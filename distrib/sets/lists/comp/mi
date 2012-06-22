@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1764 2012/06/21 04:29:26 pgoyette Exp $
+#	$NetBSD: mi,v 1.1765 2012/06/22 18:30:22 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4872,6 +4872,7 @@
 ./usr/share/man/cat2/reboot.0			comp-c-catman		.cat
 ./usr/share/man/cat2/recv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/recvfrom.0			comp-c-catman		.cat
+./usr/share/man/cat2/recvmmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/recvmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/rename.0			comp-c-catman		.cat
 ./usr/share/man/cat2/revoke.0			comp-c-catman		.cat
@@ -4888,6 +4889,7 @@
 ./usr/share/man/cat2/semget.0			comp-c-catman		.cat
 ./usr/share/man/cat2/semop.0			comp-c-catman		.cat
 ./usr/share/man/cat2/send.0			comp-c-catman		.cat
+./usr/share/man/cat2/sendmmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sendmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sendto.0			comp-c-catman		.cat
 ./usr/share/man/cat2/setcontext.0		comp-c-catman		.cat
@@ -11257,6 +11259,7 @@
 ./usr/share/man/html2/reboot.html		comp-c-htmlman		html
 ./usr/share/man/html2/recv.html			comp-c-htmlman		html
 ./usr/share/man/html2/recvfrom.html		comp-c-htmlman		html
+./usr/share/man/html2/recvmmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/recvmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/rename.html		comp-c-htmlman		html
 ./usr/share/man/html2/revoke.html		comp-c-htmlman		html
@@ -11268,6 +11271,7 @@
 ./usr/share/man/html2/semget.html		comp-c-htmlman		html
 ./usr/share/man/html2/semop.html		comp-c-htmlman		html
 ./usr/share/man/html2/send.html			comp-c-htmlman		html
+./usr/share/man/html2/sendmmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/sendmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/sendto.html		comp-c-htmlman		html
 ./usr/share/man/html2/setcontext.html		comp-c-htmlman		html
@@ -17423,6 +17427,7 @@
 ./usr/share/man/man2/reboot.2			comp-c-man		.man
 ./usr/share/man/man2/recv.2			comp-c-man		.man
 ./usr/share/man/man2/recvfrom.2			comp-c-man		.man
+./usr/share/man/man2/recvmmsg.2			comp-c-man		.man
 ./usr/share/man/man2/recvmsg.2			comp-c-man		.man
 ./usr/share/man/man2/rename.2			comp-c-man		.man
 ./usr/share/man/man2/revoke.2			comp-c-man		.man
@@ -17439,6 +17444,7 @@
 ./usr/share/man/man2/semget.2			comp-c-man		.man
 ./usr/share/man/man2/semop.2			comp-c-man		.man
 ./usr/share/man/man2/send.2			comp-c-man		.man
+./usr/share/man/man2/sendmmsg.2			comp-c-man		.man
 ./usr/share/man/man2/sendmsg.2			comp-c-man		.man
 ./usr/share/man/man2/sendto.2			comp-c-man		.man
 ./usr/share/man/man2/setcontext.2		comp-c-man		.man
