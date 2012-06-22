@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.41 2012/06/21 17:55:15 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.42 2012/06/22 08:47:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.41 2012/06/21 17:55:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.42 2012/06/22 08:47:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,8 +96,8 @@ static const struct {
 	{L("connect"),	sizeof(struct linux_sys_connect_args)},		/* 3 */
 	{L("listen"),	sizeof(struct linux_sys_listen_args)},		/* 4 */
 	{L("accept"),	sizeof(struct linux_sys_accept_args)},		/* 5 */
-	{L("getsockname)",sizeof(struct linux_sys_getsockname_args)},	/* 6 */
-	{L("getpeername)",sizeof(struct linux_sys_getpeername_args)},	/* 7 */
+	{L("getsockname"),sizeof(struct linux_sys_getsockname_args)},	/* 6 */
+	{L("getpeername"),sizeof(struct linux_sys_getpeername_args)},	/* 7 */
 	{L("socketpair"),sizeof(struct linux_sys_socketpair_args)},	/* 8 */
 	{L("send"),	sizeof(struct linux_sys_send_args)},		/* 9 */
 	{L("recv"),	sizeof(struct linux_sys_recv_args)},		/* 10 */
