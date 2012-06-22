@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.124 2012/05/21 22:38:26 jdf Exp $ */
+/*	$NetBSD: disks.c,v 1.125 2012/06/22 20:54:39 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <util.h>
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/swap.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -303,6 +304,45 @@ done:
 		close(fd);
 	if (strlen(dd->dd_descr) == 0)
 		strcpy(dd->dd_descr, dd->dd_name);
+}
+
+/* disknames - contains device names without partition letters
+ * cdrom_devices - contains devices including partition letters
+ * returns the first entry in hw.disknames matching a cdrom_device, or
+ * first entry on error or no match
+ */
+const char *
+get_default_cdrom(void)
+{
+	static const char *cdrom_devices[] = { CD_NAMES, 0};
+	static const char mib_name[] = "hw.disknames";
+	size_t len;
+	char *disknames;
+	char *last;
+	char *name;
+	const char **arg;
+	const char *cd_dev;
+
+	/* On error just use first entry in cdrom_devices */
+	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) != 0)
+		return cdrom_devices[0];
+	if ((disknames = malloc(len)) == 0) /* skip on malloc fail */
+		return cdrom_devices[0];
+
+	sysctlbyname(mib_name, disknames, &len, NULL, 0);
+        for ((name = strtok_r(disknames, " ", &last)); name;
+	    (name = strtok_r(NULL, " ", &last))) {
+		for (arg = cdrom_devices ; *arg ; ++arg ) {
+			cd_dev = *arg;
+			if (strncmp(cd_dev, name, strlen(cd_dev) - 1) == 0) {
+				free(disknames);
+				return cd_dev;
+			}
+
+		}
+	}
+	free(disknames);
+	return cdrom_devices[0];
 }
 
 static int
@@ -773,7 +813,8 @@ make_fstab(void)
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
-	scripting_fprintf(f, "/dev/" CD_NAME "\t\t/cdrom\tcd9660\tro,noauto\n");
+	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
+	    (char *)get_default_cdrom);
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");

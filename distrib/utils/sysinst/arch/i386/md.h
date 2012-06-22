@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.68 2011/04/04 08:30:32 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.69 2012/06/22 20:54:39 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,8 +105,12 @@
 
 extern struct mbr_bootsel *mbs;
 
+/* i386 can still have old mcd ISA devices */
+#ifdef CD_NAMES
+#undef CD_NAMES
+#endif
+#define CD_NAMES "cd0a","mcd0a"
 
 /*
  *  prototypes for MD code.
  */
-
