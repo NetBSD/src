@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.32 2012/06/22 18:28:38 christos Exp $
+.\"	$NetBSD: recv.2,v 1.33 2012/06/22 22:48:37 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd February 1, 2012
+.Dd June 22, 2012
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ call be used to receive multiple messages in the same call using an array of
 .Fa mmsghdr
 elements with the following form, as defined in
 .Ao Pa sys/socket.h Ac :
-.Pp 
+.Pp
 .Bd -literal
 struct mmsghdr {
 	struct msghdr	msg_hdr;	/* the message to be sent */
@@ -84,7 +84,7 @@ struct mmsghdr {
 };
 .Ed
 .Pp
-The 
+The
 .Fa msg_len
 member contains the number of bytes received for each
 .Fa msg_hdr
@@ -110,7 +110,9 @@ call will wait for one message, and set
 for the rest.
 If the
 .Fa timeout
-parameter is not NULL, then
+parameter is not
+.Dv NULL ,
+then
 .Fn recvmmsg
 will return if that time is exceeded.
 .Pp
@@ -285,7 +287,7 @@ for ancillary data.
 .Dv MSG_OOB
 is returned to indicate that expedited or out-of-band data were received.
 .Sh RETURN VALUES
-The 
+The
 .Fn recv ,
 .Fn recvfrom
 and
