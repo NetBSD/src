@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.24 2011/09/24 17:22:14 christos Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.25 2012/06/22 14:54:35 christos Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -88,8 +88,7 @@
 #define	UDP6CTL_RECVSPACE	2	/* default recv buffer */
 #define	UDP6CTL_LOOPBACKCKSUM	3	/* do UDP checksum on loopback? */
 #define	UDP6CTL_STATS		4	/* udp6 statistics */
-#define	UDP6CTL_RFC6056		5	/* RFC 6056 algorithm selection */
-#define	UDP6CTL_MAXID		6
+#define	UDP6CTL_MAXID		5
 
 #define UDP6CTL_NAMES { \
 	{ 0, 0 }, \
