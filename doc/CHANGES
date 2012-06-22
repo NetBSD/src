@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1711 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1712 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -68,3 +68,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		kern.uidinfo.* via sysctl. [christos 20120608]
 	usb(9): Added support for SMP to the USB subsytem.  By Jared D.
 		McNeill and myself.  [mrg 20120609]
+	kernel: {send,recv}mmsg support [christos 20120621]
