@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.3 2012/02/20 00:18:19 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.4 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,16 +31,17 @@
 
 /*
  * NPF interface for application level gateways (ALGs).
- *
- * XXX: locking
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.3 2012/02/20 00:18:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.4 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/kmem.h>
-#include <sys/pool.h>
+#include <sys/pserialize.h>
+#include <sys/mutex.h>
 #include <net/pfil.h>
 
 #include "npf_impl.h"
@@ -55,12 +56,16 @@ struct npf_alg {
 	npf_algfunc_t			na_seid_func;
 };
 
-static LIST_HEAD(, npf_alg)		nat_alg_list	__read_mostly;
+static LIST_HEAD(, npf_alg)		nat_alg_list	__cacheline_aligned;
+static kmutex_t				nat_alg_lock	__cacheline_aligned;
+static pserialize_t			nat_alg_psz	__cacheline_aligned;
 
 void
 npf_alg_sysinit(void)
 {
 
+	mutex_init(&nat_alg_lock, MUTEX_DEFAULT, IPL_NONE);
+	nat_alg_psz = pserialize_create();
 	LIST_INIT(&nat_alg_list);
 }
 
@@ -69,6 +74,8 @@ npf_alg_sysfini(void)
 {
 
 	KASSERT(LIST_EMPTY(&nat_alg_list));
+	pserialize_destroy(nat_alg_psz);
+	mutex_destroy(&nat_alg_lock);
 }
 
 /*
@@ -88,7 +95,11 @@ npf_alg_register(npf_algfunc_t match, npf_algfunc_t out, npf_algfunc_t in,
 	alg->na_out_func = out;
 	alg->na_in_func = in;
 	alg->na_seid_func = seid;
+
+	mutex_enter(&nat_alg_lock);
 	LIST_INSERT_HEAD(&nat_alg_list, alg, na_entry);
+	mutex_exit(&nat_alg_lock);
+
 	return alg;
 }
 
@@ -98,17 +109,15 @@ npf_alg_register(npf_algfunc_t match, npf_algfunc_t out, npf_algfunc_t in,
 int
 npf_alg_unregister(npf_alg_t *alg)
 {
-	npf_alg_t *it;
 
-	LIST_FOREACH(it, &nat_alg_list, na_entry) {
-		if (alg == it)
-			break;
-	}
-	if (it != NULL) {
-		LIST_REMOVE(alg, na_entry);
-	}
-	/* TODO: Flush relevant sessions. */
+	mutex_enter(&nat_alg_lock);
+	LIST_REMOVE(alg, na_entry);
+	pserialize_perform(nat_alg_psz);
+	mutex_exit(&nat_alg_lock);
+
+	npf_nat_freealg(alg);
 	kmem_free(alg, sizeof(npf_alg_t));
+
 	return 0;
 }
 
@@ -119,15 +128,20 @@ bool
 npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
 {
 	npf_alg_t *alg;
-	npf_algfunc_t func;
+	bool match = false;
+	int s;
 
+	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		func = alg->na_match_func;
+		npf_algfunc_t func = alg->na_match_func;
+
 		if (func && func(npc, nbuf, nt)) {
-			return true;
+			match = true;
+			break;
 		}
 	}
-	return false;
+	pserialize_read_exit(s);
+	return match;
 }
 
 /*
@@ -137,7 +151,9 @@ void
 npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, const int di)
 {
 	npf_alg_t *alg;
+	int s;
 
+	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
 		if ((di & PFIL_OUT) != 0 && alg->na_out_func != NULL) {
 			(alg->na_out_func)(npc, nbuf, nt);
@@ -148,19 +164,25 @@ npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, const int di)
 			continue;
 		}
 	}
+	pserialize_read_exit(s);
 }
 
 bool
 npf_alg_sessionid(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *key)
 {
 	npf_alg_t *alg;
-	npf_algfunc_t func;
+	bool nkey = false;
+	int s;
 
+	s = pserialize_read_enter();
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
-		func = alg->na_seid_func;
+		npf_algfunc_t func = alg->na_seid_func;
+
 		if (func && func(npc, nbuf, (npf_nat_t *)key)) {
-			return true;
+			nkey = true;
+			break;
 		}
 	}
-	return false;
+	pserialize_read_exit(s);
+	return nkey;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_state.c,v 1.7 2012/05/30 21:38:03 rmind Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.8 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.7 2012/05/30 21:38:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.8 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.7 2012/05/30 21:38:03 rmind Exp $");
 #define	NPF_ANY_SESSION_ESTABLISHED	2
 #define	NPF_ANY_SESSION_NSTATES		3
 
-static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] __read_mostly = {
+static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] = {
 	[NPF_ANY_SESSION_CLOSED] = {
 		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_NEW,
 	},
@@ -68,12 +68,19 @@ static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] __read_mostly = {
 	},
 };
 
-static const u_int npf_generic_timeout[] __read_mostly = {
+static u_int npf_generic_timeout[] __read_mostly = {
 	[NPF_ANY_SESSION_CLOSED]	= 0,
 	[NPF_ANY_SESSION_NEW]		= 30,
 	[NPF_ANY_SESSION_ESTABLISHED]	= 60,
 };
 
+/*
+ * npf_state_init: initialise the state structure.
+ *
+ * Should normally be called on a first packet, which also determines the
+ * direction in a case of connection-orientated protocol.  Returns true on
+ * success and false otherwise (e.g. if protocol is not supported).
+ */
 bool
 npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
@@ -111,6 +118,12 @@ npf_state_destroy(npf_state_t *nst)
 	mutex_destroy(&nst->nst_lock);
 }
 
+/*
+ * npf_state_inspect: inspect the packet according to the protocol state.
+ *
+ * Return true if packet is considered to match the state (e.g. for TCP,
+ * the packet belongs to the tracked connection) and false otherwise.
+ */
 bool
 npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
     npf_state_t *nst, const bool forw)
@@ -137,9 +150,6 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 	NPF_TCP_STATE_SAMPLE(nst, ret);
 	mutex_exit(&nst->nst_lock);
 
-	if (__predict_false(!ret)) {
-		npf_stats_inc(NPF_STAT_INVALID_STATE);
-	}
 	return ret;
 }
 

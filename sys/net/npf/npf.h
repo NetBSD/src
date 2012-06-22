@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.16 2012/04/14 19:01:21 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.17 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -109,72 +109,6 @@ typedef struct {
 		struct icmp	icmp;
 	} npc_l4;
 } npf_cache_t;
-
-static inline void
-npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
-{
-	uint_fast8_t length = omask;
-
-	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
-	KASSERT(length <= NPF_MAX_NETMASK);
-
-	for (int i = 0; i < 4; i++) {
-		if (length >= 32) {
-			dst->s6_addr32[i] = htonl(0xffffffff);
-			length -= 32;
-		} else {
-			dst->s6_addr32[i] = htonl(0xffffffff << (32 - length));
-			length = 0;
-		}
-	}
-}
-
-static inline void
-npf_calculate_masked_addr(npf_addr_t *dst, const npf_addr_t *src,
-    const npf_netmask_t omask)
-{
-	npf_addr_t mask;
-
-	npf_generate_mask(&mask, omask);
-	for (int i = 0; i < 4; i++) {
-		dst->s6_addr32[i] = src->s6_addr32[i] & mask.s6_addr32[i];
-	}
-}
-
-/*
- * npf_compare_cidr: compare two addresses, either IPv4 or IPv6.
- *
- * => If the mask is NULL, ignore it.
- */
-static inline int
-npf_compare_cidr(const npf_addr_t *addr1, const npf_netmask_t mask1,
-    const npf_addr_t *addr2, const npf_netmask_t mask2)
-{
-	npf_addr_t realmask1, realmask2;
-
-	if (mask1 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask1, mask1);
-	}
-	if (mask2 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask2, mask2);
-	}
-	for (int i = 0; i < 4; i++) {
-		const uint32_t x = mask1 != NPF_NO_NETMASK ?
-		    addr1->s6_addr32[i] & realmask1.s6_addr32[i] :
-		    addr1->s6_addr32[i];
-		const uint32_t y = mask2 != NPF_NO_NETMASK ?
-		    addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
-		    addr2->s6_addr32[i];
-		if (x < y) {
-			return -1;
-		}
-		if (x > y) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
 
 static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)

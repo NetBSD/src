@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_table_test.c,v 1.1 2012/04/14 21:57:29 rmind Exp $	*/
+/*	$NetBSD: npf_table_test.c,v 1.2 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*
  * NPF tableset test.
@@ -54,6 +54,15 @@ npf_table_test(bool verbose)
 	assert(t2 != NULL);
 	error = npf_tableset_insert(tblset, t2);
 	assert(error == 0);
+
+	/* Attempt to match non-existing entries - should fail. */
+	addr->s6_addr32[0] = inet_addr(ip_list[0]);
+
+	error = npf_table_match_addr(tblset, HASH_TID, addr);
+	assert(error != 0);
+
+	error = npf_table_match_addr(tblset, TREE_TID, addr);
+	assert(error != 0);
 
 	/* Fill both tables with IP addresses. */
 	for (i = 0; i < __arraycount(ip_list); i++) {

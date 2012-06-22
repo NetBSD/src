@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_inet.c,v 1.11 2012/02/20 00:18:19 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.12 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -31,10 +31,15 @@
 
 /*
  * Various procotol related helper routines.
+ *
+ * This layer manipulates npf_cache_t structure i.e. caches requested headers
+ * and stores which information was cached in the information bit field.
+ * It is also responsibility of this layer to update or invalidate the cache
+ * on rewrites (e.g. by translation routines).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.11 2012/02/20 00:18:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.12 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -121,14 +126,86 @@ npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 	return mix;
 }
 
+static inline void
+npf_generate_mask(npf_addr_t *out, const npf_netmask_t mask)
+{
+	uint_fast8_t length = mask;
+
+	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
+	KASSERT(length <= NPF_MAX_NETMASK);
+
+	for (int i = 0; i < 4; i++) {
+		if (length >= 32) {
+			out->s6_addr32[i] = htonl(0xffffffff);
+			length -= 32;
+		} else {
+			out->s6_addr32[i] = htonl(0xffffffff << (32 - length));
+			length = 0;
+		}
+	}
+}
+
 /*
- * npf_tcpsaw: helper to fetch SEQ, ACK, WIN and return TCP data length.
- * Returns all values in host byte-order.
+ * npf_addr_mask: apply the mask to a given address and store the result.
+ */
+void
+npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask, npf_addr_t *out)
+{
+	npf_addr_t realmask;
+
+	npf_generate_mask(&realmask, mask);
+
+	for (int i = 0; i < 4; i++) {
+		out->s6_addr32[i] = addr->s6_addr32[i] & realmask.s6_addr32[i];
+	}
+}
+
+/*
+ * npf_addr_cmp: compare two addresses, either IPv4 or IPv6.
+ *
+ * => Ignore the mask, if NPF_NO_NETMASK is specified.
+ * => Return 0 if equal and -1 or 1 if less or greater accordingly.
  */
 int
-npf_tcpsaw(npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
+npf_addr_cmp(const npf_addr_t *addr1, const npf_netmask_t mask1,
+    const npf_addr_t *addr2, const npf_netmask_t mask2)
 {
-	struct tcphdr *th = &npc->npc_l4.tcp;
+	npf_addr_t realmask1, realmask2;
+
+	if (mask1 != NPF_NO_NETMASK) {
+		npf_generate_mask(&realmask1, mask1);
+	}
+	if (mask2 != NPF_NO_NETMASK) {
+		npf_generate_mask(&realmask2, mask2);
+	}
+
+	for (int i = 0; i < 4; i++) {
+		const uint32_t x = mask1 != NPF_NO_NETMASK ?
+		    addr1->s6_addr32[i] & realmask1.s6_addr32[i] :
+		    addr1->s6_addr32[i];
+		const uint32_t y = mask2 != NPF_NO_NETMASK ?
+		    addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
+		    addr2->s6_addr32[i];
+		if (x < y) {
+			return -1;
+		}
+		if (x > y) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * npf_tcpsaw: helper to fetch SEQ, ACK, WIN and return TCP data length.
+ *
+ * => Returns all values in host byte-order.
+ */
+int
+npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
+{
+	const struct tcphdr *th = &npc->npc_l4.tcp;
 	u_int thlen;
 
 	KASSERT(npf_iscached(npc, NPC_TCP));
@@ -139,11 +216,10 @@ npf_tcpsaw(npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
 	thlen = th->th_off << 2;
 
 	if (npf_iscached(npc, NPC_IP4)) {
-		struct ip *ip = &npc->npc_ip.v4;
+		const struct ip *ip = &npc->npc_ip.v4;
 		return ntohs(ip->ip_len) - npf_cache_hlen(npc) - thlen;
-	} else {
-		KASSERT(npf_iscached(npc, NPC_IP6));
-		struct ip6_hdr *ip6 = &npc->npc_ip.v6;
+	} else if (npf_iscached(npc, NPC_IP6)) {
+		const struct ip6_hdr *ip6 = &npc->npc_ip.v6;
 		return ntohs(ip6->ip6_plen) - thlen;
 	}
 	return 0;
@@ -179,6 +255,7 @@ next:
 	if (nbuf_advfetch(&nbuf, &n_ptr, step, sizeof(val), &val)) {
 		return false;
 	}
+
 	switch (val) {
 	case TCPOPT_EOL:
 		/* Done. */
@@ -225,6 +302,7 @@ next:
 		topts_len -= val;
 		step = val - 1;
 	}
+
 	/* Any options left? */
 	if (__predict_true(topts_len > 0)) {
 		goto next;
@@ -238,21 +316,21 @@ next:
 bool
 npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
-	struct ip *ip;
-	struct ip6_hdr *ip6;
 	uint8_t ver;
 
 	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &ver)) {
 		return false;
 	}
+
 	switch (ver >> 4) {
-	case IPVERSION:
-		/* IPv4 */
-		ip = &npc->npc_ip.v4;
-		/* Fetch the header. */
+	case IPVERSION: {
+		struct ip *ip = &npc->npc_ip.v4;
+
+		/* Fetch IPv4 header. */
 		if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(struct ip), ip)) {
 			return false;
 		}
+
 		/* Check header length and fragment offset. */
 		if ((u_int)(ip->ip_hl << 2) < sizeof(struct ip)) {
 			return false;
@@ -261,6 +339,7 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 			/* Note fragmentation. */
 			npc->npc_info |= NPC_IPFRAG;
 		}
+
 		/* Cache: layer 3 - IPv4. */
 		npc->npc_ipsz = sizeof(struct in_addr);
 		npc->npc_srcip = (npf_addr_t *)&ip->ip_src;
@@ -269,31 +348,31 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 		npc->npc_hlen = ip->ip_hl << 2;
 		npc->npc_next_proto = npc->npc_ip.v4.ip_p;
 		break;
+	}
 
-	case (IPV6_VERSION >> 4):
-		ip6 = &npc->npc_ip.v6;
+	case (IPV6_VERSION >> 4): {
+		struct ip6_hdr *ip6 = &npc->npc_ip.v6;
+		size_t toskip;
+		bool done;
+
+		/* Fetch IPv6 header. */
 		if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(struct ip6_hdr), ip6)) {
 			return false;
 		}
 
-		bool done = false;
-		uint_fast8_t next_proto;
-		size_t toskip;
-
 		/* Initial next-protocol value. */
-		next_proto = ip6->ip6_nxt;
+		npc->npc_next_proto = ip6->ip6_nxt;
 		toskip = sizeof(struct ip6_hdr);
 		npc->npc_hlen = 0;
+		done = false;
 
+		/*
+		 * Advance by the length of the previous known header and
+		 * fetch by the lengh of next extension header.
+		 */
 		do {
 			struct ip6_ext ip6e;
 
-			npc->npc_next_proto = next_proto;
-
-			/*
-			 * Advance by the length of the previous known header
-			 * and fetch the next extension header's length.
-			 */
 			if (nbuf_advfetch(&nbuf, &n_ptr, toskip,
 			    sizeof(struct ip6_ext), &ip6e)) {
 				return false;
@@ -315,21 +394,28 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 				break;
 			}
 			npc->npc_hlen += toskip;
-			next_proto = ip6e.ip6e_nxt;
+			npc->npc_next_proto = ip6e.ip6e_nxt;
 
 		} while (!done);
 
+		/* Cache: layer 3 - IPv6. */
 		npc->npc_ipsz = sizeof(struct in6_addr);
 		npc->npc_srcip = (npf_addr_t *)&ip6->ip6_src;
 		npc->npc_dstip = (npf_addr_t *)&ip6->ip6_dst;
 		npc->npc_info |= NPC_IP6;
 		break;
+	}
 	default:
 		return false;
 	}
+
 	return true;
 }
 
+/*
+ * npf_fetch_tcp: fetch, check and cache TCP header.  If necessary,
+ * fetch and cache layer 3 as well.
+ */
 bool
 npf_fetch_tcp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
@@ -355,6 +441,10 @@ npf_fetch_tcp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	return true;
 }
 
+/*
+ * npf_fetch_udp: fetch, check and cache UDP header.  If necessary,
+ * fetch and cache layer 3 as well.
+ */
 bool
 npf_fetch_udp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
@@ -372,7 +462,7 @@ npf_fetch_udp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	uh = &npc->npc_l4.udp;
 	hlen = npf_cache_hlen(npc);
 
-	/* Fetch ICMP header. */
+	/* Fetch UDP header. */
 	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, sizeof(struct udphdr), uh)) {
 		return false;
 	}
@@ -384,8 +474,6 @@ npf_fetch_udp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 
 /*
  * npf_fetch_icmp: fetch ICMP code, type and possible query ID.
- *
- * => Stores both all fetched items into the cache.
  */
 bool
 npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
@@ -417,7 +505,7 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 
 /*
  * npf_cache_all: general routine to cache all relevant IP (v4 or v6)
- * and TCP, UDP or ICMP data.
+ * and TCP, UDP or ICMP headers.
  */
 int
 npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
