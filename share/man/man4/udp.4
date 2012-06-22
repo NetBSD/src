@@ -1,4 +1,4 @@
-.\"	$NetBSD: udp.4,v 1.12 2011/09/24 18:49:13 christos Exp $
+.\"	$NetBSD: udp.4,v 1.13 2012/06/22 14:54:34 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)udp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd September 24, 2011
+.Dd June 20, 2012
 .Dt UDP 4
 .Os
 .Sh NAME
@@ -118,31 +118,6 @@ from draft-ietf-ipsec-nat-t-ike-00/01 and
 from draft-ietf-ipsec-udp-encaps-06
 defined in
 .In netinet/udp.h .
-.Pp
-The
-.Dv UDP_RFC6056ALGO
-can be used to randomize the port selection.
-Valid algorithms are described in
-.Xr rfc6056 7
-and their respective constants are in
-.In netinet/rfc6056.h .
-For example,
-.Bd -literal
-int algo = RFC6056_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/rfc6056.h\*[Gt] */
-setsockopt(s, IPPROTO_UDP, UDP_RFC6056ALGO, \*[Am]algo, sizeof(algo));
-.Ed
-.Pp
-The port selection can be also controlled at a global level for all
-.Tn UDP
-or
-.Tn UDP6
-sockets using the following
-.Xr sysctl 7
-variables:
-.Dv net.inet.udp.rfc6056.selected
-and
-.Dv net.inet6.udp6.rfc6056.selected
-respectively.
 .Pp
 Options at the
 .Tn IP

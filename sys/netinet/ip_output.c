@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.215 2012/04/30 22:51:28 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.216 2012/06/22 14:54:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.215 2012/04/30 22:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.216 2012/06/22 14:54:35 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.215 2012/04/30 22:51:28 rmind Exp $"
 #include <netinet/ip_var.h>
 #include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
+#include <netinet/rfc6056.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -1142,13 +1143,20 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			/* INP_UNLOCK(inp); */
 			break;
 
+		case IP_PORTALGO:
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			error = rfc6056_algo_index_select(
+			    (struct inpcb_hdr *)inp, optval);
+			break;
+
 #if defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
-		    {
 			error = ipsec4_set_policy(inp, sopt->sopt_name,
 			    sopt->sopt_data, sopt->sopt_size, l->l_cred);
 			break;
-		    }
 #endif /*IPSEC*/
 
 		default:
@@ -1256,6 +1264,11 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 			error = sockopt_setint(sopt, optval);
 
+			break;
+
+		case IP_PORTALGO:
+			optval = ((struct inpcb_hdr *)inp)->inph_rfc6056algo;
+			error = sockopt_setint(sopt, optval);
 			break;
 
 		default:
