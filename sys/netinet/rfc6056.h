@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.h,v 1.2 2011/09/24 17:54:19 christos Exp $	*/
+/*	$NetBSD: rfc6056.h,v 1.3 2012/06/22 14:54:35 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -33,6 +33,7 @@
 #ifdef _KERNEL
 #include <sys/sysctl.h>
 
+struct inpcb_hdr;
 int rfc6056_randport(uint16_t *, struct inpcb_hdr *, kauth_cred_t);
 int sysctl_rfc6056_selected(SYSCTLFN_ARGS);
 int sysctl_rfc6056_selected6(SYSCTLFN_ARGS);

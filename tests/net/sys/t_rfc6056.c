@@ -1,4 +1,4 @@
-/* $NetBSD: t_rfc6056.c,v 1.2 2011/11/05 19:01:42 jruoho Exp $ */
+/* $NetBSD: t_rfc6056.c,v 1.3 2012/06/22 14:54:35 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rfc6056.c,v 1.2 2011/11/05 19:01:42 jruoho Exp $");
+__RCSID("$NetBSD: t_rfc6056.c,v 1.3 2012/06/22 14:54:35 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -51,13 +51,26 @@ static void
 test(const char *hostname, const char *service, int family, int al)
 {
 	static const char hello[] = "hello\n";
-	int s, error;
+	int s, error, proto, option;
 	struct sockaddr_storage ss;
 	struct addrinfo hints, *res;
 	
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_DGRAM;
+
+	switch (family) {
+	case AF_INET:
+		proto = IPPROTO_IP;
+		option = IP_PORTALGO;
+		break;
+	case AF_INET6:
+		proto = IPPROTO_IPV6;
+		option = IPV6_PORTALGO;
+		break;
+	default:
+		abort();
+	}
 
 	error = getaddrinfo(hostname, service, &hints, &res);
 	if (error)
@@ -68,7 +81,7 @@ test(const char *hostname, const char *service, int family, int al)
 	if (s == -1)
 		err(EXIT_FAILURE, "socket");
 	
-	if (setsockopt(s, IPPROTO_UDP, UDP_RFC6056ALGO, &al, sizeof(al)) == -1)
+	if (setsockopt(s, proto, option, &al, sizeof(al)) == -1)
 		err(EXIT_FAILURE, "setsockopt");
 
 	memset(&ss, 0, sizeof(ss));
@@ -89,7 +102,7 @@ test(const char *hostname, const char *service, int family, int al)
 	if (s == -1)
 		err(EXIT_FAILURE, "socket");
 
-	if (setsockopt(s, IPPROTO_UDP, UDP_RFC6056ALGO, &al, sizeof(al)) == -1)
+	if (setsockopt(s, proto, option, &al, sizeof(al)) == -1)
 		err(EXIT_FAILURE, "setsockopt");
 
 	if (connect(s, res->ai_addr, res->ai_addrlen) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.323 2012/04/13 15:35:57 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.324 2012/06/22 14:54:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.323 2012/04/13 15:35:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.324 2012/06/22 14:54:35 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -939,6 +939,11 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 					     IFF_LOOPBACK) ||
 					   tcp_do_loopback_cksum)) {
 				TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
+				if (m->m_len == 0) {
+					printf("mlen = 0 mkthdrlen = %d\n",
+					    m->m_pkthdr.len);
+					return 0;
+				}
 				if (in4_cksum(m, IPPROTO_TCP, toff,
 					      tlen + off) != 0)
 					goto badcsum;

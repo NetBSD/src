@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.147 2012/03/22 20:34:41 drochner Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.148 2012/06/22 14:54:35 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.147 2012/03/22 20:34:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.148 2012/06/22 14:54:35 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.147 2012/03/22 20:34:41 drochner Ex
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
+#include <netinet/rfc6056.h>
 #include <netinet6/in6_offload.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
@@ -1633,6 +1634,14 @@ else 					\
 			}
 			break;
 
+		case IPV6_PORTALGO:
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			error = rfc6056_algo_index_select(
+			    (struct inpcb_hdr *)in6p, optval);
+			break;
 
 #if defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
@@ -1816,6 +1825,11 @@ else 					\
 		case IPV6_JOIN_GROUP:
 		case IPV6_LEAVE_GROUP:
 			error = ip6_getmoptions(sopt, in6p->in6p_moptions);
+			break;
+
+		case IPV6_PORTALGO:
+			optval = ((struct inpcb_hdr *)in6p)->inph_rfc6056algo;
+			error = sockopt_setint(sopt, optval);
 			break;
 
 #if defined(FAST_IPSEC)
