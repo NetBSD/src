@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.47 2012/04/19 17:28:25 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.48 2012/06/22 06:15:18 sjg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.47 2012/04/19 17:28:25 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.48 2012/06/22 06:15:18 sjg Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -498,11 +498,22 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		bufsize = sfs.f_iosize;
 #endif
 	bufrem = fsopts->size;
-	if (debug & DEBUG_FS_CREATE_IMAGE)
+
+	if (fsopts->sparse) {
+		if (ftruncate(fsopts->fd, bufrem) == -1) {
+			printf ("ERROR in truncate. Sparse option disabled\n");
+			fsopts->sparse = 0;
+		} else {
+			bufrem = 0; /* File truncated at bufrem. Remaining is 0 */
+			buf = NULL;
+		}
+	}
+
+	if ((debug & DEBUG_FS_CREATE_IMAGE) && fsopts->sparse == 0)
 		printf(
 		    "zero-ing image `%s', %lld sectors, using %d byte chunks\n",
 		    image, (long long)bufrem, bufsize);
-	if ((buf = calloc(1, bufsize)) == NULL) {
+	if ((bufrem > 0) && ((buf = calloc(1, bufsize)) == NULL)) {
 		warn("Can't create buffer for sector");
 		return (-1);
 	}
@@ -516,7 +527,8 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		}
 		bufrem -= i;
 	}
-	free(buf);
+	if (buf)
+		free(buf);
 
 		/* make the file system */
 	if (debug & DEBUG_FS_CREATE_IMAGE)
