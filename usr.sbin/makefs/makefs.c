@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.34 2012/04/29 13:32:21 joerg Exp $	*/
+/*	$NetBSD: makefs.c,v 1.35 2012/06/22 06:15:18 sjg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.34 2012/04/29 13:32:21 joerg Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.35 2012/06/22 06:15:18 sjg Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	start_time.tv_sec = start.tv_sec;
 	start_time.tv_nsec = start.tv_usec * 1000;
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:x")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:xZ")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -230,6 +230,10 @@ main(int argc, char *argv[])
 			fsoptions.onlyspec = 1;
 			break;
 
+		case 'Z':
+			fsoptions.sparse = 1;
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -329,7 +333,7 @@ usage(void)
 
 	prog = getprogname();
 	fprintf(stderr,
-"usage: %s [-x] [-B endian] [-b free-blocks] [-d debug-mask]\n"
+"usage: %s [-xZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size]\n"
 "\t[-m maximum-size] [-N userdb-dir] [-o fs-options] [-S sector-size]\n"
 "\t[-s image-size] [-t fs-type] image-file directory [extra-directory ...]\n",
