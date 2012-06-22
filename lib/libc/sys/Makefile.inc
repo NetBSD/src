@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.214 2012/03/08 21:59:28 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.215 2012/06/22 18:28:38 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -117,11 +117,11 @@ ASM=	access.S acct.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
-	rasctl.S readlinkat.S reboot.S recvfrom.S recvmsg.S rename.S \
+	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S rename.S \
 		renameat.S revoke.S rmdir.S \
 	semconfig.S semget.S semop.S \
-		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
-		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
+		sendmmsg.S sendmsg.S sendto.S setegid.S setcontext.S seteuid.S \
+		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
 		setuid.S __shmctl50.S shmdt.S shmget.S shutdown.S \
@@ -305,9 +305,9 @@ MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
-MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
+MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2
 MLINKS+=select.2 pselect.2
-MLINKS+=send.2 sendmsg.2 send.2 sendto.2
+MLINKS+=send.2 sendmsg.2 send.2 sendto.2 send.2 sendmmsg.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
