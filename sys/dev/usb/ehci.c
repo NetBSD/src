@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.191 2012/06/19 07:15:41 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.192 2012/06/22 00:12:23 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.191 2012/06/19 07:15:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.192 2012/06/22 00:12:23 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2892,7 +2892,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	int i, offs, frindex, previndex;
 	usb_dma_t dma;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	mutex_enter(&sc->sc_lock);
 
 	/* Find an itd that wasn't freed this frame or last frame. This can
 	 * discard itds that were freed before frindex wrapped around
@@ -2918,6 +2918,7 @@ ehci_alloc_itd(ehci_softc_t *sc)
 
 		if (err) {
 			DPRINTF(("ehci_alloc_itd, alloc returned %d\n", err));
+			mutex_exit(&sc->sc_lock);
 			return NULL;
 		}
 
@@ -2943,6 +2944,8 @@ ehci_alloc_itd(ehci_softc_t *sc)
 	itd->u.frame_list.prev = NULL;
 	itd->xfer_next = NULL;
 	itd->slot = 0;
+
+	mutex_exit(&sc->sc_lock);
 
 	return itd;
 }
