@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.10 2012/05/06 02:45:25 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.11 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.10 2012/05/06 02:45:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.11 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -108,7 +108,7 @@ npf_return_tcp(npf_cache_t *npc)
 		memset(ip, 0, len);
 
 		/*
-		 * First fill of IPv4 header, for TCP checksum.
+		 * First, partially fill IPv4 header for TCP checksum.
 		 * Note: IP length contains TCP header length.
 		 */
 		ip->ip_p = IPPROTO_TCP;
@@ -134,7 +134,9 @@ npf_return_tcp(npf_cache_t *npc)
 		th = (struct tcphdr *)(ip6 + 1);
 	}
 
-	/* Construct TCP header and compute the checksum. */
+	/*
+	 * Construct TCP header and compute the checksum.
+	 */
 	th->th_sport = oth->th_dport;
 	th->th_dport = oth->th_sport;
 	th->th_seq = htonl(ack);
@@ -148,7 +150,9 @@ npf_return_tcp(npf_cache_t *npc)
 	if (npf_iscached(npc, NPC_IP4)) {
 		th->th_sum = in_cksum(m, len);
 
-		/* Second fill of IPv4 header, fill correct IP length. */
+		/*
+		 * Second, fill the rest of IPv4 header and correct IP length.
+		 */
 		ip->ip_v = IPVERSION;
 		ip->ip_hl = sizeof(struct ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;

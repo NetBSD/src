@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_log.c,v 1.3 2012/02/20 00:18:20 rmind Exp $	*/
+/*	$NetBSD: npf_log.c,v 1.4 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.3 2012/02/20 00:18:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.4 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,7 +58,7 @@ typedef struct npflog_softc {
 	int				sc_unit;
 } npflog_softc_t;
 
-static int	npflog_clone_create(struct if_clone *, int );
+static int	npflog_clone_create(struct if_clone *, int);
 static int	npflog_clone_destroy(ifnet_t *);
 
 static LIST_HEAD(, npflog_softc)	npflog_if_list	__cacheline_aligned;
@@ -120,11 +120,13 @@ npflog_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_dlt = DLT_NULL;
 	ifp->if_ioctl = npflog_ioctl;
 
+	KERNEL_LOCK(1, NULL);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 	bpf_attach(ifp, DLT_NULL, 0);
-
 	LIST_INSERT_HEAD(&npflog_if_list, sc, sc_entry);
+	KERNEL_UNLOCK_ONE(NULL);
+
 	return 0;
 }
 
@@ -133,9 +135,12 @@ npflog_clone_destroy(ifnet_t *ifp)
 {
 	npflog_softc_t *sc = ifp->if_softc;
 
+	KERNEL_LOCK(1, NULL);
 	LIST_REMOVE(sc, sc_entry);
 	bpf_detach(ifp);
 	if_detach(ifp);
+	KERNEL_UNLOCK_ONE(NULL);
+
 	mutex_destroy(&sc->sc_lock);
 	kmem_free(sc, sizeof(npflog_softc_t));
 	return 0;
@@ -148,13 +153,6 @@ npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
 	ifnet_t *ifp;
 	int family;
 
-	/* Find a pseudo-interface to log. */
-	ifp = if_byindex(if_idx);
-	if (ifp == NULL) {
-		/* No interface. */
-		return;
-	}
-
 	/* Set the address family. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		family = AF_INET;
@@ -164,8 +162,17 @@ npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
 		family = AF_UNSPEC;
 	}
 
-	/* Pass through BPF. */
 	KERNEL_LOCK(1, NULL);
+
+	/* Find a pseudo-interface to log. */
+	ifp = if_byindex(if_idx);
+	if (ifp == NULL) {
+		/* No interface. */
+		KERNEL_UNLOCK_ONE(NULL);
+		return;
+	}
+
+	/* Pass through BPF. */
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	bpf_mtap_af(ifp, family, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.10 2012/03/13 18:40:59 elad Exp $	*/
+/*	$NetBSD: npf.c,v 1.11 2012/06/22 13:43:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.10 2012/03/13 18:40:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.11 2012/06/22 13:43:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.10 2012/03/13 18:40:59 elad Exp $");
 #include <sys/percpu.h>
 #include <sys/rwlock.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #include <sys/uio.h>
 
 #include "npf_impl.h"
@@ -80,6 +81,7 @@ static int	npfctl_stats(void *);
 static krwlock_t		npf_lock		__cacheline_aligned;
 static npf_core_t *		npf_core		__cacheline_aligned;
 static percpu_t *		npf_stats_percpu	__read_mostly;
+static struct sysctllog *	npf_sysctl		__read_mostly;
 
 const struct cdevsw npf_cdevsw = {
 	npf_dev_open, npf_dev_close, npf_dev_read, nowrite, npf_dev_ioctl,
@@ -99,6 +101,8 @@ npf_init(void)
 
 	rw_init(&npf_lock);
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
+	npf_sysctl = NULL;
+
 	npf_tableset_sysinit();
 	npf_session_sysinit();
 	npf_nat_sysinit();
@@ -144,6 +148,10 @@ npf_fini(void)
 	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
+
+	if (npf_sysctl) {
+		sysctl_teardown(&npf_sysctl);
+	}
 	percpu_free(npf_stats_percpu, NPF_STATS_SIZE);
 	rw_destroy(&npf_lock);
 
