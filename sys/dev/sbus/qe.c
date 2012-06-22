@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.60 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: qe.c,v 1.61 2012/06/22 11:03:57 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.60 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.61 2012/06/22 11:03:57 jdc Exp $");
 
 #define QEDEBUG
 
@@ -956,7 +956,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
