@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.474 2012/06/11 18:32:59 njoly Exp $
+# $NetBSD: mi,v 1.475 2012/06/22 18:54:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -563,6 +563,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_pipe2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_poll.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fadvise.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_recvmmsg.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf
@@ -786,6 +787,7 @@
 ./usr/libdata/debug/usr/tests/syscall/t_poll.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_pollts.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_pselect.debug			tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/syscall/t_recvmmsg.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_revoke.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_setrlimit.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_setuid.debug			tests-obsolete		obsolete
@@ -2466,6 +2468,7 @@
 ./usr/tests/lib/libc/sys/t_pipe2		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_poll			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_posix_fadvise	tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_recvmmsg		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_revoke		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_select		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_setrlimit		tests-lib-tests		atf
@@ -2941,6 +2944,7 @@
 ./usr/tests/syscall/t_poll			tests-obsolete		obsolete
 ./usr/tests/syscall/t_pollts			tests-obsolete		obsolete
 ./usr/tests/syscall/t_pselect			tests-obsolete		obsolete
+./usr/tests/syscall/t_recvmmsg			tests-obsolete		obsolete
 ./usr/tests/syscall/t_revoke			tests-obsolete		obsolete
 ./usr/tests/syscall/t_setrlimit			tests-obsolete		obsolete
 ./usr/tests/syscall/t_setuid			tests-obsolete		obsolete
