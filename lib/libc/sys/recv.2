@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.31 2012/02/01 13:30:42 wiz Exp $
+.\"	$NetBSD: recv.2,v 1.32 2012/06/22 18:28:38 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,8 @@
 .Sh NAME
 .Nm recv ,
 .Nm recvfrom ,
-.Nm recvmsg
+.Nm recvmsg ,
+.Nm recvmmsg
 .Nd receive a message from a socket
 .Sh LIBRARY
 .Lb libc
@@ -47,10 +48,13 @@
 .Fn recvfrom "int s" "void * restrict buf" "size_t len" "int flags" "struct sockaddr * restrict from" "socklen_t * restrict fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
+.Ft int
+.Fn recvmmsg "int s" "struct mmsghdr *mmsg" "unsigned int vlen" "unsigned int flags" "struct timespec *timeout"
 .Sh DESCRIPTION
-.Fn recvfrom
-and
+.Fn recvfrom ,
 .Fn recvmsg
+and
+.FN recvmmsg
 are used to receive messages from a socket,
 and may be used to receive data on a socket whether or not
 it is connection-oriented.
@@ -67,6 +71,50 @@ and modified on return to indicate the actual size of the
 address stored there.
 .Pp
 The
+.Fn recvmmsg
+call be used to receive multiple messages in the same call using an array of
+.Fa mmsghdr
+elements with the following form, as defined in
+.Ao Pa sys/socket.h Ac :
+.Pp 
+.Bd -literal
+struct mmsghdr {
+	struct msghdr	msg_hdr;	/* the message to be sent */
+	unsigned int	msg_len;	/* number of bytes received */
+};
+.Ed
+.Pp
+The 
+.Fa msg_len
+member contains the number of bytes received for each
+.Fa msg_hdr
+member.
+The array has
+.Fa vlen
+elements, which is limited to
+.Dv 1024 .
+If there is an error, a number fewer than
+.Fa vlen
+may be returned, and the error may be retrieved using
+.Xr getsockopt 2
+with
+.Dv SO_ERROR .
+If the flag
+.Dv MSG_WAITFORONE
+is set in
+.Fa flags
+then the
+.Fn recvmmsg
+call will wait for one message, and set
+.Dv MSG_DONTWAIT
+for the rest.
+If the
+.Fa timeout
+parameter is not NULL, then
+.Fn recvmmsg
+will return if that time is exceeded.
+.Pp
+The
 .Fn recv
 call is normally used only on a
 .Em connected
@@ -79,8 +127,14 @@ with a nil
 parameter.
 As it is redundant, it may not be supported in future releases.
 .Pp
-All three routines return the length of the message on successful
+.Fn recv ,
+.Fn recvfrom
+and
+.Fn recvmsg
+routines return the length of the message on successful
 completion.
+.Fn recvmmsg
+returns the number of messages received.
 If a message is too long to fit in the supplied buffer,
 excess bytes may be discarded depending on the type of socket
 the message is received from (see
@@ -231,10 +285,19 @@ for ancillary data.
 .Dv MSG_OOB
 is returned to indicate that expedited or out-of-band data were received.
 .Sh RETURN VALUES
-These calls return the number of bytes received, or \-1
+The 
+.Fn recv ,
+.Fn recvfrom
+and
+.Fn recvmsg
+calls return the number of bytes received, or \-1
 if an error occurred.
 For connected sockets whose remote peer was shut down,
 0 is returned when no more data is available.
+The
+.Fn recvmmsg
+calls return the number of messages received, or \-1
+if an error occurred.
 .Sh ERRORS
 The calls fail if:
 .Bl -tag -width Er
@@ -292,3 +355,9 @@ The
 .Fn recv
 function call appeared in
 .Bx 4.2 .
+The
+.Fn recvmmsg
+function call appeared on
+.Lx 2.6.32
+and
+.Nx 7 .
