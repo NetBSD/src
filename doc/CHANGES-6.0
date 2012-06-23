@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.133 2012/06/15 11:22:22 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.134 2012/06/23 23:05:52 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5670,4 +5670,72 @@ sys/dev/usb/stuirda.c				1.15
 	Fix a case where an uninitialized USB pipe could be freed in the
 	error path.
 	[joerg, ticket #336]
+
+bin/ps/ps.1					1.101
+distrib/amd64/cdroms/Makefile.cdrom		1.7
+distrib/amd64/cdroms/install.sh			1.3
+distrib/amd64/installimage/install.sh		1.2
+distrib/i386/cdroms/Makefile.cdrom		1.27
+distrib/i386/cdroms/install.sh			1.3
+distrib/i386/installimage/install.sh		1.2
+distrib/sets/lists/base/mi			1.996
+distrib/sets/lists/tests/mi			1.472
+distrib/sparc64/cdroms/installcd/Makefile	1.15
+distrib/sparc64/cdroms/installcd/install.sh	1.3
+distrib/sparc64/instfs/dot.profile		1.7
+distrib/sparc64/instfs/list			1.25
+etc/rc.d/sysdb					1.24
+include/cdbw.h					1.2
+include/paths.h					1.41
+include/stdlib.h				1.99
+lib/libc/cdb/cdbr.c				1.3
+lib/libc/cdb/cdbw.3				1.4-1.5
+lib/libc/cdb/cdbw.c				1.4
+lib/libc/gen/devname.3				1.12
+lib/libc/gen/devname.c				1.22
+lib/libc/gen/ttyname.3				1.23-1.24
+lib/libc/gen/ttyname.c				1.25-1.26
+lib/libc/include/namespace.h			1.154
+lib/libc/include/reentrant.h			1.15
+lib/libterminfo/Makefile.hash			1.5
+lib/libterminfo/compile.c			1.7-1.8
+lib/libterminfo/term.c				1.14-1.16
+lib/libterminfo/term_private.h			1.10
+lib/libterminfo/terminfo.5.in			1.16-1.17
+share/man/man5/rc.conf.5			1.152
+share/man/man7/hier.7				1.101 via patch
+share/terminfo/Makefile				1.3
+tests/include/t_paths.c				1.12
+tests/lib/libcurses/Makefile			1.3
+tests/lib/libcurses/director/director.c		1.10
+tools/compat/Makefile				1.57,1.59
+tools/compat/cdbr.h				1.1
+tools/compat/cdbw.h				1.1
+tools/compat/compat_defs.h			1.85-1.86
+usr.bin/tic/Makefile				1.2
+usr.bin/tic/tic.1				1.10
+usr.bin/tic/tic.c				1.13-1.20
+usr.sbin/dev_mkdb/Makefile			1.8
+usr.sbin/dev_mkdb/dev_mkdb.8			1.13
+usr.sbin/dev_mkdb/dev_mkdb.c			1.29
+
+	Switch device database and terminfo database to cdb(5), which
+	is both smaller and faster.
+	[joerg, ticket #328]
+
+sys/dev/usb/stuirda.c				1.15
+
+	Fix a case where an uninitialized USB pipe could be freed in the error
+	path.
+	[joerg, ticket #336]
+
+distrib/sets/lists/xbase/mi			1.114
+external/mit/xorg/bin/xdm/config/Makefile	1.11-1.12
+external/mit/xorg/bin/xdm/config/NetBSD-flag.png.uue 1.1
+external/mit/xorg/bin/xdm/config/NetBSD-flag1.xpm 1.1
+external/mit/xorg/bin/xdm/config/NetBSD-flag2.xpm 1.1
+external/mit/xorg/bin/xdm/config/Xresources.cpp	1.1
+
+	Make the NetBSD logo look nicer in XDM.
+	[martin, ticket #341]
 
