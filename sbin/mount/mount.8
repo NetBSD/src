@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.74 2011/07/22 15:53:21 dholland Exp $
+.\"	$NetBSD: mount.8,v 1.75 2012/06/23 23:17:46 jdf Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -303,12 +303,32 @@ Clear
 mode.
 .It Cm union
 Causes the namespace at the mount point to appear as the union
-of the mounted file system root and the existing directory.
-Lookups will be done in the mounted file system first.
-If those operations fail due to a non-existent file the underlying
-directory is then accessed.
-All creates are done in the mounted file system, except for the fdesc
-file system.
+of the mounted file system root
+(referred to as the
+.Em upper
+layer), and the existing directory
+(referred to as the
+.Em lower
+layer).
+Name lookups will be done in the upper layer first.
+If a name does not exist in the upper layer, then the name
+will be looked up in the lower layer.
+If a name exists in both the upper and lower layers, then only
+the upper instance is accessible.
+Creation of new files is done in the upper layer,
+except in the case of the fdesc file system (see
+.Xr mount_fdesc 8 ) .
+.Pp
+Note that the
+.Cm union
+option can be applied to any type of file system,
+and is fundamentally different from
+.Xr mount_union 8 ,
+which is a particular type of file system.
+Also note that the
+.Cm union
+option affects the file system name space only at the mount point
+itself; it does not apply recursively to subdirectories.
 .It Cm update
 The same as
 .Fl u ;
