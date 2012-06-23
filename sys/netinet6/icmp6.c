@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.160 2012/03/22 20:34:40 drochner Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.161 2012/06/23 03:14:03 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.160 2012/03/22 20:34:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.161 2012/06/23 03:14:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2279,6 +2279,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		 * (there will be additional hops, though).
 		 */
 		rtcount = rt_timer_count(icmp6_redirect_timeout_q);
+		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
+			goto freeit;
 		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat)
 			return;
 		else if (0 <= icmp6_redirect_lowat &&
