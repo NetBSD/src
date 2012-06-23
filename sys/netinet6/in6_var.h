@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.64 2009/01/15 23:22:15 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.65 2012/06/23 03:14:03 christos Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ struct in6_ifextra {
 	struct icmp6_ifstat *icmp6_ifstat;
 	struct nd_ifinfo *nd_ifinfo;
 	struct scope6_id *scope6_id;
+	int nprefixes;
+	int ndefrouters;
 };
 
 struct	in6_ifaddr {
