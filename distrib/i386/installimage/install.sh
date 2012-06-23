@@ -1,5 +1,5 @@
 #! /bin/sh -m
-# $NetBSD: install.sh,v 1.1 2012/01/22 03:53:30 tsutsui Exp $
+# $NetBSD: install.sh,v 1.1.2.1 2012/06/23 22:54:57 riz Exp $
 #
 # -
 #  Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ termfile=/tmp/sysinst.term
 
 # Check if we are on a framebuffer or on serial console and default
 # the terminal type accordingly.
-# There is no /var/db/dev.db, so sysctl might not map the devicename properly;
+# There is no /var/db/dev.cdb, so sysctl might not map the devicename properly;
 # ttyE0 is 90,0 -> 0x5a00
 case $(sysctl -nx kern.consdev) in
  002f000000000000)
