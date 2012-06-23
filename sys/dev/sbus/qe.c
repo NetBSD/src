@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.61 2012/06/22 11:03:57 jdc Exp $	*/
+/*	$NetBSD: qe.c,v 1.62 2012/06/23 17:21:12 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.61 2012/06/22 11:03:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62 2012/06/23 17:21:12 jdc Exp $");
 
 #define QEDEBUG
 
@@ -1077,7 +1077,7 @@ qe_mcreset(struct qe_softc *sc)
 	uint32_t crc;
 	uint16_t hash[4];
 	uint8_t octet, maccc, *ladrp = (uint8_t *)&hash[0];
-	int i, j;
+	int i;
 
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;
@@ -1125,27 +1125,18 @@ qe_mcreset(struct qe_softc *sc)
 			break;
 		}
 
-		crc = 0xffffffff;
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			octet = enm->enm_addrlo[i];
-
-			for (j = 0; j < 8; j++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				}
-				else
-					crc >>= 1;
-				octet >>= 1;
-			}
-		}
-
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 		crc >>= 26;
 		hash[crc >> 4] |= 1 << (crc & 0xf);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	/* We need to byte-swap the hash before writing to the chip. */
+	for (i = 0; i < 7; i += 2) {
+		octet = ladrp[i];
+		ladrp[i] = ladrp[i + 1];
+		ladrp[i + 1] = octet;
+	}
 	bus_space_write_1(t, mr, QE_MRI_IAC,
 			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_LOGADDR);
 	bus_space_write_multi_1(t, mr, QE_MRI_LADRF, ladrp, 8);
