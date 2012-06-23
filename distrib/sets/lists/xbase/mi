@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.112.2.1 2012/03/02 18:27:43 riz Exp $
+# $NetBSD: mi,v 1.112.2.2 2012/06/23 23:04:48 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1509,6 +1509,9 @@
 ./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag.png		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag1.xpm	-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-flag2.xpm	-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
 ./usr/X11R7/include/drm					base-x11-root	obsolete
