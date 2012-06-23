@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.160 2012/03/13 18:40:59 elad Exp $	*/
+/*	$NetBSD: in6.c,v 1.161 2012/06/23 03:14:03 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.160 2012/03/13 18:40:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161 2012/06/23 03:14:03 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2283,6 +2283,8 @@ in6_domifattach(struct ifnet *ifp)
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
 	ext->scope6_id = scope6_ifattach(ifp);
+	ext->nprefixes = 0;
+	ext->ndefrouters = 0;
 	return ext;
 }
 

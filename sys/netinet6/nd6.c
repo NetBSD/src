@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.142 2012/03/22 20:34:41 drochner Exp $	*/
+/*	$NetBSD: nd6.c,v 1.143 2012/06/23 03:14:04 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.142 2012/03/22 20:34:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.143 2012/06/23 03:14:04 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -131,6 +131,16 @@ static int fill_prlist(void *, size_t *, size_t);
 
 MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 
+#define LN_DEQUEUE(ln) do { \
+	(ln)->ln_next->ln_prev = (ln)->ln_prev; \
+	(ln)->ln_prev->ln_next = (ln)->ln_next; \
+	} while (/*CONSTCOND*/0)
+#define LN_INSERTHEAD(ln) do { \
+	(ln)->ln_next = llinfo_nd6.ln_next; \
+	llinfo_nd6.ln_next = (ln); \
+	(ln)->ln_prev = &llinfo_nd6; \
+	(ln)->ln_next->ln_prev = (ln); \
+	} while (/*CONSTCOND*/0)
 void
 nd6_init(void)
 {
@@ -473,6 +483,7 @@ nd6_llinfo_timer(void *arg)
 		}
 		break;
 
+	case ND6_LLINFO_PURGE:
 	case ND6_LLINFO_STALE:
 		/* Garbage Collection(RFC 2461 5.3) */
 		if (!ND6_LLINFO_PERMANENT(ln)) {
@@ -1332,6 +1343,35 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		ln->ln_prev = &llinfo_nd6;
 		ln->ln_next->ln_prev = ln;
 
+		/*
+		 * If we have too many cache entries, initiate immediate
+		 * purging for some "less recently used" entries.  Note that
+		 * we cannot directly call nd6_free() here because it would
+		 * cause re-entering rtable related routines triggering an LOR
+		 * problem for FreeBSD.
+		 */
+		if (ip6_neighborgcthresh >= 0 &&
+		    nd6_inuse >= ip6_neighborgcthresh) {
+			int i;
+
+			for (i = 0; i < 10 && llinfo_nd6.ln_prev != ln; i++) {
+				struct llinfo_nd6 *ln_end = llinfo_nd6.ln_prev;
+
+				/* Move this entry to the head */
+				LN_DEQUEUE(ln_end);
+				LN_INSERTHEAD(ln_end);
+
+				if (ND6_LLINFO_PERMANENT(ln_end))
+					continue;
+
+				if (ln_end->ln_state > ND6_LLINFO_INCOMPLETE)
+					ln_end->ln_state = ND6_LLINFO_STALE;
+				else
+					ln_end->ln_state = ND6_LLINFO_PURGE;
+				nd6_llinfo_settimer(ln_end, 0);
+			}
+		}
+
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		/*
 		 * check if rt_getkey(rt) is an address assigned
@@ -2042,6 +2082,14 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 
 		goto sendpkt;	/* send anyway */
 	}
+
+	/*
+	 * Move this entry to the head of the queue so that it is less likely
+	 * for this entry to be a target of forced garbage collection (see
+	 * nd6_rtrequest()).
+	 */
+	LN_DEQUEUE(ln);
+	LN_INSERTHEAD(ln);
 
 	/* We don't have to do link-layer address resolution on a p2p link. */
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&

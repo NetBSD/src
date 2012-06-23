@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.58 2012/01/19 13:19:34 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.59 2012/06/23 03:14:04 christos Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -272,6 +272,11 @@ extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
 extern int	ip6_mcast_pmtu;		/* enable pMTU discovery for multicast? */
 extern int	ip6_v6only;
+extern int	ip6_neighborgcthresh;	/* Threshold # of NDP entries for GC */
+extern int	ip6_maxifprefixes; /* Max acceptable prefixes via RA per IF */
+extern int	ip6_maxifdefrouters;	/* Max acceptable def routers via RA */
+extern int	ip6_maxdynroutes; /* Max # of routes created via redirect */
+
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
