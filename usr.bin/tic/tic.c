@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.12 2011/11/09 07:40:27 roy Exp $ */
+/* $NetBSD: tic.c,v 1.12.2.1 2012/06/23 22:54:56 riz Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,52 +32,50 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.12 2011/11/09 07:40:27 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.12.2.1 2012/06/23 22:54:56 riz Exp $");
 
 #include <sys/types.h>
+#include <sys/queue.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
 #endif
 
+#include <cdbw.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
 #include <fcntl.h>
-#include <ndbm.h>
+#include <search.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <term_private.h>
 #include <term.h>
+#include <util.h>
+
+#define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 
 /* We store the full list of terminals we have instead of iterating
    through the database as the sequential iterator doesn't work
    the the data size stored changes N amount which ours will. */
 typedef struct term {
-	struct term *next;
+	STAILQ_ENTRY(term) next;
 	char *name;
-	char type;
 	TIC *tic;
+	uint32_t id;
+	struct term *base_term;
 } TERM;
-static TERM *terms;
+static STAILQ_HEAD(, term) terms = STAILQ_HEAD_INITIALIZER(terms);
 
 static int error_exit;
 static int Sflag;
-static char *dbname;
+static size_t nterm, nalias;
 
-static void
-do_unlink(void)
-{
-
-	if (dbname != NULL)
-		unlink(dbname);
-}
-
-static void __attribute__((__format__(__printf__, 1, 2)))
+static void __printflike(1, 2)
 dowarn(const char *fmt, ...)
 {
 	va_list va;
@@ -100,22 +98,32 @@ grow_tbuf(TBUF *tbuf, size_t len)
 }
 
 static int
-save_term(DBM *db, TERM *term)
+save_term(struct cdbw *db, TERM *term)
 {
 	uint8_t *buf;
 	ssize_t len;
-	datum key, value;
+	size_t slen = strlen(term->name) + 1;
+
+	if (term->base_term != NULL) {
+		len = (ssize_t)slen + 7;
+		buf = emalloc(len);
+		buf[0] = 2;
+		le32enc(buf + 1, term->base_term->id);
+		le16enc(buf + 5, slen);
+		memcpy(buf + 7, term->name, slen);
+		if (cdbw_put(db, term->name, slen, buf, len))
+			err(1, "cdbw_put");
+		return 0;
+	}
 
 	len = _ti_flatten(&buf, term->tic);
 	if (len == -1)
 		return -1;
 
-	key.dptr = term->name;
-	key.dsize = strlen(term->name);
-	value.dptr = buf;
-	value.dsize = len;
-	if (dbm_store(db, key, value, DBM_REPLACE) == -1)
-		err(1, "dbm_store");
+	if (cdbw_put_data(db, buf, len, &term->id))
+		err(1, "cdbw_put_data");
+	if (cdbw_put_key(db, term->name, slen, term->id))
+		err(1, "cdbw_put_key");
 	free(buf);
 	return 0;
 }
@@ -123,28 +131,33 @@ save_term(DBM *db, TERM *term)
 static TERM *
 find_term(const char *name)
 {
-	TERM *term;
-	
-	for (term = terms; term != NULL; term = term->next)
-		if (strcmp(term->name, name) == 0)
-			return term;
-	return NULL;
+	ENTRY elem, *elemp;
+
+	elem.key = __UNCONST(name);
+	elem.data = NULL;
+	elemp = hsearch(elem, FIND);
+	return elemp ? (TERM *)elemp->data : NULL;
 }
 
 static TERM *
-store_term(const char *name, char type)
+store_term(const char *name, TERM *base_term)
 {
 	TERM *term;
+	ENTRY elem;
 
-	term = calloc(1, sizeof(*term));
-	if (term == NULL)
-		errx(1, "malloc");
-	term->name = strdup(name);
-	term->type = type;
-	if (term->name == NULL)
-		errx(1, "malloc");
-	term->next = terms;
-	terms = term;
+	term = ecalloc(1, sizeof(*term));
+	term->name = estrdup(name);
+	STAILQ_INSERT_TAIL(&terms, term, next);
+	elem.key = estrdup(name);
+	elem.data = term;
+	hsearch(elem, ENTER);
+
+	term->base_term = base_term;
+	if (base_term != NULL)
+		nalias++;
+	else
+		nterm++;
+
 	return term;
 }
 
@@ -174,12 +187,12 @@ process_entry(TBUF *buf, int flags)
 		_ti_freetic(tic);
 		return 0;
 	}
-	term = store_term(tic->name, 't');
+	term = store_term(tic->name, NULL);
 	term->tic = tic;
 
 	/* Create aliased terms */
 	if (tic->alias != NULL) {
-		alias = p = strdup(tic->alias);
+		alias = p = estrdup(tic->alias);
 		while (p != NULL && *p != '\0') {
 			e = strchr(p, '|');
 			if (e != NULL)
@@ -188,16 +201,11 @@ process_entry(TBUF *buf, int flags)
 				dowarn("%s: has alias for already assigned"
 				    " term %s", tic->name, p);
 			} else {
-				term = store_term(p, 'a');
-				term->tic = calloc(sizeof(*term->tic), 1);
-				if (term->tic == NULL)
-					err(1, "malloc");
-				term->tic->name = strdup(tic->name);
-				if (term->tic->name == NULL)
-					err(1, "malloc");
+				store_term(p, term);
 			}
 			p = e;
 		}
+		free(alias);
 	}
 	
 	return 0;
@@ -311,8 +319,8 @@ merge_use(int flags)
 	TERM *term, *uterm;;
 
 	skipped = merged = 0;
-	for (term = terms; term != NULL; term = term->next) {
-		if (term->type == 'a')
+	STAILQ_FOREACH(term, &terms, next) {
+		if (term->base_term != NULL)
 			continue;
 		rtic = term->tic;
 		while ((cap = _ti_find_extra(&rtic->extras, "use")) != NULL) {
@@ -326,8 +334,8 @@ merge_use(int flags)
 				goto remove;
 			}
 			uterm = find_term(cap);
-			if (uterm != NULL && uterm->type == 'a')
-				uterm = find_term(uterm->tic->name);
+			if (uterm != NULL && uterm->base_term != NULL)
+				uterm = uterm->base_term;
 			if (uterm == NULL) {
 				dowarn("%s: no use record for %s",
 				    rtic->name, cap);
@@ -395,7 +403,7 @@ print_dump(int argc, char **argv)
 			warnx("%s: no description for terminal", argv[i]);
 			continue;
 		}
-		if (term->type == 'a') {
+		if (term->base_term != NULL) {
 			warnx("%s: cannot dump alias", argv[i]);
 			continue;
 		}
@@ -436,17 +444,46 @@ print_dump(int argc, char **argv)
 	return n;
 }
 
+static void
+write_database(const char *dbname)
+{
+	struct cdbw *db;
+	char *tmp_dbname;
+	TERM *term;
+	int fd;
+
+	db = cdbw_open();
+	if (db == NULL)
+		err(1, "cdbw_open failed");
+	/* Save the terms */
+	STAILQ_FOREACH(term, &terms, next)
+		save_term(db, term);
+
+	easprintf(&tmp_dbname, "%s.XXXXXX", dbname);
+	fd = mkstemp(tmp_dbname);
+	if (fd == -1)
+		err(1, "creating temporary database %s failed", tmp_dbname);
+	if (cdbw_output(db, fd, "NetBSD terminfo", cdbw_stable_seeder))
+		err(1, "writing temporary database %s failed", tmp_dbname);
+	if (fchmod(fd, DEFFILEMODE))
+		err(1, "fchmod failed");
+	if (close(fd))
+		err(1, "writing temporary database %s failed", tmp_dbname);
+	if (rename(tmp_dbname, dbname))
+		err(1, "renaming %s to %s failed", tmp_dbname, dbname);
+	free(tmp_dbname);
+	cdbw_close(db);
+}
+
 int
 main(int argc, char **argv)
 {
 	int ch, cflag, sflag, flags;
-	char *source, *p, *buf, *ofile;
+	char *source, *dbname, *buf, *ofile;
 	FILE *f;
-	DBM *db;
-	size_t buflen, nterm, nalias;
+	size_t buflen;
 	ssize_t len;
 	TBUF tbuf;
-	TERM *term;
 
 	cflag = sflag = 0;
 	ofile = NULL;
@@ -487,27 +524,10 @@ main(int argc, char **argv)
 	f = fopen(source, "r");
 	if (f == NULL)
 		err(1, "fopen: %s", source);
-	if (!cflag && !Sflag) {
-		if (ofile == NULL)
-			ofile = source;
-		len = strlen(ofile) + 9;
-		dbname = malloc(len + 4); /* For adding .db after open */
-		if (dbname == NULL)
-			err(1, "malloc");
-		snprintf(dbname, len, "%s.tmp", ofile);
-		db = dbm_open(dbname, O_CREAT | O_RDWR | O_TRUNC, DEFFILEMODE);
-		if (db == NULL)
-			err(1, "dbopen: %s", source);
-		p = dbname + strlen(dbname);
-		*p++ = '.';
-		*p++ = 'd';
-		*p++ = 'b';
-		*p++ = '\0';
-		atexit(do_unlink);
-	} else
-		db = NULL; /* satisfy gcc warning */
 
-	buf = NULL;
+	hcreate(HASH_SIZE);
+
+	buf = tbuf.buf = NULL;
 	buflen = tbuf.buflen = tbuf.bufpos = 0;	
 	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
@@ -532,8 +552,10 @@ main(int argc, char **argv)
 		memcpy(tbuf.buf + tbuf.bufpos, buf, len);
 		tbuf.bufpos += len;
 	}
+	free(buf);
 	/* Process the last entry if not done already */
 	process_entry(&tbuf, flags);
+	free(tbuf.buf);
 
 	/* Merge use entries until we have merged all we can */
 	while (merge_use(flags) != 0)
@@ -546,34 +568,29 @@ main(int argc, char **argv)
 
 	if (cflag)
 		return error_exit;
-	
-	/* Save the terms */
-	nterm = nalias = 0;
-	for (term = terms; term != NULL; term = term->next) {
-		save_term(db, term);
-		if (term->type == 'a')
-			nalias++;
-		else
-			nterm++;
-	}
-	
-	/* done! */
-	dbm_close(db);
 
-	/* Rename the tmp db to the real one now */
-	len = strlen(ofile) + 4;
-	p = malloc(len);
-	if (p == NULL)
-		err(1, "malloc");
-	snprintf(p, len, "%s.db", ofile);
-	if (rename(dbname, p) == -1)
-		err(1, "rename");
-	free(dbname);
-	dbname = NULL;
+	if (ofile == NULL)
+		easprintf(&dbname, "%s.cdb", source);
+	else
+		dbname = ofile;
+	write_database(dbname);
 
 	if (sflag != 0)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
-		    nterm, nalias, p);
+		    nterm, nalias, dbname);
+
+#ifdef __VALGRIND__
+	if (ofile == NULL)
+		free(dbname);
+	while ((term = STAILQ_FIRST(&terms)) != NULL) {
+		STAILQ_REMOVE_HEAD(&terms, next);
+		_ti_freetic(term->tic);
+		free(term->name);
+		free(term);
+	}
+	hdestroy();
+#endif
+
 
 	return EXIT_SUCCESS;
 }

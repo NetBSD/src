@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.83 2012/01/21 20:05:27 tsutsui Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.83.2.1 2012/06/23 22:54:57 riz Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -71,6 +71,11 @@
 #undef __UNCONST
 #endif
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
+
+#undef __predict_false
+#define __predict_false(x) (x)
+#undef __predict_true
+#define __predict_true(x) (x)
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;

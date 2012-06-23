@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.150 2012/02/15 15:49:46 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.150.2.1 2012/06/23 22:54:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define catopen		_catopen
 #define daylight	_daylight
 #define difftime	_difftime
+#define devname_r	_devname_r
 #define err		_err
 #define errx		_errx
 #ifdef _REENTRANT
