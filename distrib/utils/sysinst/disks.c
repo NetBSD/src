@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.125 2012/06/22 20:54:39 abs Exp $ */
+/*	$NetBSD: disks.c,v 1.126 2012/06/23 14:06:02 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -324,21 +324,24 @@ get_default_cdrom(void)
 	const char *cd_dev;
 
 	/* On error just use first entry in cdrom_devices */
-	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) != 0)
+	if (sysctlbyname(mib_name, NULL, &len, NULL, 0) == -1)
 		return cdrom_devices[0];
-	if ((disknames = malloc(len)) == 0) /* skip on malloc fail */
+	if ((disknames = malloc(len + 2)) == 0) /* skip on malloc fail */
 		return cdrom_devices[0];
 
-	sysctlbyname(mib_name, disknames, &len, NULL, 0);
+	(void)sysctlbyname(mib_name, disknames, &len, NULL, 0);
         for ((name = strtok_r(disknames, " ", &last)); name;
 	    (name = strtok_r(NULL, " ", &last))) {
-		for (arg = cdrom_devices ; *arg ; ++arg ) {
+		for (arg = cdrom_devices; *arg; ++arg) {
 			cd_dev = *arg;
-			if (strncmp(cd_dev, name, strlen(cd_dev) - 1) == 0) {
-				free(disknames);
-				return cd_dev;
-			}
-
+			/* skip unit and partition */
+			if (strncmp(cd_dev, name, strlen(cd_dev) - 2) != 0)
+				continue;
+			if (name != disknames)
+				strcpy(disknames, name);
+			strcat(disknames, "a");
+			/* XXX: leaks, but so what? */
+			return disknames;
 		}
 	}
 	free(disknames);
@@ -814,7 +817,7 @@ make_fstab(void)
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw\n");
 	scripting_fprintf(f, "/dev/%s\t\t/cdrom\tcd9660\tro,noauto\n",
-	    (char *)get_default_cdrom);
+	    get_default_cdrom());
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
