@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.439.2.1 2012/05/21 15:25:57 riz Exp $
+# $NetBSD: mi,v 1.439.2.2 2012/06/23 22:54:59 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2283,7 +2283,8 @@
 ./usr/tests/lib/libcrypt/t_crypt		tests-lib-tests
 ./usr/tests/lib/libcurses			tests-lib-tests
 ./usr/tests/lib/libcurses/.terminfo.db		tests-obsolete		obsolete
-./usr/tests/lib/libcurses/terminfo.db		tests-lib-tests		atf
+./usr/tests/lib/libcurses/terminfo.cdb		tests-lib-tests		atf
+./usr/tests/lib/libcurses/terminfo.db		tests-obsolete		obsolete
 ./usr/tests/lib/libcurses/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libcurses/check_files			tests-lib-tests
 ./usr/tests/lib/libcurses/check_files/addch.chk		tests-lib-tests		atf

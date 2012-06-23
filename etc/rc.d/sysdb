@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.22.4.1 2012/02/23 18:25:51 riz Exp $
+# $NetBSD: sysdb,v 1.22.4.2 2012/06/23 22:54:56 riz Exp $
 #
 
 # PROVIDE: sysdb
@@ -63,6 +63,7 @@ build_netgroup()
 build_devdb()
 {
 	check_file /dev /var/run/dev.db dev_mkdb
+	check_file /dev /var/run/dev.cdb dev_mkdb
 }
 
 build_password()

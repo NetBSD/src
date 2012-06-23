@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.97.6.1 2012/05/07 16:47:22 riz Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.97.6.2 2012/06/23 22:54:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -269,6 +269,7 @@ int	 cgetustr(char *, const char *, char **);
 void	 csetexpandtc(int);
 
 int	 daemon(int, int);
+int	 devname_r(dev_t, mode_t, char *, size_t);
 #ifndef __LIBC12_SOURCE__
 __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 #endif
