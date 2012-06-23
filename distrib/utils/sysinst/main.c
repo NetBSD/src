@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2012/06/22 20:54:39 abs Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2012/06/23 17:49:58 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,15 +128,12 @@ init(void)
 	mnt2_mounted = 0;
 	fd_type = "msdos";
 
-	for (arg = fflagopts; arg->name != NULL; arg++)
-		if (arg->var == cdrom_dev) {
-			const char **dfltptr = __UNCONST(&arg->dflt);
-			*dfltptr = get_default_cdrom();
-			break;
-		}
-
-	for (arg = fflagopts; arg->name != NULL; arg++)
-		strlcpy(arg->var, arg->dflt, arg->size);
+	for (arg = fflagopts; arg->name != NULL; arg++) {
+		if (arg->var == cdrom_dev)
+			strlcpy(arg->var, get_default_cdrom(), arg->size);
+		else
+			strlcpy(arg->var, arg->dflt, arg->size);
+	}
 	pkg.xfer_type = pkgsrc.xfer_type = "http";
 }
 
