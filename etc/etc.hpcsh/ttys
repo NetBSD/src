@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.10 2008/10/07 10:00:01 abs Exp $
+#	$NetBSD: ttys,v 1.10.20.1 2012/06/24 18:04:38 riz Exp $
 #
 # name	getty				type	status		comments
 
@@ -8,5 +8,5 @@ console	"/usr/libexec/getty std.19200"	vt100	off secure
 constty	"/usr/libexec/getty std.19200"	vt100	off secure
 
 # Workstation console (framebuffer) ttys
-ttyE0	"/usr/libexec/getty std.9600"	vt100	on secure
-ttyE1	"/usr/libexec/getty std.9600"	vt100	on secure
+ttyE0	"/usr/libexec/getty std.9600"	wsvt25	on secure
+ttyE1	"/usr/libexec/getty std.9600"	wsvt25	on secure
