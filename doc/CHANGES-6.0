@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.136 2012/06/24 16:54:16 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.137 2012/06/24 18:07:51 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5787,4 +5787,43 @@ external/gpl3/gcc/dist/gcc/reload1.c		1.2
 	Apply upstream revision 175141: setjmp vs. unchanged register values;
 	should fix PR#45837.
 	[martin, ticket #352]
+
+etc/etc.acorn26/ttys				1.4
+etc/etc.acorn32/ttys				1.9
+etc/etc.alpha/ttys				1.12
+etc/etc.amd64/ttys				1.6
+etc/etc.amiga/ttys				1.24
+etc/etc.amigappc/ttys				1.3
+etc/etc.arc/ttys				1.8
+etc/etc.atari/ttys				1.10
+etc/etc.cats/ttys				1.7
+etc/etc.evbarm/ttys				1.7
+etc/etc.hp300/ttys				1.16
+etc/etc.hpcarm/ttys				1.6
+etc/etc.hpcmips/ttys				1.10
+etc/etc.hpcsh/ttys				1.11
+etc/etc.i386/ttys				1.20
+etc/etc.ibmnws/ttys				1.4
+etc/etc.iyonix/ttys				1.4
+etc/etc.mac68k/ttys				1.20
+etc/etc.mvmeppc/ttys				1.6
+etc/etc.netwinder/ttys				1.8
+etc/etc.newsmips/ttys				1.9
+etc/etc.next68k/ttys				1.10
+etc/etc.ofppc/ttys				1.9
+etc/etc.pmax/ttys				1.15
+etc/etc.prep/ttys				1.8
+etc/etc.rs6000/ttys				1.2
+etc/etc.sgimips/ttys				1.10
+etc/etc.shark/ttys				1.8
+etc/etc.zaurus/ttys				1.3
+share/terminfo/terminfo				1.5
+
+	Make all ttyE* entries use wsvt25 term type.  PR#10127.
+	[martin, ticket #342]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.10
+
+	Fix IPv6 support in rpc.lockd.
+	[tron, ticket #354]
 
