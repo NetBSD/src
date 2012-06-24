@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.134 2012/06/23 23:05:52 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.135 2012/06/24 02:50:19 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5738,4 +5738,9 @@ external/mit/xorg/bin/xdm/config/Xresources.cpp	1.1
 
 	Make the NetBSD logo look nicer in XDM.
 	[martin, ticket #341]
+
+sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	1.11
+
+	Remove user mappings before freeing DRM_SHM kernel memory. PR#46208.
+	[chs, ticket #353]
 
