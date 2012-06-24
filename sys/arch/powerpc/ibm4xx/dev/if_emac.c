@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.39 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.40 2012/06/24 08:39:39 kiyohara Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.39 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.40 2012/06/24 08:39:39 kiyohara Exp $");
 
 #include "opt_emac.h"
 
@@ -1584,11 +1584,15 @@ emac_rxeob_intr(void *arg)
 
 		rxstat = sc->sc_rxdescs[i].md_stat_ctrl;
 
-		if (rxstat & MAL_RX_EMPTY)
+		if (rxstat & MAL_RX_EMPTY) {
 			/*
 			 * We have processed all of the receive buffers.
 			 */
+			/* Flush current empty descriptor */
+			EMAC_CDRXSYNC(sc, i,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			break;
+		}
 
 		/*
 		 * If an error occurred, update stats, clear the status
