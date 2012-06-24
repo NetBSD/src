@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.89.6.1 2012/02/22 18:40:05 riz Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.89.6.2 2012/06/24 15:44:07 jdc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -149,7 +149,7 @@
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
 #endif
 #define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[(x) ? 1 : -1];
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
 
 /*
  * The following macro is used to remove const cast-away warnings
