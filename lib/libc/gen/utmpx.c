@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.29 2012/03/13 21:13:37 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.29 2012/03/13 21:13:37 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -90,7 +90,7 @@ new2old(struct utmpx *utx)
 }
 
 void
-setutxent()
+setutxent(void)
 {
 
 	(void)memset(&ut, 0, sizeof(ut));
@@ -101,7 +101,7 @@ setutxent()
 
 
 void
-endutxent()
+endutxent(void)
 {
 
 	(void)memset(&ut, 0, sizeof(ut));
@@ -114,7 +114,7 @@ endutxent()
 
 
 struct utmpx *
-getutxent()
+getutxent(void)
 {
 
 	if (fp == NULL) {
