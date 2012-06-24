@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.18 2011/12/28 17:33:53 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.18.2.1 2012/06/24 16:11:24 jdc Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -141,6 +141,7 @@ struct perfuse_callbacks {
 	perfuse_get_outhdr_fn pc_get_outhdr;
 	perfuse_get_outpayload_fn pc_get_outpayload;
 	perfuse_umount_fn pc_umount;
+	void *pc_reserved[16];
 };
 
 /* 
