@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.92 2012/06/06 22:22:41 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.93 2012/06/24 13:56:10 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2012/06/06 22:22:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2012/06/24 13:56:10 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1113,7 +1113,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	cpuid_t cid = cpu_index(ci);
 
 	mutex_enter(&ci->ci_kpm_mtx);
-	/* make new pmap visible to pmap_kpm_sync_xcall() */
+	/* make new pmap visible to xen_kpm_sync() */
 	kcpuset_atomic_set(pmap->pm_xen_ptp_cpus, cid);
 #endif
 #ifdef i386
@@ -1166,7 +1166,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 
 #endif /* __x86_64__ */
 #if defined(__x86_64__) || defined(PAE)
-	/* old pmap no longer visible to pmap_kpm_sync_xcall() */
+	/* old pmap no longer visible to xen_kpm_sync() */
 	if (oldpmap != pmap_kernel()) {
 		kcpuset_atomic_clear(oldpmap->pm_xen_ptp_cpus, cid);
 	}
