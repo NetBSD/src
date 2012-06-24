@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.3 2012/06/05 16:25:24 jdc Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.4 2012/06/24 16:07:12 jdc Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1696,6 +1696,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_attr_out *fao;
 	struct vattr *old_va;
 	int error;
+	int valid;
 #ifdef PERFUSE_DEBUG
 	struct vattr *old_vap;
 	int resize_debug = 0;
@@ -1719,39 +1720,94 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 
 	old_va = puffs_pn_getvap((struct puffs_node *)opc);
+	valid = 0;
 
 	/*
 	 * Check for permission to change size
 	 */
-	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
-	    (error = mode_access(opc, pcr, PUFFS_VWRITE)) != 0)
-		return error;
-
-	/*
-	 * Check for permission to change dates
-	 */
-	if (((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
-	     (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) &&
-	    (puffs_access_times(old_va->va_uid, old_va->va_gid,
-				old_va->va_mode, 0, pcr) != 0))
-		return EACCES;
+	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL)) {
+		if ((error = mode_access(opc, pcr, PUFFS_VWRITE)) != 0)
+			return error;
+		valid |= FUSE_FATTR_SIZE;
+	}
 
 	/*
 	 * Check for permission to change owner and group
 	 */
-	if (((vap->va_uid != (uid_t)PUFFS_VNOVAL) ||
-	     (vap->va_gid != (gid_t)PUFFS_VNOVAL)) &&
-	    (puffs_access_chown(old_va->va_uid, old_va->va_gid,
-				vap->va_uid, vap->va_gid, pcr)) != 0)
-		return EACCES;
+	if ((vap->va_uid != (uid_t)PUFFS_VNOVAL) ||
+	    (vap->va_gid != (gid_t)PUFFS_VNOVAL)) {
+		if (puffs_access_chown(old_va->va_uid, old_va->va_gid,
+				       vap->va_uid, vap->va_gid, pcr) != 0)
+			return EACCES;
+
+		if (vap->va_uid != (uid_t)PUFFS_VNOVAL)
+			valid |= FUSE_FATTR_UID;
+
+		if (vap->va_gid != (uid_t)PUFFS_VNOVAL)
+			valid |= FUSE_FATTR_GID;
+	}
 
 	/*
 	 * Check for permission to change permissions
 	 */
-	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
-	    (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
-				old_va->va_type, vap->va_mode, pcr)) != 0)
-		return EACCES;
+	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
+		if (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
+				old_va->va_type, vap->va_mode, pcr) != 0)
+			return EACCES;
+		valid |= FUSE_FATTR_MODE;
+	}
+
+	/*
+	 * Check for permission to change dates
+	 */
+	if ((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
+	    (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) {
+		if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)
+			valid |= FUSE_FATTR_ATIME;
+
+		if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)
+			valid |= FUSE_FATTR_MTIME;
+
+		/*
+		 * ftruncate() sends only va_size, and metadata cache
+		 * flush adds va_atime and va_mtime. Some FUSE
+		 * filesystems will attempt to detect ftruncate by 
+		 * checking for FATTR_SIZE being set without
+		 * FATTR_UID|FATTR_GID|FATTR_ATIME|FATTR_MTIME|FATTR_MODE
+		 * 
+		 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
+		 * if we suspect a ftruncate().
+		 */ 
+		if ((valid & FUSE_FATTR_SIZE) &&
+		    !(valid & (FUSE_FATTR_UID|FUSE_FATTR_GID|FUSE_FATTR_MODE)))
+			valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
+
+		/*
+		 * There is the same mess with fchmod()
+		 */
+		if ((valid & FUSE_FATTR_MODE) &&
+		    !(valid & (FUSE_FATTR_UID|FUSE_FATTR_GID)))
+			valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
+
+		/*
+		 * And if a change on atime/mtime remains, check permissions.
+		 */
+		if ((valid & (FUSE_FATTR_ATIME|FUSE_FATTR_MTIME)) &&
+		    (puffs_access_times(old_va->va_uid, old_va->va_gid,
+				        old_va->va_mode, 0, pcr) != 0))
+			return EACCES;
+	}
+
+	/*
+	 * If nothing remain, discard the operation. This happend when
+	 * only ctime is changed.
+	 */
+	if (!(valid & (FUSE_FATTR_SIZE|FUSE_FATTR_ATIME|FUSE_FATTR_MTIME|
+		       FUSE_FATTR_MODE|FUSE_FATTR_UID|FUSE_FATTR_GID))) {
+		error = 0;
+		goto out;
+	}
+
 	
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETATTR, sizeof(*fsi), pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
@@ -1766,7 +1822,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= FUSE_FATTR_FH;
 	}
 
-	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
+	if (valid & FUSE_FATTR_SIZE) {
 		fsi->size = vap->va_size;
 		fsi->valid |= FUSE_FATTR_SIZE;
 
@@ -1787,10 +1843,8 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * dates being reset to Epoch on glusterfs. If one
 	 * is missing, use the old value.
  	 */
-	if ((vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) || 
-	    (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)) {
-		
-		if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) {
+	if (valid & (FUSE_FATTR_ATIME|FUSE_FATTR_MTIME)) {
+		if (valid & FUSE_FATTR_ATIME) {
 			fsi->atime = vap->va_atime.tv_sec;
 			fsi->atimensec = (uint32_t)vap->va_atime.tv_nsec;
 		} else {
@@ -1798,7 +1852,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 			fsi->atimensec = (uint32_t)old_va->va_atime.tv_nsec;
 		}
 
-		if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
+		if (valid & FUSE_FATTR_MTIME) {
 			fsi->mtime = vap->va_mtime.tv_sec;
 			fsi->mtimensec = (uint32_t)vap->va_mtime.tv_nsec;
 		} else {
@@ -1809,17 +1863,17 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= (FUSE_FATTR_MTIME|FUSE_FATTR_ATIME);
 	}
 
-	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
+	if (valid & FUSE_FATTR_MODE) {
 		fsi->mode = vap->va_mode; 
 		fsi->valid |= FUSE_FATTR_MODE;
 	}
 	
-	if (vap->va_uid != (uid_t)PUFFS_VNOVAL) {
+	if (valid & FUSE_FATTR_UID) {
 		fsi->uid = vap->va_uid;
 		fsi->valid |= FUSE_FATTR_UID;
 	}
 
-	if (vap->va_gid != (gid_t)PUFFS_VNOVAL) {
+	if (valid & FUSE_FATTR_GID) {
 		fsi->gid = vap->va_gid;
 		fsi->valid |= FUSE_FATTR_GID;
 	}
@@ -1829,48 +1883,6 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= FUSE_FATTR_LOCKOWNER;
 	}
 
-	/*
-	 * ftruncate() sends only va_size, and metadata cache
-	 * flush adds va_atime and va_mtime. Some FUSE
-	 * filesystems will attempt to detect ftruncate by 
-	 * checking for FATTR_SIZE being set without
-	 * FATTR_UID|FATTR_GID|FATTR_ATIME|FATTR_MTIME|FATTR_MODE
-	 * 
-	 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
-	 * if we suspect a ftruncate().
-	 */ 
-	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
-	    ((vap->va_mode == (mode_t)PUFFS_VNOVAL) &&
-	     (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
-	     (vap->va_gid == (gid_t)PUFFS_VNOVAL))) {
-		fsi->atime = 0;
-		fsi->atimensec = 0;
-		fsi->mtime = 0;
-		fsi->mtimensec = 0;
-		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
-	}
-
-	/*
-	 * There is the same mess with fchmod()
-	 */
-	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
-	    (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
-	    (vap->va_gid == (gid_t)PUFFS_VNOVAL)) {
-		fsi->atime = 0;
-		fsi->atimensec = 0;
-		fsi->mtime = 0;
-		fsi->mtimensec = 0;
-		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
-	}
-		    
-	/*
-	 * If nothing remain, discard the operation.
-	 */
-	if (!(fsi->valid & (FUSE_FATTR_SIZE|FUSE_FATTR_ATIME|FUSE_FATTR_MTIME|
-			    FUSE_FATTR_MODE|FUSE_FATTR_UID|FUSE_FATTR_GID))) {
-		error = 0;
-		goto out;
-	}
 
 #ifdef PERFUSE_DEBUG
 	old_vap = puffs_pn_getvap((struct puffs_node *)opc);
