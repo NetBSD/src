@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.2 2012/06/09 06:19:58 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.3 2012/06/24 17:01:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -624,7 +624,9 @@ init_sernum(sernum_buffer_t *buff)
 int
 add_sernum(sernum_buffer_t *buff, uint32_t num)
 {
-	int i, t, b, n, diff;
+	int i, t, b;
+	uint32_t n;
+	int32_t diff;
 
 	/*
 	 * next_sn is the next expected SN, so normally diff should be 1.
@@ -633,7 +635,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 	diff = (num - n) + 1;
 
 	if (diff <= 0) {
-		PDEB(1, ("Rx Duplicate Block: SN %d < Next SN %d\n", num, n));
+		PDEB(1, ("Rx Duplicate Block: SN %u < Next SN %u\n", num, n));
 		return 0;				/* ignore if SN is smaller than expected (dup or retransmit) */
 	}
 
@@ -652,7 +654,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 	}
 
 	buff->top = t;
-	DEB(10, ("AddSernum bottom %d [%d], top %d, num %d, diff %d\n",
+	DEB(10, ("AddSernum bottom %d [%d], top %d, num %u, diff %d\n",
 			 b, buff->sernum[b], buff->top, num, diff));
 
 	return diff;

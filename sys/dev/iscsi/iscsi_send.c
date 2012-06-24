@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.4 2012/06/19 14:19:46 martin Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.5 2012/06/24 17:01:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -344,19 +344,20 @@ iscsi_send_thread(void *par)
 		fp = conn->sock;
 
 		/*
-		 * We must close the socket here to force the receive
+		 * We shutdown the socket here to force the receive
 		 * thread to wake up
 		 */
 		DEBC(conn, 9, ("Closing Socket %p\n", conn->sock));
 		solock((struct socket *) fp->f_data);
 		soshutdown((struct socket *) fp->f_data, SHUT_RDWR);
 		sounlock((struct socket *) fp->f_data);
-		closef(fp);
 
 		/* wake up any non-reassignable waiting CCBs */
 		for (ccb = TAILQ_FIRST(&conn->ccbs_waiting); ccb != NULL; ccb = nccb) {
 			nccb = TAILQ_NEXT(ccb, chain);
 			if (!(ccb->flags & CCBF_REASSIGN) || ccb->pdu_waiting == NULL) {
+				DEBC(conn, 9, ("Terminating CCB %p (t=%p)\n",
+					ccb,&ccb->timeout));
 				ccb->status = conn->terminating;
 				wake_ccb(ccb);
 			} else {
