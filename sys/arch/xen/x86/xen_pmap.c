@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.21 2012/04/20 22:23:25 rmind Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.21 2012/04/20 22:23:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.22 2012/06/24 18:31:53 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -241,9 +241,7 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_xen_suspend(void)
 {
-#ifdef PAE
 	pmap_unmap_recursive_entries();
-#endif
 
 	xpq_flush_queue();
 }
@@ -251,14 +249,11 @@ pmap_xen_suspend(void)
 void
 pmap_xen_resume(void)
 {
-#ifdef PAE
 	pmap_map_recursive_entries();
-#endif
 
 	xpq_flush_queue();
 }
 
-#ifdef PAE
 /*
  * NetBSD uses L2 shadow pages to support PAE with Xen. However, Xen does not
  * handle them correctly during save/restore, leading to incorrect page
@@ -327,7 +322,6 @@ pmap_unmap_recursive_entries(void)
 		    0);
 	}
 }
-#endif /* PAE */
 
 #if defined(PAE) || defined(__x86_64__)
 
