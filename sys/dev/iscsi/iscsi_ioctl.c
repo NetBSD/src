@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.3 2012/06/09 06:19:58 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.4 2012/06/24 17:01:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -488,7 +488,6 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 
 	conn->terminating = status;
 	conn->state = ST_SETTLING;
-	callout_stop(&conn->timeout);
 
 	/* let send thread take over next step of cleanup */
 	wakeup(&conn->pdus_to_send);
@@ -634,6 +633,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	callout_setfunc(&connection->timeout, connection_timeout, connection);
 	connection->idle_timeout_val = CONNECTION_IDLE_TIMEOUT;
 
+	init_sernum(&connection->StatSN_buf);
 	create_pdus(connection);
 
 	if ((rc = get_socket(par->socket, &connection->sock)) != 0) {
@@ -645,6 +645,9 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	}
 	DEBC(connection, 1, ("get_socket: par_sock=%d, fdesc=%p\n",
 			par->socket, connection->sock));
+
+	/* close the file descriptor */
+	fd_close(par->socket);
 
 	connection->threadobj = p;
 	connection->login_par = par;
@@ -666,7 +669,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 				"ConnSend")) != 0) {
 		DEBOUT(("Can't create send thread (rc %d)\n", rc));
 
-		connection->terminating = TRUE;
+		connection->terminating = ISCSI_STATUS_NO_RESOURCES;
 
 		/*
 		 * We must close the socket here to force the receive
@@ -716,9 +719,6 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	session->mru_connection = connection;
 	CS_END;
 
-	/* close the file descriptor */
-	fd_close(par->socket);
-
 	DEBC(connection, 5, ("Connection created successfully!\n"));
 	return 0;
 }
@@ -764,9 +764,12 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 		return rc;
 	}
 
+	/* close the file descriptor */
+	fd_close(par->socket);
+
 	connection->threadobj = p;
 	connection->login_par = par;
-	connection->terminating = 0;
+	connection->terminating = ISCSI_STATUS_SUCCESS;
 	connection->recover++;
 	connection->num_timeouts = 0;
 	connection->state = ST_SEC_NEG;
@@ -830,9 +833,6 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 
 	DEBC(connection, 5, ("Connection ReCreated successfully - status %d\n",
 						 par->status));
-
-	/* close the file descriptor */
-	fd_close(par->socket);
 
 	return 0;
 }
@@ -906,7 +906,7 @@ check_login_pars(iscsi_login_parameters_t *par)
 			return ISCSI_STATUS_PARAMETER_INVALID;
 		}
 	}
-	return ISCSI_STATUS_SUCCESS;
+	return 0;
 }
 
 
@@ -1491,6 +1491,8 @@ iscsi_cleanup_thread(void *par)
 			while (conn->usecount > 0)
 				tsleep(conn, PWAIT, "finalwait", 20);
 
+			callout_stop(&conn->timeout);
+			closef(conn->sock);
 			free(conn, M_DEVBUF);
 
 			if (!(--sess->total_connections)) {
