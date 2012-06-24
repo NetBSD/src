@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.22 2012/02/04 18:36:30 joerg Exp $ */
+/*  $NetBSD: perfused.c,v 1.22.2.1 2012/06/24 16:11:24 jdc Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -245,6 +245,7 @@ new_mount(int fd, int pmnt_flags)
 	/*
 	 * Initialize libperfuse, which will initialize libpuffs
 	 */
+	(void)memset(&pc, 0, sizeof(pc));
 	pc.pc_new_msg = perfused_new_pb;
 	pc.pc_xchg_msg = perfused_xchg_pb;
 	pc.pc_destroy_msg = (perfuse_destroy_msg_fn)puffs_framebuf_destroy;
