@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.29 2010/10/13 09:19:40 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.30 2012/06/24 16:24:34 kardel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.29 2010/10/13 09:19:40 martin Exp $");
+__RCSID("$NetBSD: if.c,v 1.30 2012/06/24 16:24:34 kardel Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -641,6 +641,9 @@ rt_xaddrs(struct rt_addrinfo *info,
 #ifdef _HAVE_SA_LEN
 	static struct sockaddr sa_zero;
 #endif
+#if defined(__NetBSD__) && defined(RT_ROUNDUP)
+#define ROUNDUP(a) RT_ROUNDUP(a)
+#else
 #ifdef sgi
 #define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(__uint64_t) - 1))) \
 		    : sizeof(__uint64_t))
@@ -648,6 +651,7 @@ rt_xaddrs(struct rt_addrinfo *info,
 #define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) \
 		    : sizeof(long))
 #endif
+#endif /* defined(__NetBSD__) && defined(RT_ROUNDUP) */
 
 
 	memset(info, 0, sizeof(*info));
