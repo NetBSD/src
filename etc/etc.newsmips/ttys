@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.8 2008/10/07 10:00:02 abs Exp $
+#	$NetBSD: ttys,v 1.8.20.1 2012/06/24 18:04:41 riz Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -6,7 +6,7 @@
 #
 console	"/usr/libexec/getty std.9600"	vt100	on secure
 constty	"/usr/libexec/getty std.9600"	vt100	off secure
-ttyE0	"/usr/libexec/getty std.9600"	vt100	off secure
+ttyE0	"/usr/libexec/getty std.9600"	wsvt25	off secure
 
 ttyZ0	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyZ1	"/usr/libexec/getty std.9600"	unknown	off secure

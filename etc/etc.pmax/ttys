@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.14 2008/10/07 10:00:02 abs Exp $
+#	$NetBSD: ttys,v 1.14.20.1 2012/06/24 18:04:40 riz Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -10,10 +10,10 @@ constty	"/usr/libexec/getty std.9600"	vt220	off secure
 # Workstation console.  Currently, only the px and pxg drivers support
 # virtual terminals.
 #
-ttyE0	"/usr/libexec/getty Pc"		vt220	off secure
-ttyE1	"/usr/libexec/getty Pc"		vt220	off secure
-ttyE2	"/usr/libexec/getty Pc"		vt220	off secure
-ttyE3	"/usr/libexec/getty Pc"		vt220	off secure
+ttyE0	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE1	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE2	"/usr/libexec/getty Pc"		wsvt25	off secure
+ttyE3	"/usr/libexec/getty Pc"		wsvt25	off secure
 #
 # ttys for ioasic machines with Zilog (zstty) serial ports
 #
