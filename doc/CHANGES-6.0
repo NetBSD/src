@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.135 2012/06/24 02:50:19 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.136 2012/06/24 16:54:16 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5743,4 +5743,48 @@ sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	1.11
 
 	Remove user mappings before freeing DRM_SHM kernel memory. PR#46208.
 	[chs, ticket #353]
+
+sys/sys/cdefs.h					1.96,1.97
+	add constcond
+	[joerg, ticket #369]
+
+sys/fs/hfs/hfs_vfsops.c				1.29
+sys/fs/sysvbfs/sysvbfs_vfsops.c			1.40
+sys/fs/v7fs/v7fs_vfsops.c			1.7
+	Ensure that error is initialized in all code paths.
+	[joerg, ticket #344]
+
+lib/libperfuse/ops.c				1.56,1.57
+	Fix memory leak on setattr
+	Fix memory leak when we discard a voided setattr operation
+	[manu, ticket #347]
+
+lib/libperfuse/perfuse_if.h			1.19
+usr.sbin/perfused/perfused.c			1.23
+	Add placeholder so that we can later add callbacks without breaking
+	the ABI
+	[manu, ticket #348]
+
+sys/arch/i386/stand/lib/biosdisk.c		1.41
+	Sanity check the values coming back from the int13 extensions of
+	the bios, so we can catch impossible return values.  Allows the
+	bootloader to work again on the Soekris net4501.  Fixes PR#46027.
+	[martin, ticket #349]
+
+etc/rc.d/makemandb				1.2,1.3
+	Add the ability to disable makemandb with makemandb=NO in rc.conf.
+	Thanks tsutsui@ and Yasushi Oshima.
+	[isaki, ticket #350]
+
+usr.bin/extattr/getextattr.c			1.10
+	Fix off-by-one in hexdump display (getextattr -x), which displayed a
+	trailing garbage byte.
+	[manu, ticket #351]
+
+external/gpl3/gcc/dist/gcc/ChangeLog		1.3
+external/gpl3/gcc/dist/gcc/reload.c		1.2
+external/gpl3/gcc/dist/gcc/reload1.c		1.2
+	Apply upstream revision 175141: setjmp vs. unchanged register values;
+	should fix PR#45837.
+	[martin, ticket #352]
 
