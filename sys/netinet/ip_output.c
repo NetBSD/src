@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.216 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.217 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.216 2012/06/22 14:54:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.217 2012/06/25 15:28:39 christos Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.216 2012/06/22 14:54:35 christos Exp
 #include <netinet/ip_var.h>
 #include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -1148,7 +1148,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			if (error)
 				break;
 
-			error = rfc6056_algo_index_select(
+			error = portalgo_algo_index_select(
 			    (struct inpcb_hdr *)inp, optval);
 			break;
 
@@ -1267,7 +1267,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			break;
 
 		case IP_PORTALGO:
-			optval = ((struct inpcb_hdr *)inp)->inph_rfc6056algo;
+			optval = ((struct inpcb_hdr *)inp)->inph_portalgo;
 			error = sockopt_setint(sopt, optval);
 			break;
 

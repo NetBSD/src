@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.52 2011/09/24 17:22:14 christos Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.53 2012/06/25 15:28:39 christos Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.52 2011/09/24 17:22:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.53 2012/06/25 15:28:39 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.52 2011/09/24 17:22:14 christos Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
@@ -828,7 +828,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
        /*
         * Use RFC6056 randomized port selection
         */
-	error = rfc6056_randport(&lport, &in6p->in6p_head, l->l_cred);
+	error = portalgo_randport(&lport, &in6p->in6p_head, l->l_cred);
 	if (error)
 		return error;
 	
