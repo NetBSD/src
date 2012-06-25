@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.31 2011/06/26 16:42:41 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.32 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.31 2011/06/26 16:42:41 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.32 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,8 +188,7 @@ popen(const char *command, const char *type)
  *	if already `pclosed', or waitpid returns an error.
  */
 int
-pclose(iop)
-	FILE *iop;
+pclose(FILE *iop)
 {
 	struct pid *cur, *last;
 	int pstat;

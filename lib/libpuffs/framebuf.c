@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.31 2011/12/19 15:36:26 riastradh Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.32 2012/06/25 22:32:47 abs Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.31 2011/12/19 15:36:26 riastradh Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.32 2012/06/25 22:32:47 abs Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ getfiobyfd(struct puffs_usermount *pu, int fd)
 }
 
 struct puffs_framebuf *
-puffs_framebuf_make()
+puffs_framebuf_make(void)
 {
 	struct puffs_framebuf *pufbuf;
 

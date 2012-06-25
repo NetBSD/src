@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.15 2012/06/24 15:26:03 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.16 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.15 2012/06/24 15:26:03 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.16 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -182,14 +182,7 @@ err:	if (madefd == TRUE)
 }
 
 CLIENT *
-clntudp_bufcreate(raddr, prog, vers, wait, sockp, sendsz, recvsz)
-	struct sockaddr_in *raddr;
-	u_long prog;
-	u_long vers;
-	struct timeval wait;
-	int *sockp;
-	u_int sendsz;
-	u_int recvsz;
+clntudp_bufcreate(struct sockaddr_in *raddr, u_long prog, u_long vers, struct timeval wait, int *sockp, u_int sendsz, u_int recvsz)
 {
 	CLIENT *cl;
 
@@ -206,25 +199,16 @@ clntudp_bufcreate(raddr, prog, vers, wait, sockp, sendsz, recvsz)
 }
 
 CLIENT *
-clntudp_create(raddr, program, version, wait, sockp)
-	struct sockaddr_in *raddr;
-	u_long program;
-	u_long version;
-	struct timeval wait;
-	int *sockp;
+clntudp_create(struct sockaddr_in *raddr, u_long program, u_long version,
+    struct timeval wait, int *sockp)
 {
 	return clntudp_bufcreate(raddr, program, version, wait, sockp,
 					UDPMSGSIZE, UDPMSGSIZE);
 }
 
 CLIENT *
-clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
-	struct sockaddr_in *raddr;
-	u_long prog;
-	u_long vers;
-	int *sockp;
-	u_int sendsz;
-	u_int recvsz;
+clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
+    u_int sendsz, u_int recvsz)
 {
 	return clnt_com_create(raddr, (rpcprog_t)prog, (rpcvers_t)vers, sockp,
 	    sendsz, recvsz, "tcp");
@@ -282,35 +266,26 @@ svc_com_create(int fd, u_int sendsize, u_int recvsize, const char *netid)
 }
 
 SVCXPRT *
-svctcp_create(fd, sendsize, recvsize)
-	int fd;
-	u_int sendsize;
-	u_int recvsize;
+svctcp_create(int fd, u_int sendsize, u_int recvsize)
 {
 	return svc_com_create(fd, sendsize, recvsize, "tcp");
 }
 
 SVCXPRT *
-svcudp_bufcreate(fd, sendsz, recvsz)
-	int fd;
-	u_int sendsz, recvsz;
+svcudp_bufcreate(int fd, u_int sendsz, u_int recvsz)
 {
 	return svc_com_create(fd, sendsz, recvsz, "udp");
 }
 
 SVCXPRT *
-svcfd_create(fd, sendsize, recvsize)
-	int fd;
-	u_int sendsize;
-	u_int recvsize;
+svcfd_create(int fd, u_int sendsize, u_int recvsize)
 {
 	return svc_fd_create(fd, sendsize, recvsize);
 }
 
 
 SVCXPRT *
-svcudp_create(fd)
-	int fd;
+svcudp_create(int fd)
 {
 	return svc_com_create(fd, UDPMSGSIZE, UDPMSGSIZE, "udp");
 }
@@ -322,8 +297,7 @@ svcraw_create(void)
 }
 
 int
-get_myaddress(addr)
-	struct sockaddr_in *addr;
+get_myaddress(struct sockaddr_in *addr)
 {
 
 	_DIAGASSERT(addr != NULL);

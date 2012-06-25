@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.12 2012/03/13 21:13:43 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.13 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -101,7 +101,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.12 2012/03/13 21:13:43 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.13 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -391,11 +391,8 @@ p_cdname(const u_char *cp, const u_char *msg, FILE *file) {
    length supplied).  */
 
 const u_char *
-p_fqnname(cp, msg, msglen, name, namelen)
-	const u_char *cp, *msg;
-	int msglen;
-	char *name;
-	int namelen;
+p_fqnname(const u_char *cp, const u_char *msg, int msglen, char *name,
+    int namelen)
 {
 	int n;
 	size_t newlen;
@@ -936,9 +933,7 @@ latlon2ul(const char **latlonstrptr, int *which) {
  * converts a zone file representation in a string to an RDATA on-the-wire
  * representation. */
 int
-loc_aton(ascii, binary)
-	const char *ascii;
-	u_char *binary;
+loc_aton(const char *ascii, u_char *binary)
 {
 	const char *cp, *maxcp;
 	u_char *bcp;
@@ -1047,9 +1042,7 @@ loc_aton(ascii, binary)
 
 /*% takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
-loc_ntoa(binary, ascii)
-	const u_char *binary;
-	char *ascii;
+loc_ntoa(const u_char *binary, char *ascii)
 {
 	static const char *error = "?";
 	static char tmpbuf[sizeof

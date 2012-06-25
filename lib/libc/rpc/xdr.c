@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.30 2012/03/18 16:43:34 christos Exp $	*/
+/*	$NetBSD: xdr.c,v 1.31 2012/06/25 22:32:45 abs Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.30 2012/03/18 16:43:34 christos Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.31 2012/06/25 22:32:45 abs Exp $");
 #endif
 #endif
 
@@ -882,9 +882,7 @@ xdr_u_int64_t(XDR *xdrs, u_int64_t *ullp)
  * XDR hypers
  */
 bool_t
-xdr_hyper(xdrs, llp)
-	XDR *xdrs;
-	longlong_t *llp;
+xdr_hyper(XDR *xdrs, longlong_t *llp)
 {
 
 	_DIAGASSERT(xdrs != NULL);
@@ -902,9 +900,7 @@ xdr_hyper(xdrs, llp)
  * XDR unsigned hypers
  */
 bool_t
-xdr_u_hyper(xdrs, ullp)
-	XDR *xdrs;
-	u_longlong_t *ullp;
+xdr_u_hyper(XDR *xdrs, u_longlong_t *ullp)
 {
 
 	_DIAGASSERT(xdrs != NULL);
@@ -922,9 +918,7 @@ xdr_u_hyper(xdrs, ullp)
  * XDR longlong_t's
  */
 bool_t
-xdr_longlong_t(xdrs, llp)
-	XDR *xdrs;
-	longlong_t *llp;
+xdr_longlong_t(XDR *xdrs, longlong_t *llp)
 {
 
 	_DIAGASSERT(xdrs != NULL);
@@ -942,9 +936,7 @@ xdr_longlong_t(xdrs, llp)
  * XDR u_longlong_t's
  */
 bool_t
-xdr_u_longlong_t(xdrs, ullp)
-	XDR *xdrs;
-	u_longlong_t *ullp;
+xdr_u_longlong_t(XDR *xdrs, u_longlong_t *ullp)
 {
 
 	_DIAGASSERT(xdrs != NULL);

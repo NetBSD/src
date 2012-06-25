@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.15 2012/03/02 17:27:49 christos Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_first.c,v 1.15 2012/03/02 17:27:49 christos Exp $");
+__RCSID("$NetBSD: yp_first.c,v 1.16 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -49,13 +49,8 @@ __weak_alias(yp_next,_yp_next)
 #endif
 
 int
-yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outkey;
-	int            *outkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_first(const char *indomain, const char *inmap, char **outkey,
+    int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
@@ -127,15 +122,8 @@ again:
 }
 
 int
-yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	const char     *inkey;
-	int             inkeylen;
-	char          **outkey;
-	int            *outkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_next(const char *indomain, const char *inmap, const char *inkey,
+    int inkeylen, char **outkey, int *outkeylen, char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_key yprk;

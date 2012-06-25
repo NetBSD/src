@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.51 2011/04/24 01:56:44 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.52 2012/06/25 22:32:47 abs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.51 2011/04/24 01:56:44 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.52 2012/06/25 22:32:47 abs Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -134,9 +134,7 @@ pw_lock(int retries)
 }
 
 int
-pw_mkdb(username, secureonly)
-	const char *username;
-	int secureonly;
+pw_mkdb(const char *username, int secureonly)
 {
 	const char *args[9];
 	int pstat, i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.13 2012/03/13 21:13:40 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 #if 0
 static const char rcsid[] = "Id: base64.c,v 1.4 2005/04/27 04:56:34 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.13 2012/03/13 21:13:40 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -214,10 +214,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
  */
 
 int
-b64_pton(src, target, targsize)
-	char const *src;
-	u_char *target;
-	size_t targsize;
+b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	size_t tarindex;
 	int state, ch;
