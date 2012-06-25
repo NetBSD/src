@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_driverif.c,v 1.4 2012/06/20 08:19:49 martin Exp $	*/
+/*	$NetBSD: iscsic_driverif.c,v 1.5 2012/06/25 20:33:56 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -590,7 +590,6 @@ report_luns(int argc, char **argv)
 	int rc;
 	size_t llen;
 	uint32_t n;
-	uint16_t n2;
 	uint64_t *lp;
 
 	(void) memset(&io, 0x0, sizeof(io));
@@ -609,8 +608,8 @@ report_luns(int argc, char **argv)
 	if ((rc = do_ioctl(&io, TRUE)) != 0) {
 		return rc;
 	}
-	(void) memcpy(&n2, buf, sizeof(n2));
-	llen = ntohs(n2);
+	(void) memcpy(&n, buf, sizeof(n));
+	llen = ntohs(n);
 	if (!llen) {
 		printf("No LUNs!\n");
 		return 1;
