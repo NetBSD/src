@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.139 2012/06/23 03:14:04 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.140 2012/06/25 15:28:40 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.139 2012/06/23 03:14:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140 2012/06/25 15:28:40 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.139 2012/06/23 03:14:04 christos Exp
 #include <netinet/ip_icmp.h>
 #endif /* INET */
 #include <netinet/ip6.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
@@ -1958,24 +1958,24 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 			CTL_CREATE, CTL_EOL);
 #endif
 	/* anonportalgo RFC6056 subtree */
-	const struct sysctlnode *rfc6056_node;
-	sysctl_createv(clog, 0, NULL, &rfc6056_node,
+	const struct sysctlnode *portalgo_node;
+	sysctl_createv(clog, 0, NULL, &portalgo_node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "anonportalgo",
 		       SYSCTL_DESCR("Anonymous port algorithm selection (RFC 6056)"),
 	    	       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rfc6056_node, NULL,
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "available",
 		       SYSCTL_DESCR("available algorithms"),
-		       sysctl_rfc6056_available, 0, NULL, RFC6056_MAXLEN,
+		       sysctl_portalgo_available, 0, NULL, PORTALGO_MAXLEN,
 		       CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rfc6056_node, NULL,
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "selected",
 		       SYSCTL_DESCR("selected algorithm"),
-	               sysctl_rfc6056_selected6, 0, NULL, RFC6056_MAXLEN,
+	               sysctl_portalgo_selected6, 0, NULL, PORTALGO_MAXLEN,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

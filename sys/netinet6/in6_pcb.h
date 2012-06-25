@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.36 2011/09/24 17:22:14 christos Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.37 2012/06/25 15:28:39 christos Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ struct	in6pcb {
 #define in6p_af		 in6p_head.inph_af
 #define in6p_ppcb	 in6p_head.inph_ppcb
 #define in6p_state	 in6p_head.inph_state
-#define in6p_rfc6056algo in6p_head.inph_rfc6056algo
+#define in6p_portalgo	 in6p_head.inph_portalgo
 #define in6p_socket	 in6p_head.inph_socket
 #define in6p_table	 in6p_head.inph_table
 #define in6p_sp		 in6p_head.inph_sp

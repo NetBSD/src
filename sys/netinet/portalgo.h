@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.h,v 1.3 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: portalgo.h,v 1.1 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -27,31 +27,31 @@
  * SUCH DAMAGE.
  *
  */
-#ifndef _NETINET_RFC6056_H_
-#define _NETINET_RFC6056_H_
+#ifndef _NETINET_PORTALGO_H_
+#define _NETINET_PORTALGO_H_
 
 #ifdef _KERNEL
 #include <sys/sysctl.h>
 
 struct inpcb_hdr;
-int rfc6056_randport(uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-int sysctl_rfc6056_selected(SYSCTLFN_ARGS);
-int sysctl_rfc6056_selected6(SYSCTLFN_ARGS);
-int sysctl_rfc6056_available(SYSCTLFN_ARGS);
-int rfc6056_algo_index_select(struct inpcb_hdr *, int);
+int portalgo_randport(uint16_t *, struct inpcb_hdr *, kauth_cred_t);
+int sysctl_portalgo_selected(SYSCTLFN_ARGS);
+int sysctl_portalgo_selected6(SYSCTLFN_ARGS);
+int sysctl_portalgo_available(SYSCTLFN_ARGS);
+int portalgo_algo_index_select(struct inpcb_hdr *, int);
 
-#define	RFC6056_MAXLEN       16
+#define	PORTALGO_MAXLEN       16
 #endif /* _KERNEL */
 
 /*
  * User-settable options (used with setsockopt).
  */
-#define	RFC6056_ALGO_DEFAULT			0xffff
-#define	RFC6056_ALGO_BSD			0
-#define	RFC6056_ALGO_RANDOM_START		1
-#define	RFC6056_ALGO_RANDOM_PICK		2
-#define	RFC6056_ALGO_HASH			3
-#define	RFC6056_ALGO_DOUBLEHASH			4
-#define	RFC6056_ALGO_RANDINC			5
+#define	PORTALGO_DEFAULT		0xffff
+#define	PORTALGO_BSD			0
+#define	PORTALGO_RANDOM_START		1
+#define	PORTALGO_RANDOM_PICK		2
+#define	PORTALGO_HASH			3
+#define	PORTALGO_DOUBLEHASH		4
+#define	PORTALGO_RANDINC		5
 
-#endif /* !_NETINET_RFC6056_H_ */
+#endif /* !_NETINET_PORTALGO_H_ */
