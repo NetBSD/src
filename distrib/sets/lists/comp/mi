@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1765 2012/06/22 18:30:22 christos Exp $
+#	$NetBSD: mi,v 1.1766 2012/06/25 15:30:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1933,7 +1933,8 @@
 ./usr/include/netinet/ipl.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/pim.h			comp-c-include
 ./usr/include/netinet/pim_var.h			comp-c-include
-./usr/include/netinet/rfc6056.h			comp-c-include
+./usr/include/netinet/portalgo.h		comp-c-include
+./usr/include/netinet/rfc6056.h			comp-obsolete		obsolete
 ./usr/include/netinet/tcp.h			comp-c-include
 ./usr/include/netinet/tcp_debug.h		comp-c-include
 ./usr/include/netinet/tcp_fsm.h			comp-c-include
