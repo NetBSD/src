@@ -514,12 +514,14 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	default_number = number;
 	flush_to_newline(0);
 	do {
+	    long long_number = number;
 	    if (get_number_argument("what should be the size? ", 
-		    (long *)&number, default_number) == 0) {
+		    &long_number, default_number) == 0) {
 		printf("Not a number\n");
 		flush_to_newline(1);
 		number = 0;
 	    } else {
+		number = long_number;
 		multiple = get_multiplier(map->logical_block);
 		if (multiple == 0) {
 		    printf("Bad multiplier\n");
