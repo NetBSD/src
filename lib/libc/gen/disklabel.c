@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.36 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.37 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.36 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.37 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,8 +78,7 @@ static int	gettype(char *, const char *const *);
 static const char *db_array[2] = { _PATH_DISKTAB, 0 };
 
 int
-setdisktab(name)
-	const char *name;
+setdisktab(const char *name)
 {
 	if (!name || !*name)
 		return -1;
@@ -90,8 +89,7 @@ setdisktab(name)
 
 
 struct disklabel *
-getdiskbyname(name)
-	const char *name;
+getdiskbyname(const char *name)
 {
 	static struct	disklabel disk;
 	struct	disklabel *dp = &disk;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.16 2011/11/28 08:05:05 tls Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.17 2012/06/25 22:32:47 abs Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.16 2011/11/28 08:05:05 tls Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.17 2012/06/25 22:32:47 abs Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.16 2011/11/28 08:05:05 tls Exp $");
 #include "rumpuser_int.h"
 
 int
-rumpuser_getversion()
+rumpuser_getversion(void)
 {
 
 	return RUMPUSER_VERSION;
