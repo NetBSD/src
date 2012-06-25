@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.33 2012/03/21 14:28:32 christos Exp $	*/
+/*	$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.33 2012/03/21 14:28:32 christos Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.34 2012/06/25 22:32:43 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,9 +90,7 @@ static void	 dumpmode(BITCMD *);
  * bits) followed by a '+' (set bits).
  */
 mode_t
-getmode(bbox, omode)
-	const void *bbox;
-	mode_t omode;
+getmode(const void *bbox, mode_t omode)
 {
 	const BITCMD *set;
 	mode_t clrval, newmode, value;
@@ -178,8 +176,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 #define	STANDARD_BITS	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
 
 void *
-setmode(p)
-	const char *p;
+setmode(const char *p)
 {
 	int serrno;
 	char op, *ep;
