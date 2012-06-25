@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.4.10.1 2012/05/21 15:25:57 riz Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.4.10.2 2012/06/25 00:41:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct __ucontext32 {
 };
 
 #ifdef __UCONTEXT32_SIZE
-__CTASSERT(sizeof(ucontext32_t) == __UCONTEXT32_SIZE)
+__CTASSERT(sizeof(ucontext32_t) == __UCONTEXT32_SIZE);
 #endif
 
 #endif /* COMPAT_NETBSD32 && _KERNEL */
