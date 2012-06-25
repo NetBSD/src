@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.215 2012/03/20 21:48:20 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.216 2012/06/25 16:48:55 abs Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -40,7 +40,7 @@ CFLAGS+=	-Wa,--fatal-warnings
 .if (!defined(MKPIC) || ${MKPIC} != "no") && \
     (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # XXX there are some strange problems not yet resolved
-. if !defined(HAVE_GCC) || ${HAVE_GCC} != 45
+. if !defined(HAVE_GCC)
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
