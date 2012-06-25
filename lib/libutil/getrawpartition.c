@@ -1,4 +1,4 @@
-/*	$NetBSD: getrawpartition.c,v 1.6 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: getrawpartition.c,v 1.7 2012/06/25 22:32:47 abs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getrawpartition.c,v 1.6 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: getrawpartition.c,v 1.7 2012/06/25 22:32:47 abs Exp $");
 #endif
 
 #include <sys/param.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: getrawpartition.c,v 1.6 2008/04/28 20:23:03 martin Exp $");
 #include <util.h>
 
 int
-getrawpartition()
+getrawpartition(void)
 {
 	int rawpart, mib[2];
 	size_t varlen;

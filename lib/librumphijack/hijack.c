@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.92 2012/04/18 10:37:37 martin Exp $	*/
+/*      $NetBSD: hijack.c,v 1.93 2012/06/25 22:32:47 abs Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.92 2012/04/18 10:37:37 martin Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.93 2012/06/25 22:32:47 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1390,7 +1390,7 @@ dup(int oldd)
 }
 
 pid_t
-fork()
+fork(void)
 {
 	pid_t rv;
 
