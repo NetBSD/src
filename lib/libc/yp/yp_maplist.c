@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.12 2012/03/02 17:27:49 christos Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.13 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_maplist.c,v 1.12 2012/03/02 17:27:49 christos Exp $");
+__RCSID("$NetBSD: yp_maplist.c,v 1.13 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,9 +47,7 @@ __weak_alias(yp_maplist,_yp_maplist)
 #endif
 
 int
-yp_maplist(indomain, outmaplist)
-	const char     *indomain;
-	struct ypmaplist **outmaplist;
+yp_maplist( const char *indomain, struct ypmaplist **outmaplist)
 {
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;
