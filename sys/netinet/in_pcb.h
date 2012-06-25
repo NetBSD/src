@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.49 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.50 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -80,7 +80,7 @@ struct inpcb {
 #define inp_af		inp_head.inph_af
 #define inp_ppcb	inp_head.inph_ppcb
 #define inp_state	inp_head.inph_state
-#define inp_rfc6056algo inp_head.inph_rfc6056algo
+#define inp_portalgo	inp_head.inph_portalgo
 #define inp_socket	inp_head.inph_socket
 #define inp_table	inp_head.inph_table
 #define inp_sp		inp_head.inph_sp

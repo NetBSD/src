@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.142 2012/06/21 10:31:45 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.142 2012/06/21 10:31:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.143 2012/06/25 15:28:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.142 2012/06/21 10:31:45 yamt Exp $");
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -205,7 +205,7 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
-	inp->inp_rfc6056algo = RFC6056_ALGO_DEFAULT;
+	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
 #if defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
@@ -260,7 +260,7 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
        /*
         * Use RFC6056 randomized port selection
         */
-	error = rfc6056_randport(&lport, &inp->inp_head, cred);
+	error = portalgo_randport(&lport, &inp->inp_head, cred);
 	if (error)
 		return error;
 

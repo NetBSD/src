@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.148 2012/06/22 14:54:35 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.149 2012/06/25 15:28:40 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.148 2012/06/22 14:54:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.149 2012/06/25 15:28:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.148 2012/06/22 14:54:35 christos Ex
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 #include <netinet6/in6_offload.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
@@ -1639,7 +1639,7 @@ else 					\
 			if (error)
 				break;
 
-			error = rfc6056_algo_index_select(
+			error = portalgo_algo_index_select(
 			    (struct inpcb_hdr *)in6p, optval);
 			break;
 
@@ -1828,7 +1828,7 @@ else 					\
 			break;
 
 		case IPV6_PORTALGO:
-			optval = ((struct inpcb_hdr *)in6p)->inph_rfc6056algo;
+			optval = ((struct inpcb_hdr *)in6p)->inph_portalgo;
 			error = sockopt_setint(sopt, optval);
 			break;
 
