@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.32 2012/06/22 14:54:34 christos Exp $
+.\"	$NetBSD: ip.4,v 1.33 2012/06/25 14:47:55 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd June 20, 2012
+.Dd June 25, 2012
 .Dt IP 4
 .Os
 .Sh NAME
@@ -116,10 +116,10 @@ can be used to randomize the port selection.
 Valid algorithms are described in
 .Xr rfc6056 7
 and their respective constants are in
-.In netinet/rfc6056.h .
+.In netinet/portalgo.h .
 For example,
 .Bd -literal
-int algo = RFC6056_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/rfc6056.h\*[Gt] */
+int algo = PORTALGO_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/portalgo.h\*[Gt] */
 setsockopt(s, IPPROTO_IP, IP_PORTALGO, \*[Am]algo, sizeof(algo));
 .Ed
 .Pp
