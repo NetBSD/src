@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.29 2012/06/22 14:54:34 christos Exp $
+.\"	$NetBSD: ip6.4,v 1.30 2012/06/25 14:47:55 christos Exp $
 .\"	$KAME: ip6.4,v 1.23 2005/01/11 05:56:25 itojun Exp $
 .\"	$OpenBSD: ip6.4,v 1.21 2005/01/06 03:50:46 itojun Exp $
 .\"
@@ -28,7 +28,7 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.Dd June 20, 2012
+.Dd June 25, 2012
 .Dt IP6 4
 .Os
 .Sh NAME
@@ -238,10 +238,10 @@ can be used to randomize the port selection.
 Valid algorithms are described in
 .Xr rfc6056 7
 and their respective constants are in
-.In netinet/rfc6056.h .
+.In netinet/portalgo.h .
 For example,
 .Bd -literal
-int algo = RFC6056_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/rfc6056.h\*[Gt] */
+int algo = PORTALGO_ALGO_RANDOM_PICK;       /* see \*[Lt]netinet/portalgo.h\*[Gt] */
 setsockopt(s, IPPROTO_IPV6, IPV6_PORTALGO, \*[Am]algo, sizeof(algo));
 .Ed
 .Pp
