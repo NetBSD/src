@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.3 2012/06/24 17:01:35 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.4 2012/06/25 20:34:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/socketvar.h>
+#include <sys/bswap.h>
 
 
 #ifdef ISCSI_DEBUG
@@ -166,7 +167,7 @@ gen_digest(void *buff, int len)
 	while (len--) {
 		crc = ((crc >> 8) & 0x00ffffff) ^ crc_table[(crc ^ *bp++) & 0xff];
 	}
-	return crc ^ 0xffffffff;
+	return htonl(bswap32(crc ^ 0xffffffff));
 }
 
 
@@ -195,7 +196,7 @@ gen_digest_2(void *buf1, int len1, void *buf2, int len2)
 	while (len2--) {
 		crc = ((crc >> 8) & 0x00ffffff) ^ crc_table[(crc ^ *bp++) & 0xff];
 	}
-	return crc ^ 0xffffffff;
+	return htonl(bswap32(crc ^ 0xffffffff));
 }
 
 /*****************************************************************************
