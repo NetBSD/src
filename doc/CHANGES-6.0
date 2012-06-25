@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.138 2012/06/24 18:46:09 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.139 2012/06/25 00:43:40 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5831,4 +5831,11 @@ bin/ps/ps.c					1.78
 
 	Fix bad ps/ptyfs interaction.  PR#40813.
 	[dholland, ticket #355]
+
+sys/compat/sys/ucontext.h			1.5
+sys/sys/ucontext.h				1.15
+
+	Add a semicolon to __CTASSERT() since it was removed from the macro.
+	(Build fix for ticket #369)
+	[jdc, ticket #371]
 
