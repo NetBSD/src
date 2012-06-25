@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.14 2011/09/04 10:10:26 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.15 2012/06/25 22:32:46 abs Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.14 2011/09/04 10:10:26 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.15 2012/06/25 22:32:46 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,9 +94,7 @@ static char	buf_asctime[MAX_ASCTIME_BUF_SIZE];
 #define	ASCTIME_BUFLEN	(3 * 2 + 5 * INT_STRLEN_MAXIMUM(int) + 3 + 2 + 1 + 1)
 
 char *
-asctime_r(timeptr, buf)
-register const struct tm *	timeptr;
-char *				buf;
+asctime_r(const struct tm * timeptr, char * buf)
 {
 	static const char	*wday_name[7] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -151,8 +149,7 @@ char *				buf;
 */
 
 char *
-asctime(timeptr)
-register const struct tm *	timeptr;
+asctime(const struct tm *timeptr)
 {
 	return asctime_r(timeptr, buf_asctime);
 }

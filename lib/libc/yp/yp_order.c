@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_order.c,v 1.13 2012/03/02 17:27:49 christos Exp $	 */
+/*	$NetBSD: yp_order.c,v 1.14 2012/06/25 22:32:46 abs Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_order.c,v 1.13 2012/03/02 17:27:49 christos Exp $");
+__RCSID("$NetBSD: yp_order.c,v 1.14 2012/06/25 22:32:46 abs Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,10 +47,7 @@ __weak_alias(yp_order,_yp_order)
 #endif
 
 int
-yp_order(indomain, inmap, outorder)
-	const char     *indomain;
-	const char     *inmap;
-	int            *outorder;
+yp_order(const char *indomain, const char *inmap, int *outorder)
 {
 	struct dom_binding *ysd;
 	struct ypresp_order ypro;
