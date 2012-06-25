@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc6056.c,v 1.8 2012/06/21 10:35:28 yamt Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.1 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.8 2012/06/21 10:35:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.1 2012/06/25 15:28:39 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -64,38 +64,38 @@ __KERNEL_RCSID(0, "$NetBSD: rfc6056.c,v 1.8 2012/06/21 10:35:28 yamt Exp $");
 
 #include <netinet/tcp_vtw.h>
 
-#include "rfc6056.h"
+#include "portalgo.h"
 
 #define NPROTO 2
-#define RFC6056_TCP 0
-#define RFC6056_UDP 1
+#define PORTALGO_TCP 0
+#define PORTALGO_UDP 1
 
 #define NAF 2
-#define RFC6056_IPV4 0
-#define RFC6056_IPV6 1
+#define PORTALGO_IPV4 0
+#define PORTALGO_IPV6 1
 
 #define NRANGES 2
-#define RFC6056_LOWPORT 0
-#define RFC6056_HIGHPORT 1
+#define PORTALGO_LOWPORT 0
+#define PORTALGO_HIGHPORT 1
 
-#if RFC6056_DEBUG
-static bool rfc6056_debug = true;
-#define DPRINTF if (rfc6056_debug) printf
+#if PORTALGO_DEBUG
+static bool portalgo_debug = true;
+#define DPRINTF if (portalgo_debug) printf
 #else
 #define DPRINTF while (/*CONSTCOND*/0) printf
 #endif
 
 #ifdef INET
-static int inet4_rfc6056algo = RFC6056_ALGO_BSD;
+static int inet4_portalgo = PORTALGO_BSD;
 #endif
 #ifdef INET6
-static int inet6_rfc6056algo = RFC6056_ALGO_BSD;
+static int inet6_portalgo = PORTALGO_BSD;
 #endif
 
 typedef struct {
 	const char *name;
 	int (*func)(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
-} rfc6056_algorithm_t;
+} portalgo_algorithm_t;
 
 static int algo_bsd(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
 static int algo_random_start(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
@@ -104,7 +104,7 @@ static int algo_hash(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
 static int algo_doublehash(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
 static int algo_randinc(int, uint16_t *, struct inpcb_hdr *, kauth_cred_t);
 
-static const rfc6056_algorithm_t algos[] = {
+static const portalgo_algorithm_t algos[] = {
 	{
 		.name = "bsd",
 		.func = algo_bsd
@@ -133,7 +133,7 @@ static const rfc6056_algorithm_t algos[] = {
 
 #define NALGOS __arraycount(algos)
 
-static uint16_t rfc6056_next_ephemeral[NPROTO][NAF][NRANGES][NALGOS];
+static uint16_t portalgo_next_ephemeral[NPROTO][NAF][NRANGES][NALGOS];
 
 /*
  * Access the pcb and copy the values of the last port and the ends of
@@ -145,17 +145,17 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 {
 	struct inpcbtable * const table = inp_hdr->inph_table;
 	struct socket *so;
-	int rfc6056_proto;
-	int rfc6056_af;
-	int rfc6056_range;
+	int portalgo_proto;
+	int portalgo_af;
+	int portalgo_range;
 
 	so = inp_hdr->inph_socket;
 	switch (so->so_type) {
 	case SOCK_DGRAM: /* UDP or DCCP */
-		rfc6056_proto = RFC6056_UDP;
+		portalgo_proto = PORTALGO_UDP;
 		break;
 	case SOCK_STREAM: /* TCP or SCTP */
-		rfc6056_proto = RFC6056_TCP;
+		portalgo_proto = PORTALGO_TCP;
 		break;
 	default:
 		return EPFNOSUPPORT;
@@ -166,17 +166,17 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 	case AF_INET: {
 		struct inpcb *inp = (struct inpcb *)(void *)inp_hdr;
 
-		rfc6056_af = RFC6056_IPV4;
+		portalgo_af = PORTALGO_IPV4;
 		if (inp->inp_flags & INP_LOWPORT) {
 			*mymin = lowportmin;
 			*mymax = lowportmax;
 			*lastport = table->inpt_lastlow;
-			rfc6056_range = RFC6056_LOWPORT;
+			portalgo_range = PORTALGO_LOWPORT;
 		} else {
 			*mymin = anonportmin;
 			*mymax = anonportmax;
 			*lastport = table->inpt_lastport;
-			rfc6056_range = RFC6056_HIGHPORT;
+			portalgo_range = PORTALGO_HIGHPORT;
 		}
 		break;
 	}
@@ -185,17 +185,17 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 	case AF_INET6: {
 		struct in6pcb *in6p = (struct in6pcb *)(void *)inp_hdr;
 
-		rfc6056_af = RFC6056_IPV6;
+		portalgo_af = PORTALGO_IPV6;
 		if (in6p->in6p_flags & IN6P_LOWPORT) {
 			*mymin = ip6_lowportmin;
 			*mymax = ip6_lowportmax;
 			*lastport = table->inpt_lastlow;
-			rfc6056_range = RFC6056_LOWPORT;
+			portalgo_range = PORTALGO_LOWPORT;
 		} else {
 			*mymin = ip6_anonportmin;
 			*mymax = ip6_anonportmax;
 			*lastport = table->inpt_lastport;
-			rfc6056_range = RFC6056_HIGHPORT;
+			portalgo_range = PORTALGO_HIGHPORT;
 		}
 		break;
 	}
@@ -215,11 +215,11 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 	DPRINTF("%s mymin:%d mymax:%d lastport:%d\n", __func__,
 	    *mymin, *mymax, *lastport);
 
-	*pnext_ephemeral = &rfc6056_next_ephemeral[rfc6056_proto]
-	    [rfc6056_af][rfc6056_range][algo];
+	*pnext_ephemeral = &portalgo_next_ephemeral[portalgo_proto]
+	    [portalgo_af][portalgo_range][algo];
 
-	DPRINTF("%s rfc6056_proto:%d rfc6056_af:%d rfc6056_range:%d\n",
-	    __func__, rfc6056_proto, rfc6056_af, rfc6056_range);
+	DPRINTF("%s portalgo_proto:%d portalgo_af:%d portalgo_range:%d\n",
+	    __func__, portalgo_proto, portalgo_af, portalgo_range);
 	return 0;
 }
 
@@ -741,7 +741,7 @@ algo_randinc(int algo, uint16_t *port, struct inpcb_hdr *inp_hdr,
 
 /* The generic function called in order to pick a port. */
 int
-rfc6056_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
+portalgo_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 {
 	int algo, error;
 	uint16_t lport;
@@ -749,29 +749,29 @@ rfc6056_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 	DPRINTF("%s called\n", __func__);
 
-	if (inp_hdr->inph_rfc6056algo == RFC6056_ALGO_DEFAULT) {
+	if (inp_hdr->inph_portalgo == PORTALGO_DEFAULT) {
 		switch (inp_hdr->inph_af) {
 #ifdef INET
 		case AF_INET:
-			default_algo = inet4_rfc6056algo;
+			default_algo = inet4_portalgo;
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
-			default_algo = inet6_rfc6056algo;
+			default_algo = inet6_portalgo;
 			break;
 #endif
 		default:
 			return EINVAL;
 		}
 
-		if (default_algo == RFC6056_ALGO_DEFAULT)
-			algo = RFC6056_ALGO_BSD;
+		if (default_algo == PORTALGO_DEFAULT)
+			algo = PORTALGO_BSD;
 		else
 			algo = default_algo;
 	}
 	else /* socket specifies the algorithm */
-		algo = inp_hdr->inph_rfc6056algo;
+		algo = inp_hdr->inph_portalgo;
 
 	KASSERT(algo >= 0);
 	KASSERT(algo < NALGOS);
@@ -802,7 +802,7 @@ rfc6056_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		break;
 	}
 
-	DPRINTF("%s rfc6056algo = %d\n", __func__, algo);
+	DPRINTF("%s portalgo = %d\n", __func__, algo);
 
 	error = (*algos[algo].func)(algo, &lport, inp_hdr, cred);
 	if (error == 0) {
@@ -821,7 +821,7 @@ rfc6056_randport(uint16_t *port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 
 /* Sets the algorithm to be used globally */
 static int
-rfc6056_algo_name_select(const char *name, int *algo)
+portalgo_algo_name_select(const char *name, int *algo)
 {
 	size_t ai;
 
@@ -838,16 +838,16 @@ rfc6056_algo_name_select(const char *name, int *algo)
 
 /* Sets the algorithm to be used by the pcb inp. */
 int
-rfc6056_algo_index_select(struct inpcb_hdr *inp, int algo)
+portalgo_algo_index_select(struct inpcb_hdr *inp, int algo)
 {
 
 	DPRINTF("%s called with algo %d for pcb %p\n", __func__, algo, inp );
 
 	if ((algo < 0 || algo >= NALGOS) &&
-	    (algo != RFC6056_ALGO_DEFAULT))
+	    (algo != PORTALGO_DEFAULT))
 		return EINVAL;
 
-	inp->inph_rfc6056algo = algo;
+	inp->inph_portalgo = algo;
 	return 0;
 }
 
@@ -856,11 +856,11 @@ rfc6056_algo_index_select(struct inpcb_hdr *inp, int algo)
  * of the valid algorithms. IPv4.
  */
 static int
-sysctl_rfc6056_helper(SYSCTLFN_ARGS, int *algo)
+sysctl_portalgo_helper(SYSCTLFN_ARGS, int *algo)
 {
 	struct sysctlnode node;
 	int error;
-	char newalgo[RFC6056_MAXLEN];
+	char newalgo[PORTALGO_MAXLEN];
 
 	DPRINTF("%s called\n", __func__);
 
@@ -886,7 +886,7 @@ sysctl_rfc6056_helper(SYSCTLFN_ARGS, int *algo)
 #endif
 
 	mutex_enter(softnet_lock);
-	error = rfc6056_algo_name_select(newalgo, algo);
+	error = portalgo_algo_name_select(newalgo, algo);
 	mutex_exit(softnet_lock);
 	return error;
 }
@@ -896,18 +896,18 @@ sysctl_rfc6056_helper(SYSCTLFN_ARGS, int *algo)
  * of the valid algorithms.
  */
 int
-sysctl_rfc6056_selected(SYSCTLFN_ARGS)
+sysctl_portalgo_selected(SYSCTLFN_ARGS)
 {
 
-	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet4_rfc6056algo);
+	return sysctl_portalgo_helper(SYSCTLFN_CALL(rnode), &inet4_portalgo);
 }
 
 #ifdef INET6
 int
-sysctl_rfc6056_selected6(SYSCTLFN_ARGS)
+sysctl_portalgo_selected6(SYSCTLFN_ARGS)
 {
 
-	return sysctl_rfc6056_helper(SYSCTLFN_CALL(rnode), &inet6_rfc6056algo);
+	return sysctl_portalgo_helper(SYSCTLFN_CALL(rnode), &inet6_portalgo);
 }
 #endif
 
@@ -916,11 +916,11 @@ sysctl_rfc6056_selected6(SYSCTLFN_ARGS)
  * algorithms.
  */
 int
-sysctl_rfc6056_available(SYSCTLFN_ARGS)
+sysctl_portalgo_available(SYSCTLFN_ARGS)
 {
 	size_t ai, len = 0;
 	struct sysctlnode node;
-	char availalgo[NALGOS * RFC6056_MAXLEN];
+	char availalgo[NALGOS * PORTALGO_MAXLEN];
 
 	DPRINTF("%s called\n", __func__);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.7 2011/09/24 17:18:17 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.8 2012/06/25 15:28:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -77,7 +77,7 @@ struct inpcb_hdr {
 	int	  inph_af;		/* address family - AF_INET */
 	void *	  inph_ppcb;		/* pointer to per-protocol pcb */
 	int	  inph_state;		/* bind/connect state */
-	int       inph_rfc6056algo;
+	int       inph_portalgo;
 	struct	  socket *inph_socket;	/* back pointer to socket */
 	struct	  inpcbtable *inph_table;
 #if 1 /* IPSEC */
