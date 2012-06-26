@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.1 2012/04/03 17:22:53 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.2 2012/06/26 00:07:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -73,8 +73,9 @@ yyerror(const char *fmt, ...)
 %token			ALL
 %token			ANY
 %token			APPLY
-%token			ARROW
-%token			BINAT
+%token			ARROWBOTH
+%token			ARROWLEFT
+%token			ARROWRIGHT
 %token			BLOCK
 %token			CURLY_CLOSE
 %token			CURLY_OPEN
@@ -83,6 +84,7 @@ yyerror(const char *fmt, ...)
 %token			COMMA
 %token			DEFAULT
 %token			TDYNAMIC
+%token			TSTATIC
 %token			EQ
 %token			TFILE
 %token			FLAGS
@@ -95,9 +97,8 @@ yyerror(const char *fmt, ...)
 %token			INET
 %token			INET6
 %token			INTERFACE
-%token			KEEP
+%token			MAP
 %token			MINUS
-%token			NAT
 %token			NAME
 %token			ON
 %token			OUT
@@ -108,14 +109,13 @@ yyerror(const char *fmt, ...)
 %token			PROCEDURE
 %token			PROTO
 %token			FAMILY
-%token			QUICK
-%token			RDR
+%token			FINAL
 %token			RETURN
 %token			RETURNICMP
 %token			RETURNRST
 %token			SEPLINE
 %token			SLASH
-%token			STATE
+%token			STATEFUL
 %token			TABLE
 %token			TCP
 %token			TO
@@ -135,12 +135,13 @@ yyerror(const char *fmt, ...)
 
 %type	<str>		addr, iface_name, moduleargname, list_elem, table_store
 %type	<str>		opt_apply
-%type	<num>		ifindex, port, opt_quick, on_iface
+%type	<num>		ifindex, port, opt_final, on_iface
 %type	<num>		block_or_pass, rule_dir, block_opts, family, opt_family
-%type	<num>		opt_keep_state, icmp_type, table_type
+%type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
 %type	<var>		addr_or_iface, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
 %type	<var>		modulearg_opts, procs, proc_op, modulearg, moduleargs
+%type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
 %type	<rulegroup>	group_attr, group_opt
@@ -148,6 +149,7 @@ yyerror(const char *fmt, ...)
 %union {
 	char *		str;
 	unsigned long	num;
+	addr_port_t	addrport;
 	filt_opts_t	filtopts;
 	npfvar_t *	var;
 	opt_proto_t	optproto;
@@ -168,7 +170,7 @@ lines
 line
 	: def
 	| table
-	| nat
+	| map
 	| group
 	| rproc
 	|
@@ -213,6 +215,11 @@ list_elem
 		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
 		npfvar_add_elements(cvar, vp);
 	}
+	| NUM MINUS NUM
+	{
+		npfvar_t *vp = npfctl_parse_port_range($1, $3);
+		npfvar_add_elements(cvar, vp);
+	}
 	| NUM
 	{
 		npfvar_t *vp = npfvar_create(".num");
@@ -248,30 +255,34 @@ table_store
 	| TFILE STRING	{ $$ = $2; }
 	;
 
-nat
-	: natdef
-	| binatdef
-	| rdrdef
+map_sd
+	: TSTATIC	{ $$ = NPFCTL_NAT_STATIC; }
+	| TDYNAMIC	{ $$ = NPFCTL_NAT_DYNAMIC; }
+	|		{ $$ = NPFCTL_NAT_DYNAMIC; }
 	;
 
-natdef
-	: NAT ifindex filt_opts ARROW addr_or_iface
+map_type
+	: ARROWBOTH	{ $$ = NPF_NATIN | NPF_NATOUT; }
+	| ARROWLEFT	{ $$ = NPF_NATIN; }
+	| ARROWRIGHT	{ $$ = NPF_NATOUT; }
+	;
+
+mapseg
+	: addr_or_iface port_range
 	{
-		npfctl_build_nat(NPFCTL_NAT, $2, &$3, $5, NULL);
+		$$.ap_netaddr = $1;
+		$$.ap_portrange = $2;
 	}
 	;
 
-binatdef
-	: BINAT ifindex filt_opts ARROW addr_or_iface
+map
+	: MAP ifindex map_sd mapseg map_type mapseg PASS filt_opts
 	{
-		npfctl_build_nat(NPFCTL_BINAT, $2, &$3, $5, $3.fo_from);
+		npfctl_build_nat($3, $5, $2, &$4, &$6, &$8);
 	}
-	;
-
-rdrdef
-	: RDR ifindex filt_opts ARROW addr_or_iface port_range
+	| MAP ifindex map_sd mapseg map_type mapseg
 	{
-		npfctl_build_nat(NPFCTL_RDR, $2, &$3, $5, $6);
+		npfctl_build_nat($3, $5, $2, &$4, &$6, NULL);
 	}
 	;
 
@@ -416,15 +427,15 @@ rules
 	;
 
 rule
-	: block_or_pass rule_dir opt_quick on_iface opt_family
-	  opt_proto all_or_filt_opts opt_keep_state opt_apply
+	: block_or_pass opt_stateful rule_dir opt_final on_iface opt_family
+	  opt_proto all_or_filt_opts opt_apply
 	{
 		/*
 		 * Arguments: attributes, interface index, address
 		 * family, protocol options, filter options.
 		 */
-		npfctl_build_rule($1 | $2 | $3 | $8, $4,
-		    $5, &$6, &$7, $9);
+		npfctl_build_rule($1 | $2 | $3 | $4, $5,
+		    $6, &$7, &$8, $9);
 	}
 	|
 	;
@@ -440,8 +451,8 @@ rule_dir
 	|			{ $$ = NPF_RULE_IN | NPF_RULE_OUT; }
 	;
 
-opt_quick
-	: QUICK			{ $$ = NPF_RULE_FINAL; }
+opt_final
+	: FINAL			{ $$ = NPF_RULE_FINAL; }
 	|			{ $$ = 0; }
 	;
 
@@ -486,16 +497,16 @@ opt_family
 all_or_filt_opts
 	: ALL
 	{
-		$$.fo_from = NULL;
-		$$.fo_from_port_range = NULL;
-		$$.fo_to = NULL;
-		$$.fo_to_port_range = NULL;
+		$$.fo_from.ap_netaddr = NULL;
+		$$.fo_from.ap_portrange = NULL;
+		$$.fo_to.ap_netaddr = NULL;
+		$$.fo_to.ap_portrange = NULL;
 	}
 	| filt_opts	{ $$ = $1; }
 	;
 
-opt_keep_state
-	: KEEP STATE	{ $$ = NPF_RULE_KEEPSTATE; }
+opt_stateful
+	: STATEFUL	{ $$ = NPF_RULE_KEEPSTATE; }
 	|		{ $$ = 0; }
 	;
 
@@ -514,24 +525,24 @@ block_opts
 filt_opts
 	: FROM filt_addr port_range TO filt_addr port_range
 	{
-		$$.fo_from = $2;
-		$$.fo_from_port_range = $3;
-		$$.fo_to = $5;
-		$$.fo_to_port_range = $6;
+		$$.fo_from.ap_netaddr = $2;
+		$$.fo_from.ap_portrange = $3;
+		$$.fo_to.ap_netaddr = $5;
+		$$.fo_to.ap_portrange = $6;
 	}
 	| FROM filt_addr port_range
 	{
-		$$.fo_from = $2;
-		$$.fo_from_port_range = $3;
-		$$.fo_to = NULL;
-		$$.fo_to_port_range = NULL;
+		$$.fo_from.ap_netaddr = $2;
+		$$.fo_from.ap_portrange = $3;
+		$$.fo_to.ap_netaddr = NULL;
+		$$.fo_to.ap_portrange = NULL;
 	}
 	| TO filt_addr port_range
 	{
-		$$.fo_from = NULL;
-		$$.fo_from_port_range = NULL;
-		$$.fo_to = $2;
-		$$.fo_to_port_range = $3;
+		$$.fo_from.ap_netaddr = NULL;
+		$$.fo_from.ap_portrange = NULL;
+		$$.fo_to.ap_netaddr = $2;
+		$$.fo_to.ap_portrange = $3;
 	}
 	;
 
@@ -569,7 +580,7 @@ addr_or_iface
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp);
+		const int type = npfvar_get_type(vp, 0);
 
 		switch (type) {
 		case NPFVAR_VAR_ID:
@@ -602,9 +613,13 @@ port_range
 	{
 		$$ = npfctl_parse_port_range($2, $2);
 	}
-	| PORT port MINUS port	/* port from:to */
+	| PORT port MINUS port	/* port from-to */
 	{
 		$$ = npfctl_parse_port_range($2, $4);
+	}
+	| PORT VAR_ID
+	{
+		$$ = npfctl_parse_port_range_variable($2);
 	}
 	|
 	{
@@ -613,13 +628,8 @@ port_range
 	;
 
 port
-	: NUM		{ $$ = htons($1); }
+	: NUM		{ $$ = $1; }
 	| IDENTIFIER	{ $$ = npfctl_portno($1); }
-	| VAR_ID
-	{
-		char *s = npfvar_expand_string(npfvar_lookup($1));
-		$$ = npfctl_portno(s);
-	}
 	;
 
 icmp_type_and_code
@@ -683,7 +693,7 @@ ifindex
 	| VAR_ID
 	{
 		npfvar_t *vp = npfvar_lookup($1);
-		const int type = npfvar_get_type(vp);
+		const int type = npfvar_get_type(vp, 0);
 
 		switch (type) {
 		case NPFVAR_VAR_ID:

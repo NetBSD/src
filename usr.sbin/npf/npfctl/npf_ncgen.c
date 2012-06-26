@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.7.2.2 2012/06/26 00:07:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.7.2.1 2012/04/03 17:22:54 riz Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.7.2.2 2012/06/26 00:07:19 riz Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -333,8 +333,8 @@ npfctl_gennc_icmp(nc_ctx_t *ctx, int type, int code)
 
 	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_ICMP4;
-	*nc++ = (type == -1 ? 0 : (1 << 31) & (type & 0xff << 8)) |
-		(code == -1 ? 0 : (1 << 31) & (code & 0xff));
+	*nc++ = (type == -1 ? 0 : (1 << 31) | ((type & 0xff) << 8)) |
+		(code == -1 ? 0 : (1 << 30) | (code & 0xff));
 
 	/* Comparison block (2 words). */
 	npfctl_ncgen_addjmp(ctx, &nc);
@@ -396,6 +396,8 @@ npfctl_ncgen_print(const void *code, size_t len)
 		len -= sizeof(*op);
 	}
 #else
-	npfctl_ncode_disassemble(stdout, code, len);
+	nc_inf_t *ni = npfctl_ncode_disinf(stdout);
+	npfctl_ncode_disassemble(ni, code, len);
+	free(ni);
 #endif
 }
