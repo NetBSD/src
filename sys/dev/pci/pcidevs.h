@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1111 2012/05/25 18:19:41 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1112 2012/06/26 19:03:07 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1117 2012/05/25 18:18:32 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1118 2012/06/26 19:00:59 drochner Exp
  */
 
 /*
@@ -2626,10 +2626,10 @@
 #define	PCI_PRODUCT_INTEL_Q67_LPC	0x1c4e		/* Q67 LPC */
 #define	PCI_PRODUCT_INTEL_QM67_LPC	0x1c4f		/* QM67 LPC */
 #define	PCI_PRODUCT_INTEL_B65_LPC	0x1c50		/* B65 LPC */
-#define	PCI_PRODUCT_INTEL_H61_LPC	0x1c51		/* H61 LPC */
 #define	PCI_PRODUCT_INTEL_C202_LPC	0x1c52		/* C202 LPC */
 #define	PCI_PRODUCT_INTEL_C204_LPC	0x1c54		/* C204 LPC */
 #define	PCI_PRODUCT_INTEL_C206_LPC	0x1c56		/* C206 LPC */
+#define	PCI_PRODUCT_INTEL_H61_LPC	0x1c5c		/* H61 LPC */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
@@ -3156,6 +3156,8 @@
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
 #define	PCI_PRODUCT_ITE_IT8211	0x8211		/* IT8211 IDE Controller */
 #define	PCI_PRODUCT_ITE_IT8212	0x8212		/* IT8212 IDE Controller */
+#define	PCI_PRODUCT_ITE_IT8888	0x8888		/* PCI-ISA Bridge */
+#define	PCI_PRODUCT_ITE_IT8892	0x8892		/* PCIe-PCI Bridge */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
@@ -4866,6 +4868,7 @@
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W83C553F_0	0x0565		/* W83C553F PCI-ISA Bridge */
+#define	PCI_PRODUCT_WINBOND_W83628F	0x0628		/* W83628F PCI-ISA Bridge */
 #define	PCI_PRODUCT_WINBOND_W83C553F_1	0x0105		/* W83C553F IDE Controller */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F Ethernet */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1110 2012/05/25 18:19:41 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1111 2012/06/26 19:03:07 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1117 2012/05/25 18:18:32 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1118 2012/06/26 19:00:59 drochner Exp
  */
 
 /*
@@ -4033,14 +4033,14 @@ static const uint16_t pci_products[] = {
 	    17543, 8074, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_B65_LPC, 
 	    17548, 8074, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H61_LPC, 
-	    17552, 8074, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C202_LPC, 
-	    17556, 8074, 0,
+	    17552, 8074, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C204_LPC, 
-	    17561, 8074, 0,
+	    17557, 8074, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C206_LPC, 
-	    17566, 8074, 0,
+	    17562, 8074, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_H61_LPC, 
+	    17567, 8074, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 
 	    17571, 8074, 3027, 6266, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE, 
@@ -5071,6 +5071,10 @@ static const uint16_t pci_products[] = {
 	    19135, 6329, 6158, 0,
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212, 
 	    19142, 6329, 6158, 0,
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8888, 
+	    6540, 6266, 0,
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8892, 
+	    14412, 6266, 0,
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016, 
 	    19149, 0,
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204, 
@@ -7961,66 +7965,68 @@ static const uint16_t pci_products[] = {
 	    27916, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0, 
 	    27924, 6540, 6266, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83628F, 
+	    27933, 6540, 6266, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1, 
 	    27924, 6329, 6158, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F, 
-	    27933, 5522, 5420, 0,
+	    27941, 5522, 5420, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, 
-	    27942, 5420, 0,
+	    27950, 5420, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1, 
-	    27942, 5420, 0,
+	    27950, 5420, 0,
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692, 
-	    27951, 8572, 0,
+	    27959, 8572, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI, 
 	    19081, 6373, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI, 
 	    19060, 6329, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE, 
-	    27957, 6373, 0,
+	    27965, 6373, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME, 
-	    19081, 6373, 27973, 0,
+	    19081, 6373, 27981, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI_KME, 
-	    19060, 6329, 27973, 0,
+	    19060, 6329, 27981, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA, 
-	    27957, 6373, 27979, 0,
+	    27965, 6373, 27987, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC, 
-	    27957, 6373, 27988, 0,
+	    27965, 6373, 27996, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2, 
-	    27957, 6373, 27998, 0,
+	    27965, 6373, 28006, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO, 
-	    27957, 6373, 28009, 0,
+	    27965, 6373, 28017, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A, 
-	    28019, 28025, 5612, 0,
+	    28027, 28033, 5612, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO, 
-	    28019, 28038, 5612, 28009, 0,
+	    28027, 28046, 5612, 28017, 0,
 	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME, 
-	    28041, 6329, 27973, 0,
+	    28049, 6329, 27981, 0,
 	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM, 
-	    28050, 28054, 2427, 0,
+	    28058, 28062, 2427, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3, 
-	    28063, 2439, 5420, 6158, 0,
+	    28071, 2439, 5420, 6158, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143, 
-	    28063, 2439, 5420, 6158, 28071, 0,
+	    28071, 2439, 5420, 6158, 28079, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL, 
-	    28079, 5467, 0,
+	    28087, 5467, 0,
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56, 
 	    5637, 5467, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724, 
-	    28089, 6745, 0,
+	    28097, 6745, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740, 
 	    24264, 6745, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C, 
-	    28093, 28098, 6745, 0,
+	    28101, 28106, 6745, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F, 
-	    28105, 28098, 6745, 0,
+	    28113, 28106, 6745, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B, 
-	    28110, 28114, 6745, 0,
+	    28118, 28122, 6745, 0,
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754, 
-	    28122, 28126, 6745, 0,
+	    28130, 28134, 6745, 0,
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221, 
-	    28134, 0,
+	    28142, 0,
 	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905, 
-	    28139, 6266, 0,
+	    28147, 6266, 0,
 	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120, 
 	    234, 6158, 0,
 };
@@ -8860,7 +8866,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6249 */
 	    "2188\0" /* 1 refs @ 6254 */
 	    "VL-PCI\0" /* 3 refs @ 6259 */
-	    "Bridge\0" /* 547 refs @ 6266 */
+	    "Bridge\0" /* 550 refs @ 6266 */
 	    "2051\0" /* 2 refs @ 6273 */
 	    "Single\0" /* 5 refs @ 6278 */
 	    "Solution\0" /* 2 refs @ 6285 */
@@ -8898,7 +8904,7 @@ static const char pci_words[] = { "."
 	    "(5-8)\0" /* 1 refs @ 6522 */
 	    "M1445\0" /* 1 refs @ 6528 */
 	    "M1449\0" /* 1 refs @ 6534 */
-	    "PCI-ISA\0" /* 46 refs @ 6540 */
+	    "PCI-ISA\0" /* 48 refs @ 6540 */
 	    "M1451\0" /* 1 refs @ 6548 */
 	    "Host-PCI\0" /* 42 refs @ 6554 */
 	    "M1461\0" /* 1 refs @ 6563 */
@@ -10025,7 +10031,7 @@ static const char pci_words[] = { "."
 	    "88W8335\0" /* 2 refs @ 14392 */
 	    "88SB2211\0" /* 1 refs @ 14400 */
 	    "x1\0" /* 1 refs @ 14409 */
-	    "PCIe-PCI\0" /* 1 refs @ 14412 */
+	    "PCIe-PCI\0" /* 2 refs @ 14412 */
 	    "GT-64115\0" /* 1 refs @ 14421 */
 	    "GT-64011\0" /* 1 refs @ 14430 */
 	    "SK-NET\0" /* 4 refs @ 14439 */
@@ -10432,10 +10438,10 @@ static const char pci_words[] = { "."
 	    "Q67\0" /* 1 refs @ 17539 */
 	    "QM67\0" /* 1 refs @ 17543 */
 	    "B65\0" /* 1 refs @ 17548 */
-	    "H61\0" /* 1 refs @ 17552 */
-	    "C202\0" /* 1 refs @ 17556 */
-	    "C204\0" /* 1 refs @ 17561 */
-	    "C206\0" /* 1 refs @ 17566 */
+	    "C202\0" /* 1 refs @ 17552 */
+	    "C204\0" /* 1 refs @ 17557 */
+	    "C206\0" /* 1 refs @ 17562 */
+	    "H61\0" /* 1 refs @ 17567 */
 	    "82801AA\0" /* 7 refs @ 17571 */
 	    "AC-97\0" /* 17 refs @ 17579 */
 	    "Hub-PCI\0" /* 5 refs @ 17585 */
@@ -11775,34 +11781,35 @@ static const char pci_words[] = { "."
 	    "90C\0" /* 1 refs @ 27912 */
 	    "W83769F\0" /* 1 refs @ 27916 */
 	    "W83C553F\0" /* 2 refs @ 27924 */
-	    "W89C840F\0" /* 1 refs @ 27933 */
-	    "W89C940F\0" /* 2 refs @ 27942 */
-	    "W6692\0" /* 1 refs @ 27951 */
-	    "NinjaSCSI-32UDE\0" /* 5 refs @ 27957 */
-	    "(KME)\0" /* 3 refs @ 27973 */
-	    "(IODATA)\0" /* 1 refs @ 27979 */
-	    "(LOGITEC)\0" /* 1 refs @ 27988 */
-	    "(LOGITEC2)\0" /* 1 refs @ 27998 */
-	    "(BUFFALO)\0" /* 2 refs @ 28009 */
-	    "CF32A\0" /* 2 refs @ 28019 */
-	    "CompactFlash\0" /* 1 refs @ 28025 */
-	    "CF\0" /* 1 refs @ 28038 */
-	    "NPATA-32\0" /* 1 refs @ 28041 */
-	    "Xen\0" /* 1 refs @ 28050 */
-	    "Platform\0" /* 1 refs @ 28054 */
-	    "X3201-3\0" /* 2 refs @ 28063 */
-	    "(21143)\0" /* 1 refs @ 28071 */
-	    "WinGlobal\0" /* 1 refs @ 28079 */
-	    "724\0" /* 1 refs @ 28089 */
-	    "740C\0" /* 1 refs @ 28093 */
-	    "(DS-1)\0" /* 2 refs @ 28098 */
-	    "724F\0" /* 1 refs @ 28105 */
-	    "744\0" /* 1 refs @ 28110 */
-	    "(DS-1S)\0" /* 1 refs @ 28114 */
-	    "754\0" /* 1 refs @ 28122 */
-	    "(DS-1E)\0" /* 1 refs @ 28126 */
-	    "1221\0" /* 1 refs @ 28134 */
-	    "PCI-ST32\0" /* 1 refs @ 28139 */
+	    "W83628F\0" /* 1 refs @ 27933 */
+	    "W89C840F\0" /* 1 refs @ 27941 */
+	    "W89C940F\0" /* 2 refs @ 27950 */
+	    "W6692\0" /* 1 refs @ 27959 */
+	    "NinjaSCSI-32UDE\0" /* 5 refs @ 27965 */
+	    "(KME)\0" /* 3 refs @ 27981 */
+	    "(IODATA)\0" /* 1 refs @ 27987 */
+	    "(LOGITEC)\0" /* 1 refs @ 27996 */
+	    "(LOGITEC2)\0" /* 1 refs @ 28006 */
+	    "(BUFFALO)\0" /* 2 refs @ 28017 */
+	    "CF32A\0" /* 2 refs @ 28027 */
+	    "CompactFlash\0" /* 1 refs @ 28033 */
+	    "CF\0" /* 1 refs @ 28046 */
+	    "NPATA-32\0" /* 1 refs @ 28049 */
+	    "Xen\0" /* 1 refs @ 28058 */
+	    "Platform\0" /* 1 refs @ 28062 */
+	    "X3201-3\0" /* 2 refs @ 28071 */
+	    "(21143)\0" /* 1 refs @ 28079 */
+	    "WinGlobal\0" /* 1 refs @ 28087 */
+	    "724\0" /* 1 refs @ 28097 */
+	    "740C\0" /* 1 refs @ 28101 */
+	    "(DS-1)\0" /* 2 refs @ 28106 */
+	    "724F\0" /* 1 refs @ 28113 */
+	    "744\0" /* 1 refs @ 28118 */
+	    "(DS-1S)\0" /* 1 refs @ 28122 */
+	    "754\0" /* 1 refs @ 28130 */
+	    "(DS-1E)\0" /* 1 refs @ 28134 */
+	    "1221\0" /* 1 refs @ 28142 */
+	    "PCI-ST32\0" /* 1 refs @ 28147 */
 };
-const int pci_nwords = 3778;
+const int pci_nwords = 3779;
 
