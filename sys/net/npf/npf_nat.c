@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.10.2.1 2012/04/03 17:22:53 riz Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.10.2.2 2012/06/26 14:49:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.1 2012/04/03 17:22:53 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.2 2012/06/26 14:49:10 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -265,6 +265,12 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 	cv_destroy(&np->n_cv);
 	mutex_destroy(&np->n_lock);
 	kmem_free(np, sizeof(npf_natpolicy_t));
+}
+
+void
+npf_nat_freealg(npf_alg_t *alg)
+{
+	(void)alg; /* TODO */
 }
 
 /*
