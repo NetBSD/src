@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.3 2012/01/15 00:49:48 rmind Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.3.2.1 2012/06/26 00:07:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.3 2012/01/15 00:49:48 rmind Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.3.2.1 2012/06/26 00:07:20 riz Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: npf_var.c,v 1.3 2012/01/15 00:49:48 rmind Exp $");
 
 typedef struct npf_element {
 	void *		e_data;
+	int		e_type;
 	struct npf_element *e_next;
 } npf_element_t;
 
@@ -61,6 +62,7 @@ npfvar_create(const char *name)
 {
 	npfvar_t *vp = zalloc(sizeof(*vp));
 	vp->v_key = xstrdup(name);
+	var_num++;
 	return vp;
 }
 
@@ -87,7 +89,6 @@ npfvar_add(npfvar_t *vp)
 {
 	vp->v_next = var_list;
 	var_list = vp;
-	var_num++;
 }
 
 npfvar_t *
@@ -105,6 +106,7 @@ npfvar_add_element(npfvar_t *vp, int type, const void *data, size_t len)
 	vp->v_count++;
 	el = zalloc(sizeof(*el));
 	el->e_data = zalloc(len);
+	el->e_type = type;
 	memcpy(el->e_data, data, len);
 
 	/* Preserve order of insertion. */
@@ -167,6 +169,7 @@ npfvar_destroy(npfvar_t *vp)
 	npfvar_free_elements(vp->v_elements);
 	free(vp->v_key);
 	free(vp);
+	var_num--;
 }
 
 char *
@@ -179,12 +182,6 @@ size_t
 npfvar_get_count(const npfvar_t *vp)
 {
 	return vp ? vp->v_count : 0;
-}
-
-int
-npfvar_get_type(const npfvar_t *vp)
-{
-	return vp ? vp->v_type : -1;
 }
 
 static void *
@@ -222,6 +219,43 @@ npfvar_get_data1(const npfvar_t *vp, int type, size_t idx, size_t level)
 		return npfvar_get_data1(rvp, type, 0, level + 1);
 	}
 	return el->e_data;
+}
+
+static int
+npfvar_get_type1(const npfvar_t *vp, size_t idx, size_t level)
+{
+	npf_element_t *el;
+
+	if (level >= var_num) {
+		yyerror("variable loop for '%s'", vp->v_key);
+		return -1;
+	}
+
+	if (vp == NULL)
+		return -1;
+
+	if (vp->v_count <= idx) {
+		yyerror("variable '%s' has only %zu elements, requested %zu",
+		    vp->v_key, vp->v_count, idx);
+		return -1;
+	}
+
+	el = vp->v_elements;
+	while (idx--) {
+		el = el->e_next;
+	}
+
+	if (vp->v_type == NPFVAR_VAR_ID) {
+		npfvar_t *rvp = npfvar_lookup(el->e_data);
+		return npfvar_get_type1(rvp, 0, level + 1);
+	}
+	return el->e_type;
+}
+
+int
+npfvar_get_type(const npfvar_t *vp, size_t idx)
+{
+	return npfvar_get_type1(vp, idx, 0);
 }
 
 void *

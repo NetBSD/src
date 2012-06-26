@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.10.2.1 2012/04/03 17:22:53 riz Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10.2.2 2012/06/26 00:07:16 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef _NPF_IMPL_H_
 #define _NPF_IMPL_H_
 
-#if !defined(_KERNEL) && !defined(_NPF_TESTING)
+#if !defined(_KERNEL)
 #error "Kernel-level header only"
 #endif
 
@@ -50,10 +50,6 @@
 
 #include "npf.h"
 #include "npf_ncode.h"
-
-#ifdef _NPF_TESTING
-#include "testing.h"
-#endif
 
 #ifdef _NPF_DEBUG
 #define	NPF_PRINTF(x)	printf x
@@ -119,6 +115,13 @@ typedef struct {
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
 
+#if defined(_NPF_TESTING)
+void		npf_state_sample(npf_state_t *, bool);
+#define	NPF_TCP_STATE_SAMPLE(n, r)	npf_state_sample(n, r)
+#else
+#define	NPF_TCP_STATE_SAMPLE(n, r)
+#endif
+
 /*
  * INTERFACES.
  */
@@ -153,6 +156,7 @@ void		npf_stats_dec(npf_stats_t);
 int		npf_pfil_register(void);
 void		npf_pfil_unregister(void);
 bool		npf_pfil_registered_p(void);
+int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */
@@ -177,7 +181,7 @@ int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
 bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
-void		npf_return_block(npf_cache_t *, nbuf_t *, const int);
+bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
 int		npf_match_ether(nbuf_t *, int, int, uint16_t, uint32_t *);

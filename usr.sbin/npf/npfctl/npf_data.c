@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.10 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.10.2.1 2012/06/26 00:07:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.10 2012/01/08 21:34:21 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.10.2.1 2012/06/26 00:07:19 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -211,7 +211,7 @@ out:
 
 /*
  * npfctl_parse_port_range: create a port-range variable.  Note that the
- * passed port numbers are in network byte order.
+ * passed port numbers should be in host byte order.
  */
 npfvar_t *
 npfctl_parse_port_range(in_port_t s, in_port_t e)
@@ -219,8 +219,8 @@ npfctl_parse_port_range(in_port_t s, in_port_t e)
 	npfvar_t *vp = npfvar_create(".port_range");
 	port_range_t pr;
 
-	pr.pr_start = s;
-	pr.pr_end = e;
+	pr.pr_start = htons(s);
+	pr.pr_end = htons(e);
 
 	if (!npfvar_add_element(vp, NPFVAR_PORT_RANGE, &pr, sizeof(pr)))
 		goto out;
@@ -229,6 +229,44 @@ npfctl_parse_port_range(in_port_t s, in_port_t e)
 out:
 	npfvar_destroy(vp);
 	return NULL;
+}
+
+npfvar_t *
+npfctl_parse_port_range_variable(const char *v)
+{
+	npfvar_t *vp = npfvar_lookup(v);
+	size_t count = npfvar_get_count(vp);
+	npfvar_t *pvp = npfvar_create(".port_range");
+	port_range_t *pr;
+	in_port_t p;
+
+	for (size_t i = 0; i < count; i++) {
+		int type = npfvar_get_type(vp, i);
+		void *data = npfvar_get_data(vp, type, i);
+
+		switch (type) {
+		case NPFVAR_IDENTIFIER:
+		case NPFVAR_STRING:
+			p = npfctl_portno(data);
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		case NPFVAR_PORT_RANGE:
+			pr = data;
+			npfvar_add_element(pvp, NPFVAR_PORT_RANGE, pr,
+			    sizeof(*pr));
+			break;
+		case NPFVAR_NUM:
+			p = *(unsigned long *)data;
+			npfvar_add_elements(pvp, npfctl_parse_port_range(p, p));
+			break;
+		default:
+			yyerror("wrong variable '%s' type '%s' for port range",
+			    v, npfvar_type(type));
+			npfvar_destroy(pvp);
+			return NULL;
+		}
+	}
+	return pvp;
 }
 
 npfvar_t *
@@ -311,7 +349,7 @@ npfctl_parse_cidr(char *cidr)
 /*
  * npfctl_portno: convert port identifier (string) to a number.
  *
- * => Returns port number in network byte order.
+ * => Returns port number in host byte order.
  */
 in_port_t
 npfctl_portno(const char *port)
@@ -344,7 +382,7 @@ npfctl_portno(const char *port)
 	}
 out:
 	freeaddrinfo(rai);
-	return p;
+	return ntohs(p);
 }
 
 npfvar_t *
@@ -436,7 +474,7 @@ npfctl_icmpcode(uint8_t type, const char *code)
 }
 
 npfvar_t *
-npfctl_parse_icmp(uint8_t type, uint8_t code)
+npfctl_parse_icmp(int type, int code)
 {
 	npfvar_t *vp = npfvar_create(".icmp");
 

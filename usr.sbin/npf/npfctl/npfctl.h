@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.11.2.1 2012/04/03 17:22:54 riz Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.11.2.2 2012/06/26 00:07:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -57,11 +57,14 @@ typedef struct port_range {
 	in_port_t	pr_end;
 } port_range_t;
 
+typedef struct addr_port {
+	npfvar_t *	ap_netaddr;
+	npfvar_t *	ap_portrange;
+} addr_port_t;
+
 typedef struct filt_opts {
-	npfvar_t *	fo_from;
-	npfvar_t *	fo_from_port_range;
-	npfvar_t *	fo_to;
-	npfvar_t *	fo_to_port_range;
+	addr_port_t	fo_from;
+	addr_port_t	fo_to;
 } filt_opts_t;
 
 typedef struct opt_proto {
@@ -71,7 +74,7 @@ typedef struct opt_proto {
 
 typedef struct rule_group {
 	const char *	rg_name;
-	int		rg_attr;
+	uint32_t	rg_attr;
 	u_int		rg_ifnum;
 } rule_group_t;
 
@@ -100,9 +103,10 @@ unsigned long   npfctl_find_ifindex(const char *);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
 npfvar_t * 	npfctl_parse_icmpcode(const char *);
-npfvar_t * 	npfctl_parse_icmp(uint8_t, uint8_t);
+npfvar_t * 	npfctl_parse_icmp(int, int);
 npfvar_t *	npfctl_parse_iface(const char *);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
+npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
 fam_addr_mask_t *npfctl_parse_cidr(char *);
@@ -118,6 +122,7 @@ typedef struct nc_ctx nc_ctx_t;
 
 #define	NC_MATCH_TCP		0x04
 #define	NC_MATCH_UDP		0x08
+#define	NC_MATCH_ICMP		0x10
 
 nc_ctx_t *	npfctl_ncgen_create(void);
 void *		npfctl_ncgen_complete(nc_ctx_t *, size_t *);
@@ -136,23 +141,31 @@ void		npfctl_gennc_tbl(nc_ctx_t *, int, u_int);
 void		npfctl_gennc_tcpfl(nc_ctx_t *, uint8_t, uint8_t);
 
 /*
+ * N-code disassembler.
+ */
+
+typedef struct nc_inf nc_inf_t;
+
+nc_inf_t *	npfctl_ncode_disinf(FILE *);
+int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
+
+/*
  * Configuration building interface.
  */
 
-#define	NPFCTL_RDR		1
-#define	NPFCTL_BINAT		2
-#define	NPFCTL_NAT		3
+#define	NPFCTL_NAT_DYNAMIC	1
+#define	NPFCTL_NAT_STATIC	2
 
 void		npfctl_config_init(bool);
 int		npfctl_config_send(int);
+int		npfctl_config_show(int);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
 void		npfctl_build_group(const char *, int, u_int);
 void		npfctl_build_rule(int, u_int, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *, const char *);
-void		npfctl_build_nat(int, u_int, const filt_opts_t *,
-		    npfvar_t *, npfvar_t *);
+void		npfctl_build_nat(int, int, u_int, const addr_port_t *,
+		    const addr_port_t *, const filt_opts_t *);
 void		npfctl_build_table(const char *, u_int, const char *);
-int		npfctl_ncode_disassemble(FILE *, const void *, size_t);
 
 #endif

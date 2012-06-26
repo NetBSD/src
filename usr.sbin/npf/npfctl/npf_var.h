@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.1 2012/01/08 21:34:21 rmind Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.1.2.1 2012/06/26 00:07:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -36,14 +36,14 @@
 #define	NPFVAR_IDENTIFIER	1
 #define	NPFVAR_VAR_ID		2
 #define NPFVAR_NUM		3
+#define NPFVAR_PORT_RANGE	4
 
 /* Note: primitive types are equivalent. */
-#define NPFVAR_PRIM		NPFVAR_NUM
-#define NPFVAR_TYPE(x)		(((x) & ~NPFVAR_PRIM) ? (x) : 0)
+#define NPFVAR_PRIM		NPFVAR_PORT_RANGE
+#define NPFVAR_TYPE(x)		(((x) > NPFVAR_PRIM) ? (x) : 0)
 
-#define	NPFVAR_TABLE		4
-#define	NPFVAR_FAM		5
-#define	NPFVAR_PORT_RANGE	6
+#define	NPFVAR_TABLE		5
+#define	NPFVAR_FAM		6
 #define	NPFVAR_TCPFLAG		7
 #define	NPFVAR_ICMP		8
 #define	NPFVAR_PROC_OP		9
@@ -69,7 +69,7 @@ void		npfvar_destroy(npfvar_t *);
 
 char *		npfvar_expand_string(const npfvar_t *);
 size_t		npfvar_get_count(const npfvar_t *);
-int		npfvar_get_type(const npfvar_t *);
+int		npfvar_get_type(const npfvar_t *, size_t);
 void *		npfvar_get_data(const npfvar_t *, int, size_t);
 
 #endif
