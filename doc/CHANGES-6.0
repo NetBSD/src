@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.139 2012/06/25 00:43:40 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.140 2012/06/26 00:07:47 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5838,4 +5838,43 @@ sys/sys/ucontext.h				1.15
 	Add a semicolon to __CTASSERT() since it was removed from the macro.
 	(Build fix for ticket #369)
 	[jdc, ticket #371]
+
+sys/net/npf/npf.h				1.16
+sys/net/npf/npf_ctl.c				1.15
+sys/net/npf/npf_handler.c			1.16-1.17
+sys/net/npf/npf_impl.h				1.13-1.15
+sys/net/npf/npf_mbuf.c				1.7
+sys/net/npf/npf_ncode.h				1.7-1.8
+sys/net/npf/npf_sendpkt.c			1.10
+sys/net/npf/npf_state.c				1.7
+sys/net/npf/npf_state_tcp.c			1.4-1.6
+sys/rump/dev/lib/libnpf/Makefile		1.2-1.3
+sys/rump/net/lib/libnet/Makefile		1.14
+usr.sbin/npf/npfctl/Makefile			1.7
+usr.sbin/npf/npfctl/npf.conf.5			1.10-1.12
+usr.sbin/npf/npfctl/npf_build.c			1.6-1.9
+usr.sbin/npf/npfctl/npf_data.c			1.11-1.13
+usr.sbin/npf/npfctl/npf_disassemble.c		1.4-1.5
+usr.sbin/npf/npfctl/npf_ncgen.c			1.9-1.10
+usr.sbin/npf/npfctl/npf_parse.y			1.5-1.8
+usr.sbin/npf/npfctl/npf_scan.l			1.2-1.3
+usr.sbin/npf/npfctl/npf_var.c			1.4-1.5
+usr.sbin/npf/npfctl/npf_var.h			1.2
+usr.sbin/npf/npfctl/npfctl.c			1.11-1.12
+usr.sbin/npf/npfctl/npfctl.h			1.12,1.14-1.15
+usr.sbin/npf/npftest/Makefile			1.1-1.2
+usr.sbin/npf/npftest/libnpftest/Makefile	1.1-1.3
+usr.sbin/npf/npftest/libnpftest/npf_mbuf_subr.c	1.1-1.2
+usr.sbin/npf/npftest/libnpftest/npf_nbuf_test.c	1.1
+usr.sbin/npf/npftest/libnpftest/npf_processor_test.c 1.1
+usr.sbin/npf/npftest/libnpftest/npf_state_test.c 1.1
+usr.sbin/npf/npftest/libnpftest/npf_table_test.c 1.1
+usr.sbin/npf/npftest/libnpftest/npf_test.h	1.1-1.3
+usr.sbin/npf/npftest/libnpftest/npf_test_subr.c	1.1
+usr.sbin/npf/npftest/npfstream.c		1.1
+usr.sbin/npf/npftest/npftest.c			1.1-1.3
+usr.sbin/npf/npftest/npftest.h			1.1-1.3
+
+	More fixes and improvements for npf(4).
+	[rmind, ticket #354]
 
