@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.27.8.1 2012/06/26 14:49:09 riz Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27 2011/10/31 13:17:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.27.8.1 2012/06/26 14:49:09 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -68,7 +68,10 @@ static struct rumpcpu {
 
 	int rcpu_align[0] __aligned(CACHE_LINE_SIZE);
 } rcpu_storage[MAXCPUS];
+
 struct cpu_info *rump_cpu = &rump_cpus[0];
+kcpuset_t *kcpuset_attached = NULL;
+kcpuset_t *kcpuset_running = NULL;
 int ncpu;
 
 #define RCPULWP_BUSY	((void *)-1)
@@ -140,6 +143,9 @@ rump_cpus_bootstrap(int *nump)
 		ci = &rump_cpus[i];
 		ci->ci_index = i;
 	}
+
+	kcpuset_create(&kcpuset_attached, true);
+	kcpuset_create(&kcpuset_running, true);
 
 	/* attach first cpu for bootstrap */
 	rump_cpu_attach(&rump_cpus[0]);

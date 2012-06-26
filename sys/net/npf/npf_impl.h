@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.10.2.2 2012/06/26 00:07:16 riz Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10.2.3 2012/06/26 14:49:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -177,7 +177,13 @@ uint16_t	npf_fixup16_cksum(uint16_t, uint16_t, uint16_t);
 uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);
 uint16_t	npf_addr_cksum(uint16_t, int, npf_addr_t *, npf_addr_t *);
 uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
-int		npf_tcpsaw(npf_cache_t *, tcp_seq *, tcp_seq *, uint32_t *);
+int		npf_addr_cmp(const npf_addr_t *, const npf_netmask_t,
+		    const npf_addr_t *, const npf_netmask_t);
+void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,
+		    npf_addr_t *);
+
+int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
+		    uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
 bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
@@ -291,6 +297,7 @@ void		npf_nat_expire(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
+void		npf_nat_freealg(npf_alg_t *);
 
 int		npf_nat_save(prop_dictionary_t, prop_array_t, npf_nat_t *);
 npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
