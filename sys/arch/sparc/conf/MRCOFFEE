@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.36 2012/03/11 06:18:46 nakayama Exp $
+# $NetBSD: MRCOFFEE,v 1.37 2012/06/26 02:04:55 macallan Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.36 $"
+#ident 		"MRCOFFEE-$Revision: 1.37 $"
 
 maxusers	32
 
@@ -30,7 +30,7 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #options 	BLINK
 
 # builtin terminal emulations
-options 	WSEMUL_SUN		# sun terminal emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSEMUL_DEFAULT="\"vt100\""
 

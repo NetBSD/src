@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.232 2012/03/11 06:18:46 nakayama Exp $
+# $NetBSD: GENERIC,v 1.233 2012/06/26 02:04:55 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.232 $"
+#ident 		"GENERIC-$Revision: 1.233 $"
 
 maxusers	32
 
@@ -51,8 +51,8 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 # wscons stuff
-options 	WSEMUL_SUN
-#options 	WSEMUL_VT100
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_CUSTOM_OUTPUT
 options 	WS_DEFAULT_FG=WSCOL_BLACK
