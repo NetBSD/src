@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.81 2012/03/11 06:18:46 nakayama Exp $
+#	$NetBSD: INSTALL,v 1.82 2012/06/26 02:04:55 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -49,8 +49,8 @@ options 	FONT_BOLD8x16		# a somewhat smaller font
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 # wscons stuff
-options 	WSEMUL_SUN
-#options 	WSEMUL_VT100
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_CUSTOM_OUTPUT
 options 	WS_DEFAULT_FG=WSCOL_BLACK
