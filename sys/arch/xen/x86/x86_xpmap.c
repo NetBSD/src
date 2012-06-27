@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.44 2012/06/06 22:22:41 rmind Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.45 2012/06/27 00:37:10 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.44 2012/06/06 22:22:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.45 2012/06/27 00:37:10 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -235,7 +235,7 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 	    "\n", (int64_t)ma, (int64_t)pa));
 
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
-	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+	xpq_queue[xpq_idx].val = pa >> PAGE_SHIFT;
 	xpq_increment_idx();
 #ifdef XENDEBUG_SYNC
 	xpq_flush_queue();
