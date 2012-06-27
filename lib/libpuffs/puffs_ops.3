@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.31 2012/04/18 14:24:26 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.32 2012/06/27 13:25:23 manu Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .Ft int
 .Fo puffs_node_setattr_ttl
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "const struct vattr *vap"
-.Fa "const struct puffs_cred *pcr" "struct timespec *va_ttl"
+.Fa "const struct puffs_cred *pcr" "struct timespec *va_ttl" "int xflag"
 .Fc
 .Ft int
 .Fo puffs_node_poll
@@ -187,6 +187,12 @@
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
+.Fo puffs_node_write2
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
+.Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
+.Fa "int xflag"
+.Fc
+.Ft int
 .Fo puffs_node_abortop
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
 .Fa "const struct puffs_cn *pcn"
@@ -241,6 +247,7 @@
 .Fn puffs_newinfo_setvattl "struct puffs_newinfo *pni" "struct timespec *va_ttl"
 .Ft void
 .Fn puffs_newinfo_setcnttl "struct puffs_newinfo *pni" "struct timespec *cn_ttl"
+.Fc
 .Sh DESCRIPTION
 The operations
 .Nm puffs
@@ -521,11 +528,15 @@ Only fields of
 which contain a value different from
 .Dv PUFFS_VNOVAL
 (typecast to the field's type!) contain a valid value.
-.It Fn puffs_node_setattr_ttl "pu" "opc" "va" "pcr" "va_ttl"
+.It Fn puffs_node_setattr_ttl "pu" "opc" "va" "pcr" "va_ttl" "xflag"
 Same as
 .Fn puffs_node_setattr
 with cached attribute time to live specified in
-.Fa va_ttl
+.Fa va_ttl .
+.Dv PUFFS_SETATTR_FAF
+will be set in 
+.Fa xflag
+for Fire-And-Forget operations.
 .It Fn puffs_node_poll "pu" "opc" "events"
 Poll for events on node
 .Ar opc .
@@ -749,8 +760,10 @@ The parameter
 should be set to indicate the amount of request NOT completed.
 In the normal case this should be 0.
 .It Fn puffs_node_write "pu" "opc" "buf" "offset" "resid" "pcr" "ioflag"
+.It Fn puffs_node_write2 "pu" "opc" "buf" "offset" "resid" "pcr" "ioflag" \
+"xflag"
 .Fn puffs_node_write
-Write data to a file
+writes data to a file
 .Fa opc
 at
 .Fa offset
@@ -759,9 +772,17 @@ The number of octets written is indicated by
 .Fa resid ;
 everything must be written or an error will be generated.
 The parameter must be set to indicate the amount of data NOT written.
-In case the flag
+In case the ioflag
 .Dv PUFFS_IO_APPEND
 is specified, the data should be appended to the end of the file.
+.Fn puffs_node_write2
+serves the same purpose as
+.Fn puffs_node_write
+with an additional 
+.Fa xflag
+in which
+.Dv PUFFS_WRITE_FAF
+is set for Fire-And-Forget operations.
 .It Fn puffs_node_print "pu" "opc"
 Print information about node.
 This is used only for kernel-initiated diagnostic purposes.
