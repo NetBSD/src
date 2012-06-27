@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.69 2012/03/13 18:41:02 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.70 2012/06/27 12:28:28 cheusov Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -44,6 +44,7 @@ struct ki_pcred;
 struct proc;
 struct tty;
 struct vnode;
+struct cwdinfo;
 enum vtype;
 
 /* Types. */
@@ -331,7 +332,8 @@ enum {
 	KAUTH_CRED_INIT=1,
 	KAUTH_CRED_FORK,
 	KAUTH_CRED_COPY,
-	KAUTH_CRED_FREE
+	KAUTH_CRED_FREE,
+	KAUTH_CRED_CHROOT
 };
 
 /*
@@ -487,4 +489,6 @@ kauth_action_t kauth_extattr_action(mode_t);
 kauth_cred_t kauth_cred_get(void);
 
 void kauth_proc_fork(struct proc *, struct proc *);
+void kauth_proc_chroot(kauth_cred_t cred, struct cwdinfo *cwdi);
+
 #endif	/* !_SYS_KAUTH_H_ */
