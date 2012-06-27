@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.62 2012/04/22 03:57:00 uebayasi Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.63 2012/06/27 07:12:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.62 2012/04/22 03:57:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.63 2012/06/27 07:12:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1694,7 +1694,9 @@ nobios:
 				    == 0) && (edid_parse(edid, eip) == 0)) {
 
 					sc->sc_ports[i].rp_edid_valid = 1;
+#ifdef RADEONFB_DEBUG
 					edid_print(eip);
+#endif
 				}
 			}
 		}
