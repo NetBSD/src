@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.13 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: internals.c,v 1.14 2012/06/27 11:39:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.13 2006/11/24 19:46:58 christos Exp $");
+__RCSID("$NetBSD: internals.c,v 1.14 2012/06/27 11:39:14 blymn Exp $");
 
 #include <menu.h>
 #include <ctype.h>
@@ -73,7 +73,7 @@ _menui_stitch_items(MENU *menu)
 		if (menu->item_count > (menu->item_rows * menu->item_cols))
 			menu->item_cols += 1;
 	}
-	
+
 
 	_menui_max_item_size(menu);
 
@@ -96,7 +96,7 @@ _menui_stitch_items(MENU *menu)
 					: &menu->items[i]->right,
 					(row_major) ? &menu->items[i]->up
 					: &menu->items[i]->left);
-		
+
 		  /* fill in the row and column value of the item */
 		if (row_major) {
 			menu->items[i]->row = i / menu->item_cols;
@@ -106,7 +106,7 @@ _menui_stitch_items(MENU *menu)
 			menu->items[i]->col = i / menu->item_rows;
 		}
 	}
-	
+
 	return E_OK;
 }
 
@@ -148,8 +148,8 @@ _menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
 				*major_next = NULL;
 		} else
 			*major_next = menu->items[neighbour];
-		
-		
+
+
 		neighbour = item_no - item_cols;
 		if (neighbour < 0) {
 			if (cycle) {
@@ -166,7 +166,7 @@ _menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
 						neighbour = item_no +
 							(item_rows - 2)
 							* item_cols;
-					
+
 					*major_prev = menu->items[neighbour];
 				}
 			} else
@@ -174,7 +174,7 @@ _menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
 		} else
 			*major_prev = menu->items[neighbour];
 	}
-	
+
 	if ((item_no % item_cols) == 0) {
 		if (cycle) {
 			if (item_cols  < 2) {
@@ -194,7 +194,7 @@ _menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
 			*prev = NULL;
 	} else
 		*prev = menu->items[item_no - 1];
-	
+
 	if ((item_no % item_cols) == (item_cols - 1)) {
 		if (cycle) {
 			if (item_cols  < 2) {
@@ -206,7 +206,7 @@ _menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
 						*next = menu->items[item_no];
 					} else {
 						neighbour = item_cols * item_no / item_cols;
-						
+
 						*next = menu->items[neighbour];
 					}
 				} else
@@ -235,7 +235,7 @@ int
 _menui_goto_item(MENU *menu, ITEM *item, int new_top_row)
 {
 	int old_top_row = menu->top_row, old_cur_item = menu->cur_item;
-	
+
 	  /* If we get a null then the menu is not cyclic so deny request */
 	if (item == NULL)
 		return E_REQUEST_DENIED;
@@ -249,7 +249,7 @@ _menui_goto_item(MENU *menu, ITEM *item, int new_top_row)
 		if ((menu->posted == 1) && (menu->menu_init != NULL))
 			menu->menu_init(menu);
 	}
-	
+
 	  /* this looks like wasted effort but it can happen.... */
 	if (menu->cur_item != item->index) {
 
@@ -262,10 +262,10 @@ _menui_goto_item(MENU *menu, ITEM *item, int new_top_row)
 
 		if (menu->posted == 1)
 			_menui_redraw_menu(menu, old_top_row, old_cur_item);
-		
+
 		if ((menu->posted == 1) && (menu->item_init != NULL))
 			menu->item_init(menu);
-		
+
 	}
 
 	menu->in_init = 0;
@@ -283,7 +283,7 @@ _menui_match_items(MENU *menu, int direction, int *item_matched)
 	int i, caseless;
 
 	caseless = ((menu->opts & O_IGNORECASE) == O_IGNORECASE);
-	
+
 	i = menu->cur_item;
 	if (direction == MATCH_NEXT_FORWARD) {
 		if (++i >= menu->item_count) i = 0;
@@ -291,7 +291,7 @@ _menui_match_items(MENU *menu, int direction, int *item_matched)
 		if (--i < 0) i = menu->item_count - 1;
 	}
 
-	
+
 	do {
 		if (menu->items[i]->name.length >= menu->plen) {
 			  /* no chance if pattern is longer */
@@ -313,7 +313,7 @@ _menui_match_items(MENU *menu, int direction, int *item_matched)
 				}
 			}
 		}
-	
+
 		if ((direction == MATCH_FORWARD) ||
 		    (direction == MATCH_NEXT_FORWARD)) {
 			if (++i >= menu->item_count) i = 0;
@@ -327,7 +327,7 @@ _menui_match_items(MENU *menu, int direction, int *item_matched)
 }
 
 /*
- * Attempt to match the pattern buffer against the items.  If c is a 
+ * Attempt to match the pattern buffer against the items.  If c is a
  * printable character then add it to the pattern buffer prior to
  * performing the match.  Direction determines the direction of matching.
  * If the match is successful update the item_matched variable with the
@@ -360,7 +360,7 @@ _menui_match_pattern(MENU *menu, int c, int direction, int *item_matched)
 			menu->pattern[--menu->plen] = '\0';
 			return E_NO_MATCH;
 		}
-		
+
 		if (_menui_match_items(menu, direction,
 					item_matched) == E_NO_MATCH) {
 			menu->pattern[--menu->plen] = '\0';
@@ -384,9 +384,9 @@ void
 _menui_draw_item(MENU *menu, int item)
 {
 	int j, pad_len, mark_len;
-	
+
 	mark_len = max(menu->mark.length, menu->unmark.length);
-	
+
 	wmove(menu->scrwin,
 	      menu->items[item]->row - menu->top_row,
 	      menu->items[item]->col * (menu->col_width + 1));
@@ -422,12 +422,12 @@ _menui_draw_item(MENU *menu, int item)
 		for (j = menu->unmark.length; j < mark_len; j++)
 			waddch(menu->scrwin, ' ');
 	}
-	
+
 	  /* add the menu name */
 	for (j=0; j < menu->items[item]->name.length; j++)
 		waddch(menu->scrwin,
 		       menu->items[item]->name.string[j]);
-	
+
 	pad_len = menu->col_width - menu->items[item]->name.length
 		- mark_len - 1;
 	if ((menu->opts & O_SHOWDESC) == O_SHOWDESC) {
@@ -443,7 +443,7 @@ _menui_draw_item(MENU *menu, int item)
 			waddch(menu->scrwin, ' ');
 	}
 	menu->items[item]->visible = 1;
-	
+
 	  /* kill any special attributes... */
 	wattrset(menu->scrwin, menu->back);
 
@@ -459,7 +459,7 @@ _menui_draw_item(MENU *menu, int item)
 		      menu->items[item]->col * (menu->col_width + 1) - 1);
 		waddch(menu->scrwin, ' ');
 	}
-	
+
 	  /* and position the cursor nicely */
 	pos_menu_cursor(menu);
 }
@@ -471,7 +471,7 @@ int
 _menui_draw_menu(MENU *menu)
 {
 	int rowmajor, i, j, max_items, last_item, row = -1, col = -1;
-	
+
 	rowmajor = ((menu->opts & O_ROWMAJOR) == O_ROWMAJOR);
 
 	for (i = 0;  i < menu->item_count; i++) {
@@ -487,7 +487,7 @@ _menui_draw_menu(MENU *menu)
 	max_items = menu->rows * menu->cols;
 	last_item = ((max_items + i) > menu->item_count) ? menu->item_count :
 		(max_items + i);
-	
+
 	for (; i < last_item; i++) {
 		if (i > menu->item_count) {
 			  /* no more items to draw, write background blanks */
@@ -516,7 +516,7 @@ _menui_draw_menu(MENU *menu)
 				waddch(menu->scrwin, ' ');
 		} else {
 			_menui_draw_item(menu, i);
-			
+
 		}
 
 	}
@@ -525,11 +525,11 @@ _menui_draw_menu(MENU *menu)
 		for (j = last_item; j < menu->item_count; j++)
 			menu->items[j]->visible = 0;
 	}
-	
+
 	return E_OK;
 }
 
-	
+
 /*
  * Calculate the widest menu item and stash it in the menu struct.
  *
@@ -540,7 +540,7 @@ _menui_max_item_size(MENU *menu)
 	int i, with_desc, width;
 
 	with_desc = ((menu->opts & O_SHOWDESC) == O_SHOWDESC);
-	
+
 	for (i = 0; i < menu->item_count; i++) {
 		width = menu->items[i]->name.length
 			+ max(menu->mark.length, menu->unmark.length);
