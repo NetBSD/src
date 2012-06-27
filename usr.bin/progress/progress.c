@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.19 2011/09/16 15:39:28 joerg Exp $ */
+/*	$NetBSD: progress.c,v 1.20 2012/06/27 22:07:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,32 +31,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.19 2011/09/16 15:39:28 joerg Exp $");
+__RCSID("$NetBSD: progress.c,v 1.20 2012/06/27 22:07:36 riastradh Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
-#include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/ftp.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <glob.h>
-#include <signal.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
-#include <time.h>
-#include <tzfile.h>
 #include <unistd.h>
 
 #define GLOBAL			/* force GLOBAL decls in progressbar.h to be
