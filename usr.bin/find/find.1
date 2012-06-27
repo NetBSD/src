@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.73 2012/06/20 17:55:06 wiz Exp $
+.\"	$NetBSD: find.1,v 1.74 2012/06/27 22:31:26 jdf Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,6 @@ listed below) in terms
 of each file in the tree.
 .Pp
 The options are as follows:
-.Pp
 .Bl -tag -width Ds
 .It Fl H
 The
@@ -154,7 +153,7 @@ option is a modification to permit
 to be safely used in conjunction with
 .Xr xargs 1 .
 If a file name contains any of the delimiting characters used by
-.Nm xargs ,
+.Xr xargs 1 ,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
 The delimiting characters include single
@@ -169,7 +168,7 @@ Alternatively, the
 or
 .Ic -printx
 primaries can be used to format the output in a way that
-.Nm xargs
+.Xr xargs 1
 can accept.
 .It Fl x
 The
@@ -490,7 +489,7 @@ was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
 .Pp
-.It Ic -ok Ar utility Oo argument ... Oc Ic ;
+.It Ic -ok Ar utility Oo argument ... Oc Ic \&;
 The
 .Ic -ok
 primary is similar to the semicolon-terminated
@@ -618,9 +617,9 @@ This primary always evaluates to true.
 It prints the pathname of the current file to standard output,
 with each space, tab, newline, backslash, dollar sign, and single,
 double, or back quotation mark prefixed by a backslash, so the output of
-.Nm find
+.Nm
 can safely be used as input to
-.Nm xargs .
+.Xr xargs 1 .
 .Pp
 .It Ic -prune
 This primary always evaluates to true.
@@ -731,10 +730,10 @@ The second expression is not evaluated if the first expression is true.
 .El
 .Pp
 All operands and primaries must be separate arguments to
-.Nm  .
+.Nm .
 Primaries which themselves take arguments expect each argument
 to be a separate argument to
-.Nm  .
+.Nm .
 .Sh EXIT STATUS
 The
 .Nm
@@ -897,7 +896,7 @@ primary does not interact well with other options that cause the file system
 tree traversal options to be changed.
 .Sh HISTORY
 A much simpler
-.Nm find
+.Nm .
 command appeared in First Edition AT\*[Am]T Unix.
 The syntax had become similar to the present version by
 the time of the Fifth Edition.
