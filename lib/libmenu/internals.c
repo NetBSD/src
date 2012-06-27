@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.14 2012/06/27 11:39:14 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.15 2012/06/27 11:53:36 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.14 2012/06/27 11:39:14 blymn Exp $");
+__RCSID("$NetBSD: internals.c,v 1.15 2012/06/27 11:53:36 blymn Exp $");
 
 #include <menu.h>
 #include <ctype.h>
@@ -37,9 +37,7 @@ __RCSID("$NetBSD: internals.c,v 1.14 2012/06/27 11:39:14 blymn Exp $");
 
 /* internal function prototypes */
 static void
-_menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
-		       int item_cols, ITEM **next, ITEM **prev,
-			ITEM **major_next, ITEM **major_prev);
+_menui_calc_neighbours(MENU *menu, int item_no);
 static void _menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item);
 
   /*
@@ -52,9 +50,8 @@ static void _menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item);
 int
 _menui_stitch_items(MENU *menu)
 {
-	int i, cycle, row_major;
+	int i, row_major;
 
-	cycle = ((menu->opts & O_NONCYCLIC) != O_NONCYCLIC);
 	row_major = ((menu->opts & O_ROWMAJOR) == O_ROWMAJOR);
 
 	if (menu->posted == 1)
@@ -62,41 +59,14 @@ _menui_stitch_items(MENU *menu)
 	if (menu->items == NULL)
 		return E_BAD_ARGUMENT;
 
-	if (row_major) {
-		menu->item_rows = menu->item_count / menu->cols;
-		menu->item_cols = menu->cols;
-		if (menu->item_count > (menu->item_rows * menu->item_cols))
-			menu->item_rows += 1;
-	} else {
-		menu->item_cols = menu->item_count / menu->rows;
-		menu->item_rows = menu->rows;
-		if (menu->item_count > (menu->item_rows * menu->item_cols))
-			menu->item_cols += 1;
-	}
-
+	menu->item_rows = menu->item_count / menu->cols;
+	menu->item_cols = menu->cols;
+	if (menu->item_count > (menu->item_rows * menu->item_cols))
+		menu->item_rows += 1;
 
 	_menui_max_item_size(menu);
 
 	for (i = 0; i < menu->item_count; i++) {
-		  /* Calculate the neighbours.  The ugliness here deals with
-		   * the differing menu layout styles.  The layout affects
-		   * the neighbour calculation so we change the arguments
-		   * around depending on the layout style.
-		   */
-		_menui_calc_neighbours(menu, i, cycle,
-					(row_major) ? menu->item_rows
-					: menu->item_cols,
-					(row_major) ? menu->item_cols
-					: menu->item_rows,
-					(row_major) ? &menu->items[i]->right
-					: &menu->items[i]->down,
-					(row_major) ? &menu->items[i]->left
-					: &menu->items[i]->up,
-					(row_major) ? &menu->items[i]->down
-					: &menu->items[i]->right,
-					(row_major) ? &menu->items[i]->up
-					: &menu->items[i]->left);
-
 		  /* fill in the row and column value of the item */
 		if (row_major) {
 			menu->items[i]->row = i / menu->item_cols;
@@ -105,125 +75,200 @@ _menui_stitch_items(MENU *menu)
 			menu->items[i]->row = i % menu->item_rows;
 			menu->items[i]->col = i / menu->item_rows;
 		}
+
+		_menui_calc_neighbours(menu, i);
 	}
 
 	return E_OK;
 }
 
   /*
-   * Calculate the neighbours for an item in menu.  This routine deliberately
-   * does not refer to up/down/left/right as these concepts depend on the menu
-   * layout style (row major or not).  By arranging the arguments in the right
-   * order the caller can generate the neighbours for either menu layout style.
+   * Calculate the neighbours for an item in menu.
    */
 static void
-_menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
-		       int item_cols, ITEM **next, ITEM **prev,
-		       ITEM **major_next, ITEM **major_prev)
+_menui_calc_neighbours(MENU *menu, int item_no)
 {
-	int neighbour;
+	int neighbour, cycle, row_major, edge;
+	ITEM *item;
 
-	if (item_rows < 2) {
+	row_major = ((menu->opts & O_ROWMAJOR) == O_ROWMAJOR);
+	cycle = ((menu->opts & O_NONCYCLIC) != O_NONCYCLIC);
+	item = menu->items[item_no];
+
+	if (menu->item_rows < 2) {
 		if (cycle) {
-			*major_next = menu->items[item_no];
-			*major_prev = menu->items[item_no];
+			item->up = item;
+			item->down = item;
 		} else {
-			*major_next = NULL;
-			*major_prev = NULL;
+			item->up = NULL;
+			item->down = NULL;
 		}
 	} else {
-		neighbour = item_no + item_cols;
-		if (neighbour >= menu->item_count) {
-			if (cycle) {
-				if (item_rows == 2) {
-					neighbour = item_no - item_cols;
-					if (neighbour < 0)
-						neighbour = item_no;
-					*major_next = menu->items[neighbour];
-				} else {
-					*major_next =
-						menu->items[item_no % item_cols];
-				}
+
+		/* up */
+		if (menu->item_cols < 2) {
+			if (item_no == 0) {
+				if (cycle)
+					item->up =
+					    menu->items[menu->item_count - 1];
+				else
+					item->up = NULL;
 			} else
-				*major_next = NULL;
-		} else
-			*major_next = menu->items[neighbour];
-
-
-		neighbour = item_no - item_cols;
-		if (neighbour < 0) {
-			if (cycle) {
-				if (item_rows == 2) {
-					neighbour = item_no + item_cols;
+				item->up = menu->items[item_no - 1];
+		} else {
+			edge = 0;
+			if (row_major) {
+				if (item->row == 0) {
+					neighbour =
+				    	(menu->item_rows - 1) * menu->item_cols
+						+ item->col;
 					if (neighbour >= menu->item_count)
-						neighbour = item_no;
-					*major_prev = menu->items[neighbour];
-				} else {
-					neighbour = item_no +
-						(item_rows - 1) * item_cols;
-
+						neighbour -= menu->item_cols;
+					edge = 1;
+				} else
+					neighbour = item_no - menu->item_cols;
+			} else {
+				if (item->row == 0) {
+					neighbour = menu->item_rows * item->col
+						+ menu->item_rows - 1;
 					if (neighbour >= menu->item_count)
-						neighbour = item_no +
-							(item_rows - 2)
-							* item_cols;
+						neighbour = menu->item_count - 1;
+					edge = 1;
+				} else
+					neighbour = item_no - 1;
+			}
 
-					*major_prev = menu->items[neighbour];
-				}
+
+			item->up = menu->items[neighbour];
+			if ((!cycle) && (edge == 1))
+				item->up = NULL;
+		}
+
+		/* Down */
+		if (menu->item_cols < 2) {
+			if (item_no == (menu->item_count - 1)) {
+				if (cycle)
+					item->down = menu->items[0];
+				else
+					item->down = NULL;
 			} else
-				*major_prev = NULL;
-		} else
-			*major_prev = menu->items[neighbour];
+				item->down = menu->items[item_no + 1];
+		} else {
+			edge = 0;
+			if (row_major) {
+				if (item->row == menu->item_rows - 1) {
+					neighbour = item->col;
+					edge = 1;
+				} else {
+					neighbour = item_no + menu->item_cols;
+					if (neighbour >= menu->item_count) {
+						neighbour = item->col;
+						edge = 1;
+					}
+				}
+			} else {
+				if (item->row == menu->item_rows - 1) {
+					neighbour = item->col * menu->item_rows;
+					edge = 1;
+				} else {
+					neighbour = item_no + 1;
+					if (neighbour >= menu->item_count) {
+						neighbour = item->col
+						    * menu->item_rows;
+						edge = 1;
+					}
+				}
+			}
+
+			item->down = menu->items[neighbour];
+			if ((!cycle) && (edge == 1))
+				item->down = NULL;
+		}
 	}
 
-	if ((item_no % item_cols) == 0) {
+	if (menu->item_cols < 2) {
 		if (cycle) {
-			if (item_cols  < 2) {
-				*prev = menu->items[item_no];
-			} else {
-				neighbour = item_no + item_cols - 1;
-				if (neighbour >= menu->item_count) {
-					if (item_cols == 2) {
-						*prev = menu->items[item_no];
-					} else {
-						*prev = menu->items[menu->item_count - 1];
-					}
-				} else
-					*prev = menu->items[neighbour];
-			}
-		} else
-			*prev = NULL;
-	} else
-		*prev = menu->items[item_no - 1];
-
-	if ((item_no % item_cols) == (item_cols - 1)) {
-		if (cycle) {
-			if (item_cols  < 2) {
-				*next = menu->items[item_no];
-			} else {
-				neighbour = item_no - item_cols + 1;
-				if (neighbour >= menu->item_count) {
-					if (item_cols == 2) {
-						*next = menu->items[item_no];
-					} else {
-						neighbour = item_cols * item_no / item_cols;
-
-						*next = menu->items[neighbour];
-					}
-				} else
-					*next = menu->items[neighbour];
-			}
-		} else
-			*next = NULL;
+			item->left = item;
+			item->right = item;
+		} else {
+			item->left = NULL;
+			item->right = NULL;
+		}
 	} else {
-		neighbour = item_no + 1;
-		if (neighbour >= menu->item_count) {
-			if (cycle) {
-				neighbour = item_cols * (item_rows - 1);
-				*next = menu->items[neighbour];
+		/* left */
+		if (menu->item_rows < 2) {
+			if (item_no == 0) {
+				if (cycle)
+					item->left =
+					    menu->items[menu->item_count - 1];
+				else
+					item->left = NULL;
 			} else
-				*next = NULL;
-		} else
-			*next = menu->items[neighbour];
+				item->left = menu->items[item_no - 1];
+		} else {
+			edge = 0;
+			if (row_major) {
+				if (item->col == 0) {
+					neighbour = item_no + menu->cols - 1;
+					if (neighbour >= menu->item_count)
+						neighbour = menu->item_count - 1;
+					edge = 1;
+				} else
+					neighbour = item_no - 1;
+			} else {
+				if (item->col == 0) {
+					neighbour = menu->item_rows
+					    * (menu->item_cols - 1) + item->row;
+					if (neighbour >= menu->item_count)
+						neighbour -= menu->item_rows;
+					edge = 1;
+				} else
+					neighbour = item_no - menu->item_rows;
+			}
+
+			item->left = menu->items[neighbour];
+			if ((!cycle) && (edge == 1))
+				item->left = NULL;
+		}
+
+		/* right */
+		if (menu->item_rows < 2) {
+			if (item_no == menu->item_count - 1) {
+				if (cycle)
+					item->right = menu->items[0];
+				else
+					item->right = NULL;
+			} else
+				item->right = menu->items[item_no + 1];
+		} else {
+			edge = 0;
+			if (row_major) {
+				if (item->col == menu->item_cols - 1) {
+					neighbour = item_no - menu->item_cols
+					    + 1;
+					edge = 1;
+				} else if (item_no == menu->item_count - 1) {
+					neighbour = item->row * menu->item_cols;
+					edge = 1;
+				} else
+					neighbour = item_no + 1;
+			} else {
+				if (item->col == menu->item_cols - 1) {
+					neighbour = item->row;
+					edge = 1;
+				} else {
+					neighbour = item_no + menu->item_rows;
+					if (neighbour >= menu->item_count) {
+						neighbour = item->row;
+						edge = 1;
+					}
+				}
+			}
+
+			item->right = menu->items[neighbour];
+			if ((!cycle) && (edge == 1))
+				item->right = NULL;
+		}
 	}
 }
 
@@ -470,60 +515,70 @@ _menui_draw_item(MENU *menu, int item)
 int
 _menui_draw_menu(MENU *menu)
 {
-	int rowmajor, i, j, max_items, last_item, row = -1, col = -1;
+	int rowmajor, i, j, k, row = -1, col = -1, stride;
+	int incr, cur_row, offset, row_count;
 
 	rowmajor = ((menu->opts & O_ROWMAJOR) == O_ROWMAJOR);
 
-	for (i = 0;  i < menu->item_count; i++) {
+	if (rowmajor) {
+		stride = 1;
+		incr = menu->item_cols;
+	} else {
+		stride = menu->item_rows;
+		incr = 1;
+	}
+	row_count = 0;
+
+	for (i = 0;  i < menu->item_count; i += incr) {
 		if (menu->items[i]->row == menu->top_row)
 			break;
-		menu->items[i]->visible = 0;
+		row_count++;
+		for (j = 0; j < menu->item_cols; j++) {
+			offset = j * stride + i;
+			if (offset >= menu->item_count)
+				break; /* done */
+			menu->items[offset]->visible = 0;
+		}
 	}
 
 	wmove(menu->scrwin, 0, 0);
 
 	menu->col_width = getmaxx(menu->scrwin) / menu->cols;
 
-	max_items = menu->rows * menu->cols;
-	last_item = ((max_items + i) > menu->item_count) ? menu->item_count :
-		(max_items + i);
-
-	for (; i < last_item; i++) {
-		if (i > menu->item_count) {
-			  /* no more items to draw, write background blanks */
-			wattrset(menu->scrwin, menu->back);
-			if (row < 0) {
-				row = menu->items[menu->item_count - 1]->row;
-				col = menu->items[menu->item_count - 1]->col;
-			}
-
-			if (rowmajor) {
-				col++;
-				if (col > menu->cols) {
-					col = 0;
-					row++;
+	for (cur_row = 0; cur_row < menu->rows; cur_row++) {
+		for (j = 0; j < menu->cols; j++) {
+			offset = j * stride + i;
+			if (offset >= menu->item_count) {
+			   /* no more items to draw, write background blanks */
+				wattrset(menu->scrwin, menu->back);
+				if (row < 0) {
+					row = menu->items[menu->item_count - 1]->row;
+					col = menu->items[menu->item_count - 1]->col;
 				}
+
+				wmove(menu->scrwin, cur_row,
+				      j * (menu->col_width + 1));
+				for (k = 0; k < menu->col_width; k++)
+					waddch(menu->scrwin, ' ');
 			} else {
-				row++;
-				if (row > menu->rows) {
-					row = 0;
-					col++;
-				}
+				_menui_draw_item(menu, offset);
 			}
-			wmove(menu->scrwin, row,
-			      col * (menu->col_width + 1));
-			for (j = 0; j < menu->col_width; j++)
-				waddch(menu->scrwin, ' ');
-		} else {
-			_menui_draw_item(menu, i);
-
 		}
 
+		i += incr;
+		row_count++;
 	}
 
-	if (last_item < menu->item_count) {
-		for (j = last_item; j < menu->item_count; j++)
-			menu->items[j]->visible = 0;
+	if (row_count < menu->item_rows) {
+		for (cur_row = row_count;  cur_row < menu->item_rows; cur_row++) {
+			for (j = 0; j < menu->item_cols; j++) {
+				offset = j * stride + i;
+				if (offset >= menu->item_count)
+					break; /* done */
+				menu->items[offset]->visible = 0;
+			}
+			i += incr;
+		}
 	}
 
 	return E_OK;
