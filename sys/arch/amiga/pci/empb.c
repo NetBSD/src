@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.6 2012/06/04 19:45:50 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.7 2012/06/27 18:53:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include "opt_pci.h"
 
-/* #define EMPB_DEBUG 1 */
+/*#define EMPB_DEBUG 1 */
 
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
 #define	PCI_CONF_UNLOCK(s)	splx((s))
