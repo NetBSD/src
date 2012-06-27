@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1766 2012/06/25 15:30:16 christos Exp $
+#	$NetBSD: mi,v 1.1767 2012/06/27 22:18:06 jdf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1606,8 +1606,8 @@
 ./usr/include/g++/values.h			comp-obsolete		obsolete
 ./usr/include/g++/vector			comp-cxx-include	cxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
-./usr/include/gcc-4.5/omp.h			comp-gcc-include	gcc=45
 ./usr/include/gcc-4.5/mf-runtime.h		comp-gcc-include	gcc=45
+./usr/include/gcc-4.5/omp.h			comp-gcc-include	gcc=45
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -2961,15 +2961,15 @@
 ./usr/lib/libmpfr.a				-unknown-		obsolete
 ./usr/lib/libmpfr.a				comp-c-lib		obsolete
 ./usr/lib/libmpfr_p.a				comp-c-proflib		obsolete
-./usr/lib/libnetpgp.a				comp-c-lib		crypto
-./usr/lib/libnetpgp_g.a				-unknown-		debuglib
-./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libmudflap.a				comp-c-lib		gcc=45
 ./usr/lib/libmudflap_g.a			-unknown-		gcc=45,debuglib
 ./usr/lib/libmudflap_p.a			comp-c-proflib		gcc=45,profile
 ./usr/lib/libmudflapth.a			comp-c-lib		gcc=45
 ./usr/lib/libmudflapth_g.a			-unknown-		gcc=45,debuglib
 ./usr/lib/libmudflapth_p.a			comp-c-proflib		gcc=45,profile
+./usr/lib/libnetpgp.a				comp-c-lib		crypto
+./usr/lib/libnetpgp_g.a				-unknown-		debuglib
+./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libnpf.a				comp-npf-lib		npf
 ./usr/lib/libnpf_g.a				-unknown-		debuglib
 ./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
@@ -3916,8 +3916,8 @@
 ./usr/libdata/debug/usr/bin/write.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xargs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xgettext.debug	comp-c-debug		debug
-./usr/libdata/debug/usr/bin/xstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/xmlwf.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/xstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/xz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/yacc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/yes.debug		comp-util-debug		debug
@@ -5789,12 +5789,12 @@
 ./usr/share/man/cat3/authsys_create_default.0	comp-c-catman		.cat
 ./usr/share/man/cat3/authunix_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/authunix_create_default.0	comp-c-catman		.cat
-./usr/share/man/cat3/basename.0			comp-c-catman		.cat
 ./usr/share/man/cat3/backtrace.0		comp-c-catman		.cat
 ./usr/share/man/cat3/backtrace_symbols.0	comp-c-catman		.cat
-./usr/share/man/cat3/backtrace_symbols_fmt.0	comp-c-catman		.cat
 ./usr/share/man/cat3/backtrace_symbols_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat3/backtrace_symbols_fd_fmt.0	comp-c-catman		.cat
+./usr/share/man/cat3/backtrace_symbols_fmt.0	comp-c-catman		.cat
+./usr/share/man/cat3/basename.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bcopy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/beep.0			comp-c-catman		.cat
@@ -6115,6 +6115,7 @@
 ./usr/share/man/cat3/ctime_rz.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ctype.0			comp-c-catman		.cat
 ./usr/share/man/cat3/current_field.0		comp-c-catman		.cat
+./usr/share/man/cat3/current_item.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curs_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/curses.0			comp-c-catman		.cat
 ./usr/share/man/cat3/curses_addch.0		comp-c-catman		.cat
@@ -6594,6 +6595,8 @@
 ./usr/share/man/cat3/free_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/free_fieldtype.0		comp-c-catman		.cat
 ./usr/share/man/cat3/free_form.0		comp-c-catman		.cat
+./usr/share/man/cat3/free_item.0		comp-c-catman		.cat
+./usr/share/man/cat3/free_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeifaddrs.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
@@ -6762,8 +6765,8 @@
 ./usr/share/man/cat3/getpary.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getparyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getpass.0			comp-c-catman		.cat
-./usr/share/man/cat3/getpassfd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getpass_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/getpassfd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getpeereid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprogname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprotobyname.0		comp-c-catman		.cat
@@ -7028,6 +7031,19 @@
 ./usr/share/man/cat3/iswupper.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iswxdigit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isxdigit.0			comp-c-catman		.cat
+./usr/share/man/cat3/item_count.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_description.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_index.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_name.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_opts.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_opts_off.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_opts_on.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_selected.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_term.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_userptr.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_value.0		comp-c-catman		.cat
+./usr/share/man/cat3/item_visible.0		comp-c-catman		.cat
 ./usr/share/man/cat3/itimerspec.0		comp-c-catman		.cat
 ./usr/share/man/cat3/itimerval.0		comp-c-catman		.cat
 ./usr/share/man/cat3/j0.0			comp-c-catman		.cat
@@ -7886,10 +7902,14 @@
 ./usr/share/man/cat3/memrchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/memset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_attributes.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_driver.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_fore.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_format.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_grey.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_hook.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_item_current.0	comp-c-catman		.cat
 ./usr/share/man/cat3/menu_item_name.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_item_new.0		comp-c-catman		.cat
@@ -7901,8 +7921,14 @@
 ./usr/share/man/cat3/menu_mark.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_new.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_opts.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_opts_on.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_opts_off.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_pad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menu_pattern.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_post.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_sub.0			comp-c-catman		.cat
+./usr/share/man/cat3/menu_term.0		comp-c-catman		.cat
+./usr/share/man/cat3/menu_unmark.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_userptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/menu_win.0			comp-c-catman		.cat
 ./usr/share/man/cat3/menus.0			comp-c-catman		.cat
@@ -7987,6 +8013,8 @@
 ./usr/share/man/cat3/new_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/new_fieldtype.0		comp-c-catman		.cat
 ./usr/share/man/cat3/new_form.0			comp-c-catman		.cat
+./usr/share/man/cat3/new_item.0			comp-c-catman		.cat
+./usr/share/man/cat3/new_menu.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_page.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newpad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newterm.0			comp-c-catman		.cat
@@ -8187,6 +8215,7 @@
 ./usr/share/man/cat3/popcountll.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
+./usr/share/man/cat3/pos_menu_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix2time.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix2time_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix_memalign.0		comp-c-catman		.cat
@@ -8213,6 +8242,7 @@
 ./usr/share/man/cat3/posix_spawnattr_setsigmask.0	comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawnp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/post_form.0		comp-c-catman		.cat
+./usr/share/man/cat3/post_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/powf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ppath.0			comp-c-catman		.cat
@@ -8750,6 +8780,7 @@
 ./usr/share/man/cat3/scalbnf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalbnl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scale_form.0		comp-c-catman		.cat
+./usr/share/man/cat3/scale_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
@@ -8840,6 +8871,7 @@
 ./usr/share/man/cat3/sem_wait.0			comp-c-catman		.cat
 ./usr/share/man/cat3/set_com_err_hook.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/set_current_field.0	comp-c-catman		.cat
+./usr/share/man/cat3/set_current_item.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_curterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_buffer.0		comp-c-catman		.cat
@@ -8863,9 +8895,28 @@
 ./usr/share/man/cat3/set_form_term.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_form_userptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_form_win.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_item_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_item_term.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_item_userptr.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_item_value.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_max_field.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_back.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_fore.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_format.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_grey.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_items.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_mark.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_opts.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_pad.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_sub.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_term.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_unmark.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_userptr.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_menu_win.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_new_page.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_term.0			comp-c-catman		.cat
+./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setbuf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setbuffer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setclasscontext.0		comp-c-catman		.cat
@@ -9231,6 +9282,7 @@
 ./usr/share/man/cat3/tok_reset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tok_str.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tolower.0			comp-c-catman		.cat
+./usr/share/man/cat3/top_row.0			comp-c-catman		.cat
 ./usr/share/man/cat3/touchline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/touchoverlap.0		comp-c-catman		.cat
 ./usr/share/man/cat3/touchwin.0			comp-c-catman		.cat
@@ -9273,6 +9325,7 @@
 ./usr/share/man/cat3/unistd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unlockpt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unpost_form.0		comp-c-catman		.cat
+./usr/share/man/cat3/unpost_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unsetenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unvis.0			comp-c-catman		.cat
@@ -9495,11 +9548,11 @@
 ./usr/share/man/cat3/yp_match.0			comp-c-catman		yp,.cat
 ./usr/share/man/cat3/yp_next.0			comp-c-catman		yp,.cat
 ./usr/share/man/cat3/yp_order.0			comp-c-catman		yp,.cat
+./usr/share/man/cat3/yp_setbindtries.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/yp_unbind.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/ypclnt.0			comp-c-catman		yp,.cat
 ./usr/share/man/cat3/yperr_string.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/ypprot_err.0		comp-c-catman		yp,.cat
-./usr/share/man/cat3/yp_setbindtries.0		comp-c-catman		yp,.cat
 ./usr/share/man/cat3/zlib.0			comp-c-catman		.cat
 ./usr/share/man/cat5/config.0			comp-util-catman	.cat
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
@@ -10089,6 +10142,7 @@
 ./usr/share/man/cat9/fuswintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fusword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuword.0			comp-sys-catman		.cat
+./usr/share/man/cat9/genfs.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getbintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbinuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
@@ -10100,7 +10154,6 @@
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
-./usr/share/man/cat9/genfs.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash.0			comp-sys-catman		.cat
@@ -12165,12 +12218,12 @@
 ./usr/share/man/html3/authsys_create_default.html	comp-c-htmlman		html
 ./usr/share/man/html3/authunix_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/authunix_create_default.html	comp-c-htmlman		html
-./usr/share/man/html3/basename.html		comp-c-htmlman		html
 ./usr/share/man/html3/backtrace.html		comp-c-htmlman		html
 ./usr/share/man/html3/backtrace_symbols.html	comp-c-htmlman		html
-./usr/share/man/html3/backtrace_symbols_fmt.html	comp-c-htmlman		html
 ./usr/share/man/html3/backtrace_symbols_fd.html	comp-c-htmlman		html
 ./usr/share/man/html3/backtrace_symbols_fd_fmt.html	comp-c-htmlman		html
+./usr/share/man/html3/backtrace_symbols_fmt.html	comp-c-htmlman		html
+./usr/share/man/html3/basename.html		comp-c-htmlman		html
 ./usr/share/man/html3/bcmp.html			comp-c-htmlman		html
 ./usr/share/man/html3/bcopy.html		comp-c-htmlman		html
 ./usr/share/man/html3/beep.html			comp-c-htmlman		html
@@ -12438,6 +12491,7 @@
 ./usr/share/man/html3/ctime_rz.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctype.html		comp-c-htmlman		html
 ./usr/share/man/html3/current_field.html	comp-c-htmlman		html
+./usr/share/man/html3/current_item.html		comp-c-htmlman		html
 ./usr/share/man/html3/curs_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_addch.html		comp-c-htmlman		html
@@ -12914,6 +12968,8 @@
 ./usr/share/man/html3/free_field.html		comp-c-htmlman		html
 ./usr/share/man/html3/free_fieldtype.html	comp-c-htmlman		html
 ./usr/share/man/html3/free_form.html		comp-c-htmlman		html
+./usr/share/man/html3/free_item.html		comp-c-htmlman		html
+./usr/share/man/html3/free_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeaddrinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeifaddrs.html		comp-c-htmlman		html
 ./usr/share/man/html3/freopen.html		comp-c-htmlman		html
@@ -13081,8 +13137,8 @@
 ./usr/share/man/html3/getpary.html		comp-c-htmlman		html
 ./usr/share/man/html3/getparyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getpass.html		comp-c-htmlman		html
-./usr/share/man/html3/getpassfd.html		comp-c-htmlman		html
 ./usr/share/man/html3/getpass_r.html		comp-c-htmlman		html
+./usr/share/man/html3/getpassfd.html		comp-c-htmlman		html
 ./usr/share/man/html3/getpeereid.html		comp-c-htmlman		html
 ./usr/share/man/html3/getprogname.html		comp-c-htmlman		html
 ./usr/share/man/html3/getprotobyname.html	comp-c-htmlman		html
@@ -13346,6 +13402,19 @@
 ./usr/share/man/html3/iswupper.html		comp-c-htmlman		html
 ./usr/share/man/html3/iswxdigit.html		comp-c-htmlman		html
 ./usr/share/man/html3/isxdigit.html		comp-c-htmlman		html
+./usr/share/man/html3/item_count.html		comp-c-htmlman		html
+./usr/share/man/html3/item_description.html	comp-c-htmlman		html
+./usr/share/man/html3/item_index.html		comp-c-htmlman		html
+./usr/share/man/html3/item_init.html		comp-c-htmlman		html
+./usr/share/man/html3/item_name.html		comp-c-htmlman		html
+./usr/share/man/html3/item_opts.html		comp-c-htmlman		html
+./usr/share/man/html3/item_opts_off.html	comp-c-htmlman		html
+./usr/share/man/html3/item_opts_on.html		comp-c-htmlman		html
+./usr/share/man/html3/item_selected.html	comp-c-htmlman		html
+./usr/share/man/html3/item_term.html		comp-c-htmlman		html
+./usr/share/man/html3/item_userptr.html		comp-c-htmlman		html
+./usr/share/man/html3/item_value.html		comp-c-htmlman		html
+./usr/share/man/html3/item_visible.html		comp-c-htmlman		html
 ./usr/share/man/html3/itimerspec.html		comp-c-htmlman		html
 ./usr/share/man/html3/itimerval.html		comp-c-htmlman		html
 ./usr/share/man/html3/j0.html			comp-c-htmlman		html
@@ -14170,10 +14239,14 @@
 ./usr/share/man/html3/memrchr.html		comp-c-htmlman		html
 ./usr/share/man/html3/memset.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_attributes.html	comp-c-htmlman		html
+./usr/share/man/html3/menu_back.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_cursor.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_driver.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_fore.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_format.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_grey.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_hook.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_item_current.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_item_name.html	comp-c-htmlman		html
 ./usr/share/man/html3/menu_item_new.html	comp-c-htmlman		html
@@ -14185,8 +14258,14 @@
 ./usr/share/man/html3/menu_mark.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_new.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_opts.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_opts_on.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_opts_off.html	comp-c-htmlman		html
+./usr/share/man/html3/menu_pad.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_pattern.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_post.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_sub.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_term.html		comp-c-htmlman		html
+./usr/share/man/html3/menu_unmark.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_userptr.html		comp-c-htmlman		html
 ./usr/share/man/html3/menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/menus.html		comp-c-htmlman		html
@@ -14271,6 +14350,8 @@
 ./usr/share/man/html3/new_field.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_fieldtype.html	comp-c-htmlman		html
 ./usr/share/man/html3/new_form.html		comp-c-htmlman		html
+./usr/share/man/html3/new_item.html		comp-c-htmlman		html
+./usr/share/man/html3/new_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_page.html		comp-c-htmlman		html
 ./usr/share/man/html3/newpad.html		comp-c-htmlman		html
 ./usr/share/man/html3/newterm.html		comp-c-htmlman		html
@@ -14468,6 +14549,7 @@
 ./usr/share/man/html3/popcountll.html		comp-c-htmlman		html
 ./usr/share/man/html3/popen.html		comp-c-htmlman		html
 ./usr/share/man/html3/pos_form_cursor.html	comp-c-htmlman		html
+./usr/share/man/html3/pos_menu_cursor.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix2time.html		comp-c-htmlman		html
 ./usr/share/man/html3/posix2time_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/posix_memalign.html	comp-c-htmlman		html
@@ -14494,6 +14576,7 @@
 ./usr/share/man/html3/posix_spawnattr_setsigmask.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawnp.html		comp-c-htmlman		html
 ./usr/share/man/html3/post_form.html		comp-c-htmlman		html
+./usr/share/man/html3/post_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/pow.html			comp-c-htmlman		html
 ./usr/share/man/html3/powf.html			comp-c-htmlman		html
 ./usr/share/man/html3/ppath.html		comp-c-htmlman		html
@@ -15024,6 +15107,7 @@
 ./usr/share/man/html3/scalbnf.html		comp-c-htmlman		html
 ./usr/share/man/html3/scalbnl.html		comp-c-htmlman		html
 ./usr/share/man/html3/scale_form.html		comp-c-htmlman		html
+./usr/share/man/html3/scale_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/scandir.html		comp-c-htmlman		html
 ./usr/share/man/html3/scanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/scanw.html		comp-c-htmlman		html
@@ -15113,6 +15197,7 @@
 ./usr/share/man/html3/sem_wait.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_com_err_hook.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/set_current_field.html	comp-c-htmlman		html
+./usr/share/man/html3/set_current_item.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_curterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_field_back.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_field_buffer.html	comp-c-htmlman		html
@@ -15136,9 +15221,28 @@
 ./usr/share/man/html3/set_form_term.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_form_userptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_form_win.html		comp-c-htmlman		html
+./usr/share/man/html3/set_item_init.html	comp-c-htmlman		html
+./usr/share/man/html3/set_item_term.html	comp-c-htmlman		html
+./usr/share/man/html3/set_item_userptr.html	comp-c-htmlman		html
+./usr/share/man/html3/set_item_value.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_max_field.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_back.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_fore.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_format.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_grey.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_init.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_items.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_mark.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_opts.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_pad.html		comp-c-htmlman		html
+./usr/share/man/html3/set_menu_sub.html		comp-c-htmlman		html
+./usr/share/man/html3/set_menu_term.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_unmark.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_userptr.html	comp-c-htmlman		html
+./usr/share/man/html3/set_menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_new_page.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_term.html		comp-c-htmlman		html
+./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuf.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuffer.html		comp-c-htmlman		html
 ./usr/share/man/html3/setclasscontext.html	comp-c-htmlman		html
@@ -15472,6 +15576,7 @@
 ./usr/share/man/html3/tok_reset.html		comp-c-htmlman		html
 ./usr/share/man/html3/tok_str.html		comp-c-htmlman		html
 ./usr/share/man/html3/tolower.html		comp-c-htmlman		html
+./usr/share/man/html3/top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/touchline.html		comp-c-htmlman		html
 ./usr/share/man/html3/touchoverlap.html		comp-c-htmlman		html
 ./usr/share/man/html3/touchwin.html		comp-c-htmlman		html
@@ -15514,6 +15619,7 @@
 ./usr/share/man/html3/unistd.html		comp-c-htmlman		html
 ./usr/share/man/html3/unlockpt.html		comp-c-htmlman		html
 ./usr/share/man/html3/unpost_form.html		comp-c-htmlman		html
+./usr/share/man/html3/unpost_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/unsetenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/untouchwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/unvis.html		comp-c-htmlman		html
@@ -15732,11 +15838,11 @@
 ./usr/share/man/html3/yp_match.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/yp_next.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/yp_order.html		comp-c-htmlman		yp,html
+./usr/share/man/html3/yp_setbindtries.html	comp-c-htmlman		yp,html
 ./usr/share/man/html3/yp_unbind.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/ypclnt.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/yperr_string.html		comp-c-htmlman		yp,html
 ./usr/share/man/html3/ypprot_err.html		comp-c-htmlman		yp,html
-./usr/share/man/html3/yp_setbindtries.html	comp-c-htmlman		yp,html
 ./usr/share/man/html3/zlib.html			comp-c-htmlman		html
 ./usr/share/man/html5/config.html		comp-util-htmlman	html
 ./usr/share/man/html5/config.samples.html	comp-util-htmlman	html
@@ -16288,6 +16394,7 @@
 ./usr/share/man/html9/fuswintr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fusword.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fuword.html		comp-sys-htmlman	html
+./usr/share/man/html9/genfs.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbinuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getblk.html		comp-sys-htmlman	html
@@ -16298,7 +16405,6 @@
 ./usr/share/man/html9/getnanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getnanouptime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/getnewvnode.html		comp-sys-htmlman	html
-./usr/share/man/html9/genfs.html		comp-sys-htmlman	html
 ./usr/share/man/html9/gsignal.html		comp-obsolete		obsolete
 ./usr/share/man/html9/hardclock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hash.html			comp-sys-htmlman	html
@@ -18343,12 +18449,12 @@
 ./usr/share/man/man3/authsys_create_default.3	comp-c-man		.man
 ./usr/share/man/man3/authunix_create.3		comp-c-man		.man
 ./usr/share/man/man3/authunix_create_default.3	comp-c-man		.man
-./usr/share/man/man3/basename.3			comp-c-man		.man
 ./usr/share/man/man3/backtrace.3		comp-c-man		.man
 ./usr/share/man/man3/backtrace_symbols.3	comp-c-man		.man
-./usr/share/man/man3/backtrace_symbols_fmt.3	comp-c-man		.man
 ./usr/share/man/man3/backtrace_symbols_fd.3	comp-c-man		.man
 ./usr/share/man/man3/backtrace_symbols_fd_fmt.3	comp-c-man		.man
+./usr/share/man/man3/backtrace_symbols_fmt.3	comp-c-man		.man
+./usr/share/man/man3/basename.3			comp-c-man		.man
 ./usr/share/man/man3/bcmp.3			comp-c-man		.man
 ./usr/share/man/man3/bcopy.3			comp-c-man		.man
 ./usr/share/man/man3/beep.3			comp-c-man		.man
@@ -18669,6 +18775,7 @@
 ./usr/share/man/man3/ctime_rz.3			comp-c-man		.man
 ./usr/share/man/man3/ctype.3			comp-c-man		.man
 ./usr/share/man/man3/current_field.3		comp-c-man		.man
+./usr/share/man/man3/current_item.3		comp-c-man		.man
 ./usr/share/man/man3/curs_set.3			comp-c-man		.man
 ./usr/share/man/man3/curses.3			comp-c-man		.man
 ./usr/share/man/man3/curses_addch.3		comp-c-man		.man
@@ -19148,6 +19255,8 @@
 ./usr/share/man/man3/free_field.3		comp-c-man		.man
 ./usr/share/man/man3/free_fieldtype.3		comp-c-man		.man
 ./usr/share/man/man3/free_form.3		comp-c-man		.man
+./usr/share/man/man3/free_item.3		comp-c-man		.man
+./usr/share/man/man3/free_menu.3		comp-c-man		.man
 ./usr/share/man/man3/freeaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/freeifaddrs.3		comp-c-man		.man
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
@@ -19316,8 +19425,8 @@
 ./usr/share/man/man3/getpary.3			comp-c-man		.man
 ./usr/share/man/man3/getparyx.3			comp-c-man		.man
 ./usr/share/man/man3/getpass.3			comp-c-man		.man
-./usr/share/man/man3/getpassfd.3		comp-c-man		.man
 ./usr/share/man/man3/getpass_r.3		comp-c-man		.man
+./usr/share/man/man3/getpassfd.3		comp-c-man		.man
 ./usr/share/man/man3/getpeereid.3		comp-c-man		.man
 ./usr/share/man/man3/getprogname.3		comp-c-man		.man
 ./usr/share/man/man3/getprotobyname.3		comp-c-man		.man
@@ -19582,6 +19691,19 @@
 ./usr/share/man/man3/iswupper.3			comp-c-man		.man
 ./usr/share/man/man3/iswxdigit.3		comp-c-man		.man
 ./usr/share/man/man3/isxdigit.3			comp-c-man		.man
+./usr/share/man/man3/item_count.3		comp-c-man		.man
+./usr/share/man/man3/item_description.3		comp-c-man		.man
+./usr/share/man/man3/item_index.3		comp-c-man		.man
+./usr/share/man/man3/item_init.3		comp-c-man		.man
+./usr/share/man/man3/item_name.3		comp-c-man		.man
+./usr/share/man/man3/item_opts.3		comp-c-man		.man
+./usr/share/man/man3/item_opts_off.3		comp-c-man		.man
+./usr/share/man/man3/item_opts_on.3		comp-c-man		.man
+./usr/share/man/man3/item_selected.3		comp-c-man		.man
+./usr/share/man/man3/item_term.3		comp-c-man		.man
+./usr/share/man/man3/item_userptr.3		comp-c-man		.man
+./usr/share/man/man3/item_value.3		comp-c-man		.man
+./usr/share/man/man3/item_visible.3		comp-c-man		.man
 ./usr/share/man/man3/itimerspec.3		comp-c-man		.man
 ./usr/share/man/man3/itimerval.3		comp-c-man		.man
 ./usr/share/man/man3/j0.3			comp-c-man		.man
@@ -20440,10 +20562,14 @@
 ./usr/share/man/man3/memrchr.3			comp-c-man		.man
 ./usr/share/man/man3/memset.3			comp-c-man		.man
 ./usr/share/man/man3/menu_attributes.3		comp-c-man		.man
+./usr/share/man/man3/menu_back.3		comp-c-man		.man
 ./usr/share/man/man3/menu_cursor.3		comp-c-man		.man
 ./usr/share/man/man3/menu_driver.3		comp-c-man		.man
+./usr/share/man/man3/menu_fore.3		comp-c-man		.man
 ./usr/share/man/man3/menu_format.3		comp-c-man		.man
+./usr/share/man/man3/menu_grey.3		comp-c-man		.man
 ./usr/share/man/man3/menu_hook.3		comp-c-man		.man
+./usr/share/man/man3/menu_init.3		comp-c-man		.man
 ./usr/share/man/man3/menu_item_current.3	comp-c-man		.man
 ./usr/share/man/man3/menu_item_name.3		comp-c-man		.man
 ./usr/share/man/man3/menu_item_new.3		comp-c-man		.man
@@ -20455,8 +20581,14 @@
 ./usr/share/man/man3/menu_mark.3		comp-c-man		.man
 ./usr/share/man/man3/menu_new.3			comp-c-man		.man
 ./usr/share/man/man3/menu_opts.3		comp-c-man		.man
+./usr/share/man/man3/menu_opts_on.3		comp-c-man		.man
+./usr/share/man/man3/menu_opts_off.3		comp-c-man		.man
+./usr/share/man/man3/menu_pad.3			comp-c-man		.man
 ./usr/share/man/man3/menu_pattern.3		comp-c-man		.man
 ./usr/share/man/man3/menu_post.3		comp-c-man		.man
+./usr/share/man/man3/menu_sub.3			comp-c-man		.man
+./usr/share/man/man3/menu_term.3		comp-c-man		.man
+./usr/share/man/man3/menu_unmark.3		comp-c-man		.man
 ./usr/share/man/man3/menu_userptr.3		comp-c-man		.man
 ./usr/share/man/man3/menu_win.3			comp-c-man		.man
 ./usr/share/man/man3/menus.3			comp-c-man		.man
@@ -20541,6 +20673,8 @@
 ./usr/share/man/man3/new_field.3		comp-c-man		.man
 ./usr/share/man/man3/new_fieldtype.3		comp-c-man		.man
 ./usr/share/man/man3/new_form.3			comp-c-man		.man
+./usr/share/man/man3/new_item.3			comp-c-man		.man
+./usr/share/man/man3/new_menu.3			comp-c-man		.man
 ./usr/share/man/man3/new_page.3			comp-c-man		.man
 ./usr/share/man/man3/newpad.3			comp-c-man		.man
 ./usr/share/man/man3/newterm.3			comp-c-man		.man
@@ -20741,6 +20875,7 @@
 ./usr/share/man/man3/popcountll.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
+./usr/share/man/man3/pos_menu_cursor.3		comp-c-man		.man
 ./usr/share/man/man3/posix2time.3		comp-c-man		.man
 ./usr/share/man/man3/posix2time_z.3		comp-c-man		.man
 ./usr/share/man/man3/posix_memalign.3		comp-c-man		.man
@@ -20767,6 +20902,7 @@
 ./usr/share/man/man3/posix_spawnattr_setsigmask.3	comp-c-man		.man
 ./usr/share/man/man3/posix_spawnp.3		comp-c-man		.man
 ./usr/share/man/man3/post_form.3		comp-c-man		.man
+./usr/share/man/man3/post_menu.3		comp-c-man		.man
 ./usr/share/man/man3/pow.3			comp-c-man		.man
 ./usr/share/man/man3/powf.3			comp-c-man		.man
 ./usr/share/man/man3/ppath.3			comp-c-man		.man
@@ -21304,6 +21440,7 @@
 ./usr/share/man/man3/scalbnf.3			comp-c-man		.man
 ./usr/share/man/man3/scalbnl.3			comp-c-man		.man
 ./usr/share/man/man3/scale_form.3		comp-c-man		.man
+./usr/share/man/man3/scale_menu.3		comp-c-man		.man
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
@@ -21394,6 +21531,7 @@
 ./usr/share/man/man3/sem_wait.3			comp-c-man		.man
 ./usr/share/man/man3/set_com_err_hook.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/set_current_field.3	comp-c-man		.man
+./usr/share/man/man3/set_current_item.3		comp-c-man		.man
 ./usr/share/man/man3/set_curterm.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_back.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_buffer.3		comp-c-man		.man
@@ -21417,9 +21555,28 @@
 ./usr/share/man/man3/set_form_term.3		comp-c-man		.man
 ./usr/share/man/man3/set_form_userptr.3		comp-c-man		.man
 ./usr/share/man/man3/set_form_win.3		comp-c-man		.man
+./usr/share/man/man3/set_item_init.3		comp-c-man		.man
+./usr/share/man/man3/set_item_term.3		comp-c-man		.man
+./usr/share/man/man3/set_item_userptr.3		comp-c-man		.man
+./usr/share/man/man3/set_item_value.3		comp-c-man		.man
 ./usr/share/man/man3/set_max_field.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_back.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_fore.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_format.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_grey.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_init.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_items.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_mark.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_opts.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_pad.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_sub.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_term.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_unmark.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_userptr.3		comp-c-man		.man
+./usr/share/man/man3/set_menu_win.3		comp-c-man		.man
 ./usr/share/man/man3/set_new_page.3		comp-c-man		.man
 ./usr/share/man/man3/set_term.3			comp-c-man		.man
+./usr/share/man/man3/set_top_row.3		comp-c-man		.man
 ./usr/share/man/man3/setbuf.3			comp-c-man		.man
 ./usr/share/man/man3/setbuffer.3		comp-c-man		.man
 ./usr/share/man/man3/setclasscontext.3		comp-c-man		.man
@@ -21781,6 +21938,7 @@
 ./usr/share/man/man3/tok_reset.3		comp-c-man		.man
 ./usr/share/man/man3/tok_str.3			comp-c-man		.man
 ./usr/share/man/man3/tolower.3			comp-c-man		.man
+./usr/share/man/man3/top_row.3			comp-c-man		.man
 ./usr/share/man/man3/touchline.3		comp-c-man		.man
 ./usr/share/man/man3/touchoverlap.3		comp-c-man		.man
 ./usr/share/man/man3/touchwin.3			comp-c-man		.man
@@ -21823,6 +21981,7 @@
 ./usr/share/man/man3/unistd.3			comp-c-man		.man
 ./usr/share/man/man3/unlockpt.3			comp-c-man		.man
 ./usr/share/man/man3/unpost_form.3		comp-c-man		.man
+./usr/share/man/man3/unpost_menu.3		comp-c-man		.man
 ./usr/share/man/man3/unsetenv.3			comp-c-man		.man
 ./usr/share/man/man3/untouchwin.3		comp-c-man		.man
 ./usr/share/man/man3/unvis.3			comp-c-man		.man
@@ -22045,11 +22204,11 @@
 ./usr/share/man/man3/yp_match.3			comp-c-man		yp,.man
 ./usr/share/man/man3/yp_next.3			comp-c-man		yp,.man
 ./usr/share/man/man3/yp_order.3			comp-c-man		yp,.man
+./usr/share/man/man3/yp_setbindtries.3		comp-c-man		yp,.man
 ./usr/share/man/man3/yp_unbind.3		comp-c-man		yp,.man
 ./usr/share/man/man3/ypclnt.3			comp-c-man		yp,.man
 ./usr/share/man/man3/yperr_string.3		comp-c-man		yp,.man
 ./usr/share/man/man3/ypprot_err.3		comp-c-man		yp,.man
-./usr/share/man/man3/yp_setbindtries.3		comp-c-man		yp,.man
 ./usr/share/man/man3/zlib.3			comp-c-man		.man
 ./usr/share/man/man5/config.5			comp-util-man		.man
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
@@ -22638,6 +22797,7 @@
 ./usr/share/man/man9/fuswintr.9			comp-sys-man		.man
 ./usr/share/man/man9/fusword.9			comp-sys-man		.man
 ./usr/share/man/man9/fuword.9			comp-sys-man		.man
+./usr/share/man/man9/genfs.9			comp-sys-man		.man
 ./usr/share/man/man9/getbintime.9		comp-sys-man		.man
 ./usr/share/man/man9/getbinuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
@@ -22649,7 +22809,6 @@
 ./usr/share/man/man9/getnanotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
-./usr/share/man/man9/genfs.9			comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-obsolete		obsolete
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
 ./usr/share/man/man9/hash.9			comp-sys-man		.man
