@@ -1,4 +1,4 @@
-/*	$NetBSD: empb_bsm.c,v 1.4 2012/06/04 19:45:50 rkujawa Exp $ */
+/*	$NetBSD: empb_bsm.c,v 1.5 2012/06/27 18:53:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -142,11 +142,8 @@ empb_bsm(bus_space_tag_t space, bus_addr_t address, bus_size_t size,
 			return -1; 
 		
 	/* Fail miserably if the driver wants linear space. */	
-	if (flags & BUS_SPACE_MAP_LINEAR)
-	{
-		aprint_error("empb: linear space mapping not possible\n");
-		return -1;
-	}
+	if ( (flags & BUS_SPACE_MAP_LINEAR) && (size > 8*1024*1024))
+		aprint_error("empb: linear space mapping might not work\n");
 
 	/* 
 	 * Just store the desired PCI bus address as handlep. Don't make things 
@@ -183,7 +180,7 @@ empb_bsr1(bus_space_handle_t handle, bus_size_t offset)
 	wp = empb_switch_window(empb_sc, handle);	
 
 	/* window address + (PCI mem address - window position) */
-	p = (uint8_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint8_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) + offset);
 	x = *p;
 
 	return x;
@@ -196,7 +193,7 @@ empb_bsw1(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint8_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint8_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) + offset);
 	*p = value;
 }
 
@@ -208,7 +205,8 @@ empb_bsrm1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-  	p = (volatile u_int8_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+  	p = (volatile u_int8_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -225,7 +223,8 @@ empb_bswm1(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int8_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int8_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*p = *pointer++;
@@ -242,7 +241,8 @@ empb_bsrr1(bus_space_handle_t handle, bus_size_t offset, u_int8_t *pointer,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int8_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int8_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -260,7 +260,8 @@ empb_bswr1(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int8_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int8_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
  	while (count > 0) {
 		*p = *pointer++;
@@ -278,7 +279,8 @@ empb_bssr1(bus_space_handle_t handle, bus_size_t offset, unsigned value,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int8_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int8_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
  	while (count > 0) {
  		*p = value;
@@ -322,7 +324,8 @@ empb_bsr2(bus_space_handle_t handle, bus_size_t offset)
 
 	wp = empb_switch_window(empb_sc, handle);	
 
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint16_t*) ((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	x = *p;
 
 	return x;
@@ -337,7 +340,8 @@ empb_bsr2_swap(bus_space_handle_t handle, bus_size_t offset)
 
 	wp = empb_switch_window(empb_sc, handle);	
 
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint16_t*) ((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	x = *p;
 
 	return bswap16(x);
@@ -351,7 +355,8 @@ empb_bsw2(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	     + offset);
 	*p = value;
 }
 
@@ -362,7 +367,8 @@ empb_bsw2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint16_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	*p = bswap16(value);
 }
 
@@ -375,7 +381,7 @@ empb_bsrm2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 
 	wp = empb_switch_window(empb_sc, handle);
   	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -393,7 +399,7 @@ empb_bsrm2_swap(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
   	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = bswap16(*p);
@@ -411,7 +417,7 @@ empb_bswm2(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*p = *pointer++;
@@ -429,7 +435,7 @@ empb_bswm2_swap(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*p = bswap16(*pointer++);
@@ -446,7 +452,8 @@ empb_bsrr2(bus_space_handle_t handle, bus_size_t offset, u_int16_t *pointer,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -464,7 +471,8 @@ empb_bsrr2_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = bswap16(*p);
@@ -483,7 +491,7 @@ empb_bssr2_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint16_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
  	while (count > 0) {
  		*p = bswap16(value);
@@ -501,7 +509,8 @@ empb_bswr2(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
  	while (count > 0) {
 		*p = *pointer++;
@@ -519,7 +528,8 @@ empb_bswr2_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile u_int16_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile u_int16_t *) ((empb_sc->pci_mem_win_t->base) 
+	    + (handle - wp) + offset);
 
  	while (count > 0) {
 		*p = bswap16(*pointer++);
@@ -563,7 +573,8 @@ empb_bsr4(bus_space_handle_t handle, bus_size_t offset)
 
 	wp = empb_switch_window(empb_sc, handle);	
 
-	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint32_t*) ((empb_sc->pci_mem_win_t->base) 
+	    + (handle - wp) + offset);
 	x = *p;
 
 	return x;
@@ -578,7 +589,8 @@ empb_bsr4_swap(bus_space_handle_t handle, bus_size_t offset)
 
 	wp = empb_switch_window(empb_sc, handle);	
 
-	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint32_t*) ((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	x = *p;
 
 	return bswap32(x);
@@ -592,7 +604,8 @@ empb_bsw4(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	*p = value;
 }
 
@@ -603,7 +616,8 @@ empb_bsw4_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value)
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp));
+	p = (uint32_t*)((empb_sc->pci_mem_win_t->base) + (handle - wp) 
+	    + offset);
 	*p = bswap32(value);
 }
 
@@ -616,7 +630,7 @@ empb_bsrm4(bus_space_handle_t handle, bus_size_t offset, u_int32_t *pointer,
 
 	wp = empb_switch_window(empb_sc, handle);
   	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -634,7 +648,7 @@ empb_bsrm4_swap(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
   	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = bswap32(*p);
@@ -652,7 +666,7 @@ empb_bswm4(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*p = *pointer++;
@@ -670,7 +684,7 @@ empb_bswm4_swap(bus_space_handle_t handle, bus_size_t offset,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*p = bswap32(*pointer++);
@@ -687,7 +701,8 @@ empb_bsrr4(bus_space_handle_t handle, bus_size_t offset, u_int32_t *pointer,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
+	    (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = *p;
@@ -705,7 +720,8 @@ empb_bsrr4_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) 
+	    + (handle - wp) + offset);
 
 	while (count > 0) {
 		*pointer++ = bswap32(*p);
@@ -724,7 +740,7 @@ empb_bssr4_swap(bus_space_handle_t handle, bus_size_t offset, unsigned value,
 
 	wp = empb_switch_window(empb_sc, handle);
 	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) + 
-	    (handle - wp));
+	    (handle - wp) + offset);
 
  	while (count > 0) {
  		*p = bswap32(value);
@@ -742,7 +758,8 @@ empb_bswr4(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) 
+	    + (handle - wp) + offset);
 
  	while (count > 0) {
 		*p = *pointer++;
@@ -760,7 +777,8 @@ empb_bswr4_swap(bus_space_handle_t handle, bus_size_t offset,
 	bus_addr_t wp; 
 
 	wp = empb_switch_window(empb_sc, handle);
-	p = (volatile uint32_t *)((empb_sc->pci_mem_win_t->base)+(handle - wp));
+	p = (volatile uint32_t *) ((empb_sc->pci_mem_win_t->base) 
+	    + (handle - wp) + offset);
 
  	while (count > 0) {
 		*p = bswap32(*pointer++);
@@ -842,7 +860,8 @@ const struct amiga_bus_space_methods empb_bus_swap = {
 	.bsrrs4 =	empb_bsrr4,
 	.bswrs4 =	empb_bswr4,
 	.bssr4 = 	empb_bssr4_swap,
-	.bscr4 =	empb_bscr4	/* swap? */
+	.bscr4 =	empb_bscr4		/* swap? */
+
 };
 
 
