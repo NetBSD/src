@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.69 2012/06/27 10:02:02 cheusov Exp $ */
+/* $NetBSD: kern_auth.c,v 1.70 2012/06/27 10:06:55 cheusov Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.69 2012/06/27 10:02:02 cheusov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.70 2012/06/27 10:06:55 cheusov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,7 @@ kauth_cred_hold(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-        atomic_inc_uint(&cred->cr_refcnt);
+	atomic_inc_uint(&cred->cr_refcnt);
 }
 
 /* Decrease reference count to cred. If reached zero, free it. */
