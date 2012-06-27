@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.100 2012/06/16 17:30:19 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.101 2012/06/27 00:37:08 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.100 2012/06/16 17:30:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.101 2012/06/27 00:37:08 jym Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -169,18 +169,11 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.100 2012/06/16 17:30:19 chs Exp $");
  */
 .section __xen_guest
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
-#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
 	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
-#else
-	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
-	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
-#endif
 	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-#if !defined(XEN_COMPAT_030001)
 	.ascii  ",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#endif
 #ifdef PAE
 	.ascii  ",PAE=yes[extended-cr3]"
 #endif
@@ -824,13 +817,13 @@ start:
 	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
 
-#if defined(XEN) && !defined(XEN_COMPAT_030001)
+#if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN) && !defined(XEN_COMPAT_030001) */
+#endif /* defined(XEN) */
 
 /*
  * void lgdt_finish(void);

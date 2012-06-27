@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.13 2012/01/05 18:11:50 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.14 2012/06/27 00:37:10 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.13 2012/01/05 18:11:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.14 2012/06/27 00:37:10 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -400,8 +400,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 
 		/* Invalidate pg */
 		xpmap_phys_to_machine_mapping[
-			(pa - XPMAP_OFFSET) >> PAGE_SHIFT
-			] = INVALID_P2M_ENTRY;
+		    pa >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
 
 		splx(s);
 
@@ -518,7 +517,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 		s = splvm();
 
 		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn_list[rpages];
+		    pa >> PAGE_SHIFT] = mfn_list[rpages];
 
 		xpq_queue_machphys_update(
 		    ((paddr_t) (mfn_list[rpages])) << PAGE_SHIFT, pa);
