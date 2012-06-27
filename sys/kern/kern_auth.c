@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.68 2012/03/13 18:40:52 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.69 2012/06/27 10:02:02 cheusov Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.68 2012/03/13 18:40:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.69 2012/06/27 10:02:02 cheusov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ struct kauth_cred {
 	 * Ensure that the first part of the credential resides in its own
 	 * cache line.  Due to sharing there aren't many kauth_creds in a
 	 * typical system, but the reference counts change very often.
-	 * Keeping it seperate from the rest of the data prevents false
+	 * Keeping it separate from the rest of the data prevents false
 	 * sharing between CPUs.
 	 */
 	u_int cr_refcnt;		/* reference count */
