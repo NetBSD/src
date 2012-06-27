@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.12 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.13 2012/06/27 23:05:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.12 2012/06/15 23:24:08 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.13 2012/06/27 23:05:28 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -135,7 +135,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage:\t%s [ start | stop | reload | flush | stats ]\n",
+	    "usage:\t%s [ start | stop | reload | flush | show | stats ]\n",
 	    progname);
 	fprintf(stderr,
 	    "usage:\t%s [ sess-save | sess-load ]\n",
