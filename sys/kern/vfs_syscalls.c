@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.456 2012/05/08 08:44:49 gson Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.457 2012/06/27 12:28:28 cheusov Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.456 2012/05/08 08:44:49 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.457 2012/06/27 12:28:28 cheusov Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1398,6 +1398,10 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 void
 change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
+	kauth_cred_t ncred;
+
+	ncred = kauth_cred_alloc();
 
 	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	if (cwdi->cwdi_rdir != NULL)
@@ -1419,6 +1423,15 @@ change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
 		cwdi->cwdi_cdir = vp;
 	}
 	rw_exit(&cwdi->cwdi_lock);
+
+	/* Get a write lock on the process credential. */
+	proc_crmod_enter();
+
+	kauth_cred_clone(p->p_cred, ncred);
+	kauth_proc_chroot(ncred, p->p_cwdi);
+
+	/* Broadcast our credentials to the process and other LWPs. */
+ 	proc_crmod_leave(ncred, p->p_cred, true);
 }
 
 /*

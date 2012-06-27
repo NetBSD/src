@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.100 2012/03/17 14:42:13 njoly Exp $
+.\" $NetBSD: kauth.9,v 1.101 2012/06/27 12:28:28 cheusov Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -1534,6 +1534,15 @@ and
 are both
 .Ft struct proc *
 of the parent and child processes, respectively.
+.It Dv KAUTH_CRED_CHROOT
+The credentials in cred belong to a process whose root directory is
+changed through
+.Xr change_root 9
+.Pp
+.Ar Arg0
+is the new
+.Ft struct cwdinfo *
+of the process.
 .It Dv KAUTH_CRED_FREE
 The credentials in
 .Ar cred
