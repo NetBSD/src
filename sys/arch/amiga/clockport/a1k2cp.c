@@ -1,4 +1,4 @@
-/*      $NetBSD: a1k2cp.c,v 1.1 2012/04/17 09:59:03 rkujawa Exp $ */
+/*      $NetBSD: a1k2cp.c,v 1.2 2012/06/28 18:55:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ a1k2cp_attach(device_t parent, device_t self, void *aux)
 	a1k2cp_aa.cp_intr_establish = clockport_generic_intr_establish;
 
 #ifdef A1K2CP_DEBUG
-	aprint_normal_dev(sc->sc_dev, "pa %d va %p", 
+	aprint_normal_dev(sc->sc_dev, "pa %x va %p\n", 
 	    A1K2CP_BASE, (void*) a1k2cp_bst.base);
 #endif /* A1K2CP_DEBUG */
 
