@@ -1,4 +1,4 @@
-/* $NetBSD: stty.c,v 1.21 2008/07/20 00:52:40 lukem Exp $ */
+/* $NetBSD: stty.c,v 1.21.20.1 2012/06/28 16:12:07 riz Exp $ */
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.21 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: stty.c,v 1.21.20.1 2012/06/28 16:12:07 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: stty.c,v 1.21 2008/07/20 00:52:40 lukem Exp $");
 int main(int, char *[]);
 
 int
-main(int argc, char *argv[]) 
+main(int argc, char *argv[])
 {
 	struct info i;
 	enum FMT fmt;
@@ -119,7 +119,7 @@ args:	argc -= optind;
 		gprint(&i.t);
 		break;
 	}
-	
+
 	for (i.set = i.wset = 0; *argv; ++argv) {
 		if (ksearch(&argv, &i))
 			continue;
@@ -162,7 +162,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-a|-e|-g] [-f file] [options]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-a|-e|-g] [-f file] [operand ...]\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
