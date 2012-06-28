@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.2 2012/05/18 20:52:02 rkujawa Exp $ */
+/*      $NetBSD: clockport.c,v 1.3 2012/06/28 18:55:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ clockport_attach(device_t parent, device_t self, void *aux)
 
         aprint_normal("\n");
 
-	sc = (struct clockportbus_softc *) self;
+	sc = device_private(self);
 	sc->cpb_aa = (struct clockportbus_attach_args *) aux;
 
 	config_search_ia(clockport_submatch, self, "clockport", 0);
