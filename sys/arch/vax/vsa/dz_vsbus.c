@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.42 2010/12/14 23:31:16 matt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.43 2012/06/28 13:58:21 abs Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.42 2010/12/14 23:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.43 2012/06/28 13:58:21 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ dz_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 
 #if VAX53 || VAX49 || VAXANY
 	if (vax_boardtype == VAX_BTYP_53 || vax_boardtype == VAX_BTYP_49)
-		if (cf->cf_loc[VSBUSCF_CSR] != 0x25000000)
+		if (cf->cf_loc[VSBUSCF_CSR] != DZ_CSR_KA49)
 			return 0; /* Ugly */
 #endif
 
@@ -262,12 +262,12 @@ dzcnprobe(struct consdev *cndev)
 		break;
 
 	case VAX_BTYP_49:
-		ioaddr = 0x25000000;
+		ioaddr = DZ_CSR_KA49;
 		diagcons = (vax_confdata & 8 ? 3 : 0);
 		break;
 
 	case VAX_BTYP_53:
-		ioaddr = 0x25000000;
+		ioaddr = DZ_CSR_KA49;
 		diagcons = 3;
 		break;
 

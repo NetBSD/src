@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.18 2008/03/11 05:34:02 matt Exp $ */
+/*	$NetBSD: vsbus.h,v 1.19 2012/06/28 13:58:21 abs Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,10 +60,13 @@ struct	vsbus_attach_args {
  */
 #define VS_CFGTST	0x20020000      /* config register */
 #define VS_REGS         0x20080000      /* Misc CPU internal regs */
+#define VS_REGS_KA49	0x25c00000      /* ... same, on 512KB ROM systems */
 #define NI_ADDR         0x20090000      /* Ethernet address */
 #define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
+#define DZ_CSR_KA49	0x25000000      /* ... same, on 512KB ROM systems */
 #define VS_CLOCK        0x200b0000      /* clock chip address */
 #define SCA_REGS        0x200c0000      /* disk device addresses */
+#define SCA_REGS_KA49	0x26000000      /* ... same, on 512KB ROM systems */
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 

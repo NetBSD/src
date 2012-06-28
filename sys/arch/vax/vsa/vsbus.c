@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.59 2010/12/14 23:31:17 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.59 2010/12/14 23:31:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $");
 
 #include "opt_cputype.h"
 
@@ -122,7 +122,7 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 #if VAX49 || VAX53
 	case VAX_BTYP_53:
 	case VAX_BTYP_49:
-		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
+		sc->sc_vsregs = vax_map_physmem(VS_REGS_KA49, 1);
 		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
 		sc->sc_intclr = (char *)sc->sc_vsregs + 12;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 8;
