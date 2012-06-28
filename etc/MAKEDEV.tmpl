@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.2 2012/05/30 08:06:26 sborrill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.3 2012/06/28 04:48:25 riz Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -421,6 +421,7 @@ setup()
 {
 	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
+	: ${HOST_SH:=sh}
 	: ${TOOL_MKNOD:=mknod}
 	: ${TOOL_MTREE:=mtree}
 	: ${TOOL_PAX:=pax}
@@ -2099,9 +2100,9 @@ local)
 		umask 0
 		if [ -n "$count_nodes" ]; then
 			count_nodes=$((count_nodes + \
-			    $(linecount "$(sh "$0.local" $opts -s all)") ))
+			    $(linecount "$("$HOST_SH" "$0.local" $opts -s all)") ))
 		else
-			sh "$0.local" $opts all
+			"$HOST_SH" "$0.local" $opts all
 		fi
 		umask 077
 	fi
