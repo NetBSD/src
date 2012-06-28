@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2010/02/03 15:34:43 roy Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2012/06/28 08:55:10 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2010/02/03 15:34:43 roy Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2012/06/28 08:55:10 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,10 +173,11 @@ timeoverrun(int signo)
 static int	getname(void);
 static void	oflush(void);
 static void	prompt(void);
-static void	putchr(int);
+static int	putchr(int);
 static void	putf(const char *);
-static void	putpad(const char *);
 static void	xputs(const char *);
+
+#define putpad(s) tputs(s, 1, putchr)
 
 int
 main(int argc, char *argv[], char *envp[])
@@ -566,43 +567,6 @@ getname(void)
 }
 
 static void
-putpad(const char *s)
-{
-	int pad = 0;
-	speed_t ospd = cfgetospeed(&tmode);
-
-	if (isdigit((unsigned char)*s)) {
-		while (isdigit((unsigned char)*s)) {
-			pad *= 10;
-			pad += *s++ - '0';
-		}
-		pad *= 10;
-		if (*s == '.' && isdigit((unsigned char)s[1])) {
-			pad += s[1] - '0';
-			s += 2;
-		}
-	}
-
-	xputs(s);
-	/*
-	 * If no delay needed, or output speed is
-	 * not comprehensible, then don't try to delay.
-	 */
-	if (pad == 0)
-		return;
-
-	/*
-	 * Round up by a half a character frame, and then do the delay.
-	 * Too bad there are no user program accessible programmed delays.
-	 * Transmitting pad characters slows many terminals down and also
-	 * loads the system.
-	 */
-	pad = (pad * ospd + 50000) / 100000;
-	while (pad--)
-		putchr(*PC);
-}
-
-static void
 xputs(const char *s)
 {
 	while (*s)
@@ -612,7 +576,7 @@ xputs(const char *s)
 char	outbuf[OBUFSIZ];
 size_t	obufcnt = 0;
 
-static void
+static int
 putchr(int cc)
 {
 	unsigned char c;
@@ -627,8 +591,9 @@ putchr(int cc)
 		outbuf[obufcnt++] = c;
 		if (obufcnt >= OBUFSIZ)
 			oflush();
-	} else
-		(void)write(STDOUT_FILENO, &c, 1);
+		return 1;
+	}
+	return write(STDOUT_FILENO, &c, 1);
 }
 
 static void
