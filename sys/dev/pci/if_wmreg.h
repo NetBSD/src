@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.46 2011/12/20 21:27:29 dyoung Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.46.2.1 2012/06/28 16:06:36 riz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -892,6 +892,22 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
 #define	PHY_CTRL_GBE_DIS	(1 << 4)
+
+/* Energy Efficient Ethernet "EEE" registers */
+#define WMREG_LTRC	0x01a0	/* Latency Tolerance Reportiong Control */
+#define WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
+#define EEER_TX_LPI_EN		0x00010000 /* EEER Tx LPI Enable */
+#define EEER_RX_LPI_EN		0x00020000 /* EEER Rx LPI Enable */
+#define EEER_LPI_FC		0x00040000 /* EEER Ena on Flow Cntrl */
+#define EEER_EEER_NEG		0x20000000 /* EEER capability nego */
+#define EEER_EEER_RX_LPI_STATUS	0x40000000 /* EEER Rx in LPI state */
+#define EEER_EEER_TX_LPI_STATUS	0x80000000 /* EEER Tx in LPI state */
+#define WMREG_EEE_SU	0x0e34	/* EEE Setup */
+#define WMREG_IPCNFG	0x0e38	/* Internal PHY Configuration */
+#define IPCNFG_EEE_100M_AN	0x00000004 /* IPCNFG EEE Ena 100M AN */
+#define IPCNFG_EEE_1G_AN	0x00000008 /* IPCNFG EEE Ena 1G AN */
+#define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
+#define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
