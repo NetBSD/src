@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.142 2012/06/28 04:52:59 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.143 2012/06/28 04:56:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5913,4 +5913,9 @@ sys/arch/dreamcast/dreamcast/machdep.c		1.43
 
 	Fix dreamcast build for GENERIC + no options DDB.
 	[tsutsui, ticket #360]
+
+external/lgpl3/gmp/dist/config.guess		1.2
+
+	Fix cross-building on Linux.
+	[christos, ticket #361]
 
