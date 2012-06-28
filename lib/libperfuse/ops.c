@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.57 2012/06/14 05:58:22 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.58 2012/06/28 13:53:13 abs Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1680,13 +1680,13 @@ perfuse_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap, const struct puffs_cred *pcr)
 {
 	return perfuse_node_setattr_ttl(pu, opc, 
-					__UNCONST(vap), pcr, NULL);
+					__UNCONST(vap), pcr, NULL, 0);
 }
 
 int
 perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vattr *vap, const struct puffs_cred *pcr,
-	struct timespec *va_ttl)
+	struct timespec *va_ttl, int flags)
 {
 	perfuse_msg_t *pm;
 	uint64_t fh;
