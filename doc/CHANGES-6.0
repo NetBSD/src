@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.143 2012/06/28 04:56:00 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.144 2012/06/28 16:13:39 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5918,4 +5918,21 @@ external/lgpl3/gmp/dist/config.guess		1.2
 
 	Fix cross-building on Linux.
 	[christos, ticket #361]
+
+sys/dev/pci/if_wm.c		1.228 via patch
+sys/dev/pci/if_wmreg.h		1.47 via patch
+sys/dev/pci/if_wmvar.h		1.13 via patch
+sys/dev/pci/pcidevs		1.1117 via patch
+sys/dev/pci/pcidevs.h		regen
+sys/dev/pci/pcidevs_data.h	regen
+share/man/man4/wm.4		1.22-1.25 via patch
+
+	Add support for Intel I350 Ethernet.
+	[msaitoh, ticket #362]
+
+bin/stty/stty.1					1.40-1.41
+bin/stty/stty.c					1.22
+
+	Improve documentation and sync usage.
+	[wiz, ticket #364]
 
