@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_machdep.c,v 1.1 2011/11/15 12:23:22 tsutsui Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.2 2012/06/28 17:53:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2 2012/06/28 17:53:42 tsutsui Exp $");
 
 #include "opt_fpu_emulate.h"
 
