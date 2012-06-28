@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.18 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.19 2012/06/28 13:59:25 abs Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.18 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.19 2012/06/28 13:59:25 abs Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.18 2008/03/11 05:34:03 matt Exp $");
  */
 int vax_cputype;	/* highest byte of SID register */
 int vax_bustype;	/* holds/defines all busses on this machine */
-int vax_boardtype;	/* machine dependend, combination of SID and SIE */
+int vax_boardtype;	/* machine dependent, combination of SID and SIE */
  
 int vax_cpudata;	/* contents of the SID register */
 int vax_siedata;	/* contents of the SIE register */
-int vax_confdata;	/* machine dependend, configuration/setup data */
+int vax_confdata;	/* machine dependent, configuration/setup data */
 
 /*
  * Try to figure out which type of system this is.
