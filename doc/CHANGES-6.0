@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.141 2012/06/26 15:00:52 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.142 2012/06/28 04:52:59 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5898,4 +5898,19 @@ usr.sbin/npf/npftest/libnpftest/npf_table_test.c 1.2
 
 	More npf(4) fixes.
 	[rmind, ticket #365]
+
+etc/MAKEDEV.tmpl				1.156
+
+	Fix cross-building on Solaris hosts.  PR#46537.
+	[tsutsui, ticket #358]
+
+sys/arch/evbarm/marvell/marvell_machdep.c	1.7
+
+	Fix build warnings for Marvell Kirkwood with SATA configuration.
+	[tsutsui, ticket #359]
+
+sys/arch/dreamcast/dreamcast/machdep.c		1.43
+
+	Fix dreamcast build for GENERIC + no options DDB.
+	[tsutsui, ticket #360]
 
