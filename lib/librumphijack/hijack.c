@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.93 2012/06/25 22:32:47 abs Exp $	*/
+/*      $NetBSD: hijack.c,v 1.94 2012/06/29 13:20:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.93 2012/06/25 22:32:47 abs Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.94 2012/06/29 13:20:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1335,6 +1335,122 @@ write(int fd, const void *buf, size_t blen)
 }
 
 /*
+ * file descriptor passing
+ *
+ * we intercept sendmsg and recvmsg to convert file descriptors in
+ * control messages.  an attempt to send a descriptor from a different kernel
+ * is rejected.  (ENOTSUP)
+ */
+
+static int
+msg_convert(struct msghdr *msg, int (*func)(int))
+{
+	struct cmsghdr *cmsg;
+
+	for (cmsg = CMSG_FIRSTHDR(msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(msg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+		    cmsg->cmsg_type == SCM_RIGHTS) {
+			int *fdp = (void *)CMSG_DATA(cmsg);
+			const size_t size =
+			    cmsg->cmsg_len - __CMSG_ALIGN(sizeof(*cmsg));
+			const int nfds = size / sizeof(int);
+			const int * const efdp = fdp + nfds;
+
+			while (fdp < efdp) {
+				const int newval = func(*fdp);
+
+				if (newval < 0) {
+					return ENOTSUP;
+				}
+				*fdp = newval;
+				fdp++;
+			}
+		}
+	}
+	return 0;
+}
+
+ssize_t
+recvmsg(int fd, struct msghdr *msg, int flags)
+{
+	ssize_t (*op_recvmsg)(int, struct msghdr *, int);
+	ssize_t ret;
+	const bool isrump = fd_isrump(fd);
+
+	if (isrump) {
+		fd = fd_host2rump(fd);
+		op_recvmsg = GETSYSCALL(rump, RECVMSG);
+	} else {
+		op_recvmsg = GETSYSCALL(host, RECVMSG);
+	}
+	ret = op_recvmsg(fd, msg, flags);
+	if (ret == -1) {
+		return ret;
+	}
+	/*
+	 * convert descriptors in the message.
+	 */
+	if (isrump) {
+		msg_convert(msg, fd_rump2host);
+	} else {
+		msg_convert(msg, fd_host2host);
+	}
+	return ret;
+}
+
+static int
+fd_check_rump(int fd)
+{
+
+	return fd_isrump(fd) ? 0 : -1;
+}
+
+static int
+fd_check_host(int fd)
+{
+
+	return !fd_isrump(fd) ? 0 : -1;
+}
+
+ssize_t
+sendmsg(int fd, const struct msghdr *msg, int flags)
+{
+	ssize_t (*op_sendmsg)(int, const struct msghdr *, int);
+	const bool isrump = fd_isrump(fd);
+	int error;
+
+	/*
+	 * reject descriptors from a different kernel.
+	 */
+	error = msg_convert(__UNCONST(msg),
+	    isrump ? fd_check_rump: fd_check_host);
+	if (error != 0) {
+		errno = error;
+		return -1;
+	}
+	/*
+	 * convert descriptors in the message to raw values.
+	 */
+	if (isrump) {
+		fd = fd_host2rump(fd);
+		/*
+		 * XXX we directly modify the given message assuming:
+		 * - cmsg is writable (typically on caller's stack)
+		 * - caller don't care cmsg's contents after calling sendmsg.
+		 *   (thus no need to restore values)
+		 *
+		 * it's safer to copy and modify instead.
+		 */
+		msg_convert(__UNCONST(msg), fd_host2rump);
+		op_sendmsg = GETSYSCALL(rump, SENDMSG);
+	} else {
+		op_sendmsg = GETSYSCALL(host, SENDMSG);
+	}
+	return op_sendmsg(fd, msg, flags);
+}
+
+/*
  * dup2 is special.  we allow dup2 of a rump kernel fd to 0-2 since
  * many programs do that.  dup2 of a rump kernel fd to another value
  * not >= fdoff is an error.
@@ -1948,16 +2064,6 @@ FDCALL(ssize_t, sendto, DUALCALL_SENDTO, 				\
 	(int, const void *, size_t, int,				\
 	    const struct sockaddr *, socklen_t),			\
 	(fd, buf, len, flags, to, tolen))
-
-FDCALL(ssize_t, recvmsg, DUALCALL_RECVMSG, 				\
-	(int fd, struct msghdr *msg, int flags),			\
-	(int, struct msghdr *, int),					\
-	(fd, msg, flags))
-
-FDCALL(ssize_t, sendmsg, DUALCALL_SENDMSG, 				\
-	(int fd, const struct msghdr *msg, int flags),			\
-	(int, const struct msghdr *, int),				\
-	(fd, msg, flags))
 
 FDCALL(int, getsockopt, DUALCALL_GETSOCKOPT, 				\
 	(int fd, int level, int optn, void *optval, socklen_t *optlen),	\
