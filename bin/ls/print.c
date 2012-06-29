@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.50 2011/03/15 22:53:41 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.51 2012/06/29 12:51:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.50 2011/03/15 22:53:41 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.51 2012/06/29 12:51:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,12 +198,16 @@ printcol(DISPLAY *dp)
 	 * of pointers.
 	 */
 	if (dp->entries > lastentries) {
-		lastentries = dp->entries;
-		if ((array =
-		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
+		FTSENT **newarray;
+
+		newarray = realloc(array, dp->entries * sizeof(FTSENT *));
+		if (newarray == NULL) {
 			warn(NULL);
 			printscol(dp);
+			return;
 		}
+		lastentries = dp->entries;
+		array = newarray;
 	}
 	for (p = dp->list, num = 0; p; p = p->fts_link)
 		if (p->fts_number != NO_PRINT)
