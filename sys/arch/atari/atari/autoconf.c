@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 2012/06/30 10:37:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2012/06/30 10:37:00 tsutsui Exp $");
+
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $");
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/malloc.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
+
+#if defined(MEMORY_DISK_HOOKS)
+#include <dev/md.h>
+#endif
+
+#include "ioconf.h"
 
 static void findroot(void);
 int mbmatch(device_t, cfdata_t, void *);
@@ -75,6 +84,41 @@ cpu_rootconf(void)
 {
 
 	findroot();
+#if defined(MEMORY_DISK_HOOKS)
+	/*
+	 * XXX
+	 * quick hacks for atari's traditional "auto-load from floppy on open"
+	 * installation md(4) ramdisk.
+	 * See sys/arch/atari/dev/md_root.c for details.
+	 */
+#define RAMD_NDEV	3	/* XXX */
+
+	if ((boothowto & RB_ASKNAME) != 0) {
+		int md_major, i;
+		dev_t md_dev;
+		cfdata_t cf;
+		struct md_softc *sc;
+
+		md_major = devsw_name2blk("md", NULL, 0);
+		if (md_major >= 0) {
+			for (i = 0; i < RAMD_NDEV; i++) {
+				md_dev = MAKEDISKDEV(md_major, i, RAW_PART);
+				cf = malloc(sizeof(*cf), M_DEVBUF,
+				    M_ZERO|M_WAITOK);
+				if (cf == NULL)
+					break;	/* XXX */
+				cf->cf_name = md_cd.cd_name;
+				cf->cf_atname = md_cd.cd_name;
+				cf->cf_unit = i;
+				cf->cf_fstate = FSTATE_STAR;
+				/* XXX mutex */
+				sc = device_private(config_attach_pseudo(cf));
+				if (sc == NULL)
+					break;	/* XXX */
+			}
+		}
+	}
+#endif
 	setroot(booted_device, booted_partition);
 }
 
