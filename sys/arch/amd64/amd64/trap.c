@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 2012/05/22 21:14:37 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 2012/06/30 23:33:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2012/05/22 21:14:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2012/06/30 23:33:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -184,6 +184,27 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 	return NULL;
 }
 
+static void
+trap_print(const struct trapframe *frame, const lwp_t *l)
+{
+	const int type = frame->tf_trapno;
+
+	if (frame->tf_trapno < trap_types) {
+		printf("fatal %s", trap_type[type]);
+	} else {
+		printf("unknown trap %d", type);
+	}
+	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+
+	printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 %lx "
+	    "ilevel %x rsp %lx\n",
+	    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
+	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
+
+	printf("curlwp %p pid %d lid %d lowest kstack %p\n",
+	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
+}
+
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
@@ -192,7 +213,6 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  * exception has been processed. Note that the effect is as if the arguments
  * were passed call by reference.
  */
-
 void
 trap(struct trapframe *frame)
 {
@@ -226,13 +246,7 @@ trap(struct trapframe *frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
-		       "cpl %x\n",
-		    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
-		if (curlwp)
-			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
+		trap_print(frame, l);
 	}
 #endif
 	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
@@ -266,15 +280,8 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %ld", (u_long)frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
-		       " %lx cpl %x rsp %lx\n",
-		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
+		trap_print(frame, l);
+
 		if (kdb_trap(type, 0, frame))
 			return;
 		if (kgdb_trap(type, frame))

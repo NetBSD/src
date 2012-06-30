@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.263 2012/02/19 21:06:11 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.264 2012/06/30 23:33:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.263 2012/02/19 21:06:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264 2012/06/30 23:33:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -262,16 +262,24 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 }
 
 static void
-trap_print(int type, struct trapframe *frame)
+trap_print(const struct trapframe *frame, const lwp_t *l)
 {
-	if (frame->tf_trapno < trap_types)
-		printf("fatal %s", trap_type[frame->tf_trapno]);
-	else
-		printf("unknown trap %d", frame->tf_trapno);
+	const int type = frame->tf_trapno;
+
+	if (frame->tf_trapno < trap_types) {
+		printf("fatal %s", trap_type[type]);
+	} else {
+		printf("unknown trap %d", type);
+	}
 	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-	    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-	    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
+
+	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx "
+	    "ilevel %x esp %x\n",
+	    type, frame->tf_err, frame->tf_eip, frame->tf_cs, frame->tf_eflags,
+	    (long)rcr2(), curcpu()->ci_ilevel, frame->tf_esp);
+
+	printf("curlwp %p pid %d lid %d lowest kstack %p\n",
+	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
 static void
@@ -329,12 +337,7 @@ trap(struct trapframe *frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
-		if (curlwp)
-			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
+		trap_print(frame, l);
 	}
 #endif
 	if (type != T_NMI && !KVM86MODE &&
@@ -379,7 +382,8 @@ trap(struct trapframe *frame)
 		if (type == T_TRCTRAP)
 			check_dr0();
 		else
-			trap_print(type, frame);
+			trap_print(frame, l);
+
 		if (kdb_trap(type, 0, frame))
 			return;
 		if (kgdb_trap(type, frame))
