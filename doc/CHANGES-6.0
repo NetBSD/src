@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.144 2012/06/28 16:13:39 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.145 2012/06/30 10:13:29 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5935,4 +5935,10 @@ bin/stty/stty.c					1.22
 
 	Improve documentation and sync usage.
 	[wiz, ticket #364]
+
+share/mk/bsd.sys.mk				1.216
+
+	Match Wl,--fatal-warnings behaviour in gcc-4.1 to that
+	of gcc 4.5; fix vax build.
+	[abs, ticket #379]
 
