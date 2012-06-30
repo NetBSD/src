@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.49 2012/06/30 22:50:37 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.50 2012/06/30 23:36:20 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.49 2012/06/30 22:50:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.50 2012/06/30 23:36:20 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -672,7 +672,7 @@ xennetback_get_new_mcl_pages(void)
 	struct xen_memory_reservation res;
 
 	/* get some new pages. */
-	xenguest_handle(res.extent_start) = mcl_pages;
+	set_xen_guest_handle(res.extent_start, mcl_pages);
 	res.nr_extents = NB_XMIT_PAGES_BATCH;
 	res.extent_order = 0;
 	res.address_bits = 0;

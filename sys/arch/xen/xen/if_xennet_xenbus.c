@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.61 2012/06/30 22:50:37 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.62 2012/06/30 23:36:20 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.61 2012/06/30 22:50:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.62 2012/06/30 23:36:20 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -754,7 +754,7 @@ out_loop:
 		xpq_flush_queue();
 		splx(s);
 		/* now decrease reservation */
-		xenguest_handle(reservation.extent_start) = xennet_pages;
+		set_xen_guest_handle(reservation.extent_start, xennet_pages);
 		reservation.nr_extents = i;
 		reservation.extent_order = 0;
 		reservation.address_bits = 0;
@@ -820,7 +820,8 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 					 * transfer not complete, we lost the page.
 					 * Get one from hypervisor
 					 */
-					xenguest_handle(xenres.extent_start) = &pfn;
+					set_xen_guest_handle(
+					    xenres.extent_start, &pfn);
 					xenres.nr_extents = 1;
 					xenres.extent_order = 0;
 					xenres.address_bits = 31;
