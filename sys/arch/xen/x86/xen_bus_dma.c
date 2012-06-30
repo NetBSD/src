@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.25 2012/06/30 22:50:37 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.26 2012/06/30 23:36:20 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.25 2012/06/30 22:50:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.26 2012/06/30 23:36:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 		xpmap_ptom_unmap(pa);
-		xenguest_handle(res.extent_start) = &mfn;
+		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 0;
@@ -110,7 +110,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 		}
 	}
 	/* Get the new contiguous memory extent */
-	xenguest_handle(res.extent_start) = &mfn;
+	set_xen_guest_handle(res.extent_start, &mfn);
 	res.nr_extents = 1;
 	res.extent_order = order;
 	res.address_bits = get_order(high) + PAGE_SHIFT;
@@ -163,7 +163,7 @@ failed:
 	s = splvm();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
 		pgnext = pg->pageq.queue.tqe_next;
-		xenguest_handle(res.extent_start) = &mfn;
+		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 32;

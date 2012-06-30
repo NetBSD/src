@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.15 2012/06/30 22:50:37 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.15 2012/06/30 22:50:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -407,7 +407,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	}
 
 	/* Hand over pages to Hypervisor */
-	xenguest_handle(reservation.extent_start) = mfn_list;
+	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = rpages;
 
 	s = splvm();
@@ -471,7 +471,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	}
 
 	/* reclaim pages from balloon */
-	xenguest_handle(reservation.extent_start) = mfn_list;
+	set_xen_guest_handle(reservation.extent_start, mfn_list);
 	reservation.nr_extents = tpages;
 
 	s = splvm();
