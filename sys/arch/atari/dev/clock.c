@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53 2011/06/05 06:33:42 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.54 2012/06/30 12:42:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53 2011/06/05 06:33:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2012/06/30 12:42:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -505,7 +505,7 @@ rtcread(dev_t dev, struct uio *uio, int flags)
 	struct clock_softc	*sc;
 	mc_todregs		clkregs;
 	int			s, length;
-	char			buffer[16];
+	char			buffer[16 + 1];
 
 	sc = device_lookup_private(&clock_cd, minor(dev));
 
