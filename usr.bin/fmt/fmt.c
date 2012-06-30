@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.31 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: fmt.c,v 1.32 2012/06/30 21:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.31 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.32 2012/06/30 21:31:15 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	setprogname(*argv);
 	(void)setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Cg:m:r")) != -1)
+	while ((c = getopt(argc, argv, "Cg:m:rw:")) != -1)
 		switch (c) {
 		case 'C':
 			center++;
@@ -123,6 +123,7 @@ main(int argc, char **argv)
 			compat = 0;
 			break;
 		case 'm':
+		case 'w':
 			(void)getnum(optarg, "max", &max_length, 1);
 			compat = 0;
 			break;
@@ -175,7 +176,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-Cr] [-g <goal>] [-m <max>] [<files>..]\n"
+	    "Usage: %s [-Cr] [-g <goal>] [-m|w <max>] [<files>..]\n"
 	    "\t %s [-Cr] [<goal>] [<max>] [<files>]\n",
 	    getprogname(), getprogname());
 	exit(1);
