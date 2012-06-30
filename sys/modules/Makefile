@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 2012/04/26 03:03:53 christos Exp $
+#	$NetBSD: Makefile,v 1.107 2012/06/30 15:03:57 reinoud Exp $
 
 .include <bsd.own.mk>
 
@@ -214,6 +214,14 @@ SUBDIR+=	pwdog
 .endif
 
 .include <bsd.own.mk>
+
+#
+# NetBSD/usermode support
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	../arch/usermode/modules/syscallemu
+.endif
 
 # we need our device mapper for LVM
 .if (${MKLVM} != "no")
