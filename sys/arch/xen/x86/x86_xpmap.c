@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.45 2012/06/27 00:37:10 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.46 2012/06/30 22:50:37 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.45 2012/06/27 00:37:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.46 2012/06/30 22:50:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -1092,7 +1092,7 @@ xen_set_user_pgd(paddr_t page)
 
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
-	op.arg1.mfn = pfn_to_mfn(page >> PAGE_SHIFT);
+	op.arg1.mfn = xpmap_ptom_masked(page) >> PAGE_SHIFT;
         if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xen_set_user_pgd: failed to install new user page"
 			" directory %#" PRIxPADDR, page);

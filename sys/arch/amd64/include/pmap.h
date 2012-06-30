@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 2012/06/11 15:18:26 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 2012/06/30 22:50:36 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -258,6 +258,7 @@ pmap_pte2pa(pt_entry_t pte)
 {
 	return xpmap_mtop_masked(pte & PG_FRAME);
 }
+
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
