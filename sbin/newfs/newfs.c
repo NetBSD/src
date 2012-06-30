@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.110 2012/02/13 12:59:56 wiz Exp $	*/
+/*	$NetBSD: newfs.c,v 1.111 2012/06/30 15:34:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.110 2012/02/13 12:59:56 wiz Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.111 2012/06/30 15:34:01 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,14 +157,17 @@ const char lmsg[] = "%s: can't read disk label";
  */
 /*
  * For file systems smaller than SMALL_FSSIZE we use the S_DFL_* defaults,
- * otherwise if less than MEDIUM_FSSIZE use M_DFL_*, otherwise use
- * L_DFL_*.
+ * otherwise if less than MEDIUM_FSSIZE use M_DFL_*,
+ * otherwise if less than LARGE_FSSIZE use L_DFL_*,
+ * otherwise use LL_DFL_* especially for modern AFT disks.
  */
 #define	SMALL_FSSIZE	(20*1024*2)
 #define	S_DFL_FRAGSIZE	512
 #define	MEDIUM_FSSIZE	(1000*1024*2)
 #define	M_DFL_FRAGSIZE	1024
+#define	LARGE_FSSIZE	(128*1024*1024*2)
 #define	L_DFL_FRAGSIZE	2048
+#define	LL_DFL_FRAGSIZE	4096
 #define	DFL_FRAG_BLK	8
 
 /* Apple requires the fragment size to be at least APPLEUFS_DIRBLKSIZ
@@ -624,8 +627,10 @@ main(int argc, char *argv[])
 					fsize = S_DFL_FRAGSIZE;
 				else if (fssize < MEDIUM_FSSIZE)
 					fsize = M_DFL_FRAGSIZE;
-				else
+				else if (fssize < LARGE_FSSIZE)
 					fsize = L_DFL_FRAGSIZE;
+				else
+					fsize = LL_DFL_FRAGSIZE;
 				if (fsize < sectorsize)
 					fsize = sectorsize;
 			}

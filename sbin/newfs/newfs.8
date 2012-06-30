@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.82 2011/05/14 19:46:10 dholland Exp $
+.\"	$NetBSD: newfs.8,v 1.83 2012/06/30 15:34:01 tsutsui Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd May 14, 2011
+.Dd June 30, 2012
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -111,10 +111,12 @@ The default size depends upon the size of the file system:
 .Ar block-size
 .It \*[Lt] 20 MB
 4 KB
-.It \*[Lt] 1024 MB
+.It \*[Lt] 1000 MB
 8 KB
-.It \*[Gt]= 1024 MB
+.It \*[Lt] 128 GB
 16 KB
+.It \*[Gt]= 128 GB
+32 KB
 .El
 .It Fl d Ar maxbsize
 Set the maximum extent size to
@@ -151,10 +153,12 @@ The default size depends upon the size of the file system:
 .Ar frag-size
 .It \*[Lt] 20 MB
 0.5 KB
-.It \*[Lt] 1024 MB
+.It \*[Lt] 1000 MB
 1 KB
-.It \*[Gt]= 1024 MB
+.It \*[Lt] 128 GB
 2 KB
+.It \*[Gt]= 128 GB
+4 KB
 .El
 .It Fl G
 Treat garbage parameters as non-fatal.
@@ -182,10 +186,12 @@ bytes of data space:
 .Ar bytes-per-inode
 .It \*[Lt] 20 MB
 2 KB
-.It \*[Lt] 1024 MB
+.It \*[Lt] 1000 MB
 4 KB
-.It \*[Gt]= 1024 MB
+.It \*[Lt] 128 GB
 8 KB
+.It \*[Gt]= 128 GB
+16 KB
 .El
 .It Fl m Ar free-space
 The percentage of space reserved from normal users; the minimum free
