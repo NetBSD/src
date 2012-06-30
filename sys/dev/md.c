@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.66 2010/11/25 08:53:30 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.67 2012/06/30 10:52:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.66 2010/11/25 08:53:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.67 2012/06/30 10:52:31 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -243,6 +243,9 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	cfdata_t cf;
 	struct md_softc *sc;
 	struct disk *dk;
+#ifdef	MEMORY_DISK_HOOKS
+	bool configured;
+#endif
 
 	mutex_enter(&md_device_lock);
 	unit = MD_UNIT(dev);
@@ -274,7 +277,11 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 #ifdef	MEMORY_DISK_HOOKS
 	/* Call the open hook to allow loading the device. */
+	configured = (sc->sc_type != MD_UNCONFIGURED);
 	md_open_hook(unit, &sc->sc_md);
+	/* initialize disklabel if the device is configured in open hook */
+	if (!configured && sc->sc_type != MD_UNCONFIGURED)
+		md_set_disklabel(sc);
 #endif
 
 	/*
