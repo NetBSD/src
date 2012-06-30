@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.31 2012/01/07 20:44:41 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.32 2012/06/30 15:03:57 reinoud Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -9,16 +9,26 @@ NEED_OWN_INSTALL_TARGET?=	no
 ##
 USERMODE=	$S/arch/usermode
 GENASSYM_CONF=	${USERMODE}/usermode/genassym.cf
+
+## support for crosscompiling
+.if ${MACHINE_ARCH:Uunset} == "unset"
 MACHINE_ARCH!=uname -p
+.endif
 
 ##
 ## (2) compile settings
 ##
 USERMODE_HOSTOS!=uname -s
 USERMODE_HOSTMACHINE!=uname -m
-USERMODE_LIBS=	-lc -lrt
+USERMODE_LIBS= -L${DESTDIR}/usr/lib -lrt
 USERMODE_CPPFLAGS=${DEBUG} -U_KERNEL -I/usr/include
 USERMODE_CPPFLAGS+=${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
+
+## XXX hack to make it work under build.sh
+.if ${TOOLDIR:Uno} != "no"
+USERMODE_LIBS+= crti.o
+SYSTEM_LD_FIX= cp ${DESTDIR}/usr/lib/crt0.o ${DESTDIR}/usr/lib/crtbegin.o ${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crti.o .;
+.endif
 
 .if ${USERMODE_HOSTOS} == "Linux"
 USERMODE_LIBS+=	-lpthread
@@ -63,6 +73,7 @@ KERN_LDSCRIPT?=	kern.ldscript
 SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ ${LINKFORMAT} -Ttext ${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS}; \
+		${SYSTEM_LD_FIX} \
 		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ ${LINKFORMAT} -Ttext ${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS}
 NVFLAGS=	-n
 
