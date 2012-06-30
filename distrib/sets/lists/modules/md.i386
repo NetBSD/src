@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.38 2012/01/17 16:59:38 jakllsch Exp $
+# $NetBSD: md.i386,v 1.39 2012/06/30 15:03:56 reinoud Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -121,6 +121,8 @@
 ./@MODULEDIR@/savagedrm/savagedrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
+./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm/tdfxdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
