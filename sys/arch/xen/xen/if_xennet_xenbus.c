@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.60 2012/06/27 00:37:10 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.61 2012/06/30 22:50:37 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.60 2012/06/27 00:37:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.61 2012/06/30 22:50:37 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -686,7 +686,6 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	struct xennet_rxreq *req;
 	struct xen_memory_reservation reservation;
 	int s, otherend_id, notify;
-	paddr_t pfn;
 
 	otherend_id = sc->sc_xbusd->xbusd_otherend_id;
 
@@ -731,9 +730,9 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 			 * Remove this page from pseudo phys map before
 			 * passing back to Xen.
 			 */
-			pfn = req->rxreq_pa >> PAGE_SHIFT;
-			xennet_pages[i] = xpmap_phys_to_machine_mapping[pfn];
-			xpmap_phys_to_machine_mapping[pfn] = INVALID_P2M_ENTRY;
+			xennet_pages[i] =
+			    xpmap_ptom(req->rxreq_pa) >> PAGE_SHIFT;
+			xpmap_ptom_unmap(req->rxreq_pa);
 		}
 	}
 
@@ -842,8 +841,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				MULTI_update_va_mapping(&mcl[0], va, 
 				    (ma << PAGE_SHIFT) | PG_V | PG_KW,
 				    UVMF_TLB_FLUSH|UVMF_ALL);
-				xpmap_phys_to_machine_mapping[
-				    pa >> PAGE_SHIFT] = ma;
+				xpmap_ptom_map(pa, ptoa(ma));
 				mcl[1].op = __HYPERVISOR_mmu_update;
 				mcl[1].args[0] = (unsigned long)mmu;
 				mcl[1].args[1] = 1;
@@ -1039,7 +1037,7 @@ again:
 			mmu[0].val = pa >> PAGE_SHIFT;
 			MULTI_update_va_mapping(&mcl[0], va, 
 			    (ma << PAGE_SHIFT) | PG_V | PG_KW, UVMF_TLB_FLUSH|UVMF_ALL);
-			xpmap_phys_to_machine_mapping[pa >> PAGE_SHIFT] = ma;
+			xpmap_ptom_map(pa, ptoa(ma));
 			mcl[1].op = __HYPERVISOR_mmu_update;
 			mcl[1].args[0] = (unsigned long)mmu;
 			mcl[1].args[1] = 1;
