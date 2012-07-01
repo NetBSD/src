@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.5 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.6 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.5 2012/06/15 23:24:08 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.6 2012/07/01 23:21:07 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -205,6 +205,13 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		snprintf(buf, bufsiz, "ether=0x%x", op);
 		break;
 
+	case NPF_OPERAND_PROTO: {
+		uint8_t addrlen = (op >> 8) & 0xff;
+		uint8_t proto = op & 0xff;
+
+		snprintf(buf, bufsiz, "addrlen=%u, proto=%u", addrlen, proto);
+		break;
+	}
 	case NPF_OPERAND_SUBNET: {
 		snprintf(buf, bufsiz, "/%d", op);
 		if (ni) {
@@ -448,7 +455,7 @@ static const struct attr_keyword_mapent {
 	{ NPF_RSTICMP,		NPF_RSTICMP,	"return",	NULL	},
 	{ NPF_RSTICMP,		NPF_RULE_RETRST,"return-rst",	NULL	},
 	{ NPF_RSTICMP,		NPF_RULE_RETICMP,"return-icmp",	NULL	},
-	{ NPF_RULE_KEEPSTATE,	NPF_RULE_KEEPSTATE,"stateful",	NULL	},
+	{ NPF_RULE_STATEFUL,	NPF_RULE_STATEFUL,"stateful",	NULL	},
 	{ NPF_RULE_DIMASK,	NPF_RULE_IN,	"in",		NULL	},
 	{ NPF_RULE_DIMASK,	NPF_RULE_OUT,	"out",		NULL	},
 	{ NPF_RULE_FINAL,	NPF_RULE_FINAL,	"final",	NULL	},
@@ -524,6 +531,38 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 	puts("");
 }
 
+static void
+npfctl_show_table(unsigned id, int type)
+{
+	printf("table <%u> type %s\n", id,
+		(type == NPF_TABLE_HASH) ? "hash" :
+		(type == NPF_TABLE_TREE) ? "tree" :
+		"unknown"
+	);
+}
+
+static void
+npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
+{
+	rule_group_t rg;
+	nl_nat_t *nt = nrl;
+	npf_addr_t taddr;
+	in_port_t port;
+	size_t alen;
+	u_int flags;
+	int type;
+
+	_npf_rule_getinfo(nrl, &rg.rg_name, &rg.rg_attr, &rg.rg_ifnum);
+
+	/* Get the interface, if any. */
+	char ifnamebuf[IFNAMSIZ], *ifname = NULL;
+	if (rg.rg_ifnum) {
+		ifname = if_indextoname(rg.rg_ifnum, ifnamebuf);
+	}
+	_npf_nat_getinfo(nt, &type, &flags, &taddr, &alen, &port);
+	return; /* TODO */
+}
+
 int
 npfctl_config_show(int fd)
 {
@@ -540,8 +579,14 @@ npfctl_config_show(int fd)
 	    loaded ? "loaded" : "empty");
 
 	if (loaded) {
-		error = _npf_rule_foreach(ncf, npfctl_show_rule);
-		puts("}");
+		_npf_table_foreach(ncf, npfctl_show_table);
+		puts("");
+		error = _npf_nat_foreach(ncf, npfctl_show_nat);
+		puts("");
+		if (!error) {
+			error = _npf_rule_foreach(ncf, npfctl_show_rule);
+			puts("}");
+		}
 	}
 	npf_config_destroy(ncf);
 	return error;

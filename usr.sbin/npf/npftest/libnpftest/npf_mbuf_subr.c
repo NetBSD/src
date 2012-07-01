@@ -43,12 +43,34 @@ mbuf_construct_ether(int proto)
 	return m0;
 }
 
+static int
+mbuf_fill_proto(int proto, void *l4data)
+{
+	struct tcphdr *th;
+	int size = 0;
+
+	switch (proto) {
+	case IPPROTO_TCP:
+		th = l4data;
+		th->th_off = sizeof(struct tcphdr) >> 2;
+		size = sizeof(struct tcphdr);
+		break;
+	case IPPROTO_UDP:
+		size = sizeof(struct udphdr);
+		break;
+	case IPPROTO_ICMP:
+		size = offsetof(struct icmp, icmp_data);
+		break;
+	}
+	return size;
+}
+
 struct mbuf *
 mbuf_construct(int proto)
 {
 	struct mbuf *m;
 	struct ip *iphdr;
-	struct tcphdr *th;
+	void *l4data;
 	int size;
 
 	m = m_gethdr(M_WAITOK, MT_HEADER);
@@ -61,21 +83,34 @@ mbuf_construct(int proto)
 	iphdr->ip_p = proto;
 
 	size = sizeof(struct ip);
-
-	switch (proto) {
-	case IPPROTO_TCP:
-		th = (void *)(iphdr + 1);
-		th->th_off = sizeof(struct tcphdr) >> 2;
-		size += sizeof(struct tcphdr);
-		break;
-	case IPPROTO_UDP:
-		size += sizeof(struct udphdr);
-		break;
-	case IPPROTO_ICMP:
-		size += offsetof(struct icmp, icmp_data);
-		break;
-	}
+	l4data = (void *)(iphdr + 1);
+	size += mbuf_fill_proto(proto, l4data);
 	iphdr->ip_len = htons(size);
+
+	m->m_len = size;
+	m->m_next = NULL;
+	return m;
+}
+
+struct mbuf *
+mbuf_construct6(int proto)
+{
+	struct mbuf *m;
+	struct ip6_hdr *ip6;
+	void *l4data;
+	int size;
+
+	m = m_gethdr(M_WAITOK, MT_HEADER);
+	ip6 = mtod(m, struct ip6_hdr *);
+
+	ip6->ip6_vfc = IPV6_VERSION;
+	ip6->ip6_nxt = proto;
+	ip6->ip6_hlim = 64;
+
+	size = sizeof(struct ip6_hdr);
+	l4data = (void *)(ip6 + 1);
+	size += mbuf_fill_proto(proto, l4data);
+	ip6->ip6_plen = htons(size);
 
 	m->m_len = size;
 	m->m_next = NULL;
