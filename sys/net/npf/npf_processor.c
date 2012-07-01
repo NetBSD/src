@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.10 2012/02/20 00:18:20 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.11 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.10 2012/02/20 00:18:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.11 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -271,18 +271,13 @@ cisc_like:
 	 * CISC-like instructions.
 	 */
 	switch (d) {
-	case NPF_OPCODE_ETHER:
-		/* Source/destination, reserved, ethernet type. */
-		i_ptr = nc_fetch_word(i_ptr, &d);
-		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_ether(nbuf, d, n, i, &regs[NPF_NREGS - 1]);
-		break;
 	case NPF_OPCODE_IP4MASK:
 		/* Source/destination, network address, subnet. */
 		i_ptr = nc_fetch_word(i_ptr, &d);
 		i_ptr = nc_fetch_double(i_ptr, &addr.s6_addr32[0], &n);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d, &addr,
-		    (npf_netmask_t)n);
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr,
+		    (sizeof(struct in_addr) << 1) | (d & 0x1),
+		    &addr, (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_IP6MASK:
 		/* Source/destination, network address, subnet. */
@@ -292,7 +287,8 @@ cisc_like:
 		i_ptr = nc_fetch_double(i_ptr,
 		    &addr.s6_addr32[2], &addr.s6_addr32[3]);
 		i_ptr = nc_fetch_word(i_ptr, &n);
-		cmpval = npf_match_ipmask(npc, nbuf, n_ptr, d,
+		cmpval = npf_match_ipmask(npc, nbuf, n_ptr,
+		    (sizeof(struct in6_addr) << 1) | (d & 0x1),
 		    &addr, (npf_netmask_t)n);
 		break;
 	case NPF_OPCODE_TABLE:
@@ -319,6 +315,16 @@ cisc_like:
 		/* ICMP type/code. */
 		i_ptr = nc_fetch_word(i_ptr, &n);
 		cmpval = npf_match_icmp4(npc, nbuf, n_ptr, n);
+		break;
+	case NPF_OPCODE_PROTO:
+		i_ptr = nc_fetch_word(i_ptr, &n);
+		cmpval = npf_match_proto(npc, nbuf, n_ptr, n);
+		break;
+	case NPF_OPCODE_ETHER:
+		/* Source/destination, reserved, ethernet type. */
+		i_ptr = nc_fetch_word(i_ptr, &d);
+		i_ptr = nc_fetch_double(i_ptr, &n, &i);
+		cmpval = npf_match_ether(nbuf, d, n, i, &regs[NPF_NREGS - 1]);
 		break;
 	default:
 		/* Invalid instruction. */
@@ -443,9 +449,6 @@ jmp_check:
 	/*
 	 * CISC-like instructions.
 	 */
-	case NPF_OPCODE_ETHER:
-		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
-		break;
 	case NPF_OPCODE_IP4MASK:
 		error = nc_ptr_check(&iptr, nc, sz, 3, &val, 3);
 		if (error) {
@@ -478,6 +481,12 @@ jmp_check:
 		break;
 	case NPF_OPCODE_ICMP4:
 		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
+		break;
+	case NPF_OPCODE_PROTO:
+		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
+		break;
+	case NPF_OPCODE_ETHER:
+		error = nc_ptr_check(&iptr, nc, sz, 3, NULL, 0);
 		break;
 	default:
 		/* Invalid instruction. */

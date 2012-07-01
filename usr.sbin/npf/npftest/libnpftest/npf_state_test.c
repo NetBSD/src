@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_test.c,v 1.1 2012/06/04 00:28:34 rmind Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.2 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*
  * NPF state tracking test.
@@ -67,6 +67,20 @@ static const tcp_meta_t packet_sequence[] = {
 	{ A,	0,		10,	15000,		2000,	IN	},
 	/* --- */
 	{ A,	1000,		12000,	10,		1000,	OUT	},
+	{ CLEAR },
+
+	/* FIN exchange with retransmit. */
+	{ S,	0,		999,	0,		1000,	OUT	},
+	{ S|A,	0,		9,	1000,		2000,	IN	},
+	{ A,	0,		1000,	10,		1000,	OUT	},
+	/* --- */
+	{ F,	0,		10,	1000,		2000,	IN	},
+	{ F,	0,		1000,	10,		1000,	OUT	},
+	{ A,	0,		1000,	11,		1000,	OUT	},
+	/* --- */
+	{ F,	0,		1000,	11,		1000,	OUT	},
+	{ F,	0,		1000,	11,		1000,	OUT	},
+	{ A,	0,		11,	1001,		2000,	OUT	},
 	{ CLEAR },
 
 	/* Out of window. */

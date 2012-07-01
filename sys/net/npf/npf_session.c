@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.13 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.14 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  *	Note that entry may contain translated values in a case of NAT.
  *
  *	Sessions can serve two purposes: "pass" or "NAT".  Sessions for the
- *	former purpose are created according to the rules with "keep state"
+ *	former purpose are created according to the rules with "stateful"
  *	attribute and are used for stateful filtering.  Such sessions
  *	indicate that the packet of the backwards stream should be passed
  *	without inspection of the ruleset.  Another purpose is to associate
@@ -71,10 +71,16 @@
  *	the packet cache (npf_cache_t) representing the IDs.  It is done
  *	via npf_alg_sessionid() call.  In such case, ALGs are responsible
  *	for correct filling of protocol, addresses and ports/IDs.
+ *
+ * Lock order
+ *
+ *	sess_lock ->
+ *		npf_sehash_t::sh_lock ->
+ *			npf_state_t::nst_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.13 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.14 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -149,15 +155,21 @@ struct npf_sehash {
 /*
  * Session flags:
  * - PFIL_IN and PFIL_OUT values are reserved for direction.
- * - SE_PASSING: a "pass" session.
+ * - SE_ACTIVE: session is active i.e. visible on inspection.
+ * - SE_PASS: a "pass" session.
  * - SE_EXPIRE: explicitly expire the session.
  * - SE_REMOVING: session is being removed (indicate need to enter G/C list).
  */
 CTASSERT(PFIL_ALL == (0x001 | 0x002));
-#define	SE_PASSSING		0x004
-#define	SE_EXPIRE		0x008
-#define	SE_REMOVING		0x010
+#define	SE_ACTIVE		0x004
+#define	SE_PASS			0x008
+#define	SE_EXPIRE		0x010
+#define	SE_REMOVING		0x020
 
+/*
+ * Session tracking state: disabled (off), enabled (on) or flush request.
+ */
+enum { SESS_TRACKING_OFF, SESS_TRACKING_ON, SESS_TRACKING_FLUSH };
 static int			sess_tracking	__cacheline_aligned;
 
 /* Session hash table, lock and session cache. */
@@ -185,10 +197,14 @@ void
 npf_session_sysinit(void)
 {
 
+	sess_cache = pool_cache_init(sizeof(npf_session_t), coherency_unit,
+	    0, 0, "npfsespl", NULL, IPL_NET, NULL, NULL, NULL);
 	mutex_init(&sess_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sess_cv, "npfgccv");
+	sess_hashtbl = NULL;
 	sess_gc_lwp = NULL;
-	sess_tracking = 0;
+
+	sess_tracking = SESS_TRACKING_OFF;
 }
 
 void
@@ -197,9 +213,15 @@ npf_session_sysfini(void)
 
 	/* Disable tracking, flush all sessions. */
 	npf_session_tracking(false);
-	KASSERT(sess_tracking == 0);
+	KASSERT(sess_tracking == SESS_TRACKING_OFF);
 	KASSERT(sess_gc_lwp == NULL);
 
+	/* Sessions might have been restored while the tracking is off. */
+	if (sess_hashtbl) {
+		sess_htable_destroy(sess_hashtbl);
+	}
+
+	pool_cache_destroy(sess_cache);
 	cv_destroy(&sess_cv);
 	mutex_destroy(&sess_lock);
 }
@@ -311,18 +333,25 @@ sess_htable_reload(npf_sehash_t *stbl)
 {
 	npf_sehash_t *oldstbl;
 
-	mutex_enter(&sess_lock);
 	/* Flush all existing entries. */
-	sess_tracking = -1;	/* XXX */
-	cv_signal(&sess_cv);
-	cv_wait(&sess_cv, &sess_lock);
-	sess_tracking = 1;
+	mutex_enter(&sess_lock);
+	if (sess_gc_lwp) {
+		sess_tracking = SESS_TRACKING_FLUSH;
+		cv_broadcast(&sess_cv);
+	}
+	while (sess_tracking == SESS_TRACKING_FLUSH) {
+		cv_wait(&sess_cv, &sess_lock);
+	}
+
 	/* Set a new session table. */
 	oldstbl = sess_hashtbl;
 	sess_hashtbl = stbl;
 	mutex_exit(&sess_lock);
+
 	/* Destroy the old table. */
-	sess_htable_destroy(oldstbl);
+	if (oldstbl) {
+		sess_htable_destroy(oldstbl);
+	}
 }
 
 /*
@@ -332,20 +361,23 @@ sess_htable_reload(npf_sehash_t *stbl)
 static int
 sess_tracking_start(void)
 {
+	npf_sehash_t *nstbl;
 
-	sess_cache = pool_cache_init(sizeof(npf_session_t), coherency_unit,
-	    0, 0, "npfsespl", NULL, IPL_NET, NULL, NULL, NULL);
-	if (sess_cache == NULL)
-		return ENOMEM;
-
-	sess_hashtbl = sess_htable_create();
-	if (sess_hashtbl == NULL) {
-		pool_cache_destroy(sess_cache);
+	nstbl = sess_htable_create();
+	if (nstbl == NULL) {
 		return ENOMEM;
 	}
 
-	/* Make it visible before thread start. */
-	sess_tracking = 1;
+	/* Note: should be visible before thread start. */
+	mutex_enter(&sess_lock);
+	if (sess_tracking != SESS_TRACKING_OFF) {
+		mutex_exit(&sess_lock);
+		sess_htable_destroy(nstbl);
+		return EEXIST;
+	}
+	sess_hashtbl = nstbl;
+	sess_tracking = SESS_TRACKING_ON;
+	mutex_exit(&sess_lock);
 
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    npf_session_worker, NULL, &sess_gc_lwp, "npfgc")) {
@@ -359,33 +391,38 @@ static void
 sess_tracking_stop(void)
 {
 
-	/* Notify G/C thread to flush all sessions, wait for the exit. */
 	mutex_enter(&sess_lock);
-	sess_tracking = 0;
-	cv_signal(&sess_cv);
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		mutex_exit(&sess_lock);
+		return;
+	}
+
+	/* Notify G/C thread to flush all sessions. */
+	sess_tracking = SESS_TRACKING_OFF;
+	cv_broadcast(&sess_cv);
+
+	/* Wait for the exit. */
 	while (sess_gc_lwp != NULL) {
 		cv_wait(&sess_cv, &sess_lock);
 	}
 	mutex_exit(&sess_lock);
 
 	sess_htable_destroy(sess_hashtbl);
-	pool_cache_destroy(sess_cache);
+	pool_cache_invalidate(sess_cache);
 }
 
 /*
  * npf_session_tracking: enable/disable session tracking.
- *
- * => XXX: serialize at upper layer; ignore for now.
  */
 int
 npf_session_tracking(bool track)
 {
 
-	if (!sess_tracking && track) {
+	if (sess_tracking == SESS_TRACKING_OFF && track) {
 		/* Disabled -> Enable. */
 		return sess_tracking_start();
 	}
-	if (sess_tracking && !track) {
+	if (sess_tracking == SESS_TRACKING_ON && !track) {
 		/* Enabled -> Disable. */
 		sess_tracking_stop();
 		return 0;
@@ -404,13 +441,16 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
 	npf_session_t *se;
+	int flags;
 
 	/*
-	 * If layer 3 and 4 are not cached - protocol is not supported
-	 * or packet is invalid.
+	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
+	 * cached - protocol is not supported or packet is invalid.
 	 */
-	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
-	    !npf_iscached(npc, NPC_LAYER4)) {
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		return NULL;
+	}
+	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
 	}
 
@@ -467,17 +507,24 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 		return NULL;
 	}
 	se = sen->se_backptr;
+	flags = se->s_flags;
 
-	/* Match direction and check if not explicitly expired. */
-	const bool forw = (sen == &se->s_forw_entry);
-	const int se_di = se->s_flags & PFIL_ALL;
-	if (forw != (se_di == di) || (se->s_flags & SE_EXPIRE) != 0) {
+	/* Check if session is active and not expired. */
+	if (__predict_false((flags & (SE_ACTIVE | SE_EXPIRE)) != SE_ACTIVE)) {
+		rw_exit(&sh->sh_lock);
+		return NULL;
+	}
+
+	/* Match session entry and packet directions. */
+	const bool sforw = (sen == &se->s_forw_entry);
+	const bool pforw = (flags & PFIL_ALL) == di;
+	if (__predict_false(sforw != pforw)) {
 		rw_exit(&sh->sh_lock);
 		return NULL;
 	}
 
 	/* Inspect the protocol data and handle state changes. */
-	if (npf_state_inspect(npc, nbuf, &se->s_state, forw)) {
+	if (npf_state_inspect(npc, nbuf, &se->s_state, sforw)) {
 		/* Update the last activity time and hold a reference. */
 		getnanouptime(&se->s_atime);
 		atomic_inc_uint(&se->s_refcnt);
@@ -495,6 +542,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
  * npf_establish_session: create a new session, insert into the global list.
  *
  * => Session is created with the reference held for the caller.
+ * => Session will be activated on the first reference release.
  */
 npf_session_t *
 npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
@@ -508,11 +556,13 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	bool ok;
 
 	/*
-	 * If layer 3 and 4 are not cached - protocol is not supported
-	 * or packet is invalid.
+	 * Check if session tracking is on.  Also, if layer 3 and 4 are not
+	 * cached - protocol is not supported or packet is invalid.
 	 */
-	if (!sess_tracking || !npf_iscached(npc, NPC_IP46) ||
-	    !npf_iscached(npc, NPC_LAYER4)) {
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		return NULL;
+	}
+	if (!npf_iscached(npc, NPC_IP46) || !npf_iscached(npc, NPC_LAYER4)) {
 		return NULL;
 	}
 
@@ -723,7 +773,7 @@ npf_session_expire(npf_session_t *se)
 {
 
 	/* KASSERT(se->s_refcnt > 0); XXX: npf_nat_freepolicy() */
-	se->s_flags |= SE_EXPIRE;		/* XXXSMP */
+	atomic_or_uint(&se->s_flags, SE_EXPIRE);
 }
 
 /*
@@ -734,7 +784,7 @@ npf_session_pass(const npf_session_t *se, npf_rproc_t **rp)
 {
 
 	KASSERT(se->s_refcnt > 0);
-	if ((se->s_flags & SE_PASSSING) != 0) {
+	if ((se->s_flags & SE_PASS) != 0) {
 		*rp = se->s_rproc;
 		return true;
 	}
@@ -749,9 +799,12 @@ void
 npf_session_setpass(npf_session_t *se, npf_rproc_t *rp)
 {
 
+	KASSERT((se->s_flags & SE_ACTIVE) == 0);
 	KASSERT(se->s_refcnt > 0);
 	KASSERT(se->s_rproc == NULL);
-	se->s_flags |= SE_PASSSING;		/* XXXSMP */
+
+	/* No need for atomic since the session is not yet active. */
+	se->s_flags |= SE_PASS;
 	se->s_rproc = rp;
 }
 
@@ -764,6 +817,10 @@ npf_session_release(npf_session_t *se)
 {
 
 	KASSERT(se->s_refcnt > 0);
+	if ((se->s_flags & SE_ACTIVE) == 0) {
+		/* Activate: after this point, session is globally visible. */
+		se->s_flags |= SE_ACTIVE;
+	}
 	atomic_dec_uint(&se->s_refcnt);
 }
 
@@ -836,18 +893,15 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 			sh->sh_count--;
 
 			/*
-			 * Remove session, if forwards entry.  Set removal bit
-			 * when first entry is removed.  If it is already set,
-			 * then it is a second entry removal, therefore move
-			 * the session into the G/C list.
+			 * Set removal bit when the first entry is removed.
+			 * If already set, then second entry has been removed,
+			 * therefore move the session into the G/C list.
 			 */
-			if (sen == &se->s_forw_entry) {
-				LIST_REMOVE(se, s_list);
-			}
 			if (se->s_flags & SE_REMOVING) {
+				LIST_REMOVE(se, s_list);
 				LIST_INSERT_HEAD(gc_list, se, s_list);
 			} else {
-				se->s_flags |= SE_REMOVING;
+				atomic_or_uint(&se->s_flags, SE_REMOVING);
 			}
 
 			/* Next.. */
@@ -892,18 +946,19 @@ npf_session_worker(void *arg)
 	do {
 		/* Periodically wake up, unless get notified. */
 		mutex_enter(&sess_lock);
-		if (flushreq) {
-			/* Flush was performed, notify waiter. */
-			cv_signal(&sess_cv);
-		}
 		(void)cv_timedwait(&sess_cv, &sess_lock, SESS_GC_INTERVAL);
-		flushreq = (sess_tracking != 1);	/* XXX */
+		flushreq = (sess_tracking != SESS_TRACKING_ON);
 		npf_session_gc(&gc_list, flushreq);
+		if (sess_tracking == SESS_TRACKING_FLUSH) {
+			/* Flush was requested - on again, notify waiter. */
+			sess_tracking = SESS_TRACKING_ON;
+			cv_broadcast(&sess_cv);
+		}
 		mutex_exit(&sess_lock);
 
 		npf_session_freelist(&gc_list);
 
-	} while (sess_tracking);
+	} while (sess_tracking != SESS_TRACKING_OFF);
 
 	/* Wait for any referenced sessions to be released. */
 	while (!LIST_EMPTY(&gc_list)) {
@@ -914,7 +969,7 @@ npf_session_worker(void *arg)
 	/* Notify that we are done. */
 	mutex_enter(&sess_lock);
 	sess_gc_lwp = NULL;
-	cv_signal(&sess_cv);
+	cv_broadcast(&sess_cv);
 	mutex_exit(&sess_lock);
 
 	kthread_exit(0);
@@ -932,7 +987,9 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 	int error = 0, i;
 
 	/* If not tracking - empty. */
-	if (!sess_tracking) {
+	mutex_enter(&sess_lock);
+	if (sess_tracking == SESS_TRACKING_OFF) {
+		mutex_exit(&sess_lock);
 		return 0;
 	}
 
@@ -941,7 +998,6 @@ npf_session_save(prop_array_t selist, prop_array_t nplist)
 	 * expiring and removing.  Therefore, no need to exclusively lock
 	 * the entire hash table.
 	 */
-	mutex_enter(&sess_lock);
 	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
 		sh = &sess_hashtbl[i];
 		if (sh->sh_count == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.8 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.9 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ int	npf_ncode_validate(const void *, size_t, int *);
  */
 
 #define	NPF_OPCODE_ETHER		0x80
+#define	NPF_OPCODE_PROTO		0x81
 
 #define	NPF_OPCODE_IP4MASK		0x90
 #define	NPF_OPCODE_TABLE		0x91
@@ -141,6 +142,7 @@ int	npf_ncode_validate(const void *, size_t, int *);
 # define	NPF_OPERAND_ICMP4_TYPE_CODE	12
 # define	NPF_OPERAND_TCP_FLAGS_MASK	13
 # define	NPF_OPERAND_PORT_RANGE		14
+# define	NPF_OPERAND_PROTO		15
 
 static const struct npf_instruction {
 	const char *	name;
@@ -177,7 +179,7 @@ static const struct npf_instruction {
 	[NPF_OPCODE_MOVE] = {
 		.name = "move",
 		.op = {
-			[0] = NPF_OPERAND_VALUE, 
+			[0] = NPF_OPERAND_VALUE,
 			[1] = NPF_OPERAND_REGISTER,
 		},
 	},
@@ -302,6 +304,12 @@ static const struct npf_instruction {
 			[0] = NPF_OPERAND_SD,
 			[1] = NPF_OPERAND_NET_ADDRESS4,
 			[2] = NPF_OPERAND_ETHER_TYPE,
+		},
+	},
+	[NPF_OPCODE_PROTO] = {
+		.name = "proto",
+		.op = {
+			[0] = NPF_OPERAND_PROTO,
 		},
 	},
 	[NPF_OPCODE_IP4MASK] = {

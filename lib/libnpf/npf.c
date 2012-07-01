@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.8 2012/04/01 19:16:24 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.9 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.8 2012/04/01 19:16:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.9 2012/07/01 23:21:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -554,6 +554,29 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri)
 	return 0;
 }
 
+int
+_npf_nat_foreach(nl_config_t *ncf, nl_rule_callback_t func)
+{
+
+	return _npf_rule_foreach1(ncf->ncf_nat_list, 0, func);
+}
+
+void
+_npf_nat_getinfo(nl_nat_t *nt, int *type, u_int *flags, npf_addr_t *addr,
+    size_t *alen, in_port_t *port)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+
+	prop_dictionary_get_int32(rldict, "type", type);
+	prop_dictionary_get_uint32(rldict, "flags", flags);
+
+	prop_object_t obj = prop_dictionary_get(rldict, "translation-ip");
+	*alen = prop_data_size(obj);
+	memcpy(addr, prop_data_data_nocopy(obj), *alen);
+
+	prop_dictionary_get_uint16(rldict, "translation-port", port);
+}
+
 /*
  * TABLE INTERFACE.
  */
@@ -652,6 +675,24 @@ npf_table_destroy(nl_table_t *tl)
 
 	prop_object_release(tl->ntl_dict);
 	free(tl);
+}
+
+void
+_npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
+{
+	prop_dictionary_t tldict;
+	prop_object_iterator_t it;
+
+	it = prop_array_iterator(ncf->ncf_table_list);
+	while ((tldict = prop_object_iterator_next(it)) != NULL) {
+		u_int id;
+		int type;
+
+		prop_dictionary_get_uint32(tldict, "id", &id);
+		prop_dictionary_get_int32(tldict, "type", &type);
+		(*func)(id, type);
+	}
+	prop_object_iterator_release(it);
 }
 
 /*
