@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.15 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.16 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ char *		xstrndup(const char *, size_t);
 
 void		npfctl_print_error(const nl_error_t *);
 bool		npfctl_table_exists_p(const char *);
+int		npfctl_protono(const char *);
 in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(uint8_t, const char *);
 uint8_t		npfctl_icmptype(const char *);
@@ -139,6 +140,7 @@ void		npfctl_gennc_ports(nc_ctx_t *, int, in_port_t, in_port_t);
 void		npfctl_gennc_icmp(nc_ctx_t *, int, int);
 void		npfctl_gennc_tbl(nc_ctx_t *, int, u_int);
 void		npfctl_gennc_tcpfl(nc_ctx_t *, uint8_t, uint8_t);
+void		npfctl_gennc_proto(nc_ctx_t *ctx, uint8_t, uint8_t);
 
 /*
  * N-code disassembler.
