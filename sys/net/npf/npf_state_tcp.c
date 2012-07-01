@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.7 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.8 2012/07/01 18:13:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.7 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.8 2012/07/01 18:13:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,14 +60,15 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.7 2012/06/22 13:43:17 rmind Exp 
 #define	NPF_TCPS_SIMSYN_SENT	2
 #define	NPF_TCPS_SYN_RECEIVED	3
 #define	NPF_TCPS_ESTABLISHED	4
-#define	NPF_TCPS_FIN_SEEN	5
-#define	NPF_TCPS_CLOSE_WAIT	6
-#define	NPF_TCPS_FIN_WAIT	7
-#define	NPF_TCPS_CLOSING	8
-#define	NPF_TCPS_LAST_ACK	9
-#define	NPF_TCPS_TIME_WAIT	10
+#define	NPF_TCPS_FIN_SENT	5
+#define	NPF_TCPS_FIN_RECEIVED	6
+#define	NPF_TCPS_CLOSE_WAIT	7
+#define	NPF_TCPS_FIN_WAIT	8
+#define	NPF_TCPS_CLOSING	9
+#define	NPF_TCPS_LAST_ACK	10
+#define	NPF_TCPS_TIME_WAIT	11
 
-#define	NPF_TCP_NSTATES		11
+#define	NPF_TCP_NSTATES		12
 
 /*
  * TCP connection timeout table (in seconds).
@@ -79,12 +80,15 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 	[NPF_TCPS_SYN_SENT]	= 30,
 	[NPF_TCPS_SIMSYN_SENT]	= 30,
 	[NPF_TCPS_SYN_RECEIVED]	= 60,
-	/* Established, timeout: 24 hours. */
+	/* Established: 24 hours. */
 	[NPF_TCPS_ESTABLISHED]	= 60 * 60 * 24,
-	/* Closure cases, timeout: 4 minutes (2 * MSL). */
-	[NPF_TCPS_FIN_SEEN]	= 60 * 2 * 2,
-	[NPF_TCPS_CLOSE_WAIT]	= 60 * 2 * 2,
-	[NPF_TCPS_FIN_WAIT]	= 60 * 2 * 2,
+	/* FIN seen: 4 minutes (2 * MSL). */
+	[NPF_TCPS_FIN_SENT]	= 60 * 2 * 2,
+	[NPF_TCPS_FIN_RECEIVED]	= 60 * 2 * 2,
+	/* Half-closed cases: 6 hours. */
+	[NPF_TCPS_CLOSE_WAIT]	= 60 * 60 * 6,
+	[NPF_TCPS_FIN_WAIT]	= 60 * 60 * 6,
+	/* Full close cases: 30 sec and 2 * MSL. */
 	[NPF_TCPS_CLOSING]	= 30,
 	[NPF_TCPS_LAST_ACK]	= 30,
 	[NPF_TCPS_TIME_WAIT]	= 60 * 2 * 2,
@@ -176,7 +180,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			/* SYN-ACK response to original SYN. */
 			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
 			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
 	[NPF_TCPS_SYN_RECEIVED] = {
@@ -184,7 +188,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			/* Handshake (3): ACK is expected. */
 			[TCPFC_ACK]	= NPF_TCPS_ESTABLISHED,
 			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
 		},
 		[NPF_FLOW_BACK] = {
 			/* SYN-ACK may be retransmitted. */
@@ -192,7 +196,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			/* XXX: ACK of late SYN in simultaneous case? */
 			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
 	[NPF_TCPS_ESTABLISHED] = {
@@ -203,28 +207,38 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 		[NPF_FLOW_FORW] = {
 			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the sender. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
 		},
 		[NPF_FLOW_BACK] = {
 			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the receiver. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
-	[NPF_TCPS_FIN_SEEN] = {
+	[NPF_TCPS_FIN_SENT] = {
+		[NPF_FLOW_FORW] = {
+			/* FIN may be re-transmitted.  Late ACK as well. */
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_OK,
+		},
+		[NPF_FLOW_BACK] = {
+			/* If ACK, connection is half-closed now. */
+			[TCPFC_ACK]	= NPF_TCPS_FIN_WAIT,
+			/* FIN or FIN-ACK race - immediate closing. */
+			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
+		},
+	},
+	[NPF_TCPS_FIN_RECEIVED] = {
 		/*
-		 * FIN was seen.  If ACK only, connection is half-closed now,
-		 * need to determine which end is closed (sender or receiver).
-		 * However, both FIN and FIN-ACK may race here - in which
-		 * case we are closing immediately.
+		 * FIN was received.  Equivalent scenario to sent FIN.
 		 */
 		[NPF_FLOW_FORW] = {
 			[TCPFC_ACK]	= NPF_TCPS_CLOSE_WAIT,
 			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
 		},
 		[NPF_FLOW_BACK] = {
-			[TCPFC_ACK]	= NPF_TCPS_FIN_WAIT,
-			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_OK,
 		},
 	},
 	[NPF_TCPS_CLOSE_WAIT] = {
