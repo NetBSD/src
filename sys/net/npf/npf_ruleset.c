@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.11 2012/02/20 00:18:20 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.12 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.11 2012/02/20 00:18:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.12 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.11 2012/02/20 00:18:20 rmind Exp $
 #include "npf_ncode.h"
 #include "npf_impl.h"
 
-/* Ruleset structre (queue and default rule). */
+/* Ruleset structure (queue and default rule). */
 struct npf_ruleset {
 	TAILQ_HEAD(, npf_rule)	rs_queue;
 	npf_rule_t *		rs_default;
@@ -407,9 +407,9 @@ npf_rule_apply(npf_cache_t *npc, nbuf_t *nbuf, npf_rule_t *rl, int *retfl)
 #if defined(DDB) || defined(_NPF_TESTING)
 
 void
-npf_rulenc_dump(npf_rule_t *rl)
+npf_rulenc_dump(const npf_rule_t *rl)
 {
-	uint32_t *op = rl->r_ncode;
+	const uint32_t *op = rl->r_ncode;
 	size_t n = rl->r_nc_size;
 
 	while (n) {

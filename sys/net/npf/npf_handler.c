@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.17 2012/05/30 21:38:03 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.18 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.17 2012/05/30 21:38:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.18 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.17 2012/05/30 21:38:03 rmind Exp $
 #include "npf_impl.h"
 
 /*
- * If npf_ph_if != NULL, pfil hooks are registers.  If NULL, not registered.
+ * If npf_ph_if != NULL, pfil hooks are registered.  If NULL, not registered.
  * Used to check the state.  Locked by: softnet_lock + KERNEL_LOCK (XXX).
  */
 static struct pfil_head *	npf_ph_if = NULL;
@@ -100,24 +100,25 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
 	if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
-		int ret = -1;
+		/*
+		 * Pass to IPv4 or IPv6 reassembly mechanism.
+		 */
+		error = EINVAL;
 
-		/* Pass to IPv4 or IPv6 reassembly mechanism. */
 		if (npf_iscached(&npc, NPC_IP4)) {
 			struct ip *ip = nbuf_dataptr(*mp);
-			ret = ip_reass_packet(mp, ip);
+			error = ip_reass_packet(mp, ip);
 		} else if (npf_iscached(&npc, NPC_IP6)) {
 #ifdef INET6
 			/*
-			 * Note: frag6_input() offset is the start of the
-			 * fragment header.
+			 * Note: ip6_reass_packet() offset is the start of
+			 * the fragment header.
 			 */
 			const u_int hlen = npf_cache_hlen(&npc);
-			ret = ip6_reass_packet(mp, hlen);
+			error = ip6_reass_packet(mp, hlen);
 #endif
 		}
-		if (ret) {
-			error = EINVAL;
+		if (error) {
 			se = NULL;
 			goto out;
 		}
@@ -133,7 +134,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
 
-		ret = npf_cache_all(&npc, nbuf);
+		int ret = npf_cache_all(&npc, nbuf);
 		KASSERT((ret & NPC_IPFRAG) == 0);
 	}
 
@@ -188,7 +189,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * Note: the reference on the rule procedure is transfered to the
 	 * session.  It will be released on session destruction.
 	 */
-	if ((retfl & NPF_RULE_KEEPSTATE) != 0 && !se) {
+	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
 		se = npf_session_establish(&npc, nbuf, di);
 		if (se) {
 			npf_session_setpass(se, rp);

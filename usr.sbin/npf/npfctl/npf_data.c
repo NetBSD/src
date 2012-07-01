@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.13 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.14 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.13 2012/06/15 23:24:08 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.14 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -64,6 +64,8 @@ npfctl_find_ifindex(const char *ifname)
 static bool
 npfctl_copy_address(sa_family_t fam, npf_addr_t *addr, const void *ptr)
 {
+	memset(addr, 0, sizeof(npf_addr_t));
+
 	switch (fam) {
 	case AF_INET: {
 		const struct sockaddr_in *sin = ptr;
@@ -346,6 +348,19 @@ npfctl_parse_cidr(char *cidr)
 	return npfvar_get_data(vp, NPFVAR_FAM, 0);
 }
 
+int
+npfctl_protono(const char *proto)
+{
+	struct protoent *pe;
+
+	pe = getprotobyname(proto);
+	if (pe == NULL) {
+		yyerror("unknown protocol '%s'", proto);
+		return -1;
+	}
+	return pe->p_proto;
+}
+
 /*
  * npfctl_portno: convert port identifier (string) to a number.
  *
@@ -360,7 +375,7 @@ npfctl_portno(const char *port)
 
 	e = getaddrinfo(NULL, port, NULL, &rai);
 	if (e != 0) {
-		yyerror("invalid port name: '%s' (%s)", port, gai_strerror(e));
+		yyerror("invalid port name '%s' (%s)", port, gai_strerror(e));
 		return 0;
 	}
 

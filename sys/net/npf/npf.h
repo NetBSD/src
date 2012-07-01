@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.17 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.18 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 #define	NPF_RULE_PASS			0x0001
 #define	NPF_RULE_DEFAULT		0x0002
 #define	NPF_RULE_FINAL			0x0004
-#define	NPF_RULE_KEEPSTATE		0x0008
+#define	NPF_RULE_STATEFUL		0x0008
 #define	NPF_RULE_RETRST			0x0010
 #define	NPF_RULE_RETICMP		0x0020
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.12 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.13 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.12 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.13 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -126,75 +126,56 @@ npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 	return mix;
 }
 
-static inline void
-npf_generate_mask(npf_addr_t *out, const npf_netmask_t mask)
+/*
+ * npf_addr_mask: apply the mask to a given address and store the result.
+ */
+void
+npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask,
+    const int alen, npf_addr_t *out)
 {
+	const int nwords = alen >> 2;
 	uint_fast8_t length = mask;
 
 	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
 	KASSERT(length <= NPF_MAX_NETMASK);
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < nwords; i++) {
+		uint32_t wordmask;
+
 		if (length >= 32) {
-			out->s6_addr32[i] = htonl(0xffffffff);
+			wordmask = htonl(0xffffffff);
 			length -= 32;
-		} else {
-			out->s6_addr32[i] = htonl(0xffffffff << (32 - length));
+		} else if (length) {
+			wordmask = htonl(0xffffffff << (32 - length));
 			length = 0;
+		} else {
+			wordmask = 0;
 		}
-	}
-}
-
-/*
- * npf_addr_mask: apply the mask to a given address and store the result.
- */
-void
-npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask, npf_addr_t *out)
-{
-	npf_addr_t realmask;
-
-	npf_generate_mask(&realmask, mask);
-
-	for (int i = 0; i < 4; i++) {
-		out->s6_addr32[i] = addr->s6_addr32[i] & realmask.s6_addr32[i];
+		out->s6_addr32[i] = addr->s6_addr32[i] & wordmask;
 	}
 }
 
 /*
  * npf_addr_cmp: compare two addresses, either IPv4 or IPv6.
  *
+ * => Return 0 if equal and negative/positive if less/greater accordingly.
  * => Ignore the mask, if NPF_NO_NETMASK is specified.
- * => Return 0 if equal and -1 or 1 if less or greater accordingly.
  */
 int
 npf_addr_cmp(const npf_addr_t *addr1, const npf_netmask_t mask1,
-    const npf_addr_t *addr2, const npf_netmask_t mask2)
+    const npf_addr_t *addr2, const npf_netmask_t mask2, const int alen)
 {
-	npf_addr_t realmask1, realmask2;
+	npf_addr_t realaddr1, realaddr2;
 
 	if (mask1 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask1, mask1);
+		npf_addr_mask(addr1, mask1, alen, &realaddr1);
+		addr1 = &realaddr1;
 	}
 	if (mask2 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask2, mask2);
+		npf_addr_mask(addr2, mask2, alen, &realaddr2);
+		addr2 = &realaddr2;
 	}
-
-	for (int i = 0; i < 4; i++) {
-		const uint32_t x = mask1 != NPF_NO_NETMASK ?
-		    addr1->s6_addr32[i] & realmask1.s6_addr32[i] :
-		    addr1->s6_addr32[i];
-		const uint32_t y = mask2 != NPF_NO_NETMASK ?
-		    addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
-		    addr2->s6_addr32[i];
-		if (x < y) {
-			return -1;
-		}
-		if (x > y) {
-			return 1;
-		}
-	}
-
-	return 0;
+	return memcmp(addr1, addr2, alen);
 }
 
 /*
@@ -352,51 +333,49 @@ npf_fetch_ip(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 
 	case (IPV6_VERSION >> 4): {
 		struct ip6_hdr *ip6 = &npc->npc_ip.v6;
-		size_t toskip;
-		bool done;
+		size_t hlen = sizeof(struct ip6_hdr);
+		struct ip6_ext ip6e;
 
-		/* Fetch IPv6 header. */
-		if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(struct ip6_hdr), ip6)) {
+		/* Fetch IPv6 header and set initial next-protocol value. */
+		if (nbuf_fetch_datum(nbuf, n_ptr, hlen, ip6)) {
 			return false;
 		}
-
-		/* Initial next-protocol value. */
 		npc->npc_next_proto = ip6->ip6_nxt;
-		toskip = sizeof(struct ip6_hdr);
-		npc->npc_hlen = 0;
-		done = false;
+		npc->npc_hlen = hlen;
 
 		/*
-		 * Advance by the length of the previous known header and
-		 * fetch by the lengh of next extension header.
+		 * Advance by the length of the current header and
+		 * prefetch the extension header.
 		 */
-		do {
-			struct ip6_ext ip6e;
-
-			if (nbuf_advfetch(&nbuf, &n_ptr, toskip,
-			    sizeof(struct ip6_ext), &ip6e)) {
-				return false;
-			}
+		while (nbuf_advfetch(&nbuf, &n_ptr, hlen,
+		    sizeof(struct ip6_ext), &ip6e) == 0) {
+			/*
+			 * Determine whether we are going to continue.
+			 */
 			switch (npc->npc_next_proto) {
+			case IPPROTO_HOPOPTS:
 			case IPPROTO_DSTOPTS:
 			case IPPROTO_ROUTING:
-				toskip = (ip6e.ip6e_len + 1) << 3;
+				hlen = (ip6e.ip6e_len + 1) << 3;
 				break;
 			case IPPROTO_FRAGMENT:
 				npc->npc_info |= NPC_IPFRAG;
-				toskip = sizeof(struct ip6_frag);
+				hlen = sizeof(struct ip6_frag);
 				break;
 			case IPPROTO_AH:
-				toskip = (ip6e.ip6e_len + 2) << 2;
+				hlen = (ip6e.ip6e_len + 2) << 2;
 				break;
 			default:
-				done = true;
+				hlen = 0;
 				break;
 			}
-			npc->npc_hlen += toskip;
-			npc->npc_next_proto = ip6e.ip6e_nxt;
 
-		} while (!done);
+			if (!hlen) {
+				break;
+			}
+			npc->npc_next_proto = ip6e.ip6e_nxt;
+			npc->npc_hlen += hlen;
+		}
 
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_ipsz = sizeof(struct in6_addr);
@@ -790,3 +769,15 @@ npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
 	}
 	return true;
 }
+
+#if defined(DDB) || defined(_NPF_TESTING)
+
+void
+npf_addr_dump(const npf_addr_t *addr)
+{
+	printf("IP[%x:%x:%x:%x]\n",
+	    addr->s6_addr32[0], addr->s6_addr32[1],
+	    addr->s6_addr32[2], addr->s6_addr32[3]);
+}
+
+#endif

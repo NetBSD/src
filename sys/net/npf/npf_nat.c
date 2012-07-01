@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_nat.c,v 1.13 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.14 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.13 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.14 2012/07/01 23:21:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -510,18 +510,10 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
 
 	if (forw) {
 		/* "Forwards" stream: use translation address/port. */
-		KASSERT(
-		    (np->n_type == NPF_NATIN && di == PFIL_IN) ^
-		    (np->n_type == NPF_NATOUT && di == PFIL_OUT)
-		);
 		addr = &np->n_taddr;
 		port = nt->nt_tport;
 	} else {
 		/* "Backwards" stream: use original address/port. */
-		KASSERT(
-		    (np->n_type == NPF_NATIN && di == PFIL_OUT) ^
-		    (np->n_type == NPF_NATOUT && di == PFIL_IN)
-		);
 		addr = &nt->nt_oaddr;
 		port = nt->nt_oport;
 	}
@@ -635,7 +627,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 	}
 
 	/*
-	 * If there is no local session (no "keep state" rule - unusual, but
+	 * If there is no local session (no "stateful" rule - unusual, but
 	 * possible configuration), establish one before translation.  Note
 	 * that it is not a "pass" session, therefore passing of "backwards"
 	 * stream depends on other, stateless filtering rules.
@@ -671,7 +663,7 @@ out:
 			/* Will free the structure and return the port. */
 			npf_nat_expire(nt);
 		}
-		if (nse != NULL) {
+		if (nse) {
 			npf_session_release(nse);
 		}
 	}
@@ -837,9 +829,9 @@ npf_nat_restore(prop_dictionary_t sedict, npf_session_t *se)
 #if defined(DDB) || defined(_NPF_TESTING)
 
 void
-npf_nat_dump(npf_nat_t *nt)
+npf_nat_dump(const npf_nat_t *nt)
 {
-	npf_natpolicy_t *np;
+	const npf_natpolicy_t *np;
 	struct in_addr ip;
 
 	np = nt->nt_natpolicy;

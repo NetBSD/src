@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.10 2012/06/15 23:24:08 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.11 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.10 2012/06/15 23:24:08 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.11 2012/07/01 23:21:07 rmind Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -377,6 +377,25 @@ npfctl_gennc_tcpfl(nc_ctx_t *ctx, uint8_t tf, uint8_t tf_mask)
 	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_TCP_FLAGS;
 	*nc++ = (tf << 8) | tf_mask;
+
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
+
+	/* + 4 words. */
+	npfctl_ncgen_putptr(ctx, nc);
+}
+
+/*
+ * npfctl_gennc_proto: fragment to match the protocol.
+ */
+void
+npfctl_gennc_proto(nc_ctx_t *ctx, uint8_t addrlen, uint8_t proto)
+{
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
+
+	/* OP, code, type (2 words) */
+	*nc++ = NPF_OPCODE_PROTO;
+	*nc++ = ((addrlen & 0xff) << 8) | (proto & 0xff);
 
 	/* Comparison block (2 words). */
 	npfctl_ncgen_addjmp(ctx, &nc);
