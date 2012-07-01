@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_table_test.c,v 1.2 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_table_test.c,v 1.3 2012/07/01 23:21:07 rmind Exp $	*/
 
 /*
  * NPF tableset test.
@@ -56,6 +56,7 @@ npf_table_test(bool verbose)
 	assert(error == 0);
 
 	/* Attempt to match non-existing entries - should fail. */
+	memset(addr, 0, sizeof(npf_addr_t));
 	addr->s6_addr32[0] = inet_addr(ip_list[0]);
 
 	error = npf_table_match_addr(tblset, HASH_TID, addr);
@@ -66,6 +67,7 @@ npf_table_test(bool verbose)
 
 	/* Fill both tables with IP addresses. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
+		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
 		error = npf_table_add_cidr(tblset, HASH_TID, addr, 32);
@@ -80,6 +82,7 @@ npf_table_test(bool verbose)
 	}
 
 	/* Attempt to add duplicates - should fail. */
+	memset(addr, 0, sizeof(npf_addr_t));
 	addr->s6_addr32[0] = inet_addr(ip_list[0]);
 
 	error = npf_table_add_cidr(tblset, HASH_TID, addr, 32);
@@ -99,6 +102,7 @@ npf_table_test(bool verbose)
 
 	/* Match (validate) each IP entry. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
+		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
 		error = npf_table_match_addr(tblset, HASH_TID, addr);
@@ -110,6 +114,7 @@ npf_table_test(bool verbose)
 
 	/* Remove all entries. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
+		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
 		error = npf_table_rem_cidr(tblset, HASH_TID, addr, 32);

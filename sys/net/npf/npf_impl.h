@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.16 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.17 2012/07/01 23:21:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,6 +39,12 @@
 
 #if !defined(_KERNEL)
 #error "Kernel-level header only"
+#endif
+
+#ifdef _KERNEL_OPT
+/* For INET/INET6 definitions. */
+#include "opt_inet.h"
+#include "opt_inet6.h"
 #endif
 
 #include <sys/types.h>
@@ -178,9 +184,9 @@ uint16_t	npf_fixup32_cksum(uint16_t, uint32_t, uint32_t);
 uint16_t	npf_addr_cksum(uint16_t, int, npf_addr_t *, npf_addr_t *);
 uint32_t	npf_addr_sum(const int, const npf_addr_t *, const npf_addr_t *);
 int		npf_addr_cmp(const npf_addr_t *, const npf_netmask_t,
-		    const npf_addr_t *, const npf_netmask_t);
+		    const npf_addr_t *, const npf_netmask_t, const int);
 void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,
-		    npf_addr_t *);
+		    const int, npf_addr_t *);
 
 int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
@@ -191,6 +197,7 @@ bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
 int		npf_match_ether(nbuf_t *, int, int, uint16_t, uint32_t *);
+int		npf_match_proto(npf_cache_t *, nbuf_t *, void *, uint32_t);
 int		npf_match_table(npf_cache_t *, nbuf_t *, void *,
 		    const int, const u_int);
 int		npf_match_ipmask(npf_cache_t *, nbuf_t *, void *,
@@ -313,9 +320,10 @@ void		npf_alg_exec(npf_cache_t *, nbuf_t *, npf_nat_t *, const int );
 bool		npf_alg_sessionid(npf_cache_t *, nbuf_t *, npf_cache_t *);
 
 /* Debugging routines. */
-void		npf_rulenc_dump(npf_rule_t *);
+void		npf_addr_dump(const npf_addr_t *);
+void		npf_rulenc_dump(const npf_rule_t *);
 void		npf_sessions_dump(void);
-void		npf_state_dump(npf_state_t *);
-void		npf_nat_dump(npf_nat_t *);
+void		npf_state_dump(const npf_state_t *);
+void		npf_nat_dump(const npf_nat_t *);
 
 #endif	/* _NPF_IMPL_H_ */
