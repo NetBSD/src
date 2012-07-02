@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.27 2011/07/18 05:17:16 jruoho Exp $
+.\"	$NetBSD: fopen.3,v 1.28 2012/07/02 20:02:43 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,13 @@ The argument
 .Fa mode
 points to a string beginning with one of the following
 sequences (Additional characters may follow these sequences.):
-.Bl -tag -width indent
+.Bl -tag -width 4n
+.It Dq Li a
+Append; open for writing.
+The file is created if it does not exist.
+.It Dq Li a+
+Append; open for reading and writing.
+The file is created if it does not exist.
 .It Dq Li r
 Open for reading.
 .It Dq Li r+
@@ -74,45 +80,38 @@ Truncate file to zero length or create file.
 .It Dq Li w+
 Open for reading and writing.
 Truncate file to zero length or create file.
-.It Dq Li a
-Append; open for writing.
-The file is created if it does not exist.
-.It Dq Li a+
-Append; open for reading and writing.
-The file is created if it does not exist.
 .El
 .Pp
-Additionally:
-.Bl -bullet -offset 2n
-.It
-The
+Additionally, the
 .Fa mode
-string can also include the letter
-.Dq b
-either as a last character or
-as a character between the characters in any of the two-character strings
-described above.
+string can also include one of the following letters:
+.Bl -tag -width 4n
+.It Sq b
+The letter
+.Sq b
+may appear either as a last character or as a character between the
+characters in any of the two-character strings described above.
 This is strictly for compatibility with
 .St -ansiC
 and has no effect; the
-.Dq b
+.Sq b
 is ignored.
-.It
+.It Sq e
 The letter
-.Dq f
-in the mode string restricts
-.Fn fopen
-to regular files; if the file opened is not a regular file,
+.Sq e
+in the mode string sets the close-on-exec flag in the file descriptors of
+the newly opened file files; if the operation fails,
 .Fn fopen
 will fail.
 This is a non
 .St -ansiC
 extension.
-.It
+.It Sq f
 The letter
-.Dq e
-in the mode string sets the close-on-exec flag in the file descriptors of
-the newly opened file files; if the operation fails,
+.Sq f
+in the mode string restricts
+.Fn fopen
+to regular files; if the file opened is not a regular file,
 .Fn fopen
 will fail.
 This is a non
