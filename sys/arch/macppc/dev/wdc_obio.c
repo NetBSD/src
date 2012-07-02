@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.53 2011/07/01 18:41:52 dyoung Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.54 2012/07/02 18:15:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.53 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.54 2012/07/02 18:15:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanptr = chp;
 	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
 	sc->sc_wdcdev.dma_start = wdc_obio_dma_start;
@@ -237,7 +238,6 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
-	chp->ch_ndrive = 2;
 
 	wdc_init_shadow_regs(chp);
 
@@ -319,7 +319,7 @@ adjust_timing(struct ata_channel *chp)
 		
 		drvp = &chp->ch_drive[drive];
 		/* set up pio mode timings */
-		if (drvp->drive_flags & DRIVE) {
+		if (drvp->drive_type != DRIVET_NONE) {
 			int piomode = drvp->PIO_mode;
 			min_cycle = pio_timing[piomode].cycle;
 			min_active = pio_timing[piomode].active;
@@ -385,7 +385,7 @@ ata4_adjust_timing(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 		/* set up pio mode timings */
 
-		if (drvp->drive_flags & DRIVE) {
+		if (drvp->drive_type != DRIVET_NONE) {
 			int piomode = drvp->PIO_mode;
 			min_cycle = pio_timing[piomode].cycle;
 			min_active = pio_timing[piomode].active;

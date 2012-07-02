@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.9 2011/04/04 20:37:51 dyoung Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.10 2012/07/02 18:15:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.9 2011/04/04 20:37:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.10 2012/07/02 18:15:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ gcscide_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 
 		reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :

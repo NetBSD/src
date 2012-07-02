@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.96 2012/01/09 01:01:48 jakllsch Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.97 2012/07/02 18:15:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.96 2012/01/09 01:01:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.97 2012/07/02 18:15:46 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -187,8 +187,10 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 #endif
 
-	ATADEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d\n",
-	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive),
+	ATADEBUG_PRINT(("wdc_ata_bio_start %s:%d:%d state %d drive_flags 0x%x "
+	    "c_flags 0x%x ch_flags 0x%x\n",
+	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
+	    drvp->state, drvp->drive_flags, xfer->c_flags, chp->ch_flags),
 	    DEBUG_XFERS);
 
 	/* Do control operations specially. */
@@ -780,7 +782,7 @@ wdc_ata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("wdc_ata_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
-	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
+	ATADEBUG_PRINT(("wdc_ata_bio_kill_xfer: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 }
 

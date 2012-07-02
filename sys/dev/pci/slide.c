@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.23 2012/04/08 13:08:02 jakllsch Exp $	*/
+/*	$NetBSD: slide.c,v 1.24 2012/07/02 18:15:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.23 2012/04/08 13:08:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.24 2012/07/02 18:15:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ sl82c105_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	idecr = pci_conf_read(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR);
 
@@ -207,7 +208,7 @@ sl82c105_setup_channel(struct ata_channel *chp)
 
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip. */
-		if ((drvp->drive_flags & DRIVE) == 0) {
+		if (drvp->drive_type == DRIVET_NONE) {
 			pci_conf_write(sc->sc_pc, sc->sc_tag, pxdx_reg, pxdx);
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.26 2011/07/19 15:59:54 dyoung Exp $	*/
+/*	$NetBSD: simide.c,v 1.27 2012/07/02 18:15:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.26 2011/07/19 15:59:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.27 2012/07/02 18:15:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +249,7 @@ simide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		scp = &sc->simide_channels[channel];
 		sc->sc_chanarray[channel] = &scp->sc_channel;
@@ -258,7 +259,6 @@ simide_attach(device_t parent, device_t self, void *aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &scp->sc_chqueue;
-		cp->ch_ndrive = 2;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;
 		if (bus_space_map(wdr->cmd_iot, iobase +

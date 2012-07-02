@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.22 2012/03/04 00:21:20 mrg Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.23 2012/07/02 18:15:48 bouyer Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.22 2012/03/04 00:21:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.23 2012/07/02 18:15:48 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -110,7 +110,7 @@ int	uisdatadebug = 0;
 
 int  uisdata_bio(struct ata_drive_datas *, struct ata_bio *);
 int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
-void uisdata_reset_drive(struct ata_drive_datas *, int);
+void uisdata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void uisdata_reset_channel(struct ata_channel *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
 int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
@@ -215,7 +215,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_channel = 1;	/* XXX */
 	adev.adev_openings = 1;
 	adev.adev_drv_data = &scbus->sc_drv_data;
-	scbus->sc_drv_data.drive_flags = DRIVE_ATA;
+	scbus->sc_drv_data.drive_type = DRIVET_ATA;
 	scbus->sc_drv_data.chnl_softc = sc;
 	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
@@ -376,9 +376,10 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 }
 
 void
-uisdata_reset_drive(struct ata_drive_datas *drv, int flags)
+uisdata_reset_drive(struct ata_drive_datas *drv, int flags, uint32_t *sigp)
 {
 	DPRINTFN(-1,("%s\n", __func__));
+	KASSERT(sigp == NULL);
 	/* XXX what? */
 }
 

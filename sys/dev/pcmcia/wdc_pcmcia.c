@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.117 2009/11/12 19:37:17 dyoung Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.118 2012/07/02 18:15:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.117 2009/11/12 19:37:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.118 2012/07/02 18:15:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -294,12 +294,12 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	sc->wdc_chanlist[0] = &sc->ata_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = wdcp ? wdcp->wdc_ndrive : 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 	wdcp = pcmcia_product_lookup(pa, wdc_pcmcia_products,
 	    wdc_pcmcia_nproducts, sizeof(wdc_pcmcia_products[0]), NULL);
-	sc->ata_channel.ch_ndrive = wdcp ? wdcp->wdc_ndrive : 2;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
 	error = wdc_pcmcia_enable(self, 1);

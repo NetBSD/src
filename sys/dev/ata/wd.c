@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.393 2012/06/26 09:49:24 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.394 2012/07/02 18:15:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.393 2012/06/26 09:49:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.394 2012/07/02 18:15:46 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -283,7 +283,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_done = wddone;
-	wd->drvp->drv_softc = wd->sc_dev;
+	wd->drvp->drv_softc = wd->sc_dev; /* done in atabusconfig_thread()
+					     but too late */
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -291,7 +292,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	/* read our drive info */
 	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
 		aprint_error_dev(self, "IDENTIFY failed\n");
-		return;
+		goto out;
 	}
 
 	for (blank = 0, p = wd->sc_params.atap_model, q = tbuf, i = 0;
@@ -380,6 +381,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    device_xname(self), wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
+out:
 	/*
 	 * Initialize and attach the disk structure.
 	 */
@@ -461,7 +463,8 @@ wddetach(device_t self, int flags)
 
 	callout_destroy(&sc->sc_restart_ch);
 
-	sc->drvp->drive_flags = 0; /* no drive any more here */
+	sc->drvp->drive_type = DRIVET_NONE; /* no drive any more here */
+	sc->drvp->drive_flags = 0;
 
 	return (0);
 }
@@ -772,7 +775,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD, NULL);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
@@ -896,6 +899,9 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (! device_is_active(wd->sc_dev))
 		return (ENODEV);
 
+	if (wd->sc_capacity == 0)
+		return (ENODEV);
+
 	part = WDPART(dev);
 
 	mutex_enter(&wd->sc_dk.dk_openlock);
@@ -928,11 +934,15 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
-			wd->sc_flags |= WDF_LOADED;
 
 			/* Load the physical device parameters. */
-			wd_get_params(wd, AT_WAIT, &wd->sc_params);
-
+			if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
+				aprint_error_dev(wd->sc_dev,
+				"IDENTIFY failed\n");
+				error = EIO;
+				goto bad2;
+			}
+			wd->sc_flags |= WDF_LOADED;
 			/* Load the partition info if not already loaded. */
 			wdgetdisklabel(wd);
 		}
@@ -1607,7 +1617,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (wddumprecalibrated == 0) {
 		wddumprecalibrated = 1;
 		(*wd->atabus->ata_reset_drive)(wd->drvp,
-					       AT_POLL | AT_RST_EMERG);
+					       AT_POLL | AT_RST_EMERG, NULL);
 		wd->drvp->state = RESET;
 	}
 
@@ -1762,6 +1772,8 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
+		if (wd->drvp->drive_type != DRIVET_OLD)
+			return 1;
 		/*
 		 * We `know' there's a drive here; just assume it's old.
 		 * This geometry is only used to read the MBR and print a

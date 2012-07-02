@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.84 2012/01/24 20:04:07 jakllsch Exp $	*/
+/*	$NetBSD: atavar.h,v 1.85 2012/07/02 18:15:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -35,11 +35,6 @@
 /* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapiconf.h>
-
-/*
- * Max number of drives per channel.
- */
-#define	ATA_MAXDRIVES		2
 
 /*
  * Description of a command to be handled by an ATA controller.  These
@@ -113,22 +108,24 @@ struct ataparams;
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
+	enum {
+		DRIVET_NONE = 0,
+		DRIVET_ATA,
+		DRIVET_ATAPI,
+		DRIVET_OLD,
+		DRIVET_PM,
+	} drive_type;
 	u_int8_t drive;		/* drive number */
 	int8_t ata_vers;	/* ATA version supported */
 	u_int16_t drive_flags;	/* bitmask for drives present/absent and cap */
-
-#define	DRIVE_ATA	0x0001
-#define	DRIVE_ATAPI	0x0002
-#define	DRIVE_OLD	0x0004
-#define	DRIVE		(DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
-#define	DRIVE_CAP32	0x0008
-#define	DRIVE_DMA	0x0010
-#define	DRIVE_UDMA	0x0020
-#define	DRIVE_MODE	0x0040	/* the drive reported its mode */
-#define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
-#define	DRIVE_WAITDRAIN	0x0100	/* device is waiting for the queue to drain */
-#define	DRIVE_ATAPIST	0x0200	/* device is an ATAPI tape drive */
-#define	DRIVE_NOSTREAM	0x0400	/* no stream methods on this drive */
+#define	DRIVE_CAP32	0x0001
+#define	DRIVE_DMA	0x0002
+#define	DRIVE_UDMA	0x0004
+#define	DRIVE_MODE	0x0008	/* the drive reported its mode */
+#define	DRIVE_RESET	0x0010	/* reset the drive state at next xfer */
+#define	DRIVE_WAITDRAIN	0x0020	/* device is waiting for the queue to drain */
+#define	DRIVE_NOSTREAM	0x0040	/* no stream methods on this drive */
+#define DRIVE_ATAPIDSCW	0x0080	/* needs to wait for DSC in phase_complete */
 
 	/*
 	 * Current setting of drive's PIO, DMA and UDMA modes.
@@ -286,7 +283,7 @@ struct ata_command {
 struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
-	void	(*ata_reset_drive)(struct ata_drive_datas *, int);
+	void	(*ata_reset_drive)(struct ata_drive_datas *, int, uint32_t *);
 	void	(*ata_reset_channel)(struct ata_channel *, int);
 /* extra flags for ata_reset_*(), in addition to AT_* */
 #define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
@@ -347,17 +344,14 @@ struct ata_channel {
 	int ch_reset_flags;
 
 	/* per-drive info */
-	int ch_ndrive;
-	struct ata_drive_datas ch_drive[ATA_MAXDRIVES];
+	int ch_ndrives; /* number of entries in ch_drive[] */
+	struct ata_drive_datas *ch_drive; /* array of ata_drive_datas */
 
 	device_t atabus;	/* self */
 
 	/* ATAPI children */
 	device_t atapibus;
 	struct scsipi_channel ch_atapi_channel;
-
-	/* ATA children */
-	device_t ata_drives[ATA_MAXDRIVES];
 
 	/*
 	 * Channel queues.  May be the same for all channels, if hw
@@ -367,6 +361,9 @@ struct ata_channel {
 
 	/* The channel kernel thread */
 	struct lwp *ch_thread;
+
+	/* Number of sata PMP ports, if any */
+	int ch_satapmp_nports;
 };
 
 /*
@@ -433,6 +430,9 @@ struct atac_softc {
 void	ata_channel_attach(struct ata_channel *);
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
+
+int	atabus_alloc_drives(struct ata_channel *, int);
+void	atabus_free_drives(struct ata_channel *);
 
 struct ataparams;
 int	ata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);

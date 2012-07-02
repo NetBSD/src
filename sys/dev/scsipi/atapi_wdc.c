@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.113 2012/04/20 20:23:21 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.114 2012/07/02 18:15:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.113 2012/04/20 20:23:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.114 2012/07/02 18:15:48 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -199,7 +199,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct ata_command ata_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
-	if ((chp->ch_drive[drive].drive_flags & DRIVE_ATAPI) == 0) {
+	if (chp->ch_drive[drive].drive_type != DRIVET_ATAPI) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
 		    drive), DEBUG_PROBE);
 		return -1;
@@ -290,7 +290,7 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 			periph->periph_flags |= PERIPH_REMOVABLE;
 		if (periph->periph_type == T_SEQUENTIAL) {
 			s = splbio();
-			drvp->drive_flags |= DRIVE_ATAPIST;
+			drvp->drive_flags |= DRIVE_ATAPIDSCW;
 			splx(s);
 		}
 
@@ -321,12 +321,12 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 			ata_probe_caps(drvp);
 		else {
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_ATAPI;
+			drvp->drive_type = DRIVET_NONE;
 			splx(s);
 		}
 	} else {
 		s = splbio();
-		drvp->drive_flags &= ~DRIVE_ATAPI;
+		drvp->drive_type = DRIVET_NONE;
 		splx(s);
 	}
 }
@@ -995,7 +995,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
 	/* wait for DSC if needed */
-	if (drvp->drive_flags & DRIVE_ATAPIST) {
+	if (drvp->drive_flags & DRIVE_ATAPIDSCW) {
 		ATADEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
 		    "polldsc %d\n", device_xname(atac->atac_dev),
 		    chp->ch_channel,

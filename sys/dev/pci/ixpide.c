@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ ixp_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = ixp_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
@@ -187,7 +188,7 @@ ixp_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			s = splbio();

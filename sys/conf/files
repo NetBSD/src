@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1050 2012/05/08 23:53:26 riastradh Exp $
+#	$NetBSD: files,v 1.1051 2012/07/02 18:15:46 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -290,6 +290,7 @@ define	videobus	{ }
 define	ata	        {[channel = -1]}
 define	sata
 define	sata_fis
+define	sata_pmp
 define	scsi_core
 define	scsi		{[channel = -1]}: scsi_core
 define	ata_hl		{[drive = -1]}
@@ -974,12 +975,12 @@ file	dev/ic/lpt_upc.c		lpt_upc
 # AHCI-compatible SATA controllers
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
-device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, ahcisata_core
 
 # Silicon Image SteelVine SATA-II controllers
 define	siisata
 file	dev/ic/siisata.c		siisata
-device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
+device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, siisata
 
 # Marvell Serial-ATA Host Controller
 define mvsata
