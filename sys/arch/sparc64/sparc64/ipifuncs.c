@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.44 2012/02/12 16:34:10 matt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.45 2012/07/02 15:40:33 jdc Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.44 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.45 2012/07/02 15:40:33 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -222,7 +222,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	intr_func = (uint64_t)(u_long)func;
 
 	/* Schedule an interrupt. */
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 10000; i++) {
 		int s = intr_disable();
 
 		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, intr_func);
@@ -325,17 +325,21 @@ mp_halt_cpus(void)
 void
 mp_pause_cpus(void)
 {
+	int i = 3;
 	sparc64_cpuset_t cpuset;
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
+	while (i-- > 0) {
+		if (CPUSET_EMPTY(cpuset))
+			return;
 
-	if (CPUSET_EMPTY(cpuset))
-		return;
-
-	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0, 0);
-	if (sparc64_ipi_wait(&cpus_paused, cpuset))
-		sparc64_ipi_error("pause", cpus_paused, cpuset);
+		sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0, 0);
+		if (!sparc64_ipi_wait(&cpus_paused, cpuset))
+			return;
+		CPUSET_SUB(cpuset, cpus_paused);
+	}
+	sparc64_ipi_error("pause", cpus_paused, cpuset);
 }
 
 /*
@@ -354,16 +358,20 @@ mp_resume_cpu(int cno)
 void
 mp_resume_cpus(void)
 {
+	int i = 3;
 	sparc64_cpuset_t cpuset;
 
-	CPUSET_CLEAR(cpus_resumed);
-	CPUSET_ASSIGN(cpuset, cpus_paused);
-	membar_Sync();
-	CPUSET_CLEAR(cpus_paused);
+	while (i-- > 0) {
+		CPUSET_CLEAR(cpus_resumed);
+		CPUSET_ASSIGN(cpuset, cpus_paused);
+		membar_Sync();
+		CPUSET_CLEAR(cpus_paused);
 
-	/* CPUs awake on cpus_paused clear */
-	if (sparc64_ipi_wait(&cpus_resumed, cpuset))
-		sparc64_ipi_error("resume", cpus_resumed, cpuset);
+		/* CPUs awake on cpus_paused clear */
+		if (!sparc64_ipi_wait(&cpus_resumed, cpuset))
+			return;
+	}
+	sparc64_ipi_error("resume", cpus_resumed, cpuset);
 }
 
 int
