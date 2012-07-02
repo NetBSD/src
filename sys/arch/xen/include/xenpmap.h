@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.33.2.1 2012/05/09 03:22:52 riz Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.33.2.2 2012/07/02 21:01:48 jdc Exp $	*/
 
 /*
  *
@@ -58,11 +58,8 @@ void xen_bcast_invlpg(vaddr_t);
 
 void pmap_xen_resume(void);
 void pmap_xen_suspend(void);
-
-#ifdef PAE
-void	pmap_map_recursive_entries(void);
-void	pmap_unmap_recursive_entries(void);
-#endif /* PAE */
+void pmap_map_recursive_entries(void);
+void pmap_unmap_recursive_entries(void);
 
 #if defined(PAE) || defined(__x86_64__)
 void xen_kpm_sync(struct pmap *, int);
