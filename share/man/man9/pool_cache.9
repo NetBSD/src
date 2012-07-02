@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.19 2011/11/15 00:32:34 jym Exp $
+.\"	$NetBSD: pool_cache.9,v 1.19.2.1 2012/07/02 19:04:42 jdc Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -360,3 +360,13 @@ subsystem is implemented within the file
 .Xr memoryallocators 9 ,
 .Xr percpu 9 ,
 .Xr pool 9
+.\" ------------------------------------------------------------
+.Sh CAVEATS
+.Fn pool_cache_invalidate
+only affects objects safely accessible by the local CPU.
+On multiprocessor systems this function should be called by each CPU to
+invalidate their local caches.
+See
+.Xr xcall 9
+for an interface to schedule the execution of arbitrary functions
+to any other CPU.
