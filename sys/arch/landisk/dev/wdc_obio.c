@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.5 2011/07/01 19:12:53 dyoung Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.6 2012/07/02 18:15:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.5 2011/07/01 19:12:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.6 2012/07/02 18:15:45 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,10 +171,10 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanlist[0] = &sc->sc_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
-	sc->sc_channel.ch_ndrive = 2;
 
 	wdc_init_shadow_regs(&sc->sc_channel);
 

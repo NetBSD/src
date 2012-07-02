@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmpreg.h,v 1.3 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: satapmpreg.h,v 1.4 2012/07/02 18:15:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #define PMP_GSCR_ID	0x00		/* product and vendor id */
-#define 	PMP_ID_DEV(x)	((x) << 16)
+#define 	PMP_ID_DEV(x)	((x) >> 16)
 #define		PMP_ID_VEND(x)	((x) & 0xffff)
 #define PMP_GSCR_REV	0x01		/* revision */
 #define		PMP_REV_SPEC_10		0x02
@@ -78,5 +78,8 @@
  */
 #define PMPC_READ_PORT		0xe4
 #define PMPC_WRITE_PORT		0xe8
+
+/* max number of drives (last one being the PM itself */
+#define PMP_MAX_DRIVES		16
 
 #endif /* _DEV_ATA_SATAPMPREG_H_ */
