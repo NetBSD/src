@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.69.2.1 2012/03/07 23:44:24 riz Exp $ */
+/* $NetBSD: cpu.c,v 1.69.2.2 2012/07/02 21:33:00 jdc Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.1 2012/03/07 23:44:24 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.2 2012/07/02 21:33:00 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -283,6 +283,16 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 #endif
 	memcpy(mcp, &ucp->uc_mcontext, sizeof(mcontext_t));
 	return;
+}
+
+int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	/*
+	 * can we check here? or should that be done in the target
+	 * specific places?
+	 */
+	return 0;
 }
 
 int
