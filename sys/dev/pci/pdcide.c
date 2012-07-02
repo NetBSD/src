@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.29 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.30 2012/07/02 18:15:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.29 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.30 2012/07/02 18:15:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			pdc20268_setup_channel : pdc202xx_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -372,8 +373,8 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
 		    bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_ATAPI(channel))), DEBUG_PROBE);
-		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
-			chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
+		if (chp->ch_drive[0].drive_type == DRIVET_ATAPI ||
+			chp->ch_drive[1].drive_type == DRIVET_ATAPI) {
 			if (((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
 			    !(chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
 			    (chp->ch_drive[1].drive_flags & DRIVE_DMA)) ||
@@ -390,7 +391,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -417,7 +418,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		}
 		mode = PDC2xx_TIM_SET_PA(mode, pdc2xx_pa[drvp->PIO_mode]);
 		mode = PDC2xx_TIM_SET_PB(mode, pdc2xx_pb[drvp->PIO_mode]);
-		if (drvp->drive_flags & DRIVE_ATA)
+		if (drvp->drive_type == DRIVET_ATA)
 			mode |= PDC2xx_TIM_PRE;
 		mode |= PDC2xx_TIM_SYNC | PDC2xx_TIM_ERRDY;
 		if (drvp->PIO_mode >= 3) {
@@ -468,7 +469,7 @@ pdc20268_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
@@ -594,8 +595,8 @@ pdc20262_dma_finish(void *v, int channel, int drive, int force)
 	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
 		chp = sc->wdc_chanarray[channel];
 		atapi = 0;
-		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
-		    chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
+		if (chp->ch_drive[0].drive_type == DRIVET_ATAPI ||
+		    chp->ch_drive[1].drive_type == DRIVET_ATAPI) {
 			if ((!(chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
 			    (chp->ch_drive[1].drive_flags & DRIVE_UDMA) ||
 			    !(chp->ch_drive[1].drive_flags & DRIVE_DMA)) &&

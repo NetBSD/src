@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.28 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: hptide.c,v 1.29 2012/07/02 18:15:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.28 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.29 2012/07/02 18:15:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ hpt_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		else
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 	}
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -334,10 +335,10 @@ hpt_setup_channel(struct ata_channel *chp)
 	}
 
 	/* Per drive settings */
-	for (drive = 0; drive < chp->ch_ndrive; drive++) {
+	for (drive = 0; drive < chp->ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
 					HPT_IDETIM(chp->ch_channel, drive));
