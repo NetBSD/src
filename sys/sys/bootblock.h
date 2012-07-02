@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.53 2012/04/02 18:53:54 christos Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.54 2012/07/02 22:42:18 abs Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1409,7 +1409,8 @@ struct vax_boot_block {
 	uint8_t		bb_mbone;	/* must be one */
 	uint16_t	bb_lbn_hi;	/* lbn (hi word) of bootstrap */
 	uint16_t	bb_lbn_low;	/* lbn (low word) of bootstrap */
-	uint8_t		pad1[332];
+	uint8_t		pad1[460];
+	/* disklabel offset is 64 from base, or 56 from start of pad1 */
 
 	/* The rest of these fields are identification area and describe
 	 * the secondary block for uVAX VMB.
@@ -1431,7 +1432,7 @@ struct vax_boot_block {
 
 	/* The rest is unused.
 	 */
-	uint8_t		pad2[148];
+	uint8_t		pad2[20];
 } __packed;
 
 #define	VAX_BOOT_MAGIC1			0x18	/* size of BB info? */
