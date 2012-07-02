@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.27 2011/07/01 18:14:15 dyoung Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.28 2012/07/02 18:15:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.27 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.28 2012/07/02 18:15:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
 					  M_DEVBUF, M_NOWAIT);
-	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error_dev(self, "unable to allocate memory for command "
 		    "queue\n");
@@ -149,6 +148,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;		/* XXX */
@@ -182,7 +182,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	wdcattach(wdc_cp);
 
 	idedma_ctl = 0;
-	for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
+	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
 		/*
 		 * we have not probed the drives yet,
 		 * allocate ressources for all of them.
