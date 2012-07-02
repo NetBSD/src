@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.22 2008/03/18 20:46:37 cube Exp $	*/
+/*	$NetBSD: hcide.c,v 1.23 2012/07/02 18:15:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.22 2008/03/18 20:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.23 2012/07/02 18:15:48 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -92,6 +92,7 @@ hcide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
 	sc->sc_wdc.sc_atac.atac_nchannels = HCIDE_NCHANNELS;
 	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
+	sc->sc_wdc.wdc_maxdrives = 2;
 	aprint_normal("\n");
 	for (i = 0; i < HCIDE_NCHANNELS; i++) {
 		ch = sc->sc_chp[i] = &sc->sc_chan[i];
@@ -101,7 +102,6 @@ hcide_attach(device_t parent, device_t self, void *aux)
 		wdr->cmd_iot = pa->pa_mod_t;
 		wdr->ctl_iot = pa->pa_mod_t;
 		ch->ch_queue = &sc->sc_chq[i];
-		ch->ch_ndrive = 2;
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);
