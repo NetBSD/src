@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.106 2011/06/01 02:22:18 rmind Exp $
+.\"	$NetBSD: uvm.9,v 1.107 2012/07/02 21:10:31 jym Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2011
+.Dd July 2, 2012
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -486,6 +486,36 @@ to
 .Fa newsize .
 Caller must hold a reference to the vnode.
 If the vnode shrinks, pages no longer used are discarded.
+.Sh MISCELLANEOUS MACROS
+.Bl -ohang
+.It Ft paddr_t
+.Fn atop "paddr_t pa" ;
+.It Ft paddr_t
+.Fn ptoa "paddr_t pn" ;
+.It Ft paddr_t
+.Fn round_page "address" ;
+.It Ft paddr_t
+.Fn trunc_page "address" ;
+.El
+.Pp
+The
+.Fn atop
+macro converts a physical address
+.Fa pa
+into a page number.
+The
+.Fn ptoa
+macro does the opposite by converting a page number
+.Fa pn
+into a physical address.
+.Pp
+.Fn round_page
+and
+.Fn trunc_page
+macros return a page address boundary from rounding
+.Fa address
+up and down, respectively, to the nearest page boundary.
+These macros work for either addresses or byte counts.
 .Sh SYSCTL
 UVM provides support for the
 .Dv CTL_VM
