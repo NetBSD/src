@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1767 2012/06/27 22:18:06 jdf Exp $
+#	$NetBSD: mi,v 1.1768 2012/07/02 21:10:30 jym Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9709,6 +9709,7 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-obsolete		obsolete
+./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman		.cat
@@ -10617,6 +10618,7 @@
 ./usr/share/man/cat9/pserialize_read_enter.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pserialize_read_exit.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ptoa.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/radio.0			comp-sys-catman		.cat
@@ -10639,6 +10641,7 @@
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_extract_data.0		comp-sys-catman		.cat
+./usr/share/man/cat9/round_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup2.0			comp-sys-catman		.cat
@@ -10833,6 +10836,7 @@
 ./usr/share/man/cat9/tprintf_open.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/transferlockers.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/trapsignal.0		comp-sys-catman		.cat
+./usr/share/man/cat9/trunc_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tsleep.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyldisc_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyldisc_lookup.0		comp-sys-catman		.cat
@@ -15983,6 +15987,7 @@
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VREF.html			comp-obsolete	obsolete
+./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_generic_mod_event.html	comp-sys-htmlman	html
@@ -16852,6 +16857,7 @@
 ./usr/share/man/html9/pserialize_read_enter.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pserialize_read_exit.html	comp-sys-htmlman	html
 ./usr/share/man/html9/psignal.html		comp-sys-htmlman	html
+./usr/share/man/html9/ptoa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/putiobuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/putter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/radio.html		comp-sys-htmlman	html
@@ -16873,6 +16879,7 @@
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_extract_data.html	comp-sys-htmlman	html
+./usr/share/man/html9/round_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup2.html		comp-sys-htmlman	html
@@ -17054,6 +17061,7 @@
 ./usr/share/man/html9/tprintf_open.html		comp-sys-htmlman	html
 ./usr/share/man/html9/transferlockers.html	comp-sys-htmlman	html
 ./usr/share/man/html9/trapsignal.html		comp-sys-htmlman	html
+./usr/share/man/html9/trunc_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tsleep.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ttyldisc_add.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ttyldisc_lookup.html	comp-sys-htmlman	html
@@ -22364,6 +22372,7 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-obsolete		obsolete
+./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man		.man
@@ -23272,6 +23281,7 @@
 ./usr/share/man/man9/pserialize_read_enter.9	comp-sys-man		.man
 ./usr/share/man/man9/pserialize_read_exit.9	comp-sys-man		.man
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
+./usr/share/man/man9/ptoa.9			comp-sys-man		.man
 ./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/putter.9			comp-sys-man		.man
 ./usr/share/man/man9/radio.9			comp-sys-man		.man
@@ -23294,6 +23304,7 @@
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_extract_data.9		comp-sys-man		.man
+./usr/share/man/man9/round_page.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
 ./usr/share/man/man9/roundup.9			comp-sys-man		.man
 ./usr/share/man/man9/roundup2.9			comp-sys-man		.man
@@ -23488,6 +23499,7 @@
 ./usr/share/man/man9/tprintf_open.9		comp-sys-man		.man
 ./usr/share/man/man9/transferlockers.9		comp-sys-man		.man
 ./usr/share/man/man9/trapsignal.9		comp-sys-man		.man
+./usr/share/man/man9/trunc_page.9		comp-sys-man		.man
 ./usr/share/man/man9/tsleep.9			comp-sys-man		.man
 ./usr/share/man/man9/ttyldisc_add.9		comp-sys-man		.man
 ./usr/share/man/man9/ttyldisc_lookup.9		comp-sys-man		.man
