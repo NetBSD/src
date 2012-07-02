@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.99 2012/06/12 17:14:19 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2012/06/12 17:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -589,12 +589,15 @@ void
 cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
+	kcpuset_t *cpus;
 	u_long i;
 
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
 
-	for (i=0; i < maxcpus; i++) {
+	kcpuset_create(&cpus, true);
+	kcpuset_set(cpus, cpu_index(curcpu()));
+	for (i = 0; i < maxcpus; i++) {
 		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
@@ -605,7 +608,11 @@ cpu_boot_secondary_processors(void)
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		cpu_boot_secondary(ci);
+		kcpuset_set(cpus, cpu_index(ci));
 	}
+	while (!kcpuset_match(cpus, kcpuset_running))
+		;
+	kcpuset_destroy(cpus);
 
 	x86_mp_online = true;
 
