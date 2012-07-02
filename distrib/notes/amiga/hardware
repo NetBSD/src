@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.51 2012/04/24 13:55:51 rkujawa Exp $
+.\"	$NetBSD: hardware,v 1.52 2012/07/02 18:13:13 rkujawa Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -13,13 +13,13 @@ For 68020 and 68030 systems, a FPU is recommended but not required for the
 system utilities.
 68LC040, 68040V and 68LC060 systems don't work correctly at the moment.
 .Pp
-The minimal configuration requires 6 MB of RAM (not including CHIPMEM!)
-and about 100 MB of disk space.
+The minimal configuration requires around 24 MB of RAM (not including CHIPMEM!)
+and about 250 MB of disk space.
 To install the entire system requires much more disk space,
 and to run X or compile the system, more RAM is recommended.
-(6 MB of RAM will actually allow you to compile,
+(24 MB of RAM will actually allow you to compile,
 however it won't be speedy.
-X really isn't usable on a 6 MB system.)
+X really isn't usable on a 24 MB system.)
 .Pp
 You will probably want to compile your own kernel.
 .Li GENERIC
@@ -64,6 +64,8 @@ Blizzard 2060, CyberSCSI Mk I and II
 .It
 PCI bridges
 .(bullet -compact
+ELBOX Mediator PCI 1200 series (original model, LT2, LT4, SX, TX)
+.It
 Prometheus PCI bridge
 .It
 Phase5 PCI bridge: CyberVision PPC, BlizzardVision PPC
