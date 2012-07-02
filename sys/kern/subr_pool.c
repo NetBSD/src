@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.194 2012/02/04 22:11:42 para Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.194.2.1 2012/07/02 19:04:42 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194 2012/02/04 22:11:42 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.194.2.1 2012/07/02 19:04:42 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2245,26 +2245,15 @@ void
 pool_cache_invalidate(pool_cache_t pc)
 {
 	pcg_t *full, *empty, *part;
-#if 0
-	uint64_t where;
 
-	if (ncpu < 2 || !mp_online) {
-		/*
-		 * We might be called early enough in the boot process
-		 * for the CPU data structures to not be fully initialized.
-		 * In this case, simply gather the local CPU's cache now
-		 * since it will be the only one running.
-		 */
-		pool_cache_xcall(pc);
-	} else {
-		/*
-		 * Gather all of the CPU-specific caches into the
-		 * global cache.
-		 */
-		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
-		xc_wait(where);
-	}
-#endif
+	/*
+	 * Transfer the content of the local CPU's cache back into global
+	 * cache. Note that this does not handle objects cached for other CPUs.
+	 * A xcall(9) must be scheduled to take care of them.
+	 */
+	pool_cache_xcall(pc);
+
+	/* Invalidate the global cache. */
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
