@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.83.14.2 2012/04/23 16:28:30 riz Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.83.14.3 2012/07/02 21:11:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.83.14.2 2012/04/23 16:28:30 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.83.14.3 2012/07/02 21:11:50 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,12 +194,15 @@ atapibusdetach(device_t self, int flags)
 	struct atapibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
-	int target, error;
+	int target, error = 0;
 
 	/*
 	 * Shut down the channel.
 	 */
 	scsipi_channel_shutdown(chan);
+
+	/* XXXSMP scsipi */
+	KERNEL_LOCK(1, curlwp);
 
 	/*
 	 * Now detach all of the periphs.
@@ -210,10 +213,14 @@ atapibusdetach(device_t self, int flags)
 			continue;
 		error = config_detach(periph->periph_dev, flags);
 		if (error)
-			return (error);
+			goto out;
 		KASSERT(scsipi_lookup_periph(chan, target, 0) == NULL);
 	}
-	return (0);
+
+out:
+	/* XXXSMP scsipi */
+	KERNEL_UNLOCK_ONE(curlwp);
+	return error;
 }
 
 static int
