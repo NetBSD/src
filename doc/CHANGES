@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1713 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1714 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -75,3 +75,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		net.inet6.ip6.maxifdefrouters = 16
 		net.inet6.ip6.maxdynroutes = 4096
 		[christos 20120622]
+	ata(4): added support for sata Port MultiPliers (PMP)
+		[bouyer 20120702]
