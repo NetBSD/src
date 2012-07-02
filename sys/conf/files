@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1043 2012/02/02 19:43:01 tls Exp $
+#	$NetBSD: files,v 1.1043.2.1 2012/07/02 18:01:16 jdc Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1634,6 +1634,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_rename.c
 file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
