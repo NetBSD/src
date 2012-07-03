@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.1.8.1 2012/06/12 19:41:25 riz Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.1.8.2 2012/07/03 20:48:40 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -199,6 +199,8 @@ reassign_tasks(connection_t *oldconn)
 		ccb->pdu_waiting = pdu;
 		ccb->connection = conn;
 		ccb->num_timeouts = 0;
+		oldconn->usecount--;
+		conn->usecount++;
 
 		DEBC(conn, 1, ("CCB %p: Copied PDU %p to %p\n",
 					   ccb, opdu, pdu));
@@ -341,30 +343,21 @@ iscsi_send_thread(void *par)
 
 		fp = conn->sock;
 
-		DEBC(conn, 9, ("Closing Socket %p\n", conn->sock));
 		/*
-		 * We must close the socket here to force the receive
+		 * We shutdown the socket here to force the receive
 		 * thread to wake up
 		 */
+		DEBC(conn, 9, ("Closing Socket %p\n", conn->sock));
 		solock((struct socket *) fp->f_data);
 		soshutdown((struct socket *) fp->f_data, SHUT_RDWR);
 		sounlock((struct socket *) fp->f_data);
-
-#if __NetBSD_Version__ > 500000000
-		mutex_enter(&fp->f_lock);
-		fp->f_count += 1;
-		mutex_exit(&fp->f_lock);
-		closef(fp);
-#else
-		simple_lock(&fp->f_slock);
-		FILE_USE(fp);
-		closef(fp, NULL);
-#endif
 
 		/* wake up any non-reassignable waiting CCBs */
 		for (ccb = TAILQ_FIRST(&conn->ccbs_waiting); ccb != NULL; ccb = nccb) {
 			nccb = TAILQ_NEXT(ccb, chain);
 			if (!(ccb->flags & CCBF_REASSIGN) || ccb->pdu_waiting == NULL) {
+				DEBC(conn, 9, ("Terminating CCB %p (t=%p)\n",
+					ccb,&ccb->timeout));
 				ccb->status = conn->terminating;
 				wake_ccb(ccb);
 			} else {
@@ -791,9 +784,13 @@ start_text_negotiation(connection_t *conn)
 	ccb_t *ccb;
 
 	ccb = get_ccb(conn, TRUE);
-	pdu = get_pdu(conn);
-	if (ccb == NULL || pdu == NULL)
+	if (ccb == NULL)
 		return;
+	pdu = get_pdu(conn);
+	if (pdu == NULL) {
+		free_ccb(ccb);
+		return;
+	}
 
 	if (init_text_parameters(conn, ccb)) {
 		free_ccb(ccb);
@@ -887,10 +884,13 @@ send_send_targets(session_t *session, uint8_t *key)
 			: ISCSI_STATUS_CONNECTION_FAILED;
 
 	ccb = get_ccb(conn, TRUE);
-	pdu = get_pdu(conn);
-	/* can only happen if terminating... */
-	if (ccb == NULL || pdu == NULL)
+	if (ccb == NULL)
 		return conn->terminating;
+	pdu = get_pdu(conn);
+	if (pdu == NULL) {
+		free_ccb(ccb);
+		return conn->terminating;
+	}
 
 	ccb->flags |= CCBF_SENDTARGET;
 
@@ -1105,13 +1105,16 @@ send_login(connection_t *conn)
 
 	DEBC(conn, 9, ("Send_login\n"));
 	ccb = get_ccb(conn, TRUE);
-	pdu = get_pdu(conn);
-
 	/* only if terminating (which couldn't possibly happen here, but...) */
-	if (ccb == NULL || pdu == NULL) {
+	if (ccb == NULL)
+		return conn->terminating;
+	pdu = get_pdu(conn);
+	if (pdu == NULL) {
+		free_ccb(ccb);
 		return conn->terminating;
 	}
-	if ((rc = assemble_login_parameters(conn, ccb, pdu)) >= 0) {
+
+	if ((rc = assemble_login_parameters(conn, ccb, pdu)) <= 0) {
 		init_login_pdu(conn, pdu, !rc);
 		setup_tx_uio(pdu, pdu->temp_data_len, pdu->temp_data, FALSE);
 		send_pdu(ccb, pdu, CCBDISP_WAIT, PDUDISP_FREE);
@@ -1148,10 +1151,14 @@ send_logout(connection_t *conn, connection_t *refconn, int reason,
 
 	DEBC(conn, 5, ("Send_logout\n"));
 	ccb = get_ccb(conn, TRUE);
-	ppdu = get_pdu(conn);
 	/* can only happen if terminating... */
-	if (ccb == NULL || ppdu == NULL)
+	if (ccb == NULL)
 		return conn->terminating;
+	ppdu = get_pdu(conn);
+	if (ppdu == NULL) {
+		free_ccb(ccb);
+		return conn->terminating;
+	}
 
 	pdu = &ppdu->pdu;
 	pdu->Opcode = IOP_Logout_Request | OP_IMMEDIATE;
@@ -1211,10 +1218,14 @@ send_task_management(connection_t *conn, ccb_t *ref_ccb, struct scsipi_xfer *xs,
 		return ISCSI_STATUS_CANT_REASSIGN;
 
 	ccb = get_ccb(conn, xs == NULL);
-	ppdu = get_pdu(conn);
 	/* can only happen if terminating... */
-	if (ccb == NULL || ppdu == NULL)
+	if (ccb == NULL)
 		return conn->terminating;
+	ppdu = get_pdu(conn);
+	if (ppdu == NULL) {
+		free_ccb(ccb);
+		return conn->terminating;
+	}
 
 	ccb->xs = xs;
 
@@ -1392,12 +1403,11 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 			totlen = 0;
 		} else {
 			pdu->Flags = FLAG_WRITE;
+			/* immediate data we can send */
 			len = min(totlen, conn->max_firstimmed);
-			/* this means InitialR2T=Yes or FirstBurstLength=0 */
-			if (!len)	
-				totlen = 0;
-			else
-				totlen -= len;
+
+			/* can we send more unsolicited data ? */
+			totlen = conn->max_firstdata ? totlen - len : 0;
 		}
 	}
 
@@ -1459,7 +1469,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	conn = assign_connection(session, waitok);
 
 	if (conn == NULL || conn->terminating || conn->state != ST_FULL_FEATURE) {
-		xs->error = XS_REQUEUE;
+		xs->error = XS_SELTIMEOUT;
 		DEBC(conn, 10, ("run_xfer on dead connection\n"));
 		scsipi_done(xs);
 		return;
@@ -1500,6 +1510,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	ccb->lun += 0x1000000000000LL;
 	ccb->cmd[1] += 0x10;
 #endif
+	ccb->disp = CCBDISP_SCSIPI;
 	send_command(ccb, CCBDISP_SCSIPI, waitok, FALSE);
 }
 
@@ -1615,13 +1626,8 @@ ccb_timeout(void *par)
 {
 	ccb_t *ccb = (ccb_t *) par;
 	connection_t *conn = ccb->connection;
-
 	PDEBC(conn, 1, ("CCB Timeout, ccb=%x, num_timeouts=%d\n",
 			 (int) ccb, ccb->num_timeouts));
-
-	/* ignore CCB timeouts outside full feature phase */
-	if (conn->state != ST_FULL_FEATURE)
-		return;
 
 	ccb->total_tries++;
 
@@ -1629,9 +1635,10 @@ ccb_timeout(void *par)
 		ccb->total_tries > MAX_CCB_TRIES ||
 		ccb->disp <= CCBDISP_FREE ||
 		!ccb->session->ErrorRecoveryLevel) {
-		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT,
-					(ccb->total_tries <= MAX_CCB_TRIES) ? RECOVER_CONNECTION
-														: LOGOUT_CONNECTION);
+		ccb->status = ISCSI_STATUS_TIMEOUT;
+		complete_ccb(ccb);
+
+		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT, RECOVER_CONNECTION);
 	} else {
 		if (ccb->data_in && ccb->xfer_len < ccb->data_len) {
 			/* request resend of all missing data */
