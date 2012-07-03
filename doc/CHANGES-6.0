@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.146 2012/07/02 21:42:47 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.147 2012/07/03 21:27:54 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6000,4 +6000,36 @@ sys/arch/usermode/dev/cpu.c			1.71
 dist/pdisk/partition_map.c			1.15
 	Fix uint32_t / long pointer abuse in pdisk.
 	[abs, ticket #380]
+
+sys/dev/iscsi/iscsi_globals.h			1.3,1.4
+sys/dev/iscsi/iscsi_main.c			1.4,1.5
+sys/dev/iscsi/iscsi_text.c			1.4,1.5
+sys/dev/iscsi/iscsi_ioctl.c			1.3,1.4
+sys/dev/iscsi/iscsi_send.c			1.3,1.4,1.5
+sys/dev/iscsi/iscsi_utils.c			1.2,1.3,1.4
+sbin/iscsid/iscsid_discover.c			1.4
+sys/dev/iscsi/iscsi_rcv.c			1.3
+sbin/iscsictl/iscsic_driverif.c			1.5,1.6
+	iscsi fixes:
+	  - make CHAP authenticated iscsi logins work
+	  - fix error handling
+	  - avoid namespace pollution when debugging, add more debugging
+	  - make digests work on big-endian machines
+	[martin, ticket #357]
+
+sys/dev/ata/wd.c				1.393
+	In some cases, when an error is reported by the disk, the ahci
+	controller still reports a number of bytes transfered equal to
+	bcount.  Detect these cases in wd(4), and claim that we didn't
+	read/write anything.
+	[bouyer, ticket #381]
+
+sys/arch/powerpc/booke/dev/pq3etsec.c		1.10
+	Don't rely on being able to allocate while in a softintr.  So
+	preallocate all the bus_dma maps in ifinit where we can sleep.
+	[matt, ticket #382]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.85 via patch
+	Disable azalia(4) now that hdaudio(4) was switched on.
+	[khorben, ticket #383]
 
