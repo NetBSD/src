@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.60 2012/06/22 20:42:23 abs Exp $
+#	$NetBSD: INSTALL,v 1.61 2012/07/03 21:49:56 abs Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -54,7 +54,7 @@ file-system 	FFS
 #file-system 	MFS
 file-system 	NFS
 #file-system 	FDESC
-file-system 	KERNFS
+#file-system 	KERNFS
 #file-system 	NULLFS
 #file-system 	PROCFS
 #file-system 	UMAPFS
