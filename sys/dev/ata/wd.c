@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.392 2012/02/02 19:43:02 tls Exp $ */
+/*	$NetBSD: wd.c,v 1.392.2.1 2012/07/03 21:13:25 jdc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.392 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.392.2.1 2012/07/03 21:13:25 jdc Exp $");
 
 #include "opt_ata.h"
 
@@ -818,6 +818,14 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	case ERR_NODEV:
 		bp->b_error = EIO;
 		break;
+	}
+	if (__predict_false(bp->b_error != 0) && bp->b_resid == 0) {
+		/*
+		 * the disk or controller sometimes report a complete
+		 * xfer, when there has been an error. This is wrong,
+		 * assume nothing got transfered in this case
+		 */
+		bp->b_resid = bp->b_bcount;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
