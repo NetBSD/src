@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.1.8.1 2012/07/03 20:48:40 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/socketvar.h>
+#include <sys/bswap.h>
 
 
 #ifdef ISCSI_DEBUG
@@ -166,7 +167,7 @@ gen_digest(void *buff, int len)
 	while (len--) {
 		crc = ((crc >> 8) & 0x00ffffff) ^ crc_table[(crc ^ *bp++) & 0xff];
 	}
-	return crc ^ 0xffffffff;
+	return htonl(bswap32(crc ^ 0xffffffff));
 }
 
 
@@ -195,7 +196,7 @@ gen_digest_2(void *buf1, int len1, void *buf2, int len2)
 	while (len2--) {
 		crc = ((crc >> 8) & 0x00ffffff) ^ crc_table[(crc ^ *bp++) & 0xff];
 	}
-	return crc ^ 0xffffffff;
+	return htonl(bswap32(crc ^ 0xffffffff));
 }
 
 /*****************************************************************************
@@ -244,6 +245,7 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->ITT = (ccb->ITT & 0xffffff) | (++sess->itt_id << 24);
 	ccb->disp = CCBDISP_NOWAIT;
 	ccb->connection = conn;
+	conn->usecount++;
 
 	return ccb;
 }
@@ -260,6 +262,9 @@ free_ccb(ccb_t *ccb)
 {
 	session_t *sess = ccb->session;
 	pdu_t *pdu;
+
+	ccb->connection->usecount--;
+	ccb->connection = NULL;
 
 	ccb->disp = CCBDISP_UNUSED;
 
@@ -620,7 +625,9 @@ init_sernum(sernum_buffer_t *buff)
 int
 add_sernum(sernum_buffer_t *buff, uint32_t num)
 {
-	int i, t, b, n, diff;
+	int i, t, b;
+	uint32_t n;
+	int32_t diff;
 
 	/*
 	 * next_sn is the next expected SN, so normally diff should be 1.
@@ -629,7 +636,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 	diff = (num - n) + 1;
 
 	if (diff <= 0) {
-		PDEB(1, ("Rx Duplicate Block: SN %d < Next SN %d\n", num, n));
+		PDEB(1, ("Rx Duplicate Block: SN %u < Next SN %u\n", num, n));
 		return 0;				/* ignore if SN is smaller than expected (dup or retransmit) */
 	}
 
@@ -648,7 +655,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 	}
 
 	buff->top = t;
-	DEB(10, ("AddSernum bottom %d [%d], top %d, num %d, diff %d\n",
+	DEB(10, ("AddSernum bottom %d [%d], top %d, num %u, diff %d\n",
 			 b, buff->sernum[b], buff->top, num, diff));
 
 	return diff;
