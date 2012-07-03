@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.102 2012/06/27 20:29:38 wiz Exp $
+.\" $NetBSD: kauth.9,v 1.103 2012/07/03 21:35:04 cheusov Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 27, 2012
+.Dd July 4, 2012
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -1705,10 +1705,9 @@ may be associated with the credentials.
 Registering, and deregistering, a key is done by using these routines:
 .Pp
 .Bl -tag -width compact
-.It Ft int Fn kauth_register_key "const char *name" "kauth_key_t *keyp"
-Register new key for private data for
-.Ar name
-(usually, the security model name).
+.It Ft int Fn kauth_register_key "secmodel_t sm" "kauth_key_t *keyp"
+Register new key for private data for security model
+.Ar sm .
 .Ar keyp
 will be used to return the key to be used in further calls.
 .Pp
