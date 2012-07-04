@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2011/12/18 05:49:33 dholland Exp $
+#	$NetBSD: INSTALL,v 1.58.2.1 2012/07/04 20:41:45 jdc Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -160,6 +160,7 @@ mscpbus*	at mtc?
 
 # MSCP devices
 ra*		at mscpbus? drive?	# MSCP disk
+racd*		at mscpbus? drive?	# MSCP CD-ROM (RRD40)
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 

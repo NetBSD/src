@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.41.18.1 2012/07/04 20:41:47 jdc Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.18.1 2012/07/04 20:41:47 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ mscp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 
-#if NRA || NRX
+#if NRA || NRACD || NRX
 	if (ma->ma_type & MSCPBUS_DISK)
 		return 1;
 #endif
@@ -245,7 +245,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	}
 
 
-#if NRA
+#if NRA || NRACD || NRX
 	if (ma->ma_type & MSCPBUS_DISK) {
 		extern	struct mscp_device ra_device;
 
