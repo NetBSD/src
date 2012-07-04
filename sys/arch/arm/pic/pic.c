@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.8 2011/03/11 03:16:14 bsh Exp $	*/
+/*	$NetBSD: pic.c,v 1.9 2012/07/04 13:34:24 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8 2011/03/11 03:16:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9 2012/07/04 13:34:24 skrll Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -412,6 +412,7 @@ pic_add(struct pic_softc *pic, int irqbase)
 	printf("%s: pic_sourcebase=%zu pic_maxsources=%zu\n",
 	    pic->pic_name, pic_sourcebase, pic->pic_maxsources);
 #endif
+	KASSERT(pic->pic_maxsources <= PIC_MAXSOURCES);
 	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 
 	pic->pic_sources = &pic_sources[pic_sourcebase];
