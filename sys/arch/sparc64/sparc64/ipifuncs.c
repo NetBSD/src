@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.45 2012/07/02 15:40:33 jdc Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.46 2012/07/04 07:03:30 jdc Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.45 2012/07/02 15:40:33 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46 2012/07/04 07:03:30 jdc Exp $");
 
 #include "opt_ddb.h"
 
@@ -360,6 +360,8 @@ mp_resume_cpus(void)
 {
 	int i = 3;
 	sparc64_cpuset_t cpuset;
+
+	CPUSET_CLEAR(cpuset);	/* XXX: gcc -Wuninitialized */
 
 	while (i-- > 0) {
 		CPUSET_CLEAR(cpus_resumed);
