@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.87 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: hme.c,v 1.87.2.1 2012/07/04 19:43:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.87 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.87.2.1 2012/07/04 19:43:10 riz Exp $");
 
 /* #define HMEDEBUG */
 
@@ -254,15 +254,8 @@ hme_config(struct hme_softc *sc)
 
 	hme_mifinit(sc);
 
-	/*
-	 * Some HME's have an MII connector, as well as RJ45.  Try attaching
-	 * the RJ45 (internal) PHY first, so that the MII PHY is always
-	 * instance 1.
-	 */
 	mii_attach(sc->sc_dev, mii, 0xffffffff,
-			HME_PHYAD_INTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
-	mii_attach(sc->sc_dev, mii, 0xffffffff,
-			HME_PHYAD_EXTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
+			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
