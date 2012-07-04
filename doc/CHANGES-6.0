@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.148 2012/07/04 19:45:56 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.149 2012/07/04 21:05:38 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6050,4 +6050,57 @@ external/public-domain/xz/prepare-import.sh	1.3
 	Determine WORDS_BIGENDIAN at build time, rather than hardcoding it to 0.
 	Makes liblzma work on sparc64 (and probably other big endian hosts too).
 	[jdc, ticket #378]
+
+sys/arch/m68k/fpe/fpu_int.c			1.11
+	Rewrite fpu_int().  Especially, remove the special treatment
+	when |x| < 1 because it forgets to consider FPCR round mode.
+	PR#46627.  Thanks Y.Sugahara for advice.
+	[isaki, ticket #384]
+
+etc/etc.vax/MAKEDEV.conf			1.14
+sys/arch/vax/conf/GENERIC			1.182
+sys/arch/vax/conf/INSTALL			1.60
+sys/arch/vax/conf/VAX780			1.9
+sys/arch/vax/conf/majors.vax			1.24
+sys/arch/vax/vax/disksubr.c			1.53
+sys/dev/DEVNAMES				1.275
+sys/dev/mscp/files.mscp				1.8
+sys/dev/mscp/mscp_disk.c			1.72
+sys/dev/mscp/mscp_subr.c			1.42
+distrib/vax/ramdisk/Makefile			1.29
+	Add racd* devices for MSCP based CD-ROM drives (RRD40s), and
+	default to the same single iso9660 partition as cd*.
+	Cleanup config option handling slightly so any combination of ra*,
+	rx* (and now raccd*) can be defined without build errors.
+	Include racd0 and racd1 on ramdisk.
+	[abs, ticket #385]
+
+distrib/utils/sysinst/defs.h			1.163
+distrib/utils/sysinst/disks.c			1.125,1.126
+distrib/utils/sysinst/main.c			1.65,1.66
+distrib/utils/sysinst/arch/emips/md.h		1.4
+distrib/utils/sysinst/arch/i386/md.h		1.69
+distrib/utils/sysinst/arch/vax/md.h		1.21
+	Replace the CD_NAME definition with a CD_NAMES comma separate list.
+	Add get_default_cdrom() to disks.c, which is called in init().
+	The primary beneficiary is vax systems with an MSCP but no SCSI CD
+	drive, which now default to (a valid) racd0a rather than an invalid
+	cd0a.  The obvious example being simh-vax.
+	instead. Makes sysinst at least start up again.
+	[abs, ticket #386]
+
+external/bsd/ntp/dist/ntpdc/ntpdc.c		1.6
+	PR#46612 - Lloyd Parkes -- add a terminating newline to error messages
+	[jnemeth, ticket #387]
+
+sys/arch/powerpc/powerpc/vm_machdep.c		1.97
+	Don't panic if you can't allocate a contiguous stack for system
+	threads.  Just use a mapped a stack.
+	[matt, ticket #388]
+
+sys/dev/wsfont/Droid_Sans_Mono_12x22.h		1.2
+sys/dev/wsfont/Droid_Sans_Mono_9x18.h		1.2
+sys/dev/wsfont/DejaVu_Sans_Mono_12x22.h		1.2
+	Add license headers to WS fonts converted from TTF fonts.
+	[macallan, ticket #389]
 
