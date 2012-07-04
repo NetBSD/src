@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.197 2012/02/24 19:53:31 apb Exp $	*/
+/*	$NetBSD: fetch.c,v 1.198 2012/07/04 06:09:37 is Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.197 2012/02/24 19:53:31 apb Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.198 2012/07/04 06:09:37 is Exp $");
 #endif /* not lint */
 
 /*
@@ -734,7 +734,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				continue;
 			}
 
-			if (ftp_connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+			if (ftp_connect(s, res->ai_addr, res->ai_addrlen,
+			    verbose || !res->ai_next) < 0) {
 				close(s);
 				s = -1;
 				continue;

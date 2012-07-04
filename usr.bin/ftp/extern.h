@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.79 2011/09/16 15:39:26 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.80 2012/07/04 06:09:37 is Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ void	unsetoption(int, char **);
 void	updatelocalcwd(void);
 void	updateremotecwd(void);
 void	user(int, char **);
-int	ftp_connect(int, const struct sockaddr *, socklen_t);
+int	ftp_connect(int, const struct sockaddr *, socklen_t, int);
 int	ftp_listen(int, int);
 int	ftp_poll(struct pollfd *, int, int);
 void   *ftp_malloc(size_t);
