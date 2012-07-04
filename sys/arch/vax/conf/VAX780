@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.7 2011/12/18 05:49:33 dholland Exp $
+# $NetBSD: VAX780,v 1.7.2.1 2012/07/04 20:41:46 jdc Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -256,6 +256,7 @@ mscpbus*	at mtc?
 #mscpbus*	at kdb?
 
 ra*		at mscpbus? drive?	# MSCP disk
+racd*		at mscpbus? drive?	# MSCP CD-ROM (RRD40)
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 
