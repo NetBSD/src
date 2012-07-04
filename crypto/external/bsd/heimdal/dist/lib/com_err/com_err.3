@@ -1,4 +1,4 @@
-.\"	$NetBSD: com_err.3,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $
+.\"	$NetBSD: com_err.3,v 1.2 2012/07/04 20:46:14 jdf Exp $
 .\"
 .\" Copyright (c) 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -136,10 +136,11 @@ This routine provides an interface, equivalent to
 which may be used by higher-level variadic functions (functions which
 accept variable numbers of arguments).
 .It Fn error_message "code"
-Returns the character string error message associate with
+Returns the character string error message associated with
 .Fa code .
 If
-.Fa code is associated with an unknown error table, or if
+.Fa code
+is associated with an unknown error table, or if
 .Fa code
 is associated with a known error table but is not in the table, a
 string of the form `Unknown code XXXX NN' is returned, where XXXX is
