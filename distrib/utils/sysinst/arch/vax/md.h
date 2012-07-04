@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.20 2011/04/04 08:30:44 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.20.6.1 2012/07/04 20:48:55 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,3 +69,9 @@
  * the hand-edited disklabel will NOT be written by MI code.
  */
 #define	DISKLABEL_CMD	"disklabel -w -r"
+
+/* VAX can have cd* or racd* devices */
+#ifdef CD_NAMES
+#undef CD_NAMES
+#endif
+#define CD_NAMES "cd0a","racd0a"

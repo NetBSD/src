@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2011/04/04 08:30:22 mbalmer Exp $	*/
+/*	$NetBSD: md.h,v 1.3.6.1 2012/07/04 20:48:55 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,8 +83,7 @@
 #define MD_SETS_VALID	SET_KERNEL, SET_SYSTEM, SET_X11_NOSERVERS
 
 /* default install CD device is ace1a */
-/* XXX: not pretty */
-#ifdef CD_NAME
-#undef CD_NAME
+#ifdef CD_NAMES
+#undef CD_NAMES
 #endif
-#define CD_NAME "ace1a"
+#define CD_NAMES "ace1a"
