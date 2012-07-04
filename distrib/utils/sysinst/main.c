@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63.2.1 2012/05/17 18:57:08 sborrill Exp $	*/
+/*	$NetBSD: main.c,v 1.63.2.2 2012/07/04 20:48:55 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,7 +91,7 @@ static const struct f_arg fflagopts[] = {
 	{"ftp proxy", "", ftp.proxy, sizeof ftp.proxy},
 	{"nfs host", "", nfs_host, sizeof nfs_host},
 	{"nfs dir", "/bsd/release", nfs_dir, sizeof nfs_dir},
-	{"cd dev", CD_NAME, cdrom_dev, sizeof cdrom_dev},
+	{"cd dev", 0, cdrom_dev, sizeof cdrom_dev}, /* default filled in init */
 	{"fd dev", "/dev/fd0a", fd_dev, sizeof fd_dev},
 	{"local dev", "", localfs_dev, sizeof localfs_dev},
 	{"local fs", "ffs", localfs_fs, sizeof localfs_fs},
@@ -128,8 +128,12 @@ init(void)
 	mnt2_mounted = 0;
 	fd_type = "msdos";
 
-	for (arg = fflagopts; arg->name != NULL; arg++)
-		strlcpy(arg->var, arg->dflt, arg->size);
+	for (arg = fflagopts; arg->name != NULL; arg++) {
+		if (arg->var == cdrom_dev)
+			strlcpy(arg->var, get_default_cdrom(), arg->size);
+		else
+			strlcpy(arg->var, arg->dflt, arg->size);
+	}
 	pkg.xfer_type = pkgsrc.xfer_type = "http";
 }
 
