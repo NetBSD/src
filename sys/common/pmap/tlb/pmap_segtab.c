@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.4 2011/06/23 08:11:56 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.5 2012/07/04 11:39:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4 2011/06/23 08:11:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5 2012/07/04 11:39:42 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.4 2011/06/23 08:11:56 matt Exp $")
 CTASSERT(NBPG >= sizeof(struct pmap_segtab));
 
 struct pmap_segtab_info {
-	struct pmap_segtab * volatile free_segtab;		/* free list kept locally */
+	struct pmap_segtab *free_segtab;	/* free list kept locally */
 #ifdef DEBUG
 	uint32_t nget_segtab;
 	uint32_t nput_segtab;
@@ -120,6 +120,8 @@ struct pmap_segtab_info {
 #define	SEGTAB_ADD(n, v)	((void) 0)
 #endif
 } pmap_segtab_info;
+
+kmutex_t pmap_segtab_lock __cacheline_aligned;
 
 static inline struct vm_page *
 pmap_pte_pagealloc(void)
@@ -162,20 +164,16 @@ pmap_segtab_alloc(pmap_t pmap)
 {
 	struct pmap_segtab *stp;
  again:
-	stp = NULL;
-	while (__predict_true(pmap_segtab_info.free_segtab != NULL)) {
-		struct pmap_segtab *next_stp;
-		stp = pmap_segtab_info.free_segtab;
-		next_stp = (struct pmap_segtab *)stp->seg_tab[0];
-		if (stp == atomic_cas_ptr(&pmap_segtab_info.free_segtab, stp, next_stp)) {
-			SEGTAB_ADD(nget, 1);
-			break;
-		}
-	}
-	
-	if (__predict_true(stp != NULL)) {
+	mutex_spin_enter(&pmap_segtab_lock);
+	if (__predict_true((stp = pmap_segtab_info.free_segtab) != NULL)) {
+		pmap_segtab_info.free_segtab =
+		    (struct pmap_segtab *)stp->seg_tab[0];
 		stp->seg_tab[0] = NULL;
-	} else {
+		SEGTAB_ADD(nget, 1);
+	}
+	mutex_spin_exit(&pmap_segtab_lock);
+	
+	if (__predict_false(stp == NULL)) {
 		struct vm_page * const stp_pg = pmap_pte_pagealloc();
 
 		if (__predict_false(stp_pg == NULL)) {
@@ -200,13 +198,11 @@ pmap_segtab_alloc(pmap_t pmap)
 			/*
 			 * Now link the new segtabs into the free segtab list.
 			 */
-			for (;;) {
-				void *tmp = pmap_segtab_info.free_segtab;
-				stp[n-1].seg_tab[0] = tmp;
-				if (tmp == atomic_cas_ptr(&pmap_segtab_info.free_segtab, tmp, stp+1))
-					break;
-			}
+			mutex_spin_enter(&pmap_segtab_lock);
+			stp[n-1].seg_tab[0] = (void *)pmap_segtab_info.free_segtab;
+			pmap_segtab_info.free_segtab = stp + 1;
 			SEGTAB_ADD(nput, n - 1);
+			mutex_spin_exit(&pmap_segtab_lock);
 		}
 	}
 
@@ -255,14 +251,11 @@ pmap_segtab_free(pmap_t pmap)
 	/*
 	 * Insert the the segtab into the segtab freelist.
 	 */
-	for (;;) {
-		void *tmp = pmap_segtab_info.free_segtab;
-		stp->seg_tab[0] = tmp;
-		if (tmp == atomic_cas_ptr(&pmap_segtab_info.free_segtab, tmp, stp)) {
-			SEGTAB_ADD(nput, 1);
-			break;
-		}
-	}
+	mutex_spin_enter(&pmap_segtab_lock);
+	stp->seg_tab[0] = (void *) pmap_segtab_info.free_segtab;
+	pmap_segtab_info.free_segtab = stp;
+	SEGTAB_ADD(nput, 1);
+	mutex_spin_exit(&pmap_segtab_lock);
 }
 
 /*
