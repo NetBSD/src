@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.36 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.37 2012/07/04 18:35:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.36 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.37 2012/07/04 18:35:58 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ static void infohandler(int sig);
 int
 main(int argc, char *argv[])
 {
-    static char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:u:";
+    static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:u:";
     static const char *opt_B, *opt_L, *opt_O, *opt_f;
     static u_int opt_F, opt_I, opt_S, opt_a, opt_b, opt_c, opt_e;
     static u_int opt_h, opt_i, opt_k, opt_m, opt_n, opt_o, opt_r;
