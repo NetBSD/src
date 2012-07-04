@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1.8.1 2012/03/07 22:33:25 riz Exp $
+# $NetBSD: prepare-import.sh,v 1.1.8.2 2012/07/04 19:45:31 riz Exp $
 
 set -e
 
@@ -31,3 +31,12 @@ done
 # build-aux/* from autoconf
 # lib/*
 # m4/*
+
+# Changes to config.h
+echo Add build-time endian test to include/config.h:
+cat << EOE
+#include <sys/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
+#  define WORDS_BIGENDIAN 1
+#endif
+EOE
