@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.623 2012/07/01 04:20:26 nonaka Exp $
+$NetBSD: usbdevs,v 1.624 2012/07/04 01:08:26 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2695,6 +2695,7 @@ product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 product SIERRA AC595U		0x0120	Sierra Wireless AirCard 595U
 product SIERRA MC5720		0x0218	MC5720 Wireless Modem
 product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product SIERRA 250U		0x0301	Sieral Wireless 250U 3G
 product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
 product SIERRA MC8755_2		0x6802	MC8755
 product SIERRA MC8765		0x6803	MC8765
