@@ -1,4 +1,4 @@
-.\" $NetBSD: empb.4,v 1.5 2012/07/03 19:09:44 rkujawa Exp $
+.\" $NetBSD: empb.4,v 1.6 2012/07/04 07:53:55 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,17 +57,20 @@ driver supports the following hardware:
 .Sh DIAGNOSTICS
 .Bl -diag
 .It empb: linear space mapping might not work
-PCI card driver is trying map memory space with BUS_SPACE_MAP_LINEAR flag.
-Due to windowed design of Medaitor, it is expected to fail miserably if
-normal memory space access methods (e.g. pointer dereference) are used
+The PCI card driver is trying map memory space with the
+.Dv BUS_SPACE_MAP_LINEAR
+flag.
+Due to the windowed design of Mediator, it is expected to fail miserably if
+normal memory space access methods (e.g., pointer dereference) are used
 instead of
 .Xr bus_space 9
 methods.
 .It empb%d: couldn't find memory space, check your WINDOW jumper
-PCI memory space access is disabled on a hardware level. The
+PCI memory space access is disabled on a hardware level.
+The
 .Nm
-driver will work anyway, but only PCI I/O space will be accessible. To enable
-memory space set WINDOW jumper to 4MB or 8MB.
+driver will work anyway, but only PCI I/O space will be accessible.
+To enable memory space set the WINDOW jumper to 4MB or 8MB.
 .Sh SEE ALSO
 .Xr mppb 4 ,
 .Xr p5pb 4 ,
