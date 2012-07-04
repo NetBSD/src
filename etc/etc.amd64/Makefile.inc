@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2012/06/30 15:03:57 reinoud Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2012/07/04 13:54:20 reinoud Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@
 
 KERNEL_SETS=		GENERIC
 KERNEL_SETS+=		XEN3_DOM0 XEN3_DOMU
-KERNEL_SETS+=		GENERIC_USERMODE
+# KERNEL_SETS+=		GENERIC_USERMODE
 
 BUILD_KERNELS=		INSTALL INSTALL_XEN3_DOMU
 
