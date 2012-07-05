@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.1.1.2 2010/06/17 18:06:44 tron Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.2 2012/07/05 17:40:11 christos Exp $	*/
 
 /*++
 /* NAME
@@ -176,12 +176,37 @@ typedef struct DNS_REPLY {
 
 /* dns_query - query name server and pre-parse the reply */
 
+#if __RES < 20030124
+
+static int
+res_ninit(res_state res)
+{
+	int error;
+
+	if ((error = res_init()) < 0)
+		return error;
+
+	*res = _res;
+	return error;
+}
+
+static int
+res_nsearch(res_state statp, const char *dname, int class, int type,
+    u_char *answer, int anslen)
+{
+	return res_search(dname, class, type, answer, anslen);
+}
+
+#endif
+
 static int dns_query(const char *name, int type, int flags,
 		             DNS_REPLY *reply, VSTRING *why)
 {
     HEADER *reply_header;
     int     len;
     unsigned long saved_options;
+    /* For efficiency, we are not called from multiple threads */
+    static struct __res_state res;
 
     /*
      * Initialize the reply buffer.
@@ -194,7 +219,7 @@ static int dns_query(const char *name, int type, int flags,
     /*
      * Initialize the name service.
      */
-    if ((_res.options & RES_INIT) == 0 && res_init() < 0) {
+    if ((res.options & RES_INIT) == 0 && res_ninit(&res) < 0) {
 	if (why)
 	    vstring_strcpy(why, "Name service initialization failure");
 	return (DNS_FAIL);
@@ -208,18 +233,18 @@ static int dns_query(const char *name, int type, int flags,
 
     if ((flags & USER_FLAGS) != flags)
 	msg_panic("dns_query: bad flags: %d", flags);
-    saved_options = (_res.options & USER_FLAGS);
+    saved_options = (res.options & USER_FLAGS);
 
     /*
      * Perform the lookup. Claim that the information cannot be found if and
      * only if the name server told us so.
      */
     for (;;) {
-	_res.options &= ~saved_options;
-	_res.options |= flags;
-	len = res_search((char *) name, C_IN, type, reply->buf, reply->buf_len);
-	_res.options &= ~flags;
-	_res.options |= saved_options;
+	res.options &= ~saved_options;
+	res.options |= flags;
+	len = res_nsearch(&res, name, C_IN, type, reply->buf, reply->buf_len);
+	res.options &= ~flags;
+	res.options |= saved_options;
 	if (len < 0) {
 	    if (why)
 		vstring_sprintf(why, "Host or domain name not found. "
