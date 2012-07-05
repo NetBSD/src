@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.38.2.1 2012/04/23 16:48:57 riz Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.38.2.2 2012/07/05 17:26:14 riz Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.38.2.1 2012/04/23 16:48:57 riz Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.38.2.2 2012/07/05 17:26:14 riz Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -467,14 +467,19 @@ dispatch(struct puffs_cc *pcc)
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
 			if (PUFFS_USE_FS_TTL(pu)) {
+				int xflag = 0;
+
 				if (pops->puffs_node_setattr_ttl == NULL) {
 					error = EOPNOTSUPP;
 					break;
 				}
 
+				if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+					xflag |= PUFFS_SETATTR_FAF;
+
 				error = pops->puffs_node_setattr_ttl(pu,
 				    opcookie, &auxt->pvnr_va, pcr,
-				    &auxt->pvnr_va_ttl);
+				    &auxt->pvnr_va_ttl, xflag);
 			} else {
 				if (pops->puffs_node_setattr == NULL) {
 					error = EOPNOTSUPP;
@@ -913,15 +918,27 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_write *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
-			if (pops->puffs_node_write == NULL) {
+			if (pops->puffs_node_write2 != NULL) {
+				int xflag = 0;
+
+				if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+					xflag |= PUFFS_SETATTR_FAF;
+
+				error = pops->puffs_node_write2(pu,
+				    opcookie, auxt->pvnr_data,
+				    auxt->pvnr_offset, &auxt->pvnr_resid,
+				    pcr, auxt->pvnr_ioflag, xflag);
+
+			} else if (pops->puffs_node_write != NULL) {
+				error = pops->puffs_node_write(pu,
+				    opcookie, auxt->pvnr_data,
+				    auxt->pvnr_offset, &auxt->pvnr_resid,
+				    pcr, auxt->pvnr_ioflag);
+			} else {
 				error = EIO;
 				break;
 			}
 
-			error = pops->puffs_node_write(pu,
-			    opcookie, auxt->pvnr_data,
-			    auxt->pvnr_offset, &auxt->pvnr_resid,
-			    pcr, auxt->pvnr_ioflag);
 
 			/* don't need to move data back to the kernel */
 			preq->preq_buflen = sizeof(struct puffs_vnmsg_write);
