@@ -469,7 +469,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 			union segtab *ostp = atomic_cas_ptr(stp_p, NULL, nstp);
 			if (__predict_false(ostp != NULL)) {
 				pmap_segtab_free(nstp);
-				stp = ostp;
+				nstp = ostp;
 			}
 #else
 			*stp_p = nstp;
