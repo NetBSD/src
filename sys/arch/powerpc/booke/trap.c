@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2012/05/17 16:22:38 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 2012/07/05 17:25:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.15 2012/05/17 16:22:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.16 2012/07/05 17:25:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ trap_pte_lookup(struct trapframe *tf, vaddr_t va, register_t psl_mask)
 	struct pmap_segtab * const stp = stps[(tf->tf_srr1 / psl_mask) & 1];
 	if (__predict_false(stp == NULL))
 		return NULL;
-	pt_entry_t *ptep = stp->seg_tab[va >> SEGSHIFT];
+	pt_entry_t * const ptep = stp->seg_ptr[va >> SEGSHIFT];
 	if (__predict_false(ptep == NULL))
 		return NULL;
 	return ptep + ((va & SEGOFSET) >> PAGE_SHIFT);
