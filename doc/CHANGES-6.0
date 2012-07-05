@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.150 2012/07/05 17:54:15 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.151 2012/07/05 18:49:03 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6204,4 +6204,61 @@ sys/arch/x86/x86/cpu.c				1.100
 	In cpu_boot_secondary_processors(), wait until all the other CPUs
 	have registered themselves in kcpuset_running before returning.
 	[chs, ticket #400]
+
+sys/dev/ic/gem.c				1.99
+sys/dev/ic/gemreg.h				1.15
+sys/dev/ic/gemvar.h				1.24
+
+	Apply lockup fixes to gem(4).  Also alter the interrupt
+	blanking rate to 8 packets, as per OpenSolaris. PR#46260.
+	[jdc, ticket #401]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.187
+sys/arch/x86/x86/x86_autoconf.c			1.63
+sys/arch/xen/x86/autoconf.c			1.14
+sys/arch/zaurus/zaurus/autoconf.c		1.11
+sys/dev/dkwedge/dk.c				1.64
+sys/dev/dkwedge/dkwedge_bsdlabel.c		1.17
+sys/dev/vnd.c					1.221
+sys/kern/init_main.c				1.443-1.444
+sys/kern/kern_subr.c				1.213
+sys/sys/device.h				1.141
+sys/sys/disk.h					1.57
+
+	Improve support for disk "wedges".
+	[mlelstv, ticket #402]
+
+distrib/vax/miniroot/Makefile.inc		1.21
+sys/arch/vax/include/disklabel.h		1.6
+sys/arch/vax/include/types.h			1.46 via patch
+sys/sys/bootblock.h				1.54
+
+	Increase MAXPARTITIONS for vax from 8 to 16.
+	[abs, ticket #403]
+
+sys/common/pmap/tlb/pmap.c			1.14
+sys/common/pmap/tlb/pmap.h			1.13
+sys/common/pmap/tlb/pmap_segtab.c		1.5
+
+	Avoid corruption of the free segtab list.
+	[matt, ticket #404]
+
+distrib/vax/install.md				delete
+distrib/vax/miniroot/Makefile.inc		1.22
+distrib/vax/miniroot/list			1.15
+distrib/vax/ramdisk/Makefile			1.30
+distrib/vax/ramdisk/dot.profile			1.9
+distrib/vax/ramdisk/list			1.30
+etc/etc.vax/MAKEDEV.conf			1.15-1.16
+sys/arch/vax/conf/INSTALL			1.61-1.62
+
+	Add dmesg and dhcpcd to vax install, and enable dhcpcd.
+	[abs, ticket #405]
+
+sys/arch/mips/include/pmap.h			1.62
+sys/arch/mips/mips/pmap.c			1.208
+sys/arch/mips/mips/pmap_segtab.c		1.5
+
+	Change MIPS segtab management to look more like the common pmap.
+	[matt, ticket #406]
 
