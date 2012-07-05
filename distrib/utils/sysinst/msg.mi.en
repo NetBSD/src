@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.169.2.1 2012/05/17 18:57:10 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.169.2.2 2012/07/05 17:29:15 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,9 @@ Do you really want to reinstall NetBSD distribution sets?
 disks.)
 }
 
+message mount_failed
+{Mounting %s failed. Continue?
+}
 
 message nodisk
 {I can not find any hard disks for use by NetBSD.  You will be
@@ -680,7 +683,7 @@ message makedev
 
 message badfs
 {It appears that /dev/%s%c is not a BSD file system or the fsck was
-not successful.  The upgrade has been aborted.  (Error number %d.)
+not successful.  Try mounting it anyway?  (Error number %d.)
 }
 
 message rootmissing

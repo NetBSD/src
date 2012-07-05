@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.119.2.1 2012/05/17 18:57:10 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.119.2.2 2012/07/05 17:29:15 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,6 +125,10 @@ ou une mise à jour avant de démarrer cette procédure !
 Voulez-vous réellement réinstaller les composants NetBSD ?
 (Ceci est le dernier avertissement avant que cette procédure ne commence à
 modifier vos disques).
+}
+
+message mount_failed
+{Le montage du système de fichiers %s a échoué.  Continuer ?
 }
 
 message nodisk
@@ -748,9 +752,9 @@ message makedev
 message badfs
 {
 /dev/%s%c ne semble pas être un système de fichiers BSD, ou
-la vérification de son intégrité par fsck a échoué.
+la vérification de son intégrité par fsck a échoué, code d'erreur %d.
 
-Interruption de la procédure de mise à jour, code d'erreur %d.
+Souhaitez-vous continuer mise à jour?
 }
 
 message rootmissing

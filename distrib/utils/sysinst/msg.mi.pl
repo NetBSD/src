@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.78.2.1 2012/05/17 18:57:11 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.78.2.2 2012/07/05 17:29:15 riz Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -121,6 +121,10 @@ Czy napewno chcesz przeinstalowac pakiety dystrybucjne NetBSD?
 twoich dyskach.)
 }
 
+message mount_failed
+{Mounting %s failed. Continue?
+}
+/* XXX: Translate. */
 
 message nodisk
 {Nie moge znalezc zadnych twardych dyskow do uzycia z NetBSD. Zostaniesz
@@ -675,6 +679,10 @@ message makedev
 {Tworzenie plikow urzadzen ...
 }
 
+/* XXX: Translate:
+* -not successful.  The upgrade has been aborted.  (Error number %d.)
+* +not successful (Error number %d.). Try mounting it anyway?
+*/
 message badfs
 {Wyglada na to, ze /dev/%s%c nie jest systemem plikow BSD albo nie powiodlo sie
 jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
