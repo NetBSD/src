@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.38 2012/05/20 10:28:44 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.39 2012/07/05 10:56:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.38 2012/05/20 10:28:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.39 2012/07/05 10:56:52 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -640,7 +640,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->ppsparam.mode = 0;
 		mutex_spin_exit(&timecounter_lock);
 
-		mutex_spin_enter(&sc->sc_lock);
+		mutex_spin_exit(&sc->sc_lock);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
