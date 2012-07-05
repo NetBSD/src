@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207 2012/02/02 18:59:44 para Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207.2.1 2012/07/05 18:39:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2012/02/02 18:59:44 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207.2.1 2012/07/05 18:39:42 riz Exp $");
 
 /*
  *	Manages physical address maps.
@@ -276,8 +276,8 @@ struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 paddr_t mips_avail_start;	/* PA of first available physical page */
 paddr_t mips_avail_end;		/* PA of last available physical page */
 vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
-vaddr_t iospace;        /* VA of start of I/O space, if needed  */
-vsize_t iospace_size = 0; /* Size of (initial) range of I/O addresses */
+vaddr_t iospace;		/* VA of start of I/O space, if needed  */
+vsize_t iospace_size = 0;	/* Size of (initial) range of I/O addresses */
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
@@ -737,6 +737,11 @@ pmap_init(void)
 	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
 		printf("pmap_init()\n");
 #endif
+
+	/*
+	 * Initialize the segtab lock.
+	 */
+	mutex_init(&pmap_segtab_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set a low water mark on the pv_entry pool, so that we are
@@ -2108,11 +2113,11 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 	pv_entry_t pv, npv, apv;
 	int16_t gen;
 
-        KASSERT(kpreempt_disabled());
-        KASSERT(!MIPS_KSEG0_P(va));
-        KASSERT(!MIPS_KSEG1_P(va));
+	KASSERT(kpreempt_disabled());
+	KASSERT(!MIPS_KSEG0_P(va));
+	KASSERT(!MIPS_KSEG1_P(va));
 #ifdef _LP64
-        KASSERT(!MIPS_XKPHYS_P(va));
+	KASSERT(!MIPS_XKPHYS_P(va));
 #endif
 
 	apv = NULL;
