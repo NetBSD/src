@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2012/07/05 16:55:11 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2012/07/05 17:24:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ UVMHIST_DECL(pmaphist);
  * Each seg_tab point an array of pt_entry [NPTEPG]
  */
 struct pmap_segtab {
-	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
+	void	*seg_ptr[PMAP_SEGTABSIZE];
 };
 
 #ifdef _KERNEL
