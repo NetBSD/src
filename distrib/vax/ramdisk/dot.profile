@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.8 2003/07/26 17:07:43 salo Exp $
+# $NetBSD: dot.profile,v 1.8.58.1 2012/07/05 18:22:49 riz Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,10 @@ TERM=vt100
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
 
@@ -56,12 +60,10 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
 
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
-
 	# pull in the functions that people will use from the shell prompt.
 	# . /.commonutils
 	# . /.instutils
+	grep() sed -n "/$1/p"
 
 	# run the installation or upgrade script.
 	sysinst
