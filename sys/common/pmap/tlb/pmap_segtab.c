@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.6 2012/07/05 16:55:11 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.7 2012/07/05 17:24:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.6 2012/07/05 16:55:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.7 2012/07/05 17:24:54 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -135,11 +135,11 @@ pmap_segmap(struct pmap *pmap, vaddr_t va)
 	struct pmap_segtab *stp = pmap->pm_segtab;
 	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
 #ifdef _LP64
-	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
+	stp = stp->seg_ptr[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 	if (stp == NULL)
 		return NULL;
 #endif
-	return stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
+	return stp->seg_ptr[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 }
 
 pt_entry_t *
@@ -159,7 +159,7 @@ pmap_segtab_free(struct pmap_segtab *stp)
 	 * Insert the the segtab into the segtab freelist.
 	 */
 	mutex_spin_enter(&pmap_segtab_lock);
-	stp->seg_tab[0] = (void *) pmap_segtab_info.free_segtab;
+	stp->seg_ptr[0] = pmap_segtab_info.free_segtab;
 	pmap_segtab_info.free_segtab = stp;
 	SEGTAB_ADD(nput, 1);
 	mutex_spin_exit(&pmap_segtab_lock);
@@ -173,16 +173,16 @@ pmap_segtab_release(struct pmap_segtab *stp, u_int level)
 		paddr_t pa;
 #ifdef _LP64
 		if (level > 0) {
-			if (stp->seg_seg[i] != NULL) {
-				pmap_segtab_release(stp->seg_seg[i], level - 1);
-				stp->seg_seg[i] = NULL;
+			if (stp->seg_ptr[i] != NULL) {
+				pmap_segtab_release(stp->seg_ptr[i], level - 1);
+				stp->seg_ptr[i] = NULL;
 			}
 			continue;
 		}
 #endif
 
 		/* get pointer to segment map */
-		pt_entry_t *pte = stp->seg_tab[i];
+		pt_entry_t *pte = stp->seg_ptr[i];
 		if (pte == NULL)
 			continue;
 #ifdef PARANOIADIAG
@@ -195,7 +195,7 @@ pmap_segtab_release(struct pmap_segtab *stp, u_int level)
 		pa = POOL_VTOPHYS(pte);
 		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 
-		stp->seg_tab[i] = NULL;
+		stp->seg_ptr[i] = NULL;
 	}
 
 	pmap_segtab_free(stp);
@@ -221,9 +221,8 @@ pmap_segtab_alloc(void)
  again:
 	mutex_spin_enter(&pmap_segtab_lock);
 	if (__predict_true((stp = pmap_segtab_info.free_segtab) != NULL)) {
-		pmap_segtab_info.free_segtab =
-		    (struct pmap_segtab *)stp->seg_tab[0];
-		stp->seg_tab[0] = NULL;
+		pmap_segtab_info.free_segtab = stp->seg_ptr[0];
+		stp->seg_ptr[0] = NULL;
 		SEGTAB_ADD(nget, 1);
 	}
 	mutex_spin_exit(&pmap_segtab_lock);
@@ -248,13 +247,13 @@ pmap_segtab_alloc(void)
 			 * link all the segtabs in this page together
 			 */
 			for (size_t i = 1; i < n - 1; i++) {
-				stp[i].seg_tab[0] = (void *)&stp[i+1];
+				stp[i].seg_ptr[0] = (void *)&stp[i+1];
 			}
 			/*
 			 * Now link the new segtabs into the free segtab list.
 			 */
 			mutex_spin_enter(&pmap_segtab_lock);
-			stp[n-1].seg_tab[0] = (void *)pmap_segtab_info.free_segtab;
+			stp[n-1].seg_ptr[0] = pmap_segtab_info.free_segtab;
 			pmap_segtab_info.free_segtab = stp + 1;
 			SEGTAB_ADD(nput, n - 1);
 			mutex_spin_exit(&pmap_segtab_lock);
@@ -263,8 +262,8 @@ pmap_segtab_alloc(void)
 
 #ifdef PARANOIADIAG
 	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
-		if (stp->seg_tab[i] != 0)
-			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
+		if (stp->seg_ptr[i] != 0)
+			panic("pmap_create: pm_segtab.seg_ptr[%zu] != 0");
 	}
 #endif
 	return stp;
@@ -313,7 +312,7 @@ pmap_segtab_activate(struct pmap *pm, struct lwp *l)
 		} else {
 			l->l_cpu->ci_pmap_user_segtab = pm->pm_segtab;
 #ifdef _LP64
-			l->l_cpu->ci_pmap_user_seg0tab = pm->pm_segtab->seg_seg[0];
+			l->l_cpu->ci_pmap_user_seg0tab = pm->pm_segtab->seg_ptr[0];
 #endif
 		}
 	}
@@ -370,8 +369,8 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 	pte = pmap_pte_lookup(pmap, va);
 	if (__predict_false(pte == NULL)) {
 #ifdef _LP64
-		struct pmap_segtab ** const stp_p =
-		    &stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];  
+		void ** const stp_p =
+		    &stp->seg_ptr[(va >> XSEGSHIFT) & (NSEGPG - 1)];  
 		if (__predict_false((stp = *stp_p) == NULL)) {  
  			struct pmap_segtab *nstp = pmap_segtab_alloc();
 #ifdef MULTIPROCESSOR 
@@ -385,7 +384,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #endif /* MULTIPROCESSOR */
 			stp = nstp;
 		}
-		KASSERT(stp == pmap->pm_segtab->seg_seg[(va >> XSEGSHIFT) & (NSE
+		KASSERT(stp == pmap->pm_segtab->seg_ptr[(va >> XSEGSHIFT) & (NSE
 GPG - 1)]);
 #endif /* _LP64 */
 		struct vm_page * const pg = pmap_pte_pagealloc();
@@ -400,7 +399,7 @@ GPG - 1)]);
 		pte = (pt_entry_t *)POOL_PHYSTOV(pa);
 #ifdef MULTIPROCESSOR
 		pt_entry_t *opte = atomic_cas_ptr(
-		    &stp->seg_tab[va >> SEGSHIFT], NULL, pte);
+		    &stp->seg_ptr[va >> SEGSHIFT], NULL, pte);
 		/*
 		 * If another thread allocated the segtab needed for this va
 		 * free the page we just allocated.
@@ -410,7 +409,7 @@ GPG - 1)]);
 			pte = opte;
 		}
 #else
-		stp->seg_tab[va >> SEGSHIFT] = pte;
+		stp->seg_ptr[va >> SEGSHIFT] = pte;
 #endif
 
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
