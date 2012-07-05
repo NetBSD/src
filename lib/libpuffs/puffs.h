@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119.4.1 2012/04/23 16:48:58 riz Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.4.2 2012/07/05 17:26:14 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -110,6 +110,12 @@ struct puffs_usermount;
 
 #define PUFFS_FSYNC_DATAONLY 0x0002
 #define PUFFS_FSYNC_CACHE    0x0100
+
+/*
+ * xflags for setattr_ttl and write2
+ */
+#define PUFFS_SETATTR_FAF    0x1
+#define PUFFS_WRITE_FAF      0x1
 
 #define PUFFS_EXTATTR_LIST_LENPREFIX 1
 /*
@@ -238,9 +244,11 @@ struct puffs_ops {
 	    struct timespec *);
 	int (*puffs_node_setattr_ttl)(struct puffs_usermount *,
 	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
-	    struct timespec *);
+	    struct timespec *, int);
+	int (*puffs_node_write2)(struct puffs_usermount *, puffs_cookie_t,
+	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int, int);
 
-	void *puffs_ops_spare[30];
+	void *puffs_ops_spare[29];
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -393,7 +401,10 @@ enum {
 	    struct timespec *);						\
 	int fsname##_node_setattr_ttl(struct puffs_usermount *,		\
 	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,	\
-	    struct timespec *);
+	    struct timespec *, int);					\
+	int fsname##_node_write2(struct puffs_usermount *,		\
+	    puffs_cookie_t, uint8_t *, off_t, size_t *,			\
+	    const struct puffs_cred *, int, int);
 
 
 #define PUFFSOP_INIT(ops)						\
