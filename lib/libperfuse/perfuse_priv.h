@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.25.2.2 2012/04/23 16:48:59 riz Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.25.2.3 2012/07/05 17:26:14 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -259,7 +259,7 @@ int perfuse_node_getattr_ttl(struct puffs_usermount *,
     struct timespec *);
 int perfuse_node_setattr_ttl(struct puffs_usermount *,
     puffs_cookie_t, struct vattr *, const struct puffs_cred *,
-    struct timespec *);
+    struct timespec *, int flags);
 
 struct perfuse_trace *perfuse_trace_begin(struct perfuse_state *, 
     puffs_cookie_t, perfuse_msg_t *);
