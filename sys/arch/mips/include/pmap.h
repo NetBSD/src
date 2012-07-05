@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2011/09/22 05:08:52 macallan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61.8.1 2012/07/05 18:39:42 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,6 +148,7 @@ void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_init(struct pmap *);
 void pmap_segtab_destroy(struct pmap *);
+extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
 /*
