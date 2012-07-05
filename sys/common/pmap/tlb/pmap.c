@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2012/01/18 07:17:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12.2.1 2012/07/05 18:50:52 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2012/01/18 07:17:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12.2.1 2012/07/05 18:50:52 riz Exp $");
 
 /*
  *	Manages physical address maps.
@@ -437,6 +437,11 @@ pmap_init(void)
         UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
+
+	/*
+	 * Initialize the segtab lock.
+	 */
+	mutex_init(&pmap_segtab_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set a low water mark on the pv_entry pool, so that we are
