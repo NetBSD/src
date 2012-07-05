@@ -1,4 +1,4 @@
-/*	$NetBSD: deviceid.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: deviceid.c,v 1.2 2012/07/05 13:55:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/compat/opensolaris/misc/deviceid.c,v 1.1 2007/05/06 01:39:38 pjd Exp $"); */
-__RCSID("$NetBSD: deviceid.c,v 1.1 2009/08/07 20:57:56 haad Exp $");
+__RCSID("$NetBSD: deviceid.c,v 1.2 2012/07/05 13:55:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -78,7 +78,7 @@ devid_str_decode(char *devidstr, ddi_devid_t *retdevid, char **retminor_name)
 		return (EINVAL);
 	}
 	*retminor_name = strdup("");
-	if (*retminor_name == NULL);
+	if (*retminor_name == NULL)
 		return (ENOMEM);
 	return (0);
 }
