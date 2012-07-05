@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.8.1 2012/07/04 20:41:47 jdc Exp $
+#	$NetBSD: Makefile,v 1.26.8.2 2012/07/05 18:22:49 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,11 +11,10 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list  ${DISTRIBDIR}/common/list.sysinst
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 ra2 ra3 hp0 hp1 \
-		sd0 sd1 sd2 md0 pty0 cd0 cd1 racd0 racd1
+MAKEDEVTARGETS=	ramdisk
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${DESTDIR}/boot ${DESTDIR}/usr/mdec/xxboot \
@@ -29,6 +28,7 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 ${CRUNCHBIN}:	libhack.o
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
 
