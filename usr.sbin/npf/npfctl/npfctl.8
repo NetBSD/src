@@ -1,6 +1,6 @@
-.\"	$NetBSD: npfctl.8,v 1.6 2011/03/24 05:48:54 jruoho Exp $
+.\"	$NetBSD: npfctl.8,v 1.6.6.1 2012/07/05 17:48:44 riz Exp $
 .\"
-.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2011
+.Dd July 1, 2012
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -74,6 +74,11 @@ is atomic.
 Flush configuration.
 That is, remove all rules, tables and expire all sessions.
 This command does not disable packet inspection.
+.It Ic show
+Show the current state and configuration.
+Syntax of printed configuration is for the user and may not match the
+.Xr npf.conf 5
+syntax.
 .It Ic table Ar tid
 List all entries in the currently loaded table specified by
 .Ar tid .
@@ -129,6 +134,7 @@ Starting the NPF packet filter:
 .Bd -literal -offset indent
 # npfctl reload
 # npfctl start
+# npfctl show
 .Ed
 .Pp
 Addition and removal of entries in the table whose ID is 2:
