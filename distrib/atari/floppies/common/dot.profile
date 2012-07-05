@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2008/11/17 20:14:35 abs Exp $
+# $NetBSD: dot.profile,v 1.3.10.1 2012/07/05 17:33:59 riz Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -47,16 +47,13 @@ export EDITOR
 umask 022
 
 makerootwritable() {
-	if [ ! -e /tmp/.root_writable ]; then
-		# note, only handles up to partition 'j'
-		rootdev=/dev/$(sysctl -n kern.root_device)$(sysctl -n kern.root_partition | sed y/0123456789/abcdefghij/)
-		if ! mount $rootdev / ; then
-		    echo "Unable to mount $rootdev read-write"
-		    exit 1
-		fi
-		cp /dev/null /tmp/.root_writable
-		echo "Mounted $rootdev read-write"
+	# note, only handles up to partition 'j'
+	rootdev=/dev/$(sysctl -n kern.root_device)$(sysctl -n kern.root_partition | sed y/0123456789/abcdefghij/)
+	if ! mount -u $rootdev / ; then
+	    echo "Unable to mount $rootdev read-write"
+	    exit 1
 	fi
+	echo "Mounted $rootdev read-write"
 }
 
 if [ "X${DONEPROFILE}" = "X" ]; then
