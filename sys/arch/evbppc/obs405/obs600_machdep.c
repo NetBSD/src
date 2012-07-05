@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_machdep.c,v 1.8 2011/12/12 11:31:46 kiyohara Exp $	*/
+/*	$NetBSD: obs600_machdep.c,v 1.9 2012/07/05 02:56:40 kiyohara Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.8 2011/12/12 11:31:46 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.9 2012/07/05 02:56:40 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -215,14 +215,14 @@ cpu_startup(void)
 	 */
 	board_info_init();
 
+	read_eeprom(sizeof(buf), buf);
+	macaddr = &buf[0];
+	macaddr1 = &buf[8];
+
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
 	bus_space_mallocok();
-
-	read_eeprom(sizeof(buf), buf);
-	macaddr = &buf[0];
-	macaddr1 = &buf[8];
 
 	pn = prop_number_create_integer(OBS600_CPU_FREQ);
 	KASSERT(pn != NULL);
@@ -353,51 +353,59 @@ cpu_reboot(int howto, char *what)
 #endif
 }
 
-/* This function assume already initialized for I2C... */
+/*
+ * Read EEPROM via I2C.  We don't use bus_space(9) here.  This is MD-part and,
+ * don't support bus_space_unmap() to a space on reserved space? X-<
+ *
+ * XXXX: Also this function assume already initialized for I2C...
+ */
 static int
 read_eeprom(int len, char *buf)
 {
-	bus_space_tag_t bst = opb_get_bus_space_tag();
-	bus_space_handle_t bsh;
-	uint8_t mdcntl, sts;
+	volatile uint8_t *iic0;
+#define IIC0_READ(r)		(*(iic0 + (r)))
+#define IIC0_WRITE(r, v)	(*(iic0 + (r)) = (v))
+	uint8_t sts;
 	int cnt, i = 0;
 
 #define I2C_EEPROM_ADDR	0x52
 
-	if (bus_space_map(bst, AMCC405EX_IIC0_BASE, IIC_NREG, 0, &bsh))
+	if ((iic0 = ppc4xx_tlb_mapiodev(AMCC405EX_IIC0_BASE, IIC_NREG)) == NULL)
 		return ENOMEM; /* ??? */
 
 	/* Clear Stop Complete Bit */
-	bus_space_write_1(bst, bsh, IIC_STS, IIC_STS_SCMP);
+	IIC0_WRITE(IIC_STS, IIC_STS_SCMP);
 	/* Check init */
 	do {
 		/* Get status */
-		sts = bus_space_read_1(bst, bsh, IIC_STS);
+		sts = IIC0_READ(IIC_STS);
 	} while ((sts & IIC_STS_PT));
 
-	mdcntl = bus_space_read_1(bst, bsh, IIC_MDCNTL);
-	bus_space_write_1(bst, bsh, IIC_MDCNTL,
-	    mdcntl | IIC_MDCNTL_FMDB | IIC_MDCNTL_FSDB);
+	IIC0_WRITE(IIC_MDCNTL,
+	    IIC0_READ(IIC_MDCNTL) | IIC_MDCNTL_FMDB | IIC_MDCNTL_FSDB);
 
 	/* 7-bit adressing */
-	bus_space_write_1(bst, bsh, IIC_HMADR, 0);
-	bus_space_write_1(bst, bsh, IIC_LMADR, I2C_EEPROM_ADDR << 1);
+	IIC0_WRITE(IIC_HMADR, 0);
+	IIC0_WRITE(IIC_LMADR, I2C_EEPROM_ADDR << 1);
 
-	bus_space_write_1(bst, bsh, IIC_MDBUF, 0);
-	bus_space_write_1(bst, bsh, IIC_CNTL, IIC_CNTL_PT);
+	IIC0_WRITE(IIC_MDBUF, 0);
+	IIC0_WRITE(IIC_CNTL, IIC_CNTL_PT);
 	do {
 		/* Get status */
-		sts = bus_space_read_1(bst, bsh, IIC_STS);
+		sts = IIC0_READ(IIC_STS);
 	} while ((sts & IIC_STS_PT) && !(sts & IIC_STS_ERR));
 
 	cnt = 0;
 	while (cnt < len) {
 		/* always read 4byte */
-		bus_space_write_1(bst, bsh, IIC_CNTL,
-		    IIC_CNTL_PT | IIC_CNTL_RW | IIC_CNTL_TCT);
+		IIC0_WRITE(IIC_CNTL,
+		    IIC_CNTL_PT				|
+		    IIC_CNTL_RW				|
+		    ((cnt == 0) ? IIC_CNTL_RPST : 0)	|
+		    IIC_CNTL_TCT);
 		do {
 			/* Get status */
-			sts = bus_space_read_1(bst, bsh, IIC_STS);
+			sts = IIC0_READ(IIC_STS);
 		} while ((sts & IIC_STS_PT) && !(sts & IIC_STS_ERR));
 
 		if ((sts & IIC_STS_PT) || (sts & IIC_STS_ERR))
@@ -406,16 +414,11 @@ read_eeprom(int len, char *buf)
 			delay(1);
 			/* read 4byte */
 			for (i = 0; i < 4 && cnt < len; i++, cnt++)
-				buf[cnt] =
-				    bus_space_read_1(bst, bsh, IIC_MDBUF);
+				buf[cnt] = IIC0_READ(IIC_MDBUF);
 		}
 	}
 	for ( ; i < 4; i++)
-		(void) bus_space_read_1(bst, bsh, IIC_MDBUF);
-
-#if 0	/* Ooops, can't unmap here... */
-	bus_space_unmap(bst, bsh, IIC_NREG);
-#endif
+		(void) IIC0_READ(IIC_MDBUF);
 
 	return (cnt == len) ? 0 : EINVAL;
 }
