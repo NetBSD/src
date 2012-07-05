@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2012/07/04 11:39:42 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2012/07/05 16:55:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2012/07/04 11:39:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2012/07/05 16:55:11 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -450,8 +450,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 void
 pmap_init(void)
 {
-        UVMHIST_INIT_STATIC(pmapexechist, pmapexechistbuf);
-        UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+	UVMHIST_INIT_STATIC(pmapexechist, pmapexechistbuf);
+	UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
@@ -504,7 +504,7 @@ pmap_create(void)
 	pmap->pm_minaddr = VM_MIN_ADDRESS;
 	pmap->pm_maxaddr = VM_MAXUSER_ADDRESS;
 
-	pmap_segtab_alloc(pmap);
+	pmap_segtab_init(pmap);
 
 	UVMHIST_LOG(pmaphist, "<- pmap %p", pmap,0,0,0);
 	return pmap;
@@ -530,7 +530,7 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_free(pmap);
+	pmap_segtab_destroy(pmap);
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -1482,7 +1482,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 	    pmap, va, pg, VM_PAGE_TO_PHYS(pg));
 	UVMHIST_LOG(pmaphist, "nptep=%p (%#x))", npte, *npte, 0, 0);
 
-        KASSERT(kpreempt_disabled());
+	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
 
 	apv = NULL;
