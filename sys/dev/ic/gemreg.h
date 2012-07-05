@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.14 2008/09/15 19:43:24 jdc Exp $ */
+/*	$NetBSD: gemreg.h,v 1.14.34.1 2012/07/05 17:59:12 riz Exp $ */
 
 /*
  *
@@ -516,6 +516,8 @@
 #define	GEM_MAC_CC_PASS_PAUSE	0x00000004	/* pass pause up */
 #define	GEM_MAC_CC_BITS		"\177\020b\0TXPAUSE\0b\1RXPAUSE\0b\2NOPAUSE\0\0"
 
+/* GEM_MAC_MAC_STATE register bits */
+#define GEM_MAC_STATE_OVERFLOW	0x03800000
 
 /* 
  * Bits in GEM_MAC_SLOT_TIME register
