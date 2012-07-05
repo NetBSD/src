@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2009/11/27 03:23:15 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.18.1 2012/07/05 18:12:49 riz Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2009/11/27 03:23:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.18.1 2012/07/05 18:12:49 riz Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2009/11/27 03:23:15 rmind Exp $");
 
 static void findroot(void);
 static int is_valid_disk(device_t);
-static void handle_wedges(device_t, int);
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -155,16 +154,9 @@ cpu_rootconf(void)
 {
 	findroot();
 
-	if (booted_wedge) {
-		KASSERT(booted_device != NULL);
-		printf("boot device: %s (%s)\n",
-		    device_xname(booted_wedge), device_xname(booted_device));
-		setroot(booted_wedge, 0);
-	} else {
-		printf("boot device: %s\n",
-		    booted_device ? device_xname(booted_device) : "<unknown>");
-		setroot(booted_device, booted_partition);
-	}
+	printf("boot device: %s\n",
+	    booted_device ? device_xname(booted_device) : "<unknown>");
+	setroot(booted_device, booted_partition);
 }
 
 
@@ -199,7 +191,7 @@ findroot(void)
 			continue;
 
 		if (is_disk && xcp.xcp_bootdev[0] == 0) {
-			handle_wedges(dv, 0);
+			booted_device = dv;
 			break;
 		}
 
@@ -352,15 +344,6 @@ found:
 		return;
 	}
 	booted_device = dev;
-}
-
-static void
-handle_wedges(device_t dv, int par)
-{
-	if (config_handle_wedges(dv, par) == 0)
-		return;
-	booted_device = dv;
-	booted_partition = par;
 }
 
 static int
