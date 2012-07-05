@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.1.2.1 2012/06/26 00:07:20 riz Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.1.2.2 2012/07/05 17:48:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@ proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
 icmp			return ICMP;
-udp			return UDP;
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;

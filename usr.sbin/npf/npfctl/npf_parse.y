@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.2 2012/06/26 00:07:19 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.3 2012/07/05 17:48:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ yyerror(const char *fmt, ...)
 %token			TO
 %token			TREE
 %token			TYPE
-%token			UDP
 %token			ICMP
 
 %token	<num>		HEX
@@ -133,10 +132,10 @@ yyerror(const char *fmt, ...)
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
-%type	<str>		addr, iface_name, moduleargname, list_elem, table_store
+%type	<str>		addr, some_name, list_elem, table_store
 %type	<str>		opt_apply
 %type	<num>		ifindex, port, opt_final, on_iface
-%type	<num>		block_or_pass, rule_dir, block_opts, family, opt_family
+%type	<num>		block_or_pass, rule_dir, block_opts, opt_family
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
 %type	<var>		addr_or_iface, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
@@ -321,7 +320,7 @@ moduleargs
 	;
 
 modulearg
-	: moduleargname modulearg_opts
+	: some_name modulearg_opts
 	{
 		module_arg_t ma;
 
@@ -330,11 +329,6 @@ modulearg
 		$$ = npfvar_create(".module_arg");
 		npfvar_add_element($$, NPFVAR_MODULE_ARG, &ma, sizeof(ma));
 	}
-	;
-
-moduleargname
-	: STRING	{ $$ = $1; }
-	| IDENTIFIER	{ $$ = $1; }
 	;
 
 modulearg_opts
@@ -461,9 +455,10 @@ on_iface
 	|			{ $$ = 0; }
 	;
 
-family
-	: INET			{ $$ = AF_INET; }
-	| INET6			{ $$ = AF_INET6; }
+opt_family
+	: FAMILY INET		{ $$ = AF_INET; }
+	| FAMILY INET6		{ $$ = AF_INET6; }
+	|			{ $$ = AF_UNSPEC; }
 	;
 
 opt_proto
@@ -477,9 +472,14 @@ opt_proto
 		$$.op_proto = IPPROTO_ICMP;
 		$$.op_opts = $3;
 	}
-	| PROTO UDP
+	| PROTO some_name
 	{
-		$$.op_proto = IPPROTO_UDP;
+		$$.op_proto = npfctl_protono($2);
+		$$.op_opts = NULL;
+	}
+	| PROTO NUM
+	{
+		$$.op_proto = $2;
 		$$.op_opts = NULL;
 	}
 	|
@@ -487,11 +487,6 @@ opt_proto
 		$$.op_proto = -1;
 		$$.op_opts = NULL;
 	}
-	;
-
-opt_family
-	: FAMILY family		{ $$ = $2; }
-	|			{ $$ = AF_UNSPEC; }
 	;
 
 all_or_filt_opts
@@ -506,7 +501,7 @@ all_or_filt_opts
 	;
 
 opt_stateful
-	: STATEFUL	{ $$ = NPF_RULE_KEEPSTATE; }
+	: STATEFUL	{ $$ = NPF_RULE_STATEFUL; }
 	|		{ $$ = 0; }
 	;
 
@@ -572,8 +567,12 @@ addr_and_mask
 	;
 
 addr_or_iface
-	: addr_and_mask	{ assert($1 != NULL); $$ = $1; }
-	| iface_name
+	: addr_and_mask
+	{
+		assert($1 != NULL);
+		$$ = $1;
+	}
+	| some_name
 	{
 		$$ = npfctl_parse_iface($1);
 	}
@@ -686,7 +685,7 @@ icmp_type
 	;
 
 ifindex
-	: iface_name
+	: some_name
 	{
 		$$ = npfctl_find_ifindex($1);
 	}
@@ -712,7 +711,7 @@ ifindex
 	}
 	;
 
-iface_name
+some_name
 	: IDENTIFIER	{ $$ = $1; }
 	| STRING	{ $$ = $1; }
 	;
