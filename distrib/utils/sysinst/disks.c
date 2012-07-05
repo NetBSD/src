@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.123.2.1 2012/07/04 20:48:55 jdc Exp $ */
+/*	$NetBSD: disks.c,v 1.123.2.2 2012/07/05 17:29:15 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -849,8 +849,12 @@ foundffs(struct data *list, size_t num)
 		return error;
 
 	error = target_mount("", list[0].u.s_val, ' '-'a', list[1].u.s_val);
-	if (error != 0)
-		return error;
+	if (error != 0) {
+		msg_display(MSG_mount_failed, list[0].u.s_val);
+		process_menu(MENU_noyes, NULL);
+		if (!yesno)
+			return error;
+	}
 	return 0;
 }
 
@@ -898,7 +902,9 @@ fsck_preen(const char *disk, int ptn, const char *fsname)
 	free(prog);
 	if (error != 0) {
 		msg_display(MSG_badfs, disk, ptn, error);
-		process_menu(MENU_ok, NULL);
+		process_menu(MENU_noyes, NULL);
+		if (yesno)
+			error = 0;
 		/* XXX at this point maybe we should run a full fsck? */
 	}
 	return error;
@@ -1010,7 +1016,7 @@ mount_disks(void)
 	else {
 		error = mount_root();
 		if (error != 0 && error != EBUSY)
-			return 0;
+			return -1;
 	}
 
 	/* Check the target /etc/fstab exists before trying to parse it. */
@@ -1018,7 +1024,7 @@ mount_disks(void)
 	    target_file_exists_p("/etc/fstab") == 0) {
 		msg_display(MSG_noetcfstab, diskdev);
 		process_menu(MENU_ok, NULL);
-		return 0;
+		return -1;
 	}
 
 
@@ -1028,7 +1034,7 @@ mount_disks(void)
 		/* error ! */
 		msg_display(MSG_badetcfstab, diskdev);
 		process_menu(MENU_ok, NULL);
-		return 0;
+		return -1;
 	}
 	error = walk(fstab, (size_t)fstabsize, fstabbuf, numfstabbuf);
 	free(fstab);

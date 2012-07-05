@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.61.2.1 2012/05/17 18:57:09 sborrill Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.61.2.2 2012/07/05 17:29:15 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -124,6 +124,9 @@ Wollen Sie die NetBSD Distributionssets wirklich erneut installieren?
 überschrieben werden!)
 }
 
+message mount_failed
+{Versuch, %s zu mounten ist fehlgeschlagen. Fortfahren?
+}
 
 message nodisk
 {Ich kann keine für NetBSD nutzbaren Festplatten finden.
@@ -711,9 +714,9 @@ message makedev
 
 message badfs
 {Das Dateisystem auf /dev/%s%c scheint kein BSD-Dateisystem zu sein,
-die Prüfung des Dateisystems (fsck) ist fehlgeschlagen.
+die Prüfung des Dateisystems (fsck) ist fehlgeschlagen (Fehler %d).
 
-Die Aktualisierung wird abgebrochen. (Fehlernummer %d.)
+Die Aktualisierung trotzdem fortsetzen?
 }
 
 message rootmissing
