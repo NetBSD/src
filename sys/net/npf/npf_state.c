@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.6.4.2 2012/06/26 14:49:10 riz Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.6.4.3 2012/07/05 17:48:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6.4.2 2012/06/26 14:49:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6.4.3 2012/07/05 17:48:42 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,10 +179,11 @@ npf_state_etime(const npf_state_t *nst, const int proto)
 }
 
 void
-npf_state_dump(npf_state_t *nst)
+npf_state_dump(const npf_state_t *nst)
 {
 #if defined(DDB) || defined(_NPF_TESTING)
-	npf_tcpstate_t *fst = &nst->nst_tcpst[0], *tst = &nst->nst_tcpst[1];
+	const npf_tcpstate_t *fst = &nst->nst_tcpst[0];
+	const npf_tcpstate_t *tst = &nst->nst_tcpst[1];
 
 	printf("\tstate (%p) %d:\n\t\t"
 	    "F { end %u maxend %u mwin %u wscale %u }\n\t\t"

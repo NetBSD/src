@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_instr.c,v 1.9.2.2 2012/06/26 14:49:10 riz Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.9.2.3 2012/07/05 17:48:42 riz Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.2 2012/06/26 14:49:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.3 2012/07/05 17:48:42 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,7 +90,29 @@ again:
 }
 
 /*
- * npf_match_ip4table: match IPv4 address against NPF table.
+ * npf_match_proto: match IP address length and/or layer 4 protocol.
+ */
+int
+npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
+{
+	const int addrlen = (ap >> 8) & 0xff;
+	const int proto = ap & 0xff;
+
+	if (!npf_iscached(npc, NPC_IP46)) {
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
+			return -1;
+		}
+		KASSERT(npf_iscached(npc, NPC_IP46));
+	}
+
+	if (addrlen && npc->npc_ipsz != addrlen) {
+		return -1;
+	}
+	return (proto != 0xff && npf_cache_ipproto(npc) != proto) ? -1 : 0;
+}
+
+/*
+ * npf_match_table: match IP address against NPF table.
  */
 int
 npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
@@ -117,9 +139,10 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  */
 int
 npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const npf_addr_t *netaddr, npf_netmask_t mask)
+    const int szsd, const npf_addr_t *maddr, npf_netmask_t mask)
 {
-	npf_addr_t *addr, cmpaddr;
+	const int alen = szsd >> 1;
+	npf_addr_t *addr;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -127,12 +150,11 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	addr = sd ? npc->npc_srcip : npc->npc_dstip;
-	if (mask != NPF_NO_NETMASK) {
-		npf_addr_mask(addr, mask, &cmpaddr);
-		addr = &cmpaddr;
+	if (npc->npc_ipsz != alen) {
+		return -1;
 	}
-	return memcmp(netaddr, addr, npc->npc_ipsz) ? -1 : 0;
+	addr = (szsd & 0x1) ? npc->npc_srcip : npc->npc_dstip;
+	return npf_addr_cmp(maddr, NPF_NO_NETMASK, addr, mask, alen) ? -1 : 0;
 }
 
 /*

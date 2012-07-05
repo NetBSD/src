@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.9.2.1 2012/06/26 00:07:20 riz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.9.2.2 2012/07/05 17:48:44 riz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 2012
+.Dd June 29, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ ifconfig npflog0 create
 Rules for address translation can be added.
 Translation is performed on the specified interface, assigning the specified
 address of said interface.
-There are three types of translation:
+Currently, three types of translation are supported:
 Network Address Port Translation (NAPT) - a regular NAT,
 also known as "outbound NAT";
 Port forwarding (redirection) - also known as "inbound NAT";
@@ -134,15 +134,16 @@ There are two types of storage: "tree" (red-black tree is used) and
 .Bd -literal
 line		= ( def | table | map | group | rproc )
 
-def		= ( \*[Lt]name\*[Gt] "=" "{ a, b, ... }" | "\*[Lt]text\*[Gt]" | "$\*[Lt]interface\*[Gt]" )
-iface		= ( \*[Lt]interface\*[Gt] | def )
+var		= $\*[Lt]name\*[Gt]
+iface		= ( \*[Lt]interface\*[Gt] | var )
+def		= ( var "=" "{ "\*[Lt]value_1\*[Gt]", "\*[Lt]value_2\*[Gt]", ... }" | "\*[Lt]value\*[Gt]" )
 
 table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
 		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
 
 map-di		= ( "->" | "<-" | "<->" )
 map-type	= ( "static" | "dynamic" )
-map		= "map" iface maptype \*[Lt]seg1\*[Gt] mapdi \*[Lt]seg2\*[Gt] [ "pass" filt-opts ]
+map		= "map" iface map-type \*[Lt]seg1\*[Gt] map-di \*[Lt]seg2\*[Gt] [ "pass" filt-opts ]
 
 rproc		= "procedure" \*[Lt]name\*[Gt] procs
 procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
@@ -150,18 +151,18 @@ op		= ( "log" iface | "normalise" "(" norm-opt1 "," norm-opt2 ... ")" )
 norm-opt	= [ "random-id" | "min-ttl" \*[Lt]num\*[Gt] | "max-mss" \*[Lt]num\*[Gt] | "no-df" ]
 
 group		= "group" "(" ( "default" | group-opts ) ")" ruleset
-group-opts	= "interface" iface "," [ "in" | "out" ]
+group-opts	= [ name \*[Lt]name\*[Gt] "," ] "interface" iface [ "," ( "in" | "out" ) ]
 
 ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
 
 rule		= ( "block" block-opts | "pass" ) [ "stateful" ] [ "in" | out" ] [ "final" ]
-		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] ]
+		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] [ proto-opts ] ]
 		  ( "all" | filt-opts ) [ "apply" rproc ] }
 
 fam-opt		= [ "inet" | "inet6" ]
 block-opts	= [ "return-rst" | "return-icmp" | "return" ]
-filt-addr	= iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt]
-port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] "-" \*[Lt]port-to\*[Gt] | def ) ]
+filt-addr	= iface | var | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt]
+port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] "-" \*[Lt]port-to\*[Gt] | var ) ]
 filt-opts	= [ "from" filt-addr [ port-opts ] ] [ "to" filt-addr [ port-opts ] ]
 proto-opts	= [ "flags" \*[Lt]tcp_flags\*[Gt] | "icmp-type" \*[Lt]type\*[Gt] "code" \*[Lt]code\*[Gt] ]
 .Ed
@@ -186,6 +187,8 @@ $services_tcp = { http, https, smtp, domain, 6000, 9022 }
 $services_udp = { domain, ntp, 6000 }
 $localnet = { 10.1.1.0/24 }
 
+# Note: if $ext_if has multiple IP address (e.g. IPv6 as well),
+# then the translation address has to be specified explicitly.
 map $ext_if dynamic 10.1.1.0/24 -> $ext_if
 map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if 9022
 
@@ -201,11 +204,11 @@ group (name "external", interface $ext_if) {
 	pass stateful out final from $ext_if apply "rid"
 
 	block in final from \*[Lt]1\*[Gt]
-	pass in final family inet proto tcp to $ext_if port ssh apply "log"
-	pass in final proto tcp to $ext_if port $services_tcp
-	pass in final proto udp to $ext_if port $services_udp
-	pass in final proto tcp to $ext_if port 49151-65535	# Passive FTP
-	pass in final proto udp to $ext_if port 33434-33600	# Traceroute
+	pass stateful in final family inet proto tcp to $ext_if port ssh apply "log"
+	pass stateful in final proto tcp to $ext_if port $services_tcp
+	pass stateful in final proto udp to $ext_if port $services_udp
+	pass stateful in final proto tcp to $ext_if port 49151-65535	# Passive FTP
+	pass stateful in final proto udp to $ext_if port 33434-33600	# Traceroute
 }
 
 group (name "internal", interface $int_if) {
@@ -215,6 +218,7 @@ group (name "internal", interface $int_if) {
 }
 
 group (default) {
+	pass final on lo0 all
 	block all
 }
 .Ed

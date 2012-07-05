@@ -1,6 +1,6 @@
-.\"	$NetBSD: npf_ncode.9,v 1.8 2011/12/23 20:53:31 rmind Exp $
+.\"	$NetBSD: npf_ncode.9,v 1.8.2.1 2012/07/05 17:48:45 riz Exp $
 .\"
-.\" Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 23, 2011
+.Dd July 1, 2012
 .Dt NPF_NCODE 9
 .Os
 .Sh NAME
@@ -221,6 +221,14 @@ CISC-like n-code instructions.
 Read Ethernet type in the frame, handle possible VLAN and match with
 the value passed in the argument.
 Return value to advance to layer 3 header in R3.
+.\" -
+.It Sy 0x81 NPF_OPCODE_PROTO <protocol>
+Match the IP address length and the protocol.
+The values for both are represented by lower 16 bits.
+The higher 8 bits represent IP address length.
+If zero is specified, the length is not matched.
+The lower 8 bits represent the protocol.
+If 0xff is specified, the protocol is not matched.
 .\" -
 .It Sy 0x90 NPF_OPCODE_IP4MASK <s/d>, <network address>, <subnet>
 Match passed network address with subnet against source or destination

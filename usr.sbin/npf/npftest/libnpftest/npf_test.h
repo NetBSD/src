@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.3.2.2 2012/06/26 00:07:18 riz Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.3.2.3 2012/07/05 17:48:43 riz Exp $	*/
 
 /*
  * Public Domain.
@@ -31,6 +31,7 @@ int		npf_test_handlepkt(const void *, size_t, unsigned,
 struct mbuf *	mbuf_getwithdata(const void *, size_t);
 struct mbuf *	mbuf_construct_ether(int);
 struct mbuf *	mbuf_construct(int);
+struct mbuf *	mbuf_construct6(int);
 void *		mbuf_return_hdrs(struct mbuf *, bool, struct ip **);
 void		mbuf_icmp_append(struct mbuf *, struct mbuf *);
 

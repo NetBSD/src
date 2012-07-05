@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.4.2.2 2012/06/26 00:07:19 riz Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.4.2.3 2012/07/05 17:48:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.4.2.2 2012/06/26 00:07:19 riz Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.4.2.3 2012/07/05 17:48:44 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -69,7 +69,9 @@ npfctl_config_send(int fd)
 	int error;
 
 	if (!fd) {
-		_npf_config_setsubmit(npf_conf, "./npf.plist");
+		const char *outconf = "/tmp/npf.plist";
+		_npf_config_setsubmit(npf_conf, outconf);
+		printf("\nSaving to %s\n", outconf);
 	}
 	if (!defgroup_set) {
 		errx(EXIT_FAILURE, "default group was not defined");
@@ -116,7 +118,7 @@ npfctl_get_singlefam(const npfvar_t *vp)
 	return npfvar_get_data(vp, NPFVAR_FAM, 0);
 }
 
-static void
+static bool
 npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
     fam_addr_mask_t *fam, int opts)
 {
@@ -130,7 +132,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 			yyerror("specified address is not of the required "
 			    "family %d", family);
 		}
-		return;
+		return false;
 	}
 
 	/*
@@ -139,11 +141,12 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 	 */
 	if (fam->fam_mask == 0) {
 		npf_addr_t zero;
+
 		memset(&zero, 0, sizeof(npf_addr_t));
 		if (memcmp(&fam->fam_addr, &zero, sizeof(npf_addr_t))) {
 			yyerror("filter criterion would never match");
 		}
-		return;
+		return false;
 	}
 
 	switch (fam->fam_family) {
@@ -158,6 +161,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 	default:
 		yyerror("family %d is not supported", fam->fam_family);
 	}
+	return true;
 }
 
 static void
@@ -202,12 +206,14 @@ npfctl_build_vars(nc_ctx_t *nc, sa_family_t family, npfvar_t *vars, int opts)
 }
 
 static int
-npfctl_build_proto(nc_ctx_t *nc, const opt_proto_t *op)
+npfctl_build_proto(nc_ctx_t *nc, sa_family_t family,
+    const opt_proto_t *op, bool nof, bool nop)
 {
 	const npfvar_t *popts = op->op_opts;
+	const int proto = op->op_proto;
 	int pflag = 0;
 
-	switch (op->op_proto) {
+	switch (proto) {
 	case IPPROTO_TCP:
 		pflag = NC_MATCH_TCP;
 		if (!popts) {
@@ -221,6 +227,7 @@ npfctl_build_proto(nc_ctx_t *nc, const opt_proto_t *op)
 		tf = npfvar_get_data(popts, NPFVAR_TCPFLAG, 0);
 		tf_mask = npfvar_get_data(popts, NPFVAR_TCPFLAG, 1);
 		npfctl_gennc_tcpfl(nc, *tf, *tf_mask);
+		nop = false;
 		break;
 	case IPPROTO_UDP:
 		pflag = NC_MATCH_UDP;
@@ -229,18 +236,50 @@ npfctl_build_proto(nc_ctx_t *nc, const opt_proto_t *op)
 		/*
 		 * Build ICMP block.
 		 */
+		if (!nop) {
+			goto invop;
+		}
 		assert(npfvar_get_count(popts) == 2);
 
 		int *icmp_type, *icmp_code;
 		icmp_type = npfvar_get_data(popts, NPFVAR_ICMP, 0);
 		icmp_code = npfvar_get_data(popts, NPFVAR_ICMP, 1);
 		npfctl_gennc_icmp(nc, *icmp_type, *icmp_code);
+		nop = false;
 		break;
 	case -1:
 		pflag = NC_MATCH_TCP | NC_MATCH_UDP;
+		nop = false;
 		break;
 	default:
-		yyerror("protocol %d is not supported", op->op_proto);
+		/*
+		 * No filter options are supported for other protcols.
+		 */
+		if (nof && nop) {
+			break;
+		}
+invop:
+		yyerror("invalid filter options for protocol %d", proto);
+	}
+
+	/*
+	 * Build the protocol block, unless other blocks will implicitly
+	 * perform the family/protocol checks for us.
+	 */
+	if ((family != AF_UNSPEC && nof) || (proto != -1 && nop)) {
+		uint8_t addrlen;
+
+		switch (family) {
+		case AF_INET:
+			addrlen = sizeof(struct in_addr);
+			break;
+		case AF_INET6:
+			addrlen = sizeof(struct in6_addr);
+			break;
+		default:
+			addrlen = 0;
+		}
+		npfctl_gennc_proto(nc, nof ? addrlen : 0, nop ? proto : 0xff);
 	}
 	return pflag;
 }
@@ -251,13 +290,18 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 {
 	const addr_port_t *apfrom = &fopts->fo_from;
 	const addr_port_t *apto = &fopts->fo_to;
+	const int proto = op->op_proto;
+	bool nof, nop;
 	nc_ctx_t *nc;
 	void *code;
 	size_t len;
 
-	if (family == AF_UNSPEC && op->op_proto == -1 &&
-	    op->op_opts == NULL && !apfrom->ap_netaddr && !apto->ap_netaddr &&
-	    !apfrom->ap_portrange && !apto->ap_portrange)
+	/*
+	 * If none specified, no n-code.
+	 */
+	nof = !apfrom->ap_netaddr && !apto->ap_netaddr;
+	nop = !apfrom->ap_portrange && !apto->ap_portrange;
+	if (family == AF_UNSPEC && proto == -1 && !op->op_opts && nof && nop)
 		return false;
 
 	int srcflag = NC_MATCH_SRC;
@@ -270,22 +314,16 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 
 	nc = npfctl_ncgen_create();
 
+	/* Build layer 4 protocol blocks. */
+	int pflag = npfctl_build_proto(nc, family, op, nof, nop);
+
 	/* Build IP address blocks. */
 	npfctl_build_vars(nc, family, apfrom->ap_netaddr, srcflag);
 	npfctl_build_vars(nc, family, apto->ap_netaddr, dstflag);
 
-	/* Build layer 4 protocol blocks. */
-	int pflag = npfctl_build_proto(nc, op);
-
 	/* Build port-range blocks. */
-	if (apfrom->ap_portrange) {
-		npfctl_build_vars(nc, family, apfrom->ap_portrange,
-		    srcflag | pflag);
-	}
-	if (apto->ap_portrange) {
-		npfctl_build_vars(nc, family, apto->ap_portrange,
-		    dstflag | pflag);
-	}
+	npfctl_build_vars(nc, family, apfrom->ap_portrange, srcflag | pflag);
+	npfctl_build_vars(nc, family, apto->ap_portrange, dstflag | pflag);
 
 	/*
 	 * Complete n-code (destroys the context) and pass to the rule.
@@ -296,6 +334,8 @@ npfctl_build_ncode(nl_rule_t *rl, sa_family_t family, const opt_proto_t *op,
 		printf("RULE AT LINE %d\n", yylineno);
 		npfctl_ncgen_print(code, len);
 	}
+	assert(code && len > 0);
+
 	if (npf_rule_setcode(rl, NPF_CODE_NCODE, code, len) == -1) {
 		errx(EXIT_FAILURE, "npf_rule_setcode failed");
 	}
@@ -438,7 +478,7 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
     const addr_port_t *ap2, const filt_opts_t *fopts)
 {
 	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
-	fam_addr_mask_t *am1, *am2;
+	fam_addr_mask_t *am1 = NULL, *am2 = NULL;
 	filt_opts_t imfopts;
 	sa_family_t family;
 	nl_nat_t *nat;
@@ -456,12 +496,11 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 			yyerror("inbound network segment is not specified");
 		}
 		am1 = npfctl_get_singlefam(ap1->ap_netaddr);
-		if (am1->fam_family != AF_INET) {
+		if (am1->fam_family != family) {
 			yyerror("IPv6 NAT is not supported");
 		}
 		assert(am1 != NULL);
-	} else
-		am1 = NULL;
+	}
 
 	if (type & NPF_NATOUT) {
 		if (!ap2->ap_netaddr) {
@@ -472,8 +511,7 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
 			yyerror("IPv6 NAT is not supported");
 		}
 		assert(am2 != NULL);
-	} else
-		am2 = NULL;
+	}
 
 	/*
 	 * If filter criteria is not specified explicitly, apply implicit
