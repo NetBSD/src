@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.32 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.33 2012/07/05 03:02:53 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.33 2012/07/05 03:02:53 kiyohara Exp $");
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 
@@ -679,6 +679,9 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	bpa = pa - t->pbs_offset;
 
 	if (t->pbs_extent != NULL
+#ifdef PPC_IBM4XX
+	    && extent_flags
+#endif
 	    && extent_free(t->pbs_extent, bpa, size,
 			   EX_NOWAIT | extent_flags)) {
 		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
