@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.4 2011/09/18 01:21:34 christos Exp $
+.\"	$NetBSD: sysinst.8,v 1.5 2012/07/06 09:11:19 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 17, 2011
+.Dd June 30, 2012
 .Dt SYSINST 8
 .Os
 .Sh NAME
@@ -33,8 +33,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl D
-.Op Fl f Ar deffile
-.Op Fl r Ar releasename
+.Op Fl f Ar definition_file
+.Op Fl r Ar release
 .Sh DESCRIPTION
 .Nm
 is a menu-based program that may be used to install or upgrade a
@@ -48,49 +48,60 @@ from appropriate installation media.
 is usually not present on a
 .Nx
 system that has been fully installed.
-.Sh OPTIONS
-.Bl -tag -width rrrreleasename
+.Pp
+The following options are available:
+.Bl -tag -width XfXdefinition_fileXX
 .It Fl D
 Switch on debugging.
-.It Fl r Ar releasename
-Set the releasename if it is different to the one compiled.
-Currently unused.
-.It Fl f Ar deffile
-Set a file for definitions other than the defaults.
-See
+.It Fl f Ar definition_file
+Use
+.Ar definition_file
+as a file for definitions other than the defaults.
+See the
 .Sx DEFINITION FILE
-for its format.
+section for its format.
+.It Fl r Ar release
+Use
+.Ar release
+as the release name if it is different to the one compiled.
+Currently unused.
 .El
 .Sh DEFINITION FILE
-The definition file is used to set several other names and directories
-to search for.
-You can specify any of the options in the file.
-They are stored as:
+A definition file can be used with
+.Nm
+to control several aspects of the installation or upgrade process.
+Options can be stored within the file as
 .Dl option = value
 pairs.
-In this description, REL and MACH are the release and architecture
-respectively, determined by the image sysinst is used on.
+Options include the following, shown with their defaults
+as well as a description
+.Dq ( REL
+and
+.Dq MACH
+are the release and architecture
+respectively, as determined by the image
+.Nm
+is used on):
 .Bl -column "targetroot mount" "pub/NetBSD/NetBSD-REL"
 .It Sy "option name" Ta Sy "default value" Ta Sy "description"
-.It release Ta REL Ta Release name (also set by Fl r Ar releasename ) .
+.It release Ta REL Ta Release name (also set by Fl r Ar release )
 .It machine Ta MACH Ta Machine architecture
 .It xfer dir Ta /usr/INSTALL Ta Transfer dir
 .It ext dir Ta "" Ta Extract dir (will usually be set later on)
-.It ftp host Ta "ftp.NetBSD.org" Ta ftp host for fetching files
-.It ftp dir Ta "pub/NetBSD/NetBSD-REL" Ta ftp directory for fetching files
-.It ftp prefix Ta "/MACH/binary/sets" Ta directory to look for sets.
-Note that this is used for all kinds of fetching (CDs, local FS, ...),
-not only ftp.
-.It ftp user Ta "ftp" Ta ftp user for connecting
-.It ftp pass Ta "-" Ta ftp password
-.It ftp proxy Ta "-" Ta ftp proxy
-.It nfs host Ta "-" Ta nfs host for fetching via nfs
-.It nfs dir Ta "/bsd/release" Ta nfs directory for fetching files
-.It cd dev Ta "cd0a" Ta name of the CD device for fetching files
-.It fd dev Ta "/dev/fd0a" Ta name of floppy for fetching files
+.It ftp host Ta "ftp.NetBSD.org" Ta FTP host for fetching files
+.It ftp dir Ta "pub/NetBSD/NetBSD-REL" Ta FTP directory for fetching files
+.It ftp prefix Ta "/MACH/binary/sets" Ta Directory to look for sets,
+used for all methods of fetching (i.e., not just FTP)
+.It ftp user Ta "ftp" Ta FTP user for connecting
+.It ftp pass Ta "-" Ta FTP password
+.It ftp proxy Ta "-" Ta FTP proxy
+.It nfs host Ta "-" Ta NFS host for fetching via NFS
+.It nfs dir Ta "/bsd/release" Ta NFS directory for fetching files
+.It cd dev Ta "cd0a" Ta Name of CD device for fetching files
+.It fd dev Ta "/dev/fd0a" Ta Name of floppy device for fetching files
 .It local dev Ta "-" Ta Other device to be mounted for fetching files
-.It local fs Ta "ffs" Ta FS-type for local dev
-.It local dir Ta "release" Ta Directory to look for in the mounted local fs
+.It local fs Ta "ffs" Ta File system type for local device
+.It local dir Ta "release" Ta Directory to look for in the mounted local file system
 .It targetroot mount Ta "/targetroot" Ta Directory to mount target root dir to
 .It dist postfix Ta ".tgz" Ta Suffix of set files to be extracted
 .It diskname Ta "mydisk" Ta Xr disktab 5 diskname to use for target disk
