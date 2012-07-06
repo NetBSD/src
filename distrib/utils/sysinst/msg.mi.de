@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.69 2012/07/06 09:12:16 wiz Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.70 2012/07/06 21:10:56 jdf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -955,6 +955,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Aktualisierung einer bestehenden NetBSD-I
 message Re_install_sets_or_install_additional_sets {Erneute Installation oder zusätzliche Pakete installieren}
 message Reboot_the_computer {Computer neu starten}
 message Utility_menu {Extras}
+message Config_menu {Konfigurationsmenü}
 message exit_utility_menu {Zurück zum Hauptmenü}
 message NetBSD_VERSION_Utilities {NetBSD-@@VERSION@@ Extras}
 message Run_bin_sh {Ausführen von /bin/sh}
