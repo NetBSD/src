@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.17 2010/11/28 10:45:32 mrg Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.17 2010/11/28 10:45:32 mrg Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.18 2012/07/06 09:06:43 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,13 +98,13 @@ usage(void)
 {
 	const char *pname = getprogname();
 
-	(void)fprintf(stderr, "Usage: %s ", pname);
+	(void)fprintf(stderr, "usage: %s ", pname);
 	if (isod)
 		(void)fprintf(stderr, "[-aBbcDdeFfHhIiLlOovXx] [-A base] "
 		    "[-j skip] [-N length] [-t type_string] [[+]offset[.][Bb]] "
 		    "[file ...]\n");
 	else
-		(void)fprintf(stderr, "[-bcCdovx] [-e fmt] [-f fmt_file] "
+		(void)fprintf(stderr, "[-bCcdovx] [-e format_string] [-f format_file] "
 		    "[-n length] [-s skip] [file ...]\n");
 	exit(1);
 }
