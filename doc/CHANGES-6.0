@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.151 2012/07/05 18:49:03 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.152 2012/07/06 13:07:25 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6095,7 +6095,7 @@ external/bsd/ntp/dist/ntpdc/ntpdc.c		1.6
 
 sys/arch/powerpc/powerpc/vm_machdep.c		1.97
 	Don't panic if you can't allocate a contiguous stack for system
-	threads.  Just use a mapped a stack.
+	threads.  Just use a mapped a stack.  PR#46591
 	[matt, ticket #388]
 
 sys/dev/wsfont/Droid_Sans_Mono_12x22.h		1.2
