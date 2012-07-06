@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.46 2012/04/07 19:02:57 jdf Exp $	*/
+/*	$NetBSD: menus.mi,v 1.47 2012/07/06 21:10:56 jdf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
 	option MSG_Reboot_the_computer, exit,
 		action (endwin) { system("/sbin/reboot -q"); };
 	option MSG_Utility_menu, sub menu utility;
-	option "Config menu", action { do_configmenu(); };
+	option MSG_Config_menu, action { do_configmenu(); };
 
 menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 		exitstring MSG_exit_utility_menu;
