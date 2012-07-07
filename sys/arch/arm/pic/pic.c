@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.9 2012/07/04 13:34:24 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.10 2012/07/07 08:05:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.9 2012/07/04 13:34:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.10 2012/07/07 08:05:48 skrll Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -159,7 +159,8 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
 
 		irq_mask = __BIT(irq);
 #if 1
-    		KASSERT(pic->pic_sources[irq_base + irq] != NULL);
+    		KASSERTMSG(pic->pic_sources[irq_base + irq] != NULL,
+		   "%s: irq_base %zu irq %d\n", __func__, irq_base, irq);
 #else
 		if (pic->pic_sources[irq_base + irq] == NULL) {
 			aprint_error("stray interrupt? irq_base=%zu irq=%d\n",
