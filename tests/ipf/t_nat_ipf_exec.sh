@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_ipf_exec.sh,v 1.6 2012/03/27 09:27:33 jruoho Exp $
+# $NetBSD: t_nat_ipf_exec.sh,v 1.7 2012/07/07 23:29:44 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,24 +35,32 @@ natipftest()
 	h_copydata $1
 	cp $(atf_get_srcdir)/regress/$1.nat nat
 	cp $(atf_get_srcdir)/regress/$1.ipf ipf
+	many=$2
+	infmt=$3
+	outfmt=$4
+	shift
+	shift
+	shift
+	shift
+	args=$@
 
-	if [ $4 = hex ] ; then
-		format="-xF $3"
+	if [ $outfmt = hex ] ; then
+		format="-xF $infmt"
 	else
-		format="-F $3"
+		format="-F $infmt"
 	fi
 
-	case $2 in
+	case $many in
 	single)
 		{ while read rule; do
 			atf_check -o save:save -x "echo \"$rule\" | \
-ipftest -R $5 $6 $format -b -r ipf -N - -i in"
+ipftest -R $format -b -r ipf -N - -i in $args"
 			cat save >>out
 			echo "-------------------------------" >>out
 		done; } <nat
 		;;
 	multi)
-		atf_check -o save:out ipftest -R $5 $6 \
+		atf_check -o save:out ipftest -R $args \
 			$format -b -r ipf -N nat -i in
 		echo "-------------------------------" >>out
 		;;
@@ -61,24 +69,26 @@ ipftest -R $5 $6 $format -b -r ipf -N - -i in"
 	diff -u exp out || atf_fail "results differ"
 }
 
-broken_test_case ni1 natipftest multi hex hex -T fr_update_ipid=1
-broken_test_case ni2 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni3 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni4 natipftest single hex hex -T fr_update_ipid=1
-#broken_test_case ni5 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni6 natipftest multi hex hex -T fr_update_ipid=1
-broken_test_case ni7 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni8 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni9 natipftest single hex hex -T fr_update_ipid=1
-#broken_test_case ni10 natipftest single hex hex -T fr_update_ipid=1
-#broken_test_case ni11 natipftest single hex hex -T fr_update_ipid=1
-#broken_test_case ni12 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni13 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni14 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni15 natipftest single hex hex -T fr_update_ipid=1
-broken_test_case ni16 natipftest single hex hex -T fr_update_ipid=1
-#broken_test_case ni19 natipftest single hex hex -T fr_update_ipid=0
-#broken_test_case ni20 natipftest single hex hex -T fr_update_ipid=0
+test_case ni1 natipftest multi hex hex -T update_ipid=1
+test_case ni2 natipftest single hex hex -T update_ipid=1
+test_case ni3 natipftest single hex hex -T update_ipid=1
+test_case ni4 natipftest single hex hex -T update_ipid=1
+test_case ni5 natipftest single hex hex -T update_ipid=1
+test_case ni6 natipftest multi hex text -T update_ipid=1 -D
+test_case ni7 natipftest single hex hex -T update_ipid=1
+test_case ni8 natipftest single hex hex -T update_ipid=1
+test_case ni9 natipftest single hex hex -T update_ipid=1
+test_case ni10 natipftest single hex hex -T update_ipid=1
+test_case ni11 natipftest single hex hex -T update_ipid=1
+test_case ni12 natipftest single hex hex -T update_ipid=1
+test_case ni13 natipftest single hex hex -T update_ipid=1
+test_case ni14 natipftest single hex hex -T update_ipid=1
+test_case ni15 natipftest single hex hex -T update_ipid=1
+test_case ni16 natipftest single hex hex -T update_ipid=1
+test_case ni17 natipftest multi text text
+test_case ni18 natipftest multi text text
+test_case ni19 natipftest single hex hex -T update_ipid=0
+test_case ni20 natipftest single hex hex -T update_ipid=0 -D
 test_case ni21 natipftest multi text text
 test_case ni23 natipftest multi text text -D
 
@@ -88,21 +98,23 @@ atf_init_test_cases()
 	atf_add_test_case ni2
 	atf_add_test_case ni3
 	atf_add_test_case ni4
+	atf_add_test_case ni5
 	atf_add_test_case ni6
 	atf_add_test_case ni7
 	atf_add_test_case ni8
 	atf_add_test_case ni9
+	atf_add_test_case ni10
+	atf_add_test_case ni11
+	atf_add_test_case ni12
 	atf_add_test_case ni13
 	atf_add_test_case ni14
 	atf_add_test_case ni15
 	atf_add_test_case ni16
+	atf_add_test_case ni17
+	atf_add_test_case ni18
+	atf_add_test_case ni19
+	atf_add_test_case ni20
 	atf_add_test_case ni21
 	atf_add_test_case ni23
 
-	#atf_add_test_case ni5
-	#atf_add_test_case ni10
-	#atf_add_test_case ni11
-	#atf_add_test_case ni12
-	#atf_add_test_case ni19
-	#atf_add_test_case ni20
 }
