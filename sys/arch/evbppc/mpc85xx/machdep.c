@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2012/03/29 15:49:08 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2012/07/07 08:06:51 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1152,7 +1152,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	cpu_md_ops.md_cpunode_attach = pq3gpio_attach;
 #endif
 
-		printf(" initppc done!\n");
+	printf(" initppc done!\n");
 
 	/*
 	 * Look for the Book-E modules in the right place.
