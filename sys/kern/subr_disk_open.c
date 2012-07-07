@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.9 2012/07/07 16:10:23 tsutsui Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.10 2012/07/07 16:15:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.9 2012/07/07 16:10:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10 2012/07/07 16:15:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ opendisk(struct device *dv)
 }
 
 int
-getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
+getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 {
 	struct partinfo dpart;
 	struct dkwedge_info dkw;
