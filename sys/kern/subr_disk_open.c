@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.8 2012/04/27 18:15:55 drochner Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.9 2012/07/07 16:10:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.8 2012/04/27 18:15:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.9 2012/07/07 16:10:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -94,23 +94,41 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
 	struct partinfo dpart;
 	struct dkwedge_info dkw;
 	struct disk *pdk;
+	unsigned int secsize;
+	uint64_t numsec;
 	int error;
 
 	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error == 0) {
-		*secsizep = dpart.disklab->d_secsize;
-		*numsecp  = dpart.part->p_size;
-		return 0;
+		secsize = dpart.disklab->d_secsize;
+		numsec  = dpart.part->p_size;
+	} else {
+		error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+		if (error == 0) {
+			pdk = disk_find(dkw.dkw_parent);
+			if (pdk != NULL) {
+				secsize = DEV_BSIZE << pdk->dk_blkshift;
+				numsec  = dkw.dkw_size;
+			} else
+				error = ENODEV;
+		}
 	}
 
-	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+	if (error == 0 &&
+	    (secsize == 0 || secsize > MAXBSIZE || !powerof2(secsize) ||
+	     numsec == 0)) {
+#ifdef DIAGNOSTIC
+		printf("%s: %s returns invalid disksize values"
+		    " (secsize = %u, numsec = %" PRIu64 ")\n",
+		    __func__,
+		    devsw_blk2name(major(vp->v_specnode->sn_rdev)),
+		    secsize, numsec);
+#endif
+		error = EINVAL;
+	}
 	if (error == 0) {
-		pdk = disk_find(dkw.dkw_parent);
-		if (pdk != NULL) {
-			*secsizep = DEV_BSIZE << pdk->dk_blkshift;
-			*numsecp  = dkw.dkw_size;
-		} else
-			error = ENODEV;
+		*secsizep = secsize;
+		*numsecp  = numsec;
 	}
 
 	return error;
