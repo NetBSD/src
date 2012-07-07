@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.75 2012/06/27 22:57:27 jdf Exp $
+.\"	$NetBSD: find.1,v 1.76 2012/07/07 20:45:09 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd June 17, 2012
+.Dd July 7, 2012
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -296,12 +296,12 @@ into sets, and
 .Ar utility
 will be invoked once per set, similar to
 .Xr xargs 1 .
-In this case the parameter
+In this case the string
 .Dq Ic {}
 must appear, and must appear as the last item in the argument list,
 just before the
 .Dq Ic \&+
-parameter.
+parameter, and is replaced by the pathnames of the current set of files.
 Each set is limited to no more than 5,000 pathnames,
 and is also limited such that the total number of bytes in the argument
 list does not exceed
