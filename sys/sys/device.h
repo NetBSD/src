@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.141 2012/06/10 17:05:18 mlelstv Exp $ */
+/* $NetBSD: device.h,v 1.142 2012/07/07 16:15:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -428,7 +428,7 @@ extern daddr_t booted_startblk;		/* or the start of a wedge */
 extern uint64_t booted_nblks;		/* and the size of that wedge */
 
 struct vnode *opendisk(struct device *);
-int getdisksize(struct vnode *, uint64_t *, unsigned *);
+int getdisksize(struct vnode *, uint64_t *, unsigned int *);
 struct dkwedge_info;
 int getdiskinfo(struct vnode *, struct dkwedge_info *);
 
