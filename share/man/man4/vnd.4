@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnd.4,v 1.17 2009/12/18 23:37:38 dyoung Exp $
+.\"	$NetBSD: vnd.4,v 1.18 2012/07/08 22:47:41 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,11 +43,13 @@ driver provides a disk-like interface to a file.
 This is useful for a variety of applications, including swap files
 and building miniroot or floppy disk images.
 .Pp
-This document assumes that you're familiar with how to generate kernels,
-how to properly configure disks and pseudo-devices in a kernel
+This document assumes that you're familiar with how to generate kernels
+and how to properly configure disks and pseudo-devices in a kernel
 configuration file.
 .Pp
-In order to compile in support for the vnd, you must add a line similar
+In order to compile in support for the
+.Nm ,
+you must add a line similar
 to the following to your kernel configuration file:
 .Bd -unfilled -offset indent
 pseudo-device	vnd		# vnode disk driver
@@ -59,15 +61,17 @@ add the following option to your kernel config file:
 options        VND_COMPRESSION    # compressed vnd(4)
 .Ed
 .Pp
-Compressed disk images are expected in the cloop2 format,
-they can be created from "normal" disk images by the
+Compressed disk images are expected in the cloop2 format.
+They can be created from
+.Dq normal
+disk images by the
 .Xr vndcompress 1
 program.
 .Pp
 There is a run-time utility that is used for configuring
 both compressed and uncompressed
-.Nm vnd Ns s .
-See
+.Nm vnd Ns s ;
+see
 .Xr vnconfig 8
 for more information.
 .Sh FILES
@@ -78,8 +82,8 @@ vnd device special files.
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr vndcompress 1 ,
-.Xr MAKEDEV 8 ,
 .Xr fsck 8 ,
+.Xr MAKEDEV 8 ,
 .Xr mount 8 ,
 .Xr newfs 8 ,
 .Xr vnconfig 8
