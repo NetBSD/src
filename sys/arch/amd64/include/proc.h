@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.13 2011/01/14 02:06:22 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.14 2012/07/08 20:14:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -53,6 +53,8 @@ struct mdlwp {
 	volatile int md_astpending;
 };
 
+#define	MDL_USEDFPU	0x0001	/* has used the FPU */
+
 struct mdproc {
 	int	md_flags;
 					/* Syscall handling function */
@@ -60,7 +62,6 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_USEDFPU	0x0001	/* has used the FPU */
 #define MDP_COMPAT	0x0002	/* x86 compatibility process */
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */

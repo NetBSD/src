@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.38 2011/08/11 18:36:14 cherry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.39 2012/07/08 20:14:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2011/08/11 18:36:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.39 2012/07/08 20:14:11 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -137,17 +137,17 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2011/08/11 18:36:14 cherry Exp $");
 
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
- * MDP_USEDFPU bit in mdproc.
+ * MDL_USEDFPU bit in mdlwp.
  *
  * DNA exceptions are handled like this:
  *
  * 1) If there is no FPU, return and go to the emulator.
  * 2) If someone else has used the FPU, save its state into that lwp's PCB.
- * 3a) If MDP_USEDFPU is not set, set it and initialize the FPU.
+ * 3a) If MDL_USEDFPU is not set, set it and initialize the FPU.
  * 3b) Otherwise, reload the lwp's previous FPU state.
  *
  * When a lwp is created or exec()s, its saved cr0 image has the TS bit
- * set and the MDP_USEDFPU bit clear.  The MDP_USEDFPU bit is set when the
+ * set and the MDL_USEDFPU bit clear.  The MDL_USEDFPU bit is set when the
  * lwp first gets a DNA and the FPU is initialized.  The TS bit is turned
  * off when the FPU is used, and turned on again later when the lwp's FPU
  * state is saved.
@@ -305,13 +305,13 @@ fpudna(struct cpu_info *ci)
 	clts();
 	ci->ci_fpcurlwp = l;
 	pcb->pcb_fpcpu = ci;
-	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) == 0) {
 		fninit();
 		cw = pcb->pcb_savefpu.fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		mxcsr = pcb->pcb_savefpu.fp_fxsave.fx_mxcsr;
 		x86_ldmxcsr(&mxcsr);
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
 		/*
 		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
@@ -426,6 +426,6 @@ fpusave_lwp(struct lwp *l, bool save)
 
 	if (!save) {
 		/* Ensure we restart with a clean slate. */
-	 	l->l_md.md_flags &= ~MDP_USEDFPU;
+	 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	}
 }

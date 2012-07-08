@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.19 2011/01/28 21:06:08 uwe Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20 2012/07/08 20:14:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2011/01/28 21:06:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2012/07/08 20:14:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,9 +343,9 @@ process_sstep(struct lwp *l, int sstep)
 {
 
 	if (sstep)
-		l->l_md.md_flags |= MDP_SSTEP;
+		l->l_md.md_flags |= MDL_SSTEP;
 	else
-		l->l_md.md_flags &= ~MDP_SSTEP;
+		l->l_md.md_flags &= ~MDL_SSTEP;
 
 	return 0;
 }
