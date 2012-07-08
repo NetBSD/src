@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.9 2012/05/07 11:18:16 wiz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.10 2012/07/08 23:18:23 uwe Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.9 2012/05/07 11:18:16 wiz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.10 2012/07/08 23:18:23 uwe Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -763,7 +763,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 	sqlite3_finalize(stmt);
 	
 	if (mflags.verbosity) {
-		printf("Total Number of new or updated pages enountered = %d\n"
+		printf("Total Number of new or updated pages encountered = %d\n"
 			"Total number of pages that were successfully"
 			" indexed/updated = %d\n"
 			"Total number of (hard or symbolic) links found = %d\n"
