@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1714 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1715 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -77,3 +77,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[christos 20120622]
 	ata(4): added support for sata Port MultiPliers (PMP)
 		[bouyer 20120702]
+	kernel, libc: Add MurmurHash2 function. [rmind 20120708]
