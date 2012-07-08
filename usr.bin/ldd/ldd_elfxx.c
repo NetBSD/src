@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.5 2011/06/30 20:09:41 wiz Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.6 2012/07/08 00:53:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.5 2011/06/30 20:09:41 wiz Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.6 2012/07/08 00:53:44 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,6 +83,9 @@ __RCSID("$NetBSD: ldd_elfxx.c,v 1.5 2011/06/30 20:09:41 wiz Exp $");
 #include "debug.h"
 #include "rtld.h"
 #include "ldd.h"
+
+static void print_needed(Obj_Entry *, const char *, const char *);
+static void fmtprint(const char *, Obj_Entry *, const char *, const char *);
 
 /*
  * elfxx_ldd() - bit-size independent ELF ldd implementation.
@@ -157,4 +160,109 @@ ELFNAME(ldd)(int fd, char *path, const char *fmt1, const char *fmt2)
 	/* Need to free _rtld_paths? */
 
 	return 0;
+}
+
+void
+fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
+    const char *fmt2)
+{
+	const char *libpath = obj ? obj->path : "not found";
+	char libnamebuf[200];
+	char *libmajor = NULL;
+	const char *fmt;
+	char *cp;
+	int c;
+
+	if (strncmp(libname, "lib", 3) == 0 &&
+	    (cp = strstr(libname, ".so")) != NULL) {
+		size_t i = cp - (libname + 3);
+
+		if (i >= sizeof(libnamebuf))
+			i = sizeof(libnamebuf) - 1;
+		(void)memcpy(libnamebuf, libname + 3, i);
+		libnamebuf[i] = '\0';
+		if (cp[3] && isdigit((unsigned char)cp[4]))
+			libmajor = &cp[4];
+		libname = libnamebuf;
+	}
+
+	if (fmt1 == NULL)
+		fmt1 = libmajor != NULL ?
+		    "\t-l%o.%m => %p\n" :
+		    "\t-l%o => %p\n";
+	if (fmt2 == NULL)
+		fmt2 = "\t%o => %p\n";
+
+	fmt = libname == libnamebuf ? fmt1 : fmt2;
+	while ((c = *fmt++) != '\0') {
+		switch (c) {
+		default:
+			putchar(c);
+			continue;
+		case '\\':
+			switch (c = *fmt) {
+			case '\0':
+				continue;
+			case 'n':
+				putchar('\n');
+				break;
+			case 't':
+				putchar('\t');
+				break;
+			}
+			break;
+		case '%':
+			switch (c = *fmt) {
+			case '\0':
+				continue;
+			case '%':
+			default:
+				putchar(c);
+				break;
+			case 'A':
+				printf("%s", main_local);
+				break;
+			case 'a':
+				printf("%s", main_progname);
+				break;
+			case 'o':
+				printf("%s", libname);
+				break;
+			case 'm':
+				printf("%s", libmajor);
+				break;
+			case 'n':
+				/* XXX: not supported for elf */
+				break;
+			case 'p':
+				printf("%s", libpath);
+				break;
+			case 'x':
+				printf("%p", obj ? obj->mapbase : 0);
+				break;
+			}
+			break;
+		}
+		++fmt;
+	}
+}
+
+void
+print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
+{
+	const Needed_Entry *needed;
+
+	for (needed = obj->needed; needed != NULL; needed = needed->next) {
+		const char *libname = obj->strtab + needed->name;
+
+		if (needed->obj != NULL) {
+			if (!needed->obj->printed) {
+				fmtprint(libname, needed->obj, fmt1, fmt2);
+				needed->obj->printed = 1;
+				print_needed(needed->obj, fmt1, fmt2);
+			}
+		} else {
+			fmtprint(libname, needed->obj, fmt1, fmt2);
+		}
+	}
 }
