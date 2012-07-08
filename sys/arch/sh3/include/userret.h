@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12 2011/02/08 20:20:23 rmind Exp $	*/
+/*	$NetBSD: userret.h,v 1.13 2012/07/08 20:14:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@ userret(struct lwp *l)
 
 #ifdef PTRACE
 	/* Check if lwp is being PT_STEP'ed */
-	if (l->l_md.md_flags & MDP_SSTEP) {
+	if (l->l_md.md_flags & MDL_SSTEP) {
 		struct trapframe *tf = l->l_md.md_regs;
 
 		/*
