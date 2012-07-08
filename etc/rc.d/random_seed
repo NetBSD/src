@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.1 2011/11/23 10:47:48 tls Exp $
+# $NetBSD: random_seed,v 1.2 2012/07/08 14:25:49 hans Exp $
 #
 
 # PROVIDE: random_seed
@@ -34,7 +34,7 @@ fs_safe()
 	    ext2fs)
 		return 0;
 		;;
-	    msdosfs)
+	    msdos)
 		return 0;
 		;;
 	    v7fs)
