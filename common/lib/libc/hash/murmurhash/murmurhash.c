@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.1 2012/07/08 01:21:12 rmind Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -16,9 +16,9 @@
 #include <sys/hash.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.1 2012/07/08 01:21:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $");
 #else
-__RCSID("$NetBSD: murmurhash.c,v 1.1 2012/07/08 01:21:12 rmind Exp $");
+__RCSID("$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $");
 #endif
 
 uint32_t
@@ -33,7 +33,7 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 	const int r = 24;
 
 	const uint8_t *data = (const uint8_t *)key;
-	uint32_t h = seed ^ len;
+	uint32_t h = seed ^ (uint32_t)len;
 
 	while (len >= sizeof(uint32_t)) {
 		uint32_t k;
@@ -58,8 +58,10 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 	switch (len) {
 	case 3:
 		h ^= data[2] << 16;
+		/* FALLTHROUGH */
 	case 2:
 		h ^= data[1] << 8;
+		/* FALLTHROUGH */
 	case 1:
 		h ^= data[0];
 		h *= m;
