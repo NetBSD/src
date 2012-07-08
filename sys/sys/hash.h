@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.6 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: hash.h,v 1.7 2012/07/08 01:24:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 #define	_SYS_HASH_H_
 
 #include <sys/types.h>
+
 #ifdef __HAVE_MACHINE_HASH_H
 #include <machine/hash.h>
 #endif
-
 
 #ifndef __HAVE_HASH32_BUF			/* not overridden by MD hash */
 
@@ -99,5 +99,8 @@ hash32_strn(const void *bf, size_t len, uint32_t hash)
 }
 #endif	/* __HAVE_HASH32_STR */
 
+__BEGIN_DECLS
+uint32_t	murmurhash2(const void *, size_t, uint32_t);
+__END_DECLS
 
 #endif	/* !_SYS_HASH_H_ */
