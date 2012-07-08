@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.6 2007/03/24 23:16:11 dillo Exp $
+.\"	$NetBSD: vndcompress.1,v 1.7 2012/07/08 22:48:32 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Florian Stoehr <netbsd@wolfnode.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 12, 2005
+.Dd July 8, 2012
 .Dt VNDCOMPRESS 1
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ If omitted, the default of 64kB is used.
 .Pp
 The
 .Nm vnduncompress
-command decompress a cloop2-compressed file system image back into a
+command decompress a cloop2 compressed file system image back into a
 regular image.
 .Pp
 The
@@ -141,7 +141,7 @@ was compiled with
 .Dv VND_COMPRESSION ,
 you can use
 .Xr vnconfig 8
-to access the cloop-compressed image directly, e.g.,
+to access the cloop2 compressed image directly, e.g.,
 .Bd -literal -offset indent
 # vnconfig vnd0 KNOPPIX.iso
 # mount -t cd9660 -o ro /dev/vnd0d /mnt
