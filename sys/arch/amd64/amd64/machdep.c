@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2012/06/27 00:37:07 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 2012/07/08 20:14:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2012/06/27 00:37:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2012/07/08 20:14:11 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -627,7 +627,7 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 }
 
 void
@@ -674,7 +674,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Don't bother copying out FP state if there is none.
 	 */
-	if (l->l_md.md_flags & MDP_USEDFPU)
+	if (l->l_md.md_flags & MDL_USEDFPU)
 		tocopy = sizeof (struct sigframe_siginfo);
 	else
 		tocopy = sizeof (struct sigframe_siginfo) -
@@ -1406,7 +1406,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 	pcb->pcb_flags = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
@@ -1999,7 +1999,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
 	*flags |= _UC_TLSBASE;
 
-	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 		struct pcb *pcb = lwp_getpcb(l);
 
 		if (pcb->pcb_fpcpu) {
@@ -2063,7 +2063,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if ((flags & _UC_FPU) != 0) {
 		memcpy(&pcb->pcb_savefpu.fp_fxsave, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	if ((flags & _UC_TLSBASE) != 0)
