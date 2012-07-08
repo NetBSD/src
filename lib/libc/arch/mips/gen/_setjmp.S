@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.23 2011/03/09 16:10:29 tsutsui Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.24 2012/07/08 00:59:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.23 2011/03/09 16:10:29 tsutsui Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.24 2012/07/08 00:59:34 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ LEAF(_setjmp)
 	REG_EPILOGUE
 
 	j	ra
-	move	v0, zero
+	 move	v0, zero
 END(_setjmp)
 
 LEAF(_longjmp)
@@ -175,9 +175,8 @@ LEAF(_longjmp)
 #endif	/* SOFTFLOAT_FOR_GCC */
 
 	REG_EPILOGUE
-	move	v0, a1			# get return value in 1st arg
 	j	ra
-	nop
+	 move	v0, a1			# get return value in 1st arg
 
 botch:
 	/*
