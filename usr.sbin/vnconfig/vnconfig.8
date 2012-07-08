@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.36 2011/02/09 10:25:40 rmind Exp $
+.\"	$NetBSD: vnconfig.8,v 1.37 2012/07/08 22:49:55 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 16, 2005
+.Dd July 9, 2012
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -123,7 +123,8 @@ argument is:
 If geometry is not specified, the kernel will choose a default based on 1MB
 cylinders.
 .Ar secsize
-is the number of bytes per sector.  It must be an even multiple of 512.
+is the number of bytes per sector.
+It must be an even multiple of 512.
 .Ar nsectors
 is the number of sectors per track.
 .Ar ntracks
@@ -142,7 +143,8 @@ option should look up in
 instead of in
 .Pa /etc/disktab .
 .It Fl l
-List the vnd devices and indicate which ones are in use.  If a specific
+List the vnd devices and indicate which ones are in use.
+If a specific
 .Ar vnode_disk
 is given, then only that will be described.
 .It Fl t Ar typename
@@ -150,7 +152,8 @@ If configuring the device, look up
 .Ar typename
 in
 .Pa /etc/disktab
-and use the geometry specified in the entry.  This option and the
+and use the geometry specified in the entry.
+This option and the
 .Ar geomspec
 argument are mutually exclusive.
 .It Fl r
@@ -210,6 +213,7 @@ Unconfigures the
 .Pa vnd0
 device.
 .Sh SEE ALSO
+.Xr vndcompress 1 ,
 .Xr opendisk 3 ,
 .Xr vnd 4 ,
 .Xr mount 8 ,
