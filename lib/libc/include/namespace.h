@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.154 2012/06/03 21:42:46 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.155 2012/07/09 21:25:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -458,6 +458,7 @@
 #define mq_timedreceive		_mq_timedreceive
 #define mq_timedsend		_mq_timedsend
 #define mrand48			_mrand48
+#define murmurhash2		_murmurhash2
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror
 #define nanosleep		_nanosleep
