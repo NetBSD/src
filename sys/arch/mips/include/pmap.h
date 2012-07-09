@@ -104,6 +104,8 @@
  * dynamically allocated at boot time.
  */
 
+#define	KERNEL_PID		0
+
 #define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
@@ -115,17 +117,15 @@
 
 union pt_entry;
 
-union segtab {
-#ifdef _LP64
-	union segtab	*seg_seg[PMAP_SEGTABSIZE];
-#endif
-	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
-};
+typedef union pmap_segtab {
+	union pmap_segtab *	seg_seg[PMAP_SEGTABSIZE];
+	union pt_entry	*	seg_tab[PMAP_SEGTABSIZE];
+} pmap_segtab_t;
 #else
 /*
  * Modules don't need to know this.
  */
-union segtab;
+typedef union pmap_segtab pmap_segtab_t;
 #endif
 
 /*
@@ -155,6 +155,7 @@ void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_init(struct pmap *);
 void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
+extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
 /*
@@ -182,7 +183,7 @@ typedef struct pmap {
 	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
 	volatile uint32_t	pm_shootdown_pending;
 #endif
-	union segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001
@@ -304,8 +305,10 @@ struct vm_page *mips_pmap_alloc_poolpage(int);
 #define	POOL_VTOPHYS(va)	(MIPS_KSEG0_P(va) \
 				    ? MIPS_KSEG0_TO_PHYS(va) \
 				    : MIPS_XKPHYS_TO_PHYS(va))
+#define	POOL_PHYSTOV(pa)	MIPS_PHYS_TO_XKPHYS_CACHED((paddr_t)(pa))
 #else
 #define	POOL_VTOPHYS(va)	MIPS_KSEG0_TO_PHYS((vaddr_t)(va))
+#define	POOL_PHYSTOV(pa)	MIPS_PHYS_TO_KSEG0((paddr_t)(pa))
 #endif
 
 /*
