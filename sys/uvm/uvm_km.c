@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.127 2012/06/03 17:12:49 rmind Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.128 2012/07/09 11:19:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.127 2012/06/03 17:12:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.128 2012/07/09 11:19:34 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -500,7 +500,10 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(VM_MAP_IS_KERNEL(map));
-	KASSERT(vm_map_min(map) <= start);
+	KASSERTMSG(vm_map_min(map) <= start,
+	    "vm_map_min(map) [%#"PRIxVADDR"] <= start [%#"PRIxVADDR"]"
+	    " (size=%#"PRIxVSIZE")",
+	    vm_map_min(map), start, end - start);
 	KASSERT(start < end);
 	KASSERT(end <= vm_map_max(map));
 
@@ -781,9 +784,13 @@ again:
 	loopsize = size;
 
 	while (loopsize) {
-		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
-		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE" vmem=%p",
-		    loopva, loopsize, vm);
+#ifdef DIAGNOSTIC
+		paddr_t pa;
+#endif
+		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, &pa),
+		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE
+		    " pa=%#"PRIxPADDR" vmem=%p",
+		    loopva, loopsize, pa, vm);
 
 		pg = uvm_pagealloc(NULL, loopva, NULL,
 		    UVM_FLAG_COLORMATCH
