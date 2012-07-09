@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.14 2012/07/05 17:25:36 matt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.15 2012/07/09 17:45:22 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.14 2012/07/05 17:25:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.15 2012/07/09 17:45:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.14 2012/07/05 17:25:36 matt Exp $")
 #define	PMAP_SIZE	sizeof(struct pmap)
 #endif
 
-CTASSERT(sizeof(struct pmap_segtab) == NBPG);
+CTASSERT(sizeof(pmap_segtab_t) == NBPG);
 
-struct pmap_segtab pmap_kernel_segtab;
+pmap_segtab_t pmap_kernel_segtab;
 
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
@@ -124,9 +124,9 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 
 #ifdef PMAP_MINIMALTLB
 static pt_entry_t *
-kvtopte(const struct pmap_segtab *stp, vaddr_t va)
+kvtopte(const pmap_segtab_t *stp, vaddr_t va)
 {
-	pt_entry_t * const ptep = stp->seg_ptr[va >> SEGSHIFT];
+	pt_entry_t * const ptep = stp->seg_tab[va >> SEGSHIFT];
 	if (ptep == NULL)
 		return NULL;
 	return &ptep[(va & SEGOFSET) >> PAGE_SHIFT];
@@ -135,7 +135,7 @@ kvtopte(const struct pmap_segtab *stp, vaddr_t va)
 vaddr_t
 pmap_kvptefill(vaddr_t sva, vaddr_t eva, pt_entry_t pt_entry)
 {
-	const struct pmap_segtab * const stp = pmap_kernel()->pm_segtab;
+	const pmap_segtab_t * const stp = pmap_kernel()->pm_segtab;
 	KASSERT(sva == trunc_page(sva));
 	pt_entry_t *ptep = kvtopte(stp, sva);
 	for (; sva < eva; sva += NBPG) {
@@ -153,7 +153,7 @@ vaddr_t
 pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	phys_ram_seg_t *avail, size_t cnt)
 {
-	struct pmap_segtab * const stp = &pmap_kernel_segtab;
+	pmap_segtab_t * const stp = &pmap_kernel_segtab;
 
 	/*
 	 * Initialize the kernel segment table.
@@ -226,7 +226,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	 * an extra page for the segment table and allows the user/kernel
 	 * access to be common.
 	 */
-	void **ptp = &stp->seg_ptr[VM_MIN_KERNEL_ADDRESS >> SEGSHIFT];
+	pt_entry_t **ptp = &stp->seg_tab[VM_MIN_KERNEL_ADDRESS >> SEGSHIFT];
 	pt_entry_t *ptep = (void *)kv_segtabs;
 	memset(ptep, 0, NBPG * kv_nsegtabs);
 	for (size_t i = 0; i < kv_nsegtabs; i++, ptep += NPTEPG) {
@@ -244,7 +244,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	avail[0].size -= NBPG * dm_nsegtabs;
 	endkernel += NBPG * dm_nsegtabs;
 
-	ptp = stp->seg_ptr;
+	ptp = stp->seg_tab;
 	ptep = (void *)dm_segtabs;
 	memset(ptep, 0, NBPG * dm_nsegtabs);
 	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ptep += NPTEPG) {
