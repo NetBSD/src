@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2012/07/05 16:55:11 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2012/07/09 17:45:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2012/07/05 16:55:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2012/07/09 17:45:22 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -530,7 +530,7 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_destroy(pmap);
+	pmap_segtab_destroy(pmap, NULL, 0);
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
