@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2012/07/05 17:24:54 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2012/07/09 17:45:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,9 +94,10 @@ UVMHIST_DECL(pmaphist);
 /*
  * Each seg_tab point an array of pt_entry [NPTEPG]
  */
-struct pmap_segtab {
-	void	*seg_ptr[PMAP_SEGTABSIZE];
-};
+typedef union pmap_segtab {
+	union pmap_segtab *	seg_seg[PMAP_SEGTABSIZE];
+	pt_entry_t *		seg_tab[PMAP_SEGTABSIZE];
+} pmap_segtab_t;
 
 #ifdef _KERNEL
 struct pmap;
@@ -108,7 +109,7 @@ void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
 void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_init(struct pmap *);
-void pmap_segtab_destroy(struct pmap *);
+void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
 extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
@@ -137,7 +138,7 @@ struct pmap {
 	__cpuset_t		pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
-	struct pmap_segtab	*pm_segtab;	/* pointers to pages of PTEs */
+	pmap_segtab_t *		pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001
