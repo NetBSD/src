@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.101 2012/06/07 23:30:52 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.102 2012/07/09 19:42:14 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -607,16 +607,16 @@ bthub*  at btuart?
 bthidev* at bthub?
 
 # Bluetooth Mouse
-btms*   at bthidev? reportid ?
-wsmouse* at btms? mux 0
+#btms*   at bthidev? reportid ?
+#wsmouse* at btms? mux 0
 
 # Bluetooth Keyboard
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Apple Magic Mouse
-btmagic* at bthub?
-wsmouse* at btmagic? mux 0
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?
