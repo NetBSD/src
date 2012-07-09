@@ -120,9 +120,9 @@ struct cpu_info {
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
 	u_int ci_pmap_asid_cur;		/* current ASID */
 	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
-	union segtab *ci_pmap_seg0tab;
+	union pmap_segtab *ci_pmap_seg0tab;
 #ifdef _LP64
-	union segtab *ci_pmap_segtab;
+	union pmap_segtab *ci_pmap_segtab;
 #else
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */

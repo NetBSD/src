@@ -760,6 +760,11 @@ pmap_init(void)
 #endif
 
 	/*
+	 * Initialize the segtab lock.
+	 */
+	mutex_init(&pmap_segtab_lock, MUTEX_DEFAULT, IPL_HIGH);      
+
+	/*
 	 * Set a low water mark on the pv_entry pool, so that we are
 	 * more likely to have these around even in extreme memory
 	 * starvation.

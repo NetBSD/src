@@ -119,13 +119,8 @@ __KERNEL_RCSID(0, "pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
-#include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
 
@@ -134,25 +129,29 @@ __KERNEL_RCSID(0, "pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp");
 #include <mips/locore.h>
 #include <mips/pte.h>
 
-CTASSERT(NBPG >= sizeof(union segtab));
+CTASSERT(NBPG >= sizeof(pmap_segtab_t));
+#define PMAP_PTP_CACHE
 
-union segtab * volatile free_segtab;		/* free list kept locally */
+struct pmap_segtab_info {
+	pmap_segtab_t *free_segtab;	/* free list kept locally */
 #ifdef DEBUG
-uint32_t nget_segtab;
-uint32_t nput_segtab;
-uint32_t npage_segtab;
-#define	SEGTAB_ADD(n, v)	(n ## _segtab += (v))
+	uint32_t nget_segtab;
+	uint32_t nput_segtab;
+	uint32_t npage_segtab;
+#define	SEGTAB_ADD(n, v)	(pmap_segtab_info.n ## _segtab += (v))
 #else
 #define	SEGTAB_ADD(n, v)	((void) 0)
 #endif
-
-/*
- * Keep a list of idle page tables.
- */
-#define PMAP_PTP_CACHE
 #ifdef PMAP_PTP_CACHE
-static struct pgflist ptp_pgflist = LIST_HEAD_INITIALIZER(ptp_pgflist);
+	struct pgflist ptp_pgflist;	/* Keep a list of idle page tables. */
 #endif
+} pmap_segtab_info = {
+#ifdef PMAP_PTP_CACHE
+	.ptp_pgflist = LIST_HEAD_INITIALIZER(pmap_segtab_info.ptp_pgflist),
+#endif
+};
+
+kmutex_t pmap_segtab_lock;
 
 static inline struct vm_page *
 pmap_pte_pagealloc(void)
@@ -171,17 +170,17 @@ pmap_pte_pagealloc(void)
 	return pg;
 }
 
-static inline pt_entry_t * 
+static inline pt_entry_t *
 pmap_segmap(struct pmap *pmap, vaddr_t va)
 {
-	union segtab *stp = pmap->pm_segtab;
+	pmap_segtab_t *stp = pmap->pm_segtab;
 	KASSERT(!mm_md_direct_mapped_virt(va, NULL, NULL));
 #ifdef _LP64
 	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 	if (stp == NULL)
 		return NULL;
 #endif
-	
+
 	return stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 }
 
@@ -196,28 +195,26 @@ pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 }
 
 static void
-pmap_segtab_free(union segtab *stp)
+pmap_segtab_free(pmap_segtab_t *stp)
 {
 	/*
 	 * Insert the the segtab into the segtab freelist.
 	 */
-	for (;;) {
-		void *tmp = free_segtab;
-		stp->seg_tab[0] = tmp;
-		if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp)) {
-			SEGTAB_ADD(nput, 1);
-			break;
-		}
-	}
+	mutex_spin_enter(&pmap_segtab_lock);
+	stp->seg_seg[0] = pmap_segtab_info.free_segtab;
+	pmap_segtab_info.free_segtab = stp;
+	SEGTAB_ADD(nput, 1);
+	mutex_spin_exit(&pmap_segtab_lock);
 }
 
 static void
-pmap_segtab_release(pmap_t pmap, union segtab **stp_p, bool free_stp,
+pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 	pte_callback_t callback, uintptr_t flags,
 	vaddr_t va, vsize_t vinc)
 {
-	union segtab *stp = *stp_p;
+	pmap_segtab_t *stp = *stp_p;
 
+	KASSERT(((va / vinc) & (PMAP_SEGTABSIZE - 1)) == 0);
 	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++, va += vinc) {
 #ifdef _LP64
 		if (vinc > NBSEG) {
@@ -241,12 +238,12 @@ pmap_segtab_release(pmap_t pmap, union segtab **stp_p, bool free_stp,
 		 */
 		if (callback != NULL) {
 			(*callback)(pmap, va, va + vinc, pte, flags);
-		} 
+		}
 #ifdef DEBUG
 		for (size_t j = 0; j < NPTEPG; j++) {
 			if (pte[j].pt_entry)
 				panic("%s: pte entry %p not 0 (%#x)",
-				   __func__, &pte[j], pte[j].pt_entry);
+				    __func__, &pte[j], pte[j].pt_entry);
 		}
 #endif
 
@@ -262,12 +259,12 @@ pmap_segtab_release(pmap_t pmap, union segtab **stp_p, bool free_stp,
 		if (MIPS_CACHE_VIRTUAL_ALIAS)
 			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
-		paddr_t pa = mips_pmap_unmap_poolpage((vaddr_t)pte);
+		paddr_t pa = PMAP_UNMAP_POOLPAGE((vaddr_t)pte);
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 #ifdef PMAP_PTP_CACHE
-		mutex_spin_enter(&uvm_fpageqlock);
-		LIST_INSERT_HEAD(&ptp_pgflist, pg, listq.list);
-		mutex_spin_exit(&uvm_fpageqlock);
+		mutex_spin_enter(&pmap_segtab_lock);
+		LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist, pg, listq.list);
+		mutex_spin_exit(&pmap_segtab_lock);
 #else
 		uvm_km_pagefree(pg);
 #endif
@@ -293,25 +290,21 @@ pmap_segtab_release(pmap_t pmap, union segtab **stp_p, bool free_stp,
  *	the map will be used in software only, and
  *	is bounded by that size.
  */
-static union segtab *
+static pmap_segtab_t *
 pmap_segtab_alloc(void)
 {
-	union segtab *stp;
+	pmap_segtab_t *stp;
+
  again:
-	stp = NULL;
-	while (__predict_true(free_segtab != NULL)) {
-		union segtab *next_stp;
-		stp = free_segtab;
-		next_stp = (union segtab *)stp->seg_tab[0];
-		if (stp == atomic_cas_ptr(&free_segtab, stp, next_stp)) {
-			SEGTAB_ADD(nget, 1);
-			break;
-		}
+	mutex_spin_enter(&pmap_segtab_lock);
+	if (__predict_true((stp = pmap_segtab_info.free_segtab) != NULL)) {
+		pmap_segtab_info.free_segtab = stp->seg_seg[0];
+		stp->seg_seg[0] = NULL;
+		SEGTAB_ADD(nget, 1);
 	}
-	
-	if (__predict_true(stp != NULL)) {
-		stp->seg_tab[0] = NULL;
-	} else {
+	mutex_spin_exit(&pmap_segtab_lock);
+
+	if (__predict_false(stp == NULL)) {
 		struct vm_page * const stp_pg = pmap_pte_pagealloc();
 
 		if (__predict_false(stp_pg == NULL)) {
@@ -327,25 +320,23 @@ pmap_segtab_alloc(void)
 #ifdef _LP64
 		KASSERT(mips_options.mips3_xkphys_cached);
 #endif
-		stp = (union segtab *)mips_pmap_map_poolpage(stp_pa);
-		const size_t n = NBPG / sizeof(union segtab);
+		stp = (pmap_segtab_t *)PMAP_MAP_POOLPAGE(stp_pa);
+		const size_t n = NBPG / sizeof(*stp);
 		if (n > 1) {
 			/*
 			 * link all the segtabs in this page together
 			 */
 			for (size_t i = 1; i < n - 1; i++) {
-				stp[i].seg_tab[0] = (void *)&stp[i+1];
+				stp[i].seg_seg[0] = &stp[i+1];
 			}
 			/*
 			 * Now link the new segtabs into the free segtab list.
 			 */
-			for (;;) {
-				void *tmp = free_segtab;
-				stp[n-1].seg_tab[0] = tmp;
-				if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp+1))
-					break;
-			}
+			mutex_spin_enter(&pmap_segtab_lock);
+			stp[n-1].seg_seg[0] = pmap_segtab_info.free_segtab;
+			pmap_segtab_info.free_segtab = stp + 1;
 			SEGTAB_ADD(nput, n - 1);
+			mutex_spin_exit(&pmap_segtab_lock);
 		}
 	}
 
@@ -380,12 +371,12 @@ pmap_segtab_destroy(pmap_t pmap, pte_callback_t func, uintptr_t flags)
 		return;
 
 #ifdef _LP64
-	pmap_segtab_release(pmap, &pmap->pm_segtab,
-	    func == NULL, func, flags, 0, NBXSEG);
+	const vsize_t vinc = NBXSEG;
 #else
-	pmap_segtab_release(pmap, &pmap->pm_segtab,
-	    func == NULL, func, flags, 0, NBSEG);
+	const vsize_t vinc = NBSEG;
 #endif
+	pmap_segtab_release(pmap, &pmap->pm_segtab,
+	    func == NULL, func, flags, 0, vinc);
 }
 
 /*
@@ -455,18 +446,18 @@ pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 pt_entry_t *
 pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 {
-	union segtab *stp = pmap->pm_segtab;
+	pmap_segtab_t *stp = pmap->pm_segtab;
 	pt_entry_t *pte;
 
 	pte = pmap_pte_lookup(pmap, va);
 	if (__predict_false(pte == NULL)) {
 #ifdef _LP64
-		union segtab ** const stp_p =
+		pmap_segtab_t ** const stp_p =
 		    &stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
 		if (__predict_false((stp = *stp_p) == NULL)) {
-			union segtab *nstp = pmap_segtab_alloc();
+			pmap_segtab_t *nstp = pmap_segtab_alloc();
 #ifdef MULTIPROCESSOR
-			union segtab *ostp = atomic_cas_ptr(stp_p, NULL, nstp);
+			pmap_segtab_t *ostp = atomic_cas_ptr(stp_p, NULL, nstp);
 			if (__predict_false(ostp != NULL)) {
 				pmap_segtab_free(nstp);
 				nstp = ostp;
@@ -479,13 +470,13 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		KASSERT(stp == pmap->pm_segtab->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)]);
 #endif /* _LP64 */
 		struct vm_page *pg = NULL;
-#if defined(PMAP_PTP_CACHE)
-		mutex_spin_enter(&uvm_fpageqlock);
-		if ((pg = LIST_FIRST(&ptp_pgflist)) != NULL) {
+#ifdef PMAP_PTP_CACHE
+		mutex_spin_enter(&pmap_segtab_lock);
+		if ((pg = LIST_FIRST(&pmap_segtab_info.ptp_pgflist)) != NULL) {
 			LIST_REMOVE(pg, listq.list);
-			KASSERT(LIST_FIRST(&ptp_pgflist) != pg);
+			KASSERT(LIST_FIRST(&pmap_segtab_info.ptp_pgflist) != pg);
 		}
-		mutex_spin_exit(&uvm_fpageqlock);
+		mutex_spin_exit(&pmap_segtab_lock);
 #endif
 		if (pg == NULL)
 			pg = pmap_pte_pagealloc();
@@ -511,9 +502,10 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		 */
 		if (__predict_false(opte != NULL)) {
 #ifdef PMAP_PTP_CACHE
-			mutex_spin_enter(&uvm_fpageqlock);
-			LIST_INSERT_HEAD(&ptp_pgflist, pg, listq.list);
-			mutex_spin_exit(&uvm_fpageqlock);
+			mutex_spin_enter(&pmap_segtab_lock);
+			LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist,
+			    pg, listq.list);
+			mutex_spin_exit(&pmap_segtab_lock);
 #else
 			uvm_km_pagefree(pg);
 #endif

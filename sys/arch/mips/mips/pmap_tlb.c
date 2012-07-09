@@ -191,7 +191,7 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 	/*
 	 * We must have an ASID but it must not be onproc (on a processor).
 	 */
-	KASSERT(pai->pai_asid);
+	KASSERT(pai->pai_asid > KERNEL_PID);
 #ifdef MULTIPROCESSOR
 	KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
 #endif
@@ -412,7 +412,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	for (pai = LIST_FIRST(&ti->ti_pais); pai != NULL; pai = next) {
 		struct pmap * const pm = PAI_PMAP(pai, ti);
 		next = LIST_NEXT(pai, pai_link);
-		KASSERT(pai->pai_asid != 0);
+		KASSERT(pai->pai_asid > KERNEL_PID);
 #ifdef MULTIPROCESSOR
 		if (pm->pm_onproc & ti->ti_cpu_mask) {
 			if (!TLBINFO_ASID_INUSE_P(ti, pai->pai_asid)) {
@@ -470,7 +470,7 @@ pmap_tlb_shootdown_process(void)
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
 			 */
-			KASSERT(pai->pai_asid != 0);
+			KASSERT(pai->pai_asid > KERNEL_PID);
 			pmap_tlb_asid_check();
 			tlb_invalidate_asids(pai->pai_asid, pai->pai_asid + 1);
 			pmap_tlb_asid_check();
@@ -568,7 +568,7 @@ pmap_tlb_target_bystander(struct pmap_tlb_info *ti, struct pmap *pm,
 		ti->ti_tlbinvop = TLBINV_KERNEL_MAP(ti->ti_tlbinvop);
 		ti->ti_victim = NULL;
 	} else {
-		KASSERT(pai->pai_asid);
+		KASSERT(pai->pai_asid > KERNEL_PID);
 		if (__predict_false(ti->ti_victim == pm)) {
 			KASSERT(ti->ti_tlbinvop == TLBINV_ONE);
 			/*
