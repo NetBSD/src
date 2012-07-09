@@ -37,12 +37,18 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.3 2012/02/16 10:44:30 matt Exp $")
+RCSID("$NetBSD: cache_r4k_subr.S,v 1.1.2.4 2012/07/09 17:12:39 matt Exp $")
 
 #include <mips/cache_r4k.h>
 
 #ifndef LINE_SHIFT
 #error LINE_SHIFT undefined
+#endif
+
+#ifdef __mips_o32
+	.set	mips32
+#else
+	.set	mips3
 #endif
 
 #define	LINE_SIZE		(1 << LINE_SHIFT)
