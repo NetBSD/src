@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.126 2012/02/12 16:34:06 matt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.127 2012/07/09 19:23:45 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.126 2012/02/12 16:34:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.127 2012/07/09 19:23:45 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.126 2012/02/12 16:34:06 matt Exp $"
 extern u_int	lowram;
 extern u_int	Umap;
 extern u_long boot_partition;
-vaddr_t		amiga_uptbase;
+extern vaddr_t	m68k_uptbase;
+
 #ifdef P5PPC68KBOARD
 extern int	p5ppc;
 #endif
@@ -705,7 +706,7 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 	 * XXX 16 MB instead of 256 MB should be enough, but...
 	 * we need to fix the fastmem loading first. (see comment at line 375)
 	 */
-	RELOC(amiga_uptbase, vaddr_t) =
+	RELOC(m68k_uptbase, vaddr_t) =
 	    roundup(vstart + 0x10000000, 0x10000000);
 
 	/*
