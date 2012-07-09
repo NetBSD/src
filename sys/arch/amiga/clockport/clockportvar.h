@@ -1,4 +1,4 @@
-/*      $NetBSD: clockportvar.h,v 1.3 2012/06/28 18:55:03 rkujawa Exp $ */
+/*      $NetBSD: clockportvar.h,v 1.4 2012/07/09 19:32:26 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@ struct gencp_softc {
 };
 
 struct clockportbus_softc {
-	device_t	sc_dev;
 
 	struct clockportbus_attach_args *cpb_aa;
 };
