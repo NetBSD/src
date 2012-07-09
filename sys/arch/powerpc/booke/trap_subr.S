@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.7 2012/07/09 17:36:55 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.7 2012/07/09 17:36:55 matt Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -503,18 +503,19 @@ _C_LABEL(fixed_interval_timer_vector):
 	bl	_C_LABEL(intr_fitintr)
 	b	intrexit
 
+#ifdef E500_WDOG_STACK
 	.data
 	.lcomm wdogstk,4096
+#endif
 	.text
 	.p2align 4
 _C_LABEL(watchdog_timer_vector):
 	/* MSR[CE], MSR[ME], MSR[DE] are unchanged, all others cleared */
 	FRAME_CRIT_PROLOGUE			/* save SP r25-31 CR LR XER */
+#ifdef E500_WDOG_STACK
 	FRAME_WDOG_ENTER(EXC_WDOG, wdogstk+4096-CALLFRAMELEN)
-#if 0
-	lis	%r11,0xe0004641@ha
-	addi	%r11,%r11,0xe0004641@l
-	stb	%r11,-65(%r11)
+#else
+	FRAME_CRIT_ENTER(EXC_WDOG);
 #endif
 
 	bl	_C_LABEL(intr_wdogintr)
