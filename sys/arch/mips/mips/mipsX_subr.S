@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.56 2012/02/27 17:04:39 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.57 2012/07/09 17:11:32 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -601,8 +601,13 @@ _VECTOR_END(MIPSX(exception))
  */
 VECTOR(MIPSX(intr), unknown)
 	.set	noat
+#if (MIPS64R2_RMIXL) > 0
+	EHB					#work around chip bug
+#endif
 	mfc0	k1, MIPS_COP_0_STATUS		#00: get the status register
+#if (MIPS3) > 0
 	nop					#01: stall
+#endif
 	and	k1, k1, MIPS3_SR_KSU_USER	#02: test for user mode
 	PTR_LA	k0, MIPSX(user_intr)		#03: assume user mode
 	bnez	k1, 1f				#05: yep, do it
@@ -2598,6 +2603,14 @@ LEAF(MIPSX(lwp_trampoline))
 	jalr	s0			
 	 move	a0, s1
 
+#ifdef DIAGNOSTIC
+	INT_L	v0, L_FLAG(MIPS_CURLWP)
+	and	v0, LW_SYSTEM
+	beqz	v0, 1f
+	 nop
+	PANIC("kthread failed to call kthread_exit!")
+1:
+#endif
 	#
 	# Return to user (won't happen if a kernel thread)
 	#
