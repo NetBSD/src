@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2012/07/09 17:55:15 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #define	VM_MIN_ADDRESS		((vaddr_t) 0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) /* -32768 */ 0x7fff8000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) /* -32768 */ 0xffff8000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xe4000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xfefff000)
