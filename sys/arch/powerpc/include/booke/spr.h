@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.7 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.8 2012/07/09 17:58:34 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,16 @@
 #define	SVR_P1022v2		  0x80e60020
 
 #define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
+
+#define	SVR_P2040v1		  0x82100010	/* e500mc */
+#define	SVR_P2041v1		  0x82100110	/* e500mc */
+
+#define	SVR_P4080v1		  0x82000010	/* e500mc */
+#define	SVR_P4040v1		  0x82000110	/* e500mc */
+
+#define	SVR_P5010v1		  0x82210010	/* e5500 */
+#define	SVR_P5020v1		  0x82200010	/* e5500 */
+#define	SVR_P5010v1		  0x82210010	/* e5500 */
 
 /*
  * Special Purpose Register declarations.
