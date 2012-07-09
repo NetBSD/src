@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.109 2012/01/27 19:22:49 para Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.110 2012/07/09 11:20:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.109 2012/01/27 19:22:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.110 2012/07/09 11:20:22 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -156,7 +156,9 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	/* Keep unlinked inode list up to date */
-	KDASSERT(DIP(ip, nlink) == ip->i_nlink);
+	KDASSERTMSG(DIP(ip, nlink) == ip->i_nlink,
+	    "DIP(ip, nlink) [%d] == ip->i_nlink [%d]",
+	    DIP(ip, nlink), ip->i_nlink);
 	if (ip->i_mode) {
 		if (ip->i_nlink > 0) {
 			UFS_WAPBL_UNREGISTER_INODE(ip->i_ump->um_mountp,
