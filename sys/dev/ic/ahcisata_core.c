@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.35 2012/07/02 18:15:46 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.36 2012/07/09 19:10:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.35 2012/07/02 18:15:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.36 2012/07/09 19:10:16 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -642,8 +642,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
-	if ((sc->sc_ahci_cap & (AHCI_CAP_SPM | AHCI_CAP_CLO)) ==
-	    (AHCI_CAP_SPM | AHCI_CAP_CLO)) {
+	if ((sc->sc_ahci_cap & AHCI_CAP_CLO) == AHCI_CAP_CLO) {
 		/*
 		 * issue a command list override to clear BSY.
 		 * This is needed if there's a PMP with no drive
