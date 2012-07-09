@@ -1195,7 +1195,7 @@ const static struct { void *addr; const char *name;} names[] = {
 #endif	/* MIPS64R2_RMIXL */
 
 	Name(cpu_idle),
-	Name(cpu_switchto),
+	Name(mips_cpu_switchto),
 	{0, 0}
 };
 
