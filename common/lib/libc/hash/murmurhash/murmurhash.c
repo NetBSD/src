@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -12,13 +12,19 @@
  */
 
 #include <sys/cdefs.h>
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $");
+#else
+__RCSID("$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $");
+#endif
+
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/hash.h>
 
-#if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $");
-#else
-__RCSID("$NetBSD: murmurhash.c,v 1.2 2012/07/08 13:42:29 rmind Exp $");
+#ifdef __weak_alias
+__weak_alias(murmurhash2,_murmurhash2)
 #endif
 
 uint32_t
