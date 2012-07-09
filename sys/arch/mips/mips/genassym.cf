@@ -109,6 +109,7 @@ define	MIPS_XKSEG_START	MIPS_XKSEG_START
 # Important offsets into the lwp and proc structs & associated constants
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_CTXSWITCH		offsetof(struct lwp, l_ctxswtch)
+define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
@@ -119,6 +120,8 @@ define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
+
+define	LW_SYSTEM		LW_SYSTEM
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
