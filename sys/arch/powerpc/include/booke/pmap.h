@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2012/03/29 15:44:40 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2012/07/09 17:48:31 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -71,7 +71,7 @@
 #define	KERNEL_PID	0
 
 #define	PMAP_TLB_NUM_PIDS		256
-#define	PMAP_INVALID_SEGTAB_ADDRESS	((struct pmap_segtab *)0xfeeddead)
+#define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xfeeddead)
 
 #define	pmap_phys_address(x)		(x)
 
