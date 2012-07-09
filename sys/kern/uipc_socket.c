@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.210 2012/03/16 06:47:37 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.211 2012/07/09 04:35:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.210 2012/03/16 06:47:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.211 2012/07/09 04:35:13 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1132,7 +1132,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 {
 	struct lwp *l = curlwp;
 	struct mbuf	*m, **mp, *mt;
-	int atomic, flags, len, error, s, offset, moff, type, orig_resid;
+	size_t len, offset, moff, orig_resid;
+	int atomic, flags, error, s, type;
 	const struct protosw	*pr;
 	struct mbuf	*nextrecord;
 	int		mbuf_removed = 0;
@@ -1165,7 +1166,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			goto bad;
 		do {
 			error = uiomove(mtod(m, void *),
-			    (int) min(uio->uio_resid, m->m_len), uio);
+			    MIN(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid > 0 && error == 0 && m);
  bad:
@@ -1419,7 +1420,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			sounlock(so);
 			splx(s);
-			error = uiomove(mtod(m, char *) + moff, (int)len, uio);
+			error = uiomove(mtod(m, char *) + moff, len, uio);
 			s = splsoftnet();
 			solock(so);
 			if (error != 0) {
