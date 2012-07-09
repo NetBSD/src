@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $	*/
+/*	subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $");
+__KERNEL_RCSID(0, "subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -209,6 +209,7 @@ kmem_backend_free(vmem_t *dummy, vmem_addr_t addr, vmem_size_t size)
 	KASSERT(dummy == NULL);
 	KASSERT(addr != 0);
 	KASSERT(size != 0);
+	KASSERT(addr == trunc_page(addr));
 	KASSERT(size == round_page(size));
 
 	kmem_poison_check((void *)addr, size);
