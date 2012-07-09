@@ -1511,6 +1511,15 @@ LEAF(MIPSX(lwp_trampoline))
 	jalr	s0			
 	 move	a0, s1
 
+#ifdef DIAGNOSTIC
+	INT_L	v0, L_FLAG(MIPS_CURLWP)
+	and	v0, LW_SYSTEM
+	beqz	v0, 1f
+	 nop
+	PANIC("kthread failed to call kthread_exit!")
+1:
+#endif
+
 	# Return to user (won't happen if a kernel thread)
 	.set	noat
 MIPSX(user_return):
