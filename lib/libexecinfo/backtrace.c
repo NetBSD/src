@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.1 2012/05/26 22:02:29 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.2 2012/07/09 03:11:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backtrace.c,v 1.1 2012/05/26 22:02:29 christos Exp $");
+__RCSID("$NetBSD: backtrace.c,v 1.2 2012/07/09 03:11:59 christos Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -168,7 +168,7 @@ backtrace_symbols_fmt(void *const *trace, size_t len, const char *fmt)
 		st = NULL;
 
 	if ((ptr = calloc(len, slen)) == NULL)
-		return NULL;
+		goto out;
 
 	size_t psize = len * slen;
 	size_t offs = len * sizeof(char *);
@@ -180,7 +180,8 @@ backtrace_symbols_fmt(void *const *trace, size_t len, const char *fmt)
 		x = format_address(st, &ptr, &psize, offs, fmt, trace[i]);
 		if (x == -1) {
 			free(ptr);
-			return NULL;
+			ptr = NULL;
+			goto out;
 		}
 		offs += x;
 		ptr[offs++] = '\0';
@@ -191,6 +192,7 @@ backtrace_symbols_fmt(void *const *trace, size_t len, const char *fmt)
 	for (size_t j = 0; j < len; j++)
 		((char **)(void *)ptr)[j] += (intptr_t)ptr;
 
+out:
 	symtab_destroy(st);
 	if (fd != -1)
 		(void)close(fd);
