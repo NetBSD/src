@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.73 2012/07/10 22:30:23 abs Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.74 2012/07/10 22:34:37 abs Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,12 +82,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.73 2012/07/10 22:30:23 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.74 2012/07/10 22:34:37 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/cdio.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -306,7 +305,7 @@ raclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
-		ra->ra_state = DK_CLOSED;
+		ra->ra_state = CLOSED;
 		ra->ra_wlabel = 0;
 	}
 #endif
@@ -462,8 +461,9 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (cmd == ODIOCGDEFLABEL)
 			tp = &newlabel;
 		else
-#endif
+#else
 		tp = (struct disklabel *)data;
+#endif
 		memset(tp, 0, sizeof(struct disklabel));
 		tp->d_secsize = lp->d_secsize;
 		tp->d_nsectors = lp->d_nsectors;
@@ -516,20 +516,13 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (dkwedge_list(&ra->ra_disk, dkwl, l));
 	    }
 
-	case DIOCTUR:
-		/* test unit ready */
-		if (ra->ra_state == DK_CLOSED &&
-		    ra_putonline(dev, ra) == MSCP_FAILED)
-			error = ENXIO;
-		*((int*)data) = (ra->ra_state == DK_OPEN);
-		return error;
-
 	default:
 		error = ENOTTY;
 		break;
 	}
-	return error;
+	return (error);
 }
+
 
 int
 radump(dev_t dev, daddr_t blkno, void *va, size_t size)
@@ -756,7 +749,6 @@ rx_putonline(struct rx_softc *rx)
 
 	return MSCP_DONE;
 }
-
 
 #if NRX
 
