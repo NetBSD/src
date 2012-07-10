@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.53 2012/07/10 22:35:11 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.54 2012/07/10 22:50:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.53 2012/07/10 22:35:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.54 2012/07/10 22:50:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,7 +552,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = sc->sc_ramsize;
-	/*fb->fb_type.fb_height * fb->fb_linebytes;*/
+
 	printf(": %s, %d x %d", name,
 	       fb->fb_type.fb_width, fb->fb_type.fb_height);
 	if(sc->sc_fhc) {
@@ -1080,7 +1080,7 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 			continue;
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : 
-		    sc->sc_ramsize/*sc_fb.fb_type.fb_size*/;
+		    sc->sc_ramsize;
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				sc->sc_paddr, u+mo->mo_physoff,
@@ -1127,6 +1127,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_fbinfo *wdf;
 	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
+
 #ifdef CGSIX_DEBUG
 	printf("cgsix_ioctl(%lx)\n",cmd);
 #endif
@@ -1189,7 +1190,8 @@ cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int error,i;
+	int error, i;
+
 	if (index >= 256 || count > 256 || index + count > 256)
 		return EINVAL;
 
@@ -1308,7 +1310,7 @@ cgsix_setup_mono(struct cgsix_softc *sc, int x, int y, int wi, int he,
 	volatile struct cg6_fbc *fbc=sc->sc_fbc;
 	CG6_DRAIN(fbc);
 	fbc->fbc_x0 = x;
-	fbc->fbc_x1  =x + wi - 1;
+	fbc->fbc_x1 = x + wi - 1;
 	fbc->fbc_y0 = y;
 	fbc->fbc_incx = 0;
 	fbc->fbc_incy = 1;
@@ -1396,7 +1398,7 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				}
 				/* put the chip back to normal */
 				fbc->fbc_incy = 0;
-				fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR8;	
+				fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR8;
 			}
 		}
 	}
