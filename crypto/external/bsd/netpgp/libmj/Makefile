@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/07 04:17:49 agc Exp $
+# $NetBSD: Makefile,v 1.2 2012/07/10 19:38:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,6 @@ USE_FORT?= yes
 LIB= mj
 SRCS= mj.c
 MAN= libmj.3
-WARNS=4
 
 EXTDIST=${.CURDIR}/../dist
 

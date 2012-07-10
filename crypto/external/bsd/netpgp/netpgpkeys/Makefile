@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/09/02 06:00:12 agc Exp $
+#	$NetBSD: Makefile,v 1.4 2012/07/10 19:38:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,11 +18,6 @@ LDADD+=		-lcrypto -lz -lbz2
 DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
 
 MAN=		netpgpkeys.1
-
-# although the code is/was WARNS=4 clean, when linking, there is a warning
-# about libidea being a patented algorithm, and WARNS>0 treats warnings as
-# errors. For now, just set WARNS off.
-WARNS=		0
 
 .PATH: ${.CURDIR}/../dist/src/netpgpkeys
 
