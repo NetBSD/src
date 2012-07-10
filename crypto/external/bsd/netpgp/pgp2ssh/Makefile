@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/09/06 18:17:58 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2012/07/10 19:38:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,6 @@ LDADD+=		-lcrypto -lz -lbz2
 DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
 
 MAN=		pgp2ssh.1
-WARNS=		0
 
 .PATH: ${.CURDIR}/../dist/src/pgp2ssh ${.CURDIR}/../dist/src/hkpclient
 
