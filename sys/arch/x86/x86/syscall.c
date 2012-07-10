@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2012/02/19 21:06:35 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.11 2012/07/10 21:18:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2012/02/19 21:06:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2012/07/10 21:18:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/ktrace.h>
-#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscall_stats.h>
@@ -113,7 +112,7 @@ syscall(struct trapframe *frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	register_t code, rval[2], rip_call;
+	register_t code, rval[2];
 #ifdef __x86_64__
 	/* Verify that the syscall args will fit in the trapframe space */
 	CTASSERT(offsetof(struct trapframe, tf_arg9) >=
@@ -126,13 +125,6 @@ syscall(struct trapframe *frame)
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
-
-	/*
-	 * The offset to adjust the PC by depends on whether we entered the
-	 * kernel through the trap or call gate.  We saved the instruction
-	 * size in tf_err on entry.
-	 */
-	rip_call = X86_TF_RIP(frame) - frame->tf_err;
 
 	code = X86_TF_RAX(frame) & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
@@ -181,7 +173,12 @@ syscall(struct trapframe *frame)
 	} else {
 		switch (error) {
 		case ERESTART:
-			X86_TF_RIP(frame) = rip_call;
+			/*
+			 * The offset to adjust the PC by depends on whether we
+			 * entered the kernel through the trap or call gate.
+			 * We saved the instruction size in tf_err on entry.
+			 */
+			X86_TF_RIP(frame) -= frame->tf_err;
 			break;
 		case EJUSTRETURN:
 			/* nothing to do */
