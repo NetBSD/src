@@ -72,17 +72,17 @@ __weak_alias(idea_encrypt,_idea_encrypt)
 #endif
 
 __warn_references(idea_cbc_encrypt,
-    "IDEA is a patented algorithm; link against libcrypto_idea.a")
+    "IDEA is a patented algorithm; link against libcrypto_idea")
 __warn_references(idea_encrypt,
-    "IDEA is a patented algorithm; link against libcrypto_idea.a")
+    "IDEA is a patented algorithm; link against libcrypto_idea")
 
 void idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int encrypt)
 {
 
 	fprintf(stderr,
-	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
-	    "Aborting...\n");
+	    "IDEA is a patented algorithm; link against libcrypto_idea. "
+	    "Exiting...\n");
 	exit(1);
 }
 
@@ -90,7 +90,7 @@ void idea_encrypt(IDEA_INT *d, IDEA_KEY_SCHEDULE *key)
 {
 
 	fprintf(stderr,
-	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
-	    "Aborting...\n");
+	    "IDEA is a patented algorithm; link against libcrypto_idea. "
+	    "Exiting...\n");
 	exit(1);
 }

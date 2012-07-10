@@ -75,18 +75,18 @@ __weak_alias(MDC2_Final,_MDC2_Final)
 #endif
 
 __warn_references(MDC2_Init,
-    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a")
+    "MDC2 is a patented algorithm; link against libcrypto_mdc2")
 __warn_references(MDC2_Update,
-    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a")
+    "MDC2 is a patented algorithm; link against libcrypto_mdc2")
 __warn_references(MDC2_Final,
-    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a")
+    "MDC2 is a patented algorithm; link against libcrypto_mdc2")
 
 void MDC2_Init(MDC2_CTX *c)
 {
 
 	fprintf(stderr,
-	    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a. "
-	    "Aborting...\n");
+	    "MDC2 is a patented algorithm; link against libcrypto_mdc2. "
+	    "Exiting...\n");
 	exit(1);
 }
 
@@ -94,8 +94,8 @@ void MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 {
 
 	fprintf(stderr,
-	    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a. "
-	    "Aborting...\n");
+	    "MDC2 is a patented algorithm; link against libcrypto_mdc2. "
+	    "Exiting...\n");
 	exit(1);
 }
 
@@ -103,7 +103,7 @@ void MDC2_Final(unsigned char *md, MDC2_CTX *c)
 {
 
 	fprintf(stderr,
-	    "MDC2 is a patented algorithm; link against libcrypto_mdc2.a. "
-	    "Aborting...\n");
+	    "MDC2 is a patented algorithm; link against libcrypto_mdc2. "
+	    "Exiting...\n");
 	exit(1);
 }

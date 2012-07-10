@@ -70,14 +70,14 @@ __weak_alias(RC5_32_set_key,_RC5_32_set_key)
 #endif
 
 __warn_references(RC5_32_set_key,
-    "RC5 is a patented algorithm; link against libcrypto_rc5.a")
+    "RC5 is a patented algorithm; link against libcrypto_rc5")
 
 void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
 	     int rounds)
 {
 
 	fprintf(stderr,
-	    "RC5 is a patented algorithm; link against libcrypto_rc5.a. "
-	    "Aborting...\n");
+	    "RC5 is a patented algorithm; link against libcrypto_rc5. "
+	    "Exiting...\n");
 	exit(1);
 }
