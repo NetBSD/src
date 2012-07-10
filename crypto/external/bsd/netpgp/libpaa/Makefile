@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/09/10 05:29:12 agc Exp $
+#	$NetBSD: Makefile,v 1.2 2012/07/10 19:38:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ LIBDPLIBS+=	z	${NETBSDSRCDIR}/lib/libz
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
 
 MAN=		libpaa.3
-WARNS=		4
 
 .PATH: ${.CURDIR}/../dist/src/pgp2ssh ${.CURDIR}/../dist/src/libpaa
 
