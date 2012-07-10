@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.4 2012/07/10 17:05:38 christos Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -14,12 +14,17 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.4 2012/07/10 17:05:38 christos Exp $");
+
 #else
-__RCSID("$NetBSD: murmurhash.c,v 1.3 2012/07/09 21:25:46 rmind Exp $");
-#endif
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: murmurhash.c,v 1.4 2012/07/10 17:05:38 christos Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/hash.h>
 
@@ -38,7 +43,7 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 	const uint32_t m = 0x5bd1e995;
 	const int r = 24;
 
-	const uint8_t *data = (const uint8_t *)key;
+	const uint8_t *data = key;
 	uint32_t h = seed ^ (uint32_t)len;
 
 	while (len >= sizeof(uint32_t)) {
