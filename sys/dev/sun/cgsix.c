@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.52 2012/07/10 22:33:15 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.53 2012/07/10 22:35:11 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.52 2012/07/10 22:33:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.53 2012/07/10 22:35:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1314,8 +1314,8 @@ cgsix_setup_mono(struct cgsix_softc *sc, int x, int y, int wi, int he,
 	fbc->fbc_incy = 1;
 	fbc->fbc_fg = fg;
 	fbc->fbc_bg = bg;
-	fbc->fbc_mode = 0x00140000;	/* nosrc, color1 */
-	fbc->fbc_alu = 0x0800fc30;	/* colour expansion, solid bg */
+	fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR1;
+	fbc->fbc_alu = GX_PATTERN_ONES | ROP_OSTP(GX_ROP_CLEAR, GX_ROP_SET);
 	sc->sc_mono_width = wi;
 	/* now feed the data into the chip */
 }
@@ -1396,10 +1396,7 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				}
 				/* put the chip back to normal */
 				fbc->fbc_incy = 0;
-				/* nosrc, color8 */
-				fbc->fbc_mode = 0x00120000;     
-				/*fbc->fbc_mode &= ~CG6_MODE_MASK;
-				fbc->fbc_mode |= CG6_MODE;*/
+				fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR8;	
 			}
 		}
 	}
