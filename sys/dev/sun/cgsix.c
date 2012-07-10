@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.51 2012/01/11 16:10:13 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.52 2012/07/10 22:33:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.51 2012/01/11 16:10:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.52 2012/07/10 22:33:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,6 +609,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	cg6_ras_init(sc);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_bg = WS_DEFAULT_BG;
+	sc->sc_fb_is_open = FALSE;
 	
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
@@ -653,10 +654,13 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 int
 cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int unit = minor(dev);
+	device_t dv = device_lookup(&cgsix_cd, minor(dev));
+	struct cgsix_softc *sc = device_private(dv);
 
-	if (device_lookup(&cgsix_cd, unit) == NULL)
+	if (dv == NULL)
 		return ENXIO;
+	sc->sc_fb_is_open = TRUE;
+
 	return 0;
 }
 
@@ -667,9 +671,19 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 	struct cgsix_softc *sc = device_private(dv);
 
 	cg6_reset(sc);
+	sc->sc_fb_is_open = FALSE;
 
 #if NWSDISPLAY > 0
-	cg6_setup_palette(sc);
+	if (IS_IN_EMUL_MODE(sc)) {
+		struct vcons_screen *ms = sc->vd.active;
+
+		cg6_ras_init(sc);
+		cg6_setup_palette(sc);
+
+		/* we don't know if the screen exists */
+		if (ms != NULL)
+			vcons_redraw_screen(ms);
+	}
 #else
 	/* (re-)initialize the default color map */
 	bt_initcmap(&sc->sc_cmap, 256);
@@ -689,7 +703,7 @@ cgsixioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	int v, error;
 
 #ifdef CGSIX_DEBUG
-	printf("cgsixioctl(%ld)\n",cmd);
+	printf("cgsixioctl(%lx)\n",cmd);
 #endif
 
 	switch (cmd) {
@@ -1114,7 +1128,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
 #ifdef CGSIX_DEBUG
-	printf("cgsix_ioctl(%ld)\n",cmd);
+	printf("cgsix_ioctl(%lx)\n",cmd);
 #endif
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
@@ -1142,11 +1156,10 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
-				if (new_mode != sc->sc_mode)
-				{
+
+				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL)
-					{
+					if (IS_IN_EMUL_MODE(sc)) {
 						cg6_reset(sc);
 						cg6_ras_init(sc);
 						cg6_setup_palette(sc);
@@ -1164,12 +1177,11 @@ cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct cgsix_softc *sc = vd->cookie;
 
-	if(offset<sc->sc_ramsize) {
+	if (offset < sc->sc_ramsize) {
 		return bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
-		    CGSIX_RAM_OFFSET+offset, prot, BUS_SPACE_MAP_LINEAR);
+		    CGSIX_RAM_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR);
 	}
-	/* I'm not at all sure this is the right thing to do */
-	return cgsixmmap(0, offset, prot); /* assume minor dev 0 for now */
+	return -1;
 }
 
 int
@@ -1385,7 +1397,7 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				/* put the chip back to normal */
 				fbc->fbc_incy = 0;
 				/* nosrc, color8 */
-				fbc->fbc_mode = 0x00120000;	
+				fbc->fbc_mode = 0x00120000;     
 				/*fbc->fbc_mode &= ~CG6_MODE_MASK;
 				fbc->fbc_mode |= CG6_MODE;*/
 			}
