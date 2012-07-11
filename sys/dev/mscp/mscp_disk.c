@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.74 2012/07/10 22:34:37 abs Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.75 2012/07/11 16:41:16 abs Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.74 2012/07/10 22:34:37 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.75 2012/07/11 16:41:16 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -305,7 +305,7 @@ raclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			(void) tsleep(&udautab[unit], PZERO - 1,
 			    "raclose", 0);
 		splx(s);
-		ra->ra_state = CLOSED;
+		ra->ra_state = DK_CLOSED;
 		ra->ra_wlabel = 0;
 	}
 #endif
@@ -461,9 +461,8 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (cmd == ODIOCGDEFLABEL)
 			tp = &newlabel;
 		else
-#else
-		tp = (struct disklabel *)data;
 #endif
+		tp = (struct disklabel *)data;
 		memset(tp, 0, sizeof(struct disklabel));
 		tp->d_secsize = lp->d_secsize;
 		tp->d_nsectors = lp->d_nsectors;
@@ -522,7 +521,6 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 	return (error);
 }
-
 
 int
 radump(dev_t dev, daddr_t blkno, void *va, size_t size)
