@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2012/07/10 19:38:17 christos Exp $
+# $NetBSD: Makefile,v 1.15 2012/07/11 19:01:02 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,9 +22,6 @@ INCSDIR=/usr/include
 
 OPENSSL=${NETBSDSRCDIR}/crypto/external/bsd/openssl
 LIBDPLIBS+=	mj	${.CURDIR}/../libmj
-.if (${MKCRYPTO_IDEA} != "no")
-LIBDPLIBS+=	crypto_idea	${OPENSSL}/lib/libcrypto_idea
-.endif  # MKCRYPTO_IDEA != no
 LIBDPLIBS+=	crypto		${OPENSSL}/lib/libcrypto
 LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
 LIBDPLIBS+=	bz2		${NETBSDSRCDIR}/lib/libbz2
