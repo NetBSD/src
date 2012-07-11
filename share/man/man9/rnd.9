@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.20 2011/12/17 21:25:12 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.21 2012/07/11 18:17:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ There is no supported API for direct access to the output of the entropy pool.
 .\" .Sh ERRORS
 .Sh FILES
 These functions are declared in src/sys/sys/rnd.h and defined in
-src/sys/dev/rnd.c.
+src/sys/kern/kern_rndq.c.
 .Sh SEE ALSO
 .Xr rnd 4 ,
 .Xr rndctl 8 ,
