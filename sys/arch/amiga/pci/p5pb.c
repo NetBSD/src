@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.9 2012/07/11 17:13:31 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.10 2012/07/11 19:14:17 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -78,7 +78,12 @@ struct m68k_bus_dma_tag p5pb_bus_dma_tag = {
 	_bus_dmamap_load_uio_direct,
 	_bus_dmamap_load_raw_direct,
 	_bus_dmamap_unload,
-	_bus_dmamap_sync
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap
 };
 
 static int	p5pb_match(struct device *, struct cfdata *, void *);
