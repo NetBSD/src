@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbreg.h,v 1.6 2012/01/19 00:14:08 rkujawa Exp $ */
+/*	$NetBSD: p5pbreg.h,v 1.7 2012/07/11 17:13:31 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 #define P5BUS_PCI_CONF_BASE	0xFFFC0000
 #define P5BUS_PCI_CONF_SIZE	0x00020000	/* up to 128kB */
 
-#define OFF_PCI_CONF_DATA	0x00001000	/* also 0 on CVPPC */
-#define OFF_PCI_DEVICE		0x00002000
+#define OFF_PCI_CONF_DATA	0x00000000	/* also 0 on CVPPC */
+#define OFF_PCI_DEVICE		0x00001000
 #define OFF_PCI_FUNCTION	0x00000100
 
 #define P5BUS_PCI_IO_BASE	0xFFFA0000
