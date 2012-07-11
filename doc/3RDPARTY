@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.946 2012/07/11 19:00:12 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.947 2012/07/11 22:43:19 jmmv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -53,8 +53,8 @@ Fix symbolic links before import.
 Check external/bsd/am-utils/include/config.h is correct after import.
 
 Package:	Automated Testing Framework (ATF)
-Version:	0.15
-Current Vers:	0.15
+Version:	0.16
+Current Vers:	0.16
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
 Home page:	http://code.google.com/p/kyua/wiki/ATF
