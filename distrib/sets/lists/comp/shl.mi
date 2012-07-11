@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.227 2012/07/11 18:59:32 christos Exp $
+# $NetBSD: shl.mi,v 1.228 2012/07/11 22:42:40 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -252,6 +252,8 @@
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
+./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug	comp-atf-debug	atf,debug
+./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libbind9.so.5.7.debug	comp-bind-debug	debug
