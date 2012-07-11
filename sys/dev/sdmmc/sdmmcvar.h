@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.12 2012/02/01 22:34:43 matt Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.13 2012/07/11 18:21:27 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ struct sdmmc_function {
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
-	struct sdmmc_scr scr;		/* decoded CSR value */
+	struct sdmmc_scr scr;		/* decoded SCR value */
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
