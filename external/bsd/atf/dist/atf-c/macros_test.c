@@ -749,6 +749,11 @@ BUILD_TC(use, "macros_h_test.c",
          "do not cause syntax errors when used",
          "Build of macros_h_test.c failed; some macros in atf-c/macros.h "
          "are broken");
+BUILD_TC_FAIL(detect_unused_tests, "unused_test.c",
+         "Tests that defining an unused test case raises a warning (and thus "
+         "an error)",
+         "Build of unused_test.c passed; unused test cases are not properly "
+         "detected");
 
 /* ---------------------------------------------------------------------
  * Main.
@@ -771,6 +776,7 @@ ATF_TP_ADD_TCS(tp)
     /* Add the test cases for the header file. */
     ATF_TP_ADD_TC(tp, include);
     ATF_TP_ADD_TC(tp, use);
+    ATF_TP_ADD_TC(tp, detect_unused_tests);
 
     return atf_no_error();
 }
