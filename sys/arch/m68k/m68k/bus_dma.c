@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.32 2011/09/19 19:17:05 rkujawa Exp $ */
+/* $NetBSD: bus_dma.c,v 1.33 2012/07/11 17:13:30 rkujawa Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2011/09/19 19:17:05 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2012/07/11 17:13:30 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		rv = pmap_extract(pmap, vaddr, &curaddr);
+		rv = pmap_extract(pmap, vaddr, (paddr_t *) &curaddr);
 		KASSERT(rv);
 
 		cacheable = _pmap_page_is_cacheable(pmap, vaddr);
