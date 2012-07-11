@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2010/10/20 09:20:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.8 2012/07/11 22:40:16 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/bsd/atf/lib/libatf-c
 
 FILESDIR=	${TESTSDIR}
 FILES=		macros_h_test.c
+FILES+=		unused_test.c
 
 TESTS_C=
 .for test in	atf_c_test \
