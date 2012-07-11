@@ -1008,6 +1008,8 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, parse_test_case_result_skipped);
     ATF_ADD_TEST_CASE(tcs, parse_test_case_result_unknown);
 
+    ATF_ADD_TEST_CASE(tcs, read_test_case_result_failed);
+    ATF_ADD_TEST_CASE(tcs, read_test_case_result_skipped);
     ATF_ADD_TEST_CASE(tcs, read_test_case_result_no_file);
     ATF_ADD_TEST_CASE(tcs, read_test_case_result_empty_file);
     ATF_ADD_TEST_CASE(tcs, read_test_case_result_multiline);
