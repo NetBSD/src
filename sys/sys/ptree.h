@@ -1,4 +1,5 @@
-/* $NetBSD: ptree.h,v 1.5 2012/03/09 15:35:28 christos Exp $ */
+/*	$NetBSD: ptree.h,v 1.6 2012/07/11 00:19:28 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SYS_PTREE_H_
 #define _SYS_PTREE_H_
 
@@ -155,12 +157,14 @@ typedef struct pt_node {
 #endif /* _PT_PRIVATE */
 
 typedef struct pt_tree_ops {
-	bool (*ptto_matchnode)(const void *, const void *, pt_bitoff_t,
-		pt_bitoff_t *, pt_slot_t *);
-	bool (*ptto_matchkey)(const void *, const void *, pt_bitoff_t,
-		pt_bitlen_t);
-	pt_slot_t (*ptto_testnode)(const void *, pt_bitoff_t, pt_bitlen_t);
-	pt_slot_t (*ptto_testkey)(const void *, pt_bitoff_t, pt_bitlen_t);
+	bool (*ptto_matchnode)(const void *, const void *,
+		pt_bitoff_t, pt_bitoff_t *, pt_slot_t *, void *);
+	bool (*ptto_matchkey)(const void *, const void *,
+		pt_bitoff_t, pt_bitlen_t, void *);
+	pt_slot_t (*ptto_testnode)(const void *,
+		pt_bitoff_t, pt_bitlen_t, void *);
+	pt_slot_t (*ptto_testkey)(const void *,
+		pt_bitoff_t, pt_bitlen_t, void *);
 } pt_tree_ops_t;
 
 typedef struct pt_tree {
@@ -170,13 +174,14 @@ typedef struct pt_tree {
 	const pt_tree_ops_t *pt_ops;
 	size_t pt_node_offset;
 	size_t pt_key_offset;
-	uintptr_t pt_spare[4];
+	void *pt_context;
+	uintptr_t pt_spare[3];
 } pt_tree_t;
 
 #define	PT_FILTER_MASK		0x00000001	/* node is a mask */
 typedef bool (*pt_filter_t)(void *, const void *, int);
 
-void	ptree_init(pt_tree_t *, const pt_tree_ops_t *, size_t, size_t);
+void	ptree_init(pt_tree_t *, const pt_tree_ops_t *, void *, size_t, size_t);
 bool	ptree_insert_node(pt_tree_t *, void *);
 bool	ptree_insert_mask_node(pt_tree_t *, void *, pt_bitlen_t);
 void *	ptree_find_filtered_node(pt_tree_t *, void *, pt_filter_t, void *);
