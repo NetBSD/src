@@ -382,8 +382,8 @@
         <td class="tp-id" colspan="3">
           <p><xsl:value-of select="@id" /></p>
         </td>
-        <td class="numeric">
-          <xsl:apply-templates select="tp-time" />s
+        <td class="tp-numeric">
+          <p><xsl:value-of select="tp-time" />s</p>
         </td>
       </tr>
       <xsl:if test="$which != 'bogus'">
@@ -437,9 +437,9 @@
                                      expected_failure|expected_timeout|
                                      expected_signal|failed|passed|
                                      skipped" mode="tc" />
-	<td class="numeric">
-	  <xsl:apply-templates select="tc-time" />s
-	</td>
+        <td class="numeric">
+          <p><xsl:value-of select="tc-time" />s</p>
+        </td>
       </tr>
     </xsl:if>
   </xsl:template>

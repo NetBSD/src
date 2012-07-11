@@ -36,31 +36,48 @@
 
 #include <atf-c++/tests.hpp>
 
+// Do not define inline methods for the test case classes.  Doing so
+// significantly increases the memory requirements of GNU G++ during
+// compilation.
+
 #define ATF_TEST_CASE_WITHOUT_HEAD(name) \
+    namespace { \
     class atfu_tc_ ## name : public atf::tests::tc { \
         void body(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
-    };
+        atfu_tc_ ## name(void); \
+    }; \
+    static atfu_tc_ ## name* atfu_tcptr_ ## name; \
+    atfu_tc_ ## name::atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
+    }
 
 #define ATF_TEST_CASE(name) \
+    namespace { \
     class atfu_tc_ ## name : public atf::tests::tc { \
         void head(void); \
         void body(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
-    };
+        atfu_tc_ ## name(void); \
+    }; \
+    static atfu_tc_ ## name* atfu_tcptr_ ## name; \
+    atfu_tc_ ## name::atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
+    }
 
 #define ATF_TEST_CASE_WITH_CLEANUP(name) \
+    namespace { \
     class atfu_tc_ ## name : public atf::tests::tc { \
         void head(void); \
         void body(void) const; \
         void cleanup(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name, true) {} \
-    };
+        atfu_tc_ ## name(void); \
+    }; \
+    static atfu_tc_ ## name* atfu_tcptr_ ## name; \
+    atfu_tc_ ## name::atfu_tc_ ## name(void) : atf::tests::tc(#name, true) {} \
+    }
 
 #define ATF_TEST_CASE_NAME(name) atfu_tc_ ## name
+#define ATF_TEST_CASE_USE(name) (atfu_tcptr_ ## name) = NULL
 
 #define ATF_TEST_CASE_HEAD(name) \
     void \
@@ -198,8 +215,8 @@
 
 #define ATF_ADD_TEST_CASE(tcs, tcname) \
     do { \
-        atf::tests::tc* tcptr = new atfu_tc_ ## tcname(); \
-        (tcs).push_back(tcptr); \
+        atfu_tcptr_ ## tcname = new atfu_tc_ ## tcname(); \
+        (tcs).push_back(atfu_tcptr_ ## tcname); \
     } while (0);
 
 #endif // !defined(_ATF_CXX_MACROS_HPP_)

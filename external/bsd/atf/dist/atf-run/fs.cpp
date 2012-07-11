@@ -137,9 +137,9 @@ retry_chmod:
                 subdirs = d.names();
                 ok = true;
             } catch (const atf::system_error& e) {
+                retries--;
                 if (retries == 0)
                     throw e;
-                retries--;
                 ::sleep(retry_delay_in_seconds);
             }
         }

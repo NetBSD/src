@@ -148,8 +148,20 @@ table.tcs-summary th {
 }
 
 table.tcs-summary td.numeric {
-    text-align: right;
     width: 1pt;
+}
+
+table.tcs-summary td.numeric p {
+    text-align: right;
+}
+
+table.tcs-summary td.tp-numeric {
+    background: #dddddd;
+    width: 1pt;
+}
+
+table.tcs-summary td.tp-numeric p {
+    text-align: right;
 }
 
 table.tcs-summary td.tp-id {
