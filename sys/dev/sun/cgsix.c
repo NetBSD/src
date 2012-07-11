@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.54 2012/07/10 22:50:41 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.55 2012/07/11 15:03:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.54 2012/07/10 22:50:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.55 2012/07/11 15:03:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,6 +318,7 @@ static void cg6_ras_eraserows(void *, int, int, long int);
 #if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
 static void cg6_ras_do_cursor(struct rasops_info *);
 #endif
+
 static void
 cg6_ras_init(struct cgsix_softc *sc)
 {
@@ -326,6 +327,16 @@ cg6_ras_init(struct cgsix_softc *sc)
 	CG6_DRAIN(fbc);
 	fbc->fbc_mode &= ~CG6_MODE_MASK;
 	fbc->fbc_mode |= CG6_MODE;
+
+	/* set some common drawing engine parameters */
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = 0x3fff;
+	fbc->fbc_clipmaxy = 0x3fff;
 }
 
 static void
@@ -355,15 +366,10 @@ cg6_ras_copyrows(void *cookie, int src, int dst, int n)
 	n *= ri->ri_font->fontheight;
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
 	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_x0 = ri->ri_xorigin;
 	fbc->fbc_y0 = ri->ri_yorigin + src;
 	fbc->fbc_x1 = ri->ri_xorigin + ri->ri_emuwidth - 1;
@@ -406,15 +412,10 @@ cg6_ras_copycols(void *cookie, int row, int src, int dst, int n)
 	src *= ri->ri_font->fontwidth;
 	dst *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
 	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_x0 = ri->ri_xorigin + src;
 	fbc->fbc_y0 = ri->ri_yorigin + row;
 	fbc->fbc_x1 = ri->ri_xorigin + src + n - 1;
@@ -450,15 +451,10 @@ cg6_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 	n *= ri->ri_font->fontwidth;
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
 	fbc->fbc_arecty = ri->ri_yorigin + row;
 	fbc->fbc_arectx = ri->ri_xorigin + col;
@@ -485,15 +481,10 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 		n = ri->ri_rows - row;
 	if (n <= 0)
 		return;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		fbc->fbc_arecty = 0;
@@ -1286,15 +1277,10 @@ cgsix_rectfill(struct cgsix_softc *sc, int xs, int ys, int wi, int he,
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 	
 	CG6_DRAIN(fbc);
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = sc->sc_width - 1;
-	fbc->fbc_clipmaxy = sc->sc_height - 1;
+
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = col;
 	fbc->fbc_arecty = ys;
 	fbc->fbc_arectx = xs;
@@ -1398,7 +1384,6 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				}
 				/* put the chip back to normal */
 				fbc->fbc_incy = 0;
-				fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR8;
 			}
 		}
 	}
@@ -1448,15 +1433,10 @@ cgsix_clearscreen(struct cgsix_softc *sc)
 		volatile struct cg6_fbc *fbc = sc->sc_fbc;
 		
 		CG6_DRAIN(fbc);
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
+
 		fbc->fbc_alu = CG6_ALU_FILL;
+		fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 		fbc->fbc_fg = ri->ri_devcmap[sc->sc_bg];
 		fbc->fbc_arectx = 0;
 		fbc->fbc_arecty = 0;
@@ -1473,18 +1453,10 @@ void
 cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 {
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	
 	CG6_DRAIN(fbc);
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
 	fbc->fbc_alu = CG6_ALU_FLIP;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
 	fbc->fbc_arecty = y;
 	fbc->fbc_arectx = x;
 	fbc->fbc_arecty = y + he - 1;
