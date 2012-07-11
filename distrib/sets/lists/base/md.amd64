@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.169 2012/07/10 19:15:48 christos Exp $
+# $NetBSD: md.amd64,v 1.170 2012/07/11 18:59:28 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -76,10 +76,10 @@
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.7.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto_idea.so.7		base-compat-shlib	compat,pic,crypto,crypto_idea
-./usr/lib/i386/libcrypto_idea.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_idea
-./usr/lib/i386/libcrypto_mdc2.so.7		base-compat-shlib	compat,pic,crypto,crypto_mdc2
-./usr/lib/i386/libcrypto_mdc2.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_mdc2
+./usr/lib/i386/libcrypto_idea.so.7		base-obsolete		obsolete
+./usr/lib/i386/libcrypto_idea.so.7.0		base-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2.so.7		base-obsolete		obsolete
+./usr/lib/i386/libcrypto_mdc2.so.7.0		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_rc5.so.7		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/i386/libcrypto_rc5.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/i386/libcurses.so.7			base-compat-shlib	compat,pic

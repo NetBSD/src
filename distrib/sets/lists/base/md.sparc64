@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.159 2012/07/10 19:15:49 christos Exp $
+# $NetBSD: md.sparc64,v 1.160 2012/07/11 18:59:28 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -74,10 +74,10 @@
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.7			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libcrypto.so.7.0		base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libcrypto_idea.so.7		base-compat-shlib	compat,pic,crypto,crypto_idea
-./usr/lib/sparc/libcrypto_idea.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_idea
-./usr/lib/sparc/libcrypto_mdc2.so.7		base-compat-shlib	compat,pic,crypto,crypto_mdc2
-./usr/lib/sparc/libcrypto_mdc2.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_mdc2
+./usr/lib/sparc/libcrypto_idea.so.7		base-obsolete		obsolete
+./usr/lib/sparc/libcrypto_idea.so.7.0		base-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2.so.7		base-obsolete		obsolete
+./usr/lib/sparc/libcrypto_mdc2.so.7.0		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_rc5.so.7		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/sparc/libcrypto_rc5.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/sparc/libcurses.so.7			base-compat-shlib	compat,pic
