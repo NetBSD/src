@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.169 2012/07/11 18:59:30 christos Exp $
+# $NetBSD: md.amd64,v 1.170 2012/07/11 22:42:39 jmmv Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -447,10 +447,12 @@
 ./usr/lib/i386/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/i386/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/i386/libatf-c++.a			comp-c-lib		compat,atf
+./usr/lib/i386/libatf-c++.so			comp-sys-shlib		compat,pic,atf
 ./usr/lib/i386/libatf-c++_g.a			comp-c-proflib		compat,debuglib,atf
 ./usr/lib/i386/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/i386/libatf-c++_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/i386/libatf-c.a			comp-c-lib		compat,atf
+./usr/lib/i386/libatf-c.so			comp-sys-shlib		compat,pic,atf
 ./usr/lib/i386/libatf-c_g.a			comp-c-proflib		compat,debuglib,atf
 ./usr/lib/i386/libatf-c_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/i386/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
@@ -1084,6 +1086,8 @@
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/i386/libatf-c.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/i386/libatf-c++.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/i386/libbfd.so.12.0.debug	comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/i386/libbind9.so.5.7.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libbluetooth.so.4.2.debug	comp-compat-shlib	compat,pic,debug
