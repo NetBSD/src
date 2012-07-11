@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.475 2012/06/22 18:54:00 christos Exp $
+# $NetBSD: mi,v 1.476 2012/07/11 22:42:40 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -897,6 +897,7 @@
 ./usr/tests/atf/atf-c/test_helpers_test		tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/text_test			tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/tp_test			tests-atf-tests		atf
+./usr/tests/atf/atf-c/unused_test.c		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/user_test			tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/utils_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++				tests-atf-tests
@@ -979,6 +980,7 @@
 ./usr/tests/atf/atf-c++/tests_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/text_test		tests-obsolete		obsolete
 ./usr/tests/atf/atf-c++/ui_test			tests-obsolete		obsolete
+./usr/tests/atf/atf-c++/unused_test.cpp		tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/user_test		tests-obsolete		obsolete
 ./usr/tests/atf/atf-c++/utils_test		tests-atf-tests		atf
 ./usr/tests/atf/atf-check			tests-obsolete		obsolete

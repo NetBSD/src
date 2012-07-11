@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.151 2012/07/11 18:59:30 christos Exp $
+# $NetBSD: md.sparc64,v 1.152 2012/07/11 22:42:40 jmmv Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -272,10 +272,12 @@
 ./usr/lib/sparc/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/sparc/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/sparc/libatf-c++.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c++.so			base-sys-shlib		compat,pic,atf
 ./usr/lib/sparc/libatf-c++_g.a			-unknown-		compat,debuglib,atf
 ./usr/lib/sparc/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/sparc/libatf-c++_pic.a		comp-c-piclib		compat,pic,atf
 ./usr/lib/sparc/libatf-c.a			comp-c-lib		compat,atf
+./usr/lib/sparc/libatf-c.so			base-sys-shlib		compat,pic,atf
 ./usr/lib/sparc/libatf-c_g.a			-unknown-		compat,debuglib,atf
 ./usr/lib/sparc/libatf-c_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/sparc/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
@@ -902,6 +904,8 @@
 ./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libbfd.so.12.0.debug			comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libbind9.so.5.7.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
