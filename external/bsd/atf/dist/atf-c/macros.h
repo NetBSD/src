@@ -31,6 +31,7 @@
 #define ATF_C_MACROS_H
 
 #include <atf-c/defs.h>
+#include <atf-c/error.h>
 #include <atf-c/tc.h>
 #include <atf-c/tp.h>
 #include <atf-c/utils.h>
