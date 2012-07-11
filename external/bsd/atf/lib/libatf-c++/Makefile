@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2012/01/16 22:42:40 jmmv Exp $
+# $NetBSD: Makefile,v 1.13 2012/07/11 22:40:16 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -8,7 +8,6 @@ LIB=		atf-c++
 LIBISCXX=	yes
 LDADD=		-L${.OBJDIR}/../libatf-c -latf-c
 DPADD=		${LIBATF_C}
-NOPIC=		# defined; interface is still too unstable
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
@@ -55,7 +54,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
 atf-c++.pc: Makefile atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.15,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.16,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
