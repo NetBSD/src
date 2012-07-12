@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/07/12 10:14:04 wiz Exp $
+#	$NetBSD: Makefile,v 1.5 2012/07/12 12:43:06 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,6 @@ PROG=	xconsole
 
 APPDEFS=XConsole.ad
 
-CPPFLAGS+=-DHAS_OPENPTY
 LDADD+=	-lutil -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBUTIL} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11}
