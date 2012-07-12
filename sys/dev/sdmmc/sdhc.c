@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.19 2012/07/12 17:27:42 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.20 2012/07/12 23:07:06 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.19 2012/07/12 17:27:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.20 2012/07/12 23:07:06 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1016,8 +1016,13 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		int i;
 
 		for (i = 0; i < 4; i++) {
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
 			*p++ = bus_space_read_stream_4(hp->iot, hp->ioh,
 			    SDHC_RESPONSE + i * 4);
+#else
+			*p++ = htole32(bus_space_read_4(hp->iot, hp->ioh,
+			    SDHC_RESPONSE + i * 4));
+#endif
 			if (!ISSET(cmd->c_flags, SCF_RSP_136))
 				break;
 		}
