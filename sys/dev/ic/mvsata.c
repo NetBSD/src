@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.17 2012/07/02 18:15:46 bouyer Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.18 2012/07/12 14:17:03 reinoud Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.17 2012/07/02 18:15:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.18 2012/07/12 14:17:03 reinoud Exp $");
 
 #include "opt_mvsata.h"
 
@@ -792,7 +792,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if ((drvp->drive_type != DRIVET_ATAPI) {
+	if (drvp->drive_type != DRIVET_ATAPI) {
 		DPRINTF(("%s:%d: mvsata_atapi_probe_device:"
 		    " drive %d not present\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, target));
