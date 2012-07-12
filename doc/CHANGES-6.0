@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.154 2012/07/12 19:26:01 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.155 2012/07/12 19:43:15 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6309,4 +6309,9 @@ external/historical/nawk/dist/run.c		patch
 
 	Fix segfault in awk, and address PR#46155.
 	[christos, ticket #414]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86sbusBus.c 1.4
+
+	Fix colors on suncg6.
+	[macallan, ticket #415]
 
