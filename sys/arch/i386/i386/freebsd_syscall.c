@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.38 2012/07/12 17:26:42 dsl Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.39 2012/07/12 18:13:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.38 2012/07/12 17:26:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.39 2012/07/12 18:13:08 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,8 @@ freebsd_syscall(struct trapframe *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+	if (!__predict_false(p->p_trace_enabled)
+	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
 		error = sy_call(callp, l, args, rval);
@@ -142,7 +143,8 @@ freebsd_syscall(struct trapframe *frame)
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(code, rval, error);
 
 	userret(l);
 }
