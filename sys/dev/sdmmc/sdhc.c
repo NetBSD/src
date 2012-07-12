@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.16 2012/07/12 16:46:48 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.17 2012/07/12 16:58:50 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.16 2012/07/12 16:46:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.17 2012/07/12 16:58:50 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -88,6 +88,7 @@ struct sdhc_host {
 };
 
 #define HDEVNAME(hp)	(device_xname((hp)->sc->sc_dev))
+#define HDEVINST(hp)	((int)(((hp)-(hp)->sc->sc_host[0])/sizeof(*(hp))))
 
 static uint8_t
 hread1(struct sdhc_host *hp, bus_size_t reg)
@@ -215,6 +216,20 @@ static struct sdmmc_chip_functions sdhc_functions = {
 	sdhc_card_enable_intr,
 	sdhc_card_intr_ack
 };
+
+static int
+sdhc_cfprint(void *aux, const char *pnp)
+{
+	const struct sdmmcbus_attach_args const * saa = aux;
+	const struct sdhc_host * const hp = saa->saa_sch;
+	
+	if (pnp) {
+		aprint_normal("sdmmc at %s", pnp);
+	}
+	aprint_normal(" slot %d", HDEVINST(hp));
+
+	return UNCONF;
+}
 
 /*
  * Called by attachment driver.  For each SD card slot there is one SD
@@ -390,7 +405,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(hp->flags, SHF_USE_DMA))
 		saa.saa_caps |= SMC_CAPS_DMA;
 #endif
-	hp->sdmmc = config_found(sc->sc_dev, &saa, NULL);
+	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
 
