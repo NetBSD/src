@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.7 2012/03/02 18:20:33 nonaka Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.8 2012/07/12 17:37:24 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.7 2012/03/02 18:20:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.8 2012/07/12 17:37:24 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -118,6 +118,15 @@ static const struct sdhc_pci_quirk {
 		0xffff,
 		0,
 		SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK
+	},
+
+	{
+		PCI_VENDOR_RICOH,
+		PCI_PRODUCT_RICOH_Rx5C822,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_FORCE_DMA
 	},
 };
 
