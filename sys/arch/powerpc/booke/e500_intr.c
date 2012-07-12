@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.16.8.1 2012/06/13 19:41:28 riz Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.16.8.2 2012/07/12 17:15:17 riz Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16.8.1 2012/06/13 19:41:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16.8.2 2012/07/12 17:15:17 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -491,7 +491,8 @@ e500_splx(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(panicstr != NULL || (mfmsr() & PSL_CE));
 
 	if (ipl == old_ipl)
 		return;
@@ -527,7 +528,8 @@ e500_splraise(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(panicstr != NULL || (mfmsr() & PSL_CE));
 
 	if (old_ipl < ipl) {
 		//const
@@ -814,7 +816,8 @@ e500_extintr(struct trapframe *tf)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(panicstr != NULL || (mfmsr() & PSL_CE));
 
 #if 0
 //	printf("%s(%p): idepth=%d enter\n", __func__, tf, ci->ci_idepth);
