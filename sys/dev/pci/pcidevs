@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1118 2012/06/26 19:00:59 drochner Exp $
+$NetBSD: pcidevs,v 1.1119 2012/07/12 09:29:31 kiyohara Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2171,6 +2171,7 @@ product MARVELL 88F6180		0x6180	88F6180 SoC Kirkwood
 product MARVELL 88F6183		0x6183	88F6183 SoC Orion1
 product MARVELL 88F6192		0x6192	88F6192 SoC Kirkwood
 product MARVELL 88F6281		0x6281	88F6281 SoC Kirkwood
+product MARVELL 88F6282		0x6282	88F6282 SoC Kirkwood
 product MARVELL GT64130		0x6320	GT-64130 System Controller
 product MARVELL GT64260		0x6430	GT-64260 System Controller
 product MARVELL MV64360		0x6460	MV6436x System Controller
