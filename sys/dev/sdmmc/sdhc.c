@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.17 2012/07/12 16:58:50 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.18 2012/07/12 17:15:27 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.17 2012/07/12 16:58:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.18 2012/07/12 17:15:27 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -721,6 +721,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 				*divp = SDHC_SDCLK_CGM
 				    | ((div & 0x300) << SDHC_SDCLK_XDIV_SHIFT)
 				    | ((div & 0x0ff) << SDHC_SDCLK_DIV_SHIFT);
+				//freq = hp->clkbase / div;
 				return true;
 			}
 		}
@@ -738,6 +739,7 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 				DPRINTF(2,
 				    ("%s: divisor for freq %u is %u * %u\n",
 				    HDEVNAME(hp), freq, div * 2, dvs + 1));
+				//freq = hp->clkbase / (div * 2) * (dvs + 1);
 				return true;
 			}
 			/*
@@ -745,11 +747,13 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 			 */
 			roundup |= dvs & 1;
 		}
-		panic("%s: can't find divisor for freq %u", HDEVNAME(hp), freq);
+		/* No divisor found. */
+		return false;
 	} else {
 		for (div = 1; div <= 256; div *= 2) {
 			if ((hp->clkbase / div) <= freq) {
 				*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
+				//freq = hp->clkbase / div;
 				return true;
 			}
 		}
