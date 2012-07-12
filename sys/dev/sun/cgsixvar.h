@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.12 2009/02/20 22:55:26 martin Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.13 2012/07/12 01:20:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include "wsdisplay.h"
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 /*
  * color display (cgsix) driver; common definitions.
@@ -71,14 +72,20 @@ struct cgsix_softc {
 	uint32_t sc_stride;
 	uint32_t sc_mono_width;	/* how many monochrome pixels to write */
 	uint32_t sc_ramsize;		/* VRAM size in bytes */
+	int sc_fb_is_open;
 #if NWSDISPLAY > 0	
 	int sc_mode;
 	uint32_t sc_bg;
 	struct vcons_data vd;
 	uint8_t sc_default_cmap[768];
+	glyphcache sc_gc;	
 #endif
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
+
+#define IS_IN_EMUL_MODE(sc) \
+	((sc->sc_fb_is_open == 0) && \
+	 (sc->sc_mode == WSDISPLAYIO_MODE_EMUL))
 
 #ifdef RASTERCONSOLE
 extern int cgsix_use_rasterconsole;

@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.17 2012/04/26 00:50:10 macallan Exp $
+# $NetBSD: files.sun,v 1.18 2012/07/12 01:20:22 macallan Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -75,5 +75,5 @@ file	dev/sun/bwtwo.c			bwtwo needs-flag
 device cgthree: bt_dac, fb, rasops8, wsemuldisplaydev, vcons
 file	dev/sun/cgthree.c		cgthree needs-flag
 
-device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev, vcons
+device cgsix: bt_dac, fb, rasops8, pfour, wsemuldisplaydev, vcons, glyphcache
 file	dev/sun/cgsix.c			cgsix needs-flag
