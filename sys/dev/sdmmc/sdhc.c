@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.18 2012/07/12 17:15:27 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.19 2012/07/12 17:27:42 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.18 2012/07/12 17:15:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.19 2012/07/12 17:27:42 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -296,7 +296,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	caps = HREAD4(hp, SDHC_CAPABILITIES);
 	mutex_exit(&hp->host_mtx);
 
-#if notyet
 	/* Use DMA if the host system and the controller support it. */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA)
 	 || ((ISSET(sc->sc_flags, SDHC_FLAG_USE_DMA)
@@ -304,7 +303,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		SET(hp->flags, SHF_USE_DMA);
 		aprint_normal_dev(sc->sc_dev, "using DMA transfer\n");
 	}
-#endif
 
 	/*
 	 * Determine the base clock frequency. (2.2.24)
@@ -401,10 +399,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
-#if notyet
 	if (ISSET(hp->flags, SHF_USE_DMA))
-		saa.saa_caps |= SMC_CAPS_DMA;
-#endif
+		saa.saa_caps |= SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA;
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
@@ -1037,19 +1033,6 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		sdhc_transfer_data(hp, cmd);
 
 out:
-#if 0
-	if (cmd->c_dmamap != NULL && cmd->c_error == 0
-	    && ISSET(hp->flags, SHF_USE_DMA)
-	    && ISSET(cmd->c_flags, SCF_CMD_READ) {                           
-		if (((uintptr_t)cmd->c_data & PAGE_MASK) + cmd->c_datalen > PAGE_SIZE) {
-			memcpy(cmd->c_data,
-			    (void *)hp->sc->dma_map->dm_segs[0].ds_addr,
-			    cmd->c_datalen);
-		}
-		bus_dmamap_unload(hp->sc->dt, hp->sc->dma_map);
-	}
-#endif
-
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)
 	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_LED_ON)) {
 		mutex_enter(&hp->host_mtx);
@@ -1111,11 +1094,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		mode |= SDHC_AUTO_CMD12_ENABLE;
 	}
 	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0) {
-		if (cmd->c_dmamap->dm_nsegs == 1) {
-			mode |= SDHC_DMA_ENABLE;
-		} else {
-			cmd->c_dmamap = NULL;
-		}
+		mode |= SDHC_DMA_ENABLE;
 	}
 
 	/*
@@ -1146,6 +1125,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	DPRINTF(1,("%s: writing cmd: blksize=%d blkcnt=%d mode=%04x cmd=%04x\n",
 	    HDEVNAME(hp), blksize, blkcount, mode, command));
+
+	blksize |= (MAX(0, PAGE_SHIFT - 12) & SDHC_DMA_BOUNDARY_MASK) <<
+	    SDHC_DMA_BOUNDARY_SHIFT;	/* PAGE_SIZE DMA boundary */
 
 	mutex_enter(&hp->host_mtx);
 
@@ -1212,11 +1194,13 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 static int
 sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
-	bus_dmamap_t dmap = cmd->c_dmamap;
-	uint16_t blklen = cmd->c_blklen;
-	uint16_t blkcnt = cmd->c_datalen / blklen;
-	uint16_t remain;
+	bus_dma_segment_t *dm_segs = cmd->c_dmamap->dm_segs;
+	bus_addr_t posaddr;
+	bus_addr_t segaddr;
+	bus_size_t seglen;
+	u_int seg = 0;
 	int error = 0;
+	int status;
 
 	KASSERT(HREAD2(hp, SDHC_NINTR_STATUS_EN) & SDHC_DMA_INTERRUPT);
 	KASSERT(HREAD2(hp, SDHC_NINTR_SIGNAL_EN) & SDHC_DMA_INTERRUPT);
@@ -1224,31 +1208,40 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	KASSERT(HREAD2(hp, SDHC_NINTR_SIGNAL_EN) & SDHC_TRANSFER_COMPLETE);
 
 	for (;;) {
-		if (!sdhc_wait_intr(hp,
+		status = sdhc_wait_intr(hp,
 		    SDHC_DMA_INTERRUPT|SDHC_TRANSFER_COMPLETE,
-		    SDHC_DMA_TIMEOUT)) {
+		    SDHC_DMA_TIMEOUT);
+
+		if (status & SDHC_TRANSFER_COMPLETE) {
+			break;
+		}
+		if (!status) {
 			error = ETIMEDOUT;
 			break;
 		}
+		if ((status & SDHC_DMA_INTERRUPT) == 0) {
+			continue;
+		}
 
-		/* single block mode */
-		if (blkcnt == 1)
+		/* DMA Interrupt (boundary crossing) */
+
+		segaddr = dm_segs[seg].ds_addr;
+		seglen = dm_segs[seg].ds_len;
+		mutex_enter(&hp->host_mtx);
+		posaddr = HREAD4(hp, SDHC_DMA_ADDR);
+		mutex_exit(&hp->host_mtx);
+
+		if ((seg == (cmd->c_dmamap->dm_nsegs-1)) && (posaddr == (segaddr + seglen))) {
 			break;
-
-		/* multi block mode */
-		remain = HREAD2(hp, SDHC_BLOCK_COUNT);
-		if (remain == 0)
-			break;
-
-		HWRITE4(hp, SDHC_DMA_ADDR,
-		    dmap->dm_segs[0].ds_addr + (blkcnt - remain) * blklen);
+		}
+		mutex_enter(&hp->host_mtx);
+		if ((posaddr >= segaddr) && (posaddr < (segaddr + seglen)))
+			HWRITE4(hp, SDHC_DMA_ADDR, posaddr);
+		else if ((posaddr >= segaddr) && (posaddr == (segaddr + seglen)) && (seg + 1) < cmd->c_dmamap->dm_nsegs)
+			HWRITE4(hp, SDHC_DMA_ADDR, dm_segs[++seg].ds_addr);
+		mutex_exit(&hp->host_mtx);
+		KASSERT(seg < cmd->c_dmamap->dm_nsegs);
 	}
-
-#if 0
-	if (error == 0 && !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE,
-	    SDHC_TRANSFER_TIMEOUT))
-		error = ETIMEDOUT;
-#endif
 
 	return error;
 }
