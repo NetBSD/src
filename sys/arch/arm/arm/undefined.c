@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.43 2011/11/16 16:59:47 he Exp $	*/
+/*	$NetBSD: undefined.c,v 1.44 2012/07/12 17:20:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.43 2011/11/16 16:59:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.44 2012/07/12 17:20:20 matt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -122,6 +122,10 @@ remove_coproc_handler(void *cookie)
 	free(uh, M_TEMP);
 }
 
+static struct evcnt cp15_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "cpu0", "undefined cp15 insn traps");
+EVCNT_ATTACH_STATIC(cp15_ev);
+
 static int
 cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
@@ -151,7 +155,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 	 */
 	if ((insn & 0xffff0fff) == 0xee1d0f70) {
 		*regp = (uintptr_t)l->l_private;
-		frame->tf_pc += INSN_SIZE;
+		cp15_ev.ev_count++;
 		return 0;
 	}
 
@@ -165,6 +169,7 @@ cp15_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 		else
 			pcb->pcb_user_pid_rw = *regp;
 		frame->tf_pc += INSN_SIZE;
+		cp15_ev.ev_count++;
 		return 0;
 	}
 
@@ -235,6 +240,10 @@ undefined_init(void)
 #endif
 }
 
+static struct evcnt und_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "cpu0", "undefined insn traps");
+EVCNT_ATTACH_STATIC(und_ev);
+
 void
 undefinedinstruction(trapframe_t *frame)
 {
@@ -248,6 +257,8 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef VERBOSE_ARM32
 	int s;
 #endif
+
+	und_ev.ev_count++;
 
 	/* Enable interrupts if they were enabled before the exception. */
 #ifdef acorn26
