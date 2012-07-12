@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.3 2010/08/28 13:02:32 ahoka Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.4 2012/07/12 03:28:45 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -531,5 +531,16 @@
 #define GPIO_SETWKUENA			0x084
 #define GPIO_CLEARDATAOUT		0x090
 #define GPIO_SETDATAOUT			0x094
+
+/*
+ * USB Host
+ */
+#define	OHCI1_BASE_3530			0x48064400
+#deifne	EHCI1_BASE_3530			0x48064800
+
+#define	OHCI1_BASE_4430			OHCI1_BASE_3530
+#deifne	EHCI1_BASE_4430			EHCI1_BASE_3530
+
+#define	OHCI2_BASE_4430			0x4A0A9000
 
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */
