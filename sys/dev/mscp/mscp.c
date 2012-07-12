@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.34 2009/05/12 14:37:59 cegger Exp $	*/
+/*	$NetBSD: mscp.c,v 1.34.18.1 2012/07/12 17:17:27 riz Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.34 2009/05/12 14:37:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.34.18.1 2012/07/12 17:17:27 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -173,7 +173,8 @@ mscp_dorsp(struct mscp_softc *mi)
 	struct mscp_xi *mxi;
 	int nextrsp;
 	int st, error;
-	extern struct mscp slavereply;
+	extern struct mscp mscp_cold_reply;
+	extern int mscp_cold_unit;
 
 	nextrsp = mi->mi_rsp.mri_next;
 loop:
@@ -287,8 +288,12 @@ loop:
 		 * to set it up, otherwise it's just a "normal" unit
 		 * status.
 		 */
-		if (cold)
-			memcpy(&slavereply, mp, sizeof(struct mscp));
+		if (cold) {
+			memcpy(&mscp_cold_reply, mp, sizeof(struct mscp));
+			/* Detect that we've reached the end of all units */
+			if (mp->mscp_unit < mscp_cold_unit)
+				break;
+		}
 
 		if (mp->mscp_status == (M_ST_OFFLINE|M_OFFLINE_UNKNOWN))
 			break;
