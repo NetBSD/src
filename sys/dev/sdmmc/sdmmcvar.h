@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.13 2012/07/11 18:21:27 jakllsch Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.14 2012/07/12 15:59:32 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ struct sdmmc_softc {
 	sdmmc_chipset_handle_t sc_sch;	/* host controller chipset handle */
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmap;
-#define	SDMMC_MAXNSEGS		17	/* (MAXPHYS / PAGE_SIZE) + 1 */
+#define	SDMMC_MAXNSEGS		((MAXPHYS / PAGE_SIZE) + 1)
 
 	struct kmutex sc_mtx;		/* lock around host controller */
 	int sc_dying;			/* bus driver is shutting down */
