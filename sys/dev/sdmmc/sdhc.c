@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.13 2012/03/15 18:37:43 bouyer Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.14 2012/07/12 03:05:49 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.13 2012/03/15 18:37:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.14 2012/07/12 03:05:49 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1031,7 +1031,8 @@ out:
 	}
 #endif
 
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)
+	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_LED_ON)) {
 		mutex_enter(&hp->host_mtx);
 		/* Turn off the LED. */
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
