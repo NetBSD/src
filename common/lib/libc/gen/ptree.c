@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $ */
+/*	$NetBSD: ptree.c,v 1.5.8.1 2012/07/12 18:35:10 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5.8.1 2012/07/12 18:35:10 riz Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.5 2009/06/07 03:12:40 yamt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.5.8.1 2012/07/12 18:35:10 riz Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -124,8 +124,8 @@ ptree_matchnode(const pt_tree_t *pt, const pt_node_t *target,
 	pt_bitoff_t *bitoff_p, pt_slot_t *slots_p)
 {
 	return (*pt->pt_ops->ptto_matchnode)(NODETOKEY(pt, target),
-	    (ptn != NULL ? NODETOKEY(pt, ptn) : NULL), max_bitoff,
-	    bitoff_p, slots_p);
+	    (ptn != NULL ? NODETOKEY(pt, ptn) : NULL),
+	    max_bitoff, bitoff_p, slots_p, pt->pt_context);
 }
 
 static inline pt_slot_t
@@ -136,8 +136,7 @@ ptree_testnode(const pt_tree_t *pt, const pt_node_t *target,
 	if (bitlen == 0)
 		return PT_SLOT_ROOT;
 	return (*pt->pt_ops->ptto_testnode)(NODETOKEY(pt, target),
-	     PTN_BRANCH_BITOFF(ptn),
-	     bitlen);
+	    PTN_BRANCH_BITOFF(ptn), bitlen, pt->pt_context);
 }
 
 static inline bool
@@ -145,15 +144,14 @@ ptree_matchkey(const pt_tree_t *pt, const void *key,
 	const pt_node_t *ptn, pt_bitoff_t bitoff, pt_bitlen_t bitlen)
 {
 	return (*pt->pt_ops->ptto_matchkey)(key, NODETOKEY(pt, ptn),
-	    bitoff, bitlen);
+	    bitoff, bitlen, pt->pt_context);
 }
 
 static inline pt_slot_t
 ptree_testkey(const pt_tree_t *pt, const void *key, const pt_node_t *ptn)
 {
-	return (*pt->pt_ops->ptto_testkey)(key,
-	    PTN_BRANCH_BITOFF(ptn),
-	    PTN_BRANCH_BITLEN(ptn));
+	return (*pt->pt_ops->ptto_testkey)(key, PTN_BRANCH_BITOFF(ptn),
+	    PTN_BRANCH_BITLEN(ptn), pt->pt_context);
 }
 
 static inline void
@@ -166,12 +164,13 @@ ptree_set_position(uintptr_t node, pt_slot_t position)
 }
 
 void
-ptree_init(pt_tree_t *pt, const pt_tree_ops_t *ops, size_t node_offset,
-	size_t key_offset)
+ptree_init(pt_tree_t *pt, const pt_tree_ops_t *ops, void *context,
+	size_t node_offset, size_t key_offset)
 {
 	memset(pt, 0, sizeof(*pt));
 	pt->pt_node_offset = node_offset;
 	pt->pt_key_offset = key_offset;
+	pt->pt_context = context;
 	pt->pt_ops = ops;
 }
 
