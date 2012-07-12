@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.45 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.46 2012/07/12 17:26:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.45 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.46 2012/07/12 17:26:42 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -53,18 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.45 2009/11/21 03:11:00 rmind Exp 
 #include <compat/svr4/svr4_syscall.h>
 #include <machine/svr4_machdep.h>
 
-void svr4_syscall_plain(struct trapframe *);
-void svr4_syscall_fancy(struct trapframe *);
+void svr4_syscall(struct trapframe *);
 extern struct sysent svr4_sysent[];
 
 void
 svr4_syscall_intern(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = svr4_syscall_fancy;
-	else
-		p->p_md.md_syscall = svr4_syscall_plain;
+	p->p_md.md_syscall = svr4_syscall;
 }
 
 /*
@@ -73,83 +69,7 @@ svr4_syscall_intern(struct proc *p)
  * Like trap(), argument is call by reference.
  */
 void
-svr4_syscall_plain(struct trapframe *frame)
-{
-	char *params;
-	const struct sysent *callp;
-	struct lwp *l;
-	int error;
-	size_t argsize;
-	register_t code, args[8], rval[2];
-
-	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
-
-	code = frame->tf_eax;
-	callp = svr4_sysent;
-	params = (char *)frame->tf_esp + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = fuword(params);
-		params += sizeof(int);
-		break;
-	default:
-		break;
-	}
-
-	code &= (SVR4_SYS_NSYSENT - 1);
-	callp += code;
-	argsize = callp->sy_argsize;
-	if (argsize) {
-		error = copyin(params, (void *)args, argsize);
-		if (error)
-			goto bad;
-	}
-
-	rval[0] = 0;
-	rval[1] = 0;
-
-	error = sy_call(callp, l, args, rval);
-
-	switch (error) {
-	case 0:
-		frame->tf_eax = rval[0];
-		frame->tf_edx = rval[1];
-		frame->tf_eflags &= ~PSL_C;	/* carry bit */
-		break;
-	case ERESTART:
-		/*
-		 * The offset to adjust the PC by depends on whether we entered
-		 * the kernel through the trap or call gate.  We pushed the
-		 * size of the instruction into tf_err on entry.
-		 */
-		frame->tf_eip -= frame->tf_err;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		error = native_to_svr4_errno[error];
-		frame->tf_eax = error;
-		frame->tf_eflags |= PSL_C;	/* carry bit */
-		break;
-	}
-
-	userret(l);
-}
-
-/*
- * syscall(frame):
- *	System call request from POSIX system call gate interface to kernel.
- * Like trap(), argument is call by reference.
- */
-void
-svr4_syscall_fancy(struct trapframe *frame)
+svr4_syscall(struct trapframe *frame)
 {
 	char *params;
 	const struct sysent *callp;
