@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.152 2012/07/06 13:07:25 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.153 2012/07/12 19:13:41 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6261,4 +6261,43 @@ sys/arch/mips/mips/pmap_segtab.c		1.5
 
 	Change MIPS segtab management to look more like the common pmap.
 	[matt, ticket #406]
+
+sys/arch/vax/include/cpu.h			1.94
+
+	Allow simh to detect the VAX idle loop.
+	[abs, ticket #407]
+
+sys/kern/uipc_socket.c				1.211
+
+	Fix a crash that can happen transferring large blocks over a
+	network.  PR#43240.
+	[chs, ticket #408]
+
+sys/arch/powerpc/booke/e500_intr.c		1.18
+
+	Handle a watchdog timeout properly for PPC BookE e500.
+	[matt, ticket #409]
+
+sys/dev/mscp/mscp.c				1.35
+sys/dev/mscp/mscp.h				1.9
+sys/dev/mscp/mscp_subr.c			1.43
+
+	Fix MSCP handling to work on real hardware.
+	[abs, ticket #410]
+
+gnu/dist/gcc4/gcc/config/vax/builtins.md	1.3
+
+	Fix a vax bug in builtin FFS.  PR#46677.
+	[ragge, ticket #411]
+
+sys/dev/mscp/mscp_disk.c			1.75
+
+	Avoid a warning, to fix vax build.
+	[abs, ticket #412]
+
+common/lib/libc/gen/ptree.c			1.6
+sys/sys/ptree.h					1.6
+
+	Add a context argument to ptree_init().
+	[rmind, ticket #413]
 
