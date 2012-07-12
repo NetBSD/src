@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.15 2012/07/12 16:32:34 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.16 2012/07/12 16:46:48 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.15 2012/07/12 16:32:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.16 2012/07/12 16:46:48 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -997,14 +997,14 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 */
 	mutex_enter(&hp->host_mtx);
 	if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
-		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
-			uint8_t *p = (uint8_t *)cmd->c_resp;
-			int i;
+		uint32_t *p = cmd->c_resp;
+		int i;
 
-			for (i = 0; i < 15; i++)
-				*p++ = HREAD1(hp, SDHC_RESPONSE + i);
-		} else {
-			cmd->c_resp[0] = HREAD4(hp, SDHC_RESPONSE);
+		for (i = 0; i < 4; i++) {
+			*p++ = bus_space_read_stream_4(hp->iot, hp->ioh,
+			    SDHC_RESPONSE + i * 4);
+			if (!ISSET(cmd->c_flags, SCF_RSP_136))
+				break;
 		}
 	}
 	mutex_exit(&hp->host_mtx);
