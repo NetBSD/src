@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.184 2012/05/27 02:19:50 matt Exp $
+#	$NetBSD: Makefile,v 1.185 2012/07/12 19:11:06 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -52,10 +52,6 @@ SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
 
 SUBDIR+=	../external/bsd/am-utils/lib
-
-.if (${MKATF} != "no")
-SUBDIR+=	../external/bsd/atf/lib
-.endif
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
@@ -143,6 +139,10 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+.if (${MKATF} != "no")
+SUBDIR+=	../external/bsd/atf/lib	# depends on libstdc++ and libm
+.endif
 
 SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
