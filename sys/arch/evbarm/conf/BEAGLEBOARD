@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.27 2012/06/05 08:44:09 abs Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.28 2012/07/12 03:48:54 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -166,7 +166,8 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=256
+#options 	MEMSIZE=256
+options 	MEMSIZE=128
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -180,6 +181,14 @@ obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
 
+# SDHC controllers
+sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
+#sdhc1		at obio0 addr 0x480B4000 size 0x0400 intr 86
+#sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+
+
 # NAND controller
 omapnand0	at gpmc? addr 0x30000000
 
@@ -190,11 +199,11 @@ nand0		at nandbus?
 options NAND_BBT
 
 # Define flash partitions for board
-flash0		at nand0 offset 0x0 size 0x80000 readonly 1
-flash1		at nand0 offset 0x80000 size 0x80000 readonly 1
-flash2		at nand0 offset 0x260000 size 0x20000
-flash3		at nand0 offset 0x280000 size 0x400000
-flash4		at nand0 offset 0x680000 size 0x0
+flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
+flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
+flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
+flash3		at nand0 offset 0x280000 size 0x400000		# kernel
+flash4		at nand0 offset 0x680000 size 0			# filesystem
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
@@ -235,7 +244,7 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
 # onboard video
-omapfb*		at obio0 addr 0x48050000 size 0x10000
+omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
