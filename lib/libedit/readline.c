@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.104 2012/06/05 00:30:22 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.105 2012/07/12 18:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.104 2012/06/05 00:30:22 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.105 2012/07/12 18:46:20 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2266,4 +2266,9 @@ int
 rl_on_new_line(void)
 {
 	return 0;
+}
+
+void
+rl_free_line_state(void)
+{
 }
