@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2012
+.Dd June 7, 2012
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -102,8 +102,18 @@ is also an implementation of the BOOTP client specified in
 .Pp
 .Nm
 is also an implementation of an IPv6 Router Solicitor as specified in
-.Li RFC 6106
-with regard to the RDNSS and DNSSL options.
+.Li RFC 4861
+and
+.Li RFC 6106 .
+.Nm
+can optionally handle address and route management itself,
+and will do so by default if Router Solicitation is disabled in the kernel.
+If
+.Nm
+is managing routes,
+.Nm
+sends Neighbor Solicitions to each advertising router periodically and will
+expire the ones that do not respond.
 .Ss Local Link configuration
 If
 .Nm
@@ -274,8 +284,12 @@ Override the
 .Ar vendorclassid
 field sent.
 The default is
-dhcpcd <version>.
+dhcpcd-<version>:<os>:<machine>:<platform>.
+For example
+.D1 dhcpcd-5.5.6:NetBSD-6.99.5:i386:i386
 If not set then none is sent.
+Some badly configured DHCP servers reject unknown vendorclassids.
+To work around it, try and impersonate Windows by using the MSFT vendorclassid.
 .It Fl k , Fl Fl release
 This causes an existing
 .Nm
@@ -578,7 +592,8 @@ running on the
 .Xr resolvconf 8
 .Sh STANDARDS
 RFC 951, RFC 1534, RFC 2131, RFC 2132, RFC 2855, RFC 3004, RFC 3361, RFC 3396,
-RFC 3397, RFC 3442, RFC 3927, RFC 4361, RFC 4390, RFC 4702, RFC 5969, RFC 6106.
+RFC 3397, RFC 3442, RFC 3927, RFC 4361, RFC 4390, RFC 4702, RFC 4861, RFC 5969,
+RFC 6106.
 .Sh AUTHORS
 .An Roy Marples Aq roy@marples.name
 .Sh BUGS
