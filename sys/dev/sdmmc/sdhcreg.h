@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.6 2012/03/02 18:20:34 nonaka Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.7 2012/07/12 16:34:30 jakllsch Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -23,6 +23,8 @@
 /* Host standard register set */
 #define SDHC_DMA_ADDR			0x00
 #define SDHC_BLOCK_SIZE			0x04
+#define  SDHC_DMA_BOUNDARY_SHIFT	12
+#define  SDHC_DMA_BOUNDARY_MASK		0x7
 #define SDHC_BLOCK_COUNT		0x06
 #define  SDHC_BLOCK_COUNT_MAX		512
 #define SDHC_ARGUMENT			0x08
