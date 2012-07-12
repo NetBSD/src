@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.47 2012/07/12 17:26:42 dsl Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.48 2012/07/12 18:13:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.47 2012/07/12 17:26:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.48 2012/07/12 18:13:08 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -75,12 +75,14 @@ ibcs2_syscall(struct trapframe *frame)
 	char * params;
 	const struct sysent *callp;
 	struct lwp *l;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
+	p = l->l_proc;
+	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
 	if (IBCS2_HIGH_SYSCALL(code))
@@ -109,7 +111,8 @@ ibcs2_syscall(struct trapframe *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+	if (!__predict_false(p->p_trace_enabled)
+	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 		error = sy_call(callp, l, args, rval);
@@ -140,7 +143,8 @@ ibcs2_syscall(struct trapframe *frame)
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(code, rval, error);
 
 	userret(l);
 }
