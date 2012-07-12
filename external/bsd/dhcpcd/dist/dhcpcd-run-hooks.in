@@ -16,6 +16,9 @@ signature_base_end="# End of dhcpcd"
 signature_end="$signature_base_end $from $ifname"
 state_dir=/var/run/dhcpcd
 
+: ${if_up:=false}
+: ${if_down:=false}
+
 # Ensure that all arguments are unique
 uniqify()
 {
