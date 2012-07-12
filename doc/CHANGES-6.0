@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.153 2012/07/12 19:13:41 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.154 2012/07/12 19:26:01 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6300,4 +6300,13 @@ sys/sys/ptree.h					1.6
 
 	Add a context argument to ptree_init().
 	[rmind, ticket #413]
+
+external/historical/nawk/dist/main.c		patch
+external/historical/nawk/dist/b.c		patch
+external/historical/nawk/dist/lib.c		patch
+external/historical/nawk/dist/proto.h		patch
+external/historical/nawk/dist/run.c		patch
+
+	Fix segfault in awk, and address PR#46155.
+	[christos, ticket #414]
 
