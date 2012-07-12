@@ -272,6 +272,9 @@ valid_length(uint8_t option, int dl, int *type)
 		    opt->type & (STRING | RFC3442 | RFC5969))
 			return 0;
 
+		if (opt->type & IPV4 && opt->type & ARRAY)
+			return (dl % sizeof(uint32_t) == 0 ? 0 : -1);
+
 		sz = 0;
 		if (opt->type & (UINT32 | IPV4))
 			sz = sizeof(uint32_t);
@@ -279,9 +282,8 @@ valid_length(uint8_t option, int dl, int *type)
 			sz = sizeof(uint16_t);
 		if (opt->type & UINT8)
 			sz = sizeof(uint8_t);
-		if (opt->type & (IPV4 | ARRAY))
-			return dl % sz;
-		return (dl == sz ? 0 : -1);
+		/* If we don't know the size, assume it's valid */
+		return (sz == 0 || dl == sz ? 0 : -1);
 	}
 
 	/* unknown option, so let it pass */
@@ -1361,7 +1363,6 @@ ssize_t
 configure_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
     const struct if_options *ifo)
 {
-	unsigned int i;
 	const uint8_t *p;
 	int pl;
 	struct in_addr addr;
@@ -1404,7 +1405,6 @@ configure_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 			net.s_addr = get_netmask(addr.s_addr);
 			setvar(&ep, prefix, "subnet_mask", inet_ntoa(net));
 		}
-		i = inet_ntocidr(net);
 		snprintf(cidr, sizeof(cidr), "%d", inet_ntocidr(net));
 		setvar(&ep, prefix, "subnet_cidr", cidr);
 		if (get_option_addr(&brd, dhcp, DHO_BROADCAST) == -1) {

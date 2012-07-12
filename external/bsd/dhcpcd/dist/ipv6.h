@@ -1,7 +1,8 @@
-/*
+/* 
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
- *
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -24,29 +25,52 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef IPV6_H
+#define IPV6_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.6.1"
+#include <sys/queue.h>
 
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
-#endif
+#include <netinet/in.h>
+
+#include "ipv6rs.h"
+
+#define ALLROUTERS "ff02::2"
+#define HOPLIMIT 255
+
+#define ROUNDUP8(a) (1 + (((a) - 1) | 7))
+
+struct ipv6_addr {
+	TAILQ_ENTRY(ipv6_addr) next;
+	struct in6_addr prefix;
+	int prefix_len;
+	uint32_t prefix_vltime;
+	uint32_t prefix_pltime;
+	struct in6_addr addr;
+	int new;
+	char saddr[INET6_ADDRSTRLEN];
+};
+
+struct rt6 {
+	TAILQ_ENTRY(rt6) next;
+	struct in6_addr dest;
+	struct in6_addr net;
+	struct in6_addr gate;
+	const struct interface *iface;
+	struct ra *ra;
+	int metric;
+	unsigned int mtu;
+};
+TAILQ_HEAD(rt6head, rt6);
+
+extern int socket_afnet6;
+
+int ipv6_open(void);
+struct in6_addr *ipv6_linklocal(const char *);
+int ipv6_makeaddr(struct in6_addr *, const char *, const struct in6_addr *, int);
+int ipv6_mask(struct in6_addr *, int);
+int ipv6_prefixlen(const struct in6_addr *);
+int ipv6_remove_subnet(struct ra *, struct ipv6_addr *);
+void ipv6_build_routes(void);
+void ipv6_drop(struct interface *);
 
 #endif
