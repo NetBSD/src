@@ -41,6 +41,17 @@
 #include "config.h"
 #include "dhcp.h"
 #include "dhcpcd.h"
+#include "ipv6.h"
+
+/* Some systems have route metrics */
+#ifndef HAVE_ROUTE_METRIC
+# ifdef __linux__
+#  define HAVE_ROUTE_METRIC 1
+# endif
+# ifndef HAVE_ROUTE_METRIC
+#  define HAVE_ROUTE_METRIC 0
+# endif
+#endif
 
 #ifndef DUID_LEN
 #  define DUID_LEN			128 + 2
@@ -58,7 +69,6 @@
 #ifndef ARPHRD_INFINIBAND
 #  define ARPHRD_INFINIBAND		32
 #endif
-
 
 /* Work out if we have a private address or not
  * 10/8
@@ -96,7 +106,6 @@ char *hwaddr_ntoa(const unsigned char *, size_t);
 size_t hwaddr_aton(unsigned char *, const char *);
 
 int getifssid(const char *, char *);
-struct interface *init_interface(const char *);
 struct interface *discover_interfaces(int, char * const *);
 void free_interface(struct interface *);
 int do_mtu(const char *, short int);
@@ -130,6 +139,16 @@ int if_route(const struct rt *rt, int);
 #define del_route(rt) if_route(rt, -1)
 #define del_src_route(rt) if_route(rt, -2);
 void free_routes(struct rt *);
+
+int if_address6(const struct interface *, const struct ipv6_addr *, int);
+#define add_address6(ifp, a) if_address6(ifp, a, 1)
+#define del_address6(ifp, a) if_address6(ifp, a, -1)
+
+int if_route6(const struct rt6 *rt, int);
+#define add_route6(rt) if_route6(rt, 1)
+#define change_route6(rt) if_route6(rt, 0)
+#define del_route6(rt) if_route6(rt, -1)
+#define del_src_route6(rt) if_route6(rt, -2);
 
 int open_udp_socket(struct interface *);
 extern const size_t udp_dhcp_len;

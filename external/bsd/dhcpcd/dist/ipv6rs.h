@@ -28,10 +28,52 @@
 #ifndef IPV6RS_H
 #define IPV6RS_H
 
+#include <sys/queue.h>
+
+#include <time.h>
+
+#include "dhcpcd.h"
+#include "ipv6.h"
+
+struct ra_opt {
+	TAILQ_ENTRY(ra_opt) next;
+	uint8_t type;
+	struct timeval expire;
+	char *option;
+};
+
+struct ra {
+	TAILQ_ENTRY(ra) next;
+	struct interface *iface;
+	struct in6_addr from;
+	char sfrom[INET6_ADDRSTRLEN];
+	unsigned char *data;
+	ssize_t data_len;
+	struct timeval received;
+	unsigned char flags;
+	uint32_t lifetime;
+	uint32_t mtu;
+	TAILQ_HEAD(, ipv6_addr) addrs;
+	TAILQ_HEAD(, ra_opt) options;
+	
+	unsigned char *ns;
+	size_t nslen;
+	int nsprobes;
+
+	int expired;
+};
+
+extern TAILQ_HEAD(rahead, ra) ipv6_routers;
+
 int ipv6rs_open(void);
 void ipv6rs_handledata(void *);
 int ipv6rs_start(struct interface *);
 ssize_t ipv6rs_env(char **, const char *, const struct interface *);
-void ipv6rs_free(struct interface *ifp);
+void ipv6rs_freedrop_ra(struct ra *, int);
+#define ipv6rs_free_ra(ra) ipv6rs_freedrop_ra((ra),  0)
+#define ipv6rs_drop_ra(ra) ipv6rs_freedrop_ra((ra),  1)
+ssize_t ipv6rs_free(struct interface *);
 void ipv6rs_expire(void *arg);
+int ipv6rs_has_ra(const struct interface *);
+void ipv6rs_drop(struct interface *);
 #endif

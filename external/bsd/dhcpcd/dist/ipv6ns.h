@@ -1,7 +1,8 @@
-/*
+/* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
- *
+ * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -24,29 +25,18 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef IPV6NS_H
+#define IPV6NS_H
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.6.1"
+#include "dhcpcd.h"
+#include "ipv6rs.h"
 
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
-#endif
+#define REACHABLE_TIME		30 	/* seconds */
+#define RETRANS_TIMER		1  	/* second */
+#define DELAY_FIRST_PROBE_TIME	5	/* seconds */
 
+int ipv6ns_open(void);
+void ipv6ns_unreachable(void *);
+void ipv6ns_sendprobe(void *);
+void ipv6ns_handledata(void *);
 #endif
