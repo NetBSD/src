@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.9 2012/07/12 17:23:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -40,16 +40,20 @@ __BEGIN_DECLS
 static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
-#ifdef _ARM_ARCH_6
-	__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
-#else
 	uint32_t t1;
+
+#ifdef _ARM_ARCH_6
+	if (!__builtin_constant_p(v)) {
+		__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
+		return v;
+	}
+#endif
 
 	t1 = v ^ ((v << 16) | (v >> 16));
 	t1 &= 0xff00ffffU;
 	v = (v >> 8) | (v << 24);
 	v ^= (t1 >> 8);
-#endif
+
 	return (v);
 }
 
@@ -59,18 +63,23 @@ __byte_swap_u16_variable(uint16_t v)
 {
 
 #ifdef _ARM_ARCH_6
-	__asm("rev16\t%0, %1" : "=r" (v) : "0" (v));
+	if (!__builtin_constant_p(v)) {
+		__asm("rev16\t%0, %1" : "=r" (v) : "0" (v));
+		return v;
+	}
 #elif !defined(__thumb__)
-	__asm volatile(
-		"mov	%0, %1, ror #8\n"
-		"orr	%0, %0, %0, lsr #16\n"
-		"bic	%0, %0, %0, lsl #16"
-	: "=r" (v)
-	: "0" (v));
-#else
+	if (!__builtin_constant_p(v)) {
+		__asm volatile(
+			"mov	%0, %1, ror #8\n"
+			"orr	%0, %0, %0, lsr #16\n"
+			"bic	%0, %0, %0, lsl #16"
+		: "=&r" (v)
+		: "0" (v));
+		return (v);
+	}
+#endif
 	v &= 0xffff;
 	v = (v >> 8) | (v << 8);
-#endif
 
 	return (v);
 }
