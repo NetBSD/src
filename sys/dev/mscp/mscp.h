@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.h,v 1.8 2005/12/11 12:22:47 christos Exp $	*/
+/*	$NetBSD: mscp.h,v 1.8.116.1 2012/07/12 17:17:26 riz Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -39,6 +39,8 @@
  * I WISH I KNEW WHAT MORE OF THESE WERE.  IT SURE WOULD BE NICE
  * IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
  */
+
+#define MSCP_MAX_UNIT	4095
 
 /*
  * Control message opcodes
