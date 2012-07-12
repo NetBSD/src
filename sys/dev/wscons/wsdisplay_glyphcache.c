@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.2 2012/04/19 08:46:17 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.3 2012/07/12 01:21:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -47,6 +47,7 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	gc->gc_cellheight = cellheight;
 	gc->gc_firstline = first;
 	gc->gc_cellsperline = width / cellwidth;
+	if (lines < 0) lines = 0;
 	cache_lines = lines / cellheight;
 	gc->gc_numcells = cache_lines * gc->gc_cellsperline;
 	if (gc->gc_numcells > 256)
