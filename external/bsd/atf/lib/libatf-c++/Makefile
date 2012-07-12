@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2012/07/12 16:15:40 christos Exp $
+# $NetBSD: Makefile,v 1.15 2012/07/12 22:15:29 christos Exp $
 
 NOLINT=		# defined
 
@@ -7,7 +7,10 @@ NOLINT=		# defined
 LIB=		atf-c++
 LIBISCXX=	yes
 
-LIBDPLIBS+=     atf-c      ${.CURDIR}/../libatf-c
+LIBDPLIBS+=     atf-c	${.CURDIR}/../libatf-c
+LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/gcc/lib/libstdc++-v3
+LIBDPLIBS+=     m	${.CURDIR}/../../../../../lib/libm
+
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
