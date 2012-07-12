@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2011/04/14 16:05:59 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4 2012/07/12 17:14:39 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3 2011/04/14 16:05:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2012/07/12 17:14:39 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,7 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 		} else if (!strcmp(name, "trap")) {
 			*is_trap = TRAP;
 			narg = 0;
-		} else if (!strcmp(name, "syscall_plain") ||
-		           !strcmp(name, "syscall_fancy")) {
+		} else if (!strcmp(name, "syscall")) {
 			*is_trap = SYSCALL;
 			narg = 0;
 		} else if (name[0] == 'X') {
