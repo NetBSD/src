@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.12 2012/02/01 22:34:42 matt Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.13 2012/07/12 16:01:53 jakllsch Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.12 2012/02/01 22:34:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.13 2012/07/12 16:01:53 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -192,6 +192,12 @@ sdmmc_detach(device_t self, int flags)
 	error = config_detach_children(self, flags);
 	if (error)
 		return error;
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
+	}
+
 	return 0;
 }
 
