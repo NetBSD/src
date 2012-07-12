@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.6 2012/02/01 23:03:30 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.7 2012/07/12 03:05:49 matt Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -43,6 +43,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_ENHANCED	0x0020	/* Freescale ESDHC */
 #define	SDHC_FLAG_8BIT_MODE	0x0040	/* MMC 8bit mode is supported */
 #define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
+#define	SDHC_FLAG_NO_LED_ON	0x0100	/* LED_ON unsupported in HOST_CTL */
 	uint32_t		sc_clkbase;
 };
 
