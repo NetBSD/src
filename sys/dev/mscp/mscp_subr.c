@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.41.18.1 2012/07/04 20:41:47 jdc Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.41.18.2 2012/07/12 17:17:27 riz Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.18.1 2012/07/04 20:41:47 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.18.2 2012/07/12 17:17:27 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,8 @@ CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
 #define	WRITE_IP(x)	bus_space_write_2(mi->mi_iot, mi->mi_iph, 0, (x))
 #define	WRITE_SW(x)	bus_space_write_2(mi->mi_iot, mi->mi_swh, 0, (x))
 
-struct	mscp slavereply;
+struct	mscp mscp_cold_reply;
+int	     mscp_cold_unit;
 
 #define NITEMS		4
 
@@ -178,7 +179,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
-	int	timeout, error, next = 0;
+	int	timeout, error, unit;
 
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
@@ -263,96 +264,101 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	 * Go out and search for sub-units on this MSCP bus,
 	 * and call config_found for each found.
 	 */
-findunit:
-	mp = mscp_getcp(mi, MSCP_DONTWAIT);
-	if (mp == NULL)
-		panic("mscpattach: no packets");
-	mp->mscp_opcode = M_OP_GETUNITST;
-	mp->mscp_unit = next;
-	mp->mscp_modifier = M_GUM_NEXTUNIT;
-	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-	slavereply.mscp_opcode = 0;
+	for (unit = 0; unit <= MSCP_MAX_UNIT; ++unit) {
+		mp = mscp_getcp(mi, MSCP_DONTWAIT);
+		if (mp == NULL)
+			panic("mscpattach: no packets");
+		mp->mscp_opcode = M_OP_GETUNITST;
+		mp->mscp_unit = unit;
+		mp->mscp_modifier = M_GUM_NEXTUNIT;
+		*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
+		mscp_cold_reply.mscp_opcode = 0;
+		mscp_cold_unit = mp->mscp_unit;
 
-	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
-	mp = &slavereply;
-	timeout = 1000;
-	while (timeout-- > 0) {
-		DELAY(10000);
-		if (mp->mscp_opcode)
-			goto gotit;
-	}
-	printf("%s: no response to Get Unit Status request\n",
-	    device_xname(&mi->mi_dev));
-	return;
+		i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
+		mp = &mscp_cold_reply;
+		timeout = 1000;
 
-gotit:	/*
-	 * Got a slave response.  If the unit is there, use it.
-	 */
-	switch (mp->mscp_status & M_ST_MASK) {
+		while (!mp->mscp_opcode) {
+			if ( --timeout == 0) {
+				printf("%s: no Get Unit Status response\n",
+				    device_xname(&mi->mi_dev));
+				return;
+			}
+			DELAY(10000);
+		}
 
-	case M_ST_SUCCESS:	/* worked */
-	case M_ST_AVAILABLE:	/* found another drive */
-		break;		/* use it */
-
-	case M_ST_OFFLINE:
 		/*
-		 * Figure out why it is off line.  It may be because
-		 * it is nonexistent, or because it is spun down, or
-		 * for some other reason.
+		 * Got a slave response.  If the unit is there, use it.
 		 */
-		switch (mp->mscp_status & ~M_ST_MASK) {
 
-		case M_OFFLINE_UNKNOWN:
-			/*
-			 * No such drive, and there are none with
-			 * higher unit numbers either, if we are
-			 * using M_GUM_NEXTUNIT.
-			 */
-			mi->mi_ierr = 3;
+		/*
+		 * If we get a lower number, we have circulated around all
+		 * devices and are finished, otherwise try to find next unit.
+		 */
+		if (mp->mscp_unit < unit)
 			return;
+		/*
+		 * If a higher number, use it to skip non-present devices
+		 */
+		if (mp->mscp_unit > unit)
+			unit = mp->mscp_unit;
 
-		case M_OFFLINE_UNMOUNTED:
+		switch (mp->mscp_status & M_ST_MASK) {
+
+		case M_ST_SUCCESS:	/* worked */
+		case M_ST_AVAILABLE:	/* found another drive */
+			break;		/* use it */
+
+		case M_ST_OFFLINE:
 			/*
-			 * The drive is not spun up.  Use it anyway.
-			 *
-			 * N.B.: this seems to be a common occurrance
-			 * after a power failure.  The first attempt
-			 * to bring it on line seems to spin it up
-			 * (and thus takes several minutes).  Perhaps
-			 * we should note here that the on-line may
-			 * take longer than usual.
+			 * Figure out why it is off line.  It may be because
+			 * it is nonexistent, or because it is spun down, or
+			 * for some other reason.
 			 */
+			switch (mp->mscp_status & ~M_ST_MASK) {
+
+			case M_OFFLINE_UNKNOWN:
+				/*
+				 * No such drive, and there are none with
+				 * higher unit numbers either, if we are
+				 * using M_GUM_NEXTUNIT.
+				 */
+				mi->mi_ierr = 3;
+				break; /* return */
+
+			case M_OFFLINE_UNMOUNTED:
+				/*
+				 * The drive is not spun up.  Use it anyway.
+				 *
+				 * N.B.: this seems to be a common occurrance
+				 * after a power failure.  The first attempt
+				 * to bring it on line seems to spin it up
+				 * (and thus takes several minutes).  Perhaps
+				 * we should note here that the on-line may
+				 * take longer than usual.
+				 */
+				break;
+
+			default:
+				/*
+				 * In service, or something else unusable.
+				 */
+				printf("%s: unit %d off line: ",
+				    device_xname(&mi->mi_dev), mp->mscp_unit);
+				mp2 = __UNVOLATILE(mp);
+				mscp_printevent(mp2);
+				break;
+			}
 			break;
 
 		default:
-			/*
-			 * In service, or something else equally unusable.
-			 */
-			printf("%s: unit %d off line: ", device_xname(&mi->mi_dev),
-				mp->mscp_unit);
-			mp2 = __UNVOLATILE(mp);
-			mscp_printevent(mp2);
-			next++;
-			goto findunit;
+			aprint_error_dev(&mi->mi_dev,
+			    "unable to get unit status: ");
+			mscp_printevent(__UNVOLATILE(mp));
+			return;
 		}
-		break;
-
-	default:
-		aprint_error_dev(&mi->mi_dev, "unable to get unit status: ");
-		mscp_printevent(__UNVOLATILE(mp));
-		return;
 	}
-
-	/*
-	 * If we get a lower number, we have circulated around all
-	 * devices and are finished, otherwise try to find next unit.
-	 * We shouldn't ever get this, it's a workaround.
-	 */
-	if (mp->mscp_unit < next)
-		return;
-
-	next = mp->mscp_unit + 1;
-	goto findunit;
 }
 
 
