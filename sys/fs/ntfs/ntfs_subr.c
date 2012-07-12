@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.47 2012/06/02 16:26:24 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.48 2012/07/12 17:24:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.47 2012/06/02 16:26:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.48 2012/07/12 17:24:47 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1134,7 +1134,7 @@ ntfs_isnamepermitted(
 
 	switch (iep->ie_fnametype) {
 	case 2:
-		ddprintf(("%s: skipped DOS name\n", __func_));
+		ddprintf(("%s: skipped DOS name\n", __func__));
 		return 0;
 	case 0: case 1: case 3:
 		return 1;
@@ -1493,7 +1493,7 @@ ntfs_writentvattr_plain(
 		return ENOTTY;
 	}
 
-	ddprintf(("%s: data in run: %lu chains\n", __func__
+	ddprintf(("%s: data in run: %lu chains\n", __func__,
 		 vap->va_vruncnt));
 
 	off = roff;
