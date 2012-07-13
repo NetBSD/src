@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.105 2012/05/20 17:56:30 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.106 2012/07/13 05:23:30 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.105 2012/05/20 17:56:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.106 2012/07/13 05:23:30 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1851,10 +1851,7 @@ set_cpufuncs(void)
 	}
 #endif /* CPU_XSCALE_IXP425 */
 #if defined(CPU_CORTEX)
-	if (cputype == CPU_ID_CORTEXA8R1 ||
-	    cputype == CPU_ID_CORTEXA8R2 ||
-	    cputype == CPU_ID_CORTEXA8R3 ||
-	    cputype == CPU_ID_CORTEXA9R1) {
+	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = cortex_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
