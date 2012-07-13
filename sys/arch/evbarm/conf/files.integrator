@@ -1,4 +1,4 @@
-#	$NetBSD: files.integrator,v 1.8 2007/12/03 15:33:30 ad Exp $
+#	$NetBSD: files.integrator,v 1.9 2012/07/13 06:09:18 skrll Exp $
 #
 # ARM, Ltd. Integrator evaluation board configuraiton info
 #
@@ -21,8 +21,6 @@ file	arch/evbarm/ifpga/ifpga_pci.c		ifpga & pci
 # "device" declaration in files.evbarm (because of needs-flag)
 attach	plcom at ifpga with plcom_ifpga
 file	arch/evbarm/ifpga/plcom_ifpga.c		plcom_ifpga
-#file	arch/evbarm/ifpga/pl010_uart_io.c	plcom
-#file	arch/evbarm/ifpga/pl010_uart_io_asm.S	plcom
 
 # Integrator real-time clock
 device plrtc
