@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.10 2012/07/11 19:14:17 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.11 2012/07/13 08:47:07 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ p5pb_find_resources(struct p5pb_softc *sc)
 
 /*
  * Set properties needed to support fb driver. These are read later during
- * autoconfg in device_register(). Needed for CVPPC/BVPPC and Voodoo in G-REX.
+ * autoconfg in device_register(). Needed for CVPPC/BVPPC.
  */
 void
 p5pb_set_props(struct p5pb_softc *sc) 
@@ -329,26 +329,14 @@ p5pb_set_props(struct p5pb_softc *sc)
 	dev = sc->sc_dev;
 	dict = device_properties(dev);
 
-	prop_dictionary_set_uint32(dict, "width", P5GFX_WIDTH);
-	prop_dictionary_set_uint32(dict, "height", P5GFX_HEIGHT);
-	prop_dictionary_set_uint8(dict, "depth", P5GFX_DEPTH);
-
 	/* genfb needs additional properties, like virtual, physical address */
 #if (NGENFB > 0)
 	/* XXX: currently genfb is supported only on CVPPC/BVPPC */
-	prop_dictionary_set_uint16(dict, "linebytes", P5GFX_LINEBYTES);
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    sc->pci_mem_area.base);
 	prop_dictionary_set_uint64(dict, "address", 
 	    kvtop((void*) sc->pci_mem_area.base)); 
 #endif
-
-#ifdef P5PB_CONSOLE
-	prop_dictionary_set_bool(dict, "is_console", true);
-#else
-	prop_dictionary_set_bool(dict, "is_console", false);
-#endif
-
 }
 
 pcireg_t
@@ -665,4 +653,57 @@ p5pb_conf_search(struct p5pb_softc *sc, uint16_t val)
 }
 
 #endif /* P5PB_DEBUG */
+
+#ifdef P5PB_CONSOLE
+void
+p5pb_device_register(device_t dev, void *aux)
+{
+	prop_dictionary_t dict, parent_dict;
+	struct pci_attach_args *pa = aux;
+
+	if (device_parent(dev) && device_is_a(device_parent(dev), "pci")) {
+
+		dict = device_properties(dev);
+
+		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY) {
+
+			/* Handle the CVPPC/BVPPC card... */
+			if ( ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI)
+			    && (PCI_PRODUCT(pa->pa_id) ==
+			    PCI_PRODUCT_TI_TVP4020) ) ||
+			    /* ...and 3Dfx Voodoo 3 in G-REX. */
+			    ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3DFX)
+			    && (PCI_PRODUCT(pa->pa_id) ==
+			    PCI_PRODUCT_3DFX_VOODOO3) )) {
+
+				parent_dict = device_properties(
+				    device_parent(device_parent(dev)));
+
+				prop_dictionary_set_uint32(dict, "width",
+				    P5GFX_WIDTH);
+
+				prop_dictionary_set_uint32(dict, "height",
+				    P5GFX_HEIGHT);
+
+				prop_dictionary_set_uint32(dict, "depth",
+				    P5GFX_DEPTH);
+
+#if (NGENFB > 0)
+				prop_dictionary_set_uint32(dict, "linebytes",
+				    P5GFX_LINEBYTES);
+
+				prop_dictionary_set(dict, "address",
+				    prop_dictionary_get(parent_dict,
+				    "address"));
+				prop_dictionary_set(dict, "virtual_address",
+				    prop_dictionary_get(parent_dict,
+				    "virtual_address"));
+#endif
+				prop_dictionary_set_bool(dict, "is_console",
+				    true);
+                        }
+                }
+        }
+}
+#endif /* P5PB_CONSOLE */
 
