@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.57 2012/07/12 01:20:22 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.58 2012/07/13 19:48:45 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.57 2012/07/12 01:20:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.58 2012/07/13 19:48:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,8 +303,16 @@ int cgsix_use_rasterconsole = 1;
 		/*EMPTY*/;						\
 } while (0)
 
+/*
+ * something is missing here
+ * Waiting for GX_FULL to clear should be enough to send another command
+ * but some CG6 ( LX onboard for example ) lock up if we do that while
+ * it works fine on others ( a 4MB TGX+ I've got here )
+ * So, until I figure out what's going on we wait for the blitter to go
+ * fully idle.
+ */
 #define CG6_WAIT_READY(fbc) do {					\
-       	while (((fbc)->fbc_s & GX_FULL) != 0)				\
+       	while (((fbc)->fbc_s & GX_INPROGRESS/*GX_FULL*/) != 0)		\
 		/*EMPTY*/;						\
 } while (0)
 
