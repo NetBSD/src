@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61 2012/05/10 19:40:46 christos Exp $
+	$NetBSD: syscalls.master,v 1.62 2012/07/13 18:21:33 christos Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -400,18 +400,27 @@
 223	UNIMPL	/*	unused	*/
 224	NOARGS	{ pid_t|linux_sys||gettid(void); }
 225	UNIMPL	readahead
-226	UNIMPL	setxattr
-227	UNIMPL	lsetxattr
-228	UNIMPL	fsetxattr
-229	UNIMPL	getxattr
-230	UNIMPL	lgetxattr
-231	UNIMPL	fgetxattr
-232	UNIMPL	listxattr
-233	UNIMPL	llistxattr
-234	UNIMPL	flistxattr
-235	UNIMPL	removexattr
-236	UNIMPL	lremovexattr
-237	UNIMPL	fremovexattr
+226	NOARGS	{ int|linux_sys||setxattr(char *path, char *name, \
+		    void *value, size_t size, int flags); }
+227	NOARGS	{ int|linux_sys||lsetxattr(char *path, char *name, \
+		    void *value, size_t size, int flags); }
+228	NOARGS	{ int|linux_sys||fsetxattr(int fd, char *name, \
+		    void *value, size_t size, int flags); }
+229	NOARGS	{ ssize_t|linux_sys||getxattr(char *path, char *name, \
+		    void *value, size_t size); }
+230	NOARGS	{ ssize_t|linux_sys||lgetxattr(char *path, char *name, \
+		    void *value, size_t size); }
+231	NOARGS	{ ssize_t|linux_sys||fgetxattr(int fd, char *name, \
+		    void *value, size_t size); }
+232	NOARGS	{ ssize_t|linux_sys||listxattr(char *path, char *list, \
+		    size_t size); }
+233	NOARGS	{ ssize_t|linux_sys||llistxattr(char *path, char *list, \
+		    size_t size); }
+234	NOARGS	{ ssize_t|linux_sys||flistxattr(int fd, char *list, \
+		    size_t size); }
+235	NOARGS	{ int|linux_sys||removexattr(char *path, char *name); }
+236	NOARGS	{ int|linux_sys||lremovexattr(char *path, char *name); }
+237	NOARGS	{ int|linux_sys||fremovexattr(int fd, char *name); }
 238	STD	{ int|linux32_sys||tkill(int tid, int sig); }
 239	UNIMPL	sendfile64
 240	STD	{ int|linux32_sys||futex(linux32_intp_t uaddr, int op, int val, \
