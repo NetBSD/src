@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pbvar.h,v 1.3 2012/01/19 00:14:08 rkujawa Exp $ */
+/*	$NetBSD: p5pbvar.h,v 1.4 2012/07/13 08:47:07 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -64,4 +64,7 @@ struct p5pb_softc {
 	TAILQ_HEAD(, p5pb_autoconf_entry)	auto_bars;
 };
 
+void p5pb_device_register(device_t, void *);
+
 #endif /* _AMIGA_P5PBVAR_H_ */
+
