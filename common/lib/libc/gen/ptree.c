@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.6 2012/07/11 00:19:28 rmind Exp $	*/
+/*	$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.6 2012/07/11 00:19:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.6 2012/07/11 00:19:28 rmind Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.6 2012/07/11 00:19:28 rmind Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -134,7 +134,7 @@ ptree_testnode(const pt_tree_t *pt, const pt_node_t *target,
 {
 	const pt_bitlen_t bitlen = PTN_BRANCH_BITLEN(ptn);
 	if (bitlen == 0)
-		return PT_SLOT_ROOT;
+		return PT_SLOT_ROOT;	/* mask or root, doesn't matter */
 	return (*pt->pt_ops->ptto_testnode)(NODETOKEY(pt, target),
 	    PTN_BRANCH_BITOFF(ptn), bitlen, pt->pt_context);
 }
@@ -150,6 +150,9 @@ ptree_matchkey(const pt_tree_t *pt, const void *key,
 static inline pt_slot_t
 ptree_testkey(const pt_tree_t *pt, const void *key, const pt_node_t *ptn)
 {
+	const pt_bitlen_t bitlen = PTN_BRANCH_BITLEN(ptn);
+	if (bitlen == 0)
+		return PT_SLOT_ROOT;	/* mask or root, doesn't matter */
 	return (*pt->pt_ops->ptto_testkey)(key, PTN_BRANCH_BITOFF(ptn),
 	    PTN_BRANCH_BITLEN(ptn), pt->pt_context);
 }
