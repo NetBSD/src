@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1396 2012/07/13 16:21:38 rkujawa Exp $
+# $NetBSD: mi,v 1.1397 2012/07/13 22:58:44 abs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4624,6 +4624,7 @@
 ./usr/share/man/html4/wdc.html			man-sys-htmlman		html
 ./usr/share/man/html4/wds.html			man-sys-htmlman		html
 ./usr/share/man/html4/we.html			man-sys-htmlman		html
+./usr/share/man/html4/wedge.html		man-sys-htmlman		html
 ./usr/share/man/html4/wi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wm.html			man-sys-htmlman		html
 ./usr/share/man/html4/wmidell.html		man-sys-htmlman		html
@@ -7359,6 +7360,7 @@
 ./usr/share/man/man4/wdc.4			man-sys-man		.man
 ./usr/share/man/man4/wds.4			man-sys-man		.man
 ./usr/share/man/man4/we.4			man-sys-man		.man
+./usr/share/man/man4/wedge.4			man-sys-man		.man
 ./usr/share/man/man4/wi.4			man-sys-man		.man
 ./usr/share/man/man4/wm.4			man-sys-man		.man
 ./usr/share/man/man4/wmidell.4			man-sys-man		.man

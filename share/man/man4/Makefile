@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.587 2012/07/13 16:19:42 rkujawa Exp $
+#	$NetBSD: Makefile,v 1.588 2012/07/13 22:58:45 abs Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -197,6 +197,7 @@ MLINKS+=dbcool.4 adt7468.4
 MLINKS+=dbcool.4 adt7473.4
 MLINKS+=dbcool.4 adt7475.4
 MLINKS+=dbcool.4 adt7476.4
+MLINKS+=dk.4 wedge.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=fujbp.4 fujhk.4
