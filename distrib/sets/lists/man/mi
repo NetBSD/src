@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1395 2012/06/04 20:19:28 rkujawa Exp $
+# $NetBSD: mi,v 1.1396 2012/07/13 16:21:38 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1814,6 +1814,7 @@
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
+./usr/share/man/cat4/voodoofb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vte.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wapbl.0			man-sys-catman		.cat
@@ -4613,6 +4614,7 @@
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
+./usr/share/man/html4/voodoofb.html		man-sys-htmlman		html
 ./usr/share/man/html4/vr.html			man-sys-htmlman		html
 ./usr/share/man/html4/vte.html			man-sys-htmlman		html
 ./usr/share/man/html4/wapbl.html		man-sys-htmlman		html
@@ -7347,6 +7349,7 @@
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
+./usr/share/man/man4/voodoofb.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
 ./usr/share/man/man4/vte.4			man-sys-man		.man
 ./usr/share/man/man4/wapbl.4			man-sys-man		.man
