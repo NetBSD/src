@@ -1,6 +1,6 @@
-.\"	$NetBSD: voodoofb.4,v 1.1 2012/07/13 16:19:42 rkujawa Exp $
+.\"	$NetBSD: voodoofb.4,v 1.2 2012/07/13 23:16:13 wiz Exp $
 .\"
-.\" Copyright (c) 2012 Radoslaw Kujawa 
+.\" Copyright (c) 2012 Radoslaw Kujawa
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -37,24 +37,28 @@
 The
 .Nm
 driver provides support for the 3Dfx Voodoo 3 series of graphics cards
-and provides interface for machine independent
+and provides an interface for machine independent
 .Xr wscons 4
 driver.
 .Pp
 Currently
 .Nm
 depends on the firmware to do low level initialization of the card
-(e.g. program video RAM controller). However, it is capable of changing
-the resolution and uses DDC2 to pick appropriate video mode.
+(e.g. program video RAM controller).
+However, it is capable of changing the resolution and uses DDC2 to
+pick an appropriate video mode.
 .Pp
-2D graphics engine is used to accelerate all drawing operations.
-Direct access to video memory is not required by the
+A 2D graphics engine is used to accelerate all drawing operations.
+Direct access to video memory is not required by
 .Nm .
 .Sh SEE ALSO
 .Xr genfb 4 ,
 .Xr wsdisplay 4
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-driver was written by Michael Lorenz. This man page was written by
-Radoslaw Kujawa. 
+driver was written by
+.An Michael Lorenz .
+This man page was written by
+.An Radoslaw Kujawa .
