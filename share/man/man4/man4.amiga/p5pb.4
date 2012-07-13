@@ -1,4 +1,4 @@
-.\" $NetBSD: p5pb.4,v 1.10 2012/07/13 13:38:44 rkujawa Exp $
+.\" $NetBSD: p5pb.4,v 1.11 2012/07/13 13:51:09 wiz Exp $
 .\"
 .\" Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,13 +46,14 @@ The
 driver provides support for the PCI bus present on various devices equipped with
 the Phase5 PCI bridge.
 .Pp
+The
 .Dv P5PB_CONSOLE
-option activates necessary support for console on CyberVisionPPC and 
-BlizzardVisionPPC, allowing attachment of
+option activates the necessary support for the console on CyberVisionPPC and
+BlizzardVisionPPC, allowing the attachment of the
 .Xr genfb 4
-driver. 
-3Dfx Voodoo 3 board installed in G-REX are also supported as console by
-this option in conjuction with
+driver.
+3Dfx Voodoo 3 boards installed in G-REX are also supported as console by
+this option in conjuction with the
 .Xr voodoofb 4
 driver.
 .Pp
