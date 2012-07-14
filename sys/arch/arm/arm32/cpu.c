@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.81 2012/05/20 18:08:05 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.82 2012/07/14 07:55:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81 2012/05/20 18:08:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2012/07/14 07:55:28 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -420,15 +420,23 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM11MPCORE,	CPU_CLASS_ARM11J, 	"ARM11 MPCore",
 	  generic_steppings },
 
+	{ CPU_ID_CORTEXA5R0,	CPU_CLASS_CORTEX,	"Cortex-A5 r0",
+	  pN_steppings },
 	{ CPU_ID_CORTEXA8R1,	CPU_CLASS_CORTEX,	"Cortex-A8 r1",
 	  pN_steppings },
 	{ CPU_ID_CORTEXA8R2,	CPU_CLASS_CORTEX,	"Cortex-A8 r2",
 	  pN_steppings },
 	{ CPU_ID_CORTEXA8R3,	CPU_CLASS_CORTEX,	"Cortex-A8 r3",
 	  pN_steppings },
-	{ CPU_ID_CORTEXA9R1,	CPU_CLASS_CORTEX,	"Cortex-A9 r1",
+	{ CPU_ID_CORTEXA9R2,	CPU_CLASS_CORTEX,	"Cortex-A9 r2",
 	  pN_steppings },
-	{ CPU_ID_CORTEXA8R3,	CPU_CLASS_ARM11J,	"Cortex-A8 r3",
+	{ CPU_ID_CORTEXA9R3,	CPU_CLASS_CORTEX,	"Cortex-A9 r3",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA9R4,	CPU_CLASS_CORTEX,	"Cortex-A9 r4",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA15R2,	CPU_CLASS_CORTEX,	"Cortex-A15 r2",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA15R3,	CPU_CLASS_CORTEX,	"Cortex-A15 r3",
 	  pN_steppings },
 
 	{ CPU_ID_FA526,		CPU_CLASS_ARMV4,	"FA526",
