@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.49 2011/10/30 16:54:58 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.50 2012/07/14 15:06:26 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.49 2011/10/30 16:54:58 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.50 2012/07/14 15:06:26 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ static int	check_all;
 static int	log_success;		/* If TRUE, log all successful accesses */
 static int	sent_null;
 
-__dead static void	 doit(struct sockaddr *);
+__dead static void	 doit(struct sockaddr *, struct sockaddr *);
 __dead static void	 rshd_errx(int, const char *, ...) __printflike(2, 3);
 static void	 getstr(char *, int, const char *);
 static int	 local_domain(char *);
@@ -155,7 +155,9 @@ main(int argc, char *argv[])
 	struct linger linger;
 	int ch, on = 1;
 	socklen_t fromlen;
+	socklen_t locallen;
 	struct sockaddr_storage from;
+	struct sockaddr_storage local;
 	struct protoent *proto;
 
 	openlog("rshd", LOG_PID, LOG_DAEMON);
@@ -185,8 +187,14 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	fromlen = sizeof(from); /* xxx */
+	locallen = sizeof(local); /* xxx */
 	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR, "getpeername: %m");
+		return EXIT_FAILURE;
+	}
+	if (getsockname(STDIN_FILENO, (struct sockaddr *)&local,
+	    &locallen) < 0) {
+		syslog(LOG_ERR, "getsockname: %m");
 		return EXIT_FAILURE;
 	}
 #if 0
@@ -232,13 +240,13 @@ main(int argc, char *argv[])
 	proto = getprotobyname("tcp");
 	(void)setsockopt(STDIN_FILENO, proto->p_proto, TCP_NODELAY, &on,
 	    sizeof(on));
-	doit((struct sockaddr *)&from);
+	doit((struct sockaddr *)&from, (struct sockaddr *)&local);
 }
 
 extern char	**environ;
 
 static void
-doit(struct sockaddr *fromp)
+doit(struct sockaddr *fromp, struct sockaddr *localp)
 {
 	struct passwd *pwd, pwres;
 	in_port_t port;
@@ -356,7 +364,7 @@ doit(struct sockaddr *fromp)
 	(void) alarm(0);
 	if (port != 0) {
 		int lport = IPPORT_RESERVED - 1;
-		s = rresvport_af(&lport, af);
+		s = rresvport_af_addr(&lport, af, localp);
 		if (s < 0) {
 			syslog(LOG_ERR, "can't get stderr port: %m");
 			exit(EXIT_FAILURE);
