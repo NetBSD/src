@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <sys/syslog.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <stdarg.h>
 
 void
@@ -25,10 +27,8 @@ syslog(int fac, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	(void)vfprintf(stderr, fmt, ap);
+	vsyslog(fac, fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	fflush(stderr);
 }
 
 __strong_alias(_vsyslog, vsyslog)
@@ -36,6 +36,9 @@ void
 vsyslog(int fac, const char *fmt, va_list ap)
 {
 	(void)vfprintf(stderr, fmt, ap);
+	/* Cheap hack to ensure %m causes error message string to be shown */
+	if (strstr(fmt, "%m"))
+		(void)fprintf(stderr, " (%s)", strerror(errno));
 	(void)fprintf(stderr, "\n");
 	fflush(stderr);
 }
