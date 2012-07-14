@@ -1,14 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2011/07/05 10:03:09 spz Exp $
+# $NetBSD: Makefile,v 1.4 2012/07/14 04:06:17 christos Exp $
 
 HELPER_NAME=	ideatest
 HELPER_DIR=	idea
 
 .include <bsd.init.mk>
 
-.if ${MKCRYPTO_IDEA} != "no"
-LDADD= -lcrypto_idea -lcrypto
-.else
-CPPFLAGS+= -DOPENSSL_NO_IDEA
-.endif
-
+LDADD= -lcrypto
 LDADD+=		-Wl,--no-fatal-warnings
