@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.296 2012/06/19 06:20:13 plunky Exp $
+#	$NetBSD: bsd.README,v 1.297 2012/07/14 16:04:06 spz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -140,13 +140,7 @@ MKCRYPTO	If "no", no cryptography support will be built into the system,
 		and also acts as "MKKERBEROS=no".
 		Default: yes
 
-MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
-		Default: no
-
-MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
-		Default: no
-
-MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
+MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
 		Default: no
 
 MKCVS		If "no", don't build or install cvs(1).

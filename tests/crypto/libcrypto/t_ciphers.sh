@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.3 2011/06/09 05:25:21 spz Exp $
+# $NetBSD: t_ciphers.sh,v 1.4 2012/07/14 16:04:06 spz Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,9 +93,6 @@ idea_head()
 }
 idea_body()
 {
-	[ -x "$(atf_get_srcdir)/h_ideatest" ] \
-	    || atf_skip "IDEA support not available; system built" \
-	                "with MKCRYPTO_IDEA=no"
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_ideatest"
 }
 
