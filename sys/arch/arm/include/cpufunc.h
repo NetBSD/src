@@ -554,6 +554,7 @@ void	sheeva_dcache_inv_range	(vaddr_t, vsize_t);
 void	sheeva_dcache_wb_range	(vaddr_t, vsize_t);
 void	sheeva_idcache_wbinv_range (vaddr_t, vsize_t);
 void	sheeva_setup(char *);
+void	sheeva_cpu_sleep(int);
 #endif
 
 #define tlb_flush	cpu_tlb_flushID
