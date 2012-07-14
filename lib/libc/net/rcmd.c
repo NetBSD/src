@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.67 2012/03/13 21:13:42 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.67 2012/03/13 21:13:42 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.68 2012/07/14 15:06:26 darrenr Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -506,6 +506,12 @@ rresvport(int *alport)
 int
 rresvport_af(int *alport, int family)
 {
+	return rresvport_af_addr(alport, family, NULL);
+}
+
+int
+rresvport_af_addr(int *alport, int family, void *addr)
+{
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;
 	socklen_t salen;
@@ -522,6 +528,9 @@ rresvport_af(int *alport, int family)
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in);
+		if (addr)
+			((struct sockaddr_in *)(void *)sa)->sin_addr =
+			    ((struct sockaddr_in *)addr)->sin_addr;
 		portp = &((struct sockaddr_in *)(void *)sa)->sin_port;
 		break;
 #ifdef INET6
@@ -530,6 +539,9 @@ rresvport_af(int *alport, int family)
 		sa->sa_len =
 #endif
 		salen = sizeof(struct sockaddr_in6);
+		if (addr)
+			((struct sockaddr_in6 *)(void *)sa)->sin6_addr =
+			    ((struct sockaddr_in6 *)addr)->sin6_addr;
 		portp = &((struct sockaddr_in6 *)(void *)sa)->sin6_port;
 		break;
 #endif
