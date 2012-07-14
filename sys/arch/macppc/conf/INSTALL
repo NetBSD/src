@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.115 2012/03/23 18:37:42 he Exp $
+#	$NetBSD: INSTALL,v 1.116 2012/07/14 18:50:22 jmmv Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -191,6 +191,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
+umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device
