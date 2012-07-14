@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.631 2012/07/11 22:42:39 jmmv Exp $
+# $NetBSD: shl.mi,v 1.632 2012/07/14 16:04:05 spz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -194,8 +194,10 @@
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.so.7.0			base-obsolete		obsolete
+./usr/lib/libcrypto_rc5.so			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	crypto,crypto_rc5
+./usr/lib/libcrypto_rc5_pic.a			base-crypto-shlib	crypto,crypto_rc5
 ./usr/lib/libctf.so				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2.0				base-sys-shlib		dtrace
