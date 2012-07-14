@@ -214,3 +214,11 @@ ENTRY(sheeva_idcache_wbinv_range)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	ldr	lr, [sp], #4
 	RET
+
+/*
+ * CPU sleep
+ */
+ENTRY_NP(sheeva_cpu_sleep)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
+	RET
