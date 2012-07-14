@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.15 2010/03/22 18:58:33 joerg Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.16 2012/07/14 05:32:17 rkujawa Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -257,9 +257,9 @@ function might be called as follows:
 .Bd -literal -compact
 	struct extent *ioext, *memext;
 	...
-	ioext  = extent_create("pciio",  0x01000000, 0x0fffffff, M_DEVBUF,
+	ioext  = extent_create("pciio",  0x01000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
 	...
 	pci_configure_bus(0, ioext, memext, NULL);
