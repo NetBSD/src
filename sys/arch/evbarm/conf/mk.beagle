@@ -1,6 +1,5 @@
-#	$NetBSD: mk.beagle,v 1.5 2011/03/06 02:22:27 jakllsch Exp $
-# gcc doesn't know about cortex-a8
-CPPFLAGS+= -mcpu=arm1136jf-s
+#	$NetBSD: mk.beagle,v 1.6 2012/07/14 06:55:18 matt Exp $
+CPPFLAGS+= -mcpu=cortex-a8
 
 SYSTEM_FIRST_OBJ=	beagle_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/beagle/beagle_start.S
