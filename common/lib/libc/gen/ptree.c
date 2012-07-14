@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $	*/
+/*	$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.7 2012/07/13 01:15:27 matt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -459,6 +459,12 @@ ptree_insert_node_common(pt_tree_t *pt, void *item)
 	pt_insertdata_t id;
 
 	/*
+	 * If this node already exists in the tree, return failure.
+	 */
+	if (target == PT_NODE(pt->pt_root))
+		return false;
+
+	/*
 	 * We need a leaf so we can match against.  Until we get a leaf
 	 * we having nothing to test against.
 	 */
@@ -478,6 +484,12 @@ ptree_insert_node_common(pt_tree_t *pt, void *item)
 		pt_bitoff_t branch_bitoff;
 		pt_node_t * const ptn = PT_NODE(*id.id_insertp);
 		id.id_node = *id.id_insertp;
+
+		/*
+		 * If this node already exists in the tree, return failure.
+		 */
+		if (target == ptn)
+			return false;
 
 		/*
 		 * If we hit a leaf, try to insert target at leaf.  We could
