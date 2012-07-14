@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.10 2012/07/07 08:05:48 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.11 2012/07/14 07:52:53 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,23 +28,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.10 2012/07/07 08:05:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.11 2012/07/14 07:52:53 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
-#include <sys/malloc.h>
-#include <sys/mallocvar.h>
+#include <sys/kmem.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <arm/armreg.h>
-#include <arm/cpu.h>
 #include <arm/cpufunc.h>
 
 #include <arm/pic/picvar.h>
-
-MALLOC_DEFINE(M_INTRSOURCE, "intrsource", "interrupt source");
 
 static uint32_t
 	pic_find_pending_irqs_by_ipl(struct pic_softc *, size_t, uint32_t, int);
@@ -73,7 +70,16 @@ static struct evcnt pic_deferral_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
 
-
+#ifdef __HAVE_PIC_SET_PRIORITY
+void
+pic_set_priority(struct cpu_info *ci, int newipl)
+{
+	register_t psw = disable_interrupts(I32_bit);
+	ci->ci_cpl = newipl;
+	(pic_list[0]->pic_set_priority)(newipl);
+	restore_interrupts(psw);
+}
+#endif
 
 int
 pic_handle_intr(void *arg)
@@ -371,13 +377,13 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			if (ipl <= newipl)
 				break;
 
-			ci->ci_cpl = ipl;
+			pic_set_priority(ci, newipl);
 			pic_list_deliver_irqs(psw, ipl, frame);
 			pic_list_unblock_irqs();
 		}
 	}
 	if (ci->ci_cpl != newipl)
-		ci->ci_cpl = newipl;
+		pic_set_priority(ci, newipl);
 #ifdef __HAVE_FAST_SOFTINTS
 	cpu_dosoftints();
 #endif
@@ -449,7 +455,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 		return NULL;
 	}
 
-	is = malloc(sizeof(*is), M_INTRSOURCE, M_NOWAIT|M_ZERO);
+	is = kmem_zalloc(sizeof(*is), KM_SLEEP);
 	if (is == NULL)
 		return NULL;
 
@@ -527,13 +533,16 @@ pic_disestablish_source(struct intrsource *is)
 	pic__iplsources[pic_ipl_offset[is->is_ipl] + is->is_iplidx] = NULL;
 	evcnt_detach(&is->is_ev);
 
-	free(is, M_INTRSOURCE);
+	kmem_free(is, sizeof(*is));
 }
 
 void *
 intr_establish(int irq, int ipl, int type, int (*func)(void *), void *arg)
 {
 	int slot;
+
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	for (slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const pic = pic_list[slot];

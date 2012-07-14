@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.5 2010/11/15 09:25:58 bsh Exp $	*/
+/*	$NetBSD: picvar.h,v 1.6 2012/07/14 07:52:53 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,8 +100,23 @@ struct pic_ops {
 
 	void (*pic_establish_irq)(struct pic_softc *, struct intrsource *);
 	void (*pic_source_name)(struct pic_softc *, int, char *, size_t);
+
+#ifdef __HAVE_PIC_SET_PRIORITY
+	void (*pic_set_priority)(struct pic_softc *, int);
+#endif
 };
 
+#ifdef __HAVE_PIC_SET_PRIORITY
+/*
+ * This is used to update a hardware pic with a value corresponding
+ * to the ipl being set.
+ */
+struct cpu_info;
+void	pic_set_priority(struct cpu_info *, int);
+#else
+/* Using an inline causes catch-22 problems with cpu.h */
+#define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
+#endif
 
 void	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
