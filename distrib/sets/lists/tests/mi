@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.476 2012/07/11 22:42:40 jmmv Exp $
+# $NetBSD: mi,v 1.477 2012/07/14 14:13:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -198,13 +198,13 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_enginetest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_evp_test.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_exptest.debug		tests-crypto-debug	debug,crypto
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,crypto_idea,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_hmactest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug,crypto
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,crypto_mdc2,crypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,crypto
@@ -1429,12 +1429,12 @@
 ./usr/tests/crypto/libcrypto/evptests.txt	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests	crypto
-./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	crypto_idea,crypto
+./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_md2test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_md4test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_md5test		tests-crypto-tests	crypto
-./usr/tests/crypto/libcrypto/h_mdc2test		tests-crypto-tests	crypto_mdc2,crypto
+./usr/tests/crypto/libcrypto/h_mdc2test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_randtest		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_rc2test		tests-crypto-tests	crypto
 ./usr/tests/crypto/libcrypto/h_rc4test		tests-crypto-tests	crypto
