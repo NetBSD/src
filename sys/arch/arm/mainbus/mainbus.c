@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.18 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: mainbus.c,v 1.19 2012/07/14 07:57:26 matt Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2012/07/14 07:57:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
 			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
 		}
+		mb.mb_intrbase = cf->cf_loc[MAINBUSCF_INTRBASE];
 		mb.mb_iot = &mainbus_bs_tag;
 
 		tryagain = 0;
