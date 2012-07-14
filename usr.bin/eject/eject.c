@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.26 2010/06/23 18:07:59 yamt Exp $	*/
+/*	$NetBSD: eject.c,v 1.27 2012/07/14 20:41:27 abs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.26 2010/06/23 18:07:59 yamt Exp $");
+__RCSID("$NetBSD: eject.c,v 1.27 2012/07/14 20:41:27 abs Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -74,23 +74,24 @@ struct nicknames_s {
 # define FLOPPY 0x2
 # define TYPEMASK ((int)~0x01)
 } nicknames[] = {
-	{ "diskette", "fd",  DISK | FLOPPY | NOTLOADABLE },
-	{ "floppy",   "fd",  DISK | FLOPPY | NOTLOADABLE },
-	{ "fd",       "fd",  DISK | FLOPPY | NOTLOADABLE },
-	{ "sd",       "sd",  DISK | NOTLOADABLE },
-	{ "cdrom",    "cd",  DISK | LOADABLE },
-	{ "cd",       "cd",  DISK | LOADABLE },
-	{ "cdr",      "cd",  DISK | LOADABLE },
-	{ "cdrw",     "cd",  DISK | LOADABLE },
-	{ "dvdrom",   "cd",  DISK | LOADABLE },
-	{ "dvd",      "cd",  DISK | LOADABLE },
-	{ "dvdr",     "cd",  DISK | LOADABLE },
-	{ "dvdrw",    "cd",  DISK | LOADABLE },
-	{ "mcd",      "mcd", DISK | LOADABLE },	/* XXX Is this true? */
-	{ "tape",     "st",  TAPE | NOTLOADABLE },
-	{ "st",       "st",  TAPE | NOTLOADABLE },
-	{ "dat",      "st",  TAPE | NOTLOADABLE },
-	{ "exabyte",  "st",  TAPE | NOTLOADABLE }
+	{ "diskette", "fd",   DISK | FLOPPY | NOTLOADABLE },
+	{ "floppy",   "fd",   DISK | FLOPPY | NOTLOADABLE },
+	{ "fd",       "fd",   DISK | FLOPPY | NOTLOADABLE },
+	{ "sd",       "sd",   DISK | NOTLOADABLE },
+	{ "cdrom",    "cd",   DISK | LOADABLE },
+	{ "cd",       "cd",   DISK | LOADABLE },
+	{ "racd",     "racd", DISK | LOADABLE },
+	{ "cdr",      "cd",   DISK | LOADABLE },
+	{ "cdrw",     "cd",   DISK | LOADABLE },
+	{ "dvdrom",   "cd",   DISK | LOADABLE },
+	{ "dvd",      "cd",   DISK | LOADABLE },
+	{ "dvdr",     "cd",   DISK | LOADABLE },
+	{ "dvdrw",    "cd",   DISK | LOADABLE },
+	{ "mcd",      "mcd",  DISK | LOADABLE },	/* XXX Is this true? */
+	{ "tape",     "st",   TAPE | NOTLOADABLE },
+	{ "st",       "st",   TAPE | NOTLOADABLE },
+	{ "dat",      "st",   TAPE | NOTLOADABLE },
+	{ "exabyte",  "st",   TAPE | NOTLOADABLE }
 };
 #define MAXNICKLEN 12		/* at least enough room for the longest
 				 * nickname */
