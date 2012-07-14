@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.106 2012/07/13 05:23:30 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.107 2012/07/14 12:59:55 hans Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.106 2012/07/13 05:23:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.107 2012/07/14 12:59:55 hans Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1243,7 +1243,7 @@ struct cpu_functions sheeva_cpufuncs = {
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= (void *)cpufunc_nullop,
+	.cf_sleep		= (void *)sheeva_cpu_sleep,
 
 	/* Soft functions */
 
@@ -1598,6 +1598,7 @@ set_cpufuncs(void)
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
+		cpu_do_powersave = 1;			/* Enable powersave */
 		return 0;
 	}
 #endif /* CPU_SHEEVA */
