@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.232 2012/07/08 01:21:11 rmind Exp $
+#	$NetBSD: shlib_version,v 1.233 2012/07/14 15:06:26 darrenr Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -31,4 +31,4 @@
 # - remove gets(); it is finally dead in c11.
 # - make __cerror (spelled CERROR) hidden again
 major=12
-minor=184
+minor=185
