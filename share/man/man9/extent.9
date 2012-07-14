@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.29 2010/12/02 12:54:13 wiz Exp $
+.\" $NetBSD: extent.9,v 1.30 2012/07/14 05:36:56 rkujawa Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .In sys/malloc.h
 .In sys/extent.h
 .Ft struct extent *
-.Fn extent_create "char *name" "u_long start" "u_long end" "int mtype" "void *storage" "size_t storagesize" "int flags"
+.Fn extent_create "char *name" "u_long start" "u_long end" "void *storage" "size_t storagesize" "int flags"
 .Ft void
 .Fn extent_destroy "struct extent *ex"
 .Ft int
@@ -87,12 +87,6 @@ creates an extent map managing the space from
 to
 .Fa end
 inclusive.
-All memory allocation will use the memory type
-.Fa mtype
-.Po
-see
-.Xr malloc 9
-.Pc .
 The extent map will have the name
 .Fa name ,
 used for identification in case of an error.
