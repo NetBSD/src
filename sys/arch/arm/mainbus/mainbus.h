@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.2 2011/07/01 20:31:39 dyoung Exp $ */
+/* $NetBSD: mainbus.h,v 1.3 2012/07/14 07:57:26 matt Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -52,6 +52,7 @@ struct mainbus_attach_args {
 	int		mb_iosize;	/* span of ports used */
 	int		mb_irq;		/* interrupt request */
 	int		mb_drq;		/* DMA request */
+	int		mb_intrbase;	/* interrupt numbering base */
 	void		*mb_aux;	/* driver specific */
 	bus_space_tag_t	mb_iot;		/* bus space tag */
 };
