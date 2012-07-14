@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.2 2011/05/28 20:56:37 jakllsch Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.3 2012/07/14 07:52:53 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.2 2011/05/28 20:56:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.3 2012/07/14 07:52:53 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -51,8 +51,9 @@ _splraise(int newipl)
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
 	KASSERT(newipl < NIPL);
-	if (newipl > ci->ci_cpl)
-		ci->ci_cpl = newipl;
+	if (newipl > ci->ci_cpl) {
+		pic_set_priority(ci, newipl);
+	}
 	return oldipl;
 }
 int
