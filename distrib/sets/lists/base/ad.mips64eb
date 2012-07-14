@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.96 2012/07/11 22:42:38 jmmv Exp $
+# $NetBSD: ad.mips64eb,v 1.97 2012/07/14 22:37:41 mlelstv Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -72,7 +72,7 @@
 ./usr/lib/64/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libc.so.12				base-compat-shlib	compat,pic
-./usr/lib/64/libc.so.12.184			base-compat-shlib	compat,pic
+./usr/lib/64/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/64/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -380,7 +380,7 @@
 ./usr/lib/o32/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/o32/libc.so.12.184			base-compat-shlib	compat,pic
+./usr/lib/o32/libc.so.12.185			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
