@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.16 2012/07/02 18:15:46 bouyer Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.17 2012/07/15 10:55:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.16 2012/07/02 18:15:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.17 2012/07/15 10:55:29 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -173,23 +173,23 @@ sata_interpret_sig(struct ata_channel *chp, int port, uint32_t sig)
 	switch(sig) {
 	case 0x96690101:
 		KASSERT(port == 0 || port == PMP_PORT_CTL);
-		chp->ch_drive[PMP_PORT_CTL].drive_type = DRIVET_PM;
+		chp->ch_drive[PMP_PORT_CTL].drive_type = ATA_DRIVET_PM;
 		break;
 	case 0xc33c0101:
 		aprint_verbose_dev(chp->atabus, "port %d is SEMB, ignored\n",
 		    port);
 		break;
 	case 0xeb140101:
-		chp->ch_drive[port].drive_type = DRIVET_ATAPI;
+		chp->ch_drive[port].drive_type = ATA_DRIVET_ATAPI;
 		break;
 	case 0x00000101:
-		chp->ch_drive[port].drive_type = DRIVET_ATA;
+		chp->ch_drive[port].drive_type = ATA_DRIVET_ATA;
 		break;
 	case 0xffffffff:
 		/* COMRESET time out */
 		break;
 	default:
-		chp->ch_drive[port].drive_type = DRIVET_ATA;
+		chp->ch_drive[port].drive_type = ATA_DRIVET_ATA;
 		aprint_verbose_dev(chp->atabus,
 		    "Unrecognized signature 0x%08x on port %d. "
 		    "Assuming it's a disk.\n", sig, port);

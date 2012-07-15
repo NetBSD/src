@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.54 2012/07/02 18:15:45 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.55 2012/07/15 10:55:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.54 2012/07/02 18:15:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.55 2012/07/15 10:55:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ adjust_timing(struct ata_channel *chp)
 		
 		drvp = &chp->ch_drive[drive];
 		/* set up pio mode timings */
-		if (drvp->drive_type != DRIVET_NONE) {
+		if (drvp->drive_type != ATA_DRIVET_NONE) {
 			int piomode = drvp->PIO_mode;
 			min_cycle = pio_timing[piomode].cycle;
 			min_active = pio_timing[piomode].active;
@@ -335,7 +335,7 @@ adjust_timing(struct ata_channel *chp)
 			conf |= (inact_tick << 5) | act_tick;
 		}
 		/* Set up DMA mode timings */
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			int dmamode = drvp->DMA_mode;
 			min_cycle = dma_timing[dmamode].cycle;
 			min_active = dma_timing[dmamode].active;
@@ -385,7 +385,7 @@ ata4_adjust_timing(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 		/* set up pio mode timings */
 
-		if (drvp->drive_type != DRIVET_NONE) {
+		if (drvp->drive_type != ATA_DRIVET_NONE) {
 			int piomode = drvp->PIO_mode;
 			min_cycle = pio_timing[piomode].cycle;
 			min_active = pio_timing[piomode].active;
@@ -397,7 +397,7 @@ ata4_adjust_timing(struct ata_channel *chp)
 			conf |= (inact_tick << 5) | act_tick;
 		}
 		/* set up dma mode timings */
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			int dmamode = drvp->DMA_mode;
 			min_cycle = dma_timing[dmamode].cycle;
 			min_active = dma_timing[dmamode].active;
@@ -408,7 +408,7 @@ ata4_adjust_timing(struct ata_channel *chp)
 			conf |= (act_tick << 10) | (inact_tick << 15);
 		}
 		/* set up udma mode timings */
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			int udmamode = drvp->UDMA_mode;
 			min_cycle = udma_timing[udmamode].cycle;
 			min_active = udma_timing[udmamode].active;

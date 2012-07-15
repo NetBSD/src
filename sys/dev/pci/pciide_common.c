@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.53 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.54 2012/07/15 10:55:31 dsl Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.53 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.54 2012/07/15 10:55:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -573,14 +573,14 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
 		drvp = &cp->ata_channel.ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* setup DMA if needed */
-		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
-		    (drvp->drive_flags & DRIVE_UDMA) == 0) ||
+		if (((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & ATA_DRIVE_UDMA) == 0) ||
 		    sc->sc_dma_ok == 0) {
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_DMA | ATA_DRIVE_UDMA);
 			splx(s);
 			continue;
 		}
@@ -588,7 +588,7 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 					   drive) != 0) {
 			/* Abort DMA setup */
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_DMA | ATA_DRIVE_UDMA);
 			splx(s);
 			continue;
 		}
@@ -1120,18 +1120,18 @@ sata_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 #if NATA_UDMA
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else
 #endif	/* NATA_UDMA */
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		}
 	}

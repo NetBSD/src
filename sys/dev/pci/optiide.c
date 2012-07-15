@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: optiide.c,v 1.21 2012/07/15 10:55:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.21 2012/07/15 10:55:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,12 +198,12 @@ opti_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE) {
+		if (drvp->drive_type == ATA_DRIVET_NONE) {
 			mode[drive] = -1;
 			continue;
 		}
 
-		if ((drvp->drive_flags & DRIVE_DMA)) {
+		if ((drvp->drive_flags & ATA_DRIVE_DMA)) {
 			/*
 			 * Timings will be used for both PIO and DMA,
 			 * so adjust DMA mode if needed
@@ -234,7 +234,7 @@ opti_setup_channel(struct ata_channel *chp)
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
 			chp->ch_drive[d].DMA_mode = 0;
 			s = splbio();
-			chp->ch_drive[d].drive_flags &= ~DRIVE_DMA;
+			chp->ch_drive[d].drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 		}
 	}

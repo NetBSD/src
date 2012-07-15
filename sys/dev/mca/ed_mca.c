@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.49 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.50 2012/07/15 10:55:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.49 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.50 2012/07/15 10:55:30 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ edgetdisklabel(dev_t dev, struct ed_softc *ed)
 		 */
 #if 0
 		if (wd->drvp->state > RECAL)
-			wd->drvp->drive_flags |= DRIVE_RESET;
+			wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 #endif
 		errstring = readdisklabel(EDLABELDEV(dev),
 			edmcastrategy, lp, ed->sc_dk.dk_cpulabel);
@@ -492,7 +492,7 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		if (error == 0) {
 #if 0
 			if (wd->drvp->state > RECAL)
-				wd->drvp->drive_flags |= DRIVE_RESET;
+				wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 #endif
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(EDLABELDEV(dev),

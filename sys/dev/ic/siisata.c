@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.18 2012/07/02 18:15:47 bouyer Exp $ */
+/* $NetBSD: siisata.c,v 1.19 2012/07/15 10:55:30 dsl Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.18 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.19 2012/07/15 10:55:30 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -917,9 +917,9 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 		ata_c->flags |= AT_ERROR;
 	}
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		siisata_cmd_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	} else
@@ -1130,9 +1130,9 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, schp->sch_datad[slot]);
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		siisata_bio_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	}
@@ -1395,7 +1395,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type == DRIVET_ATAPI) {
+	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
 		SIISATA_DEBUG_PRINT(("%s: drive %d "
 		    "not present\n", __func__, target), DEBUG_PROBE);
 		return;
@@ -1470,7 +1470,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 			ata_probe_caps(drvp);
 		else {
 			s = splbio();
-			drvp->drive_type &= DRIVET_NONE;
+			drvp->drive_type &= ATA_DRIVET_NONE;
 			splx(s);
 		}
 	} else {
@@ -1479,7 +1479,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		    __func__, SIISATANAME(siic), chp->ch_channel, target,
 		    chp->ch_error), DEBUG_PROBE);
 		s = splbio();
-		drvp->drive_type &= DRIVET_NONE;
+		drvp->drive_type &= ATA_DRIVET_NONE;
 		splx(s);
 	}
 }
@@ -1653,9 +1653,9 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, schp->sch_datad[slot]);
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		siisata_atapi_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0; /* XXX verify */
 	}
