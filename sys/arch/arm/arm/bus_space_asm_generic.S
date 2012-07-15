@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.6 2010/06/19 19:44:57 matt Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.7 2012/07/15 20:48:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -36,6 +36,7 @@
 
 #include <arm/asm.h>
 #include <arm/cpuconf.h>
+#include <arm/byte_swap.h>
 
 /*
  * Generic bus_space functions.
@@ -45,287 +46,456 @@
  * read single
  */
 
-ENTRY(generic_bs_r_1)
+ENTRY_NP(generic_bs_r_1)
 	ldrb	r0, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_bs_r_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_r_2)
+ENTRY_NP(generic_armv4_bs_r_2)
 	ldrh	r0, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_armv4_bs_r_2)
+
+ENTRY_NP(generic_armv4_bs_r_2_swap)
+	ldrh	r0, [r1, r2]
+	BSWAP16(r0, r0, r1)
+	RET
+END(generic_armv4_bs_r_2_swap)
 #endif
 
-ENTRY(generic_bs_r_4)
+ENTRY_NP(generic_bs_r_4)
 	ldr	r0, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_bs_r_4)
+
+ENTRY_NP(generic_bs_r_4_swap)
+	ldr	r0, [r1, r2]
+	BSWAP32(r0, r0, r1)
+	RET
+END(generic_bs_r_4_swap)
 
 /*
  * write single
  */
 
-ENTRY(generic_bs_w_1)
+ENTRY_NP(generic_bs_w_1)
 	strb	r3, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_bs_w_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_w_2)
+ENTRY_NP(generic_armv4_bs_w_2_swap)
+	BSWAP16(r3, r3, r0)		/* swap and fallthrough */
+ENTRY_NP(generic_armv4_bs_w_2)
 	strh	r3, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_armv4_bs_w_2)
 #endif
 
-ENTRY(generic_bs_w_4)
+ENTRY_NP(generic_bs_w_4_swap)
+	BSWAP32(r3, r3, r0)
+ENTRY_NP(generic_bs_w_4)
 	str	r3, [r1, r2]
-	mov	pc, lr
+	RET
+END(generic_bs_w_4)
 
 /*
  * read multiple
  */
 
-ENTRY(generic_bs_rm_1)
+ENTRY_NP(generic_bs_rm_1)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrb	r3, [r0]
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_rm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_rm_2)
+ENTRY_NP(generic_armv4_bs_rm_2)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrh	r3, [r0]
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
-#endif
+	RET
+END(generic_armv4_bs_rm_2)
 
-ENTRY(generic_bs_rm_4)
+ENTRY_NP(generic_armv4_bs_rm_2_swap)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
+
+1:	ldrh	r3, [r0]
+	BSWAP16(r3, r3, ip)
+	strh	r3, [r1], #2
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_armv4_bs_rm_2_swap)
+#endif
+
+ENTRY_NP(generic_bs_rm_4)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
 
 1:	ldr	r3, [r0]
 	str	r3, [r1], #4
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_rm_4)
+
+ENTRY_NP(generic_bs_rm_4_swap)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
+
+1:	ldr	r3, [r0]
+	BSWAP32(r3, r3, ip)
+	str	r3, [r1], #4
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_bs_rm_4_swap)
 
 /*
  * write multiple
  */
 
-ENTRY(generic_bs_wm_1)
+ENTRY_NP(generic_bs_wm_1)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrb	r3, [r1], #1
 	strb	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_wm_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_wm_2)
+ENTRY_NP(generic_armv4_bs_wm_2)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrh	r3, [r1], #2
 	strh	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
-#endif
+	RET
+END(generic_armv4_bs_wm_2)
 
-ENTRY(generic_bs_wm_4)
+ENTRY_NP(generic_armv4_bs_wm_2_swap)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
+
+1:	ldrh	r3, [r1], #2
+	BSWAP16(r3, r3, ip)
+	strh	r3, [r0]
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_armv4_bs_wm_2_swap)
+#endif
+
+ENTRY_NP(generic_bs_wm_4)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
 
 1:	ldr	r3, [r1], #4
 	str	r3, [r0]
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_wm_4)
+
+ENTRY_NP(generic_bs_wm_4_swap)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
+
+1:	ldr	r3, [r1], #4
+	BSWAP32(r3, r3, ip)
+	str	r3, [r0]
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_bs_wm_4_swap)
 
 /*
  * read region
  */
 
-ENTRY(generic_bs_rr_1)
+ENTRY_NP(generic_bs_rr_1)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrb	r3, [r0], #1
 	strb	r3, [r1], #1
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_rr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_rr_2)
+ENTRY_NP(generic_armv4_bs_rr_2)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrh	r3, [r0], #2
 	strh	r3, [r1], #2
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
-#endif
+	RET
+END(generic_armv4_bs_rr_2)
 
-ENTRY(generic_bs_rr_4)
+ENTRY_NP(generic_armv4_bs_rr_2_swap)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
+
+1:	ldrh	r3, [r0], #2
+	BSWAP16(r3, r3, ip)
+	strh	r3, [r1], #2
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_armv4_bs_rr_2_swap)
+#endif
+
+ENTRY_NP(generic_bs_rr_4)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
 
 1:	ldr	r3, [r0], #4
 	str	r3, [r1], #4
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_rr_4)
+
+ENTRY_NP(generic_bs_rr_4_swap)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
+
+1:	ldr	r3, [r0], #4
+	BSWAP32(r3, r3, ip)
+	str	r3, [r1], #4
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_bs_rr_4_swap)
 
 /*
  * write region.
  */
 
-ENTRY(generic_bs_wr_1)
+ENTRY_NP(generic_bs_wr_1)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_wr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_wr_2)
+ENTRY_NP(generic_armv4_bs_wr_2)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	ldrh	r3, [r1], #2
 	strh	r3, [r0], #2
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
-#endif
+	RET
+END(generic_armv4_bs_wr_2)
 
-ENTRY(generic_bs_wr_4)
+ENTRY_NP(generic_armv4_bs_wr_2_swap)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
+
+1:	ldrh	r3, [r1], #2
+	BSWAP16(r3, r3, ip)
+	strh	r3, [r0], #2
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_armv4_bs_wr_2_swap)
+#endif
+
+ENTRY_NP(generic_bs_wr_4)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
 
 1:	ldr	r3, [r1], #4
 	str	r3, [r0], #4
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_wr_4)
+
+ENTRY_NP(generic_bs_wr_4_swap)
+	add	r0, r1, r2
+	mov	r1, r3
+	ldr	r2, [sp, #0]
+	teq	r2, #0
+	RETc(eq)
+
+1:	ldr	r3, [r1], #4
+	BSWAP32(r3, r3, ip)
+	str	r3, [r0], #4
+	subs	r2, r2, #1
+	bne	1b
+
+	RET
+END(generic_bs_wr_4_swap)
 
 /*
  * set region
  */
 
-ENTRY(generic_bs_sr_1)
+ENTRY_NP(generic_bs_sr_1)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	strb	r1, [r0], #1
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_sr_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_sr_2)
+ENTRY_NP(generic_armv4_bs_sr_2_swap)
+	BSWAP16(r3, r3, r0)	/* swap and fallthrough */
+ENTRY_NP(generic_armv4_bs_sr_2)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	strh	r1, [r0], #2
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_armv4_bs_sr_2)
 #endif
 
-ENTRY(generic_bs_sr_4)
+ENTRY_NP(generic_bs_sr_4_swap)
+	BSWAP32(r3, r3, r0)	/* swap and fallthrough */
+ENTRY_NP(generic_bs_sr_4)
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 1:	str	r1, [r0], #4
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
+END(generic_bs_sr_4)
 
 /*
  * copy region
  */
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
-ENTRY(generic_armv4_bs_c_2)
+ENTRY_NP(generic_armv4_bs_c_2)
 	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	add	r1, r2, r3
 	ldr	r2, [sp, #4]
 	teq	r2, #0
-	moveq	pc, lr
+	RETc(eq)
 
 	cmp	r0, r1
 	blt	2f
@@ -335,7 +505,7 @@ ENTRY(generic_armv4_bs_c_2)
 	subs	r2, r2, #1
 	bne	1b
 
-	mov	pc, lr
+	RET
 
 2:	add	r0, r0, r2, lsl #1
 	add	r1, r1, r2, lsl #1
@@ -347,5 +517,6 @@ ENTRY(generic_armv4_bs_c_2)
 	subs	r2, r2, #1
 	bne	3b
 
-	mov	pc, lr
+	RET
+END(generic_armv4_bs_c_2)
 #endif
