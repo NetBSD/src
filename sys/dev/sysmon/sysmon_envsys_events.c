@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.99 2012/07/15 17:41:39 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.100 2012/07/15 18:33:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.99 2012/07/15 17:41:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.100 2012/07/15 18:33:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -186,6 +186,9 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		}
 		break;
 	}
+	if (crittype == PENVSYS_EVENT_NULL && see != NULL)
+		return EEXIST;
+
 	if (see == NULL) {
 		/*
 		 * New event requested - allocate a sysmon_envsys event.
@@ -526,6 +529,10 @@ do {									\
 		     PENVSYS_EVENT_LIMITS,
 		     "hw-range-limits");
 
+	SEE_REGEVENT(ENVSYS_FHAS_ENTROPY,
+		     PENVSYS_EVENT_NULL,
+		     "refresh-event");
+
 	/* 
 	 * we are done, free memory now.
 	 */
@@ -732,7 +739,7 @@ sme_events_worker(struct work *wk, void *arg)
 	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
 		if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
 			/* refresh sensor in device */
-			(*sme->sme_refresh)(sme, edata);
+			sysmon_envsys_refresh_sensor(sme, edata);
 			edata->flags &= ~ENVSYS_FNEED_REFRESH;
 		}
 	}
@@ -952,6 +959,8 @@ sme_deliver_event(sme_event_t *see)
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
 		}
 		break;
+	case PENVSYS_EVENT_NULL:
+		break;
 	default:
 		panic("%s: invalid event type %d", __func__, see->see_type);
 	}
@@ -1002,7 +1011,7 @@ sme_acadapter_check(void)
 			sensor = true;
 			/* refresh current sensor */
 			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
-				(*sme->sme_refresh)(sme, edata);
+				sysmon_envsys_refresh_sensor(sme, edata);
 			if (edata->value_cur)
 				return false;
 		}
