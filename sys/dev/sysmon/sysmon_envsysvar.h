@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.41 2012/02/18 01:08:00 matt Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.42 2012/07/15 17:41:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -127,6 +127,7 @@ int	sme_event_register(prop_dictionary_t, envsys_data_t *,
 			   struct sysmon_envsys *, sysmon_envsys_lim_t *,
 			   uint32_t, int, int);
 int	sme_event_unregister(struct sysmon_envsys *, const char *, int);
+int	sme_event_unregister_sensor(struct sysmon_envsys *, envsys_data_t *);
 void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
 int	sme_events_init(struct sysmon_envsys *);
