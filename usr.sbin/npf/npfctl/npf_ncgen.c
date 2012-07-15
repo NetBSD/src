@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.11 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.12 2012/07/15 00:22:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.11 2012/07/01 23:21:07 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.12 2012/07/15 00:22:59 rmind Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include <assert.h>
 #include <err.h>
 
 #include "npfctl.h"
