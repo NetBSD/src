@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.85 2012/07/02 18:15:46 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.86 2012/07/15 10:55:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -108,24 +108,24 @@ struct ataparams;
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
-	enum {
-		DRIVET_NONE = 0,
-		DRIVET_ATA,
-		DRIVET_ATAPI,
-		DRIVET_OLD,
-		DRIVET_PM,
-	} drive_type;
 	u_int8_t drive;		/* drive number */
 	int8_t ata_vers;	/* ATA version supported */
 	u_int16_t drive_flags;	/* bitmask for drives present/absent and cap */
-#define	DRIVE_CAP32	0x0001
-#define	DRIVE_DMA	0x0002
-#define	DRIVE_UDMA	0x0004
-#define	DRIVE_MODE	0x0008	/* the drive reported its mode */
-#define	DRIVE_RESET	0x0010	/* reset the drive state at next xfer */
-#define	DRIVE_WAITDRAIN	0x0020	/* device is waiting for the queue to drain */
-#define	DRIVE_NOSTREAM	0x0040	/* no stream methods on this drive */
-#define DRIVE_ATAPIDSCW	0x0080	/* needs to wait for DSC in phase_complete */
+#define	ATA_DRIVE_CAP32		0x0001
+#define	ATA_DRIVE_DMA		0x0002
+#define	ATA_DRIVE_UDMA		0x0004
+#define	ATA_DRIVE_MODE		0x0008	/* the drive reported its mode */
+#define	ATA_DRIVE_RESET		0x0010	/* reset the drive state at next xfer */
+#define	ATA_DRIVE_WAITDRAIN	0x0020	/* device is waiting for the queue to drain */
+#define	ATA_DRIVE_NOSTREAM	0x0040	/* no stream methods on this drive */
+#define ATA_DRIVE_ATAPIDSCW	0x0080	/* needs to wait for DSC in phase_complete */
+
+	uint8_t drive_type;
+#define	ATA_DRIVET_NONE		0
+#define	ATA_DRIVET_ATA		1
+#define	ATA_DRIVET_ATAPI	2
+#define	ATA_DRIVET_OLD		3
+#define	ATA_DRIVET_PM		4
 
 	/*
 	 * Current setting of drive's PIO, DMA and UDMA modes.

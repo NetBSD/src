@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.26 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: acardide.c,v 1.27 2012/07/15 10:55:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.26 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.27 2012/07/15 10:55:30 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,8 +203,8 @@ acard_setup_channel(struct ata_channel *chp)
 		udma_mode &= ~ATP860_UDMA_MASK(channel);
 
 		/* check 80 pins cable */
-		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
-		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
+		if ((chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA) ||
+		    (chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA)) {
 			if (pci_conf_read(sc->sc_pc, sc->sc_tag, ATP8x0_CTRL)
 			    & ATP860_CTRL_80P(chp->ch_channel)) {
 				if (chp->ch_drive[0].UDMA_mode > 2)
@@ -221,11 +221,11 @@ acard_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
 		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
-		    (drvp->drive_flags & DRIVE_UDMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
@@ -242,10 +242,10 @@ acard_setup_channel(struct ata_channel *chp)
 			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
-		    (drvp->drive_flags & DRIVE_DMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_DMA)) {
 			/* use Multiword DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
@@ -260,7 +260,7 @@ acard_setup_channel(struct ata_channel *chp)
 		} else {
 			/* PIO only */
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_UDMA | ATA_DRIVE_DMA);
 			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
