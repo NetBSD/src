@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.10 2011/08/02 00:23:34 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.11 2012/07/15 08:44:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -458,9 +458,20 @@
 #define	PMUXCR_USB1	__PPCBIT(5)
 #define	PMUXCR_TSEC3_TS __PPCBIT(5)
 #define	PMUXCR_USB2	__PPCBIT(6)
-#define	PMUXCR_USB	 __PPCBIT(6)
+#define	PMUXCR_USB_PCTL	__PPCBITS(6,5)
+#define	PMUXCR_USB	__PPCBIT(6)
+#define	PMUXCR_TSEC1	__PPCBIT(14)
 #define	PMUXCR_DMA0	__PPCBIT(14)
 #define	PMUXCR_DMA2	__PPCBIT(15)
+#define	PMUXCR_QE0	__PPCBIT(16)
+#define	PMUXCR_QE1	__PPCBIT(17)
+#define	PMUXCR_QE2	__PPCBIT(18)
+#define	PMUXCR_QE3	__PPCBIT(19)
+#define	PMUXCR_QE8	__PPCBIT(24)
+#define	PMUXCR_QE9	__PPCBIT(25)
+#define	PMUXCR_QE10	__PPCBIT(26)
+#define	PMUXCR_QE11	__PPCBIT(27)
+#define	PMUXCR_QE12	__PPCBIT(28)
 #define	PMUXCR_DMA1	__PPCBIT(30)
 #define	PMUXCR_DMA3	__PPCBIT(31)
 
@@ -517,6 +528,25 @@
 /* Version Registers */
 #define PVR		0x0A0 /* Processor version register */
 #define SVR		0x0A4 /* System version register */
+
+/* Control Pin Registers (GPIO) for P1025  */
+#define	CPBASE(n)	(0x100+0x20*(n))	/* Control Pin (GPIO) base */
+#define	CPODR		0x0000			/* Open Drain */
+#define	CPDAT		0x0004			/* Output Data */
+#define	CPDIR1		0x0008			/* Direction1 */
+#define	CPDIR2		0x000c			/* Direction2 */
+#define	CPPAR1		0x0010			/* Pin Assignment1 */
+#define	CPPAR2		0x0014			/* Pin Assignment2 */
+
+#define	CPDIR_DIS	0
+#define	CPDIR_OUT	1
+#define	CPDIR_IN	2
+#define	CPDIR_INOUT	3
+
+#define	CPPAR_FUNC0	0
+#define	CPPAR_FUNC1	1
+#define	CPPAR_FUNC2	2
+#define	CPPAR_FUNC3	3
 
 /* Status Registers */
 #define RSTCR		0x0B0 /* Reset control register */
