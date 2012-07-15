@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.5 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: toshide.c,v 1.6 2012/07/15 10:55:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.5 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.6 2012/07/15 10:55:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,13 +184,13 @@ piccolo_setup_channel(struct ata_channel *chp)
 
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 
 			/*
@@ -215,7 +215,7 @@ piccolo_setup_channel(struct ata_channel *chp)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 
 		}
-		else if (drvp->drive_flags & DRIVE_DMA) {
+		else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/*
 			 * Use Multiword DMA
 			 */

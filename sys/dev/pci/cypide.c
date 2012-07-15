@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.25 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: cypide.c,v 1.26 2012/07/15 10:55:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.25 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.26 2012/07/15 10:55:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,10 +195,10 @@ cy693_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			/* use Multiword DMA */
 			if (dma_mode == -1 || dma_mode > drvp->DMA_mode)

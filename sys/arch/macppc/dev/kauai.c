@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.29 2012/07/02 18:15:45 bouyer Exp $	*/
+/*	$NetBSD: kauai.c,v 1.30 2012/07/15 10:55:28 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.29 2012/07/02 18:15:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.30 2012/07/15 10:55:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,15 +208,15 @@ kauai_set_modes(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	int drive;
 
-	if (drvp0->drive_type != DRIVET_NONE &&
-	    drvp1->drive_type != DRIVET_NONE) {
+	if (drvp0->drive_type != ATA_DRIVET_NONE &&
+	    drvp1->drive_type != ATA_DRIVET_NONE) {
 		drvp0->PIO_mode = drvp1->PIO_mode =
 		    min(drvp0->PIO_mode, drvp1->PIO_mode);
 	}
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type !=  DRIVET_NONE) {
+		if (drvp->drive_type !=  ATA_DRIVET_NONE) {
 			(*sc->sc_calc_timing)(sc, drive);
 			bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh,
 			    PIO_CONFIG_REG, sc->sc_piotiming_r[drive]);
@@ -266,12 +266,12 @@ calc_timing_kauai(struct kauai_softc *sc, int drive)
 	pioconf = pio_timing_kauai[piomode];
 
 	dmaconf = 0;
-	if (drvp->drive_flags & DRIVE_DMA)
+	if (drvp->drive_flags & ATA_DRIVE_DMA)
 		dmaconf |= dma_timing_kauai[dmamode];
-	if (drvp->drive_flags & DRIVE_UDMA)
+	if (drvp->drive_flags & ATA_DRIVE_UDMA)
 		dmaconf |= udma_timing_kauai[udmamode];
 
-	if (drvp->drive_flags & DRIVE_UDMA)
+	if (drvp->drive_flags & ATA_DRIVE_UDMA)
 		dmaconf |= 1;
 
 	sc->sc_piotiming_r[drive] = sc->sc_piotiming_w[drive] = pioconf;
