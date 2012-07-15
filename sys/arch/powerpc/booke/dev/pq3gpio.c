@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.7 2012/05/19 00:11:46 matt Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.7 2012/05/19 00:11:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -106,6 +106,58 @@ pq3gpio_pin_write(void *v, int num, int val)
 static void
 pq3gpio_null_pin_ctl(void *v, int num, int ctl)
 {
+}
+#endif
+
+#if defined(P1025)
+/*
+ * P1025 has controllable input/output pins
+ */
+static void
+pq3gpio_pin_ctl(void *v, int num, int ctl)
+{
+	struct pq3gpio_group * const gc = v;
+	const size_t shift = gc->gc_pins[num].pin_num ^ 31;
+  
+	uint64_t old_dir =
+	    ((uint64_t)bus_space_read_4(gc->gc_bst, gc->gc_bsh, CPDIR1) << 32)
+	    | (bus_space_read_4(gc->gc_bst, gc->gc_bsh, CPDIR2) << 0);
+
+	uint32_t dir = 0;
+	switch (ctl & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
+	case GPIO_PIN_INPUT|GPIO_PIN_OUTPUT:	dir = CPDIR_INOUT; break;
+	case GPIO_PIN_OUTPUT:			dir = CPDIR_OUT; break;
+	case GPIO_PIN_INPUT:			dir = CPDIR_INOUT; break;
+	case 0:					dir = CPDIR_DIS; break;
+	}
+
+	uint64_t new_dir = (old_dir & (3ULL << (2 * shift)))
+	    | ((uint64_t)dir << (2 * shift));
+
+	if ((uint32_t)old_dir != (uint32_t)new_dir)
+		bus_space_write_4(gc->gc_bst, gc->gc_bsh, CPDIR2,
+		    (uint32_t)new_dir);
+	new_dir >>= 32;
+	old_dir >>= 32;
+	if ((uint32_t)old_dir != (uint32_t)new_dir)
+		bus_space_write_4(gc->gc_bst, gc->gc_bsh, CPDIR1,
+		    (uint32_t)new_dir);
+
+	/*
+	 * Now handle opendrain
+	 */
+	uint32_t old_odr = bus_space_read_4(gc->gc_bst, gc->gc_bsh, CPODR);
+	uint32_t new_odr = old_odr;
+	uint32_t odr_mask = 1UL << shift;
+
+	if (ctl & GPIO_PIN_OPENDRAIN) {
+		new_odr |= odr_mask;
+	} else {
+		new_odr &= ~odr_mask;
+	}
+
+	if (old_odr != new_odr)
+		bus_space_write_4(gc->gc_bst, gc->gc_bsh, CPODR, new_odr);
 }
 #endif
 
@@ -327,6 +379,55 @@ pq3gpio_mpc8548_attach(device_t self, bus_space_tag_t bst,
 }
 #endif /* MPC8548 */
 
+#ifdef P1025
+static void
+pq3gpio_p1025_attach(device_t self, bus_space_tag_t bst,
+	bus_space_handle_t bsh, u_int svr)
+{
+	static const uint32_t gpio2pmuxcr_map[][4] = {
+		{ 0, __BIT(12), 0, PMUXCR_SDHC_WP },
+		{ __BIT(15), __BIT(8), 0, PMUXCR_USB1 },
+		{ __BITS(14,4)|__BIT(16)|__BITS(27,17)|__BIT(30),
+		  __BIT(1)|__BITS(3,2), 0, PMUXCR_QE0 },
+		{ __BITS(3,1), 0, 0, PMUXCR_QE3 },
+		{ 0, __BITS(17,14), 0, PMUXCR_QE8 },
+		{ __BIT(29), __BITS(19,18), 0, PMUXCR_QE9 },
+		{ 0, __BITS(22,21), 0, PMUXCR_QE10 },
+		{ 0, __BITS(28,23), 0, PMUXCR_QE11 },
+		{ 0, __BIT(20), 0, PMUXCR_QE12 },
+	};
+	
+	uint32_t pinmask[3] = {
+		 0xffffffff, 0xffffffff, 0xffffffff
+	};	/* assume all bits are valid */
+	const uint32_t pmuxcr = cpu_read_4(GLOBAL_BASE + PMUXCR);
+	for (size_t i = 0; i < __arraycount(gpio2pmuxcr_map); i++) {
+		if (pmuxcr & gpio2pmuxcr_map[i][3]) {
+			pinmask[0] &= ~gpio2pmuxcr_map[i][0];
+			pinmask[1] &= ~gpio2pmuxcr_map[i][1];
+			pinmask[2] &= ~gpio2pmuxcr_map[i][2];
+		}
+	}
+
+	/*
+	 * Create GPIO pin groups
+	 */
+	for (size_t i = 0; i < 3; i++) {
+		if (pinmask[i]) {
+			bus_space_handle_t bsh2;
+			aprint_normal_dev(self,
+			    "gpio[%c]: %zu input/output/opendrain pins\n",
+			    "abc"[i], popcount32(pinmask[i]));
+			bus_space_subregion(bst, bsh, CPBASE(i), 0x20, &bsh2);
+			pq3gpio_group_create(self, bst, bsh2, CPDAT,
+			    pinmask[0],
+			    GPIO_PIN_INPUT|GPIO_PIN_OUTPUT|GPIO_PIN_OPENDRAIN,
+			    pq3gpio_pin_ctl);
+		}
+	}
+}
+#endif /* P1025 */
+
 #ifdef P2020
 static void
 pq3gpio_p20x0_attach(device_t self, bus_space_tag_t bst,
@@ -385,6 +486,10 @@ static const struct pq3gpio_svr_info {
 #ifdef MPC8536
 	{ SVR_MPC8536v1 >> 16, pq3gpio_mpc8536_attach,
 	    GPIO_BASE, GPIO_SIZE },
+#endif
+#ifdef P1025
+	{ SVR_P1025v1 >> 16, pq3gpio_p1025_attach,
+	    GLOBAL_BASE, GLOBAL_SIZE },
 #endif
 #ifdef P2020
 	{ SVR_P2020v2 >> 16, pq3gpio_p20x0_attach,
