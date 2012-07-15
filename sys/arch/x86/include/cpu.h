@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2012/06/16 17:30:18 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -407,7 +407,6 @@ void	lgdt_finish(void);
 struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
-void	child_trampoline(void);
 #ifdef XEN
 void	startrtclock(void);
 void	xen_delay(unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 2012/06/30 23:33:10 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2012/06/30 23:33:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2012/07/15 15:17:56 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -343,7 +343,7 @@ kernelfault:
 		switch (*(uint16_t *)frame->tf_rip) {
 		case 0xcf48:	/* iretq */
 			/*
-			 * The 'iretq' instruction faulted, wo we have the
+			 * The 'iretq' instruction faulted, so we have the
 			 * 'user' registers saved after the kernel
 			 * %rip:%cs:%fl:%rsp:%ss of the iret, and below that
 			 * the user %rip:%cs:%fl:%rsp:%ss the 'iret' was

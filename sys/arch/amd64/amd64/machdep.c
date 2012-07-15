@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 2012/07/08 20:14:11 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2012/07/08 20:14:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2012/07/15 15:17:56 dsl Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2054,7 +2054,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_err = err;
 		tf->tf_trapno = trapno;
 
-		l->l_md.md_flags |= MDP_IRET;
+		l->l_md.md_flags |= MDL_IRET;
 	}
 
 	if (pcb->pcb_fpcpu != NULL)

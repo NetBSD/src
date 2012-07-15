@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.30 2012/07/08 20:14:12 dsl Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.31 2012/07/15 15:17:56 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.30 2012/07/08 20:14:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.31 2012/07/15 15:17:56 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.30 2012/07/08 20:14:12 dsl Exp
 extern char linux32_sigcode[];
 extern char linux32_rt_sigcode[];
 extern char linux32_esigcode[];
-
-extern void (osyscall_return)(void);
 
 static void linux32_save_ucontext(struct lwp *, struct trapframe *,
     const sigset_t *, struct sigaltstack *, struct linux32_ucontext *);
@@ -274,7 +272,6 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
-	void **retaddr;
 
 	/* If we were using the FPU, forget about it. */
 	if (pcb->pcb_fpcpu != NULL)
@@ -287,6 +284,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDL_USEDFPU;
+	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __Linux_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
@@ -319,11 +317,6 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
 	cpu_fsgs_zero(l);
 	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL), GSEL(GUDATA32_SEL, SEL_UPL));
-
-	/* XXX frob return address to return via old iret method, not sysret */
-	retaddr = (void **)tf - 1;
-	*retaddr = (void *)osyscall_return;
-	return;
 }
 
 static void
