@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.8 2012/07/09 17:58:34 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.9 2012/07/15 08:44:57 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,9 +68,11 @@
 #define	SVR_P1011v2		  0x80e50020
 #define	SVR_P1012v2		  0x80e50120
 #define	SVR_P1013v2		  0x80e70020
+#define	SVR_P1016v1		  0x80e50310
 #define	SVR_P1020v2		  0x80e40020
 #define	SVR_P1021v2		  0x80e40120
 #define	SVR_P1022v2		  0x80e60020
+#define	SVR_P1025v1		  0x80e40310
 
 #define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
 

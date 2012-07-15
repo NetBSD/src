@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.13 2012/05/07 23:04:22 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.14 2012/07/15 08:44:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.13 2012/05/07 23:04:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.14 2012/07/15 08:44:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -693,8 +693,6 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 	int error = 0;
 
-	KASSERT(!cpu_softintr_p());
-
 	sc->sc_maxfrm = max(ifp->if_mtu + 32, MCLBYTES);
 	if (ifp->if_mtu > ETHERMTU_JUMBO)
 		return error;
@@ -1134,7 +1132,7 @@ pq3etsec_mapcache_destroy(
 	for (u_int i = 0; i < dmc->dmc_maxmaps; i++) {
 		bus_dmamap_destroy(sc->sc_dmat, dmc->dmc_maps[i]);
 	}
-	kmem_free(dmc, dmc_size);
+	kmem_intr_free(dmc, dmc_size);
 }
 
 static int
@@ -1147,7 +1145,8 @@ pq3etsec_mapcache_create(
 {
 	const size_t dmc_size =
 	    offsetof(struct pq3etsec_mapcache, dmc_maps[maxmaps]);
-	struct pq3etsec_mapcache * const dmc = kmem_zalloc(dmc_size, KM_SLEEP);
+	struct pq3etsec_mapcache * const dmc =
+		kmem_intr_zalloc(dmc_size, KM_NOSLEEP);
 
 	dmc->dmc_maxmaps = maxmaps;
 	dmc->dmc_nmaps = maxmaps;
@@ -1167,7 +1166,7 @@ pq3etsec_mapcache_create(
 				bus_dmamap_destroy(sc->sc_dmat,
 				    dmc->dmc_maps[i]);
 			}
-			kmem_free(dmc, dmc_size);
+			kmem_intr_free(dmc, dmc_size);
 			return error;
 		}
 		KASSERT(dmc->dmc_maps[i] != NULL);

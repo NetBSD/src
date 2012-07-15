@@ -1,0 +1,10 @@
+# 	$NetBSD: INSTALL_TWRP1025,v 1.1 2012/07/15 08:44:56 matt Exp $
+
+include "arch/evbppc/conf/TWRP1025"
+
+#ident 		"INSTALL_P2020RDB-$Revision: 1.1 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
+
+no config netbsd-sd0a
+no config nfsnetbsd
