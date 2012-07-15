@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.58 2009/04/03 21:18:59 apb Exp $	*/
+/*	$NetBSD: create.c,v 1.59 2012/07/15 09:08:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.58 2009/04/03 21:18:59 apb Exp $");
+__RCSID("$NetBSD: create.c,v 1.59 2012/07/15 09:08:29 spz Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,9 +259,11 @@ statf(FTSENT *p)
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(&indent, "link=%s", vispath(rlink(p->fts_accpath)));
 #if HAVE_STRUCT_STAT_ST_FLAGS
-	if (keys & F_FLAGS && p->fts_statp->st_flags != flags)
-		output(&indent, "flags=%s",
-		    flags_to_string(p->fts_statp->st_flags, "none"));
+	if (keys & F_FLAGS && p->fts_statp->st_flags != flags) {
+		char *str = flags_to_string(p->fts_statp->st_flags, "none");
+		output(&indent, "flags=%s", str);
+		free(str);
+	}
 #endif
 	putchar('\n');
 }
@@ -372,9 +374,11 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 			printf(" mode=%#lo", (u_long)savemode);
 		if (keys & F_NLINK)
 			printf(" nlink=1");
-		if (keys & F_FLAGS)
-			printf(" flags=%s",
-			    flags_to_string(saveflags, "none"));
+		if (keys & F_FLAGS) {
+			char *str = flags_to_string(saveflags, "none");
+			printf(" flags=%s", str);
+			free(str);
+		}
 		printf("\n");
 		*puid = saveuid;
 		*pgid = savegid;
