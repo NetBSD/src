@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.69 2012/06/16 17:30:19 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.70 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -986,9 +986,9 @@ ENTRY(cpu_switchto)
 	xorq	%rax, %rax
 	movw	%ax, %fs
 	CLI(cx)
-	swapgs
+	SWAPGS
 	movw	%ax, %gs
-	swapgs
+	SWAPGS
 	STI(cx)
 
 	movq	CPUVAR(GDT),%rcx
@@ -1018,9 +1018,9 @@ ENTRY(cpu_switchto)
 	movq	L_MD_REGS(%r12), %rbx
 	movw	TF_FS(%rbx), %fs
 	CLI(ax)
-	swapgs
+	SWAPGS
 	movw	TF_GS(%rbx), %gs
-	swapgs
+	SWAPGS
 	STI(ax)
 
 #else
@@ -1063,40 +1063,50 @@ IDTVEC(syscall32)
 /*
  * syscall()
  *
- * syscall insn entry. This currently isn't much faster, but
- * it can be made faster in the future.
+ * syscall insn entry.
+ * This currently isn't much faster, but it can be made faster in the future.
+ * (Actually we've already saved a few 100 clocks by not loading the trap gate)
  */
 IDTVEC(syscall)
 #ifndef XEN
+	/*
+	 * The user %rip is in %rcx and the user %flags in %r11.
+	 * The kernel %cs and %ss are loaded, but nothing else is.
+	 * The 'swapgs' gives us access to cpu-specific memory where
+	 * we can save a user register and then read the lwps
+	 * kernel stack pointer,
+	 * This code doesn't seem to set %ds, this may not matter since it
+	 * is ignored in 64bit mode, OTOH the syscall instruction sets %ss
+	 * and that is ignored as well.
+	 */
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
 	movq	L_PCB(%r15),%r15
-	movq	PCB_RSP0(%r15),%r15
-	xchgq	%r15,%rsp
+	movq	PCB_RSP0(%r15),%r15	/* LWP's kernel stack pointer */
 
-	/*
-	 * XXX don't need this whole frame, split of the
-	 * syscall frame and trapframe is needed.
-	 * First, leave some room for the trapno, error,
-	 * ss:rsp, etc, so that all GP registers can be
-	 * saved. Then, fill in the rest.
-	 */
-	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
-	pushq	%r15				/* User space rsp */
+	/* Make stack look like an 'int nn' frame */
+#define SP(x)	(x)-(TF_SS+8)(%r15)
+	movq	$(LSEL(LUDATA_SEL, SEL_UPL)), SP(TF_SS) /* user %ss */
+	movq	%rsp, SP(TF_RSP) 	/* User space rsp */
+
+	movq	%r11, SP(TF_RFLAGS)	/* old rflags from syscall insn */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), SP(TF_CS)
+	movq	%rcx, SP(TF_RIP)	/* syscall saves rip in rcx */
+
+	leaq	SP(0),%rsp		/* %rsp now valid after frame */
 	movq	CPUVAR(SCRATCH),%r15
-	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
+#undef SP
+
+	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
+	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
+
 	movw	%es,TF_ES(%rsp)
 	sti
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
-	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rcx,TF_RIP(%rsp)	/* syscall saves rip in rcx */
-	movq	$2,TF_ERR(%rsp)
-	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 #else
 	/* Xen already switched to kernel stack */
 	pushq	%rsi
@@ -1113,44 +1123,59 @@ IDTVEC(syscall)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 #endif
 
+do_syscall:
 	movq	CPUVAR(CURLWP),%r14
 	incq	CPUVAR(NSYSCALL)	# count it atomically
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
-	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
+	andl	$~MDL_IRET,L_MD_FLAGS(%r14)   /* Allow sysret return */
 	movq	%rsp,%rdi		/* Pass frame as arg0 */
 	call	*P_MD_SYSCALL(%r15)
 .Lsyscall_checkast:
-	/* Check for ASTs on exit to user mode. */
+	/*
+	 * Disable interrupts to avoid new ASTs (etc) being added and
+	 * to ensure we don't take an interrupt with some of the user
+	 * registers loaded.
+	 */
 	CLI(si)
+	/* Check for ASTs on exit to user mode. */
 	movl	L_MD_ASTPENDING(%r14), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
-	testl	$MDP_IRET, L_MD_FLAGS(%r14)
-	jne	iret_return;
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
-	movw	TF_ES(%rsp),%es
-#ifndef XEN
-	swapgs
-#endif
+	testl	$(MDL_IRET | MDL_COMPAT32), L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
-	movw	$(LSEL(LUDATA_SEL, SEL_UPL)), %r11w
-	movw	%r11w,%ds
-	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
+	movw	TF_ES(%rsp),%es
+	SWAPGS
+	jnz	2f
 #ifndef XEN
-	popq	%rcx	/* return rip */
-	addq	$8,%rsp	/* discard cs */
-	popq	%r11	/* flags as set by sysret insn */
-	movq	%ss:(%rsp),%rsp
+	movq	TF_RIP(%rsp), %rcx	/* %rip for sysret */
+	movq	TF_RFLAGS(%rsp), %r11	/* %flags for sysret */
+	movw	TF_DS(%rsp), %ds
+	movq	TF_RSP(%rsp), %rsp
 	sysretq
 #else
+	movw	TF_DS(%rsp), %ds
+	addq	$TF_RIP, %rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
 #endif
 
+/*
+ * If the syscall might have modified some registers, or we are a 32bit
+ * process we must return to user with an 'iret' instruction.
+ * If the iret faults in kernel (assumed due to illegal register values)
+ * then a SIGSEGV will be signalled.
+ */
+2:
+	movw	TF_DS(%rsp), %ds
+	addq	$TF_RIP, %rsp
+	iretq
+
+/* Report SPL error */
 #ifdef DIAGNOSTIC
 3:	movabsq	$4f, %rdi
 	movl	TF_RAX(%rsp),%esi
@@ -1164,6 +1189,8 @@ IDTVEC(syscall)
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
+
+/* AST pending or pmap load needed */
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 	jz	10f
@@ -1182,26 +1209,9 @@ IDTVEC(syscall)
  * void lwp_trampoline(void);
  *
  * This is a trampoline function pushed run by newly created LWPs
- * in order to do additional setup in their context.  32-bit
- * binaries begin life here.
+ * in order to do additional setup in their context.
  */
 NENTRY(lwp_trampoline)
-	movq	%rbp,%rsi
-	movq	%rbp,%r14	/* for .Losyscall_checkast */
-	movq	%rax,%rdi
-	xorq	%rbp,%rbp
-	call	_C_LABEL(lwp_startup)
-	movq	%r13,%rdi
-	call	*%r12
-	jmp	.Losyscall_checkast
-	/* NOTREACHED */
-
-/*
- * void child_trampoline(void);
- *
- * As per lwp_trampoline(), but 64-bit binaries start here.
- */
-NENTRY(child_trampoline)
 	movq	%rbp,%rsi
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
@@ -1210,8 +1220,6 @@ NENTRY(child_trampoline)
 	movq	%r13,%rdi
 	call	*%r12
 	jmp	.Lsyscall_checkast
-
-	.globl  _C_LABEL(osyscall_return)
 
 /*
  * oosyscall()
@@ -1249,50 +1257,7 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	STI(si)
-	movq	CPUVAR(CURLWP),%r14
-	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
-	movq	L_PROC(%r14),%rdx
-	movq	%rsp,%rdi
-	call	*P_MD_SYSCALL(%rdx)
-_C_LABEL(osyscall_return):
-.Losyscall_checkast:
-	/* Check for ASTs on exit to user mode. */
-	CLI(si)
-	movl	L_MD_ASTPENDING(%r14), %eax
-	orl	CPUVAR(WANT_PMAPLOAD), %eax
-	jnz	9f
-iret_return:
-#ifdef DIAGNOSTIC
-	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	3f
-#endif
-	INTRFASTEXIT
-#ifdef DIAGNOSTIC
-3:	movabsq	$4f, %rdi
-	movl	TF_RAX(%rsp),%esi
-	movl	TF_RDI(%rsp),%edx
-	movl	%ebx,%ecx
-	movl	CPUVAR(ILEVEL),%r8d
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Losyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
-#endif
-9:
-	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
-	jz	10f
-	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Losyscall_checkast	/* re-check ASTs */
-10:
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Losyscall_checkast	/* re-check ASTs */
+	jmp	do_syscall
 
 /*
  * bool sse2_idlezero_page(void *pg)

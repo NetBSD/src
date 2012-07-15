@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.51 2012/06/11 15:18:05 chs Exp $
+#	$NetBSD: genassym.cf,v 1.52 2012/07/15 15:17:56 dsl Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -162,7 +162,8 @@ define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	PAGE_SIZE		PAGE_SIZE
 
-define	MDP_IRET		MDP_IRET
+define	MDL_IRET		MDL_IRET
+define	MDL_COMPAT32		MDL_COMPAT32
 
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.78 2012/07/08 20:14:11 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.79 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.78 2012/07/08 20:14:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79 2012/07/15 15:17:56 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.78 2012/07/08 20:14:11 dsl Ex
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";	
 
-extern void (osyscall_return)(void);
-
 #ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
@@ -127,7 +125,6 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pcb *pcb;
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
-	void **retaddr;
 
 	pcb = lwp_getpcb(l);
 
@@ -143,6 +140,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDL_USEDFPU;
+	l->l_md.md_flags |= MDL_COMPAT32;	/* Force iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
         pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
         pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
@@ -167,10 +165,6 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
 	tf->tf_ss = LSEL(LUDATA32_SEL, SEL_UPL);
-
-	/* XXX frob return address to return via old iret method, not sysret */
-	retaddr = (void **)tf - 1;
-	*retaddr = (void *)osyscall_return;
 }
 
 #ifdef COMPAT_16
