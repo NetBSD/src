@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.18 2012/07/12 14:17:03 reinoud Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.19 2012/07/15 01:15:03 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.18 2012/07/12 14:17:03 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.19 2012/07/15 01:15:03 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1739,7 +1739,7 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 			}
 			ata_c->r_count |=
 			    MVSATA_WDC_READ_1(mvport, SRB_SC) << 8;
-			ata_c->r_lba =
+			ata_c->r_lba |=
 			    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAL) << 24;
 			ata_c->r_lba |=
 			    (uint64_t)MVSATA_WDC_READ_1(mvport, SRB_LBAM) << 32;
