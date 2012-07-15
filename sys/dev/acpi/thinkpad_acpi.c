@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.40 2012/07/15 11:52:01 spz Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.39 2011/06/20 15:00:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.40 2012/07/15 11:52:01 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,7 +79,7 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_NOTIFY_BatteryInfo	0x003
 #define	THINKPAD_NOTIFY_SleepButton	0x004
 #define	THINKPAD_NOTIFY_WirelessSwitch	0x005
-#define	THINKPAD_NOTIFY_FnF6		0x006
+#define	THINKPAD_NOTIFY_wWANSwitch	0x006
 #define	THINKPAD_NOTIFY_DisplayCycle	0x007
 #define	THINKPAD_NOTIFY_PointerSwitch	0x008
 #define	THINKPAD_NOTIFY_EjectButton	0x009
@@ -120,6 +120,7 @@ static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	thinkpad_fan_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
+static void	thinkpad_wwan_toggle(thinkpad_softc_t *);
 
 static bool	thinkpad_resume(device_t, const pmf_qual_t *);
 static void	thinkpad_brightness_up(device_t);
@@ -348,6 +349,9 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_WirelessSwitch:
 			thinkpad_wireless_toggle(sc);
 			break;
+		case THINKPAD_NOTIFY_wWANSwitch:
+			thinkpad_wwan_toggle(sc);
+			break;
 		case THINKPAD_NOTIFY_SleepButton:
 			if (sc->sc_smpsw_valid == false)
 				break;
@@ -405,7 +409,6 @@ thinkpad_get_hotkeys(void *opaque)
 			    PSWITCH_EVENT_PRESSED);
 			break;
 		case THINKPAD_NOTIFY_FnF1:
-		case THINKPAD_NOTIFY_FnF6:
 		case THINKPAD_NOTIFY_PointerSwitch:
 		case THINKPAD_NOTIFY_FnF10:
 		case THINKPAD_NOTIFY_FnF11:
@@ -588,6 +591,13 @@ thinkpad_wireless_toggle(thinkpad_softc_t *sc)
 	/* Ignore return value, as the hardware may not support bluetooth */
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
 	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, NULL);
+}
+
+static void
+thinkpad_wwan_toggle(thinkpad_softc_t *sc)
+{
+	/* Ignore return value, as the hardware may not support wireless WAN */
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "WTGL", NULL, NULL);
 }
 
 static uint8_t
