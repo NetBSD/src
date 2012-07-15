@@ -1,4 +1,4 @@
-/*	$NetBSD: schide.c,v 1.3 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: schide.c,v 1.4 2012/07/15 10:55:32 dsl Exp $	*/
 /*	$OpenBSD: pciide.c,v 1.305 2009/11/01 01:50:15 dlg Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.3 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.4 2012/07/15 10:55:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,26 +185,26 @@ sch_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
 		timaddr = (drive == 0) ? SCH_D0TIM : SCH_D1TIM;
 		tim = pci_conf_read(sc->sc_pc, sc->sc_tag, timaddr);
 		tim &= ~SCH_TIM_MASK;
 
-		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
-		    (drvp->drive_flags & DRIVE_UDMA) == 0))
+		if (((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & ATA_DRIVE_UDMA) == 0))
 			goto pio;
 
 		/* add timing values, setup DMA if needed */
 		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
-		    (drvp->drive_flags & DRIVE_UDMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			tim |= (drvp->UDMA_mode << 16) | SCH_TIM_SYNCDMA;
 		} else {
 			/* use Multiword DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			splx(s);
 			tim &= ~SCH_TIM_SYNCDMA;
 		}

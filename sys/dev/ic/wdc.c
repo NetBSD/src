@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.269 2012/07/02 18:15:47 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.270 2012/07/15 10:55:30 dsl Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.269 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.270 2012/07/15 10:55:30 dsl Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -248,9 +248,9 @@ wdc_sataprobe(struct ata_channel *chp)
 		 */
 		s = splbio();
 		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_type = DRIVET_ATAPI;
+			chp->ch_drive[0].drive_type = ATA_DRIVET_ATAPI;
 		else
-			chp->ch_drive[0].drive_type = DRIVET_ATA;
+			chp->ch_drive[0].drive_type = ATA_DRIVET_ATA;
 		splx(s);
 
 		/*
@@ -258,7 +258,7 @@ wdc_sataprobe(struct ata_channel *chp)
 		 * is up
 		 */
 		if (wdcreset(chp, RESET_SLEEP) != 0)
-			chp->ch_drive[0].drive_type = DRIVET_NONE;
+			chp->ch_drive[0].drive_type = ATA_DRIVET_NONE;
 		break;
 
 	default:
@@ -308,7 +308,7 @@ wdc_drvprobe(struct ata_channel *chp)
 		 * exit from the loop
 		 */
 		if (chp->ch_ndrives > 1 &&
-		    chp->ch_drive[1].drive_type == DRIVET_ATA) {
+		    chp->ch_drive[1].drive_type == ATA_DRIVET_ATA) {
 			if (wdc->select)
 				wdc->select(chp,1);
 			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
@@ -317,7 +317,7 @@ wdc_drvprobe(struct ata_channel *chp)
 			st1 = bus_space_read_1(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_status], 0);
 		}
-		if (chp->ch_drive[0].drive_type == DRIVET_ATA) {
+		if (chp->ch_drive[0].drive_type == ATA_DRIVET_ATA) {
 			if (wdc->select)
 				wdc->select(chp,0);
 			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
@@ -328,10 +328,10 @@ wdc_drvprobe(struct ata_channel *chp)
 		}
 
 
-		if ((chp->ch_drive[0].drive_type != DRIVET_ATA ||
+		if ((chp->ch_drive[0].drive_type != ATA_DRIVET_ATA ||
 		     (st0 & WDCS_DRDY)) &&
 		    (chp->ch_ndrives < 2 ||
-		     chp->ch_drive[1].drive_type != DRIVET_ATA ||
+		     chp->ch_drive[1].drive_type != ATA_DRIVET_ATA ||
 		     (st1 & WDCS_DRDY)))
 			break;
 #ifdef WDC_NO_IDS
@@ -344,11 +344,11 @@ wdc_drvprobe(struct ata_channel *chp)
 #endif
 	}
 	if ((st0 & WDCS_DRDY) == 0 &&
-	    chp->ch_drive[0].drive_type != DRIVET_ATAPI)
-		chp->ch_drive[0].drive_type = DRIVET_NONE;
+	    chp->ch_drive[0].drive_type != ATA_DRIVET_ATAPI)
+		chp->ch_drive[0].drive_type = ATA_DRIVET_NONE;
 	if (chp->ch_ndrives > 1 && (st1 & WDCS_DRDY) == 0 &&
-	    chp->ch_drive[1].drive_type != DRIVET_ATAPI)
-		chp->ch_drive[1].drive_type = DRIVET_NONE;
+	    chp->ch_drive[1].drive_type != ATA_DRIVET_ATAPI)
+		chp->ch_drive[1].drive_type = ATA_DRIVET_NONE;
 	splx(s);
 
 	ATADEBUG_PRINT(("%s:%d: wait DRDY st0 0x%x st1 0x%x\n",
@@ -371,10 +371,10 @@ wdc_drvprobe(struct ata_channel *chp)
 		if ((atac->atac_cap &
 		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32) {
 			s = splbio();
-			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+			chp->ch_drive[i].drive_flags |= ATA_DRIVE_CAP32;
 			splx(s);
 		}
-		if (chp->ch_drive[i].drive_type == DRIVET_NONE)
+		if (chp->ch_drive[i].drive_type == ATA_DRIVET_NONE)
 			continue;
 
 		/* Shortcut in case we've been shutdown */
@@ -404,9 +404,9 @@ wdc_drvprobe(struct ata_channel *chp)
 			    device_xname(atac->atac_dev),
 			    chp->ch_channel, i, error), DEBUG_PROBE);
 			s = splbio();
-			if (chp->ch_drive[i].drive_type != DRIVET_ATA ||
+			if (chp->ch_drive[i].drive_type != ATA_DRIVET_ATA ||
 			    (wdc->cap & WDC_CAPABILITY_PREATA) == 0) {
-				chp->ch_drive[i].drive_type = DRIVET_NONE;
+				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				continue;
 			}
 			splx(s);
@@ -433,7 +433,7 @@ wdc_drvprobe(struct ata_channel *chp)
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
 				    s = splbio();
-				    chp->ch_drive[i].drive_type = DRIVET_NONE;
+				    chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				    splx(s);
 				    continue;
 			}
@@ -442,7 +442,7 @@ wdc_drvprobe(struct ata_channel *chp)
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
 				s = splbio();
-				chp->ch_drive[i].drive_type = DRIVET_NONE;
+				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				splx(s);
 				continue;
 			}
@@ -454,15 +454,15 @@ wdc_drvprobe(struct ata_channel *chp)
 				    device_xname(atac->atac_dev),
 				    chp->ch_channel, i), DEBUG_PROBE);
 				s = splbio();
-				chp->ch_drive[i].drive_type = DRIVET_NONE;
+				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				splx(s);
 			} else {
 				s = splbio();
 				for (j = 0; j < chp->ch_ndrives; j++) {
 					if (chp->ch_drive[i].drive_type !=
-					    DRIVET_NONE) {
+					    ATA_DRIVET_NONE) {
 						chp->ch_drive[j].drive_type =
-						    DRIVET_OLD;
+						    ATA_DRIVET_OLD;
 					}
 				}
 				splx(s);
@@ -750,9 +750,9 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		 */
 		if (chp->ch_drive != NULL) {
 			if (cl == 0x14 && ch == 0xeb) {
-				chp->ch_drive[drive].drive_type = DRIVET_ATAPI;
+				chp->ch_drive[drive].drive_type = ATA_DRIVET_ATAPI;
 			} else {
-				chp->ch_drive[drive].drive_type = DRIVET_ATA;
+				chp->ch_drive[drive].drive_type = ATA_DRIVET_ATA;
 			}
 		}
 	}
@@ -1037,10 +1037,10 @@ wdcreset(struct ata_channel *chp, int poll)
 #endif
 	wdc->reset(chp, poll);
 
-	drv_mask1 = (chp->ch_drive[0].drive_type !=  DRIVET_NONE) ? 0x01:0x00;
+	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE) ? 0x01:0x00;
 	if (chp->ch_ndrives > 1) 
 		drv_mask1 |=
-		    (chp->ch_drive[1].drive_type != DRIVET_NONE) ? 0x02:0x00;
+		    (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE) ? 0x02:0x00;
 	drv_mask2 = __wdcwait_reset(chp, drv_mask1,
 	    (poll == RESET_SLEEP) ? 0 : 1);
 	if (drv_mask2 != drv_mask1) {
@@ -1506,7 +1506,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		 * Historically it's what we have always done so keeping it
 		 * here ensure binary backward compatibility.
 		 */
-		 drive_flags = DRIVE_NOSTREAM |
+		 drive_flags = ATA_DRIVE_NOSTREAM |
 				chp->ch_drive[xfer->c_drive].drive_flags;
 	} else {
 		/*
@@ -1670,9 +1670,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		    WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}
-	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		__wdccommand_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 	} else
 		__wdccommand_done_end(chp, xfer);
@@ -1876,12 +1876,12 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)
 		goto unaligned;
-	if ((flags & DRIVE_CAP32) && ((uintptr_t)bf & 3))
+	if ((flags & ATA_DRIVE_CAP32) && ((uintptr_t)bf & 3))
 		goto unaligned;
 #endif
 
-	if (flags & DRIVE_NOSTREAM) {
-		if (flags & DRIVE_CAP32) {
+	if (flags & ATA_DRIVE_NOSTREAM) {
+		if (flags & ATA_DRIVE_CAP32) {
 			bus_space_read_multi_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
@@ -1892,7 +1892,7 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
 		}
 	} else {
-		if (flags & DRIVE_CAP32) {
+		if (flags & ATA_DRIVE_CAP32) {
 			bus_space_read_multi_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
@@ -1907,8 +1907,8 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
-	if (flags & DRIVE_NOSTREAM) {
-		if (flags & DRIVE_CAP32) {
+	if (flags & ATA_DRIVE_NOSTREAM) {
+		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
 
@@ -1929,7 +1929,7 @@ unaligned:
 			len -= 2;
 		}
 	} else {
-		if (flags & DRIVE_CAP32) {
+		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
 
@@ -1961,12 +1961,12 @@ wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)
 		goto unaligned;
-	if ((flags & DRIVE_CAP32) && ((uintptr_t)bf & 3))
+	if ((flags & ATA_DRIVE_CAP32) && ((uintptr_t)bf & 3))
 		goto unaligned;
 #endif
 
-	if (flags & DRIVE_NOSTREAM) {
-		if (flags & DRIVE_CAP32) {
+	if (flags & ATA_DRIVE_NOSTREAM) {
+		if (flags & ATA_DRIVE_CAP32) {
 			bus_space_write_multi_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
@@ -1977,7 +1977,7 @@ wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
 		}
 	} else {
-		if (flags & DRIVE_CAP32) {
+		if (flags & ATA_DRIVE_CAP32) {
 			bus_space_write_multi_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
@@ -1992,8 +1992,8 @@ wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
-	if (flags & DRIVE_NOSTREAM) {
-		if (flags & DRIVE_CAP32) {
+	if (flags & ATA_DRIVE_NOSTREAM) {
+		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
 
@@ -2014,7 +2014,7 @@ unaligned:
 			len -= 2;
 		}
 	} else {
-		if (flags & DRIVE_CAP32) {
+		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
 

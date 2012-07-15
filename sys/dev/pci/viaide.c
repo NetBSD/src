@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.79 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: viaide.c,v 1.80 2012/07/15 10:55:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.79 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.80 2012/07/15 10:55:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,19 +744,19 @@ via_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
-		    (drvp->drive_flags & DRIVE_UDMA) == 0)) {
+		if (((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & ATA_DRIVE_UDMA) == 0)) {
 			mode = drvp->PIO_mode;
 			goto pio;
 		}
 		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
-		    (drvp->drive_flags & DRIVE_UDMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			udmatim_reg |= APO_UDMA_EN(chp->ch_channel, drive) |
 			    APO_UDMA_EN_MTH(chp->ch_channel, drive);
@@ -801,7 +801,7 @@ via_setup_channel(struct ata_channel *chp)
 		} else {
 			/* use Multiword DMA, but only if revision is OK */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			splx(s);
 #ifndef PCIIDE_AMD756_ENABLEDMA
 			/*
@@ -822,7 +822,7 @@ via_setup_channel(struct ata_channel *chp)
 				    chp->ch_channel, drive);
 				mode = drvp->PIO_mode;
 				s = splbio();
-				drvp->drive_flags &= ~DRIVE_DMA;
+				drvp->drive_flags &= ~ATA_DRIVE_DMA;
 				splx(s);
 				goto pio;
 			}

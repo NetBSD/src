@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.30 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.31 2012/07/15 10:55:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.30 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.31 2012/07/15 10:55:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,9 +350,9 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
 		/* Trim UDMA mode */
 		if ((st & PDC262_STATE_80P(channel)) != 0 ||
-		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    (chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA &&
 		    chp->ch_drive[0].UDMA_mode <= 2) ||
-		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    (chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA &&
 		    chp->ch_drive[1].UDMA_mode <= 2)) {
 			if (chp->ch_drive[0].UDMA_mode > 2)
 				chp->ch_drive[0].UDMA_mode = 2;
@@ -360,9 +360,9 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 				chp->ch_drive[1].UDMA_mode = 2;
 		}
 		/* Set U66 if needed */
-		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		if ((chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA &&
 		    chp->ch_drive[0].UDMA_mode > 2) ||
-		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    (chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA &&
 		    chp->ch_drive[1].UDMA_mode > 2))
 			scr |= PDC262_U66_EN(channel);
 		else
@@ -373,14 +373,14 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
 		    bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_ATAPI(channel))), DEBUG_PROBE);
-		if (chp->ch_drive[0].drive_type == DRIVET_ATAPI ||
-			chp->ch_drive[1].drive_type == DRIVET_ATAPI) {
-			if (((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
-			    !(chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
-			    (chp->ch_drive[1].drive_flags & DRIVE_DMA)) ||
-			    ((chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
-			    !(chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
-			    (chp->ch_drive[0].drive_flags & DRIVE_DMA)))
+		if (chp->ch_drive[0].drive_type == ATA_DRIVET_ATAPI ||
+			chp->ch_drive[1].drive_type == ATA_DRIVET_ATAPI) {
+			if (((chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA) &&
+			    !(chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA) &&
+			    (chp->ch_drive[1].drive_flags & ATA_DRIVE_DMA)) ||
+			    ((chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA) &&
+			    !(chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA) &&
+			    (chp->ch_drive[0].drive_flags & ATA_DRIVE_DMA)))
 				atapi = 0;
 			else
 				atapi = PDC262_ATAPI_UDMA;
@@ -391,20 +391,20 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		mode = 0;
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
 			    pdc2xx_udma_mc[drvp->UDMA_mode]);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_dma_mb[drvp->DMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
@@ -418,7 +418,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		}
 		mode = PDC2xx_TIM_SET_PA(mode, pdc2xx_pa[drvp->PIO_mode]);
 		mode = PDC2xx_TIM_SET_PB(mode, pdc2xx_pb[drvp->PIO_mode]);
-		if (drvp->drive_type == DRIVET_ATA)
+		if (drvp->drive_type == ATA_DRIVET_ATA)
 			mode |= PDC2xx_TIM_PRE;
 		mode |= PDC2xx_TIM_SYNC | PDC2xx_TIM_ERRDY;
 		if (drvp->PIO_mode >= 3) {
@@ -469,17 +469,17 @@ pdc20268_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			if (drvp->UDMA_mode > 2 && u100 == 0)
 				drvp->UDMA_mode = 2;
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		}
 	}
@@ -595,14 +595,14 @@ pdc20262_dma_finish(void *v, int channel, int drive, int force)
 	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
 		chp = sc->wdc_chanarray[channel];
 		atapi = 0;
-		if (chp->ch_drive[0].drive_type == DRIVET_ATAPI ||
-		    chp->ch_drive[1].drive_type == DRIVET_ATAPI) {
-			if ((!(chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
-			    (chp->ch_drive[1].drive_flags & DRIVE_UDMA) ||
-			    !(chp->ch_drive[1].drive_flags & DRIVE_DMA)) &&
-			    (!(chp->ch_drive[1].drive_flags & DRIVE_UDMA) ||
-			    (chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
-			    !(chp->ch_drive[0].drive_flags & DRIVE_DMA)))
+		if (chp->ch_drive[0].drive_type == ATA_DRIVET_ATAPI ||
+		    chp->ch_drive[1].drive_type == ATA_DRIVET_ATAPI) {
+			if ((!(chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA) ||
+			    (chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA) ||
+			    !(chp->ch_drive[1].drive_flags & ATA_DRIVE_DMA)) &&
+			    (!(chp->ch_drive[1].drive_flags & ATA_DRIVE_UDMA) ||
+			    (chp->ch_drive[0].drive_flags & ATA_DRIVE_UDMA) ||
+			    !(chp->ch_drive[0].drive_flags & ATA_DRIVE_DMA)))
 				atapi = PDC262_ATAPI_UDMA;
 		}
 		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
