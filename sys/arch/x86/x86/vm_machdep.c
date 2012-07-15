@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2012/02/19 21:06:35 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2012/02/19 21:06:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $");
 
 #include "opt_mtrr.h"
 
@@ -224,10 +224,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #ifdef __x86_64__
 	sf->sf_r12 = (uint64_t)func;
 	sf->sf_r13 = (uint64_t)arg;
-	if (func == child_return && !(l2->l_proc->p_flag & PK_32))
-		sf->sf_rip = (uint64_t)child_trampoline;
-	else
-		sf->sf_rip = (uint64_t)lwp_trampoline;
+	sf->sf_rip = (uint64_t)lwp_trampoline;
 	pcb2->pcb_rsp = (uint64_t)sf;
 	pcb2->pcb_rbp = (uint64_t)l2;
 #else
