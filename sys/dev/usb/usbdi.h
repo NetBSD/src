@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.83 2012/06/10 06:15:55 mrg Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.84 2012/07/15 21:13:31 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -113,12 +113,12 @@ usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 usbd_status usbd_abort_pipe(usbd_pipe_handle);
 usbd_status usbd_abort_default_pipe(usbd_device_handle);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle);
-usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle);
+void usbd_clear_endpoint_stall_async(usbd_pipe_handle);
 void usbd_clear_endpoint_toggle(usbd_pipe_handle);
 usbd_status usbd_endpoint_count(usbd_interface_handle, u_int8_t *);
 usbd_status usbd_interface_count(usbd_device_handle, u_int8_t *);
 void usbd_interface2device_handle(usbd_interface_handle,
-					 usbd_device_handle *);
+				  usbd_device_handle *);
 usbd_status usbd_device2interface_handle(usbd_device_handle,
 			      u_int8_t, usbd_interface_handle *);
 
@@ -187,6 +187,9 @@ typedef struct {
 } usbd_desc_iter_t;
 void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
+
+/* Used to clear endpoint stalls from the softint */
+void usbd_clear_endpoint_stall_async_cb(void *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event

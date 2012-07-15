@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.97 2012/06/10 06:15:55 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.98 2012/07/15 21:13:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -212,6 +212,7 @@ struct usbd_pipe {
 	char			aborting;
 	SIMPLEQ_HEAD(, usbd_xfer) queue;
 	LIST_ENTRY(usbd_pipe)	next;
+	struct usb_task		async_task;
 
 	usbd_xfer_handle	intrxfer; /* used for repeating requests */
 	char			repeat;
