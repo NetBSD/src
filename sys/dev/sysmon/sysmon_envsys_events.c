@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.98 2011/06/08 16:14:57 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.99 2012/07/15 17:41:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98 2011/06/08 16:14:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.99 2012/07/15 17:41:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,6 +76,8 @@ static bool sme_event_check_low_power(void);
 static bool sme_battery_check(void);
 static bool sme_battery_critical(envsys_data_t *);
 static bool sme_acadapter_check(void);
+
+static void sme_remove_event(sme_event_t *, struct sysmon_envsys *);
 
 /*
  * sme_event_register:
@@ -334,11 +336,11 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 			break;
 
 		if (strcmp(see->see_pes.pes_dvname, sme->sme_name) == 0) {
-			LIST_REMOVE(see, see_list);
 			DPRINTF(("%s: event %s %d removed (%s)\n", __func__,
 			    see->see_pes.pes_sensname, see->see_type,
 			    sme->sme_name));
-			kmem_free(see, sizeof(*see));
+			sme_remove_event(see, sme);
+
 			evcounter--;
 		}
 	}
@@ -386,6 +388,58 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 
 	DPRINTF(("%s: removed dev=%s sensor=%s type=%d\n",
 	    __func__, see->see_pes.pes_dvname, sensor, type));
+
+	sme_remove_event(see, sme);
+
+	mutex_exit(&sme->sme_mtx);
+	return 0;
+}
+
+/*
+ * sme_event_unregister_sensor:
+ *
+ *	+ Unregisters any event associated with a specific sensor
+ *	  The caller must already own the sme_mtx.
+ */
+int
+sme_event_unregister_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	sme_event_t *see;
+	bool found = false;
+
+	KASSERT(mutex_owned(&sme->sme_mtx));
+	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
+		if (see->see_edata == edata) {
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		return EINVAL;
+
+	/*
+	 * Wait for the event to finish its work, remove from the list
+	 * and release resouces.
+	 */
+	while (see->see_flags & SEE_EVENT_WORKING)
+		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
+
+	DPRINTF(("%s: removed dev=%s sensor=%s\n",
+	    __func__, see->see_pes.pes_dvname, edata->desc));
+
+	sme_remove_event(see, sme);
+
+	return 0;
+}
+
+static void
+sme_remove_event(sme_event_t *see, struct sysmon_envsys *sme)
+{
+
+	KASSERT(mutex_owned(&sme->sme_mtx));
+
+	if (see->see_edata->flags & ENVSYS_FHAS_ENTROPY)
+		rnd_detach_source(&see->see_edata->rnd_src);
 	LIST_REMOVE(see, see_list);
 	/*
 	 * So the events list is empty, we'll do the following:
@@ -395,10 +449,8 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	 */
 	if (LIST_EMPTY(&sme->sme_events_list))
 		sme_events_destroy(sme);
-	mutex_exit(&sme->sme_mtx);
 
 	kmem_free(see, sizeof(*see));
-	return 0;
 }
 
 /*

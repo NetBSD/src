@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.118 2012/02/18 01:08:00 matt Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.119 2012/07/15 17:41:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.118 2012/02/18 01:08:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.119 2012/07/15 17:41:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -604,6 +604,7 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/*
 	 * remove it and decrement the sensors count.
 	 */
+	sme_event_unregister_sensor(sme, edata);
 	TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	sme->sme_nsensors--;
 	sysmon_envsys_release(sme, true);
