@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.4 2009/11/14 20:01:20 tnozaki Exp $ */
+/*	$NetBSD: exf.c,v 1.5 2012/07/15 09:13:59 spz Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -173,6 +173,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 			    exfp->minode == sb.st_ino && 
 			    (exfp != sp->ep || exfp->refcnt > 1)) {
 				ep = exfp;
+				oname = ep->rcv_path;
 				goto postinit;
 			}
 		}
@@ -807,8 +808,10 @@ file_end(SCR *sp, EXF *ep, int force)
 		(void)close(ep->rcv_fd);
 	if (ep->env_path != NULL)
 		free(ep->env_path);
-	if (ep->rcv_path != NULL)
+	if (ep->rcv_path != NULL) {
 		free(ep->rcv_path);
+		ep->rcv_path = NULL;
+	}
 	if (ep->rcv_mpath != NULL)
 		free(ep->rcv_mpath);
 
@@ -1251,6 +1254,8 @@ file_backup(SCR *sp, const char *name, const char *bname)
 	}
 	if (bp != NULL)
 		FREE_SPACE(sp, bp, blen);
+	if (d != NULL)
+		free(d);
 	return (0);
 
 alloc_err:
