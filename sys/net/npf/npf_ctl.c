@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.15 2012/05/30 21:38:03 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.16 2012/07/15 00:23:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.15 2012/05/30 21:38:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.16 2012/07/15 00:23:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -135,12 +135,15 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		while ((ent = prop_object_iterator_next(eit)) != NULL) {
 			const npf_addr_t *addr;
 			npf_netmask_t mask;
+			int alen;
 
 			/* Get address and mask.  Add a table entry. */
-			addr = (const npf_addr_t *)prop_data_data_nocopy(
-			    prop_dictionary_get(ent, "addr"));
+			prop_object_t obj = prop_dictionary_get(ent, "addr");
+			addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
 			prop_dictionary_get_uint8(ent, "mask", &mask);
-			error = npf_table_add_cidr(tblset, tid, addr, mask);
+			alen = prop_data_size(obj);
+
+			error = npf_table_insert(tblset, tid, alen, addr, mask);
 			if (error)
 				break;
 		}
@@ -689,16 +692,16 @@ npfctl_table(void *data)
 	tblset = npf_core_tableset();
 	switch (nct->nct_action) {
 	case NPF_IOCTL_TBLENT_ADD:
-		error = npf_table_add_cidr(tblset, nct->nct_tid,
-		    &nct->nct_addr, nct->nct_mask);
+		error = npf_table_insert(tblset, nct->nct_tid,
+		    nct->nct_alen, &nct->nct_addr, nct->nct_mask);
 		break;
 	case NPF_IOCTL_TBLENT_REM:
-		error = npf_table_rem_cidr(tblset, nct->nct_tid,
-		    &nct->nct_addr, nct->nct_mask);
+		error = npf_table_remove(tblset, nct->nct_tid,
+		    nct->nct_alen, &nct->nct_addr, nct->nct_mask);
 		break;
 	default:
-		error = npf_table_match_addr(tblset, nct->nct_tid,
-		    &nct->nct_addr);
+		error = npf_table_lookup(tblset, nct->nct_tid,
+		    nct->nct_alen, &nct->nct_addr);
 	}
 	npf_core_exit(); /* XXXSMP */
 	return error;
