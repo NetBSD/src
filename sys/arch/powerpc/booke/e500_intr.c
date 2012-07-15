@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.18 2012/07/09 11:40:19 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.19 2012/07/15 08:44:56 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.18 2012/07/09 11:40:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.19 2012/07/15 08:44:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -319,6 +319,30 @@ const struct e500_intr_name mpc8572_onchip_intr_names[] = {
 
 INTR_INFO_DECL(mpc8572, MPC8572);
 #endif
+
+#ifdef P1025
+#define	p1025_external_intr_names	default_external_intr_names
+const struct e500_intr_name p1025_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_ETSEC1_G1_TX, "etsec1-g1-tx" },
+	{ ISOURCE_ETSEC1_G1_RX, "etsec1-g1-rx" },
+	{ ISOURCE_ETSEC1_G1_ERR, "etsec1-g1-error" },
+	{ ISOURCE_ETSEC2_G1_TX, "etsec2-g1-tx" },
+	{ ISOURCE_ETSEC2_G1_RX, "etsec2-g1-rx" },
+	{ ISOURCE_ETSEC2_G1_ERR, "etsec2-g1-error" },
+	{ ISOURCE_ETSEC3_G1_TX, "etsec3-g1-tx" },
+	{ ISOURCE_ETSEC3_G1_RX, "etsec3-g1-rx" },
+	{ ISOURCE_ETSEC3_G1_ERR, "etsec3-g1-error" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(p1025, P1025);
+#endif
+
 #ifdef P2020
 #define	p20x0_external_intr_names	default_external_intr_names
 const struct e500_intr_name p20x0_onchip_intr_names[] = {
@@ -1011,6 +1035,12 @@ e500_intr_init(void)
 #ifdef MPC8572
 	case SVR_MPC8572v1 >> 16:
 		*ii = mpc8572_intr_info;
+		break;
+#endif
+#ifdef P1025
+	case SVR_P1016v1 >> 16:
+	case SVR_P1025v1 >> 16:
+		*ii = p1025_intr_info;
 		break;
 #endif
 #ifdef P2020
