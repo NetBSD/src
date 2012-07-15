@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $	*/
+/*	$NetBSD: ptree.c,v 1.9 2012/07/15 00:16:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.9 2012/07/15 00:16:28 rmind Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.9 2012/07/15 00:16:28 rmind Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
 #endif
 
 /*
- * This is an implementation of a radix / PATRICIA tree.  As in a traditional 
+ * This is an implementation of a radix / PATRICIA tree.  As in a traditional
  * patricia tree, all the data is at the leaves of the tree.  An N-value
  * tree would have N leaves, N-1 branching nodes, and a root pointer.  Each
  * branching node would have left(0) and right(1) pointers that either point
@@ -76,15 +76,15 @@ __RCSID("$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
  * have no need for pointers.
  *
  * However, allocation for these branching nodes is problematic since the
- * allocation could fail.  This would cause insertions to fail for reasons  
- * beyond the users control.  So to prevent this, in this implementation
+ * allocation could fail.  This would cause insertions to fail for reasons
+ * beyond the user's control.  So to prevent this, in this implementation
  * each node has two identities: its leaf identity and its branch identity.
  * Each is separate from the other.  Every branch is tagged as to whether
  * it points to a leaf or a branch.  This is not an attribute of the object
  * but of the pointer to the object.  The low bit of the pointer is used as
  * the tag to determine whether it points to a leaf or branch identity, with
  * branch identities having the low bit set.
- * 
+ *
  * A node's branch identity has one rule: when traversing the tree from the
  * root to the node's leaf identity, one of the branches traversed will be via
  * the node's branch identity.  Of course, that has an exception: since to
@@ -93,7 +93,7 @@ __RCSID("$NetBSD: ptree.c,v 1.8 2012/07/14 18:16:54 matt Exp $");
  *
  * Branching nodes also has a bit offset and a bit length which determines
  * which branch slot is used.  The bit length can be zero resulting in a
- * one-way branch.  This is happens in two special cases: the root and
+ * one-way branch.  This happens in two special cases: the root and
  * interior mask nodes.
  *
  * To support longest match first lookups, when a mask node (one that only
@@ -628,7 +628,7 @@ ptree_insert_mask_node(pt_tree_t *pt, void *item, pt_bitlen_t mask_len)
 #endif /* !PTNOMASH */
 
 void *
-ptree_find_filtered_node(pt_tree_t *pt, void *key, pt_filter_t filter,
+ptree_find_filtered_node(pt_tree_t *pt, const void *key, pt_filter_t filter,
 	void *filter_arg)
 {
 #ifndef PTNOMASK
