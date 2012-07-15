@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.12 2012/07/01 23:21:06 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.12 2012/07/01 23:21:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -162,6 +162,26 @@ npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 			break;
 	}
 	return rl;
+}
+
+/*
+ * npf_ruleset_freealg: inspect the ruleset and disassociate specified
+ * ALG from all NAT entries using it.
+ */
+void
+npf_ruleset_freealg(npf_ruleset_t *rlset, npf_alg_t *alg)
+{
+	npf_rule_t *rl;
+
+	KASSERT(npf_core_locked());
+
+	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
+		npf_natpolicy_t *np = rl->r_natp;
+
+		if (np != NULL) {
+			npf_nat_freealg(np, alg);
+		}
+	}
 }
 
 /*
