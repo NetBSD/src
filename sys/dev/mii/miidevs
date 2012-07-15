@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.107 2012/04/06 18:49:17 matt Exp $
+$NetBSD: miidevs,v 1.108 2012/07/15 07:30:57 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@ model ATHEROS F2		0x0002 F2 10/100 PHY
 model ATTANSIC L1		0x0001 L1 10/100/1000 PHY
 model ATTANSIC L2		0x0002 L2 10/100 PHY
 model ATTANSIC AR8021		0x0004 Atheros AR8021 10/100/1000 PHY
+model ATTANSIC AR8035		0x0007 Atheros AR8035 10/100/1000 PHY
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
