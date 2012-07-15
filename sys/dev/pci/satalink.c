@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.44 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: satalink.c,v 1.45 2012/07/15 10:55:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.44 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.45 2012/07/15 10:55:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,9 +878,9 @@ sii3112_drv_probe(struct ata_channel *chp)
 		 */
 		s = splbio();
 		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_type = DRIVET_ATAPI;
+			chp->ch_drive[0].drive_type = ATA_DRIVET_ATAPI;
 		else
-			chp->ch_drive[0].drive_type = DRIVET_ATA;
+			chp->ch_drive[0].drive_type = ATA_DRIVET_ATA;
 		splx(s);
 
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
@@ -914,16 +914,16 @@ sii3112_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			dtm |= DTM_IDEx_DMA;
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			dtm |= DTM_IDEx_DMA;
 		} else {

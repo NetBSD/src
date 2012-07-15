@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.21 2012/07/15 10:55:31 dsl Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.20 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.21 2012/07/15 10:55:31 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,15 +188,15 @@ ixp_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			IXP_UDMA_ENABLE(udma, chp->ch_channel, drive);
 			IXP_SET_MODE(udma, chp->ch_channel, drive, drvp->UDMA_mode);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			IXP_UDMA_DISABLE(udma, chp->ch_channel, drive);
 			IXP_SET_TIMING(mdma_timing, chp->ch_channel, drive,
 			    ixp_mdma_timings[drvp->DMA_mode]);

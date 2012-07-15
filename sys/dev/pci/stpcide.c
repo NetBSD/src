@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.22 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.23 2012/07/15 10:55:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.22 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.23 2012/07/15 10:55:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,14 +159,14 @@ stpc_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
 		if ((atac->atac_cap & ATAC_CAP_DMA) &&
-		    (drvp->drive_flags & DRIVE_DMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_DMA)) {
 			/* use Multiword DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			bits[drive] = 0xe; /* IOCHRDY,wr/post,rd/prefetch */
@@ -174,7 +174,7 @@ stpc_setup_channel(struct ata_channel *chp)
 		else {
 			/* PIO only */
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_UDMA | ATA_DRIVE_DMA);
 			splx(s);
 			bits[drive] = 0x8; /* IOCHRDY */
 		}
