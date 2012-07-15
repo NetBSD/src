@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_a4x_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: omap_a4x_space.c,v 1.3 2012/07/15 20:54:15 matt Exp $ */
 
 /*
  * Based on arch/arm/xscale/pxa2x0_a4x_space.c
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_a4x_space.c,v 1.2 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_a4x_space.c,v 1.3 2012/07/15 20:54:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,44 @@ struct bus_space omap_a4x_bs_tag = {
 	bs_notimpl_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read (single) */
+	a4x_bs_r_1,
+	a4x_bs_r_2,
+	a4x_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read multiple */
+	a4x_bs_rm_1,
+	a4x_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region */
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write (single) */
+	a4x_bs_w_1,
+	a4x_bs_w_2,
+	a4x_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write multiple */
+	a4x_bs_wm_1,
+	a4x_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region */
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
+#endif
 };
 
 
