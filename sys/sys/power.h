@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.16 2011/04/06 08:15:44 jruoho Exp $	*/
+/*	$NetBSD: power.h,v 1.17 2012/07/15 18:31:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -206,6 +206,13 @@ struct pswitch_state {
  */
 #define PENVSYS_EVENT_LIMITS		200
 #define PENVSYS_EVENT_CAPACITY		210
+
+/*
+ * The following pseudo-event is used to force refreshing of a
+ * sensor that provides rnd(4) entropy, even if the sensor is not
+ * otherwise being monitored.
+ */
+#define PENVSYS_EVENT_NULL		220
 
 /*
  * This structure defines the properties of an envsys event.
