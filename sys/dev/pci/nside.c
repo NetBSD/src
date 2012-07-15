@@ -1,4 +1,4 @@
-/*	$NetBSD: nside.c,v 1.3 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: nside.c,v 1.4 2012/07/15 10:56:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.3 2012/07/02 18:15:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nside.c,v 1.4 2012/07/15 10:56:50 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,12 +173,12 @@ natsemi_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
 		ndrives++;
 		/* add timing values, setup DMA if needed */
-		if ((drvp->drive_flags & DRIVE_DMA) == 0) {
+		if ((drvp->drive_flags & ATA_DRIVE_DMA) == 0) {
 			tim = natsemi_pio_pulse[drvp->PIO_mode] |
 			    (natsemi_pio_recover[drvp->PIO_mode] << 4);
 		} else {
