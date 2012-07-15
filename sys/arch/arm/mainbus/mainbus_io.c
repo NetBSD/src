@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.22 2012/07/15 20:53:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.21 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.22 2012/07/15 20:53:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,45 @@ struct bus_space mainbus_bs_tag = {
 	bs_notimpl_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* stream methods */
+	/* read (single) */
+	mainbus_bs_r_1,
+	mainbus_bs_r_2,
+	mainbus_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read multiple */
+	bs_notimpl_bs_rm_1,
+	mainbus_bs_rm_2,
+	bs_notimpl_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region */
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write (single) */
+	mainbus_bs_w_1,
+	mainbus_bs_w_2,
+	mainbus_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write multiple */
+	mainbus_bs_wm_1,
+	mainbus_bs_wm_2,
+	bs_notimpl_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region */
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
+	bs_notimpl_bs_wr_8,
+#endif
 };
 
 /* bus space functions */
