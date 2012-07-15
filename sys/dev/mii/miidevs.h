@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.110 2012/04/06 18:49:44 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.111 2012/07/15 07:31:18 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.107 2012/04/06 18:49:17 matt Exp
+ *	NetBSD: miidevs,v 1.108 2012/07/15 07:30:57 matt Exp
  */
 
 /*-
@@ -135,6 +135,8 @@
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
 #define	MII_MODEL_ATTANSIC_AR8021	0x0004
 #define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
+#define	MII_MODEL_ATTANSIC_AR8035	0x0007
+#define	MII_STR_ATTANSIC_AR8035	"Atheros AR8035 10/100/1000 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
