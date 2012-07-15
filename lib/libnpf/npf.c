@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.9 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.10 2012/07/15 00:22:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.9 2012/07/01 23:21:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.10 2012/07/15 00:22:59 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -614,7 +614,8 @@ npf_table_create(u_int id, int type)
 }
 
 int
-npf_table_add_entry(nl_table_t *tl, npf_addr_t *addr, npf_netmask_t mask)
+npf_table_add_entry(nl_table_t *tl, const int alen,
+    const npf_addr_t *addr, const npf_netmask_t mask)
 {
 	prop_dictionary_t tldict = tl->ntl_dict, entdict;
 	prop_array_t tblents;
@@ -622,10 +623,10 @@ npf_table_add_entry(nl_table_t *tl, npf_addr_t *addr, npf_netmask_t mask)
 
 	/* Create the table entry. */
 	entdict = prop_dictionary_create();
-	if (entdict) {
+	if (entdict == NULL) {
 		return ENOMEM;
 	}
-	addrdata = prop_data_create_data(addr, sizeof(npf_addr_t));
+	addrdata = prop_data_create_data(addr, alen);
 	prop_dictionary_set(entdict, "addr", addrdata);
 	prop_dictionary_set_uint8(entdict, "mask", mask);
 	prop_object_release(addrdata);

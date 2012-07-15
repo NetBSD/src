@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.14 2012/07/01 23:21:06 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.15 2012/07/15 00:23:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -74,13 +74,13 @@
  *
  * Lock order
  *
- *	sess_lock ->
+ *	[ sess_lock -> ]
  *		npf_sehash_t::sh_lock ->
  *			npf_state_t::nst_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.14 2012/07/01 23:21:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.15 2012/07/15 00:23:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -112,7 +112,7 @@ typedef struct {
 	rb_node_t		se_rbnode;
 	npf_session_t *		se_backptr;
 	/* Size of the addresses. */
-	int			se_addr_sz;
+	int			se_alen;
 	/* Source and destination addresses. */
 	npf_addr_t		se_src_addr;
 	npf_addr_t		se_dst_addr;
@@ -236,7 +236,7 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 {
 	const npf_sentry_t * const sen1 = n1;
 	const npf_sentry_t * const sen2 = n2;
-	const int sz = sen1->se_addr_sz;
+	const int sz = sen1->se_alen;
 	int ret;
 
 	/*
@@ -251,8 +251,8 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	/*
 	 * Note that hash should minimise differentiation on addresses.
 	 */
-	if (sen1->se_addr_sz != sen2->se_addr_sz) {
-		return (sen1->se_addr_sz < sen2->se_addr_sz) ? -1 : 1;
+	if (sen1->se_alen != sen2->se_alen) {
+		return (sen1->se_alen < sen2->se_alen) ? -1 : 1;
 	}
 	if ((ret = memcmp(&sen1->se_src_addr, &sen2->se_src_addr, sz)) != 0) {
 		return ret;
@@ -269,7 +269,7 @@ sess_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
 	const npf_sentry_t * const sen1 = n1;
 	const npf_sentry_t * const sen2 = key;
 
-	KASSERT(sen1->se_addr_sz != 0 && sen2->se_addr_sz != 0);
+	KASSERT(sen1->se_alen != 0 && sen2->se_alen != 0);
 	return sess_rbtree_cmp_nodes(NULL, sen1, sen2);
 }
 
@@ -283,7 +283,7 @@ static const rb_tree_ops_t sess_rbtree_ops = {
 static inline npf_sehash_t *
 sess_hash_bucket(npf_sehash_t *stbl, const int proto, npf_sentry_t *sen)
 {
-	const int sz = sen->se_addr_sz;
+	const int sz = sen->se_alen;
 	uint32_t hash, mix;
 
 	/* Sum protocol and both addresses (for both directions). */
@@ -390,6 +390,7 @@ sess_tracking_start(void)
 static void
 sess_tracking_stop(void)
 {
+	npf_sehash_t *stbl;
 
 	mutex_enter(&sess_lock);
 	if (sess_tracking == SESS_TRACKING_OFF) {
@@ -405,9 +406,11 @@ sess_tracking_stop(void)
 	while (sess_gc_lwp != NULL) {
 		cv_wait(&sess_cv, &sess_lock);
 	}
+	stbl = sess_hashtbl;
+	sess_hashtbl = NULL;
 	mutex_exit(&sess_lock);
 
-	sess_htable_destroy(sess_hashtbl);
+	sess_htable_destroy(stbl);
 	pool_cache_invalidate(sess_cache);
 }
 
@@ -472,23 +475,36 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	/* Note: take protocol from the key. */
 	const int proto = npf_cache_ipproto(key);
 
-	if (proto == IPPROTO_TCP) {
+	switch (proto) {
+	case IPPROTO_TCP: {
 		const struct tcphdr *th = &key->npc_l4.tcp;
 		senkey.se_src_id = th->th_sport;
 		senkey.se_dst_id = th->th_dport;
-	} else if (proto == IPPROTO_UDP) {
+		break;
+	}
+	case IPPROTO_UDP: {
 		const struct udphdr *uh = &key->npc_l4.udp;
 		senkey.se_src_id = uh->uh_sport;
 		senkey.se_dst_id = uh->uh_dport;
-	} else if (npf_iscached(key, NPC_ICMP_ID)) {
-		const struct icmp *ic = &key->npc_l4.icmp;
-		senkey.se_src_id = ic->icmp_id;
-		senkey.se_dst_id = ic->icmp_id;
+		break;
 	}
-	KASSERT(key->npc_srcip && key->npc_dstip && key->npc_ipsz > 0);
-	memcpy(&senkey.se_src_addr, key->npc_srcip, key->npc_ipsz);
-	memcpy(&senkey.se_dst_addr, key->npc_dstip, key->npc_ipsz);
-	senkey.se_addr_sz = key->npc_ipsz;
+	case IPPROTO_ICMP:
+		if (npf_iscached(key, NPC_ICMP_ID)) {
+			const struct icmp *ic = &key->npc_l4.icmp;
+			senkey.se_src_id = ic->icmp_id;
+			senkey.se_dst_id = ic->icmp_id;
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		/* Unsupported protocol. */
+		return NULL;
+	}
+
+	KASSERT(key->npc_srcip && key->npc_dstip && key->npc_alen > 0);
+	memcpy(&senkey.se_src_addr, key->npc_srcip, key->npc_alen);
+	memcpy(&senkey.se_dst_addr, key->npc_dstip, key->npc_alen);
+	senkey.se_alen = key->npc_alen;
 
 	/*
 	 * Get a hash bucket from the cached key data.
@@ -552,7 +568,7 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
 	npf_session_t *se;
-	int proto, sz;
+	int proto, alen;
 	bool ok;
 
 	/*
@@ -582,10 +598,10 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 
 	/* Unique IDs: IP addresses.  Setup "forwards" entry first. */
 	KASSERT(npf_iscached(npc, NPC_IP46));
-	sz = npc->npc_ipsz;
+	alen = npc->npc_alen;
 	fw = &se->s_forw_entry;
-	memcpy(&fw->se_src_addr, npc->npc_srcip, sz);
-	memcpy(&fw->se_dst_addr, npc->npc_dstip, sz);
+	memcpy(&fw->se_src_addr, npc->npc_srcip, alen);
+	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
 
 	/* Initialize protocol state. */
 	if (!npf_state_init(npc, nbuf, &se->s_state)) {
@@ -632,14 +648,14 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 
 	/* Setup inverted "backwards". */
 	bk = &se->s_back_entry;
-	memcpy(&bk->se_src_addr, &fw->se_dst_addr, sz);
-	memcpy(&bk->se_dst_addr, &fw->se_src_addr, sz);
+	memcpy(&bk->se_src_addr, &fw->se_dst_addr, alen);
+	memcpy(&bk->se_dst_addr, &fw->se_src_addr, alen);
 	bk->se_src_id = fw->se_dst_id;
 	bk->se_dst_id = fw->se_src_id;
 
 	/* Finish the setup of entries. */
 	fw->se_backptr = bk->se_backptr = se;
-	fw->se_addr_sz = bk->se_addr_sz = sz;
+	fw->se_alen = bk->se_alen = alen;
 
 	/*
 	 * Insert the session and both entries into the tree.
@@ -738,13 +754,13 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 	npf_nat_gettrans(nt, &taddr, &tport);
 	if (di == PFIL_OUT) {
 		/* NPF_NATOUT: source in "forwards" = destination. */
-		memcpy(&sen->se_dst_addr, taddr, sen->se_addr_sz);
+		memcpy(&sen->se_dst_addr, taddr, sen->se_alen);
 		if (tport) {
 			sen->se_dst_id = tport;
 		}
 	} else {
 		/* NPF_NATIN: destination in "forwards" = source. */
-		memcpy(&sen->se_src_addr, taddr, sen->se_addr_sz);
+		memcpy(&sen->se_src_addr, taddr, sen->se_alen);
 		if (tport) {
 			sen->se_src_id = tport;
 		}

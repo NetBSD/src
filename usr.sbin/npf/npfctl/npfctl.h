@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.16 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.17 2012/07/15 00:22:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include <net/npf_ncode.h>
 #include <net/npf.h>
@@ -110,7 +111,7 @@ npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
-fam_addr_mask_t *npfctl_parse_cidr(char *);
+bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 
 /*
  * N-code generation interface.

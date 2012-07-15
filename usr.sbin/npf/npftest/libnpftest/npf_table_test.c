@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_table_test.c,v 1.3 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf_table_test.c,v 1.4 2012/07/15 00:22:59 rmind Exp $	*/
 
 /*
  * NPF tableset test.
@@ -22,6 +22,13 @@ static const char *ip_list[] = {
 	"10.0.0.2",
 };
 
+static const uint32_t ip6_list[][4] = {
+	{ 0x000080fe, 0x00000000, 0xffc0a002, 0x341210fe },
+	{ 0x000080fe, 0x00000000, 0xffc0a002, 0x00000000 },
+	{ 0x000080fe, 0x00000000, 0x00000000, 0x00000000 },
+	{ 0x000080fe, 0x00000000, 0xffc0a002, 0x301210fe },
+};
+
 #define	HASH_TID		1
 #define	TREE_TID		2
 
@@ -29,9 +36,10 @@ bool
 npf_table_test(bool verbose)
 {
 	npf_addr_t addr_storage, *addr = &addr_storage;
+	const int nm = NPF_NO_NETMASK;
 	npf_tableset_t *tblset;
 	npf_table_t *t1, *t2;
-	int error;
+	int error, alen;
 	u_int i;
 
 	npf_tableset_sysinit();
@@ -56,39 +64,38 @@ npf_table_test(bool verbose)
 	assert(error == 0);
 
 	/* Attempt to match non-existing entries - should fail. */
-	memset(addr, 0, sizeof(npf_addr_t));
 	addr->s6_addr32[0] = inet_addr(ip_list[0]);
+	alen = sizeof(struct in_addr);
 
-	error = npf_table_match_addr(tblset, HASH_TID, addr);
+	error = npf_table_lookup(tblset, HASH_TID, alen, addr);
 	assert(error != 0);
 
-	error = npf_table_match_addr(tblset, TREE_TID, addr);
+	error = npf_table_lookup(tblset, TREE_TID, alen, addr);
 	assert(error != 0);
 
 	/* Fill both tables with IP addresses. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
-		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
-		error = npf_table_add_cidr(tblset, HASH_TID, addr, 32);
+		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
 		assert(error == 0);
-		error = npf_table_add_cidr(tblset, HASH_TID, addr, 32);
+		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
 		assert(error != 0);
 
-		error = npf_table_add_cidr(tblset, TREE_TID, addr, 32);
+		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
 		assert(error == 0);
-		error = npf_table_add_cidr(tblset, TREE_TID, addr, 32);
+		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
 		assert(error != 0);
 	}
 
 	/* Attempt to add duplicates - should fail. */
-	memset(addr, 0, sizeof(npf_addr_t));
 	addr->s6_addr32[0] = inet_addr(ip_list[0]);
+	alen = sizeof(struct in_addr);
 
-	error = npf_table_add_cidr(tblset, HASH_TID, addr, 32);
+	error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
 	assert(error != 0);
 
-	error = npf_table_add_cidr(tblset, TREE_TID, addr, 32);
+	error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
 	assert(error != 0);
 
 	/* Reference checks. */
@@ -102,25 +109,86 @@ npf_table_test(bool verbose)
 
 	/* Match (validate) each IP entry. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
-		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
-		error = npf_table_match_addr(tblset, HASH_TID, addr);
+		error = npf_table_lookup(tblset, HASH_TID, alen, addr);
 		assert(error == 0);
 
-		error = npf_table_match_addr(tblset, TREE_TID, addr);
+		error = npf_table_lookup(tblset, TREE_TID, alen, addr);
 		assert(error == 0);
 	}
 
-	/* Remove all entries. */
+	/* IPv6 addresses. */
+	memcpy(addr, ip6_list[0], sizeof(ip6_list[0]));
+	alen = sizeof(struct in6_addr);
+
+	error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
+	assert(error == 0);
+	error = npf_table_lookup(tblset, HASH_TID, alen, addr);
+	assert(error == 0);
+	error = npf_table_remove(tblset, HASH_TID, alen, addr, nm);
+	assert(error == 0);
+
+	error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
+	assert(error == 0);
+	error = npf_table_lookup(tblset, TREE_TID, alen, addr);
+	assert(error == 0);
+	error = npf_table_remove(tblset, TREE_TID, alen, addr, nm);
+	assert(error == 0);
+
+	/*
+	 * Masking: 96, 32, 127.
+	 */
+
+	memcpy(addr, ip6_list[1], sizeof(ip6_list[1]));
+	error = npf_table_insert(tblset, TREE_TID, alen, addr, 96);
+	assert(error == 0);
+
+	memcpy(addr, ip6_list[0], sizeof(ip6_list[0]));
+	error = npf_table_lookup(tblset, TREE_TID, alen, addr);
+	assert(error == 0);
+
+	memcpy(addr, ip6_list[1], sizeof(ip6_list[1]));
+	error = npf_table_remove(tblset, TREE_TID, alen, addr, 96);
+	assert(error == 0);
+
+
+	memcpy(addr, ip6_list[2], sizeof(ip6_list[2]));
+	error = npf_table_insert(tblset, TREE_TID, alen, addr, 32);
+	assert(error == 0);
+
+	memcpy(addr, ip6_list[0], sizeof(ip6_list[0]));
+	error = npf_table_lookup(tblset, TREE_TID, alen, addr);
+	assert(error == 0);
+
+	memcpy(addr, ip6_list[2], sizeof(ip6_list[2]));
+	error = npf_table_remove(tblset, TREE_TID, alen, addr, 32);
+	assert(error == 0);
+
+
+	memcpy(addr, ip6_list[3], sizeof(ip6_list[3]));
+	error = npf_table_insert(tblset, TREE_TID, alen, addr, 126);
+	assert(error == 0);
+
+	memcpy(addr, ip6_list[0], sizeof(ip6_list[0]));
+	error = npf_table_lookup(tblset, TREE_TID, alen, addr);
+	assert(error != 0);
+
+	memcpy(addr, ip6_list[3], sizeof(ip6_list[3]));
+	error = npf_table_remove(tblset, TREE_TID, alen, addr, 126);
+	assert(error == 0);
+
+
+	alen = sizeof(struct in_addr);
+
+	/* Remove all IPv4 entries. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
-		memset(addr, 0, sizeof(npf_addr_t));
 		addr->s6_addr32[0] = inet_addr(ip_list[i]);
 
-		error = npf_table_rem_cidr(tblset, HASH_TID, addr, 32);
+		error = npf_table_remove(tblset, HASH_TID, alen, addr, nm);
 		assert(error == 0);
 
-		error = npf_table_rem_cidr(tblset, TREE_TID, addr, 32);
+		error = npf_table_remove(tblset, TREE_TID, alen, addr, nm);
 		assert(error == 0);
 	}
 
