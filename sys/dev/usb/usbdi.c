@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.138 2012/06/10 06:15:55 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.139 2012/07/15 21:13:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.138 2012/06/10 06:15:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.139 2012/07/15 21:13:31 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -599,12 +599,12 @@ XXX should we do this?
 	return (err);
 }
 
-usbd_status
-usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
+void
+usbd_clear_endpoint_stall_async_cb(void *arg)
 {
+	usbd_pipe_handle pipe = arg;
 	usbd_device_handle dev = pipe->device;
 	usb_device_request_t req;
-	usbd_status err;
 
 	pipe->methods->cleartoggle(pipe);
 
@@ -613,8 +613,14 @@ usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
 	USETW(req.wValue, UF_ENDPOINT_HALT);
 	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
-	err = usbd_do_request_async(dev, &req, 0);
-	return (err);
+	(void)usbd_do_request_async(dev, &req, 0);
+}
+
+void
+usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
+{
+
+	usb_add_task(pipe->device, &pipe->async_task, USB_TASKQ_DRIVER);
 }
 
 void
