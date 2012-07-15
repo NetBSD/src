@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.11 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.12 2012/07/15 00:23:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.11 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12 2012/07/15 00:23:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,6 +170,11 @@ npf_modcmd(modcmd_t cmd, void *arg)
 		return npf_init();
 	case MODULE_CMD_FINI:
 		return npf_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		if (npf_pfil_registered_p() || !npf_default_pass()) {
+			return EBUSY;
+		}
+		break;
 	default:
 		return ENOTTY;
 	}
