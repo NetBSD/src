@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.77 2012/07/16 06:26:43 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.78 2012/07/16 06:33:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.77 2012/07/16 06:26:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.78 2012/07/16 06:33:05 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -420,7 +420,7 @@ parse_mi_bootargs(char *args)
  * SOFTIPLMASK(IPL_SOFTNET)	= 0x00000008
  * SOFTIPLMASK(IPL_SOFTSERIAL)	= 0x00000000
  */
-#define	SOFTIPLMASK(ipl) (0x0f << (ipl))
+#define	SOFTIPLMASK(ipl) ((0x0f << (ipl)) & 0x0f)
 
 void softint_switch(lwp_t *, int);
 
