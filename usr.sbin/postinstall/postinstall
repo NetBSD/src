@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.129.2.6 2012/06/11 23:09:24 riz Exp $
+# $NetBSD: postinstall,v 1.129.2.7 2012/07/16 22:08:03 riz Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1595,30 +1595,62 @@ do_tcpdumpchroot()
 #
 #	atf
 #
-additem atf "validate the _atf to _tests user/group renaming"
+additem atf "install missing atf configuration files and validate them"
 do_atf()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_atf  fix|check"
 	op="$1"
 	failed=0
 
-	populate_dir "${op}" true \
-		"${SRC_DIR}/etc/atf" "${DEST_DIR}/etc/atf" 644 \
-		NetBSD.conf atf-run.hooks common.conf
+	# Ensure atf configuration files are in place.
+	if find_file_in_dirlist NetBSD.conf "NetBSD.conf" \
+	    "${SRC_DIR}/external/bsd/atf/etc/atf" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    NetBSD.conf common.conf || failed=1
+	else
+		failed=1
+	fi
+	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
+	    "${SRC_DIR}/external/bsd/atf/dist/atf-run/sample" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    atf-run.hooks || failed=1
+	else
+		failed=1
+	fi
 
-	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' ${DEST_DIR}/etc/atf/common.conf \
-	    >/dev/null
+	# Validate the _atf to _tests user/group renaming.
+	if [ -f "${DEST_DIR}/etc/atf/common.conf" ]; then
+		handle_atf_user "${op}" || failed=1
+	else
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+handle_atf_user()
+{
+	local op="$1"
+	local failed=0
+
+	local conf="${DEST_DIR}/etc/atf/common.conf"
+	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
 	then
 		if [ "$1" = "fix" ]; then
 			sed -e \
 			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
-			    ${DEST_DIR}/etc/atf/common.conf >${DEST_DIR}/etc/atf/common.conf.new
+			    "${conf}" >"${conf}.new"
 			failed=$(( ${failed} + $? ))
-			mv ${DEST_DIR}/etc/atf/common.conf.new ${DEST_DIR}/etc/atf/common.conf
+			mv "${conf}.new" "${conf}"
 			failed=$(( ${failed} + $? ))
+			msg "Set unprivileged-user=_tests in ${conf}"
 		else
-			msg "unprivileged-user=_atf in ${DEST_DIR}/etc/atf/common.conf" \
-			    "should be _tests"
+			msg "unprivileged-user=_atf in ${conf} should be" \
+			    "unprivileged-user=_tests"
 			failed=1
 		fi
 	fi
