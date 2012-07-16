@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.120 2012/07/15 18:33:07 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.121 2012/07/16 13:55:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.120 2012/07/15 18:33:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.121 2012/07/16 13:55:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -358,8 +358,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (tred->sensor < sme->sme_nsensors) {
-			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0 &&
-			    (sme->sme_flags & SME_POLL_ONLY) == 0) {
+			if ((sme->sme_flags & SME_POLL_ONLY) == 0) {
 				mutex_enter(&sme->sme_mtx);
 				sysmon_envsys_refresh_sensor(sme, edata);
 				mutex_exit(&sme->sme_mtx);
@@ -1015,8 +1014,7 @@ sme_initial_refresh(void *arg)
 	mutex_enter(&sme->sme_mtx);
 	sysmon_envsys_acquire(sme, true);
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head)
-		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
-			sysmon_envsys_refresh_sensor(sme, edata);
+		sysmon_envsys_refresh_sensor(sme, edata);
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
 }
@@ -1436,14 +1434,11 @@ sme_get_max_value(struct sysmon_envsys *sme,
 			continue;
 
 		/* 
-		 * refresh sensor data via sme_refresh only if the
-		 * flag is not set.
+		 * refresh sensor data
 		 */
-		if (refresh && (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-			mutex_enter(&sme->sme_mtx);
-			sysmon_envsys_refresh_sensor(sme, edata);
-			mutex_exit(&sme->sme_mtx);
-		}
+		mutex_enter(&sme->sme_mtx);
+		sysmon_envsys_refresh_sensor(sme, edata);
+		mutex_exit(&sme->sme_mtx);
 
 		v = edata->value_cur;
 		if (v > maxv)
@@ -1513,14 +1508,11 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 */
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 		/* 
-		 * refresh sensor data via sme_refresh only if the
-		 * flag is not set.
+		 * refresh sensor data via sme_envsys_refresh_sensor
 		 */
-		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-			mutex_enter(&sme->sme_mtx);
-			sysmon_envsys_refresh_sensor(sme, edata);
-			mutex_exit(&sme->sme_mtx);
-		}
+		mutex_enter(&sme->sme_mtx);
+		sysmon_envsys_refresh_sensor(sme, edata);
+		mutex_exit(&sme->sme_mtx);
 
 		/* 
 		 * retrieve sensor's dictionary.
@@ -1896,11 +1888,11 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_WARNMIN;
 		}
 
-		if (props) {
-			if (edata->flags & ENVSYS_FMONNOTSUPP) {
-				error = ENOTSUP;
-				goto out;
-			}
+		if (props && (edata->flags & ENVSYS_FMONNOTSUPP) != 0) {
+			error = ENOTSUP;
+			goto out;
+		}
+		if (props || (edata->flags & ENVSYS_FHAS_ENTROPY) != 0) {
 			error = sme_event_register(dict, edata, sme, &lims,
 					props,
 					(edata->flags & ENVSYS_FPERCENT)?
@@ -1948,8 +1940,7 @@ sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
 
 		sysmon_envsys_acquire(sme, false);
 		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
-			if (refresh &&
-			    (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+			if (refresh) {
 				mutex_enter(&sme->sme_mtx);
 				sysmon_envsys_refresh_sensor(sme, sensor);
 				mutex_exit(&sme->sme_mtx);
@@ -1968,18 +1959,13 @@ sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
 void
 sysmon_envsys_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	int32_t	old_state;
-	int32_t	old_value;
 
-	if (edata->flags & ENVSYS_FHAS_ENTROPY) {
-		old_state = edata->state;
-		old_value = edata->value_cur;
+	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
 		(*sme->sme_refresh)(sme, edata);
-		if (old_state != ENVSYS_SINVALID &&
-		    edata->state != ENVSYS_SINVALID &&
-		    old_value != edata->value_cur)
-			rnd_add_uint32(&edata->rnd_src, edata->value_cur);
-	}
-	else
-		(*sme->sme_refresh)(sme, edata);
+
+	if (edata->flags & ENVSYS_FHAS_ENTROPY &&
+	    edata->state != ENVSYS_SINVALID &&
+	    edata->value_prev != edata->value_cur)
+		rnd_add_uint32(&edata->rnd_src, edata->value_cur);
+	edata->value_prev = edata->value_cur;
 }
