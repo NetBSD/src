@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.9.2.3 2012/07/05 17:48:42 riz Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.9.2.4 2012/07/16 22:13:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.3 2012/07/05 17:48:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.9.2.4 2012/07/16 22:13:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,7 +95,7 @@ again:
 int
 npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
 {
-	const int addrlen = (ap >> 8) & 0xff;
+	const int alen = (ap >> 8) & 0xff;
 	const int proto = ap & 0xff;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
@@ -105,7 +105,7 @@ npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
 
-	if (addrlen && npc->npc_ipsz != addrlen) {
+	if (alen && npc->npc_alen != alen) {
 		return -1;
 	}
 	return (proto != 0xff && npf_cache_ipproto(npc) != proto) ? -1 : 0;
@@ -118,7 +118,9 @@ int
 npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const u_int tid)
 {
+	npf_tableset_t *tblset;
 	npf_addr_t *addr;
+	int alen;
 
 	KASSERT(npf_core_locked());
 
@@ -129,9 +131,11 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
 	addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	tblset = npf_core_tableset();
+	alen = npc->npc_alen;
 
 	/* Match address against NPF table. */
-	return npf_table_match_addr(npf_core_tableset(), tid, addr) ? -1 : 0;
+	return npf_table_lookup(tblset, tid, alen, addr) ? -1 : 0;
 }
 
 /*
@@ -150,7 +154,7 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	if (npc->npc_ipsz != alen) {
+	if (npc->npc_alen != alen) {
 		return -1;
 	}
 	addr = (szsd & 0x1) ? npc->npc_srcip : npc->npc_dstip;

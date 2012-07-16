@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.6.2.2 2012/07/05 17:48:44 riz Exp $	*/
+/*	$NetBSD: npf.h,v 1.6.2.3 2012/07/16 22:13:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@ nl_nat_t *	npf_nat_create(int, u_int, u_int, npf_addr_t *, int, in_port_t);
 int		npf_nat_insert(nl_config_t *, nl_nat_t *, pri_t);
 
 nl_table_t *	npf_table_create(u_int, int);
-int		npf_table_add_entry(nl_table_t *, npf_addr_t *, npf_netmask_t);
+int		npf_table_add_entry(nl_table_t *, const int,
+		    const npf_addr_t *, const npf_netmask_t);
 bool		npf_table_exists_p(nl_config_t *, u_int);
 int		npf_table_insert(nl_config_t *, nl_table_t *);
 void		npf_table_destroy(nl_table_t *);

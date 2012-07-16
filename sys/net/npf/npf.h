@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.14.2.4 2012/07/05 17:48:42 riz Exp $	*/
+/*	$NetBSD: npf.h,v 1.14.2.5 2012/07/16 22:13:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		4
+#define	NPF_VERSION		5
 
 /*
  * Public declarations and definitions.
@@ -94,7 +94,7 @@ typedef struct {
 	npf_addr_t *		npc_srcip;
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
-	int			npc_ipsz;
+	int			npc_alen;
 	u_int			npc_hlen;
 	int			npc_next_proto;
 	/* IPv4, IPv6. */
@@ -188,6 +188,7 @@ int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 typedef struct npf_ioctl_table {
 	int			nct_action;
 	u_int			nct_tid;
+	int			nct_alen;
 	npf_addr_t		nct_addr;
 	npf_netmask_t		nct_mask;
 } npf_ioctl_table_t;
@@ -216,6 +217,10 @@ typedef enum {
 	/* Rule procedure cases. */
 	NPF_STAT_RPROC_LOG,
 	NPF_STAT_RPROC_NORM,
+	/* Fragments. */
+	NPF_STAT_FRAGMENTS,
+	NPF_STAT_REASSEMBLY,
+	NPF_STAT_REASSFAIL,
 	/* Other errors. */
 	NPF_STAT_ERROR,
 	/* Count (last). */

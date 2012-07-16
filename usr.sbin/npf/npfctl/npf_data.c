@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.10.2.2 2012/07/05 17:48:43 riz Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.10.2.2 2012/07/05 17:48:43 riz Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -124,21 +124,12 @@ npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 			return false;
 	}
 
-	switch (fam) {
-	case AF_INET:
-		*mask = 32;
-		break;
-	case AF_INET6:
-		*mask = 128;
-		break;
-	default:
-		yyerror("unknown address family %u", fam);
-		return false;
-	}
-
+	assert(fam == AF_INET || fam == AF_INET6);
+	*mask = NPF_NO_NETMASK;
 	if (ep == NULL) {
 		return true;
 	}
+
 	ap = addr.s6_addr + (*mask / 8) - 1;
 	while (ap >= addr.s6_addr) {
 		for (int j = 8; j > 0; j--) {
@@ -331,21 +322,38 @@ out:
 	return NULL;
 }
 
-fam_addr_mask_t *
-npfctl_parse_cidr(char *cidr)
+bool
+npfctl_parse_cidr(char *cidr, fam_addr_mask_t *fam, int *alen)
 {
-	npfvar_t *vp;
-	char *p;
+	char *mask, *p;
 
-	p = strchr(cidr, '/');
+	p = strchr(cidr, '\n');
 	if (p) {
-		*p++ = '\0';
+		*p = '\0';
 	}
-	vp = npfctl_parse_fam_addr_mask(cidr, p, NULL);
-	if (vp == NULL) {
-		return NULL;
+	mask = strchr(cidr, '/');
+	if (mask) {
+		*mask++ = '\0';
 	}
-	return npfvar_get_data(vp, NPFVAR_FAM, 0);
+
+	memset(fam, 0, sizeof(*fam));
+	if (!npfctl_parse_fam_addr(cidr, &fam->fam_family, &fam->fam_addr)) {
+		return false;
+	}
+	if (!npfctl_parse_mask(mask, fam->fam_family, &fam->fam_mask)) {
+		return false;
+	}
+	switch (fam->fam_family) {
+	case AF_INET:
+		*alen = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		*alen = sizeof(struct in6_addr);
+		break;
+	default:
+		return false;
+	}
+	return true;
 }
 
 int

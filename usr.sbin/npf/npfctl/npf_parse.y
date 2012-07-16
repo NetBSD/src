@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.3 2012/07/05 17:48:44 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.4 2012/07/16 22:13:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #include <err.h>
 #include <vis.h>
 #include <netdb.h>
-#include <assert.h>
 
 #include "npfctl.h"
 

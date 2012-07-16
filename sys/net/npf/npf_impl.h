@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.10.2.4 2012/07/05 17:48:42 riz Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10.2.5 2012/07/16 22:13:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <sys/queue.h>
 #include <sys/hash.h>
 #include <sys/rbtree.h>
+#include <sys/ptree.h>
 #include <sys/rwlock.h>
 #include <net/if.h>
 
@@ -213,6 +214,8 @@ int		npf_match_tcpfl(npf_cache_t *, nbuf_t *, void *, uint32_t);
 void		npf_tableset_sysinit(void);
 void		npf_tableset_sysfini(void);
 
+const pt_tree_ops_t npf_table_ptree_ops;
+
 npf_tableset_t *npf_tableset_create(void);
 void		npf_tableset_destroy(npf_tableset_t *);
 int		npf_tableset_insert(npf_tableset_t *, npf_table_t *);
@@ -225,13 +228,13 @@ void		npf_table_unref(npf_table_t *);
 
 npf_table_t *	npf_table_get(npf_tableset_t *, u_int);
 void		npf_table_put(npf_table_t *);
-int		npf_table_check(npf_tableset_t *, u_int, int);
-int		npf_table_add_cidr(npf_tableset_t *, u_int,
-		    const npf_addr_t *, const npf_netmask_t);
-int		npf_table_rem_cidr(npf_tableset_t *, u_int,
-		    const npf_addr_t *, const npf_netmask_t);
-int		npf_table_match_addr(npf_tableset_t *, u_int,
-		    const npf_addr_t *);
+int		npf_table_check(const npf_tableset_t *, u_int, int);
+int		npf_table_insert(npf_tableset_t *, u_int,
+		    const int, const npf_addr_t *, const npf_netmask_t);
+int		npf_table_remove(npf_tableset_t *, u_int,
+		    const int, const npf_addr_t *, const npf_netmask_t);
+int		npf_table_lookup(npf_tableset_t *, u_int,
+		    const int, const npf_addr_t *);
 
 /* Ruleset interface. */
 npf_ruleset_t *	npf_ruleset_create(void);
@@ -241,6 +244,7 @@ void		npf_ruleset_natreload(npf_ruleset_t *, npf_ruleset_t *);
 npf_rule_t *	npf_ruleset_matchnat(npf_ruleset_t *, npf_natpolicy_t *);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 npf_rule_t *	npf_ruleset_replace(const char *, npf_ruleset_t *);
+void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *, npf_ruleset_t *,
 		    ifnet_t *, const int, const int);
@@ -297,6 +301,7 @@ npf_natpolicy_t *npf_nat_newpolicy(prop_dictionary_t, npf_ruleset_t *);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
 bool		npf_nat_matchpolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
+void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *,
 		    ifnet_t *, const int);
@@ -304,7 +309,6 @@ void		npf_nat_expire(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
-void		npf_nat_freealg(npf_alg_t *);
 
 int		npf_nat_save(prop_dictionary_t, prop_array_t, npf_nat_t *);
 npf_nat_t *	npf_nat_restore(prop_dictionary_t, npf_session_t *);
