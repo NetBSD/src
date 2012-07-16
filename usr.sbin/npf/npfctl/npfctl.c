@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.2 2012/07/05 17:48:44 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.2 2012/07/05 17:48:44 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: npfctl.c,v 1.10.2.2 2012/07/05 17:48:44 riz Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "npfctl.h"
 
@@ -62,7 +63,7 @@ enum {
 	NPFCTL_SESSIONS_LOAD,
 };
 
-static struct operations_s {
+static const struct operations_s {
 	const char *		cmd;
 	int			action;
 } operations[] = {
@@ -144,7 +145,7 @@ usage(void)
 	    "\t%s table <tid> [ flush ]\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s table <tid> { add | rem } <address/mask>\n",
+	    "\t%s table <tid> { add | rem | test } <address/mask>\n",
 	    progname);
 
 	exit(EXIT_FAILURE);
@@ -205,6 +206,12 @@ npfctl_print_stats(int fd)
 	    "\t%"PRIu64" packets logged\n\t%"PRIu64" packets normalized\n\n",
 	    st[NPF_STAT_RPROC_LOG], st[NPF_STAT_RPROC_NORM]);
 
+	printf("Fragmentation:\n"
+	    "\t%"PRIu64" fragments\n\t%"PRIu64" reassembled\n"
+	    "\t%"PRIu64" failed reassembly\n\n",
+	    st[NPF_STAT_FRAGMENTS], st[NPF_STAT_REASSEMBLY],
+	    st[NPF_STAT_REASSFAIL]);
+
 	printf("Unexpected error cases:\n\t%"PRIu64"\n", st[NPF_STAT_ERROR]);
 
 	free(st);
@@ -237,17 +244,76 @@ npfctl_print_error(const nl_error_t *ne)
 }
 
 static void
+npfctl_table(int fd, char **argv)
+{
+	static const struct tblops_s {
+		const char *	cmd;
+		int		action;
+	} tblops[] = {
+		{ "add",	NPF_IOCTL_TBLENT_ADD },
+		{ "rem",	NPF_IOCTL_TBLENT_REM },
+		{ "test",	0 },
+		{ NULL,		0 }
+	};
+	npf_ioctl_table_t nct;
+	fam_addr_mask_t fam;
+	char *cmd = argv[3];
+	char *arg = argv[3];
+	int n, alen;
+
+	memset(&nct, 0, sizeof(npf_ioctl_table_t));
+	nct.nct_tid = atoi(argv[2]);
+
+	for (n = 0; tblops[n].cmd != NULL; n++) {
+		if (strcmp(cmd, tblops[n].cmd) == 0) {
+			nct.nct_action = tblops[n].action;
+			arg = argv[4];
+			break;
+		}
+	}
+	if (!npfctl_parse_cidr(arg, &fam, &alen)) {
+		errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
+	}
+	memcpy(&nct.nct_addr, &fam.fam_addr, sizeof(npf_addr_t));
+	nct.nct_mask = fam.fam_mask;
+	nct.nct_alen = alen;
+
+	if (ioctl(fd, IOC_NPF_TABLE, &nct) != -1) {
+		errno = 0;
+	}
+	switch (errno) {
+	case EEXIST:
+		warnx("entry already exists or is conflicting");
+		break;
+	case ENOENT:
+		warnx("no matching entry was not found");
+		break;
+	case EINVAL:
+		warnx("invalid address, mask or table ID");
+		break;
+	case 0:
+		printf("%s: %s\n", getprogname(), nct.nct_action == 0 ?
+		    "matching entry found" : "success");
+		break;
+	default:
+		warn("error");
+	}
+	exit(errno ? EXIT_FAILURE : EXIT_SUCCESS);
+}
+
+static void
 npfctl(int action, int argc, char **argv)
 {
 	int fd, ret, ver, boolval;
-	npf_ioctl_table_t tbl;
-	char *arg;
 
 	fd = open(NPF_DEV_PATH, O_RDONLY);
 	if (fd == -1) {
 		err(EXIT_FAILURE, "cannot open '%s'", NPF_DEV_PATH);
 	}
 	ret = ioctl(fd, IOC_NPF_VERSION, &ver);
+	if (ret == -1) {
+		err(EXIT_FAILURE, "ioctl");
+	}
 	if (ver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
 		    "incompatible NPF interface version (%d, kernel %d)\n"
@@ -266,6 +332,9 @@ npfctl(int action, int argc, char **argv)
 		npfctl_config_init(false);
 		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		ret = npfctl_config_send(fd);
+		if (ret) {
+			errx(EXIT_FAILURE, "ioctl: %s", strerror(ret));
+		}
 		break;
 	case NPFCTL_SHOWCONF:
 		ret = npfctl_config_show(fd);
@@ -277,45 +346,19 @@ npfctl(int action, int argc, char **argv)
 		if (argc < 5) {
 			usage();
 		}
-		tbl.nct_tid = atoi(argv[2]);
-		if (strcmp(argv[3], "add") == 0) {
-			/* Add table entry. */
-			tbl.nct_action = NPF_IOCTL_TBLENT_ADD;
-			arg = argv[4];
-		} else if (strcmp(argv[3], "rem") == 0) {
-			/* Remove entry. */
-			tbl.nct_action = NPF_IOCTL_TBLENT_REM;
-			arg = argv[4];
-		} else {
-			/* Default: lookup. */
-			tbl.nct_action = 0;
-			arg = argv[3];
-		}
-		fam_addr_mask_t *fam = npfctl_parse_cidr(arg);
-		if (fam == NULL) {
-			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
-		}
-		memcpy(&tbl.nct_addr, &fam->fam_addr, sizeof(npf_addr_t));
-		tbl.nct_mask = fam->fam_mask;
-		ret = ioctl(fd, IOC_NPF_TABLE, &tbl);
-		if (tbl.nct_action == 0) {
-			printf("%s\n", ret ? "not found" : "found");
-			exit(ret ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
+		npfctl_table(fd, argv);
 		break;
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
 		break;
 	case NPFCTL_SESSIONS_SAVE:
-		ret = npf_sessions_recv(fd, NPF_SESSDB_PATH);
-		if (ret) {
+		if (npf_sessions_recv(fd, NPF_SESSDB_PATH) != 0) {
 			errx(EXIT_FAILURE, "could not save sessions to '%s'",
 			    NPF_SESSDB_PATH);
 		}
 		break;
 	case NPFCTL_SESSIONS_LOAD:
-		ret = npf_sessions_send(fd, NPF_SESSDB_PATH);
-		if (ret) {
+		if (npf_sessions_send(fd, NPF_SESSDB_PATH) != 0) {
 			errx(EXIT_FAILURE, "no sessions loaded from '%s'",
 			    NPF_SESSDB_PATH);
 		}

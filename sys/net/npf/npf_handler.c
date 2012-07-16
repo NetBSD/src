@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.13.2.3 2012/07/05 17:48:42 riz Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.13.2.4 2012/07/16 22:13:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.13.2.3 2012/07/05 17:48:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.13.2.4 2012/07/16 22:13:26 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,11 +119,13 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 #endif
 		}
 		if (error) {
+			npf_stats_inc(NPF_STAT_REASSFAIL);
 			se = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
 			/* More fragments should come; return. */
+			npf_stats_inc(NPF_STAT_FRAGMENTS);
 			return 0;
 		}
 
@@ -136,6 +138,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 		int ret __unused = npf_cache_all(&npc, nbuf);
 		KASSERT((ret & NPC_IPFRAG) == 0);
+		npf_stats_inc(NPF_STAT_REASSEMBLY);
 	}
 
 	/* Inspect the list of sessions. */
@@ -239,9 +242,7 @@ out:
 		*mp = NULL;
 	}
 
-	if (error) {
-		npf_stats_inc(NPF_STAT_ERROR);
-	} else {
+	if (!error) {
 		error = ENETUNREACH;
 	}
 

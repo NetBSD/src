@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.8.4.1 2012/04/03 17:22:53 riz Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.8.4.2 2012/07/16 22:13:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8.4.1 2012/04/03 17:22:53 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.8.4.2 2012/07/16 22:13:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -101,6 +101,8 @@ npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
 		return npf_alg_icmp_init();
 	case MODULE_CMD_FINI:
 		return npf_alg_icmp_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}
@@ -278,7 +280,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 	KASSERT(npf_iscached(key, NPC_IP46));
 	KASSERT(npf_iscached(key, NPC_LAYER4));
 	npfa_srcdst_invert(key);
-	key->npc_ipsz = npc->npc_ipsz;
+	key->npc_alen = npc->npc_alen;
 
 	return true;
 }
@@ -325,7 +327,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 		cksum = npf_fixup16_cksum(cksum, uh->uh_sport, port);
 		l4cksum = uh->uh_sum;
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_ipsz, enpc.npc_srcip, addr);
+	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_srcip, addr);
 
 	/*
 	 * Save the original pointers to the main IP header and then advance
