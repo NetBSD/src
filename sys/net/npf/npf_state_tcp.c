@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.3.2.3 2012/07/05 17:48:42 riz Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.3.2.4 2012/07/16 22:13:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.3.2.3 2012/07/05 17:48:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.3.2.4 2012/07/16 22:13:25 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -179,7 +179,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			[TCPFC_SYN]	= NPF_TCPS_OK,
 			/* SYN-ACK response to original SYN. */
 			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
-			/* FIN may be sent early. */
+			/* FIN may occur early. */
 			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
@@ -195,7 +195,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			[TCPFC_SYNACK]	= NPF_TCPS_OK,
 			/* XXX: ACK of late SYN in simultaneous case? */
 			[TCPFC_ACK]	= NPF_TCPS_OK,
-			/* FIN may be sent early. */
+			/* FIN may occur early. */
 			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},

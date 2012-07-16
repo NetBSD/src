@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.4.2.3 2012/07/05 17:48:44 riz Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.4.2.4 2012/07/16 22:13:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.4.2.3 2012/07/05 17:48:44 riz Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.4.2.4 2012/07/16 22:13:28 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: npf_build.c,v 1.4.2.3 2012/07/05 17:48:44 riz Exp $");
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
-#include <assert.h>
 #include <err.h>
 
 #include "npfctl.h"
@@ -578,7 +577,7 @@ npfctl_build_nat(int sd, int type, u_int if_idx, const addr_port_t *ap1,
  * npfctl_fill_table: fill NPF table with entries from a specified file.
  */
 static void
-npfctl_fill_table(nl_table_t *tl, const char *fname)
+npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 {
 	char *buf = NULL;
 	int l = 0;
@@ -590,19 +589,24 @@ npfctl_fill_table(nl_table_t *tl, const char *fname)
 		err(EXIT_FAILURE, "open '%s'", fname);
 	}
 	while (l++, getline(&buf, &n, fp) != -1) {
-		fam_addr_mask_t *fam;
+		fam_addr_mask_t fam;
+		int alen;
 
 		if (*buf == '\n' || *buf == '#') {
 			continue;
 		}
-		fam = npfctl_parse_cidr(buf);
-		if (fam == NULL) {
-			errx(EXIT_FAILURE, "%s:%d: invalid table entry",
-			    fname, l);
+
+		if (!npfctl_parse_cidr(buf, &fam, &alen)) {
+			errx(EXIT_FAILURE,
+			    "%s:%d: invalid table entry", fname, l);
+		}
+		if (type == NPF_TABLE_HASH && fam.fam_mask != NPF_NO_NETMASK) {
+			errx(EXIT_FAILURE,
+			    "%s:%d: mask used with the hash table", fname, l);
 		}
 
 		/* Create and add a table entry. */
-		npf_table_add_entry(tl, &fam->fam_addr, fam->fam_mask);
+		npf_table_add_entry(tl, alen, &fam.fam_addr, fam.fam_mask);
 	}
 	if (buf != NULL) {
 		free(buf);
@@ -628,6 +632,6 @@ npfctl_build_table(const char *tid, u_int type, const char *fname)
 	}
 
 	if (fname) {
-		npfctl_fill_table(tl, fname);
+		npfctl_fill_table(tl, type, fname);
 	}
 }

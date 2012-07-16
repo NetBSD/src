@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.2.4 2012/07/05 17:48:44 riz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.2.5 2012/07/16 22:13:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.4 2012/07/05 17:48:44 riz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.5 2012/07/16 22:13:28 riz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <assert.h>
 #include <err.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

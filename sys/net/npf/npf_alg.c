@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.2.16.2 2012/06/26 14:49:10 riz Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.2.16.3 2012/07/16 22:13:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.16.2 2012/06/26 14:49:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2.16.3 2012/07/16 22:13:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -115,9 +115,11 @@ npf_alg_unregister(npf_alg_t *alg)
 	pserialize_perform(nat_alg_psz);
 	mutex_exit(&nat_alg_lock);
 
-	npf_nat_freealg(alg);
-	kmem_free(alg, sizeof(npf_alg_t));
+	npf_core_enter();
+	npf_ruleset_freealg(npf_core_natset(), alg);
+	npf_core_exit();
 
+	kmem_free(alg, sizeof(npf_alg_t));
 	return 0;
 }
 
