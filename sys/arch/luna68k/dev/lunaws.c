@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.23 2011/07/27 14:17:54 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.24 2012/07/16 11:31:13 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.23 2011/07/27 14:17:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24 2012/07/16 11:31:13 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -228,7 +228,7 @@ wsintr(int chan)
 #endif
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
 	}
-	if (rr && RR_TXRDY)
+	if (rr & RR_TXRDY)
 		sio->sio_cmd = WR0_RSTPEND;
 	/* not capable of transmit, yet */
 }
