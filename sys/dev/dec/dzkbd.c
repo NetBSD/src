@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.24 2012/07/16 12:52:47 abs Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.25 2012/07/16 12:55:36 abs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.24 2012/07/16 12:52:47 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.25 2012/07/16 12:55:36 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ struct dzkbd_softc {
 
 	int sc_enabled;
 	int kbd_type;
-	int wsraw;
 
 	device_t sc_wskbddev;
 };
@@ -287,11 +286,6 @@ dzkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 		/* XXX don't dig in kbd internals */
 		*(int *)data = sc->sc_itl->dzi_ks.kcvol;
 		return 0;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	case WSKBDIO_SETMODE:
-		sc->wsraw = *(int *)data == WSKBD_RAW;
-		return 0;
-#endif
 	}
 	return (EPASSTHROUGH);
 }
