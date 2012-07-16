@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.155 2012/07/12 19:43:15 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.156 2012/07/16 22:14:19 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6314,4 +6314,58 @@ xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86sbusBus.c 1.4
 
 	Fix colors on suncg6.
 	[macallan, ticket #415]
+
+lib/libc/arch/arm/gen/Makefile.inc		1.17
+
+	Fix ARM static binaries.
+	[reinoud, ticket #416]
+
+sys/dev/ldvar.h					1.21
+
+	Fix problem with ataraid volumes larger than 2 TiB.
+	[nonaka, ticket #418]
+
+usr.sbin/postinstall/postinstall		1.136 via patch
+
+	Properly find atf configuration files in the source tree. PR#45870.
+	[jmmv, ticket #419]
+
+common/lib/libc/gen/ptree.c			1.7-1.9
+sys/sys/ptree.h					1.7
+
+	ptree fixes:  don't test 0 length keys, protect against multiple
+	insertions, and make key argument const.
+	[rmind, ticket #420]
+
+lib/libnpf/npf.c				1.10
+lib/libnpf/npf.h				1.9
+sys/net/npf/files.npf				1.7
+sys/net/npf/npf.c				1.12
+sys/net/npf/npf.h				1.19
+sys/net/npf/npf_alg.c				1.5
+sys/net/npf/npf_alg_icmp.c			1.10
+sys/net/npf/npf_ctl.c				1.16
+sys/net/npf/npf_handler.c			1.20
+sys/net/npf/npf_impl.h				1.18
+sys/net/npf/npf_inet.c				1.14
+sys/net/npf/npf_instr.c				1.13
+sys/net/npf/npf_nat.c				1.15
+sys/net/npf/npf_ruleset.c			1.13
+sys/net/npf/npf_sendpkt.c			1.12
+sys/net/npf/npf_session.c			1.15
+sys/net/npf/npf_state_tcp.c			1.9
+sys/net/npf/npf_tableset.c			1.13
+sys/net/npf/npf_tableset_ptree.c		1.1
+sys/rump/dev/lib/libnpf/Makefile		1.4
+usr.sbin/npf/npfctl/npf_build.c			1.11
+usr.sbin/npf/npfctl/npf_data.c			1.15
+usr.sbin/npf/npfctl/npf_disassemble.c		1.7
+usr.sbin/npf/npfctl/npf_ncgen.c			1.12
+usr.sbin/npf/npfctl/npf_parse.y			1.10
+usr.sbin/npf/npfctl/npfctl.c			1.15
+usr.sbin/npf/npfctl/npfctl.h			1.17
+usr.sbin/npf/npftest/libnpftest/npf_table_test.c 1.4
+
+	Rework NPF tables and fix support for IPv6.
+	[rmind, ticket #421]
 
