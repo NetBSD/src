@@ -34,6 +34,8 @@
   [(VUNSPEC_BLOCKAGE 0)	    ; `blockage' insn to prevent scheduling across an
 			    ; insn in the code.
    (VUNSPEC_SYNC_ISTREAM 1) ; sequence of insns to sync the I-stream
+   (VUNSPEC_FFS 2)          ; internal FFS for the expand
+   (VUNSPEC_FFC 3)          ; internal FFC for the expand
    (VAX_AP_REGNUM 12)	    ; Register 12 contains the argument pointer
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer

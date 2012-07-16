@@ -25,7 +25,7 @@
   "
 {
   rtx label = gen_label_rtx ();
-  emit_insn (gen_ffssi2_internal (operands[0], operands[1], operands[1]));
+  emit_insn (gen_unspec_ffssi2 (operands[0], operands[1]));
   emit_jump_insn (gen_bne (label));
   emit_insn (gen_negsi2 (operands[0], const1_rtx));
   emit_label (label);
@@ -33,9 +33,15 @@
   DONE;
 }")
 
-(define_insn "ffssi2_internal"
+;;
+;; Set cc0 to match argument 1 since if it is 0, Z will be set just as
+;; if a tst:SI was performed.  If we did a match_dup 0, that wouldn't be
+;; right since 0 will be set to (0+32) [the position (relative to the base)
+;; of a bit one position to the left of the specified field].
+;;
+(define_insn "unspec_ffssi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-        (ffs:SI (match_operand:SI 1 "general_operand" "nrQ")))
-   (set (cc0) (ffs:SI (match_operand:SI 2 "general_operand" "1")))]
+        (unspec:SI [(match_operand:SI 1 "general_operand" "nrQ")] VUNSPEC_FFS))
+   (set (cc0) (match_dup 1))]
   ""
   "ffs $0,$32,%1,%0")
