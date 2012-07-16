@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.100 2012/07/15 18:33:07 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.101 2012/07/16 13:55:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.100 2012/07/15 18:33:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.101 2012/07/16 13:55:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -734,14 +734,13 @@ sme_events_worker(struct work *wk, void *arg)
 	see->see_flags |= SEE_EVENT_WORKING;
 	/* 
 	 * sme_events_check marks the sensors to make us refresh them here.
-	 * Don't refresh if the driver uses its own method for refreshing.
+	 * sme_envsys_refresh_sensor will not call the driver if the driver
+	 * does its own setting of the sensor value.
 	 */
-	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-		if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
-			/* refresh sensor in device */
-			sysmon_envsys_refresh_sensor(sme, edata);
-			edata->flags &= ~ENVSYS_FNEED_REFRESH;
-		}
+	if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
+		/* refresh sensor in device */
+		sysmon_envsys_refresh_sensor(sme, edata);
+		edata->flags &= ~ENVSYS_FNEED_REFRESH;
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
@@ -1010,8 +1009,7 @@ sme_acadapter_check(void)
 		if (edata->units == ENVSYS_INDICATOR) {
 			sensor = true;
 			/* refresh current sensor */
-			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
-				sysmon_envsys_refresh_sensor(sme, edata);
+			sysmon_envsys_refresh_sensor(sme, edata);
 			if (edata->value_cur)
 				return false;
 		}
