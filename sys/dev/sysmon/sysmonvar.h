@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.42 2012/07/15 18:33:07 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.43 2012/07/16 13:55:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -82,6 +82,7 @@ struct envsys_data {
 	uint32_t	rpms;		/* for fans, nominal RPMs */
 	int32_t		rfact;		/* for volts, factor x 10^4 */
 	int32_t		value_cur;	/* current value */
+	int32_t		value_prev;	/* previous value */
 	int32_t		value_max;	/* max value */
 	int32_t		value_min;	/* min value */
 	int32_t		private;	/* private data for drivers */
