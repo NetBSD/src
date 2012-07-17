@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.1 2012/07/15 08:44:56 matt Exp $
+#	$NetBSD: TWRP1025,v 1.2 2012/07/17 01:36:12 matt Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.1 $"
+ident 		"TWRP1025-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -167,8 +167,8 @@ duart*		at cpunode?
 com*		at duart? port ?
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x002	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 0x103	# Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? instance 1 flags 0x003	# Enhanced 3-Speed Ethernet Controller
+tsec1		at cpunode? instance 3 flags 0x102	# Enhanced 3-Speed Ethernet Controller
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS
 

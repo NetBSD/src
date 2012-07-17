@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.11 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.12 2012/07/17 01:36:13 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -333,6 +333,12 @@
 #define	ETSEC2_BASE	0x25000
 #define	ETSEC3_BASE	0x26000
 #define	ETSEC4_BASE	0x27000
+#define	ETSEC1_G0_BASE	0xB0000
+#define	ETSEC2_G0_BASE	0xB1000
+#define	ETSEC3_G0_BASE	0xB2000
+#define	ETSEC1_G1_BASE	0xB4000
+#define	ETSEC2_G1_BASE	0xB5000
+#define	ETSEC3_G1_BASE	0xB6000
 #define	ETSEC_SIZE	0x01000
 
 #define	ESDHC_BASE	0x2e000

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2012/07/17 01:36:12 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -221,9 +221,23 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_DUART) },
 	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1,
 		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ 0xffff, SVR_P1025v1 >> 16 } },
+#if defined(P1025)
+	{ "tsec", ETSEC1_G0_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC1_G1_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_G1_TX, ISOURCE_ETSEC1_G1_RX,
+		     ISOURCE_ETSEC1_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
+#endif
+#endif
 #if defined(MPC8548) || defined(MPC8555) || defined(MPC8572) \
-    || defined(P2020) || defined(P1025)
+    || defined(P2020)
 	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2,
 		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
 		1 + ilog2(DEVDISR_TSEC2),
@@ -231,18 +245,44 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		  SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
 		  SVR_P1025v1 >> 16 } },
 #endif
+#if defined(P1025)
+	{ "tsec", ETSEC2_G0_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC2_G1_BASE, ETSEC_SIZE, 5,
+		3, { ISOURCE_ETSEC2_G1_TX, ISOURCE_ETSEC2_G1_RX,
+		     ISOURCE_ETSEC2_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
+#endif
+#endif
 #if defined(MPC8544) || defined(MPC8536)
 	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2,
 		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
 		1 + ilog2(DEVDISR_TSEC3),
 		{ SVR_MPC8536v1 >> 16, SVR_MPC8544v1 >> 16 } },
 #endif
-#if defined(MPC8548) || defined(MPC8572) || defined(P1025) || defined(P2020)
+#if defined(MPC8548) || defined(MPC8572) || defined(P2020)
 	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 3,
 		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
 		1 + ilog2(DEVDISR_TSEC3),
 		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16,
-		  SVR_P2020v2 >> 16, SVR_P1025v1 >> 16 } },
+		  SVR_P2020v2 >> 16 } },
+#endif
+#if defined(P1025)
+	{ "tsec", ETSEC3_G0_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC3_G1_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_G1_TX, ISOURCE_ETSEC3_G1_RX,
+		     ISOURCE_ETSEC3_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
+#endif
 #endif
 #if defined(MPC8548) || defined(MPC8572)
 	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4,
