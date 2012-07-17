@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.13 2012/07/12 16:01:53 jakllsch Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.14 2012/07/17 05:47:07 skrll Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.13 2012/07/12 16:01:53 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.14 2012/07/17 05:47:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -516,7 +516,7 @@ sdmmc_enable(struct sdmmc_softc *sc)
 			goto out;
 	}
 
-		/* Initialize SD/MMC memory card(s). */
+	/* Initialize SD/MMC memory card(s). */
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) ||
 	    ISSET(sc->sc_flags, SMF_MEM_MODE))
 		error = sdmmc_mem_enable(sc);
