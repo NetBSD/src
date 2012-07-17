@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.155 2012/06/22 18:26:35 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.156 2012/07/17 14:22:42 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.155 2012/06/22 18:26:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156 2012/07/17 14:22:42 njoly Exp $");
 
 #include "opt_pipe.h"
 
@@ -604,7 +604,7 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 		}
 	}
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
@@ -634,9 +634,10 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 		*retsize = len - auio.uio_resid;
 
 bad:
-	if (ktriov != NULL) {
+	if (ktrpoint(KTR_GENIO)) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
-		kmem_free(ktriov, iovsz);
+		if (ktriov != NULL)
+			kmem_free(ktriov, iovsz);
 	}
 
  	if (iov != aiov)
@@ -897,7 +898,7 @@ static int
 do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
     struct mbuf **from, struct mbuf **control, register_t *retsize)
 {
-	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov;
+	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
@@ -947,8 +948,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 		}
 	}
 
-	ktriov = NULL;
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
@@ -964,9 +964,10 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 		/* Some data transferred */
 		error = 0;
 
-	if (ktriov != NULL) {
+	if (ktrpoint(KTR_GENIO)) {
 		ktrgeniov(s, UIO_READ, ktriov, len, error);
-		kmem_free(ktriov, iovsz);
+		if (ktriov != NULL)
+			kmem_free(ktriov, iovsz);
 	}
 
 	if (error != 0) {
