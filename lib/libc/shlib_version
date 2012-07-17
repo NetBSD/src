@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.233 2012/07/14 15:06:26 darrenr Exp $
+#	$NetBSD: shlib_version,v 1.234 2012/07/17 05:41:30 dholland Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -30,5 +30,6 @@
 #   see isblank's comment in ctype.h.
 # - remove gets(); it is finally dead in c11.
 # - make __cerror (spelled CERROR) hidden again
+# - remove ruserok() and friends to libcompat (or entirely)
 major=12
 minor=185
