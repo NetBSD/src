@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.54 2012/07/17 06:04:23 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.55 2012/07/17 06:12:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -317,7 +317,7 @@
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
-/* ARM11r0 Auxillary Control Register (CP15 register 1, opcode2 1) */
+/* ARM11r0 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define ARM11R0_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
 					   /* This is an undocumented flag
 					    * used to work around a cache bug
@@ -340,7 +340,7 @@
 #define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
 #define	ARM1176_AUXCTL_FIO	0x80000000 /* low intr latency override */
 
-/* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
+/* XScale Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
 #define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
 #define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
@@ -348,7 +348,7 @@
 #define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
 #define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
-/* ARM11 MPCore Auxillary Control Register (CP15 register 1, opcode2 1) */
+/* ARM11 MPCore Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	MPCORE_AUXCTL_RS	0x00000001 /* return stack */
 #define	MPCORE_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
 #define	MPCORE_AUXCTL_SB	0x00000004 /* static branch prediction */
