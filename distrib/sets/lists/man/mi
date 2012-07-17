@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1397 2012/07/13 22:58:44 abs Exp $
+# $NetBSD: mi,v 1.1398 2012/07/17 14:34:31 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1824,6 +1824,7 @@
 ./usr/share/man/cat4/wdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wds.0			man-sys-catman		.cat
 ./usr/share/man/cat4/we.0			man-sys-catman		.cat
+./usr/share/man/cat4/wedge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmidell.0			man-sys-catman		.cat
