@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.41 2012/03/02 16:17:22 matt Exp $	*/
+/*	$NetBSD: dump.c,v 1.42 2012/07/17 14:39:08 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.41 2012/03/02 16:17:22 matt Exp $");
+__RCSID("$NetBSD: dump.c,v 1.42 2012/07/17 14:39:08 njoly Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -634,6 +634,7 @@ sysretprint(struct ktr_header *kth)
 			wprintf(" %s", errnos[error].name);
 	} else
 		switch (ktr->ktr_code) {
+		case SYS_mremap:
 		case SYS_mmap:
 			wprintf(" = %p", (void *)(intptr_t)ret);
 			break;
