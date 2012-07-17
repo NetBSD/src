@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.14 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.15 2012/07/17 01:36:13 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,10 +35,11 @@
  */
 
 #include "opt_inet.h"
+#include "opt_mpc85xx.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.14 2012/07/15 08:44:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.15 2012/07/17 01:36:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -170,6 +171,7 @@ struct pq3etsec_softc {
 	struct mii_data sc_mii;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_mdio_bsh;
 	bus_dma_tag_t sc_dmat;
 	int sc_phy_addr;
 	prop_dictionary_t sc_intrmap;
@@ -303,6 +305,18 @@ etsec_write(struct pq3etsec_softc *sc, bus_size_t off, uint32_t data)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, off, data);
 }
 
+static inline uint32_t
+etsec_mdio_read(struct pq3etsec_softc *sc, bus_size_t off)
+{
+	return bus_space_read_4(sc->sc_bst, sc->sc_mdio_bsh, off);
+}
+
+static inline void
+etsec_mdio_write(struct pq3etsec_softc *sc, bus_size_t off, uint32_t data)
+{
+	bus_space_write_4(sc->sc_bst, sc->sc_mdio_bsh, off, data);
+}
+
 static int
 pq3etsec_mii_readreg(device_t self, int phy, int reg)
 {
@@ -311,24 +325,24 @@ pq3etsec_mii_readreg(device_t self, int phy, int reg)
 
 //	int s = splnet();
 
-	etsec_write(sc, MIIMADD,
+	etsec_mdio_write(sc, MIIMADD,
 	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
 
 	etsec_write(sc, IEVENT, IEVENT_MMRD);
-	etsec_write(sc, MIIMCOM, 0);	/* clear any past bits */
-	etsec_write(sc, MIIMCOM, MIIMCOM_READ);
+	etsec_mdio_write(sc, MIIMCOM, 0);	/* clear any past bits */
+	etsec_mdio_write(sc, MIIMCOM, MIIMCOM_READ);
 #if 0
 	sc->sc_imask |= IEVENT_MMRD;
 	etsec_write(sc, IMASK, sc->sc_imask);
 #endif
 
-	while (etsec_read(sc, MIIMIND) != 0) {
+	while (etsec_mdio_read(sc, MIIMIND) != 0) {
 			delay(1);
 	}
-	int data = etsec_read(sc, MIIMSTAT);
+	int data = etsec_mdio_read(sc, MIIMSTAT);
 
 	if (miimcom == MIIMCOM_SCAN)
-		etsec_write(sc, MIIMCOM, miimcom);
+		etsec_mdio_write(sc, MIIMCOM, miimcom);
 
 #if 0
 	aprint_normal_dev(sc->sc_dev, "%s: phy %d reg %d: %#x\n",
@@ -343,7 +357,7 @@ static void
 pq3etsec_mii_writereg(device_t self, int phy, int reg, int data)
 {
 	struct pq3etsec_softc * const sc = device_private(self);
-	uint32_t miimcom = etsec_read(sc, MIIMCOM);
+	uint32_t miimcom = etsec_mdio_read(sc, MIIMCOM);
 
 #if 0
 	aprint_normal_dev(sc->sc_dev, "%s: phy %d reg %d: %#x\n",
@@ -352,10 +366,10 @@ pq3etsec_mii_writereg(device_t self, int phy, int reg, int data)
 
 //	int s = splnet();
 	etsec_write(sc, IEVENT, IEVENT_MMWR);
-	etsec_write(sc, MIIMADD,
+	etsec_mdio_write(sc, MIIMADD,
 	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
-	etsec_write(sc, MIIMCOM, 0);	/* clear any past bits */
-	etsec_write(sc, MIIMCON, data);
+	etsec_mdio_write(sc, MIIMCOM, 0);	/* clear any past bits */
+	etsec_mdio_write(sc, MIIMCON, data);
 
 #if 0
 	sc->sc_imask |= IEVENT_MMWR;
@@ -363,12 +377,12 @@ pq3etsec_mii_writereg(device_t self, int phy, int reg, int data)
 #endif
 
 	int timo = 1000;	/* 1ms */
-	while ((etsec_read(sc, MIIMIND) & MIIMIND_BUSY) && --timo > 0) {
+	while ((etsec_mdio_read(sc, MIIMIND) & MIIMIND_BUSY) && --timo > 0) {
 			delay(1);
 	}
 
 	if (miimcom == MIIMCOM_SCAN)
-		etsec_write(sc, MIIMCOM, miimcom);
+		etsec_mdio_write(sc, MIIMCOM, miimcom);
 	etsec_write(sc, IEVENT, IEVENT_MMWR);
 //	splx(s);
 }
@@ -453,6 +467,50 @@ pq3etsec_mediachange(struct ifnet *ifp)
 }
 #endif
 
+
+static const struct {
+	bus_addr_t reg_base;
+	bus_addr_t mdio_base;
+} etsec_mdio_map[] = {
+	{ ETSEC1_BASE, ETSEC1_BASE },
+	{ ETSEC2_BASE, ETSEC2_BASE },
+	{ ETSEC3_BASE, ETSEC3_BASE },
+	{ ETSEC4_BASE, ETSEC4_BASE },
+#if defined(P1025)
+	{ ETSEC1_G0_BASE, ETSEC1_BASE },
+	{ ETSEC1_G1_BASE, ETSEC1_BASE },
+	{ ETSEC2_G0_BASE, ETSEC2_BASE },
+	{ ETSEC2_G1_BASE, ETSEC2_BASE },
+	{ ETSEC3_G0_BASE, ETSEC3_BASE },
+	{ ETSEC3_G1_BASE, ETSEC3_BASE },
+#endif
+};
+
+static bool
+pq3etsec_mdio_map(struct pq3etsec_softc *sc, bus_addr_t reg_base,
+	bus_addr_t *mdio_basep)
+{
+	*mdio_basep = 0;
+	for (size_t i = 0; i < __arraycount(etsec_mdio_map); i++) {
+		if (etsec_mdio_map[i].reg_base == reg_base) {
+			bus_addr_t mdio_base = etsec_mdio_map[i].mdio_base;
+			if (mdio_base == reg_base) {
+				sc->sc_mdio_bsh = sc->sc_bsh;
+				return true;
+			}
+			if (!bus_space_map(sc->sc_bst,
+					mdio_base,
+					ETSEC_SIZE, 0, &sc->sc_mdio_bsh)) {
+				return true;
+			}
+			*mdio_basep = mdio_base;
+			break;
+		}
+	}
+
+	return false;
+}
+
 static void
 pq3etsec_attach(device_t parent, device_t self, void *aux)
 {
@@ -462,6 +520,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_locators * const cnl = &cna->cna_locs;
 	cfdata_t cf = device_cfdata(self);
 	int error;
+	bus_addr_t mdio_base;
 
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc_dev = self;
@@ -491,6 +550,12 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_bsh);
 	if (error) {
 		aprint_error(": error mapping registers: %d\n", error);
+		return;
+	}
+
+	if (!pq3etsec_mdio_map(sc, cnl->cnl_addr, &mdio_base)) {
+		aprint_error(": error mapping mdio registers @ %#x\n",
+		    mdio_base);
 		return;
 	}
 
