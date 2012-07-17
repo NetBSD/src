@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.29 2012/05/08 05:15:45 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.30 2012/07/17 03:13:31 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.29 2012/05/08 05:15:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.30 2012/07/17 03:13:31 jmmv Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -159,7 +159,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	/* get model name and perform model-specific actions */
 	memset(model_name, 0, sizeof(model_name));
 	node = OF_finddevice("/");
-	if (node >= 0) {
+	if (node != -1) {
 		l = OF_getprop(node, "model", model_name, sizeof(model_name));
 		if (l == -1)
 			OF_getprop(node, "name", model_name,
