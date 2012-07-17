@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.189 2012/05/11 04:05:54 chs Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.189 2012/05/11 04:05:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1143,6 +1143,15 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 	int s;
+
+	/*
+	 * Prevent further calls to ioctl (for example turning off
+	 * promiscuous mode from the bridge code), which eventually can
+	 * call if_init() which can cause panics because the interface
+	 * is in the process of being detached. Return device not configured
+	 * instead.
+	 */
+	ifp->if_ioctl = (int (*)(struct ifnet *, u_long, void *))enxio;
 
 #if NBRIDGE > 0
 	if (ifp->if_bridge)
