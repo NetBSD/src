@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.21 2012/07/17 05:57:49 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.22 2012/07/17 21:35:26 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.21 2012/07/17 05:57:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.22 2012/07/17 21:35:26 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1530,10 +1530,11 @@ sdhc_intr(void *arg)
 			uint32_t xstatus = HREAD4(hp, SDHC_NINTR_STATUS);
 			status = xstatus;
 			error = xstatus >> 16;
-			if (!ISSET(status, SDHC_NINTR_STATUS_MASK))
+			if (error)
+				xstatus |= SDHC_ERROR_INTERRUPT;
+			else if (!ISSET(status, SDHC_NINTR_STATUS_MASK))
 				continue; /* no interrupt for us */
 			/* Acknowledge the interrupts we are about to handle. */
-			xstatus |= (error ? SDHC_ERROR_INTERRUPT : 0);
 			HWRITE4(hp, SDHC_NINTR_STATUS, xstatus);
 		} else {
 			/* Find out which interrupts are pending. */
