@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.12 2012/01/27 18:52:59 para Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.13 2012/07/18 19:38:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.12 2012/01/27 18:52:59 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.13 2012/07/18 19:38:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,6 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.12 2012/01/27 18:52:59 para Exp $");
     TRUTH_ENCODE(SVR_P2020v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
     TRUTH_ENCODE(SVR_P2010v2, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
+#define	PORDEVSR_P1025_TRUTH_ENCODE(inst, field, value, result) \
+    TRUTH_ENCODE(SVR_P1025v1, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
+    TRUTH_ENCODE(SVR_P1016v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
@@ -156,6 +161,15 @@ const struct e500_truthtab pq3pci_pcie_lanes[] = {
 
     PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE12_X1_3_X2, 2),
     PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE13_X2, 2),
+#endif
+
+#ifdef P1025
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X1, 1),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_SGMII23, 1),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X2_SGMII23, 2),
+
+    PORDEVSR_P1025_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
 #endif
 };
 
