@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL_TWRP1025.MP,v 1.1 2012/07/15 08:44:56 matt Exp $
+# 	$NetBSD: INSTALL_TWRP1025.MP,v 1.2 2012/07/18 16:58:15 matt Exp $
 
-include "arch/evbppc/conf/TWRP1205.MP"
+include "arch/evbppc/conf/TWRP1025.MP"
 
-#ident 		"INSTALL_TWRP1205.MP-$Revision: 1.1 $"
+#ident 		"INSTALL_TWRP1025.MP-$Revision: 1.2 $"
 
 include "arch/evbppc/conf/INSTALL.inc"
 
