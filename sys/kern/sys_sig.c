@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.37 2012/02/19 21:06:57 rmind Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.38 2012/07/18 20:30:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.37 2012/02/19 21:06:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38 2012/07/18 20:30:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,10 +240,11 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 	if (pid > 0) {
 		/* kill single process */
 		mutex_enter(proc_lock);
-		p = proc_find(pid);
-		if (p == NULL) {
+		p = proc_find_raw(pid);
+		if (p == NULL || (p->p_stat != SACTIVE && p->p_stat != SSTOP)) {
 			mutex_exit(proc_lock);
-			return ESRCH;
+			/* IEEE Std 1003.1-2001: return success for zombies */
+			return p ? 0 : ESRCH;
 		}
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
