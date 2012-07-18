@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.9 2012/07/15 08:44:57 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.10 2012/07/18 20:46:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,8 @@
 
 #define PVR_MPCe500		  0x8020
 #define PVR_MPCe500v2		  0x8021
+#define PVR_MPCe500mc		  0x8023
+#define PVR_MPCe5500		  0x8024	/* 64-bit */
 
 #define	SVR_MPC8548v1		  0x80310010
 #define	SVR_MPC8548v1plus	  0x80310011
@@ -68,10 +70,12 @@
 #define	SVR_P1011v2		  0x80e50020
 #define	SVR_P1012v2		  0x80e50120
 #define	SVR_P1013v2		  0x80e70020
+#define	SVR_P1015v1		  0x80e50210
 #define	SVR_P1016v1		  0x80e50310
 #define	SVR_P1020v2		  0x80e40020
 #define	SVR_P1021v2		  0x80e40120
 #define	SVR_P1022v2		  0x80e60020
+#define	SVR_P1024v2		  0x80e40210
 #define	SVR_P1025v1		  0x80e40310
 
 #define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
@@ -79,12 +83,13 @@
 #define	SVR_P2040v1		  0x82100010	/* e500mc */
 #define	SVR_P2041v1		  0x82100110	/* e500mc */
 
+#define	SVR_P3041v1		  0x82110310	/* e500mc */
+
 #define	SVR_P4080v1		  0x82000010	/* e500mc */
 #define	SVR_P4040v1		  0x82000110	/* e500mc */
 
 #define	SVR_P5010v1		  0x82210010	/* e5500 */
 #define	SVR_P5020v1		  0x82200010	/* e5500 */
-#define	SVR_P5010v1		  0x82210010	/* e5500 */
 
 /*
  * Special Purpose Register declarations.
