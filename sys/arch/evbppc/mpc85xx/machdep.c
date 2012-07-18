@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2012/07/17 01:36:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2012/07/18 19:38:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -364,11 +364,12 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_PCIE2),
 		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
 		  SVR_P1025v1 >> 16 } },
+#endif
+#if defined(MPC8572) || defined(P2020)
 	{ "pcie", PCIE3_MPC8572_BASE, PCI_SIZE, 3,
 		1, { ISOURCE_PCIEX3_MPC8572 },
 		1 + ilog2(DEVDISR_PCIE3),
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
-		  SVR_P1025v1 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16, } },
 #endif
 #if defined(MPC8536) || defined(P1025) || defined(P2020)
 	{ "ehci", USB1_BASE, USB_SIZE, 1,
@@ -1422,15 +1423,16 @@ cpu_startup(void)
 	case SVR_MPC8544v1 >> 16:
 	case SVR_MPC8572v1 >> 16:
 	case SVR_P1016v1 >> 16:
-	case SVR_P1025v1 >> 16:
 	case SVR_P2010v2 >> 16:
 	case SVR_P2020v2 >> 16:
-		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
-		    0, 1, 2, 3);
-		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
-		    4, 5, 6, 7);
 		mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL,
 		    8, 9, 10, 11);
+		/* FALLTHROUGH */
+	case SVR_P1025v1 >> 16:
+		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
+		    4, 5, 6, 7);
+		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
 		break;
 #endif
 	}
