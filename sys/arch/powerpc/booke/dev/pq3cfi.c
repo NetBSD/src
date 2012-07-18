@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.4 2011/08/06 05:48:01 cliff Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.5 2012/07/18 19:01:50 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.4 2011/08/06 05:48:01 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.5 2012/07/18 19:01:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ pq3cfi_attach(device_t parent, device_t self, void *aux)
 	cfi_print(self, &sc->sc_cfi);
 
 	error = bus_space_map(sc->sc_cfi.cfi_bst, sc->sc_addr, sc->sc_size,
-		0, &sc->sc_cfi.cfi_bsh);
+		BUS_SPACE_MAP_PREFETCHABLE, &sc->sc_cfi.cfi_bsh);
 	if (error != 0) {
 		aprint_error_dev(self, "could not map error %d\n", error);
 		return;
