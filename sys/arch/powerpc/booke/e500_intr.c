@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.19 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.20 2012/07/18 16:45:33 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.19 2012/07/15 08:44:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.20 2012/07/18 16:45:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -333,6 +333,8 @@ const struct e500_intr_name p1025_onchip_intr_names[] = {
 	{ ISOURCE_ETSEC3_G1_TX, "etsec3-g1-tx" },
 	{ ISOURCE_ETSEC3_G1_RX, "etsec3-g1-rx" },
 	{ ISOURCE_ETSEC3_G1_ERR, "etsec3-g1-error" },
+	{ ISOURCE_QEB_MUECC, "qeb-low" },
+	{ ISOURCE_QEB_HIGH, "qeb-crit" },
 	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
 	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
 	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
