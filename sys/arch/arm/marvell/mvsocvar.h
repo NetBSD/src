@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.2 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.3 2012/07/18 09:45:58 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -54,7 +54,7 @@ extern struct arm32_bus_dma_tag mvsoc_bus_dma_tag;
 void mvsoc_bootstrap(bus_addr_t);
 uint16_t mvsoc_model(void);
 uint8_t mvsoc_rev(void);
-void * mvsoc_bridge_intr_establish(int, int, int (*)(void *), void *);
+void *mvsoc_bridge_intr_establish(int, int, int (*)(void *), void *);
 
 #include <dev/marvell/marvellvar.h>
 
@@ -76,6 +76,8 @@ enum mvsoc_tags {
 
 	KIRKWOOD_TAG_PEX_MEM,
 	KIRKWOOD_TAG_PEX_IO,
+	KIRKWOOD_TAG_PEX1_MEM,
+	KIRKWOOD_TAG_PEX1_IO,
 	KIRKWOOD_TAG_NAND,
 	KIRKWOOD_TAG_SPI,
 	KIRKWOOD_TAG_BOOTROM,
@@ -83,10 +85,10 @@ enum mvsoc_tags {
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 
-void orion_getclks(bus_addr_t);
 void orion_intr_bootstrap(void);
+void orion_getclks(bus_addr_t);
 
-void kirkwood_getclks(bus_addr_t);
 void kirkwood_intr_bootstrap(void);
+void kirkwood_getclks(bus_addr_t);
 
 #endif	/* _MVSOCVAR_H_ */
