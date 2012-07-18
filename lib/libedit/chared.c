@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.36 2011/10/23 17:37:55 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.37 2012/07/18 17:12:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.36 2011/10/23 17:37:55 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.37 2012/07/18 17:12:39 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -612,7 +612,7 @@ FUN(el,insertstr)(EditLine *el, const Char *s)
 {
 	size_t len;
 
-	if ((len = Strlen(s)) == 0)
+	if (s == NULL || (len = Strlen(s)) == 0)
 		return -1;
 	if (el->el_line.lastchar + len >= el->el_line.limit) {
 		if (!ch_enlargebufs(el, len))
