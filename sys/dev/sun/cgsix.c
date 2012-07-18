@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.58 2012/07/13 19:48:45 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.59 2012/07/18 02:31:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.58 2012/07/13 19:48:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.59 2012/07/18 02:31:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,6 +704,7 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 		cg6_ras_init(sc);
 		cg6_setup_palette(sc);
+		glyphcache_wipe(&sc->sc_gc);
 
 		/* we don't know if the screen exists */
 		if (ms != NULL)
@@ -1191,6 +1192,7 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						cg6_reset(sc);
 						cg6_ras_init(sc);
 						cg6_setup_palette(sc);
+						glyphcache_wipe(&sc->sc_gc);
 						vcons_redraw_screen(ms);
 					}
 				}
