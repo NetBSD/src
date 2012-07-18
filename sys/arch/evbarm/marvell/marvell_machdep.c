@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.8 2012/07/18 08:51:42 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.9 2012/07/18 10:28:47 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.8 2012/07/18 08:51:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.9 2012/07/18 10:28:47 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -339,6 +339,7 @@ initarm(void *arg)
 	case MARVELL_KIRKWOOD_88F6180:
 	case MARVELL_KIRKWOOD_88F6192:
 	case MARVELL_KIRKWOOD_88F6281:
+	case MARVELL_KIRKWOOD_88F6282:
 		kirkwood_intr_bootstrap();
 
 		memtag = KIRKWOOD_TAG_PEX_MEM;
@@ -914,14 +915,13 @@ marvell_device_register(device_t dev, void *aux)
 #endif
 #ifdef KIRKWOOD
 		extern struct bus_space
-		    kirkwood_pex_io_bs_tag, kirkwood_pex_mem_bs_tag;
+		    kirkwood_pex_io_bs_tag, kirkwood_pex_mem_bs_tag,
+		    kirkwood_pex1_io_bs_tag, kirkwood_pex1_mem_bs_tag;
 #endif
 		extern struct arm32_pci_chipset arm32_mvpex0_chipset;
-#ifdef ORION
+#if defined(ORION) || defined(KIRKWOOD)
 		extern struct arm32_pci_chipset arm32_mvpex1_chipset;
-#endif
 
-#ifdef ORION
 		struct marvell_attach_args *mva = aux;
 #endif
 		struct bus_space *mvpex_io_bs_tag, *mvpex_mem_bs_tag;
@@ -954,6 +954,18 @@ marvell_device_register(device_t dev, void *aux)
 #endif
 
 #ifdef KIRKWOOD
+		case MARVELL_KIRKWOOD_88F6282:
+			if (mva->mva_offset != MVSOC_PEX_BASE) {
+				mvpex_io_bs_tag = &kirkwood_pex1_io_bs_tag;
+				mvpex_mem_bs_tag = &kirkwood_pex1_mem_bs_tag;
+				arm32_mvpex_chipset = &arm32_mvpex1_chipset;
+				iotag = KIRKWOOD_TAG_PEX1_IO;
+				memtag = KIRKWOOD_TAG_PEX1_MEM;
+				break;
+			}
+
+			/* FALLTHROUGH */
+
 		case MARVELL_KIRKWOOD_88F6180:
 		case MARVELL_KIRKWOOD_88F6192:
 		case MARVELL_KIRKWOOD_88F6281:
