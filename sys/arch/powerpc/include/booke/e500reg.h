@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.12 2012/07/17 01:36:13 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.13 2012/07/18 19:38:26 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -418,6 +418,10 @@
 #define	IOSEL_P20x0_PCIE1_X1_SRIO2500_1X	13
 #define	IOSEL_P20x0_PCIE12_X1_SGMII23	14
 #define	IOSEL_P20x0_PCIE1_X2_SGMII23	15
+#define	IOSEL_P1025_PCIE1_X1		0	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE1_X4		6	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE12_X1_SGMII23	14	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE1_X2_SGMII23	15	/* same at P20x10 */
 #define	PORDEVSR_PCI2_ARB	__PPCBIT(13)
 #define	PORDEVSR_PCI1_ARB	__PPCBIT(14)
 #define	PORDEVSR_PCI32		__PPCBIT(15)
