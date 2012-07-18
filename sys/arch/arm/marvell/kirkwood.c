@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.5 2012/07/18 10:04:20 kiyohara Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.6 2012/07/18 10:07:34 kiyohara Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.5 2012/07/18 10:04:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.6 2012/07/18 10:07:34 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -114,6 +114,7 @@ kirkwood_intr_bootstrap(void)
 	case MARVELL_KIRKWOOD_88F6180: gpp_npins = 30; break;
 	case MARVELL_KIRKWOOD_88F6192: gpp_npins = 36; break;
 	case MARVELL_KIRKWOOD_88F6281: gpp_npins = 50; break;
+	case MARVELL_KIRKWOOD_88F6282: gpp_npins = 50; break;
 	}
 	gpp_irqbase = 96;	/* Main Low(32) + High(32) + Bridge(32) */
 #endif
@@ -211,7 +212,8 @@ kirkwood_getclks(bus_addr_t iobase)
 #define MHz	* 1000 * 1000
 
 	model = mvsoc_model();
-	if (model == MARVELL_KIRKWOOD_88F6281)
+	if (model == MARVELL_KIRKWOOD_88F6281 ||
+	    model == MARVELL_KIRKWOOD_88F6282)
 		mvTclk = 200 MHz;
 	else		/* 166MHz */
 		mvTclk = 166666667;
@@ -228,20 +230,28 @@ kirkwood_getclks(bus_addr_t iobase)
 		mvSysclk = 200 MHz;
 	} else {
 		switch (reg & 0x0040001a) {
+		case 0x00000002: mvPclk =  400 MHz; break;
 		case 0x00000008: mvPclk =  600 MHz; break;
 		case 0x00400008: mvPclk =  800 MHz; break;
 		case 0x0040000a: mvPclk = 1000 MHz; break;
 		case 0x00000012: mvPclk = 1200 MHz; break;
-		case 0x00000018: mvPclk = 1200 MHz; break;
-		case 0x00000002: mvPclk = 1200 MHz; break;
+		case 0x00000018: mvPclk = 1500 MHz; break;
+		case 0x0000001a: mvPclk = 1600 MHz; break;
+		case 0x00400018: mvPclk = 1800 MHz; break;
+		case 0x0040001a: mvPclk = 2000 MHz; break;
 		default:
 			panic("unknown mvPclk\n");
 		}
 
 		switch (reg & 0x000001e0) {
+		case 0x00000000: mvSysclk = mvPclk * 1 / 1; break;
+		case 0x00000040: mvSysclk = mvPclk * 1 / 2; break;
 		case 0x00000060: mvSysclk = mvPclk * 2 / 5; break;
 		case 0x00000080: mvSysclk = mvPclk * 1 / 3; break;
 		case 0x000000c0: mvSysclk = mvPclk * 1 / 4; break;
+		case 0x000000e0: mvSysclk = mvPclk * 2 / 9; break;
+		case 0x00000100: mvSysclk = mvPclk * 1 / 5; break;
+		case 0x00000120: mvSysclk = mvPclk * 1 / 6; break;
 		default:
 			panic("unknown mvSysclk\n");
 		}
