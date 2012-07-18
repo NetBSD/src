@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.4 2011/05/24 17:45:49 matt Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.5 2012/07/18 10:04:20 kiyohara Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.4 2011/05/24 17:45:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.5 2012/07/18 10:04:20 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -188,7 +188,7 @@ kirkwood_find_pending_irqs(void)
 	if (pendinglow != 0)
 		ipl |= pic_mark_pending_sources(&kirkwood_pic, 0, pendinglow);
 
-	if ((causelow & KIRKWOOD_IRQ_HIGH) == KIRKWOOD_IRQ_HIGH) {
+	if ((causelow & (1 << KIRKWOOD_IRQ_HIGH)) == (1 << KIRKWOOD_IRQ_HIGH)) {
 		uint32_t causehigh = read_mlmbreg(KIRKWOOD_MLMB_MICHR);
 		uint32_t pendinghigh = read_mlmbreg(KIRKWOOD_MLMB_MIRQIMHR);
 		pendinghigh &= causehigh;
