@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.73 2012/02/01 05:25:58 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.74 2012/07/18 16:56:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,6 +78,14 @@
 	lis	t0,_C_LABEL(kernel_pmap_)@ha;				\
 	ldreg	t0,_C_LABEL(kernel_pmap_)+PM_STEG@l(t0);		\
 	mtasr	t0
+
+#elif defined(PPC_MPC8XX)
+
+/*
+ * PPC_MPC8XX don't have SRs to load
+ */
+#define RESTORE_USER_SRS(t0,t1)
+#define RESTORE_KERN_SRS(t0,t1)
 
 #else /* not OEA64 */
 
@@ -216,6 +224,7 @@ _C_LABEL(alitrap):
 #endif
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
+#if !defined(PPC_MPC8XX)
 /*
  * Similar to the above for DSI
  * Has to handle BAT spills
@@ -232,10 +241,11 @@ _C_LABEL(dsitrap):
 	streg	%r31,(CI_DISISAVE+CPUSAVE_R31)(%r1)	/* save r31 */
 	mfsprg1	%r1
 	mfcr	%r29			/* save CR */
-	mfxer	%r30			/* save XER */
-	mtsprg2	%r30			/* in SPRG2 */
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
+#if !defined(PPC_MPC8XX)
+	mfxer	%r30			/* save XER */
+	mtsprg2	%r30			/* in SPRG2 */
 	bt	MSR_PR,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,3+(32-BAT_ADDR_SHIFT),BAT_ADDR_SHIFT-3,28
@@ -296,6 +306,7 @@ dsitrap_fix_dbat7:
 	mfsprg1	%r1
 	RFI				/* return to trapped code */
 1:
+#endif	/* !PPC_MPC8XX */
 	mflr	%r28			/* save LR */
 	mtsprg1	%r1			/* save SP */
 #if defined(DISTANT_KERNEL)
@@ -307,6 +318,7 @@ dsitrap_fix_dbat7:
 	bla	disitrap
 #endif
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
+#endif /* !PPC_MPC8XX */
 
 #if defined(PPC_OEA601)
 /*
@@ -444,7 +456,7 @@ _C_LABEL(decrint):
 #endif
 _C_LABEL(decrsize) = .-_C_LABEL(decrint)
 
-#if !defined(PPC_OEA64)
+#if !defined(PPC_OEA64) && !defined(PPC_MPC8XX)
 /*
  * Now the tlb software load for 603 processors:
  * (Code essentially from the 603e User Manual, Chapter 5, but
@@ -648,7 +660,7 @@ _C_LABEL(tlbdsmiss):
 	ba	EXC_DSI
 #endif
 _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
-#endif /* !defined(PPC_OEA64) */
+#endif /* !PPC_OEA64 && !PPC_MPC8XX */
 
 #if defined(DDB) || defined(KGDB)
 /*
@@ -1112,6 +1124,9 @@ _C_LABEL(sctrapexit):
 	streg	%r4,FRAME_CTR(%r1);					\
 	streg	%r11,FRAME_SRR0(%r1);					\
 	streg	%r12,FRAME_SRR1(%r1);					\
+	mfmsr	%r30;							\
+	ori	%r30,%r30,PSL_RI;	/* turn on recovery interrupt */\
+	mtmsr	%r30;							\
 	SAVE_VRSAVE(%r1,%r6);						\
 	SAVE_MQ(%r1,%r7)
 
@@ -1337,5 +1352,7 @@ _C_LABEL(trapend):
  * All OEA have FPUs so include this too.  Some OEA have AltiVec so include
  * that too.
  */
+#if !defined(PPC_MPC8XX)
 #include <powerpc/powerpc/fpu_subr.S>
 #include <powerpc/oea/altivec_subr.S>
+#endif
