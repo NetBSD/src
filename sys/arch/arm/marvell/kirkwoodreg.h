@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.2 2012/07/18 09:51:23 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -60,6 +60,8 @@
 #define KIRKWOOD_ATTR_BOOTROM		0x1d
 #define KIRKWOOD_ATTR_PEX_MEM		0xe8
 #define KIRKWOOD_ATTR_PEX_IO		0xe0
+#define KIRKWOOD_ATTR_PEX1_MEM		0xd8
+#define KIRKWOOD_ATTR_PEX1_IO		0xd0
 #define KIRKWOOD_ATTR_CRYPT		0x00
 
 #define KIRKWOOD_IRQ_HIGH		0	/* High interrupt */
@@ -71,6 +73,7 @@
 #define KIRKWOOD_IRQ_XOR1CHAN0		7	/* Xor 1 Channel0 */
 #define KIRKWOOD_IRQ_XOR1CHAN1		8	/* Xor 1 Channel1 */
 #define KIRKWOOD_IRQ_PEX0INT		9	/* PCI Express port0 INT A-D */
+#define KIRKWOOD_IRQ_PEX1INT		10	/* PCI Express port1 INT A-D */
 #define KIRKWOOD_IRQ_GBE0SUM		11	/* GbE0 summary */
 #define KIRKWOOD_IRQ_GBE0RX		12	/* GbE0 receive interrupt */
 #define KIRKWOOD_IRQ_GBE0TX		13	/* GbE0 transmit interrupt */
@@ -101,6 +104,7 @@
 #define KIRKWOOD_IRQ_XOR0ERR		42	/* XOR0 error */
 #define KIRKWOOD_IRQ_XOR1ERR		43	/* XOR1 error */
 #define KIRKWOOD_IRQ_PEX0ERR		44	/* PCI Express0 error */
+#define KIRKWOOD_IRQ_PEX1ERR		45	/* PCI Express1 error */
 #define KIRKWOOD_IRQ_GBE0ERR		46	/* GbE port0 error */
 #define KIRKWOOD_IRQ_GBE1ERR		47	/* GbE port1 error */
 #define KIRKWOOD_IRQ_USBERR		48	/* USB error */
@@ -156,6 +160,11 @@
 #define KIRKWOOD_MLMB_MFIQIMHR		  0x218	/*Main FIQ Interrupt High Mask*/
 #define KIRKWOOD_MLMB_EIMHR		  0x21c	/*Endpoint Interrupt High Mask*/
 
+
+/*
+ * PCI-Express Interface Registers
+ */
+#define KIRKWOOD_PEX1_BASE	(MVSOC_PEX_BASE + 0x4000)
 
 /*
  * Cryptographic Engine and Security Accelerator Registers
