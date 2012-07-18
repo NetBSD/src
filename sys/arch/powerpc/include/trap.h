@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 2008/05/24 21:39:01 phx Exp $	*/
+/*	$NetBSD: trap.h,v 1.12 2012/07/18 16:44:52 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,15 @@
 #define	EXC_DTMISS	0x1100		/* Data TLB Miss */
 #define	EXC_ITMISS	0x1200		/* Instruction TLB Miss */
 #define	EXC_DEBUG	0x2000		/* Debug trap */
+
+/* The following are only available on mpc8xx */
+#define	EXC_SWEMUL	0x1000		/* Software Emulation */
+#define	EXC_ITMISS_8XX	0x1100		/* Instruction TLB Miss */
+#define	EXC_DTMISS_8XX	0x1200		/* Data TLB Miss */
+#define	EXC_ITERROR	0x1300		/* Instruction TLB Error */
+#define	EXC_DTERROR	0x1400		/* Data TLB Error */
+#define	EXC_DBREAK	0x1c00		/* data breakpoint */
+#define	EXC_IBREAK	0x1d00		/* instructin breakpoint */
 
 /* The following are only present on 64 bit PPC implementations */
 #define EXC_DSEG	0x380
