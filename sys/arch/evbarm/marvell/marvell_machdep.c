@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.7 2012/03/31 02:36:31 tsutsui Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.8 2012/07/18 08:51:42 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.7 2012/03/31 02:36:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.8 2012/07/18 08:51:42 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -426,6 +426,9 @@ initarm(void *arg)
 	consinit();
 
 	/* Talk to the user */
+#ifndef EVBARM_BOARDTYPE
+#define EVBARM_BOARDTYPE	Marvell
+#endif
 #define BDSTR(s)	_BDSTR(s)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
