@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.101 2012/07/16 13:55:01 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.102 2012/07/18 20:50:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.101 2012/07/16 13:55:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.102 2012/07/18 20:50:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -186,8 +186,10 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		}
 		break;
 	}
-	if (crittype == PENVSYS_EVENT_NULL && see != NULL)
+	if (crittype == PENVSYS_EVENT_NULL && see != NULL) {
+		mutex_exit(&sme->sme_mtx);
 		return EEXIST;
+	}
 
 	if (see == NULL) {
 		/*
