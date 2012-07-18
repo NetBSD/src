@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.16 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.17 2012/07/18 09:21:37 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.16 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.17 2012/07/18 09:21:37 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -299,9 +299,11 @@ struct mvgbe_port {
 
 	{ MARVELL_KIRKWOOD_88F6180,	0, 1, { 11 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 14 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 15 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB },
 	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 15 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6282,	0, 1, { 11 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6282,	1, 1, { 15 }, FLAGS_FIX_TQTB },
 
 	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB },
 	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB },
@@ -357,7 +359,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 
 	if (mvgbec0 == NULL)
 		mvgbec0 = self;
-		
+
 	phyaddr = 0;
 	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
 
