@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.9 2012/07/18 18:29:22 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.10 2012/07/18 18:50:46 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.9 2012/07/18 18:29:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.10 2012/07/18 18:50:46 matt Exp $");
 
 #include <sys/param.h>
 
@@ -722,7 +722,8 @@ e500_tlb_mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 	    && (prefetchable
 		|| (xtlb->e_tlb.tlb_pte & PTE_WIG) == (PTE_I|PTE_G))) {
 		xtlb->e_refcnt++;
-		return (void *) pa;
+		return (void *) (xtlb->e_tlb.tlb_va
+		    + pa - (xtlb->e_tlb.tlb_pte & PTE_RPN_MASK));
 	}
 	return NULL;
 }
