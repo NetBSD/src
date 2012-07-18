@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_mv.c,v 1.3 2010/10/30 05:46:12 kiyohara Exp $	*/
+/*	$NetBSD: mvsata_mv.c,v 1.4 2012/07/18 09:18:30 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.3 2010/10/30 05:46:12 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.4 2012/07/18 09:18:30 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,6 +93,7 @@ struct mvsata_product mvsata_products[] = {
 	/* Kirkwood */
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6192, 1, 2, gen2e, 0 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6281, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6282, 1, 2, gen2e, 0 },
 
 	/* Discovery Innovation */
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78100, 1, 2, gen2e, 0 },
