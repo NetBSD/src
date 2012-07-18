@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.15 2012/07/18 18:51:59 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.15 2012/07/18 18:51:59 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -329,12 +329,44 @@ mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 		panic("mapiodev: no TLB entry reserved for %llx+%llx",
 		    (long long)pa, (long long)len);
 
+	const paddr_t orig_pa = pa;
+	const psize_t orig_len = len;
+	vsize_t align = 0;
 	pa = trunc_page(pa);
 	len = round_page(off + len);
-	vaddr_t va = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
+	/*
+	 * If we are allocating a large amount (>= 1MB) try to get an
+	 * aligned VA region for it so try to do a large mapping for it.
+	 */
+	if ((len & (len - 1)) == 0 && len >= 0x100000)
+		align = len;
 
+	vaddr_t va = uvm_km_alloc(kernel_map, len, align, UVM_KMF_VAONLY);
+
+	if (va == 0 && align > 0) {
+		/*
+		 * Large aligned request failed.  Let's just get anything.
+		 */
+		align = 0;
+		va = uvm_km_alloc(kernel_map, len, align, UVM_KMF_VAONLY);
+	}
 	if (va == 0)
 		return NULL;
+
+	if (align) {
+		/*
+		 * Now try to map that via one big TLB entry.
+		 */
+		pt_entry_t pte = pte_make_kenter_pa(pa, NULL,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    prefetchable ? 0 : PMAP_NOCACHE);
+		if (!tlb_ioreserve(va, len, pte)) {
+			void * const p0 = tlb_mapiodev(orig_pa, orig_len,
+			    prefetchable);
+			KASSERT(p0 != NULL);
+			return p0;
+		}
+	}
 
 	for (va += len, pa += len; len > 0; len -= PAGE_SIZE) {
 		va -= PAGE_SIZE;
