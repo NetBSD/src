@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63 2011/09/07 20:26:13 riz Exp $
+# $NetBSD: md.amd64,v 1.64 2012/07/19 19:30:38 macallan Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -487,6 +487,8 @@
 ./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/xgi_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/xgi_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libGLcore.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libGLcore.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libGLcore.so.0	-unknown-	obsolete
@@ -701,6 +703,7 @@
 ./usr/X11R7/man/html4/void.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/xgi.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
@@ -745,5 +748,6 @@
 ./usr/X11R7/man/man4/void.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/xgi.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
