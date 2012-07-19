@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.2 2012/07/19 22:34:54 pooka Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.3 2012/07/19 22:46:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,6 +43,9 @@
 #define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
 #define	__builtin_va_end(a)		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
+#elif !(__GNUC_PREREQ__(4, 5) || \
+    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
+#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
 #endif
 
 #ifndef __VA_LIST_DECLARED
@@ -50,11 +53,7 @@ typedef __va_list va_list;
 #define __VA_LIST_DECLARED
 #endif
 
-#if __GNUC_PREREQ__(4, 5) || (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2)
 #define	va_start(ap, last)	__builtin_va_start((ap), (last))
-#else
-#define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
-#endif
 #define	va_arg			__builtin_va_arg
 #define	va_end(ap)		__builtin_va_end(ap)
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
