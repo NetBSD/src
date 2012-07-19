@@ -1,5 +1,8 @@
 $eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
 
+changes since bozohttpd 20111118:
+	o  properly escape generated URIs
+
 changes since bozohttpd 20100920:
 	o  add -P <pidfile> option, from jmmv@netbsd.org
 	o  avoid crashes with http basic auth, from pooka@netbsd.org
