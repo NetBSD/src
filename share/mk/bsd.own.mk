@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.700 2012/07/14 16:04:06 spz Exp $
+#	$NetBSD: bsd.own.mk,v 1.701 2012/07/19 15:16:31 macallan Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1092,7 +1092,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	r128 radeonhd rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
-	tdfx tga trident tseng vesa vga via vmware wsfb
+	tdfx tga trident tseng vesa vga via vmware wsfb xgi
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
