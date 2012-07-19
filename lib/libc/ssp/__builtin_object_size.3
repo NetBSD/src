@@ -1,4 +1,4 @@
-.\"	$NetBSD: __builtin_object_size.3,v 1.9 2012/07/18 22:22:26 christos Exp $
+.\"	$NetBSD: __builtin_object_size.3,v 1.10 2012/07/19 06:44:12 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,8 @@ effects.
 If the size of the object is not known or it has side effects the
 .Fn __builtin_object_size
 function returns:
-.Bl -tag -width (size_t)-1 -offset indent
-.It Dv (size_t)-1
+.Bl -tag -width (size_t)\-1 -offset indent
+.It Dv (size_t)\-1
 for
 .Fa type
 .Dv 0
@@ -90,7 +90,7 @@ appeared in
 This is a non-standard, compiler-specific extension.
 .Pp
 Note that currently the object size calculation pass is only done at -O1
-or above, meaning that this function always returns -1 when the optimizer
+or above, meaning that this function always returns \-1 when the optimizer
 is off.
 .Pp
 There are some discussions about always doing the object size pass, but
