@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.178 2012/05/08 13:51:34 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.179 2012/07/19 06:07:21 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1455,7 +1455,7 @@ del_rc_conf(const char *value)
 {
 	FILE *fp, *nfp;
 	char buf[4096]; /* Ridiculously high, but should be enough in any way */
-	char *rcconf, *tempname, *bakname;
+	char *rcconf, *tempname = NULL, *bakname = NULL;
 	char *cp;
 	int done = 0;
 	int fd;
