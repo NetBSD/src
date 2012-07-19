@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300 2012/03/17 19:57:14 riz Exp $
+# $NetBSD: GENERIC,v 1.301 2012/07/19 09:20:41 rkujawa Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.300 $"
+#ident 		"GENERIC-$Revision: 1.301 $"
 
 maxusers	32
 
@@ -293,6 +293,7 @@ radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
 options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+tdvfb*		at pci? function ?	# 3Dfx Voodoo2
 r128fb*		at pci? function ?	# ATI Rage 128
 genfb*		at pci? function ?
 
