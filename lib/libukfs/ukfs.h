@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.13 2009/12/03 14:23:49 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.14 2012/07/19 06:33:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -130,8 +130,9 @@ extern struct ukfs_part *ukfs_part_na;
 
 #define UKFS_DEVICE_ARGVPROBE(part)					\
 do {									\
-	if (argc >= 3)							\
-		if (ukfs_part_probe(argv[argc-2], part) == -1)	\
+	if (argc < 3)							\
+		*part = NULL;						\
+	else if (ukfs_part_probe(argv[argc-2], part) == -1)		\
 			err(1, "ukfs_part_probe");			\
 } while (/*CONSTCOND*/0)
 
