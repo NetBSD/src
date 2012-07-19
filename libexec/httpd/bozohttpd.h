@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.22 2012/03/14 23:47:19 joerg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.23 2012/07/19 09:53:06 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -186,6 +186,7 @@ int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *, const char *);
+char	*escape_rfc3986(bozohttpd_t *httpd, const char *url);
 
 char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *, int, void *, size_t));
 char	*bozostrnsep(char **, const char *, ssize_t *);

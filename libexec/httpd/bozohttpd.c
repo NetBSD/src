@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.31 2012/02/20 09:26:56 elric Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.32 2012/07/19 09:53:06 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -847,6 +847,67 @@ parse_http_date(const char *val, time_t *timestamp)
 }
 
 /*
+ * given an url, encode it ala rfc 3986.  ie, escape ? and friends.
+ * note that this function returns a static buffer, and thus needs
+ * to be updated for any sort of parallel processing.
+ */
+char *
+escape_rfc3986(bozohttpd_t *httpd, const char *url)
+{
+	static char *buf;
+	static size_t buflen = 0;
+	size_t len;
+	const char *s;
+	char *d;
+
+	len = strlen(url);
+	if (buflen < len * 3 + 1) {
+		buflen = len * 3 + 1;
+		buf = bozorealloc(httpd, buf, buflen);
+	}
+	
+	if (url == NULL) {
+		buf[0] = 0;
+		return buf;
+	}
+
+	for (s = url, d = buf; *s;) {
+		if (*s & 0x80)
+			goto encode_it;
+		switch (*s) {
+		case ':':
+		case '/':
+		case '?':
+		case '#':
+		case '[':
+		case ']':
+		case '@':
+		case '!':
+		case '$':
+		case '&':
+		case '\'':
+		case '(':
+		case ')':
+		case '*':
+		case '+':
+		case ',':
+		case ';':
+		case '=':
+		encode_it:
+			snprintf(d, 4, "%%%2X", *s++);
+			d += 3;
+			len += 3;
+		default:
+			*d++ = *s++;
+			len++;
+		}
+	}
+	buf[len] = 0;
+
+	return buf;
+}
+
+/*
  * checks to see if this request has a valid .bzdirect file.  returns
  * 0 on failure and 1 on success.
  */
@@ -898,10 +959,10 @@ handle_redirect(bozo_httpreq_t *request,
 		url = urlbuf;
 	} else
 		urlbuf = NULL;
+	url = escape_rfc3986(request->hr_httpd, url);
 
-	if (request->hr_query && strlen(request->hr_query)) {
+	if (request->hr_query && strlen(request->hr_query))
 		query = 1;
-	}
 
 	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
 		snprintf(portbuf, sizeof(portbuf), ":%s",
@@ -918,9 +979,9 @@ handle_redirect(bozo_httpreq_t *request,
 		if (absolute == 0)
 			bozo_printf(httpd, "%s%s", httpd->virthostname, portbuf);
 		if (query) {
-		  bozo_printf(httpd, "%s?%s\r\n", url, request->hr_query);
+			bozo_printf(httpd, "%s?%s\r\n", url, request->hr_query);
 		} else {
-		  bozo_printf(httpd, "%s\r\n", url);
+			bozo_printf(httpd, "%s\r\n", url);
 		}
 	}
 	bozo_printf(httpd, "\r\n");
@@ -930,16 +991,17 @@ handle_redirect(bozo_httpreq_t *request,
 	bozo_printf(httpd, "<body><h1>Document Moved</h1>\n");
 	bozo_printf(httpd, "This document had moved <a href=\"http://");
 	if (query) {
-	  if (absolute)
-	    bozo_printf(httpd, "%s?%s", url, request->hr_query);
-	  else
-	    bozo_printf(httpd, "%s%s%s?%s", httpd->virthostname, portbuf, url,
-	    		request->hr_query);
-        } else {
-	  if (absolute)
-	    bozo_printf(httpd, "%s", url);
-	  else
-	    bozo_printf(httpd, "%s%s%s", httpd->virthostname, portbuf, url);
+		if (absolute)
+			bozo_printf(httpd, "%s?%s", url, request->hr_query);
+		else
+			bozo_printf(httpd, "%s%s%s?%s", httpd->virthostname,
+				    portbuf, url, request->hr_query);
+	} else {
+		if (absolute)
+			bozo_printf(httpd, "%s", url);
+		else
+			bozo_printf(httpd, "%s%s%s", httpd->virthostname,
+				    portbuf, url);
 	}
 	bozo_printf(httpd, "\">here</a>\n");
 	bozo_printf(httpd, "</body></html>\n");
