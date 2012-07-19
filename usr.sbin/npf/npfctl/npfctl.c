@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.15 2012/07/15 00:22:59 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.16 2012/07/19 06:31:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.15 2012/07/15 00:22:59 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.16 2012/07/19 06:31:26 joerg Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -243,7 +243,7 @@ npfctl_print_error(const nl_error_t *ne)
 	}
 }
 
-static void
+__dead static void
 npfctl_table(int fd, char **argv)
 {
 	static const struct tblops_s {
