@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.16 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.17 2012/07/19 22:22:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.16 2012/07/19 21:52:29 spz Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.17 2012/07/19 22:22:53 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -471,7 +471,7 @@ npfctl_icmptype(int proto, const char *type)
 uint8_t
 npfctl_icmpcode(int proto, uint8_t type, const char *code)
 {
-	const char **arr;
+	const char * const *arr;
 
 	switch (proto) {
 	case IPPROTO_ICMP:
