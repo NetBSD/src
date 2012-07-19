@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.321 2012/02/19 23:19:37 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.322 2012/07/19 19:42:45 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -193,8 +193,8 @@ MKSHLIBOBJS= no
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB_PREFIX}${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
-SHLIB_LDSTARTFILE?=	${_GCC_CRTDIR}/crti.o ${_GCC_CRTBEGINS}
-SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTDIR}/crtn.o
+SHLIB_LDSTARTFILE?=	${_GCC_CRTI} ${_GCC_CRTBEGINS}
+SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTN}
 
 CFLAGS+=	${COPTS}
 OBJCFLAGS+=	${OBJCOPTS}
