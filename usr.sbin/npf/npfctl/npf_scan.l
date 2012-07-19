@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.4 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.5 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -85,7 +85,9 @@ inet			return INET;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
-icmp			return ICMP;
+icmp			{ yylval.num = IPPROTO_ICMP; return ICMP; }
+ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
+\"ipv6-icmp\"		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;

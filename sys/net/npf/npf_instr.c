@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.13 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.14 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.13 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.14 2012/07/19 21:52:29 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,6 +230,37 @@ npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
 	if ((1 << 30) & tc) {
 		const uint8_t code = tc & 0xff;
 		if (code != ic->icmp_code) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * npf_match_icmp6: match ICMPv6 packet.
+ */
+int
+npf_match_icmp6(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
+{
+	struct icmp6_hdr *ic6 = &npc->npc_l4.icmp6;
+
+	if (!npf_iscached(npc, NPC_ICMP)) {
+		if (!npf_fetch_icmp(npc, nbuf, n_ptr)) {
+			return -1;
+		}
+		KASSERT(npf_iscached(npc, NPC_ICMP));
+	}
+
+	/* Match code/type, if required. */
+	if ((1 << 31) & tc) {
+		const uint8_t type = (tc >> 8) & 0xff;
+		if (type != ic6->icmp6_type) {
+			return -1;
+		}
+	}
+	if ((1 << 30) & tc) {
+		const uint8_t code = tc & 0xff;
+		if (code != ic6->icmp6_code) {
 			return -1;
 		}
 	}
