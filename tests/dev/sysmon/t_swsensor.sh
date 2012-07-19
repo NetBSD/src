@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.4 2010/12/31 00:35:42 pgoyette Exp $
+# $NetBSD: t_swsensor.sh,v 1.5 2012/07/19 13:36:18 pgoyette Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -11,6 +11,14 @@ get_sensor_key() {
 
 get_powerd_event_count() {
 	grep "not running" powerd.log | wc -l
+}
+
+get_rnd_bits_count() {
+	env RUMPHIJACK=blanket=/dev/random:/dev/urandom	\
+	    RUMP_SERVER=unix://t_swsensor_socket	\
+	    LD_PRELOAD=/usr/lib/librumphijack.so	  rndctl -l | \
+	grep "swsensor-sensor" | \
+	awk '{print $2}'
 }
 
 check_powerd_event() {
@@ -40,7 +48,7 @@ check_powerd_event() {
 # requested properties
 
 start_rump() {
-	rump_server -l rumpvfs -l rumpdev -l rumpdev_sysmon ${RUMP_SERVER}
+	rump_allserver -l rumpvfs -l rumpdev -l rumpdev_sysmon ${RUMP_SERVER}
 	if [ $( get_sensor_info | wc -l ) -ne 0 ] ; then
 		rump.modunload swsensor
 		rump.modload -f $1 swsensor
@@ -55,7 +63,8 @@ common_head() {
 	atf_set	timeout		60
 	atf_set	require.progs	rump.powerd rump.envstat rump.modload	\
 				rump.halt   rump.sysctl  rump_server	\
-				sed         grep
+				sed         grep         awk		\
+				rndctl      expr
 }
 
 common_cleanup() {
@@ -87,10 +96,12 @@ ENV2
 #	$3	initial limit
 #	$4	amount to lower limit
 #	$5	difference from limit to trigger event
+#	$6	sensor flags, for FHAS_ENTROPY and FMONNOTSUPP
 
 common_body() {
 	# Start the rump-server process and load the module
-	start_rump "-i mode=$1 -i value=$2 -i limit=$3"
+	modload_args="-i mode=$1 -i value=$2 -i limit=$3 ${6:+-i flags=$6}"
+	start_rump "$modload_args"
 
 	# create configuration files for updates
 	create_envsys_conf_files $3 $4
@@ -173,81 +184,138 @@ common_body() {
 	fi
 
 	# Step 7 - verify that we can set our own limit
-	rump.envstat -c env1.conf
-	if [ $( get_sensor_key critical-min ) -ne $(( $3 - $4 )) ] ; then
-		atf_fail "7: Limit not set by envstat -c"
-	fi
+
+	# Steps 7 thru 12 are skipped if the sensor cannot be monitored
+	if [ $( expr \( 0$6 / 2048 \) % 2 ) -ne 1 ] ; then
+		rump.envstat -c env1.conf
+		if [ $( get_sensor_key critical-min ) -ne $(( $3 - $4 )) ] ; then
+			atf_fail "7: Limit not set by envstat -c"
+		fi
 
 	# Step 8 - make sure user-set limit works
-	if [ ${skip_events} -eq 0 ] ; then
-		rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 - $5 ))
-		sleep 5
-		cnt=$(get_powerd_event_count)
-		if [ ${cnt} -lt ${expected_event} ] ; then
-			atf_fail "8: No event triggered"
-		elif [ ${cnt} -gt ${expected_event} ] ; then
-			atf_fail "8: Multiple events triggered"
-		fi
-		evt=$( check_powerd_event ${cnt} "critical-under")
-		if [ -n "${evt}" ] ; then
-			atf_fail "8: ${evt}"
-		fi
-		expected_event=$(( 1 + ${expected_event} ))
-	fi
-
-	# Step 9 - verify that we return to normal state
-	if [ ${skip_events} -eq 0 ] ; then
-		rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 + $5 ))
-		sleep 5
-		cnt=$(get_powerd_event_count)
-		if [ ${cnt} -lt ${expected_event} ] ; then
-			atf_fail "9: No event triggered"
-		elif [ ${cnt} -gt ${expected_event} ] ; then
-			atf_fail "9: Multiple events triggered"
-		fi
-		evt=$( check_powerd_event ${cnt} "normal")
-		if [ -n "${evt}" ] ; then
-			atf_fail "9: ${evt}"
-		fi
-		expected_event=$(( 1 + ${expected_event} ))
-	fi
-
-	# Step 10 - reset to defaults
-	rump.envstat -S
-	if [ $1 -eq 0 ] ; then
-		get_sensor_info | grep -q critical-min &&
-			atf_fail "10: Failed to clear a limit with envstat -S"
-	else
-		if [ $( get_sensor_key critical-min ) -ne $3 ] ; then
-			atf_fail "10: Limit not reset to initial value"
-		fi
-	fi
-
-	# Step 11 - see if more events occur
-	if [ ${skip_events} -eq 0 ] ; then
-		rump.envstat -c env0.conf
-		rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 - $5 ))
-		sleep 5
-		cnt=$(get_powerd_event_count)
-		if [ ${cnt} -ge ${expected_event} ] ; then
-			if [ $1 -ne 2 ] ; then
-				atf_fail "11b Event triggered after reset"
+		if [ ${skip_events} -eq 0 ] ; then
+			rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 - $5 ))
+			sleep 5
+			cnt=$(get_powerd_event_count)
+			if [ ${cnt} -lt ${expected_event} ] ; then
+				atf_fail "8: No event triggered"
+			elif [ ${cnt} -gt ${expected_event} ] ; then
+				atf_fail "8: Multiple events triggered"
 			fi
 			evt=$( check_powerd_event ${cnt} "critical-under")
 			if [ -n "${evt}" ] ; then
-				atf_fail "11a: ${evt}"
+				atf_fail "8: ${evt}"
 			fi
+			expected_event=$(( 1 + ${expected_event} ))
+		fi
+
+	# Step 9 - verify that we return to normal state
+		if [ ${skip_events} -eq 0 ] ; then
+			rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 + $5 ))
+			sleep 5
+			cnt=$(get_powerd_event_count)
+			if [ ${cnt} -lt ${expected_event} ] ; then
+				atf_fail "9: No event triggered"
+			elif [ ${cnt} -gt ${expected_event} ] ; then
+				atf_fail "9: Multiple events triggered"
+			fi
+			evt=$( check_powerd_event ${cnt} "normal")
+			if [ -n "${evt}" ] ; then
+				atf_fail "9: ${evt}"
+			fi
+			expected_event=$(( 1 + ${expected_event} ))
+		fi
+
+	# Step 10 - reset to defaults
+		rump.envstat -S
+		if [ $1 -eq 0 ] ; then
+			get_sensor_info | grep -q critical-min &&
+				atf_fail "10: Failed to clear a limit with envstat -S"
+		else
+			if [ $( get_sensor_key critical-min ) -ne $3 ] ; then
+				atf_fail "10: Limit not reset to initial value"
+			fi
+		fi
+
+	# Step 11 - see if more events occur
+		if [ ${skip_events} -eq 0 ] ; then
+			rump.envstat -c env0.conf
+			rump.sysctl -w hw.swsensor.cur_value=$(( $3 - $4 - $5 ))
+			sleep 5
+			cnt=$(get_powerd_event_count)
+			if [ ${cnt} -ge ${expected_event} ] ; then
+				if [ $1 -ne 2 ] ; then
+					atf_fail "11b Event triggered after reset"
+				fi
+				evt=$( check_powerd_event ${cnt} "critical-under")
+				if [ -n "${evt}" ] ; then
+					atf_fail "11a: ${evt}"
+				fi
+			fi
+		fi
+
+	# Step 12 - make sure we can set new limits once more
+		rump.envstat -c env2.conf
+		if [ $( get_sensor_key critical-min ) -ne $3 ] ; then
+			atf_fail "12a: Limit not reset to same value"
+		fi
+		rump.envstat -c env1.conf
+		if [ $( get_sensor_key critical-min ) -ne $(( $3 - $4 )) ] ; then
+			atf_fail "12b: Limit not reset to new value"
 		fi
 	fi
 
-	# Step 12 - make sure we can set new limits once more
-	rump.envstat -c env2.conf
-	if [ $( get_sensor_key critical-min ) -ne $3 ] ; then
-		atf_fail "12a: Limit not reset to same value"
+	# Step 13 - confirm registration (or lack thereof) with rndctl
+	rnd_bits=$( get_rnd_bits_count )
+	if [ $( expr \( 0$6 / 8192 \) % 2 ) -eq 1 ] ; then
+		if [ -z "$rnd_bits" ] ; then
+			atf_fail "13a: Not registered with rndctl"
+		fi
+	else
+		if [ -n "$rnd_bits" ] ; then
+			atf_fail "13b: Wrongly registered with rndctl"
+		fi
 	fi
-	rump.envstat -c env1.conf
-	if [ $( get_sensor_key critical-min ) -ne $(( $3 - $4 )) ] ; then
-		atf_fail "12b: Limit not reset to new value"
+
+	# Steps 14 and 15 are only if sensor is providing entropy
+	if [ $( expr \( 0$6 / 8192 \) % 2 ) -ne 1 ] ; then
+		return
+	fi
+
+	# Step 14 - make sure entropy collected when device is being polled
+	rump.envstat -c env0.conf
+	rump.sysctl -w hw.swsensor.cur_value=$3
+	sleep 5
+	rump.sysctl -w hw.swsensor.cur_value=$(( $3 + $4 ))
+	sleep 5
+	new_rnd_bits=$( get_rnd_bits_count )
+	if [ $new_rnd_bits -le $rnd_bits ] ; then
+		atf_fail "14a: entropy bits did not increase after polling"
+	fi
+	rnd_bits=$new_rnd_bits
+	sleep 5
+	new_rnd_bits=$( get_rnd_bits_count )
+	if [ $new_rnd_bits -gt $rnd_bits ] ; then
+		atf_fail "14b: entropy bits increased after poll with no value change"
+	fi
+
+	# Step 15 - make sure entropy collected when device is interrogated
+	# 
+	rump.envstat -c env0.conf
+	rump.sysctl -w hw.swsensor.cur_value=$3
+	get_sensor_key cur-value
+	rnd_bits=$( get_rnd_bits_count )
+	rump.sysctl -w hw.swsensor.cur_value=$(( $3 + $4 ))
+	get_sensor_key cur-value
+	new_rnd_bits=$( get_rnd_bits_count )
+	if [ $new_rnd_bits -le $rnd_bits ] ; then
+		atf_fail "15a: entropy bits did not increase after interrogation"
+	fi
+	rnd_bits=$new_rnd_bits
+	get_sensor_key cur-value
+	new_rnd_bits=$( get_rnd_bits_count )
+	if [ $new_rnd_bits -gt $rnd_bits ] ; then
+		atf_fail "15b: entropy bits increased after interrogation with no value change"
 	fi
 }
 
@@ -290,9 +358,37 @@ alarm_sensor_cleanup() {
 	common_cleanup
 }
 
+atf_test_case entropy_polled_sensor cleanup
+entropy_polled_sensor_head() {
+	common_head "Test a simple sensor that provides entropy"
+}
+
+entropy_polled_sensor_body() {
+	common_body 0 50 30 10 1 8192
+}
+
+entropy_polled_sensor_cleanup() {
+	common_cleanup
+}
+
+atf_test_case entropy_interrupt_sensor cleanup
+entropy_interrupt_sensor_head() {
+	common_head "Test a sensor that provides entropy without polling"
+}
+
+entropy_interrupt_sensor_body() {
+	common_body 0 50 30 10 1 10240
+}
+
+entropy_interrupt_sensor_cleanup() {
+	common_cleanup
+}
+
 atf_init_test_cases() {
 	RUMP_SERVER="unix://t_swsensor_socket" ; export RUMP_SERVER
 	atf_add_test_case simple_sensor
 	atf_add_test_case limit_sensor
 	atf_add_test_case alarm_sensor
+	atf_add_test_case entropy_polled_sensor
+	atf_add_test_case entropy_interrupt_sensor
 }
