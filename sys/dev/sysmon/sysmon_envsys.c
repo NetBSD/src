@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.121 2012/07/16 13:55:01 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.122 2012/07/19 13:31:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.121 2012/07/16 13:55:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.122 2012/07/19 13:31:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1062,6 +1062,7 @@ sme_remove_userprops(void)
 	prop_dictionary_t sdict;
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
+	char rnd_name[sizeof(edata->rnd_src.name)];
 	sysmon_envsys_lim_t lims;
 	const struct sme_descr_entry *sdt_units;
 	uint32_t props;
@@ -1168,20 +1169,28 @@ sme_remove_userprops(void)
 			sme_event_unregister(sme, edata->desc,
 			    PENVSYS_EVENT_LIMITS);
 
+			/*
+			 * Find the correct units for this sensor.
+			 */
+			sdt_units = sme_find_table_entry(SME_DESC_UNITS,
+			    edata->units);
+
 			if (props & PROP_LIMITS) {
 				DPRINTF(("%s: install limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
 
-
-				/*
-				 * Find the correct units for this sensor.
-				 */
-				sdt_units = sme_find_table_entry(SME_DESC_UNITS,
-				    edata->units);
-
 				sme_event_register(sdict, edata, sme,
 				    &lims, props, PENVSYS_EVENT_LIMITS,
 				    sdt_units->crittype);
+			}
+			if (edata->flags & ENVSYS_FHAS_ENTROPY) {
+				sme_event_register(sdict, edata, sme,
+				    &lims, props, PENVSYS_EVENT_NULL,
+				    sdt_units->crittype);
+				snprintf(rnd_name, sizeof(rnd_name), "%s-%s",
+				    sme->sme_name, edata->desc);
+				rnd_attach_source(&edata->rnd_src, rnd_name,
+				    RND_TYPE_ENV, 0);
 			}
 		}
 
