@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.85 2012/02/02 19:43:02 tls Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.86 2012/07/19 18:03:32 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.85 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.86 2012/07/19 18:03:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -536,7 +536,7 @@ acpitz_get_zone(void *opaque, int verbose)
 
 		obj = sc->sc_zone.al[i].Pointer;
 
-		if (obj->Type != ACPI_TYPE_PACKAGE) {
+		if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count == 0) {
 			sc->sc_zone.al[i].Pointer = NULL;
 			ACPI_FREE(obj);
 			continue;
