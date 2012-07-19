@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.11 2012/07/01 23:21:06 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.12 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.11 2012/07/01 23:21:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.12 2012/07/19 21:52:29 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -316,6 +316,11 @@ cisc_like:
 		i_ptr = nc_fetch_word(i_ptr, &n);
 		cmpval = npf_match_icmp4(npc, nbuf, n_ptr, n);
 		break;
+	case NPF_OPCODE_ICMP6:
+		/* ICMP type/code. */
+		i_ptr = nc_fetch_word(i_ptr, &n);
+		cmpval = npf_match_icmp6(npc, nbuf, n_ptr, n);
+		break;
 	case NPF_OPCODE_PROTO:
 		i_ptr = nc_fetch_word(i_ptr, &n);
 		cmpval = npf_match_proto(npc, nbuf, n_ptr, n);
@@ -480,6 +485,7 @@ jmp_check:
 		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
 		break;
 	case NPF_OPCODE_ICMP4:
+	case NPF_OPCODE_ICMP6:
 		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
 		break;
 	case NPF_OPCODE_PROTO:
