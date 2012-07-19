@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.9 2012/07/01 23:21:06 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.10 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ int	npf_ncode_validate(const void *, size_t, int *);
 #define	NPF_OPCODE_TABLE		0x91
 #define	NPF_OPCODE_ICMP4		0x92
 #define	NPF_OPCODE_IP6MASK		0x93
+#define	NPF_OPCODE_ICMP6		0x94
 
 #define	NPF_OPCODE_TCP_PORTS		0xa0
 #define	NPF_OPCODE_UDP_PORTS		0xa1
@@ -139,7 +140,7 @@ int	npf_ncode_validate(const void *, size_t, int *);
 # define	NPF_OPERAND_SUBNET		9
 # define	NPF_OPERAND_LENGTH		10
 # define	NPF_OPERAND_TABLE_ID		11
-# define	NPF_OPERAND_ICMP4_TYPE_CODE	12
+# define	NPF_OPERAND_ICMP_TYPE_CODE	12
 # define	NPF_OPERAND_TCP_FLAGS_MASK	13
 # define	NPF_OPERAND_PORT_RANGE		14
 # define	NPF_OPERAND_PROTO		15
@@ -330,7 +331,13 @@ static const struct npf_instruction {
 	[NPF_OPCODE_ICMP4] = {
 		.name = "icmp4",
 		.op = {
-			[0] = NPF_OPERAND_ICMP4_TYPE_CODE,
+			[0] = NPF_OPERAND_ICMP_TYPE_CODE,
+		},
+	},
+	[NPF_OPCODE_ICMP6] = {
+		.name = "icmp6",
+		.op = {
+			[0] = NPF_OPERAND_ICMP_TYPE_CODE,
 		},
 	},
 	[NPF_OPCODE_IP6MASK] = {

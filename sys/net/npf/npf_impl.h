@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.18 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.19 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ int		npf_match_tcp_ports(npf_cache_t *, nbuf_t *, void *,
 int		npf_match_udp_ports(npf_cache_t *, nbuf_t *, void *,
 		    const int, const uint32_t);
 int		npf_match_icmp4(npf_cache_t *, nbuf_t *, void *, uint32_t);
+int		npf_match_icmp6(npf_cache_t *, nbuf_t *, void *, uint32_t);
 int		npf_match_tcpfl(npf_cache_t *, nbuf_t *, void *, uint32_t);
 
 /* Tableset interface. */
