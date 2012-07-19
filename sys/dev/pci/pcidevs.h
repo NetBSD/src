@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1113 2012/07/12 09:37:57 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1114 2012/07/19 02:40:57 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1119 2012/07/12 09:29:31 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.1120 2012/07/19 02:40:08 msaitoh Exp
  */
 
 /*
@@ -626,6 +626,7 @@
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
+#define	PCI_VENDOR_XGI	0x18ca		/* XGI Technology */
 #define	PCI_VENDOR_RENESAS	0x1912		/* Renesas Technologies */
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
@@ -4892,6 +4893,13 @@
 
 /* XenSource products */
 #define	PCI_PRODUCT_XENSOURCE_XENPLATFORM	0x0001		/* Xen Platform Device */
+
+/* XGI Technology products */
+#define	PCI_PRODUCT_XGI_VOLARI_Z7	0x0020		/* Volari Z7/Z9/Z9s */
+#define	PCI_PRODUCT_XGI_VOLARI_Z9M	0x0021		/* Volari Z9m */
+#define	PCI_PRODUCT_XGI_VOLARI_Z11	0x0027		/* Volari Z11/Z11M */
+#define	PCI_PRODUCT_XGI_VOLARI_V3XT	0x0040		/* Volari V3XT/V5/V8 */
+#define	PCI_PRODUCT_XGI_VOLARI_XP10	0x0047		/* Volari XP10 */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
