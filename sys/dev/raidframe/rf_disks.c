@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.82 2011/10/14 09:23:30 hannken Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.82 2011/10/14 09:23:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.83 2012/07/19 22:47:52 pooka Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -759,6 +759,8 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 
 	ser_values[0] = ser_values[1] = ser_values[2] = ser_values[3] = 0;
 	ser_count[0] = ser_count[1] = ser_count[2] = ser_count[3] = 0;
+	mod_values[0] = mod_values[1] = mod_values[2] = mod_values[3] = 0;
+	mod_count[0] = mod_count[1] = mod_count[2] = mod_count[3] = 0;
 
 	for (c = 0; c < raidPtr->numCol; c++) {
 		if (raidPtr->Disks[c].status != rf_ds_optimal)
