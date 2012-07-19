@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.14 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.15 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.14 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.15 2012/07/19 21:52:29 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -463,14 +463,18 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
 		return false;
 	}
-	if (npf_cache_ipproto(npc) != IPPROTO_ICMP) {
+	if (npf_cache_ipproto(npc) != IPPROTO_ICMP &&
+	    npf_cache_ipproto(npc) != IPPROTO_ICMPV6) {
 		return false;
 	}
 	ic = &npc->npc_l4.icmp;
 	hlen = npf_cache_hlen(npc);
 
 	/* Fetch basic ICMP header, up to the "data" point. */
-	iclen = offsetof(struct icmp, icmp_data);
+	CTASSERT(offsetof(struct icmp, icmp_void) ==
+	         offsetof(struct icmp6_hdr, icmp6_data32));
+
+	iclen = offsetof(struct icmp, icmp_void);
 	if (nbuf_advfetch(&nbuf, &n_ptr, hlen, iclen, ic)) {
 		return false;
 	}
@@ -503,6 +507,7 @@ npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
 		(void)npf_fetch_udp(npc, nbuf, n_ptr);
 		break;
 	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
 		(void)npf_fetch_icmp(npc, nbuf, n_ptr);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.19 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.20 2012/07/19 21:52:29 spz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ typedef struct npf_rproc	npf_rproc_t;
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 
 #define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
 #define	NPC_IP6		0x02	/* Indicates IPv6 header. */
@@ -104,9 +105,10 @@ typedef struct {
 	} npc_ip;
 	/* TCP, UDP, ICMP. */
 	union {
-		struct tcphdr	tcp;
-		struct udphdr	udp;
-		struct icmp	icmp;
+		struct tcphdr		tcp;
+		struct udphdr		udp;
+		struct icmp		icmp;
+		struct icmp6_hdr	icmp6;
 	} npc_l4;
 } npf_cache_t;
 
