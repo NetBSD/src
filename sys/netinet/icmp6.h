@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.45 2012/07/19 20:57:43 spz Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.46 2012/07/19 21:08:42 spz Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -741,7 +741,7 @@ extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 /* Info: http://www.iana.org/assignments/icmpv6-parameters */
 
 static const char * const icmp6_type_err[] = {
-        "reserved0", "unreach", "packet_too_big", "timxceed", "paramprob",
+	"reserved0", "unreach", "packet_too_big", "timxceed", "paramprob",
 	NULL
 };
 
@@ -759,16 +759,16 @@ static const char * const icmp6_type_info[] = {
 static const char * const icmp6_code_none[] = { "none", NULL };
 
 static const char * const icmp6_code_unreach[] = {
-        "noroute", "admin", "beyondscope", "addr", "port",
+	"noroute", "admin", "beyondscope", "addr", "port",
 	"srcaddr_policy", "reject_route", "source_route_err", NULL
 };
 
 static const char * const icmp6_code_timxceed[] = {
-        "intrans", "reass", NULL
+	"intrans", "reass", NULL
 };
 
 static const char * const icmp6_code_paramprob[] = {
-        "hdr_field", "nxthdr_type", "option", NULL
+	"hdr_field", "nxthdr_type", "option", NULL
 };      
 
 /* not all informational icmps that have codes have a names array */
