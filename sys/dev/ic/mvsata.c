@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.20 2012/07/15 10:55:30 dsl Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.21 2012/07/19 12:39:08 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,11 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.20 2012/07/15 10:55:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.21 2012/07/19 12:39:08 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
-/* ATAPI implementation not finished. Also don't work shadow registers? */
+/* ATAPI implementation not finished. */
 //#include "atapibus.h"
 
 #include <sys/param.h>
@@ -76,13 +76,17 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.20 2012/07/15 10:55:30 dsl Exp $");
 #define MVSATA_EDMA_WRITE_4(mvport, reg, val) \
 	bus_space_write_4((mvport)->port_iot, (mvport)->port_ioh, (reg), (val))
 #define MVSATA_WDC_READ_2(mvport, reg) \
-	bus_space_read_2((mvport)->port_iot, (mvport)->port_ioh, (reg))
+	bus_space_read_2((mvport)->port_iot, (mvport)->port_ioh, \
+	SHADOW_REG_BLOCK_OFFSET + (reg))
 #define MVSATA_WDC_READ_1(mvport, reg) \
-	bus_space_read_1((mvport)->port_iot, (mvport)->port_ioh, (reg))
+	bus_space_read_1((mvport)->port_iot, (mvport)->port_ioh, \
+	SHADOW_REG_BLOCK_OFFSET + (reg))
 #define MVSATA_WDC_WRITE_2(mvport, reg, val) \
-	bus_space_write_2((mvport)->port_iot, (mvport)->port_ioh, (reg), (val))
+	bus_space_write_2((mvport)->port_iot, (mvport)->port_ioh, \
+	SHADOW_REG_BLOCK_OFFSET + (reg), (val))
 #define MVSATA_WDC_WRITE_1(mvport, reg, val) \
-	bus_space_write_1((mvport)->port_iot, (mvport)->port_ioh, (reg), (val))
+	bus_space_write_1((mvport)->port_iot, (mvport)->port_ioh, \
+	SHADOW_REG_BLOCK_OFFSET + (reg), (val))
 
 #ifdef MVSATA_DEBUG
 #define DPRINTF(x)	if (mvsata_debug) printf x
