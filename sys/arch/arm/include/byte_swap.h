@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.10 2012/07/15 19:59:48 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.11 2012/07/20 18:53:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #ifdef _LOCORE
 
-#if (ARM_ARCH_6 + ARM_ARCH_7) > 0
+#if defined(_ARM_ARCH_6) || defined(_ARM_ARCH_7)
 
 #define	BSWAP16(_src, _dst, _tmp)		\
 	rev16	_dst, _src
