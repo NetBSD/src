@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.56 2012/07/20 01:26:19 uwe Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.55 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.56 2012/07/20 01:26:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -285,9 +285,9 @@ ehci_pci_detach(device_t self, int flags)
 	ehci_shutdown(self, flags);
 
 	/* disable interrupts */
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 	/* XXX grotty hack to flush the write */
-	(void)EOREAD2(&sc->sc, EHCI_USBINTR);
+	(void)EOREAD4(&sc->sc, EHCI_USBINTR);
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
