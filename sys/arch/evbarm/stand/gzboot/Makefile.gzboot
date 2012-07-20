@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.17 2011/01/22 19:19:17 joerg Exp $
+#	$NetBSD: Makefile.gzboot,v 1.18 2012/07/20 14:59:33 matt Exp $
 
 NOMAN=  # defined
 
@@ -116,5 +116,6 @@ FILES=	${PROGSYM}
 .include <bsd.prog.mk>
 
 ${PROGSYM}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -o ${.TARGET} ${LDFLAGS} ${STARTFILE} \
 	    ${OBJS} ${LIBLIST} > ${BASE}.list
