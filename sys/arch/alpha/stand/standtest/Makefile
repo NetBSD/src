@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/07/21 21:25:19 jdolecek Exp $
+# $NetBSD: Makefile,v 1.3 2012/07/20 15:23:02 matt Exp $
 
 PROG=	test
 BINDIR=	/stand
@@ -20,5 +20,6 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -Ttext ${RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBKERN}
