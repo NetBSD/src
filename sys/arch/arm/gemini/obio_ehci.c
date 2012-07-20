@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.2 2008/10/24 17:31:24 matt Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.3 2012/07/20 02:14:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.2 2008/10/24 17:31:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.3 2012/07/20 02:14:01 matt Exp $");
 
 #include "locators.h"
 
@@ -122,7 +122,7 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 	DPRINTF(("%s: offs=%d\n", devname, sc->sc_offs));
-	EOWRITE2(sc, EHCI_USBINTR, 0);
+	EOWRITE4(sc, EHCI_USBINTR, 0);
 	bus_space_write_4(sc->iot, sc->ioh, EHCI_HCOTGDEV_INTR_MASK,
 	    OTG_INT|DEV_INT);
 

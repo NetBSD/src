@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.4 2011/07/01 19:01:30 dyoung Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.4 2011/07/01 19:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
 
 #include "locators.h"
 
@@ -119,7 +119,7 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
 	/* Disable EHCI interrupts */
-	EOWRITE2(sc, EHCI_USBINTR, 0);
+	EOWRITE4(sc, EHCI_USBINTR, 0);
 
 	/* establish interrupt */
 	if (usbi->usbi_intr != RMIXL_USBICF_INTR_DEFAULT) {

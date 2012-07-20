@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.1 2011/07/10 06:26:02 matt Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.1 2011/07/10 06:26:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $");
 
 #include "locators.h"
 
@@ -110,7 +110,7 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* Disable EHCI interrupts */
-	EOWRITE2(sc, EHCI_USBINTR, 0);
+	EOWRITE4(sc, EHCI_USBINTR, 0);
 
 	/* establish interrupt */
 	ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, ehci_intr, sc);
