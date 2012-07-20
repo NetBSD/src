@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.17 2012/07/20 09:11:33 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.18 2012/07/20 09:20:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.17 2012/07/20 09:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.18 2012/07/20 09:20:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -88,7 +88,7 @@ kern_free(void *ptr)
  * Kmem
  */
 
-#ifdef RUMP_USE_UNREAL_ALLOCATORS
+#ifdef RUMP_UNREAL_ALLOCATORS
 void
 kmem_init()
 {
@@ -391,4 +391,4 @@ percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
 
 	cb(pc, arg, rump_cpu);
 }
-#endif /* RUMP_USE_UNREAL_ALLOCATORS */
+#endif /* RUMP_UNREAL_ALLOCATORS */
