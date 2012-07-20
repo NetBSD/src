@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.154.2.1 2012/07/20 23:10:06 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154 2012/01/25 16:56:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.154.2.1 2012/07/20 23:10:06 riz Exp $");
 
 #include "opt_pipe.h"
 
@@ -605,7 +605,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 	}
 
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
@@ -640,9 +640,10 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		*retsize = len - auio.uio_resid;
 
 bad:
-	if (ktriov != NULL) {
+	if (ktrpoint(KTR_GENIO)) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
-		kmem_free(ktriov, iovsz);
+		if (ktriov != NULL)
+			kmem_free(ktriov, iovsz);
 	}
 
  	if (iov != aiov)
@@ -826,7 +827,7 @@ int
 do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
     struct mbuf **control, register_t *retsize)
 {
-	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov;
+	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct socket	*so;
 	struct uio	auio;
 	size_t		len, iovsz;
@@ -880,8 +881,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 		}
 	}
 
-	ktriov = NULL;
-	if (ktrpoint(KTR_GENIO)) {
+	if (ktrpoint(KTR_GENIO) && iovsz > 0) {
 		ktriov = kmem_alloc(iovsz, KM_SLEEP);
 		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
@@ -897,9 +897,10 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 		/* Some data transferred */
 		error = 0;
 
-	if (ktriov != NULL) {
+	if (ktrpoint(KTR_GENIO)) {
 		ktrgeniov(s, UIO_READ, ktriov, len, error);
-		kmem_free(ktriov, iovsz);
+		if (ktriov != NULL)
+			kmem_free(ktriov, iovsz);
 	}
 
 	if (error != 0) {
