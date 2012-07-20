@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.121 2012/07/20 16:44:33 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.122 2012/07/20 18:17:26 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -283,6 +283,7 @@ NR == 1 {
 	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
 	printf "#include <sys/types.h> /* typedefs */\n" > rumpcallshdr
 	printf "#include <sys/select.h> /* typedefs */\n\n" > rumpcallshdr
+	printf "#include <sys/socket.h> /* typedefs */\n\n" > rumpcallshdr
 	printf "#include <signal.h> /* typedefs */\n\n" > rumpcallshdr
 	printf "#include <rump/rump_syscalls_compat.h>\n\n" > rumpcallshdr
 
