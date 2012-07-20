@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.127 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: vm.c,v 1.128 2012/07/20 09:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.127 2012/06/05 22:51:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.128 2012/07/20 09:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -331,6 +331,8 @@ uvm_init(void)
 	kernel_map->pmap = pmap_kernel();
 
 	pool_subsystem_init();
+
+#ifndef RUMP_USE_UNREAL_ALLOCATORS
 	vmem_bootstrap();
 	kmem_arena = vmem_create("kmem", 0, 1024*1024, PAGE_SIZE,
 	    NULL, NULL, NULL,
@@ -341,6 +343,7 @@ uvm_init(void)
 	kmem_va_arena = vmem_create("kva", 0, 0, PAGE_SIZE,
 	    vmem_alloc, vmem_free, kmem_arena,
 	    8 * PAGE_SIZE, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+#endif /* !RUMP_USE_UNREAL_ALLOCATORS */
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
