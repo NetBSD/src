@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.134 2012/07/20 07:31:14 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.135 2012/07/20 23:18:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.134 2012/07/20 07:31:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.135 2012/07/20 23:18:02 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -205,7 +205,6 @@ usb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
 	else
 		sc->sc_bus->lock = NULL;
-	usb_create_event_thread(self);
 
 	RUN_ONCE(&init_control, usb_once_init);
 	config_interrupts(self, usb_doattach);
@@ -297,6 +296,7 @@ usb_doattach(device_t self)
 			return;
 		}
 		sc->sc_bus->root_hub = dev;
+		usb_create_event_thread(self);
 #if 1
 		/*
 		 * Turning this code off will delay attachment of USB devices
