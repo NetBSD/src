@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfbvar.h,v 1.1 2012/07/18 23:30:14 rkujawa Exp $	*/
+/*	$NetBSD: tdvfbvar.h,v 1.2 2012/07/20 12:03:32 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc. 
@@ -45,6 +45,10 @@ struct tdvfb_dac_timing {
 
 struct tdvfb_softc {
 	device_t sc_dev;
+
+	int sc_voodootype;
+#define TDV_VOODOO_1	1
+#define TDV_VOODOO_2	2
 
 	/* bus attachment, handles */
 	pci_chipset_tag_t sc_pc;
