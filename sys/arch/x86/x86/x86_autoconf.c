@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.62.8.1 2012/07/05 18:12:47 riz Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.62.8.2 2012/07/20 23:57:38 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62.8.1 2012/07/05 18:12:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62.8.2 2012/07/20 23:57:38 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,14 +454,20 @@ findroot(void)
 		 * No booted device found; check CD-ROM boot at last.
 		 *
 		 * Our bootloader assumes CD-ROM boot if biosdev is larger
-		 * than the number of hard drives recognized by the BIOS.
-		 * The number of drives can be found in BTINFO_BIOSGEOM here.
+		 * or equal than the number of hard drives recognized by the
+		 * BIOS. The number of drives can be found in BTINFO_BIOSGEOM
+		 * here. For example, if we have wd0, wd1, and cd0:
+		 *
+		 *	big->num = 2 (for wd0 and wd1)
+		 *	bid->biosdev = 0x80 (wd0)
+		 *	bid->biosdev = 0x81 (wd1)
+		 *	bid->biosdev = 0x82 (cd0)
 		 *
 		 * See src/sys/arch/i386/stand/boot/devopen.c and
 		 * src/sys/arch/i386/stand/lib/bootinfo_biosgeom.c .
 		 */
 		if ((big = lookup_bootinfo(BTINFO_BIOSGEOM)) != NULL &&
-		    bid->biosdev > 0x80 + big->num) {
+		    bid->biosdev >= 0x80 + big->num) {
 			/*
 			 * XXX
 			 * There is no proper way to detect which unit is
