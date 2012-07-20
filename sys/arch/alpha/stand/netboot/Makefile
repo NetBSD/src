@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2003/01/03 15:34:42 lukem Exp $
+# $NetBSD: Makefile,v 1.26 2012/07/20 15:23:02 matt Exp $
 
 PROG = netboot
 
@@ -15,7 +15,7 @@ CPPFLAGS += ${UNIFIED_CPPFLAGS} -DSUPPORT_DHCP \
 		-DBOOT_TYPE_NAME='"Network"'
 
 ${PROG}: ${PROG}.sym
-	@echo creating ${PROG} from ${PROG}.sym...
+	${_MKTARGET_CREATE}
 	@${OBJCOPY} --output-target=binary ${PROG}.sym ${PROG}
 	@chmod 644 ${PROG}
 	@ls -l ${PROG}
@@ -26,6 +26,7 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=yes SA_USE_CREAD=yes
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	${SIZE} ${PROG}.sym
