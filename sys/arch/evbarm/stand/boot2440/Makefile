@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/02/22 12:12:21 nisimura Exp $
+#	$NetBSD: Makefile,v 1.4 2012/07/20 14:53:27 matt Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -59,6 +59,7 @@ vers.c: version
 	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version "evbarm"
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET}.elf \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${.TARGET}.elf ${.TARGET}
