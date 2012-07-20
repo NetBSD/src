@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.32.4.1 2012/07/20 23:14:23 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.32.4.1 2012/07/20 23:14:23 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,10 @@ __RCSID("$NetBSD: tftp.c,v 1.32 2011/09/17 15:15:46 christos Exp $");
 #include "extern.h"
 #include "tftpsubs.h"
 
+extern jmp_buf	toplevel;
+
 char    ackbuf[PKTSIZE];
 int	timeout;
-jmp_buf	toplevel;
 jmp_buf	timeoutbuf;
 
 static void nak __P((int, struct sockaddr *));
@@ -761,7 +762,7 @@ timer(sig)
 
 	timeout += rexmtval;
 	if (timeout >= maxtimeout) {
-		(void)printf("Transfer timed out.\n");
+		(void)printf("Transfer timed out.");
 		longjmp(toplevel, -1);
 	}
 	longjmp(timeoutbuf, 1);
