@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.50 2012/02/19 21:06:24 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.51 2012/07/20 14:21:20 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.50 2012/02/19 21:06:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2012/07/20 14:21:20 matt Exp $");
 
 void
 child_return(void *arg)
@@ -79,107 +79,15 @@ child_return(void *arg)
 }
 #endif
 
-static void EMULNAME(syscall_plain)(struct trapframe *);
-
 #include <powerpc/spr.h>
 
-void
-EMULNAME(syscall_plain)(struct trapframe *tf)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	const struct sysent *callp;
-	size_t argsize;
-	register_t code;
-	register_t *params, rval[2];
-	register_t args[10];
-	int error;
-	int n;
-
-	LWP_CACHE_CREDS(l, p);
-	curcpu()->ci_ev_scalls.ev_count++;
-	curcpu()->ci_data.cpu_nsyscall++;
-
-	code = tf->tf_fixreg[0];
-	params = tf->tf_fixreg + FIRSTARG;
-	n = NARGREG;
-
-	{
-		switch (code) {
-		case EMULNAMEU(SYS_syscall):
-			/*
-			 * code is first argument,
-			 * followed by actual args.
-			 */
-			code = *params++;
-			n -= 1;
-			break;
-#if !defined(COMPAT_LINUX)
-		case EMULNAMEU(SYS___syscall):
-			params++;
-			code = *params++;
-			n -= 2;
-			break;
-#endif
-		default:
-			break;
-		}
-
-		callp = p->p_emul->e_sysent +
-		    (code & (EMULNAMEU(SYS_NSYSENT)-1));
-	}
-
-	argsize = callp->sy_argsize;
-
-	if (argsize > n * sizeof(register_t)) {
-		memcpy(args, params, n * sizeof(register_t));
-		error = copyin(MOREARGS(tf->tf_fixreg[1]),
-		    args + n,
-		    argsize - n * sizeof(register_t));
-		if (error)
-			goto bad;
-		params = args;
-	}
-
-	rval[0] = 0;
-	rval[1] = 0;
-
-	error = sy_call(callp, l, params, rval);
-
-	switch (error) {
-	case 0:
-		tf->tf_fixreg[FIRSTARG] = rval[0];
-		tf->tf_fixreg[FIRSTARG + 1] = rval[1];
-		tf->tf_cr &= ~0x10000000;
-		break;
-	case ERESTART:
-		/*
-		 * Set user's pc back to redo the system call.
-		 */
-		tf->tf_srr0 -= 4;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_fixreg[FIRSTARG] = error;
-		tf->tf_cr |= 0x10000000;
-		break;
-	}
-
-	userret(l, tf);
-}
-
-static void EMULNAME(syscall_fancy)(struct trapframe *);
+static void EMULNAME(syscall)(struct trapframe *);
 
 void
-EMULNAME(syscall_fancy)(struct trapframe *tf)
+EMULNAME(syscall)(struct trapframe *tf)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
 	const struct sysent *callp;
 	size_t argsize;
 	register_t code;
@@ -236,38 +144,43 @@ EMULNAME(syscall_fancy)(struct trapframe *tf)
 		params = args;
 	}
 
-	if ((error = trace_enter(realcode, params, callp->sy_narg)) != 0)
-		goto out;
+	if (!__predict_false(p->p_trace_enabled)
+	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
+	    || (error = trace_enter(realcode, params, callp->sy_narg)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+		error = sy_call(callp, l, params, rval);
+	}
 
-	rval[0] = 0;
-	rval[1] = 0;
+	if (__predict_false(p->p_trace_enabled)
+	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
+		trace_exit(code, rval, error);
+	}
 
-	error = sy_call(callp, l, params, rval);
-out:
-	switch (error) {
-	case 0:
+	if (__predict_true(error == 0)) {
 		tf->tf_fixreg[FIRSTARG] = rval[0];
 		tf->tf_fixreg[FIRSTARG + 1] = rval[1];
 		tf->tf_cr &= ~0x10000000;
-		break;
-	case ERESTART:
-		/*
-		 * Set user's pc back to redo the system call.
-		 */
-		tf->tf_srr0 -= 4;
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_fixreg[FIRSTARG] = error;
-		tf->tf_cr |= 0x10000000;
-		break;
+	} else {
+		switch (error) {
+		case ERESTART:
+			/*
+			 * Set user's pc back to redo the system call.
+			 */
+			tf->tf_srr0 -= 4;
+			break;
+		case EJUSTRETURN:
+			/* nothing to do */
+			break;
+		default:
+		bad:
+			if (p->p_emul->e_errno)
+				error = p->p_emul->e_errno[error];
+			tf->tf_fixreg[FIRSTARG] = error;
+			tf->tf_cr |= 0x10000000;
+			break;
+		}
 	}
-	trace_exit(realcode, rval, error);
 
 	userret(l, tf);
 }
@@ -278,8 +191,5 @@ void
 EMULNAME(syscall_intern)(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-	else
-		p->p_md.md_syscall = EMULNAME(syscall_plain);
+	p->p_md.md_syscall = EMULNAME(syscall);
 }
