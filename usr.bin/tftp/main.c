@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2012/01/16 17:38:16 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.30.2.1 2012/07/20 23:14:23 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2012/01/16 17:38:16 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.30.2.1 2012/07/20 23:14:23 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ u_int	rexmtval = TIMEOUT;
 ushort	mcmasterslave;
 int	maxtimeout = 5 * TIMEOUT;
 
+jmp_buf	toplevel;
+
 static int	connected;
 static char	mode[32];
 static char	line[LBUFLEN];
@@ -94,7 +96,6 @@ static int	margc;
 static char	*margv[20];
 static const	char *prompt = "tftp";
 static char    hostname[MAXHOSTNAMELEN];
-static jmp_buf	toplevel;
 
 static void	get(int, char **);
 static void	help(int, char **);
