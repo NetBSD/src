@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.9 2009/04/03 10:38:12 tsutsui Exp $
+# $NetBSD: Makefile.bootxx,v 1.10 2012/07/20 15:23:02 matt Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -37,6 +37,7 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 # they are not included in the final object.
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
+	${_MKTARGET_LINK}
 	@${LD} -Ttext 0x20000000 -N --verbose 2>&1 \
 	    | ${TOOL_SED} -n '/^==========/,/^===========/{/^========/d; \
 	    s,^[[:blank:]]*\.eh_frame[[:blank:]]*:,  /DISCARD/ : ,;p;}' \
