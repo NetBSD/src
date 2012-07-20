@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.156 2012/07/16 22:14:19 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.157 2012/07/20 23:20:34 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6368,4 +6368,35 @@ usr.sbin/npf/npftest/libnpftest/npf_table_test.c 1.4
 
 	Rework NPF tables and fix support for IPv6.
 	[rmind, ticket #421]
+
+sys/arch/dreamcast/conf/GENERIC			1.107
+
+	Add UNION to dreamcast GENERIC.
+	[abs, ticket #422]
+
+sys/kern/uipc_syscalls.c			1.156 via patch
+
+	Don't crash when tracing processes that use empty messages with
+	sendmsg/recvmsg.
+	[njoly, ticket #423]
+
+sys/compat/linux32/arch/amd64/linux32_syscall.h	1.67
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h 1.67
+sys/compat/linux32/arch/amd64/linux32_syscalls.c 1.67
+sys/compat/linux32/arch/amd64/linux32_sysent.c	1.67
+sys/compat/linux32/arch/amd64/syscalls.master	1.62
+
+	Add xattr stubs to linux32 compat.
+	[christos, ticket #424]
+
+usr.bin/tftp/main.c				1.32
+usr.bin/tftp/tftp.c				1.34
+
+	Avoid core dump if a transfer time-out is experienced.
+	[he, ticket #425]
+
+etc/master.passwd				1.46
+
+	Change root's default shell to /bin/sh.
+	[gson, ticket #426]
 
