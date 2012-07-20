@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.57 2012/07/20 16:49:45 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.58 2012/07/20 18:19:45 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -16,6 +16,7 @@
 
 #include <sys/types.h> /* typedefs */
 #include <sys/select.h> /* typedefs */
+#include <sys/socket.h> /* typedefs */
 
 #include <signal.h> /* typedefs */
 
