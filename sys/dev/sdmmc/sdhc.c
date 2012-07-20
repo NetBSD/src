@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.22 2012/07/17 21:35:26 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.23 2012/07/20 02:04:13 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.22 2012/07/17 21:35:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.23 2012/07/20 02:04:13 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1012,23 +1012,15 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 */
 	mutex_enter(&hp->host_mtx);
 	if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
-		uint32_t *p = cmd->c_resp;
-		int i;
-
-		for (i = 0; i < 4; i++) {
-#ifdef __BUS_SPACE_HAS_STREAM_METHODS
-			*p++ = bus_space_read_stream_4(hp->iot, hp->ioh,
-			    SDHC_RESPONSE + i * 4);
-#else
-			*p++ = htole32(bus_space_read_4(hp->iot, hp->ioh,
-			    SDHC_RESPONSE + i * 4));
-#endif
-			if (!ISSET(cmd->c_flags, SCF_RSP_136))
-				break;
+		cmd->c_resp[0] = HREAD4(hp, SDHC_RESPONSE + 0);
+		if (ISSET(cmd->c_flags, SCF_RSP_136)) {
+			cmd->c_resp[1] = HREAD4(hp, SDHC_RESPONSE + 4);
+			cmd->c_resp[2] = HREAD4(hp, SDHC_RESPONSE + 8);
+			cmd->c_resp[3] = HREAD4(hp, SDHC_RESPONSE + 12);
 		}
 	}
 	mutex_exit(&hp->host_mtx);
-	DPRINTF(1,("%s: resp = %08x\n", HDEVNAME(hp), cmd->c_resp[0]));
+	DPRINTF(1,("%s: resp = %08x\n", HDEVNAME(hp), be32toh(cmd->c_resp[0])));
 
 	/*
 	 * If the command has data to transfer in any direction,
@@ -1403,15 +1395,30 @@ esdhc_read_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 	uint16_t status = HREAD2(hp, SDHC_NINTR_STATUS);
 	uint32_t v;
 
+	const size_t watermark = (HREAD4(hp, SDHC_WATERMARK_LEVEL) >> SDHC_WATERMARK_READ_SHIFT) & SDHC_WATERMARK_READ_MASK;
+	size_t count = 0;
+
 	while (datalen > 3 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
+		if (count == 0) {
+			/*
+			 * If we've drained "watermark" words, we need to wait
+			 * a little bit so the read FIFO can refill.
+			 */
+			sdmmc_delay(10);
+			count = watermark;
+		}
 		v = HREAD4(hp, SDHC_DATA);
 		v = le32toh(v);
 		*(uint32_t *)data = v;
 		data += 4;
 		datalen -= 4;
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
+		count--;
 	}
 	if (datalen > 0 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
+		if (count == 0) {
+			sdmmc_delay(10);
+		}
 		v = HREAD4(hp, SDHC_DATA);
 		v = le32toh(v);
 		do {
@@ -1427,15 +1434,26 @@ esdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 	uint16_t status = HREAD2(hp, SDHC_NINTR_STATUS);
 	uint32_t v;
 
+	const size_t watermark = (HREAD4(hp, SDHC_WATERMARK_LEVEL) >> SDHC_WATERMARK_WRITE_SHIFT) & SDHC_WATERMARK_WRITE_MASK;
+	size_t count = watermark;
+
 	while (datalen > 3 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
+		if (count == 0) {
+			sdmmc_delay(10);
+			count = watermark;
+		}
 		v = *(uint32_t *)data;
 		v = htole32(v);
 		HWRITE4(hp, SDHC_DATA, v);
 		data += 4;
 		datalen -= 4;
 		status = HREAD2(hp, SDHC_NINTR_STATUS);
+		count--;
 	}
 	if (datalen > 0 && !ISSET(status, SDHC_TRANSFER_COMPLETE)) {
+		if (count == 0) {
+			sdmmc_delay(10);
+		}
 		v = *(uint32_t *)data;
 		v = htole32(v);
 		HWRITE4(hp, SDHC_DATA, v);
