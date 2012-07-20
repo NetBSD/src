@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2011/12/30 12:47:37 he Exp $
+# $NetBSD: GENERIC,v 1.105.2.1 2012/07/20 23:07:58 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -84,7 +84,7 @@ file-system 	PROCFS		# /proc
 #file-system 	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system	UNION		# union file system
+file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
