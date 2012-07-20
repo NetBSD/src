@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbdi.9,v 1.23 2012/06/10 06:40:08 mrg Exp $
+.\"	$NetBSD: usbdi.9,v 1.24 2012/07/20 07:55:44 mrg Exp $
 .\"
 .\" Copyright (c) 2012 Matthew R. Green
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 2, 2012
+.Dd July 20, 2012
 .Dt USBDI 9
 .Os
 .Sh NAME
@@ -642,7 +642,6 @@ with the
 and
 .Dv USBD_SYNCHRONOUS_SIG
 flags set.
-This function is only available with the USB SMP code.
 .Pp
 Transfers are aborted via this pipe with
 .Fn usbd_abort_pipe
@@ -900,8 +899,6 @@ and
 that is being waited on with
 .Fn usb_detach_wait .
 .Pp
-These functions are only available with the USB SMP code.
-.Pp
 The are another pair of functions with similar functionality that do not
 use a condition variable or mutex and should be avoided in new code.
 The
@@ -917,7 +914,9 @@ function works like
 The USB stack provides a task management framework to execute tasks
 in a thread context at the soonest opportunity.
 Typically this is used by network drivers to handle periodic updates
-or status change requests.
+or status change requests, or other operations that need to run in
+a normal context.
+.Pp
 The
 .Fn usb_init_task
 function takes a pointer to a
@@ -927,18 +926,33 @@ that will be initalised, a function to call for this task
 and the argument to pass to
 .Fa func ,
 .Fa arg .
-To schedule the task to be run the
+.Pp
+To invoke the task callback the
 .Fn usb_add_task
 function should be called with the
 .Fa iface
-associated with this device, the task queue to invoke
+associated with this device, the task structure
 .Fa task ,
 and the
 .Fa queue
 to run against, either
 .Dv USB_TASKQ_HC
-or
-.Dv USB_TASKQ_DRIVER .
+for operations initiated by host controllers or
+.Dv USB_TASKQ_DRIVER
+for operations initiated by USB drivers.
+.Pp
+To deschedule a potentially running task the
+.Fn usb_rem_task
+function should be called.
+.Pp
+The driver using these facilities is expected to provide the
+necessary serialisation between
+.Fn usb_init_task ,
+.Fn usb_add_task
+and
+.Fn usb_rem_task
+for each specific
+.Ft struct usb_task .
 .Sh SEE ALSO
 .Xr usb 4 ,
 .Xr usbd_status 9
