@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.115 2011/12/23 00:51:47 jakllsch Exp $        */
+/*      $NetBSD: ukbd.c,v 1.115.2.1 2012/07/20 23:49:31 riz Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.115 2011/12/23 00:51:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.115.2.1 2012/07/20 23:49:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,8 @@ Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 #endif
 		{ 76, 71 },	/* delete -> scroll lock */
 		{ 81, 78 },	/* down -> page down */
-		{ 82, 75 }	/* up -> page up */
+		{ 82, 75 },	/* up -> page up */
+		{  0, 0 }
 };
 #endif
 
