@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.16 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.17 2012/07/20 09:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.16 2012/06/05 22:51:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.17 2012/07/20 09:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -121,6 +121,10 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
+
+__strong_alias(kmem_intr_alloc, kmem_alloc);
+__strong_alias(kmem_intr_zalloc, kmem_zalloc);
+__strong_alias(kmem_intr_free, kmem_free);
 
 /*
  * pool & pool_cache
@@ -316,6 +320,12 @@ pool_page_free(struct pool *pp, void *item)
 
 	return pool_put(pp, item);
 }
+
+struct pool_allocator pool_allocator_kmem = {
+        .pa_alloc = pool_page_alloc,
+        .pa_free = pool_page_free,
+        .pa_pagesz = 0
+};
 
 void
 vmem_rehash_start()
