@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.11 2012/07/14 07:52:53 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.12 2012/07/20 21:53:57 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.11 2012/07/14 07:52:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.12 2012/07/20 21:53:57 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -377,7 +377,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			if (ipl <= newipl)
 				break;
 
-			pic_set_priority(ci, newipl);
+			pic_set_priority(ci, ipl);
 			pic_list_deliver_irqs(psw, ipl, frame);
 			pic_list_unblock_irqs();
 		}
