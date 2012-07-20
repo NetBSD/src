@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,7 +147,7 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable EHCI interrupts. */
 	sc->sc_ehci.sc_offs = EREAD1(&sc->sc_ehci, EHCI_CAPLENGTH);
-	EOWRITE2(&sc->sc_ehci, EHCI_USBINTR, 0);
+	EOWRITE4(&sc->sc_ehci, EHCI_USBINTR, 0);
 
 #ifdef RALINK_EHCI_DEBUG
 	printf("%s: EHCI USBCMD=0x%x\n", devname,

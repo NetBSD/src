@@ -1,7 +1,7 @@
-/*	$Id: omap3_ehci.c,v 1.1 2012/07/12 03:38:50 matt Exp $	*/
+/*	$Id: omap3_ehci.c,v 1.2 2012/07/20 02:14:01 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap3_ehci.c,v 1.1 2012/07/12 03:38:50 matt Exp $	*/
+/*	$NetBSD: omap3_ehci.c,v 1.2 2012/07/20 02:14:01 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_ehci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.1 2012/07/12 03:38:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.2 2012/07/20 02:14:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ obioehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 #if 1
 	sc->sc_ih = intr_establish(obio->obio_intr, IPL_USB, IST_LEVEL,
