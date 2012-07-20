@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfbreg.h,v 1.1 2012/07/18 23:30:14 rkujawa Exp $	*/
+/*	$NetBSD: tdvfbreg.h,v 1.2 2012/07/20 12:03:32 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc. 
@@ -33,6 +33,7 @@
 #ifndef TDVFBREG_H
 #define TDVFBREG_H
 
+#define TDV_SST_CLK		50000	/* 50MHz, max is around 60MHz */
 #define TDV_CVG_CLK		75000	/* 75MHz, max is around 90MHz */
 
 /* CVG PCI config registers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.1 2012/07/18 23:30:14 rkujawa Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.2 2012/07/20 12:03:32 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -29,7 +29,7 @@
  */
 
 /*
- * A console driver for 3Dfx Voodoo2 (CVG). 
+ * A console driver for 3Dfx Voodoo2 (CVG) and 3Dfx Voodoo Graphics (SST-1).
  *
  * 3Dfx Glide 2.x source code, Linux driver by Ghozlane Toumi, and 
  * "Voodoo2 Graphics Engine for 3D Game Acceleration" document were used as 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.1 2012/07/18 23:30:14 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.2 2012/07/20 12:03:32 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,9 @@ tdvfb_match(device_t parent, cfdata_t match, void *aux)
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3DFX) &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DFX_VOODOO2))
 		return 100;
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3DFX) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DFX_VOODOO))
+		return 100;
 
 	return 0;
 }
@@ -133,6 +136,11 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dev = self;
 
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DFX_VOODOO2)
+		sc->sc_voodootype = TDV_VOODOO_2;
+	else
+		sc->sc_voodootype = TDV_VOODOO_1;
+
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 	    PCI_COMMAND_STATUS_REG);
 	screg |= PCI_COMMAND_MEM_ENABLE;
@@ -154,7 +162,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map the framebuffer");	
 	}
 
-	aprint_normal_dev(sc->sc_dev, "CVG at 0x%08x, fb at 0x%08x\n", 
+	aprint_normal_dev(sc->sc_dev, "registers at 0x%08x, fb at 0x%08x\n", 
 	    sc->sc_cvg_pa, sc->sc_cvg_pa + TDV_OFF_FB);
 
 	/* Do the low level setup. */
@@ -169,7 +177,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_memsize = tdvfb_mem_size(sc);
 
-	/* Select video mode, 800x600x60 by default... */
+	/* Select video mode, 800x600 32bpp 60Hz by default... */
 	sc->sc_width = 800;
 	sc->sc_height = 600;
 	sc->sc_bpp = 32;
@@ -295,7 +303,10 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 
 	sc->vid_timing = tdvfb_gendac_calc_pll(sc->sc_videomode->dot_clock);
 
-	sc->sc_x_tiles = (sc->sc_videomode->hdisplay + 63 ) / 64 * 2;
+	if(sc->sc_voodootype == TDV_VOODOO_2)
+		sc->sc_x_tiles = (sc->sc_videomode->hdisplay + 63 ) / 64 * 2;
+	else
+		sc->sc_x_tiles = (sc->sc_videomode->hdisplay + 63 ) / 64;
 
 	tdvfb_cvg_write(sc, TDV_OFF_NOPCMD, 0);
 	tdvfb_wait(sc);
@@ -309,9 +320,10 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 	tdvfb_cvg_unset(sc, TDV_OFF_FBIINIT2, TDV_FBIINIT2_DRAM_REFR);
 	tdvfb_wait(sc);
 
-	/* program video timings into CVG */
+	/* program video timings into CVG/SST-1*/
 	tdvfb_cvg_write(sc, TDV_OFF_VDIMENSIONS, yheight << 16 | (xwidth - 1));
-	tdvfb_cvg_write(sc, TDV_OFF_BACKPORCH, vbackporch << 16 | (hbackporch-2));
+	tdvfb_cvg_write(sc, TDV_OFF_BACKPORCH, vbackporch << 16 | 
+	    (hbackporch - 2));
 	tdvfb_cvg_write(sc, TDV_OFF_HSYNC, hsyncoff << 16 | (hsyncon - 1));
 	tdvfb_cvg_write(sc, TDV_OFF_VSYNC, vsyncoff << 16 | vsyncon);
 
@@ -325,22 +337,29 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 	    TDV_FBIINIT1_DR_DCLK |
 	    TDV_FBIINIT1_IN_VCLK_2X );
 
-	fbiinit1 |= ((sc->sc_x_tiles & 0x20) >> 5) << TDV_FBIINIT1_TILES_X_MSB |
-	    ((sc->sc_x_tiles & 0x1e) >> 1) << TDV_FBIINIT1_TILES_X;
-	fbiinit6 = (sc->sc_x_tiles & 0x1) << TDV_FBIINIT6_TILES_X_LSB;
+	if (sc->sc_voodootype == TDV_VOODOO_2) {
+		fbiinit1 |= ((sc->sc_x_tiles & 0x20) >> 5) 
+		    << TDV_FBIINIT1_TILES_X_MSB | ((sc->sc_x_tiles & 0x1e) >> 1)
+		    << TDV_FBIINIT1_TILES_X;
+		fbiinit6 = (sc->sc_x_tiles & 0x1) << TDV_FBIINIT6_TILES_X_LSB;
+	} else
+		fbiinit1 |= sc->sc_x_tiles  << TDV_FBIINIT1_TILES_X;
 
 	fbiinit1 |= TDV_FBIINIT1_VCLK_2X << TDV_FBIINIT1_VCLK_SRC;
 
-	fbiinit5 = tdvfb_cvg_read(sc, TDV_OFF_FBIINIT5) & TDV_FBIINIT5_VIDMASK;
-
-	if (sc->sc_videomode->flags & VID_PHSYNC)
-		fbiinit5 |= TDV_FBIINIT5_PHSYNC;
-	if (sc->sc_videomode->flags & VID_PVSYNC)
-		fbiinit5 |= TDV_FBIINIT5_PVSYNC;
-
+	if (sc->sc_voodootype == TDV_VOODOO_2) {
+		fbiinit5 = tdvfb_cvg_read(sc, TDV_OFF_FBIINIT5) 
+		    & TDV_FBIINIT5_VIDMASK;
+		if (sc->sc_videomode->flags & VID_PHSYNC)
+			fbiinit5 |= TDV_FBIINIT5_PHSYNC;
+		if (sc->sc_videomode->flags & VID_PVSYNC)
+			fbiinit5 |= TDV_FBIINIT5_PVSYNC;
+	}
 	tdvfb_cvg_write(sc, TDV_OFF_FBIINIT1, fbiinit1);
-	tdvfb_cvg_write(sc, TDV_OFF_FBIINIT6, fbiinit6);
-	tdvfb_cvg_write(sc, TDV_OFF_FBIINIT5, fbiinit6);
+	if (sc->sc_voodootype == TDV_VOODOO_2) {
+		tdvfb_cvg_write(sc, TDV_OFF_FBIINIT6, fbiinit6);
+		tdvfb_cvg_write(sc, TDV_OFF_FBIINIT5, fbiinit5); 
+	}
 	tdvfb_wait(sc);	
 
 	/* unreset, enable DRAM refresh */
@@ -455,8 +474,11 @@ tdvfb_init(struct tdvfb_softc *sc)
 		return false;
 	}
 
-	/* calculate PLL used to drive the CVG (graphics clock) */
-	sc->cvg_timing = tdvfb_gendac_calc_pll(TDV_CVG_CLK);
+	/* calculate PLL used to drive the chips (graphics clock) */
+	if(sc->sc_voodootype == TDV_VOODOO_2)
+		sc->cvg_timing = tdvfb_gendac_calc_pll(TDV_CVG_CLK);
+	else
+		sc->cvg_timing = tdvfb_gendac_calc_pll(TDV_SST_CLK);
 
 	/* set PLL for gfx clock */
 	tdvfb_gendac_set_cvg_timing(sc, &(sc->cvg_timing));
@@ -514,8 +536,10 @@ tdvfb_fbiinit_defaults(struct tdvfb_softc *sc)
 	tdvfb_wait(sc);
 	tdvfb_cvg_write(sc, TDV_OFF_FBIINIT4, fbiinit4);
 	tdvfb_wait(sc);
-	tdvfb_cvg_write(sc, TDV_OFF_FBIINIT6, fbiinit6);
-	tdvfb_wait(sc);
+	if (sc->sc_voodootype == TDV_VOODOO_2) {
+		tdvfb_cvg_write(sc, TDV_OFF_FBIINIT6, fbiinit6);
+		tdvfb_wait(sc);
+	}
 }
 
 static void
