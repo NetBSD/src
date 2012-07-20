@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.115.2.1 2012/07/20 23:49:31 riz Exp $        */
+/*      $NetBSD: ukbd.c,v 1.115.2.2 2012/07/20 23:55:54 riz Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.115.2.1 2012/07/20 23:49:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.115.2.2 2012/07/20 23:55:54 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,13 @@ Static const struct ukbd_keycodetrans trtab_gdium_fn[] = {
 		{  0, 0 }
 };
 #endif
+
+Static const struct ukbd_keycodetrans trtab_generic[] = {
+	{ 0x7f, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
+	{ 0x80, IS_PMF | PMFE_AUDIO_VOLUME_UP },
+	{ 0x81, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
+	{ 0x00, 0x00 }
+};
 
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
@@ -668,6 +675,8 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		}
 	}
 #endif
+
+	ukbd_translate_keycodes(sc, ud, trtab_generic);
 
 	if ((sc->sc_flags & FLAG_DEBOUNCE) && !(sc->sc_flags & FLAG_POLLING)) {
 		/*
