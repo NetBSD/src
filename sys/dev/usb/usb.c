@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.132 2012/07/17 10:33:46 cegger Exp $	*/
+/*	$NetBSD: usb.c,v 1.133 2012/07/20 02:23:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.132 2012/07/17 10:33:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.133 2012/07/20 02:23:35 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -362,15 +362,14 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 void
 usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 {
-	struct usb_taskq *taskq;
 
-	taskq = &usb_taskq[task->queue];
-	mutex_enter(&taskq->lock);
 	if (task->queue != -1) {
+		struct usb_taskq *taskq = &usb_taskq[task->queue];
+		mutex_enter(&taskq->lock);
 		TAILQ_REMOVE(&taskq->tasks, task, next);
 		task->queue = -1;
+		mutex_exit(&taskq->lock);
 	}
-	mutex_exit(&taskq->lock);
 }
 
 void
