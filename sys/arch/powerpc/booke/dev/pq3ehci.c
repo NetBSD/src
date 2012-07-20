@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.4 2011/06/12 05:29:13 matt Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.4 2011/06/12 05:29:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
 
 #include "opt_usb.h"
 
@@ -138,7 +138,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
-	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
 	error = ehci_init(&sc->sc);
 	if (error != USBD_NORMAL_COMPLETION) {

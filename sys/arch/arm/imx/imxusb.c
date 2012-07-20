@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.1 2010/11/30 13:05:27 bsh Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.2 2012/07/20 02:14:01 matt Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.1 2010/11/30 13:05:27 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2 2012/07/20 02:14:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	EOWRITE2(hsc, EHCI_USBINTR, 0);
+	EOWRITE4(hsc, EHCI_USBINTR, 0);
 
 	intr_establish(aa->aa_irq, IPL_USB, IST_LEVEL, ehci_intr, hsc);
 
