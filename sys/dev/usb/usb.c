@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.133 2012/07/20 02:23:35 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.134 2012/07/20 07:31:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.133 2012/07/20 02:23:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.134 2012/07/20 07:31:14 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usb.h"
@@ -104,7 +104,6 @@ struct usb_taskq {
 	kcondvar_t cv;
 	struct lwp *task_thread_lwp;
 	const char *name;
-	int taskcreated;	/* task thread exists. */
 };
 
 static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
@@ -167,6 +166,8 @@ CFATTACH_DECL3_NEW(usb, sizeof(struct usb_softc),
     usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet,
     DVF_DETACH_SHUTDOWN);
 
+static const char *taskq_names[] = USB_TASKQ_NAMES;
+
 int
 usb_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -179,9 +180,11 @@ usb_attach(device_t parent, device_t self, void *aux)
 {
 	static ONCE_DECL(init_control);
 	struct usb_softc *sc = device_private(self);
+	bool mpsafe;
 	int usbrev;
 
 	sc->sc_bus = aux;
+	mpsafe = sc->sc_bus->methods->get_lock ? true : false;
 	usbrev = sc->sc_bus->usbrev;
 
 	aprint_naive("\n");
@@ -198,6 +201,12 @@ usb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
+	if (mpsafe)
+		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
+	else
+		sc->sc_bus->lock = NULL;
+	usb_create_event_thread(self);
+
 	RUN_ONCE(&init_control, usb_once_init);
 	config_interrupts(self, usb_doattach);
 }
@@ -205,10 +214,31 @@ usb_attach(device_t parent, device_t self, void *aux)
 static int
 usb_once_init(void)
 {
+	struct usb_taskq *taskq;
+	int i;
 
 	selinit(&usb_selevent);
 	mutex_init(&usb_event_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&usb_event_cv, "usbrea");
+
+	for (i = 0; i < USB_NUM_TASKQS; i++) {
+		taskq = &usb_taskq[i];
+
+		TAILQ_INIT(&taskq->tasks);
+		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&taskq->cv, "usbtsk");
+		taskq->name = taskq_names[i];
+		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+		    usb_task_thread, taskq, &taskq->task_thread_lwp,
+		    "%s", taskq->name)) {
+			printf("unable to create task thread: %s\n", taskq->name);
+			panic("usb_create_event_thread task");
+		}
+		/*
+		 * XXX we should make sure these threads are alive before
+		 * end up using them in usb_doattach().
+		 */
+	}
 	return 0;
 }
 
@@ -220,7 +250,7 @@ usb_doattach(device_t self)
 	usbd_status err;
 	int speed;
 	struct usb_event *ue;
-	bool mpsafe = sc->sc_bus->methods->get_lock ? true : false;
+	const bool mpsafe = sc->sc_bus->methods->get_lock ? true : false;
 
 	DPRINTF(("usbd_doattach\n"));
 
@@ -239,11 +269,6 @@ usb_doattach(device_t self)
 		panic("usb_doattach");
 	}
 
-	if (mpsafe) {
-		sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
-	} else {
-		sc->sc_bus->lock = NULL;
-	}
 	cv_init(&sc->sc_bus->needs_explore_cv, "usbevt");
 
 	ue = usb_alloc_event();
@@ -288,7 +313,6 @@ usb_doattach(device_t self)
 	}
 
 	config_pending_incr();
-	usb_create_event_thread(self);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -299,14 +323,10 @@ usb_doattach(device_t self)
 	return;
 }
 
-static const char *taskq_names[] = USB_TASKQ_NAMES;
-
 void
 usb_create_event_thread(device_t self)
 {
 	struct usb_softc *sc = device_private(self);
-	struct usb_taskq *taskq;
-	int i;
 
 	if (kthread_create(PRI_NONE,
 	    sc->sc_bus->lock ? KTHREAD_MPSAFE : 0, NULL,
@@ -315,24 +335,6 @@ usb_create_event_thread(device_t self)
 		printf("%s: unable to create event thread for\n",
 		       device_xname(self));
 		panic("usb_create_event_thread");
-	}
-	for (i = 0; i < USB_NUM_TASKQS; i++) {
-		taskq = &usb_taskq[i];
-
-		if (taskq->taskcreated)
-			continue;
-
-		TAILQ_INIT(&taskq->tasks);
-		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&taskq->cv, "usbtsk");
-		taskq->taskcreated = 1;
-		taskq->name = taskq_names[i];
-		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-		    usb_task_thread, taskq, &taskq->task_thread_lwp,
-		    "%s", taskq->name)) {
-			printf("unable to create task thread: %s\n", taskq->name);
-			panic("usb_create_event_thread task");
-		}
 	}
 }
 
