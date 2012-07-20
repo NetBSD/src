@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.53 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.54 2012/07/20 09:27:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -145,31 +145,59 @@ _END_DECLS
 #endif /* RUMP_SYS_NETWORKING */
 
 #ifdef RUMP_SYS_IOCTL
-#error deprecated syscall selection.  use rumphijack
+#define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
+#define fnctl(...) rump_sys_fcntl(__VA_ARGS__)
 #endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
-#error deprecated syscall selection.  use rumphijack
+#define close(a) rump_sys_close(a)
 #endif /* RUMP_SYS_CLOSE */
 
 #ifdef RUMP_SYS_OPEN
-#error deprecated syscall selection.  use rumphijack
+#define open(...) rump_sys_open(__VA_ARGS__)
 #endif /* RUMP_SYS_OPEN */
 
 #ifdef RUMP_SYS_READWRITE
-#error deprecated syscall selection.  use rumphijack
+#define read(a,b,c) rump_sys_read(a,b,c)
+#define readv(a,b,c) rump_sys_readv(a,b,c)
+#define pread(a,b,c,d) rump_sys_pread(a,b,c,d)
+#define preadv(a,b,c,d) rump_sys_preadv(a,b,c,d)
+#define write(a,b,c) rump_sys_write(a,b,c)
+#define writev(a,b,c) rump_sys_writev(a,b,c)
+#define pwrite(a,b,c,d) rump_sys_pwrite(a,b,c,d)
+#define pwritev(a,b,c,d) rump_sys_pwritev(a,b,c,d)
 #endif /* RUMP_SYS_READWRITE */
 
 #ifdef RUMP_SYS_FILEOPS
-#error deprecated syscall selection.  use rumphijack
+#define mkdir(a,b) rump_sys_mkdir(a,b)
+#define rmdir(a) rump_sys_rmdir(a)
+#define link(a,b) rump_sys_link(a,b)
+#define symlink(a,b) rump_sys_symlink(a,b)
+#define unlink(a) rump_sys_unlink(a)
+#define readlink(a,b,c) rump_sys_readlink(a,b,c)
+#define chdir(a) rump_sys_chdir(a)
+#define fsync(a) rump_sys_fsync(a)
+#define sync() rump_sys_sync()
+#define chown(a,b,c) rump_sys_chown(a,b,c)
+#define fchown(a,b,c) rump_sys_fchown(a,b,c)
+#define lchown(a,b,c) rump_sys_lchown(a,b,c)
+#define lseek(a,b,c) rump_sys_lseek(a,b,c)
+#define mknod(a,b,c) rump_sys_mknod(a,b,c)
+#define rename(a,b) rump_sys_rename(a,b)
+#define truncate(a,b) rump_sys_truncate(a,b)
+#define ftruncate(a,b) rump_sys_ftruncate(a,b)
+#define umask(a) rump_sys_umask(a)
+#define getdents(a,b,c) rump_sys_getdents(a,b,c)
 #endif /* RUMP_SYS_FILEOPS */
 
 #ifdef RUMP_SYS_STAT
-#error deprecated syscall selection.  use rumphijack
+#define stat(a,b) rump_sys_stat(a,b)
+#define fstat(a,b) rump_sys_fstat(a,b)
+#define lstat(a,b) rump_sys_lstat(a,b)
 #endif /* RUMP_SYS_STAT */
 
 #ifdef RUMP_SYS_PROCOPS
-#error deprecated syscall selection.  use rumphijack
+#define getpid() rump_sys_getpid()
 #endif /* RUMP_SYS_PROCOPS */
 
 #endif /* _RUMP_RUMP_H_ */
