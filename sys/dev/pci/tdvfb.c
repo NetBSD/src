@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.2 2012/07/20 12:03:32 rkujawa Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.3 2012/07/20 21:31:28 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.2 2012/07/20 12:03:32 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.3 2012/07/20 21:31:28 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void	tdvfb_cvg_set(struct tdvfb_softc *sc, uint32_t reg,
 static void	tdvfb_cvg_unset(struct tdvfb_softc *sc, uint32_t reg, 
 		    uint32_t bits);
 static uint8_t	tdvfb_cvg_dac_read(struct tdvfb_softc *sc, uint32_t reg);
-void		tdvfb_cvg_dac_write(struct tdvfb_softc *sc, uint32_t reg, 
+static void	tdvfb_cvg_dac_write(struct tdvfb_softc *sc, uint32_t reg, 
 		    uint32_t val);
 static void	tdvfb_wait(struct tdvfb_softc *sc);
 
@@ -96,6 +96,15 @@ static void	tdvfb_gendac_set_vid_timing(struct tdvfb_softc *sc,
 static void	tdvfb_init_screen(void *cookie, struct vcons_screen *scr, 
 		    int existing, long *defattr);
 static void	tdvfb_init_palette(struct tdvfb_softc *sc);
+/* blitter support */
+static void	tdvfb_rectfill(struct tdvfb_softc *sc, int x, int y, int wi, 
+		    int he, uint32_t color);
+static void	tdvfb_bitblt(struct tdvfb_softc *sc, int xs, int ys, int xd, 
+		    int yd, int wi, int he);
+/* accelerated raster ops */
+static void	tdvfb_eraserows(void *cookie, int row, int nrows, 
+		    long fillattr);
+static void	tdvfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows);
 
 CFATTACH_DECL_NEW(tdvfb, sizeof(struct tdvfb_softc),
     tdvfb_match, tdvfb_attach, NULL, NULL);
@@ -180,7 +189,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	/* Select video mode, 800x600 32bpp 60Hz by default... */
 	sc->sc_width = 800;
 	sc->sc_height = 600;
-	sc->sc_bpp = 32;
+	sc->sc_bpp = 32;	/* XXX: 16 would allow blitter use. */
 	sc->sc_linebytes = 1024 * (sc->sc_bpp / 8);
 	sc->sc_videomode = pick_mode_by_ref(sc->sc_width, sc->sc_height, 60);
 
@@ -263,6 +272,14 @@ tdvfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
 	ri->ri_flg = RI_CENTER;
+
+#if BYTE_ORDER == BIG_ENDIAN
+#if 0 /* XXX: not yet :( */
+	if (sc->sc_bpp == 16)
+		ri->ri_flg |= RI_BITSWAP;
+#endif 
+#endif
+
 	ri->ri_bits = (char *) bus_space_vaddr(sc->sc_cvgt, sc->sc_fbh);	
 
 	scr->scr_flags |= VCONS_DONT_READ;
@@ -273,6 +290,13 @@ tdvfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	    sc->sc_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
+
+	/* If we are a Voodoo2 and running in 16 bits try to use blitter. */
+	if ((sc->sc_voodootype == TDV_VOODOO_2) && (sc->sc_bpp == 16)) {
+		aprint_normal_dev(sc->sc_dev, "using CVG blitter\n");
+		ri->ri_ops.eraserows = tdvfb_eraserows;
+		ri->ri_ops.copyrows = tdvfb_copyrows;
+	}
 }
 
 static bool
@@ -372,7 +396,12 @@ tdvfb_videomode_set(struct tdvfb_softc *sc)
 	    TDV_INITENABLE_EN_FIFO);
 	tdvfb_wait(sc);	
 
-	lfbmode = TDV_LFBMODE_8888;
+	if (sc->sc_bpp == 16)
+		lfbmode = TDV_LFBMODE_565; 
+	else if (sc->sc_bpp == 32)
+		lfbmode = TDV_LFBMODE_8888; 
+	else
+		return false;
 
 #if BYTE_ORDER == BIG_ENDIAN
 	lfbmode |= TDV_LFBMODE_BSW_WR | TDV_LFBMODE_BSW_RD;
@@ -759,7 +788,7 @@ tdvfb_cvg_dac_read(struct tdvfb_softc *sc, uint32_t reg)
 	return rv & 0xFF;
 }
 
-void
+static void
 tdvfb_cvg_dac_write(struct tdvfb_softc *sc, uint32_t reg, uint32_t val)
 {
 	uint32_t wreg;
@@ -773,5 +802,90 @@ tdvfb_cvg_dac_write(struct tdvfb_softc *sc, uint32_t reg, uint32_t val)
 
 	tdvfb_cvg_write(sc, TDV_OFF_DAC_DATA, wreg);
 	tdvfb_wait(sc);
+}
+
+static void
+tdvfb_rectfill(struct tdvfb_softc *sc, int x, int y, int wi, int he,
+    uint32_t color)
+{
+	tdvfb_cvg_write(sc, TDV_OFF_BLTSRC, 0);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTDST, 0);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTROP, TDV_BLTROP_COPY);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTXYSTRIDE, 
+	    sc->sc_linebytes | (sc->sc_linebytes << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTDSTXY, x | (y << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTSIZE, wi | (he << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTCMD, TDV_BLTCMD_RECTFILL | 
+	    TDV_BLTCMD_LAUNCH | TDV_BLTCMD_FMT_565 << 3 | TDV_BLTCMD_DSTTILED |
+	    TDV_BLTCMD_CLIPRECT );
+	tdvfb_wait(sc);
+}
+
+static void
+tdvfb_bitblt(struct tdvfb_softc *sc, int xs, int ys, int xd, int yd, int wi,
+    int he) 
+{
+	tdvfb_cvg_write(sc, TDV_OFF_BLTSRC, 0);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTDST, 0);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTROP, TDV_BLTROP_COPY);
+	tdvfb_cvg_write(sc, TDV_OFF_BLTXYSTRIDE, 
+	    sc->sc_linebytes | (sc->sc_linebytes << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTSRCXY, xs | (ys << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTDSTXY, xd | (yd << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTSIZE, wi | (he << 16));
+	tdvfb_cvg_write(sc, TDV_OFF_BLTCMD, TDV_BLTCMD_SCR2SCR | 
+	    TDV_BLTCMD_LAUNCH | TDV_BLTCMD_FMT_565 << 3);
+	
+	tdvfb_wait(sc);
+}
+
+static void
+tdvfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct tdvfb_softc *sc;
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	int x, ys, yd, wi, he;
+
+	ri = cookie;
+	scr = ri->ri_hw;
+	sc = scr->scr_cookie;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		wi = ri->ri_emuwidth;
+		he = ri->ri_font->fontheight * nrows;
+		tdvfb_bitblt(sc, x, ys, x, yd, wi, he);
+	}
+}
+
+static void
+tdvfb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+
+	struct tdvfb_softc *sc;
+	struct rasops_info *ri;
+	struct vcons_screen *scr;
+	int x, y, wi, he, fg, bg, ul;
+
+	ri = cookie;
+	scr = ri->ri_hw;
+	sc = scr->scr_cookie;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+		if ((row == 0) && (nrows == ri->ri_rows)) 
+			tdvfb_rectfill(sc, 0, 0, ri->ri_width,
+			    ri->ri_height, ri->ri_devcmap[bg]);
+		else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			wi = ri->ri_emuwidth;
+			he = ri->ri_font->fontheight * nrows;
+			tdvfb_rectfill(sc, x, y, wi, he, ri->ri_devcmap[bg]);
+		}
+	}
 }
 
