@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2011/01/18 01:27:16 matt Exp $
+# $NetBSD: dot.profile,v 1.4 2012/07/20 11:19:51 matt Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -47,8 +47,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	export DONEPROFILE
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
 	# mount root read-write
 	mount -u /dev/md0a /
