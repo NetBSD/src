@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.2 2012/07/18 09:51:23 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.3 2012/07/21 04:30:34 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -32,11 +32,14 @@
 #include <dev/marvell/mvgbereg.h>
 
 /*
- *                MHz TCLK  GbE SATA  TDMI Audio MTS GPIO
- * 6180:     600/800, 166,  x1,   -,    -,   o,   -,  30
- * 6190:         600, 166, *x2,  x1,    -,   -,   -,  36	* GbEx1+100BTx1
- * 6192:         800, 166,  x2,  x2,    o,   o,   o,  36
- * 6281: 1.0/1.2/1.5, 200,  x2,  x2,    o,   o,   o,  50
+ *                MHz TCLK  GbE SATA TDMI Audio MTS GPIO TSens TWSI
+ * 6180:     600/800, 166,  x1,   -,   -,    o,  -,  30,    -,  x1
+ * 6190:         600, 166, *x2,  x1,   -,    -,  -,  36,    -,  x1
+ * 6192:         800, 166,  x2,  x2,   o,    o,  o,  36,    -,  x1
+ * 6281: 1.0/1.2/1.5, 200,  x2,  x2,   o,    o,  o,  50,    -,  x1
+ * 6282:       ?-2.0, 200,  x2,  x2,   o,    o,  o,  50,    o,  x2
+ *
+ *  * GbE x1 + 100BT x1
  */
 
 #define KIRKWOOD_UNITID_DDR		MVSOC_UNITID_DDR
@@ -92,6 +95,7 @@
 #define KIRKWOOD_IRQ_TWSI		29	/* TWSI interrupt */
 #define KIRKWOOD_IRQ_AVBINT		30	/* AVB Interrupt */
 #define KIRKWOOD_IRQ_TDMINT		31	/* TDM Interrupt */
+#define KIRKWOOD_IRQ_TWSI1		32	/* TWSI1 interrupt */
 #define KIRKWOOD_IRQ_UART0INT		33	/* UART0 */
 #define KIRKWOOD_IRQ_UART1INT		34	/* UART1 */
 #define KIRKWOOD_IRQ_GPIOLO7_0		35	/* GPIO Low[7:0] */
@@ -160,6 +164,11 @@
 #define KIRKWOOD_MLMB_MFIQIMHR		  0x218	/*Main FIQ Interrupt High Mask*/
 #define KIRKWOOD_MLMB_EIMHR		  0x21c	/*Endpoint Interrupt High Mask*/
 
+
+/*
+ * Two-Wire Serial Interface Registers
+ */
+#define KIRKWOOD_TWSI1_BASE	(MVSOC_TWSI_BASE + 0x0100)
 
 /*
  * PCI-Express Interface Registers
