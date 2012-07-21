@@ -1,4 +1,4 @@
-/* $NetBSD: gttwsireg.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $ */
+/* $NetBSD: gttwsireg.h,v 1.2 2012/07/21 04:23:16 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -27,7 +27,7 @@
 #ifndef _GTTWSIREG_H_
 #define _GTTWSIREG_H_
 
-#define GTTWSI_SIZE		0x1000
+#define GTTWSI_SIZE		0x100
 
 #define	TWSI_SLAVEADDR		0x00
 #define	TWSI_EXTEND_SLAVEADDR	0x10
