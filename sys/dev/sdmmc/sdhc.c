@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.23 2012/07/20 02:04:13 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.24 2012/07/21 16:14:05 skrll Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.23 2012/07/20 02:04:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.24 2012/07/21 16:14:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -292,9 +292,13 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	(void)sdhc_host_reset(hp);
 
 	/* Determine host capabilities. */
-	mutex_enter(&hp->host_mtx);
-	caps = HREAD4(hp, SDHC_CAPABILITIES);
-	mutex_exit(&hp->host_mtx);
+	if (ISSET(sc->sc_flags, SDHC_FLAG_HOSTCAPS)) {
+		caps = sc->sc_caps;
+	} else {
+		mutex_enter(&hp->host_mtx);
+		caps = HREAD4(hp, SDHC_CAPABILITIES);
+		mutex_exit(&hp->host_mtx);
+	}
 
 	/* Use DMA if the host system and the controller support it. */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA)
