@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.5 2010/10/10 04:49:48 kiyohara Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.6 2012/07/21 04:21:14 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.5 2010/10/10 04:49:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.6 2012/07/21 04:21:14 kiyohara Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -391,9 +391,16 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		return EIO;
 	}
 
-	if ((flags & I2C_F_STOP) && expect != STAT_RSCT &&
-	    expect != STAT_MRRD_AT && expect != STAT_ARBT_AR)
-		error = gttwsi_send_stop(sc, flags);
+	if (flags & I2C_F_STOP)
+		switch (expect) {
+		case STAT_SCT:
+		case STAT_RSCT:
+		case STAT_MRRD_AT:
+		case STAT_ARBT_AR:
+			break;
+		default:
+			error = gttwsi_send_stop(sc, flags);
+		}
 
 	return error;
 }
