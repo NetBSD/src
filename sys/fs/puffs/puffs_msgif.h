@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.78 2012/04/08 15:04:41 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.79 2012/07/21 05:17:10 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -567,6 +567,8 @@ struct puffs_vnmsg_readlink {
 
 struct puffs_vnmsg_reclaim {
 	struct puffs_req	pvn_pr;
+
+	int			pvnr_nlookup;		/* OUT */
 };
 
 struct puffs_vnmsg_inactive {

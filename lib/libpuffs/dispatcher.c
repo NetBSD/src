@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.41 2012/06/27 13:25:23 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.42 2012/07/21 05:17:10 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.41 2012/06/27 13:25:23 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.42 2012/07/21 05:17:10 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -300,6 +300,12 @@ dispatch(struct puffs_cc *pcc)
 						pu->pu_pathfree(pu,
 						    &pcn.pcn_po_full);
 				}
+			}
+
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
 			}
 			break;
 		}
@@ -810,8 +816,24 @@ dispatch(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RECLAIM:
 		{
-
+			struct puffs_vnmsg_reclaim *auxt = auxbuf;
+			struct puffs_node *pn;
+		
 			if (pops->puffs_node_reclaim == NULL) {
+				error = 0;
+				break;
+			}
+
+			/*
+			 * This fixes a race condition, 
+			 * where a node in reclaimed by kernel 
+			 * after a lookup request is sent, 
+			 * but before the reply, leaving the kernel
+			 * with a invalid vnode/cookie reference.
+			 */
+			pn = PU_CMAP(pu, opcookie);
+			pn->pn_nlookup -= auxt->pvnr_nlookup;
+			if (pn->pn_nlookup >= 1) {
 				error = 0;
 				break;
 			}
