@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 2011/05/21 15:50:42 tsutsui Exp $	*/
+/*	$NetBSD: net.c,v 1.7.10.1 2012/07/21 00:04:56 riz Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -180,14 +180,28 @@ net_mountroot_bootp(void)
 	return (0);
 }
 
+/*
+ * libsa's tftp_open expects a pointer to netdev_sock, i.e. an (int *),
+ * in f_devdata, a pointer to which gets handed down from devopen().
+ *
+ * Do not expect booting via different methods to have the same
+ * requirements or semantics.
+ *
+ * net_tftp_bootp uses net_mountroot_bootp because that incidentially does
+ * most of what it needs to do. It of course in no manner actually mounts
+ * anything, all that routine actually does is prepare the socket for the
+ * necessary net access, and print info for the user.
+ */
+
 int
-net_tftp_bootp(struct of_dev *op)
+net_tftp_bootp(int **sock)
 {
 
 	net_mountroot_bootp();
 	if (myip.s_addr == 0)
 		return(ENOENT);
 
+	*sock = &netdev_sock;
 	return (0);
 }
 
