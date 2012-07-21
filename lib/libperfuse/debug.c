@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.11 2012/03/21 10:10:36 matt Exp $ */
+/*  $NetBSD: debug.c,v 1.12 2012/07/21 05:49:42 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -90,7 +90,8 @@ const char * const perfuse_qtypestr[] = {
 	"WRITE",
 	"AFTERWRITE",
 	"OPEN",
-	"AFTERXCHG"
+	"AFTERXCHG",
+	"REF"
 };
 
 const char *
@@ -146,7 +147,7 @@ perfuse_trace_begin(struct perfuse_state *ps, puffs_cookie_t opc,
 		(void)strcpy(pt->pt_path, "");
 	else
 		(void)strlcpy(pt->pt_path, 
-			      perfuse_node_path(opc),
+			      perfuse_node_path(ps, opc),
 			      sizeof(pt->pt_path));
 
 	(void)strlcpy(pt->pt_extra,
@@ -198,7 +199,7 @@ perfuse_trace_dump(struct puffs_usermount *pu, FILE *fp)
 	ps = puffs_getspecific(pu);
 
 	(void)ftruncate(fileno(fp), 0);
-	(void)fseek(fp, 0, SEEK_SET);
+	(void)fseek(fp, 0UL, SEEK_SET);
 
 	(void)memset(&ts_min, 0, sizeof(ts_min));
 	(void)memset(&ts_max, 0, sizeof(ts_max));
@@ -265,6 +266,11 @@ perfuse_trace_dump(struct puffs_usermount *pu, FILE *fp)
 			(long)(avg % 1000000000L),
 			(long long)ts_max[i].tv_sec, ts_max[i].tv_nsec);
 	}	
+
+	fprintf(fp, "\n\nGlobal statistics\n");
+	fprintf(fp, "Nodes: %d\n", ps->ps_nodecount);
+	fprintf(fp, "Exchanges: %d\n", ps->ps_xchgcount);
+	fprintf(fp, "Nodes possibly leaked: %d\n", ps->ps_nodeleakcount);
 	
 	(void)fflush(fp);
 	return;
