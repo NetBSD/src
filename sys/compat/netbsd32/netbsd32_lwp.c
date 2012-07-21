@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.12.10.1 2012/05/21 15:25:59 riz Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.12.10.2 2012/07/21 00:01:45 riz Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.12.10.1 2012/05/21 15:25:59 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.12.10.2 2012/07/21 00:01:45 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,7 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 
 	KASSERT(p->p_emul->e_ucsize == sizeof(*newuc));
 
-	newuc = kmem_alloc(sizeof(ucontext32_t), KM_SLEEP);
+	newuc = kmem_alloc(sizeof(ucontext_t), KM_SLEEP);
 	error = copyin(SCARG_P32(uap, ucp), newuc, p->p_emul->e_ucsize);
 	if (error)
 		goto fail;
@@ -85,7 +85,7 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 	return copyout(&lid, SCARG_P32(uap, new_lwp), sizeof(lid));
 
 fail:
-	kmem_free(newuc, sizeof(*newuc));
+	kmem_free(newuc, sizeof(ucontext_t));
 	return error;
 }
 
