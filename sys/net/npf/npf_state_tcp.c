@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.9 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.10 2012/07/21 17:11:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.9 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10 2012/07/21 17:11:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -300,7 +300,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	const struct tcphdr * const th = &npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
 	npf_tcpstate_t *fstate, *tstate;
-	int tcpdlen, wscale, ackskew;
+	int tcpdlen, ackskew;
 	tcp_seq seq, ack, end;
 	uint32_t win;
 
@@ -359,11 +359,9 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		 * Handle TCP Window Scaling (RFC 1323).  Both sides may
 		 * send this option in their SYN packets.
 		 */
-		if (npf_fetch_tcpopts(npc, nbuf, NULL, &wscale)) {
-			fstate->nst_wscale = wscale;
-		} else {
-			fstate->nst_wscale = 0;
-		}
+		fstate->nst_wscale = 0;
+		(void)npf_fetch_tcpopts(npc, nbuf, NULL, &fstate->nst_wscale);
+
 		tstate->nst_wscale = 0;
 
 		/* Done. */
@@ -377,12 +375,12 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		fstate->nst_end = end;
 		fstate->nst_maxend = end + 1;
 		fstate->nst_maxwin = win;
+		fstate->nst_wscale = 0;
 
 		/* Handle TCP Window Scaling (must be ignored if no SYN). */
 		if (tcpfl & TH_SYN) {
-			fstate->nst_wscale =
-			    npf_fetch_tcpopts(npc, nbuf, NULL, &wscale) ?
-			    wscale : 0;
+			(void)npf_fetch_tcpopts(npc, nbuf, NULL,
+			    &fstate->nst_wscale);
 		}
 	}
 
