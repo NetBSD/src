@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.149 2012/06/25 15:28:40 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.150 2012/07/21 14:52:40 gdt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.149 2012/06/25 15:28:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150 2012/07/21 14:52:40 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1147,6 +1147,10 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 
 /*
  * Insert fragment header and copy unfragmentable header portions.
+ * 
+ * *frghdrp will not be read, and it is guaranteed that either an
+ * error is returned or that *frghdrp will point to space allocated
+ * for the fragment header.
  */
 static int
 ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen, 
