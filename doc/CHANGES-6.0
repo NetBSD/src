@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.157 2012/07/20 23:20:34 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.158 2012/07/21 00:05:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6399,4 +6399,44 @@ etc/master.passwd				1.46
 
 	Change root's default shell to /bin/sh.
 	[gson, ticket #426]
+
+sys/dev/usb/ukbd.c				1.118
+
+	Fix a potential out-of-bounds array access when translating keycodes
+	for the gdium keyboard.
+	[khorben, ticket #427]
+
+sys/dev/usb/ukbd.c				1.120 via patch
+
+	Convert keycodes to PMF events.
+	[khorben, ticket #428]
+
+sys/arch/x86/x86/x86_autoconf.c			1.64
+
+	Fix the comparison to determine if a biosdev is a cdrom.
+	[mhitch, ticket #429]
+
+sys/kern/sys_sig.c				1.38
+
+	Make kill(2) called for a zombie process return 0.
+	[christos, ticket #430]
+
+sys/compat/netbsd32/netbsd32_lwp.c		1.14
+
+	Fix memory corruption issue with compat32 threads.
+	[christos, ticket #431]
+
+sys/arch/i386/stand/lib/biosdisk.c		1.42
+
+	Fix BIOS bootloader problems with partitions that start above 1TB.
+	PR#46583.
+	[tsutsui, ticket #432]
+
+sys/arch/sparc/stand/ofwboot/net.c		1.8
+sys/arch/sparc/stand/ofwboot/net.h		1.3
+sys/arch/sparc/stand/ofwboot/ofdev.c		1.33
+
+	Fix tftpboot failure of sparc/sparc64 ofwboot as mentioned in
+	PR#46652.
+	[tsutsui, ticket #433]
 
