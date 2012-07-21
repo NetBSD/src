@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.1 2012/03/17 17:15:29 jruoho Exp $
+#	$NetBSD: t_hello.sh,v 1.2 2012/07/21 12:30:55 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,12 @@ hello_pic_head() {
 	atf_set "require.progs" "cc"
 }
 
+atf_test_case hello_pie
+hello_pie_head() {
+	atf_set "descr" "compile and run position independend (PIE) \"hello world\""
+	atf_set "require.progs" "cc"
+}
+
 atf_test_case hello32
 hello32_head() {
 	atf_set "descr" "compile and run \"hello world\" for/in netbsd32 emulation"
@@ -69,6 +75,20 @@ EOF
 	    cc -o hello test.c -L. -ltest
 
 	export LD_LIBRARY_PATH=.
+	atf_check -s exit:0 -o inline:"hello world\n" ./hello
+}
+
+hello_pie_body() {
+	# check whether this arch supports -pie
+	if ! cc -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
+		atf_skip "cc -pie not supported on this architecture"
+	fi
+	cat > test.c << EOF
+#include <stdio.h>
+#include <stdlib.h>
+int main(void) {printf("hello world\n");exit(0);}
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -fpie -pie -o hello test.c
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
@@ -119,5 +139,6 @@ atf_init_test_cases()
 
 	atf_add_test_case hello
 	atf_add_test_case hello_pic
+	atf_add_test_case hello_pie
 	atf_add_test_case hello32
 }
