@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.40.2.1 2012/06/24 16:17:40 jdc Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.40.2.2 2012/07/21 00:03:19 riz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -416,7 +416,7 @@ read_minix_subp(struct biosdisk *d, struct disklabel* dflt_lbl,
 
 	if (readsects(&d->ll, sector, 1, d->buf, 0)) {
 #ifdef DISK_DEBUG
-		printf("Error reading MFS sector %d\n", sector);
+		printf("Error reading MFS sector %"PRId64"\n", sector);
 #endif
 		return EIO;
 	}
@@ -445,10 +445,11 @@ read_label(struct biosdisk *d)
 	struct disklabel dflt_lbl;
 	struct mbr_partition mbr[MBR_PART_COUNT];
 	struct partition *p;
-	int sector, i;
+	uint32_t sector;
+	int i;
 	int error;
 	int typ;
-	int ext_base, this_ext, next_ext;
+	uint32_t ext_base, this_ext, next_ext;
 #ifdef COMPAT_386BSD_MBRPART
 	int sector_386bsd = -1;
 #endif
@@ -473,7 +474,7 @@ read_label(struct biosdisk *d)
 		next_ext = 0;
 		if (readsects(&d->ll, this_ext, 1, d->buf, 0)) {
 #ifdef DISK_DEBUG
-			printf("error reading MBR sector %d\n", this_ext);
+			printf("error reading MBR sector %u\n", this_ext);
 #endif
 			return EIO;
 		}
@@ -486,7 +487,7 @@ read_label(struct biosdisk *d)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;
 #ifdef DISK_DEBUG
-			printf("ptn type %d in sector %d\n", typ, sector);
+			printf("ptn type %d in sector %u\n", typ, sector);
 #endif
                         if (typ == MBR_PTYPE_MINIX_14B) {
 				if (!read_minix_subp(d, &dflt_lbl,
