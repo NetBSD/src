@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.1 2012/05/30 21:38:04 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.2 2012/07/21 17:11:02 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -65,10 +65,12 @@ npf_test_handlepkt(const void *data, size_t len, unsigned idx,
 	result[i++] = fstate->nst_end;
 	result[i++] = fstate->nst_maxend;
 	result[i++] = fstate->nst_maxwin;
+	result[i++] = fstate->nst_wscale;
 
 	result[i++] = tstate->nst_end;
 	result[i++] = tstate->nst_maxend;
 	result[i++] = tstate->nst_maxwin;
+	result[i++] = tstate->nst_wscale;
 
 	return 0;
 }
