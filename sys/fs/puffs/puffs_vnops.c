@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.166 2012/04/18 00:42:50 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.167 2012/07/21 05:17:11 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.166 2012/04/18 00:42:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.167 2012/07/21 05:17:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -414,7 +414,7 @@ static int callremove(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 static int callrmdir(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 			   struct componentname *);
 static void callinactive(struct puffs_mount *, puffs_cookie_t, int);
-static void callreclaim(struct puffs_mount *, puffs_cookie_t);
+static void callreclaim(struct puffs_mount *, puffs_cookie_t, int);
 static int  flushvncache(struct vnode *, off_t, off_t, bool);
 static void update_va(struct vnode *, struct vattr *, struct vattr *,
 		      struct timespec *, struct timespec *, int);
@@ -446,7 +446,7 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 	}
 
 	callinactive(pmp, ck, 0);
-	callreclaim(pmp, ck);
+	callreclaim(pmp, ck, 0);
 }
 
 /*
@@ -507,16 +507,15 @@ puffs_vnop_lookup(void *v)
 	/*
 	 * Check if someone fed it into the cache
 	 */
-	if (PUFFS_USE_NAMECACHE(pmp)) {
+	if (!isdot && PUFFS_USE_NAMECACHE(pmp)) {
 		error = cache_lookup(dvp, ap->a_vpp, cnp);
 
 		if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
-
 			cvp = *ap->a_vpp;
 			cpn = VPTOPP(cvp);
-			if (TIMED_OUT(cpn->pn_cn_timeout)) {
-				cache_purge1(cvp, NULL, PURGE_CHILDREN);
 
+			if (TIMED_OUT(cpn->pn_cn_timeout)) {
+				cache_purge(cvp);
 				/*
 				 * cached vnode (cvp) is still locked
 				 * so that we can reuse it upon a new
@@ -534,7 +533,7 @@ puffs_vnop_lookup(void *v)
 		if ((error == ENOENT) && PUFFS_USE_FS_TTL(pmp))
 			error = -1;
 
-		if (error >= 0) 
+		if (error >= 0)
 			return error;
 	}
 
@@ -542,9 +541,6 @@ puffs_vnop_lookup(void *v)
 		/* deal with rename lookup semantics */
 		if (cnp->cn_nameiop == RENAME && (cnp->cn_flags & ISLASTCN))
 			return EISDIR;
-
-		if (cvp != NULL) 
-			vput(cvp);
 
 		vp = ap->a_dvp;
 		vref(vp);
@@ -612,31 +608,47 @@ puffs_vnop_lookup(void *v)
 	}
 
 	/*
-	 * On successfull relookup, do not create a new node.
+	 * Check if we looked up the cached vnode
 	 */
-	if (cvp != NULL) {
+	vp = NULL;
+	if (cvp && (VPTOPP(cvp)->pn_cookie == lookup_msg->pvnr_newnode)) {
+		int grace;
+
+		/*
+		 * Bump grace time of this node so that it does not get 
+		 * reclaimed too fast. We try to increase a bit more the
+		 * lifetime of busiest * nodes - with some limits.
+		 */
+		grace = 10 * puffs_sopreq_expire_timeout;
+		cpn->pn_cn_grace = hardclock_ticks + grace;
 		vp = cvp;
-	} else {
+	}
+
+	/*
+	 * No cached vnode available, or the cached vnode does not
+	 * match the userland cookie anymore: is the node known?
+	 */
+	if (vp == NULL) {
 		error = puffs_cookie2vnode(pmp, lookup_msg->pvnr_newnode,
 					   1, 1, &vp);
+	}
 
-		if (error == PUFFS_NOSUCHCOOKIE) {
-			error = puffs_getvnode(dvp->v_mount,
-			    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
-			    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev, &vp);
-			if (error) {
-				puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP,
-				    VPTOPNC(dvp), lookup_msg->pvnr_newnode,
-				    ap->a_cnp);
-				goto out;
-			}
-
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		} else if (error) {
-			puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
-			    lookup_msg->pvnr_newnode, ap->a_cnp);
+	if (error == PUFFS_NOSUCHCOOKIE) {
+		error = puffs_getvnode(dvp->v_mount,
+		    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
+		    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev, &vp);
+		if (error) {
+			puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP,
+			    VPTOPNC(dvp), lookup_msg->pvnr_newnode,
+			    ap->a_cnp);
 			goto out;
 		}
+
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	} else if (error) {
+		puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
+		    lookup_msg->pvnr_newnode, ap->a_cnp);
+		goto out;
 	}
 
 	/*
@@ -649,6 +661,7 @@ puffs_vnop_lookup(void *v)
 			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
+	KASSERT(lookup_msg->pvnr_newnode == VPTOPP(vp)->pn_cookie);
 	*ap->a_vpp = vp;
 
 	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
@@ -661,14 +674,12 @@ puffs_vnop_lookup(void *v)
 		cnp->cn_consume = MIN(lookup_msg->pvnr_cn.pkcn_consume,
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
 
+	VPTOPP(vp)->pn_nlookup++;
  out:
 	if (cvp != NULL) {
 		mutex_exit(&cpn->pn_sizemtx);
-	 	/*
-		 * We had a cached vnode but new lookup failed, 	
-		 * unlock it and let it die now.
-		 */
-		if (error != 0)
+
+		if (error || (cvp != vp))
 			vput(cvp);
 	}
 
@@ -928,8 +939,10 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 {
 	struct puffs_node *pn = VPTOPP(vp);
 
-	if (TTL_VALID(cn_ttl))
+	if (TTL_VALID(cn_ttl)) {
 		pn->pn_cn_timeout = TTL_TO_TIMEOUT(cn_ttl);
+		pn->pn_cn_grace = MAX(pn->pn_cn_timeout, pn->pn_cn_grace);
+	}
 
 	/*
 	 * Don't listen to the file server regarding special device
@@ -1198,6 +1211,7 @@ puffs_vnop_inactive(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pnode;
+	bool recycle = false;
 	int error;
 
 	pnode = vp->v_data;
@@ -1221,8 +1235,61 @@ puffs_vnop_inactive(void *v)
 	 */
 	if (pnode->pn_stat & PNODE_NOREFS) {
 		pnode->pn_stat |= PNODE_DYING;
-		*ap->a_recycle = true;
+		recycle = true;
 	}
+
+	/*
+	 * Handle node TTL. 
+	 * If grace has already timed out, make it reclaimed.
+	 * Otherwise, we queue its expiration by sop thread, so
+	 * that it does not remain for ages in the freelist, 
+	 * holding memory in userspace, while we will have 
+	 * to look it up again anyway.
+	 */ 
+	if (PUFFS_USE_FS_TTL(pmp) && !(vp->v_vflag & VV_ROOT) && !recycle) {
+		bool incache = !TIMED_OUT(pnode->pn_cn_timeout);
+		bool ingrace = !TIMED_OUT(pnode->pn_cn_grace);
+		bool reclaimqueued = pnode->pn_stat & PNODE_SOPEXP;
+
+		if (!incache && !ingrace && !reclaimqueued) {
+			pnode->pn_stat |= PNODE_DYING;
+			recycle = true;
+		}
+
+		if (!recycle && !reclaimqueued) {
+			struct puffs_sopreq *psopr;
+			int at = MAX(pnode->pn_cn_grace, pnode->pn_cn_timeout);
+
+			KASSERT(curlwp != uvm.pagedaemon_lwp);
+			psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+			psopr->psopr_ck = VPTOPNC(pnode->pn_vp);
+			psopr->psopr_sopreq = PUFFS_SOPREQ_EXPIRE;
+			psopr->psopr_at = at;
+
+			mutex_enter(&pmp->pmp_sopmtx);
+
+			/*
+			 * If thread has disapeared, just give up. The
+			 * fs is being unmounted and the node will be 
+			 * be reclaimed anyway.
+			 *
+			 * Otherwise, we queue the request but do not
+			 * immediatly signal the thread, as the node
+			 * has not been expired yet.
+			 */
+			if (pmp->pmp_sopthrcount == 0) {
+				kmem_free(psopr, sizeof(*psopr));
+			} else {
+				TAILQ_INSERT_TAIL(&pmp->pmp_sopslowreqs,
+				    psopr, psopr_entries); 
+				pnode->pn_stat |= PNODE_SOPEXP;
+			}
+
+			mutex_exit(&pmp->pmp_sopmtx);
+		}
+	}
+
+	*ap->a_recycle = recycle;
 
 	mutex_exit(&pnode->pn_sizemtx);
 	VOP_UNLOCK(vp);
@@ -1231,7 +1298,7 @@ puffs_vnop_inactive(void *v)
 }
 
 static void
-callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck)
+callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck, int nlookup)
 {
 	PUFFS_MSG_VARS(vn, reclaim);
 
@@ -1239,11 +1306,13 @@ callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck)
 		return;
 
 	PUFFS_MSG_ALLOC(vn, reclaim);
+	reclaim_msg->pvnr_nlookup = nlookup;
 	puffs_msg_setfaf(park_reclaim);
 	puffs_msg_setinfo(park_reclaim, PUFFSOP_VN, PUFFS_VN_RECLAIM, ck);
 
 	puffs_msg_enqueue(pmp, park_reclaim);
 	PUFFS_MSG_RELEASE(reclaim);
+	return;
 }
 
 /*
@@ -1283,10 +1352,15 @@ puffs_vnop_reclaim(void *v)
 	 */
 	mutex_enter(&pmp->pmp_lock);
 	LIST_REMOVE(pnode, pn_hashent);
+	if (PUFFS_USE_NAMECACHE(pmp))
+		cache_purge(vp);
 	mutex_exit(&pmp->pmp_lock);
 
-	if (notifyserver)
-		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp));
+	if (notifyserver) {
+		int nlookup = VPTOPP(vp)->pn_nlookup;
+
+		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp), nlookup);
+	}
 
 	puffs_putvnode(vp);
 	vp->v_data = NULL;
