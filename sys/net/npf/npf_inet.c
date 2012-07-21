@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.15 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.16 2012/07/21 17:11:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.15 2012/07/19 21:52:29 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16 2012/07/21 17:11:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -277,7 +277,7 @@ next:
 		if (nbuf_advfetch(&nbuf, &n_ptr, 1, sizeof(val), &val)) {
 			return false;
 		}
-		if (val < 2 || val >= topts_len) {
+		if (val < 2 || val > topts_len) {
 			return false;
 		}
 		topts_len -= val;

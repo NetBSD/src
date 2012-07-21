@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.1 2012/05/30 21:38:04 rmind Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.2 2012/07/21 17:11:02 rmind Exp $	*/
 
 /*
  * NPF stream processor.
@@ -67,7 +67,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 	forw = (initial_ip.s_addr == ip->ip_src.s_addr);
 	packetno = forw ? ++snd_packet_no : ++rcv_packet_no;
 
-	int64_t result[9];
+	int64_t result[11];
 	memset(result, 0, sizeof(result));
 
 	len = ntohs(ip->ip_len);
@@ -76,7 +76,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 	fprintf(fp, "%s%2x %5d %3d %11u %11u %11u %11u %12lx",
 	    forw ? ">" : "<", (th->th_flags & (TH_SYN | TH_ACK | TH_FIN)),
 	    packetno, error, (u_int)seq, (u_int)ntohl(th->th_ack),
-	    (u_int)(seq + tcpdlen), ntohs(th->th_win), (uintptr_t)result[0]);
+	    tcpdlen, ntohs(th->th_win), (uintptr_t)result[0]);
 
 	for (unsigned i = 1; i < __arraycount(result); i++) {
 		fprintf(fp, "%11" PRIu64 " ", result[i]);
@@ -101,9 +101,12 @@ process_stream(const char *input, const char *output, unsigned idx)
 	if (fp == NULL) {
 		err(EXIT_FAILURE, "fopen");
 	}
-	fprintf(fp, "#   %5s %3s %11s %11s %11s %11s %11s %11s %11s\n",
+	fprintf(fp, "#FL %5s %3s %11s %11s %11s %11s %11s %11s %11s "
+	    "%11s %11s %11s %5s %11s %11s %11s %5s\n",
 	    "No", "Err", "Seq", "Ack", "TCP Len", "Win",
-	    "Stream", "RetVal", "State");
+	    "Stream", "RetVal", "State",
+	    "F.END", "F.MAXEND", "F.MAXWIN", "F.WSC",
+	    "T.END", "T.MAXEND", "T.MAXWIN", "T.WSC");
 	while (pcap_next_ex(pcap, &phdr, &data) > 0) {
 		if (phdr->len != phdr->caplen) {
 			warnx("process_stream: truncated packet");
