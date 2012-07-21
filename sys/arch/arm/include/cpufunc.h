@@ -470,15 +470,18 @@ void	armv7_setup		(char *string);
 #endif
 
 
+#if defined(CPU_ARM1136) || defined(CPU_ARM1176)
+void	arm11x6_setttb			(u_int);
+void	arm11x6_idcache_wbinv_all	(void);
+void	arm11x6_dcache_wbinv_all	(void);
+void	arm11x6_icache_sync_all		(void);
+void	arm11x6_flush_prefetchbuf	(void);
+void	arm11x6_icache_sync_range	(vaddr_t, vsize_t);
+void	arm11x6_idcache_wbinv_range	(vaddr_t, vsize_t);
+void	arm11x6_setup			(char *string);
+void	arm11x6_sleep			(int);	/* no ref. for errata */
+#endif
 #if defined(CPU_ARM1136)
-void	arm1136_setttb			(u_int);
-void	arm1136_idcache_wbinv_all	(void);
-void	arm1136_dcache_wbinv_all	(void);
-void	arm1136_icache_sync_all		(void);
-void	arm1136_flush_prefetchbuf	(void);
-void	arm1136_icache_sync_range	(vaddr_t, vsize_t);
-void	arm1136_idcache_wbinv_range	(vaddr_t, vsize_t);
-void	arm1136_setup			(char *string);
 void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
 #endif
 
