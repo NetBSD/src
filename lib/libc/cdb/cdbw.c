@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbw.c,v 1.4 2012/06/03 21:02:50 joerg Exp $	*/
+/*	$NetBSD: cdbw.c,v 1.5 2012/07/21 22:49:37 joerg Exp $	*/
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbw.c,v 1.4 2012/06/03 21:02:50 joerg Exp $");
+__RCSID("$NetBSD: cdbw.c,v 1.5 2012/07/21 22:49:37 joerg Exp $");
 
 #include "namespace.h"
 
@@ -386,6 +386,13 @@ build_graph(struct cdbw *cdbw, struct state *state)
 			e->left = hashes[0] % state->entries;
 			e->middle = hashes[1] % state->entries;
 			e->right = hashes[2] % state->entries;
+
+			if (e->left == e->middle)
+				return -1;
+			if (e->left == e->right)
+				return -1;
+			if (e->middle == e->right)
+				return -1;
 
 			++e;
 		}
