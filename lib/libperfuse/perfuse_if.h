@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.19 2012/06/05 15:04:18 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.20 2012/07/21 05:49:42 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -114,7 +114,7 @@ extern int perfuse_diagflags;
  * frame handling callbacks
  */
 #ifndef PEFUSE_MSG_T
-#define PEFUSE_MSG_T struct perfuse_framebuf
+#define PEFUSE_MSG_T struct puffs_framebuf
 #endif
 typedef PEFUSE_MSG_T perfuse_msg_t;
 
@@ -131,6 +131,7 @@ typedef struct fuse_in_header *(*perfuse_get_inhdr_fn)(perfuse_msg_t *);
 typedef char *(*perfuse_get_inpayload_fn)(perfuse_msg_t *);
 typedef char *(*perfuse_get_outpayload_fn)(perfuse_msg_t *);
 typedef void (*perfuse_umount_fn)(struct puffs_usermount *);
+typedef void (*perfuse_fsreq_fn)(struct puffs_usermount *, perfuse_msg_t *);
 
 struct perfuse_callbacks {
 	perfuse_new_msg_fn pc_new_msg;
@@ -141,7 +142,8 @@ struct perfuse_callbacks {
 	perfuse_get_outhdr_fn pc_get_outhdr;
 	perfuse_get_outpayload_fn pc_get_outpayload;
 	perfuse_umount_fn pc_umount;
-	void *pc_reserved[16];
+	perfuse_fsreq_fn pc_fsreq;
+	void *pc_reserved[15];
 };
 
 /* 
@@ -209,5 +211,6 @@ void perfuse_fs_init(struct puffs_usermount *);
 int perfuse_mainloop(struct puffs_usermount *);
 int perfuse_unmount(struct puffs_usermount *);
 void perfuse_trace_dump(struct puffs_usermount *, FILE *);
+void perfuse_fsreq(struct puffs_usermount *, perfuse_msg_t *);
 
 #endif /* _PERFUSE_IF_H */

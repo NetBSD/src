@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.58 2012/06/28 13:53:13 abs Exp $ */
+/*  $NetBSD: ops.c,v 1.59 2012/07/21 05:49:42 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -34,7 +34,7 @@
 #include <sysexits.h>
 #include <syslog.h>
 #include <puffs.h>
-#include <sys/cdefs.h>
+#include <sys/socket.h>
 #include <sys/socket.h>
 #include <sys/extattr.h>
 #include <sys/time.h>
@@ -50,21 +50,15 @@ static void print_node(const char *, puffs_cookie_t);
 #endif
 #ifdef PUFFS_KFLAG_CACHE_FS_TTL
 static void perfuse_newinfo_setttl(struct puffs_newinfo *, 
-    struct fuse_entry_out *, struct fuse_attr_out *);
-#else /* PUFFS_KFLAG_CACHE_FS_TTL */
-static void set_expire(puffs_cookie_t, struct fuse_entry_out *, 
-    struct fuse_attr_out *);
-static int attr_expired(puffs_cookie_t);
-static int entry_expired(puffs_cookie_t);
+    struct puffs_node *, struct fuse_entry_out *, struct fuse_attr_out *);
 #endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 static int xchg_msg(struct puffs_usermount *, puffs_cookie_t, 
     perfuse_msg_t *, size_t, enum perfuse_xchg_pb_reply); 
 static int mode_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
-static int sticky_access(struct puffs_node *, const struct puffs_cred *);
+static int sticky_access(puffs_cookie_t, struct puffs_node *, 
+    const struct puffs_cred *);
 static void fuse_attr_to_vap(struct perfuse_state *,
     struct vattr *, struct fuse_attr *);
-static int node_lookup_dir_nodot(struct puffs_usermount *,
-    puffs_cookie_t, char *, size_t, struct puffs_node **);
 static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t, 
     struct puffs_newinfo *, const char *, const struct puffs_cred *, 
     struct puffs_node **);
@@ -73,12 +67,13 @@ static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
 static uint64_t readdir_last_cookie(struct fuse_dirent *, size_t); 
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
-static int readdir_buffered(puffs_cookie_t, struct dirent *, off_t *, 
+static void readdir_buffered(puffs_cookie_t, struct dirent *, off_t *, 
     size_t *);
+static void node_ref(puffs_cookie_t);
+static void node_rele(puffs_cookie_t);
 static void requeue_request(struct puffs_usermount *, 
     puffs_cookie_t opc, enum perfuse_qtype);
-static int dequeue_requests(struct perfuse_state *, 
-    puffs_cookie_t opc, enum perfuse_qtype, int);
+static int dequeue_requests(puffs_cookie_t opc, enum perfuse_qtype, int);
 #define DEQUEUE_ALL 0
 
 /* 
@@ -213,12 +208,13 @@ xchg_msg(struct puffs_usermount *pu, puffs_cookie_t opc, perfuse_msg_t *pm,
 #ifdef PERFUSE_DEBUG
 	if ((perfuse_diagflags & PDF_FILENAME) && (opc != 0))
 		DPRINTF("file = \"%s\", ino = %"PRIu64" flags = 0x%x\n", 
-			perfuse_node_path(opc), 
+			perfuse_node_path(ps, opc), 
 			((struct puffs_node *)opc)->pn_va.va_fileid,
 			PERFUSE_NODE_DATA(opc)->pnd_flags);
 #endif
+	ps->ps_xchgcount++;
 	if (pnd)
-		pnd->pnd_flags |= PND_INXCHG;
+		pnd->pnd_inxchg++;
 
 	/*
 	 * Record FUSE call start if requested
@@ -238,9 +234,10 @@ xchg_msg(struct puffs_usermount *pu, puffs_cookie_t opc, perfuse_msg_t *pm,
 	if (pt != NULL)
 		perfuse_trace_end(ps, pt, error);
 
+	ps->ps_xchgcount--;
 	if (pnd) {
-		pnd->pnd_flags &= ~PND_INXCHG;
-		(void)dequeue_requests(ps, opc, PCQ_AFTERXCHG, DEQUEUE_ALL);
+		pnd->pnd_inxchg--;
+		(void)dequeue_requests(opc, PCQ_AFTERXCHG, DEQUEUE_ALL);
 	}
 
 	return error;
@@ -268,13 +265,11 @@ mode_access(puffs_cookie_t opc, const struct puffs_cred *pcr, mode_t mode)
 }
 
 static int 
-sticky_access(struct puffs_node *targ, const struct puffs_cred *pcr)
+sticky_access(puffs_cookie_t opc, struct puffs_node *targ,
+	      const struct puffs_cred *pcr)
 {
 	uid_t uid;
-	struct puffs_node *tdir;
 	int sticky, owner;
-
-	tdir = PERFUSE_NODE_DATA(targ)->pnd_parent;
 
 	/*
 	 * This covers the case where the kernel requests a DELETE
@@ -291,7 +286,7 @@ sticky_access(struct puffs_node *targ, const struct puffs_cred *pcr)
 	if (puffs_cred_getuid(pcr, &uid) != 0)
 		DERRX(EX_SOFTWARE, "puffs_cred_getuid fails in %s", __func__);
 
-	sticky = puffs_pn_getvap(tdir)->va_mode & S_ISTXT;
+	sticky = puffs_pn_getvap(opc)->va_mode & S_ISTXT;
 	owner = puffs_pn_getvap(targ)->va_uid == uid;
 
 	if (sticky && !owner)
@@ -339,8 +334,10 @@ fuse_attr_to_vap(struct perfuse_state *ps, struct vattr *vap,
 }
 
 #ifdef PUFFS_KFLAG_CACHE_FS_TTL
-static void perfuse_newinfo_setttl(struct puffs_newinfo *pni, 
-	struct fuse_entry_out *feo, struct fuse_attr_out *fao)
+static void 
+perfuse_newinfo_setttl(struct puffs_newinfo *pni,
+    struct puffs_node *pn, struct fuse_entry_out *feo,
+    struct fuse_attr_out *fao)
 {
 #ifdef PERFUSE_DEBUG
 	if ((feo == NULL) && (fao == NULL))
@@ -362,6 +359,8 @@ static void perfuse_newinfo_setttl(struct puffs_newinfo *pni,
 	if (feo != NULL) {
 		struct timespec va_ttl;
 		struct timespec cn_ttl;
+		struct timespec now;
+		struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(pn);
 
 		va_ttl.tv_sec = feo->attr_valid;
 		va_ttl.tv_nsec = feo->attr_valid_nsec;
@@ -370,113 +369,16 @@ static void perfuse_newinfo_setttl(struct puffs_newinfo *pni,
 
 		puffs_newinfo_setvattl(pni, &va_ttl);
 		puffs_newinfo_setcnttl(pni, &cn_ttl);
+        
+		if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+			DERR(EX_OSERR, "clock_gettime failed"); 
+
+                timespecadd(&now, &cn_ttl, &pnd->pnd_cn_expire);
 	}
 
 	return;	
 }
-#else /* PUFFS_KFLAG_CACHE_FS_TTL */
-static void 
-set_expire(puffs_cookie_t opc, struct fuse_entry_out *feo,
-	   struct fuse_attr_out *fao)
-{
- 	struct puffs_node *pn = (struct puffs_node *)opc;
-	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
-	struct timespec entry_ts;
-	struct timespec attr_ts;
-	struct timespec now;
-
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed");
-
-	if ((feo == NULL) && (fao == NULL))
-		DERRX(EX_SOFTWARE, "%s: feo and fao NULL", __func__);
-
-	if ((feo != NULL) && (fao != NULL))
-		DERRX(EX_SOFTWARE, "%s: feo and fao != NULL", __func__);
-
-	if (feo != NULL) {
-		entry_ts.tv_sec = (time_t)feo->entry_valid;
-		entry_ts.tv_nsec = (long)feo->entry_valid_nsec;
-
-		timespecadd(&now, &entry_ts, &pnd->pnd_entry_expire);
-
-		attr_ts.tv_sec = (time_t)feo->attr_valid;
-		attr_ts.tv_nsec = (long)feo->attr_valid_nsec;
-
-		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
-	} 
-
-	if (fao != NULL) {
-		attr_ts.tv_sec = (time_t)fao->attr_valid;
-		attr_ts.tv_nsec = (long)fao->attr_valid_nsec;
-
-		timespecadd(&now, &attr_ts, &pnd->pnd_attr_expire);
-	} 
-
-	return;
-}
-
-static int
-attr_expired(puffs_cookie_t opc)
-{
-	struct perfuse_node_data *pnd;
-	struct timespec expire;
-	struct timespec now;
-
-	pnd = PERFUSE_NODE_DATA(opc);
-	expire = pnd->pnd_attr_expire;
-
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed");
-
-	return timespeccmp(&expire, &now, <);
-}
-
-static int
-entry_expired(puffs_cookie_t opc)
-{
-	struct perfuse_node_data *pnd;
-	struct timespec expire;
-	struct timespec now;
-
-	pnd = PERFUSE_NODE_DATA(opc);
-	expire = pnd->pnd_entry_expire;
-
-	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
-		DERR(EX_OSERR, "clock_gettime failed");
-
-	return timespeccmp(&expire, &now, <);
-}
 #endif /* PUFFS_KFLAG_CACHE_FS_TTL */
-
-
-/* 
- * Lookup name in directory opc
- * We take special care of name being . or ..
- * These are returned by readdir and deserve tweaks.
- */
-static int
-node_lookup_dir_nodot(struct puffs_usermount *pu, puffs_cookie_t opc,
-	char *name, size_t namelen, struct puffs_node **pnp)
-{
-	/*
-	 * "dot" is easy as we already know it
-	 */
-	if (strncmp(name, ".", namelen) == 0) {
-		*pnp = (struct puffs_node *)opc;
-		return 0;
-	}
-
-	/*
-	 * "dotdot" is also known
-	 */
-	if (strncmp(name, "..", namelen) == 0) {
-		*pnp = PERFUSE_NODE_DATA(opc)->pnd_parent;
-		return 0;
-	}
-
-	return node_lookup_common(pu, opc, NULL, name, NULL, pnp);
-}
 
 static int
 node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
@@ -505,97 +407,67 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
 		DPRINTF("%s: opc = %p, file = \"%s\" looking up \"%s\"\n",
-			__func__, (void *)opc, perfuse_node_path(opc), path);
-#endif
-	/*
-	 * Is the node already known?
-	 */
-	TAILQ_FOREACH(oldpnd, &PERFUSE_NODE_DATA(opc)->pnd_children, pnd_next) {
-		if ((oldpnd->pnd_flags & PND_REMOVED) ||
-		    (strcmp(oldpnd->pnd_name, path) != 0))
-			continue;
+			__func__, (void *)opc,
+			perfuse_node_path(ps, opc), path);
+	
+	if (strcmp(path, ".") == 0)
+		DERRX(EX_SOFTWARE, "unexpected dot-lookup");  
 
-#ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_FILENAME)
-			DPRINTF("%s: opc = %p, file = \"%s\" found "
-				"cookie = %p, nodeid = 0x%"PRIx64" "
-				"for \"%s\"\n", __func__, 
-				(void *)opc, perfuse_node_path(opc), 
-				(void *)oldpnd->pnd_pn, oldpnd->pnd_nodeid,	
-				path);
-#endif
-		break;
-	}
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_RECLAIMED) 
+		DERRX(EX_SOFTWARE,
+		      "looking up reclaimed node opc = %p, name = \"%s\"",
+		      opc, path);
 
-#ifndef PUFFS_KFLAG_CACHE_FS_TTL
-	/*
-	 * Check for cached name
-	 */
-	if ((oldpnd != NULL) && !entry_expired(oldpnd->pnd_pn)) {
-		oldpnd->pnd_puffs_nlookup++;
-		*pnp = oldpnd->pnd_pn;
-		return 0;
-	}
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_INVALID) 
+		DERRX(EX_SOFTWARE,
+		      "looking up freed node opc = %p, name = \"%s\"",
+		      opc, path);
+#endif /* PERFUSE_DEBUG */
 
 	len = strlen(path) + 1;
-
 	pm = ps->ps_new_msg(pu, opc, FUSE_LOOKUP, len, pcr);
 	(void)strlcpy(_GET_INPAYLOAD(ps, pm, char *), path, len);
 
-	error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply);
-
-	switch (error) {
-	case 0:
-		break;
-	case ENOENT:
-		if (oldpnd != NULL) {
-			oldpnd->pnd_flags |= PND_REMOVED;
-#ifdef PERFUSE_DEBUG
-			if (perfuse_diagflags & PDF_FILENAME)
-				DPRINTF("%s: opc = %p nodeid = 0x%"PRIx64" "
-					"file = \"%s\" removed\n", __func__, 
-					oldpnd->pnd_pn, oldpnd->pnd_nodeid,
-					oldpnd->pnd_name);
-#endif
-		}
-		/* FALLTHROUGH */
-	default:
+	if ((error = xchg_msg(pu, opc, pm, sizeof(*feo), wait_reply)) != 0)
 		return error;
-		/* NOTREACHED */
-		break;
-	}
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
 
-	pn = NULL;
-	if (oldpnd != NULL) {
-		if (oldpnd->pnd_nodeid == feo->nodeid) {
-			oldpnd->pnd_fuse_nlookup++;
-			oldpnd->pnd_puffs_nlookup++;
-			pn = oldpnd->pnd_pn;
-		} else {
-			oldpnd->pnd_flags |= PND_REMOVED;
-#ifdef PERFUSE_DEBUG
-			if (perfuse_diagflags & PDF_FILENAME)
-				DPRINTF("%s: opc = %p nodeid = 0x%"PRIx64" "
-					"file = \"%s\" replaced\n", __func__, 
-					oldpnd->pnd_pn, oldpnd->pnd_nodeid,
-					oldpnd->pnd_name);
-#endif
-		}
-	}
+	/*
+	 * Check for a known node, not reclaimed, with another name.
+	 * It may have been moved, or we can lookup ../
+	 */
+	if (((oldpnd = perfuse_node_bynodeid(ps, feo->nodeid)) != NULL) &&
+	    !(oldpnd->pnd_flags & PND_RECLAIMED)) {
+		/*
+		 * Save the new node name if not ..
+		 */
+		if (strncmp(path, "..", len) != 0)
+			(void)strlcpy(oldpnd->pnd_name, 
+				      path, MAXPATHLEN);
+		pn = oldpnd->pnd_pn;
 
-	if (pn == NULL) {
+	} else {
 		pn = perfuse_new_pn(pu, path, opc);
 		PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+		perfuse_node_cache(ps, pn);
 	}
+
+#ifdef PERFUSE_DEBUG
+	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_RECLAIMED) 
+		DERRX(EX_SOFTWARE,
+		      "reclaimed in lookup opc = %p, name = \"%s\", ck = %p",
+		      opc, path, pn);
+
+	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_INVALID) 
+		DERRX(EX_SOFTWARE,
+		      "freed in lookup opc = %p, name = \"%s\", ck = %p",
+		      opc, path, pn);
+#endif /* PERFUSE_DEBUG */
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
-#ifndef PUFFS_KFLAG_CACHE_FS_TTL
-	set_expire((puffs_cookie_t)pn, feo, NULL);
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
+	PERFUSE_NODE_DATA(pn)->pnd_fuse_nlookup++;
 
 	*pnp = pn;
 
@@ -605,16 +477,21 @@ node_lookup_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 			"nodeid = 0x%"PRIx64" file = \"%s\"\n", __func__, 
 			(void *)opc, pn, feo->nodeid, path);
 #endif
-	
+
 	if (pni != NULL) {
 #ifdef PUFFS_KFLAG_CACHE_FS_TTL
 		puffs_newinfo_setva(pni, &pn->pn_va);
-		perfuse_newinfo_setttl(pni, feo, NULL);
+		perfuse_newinfo_setttl(pni, pn, feo, NULL);
 #endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 		puffs_newinfo_setcookie(pni, pn);
 		puffs_newinfo_setvtype(pni, pn->pn_va.va_type); 
 		puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
 		puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
+	}
+
+	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_NODELEAK) {
+		PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_NODELEAK;
+		ps->ps_nodeleakcount--;
 	}
 
 	ps->ps_destroy_msg(pm);
@@ -650,6 +527,8 @@ node_mk_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	pn = perfuse_new_pn(pu, pcn->pcn_name, opc);
 	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
+	perfuse_node_cache(ps, pn);
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
@@ -657,10 +536,8 @@ node_mk_common(struct puffs_usermount *pu, puffs_cookie_t opc,
 	puffs_newinfo_setcookie(pni, pn);
 #ifdef PUFFS_KFLAG_CACHE_FS_TTL
 	puffs_newinfo_setva(pni, &pn->pn_va);
-	perfuse_newinfo_setttl(pni, feo, NULL);
-#else
-	set_expire((puffs_cookie_t)pn, feo, NULL);
-#endif
+	perfuse_newinfo_setttl(pni, pn, feo, NULL);
+#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 
 #ifdef PERFUSE_DEBUG
@@ -758,11 +635,12 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 		if (fd->ino == PERFUSE_UNKNOWN_INO) {
 			struct puffs_node *pn;
 
-			if (node_lookup_dir_nodot(pu, opc, fd->name, 
-						  fd->namelen, &pn) != 0) {
-				DWARNX("node_lookup_dir_nodot failed");
+			if (node_lookup_common(pu, opc, NULL, fd->name,
+					       NULL, &pn) != 0) {
+				DWARNX("node_lookup_common failed");
 			} else {
 				fd->ino = pn->pn_va.va_fileid;
+				(void)perfuse_node_reclaim(pu, pn);
 			}
 		}
 
@@ -825,7 +703,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 	return written;
 }
 
-static int 
+static void
 readdir_buffered(puffs_cookie_t opc, struct dirent *dent, off_t *readoff,
 	size_t *reslen)
 {
@@ -864,7 +742,40 @@ readdir_buffered(puffs_cookie_t opc, struct dirent *dent, off_t *readoff,
 		pnd->pnd_dirent_len = 0;
 	}
 
-	return 0;
+	return;
+}
+
+
+static void
+node_ref(puffs_cookie_t opc)
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+
+#ifdef PERFUSE_DEBUG
+	if (pnd->pnd_flags & PND_INVALID)
+		DERRX(EX_SOFTWARE, "Use of freed node opc = %p", opc);
+#endif /* PERFUSE_DEBUG */
+
+	pnd->pnd_ref++;
+	return;
+}
+
+static void
+node_rele(puffs_cookie_t opc)
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+
+#ifdef PERFUSE_DEBUG
+	if (pnd->pnd_flags & PND_INVALID)
+		DERRX(EX_SOFTWARE, "Use of freed node opc = %p", opc);
+#endif /* PERFUSE_DEBUG */
+
+	pnd->pnd_ref--;
+
+	if (pnd->pnd_ref == 0)
+		(void)dequeue_requests(opc, PCQ_REF, DEQUEUE_ALL);
+		
+	return;
 }
 
 static void
@@ -904,10 +815,8 @@ requeue_request(struct puffs_usermount *pu, puffs_cookie_t opc,
 	return;
 }
 
-/* ARGSUSED0 */
 static int
-dequeue_requests(struct perfuse_state *ps, puffs_cookie_t opc,
-	enum perfuse_qtype type, int max)
+dequeue_requests(puffs_cookie_t opc, enum perfuse_qtype type, int max)
 {
 	struct perfuse_cc_queue *pcq;
 	struct perfuse_node_data *pnd;
@@ -1129,14 +1038,17 @@ perfuse_fs_suspend(struct puffs_usermount *pu, int status)
 }
 
 
-
 int
 perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
+	struct perfuse_state *ps;
 	struct puffs_node *pn;
 	mode_t mode;
 	int error;
+
+	ps = puffs_getspecific(pu);
+	node_ref(opc);
 
 	/*
 	 * Check permissions
@@ -1157,27 +1069,13 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 
 	if ((error = mode_access(opc, pcn->pcn_cred, mode)) != 0) 
-		return error;
+		goto out;
 
-	/*
-	 * Special case for ..
-	 */
-	if (strcmp(pcn->pcn_name, "..") == 0) {
-		pn = PERFUSE_NODE_DATA(opc)->pnd_parent;
-#ifdef PUFFS_KFLAG_CACHE_FS_TTL
-		puffs_newinfo_setva(pni, &pn->pn_va);
-		/* XXX cannot call perfuse_newinfo_setttl */
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
-		puffs_newinfo_setcookie(pni, pn);
-		puffs_newinfo_setvtype(pni, pn->pn_va.va_type); 
-		puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
-		puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
-	} else {
-		error = node_lookup_common(pu, (puffs_cookie_t)opc, pni,
-					   pcn->pcn_name, pcn->pcn_cred, &pn);
-	}
+	error = node_lookup_common(pu, (puffs_cookie_t)opc, pni,
+				   pcn->pcn_name, pcn->pcn_cred, &pn);
+
 	if (error != 0)
-		return error;
+		goto out;
 
 	/*
 	 * Kernel would kill us if the filesystem returned the parent
@@ -1185,16 +1083,19 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	if ((opc == (puffs_cookie_t)pn) && (strcmp(pcn->pcn_name, ".") != 0)) {
 		DERRX(EX_SOFTWARE, "lookup \"%s\" in \"%s\" returned parent",
-		      pcn->pcn_name, perfuse_node_path(opc));
+		      pcn->pcn_name, perfuse_node_path(ps, opc));
 		/* NOTREACHED */
-		return ESTALE;
+		error = ESTALE;
+		goto out;
 	}
 
 	/*
 	 * Removed node
 	 */
-	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_REMOVED)
-		return ENOENT;
+	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_REMOVED) {
+		error = ENOENT;
+		goto out;
+	}
 
 	/*
 	 * Check for sticky bit. Unfortunately there is no way to 
@@ -1204,27 +1105,22 @@ perfuse_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	switch (pcn->pcn_nameiop) {
 	case NAMEI_DELETE: /* FALLTHROUGH */
 	case NAMEI_RENAME:
-		error = sticky_access(pn, pcn->pcn_cred);
+		error = sticky_access(opc, pn, pcn->pcn_cred);
 		if (error != 0) {
-			/* 
-			 * kernel will never know about it and will
-			 * not reclaim it. The filesystem needs to
-			 * clean it up anyway, therefore mimick a forget.
-			 */
-			PERFUSE_NODE_DATA(pn)->pnd_flags |= PND_RECLAIMED;
-			(void)perfuse_node_reclaim(pu, (puffs_cookie_t)pn);
-			return error;
+			(void)perfuse_node_reclaim(pu, pn);
+			goto out;
 		}
 		break;
 	default:
 		break;
 	}
 
-	/*
-	 * If that node had a pending reclaim, wipe it out.
-	 */
-	PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_RECLAIMED;
+	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
 
+	error = 0;
+
+out:
+	node_rele(opc);
 	return error;
 }
 
@@ -1247,6 +1143,8 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
+
 	/*
 	 * If create is unimplemented: Check that it does not
 	 * already exists, and if not, do mknod and open
@@ -1255,17 +1153,20 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (ps->ps_flags & PS_NO_CREAT) {
 		error = node_lookup_common(pu, opc, NULL, pcn->pcn_name,
 					   pcn->pcn_cred, &pn);
-		if (error == 0)	
-			return EEXIST;
+		if (error == 0)	{
+			(void)perfuse_node_reclaim(pu, pn);
+			error = EEXIST;
+			goto out;
+		}
 
 		error = perfuse_node_mknod(pu, opc, pni, pcn, vap);
-		if (error != 0)
-			return error;
+		if (error != 0) 
+			goto out;
 
 		error = node_lookup_common(pu, opc, NULL, pcn->pcn_name,
 					   pcn->pcn_cred, &pn);
-		if (error != 0)	
-			return error;
+		if (error != 0)
+			goto out;
 
 		/*
 		 * FUSE does the open at create time, while
@@ -1275,12 +1176,9 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 * a file descriptor before the kernel sends 
 		 * the open operation.
 		 */
-		opc = (puffs_cookie_t)pn;
-		error = perfuse_node_open(pu, opc, FWRITE, pcn->pcn_cred);
-		if (error != 0)	
-			return error;
-
-		return 0;
+		error = perfuse_node_open(pu, (puffs_cookie_t)pn,
+					  FWRITE, pcn->pcn_cred);
+		goto out;
 	}
 
 	name = pcn->pcn_name;
@@ -1308,10 +1206,10 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 */
 		if (error == ENOSYS) {
 			ps->ps_flags |= PS_NO_CREAT;
-			return perfuse_node_create(pu, opc, pni, pcn, vap);
+			error = perfuse_node_create(pu, opc, pni, pcn, vap);
 		}
 
-		return error;
+		goto out;
 	}
 
 	feo = GET_OUTPAYLOAD(ps, pm, fuse_entry_out);
@@ -1326,6 +1224,8 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	pn = perfuse_new_pn(pu, name, opc);
 	perfuse_new_fh((puffs_cookie_t)pn, foo->fh, FWRITE);
 	PERFUSE_NODE_DATA(pn)->pnd_nodeid = feo->nodeid;
+	PERFUSE_NODE_DATA(pn)->pnd_puffs_nlookup++;
+	perfuse_node_cache(ps, pn);
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	pn->pn_va.va_gen = (u_long)(feo->generation);
@@ -1333,9 +1233,7 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	puffs_newinfo_setcookie(pni, pn);
 #ifdef PUFFS_KFLAG_CACHE_FS_TTL
 	puffs_newinfo_setva(pni, &pn->pn_va);
-	perfuse_newinfo_setttl(pni, feo, NULL);
-#else /* PUFFS_KFLAG_CACHE_FS_TTL */
-	set_expire((puffs_cookie_t)pn, feo, NULL);
+	perfuse_newinfo_setttl(pni, pn, feo, NULL);
 #endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 #ifdef PERFUSE_DEBUG
@@ -1348,8 +1246,11 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 #endif
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 
@@ -1363,9 +1264,12 @@ perfuse_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_mknod_in *fmi;
 	const char* path;
 	size_t len;
+	int error;
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
+
+	node_ref(opc);
 
 	/*
 	 * Only superuser can mknod objects other than 
@@ -1380,8 +1284,10 @@ perfuse_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 	case VSOCK:
 		break;
 	default:	/* VNON, VBLK, VCHR, VBAD */
-		if (!puffs_cred_isjuggernaut(pcn->pcn_cred))
-			return EACCES;
+		if (!puffs_cred_isjuggernaut(pcn->pcn_cred)) {
+			error = EACCES;
+			goto out;
+		}
 		break;
 	}
 
@@ -1400,7 +1306,11 @@ perfuse_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 	fmi->umask = 0; 	/* Seems unused bu libfuse */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 
-	return node_mk_common(pu, opc, pni, pcn, pm);
+	error = node_mk_common(pu, opc, pni, pcn, pm);
+
+out:
+	node_rele(opc);
+	return error;	
 }
 
 
@@ -1425,6 +1335,8 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 
 	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
+
+	node_ref(opc);
 
 	if (puffs_pn_getvap(pn)->va_type == VDIR)
 		op = FUSE_OPENDIR;
@@ -1488,7 +1400,7 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", "
 			"nodeid = 0x%"PRIx64", %s%sfh = 0x%"PRIx64"\n",
-			__func__, (void *)opc, perfuse_node_path(opc),
+			__func__, (void *)opc, perfuse_node_path(ps, opc),
 			pnd->pnd_nodeid, mode & FREAD ? "r" : "",
 			mode & FWRITE ? "w" : "", foo->fh);
 #endif
@@ -1497,8 +1409,9 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 out:
 
 	pnd->pnd_flags &= ~PND_INOPEN;
-	(void)dequeue_requests(ps, opc, PCQ_OPEN, DEQUEUE_ALL);
+	(void)dequeue_requests(opc, PCQ_OPEN, DEQUEUE_ALL);
 
+	node_rele(opc);
 	return error;
 }
 
@@ -1532,6 +1445,8 @@ perfuse_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
+
 	/* 
 	 * If we previously detected the filesystem does not 
 	 * implement access(), short-circuit the call and skip 
@@ -1547,7 +1462,7 @@ perfuse_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 				     vap->va_mode & ACCESSPERMS, 
 				     vap->va_uid, vap->va_gid,
 				     (mode_t)mode, pcr); 
-		return error;
+		goto out;
 	}
 
 	/*
@@ -1569,9 +1484,11 @@ perfuse_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 */
 	if (error == ENOSYS) {
 		ps->ps_flags |= PS_NO_ACCESS;
-		return perfuse_node_access(pu, opc, mode, pcr);
+		error = perfuse_node_access(pu, opc, mode, pcr);
 	}
 
+out:
+	node_rele(opc);
 	return error;
 }
 
@@ -1597,6 +1514,8 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (pnd->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
+
 	/* 
 	 * Serialize size access, see comment in perfuse_node_setattr().
 	 */
@@ -1606,18 +1525,6 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	ps = puffs_getspecific(pu);
 		
-#ifndef PUFFS_KFLAG_CACHE_FS_TTL
-	/*
-	 * Check for cached attributes
-	 * This still require serialized access to size.
-	 */ 
-	if (!attr_expired(opc)) {
-		(void)memcpy(vap, puffs_pn_getvap((struct puffs_node *)opc), 
-			     sizeof(*vap));
-		goto out;
-	}
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
-
 	/*
 	 * FUSE_GETATTR_FH must be set in fgi->flags 
 	 * if we use for fgi->fh
@@ -1657,21 +1564,19 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
 
-#ifdef PUFFS_KFLAG_CACHE_FS_TTL
 	if (va_ttl != NULL) {
 		va_ttl->tv_sec = fao->attr_valid;
 		va_ttl->tv_nsec = fao->attr_valid_nsec;
 	}
-#else /* PUFFS_KFLAG_CACHE_FS_TTL */
-	set_expire(opc, NULL, fao);
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 out:
 
 	pnd->pnd_flags &= ~PND_INRESIZE;
-	(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
+	(void)dequeue_requests(opc, PCQ_RESIZE, DEQUEUE_ALL);
 
+	node_rele(opc);
 	return error;
 }
 
@@ -1686,7 +1591,7 @@ perfuse_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 int
 perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vattr *vap, const struct puffs_cred *pcr,
-	struct timespec *va_ttl, int flags)
+	struct timespec *va_ttl, int xflag)
 {
 	perfuse_msg_t *pm;
 	uint64_t fh;
@@ -1695,13 +1600,12 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_setattr_in *fsi;
 	struct fuse_attr_out *fao;
 	struct vattr *old_va;
+	enum perfuse_xchg_pb_reply reply;
 	int error;
-	int valid;
 #ifdef PERFUSE_DEBUG
 	struct vattr *old_vap;
 	int resize_debug = 0;
 #endif
-
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
 
@@ -1715,100 +1619,74 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		if (!(pnd->pnd_flags & PND_OPEN))
 			return ENOENT;
 		
-		error = 0;
-		goto out;
+		return 0;
 	}
 
 	old_va = puffs_pn_getvap((struct puffs_node *)opc);
-	valid = 0;
 
 	/*
 	 * Check for permission to change size
+	 * It is always allowed if we already have a write file handle
 	 */
-	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL)) {
-		if ((error = mode_access(opc, pcr, PUFFS_VWRITE)) != 0)
-			return error;
-		valid |= FUSE_FATTR_SIZE;
-	}
-
-	/*
-	 * Check for permission to change owner and group
-	 */
-	if ((vap->va_uid != (uid_t)PUFFS_VNOVAL) ||
-	    (vap->va_gid != (gid_t)PUFFS_VNOVAL)) {
-		if (puffs_access_chown(old_va->va_uid, old_va->va_gid,
-				       vap->va_uid, vap->va_gid, pcr) != 0)
-			return EACCES;
-
-		if (vap->va_uid != (uid_t)PUFFS_VNOVAL)
-			valid |= FUSE_FATTR_UID;
-
-		if (vap->va_gid != (uid_t)PUFFS_VNOVAL)
-			valid |= FUSE_FATTR_GID;
-	}
-
-	/*
-	 * Check for permission to change permissions
-	 */
-	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
-		if (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
-				old_va->va_type, vap->va_mode, pcr) != 0)
-			return EACCES;
-		valid |= FUSE_FATTR_MODE;
-	}
+	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
+	    !(pnd->pnd_flags & PND_WFH) &&
+	    (error = mode_access(opc, pcr, PUFFS_VWRITE)) != 0)
+		return error;
 
 	/*
 	 * Check for permission to change dates
 	 */
-	if ((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
-	    (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) {
-		if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)
-			valid |= FUSE_FATTR_ATIME;
-
-		if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)
-			valid |= FUSE_FATTR_MTIME;
-
-		/*
-		 * ftruncate() sends only va_size, and metadata cache
-		 * flush adds va_atime and va_mtime. Some FUSE
-		 * filesystems will attempt to detect ftruncate by 
-		 * checking for FATTR_SIZE being set without
-		 * FATTR_UID|FATTR_GID|FATTR_ATIME|FATTR_MTIME|FATTR_MODE
-		 * 
-		 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
-		 * if we suspect a ftruncate().
-		 */ 
-		if ((valid & FUSE_FATTR_SIZE) &&
-		    !(valid & (FUSE_FATTR_UID|FUSE_FATTR_GID|FUSE_FATTR_MODE)))
-			valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
-
-		/*
-		 * There is the same mess with fchmod()
-		 */
-		if ((valid & FUSE_FATTR_MODE) &&
-		    !(valid & (FUSE_FATTR_UID|FUSE_FATTR_GID)))
-			valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
-
-		/*
-		 * And if a change on atime/mtime remains, check permissions.
-		 */
-		if ((valid & (FUSE_FATTR_ATIME|FUSE_FATTR_MTIME)) &&
-		    (puffs_access_times(old_va->va_uid, old_va->va_gid,
-				        old_va->va_mode, 0, pcr) != 0))
-			return EACCES;
-	}
+	if (((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
+	     (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) &&
+	    (puffs_access_times(old_va->va_uid, old_va->va_gid,
+				old_va->va_mode, 0, pcr) != 0))
+		return EACCES;
 
 	/*
-	 * If nothing remain, discard the operation. This happend when
-	 * only ctime is changed.
+	 * Check for permission to change owner and group
 	 */
-	if (!(valid & (FUSE_FATTR_SIZE|FUSE_FATTR_ATIME|FUSE_FATTR_MTIME|
-		       FUSE_FATTR_MODE|FUSE_FATTR_UID|FUSE_FATTR_GID))) {
-		error = 0;
-		goto out;
+	if (((vap->va_uid != (uid_t)PUFFS_VNOVAL) ||
+	     (vap->va_gid != (gid_t)PUFFS_VNOVAL)) &&
+	    (puffs_access_chown(old_va->va_uid, old_va->va_gid,
+				vap->va_uid, vap->va_gid, pcr)) != 0)
+		return EACCES;
+
+	/*
+	 * Check for permission to change permissions
+	 */
+	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
+	    (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
+				old_va->va_type, vap->va_mode, pcr)) != 0)
+		return EACCES;
+	
+	node_ref(opc);
+	
+	if (pnd->pnd_flags & PND_WFH)
+		fh = perfuse_get_fh(opc, FWRITE);
+	else
+		fh = FUSE_UNKNOWN_FH;
+
+	/*
+	 * fchmod() sets mode and fh, and it may carry
+	 * a resize as well. That may break if the 
+	 * filesystem does chmod then resize, and fails
+	 * because it does not have permission anymore.
+	 * We work this around by splitting into two setattr.
+	 */
+	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
+	    (vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
+	    (fh != FUSE_UNKNOWN_FH)) {
+		struct vattr resize_va;
+
+		(void)memcpy(&resize_va, vap, sizeof(resize_va));
+		resize_va.va_mode = (mode_t)PUFFS_VNOVAL;
+		if ((error = perfuse_node_setattr_ttl(pu, opc, &resize_va,
+						      pcr, va_ttl, xflag)) != 0)
+			goto out2;
+
+		vap->va_size = (u_quad_t)PUFFS_VNOVAL;
 	}
 
-	
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETATTR, sizeof(*fsi), pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
 	fsi->valid = 0;
@@ -1816,13 +1694,13 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	/*
 	 * Get a fh if the node is open for writing
 	 */
-	if (pnd->pnd_flags & PND_WFH) {
-		fh = perfuse_get_fh(opc, FWRITE);
+	if (fh != FUSE_UNKNOWN_FH) {
 		fsi->fh = fh;
 		fsi->valid |= FUSE_FATTR_FH;
 	}
 
-	if (valid & FUSE_FATTR_SIZE) {
+
+	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
 		fsi->size = vap->va_size;
 		fsi->valid |= FUSE_FATTR_SIZE;
 
@@ -1843,8 +1721,10 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * dates being reset to Epoch on glusterfs. If one
 	 * is missing, use the old value.
  	 */
-	if (valid & (FUSE_FATTR_ATIME|FUSE_FATTR_MTIME)) {
-		if (valid & FUSE_FATTR_ATIME) {
+	if ((vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) || 
+	    (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)) {
+		
+		if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) {
 			fsi->atime = vap->va_atime.tv_sec;
 			fsi->atimensec = (uint32_t)vap->va_atime.tv_nsec;
 		} else {
@@ -1852,7 +1732,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 			fsi->atimensec = (uint32_t)old_va->va_atime.tv_nsec;
 		}
 
-		if (valid & FUSE_FATTR_MTIME) {
+		if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
 			fsi->mtime = vap->va_mtime.tv_sec;
 			fsi->mtimensec = (uint32_t)vap->va_mtime.tv_nsec;
 		} else {
@@ -1863,17 +1743,17 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= (FUSE_FATTR_MTIME|FUSE_FATTR_ATIME);
 	}
 
-	if (valid & FUSE_FATTR_MODE) {
+	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
 		fsi->mode = vap->va_mode; 
 		fsi->valid |= FUSE_FATTR_MODE;
 	}
 	
-	if (valid & FUSE_FATTR_UID) {
+	if (vap->va_uid != (uid_t)PUFFS_VNOVAL) {
 		fsi->uid = vap->va_uid;
 		fsi->valid |= FUSE_FATTR_UID;
 	}
 
-	if (valid & FUSE_FATTR_GID) {
+	if (vap->va_gid != (gid_t)PUFFS_VNOVAL) {
 		fsi->gid = vap->va_gid;
 		fsi->valid |= FUSE_FATTR_GID;
 	}
@@ -1883,6 +1763,36 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= FUSE_FATTR_LOCKOWNER;
 	}
 
+	/*
+	 * ftruncate() sends only va_size, and metadata cache
+	 * flush adds va_atime and va_mtime. Some FUSE
+	 * filesystems will attempt to detect ftruncate by 
+	 * checking for FATTR_SIZE being set without
+	 * FATTR_UID|FATTR_GID|FATTR_ATIME|FATTR_MTIME|FATTR_MODE
+	 * 
+	 * Try to adapt and remove FATTR_ATIME|FATTR_MTIME
+	 * if we suspect a ftruncate().
+	 */ 
+	if ((vap->va_size != (u_quad_t)PUFFS_VNOVAL) &&
+	    ((vap->va_mode == (mode_t)PUFFS_VNOVAL) &&
+	     (vap->va_uid == (uid_t)PUFFS_VNOVAL) &&
+	     (vap->va_gid == (gid_t)PUFFS_VNOVAL))) {
+		fsi->atime = 0;
+		fsi->atimensec = 0;
+		fsi->mtime = 0;
+		fsi->mtimensec = 0;
+		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
+	}
+		    
+	/*
+	 * If nothing remain, discard the operation.
+	 */
+	if (!(fsi->valid & (FUSE_FATTR_SIZE|FUSE_FATTR_ATIME|FUSE_FATTR_MTIME|
+			    FUSE_FATTR_MODE|FUSE_FATTR_UID|FUSE_FATTR_GID))) {
+		error = 0;
+		ps->ps_destroy_msg(pm);
+		goto out;
+	}
 
 #ifdef PERFUSE_DEBUG
 	old_vap = puffs_pn_getvap((struct puffs_node *)opc);
@@ -1898,7 +1808,19 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 #endif
 
-	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
+	/*
+	 * Do not honour FAF when changing size. How do
+	 * you want such a thing to work?
+	 */
+	reply = wait_reply;
+#ifdef PUFFS_SETATTR_FAF
+	if ((xflag & PUFFS_SETATTR_FAF) && !(fsi->valid & FUSE_FATTR_SIZE))
+		reply = no_reply;
+#endif
+	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), reply)) != 0)
+		goto out;
+
+	if (reply == no_reply)
 		goto out;
 
 	/*
@@ -1914,24 +1836,23 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	fuse_attr_to_vap(ps, old_va, &fao->attr);
 
-#ifdef PUFFS_KFLAG_CACHE_FS_TTL
 	if (va_ttl != NULL) {
 		va_ttl->tv_sec = fao->attr_valid;
 		va_ttl->tv_nsec = fao->attr_valid_nsec;
 		(void)memcpy(vap, old_va, sizeof(*vap));
 	}
-#else /* PUFFS_KFLAG_CACHE_FS_TTL */
-	set_expire(opc, NULL, fao);
-#endif /* PUFFS_KFLAG_CACHE_FS_TTL */
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
 out:
 	if (pnd->pnd_flags & PND_INRESIZE) {
 		pnd->pnd_flags &= ~PND_INRESIZE;
-		(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
+		(void)dequeue_requests(opc, PCQ_RESIZE, DEQUEUE_ALL);
 	}
 
+out2:
+	node_rele(opc);
 	return error;
 }
 
@@ -1944,6 +1865,7 @@ perfuse_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
 	struct fuse_poll_out *fpo;
 	int error;
 
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	/*
 	 * kh is set if FUSE_POLL_SCHEDULE_NOTIFY is set.
@@ -1969,14 +1891,17 @@ perfuse_node_poll(struct puffs_usermount *pu, puffs_cookie_t opc, int *events)
 			PERFUSE_NODE_DATA(opc)->pnd_nodeid, fpi->fh);
 #endif
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fpo), wait_reply)) != 0)
-		return error;
+		goto out;
 
 	fpo = GET_OUTPAYLOAD(ps, pm, fuse_poll_out);
 	*events = fpo->revents;
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 /* ARGSUSED0 */
@@ -2001,7 +1926,7 @@ perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct perfuse_node_data *pnd;
 	struct fuse_fsync_in *ffi;
 	uint64_t fh;
-	int error;
+	int error = 0;
 	
 	pm = NULL;
 	ps = puffs_getspecific(pu);
@@ -2020,6 +1945,8 @@ perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (!(pnd->pnd_flags & PND_OPEN))
 		return 0;
 
+	node_ref(opc);
+
 	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
 		op = FUSE_FSYNCDIR;
 	else 		/* VREG but also other types such as VLNK */
@@ -2032,11 +1959,11 @@ perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_SYNC)
 		DPRINTF("%s: TEST opc = %p, file = \"%s\" is %sdirty\n", 
-			__func__, (void*)opc, perfuse_node_path(opc),
+			__func__, (void*)opc, perfuse_node_path(ps, opc),
 			pnd->pnd_flags & PND_DIRTY ? "" : "not ");
 #endif
 	if (!(pnd->pnd_flags & PND_DIRTY))
-		return 0;
+		goto out;
 
 	/*
 	 * It seems NetBSD can call fsync without open first
@@ -2085,10 +2012,11 @@ perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_SYNC)
 		DPRINTF("%s: CLEAR opc = %p, file = \"%s\"\n", 
-			__func__, (void*)opc, perfuse_node_path(opc));
+			__func__, (void*)opc, perfuse_node_path(ps, opc));
 #endif
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
 out:
 	/*
@@ -2097,6 +2025,7 @@ out:
 	if (error == ENOSYS)
 		error = 0;
 
+	node_rele(opc);
 	return error;
 }
 
@@ -2134,12 +2063,15 @@ perfuse_node_remove(struct puffs_usermount *pu, puffs_cookie_t opc,
 		DPRINTF("%s: opc = %p, remove opc = %p, file = \"%s\"\n",
 			__func__, (void *)opc, (void *)targ, pcn->pcn_name);
 #endif
+	node_ref(opc);
+	node_ref(targ);
+
 	/*
 	 * Await for all operations on the deleted node to drain, 
 	 * as the filesystem may be confused to have it deleted
 	 * during a getattr
 	 */
-	while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+	while (PERFUSE_NODE_DATA(targ)->pnd_inxchg)
 		requeue_request(pu, targ, PCQ_AFTERXCHG);
 
 	ps = puffs_getspecific(pu);
@@ -2152,9 +2084,11 @@ perfuse_node_remove(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy(path, name, len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
+	perfuse_cache_flush(targ);
 	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+
 	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
@@ -2170,8 +2104,12 @@ perfuse_node_remove(struct puffs_usermount *pu, puffs_cookie_t opc,
 			pcn->pcn_name);
 #endif
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	node_rele(targ);
+	return error;
 }
 
 int
@@ -2189,6 +2127,8 @@ perfuse_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 	
+	node_ref(opc);
+	node_ref(targ);
 	ps = puffs_getspecific(pu);
 	pn = (struct puffs_node *)targ;
 	name = pcn->pcn_name;
@@ -2200,11 +2140,15 @@ perfuse_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy((char *)(void *)(fli + 1), name, len - sizeof(*fli));
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	node_rele(targ);
+	return error;
 }
 
 int
@@ -2214,6 +2158,7 @@ perfuse_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cn *pcn_targ)
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *dstdir_pnd;
 	perfuse_msg_t *pm;
 	struct fuse_rename_in *fri;
 	const char *newname;
@@ -2229,16 +2174,20 @@ perfuse_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 	    (PERFUSE_NODE_DATA(targ_dir)->pnd_flags & PND_REMOVED))
 		return ENOENT;
 
+	node_ref(opc);
+	node_ref(src);
+
 	/*
 	 * Await for all operations on the deleted node to drain, 
 	 * as the filesystem may be confused to have it deleted
 	 * during a getattr
 	 */
 	if ((struct puffs_node *)targ != NULL) {
-		while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+		node_ref(targ);
+		while (PERFUSE_NODE_DATA(targ)->pnd_inxchg)
 			requeue_request(pu, targ, PCQ_AFTERXCHG);
 	} else {
-		while (PERFUSE_NODE_DATA(src)->pnd_flags & PND_INXCHG)
+		while (PERFUSE_NODE_DATA(src)->pnd_inxchg)
 			requeue_request(pu, src, PCQ_AFTERXCHG);
 	}
 
@@ -2258,34 +2207,30 @@ perfuse_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy(np, newname, newname_len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
-	if (opc != targ_dir) {
-		struct perfuse_node_data *srcdir_pnd;
-		struct perfuse_node_data *dstdir_pnd;
-		struct perfuse_node_data *src_pnd;
 		
-		srcdir_pnd = PERFUSE_NODE_DATA(opc);
-		dstdir_pnd = PERFUSE_NODE_DATA(targ_dir);
-		src_pnd = PERFUSE_NODE_DATA(src);
+	/*
+	 * Record new parent nodeid
+	 */
+	dstdir_pnd = PERFUSE_NODE_DATA(targ_dir);
+	PERFUSE_NODE_DATA(src)->pnd_parent_nodeid = dstdir_pnd->pnd_nodeid;
 
-		TAILQ_REMOVE(&srcdir_pnd->pnd_children, src_pnd, pnd_next);
-		TAILQ_INSERT_TAIL(&dstdir_pnd->pnd_children, src_pnd, pnd_next);
+	if (opc != targ_dir)
+		dstdir_pnd->pnd_flags |= PND_DIRTY;
 
-		srcdir_pnd->pnd_childcount--;
-		dstdir_pnd->pnd_childcount++;
-
-		src_pnd->pnd_parent = targ_dir;
-
-		PERFUSE_NODE_DATA(targ_dir)->pnd_flags |= PND_DIRTY;
-	}
-
-	(void)strlcpy(PERFUSE_NODE_DATA(src)->pnd_name, newname, MAXPATHLEN);
+	if (strcmp(newname, "..") != 0)
+		(void)strlcpy(PERFUSE_NODE_DATA(src)->pnd_name,
+		    newname, MAXPATHLEN);
+	else
+		PERFUSE_NODE_DATA(src)->pnd_name[0] = 0; /* forget name */
 
 	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 
-	if ((struct puffs_node *)targ != NULL)
+	if ((struct puffs_node *)targ != NULL) {
+		perfuse_cache_flush(targ);
 		PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+	}
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
@@ -2295,12 +2240,19 @@ perfuse_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
 			pcn_src->pcn_name, pcn_targ->pcn_name,
 			PERFUSE_NODE_DATA(opc)->pnd_nodeid,
 			PERFUSE_NODE_DATA(targ_dir)->pnd_nodeid,
-			perfuse_node_path(targ_dir));
+			perfuse_node_path(ps, targ_dir));
 #endif
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	node_rele(src);
+	if ((struct puffs_node *)targ != NULL)
+		node_rele(targ);
+
+	return error;
 }
 
 int
@@ -2313,10 +2265,12 @@ perfuse_node_mkdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_mkdir_in *fmi;
 	const char *path;
 	size_t len;
+	int error;
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	path = pcn->pcn_name;
 	len = sizeof(*fmi) + pcn->pcn_namelen + 1; 
@@ -2327,7 +2281,10 @@ perfuse_node_mkdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	fmi->umask = 0; 	/* Seems unused by libfuse? */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 
-	return node_mk_common(pu, opc, pni, pcn, pm);
+	error = node_mk_common(pu, opc, pni, pcn, pm);
+
+	node_rele(opc);
+	return error;
 }
 
 
@@ -2349,12 +2306,15 @@ perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	    (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_REMOVED))
 		return ENOENT;
 
+	node_ref(opc);
+	node_ref(targ);
+
 	/*
 	 * Await for all operations on the deleted node to drain, 
 	 * as the filesystem may be confused to have it deleted
 	 * during a getattr
 	 */
-	while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+	while (PERFUSE_NODE_DATA(targ)->pnd_inxchg)
 		requeue_request(pu, targ, PCQ_AFTERXCHG);
 
 	ps = puffs_getspecific(pu);
@@ -2366,9 +2326,11 @@ perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy(path, name, len);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
+	perfuse_cache_flush(targ);
 	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+
 	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
@@ -2381,11 +2343,15 @@ perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (perfuse_diagflags & PDF_FILENAME)
 		DPRINTF("%s: remove nodeid = 0x%"PRIx64" file = \"%s\"\n",
 			__func__, PERFUSE_NODE_DATA(targ)->pnd_nodeid,
-			perfuse_node_path(targ));
+			perfuse_node_path(ps, targ));
 #endif
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	node_rele(targ);
+	return error;
 }
 
 /* vap is unused */
@@ -2402,10 +2368,12 @@ perfuse_node_symlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	size_t path_len;
 	size_t linkname_len;
 	size_t len;
+	int error;
 	
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	path = pcn_src->pcn_name;
 	path_len = pcn_src->pcn_namelen + 1;
@@ -2418,7 +2386,10 @@ perfuse_node_symlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	np += path_len;
 	(void)strlcpy(np, link_target, linkname_len);
 
-	return node_mk_common(pu, opc, pni, pcn_src, pm);
+	error = node_mk_common(pu, opc, pni, pcn_src, pm);
+
+	node_rele(opc);
+	return error;
 }
 
 /* ARGSUSED4 */
@@ -2440,6 +2411,7 @@ perfuse_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	size_t fd_maxlen;
 	
 	error = 0;
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 
 	/*
@@ -2578,13 +2550,13 @@ out:
 	}
 
 	if (error == 0)
-		error = readdir_buffered(opc, dent, readoff, reslen);
+		readdir_buffered(opc, dent, readoff, reslen);
 
 	/*
 	 * Schedule queued readdir requests
 	 */
 	pnd->pnd_flags &= ~PND_INREADDIR;
-	(void)dequeue_requests(ps, opc, PCQ_READDIR, DEQUEUE_ALL);
+	(void)dequeue_requests(opc, PCQ_READDIR, DEQUEUE_ALL);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_READDIR)
@@ -2592,6 +2564,7 @@ out:
 			__func__, (void *)opc);
 #endif
 
+	node_rele(opc);
 	return error;
 }
 
@@ -2608,12 +2581,13 @@ perfuse_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_READLINK, 0, pcr);
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
 	foh = GET_OUTHDR(ps, pm);
 	len = foh->len - sizeof(*foh);
@@ -2630,8 +2604,11 @@ perfuse_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)memcpy(linkname, _GET_OUTPAYLOAD(ps, pm, char *), len);
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 int 
@@ -2641,8 +2618,8 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 	perfuse_msg_t *pm;
 	struct perfuse_node_data *pnd;
 	struct fuse_forget_in *ffi;
-	struct puffs_node *pn;
-	struct puffs_node *pn_root;
+	int nlookup;
+	struct timespec now;
 	
 	if (opc == 0)
 		return 0;
@@ -2656,29 +2633,51 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 	if (pnd->pnd_nodeid == FUSE_ROOT_ID)
 		return 0;
 
+	/*
+	 * There is a race condition between reclaim and lookup.
+	 * When looking up an already known node, the kernel cannot
+	 * hold a reference on the result until it gets the PUFFS
+	 * reply. It mayy therefore reclaim the node after the 
+	 * userland looked it up, and before it gets the reply. 
+	 * On rely, the kernel re-creates the node, but at that 
+	 * time the node has been reclaimed in userland.
+	 *
+	 * In order to avoid this, we refuse reclaiming nodes that
+	 * are too young since the last lookup - and that we do 
+	 * not have removed on our own, of course. 
+	 */
+	if (clock_gettime(CLOCK_REALTIME, &now) != 0)
+		DERR(EX_OSERR, "clock_gettime failed"); 
+
+	if (timespeccmp(&pnd->pnd_cn_expire, &now, >) && 
+	    !(pnd->pnd_flags & PND_REMOVED)) {
+		if (!(pnd->pnd_flags & PND_NODELEAK)) {
+			ps->ps_nodeleakcount++;
+			pnd->pnd_flags |= PND_NODELEAK;
+		}
+		DWARNX("possible leaked node:: opc = %p \"%s\"",
+		       opc, pnd->pnd_name);
+		return 0;
+	}
+
+	node_ref(opc);
 	pnd->pnd_flags |= PND_RECLAIMED;
 	pnd->pnd_puffs_nlookup--;
+	nlookup = pnd->pnd_puffs_nlookup;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") reclaimed\n", 
-			perfuse_node_path(opc), pnd->pnd_nodeid);
+			perfuse_node_path(ps, opc), pnd->pnd_nodeid);
 #endif
-
-	pn_root = puffs_getroot(pu);
-	pn = (struct puffs_node *)opc;
-	while (pn != pn_root) {
-		struct puffs_node *parent_pn;
-	
-		pnd = PERFUSE_NODE_DATA(pn);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, nlookup = %d "
-			"has childcount %d %s%s%s%s, pending ops:%s%s%s\n", 
-		        perfuse_node_path((puffs_cookie_t)pn), pnd->pnd_nodeid,
+			"%s%s%s%s, pending ops:%s%s%s\n", 
+		        perfuse_node_path(ps, opc), pnd->pnd_nodeid,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
-			pnd->pnd_puffs_nlookup, pnd->pnd_childcount,
+			pnd->pnd_puffs_nlookup,
 			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
 			pnd->pnd_flags & PND_RFH ? "r" : "",
 			pnd->pnd_flags & PND_WFH ? "w" : "",
@@ -2687,62 +2686,64 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 			pnd->pnd_flags & PND_INWRITE ? " write" : "",
 			pnd->pnd_flags & PND_INOPEN ? " open" : "");
 #endif
-		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
-		    (pnd->pnd_childcount != 0))
-			return 0;
+	/*
+	 * Make sure it is not looked up again 
+	 */
+	if (!(pnd->pnd_flags & PND_REMOVED))
+		perfuse_cache_flush(opc);
 
-		/*
-		 * lookup/reclaim activity differs whether name cache
-		 * is used or not. 
-		 * - With namecache off, we get as many reclaims as lookups,
-		 *   we therefore must keep track of pnd_puffs_nlookup
-		 * - With namecache on we have a single 
-		 *   reclaim for any amount of lookups. We therfore 
-		 *   ignore pnd_puffs_nlookup. On netbsd-5 there is a
-		 *   bug and this behavior occurs whatever cache setting
-		 *   we have.
-		 */
-#if !defined(PUFFS_KFLAG_CACHE_FS_TTL) && __NetBSD_Prereq__(5,99,0)
-		if (pnd->pnd_puffs_nlookup != 0)
-			return 0;
-#endif /* !PUFFS_KFLAG_CACHE_FS_TTL && NetBSD > 5.99.0 */
+	/*
+	 * Purge any activity on the node, while checking
+	 * that it remains eligible for a reclaim.
+	 */
+	while (pnd->pnd_ref > 1)
+		requeue_request(pu, opc, PCQ_REF);
+
+	/*
+	 * reclaim cancel?
+	 */
+	if (pnd->pnd_puffs_nlookup > nlookup) {
+		pnd->pnd_flags &= ~PND_RECLAIMED;
+		perfuse_node_cache(ps, opc);
+		node_rele(opc);
+		return 0;
+	}
+
 
 #ifdef PERFUSE_DEBUG
-		if ((pnd->pnd_flags & PND_OPEN) ||
-		       !TAILQ_EMPTY(&pnd->pnd_pcq))
-			DERRX(EX_SOFTWARE, "%s: opc = %p: still open",
-			      __func__, (void *)opc);
+	if ((pnd->pnd_flags & PND_OPEN) ||
+	       !TAILQ_EMPTY(&pnd->pnd_pcq))
+		DERRX(EX_SOFTWARE, "%s: opc = %p: still open",
+		      __func__, opc);
 
-		if ((pnd->pnd_flags & PND_BUSY) ||
-		       !TAILQ_EMPTY(&pnd->pnd_pcq))
-			DERRX(EX_SOFTWARE, "%s: opc = %p: ongoing operations",
-			      __func__, (void *)opc);
+	if ((pnd->pnd_flags & PND_BUSY) ||
+	       !TAILQ_EMPTY(&pnd->pnd_pcq))
+		DERRX(EX_SOFTWARE, "%s: opc = %p: queued operations",
+		      __func__, opc);
+
+	if (pnd->pnd_inxchg != 0)
+		DERRX(EX_SOFTWARE, "%s: opc = %p: ongoing operations",
+		      __func__, opc);
 #endif
 
-		/*
-		 * Send the FORGET message
-		 *
-		 * ps_new_msg() is called with NULL creds, which will
-		 * be interpreted as FUSE superuser. This is obviously
-		 * fine since we operate with kernel creds here.
-		 */
-		pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, FUSE_FORGET, 
-			      sizeof(*ffi), NULL);
-		ffi = GET_INPAYLOAD(ps, pm, fuse_forget_in);
-		ffi->nlookup = pnd->pnd_fuse_nlookup;
+	/*
+	 * Send the FORGET message
+	 *
+	 * ps_new_msg() is called with NULL creds, which will
+	 * be interpreted as FUSE superuser. This is obviously
+	 * fine since we operate with kernel creds here.
+	 */
+	pm = ps->ps_new_msg(pu, opc, FUSE_FORGET, 
+		      sizeof(*ffi), NULL);
+	ffi = GET_INPAYLOAD(ps, pm, fuse_forget_in);
+	ffi->nlookup = pnd->pnd_fuse_nlookup;
 
-		/*
-		 * No reply is expected, pm is freed in xchg_msg
-		 */
-		(void)xchg_msg(pu, (puffs_cookie_t)pn, 
-			       pm, UNSPEC_REPLY_LEN, no_reply);
+	/*
+	 * No reply is expected, pm is freed in xchg_msg
+	 */
+	(void)xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, no_reply);
 
-		parent_pn = pnd->pnd_parent;
-
-		perfuse_destroy_pn(pn);
-
-		pn = parent_pn;
-	}
+	perfuse_destroy_pn(pu, opc);
 
 	return 0;
 }
@@ -2750,18 +2751,17 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 int 
 perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
-	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	int error;
 
 	if (opc == 0)
 		return 0;
 
-	ps = puffs_getspecific(pu);
+	node_ref(opc);
 	pnd = PERFUSE_NODE_DATA(opc);
 
 	if (!(pnd->pnd_flags & (PND_OPEN|PND_REMOVED)))
-		return 0;
+		goto out;
 
 	/*
 	 * Make sure all operation are finished
@@ -2778,7 +2778,7 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 	 * so that a new open will be queued.
 	 */
 	if (pnd->pnd_flags & PND_INOPEN) 
-		return 0;
+		goto out;
 
 	pnd->pnd_flags |= PND_INOPEN;
 
@@ -2817,8 +2817,13 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 	 * Schedule awaiting operations
 	 */
 	pnd->pnd_flags &= ~PND_INOPEN;
-	(void)dequeue_requests(ps, opc, PCQ_OPEN, DEQUEUE_ALL);
+	(void)dequeue_requests(opc, PCQ_OPEN, DEQUEUE_ALL);
 
+	/*
+	 * errors are ignored, since the kernel ignores the return code.
+	 */
+out:
+	node_rele(opc);
 	return 0;
 }
 
@@ -2855,6 +2860,8 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	size_t len;
 	int error;
 	
+	node_ref(opc);
+
 	/*
 	 * Make sure we do have a filehandle, as the FUSE filesystem
 	 * expect one. E.g.: if we provide none, GlusterFS logs an error
@@ -2866,8 +2873,10 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * files at exit time when the process used lock, see
 	 * sys_exit -> exit1 -> fd_free -> fd_close -> VOP_ADVLOCK
 	 */
-	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH)
-		return EBADF;
+	if ((fh = perfuse_get_fh(opc, FREAD)) == FUSE_UNKNOWN_FH) {
+		error = EBADF;
+		goto out;
+	}
 
 	ps = puffs_getspecific(pu);
 
@@ -2903,7 +2912,7 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 #endif
 
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
 	foh = GET_OUTHDR(ps, pm);
 	len = foh->len - sizeof(*foh);
@@ -2948,8 +2957,11 @@ perfuse_node_advlock(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 int
@@ -3035,8 +3047,18 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 }
 
 int
-perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
-	off_t offset, size_t *resid, const struct puffs_cred *pcr, int ioflag)
+perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
+	uint8_t *buf, off_t offset, size_t *resid, 
+	const struct puffs_cred *pcr, int ioflag)
+{
+	return perfuse_node_write2(pu, opc, buf, offset, resid, pcr, ioflag, 0);
+}
+
+/* ARGSUSED7 */
+int
+perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag, int xflag)
 {
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -3059,6 +3081,8 @@ perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 
 	if (vap->va_type == VDIR) 
 		return EISDIR;
+
+	node_ref(opc);
 
 	/*
 	 * We need to queue write requests in order to avoid
@@ -3143,6 +3167,8 @@ perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 
 		fwo = GET_OUTPAYLOAD(ps, pm, fuse_write_out);
 		written = fwo->size;
+		ps->ps_destroy_msg(pm);
+
 #ifdef PERFUSE_DEBUG
 		if (written > *resid)
 			DERRX(EX_SOFTWARE, "%s: Unexpected big write %zd",
@@ -3152,7 +3178,6 @@ perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 		offset += written;
 		buf += written;
 
-		ps->ps_destroy_msg(pm);
 	} while (*resid != 0);
 
 	/* 
@@ -3184,7 +3209,7 @@ perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 			DERRX(EX_SOFTWARE, "file write grow without resize");
 #endif
 		pnd->pnd_flags &= ~PND_INRESIZE;
-		(void)dequeue_requests(ps, opc, PCQ_RESIZE, DEQUEUE_ALL);
+		(void)dequeue_requests(opc, PCQ_RESIZE, DEQUEUE_ALL);
 	}
 
 
@@ -3204,18 +3229,29 @@ perfuse_node_write(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_SYNC)
 		DPRINTF("%s: DIRTY opc = %p, file = \"%s\"\n", 
-			__func__, (void*)opc, perfuse_node_path(opc));
+			__func__, (void*)opc, perfuse_node_path(ps, opc));
 #endif
 
 out:
+	/*
+	 * VOP_PUTPAGE causes FAF write where kernel does not 
+	 * check operation result. At least warn if it failed.
+	 */
+#ifdef PUFFS_WRITE_FAF
+	if (error && (xflag & PUFFS_WRITE_FAF))
+		DWARN("Data loss caused by FAF write failed on \"%s\"",
+		      pnd->pnd_name);
+#endif /* PUFFS_WRITE_FAF */
+
 	/*
 	 * If there are no more queued write, we can resume
 	 * an operation awaiting write completion.
 	 */ 
 	pnd->pnd_flags &= ~PND_INWRITE;
-	if (dequeue_requests(ps, opc, PCQ_WRITE, 1) == 0)
-		(void)dequeue_requests(ps, opc, PCQ_AFTERWRITE, DEQUEUE_ALL);
+	if (dequeue_requests(opc, PCQ_WRITE, 1) == 0)
+		(void)dequeue_requests(opc, PCQ_AFTERWRITE, DEQUEUE_ALL);
 
+	node_rele(opc);
 	return error;
 }
 
@@ -3244,6 +3280,7 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
 	attrnamelen = strlen(attrname) + 1;
@@ -3256,7 +3293,7 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy(np, attrname, attrnamelen);
 	
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
 	/*
 	 * We just get fuse_getattr_out with list size if we requested
@@ -3269,7 +3306,8 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 			*attrsize = fgo->size;
 
 		ps->ps_destroy_msg(pm);
-		return 0;
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -3286,8 +3324,11 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 	
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 int
@@ -3304,6 +3345,7 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
 	attrnamelen = strlen(attrname) + 1;
@@ -3320,12 +3362,15 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	if ((error = xchg_msg(pu, opc, pm, 
 			      NO_PAYLOAD_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
-	*resid = 0;
 	ps->ps_destroy_msg(pm);
+	*resid = 0;
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 /* ARGSUSED2 */
@@ -3343,6 +3388,8 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	size_t len, puffs_len;
 	int error;
 	
+	node_ref(opc);
+
 	ps = puffs_getspecific(pu);
 	len = sizeof(*fgi);
 
@@ -3354,7 +3401,7 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fgi->size = 0;
 	
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
-		return error;
+		goto out;
 
 	/*
 	 * We just get fuse_getattr_out with list size if we requested
@@ -3368,7 +3415,8 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 		ps->ps_destroy_msg(pm);
 
-		return 0;
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -3403,8 +3451,11 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 		*attrsize = puffs_len;
 
 	ps->ps_destroy_msg(pm);
+	error = 0;
 
-	return 0;
+out:
+	node_rele(opc);
+	return error;
 }
 
 int
@@ -3418,6 +3469,8 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	node_ref(opc);
+
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
 	attrnamelen = strlen(attrname) + 1;
@@ -3430,5 +3483,6 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	
 	ps->ps_destroy_msg(pm);
 
+	node_rele(opc);
 	return error;
 }

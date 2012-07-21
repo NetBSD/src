@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.28 2012/04/18 00:57:22 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.29 2012/07/21 05:49:42 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/extattr.h>
+#include <sys/hash.h>
 #include <sys/un.h>
 #include <machine/vmparam.h>
 
@@ -56,15 +57,24 @@ static struct perfuse_state *
 init_state(void)
 {
 	struct perfuse_state *ps;
+	size_t len;
 	char opts[1024];
+	int i;
 
 	if ((ps = malloc(sizeof(*ps))) == NULL)
-		DERR(EX_OSERR, "%s: malloc failed", __func__);
+		DERR(EX_OSERR, "%s:%d malloc failed", __func__, __LINE__);
 
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
 	ps->ps_max_readahead = UINT_MAX;
 	TAILQ_INIT(&ps->ps_trace);
+
+	ps->ps_nnidhash = PUFFS_PNODEBUCKETS;
+	len = sizeof(*ps->ps_nidhash) * ps->ps_nnidhash;
+	if ((ps->ps_nidhash = malloc(len)) == NULL)
+		DERR(EX_OSERR, "%s:%d malloc failed", __func__, __LINE__);
+	for (i = 0; i < ps->ps_nnidhash; i++)
+		LIST_INIT(&ps->ps_nidhash[i]);
 	
 	/*
 	 * Most of the time, access() is broken because the filesystem
@@ -490,6 +500,9 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	PUFFSOP_SET(pops, perfuse, node, getattr_ttl);
 	PUFFSOP_SET(pops, perfuse, node, setattr_ttl);
 #endif /* PUFFS_KFLAG_CACHE_FS_TTL */
+#ifdef PUFFS_SETATTR_FAF
+	PUFFSOP_SET(pops, perfuse, node, write2);
+#endif /* PUFFS_SETATTR_FAF */
 
 	/*
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
@@ -521,6 +534,8 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	if ((pu = puffs_init(pops, source, fstype, ps, puffs_flags)) == NULL)
 		DERR(EX_OSERR, "%s: puffs_init failed", __func__);
 
+	puffs_setncookiehash(pu, PUFFS_PNODEBUCKETS);
+
 	ps->ps_pu = pu;
 
 	/*
@@ -528,7 +543,8 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	 */
 	pn_root = perfuse_new_pn(pu, "", NULL);
 	PERFUSE_NODE_DATA(pn_root)->pnd_nodeid = FUSE_ROOT_ID; 
-	PERFUSE_NODE_DATA(pn_root)->pnd_parent = pn_root;
+	PERFUSE_NODE_DATA(pn_root)->pnd_parent_nodeid = FUSE_ROOT_ID;
+	perfuse_node_cache(ps, pn_root);
 	puffs_setroot(pu, pn_root);
 	ps->ps_fsid = pn_root->pn_va.va_fsid;
 	
@@ -557,6 +573,8 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	ps->ps_get_outhdr = pc->pc_get_outhdr;
 	ps->ps_get_outpayload = pc->pc_get_outpayload;
 	ps->ps_umount = pc->pc_umount;
+
+	pc->pc_fsreq = *perfuse_fsreq;
 
 	return pu;
 } 
@@ -626,4 +644,44 @@ perfuse_unmount(struct puffs_usermount *pu)
 	ps = puffs_getspecific(pu);
 
 	return unmount(ps->ps_target, MNT_FORCE);
+}
+
+void         
+perfuse_fsreq(struct puffs_usermount *pu, perfuse_msg_t *pm)
+{
+	struct perfuse_state *ps;
+	struct fuse_out_header *foh;
+	     
+	ps = puffs_getspecific(pu);
+	foh = GET_OUTHDR(ps, pm);
+
+	/*
+	 * There are some operations we may use in a  Fire and Forget wey,
+	 * because the kernel does not await a reply, but FUSE still
+	 * sends a reply. This happens for fsyc, setattr (for metadata
+	 * associated with a fsync) and write (for VOP_PUTPAGES). Ignore
+	 * if it was fine, warn or abort otherwise.
+	 */   
+	switch (foh->error) {
+	case 0:
+		break;
+	case -ENOENT:
+		/* File disapeared during a FAF operation */
+		break;
+	case -ENOTCONN: /* FALLTHROUGH */
+	case -EAGAIN: /* FALLTHROUGH */
+	case -EMSGSIZE:
+		DWARN("operation unique = %"PRId64" failed", foh->unique);
+		break;
+	default:
+		DERRX(EX_SOFTWARE,
+		     "Unexpected frame: unique = %"PRId64", error = %d",
+		     foh->unique, foh->error);
+		/* NOTREACHED */
+		break;
+	}
+
+	ps->ps_destroy_msg(pm);
+
+	return;
 }

@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.20 2012/02/04 18:36:30 joerg Exp $ */
+/*  $NetBSD: msg.c,v 1.21 2012/07/21 05:49:42 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -357,7 +357,12 @@ perfused_xchg_pb(struct puffs_usermount *pu, perfuse_msg_t *pm,
 	/*
 	 * Negative Linux errno... 
 	 */
-	foh->error = -foh->error;
+	if (foh->error <= 0) {
+		foh->error = -foh->error;
+	} else {
+		DWARNX("FUSE resturns positive errno %d", foh->error);
+		foh->error = 0;
+	}
 
 	return foh->error;
 }
