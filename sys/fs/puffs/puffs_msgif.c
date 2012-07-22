@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.90 2012/07/21 05:17:10 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.91 2012/07/22 17:40:46 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.90 2012/07/21 05:17:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.91 2012/07/22 17:40:46 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -986,7 +986,6 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
 		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
-		psopr->psopr_at = hardclock_ticks;
 
 		mutex_enter(&pmp->pmp_sopmtx);
 		if (pmp->pmp_sopthrcount == 0) {
@@ -1011,7 +1010,6 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_preq = *preq;
 		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;
-		psopr->psopr_at = hardclock_ticks;
 
 		mutex_enter(&pmp->pmp_sopmtx);
 		if (pmp->pmp_sopthrcount == 0) {
@@ -1061,13 +1059,14 @@ puffs_sop_thread(void *arg)
 	for (keeprunning = true; keeprunning; ) {
 		/*
 		 * We have a higher priority queue for flush and umount
-		 * and a lower priority queue for reclaims. Request are
-		 * not honoured before clock reaches psopr_at. This code
-		 * assumes that requests are ordered by psopr_at in queues.
+		 * and a lower priority queue for reclaims. Request on
+		 * slower queue are not honoured before clock reaches 
+		 * psopr_at. This code assumes that requests are ordered 
+		 * by psopr_at in queues.
 		 */
 		do {
 			psopr = TAILQ_FIRST(&pmp->pmp_sopfastreqs);
-			if ((psopr != NULL) && TIMED_OUT(psopr->psopr_at)) {
+			if (psopr != NULL) {
 				TAILQ_REMOVE(&pmp->pmp_sopfastreqs,
 					     psopr, psopr_entries);
 				break;

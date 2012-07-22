@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.102 2012/07/21 05:17:11 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.103 2012/07/22 17:40:46 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.102 2012/07/21 05:17:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.103 2012/07/22 17:40:46 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -422,7 +422,6 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		KASSERT(curlwp != uvm.pagedaemon_lwp);
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_sopreq = PUFFS_SOPREQSYS_EXIT;
-		psopr->psopr_at = hardclock_ticks;
 		mutex_enter(&pmp->pmp_sopmtx);
 		if (pmp->pmp_sopthrcount == 0) {
 			mutex_exit(&pmp->pmp_sopmtx);
