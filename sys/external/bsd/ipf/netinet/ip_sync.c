@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.4 2012/07/22 17:48:53 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.4 2012/07/22 17:48:53 martin Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:45:38 darrenr Exp";
 #endif
@@ -550,7 +550,7 @@ ipf_sync_write(ipf_main_softc_t *softc, struct uio *uio)
 		} else {
 			/* insufficient data, wait until next call */
 			if (softs->ipf_sync_debug > 2)
-				printf("uiomove(data) %s %d bytes, got %zu\n",
+				printf("uiomove(data) %s %d bytes, got %d\n",
 					"insufficient data, need",
 					sh.sm_len, (int)uio->uio_resid);
 			IPFERROR(110007);
