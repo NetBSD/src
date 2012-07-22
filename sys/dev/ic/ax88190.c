@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.11 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.12 2012/07/22 14:32:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.11 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.11 2008/04/28 20:23:49 martin Exp $");
 
 static int	ax88190_mii_readreg(device_t, int, int);
 static void	ax88190_mii_writereg(device_t, int, int, int);
-static void	ax88190_mii_statchg(device_t);
+static void	ax88190_mii_statchg(struct ifnet *);
 
 /*
  * MII bit-bang glue.
@@ -174,7 +174,7 @@ ax88190_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 static void
-ax88190_mii_statchg(device_t self)
+ax88190_mii_statchg(struct ifnet *ifp)
 {
 
 	/* XXX */

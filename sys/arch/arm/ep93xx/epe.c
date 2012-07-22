@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.26 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: epe.c,v 1.27 2012/07/22 14:32:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.27 2012/07/22 14:32:50 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,15 +98,15 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.26 2011/07/01 19:31:17 dyoung Exp $");
 #define CTRLPAGE_DMASYNC(x, y, z)
 #endif /* ! EPE_FAST */
 
-static int	epe_match(struct device *, struct cfdata *, void *);
-static void	epe_attach(struct device *, struct device *, void *);
+static int	epe_match(device_t , cfdata_t, void *);
+static void	epe_attach(device_t, device_t, void *);
 static void	epe_init(struct epe_softc *);
 static int      epe_intr(void* arg);
 static int	epe_gctx(struct epe_softc *);
 static int	epe_mediachange(struct ifnet *);
-int		epe_mii_readreg (struct device *, int, int);
-void		epe_mii_writereg (struct device *, int, int, int);
-void		epe_statchg (struct device *);
+int		epe_mii_readreg (device_t, int, int);
+void		epe_mii_writereg (device_t, int, int, int);
+void		epe_statchg (struct ifnet *);
 void		epe_tick (void *);
 static int	epe_ifioctl (struct ifnet *, u_long, void *);
 static void	epe_ifstart (struct ifnet *);
@@ -119,21 +119,21 @@ CFATTACH_DECL(epe, sizeof(struct epe_softc),
     epe_match, epe_attach, NULL, NULL);
 
 static int
-epe_match(struct device *parent, struct cfdata *match, void *aux)
+epe_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 2;
 }
 
 static void
-epe_attach(struct device *parent, struct device *self, void *aux)
+epe_attach(device_t parent, device_t self, void *aux)
 {
-	struct epe_softc		*sc;
+	struct epe_softc		*sc = device_private(self);
 	struct epsoc_attach_args	*sa;
 	prop_data_t			 enaddr;
 
-	printf("\n");
-	sc = (struct epe_softc*) self;
+	aprint_normal("\n");
 	sa = aux;
+	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_intr = sa->sa_intr;
 	sc->sc_dmat = sa->sa_dmat;
@@ -303,7 +303,7 @@ epe_init(struct epe_softc *sc)
 	/* Read ethernet MAC, should already be set by bootrom */
 	bus_space_read_region_1(sc->sc_iot, sc->sc_ioh, EPE_IndAd,
 		sc->sc_enaddr, ETHER_ADDR_LEN);
-	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(sc->sc_dev, "MAC address %s\n", 
 		ether_sprintf(sc->sc_enaddr));
 
 	/* Soft Reset the MAC */
@@ -334,7 +334,7 @@ epe_init(struct epe_softc *sc)
 			sc->ctrlpage, PAGE_SIZE, NULL, BUS_DMA_WAITOK);
 	}
 	if (err != 0) {
-		panic("%s: Cannot get DMA memory", sc->sc_dev.dv_xname);
+		panic("%s: Cannot get DMA memory", device_xname(sc->sc_dev));
 	}
 	sc->ctrlpage_dsaddr = sc->ctrlpage_dmamap->dm_segs[0].ds_addr;
 	memset(sc->ctrlpage, 0, PAGE_SIZE);
@@ -402,8 +402,8 @@ epe_init(struct epe_softc *sc)
 	}
 
 	/* Divide HCLK by 32 for MDC clock */
-	if (device_cfdata(&sc->sc_dev)->cf_flags)
-		mdcdiv = device_cfdata(&sc->sc_dev)->cf_flags;
+	if (device_cfdata(sc->sc_dev)->cf_flags)
+		mdcdiv = device_cfdata(sc->sc_dev)->cf_flags;
 	EPE_WRITE(SelfCtl, (SelfCtl_MDCDIV(mdcdiv)|SelfCtl_PSPRS));
 
 	sc->sc_mii.mii_ifp = ifp;
@@ -413,7 +413,7 @@ epe_init(struct epe_softc *sc)
 	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epe_mediachange,
 		ether_mediastatus);
-	mii_attach((struct device *)sc, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
@@ -434,7 +434,7 @@ epe_init(struct epe_softc *sc)
 	 */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-        strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+        strcpy(ifp->if_xname, device_xname(sc->sc_dev));
         ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
         ifp->if_ioctl = epe_ifioctl;
         ifp->if_start = epe_ifstart;
@@ -457,12 +457,13 @@ epe_mediachange(struct ifnet *ifp)
 }
 
 int
-epe_mii_readreg(struct device *self, int phy, int reg)
+epe_mii_readreg(device_t self, int phy, int reg)
 {
-	u_int32_t d, v;
 	struct epe_softc *sc;
+	u_int32_t d, v;
 
-	sc = (struct epe_softc *)self;
+	sc = device_private(self);
+
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
 	EPE_WRITE(MIICmd, (MIICmd_READ | (phy << 5) | reg));
@@ -473,12 +474,13 @@ epe_mii_readreg(struct device *self, int phy, int reg)
 }
 
 void
-epe_mii_writereg(struct device *self, int phy, int reg, int val)
+epe_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct epe_softc *sc;
 	u_int32_t d;
 
-	sc = (struct epe_softc *)self;
+	sc = device_private(self);
+
 	d = EPE_READ(SelfCtl);
 	EPE_WRITE(SelfCtl, d & ~SelfCtl_PSPRS); /* no preamble suppress */
 	EPE_WRITE(MIIData, val);
@@ -489,9 +491,9 @@ epe_mii_writereg(struct device *self, int phy, int reg, int val)
 
 	
 void
-epe_statchg(struct device *self)
+epe_statchg(struct ifnet *ifp)
 {
-        struct epe_softc *sc = (struct epe_softc *)self;
+        struct epe_softc *sc = ifp->if_softc;
         u_int32_t reg;
 
         /*
@@ -518,7 +520,7 @@ epe_tick(void *arg)
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EPE_READ(RXMissCnt);
 	if (misses > 0) 
-		printf("%s: %d rx misses\n", sc->sc_dev.dv_xname, misses);
+		printf("%s: %d rx misses\n", device_xname(sc->sc_dev), misses);
 	
 	s = splnet();
 	if (epe_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
@@ -666,7 +668,7 @@ epe_ifwatchdog(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
        	printf("%s: device timeout, BMCtl = 0x%08x, BMSts = 0x%08x\n", 
-		sc->sc_dev.dv_xname, EPE_READ(BMCtl), EPE_READ(BMSts));
+		device_xname(sc->sc_dev), EPE_READ(BMCtl), EPE_READ(BMSts));
 }
 
 static int

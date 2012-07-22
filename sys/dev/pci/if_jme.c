@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.20 2012/06/02 21:36:44 dsl Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.21 2012/07/22 14:33:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.20 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.21 2012/07/22 14:33:02 matt Exp $");
 
 
 #include <sys/param.h>
@@ -206,7 +206,7 @@ static void jme_set_filter(jme_softc_t *);
 
 int jme_mii_read(device_t, int, int);
 void jme_mii_write(device_t, int, int, int);
-void jme_statchg(device_t);
+void jme_statchg(struct ifnet *);
 
 static int jme_eeprom_read_byte(struct jme_softc *, uint8_t, uint8_t *);
 static int jme_eeprom_macaddr(struct jme_softc *);
@@ -1037,10 +1037,8 @@ jme_mii_write(device_t self, int phy, int reg, int val)
 }
 
 void
-jme_statchg(device_t self)
+jme_statchg(struct ifnet *ifp)
 {
-	jme_softc_t *sc = device_private(self);
-	struct ifnet *ifp = &sc->jme_if;
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING))
 		jme_init(ifp, 0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.41 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.42 2012/07/22 14:32:52 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.41 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.42 2012/07/22 14:32:52 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -319,9 +319,9 @@ sbmac_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 static void
-sbmac_mii_statchg(device_t self)
+sbmac_mii_statchg(struct ifnet *ifp)
 {
-	struct sbmac_softc *sc = device_private(self);
+	struct sbmac_softc *sc = ifp->if_softc;
 	sbmac_state_t oldstate;
 
 	/* Stop the MAC in preparation for changing all of the parameters. */
@@ -1468,7 +1468,7 @@ sbmac_init_and_start(struct sbmac_softc *sc)
 	s = splnet();
 
 	mii_pollstat(&sc->sc_mii);		/* poll phy for current speed */
-	sbmac_mii_statchg(sc->sc_dev); /* set state to new speed */
+	sbmac_mii_statchg(&sc->sc_ethercom.ec_if); /* set state to new speed */
 	sbmac_set_channel_state(sc, sbmac_state_on);
 
 	splx(s);

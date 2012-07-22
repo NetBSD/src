@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.43 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.44 2012/07/22 14:33:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.43 2012/03/11 01:06:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.44 2012/07/22 14:33:06 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ Static void url_lock_mii(struct url_softc *);
 Static void url_unlock_mii(struct url_softc *);
 Static int url_int_miibus_readreg(device_t, int, int);
 Static void url_int_miibus_writereg(device_t, int, int, int);
-Static void url_miibus_statchg(device_t);
+Static void url_miibus_statchg(struct ifnet *);
 Static int url_init(struct ifnet *);
 Static void url_setmulti(struct url_softc *);
 Static void url_reset(struct url_softc *);
@@ -1484,16 +1484,13 @@ url_int_miibus_writereg(device_t dev, int phy, int reg, int data)
 }
 
 Static void
-url_miibus_statchg(device_t dev)
+url_miibus_statchg(struct ifnet *ifp)
 {
 #ifdef URL_DEBUG
-	struct url_softc *sc;
-
-	if (dev == NULL)
+	if (ifp == NULL)
 		return;
 
-	sc = device_private(dev);
-	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", ifp->if_xname, __func__));
 #endif
 	/* Nothing to do */
 }

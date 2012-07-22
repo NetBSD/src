@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.54 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.55 2012/07/22 14:33:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.54 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.55 2012/07/22 14:33:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ static int	pcn_rxintr(struct pcn_softc *);
 
 static int	pcn_mii_readreg(device_t, int, int);
 static void	pcn_mii_writereg(device_t, int, int, int);
-static void	pcn_mii_statchg(device_t);
+static void	pcn_mii_statchg(struct ifnet *);
 
 static void	pcn_79c970_mediainit(struct pcn_softc *);
 static int	pcn_79c970_mediachange(struct ifnet *);
@@ -2183,9 +2183,9 @@ pcn_mii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-pcn_mii_statchg(device_t self)
+pcn_mii_statchg(struct ifnet *ifp)
 {
-	struct pcn_softc *sc = device_private(self);
+	struct pcn_softc *sc = ifp->if_softc;
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		pcn_bcr_write(sc, LE_BCR9, LE_B9_FDEN);

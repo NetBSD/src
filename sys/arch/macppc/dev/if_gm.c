@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.41 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.42 2012/07/22 14:32:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.41 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42 2012/07/22 14:32:51 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -117,7 +117,7 @@ void gmac_watchdog(struct ifnet *);
 
 int gmac_mii_readreg(device_t, int, int);
 void gmac_mii_writereg(device_t, int, int, int);
-void gmac_mii_statchg(device_t);
+void gmac_mii_statchg(struct ifnet *);
 void gmac_mii_tick(void *);
 
 CFATTACH_DECL_NEW(gm, sizeof(struct gmac_softc),
@@ -883,9 +883,9 @@ gmac_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 void
-gmac_mii_statchg(device_t self)
+gmac_mii_statchg(struct ifnet *ifp)
 {
-	struct gmac_softc *sc = device_private(self);
+	struct gmac_softc *sc = ifp->if_softc;
 
 	gmac_stop_txdma(sc);
 	gmac_stop_rxdma(sc);

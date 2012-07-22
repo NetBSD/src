@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_et.c,v 1.4 2012/07/22 14:33:02 matt Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.4 2012/07/22 14:33:02 matt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -101,7 +101,7 @@ int	et_shutdown(device_t);
 
 int	et_miibus_readreg(device_t, int, int);
 void	et_miibus_writereg(device_t, int, int, int);
-void	et_miibus_statchg(device_t);
+void	et_miibus_statchg(struct ifnet *);
 
 int	et_init(struct ifnet *ifp);
 int	et_ioctl(struct ifnet *, u_long, void *);
@@ -451,9 +451,9 @@ et_miibus_writereg(device_t dev, int phy, int reg, int val0)
 }
 
 void
-et_miibus_statchg(device_t dev)
+et_miibus_statchg(struct ifnet *ifp)
 {
-	struct et_softc *sc = device_private(dev);
+	struct et_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
 	uint32_t cfg2, ctrl;
 
