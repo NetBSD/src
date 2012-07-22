@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.25 2012/03/13 18:40:36 elad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.25 2012/03/13 18:40:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ efs_lookup(void *v)
 		err = efs_inode_lookup(VFSTOEFS(ap->a_dvp->v_mount),
 		    EFS_VTOI(ap->a_dvp), ap->a_cnp, &ino);
 		if (err) {
-			if (err == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
-			    nameiop != CREATE)
+			if (err == ENOENT && nameiop != CREATE)
 				cache_enter(ap->a_dvp, NULL, cnp);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
@@ -121,10 +120,9 @@ efs_lookup(void *v)
 		*ap->a_vpp = vp;
 	}
 
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(ap->a_dvp, *ap->a_vpp, cnp);
+	cache_enter(ap->a_dvp, *ap->a_vpp, cnp);
 
-	return (0);
+	return 0;
 }
 
 static int

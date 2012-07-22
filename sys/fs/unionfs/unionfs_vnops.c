@@ -142,8 +142,7 @@ unionfs_lookup(void *v)
 
 			vn_lock(dunp->un_dvp, LK_EXCLUSIVE | LK_RETRY);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		} else if (error == ENOENT && (cnflags & MAKEENTRY) &&
-		    nameiop != CREATE)
+		} else if (error == ENOENT && nameiop != CREATE)
 			cache_enter(dvp, NULLVP, cnp);
 
 		UNIONFS_INTERNAL_DEBUG("unionfs_lookup: leave (%d)\n", error);
@@ -269,8 +268,7 @@ unionfs_lookup(void *v)
 
 	*(ap->a_vpp) = vp;
 
-	if (cnflags & MAKEENTRY)
-		cache_enter(dvp, vp, cnp);
+	cache_enter(dvp, vp, cnp);
 
 	/* XXXAD lock status on error */
 unionfs_lookup_out:
@@ -279,7 +277,7 @@ unionfs_lookup_out:
 	if (lvp != NULLVP)
 		vrele(lvp);
 
-	if (error == ENOENT && (cnflags & MAKEENTRY) && nameiop != CREATE)
+	if (error == ENOENT && nameiop != CREATE)
 		cache_enter(dvp, NULLVP, cnp);
 
 	UNIONFS_INTERNAL_DEBUG("unionfs_lookup: leave (%d)\n", error);

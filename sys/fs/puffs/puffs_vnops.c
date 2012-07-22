@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.167 2012/07/21 05:17:11 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.168 2012/07/22 00:53:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.167 2012/07/21 05:17:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.168 2012/07/22 00:53:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -586,9 +586,8 @@ puffs_vnop_lookup(void *v)
 
 			/* save negative cache entry */
 			} else {
-				if ((cnp->cn_flags & MAKEENTRY)
-				    && PUFFS_USE_NAMECACHE(pmp)
-				    && !PUFFS_USE_FS_TTL(pmp))
+				if (PUFFS_USE_NAMECACHE(pmp) &&
+				    !PUFFS_USE_FS_TTL(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
 		}
@@ -664,7 +663,7 @@ puffs_vnop_lookup(void *v)
 	KASSERT(lookup_msg->pvnr_newnode == VPTOPP(vp)->pn_cookie);
 	*ap->a_vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
+	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
 	/* XXX */
