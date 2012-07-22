@@ -1,20 +1,44 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.1 2012/03/23 21:19:58 christos Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.2 2012/07/22 13:44:23 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id
+ * $Id: ip_pptp_pxy.c,v 1.1.1.2 2012/07/22 13:44:23 darrenr Exp $
  *
  */
 #define	IPF_PPTP_PROXY
 
+
+
+/*
+ * PPTP proxy
+ */
+typedef struct pptp_side {
+	u_32_t		pptps_nexthdr;
+	u_32_t		pptps_next;
+	int		pptps_state;
+	int		pptps_gothdr;
+	int		pptps_len;
+	int		pptps_bytes;
+	char		*pptps_wptr;
+	char		pptps_buffer[512];
+} pptp_side_t;
+
+typedef struct pptp_pxy {
+	nat_t		*pptp_nat;
+	struct ipstate	*pptp_state;
+	u_short		pptp_call[2];
+	pptp_side_t	pptp_side[2];
+	ipnat_t		*pptp_rule;
+} pptp_pxy_t;
+
 typedef	struct pptp_hdr {
-	u_short	pptph_len;
-	u_short	pptph_type;
-	u_32_t	pptph_cookie;
+	u_short		pptph_len;
+	u_short		pptph_type;
+	u_32_t		pptph_cookie;
 } pptp_hdr_t;
 
 #define	PPTP_MSGTYPE_CTL	1
@@ -92,10 +116,17 @@ ipf_p_pptp_new(arg, fin, aps, nat)
 	nat_t *nat;
 {
 	pptp_pxy_t *pptp;
-	ipnat_t *ipn, *np;
+	ipnat_t *ipn;
+	ipnat_t *np;
+	int size;
 	ip_t *ip;
 
+	if (fin->fin_v != 4)
+		return -1;
+
 	ip = fin->fin_ip;
+	np = nat->nat_ptr;
+	size = np->in_size;
 
 	if (ipf_nat_outlookup(fin, 0, IPPROTO_GRE, nat->nat_osrcip,
 			  ip->ip_dst) != NULL) {
@@ -103,24 +134,31 @@ ipf_p_pptp_new(arg, fin, aps, nat)
 			printf("ipf_p_pptp_new: GRE session already exists\n");
 		return -1;
 	}
-	np = nat->nat_ptr;
 
-	aps->aps_psiz = sizeof(*pptp) + np->in_namelen;
-	KMALLOCS(aps->aps_data, pptp_pxy_t *, aps->aps_psiz);
-	if (aps->aps_data == NULL) {
+	KMALLOC(pptp, pptp_pxy_t *);
+	if (pptp == NULL) {
 		if (ipf_p_pptp_debug > 0)
 			printf("ipf_p_pptp_new: malloc for aps_data failed\n");
 		return -1;
 	}
+	KMALLOCS(ipn, ipnat_t *, size);
+	if (ipn == NULL) {
+		KFREE(pptp);
+		return -1;
+	}
+
+	aps->aps_data = pptp;
+	aps->aps_psiz = sizeof(*pptp);
+	bzero((char *)pptp, sizeof(*pptp));
+	bzero((char *)ipn, size);
+	pptp->pptp_rule = ipn;
 
 	/*
 	 * Create NAT rule against which the tunnel/transport mapping is
 	 * created.  This is required because the current NAT rule does not
 	 * describe GRE but TCP instead.
 	 */
-	pptp = aps->aps_data;
-	bzero((char *)pptp, sizeof(*pptp));
-	ipn = &pptp->pptp_rule;
+	ipn->in_size = size;
 	ipn->in_ifps[0] = fin->fin_ifp;
 	ipn->in_apr = NULL;
 	ipn->in_use = 1;
@@ -137,6 +175,7 @@ ipf_p_pptp_new(arg, fin, aps, nat)
 	ipn->in_nsrcmsk = 0xffffffff;
 	ipn->in_odstmsk = 0xffffffff;
 	ipn->in_ndstmsk = 0xffffffff;
+	ipn->in_flags = (np->in_flags | IPN_PROXYRULE);
 	MUTEX_INIT(&ipn->in_lock, "pptp proxy NAT rule");
 
 	ipn->in_namelen = np->in_namelen;
@@ -205,10 +244,9 @@ ipf_p_pptp_donatstate(fin, nat, pptp)
 #endif
 
 		MUTEX_ENTER(&softn->ipf_nat_new);
-		nat2 = ipf_nat_add(&fi, &pptp->pptp_rule, &pptp->pptp_nat,
+		nat2 = ipf_nat_add(&fi, pptp->pptp_rule, &pptp->pptp_nat,
 				   NAT_SLAVE, nat->nat_dir);
 		MUTEX_EXIT(&softn->ipf_nat_new);
-		pptp->pptp_nat = nat2;
 		if (nat2 != NULL) {
 			(void) ipf_nat_proto(&fi, nat2, 0);
 			MUTEX_ENTER(&nat2->nat_lock);
@@ -538,6 +576,7 @@ ipf_p_pptp_del(softc, aps)
 
 		if (pptp->pptp_nat != NULL)
 			ipf_nat_setpending(softc, pptp->pptp_nat);
-		MUTEX_DESTROY(&pptp->pptp_rule.in_lock);
+		pptp->pptp_rule->in_flags |= IPN_DELETE;
+		ipf_nat_rule_deref(softc, &pptp->pptp_rule);
 	}
 }

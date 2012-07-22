@@ -1,18 +1,19 @@
-/*	$NetBSD: print_toif.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: print_toif.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: print_toif.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $
  */
 
 #include "ipf.h"
 
 
 void
-print_toif(tag, base, fdp)
+print_toif(family, tag, base, fdp)
+	int family;
 	char *tag;
 	char *base;
 	frdest_t *fdp;
@@ -23,12 +24,14 @@ print_toif(tag, base, fdp)
 		PRINTF("%s %s%s", tag, base + fdp->fd_name,
 		       (fdp->fd_ptr || (long)fdp->fd_ptr == -1) ? "" : "(!)");
 #ifdef	USE_INET6
-		if (use_inet6 && IP6_NOTZERO(&fdp->fd_ip6.in6)) {
-			char ipv6addr[80];
+		if (family == AF_INET6) {
+			if (IP6_NOTZERO(&fdp->fd_ip6)) {
+				char ipv6addr[80];
 
-			inet_ntop(AF_INET6, &fdp->fd_ip6, ipv6addr,
-				  sizeof(fdp->fd_ip6));
-			PRINTF(":%s", ipv6addr);
+				inet_ntop(AF_INET6, &fdp->fd_ip6, ipv6addr,
+					  sizeof(fdp->fd_ip6));
+				PRINTF(":%s", ipv6addr);
+			}
 		} else
 #endif
 			if (fdp->fd_ip.s_addr)

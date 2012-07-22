@@ -1,11 +1,11 @@
-/*	$NetBSD: allocmbt.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: allocmbt.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2006 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: allocmbt.c,v 1.1 2007/08/20 10:15:23 darren_r Exp 
+ * $Id: allocmbt.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
  */
 
 #include "ipf.h"
