@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipftest.c,v 1.78.2.6 2012/01/26 05:29:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipftest.c,v 1.1.1.2 2012/07/22 13:44:55 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -205,8 +205,10 @@ main(argc,argv)
 	else
 		fd = (*r->r_open)("-");
 
-	if (fd < 0)
+	if (fd < 0) {
+		perror("error opening input");
 		exit(-1);
+	}
 
 	m->m_data = (char *)m->mb_buf;
 	while ((i = (*r->r_readip)(m, &iface, &dir)) > 0) {
@@ -358,6 +360,7 @@ int ipftestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -380,6 +383,7 @@ int ipnattestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -402,6 +406,7 @@ int ipstatetestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -424,6 +429,7 @@ int ipauthtestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -446,6 +452,7 @@ int ipscantestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -468,6 +475,7 @@ int ipsynctestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -490,6 +498,7 @@ int ipooltestioctl(int dev, ioctlcmd_t cmd, ...)
 	va_list ap;
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	va_start(ap, cmd);
 	data = va_arg(ap, caddr_t);
 	va_end(ap);
@@ -512,6 +521,7 @@ int ipftestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGIPF, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(IPF,%#x,%p) = %d (%d)\n",
@@ -531,6 +541,7 @@ int ipnattestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGNAT, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(NAT,%#x,%p) = %d\n", cmd, data, i);
@@ -549,6 +560,7 @@ int ipstatetestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGSTATE, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(STATE,%#x,%p) = %d\n", cmd, data, i);
@@ -567,6 +579,7 @@ int ipauthtestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGAUTH, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(AUTH,%#x,%p) = %d\n", cmd, data, i);
@@ -585,6 +598,7 @@ int ipsynctestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGSYNC, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(SYNC,%#x,%p) = %d\n", cmd, data, i);
@@ -603,6 +617,7 @@ int ipscantestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGSCAN, cmd, data, FWRITE|FREAD);
 	if ((opts & OPT_DEBUG) || (i != 0))
 		fprintf(stderr, "ipfioctl(SCAN,%#x,%p) = %d\n", cmd, data, i);
@@ -621,6 +636,7 @@ int ipooltestioctl(dev, cmd, data)
 {
 	int i;
 
+	dev = dev;	/* gcc -Wextra */
 	i = ipfioctl(softc, IPL_LOGLOOKUP, cmd, data, FWRITE|FREAD);
 	if (opts & OPT_DEBUG)
 		fprintf(stderr, "ipfioctl(POOL,%#x,%p) = %d (%d)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -87,10 +87,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.110.2.9 2012/01/29 05:30:36 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
 #endif
 #endif
 
@@ -428,17 +428,25 @@ ipfr_frag_new(
 	frag.ipfr_auth = fin->fin_fi.fi_auth;
 
 	off = fin->fin_off >> 3;
-#ifdef USE_INET6
-	if ((off == 0) && (fin->fin_v == 6)) {
+	if (off == 0) {
 		char *ptr;
 		int end;
 
-		ptr = (char *)fin->fin_fraghdr + sizeof(struct ip6_frag);
+#ifdef USE_INET6
+		if (fin->fin_v == 6) {
+
+			ptr = (char *)fin->fin_fraghdr +
+			      sizeof(struct ip6_frag);
+		} else
+#endif
+		{
+			ptr = fin->fin_dp;
+		}
 		end = fin->fin_plen - (ptr - (char *)fin->fin_ip);
 		frag.ipfr_firstend = end >> 3;
-	} else
-#endif
+	} else {
 		frag.ipfr_firstend = 0;
+	}
 
 	/*
 	 * allocate some memory, if possible, if not, just record that we
@@ -553,7 +561,7 @@ ipf_frag_natnew(ipf_main_softc_t *softc, fr_info_t *fin, u_32_t pass,
 	ipf_frag_softc_t *softf = softc->ipf_frag_soft;
 	ipfr_t	*fra;
 
-	if ((fin->fin_v != 4) || (softf->ipfr_lock != 0))
+	if (softf->ipfr_lock != 0)
 		return 0;
 
 #ifdef USE_MUTEXES
@@ -570,8 +578,9 @@ ipf_frag_natnew(ipf_main_softc_t *softc, fr_info_t *fin, u_32_t pass,
 		softf->ipfr_nattail = &fra->ipfr_next;
 		fra->ipfr_next = NULL;
 		RWLOCK_EXIT(&softf->ipfr_natfrag);
+		return 0;
 	}
-	return fra ? 0 : -1;
+	return -1;
 }
 
 
@@ -708,7 +717,9 @@ ipf_frag_lookup(
 				 */
 				if ((f->ipfr_firstend != 0) &&
 				    (off < f->ipfr_firstend)) {
-					FBUMPD(ifs_overlap);
+					FBUMP(ifs_overlap);
+					DT2(ifs_overlap, u_short, off,
+					    ipfr_t *, f);
 					fin->fin_flx |= FI_BAD;
 					break;
 				}
@@ -836,8 +847,7 @@ ipf_frag_ipidknown(fr_info_t *fin)
 	ipfr_t	*ipf;
 	u_32_t	id;
 
-	if ((fin->fin_v != 4) || (softf->ipfr_lock) ||
-	    !softf->ipfr_ipidlist)
+	if (softf->ipfr_lock || !softf->ipfr_ipidlist)
 		return 0xffffffff;
 
 #ifdef USE_MUTEXES

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.2 2012/03/24 02:19:00 christos Exp $
+.\"	$NetBSD: ipf.5,v 1.3 2012/07/22 14:27:50 darrenr Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -78,7 +78,7 @@ sections that can be used to match on the contents of packet headers will
 follow on below.
 .PP
 The complete list of keywords, along with what they do is as follows:
-.DS
+.RS
 .HP
 pass
 rules that match a packet indicate to ipfilter that it should be
@@ -184,9 +184,9 @@ block out from any to 10.1.1.1
 .PP
 It is not possible to specify a range of addresses that does not
 have a boundary that can be defined by a standard subnet mask.
+.IP
+.B Names instead of addresses
 .RS
-.PP
-Names instead of addresses
 .PP
 Hostnames, resolved either via DNS or /etc/hosts, or network names,
 resolved via /etc/networks, may be used in place of actual addresses
@@ -256,7 +256,7 @@ return-icmp. Which return code to use is a choice to be made when
 weighing up the pro's and con's. Using some of the codes may make it
 more obvious that a firewall is being used rather than just the host
 not responding.
-.DS
+.RS
 .HP
 filter-prohib
 (prohibited by filter)
@@ -487,7 +487,7 @@ There are two types of address pools that can be defined in ippool.conf(5):
 trees and hash tables. To refer to a tree defined in ippool.conf(5),
 use this syntax:
 .PP
-.If
+.nf
 pass in from pool/trusted to any
 .fi
 .PP
@@ -515,7 +515,6 @@ possible to restrict the way in which IPFilter allows connections to
 be created.  A quick overview of the TCP
 flags is below. Each is listed with the letter used in IPFilter
 rules, followed by its three or four letter pneumonic.
-.PP
 .HP
 S
 SYN - this bit is set when a host is setting up a connection.
@@ -844,6 +843,7 @@ pass ... in on forward-in,reverse-in \\
 
 pass ... out on forward-out,reverse-out \\
          in-via forward-in,reverse-in ...
+.fi
 .PP
 An example that pins down all 4 network interfaces used by an ssh
 connection might look something like this:
@@ -916,7 +916,7 @@ block out quick on bge0 all head 101
 block in quick on fxp0 all head internal-in
 block out quick on fxp0 all head internal-out
 pass in quick proto icmp all icmp-type echo group 100
-.nf
+.fi
 .PP
 In the above set of rules, there are four groups defined but only one
 of them has a member rule. The only packets that would be allowed
@@ -1061,7 +1061,6 @@ pass in quick proto igmp all with opt rtralrt
 .PP
 The following is a list of IP options that most people encounter and
 what their use/threat is.
-.PP
 .HP
 lsrr
 (loose source route) the sender of the packet includes a list of addresses
@@ -1603,7 +1602,7 @@ tcp_timeout		1	MAXINT	480
 udp_ack_timeout	1	MAXINT	24
 udp_timeout		1	MAXINT	240
 update_ipid		0	1	0
-.nf
+.fi
 .SH Calling out to internal functions
 .PP
 IPFilter provides a pair of functions that can be called from a rule

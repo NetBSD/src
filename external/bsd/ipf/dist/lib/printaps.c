@@ -1,4 +1,4 @@
-/*	$NetBSD: printaps.c,v 1.2 2012/03/25 09:50:45 martin Exp $	*/
+/*	$NetBSD: printaps.c,v 1.3 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: printaps.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $";
 #endif
 
 
@@ -35,10 +35,11 @@ printaps(aps, opts, proto)
 	PRINTF("\tproxy %s/%d use %d flags %x\n", apr.apr_label,
 		apr.apr_p, apr.apr_ref, apr.apr_flags);
 #ifdef	USE_QUAD_T
-	PRINTF("%llu pkts %llu", (unsigned long long)ap.aps_bytes,
+	PRINTF("\tbytes %"PRIu64" pkts %"PRIu64"",
+		(unsigned long long)ap.aps_bytes,
 		(unsigned long long)ap.aps_pkts);
 #else
-	PRINTF("%lu pkts %lu", ap.aps_bytes, ap.aps_pkts);
+	PRINTF("\tbytes %lu pkts %lu", ap.aps_bytes, ap.aps_pkts);
 #endif
 	PRINTF(" data %s\n", ap.aps_data ? "YES" : "NO");
 	if ((proto == IPPROTO_TCP) && (opts & OPT_VERBOSE)) {
