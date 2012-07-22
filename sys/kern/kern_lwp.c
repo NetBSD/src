@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.170 2012/06/09 02:55:32 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.171 2012/07/22 22:40:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.170 2012/06/09 02:55:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.171 2012/07/22 22:40:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -356,6 +356,7 @@ lwp0_init(void)
 	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
 	cv_init(&l->l_sigcv, "sigwait");
+	cv_init(&l->l_waitcv, "vfork");
 
 	kauth_cred_hold(proc0.p_cred);
 	l->l_cred = proc0.p_cred;
@@ -824,6 +825,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
 	cv_init(&l2->l_sigcv, "sigwait");
+	cv_init(&l2->l_waitcv, "vfork");
 	l2->l_syncobj = &sched_syncobj;
 
 	if (rnewlwpp != NULL)
@@ -1162,6 +1164,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
+	cv_destroy(&l->l_waitcv);
 
 	/*
 	 * Free lwpctl structure and affinity.
