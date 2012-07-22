@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_scan.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -61,10 +61,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_scan.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_scan.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_scan.c,v 2.53.2.2 2012/01/29 03:08:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_scan.c,v 1.1.1.2 2012/07/22 13:45:34 darrenr Exp";
 #endif
 #endif
 

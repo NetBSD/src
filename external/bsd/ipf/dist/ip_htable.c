@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -53,7 +53,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp";
 #endif
 
 # ifdef USE_INET6

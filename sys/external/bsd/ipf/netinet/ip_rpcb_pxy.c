@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
+ * Copyright (C) 2002-2012 by Ryan Beasley <ryanb@goddamnbastard.org>
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -39,11 +39,11 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.47 2009/03/01 12:41:26 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 1.1.1.2 2012/07/22 13:45:34 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 
 #define	IPF_RPCB_PROXY
 
@@ -152,8 +152,10 @@ ipf_p_rpcb_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	rpcb_session_t *rs;
 
-	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
+
+	if (fin->fin_v != 4)
+		return -1;
 
 	KMALLOC(rs, rpcb_session_t *);
 	if (rs == NULL)
@@ -1218,6 +1220,7 @@ ipf_p_rpcb_getnat(fr_info_t *fin, nat_t *nat, u_int proto, u_int port)
 			return(-1);
 		}
 
+		natl->nat_ptr = ipn;
 		fi.fin_saddr = natl->nat_nsrcaddr;
 		fi.fin_daddr = natl->nat_ndstaddr;
 		ipn->in_use++;

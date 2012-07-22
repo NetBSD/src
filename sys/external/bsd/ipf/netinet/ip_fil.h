@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.267.2.21 2012/01/29 05:30:35 darrenr Exp
+ * Id: ip_fil.h,v 1.1.1.2 2012/07/22 13:45:13 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -204,7 +204,7 @@ typedef	union	i6addr	{
 			      ntohl(HI63(a)) < ntohl(HI63(b))))))))
 #define	NLADD(n,x)	htonl(ntohl(n) + (x))
 #define	IP6_INC(a)	\
-		{ u_32_t *_i6 = (u_32_t *)(a); \
+		do { u_32_t *_i6 = (u_32_t *)(a); \
 		  _i6[3] = NLADD(_i6[3], 1); \
 		  if (_i6[3] == 0) { \
 			_i6[2] = NLADD(_i6[2], 1); \
@@ -215,9 +215,9 @@ typedef	union	i6addr	{
 				} \
 			} \
 		  } \
-		}
+		} while (0)
 #define	IP6_ADD(a,x,d)	\
-		{ i6addr_t *_s = (i6addr_t *)(a); \
+		do { i6addr_t *_s = (i6addr_t *)(a); \
 		  i6addr_t *_d = (i6addr_t *)(d); \
 		  _d->i6[0] = NLADD(_s->i6[0], x); \
 		  if (ntohl(_d->i6[0]) < ntohl(_s->i6[0])) { \
@@ -229,23 +229,23 @@ typedef	union	i6addr	{
 				} \
 			} \
 		  } \
-		}
-#define	IP6_AND(a,b,d)	{ i6addr_t *_s1 = (i6addr_t *)(a); \
+		} while (0)
+#define	IP6_AND(a,b,d)	do { i6addr_t *_s1 = (i6addr_t *)(a); \
 			  i6addr_t *_s2 = (i6addr_t *)(b); \
 			  i6addr_t *_d = (i6addr_t *)(d); \
 			  _d->i6[0] = _s1->i6[0] & _s2->i6[0]; \
 			  _d->i6[1] = _s1->i6[1] & _s2->i6[1]; \
 			  _d->i6[2] = _s1->i6[2] & _s2->i6[2]; \
 			  _d->i6[3] = _s1->i6[3] & _s2->i6[3]; \
-			}
+			} while (0)
 #define	IP6_ANDASSIGN(a,m) \
-			{ i6addr_t *_d = (i6addr_t *)(a); \
+			do { i6addr_t *_d = (i6addr_t *)(a); \
 			  i6addr_t *_m = (i6addr_t *)(m); \
 			  _d->i6[0] &= _m->i6[0]; \
 			  _d->i6[1] &= _m->i6[1]; \
 			  _d->i6[2] &= _m->i6[2]; \
 			  _d->i6[3] &= _m->i6[3]; \
-			}
+			} while (0)
 #define	IP6_MASKEQ(a,m,b) \
 			(((I60(a) & I60(m)) == I60(b)) && \
 			 ((I61(a) & I61(m)) == I61(b)) && \
@@ -257,7 +257,7 @@ typedef	union	i6addr	{
 			 ((I62(a) & I62(m)) != I62(b)) || \
 			 ((I63(a) & I63(m)) != I63(b)))
 #define	IP6_MERGE(a,b,c) \
-			{ i6addr_t *_d, *_s1, *_s2; \
+			do { i6addr_t *_d, *_s1, *_s2; \
 			  _d = (i6addr_t *)(a); \
 			  _s1 = (i6addr_t *)(b); \
 			  _s2 = (i6addr_t *)(c); \
@@ -265,9 +265,9 @@ typedef	union	i6addr	{
 			  _d->i6[1] |= _s1->i6[1] & ~_s2->i6[1]; \
 			  _d->i6[2] |= _s1->i6[2] & ~_s2->i6[2]; \
 			  _d->i6[3] |= _s1->i6[3] & ~_s2->i6[3]; \
-			}
+			} while (0)
 #define	IP6_MASK(a,b,c) \
-			{ i6addr_t *_d, *_s1, *_s2; \
+			do { i6addr_t *_d, *_s1, *_s2; \
 			  _d = (i6addr_t *)(a); \
 			  _s1 = (i6addr_t *)(b); \
 			  _s2 = (i6addr_t *)(c); \
@@ -275,7 +275,15 @@ typedef	union	i6addr	{
 			  _d->i6[1] = _s1->i6[1] & ~_s2->i6[1]; \
 			  _d->i6[2] = _s1->i6[2] & ~_s2->i6[2]; \
 			  _d->i6[3] = _s1->i6[3] & ~_s2->i6[3]; \
-			}
+			} while (0)
+#define	IP6_SETONES(a)	\
+			do { i6addr_t *_d = (i6addr_t *)(a); \
+			  _d->i6[0] = 0xffffffff; \
+			  _d->i6[1] = 0xffffffff; \
+			  _d->i6[2] = 0xffffffff; \
+			  _d->i6[3] = 0xffffffff; \
+			} while (0)
+
 typedef	union ipso_u	{
 	u_short	ipso_ripso[2];
 	u_32_t	ipso_doi;
@@ -327,7 +335,9 @@ typedef	struct	fr_ip	{
 #define	FI_ICMPQUERY	0x80000
 #define	FI_ENCAP	0x100000	/* encap/decap with NAT */
 #define	FI_AH		0x200000	/* AH header present */
+#define	FI_DOCKSUM	0x10000000	/* Proxy wants L4 recalculation */
 #define	FI_NOCKSUM	0x20000000	/* don't do a L4 checksum validation */
+#define	FI_NOWILD	0x40000000	/* Do not do wildcard searches */
 #define	FI_IGNORE	0x80000000
 
 #define	fi_secmsk	fi_ipso.ipso_ripso[0]
@@ -371,25 +381,34 @@ typedef	struct {
 } frdat_t;
 
 typedef enum fr_breasons_e {
+	FRB_BLOCKED = 0,
 	FRB_LOGFAIL = 1,
-	FRB_PPSRATE,
-	FRB_JUMBO,
-	FRB_MAKEFRIP,
-	FRB_STATEADD,
-	FRB_UPDATEIPID,
-	FRB_LOGFAIL2,
-	FRB_DECAPFRIP,
-	FRB_AUTHNEW,
-	FRB_AUTHCAPTURE,
-	FRB_COALESCE,
-	FRB_PULLUP,
-	FRB_AUTHFEEDBACK,
-	FRB_BADFRAG,
-	FRB_NATV4OUT,
-	FRB_NATV4IN,
-	FRB_NATV6OUT,
-	FRB_NATV6IN
+	FRB_PPSRATE = 2,
+	FRB_JUMBO = 3,
+	FRB_MAKEFRIP = 4,
+	FRB_STATEADD = 5,
+	FRB_UPDATEIPID = 6,
+	FRB_LOGFAIL2 = 7,
+	FRB_DECAPFRIP = 8,
+	FRB_AUTHNEW = 9,
+	FRB_AUTHCAPTURE = 10,
+	FRB_COALESCE = 11,
+	FRB_PULLUP = 12,
+	FRB_AUTHFEEDBACK = 13,
+	FRB_BADFRAG = 14,
+	FRB_NATV4 = 15,
+	FRB_NATV6 = 16,
 } fr_breason_t;
+
+#define	FRB_MAX_VALUE	16
+
+typedef enum ipf_cksum_e {
+	FI_CK_BAD = -1,
+	FI_CK_NEEDED = 0,
+	FI_CK_SUMOK = 1,
+	FI_CK_L4PART = 2,
+	FI_CK_L4FULL = 4
+} ipf_cksum_t;
 
 typedef	struct	fr_info	{
 	void	*fin_main_soft;
@@ -423,7 +442,7 @@ typedef	struct	fr_info	{
 	u_short	fin_off;
 	int	fin_depth;		/* Group nesting depth */
 	int	fin_error;		/* Error code to return */
-	int	fin_cksum;		/* -1 = bad, 1 = good, 0 = not done */
+	ipf_cksum_t	fin_cksum;	/* -1 = bad, 1 = good, 0 = not done */
 	fr_breason_t	fin_reason;	/* why auto blocked */
 	u_int	fin_pktnum;
 	void	*fin_nattag;
@@ -519,6 +538,7 @@ typedef	struct	{
 	u_char		adf_xxx[2];
 	i6addr_t	adf_addr;
 } addrfamily_t;
+
 
 RBI_LINK(ipf_rb, host_node_s);
 
@@ -666,8 +686,9 @@ typedef	struct	frentry {
 	ipfmutex_t	fr_lock;
 	struct	frentry	*fr_next;
 	struct	frentry	**fr_pnext;
-	struct	frentry	**fr_grp;
-	struct	frentry	**fr_icmpgrp;
+	struct	frgroup	*fr_grp;
+	struct	frgroup	*fr_grphead;
+	struct	frgroup	*fr_icmpgrp;
 	struct	ipscan	*fr_isc;
 	struct	frentry	*fr_dnext;	/* 2 fr_die linked list pointers */
 	struct	frentry	**fr_pdnext;
@@ -982,6 +1003,7 @@ typedef	struct	ipf_statistics {
 	u_long	fr_ipv6;	/* IPv6 packets in/out */
 	u_long	fr_ppshit;	/* dropped because of pps ceiling */
 	u_long	fr_ipud;	/* IP id update failures */
+	u_long	fr_blocked[FRB_MAX_VALUE + 1];
 } ipf_statistics_t;
 
 /*
@@ -1494,6 +1516,19 @@ typedef	struct	ipftable {
 #define	IPFTABLE_BUCKETS_NATOUT	3
 
 
+typedef struct ipf_v4_masktab_s {
+	u_32_t	imt4_active[33];
+	int	imt4_masks[33];
+	int	imt4_max;
+} ipf_v4_masktab_t;
+
+typedef struct ipf_v6_masktab_s {
+	i6addr_t	imt6_active[129];
+	int		imt6_masks[129];
+	int		imt6_max;
+} ipf_v6_masktab_t;
+
+
 /*
  *
  */
@@ -1518,7 +1553,8 @@ typedef struct ipfexp {
 	int		ipfe_cmd;
 	int		ipfe_not;
 	int		ipfe_narg;
-	int		ipfe_arg0;
+	int		ipfe_size;
+	int		ipfe_arg0[1];
 } ipfexp_t;
 
 /*
@@ -1688,6 +1724,7 @@ extern	int	ipl_disable(void);
 extern	int	ipf_check(void *, struct ip *, int, void *, int, void *,
 			       mblk_t **);
 #  if SOLARIS
+extern	void	ipf_prependmbt(fr_info_t *, mblk_t *);
 #   if SOLARIS2 >= 7
 extern	int	ipfioctl(dev_t, int, intptr_t, int, cred_t *, int *);
 #   else
@@ -1847,7 +1884,7 @@ extern int	ipf_pr_pullup(fr_info_t *, int);
 extern	int	ipf_flush(ipf_main_softc_t *, minor_t, int);
 extern	frgroup_t *ipf_group_add(ipf_main_softc_t *, char *, void *,
 				      u_32_t, minor_t, int);
-extern	int	ipf_group_del(ipf_main_softc_t *, char *, minor_t, int);
+extern	void	ipf_group_del(ipf_main_softc_t *, frgroup_t *, frentry_t *);
 extern	int	ipf_derefrule(ipf_main_softc_t *, frentry_t **);
 extern	frgroup_t *ipf_findgroup(ipf_main_softc_t *, char *, minor_t,
 				      int, frgroup_t ***);
@@ -1880,6 +1917,12 @@ extern	int		ipf_ifpaddr(ipf_main_softc_t *, int, int, void *,
 extern	int		ipf_initialise(void);
 extern	int		ipf_lock(void *, int *);
 extern  int		ipf_makefrip(int, ip_t *, fr_info_t *);
+extern	void		ipf_inet_mask_add(int, ipf_v4_masktab_t *);
+extern	void		ipf_inet_mask_del(int, ipf_v4_masktab_t *);
+#ifdef	USE_INET6
+extern	void		ipf_inet6_mask_add(int, i6addr_t *, ipf_v6_masktab_t *);
+extern	void		ipf_inet6_mask_del(int, i6addr_t *, ipf_v6_masktab_t *);
+#endif
 extern	int		ipf_matchtag(ipftag_t *, ipftag_t *);
 extern	int		ipf_matchicmpqueryreply(int, icmpinfo_t *,
 						     struct icmp *, int);
@@ -1895,7 +1938,7 @@ extern	int		ipf_zerostats(ipf_main_softc_t *, void *);
 extern	int		ipf_getnextrule(ipf_main_softc_t *, ipftoken_t *,
 					     void *);
 extern	int		ipf_sync(ipf_main_softc_t *, void *);
-extern	void		ipf_token_deref(ipf_main_softc_t *, ipftoken_t *);
+extern	int		ipf_token_deref(ipf_main_softc_t *, ipftoken_t *);
 extern	void		ipf_token_expire(ipf_main_softc_t *);
 extern	ipftoken_t	*ipf_token_find(ipf_main_softc_t *, int, int,
 					    void *);
@@ -1913,8 +1956,7 @@ extern	u_32_t		ipf_random(void);
 
 extern	int		ipf_main_load(void);
 extern	void		*ipf_main_soft_create(void *);
-extern	void		ipf_main_soft_destroy(ipf_main_softc_t *,
-						   void *arg);
+extern	void		ipf_main_soft_destroy(ipf_main_softc_t *);
 extern	int		ipf_main_soft_init(ipf_main_softc_t *);
 extern	int		ipf_main_soft_fini(ipf_main_softc_t *);
 extern	int		ipf_main_unload(void);

@@ -1,11 +1,11 @@
-/*	$NetBSD: count4bits.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $	*/
+/*	$NetBSD: count4bits.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * $Id: count4bits.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
+ * Id: count4bits.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
  */
 
 #include "ipf.h"
