@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.119 2012/07/15 15:49:46 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.120 2012/07/22 19:07:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.119 2012/07/15 15:49:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.120 2012/07/22 19:07:33 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -212,7 +212,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	if (chp->ch_satapmp_nports == 0)
 		(*atac->atac_probe)(chp);
 
-	if (chp->ch_drive != NULL && chp->ch_ndrives >= 1) {
+	if (chp->ch_drive != NULL && chp->ch_ndrives >= 2) {
 		ATADEBUG_PRINT(("atabusattach: ch_drive_type 0x%x 0x%x\n",
 		    chp->ch_drive[0].drive_type, chp->ch_drive[1].drive_type),
 		    DEBUG_PROBE);
