@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.4 2012/07/22 16:13:16 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.5 2012/07/22 16:26:56 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4 2012/07/22 16:13:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.5 2012/07/22 16:26:56 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -9775,9 +9775,7 @@ ipf_inet_mask_add(int bits, ipf_v4_masktab_t *mtab)
 /* netmasks stored inside of mtab.                                          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_inet_mask_del(bits, mtab)
-	int bits;
-	ipf_v4_masktab_t *mtab;
+ipf_inet_mask_del(int bits, ipf_v4_masktab_t *mtab)
 {
 	u_32_t mask;
 	int i, j;
