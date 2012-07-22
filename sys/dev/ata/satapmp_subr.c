@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.4 2012/07/22 18:12:01 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.5 2012/07/22 18:17:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.4 2012/07/22 18:12:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.5 2012/07/22 18:17:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ satapmp_attach(struct ata_channel *chp)
 	aprint_normal_dev(chp->atabus,
 	    "SATA port multiplier, %d ports\n", PMP_INF_NPORTS(inf));
 	aprint_verbose_dev(chp->atabus,
-	    "vendor 0x%x, product 0x%x",
+	    "vendor 0x%04x, product 0x%04x",
 	    PMP_ID_VEND(id), PMP_ID_DEV(id));
 	if (rev & PMP_REV_SPEC_11) {
 		aprint_verbose(", revision 1.1");
