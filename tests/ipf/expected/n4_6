@@ -9,7 +9,7 @@
 < zx0 ip6/0 20 0 6 10:3:3:0:0:0:0:3,12345 > 10:1:1:0:0:0:0:0,53
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::1/128 port 23 -> 10::2:2:1/128 port 10023 tcp
+rdr zx0 inet6 10:1:1::1/128 port 23 -> 10::2:2:1/128 port 10023 tcp
 
 List of active sessions:
 RDR 10::2:2:1 10023 <- -> 10:1:1::1 23    [10:3:3::3 12345]
@@ -40,7 +40,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 20 0 6 10:3:3:0:0:0:0:3,12345 > 10:1:1:0:0:0:0:0,53
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::/112 port 23 -> 10::2:2:1/128 port 10023 tcp
+rdr zx0 inet6 10:1:1::/112 port 23 -> 10::2:2:1/128 port 10023 tcp
 
 List of active sessions:
 RDR 10::2:2:1 10023 <- -> 10:1:1::1 23    [10:3:3::3 12345]
@@ -71,7 +71,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 20 0 6 10:3:3:0:0:0:0:3,12345 > 10:1:1:0:0:0:0:0,53
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 any port 23 -> 10::2:2:1/128 port 10023 tcp
+rdr zx0 inet6 any port 23 -> 10::2:2:1/128 port 10023 tcp
 
 List of active sessions:
 RDR 10::2:2:1 10023 <- -> 10:1:: 23    [10:3:3::3 12346]
@@ -103,7 +103,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 20 0 6 10:3:3:0:0:0:0:3,12345 > 10:1:1:0:0:0:0:0,53
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::/112 port 53 -> 10::2:2:1/128 port 10053 udp
+rdr zx0 inet6 10:1:1::/112 port 53 -> 10::2:2:1/128 port 10053 udp
 
 List of active sessions:
 RDR 10::2:2:1 10053 <- -> 10:1:1:: 53    [10:3:3::3 12345]
@@ -131,10 +131,10 @@ Accounting rules configured (set 1, out)
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,10023 > 10:3:3:0:0:0:0:3,12346
 < zx0 ip6/0 8 0 17 10:3:3:0:0:0:0:3,12345 > 10:1:1:0:0:0:0:0,53
 > zx0 ip6/0 8 0 17 10:0:0:0:0:2:2:1,10053 > 10:3:3:0:0:0:0:3,12345
-18
+16
 > zx0 ip6/0 20 0 6 10:1:1:0:0:0:0:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::/112 port 0 -> 10::2:2:1/128 port 0 tcp
+rdr zx0 inet6 10:1:1::/112 port 0 -> 10::2:2:1/128 port 0 tcp
 
 List of active sessions:
 RDR 10::2:2:1 53    <- -> 10:1:1::1 53    [10:3:3::3 12345]
@@ -163,10 +163,10 @@ Accounting rules configured (set 1, out)
 > zx0 ip6/0 20 0 6 10:0:0:0:0:2:2:1,10023 > 10:3:3:0:0:0:0:3,12346
 < zx0 ip6/0 8 0 17 10:3:3:0:0:0:0:3,12345 > 10:0:0:0:0:2:2:1,53
 > zx0 ip6/0 8 0 17 10:0:0:0:0:2:2:1,10053 > 10:3:3:0:0:0:0:3,12345
-18
+16
 > zx0 ip6/0 20 0 6 10:1:1:0:0:0:0:1,53 > 10:3:3:0:0:0:0:3,12345
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::/112 -> 10::2:2:1/128 ip
+rdr zx0 inet6 10:1:1::/112 -> 10::2:2:1/128 ip
 
 List of active sessions:
 RDR 10::2:2:1 53    <- -> 10:1:1:: 53    [10:3:3::3 12345]

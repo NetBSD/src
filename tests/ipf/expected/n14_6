@@ -3,7 +3,7 @@
 < gre0 ip6/0 20 0 6 10:0:0:0:0:2:2:7,2000 > 10:1:1:0:0:0:0:254,80
 < gre0 ip6/0 20 0 6 10:0:0:0:0:2:2:5,2001 > 203:0:1:0:0:0:1:1,80
 List of active MAP/Redirect filters:
-rdr gre0 any port 80 -> 10:1:1::254,10:1:1::253 port 80 tcp sticky
+rdr gre0 inet6 any port 80 -> 10:1:1::254,10:1:1::253 port 80 tcp sticky
 
 List of active sessions:
 RDR 10:1:1::254 80    <- -> 203:0:1::1:1 80    [10::2:2:7 2000]

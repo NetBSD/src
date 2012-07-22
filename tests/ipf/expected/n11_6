@@ -15,7 +15,7 @@
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:1 > 10:0:0:0:0:3:4:5
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:2 > 10:0:0:0:0:3:4:5
 List of active MAP/Redirect filters:
-bimap zx0 10:1:1::1/128 -> 1::6:7:8/128
+bimap zx0 inet6 10:1:1::1/128 -> 1::6:7:8/128
 
 List of active sessions:
 BIMAP 10:1:1::1 <- -> 1::6:7:8 [10:1:1::2]
@@ -37,7 +37,7 @@ Accounting rules configured (set 1, in)
 Accounting rules configured (set 1, out)
 -------------------------------
 > zx0 ip6/0 1 0 255 10:0:0:0:0:2:2:2 > 10:1:1:0:0:0:0:2
-17
+16
 > zx0 ip6/0 1 0 255 10:0:0:0:0:2:2:2 > 10:1:1:0:0:0:0:1
 > zx0 ip6/0 1 0 255 10:0:0:0:0:2:2:1 > 10:1:2:0:0:0:0:1
 > zx0 ip6/0 1 0 255 10:0:0:0:0:2:2:2 > 10:1:2:0:0:0:0:1
@@ -53,7 +53,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:1 > 10:0:0:0:0:3:4:5
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:2 > 10:0:0:0:0:3:4:5
 List of active MAP/Redirect filters:
-bimap zx0 10:1:1::/112 -> 10::2:2:2/128
+bimap zx0 inet6 10:1:1::/112 -> 10::2:2:2/128
 
 List of active sessions:
 BIMAP 10:1:1:: <- -> 10::2:2:2 [10::2:3:4]
@@ -94,7 +94,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:1 > 10:1:1:0:0:0:0:5
 < zx0 ip6/0 1 0 255 10:1:1:0:0:0:0:2 > 10:1:1:0:0:0:0:5
 List of active MAP/Redirect filters:
-bimap zx0 10:1:1::/112 -> 10::3:4:0/112
+bimap zx0 inet6 10:1:1::/112 -> 10::3:4:0/112
 
 List of active sessions:
 BIMAP 10:1:1::5 <- -> 10::3:4:5 [10:1:1::2]
