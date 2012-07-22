@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.1 2012/03/23 21:19:56 christos Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: ip_irc_pxy.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $
  */
 
 #define	IPF_IRC_PROXY
@@ -234,11 +234,13 @@ ipf_p_irc_new(arg, fin, aps, nat)
 {
 	ircinfo_t *irc;
 
+	if (fin->fin_v != 4)
+		return -1;
+
 	KMALLOC(irc, ircinfo_t *);
 	if (irc == NULL)
 		return -1;
 
-	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
 
 	aps->aps_data = irc;
@@ -358,6 +360,7 @@ ipf_p_irc_send(fin, nat)
 	/* the mbuf chain will be extended if necessary by m_copyback() */
 #endif
 	COPYBACK(m, off, nlen, newbuf);
+	fin->fin_flx |= FI_DOCKSUM;
 
 	if (inc != 0) {
 #if defined(MENTAT) || defined(__sgi)
@@ -372,7 +375,7 @@ ipf_p_irc_send(fin, nat)
 		sum2 -= sum1;
 		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
-		ipf_fix_outcksum(fin, &ip->ip_sum, sum2);
+		ipf_fix_outcksum(0, &ip->ip_sum, sum2, 0);
 #endif
 		fin->fin_plen += inc;
 		ip->ip_len = htons(fin->fin_plen);

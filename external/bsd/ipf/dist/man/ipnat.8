@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.8,v 1.1.1.1 2012/03/23 21:20:12 christos Exp $
+.\"	$NetBSD: ipnat.8,v 1.1.1.2 2012/07/22 13:44:46 darrenr Exp $
 .\"
 .TH IPNAT 8
 .SH NAME
@@ -52,6 +52,11 @@ Show the list of current NAT table entry mappings.
 .B \-n
 This flag (no-change) prevents \fBipf\fP from actually making any ioctl
 calls or doing anything which would alter the currently running kernel.
+.TP
+.B \-p
+This flag is used with the \fB-r\fP flag to cause any active NAT
+sessions that were created by the rules being removed and that are
+currently active to also be removed.
 .TP
 .B \-r
 Remove matching NAT rules rather than add them to the internal lists.

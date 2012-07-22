@@ -1,7 +1,7 @@
-/*	$NetBSD: iplang.h,v 1.1.1.1 2012/03/23 21:20:05 christos Exp $	*/
+/*	$NetBSD: iplang.h,v 1.1.1.2 2012/07/22 13:44:33 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2001 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
