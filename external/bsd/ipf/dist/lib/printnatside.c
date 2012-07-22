@@ -1,21 +1,21 @@
-/*	$NetBSD: printnatside.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: printnatside.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printnatside.c,v 1.2.2.2 2012/01/29 03:08:11 darren_r Exp 
+ * $Id: printnatside.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $
  */
 #include "ipf.h"
 
 void
-printnatside(side, nsp, ns)
+printnatside(side, ns)
 	char *side;
-	natstat_t *nsp;
 	nat_stat_side_t *ns;
 {
-	PRINTF("%lu\tproxy fail %s\n", ns->ns_appr_fail, side);
+	PRINTF("%lu\tproxy create fail %s\n", ns->ns_appr_fail, side);
+	PRINTF("%lu\tproxy fail %s\n", ns->ns_ipf_proxy_fail, side);
 	PRINTF("%lu\tbad nat %s\n", ns->ns_badnat, side);
 	PRINTF("%lu\tbad nat new %s\n", ns->ns_badnatnew, side);
 	PRINTF("%lu\tbad next addr %s\n", ns->ns_badnextaddr, side);
@@ -27,8 +27,6 @@ printnatside(side, nsp, ns)
 	PRINTF("%lu\tdivert dup %s\n", ns->ns_divert_dup, side);
 	PRINTF("%lu\tdivert exist %s\n", ns->ns_divert_exist, side);
 	PRINTF("%lu\tdrop %s\n", ns->ns_drop, side);
-	PRINTF("%lu\tencap dup %s\n", ns->ns_encap_dup, side);
-	PRINTF("%lu\tencap pullup %s\n", ns->ns_encap_pullup, side);
 	PRINTF("%lu\texhausted %s\n", ns->ns_exhausted, side);
 	PRINTF("%lu\ticmp address %s\n", ns->ns_icmp_address, side);
 	PRINTF("%lu\ticmp basic %s\n", ns->ns_icmp_basic, side);
