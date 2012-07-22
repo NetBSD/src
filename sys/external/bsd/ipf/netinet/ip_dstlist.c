@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -73,11 +73,12 @@ struct file;
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_dstlist.c,v 2.13.2.5 2012/01/29 05:30:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:45:11 darrenr Exp";
 #endif
 
 typedef struct ipf_dstl_softc_s {
 	ippool_dst_t	*dstlist[LOOKUP_POOL_SZ];
+	ippool_dst_t	**tails[LOOKUP_POOL_SZ];
 	ipf_dstl_stat_t	stats;
 } ipf_dstl_softc_t;
 
@@ -90,6 +91,7 @@ static int ipf_dstlist_addr_find(ipf_main_softc_t *, void *, int,
 				      void *, u_int);
 static size_t ipf_dstlist_flush(ipf_main_softc_t *, void *,
 				     iplookupflush_t *);
+static void ipf_dstlist_table_free(ipf_dstl_softc_t *, ippool_dst_t *);
 static int ipf_dstlist_iter_deref(ipf_main_softc_t *, void *, int, int,
 				       void *);
 static int ipf_dstlist_iter_next(ipf_main_softc_t *, void *, ipftoken_t *,
@@ -153,12 +155,17 @@ static void *
 ipf_dstlist_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_dstl_softc_t *softd;
+	int i;
 
 	KMALLOC(softd, ipf_dstl_softc_t *);
-	if (softd == NULL)
+	if (softd == NULL) {
+		IPFERROR(120028);
 		return NULL;
+	}
 
 	bzero((char *)softd, sizeof(*softd));
+	for (i = 0; i <= IPL_LOGMAX; i++)
+		softd->tails[i] = &softd->dstlist[i];
 
 	return softd;
 }
@@ -211,10 +218,12 @@ ipf_dstlist_soft_fini(ipf_main_softc_t *softc, void *arg)
 	ipf_dstl_softc_t *softd = arg;
 	int i;
 
-	for (i = -1; i <= IPL_LOGMAX; i++)
-		while (softd->dstlist[i + 1] != NULL)
+	for (i = -1; i <= IPL_LOGMAX; i++) {
+		while (softd->dstlist[i + 1] != NULL) {
 			ipf_dstlist_table_remove(softc, softd,
 						 softd->dstlist[i + 1]);
+		}
+	}
 
 	ASSERT(softd->stats.ipls_numderefnodes == 0);
 }
@@ -230,7 +239,10 @@ ipf_dstlist_soft_fini(ipf_main_softc_t *softc, void *arg)
 /*              arg4(I)  - pointer to local context to use                  */
 /*                                                                          */
 /* There is currently no such thing as searching a destination list for an  */
-/* address so this function becomes a no-op.                                */
+/* address so this function becomes a no-op. Its presence is required as    */
+/* ipf_lookup_res_name() stores the "addr_find" function pointer in the     */
+/* pointer passed in to it as funcptr, although it could be a generic null- */
+/* op function rather than a specific one.                                  */
 /* ------------------------------------------------------------------------ */
 /*ARGSUSED*/
 static int
@@ -287,6 +299,9 @@ ipf_dstlist_flush(ipf_main_softc_t *softc, void *arg, iplookupflush_t *fop)
 /*              unit(I)  - device we are working with                       */
 /*              data(I)  - address of object in kernel space                */
 /*                                                                          */
+/* This function is called when the iteration token is being free'd and is  */
+/* responsible for dropping the reference count of the structure it points  */
+/* to.                                                                      */
 /* ------------------------------------------------------------------------ */
 static int
 ipf_dstlist_iter_deref(ipf_main_softc_t *softc, void *arg, int otype, int unit,
@@ -325,60 +340,73 @@ ipf_dstlist_iter_deref(ipf_main_softc_t *softc, void *arg, int otype, int unit,
 /*              op(I)    - pointer to lookup operation data                 */
 /*              uid(I)   - uid of process doing the ioctl                   */
 /*                                                                          */
+/* This function is responsible for either selecting the next destination   */
+/* list or node on a destination list to be returned as a user process      */
+/* iterates through the list of destination lists or nodes.                 */
 /* ------------------------------------------------------------------------ */
 static int
 ipf_dstlist_iter_next(ipf_main_softc_t *softc, void *arg, ipftoken_t *token,
     ipflookupiter_t *iter)
 {
 	ipf_dstnode_t zn, *nextnode = NULL, *node = NULL;
-	ippool_dst_t zero, *next = NULL, *list = NULL;
+	ippool_dst_t zero, *next = NULL, *dsttab = NULL;
 	ipf_dstl_softc_t *softd = arg;
 	int err = 0;
+	void *hint;
 
 	switch (iter->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
-		list = token->ipt_data;
-		if (list == NULL) {
+		dsttab = token->ipt_data;
+		if (dsttab == NULL) {
 			next = softd->dstlist[(int)iter->ili_unit + 1];
 		} else {
-			next = list->ipld_next;
+			next = dsttab->ipld_next;
 		}
 
 		if (next != NULL) {
-			ATOMIC_INC32(list->ipld_ref);
+			ATOMIC_INC32(next->ipld_ref);
 			token->ipt_data = next;
+			hint = next->ipld_next;
 		} else {
 			bzero((char *)&zero, sizeof(zero));
 			next = &zero;
 			token->ipt_data = NULL;
+			hint = NULL;
 		}
 		break;
 
 	case IPFLOOKUPITER_NODE :
 		node = token->ipt_data;
 		if (node == NULL) {
-			list = ipf_dstlist_table_find(arg, iter->ili_unit,
-						      iter->ili_name);
-			if (list == NULL) {
+			dsttab = ipf_dstlist_table_find(arg, iter->ili_unit,
+							iter->ili_name);
+			if (dsttab == NULL) {
 				IPFERROR(120004);
 				err = ESRCH;
 				nextnode = NULL;
 			} else {
-				nextnode = *list->ipld_dests;
-				list = NULL;
+				if (dsttab->ipld_dests == NULL)
+					nextnode = NULL;
+				else
+					nextnode = *dsttab->ipld_dests;
+				dsttab = NULL;
 			}
 		} else {
 			nextnode = node->ipfd_next;
 		}
 
 		if (nextnode != NULL) {
-			ATOMIC_INC32(nextnode->ipfd_ref);
+			MUTEX_ENTER(&nextnode->ipfd_lock);
+			nextnode->ipfd_ref++;
+			MUTEX_EXIT(&nextnode->ipfd_lock);
 			token->ipt_data = nextnode;
+			hint = nextnode->ipfd_next;
 		} else {
 			bzero((char *)&zn, sizeof(zn));
 			nextnode = &zn;
 			token->ipt_data = NULL;
+			hint = NULL;
 		}
 		break;
 	default :
@@ -393,10 +421,8 @@ ipf_dstlist_iter_next(ipf_main_softc_t *softc, void *arg, ipftoken_t *token,
 	switch (iter->ili_otype)
 	{
 	case IPFLOOKUPITER_LIST :
-		if (node != NULL) {
-			ipf_dstlist_table_deref(softc, arg, node);
-		}
-		token->ipt_data = next;
+		if (dsttab != NULL)
+			ipf_dstlist_table_deref(softc, arg, dsttab);
 		err = COPYOUT(next, iter->ili_data, sizeof(*next));
 		if (err != 0) {
 			IPFERROR(120005);
@@ -405,10 +431,8 @@ ipf_dstlist_iter_next(ipf_main_softc_t *softc, void *arg, ipftoken_t *token,
 		break;
 
 	case IPFLOOKUPITER_NODE :
-		if (node != NULL) {
+		if (node != NULL)
 			ipf_dstlist_node_deref(arg, node);
-		}
-		token->ipt_data = nextnode;
 		err = COPYOUT(nextnode, iter->ili_data, sizeof(*nextnode));
 		if (err != 0) {
 			IPFERROR(120006);
@@ -416,6 +440,9 @@ ipf_dstlist_iter_next(ipf_main_softc_t *softc, void *arg, ipftoken_t *token,
 		}
 		break;
 	}
+
+	if (hint == NULL)
+		ipf_token_mark_complete(token);
 
 	return err;
 }
@@ -488,17 +515,29 @@ ipf_dstlist_node_add(ipf_main_softc_t *softc, void *arg, iplookupop_t *op,
 		IPFERROR(120008);
 		return ENOMEM;
 	}
+	bzero((char *)node, sizeof(*node) + dest.fd_name);
 
 	bcopy(&dest, &node->ipfd_dest, sizeof(dest));
 	node->ipfd_size = sizeof(*node) + dest.fd_name;
 
-	err = COPYIN((char *)op->iplo_struct + sizeof(dest), node->ipfd_names,
-		     dest.fd_name);
-	if (err != 0) {
-		IPFERROR(120017);
-		KFREES(node, node->ipfd_size);
-		return EFAULT;
+	if (dest.fd_name > 0) {
+		/*
+		 * fd_name starts out as the length of the string to copy
+		 * in (including \0) and ends up being the offset from
+		 * fd_names (0).
+		 */
+		err = COPYIN((char *)op->iplo_struct + sizeof(dest),
+			     node->ipfd_names, dest.fd_name);
+		if (err != 0) {
+			IPFERROR(120017);
+			KFREES(node, node->ipfd_size);
+			return EFAULT;
+		}
+		node->ipfd_dest.fd_name = 0;
+	} else {
+		node->ipfd_dest.fd_name = -1;
 	}
+
 	if (d->ipld_nodes == d->ipld_maxnodes) {
 		KMALLOCS(nodes, ipf_dstnode_t **,
 			 sizeof(*nodes) * (d->ipld_maxnodes + 1));
@@ -528,17 +567,14 @@ ipf_dstlist_node_add(ipf_main_softc_t *softc, void *arg, iplookupop_t *op,
 	*node->ipfd_pnext = node;
 
 	MUTEX_INIT(&node->ipfd_lock, "ipf dst node lock");
-	node->ipfd_plock = &d->ipld_lock;
-	node->ipfd_next = NULL;
 	node->ipfd_uid = uid;
-	node->ipfd_states = 0;
 	node->ipfd_ref = 1;
-	node->ipfd_syncat = 0;
-	node->ipfd_dest.fd_name = 0;
-	(void) ipf_resolvedest(softc, node->ipfd_names, &node->ipfd_dest,
-			       AF_INET);
+	if (node->ipfd_dest.fd_name == 0)
+		(void) ipf_resolvedest(softc, node->ipfd_names,
+				       &node->ipfd_dest, AF_INET);
 #ifdef USE_INET6
-	if (node->ipfd_dest.fd_ptr == (void *)-1)
+	if (node->ipfd_dest.fd_name == 0 &&
+	    node->ipfd_dest.fd_ptr == (void *)-1)
 		(void) ipf_resolvedest(softc, node->ipfd_names,
 				       &node->ipfd_dest, AF_INET6);
 #endif
@@ -552,13 +588,13 @@ ipf_dstlist_node_add(ipf_main_softc_t *softc, void *arg, iplookupop_t *op,
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_dstlist_node_deref                                      */
 /* Returns:     int - 0 = success, else error                               */
-/* Parameters:  softc(I) - pointer to soft context main structure           */
-/*              arg(I)   - pointer to local context to use                  */
-/*              op(I)    - pointer to lookup operation data                 */
-/*              uid(I)   - uid of process doing the ioctl                   */
+/* Parameters:  arg(I)  - pointer to local context to use                   */
+/*              node(I) - pointer to destionation node to free              */
 /*                                                                          */
 /* Dereference the use count by one. If it drops to zero then we can assume */
 /* that it has been removed from any lists/tables and is ripe for freeing.  */
+/* The pointer to context is required for the purpose of maintaining        */
+/* statistics.                                                              */
 /* ------------------------------------------------------------------------ */
 static int
 ipf_dstlist_node_deref(void *arg, ipf_dstnode_t *node)
@@ -566,23 +602,18 @@ ipf_dstlist_node_deref(void *arg, ipf_dstnode_t *node)
 	ipf_dstl_softc_t *softd = arg;
 	int ref;
 
-	/*
-	 * ipfd_plock points back to the lock in the ippool_dst_t that is
-	 * used to synchronise additions/deletions from its node list.
-	 */
-	MUTEX_ENTER(node->ipfd_plock);
+	MUTEX_ENTER(&node->ipfd_lock);
 	ref = --node->ipfd_ref;
-	MUTEX_EXIT(node->ipfd_plock);
+	MUTEX_EXIT(&node->ipfd_lock);
 
 	if (ref > 0)
 		return 0;
 
-	MUTEX_DESTROY(&node->ipfd_lock);
-
-	KFREES(node, node->ipfd_size);
-
 	if ((node->ipfd_flags & IPDST_DELETE) != 0)
 		softd->stats.ipls_numderefnodes--;
+	MUTEX_DESTROY(&node->ipfd_lock);
+	KFREES(node, node->ipfd_size);
+	softd->stats.ipls_numnodes--;
 
 	return 0;
 }
@@ -645,7 +676,6 @@ ipf_dstlist_node_del(ipf_main_softc_t *softc, void *arg, iplookupop_t *op,
 			continue;
 		if (!bcmp(&node->ipfd_dest.fd_ip6, &frd.fd_ip6,
 			  size - offsetof(frdest_t, fd_ip6))) {
-			MUTEX_ENTER(&node->ipfd_lock);
 			ipf_dstlist_node_free(softd, d, node);
 			MUTEX_EXIT(&d->ipld_lock);
 			KFREES(temp, size);
@@ -662,7 +692,9 @@ ipf_dstlist_node_del(ipf_main_softc_t *softc, void *arg, iplookupop_t *op,
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_dstlist_node_free                                       */
 /* Returns:     Nil                                                         */
-/* Parameters:  node(I) - pointer to node to free                           */
+/* Parameters:  softd(I) - pointer to the destination list context          */
+/*              d(I)     - pointer to destination list                      */
+/*              node(I)  - pointer to node to free                          */
 /* Locks:       MUTEX(ipld_lock) or WRITE(ipf_poolrw)                       */
 /*                                                                          */
 /* Free the destination node by first removing it from any lists and then   */
@@ -675,7 +707,6 @@ static void
 ipf_dstlist_node_free(ipf_dstl_softc_t *softd, ippool_dst_t *d,
     ipf_dstnode_t *node)
 {
-	int ref;
 	int i;
 
 	/*
@@ -689,13 +720,6 @@ ipf_dstlist_node_free(ipf_dstl_softc_t *softd, ippool_dst_t *d,
 		      sizeof(*d->ipld_dests) * (d->ipld_nodes - i - 1));
 	}
 	d->ipld_nodes--;
-	/*
-	 * ipfd_plock points back to the lock in the ippool_dst_t that is
-	 * used to synchronise additions/deletions from its node list.
-	 */
-	MUTEX_ENTER(node->ipfd_plock);
-
-	ref = --node->ipfd_ref;
 
 	if (node->ipfd_pnext != NULL)
 		*node->ipfd_pnext = node->ipfd_next;
@@ -704,16 +728,12 @@ ipf_dstlist_node_free(ipf_dstl_softc_t *softd, ippool_dst_t *d,
 	node->ipfd_pnext = NULL;
 	node->ipfd_next = NULL;
 
-	MUTEX_EXIT(node->ipfd_plock);
-
-	if (ref == 0) {
-		MUTEX_DESTROY(&node->ipfd_lock);
-		KFREES(node, node->ipfd_size);
-		softd->stats.ipls_numnodes--;
-	} else if ((node->ipfd_flags & IPDST_DELETE) == 0) {
+	if ((node->ipfd_flags & IPDST_DELETE) == 0) {
 		softd->stats.ipls_numderefnodes++;
 		node->ipfd_flags |= IPDST_DELETE;
 	}
+
+	ipf_dstlist_node_deref(softd, node);
 }
 
 
@@ -753,7 +773,7 @@ ipf_dstlist_stats_get(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 						     op->iplo_name);
 		else
 			ptr = softd->dstlist[unit + 1];
-		stats.ipls_list[unit + 1] = ptr;
+		stats.ipls_list[unit] = ptr;
 	} else {
 		IPFERROR(120024);
 		err = EINVAL;
@@ -788,26 +808,25 @@ ipf_dstlist_table_add(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 	ippool_dst_t user, *d, *new;
 	int unit, err;
 
-	KMALLOC(new, ippool_dst_t *);
-	if (new == NULL) {
-		softd->stats.ipls_nomem++;
-		IPFERROR(120014);
-		return ENOMEM;
-	}
-
 	d = ipf_dstlist_table_find(arg, op->iplo_unit, op->iplo_name);
 	if (d != NULL) {
 		IPFERROR(120013);
-		KFREE(new);
 		return EEXIST;
 	}
 
 	err = COPYIN(op->iplo_struct, &user, sizeof(user));
 	if (err != 0) {
 		IPFERROR(120021);
-		KFREE(new);
 		return EFAULT;
 	}
+
+	KMALLOC(new, ippool_dst_t *);
+	if (new == NULL) {
+		softd->stats.ipls_nomem++;
+		IPFERROR(120014);
+		return ENOMEM;
+	}
+	bzero((char *)new, sizeof(*new));
 
 	MUTEX_INIT(&new->ipld_lock, "ipf dst table lock");
 
@@ -816,18 +835,11 @@ ipf_dstlist_table_add(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 	new->ipld_unit = unit;
 	new->ipld_policy = user.ipld_policy;
 	new->ipld_seed = ipf_random();
-	new->ipld_dests = NULL;
-	new->ipld_nodes = 0;
-	new->ipld_maxnodes = 0;
-	new->ipld_selected = NULL;
-	new->ipld_ref = 0;
-	new->ipld_flags = 0;
+	new->ipld_ref = 1;
 
-	new->ipld_pnext = &softd->dstlist[unit + 1];
-	new->ipld_next = softd->dstlist[unit + 1];
-	if (softd->dstlist[unit + 1] != NULL)
-		softd->dstlist[unit + 1]->ipld_pnext = &new->ipld_next;
-	softd->dstlist[unit + 1] = new;
+	new->ipld_pnext = softd->tails[unit + 1];
+	*softd->tails[unit + 1] = new;
+	softd->tails[unit + 1] = &new->ipld_next;
 	softd->stats.ipls_numlists++;
 
 	return 0;
@@ -870,24 +882,26 @@ ipf_dstlist_table_del(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 /* Function:    ipf_dstlist_table_remove                                    */
 /* Returns:     Nil                                                         */
 /* Parameters:  softc(I) - pointer to soft context main structure           */
-/*              arg(I)   - pointer to local context to use                  */
-/*              op(I)    - pointer to lookup operation data                 */
+/*              softd(I) - pointer to the destination list context          */
+/*              d(I)     - pointer to destination list                      */
 /*                                                                          */
 /* Remove a given destination list from existance. While the IPDST_DELETE   */
 /* flag is set every time we call this function and the reference count is  */
-/* non-zero, the "numdereflists" counter is only incremented when the entry */
-/* is removed from the list as it only becomes dereferenced once.           */
+/* non-zero, the "numdereflists" counter is always incremented because the  */
+/* decision about whether it will be freed or not is not made here. This    */
+/* means that the only action the code can take here is to treat it as if   */
+/* it will become a detached.                                               */
 /* ------------------------------------------------------------------------ */
 static void
 ipf_dstlist_table_remove(ipf_main_softc_t *softc, ipf_dstl_softc_t *softd,
     ippool_dst_t *d)
 {
 
-	if (d->ipld_pnext != NULL) {
+	if (softd->tails[d->ipld_unit + 1] == &d->ipld_next)
+		softd->tails[d->ipld_unit + 1] = d->ipld_pnext;
+
+	if (d->ipld_pnext != NULL)
 		*d->ipld_pnext = d->ipld_next;
-		if (d->ipld_ref > 1)
-			softd->stats.ipls_numdereflists++;
-	}
 	if (d->ipld_next != NULL)
 		d->ipld_next->ipld_pnext = d->ipld_pnext;
 	d->ipld_pnext = NULL;
@@ -895,11 +909,29 @@ ipf_dstlist_table_remove(ipf_main_softc_t *softc, ipf_dstl_softc_t *softd,
 
 	ipf_dstlist_table_clearnodes(softd, d);
 
-	if (d->ipld_ref > 0) {
-		d->ipld_flags |= IPDST_DELETE;
-		return;
-	}
+	softd->stats.ipls_numdereflists++;
+	d->ipld_flags |= IPDST_DELETE;
 
+	ipf_dstlist_table_deref(softc, softd, d);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_dstlist_table_free                                      */
+/* Returns:     Nil                                                         */
+/* Parameters:  softd(I) - pointer to the destination list context          */
+/*              d(I)   - pointer to destination list                        */
+/*                                                                          */
+/* Free up a destination list data structure and any other memory that was  */
+/* directly allocated as part of creating it. Individual destination list   */
+/* nodes are not freed. It is assumed the caller will have already emptied  */
+/* the destination list.                                                    */
+/* ------------------------------------------------------------------------ */
+static void
+ipf_dstlist_table_free(softd, d)
+	ipf_dstl_softc_t *softd;
+	ippool_dst_t *d;
+{
 	MUTEX_DESTROY(&d->ipld_lock);
 
 	if ((d->ipld_flags & IPDST_DELETE) != 0)
@@ -934,7 +966,7 @@ ipf_dstlist_table_deref(ipf_main_softc_t *softc, void *arg, void *table)
 	if (d->ipld_ref > 0)
 		return d->ipld_ref;
 
-	ipf_dstlist_table_remove(softc, arg, table);
+	ipf_dstlist_table_free(arg, d);
 
 	return 0;
 }
@@ -943,7 +975,8 @@ ipf_dstlist_table_deref(ipf_main_softc_t *softc, void *arg, void *table)
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_dstlist_table_clearnodes                                */
 /* Returns:     Nil                                                         */
-/* Parameters:  dst(I) - pointer to soft context main structure             */
+/* Parameters:  softd(I) - pointer to the destination list context          */
+/*              dst(I)   - pointer to destination list                      */
 /*                                                                          */
 /* Free all of the destination nodes attached to the given table.           */
 /* ------------------------------------------------------------------------ */
@@ -951,6 +984,9 @@ static void
 ipf_dstlist_table_clearnodes(ipf_dstl_softc_t *softd, ippool_dst_t *dst)
 {
 	ipf_dstnode_t *node;
+
+	if (dst->ipld_dests == NULL)
+		return;
 
 	while ((node = *dst->ipld_dests) != NULL) {
 		ipf_dstlist_node_free(softd, dst, node);
@@ -1014,7 +1050,8 @@ ipf_dstlist_select_ref(void *arg, int unit, char *name)
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_dstlist_select                                          */
 /* Returns:     void * - NULL = failure, else pointer to table              */
-/* Parameters:  d(I)   - pointer to destination list                        */
+/* Parameters:  fin(I) - pointer to packet information                      */
+/*              d(I)   - pointer to destination list                        */
 /*                                                                          */
 /* Find the next node in the destination list to be used according to the   */
 /* defined policy. Of these, "connection" is the most expensive policy to   */
@@ -1150,10 +1187,12 @@ ipf_dstlist_select(fr_info_t *fin, ippool_dst_t *d)
 /* Parameters:  fin(I)   - pointer to packet information                    */
 /*              group(I) - destination pool to search                       */
 /*              addr(I)  - pointer to store selected address                */
+/*              pfdp(O)  - pointer to storage for selected destination node */
 /*                                                                          */
 /* This function is only responsible for obtaining the next IP address for  */
-/* use and storing it in the caller's address space (addr). No permanent    */
-/* reference is currently kept on the node.                                 */
+/* use and storing it in the caller's address space (addr). "addr" is only  */
+/* used for storage if pfdp is NULL. No permanent reference is currently    */
+/* kept on the node.                                                        */
 /* ------------------------------------------------------------------------ */
 int
 ipf_dstlist_select_node(fr_info_t *fin, void *group, u_32_t *addr,

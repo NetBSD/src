@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -98,7 +98,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $";
 #endif
 
 #define	SYNC_STATETABSZ	256

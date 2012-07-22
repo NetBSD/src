@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_sync.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -100,9 +100,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.68.2.4 2012/01/29 05:30:36 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:45:38 darrenr Exp";
 #endif
 #endif
 
@@ -162,8 +162,10 @@ ipf_sync_soft_create(ipf_main_softc_t *softc)
 	ipf_sync_softc_t *softs;
 
 	KMALLOC(softs, ipf_sync_softc_t *);
-	if (softs == NULL)
+	if (softs == NULL) {
+		IPFERROR(110024);
 		return NULL;
+	}
 
 	bzero((char *)softs, sizeof(*softs));
 
@@ -550,7 +552,7 @@ ipf_sync_write(ipf_main_softc_t *softc, struct uio *uio)
 			if (softs->ipf_sync_debug > 2)
 				printf("uiomove(data) %s %d bytes, got %zu\n",
 					"insufficient data, need",
-					sh.sm_len, uio->uio_resid);
+					sh.sm_len, (int)uio->uio_resid);
 			IPFERROR(110007);
 			return EAGAIN;
 		}

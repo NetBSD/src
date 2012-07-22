@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_dstlist.h,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
+/*	$NetBSD: ip_dstlist.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_dstlist.h,v 2.5.2.2 2012/01/26 05:29:10 darrenr Exp
+ * Id: ip_dstlist.h,v 1.1.1.2 2012/07/22 13:45:11 darrenr Exp
  */
 
 #ifndef	__IP_DSTLIST_H__
@@ -14,7 +14,6 @@
 typedef struct ipf_dstnode {
 	struct ipf_dstnode	*ipfd_next;
 	struct ipf_dstnode	**ipfd_pnext;
-	ipfmutex_t		*ipfd_plock;
 	ipfmutex_t		ipfd_lock;
 	frdest_t		ipfd_dest;
 	u_long			ipfd_syncat;

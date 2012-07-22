@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_auth.h,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_auth.h,v 2.22.2.1 2012/01/26 05:29:10 darrenr Exp
+ * Id: ip_auth.h,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp
  *
  */
 #ifndef _NETINET_IP_AUTH_H_

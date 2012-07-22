@@ -1,11 +1,11 @@
-/*	$NetBSD: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $	*/
+/*	$NetBSD: facpri.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * $Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
+ * Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
  */
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $";
 #endif
 
 

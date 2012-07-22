@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.2 2012/03/24 02:19:00 christos Exp $
+.\"	$NetBSD: ipnat.5,v 1.3 2012/07/22 14:27:51 darrenr Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -346,7 +346,6 @@ rdr le0 0/0 -> 192.168.1.0/24
 .PP
 then you will receive a parsing error.
 .PP
-.PP
 The from-to source-destination matching used with
 .B map
 rules can be used with rdr rules, along with negation, however the
@@ -371,7 +370,6 @@ recommended method is to use a comma (",") like this:
 .nf
 
 rdr le0 0/0 -> 192.168.1.1,192.168.1.2
-.fi
 .fi
 .PP
 If there is a large group of destination addresses that are somewhat
@@ -558,9 +556,13 @@ computer to be decapsulated, this can be achieved using a
 .B divert
 rule.
 .PP
-The syntax for these rules is much the same as
-.B encap
-rules, but instead the syntax must supply required information for UDP:
+Divert rules can be be used with both inbound and outbound packet
+matching however the rule
+.B must
+specify host addresses for the outer packet, not ranges of addresses
+or netmasks, just single addresses.
+Additionally the syntax must supply required information for UDP.
+An example of what a divert rule looks ike is as follows:
 .nf
 
 divert in on le0 proto udp from any to any port = 53 ->
@@ -581,34 +583,21 @@ encapsulating IP header plus UDP header causes the packet to exceed
 the size allowed by the outbound network interface.  At present it is
 not possible to cause Path MTU discovery to happen as this feature
 is intended to be transparent to both endpoints.
-.SH ENCAPSULATING PACKETS
-.PP
-In addition to translating address fields of a packet, the NAT module in
-IPFILter also supports wrapping them up in another IP packet and sending
-them off to a new destination.  Full compliance of this feature with
-RFC 1853 and RFC 2003 is pending implementation of support for PMTU
-discovery with it.
-.PP
-Encapsulation can be performed on both incoming and outgoing packets
-but
-.B must
-specify host addresses for the outer packet, not ranges of addresses
-or netmasks, just single addresses.
-.PP
-As with the
-.B rewrite
-rules, the LHS requires a from/to match and terminates with a
-semi-colon (";").  An example of what these might look like are:
-.nf
-
-encap out on le0 from any to any -> src 10.1.1.1 dst 192.168.1.1;
-.fi
-.TP
 .B Path MTU Discovery
 If Path MTU discovery is being used and the "do not fragment" flag
 is set in packets to be encapsulated, an ICMP error message will
 be sent back to the sender if the new packet would need to be
 fragmented.
+.SH COMMON OPTIONS
+This section deals with options that are available with all rules.
+.TP
+.B purge
+When the purge keyword is added to the end of a NAT rule, it will
+cause all of the active NAT sessions to be removed when the rule
+is removed as an individual operation. If all of the NAT rules
+are flushed out, it is expected that the operator will similarly
+flush the NAT table and thus NAT sessions are not removed when the
+NAT rules are flushed out.
 .SH RULE ORDERING
 .PP
 .B NOTE:
@@ -727,7 +716,6 @@ netbios - Experimental
 R-command - Mature
 (map ... proxy port shell rcmd/tcp)
 .SH KERNEL PROXIES
-.PP
 .SH FILES
 /dev/ipnat
 .br

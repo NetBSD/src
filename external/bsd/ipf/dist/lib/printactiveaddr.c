@@ -1,4 +1,4 @@
-/*	$NetBSD: printactiveaddr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
+/*	$NetBSD: printactiveaddr.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: printactiveaddr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: printactiveaddr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $";
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ipmon.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
+ * Id: ipmon.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
  */
 
 typedef struct ipmon_msg_s {

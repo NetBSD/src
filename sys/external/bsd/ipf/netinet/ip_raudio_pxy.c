@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_raudio_pxy.c,v 1.53.2.1 2012/01/26 05:29:12 darrenr Exp
+ * Id: ip_raudio_pxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 
 #define	IPF_RAUDIO_PROXY
 
@@ -57,12 +57,14 @@ ipf_p_raudio_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	raudio_t *rap;
 
+	nat = nat;	/* LINT */
+
+	if (fin->fin_v != 4)
+		return -1;
+
 	KMALLOCS(aps->aps_data, void *, sizeof(raudio_t));
 	if (aps->aps_data == NULL)
 		return -1;
-
-	fin = fin;	/* LINT */
-	nat = nat;	/* LINT */
 
 	bzero(aps->aps_data, sizeof(raudio_t));
 	rap = aps->aps_data;

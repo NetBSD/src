@@ -1,14 +1,14 @@
-/*	$NetBSD: iptests.c,v 1.2 2012/03/24 02:08:34 christos Exp $	*/
+/*	$NetBSD: iptests.c,v 1.3 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.21.2.1 2012/01/26 05:29:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

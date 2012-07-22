@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.2 2012/03/24 02:08:34 christos Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.3 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -50,7 +50,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: sbpf.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr Exp $";
 #endif
 
 /*

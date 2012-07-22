@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.1.1.2 2012/07/22 13:44:33 darrenr Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 %{
 /*
@@ -6,7 +6,7 @@
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * $Id: iplang_l.l,v 1.1.1.2 2012/07/22 13:44:33 darrenr Exp $
+ * Id: iplang_l.l,v 1.1.1.2 2012/07/22 13:44:33 darrenr Exp $
  */
 #include <stdio.h>
 #include <string.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: ippool.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
+/*	$NetBSD: ippool.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -95,14 +95,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int err;
+	int err = 1;
 
 	if (argc < 2)
 		usage(argv[0]);
 
 	assigndefined(getenv("IPPOOL_PREDEFINED"));
 
-	switch (getopt(argc, argv, "aAf:FlrRs"))
+	switch (getopt(argc, argv, "aAf:FlnrRsv"))
 	{
 	case 'a' :
 		err = poolnodecommand(0, argc, argv);
@@ -119,6 +119,9 @@ main(argc, argv)
 	case 'l' :
 		err = poollist(argc, argv);
 		break;
+	case 'n' :
+		opts |= OPT_DONOTHING|OPT_DONTOPEN;
+		break;
 	case 'r' :
 		err = poolnodecommand(1, argc, argv);
 		break;
@@ -127,6 +130,9 @@ main(argc, argv)
 		break;
 	case 's' :
 		err = poolstats(argc, argv);
+		break;
+	case 'v' :
+		opts |= OPT_VERBOSE;
 		break;
 	default :
 		exit(1);
@@ -939,7 +945,9 @@ showpools_live(fd, role, plstp, poolname)
 			ipferror(fd, "ioctl(SIOCLOOKUPITER)");
 			break;
 		}
-		printpool_live(&pool, fd, poolname, opts, pool_fields);
+		if (((pool.ipo_flags & IPOOL_DELETE) == 0) ||
+		    ((opts & OPT_DEBUG) != 0))
+			printpool_live(&pool, fd, poolname, opts, pool_fields);
 
 		plstp->ipls_list[role + 1] = pool.ipo_next;
 	}
@@ -1039,9 +1047,18 @@ setnodeaddr(int type, int role, void *ptr, char *arg)
 	if (type == IPLT_POOL) {
 		ip_pool_node_t *node = ptr;
 
-		node->ipn_addr.adf_len = sizeof(node->ipn_addr);
+		if (node->ipn_addr.adf_family == AF_INET)
+			node->ipn_addr.adf_len = offsetof(addrfamily_t,
+							  adf_addr) +
+						 sizeof(struct in_addr);
+#ifdef USE_INET6
+		else
+			node->ipn_addr.adf_len = offsetof(addrfamily_t,
+							  adf_addr) +
+						 sizeof(struct in6_addr);
+#endif
 		node->ipn_addr.adf_addr.in4.s_addr = inet_addr(arg);
-		node->ipn_mask.adf_len = sizeof(node->ipn_mask);
+		node->ipn_mask.adf_len = node->ipn_addr.adf_len;
 		node->ipn_mask.adf_addr.in4.s_addr = mask.s_addr;
 	} else if (type == IPLT_HASH) {
 		iphtent_t *node = ptr;

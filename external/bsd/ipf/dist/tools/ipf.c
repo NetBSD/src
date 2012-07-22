@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.1.1.2 2012/07/22 13:44:51 darrenr Exp $	*/
+/*	$NetBSD: ipf.c,v 1.2 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -22,7 +22,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.1.1.2 2012/07/22 13:44:51 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: ipf.c,v 1.1.1.2 2012/07/22 13:44:51 darrenr Exp $";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)

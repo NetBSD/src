@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/23 21:29:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2012/07/22 14:27:51 darrenr Exp $
 
 LIBISPRIVATE=	yes
 
@@ -42,7 +42,6 @@ SRCS=		addicmp.c \
 		initparse.c \
 		interror.c \
 		ionames.c \
-		ipferror.c \
 		ipf_perror.c \
 		ipf_dotuning.c \
 		ipft_hx.c \
@@ -135,7 +134,6 @@ SRCS=		addicmp.c \
 		save_v1trap.c \
 		save_v2trap.c \
 		tcpflags.c \
-		tcp_flags.c \
 		var.c \
 		verbose.c \
 		vtof.c \

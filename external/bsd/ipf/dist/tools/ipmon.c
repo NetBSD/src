@@ -1,7 +1,7 @@
-/*	$NetBSD: ipmon.c,v 1.2 2012/03/24 02:19:01 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -16,7 +16,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 1.72.2.2 2012/01/26 05:29:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp ";
 #endif
 
 
@@ -478,6 +478,9 @@ static int read_log(fd, lenp, buf, bufsize)
 {
 	int	nr;
 
+	if (bufsize > IPFILTER_LOGSIZE)
+		bufsize = IPFILTER_LOGSIZE;
+
 	nr = read(fd, buf, bufsize);
 	if (!nr)
 		return 2;
@@ -608,7 +611,7 @@ void dumphex(log, dopts, buf, len)
 			sprintf((char *)t, "        ");
 			t += 8;
 			for (k = 16; k; k--, s++)
-				*t++ = (ISPRINT(*s) ? *s : '.');
+				*t++ = (isprint(*s) ? *s : '.');
 			s--;
 		}
 
@@ -626,7 +629,7 @@ void dumphex(log, dopts, buf, len)
 		t += 7;
 		s -= j & 0xf;
 		for (k = j & 0xf; k; k--, s++)
-			*t++ = (ISPRINT(*s) ? *s : '.');
+			*t++ = (isprint(*s) ? *s : '.');
 		*t++ = '\n';
 		*t = '\0';
 	}
@@ -725,6 +728,10 @@ static void print_natlog(conf, buf, blen)
 		strcpy(t, "NAT:DESTROY");
 		break;
 
+	case NL_PURGE :
+		strcpy(t, "NAT:PURGE");
+		break;
+
 	default :
 		sprintf(t, "NAT:Action(%d)", nl->nl_action);
 		break;
@@ -735,7 +742,7 @@ static void print_natlog(conf, buf, blen)
 	switch (nl->nl_type)
 	{
 	case NAT_MAP :
-		strcpy(t, "-NAT ");
+		strcpy(t, "-MAP ");
 		simple = 1;
 		break;
 
@@ -795,7 +802,7 @@ static void print_natlog(conf, buf, blen)
 		sprintf(t, "%s,%s ", hostname(family, nl->nl_nsrcip.i6),
 			portlocalname(res, proto, (u_int)nl->nl_nsrcport));
 		t += strlen(t);
-		sprintf(t, "[%s,%s]", hostname(family, nl->nl_odstip.i6),
+		sprintf(t, "[%s,%s] ", hostname(family, nl->nl_odstip.i6),
 			portlocalname(res, proto, (u_int)nl->nl_odstport));
 	} else {
 		sprintf(t, "%s,%s ", hostname(family, nl->nl_osrcip.i6),
@@ -807,7 +814,7 @@ static void print_natlog(conf, buf, blen)
 		sprintf(t, "%s,%s ", hostname(family, nl->nl_nsrcip.i6),
 			portlocalname(res, proto, (u_int)nl->nl_nsrcport));
 		t += strlen(t);
-		sprintf(t, "%s,%s", hostname(family, nl->nl_ndstip.i6),
+		sprintf(t, "%s,%s ", hostname(family, nl->nl_ndstip.i6),
 			portlocalname(res, proto, (u_int)nl->nl_ndstport));
 	}
 	t += strlen(t);
@@ -817,16 +824,17 @@ static void print_natlog(conf, buf, blen)
 
 	if (nl->nl_action == NL_EXPIRE || nl->nl_action == NL_FLUSH) {
 #ifdef	USE_QUAD_T
+# ifdef	PRId64
+		sprintf(t, " Pkts %" PRId64 "/%" PRId64 " Bytes %" PRId64 "/%"
+			PRId64,
+# else
 		sprintf(t, " Pkts %qd/%qd Bytes %qd/%qd",
-				(long long)nl->nl_pkts[0],
-				(long long)nl->nl_pkts[1],
-				(long long)nl->nl_bytes[0],
-				(long long)nl->nl_bytes[1]);
+# endif
 #else
 		sprintf(t, " Pkts %ld/%ld Bytes %ld/%ld",
+#endif
 				nl->nl_pkts[0], nl->nl_pkts[1],
 				nl->nl_bytes[0], nl->nl_bytes[1]);
-#endif
 		t += strlen(t);
 	}
 
@@ -1515,7 +1523,7 @@ static void flushlogs(file, log)
 			flushed);
 		fflush(stdout);
 	} else
-		perror("SIOCIPFFB");
+		ipferror(fd, "SIOCIPFFB");
 	(void) close(fd);
 
 	if (flushed) {
@@ -1815,7 +1823,7 @@ static void openlogs(config_t *conf)
 
 static int read_loginfo(config_t *conf)
 {
-	char buf[DEFAULT_IPFLOGSIZE];
+	iplog_t buf[DEFAULT_IPFLOGSIZE/sizeof(iplog_t)+1];
 	int n, tr, nr, i;
 	logsource_t *l;
 	fd_set fdr;
@@ -1845,7 +1853,7 @@ static int read_loginfo(config_t *conf)
 		}
 
 		n = 0;
-		tr = read_log(l->fd, &n, buf, sizeof(buf));
+		tr = read_log(l->fd, &n, (char *)buf, sizeof(buf));
 		if (donehup) {
 			if (conf->file != NULL) {
 				if (conf->log != NULL) {
@@ -1874,8 +1882,9 @@ static int read_loginfo(config_t *conf)
 		case -1 :
 			if (ipmonopts & IPMON_SYSLOG)
 				syslog(LOG_CRIT, "read: %m\n");
-			else
-				perror("read");
+			else {
+				ipferror(l->fd, "read");
+			}
 			return 0;
 		case 1 :
 			if (ipmonopts & IPMON_SYSLOG)
@@ -1888,7 +1897,7 @@ static int read_loginfo(config_t *conf)
 		case 0 :
 			nr += tr;
 			if (n > 0) {
-				print_log(conf, l, buf, n);
+				print_log(conf, l, (char *)buf, n);
 				if (!(ipmonopts & IPMON_SYSLOG))
 					fflush(conf->log);
 			}

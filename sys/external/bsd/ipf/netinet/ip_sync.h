@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_sync.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_sync.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -120,4 +120,4 @@ extern	void ipf_sync_expire(ipf_main_softc_t *);
 extern	void	ipf_sync_soft_destroy(ipf_main_softc_t *, void *);
 extern	void	*ipf_sync_soft_create(ipf_main_softc_t *);
 
-#endif /* IP_SYNC */
+#endif /* __IP_SYNC_H__ */
