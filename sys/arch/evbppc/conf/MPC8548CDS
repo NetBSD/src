@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.9 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: MPC8548CDS,v 1.10 2012/07/22 23:46:10 matt Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.9 $"
+ident 		"MPC8548CDS-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -157,8 +157,9 @@ duart*		at cpunode?
 com*		at duart? port ?
 options		CONSPEED=115200
 
-tsec0		at cpunode? flags 1	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 1	# Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? phy 0	# Enhanced 3-Speed Ethernet Controller
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 1 # Enhanced 3-Speed Ethernet Controller
 makphy*		at mii?			# Marvell PHY
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS
