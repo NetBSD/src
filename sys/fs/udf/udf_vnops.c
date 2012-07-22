@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.71 2012/04/29 22:53:59 chs Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.72 2012/07/22 00:53:21 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.71 2012/04/29 22:53:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.72 2012/07/22 00:53:21 rmind Exp $");
 #endif /* not lint */
 
 
@@ -795,7 +795,7 @@ out:
 	 * the file might not be found and thus putting it into the namecache
 	 * might be seen as negative caching.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE)
 		cache_enter(dvp, *vpp, cnp);
 
 	DPRINTFIF(LOOKUP, error, ("udf_lookup returing error %d\n", error));

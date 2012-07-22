@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.88 2011/06/12 03:35:56 rmind Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.89 2012/07/22 00:53:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.88 2011/06/12 03:35:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.89 2012/07/22 00:53:18 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -111,30 +111,37 @@ struct nchcpu {
 /*
  * Structures associated with name cacheing.
  */
-LIST_HEAD(nchashhead, namecache) *nchashtbl;
-u_long	nchash;				/* size of hash table - 1 */
+
+static kmutex_t *namecache_lock __read_mostly;
+static pool_cache_t namecache_cache __read_mostly;
+static TAILQ_HEAD(, namecache) nclruhead __cacheline_aligned;
+
+static LIST_HEAD(nchashhead, namecache) *nchashtbl __read_mostly;
+static u_long	nchash __read_mostly;
+
 #define	NCHASH(cnp, dvp)	\
 	(((cnp)->cn_hash ^ ((uintptr_t)(dvp) >> 3)) & nchash)
 
-LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
-u_long	ncvhash;			/* size of hash table - 1 */
+static LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl __read_mostly;
+static u_long	ncvhash __read_mostly;
+
 #define	NCVHASH(vp)		(((uintptr_t)(vp) >> 3) & ncvhash)
 
-long	numcache;			/* number of cache entries allocated */
-static u_int	cache_gcpend;		/* number of entries pending GC */
-static void	*cache_gcqueue;		/* garbage collection queue */
+/* Number of cache entries allocated. */
+static long	numcache __cacheline_aligned;
 
-TAILQ_HEAD(, namecache) nclruhead =		/* LRU chain */
-	TAILQ_HEAD_INITIALIZER(nclruhead);
+/* Garbage collection queue and number of entries pending in it. */
+static void	*cache_gcqueue;
+static u_int	cache_gcpend;
+
+/* Cache effectiveness statistics. */
+struct nchstats	nchstats __cacheline_aligned;
 #define	COUNT(c,x)	(c.x++)
-struct	nchstats nchstats;		/* cache effectiveness statistics */
 
-static pool_cache_t namecache_cache;
-
-int cache_lowat = 95;
-int cache_hiwat = 98;
-int cache_hottime = 5;			/* number of seconds */
-int doingcache = 1;			/* 1 => enable the cache */
+static const int cache_lowat = 95;
+static const int cache_hiwat = 98;
+static const int cache_hottime = 5;	/* number of seconds */
+static int doingcache = 1;		/* 1 => enable the cache */
 
 static struct evcnt cache_ev_scan;
 static struct evcnt cache_ev_gc;
@@ -142,11 +149,8 @@ static struct evcnt cache_ev_over;
 static struct evcnt cache_ev_under;
 static struct evcnt cache_ev_forced;
 
-/* A single lock to serialize modifications. */
-static kmutex_t *namecache_lock;
-
 static void cache_invalidate(struct namecache *);
-static inline struct namecache *cache_lookup_entry(
+static struct namecache *cache_lookup_entry(
     const struct vnode *, const struct componentname *);
 static void cache_thread(void *);
 static void cache_invalidate(struct namecache *);
@@ -587,12 +591,11 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	struct nchashhead *ncpp;
 	struct ncvhashhead *nvcpp;
 
-#ifdef DIAGNOSTIC
-	if (cnp->cn_namelen > NCHNAMLEN)
-		panic("cache_enter: name too long");
-#endif
-	if (!doingcache)
+	/* First, check whether we can/should add a cache entry. */
+	if ((cnp->cn_flags & MAKEENTRY) == 0 ||
+	    __predict_false(cnp->cn_namelen > NCHNAMLEN || !doingcache)) {
 		return;
+	}
 
 	if (numcache > desiredvnodes) {
 		mutex_enter(namecache_lock);
@@ -628,6 +631,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		 */
 		ncp->nc_flags = cnp->cn_flags & ISWHITEOUT;
 	}
+
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
 	LIST_INSERT_HEAD(&dvp->v_dnclist, ncp, nc_dvlist);
@@ -637,9 +641,10 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		ncp->nc_vlist.le_prev = NULL;
 		ncp->nc_vlist.le_next = NULL;
 	}
+	KASSERT(cnp->cn_namelen <= NCHNAMLEN);
 	ncp->nc_nlen = cnp->cn_namelen;
-	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	memcpy(ncp->nc_name, cnp->cn_nameptr, (unsigned)ncp->nc_nlen);
+	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	ncpp = &nchashtbl[NCHASH(cnp, dvp)];
 
 	/*
@@ -685,6 +690,7 @@ nchinit(void)
 {
 	int error;
 
+	TAILQ_INIT(&nclruhead);
 	namecache_cache = pool_cache_init(sizeof(struct namecache), 
 	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, cache_ctor,
 	    cache_dtor, NULL);

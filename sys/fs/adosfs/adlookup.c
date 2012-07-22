@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.15 2010/11/30 10:43:02 dholland Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.16 2012/07/22 00:53:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.15 2010/11/30 10:43:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.16 2012/07/22 00:53:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ adosfs_lookup(void *v)
 #endif
 		return(EJUSTRETURN);
 	}
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE)
 		cache_enter(vdp, NULL, cnp);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("ENOENT)");
@@ -240,7 +240,7 @@ found:
 	if (vdp == *vpp)
 		vref(vdp);
 found_lockdone:
-	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
+	if (nocache == 0)
 		cache_enter(vdp, *vpp, cnp);
 
 #ifdef ADOSFS_DIAGNOSTIC

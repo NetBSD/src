@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.19 2011/09/27 01:27:44 christos Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.20 2012/07/22 00:53:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.19 2011/09/27 01:27:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.20 2012/07/22 00:53:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -336,11 +336,8 @@ notfound:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	if (nameiop == CREATE || nameiop == RENAME)
-		return (EROFS);
-	return (ENOENT);
+	cache_enter(vdp, *vpp, cnp);
+	return (nameiop == CREATE || nameiop == RENAME) ? EROFS : ENOENT;
 
 found:
 	if (numdirpasses == 2)
@@ -402,9 +399,8 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	return (0);
+	cache_enter(vdp, *vpp, cnp);
+	return 0;
 }
 
 /*

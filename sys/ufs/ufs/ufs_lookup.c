@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.116 2012/06/04 16:46:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.117 2012/07/22 00:53:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.116 2012/06/04 16:46:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.117 2012/07/22 00:53:22 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -496,8 +496,9 @@ notfound:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE) {
 		cache_enter(vdp, *vpp, cnp);
+	}
 	error = ENOENT;
 	goto out;
 
@@ -660,8 +661,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp);
 	error = 0;
 
 out:
