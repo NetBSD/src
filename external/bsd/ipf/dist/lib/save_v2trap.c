@@ -1,7 +1,7 @@
-/*	$NetBSD: save_v2trap.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: save_v2trap.c,v 1.1.1.2 2012/07/22 13:44:43 darrenr Exp $	*/
 
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 #include "ipmon.h"
 #include <ctype.h>
 
@@ -15,8 +15,7 @@ static u_char ipf_trap0_2[] = { 6, 10, 0x2b, 6, 1, 4, 1, 0xcd, 0x4c, 1, 1, 2 };
 
 static int writeint __P((u_char *, int));
 static int writelength __P((u_char *, u_int));
-static int maketrap_v2 __P((char *, u_char *, int, u_char *, int, u_32_t,
-			    u_int, time_t));
+static int maketrap_v2 __P((char *, u_char *, int, u_char *, int));
 static void snmpv2_destroy __P((void *));
 static void *snmpv2_dup __P((void *));
 static int snmpv2_match __P((void *, void *));
@@ -25,7 +24,7 @@ static void snmpv2_print __P((void *));
 static int snmpv2_send __P((void *, ipmon_msg_t *));
 
 
-int sendtrap_v2_0 __P((int, char *, char *, int, time_t));
+int sendtrap_v2_0 __P((int, char *, char *, int));
 
 static char def_community[] = "public";	/* ublic */
 
@@ -231,7 +230,7 @@ snmpv2_send(ctx, msg)
 	snmpv2_opts_t *v2 = ctx;
 
 	return sendtrap_v2_0(v2->fd, v2->community,
-			     msg->imm_msg, msg->imm_msglen, msg->imm_when);
+			     msg->imm_msg, msg->imm_msglen);
 }
 static int
 writelength(buffer, value)
@@ -299,15 +298,12 @@ writeint(buffer, value)
  * 1.3.6.1.4.1.9932.1.1
  */
 static int
-maketrap_v2(community, buffer, bufsize, msg, msglen, ipaddr, code, when)
+maketrap_v2(community, buffer, bufsize, msg, msglen)
 	char *community;
 	u_char *buffer;
 	int bufsize;
 	u_char *msg;
 	int msglen;
-	u_32_t ipaddr;
-	u_int code;
-	time_t when;
 {
 	u_char *s = buffer, *t, *pdulen;
 	u_char *varlen;
@@ -446,18 +442,17 @@ maketrap_v2(community, buffer, bufsize, msg, msglen, ipaddr, code, when)
 
 
 int
-sendtrap_v2_0(fd, community, msg, msglen, when)
+sendtrap_v2_0(fd, community, msg, msglen)
 	int fd;
 	char *community, *msg;
 	int msglen;
-	time_t when;
 {
 
 	u_char buffer[1500];
 	int n;
 
 	n = maketrap_v2(community, buffer, sizeof(buffer),
-			(u_char *)msg, msglen, 0, 0, when);
+			(u_char *)msg, msglen);
 	if (n > 0) {
 		return send(fd, buffer, n, 0);
 	}

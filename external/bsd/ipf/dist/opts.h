@@ -1,11 +1,11 @@
-/*	$NetBSD: opts.h,v 1.1.1.1 2012/03/23 21:20:00 christos Exp $	*/
+/*	$NetBSD: opts.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: opts.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
  */
 
 #ifndef	__OPTS_H__
@@ -43,6 +43,7 @@
 #define	OPT_ASCII	0x4000000
 #define	OPT_NORESOLVE	0x8000000
 #define	OPT_DONTOPEN	0x10000000
+#define	OPT_PURGE	0x20000000
 
 #define	OPT_STAT	OPT_FRSTATES
 #define	OPT_LIST	OPT_SHOWLIST

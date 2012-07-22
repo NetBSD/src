@@ -1,17 +1,17 @@
-/*	$NetBSD: ipft_pc.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: ipft_pc.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: ipft_pc.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $";
 #endif
 
 struct	llc	{
@@ -215,6 +215,8 @@ static	int	ipcap_readip(mb, ifn, dir)
 	char	*buf;
 	int	cnt;
 
+	ifn = ifn;	/* gcc -Wextra */
+	dir = dir;	/* gcc -Wextra */
 	buf = (char *)mb->mb_buf;
 	cnt = sizeof(mb->mb_buf);
 	l = llcp;

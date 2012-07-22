@@ -1,11 +1,11 @@
-/*	$NetBSD: load_pool.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: load_pool.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: load_pool.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -34,16 +34,18 @@ load_pool(plp, iocfunc)
 	op.iplo_size = sizeof(pool);
 	op.iplo_struct = &pool;
 	bzero((char *)&pool, sizeof(pool));
+	pool.ipo_unit = plp->ipo_unit;
 	strncpy(pool.ipo_name, plp->ipo_name, sizeof(pool.ipo_name));
 	if (plp->ipo_name[0] == '\0')
 		op.iplo_arg |= IPOOL_ANON;
 
 	if ((opts & OPT_REMOVE) == 0) {
-		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op))
+		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op)) {
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_pool:SIOCLOOKUPADDTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+						     "add lookup table");
 			}
+		}
 	}
 
 	if (op.iplo_arg & IPOOL_ANON)
@@ -62,8 +64,8 @@ load_pool(plp, iocfunc)
 	if ((opts & OPT_REMOVE) != 0) {
 		if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_pool:SIOCLOOKUPDELTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+						     "delete lookup table");
 			}
 	}
 	return 0;

@@ -1,11 +1,11 @@
-/*	$NetBSD: checkrev.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: checkrev.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: checkrev.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $
  */
 
 #include <sys/ioctl.h>
@@ -33,7 +33,7 @@ int checkrev(ipfname)
 	}
 
 	if (ioctl(vfd, SIOCGETFS, &obj)) {
-		perror("ioctl(SIOCGETFS)");
+		ipferror(vfd, "ioctl(SIOCGETFS)");
 		close(vfd);
 		vfd = -1;
 		return -1;
