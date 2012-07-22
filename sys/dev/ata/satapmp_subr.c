@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.3 2012/07/22 18:03:34 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.4 2012/07/22 18:12:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.3 2012/07/22 18:03:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.4 2012/07/22 18:12:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,11 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 
 	ata_c.r_command = PMPC_READ_PORT;
 	ata_c.r_features = reg;
-	ata_c.r_lba = (port & 0xf) << 24;
+	ata_c.r_device = port;
 	ata_c.timeout = 3000; /* 3s */
 	ata_c.r_st_bmask = WDCS_DRDY;
 	ata_c.r_st_pmask = 0;
-	ata_c.flags = AT_READREG | AT_WAIT;
+	ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    &ata_c) != ATACMD_COMPLETE) {
@@ -92,7 +92,6 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 	return 0;
 }
 
-static int satapmp_write(struct ata_channel *chp, int, int, uint32_t) __unused;
 static int
 satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
 {
@@ -110,13 +109,13 @@ satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
 
 	ata_c.r_command = PMPC_WRITE_PORT;
 	ata_c.r_features = reg;
-	ata_c.r_lba = (port & 0xf) << 24;
-	ata_c.r_lba |= (value & 0xffffff00) >> 8;
+	ata_c.r_device = port;
+	ata_c.r_lba = (value & 0xffffff00) >> 8;
 	ata_c.r_count = value & 0xff;
 	ata_c.timeout = 3000; /* 3s */
 	ata_c.r_st_bmask = WDCS_DRDY;
 	ata_c.r_st_pmask = 0;
-	ata_c.flags = AT_WAIT;
+	ata_c.flags = AT_LBA48 | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 	    &ata_c) != ATACMD_COMPLETE) {
