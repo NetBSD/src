@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.4 2012/07/22 16:19:34 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -96,7 +96,6 @@ struct file;
 #if defined(_KERNEL)
 # include "netinet/ip_irc_pxy.c"
 # include "netinet/ip_raudio_pxy.c"
-# include "netinet/ip_h323_pxy.c"
 # include "netinet/ip_netbios_pxy.c"
 #endif
 #include "netinet/ip_ipsec_pxy.c"
@@ -105,7 +104,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.4 2012/07/22 16:19:34 darrenr Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp";
 #endif
