@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_dns_pxy.c,v 1.2 2012/03/23 20:39:49 christos Exp $	*/
+/*	$NetBSD: ip_dns_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_dns_pxy.c,v 2.2.2.6 2012/01/29 05:30:35 darrenr Exp
+ * Id: ip_dns_pxy.c,v 1.1.1.2 2012/07/22 13:45:10 darrenr Exp
  */
 
 #define	IPF_DNS_PROXY
@@ -174,6 +174,9 @@ ipf_p_dns_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	dnsinfo_t *di;
 	int dlen;
+
+	if (fin->fin_v != 4)
+		return -1;
 
 	dlen = fin->fin_dlen - sizeof(udphdr_t);
 	if (dlen < sizeof(ipf_dns_hdr_t)) {

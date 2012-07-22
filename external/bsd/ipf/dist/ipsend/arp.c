@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.1.1.2 2012/07/22 13:44:35 darrenr Exp $	*/
+/*	$NetBSD: arp.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * arp.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)arp.c	1.4 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: arp.c,v 1.1.1.2 2012/07/22 13:44:35 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: arp.c,v 1.1.1.2 2012/07/22 13:44:35 darrenr Exp $";
 #endif
 #include <sys/types.h>
 #include <sys/socket.h>

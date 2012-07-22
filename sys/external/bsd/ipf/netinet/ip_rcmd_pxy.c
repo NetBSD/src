@@ -1,20 +1,26 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_rcmd_pxy.c,v 1.65.2.2 2012/01/26 05:29:13 darrenr Exp
+ * Id: ip_rcmd_pxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp
  *
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 
 #define	IPF_RCMD_PROXY
+
+typedef struct rcmdinfo {
+	u_32_t	rcmd_port;	/* Port number seen */
+	u_32_t	rcmd_portseq;	/* Sequence number where port is first seen */
+	ipnat_t	*rcmd_rule;	/* Template rule for back connection */
+} rcmdinfo_t;
 
 void ipf_p_rcmd_main_load(void);
 void ipf_p_rcmd_main_unload(void);
@@ -66,60 +72,32 @@ ipf_p_rcmd_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 	rcmdinfo_t *rc;
 	ipnat_t *ipn;
+	ipnat_t *np;
+	int size;
 
 	fin = fin;	/* LINT */
-	nat = nat;	/* LINT */
 
-	aps->aps_psiz = sizeof(rcmdinfo_t) + nat->nat_ptr->in_namelen + 1;
-	KMALLOCS(rc, rcmdinfo_t *, aps->aps_psiz);
+	np = nat->nat_ptr;
+	size = np->in_size;
+	KMALLOC(rc, rcmdinfo_t *);
 	if (rc == NULL) {
 		printf("ipf_p_rcmd_new:KMALLOCS(%zu) failed\n", sizeof(*rc));
 		return -1;
 	}
-
-	aps->aps_data = rc;
-	bzero((char *)rc, sizeof(*rc));
 	aps->aps_sport = tcp->th_sport;
 	aps->aps_dport = tcp->th_dport;
 
-	ipn = &rc->rcmd_rule;
-	ipn->in_ifps[0] = nat->nat_ifps[0];
-	ipn->in_ifps[1] = nat->nat_ifps[1];
-	ipn->in_apr = NULL;
-	ipn->in_use = 1;
-	ipn->in_hits = 1;
-	ipn->in_ippip = 1;
-
-	if ((nat->nat_ptr->in_redir & NAT_REDIRECT) != 0) {
-		ipn->in_redir = NAT_MAP;
-		ipn->in_snip = ntohl(nat->nat_odstaddr);
-		ipn->in_nsrcaddr = nat->nat_odstaddr;
-		ipn->in_dnip = ntohl(nat->nat_nsrcaddr);
-		ipn->in_ndstaddr = nat->nat_nsrcaddr;
-		ipn->in_osrcaddr = nat->nat_ndstaddr;
-		ipn->in_odstaddr = nat->nat_osrcaddr;
-	} else {
-		ipn->in_redir = NAT_REDIRECT;
-		ipn->in_snip = ntohl(nat->nat_odstaddr);
-		ipn->in_nsrcaddr = nat->nat_odstaddr;
-		ipn->in_dnip = ntohl(nat->nat_osrcaddr);
-		ipn->in_ndstaddr = nat->nat_osrcaddr;
-		ipn->in_osrcaddr = nat->nat_ndstaddr;
-		ipn->in_odstaddr = nat->nat_nsrcaddr;
+	ipn = ipf_proxy_rule_rev(nat);
+	if (ipn == NULL) {
+		KFREE(rc);
+		return -1;
 	}
 
-	ipn->in_osrcmsk = 0xffffffff;
-	ipn->in_nsrcmsk = 0xffffffff;
-	ipn->in_odstmsk = 0xffffffff;
-	ipn->in_ndstmsk = 0xffffffff;
-	ipn->in_pr[0] = IPPROTO_TCP;
-	ipn->in_pr[1] = IPPROTO_TCP;
-	MUTEX_INIT(&ipn->in_lock, "rcmd proxy NAT rule");
+	aps->aps_data = rc;
+	aps->aps_psiz = sizeof(*rc);
+	bzero((char *)rc, sizeof(*rc));
 
-	ipn->in_namelen = nat->nat_ptr->in_namelen;
-	bcopy(nat->nat_ptr->in_names, ipn->in_ifnames, ipn->in_namelen);
-	ipn->in_ifnames[0] = nat->nat_ptr->in_ifnames[0];
-	ipn->in_ifnames[1] = nat->nat_ptr->in_ifnames[1];
+	rc->rcmd_rule = ipn;
 
 	return 0;
 }
@@ -132,7 +110,8 @@ ipf_p_rcmd_del(ipf_main_softc_t *softc, ap_session_t *aps)
 
 	rci = aps->aps_data;
 	if (rci != NULL) {
-		MUTEX_DESTROY(&rci->rcmd_rule.in_lock);
+		rci->rcmd_rule->in_flags |= IPN_DELETE;
+		ipf_nat_rule_deref(softc, &rci->rcmd_rule);
 	}
 }
 
@@ -160,11 +139,15 @@ ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	int off, dlen, nflags, direction;
 	ipf_main_softc_t *softc;
+	ipf_nat_softc_t *softn;
 	char portbuf[8], *s;
 	rcmdinfo_t *rc;
 	fr_info_t fi;
 	u_short sp;
 	nat_t *nat2;
+	ip6_t *ip6;
+	int tcpsz;
+	int slen;
 	ip_t *ip;
 	mb_t *m;
 
@@ -172,13 +155,13 @@ ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 
 	m = fin->fin_m;
 	ip = fin->fin_ip;
-	off = (char *)tcp - (char *)ip + (TCP_OFF(tcp) << 2) + fin->fin_ipoff;
+	tcpsz = TCP_OFF(tcp) << 2;
+	ip6 = (ip6_t *)fin->fin_ip;
+	softc = fin->fin_main_soft;
+	softn = softc->ipf_nat_soft;
+	off = (char *)tcp - (char *)ip + tcpsz + fin->fin_ipoff;
 
-#ifdef __sgi
-	dlen = fin->fin_plen - off;
-#else
-	dlen = MSGDSIZE(m) - off;
-#endif
+	dlen = fin->fin_dlen - tcpsz;
 	if (dlen <= 0)
 		return 0;
 
@@ -221,77 +204,110 @@ ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_data[0] = 0;
 	fi.fin_data[1] = sp;
-	fi.fin_fi.fi_saddr = nat->nat_ndstaddr;
-	fi.fin_fi.fi_daddr = nat->nat_nsrcaddr;
+	fi.fin_src6 = nat->nat_ndst6;
+	fi.fin_dst6 = nat->nat_nsrc6;
 
-	if (nat->nat_dir == NAT_OUTBOUND) {
-		nat2 = ipf_nat_outlookup(&fi, NAT_SEARCH|IPN_TCP,
-					 nat->nat_pr[1],
-					 nat->nat_osrcip, nat->nat_odstip);
-	} else {
-		nat2 = ipf_nat_inlookup(&fi, NAT_SEARCH|IPN_TCP,
-					nat->nat_pr[0],
-					nat->nat_osrcip, nat->nat_odstip);
-	}
-
-	softc = fin->fin_main_soft;
-	if (nat2 == NULL) {
-#ifdef USE_MUTEXES
-		ipf_nat_softc_t *softn = softc->ipf_nat_soft;
+	if (nat->nat_v[0] == 6) {
+#ifdef USE_INET6
+		if (nat->nat_dir == NAT_OUTBOUND) {
+			nat2 = ipf_nat6_outlookup(&fi, NAT_SEARCH|IPN_TCP,
+						  nat->nat_pr[1],
+						  &nat->nat_osrc6.in6,
+						  &nat->nat_odst6.in6);
+		} else {
+			nat2 = ipf_nat6_inlookup(&fi, NAT_SEARCH|IPN_TCP,
+						 nat->nat_pr[0],
+						 &nat->nat_osrc6.in6,
+						 &nat->nat_odst6.in6);
+		}
+#else
+		nat2 = (void *)-1;
 #endif
+	} else {
+		if (nat->nat_dir == NAT_OUTBOUND) {
+			nat2 = ipf_nat_outlookup(&fi, NAT_SEARCH|IPN_TCP,
+						 nat->nat_pr[1],
+						 nat->nat_osrcip,
+						 nat->nat_odstip);
+		} else {
+			nat2 = ipf_nat_inlookup(&fi, NAT_SEARCH|IPN_TCP,
+						nat->nat_pr[0],
+						nat->nat_osrcip,
+						nat->nat_odstip);
+		}
+	}
+	if (nat2 != NULL)
+		return APR_ERR(1);
 
-		/*
-		 * Add skeleton NAT entry for connection which will come
-		 * back the other way.
-		 */
-		int slen;
+	/*
+	 * Add skeleton NAT entry for connection which will come
+	 * back the other way.
+	 */
 
+	if (nat->nat_v[0] == 6) {
+#ifdef USE_INET6
+		slen = ip6->ip6_plen;
+		ip6->ip6_plen = htons(sizeof(*tcp));
+#endif
+	} else {
 		slen = ip->ip_len;
 		ip->ip_len = htons(fin->fin_hlen + sizeof(*tcp));
+	}
 
-		/*
-		 * Fill out the fake TCP header with a few fields that ipfilter
-		 * considers to be important.
-		 */
-		bzero((char *)tcp2, sizeof(*tcp2));
-		tcp2->th_win = htons(8192);
-		TCP_OFF_A(tcp2, 5);
-		tcp2->th_flags = TH_SYN;
+	/*
+	 * Fill out the fake TCP header with a few fields that ipfilter
+	 * considers to be important.
+	 */
+	bzero((char *)tcp2, sizeof(*tcp2));
+	tcp2->th_win = htons(8192);
+	TCP_OFF_A(tcp2, 5);
+	tcp2->th_flags = TH_SYN;
 
-		fi.fin_dp = (char *)tcp2;
-		fi.fin_fr = &rcmdfr;
-		fi.fin_dlen = sizeof(*tcp2);
-		fi.fin_plen = fi.fin_hlen + sizeof(*tcp2);
+	fi.fin_dp = (char *)tcp2;
+	fi.fin_fr = &rcmdfr;
+	fi.fin_dlen = sizeof(*tcp2);
+	fi.fin_plen = fi.fin_hlen + sizeof(*tcp2);
+	fi.fin_flx &= FI_LOWTTL|FI_FRAG|FI_TCPUDP|FI_OPTIONS|FI_IGNORE;
 
-		if (nat->nat_dir == NAT_OUTBOUND) {
-			fi.fin_out = 0;
-			direction = NAT_INBOUND;
-		} else {
-			fi.fin_out = 1;
-			direction = NAT_OUTBOUND;
-		}
-		nflags = SI_W_SPORT;
+	if (nat->nat_dir == NAT_OUTBOUND) {
+		fi.fin_out = 0;
+		direction = NAT_INBOUND;
+	} else {
+		fi.fin_out = 1;
+		direction = NAT_OUTBOUND;
+	}
+	nflags = SI_W_SPORT|NAT_SLAVE|IPN_TCP;
 
-		fi.fin_flx &= FI_LOWTTL|FI_FRAG|FI_TCPUDP|FI_OPTIONS|FI_IGNORE;
-
-		nflags |= NAT_SLAVE|IPN_TCP;
-		MUTEX_ENTER(&softn->ipf_nat_new);
-		nat2 = ipf_nat_add(&fi, &rc->rcmd_rule, NULL, nflags,
+	MUTEX_ENTER(&softn->ipf_nat_new);
+	if (fin->fin_v == 4)
+		nat2 = ipf_nat_add(&fi, rc->rcmd_rule, NULL, nflags,
 				   direction);
-		MUTEX_EXIT(&softn->ipf_nat_new);
+#ifdef USE_INET6
+	else
+		nat2 = ipf_nat6_add(&fi, rc->rcmd_rule, NULL, nflags,
+				    direction);
+#endif
+	MUTEX_EXIT(&softn->ipf_nat_new);
 
-		if (nat2 != NULL) {
-			(void) ipf_nat_proto(&fi, nat2, IPN_TCP);
-			MUTEX_ENTER(&nat2->nat_lock);
-			ipf_nat_update(&fi, nat2);
-			MUTEX_EXIT(&nat2->nat_lock);
-			fi.fin_ifp = NULL;
-			if (nat2->nat_dir == NAT_INBOUND)
-				fi.fin_fi.fi_daddr = nat->nat_osrcaddr;
-			(void) ipf_state_add(softc, &fi, NULL, SI_W_SPORT);
-		}
+	if (nat2 != NULL) {
+		(void) ipf_nat_proto(&fi, nat2, IPN_TCP);
+		MUTEX_ENTER(&nat2->nat_lock);
+		ipf_nat_update(&fi, nat2);
+		MUTEX_EXIT(&nat2->nat_lock);
+		fi.fin_ifp = NULL;
+		if (nat2->nat_dir == NAT_INBOUND)
+			fi.fin_dst6 = nat->nat_osrc6;
+		(void) ipf_state_add(softc, &fi, NULL, SI_W_SPORT);
+	}
+	if (nat->nat_v[0] == 6) {
+#ifdef USE_INET6
+		ip6->ip6_plen = slen;
+#endif
+	} else {
 		ip->ip_len = slen;
 	}
+	if (nat2 == NULL)
+		return APR_ERR(1);
 	return 0;
 }
 

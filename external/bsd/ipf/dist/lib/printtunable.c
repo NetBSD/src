@@ -1,11 +1,11 @@
-/*	$NetBSD: printtunable.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
+/*	$NetBSD: printtunable.c,v 1.2 2012/07/22 14:27:37 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * $Id: printtunable.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
+ * Id: printtunable.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include "ipf.h"

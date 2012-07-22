@@ -1,11 +1,11 @@
-/*	$NetBSD: printlookup.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $	*/
+/*	$NetBSD: printlookup.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * $Id: printlookup.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $
+ * Id: printlookup.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $
  */
 
 #include "ipf.h"
