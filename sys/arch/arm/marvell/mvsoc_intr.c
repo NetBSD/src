@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $	*/
+/*	$NetBSD: mvsoc_intr.c,v 1.4 2012/07/22 17:14:18 jakllsch Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_intr.c,v 1.4 2012/07/22 17:14:18 jakllsch Exp $");
 
 #define _INTR_PRIVATE
 
@@ -96,8 +96,8 @@ void *
 mvsoc_bridge_intr_establish(int ih, int ipl, int (*ih_func)(void *), void *arg)
 {
 
-	return intr_establish(mvsoc_bridge_pic.pic_irqbase + ih, ipl, 0,
-	    ih_func, arg);
+	return intr_establish(mvsoc_bridge_pic.pic_irqbase + ih, ipl,
+	    IST_LEVEL_HIGH, ih_func, arg);
 }
 
 /* ARGSUSED */
