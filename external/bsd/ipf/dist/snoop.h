@@ -1,4 +1,4 @@
-/*	$NetBSD: snoop.h,v 1.1.1.2 2012/07/22 13:44:27 darrenr Exp $	*/
+/*	$NetBSD: snoop.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -11,7 +11,7 @@
 
 /*
  * written to comply with the RFC (1761) from Sun.
- * $Id: snoop.h,v 1.1.1.2 2012/07/22 13:44:27 darrenr Exp $
+ * Id: snoop.h,v 1.1.1.2 2012/07/22 13:44:27 darrenr Exp $
  */
 struct	snoophdr	{
 	char	s_id[8];
