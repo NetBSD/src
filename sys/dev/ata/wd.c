@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.395 2012/07/15 10:55:29 dsl Exp $ */
+/*	$NetBSD: wd.c,v 1.396 2012/07/22 18:37:31 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.395 2012/07/15 10:55:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.396 2012/07/22 18:37:31 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -1913,7 +1913,7 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	ata_c.r_st_bmask = WDCS_DRDY;
 	ata_c.r_st_pmask = WDCS_DRDY;
 	ata_c.flags = flags;
-	ata_c.timeout = 30000; /* 30s timeout */
+	ata_c.timeout = 300000; /* 5m timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "flush cache command didn't complete\n");
