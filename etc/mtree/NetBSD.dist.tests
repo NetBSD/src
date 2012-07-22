@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.78 2012/06/06 21:23:10 martin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.79 2012/07/22 21:04:44 joerg Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -290,6 +290,7 @@
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
 ./usr/tests/usr.bin/mkdep
+./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/sdiff
