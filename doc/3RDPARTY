@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.949 2012/07/22 10:12:09 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.950 2012/07/22 10:46:53 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1171,7 +1171,7 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2012b / tzdata2012b
+Version:	tzcode2012b / tzdata2012d
 Current Vers:	tzcode2012c / tzdata2012d
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Maintainer:	Robert Elz <kre@munnari.oz.au>
