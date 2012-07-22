@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: fil.c,v 1.4 2012/07/22 16:13:16 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.4 2012/07/22 16:13:16 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -7296,8 +7296,7 @@ ipf_token_expire(ipf_main_softc_t *softc)
 /* by code that is only entitled to drop it once.                           */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_token_flush(softc)
-	ipf_main_softc_t *softc;
+ipf_token_flush(ipf_main_softc_t *softc)
 {
 	ipftoken_t *it, *next;
 
@@ -9740,9 +9739,7 @@ ipf_slowtimer(ipf_main_softc_t *softc)
 /* a given netmask.                                                         */
 /* ------------------------------------------------------------------------ */
 void
-ipf_inet_mask_add(bits, mtab)
-	int bits;
-	ipf_v4_masktab_t *mtab;
+ipf_inet_mask_add(int bits, ipf_v4_masktab_t *mtab)
 {
 	u_32_t mask;
 	int i, j;
@@ -9817,10 +9814,7 @@ ipf_inet_mask_del(bits, mtab)
 /* a given netmask.                                                         */
 /* ------------------------------------------------------------------------ */
 void
-ipf_inet6_mask_add(bits, mask, mtab)
-	int bits;
-	i6addr_t *mask;
-	ipf_v6_masktab_t *mtab;
+ipf_inet6_mask_add(int bits, i6addr_t *mask, ipf_v6_masktab_t *mtab)
 {
 	i6addr_t zero;
 	int i, j;
@@ -9860,10 +9854,7 @@ ipf_inet6_mask_add(bits, mask, mtab)
 /* netmasks stored inside of mtab.                                          */
 /* ------------------------------------------------------------------------ */
 void
-ipf_inet6_mask_del(bits, mask, mtab)
-	int bits;
-	i6addr_t *mask;
-	ipf_v6_masktab_t *mtab;
+ipf_inet6_mask_del(int bits, i6addr_t *mask, ipf_v6_masktab_t *mtab)
 {
 	i6addr_t zero;
 	int i, j;
