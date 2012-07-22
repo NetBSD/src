@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.2 2012/07/15 10:55:29 dsl Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.3 2012/07/22 18:03:34 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.2 2012/07/15 10:55:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.3 2012/07/22 18:03:34 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 
+	KASSERT(port < PMP_MAX_DRIVES);
 	KASSERT(reg < PMP_GSCR_NREGS);
 	KASSERT(chp->ch_ndrives >= PMP_MAX_DRIVES);
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
@@ -99,11 +100,11 @@ satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 
+	KASSERT(port < PMP_MAX_DRIVES);
 	KASSERT(reg < PMP_GSCR_NREGS);
 	KASSERT(chp->ch_ndrives >= PMP_MAX_DRIVES);
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
-
 
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
