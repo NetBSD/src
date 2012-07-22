@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.81 2012/02/12 16:34:11 matt Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.82 2012/07/22 14:32:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.81 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.82 2012/07/22 14:32:58 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +173,7 @@ const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 /* MII callbacks */
 int	smc91cxx_mii_readreg(device_t, int, int);
 void	smc91cxx_mii_writereg(device_t, int, int, int);
-void	smc91cxx_statchg(device_t);
+void	smc91cxx_statchg(struct ifnet *);
 void	smc91cxx_tick(void *);
 
 int	smc91cxx_mediachange(struct ifnet *);
@@ -1575,9 +1575,9 @@ smc91cxx_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 void
-smc91cxx_statchg(device_t self)
+smc91cxx_statchg(struct ifnet *ifp)
 {
-	struct smc91cxx_softc *sc = device_private(self);
+	struct smc91cxx_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int mctl;

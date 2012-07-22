@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.78 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: be.c,v 1.79 2012/07/22 14:33:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.78 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.79 2012/07/22 14:33:05 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -184,7 +184,7 @@ static void	be_mcreset(struct be_softc *);
 /* MII methods & callbacks */
 static int	be_mii_readreg(device_t, int, int);
 static void	be_mii_writereg(device_t, int, int, int);
-static void	be_mii_statchg(device_t);
+static void	be_mii_statchg(struct ifnet *);
 
 /* MII helpers */
 static void	be_mii_sync(struct be_softc *);
@@ -1383,9 +1383,9 @@ be_tick(void *arg)
 }
 
 void
-be_mii_statchg(device_t self)
+be_mii_statchg(struct ifnet *ifp)
 {
-	struct be_softc *sc = device_private(self);
+	struct be_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 	uint instance;
@@ -1590,7 +1590,7 @@ be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 
 	/* Callback if something changed. */
 	if (sc->sc_mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(self);
+		(*mii->mii_statchg)(mii->mii_ifp);
 		sc->sc_mii_active = mii->mii_media_active;
 	}
 	return 0;

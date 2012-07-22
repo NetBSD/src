@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.110 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.111 2012/07/22 14:33:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.110 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.111 2012/07/22 14:33:04 matt Exp $");
 
 
 
@@ -303,7 +303,7 @@ static void	vr_tick(void *);
 
 static int	vr_mii_readreg(device_t, int, int);
 static void	vr_mii_writereg(device_t, int, int, int);
-static void	vr_mii_statchg(device_t);
+static void	vr_mii_statchg(struct ifnet *);
 
 static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
@@ -396,9 +396,9 @@ vr_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 static void
-vr_mii_statchg(device_t self)
+vr_mii_statchg(struct ifnet *ifp)
 {
-	struct vr_softc *sc = device_private(self);
+	struct vr_softc *sc = ifp->if_softc;
 
 	/*
 	 * In order to fiddle with the 'full-duplex' bit in the netconfig

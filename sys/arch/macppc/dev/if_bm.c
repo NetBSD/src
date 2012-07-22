@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.45 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.45 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ void bmac_setladrf(struct bmac_softc *);
 
 int bmac_mii_readreg(device_t, int, int);
 void bmac_mii_writereg(device_t, int, int, int);
-void bmac_mii_statchg(device_t);
+void bmac_mii_statchg(struct ifnet *);
 void bmac_mii_tick(void *);
 u_int32_t bmac_mbo_read(device_t);
 void bmac_mbo_write(device_t, u_int32_t);
@@ -880,9 +880,9 @@ bmac_mbo_write(device_t self, u_int32_t val)
 }
 
 void
-bmac_mii_statchg(device_t self)
+bmac_mii_statchg(struct ifnet *ifp)
 {
-	struct bmac_softc *sc = device_private(self);
+	struct bmac_softc *sc = ifp->if_softc;
 	int x;
 
 	/* Update duplex mode in TX configuration */

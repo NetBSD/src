@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.132 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: elink3.c,v 1.133 2012/07/22 14:32:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.132 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.133 2012/07/22 14:32:56 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -202,7 +202,7 @@ void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 /* MII callbacks */
 int	ep_mii_readreg(device_t, int, int);
 void	ep_mii_writereg(device_t, int, int, int);
-void	ep_statchg(device_t);
+void	ep_statchg(struct ifnet *);
 
 void	ep_tick(void *);
 
@@ -2081,9 +2081,9 @@ ep_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 void
-ep_statchg(device_t self)
+ep_statchg(struct ifnet *ifp)
 {
-	struct ep_softc *sc = device_private(self);
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;

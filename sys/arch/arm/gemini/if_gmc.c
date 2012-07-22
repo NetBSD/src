@@ -1,4 +1,4 @@
-/* $NetBSD: if_gmc.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $ */
+/* $NetBSD: if_gmc.c,v 1.5 2012/07/22 14:32:50 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gmc.c,v 1.5 2012/07/22 14:32:50 matt Exp $");
 
 #define	MAX_TXSEG	32
 
@@ -307,9 +307,9 @@ gmc_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static void
-gmc_mii_statchg(device_t self)
+gmc_mii_statchg(struct ifnet *ifp)
 {
-	struct gmc_softc * const sc = device_private(self);
+	struct gmc_softc * const sc = ifp->if_softc;
 	uint32_t gmac_status;
 	
 	gmac_status = sc->sc_gmac_status;
