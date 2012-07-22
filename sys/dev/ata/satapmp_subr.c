@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.5 2012/07/22 18:17:30 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.6 2012/07/22 18:21:17 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.5 2012/07/22 18:17:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.6 2012/07/22 18:21:17 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.5 2012/07/22 18:17:30 jakllsch Ex
 #include <dev/ata/satareg.h>
 
 static int
-satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
+satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 {
 	struct ata_command ata_c;
 	struct atac_softc *atac = chp->ch_atac;
@@ -88,12 +88,31 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 		    reg, ata_c.r_error);
 		return EIO;
 	}
-	*value = ata_c.r_lba << 8 | ata_c.r_count;
+
+	*value = ((uint64_t)((ata_c.r_lba >> 24) & 0xffffff) << 40) |
+		((uint64_t)((ata_c.r_count >> 8) & 0xff) << 32) |
+		((uint64_t)((ata_c.r_lba >> 0) & 0xffffff) << 8) |
+		((uint64_t)((ata_c.r_count >> 0) & 0xff) << 0);
+
 	return 0;
 }
 
+static inline int
+satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
+{
+	uint64_t value64;
+	int ret;
+
+	ret = satapmp_read_8(chp, port, reg, &value64);
+	if (ret)
+		return ret;
+
+	*value = value64 & 0xffffffff;
+	return ret;
+}
+
 static int
-satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
+satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 {
 	struct ata_command ata_c;
 	struct atac_softc *atac = chp->ch_atac;
@@ -110,8 +129,10 @@ satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
 	ata_c.r_command = PMPC_WRITE_PORT;
 	ata_c.r_features = reg;
 	ata_c.r_device = port;
-	ata_c.r_lba = (value & 0xffffff00) >> 8;
-	ata_c.r_count = value & 0xff;
+	ata_c.r_lba = (((value >> 40) & 0xffffff) << 24) |
+		      (((value >>  8) & 0xffffff) <<  0);
+	ata_c.r_count = (((value >> 32) & 0xff) << 8) |
+			(((value >>  0) & 0xff) << 0);
 	ata_c.timeout = 3000; /* 3s */
 	ata_c.r_st_bmask = WDCS_DRDY;
 	ata_c.r_st_pmask = 0;
@@ -136,6 +157,12 @@ satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
 		return EIO;
 	}
 	return 0;
+}
+
+static inline int
+satapmp_write(struct ata_channel *chp, int port, int reg, uint32_t value)
+{
+	return satapmp_write_8(chp, port, reg, value);
 }
 
 /*
