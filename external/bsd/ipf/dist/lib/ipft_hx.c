@@ -1,13 +1,13 @@
-/*	$NetBSD: ipft_hx.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ipft_hx.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $";
 #endif
 
 #include <ctype.h>
@@ -134,11 +134,12 @@ static	int	hex_readip(mb, ifn, dir)
 		ip = (ip_t *)readhex(s, (char *)ip);
 		if ((opts & OPT_DEBUG) != 0) {
 			if (opts & OPT_ASCII) {
+				int c = *t;
 				if (t < (char *)ip)
 					putchar('\t');
 				while (t < (char *)ip) {
-					if (ISPRINT(*t) && ISASCII(*t))
-						putchar(*t);
+					if (isprint(c) && isascii(c))
+						putchar(c);
 					else
 						putchar('.');
 					t++;

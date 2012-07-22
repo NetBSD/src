@@ -1,7 +1,7 @@
-/*	$NetBSD: printdstl_live.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printdstl_live.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -23,7 +23,7 @@ printdstl_live(d, fd, name, opts, fields)
 	int opts;
 	wordtab_t *fields;
 {
-	ipf_dstnode_t *entry, *top, *node;
+	ipf_dstnode_t *entry, *zero;
 	ipflookupiter_t iter;
 	int printed, last;
 	ipfobj_t obj;
@@ -34,6 +34,11 @@ printdstl_live(d, fd, name, opts, fields)
 	entry = calloc(1, sizeof(*entry) + 64);
 	if (entry == NULL)
 		return d->ipld_next;
+	zero = calloc(1, sizeof(*zero) + 64);
+	if (zero == NULL) {
+		free(entry);
+		return d->ipld_next;
+	}
 
 	if (fields == NULL)
 		printdstlistdata(d, opts);
@@ -57,32 +62,20 @@ printdstl_live(d, fd, name, opts, fields)
 	strncpy(iter.ili_name, d->ipld_name, FR_GROUPLEN);
 
 	last = 0;
-	top = NULL;
 	printed = 0;
-	entry = NULL;
 
-	if (d->ipld_nodes > 0) {
-		while (!last && (ioctl(fd, SIOCLOOKUPITER, &obj) == 0)) {
-			if (entry->ipfd_next == NULL)
-				last = 1;
-			entry->ipfd_next = top;
-			top = malloc(entry->ipfd_size);
-			if (top == NULL)
-				break;
-			bcopy(entry, top, entry->ipfd_size);
-		}
-	}
-
-	while (top != NULL) {
-		node = top;
-		(void) printdstlistnode(node, bcopywrap, opts, fields);
-		top = node->ipfd_next;
-		free(node);
+	while (!last && (ioctl(fd, SIOCLOOKUPITER, &obj) == 0)) {
+		if (entry->ipfd_next == NULL)
+			last = 1;
+		if (bcmp((char *)zero, (char *)entry, sizeof(*zero)) == 0)
+			break;
+		(void) printdstlistnode(entry, bcopywrap, opts, fields);
 		printed++;
 	}
 
-	if (entry != NULL)
-		free(entry);
+	(void) ioctl(fd, SIOCIPFDELTOK, &iter.ili_key);
+	free(entry);
+	free(zero);
 
 	if (printed == 0)
 		putchar(';');

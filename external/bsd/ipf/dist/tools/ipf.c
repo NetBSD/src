@@ -1,7 +1,7 @@
-/*	$NetBSD: ipf.c,v 1.1.1.1 2012/03/23 21:20:23 christos Exp $	*/
+/*	$NetBSD: ipf.c,v 1.1.1.2 2012/07/22 13:44:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -22,7 +22,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.1.1.2 2012/07/22 13:44:51 darrenr Exp $";
 #endif
 
 #if !defined(__SVR4) && defined(__GNUC__)
@@ -41,8 +41,9 @@ int	main __P((int, char *[]));
 int	opts = 0;
 int	outputc = 0;
 int	use_inet6 = 0;
+int	exitstatus = 0;
 
-static	void	procfile __P((char *, char *));
+static	void	procfile __P((char *));
 static	void	flushfilter __P((char *, int *));
 static	void	set_state __P((u_int));
 static	void	showstats __P((friostat_t *));
@@ -54,7 +55,7 @@ static	char	*ipfname = IPL_NAME;
 static	void	usage __P((void));
 static	int	showversion __P((void));
 static	int	get_flags __P((void));
-static	void	ipf_interceptadd __P((int, ioctlfunc_t, void *));
+static	int	ipf_interceptadd __P((int, ioctlfunc_t, void *));
 
 static	int	fd = -1;
 static	ioctlfunc_t	iocfunctions[IPL_LOGSIZE] = { ioctl, ioctl, ioctl,
@@ -111,7 +112,7 @@ int main(argc,argv)
 			opts ^= OPT_DEBUG;
 			break;
 		case 'f' :
-			procfile(argv[0], optarg);
+			procfile(optarg);
 			break;
 		case 'F' :
 			flushfilter(optarg, filter);
@@ -171,7 +172,7 @@ int main(argc,argv)
 	if (fd != -1)
 		(void) close(fd);
 
-	return(0);
+	return(exitstatus);
 	/* NOTREACHED */
 }
 
@@ -236,8 +237,8 @@ static	void	set_state(enable)
 }
 
 
-static	void	procfile(name, file)
-	char	*name, *file;
+static	void	procfile(file)
+	char	*file;
 {
 	(void) opendevice(ipfname, 1);
 
@@ -253,7 +254,7 @@ static	void	procfile(name, file)
 }
 
 
-static void ipf_interceptadd(fd, ioctlfunc, ptr)
+static int ipf_interceptadd(fd, ioctlfunc, ptr)
 	int fd;
 	ioctlfunc_t ioctlfunc;
 	void *ptr;
@@ -261,7 +262,9 @@ static void ipf_interceptadd(fd, ioctlfunc, ptr)
 	if (outputc)
 		printc(ptr);
 
-	ipf_addrule(fd, ioctlfunc, ptr);
+	if (ipf_addrule(fd, ioctlfunc, ptr) != 0)
+		exitstatus = 1;
+	return 0;
 }
 
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: parsewhoisline.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: parsewhoisline.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: parsewhoisline.c,v 1.2.2.2 2012/01/26 05:44:26 darren_r Exp 
+ * $Id: parsewhoisline.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $
  */
 #include "ipf.h"
 
@@ -41,7 +41,7 @@ parsewhoisline(line, addrp, maskp)
 		return -1;
 
 	memset(addrp, 0x00, sizeof(*maskp));
-	memset(maskp, 0xff, sizeof(*maskp));
+	memset(maskp, 0x00, sizeof(*maskp));
 
 	if (*(s + 4) == '6') {
 #ifdef USE_INET6
@@ -66,7 +66,8 @@ parsewhoisline(line, addrp, maskp)
 
 		addrp->adf_addr = a61;
 		addrp->adf_family = AF_INET6;
-		addrp->adf_len = offsetof(addrfamily_t, adf_addr) + 16;
+		addrp->adf_len = offsetof(addrfamily_t, adf_addr) +
+				 sizeof(struct in6_addr);
 
 		maskp->adf_addr.i6[0] = ~(a62.i6[0] ^ a61.i6[0]);
 		maskp->adf_addr.i6[1] = ~(a62.i6[1] ^ a61.i6[1]);
@@ -81,8 +82,12 @@ parsewhoisline(line, addrp, maskp)
 			return -1;
 
 		maskp->adf_family = AF_INET6;
-		maskp->adf_len = offsetof(addrfamily_t, adf_addr) + 16;
+		maskp->adf_len = addrp->adf_len;
 
+		if (IP6_MASKNEQ(&addrp->adf_addr.in6, &maskp->adf_addr.in6,
+				&addrp->adf_addr.in6)) {
+			return -1;
+		}
 		return 0;
 #else
 		return -1;
@@ -108,7 +113,8 @@ parsewhoisline(line, addrp, maskp)
 
 	addrp->adf_addr.in4 = a1;
 	addrp->adf_family = AF_INET;
-	addrp->adf_len = offsetof(addrfamily_t, adf_addr) + 4;
+	addrp->adf_len = offsetof(addrfamily_t, adf_addr) +
+			 sizeof(struct in_addr);
 	maskp->adf_addr.in4.s_addr = ~(a2.s_addr ^ a1.s_addr);
 
 	/*
@@ -119,8 +125,10 @@ parsewhoisline(line, addrp, maskp)
 		return -1;
 
 	maskp->adf_family = AF_INET;
-	maskp->adf_len = offsetof(addrfamily_t, adf_addr) + 4;
+	maskp->adf_len = addrp->adf_len;
 	bzero((char *)maskp + maskp->adf_len, sizeof(*maskp) - maskp->adf_len);
-
+	if ((addrp->adf_addr.in4.s_addr & maskp->adf_addr.in4.s_addr) !=
+	    addrp->adf_addr.in4.s_addr)
+		return -1;
 	return 0;
 }

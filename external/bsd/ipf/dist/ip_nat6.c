@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_nat6.c,v 1.1.1.1 2012/03/23 21:19:58 christos Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.1.1.2 2012/07/22 13:44:21 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -110,7 +110,7 @@ extern struct ifnet vpnif;
 #define	SOCKADDR_IN	struct sockaddr_in
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_nat6.c,v 1.22.2.11 2012/01/29 05:30:35 darren_r Exp ";
+static const char rcsid[] = "@(#)$Id: ip_nat6.c,v 1.1.1.2 2012/07/22 13:44:21 darrenr Exp $";
 #endif
 
 #ifdef USE_INET6
@@ -122,9 +122,6 @@ static void ipf_nat6_tabmove __P((ipf_nat_softc_t *, nat_t *));
 static int ipf_nat6_decap __P((fr_info_t *, nat_t *));
 static int ipf_nat6_nextaddr __P((fr_info_t *, nat_addr_t *, i6addr_t *,
 				  i6addr_t *));
-static int ipf_nat6_encapok __P((fr_info_t *, nat_t *));
-static int ipf_nat6_matchencap __P((fr_info_t *, ipnat_t *));
-static nat_t *ipf_nat6_rebuildencapicmp __P((fr_info_t *, nat_t *));
 static int ipf_nat6_icmpquerytype __P((int));
 static int ipf_nat6_out __P((fr_info_t *, nat_t *, int, u_32_t));
 static int ipf_nat6_in __P((fr_info_t *, nat_t *, int, u_32_t));
@@ -133,17 +130,10 @@ static int ipf_nat6_nextaddrinit __P((ipf_main_softc_t *, char *,
 				      nat_addr_t *, int, void *));
 static int ipf_nat6_insert __P((ipf_main_softc_t *, ipf_nat_softc_t *,
 				nat_t *));
-static void ipf_nat6_add_active __P((i6addr_t *, i6addr_t *));
-static void ipf_nat6_add_map_mask __P((ipf_nat_softc_t *, i6addr_t *));
-static void ipf_nat6_add_rdr_mask __P((ipf_nat_softc_t *, i6addr_t *));
-static void ipf_nat6_delmap __P((ipf_nat_softc_t *, ipnat_t *));
-static void ipf_nat6_delrdr __P((ipf_nat_softc_t *, ipnat_t *));
-static void ipf_nat6_del_active __P((i6addr_t *, i6addr_t *));
-static void ipf_nat6_del_map_mask __P((ipf_nat_softc_t *, i6addr_t *));
-static void ipf_nat6_del_rdr_mask __P((ipf_nat_softc_t *, i6addr_t *));
 
 
 #define	NINCLSIDE6(y,x)	ATOMIC_INCL(softn->ipf_nat_stats.ns_side6[y].x)
+#define	NBUMPSIDE(y,x)	softn->ipf_nat_stats.ns_side[y].x++
 #define	NBUMPSIDE6(y,x)	softn->ipf_nat_stats.ns_side6[y].x++
 #define	NBUMPSIDE6D(y,x) \
 			do { \
@@ -209,149 +199,9 @@ ipf_nat6_ruleaddrinit(softc, softn, n)
 	if (error != 0)
 		return error;
 
-	if (n->in_redir & (NAT_ENCAP|NAT_DIVERTUDP))
+	if (n->in_redir & NAT_DIVERTUDP)
 		ipf_nat6_builddivertmp(softn, n);
 	return 0;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_add_active                                         */
-/* Returns:     Nil                                                         */
-/* Parameters:  mask(I)   - mask to add to the active array                 */
-/*              active(O) - pointer to array of active masks                */
-/*                                                                          */
-/* Insert the bitmask at "mask" into the array pointed to by "active".      */
-/* The array is kept sorted in order from most specific mask at [0] to      */
-/* the least specific mask. When full, [0] will have a mask with all 128    */
-/* bits set and [128] will have a mask with all 0s.                         */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_add_active(mask, active)
-	i6addr_t *mask, *active;
-{
-	int i;
-
-	for (i = 0; i < 33; i++) {
-		if (IP6_LT(&active[i], mask)) {
-			int j;
-
-			for (j = i + 1; j < 33; j++)
-				active[j] = active[j - 1];
-			active[i] = *mask;
-			break;
-		}
-	}
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_del_active                                         */
-/* Returns:     Nil                                                         */
-/* Parameters:  mask(I)   - mask to remove from the active array            */
-/*              active(O) - pointer to array of active masks                */
-/*                                                                          */
-/* Remove the bitmask at "mask" from the array pointed to by "active".      */
-/* This should be called as part of th cleanup of the last rule that is     */
-/* using the mask at "mask" for its matching.                               */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_del_active(mask, active)
-	i6addr_t *mask, *active;
-{
-	int i;
-
-	for (i = 0; i < 33; i++) {
-		if (IP6_EQ(&active[i], mask)) {
-			int j;
-
-			for (j = i + 1; j < 33; j++)
-				active[j - 1] = active[j];
-			break;
-		}
-	}
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_add_map_mask                                       */
-/* Returns:     Nil                                                         */
-/* Parameters:  softn(I) - pointer to nat context information               */
-/*              mask(I)  - pointer to mask to add                           */
-/*                                                                          */
-/* Add the mask pointed to by "mask" to the active set of masks used for    */
-/* map rules and update the number of active masks to reflect the new mask  */
-/* being present.                                                           */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_add_map_mask(softn, mask)
-	ipf_nat_softc_t *softn;
-	i6addr_t *mask;
-{
-	ipf_nat6_add_active(mask, softn->ipf_nat6_map_active_masks);
-	softn->ipf_nat6_map_max++;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_add_rdr_mask                                       */
-/* Returns:     Nil                                                         */
-/* Parameters:  softn(I)    - pointer to nat context information            */
-/*              mask(I)   - mask to add to the active array                 */
-/*                                                                          */
-/* Add the mask pointed to by "mask" to the active set of masks used for    */
-/* rdr rules and update the number of active masks to reflect the new mask  */
-/* being present.                                                           */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_add_rdr_mask(softn, mask)
-	ipf_nat_softc_t *softn;
-	i6addr_t *mask;
-{
-	ipf_nat6_add_active(mask, softn->ipf_nat6_rdr_active_masks);
-	softn->ipf_nat6_rdr_max++;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_del_map_mask                                       */
-/* Returns:     Nil                                                         */
-/* Parameters:  softn(I) - pointer to nat context information               */
-/*              mask(I)  - mask to add to the active array                  */
-/*                                                                          */
-/* Remove the mask at "mask" from the list of active masks in use with map  */
-/* rules and reduce the number of active masks accordingly. There should be */
-/* no more map rules present using the mask matching "mask" after the       */
-/* current rule is deleted.                                                 */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_del_map_mask(softn, mask)
-	ipf_nat_softc_t *softn;
-	i6addr_t *mask;
-{
-	ipf_nat6_del_active(mask, softn->ipf_nat6_map_active_masks);
-	softn->ipf_nat6_map_max--;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_del_rdr_mask                                       */
-/* Returns:     Nil                                                         */
-/* Parameters:  softn(I) - pointer to nat context information               */
-/*              mask(I)  - mask to add to the active array                  */
-/*                                                                          */
-/* Remove the mask at "mask" from the list of active masks in use with rdr  */
-/* rules and reduce the number of active masks accordingly. There should be */
-/* no more rdr rules present using the mask matching "mask" after the       */
-/* current rule is deleted.                                                 */
-/* ------------------------------------------------------------------------ */
-static void
-ipf_nat6_del_rdr_mask(softn, mask)
-	ipf_nat_softc_t *softn;
-	i6addr_t *mask;
-{
-	ipf_nat6_del_active(mask, softn->ipf_nat6_rdr_active_masks);
-	softn->ipf_nat6_rdr_max--;
 }
 
 
@@ -369,40 +219,37 @@ ipf_nat6_addrdr(softn, n)
 	ipf_nat_softc_t *softn;
 	ipnat_t *n;
 {
+	i6addr_t *mask;
 	ipnat_t **np;
 	i6addr_t j;
 	u_int hv;
 	int k;
 
-	 if ((n->in_redir & NAT_BIMAP) == NAT_BIMAP) {
+	if ((n->in_redir & NAT_BIMAP) == NAT_BIMAP) {
 		k = count6bits(n->in_nsrcmsk6.i6);
-		softn->ipf_nat6_rdr_masks[k]++;
-		if (softn->ipf_nat6_rdr_masks[k] == 1)
-			ipf_nat6_add_rdr_mask(softn, &n->in_nsrcmsk6);
-
+		mask = &n->in_nsrcmsk6;
 		IP6_AND(&n->in_odstip6, &n->in_odstmsk6, &j);
 		hv = NAT_HASH_FN6(&j, 0, softn->ipf_nat_rdrrules_sz);
 
 	} else if (n->in_odstatype == FRI_NORMAL) {
 		k = count6bits(n->in_odstmsk6.i6);
-		softn->ipf_nat6_rdr_masks[k]++;
-		if (softn->ipf_nat6_rdr_masks[k] == 1)
-			ipf_nat6_add_rdr_mask(softn, &n->in_odstmsk6);
-
+		mask = &n->in_odstmsk6;
 		IP6_AND(&n->in_odstip6, &n->in_odstmsk6, &j);
 		hv = NAT_HASH_FN6(&j, 0, softn->ipf_nat_rdrrules_sz);
 	} else {
-		softn->ipf_nat6_rdr_masks[0]++;
-		if (softn->ipf_nat6_rdr_masks[0] == 1)
-			ipf_nat6_add_rdr_mask(softn, &n->in_odstmsk6);
+		k = 0;
 		hv = 0;
+		mask = NULL;
 	}
+	ipf_inet6_mask_add(k, mask, &softn->ipf_nat6_rdr_mask);
+
 	np = softn->ipf_nat_rdr_rules + hv;
 	while (*np != NULL)
 		np = &(*np)->in_rnext;
 	n->in_rnext = NULL;
 	n->in_prnext = np;
 	n->in_hv[0] = hv;
+	n->in_use++;
 	*np = n;
 }
 
@@ -421,6 +268,7 @@ ipf_nat6_addmap(softn, n)
 	ipf_nat_softc_t *softn;
 	ipnat_t *n;
 {
+	i6addr_t *mask;
 	ipnat_t **np;
 	i6addr_t j;
 	u_int hv;
@@ -428,23 +276,23 @@ ipf_nat6_addmap(softn, n)
 
 	if (n->in_osrcatype == FRI_NORMAL) {
 		k = count6bits(n->in_osrcmsk6.i6);
-		softn->ipf_nat6_map_masks[k]++;
-		if (softn->ipf_nat6_map_masks[k] == 1)
-			ipf_nat6_add_map_mask(softn, &n->in_osrcmsk6);
+		mask = &n->in_osrcmsk6;
 		IP6_AND(&n->in_osrcip6, &n->in_osrcmsk6, &j);
 		hv = NAT_HASH_FN6(&j, 0, softn->ipf_nat_maprules_sz);
 	} else {
-		softn->ipf_nat6_map_masks[0]++;
-		if (softn->ipf_nat6_map_masks[0] == 1)
-			ipf_nat6_add_map_mask(softn, &n->in_osrcmsk6);
+		k = 0;
 		hv = 0;
+		mask = NULL;
 	}
+	ipf_inet6_mask_add(k, mask, &softn->ipf_nat6_map_mask);
+
 	np = softn->ipf_nat_map_rules + hv;
 	while (*np != NULL)
 		np = &(*np)->in_mnext;
 	n->in_mnext = NULL;
 	n->in_pmnext = np;
 	n->in_hv[1] = hv;
+	n->in_use++;
 	*np = n;
 }
 
@@ -456,25 +304,30 @@ ipf_nat6_addmap(softn, n)
 /*                                                                          */
 /* Removes a NAT rdr rule from the hash table of NAT rdr rules.             */
 /* ------------------------------------------------------------------------ */
-static void
+void
 ipf_nat6_delrdr(softn, n)
 	ipf_nat_softc_t *softn;
 	ipnat_t *n;
 {
+	i6addr_t *mask;
 	int k;
 
-	if (n->in_osrcatype == FRI_NORMAL) {
-		k = count6bits(n->in_osrcmsk6.i6);
+	if ((n->in_redir & NAT_BIMAP) == NAT_BIMAP) {
+		k = count6bits(n->in_nsrcmsk6.i6);
+		mask = &n->in_nsrcmsk6;
+	} else if (n->in_odstatype == FRI_NORMAL) {
+		k = count6bits(n->in_odstmsk6.i6);
+		mask = &n->in_odstmsk6;
 	} else {
 		k = 0;
+		mask = NULL;
 	}
-	softn->ipf_nat6_rdr_masks[k]--;
-	if (softn->ipf_nat6_rdr_masks[k] == 0)
-		ipf_nat6_del_rdr_mask(softn, &n->in_osrcmsk6);
+	ipf_inet6_mask_del(k, mask, &softn->ipf_nat6_rdr_mask);
 
-	if (n->in_mnext != NULL)
-		n->in_mnext->in_pmnext = n->in_pmnext;
-	*n->in_pmnext = n->in_mnext;
+	if (n->in_rnext != NULL)
+		n->in_rnext->in_prnext = n->in_prnext;
+	*n->in_prnext = n->in_rnext;
+	n->in_use--;
 }
                                         
                        
@@ -485,95 +338,27 @@ ipf_nat6_delrdr(softn, n)
 /*                                                                          */
 /* Removes a NAT map rule from the hash table of NAT map rules.             */
 /* ------------------------------------------------------------------------ */
-static void
+void
 ipf_nat6_delmap(softn, n)
 	ipf_nat_softc_t *softn;
 	ipnat_t *n;
 {
+	i6addr_t *mask;
 	int k;
 
 	if (n->in_osrcatype == FRI_NORMAL) {
-		k = count6bits(n->in_odstmsk6.i6);
+		k = count6bits(n->in_osrcmsk6.i6);
+		mask = &n->in_osrcmsk6;
 	} else {
 		k = 0;
+		mask = NULL;
 	}
-	softn->ipf_nat6_map_masks[k]--;
-	if (softn->ipf_nat6_map_masks[k] == 0)
-		ipf_nat6_del_map_mask(softn, &n->in_odstmsk6);
+	ipf_inet6_mask_del(k, mask, &softn->ipf_nat6_map_mask);
 
 	if (n->in_mnext != NULL)
 		n->in_mnext->in_pmnext = n->in_pmnext;
 	*n->in_pmnext = n->in_mnext;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_addencap                                           */
-/* Returns:     Nil                                                         */
-/* Parameters:  n(I) - pointer to NAT rule to add                           */
-/*                                                                          */
-/* Here we add in a pointer in the NAT rules hash table to match reply      */
-/* packets that are encapsulated.  For encap rules that are "out", what we  */
-/* will want to match upon will be the source address in the encap rule as  */
-/* this is what will become the destination in packets coming back to us.   */
-/* For encaps pointing in, it is still the same because it is still the     */
-/* reply packet we want to match.                                           */
-/* ------------------------------------------------------------------------ */
-void
-ipf_nat6_addencap(softn, n)
-	ipf_nat_softc_t *softn;
-	ipnat_t *n;
-{
-	ipnat_t **np;
-	u_32_t j;
-	u_int hv;
-	int k;
-
-	k = -1;
-
-	/*
-	 * It is the new source address we're after...
-	 */
-	if (n->in_nsrcatype == FRI_NORMAL) {
-		k = count6bits(n->in_nsrcip6.i6);
-		IP6_AND(&n->in_nsrcip6, &n->in_nsrcip6, &j);
-		hv = NAT_HASH_FN6(&j, 0, softn->ipf_nat_maprules_sz);
-	} else {
-		k = 0;
-		j = 0;
-		hv = 0;
-	}
-
-	/*
-	 * And place the rules table entry in the reverse spot, so for out
-	 * we use the rdr-links and for rdr, we use the map-links/
-	 */
-	if (n->in_redir & NAT_MAP) {
-		softn->ipf_nat6_rdr_masks[k]++;
-		if (softn->ipf_nat6_rdr_masks[k] == 1)
-			ipf_nat6_add_rdr_mask(softn, &n->in_nsrcip6);
-
-		np = softn->ipf_nat_rdr_rules + hv;
-		while (*np != NULL)
-			np = &(*np)->in_rnext;
-		n->in_rnext = NULL;
-		n->in_prnext = np;
-		n->in_hv[0] = hv;
-		*np = n;
-	} else if (n->in_redir & NAT_REDIRECT) {
-		softn->ipf_nat6_map_masks[k]++;
-		if (softn->ipf_nat6_map_masks[k] == 1)
-			ipf_nat6_add_map_mask(softn, &n->in_nsrcip6);
-		np = softn->ipf_nat_map_rules + hv;
-		while (*np != NULL)
-			np = &(*np)->in_mnext;
-		n->in_mnext = NULL;
-		n->in_pmnext = np;
-		n->in_hv[1] = hv;
-		*np = n;
-	}
-
-	/* TRACE(n, hv, k) */
+	n->in_use--;
 }
 
 
@@ -642,6 +427,7 @@ ipf_nat6_hostmap(softn, np, src, dst, map, port)
 			softn->ipf_hm_maptable[hv]->hm_phnext = &hm->hm_hnext;
 		softn->ipf_hm_maptable[hv] = hm;
 		hm->hm_ipnat = np;
+		np->in_use++;
 		hm->hm_osrcip6 = *src;
 		hm->hm_odstip6 = *dst;
 		hm->hm_nsrcip6 = *map;
@@ -727,7 +513,7 @@ ipf_nat6_newmap(fin, nat, ni)
 			if (hm != NULL)
 				in = hm->hm_nsrcip6;
 		} else if ((l == 1) && (hm != NULL)) {
-			ipf_nat_hostmapdel(&hm);
+			ipf_nat_hostmapdel(softc, &hm);
 		}
 
 		nat->nat_hm = hm;
@@ -1182,6 +968,7 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	hostmap_t *hm = NULL;
 	nat_t *nat, *natl;
+	natstat_t *nsp;
 	u_int nflags;
 	natinfo_t ni;
 	int move;
@@ -1189,12 +976,14 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 	qpktinfo_t *qpi = fin->fin_qpi;
 #endif
 
-	if ((softn->ipf_nat_stats.ns_active * 100 / softn->ipf_nat_table_max) >
+	nsp = &softn->ipf_nat_stats;
+
+	if ((nsp->ns_active * 100 / softn->ipf_nat_table_max) >
 	    softn->ipf_nat_table_wm_high) {
 		softn->ipf_nat_doflush = 1;
 	}
 
-	if (softn->ipf_nat_stats.ns_active >= softn->ipf_nat_table_max) {
+	if (nsp->ns_active >= softn->ipf_nat_table_max) {
 		NBUMPSIDE6(fin->fin_out, ns_table_max);
 		return NULL;
 	}
@@ -1218,9 +1007,8 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 		 * conditions arising.
 		 */
 		if ((softn->ipf_nat_table_max > softn->ipf_nat_table_sz) &&
-		    (softn->ipf_nat_stats.ns_active > 100)) {
-			softn->ipf_nat_table_max =
-			    softn->ipf_nat_stats.ns_active - 100;
+		    (nsp->ns_active > 100)) {
+			softn->ipf_nat_table_max = nsp->ns_active - 100;
 			printf("table_max reduced to %d\n",
 				softn->ipf_nat_table_max);
 		}
@@ -1256,7 +1044,7 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 	 * Search the current table for a match and create a new mapping
 	 * if there is none found.
 	 */
-	if (np->in_redir & (NAT_ENCAP|NAT_DIVERTUDP)) {
+	if (np->in_redir & NAT_DIVERTUDP) {
 		move = ipf_nat6_newdivert(fin, nat, &ni);
 
 	} else if (np->in_redir & NAT_REWRITE) {
@@ -1303,12 +1091,14 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 	nat->nat_fr = fin->fin_fr;
 	nat->nat_rev = fin->fin_rev;
 	nat->nat_ptr = np;
+	nat->nat_dlocal = np->in_dlocal;
 
-#ifdef IPF_V6_PROXIES
-	if ((np->in_apr != NULL) && ((nat->nat_flags & NAT_SLAVE) == 0))
-		if (appr_new(fin, nat) == -1)
+	if ((np->in_apr != NULL) && ((nat->nat_flags & NAT_SLAVE) == 0)) {
+		if (ipf_proxy_new(fin, nat) == -1) {
+			NBUMPSIDE6D(fin->fin_out, ns_appr_fail);
 			goto badnat;
-#endif
+		}
+	}
 
 	nat->nat_ifps[0] = np->in_ifps[0];
 	if (np->in_ifps[0] != NULL) {
@@ -1337,17 +1127,21 @@ ipf_nat6_add(fin, np, natsave, flags, direction)
 	}
 
 	if (flags & SI_WILDP)
-		softn->ipf_nat_stats.ns_wilds++;
+		nsp->ns_wilds++;
 	softn->ipf_nat_stats.ns_proto[nat->nat_pr[0]]++;
 
 	goto done;
 badnat:
 	NBUMPSIDE6(fin->fin_out, ns_badnatnew);
 	if ((hm = nat->nat_hm) != NULL)
-		ipf_nat_hostmapdel(&hm);
+		ipf_nat_hostmapdel(softc, &hm);
 	KFREE(nat);
 	nat = NULL;
 done:
+	if (nat != NULL && np != NULL)
+		np->in_hits++;
+	if (natsave != NULL)
+		*natsave = nat;
 	return nat;
 }
 
@@ -1379,14 +1173,21 @@ ipf_nat6_finalise(fin, nat)
 	switch (fin->fin_p)
 	{
 	case IPPROTO_ICMPV6 :
-		sum1 = LONG_SUM(ntohs(nat->nat_osport));
-		sum2 = LONG_SUM(ntohs(nat->nat_nsport));
+		sum1 = LONG_SUM6(&nat->nat_osrc6);
+		sum1 += ntohs(nat->nat_oicmpid);
+		sum2 = LONG_SUM6(&nat->nat_nsrc6);
+		sum2 += ntohs(nat->nat_nicmpid);
 		CALC_SUMD(sum1, sum2, sumd);
 		nat->nat_sumd[0] = (sumd & 0xffff) + (sumd >> 16);
 
+		sum1 = LONG_SUM6(&nat->nat_odst6);
+		sum2 = LONG_SUM6(&nat->nat_ndst6);
+		CALC_SUMD(sum1, sum2, sumd);
+		nat->nat_sumd[0] += (sumd & 0xffff) + (sumd >> 16);
 		break;
 
-	default :
+	case IPPROTO_TCP :
+	case IPPROTO_UDP :
 		sum1 = LONG_SUM6(&nat->nat_osrc6);
 		sum1 += ntohs(nat->nat_osport);
 		sum2 = LONG_SUM6(&nat->nat_nsrc6);
@@ -1401,9 +1202,34 @@ ipf_nat6_finalise(fin, nat)
 		CALC_SUMD(sum1, sum2, sumd);
 		nat->nat_sumd[0] += (sumd & 0xffff) + (sumd >> 16);
 		break;
+
+	default :
+		sum1 = LONG_SUM6(&nat->nat_osrc6);
+		sum2 = LONG_SUM6(&nat->nat_nsrc6);
+		CALC_SUMD(sum1, sum2, sumd);
+		nat->nat_sumd[0] = (sumd & 0xffff) + (sumd >> 16);
+
+		sum1 = LONG_SUM6(&nat->nat_odst6);
+		sum2 = LONG_SUM6(&nat->nat_ndst6);
+		CALC_SUMD(sum1, sum2, sumd);
+		nat->nat_sumd[0] += (sumd & 0xffff) + (sumd >> 16);
+		break;
 	}
 
-	nat->nat_sumd[1] = nat->nat_sumd[0];
+	/*
+	 * Compute the partial checksum, just in case.
+	 * This is only ever placed into outbound packets so care needs
+	 * to be taken over which pair of addresses are used.
+	 */
+	if (nat->nat_dir == NAT_OUTBOUND) {
+		sum1 = LONG_SUM6(&nat->nat_nsrc6);
+		sum1 += LONG_SUM6(&nat->nat_ndst6);
+	} else {
+		sum1 = LONG_SUM6(&nat->nat_osrc6);
+		sum1 += LONG_SUM6(&nat->nat_odst6);
+	}
+	sum1 += nat->nat_pr[1];
+	nat->nat_sumd[1] = (sum1 & 0xffff) + (sum1 >> 16);
 
 	if ((nat->nat_flags & SI_CLONE) == 0)
 		nat->nat_sync = ipf_sync_new(softc, SMC_NAT, fin, nat);
@@ -1435,16 +1261,19 @@ ipf_nat6_finalise(fin, nat)
 	/*
 	 * nat6_insert failed, so cleanup time...
 	 */
+	if (nat->nat_sync != NULL)
+		ipf_sync_del_nat(softc->ipf_sync_soft, nat->nat_sync);
 	return -1;
 }
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:   ipf_nat6_insert                                              */
-/* Returns:    int - 0 == sucess, -1 == failure                             */
-/* Parameters: nat(I) - pointer to NAT structure                            */
-/*             rev(I) - flag indicating forward/reverse direction of packet */
-/* Write Lock: ipf_nat                                                      */
+/* Function:    ipf_nat6_insert                                             */
+/* Returns:     int - 0 == sucess, -1 == failure                            */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              softn(I) - pointer to NAT context structure                 */
+/*              nat(I) - pointer to NAT structure                           */
+/* Write Lock:  ipf_nat                                                     */
 /*                                                                          */
 /* Insert a NAT entry into the hash tables for searching and add it to the  */
 /* list of active NAT entries.  Adjust global counters when complete.       */
@@ -1456,7 +1285,7 @@ ipf_nat6_insert(softc, softn, nat)
 	nat_t *nat;
 {
 	u_int hv1, hv2;
-	nat_t **natp;
+	u_32_t sp, dp;
 	ipnat_t *in;
 
 	/*
@@ -1464,9 +1293,18 @@ ipf_nat6_insert(softc, softn, nat)
 	 * entry numbers first and then proceed.
 	 */
 	if ((nat->nat_flags & (SI_W_SPORT|SI_W_DPORT)) == 0) {
-		hv1 = NAT_HASH_FN6(&nat->nat_osrc6, nat->nat_osport,
-				   0xffffffff);
-		hv1 = NAT_HASH_FN6(&nat->nat_odst6, hv1 + nat->nat_odport,
+		if ((nat->nat_flags & IPN_TCPUDP) != 0) {
+			sp = nat->nat_osport;
+			dp = nat->nat_odport;
+		} else if ((nat->nat_flags & IPN_ICMPQUERY) != 0) {
+			sp = 0;
+			dp = nat->nat_oicmpid;
+		} else {
+			sp = 0;
+			dp = 0;
+		}
+		hv1 = NAT_HASH_FN6(&nat->nat_osrc6, sp, 0xffffffff);
+		hv1 = NAT_HASH_FN6(&nat->nat_odst6, hv1 + dp,
 				   softn->ipf_nat_table_sz);
 
 		/*
@@ -1474,9 +1312,18 @@ ipf_nat6_insert(softc, softn, nat)
 		 * nat6_odport, hv1
 		 */
 
-		hv2 = NAT_HASH_FN6(&nat->nat_nsrc6, nat->nat_nsport,
-				   0xffffffff);
-		hv2 = NAT_HASH_FN6(&nat->nat_ndst6, hv2 + nat->nat_ndport,
+		if ((nat->nat_flags & IPN_TCPUDP) != 0) {
+			sp = nat->nat_nsport;
+			dp = nat->nat_ndport;
+		} else if ((nat->nat_flags & IPN_ICMPQUERY) != 0) {
+			sp = 0;
+			dp = nat->nat_nicmpid;
+		} else {
+			sp = 0;
+			dp = 0;
+		}
+		hv2 = NAT_HASH_FN6(&nat->nat_nsrc6, sp, 0xffffffff);
+		hv2 = NAT_HASH_FN6(&nat->nat_ndst6, hv2 + dp,
 				   softn->ipf_nat_table_sz);
 		/*
 		 * TRACE nat6_nsrcaddr, nat6_nsport, nat6_ndstaddr,
@@ -1494,36 +1341,13 @@ ipf_nat6_insert(softc, softn, nat)
 		/* TRACE nat6_nsrcip6, nat6_ndstip6, hv2 */
 	}
 
-	if (softn->ipf_nat_stats.ns_side[0].ns_bucketlen[hv1] >=
-	    softn->ipf_nat_maxbucket) {
-		NBUMPSIDE6D(0, ns_bucket_max);
-		return -1;
-	}
-
-	if (softn->ipf_nat_stats.ns_side[1].ns_bucketlen[hv2] >=
-	    softn->ipf_nat_maxbucket) {
-		NBUMPSIDE6D(1, ns_bucket_max);
-		return -1;
-	}
-	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_ENCAPIN ||
-	    nat->nat_dir == NAT_DIVERTIN) {
-		u_int swap;
-
-		swap = hv2;
-		hv2 = hv1;
-		hv1 = swap;
-	}
 	nat->nat_hv[0] = hv1;
 	nat->nat_hv[1] = hv2;
 
 	MUTEX_INIT(&nat->nat_lock, "nat entry lock");
 
 	in = nat->nat_ptr;
-	nat->nat_ref = 1;
-	nat->nat_bytes[0] = 0;
-	nat->nat_pkts[0] = 0;
-	nat->nat_bytes[1] = 0;
-	nat->nat_pkts[1] = 0;
+	nat->nat_ref = nat->nat_me ? 2 : 1;
 
 	nat->nat_ifnames[0][LIFNAMSIZ - 1] = '\0';
 	nat->nat_ifps[0] = ipf_resolvenic(softc, nat->nat_ifnames[0],
@@ -1551,37 +1375,7 @@ ipf_nat6_insert(softc, softn, nat)
 		nat->nat_mtu[1] = GETIFMTU_6(nat->nat_ifps[1]);
 	}
 
-	nat->nat_next = softn->ipf_nat_instances;
-	nat->nat_pnext = &softn->ipf_nat_instances;
-	if (softn->ipf_nat_instances)
-		softn->ipf_nat_instances->nat_pnext = &nat->nat_next;
-	softn->ipf_nat_instances = nat;
-
-	natp = &softn->ipf_nat_table[0][hv1];
-	if (*natp)
-		(*natp)->nat_phnext[0] = &nat->nat_hnext[0];
-	else
-		NBUMPSIDE6(0, ns_inuse);
-	nat->nat_phnext[0] = natp;
-	nat->nat_hnext[0] = *natp;
-	*natp = nat;
-	softn->ipf_nat_stats.ns_side[0].ns_bucketlen[hv1]++;
-
-	natp = &softn->ipf_nat_table[1][hv2];
-	if (*natp)
-		(*natp)->nat_phnext[1] = &nat->nat_hnext[1];
-	else
-		NBUMPSIDE6(1, ns_inuse);
-	nat->nat_phnext[1] = natp;
-	nat->nat_hnext[1] = *natp;
-	*natp = nat;
-	softn->ipf_nat_stats.ns_side[1].ns_bucketlen[hv2]++;
-
-	ipf_nat_setqueue(softc, softn, nat);
-
-	softn->ipf_nat_stats.ns_side[1].ns_added++;
-	softn->ipf_nat_stats.ns_active++;
-	return 0;
+	return ipf_nat_hashtab_add(softc, softn, nat);
 }
 
 
@@ -1824,18 +1618,6 @@ ipf_nat6_icmperror(fin, nflags, dir)
 		return NULL;
 	}
 
-	if (nat->nat_dir == NAT_ENCAPIN || nat->nat_dir == NAT_ENCAPOUT) {
-		/*
-		 * For ICMP replies to encapsulated packets, we need to
-		 * rebuild the ICMP reply completely to match the original
-		 * packet...
-		 */
-		if (ipf_nat6_rebuildencapicmp(fin, nat) == 0)
-			return nat;
-		NBUMPSIDE6D(fin->fin_out, ns_icmp_rebuild);
-		return NULL;
-	}
-
 	tcp = NULL;
 	csump = NULL;
 	flags = 0;
@@ -2050,8 +1832,8 @@ ipf_nat6_icmperror(fin, nflags, dir)
 				sumd2 = (sumd2 & 0xffff) + (sumd2 >> 16);
 				sumd2 = (sumd2 & 0xffff) + (sumd2 >> 16);
 				sumd2 = (sumd2 & 0xffff) + (sumd2 >> 16);
-				ipf_fix_incksum(fin, &icmp6->icmp6_cksum,
-						sumd2);
+				ipf_fix_incksum(0, &icmp6->icmp6_cksum,
+						sumd2, 0);
 			}
 		}
 	} else if (((flags & IPN_ICMPQUERY) != 0) && (dlen >= 8)) {
@@ -2253,7 +2035,7 @@ find_in_wild_ports:
 		NBUMPSIDE6DX(0, ns_lookup_miss, ns_lookup_miss_1);
 		return NULL;
 	}
-	if (softn->ipf_nat_stats.ns_wilds == 0) {
+	if (softn->ipf_nat_stats.ns_wilds == 0 || (fin->fin_flx & FI_NOWILD)) {
 		NBUMPSIDE6D(0, ns_lookup_nowild);
 		return NULL;
 	}
@@ -2393,8 +2175,7 @@ ipf_nat6_tabmove(softn, nat)
 	hv1 = NAT_HASH_FN6(&nat->nat_ndst6, hv1 + nat->nat_ndport,
 			   softn->ipf_nat_table_sz);
 
-	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_ENCAPIN ||
-	    nat->nat_dir == NAT_DIVERTIN) {
+	if (nat->nat_dir == NAT_INBOUND || nat->nat_dir == NAT_DIVERTIN) {
 		u_int swap;
 
 		swap = hv0;
@@ -2571,7 +2352,7 @@ find_out_wild_ports:
 		NBUMPSIDE6DX(1, ns_lookup_miss, ns_lookup_miss_3);
 		return NULL;
 	}
-	if (softn->ipf_nat_stats.ns_wilds == 0) {
+	if (softn->ipf_nat_stats.ns_wilds == 0 || (fin->fin_flx & FI_NOWILD)) {
 		NBUMPSIDE6D(1, ns_lookup_nowild);
 		return NULL;
 	}
@@ -2769,9 +2550,6 @@ ipf_nat6_match(fin, np)
 	frtuc_t *ft;
 	int match;
 
-	if ((fin->fin_p == IPPROTO_IPIP) && (np->in_redir & NAT_ENCAP))
-		return ipf_nat6_matchencap(fin, np);
-
 	match = 0;
 	switch (np->in_osrcatype)
 	{
@@ -2818,52 +2596,6 @@ ipf_nat6_match(fin, np)
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_ipfout                                             */
-/* Returns:     frentry_t* - NULL (packet may have been translated, let it  */
-/*                           pass), &ipfnatblock - block/drop the packet.   */
-/* Parameters:  fin(I)   - pointer to packet information                    */
-/*              passp(I) - point to filtering result flags                  */
-/*                                                                          */
-/* This is purely and simply a wrapper around ipf_nat6_checkout for the sole*/
-/* reason of being able to activate NAT from an ipf rule using "call-now".  */
-/* ------------------------------------------------------------------------ */
-frentry_t *
-ipf_nat6_ipfout(fin, passp)
-	fr_info_t *fin;
-	u_32_t *passp;
-{
-	frentry_t *fr = fin->fin_fr;
-
-	switch (ipf_nat6_checkout(fin, passp))
-	{
-	case -1 :
-		fr = &ipfnatblock;
-		MUTEX_ENTER(&fr->fr_lock);
-		fr->fr_ref++;
-		MUTEX_EXIT(&fr->fr_lock);
-		return fr;
-
-	case 0 :
-		break;
-
-	case 1 :
-		/*
-		 * Returing NULL causes this rule to be "ignored" but
-		 * it has actually had an influence on the packet so we
-		 * increment counters for it.
-		 */
-		MUTEX_ENTER(&fr->fr_lock);
-		fr->fr_bytes += (U_QUAD_T)fin->fin_plen;
-		fr->fr_hits++;
-		MUTEX_EXIT(&fr->fr_lock);
-		break;
-	}
-
-	return NULL;
-}
-
-
-/* ------------------------------------------------------------------------ */
 /* Function:    ipf_nat6_checkout                                           */
 /* Returns:     int - -1 == packet failed NAT checks so block it,           */
 /*                     0 == no packet translation occurred,                 */
@@ -2899,6 +2631,7 @@ ipf_nat6_checkout(fin, passp)
 	if (softn->ipf_nat_stats.ns_rules == 0 || softn->ipf_nat_lock != 0)
 		return 0;
 
+	icmp6 = NULL;
 	natfailed = 0;
 	fr = fin->fin_fr;
 	sifp = fin->fin_ifp;
@@ -2920,6 +2653,14 @@ ipf_nat6_checkout(fin, passp)
 			break;
 		case IPPROTO_ICMPV6 :
 			icmp6 = fin->fin_dp;
+
+			/*
+			 * Apart from ECHO request and reply, all other
+			 * informational messages should not be translated
+			 * so as to keep IPv6 working.
+			 */
+			if (icmp6->icmp6_type > ICMP6_ECHO_REPLY)
+				return 0;
 
 			/*
 			 * This is an incoming packet, so the destination is
@@ -3042,7 +2783,7 @@ outmatchfail:
 		if (passp != NULL) {
 			NBUMPSIDE6D(1, ns_drop);
 			*passp = FR_BLOCK;
-			fin->fin_reason = FRB_NATV6OUT;
+			fin->fin_reason = FRB_NATV6;
 		}
 		fin->fin_flx |= FI_BADNAT;
 		NBUMPSIDE6D(1, ns_badnat);
@@ -3079,7 +2820,6 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	struct icmp6_hdr *icmp6;
-	u_short *csump;
 	tcphdr_t *tcp;
 	ipnat_t *np;
 	int skip;
@@ -3087,7 +2827,6 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 
 	tcp = NULL;
 	icmp6 = NULL;
-	csump = NULL;
 	np = nat->nat_ptr;
 
 	if ((natadd != 0) && (fin->fin_flx & FI_FRAG) && (np != NULL))
@@ -3115,8 +2854,6 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 		fin->fin_dst6 = nat->nat_nsrc6;
 		break;
 
-	case NAT_ENCAPIN :
-		fin->fin_flx |= FI_ENCAP;
 	case NAT_DIVERTIN :
 	    {
 		mb_t *m;
@@ -3151,37 +2888,6 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 		/* NOTREACHED */
 	    }
 
-	case NAT_ENCAPOUT :
-	    {
-		ip6_t *ip6;
-		mb_t *m;
-
-		if (ipf_nat6_encapok(fin, nat) == -1)
-			return -1;
-
-		m = M_DUP(np->in_divmp);
-		if (m == NULL) {
-			NBUMPSIDE6D(1, ns_encap_dup);
-			return -1;
-		}
-
-		ip6 = MTOD(m, ip6_t *);
-		/* TRACE (fin,ip) */
-		ip6->ip6_plen = htons(fin->fin_plen + sizeof(ip6_t));
-
-		/* TRACE (ip) */
-
-		PREP_MB_T(fin, m);
-
-		fin->fin_ip6 = ip6;
-		fin->fin_plen += sizeof(ip6_t);	/* UDP + new IPv6 hdr */
-		fin->fin_dlen += sizeof(ip6_t);	/* UDP + old IPv6 hdr */
-		fin->fin_flx |= FI_ENCAP;
-
-		nflags &= ~IPN_TCPUDPICMP;
-
-		break;
-	    }
 	case NAT_DIVERTOUT :
 	    {
 		udphdr_t *uh;
@@ -3217,6 +2923,8 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 	}
 
 	if (!(fin->fin_flx & FI_SHORT) && (fin->fin_off == 0)) {
+		u_short *csump;
+
 		if ((nat->nat_nsport != 0) && (nflags & IPN_TCPUDP)) {
 			tcp = fin->fin_dp;
 
@@ -3226,14 +2934,14 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 				tcp->th_sport = nat->nat_nsport;
 				fin->fin_data[0] = ntohs(nat->nat_nsport);
 				tcp->th_dport = nat->nat_ndport;
-				fin->fin_data[0] = ntohs(nat->nat_ndport);
+				fin->fin_data[1] = ntohs(nat->nat_ndport);
 				break;
 
 			case NAT_INBOUND :
 				tcp->th_sport = nat->nat_odport;
 				fin->fin_data[0] = ntohs(nat->nat_odport);
 				tcp->th_dport = nat->nat_osport;
-				fin->fin_data[0] = ntohs(nat->nat_osport);
+				fin->fin_data[1] = ntohs(nat->nat_osport);
 				break;
 			}
 		}
@@ -3244,90 +2952,48 @@ ipf_nat6_out(fin, nat, natadd, nflags)
 		}
 
 		csump = ipf_nat_proto(fin, nat, nflags);
+
+		/*
+		 * The above comments do not hold for layer 4 (or higher)
+		 * checksums...
+		 */
+		if (csump != NULL) {
+			if (nat->nat_dir == NAT_OUTBOUND)
+				ipf_fix_outcksum(fin->fin_cksum, csump,
+						 nat->nat_sumd[0],
+						 nat->nat_sumd[1] +
+						 fin->fin_dlen);
+			else
+				ipf_fix_incksum(fin->fin_cksum, csump,
+						nat->nat_sumd[0],
+						nat->nat_sumd[1] +
+						fin->fin_dlen);
+		}
 	}
 
-	/*
-	 * The above comments do not hold for layer 4 (or higher) checksums...
-	 */
-	if (csump != NULL) {
-		if (nat->nat_dir == NAT_OUTBOUND)
-			ipf_fix_outcksum(fin, csump, nat->nat_sumd[1]);
-		else
-			ipf_fix_incksum(fin, csump, nat->nat_sumd[1]);
-	}
 	ipf_sync_update(softc, SMC_NAT, fin, nat->nat_sync);
 	/* ------------------------------------------------------------- */
-	/* A few quick notes:						 */
-	/*	Following are test conditions prior to calling the 	 */
-	/*	appr_check routine.					 */
-	/*								 */
-	/* 	A NULL tcp indicates a non TCP/UDP packet.  When dealing */
-	/*	with a redirect rule, we attempt to match the packet's	 */
-	/*	source port against in_dport, otherwise	we'd compare the */
-	/*	packet's destination.			 		 */
+	/* A few quick notes:                                            */
+	/*      Following are test conditions prior to calling the       */
+	/*      ipf_proxy_check routine.                                 */
+	/*                                                               */
+	/*      A NULL tcp indicates a non TCP/UDP packet.  When dealing */
+	/*      with a redirect rule, we attempt to match the packet's   */
+	/*      source port against in_dport, otherwise we'd compare the */
+	/*      packet's destination.                                    */
 	/* ------------------------------------------------------------- */
 	if ((np != NULL) && (np->in_apr != NULL)) {
-#ifdef IPF_V6_PROXIES
-		i = appr_check(fin, nat);
-		if (i == 0)
+		i = ipf_proxy_check(fin, nat);
+		if (i == 0) {
 			i = 1;
-		else if (i == -1) {
-			NBUMPSIDE6D(1, ns_appr_fail);
+		} else if (i == -1) {
+			NBUMPSIDE6D(1, ns_ipf_proxy_fail);
 		}
-#else
-		i = 1;
-#endif
 	} else {
 		i = 1;
 	}
 	fin->fin_flx |= FI_NATED;
 	return i;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_ipfin                                              */
-/* Returns:     frentry_t* - NULL (packet may have been translated, let it  */
-/*                           pass), &ipfnatblock - block/drop the packet.   */
-/* Parameters:  fin(I)   - pointer to packet information                    */
-/*              passp(I) - point to filtering result flags                  */
-/*                                                                          */
-/* This is purely and simply a wrapper around ipf_nat6_checkin for the sole */
-/* reason of being able to activate NAT from an ipf rule using "call-now".  */
-/* ------------------------------------------------------------------------ */
-frentry_t *
-ipf_nat6_ipfin(fin, passp)
-	fr_info_t *fin;
-	u_32_t *passp;
-{
-	frentry_t *fr = fin->fin_fr;
-
-	switch (ipf_nat6_checkin(fin, passp))
-	{
-	case -1 :
-		fr = &ipfnatblock;
-		MUTEX_ENTER(&fr->fr_lock);
-		fr->fr_ref++;
-		MUTEX_EXIT(&fr->fr_lock);
-		return fr;
-
-	case 0 :
-		return NULL;
-
-	case 1 :
-		/*
-		 * Returing NULL causes this rule to be "ignored" but
-		 * it has actually had an influence on the packet so we
-		 * increment counters for it.
-		 */
-		MUTEX_ENTER(&fr->fr_lock);
-		fr->fr_bytes += (U_QUAD_T)fin->fin_plen;
-		fr->fr_hits++;
-		MUTEX_EXIT(&fr->fr_lock);
-		return NULL;
-	}
-
-	return NULL;
 }
 
 
@@ -3385,6 +3051,14 @@ ipf_nat6_checkin(fin, passp)
 			break;
 		case IPPROTO_ICMPV6 :
 			icmp6 = fin->fin_dp;
+
+			/*
+			 * Apart from ECHO request and reply, all other
+			 * informational messages should not be translated
+			 * so as to keep IPv6 working.
+			 */
+			if (icmp6->icmp6_type > ICMP6_ECHO_REPLY)
+				return 0;
 
 			/*
 			 * This is an incoming packet, so the destination is
@@ -3509,7 +3183,7 @@ inmatchfail:
 		if (passp != NULL) {
 			NBUMPSIDE6D(0, ns_drop);
 			*passp = FR_BLOCK;
-			fin->fin_reason = FRB_NATV6IN;
+			fin->fin_reason = FRB_NATV6;
 		}
 		fin->fin_flx |= FI_BADNAT;
 		NBUMPSIDE6D(0, ns_badnat);
@@ -3551,6 +3225,7 @@ ipf_nat6_in(fin, nat, natadd, nflags)
 	tcphdr_t *tcp;
 	ipnat_t *np;
 	int skip;
+	int i;
 
 	tcp = NULL;
 	csump = NULL;
@@ -3562,23 +3237,21 @@ ipf_nat6_in(fin, nat, natadd, nflags)
 			(void) ipf_frag_natnew(softc, fin, 0, nat);
 
 	/* ------------------------------------------------------------- */
-	/* A few quick notes:						 */
-	/*	Following are test conditions prior to calling the 	 */
-	/*	appr_check routine.					 */
-	/*								 */
-	/* 	A NULL tcp indicates a non TCP/UDP packet.  When dealing */
-	/*	with a map rule, we attempt to match the packet's	 */
-	/*	source port against in_dport, otherwise	we'd compare the */
-	/*	packet's destination.			 		 */
+	/* A few quick notes:                                            */
+	/*      Following are test conditions prior to calling the       */
+	/*      ipf_proxy_check routine.                                 */
+	/*                                                               */
+	/*      A NULL tcp indicates a non TCP/UDP packet.  When dealing */
+	/*      with a map rule, we attempt to match the packet's        */
+	/*      source port against in_dport, otherwise we'd compare the */
+	/*      packet's destination.                                    */
 	/* ------------------------------------------------------------- */
 		if (np->in_apr != NULL) {
-#ifdef IPF_V6_PROXIES
-			i = appr_check(fin, nat);
+			i = ipf_proxy_check(fin, nat);
 			if (i == -1) {
-				NBUMPSIDE6D(0, ns_appr_fail);
+				NBUMPSIDE6D(0, ns_ipf_proxy_fail);
 				return -1;
 			}
-#endif
 		}
 	}
 
@@ -3615,44 +3288,6 @@ ipf_nat6_in(fin, nat, natadd, nflags)
 		fin->fin_dst6 = nat->nat_osrc6;
 		break;
 
-	case NAT_ENCAPIN :
-	    {
-		ip6_t *ip6;
-		mb_t *m;
-
-		/*
-		 * XXX
-		 * This is not necessarily true.  What we need to know here
-		 * is the MTU of the interface out which the packets will go
-		 * and this won't be nat6_ifps[1] because that is where we
-		 * send packets after stripping off stuff - what's needed
-		 * here is the MTU of the interface for the route to the
-		 * destination of the outer header.
-		 */
-		if (ipf_nat6_encapok(fin, nat) == -1)
-			return -1;
-
-		m = M_DUP(np->in_divmp);
-		if (m == NULL) {
-			NBUMPSIDE6D(0, ns_encap_dup);
-			return -1;
-		}
-
-		ip6 = MTOD(m, ip6_t *);
-		ip6->ip6_plen = htons(fin->fin_plen + 8);
-
-		PREP_MB_T(fin, m);
-
-		fin->fin_ip6 = ip6;
-		fin->fin_plen += sizeof(ip6_t) + 8;	/* UDP + new IPv6 hdr */
-		fin->fin_dlen += sizeof(ip6_t) + 8;	/* UDP + old IPv6 hdr */
-		fin->fin_flx |= FI_ENCAP;
-
-		nflags &= ~IPN_TCPUDPICMP;
-
-		break;
-	    }
-
 	case NAT_DIVERTIN :
 	    {
 		udphdr_t *uh;
@@ -3682,8 +3317,6 @@ ipf_nat6_in(fin, nat, natadd, nflags)
 		break;
 	    }
 
-	case NAT_ENCAPOUT :
-		fin->fin_flx |= FI_ENCAP;
 	case NAT_DIVERTOUT :
 	    {
 		mb_t *m;
@@ -3754,9 +3387,9 @@ ipf_nat6_in(fin, nat, natadd, nflags)
 	 */
 	if (csump != NULL) {
 		if (nat->nat_dir == NAT_OUTBOUND)
-			ipf_fix_incksum(fin, csump, nat->nat_sumd[0]);
+			ipf_fix_incksum(0, csump, nat->nat_sumd[0], 0);
 		else
-			ipf_fix_outcksum(fin, csump, nat->nat_sumd[0]);
+			ipf_fix_outcksum(0, csump, nat->nat_sumd[0], 0);
 	}
 	fin->fin_flx |= FI_NATED;
 	if (np != NULL && np->in_tag.ipt_num[0] != 0)
@@ -3984,11 +3617,14 @@ ipf_nat6_newrewrite(fin, nat, nai)
 	nat->nat_nsrc6 = frnat.fin_src6;
 	nat->nat_ndst6 = frnat.fin_dst6;
 
-	if ((flags & IPN_TCPUDPICMP) != 0) {
+	if ((flags & IPN_TCPUDP) != 0) {
 		nat->nat_osport = htons(fin->fin_data[0]);
 		nat->nat_odport = htons(fin->fin_data[1]);
 		nat->nat_nsport = htons(frnat.fin_data[0]);
 		nat->nat_ndport = htons(frnat.fin_data[1]);
+	} else if ((flags & IPN_ICMPQUERY) != 0) {
+		nat->nat_oicmpid = fin->fin_data[1];
+		nat->nat_nicmpid = frnat.fin_data[1];
 	}
 
 	return 0;
@@ -4004,8 +3640,8 @@ ipf_nat6_newrewrite(fin, nat, nai)
 /*                       to create new NAT entry.                           */
 /* Write Lock:  ipf_nat                                                     */
 /*                                                                          */
-/* Create a new NAT encap/divert session as defined by the NAT rule.  This  */
-/* is somewhat different to other NAT session creation routines because we  */
+/* Create a new NAT divert session as defined by the NAT rule.  This is     */
+/* somewhat different to other NAT session creation routines because we     */
 /* do not iterate through either port numbers or IP addresses, searching    */
 /* for a unique mapping, however, a complimentary duplicate check is made.  */
 /* ------------------------------------------------------------------------ */
@@ -4066,17 +3702,10 @@ ipf_nat6_newdivert(fin, nat, nai)
 	nat->nat_pr[fin->fin_out] = fin->fin_p;
 	nat->nat_pr[1 - fin->fin_out] = p;
 
-	if (np->in_redir & NAT_ENCAP) {
-		if (np->in_redir & NAT_REDIRECT)
-			nat->nat_dir = NAT_ENCAPIN;
-		else
-			nat->nat_dir = NAT_ENCAPOUT;
-	} else {
-		if (np->in_redir & NAT_REDIRECT)
-			nat->nat_dir = NAT_DIVERTIN;
-		else
-			nat->nat_dir = NAT_DIVERTOUT;
-	}
+	if (np->in_redir & NAT_REDIRECT)
+		nat->nat_dir = NAT_DIVERTIN;
+	else
+		nat->nat_dir = NAT_DIVERTOUT;
 
 	return 0;
 }
@@ -4087,9 +3716,9 @@ ipf_nat6_newdivert(fin, nat, nai)
 /* Returns:     int - -1 == error, 0 == success                             */
 /* Parameters:  np(I) - pointer to a NAT rule                               */
 /*                                                                          */
-/* For encap/divert rules, a skeleton packet representing what will be      */
-/* prepended to the real packet is created.  Even though we don't have the  */
-/* full packet here, a checksum is calculated that we update later when we  */
+/* For divert rules, a skeleton packet representing what will be prepended  */
+/* to the real packet is created.  Even though we don't have the full       */
+/* packet here, a checksum is calculated that we update later when we       */
 /* fill in the final details.  At present a 0 checksum for UDP is being set */
 /* here because it is expected that divert will be used for localhost.      */
 /* ------------------------------------------------------------------------ */
@@ -4226,137 +3855,6 @@ ipf_nat6_decap(fin, nat)
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    nat6_matchencap                                             */
-/* Returns:     int - -1 == packet error, 1 == success, 0 = no match        */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*              np(I) - pointer to a NAT rule                               */
-/*                                                                          */
-/* To properly compare a packet travelling in the reverse direction to an   */
-/* encap rule, it needs to be pseudo-decapsulated so we can check if a      */
-/* reply to it would be encapsulated.  In doing this, we have to be careful */
-/* so as not to actually do any decapsulation nor affect any of the current */
-/* stored parameters in "fin" so that we can continue processing it else-   */
-/* where if it doesn't match.                                               */
-/* ------------------------------------------------------------------------ */
-static int
-ipf_nat6_matchencap(fin, np)
-	fr_info_t *fin;
-	ipnat_t *np;
-{
-	ipf_main_softc_t *softc = fin->fin_main_soft;
-	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	int match, skip;
-	u_short *ports;
-	frtuc_t *ft;
-	fr_ip_t fi;
-	ip6_t *ip6;
-	char *hdr;
-	mb_t *m;
-
-	/*
-	 * This function is only for matching packets that are appearing from
-	 * the reverse direction against "encap" rules.
-	 */
-	if (fin->fin_out == 1) {
-		if ((np->in_redir & NAT_REDIRECT) == 0)
-			return 0;
-	} else {
-		if ((np->in_redir & NAT_MAP) == 0)
-			return 0;
-	}
-	if (np->in_pr[fin->fin_out] != fin->fin_p)
-		return 0;
-
-	/*
-	 * The aim here is to keep the original packet details in "fin" for
-	 * as long as possible so that returning with an error is for the
-	 * original packet and there is little undoing work to do.
-	 */
-	m = fin->fin_m;
-	skip = fin->fin_hlen;
-	if (M_LEN(m) < skip + sizeof(ip6_t)) {
-		if (ipf_pr_pullup(fin, sizeof(ip6_t)) == -1) {
-			NBUMPSIDE6D(fin->fin_out, ns_encap_pullup);
-			return -1;
-		}
-	}
-
-	hdr = MTOD(fin->fin_m, char *);
-	ip6 = (ip6_t *)(hdr + skip);
-
-	match = 1;
-
-	/*
-	 * Now we should have the entire innder header, so match up the
-	 * address fields - easy enough.  Reverse matching of source and
-	 * destination because this is purportedly a "reply" to an encap rule.
-	 */
-	switch (np->in_osrcatype)
-	{
-	case FRI_NORMAL :
-		match = IP6_MASKNEQ(&ip6->ip6_dst, &np->in_osrcmsk6,
-				    &np->in_osrcip6);
-		break;
-	case FRI_LOOKUP :
-		match = (*np->in_osrcfunc)(softc, np->in_osrcptr, np->in_v[0],
-					   &ip6->ip6_dst, fin->fin_plen);
-		break;
-	}
-	if (match)
-		return 0;
-
-	switch (np->in_odstatype)
-	{
-	case FRI_NORMAL :
-		match = IP6_MASKNEQ(&ip6->ip6_src, &np->in_odstmsk6,
-				    &np->in_odstip6);
-		break;
-	case FRI_LOOKUP :
-		match = (*np->in_odstfunc)(softc, np->in_odstptr, np->in_v[0],
-					   &ip6->ip6_src, fin->fin_plen);
-		break;
-	}
-	if (match)
-		return 0;
-
-	ft = &np->in_tuc;
-
-	switch (ip6->ip6_nxt)
-	{
-	case IPPROTO_TCP :
-	case IPPROTO_UDP :
-		/*
-		 * Only need to fetch port numbers for NAT
-		 */
-		if (ipf_pr_pullup(fin, sizeof(ip6_t) + 4) == -1) {
-			NBUMPSIDE6(fin->fin_out, ns_encap_pullup);
-			return -1;
-		}
-
-		ports = (u_short *)((char *)ip6 + sizeof(ip6_t));
-
-		fi.fi_tcpf = 0;
-		/*
-		 * And again, because we're simulating a reply, put the port
-		 * numbers in the revese place to where they are now.
-		 */
-		fi.fi_ports[0] = ntohs(ports[1]);
-		fi.fi_ports[1] = ntohs(ports[0]);
-		return ipf_tcpudpchk(&fi, ft);
-
-		/* NOTREACHED */
-
-	default :
-		if (ft->ftu_scmp || ft->ftu_dcmp)
-			return 0;
-		break;
-	}
-
-	return 1;
-}
-
-
-/* ------------------------------------------------------------------------ */
 /* Function:    nat6_nextaddr                                               */
 /* Returns:     int - -1 == bad input (no new address),                     */
 /*                     0 == success and dst has new address                 */
@@ -4446,6 +3944,7 @@ ipf_nat6_nextaddr(fin, na, old, dst)
 			new.in6 = na->na_nextip6;
 		}
 		*dst = new;
+		error = 0;
 		break;
 
 	default :
@@ -4551,178 +4050,6 @@ ipf_nat6_nextaddrinit(softc, base, na, initial, ifp)
 			IP6_INC(&na->na_nextip6);
 		}
 	}
-
-	return 0;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    nat6_encapok                                                */
-/* Returns:     int - -1 == MTU not big enough, 0 == ok to send packet      */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*              nat(I) - pointer to current NAT session                     */
-/*                                                                          */
-/* The purpose of this function is to determine whether or not a packet can */
-/* be sent out of a network interface after it has been encapsulated, before*/
-/* the actual encapsulation happens.  If it cannot - because the "Don't     */
-/* fragment" bit has been set - then generate an ICMP error message back to */
-/* the origin of the packet, informing it that the packet is too big and    */
-/* what the actual MTU out for the connection is.                           */
-/*                                                                          */
-/* At present the only question this would leave for strange behaviour is   */
-/* with local connections that will go out an encapsulation as sending of   */
-/* ICMP messages to local destinations isn't considered robust.             */
-/* ------------------------------------------------------------------------ */
-static int
-ipf_nat6_encapok(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
-{
-#ifdef INSTANCES
-	ipf_main_softc_t *softc = fin->fin_main_soft;   /* For GETIFMTU_6 */
-#endif
-	void *sifp;
-	ipnat_t *n;
-	int extra;
-	int mtu;
-
-	n = nat->nat_ptr;
-
-	if (n->in_redir & NAT_ENCAP) {
-		extra = sizeof(ip6_t);
-
-	} else {
-		return 0;
-	}
-
-	mtu = GETIFMTU_6(nat->nat_ifps[1]);
-
-	if (fin->fin_plen + extra < mtu)
-		return 0;
-
-	sifp = fin->fin_ifp;
-	fin->fin_ifp = NULL;
-	fin->fin_icode = 0;
-	fin->fin_mtu = mtu - extra;
-
-	(void) ipf_send_icmp_err(ICMP6_PACKET_TOO_BIG, fin, 1);
-
-	fin->fin_mtu = 0;
-
-	return -1;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/* Function:    ipf_nat6_rebuildencapicmp                                   */
-/* Returns:     int - -1 == error, 0 == success                             */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*              nat(I) - pointer to current NAT session                     */
-/*                                                                          */
-/* For ICMP replies received in response to packets we've encapsulated on   */
-/* the way out, we need to replace all of the addressing fields found in    */
-/* the data section of the ICMP header.  The ICMP packet is going to        */
-/* contain the the IP packet we sent out (IPENCAP) plus at least 64 bits of */
-/* the original IP packet - not something that will be of use to the origin */
-/* of the offending packet.                                                 */
-/* ------------------------------------------------------------------------ */
-static nat_t *
-ipf_nat6_rebuildencapicmp(fin, nat)
-	fr_info_t *fin;
-	nat_t *nat;
-{
-	struct icmp6_hdr *icmp6;
-	udphdr_t *udp;
-	ip6_t *oip6;
-	int p;
-
-	icmp6 = fin->fin_dp;
-	oip6 = (ip6_t *)((u_char *)icmp6 + sizeof(*icmp6));
-
-	if (fin->fin_out == 0) {
-		if (nat->nat_dir == NAT_ENCAPIN) {
-			oip6->ip6_src = nat->nat_odst6.in6;
-			oip6->ip6_dst = nat->nat_osrc6.in6;
-		} else {
-			oip6->ip6_src = nat->nat_osrc6.in6;
-			oip6->ip6_dst = nat->nat_odst6.in6;
-		}
-	} else {
-		if (nat->nat_dir == NAT_ENCAPIN) {
-			oip6->ip6_src = nat->nat_osrc6.in6;
-			oip6->ip6_dst = nat->nat_odst6.in6;
-		} else {
-			oip6->ip6_src = nat->nat_odst6.in6;
-			oip6->ip6_dst = nat->nat_osrc6.in6;
-		}
-	}
-
-	udp = (udphdr_t *)(oip6 + 1);
-
-	/*
-	 * We use nat6_p here because the original UDP header is quite likely
-	 * to have been lost - the error packet returned contains the outer
-	 * encapsulation header plus 64 bits of the inner IP header, no room
-	 * for a UDP or TCP header unless extra data is returned.
-	 *
-	 * XXX - If the entire original packet has been included (possible)
-	 *       then we should be just stripping off the outer encapsulation.
-	 *       This is a "todo" for the near future.
-	 */
-	p = nat->nat_pr[1 - fin->fin_out];
-
-	switch (p)
-	{
-	case IPPROTO_UDP :
-		udp->uh_sum = 0;
-		break;
-	case IPPROTO_TCP :
-		/*
-		 * NAT doesn't track the sequence number so we can't pretend
-		 * to know what value this field should carry.
-		 */
-		((tcphdr_t *)udp)->th_seq = 0;
-		break;
-	default :
-		break;
-	}
-
-	if (p == IPPROTO_TCP || p == IPPROTO_UDP) {
-		if (fin->fin_out == 0) {
-			if (nat->nat_dir == NAT_ENCAPIN) {
-				udp->uh_sport = nat->nat_odport;
-				udp->uh_dport = nat->nat_osport;
-			} else {
-				udp->uh_sport = nat->nat_osport;
-				udp->uh_dport = nat->nat_odport;
-			}
-		} else {
-			if (nat->nat_dir == NAT_ENCAPIN) {
-				udp->uh_sport = nat->nat_osport;
-				udp->uh_dport = nat->nat_odport;
-			} else {
-				udp->uh_sport = nat->nat_odport;
-				udp->uh_dport = nat->nat_osport;
-			}
-		}
-	}
-
-	/* TRACE (fin,oip,udp,icmp6) */
-	oip6->ip6_nxt = nat->nat_pr[1 - fin->fin_out];
-
-	/*
-	 * Reduce the next MTU setting by the size of the encap header
-	 */
-	if (icmp6->icmp6_type == ICMP6_PACKET_TOO_BIG) {
-		icmp6->icmp6_mtu = ntohs(icmp6->icmp6_mtu);
-		icmp6->icmp6_mtu -= sizeof(ip6_t);
-		icmp6->icmp6_mtu = htons(icmp6->icmp6_mtu);
-	}
-
-	icmp6->icmp6_cksum = 0;
-	icmp6->icmp6_cksum = ipf_cksum((u_short *)icmp6, fin->fin_dlen);
-
-	/* TRACE (fin,oip,udp,icmp6) */
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.4,v 1.1.1.1 2012/03/23 21:20:11 christos Exp $
+.\"	$NetBSD: ipnat.4,v 1.1.1.2 2012/07/22 13:44:45 darrenr Exp $
 .\"
 .TH IPNAT 4
 .SH NAME
@@ -31,7 +31,6 @@ These ioctl's are implemented as being routing ioctls and thus the same rules
 for the various routing ioctls and the file descriptor are employed, mainly
 being that the fd must be that of the device associated with the module
 (i.e., /dev/ipl).
-.LP
 .PP
 The structure used with the NAT interface is described below:
 .LP
@@ -66,7 +65,6 @@ Recognised values for in_redir:
 #define NAT_MAP         0
 #define NAT_REDIRECT    1
 .fi
-.PP
 .LP
 \fBNAT statistics\fP
 Statistics on the number of packets mapped, going in and out are kept,

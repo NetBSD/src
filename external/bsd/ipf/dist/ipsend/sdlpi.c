@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlpi.c,v 1.1.1.1 2012/03/23 21:20:06 christos Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -48,7 +48,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sdlpi.c	1.3 10/30/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: sdlpi.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr Exp $";
 #endif
 
 #define	CHUNKSIZE	8192

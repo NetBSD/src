@@ -10,6 +10,265 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+5.1.2 - RELEASED - 22 Jul 2012
+
+3546266 macro letters could be more consistent
+3546265 not all of the state statistics are displayed
+3546261 scripts for updating BSD environment out of date
+3546260 compiler warnings about non-integer array subscript
+3546259 asserting numdereflists == 0 is not correct
+3546258 expression matching does not see IPF_EXP_END
+3544317 ipnat/ipfstat are not using ipfexp_t
+3545324 proxy checksum calculation is not hardware aware
+3545321 FTP sequence number adjustment incorrectly applied
+3545320 EPSV is not recognised
+3545319 move nat rule creation to ip_proxy.c
+3545317 better feedback of checksum requirements for proxies
+3545314 ftp proxy levels do not make sense
+3545312 EPRT is not supported by ftp proxy
+3544318 ipnat.conf parsing ignores LHS address family
+3545309 non-ipv6 safe proxies do not fail with ipv6
+3545323 NAT updates the source port twice
+3545322 ipv6 nat rules cannot start proxies
+3544314 bucket copyout tries to copy too much data
+3544313 remove nat encap feature
+3546248 compat rule pointer type mismatch
+3546247 UDP hardware checksum offload not recognised
+3545311 ifp_ifaddr does not find the first set address
+3545310 ipmon needs ipl_sec on 64bit boundary
+3545326 reference count changes made without lock
+3544315 stateful matching does not use ipfexp_t
+3543493 tokens are not flushed when disabled
+3543487 NAT rules do not always release lookup objects
+3543491 function comments in ip_state.c are old
+3543404 ipnat.conf parsing uses family/ip version badly
+3543403 incorrect line number printed in ipnat parsing errors
+3543402 Not all NAT statistics are printed
+3542979 NAT session list management is too simple
+3542978 ipv4 and ipv6 nat insert have common hash insertion
+3542977 ipnat_t refence tracking incomplete
+3542975 proxies must use ipnat_t separately
+3542980 printing ipv6 expressions is wrong
+3542983 ippool cannot handle more than one ipv6 address
+3543018 mask array shifted incorrectly.
+3542974 reason for dropping packet is lost
+3542982 line numbers not recorded/displayed correctly by ipf
+3542981 exclamation mark cuases trouble with pools
+3541655 test suite checksums incorrect
+3541653 display proxy fail status correctly
+3540993 IP header offset excluded in pullup calculations
+3540994 pullupmsg does not work as required
+3540992 pointer to ipv6 frag header not updated on pullup
+3541645 netmask management adds /32 for /0
+3541637 ipnat parser does not zero port fields for non-port protocol
+3541635 pool names cannot by numbers
+3540995 IPv6 fragment tracking does not always work
+3540996 printing of nextip for ipv6 nat rules is wrong
+3540999 ipnat.conf parsing has trouble with icmpidmap for ipv6
+3540825 whois output parsing error for ipv6
+3540814 ipfd_lock serves no purpose
+3540810 lookup objects need tail pointers
+3540809 refactor hash table lookups for nat
+3540819 radix tree does not work with ipv6
+3540820 mutex emulation should be logged
+3540828 ipfstat filtering with -m fails tests
+3536480 ippool could be more like the others
+3536477 pool printing not uniform
+3536483 flushing empty destination lists causes panic
+3536481 more use of bzero after KMALLOC required
+3536479 ipnat.conf line numbers not stored
+3536484 Makefile missing dependency for ippool
+3536199 TFTP proxy requires something extra
+3536198 ICMP checksum out by one
+3536203 ipnat does not return an error
+3536201 ipf.conf parsing too address friendly
+3536200 printing of bytes/packets not indented
+3497941 ipv4 multicast detection incorrect on little endian
+3535361 to interfaces printed out of order
+3535363 ipf parser is inconsistent
+3532306 deleting ipnat rules does not work
+3532054 new error required for ipf_rx_create
+3532053 icmp6 checksums wrong
+3532052 icmpv6 state check with incorrect length
+3531871 checksum verification wants too many icmp6 bytes
+3531870 ipnat.conf parsing needs to support inet6
+3532048 error in ipf group parsing
+3531868 ICMPV6 checksum not validated
+3531893 ipftest exits without error for bad input
+3531890 whois pool parsing builds bad structures
+3531891 icmpv6 text parsing ignorant of icmp types
+3531653 rewrite with icmp does not work
+3530563 NAT operations fail with EPERM
+3530544 first pass at gcc -Wextra cleanup
+3530540 lookup create functions do not set error properly
+3530539 ipf_main_soft_destroy doesn't need 2nd arg
+3530541 reorder structure for better packing
+3530543 ipnat purge needs documentation
+3530515 BSD upgrade script required
+3528029 ipmon bad-mutex panic
+3530247 loading address pools light on input validation
+3530255 radix tree delete uses wrong lookup
+3530254 radix tree allocation support wrong
+3530264 ipmon prints qd for some 64bit numbers
+3530260 decapsulate rules not printed correctly.
+3530266 ipfstat -v/-d flags confused
+2939220 why a packet is blocked is not discernable
+2939218 output interface not recorded
+2941850 use of destination lists with to/dup-to beneficial
+3457747 build errors introduced with radix change
+3535360 timeout groups leak
+3535359 memory leak with tokens
+3535358 listing rules in groups requires tracking groups
+3535357 rule head removal is problematic
+3530259 not all ioctl error checked wth SIOCIPFINTERROR
+3530258 error routine that uses fd required
+3530253 inadequate function comment blocks
+3530249 walking lookup tables leaks memory
+3530241 extra lock padding required for freebsd
+3529901 ipf returns 0 when rules fail to load
+3529491 checksum validation could be better
+3529486 tcp checksum wrong for ipv6
+3533779 ipv6 nat rules missing inet6 keyword
+3532693 ipnat.conf rejects some ipv6 addresses
+3532691 ipv4 should not be forced for icmp
+3532689 ipv6 nat rules do not print inet6
+3532688 ipv6 address always printed with "to <if>"
+3532687 with v6hdrs not supported like with ipopts
+3532686 ipf expressions do not work with ipv6
+3540825 whois output parsing error for ipv6
+3540818 NAT for certain IPv6 ICMP packets should not be allowed
+3540815 memory leak with destination lists
+3540814 ipfd_lock serves no purpose
+3540810 lookup objects need tail pointers
+3540809 refactor hash table lookups for nat
+3540808 completed tokens do not stop iteration
+3530492 address hash table name not used
+3528029 ipmon bad-mutex panic
+3530256 hook memory leaked
+3530271 pools parsing produces badly formed address structures
+3488061 cleanup for illumos build
+3484434 SIOCIPFINTERROR must work for all devices
+3484067 mandoc -Tlint warnings to be fixed
+3483343 compile warning in ipfcomp.c
+3482893 building without IPFILTER_LOG fails
+3482765 building netbsd kernel without inet6 fails
+3482116 ipf_check frees packet from ipftest
+3481663 does not compile on solaris 11
+
+5.1.1 - RELEASED - 9 May 2012
+
+3481322 ip_fil_compat.c needs a cleanup
+3481211 add user errors to dtrace
+3481152 compatibility for 4.1 needs more work
+3481153 PRIu64 problems on FreeBSD
+3481155 ipnat listing incorrect
+3480543 change leads to compat problems
+3480538 compiler errors from earlier patch
+3480537 ipf_instance_destroy is incomplete
+3480536 _fini order leads to panic
+3479991 compiler warnings about size mismatches
+3479974 copyright dates are wrong (fix)
+3479464 add support for leaks testing
+3479457 %qu is not the prefered way
+3479451 iterators leak memory
+3479453 nat rules with pools leak
+3479454 memory leak in hostmap table
+3479461 load_hash uses memory after free
+3479462 printpool leaks memory
+3479452 missing FREE_MB_T to freembt leaks
+3479450 ipfdetach is called when detached
+3479448 group mapping rules memory leak
+3479455 memory leak from tuning
+3479458 ipf must be running in global zone
+3479460 driver replace is wrong
+3479459 radix tree tries to free null pointer
+3479463 rwlock emulation does not free memory
+3479465 parser leaks memory
+3475959 hardware checksum not correctly used
+3475426 ip pseudo checksum wrong
+3473566 radix tree does not delete dups right
+3472987 compile is not clean
+3472337 not everything is zero'd
+3472344 interface setup needs to be after insert
+3472340 wildcard counter drops twice
+3472338 change fastroute interface
+3472335 kernel lock defines not placed correctly
+3472324 ICMP INFOREQ/REPLY not handled
+3472330 multicast packets tagged by address
+3472333 ipf_deliverlocal called incorrectly
+3472345 mutex debug could be more granular
+3472761 building i19 regression is flawed
+3456457 use of bsd tree.h needs to be removed
+3460522 code cleanup required for building on freebsd
+3459734 trade some cpu for memory
+3457747 build errors introduced with radix change
+3457804 build errors from removal of pcap-int,h
+3440163 rewrite radix tree
+3428004 snoop, tcpdump, etherfind readers are unused
+3439495 ipf_rand_push never called (fix brackets)
+3437732 getnattype does not need to use ipnat_t (fix variable name)
+3437696 fr_cksum is a nightmare
+3439061 ipf_send_ip doesn't need 3rd arg
+3439059 ipid needs to be file local
+3437740 complete buildout of fnew
+3438575 add dtrace probes to block events
+3438347 comment blocks missing softc
+3437687 description of ipf_makefrip wrong
+3438340 more stats as dtrace probes
+3438316 free on nat structure uses fixed size
+3437745 nat iterator using the wrong size
+3437710 fail checksum verification if packet is short
+3437696 fr_cksum is a nightmare
+3437732 getnattype does not need to use ipnat_t
+3437735 rename ipf_allocmbt to allocmbt
+3437697 fr_family to version assignment is wrong
+3437746 ap_session_t has unused fields
+3437747 move softc structure to .h file (ip_state.c)
+3437704 there is no DTRACE_PROBE5
+3437748 wrong interface in qpktinfo_t
+3437729 create function to hexdump mb_t
+3438273 msgdsize should be easier to read
+3437683 object direction not set for 32bit
+3433767 calling ip_cksum could be easier
+3433764 left over locking
+3428015 printing proxy data size is useless
+3428013 add M_ADJ to hide adjmsg/m_adj
+3428012 interface name is not always returned correctly
+3428002 ip_ttl is too low
+3427997 ipft readers do not set buffer length
+3426558 resistence is futile
+3424495 various copy-paste errors
+1826936 shall we allow ipf to be as dumb as its admin
+3424477 specfuncs needs to go
+3424484 missing fr_checkv6sum
+3424478 one entry at a time
+2998760 auth rules do not mix well with to/dup-to/fastroute
+3424195 add ctfmerge to sunos5 makefile
+3424132 some dtrace probes to start with
+3423812 makefile needs ip_frag.h for some files
+3423817 reference count useful in verbose output
+3423800 walking lists does not drop reference
+3423805 fragmentation stats not reported correclty
+3423808 ip addresses reportied incorrectly with ipfstat -f
+3423821 track packets and bytes for fragmentation
+3423803 attempt to double free rule
+3423805 fragmentation stats not reported correctly
+3422712 system panic with ipfstat -f
+3422619 pullup counter bumped for every packet
+3422608 dummy rtentry required to build
+3422018 frflush next to ipf_fini_all is redundant
+3422012 instance cleanup is not clean
+3421845 instance name not set
+3005622 ip_fil5.1.0 does not load on Solaris 10 U8
+2976332 stateful filtering is incompatible with ipv4 options
+3387509 ipftest needs help construction ip packets with options
+2998746 passp can never be null
+3064034 mbuf clobbering problem with ipv6
+3105725 ipnat divide by zero panic
+2998750 ipf_htent_insert can leak memory
+3064034 mbuf clobbering problem with ipv6
+3105725 ipnat divie by zero panic
+
 5.1 - RELEASED - 9 May 2010
 
 * See WhatsNew50.txt

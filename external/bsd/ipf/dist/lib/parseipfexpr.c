@@ -1,4 +1,4 @@
-/*	$NetBSD: parseipfexpr.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: parseipfexpr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 #include "ipf.h"
 #include <ctype.h>
@@ -8,31 +8,33 @@ typedef struct ipfopentry {
 	int	ipoe_cmd;
 	int	ipoe_nbasearg;
 	int	ipoe_maxarg;
+	int	ipoe_argsize;
 	char	*ipoe_word;
 } ipfopentry_t;
 
 static ipfopentry_t opwords[17] = {
-	{ IPF_EXP_IP_ADDR, 2, 0, "ip.addr" },
-	{ IPF_EXP_IP6_ADDR, 2, 0, "ip6.addr" },
-	{ IPF_EXP_IP_PR, 1, 0, "ip.p" },
-	{ IPF_EXP_IP_SRCADDR, 2, 0, "ip.src" },
-	{ IPF_EXP_IP_DSTADDR, 2, 0, "ip.dst" },
-	{ IPF_EXP_IP6_SRCADDR, 2, 0, "ip6.src" },
-	{ IPF_EXP_IP6_DSTADDR, 2, 0, "ip6.dst" },
-	{ IPF_EXP_TCP_PORT, 1, 0, "tcp.port" },
-	{ IPF_EXP_TCP_DPORT, 1, 0, "tcp.dport" },
-	{ IPF_EXP_TCP_SPORT, 1, 0, "tcp.sport" },
-	{ IPF_EXP_TCP_FLAGS, 2, 0, "tcp.flags" },
-	{ IPF_EXP_UDP_PORT, 1, 0, "udp.port" },
-	{ IPF_EXP_UDP_DPORT, 1, 0, "udp.dport" },
-	{ IPF_EXP_UDP_SPORT, 1, 0, "udp.sport" },
-	{ IPF_EXP_TCP_STATE, 1, 0, "tcp.state" },
-	{ IPF_EXP_IDLE_GT, 1, 1, "idle-gt" },
-	{ -1, 0, 0, NULL  }
+	{ IPF_EXP_IP_ADDR, 2, 0, 1, "ip.addr" },
+	{ IPF_EXP_IP6_ADDR, 2, 0, 4, "ip6.addr" },
+	{ IPF_EXP_IP_PR, 1, 0, 1, "ip.p" },
+	{ IPF_EXP_IP_SRCADDR, 2, 0, 1, "ip.src" },
+	{ IPF_EXP_IP_DSTADDR, 2, 0, 1, "ip.dst" },
+	{ IPF_EXP_IP6_SRCADDR, 2, 0, 4, "ip6.src" },
+	{ IPF_EXP_IP6_DSTADDR, 2, 0, 4, "ip6.dst" },
+	{ IPF_EXP_TCP_PORT, 1, 0, 1, "tcp.port" },
+	{ IPF_EXP_TCP_DPORT, 1, 0, 1, "tcp.dport" },
+	{ IPF_EXP_TCP_SPORT, 1, 0, 1, "tcp.sport" },
+	{ IPF_EXP_TCP_FLAGS, 2, 0, 1, "tcp.flags" },
+	{ IPF_EXP_UDP_PORT, 1, 0, 1, "udp.port" },
+	{ IPF_EXP_UDP_DPORT, 1, 0, 1, "udp.dport" },
+	{ IPF_EXP_UDP_SPORT, 1, 0, 1, "udp.sport" },
+	{ IPF_EXP_TCP_STATE, 1, 0, 1, "tcp.state" },
+	{ IPF_EXP_IDLE_GT, 1, 1, 1, "idle-gt" },
+	{ -1, 0, 0, 0, NULL  }
 };
 
 
-int *parseipfexpr(line, errorptr)
+int *
+parseipfexpr(line, errorptr)
 	char *line;
 	char **errorptr;
 {
@@ -121,7 +123,7 @@ int *parseipfexpr(line, errorptr)
 		 * and is thus where we start putting new data.
 		 */
 		osize = asize;
-		asize += 3 + (items * e->ipoe_nbasearg);
+		asize += 4 + (items * e->ipoe_nbasearg * e->ipoe_argsize);
 		if (oplist == NULL)
 			oplist = calloc(1, sizeof(int) * (asize + 2));
 		else
@@ -131,10 +133,12 @@ int *parseipfexpr(line, errorptr)
 			goto parseerror;
 		}
 		ipfe = (ipfexp_t *)(oplist + osize);
-		osize += 3;
+		osize += 4;
 		ipfe->ipfe_cmd = e->ipoe_cmd;
 		ipfe->ipfe_not = not;
 		ipfe->ipfe_narg = items * e->ipoe_nbasearg;
+		ipfe->ipfe_size = items * e->ipoe_nbasearg * e->ipoe_argsize;
+		ipfe->ipfe_size += 4;
 
 		for (s = arg; (*s != '\0') && (osize < asize); s = t) {
 			/*

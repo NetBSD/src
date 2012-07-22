@@ -1,7 +1,7 @@
-/*	$NetBSD: l4check.c,v 1.1.1.1 2012/03/23 21:20:07 christos Exp $	*/
+/*	$NetBSD: l4check.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $	*/
 
 /*
- * (C)Copyright (C) 2007 by Darren Reed.
+ * (C)Copyright (C) 2012 by Darren Reed.
  */
 #include <sys/types.h>
 #include <sys/stat.h>

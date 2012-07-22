@@ -1,14 +1,14 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.1 2012/03/23 21:20:07 christos Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.1.1.2 2012/07/22 13:44:36 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2007 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ipsopt.c,v 1.1.1.2 2012/07/22 13:44:36 darrenr Exp $";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

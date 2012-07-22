@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_pool.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: remove_pool.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: remove_pool.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -37,11 +37,11 @@ remove_pool(poolp, iocfunc)
 	strncpy(pool.ipo_name, poolp->ipo_name, sizeof(pool.ipo_name));
 	pool.ipo_flags = poolp->ipo_flags;
 
-	if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
+	if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op)) {
 		if ((opts & OPT_DONOTHING) == 0) {
-			perror("remove_pool:SIOCLOOKUPDELTABLE");
-			return -1;
+			return ipf_perror_fd(pool_fd(), iocfunc,
+					     "delete lookup pool");
 		}
-
+	}
 	return 0;
 }

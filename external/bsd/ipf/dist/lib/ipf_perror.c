@@ -1,5 +1,7 @@
-/*	$NetBSD: ipf_perror.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: ipf_perror.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include "ipf.h"
 
 void
@@ -11,4 +13,37 @@ ipf_perror(err, string)
 		fprintf(stderr, "%s\n", string);
 	else
 		fprintf(stderr, "%s %s\n", string, ipf_strerror(err));
+}
+
+int
+ipf_perror_fd(fd, iocfunc, string)
+	int fd;
+	ioctlfunc_t iocfunc;
+	char *string;
+{
+	int save;
+	int realerr;
+
+	save = errno;
+	if ((*iocfunc)(fd, SIOCIPFINTERROR, &realerr) == -1)
+		realerr = 0;
+
+	errno = save;
+	fprintf(stderr, "%d:", realerr);
+	ipf_perror(realerr, string);
+	return realerr ? realerr : save;
+
+}
+
+void
+ipferror(fd, msg)
+	int fd;
+	char *msg;
+{
+	if (fd >= 0) {
+		ipf_perror_fd(fd, ioctl, msg);
+	} else {
+		fprintf(stderr, "0:");
+		perror(msg);
+	}
 }

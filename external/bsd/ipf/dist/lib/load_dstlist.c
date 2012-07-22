@@ -1,11 +1,11 @@
-/*	$NetBSD: load_dstlist.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: load_dstlist.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_dstlist.c,v 1.1.2.2 2012/01/26 05:44:26 darren_r Exp 
+ * $Id: load_dstlist.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -46,8 +46,8 @@ load_dstlist(dst, iocfunc, nodes)
 	if ((opts & OPT_REMOVE) == 0) {
 		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_dstlist:SIOCLOOKUPADDTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+						  "add destination list table");
 			}
 	}
 
@@ -58,13 +58,13 @@ load_dstlist(dst, iocfunc, nodes)
 	}
 
 	for (a = nodes; a != NULL; a = a->ipfd_next)
-		load_dstlistnode(dst->ipld_unit, dest.ipld_name, a, 0, iocfunc);
+		load_dstlistnode(dst->ipld_unit, dest.ipld_name, a, iocfunc);
 
 	if ((opts & OPT_REMOVE) != 0) {
 		if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_dstlist:SIOCLOOKUPDELTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+					      "delete destination list table");
 			}
 	}
 	return 0;

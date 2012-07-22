@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.1.1.1 2012/03/23 21:20:07 christos Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.1.1.2 2012/07/22 13:44:36 darrenr Exp $	*/
 
 /*
  * ipsend.h (C) 1997-1998 Darren Reed
@@ -29,7 +29,7 @@
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
-#include "tcpip.h"
+#include "netinet/tcpip.h"
 #include "ipt.h"
 
 extern	int	resolve __P((char *, char *));

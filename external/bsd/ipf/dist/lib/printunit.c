@@ -1,7 +1,7 @@
-/*	$NetBSD: printunit.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: printunit.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */

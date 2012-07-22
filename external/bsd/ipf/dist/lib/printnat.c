@@ -1,7 +1,7 @@
-/*	$NetBSD: printnat.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: printnat.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $";
 #endif
 
 
@@ -27,7 +27,17 @@ printnat(np, opts)
 {
 	struct protoent *pr;
 	char *base;
+	int family;
 	int proto;
+
+	if (np->in_v[0] == 4)
+		family = AF_INET;
+#ifdef USE_INET6
+	else if (np->in_v[0] == 6)
+		family = AF_INET6;
+#endif
+	else
+		family = AF_UNSPEC;
 
 	if (np->in_flags & IPN_NO)
 		PRINTF("no ");
@@ -97,6 +107,9 @@ printnat(np, opts)
 	}
 	putchar(' ');
 
+	if (family == AF_INET6)
+		PRINTF("inet6 ");
+
 	if (np->in_redir & (NAT_REWRITE|NAT_ENCAP|NAT_DIVERTUDP)) {
 		if ((proto != 0) || (np->in_flags & IPN_TCPUDP)) {
 			PRINTF("proto ");
@@ -134,6 +147,8 @@ printnat(np, opts)
 			     np->in_ifnames[0]);
 		if ((np->in_redir & NAT_DIVERTUDP) != 0)
 			PRINTF(",%u udp", np->in_dpmin);
+		if ((np->in_flags & IPN_PURGE) != 0)
+			PRINTF(" purge");
 		PRINTF(";\n");
 
 	} else if (np->in_redir & NAT_REWRITE) {
@@ -179,6 +194,8 @@ printnat(np, opts)
 					PRINTF("-%u", np->in_dpmax);
 			}
 		}
+		if ((np->in_flags & IPN_PURGE) != 0)
+			PRINTF(" purge");
 		PRINTF(";\n");
 
 	} else if (np->in_redir == NAT_REDIRECT) {
@@ -226,6 +243,8 @@ printnat(np, opts)
 			PRINTF(" proxy %s", np->in_names + np->in_plabel);
 		if (np->in_tag.ipt_tag[0] != '\0')
 			PRINTF(" tag %-.*s", IPFTAG_LEN, np->in_tag.ipt_tag);
+		if ((np->in_flags & IPN_PURGE) != 0)
+			PRINTF(" purge");
 		PRINTF("\n");
 		if (opts & OPT_DEBUG)
 			PRINTF("\tpmax %u\n", np->in_dpmax);
@@ -292,6 +311,8 @@ printnat(np, opts)
 			} else {
 				PRINTF(" %d:%d", np->in_spmin, np->in_spmax);
 			}
+			if (np->in_flags & IPN_SEQUENTIAL)
+				PRINTF(" sequential");
 		}
 
 		if (np->in_flags & IPN_FRAG)
@@ -307,14 +328,13 @@ printnat(np, opts)
 			putchar(' ');
 			printproto(pr, proto, np);
 		}
+		if ((np->in_flags & IPN_PURGE) != 0)
+			PRINTF(" purge");
 		PRINTF("\n");
 		if (opts & OPT_DEBUG) {
-			struct in_addr nip;
-
-			nip.s_addr = htonl(np->in_snip);
-
-			PRINTF("\tnextip %s pnext %d\n",
-			       inet_ntoa(nip), np->in_spnext);
+			PRINTF("\tnextip ");
+			printip(family, &np->in_snip);
+			PRINTF(" pnext %d\n", np->in_spnext);
 		}
 	}
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hash.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: load_hash.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -42,10 +42,7 @@ load_hash(iphp, list, iocfunc)
 		op.iplo_arg = IPHASH_ANON;
 	op.iplo_size = sizeof(iph);
 	op.iplo_struct = &iph;
-	iph.iph_unit = iphp->iph_unit;
-	iph.iph_type = iphp->iph_type;
-	strncpy(iph.iph_name, iphp->iph_name, sizeof(iph.iph_name));
-	iph.iph_flags = iphp->iph_flags;
+	iph = *iphp;
 	if (n <= 0)
 		n = 1;
 	if (iphp->iph_size == 0)
@@ -58,7 +55,6 @@ load_hash(iphp, list, iocfunc)
 			iphp->iph_name, "size to match expected use");
 	}
 	iph.iph_size = size;
-	iph.iph_seed = iphp->iph_seed;
 	iph.iph_table = NULL;
 	iph.iph_list = NULL;
 	iph.iph_ref = 0;
@@ -66,8 +62,8 @@ load_hash(iphp, list, iocfunc)
 	if ((opts & OPT_REMOVE) == 0) {
 		if (pool_ioctl(iocfunc, SIOCLOOKUPADDTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_hash:SIOCLOOKUPADDTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+					"add lookup hash table");
 			}
 	}
 
@@ -75,10 +71,6 @@ load_hash(iphp, list, iocfunc)
 	strncpy(iphp->iph_name, op.iplo_name, sizeof(op.iplo_name));
 
 	if (opts & OPT_VERBOSE) {
-		for (a = list; a != NULL; a = a->ipe_next) {
-			a->ipe_addr.in4_addr = ntohl(a->ipe_addr.in4_addr);
-			a->ipe_mask.in4_addr = ntohl(a->ipe_mask.in4_addr);
-		}
 		iph.iph_table = calloc(size, sizeof(*iph.iph_table));
 		if (iph.iph_table == NULL) {
 			perror("calloc(size, sizeof(*iph.iph_table))");
@@ -103,8 +95,8 @@ load_hash(iphp, list, iocfunc)
 	if ((opts & OPT_REMOVE) != 0) {
 		if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
 			if ((opts & OPT_DONOTHING) == 0) {
-				perror("load_hash:SIOCLOOKUPDELTABLE");
-				return -1;
+				return ipf_perror_fd(pool_fd(), iocfunc,
+					"delete lookup hash table");
 			}
 	}
 	return 0;

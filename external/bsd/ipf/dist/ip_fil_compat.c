@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_fil_compat.c,v 1.1.1.1 2012/03/23 21:20:00 christos Exp $	*/
+/*	$NetBSD: ip_fil_compat.c,v 1.1.1.2 2012/07/22 13:44:16 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2002-2003 by Darren Reed.
+ * Copyright (C) 2002-2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -3765,7 +3765,7 @@ frentry_current_to_4_1_34(current, old)
 
 	old->fr_lock = fr->fr_lock;
 	old->fr_next = fr->fr_next;
-	old->fr_grp = fr->fr_grp;
+	old->fr_grp = (void *)fr->fr_grp;
 	old->fr_isc = fr->fr_isc;
 	old->fr_ifas[0] = fr->fr_ifas[0];
 	old->fr_ifas[1] = fr->fr_ifas[1];
@@ -3860,7 +3860,7 @@ frentry_current_to_4_1_16(current, old)
 
 	old->fr_lock = fr->fr_lock;
 	old->fr_next = fr->fr_next;
-	old->fr_grp = fr->fr_grp;
+	old->fr_grp = (void *)fr->fr_grp;
 	old->fr_isc = fr->fr_isc;
 	old->fr_ifas[0] = fr->fr_ifas[0];
 	old->fr_ifas[1] = fr->fr_ifas[1];
@@ -3955,7 +3955,7 @@ frentry_current_to_4_1_0(current, old)
 
 	old->fr_lock = fr->fr_lock;
 	old->fr_next = fr->fr_next;
-	old->fr_grp = fr->fr_grp;
+	old->fr_grp = (void *)fr->fr_grp;
 	old->fr_isc = fr->fr_isc;
 	old->fr_ifas[0] = fr->fr_ifas[0];
 	old->fr_ifas[1] = fr->fr_ifas[1];

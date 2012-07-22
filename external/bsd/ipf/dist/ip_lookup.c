@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_lookup.c,v 1.1.1.1 2012/03/23 21:19:56 christos Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.1.1.2 2012/07/22 13:44:18 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -61,7 +61,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_lookup.c,v 1.1.1.2 2012/07/22 13:44:18 darrenr Exp $";
 #endif
 
 /*
@@ -783,7 +783,7 @@ ipf_lookup_iterderef(softc, type, data)
 	WRITE_ENTER(&softc->ipf_poolrw);
 
 	for (i = 0; i < MAX_BACKENDS; i++) {
-		if (type == backends[i]->ipfl_type) {
+		if (lkey->ilik_type == backends[i]->ipfl_type) {
 			(*backends[i]->ipfl_iter_deref)(softc,
 							softl->ipf_back[i],
 							lkey->ilik_otype,
@@ -874,7 +874,7 @@ ipf_lookup_res_num(softc, unit, type, number, funcptr)
 /*                                                                          */
 /* Search for the "table" number passed in amongst those configured for     */
 /* that particular type.  If the type is recognised then the function to    */
-/* call to do the IP address search will be change, regardless of whether   */
+/* call to do the IP address search will be changed, regardless of whether  */
 /* or not the "table" number exists.                                        */
 /* ------------------------------------------------------------------------ */
 void *

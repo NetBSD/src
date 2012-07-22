@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.1 2012/03/23 21:19:59 christos Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -98,7 +98,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $";
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -158,8 +158,10 @@ ipf_sync_soft_create(softc)
 	ipf_sync_softc_t *softs;
 
 	KMALLOC(softs, ipf_sync_softc_t *);
-	if (softs == NULL)
+	if (softs == NULL) {
+		IPFERROR(110024);
 		return NULL;
+	}
 
 	bzero((char *)softs, sizeof(*softs));
 
@@ -560,7 +562,7 @@ ipf_sync_write(softc, uio)
 			if (softs->ipf_sync_debug > 2)
 				printf("uiomove(data) %s %d bytes, got %d\n",
 					"insufficient data, need",
-					sh.sm_len, uio->uio_resid);
+					sh.sm_len, (int)uio->uio_resid);
 			IPFERROR(110007);
 			return EAGAIN;
 		}

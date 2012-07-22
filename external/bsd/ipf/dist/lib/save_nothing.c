@@ -1,4 +1,4 @@
-/*	$NetBSD: save_nothing.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: save_nothing.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
 
 #include "ipf.h"
 #include "ipmon.h"
@@ -29,6 +29,8 @@ nothing_parse(char **strings)
 {
 	void *ctx;
 
+	strings = strings;	/* gcc -Wextra */
+
 	ctx = calloc(1, sizeof(void *));
 
 	return ctx;
@@ -48,6 +50,8 @@ nothing_send(ctx, msg)
 	void *ctx;
 	ipmon_msg_t *msg;
 {
+	ctx = ctx;	/* gcc -Wextra */
+	msg = msg;	/* gcc -Wextra */
 	/*
 	 * Do nothing
 	 */

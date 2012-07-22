@@ -1,11 +1,11 @@
-/*	$NetBSD: interror.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: interror.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: interror.c,v 1.9.2.6 2012/01/29 05:30:36 darren_r Exp 
+ * $Id: interror.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include "ipf.h"
@@ -19,7 +19,7 @@ typedef	struct	{
 
 static ipf_error_entry_t *find_error __P((int));
 
-#define	IPF_NUM_ERRORS	460
+#define	IPF_NUM_ERRORS	475
 
 /*
  * NO REUSE OF NUMBERS!
@@ -117,7 +117,7 @@ static ipf_error_entry_t ipf_errors[IPF_NUM_ERRORS] = {
 	{	87,	"value for iri_nrules is 0" },
 	{	88,	"NULL pointer specified for where to copy rule to" },
 	{	89,	"copyout of rule failed" },
-	{	90,	"copyout of rule data section failed" },
+	{	90,	"" },
 	{	91,	"could not get token for rule iteration" },
 	{	92,	"unrecognised generic iterator" },
 	{	93,	"could not find token for generic iterator" },
@@ -227,6 +227,9 @@ static ipf_error_entry_t ipf_errors[IPF_NUM_ERRORS] = {
 	{	30021,	"node already exists in the table" },
 	{	30022,	"could not find node to delete in table" },
 	{	30023,	"uid mismatch on node to delete" },
+	{	30024,	"object size incorrect for hash table" },
+	{	30025,	"hash table size must be at least 1"},
+	{	30026,	"cannot allocate memory for hash table context" },
 /* -------------------------------------------------------------------------- */
 	{	40001,	"invalid minor device numebr for log read" },
 	{	40002,	"read size too small" },
@@ -299,7 +302,7 @@ log" },
 	{	60018,	"NAT not locked for fetching NAT table entry" },
 	{	60019,	"error copying in NAT token data for deletion" },
 	{	60020,	"unknown NAT ioctl" },
-	{	60021,	"cannot add encapsulation rule for TCP/UDP" },
+	{	60021,	"" },
 	{	60022,	"resolving proxy name in NAT rule failed" },
 	{	60023,	"only reply age specified in NAT rule" },
 	{	60024,	"error doing copyin to determine NAT entry size" },
@@ -370,7 +373,7 @@ log" },
 	{	70013,	"error copying out pool node" },
 	{	70014,	"add node size incorrect" },
 	{	70015,	"error copying in pool node" },
-	{	70016,	"node address/mask family mismatch" },
+	{	70016,	"" },
 	{	70017,	"cannot find pool for node" },
 	{	70018,	"node entry already present in pool" },
 	{	70019,	"delete node size incorrect" },
@@ -381,6 +384,17 @@ log" },
 	{	70024,	"uid mismatch for node removal" },
 	{	70025,	"stats device unit is invalid" },
 	{	70026,	"error copying out statistics" },
+	{	70027,	"could not remove node from radix tree" },
+	{	70028,	"incorrect address length in pool node add" },
+	{	70029,	"incorrect mask length in pool node add" },
+	{	70030,	"incorrect address length in pool node remove" },
+	{	70031,	"incorrect mask length in pool node remove" },
+	{	70032,	"cannot allocate memory for pool context" },
+	{	70033,	"cannot allocate memory for radix tree context" },
+	{	70034,	"adding IPv6 node with incorrect address length" },
+	{	70035,	"IPv4 address not masked" },
+	{	70036,	"IPv6 address not masked" },
+	{	70037,	"removing IPv6 node with incorrect address length" },
 /* -------------------------------------------------------------------------- */
 	{	80001,	"could not find proxy" },
 	{	80002,	"proxy does not support control operations" },
@@ -485,6 +499,7 @@ log" },
 	{	120025,	"error copying out dest. list statistics" },
 	{	120026,	"cannot allocate memory for destination node" },
 	{	120027,	"error copying in destination node" },
+	{	120028,	"cannot allocate memory for destination context " },
 /* -------------------------------------------------------------------------- */
 	{	130001,	"ioctl denied by system security level" },
 	{	130002,	"ioctl operation on invalid minor device" },

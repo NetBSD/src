@@ -1,7 +1,7 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.1 2012/03/23 21:20:25 christos Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp $";
 #endif
 
 
@@ -124,7 +124,7 @@ int main(argc, argv)
 
 	assigndefined(getenv("IPNAT_PREDEFINED"));
 
-	while ((c = getopt(argc, argv, "CdFf:hlm:M:N:nO:rRsv")) != -1)
+	while ((c = getopt(argc, argv, "CdFf:hlm:M:N:nO:prRsv")) != -1)
 		switch (c)
 		{
 		case 'C' :
@@ -162,6 +162,9 @@ int main(argc, argv)
 		case 'O' :
 			nat_fields = parsefields(natfields, optarg);
 			break;
+		case 'p' :
+			opts |= OPT_PURGE;
+			break;
 		case 'R' :
 			opts |= OPT_NORESOLVE;
 			break;
@@ -178,6 +181,12 @@ int main(argc, argv)
 		default :
 			usage(argv[0]);
 		}
+
+	if (((opts & OPT_PURGE) != 0) && ((opts & OPT_REMOVE) == 0)) {
+		(void) fprintf(stderr, "%s: -p must be used with -r\n",
+			       argv[0]);
+		exit(1);
+	}
 
 	initparse();
 
@@ -229,7 +238,7 @@ int main(argc, argv)
 	if (opts & (OPT_FLUSH|OPT_CLEAR))
 		flushtable(fd, opts, natfilter);
 	if (file) {
-		ipnat_parsefile(fd, ipnat_addrule, ioctl, file);
+		return ipnat_parsefile(fd, ipnat_addrule, ioctl, file);
 	}
 	if (opts & (OPT_LIST|OPT_STAT))
 		dostats(fd, nsp, opts, 1, natfilter);
@@ -434,7 +443,7 @@ void dotable(nsp, fd, alive, which, side)
 
 	if (alive) {
 		if (ioctl(fd, SIOCGTABL, &obj) != 0) {
-			perror("SIOCFTABL");
+			ipferror(fd, "SIOCFTABL");
 			free(buckets);
 			return;
 		}
@@ -481,10 +490,10 @@ void dostats(fd, nsp, opts, alive, filter)
 	 * Show statistics ?
 	 */
 	if (opts & OPT_STAT) {
-		printnatside("in", nsp, &nsp->ns_side[0]);
+		printnatside("in", &nsp->ns_side[0]);
 		dotable(nsp, fd, alive, 0, "in");
 
-		printnatside("out", nsp, &nsp->ns_side[1]);
+		printnatside("out", &nsp->ns_side[1]);
 		dotable(nsp, fd, alive, 1, "out");
 
 		printf("%lu\tlog successes\n", nsp->ns_side[0].ns_log);
@@ -492,7 +501,25 @@ void dostats(fd, nsp, opts, alive, filter)
 		printf("%lu\tadded in\n%lu\tadded out\n",
 			nsp->ns_side[0].ns_added,
 			nsp->ns_side[1].ns_added);
+		printf("%u\tactive\n", nsp->ns_active);
+		printf("%lu\ttransparent adds\n", nsp->ns_addtrpnt);
+		printf("%lu\tdivert build\n", nsp->ns_divert_build);
 		printf("%lu\texpired\n", nsp->ns_expire);
+		printf("%lu\tflush all\n", nsp->ns_flush_all);
+		printf("%lu\tflush closing\n", nsp->ns_flush_closing);
+		printf("%lu\tflush queue\n", nsp->ns_flush_queue);
+		printf("%lu\tflush state\n", nsp->ns_flush_state);
+		printf("%lu\tflush timeout\n", nsp->ns_flush_timeout);
+		printf("%lu\thostmap new\n", nsp->ns_hm_new);
+		printf("%lu\thostmap fails\n", nsp->ns_hm_newfail);
+		printf("%lu\thostmap add\n", nsp->ns_hm_addref);
+		printf("%lu\thostmap NULL rule\n", nsp->ns_hm_nullnp);
+		printf("%lu\tlog ok\n", nsp->ns_log_ok);
+		printf("%lu\tlog fail\n", nsp->ns_log_fail);
+		printf("%u\torphan count\n", nsp->ns_orphans);
+		printf("%u\trule count\n", nsp->ns_rules);
+		printf("%u\tmap rules\n", nsp->ns_rules_map);
+		printf("%u\trdr rules\n", nsp->ns_rules_rdr);
 		printf("%u\twilds\n", nsp->ns_wilds);
 		if (opts & OPT_VERBOSE)
 			printf("list %p\n", nsp->ns_list);
@@ -678,81 +705,154 @@ int nat_matcharray(nat, array)
 	nat_t *nat;
 	int *array;
 {
-	int i, n, *x, e, p;
+	int i, n, *x, rv, p;
+	ipfexp_t *e;
 
-	e = 0;
+	rv = 0;
 	n = array[0];
 	x = array + 1;
 
-	for (; n > 0; x += 3 + x[3]) {
-		if (x[0] == IPF_EXP_END)
+	for (; n > 0; x += 3 + x[3], rv = 0) {
+		e = (ipfexp_t *)x;
+		if (e->ipfe_cmd == IPF_EXP_END)
 			break;
-		e = 0;
+		n -= e->ipfe_size;
 
-		n -= x[3] + 3;
-
-		p = x[0] >> 16;
-		if (p != 0 && p != nat->nat_pr[1])
+		p = e->ipfe_cmd >> 16;
+		if ((p != 0) && (p != nat->nat_pr[1]))
 			break;
 
-		switch (x[0])
+		switch (e->ipfe_cmd)
 		{
 		case IPF_EXP_IP_PR :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= (nat->nat_pr[1] == x[i + 3]);
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= (nat->nat_pr[1] == e->ipfe_arg0[i]);
 			}
 			break;
 
 		case IPF_EXP_IP_SRCADDR :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= ((nat->nat_nsrcaddr & x[i + 4]) ==
-				      x[i + 3]);
+			if (nat->nat_v[0] != 4)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= ((nat->nat_osrcaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]) ||
+				      ((nat->nat_nsrcaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]);
 			}
 			break;
 
 		case IPF_EXP_IP_DSTADDR :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= ((nat->nat_ndstaddr & x[i + 4]) ==
-				      x[i + 3]);
+			if (nat->nat_v[0] != 4)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= ((nat->nat_odstaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]) ||
+				      ((nat->nat_ndstaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]);
 			}
 			break;
 
 		case IPF_EXP_IP_ADDR :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= ((nat->nat_nsrcaddr & x[i + 4]) ==
-				      x[i + 3]) ||
-				     ((nat->nat_ndstaddr & x[i + 4]) ==
-				      x[i + 3]);
+			if (nat->nat_v[0] != 4)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= ((nat->nat_osrcaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]) ||
+				      ((nat->nat_nsrcaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]) ||
+				     ((nat->nat_odstaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]) ||
+				     ((nat->nat_ndstaddr &
+					e->ipfe_arg0[i * 2 + 1]) ==
+				       e->ipfe_arg0[i * 2]);
 			}
 			break;
 
+#ifdef USE_INET6
+		case IPF_EXP_IP6_SRCADDR :
+			if (nat->nat_v[0] != 6)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= IP6_MASKEQ(&nat->nat_osrc6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]) ||
+				      IP6_MASKEQ(&nat->nat_nsrc6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]);
+			}
+			break;
+
+		case IPF_EXP_IP6_DSTADDR :
+			if (nat->nat_v[0] != 6)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= IP6_MASKEQ(&nat->nat_odst6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]) ||
+				      IP6_MASKEQ(&nat->nat_ndst6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]);
+			}
+			break;
+
+		case IPF_EXP_IP6_ADDR :
+			if (nat->nat_v[0] != 6)
+				break;
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= IP6_MASKEQ(&nat->nat_osrc6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]) ||
+				      IP6_MASKEQ(&nat->nat_nsrc6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]) ||
+				      IP6_MASKEQ(&nat->nat_odst6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]) ||
+				      IP6_MASKEQ(&nat->nat_ndst6,
+						 &e->ipfe_arg0[i * 8 + 4],
+						 &e->ipfe_arg0[i * 8]);
+			}
+			break;
+#endif
+
 		case IPF_EXP_UDP_PORT :
 		case IPF_EXP_TCP_PORT :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= (nat->nat_nsport == x[i + 3]) ||
-				     (nat->nat_ndport == x[i + 3]);
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= (nat->nat_osport == e->ipfe_arg0[i]) ||
+				      (nat->nat_nsport == e->ipfe_arg0[i]) ||
+				      (nat->nat_odport == e->ipfe_arg0[i]) ||
+				      (nat->nat_ndport == e->ipfe_arg0[i]);
 			}
 			break;
 
 		case IPF_EXP_UDP_SPORT :
 		case IPF_EXP_TCP_SPORT :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= (nat->nat_nsport == x[i + 3]);
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= (nat->nat_osport == e->ipfe_arg0[i]) ||
+				      (nat->nat_nsport == e->ipfe_arg0[i]);
 			}
 			break;
 
 		case IPF_EXP_UDP_DPORT :
 		case IPF_EXP_TCP_DPORT :
-			for (i = 0; !e && i < x[3]; i++) {
-				e |= (nat->nat_ndport == x[i + 3]);
+			for (i = 0; !rv && i < e->ipfe_narg; i++) {
+				rv |= (nat->nat_odport == e->ipfe_arg0[i]) ||
+				      (nat->nat_ndport == e->ipfe_arg0[i]);
 			}
 			break;
 		}
-		e ^= x[2];
+		rv ^= e->ipfe_not;
 
-		if (!e)
+		if (rv == 0)
 			break;
 	}
 
-	return e;
+	return rv;
 }

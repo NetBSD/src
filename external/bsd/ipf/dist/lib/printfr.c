@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: printfr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $
  */
 
 #include "ipf.h"
@@ -57,6 +57,8 @@ printfr(fp, iocfunc)
 		PRINTF("preauth");
 	else if (FR_ISNOMATCH(fp->fr_flags))
 		PRINTF("nomatch");
+	else if (FR_ISDECAPS(fp->fr_flags))
+		PRINTF("decapsulate");
 	else if (FR_ISSKIP(fp->fr_flags))
 		PRINTF("skip %u", fp->fr_arg);
 	else {
@@ -101,12 +103,14 @@ printfr(fp, iocfunc)
 		putchar(' ');
 	}
 
-	if (fp->fr_dif.fd_name != -1)
-		print_toif("dup-to", fp->fr_names, &fp->fr_dif);
 	if (fp->fr_tif.fd_name != -1)
-		print_toif("to", fp->fr_names, &fp->fr_tif);
+		print_toif(fp->fr_family, "to", fp->fr_names, &fp->fr_tif);
+	if (fp->fr_dif.fd_name != -1)
+		print_toif(fp->fr_family, "dup-to", fp->fr_names,
+			   &fp->fr_dif);
 	if (fp->fr_rif.fd_name != -1)
-		print_toif("reply-to", fp->fr_names, &fp->fr_rif);
+		print_toif(fp->fr_family, "reply-to", fp->fr_names,
+			   &fp->fr_rif);
 	if (fp->fr_flags & FR_FASTROUTE)
 		PRINTF("fastroute ");
 
@@ -350,6 +354,13 @@ printfr(fp, iocfunc)
 			if (!(fp->fr_flx & FI_STATE))
 				PRINTF("not ");
 			PRINTF("state");
+			comma = ",";
+		}
+		if (fp->fr_mflx & FI_V6EXTHDR) {
+			fputs(comma, stdout);
+			if (!(fp->fr_flx & FI_V6EXTHDR))
+				PRINTF("not ");
+			PRINTF("v6hdrs");
 			comma = ",";
 		}
 	}
