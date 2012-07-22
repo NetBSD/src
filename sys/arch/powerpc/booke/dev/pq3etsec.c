@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.15 2012/07/17 01:36:13 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.15 2012/07/17 01:36:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.15 2012/07/17 01:36:13 matt Exp $");
 #include <net/if_media.h>
 
 #include <dev/mii/miivar.h>
-
-#include "ioconf.h"
 
 #include <net/bpf.h>
 
@@ -166,6 +164,7 @@ struct pq3etsec_mapcache {
 
 struct pq3etsec_softc {
 	device_t sc_dev;
+	device_t sc_mdio_dev;
 	struct ethercom sc_ec;
 #define sc_if		sc_ec.ec_if
 	struct mii_data sc_mii;
@@ -232,8 +231,20 @@ struct pq3etsec_softc {
 	struct pq3etsec_mapcache *sc_tx_mapcache; 
 };
 
+struct pq3mdio_softc {
+	device_t mdio_dev;
+
+	kmutex_t *mdio_lock;
+
+	bus_space_tag_t mdio_bst;
+	bus_space_handle_t mdio_bsh;
+};
+
 static int pq3etsec_match(device_t, cfdata_t, void *);
 static void pq3etsec_attach(device_t, device_t, void *);
+
+static int pq3mdio_match(device_t, cfdata_t, void *);
+static void pq3mdio_attach(device_t, device_t, void *);
 
 static void pq3etsec_ifstart(struct ifnet *);
 static void pq3etsec_ifwatchdog(struct ifnet *);
@@ -283,14 +294,22 @@ static void pq3etsec_soft_intr(void *);
 CFATTACH_DECL_NEW(pq3etsec, sizeof(struct pq3etsec_softc),
     pq3etsec_match, pq3etsec_attach, NULL, NULL);
 
-static int
-pq3etsec_match(device_t parent, cfdata_t cf, void *aux)
+CFATTACH_DECL_NEW(pq3mdio_tsec, sizeof(struct pq3mdio_softc),
+    pq3mdio_match, pq3mdio_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(pq3mdio_cpunode, sizeof(struct pq3mdio_softc),
+    pq3mdio_match, pq3mdio_attach, NULL, NULL);
+
+static inline uint32_t
+etsec_mdio_read(struct pq3mdio_softc *mdio, bus_size_t off)
 {
+	return bus_space_read_4(mdio->mdio_bst, mdio->mdio_bsh, off);
+}
 
-	if (!e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
-		return 0;
-
-	return 1;
+static inline void
+etsec_mdio_write(struct pq3mdio_softc *mdio, bus_size_t off, uint32_t data)
+{
+	bus_space_write_4(mdio->mdio_bst, mdio->mdio_bsh, off, data);
 }
 
 static inline uint32_t
@@ -299,98 +318,145 @@ etsec_read(struct pq3etsec_softc *sc, bus_size_t off)
 	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, off);
 }
 
+static int
+pq3mdio_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	return strcmp(cf->cf_name, "mdio") == 0;
+}
+
+static int
+pq3mdio_match(device_t parent, cfdata_t cf, void *aux)
+{
+	const uint16_t svr = (mfspr(SPR_SVR) & ~0x80000) >> 16;
+	const bool p1025_p = (svr == (SVR_P1025v1 >> 16)
+	    || svr == (SVR_P1016v1 >> 16));
+
+	if (device_is_a(parent, "cpunode")) {
+		if (!p1025_p
+		    || !e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
+			return 0;
+
+		return 1;
+	}
+
+	if (device_is_a(parent, "tsec")) {
+		if (p1025_p
+		    || !e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
+			return 0;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+static void
+pq3mdio_attach(device_t parent, device_t self, void *aux)
+{
+	struct pq3mdio_softc * const mdio = device_private(self);
+	struct cpunode_attach_args * const cna = aux;
+	struct cpunode_locators * const cnl = &cna->cna_locs;
+
+	mdio->mdio_dev = self;
+	mdio->mdio_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+
+	if (device_is_a(parent, "cpunode")) {
+		struct cpunode_softc * const psc = device_private(parent);
+		psc->sc_children |= cna->cna_childmask;
+
+		mdio->mdio_bst = cna->cna_memt;
+		if (bus_space_map(mdio->mdio_bst, cnl->cnl_addr,
+				cnl->cnl_size, 0, &mdio->mdio_bsh) != 0) {
+			aprint_error(": error mapping registers @ %#x\n",
+			    cnl->cnl_addr);
+			return;
+		}
+	} else {
+		struct pq3etsec_softc * const sc = device_private(parent);
+
+		KASSERT(device_is_a(parent, "tsec"));
+		KASSERTMSG(cnl->cnl_addr == ETSEC1_BASE
+		    || cnl->cnl_addr == ETSEC2_BASE
+		    || cnl->cnl_addr == ETSEC3_BASE
+		    || cnl->cnl_addr == ETSEC4_BASE,
+		    "unknown tsec addr %x", cnl->cnl_addr);
+
+		mdio->mdio_bst = sc->sc_bst;
+		mdio->mdio_bsh = sc->sc_bsh;
+	}
+
+	aprint_normal("\n");
+}
+
+static int
+pq3mdio_mii_readreg(device_t self, int phy, int reg)
+{
+	struct pq3mdio_softc * const mdio = device_private(self);
+	uint32_t miimcom = etsec_mdio_read(mdio, MIIMCOM);
+
+	mutex_enter(mdio->mdio_lock);
+
+	etsec_mdio_write(mdio, MIIMADD,
+	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
+
+	etsec_mdio_write(mdio, MIIMCOM, 0);	/* clear any past bits */
+	etsec_mdio_write(mdio, MIIMCOM, MIIMCOM_READ);
+
+	while (etsec_mdio_read(mdio, MIIMIND) != 0) {
+			delay(1);
+	}
+	int data = etsec_mdio_read(mdio, MIIMSTAT);
+
+	if (miimcom == MIIMCOM_SCAN)
+		etsec_mdio_write(mdio, MIIMCOM, miimcom);
+
+#if 0
+	aprint_normal_dev(mdio->mdio_dev, "%s: phy %d reg %d: %#x\n",
+	    __func__, phy, reg, data);
+#endif
+	mutex_exit(mdio->mdio_lock);
+	return data;
+}
+
+static void
+pq3mdio_mii_writereg(device_t self, int phy, int reg, int data)
+{
+	struct pq3mdio_softc * const mdio = device_private(self);
+	uint32_t miimcom = etsec_mdio_read(mdio, MIIMCOM);
+
+#if 0
+	aprint_normal_dev(mdio->mdio_dev, "%s: phy %d reg %d: %#x\n",
+	    __func__, phy, reg, data);
+#endif
+
+	mutex_enter(mdio->mdio_lock);
+
+	etsec_mdio_write(mdio, MIIMADD,
+	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
+	etsec_mdio_write(mdio, MIIMCOM, 0);	/* clear any past bits */
+	etsec_mdio_write(mdio, MIIMCON, data);
+
+	int timo = 1000;	/* 1ms */
+	while ((etsec_mdio_read(mdio, MIIMIND) & MIIMIND_BUSY) && --timo > 0) {
+			delay(1);
+	}
+
+	if (miimcom == MIIMCOM_SCAN)
+		etsec_mdio_write(mdio, MIIMCOM, miimcom);
+
+	mutex_exit(mdio->mdio_lock);
+}
+
 static inline void
 etsec_write(struct pq3etsec_softc *sc, bus_size_t off, uint32_t data)
 {
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, off, data);
 }
 
-static inline uint32_t
-etsec_mdio_read(struct pq3etsec_softc *sc, bus_size_t off)
-{
-	return bus_space_read_4(sc->sc_bst, sc->sc_mdio_bsh, off);
-}
-
-static inline void
-etsec_mdio_write(struct pq3etsec_softc *sc, bus_size_t off, uint32_t data)
-{
-	bus_space_write_4(sc->sc_bst, sc->sc_mdio_bsh, off, data);
-}
-
-static int
-pq3etsec_mii_readreg(device_t self, int phy, int reg)
-{
-	struct pq3etsec_softc * const sc = device_private(self);
-	uint32_t miimcom = etsec_read(sc, MIIMCOM);
-
-//	int s = splnet();
-
-	etsec_mdio_write(sc, MIIMADD,
-	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
-
-	etsec_write(sc, IEVENT, IEVENT_MMRD);
-	etsec_mdio_write(sc, MIIMCOM, 0);	/* clear any past bits */
-	etsec_mdio_write(sc, MIIMCOM, MIIMCOM_READ);
-#if 0
-	sc->sc_imask |= IEVENT_MMRD;
-	etsec_write(sc, IMASK, sc->sc_imask);
-#endif
-
-	while (etsec_mdio_read(sc, MIIMIND) != 0) {
-			delay(1);
-	}
-	int data = etsec_mdio_read(sc, MIIMSTAT);
-
-	if (miimcom == MIIMCOM_SCAN)
-		etsec_mdio_write(sc, MIIMCOM, miimcom);
-
-#if 0
-	aprint_normal_dev(sc->sc_dev, "%s: phy %d reg %d: %#x\n",
-	    __func__, phy, reg, data);
-#endif
-	etsec_write(sc, IEVENT, IEVENT_MMRD);
-//	splx(s);
-	return data;
-}
-
 static void
-pq3etsec_mii_writereg(device_t self, int phy, int reg, int data)
+pq3etsec_mii_statchg(struct ifnet *ifp)
 {
-	struct pq3etsec_softc * const sc = device_private(self);
-	uint32_t miimcom = etsec_mdio_read(sc, MIIMCOM);
-
-#if 0
-	aprint_normal_dev(sc->sc_dev, "%s: phy %d reg %d: %#x\n",
-	    __func__, phy, reg, data);
-#endif
-
-//	int s = splnet();
-	etsec_write(sc, IEVENT, IEVENT_MMWR);
-	etsec_mdio_write(sc, MIIMADD,
-	    __SHIFTIN(phy, MIIMADD_PHY) | __SHIFTIN(reg, MIIMADD_REG));
-	etsec_mdio_write(sc, MIIMCOM, 0);	/* clear any past bits */
-	etsec_mdio_write(sc, MIIMCON, data);
-
-#if 0
-	sc->sc_imask |= IEVENT_MMWR;
-	etsec_write(sc, IMASK, sc->sc_imask);
-#endif
-
-	int timo = 1000;	/* 1ms */
-	while ((etsec_mdio_read(sc, MIIMIND) & MIIMIND_BUSY) && --timo > 0) {
-			delay(1);
-	}
-
-	if (miimcom == MIIMCOM_SCAN)
-		etsec_mdio_write(sc, MIIMCOM, miimcom);
-	etsec_write(sc, IEVENT, IEVENT_MMWR);
-//	splx(s);
-}
-
-static void
-pq3etsec_mii_statchg(device_t self)
-{
-	struct pq3etsec_softc * const sc = device_private(self);
+	struct pq3etsec_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->sc_mii;
 
 	uint32_t maccfg1 = sc->sc_maccfg1;
@@ -467,48 +533,14 @@ pq3etsec_mediachange(struct ifnet *ifp)
 }
 #endif
 
-
-static const struct {
-	bus_addr_t reg_base;
-	bus_addr_t mdio_base;
-} etsec_mdio_map[] = {
-	{ ETSEC1_BASE, ETSEC1_BASE },
-	{ ETSEC2_BASE, ETSEC2_BASE },
-	{ ETSEC3_BASE, ETSEC3_BASE },
-	{ ETSEC4_BASE, ETSEC4_BASE },
-#if defined(P1025)
-	{ ETSEC1_G0_BASE, ETSEC1_BASE },
-	{ ETSEC1_G1_BASE, ETSEC1_BASE },
-	{ ETSEC2_G0_BASE, ETSEC2_BASE },
-	{ ETSEC2_G1_BASE, ETSEC2_BASE },
-	{ ETSEC3_G0_BASE, ETSEC3_BASE },
-	{ ETSEC3_G1_BASE, ETSEC3_BASE },
-#endif
-};
-
-static bool
-pq3etsec_mdio_map(struct pq3etsec_softc *sc, bus_addr_t reg_base,
-	bus_addr_t *mdio_basep)
+static int
+pq3etsec_match(device_t parent, cfdata_t cf, void *aux)
 {
-	*mdio_basep = 0;
-	for (size_t i = 0; i < __arraycount(etsec_mdio_map); i++) {
-		if (etsec_mdio_map[i].reg_base == reg_base) {
-			bus_addr_t mdio_base = etsec_mdio_map[i].mdio_base;
-			if (mdio_base == reg_base) {
-				sc->sc_mdio_bsh = sc->sc_bsh;
-				return true;
-			}
-			if (!bus_space_map(sc->sc_bst,
-					mdio_base,
-					ETSEC_SIZE, 0, &sc->sc_mdio_bsh)) {
-				return true;
-			}
-			*mdio_basep = mdio_base;
-			break;
-		}
-	}
 
-	return false;
+	if (!e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
+		return 0;
+
+	return 1;
 }
 
 static void
@@ -520,7 +552,6 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_locators * const cnl = &cna->cna_locs;
 	cfdata_t cf = device_cfdata(self);
 	int error;
-	bus_addr_t mdio_base;
 
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc_dev = self;
@@ -528,15 +559,18 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = &booke_bus_dma_tag;
 
 	/*
-	 * If we have a common MDIO bus, if all off instance 1.
+	 * Pull out the mdio bus and phy we are supposed to use.
 	 */
-	device_t miiself = (cf->cf_flags & 0x100) ? tsec_cd.cd_devs[0] : self;
+	const int mdio = cf->cf_loc[CPUNODECF_MDIO];
+	const int phy = cf->cf_loc[CPUNODECF_PHY];
+	if (mdio != CPUNODECF_MDIO_DEFAULT)
+		aprint_normal(" mdio %d", mdio);
 
 	/*
 	 * See if the phy is in the config file...
 	 */
-	if (cf->cf_flags & 0x3f) {
-		sc->sc_phy_addr = (cf->cf_flags & 0x3f) - 1;
+	if (phy != CPUNODECF_PHY_DEFAULT) {
+		sc->sc_phy_addr = phy;
 	} else {
 		unsigned char prop_name[20];
 		snprintf(prop_name, sizeof(prop_name), "tsec%u-phy-addr",
@@ -550,12 +584,6 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_bsh);
 	if (error) {
 		aprint_error(": error mapping registers: %d\n", error);
-		return;
-	}
-
-	if (!pq3etsec_mdio_map(sc, cnl->cnl_addr, &mdio_base)) {
-		aprint_error(": error mapping mdio registers @ %#x\n",
-		    mdio_base);
 		return;
 	}
 
@@ -655,7 +683,23 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal("\n");
+	/*
+	 * If there was no MDIO 
+	 */
+	if (mdio == CPUNODECF_MDIO_DEFAULT) {
+		aprint_normal("\n");
+		cfdata_t mdio_cf = config_search_ia(pq3mdio_find, self, NULL, cna); 
+		if (mdio_cf != NULL) {
+			sc->sc_mdio_dev = config_attach(self, mdio_cf, cna, NULL);
+		}
+	} else {
+		sc->sc_mdio_dev = device_find_by_driver_unit("mdio", mdio);
+		if (sc->sc_mdio_dev == NULL) {
+			aprint_error(": failed to locate mdio device\n");
+			return;
+		}
+		aprint_normal("\n");
+	}
 
 	etsec_write(sc, ATTR, ATTR_DEFAULT);
 	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
@@ -675,15 +719,15 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	ec->ec_mii = &sc->sc_mii;
 
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = pq3etsec_mii_readreg;
-	sc->sc_mii.mii_writereg = pq3etsec_mii_writereg;
+	sc->sc_mii.mii_readreg = pq3mdio_mii_readreg;
+	sc->sc_mii.mii_writereg = pq3mdio_mii_writereg;
 	sc->sc_mii.mii_statchg = pq3etsec_mii_statchg;
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 
-	if (sc->sc_phy_addr < 32) {
-		mii_attach(miiself, &sc->sc_mii, 0xffffffff,
+	if (sc->sc_mdio_dev != NULL && sc->sc_phy_addr < 32) {
+		mii_attach(sc->sc_mdio_dev, &sc->sc_mii, 0xffffffff,
 		    sc->sc_phy_addr, MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
