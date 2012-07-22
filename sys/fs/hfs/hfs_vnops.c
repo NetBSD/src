@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.25 2012/03/13 18:40:37 elad Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.25 2012/03/13 18:40:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -474,8 +474,7 @@ hfs_vop_lookup(void *v)
 	 */
 /* XXX Cache disabled until we can make sure it works. */
 #if 0
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp);
 #endif
 	
 	error = 0;
