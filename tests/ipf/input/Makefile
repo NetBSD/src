@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2012/03/23 23:08:02 christos Exp $
+# $NetBSD: Makefile,v 1.6 2012/07/22 16:22:41 darrenr Exp $
 
 TESTSDIR=	${TESTSBASE}/ipf
 ATFFILE=	no
@@ -69,8 +69,6 @@ n18 \
 n1_6 \
 n2 \
 n200 \
-n201 \
-n202 \
 n2_6 \
 n3 \
 n4 \
