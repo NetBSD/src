@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.201 2012/07/22 14:33:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.201 2012/07/22 14:33:01 matt Exp $");
 
 #include "vlan.h"
 
@@ -249,7 +249,7 @@ static void bge_set_max_readrq(struct bge_softc *);
 
 static int bge_miibus_readreg(device_t, int, int);
 static void bge_miibus_writereg(device_t, int, int, int);
-static void bge_miibus_statchg(device_t);
+static void bge_miibus_statchg(struct ifnet *);
 
 #define	BGE_RESET_START 1
 #define	BGE_RESET_STOP  2
@@ -1052,9 +1052,9 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 static void
-bge_miibus_statchg(device_t dev)
+bge_miibus_statchg(struct ifnet *ifp)
 {
-	struct bge_softc *sc = device_private(dev);
+	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 
 	/*

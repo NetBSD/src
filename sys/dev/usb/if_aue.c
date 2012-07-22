@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.126 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.127 2012/07/22 14:33:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.126 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.127 2012/07/22 14:33:05 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -239,7 +239,7 @@ Static int aue_eeprom_getword(struct aue_softc *, int);
 Static void aue_read_mac(struct aue_softc *, u_char *);
 Static int aue_miibus_readreg(device_t, int, int);
 Static void aue_miibus_writereg(device_t, int, int, int);
-Static void aue_miibus_statchg(device_t);
+Static void aue_miibus_statchg(struct ifnet *);
 
 Static void aue_lock_mii(struct aue_softc *);
 Static void aue_unlock_mii(struct aue_softc *);
@@ -516,10 +516,10 @@ aue_miibus_writereg(device_t dev, int phy, int reg, int data)
 }
 
 Static void
-aue_miibus_statchg(device_t dev)
+aue_miibus_statchg(struct ifnet *ifp)
 {
-	struct aue_softc *sc = device_private(dev);
-	struct mii_data		*mii = GET_MII(sc);
+	struct aue_softc *sc = ifp->if_softc;
+	struct mii_data	*mii = GET_MII(sc);
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
@@ -547,8 +547,8 @@ aue_miibus_statchg(device_t dev)
 	 */
 	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
 		u_int16_t auxmode;
-		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
-		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
+		auxmode = aue_miibus_readreg(sc->aue_dev, 0, 0x1b);
+		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
 	DPRINTFN(5,("%s: %s: exit\n", device_xname(sc->aue_dev), __func__));
 }

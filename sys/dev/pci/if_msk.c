@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.40 2012/06/02 21:36:44 dsl Exp $ */
+/* $NetBSD: if_msk.c,v 1.41 2012/07/22 14:33:02 matt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.40 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.41 2012/07/22 14:33:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ void msk_update_int_mod(struct sk_softc *, int);
 
 int msk_miibus_readreg(device_t, int, int);
 void msk_miibus_writereg(device_t, int, int, int);
-void msk_miibus_statchg(device_t);
+void msk_miibus_statchg(struct ifnet *);
 
 void msk_setfilt(struct sk_if_softc *, void *, int);
 void msk_setmulti(struct sk_if_softc *);
@@ -275,9 +275,9 @@ msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 void
-msk_miibus_statchg(device_t dev)
+msk_miibus_statchg(struct ifnet *ifp)
 {
-	struct sk_if_softc *sc_if = device_private(dev);
+	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct mii_data *mii = &sc_if->sk_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int gpcr;
@@ -313,7 +313,7 @@ msk_miibus_statchg(device_t dev)
 	SK_YU_WRITE_2(sc_if, YUKON_GPCR, gpcr);
 
 	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
-		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
+		     SK_YU_READ_2(sc_if, YUKON_GPCR)));
 }
 
 #define HASH_BITS	6

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.43 2012/07/22 14:33:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.43 2012/07/22 14:33:03 matt Exp $");
 
 
 #include <sys/param.h>
@@ -217,7 +217,7 @@ static void	ste_rxintr(struct ste_softc *);
 
 static int	ste_mii_readreg(device_t, int, int);
 static void	ste_mii_writereg(device_t, int, int, int);
-static void	ste_mii_statchg(device_t);
+static void	ste_mii_statchg(struct ifnet *);
 
 static int	ste_match(device_t, cfdata_t, void *);
 static void	ste_attach(device_t, device_t, void *);
@@ -1616,9 +1616,9 @@ ste_mii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-ste_mii_statchg(device_t self)
+ste_mii_statchg(struct ifnet *ifp)
 {
-	struct ste_softc *sc = device_private(self);
+	struct ste_softc *sc = ifp->if_softc;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_MacCtrl0 |= MC0_FullDuplexEnable;
