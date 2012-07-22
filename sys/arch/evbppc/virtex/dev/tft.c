@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $ */
+/* 	$NetBSD: tft.c,v 1.5 2012/07/22 14:02:45 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.5 2012/07/22 14:02:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,7 @@ tft_attach(device_t self, struct wsdisplay_accessops *accessops)
 	sc->sc_ws_descr_storage[0] = tft_screen; 	/* struct copy */
 	sc->sc_ws_descr = sc->sc_ws_descr_storage;
 	sc->sc_ws_scrlist.nscreens = 1;
-	sc->sc_ws_scrlist.screens =
-	    (const struct wsscreen_descr **)&sc->sc_ws_descr;
+	sc->sc_ws_scrlist.screens = (void *) &sc->sc_ws_descr;
 
 	vcons_init(&sc->sc_vc_data, self, sc->sc_ws_descr, accessops);
 
