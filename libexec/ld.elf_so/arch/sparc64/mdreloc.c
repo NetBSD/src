@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.52 2011/03/30 08:37:52 martin Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.52 2011/03/30 08:37:52 martin Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.53 2012/07/22 09:21:03 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -323,6 +323,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		if (type == R_TYPE(NONE))
 			continue;
 
+		/* OLO10 relocations have extra info */
+		if ((type & 0x00ff) == R_SPARC_OLO10)
+			type = R_SPARC_OLO10;
+
 		/* We do JMP_SLOTs in _rtld_bind() below */
 		if (type == R_TYPE(JMP_SLOT))
 			continue;
@@ -335,8 +339,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 		 * We use the fact that relocation types are an `enum'
 		 * Note: R_SPARC_TLS_TPOFF64 is currently numerically largest.
 		 */
-		if (type > R_TYPE(TLS_TPOFF64))
-			return (-1);
+		if (type > R_TYPE(TLS_TPOFF64)) {
+			dbg(("unknown relocation type %x at %p", type, rela));
+			return -1;
+		}
 
 		value = rela->r_addend;
 
@@ -420,6 +426,11 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			/* Add in the symbol's absolute address */
 			value += (Elf_Addr)(defobj->relocbase + def->st_value);
+		}
+
+		if (type == R_SPARC_OLO10) {
+			value = (value & 0x3ff)
+			    + (((Elf64_Xword)rela->r_info<<32)>>40);
 		}
 
 		if (RELOC_PC_RELATIVE(type)) {
