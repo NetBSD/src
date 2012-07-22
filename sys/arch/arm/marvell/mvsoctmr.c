@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.6 2012/07/22 16:54:35 jakllsch Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.7 2012/07/22 16:59:10 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.6 2012/07/22 16:54:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.7 2012/07/22 16:59:10 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -86,7 +86,7 @@ static int mvsoctmr_wdog_setmode(struct sysmon_wdog *);
 static void mvsoctmr_wdog_ddb_trap(int);
 #endif
 
-#define MVSOC_WDOG_MAX_PERIOD	21
+#define MVSOC_WDOG_MAX_PERIOD	(0xffffffff / mvTclk)
 
 static struct mvsoctmr_softc *mvsoctmr_sc;
 static struct timecounter mvsoctmr_timecounter = {
