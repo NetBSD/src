@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.4 2012/07/22 16:31:26 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -928,9 +928,7 @@ ipf_dstlist_table_remove(ipf_main_softc_t *softc, ipf_dstl_softc_t *softd,
 /* the destination list.                                                    */
 /* ------------------------------------------------------------------------ */
 static void
-ipf_dstlist_table_free(softd, d)
-	ipf_dstl_softc_t *softd;
-	ippool_dst_t *d;
+ipf_dstlist_table_free(ipf_dstl_softc_t *softd, ippool_dst_t *d)
 {
 	MUTEX_DESTROY(&d->ipld_lock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.4 2012/07/22 16:19:34 darrenr Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.5 2012/07/22 16:34:04 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -104,7 +104,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.4 2012/07/22 16:19:34 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.5 2012/07/22 16:34:04 darrenr Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp";
 #endif
@@ -1303,8 +1303,7 @@ ipf_proxy_fixseqack(fr_info_t *fin, ip_t *ip, ap_session_t *aps, int inc)
 /* data connections with the PORT and EPRT commands.                        */
 /* ------------------------------------------------------------------------ */ 
 ipnat_t *
-ipf_proxy_rule_rev(nat)
-	nat_t *nat;
+ipf_proxy_rule_rev(nat_t *nat)
 {
 	ipnat_t *old;
 	ipnat_t *ipn;
@@ -1391,8 +1390,7 @@ ipf_proxy_rule_rev(nat)
 /* used to support PORT/EPRT, this function supports PASV/EPSV.             */
 /* ------------------------------------------------------------------------ */ 
 ipnat_t *
-ipf_proxy_rule_fwd(nat)
-	nat_t *nat;
+ipf_proxy_rule_fwd(nat_t *nat)
 {
 	ipnat_t *old;
 	ipnat_t *ipn;
