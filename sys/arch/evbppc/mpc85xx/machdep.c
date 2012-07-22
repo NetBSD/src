@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2012/07/18 19:38:26 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2012/07/22 23:46:10 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -224,6 +224,10 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_TSEC1),
 		{ 0xffff, SVR_P1025v1 >> 16 } },
 #if defined(P1025)
+	{ "mdio", ETSEC1_BASE, ETSEC_SIZE, 1,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
 	{ "tsec", ETSEC1_G0_BASE, ETSEC_SIZE, 1,
 		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
 		1 + ilog2(DEVDISR_TSEC1),
@@ -246,6 +250,10 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		  SVR_P1025v1 >> 16 } },
 #endif
 #if defined(P1025)
+	{ "mdio", ETSEC2_BASE, ETSEC_SIZE, 2,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
 	{ "tsec", ETSEC2_G0_BASE, ETSEC_SIZE, 2,
 		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
 		1 + ilog2(DEVDISR_TSEC2),
@@ -272,6 +280,10 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		  SVR_P2020v2 >> 16 } },
 #endif
 #if defined(P1025)
+	{ "mdio", ETSEC3_BASE, ETSEC_SIZE, 3,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
 	{ "tsec", ETSEC3_G0_BASE, ETSEC_SIZE, 3,
 		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
 		1 + ilog2(DEVDISR_TSEC3),
