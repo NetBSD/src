@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.7 2012/07/22 16:59:10 jakllsch Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.8 2012/07/22 19:35:04 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.7 2012/07/22 16:59:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.8 2012/07/22 19:35:04 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,6 +146,8 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	 * stop watchdog timer, enable watchdog timer resets
 	 */
 	mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
+	write_mlmbreg(MVSOC_MLMB_MLMBICR,
+	    ~(1<<MVSOC_MLMB_MLMBI_CPUWDTIMERINTREQ));
 	rstoutn = read_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR);
 	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
 		      rstoutn | MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN);
