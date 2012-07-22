@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.4 2012/07/22 16:37:31 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.5 2012/07/22 16:40:40 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.4 2012/07/22 16:37:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.5 2012/07/22 16:40:40 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -3444,10 +3444,7 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 /* Handle the insertion of a NAT entry into the table/list.                 */
 /* ------------------------------------------------------------------------ */
 int
-ipf_nat_hashtab_add(softc, softn, nat)
-	ipf_main_softc_t *softc;
-	ipf_nat_softc_t *softn;
-	nat_t *nat;
+ipf_nat_hashtab_add(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 {
 	nat_t **natp;
 	u_int hv0;
