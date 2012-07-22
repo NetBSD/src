@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.12 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: P2020RDB,v 1.13 2012/07/22 23:46:10 matt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.12 $"
+ident 		"P2020RBD-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -20,6 +20,8 @@ makeoptions	NEED_UBOOTIMAGE="yes"
 options 	P2020
 options 	SYS_CLK=100000000
 #options 	HZ=1000
+
+#options 	SDHC_DEBUG
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -165,15 +167,16 @@ duart*		at cpunode?
 com*		at duart? port ?
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x021	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 0x101	# Enhanced 3-Speed Ethernet Controller
-tsec2		at cpunode? flags 0x102	# Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? phy 32 # Enhanced 3-Speed Ethernet Controller
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 0 # Enhanced 3-Speed Ethernet Controller
+tsec2		at cpunode? mdio 0 phy 1 # Enhanced 3-Speed Ethernet Controller
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS
 
 diic*		at cpunode?		# i2c bus
 iic*		at diic?
-dsrtc*		at iic1 addr 0x68	# RTC
+dsrtc*		at iic1 addr 0x68 flags 1339	# RTC DS1339
 
 pq3pcie*	at cpunode?		# PCI-Express controller
 pq3pci* 	at cpunode?		# PCI(X)
@@ -194,9 +197,9 @@ umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 
-#sdhc*		at cpunode?		# sdmmc
-#sdmmc*		at sdhc?		# SD/MMC bus
-#ld*		at sdmmc?
+sdhc*		at cpunode?		# sdmmc
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
 
 #siisata*	at pci? dev ? function ?
 #atabus* 	at siisata? channel ?
