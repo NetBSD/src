@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.37 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.38 2012/07/22 14:33:05 matt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.37 2012/03/11 01:06:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.38 2012/07/22 14:33:05 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -110,7 +110,7 @@ Static void udav_lock_mii(struct udav_softc *);
 Static void udav_unlock_mii(struct udav_softc *);
 Static int udav_miibus_readreg(device_t, int, int);
 Static void udav_miibus_writereg(device_t, int, int, int);
-Static void udav_miibus_statchg(device_t);
+Static void udav_miibus_statchg(struct ifnet *);
 Static int udav_init(struct ifnet *);
 Static void udav_setmulti(struct udav_softc *);
 Static void udav_reset(struct udav_softc *);
@@ -1578,16 +1578,14 @@ udav_miibus_writereg(device_t dev, int phy, int reg, int data)
 }
 
 Static void
-udav_miibus_statchg(device_t dev)
+udav_miibus_statchg(struct ifnet *ifp)
 {
 #ifdef UDAV_DEBUG
-	struct udav_softc *sc;
 
-	if (dev == NULL)
+	if (ifp == NULL)
 		return;
 
-	sc = device_private(dev);
-	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", ifp->if_xname, __func__));
 #endif
 	/* Nothing to do */
 }

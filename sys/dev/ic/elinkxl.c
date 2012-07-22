@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.114 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.115 2012/07/22 14:32:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.114 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.115 2012/07/22 14:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static void ex_txstat(struct ex_softc *);
 
 int ex_mii_readreg(device_t, int, int);
 void ex_mii_writereg(device_t, int, int, int);
-void ex_mii_statchg(device_t);
+void ex_mii_statchg(struct ifnet *);
 
 void ex_probemedia(struct ex_softc *);
 
@@ -1924,9 +1924,9 @@ ex_mii_writereg(device_t v, int phy, int reg, int data)
 }
 
 void
-ex_mii_statchg(device_t v)
+ex_mii_statchg(struct ifnet *ifp)
 {
-	struct ex_softc *sc = device_private(v);
+	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;

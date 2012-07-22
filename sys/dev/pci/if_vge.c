@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.52 2012/01/30 19:41:21 drochner Exp $ */
+/* $NetBSD: if_vge.c,v 1.53 2012/07/22 14:33:04 matt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.52 2012/01/30 19:41:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53 2012/07/22 14:33:04 matt Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -325,7 +325,7 @@ static void vge_miipoll_start(struct vge_softc *);
 static void vge_miipoll_stop(struct vge_softc *);
 static int vge_miibus_readreg(device_t, int, int);
 static void vge_miibus_writereg(device_t, int, int, int);
-static void vge_miibus_statchg(device_t);
+static void vge_miibus_statchg(struct ifnet *);
 
 static void vge_cam_clear(struct vge_softc *);
 static int vge_cam_set(struct vge_softc *, uint8_t *);
@@ -1960,15 +1960,12 @@ out:
 }
 
 static void
-vge_miibus_statchg(device_t self)
+vge_miibus_statchg(struct ifnet *ifp)
 {
-	struct vge_softc *sc;
-	struct mii_data *mii;
-	struct ifmedia_entry *ife;
+	struct vge_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
-	sc = device_private(self);
-	mii = &sc->sc_mii;
-	ife = mii->mii_media.ifm_cur;
 	/*
 	 * If the user manually selects a media mode, we need to turn
 	 * on the forced MAC mode bit in the DIAGCTL register. If the

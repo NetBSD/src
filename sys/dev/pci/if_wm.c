@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.228 2012/05/25 23:37:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.229 2012/07/22 14:33:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.228 2012/05/25 23:37:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.229 2012/07/22 14:33:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
-static void	wm_gmii_statchg(device_t);
+static void	wm_gmii_statchg(struct ifnet *);
 
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
@@ -6465,9 +6465,9 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-wm_gmii_statchg(device_t self)
+wm_gmii_statchg(struct ifnet *ifp)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 
 	sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
@@ -6494,11 +6494,11 @@ wm_gmii_statchg(device_t self)
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: FDX\n", device_xname(sc->sc_dev)));
+		    ("%s: LINK: statchg: FDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 	} else {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: HDX\n", device_xname(sc->sc_dev)));
+		    ("%s: LINK: statchg: HDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
 	}
 

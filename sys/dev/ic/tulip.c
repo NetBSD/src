@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.180 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: tulip.c,v 1.181 2012/07/22 14:32:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.180 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.181 2012/07/22 14:32:58 matt Exp $");
 
 
 #include <sys/param.h>
@@ -107,9 +107,9 @@ static void	tlp_rxintr(struct tulip_softc *);
 static void	tlp_txintr(struct tulip_softc *);
 
 static void	tlp_mii_tick(void *);
-static void	tlp_mii_statchg(device_t);
-static void	tlp_winb_mii_statchg(device_t);
-static void	tlp_dm9102_mii_statchg(device_t);
+static void	tlp_mii_statchg(struct ifnet *);
+static void	tlp_winb_mii_statchg(struct ifnet *);
+static void	tlp_dm9102_mii_statchg(struct ifnet *);
 
 static void	tlp_mii_getmedia(struct tulip_softc *, struct ifmediareq *);
 static int	tlp_mii_setmedia(struct tulip_softc *);
@@ -3213,9 +3213,9 @@ tlp_mii_tick(void *arg)
  *	Callback from PHY when media changes.
  */
 static void
-tlp_mii_statchg(device_t self)
+tlp_mii_statchg(struct ifnet *ifp)
 {
-	struct tulip_softc *sc = device_private(self);
+	struct tulip_softc *sc = ifp->if_softc;
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -3244,9 +3244,9 @@ tlp_mii_statchg(device_t self)
  *	for the Winbond 89C840F, which has different OPMODE bits.
  */
 static void
-tlp_winb_mii_statchg(device_t self)
+tlp_winb_mii_statchg(struct ifnet *ifp)
 {
-	struct tulip_softc *sc = device_private(self);
+	struct tulip_softc *sc = ifp->if_softc;
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -3273,9 +3273,9 @@ tlp_winb_mii_statchg(device_t self)
  *	for the DM9102.
  */
 static void
-tlp_dm9102_mii_statchg(device_t self)
+tlp_dm9102_mii_statchg(struct ifnet *ifp)
 {
-	struct tulip_softc *sc = device_private(self);
+	struct tulip_softc *sc = ifp->if_softc;
 
 	/*
 	 * Don't idle the transmit and receive processes, here.  It
@@ -4583,7 +4583,7 @@ const struct tulip_mediasw tlp_2114x_isv_mediasw = {
 static void	tlp_2114x_nway_get(struct tulip_softc *, struct ifmediareq *);
 static int	tlp_2114x_nway_set(struct tulip_softc *);
 
-static void	tlp_2114x_nway_statchg(device_t);
+static void	tlp_2114x_nway_statchg(struct ifnet *);
 static int	tlp_2114x_nway_service(struct tulip_softc *, int);
 static void	tlp_2114x_nway_auto(struct tulip_softc *);
 static void	tlp_2114x_nway_status(struct tulip_softc *);
@@ -5142,9 +5142,9 @@ tlp_2114x_nway_set(struct tulip_softc *sc)
 }
 
 static void
-tlp_2114x_nway_statchg(device_t self)
+tlp_2114x_nway_statchg(struct ifnet *ifp)
 {
-	struct tulip_softc *sc = device_private(self);
+	struct tulip_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife;
 
@@ -5261,7 +5261,7 @@ tlp_2114x_nway_service(struct tulip_softc *sc, int cmd)
 	 */
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO &&
 	    ife->ifm_data != mii->mii_media_active) {
-		(*sc->sc_statchg)(sc->sc_dev);
+		(*sc->sc_statchg)(mii->mii_ifp);
 		ife->ifm_data = mii->mii_media_active;
 	}
 	return (0);
@@ -5454,7 +5454,7 @@ const struct tulip_mediasw tlp_pnic_mediasw = {
 	tlp_pnic_tmsw_init, tlp_pnic_tmsw_get, tlp_pnic_tmsw_set
 };
 
-static void	tlp_pnic_nway_statchg(device_t);
+static void	tlp_pnic_nway_statchg(struct ifnet *);
 static void	tlp_pnic_nway_tick(void *);
 static int	tlp_pnic_nway_service(struct tulip_softc *, int);
 static void	tlp_pnic_nway_reset(struct tulip_softc *);
@@ -5565,9 +5565,9 @@ tlp_pnic_tmsw_set(struct tulip_softc *sc)
 }
 
 static void
-tlp_pnic_nway_statchg(device_t self)
+tlp_pnic_nway_statchg(struct ifnet *ifp)
 {
-	struct tulip_softc *sc = device_private(self);
+	struct tulip_softc *sc = ifp->if_softc;
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -5684,7 +5684,7 @@ tlp_pnic_nway_service(struct tulip_softc *sc, int cmd)
 	if ((sc->sc_nway_active == NULL ||
 	     sc->sc_nway_active->ifm_media != mii->mii_media_active) ||
 	    cmd == MII_MEDIACHG) {
-		(*sc->sc_statchg)(sc->sc_dev);
+		(*sc->sc_statchg)(mii->mii_ifp);
 		tlp_nway_activate(sc, mii->mii_media_active);
 	}
 	return (0);

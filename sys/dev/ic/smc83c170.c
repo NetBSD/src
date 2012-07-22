@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.80 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.81 2012/07/22 14:32:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.80 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.81 2012/07/22 14:32:58 matt Exp $");
 
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ void	epic_mii_write(device_t, int, int, int);
 int	epic_mii_wait(struct epic_softc *, uint32_t);
 void	epic_tick(void *);
 
-void	epic_statchg(device_t);
+void	epic_statchg(struct ifnet *);
 int	epic_mediachange(struct ifnet *);
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
@@ -1381,9 +1381,9 @@ epic_mii_write(device_t self, int phy, int reg, int val)
  * Callback from PHY when media changes.
  */
 void
-epic_statchg(device_t self)
+epic_statchg(struct ifnet *ifp)
 {
-	struct epic_softc *sc = device_private(self);
+	struct epic_softc *sc = ifp->if_softc;
 	uint32_t txcon, miicfg;
 
 	/*
@@ -1459,7 +1459,7 @@ epic_mediachange(struct ifnet *ifp)
 		mii->mii_media_active = media;
 		mii->mii_media_status = 0;
 
-		epic_statchg(sc->sc_dev);
+		epic_statchg(mii->mii_ifp);
 		return 0;
 	}
 

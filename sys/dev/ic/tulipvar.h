@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.67 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.68 2012/07/22 14:32:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -382,7 +382,7 @@ struct tulip_softc {
 	void		(*sc_filter_setup)(struct tulip_softc *);
 
 	/* Media status update function. */
-	void		(*sc_statchg)(device_t);
+	void		(*sc_statchg)(struct ifnet *);
 
 	/* Media tick function. */
 	void		(*sc_tick)(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.88 2012/06/24 09:37:28 jdc Exp $	*/
+/*	$NetBSD: hme.c,v 1.89 2012/07/22 14:32:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.88 2012/06/24 09:37:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.89 2012/07/22 14:32:57 matt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -96,7 +96,7 @@ static void	hme_setladrf(struct hme_softc *);
 /* MII methods & callbacks */
 static int	hme_mii_readreg(device_t, int, int);
 static void	hme_mii_writereg(device_t, int, int, int);
-static void	hme_mii_statchg(device_t);
+static void	hme_mii_statchg(struct ifnet *);
 
 static int	hme_mediachange(struct ifnet *);
 
@@ -1342,9 +1342,9 @@ out:
 }
 
 static void
-hme_mii_statchg(device_t dev)
+hme_mii_statchg(struct ifnet *ifp)
 {
-	struct hme_softc *sc = device_private(dev);
+	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	uint32_t v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.22 2012/02/02 19:42:58 tls Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.23 2012/07/22 14:32:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.22 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23 2012/07/22 14:32:50 matt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -99,7 +99,7 @@ struct npedma {
 };
 
 struct npe_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct ethercom	sc_ethercom;
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	struct mii_data	sc_mii;
@@ -220,9 +220,9 @@ static uint32_t	npe_getimageid(struct npe_softc *);
 static int	npe_setloopback(struct npe_softc *, int ena);
 #endif
 
-static int	npe_miibus_readreg(struct device *, int, int);
-static void	npe_miibus_writereg(struct device *, int, int, int);
-static void	npe_miibus_statchg(struct device *);
+static int	npe_miibus_readreg(device_t, int, int);
+static void	npe_miibus_writereg(device_t, int, int, int);
+static void	npe_miibus_statchg(struct ifnet *);
 
 static int	npe_debug;
 #define DPRINTF(sc, fmt, ...) do {			\
@@ -251,14 +251,14 @@ static int tx_doneqid = -1;
 
 void (*npe_getmac_md)(int, uint8_t *);
 
-static int npe_match(struct device *, struct cfdata *, void *);
-static void npe_attach(struct device *, struct device *, void *);
+static int npe_match(device_t, cfdata_t, void *);
+static void npe_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(npe, sizeof(struct npe_softc),
+CFATTACH_DECL_NEW(npe, sizeof(struct npe_softc),
     npe_match, npe_attach, NULL, NULL);
 
 static int
-npe_match(struct device *parent, struct cfdata *cf, void *arg)
+npe_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct ixpnpe_attach_args *na = arg;
 
@@ -266,16 +266,17 @@ npe_match(struct device *parent, struct cfdata *cf, void *arg)
 }
 
 static void
-npe_attach(struct device *parent, struct device *self, void *arg)
+npe_attach(device_t parent, device_t self, void *arg)
 {
-	struct npe_softc *sc = (void *)self;
+	struct npe_softc *sc = device_private(self);
+	struct ixpnpe_softc *isc = device_private(parent);
 	struct ixpnpe_attach_args *na = arg;
-	struct ixpnpe_softc *isc = (struct ixpnpe_softc *)parent;
 	struct ifnet *ifp;
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet co-processor\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = na->na_iot;
 	sc->sc_dt = na->na_dt;
 	sc->sc_npe = na->na_npe;
@@ -288,15 +289,15 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	callout_init(&sc->sc_tick_ch, 0);
 
 	if (npe_activate(sc)) {
-		aprint_error("%s: Failed to activate NPE (missing "
-		    "microcode?)\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "Failed to activate NPE (missing microcode?)\n");
 		return;
 	}
 
 	npe_getmac(sc);
 	npeinit_macreg(sc);
 
-	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -309,7 +310,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    npe_ifmedia_status);
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -318,7 +319,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp->if_softc = sc;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = npestart;
 	ifp->if_ioctl = npeioctl;
@@ -332,7 +333,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 
 	/* callback function to reset MAC */
@@ -430,15 +431,17 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	error = bus_dmamem_alloc(sc->sc_dt, size, sizeof(uint32_t), 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate memory for %s h/w buffers, "
-		    "error %u\n", sc->sc_dev.dv_xname, dma->name, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s %s buffers, error %u\n",
+		    "allocate memory", dma->name, "h/w", error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dt, &seg, 1, size, &hwbuf,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 	if (error) {
-		printf("%s: unable to map memory for %s h/w buffers, "
-		    "error %u\n", sc->sc_dev.dv_xname, dma->name, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s %s buffers, error %u\n",
+		    "map memory", dma->name, "h/w", error);
  free_dmamem:
 		bus_dmamem_free(sc->sc_dt, &seg, rseg);
 		return error;
@@ -448,8 +451,9 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	error = bus_dmamap_create(sc->sc_dt, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dma->buf_map);
 	if (error) {
-		printf("%s: unable to create map for %s h/w buffers, "
-		    "error %u\n", sc->sc_dev.dv_xname, dma->name, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s %s buffers, error %u\n",
+		    "create map", dma->name, "h/w", error);
  unmap_dmamem:
 		dma->hwbuf = NULL;
 		bus_dmamem_unmap(sc->sc_dt, hwbuf, size);
@@ -459,8 +463,9 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	error = bus_dmamap_load(sc->sc_dt, dma->buf_map, hwbuf, size, NULL,
 	    BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load map for %s h/w buffers, "
-		    "error %u\n", sc->sc_dev.dv_xname, dma->name, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s %s buffers, error %u\n",
+		    "load map", dma->name, "h/w", error);
  destroy_dmamap:
 		bus_dmamap_destroy(sc->sc_dt, dma->buf_map);
 		goto unmap_dmamem;
@@ -469,8 +474,9 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 	/* XXX M_TEMP */
 	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP, M_NOWAIT | M_ZERO);
 	if (dma->buf == NULL) {
-		printf("%s: unable to allocate memory for %s s/w buffers\n",
-		    sc->sc_dev.dv_xname, dma->name);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s %s buffers, error %u\n",
+		    "allocate memory", dma->name, "h/w", error);
 		bus_dmamap_unload(sc->sc_dt, dma->buf_map);
 		error = ENOMEM;
 		goto destroy_dmamap;
@@ -488,9 +494,9 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		error = bus_dmamap_create(sc->sc_dt, MCLBYTES, maxseg,
 		    MCLBYTES, 0, 0, &npe->ix_map);
 		if (error != 0) {
-			printf("%s: unable to create dmamap for %s buffer %u, "
-			    "error %u\n", sc->sc_dev.dv_xname, dma->name, i,
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to %s for %s buffer %u, error %u\n",
+			    "create dmamap", dma->name, i, error);
 			/* XXXSCW: Free up maps... */
 			return error;
 		}
@@ -539,9 +545,8 @@ npe_activate(struct npe_softc *sc)
 
 	if (bus_space_map(sc->sc_iot, npeconfig[unit].regbase,
 	    npeconfig[unit].regsize, 0, &sc->sc_ioh)) {
-		printf("%s: Cannot map registers 0x%x:0x%x\n",
-		    sc->sc_dev.dv_xname, npeconfig[unit].regbase,
-		    npeconfig[unit].regsize);
+		aprint_error_dev(sc->sc_dev, "Cannot map registers 0x%x:0x%x\n",
+		    npeconfig[unit].regbase, npeconfig[unit].regsize);
 		return ENOMEM;
 	}
 
@@ -553,9 +558,9 @@ npe_activate(struct npe_softc *sc)
 		 */
 		if (bus_space_map(sc->sc_iot, npeconfig[unit].miibase,
 		    npeconfig[unit].miisize, 0, &sc->sc_miih)) {
-			printf("%s: Cannot map MII registers 0x%x:0x%x\n",
-			    sc->sc_dev.dv_xname, npeconfig[unit].miibase,
-			    npeconfig[unit].miisize);
+			aprint_error_dev(sc->sc_dev,
+			    "Cannot map MII registers 0x%x:0x%x\n",
+			    npeconfig[unit].miibase, npeconfig[unit].miisize);
 			return ENOMEM;
 		}
 	} else
@@ -571,16 +576,18 @@ npe_activate(struct npe_softc *sc)
 	error = bus_dmamem_alloc(sc->sc_dt, sizeof(struct npestats),
 	    sizeof(uint32_t), 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate memory for stats block, "
-		    "error %u\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s, error %u\n",
+		    "allocate memory", "stats block", error);
 		return error;
 	}
 
 	error = bus_dmamem_map(sc->sc_dt, &seg, 1, sizeof(struct npestats),
 	    &statbuf, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to map memory for stats block, "
-		    "error %u\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s, error %u\n",
+		    "map memory", "stats block", error);
 		return error;
 	}
 	sc->sc_stats = (void *)statbuf;
@@ -589,15 +596,17 @@ npe_activate(struct npe_softc *sc)
 	    sizeof(struct npestats), 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_stats_map);
 	if (error) {
-		printf("%s: unable to create map for stats block, "
-		    "error %u\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s, error %u\n",
+		    "create map", "stats block", error);
 		return error;
 	}
 
 	if (bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
 	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: unable to load memory for stats block, error %u\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to %s for %s, error %u\n",
+		    "load map", "stats block", error);
 		return error;
 	}
 	sc->sc_stats_phys = sc->sc_stats_map->dm_segs[0].ds_addr;
@@ -629,7 +638,7 @@ npe_activate(struct npe_softc *sc)
 #if 0
 	for (i = 0; i < 8; i++)
 #else
-printf("%s: remember to fix rx q setup\n", sc->sc_dev.dv_xname);
+printf("%s: remember to fix rx q setup\n", device_xname(sc->sc_dev));
 	for (i = 0; i < 4; i++)
 #endif
 		npe_setrxqosentry(sc, i, 0, sc->rx_qid);
@@ -766,7 +775,7 @@ npe_getmac(struct npe_softc *sc)
 	uint8_t *eaddr = sc->sc_enaddr;
 
 	if (npe_getmac_md != NULL) {
-		(*npe_getmac_md)(sc->sc_dev.dv_unit, eaddr);
+		(*npe_getmac_md)(device_unit(sc->sc_dev), eaddr);
 	} else {
 		/*
 		 * Some system's unicast address appears to be loaded from
@@ -949,7 +958,7 @@ npe_rxdone(int qid, void *arg)
 #if 1
 			if (mrx->m_pkthdr.len < sizeof(struct ether_header)) {
 				log(LOG_INFO, "%s: too short frame (len=%d)\n",
-				    sc->sc_dev.dv_xname, mrx->m_pkthdr.len);
+				    device_xname(sc->sc_dev), mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
 				ifp->if_ierrors++;
@@ -1025,7 +1034,7 @@ npe_rxdone(int qid, void *arg)
 			}
 			if (mrx->m_pkthdr.len > NPE_FRAME_SIZE_DEFAULT) {
 				log(LOG_INFO, "%s: oversized frame (len=%d)\n",
-				    sc->sc_dev.dv_xname, mrx->m_pkthdr.len);
+				    device_xname(sc->sc_dev), mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
 				ifp->if_ierrors++;
@@ -1073,7 +1082,7 @@ npe_startxmit(struct npe_softc *sc)
 		if (npe->ix_m != NULL) {
 			/* NB: should not happen */
 			printf("%s: %s: free mbuf at entry %u\n",
-			    sc->sc_dev.dv_xname, __func__, i);
+			    device_xname(sc->sc_dev), __func__, i);
 			m_freem(npe->ix_m);
 		}
 		npe->ix_m = NULL;
@@ -1266,7 +1275,7 @@ npestart(struct ifnet *ifp)
 			n = npe_defrag(m);
 			if (n == NULL) {
 				printf("%s: %s: too many fragments\n",
-				    sc->sc_dev.dv_xname, __func__);
+				    device_xname(sc->sc_dev), __func__);
 				m_freem(m);
 				return;	/* XXX? */
 			}
@@ -1276,7 +1285,7 @@ npestart(struct ifnet *ifp)
 		}
 		if (error != 0) {
 			printf("%s: %s: error %u\n",
-			    sc->sc_dev.dv_xname, __func__, error);
+			    device_xname(sc->sc_dev), __func__, error);
 			m_freem(m);
 			return;	/* XXX? */
 		}
@@ -1397,7 +1406,7 @@ npewatchdog(struct ifnet *ifp)
 	struct npe_softc *sc = ifp->if_softc;
 	int s;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "device timeout\n");
 	s = splnet();
 	ifp->if_oerrors++;
 	npeinit_locked(sc);
@@ -1609,9 +1618,9 @@ npe_mii_mdio_wait(struct npe_softc *sc)
 }
 
 static int
-npe_miibus_readreg(struct device *self, int phy, int reg)
+npe_miibus_readreg(device_t self, int phy, int reg)
 {
-	struct npe_softc *sc = (void *)self;
+	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
@@ -1628,9 +1637,9 @@ npe_miibus_readreg(struct device *self, int phy, int reg)
 }
 
 static void
-npe_miibus_writereg(struct device *self, int phy, int reg, int data)
+npe_miibus_writereg(device_t self, int phy, int reg, int data)
 {
-	struct npe_softc *sc = (void *)self;
+	struct npe_softc *sc = device_private(self);
 	uint32_t v;
 
 	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && phy != sc->sc_phy)
@@ -1644,9 +1653,9 @@ npe_miibus_writereg(struct device *self, int phy, int reg, int data)
 }
 
 static void
-npe_miibus_statchg(struct device *self)
+npe_miibus_statchg(struct ifnet *ifp)
 {
-	struct npe_softc *sc = (void *)self;
+	struct npe_softc *sc = ifp->if_softc;
 	uint32_t tx1, rx1;
 	uint32_t randoff;
 

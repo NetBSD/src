@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.11 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.12 2012/07/22 14:32:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.11 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.12 2012/07/22 14:32:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.11 2008/04/28 20:23:49 martin Exp $");
 
 int	dl10019_mii_readreg(device_t, int, int);
 void	dl10019_mii_writereg(device_t, int, int, int);
-void	dl10019_mii_statchg(device_t);
+void	dl10019_mii_statchg(struct ifnet *);
 
 /*
  * MII bit-bang glue.
@@ -228,10 +228,10 @@ dl10019_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 void
-dl10019_mii_statchg(device_t self)
+dl10019_mii_statchg(struct ifnet *ifp)
 {
-	struct dp8390_softc *sc = device_private(self);
-	struct ne2000_softc *nsc = device_private(self);
+	struct ne2000_softc *nsc = ifp->if_softc;
+	struct dp8390_softc *sc = &nsc->sc_dp8390;
 
 	/*
 	 * Disable collision detection on the DL10022 if

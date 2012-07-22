@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.22 2012/02/02 19:43:00 tls Exp $ */
+/* $Id: if_ae.c,v 1.23 2012/07/22 14:32:52 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.22 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23 2012/07/22 14:32:52 matt Exp $");
 
 
 #include <sys/param.h>
@@ -174,7 +174,7 @@ static void	ae_rxintr(struct ae_softc *);
 static void	ae_txintr(struct ae_softc *);
 
 static void	ae_mii_tick(void *);
-static void	ae_mii_statchg(device_t);
+static void	ae_mii_statchg(struct ifnet *);
 
 static int	ae_mii_readreg(device_t, int, int);
 static void	ae_mii_writereg(device_t, int, int, int);
@@ -1838,9 +1838,9 @@ ae_mii_tick(void *arg)
  *	Callback from PHY when media changes.
  */
 static void
-ae_mii_statchg(device_t self)
+ae_mii_statchg(struct ifnet *ifp)
 {
-	struct ae_softc *sc = device_private(self);
+	struct ae_softc *sc = ifp->if_softc;
 	uint32_t	macctl, flowc;
 
 	//opmode = AE_READ(sc, CSR_OPMODE);

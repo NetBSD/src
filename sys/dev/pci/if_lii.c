@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.10 2011/04/20 20:15:03 christos Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.11 2012/07/22 14:33:02 matt Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.10 2011/04/20 20:15:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.11 2012/07/22 14:33:02 matt Exp $");
 
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ static int	lii_free_tx_space(struct lii_softc *);
 
 static int	lii_mii_readreg(device_t, int, int);
 static void	lii_mii_writereg(device_t, int, int, int);
-static void	lii_mii_statchg(device_t);
+static void	lii_mii_statchg(struct ifnet *);
 
 static int	lii_media_change(struct ifnet *);
 static void	lii_media_status(struct ifnet *, struct ifmediareq *);
@@ -635,9 +635,9 @@ lii_mii_writereg(device_t dev, int phy, int reg, int data)
 }
 
 static void
-lii_mii_statchg(device_t dev)
+lii_mii_statchg(struct ifnet *ifp)
 {
-	struct lii_softc *sc = device_private(dev);
+	struct lii_softc *sc = ifp->if_softc;
 	uint32_t val;
 
 	DPRINTF(("lii_mii_statchg\n"));

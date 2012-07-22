@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.55 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.56 2012/07/22 14:33:03 matt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.55 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.56 2012/07/22 14:33:03 matt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -77,7 +77,7 @@ int	nfe_match(device_t, cfdata_t, void *);
 void	nfe_attach(device_t, device_t, void *);
 int	nfe_detach(device_t, int);
 void	nfe_power(int, void *);
-void	nfe_miibus_statchg(device_t);
+void	nfe_miibus_statchg(struct ifnet *);
 int	nfe_miibus_readreg(device_t, int, int);
 void	nfe_miibus_writereg(device_t, int, int, int);
 int	nfe_intr(void *);
@@ -476,9 +476,9 @@ nfe_detach(device_t self, int flags)
 }
 
 void
-nfe_miibus_statchg(device_t dev)
+nfe_miibus_statchg(struct ifnet *ifp)
 {
-	struct nfe_softc *sc = device_private(dev);
+	struct nfe_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t phy, seed, misc = NFE_MISC1_MAGIC, link = NFE_MEDIA_SET;
 

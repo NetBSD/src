@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.15 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.16 2012/07/22 14:32:57 matt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.15 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.16 2012/07/22 14:32:57 matt Exp $");
 
 /*
  * The LAN9118 Family
@@ -92,7 +92,7 @@ static void lan9118_ifm_status(struct ifnet *, struct ifmediareq *);
 
 static int lan9118_miibus_readreg(device_t, int, int);
 static void lan9118_miibus_writereg(device_t, int, int, int);
-static void lan9118_miibus_statchg(device_t);
+static void lan9118_miibus_statchg(struct ifnet *);
 
 static uint16_t lan9118_mii_readreg(struct lan9118_softc *, int, int);
 static void lan9118_mii_writereg(struct lan9118_softc *, int, int, uint16_t);
@@ -754,9 +754,9 @@ lan9118_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 static void
-lan9118_miibus_statchg(device_t dev)
+lan9118_miibus_statchg(struct ifnet *ifp)
 {
-	struct lan9118_softc *sc = device_private(dev);
+	struct lan9118_softc *sc = ifp->if_softc;
 	u_int cr;
 
 	cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);

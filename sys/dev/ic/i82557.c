@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.139 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.139 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ void	fxp_rx_hwcksum(struct fxp_softc *,struct mbuf *,
 void	fxp_rxdrain(struct fxp_softc *);
 int	fxp_add_rfabuf(struct fxp_softc *, bus_dmamap_t, int);
 int	fxp_mdi_read(device_t, int, int);
-void	fxp_statchg(device_t);
+void	fxp_statchg(struct ifnet *);
 void	fxp_mdi_write(device_t, int, int, int);
 void	fxp_autosize_eeprom(struct fxp_softc*);
 void	fxp_read_eeprom(struct fxp_softc *, uint16_t *, int, int);
@@ -2138,7 +2138,7 @@ fxp_mdi_read(device_t self, int phy, int reg)
 }
 
 void
-fxp_statchg(device_t self)
+fxp_statchg(struct ifnet *ifp)
 {
 
 	/* Nothing to do. */

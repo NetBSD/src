@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.55 2012/06/01 12:38:25 nonaka Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.56 2012/07/22 14:33:05 matt Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.55 2012/06/01 12:38:25 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.56 2012/07/22 14:33:05 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -193,7 +193,7 @@ static void	axe_stop(struct ifnet *, int);
 static void	axe_watchdog(struct ifnet *);
 static int	axe_miibus_readreg(device_t, int, int);
 static void	axe_miibus_writereg(device_t, int, int, int);
-static void	axe_miibus_statchg(device_t);
+static void	axe_miibus_statchg(struct ifnet *);
 static int	axe_cmd(struct axe_softc *, int, int, int, void *);
 static void	axe_reset(struct axe_softc *sc);
 static int	axe_ifmedia_upd(struct ifnet *);
@@ -321,9 +321,9 @@ axe_miibus_writereg(device_t dev, int phy, int reg, int aval)
 }
 
 static void
-axe_miibus_statchg(device_t dev)
+axe_miibus_statchg(struct ifnet *ifp)
 {
-	struct axe_softc *sc = device_private(dev);
+	struct axe_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->axe_mii;
 	int val, err;
 

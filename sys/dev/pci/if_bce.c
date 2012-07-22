@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.36 2012/02/20 02:14:34 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.37 2012/07/22 14:33:01 matt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.36 2012/02/20 02:14:34 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37 2012/07/22 14:33:01 matt Exp $");
 
 #include "vlan.h"
 
@@ -176,7 +176,7 @@ static	bool	bce_resume(device_t, const pmf_qual_t *);
 static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(device_t, int, int);
 static	void	bce_mii_write(device_t, int, int, int);
-static	void	bce_statchg(device_t);
+static	void	bce_statchg(struct ifnet *);
 static	void	bce_tick(void *);
 
 CFATTACH_DECL_NEW(bce, sizeof(struct bce_softc),
@@ -1433,9 +1433,9 @@ bce_mii_write(device_t self, int phy, int reg, int val)
 
 /* sync hardware duplex mode to software state */
 void
-bce_statchg(device_t self)
+bce_statchg(struct ifnet *ifp)
 {
-	struct bce_softc *sc = device_private(self);
+	struct bce_softc *sc = ifp->if_softc;
 	uint32_t	reg;
 
 	/* if needed, change register to match duplex mode */

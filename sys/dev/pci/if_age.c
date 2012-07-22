@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.40 2011/10/25 21:47:38 bouyer Exp $ */
+/*	$NetBSD: if_age.c,v 1.41 2012/07/22 14:33:00 matt Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.40 2011/10/25 21:47:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41 2012/07/22 14:33:00 matt Exp $");
 
 #include "vlan.h"
 
@@ -84,7 +84,7 @@ static bool	age_resume(device_t, const pmf_qual_t *);
 
 static int	age_miibus_readreg(device_t, int, int);
 static void	age_miibus_writereg(device_t, int, int, int);
-static void	age_miibus_statchg(device_t);
+static void	age_miibus_statchg(struct ifnet *);
 
 static int	age_init(struct ifnet *);
 static int	age_ioctl(struct ifnet *, u_long, void *);
@@ -404,16 +404,13 @@ age_miibus_writereg(device_t dev, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-age_miibus_statchg(device_t dev)
+age_miibus_statchg(struct ifnet *ifp)
 {
-	struct age_softc *sc = device_private(dev);
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct mii_data *mii;
+	struct age_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_miibus;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-
-	mii = &sc->sc_miibus;
 
 	sc->age_flags &= ~AGE_FLAG_LINK;
 	if ((mii->mii_media_status & IFM_AVALID) != 0) {
