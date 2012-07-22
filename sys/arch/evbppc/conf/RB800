@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.16 2012/01/19 23:37:23 matt Exp $
+#	$NetBSD: RB800,v 1.17 2012/07/22 23:46:10 matt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.16 $"
+ident 		"RB800-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -169,8 +169,9 @@ com*		at duart? port ?
 options		CONSPEED=115200
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x003	# 3-Speed Ethernet Controller (phy 2)
-tsec1		at cpunode? flags 0x102	# 3-Speed Ethernet Controller (phy 1)
+tsec0		at cpunode? phy 2	# 3-Speed Ethernet Controller (phy 2)
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 1 # 3-Speed Ethernet Controller (phy 1)
 atphy*		at mii?			# Attansic PHY
 ukphy*		at mii?
 #options 	TSEC_EVENT_COUNTERS

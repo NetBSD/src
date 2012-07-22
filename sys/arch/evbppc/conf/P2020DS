@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.11 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: P2020DS,v 1.12 2012/07/22 23:46:10 matt Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.11 $"
+ident 		"P2020DS-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -20,13 +20,16 @@ options 	PIXIS
 #options 	SYS_CLK=100000000
 #options 	HZ=1000
 #options 	MEMSIZE=0x40000000
+#options 	PMAP_MINIMALTLB
+#makeoptions	KERNLDSCRIPT="${POWERPC}/conf/kern-mb.ldscript"
 
 makeoptions	NEED_BINARY="yes"
 makeoptions	NEED_UBOOTIMAGE="yes"
 
-#options 	INSECURE	# disable kernel security levels
+options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	MODULAR		# new style module(7) framework
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
@@ -43,7 +46,7 @@ options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=410000	# size for embedded symbol table
+options 	SYMTAB_SPACE=425000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -78,7 +81,7 @@ file-system 	TMPFS		# efficient memory file system
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
@@ -102,7 +105,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET_CSUM_COUNTERS
 options 	TCP_CSUM_COUNTERS
 options 	UDP_CSUM_COUNTERS
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
@@ -167,9 +170,10 @@ com*		at duart? port ?
 options		CONSPEED=115200
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x001	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 0x102	# Enhanced 3-Speed Ethernet Controller
-tsec2		at cpunode? flags 0x103 # Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? phy 0	# Enhanced 3-Speed Ethernet Controller
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 1 # Enhanced 3-Speed Ethernet Controller
+tsec2		at cpunode? mdio 0 phy 2 # Enhanced 3-Speed Ethernet Controller
 options 	ETSEC_EVENT_COUNTERS
 
 ehci*		at cpunode?		# usb
@@ -177,7 +181,7 @@ ehci*		at cpunode?		# usb
 diic*		at cpunode?		# i2c bus
 iic*		at diic?
 spdmem* 	at iic0 addr 0x51	# DDR
-dsrtc*		at iic1 addr 0x68	# RTC
+dsrtc*		at iic1 addr 0x68 flags 3232	# RTC - DS3232
 
 pq3pcie*	at cpunode?		# PCI-Express controller
 pq3pci* 	at cpunode?		# PCI(X)
@@ -233,3 +237,5 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
 pseudo-device	vlan			# 802.1Q VLANs
+pseudo-device	putter			# for puffs and pud
+pseudo-device	vnd			# disk-like interface to files
