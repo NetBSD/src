@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_tftp_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_tftp_pxy.c,v 1.4 2012/07/22 16:43:59 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -85,8 +85,7 @@ ipf_p_tftp_main_unload(void)
 
 
 void *
-ipf_p_tftp_soft_create(softc)
-	ipf_main_softc_t *softc;
+ipf_p_tftp_soft_create(ipf_main_softc_t *softc)
 {
 	ipf_tftp_softc_t *softt;
 
@@ -115,9 +114,7 @@ ipf_p_tftp_soft_create(softc)
 
 
 void
-ipf_p_tftp_soft_destroy(softc, arg)
-        ipf_main_softc_t *softc;
-        void *arg;
+ipf_p_tftp_soft_destroy(ipf_main_softc_t *softc, void *arg)
 {
 	ipf_tftp_softc_t *softt = arg;
 
@@ -252,9 +249,7 @@ ipf_p_tftp_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 
 
 void
-ipf_p_tftp_del(softc, aps)
-	ipf_main_softc_t *softc;
-	ap_session_t *aps;
+ipf_p_tftp_del(ipf_main_softc_t *softc, ap_session_t *aps)
 {
 	tftpinfo_t *tftp;
 
