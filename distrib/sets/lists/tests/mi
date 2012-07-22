@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.477 2012/07/14 14:13:03 christos Exp $
+# $NetBSD: mi,v 1.478 2012/07/22 20:38:20 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3142,6 +3142,11 @@
 ./usr/tests/usr.bin/mkdep			tests-usr.bin-tests
 ./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/mkdep/t_mkdep		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/nbperf			tests-usr.bin-tests
+./usr/tests/usr.bin/nbperf/Atffile		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/nbperf/h_nbperf		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/nbperf/hash_driver.c	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/nbperf/t_nbperf		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr				tests-usr.bin-tests
 ./usr/tests/usr.bin/pr/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/pr/d_basic.in		tests-usr.bin-tests	atf
