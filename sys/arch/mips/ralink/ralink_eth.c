@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.5 2011/08/23 08:10:08 oki Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.5 2011/08/23 08:10:08 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -249,7 +249,7 @@ static int  ralink_eth_ioctl(struct ifnet *, u_long, void *);
 #if defined(RT3050) || defined(RT3052)
 static void ralink_eth_mdio_enable(ralink_eth_softc_t *, bool);
 #endif
-static void ralink_eth_mii_statchg(device_t);
+static void ralink_eth_mii_statchg(struct ifnet *);
 static void ralink_eth_mii_tick(void *);
 static int  ralink_eth_mii_read(device_t, int, int);
 static void ralink_eth_mii_write(device_t, int, int, int);
@@ -1581,10 +1581,10 @@ ralink_eth_mdio_enable(ralink_eth_softc_t *sc, bool enable)
  * ralink_eth_mii_statchg
  */
 static void
-ralink_eth_mii_statchg(device_t self)
+ralink_eth_mii_statchg(struct ifnet *ifp)
 {
 #if 0
-	ralink_eth_softc_t * const sc = device_private(self);
+	ralink_eth_softc_t * const sc = ifp->if_softc;
 
 #endif
 }

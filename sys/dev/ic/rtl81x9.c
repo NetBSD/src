@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.93 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.94 2012/07/22 14:32:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.93 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94 2012/07/22 14:32:58 matt Exp $");
 
 
 #include <sys/param.h>
@@ -135,7 +135,7 @@ static int rtk_mii_writereg(struct rtk_softc *, struct rtk_mii_frame *);
 
 static int rtk_phy_readreg(device_t, int, int);
 static void rtk_phy_writereg(device_t, int, int, int);
-static void rtk_phy_statchg(device_t);
+static void rtk_phy_statchg(struct ifnet *);
 static void rtk_tick(void *);
 
 static int rtk_enable(struct rtk_softc *);
@@ -505,7 +505,7 @@ rtk_phy_writereg(device_t self, int phy, int reg, int data)
 }
 
 static void
-rtk_phy_statchg(device_t v)
+rtk_phy_statchg(struct ifnet *ifp)
 {
 
 	/* Nothing to do. */

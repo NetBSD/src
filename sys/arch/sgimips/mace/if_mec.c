@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.48 2012/02/02 19:43:00 tls Exp $ */
+/* $NetBSD: if_mec.c,v 1.49 2012/07/22 14:32:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.48 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.49 2012/07/22 14:32:53 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -390,7 +390,7 @@ static void	mec_attach(device_t, device_t, void *);
 static int	mec_mii_readreg(device_t, int, int);
 static void	mec_mii_writereg(device_t, int, int, int);
 static int	mec_mii_wait(struct mec_softc *);
-static void	mec_statchg(device_t);
+static void	mec_statchg(struct ifnet *);
 
 static int	mec_init(struct ifnet * ifp);
 static void	mec_start(struct ifnet *);
@@ -823,9 +823,9 @@ mec_mii_wait(struct mec_softc *sc)
 }
 
 static void
-mec_statchg(device_t self)
+mec_statchg(struct ifnet *ifp)
 {
-	struct mec_softc *sc = device_private(self);
+	struct mec_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	uint32_t control;

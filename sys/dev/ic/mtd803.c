@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.25 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: mtd803.c,v 1.26 2012/07/22 14:32:57 matt Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.25 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.26 2012/07/22 14:32:57 matt Exp $");
 
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.25 2012/02/02 19:43:03 tls Exp $");
 
 int mtd_mii_readreg(device_t, int, int);
 void mtd_mii_writereg(device_t, int, int, int);
-void mtd_mii_statchg(device_t);
+void mtd_mii_statchg(struct ifnet *);
 
 void mtd_start(struct ifnet *);
 void mtd_stop(struct ifnet *, int);
@@ -397,7 +397,7 @@ mtd_init_desc(struct mtd_softc *sc)
 
 
 void
-mtd_mii_statchg(device_t self)
+mtd_mii_statchg(struct ifnet *ifp)
 {
 	/* Should we do something here? :) */
 }

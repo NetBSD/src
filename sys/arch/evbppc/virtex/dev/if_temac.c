@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.8 2011/06/18 06:44:27 matt Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.9 2012/07/22 14:32:51 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.8 2011/06/18 06:44:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.9 2012/07/22 14:32:51 matt Exp $");
 
 
 #include <sys/param.h>
@@ -205,7 +205,7 @@ static void 	temac_stop(struct ifnet *, int);
 
 /* Media management. */
 static int	temac_mii_readreg(device_t, int, int);
-static void	temac_mii_statchg(device_t);
+static void	temac_mii_statchg(struct ifnet *);
 static void	temac_mii_tick(void *);
 static void	temac_mii_writereg(device_t, int, int, int);
 
@@ -841,9 +841,9 @@ temac_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 static void
-temac_mii_statchg(device_t self)
+temac_mii_statchg(struct ifnet *ifp)
 {
-	struct temac_softc 	*sc = device_private(self);
+	struct temac_softc 	*sc = ifp->if_softc;
 	uint32_t 		rcf, tcf, mmc;
 
 	/* Full/half duplex link. */
