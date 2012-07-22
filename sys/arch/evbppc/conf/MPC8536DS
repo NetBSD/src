@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.10 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: MPC8536DS,v 1.11 2012/07/22 23:46:10 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.10 $"
+ident 		"MPC8536DS-$Revision: 1.11 $"
 
 maxusers	32
 
@@ -163,8 +163,9 @@ com*		at duart? port ?
 options		CONSPEED=9600
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x002	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 0x101	# Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? phy 1	# Enhanced 3-Speed Ethernet Controller
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 0 # Enhanced 3-Speed Ethernet Controller
 ciphy*		at mii?			# Cicada PHY
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS

@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.4 2012/07/18 19:39:54 matt Exp $
+#	$NetBSD: TWRP1025,v 1.5 2012/07/22 23:46:10 matt Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.4 $"
+ident 		"TWRP1025-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -20,8 +20,6 @@ makeoptions	NEED_UBOOTIMAGE="yes"
 options 	P1025
 options 	SYS_CLK=66666667
 #options 	HZ=1000
-
-#options 	SDHC_DEBUG
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -171,8 +169,10 @@ duart*		at cpunode?
 com*		at duart? port ?
 options 	CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? instance 1 flags 0x003	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? instance 3 flags 0x102	# Enhanced 3-Speed Ethernet Controller
+mdio0		at cpunode? instance 1
+tsec0		at cpunode? instance 1 mdio 0 phy 2 # Enhanced 3-Speed Ethernet Controller
+tsec1		at cpunode? instance 3 mdio 0 phy 1 # Enhanced 3-Speed Ethernet Controller
+atphy*		at mii?
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS
 
@@ -198,6 +198,8 @@ umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
 sdhc*		at cpunode?		# sdmmc
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
