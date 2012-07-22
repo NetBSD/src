@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.40 2012/02/21 17:39:17 para Exp $ */
+/* $NetBSD: syscall.c,v 1.41 2012/07/22 14:02:11 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2012/02/21 17:39:17 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41 2012/07/22 14:02:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,17 +104,13 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2012/02/21 17:39:17 para Exp $");
 #include <machine/alpha.h>
 #include <machine/userret.h>
 
-void	syscall_plain(struct lwp *, uint64_t, struct trapframe *);
-void	syscall_fancy(struct lwp *, uint64_t, struct trapframe *);
+void	syscall(struct lwp *, uint64_t, struct trapframe *);
 
 void
 syscall_intern(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_md.md_syscall = syscall;
 }
 
 /*
@@ -130,108 +126,21 @@ syscall_intern(struct proc *p)
  * in the trap frame.  On return, it restores the callee-saved registers,
  * a3, and v0 from the frame before returning to the user process.
  */
-void
-syscall_plain(struct lwp *l, uint64_t code, struct trapframe *framep)
-{
-	const struct sysent *callp;
-	int error;
-	uint64_t rval[2];
-	uint64_t *args, copyargs[10];				/* XXX */
-	u_int hidden, nargs;
-	struct proc *p = l->l_proc;
-
-	LWP_CACHE_CREDS(l, p);
-
-	curcpu()->ci_data.cpu_nsyscall++;
-	l->l_md.md_tf = framep;
-
-	callp = p->p_emul->e_sysent;
-
-	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * syscall() and __syscall() are handled the same on
-		 * the alpha, as everything is 64-bit aligned, anyway.
-		 */
-		code = framep->tf_regs[FRAME_A0];
-		hidden = 1;
-		break;
-	default:
-		hidden = 0;
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
-
-	nargs = callp->sy_narg + hidden;
-	switch (nargs) {
-	default:
-		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
-		    (nargs - 6) * sizeof(uint64_t));
-		if (error)
-			goto bad;
-	case 6:	
-		copyargs[5] = framep->tf_regs[FRAME_A5];
-	case 5:	
-		copyargs[4] = framep->tf_regs[FRAME_A4];
-	case 4:	
-		copyargs[3] = framep->tf_regs[FRAME_A3];
-		copyargs[2] = framep->tf_regs[FRAME_A2];
-		copyargs[1] = framep->tf_regs[FRAME_A1];
-		copyargs[0] = framep->tf_regs[FRAME_A0];
-		args = copyargs;
-		break;
-	case 3:	
-	case 2:	
-	case 1:	
-	case 0:
-		args = &framep->tf_regs[FRAME_A0];
-		break;
-	}
-	args += hidden;
-
-	rval[0] = 0;
-	rval[1] = 0;
-
-	error = sy_call(callp, l, args, rval);
-
-	switch (error) {
-	case 0:
-		framep->tf_regs[FRAME_V0] = rval[0];
-		framep->tf_regs[FRAME_A4] = rval[1];
-		framep->tf_regs[FRAME_A3] = 0;
-		break;
-	case ERESTART:
-		framep->tf_regs[FRAME_PC] -= 4;
-		break;
-	case EJUSTRETURN:
-		break;
-	default:
-	bad:
-		framep->tf_regs[FRAME_V0] = error;
-		framep->tf_regs[FRAME_A3] = 1;
-		break;
-	}
-
-	userret(l);
-}
 
 void
-syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
+syscall(struct lwp *l, uint64_t code, struct trapframe *tf)
 {
 	const struct sysent *callp;
 	int error;
 	uint64_t rval[2];
 	uint64_t *args, copyargs[10];
 	u_int hidden, nargs;
-	struct proc *p = l->l_proc;
+	struct proc * const p = l->l_proc;
 
 	LWP_CACHE_CREDS(l, p);
 
 	curcpu()->ci_data.cpu_nsyscall++;
-	l->l_md.md_tf = framep;
+	l->l_md.md_tf = tf;
 
 	callp = p->p_emul->e_sysent;
 
@@ -242,7 +151,7 @@ syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 		 * syscall() and __syscall() are handled the same on
 		 * the alpha, as everything is 64-bit aligned, anyway.
 		 */
-		code = framep->tf_regs[FRAME_A0];
+		code = tf->tf_regs[FRAME_A0];
 		hidden = 1;
 		break;
 	default:
@@ -259,54 +168,60 @@ syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(uint64_t));
 		if (error) {
-			args = copyargs;
 			goto bad;
 		}
 	case 6:	
-		copyargs[5] = framep->tf_regs[FRAME_A5];
+		copyargs[5] = tf->tf_regs[FRAME_A5];
 	case 5:	
-		copyargs[4] = framep->tf_regs[FRAME_A4];
+		copyargs[4] = tf->tf_regs[FRAME_A4];
 	case 4:	
-		copyargs[3] = framep->tf_regs[FRAME_A3];
-		copyargs[2] = framep->tf_regs[FRAME_A2];
-		copyargs[1] = framep->tf_regs[FRAME_A1];
-		copyargs[0] = framep->tf_regs[FRAME_A0];
+		copyargs[3] = tf->tf_regs[FRAME_A3];
+		copyargs[2] = tf->tf_regs[FRAME_A2];
+		copyargs[1] = tf->tf_regs[FRAME_A1];
+		copyargs[0] = tf->tf_regs[FRAME_A0];
 		args = copyargs;
 		break;
 	case 3:	
 	case 2:	
 	case 1:	
 	case 0:
-		args = &framep->tf_regs[FRAME_A0];
+		args = &tf->tf_regs[FRAME_A0];
 		break;
 	}
 	args += hidden;
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+	if (!__predict_false(p->p_trace_enabled)
+	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
+	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 		error = sy_call(callp, l, args, rval);
 	}
 
-	switch (error) {
-	case 0:
-		framep->tf_regs[FRAME_V0] = rval[0];
-		framep->tf_regs[FRAME_A4] = rval[1];
-		framep->tf_regs[FRAME_A3] = 0;
-		break;
-	case ERESTART:
-		framep->tf_regs[FRAME_PC] -= 4;
-		break;
-	case EJUSTRETURN:
-		break;
-	default:
-	bad:
-		framep->tf_regs[FRAME_V0] = error;
-		framep->tf_regs[FRAME_A3] = 1;
-		break;
+	if (__predict_false(p->p_trace_enabled)
+	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
+		trace_exit(code, rval, error);
 	}
 
-	trace_exit(code, rval, error);
+
+	if (__predict_true(error == 0)) {
+		tf->tf_regs[FRAME_V0] = rval[0];
+		tf->tf_regs[FRAME_A4] = rval[1];
+		tf->tf_regs[FRAME_A3] = 0;
+	} else {
+		switch (error) {
+		case ERESTART:
+			tf->tf_regs[FRAME_PC] -= 4;
+			break;
+		case EJUSTRETURN:
+			break;
+		default:
+		bad:
+			tf->tf_regs[FRAME_V0] = error;
+			tf->tf_regs[FRAME_A3] = 1;
+			break;
+		}
+	}
 
 	userret(l);
 }
@@ -317,7 +232,7 @@ syscall_fancy(struct lwp *l, uint64_t code, struct trapframe *framep)
 void
 child_return(void *arg)
 {
-	struct lwp *l = arg;
+	struct lwp * const l = arg;
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
