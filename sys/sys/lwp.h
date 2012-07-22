@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.162 2012/06/09 02:31:15 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.163 2012/07/22 22:40:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -53,9 +53,9 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 
 /*
- * Lightweight process.  Field markings and the corresponding locks: 
+ * Lightweight process.  Field markings and the corresponding locks:
  *
- * a:	proclist_lock
+ * a:	proc_lock
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_lock
@@ -124,6 +124,7 @@ struct lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
+	kcondvar_t	l_waitcv;	/* a: vfork() wait */
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
@@ -245,6 +246,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
+#define	LP_VFORKWAIT	0x00000200 /* Waiting at vfork() for a child */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */

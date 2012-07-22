@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.316 2012/02/19 21:06:58 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.317 2012/07/22 22:40:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ struct proc {
 	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
 	kcondvar_t	p_waitcv;	/* p: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* p: wait, stop CV on LWPs */
-      
+
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
 	struct filedesc	*p_fd;		/* :: Ptr to open files structure */
@@ -256,6 +256,7 @@ struct proc {
 	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
 	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
+	struct lwp	*p_vforklwp;	/* p: parent LWP waiting at vfork() */
 
 	/* scheduling */
 	void		*p_sched_info;	/* p: Scheduler-specific structure */

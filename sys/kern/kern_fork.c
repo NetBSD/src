@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.189 2012/03/13 18:40:52 elad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.190 2012/07/22 22:40:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.189 2012/03/13 18:40:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.190 2012/07/22 22:40:19 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -373,7 +373,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = lim_copy(p1_lim);
 	}
 
-	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);
+	if (flags & FORK_PPWAIT) {
+		/* Mark ourselves as waiting for a child. */
+		l1->l_pflag |= LP_VFORKWAIT;
+		p2->p_lflag = PL_PPWAIT;
+		p2->p_vforklwp = l1;
+	} else {
+		p2->p_lflag = 0;
+	}
 	p2->p_sflag = 0;
 	p2->p_slflag = 0;
 	parent = (flags & FORK_NOWAIT) ? initproc : p1;
@@ -565,15 +572,24 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
+
+	/*
+	 * Return child pid to parent process,
+	 * marking us as parent via retval[1].
+	 */
+	if (retval != NULL) {
+		retval[0] = p2->p_pid;
+		retval[1] = 0;
+	}
 	mutex_exit(p2->p_lock);
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, set PL_PPWAIT on child, and sleep on our
-	 * proc (in case of exit).
+	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
 	 */
-	while (p2->p_lflag & PL_PPWAIT)
-		cv_wait(&p1->p_waitcv, proc_lock);
+	while (l1->l_pflag & LP_VFORKWAIT) {
+		cv_wait(&l1->l_waitcv, proc_lock);
+	}
 
 	/*
 	 * Let the parent know that we are tracing its child.
@@ -586,17 +602,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		ksi.ksi_lid = l1->l_lid;
 		kpsignal(p1, &ksi, NULL);
 	}
-
 	mutex_exit(proc_lock);
-
-	/*
-	 * Return child pid to parent process,
-	 * marking us as parent via retval[1].
-	 */
-	if (retval != NULL) {
-		retval[0] = p2->p_pid;
-		retval[1] = 0;
-	}
 
 	return 0;
 }
