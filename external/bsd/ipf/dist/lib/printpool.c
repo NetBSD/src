@@ -1,4 +1,4 @@
-/*	$NetBSD: printpool.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: printpool.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -17,7 +17,7 @@ printpool(pp, copyfunc, name, opts, fields)
 	int opts;
 	wordtab_t *fields;
 {
-	ip_pool_node_t *ipnp, *ipnpn, ipn;
+	ip_pool_node_t *ipnp, *ipnpn, ipn, **pnext;
 	ip_pool_t ipp;
 
 	if ((*copyfunc)(pp, &ipp, sizeof(ipp)))
@@ -35,12 +35,14 @@ printpool(pp, copyfunc, name, opts, fields)
 
 	ipnpn = ipp.ipo_list;
 	ipp.ipo_list = NULL;
+	pnext = &ipp.ipo_list;
 	while (ipnpn != NULL) {
 		ipnp = (ip_pool_node_t *)malloc(sizeof(*ipnp));
 		(*copyfunc)(ipnpn, ipnp, sizeof(ipn));
 		ipnpn = ipnp->ipn_next;
-		ipnp->ipn_next = ipp.ipo_list;
-		ipp.ipo_list = ipnp;
+		*pnext = ipnp;
+		pnext = &ipnp->ipn_next;
+		ipnp->ipn_next = NULL;
 	}
 
 	if (ipp.ipo_list == NULL) {

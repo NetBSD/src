@@ -1,12 +1,12 @@
-/*	$NetBSD: iplang_y.y,v 1.1.1.1 2012/03/23 21:20:05 christos Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.1.1.2 2012/07/22 13:44:34 darrenr Exp $	*/
 
 %{
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: iplang_y.y,v 1.1.1.2 2012/07/22 13:44:34 darrenr Exp $
  */
 
 #include <stdio.h>
@@ -1325,7 +1325,7 @@ void packet_done()
 				sprintf((char *)t, "	");
 				t += 8;
 				for (k = 16; k; k--, s++)
-					*t++ = (ISPRINT(*s) ? *s : '.');
+					*t++ = (isprint(*s) ? *s : '.');
 				s--;
 			}
 
@@ -1343,7 +1343,7 @@ void packet_done()
 			t += 7;
 			s -= j & 0xf;
 			for (k = j & 0xf; k; k--, s++)
-				*t++ = (ISPRINT(*s) ? *s : '.');
+				*t++ = (isprint(*s) ? *s : '.');
 			*t++ = '\n';
 			*t = '\0';
 		}

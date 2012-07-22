@@ -1,11 +1,11 @@
-/*	$NetBSD: printipfexpr.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printipfexpr.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $	*/
 
 #include "ipf.h"
 
 static void printport __P((int *));
 static void printhosts __P((int *));
 static void printsingle __P((int *));
-
+static void printhostsv6 __P((int *));
 
 void
 printipfexpr(array)
@@ -64,9 +64,9 @@ printipfexpr(array)
 			PRINTF("tcp.flags %s= ", not ? "!" : "");
 
 			for (j = 0; j < ipfe->ipfe_narg; ) {
-				printtcpflags(array[i + 3], array[i + 4]);
+				printtcpflags(array[i + 4], array[i + 5]);
 				j += 2;
-				if (j < array[3])
+				if (j < array[4])
 					putchar(',');
 			}
 			break;
@@ -96,6 +96,23 @@ printipfexpr(array)
 			printsingle(array + i);
 			break;
 
+#ifdef USE_INET6
+		case IPF_EXP_IP6_ADDR :
+			PRINTF("ip6.addr %s= ", not ? "!" : "");
+			printhostsv6(array + i);
+			break;
+
+		case IPF_EXP_IP6_SRCADDR :
+			PRINTF("ip6.src %s= ", not ? "!" : "");
+			printhostsv6(array + i);
+			break;
+
+		case IPF_EXP_IP6_DSTADDR :
+			PRINTF("ip6.dst %s= ", not ? "!" : "");
+			printhostsv6(array + i);
+			break;
+#endif
+
 		case IPF_EXP_END :
 			break;
 
@@ -107,21 +124,22 @@ printipfexpr(array)
 		if (array[i] != IPF_EXP_END)
 			putchar(';');
 
-		i += ipfe->ipfe_narg + 3;
+		i += ipfe->ipfe_size;
 		if (array[i] != IPF_EXP_END)
 			putchar(' ');
 	}
 }
 
 
-static void printsingle(array)
+static void
+printsingle(array)
 	int *array;
 {
 	ipfexp_t *ipfe = (ipfexp_t *)array;
 	int i;
 
 	for (i = 0; i < ipfe->ipfe_narg; ) {
-		PRINTF("%d", array[i + 3]);
+		PRINTF("%d", array[i + 4]);
 		i++;
 		if (i < ipfe->ipfe_narg)
 			putchar(',');
@@ -129,14 +147,15 @@ static void printsingle(array)
 }
 
 
-static void printport(array)
+static void
+printport(array)
 	int *array;
 {
 	ipfexp_t *ipfe = (ipfexp_t *)array;
 	int i;
 
 	for (i = 0; i < ipfe->ipfe_narg; ) {
-		PRINTF("%d", ntohs(array[i + 3]));
+		PRINTF("%d", ntohs(array[i + 4]));
 		i++;
 		if (i < ipfe->ipfe_narg)
 			putchar(',');
@@ -144,17 +163,37 @@ static void printport(array)
 }
 
 
-static void printhosts(array)
+static void
+printhosts(array)
 	int *array;
 {
 	ipfexp_t *ipfe = (ipfexp_t *)array;
-	int i;
+	int i, j;
 
-	for (i = 0; i < ipfe->ipfe_narg; ) {
-		printhostmask(AF_INET, (u_32_t *)(array + i + 3),
-			      (u_32_t *)(array + i + 4));
+	for (i = 0, j = 0; i < ipfe->ipfe_narg; j++) {
+		printhostmask(AF_INET, (u_32_t *)ipfe->ipfe_arg0 + j * 2,
+			      (u_32_t *)ipfe->ipfe_arg0 + j * 2 + 1);
 		i += 2;
 		if (i < ipfe->ipfe_narg)
 			putchar(',');
 	}
 }
+
+
+#ifdef USE_INET6
+static void
+printhostsv6(array)
+	int *array;
+{
+	ipfexp_t *ipfe = (ipfexp_t *)array;
+	int i, j;
+
+	for (i = 4, j= 0; i < ipfe->ipfe_size; j++) {
+		printhostmask(AF_INET6, (u_32_t *)ipfe->ipfe_arg0 + j * 8,
+			      (u_32_t *)ipfe->ipfe_arg0 + j * 8 + 4);
+		i += 8;
+		if (i < ipfe->ipfe_size)
+			putchar(',');
+	}
+}
+#endif

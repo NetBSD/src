@@ -1,7 +1,7 @@
-/*	$NetBSD: printhash_live.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printhash_live.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -19,9 +19,9 @@ printhash_live(hp, fd, name, opts, fields)
 	int opts;
 	wordtab_t *fields;
 {
-	iphtent_t entry, *top, *node;
+	iphtent_t entry, zero;
 	ipflookupiter_t iter;
-	int printed, last;
+	int last, printed;
 	ipfobj_t obj;
 
 	if ((name != NULL) && strncmp(name, hp->iph_name, FR_GROUPLEN))
@@ -49,28 +49,19 @@ printhash_live(hp, fd, name, opts, fields)
 	strncpy(iter.ili_name, hp->iph_name, FR_GROUPLEN);
 
 	last = 0;
-	top = NULL;
 	printed = 0;
+	bzero((char *)&zero, sizeof(zero));
 
-	if (hp->iph_list != NULL) {
-		while (!last && (ioctl(fd, SIOCLOOKUPITER, &obj) == 0)) {
-			if (entry.ipe_next == NULL)
-				last = 1;
-			entry.ipe_next = top;
-			top = malloc(sizeof(*top));
-			if (top == NULL)
-				break;
-			bcopy(&entry, top, sizeof(entry));
-		}
-	}
-
-	while (top != NULL) {
-		node = top;
-		(void) printhashnode(hp, node, bcopywrap, opts, fields);
-		top = node->ipe_next;
-		free(node);
+	while (!last && (ioctl(fd, SIOCLOOKUPITER, &obj) == 0)) {
+		if (entry.ipe_next == NULL)
+			last = 1;
+		if (bcmp(&zero, &entry, sizeof(zero)) == 0)
+			break;
+		(void) printhashnode(hp, &entry, bcopywrap, opts, fields);
 		printed++;
 	}
+	if (last == 0)
+		ipferror(fd, "walking hash nodes:");
 
 	if (printed == 0)
 		putchar(';');

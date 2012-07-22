@@ -1,7 +1,7 @@
-/*	$NetBSD: printdstlist.c,v 1.1.1.1 2012/03/23 21:20:09 christos Exp $	*/
+/*	$NetBSD: printdstlist.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -27,10 +27,8 @@ printdstlist(pp, copyfunc, name, opts, nodes, fields)
 	if ((name != NULL) && strncmp(name, dst.ipld_name, FR_GROUPLEN))
 		return dst.ipld_next;
 
-	if (fields == NULL) {
+	if (fields == NULL)
 		printdstlistdata(&dst, opts);
-		putchar('\n');
-	}
 
 	if ((dst.ipld_flags & IPDST_DELETE) != 0)
 		PRINTF("# ");
@@ -53,9 +51,6 @@ printdstlist(pp, copyfunc, name, opts, nodes, fields)
 
 			node = printdstlistnode(n, bcopywrap, opts, fields);
 
-			if ((opts & OPT_DEBUG) == 0) {
-				putchar(';');
-			}
 			free(n);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.1.1.1 2012/03/23 21:19:55 christos Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -53,7 +53,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:44:17 darrenr Exp $";
 #endif
 
 # ifdef USE_INET6
@@ -144,8 +144,10 @@ ipf_htable_soft_create(softc)
 	ipf_htable_softc_t *softh;
 
 	KMALLOC(softh, ipf_htable_softc_t *);
-	if (softh == NULL)
+	if (softh == NULL) {
+		IPFERROR(30026);
 		return NULL;
+	}
 
 	bzero((char *)softh, sizeof(*softh));
 
@@ -277,11 +279,31 @@ ipf_htable_create(softc, arg, op)
 	iplookupop_t *op;
 {
 	ipf_htable_softc_t *softh = arg;
-	iphtable_t *iph, *oiph;
+	iphtable_t htab, *iph, *oiph;
 	char name[FR_GROUPLEN];
 	int err, i, unit;
 
+	if (op->iplo_size != sizeof(htab)) {
+		IPFERROR(30024);
+		return EINVAL;
+	}
+	err = COPYIN(op->iplo_struct, &htab, sizeof(htab));
+	if (err != 0) {
+		IPFERROR(30003);
+		return EFAULT;
+	}
+
 	unit = op->iplo_unit;
+	if (htab.iph_unit != unit) {
+		IPFERROR(30005);
+		return EINVAL;
+	}
+	if (htab.iph_size < 1) {
+		IPFERROR(30025);
+		return EINVAL;
+	}
+
+
 	if ((op->iplo_arg & IPHASH_ANON) == 0) {
 		iph = ipf_htable_exists(softh, unit, op->iplo_name);
 		if (iph != NULL) {
@@ -301,17 +323,7 @@ ipf_htable_create(softc, arg, op)
 		IPFERROR(30002);
 		return ENOMEM;
 	}
-	err = COPYIN(op->iplo_struct, iph, sizeof(*iph));
-	if (err != 0) {
-		KFREE(iph);
-		IPFERROR(30003);
-		return EFAULT;
-	}
-
-	if (iph->iph_unit != unit) {
-		IPFERROR(30005);
-		return EINVAL;
-	}
+	*iph = htab;
 
 	if ((op->iplo_arg & IPHASH_ANON) != 0) {
 		i = IPHASH_ANON;
@@ -332,6 +344,10 @@ ipf_htable_create(softc, arg, op)
 		(void)strncpy(iph->iph_name, name, sizeof(iph->iph_name));
 		(void)strncpy(op->iplo_name, name, sizeof(op->iplo_name));
 		iph->iph_type |= IPHASH_ANON;
+	} else {
+		(void)strncpy(iph->iph_name, op->iplo_name,
+			      sizeof(iph->iph_name));
+		iph->iph_name[sizeof(iph->iph_name) - 1] = '\0';
 	}
 
 	KMALLOCS(iph->iph_table, iphtent_t **,
@@ -348,9 +364,10 @@ ipf_htable_create(softc, arg, op)
 	iph->iph_maskset[1] = 0;
 	iph->iph_maskset[2] = 0;
 	iph->iph_maskset[3] = 0;
-	iph->iph_list = NULL;
 
 	iph->iph_ref = 1;
+	iph->iph_list = NULL;
+	iph->iph_tail = &iph->iph_list;
 	iph->iph_next = softh->ipf_htables[unit + 1];
 	iph->iph_pnext = &softh->ipf_htables[unit + 1];
 	if (softh->ipf_htables[unit + 1] != NULL)
@@ -608,6 +625,9 @@ ipf_htent_remove(softc, arg, iph, ipe)
 	iphtent_t *ipe;
 {
 
+	if (iph->iph_tail == &ipe->ipe_next)
+		iph->iph_tail = ipe->ipe_pnext;
+
 	if (ipe->ipe_hnext != NULL)
 		ipe->ipe_hnext->ipe_phnext = ipe->ipe_phnext;
 	if (ipe->ipe_phnext != NULL)
@@ -633,8 +653,7 @@ ipf_htent_remove(softc, arg, iph, ipe)
 	{
 	case IPHASH_GROUPMAP :
 		if (ipe->ipe_group != NULL)
-			ipf_group_del(softc, ipe->ipe_group, IPL_LOGIPF,
-				      softc->ipf_active);
+			ipf_group_del(softc, ipe->ipe_ptr, NULL);
 		break;
 
 	default :
@@ -902,13 +921,8 @@ ipf_htent_insert(softc, arg, iph, ipeo)
 
 	bcopy((char *)ipeo, (char *)ipe, sizeof(*ipe));
 	ipe->ipe_addr.i6[0] &= ipe->ipe_mask.i6[0];
-	ipe->ipe_addr.i6[1] &= ipe->ipe_mask.i6[1];
-	ipe->ipe_addr.i6[2] &= ipe->ipe_mask.i6[2];
-	ipe->ipe_addr.i6[3] &= ipe->ipe_mask.i6[3];
 	if (ipe->ipe_family == AF_INET) {
 		bits = count4bits(ipe->ipe_mask.in4_addr);
-		ipe->ipe_addr.i6[0] = ntohl(ipe->ipe_addr.i6[0]);
-		ipe->ipe_mask.i6[0] = ntohl(ipe->ipe_mask.i6[0]);
 		ipe->ipe_addr.i6[1] = 0;
 		ipe->ipe_addr.i6[2] = 0;
 		ipe->ipe_addr.i6[3] = 0;
@@ -920,15 +934,11 @@ ipf_htent_insert(softc, arg, iph, ipeo)
 	} else
 #ifdef USE_INET6
 	if (ipe->ipe_family == AF_INET6) {
+		ipe->ipe_addr.i6[1] &= ipe->ipe_mask.i6[1];
+		ipe->ipe_addr.i6[2] &= ipe->ipe_mask.i6[2];
+		ipe->ipe_addr.i6[3] &= ipe->ipe_mask.i6[3];
+
 		bits = count6bits(ipe->ipe_mask.i6);
-		ipe->ipe_addr.i6[0] = ntohl(ipe->ipe_addr.i6[0]);
-		ipe->ipe_addr.i6[1] = ntohl(ipe->ipe_addr.i6[1]);
-		ipe->ipe_addr.i6[2] = ntohl(ipe->ipe_addr.i6[2]);
-		ipe->ipe_addr.i6[3] = ntohl(ipe->ipe_addr.i6[3]);
-		ipe->ipe_mask.i6[0] = ntohl(ipe->ipe_mask.i6[0]);
-		ipe->ipe_mask.i6[1] = ntohl(ipe->ipe_mask.i6[1]);
-		ipe->ipe_mask.i6[2] = ntohl(ipe->ipe_mask.i6[2]);
-		ipe->ipe_mask.i6[3] = ntohl(ipe->ipe_mask.i6[3]);
 		hv = IPE_V6_HASH_FN(ipe->ipe_addr.i6,
 				    ipe->ipe_mask.i6, iph->iph_size);
 	} else
@@ -947,11 +957,10 @@ ipf_htent_insert(softc, arg, iph, ipeo)
 		iph->iph_table[hv]->ipe_phnext = &ipe->ipe_hnext;
 	iph->iph_table[hv] = ipe;
 
-	ipe->ipe_next = iph->iph_list;
-	ipe->ipe_pnext = &iph->iph_list;
-	if (ipe->ipe_next != NULL)
-		ipe->ipe_next->ipe_pnext = &ipe->ipe_next;
-	iph->iph_list = ipe;
+	ipe->ipe_pnext = iph->iph_tail;
+	*iph->iph_tail = ipe;
+	iph->iph_tail = &ipe->ipe_next;
+	ipe->ipe_next = NULL;
 
 	if (ipe->ipe_die != 0) {
 		/*
@@ -991,21 +1000,11 @@ ipf_htent_insert(softc, arg, iph, ipeo)
 	}
 
 	if (ipe->ipe_family == AF_INET) {
-		if ((bits >= 0) && (bits != 32))
-			iph->iph_maskset[0] |= 1 << bits;
+		ipf_inet_mask_add(bits, &iph->iph_v4_masks);
 	}
 #ifdef USE_INET6
 	else if (ipe->ipe_family == AF_INET6) {
-		if ((bits >= 0) && (bits != 128)) {
-			if (bits >= 96)
-				iph->iph_maskset[3] |= 1 << (bits - 96);
-			else if (bits >= 64)
-				iph->iph_maskset[2] |= 1 << (bits - 64);
-			else if (bits >= 32)
-				iph->iph_maskset[1] |= 1 << (bits - 32);
-			else
-				iph->iph_maskset[0] |= 1 << bits;
-		}
+		ipf_inet6_mask_add(bits, &ipe->ipe_mask, &iph->iph_v6_masks);
 	}
 #endif
 
@@ -1056,8 +1055,6 @@ ipf_htent_find(iph, ipeo)
 	ipe.ipe_addr.i6[3] &= ipe.ipe_mask.i6[3];
 	if (ipe.ipe_family == AF_INET) {
 		bits = count4bits(ipe.ipe_mask.in4_addr);
-		ipe.ipe_addr.i6[0] = ntohl(ipe.ipe_addr.i6[0]);
-		ipe.ipe_mask.i6[0] = ntohl(ipe.ipe_mask.i6[0]);
 		ipe.ipe_addr.i6[1] = 0;
 		ipe.ipe_addr.i6[2] = 0;
 		ipe.ipe_addr.i6[3] = 0;
@@ -1070,14 +1067,6 @@ ipf_htent_find(iph, ipeo)
 #ifdef USE_INET6
 	if (ipe.ipe_family == AF_INET6) {
 		bits = count6bits(ipe.ipe_mask.i6);
-		ipe.ipe_addr.i6[0] = ntohl(ipe.ipe_addr.i6[0]);
-		ipe.ipe_addr.i6[1] = ntohl(ipe.ipe_addr.i6[1]);
-		ipe.ipe_addr.i6[2] = ntohl(ipe.ipe_addr.i6[2]);
-		ipe.ipe_addr.i6[3] = ntohl(ipe.ipe_addr.i6[3]);
-		ipe.ipe_mask.i6[0] = ntohl(ipe.ipe_mask.i6[0]);
-		ipe.ipe_mask.i6[1] = ntohl(ipe.ipe_mask.i6[1]);
-		ipe.ipe_mask.i6[2] = ntohl(ipe.ipe_mask.i6[2]);
-		ipe.ipe_mask.i6[3] = ntohl(ipe.ipe_mask.i6[3]);
 		hv = IPE_V6_HASH_FN(ipe.ipe_addr.i6,
 				    ipe.ipe_mask.i6, iph->iph_size);
 	} else
@@ -1198,14 +1187,15 @@ ipf_iphmfind(iph, addr)
 	iphtable_t *iph;
 	struct in_addr *addr;
 {
-	u_32_t hmsk, msk, ips;
+	u_32_t msk, ips;
 	iphtent_t *ipe;
 	u_int hv;
+	int i;
 
-	hmsk = iph->iph_maskset[0];
-	msk = 0xffffffff;
+	i = 0;
 maskloop:
-	ips = ntohl(addr->s_addr) & msk;
+	msk = iph->iph_v4_masks.imt4_active[i];
+	ips = addr->s_addr & msk;
 	hv = IPE_V4_HASH_FN(ips, msk, iph->iph_size);
 	for (ipe = iph->iph_table[hv]; (ipe != NULL); ipe = ipe->ipe_hnext) {
 		if ((ipe->ipe_family != AF_INET) ||
@@ -1216,17 +1206,10 @@ maskloop:
 		break;
 	}
 
-	if ((ipe == NULL) && (hmsk != 0)) {
-		while (hmsk != 0) {
-			msk <<= 1;
-			if (hmsk & 0x80000000)
-				break;
-			hmsk <<= 1;
-		}
-		if (hmsk != 0) {
-			hmsk <<= 1;
+	if (ipe == NULL) {
+		i++;
+		if (i < iph->iph_v4_masks.imt4_max)
 			goto maskloop;
-		}
 	}
 	return ipe;
 }
@@ -1286,7 +1269,7 @@ ipf_htable_iter_next(softc, arg, token, ilp)
 	case IPFLOOKUPITER_NODE :
 		node = token->ipt_data;
 		if (node == NULL) {
-			iph = ipf_htable_find(arg, ilp->ili_unit + 1,
+			iph = ipf_htable_find(arg, ilp->ili_unit,
 					      ilp->ili_name);
 			if (iph == NULL) {
 				IPFERROR(30009);
@@ -1349,7 +1332,7 @@ ipf_htable_iter_next(softc, arg, token, ilp)
 		break;
 	}
 
-	if (hnext != NULL)
+	if (hnext == NULL)
 		ipf_token_mark_complete(token);
 
 	return err;
@@ -1411,56 +1394,32 @@ ipf_iphmfind6(iph, addr)
 	iphtable_t *iph;
 	i6addr_t *addr;
 {
-	i6addr_t msk, ips;
+	i6addr_t *msk, ips;
 	iphtent_t *ipe;
-	u_32_t hmsk;
 	u_int hv;
 	int i;
 
-	for (i = 3, hmsk = iph->iph_maskset[3]; (hmsk == 0) && (i >= 0); i--)
-		hmsk = iph->iph_maskset[i];
-
-	msk.i6[0] = 0xffffffff;
-	msk.i6[1] = 0xffffffff;
-	msk.i6[2] = 0xffffffff;
-	msk.i6[3] = 0xffffffff;
-	ips.i6[0] = ntohl(addr->i6[0]);
-	ips.i6[1] = ntohl(addr->i6[1]);
-	ips.i6[2] = ntohl(addr->i6[2]);
-	ips.i6[3] = ntohl(addr->i6[3]);
+	i = 0;
 maskloop:
-	if (i >= 0)
-		ips.i6[i] = ntohl(addr->i6[i]) & msk.i6[i];
-	hv = IPE_V6_HASH_FN(ips.i6, msk.i6, iph->iph_size);
+	msk = iph->iph_v6_masks.imt6_active + i;
+	ips.i6[0] = addr->i6[0] & msk->i6[0];
+	ips.i6[1] = addr->i6[1] & msk->i6[1];
+	ips.i6[2] = addr->i6[2] & msk->i6[2];
+	ips.i6[3] = addr->i6[3] & msk->i6[3];
+	hv = IPE_V6_HASH_FN(ips.i6, msk->i6, iph->iph_size);
 	for (ipe = iph->iph_table[hv]; (ipe != NULL); ipe = ipe->ipe_next) {
 		if ((ipe->ipe_family != AF_INET6) ||
-		    IP6_NEQ(&ipe->ipe_mask, &msk) ||
+		    IP6_NEQ(&ipe->ipe_mask, msk) ||
 		    IP6_NEQ(&ipe->ipe_addr, &ips)) {
 			continue;
 		}
 		break;
 	}
 
-	if ((ipe == NULL) && (i >= 0)) {
-nextmask:
-		if (hmsk != 0) {
-			while (hmsk != 0) {
-				msk.i6[i] <<= 1;
-				if (hmsk & 0x80000000)
-					break;
-				hmsk <<= 1;
-			}
-			if (hmsk != 0) {
-				hmsk <<= 1;
-				goto maskloop;
-			}
-		} else if (i >= 0) {
-			ips.i6[i] = 0;
-			msk.i6[i] = 0;
-			i--;
-			hmsk = iph->iph_maskset[i];
-			goto nextmask;
-		}
+	if (ipe == NULL) {
+		i++;
+		if (i < iph->iph_v6_masks.imt6_max)
+			goto maskloop;
 	}
 	return ipe;
 }

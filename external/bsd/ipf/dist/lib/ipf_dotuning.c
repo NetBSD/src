@@ -1,11 +1,11 @@
-/*	$NetBSD: ipf_dotuning.c,v 1.1.1.1 2012/03/23 21:20:08 christos Exp $	*/
+/*	$NetBSD: ipf_dotuning.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: ipf_dotuning.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include "ipf.h"
@@ -31,7 +31,8 @@ void ipf_dotuning(fd, tuneargs, iocfn)
 		if (!strcmp(s, "list")) {
 			while (1) {
 				if ((*iocfn)(fd, SIOCIPFGETNEXT, &obj) == -1) {
-					perror("ioctl(SIOCIPFGETNEXT)");
+					ipf_perror_fd(fd, iocfn, 
+						      "ioctl(SIOCIPFGETNEXT)");
 					break;
 				}
 				if (tu.ipft_cookie == NULL)
@@ -46,7 +47,8 @@ void ipf_dotuning(fd, tuneargs, iocfn)
 			strncpy(tu.ipft_name, s, sizeof(tu.ipft_name));
 			if (sscanf(t, "%lu", &tu.ipft_vlong) == 1) {
 				if ((*iocfn)(fd, SIOCIPFSET, &obj) == -1) {
-					perror("ioctl(SIOCIPFSET)");
+					ipf_perror_fd(fd, iocfn, 
+						      "ioctl(SIOCIPFSET)");
 					return;
 				}
 			} else {
@@ -57,7 +59,7 @@ void ipf_dotuning(fd, tuneargs, iocfn)
 			tu.ipft_cookie = NULL;
 			strncpy(tu.ipft_name, s, sizeof(tu.ipft_name));
 			if ((*iocfn)(fd, SIOCIPFGET, &obj) == -1) {
-				perror("ioctl(SIOCIPFGET)");
+				ipf_perror_fd(fd, iocfn, "ioctl(SIOCIPFGET)");
 				return;
 			}
 			if (tu.ipft_cookie == NULL) {
