@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.17 2012/07/18 09:21:37 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.18 2012/07/22 14:32:59 matt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.17 2012/07/18 09:21:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.18 2012/07/22 14:32:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,7 +226,7 @@ static int mvgbec_search(device_t, cfdata_t, const int *, void *);
 /* MII funcstions */
 static int mvgbec_miibus_readreg(device_t, int, int);
 static void mvgbec_miibus_writereg(device_t, int, int, int);
-static void mvgbec_miibus_statchg(device_t);
+static void mvgbec_miibus_statchg(struct ifnet *);
 
 static void mvgbec_wininit(struct mvgbec_softc *);
 
@@ -530,7 +530,7 @@ mvgbec_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 static void
-mvgbec_miibus_statchg(device_t dev)
+mvgbec_miibus_statchg(struct ifnet *ifp)
 {
 
 	/* nothing to do */
