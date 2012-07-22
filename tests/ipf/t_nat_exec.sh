@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.8 2012/07/08 14:45:05 pgoyette Exp $
+# $NetBSD: t_nat_exec.sh,v 1.9 2012/07/22 16:22:41 darrenr Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,8 +83,6 @@ broken_test_case n104 nattest hex hex -T update_ipid=0
 broken_test_case n105 nattest hex hex -T update_ipid=0
 broken_test_case n106 nattest hex hex -T update_ipid=0
 broken_test_case n200 nattest hex hex -T update_ipid=0
-broken_test_case n201 nattest hex hex -T update_ipid=0
-broken_test_case n202 nattest hex hex -T update_ipid=0
 broken_test_case n1_6 nattest text text -6
 broken_test_case n2_6 nattest text text -6
 broken_test_case n4_6 nattest text text -6
@@ -124,8 +122,6 @@ atf_init_test_cases()
 	atf_add_test_case n105
 	atf_add_test_case n106
 	atf_add_test_case n200
-	atf_add_test_case n201
-	atf_add_test_case n202
 
 	atf_add_test_case n1_6
 	atf_add_test_case n2_6
