@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_x86.c,v 1.2 2010/06/17 08:22:02 pooka Exp $	*/
+/*	$NetBSD: pmap_x86.c,v 1.3 2012/07/22 20:32:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.2 2010/06/17 08:22:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.3 2012/07/22 20:32:31 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -102,4 +102,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	*pap = va;
 	return true;
+}
+
+void
+pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
+{
 }
