@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $	*/
+/*	$NetBSD: ipf.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
+ * Id: ipf.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
  */
 
 #ifndef	__IPF_H__

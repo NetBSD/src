@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.56.2.1 2012/01/26 05:29:11 darrenr Exp
+ * Id: ip_irc_pxy.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 
 #define	IPF_IRC_PROXY
 
@@ -230,11 +230,13 @@ ipf_p_irc_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 {
 	ircinfo_t *irc;
 
+	if (fin->fin_v != 4)
+		return -1;
+
 	KMALLOC(irc, ircinfo_t *);
 	if (irc == NULL)
 		return -1;
 
-	fin = fin;	/* LINT */
 	nat = nat;	/* LINT */
 
 	aps->aps_data = irc;
@@ -352,6 +354,7 @@ ipf_p_irc_send(fr_info_t *fin, nat_t *nat)
 	/* the mbuf chain will be extended if necessary by m_copyback() */
 #endif
 	COPYBACK(m, off, nlen, newbuf);
+	fin->fin_flx |= FI_DOCKSUM;
 
 	if (inc != 0) {
 #if defined(MENTAT) || defined(__sgi)
@@ -366,7 +369,7 @@ ipf_p_irc_send(fr_info_t *fin, nat_t *nat)
 		sum2 -= sum1;
 		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
-		ipf_fix_outcksum(fin, &ip->ip_sum, sum2);
+		ipf_fix_outcksum(0, &ip->ip_sum, sum2, 0);
 #endif
 		fin->fin_plen += inc;
 		ip->ip_len = htons(fin->fin_plen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:44:12 darrenr Exp $	*/
+/*	$NetBSD: ip_dstlist.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -73,7 +73,7 @@ struct file;
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:44:12 darrenr Exp $";
+static const char rcsid[] = "@(#)Id: ip_dstlist.c,v 1.1.1.2 2012/07/22 13:44:12 darrenr Exp";
 #endif
 
 typedef struct ipf_dstl_softc_s {

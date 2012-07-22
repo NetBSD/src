@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.2 2012/07/22 13:44:23 darrenr Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * $Id: ip_pptp_pxy.c,v 1.1.1.2 2012/07/22 13:44:23 darrenr Exp $
+ * Id: ip_pptp_pxy.c,v 1.1.1.2 2012/07/22 13:44:23 darrenr Exp $
  *
  */
 #define	IPF_PPTP_PROXY

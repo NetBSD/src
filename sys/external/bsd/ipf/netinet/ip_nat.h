@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_nat.h,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.143.2.3 2012/01/29 03:08:31 darrenr Exp
+ * Id: ip_nat.h,v 1.1.1.2 2012/07/22 13:45:29 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -21,11 +21,13 @@
 #define	SIOCRMNAT	_IOW('r', 61, struct ipfobj)
 #define	SIOCGNATS	_IOWR('r', 62, struct ipfobj)
 #define	SIOCGNATL	_IOWR('r', 63, struct ipfobj)
+#define	SIOCPURGENAT	_IOWR('r', 100, struct ipfobj)
 #else
 #define	SIOCADNAT	_IOW(r, 60, struct ipfobj)
 #define	SIOCRMNAT	_IOW(r, 61, struct ipfobj)
 #define	SIOCGNATS	_IOWR(r, 62, struct ipfobj)
 #define	SIOCGNATL	_IOWR(r, 63, struct ipfobj)
+#define	SIOCPURGENAT	_IOWR(r, 100, struct ipfobj)
 #endif
 
 #undef	LARGE_NAT	/* define	this if you're setting up a system to NAT
@@ -77,7 +79,8 @@
 #ifndef	APR_LABELLEN
 #define	APR_LABELLEN	16
 #endif
-#define	NAT_HW_CKSUM	0x80000000
+#define	NAT_HW_CKSUM		0x80000000
+#define	NAT_HW_CKSUM_PART	0x40000000
 
 #define	DEF_NAT_AGE	1200     /* 10 minutes (600 seconds) */
 
@@ -225,10 +228,12 @@ typedef	struct	ipnat	{
 	char		*in_comment;
 	mb_t		*in_divmp;
 	void		*in_pconf;
+	U_QUAD_T	in_pkts[2];
+	U_QUAD_T	in_bytes[2];
 	u_long		in_space;
 	u_long		in_hits;
 	int		in_size;
-	u_int		in_use;
+	int		in_use;
 	u_int		in_hv[2];
 	int		in_flineno;		/* conf. file line number */
 	int		in_stepnext;
@@ -255,9 +260,6 @@ typedef	struct	ipnat	{
 	int		in_plabel;	/* proxy label. */
 	int		in_pconfig;	/* proxy label. */
 	ipftag_t	in_tag;
-	int		in_limit;
-	U_QUAD_T	in_pkts[2];
-	U_QUAD_T	in_bytes[2];
 	int		in_namelen;
 	char		in_names[1];
 } ipnat_t;
@@ -364,10 +366,12 @@ typedef	struct	ipnat	{
 #define	IPN_FINDFORWARD	0x100000
 #define	IPN_IN		0x200000
 #define	IPN_SEQUENTIAL	0x400000
+#define	IPN_PURGE	0x800000
+#define	IPN_PROXYRULE	0x1000000
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_SIPRANGE|IPN_SPLIT|\
 			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|IPN_NO|\
 			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY|\
-			 IPN_DIPRANGE|IPN_SEQUENTIAL)
+			 IPN_DIPRANGE|IPN_SEQUENTIAL|IPN_PURGE)
 
 /*
  * Values for in_redir
@@ -575,6 +579,7 @@ typedef	struct	natlog {
 
 #define	NL_NEW		0
 #define	NL_CLONE	1
+#define	NL_PURGE	0xfffc
 #define	NL_DESTROY	0xfffd
 #define	NL_FLUSH	0xfffe
 #define	NL_EXPIRE	0xffff
@@ -633,21 +638,14 @@ typedef struct ipf_nat_softc_s {
 	u_int		ipf_nat_defage;
 	u_int		ipf_nat_defipage;
 	u_int		ipf_nat_deficmpage;
-	int		ipf_nat_map_max;
-	int		ipf_nat_map_masks[33];
-	u_32_t		ipf_nat_map_active_masks[33];
-	int		ipf_nat6_map_max;
-	int		ipf_nat6_map_masks[129];
-	i6addr_t	ipf_nat6_map_active_masks[129];
-	int		ipf_nat_rdr_max;
-	int		ipf_nat_rdr_masks[33];
-	u_32_t		ipf_nat_rdr_active_masks[33];
-	int		ipf_nat6_rdr_max;
-	int		ipf_nat6_rdr_masks[129];
-	i6addr_t	ipf_nat6_rdr_active_masks[129];
+	ipf_v4_masktab_t	ipf_nat_map_mask;
+	ipf_v6_masktab_t	ipf_nat6_map_mask;
+	ipf_v4_masktab_t	ipf_nat_rdr_mask;
+	ipf_v6_masktab_t	ipf_nat6_rdr_mask;
 	nat_t		**ipf_nat_table[2];
 	nat_t		*ipf_nat_instances;
 	ipnat_t		*ipf_nat_list;
+	ipnat_t		**ipf_nat_list_tail;
 	ipnat_t		**ipf_nat_map_rules;
 	ipnat_t		**ipf_nat_rdr_rules;
 	ipftq_t		*ipf_nat_utqe;
@@ -664,18 +662,29 @@ typedef struct ipf_nat_softc_s {
 	natstat_t	ipf_nat_stats;
 } ipf_nat_softc_t ;
 
+#define	ipf_nat_map_max			ipf_nat_map_mask.imt4_max
+#define	ipf_nat_rdr_max			ipf_nat_rdr_mask.imt4_max
+#define	ipf_nat6_map_max		ipf_nat6_map_mask.imt6_max
+#define	ipf_nat6_rdr_max		ipf_nat6_rdr_mask.imt6_max
+#define	ipf_nat_map_active_masks	ipf_nat_map_mask.imt4_active
+#define	ipf_nat_rdr_active_masks	ipf_nat_rdr_mask.imt4_active
+#define	ipf_nat6_map_active_masks	ipf_nat6_map_mask.imt6_active
+#define	ipf_nat6_rdr_active_masks	ipf_nat6_rdr_mask.imt6_active
+
 extern	frentry_t 	ipfnatblock;
 
 extern	void	ipf_fix_datacksum(u_short *, u_32_t);
-extern	void	ipf_fix_incksum(fr_info_t *, u_short *, u_32_t);
-extern	void	ipf_fix_outcksum(fr_info_t *, u_short *, u_32_t);
+extern	void	ipf_fix_incksum(int, u_short *, u_32_t, u_32_t);
+extern	void	ipf_fix_outcksum(int, u_short *, u_32_t, u_32_t);
 
 extern	int	ipf_nat_checkin(fr_info_t *, u_32_t *);
 extern	int	ipf_nat_checkout(fr_info_t *, u_32_t *);
 extern	void	ipf_nat_delete(ipf_main_softc_t *, struct nat *, int);
 extern	void	ipf_nat_deref(ipf_main_softc_t *, nat_t **);
 extern	void	ipf_nat_expire(ipf_main_softc_t *);
-extern	void	ipf_nat_hostmapdel(hostmap_t **);
+extern	int	ipf_nat_hashtab_add(ipf_main_softc_t *,
+					 ipf_nat_softc_t *, nat_t *);
+extern	void	ipf_nat_hostmapdel(ipf_main_softc_t *, hostmap_t **);
 extern	int	ipf_nat_hostmap_rehash(ipf_main_softc_t *,
 					    ipftuneable_t *, ipftuneval_t *);
 extern	nat_t	*ipf_nat_icmperrorlookup(fr_info_t *, int);
@@ -691,8 +700,6 @@ extern	int	ipf_nat_insert(ipf_main_softc_t *, ipf_nat_softc_t *,
 				    nat_t *);
 extern	int	ipf_nat_ioctl(ipf_main_softc_t *, void *, ioctlcmd_t,
 				   int, int, void *);
-extern	frentry_t *ipf_nat_ipfin(fr_info_t *, u_32_t *);
-extern	frentry_t *ipf_nat_ipfout(fr_info_t *, u_32_t *);
 extern	void	ipf_nat_log(ipf_main_softc_t *, ipf_nat_softc_t *,
 				 struct nat *, u_int);
 extern	nat_t	*ipf_nat_lookupredir(natlookup_t *);
@@ -704,7 +711,7 @@ extern	int	ipf_nat_out(fr_info_t *, nat_t *, int, u_32_t);
 extern	nat_t	*ipf_nat_outlookup(fr_info_t *, u_int, u_int,
 				       struct in_addr, struct in_addr);
 extern	u_short	*ipf_nat_proto(fr_info_t *, nat_t *, u_int);
-extern	void	ipf_nat_rulederef(ipf_main_softc_t *, ipnat_t **);
+extern	void	ipf_nat_rule_deref(ipf_main_softc_t *, ipnat_t **);
 extern	void	ipf_nat_setqueue(ipf_main_softc_t *, ipf_nat_softc_t *,
 				      nat_t *);
 extern	void	ipf_nat_setpending(ipf_main_softc_t *, nat_t *);
@@ -725,8 +732,6 @@ extern	void	ipf_nat_sync(ipf_main_softc_t *, void *);
 extern	nat_t	*ipf_nat_clone(fr_info_t *, nat_t *);
 extern	void	ipf_nat_delmap(ipf_nat_softc_t *, ipnat_t *);
 extern	void	ipf_nat_delrdr(ipf_nat_softc_t *, ipnat_t *);
-extern	void	ipf_nat_delrule(ipf_main_softc_t *, ipf_nat_softc_t *,
-				     ipnat_t *);
 extern	int	ipf_nat_wildok(nat_t *, int, int, int, int);
 extern	void	ipf_nat_setlock(void *, int);
 extern	void	ipf_nat_load(void);
@@ -744,9 +749,10 @@ extern	nat_t	*ipf_nat6_add(fr_info_t *, ipnat_t *, nat_t **,
 				   u_int, int);
 extern	void	ipf_nat6_addrdr(ipf_nat_softc_t *, ipnat_t *);
 extern	void	ipf_nat6_addmap(ipf_nat_softc_t *, ipnat_t *);
-extern	void	ipf_nat6_addencap(ipf_nat_softc_t *, ipnat_t *);
 extern	int	ipf_nat6_checkout(fr_info_t *, u_32_t *);
 extern	int	ipf_nat6_checkin(fr_info_t *, u_32_t *);
+extern	void	ipf_nat6_delmap(ipf_nat_softc_t *, ipnat_t *);
+extern	void	ipf_nat6_delrdr(ipf_nat_softc_t *, ipnat_t *);
 extern	int	ipf_nat6_finalise(fr_info_t *, nat_t *);
 extern	nat_t	*ipf_nat6_icmperror(fr_info_t *, u_int *, int);
 extern	nat_t	*ipf_nat6_icmperrorlookup(fr_info_t *, int);

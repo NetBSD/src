@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_lookup.c,v 1.2 2012/03/23 20:39:50 christos Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -68,9 +68,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.2 2012/03/23 20:39:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.67.2.5 2012/01/29 05:30:36 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 1.1.1.2 2012/07/22 13:45:21 darrenr Exp";
 #endif
 #endif
 
@@ -757,7 +757,7 @@ ipf_lookup_iterderef(ipf_main_softc_t *softc, u_32_t type, void *data)
 	WRITE_ENTER(&softc->ipf_poolrw);
 
 	for (i = 0; i < MAX_BACKENDS; i++) {
-		if (type == backends[i]->ipfl_type) {
+		if (lkey->ilik_type == backends[i]->ipfl_type) {
 			(*backends[i]->ipfl_iter_deref)(softc,
 							softl->ipf_back[i],
 							lkey->ilik_otype,
@@ -840,7 +840,7 @@ ipf_lookup_res_num(ipf_main_softc_t *softc, int unit, u_int type, u_int number,
 /*                                                                          */
 /* Search for the "table" number passed in amongst those configured for     */
 /* that particular type.  If the type is recognised then the function to    */
-/* call to do the IP address search will be change, regardless of whether   */
+/* call to do the IP address search will be changed, regardless of whether  */
 /* or not the "table" number exists.                                        */
 /* ------------------------------------------------------------------------ */
 void *
