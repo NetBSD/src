@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.4 2012/06/19 16:50:44 hans Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.5 2012/07/22 16:52:51 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.4 2012/06/19 16:50:44 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.5 2012/07/22 16:52:51 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,7 +146,7 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * stop watchdog timer, enable watchdog timer resets
 	 */
-	mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0, 0, 0);
+	mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
 	rstoutn = read_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR);
 	write_mlmbreg(MVSOC_MLMB_RSTOUTNMASKR,
 		      rstoutn | MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN);
@@ -313,7 +313,7 @@ mvsoctmr_wdog_setmode(struct sysmon_wdog *smw)
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		sc->sc_wdog_armed = 0;
-		mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0, 0, 0);
+		mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
 	} else {
 		sc->sc_wdog_armed = 1;
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
@@ -349,7 +349,7 @@ mvsoctmr_wdog_ddb_trap(int enter)
 
 	if (sc->sc_wdog_armed) {
 		if (enter)
-			mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0, 0, 0);
+			mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG, 0xffffffff, 0, 0);
 		else
 			mvsoctmr_cntl(sc, MVSOCTMR_WATCHDOG,
 				      sc->sc_wdog_period, 1, 0);
