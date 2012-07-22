@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.6 2012/01/24 20:04:07 jakllsch Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.7 2012/07/22 17:57:57 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.6 2012/01/24 20:04:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7 2012/07/22 17:57:57 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,14 +81,14 @@ satafis_rhd_construct_cmd(struct ata_command *ata_c, uint8_t *fis)
 	fis[rhd_lba1] = (ata_c->r_lba >> 8) & 0xff;
 	fis[rhd_lba2] = (ata_c->r_lba >> 16) & 0xff;
 	if ((ata_c->flags & AT_LBA48) != 0) {
-		fis[rhd_dh] = WDSD_LBA;
+		fis[rhd_dh] = ata_c->r_device;
 		fis[rhd_lba3] = (ata_c->r_lba >> 24) & 0xff;
 		fis[rhd_lba4] = (ata_c->r_lba >> 32) & 0xff;
 		fis[rhd_lba5] = (ata_c->r_lba >> 40) & 0xff;
 		fis[rhd_features1] = (ata_c->r_features >> 8) & 0xff;
 	} else {
-		fis[rhd_dh] = ((ata_c->r_lba >> 24) & 0x0f) |
-		    (((ata_c->flags & AT_LBA) != 0) ? WDSD_LBA : 0);
+		fis[rhd_dh] = (ata_c->r_device & 0xf0) |
+		    ((ata_c->r_lba >> 24) & 0x0f);
 	}
 
 	fis[rhd_count0] = (ata_c->r_count >> 0) & 0xff;
@@ -170,8 +170,10 @@ satafis_rdh_cmd_readreg(struct ata_command *ata_c, const uint8_t *fis)
 		ata_c->r_lba |= (uint64_t)fis[rdh_lba3] << 24;
 		ata_c->r_lba |= (uint64_t)fis[rdh_lba4] << 32;
 		ata_c->r_lba |= (uint64_t)fis[rdh_lba5] << 40;
+		ata_c->r_device = fis[rdh_dh];
 	} else {
 		ata_c->r_lba |= (uint64_t)(fis[rdh_dh] & 0x0f) << 24;
+		ata_c->r_device = fis[rdh_dh] & 0xf0;
 	}
 
 	ata_c->r_count = fis[rdh_count0] << 0;
@@ -181,6 +183,4 @@ satafis_rdh_cmd_readreg(struct ata_command *ata_c, const uint8_t *fis)
 
 	ata_c->r_error = fis[rdh_error];
 	ata_c->r_status = fis[rdh_status];
-
-	ata_c->r_device = fis[rdh_dh] & 0xf0;
 }
