@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.5 2012/07/22 16:52:51 jakllsch Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.6 2012/07/22 16:54:35 jakllsch Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.5 2012/07/22 16:52:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.6 2012/07/22 16:54:35 jakllsch Exp $");
 
 #include "opt_ddb.h"
 
@@ -83,7 +83,6 @@ static int mvsoctmr_wdog_tickle(struct sysmon_wdog *);
 static int mvsoctmr_wdog_setmode(struct sysmon_wdog *);
 
 #ifdef DDB
-static struct mvsoctmr_softc *mvsoctmr_softc;
 static void mvsoctmr_wdog_ddb_trap(int);
 #endif
 
@@ -152,7 +151,6 @@ mvsoctmr_attach(device_t parent, device_t self, void *aux)
 		      rstoutn | MVSOC_MLMB_RSTOUTNMASKR_WDRSTOUTEN);
 
 #ifdef DDB
-	mvsoctmr_softc = sc;
 	db_trap_callback = mvsoctmr_wdog_ddb_trap;
 #endif
 
@@ -342,7 +340,7 @@ mvsoctmr_wdog_tickle(struct sysmon_wdog *smw)
 static void
 mvsoctmr_wdog_ddb_trap(int enter)
 {
-	struct mvsoctmr_softc *sc = mvsoctmr_softc;
+	struct mvsoctmr_softc *sc = mvsoctmr_sc;
 
 	if (sc == NULL)
 		return;
