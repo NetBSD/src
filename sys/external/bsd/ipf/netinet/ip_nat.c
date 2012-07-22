@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.4 2012/07/22 16:37:31 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.4 2012/07/22 16:37:31 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -8272,8 +8272,7 @@ ipf_nat_uncreate(fr_info_t *fin)
 /* this function should simply care if the result is zero or not.           */
 /* ------------------------------------------------------------------------ */
 static int
-ipf_nat_cmp_rules(n1, n2)
-	ipnat_t *n1, *n2;
+ipf_nat_cmp_rules(ipnat_t *n1, ipnat_t *n2)
 {
 	if (n1->in_size != n2->in_size)
 		return 1;
