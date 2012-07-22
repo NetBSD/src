@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_poolnode.c,v 1.1.1.1 2012/03/23 21:20:10 christos Exp $	*/
+/*	$NetBSD: remove_poolnode.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: remove_poolnode.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -45,8 +45,8 @@ remove_poolnode(unit, name, node, iocfunc)
 
 	if (pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op)) {
 		if ((opts & OPT_DONOTHING) == 0) {
-			perror("remove_pool:SIOCLOOKUPDELNODE");
-			return -1;
+			return ipf_perror_fd(pool_fd(), iocfunc,
+					     "remove lookup pool node");
 		}
 	}
 

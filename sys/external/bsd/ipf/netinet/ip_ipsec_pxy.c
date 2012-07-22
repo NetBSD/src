@@ -1,17 +1,30 @@
-/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.1 2012/03/23 20:36:57 christos Exp $	*/
+/*	$NetBSD: ip_ipsec_pxy.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * Simple ISAKMP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id
+ * $Id: ip_ipsec_pxy.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp $
  *
  */
 #define	IPF_IPSEC_PROXY
+
+
+/*
+ * IPSec proxy
+ */
+typedef struct ipf_ipsec_softc_s {
+	frentry_t	ipsec_fr;
+	int		ipsec_proxy_init;
+	int		ipsec_proxy_ttl;
+	ipftq_t		*ipsec_nat_tqe;
+	ipftq_t		*ipsec_state_tqe;
+	char		ipsec_buffer[1500];
+} ipf_ipsec_softc_t;
 
 
 void *ipf_p_ipsec_soft_create __P((ipf_main_softc_t *));
@@ -24,15 +37,6 @@ int ipf_p_ipsec_new __P((void *, fr_info_t *, ap_session_t *, nat_t *));
 void ipf_p_ipsec_del __P((ipf_main_softc_t *, ap_session_t *));
 int ipf_p_ipsec_inout __P((void *, fr_info_t *, ap_session_t *, nat_t *));
 int ipf_p_ipsec_match __P((fr_info_t *, ap_session_t *, nat_t *));
-
-typedef struct ipf_ipsec_softc_s {
-	frentry_t	ipsec_fr;
-	int		ipsec_proxy_init;
-	int		ipsec_proxy_ttl;
-	ipftq_t		*ipsec_nat_tqe;
-	ipftq_t		*ipsec_state_tqe;
-	char		ipsec_buffer[1500];
-} ipf_ipsec_softc_t;
 
 
 /*
@@ -139,13 +143,17 @@ ipf_p_ipsec_new(arg, fin, aps, nat)
 #ifdef USE_MUTEXES
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 #endif
+	int p, off, dlen, ttl;
 	ipsec_pxy_t *ipsec;
 	ipnat_t *ipn, *np;
 	fr_info_t fi;
 	char *ptr;
-	int p, off, dlen, ttl;
-	mb_t *m;
+	int size;
 	ip_t *ip;
+	mb_t *m;
+
+	if (fin->fin_v != 4)
+		return -1;
 
 	off = fin->fin_plen - fin->fin_dlen + fin->fin_ipoff;
 	bzero(softi->ipsec_buffer, sizeof(softi->ipsec_buffer));
@@ -163,20 +171,29 @@ ipf_p_ipsec_new(arg, fin, aps, nat)
 		return -1;
 
 	np = nat->nat_ptr;
-	aps->aps_psiz = sizeof(*ipsec) + np->in_namelen;
-	KMALLOCS(aps->aps_data, ipsec_pxy_t *, aps->aps_psiz);
-	if (aps->aps_data == NULL)
+	size = np->in_size;
+	KMALLOC(ipsec, ipsec_pxy_t *);
+	if (ipsec == NULL)
 		return -1;
 
-	ipsec = aps->aps_data;
+	KMALLOCS(ipn, ipnat_t *, size);
+	if (ipn == NULL) {
+		KFREE(ipsec);
+		return -1;
+	}
+
+	aps->aps_data = ipsec;
+	aps->aps_psiz = sizeof(*ipsec);
 	bzero((char *)ipsec, sizeof(*ipsec));
+	bzero((char *)ipn, size);
+	ipsec->ipsc_rule = ipn;
 
 	/*
 	 * Create NAT rule against which the tunnel/transport mapping is
 	 * created.  This is required because the current NAT rule does not
 	 * describe ESP but UDP instead.
 	 */
-	ipn = &ipsec->ipsc_rule;
+	ipn->in_size = size;
 	ttl = IPF_TTLVAL(softi->ipsec_nat_tqe->ifq_ttl);
 	ipn->in_tqehead[0] = ipf_nat_add_tq(softc, ttl);
 	ipn->in_tqehead[1] = ipf_nat_add_tq(softc, ttl);
@@ -197,6 +214,7 @@ ipf_p_ipsec_new(arg, fin, aps, nat)
 	ipn->in_redir = NAT_MAP;
 	ipn->in_pr[0] = IPPROTO_ESP;
 	ipn->in_pr[1] = IPPROTO_ESP;
+	ipn->in_flags = (np->in_flags | IPN_PROXYRULE);
 	MUTEX_INIT(&ipn->in_lock, "IPSec proxy NAT rule");
 
 	ipn->in_namelen = np->in_namelen;
@@ -298,7 +316,7 @@ ipf_p_ipsec_inout(arg, fin, aps, nat)
 #endif
 
 			MUTEX_ENTER(&softn->ipf_nat_new);
-			ipsec->ipsc_nat = ipf_nat_add(&fi, &ipsec->ipsc_rule,
+			ipsec->ipsc_nat = ipf_nat_add(&fi, ipsec->ipsc_rule,
 						      &ipsec->ipsc_nat,
 						      NAT_SLAVE|SI_WILDP,
 						      nat->nat_dir);
@@ -409,5 +427,7 @@ ipf_p_ipsec_del(softc, aps)
 
 		ipsec->ipsc_state = NULL;
 		ipsec->ipsc_nat = NULL;
+		ipsec->ipsc_rule->in_flags |= IPN_DELETE;
+		ipf_nat_rule_deref(softc, &ipsec->ipsc_rule);
 	}
 }

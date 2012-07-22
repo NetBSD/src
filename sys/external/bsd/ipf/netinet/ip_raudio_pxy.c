@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.1 2012/03/23 20:37:02 christos Exp $	*/
+/*	$NetBSD: ip_raudio_pxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: ip_raudio_pxy.c,v 1.1.1.2 2012/07/22 13:45:33 darrenr Exp $
  */
 
 #define	IPF_RAUDIO_PROXY
@@ -58,12 +58,14 @@ ipf_p_raudio_new(arg, fin, aps, nat)
 {
 	raudio_t *rap;
 
+	nat = nat;	/* LINT */
+
+	if (fin->fin_v != 4)
+		return -1;
+
 	KMALLOCS(aps->aps_data, void *, sizeof(raudio_t));
 	if (aps->aps_data == NULL)
 		return -1;
-
-	fin = fin;	/* LINT */
-	nat = nat;	/* LINT */
 
 	bzero(aps->aps_data, sizeof(raudio_t));
 	rap = aps->aps_data;

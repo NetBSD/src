@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.1 2012/03/23 20:36:52 christos Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -126,7 +126,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp $";
 #endif
 
 
@@ -626,10 +626,7 @@ ipf_auth_ioctl(softc, data, cmd, mode, uid, ctx)
 			error = ipf_auth_geniter(softc, token, &iter, &obj);
 		else {
 			WRITE_ENTER(&softc->ipf_tokens);
-			if (token->ipt_data == NULL)
-				ipf_token_free(softc, token);
-			else
-				ipf_token_deref(softc, token);
+			ipf_token_deref(softc, token);
 			RWLOCK_EXIT(&softc->ipf_tokens);
 			IPFERROR(10001);
 			error = ESRCH;

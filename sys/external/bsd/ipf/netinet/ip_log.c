@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.1 2012/03/23 20:36:57 christos Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * $Id: ip_log.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp $
  */
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -160,6 +160,7 @@ typedef struct ipf_log_softc_s {
 	int		ipl_used[IPL_LOGSIZE];
 	int		ipl_magic[IPL_LOGSIZE];
 	ipftuneable_t	*ipf_log_tune;
+	int		ipl_readers[IPL_LOGSIZE];
 } ipf_log_softc_t;
 
 static int magic[IPL_LOGSIZE] = { IPL_MAGIC, IPL_MAGIC_NAT, IPL_MAGIC_STATE,
@@ -199,6 +200,14 @@ ipf_log_main_unload()
 	return 0;
 }
 
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_log_soft_create                                         */
+/* Returns:     void * - NULL = failure, else pointer to log context data   */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*                                                                          */
+/* Initialise log buffers & pointers.  Also iniialised the CRC to a local   */
+/* secret for use in calculating the "last log checksum".                   */
+/* ------------------------------------------------------------------------ */
 void *
 ipf_log_soft_create(softc)
 	ipf_main_softc_t *softc;
@@ -233,9 +242,9 @@ ipf_log_soft_create(softc)
 }
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipf_log_init                                                */
+/* Function:    ipf_log_soft_init                                           */
 /* Returns:     int - 0 == success (always returned)                        */
-/* Parameters:  Nil                                                         */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
 /*                                                                          */
 /* Initialise log buffers & pointers.  Also iniialised the CRC to a local   */
 /* secret for use in calculating the "last log checksum".                   */
@@ -246,7 +255,7 @@ ipf_log_soft_init(softc, arg)
 	void *arg;
 {
 	ipf_log_softc_t *softl = arg;
-	int	i;
+	int i;
 
 	for (i = IPL_LOGMAX; i >= 0; i--) {
 		softl->iplt[i] = NULL;
@@ -274,9 +283,9 @@ ipf_log_soft_init(softc, arg)
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipf_log_unload                                              */
-/* Returns:     Nil                                                         */
-/* Parameters:  Nil                                                         */
+/* Function:    ipf_log_soft_fini                                           */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              arg(I)   - pointer to log context structure                 */
 /*                                                                          */
 /* Clean up any log data that has accumulated without being read.           */
 /* ------------------------------------------------------------------------ */
@@ -291,27 +300,58 @@ ipf_log_soft_fini(softc, arg)
 	if (softl->ipl_log_init == 0)
 		return 0;
 
+	softl->ipl_log_init = 0;
+
 	for (i = IPL_LOGMAX; i >= 0; i--) {
 		(void) ipf_log_clear(softc, i);
 
+		/*
+		 * This is a busy-wait loop so as to avoid yet another lock
+		 * to wait on.
+		 */
+		MUTEX_ENTER(&softl->ipl_mutex[i]);
+		while (softl->ipl_readers[i] > 0) {
 # if SOLARIS && defined(_KERNEL)
-		cv_destroy(&softl->ipl_wait[i]);
+			cv_broadcast(&softl->ipl_wait[i]);
+			MUTEX_EXIT(&softl->ipl_mutex[i]);
+			delay(100);
+			pollwakeup(&softc->ipf_poll_head[i], POLLRDNORM);
+# else
+			MUTEX_EXIT(&softl->ipl_mutex[i]);
+			WAKEUP(softl->iplh, i);
+			POLLWAKEUP(i);
 # endif
-		MUTEX_DESTROY(&softl->ipl_mutex[i]);
+			MUTEX_ENTER(&softl->ipl_mutex[i]);
+		}
+		MUTEX_EXIT(&softl->ipl_mutex[i]);
 	}
-
-	softl->ipl_log_init = 0;
 
 	return 0;
 }
 
 
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_log_soft_destroy                                        */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              arg(I)   - pointer to log context structure                 */
+/*                                                                          */
+/* When this function is called, it is expected that there are no longer    */
+/* any threads active in the reading code path or the logging code path.    */
+/* ------------------------------------------------------------------------ */
 void
 ipf_log_soft_destroy(softc, arg)
 	ipf_main_softc_t *softc;
 	void *arg;
 {
 	ipf_log_softc_t *softl = arg;
+	int i;
+
+	for (i = IPL_LOGMAX; i >= 0; i--) {
+# if SOLARIS && defined(_KERNEL)
+		cv_destroy(&softl->ipl_wait[i]);
+# endif
+		MUTEX_DESTROY(&softl->ipl_mutex[i]);
+	}
 
 	if (softl->ipf_log_tune != NULL) {
 		ipf_tune_array_unlink(softc, softl->ipf_log_tune);
@@ -658,6 +698,11 @@ ipf_log_read(softc, unit, uio)
 	iplog_t *ipl;
 	SPL_INT(s);
 
+	if (softl->ipl_log_init == 0) {
+		IPFERROR(40007);
+		return 0;
+	}
+
 	/*
 	 * Sanity checks.  Make sure the minor # is valid and we're copying
 	 * a valid chunk of data.
@@ -684,10 +729,13 @@ ipf_log_read(softc, unit, uio)
 	 */
 	SPL_NET(s);
 	MUTEX_ENTER(&softl->ipl_mutex[unit]);
+	softl->ipl_readers[unit]++;
 
-	while (softl->iplt[unit] == NULL) {
+	while (softl->ipl_log_init == 1 && softl->iplt[unit] == NULL) {
 # if SOLARIS && defined(_KERNEL)
-		if (!cv_wait_sig(&softl->ipl_wait[unit], &softl->ipl_mutex[unit].ipf_lk)) {
+		if (!cv_wait_sig(&softl->ipl_wait[unit],
+				 &softl->ipl_mutex[unit].ipf_lk)) {
+			softl->ipl_readers[unit]--;
 			MUTEX_EXIT(&softl->ipl_mutex[unit]);
 			IPFERROR(40003);
 			return EINTR;
@@ -699,6 +747,7 @@ ipf_log_read(softc, unit, uio)
 #   ifdef IPL_SELECT
 		if (uio->uio_fpflags & (FNBLOCK|FNDELAY)) {
 			/* this is no blocking system call */
+			softl->ipl_readers[unit]--;
 			MUTEX_EXIT(&softl->ipl_mutex[unit]);
 			return 0;
 		}
@@ -718,13 +767,21 @@ ipf_log_read(softc, unit, uio)
 		error = SLEEP(unit + softl->iplh, "ipl sleep");
 #   endif /* __osf__ */
 #  endif /* __hpux */
+		SPL_NET(s);
+		MUTEX_ENTER(&softl->ipl_mutex[unit]);
 		if (error) {
+			softl->ipl_readers[unit]--;
+			MUTEX_EXIT(&softl->ipl_mutex[unit]);
 			IPFERROR(40004);
 			return error;
 		}
-		SPL_NET(s);
-		MUTEX_ENTER(&softl->ipl_mutex[unit]);
 # endif /* SOLARIS */
+	}
+	if (softl->ipl_log_init != 1) {
+		softl->ipl_readers[unit]--;
+		MUTEX_EXIT(&softl->ipl_mutex[unit]);
+		IPFERROR(40008);
+		return EIO;
 	}
 
 # if (defined(BSD) && (BSD >= 199101)) || defined(__FreeBSD__) || \
@@ -763,6 +820,7 @@ ipf_log_read(softc, unit, uio)
 		softl->ipll[unit] = NULL;
 	}
 
+	softl->ipl_readers[unit]--;
 	MUTEX_EXIT(&softl->ipl_mutex[unit]);
 	SPL_X(s);
 	return error;

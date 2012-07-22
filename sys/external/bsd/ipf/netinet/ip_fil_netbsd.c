@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.1 2012/03/23 20:36:55 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp $";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -612,7 +612,7 @@ ipfioctl(dev, cmd, data, mode
 	}
 
 	if (ipfmain.ipf_running <= 0) {
-		if (unit != IPL_LOGIPF) {
+		if (unit != IPL_LOGIPF && cmd != SIOCIPFINTERROR) {
 			ipfmain.ipf_interror = 130003;
 			return EIO;
 		}
@@ -1628,8 +1628,8 @@ ipf_checkv4sum(fin)
 	if ((fin->fin_flx & FI_SHORT) != 0)
 		return 1;
 
-	if (fin->fin_cksum != 0)
-		return (fin->fin_cksum == 1) ? 0 : -1;
+	if (fin->fin_cksum != FI_CK_NEEDED)
+		return (fin->fin_cksum > FI_CK_NEEDED) ? 0 : -1;
 
 	manual = 0;
 	m = fin->fin_m;
@@ -1659,16 +1659,16 @@ ipf_checkv4sum(fin)
 	if (pflag != 0) {
 		if (cflags == (pflag | M_CSUM_TCP_UDP_BAD)) {
 			fin->fin_flx |= FI_BAD;
-			fin->fin_cksum = -1;
+			fin->fin_cksum = FI_CK_BAD;
 		} else if (cflags == (pflag | M_CSUM_DATA)) {
 			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0) {
 				fin->fin_flx |= FI_BAD;
-				fin->fin_cksum = -1;
+				fin->fin_cksum = FI_CK_BAD;
 			} else {
-				fin->fin_cksum = 1;
+				fin->fin_cksum = FI_CK_SUMOK;
 			}
 		} else if (cflags == pflag) {
-			fin->fin_cksum = 1;
+			fin->fin_cksum = FI_CK_SUMOK;
 		} else {
 			manual = 1;
 		}
@@ -1705,8 +1705,8 @@ ipf_checkv6sum(fin)
 	if ((fin->fin_flx & FI_SHORT) != 0)
 		return 1;
 
-	if (fin->fin_cksum != 0)
-		return (fin->fin_cksum == 1) ? 0 : -1;
+	if (fin->fin_cksum != FI_CK_SUMOK)
+		return (fin->fin_cksum > FI_CK_NEEDED) ? 0 : -1;
 
 
 	manual = 0;
@@ -1883,6 +1883,10 @@ ipf_pullup(xmin, fin, len)
 		fin->fin_ip = (ip_t *)ip;
 		if (fin->fin_dp != NULL)
 			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		if (fin->fin_fraghdr != NULL)
+			fin->fin_fraghdr = (char *)ip +
+					   ((char *)fin->fin_fraghdr -
+					    (char *)fin->fin_ip);
 	}
 
 	if (len == fin->fin_plen)

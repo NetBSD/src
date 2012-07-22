@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.1 2012/03/23 20:37:04 christos Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id
+ * $Id: ip_state.h,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__

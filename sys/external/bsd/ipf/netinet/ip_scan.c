@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_scan.c,v 1.1.1.1 2012/03/23 20:37:02 christos Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.1.1.2 2012/07/22 13:45:34 darrenr Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -60,7 +60,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)$Id: ip_scan.c,v 1.1.1.2 2012/07/22 13:45:34 darrenr Exp $";
 #endif
 
 #ifdef	IPFILTER_SCAN	/* endif at bottom of file */

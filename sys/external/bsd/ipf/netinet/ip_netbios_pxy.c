@@ -1,9 +1,9 @@
-/*	$NetBSD: ip_netbios_pxy.c,v 1.1.1.1 2012/03/23 20:37:01 christos Exp $	*/
+/*	$NetBSD: ip_netbios_pxy.c,v 1.1.1.2 2012/07/22 13:45:30 darrenr Exp $	*/
 
 /*
  * Simple netbios-dgm transparent proxy for in-kernel use.
  * For use with the NAT code.
- * Id
+ * $Id: ip_netbios_pxy.c,v 1.1.1.2 2012/07/22 13:45:30 darrenr Exp $
  */
 
 /*-
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id
+ * $Id: ip_netbios_pxy.c,v 1.1.1.2 2012/07/22 13:45:30 darrenr Exp $
  */
 
 #define	IPF_NETBIOS_PROXY
