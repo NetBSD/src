@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.12 2012/07/22 23:46:10 matt Exp $
+#	$NetBSD: P2020DS,v 1.13 2012/07/23 16:27:44 matt Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.12 $"
+ident 		"P2020DS-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -67,6 +67,10 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
