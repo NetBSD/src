@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.47 2011/12/22 15:33:30 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.48 2012/07/23 15:10:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1062,7 +1062,9 @@ GLOBAL(doadump)
  * and return to monitor.
  */
 ENTRY_NOPROFILE(doboot)
-        movw	#PSL_HIGHIPL,%sr	| no interrupts
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+	movl	_C_LABEL(boothowto),%d7	| load howto
+	movl	%sp@(4),%d2		| arg
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache5		| yes, skip
@@ -1085,18 +1087,9 @@ Lnocache5:
 	.long	0x4e7b0807		| movc %d0,%srp
 #endif /* M68040 */
 Lbootcommon:
-	movl	_C_LABEL(boothowto),%d0	| load howto
-	movl	%sp@(4),%d2		| arg
 	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
 	movl	#0,%d3
 	movc	%d3,%vbr		| monitor %vbr
-#if 0
-	andl	#0,%d0			| mask off
-	tstl	%d0			| 
-	bne	Lsboot			| sboot?
-	tstl	%d2
-	beq	Ldoreset
-#endif
 
 	movl	#0x41000000,%a0		| base = (int **)0x4100.0000
 	movl	%a0@,%d0		| *((int *)base[0])
