@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1123 2012/07/23 03:32:30 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1124 2012/07/23 07:47:14 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1445,6 +1445,7 @@ product ATI RS690_PPB_7916	0x7916	RS690 PCI Express Bridge GPP Port C
 product ATI RS690_PPB_7917	0x7917	RS690 PCI Express Bridge GPP Port D
 product ATI RADEON_HD4650	0x9498 	Radeon HD4650
 product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
+product ATI RADEON_HD3400_M82	0x95c4	Mobility Radeon HD 3400 Series (M82)
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
 product ATI RADEON_HD6520G	0x9647	Radeon HD6520G
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
@@ -4426,7 +4427,9 @@ product SIS 600PMC		0x0009	600 Power Mngmt Controller
 product SIS 180_SATA		0x0180	180 SATA Controller
 product SIS 181_SATA		0x0181	181 SATA Controller
 product SIS 182_SATA		0x0182	182 SATA Controller
+product SIS 183_SATA		0x0183	183 SATA controller
 product SIS 190			0x0190	190 Ethernet
+product SIS 191			0x0191	191 Gigabit Ethernet
 product SIS 5597_VGA		0x0200	5597/5598 Integrated VGA
 product SIS 300			0x0300	300/305 AGP VGA
 product SIS 315PRO_VGA		0x0325	315 Pro VGA
@@ -4450,6 +4453,7 @@ product SIS 652			0x0652	652 Host Bridge
 product SIS 655			0x0655	655 Host Bridge
 product SIS 658			0x0658	658 Host Bridge
 product SIS 661			0x0661	661 Host Bridge
+product SIS 671			0x0671	671 Host Bridge
 product SIS 730			0x0730	730 Host Bridge
 product SIS 733			0x0733	733 Host Bridge
 product SIS 735			0x0735	735 Host Bridge
@@ -4471,6 +4475,8 @@ product SIS 962			0x0962	962 Host Bridge
 product SIS 963			0x0963	963 Host Bridge
 product SIS 964			0x0964	964 Host Bridge
 product SIS 965			0x0965	965 Host Bridge
+product SIS 966			0x0966	966 Host Bridge
+product SIS 968			0x0968	968 Host Bridge
 product SIS 5597_IDE		0x5513	5597/5598 IDE Controller
 product SIS 5597_HB		0x5597	5597/5598 Host Bridge
 product SIS 530VGA		0x6306	530 GUI Accelerator+3D
@@ -4481,6 +4487,7 @@ product SIS 7002		0x7002	7002 USB 2.0 Host Controller
 product SIS 7012_AC		0x7012	7012 AC-97 Sound
 product SIS 7016		0x7016	7016 10/100 Ethernet
 product SIS 7018		0x7018	7018 Sound
+product SIS 7502		0x7502	7502 HD audio
 
 /* Silicon Motion products */
 product SILMOTION SM502		0x0501	Voyager GX
