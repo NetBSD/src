@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2012/02/19 21:06:22 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2012/07/23 04:13:06 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2012/02/19 21:06:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2012/07/23 04:13:06 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -303,13 +303,17 @@ trap(struct trapframe *tf)
 			l->l_md.md_flags |= MDLWP_USEDFPU;
 		}
 
-		if ((rv = fpu_emulate(tf, (struct fpreg *)&pcb->pcb_fpu))) {
-			KSI_INIT_TRAP(&ksi);
-			ksi.ksi_signo = rv;
+		if (fpu_emulate(tf, &pcb->pcb_fpu, &ksi)) {
+			if (ksi.ksi_signo == 0)	/* was emulated */
+				break;
+		} else {
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_ILLOPC;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)tf->tf_srr0;
-			trapsignal(l, &ksi);
 		}
+
+		trapsignal(l, &ksi);
 		break;
 
 	case EXC_MCHK:
