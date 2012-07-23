@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.10 2012/07/20 02:04:13 matt Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.11 2012/07/23 13:32:19 matt Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -331,10 +331,10 @@ __bitfield(const uint32_t *src, size_t start, size_t len)
 	src += start / 32;
 	start %= 32;
 
-	uint32_t dst = be32toh(src[0]) >> start;
+	uint32_t dst = src[0] >> start;
 
 	if (__predict_false((start + len - 1) / 32 != start / 32)) {
-		dst |= be32toh(src[1]) << (32 - start);
+		dst |= src[1] << (32 - start);
 	}
 
 	return dst & (__BIT(len) - 1);
