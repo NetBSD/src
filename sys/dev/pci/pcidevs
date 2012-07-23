@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1122 2012/07/22 14:36:44 matt Exp $
+$NetBSD: pcidevs,v 1.1123 2012/07/23 03:32:30 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2691,6 +2691,23 @@ product INTEL C600_SAS_11	0x1d6d	C600 SAS Controller
 product INTEL C600_SAS_12	0x1d6e	C600 SAS Controller
 product INTEL C600_SAS_SATA_4	0x1d6f	C600 SAS Controller (SATA)
 product INTEL C600_SMB_2	0x1d70	C600/X79 Series SMBus Controller
+product INTEL 7SERIES_AHCI	0x1e03	7 Series SATA Controller (AHCI)
+product INTEL 7SERIES_PCIE_1	0x1e10	7 Series PCIE
+product INTEL 7SERIES_PCIE_2	0x1e12	7 Series PCIE
+product INTEL 7SERIES_PCIE_3	0x1e14	7 Series PCIE
+product INTEL 7SERIES_PCIE_4	0x1e16	7 Series PCIE
+product INTEL 7SERIES_PCIE_5	0x1e18	7 Series PCIE
+product INTEL 7SERIES_PCIE_6	0x1e1a	7 Series PCIE
+product INTEL 7SERIES_PCIE_7	0x1e1c	7 Series PCIE
+product INTEL 7SERIES_PCIE_8	0x1e1e	7 Series PCIE
+product INTEL 7SERIES_HDA	0x1e20	7 Series HD Audio
+product INTEL 7SERIES_SMB	0x1e22	7 Series SMBus Controller
+product INTEL 7SERIES_EHCI_1	0x1e26	7 Series USB
+product INTEL 7SERIES_EHCI_2	0x1e2d	7 Series USB
+product INTEL 7SERIES_XHCI	0x1e31	7 Series USB xHCI
+product INTEL 7SERIES_MEI_1	0x1e3a	7 Series MEI Controller
+product INTEL 7SERIES_MEI_2	0x1e3b	7 Series MEI Controller
+product INTEL QM77_LPC		0x1e55	QM77 LPC
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
