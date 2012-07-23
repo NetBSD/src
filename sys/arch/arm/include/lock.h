@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2012/07/15 08:26:21 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.19 2012/07/23 12:36:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -83,10 +83,10 @@ __swp(int __val, volatile unsigned char *__ptr)
 		"1:\t"
 		"ldrexb\t%[__rv], [%[__ptr]]"			"\n\t"
 		"strexb\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
-		"cmpeq\t%[__tmp], #0"				"\n\t"
+		"cmp\t%[__tmp], #0"				"\n\t"
 		"bne 1b"
 	    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
-	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "memory");
+	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
 	return __rv;
 #else
 	__asm volatile("swpb %0, %1, [%2]"
