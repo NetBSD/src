@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.56 2012/05/23 10:01:51 cegger Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.57 2012/07/23 01:31:01 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.56 2012/05/23 10:01:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.57 2012/07/23 01:31:01 jym Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -198,7 +198,6 @@ struct xbdback_instance {
 	/* other state */
 	int xbdi_same_page; /* are we merging two segments on the same page? */
 	uint xbdi_pendingreqs; /* number of I/O in fly */
-	int xbdi_errps; /* errors per second */
 	struct timeval xbdi_lasterr_time;    /* error time tracking */
 #ifdef DEBUG
 	struct timeval xbdi_lastfragio_time; /* fragmented I/O tracking */
@@ -1460,8 +1459,11 @@ xbdback_co_io_gotfrag2(struct xbdback_instance *xbdi, void *obj)
 	seg_size = this_ls - this_fs + 1;
 
 	if (seg_size < 0) {
-		printf("xbdback_io domain %d: negative-size request (%d %d)\n",
-		       xbdi->xbdi_domid, this_ls, this_fs);
+		if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
+			printf("xbdback_io domain %d: negative-size request "
+			    "(%d %d)\n",
+			    xbdi->xbdi_domid, this_ls, this_fs);
+		}
 		xbdback_io_error(xbdi->xbdi_io, EINVAL);
 		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdback_co_main_incr;
@@ -1775,7 +1777,9 @@ xbdback_map_shm(struct xbdback_io *xbd_io)
 		xbdi->xbdi_cont = xbdback_co_wait_shm_callback;
 		return NULL;
 	default:
-		printf("xbdback_map_shm: xen_shm error %d ", error);
+		if (ratecheck(&xbdi->xbdi_lasterr_time, &xbdback_err_intvl)) {
+			printf("xbdback_map_shm: xen_shm error %d ", error);
+		}
 		xbdback_io_error(xbdi->xbdi_io, error);
 		xbdi->xbdi_io = NULL;
 		xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
