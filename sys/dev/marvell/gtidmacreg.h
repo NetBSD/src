@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmacreg.h,v 1.2 2010/06/08 05:15:52 kiyohara Exp $	*/
+/*	$NetBSD: gtidmacreg.h,v 1.3 2012/07/23 06:09:47 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -43,12 +43,16 @@
 
 #define MVXORE_NWINDOW		8
 #define MVXORE_NREMAP		4
-#define MVXORE_NINTRRUPT	2
 #define MVXORE_MAXXFER		(16 * 1024 * 1024 - 1)	/* 16M - 1 Byte */
 #define MVXORE_NSRC		8
 
 
 #define GTIDMAC_CHAN2BASE(c)	((((c) & 0x4) << 6) + (((c) & 0x3) << 2))
+#define MVXORE_PORT2BASE(sc, p)	\
+    (((sc)->sc_gtidmac_nchan == 0 && (p) == 0) ? -0x100 : 0x000)
+#define MVXORE_CHAN2BASE(sc, c)	\
+    (MVXORE_PORT2BASE(sc, (c) & 0x4) + (((c) & 0x3) << 2))
+
 
 /* IDMA Descriptor Register Map */
 #define GTIDMAC_CIDMABCR(c)	/* Chan IDMA Byte Count */ \
@@ -126,9 +130,11 @@
 #define GTIDMAC_ESR_SEL			0x1f
 
 /* XOR Engine Control Registers */
-#define MVXORE_XECHAR		0x0900			/* Channel Arbiter */
+#define MVXORE_XECHAR(sc, p)	/* Channel Arbiter */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0900)
 #define MVXORE_XECHAR_SLICEOWN(s, c)	((c) << (s))
-#define MVXORE_XEXCR(x)		(0x0910 + ((x) << 2))	/* Configuration */
+#define MVXORE_XEXCR(sc, x)	/* Configuration */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0910)
 #define MVXORE_XEXCR_OM_MASK		(7 << 0)	/* Operation Mode */
 #define MVXORE_XEXCR_OM_XOR		(0 << 0)
 #define MVXORE_XEXCR_OM_CRC32		(1 << 0)
@@ -147,7 +153,8 @@
 #define MVXORE_XEXCR_DWRREQSWP		(1 << 13)	/*  ReadReq/WriteRes */
 #define MVXORE_XEXCR_DESSWP		(1 << 14)	/*  Desc read/write */
 #define MVXORE_XEXCR_REGACCPROTECT	(1 << 15)	/* Reg Access protect */
-#define MVXORE_XEXACTR(x)	(0x0920 + ((x) << 2))	/* Activation */
+#define MVXORE_XEXACTR(sc, x)	/* Activation */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0920)
 #define MVXORE_XEXACTR_XESTART		(1 << 0)
 #define MVXORE_XEXACTR_XESTOP		(1 << 1)
 #define MVXORE_XEXACTR_XEPAUSE		(1 << 2)
@@ -157,8 +164,10 @@
 #define MVXORE_XEXACTR_XESTATUS_ACT	(1 << 4)	/* active */
 #define MVXORE_XEXACTR_XESTATUS_P	(2 << 4)	/* paused */
 /* XOR Engine Interrupt Registers */
-#define MVXORE_XEICR		0x0930			/* Interrupt Cause */
-#define MVXORE_XEIMR		0x0940			/* Interrupt Mask */
+#define MVXORE_XEICR(sc, p)	/* Interrupt Cause */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0930)
+#define MVXORE_XEIMR(sc, p)	/* Interrupt Mask */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0940)
 #define MVXORE_I_BITS			16
 #define MVXORE_I(c, b)			((b) << (MVXORE_I_BITS * (c)))
 #define MVXORE_I_EOD			(1 << 0)	/* End of Descriptor */
@@ -171,9 +180,11 @@
 #define MVXORE_I_OWN			(1 << 7)	/* Ownership */
 #define MVXORE_I_INTPARITY		(1 << 8)	/* Parity error */
 #define MVXORE_I_XBAR			(1 << 9)	/* Crossbar Parity E */
-#define MVXORE_XEECR		0x0950			/* Error Cause */
+#define MVXORE_XEECR(sc, p)	/* Error Cause */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0950)
 #define MVXORE_XEECR_ERRORTYPE_MASK	0x0000001f
-#define MVXORE_XEEAR		0x0960			/* Error Address */
+#define MVXORE_XEEAR(sc, p)	/* Error Address */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0960)
 
 /* IDMA Address Decoding Registers Map */
 #define GTIDMAC_BARX(r)		(0x0a00 + ((r) << 3))	/* Base Address x */
@@ -193,36 +204,51 @@
 #define GTIDMAC_CXAPR_WINACC_FA		0x3		/* Full access */
 
 /* XOR Engine Descriptor Registers */
-#define MVXORE_XEXNDPR(x)	(0x0b00 + ((x) << 2))	/* Next Desc Pointer */
-#define MVXORE_XEXCDPR(x)	(0x0b10 + ((x) << 2))	/* Current Desc Ptr */
-#define MVXORE_XEXBCR(x)	(0x0b20 + ((x) << 2))	/* Byte Count */
+#define MVXORE_XEXNDPR(sc, x)	/* Next Desc Pointer */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0b00)
+#define MVXORE_XEXCDPR(sc, x)	/* Current Desc Ptr */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0b10)
+#define MVXORE_XEXBCR(sc, x)	/* Byte Count */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0b20)
 /* XOR Engine Address Decording Registers */
-#define MVXORE_XEXWCR(x)	(0x0b40 + ((x) << 2))	/* Window Control */
+#define MVXORE_XEXWCR(sc, x)	/* Window Control */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0b40)
 #define MVXORE_XEXWCR_WINEN(w)		(1 << (w))
 #define MVXORE_XEXWCR_WINACC(w, ac)	((ac) << (((w) << 1) + 16))
 #define MVXORE_XEXWCR_WINACC_NOAA	0x0		/* No access allowed */
 #define MVXORE_XEXWCR_WINACC_RO		0x1		/* Read Only */
 #define MVXORE_XEXWCR_WINACC_RESV	0x2		/* Reserved */
 #define MVXORE_XEXWCR_WINACC_FA		0x3		/* Full access */
-#define MVXORE_XEBARX(x)	(0x0b50 + ((x) << 2))	/* Base Address */
+#define MVXORE_XEBARX(sc, p, w)	/* Base Address */ \
+			(MVXORE_PORT2BASE((sc), (p)) + 0x0b50 + ((w) << 2))
 #define MVXORE_XEBARX_TARGET(t)		((t) & 0xf)
 #define MVXORE_XEBARX_ATTR(a)		(((a) & 0xff) << 8)
 #define MVXORE_XEBARX_BASE(b)		((b) & 0xffff0000)
-#define MVXORE_XESMRX(x)	(0x0b70 + ((x) << 2))	/* Size Mask */
+#define MVXORE_XESMRX(sc, p, w)	/* Size Mask */ \
+			(MVXORE_PORT2BASE((sc), (p)) + 0x0b70 + ((w) << 2))
 #define MVXORE_XESMRX_SIZE(s)		(((s) - 1) & 0xffff0000)
-#define MVXORE_XEHARRX(x)	(0x0b90 + ((x) << 2))	/* High Address Remap */
-#define MVXORE_XEXAOCR(x)	(0x0ba0 + ((x) << 2))	/* Addr Override Ctrl */
+#define MVXORE_XEHARRX(sc, p, w)/* High Address Remap */ \
+			(MVXORE_PORT2BASE((sc), (p)) + 0x0b90 + ((w) << 2))
+#define MVXORE_XEXAOCR(sc, x)	/* Addr Override Ctrl */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0ba0)
 /* XOR Engine ECC/MemInit Registers */
-#define MVXORE_XEXDPR(x)	(0x0bb0 + ((x) << 2))	/* Destination Ptr */
-#define MVXORE_XEXBSR(x)	(0x0bc0 + ((x) << 2))	/* Block Size */
-#define MVXORE_XETMCR		0x0bd0			/* Timer Mode Control */
+#define MVXORE_XEXDPR(sc, x)	/* Destination Ptr */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0bb0)
+#define MVXORE_XEXBSR(sc, x)	/* Block Size */ \
+				(MVXORE_CHAN2BASE((sc), (x)) + 0x0bc0)
+#define MVXORE_XETMCR(sc, p)	/* Timer Mode Control */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0bd0)
 #define MVXORE_XETMCR_TIMEREN		(1 << 0)
 #define MVXORE_XETMCR_SECTIONSIZECTRL_MASK  0x1f
 #define MVXORE_XETMCR_SECTIONSIZECTRL_SHIFT 8
-#define MVXORE_XETMIVR		0x0bd4			/* Tmr Mode Init Val */
-#define MVXORE_XETMCVR		0x0bd8			/* Tmr Mode Curr Val */
-#define MVXORE_XEIVRL		0x0be0			/* Initial Value Low */
-#define MVXORE_XEIVRH		0x0be4			/* Initial Value High */
+#define MVXORE_XETMIVR(sc, p)	/* Tmr Mode Init Val */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0bd4)
+#define MVXORE_XETMCVR(sc, p)	/* Tmr Mode Curr Val */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0bd8)
+#define MVXORE_XEIVRL(sc, p)	/* Initial Value Low */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0be0)
+#define MVXORE_XEIVRH(sc, p)	/* Initial Value High */ \
+				(MVXORE_PORT2BASE((sc), (p)) + 0x0be4)
 
 
 struct gtidmac_desc {
