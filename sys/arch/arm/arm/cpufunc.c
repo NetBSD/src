@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.108 2012/07/21 12:19:15 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.109 2012/07/23 15:51:48 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.108 2012/07/21 12:19:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.109 2012/07/23 15:51:48 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2993,8 +2993,8 @@ arm11x6_setup(char *args)
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1136JS) { /* ARM1136JSr0pX */
 		cpuctrl |= CPU_CONTROL_FI_ENABLE;
-		auxctrl = ARM11R0_AUXCTL_PFI;
-		auxctrl_wax = ~ARM11R0_AUXCTL_PFI;
+		auxctrl = ARM1136_AUXCTL_PFI;
+		auxctrl_wax = ~ARM1136_AUXCTL_PFI;
 	}
 
 	/*

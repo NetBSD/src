@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.55 2012/07/17 06:12:11 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.56 2012/07/23 15:51:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -317,13 +317,6 @@
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
-/* ARM11r0 Auxiliary Control Register (CP15 register 1, opcode2 1) */
-#define ARM11R0_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
-					   /* This is an undocumented flag
-					    * used to work around a cache bug
-					    * in r0 steppings. See errata
-					    * 364296.
-					    */
 /* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
 #define	ARM11X6_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
@@ -334,6 +327,13 @@
 #define	ARM11X6_AUXCTL_RV	0x00000040 /* block transfer cache disable */
 #define	ARM11X6_AUXCTL_CZ	0x00000080 /* restrict cache size */
 
+/* ARM1136 Auxiliary Control Register (CP15 register 1, opcode2 1) */
+#define ARM1136_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
+					   /* This is an undocumented flag
+					    * used to work around a cache bug
+					    * in r0 steppings. See errata
+					    * 364296.
+					    */
 /* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
 #define	ARM1176_AUXCTL_PHD	0x10000000 /* inst. prefetch halting disable */
 #define	ARM1176_AUXCTL_BFD	0x20000000 /* branch folding disable */
