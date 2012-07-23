@@ -1,6 +1,6 @@
-/*	$NetBSD: gtidmac.c,v 1.7 2012/01/30 23:31:28 matt Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.8 2012/07/23 06:09:47 kiyohara Exp $	*/
 /*
- * Copyright (c) 2008 KIYOHARA Takashi
+ * Copyright (c) 2008, 2012 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.7 2012/01/30 23:31:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.8 2012/07/23 06:09:47 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,7 +147,9 @@ static int gtidmac_match(device_t, struct cfdata *, void *);
 static void gtidmac_attach(device_t, device_t, void *);
 
 static int gtidmac_intr(void *);
-static int mvxore_intr(void *);
+static int mvxore_port0_intr(void *);
+static int mvxore_port1_intr(void *);
+static int mvxore_intr(struct gtidmac_softc *, int);
 
 static void gtidmac_process(struct dmover_backend *);
 static void gtidmac_dmover_run(struct dmover_backend *);
@@ -162,6 +164,9 @@ static uint32_t mvxore_finish(void *, int, int);
 
 static void gtidmac_wininit(struct gtidmac_softc *);
 static void mvxore_wininit(struct gtidmac_softc *);
+
+static int gtidmac_buffer_setup(struct gtidmac_softc *);
+static int mvxore_buffer_setup(struct gtidmac_softc *);
 
 #ifdef GTIDMAC_DEBUG
 static void gtidmac_dump_idmacreg(struct gtidmac_softc *, int);
@@ -271,6 +276,45 @@ static const struct dmover_algdesc mvxore_algdescs[] = {
 	},
 };
 
+static struct {
+	int model;
+	int idmac_nchan;
+	int idmac_irq;
+	int xore_nchan;
+	int xore_irq;
+} channels[] = {
+	/*
+	 * Marvell System Controllers:
+	 * need irqs in attach_args.
+	 */
+	{ MARVELL_DISCOVERY,		8, -1, 0, -1 },
+	{ MARVELL_DISCOVERY_II,		8, -1, 0, -1 },
+	{ MARVELL_DISCOVERY_III,	8, -1, 0, -1 },
+#if 0
+	{ MARVELL_DISCOVERY_LT,		4, -1, 2, -1 },
+	{ MARVELL_DISCOVERY_V,		4, -1, 2, -1 },
+	{ MARVELL_DISCOVERY_VI,		4, -1, 2, -1 },		????
+#endif
+
+	/*
+	 * Marvell System on Chips:
+	 * No need irqs in attach_args.  We always connecting to interrupt-pin
+	 * statically.
+	 */
+	{ MARVELL_ORION_1_88F1181,	4, 24, 0, -1 },
+	{ MARVELL_ORION_2_88F1281,	4, 24, 0, -1 },
+	{ MARVELL_ORION_1_88F5082,	4, 24, 0, -1 },
+	{ MARVELL_ORION_1_88F5180N,	4, 24, 0, -1 },
+	{ MARVELL_ORION_1_88F5181,	4, 24, 0, -1 },
+	{ MARVELL_ORION_1_88F5182,	4, 24, 2, 30 },
+	{ MARVELL_ORION_2_88F5281,	4, 24, 0, -1 },
+	{ MARVELL_ORION_1_88W8660,	4, 24, 0, -1 },
+	{ MARVELL_KIRKWOOD_88F6180,	0, -1, 4, 5 },
+	{ MARVELL_KIRKWOOD_88F6192,	0, -1, 4, 5 },
+	{ MARVELL_KIRKWOOD_88F6281,	0, -1, 4, 5 },
+	{ MARVELL_KIRKWOOD_88F6282,	0, -1, 4, 5 },
+};
+
 CFATTACH_DECL_NEW(gtidmac_gt, sizeof(struct gtidmac_softc),
     gtidmac_match, gtidmac_attach, NULL, NULL);
 CFATTACH_DECL_NEW(gtidmac_mbus, sizeof(struct gtidmac_softc),
@@ -282,15 +326,18 @@ static int
 gtidmac_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
+	int i;
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
-	    mva->mva_irq == MVA_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
-
-	mva->mva_size = GTIDMAC_SIZE;
-	return 1;
+	for (i = 0; i < __arraycount(channels); i++)
+		if (mva->mva_model == channels[i].model) {
+			mva->mva_size = GTIDMAC_SIZE;
+			return 1;
+		}
+	return 0;
 }
 
 /* ARGSUSED */
@@ -299,51 +346,51 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 {
 	struct gtidmac_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
-	bus_dma_segment_t segs, segs_xore;
-	struct gtidmac_dma_desc *dd;
 	prop_dictionary_t dict = device_properties(self);
-	uint32_t mask, dmb_speed, xore_irq;
-	int idmac_nchan, xore_nchan, nsegs, nsegs_xore, i, j, k, n;
+	uint32_t idmac_irq, xore_irq, dmb_speed;
+	int idmac_nchan, xore_nchan, nsegs, i, j, n;
 
-	xore_irq = 0;
-	idmac_nchan = 8;
-	xore_nchan = 0;
-	switch (mva->mva_model) {
-	case MARVELL_DISCOVERY:
-	case MARVELL_DISCOVERY_II:
-	case MARVELL_DISCOVERY_III:
-		break;
-
-	case MARVELL_ORION_1_88F1181:
-	case MARVELL_ORION_1_88F5082:
-	case MARVELL_ORION_1_88F5180N:
-	case MARVELL_ORION_1_88F5181:
-	case MARVELL_ORION_1_88W8660:
-	case MARVELL_ORION_2_88F1281:
-	case MARVELL_ORION_2_88F5281:
-		idmac_nchan = 4;
-		break;
-
-#if 0
-	case MARVELL_DISCOVERY_LT:
-	case MARVELL_DISCOVERY_V:
-	case MARVELL_DISCOVERY_VI:	????
-#endif
-	case MARVELL_ORION_1_88F5182:
-		idmac_nchan = 4;
-		xore_nchan = 2;
-		break;
+	for (i = 0; i < __arraycount(channels); i++)
+		if (mva->mva_model == channels[i].model)
+			break;
+	idmac_nchan = channels[i].idmac_nchan;
+	idmac_irq = channels[i].idmac_irq;
+	if (idmac_nchan != 0) {
+		if (idmac_irq == -1)
+			idmac_irq = mva->mva_irq;
+		if (idmac_irq == -1)
+			/* Discovery */
+			if (!prop_dictionary_get_uint32(dict,
+			    "idmac-irq", &idmac_irq)) {
+				aprint_error(": no idmac-irq property\n");
+				return;
+			}
 	}
-	if (xore_nchan != 0)
-		if (!prop_dictionary_get_uint32(dict, "xore-irq-begin",
-		    &xore_irq)) {
-			aprint_error(": no xore-irq-begin property\n");
-			return;
-		}
+	xore_nchan = channels[i].xore_nchan;
+	xore_irq = channels[i].xore_irq;
+	if (xore_nchan != 0) {
+		if (xore_irq == -1)
+			xore_irq = mva->mva_irq;
+		if (xore_irq == -1)
+			/* Discovery LT/V/VI */
+			if (!prop_dictionary_get_uint32(dict,
+			    "xore-irq", &xore_irq)) {
+				aprint_error(": no xore-irq property\n");
+				return;
+			}
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": Marvell IDMA Controller%s\n",
 	    xore_nchan ? "/XOR Engine" : "");
+	if (idmac_nchan > 0)
+		aprint_normal_dev(self,
+		    "IDMA Controller %d channels, intr %d...%d\n",
+		    idmac_nchan, idmac_irq, idmac_irq + GTIDMAC_NINTRRUPT - 1);
+	if (xore_nchan > 0)
+		aprint_normal_dev(self,
+		    "XOR Engine %d channels, intr %d...%d\n",
+		    xore_nchan, xore_irq, xore_irq + xore_nchan - 1);
 
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
@@ -383,198 +430,54 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 		for (j = 0; j < sizeof(sc->sc_pbuf[i].pbuf); j++)
 			sc->sc_pbuf[i].pbuf[j] = i;
 
-	/* IDMAC DMA descriptor buffer */
-	sc->sc_gtidmac_nchan = idmac_nchan;
-	if (bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * idmac_nchan,
-	    PAGE_SIZE, 0, &segs, 1, &nsegs, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(self,
-		    "bus_dmamem_alloc failed: descriptor buffer\n");
-		goto fail4;
-	}
-	if (bus_dmamem_map(sc->sc_dmat, &segs, 1,
-	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * idmac_nchan,
-	    (void **)&sc->sc_dbuf, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(self,
-		    "bus_dmamem_map failed: descriptor buffer\n");
-		goto fail5;
-	}
-	if (bus_dmamap_create(sc->sc_dmat,
-	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * idmac_nchan, 1,
-	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * idmac_nchan, 0,
-	    BUS_DMA_NOWAIT, &sc->sc_dmap)) {
-		aprint_error_dev(self,
-		    "bus_dmamap_create failed: descriptor buffer\n");
-		goto fail6;
-	}
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, sc->sc_dbuf,
-	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * idmac_nchan, NULL,
-	    BUS_DMA_NOWAIT)) {
-		aprint_error_dev(self,
-		    "bus_dmamap_load failed: descriptor buffer\n");
-		goto fail7;
-	}
-	SLIST_INIT(&sc->sc_dlist);
-	for (i = 0; i < GTIDMAC_NDESC * idmac_nchan; i++) {
-		dd = &sc->sc_dd_buffer[i];
-		dd->dd_index = i;
-		dd->dd_idmac_vaddr = &sc->sc_dbuf[i];
-		dd->dd_paddr = sc->sc_dmap->dm_segs[0].ds_addr +
-		    (sizeof(struct gtidmac_desc) * i);
-		SLIST_INSERT_HEAD(&sc->sc_dlist, dd, dd_next);
-	}
-
-	/* Initialize IDMAC DMA channels */
-	mask = 0;
-	for (i = 0; i < idmac_nchan; i++) {
-		if (i > 0 &&
-		    ((i * GTIDMAC_I_BITS) & 31 /*bit*/) == 0) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    GTIDMAC_IMR(i - 1), mask);
-			mask = 0;
-		}
-
-		if (bus_dmamap_create(sc->sc_dmat, GTIDMAC_MAXXFER,
-		    GTIDMAC_NSEGS, GTIDMAC_MAXXFER, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_cdesc[i].chan_in)) {
-			aprint_error_dev(self,
-			    "bus_dmamap_create failed: chan%d in\n", i);
-			goto fail8;
-		}
-		if (bus_dmamap_create(sc->sc_dmat, GTIDMAC_MAXXFER,
-		    GTIDMAC_NSEGS, GTIDMAC_MAXXFER, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_cdesc[i].chan_out)) {
-			aprint_error_dev(self,
-			    "bus_dmamap_create failed: chan%d out\n", i);
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_cdesc[i].chan_in);
-			goto fail8;
-		}
-		sc->sc_cdesc[i].chan_totalcnt = 0;
-		sc->sc_cdesc[i].chan_running = NULL;
-
-		/* Ignore bits overflow.  The mask is 32bit. */
-		mask |= GTIDMAC_I(i,
-		    GTIDMAC_I_COMP	|
-		    GTIDMAC_I_ADDRMISS	|
-		    GTIDMAC_I_ACCPROT	|
-		    GTIDMAC_I_WRPROT	|
-		    GTIDMAC_I_OWN);
-	}
-	if (i > 0)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_IMR(i - 1),
-		    mask);
-
-	/* Setup interrupt */
-	for (j = 0; j < GTIDMAC_NINTRRUPT; j++) {
-		int c = j * idmac_nchan / __arraycount(sc->sc_intrarg);
-
-		sc->sc_intrarg[j].ia_sc = sc;
-		sc->sc_intrarg[j].ia_cause = GTIDMAC_ICR(c);
-		sc->sc_intrarg[j].ia_eaddr = GTIDMAC_EAR(c);
-		sc->sc_intrarg[j].ia_eselect = GTIDMAC_ESR(c);
-		marvell_intr_establish(mva->mva_irq + j, IPL_BIO,
-		    gtidmac_intr, &sc->sc_intrarg[j]);
-	}
-
-	if (mva->mva_model != MARVELL_DISCOVERY)
-		gtidmac_wininit(sc);
-
-	/* Register us with dmover. */
-	sc->sc_dmb.dmb_name = device_xname(self);
 	if (!prop_dictionary_get_uint32(dict, "dmb_speed", &dmb_speed)) {
 		aprint_error_dev(self, "no dmb_speed property\n");
-		dmb_speed = 10;		/* More than fast swdmover perhaps. */
+		dmb_speed = 10;	/* More than fast swdmover perhaps. */
 	}
-	sc->sc_dmb.dmb_speed = dmb_speed;
-	sc->sc_dmb.dmb_cookie = sc;
-	sc->sc_dmb.dmb_algdescs = gtidmac_algdescs;
-	sc->sc_dmb.dmb_nalgdescs = __arraycount(gtidmac_algdescs);
-	sc->sc_dmb.dmb_process = gtidmac_process;
-	dmover_backend_register(&sc->sc_dmb);
-	sc->sc_dmb_busy = 0;
 
-	if (xore_nchan) {
-		/* XORE DMA descriptor buffer */
-		sc->sc_mvxore_nchan = xore_nchan;
-		if (bus_dmamem_alloc(sc->sc_dmat,
-	    	    sizeof(struct mvxore_desc) * MVXORE_NDESC * xore_nchan,
-		    PAGE_SIZE, 0, &segs_xore, 1, &nsegs_xore, BUS_DMA_NOWAIT)) {
-			aprint_error_dev(self, "bus_dmamem_alloc failed:"
-			    " xore descriptor buffer\n");
-			goto fail8;
-		}
-		if (bus_dmamem_map(sc->sc_dmat, &segs_xore, 1,
-	    	    sizeof(struct mvxore_desc) * MVXORE_NDESC * xore_nchan,
-		    (void **)&sc->sc_dbuf_xore, BUS_DMA_NOWAIT)) {
-			aprint_error_dev(self,
-			    "bus_dmamem_map failed: xore descriptor buffer\n");
-			goto fail9;
-		}
-		if (bus_dmamap_create(sc->sc_dmat,
-	    	    sizeof(struct mvxore_desc) * MVXORE_NDESC * xore_nchan, 1,
-	    	    sizeof(struct mvxore_desc) * MVXORE_NDESC * xore_nchan, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_dmap_xore)) {
-			aprint_error_dev(self, "bus_dmamap_create failed:"
-			    " xore descriptor buffer\n");
-			goto fail10;
-		}
-		if (bus_dmamap_load(
-		    sc->sc_dmat, sc->sc_dmap_xore, sc->sc_dbuf_xore,
-	    	    sizeof(struct mvxore_desc) * MVXORE_NDESC * xore_nchan,
-		    NULL, BUS_DMA_NOWAIT)) {
-			aprint_error_dev(self,
-			    "bus_dmamap_load failed: xore descriptor buffer\n");
-			goto fail11;
-		}
-		SLIST_INIT(&sc->sc_dlist_xore);
-		for (j = 0; j < MVXORE_NDESC * xore_nchan; j++) {
-			dd = &sc->sc_dd_buffer[j + GTIDMAC_NDESC * idmac_nchan];
-			dd->dd_index = j;
-			dd->dd_xore_vaddr = &sc->sc_dbuf_xore[j];
-			dd->dd_paddr = sc->sc_dmap_xore->dm_segs[0].ds_addr +
-			    (sizeof(struct mvxore_desc) * j);
-			SLIST_INSERT_HEAD(&sc->sc_dlist_xore, dd, dd_next);
+	/* IDMAC DMA descriptor buffer */
+	sc->sc_gtidmac_nchan = idmac_nchan;
+	if (sc->sc_gtidmac_nchan > 0) {
+		if (gtidmac_buffer_setup(sc) != 0)
+			goto fail4;
+
+		if (mva->mva_model != MARVELL_DISCOVERY)
+			gtidmac_wininit(sc);
+
+		/* Setup interrupt */
+		for (i = 0; i < GTIDMAC_NINTRRUPT; i++) {
+			j = i * idmac_nchan / GTIDMAC_NINTRRUPT;
+
+			sc->sc_intrarg[i].ia_sc = sc;
+			sc->sc_intrarg[i].ia_cause = GTIDMAC_ICR(j);
+			sc->sc_intrarg[i].ia_eaddr = GTIDMAC_EAR(j);
+			sc->sc_intrarg[i].ia_eselect = GTIDMAC_ESR(j);
+			marvell_intr_establish(idmac_irq + i, IPL_BIO,
+			    gtidmac_intr, &sc->sc_intrarg[i]);
 		}
 
-		/* Initialize XORE DMA channels */
-		mask = 0;
-		for (j = 0; j < xore_nchan; j++) {
-			for (k = 0; k < MVXORE_NSRC; k++) {
-				if (bus_dmamap_create(sc->sc_dmat,
-				    MVXORE_MAXXFER, MVXORE_NSEGS,
-				    MVXORE_MAXXFER, 0, BUS_DMA_NOWAIT,
-				    &sc->sc_cdesc_xore[j].chan_in[k])) {
-					aprint_error_dev(self,
-					    "bus_dmamap_create failed:"
-					    " xore chan%d in[%d]\n", j, k);
-					goto fail12;
-				}
-			}
-			if (bus_dmamap_create(sc->sc_dmat, MVXORE_MAXXFER,
-			    MVXORE_NSEGS, MVXORE_MAXXFER, 0,
-			    BUS_DMA_NOWAIT, &sc->sc_cdesc_xore[j].chan_out)) {
-				aprint_error_dev(self,
-				    "bus_dmamap_create failed: chan%d out\n",
-				    j);
-				goto fail13;
-			}
-			sc->sc_cdesc_xore[j].chan_totalcnt = 0;
-			sc->sc_cdesc_xore[j].chan_running = NULL;
+		/* Register us with dmover. */
+		sc->sc_dmb.dmb_name = device_xname(self);
+		sc->sc_dmb.dmb_speed = dmb_speed;
+		sc->sc_dmb.dmb_cookie = sc;
+		sc->sc_dmb.dmb_algdescs = gtidmac_algdescs;
+		sc->sc_dmb.dmb_nalgdescs = __arraycount(gtidmac_algdescs);
+		sc->sc_dmb.dmb_process = gtidmac_process;
+		dmover_backend_register(&sc->sc_dmb);
+		sc->sc_dmb_busy = 0;
+	}
 
-			mask |= MVXORE_I(j,
-			    MVXORE_I_EOC	|
-			    MVXORE_I_ADDRDECODE	|
-			    MVXORE_I_ACCPROT	|
-			    MVXORE_I_WRPROT	|
-			    MVXORE_I_OWN	|
-			    MVXORE_I_INTPARITY	|
-			    MVXORE_I_XBAR);
-		}
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEIMR, mask);
+	/* XORE DMA descriptor buffer */
+	sc->sc_mvxore_nchan = xore_nchan;
+	if (sc->sc_mvxore_nchan > 0) {
+		if (mvxore_buffer_setup(sc) != 0)
+			goto fail5;
 
-		marvell_intr_establish(xore_irq + 0, IPL_BIO, mvxore_intr, sc);
-		marvell_intr_establish(xore_irq + 1, IPL_BIO, mvxore_intr, sc);
+		/* Setup interrupt */
+		for (i = 0; i < sc->sc_mvxore_nchan; i++)
+			marvell_intr_establish(xore_irq + i, IPL_BIO,
+			    (i & 0x2) ? mvxore_port1_intr : mvxore_port0_intr,
+			    sc);
 
 		mvxore_wininit(sc);
 
@@ -593,37 +496,17 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 
 	return;
 
-	for (; j-- > 0;) {
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc_xore[j].chan_out);
-
-fail13:
-		k = MVXORE_NSRC;
-fail12:
-		for (; k-- > 0;)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_cdesc_xore[j].chan_in[k]);
-	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap_xore);
-fail11:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap_xore);
-fail10:
-	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dbuf_xore,
-	    sizeof(struct mvxore_desc) * MVXORE_NDESC);
-fail9:
-	bus_dmamem_free(sc->sc_dmat, &segs_xore, 1);
-fail8:
-	for (; i-- > 0;) {
+fail5:
+	for (i = sc->sc_gtidmac_nchan - 1; i >= 0; i--) {
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc[i].chan_in);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc[i].chan_out);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
-fail7:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
-fail6:
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dbuf,
 	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC);
-fail5:
-	bus_dmamem_free(sc->sc_dmat, &segs, 1);
+	bus_dmamem_free(sc->sc_dmat,
+	    sc->sc_dmap->dm_segs, sc->sc_dmap->dm_nsegs);
 fail4:
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_pbuf, PAGE_SIZE);
 fail3:
@@ -707,15 +590,33 @@ gtidmac_intr(void *arg)
 }
 
 static int
-mvxore_intr(void *arg)
+mvxore_port0_intr(void *arg)
 {
 	struct gtidmac_softc *sc = arg;
+
+	return mvxore_intr(sc, 0);
+}
+
+static int
+mvxore_port1_intr(void *arg)
+{
+	struct gtidmac_softc *sc = arg;
+
+	return mvxore_intr(sc, 1);
+}
+
+static int
+mvxore_intr(struct gtidmac_softc *sc, int port)
+{
 	uint32_t cause;
 	int handled = 0, chan, error;
 
-	cause = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEICR);
-	DPRINTF(("XORE intr: cause=0x%x\n", cause));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEICR, ~cause);
+	cause =
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEICR(sc, port));
+	DPRINTF(("XORE port %d intr: cause=0x%x\n", port, cause));
+printf("XORE port %d intr: cause=0x%x\n", port, cause);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	    MVXORE_XEICR(sc, port), ~cause);
 
 	chan = 0;
 	while (cause) {
@@ -758,13 +659,14 @@ mvxore_intr(void *arg)
 			int event;
 
 			type = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    MVXORE_XEECR) & MVXORE_XEECR_ERRORTYPE_MASK;
+			    MVXORE_XEECR(sc, port));
+			type &= MVXORE_XEECR_ERRORTYPE_MASK;
 			event = type - chan * MVXORE_I_BITS;
 			if (event >= 0 && event < MVXORE_I_BITS) {
 				uint32_t xeear;
 
 				xeear = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    MVXORE_XEEAR);
+				    MVXORE_XEEAR(sc, port));
 				aprint_error(": Error Address 0x%x\n", xeear);
 			} else
 				aprint_error(": lost Error Address\n");
@@ -780,7 +682,9 @@ mvxore_intr(void *arg)
 
 		cause >>= MVXORE_I_BITS;
 	}
-	DPRINTF(("XORE intr: %shandled\n", handled ? "" : "not "));
+printf("XORE port %d intr: %shandled\n", port, handled ? "" : "not ");
+	DPRINTF(("XORE port %d intr: %shandled\n",
+	    port, handled ? "" : "not "));
 
 	return handled;
 }
@@ -1328,7 +1232,8 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 #ifdef DIAGNOSTIC
 	uint32_t xexact;
 
-	xexact = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(chan));
+	xexact =
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(sc, chan));
 	if ((xexact & MVXORE_XEXACTR_XESTATUS_MASK) ==
 	    MVXORE_XEXACTR_XESTATUS_ACT)
 		panic("mvxore_setup: chan%d already active."
@@ -1388,13 +1293,13 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 			    (*dmamap_in)->dm_mapsize);
 			return EINVAL;
 		}
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXDPR(chan),
-		    (*dmamap_out)->dm_segs[0].ds_addr);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXBSR(chan),
-		    (*dmamap_out)->dm_mapsize);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    MVXORE_XEXDPR(sc, chan), (*dmamap_out)->dm_segs[0].ds_addr);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    MVXORE_XEXBSR(sc, chan), (*dmamap_out)->dm_mapsize);
 
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan),
-		    xexc);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    MVXORE_XEXCR(sc, chan), xexc);
 		sc->sc_cdesc_xore[chan].chan_totalcnt += size;
 
 		return 0;
@@ -1474,10 +1379,10 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/* Set paddr of descriptor to Channel Next Descriptor Pointer */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXNDPR(chan),
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXNDPR(sc, chan),
 	    fstdd->dd_paddr);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan), xexc);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(sc, chan), xexc);
 
 #ifdef GTIDMAC_DEBUG
 	gtidmac_dump_xoredesc(sc, fstdd, xexc, 0/*pre*/);
@@ -1504,8 +1409,9 @@ mvxore_start(void *tag, int chan,
 
 	sc->sc_cdesc_xore[chan].chan_dma_done = dma_done_cb;
 
-	xexact = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(chan));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(chan),
+	xexact =
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(sc, chan));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(sc, chan),
 	    xexact | MVXORE_XEXACTR_XESTART);
 }
 
@@ -1522,7 +1428,7 @@ mvxore_finish(void *tag, int chan, int error)
 		gtidmac_dump_xorereg(sc, chan);
 #endif
 
-	xexc = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan));
+	xexc = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(sc, chan));
 	if ((xexc & MVXORE_XEXCR_OM_MASK) == MVXORE_XEXCR_OM_ECC ||
 	    (xexc & MVXORE_XEXCR_OM_MASK) == MVXORE_XEXCR_OM_MEMINIT)
 		return 0;
@@ -1619,7 +1525,7 @@ mvxore_wininit(struct gtidmac_softc *sc)
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
 	uint32_t target, attr, size, xexwc;
-	int window, rv, i;
+	int window, rv, i, p;
 	struct {
 		int tag;
 		int winacc;
@@ -1647,28 +1553,263 @@ mvxore_wininit(struct gtidmac_softc *sc)
 				    "can't remap window %d\n", window);
 				continue;
 			}
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    MVXORE_XEHARRX(window), (base >> 32) & 0xffffffff);
+			for (p = 0; p < sc->sc_mvxore_nchan >> 1; p++)
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				    MVXORE_XEHARRX(sc, p, window),
+				    (base >> 32) & 0xffffffff);
 		}
 
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEBARX(window),
-		    MVXORE_XEBARX_TARGET(target) |
-		    MVXORE_XEBARX_ATTR(attr) |
-		    MVXORE_XEBARX_BASE(base));
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-		    MVXORE_XESMRX(window), MVXORE_XESMRX_SIZE(size));
+		for (p = 0; p < sc->sc_mvxore_nchan >> 1; p++) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    MVXORE_XEBARX(sc, p, window),
+			    MVXORE_XEBARX_TARGET(target) |
+			    MVXORE_XEBARX_ATTR(attr) |
+			    MVXORE_XEBARX_BASE(base));
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    MVXORE_XESMRX(sc, p, window),
+			    MVXORE_XESMRX_SIZE(size));
+		}
 		xexwc |= (MVXORE_XEXWCR_WINEN(window) |
 		    MVXORE_XEXWCR_WINACC(window, targets[i].winacc));
 		window++;
 	}
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXWCR(0), xexwc);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXWCR(1), xexwc);
 
-	/* XXXXX: reset... */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXAOCR(0), 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXAOCR(1), 0);
+	for (i = 0; i < sc->sc_mvxore_nchan; i++) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXWCR(sc, i),
+		    xexwc);
+
+		/* XXXXX: reset... */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXAOCR(sc, 0),
+		    0);
+	}
 }
 
+static int
+gtidmac_buffer_setup(struct gtidmac_softc *sc)
+{
+	bus_dma_segment_t segs;
+	struct gtidmac_dma_desc *dd;
+	uint32_t mask;
+	int nchan, nsegs, i;
+
+	nchan = sc->sc_gtidmac_nchan;
+
+	if (bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * nchan,
+	    PAGE_SIZE, 0, &segs, 1, &nsegs, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamem_alloc failed: descriptor buffer\n");
+		goto fail0;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &segs, 1,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * nchan,
+	    (void **)&sc->sc_dbuf, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamem_map failed: descriptor buffer\n");
+		goto fail1;
+	}
+	if (bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * nchan, 1,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * nchan, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_dmap)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamap_create failed: descriptor buffer\n");
+		goto fail2;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, sc->sc_dbuf,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC * nchan,
+	    NULL, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamap_load failed: descriptor buffer\n");
+		goto fail3;
+	}
+	SLIST_INIT(&sc->sc_dlist);
+	for (i = 0; i < GTIDMAC_NDESC * nchan; i++) {
+		dd = &sc->sc_dd_buffer[i];
+		dd->dd_index = i;
+		dd->dd_idmac_vaddr = &sc->sc_dbuf[i];
+		dd->dd_paddr = sc->sc_dmap->dm_segs[0].ds_addr +
+		    (sizeof(struct gtidmac_desc) * i);
+			SLIST_INSERT_HEAD(&sc->sc_dlist, dd, dd_next);
+	}
+
+	/* Initialize IDMAC DMA channels */
+	mask = 0;
+	for (i = 0; i < nchan; i++) {
+		if (i > 0 && ((i * GTIDMAC_I_BITS) & 31 /*bit*/) == 0) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    GTIDMAC_IMR(i - 1), mask);
+			mask = 0;
+		}
+
+		if (bus_dmamap_create(sc->sc_dmat, GTIDMAC_MAXXFER,
+		    GTIDMAC_NSEGS, GTIDMAC_MAXXFER, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_cdesc[i].chan_in)) {
+			aprint_error_dev(sc->sc_dev,
+			    "bus_dmamap_create failed: chan%d in\n", i);
+			goto fail4;
+		}
+		if (bus_dmamap_create(sc->sc_dmat, GTIDMAC_MAXXFER,
+		    GTIDMAC_NSEGS, GTIDMAC_MAXXFER, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_cdesc[i].chan_out)) {
+			aprint_error_dev(sc->sc_dev,
+			    "bus_dmamap_create failed: chan%d out\n", i);
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_cdesc[i].chan_in);
+			goto fail4;
+		}
+		sc->sc_cdesc[i].chan_totalcnt = 0;
+		sc->sc_cdesc[i].chan_running = NULL;
+
+		/* Ignore bits overflow.  The mask is 32bit. */
+		mask |= GTIDMAC_I(i,
+		    GTIDMAC_I_COMP	|
+		    GTIDMAC_I_ADDRMISS	|
+		    GTIDMAC_I_ACCPROT	|
+		    GTIDMAC_I_WRPROT	|
+		    GTIDMAC_I_OWN);
+
+		/* 8bits/channel * 4channels => 32bit */
+		if ((i & 0x3) == 0x3) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    GTIDMAC_IMR(i), mask);
+			mask = 0;
+		}
+	}
+
+	return 0;
+
+fail4:
+	for (; i-- > 0;) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc[i].chan_in);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc[i].chan_out);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+fail3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
+fail2:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dbuf,
+	    sizeof(struct gtidmac_desc) * GTIDMAC_NDESC);
+fail1:
+	bus_dmamem_free(sc->sc_dmat, &segs, 1);
+fail0:
+	return -1;
+}
+
+static int
+mvxore_buffer_setup(struct gtidmac_softc *sc)
+{
+	bus_dma_segment_t segs;
+	struct gtidmac_dma_desc *dd;
+	uint32_t mask;
+	int nchan, nsegs, i, j;
+
+	nchan = sc->sc_mvxore_nchan;
+
+	if (bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC * nchan,
+	    PAGE_SIZE, 0, &segs, 1, &nsegs, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamem_alloc failed: xore descriptor buffer\n");
+		goto fail0;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &segs, 1,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC * nchan,
+	    (void **)&sc->sc_dbuf_xore, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamem_map failed: xore descriptor buffer\n");
+		goto fail1;
+	}
+	if (bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC * nchan, 1,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC * nchan, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_dmap_xore)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamap_create failed: xore descriptor buffer\n");
+		goto fail2;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap_xore, sc->sc_dbuf_xore,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC * nchan,
+	    NULL, BUS_DMA_NOWAIT)) {
+		aprint_error_dev(sc->sc_dev,
+		    "bus_dmamap_load failed: xore descriptor buffer\n");
+		goto fail3;
+	}
+	SLIST_INIT(&sc->sc_dlist_xore);
+	for (i = 0; i < MVXORE_NDESC * nchan; i++) {
+		dd =
+		    &sc->sc_dd_buffer[i + GTIDMAC_NDESC * sc->sc_gtidmac_nchan];
+		dd->dd_index = i;
+		dd->dd_xore_vaddr = &sc->sc_dbuf_xore[i];
+		dd->dd_paddr = sc->sc_dmap_xore->dm_segs[0].ds_addr +
+		    (sizeof(struct mvxore_desc) * i);
+		SLIST_INSERT_HEAD(&sc->sc_dlist_xore, dd, dd_next);
+	}
+
+	/* Initialize XORE DMA channels */
+	mask = 0;
+	for (i = 0; i < nchan; i++) {
+		for (j = 0; j < MVXORE_NSRC; j++) {
+			if (bus_dmamap_create(sc->sc_dmat,
+			    MVXORE_MAXXFER, MVXORE_NSEGS,
+			    MVXORE_MAXXFER, 0, BUS_DMA_NOWAIT,
+			    &sc->sc_cdesc_xore[i].chan_in[j])) {
+				aprint_error_dev(sc->sc_dev,
+				    "bus_dmamap_create failed:"
+				    " xore chan%d in[%d]\n", i, j);
+				goto fail4;
+			}
+		}
+		if (bus_dmamap_create(sc->sc_dmat, MVXORE_MAXXFER,
+		    MVXORE_NSEGS, MVXORE_MAXXFER, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_cdesc_xore[i].chan_out)) {
+			aprint_error_dev(sc->sc_dev,
+			    "bus_dmamap_create failed: chan%d out\n", i);
+			goto fail5;
+		}
+		sc->sc_cdesc_xore[i].chan_totalcnt = 0;
+		sc->sc_cdesc_xore[i].chan_running = NULL;
+
+		mask |= MVXORE_I(i,
+		    MVXORE_I_EOC	|
+		    MVXORE_I_ADDRDECODE	|
+		    MVXORE_I_ACCPROT	|
+		    MVXORE_I_WRPROT	|
+		    MVXORE_I_OWN	|
+		    MVXORE_I_INTPARITY	|
+		    MVXORE_I_XBAR);
+
+		/* 16bits/channel * 2channels => 32bit */
+		if (i & 0x1) {
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    MVXORE_XEIMR(sc, i >> 1), mask);
+			mask = 0;
+		}
+	}
+
+	return 0;
+
+	for (; i-- > 0;) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_cdesc_xore[i].chan_out);
+
+fail5:
+		j = MVXORE_NSRC;
+fail4:
+		for (; j-- > 0;)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_cdesc_xore[i].chan_in[j]);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap_xore);
+fail3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap_xore);
+fail2:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dbuf_xore,
+	    sizeof(struct mvxore_desc) * MVXORE_NDESC);
+fail1:
+	bus_dmamem_free(sc->sc_dmat, &segs, 1);
+fail0:
+	return -1;
+}
 
 #ifdef GTIDMAC_DEBUG
 static void
@@ -1788,7 +1929,7 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 
 	printf("XORE Registers\n");
 
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan));
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(sc, chan));
 	snprintb(buf, sizeof(buf),
 	    "\177\020"
 	    "b\017RegAccProtect\0b\016DesSwp\0b\015DwrReqSwp\0b\014DrdResSwp\0",
@@ -1812,7 +1953,8 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    (val & MVXORE_XEXCR_SBL_MASK) == MVXORE_XEXCR_SBL_64B ? "64" :
 	    (val & MVXORE_XEXCR_SBL_MASK) == MVXORE_XEXCR_SBL_32B ? "32" :
 	    "unknwon");
-	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(chan));
+	val =
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(sc, chan));
 	printf("  Activation      : 0x%08x\n", val);
 	val &= MVXORE_XEXACTR_XESTATUS_MASK;
 	printf("    XEstatus      : %s\n",
@@ -1825,7 +1967,7 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    opmode == MVXORE_XEXCR_OM_DMA) {
 		printf("  NextDescPtr     : 0x%08x\n",
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    MVXORE_XEXNDPR(chan)));
+		    MVXORE_XEXNDPR(sc, chan)));
 		printf("  CurrentDescPtr  : 0x%08x\n",
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    MVXORE_XEXCDPR(chan)));
@@ -1837,10 +1979,10 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    opmode == MVXORE_XEXCR_OM_MEMINIT) {
 		printf("  DstPtr          : 0x%08x\n",
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    MVXORE_XEXDPR(chan)));
+		    MVXORE_XEXDPR(sc, chan)));
 		printf("  BlockSize       : 0x%08x\n",
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    MVXORE_XEXBSR(chan)));
+		    MVXORE_XEXBSR(sc, chan)));
 
 		if (opmode == MVXORE_XEXCR_OM_ECC) {
 			val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
