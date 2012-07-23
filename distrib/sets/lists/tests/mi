@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478 2012/07/22 20:38:20 joerg Exp $
+# $NetBSD: mi,v 1.479 2012/07/23 00:25:41 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1744,8 +1744,6 @@
 ./usr/tests/ipf/expected/n1_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/n2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/n200			tests-ipf-tests		ipfilter
-./usr/tests/ipf/expected/n201			tests-ipf-tests		ipfilter
-./usr/tests/ipf/expected/n202			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/n2_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/n3			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/expected/n4			tests-ipf-tests		ipfilter
@@ -1859,8 +1857,6 @@
 ./usr/tests/ipf/input/n1_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n200			tests-ipf-tests		ipfilter
-./usr/tests/ipf/input/n201			tests-ipf-tests		ipfilter
-./usr/tests/ipf/input/n202			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n2_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n3			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/input/n4			tests-ipf-tests		ipfilter
@@ -2014,8 +2010,6 @@
 ./usr/tests/ipf/regress/n1_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n2			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n200			tests-ipf-tests		ipfilter
-./usr/tests/ipf/regress/n201			tests-ipf-tests		ipfilter
-./usr/tests/ipf/regress/n202			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n2_6			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n3			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/n4			tests-ipf-tests		ipfilter
