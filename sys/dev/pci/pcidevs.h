@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1116 2012/07/22 14:37:34 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1117 2012/07/23 07:47:40 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1122 2012/07/22 14:36:44 matt Exp
+ *	NetBSD: pcidevs,v 1.1124 2012/07/23 07:47:14 msaitoh Exp
  */
 
 /*
@@ -1452,6 +1452,7 @@
 #define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI Express Bridge GPP Port D */
 #define	PCI_PRODUCT_ATI_RADEON_HD4650	0x9498		/* Radeon HD4650 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
+#define	PCI_PRODUCT_ATI_RADEON_HD3400_M82	0x95c4		/* Mobility Radeon HD 3400 Series (M82) */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_HD6520G	0x9647		/* Radeon HD6520G */
 #define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
@@ -2698,6 +2699,23 @@
 #define	PCI_PRODUCT_INTEL_C600_SAS_12	0x1d6e		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_SATA_4	0x1d6f		/* C600 SAS Controller (SATA) */
 #define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d70		/* C600/X79 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_7SERIES_AHCI	0x1e03		/* 7 Series SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_1	0x1e10		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_2	0x1e12		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_3	0x1e14		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_4	0x1e16		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_5	0x1e18		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_6	0x1e1a		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_7	0x1e1c		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_PCIE_8	0x1e1e		/* 7 Series PCIE */
+#define	PCI_PRODUCT_INTEL_7SERIES_HDA	0x1e20		/* 7 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_7SERIES_SMB	0x1e22		/* 7 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_1	0x1e26		/* 7 Series USB */
+#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_2	0x1e2d		/* 7 Series USB */
+#define	PCI_PRODUCT_INTEL_7SERIES_XHCI	0x1e31		/* 7 Series USB xHCI */
+#define	PCI_PRODUCT_INTEL_7SERIES_MEI_1	0x1e3a		/* 7 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_7SERIES_MEI_2	0x1e3b		/* 7 Series MEI Controller */
+#define	PCI_PRODUCT_INTEL_QM77_LPC	0x1e55		/* QM77 LPC */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
@@ -4416,7 +4434,9 @@
 #define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* 180 SATA Controller */
 #define	PCI_PRODUCT_SIS_181_SATA	0x0181		/* 181 SATA Controller */
 #define	PCI_PRODUCT_SIS_182_SATA	0x0182		/* 182 SATA Controller */
+#define	PCI_PRODUCT_SIS_183_SATA	0x0183		/* 183 SATA controller */
 #define	PCI_PRODUCT_SIS_190	0x0190		/* 190 Ethernet */
+#define	PCI_PRODUCT_SIS_191	0x0191		/* 191 Gigabit Ethernet */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 Integrated VGA */
 #define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305 AGP VGA */
 #define	PCI_PRODUCT_SIS_315PRO_VGA	0x0325		/* 315 Pro VGA */
@@ -4440,6 +4460,7 @@
 #define	PCI_PRODUCT_SIS_655	0x0655		/* 655 Host Bridge */
 #define	PCI_PRODUCT_SIS_658	0x0658		/* 658 Host Bridge */
 #define	PCI_PRODUCT_SIS_661	0x0661		/* 661 Host Bridge */
+#define	PCI_PRODUCT_SIS_671	0x0671		/* 671 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_733	0x0733		/* 733 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* 735 Host Bridge */
@@ -4461,6 +4482,8 @@
 #define	PCI_PRODUCT_SIS_963	0x0963		/* 963 Host Bridge */
 #define	PCI_PRODUCT_SIS_964	0x0964		/* 964 Host Bridge */
 #define	PCI_PRODUCT_SIS_965	0x0965		/* 965 Host Bridge */
+#define	PCI_PRODUCT_SIS_966	0x0966		/* 966 Host Bridge */
+#define	PCI_PRODUCT_SIS_968	0x0968		/* 968 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE Controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 Host Bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
@@ -4471,6 +4494,7 @@
 #define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* 7012 AC-97 Sound */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Sound */
+#define	PCI_PRODUCT_SIS_7502	0x7502		/* 7502 HD audio */
 
 /* Silicon Motion products */
 #define	PCI_PRODUCT_SILMOTION_SM502	0x0501		/* Voyager GX */
