@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.24 2012/07/21 16:14:05 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.25 2012/07/23 13:32:19 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.24 2012/07/21 16:14:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.25 2012/07/23 13:32:19 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1024,7 +1024,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	}
 	mutex_exit(&hp->host_mtx);
-	DPRINTF(1,("%s: resp = %08x\n", HDEVNAME(hp), be32toh(cmd->c_resp[0])));
+	DPRINTF(1,("%s: resp = %08x\n", HDEVNAME(hp), cmd->c_resp[0]));
 
 	/*
 	 * If the command has data to transfer in any direction,
