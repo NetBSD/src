@@ -1,8 +1,8 @@
-#	$NetBSD: files.booke,v 1.7 2012/07/22 23:46:10 matt Exp $
+#	$NetBSD: files.booke,v 1.8 2012/07/23 04:13:06 matt Exp $
 #
 # PPC BookE specific configuration info
 
-#include "arch/powerpc/fpu/files.fpu"
+include "arch/powerpc/fpu/files.fpu"
 
 # Board Properties
 file	arch/powerpc/booke/board_prop.c
