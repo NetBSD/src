@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.30 2012/07/15 10:55:32 dsl Exp $	*/
+/*	$NetBSD: siside.c,v 1.31 2012/07/24 14:04:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.30 2012/07/15 10:55:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.31 2012/07/24 14:04:31 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,13 +358,13 @@ sis96x_setup_channel(struct ata_channel *chp)
 		    chp->ch_channel, drive);
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~ATA_DRIVE_DMA;
+			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS96x_REG_CBL(chp->ch_channel)) & SIS96x_REG_CBL_33) {
@@ -374,7 +374,7 @@ sis96x_setup_channel(struct ata_channel *chp)
 			sis_tim |= sis_udma133new_tim[drvp->UDMA_mode];
 			sis_tim |= sis_pio133new_tim[drvp->PIO_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
+		} else if (drvp->drive_flags & DRIVE_DMA) {
 			/*
 			 * use Multiword DMA
 			 * Timings will be used for both PIO and DMA,
@@ -424,17 +424,17 @@ sis_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if ((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
-		    (drvp->drive_flags & ATA_DRIVE_UDMA) == 0)
+		if ((drvp->drive_flags & DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) == 0)
 			goto pio;
 
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~ATA_DRIVE_DMA;
+			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->ch_channel)) {

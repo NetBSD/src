@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.15 2012/07/15 10:55:30 dsl Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.16 2012/07/24 14:04:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.15 2012/07/15 10:55:30 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.16 2012/07/24 14:04:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -326,11 +326,11 @@ njata32_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < chp->ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;	/* no drive */
 
 #if 0	/* ATA DMA is currently unused */
-		if ((drvp->drive_flags & ATA_DRIVE_DMA) != 0) {
+		if ((drvp->drive_flags & DRIVE_DMA) != 0) {
 			/*
 			 * Multiword DMA
 			 */

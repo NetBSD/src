@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.120 2012/07/15 10:55:33 dsl Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.121 2012/07/24 14:04:32 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.120 2012/07/15 10:55:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.121 2012/07/24 14:04:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -404,7 +404,7 @@ wdc_pcmcia_datain_memory(struct ata_channel *chp, int flags, void *buf,
 		size_t n;
 
 		n = min(len, 1024);
-		if ((flags & ATA_DRIVE_CAP32) && (n & 3) == 0)
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
 			bus_space_read_region_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, buf, n >> 2);
 		else
@@ -425,7 +425,7 @@ wdc_pcmcia_dataout_memory(struct ata_channel *chp, int flags, void *buf,
 		size_t n;
 
 		n = min(len, 1024);
-		if ((flags & ATA_DRIVE_CAP32) && (n & 3) == 0)
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
 			bus_space_write_region_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, buf, n >> 2);
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.34 2012/07/15 10:55:31 dsl Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.35 2012/07/24 14:04:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.34 2012/07/15 10:55:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.35 2012/07/24 14:04:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,15 +379,15 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
 		tim = cmd0643_9_data_tim_pio[drvp->PIO_mode];
-		if (drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) {
-			if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
+			if (drvp->drive_flags & DRIVE_UDMA) {
 				/* UltraDMA on a 646U2, 0648 or 0649 */
 				s = splbio();
-				drvp->drive_flags &= ~ATA_DRIVE_DMA;
+				drvp->drive_flags &= ~DRIVE_DMA;
 				splx(s);
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->ch_channel));
@@ -572,12 +572,12 @@ cmd680_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 		mode &= ~(0x03 << (drive * 4));
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			s = splbio();
-			drvp->drive_flags &= ~ATA_DRIVE_DMA;
+			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 			off = 0xa0 + chp->ch_channel * 16;
 			if (drvp->UDMA_mode > 2 &&
@@ -599,7 +599,7 @@ cmd680_setup_channel(struct ata_channel *chp)
 				val |= udma_tbl[drvp->UDMA_mode];
 			pciide_pci_write(pc, pa, off, val);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
+		} else if (drvp->drive_flags & DRIVE_DMA) {
 			mode |= 0x02 << (drive * 4);
 			off = 0xa8 + chp->ch_channel * 16 + drive * 2;
 			val = dma_tbl[drvp->DMA_mode];

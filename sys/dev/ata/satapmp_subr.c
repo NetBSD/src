@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.6 2012/07/22 18:21:17 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.7 2012/07/24 14:04:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.6 2012/07/22 18:21:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.7 2012/07/24 14:04:29 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ satapmp_rescan(struct ata_channel *chp) {
 	KASSERT(chp->ch_satapmp_nports <= chp->ch_ndrives);
 
 	for (i = 0; i < chp->ch_satapmp_nports; i++) {
-		if (chp->ch_drive[i].drive_type != ATA_DRIVET_NONE ||
+		if (chp->ch_drive[i].drive_type != DRIVET_NONE ||
 		    satapmp_reset_device_port(chp, i) != SStatus_DET_DEV) {
 			continue;
 		}

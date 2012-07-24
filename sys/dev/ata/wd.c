@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.397 2012/07/22 18:42:11 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.398 2012/07/24 14:04:29 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.397 2012/07/22 18:42:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.398 2012/07/24 14:04:29 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -463,7 +463,7 @@ wddetach(device_t self, int flags)
 
 	callout_destroy(&sc->sc_restart_ch);
 
-	sc->drvp->drive_type = ATA_DRIVET_NONE; /* no drive any more here */
+	sc->drvp->drive_type = DRIVET_NONE; /* no drive any more here */
 	sc->drvp->drive_flags = 0;
 
 	return (0);
@@ -1087,7 +1087,7 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	if (wd->drvp->state > RESET) {
 		s = splbio();
-		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
+		wd->drvp->drive_flags |= DRIVE_RESET;
 		splx(s);
 	}
 	errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
@@ -1102,7 +1102,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		 */
 		if (wd->drvp->state > RESET) {
 			s = splbio();
-			wd->drvp->drive_flags |= ATA_DRIVE_RESET;
+			wd->drvp->drive_flags |= DRIVE_RESET;
 			splx(s);
 		}
 		errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
@@ -1115,7 +1115,7 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	if (wd->drvp->state > RESET) {
 		s = splbio();
-		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
+		wd->drvp->drive_flags |= DRIVE_RESET;
 		splx(s);
 	}
 #ifdef HAS_BAD144_HANDLING
@@ -1303,7 +1303,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		if (error == 0) {
 			if (wd->drvp->state > RESET) {
 				s = splbio();
-				wd->drvp->drive_flags |= ATA_DRIVE_RESET;
+				wd->drvp->drive_flags |= DRIVE_RESET;
 				splx(s);
 			}
 			if (xfer == DIOCWDINFO
@@ -1772,7 +1772,7 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
-		if (wd->drvp->drive_type != ATA_DRIVET_OLD)
+		if (wd->drvp->drive_type != DRIVET_OLD)
 			return 1;
 		/*
 		 * We `know' there's a drive here; just assume it's old.

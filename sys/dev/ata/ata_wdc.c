@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.98 2012/07/15 10:55:29 dsl Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.99 2012/07/24 14:04:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.98 2012/07/15 10:55:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.99 2012/07/24 14:04:29 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -149,7 +149,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 #if NATA_DMA
-	if ((drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) &&
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
 #endif
@@ -233,7 +233,7 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		if (atac->atac_set_modes == NULL)
 			goto geometry;
 		/* Also don't try if the drive didn't report its mode */
-		if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0)
+		if ((drvp->drive_flags & DRIVE_MODE) == 0)
 			goto geometry;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
@@ -244,12 +244,12 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto ctrlerror;
 #if NATA_DMA
 #if NATA_UDMA
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
 		} else
 #endif
-		if (drvp->drive_flags & ATA_DRIVE_DMA) {
+		if (drvp->drive_flags & DRIVE_DMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		} else {
@@ -806,9 +806,9 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		ata_bio->error = ERR_NODEV;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 	}
 	ata_bio->flags |= ATA_ITSDONE;

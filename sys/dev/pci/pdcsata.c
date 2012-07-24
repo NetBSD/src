@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.22 2012/07/15 10:55:31 dsl Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.23 2012/07/24 14:04:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.22 2012/07/15 10:55:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.23 2012/07/24 14:04:31 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -498,11 +498,11 @@ pdc203xx_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			s = splbio();
-			drvp->drive_flags &= ~ATA_DRIVE_DMA;
+			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 		}
 	}

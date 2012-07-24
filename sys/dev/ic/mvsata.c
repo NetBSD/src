@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.21 2012/07/19 12:39:08 jakllsch Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.22 2012/07/24 14:04:30 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.21 2012/07/19 12:39:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.22 2012/07/24 14:04:30 jakllsch Exp $");
 
 #include "opt_mvsata.h"
 
@@ -509,7 +509,7 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
-	if ((drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) &&
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
 	xfer->c_drive = drvp->drive;
@@ -796,7 +796,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
+	if (drvp->drive_type != DRIVET_ATAPI) {
 		DPRINTF(("%s:%d: mvsata_atapi_probe_device:"
 		    " drive %d not present\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, target));
@@ -837,7 +837,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 			periph->periph_flags |= PERIPH_REMOVABLE;
 		if (periph->periph_type == T_SEQUENTIAL) {
 			s = splbio();
-			drvp->drive_flags |= ATA_DRIVE_ATAPIDSCW;
+			drvp->drive_flags |= DRIVE_ATAPIDSCW;
 			splx(s);
 		}
 
@@ -867,7 +867,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 			ata_probe_caps(drvp);
 		else {
 			s = splbio();
-			drvp->drive_type = ATA_DRIVET_NONE;
+			drvp->drive_type = DRIVET_NONE;
 			splx(s);
 		}
 	} else {
@@ -876,7 +876,7 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		    device_xname(atac->atac_dev), chp->ch_channel, target,
 		    chp->ch_error));
 		s = splbio();
-		drvp->drive_type = ATA_DRIVET_NONE;
+		drvp->drive_type = DRIVET_NONE;
 		splx(s);
 	}
 }
@@ -929,18 +929,18 @@ mvsata_setup_channel(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 
 		/* If no drive, skip */
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue;
 
-		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
+		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~ATA_DRIVE_DMA;
+			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 		}
 
-		if (drvp->drive_flags & (ATA_DRIVE_UDMA | ATA_DRIVE_DMA))
-			if (drvp->drive_type == ATA_DRIVET_ATA)
+		if (drvp->drive_flags & (DRIVE_UDMA | DRIVE_DMA))
+			if (drvp->drive_type == DRIVET_ATA)
 				edma_mode = dma;
 	}
 
@@ -989,10 +989,10 @@ no_edma:
 			drvp = &chp->ch_drive[drive];
 
 			/* If no drive, skip */
-			if (drvp->drive_type == ATA_DRIVET_NONE)
+			if (drvp->drive_type == DRIVET_NONE)
 				continue;
 
-			drvp->drive_flags &= ~(ATA_DRIVE_UDMA | ATA_DRIVE_DMA);
+			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
 		}
 		splx(s);
 		goto no_edma;
@@ -1404,9 +1404,9 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		ata_bio->error = ERR_NODEV;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 	}
 	ata_bio->flags |= ATA_ITSDONE;
@@ -1447,7 +1447,7 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 	if (atac->atac_set_modes == NULL)
 		goto geometry;
 	/* Also don't try if the drive didn't report its mode */
-	if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0)
+	if ((drvp->drive_flags & DRIVE_MODE) == 0)
 		goto geometry;
 	wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 	    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
@@ -1456,10 +1456,10 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 		goto ctrltimeout;
 	if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 		goto ctrlerror;
-	if (drvp->drive_flags & ATA_DRIVE_UDMA)
+	if (drvp->drive_flags & DRIVE_UDMA)
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
-	else if (drvp->drive_flags & ATA_DRIVE_DMA)
+	else if (drvp->drive_flags & DRIVE_DMA)
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 	else
@@ -1597,7 +1597,7 @@ mvsata_wdc_cmd_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		 * Historically it's what we have always done so keeping it
 		 * here ensure binary backward compatibility.
 		 */
-		drive_flags = ATA_DRIVE_NOSTREAM |
+		drive_flags = DRIVE_NOSTREAM |
 		    chp->ch_drive[xfer->c_drive].drive_flags;
 	else
 		/*
@@ -1768,9 +1768,9 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
 		delay(10);	/* some drives need a little delay here */
 	}
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
 		mvsata_wdc_cmd_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 	} else
 		mvsata_wdc_cmd_done_end(chp, xfer);
@@ -1840,7 +1840,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		if (atac->atac_set_modes == NULL)
 			goto ready;
 		/* Also don't try if the drive didn't report its mode */
-		if ((drvp->drive_flags & ATA_DRIVE_MODE) == 0)
+		if ((drvp->drive_flags & DRIVE_MODE) == 0)
 			goto ready;
 		errstring = "unbusy";
 		if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags))
@@ -1867,11 +1867,11 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			} else
 				goto error;
 		}
-		if (drvp->drive_flags & ATA_DRIVE_UDMA)
+		if (drvp->drive_flags & DRIVE_UDMA)
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
 		else
-		if (drvp->drive_flags & ATA_DRIVE_DMA)
+		if (drvp->drive_flags & DRIVE_DMA)
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
 		else
@@ -1881,7 +1881,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			goto timeout;
 		if (chp->ch_status & WDCS_ERR) {
 			if (chp->ch_error == WDCE_ABRT) {
-				if (drvp->drive_flags & ATA_DRIVE_UDMA)
+				if (drvp->drive_flags & DRIVE_UDMA)
 					goto error;
 				else {
 					/*
@@ -2255,7 +2255,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
 	/* wait for DSC if needed */
-	if (drvp->drive_flags & ATA_DRIVE_ATAPIDSCW) {
+	if (drvp->drive_flags & DRIVE_ATAPIDSCW) {
 		DPRINTFN(1,
 		    ("%s:%d:%d: mvsata_atapi_phase_complete: polldsc %d\n",
 		    device_xname(atac->atac_dev), chp->ch_channel,
@@ -2340,9 +2340,9 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 	}
 

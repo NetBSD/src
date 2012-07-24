@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.37 2012/07/15 10:55:29 dsl Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.38 2012/07/24 14:04:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.37 2012/07/15 10:55:29 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.38 2012/07/24 14:04:29 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -815,7 +815,7 @@ ahci_probe_drive(struct ata_channel *chp)
 		sata_interpret_sig(chp, 0, sig);
 		/* if we have a PMP attached, inform the controller */
 		if (chp->ch_ndrives > PMP_PORT_CTL &&
-		    chp->ch_drive[PMP_PORT_CTL].drive_type == ATA_DRIVET_PM) {
+		    chp->ch_drive[PMP_PORT_CTL].drive_type == DRIVET_PM) {
 			AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
 			    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) |
 			    AHCI_P_CMD_PMA);
@@ -1019,9 +1019,9 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 
 	chp->ch_queue->active_xfer = NULL;
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
 		ahci_cmd_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	}
@@ -1254,9 +1254,9 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[slot]);
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[xfer->c_drive].drive_flags & DRIVE_WAITDRAIN) {
 		ahci_bio_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[xfer->c_drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	}
@@ -1347,7 +1347,7 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 	p_cmd = AHCI_P_CMD_ICC_AC | AHCI_P_CMD_POD | AHCI_P_CMD_SUD |
 	    AHCI_P_CMD_FRE | AHCI_P_CMD_ST;
 	if (chp->ch_ndrives > PMP_PORT_CTL &&
-	    chp->ch_drive[PMP_PORT_CTL].drive_type == ATA_DRIVET_PM) {
+	    chp->ch_drive[PMP_PORT_CTL].drive_type == DRIVET_PM) {
 		p_cmd |= AHCI_P_CMD_PMA;
 	}
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel), p_cmd);
@@ -1635,9 +1635,9 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[slot]);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		ahci_atapi_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
+		chp->ch_drive[drive].drive_flags &= ~DRIVE_WAITDRAIN;
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	}
@@ -1712,7 +1712,7 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
+	if (drvp->drive_type != DRIVET_ATAPI) {
 		AHCIDEBUG_PRINT(("ahci_atapi_probe_device: drive %d "
 		    "not present\n", target), DEBUG_PROBE);
 		return;
@@ -1751,7 +1751,7 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 			periph->periph_flags |= PERIPH_REMOVABLE;
 		if (periph->periph_type == T_SEQUENTIAL) {
 			s = splbio();
-			drvp->drive_flags |= ATA_DRIVE_ATAPIDSCW;
+			drvp->drive_flags |= DRIVE_ATAPIDSCW;
 			splx(s);
 		}
 
@@ -1782,7 +1782,7 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 			ata_probe_caps(drvp);
 		else {
 			s = splbio();
-			drvp->drive_type = ATA_DRIVET_NONE;
+			drvp->drive_type = DRIVET_NONE;
 			splx(s);
 		}
 	} else {
@@ -1791,7 +1791,7 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 		    AHCINAME(ahcic), chp->ch_channel, target,
 		    chp->ch_error), DEBUG_PROBE);
 		s = splbio();
-		drvp->drive_type = ATA_DRIVET_NONE;
+		drvp->drive_type = DRIVET_NONE;
 		splx(s);
 	}
 }
