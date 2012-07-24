@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.64 2012/07/19 19:30:38 macallan Exp $
+# $NetBSD: md.amd64,v 1.65 2012/07/24 17:40:05 njoly Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -659,6 +659,7 @@
 ./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/xgi.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
