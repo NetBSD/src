@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.1.1.3.4.2 2011/01/23 21:47:43 bouyer Exp $	*/
+/*	$NetBSD: random.c,v 1.1.1.3.4.3 2012/07/24 20:38:40 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -105,7 +105,7 @@ isc_uint32_t
 isc_random_jitter(isc_uint32_t max, isc_uint32_t jitter) {
 	isc_uint32_t rnd;
 
-	REQUIRE(jitter < max);
+	REQUIRE(jitter < max || (jitter == 0 && max == 0));
 
 	if (jitter == 0)
 		return (max);
