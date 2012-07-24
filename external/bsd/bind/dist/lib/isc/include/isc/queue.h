@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.1 2012/06/04 17:56:50 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.2 2012/07/24 18:06:29 spz Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -16,12 +16,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 /*
  * This is a generic implementation of a two-lock concurrent queue.
  * There are built-in mutex locks for the head and tail of the queue,
  * allowing elements to be safely added and removed at the same time.
+ *
+ * NULL is "end of list"
+ * -1 is "not linked"
  */
 
 #ifndef ISC_QUEUE_H
@@ -36,67 +37,111 @@
 #define ISC_QLINK_INSIST(x) (void)0
 #endif
 
-#define ISC_QLINK(type) struct { void *next; isc_boolean_t linked; }
+#define ISC_QLINK(type) struct { void *prev, *next; }
+
 #define ISC_QLINK_INIT(elt, link) \
 	do { \
-		(elt)->link.next = (void *)(-1); \
-		(elt)->link.linked = ISC_FALSE; \
+		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
 	} while (0)
-#define ISC_QLINK_LINKED(elt, link) ((elt)->link.linked)
+
+#define ISC_QLINK_LINKED(elt, link) ((void*)(elt)->link.next != (void*)(-1))
 
 #define ISC_QUEUE(type) struct { \
-	type headnode; \
 	type *head, *tail; \
 	isc_mutex_t headlock, taillock; \
 }
 
 #define ISC_QUEUE_INIT(queue, link) \
 	do { \
-		isc_mutex_init(&(queue).headlock); \
 		isc_mutex_init(&(queue).taillock); \
-		(queue).head = (void *) &((queue).headnode); \
-		(queue).tail = (void *) &((queue).headnode); \
-		ISC_QLINK_INIT((queue).head, link); \
+		isc_mutex_init(&(queue).headlock); \
+		(queue).tail = (queue).head = NULL; \
 	} while (0)
 
-#define ISC_QUEUE_EMPTY(queue) ISC_TF((queue).head == (queue).tail)
+#define ISC_QUEUE_EMPTY(queue) ISC_TF((queue).head == NULL)
 
 #define ISC_QUEUE_DESTROY(queue) \
 	do { \
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
-		isc_mutex_destroy(&(queue).headlock); \
 		isc_mutex_destroy(&(queue).taillock); \
+		isc_mutex_destroy(&(queue).headlock); \
 	} while (0)
 
+/*
+ * queues are meant to separate the locks at either end.  For best effect, that
+ * means keeping the ends separate - i.e. non-empty queues work best.
+ *
+ * a push to an empty queue has to take the pop lock to update
+ * the pop side of the queue.
+ * Popping the last entry has to take the push lock to update
+ * the push side of the queue.
+ *
+ * The order is (pop, push), because a pop is presumably in the
+ * latency path and a push is when we're done.
+ *
+ * We do an MT hot test in push to see if we need both locks, so we can
+ * acquire them in order.  Hopefully that makes the case where we get
+ * the push lock and find we need the pop lock (and have to release it) rare.
+ *
+ * > 1 entry - no collision, push works on one end, pop on the other
+ *   0 entry - headlock race
+ *     pop wins - return(NULL), push adds new as both head/tail
+ *     push wins - updates head/tail, becomes 1 entry case.
+ *   1 entry - taillock race
+ *     pop wins - return(pop) sets head/tail NULL, becomes 0 entry case
+ *     push wins - updates {head,tail}->link.next, pop updates head
+ *                 with new ->link.next and doesn't update tail
+ *
+ */
 #define ISC_QUEUE_PUSH(queue, elt, link) \
 	do { \
+		isc_boolean_t headlocked = ISC_FALSE; \
 		ISC_QLINK_INSIST(!ISC_QLINK_LINKED(elt, link)); \
-		(elt)->link.next = (void *)(-1); \
+		if ((queue).head == NULL) { \
+			LOCK(&(queue).headlock); \
+			headlocked = ISC_TRUE; \
+		} \
 		LOCK(&(queue).taillock); \
-		(queue).tail->link.next = elt; \
-		(queue).tail = elt; \
+		if ((queue).tail == NULL && !headlocked) { \
 		UNLOCK(&(queue).taillock); \
-		(elt)->link.linked = ISC_TRUE; \
+			LOCK(&(queue).headlock); \
+			LOCK(&(queue).taillock); \
+			headlocked = ISC_TRUE; \
+		} \
+		if ((queue).tail != NULL) \
+			(queue).tail->link.next = (elt); \
+		(elt)->link.prev = (queue).tail; \
+		(elt)->link.next = NULL; \
+		(queue).tail = (elt); \
+		UNLOCK(&(queue).taillock); \
+		if (headlocked) { \
+			if ((queue).head == NULL) \
+				(queue).head = (elt); \
+			UNLOCK(&(queue).headlock); \
+		} \
 	} while (0)
 
 #define ISC_QUEUE_POP(queue, link, ret) \
 	do { \
 		LOCK(&(queue).headlock); \
-		ret = (queue).head->link.next; \
-		if (ret == (void *)(-1)) { \
-			UNLOCK(&(queue).headlock); \
-			ret = NULL; \
-		} else { \
-			(queue).head->link.next = ret->link.next; \
-			if (ret->link.next == (void *)(-1)) { \
+		ret = (queue).head; \
+		while (ret != NULL) { \
+			if (ret->link.next == NULL) { \
 				LOCK(&(queue).taillock); \
-				(queue).tail = (queue).head; \
+				if (ret->link.next == NULL) { \
+					(queue).head = (queue).tail = NULL; \
 				UNLOCK(&(queue).taillock); \
+					break; \
 			} \
-			UNLOCK(&(queue).headlock); \
-			ret->link.next = (void *)(-1); \
-			ret->link.linked = ISC_FALSE; \
+				UNLOCK(&(queue).taillock); \
 		} \
+			(queue).head = ret->link.next; \
+			(queue).head->link.prev = NULL; \
+			break; \
+		} \
+		UNLOCK(&(queue).headlock); \
+		if (ret != NULL) \
+			(ret)->link.next = (ret)->link.prev = (void *)(-1); \
 	} while (0)
 
 #endif /* ISC_QUEUE_H */
