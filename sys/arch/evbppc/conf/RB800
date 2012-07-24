@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.18 2012/07/23 16:27:44 matt Exp $
+#	$NetBSD: RB800,v 1.19 2012/07/24 22:37:08 matt Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.18 $"
+ident 		"RB800-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -230,6 +230,7 @@ pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp

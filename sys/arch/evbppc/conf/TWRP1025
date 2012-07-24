@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.5 2012/07/22 23:46:10 matt Exp $
+#	$NetBSD: TWRP1025,v 1.6 2012/07/24 22:37:08 matt Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.5 $"
+ident 		"TWRP1025-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -224,6 +224,7 @@ ld*		at sdmmc?
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
