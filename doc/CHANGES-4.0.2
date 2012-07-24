@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.103 2012/06/12 23:22:46 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.104 2012/07/24 20:42:02 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1391,4 +1391,14 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.77 via patch
 	If the user process provided a bogus signal handler address, kill it
 	now instead of trying to jump to the bogus address.
 	[spz, ticket #1450]
+
+dist/bind/CHANGES				patch
+dist/bind/version				patch
+dist/bind/bin/tests/system/stub/tests.sh	patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/zone.c			patch
+dist/bind/lib/isc/random.c			patch
+
+	Address bind CVE-2012-3817.
+	[spz, ticket #1455]
 
