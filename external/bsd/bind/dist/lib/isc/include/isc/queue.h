@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.2 2012/07/24 18:06:29 spz Exp $	*/
+/*	$NetBSD: queue.h,v 1.3 2012/07/24 20:00:45 spz Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -103,15 +103,15 @@
 		} \
 		LOCK(&(queue).taillock); \
 		if ((queue).tail == NULL && !headlocked) { \
-		UNLOCK(&(queue).taillock); \
+			UNLOCK(&(queue).taillock); \
 			LOCK(&(queue).headlock); \
 			LOCK(&(queue).taillock); \
 			headlocked = ISC_TRUE; \
 		} \
-		if ((queue).tail != NULL) \
-			(queue).tail->link.next = (elt); \
 		(elt)->link.prev = (queue).tail; \
 		(elt)->link.next = NULL; \
+		if ((queue).tail != NULL) \
+			(queue).tail->link.next = (elt); \
 		(queue).tail = (elt); \
 		UNLOCK(&(queue).taillock); \
 		if (headlocked) { \
@@ -130,10 +130,10 @@
 				LOCK(&(queue).taillock); \
 				if (ret->link.next == NULL) { \
 					(queue).head = (queue).tail = NULL; \
-				UNLOCK(&(queue).taillock); \
+					UNLOCK(&(queue).taillock); \
 					break; \
 			} \
-				UNLOCK(&(queue).taillock); \
+			UNLOCK(&(queue).taillock); \
 		} \
 			(queue).head = ret->link.next; \
 			(queue).head->link.prev = NULL; \

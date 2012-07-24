@@ -1,5 +1,7 @@
 	--- 9.9.1-P2 released ---
 
+3349.	[bug]		Change #3345 was incomplete. [RT #30233]
+
 3346.	[security]	Bad-cache data could be used before it was
 			initialized, causing an assert. [RT #30025]
 
