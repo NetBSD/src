@@ -1,9 +1,11 @@
-/*	$NetBSD: pr.c,v 1.22 2012/03/12 18:06:24 christos Exp $	*/
+/*	$NetBSD: pr.c,v 1.23 2012/07/24 02:13:04 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2012
+ *	The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego.
@@ -43,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.22 2012/03/12 18:06:24 christos Exp $");
+__RCSID("$NetBSD: pr.c,v 1.23 2012/07/24 02:13:04 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,9 +98,12 @@ static int	offst;			/* number of page offset spaces */
 static int	nodiag;			/* do not report file open errors */
 static char	schar;			/* text column separation character */
 static int	sflag;			/* -s option for multiple columns */
+static int	ttyout;			/* output is a tty */
 static int	nohead;			/* do not write head and trailer */
+static int	pgpause;		/* pause before each page */
 static int	pgwd;			/* page width with multiple col output */
 static const char *timefrmt = TIMEFMT;	/* time conversion string */
+static FILE	*ttyinf;		/* input terminal for page pauses */
 
 /*
  * misc globals
@@ -120,6 +125,7 @@ static int	 onecol(int, char **);
 static int	 otln(char *, int, int *, int *, int);
 static void	 pfail(void);
 static int	 prhead(char *, const char *, int);
+static void	 prpause(int);
 static int	 prtail(int, int);
 static int	 setup(int, char **);
 __dead static void	 terminate(int);
@@ -242,9 +248,14 @@ onecol(int argc, char *argv[])
 				 */
 				if ((cnt = inln(inf,lbuf,LBUF,&cps,0,&mor)) < 0)
 					break;
-				if (!linecnt && !nohead &&
-					prhead(hbuf, fname, pagecnt))
-					goto out;
+				if (!linecnt) {
+					if (pgpause)
+						prpause(pagecnt);
+
+				        if (!nohead &&
+					    prhead(hbuf, fname, pagecnt))
+						goto out;
+				}
 
 				/*
 				 * start of new line.
@@ -509,6 +520,9 @@ vertcol(int argc, char *argv[])
 				if (cvc % clcnt)
 					++pln;
 
+				if (pgpause)
+					prpause(pagecnt);
+
 				/*
 				 * print header
 				 */
@@ -578,8 +592,13 @@ vertcol(int argc, char *argv[])
 			/*
 			 * print header
 			 */
-			if (pln && !nohead && prhead(hbuf, fname, pagecnt))
-				goto out;
+			if (pln) {
+				if (pgpause)
+					prpause(pagecnt);
+
+			        if (!nohead && prhead(hbuf, fname, pagecnt))
+					goto out;
+			}
 
 			/*
 			 * output each line
@@ -731,9 +750,14 @@ horzcol(int argc, char *argv[])
 				 */
 				if ((j = lstdat - buf) <= offst)
 					break;
-				if (!i && !nohead &&
-					prhead(hbuf, fname, pagecnt))
-					goto out;
+				if (!i) {
+					if (pgpause)
+						prpause(pagecnt);
+
+				        if (!nohead &&
+					    prhead(hbuf, fname, pagecnt))
+						goto out;
+				}
 				/*
 				 * output line
 				 */
@@ -941,8 +965,13 @@ mulfile(int argc, char *argv[])
 			if ((j = lstdat - buf) <= offst)
 				break;
 
-			if (!i && !nohead && prhead(hbuf, fname, pagecnt))
-				goto out;
+			if (!i) {
+				if (pgpause)
+					prpause(pagecnt);
+
+			        if (!nohead && prhead(hbuf, fname, pagecnt))
+					goto out;
+			}
 
 			/*
 			 * output line
@@ -1419,6 +1448,32 @@ addnum(char *buf, int wdth, int line)
 }
 
 /*
+ * prpause():	pause before printing each page
+ *
+ *	pagcnt	page number
+ */
+static void
+prpause(int pagcnt)
+{
+
+	if (ttyout) {
+		int c;
+
+		(void)putc('\a', stderr);
+		(void)fflush(stderr);
+
+		while ((c = getc(ttyinf)) != '\n' && c != EOF)
+			;
+
+		/*
+		 * pause ONLY before first page of first file
+		 */
+		if (pgpause == FIRSTPAGE && pagcnt == 1)
+			pgpause = NO_PAUSE;
+	}
+}
+
+/*
  * prhead():	prints the top of page header
  *
  *	buf	buffer with time field (and offset)
@@ -1561,7 +1616,7 @@ usage(void)
 	(void)fputs(
 	 "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n",errf);
 	(void)fputs(
-	 "          [-s[ch]] [-w width] [-] [file ...]\n", errf);
+	 "          [-s[ch]] [-w width] [-fp] [-] [file ...]\n", errf);
 }
 
 /*
@@ -1577,6 +1632,8 @@ setup(int argc, char **argv)
 	int wflag = 0;
 	int cflag = 0;
 
+	ttyinf = stdin;
+
 	if (isatty(fileno(stdout))) {
 		/*
 		 * defer diagnostics until processing is done
@@ -1585,9 +1642,10 @@ setup(int argc, char **argv)
 		       (void)fputs("Cannot defer diagnostic messages\n",stderr);
 		       return(1);
 		}
+		ttyout = 1;
 	} else
 		errf = stderr;
-	while ((c = egetopt(argc, argv, "#adFmrte?h:i?l:n?o:s?T:w:")) != -1) {
+	while ((c = egetopt(argc, argv, "#adFfmrte?h:i?l:n?o:ps?T:w:")) != -1) {
 		switch (c) {
 		case '+':
 			if ((pgnm = atoi(eoptarg)) < 1) {
@@ -1633,6 +1691,9 @@ setup(int argc, char **argv)
 			} else
 				ingap = INGAP;
 			break;
+		case 'f':
+			pgpause |= FIRSTPAGE;
+			/*FALLTHROUGH*/
 		case 'F':
 			++formfeed;
 			break;
@@ -1700,6 +1761,9 @@ setup(int argc, char **argv)
 					errf);
 				return(1);
 			}
+			break;
+		case 'p':
+			pgpause |= EACHPAGE;
 			break;
 		case 'r':
 			++nodiag;
@@ -1816,6 +1880,17 @@ setup(int argc, char **argv)
 			if (lines & 1)
 				++addone;
 			lines /= 2;
+		}
+	}
+
+	/*
+	 * open /dev/tty if we are to pause before each page
+	 * but only if stdout is a terminal and stdin is not a terminal
+	 */
+	if (ttyout && pgpause && !isatty(fileno(stdin))) {
+		if ((ttyinf = fopen("/dev/tty", "r")) == NULL) {
+			(void)fprintf(errf, "pr: cannot open terminal\n");
+			return(1);
 		}
 	}
 
