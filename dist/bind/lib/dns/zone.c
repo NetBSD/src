@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.4.4.1.2.2 2011/01/23 21:52:14 bouyer Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.4.4.1.2.3 2012/07/24 20:41:16 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -3031,6 +3031,7 @@ zone_maintenance(dns_zone_t *zone) {
 	switch (zone->type) {
 	case dns_zone_master:
 	case dns_zone_slave:
+	case dns_zone_stub:
 		LOCK_ZONE(zone);
 		if (zone->masterfile != NULL &&
 		    isc_time_compare(&now, &zone->dumptime) >= 0 &&
@@ -3351,7 +3352,7 @@ zone_dump(dns_zone_t *zone, isc_boolean_t compact) {
 		goto fail;
 	}
 
-	if (compact) {
+	if (compact && zone->type != dns_zone_stub) {
 		dns_zone_t *dummy = NULL;
 		LOCK_ZONE(zone);
 		zone_iattach(zone, &dummy);
@@ -4160,7 +4161,7 @@ stub_callback(isc_task_t *task, isc_event_t *event) {
 	dns_zone_t *zone = NULL;
 	char master[ISC_SOCKADDR_FORMATSIZE];
 	char source[ISC_SOCKADDR_FORMATSIZE];
-	isc_uint32_t nscnt, cnamecnt;
+	isc_uint32_t nscnt, cnamecnt, refresh, retry, expire;
 	isc_result_t result;
 	isc_time_t now;
 	isc_boolean_t exiting = ISC_FALSE;
@@ -4310,22 +4311,36 @@ stub_callback(isc_task_t *task, isc_event_t *event) {
 	ZONEDB_LOCK(&zone->dblock, isc_rwlocktype_write);
 	if (zone->db == NULL)
 		zone_attachdb(zone, stub->db);
+	result = zone_get_from_db(zone, zone->db, NULL, NULL, NULL, &refresh,
+				 &retry, &expire, NULL, NULL);
+	if (result == ISC_R_SUCCESS) {
+		zone->refresh = RANGE(refresh, zone->minrefresh,
+				      zone->maxrefresh);
+		zone->retry = RANGE(retry, zone->minretry, zone->maxretry);
+		zone->expire = RANGE(expire, zone->refresh + zone->retry,
+				     DNS_MAX_EXPIRE);
+		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_HAVETIMERS);
+	}
 	ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_write);
 	dns_db_detach(&stub->db);
+
+
+	dns_message_destroy(&msg);
+	isc_event_free(&event);
+	LOCK_ZONE(zone);
+	dns_request_destroy(&zone->request);
+
+	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_REFRESH);
+	DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_LOADED);
+	DNS_ZONE_JITTER_ADD(&now, zone->refresh, &zone->refreshtime);
+	isc_interval_set(&i, zone->expire, 0);
+	DNS_ZONE_TIME_ADD(&now, zone->expire, &zone->expiretime);
 
 	if (zone->masterfile != NULL) {
 		dns_zone_dump(zone);
 		TIME_NOW(&zone->loadtime);
 	}
 
-	dns_message_destroy(&msg);
-	isc_event_free(&event);
-	LOCK_ZONE(zone);
-	dns_request_destroy(&zone->request);
-	DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_REFRESH);
-	DNS_ZONE_JITTER_ADD(&now, zone->refresh, &zone->refreshtime);
-	isc_interval_set(&i, zone->expire, 0);
-	DNS_ZONE_TIME_ADD(&now, zone->expire, &zone->expiretime);
 	zone_settimer(zone, &now);
 	UNLOCK_ZONE(zone);
 	goto free_stub;
