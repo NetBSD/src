@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/07/23 04:25:03 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2012/07/24 20:50:14 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -23,7 +23,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DISTRIBDIR}/common/services
 MAKEDEVTARGETS=	std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 pty0
 MAKEDEVTARGETS+= ld0 ld1
-MAKEDEVTARGETS+= dk0 dk1 dk2 dk3
+MAKEDEVTARGETS+= drvctl dk0 dk1 dk2 dk3
 MAKEDEVTARGETS+= flash0 flash1 flash2 flash3 flash4 flash5 flash6 flash7
 
 # Use stubs to eliminate some large stuff from libc
