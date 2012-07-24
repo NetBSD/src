@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.24 2012/07/15 10:55:34 dsl Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.25 2012/07/24 14:04:32 jakllsch Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.24 2012/07/15 10:55:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.25 2012/07/24 14:04:32 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -215,7 +215,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_channel = 1;	/* XXX */
 	adev.adev_openings = 1;
 	adev.adev_drv_data = &scbus->sc_drv_data;
-	scbus->sc_drv_data.drive_type = ATA_DRIVET_ATA;
+	scbus->sc_drv_data.drive_type = DRIVET_ATA;
 	scbus->sc_drv_data.chnl_softc = sc;
 	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 

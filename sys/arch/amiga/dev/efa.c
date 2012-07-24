@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.8 2012/07/15 10:55:28 dsl Exp $ */
+/*	$NetBSD: efa.c,v 1.9 2012/07/24 14:04:28 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -485,7 +485,7 @@ efa_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 
-		if (drvp->drive_type == ATA_DRIVET_NONE)
+		if (drvp->drive_type == DRIVET_NONE)
 			continue; /* nothing to see here */
 
 		if (drvp->PIO_cap < mode)
