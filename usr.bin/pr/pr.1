@@ -1,8 +1,10 @@
-.\"	$NetBSD: pr.1,v 1.18 2012/04/08 22:00:39 wiz Exp $
+.\"	$NetBSD: pr.1,v 1.19 2012/07/24 02:13:04 ginsbach Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1994-1995, 1997, 1999-2003, 2009, 2012
+.\"	The NetBSD Foundation, Inc.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Keith Muller of the University of California, San Diego.
@@ -32,9 +34,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: pr.1,v 1.18 2012/04/08 22:00:39 wiz Exp $
+.\"	$NetBSD: pr.1,v 1.19 2012/07/24 02:13:04 ginsbach Exp $
 .\"
-.Dd June 6, 1993
+.Dd May 4, 2012
 .Dt PR 1
 .Os
 .Sh NAME
@@ -44,7 +46,7 @@
 .Nm
 .Op Ar \&+page
 .Op Fl Ar column
-.Op Fl adFmrt
+.Op Fl adFfmprt
 .Oo
 .Op Fl e
 .Op Ar char
@@ -161,6 +163,11 @@ instead of the default behavior that uses a
 sequence of
 .Em \*[Lt]newline\*[Gt]
 characters.
+.It Fl f
+Same as
+.Fl F .
+Additionally pause before beginning the first page
+if the standard output is associated with a terminal.
 .It Fl h Ar header
 Use the string
 .Ar header
@@ -184,6 +191,12 @@ If any nondigit character,
 is specified, it is used as the output
 .Em \*[Lt]tab\*[Gt]
 character.
+If the first character of
+.Ar char
+is a digit then
+.Ar char
+is treated as
+.Ar gap .
 .It Fl l Ar lines
 Override the 66 line default and reset the page length to
 .Ar lines .
@@ -239,6 +252,16 @@ If the
 .Fl o
 option is not specified, the default is zero.
 The space taken is in addition to the output line width.
+.It Fl p
+Pause before beginning each page if the
+standard output is associated with a terminal.
+.Nm
+will write an
+.Em \*[Lt]alert\*[Gt]
+to standard error and wait for a
+.Em \*[Lt]carriage-return\*[Gt]
+to be read on
+.Pa /dev/tty .
 .It Fl r
 Write no diagnostic reports on failure to open a file.
 .It Fl s Ar char
@@ -324,5 +347,5 @@ file printing is complete (when printing to a terminal).
 The
 .Nm
 utility is
-.St -p1003.2
+.St -p1003.1-2008
 compatible.
