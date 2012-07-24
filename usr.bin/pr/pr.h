@@ -1,9 +1,11 @@
-/*	$NetBSD: pr.h,v 1.4 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: pr.h,v 1.5 2012/07/24 02:13:04 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2012
+ *	The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to Berkeley by
  * Keith Muller of the University of California, San Diego.
@@ -33,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)pr.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: pr.h,v 1.4 2003/10/13 07:41:22 agc Exp $
+ *	$NetBSD: pr.h,v 1.5 2012/07/24 02:13:04 ginsbach Exp $
  */
 
 /*
@@ -61,6 +63,12 @@
 #define	FNAME		""
 #define	LBUF		8192
 #define	HDBUF		512
+
+/* when to pause before (for -f and -p options) */
+#define NO_PAUSE	0
+#define FIRSTPAGE	1
+#define ENSUINGPAGES	2
+#define EACHPAGE	(FIRSTPAGE | ENSUINGPAGES)
 
 /*
  * structure for vertical columns. Used to balance cols on last page
