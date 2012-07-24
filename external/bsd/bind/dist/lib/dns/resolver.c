@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.12 2012/06/05 00:41:39 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.13 2012/07/24 18:06:28 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -8452,6 +8452,7 @@ dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
 			goto cleanup;
 		bad->type = type;
 		bad->hashval = hashval;
+		bad->expire = *expire;
 		isc_buffer_init(&buffer, bad + 1, name->length);
 		dns_name_init(&bad->name, NULL);
 		dns_name_copy(name, &bad->name, &buffer);
@@ -8463,7 +8464,7 @@ dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
 		if (resolver->badcount < resolver->badhash * 2 &&
 		    resolver->badhash > DNS_BADCACHE_SIZE)
 			resizehash(resolver, &now, ISC_FALSE);
-	}
+	} else
 	bad->expire = *expire;
  cleanup:
 	UNLOCK(&resolver->lock);
