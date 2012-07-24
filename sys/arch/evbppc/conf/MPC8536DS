@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8536DS,v 1.12 2012/07/23 16:27:44 matt Exp $
+#	$NetBSD: MPC8536DS,v 1.13 2012/07/24 22:37:08 matt Exp $
 #
 #	MPC8536DS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8536DS-$Revision: 1.12 $"
+ident 		"MPC8536DS-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -226,6 +226,7 @@ makphy* 	at mii? phy ?			# Marvell PHYs
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of disk subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
