@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.162 2012/07/25 21:33:09 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.163 2012/07/25 22:14:47 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6533,4 +6533,62 @@ sys/arch/luna68k/luna68k/locore.s		1.48
 	on both LUNA and LUNA-II.
 
 	[tsutsui, ticket #444]
+
+sys/netinet/icmp6.h				1.45,1.46
+
+	Add missing definitions and add strings for the types and codes.
+	[rmind, ticket #434]
+
+usr.sbin/npf/npfctl/npfctl.c			1.16,1.17
+sys/net/npf/npf.h				1.20
+sys/net/npf/npf_alg_icmp.c			1.11
+sys/net/npf/npf_impl.h				1.19
+sys/net/npf/npf_inet.c				1.15,1.16
+sys/net/npf/npf_instr.c				1.14
+sys/net/npf/npf_ncode.h				1.10
+sys/net/npf/npf_processor.c			1.12
+sys/net/npf/npf_session.c			1.16
+usr.sbin/npf/npfctl/npf_build.c			1.12
+usr.sbin/npf/npfctl/npf_data.c			1.16,1.17
+usr.sbin/npf/npfctl/npf_disassemble.c		1.8
+usr.sbin/npf/npfctl/npf_ncgen.c			1.13
+usr.sbin/npf/npfctl/npf_parse.y			1.11
+usr.sbin/npf/npfctl/npf_scan.l			1.5
+usr.sbin/npf/npfctl/npf_var.h			1.3
+usr.sbin/npf/npfctl/npfctl.h			1.18
+sys/net/npf/npf_state.c				1.10
+sys/net/npf/npf_state_tcp.c			1.10
+usr.sbin/npf/npftest/npfstream.c		1.2
+usr.sbin/npf/npftest/libnpftest/npf_test_subr.c	1.2
+ 
+	Add ipv6-icmp to NPF.
+	[rmind, ticket #435]
+
+lib/libc/cdb/cdbw.c				1.5
+	Redo hashing, if two of the three individual hashes result in identical
+	hash modules. This is the trivial case for loops in the 3-graph and got
+	lost when adopting the nbperf code.
+	[joerg, ticket #436]
+
+sys/arch/xen/xen/xen_machdep.c			1.12
+	Don't leak stack content when reading the Xen suspend value.
+	[jym, ticket #437]
+
+sys/dev/ic/ncr53c9x.c				1.145
+	When issuing a non-dma command, make sure to set the "remaining length
+	of command to be transfered via dma" (sc_cmdlen) to zero upfront,
+	otherwise we might get confused on command completition interrupt (no
+	dma active but still data left to transfer).
+        [ryoon, ticket #439]
+
+xsrc/external/mit/xf86-video-suncg6/dist/src/cg6_accel.c	1.3
+	Apply the same GX_FULL -> GX_INPROGRESS fix as cgsix.c
+	Now this works properly on the SPARCstation LX
+	[macallan, ticket #443]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c        1.16
+	Make Xorg keyboard driver work even on unknown keyboard types
+	so that we can still setup keyboard map manually by xmodmap(1), etc.
+	on some Tier II ports.
+	[tsutsui, ticket #445]
 
