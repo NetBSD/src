@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.30 2011/09/06 18:33:18 joerg Exp $	*/
+/*	$NetBSD: touch.c,v 1.31 2012/07/25 01:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.30 2011/09/06 18:33:18 joerg Exp $");
+__RCSID("$NetBSD: touch.c,v 1.31 2012/07/25 01:23:46 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -56,7 +56,9 @@ __RCSID("$NetBSD: touch.c,v 1.30 2011/09/06 18:33:18 joerg Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 
+static void	stime_arg0(char *, struct timeval *);
 static void	stime_arg1(char *, struct timeval *);
 static void	stime_arg2(char *, int, struct timeval *);
 static void	stime_file(char *, struct timeval *);
@@ -78,13 +80,17 @@ main(int argc, char *argv[])
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
-	while ((ch = getopt(argc, argv, "acfhmr:t:")) != -1)
+	while ((ch = getopt(argc, argv, "acd:fhmr:t:")) != -1)
 		switch(ch) {
 		case 'a':
 			aflag = 1;
 			break;
 		case 'c':
 			cflag = 1;
+			break;
+		case 'd':
+			timeset = 1;
+			stime_arg0(optarg, tv);
 			break;
 		case 'f':
 			break;
@@ -142,7 +148,7 @@ main(int argc, char *argv[])
 	if (*argv == NULL)
 		usage();
 
-	for (rval = 0; *argv; ++argv) {
+	for (rval = EXIT_SUCCESS; *argv; ++argv) {
 		/* See if the file exists. */
 		if ((*get_file_status)(*argv, &sb)) {
 			if (!cflag) {
@@ -150,7 +156,7 @@ main(int argc, char *argv[])
 				fd = open(*argv,
 				    O_WRONLY | O_CREAT, DEFFILEMODE);
 				if (fd == -1 || fstat(fd, &sb) || close(fd)) {
-					rval = 1;
+					rval = EXIT_FAILURE;
 					warn("%s", *argv);
 					continue;
 				}
@@ -172,7 +178,7 @@ main(int argc, char *argv[])
 
 		/* If the user specified a time, nothing else we can do. */
 		if (timeset) {
-			rval = 1;
+			rval = EXIT_FAILURE;
 			warn("%s", *argv);
 		}
 
@@ -185,13 +191,22 @@ main(int argc, char *argv[])
 		 if (!(*change_file_times)(*argv, NULL))
 			continue;
 
-		rval = 1;
+		rval = EXIT_FAILURE;
 		warn("%s", *argv);
 	}
 	exit(rval);
 }
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
+
+static void
+stime_arg0(char *arg, struct timeval *tvp)
+{
+	tvp[1].tv_sec = tvp[0].tv_sec = parsedate(arg, NULL, NULL);
+	if (tvp[0].tv_sec == -1)
+		errx(EXIT_FAILURE, "Could not parse `%s'", arg);
+	tvp[0].tv_usec = tvp[1].tv_usec = 0;
+}
 
 static void
 stime_arg1(char *arg, struct timeval *tvp)
@@ -203,7 +218,7 @@ stime_arg1(char *arg, struct timeval *tvp)
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
 	if ((t = localtime(&tmptime)) == NULL)
-		err(1, "localtime");
+		err(EXIT_FAILURE, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
 	if ((p = strchr(arg, '.')) == NULL)
 		t->tm_sec = 0;		/* Seconds defaults to 0. */
@@ -251,7 +266,7 @@ stime_arg1(char *arg, struct timeval *tvp)
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
 	if (tvp[0].tv_sec == -1)
-terr:		errx(1,
+terr:		errx(EXIT_FAILURE,
 	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
 
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
@@ -265,7 +280,7 @@ stime_arg2(char *arg, int year, struct timeval *tvp)
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
 	if ((t = localtime(&tmptime)) == NULL)
-		err(1, "localtime");
+		err(EXIT_FAILURE, "localtime");
 
 	t->tm_mon = ATOI2(arg);		/* MMDDhhmm[yy] */
 	--t->tm_mon;			/* Convert from 01-12 to 00-11 */
@@ -284,7 +299,7 @@ stime_arg2(char *arg, int year, struct timeval *tvp)
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
 	if (tvp[0].tv_sec == -1)
-		errx(1,
+		errx(EXIT_FAILURE,
 	"out of range or illegal time specification: MMDDhhmm[yy]");
 
 	tvp[0].tv_usec = tvp[1].tv_usec = 0;
@@ -305,6 +320,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: touch [-acfhm] [-r file] [-t time] file ...\n");
-	exit(1);
+	    "Usage: %s [-acfhm] [-d datetime] [-r file] [-t time] file ...\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
