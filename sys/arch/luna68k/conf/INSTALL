@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4 2011/12/18 05:49:29 dholland Exp $
+# $NetBSD: INSTALL,v 1.4.2.1 2012/07/25 21:30:34 martin Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -124,6 +124,7 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	FONT_OMRON12x20
 
 config		netbsd root on ? type ?
 
