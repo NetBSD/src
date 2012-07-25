@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.161 2012/07/25 15:31:02 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.162 2012/07/25 21:33:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6502,4 +6502,35 @@ sys/lib/libsa/cd9660.c				1.29
 
 	[mhitch, ticket #440]
 
+
+sys/arch/luna68k/conf/GENERIC			1.99
+sys/arch/luna68k/conf/INSTALL			1.6
+sys/arch/luna68k/dev/lunafb.c			1.26
+sys/arch/luna68k/dev/lunaws.c			1.24
+sys/arch/luna68k/dev/omrasops.c			1.12
+sys/arch/luna68k/dev/omrasops.c			1.13
+sys/arch/luna68k/dev/omrasopsvar.h		1.1
+sys/arch/luna68k/dev/omron_rfont.h		delete
+sys/arch/luna68k/luna68k/locore.s		1.48
+
+	Use & not && to mask bits.  From OpenBSD/luna88k
+
+
+	Fix typo in comment.  From OpenBSD/luna88k.
+
+
+	Switch luna68k wscons framebuffer driver to using rasops(9)
+	APIs instead of deprecated rcons(4).  This allows "options
+	FONT_foo" in kernel config files. Mostly taken from
+	OpenBSD/luna88k, but unnecessary MI rasops(9) stuff is
+	omitted since omrasops.c has own raster wsdisplay_emulops
+	functions. Tested on LUNA with 4bpp fb and LUNA-II with
+	1bpp fb.
+
+
+	Make reboot(2) actually work (don't access %sp after MMU is
+	turned off). Also cleanup spaces and #if 0'ed code.  Tested
+	on both LUNA and LUNA-II.
+
+	[tsutsui, ticket #444]
 
