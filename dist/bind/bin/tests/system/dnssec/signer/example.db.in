@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.2.2.1 2010-06-03 06:31:42 marka Exp
+; Id: example.db.in,v 1.2 2010/06/03 06:29:03 marka Exp
 $TTL 60
 example. 60 IN SOA example. . 0 0 0 0 0
 example. 60 IN NS example.

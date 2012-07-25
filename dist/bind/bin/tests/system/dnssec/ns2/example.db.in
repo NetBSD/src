@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.21.32.3 2010-01-18 23:48:01 tbox Exp
+; Id
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -73,6 +73,10 @@ dynamic			A	10.53.0.3
 mustbesecure		NS	ns.mustbesecure
 ns.mustbesecure		A	10.53.0.3
 
+; A subdomain with expired signatures
+expired			NS	ns.expired
+ns.expired		A	10.53.0.3
+
 ; A rfc2535 signed zone w/ CNAME
 rfc2535			NS	ns.rfc2535
 ns.rfc2535		A	10.53.0.3
@@ -107,3 +111,24 @@ ns.rsasha512		A	10.53.0.3
 
 kskonly 		NS	ns.kskonly
 ns.kskonly		A	10.53.0.3
+
+update-nsec3		NS	ns.update-nsec3
+ns.update-nsec3		A	10.53.0.3
+
+auto-nsec		NS	ns.auto-nsec
+ns.auto-nsec		A	10.53.0.3
+
+auto-nsec3		NS	ns.auto-nsec3
+ns.auto-nsec3		A	10.53.0.3
+
+
+below-cname		CNAME	some.where.else.
+
+insecure.below-cname	NS	ns.insecure.below-cname
+ns.insecure.below-cname	A	10.53.0.3
+
+secure.below-cname	NS	ns.secure.below-cname
+ns.secure.below-cname	A	10.53.0.3
+
+ttlpatch		NS	ns.ttlpatch
+ns.ttlpatch		A	10.53.0.3

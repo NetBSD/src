@@ -1,7 +1,7 @@
-/*	$NetBSD: herror.c,v 1.1.1.5.12.1 2011/06/18 11:29:15 bouyer Exp $	*/
+/*	$NetBSD: herror.c,v 1.1.1.5.12.2 2012/07/25 12:14:46 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -74,7 +74,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] =
-	"Id: herror.c,v 1.17 2007-06-19 23:47:22 tbox Exp";
+	"Id";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -98,7 +98,7 @@ static const char *h_errlist[] = {
 	"No address associated with name",	/*%< 4 NO_ADDRESS */
 };
 
-static int	h_nerr = { sizeof(h_errlist) / sizeof(h_errlist[0]) };
+static int	h_nerr = sizeof(h_errlist) / sizeof(h_errlist[0]);
 
 
 /*!

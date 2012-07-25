@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.c,v 1.1.1.6.4.1.2.2 2011/06/18 11:28:25 bouyer Exp $	*/
+/*	$NetBSD: journal.c,v 1.1.1.6.4.1.2.3 2012/07/25 12:13:02 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.c,v 1.110.24.2 2010-11-17 23:46:32 tbox Exp */
+/* Id */
 
 #include <config.h>
 
@@ -165,7 +165,7 @@ dns_db_createsoatuple(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 
 	dns_rdataset_disassociate(&rdataset);
 	dns_db_detachnode(db, &node);
-	return (ISC_R_SUCCESS);
+	return (result);
 
  freenode:
 	dns_db_detachnode(db, &node);
@@ -2172,6 +2172,7 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
 		CHECK(journal_fsync(new));
 
 		indexend = new->header.end.offset;
+		POST(indexend);
 	}
 
 	/*

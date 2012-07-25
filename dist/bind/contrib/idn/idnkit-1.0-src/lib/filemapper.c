@@ -1,7 +1,7 @@
-/*	$NetBSD: filemapper.c,v 1.1.1.1.40.1 2011/06/18 11:28:01 bouyer Exp $	*/
+/*	$NetBSD: filemapper.c,v 1.1.1.1.40.2 2012/07/25 12:12:17 jdc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: filemapper.c,v 1.1.1.1 2003-06-04 00:25:53 marka Exp";
+static char *rcsid = "Id: filemapper.c,v 1.1 2003/06/04 00:25:53 marka Exp";
 #endif
 
 /*

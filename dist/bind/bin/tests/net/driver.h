@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.1.1.5.12.1 2011/06/18 11:27:05 bouyer Exp $	*/
+/*	$NetBSD: driver.h,v 1.1.1.5.12.2 2012/07/25 12:10:25 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: driver.h,v 1.8 2007-06-19 23:47:00 tbox Exp */
+/* Id: driver.h,v 1.8 2007/06/19 23:47:00 tbox Exp */
 
 /*
  * PASSED and FAILED mean the particular test passed or failed.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4 2007-06-19 23:47:04 tbox Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -54,7 +54,7 @@ exit $status
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4 2007-06-19 23:47:04 tbox Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -75,6 +75,21 @@ do
 done
 
 diff dig.out.1 dig.out.2 || status=1
+
+echo "I:checking that large rdatasets loaded"
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+ret=0
+for a in a b c
+do
+	$DIG +tcp txt ${a}.large @10.53.0.2 -p 5300 > dig.out
+	grep "status: NOERROR" dig.out > /dev/null || ret=1
+done
+[ $ret -eq 0 ] && break
+sleep 1
+done
+[ $ret -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

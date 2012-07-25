@@ -1,7 +1,7 @@
-/*	$NetBSD: normalizer.c,v 1.1.1.1.40.1 2011/06/18 11:28:02 bouyer Exp $	*/
+/*	$NetBSD: normalizer.c,v 1.1.1.1.40.2 2012/07/25 12:12:18 jdc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: normalizer.c,v 1.1.1.1 2003-06-04 00:26:05 marka Exp";
+static char *rcsid = "Id: normalizer.c,v 1.1 2003/06/04 00:26:05 marka Exp";
 #endif
 
 /*

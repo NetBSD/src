@@ -1,7 +1,7 @@
-/*	$NetBSD: ipseckey_45.c,v 1.1.1.2.4.1.2.2 2011/06/18 11:28:40 bouyer Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.1.1.2.4.1.2.3 2012/07/25 12:13:30 jdc Exp $	*/
 
 /*
- * Copyright (C) 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipseckey_45.c,v 1.9.4.2 2011-01-13 04:48:58 tbox Exp */
+/* Id */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C

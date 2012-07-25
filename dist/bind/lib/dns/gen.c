@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.5.12.2 2011/06/18 11:28:24 bouyer Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.5.12.3 2012/07/25 12:13:01 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen.c,v 1.85 2009-12-04 22:06:37 tbox Exp */
+/* Id: gen.c,v 1.85 2009/12/04 22:06:37 tbox Exp */
 
 /*! \file */
 

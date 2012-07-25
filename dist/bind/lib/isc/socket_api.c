@@ -1,7 +1,7 @@
-/*        $NetBSD: socket_api.c,v 1.1.4.3 2011/06/18 11:28:56 bouyer Exp $      */
+/*        $NetBSD: socket_api.c,v 1.1.4.4 2012/07/25 12:14:02 jdc Exp $      */
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket_api.c,v 1.5 2009-10-01 01:30:01 sar Exp */
+/* Id */
 
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.1.1.5.12.2 2011/06/18 11:26:56 bouyer Exp $	*/
+/*	$NetBSD: main.h,v 1.1.1.5.12.3 2012/07/25 12:10:05 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.h,v 1.17 2009-09-29 23:48:03 tbox Exp */
+/* Id: main.h,v 1.17 2009/09/29 23:48:03 tbox Exp */
 
 #ifndef NAMED_MAIN_H
 #define NAMED_MAIN_H 1

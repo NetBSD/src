@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.3.6.5 2010-12-15 18:44:16 each Exp
+# Id: keygen.sh,v 1.3.6.10 2012/02/06 23:45:34 tbox Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -205,3 +205,46 @@ zonefile="${zone}.db"
 $KEYGEN -3 -q -r $RANDFILE -fk $zone > /dev/null
 $KEYGEN -3 -q -r $RANDFILE $zone > /dev/null
 $SIGNER -S -3 beef -o $zone -f $zonefile $infile > /dev/null 2>&1
+
+#
+# A zone with a DNSKEY RRset that is published before it's activated
+#
+zone=delay.example
+zonefile="${zone}.db"
+ksk=`$KEYGEN -G -q -3 -r $RANDFILE -fk $zone`
+echo $ksk > ../delayksk.key
+zsk=`$KEYGEN -G -q -3 -r $RANDFILE $zone`
+echo $zsk > ../delayzsk.key
+
+#
+# A zone with signatures that are already expired, and the private ZSK
+# is missing.
+#
+zone=nozsk.example
+zonefile="${zone}.db"
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
+$SIGNER -S -P -s now-1mo -e now-1mi -o $zone -f $zonefile ${zonefile}.in > /dev/null 2>&1
+echo $zsk > ../missingzsk.key
+rm -f ${zsk}.private
+
+#
+# A zone with signatures that are already expired, and the private ZSK
+# is inactive.
+#
+zone=inaczsk.example
+zonefile="${zone}.db"
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
+$SIGNER -S -P -s now-1mo -e now-1mi -o $zone -f $zonefile ${zonefile}.in > /dev/null 2>&1
+echo $zsk > ../inactivezsk.key
+$SETTIME -I now $zsk > /dev/null
+
+#
+# A zone that is set to 'auto-dnssec maintain' during a recofnig
+#
+zone=reconf.example
+zonefile="${zone}.db"
+cp secure.example.db.in $zonefile
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+$KEYGEN -q -3 -r $RANDFILE $zone > /dev/null

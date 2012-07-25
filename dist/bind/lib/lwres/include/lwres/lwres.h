@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres.h,v 1.3.12.1 2011/06/18 11:29:16 bouyer Exp $	*/
+/*	$NetBSD: lwres.h,v 1.3.12.2 2012/07/25 12:14:49 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwres.h,v 1.57 2007-06-19 23:47:23 tbox Exp */
+/* Id: lwres.h,v 1.57 2007/06/19 23:47:23 tbox Exp */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1

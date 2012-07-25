@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_smf_globals.h,v 1.1.1.3.12.1 2011/06/18 11:26:56 bouyer Exp $	*/
+/*	$NetBSD: ns_smf_globals.h,v 1.1.1.3.12.2 2012/07/25 12:10:06 jdc Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ns_smf_globals.h,v 1.7 2007-06-19 23:46:59 tbox Exp */
+/* Id: ns_smf_globals.h,v 1.7 2007/06/19 23:46:59 tbox Exp */
 
 #ifndef NS_SMF_GLOBALS_H
 #define NS_SMF_GLOBALS_H 1

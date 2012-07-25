@@ -1,4 +1,4 @@
-;; Id: patch-db2latex-xsltproc-title-bug,v 1.2 2007-01-12 22:24:20 sra Exp
+;; Id: patch-db2latex-xsltproc-title-bug,v 1.2 2007/01/12 22:24:20 sra Exp
 ;; 
 ;; This patches around a problem that I don't completely understand,
 ;; and which may in fact be an xsltproc bug rather than a db2latex

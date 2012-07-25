@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.1.1.5.12.2 2011/06/18 11:28:44 bouyer Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.1.1.5.12.3 2012/07/25 12:13:39 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: txt_16.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
+/* Id: txt_16.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 

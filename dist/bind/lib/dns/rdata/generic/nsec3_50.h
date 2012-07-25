@@ -1,7 +1,7 @@
-/*        $NetBSD: nsec3_50.h,v 1.1.4.3 2011/06/18 11:28:42 bouyer Exp $      */
+/*        $NetBSD: nsec3_50.h,v 1.1.4.4 2012/07/25 12:13:33 jdc Exp $      */
 
 /*
- * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
 
-/* Id: nsec3_50.h,v 1.4 2008-09-25 04:02:39 tbox Exp */
+/* Id */
 
 /*!
  * \brief Per RFC 5155 */
