@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: digcomp.pl,v 1.14 2007-06-19 23:47:00 tbox Exp
+# Id: digcomp.pl,v 1.14 2007/06/19 23:47:00 tbox Exp
 
 # Compare two files, each with the output from dig, for differences.
 # Ignore "unimportant" differences, like ordering of NS lines, TTL's,

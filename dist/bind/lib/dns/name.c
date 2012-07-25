@@ -1,7 +1,7 @@
-/*	$NetBSD: name.c,v 1.1.1.6.12.2 2011/06/18 11:28:25 bouyer Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.6.12.3 2012/07/25 12:13:04 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.169.104.3 2010-07-09 05:14:08 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -1026,12 +1026,13 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 		  dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target)
 {
-	unsigned char *ndata, *label;
+	unsigned char *ndata, *label = NULL;
 	char *tdata;
 	char c;
 	ft_state state;
-	unsigned int value, count;
-	unsigned int n1, n2, tlen, nrem, nused, digits, labels, tused;
+	unsigned int value = 0, count = 0;
+	unsigned int n1 = 0, n2 = 0;
+	unsigned int tlen, nrem, nused, digits = 0, labels, tused;
 	isc_boolean_t done;
 	unsigned char *offsets;
 	dns_offsets_t odata;
@@ -1063,16 +1064,6 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 
 	INIT_OFFSETS(name, offsets, odata);
 	offsets[0] = 0;
-
-	/*
-	 * Initialize things to make the compiler happy; they're not required.
-	 */
-	n1 = 0;
-	n2 = 0;
-	label = NULL;
-	digits = 0;
-	value = 0;
-	count = 0;
 
 	/*
 	 * Make 'name' empty in case of failure.
@@ -1173,6 +1164,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 				return (DNS_R_BADLABELTYPE);
 			}
 			state = ft_escape;
+			POST(state);
 			/* FALLTHROUGH */
 		case ft_escape:
 			if (!isdigit(c & 0xff)) {
@@ -1238,6 +1230,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			label = origin->ndata;
 			n1 = origin->length;
 			nrem -= n1;
+			POST(nrem);
 			while (n1 > 0) {
 				n2 = *label++;
 				INSIST(n2 <= 63); /* no bitstring support */
@@ -2407,14 +2400,20 @@ dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
 
 	isc_buffer_init(&buf, src, strlen(src));
 	isc_buffer_add(&buf, strlen(src));
+	if (BINDABLE(target) && target->buffer != NULL)
+		name = target;
+	else {
 	dns_fixedname_init(&fn);
 	name = dns_fixedname_name(&fn);
+	}
 
 	result = dns_name_fromtext(name, &buf, dns_rootname, options, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	if (name != target)
 	result = dns_name_dup(name, mctx, target);
+
 	return (result);
 }
 

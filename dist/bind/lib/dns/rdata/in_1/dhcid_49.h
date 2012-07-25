@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.h,v 1.1.1.1.14.1 2011/06/18 11:28:45 bouyer Exp $	*/
+/*	$NetBSD: dhcid_49.h,v 1.1.1.1.14.2 2012/07/25 12:13:41 jdc Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_DHCID_49_H
 #define IN_1_DHCID_49_H 1
 
-/* Id: dhcid_49.h,v 1.5 2007-06-19 23:47:17 tbox Exp */
+/* Id: dhcid_49.h,v 1.5 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_in_dhcid {
 	dns_rdatacommon_t	common;

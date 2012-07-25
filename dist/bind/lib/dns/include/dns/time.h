@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.1.1.5.12.1 2011/06/18 11:28:36 bouyer Exp $	*/
+/*	$NetBSD: time.h,v 1.1.1.5.12.2 2012/07/25 12:13:23 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.h,v 1.17 2007-06-19 23:47:17 tbox Exp */
+/* Id */
 
 #ifndef DNS_TIME_H
 #define DNS_TIME_H 1
@@ -67,6 +67,12 @@ dns_time32_totext(isc_uint32_t value, isc_buffer_t *target);
  * Of those dates whose counts of seconds since Jan 1 1970 0:00 GMT
  * are congruent with 'value' modulo 2^32, the one closest to the
  * current date is chosen.
+ */
+
+isc_int64_t
+dns_time64_from32(isc_uint32_t value);
+/*%<
+ * Covert a 32-bit cyclic time value into a 64 bit time stamp.
  */
 
 ISC_LANG_ENDDECLS

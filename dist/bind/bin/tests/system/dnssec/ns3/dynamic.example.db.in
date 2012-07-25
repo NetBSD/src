@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: dynamic.example.db.in,v 1.5 2007-06-19 23:47:02 tbox Exp
+; Id: dynamic.example.db.in,v 1.5 2007/06/19 23:47:02 tbox Exp
 
 ; This has the NS and glue at the apex because testing RT #2399
 ; requires we have only one name in the zone at a certain point

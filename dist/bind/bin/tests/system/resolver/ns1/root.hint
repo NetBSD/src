@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.hint,v 1.7 2007-06-19 23:47:05 tbox Exp
+; Id: root.hint,v 1.7 2007/06/19 23:47:05 tbox Exp
 
 $TTL 999999
 .			 IN NS	a.root-servers.nil.

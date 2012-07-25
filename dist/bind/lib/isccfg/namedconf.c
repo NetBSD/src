@@ -1,7 +1,7 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.7.4.1.2.2 2011/06/18 11:29:13 bouyer Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.7.4.1.2.3 2012/07/25 12:14:42 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.113.4.10 2010-08-11 18:19:58 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -544,8 +544,7 @@ static cfg_type_t cfg_type_bracketed_sockaddrlist = {
 	&cfg_rep_list, &cfg_type_sockaddr
 };
 
-static const char *autodnssec_enums[] = { "allow", "maintain", "create",
-					  "off", NULL };
+static const char *autodnssec_enums[] = { "allow", "maintain", "off", NULL };
 static cfg_type_t cfg_type_autodnssec = {
 	"autodnssec", cfg_parse_enum, cfg_print_ustring, cfg_doc_enum,
 	&cfg_rep_string, &autodnssec_enums
@@ -968,6 +967,24 @@ static cfg_type_t cfg_type_masterformat = {
  * dnssec-lookaside
  */
 
+static void
+print_lookaside(cfg_printer_t *pctx, const cfg_obj_t *obj)
+{
+	const cfg_obj_t *domain = obj->value.tuple[0];
+
+	if (domain->value.string.length == 4 &&
+	    strncmp(domain->value.string.base, "auto", 4) == 0)
+		cfg_print_cstr(pctx, "auto");
+	else
+		cfg_print_tuple(pctx, obj);
+}
+
+static void
+doc_lookaside(cfg_printer_t *pctx, const cfg_type_t *type) {
+	UNUSED(type);
+	cfg_print_cstr(pctx, "( <string> trust-anchor <string> | auto | no )");
+}
+
 static keyword_type_t trustanchor_kw = { "trust-anchor", &cfg_type_astring };
 
 static cfg_type_t cfg_type_optional_trustanchor = {
@@ -982,7 +999,7 @@ static cfg_tuplefielddef_t lookaside_fields[] = {
 };
 
 static cfg_type_t cfg_type_lookaside = {
-	"lookaside", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	"lookaside", cfg_parse_tuple, print_lookaside, doc_lookaside,
 	&cfg_rep_tuple, lookaside_fields
 };
 
@@ -1139,6 +1156,7 @@ zone_clauses[] = {
 	{ "also-notify", &cfg_type_portiplist, 0 },
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild, 0 },
+	{ "auto-dnssec", &cfg_type_autodnssec, 0 },
 	{ "check-dup-records", &cfg_type_checkmode, 0 },
 	{ "check-integrity", &cfg_type_boolean, 0 },
 	{ "check-mx", &cfg_type_checkmode, 0 },
@@ -1208,7 +1226,6 @@ zone_only_clauses[] = {
 	 */
 	{ "check-names", &cfg_type_checkmode, 0 },
 	{ "ixfr-from-differences", &cfg_type_boolean, 0 },
-	{ "auto-dnssec", &cfg_type_autodnssec, 0 },
 	{ NULL, NULL, 0 }
 };
 
@@ -2040,7 +2057,8 @@ static cfg_type_t cfg_type_controls_sockaddr = {
  * statement, which takes a single key with or without braces and semicolon.
  */
 static isc_result_t
-parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
+parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type,
+			cfg_obj_t **ret)
 {
 	isc_result_t result;
 	isc_boolean_t braces = ISC_FALSE;
@@ -2050,7 +2068,7 @@ parse_server_key_kludge(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **
 	CHECK(cfg_peektoken(pctx, 0));
 	if (pctx->token.type == isc_tokentype_special &&
 	    pctx->token.value.as_char == '{') {
-		result = cfg_gettoken(pctx, 0);
+		CHECK(cfg_gettoken(pctx, 0));
 		braces = ISC_TRUE;
 	}
 

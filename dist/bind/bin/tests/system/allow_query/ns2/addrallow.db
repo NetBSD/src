@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: addrallow.db,v 1.2.2.2 2010-11-16 02:11:48 sar Exp
+; Id: addrallow.db,v 1.2.2.2 2010/11/16 02:11:48 sar Exp
 
 $ORIGIN addrallow.example.
 $TTL 300	; 5 minutes

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run-test.sh,v 1.3 2009-06-04 02:56:47 tbox Exp
+# Id: run-test.sh,v 1.3 2009/06/04 02:56:47 tbox Exp
 
 
 sign="../../dnssec/dnssec-signzone -f signed.zone -o example.com."

@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.58 2009-11-26 20:52:44 marka Exp
+# Id: Makefile.in,v 1.58.8.4 2011/09/06 04:05:37 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-SUBDIRS =	make lib bin doc @LIBEXPORT@
+SUBDIRS =	make unit lib bin doc @LIBEXPORT@
 TARGETS =
 
 MANPAGES =	isc-config.sh.1
@@ -64,7 +64,10 @@ tags:
 check: test
 
 test:
-	(cd bin/tests && ${MAKE} ${MAKEDEFS} test)
+	status=0; \
+	(cd bin/tests && ${MAKE} ${MAKEDEFS} test) || status=1; \
+	(test -f unit/unittest.sh && $(SHELL) unit/unittest.sh) || status=1; \
+	exit $$status
 
 FAQ: FAQ.xml
 	${XSLTPROC} doc/xsl/isc-docbook-text.xsl FAQ.xml | \

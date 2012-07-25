@@ -1,4 +1,4 @@
-/*        $NetBSD: resconf.h,v 1.1.4.3 2011/06/18 11:28:51 bouyer Exp $      */
+/*        $NetBSD: resconf.h,v 1.1.4.4 2012/07/25 12:13:53 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resconf.h,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id: resconf.h,v 1.3 2009/09/02 23:48:02 tbox Exp */
 
 #ifndef IRS_RESCONF_H
 #define IRS_RESCONF_H 1

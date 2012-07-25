@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.4.4.1.2.2 2011/06/18 11:26:59 bouyer Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.4.1.2.3 2012/07/25 12:10:13 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.126.66.7 2011-02-03 12:17:22 tbox Exp */
+/* Id: rndc.c,v 1.126.66.8 2011/11/03 22:06:43 each Exp */
 
 /*! \file */
 
@@ -144,13 +144,17 @@ command is one of the following:\n\
 		Flush the given name from the server's cache(s)\n\
   status	Display status of the server.\n\
   recursing	Dump the queries that are currently recursing (named.recursing)\n\
+  tsig-list	List all currently active TSIG keys, including both statically\n\
+		configured and TKEY-negotiated keys.\n\
+  tsig-delete keyname [view]	\n\
+		Delete a TKEY-negotiated TSIG key.\n\
   validation newstate [view]\n\
 		Enable / disable DNSSEC validation.\n\
-  *restart	Restart the server.\n\
   addzone [\"file\"] zone [class [view]] { zone-options }\n\
 		Add zone to given view. Requires new-zone-file option.\n\
   delzone [\"file\"] zone [class [view]]\n\
 		Removes zone from given view. Requires new-zone-file option.\n\
+  *restart	Restart the server.\n\
 \n\
 * == not yet implemented\n\
 Version: %s\n",

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004-2008, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: start.pl,v 1.13.396.3 2010-09-15 12:10:53 marka Exp
+# Id
 
 # Framework for starting test servers.
 # Based on the type of server specified, check for port availability, remove
@@ -23,6 +23,7 @@
 # If a server is specified, start it. Otherwise, start all servers for test.
 
 use strict;
+use Cwd;
 use Cwd 'abs_path';
 use Getopt::Long;
 
@@ -33,10 +34,19 @@ use Getopt::Long;
 #   test - name of the test directory
 #   server - name of the server directory
 #   options - alternate options for the server
+#             NOTE: options must be specified with '-- "<option list>"',
+#              for instance: start.pl . ns1 -- "-c n.conf -d 43"
+#             ALSO NOTE: this variable will be filled with the
+#		contents of the first non-commented/non-blank line of args
+#		in a file called "named.args" in an ns*/ subdirectory only
+#		the FIRST non-commented/non-blank line is used (everything
+#		else in the file is ignored. If "options" is already set,
+#		then "named.args" is ignored.
 
-my $usage = "usage: $0 [--noclean] test-directory [server-directory [server-options]]";
-my $noclean;
-GetOptions('noclean' => \$noclean);
+my $usage = "usage: $0 [--noclean] [--restart] test-directory [server-directory [server-options]]";
+my $noclean = '';
+my $restart = '';
+GetOptions('noclean' => \$noclean, 'restart' => \$restart);
 my $test = $ARGV[0];
 my $server = $ARGV[1];
 my $options = $ARGV[2];
@@ -78,14 +88,14 @@ if ($server) {
 	my @ns = grep /^ns[0-9]*$/, @files;
 	my @lwresd = grep /^lwresd[0-9]*$/, @files;
 	my @ans = grep /^ans[0-9]*$/, @files;
+	my $name;
 
 	# Start the servers we found.
 	&check_ports();
-	foreach (@ns, @lwresd, @ans) {
-		&start_server($_);
-	}
-	foreach (@ns) {
-		&verify_server($_);
+	foreach $name(@ns, @lwresd, @ans) {
+		&start_server($name);
+		&verify_server($name) if ($name =~ /^ns/);
+		
 	}
 }
 
@@ -122,11 +132,27 @@ sub start_server {
 	my $cleanup_files;
 	my $command;
 	my $pid_file;
+        my $cwd = getcwd();
+	my $args_file = $cwd . "/" . $test . "/" . $server . "/" . "named.args";
 
 	if ($server =~ /^ns/) {
 		$cleanup_files = "{*.jnl,*.bk,*.st,named.run}";
 		$command = "$NAMED ";
 		if ($options) {
+			$command .= "$options";
+		} elsif (-e $args_file) {
+			open(FH, "<", $args_file);
+			while(my $line=<FH>)
+			{
+				#$line =~ s/\R//g;
+				chomp $line;
+				next if ($line =~ /^\s*$/); #discard blank lines
+				next if ($line =~ /^\s*#/); #discard comment lines
+				$line =~ s/#.*$//g;
+				$options = $line;
+				last;
+			}
+			close FH;
 			$command .= "$options";
 		} else {
 			$command .= "-m record,size,mctx ";
@@ -137,7 +163,11 @@ sub start_server {
 				if (-e "$testdir/$server/named.noaa");
 			$command .= "-c named.conf -d 99 -g";
 		}
+		if ($restart) {
+			$command .= " >>named.run 2>&1 &";
+		} else {
 		$command .= " >named.run 2>&1 &";
+		}
 		$pid_file = "named.pid";
 	} elsif ($server =~ /^lwresd/) {
 		$cleanup_files = "{lwresd.run}";
@@ -150,17 +180,29 @@ sub start_server {
 			$command .= "-C resolv.conf -d 99 -g ";
 			$command .= "-i lwresd.pid -P 9210 -p 5300";
 		}
+		if ($restart) {
+			$command .= " >>lwresd.run 2>&1 &";
+		} else {
 		$command .= " >lwresd.run 2>&1 &";
+		}
 		$pid_file = "lwresd.pid";
 	} elsif ($server =~ /^ans/) {
 		$cleanup_files = "{ans.run}";
-		$command = "$PERL ./ans.pl ";
+                if (-e "$testdir/$server/ans.pl") {
+                        $command = "$PERL ans.pl";
+                } else {
+                        $command = "$PERL $topdir/ans.pl 10.53.0.$'";
+                }
 		if ($options) {
 			$command .= "$options";
 		} else {
 			$command .= "";
 		}
+		if ($restart) {
+			$command .= " >>ans.run 2>&1 &";
+		} else {
 		$command .= " >ans.run 2>&1 &";
+		}
 		$pid_file = "ans.pid";
 	} else {
 		print "I:Unknown server type $server\n";
@@ -169,7 +211,7 @@ sub start_server {
 		exit 1;
 	}
 
-	#               print "I:starting server $server\n";
+	# print "I:starting server %s\n",$server;
 
 	chdir "$testdir/$server";
 
@@ -177,18 +219,29 @@ sub start_server {
 		unlink glob $cleanup_files;
 	}
 
-	system "$command";
+	# get the shell to report the pid of the server ($!)
+	$command .= "echo \$!";
 
+	# start the server
+	my $child = `$command`;
+
+	# wait up to 14 seconds for the server to start and to write the
+	# pid file otherwise kill this server and any others that have
+	# already been started
 	my $tries = 0;
-	while (!-f $pid_file) {
+	while (!-s $pid_file) {
 		if (++$tries > 14) {
-			print "I:Couldn't start server $server\n";
+			print "I:Couldn't start server $server (pid=$child)\n";
 			print "R:FAIL\n";
+			system "kill -9 $child" if ("$child" ne "");
 			system "$PERL $topdir/stop.pl $testdir";
 			exit 1;
 		}
 		sleep 1;
 	}
+
+        # go back to the top level directory
+	chdir $cwd;
 }
 
 sub verify_server {

@@ -1,4 +1,4 @@
-/*	$NetBSD: byname_test.c,v 1.1.1.5.12.2 2011/06/18 11:27:01 bouyer Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.1.1.5.12.3 2012/07/25 12:10:15 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byname_test.c,v 1.33 2009-09-02 23:48:01 tbox Exp */
+/* Id: byname_test.c,v 1.33 2009/09/02 23:48:01 tbox Exp */
 
 /*! \file
  * \author

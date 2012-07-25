@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.h,v 1.1.1.5.12.1 2011/06/18 11:28:42 bouyer Exp $	*/
+/*	$NetBSD: null_10.h,v 1.1.1.5.12.2 2012/07/25 12:13:35 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_NULL_10_H
 #define GENERIC_NULL_10_H 1
 
-/* Id: null_10.h,v 1.25 2007-06-19 23:47:17 tbox Exp */
+/* Id: null_10.h,v 1.25 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_null {
 	dns_rdatacommon_t	common;

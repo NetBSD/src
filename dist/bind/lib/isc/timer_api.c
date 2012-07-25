@@ -1,4 +1,4 @@
-/*        $NetBSD: timer_api.c,v 1.1.4.3 2011/06/18 11:28:56 bouyer Exp $      */
+/*        $NetBSD: timer_api.c,v 1.1.4.4 2012/07/25 12:14:04 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer_api.c,v 1.4 2009-09-02 23:48:02 tbox Exp */
+/* Id: timer_api.c,v 1.4 2009/09/02 23:48:02 tbox Exp */
 
 #include <config.h>
 

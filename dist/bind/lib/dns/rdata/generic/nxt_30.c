@@ -1,4 +1,4 @@
-/*	$NetBSD: nxt_30.c,v 1.1.1.5.12.2 2011/06/18 11:28:42 bouyer Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.1.1.5.12.3 2012/07/25 12:13:35 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nxt_30.c,v 1.65 2009-12-04 22:06:37 tbox Exp */
+/* Id: nxt_30.c,v 1.65 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 

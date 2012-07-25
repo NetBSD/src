@@ -1,4 +1,4 @@
-/*	$NetBSD: serial_test.c,v 1.1.1.5.12.1 2011/06/18 11:27:02 bouyer Exp $	*/
+/*	$NetBSD: serial_test.c,v 1.1.1.5.12.2 2012/07/25 12:10:20 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: serial_test.c,v 1.15 2007-06-19 23:46:59 tbox Exp */
+/* Id: serial_test.c,v 1.15 2007/06/19 23:46:59 tbox Exp */
 
 #include <config.h>
 

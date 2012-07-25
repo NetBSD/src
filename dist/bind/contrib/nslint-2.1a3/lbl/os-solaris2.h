@@ -1,4 +1,4 @@
-/*	$NetBSD: os-solaris2.h,v 1.1.1.1.40.1 2011/06/18 11:28:08 bouyer Exp $	*/
+/*	$NetBSD: os-solaris2.h,v 1.1.1.1.40.2 2012/07/25 12:12:31 jdc Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 2000
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Id: os-solaris2.h,v 1.1 2001-12-21 04:12:05 marka Exp (LBL)
+ * @(#) Id: os-solaris2.h,v 1.1 2001/12/21 04:12:05 marka Exp (LBL)
  */
 
 /* Prototypes missing in SunOS 5 */

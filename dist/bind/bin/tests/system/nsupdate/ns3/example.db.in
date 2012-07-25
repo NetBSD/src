@@ -1,4 +1,4 @@
-; Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.2.2.3 2010-12-07 23:46:26 tbox Exp
+; Id
 
 example. 10 IN SOA example. hostmaster.example. 1 3600 900 2419200 3600
 example. 10 IN NS example.

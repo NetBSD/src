@@ -1,6 +1,6 @@
-/*	$NetBSD: testutil.h,v 1.1.1.1.40.1 2011/06/18 11:28:05 bouyer Exp $	*/
+/*	$NetBSD: testutil.h,v 1.1.1.1.40.2 2012/07/25 12:12:22 jdc Exp $	*/
 
-/* Id: testutil.h,v 1.1.1.1 2003-06-04 00:27:03 marka Exp */
+/* Id: testutil.h,v 1.1 2003/06/04 00:27:03 marka Exp */
 /*
  * Copyright (c) 2002 Japan Network Information Center.
  * All rights reserved.

@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.5.4.1.2.3 2012/06/05 19:53:03 bouyer Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.5.4.1.2.4 2012/07/25 12:13:08 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.50.186.2 2010-02-25 05:25:52 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -55,6 +55,7 @@
  *	record count	(2 bytes)
  *	data records
  *		data length	(2 bytes)
+ *		meta data	(1 byte for RRSIG's)
  *		data		(data length bytes)
  *
  * Offsets are from the end of the header.

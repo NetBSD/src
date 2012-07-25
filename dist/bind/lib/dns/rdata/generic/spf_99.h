@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.h,v 1.1.1.2.12.1 2011/06/18 11:28:43 bouyer Exp $	*/
+/*	$NetBSD: spf_99.h,v 1.1.1.2.12.2 2012/07/25 12:13:38 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_SPF_99_H
 #define GENERIC_SPF_99_H 1
 
-/* Id: spf_99.h,v 1.4 2007-06-19 23:47:17 tbox Exp */
+/* Id: spf_99.h,v 1.4 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_spf_string {
                 isc_uint8_t    length;

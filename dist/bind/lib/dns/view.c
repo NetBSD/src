@@ -1,7 +1,7 @@
-/*	$NetBSD: view.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:30 bouyer Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.5.4.1.2.3 2012/07/25 12:13:12 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.159.8.11 2010-09-24 05:54:06 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -1272,6 +1272,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, dns_name_t *name,
 		if (result == DNS_R_PARTIALMATCH) {
 			dns_zone_detach(zp);
 			result = ISC_R_NOTFOUND;
+			POST(result);
 		}
 
 		if (zone2 != NULL) {
@@ -1597,6 +1598,9 @@ isc_result_t
 dns_view_issecuredomain(dns_view_t *view, dns_name_t *name,
 			 isc_boolean_t *secure_domain) {
 	REQUIRE(DNS_VIEW_VALID(view));
+
+	if (view->secroots_priv == NULL)
+		return (ISC_R_NOTFOUND);
 	return (dns_keytable_issecuredomain(view->secroots_priv, name,
 					    secure_domain));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:53 bouyer Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.5.4.1.2.3 2012/07/25 12:13:56 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.c,v 1.16 2009-09-01 00:22:28 jinmei Exp */
+/* Id: hash.c,v 1.16 2009/09/01 00:22:28 jinmei Exp */
 
 /*! \file
  * Some portion of this code was derived from universal hash function

@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:33 bouyer Exp $	*/
+/*	$NetBSD: log.h,v 1.1.1.5.4.1.2.3 2012/07/25 12:13:17 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.44.186.1 2009-12-18 22:13:54 each Exp */
+/* Id */
 
 /*! \file dns/log.h
  * \author  Principal Authors: DCL */

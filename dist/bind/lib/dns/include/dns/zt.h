@@ -1,7 +1,7 @@
-/*	$NetBSD: zt.h,v 1.1.1.5.12.1 2011/06/18 11:28:36 bouyer Exp $	*/
+/*	$NetBSD: zt.h,v 1.1.1.5.12.2 2012/07/25 12:13:25 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zt.h,v 1.38 2007-06-19 23:47:17 tbox Exp */
+/* Id */
 
 #ifndef DNS_ZT_H
 #define DNS_ZT_H 1

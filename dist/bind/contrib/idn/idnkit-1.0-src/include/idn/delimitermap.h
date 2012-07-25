@@ -1,6 +1,6 @@
-/*	$NetBSD: delimitermap.h,v 1.1.1.1.40.1 2011/06/18 11:27:59 bouyer Exp $	*/
+/*	$NetBSD: delimitermap.h,v 1.1.1.1.40.2 2012/07/25 12:12:13 jdc Exp $	*/
 
-/* Id: delimitermap.h,v 1.1.1.1 2003-06-04 00:25:37 marka Exp */
+/* Id: delimitermap.h,v 1.1 2003/06/04 00:25:37 marka Exp */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

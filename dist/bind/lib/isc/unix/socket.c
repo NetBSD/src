@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.1.1.7.4.1.2.2 2011/06/18 11:29:06 bouyer Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.7.4.1.2.3 2012/07/25 12:14:26 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.326.20.7 2010-12-22 03:27:22 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -762,6 +762,7 @@ FIX_IPV6_RECVPKTINFO(isc__socket_t *sock)
 	if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 		       (void *)&on, sizeof(on)) < 0) {
 
+		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "setsockopt(%d, IPV6_RECVPKTINFO) "
 				 "%s: %s", sock->fd,
@@ -1362,6 +1363,9 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	if ((sock->type == isc_sockettype_udp)
 	    && ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0)) {
+#if defined(IPV6_USE_MIN_MTU)
+		int use_min_mtu = 1;	/* -1, 0, 1 */
+#endif
 		struct cmsghdr *cmsgp;
 		struct in6_pktinfo *pktinfop;
 
@@ -1380,6 +1384,22 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 		cmsgp->cmsg_len = cmsg_len(sizeof(struct in6_pktinfo));
 		pktinfop = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 		memcpy(pktinfop, &dev->pktinfo, sizeof(struct in6_pktinfo));
+#if defined(IPV6_USE_MIN_MTU)
+		/*
+		 * Set IPV6_USE_MIN_MTU as a per packet option as FreeBSD
+		 * ignores setsockopt(IPV6_USE_MIN_MTU) when IPV6_PKTINFO
+		 * is used.
+		 */
+		cmsgp = (struct cmsghdr *)(sock->sendcmsgbuf +
+					   msg->msg_controllen);
+		msg->msg_controllen += cmsg_space(sizeof(use_min_mtu));
+		INSIST(msg->msg_controllen <= sock->sendcmsgbuflen);
+
+		cmsgp->cmsg_level = IPPROTO_IPV6;
+		cmsgp->cmsg_type = IPV6_USE_MIN_MTU;
+		cmsgp->cmsg_len = cmsg_len(sizeof(use_min_mtu));
+		memcpy(CMSG_DATA(cmsgp), &use_min_mtu, sizeof(use_min_mtu));
+#endif
 	}
 #endif /* USE_CMSG && ISC_PLATFORM_HAVEIPV6 */
 #else /* ISC_NET_BSD44MSGHDR */
@@ -1562,7 +1582,7 @@ allocate_socketevent(isc__socket_t *sock, isc_eventtype_t eventtype,
 	if (ev == NULL)
 		return (NULL);
 
-	ev->result = ISC_R_UNEXPECTED;
+	ev->result = ISC_R_UNSET;
 	ISC_LINK_INIT(ev, ev_link);
 	ISC_LIST_INIT(ev->bufferlist);
 	ev->region.base = NULL;
@@ -1756,6 +1776,7 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 		} else {
 			isc_buffer_add(buffer, actual_count);
 			actual_count = 0;
+			POST(actual_count);
 			break;
 		}
 		buffer = ISC_LIST_NEXT(buffer, link);
@@ -1995,9 +2016,10 @@ destroy(isc__socket_t **sockp) {
 		SIGNAL(&manager->shutdown_ok);
 #endif /* USE_WATCHER_THREAD */
 
-	UNLOCK(&manager->lock);
-
+	/* can't unlock manager as its memory context is still used */
 	free_socket(sockp);
+
+	UNLOCK(&manager->lock);
 }
 
 static isc_result_t
@@ -2012,8 +2034,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 
 	if (sock == NULL)
 		return (ISC_R_NOMEMORY);
-
-	result = ISC_R_UNEXPECTED;
 
 	sock->common.magic = 0;
 	sock->common.impmagic = 0;
@@ -2034,7 +2054,7 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	 */
 	cmsgbuflen = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
 #endif
 #if defined(USE_CMSG) && defined(SO_TIMESTAMP)
 	cmsgbuflen += cmsg_space(sizeof(struct timeval));
@@ -2042,19 +2062,30 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->recvcmsgbuflen = cmsgbuflen;
 	if (sock->recvcmsgbuflen != 0U) {
 		sock->recvcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->recvcmsgbuf == NULL)
+		if (sock->recvcmsgbuf == NULL) {
+			result = ISC_R_NOMEMORY;
 			goto error;
+	}
 	}
 
 	cmsgbuflen = 0;
 #if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
-	cmsgbuflen = cmsg_space(sizeof(struct in6_pktinfo));
+	cmsgbuflen += cmsg_space(sizeof(struct in6_pktinfo));
+#if defined(IPV6_USE_MIN_MTU)
+	/*
+	 * Provide space for working around FreeBSD's broken IPV6_USE_MIN_MTU
+	 * support.
+	 */
+	cmsgbuflen += cmsg_space(sizeof(int));
+#endif
 #endif
 	sock->sendcmsgbuflen = cmsgbuflen;
 	if (sock->sendcmsgbuflen != 0U) {
 		sock->sendcmsgbuf = isc_mem_get(manager->mctx, cmsgbuflen);
-		if (sock->sendcmsgbuf == NULL)
+		if (sock->sendcmsgbuf == NULL) {
+			result = ISC_R_NOMEMORY;
 			goto error;
+	}
 	}
 
 	memset(sock->name, 0, sizeof(sock->name));
@@ -2192,6 +2223,7 @@ clear_bsdcompat(void) {
 
 static isc_result_t
 opensocket(isc__socketmgr_t *manager, isc__socket_t *sock) {
+	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
 	const char *err = "socket";
 	int tries = 0;
@@ -2296,9 +2328,10 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock) {
 		}
 	}
 
-	if (make_nonblock(sock->fd) != ISC_R_SUCCESS) {
+	result = make_nonblock(sock->fd);
+	if (result != ISC_R_SUCCESS) {
 		(void)close(sock->fd);
-		return (ISC_R_UNEXPECTED);
+		return (result);
 	}
 
 #ifdef SO_BSDCOMPAT
@@ -2398,10 +2431,18 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock) {
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #ifdef IPV6_USE_MIN_MTU        /* RFC 3542, not too common yet*/
 		/* use minimum MTU */
-		if (sock->pf == AF_INET6) {
-			(void)setsockopt(sock->fd, IPPROTO_IPV6,
-					 IPV6_USE_MIN_MTU,
-					 (void *)&on, sizeof(on));
+		if (sock->pf == AF_INET6 &&
+		    setsockopt(sock->fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
+			       (void *)&on, sizeof(on)) < 0) {
+			isc__strerror(errno, strbuf, sizeof(strbuf));
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "setsockopt(%d, IPV6_USE_MIN_MTU) "
+					 "%s: %s", sock->fd,
+					 isc_msgcat_get(isc_msgcat,
+							ISC_MSGSET_GENERAL,
+							ISC_MSG_FAILED,
+							"failed"),
+					 strbuf);
 		}
 #endif
 #if defined(IPV6_MTU)
@@ -2420,8 +2461,9 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock) {
 		 */
 		if (sock->pf == AF_INET6) {
 			int action = IPV6_PMTUDISC_DONT;
-			(void)setsockopt(sock->fd, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
-					 &action, sizeof(action));
+			(void)setsockopt(sock->fd, IPPROTO_IPV6,
+					 IPV6_MTU_DISCOVER, &action,
+					 sizeof(action));
 		}
 #endif
 #endif /* ISC_PLATFORM_HAVEIPV6 */
@@ -2753,7 +2795,6 @@ isc__socket_close(isc_socket_t *sock0) {
 	isc__socket_t *sock = (isc__socket_t *)sock0;
 	int fd;
 	isc__socketmgr_t *manager;
-	isc_sockettype_t type;
 
 	REQUIRE(VALID_SOCKET(sock));
 
@@ -2773,7 +2814,6 @@ isc__socket_close(isc_socket_t *sock0) {
 	INSIST(sock->connect_ev == NULL);
 
 	manager = sock->manager;
-	type = sock->type;
 	fd = sock->fd;
 	sock->fd = -1;
 	memset(sock->name, 0, sizeof(sock->name));
@@ -3153,10 +3193,12 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 
 	UNLOCK(&sock->lock);
 
-	if (fd != -1 && (make_nonblock(fd) != ISC_R_SUCCESS)) {
+	if (fd != -1) {
+		result = make_nonblock(fd);
+		if (result != ISC_R_SUCCESS) {
 		(void)close(fd);
 		fd = -1;
-		result = ISC_R_UNEXPECTED;
+		}
 	}
 
 	/*
@@ -3691,7 +3733,6 @@ static isc_threadresult_t
 watcher(void *uap) {
 	isc__socketmgr_t *manager = uap;
 	isc_boolean_t done;
-	int ctlfd;
 	int cc;
 #ifdef USE_KQUEUE
 	const char *fnname = "kevent()";
@@ -3703,16 +3744,19 @@ watcher(void *uap) {
 #elif defined (USE_SELECT)
 	const char *fnname = "select()";
 	int maxfd;
+	int ctlfd;
 #endif
 	char strbuf[ISC_STRERRORSIZE];
 #ifdef ISC_SOCKET_USE_POLLWATCH
 	pollstate_t pollstate = poll_idle;
 #endif
 
+#if defined (USE_SELECT)
 	/*
 	 * Get the control fd here.  This will never change.
 	 */
 	ctlfd = manager->pipe_fds[0];
+#endif
 	done = ISC_FALSE;
 	while (!done) {
 		do {
@@ -4459,9 +4503,8 @@ isc__socket_recvv(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 	INSIST(sock->bound);
 
 	dev = allocate_socketevent(sock, ISC_SOCKEVENT_RECVDONE, action, arg);
-	if (dev == NULL) {
+	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
-	}
 
 	/*
 	 * UDP sockets are always partial read
@@ -4520,7 +4563,7 @@ isc__socket_recv2(isc_socket_t *sock0, isc_region_t *region,
 	isc__socket_t *sock = (isc__socket_t *)sock0;
 
 	event->ev_sender = sock;
-	event->result = ISC_R_UNEXPECTED;
+	event->result = ISC_R_UNSET;
 	ISC_LIST_INIT(event->bufferlist);
 	event->region = *region;
 	event->n = 0;
@@ -4665,9 +4708,8 @@ isc__socket_sendto(isc_socket_t *sock0, isc_region_t *region,
 	INSIST(sock->bound);
 
 	dev = allocate_socketevent(sock, ISC_SOCKEVENT_SENDDONE, action, arg);
-	if (dev == NULL) {
+	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
-	}
 
 	dev->region = *region;
 
@@ -4706,9 +4748,8 @@ isc__socket_sendtov(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 	REQUIRE(iocount > 0);
 
 	dev = allocate_socketevent(sock, ISC_SOCKEVENT_SENDDONE, action, arg);
-	if (dev == NULL) {
+	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
-	}
 
 	/*
 	 * Move each buffer from the passed in list to our internal one.
@@ -4736,7 +4777,7 @@ isc__socket_sendto2(isc_socket_t *sock0, isc_region_t *region,
 	if ((flags & ISC_SOCKFLAG_NORETRY) != 0)
 		REQUIRE(sock->type == isc_sockettype_udp);
 	event->ev_sender = sock;
-	event->result = ISC_R_UNEXPECTED;
+	event->result = ISC_R_UNSET;
 	ISC_LIST_INIT(event->bufferlist);
 	event->region = *region;
 	event->n = 0;
@@ -5125,6 +5166,7 @@ isc__socket_accept(isc_socket_t *sock0,
 	 */
 	isc_task_attach(task, &ntask);
 	if (isc_task_exiting(ntask)) {
+		free_socket(&nsock);
 		isc_task_detach(&ntask);
 		isc_event_free(ISC_EVENT_PTR(&dev));
 		UNLOCK(&sock->lock);
@@ -5636,7 +5678,7 @@ isc__socket_ipv6only(isc_socket_t *sock0, isc_boolean_t yes) {
 		if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_V6ONLY,
 			       (void *)&onoff, sizeof(int)) < 0) {
 			char strbuf[ISC_STRERRORSIZE];
-
+			isc__strerror(errno, strbuf, sizeof(strbuf));
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "setsockopt(%d, IPV6_V6ONLY) "
 					 "%s: %s", sock->fd,
