@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.160 2012/07/25 15:12:37 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.161 2012/07/25 15:31:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6488,4 +6488,18 @@ sys/arch/vax/conf/INSTALL			1.59
 	Bump the ramdisk size so that the contents fits again.
 
 	[abs, ticket #446]
+
+sys/lib/libsa/cd9660.c				1.29
+
+	Fix cd9660_read() to not read past the end of the
+	file.  This would result in incorrect resid values,
+	and causes the read of /boot.cfg to ignore the file. 
+	If the requested transfer extends past the end of the
+	file, force the internal buffer to be used, and when
+	transferring data from the internal buffer, limit the
+	transfer to what's left in the file.  CDROM boot will
+	now process the /boot.cfg file.
+
+	[mhitch, ticket #440]
+
 
