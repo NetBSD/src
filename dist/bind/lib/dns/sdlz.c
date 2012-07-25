@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.3.4.3 2011/06/18 11:20:30 bouyer Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.3.4.4 2012/07/25 11:58:49 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.22.104.3 2010-08-16 05:14:15 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -328,7 +328,7 @@ destroy(dns_sdlz_db_t *sdlz) {
 	sdlz->common.magic = 0;
 	sdlz->common.impmagic = 0;
 
-	isc_mutex_destroy(&sdlz->refcnt_lock);
+	(void)isc_mutex_destroy(&sdlz->refcnt_lock);
 
 	dns_name_free(&sdlz->common.origin, mctx);
 
@@ -1571,7 +1571,11 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 					    &lookup->callbacks);
 		if (result != ISC_R_SUCCESS)
 			isc_buffer_free(&rdatabuf);
+		if (size >= 65535)
+			break;
 		size *= 2;
+		if (size >= 65535)
+			size = 65535;
 	} while (result == ISC_R_NOSPACE);
 
 	if (result != ISC_R_SUCCESS)

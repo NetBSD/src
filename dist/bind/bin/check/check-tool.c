@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.5.4.3 2011/06/18 11:19:44 bouyer Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.5.4.4 2012/07/25 11:57:18 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.c,v 1.39.104.2 2010-09-07 23:46:37 tbox Exp */
+/* Id: check-tool.c,v 1.39.104.2 2010/09/07 23:46:37 tbox Exp */
 
 /*! \file */
 

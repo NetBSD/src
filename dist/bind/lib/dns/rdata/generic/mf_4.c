@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.1.1.5.4.2 2011/06/18 11:20:34 bouyer Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.1.1.5.4.3 2012/07/25 11:58:57 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mf_4.c,v 1.47 2009-12-04 22:06:37 tbox Exp */
+/* Id: mf_4.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 17:47:33 PST 2000 by brister */
 

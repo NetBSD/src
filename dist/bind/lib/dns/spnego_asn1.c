@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego_asn1.c,v 1.1.1.1.6.1 2011/06/18 11:20:30 bouyer Exp $	*/
+/*	$NetBSD: spnego_asn1.c,v 1.1.1.1.6.2 2012/07/25 11:58:49 jdc Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spnego_asn1.c,v 1.4 2007-06-19 23:47:16 tbox Exp */
+/* Id: spnego_asn1.c,v 1.4 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file
  * \brief Method routines generated from SPNEGO ASN.1 module.

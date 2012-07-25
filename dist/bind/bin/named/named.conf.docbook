@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.44.4.2 2010-05-14 23:49:18 tbox Exp -->
+<!-- Id: named.conf.docbook,v 1.44.4.4 2011/11/07 23:46:02 tbox Exp -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -43,6 +43,7 @@
       <year>2008</year>
       <year>2009</year>
       <year>2010</year>
+      <year>2011</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -282,8 +283,7 @@ options {
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
-	dnssec-lookaside <replaceable>string</replaceable> trust-anchor <replaceable>string</replaceable>;
-	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
+	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
 
@@ -458,7 +458,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
-	dnssec-lookaside <replaceable>string</replaceable> trust-anchor <replaceable>string</replaceable>;
+	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.7.4.2 2011/06/18 11:19:46 bouyer Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.7.4.3 2012/07/25 11:57:22 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.108.8.6 2010-08-16 23:46:30 tbox Exp */
+/* Id: dnssec-keygen.c,v 1.108.8.10 2011/11/30 00:53:34 marka Exp */
 
 /*! \file */
 
@@ -197,7 +197,8 @@ progress(int p)
 
 int
 main(int argc, char **argv) {
-	char		*algname = NULL, *nametype = NULL, *type = NULL;
+	char		*algname = NULL, *freeit = NULL;
+	char		*nametype = NULL, *type = NULL;
 	char		*classname = NULL;
 	char		*endp;
 	dst_key_t	*key = NULL;
@@ -509,6 +510,9 @@ main(int argc, char **argv) {
 				algname = strdup(DEFAULT_NSEC3_ALGORITHM);
 			else
 				algname = strdup(DEFAULT_ALGORITHM);
+			if (algname == NULL)
+				fatal("strdup failed");
+			freeit = algname;
 			if (verbose > 0)
 				fprintf(stderr, "no algorithm specified; "
 						"defaulting to %s\n", algname);
@@ -961,8 +965,7 @@ main(int argc, char **argv) {
 		 * if there is a risk of ID collision due to this key
 		 * or another key being revoked.
 		 */
-		if (key_collision(dst_key_id(key), name, directory,
-				  alg, mctx, NULL)) {
+		if (key_collision(key, name, directory, mctx, NULL)) {
 			conflict = ISC_TRUE;
 			if (null_key) {
 				dst_key_free(&key);
@@ -971,11 +974,14 @@ main(int argc, char **argv) {
 
 			if (verbose > 0) {
 				isc_buffer_clear(&buf);
-				dst_key_buildfilename(key, 0, directory, &buf);
+				ret = dst_key_buildfilename(key, 0,
+							    directory, &buf);
+				if (ret == ISC_R_SUCCESS)
 				fprintf(stderr,
-					"%s: %s already exists, or might "
-					"collide with another key upon "
-					"revokation.  Generating a new key\n",
+						"%s: %s already exists, or "
+						"might collide with another "
+						"key upon revokation.  "
+						"Generating a new key\n",
 					program, filename);
 			}
 
@@ -997,6 +1003,9 @@ main(int argc, char **argv) {
 
 	isc_buffer_clear(&buf);
 	ret = dst_key_buildfilename(key, 0, NULL, &buf);
+	if (ret != ISC_R_SUCCESS)
+		fatal("dst_key_buildfilename returned: %s\n",
+		      isc_result_totext(ret));
 	printf("%s\n", filename);
 	dst_key_free(&key);
 	if (prevkey != NULL)
@@ -1009,6 +1018,9 @@ main(int argc, char **argv) {
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);
+
+	if (freeit != NULL)
+		free(freeit);
 
 	return (0);
 }

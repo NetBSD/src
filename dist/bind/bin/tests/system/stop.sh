@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: stop.sh,v 1.25 2007-06-18 23:47:27 tbox Exp
+# Id: stop.sh,v 1.25 2007/06/18 23:47:27 tbox Exp
 
 . ./conf.sh
 $PERL ./stop.pl "$@"

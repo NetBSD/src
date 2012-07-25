@@ -1,4 +1,4 @@
-/*	$NetBSD: acache.c,v 1.1.1.2.4.2 2011/06/18 11:20:26 bouyer Exp $	*/
+/*	$NetBSD: acache.c,v 1.1.1.2.4.3 2012/07/25 11:58:42 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acache.c,v 1.22 2008-02-07 23:46:54 tbox Exp */
+/* Id: acache.c,v 1.22 2008/02/07 23:46:54 tbox Exp */
 
 #include <config.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: log_test.c,v 1.1.1.5.4.1 2011/06/18 11:19:51 bouyer Exp $	*/
+/*	$NetBSD: log_test.c,v 1.1.1.5.4.2 2012/07/25 11:57:29 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log_test.c,v 1.26.558.2 2011-01-14 00:51:07 tbox Exp */
+/* Id: log_test.c,v 1.26.558.3 2011/08/28 23:48:54 marka Exp */
 
 /* Principal Authors: DCL */
 
@@ -29,6 +29,7 @@
 #include <isc/commandline.h>
 #include <isc/mem.h>
 #include <isc/string.h>
+#include <isc/util.h>
 
 #include <dns/log.h>
 
@@ -96,6 +97,7 @@ main(int argc, char **argv) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 0) {
 		fprintf(stderr, usage, progname);

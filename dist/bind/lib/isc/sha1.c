@@ -1,7 +1,7 @@
-/*	$NetBSD: sha1.c,v 1.1.1.5.4.2 2011/06/18 11:20:40 bouyer Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.5.4.3 2012/07/25 11:59:10 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha1.c,v 1.20 2009-02-06 23:47:42 tbox Exp */
+/* Id */
 
-/*	$NetBSD: sha1.c,v 1.1.1.5.4.2 2011/06/18 11:20:40 bouyer Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.5.4.3 2012/07/25 11:59:10 jdc Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*! \file
@@ -258,6 +258,8 @@ transform(isc_uint32_t state[5], const unsigned char buffer[64]) {
 
 	/* Wipe variables */
 	a = b = c = d = e = 0;
+	/* Avoid compiler warnings */
+	POST(a); POST(b); POST(c); POST(d); POST(e);
 }
 
 

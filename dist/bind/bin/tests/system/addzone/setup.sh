@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2.2.3 2010-08-12 01:32:46 marka Exp
+# Id: setup.sh,v 1.2.2.3 2010/08/12 01:32:46 marka Exp
 
 cp -f ns2/named1.conf ns2/named.conf
 cp -f ns2/default.nzf.in ns2/3bf305731dd26307.nzf

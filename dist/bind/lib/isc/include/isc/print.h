@@ -1,4 +1,4 @@
-/*	$NetBSD: print.h,v 1.1.1.5.4.1 2011/06/18 11:20:42 bouyer Exp $	*/
+/*	$NetBSD: print.h,v 1.1.1.5.4.2 2012/07/25 11:59:14 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: print.h,v 1.26 2007-06-19 23:47:18 tbox Exp */
+/* Id: print.h,v 1.26 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_PRINT_H
 #define ISC_PRINT_H 1

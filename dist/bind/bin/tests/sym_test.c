@@ -1,4 +1,4 @@
-/*	$NetBSD: sym_test.c,v 1.1.1.5.4.1 2011/06/18 11:19:51 bouyer Exp $	*/
+/*	$NetBSD: sym_test.c,v 1.1.1.5.4.2 2012/07/25 11:57:29 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sym_test.c,v 1.28 2007-06-19 23:46:59 tbox Exp */
+/* Id: sym_test.c,v 1.28 2007/06/19 23:46:59 tbox Exp */
 
 #include <config.h>
 

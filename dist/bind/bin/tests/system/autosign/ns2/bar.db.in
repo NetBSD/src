@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: bar.db.in,v 1.1.4.2 2010-01-18 23:48:01 tbox Exp
+; Id: bar.db.in,v 1.1.4.2 2010/01/18 23:48:01 tbox Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

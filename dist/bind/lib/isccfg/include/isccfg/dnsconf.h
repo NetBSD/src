@@ -1,4 +1,4 @@
-/*        $NetBSD: dnsconf.h,v 1.1.2.2 2011/06/18 11:20:50 bouyer Exp $      */
+/*        $NetBSD: dnsconf.h,v 1.1.2.3 2012/07/25 11:59:29 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnsconf.h,v 1.3 2009-09-02 23:48:03 tbox Exp */
+/* Id: dnsconf.h,v 1.3 2009/09/02 23:48:03 tbox Exp */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1

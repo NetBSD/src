@@ -1,7 +1,7 @@
-/*        $NetBSD: namespace.h,v 1.1.2.2 2011/06/18 11:20:42 bouyer Exp $      */
+/*        $NetBSD: namespace.h,v 1.1.2.3 2012/07/25 11:59:14 jdc Exp $      */
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namespace.h,v 1.5.62.4 2010-12-04 13:27:10 marka Exp */
+/* Id */
 
 #ifndef ISCAPI_NAMESPACE_H
 #define ISCAPI_NAMESPACE_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.1.1.5.4.1 2011/06/18 11:20:49 bouyer Exp $	*/
+/*	$NetBSD: lib.c,v 1.1.1.5.4.2 2012/07/25 11:59:27 jdc Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.c,v 1.9 2007-08-28 07:20:43 tbox Exp */
+/* Id: lib.c,v 1.9 2007/08/28 07:20:43 tbox Exp */
 
 /*! \file */
 
