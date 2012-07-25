@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.15 2012/02/23 20:59:19 matt Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.16 2012/07/25 03:07:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.15 2012/02/23 20:59:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.16 2012/07/25 03:07:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,8 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 		    sc->sc_address, &cmd, 1, &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
-			    "dsrtc_read: read failed at 0x%x\n", a);
+			    "%s: read failed at 0x%x: %d\n",
+			    __func__, a, error);
 			return error;
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
@@ -293,7 +294,8 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 		    uio->uio_resid ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "dsrtc_write: write failed at 0x%x\n", a);
+			    "%s: write failed at 0x%x: %d\n",
+			    __func__, a, error);
 			break;
 		}
 	}
@@ -342,32 +344,34 @@ dsrtc_clock_read_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 {
 	struct dsrtc_model * const dm = &sc->sc_model;
 	uint8_t bcd[DSXXXX_RTC_SIZE], cmdbuf[1];
+	int error;
 
 	KASSERT(DSXXXX_RTC_SIZE >= dm->dm_rtc_size);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "dsrtc_clock_read: failed to acquire I2C bus\n");
+		    "%s: failed to acquire I2C bus: %d\n",
+		    __func__, error);
 		return 0;
 	}
 
 	/* Read each RTC register in order. */
-	for (u_int i = 0; i < dm->dm_rtc_size; i++) {
+	for (u_int i = 0; !error && i < dm->dm_rtc_size; i++) {
 		cmdbuf[0] = dm->dm_rtc_start + i;
 
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			aprint_error_dev(sc->sc_dev,
-			    "dsrtc_clock_read: failed to read rtc "
-			    "at 0x%x\n", i);
-			return 0;
-		}
+		error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_address, cmdbuf, 1, &bcd[i], 1, I2C_F_POLL);
 	}
 
 	/* Done with I2C */
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to read rtc at 0x%x: %d\n", 
+		    __func__, cmdbuf[0], error);
+		return 0;
+	}
 
 	/*
 	 * Convert the RTC's register values into something useable
@@ -400,6 +404,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 {
 	struct dsrtc_model * const dm = &sc->sc_model;
 	uint8_t bcd[DSXXXX_RTC_SIZE], cmdbuf[2];
+	int error;
 
 	KASSERT(DSXXXX_RTC_SIZE >= dm->dm_rtc_size);
 
@@ -417,30 +422,33 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	if (dt->dt_year - POSIX_BASE_YEAR >= 100)
 		bcd[DSXXXX_MONTH] |= DSXXXX_MONTH_CENTURY;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "dsrtc_clock_write: failed to acquire I2C bus\n");
+		    "%s: failed to acquire I2C bus: %d\n",
+		    __func__, error);
 		return 0;
 	}
 
 	/* Stop the clock */
 	cmdbuf[0] = dm->dm_ch_reg;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-	    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+	    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) != 0) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		aprint_error_dev(sc->sc_dev,
-		    "dsrtc_clock_write: failed to read Hold Clock\n");
+		    "%s: failed to read Hold Clock: %d\n",
+		    __func__, error);
 		return 0;
 	}
 
 	cmdbuf[1] |= dm->dm_ch_value;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-	    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+	    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) != 0) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		aprint_error_dev(sc->sc_dev,
-		    "dsrtc_clock_write: failed to write Hold Clock\n");
+		    "%s: failed to write Hold Clock: %d\n",
+		    __func__, error);
 		return 0;
 	}
 
@@ -454,12 +462,12 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 		if (dm->dm_rtc_start + i == dm->dm_ch_reg) {
 			op = I2C_OP_WRITE_WITH_STOP;
 		}
-		if (iic_exec(sc->sc_tag, op, sc->sc_address,
-		    cmdbuf, 1, &bcd[i], 1, I2C_F_POLL)) {
+		if ((error = iic_exec(sc->sc_tag, op, sc->sc_address,
+		    cmdbuf, 1, &bcd[i], 1, I2C_F_POLL)) != 0) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
 			aprint_error_dev(sc->sc_dev,
-			    "dsrtc_clock_write: failed to write rtc "
-			    " at 0x%x\n", i);
+			    "%s: failed to write rtc at 0x%x: %d\n",
+			    __func__, i, error);
 			/* XXX: Clock Hold is likely still asserted! */
 			return 0;
 		}
@@ -472,11 +480,13 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 		cmdbuf[0] = dm->dm_ch_reg;
 		cmdbuf[1] &= ~dm->dm_ch_value;
 
-		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-		    cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1,
+		    I2C_F_POLL)) != 0) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
 			aprint_error_dev(sc->sc_dev,
-			    "dsrtc_clock_write: failed to Hold Clock\n");
+			    "%s: failed to Hold Clock: %d\n",
+			    __func__, error);
 			return 0;
 		}
 	}
@@ -530,25 +540,29 @@ dsrtc_clock_read_timeval(struct dsrtc_softc *sc, time_t *tp)
 {
 	const struct dsrtc_model * const dm = &sc->sc_model;
 	uint8_t buf[4];
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to acquire I2C bus\n",
-		    __func__);
-		return (0);
+	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to acquire I2C bus: %d\n",
+		    __func__, error);
+		return 0;
 	}
 
 	/* read all registers: */
 	uint8_t reg = dm->dm_rtc_start;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address, &reg, 1,
-		     buf, 4, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		aprint_error_dev(sc->sc_dev, "%s: failed to read rtc\n",
-		    __func__);
-		return (0);
-	}
+	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
+	     &reg, 1, buf, 4, I2C_F_POLL);
 
 	/* Done with I2C */
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to read rtc at 0x%x: %d\n",
+		    __func__, reg, error);
+		return 0;
+	}
 
 	uint32_t v = (buf[3] << 24) | (buf[2] << 16) | (buf[1] << 8) | buf[0];
 	*tp = v;
@@ -556,7 +570,7 @@ dsrtc_clock_read_timeval(struct dsrtc_softc *sc, time_t *tp)
 	aprint_debug_dev(sc->sc_dev, "%s: cntr=0x%08"PRIx32"\n",
 	    __func__, v);
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -565,6 +579,7 @@ dsrtc_clock_write_timeval(struct dsrtc_softc *sc, time_t t)
 	const struct dsrtc_model * const dm = &sc->sc_model;
 	size_t buflen = dm->dm_rtc_size + 2; 
 	uint8_t buf[buflen];
+	int error;
 
 	KASSERT((dm->dm_flags & DSRTC_FLAG_CLOCK_HOLD) == 0);
 	KASSERT(dm->dm_ch_reg == dm->dm_rtc_start + 4);
@@ -576,22 +591,26 @@ dsrtc_clock_write_timeval(struct dsrtc_softc *sc, time_t t)
 	buf[4] = (t >> 24) & 0xff;
 	buf[5] = 0;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to acquire I2C bus\n",
-		    __func__);
-		return (0);
+	if ((error = iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to acquire I2C bus: %d\n",
+		    __func__, error);
+		return 0;
 	}
 
-	/* send data */
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-	    &buf, buflen, NULL, 0, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		aprint_error_dev(sc->sc_dev, "%s: failed to set time\n",
-		    __func__);
-		return (0);
-	}
+	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
+	    &buf, buflen, NULL, 0, I2C_F_POLL);
 
+	/* Done with I2C */
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
-	return (1);
+	/* send data */
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to set time: %d\n",
+		    __func__, error);
+		return 0;
+	}
+
+	return 1;
 }
