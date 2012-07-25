@@ -1,8 +1,8 @@
-Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2005, 2008, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2002  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: win32-build.txt,v 1.19 2009-11-06 03:14:10 each Exp
+Id
 
        BIND 9.7 for Win32 Source Build Instructions.  02-Jul-2009
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.c,v 1.1.1.5.12.1 2011/06/18 11:26:51 bouyer Exp $	*/
+/*	$NetBSD: logconf.c,v 1.1.1.5.12.2 2012/07/25 12:09:58 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,12 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: logconf.c,v 1.42 2007-06-19 23:46:59 tbox Exp */
+/* Id: logconf.c,v 1.42.560.3 2011/03/05 23:51:37 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
 
+#include <isc/file.h>
 #include <isc/offset.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
@@ -223,24 +224,36 @@ channel_fromconf(const cfg_obj_t *channel, isc_logconfig_t *lctx) {
 		FILE *fp;
 		
 		/*
-		 * Test that the file can be opened, since isc_log_open()
-		 * can't effectively report failures when called in
+		 * Test to make sure that file is a plain file.
+		 * Fix defect #22771
+		*/
+		result = isc_file_isplainfile(dest.file.name);
+		if (result == ISC_R_SUCCESS ||
+		    result == ISC_R_FILENOTFOUND) {
+			/*
+			 * Test that the file can be opened, since
+			 * isc_log_open() can't effectively report
+			 * failures when called in
 		 * isc_log_doit().
 		 */
 		result = isc_stdio_open(dest.file.name, "a", &fp);
-		if (result != ISC_R_SUCCESS)
-			isc_log_write(ns_g_lctx, CFG_LOGCATEGORY_CONFIG,
-				      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "logging channel '%s' file '%s': %s",
-				      channelname, dest.file.name,
+			if (result != ISC_R_SUCCESS) {
+				syslog(LOG_ERR,
+					"isc_stdio_open '%s' failed: %s",
+					dest.file.name,
+					isc_result_totext(result));
+				fprintf(stderr,
+					"isc_stdio_open '%s' failed: %s",
+					dest.file.name,
 				      isc_result_totext(result));
-		else
+			} else
 			(void)isc_stdio_close(fp);
-
-		/*
-		 * Allow named to continue by returning success.
-		 */
-		result = ISC_R_SUCCESS;
+		} else {
+			syslog(LOG_ERR, "isc_file_isplainfile '%s' failed: %s",
+				dest.file.name, isc_result_totext(result));
+			fprintf(stderr, "isc_file_isplainfile '%s' failed: %s",
+				dest.file.name, isc_result_totext(result));
+		}
 	}
 
 	return (result);

@@ -1,7 +1,7 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.6.4.1.2.3 2011/07/08 21:04:03 sborrill Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.6.4.1.2.4 2012/07/25 12:13:04 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: masterdump.c,v 1.99.334.3 2011-06-21 20:14:46 each Exp */
+/* Id */
 
 /*! \file */
 
@@ -418,12 +418,11 @@ rdataset_totext(dns_rdataset_t *rdataset,
 
 	rdataset->attributes |= DNS_RDATASETATTR_LOADORDER;
 	result = dns_rdataset_first(rdataset);
-	REQUIRE(result == ISC_R_SUCCESS);
 
 	current_ttl = ctx->current_ttl;
 	current_ttl_valid = ctx->current_ttl_valid;
 
-	do {
+	while (result == ISC_R_SUCCESS) {
 		column = 0;
 
 		/*
@@ -548,7 +547,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 
 		first = ISC_FALSE;
 		result = dns_rdataset_next(rdataset);
-	} while (result == ISC_R_SUCCESS);
+	}
 
 	if (result != ISC_R_NOMORE)
 		return (result);
@@ -873,9 +872,8 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 
 	for (i = 0; i < n; i++) {
 		dns_rdataset_t *rds = sorted[i];
-		if (ctx->style.flags & DNS_STYLEFLAG_TRUST) {
+		if (ctx->style.flags & DNS_STYLEFLAG_TRUST)
 			fprintf(f, "; %s\n", dns_trust_totext(rds->trust));
-		}
 		if (((rds->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) &&
 		    (ctx->style.flags & DNS_STYLEFLAG_NCACHE) == 0) {
 			/* Omit negative cache entries */
@@ -931,6 +929,7 @@ dump_rdataset_raw(isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *rdataset,
 	REQUIRE(buffer->length > 0);
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
+	rdataset->attributes |= DNS_RDATASETATTR_LOADORDER;
  restart:
 	totallen = 0;
 	result = dns_rdataset_first(rdataset);
@@ -1049,6 +1048,8 @@ dump_rdatasets_raw(isc_mem_t *mctx, dns_name_t *name,
 						   buffer, f);
 		}
 		dns_rdataset_disassociate(&rdataset);
+		if (result != ISC_R_SUCCESS)
+			return (result);
 	}
 
 	if (result == ISC_R_NOMORE)
@@ -1358,7 +1359,7 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 			isc_buffer_region(&buffer, &r);
 			isc_buffer_putuint32(&buffer, dns_masterformat_raw);
 			isc_buffer_putuint32(&buffer, DNS_RAWFORMAT_VERSION);
-			if (sizeof(now32) != sizeof(dctx->now)) {
+#if !defined(STDTIME_ON_32BITS) || (STDTIME_ON_32BITS + 0) != 1
 				/*
 				 * We assume isc_stdtime_t is a 32-bit integer,
 				 * which should be the case on most cases.
@@ -1373,8 +1374,9 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 					      "dumping master file in raw "
 					      "format: stdtime is not 32bits");
 				now32 = 0;
-			} else
+#else
 				now32 = dctx->now;
+#endif
 			isc_buffer_putuint32(&buffer, now32);
 			INSIST(isc_buffer_usedlength(&buffer) <=
 			       sizeof(rawheader));
@@ -1744,6 +1746,14 @@ dns_master_dumpnode(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 
 	result = dns_master_dumpnodetostream(mctx, db, version, node, name,
 					     style, f);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(dns_lctx, ISC_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_MASTERDUMP, ISC_LOG_ERROR,
+			      "dumping master file: %s: dump: %s", filename,
+			      isc_result_totext(result));
+		(void)isc_stdio_close(f);
+		return (ISC_R_UNEXPECTED);
+	}
 
 	result = isc_stdio_close(f);
 	if (result != ISC_R_SUCCESS) {

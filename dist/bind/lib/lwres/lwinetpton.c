@@ -1,7 +1,7 @@
-/*	$NetBSD: lwinetpton.c,v 1.1.1.5.12.1 2011/06/18 11:29:16 bouyer Exp $	*/
+/*	$NetBSD: lwinetpton.c,v 1.1.1.5.12.2 2012/07/25 12:14:46 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -21,7 +21,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "Id: lwinetpton.c,v 1.12 2007-06-19 23:47:22 tbox Exp";
+static char rcsid[] = "Id";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -105,7 +105,12 @@ inet_pton4(const char *src, unsigned char *dst) {
 		} else if (ch == '.' && saw_digit) {
 			if (octets == 4)
 				return (0);
-			*++tp = 0;
+			/*
+			 * "clang --analyse" generates warnings using:
+			 * 		*++tp = 0;
+			 */
+			tp++;
+			*tp = 0;
 			saw_digit = 0;
 		} else
 			return (0);

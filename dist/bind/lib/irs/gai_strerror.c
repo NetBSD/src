@@ -1,4 +1,4 @@
-/*        $NetBSD: gai_strerror.c,v 1.3.18.2 2011/06/18 11:28:50 bouyer Exp $      */
+/*        $NetBSD: gai_strerror.c,v 1.3.18.3 2012/07/25 12:13:51 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gai_strerror.c,v 1.5 2009-09-02 23:48:02 tbox Exp */
+/* Id: gai_strerror.c,v 1.5 2009/09/02 23:48:02 tbox Exp */
 
 /*! \file gai_strerror.c
  * gai_strerror() returns an error message corresponding to an

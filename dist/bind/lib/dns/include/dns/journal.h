@@ -1,7 +1,7 @@
-/*	$NetBSD: journal.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:33 bouyer Exp $	*/
+/*	$NetBSD: journal.h,v 1.1.1.5.4.1.2.3 2012/07/25 12:13:16 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journal.h,v 1.37 2009-11-04 23:48:18 tbox Exp */
+/* Id */
 
 #ifndef DNS_JOURNAL_H
 #define DNS_JOURNAL_H 1

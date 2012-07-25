@@ -1,6 +1,6 @@
-/*	$NetBSD: result.h,v 1.1.1.1.40.1 2011/06/18 11:28:00 bouyer Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.1.40.2 2012/07/25 12:12:16 jdc Exp $	*/
 
-/* Id: result.h,v 1.1.1.1 2003-06-04 00:25:46 marka Exp */
+/* Id: result.h,v 1.1 2003/06/04 00:25:46 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

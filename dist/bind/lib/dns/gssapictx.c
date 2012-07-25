@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapictx.c,v 1.1.1.3.12.2 2011/06/18 11:28:24 bouyer Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.1.1.3.12.3 2012/07/25 12:13:02 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gssapictx.c,v 1.14.104.5 2010-12-22 02:36:17 marka Exp */
+/* Id */
 
 #include <config.h>
 
@@ -135,6 +135,7 @@ name_to_gbuffer(dns_name_t *name, isc_buffer_t *buffer,
 	}
 
 	result = dns_name_toprincipal(namep, buffer);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_buffer_putuint8(buffer, 0);
 	isc_buffer_usedregion(buffer, &r);
 	REGION_TO_GBUFFER(r, *gbuffer);
@@ -179,7 +180,7 @@ log_cred(const gss_cred_id_t cred) {
 	}
 
 	if (gret == GSS_S_COMPLETE) {
-		if (gbuffer.length != 0) {
+		if (gbuffer.length != 0U) {
 			gret = gss_release_buffer(&minor, &gbuffer);
 			if (gret != GSS_S_COMPLETE)
 				gss_log(3, "failed gss_release_buffer: %s",
@@ -306,7 +307,7 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
 	if (gret != GSS_S_COMPLETE) {
 		gss_log(3, "failed to acquire %s credentials for %s: %s",
 			initiate ? "initiate" : "accept",
-			(char *)gnamebuf.value,
+			(gname != NULL) ? (char *)gnamebuf.value : "?",
 			gss_error_tostring(gret, minor, buf, sizeof(buf)));
 		dst_gssapi_check_config((char *)array);
 		return (ISC_R_FAILURE);
@@ -314,12 +315,14 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
 
 	gss_log(4, "acquired %s credentials for %s",
 		initiate ? "initiate" : "accept",
-		(char *)gnamebuf.value);
+		(gname != NULL) ? (char *)gnamebuf.value : "?");
 
 	log_cred(*cred);
 
 	return (ISC_R_SUCCESS);
 #else
+	REQUIRE(cred != NULL && *cred == NULL);
+
 	UNUSED(name);
 	UNUSED(initiate);
 	UNUSED(cred);
@@ -339,13 +342,15 @@ dst_gssapi_identitymatchesrealmkrb5(dns_name_t *signer, dns_name_t *name,
 	char *sname;
 	char *rname;
 	isc_buffer_t buffer;
+	isc_result_t result;
 
 	/*
 	 * It is far, far easier to write the names we are looking at into
 	 * a string, and do string operations on them.
 	 */
 	isc_buffer_init(&buffer, sbuf, sizeof(sbuf));
-	dns_name_toprincipal(signer, &buffer);
+	result = dns_name_toprincipal(signer, &buffer);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_buffer_putuint8(&buffer, 0);
 	if (name != NULL)
 		dns_name_format(name, nbuf, sizeof(nbuf));
@@ -411,13 +416,15 @@ dst_gssapi_identitymatchesrealmms(dns_name_t *signer, dns_name_t *name,
 	char *nname;
 	char *rname;
 	isc_buffer_t buffer;
+	isc_result_t result;
 
 	/*
 	 * It is far, far easier to write the names we are looking at into
 	 * a string, and do string operations on them.
 	 */
 	isc_buffer_init(&buffer, sbuf, sizeof(sbuf));
-	dns_name_toprincipal(signer, &buffer);
+	result = dns_name_toprincipal(signer, &buffer);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	isc_buffer_putuint8(&buffer, 0);
 	if (name != NULL)
 		dns_name_format(name, nbuf, sizeof(nbuf));
@@ -576,7 +583,7 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
 	/*
 	 * RFC 2744 states the a valid output token has a non-zero length.
 	 */
-	if (gouttoken.length != 0) {
+	if (gouttoken.length != 0U) {
 		GBUFFER_TO_REGION(gouttoken, r);
 		RETERR(isc_buffer_copyregion(outtoken, &r));
 		(void)gss_release_buffer(&minor, &gouttoken);
@@ -619,14 +626,14 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 
 	REQUIRE(outtoken != NULL && *outtoken == NULL);
 
-	log_cred(cred);
-
 	REGION_TO_GBUFFER(*intoken, gintoken);
 
 	if (*ctxout == NULL)
 		context = GSS_C_NO_CONTEXT;
 	else
 		context = *ctxout;
+
+	log_cred(cred);
 
 	gret = gss_accept_sec_context(&minor, &context, cred, &gintoken,
 				      GSS_C_NO_CHANNEL_BINDINGS, &gname,
@@ -660,7 +667,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 		return (result);
 	}
 
-	if (gouttoken.length > 0) {
+	if (gouttoken.length > 0U) {
 		RETERR(isc_buffer_allocate(mctx, outtoken, gouttoken.length));
 		GBUFFER_TO_REGION(gouttoken, r);
 		RETERR(isc_buffer_copyregion(*outtoken, &r));
@@ -682,7 +689,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 		 * case, since principal names really should not
 		 * contain null characters.
 		 */
-		if (gnamebuf.length > 0 &&
+		if (gnamebuf.length > 0U &&
 		    ((char *)gnamebuf.value)[gnamebuf.length - 1] == '\0')
 			gnamebuf.length--;
 
@@ -696,7 +703,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 		RETERR(dns_name_fromtext(principal, &namebuf, dns_rootname,
 					 0, NULL));
 
-		if (gnamebuf.length != 0) {
+		if (gnamebuf.length != 0U) {
 			gret = gss_release_buffer(&minor, &gnamebuf);
 			if (gret != GSS_S_COMPLETE)
 				gss_log(3, "failed gss_release_buffer: %s",
@@ -776,9 +783,9 @@ gss_error_tostring(isc_uint32_t major, isc_uint32_t minor,
 	snprintf(buf, buflen, "GSSAPI error: Major = %s, Minor = %s.",
 		(char *)msg_major.value, (char *)msg_minor.value);
 
-	if (msg_major.length != 0)
+	if (msg_major.length != 0U)
 		(void)gss_release_buffer(&minor_stat, &msg_major);
-	if (msg_minor.length != 0)
+	if (msg_minor.length != 0U)
 		(void)gss_release_buffer(&minor_stat, &msg_minor);
 	return(buf);
 #else

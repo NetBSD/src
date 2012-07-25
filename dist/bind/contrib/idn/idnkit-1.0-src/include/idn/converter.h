@@ -1,6 +1,6 @@
-/*	$NetBSD: converter.h,v 1.1.1.1.40.1 2011/06/18 11:27:59 bouyer Exp $	*/
+/*	$NetBSD: converter.h,v 1.1.1.1.40.2 2012/07/25 12:12:13 jdc Exp $	*/
 
-/* Id: converter.h,v 1.1.1.1 2003-06-04 00:25:36 marka Exp */
+/* Id: converter.h,v 1.1 2003/06/04 00:25:36 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.10 2007-06-19 23:47:06 tbox Exp 
+# Id 
 
 # ns1 = stealth master
 # ns2 = slave with update forwarding disabled; not currently used
@@ -98,6 +98,27 @@ echo "I:comparing post-update copies to known good data"
 $PERL ../digcomp.pl knowngood.after2 dig.out.ns1 || status=1
 $PERL ../digcomp.pl knowngood.after2 dig.out.ns2 || status=1
 $PERL ../digcomp.pl knowngood.after2 dig.out.ns3 || status=1
+
+echo "I:checking update forwarding to dead master"
+count=0
+ret=0
+while [ $count -lt 5 -a $ret -eq 0 ]
+do
+(
+$NSUPDATE -- - <<EOF 
+server 10.53.0.3 5300
+zone nomaster
+update add unsigned.nomaster. 600 A 10.10.10.1
+update add unsigned.nomaster. 600 TXT Foo
+send
+EOF
+) > /dev/null 2>&1 &
+	$DIG +notcp +noadd +noauth nomaster.\
+		@10.53.0.3 soa -p 5300 > dig.out.ns3 || ret=1
+	grep "status: NOERROR" dig.out.ns3 > /dev/null || ret=1
+	count=`expr $count + 1`
+done
+if [ $ret != 0 ] ; then echo "I:failed"; status=`expr $status + $ret`; fi
 
 echo "I:exit status: $status"
 exit $status

@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.c,v 1.1.1.1.40.1 2011/06/18 11:28:06 bouyer Exp $	*/
+/*	$NetBSD: resolver.c,v 1.1.1.1.40.2 2012/07/25 12:12:26 jdc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: resolver.c,v 1.1.1.1 2003-06-04 00:27:12 marka Exp";
+static char *rcsid = "Id: resolver.c,v 1.1 2003/06/04 00:27:12 marka Exp";
 #endif
 
 /*

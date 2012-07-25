@@ -1,4 +1,4 @@
-/*        $NetBSD: keydata.h,v 1.1.4.3 2011/06/18 11:28:33 bouyer Exp $      */
+/*        $NetBSD: keydata.h,v 1.1.4.4 2012/07/25 12:13:16 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydata.h,v 1.2 2009-06-30 02:52:32 each Exp */
+/* Id: keydata.h,v 1.2 2009/06/30 02:52:32 each Exp */
 
 #ifndef DNS_KEYDATA_H
 #define DNS_KEYDATA_H 1

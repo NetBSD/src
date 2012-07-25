@@ -1,4 +1,4 @@
-Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 This is copied from ../system.
@@ -16,4 +16,4 @@ Beware BIND clock uses unsigned integer, in 22 seconds isc_time_now()
 overflows and breaks assertions. Note 22 real seconds is 136 virtual
 years...
 
-Id: README,v 1.2.2.2 2010-06-17 05:43:49 marka Exp
+Id

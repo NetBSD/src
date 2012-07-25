@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2006-2008  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.8 2008-10-09 21:27:52 each Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -47,7 +47,7 @@ fi
 #
 #
 #
-echo "I: Checking order cyclic (master)"
+echo "I: Checking order cyclic (master + additional)"
 ret=0
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -71,6 +71,32 @@ if [ $matches -ne 16 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+#
+#
+#
+echo "I: Checking order cyclic (master)"
+ret=0
+matches=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+    j=`expr $i % 4`
+    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.1 cyclic2.example > dig.out.cyclic2 || ret=1
+    if [ $i -le 4 ]; then
+        cp dig.out.cyclic2 dig.out.$j
+    else
+        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
+    fi
+done
+cmp -s dig.out.0 dig.out.1 && ret=1
+cmp -s dig.out.0 dig.out.2 && ret=1
+cmp -s dig.out.0 dig.out.3 && ret=1
+cmp -s dig.out.1 dig.out.2 && ret=1
+cmp -s dig.out.1 dig.out.3 && ret=1
+cmp -s dig.out.2 dig.out.3 && ret=1
+if [ $matches -ne 16 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 echo "I: Checking order random (master)"
 ret=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
@@ -118,7 +144,7 @@ fi
 #
 #
 #
-echo "I: Checking order cyclic (slave)"
+echo "I: Checking order cyclic (slave + additional)"
 ret=0
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -130,6 +156,33 @@ do
         cp dig.out.cyclic dig.out.$j
     else
         cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+    fi
+done
+cmp -s dig.out.0 dig.out.1 && ret=1
+cmp -s dig.out.0 dig.out.2 && ret=1
+cmp -s dig.out.0 dig.out.3 && ret=1
+cmp -s dig.out.1 dig.out.2 && ret=1
+cmp -s dig.out.1 dig.out.3 && ret=1
+cmp -s dig.out.2 dig.out.3 && ret=1
+if [ $matches -ne 16 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+#
+#
+#
+echo "I: Checking order cyclic (slave)"
+ret=0
+matches=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+    j=`expr $i % 4`
+    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
+    if [ $i -le 4 ]; then
+        cp dig.out.cyclic2 dig.out.$j
+    else
+        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
     fi
 done
 cmp -s dig.out.0 dig.out.1 && ret=1
@@ -205,7 +258,7 @@ fi
 #
 #
 #
-echo "I: Checking order cyclic (slave loaded from disk)"
+echo "I: Checking order cyclic (slave + additional, loaded from disk)"
 ret=0
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
@@ -217,6 +270,33 @@ do
         cp dig.out.cyclic dig.out.$j
     else
         cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+    fi
+done
+cmp -s dig.out.0 dig.out.1 && ret=1
+cmp -s dig.out.0 dig.out.2 && ret=1
+cmp -s dig.out.0 dig.out.3 && ret=1
+cmp -s dig.out.1 dig.out.2 && ret=1
+cmp -s dig.out.1 dig.out.3 && ret=1
+cmp -s dig.out.2 dig.out.3 && ret=1
+if [ $matches -ne 16 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+#
+#
+#
+echo "I: Checking order cyclic (slave loaded from disk)"
+ret=0
+matches=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+    j=`expr $i % 4`
+    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
+    if [ $i -le 4 ]; then
+        cp dig.out.cyclic2 dig.out.$j
+    else
+        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
     fi
 done
 cmp -s dig.out.0 dig.out.1 && ret=1
@@ -276,8 +356,11 @@ fi
 #
 #
 #
-echo "I: Checking order cyclic (cache)"
+echo "I: Checking order cyclic (cache + additional)"
 ret=0
+# prime acache
+$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.3 cyclic.example > dig.out.cyclic || ret=1
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
@@ -288,6 +371,36 @@ do
         cp dig.out.cyclic dig.out.$j
     else
         cmp -s dig.out.cyclic dig.out.$j && matches=`expr $matches + 1`
+    fi
+done
+cmp -s dig.out.0 dig.out.1 && ret=1
+cmp -s dig.out.0 dig.out.2 && ret=1
+cmp -s dig.out.0 dig.out.3 && ret=1
+cmp -s dig.out.1 dig.out.2 && ret=1
+cmp -s dig.out.1 dig.out.3 && ret=1
+cmp -s dig.out.2 dig.out.3 && ret=1
+if [ $matches -ne 16 ]; then ret=1; fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+#
+#
+#
+echo "I: Checking order cyclic (cache)"
+ret=0
+# prime acache
+$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
+matches=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+    j=`expr $i % 4`
+    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
+	    -p 5300 @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
+    if [ $i -le 4 ]; then
+        cp dig.out.cyclic2 dig.out.$j
+    else
+        cmp -s dig.out.cyclic2 dig.out.$j && matches=`expr $matches + 1`
     fi
 done
 cmp -s dig.out.0 dig.out.1 && ret=1

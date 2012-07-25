@@ -1,4 +1,4 @@
-/*        $NetBSD: sample-async.c,v 1.1.4.3 2011/06/18 11:28:50 bouyer Exp $      */
+/*        $NetBSD: sample-async.c,v 1.1.4.4 2012/07/25 12:13:49 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sample-async.c,v 1.5 2009-09-29 15:06:07 fdupont Exp */
+/* Id: sample-async.c,v 1.5 2009/09/29 15:06:07 fdupont Exp */
 
 #include <config.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.5.4.1.2.2 2011/06/18 11:26:55 bouyer Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.5.4.1.2.3 2012/07/25 12:10:03 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.c,v 1.161.4.4 2010-09-15 03:36:41 marka Exp */
+/* Id: zoneconf.c,v 1.161.4.12 2012/01/31 23:46:14 tbox Exp */
 
 /*% */
 
@@ -123,7 +123,7 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 	/* First check to see if ACL is defined within the zone */
 	if (zconfig != NULL) {
 		maps[0] = cfg_tuple_get(zconfig, "options");
-		ns_config_get(maps, aclname, &aclobj);
+		(void)ns_config_get(maps, aclname, &aclobj);
 		if (aclobj != NULL) {
 			aclp = NULL;
 			goto parse_acl;
@@ -151,7 +151,7 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 	maps[i++] = ns_g_defaults;
 	maps[i] = NULL;
 
-	result = ns_config_get(maps, aclname, &aclobj);
+	(void)ns_config_get(maps, aclname, &aclobj);
 	if (aclobj == NULL) {
 		(*clearzacl)(zone);
 		return (ISC_R_SUCCESS);
@@ -391,7 +391,7 @@ zonetype_fromconfig(const cfg_obj_t *map) {
 	isc_result_t result;
 
 	result = cfg_map_get(map, "type", &obj);
-	INSIST(result == ISC_R_SUCCESS);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
 	return (ns_config_getzonetype(obj));
 }
 
@@ -455,7 +455,7 @@ checknames(dns_zonetype_t ztype, const cfg_obj_t **maps,
 		INSIST(0);
 	}
 	result = ns_checknames_get(maps, zone, objp);
-	INSIST(result == ISC_R_SUCCESS);
+	INSIST(result == ISC_R_SUCCESS && objp != NULL && *objp != NULL);
 }
 
 isc_result_t
@@ -509,7 +509,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			maps[i++] = options;
 	}
 	maps[i++] = ns_g_defaults;
-	maps[i++] = NULL;
+	maps[i] = NULL;
 
 	if (vconfig != NULL)
 		RETERR(ns_config_getclass(cfg_tuple_get(vconfig, "class"),
@@ -611,7 +611,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	obj = NULL;
 	result = ns_config_get(maps, "dialup", &obj);
-	INSIST(result == ISC_R_SUCCESS);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
 	if (cfg_obj_isboolean(obj)) {
 		if (cfg_obj_asboolean(obj))
 			dialup = dns_dialuptype_yes;
@@ -634,7 +634,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	obj = NULL;
 	result = ns_config_get(maps, "zone-statistics", &obj);
-	INSIST(result == ISC_R_SUCCESS);
+	INSIST(result == ISC_R_SUCCESS && obj != NULL);
 	zonestats_on = cfg_obj_asboolean(obj);
 	zoneqrystats = NULL;
 	if (zonestats_on) {
@@ -653,7 +653,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	if (ztype != dns_zone_stub) {
 		obj = NULL;
 		result = ns_config_get(maps, "notify", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (cfg_obj_isboolean(obj)) {
 			if (cfg_obj_asboolean(obj))
 				notifytype = dns_notifytype_yes;
@@ -689,19 +689,19 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "notify-source", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setnotifysrc4(zone, cfg_obj_assockaddr(obj)));
 		ns_add_reserved_dispatch(ns_g_server, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "notify-source-v6", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setnotifysrc6(zone, cfg_obj_assockaddr(obj)));
 		ns_add_reserved_dispatch(ns_g_server, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "notify-to-soa", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_NOTIFYTOSOA,
 				   cfg_obj_asboolean(obj));
 
@@ -714,17 +714,17 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-transfer-time-out", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setmaxxfrout(zone, cfg_obj_asuint32(obj) * 60);
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-transfer-idle-out", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setidleout(zone, cfg_obj_asuint32(obj) * 60);
 
 		obj = NULL;
 		result =  ns_config_get(maps, "max-journal-size", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setjournalsize(zone, -1);
 		if (cfg_obj_isstring(obj)) {
 			const char *str = cfg_obj_asstring(obj);
@@ -748,13 +748,13 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "ixfr-from-differences", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (cfg_obj_isboolean(obj))
 			ixfrdiff = cfg_obj_asboolean(obj);
-		else if (strcasecmp(cfg_obj_asstring(obj), "master") &&
+		else if (!strcasecmp(cfg_obj_asstring(obj), "master") &&
 			 ztype == dns_zone_master)
 			ixfrdiff = ISC_TRUE;
-		else if (strcasecmp(cfg_obj_asstring(obj), "slave") &&
+		else if (!strcasecmp(cfg_obj_asstring(obj), "slave") &&
 			ztype == dns_zone_slave)
 			ixfrdiff = ISC_TRUE;
 		else
@@ -777,23 +777,23 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "notify-delay", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setnotifydelay(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-sibling", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKSIBLING,
 				   cfg_obj_asboolean(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "zero-no-soa-ttl", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setzeronosoattl(zone, cfg_obj_asboolean(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "nsec3-test-zone", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_NSEC3TESTZONE,
 				   cfg_obj_asboolean(obj));
 	}
@@ -822,7 +822,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-validity-interval", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		{
 			const cfg_obj_t *validity, *resign;
 
@@ -853,28 +853,28 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-signing-signatures", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setsignatures(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-signing-nodes", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setnodes(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "sig-signing-type", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setprivatetype(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "update-check-ksk", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
 				   cfg_obj_asboolean(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "dnssec-dnskey-kskonly", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_DNSKEYKSKONLY,
 				   cfg_obj_asboolean(obj));
 	} else if (ztype == dns_zone_slave) {
@@ -889,7 +889,6 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	 */
 	if (ztype == dns_zone_master) {
 		isc_boolean_t allow = ISC_FALSE, maint = ISC_FALSE;
-		isc_boolean_t create = ISC_FALSE;
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-wildcard", &obj);
@@ -901,7 +900,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-dup-records", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
 			fail = ISC_FALSE;
 			check = ISC_TRUE;
@@ -916,7 +915,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-mx", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
 			fail = ISC_FALSE;
 			check = ISC_TRUE;
@@ -931,13 +930,13 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-integrity", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKINTEGRITY,
 				   cfg_obj_asboolean(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-mx-cname", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
 			warn = ISC_TRUE;
 			ignore = ISC_FALSE;
@@ -952,7 +951,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "check-srv-cname", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
 			warn = ISC_TRUE;
 			ignore = ISC_FALSE;
@@ -967,7 +966,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = ns_config_get(maps, "dnssec-secure-to-insecure", &obj);
-		INSIST(obj != NULL);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setoption(zone, DNS_ZONEOPT_SECURETOINSECURE,
 				   cfg_obj_asboolean(obj));
 
@@ -979,15 +978,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 				allow = ISC_TRUE;
 			else if (strcasecmp(arg, "maintain") == 0)
 				allow = maint = ISC_TRUE;
-			else if (strcasecmp(arg, "create") == 0)
-				allow = maint = create = ISC_TRUE;
 			else if (strcasecmp(arg, "off") == 0)
 				;
 			else
 				INSIST(0);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, allow);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, maint);
-			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, create);
 		}
 	}
 
@@ -999,7 +995,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	case dns_zone_stub:
 		count = 0;
 		obj = NULL;
-		result = cfg_map_get(zoptions, "masters", &obj);
+		(void)cfg_map_get(zoptions, "masters", &obj);
 		if (obj != NULL) {
 			addrs = NULL;
 			keynames = NULL;
@@ -1008,8 +1004,11 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 							 &count));
 			result = dns_zone_setmasterswithkeys(zone, addrs,
 							     keynames, count);
-			ns_config_putipandkeylist(mctx, &addrs, &keynames,
-						  count);
+			if (count != 0)
+				ns_config_putipandkeylist(mctx, &addrs,
+							  &keynames, count);
+			else
+				INSIST(addrs == NULL && keynames == NULL);
 		} else
 			result = dns_zone_setmasters(zone, NULL, 0);
 		RETERR(result);
@@ -1018,61 +1017,61 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		if (count > 1) {
 			obj = NULL;
 			result = ns_config_get(maps, "multi-master", &obj);
-			INSIST(result == ISC_R_SUCCESS);
+			INSIST(result == ISC_R_SUCCESS && obj != NULL);
 			multi = cfg_obj_asboolean(obj);
 		}
 		dns_zone_setoption(zone, DNS_ZONEOPT_MULTIMASTER, multi);
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-transfer-time-in", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setmaxxfrin(zone, cfg_obj_asuint32(obj) * 60);
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-transfer-idle-in", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setidlein(zone, cfg_obj_asuint32(obj) * 60);
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-refresh-time", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setmaxrefreshtime(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "min-refresh-time", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setminrefreshtime(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "max-retry-time", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setmaxretrytime(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "min-retry-time", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		dns_zone_setminretrytime(zone, cfg_obj_asuint32(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "transfer-source", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setxfrsource4(zone, cfg_obj_assockaddr(obj)));
 		ns_add_reserved_dispatch(ns_g_server, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "transfer-source-v6", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setxfrsource6(zone, cfg_obj_assockaddr(obj)));
 		ns_add_reserved_dispatch(ns_g_server, cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = ns_config_get(maps, "alt-transfer-source", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setaltxfrsource4(zone, cfg_obj_assockaddr(obj)));
 
 		obj = NULL;
 		result = ns_config_get(maps, "alt-transfer-source-v6", &obj);
-		INSIST(result == ISC_R_SUCCESS);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
 		RETERR(dns_zone_setaltxfrsource6(zone, cfg_obj_assockaddr(obj)));
 
 		obj = NULL;
@@ -1113,8 +1112,11 @@ ns_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
 
 	zoptions = cfg_tuple_get(zconfig, "options");
 
-	if (zonetype_fromconfig(zoptions) != dns_zone_gettype(zone))
+	if (zonetype_fromconfig(zoptions) != dns_zone_gettype(zone)) {
+		dns_zone_log(zone, ISC_LOG_DEBUG(1),
+			"not reusable: type mismatch");
 		return (ISC_FALSE);
+	}
 
 	obj = NULL;
 	(void)cfg_map_get(zoptions, "file", &obj);
@@ -1125,8 +1127,11 @@ ns_zone_reusable(dns_zone_t *zone, const cfg_obj_t *zconfig) {
 	zfilename = dns_zone_getfile(zone);
 	if (!((cfilename == NULL && zfilename == NULL) ||
 	      (cfilename != NULL && zfilename != NULL &&
-	       strcmp(cfilename, zfilename) == 0)))
+	       strcmp(cfilename, zfilename) == 0))) {
+		dns_zone_log(zone, ISC_LOG_DEBUG(1),
+			"not reusable: filename mismatch");
 	    return (ISC_FALSE);
+	}
 
 	return (ISC_TRUE);
 }

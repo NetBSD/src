@@ -1,4 +1,4 @@
-/*        $NetBSD: util.h,v 1.1.4.3 2011/06/18 11:26:43 bouyer Exp $      */
+/*        $NetBSD: util.h,v 1.1.4.4 2012/07/25 12:09:48 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.4 2009-09-29 15:06:05 fdupont Exp */
+/* Id: util.h,v 1.4 2009/09/29 15:06:05 fdupont Exp */
 
 #ifndef RNDC_UTIL_H
 #define RNDC_UTIL_H 1

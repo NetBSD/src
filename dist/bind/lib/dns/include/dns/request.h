@@ -1,7 +1,7 @@
-/*	$NetBSD: request.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:28:35 bouyer Exp $	*/
+/*	$NetBSD: request.h,v 1.1.1.5.4.1.2.3 2012/07/25 12:13:21 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.h,v 1.29 2009-01-17 23:47:43 tbox Exp */
+/* Id */
 
 #ifndef DNS_REQUEST_H
 #define DNS_REQUEST_H 1

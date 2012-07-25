@@ -1,4 +1,4 @@
-/*	$NetBSD: win32os.h,v 1.1.1.5.4.1.2.2 2011/06/18 11:29:10 bouyer Exp $	*/
+/*	$NetBSD: win32os.h,v 1.1.1.5.4.1.2.3 2012/07/25 12:14:36 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: win32os.h,v 1.7 2009-06-25 23:48:02 tbox Exp */
+/* Id: win32os.h,v 1.7 2009/06/25 23:48:02 tbox Exp */
 
 #ifndef ISC_WIN32OS_H
 #define ISC_WIN32OS_H 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.1.1.5.12.1 2011/06/18 11:27:02 bouyer Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.1.1.5.12.2 2012/07/25 12:10:20 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata_test.c,v 1.48 2007-06-19 23:46:59 tbox Exp */
+/* Id: rdata_test.c,v 1.48.558.3 2011/08/28 09:15:08 marka Exp */
 
 #include <config.h>
 
@@ -187,8 +187,8 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	case dns_rdatatype_naptr: {
-		dns_rdata_in_naptr_t in_naptr;
-		result = dns_rdata_tostruct(rdata, sp = &in_naptr, NULL);
+		dns_rdata_naptr_t naptr;
+		result = dns_rdata_tostruct(rdata, sp = &naptr, NULL);
 		break;
 	}
 	case dns_rdatatype_ns: {
@@ -449,8 +449,8 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	case dns_rdatatype_naptr: {
-		dns_rdata_in_naptr_t in_naptr;
-		result = dns_rdata_tostruct(rdata, sp = &in_naptr, mctx);
+		dns_rdata_naptr_t naptr;
+		result = dns_rdata_tostruct(rdata, sp = &naptr, mctx);
 		break;
 	}
 	case dns_rdatatype_ns: {
@@ -740,8 +740,8 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	case dns_rdatatype_naptr: {
-		dns_rdata_in_naptr_t in_naptr;
-		result = dns_rdata_fromstruct(rdata2, rdc, rdt, &in_naptr, b);
+		dns_rdata_naptr_t naptr;
+		result = dns_rdata_fromstruct(rdata2, rdc, rdt, &naptr, b);
 		break;
 	}
 	case dns_rdatatype_ns: {
@@ -975,6 +975,15 @@ main(int argc, char *argv[]) {
 			type = token.value.as_ulong;
 			isc_buffer_init(&tbuf, outbuf, sizeof(outbuf));
 			result = dns_rdatatype_totext(type, &tbuf);
+			if (result != ISC_R_SUCCESS) {
+				fprintf(stdout,
+					"dns_rdatatype_totext "
+					"returned %s(%d)\n",
+					dns_result_totext(result), result);
+				fflush(stdout);
+				need_eol = 1;
+				continue;
+			}
 			fprintf(stdout, "type = %.*s(%d)\n",
 				(int)tbuf.used, (char*)tbuf.base, type);
 		} else if (token.type == isc_tokentype_string) {
@@ -1007,6 +1016,14 @@ main(int argc, char *argv[]) {
 			class = token.value.as_ulong;
 			isc_buffer_init(&tbuf, outbuf, sizeof(outbuf));
 			result = dns_rdatatype_totext(class, &tbuf);
+			if (result != ISC_R_SUCCESS) {
+				fprintf(stdout, "dns_rdatatype_totext "
+					"returned %s(%d)\n",
+					dns_result_totext(result), result);
+				fflush(stdout);
+				need_eol = 1;
+				continue;
+			}
 			fprintf(stdout, "class = %.*s(%d)\n",
 				(int)tbuf.used, (char*)tbuf.base, class);
 		} else if (token.type == isc_tokentype_string) {
