@@ -1,4 +1,4 @@
-/*        $NetBSD: libgen.h,v 1.1.2.2 2011/06/18 11:20:47 bouyer Exp $      */
+/*        $NetBSD: libgen.h,v 1.1.2.3 2012/07/25 11:59:23 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: libgen.h,v 1.3 2009-07-17 23:47:41 tbox Exp */
+/* Id: libgen.h,v 1.3 2009/07/17 23:47:41 tbox Exp */
 
 #ifndef LIBGEN_H
 #define LIBGEN_H 1

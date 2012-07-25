@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2.4.3 2010-11-17 23:46:31 tbox Exp
+# Id
 
 ../../../tools/genrandom 400 random.data
 
+cp ns4/tld1.db ns4/tld.db
+cp ns6/to-be-removed.tld.db.in ns6/to-be-removed.tld.db
+cp ns7/server.db.in ns7/server.db
 (cd ns6 && sh keygen.sh)

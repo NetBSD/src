@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.2.2.3 2010-12-02 23:26:56 marka Exp
+# Id: tests.sh,v 1.2.2.3 2010/12/02 23:26:56 marka Exp
 
 # Test of allow-query statement.
 # allow-query takes an address match list and can be included in either the

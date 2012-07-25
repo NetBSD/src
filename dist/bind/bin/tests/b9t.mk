@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: b9t.mk,v 1.13 2007-06-19 23:46:59 tbox Exp
+# Id: b9t.mk,v 1.13 2007/06/19 23:46:59 tbox Exp
 
 #
 # makefile to configure, build and test bind9

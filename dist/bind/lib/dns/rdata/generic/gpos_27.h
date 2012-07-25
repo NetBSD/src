@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.h,v 1.1.1.5.4.1 2011/06/18 11:20:34 bouyer Exp $	*/
+/*	$NetBSD: gpos_27.h,v 1.1.1.5.4.2 2012/07/25 11:58:56 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_GPOS_27_H
 #define GENERIC_GPOS_27_H 1
 
-/* Id: gpos_27.h,v 1.17 2007-06-19 23:47:17 tbox Exp */
+/* Id: gpos_27.h,v 1.17 2007/06/19 23:47:17 tbox Exp */
 
 /*!
  *  \brief per RFC1712 */

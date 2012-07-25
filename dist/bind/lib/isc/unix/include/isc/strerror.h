@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.h,v 1.1.1.5.4.3 2011/06/18 11:20:46 bouyer Exp $	*/
+/*	$NetBSD: strerror.h,v 1.1.1.5.4.4 2012/07/25 11:59:22 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.h,v 1.10 2008-12-01 23:47:45 tbox Exp */
+/* Id: strerror.h,v 1.10 2008/12/01 23:47:45 tbox Exp */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H

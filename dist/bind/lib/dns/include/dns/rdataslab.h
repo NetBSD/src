@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.h,v 1.1.1.5.4.2 2011/06/18 11:20:32 bouyer Exp $	*/
+/*	$NetBSD: rdataslab.h,v 1.1.1.5.4.3 2012/07/25 11:58:53 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.h,v 1.33 2008-04-01 23:47:10 tbox Exp */
+/* Id: rdataslab.h,v 1.33 2008/04/01 23:47:10 tbox Exp */
 
 #ifndef DNS_RDATASLAB_H
 #define DNS_RDATASLAB_H 1

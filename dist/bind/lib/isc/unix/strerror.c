@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.1.1.5.4.3 2011/06/18 11:20:46 bouyer Exp $	*/
+/*	$NetBSD: strerror.c,v 1.1.1.5.4.4 2012/07/25 11:59:21 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: strerror.c,v 1.10 2009-02-16 23:48:04 tbox Exp */
+/* Id: strerror.c,v 1.10 2009/02/16 23:48:04 tbox Exp */
 
 /*! \file */
 

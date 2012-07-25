@@ -1,4 +1,4 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.3.4.1 2011/06/18 11:20:53 bouyer Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.3.4.2 2012/07/25 11:59:35 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.7 2007-12-14 01:40:42 marka Exp */
+/* Id: lwconfig.c,v 1.7 2007/12/14 01:40:42 marka Exp */
 
 /*
  * We do this so that we may incorporate everything in the main routines

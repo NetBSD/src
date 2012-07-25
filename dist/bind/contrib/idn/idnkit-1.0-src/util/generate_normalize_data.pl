@@ -1,5 +1,5 @@
 #! /usr/local/bin/perl -w
-# Id: generate_normalize_data.pl,v 1.1.1.1 2003-06-04 00:27:55 marka Exp
+# Id: generate_normalize_data.pl,v 1.1 2003/06/04 00:27:55 marka Exp
 #
 # Copyright (c) 2000,2001 Japan Network Information Center.
 # All rights reserved.
@@ -68,7 +68,7 @@ my $CASEMAP_LAST_BIT = 0x10;
 my $LETTER_BIT = 1;
 my $NSPMARK_BIT = 2;
 
-(my $myid = 'Id: generate_normalize_data.pl,v 1.1.1.1 2003-06-04 00:27:55 marka Exp') =~ s/\$([^\$]+)\$/\$-$1-\$/;
+(my $myid = 'Id: generate_normalize_data.pl,v 1.1 2003/06/04 00:27:55 marka Exp') =~ s/\$([^\$]+)\$/\$-$1-\$/;
 
 my @default_bits = (9, 7, 5);
 #my @default_bits = (7, 7, 7);

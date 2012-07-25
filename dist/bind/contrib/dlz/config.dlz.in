@@ -250,7 +250,7 @@ case "$use_dlz_bdb" in
 			# Check other locations for includes.
 			# Order is important (sigh).
 
-			bdb_incdirs="/ /db42/ /db41/ /db4/ /db/"
+			bdb_incdirs="/ /db48/ /db47/ /db46/ /db45/ /db44/ /db43/ /db42/ /db41/ /db4/ /db/"
 			for d in $bdb_incdirs
 			do
 				if test -f "$dd/include${d}db.h"
@@ -271,7 +271,7 @@ case "$use_dlz_bdb" in
 			# Look for libname other than libdb.so.
 			# Order is important (sigh).
 
-			bdb_libnames="db42 db-4.2 db41 db-4.1 db"
+			bdb_libnames="db48 db-4.8 db47 db-4.7 db46 db-4.6 db45 db-4.5 db44 db-4.4 db43 db-4.3 db42 db-4.2 db41 db-4.1 db"
 			for d in $bdb_libnames
 			do
 				if test -f "$dd/lib/lib${d}.so"
@@ -339,7 +339,7 @@ case "$use_dlz_filesystem" in
 		;;
 	*)
 		DLZ_ADD_DRIVER(FILESYSTEM, dlz_filesystem_driver)
-		DLZ_SYSTEM_TEST=dlz
+		DLZ_SYSTEM_TEST=filesystem
 		AC_MSG_RESULT(yes)
 		;;
 esac

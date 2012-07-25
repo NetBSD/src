@@ -1,7 +1,7 @@
-/*	$NetBSD: tcldb.c,v 1.1.1.5.4.1 2011/06/18 11:20:21 bouyer Exp $	*/
+/*	$NetBSD: tcldb.c,v 1.1.1.5.4.2 2012/07/25 11:58:30 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tcldb.c,v 1.10 2007-06-19 23:47:10 tbox Exp */
+/* Id */
 
 /*
  * A simple database driver that calls a Tcl procedure to define

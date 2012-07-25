@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hashes.c,v 1.2.2.2 2011/06/18 11:19:52 bouyer Exp $	*/
+/*	$NetBSD: t_hashes.c,v 1.2.2.3 2012/07/25 11:57:30 jdc Exp $	*/
 
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_hashes.c,v 1.2.2.5 2010-10-04 22:25:25 marka Exp */
+/* Id: t_hashes.c,v 1.2.2.5 2010/10/04 22:25:25 marka Exp */
 
 /*
  * -d1 or larger shows hash or HMAC result even if correct

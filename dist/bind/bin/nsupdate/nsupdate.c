@@ -1,7 +1,7 @@
-/*	$NetBSD: nsupdate.c,v 1.13.4.3 2011/06/18 11:19:50 bouyer Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.13.4.4 2012/07/25 11:57:27 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.173.66.12 2010-12-09 04:31:30 tbox Exp */
+/* Id: nsupdate.c,v 1.173.66.16 2011/11/03 04:30:37 each Exp */
 
 /*! \file */
 
@@ -696,8 +696,10 @@ setup_keyfile(isc_mem_t *mctx, isc_log_t *lctx) {
 				keyfile, isc_result_totext(result));
 			return;
 		}
-	} else
+	} else {
 		dst_key_attach(dstkey, &sig0key);
+		dst_key_free(&dstkey);
+	}
 }
 
 static void
@@ -2261,6 +2263,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	}
 	check_result(result, "dns_request_getresponse");
 	section = DNS_SECTION_ANSWER;
+	POST(section);
 	if (debugging)
 		show_message(stderr, rcvmsg, "Reply from SOA query:");
 
@@ -2278,6 +2281,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		dns_message_destroy(&soaquery);
 		ddebug("Out of recvsoa");
 		done_update();
+		seenerror = ISC_TRUE;
 		return;
 	}
 
@@ -2818,6 +2822,9 @@ cleanup(void) {
 		realm = NULL;
 	}
 #endif
+
+	if (sig0key != NULL)
+		dst_key_free(&sig0key);
 
 	ddebug("Shutting down task manager");
 	isc_taskmgr_destroy(&taskmgr);

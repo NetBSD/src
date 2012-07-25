@@ -1,8 +1,8 @@
-Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2012  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000-2002  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: README,v 1.8 2004-03-05 05:00:08 marka Exp
+Id
 
 The test setup for the DNSSEC tests has a secure root.
 

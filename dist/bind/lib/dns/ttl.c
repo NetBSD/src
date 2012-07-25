@@ -1,7 +1,7 @@
-/*	$NetBSD: ttl.c,v 1.1.1.5.4.1 2011/06/18 11:20:30 bouyer Exp $	*/
+/*	$NetBSD: ttl.c,v 1.1.1.5.4.2 2012/07/25 11:58:50 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ttl.c,v 1.29 2007-06-19 23:47:16 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -88,6 +88,7 @@ dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose, isc_buffer_t *target) {
 	hours = src % 24;  src /= 24;
 	days = src % 7;    src /= 7;
 	weeks = src;       src = 0;
+	POST(src);
 
 	x = 0;
 	if (weeks != 0) {
