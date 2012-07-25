@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1117 2012/07/23 07:47:40 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1118 2012/07/25 02:05:22 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1124 2012/07/23 07:47:14 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1125 2012/07/25 02:04:42 msaitoh Exp
  */
 
 /*
@@ -2699,7 +2699,16 @@
 #define	PCI_PRODUCT_INTEL_C600_SAS_12	0x1d6e		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_SATA_4	0x1d6f		/* C600 SAS Controller (SATA) */
 #define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d70		/* C600/X79 Series SMBus Controller */
-#define	PCI_PRODUCT_INTEL_7SERIES_AHCI	0x1e03		/* 7 Series SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_1	0x1e00		/* 7 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_7SER_MO_SATA_1	0x1e01		/* 7 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_AHCI	0x1e02		/* 7 Series (desktop) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_7SER_MO_SATA_AHCI	0x1e03		/* 7 Series (mobile) SATA Controller (AHCI) */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_RAID_2	0x1e04		/* 7 Series (desktop) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_RAID_3	0x1e06		/* 7 Series (desktop) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_7SER_MO_SATA_RAID	0x1e07		/* 7 Series (mobile) SATA Controller (RAID) */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_2	0x1e08		/* 7 Series (desktop) SATA Controller */
+#define	PCI_PRODUCT_INTEL_7SER_MO_SATA_2	0x1e09		/* 7 Series (mobile) SATA Controller */
+#define	PCI_PRODUCT_INTEL_7SER_DT_SATA_RAID_1	0x1e0e		/* 7 Series (desktop) SATA Controller (RAID) */
 #define	PCI_PRODUCT_INTEL_7SERIES_PCIE_1	0x1e10		/* 7 Series PCIE */
 #define	PCI_PRODUCT_INTEL_7SERIES_PCIE_2	0x1e12		/* 7 Series PCIE */
 #define	PCI_PRODUCT_INTEL_7SERIES_PCIE_3	0x1e14		/* 7 Series PCIE */
@@ -2710,12 +2719,29 @@
 #define	PCI_PRODUCT_INTEL_7SERIES_PCIE_8	0x1e1e		/* 7 Series PCIE */
 #define	PCI_PRODUCT_INTEL_7SERIES_HDA	0x1e20		/* 7 Series HD Audio */
 #define	PCI_PRODUCT_INTEL_7SERIES_SMB	0x1e22		/* 7 Series SMBus Controller */
-#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_1	0x1e26		/* 7 Series USB */
-#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_2	0x1e2d		/* 7 Series USB */
+#define	PCI_PRODUCT_INTEL_7SERIES_PPB	0x1e25		/* 7 Series PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_1	0x1e26		/* 7 Series USB EHCI */
+#define	PCI_PRODUCT_INTEL_7SERIES_EHCI_2	0x1e2d		/* 7 Series USB EHCI */
 #define	PCI_PRODUCT_INTEL_7SERIES_XHCI	0x1e31		/* 7 Series USB xHCI */
 #define	PCI_PRODUCT_INTEL_7SERIES_MEI_1	0x1e3a		/* 7 Series MEI Controller */
 #define	PCI_PRODUCT_INTEL_7SERIES_MEI_2	0x1e3b		/* 7 Series MEI Controller */
-#define	PCI_PRODUCT_INTEL_QM77_LPC	0x1e55		/* QM77 LPC */
+#define	PCI_PRODUCT_INTEL_7SERIES_IDE_R	0x1e3c		/* 7 Series IDE-R */
+#define	PCI_PRODUCT_INTEL_7SERIES_KT	0x1e3d		/* 7 Series KT */
+#define	PCI_PRODUCT_INTEL_Z77_LPC	0x1e44		/* Z77 LPC */
+#define	PCI_PRODUCT_INTEL_Z75_LPC	0x1e46		/* Z75 LPC */
+#define	PCI_PRODUCT_INTEL_Q77_LPC	0x1e47		/* Q77 LPC */
+#define	PCI_PRODUCT_INTEL_Q75_LPC	0x1e48		/* Q75 LPC */
+#define	PCI_PRODUCT_INTEL_B75_LPC	0x1e49		/* B75 LPC */
+#define	PCI_PRODUCT_INTEL_H77_LPC	0x1e4a		/* H77 LPC */
+#define	PCI_PRODUCT_INTEL_C216_LPC	0x1e53		/* C216 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_QM77_LPC	0x1e55		/* Mobile QM77 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_QS77_LPC	0x1e56		/* Mobile QS77 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_HM77_LPC	0x1e57		/* Mobile HM77 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_UM77_LPC	0x1e58		/* Mobile UM77 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_HM76_LPC	0x1e59		/* Mobile HM76 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_HM75_LPC	0x1e5d		/* Mobile HM75 LPC */
+#define	PCI_PRODUCT_INTEL_MOBILE_HM70_LPC	0x1e5e		/* Mobile HM70 LPC */
+#define	PCI_PRODUCT_INTEL_NM70_LPC	0x1e5f		/* NM70 LPC */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
