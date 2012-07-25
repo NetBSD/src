@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.h,v 1.1.1.5.8.1 2011/06/18 11:37:08 bouyer Exp $	*/
+/*	$NetBSD: tsig_250.h,v 1.1.1.5.8.2 2012/07/25 12:06:26 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig_250.h,v 1.25 2007-06-19 23:47:17 tbox Exp */
+/* Id: tsig_250.h,v 1.25 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef ANY_255_TSIG_250_H
 #define ANY_255_TSIG_250_H 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.h,v 1.1.1.5.8.1 2011/06/18 11:37:06 bouyer Exp $	*/
+/*	$NetBSD: rootns.h,v 1.1.1.5.8.2 2012/07/25 12:06:19 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.h,v 1.16 2007-06-19 23:47:17 tbox Exp */
+/* Id: rootns.h,v 1.16 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_ROOTNS_H
 #define DNS_ROOTNS_H 1

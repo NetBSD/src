@@ -1,4 +1,4 @@
-/*        $NetBSD: types.h,v 1.1.6.3 2011/06/18 11:37:23 bouyer Exp $      */
+/*        $NetBSD: types.h,v 1.1.6.4 2012/07/25 12:07:03 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id: types.h,v 1.3 2009/09/02 23:48:02 tbox Exp */
 
 #ifndef IRS_TYPES_H
 #define IRS_TYPES_H 1

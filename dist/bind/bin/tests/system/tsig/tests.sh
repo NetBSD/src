@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.5 2007-06-19 23:47:06 tbox Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -209,6 +209,15 @@ ret=0
 $DIG +tcp +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 	-y "hmac-sha512-256:sha512:$sha512" @10.53.0.1 soa -p 5300 > dig.out.sha512-256 || ret=1
 grep -i "sha512.*TSIG.*BADTRUNC" dig.out.sha512-256 > /dev/null || ret=1
+if [ $ret -eq 1 ] ; then
+	echo "I: failed"; status=1
+fi
+
+echo "I:attempting fetch with bad tsig algorithm"
+ret=0
+$DIG +tcp +nosea +nostat +noquest +nocomm +nocmd example.nil.\
+	-y "badalgo:invalid:$sha512" @10.53.0.1 soa -p 5300 > dig.out.badalgo 2>&1 || ret=1
+grep -i "Couldn't create key invalid: algorithm is unsupported" dig.out.badalgo > /dev/null || ret=1
 if [ $ret -eq 1 ] ; then
 	echo "I: failed"; status=1
 fi

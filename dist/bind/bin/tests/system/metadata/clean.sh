@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,10 +14,10 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2009-11-30 23:48:02 tbox Exp
+# Id
 
 rm -f K* dsset-* *.signed *.new random.data
 rm -f zsk.key ksk.key parent.ksk.key parent.zsk.key 
 rm -f pending.key rolling.key standby.key inact.key
-rm -f prerev.key postrev.key
+rm -f prerev.key postrev.key oldstyle.key
 rm -f keys sigs

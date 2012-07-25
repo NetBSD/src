@@ -1,4 +1,4 @@
-/*	$NetBSD: iptable.c,v 1.1.1.1.10.3 2011/06/18 11:36:52 bouyer Exp $	*/
+/*	$NetBSD: iptable.c,v 1.1.1.1.10.4 2012/07/25 12:05:56 jdc Exp $	*/
 
 /*
  * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: iptable.c,v 1.15 2009-02-18 23:47:48 tbox Exp */
+/* Id: iptable.c,v 1.15 2009/02/18 23:47:48 tbox Exp */
 
 #include <config.h>
 

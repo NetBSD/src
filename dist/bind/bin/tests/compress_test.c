@@ -1,4 +1,4 @@
-/*	$NetBSD: compress_test.c,v 1.1.1.5.8.1 2011/06/18 11:35:15 bouyer Exp $	*/
+/*	$NetBSD: compress_test.c,v 1.1.1.5.8.2 2012/07/25 12:03:03 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress_test.c,v 1.34 2007-06-18 23:47:26 tbox Exp */
+/* Id: compress_test.c,v 1.34 2007/06/18 23:47:26 tbox Exp */
 
 /*! \file */
 

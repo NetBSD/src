@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.6.8.4 2011/06/18 11:35:07 bouyer Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.6.8.5 2012/07/25 12:02:53 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.176.4.11 2011-02-03 12:17:22 tbox Exp */
+/* Id: update.c,v 1.176.4.16 2011/11/03 02:56:17 each Exp */
 
 #include <config.h>
 
@@ -1503,8 +1503,6 @@ check_soa_increment(dns_db_t *db, dns_dbversion_t *ver,
  * Incremental updating of NSECs and RRSIGs.
  */
 
-#define MAXZONEKEYS 32	/*%< Maximum number of zone keys supported. */
-
 /*%
  * We abuse the dns_diff_t type to represent a set of domain names
  * affected by the update.
@@ -1689,7 +1687,7 @@ next_active(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 {
 	isc_result_t result;
 	dns_dbiterator_t *dbit = NULL;
-	isc_boolean_t has_nsec;
+	isc_boolean_t has_nsec = ISC_FALSE;
 	unsigned int wraps = 0;
 	isc_boolean_t secure = dns_db_issecure(db);
 
@@ -2128,7 +2126,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	dns_diff_t nsec_diff;
 	dns_diff_t nsec_mindiff;
 	isc_boolean_t flag, build_nsec, build_nsec3;
-	dst_key_t *zone_keys[MAXZONEKEYS];
+	dst_key_t *zone_keys[DNS_MAXZONEKEYS];
 	unsigned int nkeys = 0;
 	unsigned int i;
 	isc_stdtime_t now, inception, expire;
@@ -2151,7 +2149,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	dns_diff_init(client->mctx, &nsec_mindiff);
 
 	result = find_zone_keys(zone, db, newver, client->mctx,
-				MAXZONEKEYS, zone_keys, &nkeys);
+				DNS_MAXZONEKEYS, zone_keys, &nkeys);
 	if (result != ISC_R_SUCCESS) {
 		update_log(client, zone, ISC_LOG_ERROR,
 			   "could not get zone keys for secure dynamic update");
@@ -2392,7 +2390,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 								   name, diff));
 			}
 			CHECK(add_exposed_sigs(client, zone, db, newver, name,
-					       cut, diff, zone_keys, nkeys,
+					       cut, &sig_diff, zone_keys, nkeys,
 					       inception, expire, check_ksk,
 					       keyset_kskonly));
 		}
@@ -2551,7 +2549,7 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 						   privatetype, &nsec_diff));
 		} else {
 			CHECK(add_exposed_sigs(client, zone, db, newver, name,
-					       cut, diff, zone_keys, nkeys,
+					       cut, &sig_diff, zone_keys, nkeys,
 					       inception, expire, check_ksk,
 					       keyset_kskonly));
 			CHECK(dns_nsec3_addnsec3sx(db, newver, name, nsecttl,
@@ -3730,7 +3728,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	 * Check Requestor's Permissions.  It seems a bit silly to do this
 	 * only after prerequisite testing, but that is what RFC2136 says.
 	 */
-	result = ISC_R_SUCCESS;
 	if (ssutable == NULL)
 		CHECK(checkupdateacl(client, dns_zone_getupdateacl(zone),
 				     "update", zonename, ISC_FALSE, ISC_FALSE));
@@ -4462,6 +4459,12 @@ send_forward_event(ns_client_t *client, dns_zone_t *zone) {
 	update_event_t *event = NULL;
 	isc_task_t *zonetask = NULL;
 	ns_client_t *evclient;
+
+	/*
+	 * This may take some time so replace this client.
+	 */
+	if (!client->mortal && (client->attributes & NS_CLIENTATTR_TCP) == 0)
+		CHECK(ns_client_replace(client));
 
 	event = (update_event_t *)
 		isc_event_allocate(client->mctx, client, DNS_EVENT_UPDATE,

@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.1.1.6.8.2 2011/06/18 11:36:57 bouyer Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.6.8.3 2012/07/25 12:06:03 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.c,v 1.128.50.2 2010-02-25 05:25:53 tbox Exp */
+/* Id */
 
 /*! \file */
 

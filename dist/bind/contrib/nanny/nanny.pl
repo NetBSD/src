@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: nanny.pl,v 1.11 2007-06-19 23:47:07 tbox Exp
+# Id: nanny.pl,v 1.11 2007/06/19 23:47:07 tbox Exp
 
 # A simple nanny to make sure named stays running.
 

@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: insecure.example.db,v 1.9 2007-06-19 23:47:02 tbox Exp
+; Id: insecure.example.db,v 1.9 2007/06/19 23:47:02 tbox Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

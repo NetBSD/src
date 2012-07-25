@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.5 2007-06-19 23:47:03 tbox Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -34,10 +34,12 @@ $SENDCMD <<EOF
 nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
 /AXFR/
 nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
+/AXFR/
 nil.      	300	NS	ns.nil.
 nil.		300	TXT	"initial AXFR"
 a.nil.		60	A	10.0.0.61
 b.nil.		60	A	10.0.0.62
+/AXFR/
 nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
 EOF
 
@@ -57,7 +59,12 @@ EOF
 
 $RNDCCMD reload
 
-sleep 2
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIGCMD nil. SOA > dig.out
+	grep "SOA" dig.out > /dev/null && break
+	sleep 1
+done
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
     echo "I:failed"
@@ -112,8 +119,10 @@ nil.      	300	TXT	"this-txt-record-would-be-added"
 nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
 /AXFR/
 nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
+/AXFR/
 nil.      	300	NS	ns.nil.
 nil.      	300	TXT	"fallback AXFR"
+/AXFR/
 nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
 EOF
 

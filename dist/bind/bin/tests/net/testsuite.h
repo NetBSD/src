@@ -1,4 +1,4 @@
-/*	$NetBSD: testsuite.h,v 1.1.1.5.8.1 2011/06/18 11:35:21 bouyer Exp $	*/
+/*	$NetBSD: testsuite.h,v 1.1.1.5.8.2 2012/07/25 12:03:12 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: testsuite.h,v 1.7 2007-06-19 23:47:00 tbox Exp */
+/* Id: testsuite.h,v 1.7 2007/06/19 23:47:00 tbox Exp */
 
 #define SUITENAME "net"
 

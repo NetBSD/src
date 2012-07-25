@@ -1,4 +1,4 @@
-/*	$NetBSD: mg_8.c,v 1.1.1.5.8.2 2011/06/18 11:37:12 bouyer Exp $	*/
+/*	$NetBSD: mg_8.c,v 1.1.1.5.8.3 2012/07/25 12:06:34 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mg_8.c,v 1.45 2009-12-04 22:06:37 tbox Exp */
+/* Id: mg_8.c,v 1.45 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 17:49:21 PST 2000 by brister */
 

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.30.32.2 2010-01-18 23:48:01 tbox Exp
+# Id
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -260,3 +260,95 @@ kskname=`$KEYGEN -q -r $RANDFILE -fk $zone`
 zskname=`$KEYGEN -q -r $RANDFILE $zone`
 cat $infile $kskname.key $zskname.key >$zonefile
 $SIGNER -x -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A zone with the expired signatures
+#
+zone=expired.example.
+infile=expired.example.db.in
+zonefile=expired.example.db
+
+kskname=`$KEYGEN -q -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone -s -1d -e +1h $zonefile > /dev/null 2>&1
+rm -f $kskname.* $zskname.*
+
+#
+# A NSEC3 signed zone that will have a DNSKEY added to it via UPDATE.
+#
+zone=update-nsec3.example.
+infile=update-nsec3.example.db.in
+zonefile=update-nsec3.example.db
+
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -3 - -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A NSEC signed zone that will have auto-dnssec enabled and
+# extra keys not in the initial signed zone.
+#
+zone=auto-nsec.example.
+infile=auto-nsec.example.db.in
+zonefile=auto-nsec.example.db
+
+kskname=`$KEYGEN -q -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+kskname=`$KEYGEN -q -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A NSEC3 signed zone that will have auto-dnssec enabled and
+# extra keys not in the initial signed zone.
+#
+zone=auto-nsec3.example.
+infile=auto-nsec3.example.db.in
+zonefile=auto-nsec3.example.db
+
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+cat $infile $kskname.key $zskname.key >$zonefile
+$SIGNER -P -3 - -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Secure below cname test zone.
+#
+zone=secure.below-cname.example.
+infile=secure.below-cname.example.db.in
+zonefile=secure.below-cname.example.db
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+$SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# Patched TTL test zone.
+#
+zone=ttlpatch.example.
+infile=ttlpatch.example.db.in
+zonefile=ttlpatch.example.db
+signedfile=ttlpatch.example.db.signed
+patchedfile=ttlpatch.example.db.patched
+
+keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
+cat $infile $keyname.key >$zonefile
+
+$SIGNER -P -r $RANDFILE -f $signedfile -o $zone $zonefile > /dev/null 2>&1
+$CHECKZONE -D -s full $zone $signedfile 2> /dev/null | \
+    awk '{$2 = "3600"; print}' > $patchedfile
+
+zone="expiring.example."
+infile="expiring.example.db.in"
+zonefile="expiring.example.db"
+signedfile="expiring.example.db.signed"
+kskname=`$KEYGEN -q -r $RANDFILE $zone`
+zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+cp $infile $zonefile
+$SIGNER -S -r $RANDFILE -e now+1mi -o $zone $zonefile > /dev/null 2>&1
+rm -f ${zskname}.private ${kskname}.private
+

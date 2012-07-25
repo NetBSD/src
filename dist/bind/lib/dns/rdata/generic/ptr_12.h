@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.h,v 1.1.1.5.8.1 2011/06/18 11:37:13 bouyer Exp $	*/
+/*	$NetBSD: ptr_12.h,v 1.1.1.5.8.2 2012/07/25 12:06:38 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_PTR_12_H
 #define GENERIC_PTR_12_H 1
 
-/* Id: ptr_12.h,v 1.27 2007-06-19 23:47:17 tbox Exp */
+/* Id: ptr_12.h,v 1.27 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_ptr {
         dns_rdatacommon_t       common;

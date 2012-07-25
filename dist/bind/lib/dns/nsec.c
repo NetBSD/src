@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.c,v 1.1.1.3.8.3 2011/06/18 11:36:54 bouyer Exp $	*/
+/*	$NetBSD: nsec.c,v 1.1.1.3.8.4 2012/07/25 12:05:58 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec.c,v 1.13 2009-01-06 23:47:57 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -184,7 +184,7 @@ dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 				    0, NULL);
 	if (result == DNS_R_UNCHANGED)
 		result = ISC_R_SUCCESS;
-	RETERR(result);
+
  failure:
 	if (dns_rdataset_isassociated(&rdataset))
 		dns_rdataset_disassociate(&rdataset);

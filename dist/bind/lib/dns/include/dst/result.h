@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.3.8.2 2011/06/18 11:37:08 bouyer Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.3.8.3 2012/07/25 12:06:25 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.9 2008-04-01 23:47:10 tbox Exp */
+/* Id: result.h,v 1.9 2008/04/01 23:47:10 tbox Exp */
 
 #ifndef DST_RESULT_H
 #define DST_RESULT_H 1
