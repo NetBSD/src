@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.10 2012/02/12 14:38:18 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.10.2.1 2012/07/25 20:52:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10 2012/02/12 14:38:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.10.2.1 2012/07/25 20:52:53 jdc Exp $");
 
 #include "opt_xen.h"
 
@@ -247,7 +247,7 @@ sysctl_xen_suspend_setup(void)
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(NULL, 0, &node, &node,
-	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE | CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "suspend",
 	    SYSCTL_DESCR("Suspend/save current Xen domain"),
 	    sysctl_xen_suspend, 0, NULL, 0,
@@ -257,11 +257,10 @@ sysctl_xen_suspend_setup(void)
 static int
 sysctl_xen_suspend(SYSCTLFN_ARGS)
 {
-	int error, t;
+	int error;
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
 	if (error || newp == NULL)
