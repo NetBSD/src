@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.4 2012/07/20 19:18:08 ginsbach Exp $
+.\"	$NetBSD: inet.3,v 1.5 2012/07/25 14:51:15 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 20, 2012
+.Dd July 25, 2012
 .Dt INET 3
 .Os
 .Sh NAME
@@ -338,8 +338,9 @@ functions conform to
 .St -p1003.1-2001 .
 Note that
 .Fn inet_pton
-does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
+does not accept 1-, 2-, or 3-part dotted addresses; all four parts
 must be specified.
+Additionally all four parts of a dotted address must be decimal.
 This is a narrower input set than that accepted by
 .Fn inet_aton .
 .Sh HISTORY
@@ -393,3 +394,8 @@ The function
 .Fn inet_addr
 should return a
 .Vt struct in_addr .
+.Pp
+The function
+.Fn inet_network
+does not support byte rearrangement for one, two, and three
+part addresses.
