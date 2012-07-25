@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.4 2012/07/16 22:13:28 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.5 2012/07/25 20:45:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -120,7 +120,8 @@ yyerror(const char *fmt, ...)
 %token			TO
 %token			TREE
 %token			TYPE
-%token			ICMP
+%token	<num>		ICMP
+%token	<num>		ICMP6
 
 %token	<num>		HEX
 %token	<str>		IDENTIFIER
@@ -471,6 +472,11 @@ opt_proto
 		$$.op_proto = IPPROTO_ICMP;
 		$$.op_opts = $3;
 	}
+	| PROTO ICMP6 icmp_type_and_code
+	{
+		$$.op_proto = IPPROTO_ICMPV6;
+		$$.op_opts = $3;
+	}
 	| PROTO some_name
 	{
 		$$.op_proto = npfctl_protono($2);
@@ -633,24 +639,24 @@ port
 icmp_type_and_code
 	: ICMPTYPE icmp_type
 	{
-		$$ = npfctl_parse_icmp($2, -1);
+		$$ = npfctl_parse_icmp($<num>0, $2, -1);
 	}
 	| ICMPTYPE icmp_type CODE NUM
 	{
-		$$ = npfctl_parse_icmp($2, $4);
+		$$ = npfctl_parse_icmp($<num>0, $2, $4);
 	}
 	| ICMPTYPE icmp_type CODE IDENTIFIER
 	{
-		$$ = npfctl_parse_icmp($2, npfctl_icmpcode($2, $4));
+		$$ = npfctl_parse_icmp($<num>0, $2, npfctl_icmpcode($<num>0, $2, $4));
 	}
 	| ICMPTYPE icmp_type CODE VAR_ID
 	{
 		char *s = npfvar_expand_string(npfvar_lookup($4));
-		$$ = npfctl_parse_icmp($2, npfctl_icmpcode($2, s));
+		$$ = npfctl_parse_icmp($<num>0, $2, npfctl_icmpcode($<num>0, $2, s));
 	}
 	|
 	{
-		$$ = npfctl_parse_icmp(-1, -1);
+		$$ = npfctl_parse_icmp($<num>0, -1, -1);
 	}
 	;
 
@@ -675,11 +681,11 @@ tcp_flags
 
 icmp_type
 	: NUM		{ $$ = $1; }
-	| IDENTIFIER	{ $$ = npfctl_icmptype($1); }
+	| IDENTIFIER	{ $$ = npfctl_icmptype($<num>-1, $1); }
 	| VAR_ID
 	{
 		char *s = npfvar_expand_string(npfvar_lookup($1));
-		$$ = npfctl_icmptype(s);
+		$$ = npfctl_icmptype($<num>-1, s);
 	}
 	;
 

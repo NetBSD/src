@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.10.4.4 2012/07/16 22:13:25 riz Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10.4.5 2012/07/25 20:45:24 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.4 2012/07/16 22:13:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.5 2012/07/25 20:45:24 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -495,7 +495,15 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 			senkey.se_dst_id = ic->icmp_id;
 			break;
 		}
-		/* FALLTHROUGH */
+		return NULL;
+	case IPPROTO_ICMPV6:
+		if (npf_iscached(key, NPC_ICMP_ID)) {
+			const struct icmp6_hdr *ic6 = &key->npc_l4.icmp6;
+			senkey.se_src_id = ic6->icmp6_id;
+			senkey.se_dst_id = ic6->icmp6_id;
+			break;
+		}
+		return NULL;
 	default:
 		/* Unsupported protocol. */
 		return NULL;
@@ -636,7 +644,18 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 			fw->se_dst_id = ic->icmp_id;
 			break;
 		}
-		/* FALLTHROUGH */
+		ok = false;
+		goto out;
+	case IPPROTO_ICMPV6:
+		if (npf_iscached(npc, NPC_ICMP_ID)) {
+			/* ICMP query ID. */
+			const struct icmp6_hdr *ic6 = &npc->npc_l4.icmp6;
+			fw->se_src_id = ic6->icmp6_id;
+			fw->se_dst_id = ic6->icmp6_id;
+			break;
+		}
+		ok = false;
+		goto out;
 	default:
 		/* Unsupported. */
 		ok = false;

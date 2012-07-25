@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.1.2.1 2012/06/26 00:07:20 riz Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.1.2.2 2012/07/25 20:45:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -48,11 +48,12 @@
 #define	NPFVAR_ICMP		8
 #define	NPFVAR_PROC_OP		9
 #define	NPFVAR_MODULE_ARG	10
+#define	NPFVAR_ICMP6		11
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
 	"string", "identifier", "var_id", "num", "table", "fam", "port_range",
-	"tcpflag", "icmp", "proc_op", "module_arg"
+	"tcpflag", "icmp", "proc_op", "module_arg", "icmp6"
 };
 #endif
 

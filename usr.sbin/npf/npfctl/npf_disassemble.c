@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.2.5 2012/07/16 22:13:28 riz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.2.6 2012/07/25 20:45:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.5 2012/07/16 22:13:28 riz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.6 2012/07/25 20:45:23 jdc Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -232,7 +232,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		snprintf(buf, bufsiz, "id=%d", op);
 		break;
 
-	case NPF_OPERAND_ICMP4_TYPE_CODE: {
+	case NPF_OPERAND_ICMP_TYPE_CODE: {
 		uint8_t type = (op & 31) ? op >> 8 : 0;
 		uint8_t code = (op & 30) ? op & 0xff : 0;
 
