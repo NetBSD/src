@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.14 2012/07/23 16:27:44 matt Exp $
+#	$NetBSD: P2020RDB,v 1.15 2012/07/25 03:09:01 matt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.14 $"
+ident 		"P2020RBD-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -180,12 +180,10 @@ ukphy*		at mii?
 
 diic*		at cpunode?		# i2c bus
 iic*		at diic?
-dsrtc*		at iic1 addr 0x68 flags 1339	# RTC DS1339
+dsrtc*		at iic0 addr 0x68 flags 1339	# RTC DS1339
 
 pq3pcie*	at cpunode?		# PCI-Express controller
-pq3pci* 	at cpunode?		# PCI(X)
 pci*		at pq3pcie?
-pci*		at pq3pci?
 
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb?
@@ -194,16 +192,18 @@ ahcisata*	at pci? dev ? function ?
 atabus*		at ahcisata? channel ?
 wd*		at atabus? drive ?
 
+sdhc*		at pci? dev ? function ?
+
+sdhc*		at cpunode?		# sdmmc
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+
 ehci*		at cpunode?		# usb
 usb*		at ehci?
 uhub*		at usb?
 umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
-
-sdhc*		at cpunode?		# sdmmc
-sdmmc*		at sdhc?		# SD/MMC bus
-ld*		at sdmmc?
 
 #siisata*	at pci? dev ? function ?
 #atabus* 	at siisata? channel ?
@@ -225,6 +225,7 @@ ld*		at sdmmc?
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of disk subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
