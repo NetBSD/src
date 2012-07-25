@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.44 2011/12/10 19:14:29 roy Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.44.2.1 2012/07/25 20:33:28 jdc Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -125,6 +125,7 @@ struct icmp6_hdr {
 #define ICMP6_FQDN_REPLY		140	/* FQDN reply */
 #define ICMP6_NI_QUERY			139	/* node information request */
 #define ICMP6_NI_REPLY			140	/* node information reply */
+#define MLDV2_LISTENER_REPORT		143	/* RFC3810 listener report */
 
 /* The definitions below are experimental. TBA */
 #define MLD_MTRACE_RESP			200	/* mtrace response(to sender) */
@@ -144,6 +145,9 @@ struct icmp6_hdr {
 #define ICMP6_DST_UNREACH_BEYONDSCOPE	2	/* beyond scope of source address */
 #define ICMP6_DST_UNREACH_ADDR		3	/* address unreachable */
 #define ICMP6_DST_UNREACH_NOPORT	4	/* port unreachable */
+#define ICMP6_DST_UNREACH_POLICY	5	/* source address failed ingress/egress policy */
+#define ICMP6_DST_UNREACH_REJROUTE	6	/* reject route to destination */
+#define ICMP6_DST_UNREACH_SOURCERT	7	/* error in source routing header */
 
 #define ICMP6_TIME_EXCEED_TRANSIT 	0	/* ttl==0 in transit */
 #define ICMP6_TIME_EXCEED_REASSEMBLY	1	/* ttl==0 in reass */
@@ -732,5 +736,42 @@ do { \
 extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 #endif /* _KERNEL */
+
+#ifdef ICMP6_STRINGS
+/* Info: http://www.iana.org/assignments/icmpv6-parameters */
+
+static const char * const icmp6_type_err[] = {
+	"reserved0", "unreach", "packet_too_big", "timxceed", "paramprob",
+	NULL
+};
+
+static const char * const icmp6_type_info[] = {
+	"echo", "echoreply",
+	"mcastlistenq", "mcastlistenrep", "mcastlistendone",
+	"rtsol", "rtadv", "neighsol", "neighadv", "redirect",
+	"routerrenum", "nodeinfoq", "nodeinfor", "invneighsol", "invneighrep",
+	"mcastlistenrep2", "haad_req", "haad_rep",
+	"mobile_psol", "mobile_padv", "cga_sol", "cga_adv",
+	"experimental150", "mcast_rtadv", "mcast_rtsol", "mcast_rtterm",
+	"fmipv6_msg", "rpl_control", NULL
+};
+
+static const char * const icmp6_code_none[] = { "none", NULL };
+
+static const char * const icmp6_code_unreach[] = {
+	"noroute", "admin", "beyondscope", "addr", "port",
+	"srcaddr_policy", "reject_route", "source_route_err", NULL
+};
+
+static const char * const icmp6_code_timxceed[] = {
+	"intrans", "reass", NULL
+};
+
+static const char * const icmp6_code_paramprob[] = {
+	"hdr_field", "nxthdr_type", "option", NULL
+};      
+
+/* not all informational icmps that have codes have a names array */
+#endif
 
 #endif /* !_NETINET_ICMP6_H_ */
