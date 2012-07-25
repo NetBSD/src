@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.6.8.2 2011/06/18 11:37:24 bouyer Exp $	*/
+/*	$NetBSD: base64.c,v 1.6.8.3 2012/07/25 12:07:06 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base64.c,v 1.34 2009-10-21 23:48:05 tbox Exp */
+/* Id: base64.c,v 1.34 2009/10/21 23:48:05 tbox Exp */
 
 /*! \file */
 

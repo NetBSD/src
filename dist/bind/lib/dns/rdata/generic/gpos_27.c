@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.c,v 1.1.1.5.8.2 2011/06/18 11:37:10 bouyer Exp $	*/
+/*	$NetBSD: gpos_27.c,v 1.1.1.5.8.3 2012/07/25 12:06:30 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gpos_27.c,v 1.43 2009-12-04 22:06:37 tbox Exp */
+/* Id: gpos_27.c,v 1.43 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 

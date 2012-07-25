@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -63,6 +63,20 @@ do
 	status=`expr $status + $ret`
 done
 
+echo "I:querying for NULL record"
+ret=0
+$DIG +short $DIGOPTS @10.53.0.1 null.example null in > dig.out || ret=1
+echo '\# 1 00' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:querying for empty NULL record"
+ret=0
+$DIG +short $DIGOPTS @10.53.0.1 empty.example null in > dig.out || ret=1
+echo '\# 0' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
 echo "I:querying for various representations of a CLASS10 TYPE1 record"
 for i in 1 2
 do
@@ -113,6 +127,31 @@ echo "I:querying for empty NULL record"
 ret=0
 $DIG +short $DIGOPTS @10.53.0.1 empty.example null in > dig.out || ret=1
 echo '\# 0' | diff - dig.out || ret=1
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:checking large unknown record loading on master"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:checking large unknown record loading on slave"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
+[ $ret = 0 ] || echo "I: failed"
+status=`expr $status + $ret`
+
+echo "I:stop and restart slave"
+$PERL $SYSTEMTESTTOP/stop.pl . ns2
+$PERL $SYSTEMTESTTOP/start.pl --noclean --restart . ns2
+
+echo "I:checking large unknown record loading on slave"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 +tcp +short large.example TYPE45234 > dig.out || { ret=1 ; echo I: dig failed ; }
+diff -s large.out dig.out > /dev/null || { ret=1 ; echo "I: diff failed"; }
 [ $ret = 0 ] || echo "I: failed"
 status=`expr $status + $ret`
 

@@ -1,4 +1,4 @@
-/*        $NetBSD: getaddrinfo.c,v 1.6.16.2 2011/06/18 11:37:22 bouyer Exp $      */
+/*        $NetBSD: getaddrinfo.c,v 1.6.16.3 2012/07/25 12:07:00 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddrinfo.c,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id: getaddrinfo.c,v 1.3 2009/09/02 23:48:02 tbox Exp */
 
 /*! \file */
 

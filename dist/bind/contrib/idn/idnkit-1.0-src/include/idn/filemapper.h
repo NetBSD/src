@@ -1,6 +1,6 @@
-/*	$NetBSD: filemapper.h,v 1.1.1.1.36.1 2011/06/18 11:36:19 bouyer Exp $	*/
+/*	$NetBSD: filemapper.h,v 1.1.1.1.36.2 2012/07/25 12:04:54 jdc Exp $	*/
 
-/* Id: filemapper.h,v 1.1.1.1 2003-06-04 00:25:38 marka Exp */
+/* Id: filemapper.h,v 1.1 2003/06/04 00:25:38 marka Exp */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

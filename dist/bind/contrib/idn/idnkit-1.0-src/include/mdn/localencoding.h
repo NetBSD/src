@@ -1,6 +1,6 @@
-/*	$NetBSD: localencoding.h,v 1.1.1.1.36.1 2011/06/18 11:36:20 bouyer Exp $	*/
+/*	$NetBSD: localencoding.h,v 1.1.1.1.36.2 2012/07/25 12:04:58 jdc Exp $	*/
 
-/* Id: localencoding.h,v 1.1.1.1 2003-06-04 00:25:45 marka Exp */
+/* Id: localencoding.h,v 1.1 2003/06/04 00:25:45 marka Exp */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.h,v 1.1.1.5.8.1 2011/06/18 11:37:39 bouyer Exp $	*/
+/*	$NetBSD: condition.h,v 1.1.1.5.8.2 2012/07/25 12:08:06 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.h,v 1.26 2007-06-19 23:47:18 tbox Exp */
+/* Id: condition.h,v 1.26 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_CONDITION_H
 #define ISC_CONDITION_H 1

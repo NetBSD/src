@@ -1,7 +1,7 @@
-/*        $NetBSD: nsec3hash.c,v 1.1.6.3 2011/06/18 11:36:15 bouyer Exp $      */
+/*        $NetBSD: nsec3hash.c,v 1.1.6.4 2012/07/25 12:04:43 jdc Exp $      */
 
 /*
- * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3hash.c,v 1.6 2009-10-06 21:20:44 each Exp */
+/* Id */
 
 #include <config.h>
 
@@ -62,7 +62,8 @@ check_result(isc_result_t result, const char *message) {
 
 static void
 usage() {
-	fatal("salt hash iterations domain");
+	printf("Usage: %s salt algorithm iterations domain\n", program);
+	exit(1);
 }
 
 int

@@ -1,7 +1,7 @@
-/*	$NetBSD: statschannel.c,v 1.3.8.3 2011/06/18 11:35:07 bouyer Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.3.8.4 2012/07/25 12:02:53 jdc Exp $	*/
 
 /*
- * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2011  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.c,v 1.24.40.2 2010-02-04 23:48:30 tbox Exp */
+/* Id: statschannel.c,v 1.24.40.4 2011/03/12 04:58:24 tbox Exp */
 
 /*! \file */
 
@@ -640,7 +640,7 @@ rdatasetstats_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
 
 static void
 opcodestat_dump(dns_opcode_t code, isc_uint64_t val, void *arg) {
-	FILE *fp = arg;
+	FILE *fp;
 	isc_buffer_t b;
 	char codebuf[64];
 	stats_dumparg_t *dumparg = arg;

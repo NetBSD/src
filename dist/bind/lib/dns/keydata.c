@@ -1,4 +1,4 @@
-/*        $NetBSD: keydata.c,v 1.1.6.3 2011/06/18 11:36:53 bouyer Exp $      */
+/*        $NetBSD: keydata.c,v 1.1.6.4 2012/07/25 12:05:56 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydata.c,v 1.3 2009-07-01 23:47:36 tbox Exp */
+/* Id: keydata.c,v 1.3 2009/07/01 23:47:36 tbox Exp */
 
 /*! \file */
 

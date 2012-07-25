@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.1.22.1 2011/06/18 11:38:03 bouyer Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.1.22.2 2012/07/25 12:08:44 jdc Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.3 2007-06-18 23:47:51 tbox Exp */
+/* Id: socket.c,v 1.3 2007/06/18 23:47:51 tbox Exp */
 
 #include <stdio.h>
 #include <lwres/platform.h>

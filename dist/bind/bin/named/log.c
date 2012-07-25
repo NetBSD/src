@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.5.8.3 2011/06/18 11:35:04 bouyer Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.5.8.4 2012/07/25 12:02:50 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.49 2009-01-07 01:46:40 jinmei Exp */
+/* Id: log.c,v 1.49 2009/01/07 01:46:40 jinmei Exp */
 
 /*! \file */
 

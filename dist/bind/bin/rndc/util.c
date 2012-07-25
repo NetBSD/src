@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.5.8.1 2011/06/18 11:35:14 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.5.8.2 2012/07/25 12:03:02 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.c,v 1.7 2007-06-19 23:46:59 tbox Exp */
+/* Id: util.c,v 1.7 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file */
 

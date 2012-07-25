@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.c,v 1.1.1.5.8.1 2011/06/18 11:36:47 bouyer Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.1.1.5.8.2 2012/07/25 12:05:47 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getaddresses.c,v 1.22 2007-06-19 23:47:16 tbox Exp */
+/* Id: getaddresses.c,v 1.22 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

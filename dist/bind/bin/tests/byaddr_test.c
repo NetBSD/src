@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr_test.c,v 1.1.1.5.8.1 2011/06/18 11:35:15 bouyer Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.1.1.5.8.2 2012/07/25 12:03:03 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr_test.c,v 1.28 2007-06-19 23:46:59 tbox Exp */
+/* Id: byaddr_test.c,v 1.28 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file
  * \author

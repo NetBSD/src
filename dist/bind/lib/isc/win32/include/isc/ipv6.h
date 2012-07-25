@@ -1,7 +1,7 @@
-/*	$NetBSD: ipv6.h,v 1.1.1.6.8.1 2011/06/18 11:37:47 bouyer Exp $	*/
+/*	$NetBSD: ipv6.h,v 1.1.1.6.8.2 2012/07/25 12:08:21 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ipv6.h,v 1.19.558.2 2011-02-03 12:17:23 tbox Exp */
+/* Id */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1

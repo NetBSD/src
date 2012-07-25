@@ -1,7 +1,7 @@
-/*        $NetBSD: nsec3_50.c,v 1.1.6.3 2011/06/18 11:37:12 bouyer Exp $      */
+/*        $NetBSD: nsec3_50.c,v 1.1.6.4 2012/07/25 12:06:36 jdc Exp $      */
 
 /*
- * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3_50.c,v 1.7 2009-12-04 21:09:34 marka Exp */
+/* Id */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.

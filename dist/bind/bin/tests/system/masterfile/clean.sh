@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.5.476.2 2010-09-15 12:38:03 tbox Exp
+# Id
 
 rm -f dig.out.*
 rm -f */named.memstats

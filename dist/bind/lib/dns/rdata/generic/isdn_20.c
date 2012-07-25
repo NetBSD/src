@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.1.1.5.8.2 2011/06/18 11:37:11 bouyer Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.1.1.5.8.3 2012/07/25 12:06:32 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: isdn_20.c,v 1.40 2009-12-04 22:06:37 tbox Exp */
+/* Id: isdn_20.c,v 1.40 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 

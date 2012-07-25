@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2bdb.c,v 1.1.1.2.22.2 2011/06/18 11:36:34 bouyer Exp $	*/
+/*	$NetBSD: zone2bdb.c,v 1.1.1.2.22.3 2012/07/25 12:05:25 jdc Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone2bdb.c,v 1.3 2009-09-01 00:22:26 jinmei Exp */
+/* Id: zone2bdb.c,v 1.3 2009/09/01 00:22:26 jinmei Exp */
 
 #include <stdio.h>
 

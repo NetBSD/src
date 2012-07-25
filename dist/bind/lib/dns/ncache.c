@@ -1,7 +1,7 @@
-/*	$NetBSD: ncache.c,v 1.1.1.5.8.3 2011/07/07 20:27:41 sborrill Exp $	*/
+/*	$NetBSD: ncache.c,v 1.1.1.5.8.4 2012/07/25 12:05:58 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ncache.c,v 1.43.268.7.46.3 2011-06-21 20:14:46 each Exp */
+/* Id */
 
 /*! \file */
 

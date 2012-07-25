@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.c,v 1.1.1.6.8.1 2011/06/18 11:37:27 bouyer Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.1.1.6.8.2 2012/07/25 12:07:20 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.c,v 1.70 2007-06-19 23:47:17 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -183,6 +183,9 @@ void
 isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 	isc_result_t result;
 	isc_buffer_t buf;
+
+	if (size == 0U)
+		return;
 
 	isc_buffer_init(&buf, array, size);
 	result = isc_sockaddr_totext(sa, &buf);

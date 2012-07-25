@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.h,v 1.1.1.5.8.1 2011/06/18 11:37:17 bouyer Exp $	*/
+/*	$NetBSD: px_26.h,v 1.1.1.5.8.2 2012/07/25 12:06:46 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef IN_1_PX_26_H
 #define IN_1_PX_26_H 1
 
-/* Id: px_26.h,v 1.19 2007-06-19 23:47:17 tbox Exp */
+/* Id: px_26.h,v 1.19 2007/06/19 23:47:17 tbox Exp */
 
 /*! 
  *  \brief Per RFC2163 */

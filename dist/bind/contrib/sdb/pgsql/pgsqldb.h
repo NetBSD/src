@@ -1,4 +1,4 @@
-/*	$NetBSD: pgsqldb.h,v 1.1.1.5.8.1 2011/06/18 11:36:35 bouyer Exp $	*/
+/*	$NetBSD: pgsqldb.h,v 1.1.1.5.8.2 2012/07/25 12:05:26 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: pgsqldb.h,v 1.5 2007-06-19 23:47:08 tbox Exp */
+/* Id: pgsqldb.h,v 1.5 2007/06/19 23:47:08 tbox Exp */
 
 #include <isc/types.h>
 

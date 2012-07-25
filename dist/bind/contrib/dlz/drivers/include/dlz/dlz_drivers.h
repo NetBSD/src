@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_drivers.h,v 1.1.1.2.8.1 2011/06/18 11:36:17 bouyer Exp $	*/
+/*	$NetBSD: dlz_drivers.h,v 1.1.1.2.8.2 2012/07/25 12:04:47 jdc Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlz_drivers.h,v 1.2 2005-09-05 00:10:58 marka Exp */
+/* Id: dlz_drivers.h,v 1.2 2005/09/05 00:10:58 marka Exp */
 
 #ifndef DLZ_DRIVERS_H
 #define DLZ_DRIVERS_H 1

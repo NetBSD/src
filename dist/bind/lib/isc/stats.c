@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.1.2.3 2011/06/18 11:37:27 bouyer Exp $	*/
+/*	$NetBSD: stats.c,v 1.1.2.4 2012/07/25 12:07:21 jdc Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stats.c,v 1.3 2009-01-27 23:47:54 tbox Exp */
+/* Id: stats.c,v 1.3 2009/01/27 23:47:54 tbox Exp */
 
 /*! \file */
 

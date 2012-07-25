@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.h,v 1.1.1.1.10.3 2011/06/18 11:37:32 bouyer Exp $	*/
+/*	$NetBSD: httpd.h,v 1.1.1.1.10.4 2012/07/25 12:07:37 jdc Exp $	*/
 
 /*
  * Copyright (C) 2006-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: httpd.h,v 1.9 2008-08-08 05:06:49 marka Exp */
+/* Id: httpd.h,v 1.9 2008/08/08 05:06:49 marka Exp */
 
 #ifndef ISC_HTTPD_H
 #define ISC_HTTPD_H 1

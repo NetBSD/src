@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.1.1.5.8.1 2011/06/18 11:37:35 bouyer Exp $	*/
+/*	$NetBSD: region.h,v 1.1.1.5.8.2 2012/07/25 12:07:47 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: region.h,v 1.25 2007-06-19 23:47:18 tbox Exp */
+/* Id: region.h,v 1.25 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1

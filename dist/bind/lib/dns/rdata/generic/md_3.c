@@ -1,4 +1,4 @@
-/*	$NetBSD: md_3.c,v 1.1.1.5.8.2 2011/06/18 11:37:11 bouyer Exp $	*/
+/*	$NetBSD: md_3.c,v 1.1.1.5.8.3 2012/07/25 12:06:33 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: md_3.c,v 1.49 2009-12-04 22:06:37 tbox Exp */
+/* Id: md_3.c,v 1.49 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Wed Mar 15 17:48:20 PST 2000 by bwelling */
 

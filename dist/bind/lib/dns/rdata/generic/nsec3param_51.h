@@ -1,4 +1,4 @@
-/*        $NetBSD: nsec3param_51.h,v 1.1.6.3 2011/06/18 11:37:12 bouyer Exp $      */
+/*        $NetBSD: nsec3param_51.h,v 1.1.6.4 2012/07/25 12:06:36 jdc Exp $      */
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #ifndef GENERIC_NSEC3PARAM_51_H
 #define GENERIC_NSEC3PARAM_51_H 1
 
-/* Id: nsec3param_51.h,v 1.4 2008-09-25 04:02:39 tbox Exp */
+/* Id: nsec3param_51.h,v 1.4 2008/09/25 04:02:39 tbox Exp */
 
 /*!
  * \brief Per RFC 5155 */

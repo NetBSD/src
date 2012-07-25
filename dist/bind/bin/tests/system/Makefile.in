@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2008, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.31.268.2 2010-06-23 23:46:35 tbox Exp
+# Id: Makefile.in,v 1.31.268.4 2011/11/01 23:46:11 tbox Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -36,6 +36,7 @@ test: subdirs
 
 testclean clean distclean::
 	if test -f ./cleanall.sh; then sh ./cleanall.sh; fi
+	rm -f systests.output
 
 distclean::
 	rm -f conf.sh

@@ -1,7 +1,7 @@
-/*	$NetBSD: t_names.c,v 1.1.1.5.8.3 2011/06/18 11:35:20 bouyer Exp $	*/
+/*	$NetBSD: t_names.c,v 1.1.1.5.8.4 2012/07/25 12:03:12 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_names.c,v 1.50 2009-09-01 23:47:44 tbox Exp */
+/* Id: t_names.c,v 1.50.104.2 2011/03/12 04:58:25 tbox Exp */
 
 #include <config.h>
 
@@ -181,7 +181,6 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 	int			c;
 	int			len;
 	int			cnt;
-	unsigned int		val;
 	unsigned char		*p;
 	FILE			*fp;
 
@@ -194,8 +193,8 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 	p = buf;
 	cnt = 0;
 	len = 0;
-	val = 0;
 	while ((c = getc(fp)) != EOF) {
+		unsigned int		val;
 		if (	(c == ' ') || (c == '\t') ||
 			(c == '\r') || (c == '\n'))
 				continue;
@@ -1680,8 +1679,6 @@ test_dns_name_fromtext(char *test_name1, char *test_name2, char *test_origin,
 	isc_result_t	dns_result;
 	dns_namereln_t	dns_namereln;
 
-	result = T_UNRESOLVED;
-
 	t_info("testing %s %s %s\n", test_name1, test_name2, test_origin);
 
 	isc_buffer_init(&binbuf1, junk1, BUFLEN);
@@ -1816,8 +1813,6 @@ test_dns_name_totext(char *test_name, isc_boolean_t omit_final) {
 	dns_name_t	dns_name2;
 	isc_result_t	dns_result;
 	dns_namereln_t	dns_namereln;
-
-	result = T_UNRESOLVED;
 
 	t_info("testing %s\n", test_name);
 
@@ -1984,8 +1979,6 @@ test_dns_name_fromwire(char *datafile_name, int testname_offset, int downcase,
 	isc_result_t		dns_result;
 	dns_namereln_t		dns_namereln;
 	dns_decompress_t	dctx;
-
-	result = T_UNRESOLVED;
 
 	t_info("testing using %s\n", datafile_name);
 	len = getmsg(datafile_name, buf1, BIGBUFLEN, &iscbuf1);

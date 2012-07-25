@@ -1,4 +1,4 @@
-/*	$NetBSD: listenlist.h,v 1.1.1.5.8.1 2011/06/18 11:35:08 bouyer Exp $	*/
+/*	$NetBSD: listenlist.h,v 1.1.1.5.8.2 2012/07/25 12:02:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: listenlist.h,v 1.15 2007-06-19 23:46:59 tbox Exp */
+/* Id: listenlist.h,v 1.15 2007/06/19 23:46:59 tbox Exp */
 
 #ifndef NAMED_LISTENLIST_H
 #define NAMED_LISTENLIST_H 1

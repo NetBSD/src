@@ -1,7 +1,7 @@
-/*        $NetBSD: nsec3.c,v 1.1.6.4 2011/07/07 20:27:41 sborrill Exp $      */
+/*        $NetBSD: nsec3.c,v 1.1.6.5 2012/07/25 12:05:58 jdc Exp $      */
 
 /*
- * Copyright (C) 2006, 2008-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.c,v 1.13.6.6.12.1 2011-06-21 20:14:47 each Exp */
+/* Id */
 
 #include <config.h>
 
@@ -559,7 +559,7 @@ dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdataset_t rdataset;
 	int pass;
-	isc_boolean_t exists;
+	isc_boolean_t exists = ISC_FALSE;
 	isc_boolean_t maybe_remove_unsecure = ISC_FALSE;
 	isc_uint8_t flags;
 	isc_buffer_t buffer;
@@ -1786,7 +1786,7 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
 	dst_key_t *key = NULL;
 	isc_buffer_t buffer;
 	isc_result_t result;
-	isc_uint16_t bits, minbits = 4096;
+	unsigned int bits, minbits = 4096;
 
 	result = dns_db_getoriginnode(db, &node);
 	if (result != ISC_R_SUCCESS)
@@ -1813,7 +1813,7 @@ dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version,
 		isc_buffer_add(&buffer, rdata.length);
 		CHECK(dst_key_fromdns(dns_db_origin(db), rdataset.rdclass,
 				      &buffer, mctx, &key));
-		bits = dst_key_getbits(key);
+		bits = dst_key_size(key);
 		dst_key_free(&key);
 		if (minbits > bits)
 			minbits = bits;

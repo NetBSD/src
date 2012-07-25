@@ -1,7 +1,7 @@
-/*	$NetBSD: builtin.c,v 1.1.1.3.8.2 2011/06/18 11:35:03 bouyer Exp $	*/
+/*	$NetBSD: builtin.c,v 1.1.1.3.8.3 2012/07/25 12:02:49 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: builtin.c,v 1.15.154.2 2010-08-03 23:46:17 tbox Exp */
+/* Id: builtin.c,v 1.15.154.5 2012/01/11 20:19:07 ckb Exp */
 
 /*! \file
  * \brief
@@ -129,6 +129,7 @@ do_authors_lookup(dns_sdblookup_t *lookup) {
 	const char **p;
 	static const char *authors[] = {
 		"Mark Andrews",
+		"Curtis Blackburn",
 		"James Brister",
 		"Ben Cottrell",
 		"Michael Graff",
@@ -137,6 +138,7 @@ do_authors_lookup(dns_sdblookup_t *lookup) {
 		"Evan Hunt",
 		"JINMEI Tatuya",
 		"David Lawrence",
+		"Scott Mann",
 		"Danny Mayer",
 		"Damien Neil",
 		"Matt Nelson",

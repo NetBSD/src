@@ -1,8 +1,8 @@
-/*	$NetBSD: query-loc.c,v 1.1.1.1.10.2 2011/06/18 11:36:33 bouyer Exp $	*/
+/*	$NetBSD: query-loc.c,v 1.1.1.1.10.3 2012/07/25 12:05:23 jdc Exp $	*/
 
 #include        "loc.h"
 
-/* Id: query-loc.c,v 1.1 2008-02-15 01:47:15 marka Exp */
+/* Id: query-loc.c,v 1.1 2008/02/15 01:47:15 marka Exp */
 
 /* Global variables */
 char *progname;

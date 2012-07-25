@@ -1,4 +1,4 @@
-/*	$NetBSD: unspec_103.c,v 1.1.1.5.8.2 2011/06/18 11:37:14 bouyer Exp $	*/
+/*	$NetBSD: unspec_103.c,v 1.1.1.5.8.3 2012/07/25 12:06:42 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: unspec_103.c,v 1.37 2009-12-04 22:06:37 tbox Exp */
+/* Id: unspec_103.c,v 1.37 2009/12/04 22:06:37 tbox Exp */
 
 #ifndef RDATA_GENERIC_UNSPEC_103_C
 #define RDATA_GENERIC_UNSPEC_103_C

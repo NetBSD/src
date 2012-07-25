@@ -1,7 +1,7 @@
-/*	$NetBSD: cc.c,v 1.1.1.6.8.1 2011/06/18 11:37:50 bouyer Exp $	*/
+/*	$NetBSD: cc.c,v 1.1.1.6.8.2 2012/07/25 12:08:24 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cc.c,v 1.18 2007-08-28 07:20:43 tbox Exp */
+/* Id: cc.c,v 1.18 2007/08/28 07:20:43 tbox Exp */
 
 /*! \file */
 
@@ -405,15 +405,16 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 
 	if (secret != NULL) {
 		if (checksum_rstart != NULL)
-			return (verify(alist, checksum_rstart,
+			result = verify(alist, checksum_rstart,
 				       (source->rend - checksum_rstart),
-				       secret));
-		return (ISCCC_R_BADAUTH);
-	}
-
-	return (ISC_R_SUCCESS);
+					secret);
+		else
+			result = ISCCC_R_BADAUTH;
+	} else
+		result = ISC_R_SUCCESS;
 
  bad:
+	if (result != ISC_R_SUCCESS)
 	isccc_sexpr_free(&alist);
 
 	return (result);

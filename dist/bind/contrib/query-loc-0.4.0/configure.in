@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_RELEASE("Id: configure.in,v 1.1 2008-02-15 01:47:15 marka Exp")
+AC_RELEASE("Id: configure.in,v 1.1 2008/02/15 01:47:15 marka Exp")
 AC_INIT(query-loc.c)
 
 dnl Checks for programs.

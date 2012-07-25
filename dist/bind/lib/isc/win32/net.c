@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.1.1.5.8.3 2011/06/18 11:37:44 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.5.8.4 2012/07/25 12:08:17 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.20 2009-09-08 23:41:50 tbox Exp */
+/* Id */
 
 #include <config.h>
 
@@ -168,7 +168,8 @@ try_ipv6only(void) {
 	}
 
 	on = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
+		       sizeof(on)) < 0) {
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -191,7 +192,8 @@ try_ipv6only(void) {
 	}
 
 	on = 1;
-	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) < 0) {
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
+		       sizeof(on)) < 0) {
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}

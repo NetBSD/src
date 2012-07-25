@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.1.1.6.8.3 2011/06/18 11:36:56 bouyer Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.6.8.4 2012/07/25 12:06:03 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.85 2009-09-01 00:22:26 jinmei Exp */
+/* Id */
 
 /*! \file */
 
@@ -430,12 +430,10 @@ req_send(dns_request_t *request, isc_task_t *task, isc_sockaddr_t *address) {
 	isc_region_t r;
 	isc_socket_t *socket;
 	isc_result_t result;
-	unsigned int dispattr;
 
 	req_log(ISC_LOG_DEBUG(3), "req_send: request %p", request);
 
 	REQUIRE(VALID_REQUEST(request));
-	dispattr = dns_dispatch_getattributes(request->dispatch);
 	socket = req_getsocket(request);
 	isc_buffer_usedregion(request->query, &r);
 	/*
@@ -1134,9 +1132,7 @@ req_render(dns_message_t *message, isc_buffer_t **bufferp,
  */
 static void
 send_if_done(dns_request_t *request, isc_result_t result) {
-	if (!DNS_REQUEST_CONNECTING(request) &&
-	    !DNS_REQUEST_SENDING(request) &&
-	    !request->canceling)
+	if (request->event != NULL && !request->canceling)
 		req_sendevent(request, result);
 }
 

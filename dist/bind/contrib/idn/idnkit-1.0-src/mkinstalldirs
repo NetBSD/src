@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# Id: mkinstalldirs,v 1.1.1.1 2003-06-04 00:25:33 marka Exp
+# Id: mkinstalldirs,v 1.1 2003/06/04 00:25:33 marka Exp
 
 errstatus=0
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.h,v 1.1.1.5.8.2 2011/06/18 11:37:07 bouyer Exp $	*/
+/*	$NetBSD: tsig.h,v 1.1.1.5.8.3 2012/07/25 12:06:22 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsig.h,v 1.53.136.4 2010-12-09 01:05:29 marka Exp */
+/* Id */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1

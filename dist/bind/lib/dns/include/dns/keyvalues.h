@@ -1,7 +1,7 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.5.8.2 2011/06/18 11:37:04 bouyer Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.5.8.3 2012/07/25 12:06:14 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyvalues.h,v 1.27 2009-10-22 02:21:31 each Exp */
+/* Id */
 
 #ifndef DNS_KEYVALUES_H
 #define DNS_KEYVALUES_H 1

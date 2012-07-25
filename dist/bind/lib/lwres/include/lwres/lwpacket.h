@@ -1,4 +1,4 @@
-/*	$NetBSD: lwpacket.h,v 1.1.1.5.8.1 2011/06/18 11:37:56 bouyer Exp $	*/
+/*	$NetBSD: lwpacket.h,v 1.1.1.5.8.2 2012/07/25 12:08:35 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwpacket.h,v 1.24 2007-06-19 23:47:23 tbox Exp */
+/* Id: lwpacket.h,v 1.24 2007/06/19 23:47:23 tbox Exp */
 
 #ifndef LWRES_LWPACKET_H
 #define LWRES_LWPACKET_H 1

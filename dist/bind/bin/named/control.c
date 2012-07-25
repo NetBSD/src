@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.1.1.6.8.3 2011/06/18 11:35:03 bouyer Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.6.8.4 2012/07/25 12:02:49 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.c,v 1.36.50.5 2010-12-03 22:04:49 each Exp */
+/* Id: control.c,v 1.36.50.5 2010/12/03 22:04:49 each Exp */
 
 /*! \file */
 

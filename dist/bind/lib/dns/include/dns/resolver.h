@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.h,v 1.1.1.5.8.3 2011/06/18 11:37:06 bouyer Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.5.8.4 2012/07/25 12:06:18 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.64.104.3 2010-07-11 00:12:19 each Exp */
+/* Id */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
