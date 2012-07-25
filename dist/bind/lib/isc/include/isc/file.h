@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.1.1.5.4.3 2011/06/18 11:20:42 bouyer Exp $	*/
+/*	$NetBSD: file.h,v 1.1.1.5.4.4 2012/07/25 11:59:13 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: file.h,v 1.37 2009-08-28 03:13:08 each Exp */
+/* Id */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -181,6 +181,27 @@ isc_boolean_t
 isc_file_isabsolute(const char *filename);
 /*!<
  * \brief Return #ISC_TRUE if the given file name is absolute.
+ */
+
+isc_result_t
+isc_file_isplainfile(const char *name);
+/*!<
+ * \brief Check that the file is a plain file
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *		Success. The file is a plain file.
+ *\li	#ISC_R_INVALIDFILE
+ *		The path specified was not usable by the operating system.
+ *\li	#ISC_R_FILENOTFOUND
+ *		The file does not exist. This return code comes from
+ *		errno=ENOENT when stat returns -1. This code is mentioned
+ *		here, because in logconf.c, it is the one rcode that is
+ *		permitted in addition to ISC_R_SUCCESS. This is done since
+ *		the next call in logconf.c is to isc_stdio_open(), which
+ *		will create the file if it can.
+ *\li	#other ISC_R_* errors translated from errno
+ *		These occur when stat returns -1 and an errno.
  */
 
 isc_boolean_t

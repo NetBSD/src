@@ -1,7 +1,7 @@
-/*        $NetBSD: getnameinfo.c,v 1.6.12.2 2011/06/18 11:20:39 bouyer Exp $      */
+/*        $NetBSD: getnameinfo.c,v 1.6.12.3 2012/07/25 11:59:07 jdc Exp $      */
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.4 2009-09-02 23:48:02 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -151,12 +151,12 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 {
 	struct afd *afd;
 	struct servent *sp;
-	unsigned short port;
+	unsigned short port = 0;
 #ifdef IRS_PLATFORM_HAVESALEN
 	size_t len;
 #endif
 	int family, i;
-	const void *addr;
+	const void *addr = NULL;
 	char *p;
 #if 0
 	unsigned long v4a;
@@ -201,8 +201,6 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 		break;
 
 	default:
-		port = 0;
-		addr = NULL;
 		INSIST(0);
 	}
 	proto = (flags & NI_DGRAM) ? "udp" : "tcp";

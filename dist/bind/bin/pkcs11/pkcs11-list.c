@@ -1,4 +1,4 @@
-/*        $NetBSD: pkcs11-list.c,v 1.1.2.2 2011/06/18 11:19:50 bouyer Exp $      */
+/*        $NetBSD: pkcs11-list.c,v 1.1.2.3 2012/07/25 11:57:27 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Id: pkcs11-list.c,v 1.7 2009-10-26 23:36:53 each Exp */
+/* Id: pkcs11-list.c,v 1.7 2009/10/26 23:36:53 each Exp */
 
 /* pkcs11-list [-P] [-m module] [-s slot] [-i $id | -l $label] [-p $pin] */
 

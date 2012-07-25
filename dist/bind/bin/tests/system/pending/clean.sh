@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3.6.1 2009-12-30 08:33:40 jinmei Exp
+# Id
 
 rm -rf */*.signed
 rm -rf */*.jnl

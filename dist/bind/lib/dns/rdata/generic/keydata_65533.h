@@ -1,4 +1,4 @@
-/*        $NetBSD: keydata_65533.h,v 1.1.2.2 2011/06/18 11:20:34 bouyer Exp $      */
+/*        $NetBSD: keydata_65533.h,v 1.1.2.3 2012/07/25 11:58:57 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 #ifndef GENERIC_KEYDATA_65533_H
 #define GENERIC_KEYDATA_65533_H 1
 
-/* Id: keydata_65533.h,v 1.2 2009-06-30 02:52:32 each Exp */
+/* Id: keydata_65533.h,v 1.2 2009/06/30 02:52:32 each Exp */
 
 typedef struct dns_rdata_keydata {
 	dns_rdatacommon_t	common;

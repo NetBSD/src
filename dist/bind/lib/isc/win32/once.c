@@ -1,4 +1,4 @@
-/*	$NetBSD: once.c,v 1.1.1.5.4.1 2011/06/18 11:20:47 bouyer Exp $	*/
+/*	$NetBSD: once.c,v 1.1.1.5.4.2 2012/07/25 11:59:23 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: once.c,v 1.12 2007-06-18 23:47:49 tbox Exp */
+/* Id: once.c,v 1.12 2007/06/18 23:47:49 tbox Exp */
 
 /* Principal Authors: DCL */
 

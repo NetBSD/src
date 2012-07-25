@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.1.1.9.4.3 2011/06/18 11:20:47 bouyer Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.9.4.4 2012/07/25 11:59:23 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.81.22.5 2010-12-09 11:41:11 marka Exp */
+/* Id */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.
@@ -3316,6 +3316,7 @@ isc__socket_accept(isc_socket_t *sock,
 	 */
 	isc_task_attach(task, &ntask);
 	if (isc_task_exiting(ntask)) {
+		free_socket(&nsock, __LINE__);
 		isc_task_detach(&ntask);
 		isc_event_free(ISC_EVENT_PTR(&adev));
 		UNLOCK(&sock->lock);

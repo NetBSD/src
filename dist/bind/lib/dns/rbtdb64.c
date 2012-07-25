@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb64.c,v 1.1.1.5.4.1 2011/06/18 11:20:29 bouyer Exp $	*/
+/*	$NetBSD: rbtdb64.c,v 1.1.1.5.4.2 2012/07/25 11:58:47 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbtdb64.c,v 1.11 2007-06-19 23:47:16 tbox Exp */
+/* Id: rbtdb64.c,v 1.11 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

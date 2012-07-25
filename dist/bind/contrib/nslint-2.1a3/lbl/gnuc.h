@@ -1,6 +1,6 @@
-/*	$NetBSD: gnuc.h,v 1.1.1.3.26.1 2011/06/18 11:20:19 bouyer Exp $	*/
+/*	$NetBSD: gnuc.h,v 1.1.1.3.26.2 2012/07/25 11:58:27 jdc Exp $	*/
 
-/* @(#) Header: /proj/cvs/prod/bind9/contrib/nslint-2.1a3/lbl/gnuc.h,v 1.1 2001-12-21 04:12:05 marka Exp (LBL) */
+/* @(#) Header: /u0/home/explorer/proj/ISC/git-conversion/cvsroot/bind9/contrib/nslint-2.1a3/lbl/gnuc.h,v 1.1 2001/12/21 04:12:05 marka Exp (LBL) */
 
 /* Define __P() macro, if necessary */
 #ifndef __P

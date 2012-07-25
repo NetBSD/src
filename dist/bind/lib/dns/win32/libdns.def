@@ -58,6 +58,7 @@ dns_cache_attachdb
 dns_cache_clean
 dns_cache_create
 dns_cache_create2
+dns_cache_create3
 dns_cache_detach
 dns_cache_dump
 dns_cache_flush
@@ -197,6 +198,7 @@ dns_dnssec_keylistfromrdataset
 dns_dnssec_selfsigns
 dns_dnssec_sign
 dns_dnssec_signmessage
+dns_dnssec_signs
 dns_dnssec_updatekeys
 dns_dnssec_verify
 dns_dnssec_verify2
@@ -640,6 +642,7 @@ dns_tcpmsg_readmessage
 dns_tcpmsg_setmaxsize
 dns_time32_fromtext
 dns_time32_totext
+dns_time64_from32
 dns_time64_fromtext
 dns_time64_totext
 dns_timer_setidle
@@ -652,7 +655,6 @@ dns_tkey_processgssresponse
 dns_tkey_processquery
 dns_tkeyctx_create
 dns_tkeyctx_destroy
-dns_trust_totext
 dns_tsig_sign
 dns_tsig_verify
 dns_tsigkey_attach
@@ -856,6 +858,7 @@ dns_zone_setxfrsource4
 dns_zone_setxfrsource6
 dns_zone_setzeronosoattl
 dns_zone_signwithkey
+dns_zone_synckeyzone
 dns_zone_unload
 dns_zonekey_iszonekey
 dns_zonemgr_attach
@@ -872,6 +875,7 @@ dns_zonemgr_releasezone
 dns_zonemgr_resumexfrs
 dns_zonemgr_setiolimit
 dns_zonemgr_setserialqueryrate
+dns_zonemgr_setsize
 dns_zonemgr_settransfersin
 dns_zonemgr_settransfersperns
 dns_zonemgr_shutdown
@@ -920,6 +924,7 @@ dst_key_name
 dst_key_paramcompare
 dst_key_proto
 dst_key_pubcompare
+dst_key_rid
 dst_key_secretsize
 dst_key_setbits
 dst_key_setflags
@@ -936,6 +941,7 @@ dst_lib_init
 dst_lib_init2
 dst_lib_initmsgcat
 dst_region_computeid
+dst_region_computerid
 dst_result_register
 dst_result_totext
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.3.4.2 2011/06/18 11:20:27 bouyer Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.3.4.3 2012/07/25 11:58:44 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: hmac_link.c,v 1.15.36.2 2010-01-07 23:48:16 tbox Exp
+ * Id
  */
 
 #include <config.h>

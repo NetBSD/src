@@ -1,4 +1,4 @@
-# Copyright (C) 2005, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.3.558.2 2010-06-02 01:27:20 tbox Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -20,7 +20,6 @@ SYSTEMTESTTOP=..
 status=0
 
 echo "I: checking that named-checkconf handles a known good config"
-
 ret=0
 $CHECKCONF good.conf > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -28,13 +27,26 @@ status=`expr $status + $ret`
 
 echo "I: checking that named-checkconf prints a known good config"
 ret=0
-$CHECKCONF -p good.conf > /dev/null 2>&1 || ret=1
+awk 'BEGIN { ok = 0; } /cut here/ { ok = 1; getline } ok == 1 { print }' good.conf > good.conf.in
+[ -s good.conf.in ] || ret=1
+$CHECKCONF -p good.conf.in | grep -v '^good.conf.in:' > good.conf.out 2>&1 || ret=1
+cmp good.conf.in good.conf.out || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
-echo "I: checking that named-checkconf handles a known bad config"
 
-ret=1
-$CHECKCONF bad.conf > /dev/null 2>&1 || ret=0
+echo "I: checking that named-checkconf handles a known bad config"
+ret=0
+$CHECKCONF bad.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking named-checkconf dnssec warnings"
+ret=0
+$CHECKCONF dnssec.1 2>&1 | grep 'validation yes.*enable no' > /dev/null || ret=1
+$CHECKCONF dnssec.2 2>&1 | grep 'auto-dnssec may only be ' > /dev/null || ret=1
+$CHECKCONF dnssec.2 2>&1 | grep 'validation yes.*enable no' > /dev/null || ret=1
+# this one should have no warnings
+$CHECKCONF dnssec.3 2>&1 | grep '.*' && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

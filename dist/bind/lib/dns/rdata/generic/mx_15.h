@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.h,v 1.1.1.5.4.1 2011/06/18 11:20:34 bouyer Exp $	*/
+/*	$NetBSD: mx_15.h,v 1.1.1.5.4.2 2012/07/25 11:58:57 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 #ifndef GENERIC_MX_15_H
 #define GENERIC_MX_15_H 1
 
-/* Id: mx_15.h,v 1.29 2007-06-19 23:47:17 tbox Exp */
+/* Id: mx_15.h,v 1.29 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t	common;

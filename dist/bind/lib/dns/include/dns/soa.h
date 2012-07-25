@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.h,v 1.1.1.5.4.2 2011/06/18 11:20:33 bouyer Exp $	*/
+/*	$NetBSD: soa.h,v 1.1.1.5.4.3 2012/07/25 11:58:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa.h,v 1.12 2009-09-10 01:47:09 each Exp */
+/* Id: soa.h,v 1.12 2009/09/10 01:47:09 each Exp */
 
 #ifndef DNS_SOA_H
 #define DNS_SOA_H 1

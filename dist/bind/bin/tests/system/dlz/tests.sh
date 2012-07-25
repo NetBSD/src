@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.2.2.2 2010-08-16 05:14:14 marka Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -35,6 +35,7 @@ $DIG $DIGOPTS +norec foo.example.com. \
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 grep "example.com..*DNAME.*example.net." dig.out.ns1.test$n > /dev/null || ret=1
 grep "foo.example.com..*CNAME.*foo.example.net." dig.out.ns1.test$n > /dev/null || ret=1
+grep "flags:[^;]* aa[ ;]" dig.out.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

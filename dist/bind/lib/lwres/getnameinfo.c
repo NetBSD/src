@@ -1,7 +1,7 @@
-/*	$NetBSD: getnameinfo.c,v 1.7.4.1 2011/06/18 11:20:51 bouyer Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.7.4.2 2012/07/25 11:59:30 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getnameinfo.c,v 1.39 2007-06-19 23:47:22 tbox Exp */
+/* Id */
 
 /*! \file */
 
@@ -221,6 +221,7 @@ lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 	default:
 		port = 0;
 		addr = NULL;
+		POST(port); POST(addr);
 		INSIST(0);
 	}
 	proto = (flags & NI_DGRAM) ? "udp" : "tcp";

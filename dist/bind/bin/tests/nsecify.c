@@ -1,7 +1,7 @@
-/*	$NetBSD: nsecify.c,v 1.1.1.4.4.2 2011/06/18 11:19:51 bouyer Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.1.1.4.4.3 2012/07/25 11:57:29 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsecify.c,v 1.10 2009-09-02 23:48:01 tbox Exp */
+/* Id: nsecify.c,v 1.10.104.2 2011/08/29 23:45:33 tbox Exp */
 
 #include <config.h>
 
@@ -159,6 +159,7 @@ nsecify(char *filename) {
 	result = dns_db_createiterator(db, 0, &dbiter);
 	check_result(result, "dns_db_createiterator()");
 	result = dns_dbiterator_first(dbiter);
+	check_result(result, "dns_dbiterator_first()");
 	node = NULL;
 	result = next_active(db, wversion, dbiter, name, &node);
 	while (result == ISC_R_SUCCESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.5.4.3 2011/06/18 11:20:47 bouyer Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.5.4.4 2012/07/25 11:59:22 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.c,v 1.15 2009-01-18 23:48:14 tbox Exp */
+/* Id: interfaceiter.c,v 1.15 2009/01/18 23:48:14 tbox Exp */
 
 /*
  * Note that this code will need to be revisited to support IPv6 Interfaces.

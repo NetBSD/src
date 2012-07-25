@@ -1,9 +1,14 @@
-/*	$NetBSD: StdAfx.h,v 1.1.1.2 2007/01/27 21:05:08 christos Exp $	*/
+/*	$NetBSD: StdAfx.h,v 1.1.1.2.18.1 2012/07/25 11:58:15 jdc Exp $	*/
 
 // stdafx.h : include file for standard system include files,
 //  or project specific include files that are used frequently, but
 //      are changed infrequently
 //
+
+/*
+ * Minimum version is Windows XP
+ */
+#define _WIN32_WINNT 0x0501
 
 #ifndef _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.3.4.2 2011/06/18 11:20:28 bouyer Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.3.4.3 2012/07/25 11:58:46 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.18 2009-10-30 05:08:23 marka Exp
+ * Id
  */
 
 #ifdef OPENSSL

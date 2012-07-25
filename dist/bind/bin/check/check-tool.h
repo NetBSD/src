@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.h,v 1.1.1.5.4.1 2011/06/18 11:19:44 bouyer Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.1.1.5.4.2 2012/07/25 11:57:18 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check-tool.h,v 1.14.560.2 2010-09-07 23:46:37 tbox Exp */
+/* Id: check-tool.h,v 1.14.560.2 2010/09/07 23:46:37 tbox Exp */
 
 #ifndef CHECK_TOOL_H
 #define CHECK_TOOL_H

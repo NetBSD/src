@@ -1,4 +1,4 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.5.4.2 2011/06/18 11:20:03 bouyer Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.1.1.5.4.3 2012/07/25 11:57:51 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwtest.c,v 1.32 2008-04-02 02:37:42 marka Exp */
+/* Id: lwtest.c,v 1.32 2008/04/02 02:37:42 marka Exp */
 
 #include <config.h>
 

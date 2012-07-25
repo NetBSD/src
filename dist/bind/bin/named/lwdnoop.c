@@ -1,4 +1,4 @@
-/*	$NetBSD: lwdnoop.c,v 1.1.1.5.4.2 2011/06/18 11:19:47 bouyer Exp $	*/
+/*	$NetBSD: lwdnoop.c,v 1.1.1.5.4.3 2012/07/25 11:57:24 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdnoop.c,v 1.13 2008-01-22 23:28:04 tbox Exp */
+/* Id: lwdnoop.c,v 1.13 2008/01/22 23:28:04 tbox Exp */
 
 /*! \file */
 

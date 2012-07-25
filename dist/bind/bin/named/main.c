@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.7.4.3 2011/06/18 11:19:47 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.7.4.4 2012/07/25 11:57:24 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.175.60.4 2010-09-15 12:10:53 marka Exp */
+/* Id: main.c,v 1.175.60.7 2011/11/05 00:46:11 each Exp */
 
 /*! \file */
 
@@ -548,6 +548,7 @@ parse_command_line(int argc, char *argv[]) {
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;
+	POST(argv);
 
 	if (argc > 0) {
 		usage();
@@ -780,6 +781,25 @@ setup(void) {
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "----------------------------------------------------");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "BIND 9 is maintained by Internet Systems Consortium,");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "Inc. (ISC), a non-profit 501(c)(3) public-benefit ");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "corporation.  Support and training for BIND 9 are ");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "available at https://www.isc.org/support");
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE,
+		      "----------------------------------------------------");
 
 	dump_symboltable();
 

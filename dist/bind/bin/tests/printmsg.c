@@ -1,7 +1,7 @@
-/*	$NetBSD: printmsg.c,v 1.1.1.5.4.1 2011/06/18 11:19:51 bouyer Exp $	*/
+/*	$NetBSD: printmsg.c,v 1.1.1.5.4.2 2012/07/25 11:57:29 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: printmsg.c,v 1.29 2007-06-19 23:46:59 tbox Exp */
+/* Id: printmsg.c,v 1.29.558.2 2011/08/25 23:45:28 tbox Exp */
 
 #include <config.h>
 
@@ -79,7 +79,9 @@ printsection(dns_message_t *msg, dns_section_t sectionid,
 	isc_region_t r;
 	dns_name_t empty_name;
 	char t[65536];
+#ifdef USEINITALWS
 	isc_boolean_t first;
+#endif
 	isc_boolean_t no_rdata;
 
 	if (sectionid == DNS_SECTION_QUESTION)
@@ -102,7 +104,9 @@ printsection(dns_message_t *msg, dns_section_t sectionid,
 		dns_message_currentname(msg, sectionid, &name);
 
 		isc_buffer_init(&target, t, sizeof(t));
+#ifdef USEINITALWS
 		first = ISC_TRUE;
+#endif
 		print_name = name;
 
 		for (rdataset = ISC_LIST_HEAD(name->list);
@@ -161,7 +165,6 @@ printrdata(dns_message_t *msg, dns_rdataset_t *rdataset, dns_name_t *owner,
 
 isc_result_t
 printmessage(dns_message_t *msg) {
-	isc_boolean_t did_flag = ISC_FALSE;
 	isc_result_t result;
 	dns_rdataset_t *opt, *tsig;
 	dns_name_t *tsigname;
@@ -172,34 +175,20 @@ printmessage(dns_message_t *msg) {
 	       opcodetext[msg->opcode], rcodetext[msg->rcode], msg->id);
 
 	printf(";; flags: ");
-	if ((msg->flags & DNS_MESSAGEFLAG_QR) != 0) {
+	if ((msg->flags & DNS_MESSAGEFLAG_QR) != 0)
 		printf("qr");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_AA) != 0) {
-		printf("%saa", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0) {
-		printf("%stc", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_RD) != 0) {
-		printf("%srd", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_RA) != 0) {
-		printf("%sra", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_AD) != 0) {
-		printf("%sad", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
-	if ((msg->flags & DNS_MESSAGEFLAG_CD) != 0) {
-		printf("%scd", did_flag ? " " : "");
-		did_flag = ISC_TRUE;
-	}
+	if ((msg->flags & DNS_MESSAGEFLAG_AA) != 0)
+		printf(" aa");
+	if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0)
+		printf(" tc");
+	if ((msg->flags & DNS_MESSAGEFLAG_RD) != 0)
+		printf(" rd");
+	if ((msg->flags & DNS_MESSAGEFLAG_RA) != 0)
+		printf(" ra");
+	if ((msg->flags & DNS_MESSAGEFLAG_AD) != 0)
+		printf(" ad");
+	if ((msg->flags & DNS_MESSAGEFLAG_CD) != 0)
+		printf(" cd");
 	printf("; QUERY: %u, ANSWER: %u, AUTHORITY: %u, ADDITIONAL: %u\n",
 	       msg->counts[DNS_SECTION_QUESTION],
 	       msg->counts[DNS_SECTION_ANSWER],

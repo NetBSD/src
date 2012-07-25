@@ -1,7 +1,7 @@
-/*	$NetBSD: stub.c,v 1.1.1.1.32.1 2011/06/18 11:20:18 bouyer Exp $	*/
+/*	$NetBSD: stub.c,v 1.1.1.1.32.2 2012/07/25 11:58:25 jdc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "Id: stub.c,v 1.1.1.1 2003-06-04 00:27:13 marka Exp";
+static char *rcsid = "Id: stub.c,v 1.1 2003/06/04 00:27:13 marka Exp";
 #endif
 
 /*

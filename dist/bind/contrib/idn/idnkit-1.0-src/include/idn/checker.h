@@ -1,6 +1,6 @@
-/*	$NetBSD: checker.h,v 1.1.1.1.32.1 2011/06/18 11:20:15 bouyer Exp $	*/
+/*	$NetBSD: checker.h,v 1.1.1.1.32.2 2012/07/25 11:58:17 jdc Exp $	*/
 
-/* Id: checker.h,v 1.1.1.1 2003-06-04 00:25:36 marka Exp */
+/* Id: checker.h,v 1.1 2003/06/04 00:25:36 marka Exp */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
  *  

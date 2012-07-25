@@ -1,7 +1,7 @@
-/*        $NetBSD: resconf.c,v 1.1.2.2 2011/06/18 11:20:39 bouyer Exp $      */
+/*        $NetBSD: resconf.c,v 1.1.2.3 2012/07/25 11:59:07 jdc Exp $      */
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resconf.c,v 1.3 2009-09-02 23:48:02 tbox Exp */
+/* Id */
 
 /*! \file resconf.c */
 
@@ -519,6 +519,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 		stopchar = getword(fp, word, sizeof(word));
 		if (stopchar == EOF) {
 			rval = ISC_R_SUCCESS;
+			POST(rval);
 			break;
 		}
 

@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000, 2001  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example-in.db,v 1.7 2007-06-19 23:47:06 tbox Exp
+; Id
 
 $TTL 300	; 5 minutes
 @			SOA	mname1. . (
@@ -46,6 +46,13 @@ empty		IN	TYPE124	\# 0
 emptyplus	IN	TYPE125 \# 0
 emptyplus	IN	TYPE125 \# 1 11
 
+null		IN	NULL	\# 1 00
+empty		IN	NULL	\# 0
+empty		IN	TYPE124	\# 0
+
+emptyplus	IN	TYPE125 \# 0
+emptyplus	IN	TYPE125 \# 1 11
+
 txt1		IN	TXT	"hello"
 txt2		CLASS1	TXT	"hello"
 txt3		IN	TYPE16	"hello"
@@ -57,4 +64,5 @@ txt7		IN	TXT	\# 6 0568656C6C6F
 unk1			TYPE123	\# 1 00
 unk2		CLASS1	TYPE123	\# 1 00
 unk3		IN	TYPE123	\# 1 00
+$INCLUDE large.db
 $INCLUDE large.db

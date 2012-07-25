@@ -135,7 +135,7 @@ diff -c /dev/null mdn/othersrc/bind9/README.idnkit:1.3
 + mdnkit-bugs@nic.ad.jp and idn-cmt@nic.ad.jp, respectively.
 + 
 + 
-+ ; Id: bind-9.2.2-patch,v 1.1.1.1 2003-06-04 00:27:32 marka Exp
++ ; Id: bind-9.2.2-patch,v 1.1 2003/06/04 00:27:32 marka Exp
 Index: config.h.in
 diff -c mdn/othersrc/bind9/config.h.in:1.1.1.6 mdn/othersrc/bind9/config.h.in:1.12
 *** config.h.in	Tue Nov 27 16:55:45 2001

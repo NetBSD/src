@@ -1,4 +1,4 @@
-/*        $NetBSD: base32.c,v 1.1.2.2 2011/06/18 11:20:39 bouyer Exp $      */
+/*        $NetBSD: base32.c,v 1.1.2.3 2012/07/25 11:59:08 jdc Exp $      */
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base32.c,v 1.6 2009-10-21 01:22:29 each Exp */
+/* Id: base32.c,v 1.6 2009/10/21 01:22:29 each Exp */
 
 /*! \file */
 

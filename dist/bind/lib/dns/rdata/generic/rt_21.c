@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.c,v 1.1.1.5.4.2 2011/06/18 11:20:35 bouyer Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.1.1.5.4.3 2012/07/25 11:58:59 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rt_21.c,v 1.48 2009-12-04 22:06:37 tbox Exp */
+/* Id: rt_21.c,v 1.48 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 

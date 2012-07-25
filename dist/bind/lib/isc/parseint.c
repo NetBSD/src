@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.c,v 1.1.1.3.4.1 2011/06/18 11:20:40 bouyer Exp $	*/
+/*	$NetBSD: parseint.c,v 1.1.1.3.4.2 2012/07/25 11:59:10 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parseint.c,v 1.8 2007-06-19 23:47:17 tbox Exp */
+/* Id: parseint.c,v 1.8 2007/06/19 23:47:17 tbox Exp */
 
 /*! \file */
 

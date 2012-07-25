@@ -1,4 +1,4 @@
-/*	$NetBSD: ntservice.c,v 1.1.1.5.4.3 2011/06/18 11:19:49 bouyer Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.1.1.5.4.4 2012/07/25 11:57:26 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntservice.c,v 1.14.132.2 2011-01-13 22:30:17 tbox Exp */
+/* Id: ntservice.c,v 1.14.132.2 2011/01/13 22:30:17 tbox Exp */
 
 #include <config.h>
 #include <stdio.h>

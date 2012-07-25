@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keygen.docbook,v 1.33.24.2 2010-08-16 23:46:30 tbox Exp -->
+<!-- Id: dnssec-keygen.docbook,v 1.33.24.2 2010/08/16 23:46:30 tbox Exp -->
 <refentry id="man.dnssec-keygen">
   <refentryinfo>
     <date>June 30, 2000</date>

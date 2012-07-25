@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.1.1.3.4.5 2011/06/18 11:20:28 bouyer Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.1.1.3.4.6 2012/07/25 11:58:46 jdc Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: openssldsa_link.c,v 1.18 2009-10-30 05:08:23 marka Exp */
+/* Id */
 
 #ifdef OPENSSL
 #ifndef USE_EVP
@@ -254,7 +254,6 @@ openssldsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	dsasig->r = BN_bin2bn(cp, ISC_SHA1_DIGESTLENGTH, NULL);
 	cp += ISC_SHA1_DIGESTLENGTH;
 	dsasig->s = BN_bin2bn(cp, ISC_SHA1_DIGESTLENGTH, NULL);
-	cp += ISC_SHA1_DIGESTLENGTH;
 
 #if 0
 	pkey = EVP_PKEY_new();

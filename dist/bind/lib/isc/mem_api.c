@@ -1,7 +1,7 @@
-/*        $NetBSD: mem_api.c,v 1.1.2.2 2011/06/18 11:20:40 bouyer Exp $      */
+/*        $NetBSD: mem_api.c,v 1.1.2.3 2012/07/25 11:59:10 jdc Exp $      */
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem_api.c,v 1.5.104.3 2010-08-12 21:31:33 jinmei Exp */
+/* Id */
 
 #include <config.h>
 

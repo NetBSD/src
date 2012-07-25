@@ -1,7 +1,7 @@
-/*	$NetBSD: sig_24.c,v 1.1.1.5.4.2 2011/06/18 11:20:35 bouyer Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.1.1.5.4.3 2012/07/25 11:58:59 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sig_24.c,v 1.68 2009-12-04 22:06:37 tbox Exp */
+/* Id */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 

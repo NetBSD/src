@@ -1,5 +1,5 @@
 #! /usr/local/bin/perl -w
-# Id: generate_nameprep_data.pl,v 1.1.1.1 2003-06-04 00:27:54 marka Exp
+# Id: generate_nameprep_data.pl,v 1.1 2003/06/04 00:27:54 marka Exp
 #
 # Copyright (c) 2001 Japan Network Information Center.  All rights reserved.
 #  
@@ -50,7 +50,7 @@ use lib qw(.);
 use SparseMap;
 use Getopt::Long;
 
-(my $myid = 'Id: generate_nameprep_data.pl,v 1.1.1.1 2003-06-04 00:27:54 marka Exp') =~ s/\$([^\$]+)\$/\$-$1-\$/;
+(my $myid = 'Id: generate_nameprep_data.pl,v 1.1 2003/06/04 00:27:54 marka Exp') =~ s/\$([^\$]+)\$/\$-$1-\$/;
 
 my @map_bits = (9, 7, 5);
 my @proh_bits = (7, 7, 7);

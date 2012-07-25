@@ -1,4 +1,4 @@
-/*	$NetBSD: rp_17.c,v 1.1.1.5.4.2 2011/06/18 11:20:35 bouyer Exp $	*/
+/*	$NetBSD: rp_17.c,v 1.1.1.5.4.3 2012/07/25 11:58:59 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rp_17.c,v 1.44 2009-12-04 22:06:37 tbox Exp */
+/* Id: rp_17.c,v 1.44 2009/12/04 22:06:37 tbox Exp */
 
 /* RFC1183 */
 

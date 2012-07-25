@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.c,v 1.1.1.5.4.1 2011/06/18 11:19:48 bouyer Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.1.1.5.4.2 2012/07/25 11:57:25 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sortlist.c,v 1.17 2007-09-14 01:46:05 marka Exp */
+/* Id: sortlist.c,v 1.17 2007/09/14 01:46:05 marka Exp */
 
 /*! \file */
 

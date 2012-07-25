@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.1.1.5.4.3 2011/06/18 11:20:40 bouyer Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.5.4.4 2012/07/25 11:59:08 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.20.186.2 2010-08-10 23:47:45 tbox Exp */
+/* Id */
 
 /*! \file
  * \brief

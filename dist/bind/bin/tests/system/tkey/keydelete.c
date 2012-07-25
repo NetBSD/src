@@ -1,7 +1,7 @@
-/*	$NetBSD: keydelete.c,v 1.1.1.6.4.2 2011/06/18 11:20:09 bouyer Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.1.1.6.4.3 2012/07/25 11:58:03 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydelete.c,v 1.13.126.3 2010-12-09 01:05:28 marka Exp */
+/* Id */
 
 #include <config.h>
 

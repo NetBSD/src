@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.8.4.3 2011/06/18 11:19:47 bouyer Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.8.4.4 2012/07/25 11:57:23 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.266.36.2 2010-09-24 08:30:58 tbox Exp */
+/* Id: client.c,v 1.266.36.7 2012/01/31 23:46:14 tbox Exp */
 
 #include <config.h>
 
@@ -635,6 +635,7 @@ ns_client_endrequest(ns_client_t *client) {
 		dns_message_puttemprdataset(client->message, &client->opt);
 	}
 
+	client->signer = NULL;
 	client->udpsize = 512;
 	client->extflags = 0;
 	client->ednsversion = -1;
@@ -935,6 +936,15 @@ ns_client_send(ns_client_t *client) {
 		render_opts = 0;
 	else
 		render_opts = DNS_MESSAGERENDER_OMITDNSSEC;
+
+	preferred_glue = 0;
+	if (client->view != NULL) {
+		if (client->view->preferred_glue == dns_rdatatype_a)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
+		else if (client->view->preferred_glue == dns_rdatatype_aaaa)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
+	}
+
 #ifdef ALLOW_FILTER_AAAA_ON_V4
 	/*
 	 * filter-aaaa-on-v4 yes or break-dnssec option to suppress
@@ -943,17 +953,15 @@ ns_client_send(ns_client_t *client) {
 	 * that we have both AAAA and A records,
 	 * and that we either have no signatures that the client wants
 	 * or we are supposed to break DNSSEC.
+	 *
+	 * Override preferred glue if necessary.
 	 */
-	if ((client->attributes & NS_CLIENTATTR_FILTER_AAAA) != 0)
+	if ((client->attributes & NS_CLIENTATTR_FILTER_AAAA) != 0) {
 		render_opts |= DNS_MESSAGERENDER_FILTER_AAAA;
-#endif
-	preferred_glue = 0;
-	if (client->view != NULL) {
-		if (client->view->preferred_glue == dns_rdatatype_a)
+		if (preferred_glue == DNS_MESSAGERENDER_PREFER_AAAA)
 			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
-		else if (client->view->preferred_glue == dns_rdatatype_aaaa)
-			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
 	}
+#endif
 
 	/*
 	 * XXXRTH  The following doesn't deal with TCP buffer resizing.
@@ -1313,6 +1321,12 @@ ns_client_isself(dns_view_t *myview, dns_tsigkey_t *mykey,
 	isc_netaddr_t netdst;
 
 	UNUSED(arg);
+
+	/*
+	 * ns_g_server->interfacemgr is task exclusive locked.
+	 */
+	if (ns_g_server->interfacemgr == NULL)
+		return (ISC_TRUE);
 
 	if (!ns_interfacemgr_listeningon(ns_g_server->interfacemgr, dstaddr))
 		return (ISC_FALSE);
@@ -2095,12 +2109,16 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	client->next = NULL;
 	client->shutdown = NULL;
 	client->shutdown_arg = NULL;
+	client->signer = NULL;
 	dns_name_init(&client->signername, NULL);
 	client->mortal = ISC_FALSE;
 	client->tcpquota = NULL;
 	client->recursionquota = NULL;
 	client->interface = NULL;
 	client->peeraddr_valid = ISC_FALSE;
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+	client->filter_aaaa = dns_v4_aaaa_ok;
+#endif
 	ISC_EVENT_INIT(&client->ctlevent, sizeof(client->ctlevent), 0, NULL,
 		       NS_EVENT_CLIENTCONTROL, client_start, client, client,
 		       NULL, NULL);

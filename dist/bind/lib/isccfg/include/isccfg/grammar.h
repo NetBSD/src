@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.4.4.2 2011/06/18 11:20:50 bouyer Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.4.4.3 2012/07/25 11:59:29 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.19.136.3 2010-08-11 18:19:58 each Exp */
+/* Id */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
