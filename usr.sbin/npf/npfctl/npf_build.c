@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.4.2.4 2012/07/16 22:13:28 riz Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.4.2.5 2012/07/25 20:45:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.4.2.4 2012/07/16 22:13:28 riz Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.4.2.5 2012/07/25 20:45:23 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -244,6 +244,21 @@ npfctl_build_proto(nc_ctx_t *nc, sa_family_t family,
 		icmp_type = npfvar_get_data(popts, NPFVAR_ICMP, 0);
 		icmp_code = npfvar_get_data(popts, NPFVAR_ICMP, 1);
 		npfctl_gennc_icmp(nc, *icmp_type, *icmp_code);
+		nop = false;
+		break;
+	case IPPROTO_ICMPV6:
+		/*
+		 * Build ICMP block.
+		 */
+		if (!nop) {
+			goto invop;
+		}
+		assert(npfvar_get_count(popts) == 2);
+
+		int *icmp6_type, *icmp6_code;
+		icmp6_type = npfvar_get_data(popts, NPFVAR_ICMP6, 0);
+		icmp6_code = npfvar_get_data(popts, NPFVAR_ICMP6, 1);
+		npfctl_gennc_icmp6(nc, *icmp6_type, *icmp6_code);
 		nop = false;
 		break;
 	case -1:
