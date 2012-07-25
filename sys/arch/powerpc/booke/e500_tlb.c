@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.10 2012/07/18 18:50:46 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.11 2012/07/25 22:11:36 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.10 2012/07/18 18:50:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.11 2012/07/25 22:11:36 matt Exp $");
 
 #include <sys/param.h>
 
@@ -212,8 +212,7 @@ hwtlb_write(const struct e500_hwtlb hwtlb, bool needs_sync)
 #endif
 	__asm volatile("tlbwe");
 	if (needs_sync) {
-		__asm volatile("tlbsync");
-		__asm volatile("isync");
+		__asm volatile("tlbsync\n\tisync\n\tsync");
 	}
 
 	mtspr(SPR_MAS0, saved_mas0);
@@ -359,6 +358,7 @@ e500_tlb_invalidate_all(void)
 	 */
 #if 1
 	__asm volatile("tlbivax\t0, %0" :: "b"(4));	/* INV_ALL */
+	__asm volatile("tlbsync\n\tisync\n\tsync");
 #else
 	mtspr(SPR_MMUCSR0, MMUCSR0_TLB0_FL);
 	while (mfspr(SPR_MMUCSR0) != 0)
@@ -411,7 +411,7 @@ e500_tlb_invalidate_globals(void)
 			__asm volatile("tlbwe");
 		}
 	}
-	__asm volatile("isync");
+	__asm volatile("isync\n\tsync");
 	wrtee(msr);
 }
 
@@ -449,7 +449,7 @@ e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 			}
 		}
 	}
-	__asm volatile("isync");
+	__asm volatile("isync\n\tsync");
 	wrtee(msr);
 }
 
@@ -497,9 +497,26 @@ e500_tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 	/*
 	 * Bits 60 & 61 have meaning
 	 */
+	if (asid == KERNEL_PID) {
+		/*
+		 * For data accesses, the context-synchronizing instruction
+		 * before tlbwe or tlbivax ensures that all memory accesses
+		 * due to preceding instructions have completed to a point
+		 * at which they have reported all exceptions they will cause.
+		 */
+		__asm volatile("isync");
+	}
 	__asm volatile("tlbivax\t0, %0" :: "b"(va));
 	__asm volatile("tlbsync");
-	__asm volatile("tlbsync");
+	__asm volatile("tlbsync");	/* Why? */
+	if (asid == KERNEL_PID) {
+		/*
+		 * The context-synchronizing instruction after tlbwe or tlbivax
+		 * ensures that subsequent accesses (data and instruction) use
+		 * the updated value in any TLB entries affected.
+		 */
+		__asm volatile("isync\n\tsync");
+	}
 }
 
 static bool
@@ -527,8 +544,8 @@ e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 	mtspr(SPR_MAS2, hwtlb.hwtlb_mas2);
 	mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
 	__asm volatile("tlbwe");
-	if (asid == 0)
-		__asm volatile("isync");
+	if (asid == KERNEL_PID)
+		__asm volatile("isync\n\tsync");
 	wrtee(msr);
 #if 0
 	if (asid)
