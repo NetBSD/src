@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.10.2.4 2012/07/25 20:45:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.10.2.4 2012/07/25 20:45:23 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: npf_data.c,v 1.10.2.3 2012/07/16 22:13:28 riz Exp $");
 #include <netinet/ip.h>
 #define ICMP_STRINGS
 #include <netinet/ip_icmp.h>
+#define ICMP6_STRINGS
+#include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
 
@@ -440,71 +442,142 @@ npfctl_parse_tcpflag(const char *s)
 }
 
 uint8_t
-npfctl_icmptype(const char *type)
+npfctl_icmptype(int proto, const char *type)
 {
-	for (uint8_t ul = 0; icmp_type[ul]; ul++)
-		if (strcmp(icmp_type[ul], type) == 0)
-			return ul;
+	uint8_t ul;
+
+	switch (proto) {
+	case IPPROTO_ICMP:
+		for (ul = 0; icmp_type[ul]; ul++)
+			if (strcmp(icmp_type[ul], type) == 0)
+				return ul;
+		break;
+	case IPPROTO_ICMPV6:
+		for (ul = 0; icmp6_type_err[ul]; ul++)
+			if (strcmp(icmp6_type_err[ul], type) == 0)
+				return ul;
+		for (ul = 0; icmp6_type_info[ul]; ul++)
+			if (strcmp(icmp6_type_info[ul], type) == 0)
+				return (ul+128);
+		break;
+	default:
+		assert(false);
+	}
+
+	yyerror("unknown icmp-type %s", type);
 	return ~0;
 }
 
 uint8_t
-npfctl_icmpcode(uint8_t type, const char *code)
+npfctl_icmpcode(int proto, uint8_t type, const char *code)
 {
-	const char **arr;
+	const char * const *arr;
 
-	switch (type) {
-	case ICMP_ECHOREPLY:
-	case ICMP_SOURCEQUENCH:
-	case ICMP_ALTHOSTADDR:
-	case ICMP_ECHO:
-	case ICMP_ROUTERSOLICIT:
-	case ICMP_TSTAMP:
-	case ICMP_TSTAMPREPLY:
-	case ICMP_IREQ:
-	case ICMP_IREQREPLY:
-	case ICMP_MASKREQ:
-	case ICMP_MASKREPLY:
-		arr = icmp_code_none;
+	switch (proto) {
+	case IPPROTO_ICMP:
+		switch (type) {
+		case ICMP_ECHOREPLY:
+		case ICMP_SOURCEQUENCH:
+		case ICMP_ALTHOSTADDR:
+		case ICMP_ECHO:
+		case ICMP_ROUTERSOLICIT:
+		case ICMP_TSTAMP:
+		case ICMP_TSTAMPREPLY:
+		case ICMP_IREQ:
+		case ICMP_IREQREPLY:
+		case ICMP_MASKREQ:
+		case ICMP_MASKREPLY:
+			arr = icmp_code_none;
+			break;
+		case ICMP_ROUTERADVERT:
+			arr = icmp_code_routeradvert;
+			break;
+		case ICMP_UNREACH:
+			arr = icmp_code_unreach;
+			break;
+		case ICMP_REDIRECT:
+			arr = icmp_code_redirect;
+			break;
+		case ICMP_TIMXCEED:
+			arr = icmp_code_timxceed;
+			break;
+		case ICMP_PARAMPROB:
+			arr = icmp_code_paramprob;
+			break;
+		case ICMP_PHOTURIS:
+			arr = icmp_code_photuris;
+			break;
+		default:
+			yyerror("unknown icmp-type %d while parsing code %s",
+				type, code);
+			return ~0;
+		}
 		break;
-	case ICMP_ROUTERADVERT:
-		arr = icmp_code_routeradvert;
-		break;
-	case ICMP_UNREACH:
-		arr = icmp_code_unreach;
-		break;
-	case ICMP_REDIRECT:
-		arr = icmp_code_redirect;
-		break;
-	case ICMP_TIMXCEED:
-		arr = icmp_code_timxceed;
-		break;
-	case ICMP_PARAMPROB:
-		arr = icmp_code_paramprob;
-		break;
-	case ICMP_PHOTURIS:
-		arr = icmp_code_photuris;
+	case IPPROTO_ICMPV6:
+		switch (type) {
+		case ICMP6_DST_UNREACH:
+			arr = icmp6_code_unreach;
+			break;
+		case ICMP6_TIME_EXCEEDED:
+			arr = icmp6_code_timxceed;
+			break;
+		case ICMP6_PARAM_PROB:
+			arr = icmp6_code_paramprob;
+			break;
+		case ICMP6_PACKET_TOO_BIG:
+		/* code-less info ICMPs */
+		case ICMP6_ECHO_REQUEST:
+		case ICMP6_ECHO_REPLY:
+		case MLD_LISTENER_QUERY:
+		case MLD_LISTENER_REPORT:
+		case MLD_LISTENER_DONE:
+		case ND_ROUTER_SOLICIT:
+		case ND_ROUTER_ADVERT:
+		case ND_NEIGHBOR_SOLICIT:
+		case ND_NEIGHBOR_ADVERT:
+		case ND_REDIRECT:
+			arr = icmp6_code_none;
+			break;
+		/* XXX TODO: info ICMPs with code values */
+		default:
+			yyerror("unknown icmp-type %d while parsing code %s",
+				type, code);
+			return ~0;
+		}
 		break;
 	default:
-		return ~0;
+		assert(false);
 	}
 
 	for (uint8_t ul = 0; arr[ul]; ul++) {
 		if (strcmp(arr[ul], code) == 0)
 			return ul;
 	}
+	yyerror("unknown code %s for icmp-type %d", code, type);
 	return ~0;
 }
 
 npfvar_t *
-npfctl_parse_icmp(int type, int code)
+npfctl_parse_icmp(int proto, int type, int code)
 {
-	npfvar_t *vp = npfvar_create(".icmp");
+	npfvar_t *vp=npfvar_create(".icmp");
+	int      varnum;
 
-	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
+	switch (proto) {
+	case IPPROTO_ICMP:
+		varnum = NPFVAR_ICMP;
+		break;
+	case IPPROTO_ICMPV6:
+		varnum = NPFVAR_ICMP6;
+		break;
+	default:
+		assert(false);
+	}
+
+	if (!npfvar_add_element(vp, varnum, &type, sizeof(type)))
 		goto out;
 
-	if (!npfvar_add_element(vp, NPFVAR_ICMP, &code, sizeof(code)))
+	if (!npfvar_add_element(vp, varnum, &code, sizeof(code)))
 		goto out;
 
 	return vp;
@@ -512,3 +585,4 @@ out:
 	npfvar_destroy(vp);
 	return NULL;
 }
+
