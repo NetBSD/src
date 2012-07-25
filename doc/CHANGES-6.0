@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.158 2012/07/21 00:05:42 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.159 2012/07/25 09:04:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6440,3 +6440,29 @@ sys/arch/sparc/stand/ofwboot/ofdev.c		1.33
 	PR#46652.
 	[tsutsui, ticket #433]
 
+external/bsd/bind/dist/CHANGES			1.4
+external/bsd/bind/dist/CHANGES			1.5
+external/bsd/bind/dist/bin/tests/system/stub/tests.sh 1.2
+external/bsd/bind/dist/lib/dns/resolver.c	1.13
+external/bsd/bind/dist/lib/dns/resolver.c	1.14
+external/bsd/bind/dist/lib/dns/zone.c		1.6
+external/bsd/bind/dist/lib/isc/include/isc/queue.h 1.2
+external/bsd/bind/dist/lib/isc/include/isc/queue.h 1.3
+external/bsd/bind/dist/version			1.2
+
+	Fixes for CVE-2012-3817 and CVE-2012-3868 from ISC:
+
+	        --- 9.9.1-P2 released ---
+
+	3346.   [security]      Bad-cache data could be used before it was
+	                        initialized, causing an assert. [RT #30025]
+
+	3345.   [bug]           Addressed race condition when removing the last item
+	                        or inserting the first item in an ISC_QUEUE.
+	                        [RT #29539]
+
+	3342.   [bug]           Change #3314 broke saving of stub zones to disk
+	                        resulting in excessive cpu usage in some cases.
+	                        [RT #29952]
+
+	[spz, ticket #442]
