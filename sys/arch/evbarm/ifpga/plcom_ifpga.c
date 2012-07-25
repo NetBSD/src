@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.13 2012/05/20 10:28:44 skrll Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.14 2012/07/25 07:26:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.13 2012/05/20 10:28:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.14 2012/07/25 07:26:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -75,24 +75,27 @@ plcom_ifpga_attach(device_t parent, device_t self, void *aux)
 
 	isc->sc_iot = ifa->ifa_iot;
 	isc->sc_ioh = ifa->ifa_sc_ioh;
+
 	sc->sc_dev = self;
-	sc->sc_iounit = device_unit(sc->sc_dev);
+	sc->sc_pi.pi_type = PLCOM_TYPE_PL010;
+	sc->sc_pi.pi_iot = ifa->ifa_iot;
+	sc->sc_pi.pi_iobase = ifa->ifa_addr;
+	sc->sc_pi.pi_size = IFPGA_UART_SIZE;
 	sc->sc_frequency = IFPGA_UART_CLK;
-	sc->sc_iot = ifa->ifa_iot;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	sc->sc_set_mcr = plcom_ifpga_set_mcr;
 	sc->sc_set_mcr_arg = (void *)isc;
 
-	if (bus_space_map(ifa->ifa_iot, ifa->ifa_addr, PLCOM_UART_SIZE, 0,
-	    &sc->sc_ioh)) {
+	if (bus_space_map(ifa->ifa_iot, ifa->ifa_addr, IFPGA_UART_SIZE, 0,
+	    &sc->sc_pi.pi_ioh)) {
 		printf("%s: unable to map device\n", device_xname(sc->sc_dev));
 		return;
 	}
 
 	plcom_attach_subr(sc);
-	isc->sc_ih = ifpga_intr_establish(ifa->ifa_irq, IPL_SERIAL, plcomintr,
-	    sc);
+	isc->sc_ih = ifpga_intr_establish(ifa->ifa_irq, IPL_SERIAL,
+	    plcomintr, sc);
 	if (isc->sc_ih == NULL)
 		panic("%s: cannot install interrupt handler",
 		    device_xname(sc->sc_dev));
