@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.159 2012/07/25 09:04:37 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.160 2012/07/25 15:12:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6466,3 +6466,26 @@ external/bsd/bind/dist/version			1.2
 	                        [RT #29952]
 
 	[spz, ticket #442]
+
+distrib/vax/ramdisk/Makefile			1.27
+external/gpl3/binutils/dist/bfd/elf32-vax.c	1.6
+external/gpl3/binutils/dist/gas/config/tc-vax.c	1.6
+gnu/dist/gcc4/gcc/config/vax/builtins.md	1.4
+gnu/dist/gcc4/gcc/config/vax/vax.md		1.16
+sys/arch/vax/conf/INSTALL			1.59
+
+	Two fixes.  Better PLT pruning (don't emit PLTs for local functions).
+	If emitting a reloc against a readonly section in a shared image,
+	cause TEXTREL to be set.
+
+	Warn about using a symbol as a displacement in PIC mode.
+
+	Fix ffssi2 again.
+	Use a UNSPEC for the internal ffs.
+	use (match_dup 1) since Z will be set if it is 0 just as if tst:SI was done.
+	This can let gcc produce better code if you code appropriately.
+
+	Bump the ramdisk size so that the contents fits again.
+
+	[abs, ticket #446]
+
