@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomreg.h,v 1.3 2012/05/14 19:40:06 skrll Exp $	*/
+/*	$NetBSD: plcomreg.h,v 1.4 2012/07/25 07:26:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -52,11 +52,12 @@
 #define	PL01X_CR_UARTEN	0x0001	/* Uart enable */
 
 /* interrupt identification register */
-#define	PL010_IIR_IMASK	0x0f
 #define	PL010_IIR_RTIS	0x08
 #define	PL010_IIR_TIS	0x04
 #define	PL010_IIR_RIS	0x02
 #define	PL010_IIR_MIS	0x01
+#define	PL010_IIR_IMASK	\
+    (PL010_IIR_RTIS | PL010_IIR_TIS | PL010_IIR_RIS | PL010_IIR_MIS)
 
 /* line control register */
 #define	PL011_LCR_SPS	0x80	/* Stick parity select */
@@ -77,16 +78,18 @@
 /* modem control register */
 #define	PL01X_MCR_RTS		0x02	/* Request To Send */
 #define	PL01X_MCR_DTR		0x01	/* Data Terminal Ready */
+#define	PL011_MCR(mcr)	((mcr) << 10)	/* MCR to CR bit values for PL011 */
 
 /* receive status register */
 #define	PL01X_RSR_OE	0x08	/* Overrun Error */
 #define	PL01X_RSR_BE	0x04	/* Break */
 #define	PL01X_RSR_PE	0x02	/* Parity Error */
 #define	PL01X_RSR_FE	0x01	/* Framing Error */
-#define	PL01X_RSR_ERROR	(PL01X_RSR_OE | PL01X_RSR_BE | PL01X_RSR_PE | PL01X_RSR_FE)
+#define	PL01X_RSR_ERROR	\
+    (PL01X_RSR_OE | PL01X_RSR_BE | PL01X_RSR_PE | PL01X_RSR_FE)
 
 /* flag register */
-#define	PL01X_FR_RI	0x100	/* Ring Indicator */
+#define	PL011_FR_RI	0x100	/* Ring Indicator */
 #define	PL01X_FR_TXFE	0x080	/* Transmit fifo empty */
 #define	PL01X_FR_RXFF	0x040	/* Recive fifo full */
 #define	PL01X_FR_TXFF	0x020	/* Transmit fifo full */
@@ -101,6 +104,7 @@
 #define	PL01X_MSR_DCD		PL01X_FR_DCD
 #define	PL01X_MSR_DSR		PL01X_FR_DSR
 #define	PL01X_MSR_CTS		PL01X_FR_CTS
+#define	PL011_MSR_RI		PL011_FR_RI
 
 /* All interrupt status/clear registers */
 #define	PL011_INT_OE	0x400
@@ -114,6 +118,12 @@
 #define	PL011_INT_DCD	0x004
 #define	PL011_INT_CTS	0x002
 #define	PL011_INT_RIR	0x001
+#define	PL011_INT_MSMASK \
+    (PL011_INT_DSR | PL011_INT_DCD | PL011_INT_CTS | PL011_INT_RIR)
+
+#define	PL011_INT_ALLMASK \
+    (PL011_INT_RT | PL011_INT_TX | PL011_INT_RX | PL011_INT_MSMASK)
+
 
 /* DMA control registers */
 #define	PL011_DMA_ONERR	0x4
@@ -121,17 +131,27 @@
 #define	PL011_DMA_RXE	0x1
 
 /* Register offsets */
-#define	plcom_dr	0x00
-#define	plcom_rsr	0x04
-#define	plcom_ecr	0x04
-#define	plcom_lcr	0x08
-#define	plcom_dlbh	0x0c
-#define	plcom_dlbl	0x10
-#define	plcom_cr	0x14
-#define	plcom_fr	0x18
-#define	plcom_iir	0x1c
-#define	plcom_icr	0x1c
-#define	plcom_ilpr	0x20
+#define	PL01XCOM_DR	0x00	/* Data Register */
+#define	PL01XCOM_RSR	0x04	/* Receive status register */
+#define	PL01XCOM_ECR	0x04	/* Error clear register - same as RSR */
+#define	PL010COM_LCR	0x08	/* Line Control Register */
+#define	PL010COM_DLBH	0x0c
+#define	PL010COM_DLBL	0x10
+#define	PL010COM_CR	0x14
+#define	PL01XCOM_FR	0x18	/* Flag Register */
+#define	PL010COM_IIR	0x1c
+#define	PL010COM_ICR	0x1c
+#define	PL01XCOM_ILPR	0x20	/* IrDA low-power control register */
+#define	PL011COM_IBRD	0x24	/* Integer baud rate divisor register */
+#define	PL011COM_FBRD	0x28	/* Fractional baud rate divisor register */
+#define	PL011COM_LCRH	0x2c	/* Line control register */
+#define	PL011COM_CR	0x30	/* Control register */
+#define	PL011COM_IFLS	0x34	/* Interrupt FIFO level select register */
+#define	PL011COM_IMSC	0x38	/* Interrupt mask set/clear register */
+#define	PL011COM_RIS	0x3c	/* Raw interrupt status register */
+#define	PL011COM_MIS	0x40	/* Masked interrupt status register */
+#define	PL011COM_ICR	0x44	/* Interrupt clear register register */
+#define	PL011COM_DMACR	0x48	/* DMA control register register */
 
-/* IFPGA specific */
-#define	PLCOM_UART_SIZE	0x24
+#define	PL010COM_UART_SIZE	0x100
+#define	PL011COM_UART_SIZE	0x1000
