@@ -1,4 +1,4 @@
-/* Id: bind.keys,v 1.5.42.2 2011-01-04 19:14:48 each Exp */
+/* Id */
 # The bind.keys file is used to override built-in DNSSEC trust anchors
 # which are included as part of BIND 9.  As of the current release (BIND
 # 9.7), the only trust anchor it sets is the one for the ISC DNSSEC
@@ -37,8 +37,8 @@ managed-keys {
 
 	# ROOT KEY: See https://data.iana.org/root-anchors/root-anchors.xml
 	# for current trust anchor information.
-        # NOTE: This key is activated by setting "dnssec-validation auto;"
-        # in named.conf.
+	# NOTE: This key not active; to use it, copy it into a managed-keys
+	# statement in named.conf
 	. initial-key 257 3 8 "AwEAAagAIKlVZrpC6Ia7gEzahOR+9W29euxhJhVVLOyQbSEW0O8gcCjF
 		FVQUTf6v58fLjwBd0YI0EzrAcQqBGCzh/RStIoO8g0NfnfL2MTJRkxoX
 		bfDaUeVPQuYEhg37NZWAJQ9VnMVDxP/VHL496M/QZxkjf5/Efucp2gaD

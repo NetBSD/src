@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.5.8.3 2011/06/18 11:37:35 bouyer Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.1.1.5.8.4 2012/07/25 12:07:49 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.h,v 1.57 2009-01-18 23:48:14 tbox Exp */
+/* Id: sockaddr.h,v 1.57 2009/01/18 23:48:14 tbox Exp */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1

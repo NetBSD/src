@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpaths.h,v 1.1.1.5.8.2 2011/06/18 11:37:47 bouyer Exp $	*/
+/*	$NetBSD: ntpaths.h,v 1.1.1.5.8.3 2012/07/25 12:08:21 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntpaths.h,v 1.20 2009-07-14 22:54:57 each Exp */
+/* Id: ntpaths.h,v 1.20 2009/07/14 22:54:57 each Exp */
 
 /*
  * Windows-specific path definitions

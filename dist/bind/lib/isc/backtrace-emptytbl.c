@@ -1,4 +1,4 @@
-/*        $NetBSD: backtrace-emptytbl.c,v 1.1.6.3 2011/06/18 11:37:24 bouyer Exp $      */
+/*        $NetBSD: backtrace-emptytbl.c,v 1.1.6.4 2012/07/25 12:07:05 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: backtrace-emptytbl.c,v 1.3 2009-09-01 20:13:44 each Exp */
+/* Id: backtrace-emptytbl.c,v 1.3 2009/09/01 20:13:44 each Exp */
 
 /*! \file */
 

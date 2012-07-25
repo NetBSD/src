@@ -1,7 +1,7 @@
-/*	$NetBSD: heap.c,v 1.6.8.2 2011/06/18 11:37:25 bouyer Exp $	*/
+/*	$NetBSD: heap.c,v 1.6.8.3 2012/07/25 12:07:09 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: heap.c,v 1.37.466.1 2010-02-24 01:46:55 marka Exp */
+/* Id */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -88,8 +88,9 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
 	if (heap == NULL)
 		return (ISC_R_NOMEMORY);
 	heap->magic = HEAP_MAGIC;
-	heap->mctx = mctx;
 	heap->size = 0;
+	heap->mctx = NULL;
+	isc_mem_attach(mctx, &heap->mctx);
 	if (size_increment == 0)
 		heap->size_increment = SIZE_INCREMENT;
 	else
@@ -116,7 +117,7 @@ isc_heap_destroy(isc_heap_t **heapp) {
 		isc_mem_put(heap->mctx, heap->array,
 			    heap->size * sizeof(void *));
 	heap->magic = 0;
-	isc_mem_put(heap->mctx, heap, sizeof(*heap));
+	isc_mem_putanddetach(&heap->mctx, heap, sizeof(*heap));
 
 	*heapp = NULL;
 }

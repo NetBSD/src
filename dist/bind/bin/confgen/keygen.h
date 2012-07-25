@@ -1,4 +1,4 @@
-/*        $NetBSD: keygen.h,v 1.1.6.3 2011/06/18 11:34:56 bouyer Exp $      */
+/*        $NetBSD: keygen.h,v 1.1.6.4 2012/07/25 12:02:42 jdc Exp $      */
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keygen.h,v 1.3 2009-06-11 23:47:55 tbox Exp */
+/* Id: keygen.h,v 1.3 2009/06/11 23:47:55 tbox Exp */
 
 #ifndef RNDC_KEYGEN_H
 #define RNDC_KEYGEN_H 1

@@ -74,6 +74,7 @@ options {
             * ) ];
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
+        auto-dnssec ( allow | maintain | off );
         avoid-v4-udp-ports { <portrange>; ... };
         avoid-v6-udp-ports { <portrange>; ... };
         bindkeys-file <quoted_string>;
@@ -103,7 +104,7 @@ options {
         dnssec-accept-expired <boolean>;
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
-        dnssec-lookaside <string> trust-anchor <string>;
+        dnssec-lookaside ( <string> trust-anchor <string> | auto | no );
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
         dnssec-validation <boolean>;
@@ -281,6 +282,7 @@ view <string> <optional_class> {
             * ) ];
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
+        auto-dnssec ( allow | maintain | off );
         cache-file <quoted_string>;
         check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
@@ -306,7 +308,7 @@ view <string> <optional_class> {
         dnssec-accept-expired <boolean>;
         dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
-        dnssec-lookaside <string> trust-anchor <string>;
+        dnssec-lookaside ( <string> trust-anchor <string> | auto | no );
         dnssec-must-be-secure <string> <boolean>;
         dnssec-secure-to-insecure <boolean>;
         dnssec-validation <boolean>;
@@ -428,7 +430,7 @@ view <string> <optional_class> {
                     <integer> | * ) ];
                 alt-transfer-source-v6 ( <ipv6_address> | * ) [ port (
                     <integer> | * ) ];
-                auto-dnssec ( allow | maintain | create | off );
+                auto-dnssec ( allow | maintain | off );
                 check-dup-records ( fail | warn | ignore );
                 check-integrity <boolean>;
                 check-mx ( fail | warn | ignore );
@@ -513,7 +515,7 @@ zone <string> <optional_class> {
         alt-transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];
         alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> |
             * ) ];
-        auto-dnssec ( allow | maintain | create | off );
+        auto-dnssec ( allow | maintain | off );
         check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
         check-mx ( fail | warn | ignore );

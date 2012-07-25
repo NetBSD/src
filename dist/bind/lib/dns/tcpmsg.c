@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpmsg.c,v 1.1.1.5.8.1 2011/06/18 11:36:58 bouyer Exp $	*/
+/*	$NetBSD: tcpmsg.c,v 1.1.1.5.8.2 2012/07/25 12:06:06 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tcpmsg.c,v 1.31 2007-06-19 23:47:16 tbox Exp */
+/* Id: tcpmsg.c,v 1.31 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

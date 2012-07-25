@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.11 2007-06-19 23:47:00 tbox Exp
+# Id: setup.sh,v 1.11 2007/06/19 23:47:00 tbox Exp
 
 #
 # Run a system test.

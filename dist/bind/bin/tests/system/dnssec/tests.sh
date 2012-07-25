@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,25 +15,59 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.55.32.15 2010-11-16 01:21:49 marka Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
-n=0
+n=1
 
 rm -f dig.out.*
 
 DIGOPTS="+tcp +noadd +nosea +nostat +nocmd +dnssec -p 5300"
 
+# convert private-type records to readable form
+showprivate () {
+    echo "-- $@ --"
+    $DIG $DIGOPTS +nodnssec +short @$2 -t type65534 $1 | cut -f3 -d' ' |
+        while read record; do
+            perl -e 'my $rdata = pack("H*", @ARGV[0]);
+                die "invalid record" unless length($rdata) == 5;
+                my ($alg, $key, $remove, $complete) = unpack("CnCC", $rdata);
+                my $action = "signing";
+                $action = "removing" if $remove;
+                my $state = " (incomplete)";
+                $state = " (complete)" if $complete;
+                print ("$action: alg: $alg, key: $key$state\n");' $record
+        done
+}
+
+# check that signing records are marked as complete
+checkprivate () {
+    ret=0
+    x=`showprivate "$@"`
+    echo $x | grep incomplete >&- 2>&- && ret=1
+    [ $ret = 1 ] && {
+        echo "$x"
+        echo "I:failed"
+    }
+    return $ret
+}
+
 # Check the example. domain
 
 echo "I:checking that zone transfer worked ($n)"
+for i in 1 2 3 4 5 6 7 8 9
+do
 ret=0
 $DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
 $DIG $DIGOPTS a.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
-$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n || ret=1
+	$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n > /dev/null || ret=1
+	[ $ret = 0 ] && break
+	sleep 1
+done
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -99,6 +133,24 @@ $DIG $DIGOPTS a.wild.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking positive wildcard answer NSEC3 ($n)"
+ret=0
+$DIG $DIGOPTS a.wild.nsec3.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+grep "AUTHORITY: 4," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking positive wildcard answer NSEC3 ($n)"
+ret=0
+$DIG $DIGOPTS a.wild.nsec3.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+grep "AUTHORITY: 4," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -959,6 +1011,36 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that dnsssec-signzone updates originalttl on ttl changes ($n)"
+ret=0
+(
+cd signer
+RANDFILE=../random.data
+zone=example
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -q -r $RANDFILE -f KSK -a RSASHA1 -b 1024 -n zone $zone`
+cat example.db.in $key1.key $key2.key > example.db
+$SIGNER -o example -f example.db.before example.db > /dev/null 2>&1
+sed 's/60.IN.SOA./50 IN SOA /' example.db.before > example.db.changed
+$SIGNER -o example -f example.db.after example.db.changed > /dev/null 2>&1
+)
+grep "SOA 5 1 50" signer/example.db.after > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking validated data are not cached longer than originalttl ($n)"
+ret=0
+$DIG $DIGOPTS +ttl +noauth a.ttlpatch.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +ttl +noauth a.ttlpatch.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+grep "3600.IN" dig.out.ns3.test$n > /dev/null || ret=1
+grep "300.IN" dig.out.ns3.test$n > /dev/null && ret=1
+grep "300.IN" dig.out.ns4.test$n > /dev/null || ret=1
+grep "3600.IN" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Test that "rndc secroots" is able to dump trusted keys
 echo "I:checking rndc secroots ($n)"
 ret=0
@@ -981,6 +1063,9 @@ $DIG $DIGOPTS normalthenrrsig.secure.example. @10.53.0.4 a > /dev/null || ret=1
 ans=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.4 rrsig` || ret=1
 expect=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.3 rrsig | grep '^A' ` || ret=1
 test "$ans" = "$expect" || ret=1
+# also check that RA is set
+$DIG $DIGOPTS normalthenrrsig.secure.example. @10.53.0.4 rrsig > dig.out.ns4.test$n || ret=1
+grep "flags:.*ra.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -991,6 +1076,9 @@ echo "I:checking RRSIG query not in cache ($n)"
 ret=0
 ans=`$DIG $DIGOPTS +short rrsigonly.secure.example. @10.53.0.4 rrsig` || ret=1
 test -z "$ans" || ret=1
+# also check that RA is cleared
+$DIG $DIGOPTS rrsigonly.secure.example. @10.53.0.4 rrsig > dig.out.ns4.test$n || ret=1
+grep "flags:.*ra.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -1041,6 +1129,7 @@ ret=0
 $DIG $DIGOPTS ns algroll. @10.53.0.4 > dig.out.ns4.test$n || ret=1
 grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -1054,6 +1143,181 @@ then
 else
     echo "I:The DNSSEC update test requires the Net::DNS library." >&2
 fi
+
+echo "I:checking that root DS queries validate ($n)"
+ret=0
+$DIG $DIGOPTS +noauth . @10.53.0.1 ds > dig.out.ns1.test$n || ret=1
+$DIG $DIGOPTS +noauth . @10.53.0.4 ds > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns1.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking expired signatures remain with "'"allow-update { none; };"'" and no keys available ($n)"
+ret=0
+$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns3.test$n || ret=1
+grep "RRSIG.SOA" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking expired signatures do not validate ($n)"
+ret=0
+$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.4 soa > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
+grep "expired.example .*: RRSIG has expired" ns4/named.run > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC3 record for the apex is properly signed when a DNSKEY is added via UPDATE ($n)"
+ret=0
+(
+cd ns3
+kskname=`$KEYGEN -q -3 -r ../random.data -fk update-nsec3.example`
+(
+echo zone update-nsec3.example
+echo server 10.53.0.3 5300
+grep DNSKEY ${kskname}.key | sed -e 's/^/update add /' -e 's/IN/300 IN/'
+echo send
+) | $NSUPDATE
+)
+$DIG $DIGOPTS +dnssec a update-nsec3.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "NSEC3 .* TYPE65534" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC record is properly generated when DNSKEY are added via auto-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +dnssec a auto-nsec.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "IN.NSEC[^3].* DNSKEY" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that the NSEC3 record is properly generated when DNSKEY are added via auto-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +dnssec a auto-nsec3.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+grep "IN.NSEC3 .* DNSKEY" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that signing records have been marked as complete ($n)"
+ret=0
+checkprivate dynamic.example 10.53.0.3 || ret=1
+checkprivate update-nsec3.example 10.53.0.3 || ret=1
+checkprivate auto-nsec3.example 10.53.0.3 || ret=1
+checkprivate expiring.example 10.53.0.3 || ret=1
+checkprivate auto-nsec.example 10.53.0.3 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that a insecure zone beneath a cname resolves ($n)"
+ret=0
+$DIG $DIGOPTS soa insecure.below-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that a secure zone beneath a cname resolves ($n)"
+ret=0
+$DIG $DIGOPTS soa secure.below-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "ANSWER: 2," dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.* ad[ ;]" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking dnskey query with no data still gets put in cache ($n)"
+ret=0
+myDIGOPTS="+noadd +nosea +nostat +noquest +nocomm +nocmd -p 5300 @10.53.0.4"
+firstVal=`$DIG $myDIGOPTS insecure.example. dnskey|awk '{ print $2 }'`
+sleep 1
+secondVal=`$DIG $myDIGOPTS insecure.example. dnskey|awk '{ print $2 }'`
+if [ $firstVal -eq $secondVal ]
+then
+	sleep 1
+	thirdVal=`$DIG $myDIGOPTS insecure.example. dnskey|awk '{ print $2 }'`
+	if [ $firstVal -eq $thirdVal ]
+	then
+		echo "I: cannot confirm query answer still in cache"
+		ret=1
+	fi
+fi
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that NOTIFY is sent at the end of NSEC3 chain generation ($n)"
+ret=0
+(
+echo zone nsec3chain-test
+echo server 10.53.0.2 5300
+echo update add nsec3chain-test. 0 nsec3param 1 0 1 123456
+echo send
+) | $NSUPDATE
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+do
+	$DIG $DIGOPTS nsec3param nsec3chain-test @10.53.0.2 > dig.out.ns2.test$n || ret=1
+	if grep "ANSWER: 3," dig.out.ns2.test$n >/dev/null
+	then
+		break;
+	fi
+	echo "I:sleeping ...."
+	sleep 3
+done;
+grep "ANSWER: 3," dig.out.ns2.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:nsec3 chain generation not complete"; fi
+sleep 3
+$DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.2 > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth +nodnssec soa nsec3chain-test @10.53.0.3 > dig.out.ns3.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing soon-to-expire RRSIGs without a replacement private key ($n)"
+ret=0
+$DIG +noall +answer +dnssec +nottl -p 5300 expiring.example ns @10.53.0.3 | grep RRSIG > dig.out.ns3.test$n 2>&1
+# there must be a signature here
+[ -s dig.out.ns3.test$n ] || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking managed key maintenance has not started yet ($n)"
+ret=0
+[ -f "ns4/managed-keys.bind.jnl" ] && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Reconfigure caching server to use managed keys.
+echo "I:reconfiguring server to turn on managed keys"
+cp ns4/named2.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 5
+
+echo "I:checking managed key maintenance timer has now started ($n)"
+ret=0
+[ -f "ns4/managed-keys.bind.jnl" ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

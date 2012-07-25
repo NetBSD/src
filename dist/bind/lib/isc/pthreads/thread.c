@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.1.1.5.8.1 2011/06/18 11:37:39 bouyer Exp $	*/
+/*	$NetBSD: thread.c,v 1.1.1.5.8.2 2012/07/25 12:08:04 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: thread.c,v 1.17 2007-06-19 23:47:18 tbox Exp */
+/* Id: thread.c,v 1.17 2007/06/19 23:47:18 tbox Exp */
 
 /*! \file */
 

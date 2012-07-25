@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2ldap.c,v 1.1.1.2.30.1 2011/01/10 00:38:18 riz Exp $	*/
+/*	$NetBSD: zone2ldap.c,v 1.1.1.2.30.2 2012/07/25 12:05:26 jdc Exp $	*/
 
 /*
  * Copyright (C) 2001 Jeff McNeil <jeff@snapcase.g-rock.net>
@@ -330,6 +330,8 @@ main (int *argc, char **argv)
   isc_hash_destroy();
   isc_entropy_detach(&ectx);
   isc_mem_destroy(&mctx);
+  if (zonefile)
+	free(zonefile);
 
   return 0;
 }

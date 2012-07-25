@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_lib.c,v 1.1.1.3.8.1 2011/06/18 11:36:51 bouyer Exp $	*/
+/*	$NetBSD: dst_lib.c,v 1.1.1.3.8.2 2012/07/25 12:05:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_lib.c,v 1.5 2007-06-19 23:47:16 tbox Exp
+ * Id: dst_lib.c,v 1.5 2007/06/19 23:47:16 tbox Exp
  */
 
 /*! \file */

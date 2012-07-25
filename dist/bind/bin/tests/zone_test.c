@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.5.8.2 2011/06/18 11:35:18 bouyer Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.1.1.5.8.3 2012/07/25 12:03:08 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone_test.c,v 1.35 2009-09-02 23:48:01 tbox Exp */
+/* Id: zone_test.c,v 1.35 2009/09/02 23:48:01 tbox Exp */
 
 #include <config.h>
 

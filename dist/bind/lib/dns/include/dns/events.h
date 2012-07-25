@@ -1,7 +1,7 @@
-/*	$NetBSD: events.h,v 1.1.1.5.8.3 2011/06/18 11:37:03 bouyer Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.5.8.4 2012/07/25 12:06:12 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.53.104.2 2010-05-10 23:49:42 tbox Exp */
+/* Id */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1

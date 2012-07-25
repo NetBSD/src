@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.h,v 1.1.1.5.8.2 2011/06/18 11:35:09 bouyer Exp $	*/
+/*	$NetBSD: tsigconf.h,v 1.1.1.5.8.3 2012/07/25 12:02:56 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsigconf.h,v 1.18 2009-06-11 23:47:55 tbox Exp */
+/* Id: tsigconf.h,v 1.18 2009/06/11 23:47:55 tbox Exp */
 
 #ifndef NS_TSIGCONF_H
 #define NS_TSIGCONF_H 1

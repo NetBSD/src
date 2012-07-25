@@ -1,4 +1,4 @@
-/*	$NetBSD: portlist.c,v 1.1.1.3.8.1 2011/06/18 11:36:55 bouyer Exp $	*/
+/*	$NetBSD: portlist.c,v 1.1.1.3.8.2 2012/07/25 12:06:00 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: portlist.c,v 1.13 2007-06-19 23:47:16 tbox Exp */
+/* Id: portlist.c,v 1.13 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

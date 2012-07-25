@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.h,v 1.1.1.5.8.1 2011/06/18 11:35:10 bouyer Exp $	*/
+/*	$NetBSD: zoneconf.h,v 1.1.1.5.8.2 2012/07/25 12:02:57 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.h,v 1.26 2007-06-19 23:46:59 tbox Exp */
+/* Id: zoneconf.h,v 1.26 2007/06/19 23:46:59 tbox Exp */
 
 #ifndef NS_ZONECONF_H
 #define NS_ZONECONF_H 1

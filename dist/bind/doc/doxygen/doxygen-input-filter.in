@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: doxygen-input-filter.in,v 1.4 2007-06-19 23:47:13 tbox Exp
+# Id: doxygen-input-filter.in,v 1.4 2007/06/19 23:47:13 tbox Exp
 
 # Input filter for feeding our source code into Doxygen.
 

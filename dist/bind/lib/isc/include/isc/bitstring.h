@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.1.1.5.8.1 2011/06/18 11:37:31 bouyer Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.1.1.5.8.2 2012/07/25 12:07:32 jdc Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bitstring.h,v 1.14 2007-06-19 23:47:18 tbox Exp */
+/* Id: bitstring.h,v 1.14 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_BITSTRING_H
 #define ISC_BITSTRING_H 1

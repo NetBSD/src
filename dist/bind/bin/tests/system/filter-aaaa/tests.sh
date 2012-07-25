@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.2.2.2 2010-06-22 04:02:41 marka Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -174,6 +174,45 @@ else
 echo "I: skipped."
 fi
 
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=NS ($n)"
+ret=0
+$DIG $DIGOPTS +add ns unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep AAAA dig.out.ns1.test$n > /dev/null 2>&1 && ret=1
+grep "ADDITIONAL: 1" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, unsigned ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns1.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, signed ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx signed -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep "^mx.signed.*AAAA" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, unsigned, over IPV6 ($n)"
+if $TESTSOCK6 fd92:7065:b8e:ffff::1
+then
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::1 @fd92:7065:b8e:ffff::1 > dig.out.ns1.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+else
+echo "I: skipped."
+fi
+
+
 #
 # Authoritative tests against:
 #	filter-aaaa-on-v4 break-dnssec;
@@ -303,6 +342,45 @@ else
 echo "I: skipped."
 fi
 
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=NS, with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add ns unsigned -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep AAAA dig.out.ns4.test$n > /dev/null 2>&1 && ret=1
+grep "ADDITIONAL: 1" dig.out.ns4.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, unsigned, with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns4.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, signed, with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx signed -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "^mx.signed.*AAAA" dig.out.ns4.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, unsigned, over IPV6, with break-dnssec ($n)"
+if $TESTSOCK6 fd92:7065:b8e:ffff::4
+then
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::4 @fd92:7065:b8e:ffff::4 > dig.out.ns4.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns4.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+else
+echo "I: skipped."
+fi
+
+
 #
 # Recursive tests against:
 #	filter-aaaa-on-v4 yes;
@@ -431,6 +509,45 @@ else
 echo "I: skipped."
 fi
 
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=NS ($n)"
+ret=0
+$DIG $DIGOPTS +add ns unsigned -b 10.53.0.2 @10.53.0.2 > dig.out.ns2.test$n || ret=1
+grep AAAA dig.out.ns2.test$n > /dev/null 2>&1 && ret=1
+grep "ADDITIONAL: 1" dig.out.ns2.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, unsigned ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b 10.53.0.2 @10.53.0.2 > dig.out.ns2.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns2.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, signed ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx signed -b 10.53.0.2 @10.53.0.2 > dig.out.ns2.test$n || ret=1
+grep "^mx.signed.*AAAA" dig.out.ns2.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, unsigned, over IPV6 ($n)"
+if $TESTSOCK6 fd92:7065:b8e:ffff::2
+then
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::2 @fd92:7065:b8e:ffff::2 > dig.out.ns2.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns2.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+else
+echo "I: skipped."
+fi
+
+
 #
 # Recursive tests against:
 #	filter-aaaa-on-v4 break-dnssec;
@@ -553,6 +670,44 @@ then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::3 @fd92:7065:b8e:ffff::3 > dig.out.ns3.test$n || ret=1
 grep 2001:db8::6 dig.out.ns3.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+else
+echo "I: skipped."
+fi
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=NS, recursive with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add ns unsigned -b 10.53.0.3 @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep AAAA dig.out.ns3.test$n > /dev/null 2>&1 && ret=1
+grep "ADDITIONAL: 1" dig.out.ns3.test$n > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, unsigned, recursive with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b 10.53.0.3 @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns3.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is omitted from additional section, qtype=MX, signed, recursive with break-dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +add +dnssec mx signed -b 10.53.0.3 @10.53.0.3 > dig.out.ns3.test$n || ret=1
+grep "^mx.signed.*AAAA" dig.out.ns3.test$n > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking that AAAA is included in additional section, qtype=MX, unsigned, over IPV6, recursive with break-dnssec ($n)"
+if $TESTSOCK6 fd92:7065:b8e:ffff::3
+then
+ret=0
+$DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::3 @fd92:7065:b8e:ffff::3 > dig.out.ns3.test$n || ret=1
+grep "^mx.unsigned.*AAAA" dig.out.ns3.test$n > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 else

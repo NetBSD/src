@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.6.8.3 2011/06/18 11:37:00 bouyer Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.6.8.4 2012/07/25 12:06:08 jdc Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.166 2008-09-25 04:12:39 marka Exp */
+/* Id */
 
 /*! \file */
 
@@ -85,8 +85,9 @@ typedef enum {
 	XFRST_IXFR_DEL,
 	XFRST_IXFR_ADDSOA,
 	XFRST_IXFR_ADD,
+	XFRST_IXFR_END,
 	XFRST_AXFR,
-	XFRST_END
+	XFRST_AXFR_END
 } xfrin_state_t;
 
 /*%
@@ -205,6 +206,7 @@ static isc_result_t axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 				   dns_rdata_t *rdata);
 static isc_result_t axfr_apply(dns_xfrin_ctx_t *xfr);
 static isc_result_t axfr_commit(dns_xfrin_ctx_t *xfr);
+static isc_result_t axfr_finalize(dns_xfrin_ctx_t *xfr);
 
 static isc_result_t ixfr_init(dns_xfrin_ctx_t *xfr);
 static isc_result_t ixfr_apply(dns_xfrin_ctx_t *xfr);
@@ -320,6 +322,16 @@ axfr_commit(dns_xfrin_ctx_t *xfr) {
 
 	CHECK(axfr_apply(xfr));
 	CHECK(dns_db_endload(xfr->db, &xfr->axfr.add_private));
+
+	result = ISC_R_SUCCESS;
+ failure:
+	return (result);
+}
+
+static isc_result_t
+axfr_finalize(dns_xfrin_ctx_t *xfr) {
+	isc_result_t result;
+
 	CHECK(dns_zone_replacedb(xfr->zone, xfr->db, ISC_TRUE));
 
 	result = ISC_R_SUCCESS;
@@ -543,7 +555,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 			isc_uint32_t soa_serial = dns_soa_getserial(rdata);
 			if (soa_serial == xfr->end_serial) {
 				CHECK(ixfr_commit(xfr));
-				xfr->state = XFRST_END;
+				xfr->state = XFRST_IXFR_END;
 				break;
 			} else if (soa_serial != xfr->ixfr.current_serial) {
 				xfrin_log(xfr, ISC_LOG_ERROR,
@@ -574,11 +586,12 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 		CHECK(axfr_putdata(xfr, DNS_DIFFOP_ADD, name, ttl, rdata));
 		if (rdata->type == dns_rdatatype_soa) {
 			CHECK(axfr_commit(xfr));
-			xfr->state = XFRST_END;
+			xfr->state = XFRST_AXFR_END;
 			break;
 		}
 		break;
-	case XFRST_END:
+	case XFRST_AXFR_END:
+	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
 	default:
 		INSIST(0);
@@ -1236,7 +1249,7 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 			result = DNS_R_UNEXPECTEDID;
 		if (xfr->reqtype == dns_rdatatype_axfr ||
 		    xfr->reqtype == dns_rdatatype_soa)
-			FAIL(result);
+			goto failure;
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "got %s, retrying with AXFR",
 		       isc_result_totext(result));
  try_axfr:
@@ -1272,7 +1285,7 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 	if (result != ISC_R_SUCCESS) {
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "TSIG check failed: %s",
 		       isc_result_totext(result));
-		FAIL(result);
+		goto failure;
 	}
 
 	for (result = dns_message_firstname(msg, DNS_SECTION_ANSWER);
@@ -1320,8 +1333,9 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 
 	} else if (dns_message_gettsigkey(msg) != NULL) {
 		xfr->sincetsig++;
-		if (xfr->sincetsig > 100 ||
-		    xfr->nmsg == 0 || xfr->state == XFRST_END)
+		if (xfr->sincetsig > 100 || xfr->nmsg == 0 ||
+		    xfr->state == XFRST_AXFR_END ||
+		    xfr->state == XFRST_IXFR_END)
 		{
 			result = DNS_R_EXPECTEDTSIG;
 			goto failure;
@@ -1347,16 +1361,22 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 
 	dns_message_destroy(&msg);
 
-	if (xfr->state == XFRST_GOTSOA) {
+	switch (xfr->state) {
+	case XFRST_GOTSOA:
 		xfr->reqtype = dns_rdatatype_axfr;
 		xfr->state = XFRST_INITIALSOA;
 		CHECK(xfrin_send_request(xfr));
-	} else if (xfr->state == XFRST_END) {
+		break;
+	case XFRST_AXFR_END:
+		CHECK(axfr_finalize(xfr));
+		/* FALLTHROUGH */
+	case XFRST_IXFR_END:
 		/*
 		 * Close the journal.
 		 */
 		if (xfr->ixfr.journal != NULL)
 			dns_journal_destroy(&xfr->ixfr.journal);
+
 		/*
 		 * Inform the caller we succeeded.
 		 */
@@ -1370,7 +1390,8 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		 */
 		xfr->shuttingdown = ISC_TRUE;
 		maybe_free(xfr);
-	} else {
+		break;
+	default:
 		/*
 		 * Read the next message.
 		 */
