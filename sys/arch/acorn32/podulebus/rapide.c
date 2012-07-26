@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.28 2012/07/02 18:15:44 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.29 2012/07/26 20:49:45 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.28 2012/07/02 18:15:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.29 2012/07/26 20:49:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,6 @@ rapide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		rcp = &sc->rapide_channels[channel];
 		sc->sc_chanarray[channel] = &rcp->rc_channel;
@@ -260,6 +259,7 @@ rapide_attach(device_t parent, device_t self, void *aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &rcp->rc_chqueue;
+		cp->ch_ndrive = 2;
 		wdr->cmd_iot = iot;
 		wdr->ctl_iot = iot;
 		wdr->data32iot = iot;

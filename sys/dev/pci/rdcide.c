@@ -1,4 +1,4 @@
-/*	$NetBSD: rdcide.c,v 1.5 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: rdcide.c,v 1.6 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcide.c,v 1.5 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcide.c,v 1.6 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,6 @@ rdcide_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = rdcide_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	ATADEBUG_PRINT(("rdcide_setup_chip: old PATR=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, RDCIDE_PATR)),
@@ -220,9 +219,9 @@ rdcide_setup_channel(struct ata_channel *chp)
 	}
 	/* now setup modes */
 	for (drive = 0; drive < 2; drive++) {
-		if (drvp[drive].drive_type == DRIVET_NONE)
+		if ((drvp[drive].drive_flags & DRIVE) == 0)
 			continue;
-		if (drvp[drive].drive_type == DRIVET_ATAPI)
+		if ((drvp[drive].drive_flags & DRIVE_ATAPI) == 0)
 			patr |= RDCIDE_PATR_ATA(chp->ch_channel, drive);
 		if (drive == 0) {
 			patr |= RDCIDE_PATR_SETUP(

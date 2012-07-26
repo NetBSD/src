@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.16 2012/07/24 14:04:30 jakllsch Exp $	*/
+/*	$NetBSD: jmide.c,v 1.17 2012/07/26 20:49:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.16 2012/07/24 14:04:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.17 2012/07/26 20:49:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,6 @@ jmpata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = jmpata_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 	wdc_allocate_regs(&sc->sc_wdcdev);
 	/*
          * can't rely on the PCI_CLASS_REG content if the chip was in raid
@@ -396,7 +395,7 @@ jmpata_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
