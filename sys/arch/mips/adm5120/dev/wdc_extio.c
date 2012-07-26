@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.6 2012/07/02 18:15:46 bouyer Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.7 2012/07/26 20:49:46 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.6 2012/07/02 18:15:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.7 2012/07/26 20:49:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -307,10 +307,10 @@ wdc_extio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanlist[0] = chp;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_chqueue;
+	chp->ch_ndrive = 2;
 
 	aprint_normal("\n");
 
