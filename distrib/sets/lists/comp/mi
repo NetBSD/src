@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1769 2012/07/11 18:59:30 christos Exp $
+#	$NetBSD: mi,v 1.1770 2012/07/26 20:05:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2169,8 +2169,10 @@
 ./usr/include/openssl/rsa.h			comp-c-include		crypto
 ./usr/include/openssl/rsaref.h			comp-obsolete		obsolete
 ./usr/include/openssl/safestack.h		comp-c-include		crypto
+./usr/include/openssl/seed.h			comp-c-include		crypto
 ./usr/include/openssl/sha.h			comp-c-include		crypto
 ./usr/include/openssl/srp.h			comp-c-include		crypto
+./usr/include/openssl/srtp.h			comp-c-include		crypto
 ./usr/include/openssl/ssl.h			comp-c-include		crypto
 ./usr/include/openssl/ssl2.h			comp-c-include		crypto
 ./usr/include/openssl/ssl23.h			comp-c-include		crypto
@@ -2184,6 +2186,7 @@
 ./usr/include/openssl/txt_db.h			comp-c-include		crypto
 ./usr/include/openssl/ui.h			comp-c-include		crypto
 ./usr/include/openssl/ui_compat.h		comp-c-include		crypto
+./usr/include/openssl/whrlpool.h		comp-c-include		crypto
 ./usr/include/openssl/x509.h			comp-c-include		crypto
 ./usr/include/openssl/x509_vfy.h		comp-c-include		crypto
 ./usr/include/openssl/x509v3.h			comp-c-include		crypto

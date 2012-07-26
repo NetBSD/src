@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.172 2012/07/14 22:37:42 mlelstv Exp $
+# $NetBSD: md.amd64,v 1.173 2012/07/26 20:05:38 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -78,8 +78,8 @@
 ./usr/lib/i386/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.7			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.7.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.8			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.8.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/i386/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -260,8 +260,8 @@
 ./usr/lib/i386/libsqlite3.so.1.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.19			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.19.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.9			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.9.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.10.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic
 ./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic

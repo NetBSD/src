@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.633 2012/07/14 22:37:42 mlelstv Exp $
+# $NetBSD: shl.mi,v 1.634 2012/07/26 20:05:38 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -20,8 +20,8 @@
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.7				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.7.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.0				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
@@ -188,8 +188,8 @@
 ./usr/lib/libcrypt.so.1				base-sys-shlib
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.7			base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.7.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.0			base-crypto-shlib	crypto
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		obsolete
@@ -672,8 +672,8 @@
 ./usr/lib/libssh.so.19				base-secsh-shlib	crypto
 ./usr/lib/libssh.so.19.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
-./usr/lib/libssl.so.9				base-crypto-shlib	crypto
-./usr/lib/libssl.so.9.0				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
