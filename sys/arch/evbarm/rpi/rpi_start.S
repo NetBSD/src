@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.2 2012/07/26 12:39:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -88,7 +88,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.1 2012/07/26 06:21:57 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.2 2012/07/26 12:39:27 skrll Exp $")
 
 /*
  * Workaround Erratum 411920 
@@ -211,18 +211,10 @@ _C_LABEL(rpi_start):
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLBs */
 
-#if 0
-	/* copied from arm11x6_setttb */
-	mcr	p15, 0, r0, c7, c10, 4	/* Drain the write buffers. */
-#endif
-
 	/* Set the Domain Access register.  Very important! */
 	mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r0, c3, c0, 0
 
-#if 0
-	mrc	p15, 0, r0, c2, c0, 0	/* Read the Translation Table Base */
-#endif
 	/*
 	 * Enable the MMU, etc.
 	 */
