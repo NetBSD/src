@@ -330,6 +330,9 @@ _x86_64_AES_encrypt_compact:
 .globl	AES_encrypt
 .type	AES_encrypt,@function
 .align	16
+.globl	asm_AES_encrypt
+.hidden	asm_AES_encrypt
+asm_AES_encrypt:
 AES_encrypt:
 	pushq	%rbx
 	pushq	%rbp
@@ -366,7 +369,7 @@ AES_encrypt:
 	movq	%rbp,8(%rsp)
 
 
-	leaq	.LAES_Te+2048(%rip),%r14
+	leaq	.LAES_Te+2048@GOTPCREL(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -775,6 +778,9 @@ _x86_64_AES_decrypt_compact:
 .globl	AES_decrypt
 .type	AES_decrypt,@function
 .align	16
+.globl	asm_AES_decrypt
+.hidden	asm_AES_decrypt
+asm_AES_decrypt:
 AES_decrypt:
 	pushq	%rbx
 	pushq	%rbp
@@ -811,7 +817,7 @@ AES_decrypt:
 	movq	%rbp,8(%rsp)
 
 
-	leaq	.LAES_Td+2048(%rip),%r14
+	leaq	.LAES_Td+2048@GOTPCREL(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -838,10 +844,10 @@ AES_decrypt:
 .Ldec_epilogue:
 	.byte	0xf3,0xc3
 .size	AES_decrypt,.-AES_decrypt
-.globl	AES_set_encrypt_key
-.type	AES_set_encrypt_key,@function
+.globl	private_AES_set_encrypt_key
+.type	private_AES_set_encrypt_key,@function
 .align	16
-AES_set_encrypt_key:
+private_AES_set_encrypt_key:
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
@@ -862,7 +868,7 @@ AES_set_encrypt_key:
 	addq	$56,%rsp
 .Lenc_key_epilogue:
 	.byte	0xf3,0xc3
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	private_AES_set_encrypt_key,.-private_AES_set_encrypt_key
 
 .type	_x86_64_AES_set_encrypt_key,@function
 .align	16
@@ -876,7 +882,7 @@ _x86_64_AES_set_encrypt_key:
 	testq	$-1,%rdi
 	jz	.Lbadpointer
 
-	leaq	.LAES_Te(%rip),%rbp
+	leaq	.LAES_Te@GOTPCREL(%rip),%rbp
 	leaq	2048+128(%rbp),%rbp
 
 
@@ -1103,10 +1109,10 @@ _x86_64_AES_set_encrypt_key:
 .Lexit:
 .byte	0xf3,0xc3			
 .size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
-.globl	AES_set_decrypt_key
-.type	AES_set_decrypt_key,@function
+.globl	private_AES_set_decrypt_key
+.type	private_AES_set_decrypt_key,@function
 .align	16
-AES_set_decrypt_key:
+private_AES_set_decrypt_key:
 	pushq	%rbx
 	pushq	%rbp
 	pushq	%r12
@@ -1141,7 +1147,7 @@ AES_set_decrypt_key:
 	cmpq	%rsi,%rdi
 	jne	.Linvert
 
-	leaq	.LAES_Te+2048+1024(%rip),%rax
+	leaq	.LAES_Te+2048+1024@GOTPCREL(%rip),%rax
 
 	movq	40(%rax),%rsi
 	movq	48(%rax),%rdi
@@ -1289,11 +1295,14 @@ AES_set_decrypt_key:
 	addq	$56,%rsp
 .Ldec_key_epilogue:
 	.byte	0xf3,0xc3
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	private_AES_set_decrypt_key,.-private_AES_set_decrypt_key
 .globl	AES_cbc_encrypt
 .type	AES_cbc_encrypt,@function
 .align	16
 
+.globl	asm_AES_cbc_encrypt
+.hidden	asm_AES_cbc_encrypt
+asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 	cmpq	$0,%rdx
 	je	.Lcbc_epilogue
@@ -1309,10 +1318,10 @@ AES_cbc_encrypt:
 	cld
 	movl	%r9d,%r9d
 
-	leaq	.LAES_Te(%rip),%r14
+	leaq	.LAES_Te@GOTPCREL(%rip),%r14
 	cmpq	$0,%r9
 	jne	.Lcbc_picked_te
-	leaq	.LAES_Td(%rip),%r14
+	leaq	.LAES_Td@GOTPCREL(%rip),%r14
 .Lcbc_picked_te:
 
 	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10d

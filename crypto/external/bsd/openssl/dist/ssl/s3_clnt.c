@@ -203,6 +203,18 @@ int ssl3_connect(SSL *s)
 	s->in_handshake++;
 	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s); 
 
+#ifndef OPENSSL_NO_HEARTBEATS
+	/* If we're awaiting a HeartbeatResponse, pretend we
+	 * already got and don't await it anymore, because
+	 * Heartbeats don't make sense during handshakes anyway.
+	 */
+	if (s->tlsext_hb_pending)
+		{
+		s->tlsext_hb_pending = 0;
+		s->tlsext_hb_seq++;
+		}
+#endif
+
 	for (;;)
 		{
 		state=s->state;
@@ -280,24 +292,19 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_HELLO_A:
 		case SSL3_ST_CR_SRVR_HELLO_B:
 			ret=ssl3_get_server_hello(s);
-#ifndef OPENSSL_NO_SRP
-			if (ret == 0 && s->s3->warn_alert == SSL_AD_MISSING_SRP_USERNAME)
-				{
-				if (!SRP_have_to_put_srp_username(s))
-					{
-					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_MISSING_SRP_USERNAME);
-					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_USER_CANCELLED);
-					goto end;
-					}
-				s->state=SSL3_ST_CW_CLNT_HELLO_A;
-				if (!ssl_init_wbio_buffer(s,0)) { ret= -1; goto end; }
-				break;
-				}
-#endif
 			if (ret <= 0) goto end;
 
 			if (s->hit)
+				{
 				s->state=SSL3_ST_CR_FINISHED_A;
+#ifndef OPENSSL_NO_TLSEXT
+				if (s->tlsext_ticket_expected)
+					{
+					/* receive renewed session ticket */
+					s->state=SSL3_ST_CR_SESSION_TICKET_A;
+					}
+#endif
+				}
 			else
 				s->state=SSL3_ST_CR_CERT_A;
 			s->init_num=0;
@@ -451,7 +458,16 @@ int ssl3_connect(SSL *s)
 			ret=ssl3_send_change_cipher_spec(s,
 				SSL3_ST_CW_CHANGE_A,SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0) goto end;
+
+
+#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 			s->state=SSL3_ST_CW_FINISHED_A;
+#else
+			if (s->s3->next_proto_neg_seen)
+				s->state=SSL3_ST_CW_NEXT_PROTO_A;
+			else
+				s->state=SSL3_ST_CW_FINISHED_A;
+#endif
 			s->init_num=0;
 
 			s->session->cipher=s->s3->tmp.new_cipher;
@@ -478,6 +494,15 @@ int ssl3_connect(SSL *s)
 				}
 
 			break;
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+		case SSL3_ST_CW_NEXT_PROTO_A:
+		case SSL3_ST_CW_NEXT_PROTO_B:
+			ret=ssl3_send_next_proto(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_CW_FINISHED_A;
+			break;
+#endif
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
@@ -664,9 +689,43 @@ int ssl3_client_hello(SSL *s)
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
 
+		/* version indicates the negotiated version: for example from
+		 * an SSLv2/v3 compatible client hello). The client_version
+		 * field is the maximum version we permit and it is also
+		 * used in RSA encrypted premaster secrets. Some servers can
+		 * choke if we initially report a higher version then
+		 * renegotiate to a lower one in the premaster secret. This
+		 * didn't happen with TLS 1.0 as most servers supported it
+		 * but it can with TLS 1.1 or later if the server only supports
+		 * 1.0.
+		 *
+		 * Possible scenario with previous logic:
+		 * 	1. Client hello indicates TLS 1.2
+		 * 	2. Server hello says TLS 1.0
+		 *	3. RSA encrypted premaster secret uses 1.2.
+		 * 	4. Handhaked proceeds using TLS 1.0.
+		 *	5. Server sends hello request to renegotiate.
+		 *	6. Client hello indicates TLS v1.0 as we now
+		 *	   know that is maximum server supports.
+		 *	7. Server chokes on RSA encrypted premaster secret
+		 *	   containing version 1.0.
+		 *
+		 * For interoperability it should be OK to always use the
+		 * maximum version we support in client hello and then rely
+		 * on the checking of version to ensure the servers isn't
+		 * being inconsistent: for example initially negotiating with
+		 * TLS 1.0 and renegotiating with TLS 1.2. We do this by using
+		 * client_version in client hello and not resetting it to
+		 * the negotiated version.
+		 */
+#if 0
 		*(p++)=s->version>>8;
 		*(p++)=s->version&0xff;
 		s->client_version=s->version;
+#else
+		*(p++)=s->client_version>>8;
+		*(p++)=s->client_version&0xff;
+#endif
 
 		/* Random stuff */
 		memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
@@ -696,6 +755,15 @@ int ssl3_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_NO_CIPHERS_AVAILABLE);
 			goto err;
 			}
+#ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
+			/* Some servers hang if client hello > 256 bytes
+			 * as hack workaround chop number of supported ciphers
+			 * to keep it well below this if we use TLS v1.2
+			 */
+			if (TLS1_get_version(s) >= TLS1_2_VERSION
+				&& i > OPENSSL_MAX_TLS1_2_CIPHER_LENGTH)
+				i = OPENSSL_MAX_TLS1_2_CIPHER_LENGTH & ~1;
+#endif
 		s2n(i,p);
 		p+=i;
 
@@ -876,6 +944,14 @@ int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_UNKNOWN_CIPHER_RETURNED);
 		goto f_err;
 		}
+	/* TLS v1.2 only ciphersuites require v1.2 or later */
+	if ((c->algorithm_ssl & SSL_TLSV1_2) && 
+		(TLS1_get_version(s) < TLS1_2_VERSION))
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_WRONG_CIPHER_RETURNED);
+		goto f_err;
+		}
 	p+=ssl_put_cipher_by_char(s,NULL,NULL);
 
 	sk=ssl_get_ciphers_by_id(s);
@@ -984,7 +1060,7 @@ int ssl3_get_server_hello(SSL *s)
 		/* wrong packet length */
 		al=SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_BAD_PACKET_LENGTH);
-		goto err;
+		goto f_err;
 		}
 
 	return(1);
@@ -1984,7 +2060,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	if (n < 6)
 		{
 		/* need at least ticket_lifetime_hint + ticket length */
-		al = SSL3_AL_FATAL,SSL_AD_DECODE_ERROR;
+		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
@@ -1995,7 +2071,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	/* ticket_lifetime_hint + ticket_length + ticket */
 	if (ticklen + 6 != n)
 		{
-		al = SSL3_AL_FATAL,SSL_AD_DECODE_ERROR;
+		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
@@ -2390,6 +2466,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			if (!DH_generate_key(dh_clnt))
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				DH_free(dh_clnt);
 				goto err;
 				}
 
@@ -2401,6 +2478,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+				DH_free(dh_clnt);
 				goto err;
 				}
 
@@ -3216,6 +3294,32 @@ f_err:
 err:
 	return(0);
 	}
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+int ssl3_send_next_proto(SSL *s)
+	{
+	unsigned int len, padding_len;
+	unsigned char *d;
+
+	if (s->state == SSL3_ST_CW_NEXT_PROTO_A)
+		{
+		len = s->next_proto_negotiated_len;
+		padding_len = 32 - ((len + 2) % 32);
+		d = (unsigned char *)s->init_buf->data;
+		d[4] = len;
+		memcpy(d + 5, s->next_proto_negotiated, len);
+		d[5 + len] = padding_len;
+		memset(d + 6 + len, 0, padding_len);
+		*(d++)=SSL3_MT_NEXT_PROTO;
+		l2n3(2 + len + padding_len, d);
+		s->state = SSL3_ST_CW_NEXT_PROTO_B;
+		s->init_num = 4 + 2 + len + padding_len;
+		s->init_off = 0;
+		}
+
+	return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
+}
+#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
 
 /* Check to see if handshake is full or resumed. Usually this is just a
  * case of checking to see if a cache hit has occurred. In the case of

@@ -65,6 +65,8 @@
 #error IDEA is disabled.
 #endif
 
+#include <sys/types.h>
+
 #define IDEA_ENCRYPT	1
 #define IDEA_DECRYPT	0
 
