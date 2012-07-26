@@ -10,7 +10,7 @@ gcm_gmult_4bit:
 .Lgmult_prologue:
 
 	movzbq	15(%rdi),%r8
-	leaq	.Lrem_4bit@GOTPCREL(%rip),%r11
+	leaq	.Lrem_4bit(%rip),%r11
 	xorq	%rax,%rax
 	xorq	%rbx,%rbx
 	movb	%r8b,%al
@@ -301,7 +301,7 @@ gcm_ghash_4bit:
 	movq	8(%rdi),%r8
 	movq	0(%rdi),%r9
 	addq	%r14,%r15
-	leaq	.Lrem_8bit@GOTPCREL(%rip),%r11
+	leaq	.Lrem_8bit(%rip),%r11
 	jmp	.Louter_loop
 .align	16
 .Louter_loop:
@@ -672,7 +672,7 @@ gcm_init_clmul:
 	por	%xmm3,%xmm2
 
 
-	pand	.L0x1c2_polynomial@GOTPCREL(%rip),%xmm5
+	pand	.L0x1c2_polynomial(%rip),%xmm5
 	pxor	%xmm5,%xmm2
 
 
@@ -724,7 +724,7 @@ gcm_init_clmul:
 .align	16
 gcm_gmult_clmul:
 	movdqu	(%rdi),%xmm0
-	movdqa	.Lbswap_mask@GOTPCREL(%rip),%xmm5
+	movdqa	.Lbswap_mask(%rip),%xmm5
 	movdqu	(%rsi),%xmm2
 .byte	102,15,56,0,197
 	movdqa	%xmm0,%xmm1
@@ -773,7 +773,7 @@ gcm_gmult_clmul:
 .type	gcm_ghash_clmul,@function
 .align	16
 gcm_ghash_clmul:
-	movdqa	.Lbswap_mask@GOTPCREL(%rip),%xmm5
+	movdqa	.Lbswap_mask(%rip),%xmm5
 
 	movdqu	(%rdi),%xmm0
 	movdqu	(%rsi),%xmm2

@@ -22,18 +22,18 @@ _vpaes_encrypt_core:
 	movq	$16,%r11
 	movl	240(%rdx),%eax
 	movdqa	%xmm9,%xmm1
-	movdqa	.Lk_ipt@GOTPCREL(%rip),%xmm2
+	movdqa	.Lk_ipt(%rip),%xmm2
 	pandn	%xmm0,%xmm1
 	movdqu	(%r9),%xmm5
 	psrld	$4,%xmm1
 	pand	%xmm9,%xmm0
 .byte	102,15,56,0,208
-	movdqa	.Lk_ipt+16@GOTPCREL(%rip),%xmm0
+	movdqa	.Lk_ipt+16(%rip),%xmm0
 .byte	102,15,56,0,193
 	pxor	%xmm5,%xmm2
 	pxor	%xmm2,%xmm0
 	addq	$16,%r9
-	leaq	.Lk_mc_backward@GOTPCREL(%rip),%r10
+	leaq	.Lk_mc_backward(%rip),%r10
 	jmp	.Lenc_entry
 
 .align	16
@@ -111,7 +111,7 @@ _vpaes_decrypt_core:
 	movq	%rdx,%r9
 	movl	240(%rdx),%eax
 	movdqa	%xmm9,%xmm1
-	movdqa	.Lk_dipt@GOTPCREL(%rip),%xmm2
+	movdqa	.Lk_dipt(%rip),%xmm2
 	pandn	%xmm0,%xmm1
 	movq	%rax,%r11
 	psrld	$4,%xmm1
@@ -119,13 +119,13 @@ _vpaes_decrypt_core:
 	shlq	$4,%r11
 	pand	%xmm9,%xmm0
 .byte	102,15,56,0,208
-	movdqa	.Lk_dipt+16@GOTPCREL(%rip),%xmm0
+	movdqa	.Lk_dipt+16(%rip),%xmm0
 	xorq	$48,%r11
-	leaq	.Lk_dsbd@GOTPCREL(%rip),%r10
+	leaq	.Lk_dsbd(%rip),%r10
 .byte	102,15,56,0,193
 	andq	$48,%r11
 	pxor	%xmm5,%xmm2
-	movdqa	.Lk_mc_forward+48@GOTPCREL(%rip),%xmm5
+	movdqa	.Lk_mc_forward+48(%rip),%xmm5
 	pxor	%xmm2,%xmm0
 	addq	$16,%r9
 	addq	%r10,%r11
@@ -221,16 +221,16 @@ _vpaes_schedule_core:
 
 
 	call	_vpaes_preheat		
-	movdqa	.Lk_rcon@GOTPCREL(%rip),%xmm8
+	movdqa	.Lk_rcon(%rip),%xmm8
 	movdqu	(%rdi),%xmm0
 
 
 	movdqa	%xmm0,%xmm3
-	leaq	.Lk_ipt@GOTPCREL(%rip),%r11
+	leaq	.Lk_ipt(%rip),%r11
 	call	_vpaes_schedule_transform
 	movdqa	%xmm0,%xmm7
 
-	leaq	.Lk_sr@GOTPCREL(%rip),%r10
+	leaq	.Lk_sr(%rip),%r10
 	testq	%rcx,%rcx
 	jnz	.Lschedule_am_decrypting
 
@@ -355,19 +355,19 @@ _vpaes_schedule_core:
 .align	16
 .Lschedule_mangle_last:
 
-	leaq	.Lk_deskew@GOTPCREL(%rip),%r11
+	leaq	.Lk_deskew(%rip),%r11
 	testq	%rcx,%rcx
 	jnz	.Lschedule_mangle_last_dec
 
 
 	movdqa	(%r8,%r10,1),%xmm1
 .byte	102,15,56,0,193
-	leaq	.Lk_opt@GOTPCREL(%rip),%r11
+	leaq	.Lk_opt(%rip),%r11
 	addq	$32,%rdx
 
 .Lschedule_mangle_last_dec:
 	addq	$-16,%rdx
-	pxor	.Lk_s63@GOTPCREL(%rip),%xmm0
+	pxor	.Lk_s63(%rip),%xmm0
 	call	_vpaes_schedule_transform 
 	movdqu	%xmm0,(%rdx)
 
@@ -452,7 +452,7 @@ _vpaes_schedule_low_round:
 	movdqa	%xmm7,%xmm1
 	pslldq	$8,%xmm7
 	pxor	%xmm1,%xmm7
-	pxor	.Lk_s63@GOTPCREL(%rip),%xmm7
+	pxor	.Lk_s63(%rip),%xmm7
 
 
 	movdqa	%xmm9,%xmm1
@@ -537,13 +537,13 @@ _vpaes_schedule_transform:
 .align	16
 _vpaes_schedule_mangle:
 	movdqa	%xmm0,%xmm4
-	movdqa	.Lk_mc_forward@GOTPCREL(%rip),%xmm5
+	movdqa	.Lk_mc_forward(%rip),%xmm5
 	testq	%rcx,%rcx
 	jnz	.Lschedule_mangle_dec
 
 
 	addq	$16,%rdx
-	pxor	.Lk_s63@GOTPCREL(%rip),%xmm4
+	pxor	.Lk_s63(%rip),%xmm4
 .byte	102,15,56,0,229
 	movdqa	%xmm4,%xmm3
 .byte	102,15,56,0,229
@@ -555,7 +555,7 @@ _vpaes_schedule_mangle:
 .align	16
 .Lschedule_mangle_dec:
 
-	leaq	.Lk_dksd@GOTPCREL(%rip),%r11
+	leaq	.Lk_dksd(%rip),%r11
 	movdqa	%xmm9,%xmm1
 	pandn	%xmm4,%xmm1
 	psrld	$4,%xmm1
@@ -712,7 +712,7 @@ vpaes_cbc_encrypt:
 .type	_vpaes_preheat,@function
 .align	16
 _vpaes_preheat:
-	leaq	.Lk_s0F@GOTPCREL(%rip),%r10
+	leaq	.Lk_s0F(%rip),%r10
 	movdqa	-32(%r10),%xmm10
 	movdqa	-16(%r10),%xmm11
 	movdqa	0(%r10),%xmm9

@@ -1302,7 +1302,7 @@ _ssse3_shortcut:
 
 	shlq	$6,%r10
 	addq	%r9,%r10
-	leaq	K_XX_XX@GOTPCREL(%rip),%r11
+	leaq	K_XX_XX(%rip),%r11
 
 	movl	0(%r8),%eax
 	movl	4(%r8),%ebx

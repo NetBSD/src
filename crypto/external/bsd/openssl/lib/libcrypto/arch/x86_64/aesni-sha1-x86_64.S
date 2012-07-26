@@ -37,7 +37,7 @@ aesni_cbc_sha1_enc_ssse3:
 	movl	240(%r15),%r8d
 	addq	%r10,%r14
 
-	leaq	K_XX_XX@GOTPCREL(%rip),%r11
+	leaq	K_XX_XX(%rip),%r11
 	movl	0(%r9),%eax
 	movl	4(%r9),%ebx
 	movl	8(%r9),%ecx
