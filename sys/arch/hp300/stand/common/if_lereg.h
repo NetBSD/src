@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.6 2012/07/26 17:15:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -50,7 +50,7 @@ struct lereg0 {
 	vu_char	ler0_id;	/* ID */
 	u_char	ler0_pad1;
 	vu_char	ler0_status;	/* interrupt enable/status */
-} __attribute__((__packed__));
+};
 
 /*
  * Control and status bits -- lereg0
@@ -65,7 +65,7 @@ struct lereg0 {
 struct lereg1 {
 	vu_short	ler1_rdp;	/* data port */
 	vu_short	ler1_rap;	/* register select port */
-} __attribute__((__packed__));
+};
 
 /*
  * Control and status bits -- lereg1
