@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.4 2012/07/26 19:58:40 christos Exp $
+#	$NetBSD: engine.inc,v 1.5 2012/07/26 20:21:20 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -12,6 +12,7 @@
 ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	eng_table.c eng_pkey.c eng_fat.c eng_all.c tb_asnmth.c \
 	tb_rsa.c tb_dsa.c tb_dh.c tb_rand.c tb_cipher.c tb_digest.c \
+	eng_aesni.c \
 	eng_openssl.c eng_dyn.c eng_cnf.c eng_rdrand.c eng_rsax.c \
 	eng_cryptodev.c tb_store.c tb_ecdsa.c tb_ecdh.c tb_pkmeth.c \
 	e_4758cca.c e_4758cca_err.c \
