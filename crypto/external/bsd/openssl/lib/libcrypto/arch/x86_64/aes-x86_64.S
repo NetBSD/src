@@ -369,7 +369,7 @@ AES_encrypt:
 	movq	%rbp,8(%rsp)
 
 
-	leaq	.LAES_Te+2048@GOTPCREL(%rip),%r14
+	leaq	.LAES_Te+2048(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -817,7 +817,7 @@ AES_decrypt:
 	movq	%rbp,8(%rsp)
 
 
-	leaq	.LAES_Td+2048@GOTPCREL(%rip),%r14
+	leaq	.LAES_Td+2048(%rip),%r14
 	leaq	768(%rsp),%rbp
 	subq	%r14,%rbp
 	andq	$768,%rbp
@@ -882,7 +882,7 @@ _x86_64_AES_set_encrypt_key:
 	testq	$-1,%rdi
 	jz	.Lbadpointer
 
-	leaq	.LAES_Te@GOTPCREL(%rip),%rbp
+	leaq	.LAES_Te(%rip),%rbp
 	leaq	2048+128(%rbp),%rbp
 
 
@@ -1147,7 +1147,7 @@ private_AES_set_decrypt_key:
 	cmpq	%rsi,%rdi
 	jne	.Linvert
 
-	leaq	.LAES_Te+2048+1024@GOTPCREL(%rip),%rax
+	leaq	.LAES_Te+2048+1024(%rip),%rax
 
 	movq	40(%rax),%rsi
 	movq	48(%rax),%rdi
@@ -1318,10 +1318,10 @@ AES_cbc_encrypt:
 	cld
 	movl	%r9d,%r9d
 
-	leaq	.LAES_Te@GOTPCREL(%rip),%r14
+	leaq	.LAES_Te(%rip),%r14
 	cmpq	$0,%r9
 	jne	.Lcbc_picked_te
-	leaq	.LAES_Td@GOTPCREL(%rip),%r14
+	leaq	.LAES_Td(%rip),%r14
 .Lcbc_picked_te:
 
 	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r10d

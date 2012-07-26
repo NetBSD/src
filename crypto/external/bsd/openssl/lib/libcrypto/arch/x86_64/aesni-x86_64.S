@@ -744,8 +744,8 @@ aesni_ecb_encrypt:
 aesni_ccm64_encrypt_blocks:
 	movl	240(%rcx),%eax
 	movdqu	(%r8),%xmm9
-	movdqa	.Lincrement64@GOTPCREL(%rip),%xmm6
-	movdqa	.Lbswap_mask@GOTPCREL(%rip),%xmm7
+	movdqa	.Lincrement64(%rip),%xmm6
+	movdqa	.Lbswap_mask(%rip),%xmm7
 
 	shrl	$1,%eax
 	leaq	0(%rcx),%r11
@@ -802,8 +802,8 @@ aesni_ccm64_decrypt_blocks:
 	movl	240(%rcx),%eax
 	movups	(%r8),%xmm9
 	movdqu	(%r9),%xmm3
-	movdqa	.Lincrement64@GOTPCREL(%rip),%xmm6
-	movdqa	.Lbswap_mask@GOTPCREL(%rip),%xmm7
+	movdqa	.Lincrement64(%rip),%xmm6
+	movdqa	.Lbswap_mask(%rip),%xmm7
 
 	movaps	%xmm9,%xmm2
 	movl	%eax,%r10d
@@ -890,7 +890,7 @@ aesni_ctr32_encrypt_blocks:
 	je	.Lctr32_one_shortcut
 
 	movdqu	(%r8),%xmm14
-	movdqa	.Lbswap_mask@GOTPCREL(%rip),%xmm15
+	movdqa	.Lbswap_mask(%rip),%xmm15
 	xorl	%eax,%eax
 .byte	102,69,15,58,22,242,3
 .byte	102,68,15,58,34,240,3
@@ -949,7 +949,7 @@ aesni_ctr32_encrypt_blocks:
 	leaq	32(%r11),%rcx
 	pxor	%xmm0,%xmm4
 .byte	102,15,56,220,217
-	movdqa	.Lincrement32@GOTPCREL(%rip),%xmm13
+	movdqa	.Lincrement32(%rip),%xmm13
 	pxor	%xmm0,%xmm5
 .byte	102,15,56,220,225
 	movdqa	-40(%rsp),%xmm12
@@ -1154,7 +1154,7 @@ aesni_xts_encrypt:
 	movq	%rdx,%r9
 	andq	$-16,%rdx
 
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm8
+	movdqa	.Lxts_magic(%rip),%xmm8
 	pxor	%xmm14,%xmm14
 	pcmpgtd	%xmm15,%xmm14
 	pshufd	$19,%xmm14,%xmm9
@@ -1556,7 +1556,7 @@ aesni_xts_decrypt:
 	movq	%rdx,%r9
 	andq	$-16,%rdx
 
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm8
+	movdqa	.Lxts_magic(%rip),%xmm8
 	pxor	%xmm14,%xmm14
 	pcmpgtd	%xmm15,%xmm14
 	pshufd	$19,%xmm14,%xmm9
