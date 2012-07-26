@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.33 2012/07/24 14:04:30 jakllsch Exp $	*/
+/*	$NetBSD: aceride.c,v 1.34 2012/07/26 20:49:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.33 2012/07/24 14:04:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.34 2012/07/26 20:49:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,6 @@ acer_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = acer_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CDRC,
 	    (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CDRC) |
@@ -282,7 +281,7 @@ acer_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		ATADEBUG_PRINT(("acer_setup_channel: old timings reg for "
 		    "channel %d drive %d 0x%x\n", chp->ch_channel, drive,
