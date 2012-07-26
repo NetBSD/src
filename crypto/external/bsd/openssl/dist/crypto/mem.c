@@ -185,9 +185,9 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*so)(long),
 				   long (*go)(void))
 	{
-	OPENSSL_init();
 	if (!allow_customize_debug)
 		return 0;
+	OPENSSL_init();
 	malloc_debug_func=m;
 	realloc_debug_func=r;
 	free_debug_func=f;
@@ -362,6 +362,10 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
 		return CRYPTO_malloc(num, file, line);
 
 	if (num <= 0) return NULL;
+
+	/* We don't support shrinking the buffer. Note the memcpy that copies
+	 * |old_len| bytes to the new buffer, below. */
+	if (num < old_len) return NULL;
 
 	if (realloc_debug_func != NULL)
 		realloc_debug_func(str, NULL, num, file, line, 0);

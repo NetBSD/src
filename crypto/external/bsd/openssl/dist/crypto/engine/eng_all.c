@@ -73,6 +73,12 @@ void ENGINE_load_builtin_engines(void)
 #if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
 	ENGINE_load_cryptodev();
 #endif
+#ifndef OPENSSL_NO_RSAX
+	ENGINE_load_rsax();
+#endif
+#ifndef OPENSSL_NO_RDRAND
+	ENGINE_load_rdrand();
+#endif
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW
