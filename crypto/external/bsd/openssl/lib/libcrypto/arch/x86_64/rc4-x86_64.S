@@ -593,7 +593,7 @@ private_RC4_set_key:
 .type	RC4_options,@function
 .align	16
 RC4_options:
-	leaq	.Lopts@GOTPCREL(%rip),%rax
+	leaq	.Lopts(%rip),%rax
 	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%edx
 	btl	$20,%edx
 	jc	.L8xchar

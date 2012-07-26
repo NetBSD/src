@@ -6,7 +6,7 @@
 .type	_bsaes_encrypt8,@function
 .align	64
 _bsaes_encrypt8:
-	leaq	.LBS0@GOTPCREL(%rip),%r11
+	leaq	.LBS0(%rip),%r11
 
 	movdqa	(%rax),%xmm8
 	leaq	16(%rax),%rax
@@ -479,7 +479,7 @@ _bsaes_encrypt8_bitslice:
 .type	_bsaes_decrypt8,@function
 .align	64
 _bsaes_decrypt8:
-	leaq	.LBS0@GOTPCREL(%rip),%r11
+	leaq	.LBS0(%rip),%r11
 
 	movdqa	(%rax),%xmm8
 	leaq	16(%rax),%rax
@@ -1046,7 +1046,7 @@ _bsaes_decrypt8:
 .type	_bsaes_key_convert,@function
 .align	16
 _bsaes_key_convert:
-	leaq	.Lmasks@GOTPCREL(%rip),%r11
+	leaq	.Lmasks(%rip),%r11
 	movdqu	(%rcx),%xmm7
 	leaq	16(%rcx),%rcx
 	movdqa	0(%r11),%xmm0
@@ -1413,7 +1413,7 @@ bsaes_ctr32_encrypt_blocks:
 	movdqa	%xmm7,(%rax)
 
 	movdqa	(%rsp),%xmm8
-	leaq	.LADD1@GOTPCREL(%rip),%r11
+	leaq	.LADD1(%rip),%r11
 	movdqa	32(%rbp),%xmm15
 	movdqa	-32(%r11),%xmm7
 .byte	102,68,15,56,0,199
@@ -1458,7 +1458,7 @@ bsaes_ctr32_encrypt_blocks:
 .byte	102,15,56,0,231
 	pxor	%xmm8,%xmm6
 .byte	102,15,56,0,239
-	leaq	.LBS0@GOTPCREL(%rip),%r11
+	leaq	.LBS0(%rip),%r11
 .byte	102,15,56,0,247
 	movl	%ebx,%r10d
 
@@ -1492,7 +1492,7 @@ bsaes_ctr32_encrypt_blocks:
 	movdqu	%xmm6,80(%r13)
 	pxor	%xmm14,%xmm4
 	movdqu	%xmm1,96(%r13)
-	leaq	.LADD1@GOTPCREL(%rip),%r11
+	leaq	.LADD1(%rip),%r11
 	movdqu	%xmm4,112(%r13)
 	leaq	128(%r13),%r13
 	paddd	112(%r11),%xmm15
@@ -1619,7 +1619,7 @@ bsaes_xts_encrypt:
 	movdqa	32(%rbp),%xmm6
 
 	pxor	%xmm14,%xmm14
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm12
+	movdqa	.Lxts_magic(%rip),%xmm12
 	pcmpgtd	%xmm6,%xmm14
 
 	subq	$128,%r14
@@ -1727,7 +1727,7 @@ bsaes_xts_encrypt:
 
 	movdqa	112(%rsp),%xmm6
 	pxor	%xmm14,%xmm14
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm12
+	movdqa	.Lxts_magic(%rip),%xmm12
 	pcmpgtd	%xmm6,%xmm14
 	pshufd	$19,%xmm14,%xmm13
 	pxor	%xmm14,%xmm14
@@ -2078,7 +2078,7 @@ bsaes_xts_decrypt:
 	movdqa	32(%rbp),%xmm6
 
 	pxor	%xmm14,%xmm14
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm12
+	movdqa	.Lxts_magic(%rip),%xmm12
 	pcmpgtd	%xmm6,%xmm14
 
 	subq	$128,%r14
@@ -2186,7 +2186,7 @@ bsaes_xts_decrypt:
 
 	movdqa	112(%rsp),%xmm6
 	pxor	%xmm14,%xmm14
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm12
+	movdqa	.Lxts_magic(%rip),%xmm12
 	pcmpgtd	%xmm6,%xmm14
 	pshufd	$19,%xmm14,%xmm13
 	pxor	%xmm14,%xmm14
@@ -2443,7 +2443,7 @@ bsaes_xts_decrypt:
 	jz	.Lxts_dec_ret
 
 	pxor	%xmm14,%xmm14
-	movdqa	.Lxts_magic@GOTPCREL(%rip),%xmm12
+	movdqa	.Lxts_magic(%rip),%xmm12
 	pcmpgtd	%xmm6,%xmm14
 	pshufd	$19,%xmm14,%xmm13
 	movdqa	%xmm6,%xmm5
