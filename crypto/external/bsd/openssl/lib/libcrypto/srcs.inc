@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.3 2011/06/06 06:44:57 spz Exp $
+#	$NetBSD: srcs.inc,v 1.4 2012/07/26 19:58:40 christos Exp $
 
 CRYPTOINCS= \
 	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc cmac.inc \
@@ -8,12 +8,11 @@ CRYPTOINCS= \
 	md2.inc md4.inc md5.inc objects.inc ocsp.inc pem.inc \
 	pkcs12.inc pkcs7.inc pqueue.inc rand.inc rc2.inc rc4.inc ripemd.inc \
 	rsa.inc sha.inc srp.inc stack.inc store.inc txt_db.inc ts.inc \
-	ui.inc x509.inc x509v3.inc
+	ui.inc x509.inc x509v3.inc idea.inc mdc2.inc whrlpool.inc modes.inc \
+	seed.inc
 
 # patented algorithms - see ../libcrypto_*
-CRYPTOINCS+=	idea.inc
 CRYPTOINCS+=	rc5.inc
-CRYPTOINCS+=	mdc2.inc
 
 CRYPTOINCS+=	man.inc
 

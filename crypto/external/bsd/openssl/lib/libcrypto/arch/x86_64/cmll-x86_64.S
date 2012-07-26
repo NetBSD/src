@@ -29,7 +29,7 @@ Camellia_EncryptBlock_Rounds:
 	movq	%rdx,%r14
 
 	shll	$6,%edi
-	leaq	.LCamellia_SBOX(%rip),%rbp
+	leaq	.LCamellia_SBOX@GOTPCREL(%rip),%rbp
 	leaq	(%r14,%rdi,1),%r15
 
 	movl	0(%rsi),%r8d
@@ -298,7 +298,7 @@ Camellia_DecryptBlock_Rounds:
 	movq	%rdx,%r15
 
 	shll	$6,%edi
-	leaq	.LCamellia_SBOX(%rip),%rbp
+	leaq	.LCamellia_SBOX@GOTPCREL(%rip),%rbp
 	leaq	(%r15,%rdi,1),%r14
 
 	movl	0(%rsi),%r8d
@@ -595,8 +595,8 @@ Camellia_Ekeygen:
 	xorl	12(%r13),%r10d
 
 .L1st128:
-	leaq	.LCamellia_SIGMA(%rip),%r14
-	leaq	.LCamellia_SBOX(%rip),%rbp
+	leaq	.LCamellia_SIGMA@GOTPCREL(%rip),%r14
+	leaq	.LCamellia_SBOX@GOTPCREL(%rip),%rbp
 
 	movl	0(%r14),%ebx
 	movl	4(%r14),%eax
@@ -1638,7 +1638,7 @@ Camellia_cbc_encrypt:
 	movq	%rbp,48(%rsp)
 
 .Lcbc_body:
-	leaq	.LCamellia_SBOX(%rip),%rbp
+	leaq	.LCamellia_SBOX@GOTPCREL(%rip),%rbp
 
 	movl	$32,%ecx
 .align	4

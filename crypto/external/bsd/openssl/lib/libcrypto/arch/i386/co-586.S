@@ -1,4 +1,4 @@
-.file	"co-586.s"
+.file	"/net/quasar/src-5/NetBSD/src/crypto/external/bsd/openssl/dist/crypto/bn/asm/co-586.s"
 .text
 .globl	bn_mul_comba8
 .type	bn_mul_comba8,@function
