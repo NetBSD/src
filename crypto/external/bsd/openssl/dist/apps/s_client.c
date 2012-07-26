@@ -206,6 +206,9 @@ static int c_status_req=0;
 static int c_msg=0;
 static int c_showcerts=0;
 
+static char *keymatexportlabel=NULL;
+static int keymatexportlen=20;
+
 static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
 #ifndef OPENSSL_NO_TLSEXT
@@ -354,8 +357,14 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
+# if !defined(OPENSSL_NO_NEXTPROTONEG)
+	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
+# endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
+ 	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
+ 	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	}
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -394,7 +403,7 @@ typedef struct srp_arg_st
 
 #define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
 
-static int SRP_Verify_N_and_g(BIGNUM *N, BIGNUM *g)
+static int srp_Verify_N_and_g(BIGNUM *N, BIGNUM *g)
 	{
 	BN_CTX *bn_ctx = BN_CTX_new();
 	BIGNUM *p = BN_new();
@@ -422,6 +431,21 @@ static int SRP_Verify_N_and_g(BIGNUM *N, BIGNUM *g)
 	return ret;
 	}
 
+/* This callback is used here for two purposes:
+   - extended debugging
+   - making some primality tests for unknown groups
+   The callback is only called for a non default group.
+
+   An application does not need the call back at all if
+   only the stanard groups are used.  In real life situations, 
+   client and server already share well known groups, 
+   thus there is no need to verify them. 
+   Furthermore, in case that a server actually proposes a group that
+   is not one of those defined in RFC 5054, it is more appropriate 
+   to add the group to a static list and then compare since 
+   primality tests are rather cpu consuming.
+*/
+
 static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
 	{
 	SRP_ARG *srp_arg = (SRP_ARG *)arg;
@@ -444,11 +468,11 @@ static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
 		if (srp_arg->debug)
 			BIO_printf(bio_err, "SRP param N and g are not known params, going to check deeper.\n");
 
-/* The srp_moregroups must be used with caution, testing primes costs time. 
+/* The srp_moregroups is a real debugging feature.
    Implementors should rather add the value to the known ones.
    The minimal size has already been tested.
 */
-		if (BN_num_bits(g) <= BN_BITS && SRP_Verify_N_and_g(N,g))
+		if (BN_num_bits(g) <= BN_BITS && srp_Verify_N_and_g(N,g))
 			return 1;
 		}	
 	BIO_printf(bio_err, "SRP param N and g rejected.\n");
@@ -477,13 +501,42 @@ static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	return pass;
 	}
 
-static char * MS_CALLBACK missing_srp_username_callback(SSL *s, void *arg)
-	{
-	SRP_ARG *srp_arg = (SRP_ARG *)arg;
-	return BUF_strdup(srp_arg->srplogin);
-	}
-
 #endif
+	char *srtp_profiles = NULL;
+
+# ifndef OPENSSL_NO_NEXTPROTONEG
+/* This the context that we pass to next_proto_cb */
+typedef struct tlsextnextprotoctx_st {
+	unsigned char *data;
+	unsigned short len;
+	int status;
+} tlsextnextprotoctx;
+
+static tlsextnextprotoctx next_proto;
+
+static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
+	{
+	tlsextnextprotoctx *ctx = arg;
+
+	if (!c_quiet)
+		{
+		/* We can assume that |in| is syntactically valid. */
+		unsigned i;
+		BIO_printf(bio_c_out, "Protocols advertised by server: ");
+		for (i = 0; i < inlen; )
+			{
+			if (i)
+				BIO_write(bio_c_out, ", ", 2);
+			BIO_write(bio_c_out, &in[i + 1], in[i]);
+			i += in[i] + 1;
+			}
+		BIO_write(bio_c_out, "\n", 1);
+		}
+
+	ctx->status = SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
+	return SSL_TLSEXT_ERR_OK;
+	}
+# endif
 #endif
 
 enum
@@ -551,6 +604,9 @@ int MAIN(int argc, char **argv)
 	char *servername = NULL; 
         tlsextctx tlsextcbp = 
         {NULL,0};
+# ifndef OPENSSL_NO_NEXTPROTONEG
+	const char *next_proto_neg_in = NULL;
+# endif
 #endif
 	char *sess_in = NULL;
 	char *sess_out = NULL;
@@ -567,13 +623,7 @@ int MAIN(int argc, char **argv)
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
 #endif
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
-#elif !defined(OPENSSL_NO_SSL3)
-	meth=SSLv3_client_method();
-#elif !defined(OPENSSL_NO_SSL2)
-	meth=SSLv2_client_method();
-#endif
 
 	apps_startup();
 	c_Pause=0;
@@ -708,7 +758,7 @@ int MAIN(int argc, char **argv)
 			psk_key=*(++argv);
 			for (j = 0; j < strlen(psk_key); j++)
                                 {
-                                if (isxdigit((int)psk_key[j]))
+                                if (isxdigit((unsigned char)psk_key[j]))
                                         continue;
                                 BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
                                 goto bad;
@@ -822,6 +872,13 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-no_ticket") == 0)
 			{ off|=SSL_OP_NO_TICKET; }
+# ifndef OPENSSL_NO_NEXTPROTONEG
+		else if (strcmp(*argv,"-nextprotoneg") == 0)
+			{
+			if (--argc < 1) goto bad;
+			next_proto_neg_in = *(++argv);
+			}
+# endif
 #endif
 		else if (strcmp(*argv,"-serverpref") == 0)
 			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
@@ -889,7 +946,23 @@ int MAIN(int argc, char **argv)
 			jpake_secret = *++argv;
 			}
 #endif
-		else
+		else if (strcmp(*argv,"-use_srtp") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srtp_profiles = *(++argv);
+			}
+		else if (strcmp(*argv,"-keymatexport") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keymatexportlabel= *(++argv);
+			}
+		else if (strcmp(*argv,"-keymatexportlen") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keymatexportlen=atoi(*(++argv));
+			if (keymatexportlen == 0) goto bad;
+			}
+                else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
 			badop=1;
@@ -915,18 +988,32 @@ bad:
 			goto end;
 			}
 		psk_identity = "JPAKE";
+		if (cipher)
+			{
+			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
+			goto end;
+			}
+		cipher = "PSK";
 		}
-
-	if (cipher)
-		{
-		BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-		goto end;
-		}
-	cipher = "PSK";
 #endif
 
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+	next_proto.status = -1;
+	if (next_proto_neg_in)
+		{
+		next_proto.data = next_protos_parse(&next_proto.len, next_proto_neg_in);
+		if (next_proto.data == NULL)
+			{
+			BIO_printf(bio_err, "Error parsing -nextprotoneg argument\n");
+			goto end;
+			}
+		}
+	else
+		next_proto.data = NULL;
+#endif
 
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
@@ -1044,10 +1131,9 @@ bad:
 			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
+	if (srtp_profiles != NULL)
+		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 #endif
-	/* HACK while TLS v1.2 is disabled by default */
-	if (!(off & SSL_OP_NO_TLSv1_2))
-		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else
@@ -1059,6 +1145,11 @@ bad:
 	 * Setting read ahead solves this problem.
 	 */
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+	if (next_proto.data)
+		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
+#endif
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -1094,9 +1185,7 @@ bad:
 #ifndef OPENSSL_NO_SRP
         if (srp_arg.srplogin)
 		{
-		if (srp_lateuser) 
-			SSL_CTX_set_srp_missing_srp_username_callback(ctx,missing_srp_username_callback);
-		else if (!SSL_CTX_set_srp_username(ctx, srp_arg.srplogin))
+		if (!srp_lateuser && !SSL_CTX_set_srp_username(ctx, srp_arg.srplogin))
 			{
 			BIO_printf(bio_err,"Unable to set SRP username\n");
 			goto end;
@@ -1779,6 +1868,14 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				SSL_renegotiate(con);
 				cbuf_len=0;
 				}
+#ifndef OPENSSL_NO_HEARTBEATS
+			else if ((!c_ign_eof) && (cbuf[0] == 'B'))
+ 				{
+				BIO_printf(bio_err,"HEARTBEATING\n");
+				SSL_heartbeat(con);
+				cbuf_len=0;
+				}
+#endif
 			else
 				{
 				cbuf_len=i;
@@ -1840,6 +1937,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_COMP
 	const COMP_METHOD *comp, *expansion;
 #endif
+	unsigned char *exportedkeymat;
 
 	if (full)
 		{
@@ -1965,7 +2063,53 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
 #endif
 
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+	if (next_proto.status != -1) {
+		const unsigned char *proto;
+		unsigned int proto_len;
+		SSL_get0_next_proto_negotiated(s, &proto, &proto_len);
+		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
+		BIO_write(bio, proto, proto_len);
+		BIO_write(bio, "\n", 1);
+	}
+#endif
+
+ 	{
+ 	SRTP_PROTECTION_PROFILE *srtp_profile=SSL_get_selected_srtp_profile(s);
+ 
+	if(srtp_profile)
+		BIO_printf(bio,"SRTP Extension negotiated, profile=%s\n",
+			   srtp_profile->name);
+	}
+ 
 	SSL_SESSION_print(bio,SSL_get_session(s));
+	if (keymatexportlabel != NULL)
+		{
+		BIO_printf(bio, "Keying material exporter:\n");
+		BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
+		BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
+		exportedkeymat = OPENSSL_malloc(keymatexportlen);
+		if (exportedkeymat != NULL)
+			{
+			if (!SSL_export_keying_material(s, exportedkeymat,
+						        keymatexportlen,
+						        keymatexportlabel,
+						        strlen(keymatexportlabel),
+						        NULL, 0, 0))
+				{
+				BIO_printf(bio, "    Error\n");
+				}
+			else
+				{
+				BIO_printf(bio, "    Keying material: ");
+				for (i=0; i<keymatexportlen; i++)
+					BIO_printf(bio, "%02X",
+						   exportedkeymat[i]);
+				BIO_printf(bio, "\n");
+				}
+			OPENSSL_free(exportedkeymat);
+			}
+		}
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)
 		X509_free(peer);
