@@ -125,10 +125,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
 		 * ENGINE and EVP_CIPHER could be used). */
-		EVP_CIPHER_CTX_cleanup(ctx);
-
-		/* Restore encrypt field: it is zeroed by cleanup */
-		ctx->encrypt = enc;
+		if (ctx->cipher)
+			{
+			unsigned long flags = ctx->flags;
+			EVP_CIPHER_CTX_cleanup(ctx);
+			/* Restore encrypt and flags */
+			ctx->encrypt = enc;
+			ctx->flags = flags;
+			}
 #ifndef OPENSSL_NO_ENGINE
 		if(impl)
 			{
@@ -166,8 +170,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 #endif
 
 #ifdef OPENSSL_FIPS
-		return FIPS_cipherinit(ctx, cipher, key, iv, enc);
-#else
+		if (FIPS_mode())
+			return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+#endif
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)
 			{
@@ -192,7 +197,6 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 				return 0;
 				}
 			}
-#endif
 		}
 	else if(!ctx->cipher)
 		{
@@ -203,8 +207,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 skip_to_init:
 #endif
 #ifdef OPENSSL_FIPS
-	return FIPS_cipherinit(ctx, cipher, key, iv, enc);
-#else
+	if (FIPS_mode())
+		return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+#endif
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	OPENSSL_assert(ctx->cipher->block_size == 1
 	    || ctx->cipher->block_size == 8
@@ -232,6 +237,7 @@ skip_to_init:
 			break;
 
 			case EVP_CIPH_CTR_MODE:
+			ctx->num = 0;
 			/* Don't reuse IV for CTR mode */
 			if(iv)
 				memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
@@ -250,7 +256,6 @@ skip_to_init:
 	ctx->final_used=0;
 	ctx->block_mask=ctx->cipher->block_size-1;
 	return 1;
-#endif
 	}
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
