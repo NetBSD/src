@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.1 2012/04/07 01:44:08 tsutsui Exp $
+$NetBSD: README.evbarm,v 1.2 2012/07/26 17:26:59 tsutsui Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ OVERO		2010/07/10	Gumstix Inc. OMAP3530 based Overo boards
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
 SMDK2800	2002/11/20	Samsung SMDK2800 S3C2800 eval board
+RPI		2012/07/26	Raspberry Pi
 TEAMASA_NPWR	2002/02/07	Team ASA Npwr IOP310 based server appliance
 TEAMASA_NPWR_FC	2003/12/24	Team ASA NPWR-FC i80321 server appliance
 TISDP2420	2008/04/27	TI OMAP 2420 eval board
