@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3sdhc.c,v 1.4 2012/02/23 21:07:35 matt Exp $	*/
+/*	$NetBSD: pq3sdhc.c,v 1.5 2012/07/26 18:38:10 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	ESDHC_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.4 2012/02/23 21:07:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.5 2012/07/26 18:38:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +87,7 @@ pq3sdhc_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.sc_dmat = cna->cna_dmat;
 	sc->sc.sc_dev = self;
-	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	//sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 	sc->sc.sc_flags |=
 	    SDHC_FLAG_HAVE_DVS | SDHC_FLAG_32BIT_ACCESS | SDHC_FLAG_ENHANCED;
 	sc->sc.sc_host = sc->sc_hosts;
@@ -100,8 +102,18 @@ pq3sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/*
+	 * If using DMA, enable SNOOPing.
+	 */
+	if (sc->sc.sc_flags & SDHC_FLAG_USE_DMA) {
+		uint32_t dcr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, DCR);
+		dcr |= DCR_SNOOP | DCR_RD_SAFE | DCR_RD_PFE;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, DCR, dcr);
+	}
+
 	aprint_naive(": SDHC controller\n");
-	aprint_normal(": SDHC controller\n");
+	aprint_normal(": SDHC controller%s\n",
+	   (sc->sc.sc_flags & SDHC_FLAG_USE_DMA) ? " (DMA enabled)" : "");
 
 	sc->sc_ih = intr_establish(cnl->cnl_intrs[0], IPL_VM, IST_ONCHIP,
 	    sdhc_intr, &sc->sc);
