@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/06/21 02:19:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2012/07/26 19:58:40 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -29,7 +29,8 @@ USE_FIPS=	no
 WARNS=0
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses
 
-CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC} -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
+CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
+CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 
@@ -66,7 +67,8 @@ INCS+=	aes.h asn1.h asn1_mac.h asn1t.h bio.h blowfish.h bn.h \
 	obj_mac.h objects.h ocsp.h opensslconf.h opensslv.h ossl_typ.h \
 	pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h \
 	rsa.h safestack.h sha.h srp.h stack.h store.h symhacks.h ts.h txt_db.h \
-	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h pqueue.h camellia.h
+	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h pqueue.h camellia.h \
+	whrlpool.h seed.h
 #	des_old.h 
 
 # IDEA - patented, but we install the header anyways

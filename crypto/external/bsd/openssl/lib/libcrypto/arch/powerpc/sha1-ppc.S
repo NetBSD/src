@@ -5,26 +5,26 @@
 .type	sha1_block_data_order,@function
 .align	4
 sha1_block_data_order:
-	mflr	0
 	stwu	1,-160(1)
-	stw	0,24(1)
-	stw	15,28(1)
-	stw	16,32(1)
-	stw	17,36(1)
-	stw	18,40(1)
-	stw	19,44(1)
-	stw	20,48(1)
-	stw	21,52(1)
-	stw	22,56(1)
-	stw	23,60(1)
-	stw	24,64(1)
-	stw	25,68(1)
-	stw	26,72(1)
-	stw	27,76(1)
-	stw	28,80(1)
-	stw	29,84(1)
-	stw	30,88(1)
-	stw	31,92(1)
+	mflr	0
+	stw	15,92(1)
+	stw	16,96(1)
+	stw	17,100(1)
+	stw	18,104(1)
+	stw	19,108(1)
+	stw	20,112(1)
+	stw	21,116(1)
+	stw	22,120(1)
+	stw	23,124(1)
+	stw	24,128(1)
+	stw	25,132(1)
+	stw	26,136(1)
+	stw	27,140(1)
+	stw	28,144(1)
+	stw	29,148(1)
+	stw	30,152(1)
+	stw	31,156(1)
+	stw	0,164(1)
 	lwz	7,0(3)
 	lwz	8,4(3)
 	lwz	9,8(3)
@@ -35,28 +35,14 @@ sha1_block_data_order:
 .Laligned:
 	mtctr	5
 	bl	.Lsha1_block_private
-.Ldone:
-	lwz	0,24(1)
-	lwz	15,28(1)
-	lwz	16,32(1)
-	lwz	17,36(1)
-	lwz	18,40(1)
-	lwz	19,44(1)
-	lwz	20,48(1)
-	lwz	21,52(1)
-	lwz	22,56(1)
-	lwz	23,60(1)
-	lwz	24,64(1)
-	lwz	25,68(1)
-	lwz	26,72(1)
-	lwz	27,76(1)
-	lwz	28,80(1)
-	lwz	29,84(1)
-	lwz	30,88(1)
-	lwz	31,92(1)
-	mtlr	0
-	addi	1,1,160
-	blr	
+	b	.Ldone
+
+
+
+
+
+
+
 .align	4
 .Lunaligned:
 	subfic	6,4,4096
@@ -71,7 +57,7 @@ sha1_block_data_order:
 .Lcross_page:
 	li	6,16
 	mtctr	6
-	addi	20,1,96
+	addi	20,1,24
 .Lmemcpy:
 	lbz	16,0(4)
 	lbz	17,1(4)
@@ -85,15 +71,40 @@ sha1_block_data_order:
 	addi	20,20,4
 	bc	16,0,.Lmemcpy
 
-	stw	4,20(1)
+	stw	4,88(1)
 	li	6,1
-	addi	4,1,96
+	addi	4,1,24
 	mtctr	6
 	bl	.Lsha1_block_private
-	lwz	4,20(1)
+	lwz	4,88(1)
 	addic.	5,5,-1
 	bne-	.Lunaligned
-	b	.Ldone
+
+.Ldone:
+	lwz	0,164(1)
+	lwz	15,92(1)
+	lwz	16,96(1)
+	lwz	17,100(1)
+	lwz	18,104(1)
+	lwz	19,108(1)
+	lwz	20,112(1)
+	lwz	21,116(1)
+	lwz	22,120(1)
+	lwz	23,124(1)
+	lwz	24,128(1)
+	lwz	25,132(1)
+	lwz	26,136(1)
+	lwz	27,140(1)
+	lwz	28,144(1)
+	lwz	29,148(1)
+	lwz	30,152(1)
+	lwz	31,156(1)
+	mtlr	0
+	addi	1,1,160
+	blr	
+.long	0
+.byte	0,12,4,1,0x80,18,3,0
+.long	0
 .align	4
 .Lsha1_block_private:
 	lis	0,0x5a82
@@ -1099,5 +1110,7 @@ sha1_block_data_order:
 	addi	4,4,64
 	bdnz+	.Lsha1_block_private
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 .byte	83,72,65,49,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,80,80,67,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,102,121,46,99,104,97,108,109,101,114,115,46,115,101,62,0
 .align	2
