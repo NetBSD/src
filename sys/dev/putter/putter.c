@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.32 2011/07/23 14:28:28 hannken Exp $	*/
+/*	$NetBSD: putter.c,v 1.33 2012/07/26 10:13:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.32 2011/07/23 14:28:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.33 2012/07/26 10:13:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,6 +392,11 @@ putter_fop_close(file_t *fp)
 	mutex_exit(&pi_mtx);
 
 	/* hmm?  suspicious locking? */
+	if (pi->pi_curput != NULL) {
+		pi->pi_pop->pop_releaseout(pi->pi_private, pi->pi_curopaq,
+		    ENXIO);
+		pi->pi_curput = NULL;
+	}
 	while ((rv = pi->pi_pop->pop_close(pi->pi_private)) == ERESTART)
 		goto restart;
 
