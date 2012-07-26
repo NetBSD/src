@@ -100,7 +100,7 @@ sub do_lib_rule
 	local($ret,$Name);
 
 	$taget =~ s/\//$o/g if $o ne '/';
-	($Name=$name) =~ tr/a-z/A-Z/;
+	(Name=name) =~ tr/a-z/A-Z/;
 
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
