@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.14 2012/07/02 18:15:48 bouyer Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.15 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.14 2012/07/02 18:15:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.15 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,6 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	/* We can use SControl and SStatus to probe for drives. */
 	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
-	sc->sc_wdcdev.wdc_maxdrives = 1;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 

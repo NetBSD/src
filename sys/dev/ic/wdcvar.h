@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.93 2012/07/02 18:15:47 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.94 2012/07/26 20:49:49 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 #define WDC_NREG	8 /* number of command registers */
 #define	WDC_NSHADOWREG	2 /* number of command "shadow" registers */
 
-#define WDC_MAXDRIVES	2 /* absolute max number of drives per channel */
-
 struct wdc_regs {
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
@@ -76,9 +74,7 @@ struct wdc_softc {
 
 	struct wdc_regs *regs;		/* register array (per-channel) */
 
-	int		wdc_maxdrives;	/* max number of drives per channel */
-
-	int		cap;		/* controller capabilities */
+	int           cap;		/* controller capabilities */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_WIDEREGS 0x0400  /* Ctrl has wide (16bit) registers  */
@@ -168,7 +164,7 @@ void	wdccommandext(struct ata_channel *, u_int8_t, u_int8_t, u_int64_t,
 		      u_int16_t, u_int16_t);
 void	wdccommandshort(struct ata_channel *, int, int);
 void	wdctimeout(void *arg);
-void	wdc_reset_drive(struct ata_drive_datas *, int, uint32_t *);
+void	wdc_reset_drive(struct ata_drive_datas *, int);
 void	wdc_reset_channel(struct ata_channel *, int);
 void	wdc_do_reset(struct ata_channel *, int);
 
