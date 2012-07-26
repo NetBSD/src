@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1118 2012/07/25 02:05:22 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1119 2012/07/26 03:15:10 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1125 2012/07/25 02:04:42 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1126 2012/07/26 03:11:41 uwe Exp
  */
 
 /*
@@ -658,6 +658,7 @@
 #define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
 #define	PCI_VENDOR_QUANCOM	0x8008		/* QUANCOM Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
+#define	PCI_VENDOR_VIRTUALBOX	0x80ee		/* VirtualBox */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_PROLAN	0x8c4a		/* ProLAN */
 #define	PCI_VENDOR_COMPUTONE	0x8e0e		/* Computone */
@@ -4923,6 +4924,10 @@
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_D238	0xd238		/* K8T890 PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_E238	0xe238		/* K8T890 PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_K8T890_PPB_F238	0xf238		/* K8T890 PCI-PCI Bridge */
+
+/* VirtualBox products */
+#define	PCI_PRODUCT_VIRTUALBOX_GRAPHICS	0xbeef		/* Graphics */
+#define	PCI_PRODUCT_VIRTUALBOX_GUEST	0xcafe		/* Guest Service */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_60x0	0x0000		/* GDT6000/6020/6050 */
