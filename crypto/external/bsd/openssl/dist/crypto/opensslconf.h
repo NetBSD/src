@@ -4,8 +4,9 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
-#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
-# define OPENSSL_NO_EC_NISTP224_64_GCC_128
+
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+# define OPENSSL_NO_EC_NISTP_64_GCC_128
 #endif
 #ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
@@ -20,9 +21,6 @@
 #ifndef OPENSSL_NO_MD2
 # define OPENSSL_NO_MD2
 #endif
-#ifndef OPENSSL_NO_MDC2
-# define OPENSSL_NO_MDC2
-#endif
 #ifndef OPENSSL_NO_RC5
 # define OPENSSL_NO_RC5
 #endif
@@ -33,28 +31,15 @@
 # define OPENSSL_NO_STORE
 #endif
 #else
-#ifndef OPENSSL_THREADS
-#define OPENSSL_THREADS
-#endif
-#ifndef OPENSSL_NO_HW_PADLOCK
-#define OPENSSL_NO_HW_PADLOCK
-#endif
-#ifndef OPENSSL_NO_GOST
-#define OPENSSL_NO_GOST
-#endif
-#ifndef OPENSSL_NO_SEED
-#define OPENSSL_NO_SEED
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-#define OPENSSL_NO_WHIRLPOOL
+#ifndef OPENSSL_NO_SCTP
+# define OPENSSL_NO_SCTP
 #endif
 #endif
+
+#define OPENSSL_CPUID_OBJ
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
 
-#ifndef OPENSSL_THREADS
-# define OPENSSL_THREADS
-#endif
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 # define OPENSSL_NO_DYNAMIC_ENGINE
 #endif
@@ -64,11 +49,8 @@
    who haven't had the time to do the appropriate changes in their
    applications.  */
 #ifdef OPENSSL_ALGORITHM_DEFINES
-# if defined(OPENSSL_NO_EC_NISTP224_64_GCC_128) && !defined(NO_EC_NISTP224_64_GCC_128)
-#  define NO_EC_NISTP224_64_GCC_128
-# endif
-# if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
-#  define NO_CAMELLIA
+# if defined(OPENSSL_NO_EC_NISTP_64_GCC_128) && !defined(NO_EC_NISTP_64_GCC_128)
+#  define NO_EC_NISTP_64_GCC_128
 # endif
 # if defined(OPENSSL_NO_GMP) && !defined(NO_GMP)
 #  define NO_GMP
@@ -82,14 +64,14 @@
 # if defined(OPENSSL_NO_MD2) && !defined(NO_MD2)
 #  define NO_MD2
 # endif
-# if defined(OPENSSL_NO_MDC2) && !defined(NO_MDC2)
-#  define NO_MDC2
-# endif
 # if defined(OPENSSL_NO_RC5) && !defined(NO_RC5)
 #  define NO_RC5
 # endif
 # if defined(OPENSSL_NO_RFC3779) && !defined(NO_RFC3779)
 #  define NO_RFC3779
+# endif
+# if defined(OPENSSL_NO_SCTP) && !defined(NO_SCTP)
+#  define NO_SCTP
 # endif
 # if defined(OPENSSL_NO_STORE) && !defined(NO_STORE)
 #  define NO_STORE
@@ -111,11 +93,10 @@
 #undef OPENSSL_UNISTD
 #define OPENSSL_UNISTD <unistd.h>
 
-#include <sys/types.h>
 #undef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 #if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
-#define IDEA_INT unsigned int
+#define IDEA_INT uint32_t
 #endif
 
 #if defined(HEADER_MD2_H) && !defined(MD2_INT)
@@ -143,7 +124,11 @@
  * This enables code handling data aligned at natural CPU word
  * boundary. See crypto/rc4/rc4_enc.c for further details.
  */
+#ifdef _LP64
+#define RC4_CHUNK uint64_t
+#else
 #undef RC4_CHUNK
+#endif
 #endif
 #endif
 
@@ -163,16 +148,14 @@
 
 /* Only one for the following should be defined */
 #ifdef _LP64
-#define SIXTY_FOUR_BIT_LONG
-#undef SIXTY_FOUR_BIT
+#undef SIXTY_FOUR_BIT_LONG
+#define SIXTY_FOUR_BIT
 #undef THIRTY_TWO_BIT
 #else
 #undef SIXTY_FOUR_BIT_LONG
 #undef SIXTY_FOUR_BIT
 #define THIRTY_TWO_BIT
 #endif
-#undef SIXTEEN_BIT
-#undef EIGHT_BIT
 #endif
 
 #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
