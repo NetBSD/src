@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.13 2012/07/18 19:38:26 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.14 2012/07/26 18:41:32 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -343,6 +343,17 @@
 
 #define	ESDHC_BASE	0x2e000
 #define	ESDHC_SIZE	0x01000
+
+#ifdef ESDHC_PRIVATE
+
+#define	DCR		0x40c		/* DMA Control Register */
+
+#define	DCR_SNOOP	__PPCBIT(25)	/* DMA transactions are snooped */
+#define	DCR_RD_SAFE	__PPCBIT(29)	/* memory is read safe */
+#define	DCR_RD_PFE	__PPCBIT(30)	/* memory is prefetch safe */
+#define	DCR_RD_PF_SIZE	__PPCBIT(31)	/* prefetch size is 32-bytes */
+
+#endif
 
 #define	GLOBAL_BASE	0xe0000
 #define	GLOBAL_SIZE	0x01000
