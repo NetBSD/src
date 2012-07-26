@@ -21,7 +21,7 @@ sha256_block_data_order:
 	movq	%r11,64+24(%rsp)
 .Lprologue:
 
-	leaq	K256@GOTPCREL(%rip),%rbp
+	leaq	K256(%rip),%rbp
 
 	movl	0(%rdi),%eax
 	movl	4(%rdi),%ebx
