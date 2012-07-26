@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.96 2012/07/14 22:37:41 mlelstv Exp $
+# $NetBSD: ad.mips64el,v 1.97 2012/07/26 20:05:37 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -75,8 +75,8 @@
 ./usr/lib/64/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypt.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/64/libcrypto.so.7			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libcrypto.so.7.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libcrypto.so.8.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/64/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -255,8 +255,8 @@
 ./usr/lib/64/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/64/libssh.so.19			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libssh.so.19.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libssl.so.9			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libssl.so.9.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libssl.so.10			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/64/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
@@ -385,8 +385,8 @@
 ./usr/lib/o32/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypt.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libcrypto.so.7			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libcrypto.so.7.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libcrypto.so.8.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic,crypto
@@ -559,8 +559,8 @@
 ./usr/lib/o32/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/o32/libssh.so.19			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssh.so.19.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libssl.so.9			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libssl.so.9.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libssl.so.10			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
