@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.25 2012/07/23 13:32:19 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.26 2012/07/26 18:36:09 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.25 2012/07/23 13:32:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.26 2012/07/26 18:36:09 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -403,8 +403,12 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
-	if (ISSET(hp->flags, SHF_USE_DMA))
-		saa.saa_caps |= SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA;
+	if (ISSET(hp->flags, SHF_USE_DMA)) {
+		saa.saa_caps |= SMC_CAPS_DMA;
+		if (!ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			saa.saa_caps |= SMC_CAPS_MULTI_SEG_DMA;
+		}
+	}
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
@@ -782,8 +786,8 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 
 	/* Must not stop the clock if commands are in progress. */
 	if (present && sdhc_card_detect(hp)) {
-		printf("%s: sdhc_sdclk_frequency_select: command in progress\n",
-		    device_xname(hp->sc->sc_dev));
+		aprint_normal_dev(hp->sc->sc_dev,
+		    "%s: command in progress\n", __func__);
 	}
 #endif
 
@@ -978,8 +982,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int error;
 
-#if 0
-	if (cmd->c_data) {
+	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
 		if (ISSET(hp->flags, SHF_USE_DMA)) {
 			HCLR2(hp, SDHC_NINTR_SIGNAL_EN, ready);
@@ -989,7 +992,6 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			HSET2(hp, SDHC_NINTR_STATUS_EN, ready);
 		}  
 	}
-#endif
 
 	/*
 	 * Start the MMC command, or mark `cmd' as failed and return.
