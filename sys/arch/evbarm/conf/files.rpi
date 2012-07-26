@@ -1,0 +1,13 @@
+#	$NetBSD: files.rpi,v 1.1 2012/07/26 06:21:57 skrll Exp $
+#
+# Raspberry Pi 
+#
+
+file	arch/evbarm/rpi/rpi_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/broadcom/files.bcm2835"
+
