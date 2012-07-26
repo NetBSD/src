@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.121 2012/07/24 14:04:29 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.122 2012/07/26 20:49:47 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.121 2012/07/24 14:04:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.122 2012/07/26 20:49:47 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -55,15 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.121 2012/07/24 14:04:29 jakllsch Exp $");
 
 #include "atapibus.h"
 #include "ataraid.h"
-#include "sata_pmp.h"
 
 #if NATARAID > 0
 #include <dev/ata/ata_raidvar.h>
 #endif
-#if NSATA_PMP > 0
-#include <dev/ata/satapmpvar.h>
-#endif
-#include <dev/ata/satapmpreg.h>
 
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
@@ -204,19 +199,13 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	chp->ch_flags |= ATACH_TH_RUN;
 	splx(s);
 
-	/*
-	 * Probe for the drives attached to controller, unless a PMP
-	 * is already known
-	 */
+	/* Probe for the drives. */
 	/* XXX for SATA devices we will power up all drives at once */
-	if (chp->ch_satapmp_nports == 0)
-		(*atac->atac_probe)(chp);
+	(*atac->atac_probe)(chp);
 
-	if (chp->ch_drive != NULL && chp->ch_ndrives >= 2) {
-		ATADEBUG_PRINT(("atabusattach: ch_drive_type 0x%x 0x%x\n",
-		    chp->ch_drive[0].drive_type, chp->ch_drive[1].drive_type),
-		    DEBUG_PROBE);
-	}
+	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
+	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
+	    DEBUG_PROBE);
 
 	/* next operations will occurs in a separate thread */
 	s = splbio();
@@ -234,18 +223,16 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	mutex_exit(&atabus_qlock);
 
 	/* If no drives, abort here */
-	if (chp->ch_drive == NULL)
-		goto out;
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (i = 0; i < chp->ch_ndrives; i++)
-		if (chp->ch_drive[i].drive_type != DRIVET_NONE)
+	for (i = 0; i < chp->ch_ndrive; i++)
+		if ((chp->ch_drive[i].drive_flags & DRIVE) != 0)
 			break;
-	if (i == chp->ch_ndrives)
+	if (i == chp->ch_ndrive)
 		goto out;
 
 	/* Shortcut in case we've been shutdown */
 	if (chp->ch_flags & ATACH_SHUTDOWN)
 		goto out;
+
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabusconfig_thread,
 	    atabus_sc, &atabus_cfg_lwp,
@@ -287,25 +274,10 @@ atabusconfig_thread(void *arg)
 	mutex_exit(&atabus_qlock);
 
 	/*
-	 * First look for a port multiplier
-	 */
-	if (chp->ch_ndrives == PMP_MAX_DRIVES &&
-	    chp->ch_drive[PMP_PORT_CTL].drive_type == DRIVET_PM) {
-#if NSATA_PMP > 0
-		satapmp_attach(chp);
-#else
-		aprint_error_dev(atabus_sc->sc_dev,
-		    "SATA port multiplier not supported\n");
-		/* no problems going on, all drives are DRIVET_NONE */
-#endif
-	}
-
-	/*
 	 * Attach an ATAPI bus, if needed.
 	 */
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (i = 0; i < chp->ch_ndrives && chp->atapibus == NULL; i++) {
-		if (chp->ch_drive[i].drive_type == DRIVET_ATAPI) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI) {
 #if NATAPIBUS > 0
 			(*atac->atac_atapibus_attach)(atabus_sc);
 #else
@@ -316,36 +288,33 @@ atabusconfig_thread(void *arg)
 			    device_xname(atac->atac_dev));
 			chp->atapibus = NULL;
 			s = splbio();
-			for (i = 0; i < chp->ch_ndrives; i++) {
-				if (chp->ch_drive[i].drive_type == DRIVET_ATAPI)
-					chp->ch_drive[i].drive_type = DRIVET_NONE;
-			}
+			for (i = 0; i < chp->ch_ndrive; i++)
+				chp->ch_drive[i].drive_flags &= ~DRIVE_ATAPI;
 			splx(s);
 #endif
 			break;
 		}
 	}
 
-	for (i = 0; i < chp->ch_ndrives; i++) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
 		struct ata_device adev;
-		if (chp->ch_drive[i].drive_type != DRIVET_ATA &&
-		    chp->ch_drive[i].drive_type != DRIVET_OLD) {
+		if ((chp->ch_drive[i].drive_flags &
+		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
 			continue;
 		}
-		if (chp->ch_drive[i].drv_softc != NULL)
-			continue;
 		memset(&adev, 0, sizeof(struct ata_device));
 		adev.adev_bustype = atac->atac_bustype_ata;
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ch_drive[i].drv_softc = config_found_ia(atabus_sc->sc_dev,
+		chp->ata_drives[i] = config_found_ia(atabus_sc->sc_dev,
 		    "ata_hl", &adev, ataprint);
-		if (chp->ch_drive[i].drv_softc != NULL) {
+		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
-		} else {
+		else {
 			s = splbio();
-			chp->ch_drive[i].drive_type = DRIVET_NONE;
+			chp->ch_drive[i].drive_flags &=
+			    ~(DRIVE_ATA | DRIVE_OLD);
 			splx(s);
 		}
 	}
@@ -356,14 +325,10 @@ atabusconfig_thread(void *arg)
 		ata_print_modes(chp);
 	}
 #if NATARAID > 0
-	if (atac->atac_cap & ATAC_CAP_RAID) {
-		for (i = 0; i < chp->ch_ndrives; i++) {
-			if (chp->ch_drive[i].drive_type == DRIVET_ATA) {
-				ata_raid_check_component(
-				    chp->ch_drive[i].drv_softc);
-			}
-		}
-	}
+	if (atac->atac_cap & ATAC_CAP_RAID)
+		for (i = 0; i < chp->ch_ndrive; i++)
+			if (chp->ata_drives[i] != NULL)
+				ata_raid_check_component(chp->ata_drives[i]);
 #endif /* NATARAID > 0 */
 
 	/*
@@ -371,13 +336,10 @@ atabusconfig_thread(void *arg)
 	 * ones
 	 */
 	s = splbio();
-	for (i = 0; i < chp->ch_ndrives; i++) {
-		if (chp->ch_drive[i].drive_type == DRIVET_PM)
-			continue;
-		if (chp->ch_drive[i].drv_softc == NULL) {
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drv_softc == NULL)
 			chp->ch_drive[i].drive_flags = 0;
-			chp->ch_drive[i].drive_type = DRIVET_NONE;
-		} else
+		else
 			chp->ch_drive[i].state = 0;
 	}
 	splx(s);
@@ -412,16 +374,13 @@ atabus_thread(void *arg)
 	chp->ch_flags |= ATACH_TH_RUN;
 
 	/*
-	 * Probe the drives.  Reset type to indicate to controllers
+	 * Probe the drives.  Reset all flags to 0 to indicate to controllers
 	 * that can re-probe that all drives must be probed..
 	 *
-	 * Note: ch_ndrives may be changed during the probe.
+	 * Note: ch_ndrive may be changed during the probe.
 	 */
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (i = 0; i < chp->ch_ndrives; i++) {
+	for (i = 0; i < ATA_MAXDRIVES; i++)
 		chp->ch_drive[i].drive_flags = 0;
-		chp->ch_drive[i].drive_type = DRIVET_NONE;
-	}
 	splx(s);
 
 	atabusconfig(sc);
@@ -563,28 +522,24 @@ atabus_detach(device_t self, int flags)
 		KASSERT(chp->atapibus == NULL);
 	}
 
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-
 	/*
 	 * Detach our other children.
 	 */
-	for (i = 0; i < chp->ch_ndrives; i++) {
-		if (chp->ch_drive[i].drive_type == DRIVET_ATAPI)
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if (chp->ch_drive[i].drive_type == DRIVET_PM)
-			chp->ch_drive[i].drive_type = DRIVET_NONE;
-		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
+		if ((dev = chp->ata_drives[i]) != NULL) {
 			ATADEBUG_PRINT(("%s.%d: %s: detaching %s\n", __func__,
 			    __LINE__, device_xname(self), device_xname(dev)),
 			    DEBUG_DETACH);
+			KASSERT(chp->ch_drive[i].drv_softc ==
+			        chp->ata_drives[i]);
 			error = config_detach(dev, flags);
 			if (error)
 				goto out;
-			KASSERT(chp->ch_drive[i].drv_softc == NULL);
-			KASSERT(chp->ch_drive[i].drive_type == 0);
+			KASSERT(chp->ata_drives[i] == NULL);
 		}
 	}
-	atabus_free_drives(chp);
 
  out:
 #ifdef ATADEBUG
@@ -605,35 +560,26 @@ atabus_childdetached(device_t self, device_t child)
 	struct ata_channel *chp = sc->sc_chan;
 	int i;
 
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
 	/*
 	 * atapibus detached.
 	 */
 	if (child == chp->atapibus) {
 		chp->atapibus = NULL;
 		found = true;
-		for (i = 0; i < chp->ch_ndrives; i++) {
-			if (chp->ch_drive[i].drive_type != DRIVET_ATAPI)
-				continue;
-			KASSERT(chp->ch_drive[i].drv_softc != NULL);
-			chp->ch_drive[i].drv_softc = NULL;
-			chp->ch_drive[i].drive_flags = 0;
-			chp->ch_drive[i].drive_type = DRIVET_NONE;
-		}
 	}
 
 	/*
 	 * Detach our other children.
 	 */
-	for (i = 0; i < chp->ch_ndrives; i++) {
-		if (chp->ch_drive[i].drive_type == DRIVET_ATAPI)
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if (child == chp->ch_drive[i].drv_softc) {
+		if (child == chp->ata_drives[i]) {
+			KASSERT(chp->ata_drives[i] ==
+			        chp->ch_drive[i].drv_softc);
+			chp->ata_drives[i] = NULL;
 			chp->ch_drive[i].drv_softc = NULL;
 			chp->ch_drive[i].drive_flags = 0;
-			if (chp->ch_drive[i].drive_type == DRIVET_PM)
-				chp->ch_satapmp_nports = 0;
-			chp->ch_drive[i].drive_type = DRIVET_NONE;
 			found = true;
 		}
 	}
@@ -650,64 +596,6 @@ CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
 /*****************************************************************************
  * Common ATA bus operations.
  *****************************************************************************/
-
-/* allocate/free the channel's ch_drive[] array */
-int
-atabus_alloc_drives(struct ata_channel *chp, int ndrives)
-{
-	int i;
-	if (chp->ch_ndrives != ndrives)
-		atabus_free_drives(chp);
-	if (chp->ch_drive == NULL) {
-		chp->ch_drive = malloc(
-		    sizeof(struct ata_drive_datas) * ndrives,
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
-	}
-	if (chp->ch_drive == NULL) {
-	    aprint_error_dev(chp->ch_atac->atac_dev,
-		"can't alloc drive array\n");
-	    chp->ch_ndrives = 0;
-	    return ENOMEM;
-	};
-	for (i = 0; i < ndrives; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
-	}
-	chp->ch_ndrives = ndrives;
-	return 0;
-}
-
-void
-atabus_free_drives(struct ata_channel *chp)
-{
-#ifdef DIAGNOSTIC
-	int i;
-	int dopanic = 0;
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (i = 0; i < chp->ch_ndrives; i++) {
-		if (chp->ch_drive[i].drive_type != DRIVET_NONE) {
-			printf("%s: ch_drive[%d] type %d != DRIVET_NONE\n",
-			    device_xname(chp->atabus), i,
-			    chp->ch_drive[i].drive_type);
-			dopanic = 1;
-		}
-		if (chp->ch_drive[i].drv_softc != NULL) {
-			printf("%s: ch_drive[%d] attached to %s\n",
-			    device_xname(chp->atabus), i,
-			    device_xname(chp->ch_drive[i].drv_softc));
-			dopanic = 1;
-		}
-	}
-	if (dopanic)
-		panic("atabus_free_drives");
-#endif
-
-	if (chp->ch_drive == NULL)
-		return;
-	chp->ch_ndrives = 0;
-	free(chp->ch_drive, M_DEVBUF);
-	chp->ch_drive = NULL;
-}
 
 /* Get the disk's parameters */
 int
@@ -727,12 +615,12 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	memset(prms, 0, sizeof(struct ataparams));
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
-	if (drvp->drive_type == DRIVET_ATA) {
+	if (drvp->drive_flags & DRIVE_ATA) {
 		ata_c.r_command = WDCC_IDENTIFY;
 		ata_c.r_st_bmask = WDCS_DRDY;
 		ata_c.r_st_pmask = WDCS_DRQ;
 		ata_c.timeout = 3000; /* 3s */
-	} else if (drvp->drive_type == DRIVET_ATAPI) {
+	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		ata_c.r_st_bmask = 0;
 		ata_c.r_st_pmask = WDCS_DRQ;
@@ -783,7 +671,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 #if BYTE_ORDER == BIG_ENDIAN
 	    !
 #endif
-	    ((drvp->drive_type == DRIVET_ATAPI) ?
+	    ((drvp->drive_flags & DRIVE_ATAPI) ?
 	     ((M(0) == 'N' && M(1) == 'E') ||
 	      (M(0) == 'F' && M(1) == 'X') ||
 	      (M(0) == 'P' && M(1) == 'i')) :
@@ -1121,8 +1009,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 
 	(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
 
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (drive = 0; drive < chp->ch_ndrives; drive++)
+	for (drive = 0; drive < chp->ch_ndrive; drive++)
 		chp->ch_drive[drive].state = 0;
 
 	chp->ch_flags &= ~ATACH_TH_RESET;
@@ -1176,11 +1063,9 @@ ata_print_modes(struct ata_channel *chp)
 	int drive;
 	struct ata_drive_datas *drvp;
 
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (drive = 0; drive < chp->ch_ndrives; drive++) {
+	for (drive = 0; drive < chp->ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type == DRIVET_NONE ||
-		    drvp->drv_softc == NULL)
+		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
 		aprint_verbose("%s(%s:%d:%d): using PIO mode %d",
 			device_xname(drvp->drv_softc),
@@ -1330,7 +1215,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 #endif
 
 	/* An ATAPI device is at last PIO mode 3 */
-	if (drvp->drive_type == DRIVET_ATAPI)
+	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
 
 	/*
@@ -1469,7 +1354,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 	s = splbio();
 	drvp->drive_flags &= ~DRIVE_NOSTREAM;
-	if (drvp->drive_type == DRIVET_ATAPI) {
+	if (drvp->drive_flags & DRIVE_ATAPI) {
 		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	} else {
@@ -1605,8 +1490,8 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		struct atabusioscan_args *a=
 		    (struct atabusioscan_args *)addr;
 #endif
-		if ((chp->ch_drive[0].drive_type == DRIVET_OLD) ||
-		    (chp->ch_drive[1].drive_type == DRIVET_OLD))
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
 			return (EOPNOTSUPP);
 		return (EOPNOTSUPP);
 	}
@@ -1614,8 +1499,8 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	{
 		struct atabusiodetach_args *a=
 		    (struct atabusiodetach_args *)addr;
-		if ((chp->ch_drive[0].drive_type == DRIVET_OLD) ||
-		    (chp->ch_drive[1].drive_type == DRIVET_OLD))
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
 			return (EOPNOTSUPP);
 		switch (a->at_dev) {
 		case -1:
@@ -1688,23 +1573,23 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 	struct ata_channel *chp = sc->sc_chan;
 	struct atabus_initq *initq;
 	int i;
+	int s;
 
-	/*
-	 * we can rescan a port multiplier atabus, even if some devices are
-	 * still attached 
-	 */
-	if (chp->ch_satapmp_nports == 0) {
-		if (chp->atapibus != NULL) {
+	if (chp->atapibus != NULL) {
+		return EBUSY;
+	}
+
+	for (i = 0; i < ATA_MAXDRIVES; i++) {
+		if (chp->ata_drives[i] != NULL) {
 			return EBUSY;
 		}
-
-		KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-		for (i = 0; i < chp->ch_ndrives; i++) {
-			if (chp->ch_drive[i].drv_softc != NULL) {
-				return EBUSY;
-			}
-		}
 	}
+
+	s = splbio();
+	for (i = 0; i < ATA_MAXDRIVES; i++) {
+		chp->ch_drive[i].drive_flags = 0;
+	}
+	splx(s);
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;

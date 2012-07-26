@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.23 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.24 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.23 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.24 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -292,7 +292,6 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = pdc203xx_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	sc->sc_wdcdev.reset = pdcsata_do_reset;
 
@@ -303,7 +302,6 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    0x00ff0033);
 		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC203xx_SATA_NCHANNELS;
-		sc->sc_wdcdev.wdc_maxdrives = 1;
 		break;
 	case PCI_PRODUCT_PROMISE_PDC20371:
 	case PCI_PRODUCT_PROMISE_PDC20375:
@@ -326,7 +324,6 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    0x00ff00ff);
 		sc->sc_wdcdev.sc_atac.atac_nchannels = PDC40718_SATA_NCHANNELS;
 		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
-		sc->sc_wdcdev.wdc_maxdrives = 1;
 		break;
 
 	case PCI_PRODUCT_PROMISE_PDC20571:
@@ -376,6 +373,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ata_channel.ch_queue =
 		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ata_channel.ch_ndrive = 2;
 		if (cp->ata_channel.ch_queue == NULL) {
 			aprint_error("%s channel %d: "
 			    "can't allocate memory for command queue\n",
@@ -498,7 +496,7 @@ pdc203xx_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			s = splbio();

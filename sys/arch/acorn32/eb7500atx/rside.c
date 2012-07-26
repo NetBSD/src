@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.12 2012/07/02 18:15:44 bouyer Exp $	*/
+/*	$NetBSD: rside.c,v 1.13 2012/07/26 20:49:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.12 2012/07/02 18:15:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.13 2012/07/26 20:49:44 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,6 @@ rside_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		scp = &sc->rside_channels[channel];
 		sc->sc_chanarray[channel] = &scp->rc_channel;
@@ -200,6 +199,7 @@ rside_attach(device_t parent, device_t self, void *aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &scp->rc_chqueue;
+		cp->ch_ndrive = 2;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		if (bus_space_map(wdr->cmd_iot,
 		    rside_info[channel].drive_registers,

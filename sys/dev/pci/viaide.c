@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.81 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.82 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.81 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.82 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,6 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = via_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
@@ -744,7 +743,7 @@ via_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		/* add timing values, setup DMA if needed */
 		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
@@ -892,7 +891,6 @@ via_sata_chip_map_common(struct pciide_softc *sc,
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
@@ -962,8 +960,6 @@ via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa,
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
-	sc->sc_wdcdev.wdc_maxdrives = 1;
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -997,6 +993,7 @@ via_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa,
 			    wdc_cp->ch_channel);
 			continue;
 		}
+		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
 		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
@@ -1073,6 +1070,7 @@ via_vt6421_chansetup(struct pciide_softc *sc, int channel)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s channel %d: "
 		    "can't allocate memory for command queue",
@@ -1122,7 +1120,6 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 	
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 3;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -1151,6 +1148,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		cp = &sc->pciide_channels[channel];
 		if (via_vt6421_chansetup(sc, channel) == 0)
 			continue;
+		cp->ata_channel.ch_ndrive = 2;
 		wdc_cp = &cp->ata_channel;
 		wdr = CHAN_TO_WDC_REGS(wdc_cp);
 

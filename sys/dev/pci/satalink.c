@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.46 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: satalink.c,v 1.47 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.46 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.47 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,7 +505,6 @@ sii3112_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 1;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -607,6 +606,7 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
@@ -750,7 +750,6 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 4;
-	sc->sc_wdcdev.wdc_maxdrives = 1;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -796,7 +795,13 @@ sii3112_drv_probe(struct ata_channel *chp)
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
-	int s;
+	int i, s;
+
+	/* XXX This should be done by other code. */
+	for (i = 0; i < 2; i++) {
+		chp->ch_drive[i].chnl_softc = chp;
+		chp->ch_drive[i].drive = i;
+	}
 
 	/*
 	 * The 3112 is a 2-port part, and only has one drive per channel
@@ -870,17 +875,15 @@ sii3112_drv_probe(struct ata_channel *chp)
 		    device_xname(&sc->sc_wdcdev.sc_atac.atac_dev), chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
-		if (atabus_alloc_drives(chp, 1) != 0)
-			return;
 		/*
 		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
 		 * cases we get wrong values here, so ignore it.
 		 */
 		s = splbio();
 		if (cl == 0x14 && ch == 0xeb)
-			chp->ch_drive[0].drive_type = DRIVET_ATAPI;
+			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
 		else
-			chp->ch_drive[0].drive_type = DRIVET_ATA;
+			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
 
 		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
@@ -914,7 +917,7 @@ sii3112_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */

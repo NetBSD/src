@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.31 2012/07/24 14:04:29 jakllsch Exp $	*/
+/*	$NetBSD: kauai.c,v 1.32 2012/07/26 20:49:46 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.31 2012/07/24 14:04:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.32 2012/07/26 20:49:46 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,6 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanptr = chp;
 	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = kauai_dma_init;
 	sc->sc_wdcdev.dma_start = kauai_dma_start;
@@ -193,6 +192,7 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_queue;
+	chp->ch_ndrive = 2;
 	wdc_init_shadow_regs(chp);
 
 	wdcattach(chp);
@@ -208,15 +208,14 @@ kauai_set_modes(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	int drive;
 
-	if (drvp0->drive_type != DRIVET_NONE &&
-	    drvp1->drive_type != DRIVET_NONE) {
+	if ((drvp0->drive_flags & DRIVE) && (drvp1->drive_flags & DRIVE)) {
 		drvp0->PIO_mode = drvp1->PIO_mode =
 		    min(drvp0->PIO_mode, drvp1->PIO_mode);
 	}
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if (drvp->drive_type !=  DRIVET_NONE) {
+		if (drvp->drive_flags & DRIVE) {
 			(*sc->sc_calc_timing)(sc, drive);
 			bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh,
 			    PIO_CONFIG_REG, sc->sc_piotiming_r[drive]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.55 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.56 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.55 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.56 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -203,7 +203,7 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 				    cp->ctl_baseioh, cp->ctl_ios);
 		}
 
-		for (drive = 0; drive < sc->sc_wdcdev.wdc_maxdrives; drive++) {
+		for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
 #if NATA_DMA
 			pciide_dma_table_teardown(sc, channel, drive);
 #endif
@@ -568,12 +568,12 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_drive_datas *drvp;
 
-	KASSERT(cp->ata_channel.ch_ndrives != 0);
+	KASSERT(cp->ata_channel.ch_ndrive != 0);
 
-	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
+	for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
 		drvp = &cp->ata_channel.ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		/* setup DMA if needed */
 		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
@@ -875,6 +875,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 		device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
 		return 0;
 	}
+	cp->ata_channel.ch_ndrive = 2;
 	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 	    "%s channel %s to %s mode\n", cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
@@ -995,7 +996,6 @@ default_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -1069,7 +1069,7 @@ next:
 	     channel++) {
 		idedma_ctl = 0;
 		cp = &sc->pciide_channels[channel];
-		for (drive = 0; drive < sc->sc_wdcdev.wdc_maxdrives; drive++) {
+		for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
 			/*
 			 * we have not probed the drives yet, allocate
 			 * ressources for all of them.
@@ -1116,11 +1116,10 @@ sata_setup_channel(struct ata_channel *chp)
 
 	idedma_ctl = 0;
 
-	KASSERT(cp->ata_channel.ch_ndrives != 0);
-	for (drive = 0; drive < cp->ata_channel.ch_ndrives; drive++) {
+	for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 #if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {

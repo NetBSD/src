@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.61 2012/07/24 14:04:31 jakllsch Exp $	*/
+/*	$NetBSD: piixide.c,v 1.62 2012/07/26 20:49:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.61 2012/07/24 14:04:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.62 2012/07/26 20:49:50 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,6 @@ piix_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		sc->sc_wdcdev.sc_atac.atac_set_modes = piix3_4_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	ATADEBUG_PRINT(("piix_setup_chip: old idetim=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM)),
@@ -677,7 +676,7 @@ end:	/*
 	 */
 	for (drive = 0; drive < 2; drive++) {
 		/* If no drive, skip */
-		if (drvp[drive].drive_type == DRIVET_NONE)
+		if ((drvp[drive].drive_flags & DRIVE) == 0)
 			continue;
 		idetim |= piix_setup_idetim_drvs(&drvp[drive]);
 		if (drvp[drive].drive_flags & DRIVE_DMA)
@@ -722,7 +721,7 @@ piix3_4_setup_channel(struct ata_channel *chp)
 		    PIIX_UDMATIM_SET(0x3, channel, drive));
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if (drvp->drive_type == DRIVET_NONE)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		if (((drvp->drive_flags & DRIVE_DMA) == 0 &&
 		    (drvp->drive_flags & DRIVE_UDMA) == 0))
@@ -944,7 +943,6 @@ piixsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	cmdsts = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
 	cmdsts &= ~PCI_COMMAND_INTERRUPT_DISABLE;
