@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.10 2010/11/22 23:02:16 dholland Exp $ */
+/*	$NetBSD: twavar.h,v 1.11 2012/07/27 14:02:17 jakllsch Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ struct twa_drive {
 
 /* Per-controller structure. */
 struct twa_softc {
-	struct device		twa_dv;
+	device_t		twa_dv;
 	bus_space_tag_t		twa_bus_iot;	/* bus space tag */
 	bus_space_handle_t	twa_bus_ioh;	/* bus space handle */
 	bus_dma_tag_t		twa_dma_tag;	/* data buffer DMA tag */
