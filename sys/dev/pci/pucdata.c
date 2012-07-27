@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.76 2011/08/09 21:04:05 dyoung Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.77 2012/07/27 21:51:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.76 2011/08/09 21:04:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.77 2012/07/27 21:51:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,6 +1331,42 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+
+	/* Intel EG20T UART */
+	{   "Intel EG20T UART #0",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_UART_0, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel EG20T UART */
+	{   "Intel EG20T UART #1",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_UART_1, 0, 1 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel EG20T UART */
+	{   "Intel EG20T UART #2",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_UART_2, 0, 2 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel EG20T UART */
+	{   "Intel EG20T UART #3",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_UART_3, 0, 3 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
 
 	/* VScom PCI-200: 2S */
 	{   "VScom PCI-200",
