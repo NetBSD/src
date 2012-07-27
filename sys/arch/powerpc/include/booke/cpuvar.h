@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.12 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.13 2012/07/27 22:24:13 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -157,7 +157,7 @@ struct trapframe;
 void	booke_sstep(struct trapframe *);
 
 void	booke_cpu_startup(const char *);	/* model name */
-struct powerpc_bus_dma_tag booke_bus_dma_tag;
+extern struct powerpc_bus_dma_tag booke_bus_dma_tag;
 
 extern struct cpu_info cpu_info[];
 #ifdef MULTIPROCESSOR
