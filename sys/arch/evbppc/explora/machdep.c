@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2012/07/27 22:13:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2012/07/27 22:13:58 matt Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2011/06/20 17:44:33 matt Exp $");
 #define MEMREGIONS	2
 #define TLB_PG_SIZE	(16*1024*1024)
 
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
@@ -82,8 +81,6 @@ static const unsigned int cpuspeed = 66000000;
 
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
-char msgbuf[MSGBUFSIZE];
-paddr_t msgbuf_paddr;
 
 static struct mem_region phys_mem[MEMREGIONS];
 static struct mem_region avail_mem[MEMREGIONS];
