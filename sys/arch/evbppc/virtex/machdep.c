@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2011/06/20 17:44:33 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.21 2012/07/27 22:13:58 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2011/06/20 17:44:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2012/07/27 22:13:58 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,12 +97,10 @@ struct vm_map *phys_map = NULL;
 /*
  * This should probably be in autoconf!				XXX
  */
-char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 char bootpath[256];
-paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
 void initppc(vaddr_t, vaddr_t);
@@ -177,8 +175,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 /*
  * Machine dependent startup code.
  */
-
-char msgbuf[MSGBUFSIZE];
 
 void
 cpu_startup(void)
