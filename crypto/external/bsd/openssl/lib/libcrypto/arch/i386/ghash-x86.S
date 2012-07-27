@@ -1,4 +1,4 @@
-.file	"ghash-x86.s"
+#include <machine/asm.h>
 .text
 .globl	gcm_gmult_4bit_x86
 .type	gcm_gmult_4bit_x86,@function
