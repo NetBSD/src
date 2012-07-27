@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.952 2012/07/26 20:26:01 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.953 2012/07/27 18:21:59 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -885,6 +885,8 @@ Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
+- run make in  /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
+  to regen assembly files
 
 Package:	pcc
 Version:	1.1.0.DEVEL 20120325
