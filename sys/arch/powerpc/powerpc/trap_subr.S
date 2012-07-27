@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.74 2012/07/18 16:56:51 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.75 2012/07/27 04:17:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1124,9 +1124,9 @@ _C_LABEL(sctrapexit):
 	streg	%r4,FRAME_CTR(%r1);					\
 	streg	%r11,FRAME_SRR0(%r1);					\
 	streg	%r12,FRAME_SRR1(%r1);					\
-	mfmsr	%r30;							\
-	ori	%r30,%r30,PSL_RI;	/* turn on recovery interrupt */\
-	mtmsr	%r30;							\
+	mfmsr	%r6;							\
+	ori	%r6,%r6,PSL_RI;		/* turn on recovery interrupt */\
+	mtmsr	%r6;							\
 	SAVE_VRSAVE(%r1,%r6);						\
 	SAVE_MQ(%r1,%r7)
 
