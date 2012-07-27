@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.20 2012/07/25 01:23:46 christos Exp $
+.\"	$NetBSD: touch.1,v 1.21 2012/07/27 18:34:35 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl acfhm
-.Op Fl r Ar file
-.Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Op Fl d Ar human-datetime
+.Op Fl r Ar file
+.Op Fl t Ar datetime
 .Ar file ...
 .Sh DESCRIPTION
 The
@@ -53,7 +53,7 @@ current time of day.
 If the file doesn't exist, it is created with default permissions.
 .Pp
 The following options are available:
-.Bl -tag -width Ds
+.Bl -tag -width "-d human-datetime"
 .It Fl a
 Change the access time of the file.
 The modification time of the file is not changed unless the
@@ -65,8 +65,10 @@ The
 .Nm
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
-.It Fl d
-The parse the argument using the human datetime parser
+.It Fl d Ar human-datetime
+Parse
+.Ar human-datetime
+using the human datetime parser
 .Xr parsedate 3 .
 .It Fl f
 This flag has no effect; it is accepted for compatibility reasons.
@@ -81,12 +83,15 @@ Change the modification time of the file.
 The access time of the file is not changed unless the
 .Fl a
 flag is also specified.
-.It Fl r
-Use the access and modifications times from the specified file
+.It Fl r Ar file
+Use the access and modifications times from
+.Ar file
 instead of the current time of day.
-.It Fl t
+.It Fl t Ar datetime
 Change the access and modification times to the specified time.
-The argument should be in the form
+The argument
+.Ar datetime
+should be in the form
 .Dq [[CC]YY]MMDDhhmm[.SS]
 where each pair of letters represents the following:
 .Pp
