@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.343 2012/01/27 18:52:57 para Exp $	*/
+/*	$NetBSD: machdep.c,v 1.344 2012/07/27 05:36:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2012/01/27 18:52:57 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344 2012/07/27 05:36:11 matt Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -192,12 +192,6 @@ struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 /*
  * Extent maps to manage all memory space, including I/O ranges.  Allocate

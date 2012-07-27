@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.46 2012/02/19 21:06:54 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.47 2012/07/27 05:36:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,11 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.46 2012/02/19 21:06:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.47 2012/07/27 05:36:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
@@ -47,6 +48,19 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.46 2012/02/19 21:06:54 rmind Exp $
 #include <sys/systm.h>
 #include <sys/sleepq.h>
 #include <sys/ktrace.h>
+
+/*
+ * for sleepq_abort:
+ * During autoconfiguration or after a panic, a sleep will simply lower the
+ * priority briefly to allow interrupts, then return.  The priority to be
+ * used (IPL_SAFEPRI) is machine-dependent, thus this value is initialized and
+ * maintained in the machine-dependent layers.  This priority will typically
+ * be 0, or the lowest priority that is safe for use on the interrupt stack;
+ * it can be made higher to block network software interrupts after panics.
+ */
+#ifndef	IPL_SAFEPRI
+#define	IPL_SAFEPRI	0
+#endif
 
 static int	sleepq_sigtoerror(lwp_t *, int);
 
@@ -396,11 +410,10 @@ sleepq_sigtoerror(lwp_t *l, int sig)
 int
 sleepq_abort(kmutex_t *mtx, int unlock)
 { 
-	extern int safepri;
 	int s;
 
 	s = splhigh();
-	splx(safepri);
+	splx(IPL_SAFEPRI);
 	splx(s);
 	if (mtx != NULL && unlock != 0)
 		mutex_exit(mtx);

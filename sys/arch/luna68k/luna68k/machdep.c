@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.89 2011/12/12 19:03:10 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.90 2012/07/27 05:36:10 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2011/12/12 19:03:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2012/07/27 05:36:10 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -104,11 +104,6 @@ struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* set by locore */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 

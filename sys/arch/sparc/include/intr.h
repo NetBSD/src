@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.12 2012/07/27 05:36:11 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,12 @@
  */
 
 #define	IPL_ZS		IPL_HIGH
+
+/*
+ * IPL_SAFEPRI is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+#define	IPL_SAFEPRI	0
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void *

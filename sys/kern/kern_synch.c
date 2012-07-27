@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.301 2012/04/21 22:38:25 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.302 2012/07/27 05:36:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.301 2012/04/21 22:38:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.302 2012/07/27 05:36:13 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -136,20 +136,6 @@ u_int			sched_pstats_ticks	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_crit	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_klock	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
-
-/*
- * During autoconfiguration or after a panic, a sleep will simply lower the
- * priority briefly to allow interrupts, then return.  The priority to be
- * used (safepri) is machine-dependent, thus this value is initialized and
- * maintained in the machine-dependent layers.  This priority will typically
- * be 0, or the lowest priority that is safe for use on the interrupt stack;
- * it can be made higher to block network software interrupts after panics.
- */
-#ifdef IPL_SAFEPRI
-int	safepri = IPL_SAFEPRI;
-#else
-int	safepri;
-#endif
 
 void
 synch_init(void)

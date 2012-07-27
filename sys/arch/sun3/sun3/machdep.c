@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 2011/12/12 19:03:12 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205 2012/07/27 05:36:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2011/12/12 19:03:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2012/07/27 05:36:12 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,12 +158,6 @@ void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;

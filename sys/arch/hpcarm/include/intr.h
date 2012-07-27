@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.16 2012/06/10 13:15:24 skrll Exp $	*/
+/* 	$NetBSD: intr.h,v 1.17 2012/07/27 05:36:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -48,6 +48,8 @@
 #define IPL_HIGH	7
 
 #define NIPL		8
+
+#define	IPL_SAFEPRI	_SPL_0
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

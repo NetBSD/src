@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267 2012/05/21 14:15:18 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.268 2012/07/27 05:36:12 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2012/05/21 14:15:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2012/07/27 05:36:12 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -168,12 +168,6 @@ extern	void *msgbufaddr;
 #ifndef MAX_DMA_SEGS
 #define MAX_DMA_SEGS	20
 #endif
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int   safepri = 0;
 
 void	dumpsys(void);
 void	stackdump(void);
