@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.170 2012/07/23 19:06:10 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.171 2012/07/27 07:38:44 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.170 2012/07/23 19:06:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.171 2012/07/27 07:38:44 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1279,7 +1279,7 @@ puffs_vnop_inactive(void *v)
 			if (pmp->pmp_sopthrcount == 0) {
 				kmem_free(psopr, sizeof(*psopr));
 			} else {
-				TAILQ_INSERT_TAIL(&pmp->pmp_sopslowreqs,
+				TAILQ_INSERT_TAIL(&pmp->pmp_sopnodereqs,
 				    psopr, psopr_entries); 
 				pnode->pn_stat |= PNODE_SOPEXP;
 			}
