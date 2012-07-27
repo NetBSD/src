@@ -61,9 +61,9 @@
 
 void ENGINE_load_builtin_engines(void)
 	{
-#if 0
-	/* Done in .init section where needed */
+	/* Some ENGINEs need this */
 	OPENSSL_cpuid_setup();
+#if 0
 	/* There's no longer any need for an "openssl" ENGINE unless, one day,
 	 * it is the *only* way for standard builtin implementations to be be
 	 * accessed (ie. it would be possible to statically link binaries with
