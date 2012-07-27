@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2011/11/24 03:35:59 mrg Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2012/07/27 14:05:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ void	softint_dispatch(lwp_t *, int);
 #define	SOFTINT_IMPMASK	0xf000
 
 extern u_int	softint_timing;
-extern int	safepri;
 
 /*
  * Historical aliases.
