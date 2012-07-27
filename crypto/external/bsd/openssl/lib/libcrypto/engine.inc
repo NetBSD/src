@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.6 2012/07/27 16:05:27 christos Exp $
+#	$NetBSD: engine.inc,v 1.7 2012/07/27 18:10:40 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -28,7 +28,7 @@ ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 .if defined(AESNI)
 ENGINE_SRCS+=  eng_aesni.c
 .else
-AESCPPFLAGS=-DOPENSSL_NO_HW_AESNI
+CRYPTOCPPFLAGS+=-DOPENSSL_NO_HW_AESNI
 .endif
 
 ENGINE_SRCS += gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c \
@@ -38,6 +38,10 @@ ENGINE_SRCS += gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c \
 
 SRCS += ${ENGINE_SRCS}
 
+.if !defined(CPUID)
+CRYPTOCPPFLAGS+=-DNEED_CPUID_SETUP
+.endif
+
 .for cryptosrc in ${ENGINE_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${AESCPPFLAGS} -DHAVE_CRYPTODEV
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${CRYPTOCPPFLAGS} -DHAVE_CRYPTODEV
 .endfor
