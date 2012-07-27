@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1724 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1725 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -88,6 +88,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel: Change mii_statchg to take "struct ifnet *" instead of
 		"device_t".  [matt 20120722]
 	powerpc: Add support for FPU emulation on BookE. [matt 20120722]
+	zoneinfo: Import tzdata2012d. [apb 20120722]
 	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
 	OpenSSH: Imported 1.0.1c [christos 20120726]
 	kernel: safepri is dead; replaced by macro IPL_SAFEPRI. [matt 20120727]
