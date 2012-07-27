@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.129 2012/07/20 09:20:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.130 2012/07/27 09:06:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.129 2012/07/20 09:20:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130 2012/07/27 09:06:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -82,6 +82,9 @@ struct vm_map rump_vmmap;
 
 static struct vm_map kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store;
+
+static struct vm_map module_map_store;
+extern struct vm_map *module_map;
 
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
@@ -327,6 +330,8 @@ uvm_init(void)
 	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, 0);
 	cv_init(&pdaemoncv, "pdaemon");
 	cv_init(&oomwait, "oomwait");
+
+	module_map = &module_map_store;
 
 	kernel_map->pmap = pmap_kernel();
 
@@ -702,19 +707,22 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 * just use a simple "if" instead of coming up with a fancy
 	 * generic solution.
 	 */
-	extern struct vm_map *module_map;
 	if (map == module_map) {
 		desired = (void *)(0x80000000 - size);
 	}
 #endif
 
-	alignbit = 0;
-	if (align) {
-		alignbit = ffs(align)-1;
+	if (__predict_false(map == module_map)) {
+		alignbit = 0;
+		if (align) {
+			alignbit = ffs(align)-1;
+		}
+		rv = rumpuser_anonmmap(desired, size, alignbit,
+		    flags & UVM_KMF_EXEC, &error);
+	} else {
+		rv = rumpuser_malloc(size, align);
 	}
 
-	rv = rumpuser_anonmmap(desired, size, alignbit, flags & UVM_KMF_EXEC,
-	    &error);
 	if (rv == NULL) {
 		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
 			return 0;
@@ -732,7 +740,10 @@ void
 uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 {
 
-	rumpuser_unmap((void *)vaddr, size);
+	if (__predict_false(map == module_map))
+		rumpuser_unmap((void *)vaddr, size);
+	else
+		rumpuser_free((void *)vaddr);
 }
 
 struct vm_map *
