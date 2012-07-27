@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.18 2010/10/02 05:53:37 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.19 2012/07/27 03:00:01 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -72,9 +72,9 @@ attach	ehci at gt with mvusb_gt
 file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
-#device	mvcesa: opencrypto
-#file	dev/marvell/mvcesa.c		mvcesa
-#attach	mvcesa at gt with mvcesa_gt
+device	mvcesa: opencrypto
+file	dev/marvell/mvcesa.c		mvcesa
+attach	mvcesa at gt with mvcesa_gt
 
 # Two-Wire Serial Interface
 device	gttwsi: i2cbus
