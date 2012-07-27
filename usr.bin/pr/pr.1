@@ -1,4 +1,4 @@
-.\"	$NetBSD: pr.1,v 1.19 2012/07/24 02:13:04 ginsbach Exp $
+.\"	$NetBSD: pr.1,v 1.20 2012/07/27 18:28:53 wiz Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -34,7 +34,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: pr.1,v 1.19 2012/07/24 02:13:04 ginsbach Exp $
 .\"
 .Dd May 4, 2012
 .Dt PR 1
@@ -96,7 +95,7 @@ utility has completed processing.
 When multiple column output is specified,
 text columns are of equal width.
 By default text columns are separated by at least one
-.Em \*[Lt]blank\*[Gt] .
+.Aq Em blank .
 Input lines that do not fit into a text column are truncated.
 Lines are not truncated under single column output.
 .Sh OPTIONS
@@ -134,11 +133,16 @@ This option requires the use of the
 .Fl column
 option.
 .It Fl d
-Produce output that is double spaced. An extra
-.Em \*[Lt]newline\*[Gt]
-character is output following every \*[Lt]newline\*[Gt] found in the input.
+Produce output that is double spaced.
+An extra
+.Aq Em newline
+character is output following every
+.Aq newline
+found in the input.
 .It Fl e Ar \&[char\&]\&[gap\&]
-Expand each input \*[Lt]tab\*[Gt] to the next greater column
+Expand each input
+.Aq tab
+to the next greater column
 position specified by the formula
 .Ar n*gap+1 ,
 where
@@ -148,20 +152,20 @@ If
 .Ar gap
 is zero or is omitted the default is 8.
 All
-.Em \*[Lt]tab\*[Gt]
+.Aq Em tab
 characters in the input are expanded into the appropriate
 number of
-.Em \*[Lt]space\*[Gt]s .
+.Ao Em space Ac Ns s .
 If any nondigit character,
 .Ar char ,
 is specified, it is used as the input tab character.
 .It Fl F
 Use a
-.Em \*[Lt]form-feed\*[Gt]
+.Aq Em form-feed
 character for new pages,
 instead of the default behavior that uses a
 sequence of
-.Em \*[Lt]newline\*[Gt]
+.Aq Em newline
 characters.
 .It Fl f
 Same as
@@ -175,21 +179,27 @@ to replace the
 .Ar file name
 in the header line.
 .It Fl i Ar \&[char\&]\&[gap\&]
-In output, replace multiple \*[Lt]space\*[Gt]s with \*[Lt]tab\*[Gt]s whenever two or more
-adjacent \*[Lt]space\*[Gt]s reach column positions
+In output, replace multiple
+.Ao space Ac Ns s
+with
+.Ao tab Ac Ns s
+whenever two or more
+adjacent
+.Ao space Ac Ns s
+reach column positions
 .Ar gap+1 ,
 .Ar 2*gap+1 ,
 etc.
 If
 .Ar gap
 is zero or omitted, default
-.Em \*[Lt]tab\*[Gt]
+.Aq Em tab
 settings at every eighth column position
 is used.
 If any nondigit character,
 .Ar char ,
 is specified, it is used as the output
-.Em \*[Lt]tab\*[Gt]
+.Aq Em tab
 character.
 If the first character of
 .Ar char
@@ -237,17 +247,18 @@ output.
 If
 .Ar char
 (any nondigit character) is given, it is appended to the line number to
-separate it from whatever follows. The default for
+separate it from whatever follows.
+The default for
 .Ar char
 is a
-.Em \*[Lt]tab\*[Gt] .
+.Aq Em tab .
 Line numbers longer than
 .Ar width
 columns are truncated.
 .It Fl o Ar offset
 Each line of output is preceded by
 .Ar offset
-.Em \*[Lt]spaces\*[Gt]s .
+.Ao Em space Ac Ns s .
 If the
 .Fl o
 option is not specified, the default is zero.
@@ -257,9 +268,9 @@ Pause before beginning each page if the
 standard output is associated with a terminal.
 .Nm
 will write an
-.Em \*[Lt]alert\*[Gt]
+.Aq Em alert
 to standard error and wait for a
-.Em \*[Lt]carriage-return\*[Gt]
+.Aq Em carriage-return
 to be read on
 .Pa /dev/tty .
 .It Fl r
@@ -268,11 +279,11 @@ Write no diagnostic reports on failure to open a file.
 Separate text columns by the single character
 .Ar char
 instead of by the appropriate number of
-.Em \*[Lt]space\*[Gt]s
+.Ao Em space Ac Ns s
 (default for
 .Ar char
 is the
-.Em \*[Lt]tab\*[Gt]
+.Aq Em tab
 character).
 .It Fl T
 Specify an
