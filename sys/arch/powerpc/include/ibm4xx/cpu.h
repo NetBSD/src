@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2011/06/20 17:44:33 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2012/07/27 22:13:58 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -137,6 +137,10 @@ extern struct pic_ops pic_uic403;
 extern struct pic_ops pic_uic0;
 extern struct pic_ops pic_uic1;
 extern struct pic_ops pic_uic2;
+
+extern paddr_t msgbuf_paddr;
+extern vaddr_t msgbuf_vaddr;
+extern char msgbuf[MSGBUFSIZE];
 #endif /* _KERNEL */
 
 /* Board info dictionary */
