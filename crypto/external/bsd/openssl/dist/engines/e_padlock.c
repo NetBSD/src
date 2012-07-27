@@ -915,7 +915,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 {
 	struct padlock_cipher_data *cdata;
 	const  void *inp;
-	unsigned char  *out;
+	unsigned char  *out, *tofree;
 	void  *iv;
 	int    inp_misaligned, out_misaligned, realign_in_loop;
 	size_t chunk, allocated=0;
@@ -999,11 +999,15 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	if (out_misaligned) {
 		/* optmize for small input */
 		allocated = (chunk<nbytes?PADLOCK_CHUNK:nbytes);
-		out = alloca(0x10 + allocated);
-		out = NEAREST_ALIGNED(out);
+		tofree = malloc(0x10 + allocated);
+		if (tofree == NULL)
+			return 0;
+		out = NEAREST_ALIGNED(tofree);
 	}
-	else
+	else {
 		out = out_arg;
+		tofree = NULL;
+	}
 
 	cdata = ALIGNED_CIPHER_DATA(ctx);
 	padlock_verify_context(cdata);
@@ -1152,6 +1156,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 		break;
 
 	default:
+		free(tofree);
 		return 0;
 	}
 
@@ -1163,6 +1168,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	}
 
 	memset(cdata->iv, 0, AES_BLOCK_SIZE);
+	free(tofree);
 
 	return 1;
 }
