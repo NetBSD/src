@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.156 2012/03/25 09:15:20 martin Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.157 2012/07/27 05:40:51 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -98,6 +98,7 @@ AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 # XXX
 .if defined(HAVE_GCC)
 CFLAGS+=	-fno-strict-aliasing
+CFLAGS+=	-fno-common
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
