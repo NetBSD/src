@@ -1,4 +1,4 @@
-.file	"cast-586.s"
+#include <machine/asm.h>
 .text
 .globl	CAST_encrypt
 .type	CAST_encrypt,@function

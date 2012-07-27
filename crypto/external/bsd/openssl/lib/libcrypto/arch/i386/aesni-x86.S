@@ -1,4 +1,4 @@
-.file	"/net/quasar/src-5/NetBSD/src/crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86.s"
+#include <machine/asm.h>
 .text
 .globl	aesni_encrypt
 .type	aesni_encrypt,@function

@@ -1,4 +1,4 @@
-.file	"rc4-586.s"
+#include <machine/asm.h>
 .text
 .globl	RC4
 .type	RC4,@function

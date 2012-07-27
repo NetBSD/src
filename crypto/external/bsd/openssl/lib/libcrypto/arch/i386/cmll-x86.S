@@ -1,4 +1,4 @@
-.file	"cmll-586.s"
+#include <machine/asm.h>
 .text
 .globl	Camellia_EncryptBlock_Rounds
 .type	Camellia_EncryptBlock_Rounds,@function

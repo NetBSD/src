@@ -1,4 +1,4 @@
-.file	"/net/quasar/src-5/NetBSD/src/crypto/external/bsd/openssl/dist/crypto/bn/asm/x86.s"
+#include <machine/asm.h>
 .text
 .globl	bn_mul_add_words
 .type	bn_mul_add_words,@function
