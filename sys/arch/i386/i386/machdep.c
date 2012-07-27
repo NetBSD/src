@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.729 2012/06/27 00:37:08 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.730 2012/07/27 22:55:29 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.729 2012/06/27 00:37:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.730 2012/07/27 22:55:29 drochner Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -232,8 +232,6 @@ int     cpureset_delay = 2000; /* default to 2s */
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
-
-int	physmem;
 
 int	cpu_class;
 int	use_pae;
