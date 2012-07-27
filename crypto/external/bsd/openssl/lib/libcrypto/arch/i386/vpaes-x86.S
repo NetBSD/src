@@ -1,4 +1,4 @@
-.file	"vpaes-x86.s"
+#include <machine/asm.h>
 .text
 .align	64
 .L_vpaes_consts:
