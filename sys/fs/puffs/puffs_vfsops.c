@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.103 2012/07/22 17:40:46 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.104 2012/07/27 07:25:56 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.103 2012/07/22 17:40:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.104 2012/07/27 07:25:56 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.103 2012/07/22 17:40:46 manu Exp 
 MODULE(MODULE_CLASS_VFS, puffs, "putter");
 
 VFS_PROTOS(puffs_vfsop);
+extern struct vfsops puffs_vfsops;
 
 #ifndef PUFFS_PNODEBUCKETS
 #define PUFFS_PNODEBUCKETS 256
@@ -320,6 +321,14 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	vfs_getnewfsid(mp);
 
+	/*
+	 * Hold a reference on vfs so that the puffs module cannot be 
+	 * unloaded while the pools items have not been freed by unmount.
+	 */
+	mutex_enter(&vfs_list_lock);
+	puffs_vfsops.vfs_refcount++;
+	mutex_exit(&vfs_list_lock);
+
  out:
 	if (error && pmp && pmp->pmp_pi)
 		putter_detach(pmp->pmp_pi);
@@ -448,6 +457,11 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 		kmem_free(pmp, sizeof(struct puffs_mount));
 		error = 0;
+
+		/*
+		 * One less user for puffs pools
+		 */
+		vfs_delref(&puffs_vfsops);
 	} else {
 		mutex_exit(&pmp->pmp_lock);
 	}
