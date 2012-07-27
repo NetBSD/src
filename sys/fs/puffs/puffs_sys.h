@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.80 2012/07/21 05:17:10 manu Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.81 2012/07/27 07:38:44 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -176,7 +176,7 @@ struct puffs_mount {
 	kcondvar_t			pmp_sopcv;
 	int				pmp_sopthrcount;
 	TAILQ_HEAD(, puffs_sopreq)	pmp_sopfastreqs;
-	TAILQ_HEAD(, puffs_sopreq)	pmp_sopslowreqs;
+	TAILQ_HEAD(, puffs_sopreq)	pmp_sopnodereqs;
 	bool				pmp_docompat;
 };
 
