@@ -1,7 +1,7 @@
 
-.hidden	OPENSSL_cpuid_setup
+.globl	OPENSSL_cpuid_setup
 .section	.init
-	call	OPENSSL_cpuid_setup
+	call	OPENSSL_cpuid_setup@GOTPCREL(%rip)
 
 .hidden	OPENSSL_ia32cap_P
 .comm	OPENSSL_ia32cap_P,8,4
