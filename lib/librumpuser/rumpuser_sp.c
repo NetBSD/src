@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.46 2012/03/09 21:03:09 joerg Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.47 2012/07/27 09:09:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -34,11 +34,13 @@
  * work correctly from one hardware architecture to another.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.46 2012/03/09 21:03:09 joerg Exp $");
+#include "rumpuser_port.h"
+
+#if !defined(lint)
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.47 2012/07/27 09:09:05 pooka Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
-#include <sys/atomic.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 
@@ -59,6 +61,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.46 2012/03/09 21:03:09 joerg Exp $");
 
 #include <rump/rump.h> /* XXX: for rfork flags */
 #include <rump/rumpuser.h>
+
 #include "rumpuser_int.h"
 
 #include "sp_common.c"
@@ -86,6 +89,42 @@ static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
 #define PROTOMINOR 3
+
+
+/* how to use atomic ops on Linux? */
+#ifdef __linux__
+static pthread_mutex_t discomtx = PTHREAD_MUTEX_INITIALIZER;
+
+static void
+signaldisco(void)
+{
+
+	pthread_mutex_lock(&discomtx);
+	disco++;
+	pthread_mutex_unlock(&discomtx);
+}
+
+static unsigned int
+getdisco(void)
+{
+	unsigned int discocnt;
+
+	pthread_mutex_lock(&discomtx);
+	discocnt = disco;
+	disco = 0;
+	pthread_mutex_unlock(&discomtx);
+
+	return discocnt;
+}
+
+#else /* NetBSD */
+
+#include <sys/atomic.h>
+#define signaldisco() atomic_inc_uint(&disco)
+#define getdisco() atomic_swap_uint(&disco, 0)
+
+#endif
+
 
 struct prefork {
 	uint32_t pf_auth[AUTHLEN];
@@ -505,7 +544,7 @@ spcrelease(struct spclient *spc)
 	spc->spc_fd = -1;
 	spc->spc_state = SPCSTATE_NEW;
 
-	atomic_inc_uint(&disco);
+	signaldisco();
 }
 
 static void
@@ -908,7 +947,7 @@ handlereq(struct spclient *spc)
 	reqno = spc->spc_hdr.rsp_reqno;
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
 		if (spc->spc_hdr.rsp_type != RUMPSP_HANDSHAKE) {
-			send_error_resp(spc, reqno, EAUTH);
+			send_error_resp(spc, reqno, EACCES);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -999,7 +1038,7 @@ handlereq(struct spclient *spc)
 
 			send_handshake_resp(spc, reqno, 0);
 		} else {
-			send_error_resp(spc, reqno, EAUTH);
+			send_error_resp(spc, reqno, EACCES);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -1158,7 +1197,7 @@ spserver(void *arg)
 		int discoed;
 
 		/* g/c hangarounds (eventually) */
-		discoed = atomic_swap_uint(&disco, 0);
+		discoed = getdisco();
 		while (discoed--) {
 			nfds--;
 			idx = maxidx;
@@ -1288,7 +1327,7 @@ rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
 	/* sloppy error recovery */
 
 	/*LINTED*/
-	if (bind(s, sap, sap->sa_len) == -1) {
+	if (bind(s, sap, parsetab[idx].slen) == -1) {
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		return errno;
 	}
