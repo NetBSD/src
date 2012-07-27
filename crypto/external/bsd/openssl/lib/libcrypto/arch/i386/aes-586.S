@@ -1,4 +1,4 @@
-.file	"aes-586.s"
+#include <machine/asm.h>
 .text
 .type	_x86_AES_encrypt_compact,@function
 .align	16

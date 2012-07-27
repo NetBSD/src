@@ -1,4 +1,4 @@
-.file	"sha512-586.s"
+#include <machine/asm.h>
 .text
 .globl	sha512_block_data_order
 .type	sha512_block_data_order,@function

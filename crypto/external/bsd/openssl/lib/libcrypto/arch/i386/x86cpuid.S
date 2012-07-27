@@ -1,4 +1,4 @@
-.file	"x86cpuid.s"
+#include <machine/asm.h>
 .text
 .globl	OPENSSL_ia32_cpuid
 .type	OPENSSL_ia32_cpuid,@function
@@ -329,10 +329,4 @@ OPENSSL_ia32_rdrand:
 .size	OPENSSL_ia32_rdrand,.-.L_OPENSSL_ia32_rdrand_begin
 .comm	OPENSSL_ia32cap_P,8,4
 .section	.init
-#ifdef PIC
-       PIC_PROLOGUE
-       call    PIC_PLT(_C_LABEL(OPENSSL_cpuid_setup))
-       PIC_EPILOGUE
-#else  
-       call    _C_LABEL(OPENSSL_cpuid_setup)
-#endif
+	call	OPENSSL_cpuid_setup
