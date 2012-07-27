@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.104 2012/07/27 07:25:56 manu Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.105 2012/07/27 07:38:44 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.104 2012/07/27 07:25:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.105 2012/07/27 07:38:44 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,7 +309,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	TAILQ_INIT(&pmp->pmp_msg_touser);
 	TAILQ_INIT(&pmp->pmp_msg_replywait);
 	TAILQ_INIT(&pmp->pmp_sopfastreqs);
-	TAILQ_INIT(&pmp->pmp_sopslowreqs);
+	TAILQ_INIT(&pmp->pmp_sopnodereqs);
 
 	if ((error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    puffs_sop_thread, pmp, NULL, "puffsop")) != 0)
