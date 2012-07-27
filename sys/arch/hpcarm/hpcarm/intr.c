@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2010/12/20 00:25:33 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2012/07/27 05:36:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2010/12/20 00:25:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2012/07/27 05:36:10 matt Exp $");
 
 #include "opt_irqstats.h"
 #include "opt_cputypes.h"
@@ -106,7 +106,6 @@ void    set_spl_masks(void);
 
 u_int spl_masks[_SPL_LEVELS + 1];
 u_int spl_smasks[_SPL_LEVELS];
-int safepri = _SPL_0;
 
 #ifdef __HAVE_FAST_SOFTINTS
 /* Handle software interrupts */
