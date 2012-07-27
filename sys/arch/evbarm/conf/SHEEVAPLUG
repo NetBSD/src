@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.14 2012/03/31 02:45:37 tsutsui Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.15 2012/07/27 03:10:23 kiyohara Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -194,7 +194,7 @@ makphy* at mii? phy ?
 ehci*	at mvsoc? offset ? irq ?
 
 # On-chip Cryptographic Engines and Security Accelerator
-#mvcesa* at mvsoc? offset ? irq ?
+mvcesa* at mvsoc? offset ? irq ?
 
 # On-chip Two-Wire Serial Interface (TWSI)
 gttwsi* at mvsoc? offset ? irq ?
@@ -204,7 +204,7 @@ iic*	at gttwsi?
 com*	at mvsoc? offset ? irq ?
 
 # On-chip IDMA Controller
-#gtidmac* at mvsoc? offset ? irq ?
+gtidmac* at mvsoc? offset ? irq ?
 
 # On-chip General Purpose I/O Port Interface
 #mvsocgpp* at mvsoc? offset ? irq ?
