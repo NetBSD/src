@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.2 2010/11/15 15:23:32 pooka Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.3 2012/07/27 09:09:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,9 +25,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+/*
+ * Purely to satisfy compilation.  This module is not expected to work on
+ * non-NetBSD due to type conflicts.
+ */
+#include "rumpuser_port.h"
+
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_net.c,v 1.2 2010/11/15 15:23:32 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_net.c,v 1.3 2012/07/27 09:09:05 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
