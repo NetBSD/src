@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2011/12/12 19:03:11 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 2012/07/27 05:36:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2011/12/12 19:03:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2012/07/27 05:36:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -131,12 +131,6 @@ paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* size of physical memory */
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 extern	short exframesize[];
