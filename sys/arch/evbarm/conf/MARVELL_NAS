@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.7 2012/03/31 02:45:37 tsutsui Exp $
+#	$NetBSD: MARVELL_NAS,v 1.8 2012/07/27 03:10:23 kiyohara Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -176,7 +176,7 @@ mvgbe*	at mvgbec? port ? irq ?
 ehci*	at mvsoc? offset ? irq ?
 
 # On-chip Cryptographic Engines and Security Accelerator
-#mvcesa* at mvsoc? offset ? irq ?
+mvcesa* at mvsoc? offset ? irq ?
 
 # On-chip Two-Wire Serial Interface (TWSI)
 gttwsi* at mvsoc? offset ? irq ?
