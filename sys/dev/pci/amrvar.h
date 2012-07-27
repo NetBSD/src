@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.8 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.9 2012/07/27 16:25:11 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,14 +46,14 @@ struct amr_logdrive {
 	u_int		al_size;
 	u_short		al_state;
 	u_short		al_properties;
-	struct device	*al_dv;
+	device_t	al_dv;
 };
 
 /*
  * Per-controller state.
  */
 struct amr_softc {
-	struct device		amr_dv;
+	device_t		amr_dv;
 	bus_space_tag_t		amr_iot;
 	bus_space_handle_t	amr_ioh;
 	bus_size_t		amr_ios;
@@ -120,7 +120,7 @@ struct amr_ccb {
 	bus_dmamap_t	ac_xfer_map;
 	void		(*ac_handler)(struct amr_ccb *);
 	void 		*ac_context;
-	struct device	*ac_dv;
+	device_t	ac_dv;
 	struct amr_mailbox_cmd	ac_cmd;
 };
 #define	AC_XFER_IN	0x01	/* Map describes inbound xfer */
