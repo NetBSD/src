@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.31 2011/03/08 15:34:37 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.32 2012/07/27 09:09:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -29,14 +29,13 @@
  * Common client/server sysproxy routines.  #included.
  */
 
-#include <sys/cdefs.h>
+#include "rumpuser_port.h"
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/syslimits.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -46,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <poll.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -54,6 +54,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/*
+ * XXX: NetBSD's __unused collides with Linux headers, so we cannot
+ * define it before we've included everything.
+ */
+#if !defined(__unused) && defined(__GNUC__)
+#define __unused __attribute__((__unused__))
+#endif
 
 //#define DEBUG
 #ifdef DEBUG
@@ -502,7 +510,7 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
+	SA_SETLEN(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');
@@ -593,7 +601,7 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	size_t slen;
 	int savepath = 0;
 
-	if (strlen(addr) > sizeof(sun.sun_path))
+	if (strlen(addr) >= sizeof(sun.sun_path))
 		return ENAMETOOLONG;
 
 	/*
@@ -612,16 +620,20 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 			fprintf(stderr, "warning: cannot determine cwd, "
 			    "omitting socket cleanup\n");
 		} else {
-			if (strlen(addr) + strlen(mywd) > sizeof(sun.sun_path))
+			if (strlen(addr)+strlen(mywd)+1 >= sizeof(sun.sun_path))
 				return ENAMETOOLONG;
-			strlcpy(sun.sun_path, mywd, sizeof(sun.sun_path));
-			strlcat(sun.sun_path, "/", sizeof(sun.sun_path));
+			strcpy(sun.sun_path, mywd);
+			strcat(sun.sun_path, "/");
 			savepath = 1;
 		}
 	}
-	strlcat(sun.sun_path, addr, sizeof(sun.sun_path));
+	strcat(sun.sun_path, addr);
+#ifdef __linux__
+	slen = sizeof(sun);
+#else
 	sun.sun_len = SUN_LEN(&sun);
 	slen = sun.sun_len+1; /* get the 0 too */
+#endif
 
 	if (savepath && *parsedurl == '\0') {
 		snprintf(parsedurl, sizeof(parsedurl),
@@ -668,14 +680,18 @@ success(void)
 struct {
 	const char *id;
 	int domain;
+	socklen_t slen;
 	addrparse_fn ap;
 	connecthook_fn connhook;
 	cleanup_fn cleanup;
 } parsetab[] = {
-	{ "tcp", PF_INET, tcp_parse, tcp_connecthook, (cleanup_fn)success },
-	{ "unix", PF_LOCAL, unix_parse, (connecthook_fn)success, unix_cleanup },
-	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success,
-			    (cleanup_fn)success },
+	{ "tcp", PF_INET, sizeof(struct sockaddr_in),
+	    tcp_parse, tcp_connecthook, (cleanup_fn)success },
+	{ "unix", PF_LOCAL, sizeof(struct sockaddr_un),
+	    unix_parse, (connecthook_fn)success, unix_cleanup },
+	{ "tcp6", PF_INET6, sizeof(struct sockaddr_in6),
+	    (addrparse_fn)notsupp, (connecthook_fn)success,
+	    (cleanup_fn)success },
 };
 #define NPARSE (sizeof(parsetab)/sizeof(parsetab[0]))
 
