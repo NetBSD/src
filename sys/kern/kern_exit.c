@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.239 2012/07/22 22:40:19 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.240 2012/07/27 20:52:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.239 2012/07/22 22:40:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.240 2012/07/27 20:52:49 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -330,6 +330,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_PPWAIT) {
+#if 0
 		lwp_t *lp;
 
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
@@ -339,6 +340,11 @@ exit1(struct lwp *l, int rv)
 		p->p_vforklwp = NULL;
 		lp->l_pflag &= ~LP_VFORKWAIT; /* XXX */
 		cv_broadcast(&lp->l_waitcv);
+#else
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
+		p->p_lflag &= ~PL_PPWAIT;
+		cv_broadcast(&p->p_pptr->p_waitcv);
+#endif
 	}
 
 	if (SESS_LEADER(p)) {
