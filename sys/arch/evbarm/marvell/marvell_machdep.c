@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.9 2012/07/18 10:28:47 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.10 2012/07/28 19:08:22 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.9 2012/07/18 10:28:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.10 2012/07/28 19:08:22 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -112,7 +112,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
