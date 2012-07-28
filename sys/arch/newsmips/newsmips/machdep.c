@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2011/03/09 13:21:36 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2011/03/09 13:21:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:57 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2011/03/09 13:21:36 tsutsui Exp $"
 #include <dev/cons.h>
 
 #include "ksyms.h"
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 

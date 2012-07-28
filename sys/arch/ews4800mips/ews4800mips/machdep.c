@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2011/02/20 07:55:20 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2012/07/28 23:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/02/20 07:55:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2012/07/28 23:08:56 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2011/02/20 07:55:20 matt Exp $");
 
 vsize_t kseg2iobufsize;		/* to reserve PTEs for KSEG2 I/O space */
 
-/* our exported CPU info */
-struct cpu_info cpu_info_store;
-
 /* maps for VM objects */
 struct vm_map *phys_map;
 
@@ -98,14 +95,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		 * the firmware directly and have to clear BSS here.
 		 */
 		memset(edata, 0, end - edata);
-		/*
-		 * XXX
-		 * lwp0 and cpu_info_store are allocated in BSS
-		 * and initialized before mach_init() is called,
-		 * so restore them again.
-		 */
-		lwp0.l_cpu = &cpu_info_store;
-		cpu_info_store.ci_curlwp = &lwp0;
 	}
 
 	/* Setup early-console with BIOS ROM routines */

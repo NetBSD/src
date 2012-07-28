@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2012/05/12 13:13:24 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 2012/07/28 23:11:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2012/05/12 13:13:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2012/07/28 23:11:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,6 @@ cpu_configure(void)
 
 	genppc_cpu_configure();
 }
-
-char *booted_kernel; /* should be a genuine filename */
 
 void
 cpu_rootconf(void)

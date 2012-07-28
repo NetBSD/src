@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -153,7 +153,6 @@ static int __bicons_enable;
 /* the following is used externally (sysctl_hw) */
 char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
-struct cpu_info cpu_info_store;		/* only one CPU */
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
 /* CPU core switch table */

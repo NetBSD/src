@@ -1,4 +1,4 @@
-/* $NetBSD: pic_prepivr.c,v 1.7 2012/02/01 09:54:03 matt Exp $ */
+/* $NetBSD: pic_prepivr.c,v 1.8 2012/07/28 23:11:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.7 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_prepivr.c,v 1.8 2012/07/28 23:11:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -50,8 +50,8 @@ static int  prepivr_get_irq(struct pic_ops *, int);
 static int  motivr_get_irq(struct pic_ops *, int);
 static void prepivr_establish_irq(struct pic_ops *, int, int, int);
 
-vaddr_t prep_intr_reg;		/* PReP interrupt vector register */
-uint32_t prep_intr_reg_off;	/* IVR offset within the mapped page */
+extern vaddr_t prep_intr_reg;	/* PReP interrupt vector register */
+extern uint32_t prep_intr_reg_off; /* IVR offset within the mapped page */
 
 #define IO_ELCR1	0x4d0
 #define IO_ELCR2	0x4d1

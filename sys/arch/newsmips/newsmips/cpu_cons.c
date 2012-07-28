@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.12 2011/02/08 20:20:21 rmind Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.13 2012/07/28 23:08:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.12 2011/02/08 20:20:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.13 2012/07/28 23:08:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.12 2011/02/08 20:20:21 rmind Exp $");
 #define	SW_FBPOP2	0x03
 #define	SW_AUTOSEL	0x07
 
-struct consdev *cn_tab = NULL;
 extern struct consdev consdev_zs, consdev_zs_ap;
 
 void fb_cnattach(void);

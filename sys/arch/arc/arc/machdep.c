@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2012/07/28 19:08:22 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2012/07/28 23:08:56 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2012/07/28 19:08:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2012/07/28 23:08:56 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -120,9 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2012/07/28 19:08:22 matt Exp $");
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 #endif /* NCOM */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 struct vm_map *phys_map = NULL;
