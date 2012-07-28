@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2012/02/19 21:06:12 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2012/07/28 19:08:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -133,7 +133,6 @@ vsize_t ia64_unwindtablen;
 struct vm_map *phys_map = NULL;
 
 void *msgbufaddr;
-int physmem;
 
 vaddr_t kernstart, kernend;
 
