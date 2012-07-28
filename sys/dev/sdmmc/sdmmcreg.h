@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.11 2012/07/23 13:32:19 matt Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.12 2012/07/28 18:38:03 matt Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -320,7 +320,7 @@
 #define SFUNC_STATUS_GROUP(status, group) \
 	be16toh(__bitfield((uint32_t *)(status), (7 - (group)) << 4, 16))
 
-/* This assumes the response fields are in big endian order.  */
+/* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
 static inline uint32_t
 __bitfield(const uint32_t *src, size_t start, size_t len)
