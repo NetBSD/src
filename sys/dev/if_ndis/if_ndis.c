@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.32 2011/05/14 12:44:15 rmind Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.33 2012/07/28 00:43:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.32 2011/05/14 12:44:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.33 2012/07/28 00:43:23 matt Exp $");
 #endif
 
 
@@ -144,6 +144,8 @@ static void ndis_media_status	(struct ifnet *, struct ifmediareq *);
 static void ndis_setmulti	(struct ndis_softc *);
 static void ndis_map_sclist	(void *, bus_dma_segment_t *,
 	int, bus_size_t, int);
+
+int ndis_in_isr;
 
 #ifdef _MODULE
 

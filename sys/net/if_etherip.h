@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.10 2008/11/12 12:36:28 ad Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.11 2012/07/28 00:43:24 matt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -51,7 +51,8 @@ struct etherip_softc {
 	LIST_ENTRY(etherip_softc) etherip_list; /* list of etherip tunnels    */
 };
 
-LIST_HEAD(, etherip_softc) etherip_softc_list;
+LIST_HEAD(etherip_softc_list, etherip_softc);
+extern struct etherip_softc_list etherip_softc_list;
 
 struct etherip_header {
 	uint8_t eip_ver;       /* version/reserved */

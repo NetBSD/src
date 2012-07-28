@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.65 2010/07/27 19:44:16 jakllsch Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.66 2012/07/28 00:43:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.65 2010/07/27 19:44:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.66 2012/07/28 00:43:23 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -135,6 +135,7 @@ void	ncr5380_cmd_timeout(void *);
 #endif
 
 #ifdef	NCR5380_DEBUG
+struct ncr5380_softc *ncr5380_debug_sc;
 
 #define	NCR_DBG_BREAK	1
 #define	NCR_DBG_CMDS	2

@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.11 2012/06/15 21:59:39 joerg Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.12 2012/07/28 00:43:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.11 2012/06/15 21:59:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.12 2012/07/28 00:43:23 matt Exp $");
 
 #include "libhfs.h"
 
@@ -65,6 +65,15 @@ hfs_catalog_key_t* hfs_gPrivateObjectKeys[4] = {
 extern uint16_t be16tohp(void** inout_ptr);
 extern uint32_t be32tohp(void** inout_ptr);
 extern uint64_t be64tohp(void** inout_ptr);
+
+hfs_callbacks	hfs_gcb;	/* global callbacks */
+ 
+/*    
+ * global case folding table
+ * (lazily initialized; see comments at bottom of hfs_open_volume())     
+ */   
+unichar_t* hfs_gcft;
+
 
 int hfslib_create_casefolding_table(void);
 

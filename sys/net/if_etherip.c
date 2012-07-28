@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.32 2012/06/02 21:36:47 dsl Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.32 2012/06/02 21:36:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -133,6 +133,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.32 2012/06/02 21:36:47 dsl Exp $");
 #endif /* INET6 */
 
 #include <compat/sys/sockio.h>
+
+struct etherip_softc_list etherip_softc_list;
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
