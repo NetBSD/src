@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.480 2012/07/23 04:21:39 pgoyette Exp $
+# $NetBSD: mi,v 1.481 2012/07/28 16:08:39 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2896,6 +2896,9 @@
 ./usr/tests/sbin/newfs				tests-sbin-tests
 ./usr/tests/sbin/newfs/Atffile			tests-sbin-tests	atf
 ./usr/tests/sbin/newfs/t_enable_quotas		tests-sbin-tests	atf
+./usr/tests/sbin/newfs_msdos			tests-sbin-tests
+./usr/tests/sbin/newfs_msdos/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/newfs_msdos/t_create		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs			tests-sbin-tests
 ./usr/tests/sbin/resize_ffs/Atffile		tests-sbin-tests	atf
 ./usr/tests/sbin/resize_ffs/t_grow		tests-sbin-tests	atf
