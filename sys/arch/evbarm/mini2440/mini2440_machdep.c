@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.2 2012/02/03 00:33:08 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.3 2012/07/28 19:08:23 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -237,7 +237,6 @@ vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -181,7 +181,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 struct vm_map *phys_map;
 
 /* physical memory */
-int	physmem;		/* max supported memory, changes to actual */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 

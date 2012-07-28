@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.50 2011/07/09 16:59:40 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.51 2012/07/28 19:08:25 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2011/07/09 16:59:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/07/28 19:08:25 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -129,8 +129,6 @@ struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
-
-int	physmem;		/* Total physical memory */
 
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */

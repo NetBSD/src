@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2012/06/08 07:53:41 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/06/08 07:53:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2012/07/28 19:08:23 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -240,7 +240,6 @@ int (*cpu_ibtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 int (*cpu_dbtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 
 dev_t	bootdev;
-int	physmem;		/* # pages supported by pmap */
 int	totalphysmem;		/* # pages in system */
 int	availphysmem;		/* # pages available to kernel */
 int	esym;
