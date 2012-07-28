@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.7 2009/03/18 10:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.8 2012/07/28 00:43:22 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -94,6 +94,10 @@ __stdcall static uint64_t KeQueryPerformanceCounter(uint64_t *);
 __stdcall static void dummy (void);
 
 extern struct mtx_pool *ndis_mtxpool;
+
+#ifdef __NetBSD__
+int win_irql;
+#endif
 
 int
 hal_libinit(void)
