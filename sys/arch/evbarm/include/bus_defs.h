@@ -1,5 +1,3 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2012/07/12 21:29:51 matt Exp $	*/
-
-#define	__BUS_SPACE_HAS_STREAM_METHODS
+/*	$NetBSD: bus_defs.h,v 1.3 2012/07/28 23:18:48 matt Exp $	*/
 
 #include <arm/bus_defs.h>
