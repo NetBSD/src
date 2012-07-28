@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2012/07/27 19:34:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2012/07/28 19:21:57 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -11,5 +11,6 @@ regen:
 		perl -I${OPENSSLSRC}/crypto/perlasm \
 		-I${OPENSSLSRC}/crypto/bn/asm $$i elf -fPIC \
 		| sed -e 's,^\.file.*$$,#include <machine/asm.h>,' \
+			-e 's/OPENSSL_cpuid_setup/OPENSSL_cpuid_setup@PLT/' \
 		> $$(basename $$i .pl).S; \
 	done
