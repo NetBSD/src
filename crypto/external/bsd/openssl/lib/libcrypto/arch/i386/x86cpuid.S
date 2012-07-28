@@ -329,4 +329,4 @@ OPENSSL_ia32_rdrand:
 .size	OPENSSL_ia32_rdrand,.-.L_OPENSSL_ia32_rdrand_begin
 .comm	OPENSSL_ia32cap_P,8,4
 .section	.init
-	call	OPENSSL_cpuid_setup
+	call	OPENSSL_cpuid_setup@PLT
