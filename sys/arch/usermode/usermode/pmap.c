@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.104 2012/07/24 13:59:26 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.105 2012/07/28 19:08:26 matt Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2012/07/24 13:59:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2012/07/28 19:08:26 matt Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -120,7 +120,6 @@ vaddr_t kmem_user_start, kmem_user_end;
 vaddr_t kmem_kvm_cur_start, kmem_kvm_cur_end;
 
 /* amount of physical memory */
-int	physmem; 
 int	num_pv_entries = 0;
 int	num_pmaps = 0;
 

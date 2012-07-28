@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2012/07/27 05:36:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2012/07/28 19:08:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2012/07/27 05:36:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2012/07/28 19:08:25 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -234,7 +234,6 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
-int	physmem;
 int	fputype;
 void *	msgbufaddr;
 

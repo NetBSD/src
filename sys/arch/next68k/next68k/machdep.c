@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2012/07/27 05:36:11 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2012/07/28 19:08:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2012/07/27 05:36:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2012/07/28 19:08:24 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,7 +130,6 @@ struct vm_map *phys_map = NULL;
 paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
-int	physmem;		/* size of physical memory */
 
 extern	u_int lowram;
 extern	short exframesize[];
