@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.82 2012/07/28 15:12:42 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.82 2012/07/28 15:12:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,13 +706,13 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 
 	sc->sc_bdev = vp->v_rdev;
-	vrele(vp);
 
 	/*
 	 * Get the block device size.
 	 */
 
 	error = getdisksize(vp, &numsec, &secsize);
+	vrele(vp);
 	if (error)
 		return error;
 
