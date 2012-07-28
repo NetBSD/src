@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2012/07/28 23:08:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.27 2012/07/28 23:08:57 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $");
 #include <dev/ic/z8530reg.h>
 
 #include "ioconf.h"
+
+void (*zs_delay)(void);
 
 #define ZS_DELAY() (*zs_delay)()
 

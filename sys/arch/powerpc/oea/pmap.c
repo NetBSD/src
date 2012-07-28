@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2012/02/03 19:29:59 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2012/07/28 23:11:00 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2012/02/03 19:29:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2012/07/28 23:11:00 matt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -91,24 +91,21 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2012/02/03 19:29:59 matt Exp $");
 #include <powerpc/oea/sr_601.h>
 
 #ifdef ALTIVEC
-int pmap_use_altivec;
+extern int pmap_use_altivec;
 #endif
 
-volatile struct pteg *pmap_pteg_table;
-unsigned int pmap_pteg_cnt;
-unsigned int pmap_pteg_mask;
 #ifdef PMAP_MEMLIMIT
 static paddr_t pmap_memlimit = PMAP_MEMLIMIT;
 #else
 static paddr_t pmap_memlimit = -PAGE_SIZE;		/* there is no limit */
 #endif
 
-struct pmap kernel_pmap_;
-unsigned int pmap_pages_stolen;
-u_long pmap_pte_valid;
+extern struct pmap kernel_pmap_;
+static unsigned int pmap_pages_stolen;
+static u_long pmap_pte_valid;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-u_long pmap_pvo_enter_depth;
-u_long pmap_pvo_remove_depth;
+static u_long pmap_pvo_enter_depth;
+static u_long pmap_pvo_remove_depth;
 #endif
 
 #ifndef MSGBUFADDR
@@ -171,6 +168,10 @@ static u_int mem_cnt, avail_cnt;
 #define pmap_pinit		PMAPNAME(pinit)
 #define pmap_procwr		PMAPNAME(procwr)
 
+#define pmap_pool		PMAPNAME(pool)
+#define pmap_upvo_pool		PMAPNAME(upvo_pool)
+#define pmap_mpvo_pool		PMAPNAME(mpvo_pool)
+#define pmap_pvo_table		PMAPNAME(pvo_table)
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 #define pmap_pte_print		PMAPNAME(pte_print)
 #define pmap_pteg_check		PMAPNAME(pteg_check)
@@ -336,10 +337,10 @@ struct pvo_page {
 SIMPLEQ_HEAD(pvop_head, pvo_page);
 static struct pvop_head pmap_upvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_upvop_head);
 static struct pvop_head pmap_mpvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_mpvop_head);
-u_long pmap_upvop_free;
-u_long pmap_upvop_maxfree;
-u_long pmap_mpvop_free;
-u_long pmap_mpvop_maxfree;
+static u_long pmap_upvop_free;
+static u_long pmap_upvop_maxfree;
+static u_long pmap_mpvop_free;
+static u_long pmap_mpvop_maxfree;
 
 static void *pmap_pool_ualloc(struct pool *, int);
 static void *pmap_pool_malloc(struct pool *, int);
