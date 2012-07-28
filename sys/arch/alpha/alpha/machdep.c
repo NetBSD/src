@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.340 2012/06/13 17:13:41 njoly Exp $ */
+/* $NetBSD: machdep.c,v 1.341 2012/07/28 00:57:04 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2012/06/13 17:13:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.341 2012/07/28 00:57:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,6 @@ void *msgbufaddr;
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
-int	physmem;		/* physical memory used by NetBSD + some rsvd */
 int	resvmem;		/* amount of memory reserved for PROM */
 int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
