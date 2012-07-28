@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.88 2012/05/04 17:57:22 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.89 2012/07/28 00:10:22 matt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.88 2012/05/04 17:57:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.89 2012/07/28 00:10:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { NULL, NULL }
 };
 
+int (**coda_vnodeop_p)(void *);
 const struct vnodeopv_desc coda_vnodeop_opv_desc =
         { &coda_vnodeop_p, coda_vnodeop_entries };
 
