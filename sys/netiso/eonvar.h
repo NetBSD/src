@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.18 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.19 2012/07/28 00:43:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -139,7 +139,7 @@ struct eon_iphdr {
 #define	IFF_ES	0x400
 #define	IFF_IS	0x800
 
-struct eon_stat {
+extern struct eon_stat {
 	int             es_in_multi_es;
 	int             es_in_multi_is;
 	int             es_in_broad;
