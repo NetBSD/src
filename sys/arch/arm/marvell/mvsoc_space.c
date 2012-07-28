@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.4 2012/07/18 09:56:49 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.5 2012/07/28 23:13:16 matt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.4 2012/07/18 09:56:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.5 2012/07/28 23:13:16 matt Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -169,7 +169,7 @@ struct bus_space orion_pex1_io_bs_tag = {
 	/* cookie */
 	(void *)ORION_TAG_PEX1_IO,
 
-	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	MVSOC_BUS_SPACE_NORMAL_FUNCS,
 #endif
@@ -199,13 +199,19 @@ struct bus_space kirkwood_pex1_mem_bs_tag = {
 	/* cookie */
 	(void *)KIRKWOOD_TAG_PEX1_MEM,
 
-	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
 };
 struct bus_space kirkwood_pex1_io_bs_tag = {
 	/* cookie */
 	(void *)KIRKWOOD_TAG_PEX1_IO,
 
-	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
 };
 #endif
 #endif
