@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2011/07/28 04:06:09 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2012/07/28 23:09:50 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2011/07/28 04:06:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2012/07/28 23:09:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,9 +113,6 @@ void mcclock_poweroff(void);
 #endif
 
 struct sgimips_intrhand intrtab[NINTR];
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2012/07/28 19:08:22 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2012/07/28 19:08:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:56 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,9 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2012/07/28 19:08:22 matt Exp $");
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;

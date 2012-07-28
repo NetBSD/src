@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2011/07/09 16:03:01 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2012/07/28 23:08:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@ struct evbmips_intrhand {
 };
 
 extern struct evcnt mips_int5_evcnt;
+extern void *(*algor_intr_establish)(int, int (*)(void *), void *);
+extern void (*algor_intr_disestablish)(void *);
 
 void	intr_init(void);
-void	*(*algor_intr_establish)(int, int (*)(void *), void *);
-void	(*algor_intr_disestablish)(void *);
 
 #endif /* _KERNEL */
 #endif /* ! _ALGOR_INTR_H_ */

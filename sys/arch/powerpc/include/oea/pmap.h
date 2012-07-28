@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 2012/07/28 23:11:00 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,6 +137,10 @@ pmap_remove_all(struct pmap *pmap)
 #if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) != 1
 #define	PMAP_NEEDS_FIXUP
 #endif
+
+extern volatile struct pteg *pmap_pteg_table;
+extern unsigned int pmap_pteg_cnt;
+extern unsigned int pmap_pteg_mask;
 
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
