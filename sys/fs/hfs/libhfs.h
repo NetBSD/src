@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.h,v 1.5 2011/07/17 20:54:51 joerg Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.6 2012/07/28 00:43:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -587,13 +587,13 @@ typedef struct
 		
 } hfs_callbacks;
 
-hfs_callbacks	hfs_gcb;	/* global callbacks */
+extern hfs_callbacks	hfs_gcb;	/* global callbacks */
 
 /*
  * global case folding table
  * (lazily initialized; see comments at bottom of hfs_open_volume())
  */
-unichar_t* hfs_gcft;
+extern unichar_t* hfs_gcft;
 
 #if 0
 #pragma mark -
