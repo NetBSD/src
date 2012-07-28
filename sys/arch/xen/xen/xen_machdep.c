@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.12 2012/07/22 19:30:19 jym Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.13 2012/07/28 02:08:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.12 2012/07/22 19:30:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.13 2012/07/28 02:08:51 matt Exp $");
 
 #include "opt_xen.h"
 
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.12 2012/07/22 19:30:19 jym Exp $")
 
 u_int	tsc_get_timecount(struct timecounter *);
 
-uint64_t tsc_freq;	/* XXX */
+bool xen_suspend_allow;
+
+extern uint64_t tsc_freq;	/* XXX */
 
 static int sysctl_xen_suspend(SYSCTLFN_ARGS);
 static void xen_suspend_domain(void);
