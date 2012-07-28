@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_kernel.c,v 1.9 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: pmap_kernel.c,v 1.10 2012/07/28 23:11:01 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,15 +30,23 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.9 2011/06/30 00:52:59 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pmap_kernel.c,v 1.10 2012/07/28 23:11:01 matt Exp $");
 
+#include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_pmap.h"
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 
-extern struct pmap kernel_pmap_;
+#ifdef ALTIVEC
+int pmap_use_altivec;
+#endif
+volatile struct pteg *pmap_pteg_table;
+unsigned int pmap_pteg_cnt;
+unsigned int pmap_pteg_mask;
+
+struct pmap kernel_pmap_;
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 
 u_int

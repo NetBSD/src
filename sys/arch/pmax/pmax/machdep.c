@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.244 2011/07/09 17:32:30 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.244 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -95,7 +95,6 @@ struct vm_map *phys_map = NULL;
 int		systype;		/* mother board type */
 char		*bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
-int		physmem;		/* max supported memory, changes to actual */
 intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];

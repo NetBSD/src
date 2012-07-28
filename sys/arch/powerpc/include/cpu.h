@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.92 2012/07/09 17:45:22 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93 2012/07/28 23:11:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -335,6 +335,7 @@ extern const char __CPU_MAXNUM;
 #endif /* _MODULE */
 
 #if !defined(_MODULE)
+extern char *booted_kernel;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
