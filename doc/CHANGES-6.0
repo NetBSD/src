@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.163 2012/07/25 22:14:47 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.164 2012/07/28 11:38:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6591,4 +6591,10 @@ xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c        1.16
 	so that we can still setup keyboard map manually by xmodmap(1), etc.
 	on some Tier II ports.
 	[tsutsui, ticket #445]
+
+share/man/man4/wapbl.4				1.14
+
+	Don't claim that quotas don't work with WAPBL. Bump date. Should be
+	pulled up to -6.
+	[dholland, ticket #448]
 
