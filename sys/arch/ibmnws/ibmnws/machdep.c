@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2011/06/30 00:52:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2012/07/28 23:11:00 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/06/30 00:52:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2012/07/28 23:11:00 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2011/06/30 00:52:56 matt Exp $");
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
+uint32_t prep_intr_reg_off;
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
