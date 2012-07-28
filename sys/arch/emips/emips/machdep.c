@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2012/01/27 18:52:53 para Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2012/07/28 23:08:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2012/01/27 18:52:53 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2012/07/28 23:08:56 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -86,9 +86,6 @@ extern vsize_t iospace_size;
 
 #include "ksyms.h"
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /*
  * Extent map to manage I/O register space.  We allocate storage for
  * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
@@ -105,7 +102,6 @@ struct vm_map *phys_map = NULL;
 int		systype;		    /* mother board type */
 char   *bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
-int		physmem;		    /* max supported memory, changes to actual */
 intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];

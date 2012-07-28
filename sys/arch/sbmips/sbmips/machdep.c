@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.51 2012/07/28 19:08:25 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.52 2012/07/28 23:09:50 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/07/28 19:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/07/28 23:09:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -123,9 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2012/07/28 19:08:25 matt Exp $");
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
-
-/* Our exported CPU info.  Only one for now */
-struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
