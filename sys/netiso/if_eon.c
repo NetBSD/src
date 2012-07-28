@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.71 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.72 2012/07/28 00:43:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.71 2011/07/17 20:54:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.72 2012/07/28 00:43:24 matt Exp $");
 
 #include "opt_eon.h"
 
@@ -117,6 +117,7 @@ eonprotoinit(void)
 	(void) eonattach();
 }
 
+struct eon_stat eonstat;
 struct eon_llinfo eon_llinfo;
 #define PROBE_OK 0;
 

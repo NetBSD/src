@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.23 2011/08/27 17:07:49 ahoka Exp $      */
+/*        $NetBSD: dm.h,v 1.24 2012/07/28 00:43:22 matt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -120,7 +120,8 @@ typedef struct dm_pdev {
  * This structure is called for every device-mapper device.
  * It points to SLIST of device tables and mirrored, snapshoted etc. devices.
  */
-TAILQ_HEAD(dm_dev_head, dm_dev) dm_devs;
+TAILQ_HEAD(dm_dev_head, dm_dev);
+//extern struct dm_dev_head dm_devs;
 
 typedef struct dm_dev {
 	char name[DM_NAME_LEN];

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs.h,v 1.2 2011/09/27 01:34:41 christos Exp $ */
+/* $NetBSD: nilfs.h,v 1.3 2012/07/28 00:43:23 matt Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -101,7 +101,7 @@ extern int nilfs_verbose;
 MALLOC_DECLARE(M_NILFSMNT);
 MALLOC_DECLARE(M_NILFSTEMP);
 
-struct pool nilfs_node_pool;
+extern struct pool nilfs_node_pool;
 struct nilfs_node;
 struct nilfs_mount;
 
