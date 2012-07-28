@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.48 2012/07/23 15:10:17 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.49 2012/07/28 17:33:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,13 +136,6 @@ ASENTRY_NOPROFILE(start)
 	RELOC(hwplanemask,%a0)
 	movl	%d5,%a0@		| save hwplanemask
 
-	movl	#0x41000000,%a0		| argument of 'x' command on boot
-	movl	%a0@(212),%a0		| (char *)base[53]
-	RELOC(bootarg,%a1)
-	movl	#63,%d0
-1:	movb	%a0@+,%a1@+		| copy to bootarg
-	dbra	%d0,1b			| upto 63 characters
-
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
@@ -167,6 +160,23 @@ Lstart0:
 	movl	%d1,%a0@
 	RELOC(fputype,%a0)
 	movl	%d2,%a0@
+
+	/*
+	 * save argument of 'x' command on boot per machine type
+	 * XXX: assume CPU_68040 is LUNA-II
+	 */
+	movl	#0x41000000,%a0
+	cmpl	#CPU_68040,%d0		| 68040?
+	jne	1f			| no, assume 68030 LUNA
+	movl	%a0@(8),%a0		| arg at (char *)base[2] on LUNA-II
+	jra	Lstart1
+1:
+	movl	%a0@(212),%a0		| arg at (char *)base[53] on LUNA
+Lstart1:
+	RELOC(bootarg,%a1)
+	movl	#63,%d0
+1:	movb	%a0@+,%a1@+		| copy to bootarg
+	dbra	%d0,1b			| upto 63 characters
 
 	/*
 	 * Now that we know what CPU we have, initialize the address error
