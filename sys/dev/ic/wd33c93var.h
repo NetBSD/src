@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.10 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.11 2012/07/28 23:04:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,7 +112,7 @@ struct wd33c93_tinfo {
 	u_char	period;			/* Period suggestion */
 	u_char	offset;			/* Offset suggestion */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
-} tinfo_t;
+};
 
 /* Look up a lun in a tinfo */
 #define TINFO_LUN(t, l) 	((t)->lun[(l)])
