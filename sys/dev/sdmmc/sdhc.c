@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.27 2012/07/28 20:08:51 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.28 2012/07/28 23:02:57 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.27 2012/07/28 20:08:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.28 2012/07/28 23:02:57 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -301,10 +301,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	}
 
 	/* Use DMA if the host system and the controller support it. */
-	if ((hp->specver == SDHC_SPEC_VERS_100) &&
-	    (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA) ||
+	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA) ||
 	    (ISSET(sc->sc_flags, SDHC_FLAG_USE_DMA &&
-	     ISSET(caps, SDHC_DMA_SUPPORT))))) {
+	     ISSET(caps, SDHC_DMA_SUPPORT)))) {
 		SET(hp->flags, SHF_USE_DMA);
 		aprint_normal_dev(sc->sc_dev, "using DMA transfer\n");
 	}
@@ -405,7 +404,10 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
 		saa.saa_caps |= SMC_CAPS_SD_HIGHSPEED;
 	if (ISSET(hp->flags, SHF_USE_DMA)) {
-		saa.saa_caps |= SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA;
+		saa.saa_caps |= SMC_CAPS_DMA;
+		if (hp->specver == SDHC_SPEC_VERS_100) {
+			saa.saa_caps |= SMC_CAPS_MULTI_SEG_DMA;
+		}
 	}
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
