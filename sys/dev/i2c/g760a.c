@@ -1,4 +1,4 @@
-/*	$NetBSD: g760a.c,v 1.2 2011/06/20 20:16:19 pgoyette Exp $	*/
+/*	$NetBSD: g760a.c,v 1.3 2012/07/28 23:03:47 matt Exp $	*/
 
 /*-
  * Copyright (C) 2008 A.Leo.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.2 2011/06/20 20:16:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g760a.c,v 1.3 2012/07/28 23:03:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ g760a_setup(struct g760a_softc* sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode**)&me,
+	ret = sysctl_createv(NULL, 0, NULL, (void *)&me,
 			CTLFLAG_READWRITE,
 			CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 			NULL, 0, NULL, 0,
@@ -236,7 +236,7 @@ g760a_setup(struct g760a_softc* sc)
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor))
 		goto out;
 
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode**)&node,
+	ret = sysctl_createv(NULL, 0, NULL, (void *)&node,
 			CTLFLAG_READWRITE,
 			CTLTYPE_INT, "rpm", sc->sc_sensor.desc,
 			sysctl_g760a_rpm, 0x42, NULL, 0,
