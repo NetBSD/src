@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.86 2011/10/26 00:56:59 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.87 2012/07/29 00:07:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.86 2011/10/26 00:56:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.87 2012/07/29 00:07:53 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -714,7 +714,7 @@ prom_cnputc(dev_t dev, int c)
 
 extern struct consdev consdev_kd;
 
-static struct {
+static const struct {
 	int zs_unit, channel;
 } zstty_conf[NZS*2] = {
 	/* XXX: knowledge from the config file here... */
@@ -724,7 +724,7 @@ static struct {
 	{ 0, 1 },	/* ttyd */
 };
 
-static const char *prom_inSrc_name[] = {
+static const char * const prom_inSrc_name[] = {
 	"keyboard/display",
 	"ttya", "ttyb",
 	"ttyc", "ttyd" };
