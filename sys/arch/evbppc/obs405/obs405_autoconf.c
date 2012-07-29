@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405_autoconf.c,v 1.5 2011/06/18 06:44:26 matt Exp $	*/
+/*	$NetBSD: obs405_autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.5 2011/06/18 06:44:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs405_autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,7 +51,7 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

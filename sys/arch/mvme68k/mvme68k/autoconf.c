@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2011/02/08 20:20:20 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2012/07/29 18:05:44 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2011/02/08 20:20:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2012/07/29 18:05:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ cpu_rootconf(void)
 	else
 		printf("\n");
 
-	setroot(booted_device, bootpart);
+	booted_partition = bootpart;
+	rootconf();
 }
 
 void

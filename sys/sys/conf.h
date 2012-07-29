@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.142 2012/07/29 10:07:10 mlelstv Exp $	*/
+/*	$NetBSD: conf.h,v 1.143 2012/07/29 18:05:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -266,6 +266,7 @@ void mm_init(void);
 #ifdef _KERNEL
 struct	device;
 void	setroot(struct device *, int);
+void	rootconf(void);
 void	swapconf(void);
 #endif /* _KERNEL */
 
