@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfbvar.h,v 1.2 2012/07/20 12:03:32 rkujawa Exp $	*/
+/*	$NetBSD: tdvfbvar.h,v 1.3 2012/07/29 20:31:53 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc. 
@@ -77,7 +77,6 @@ struct tdvfb_softc {
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
-	struct wsdisplay_accessops sc_accessops;
 
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
