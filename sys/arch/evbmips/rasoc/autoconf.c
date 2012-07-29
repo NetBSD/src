@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2011/07/28 15:50:13 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2012/07/29 18:05:42 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2011/07/28 15:50:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2012/07/29 18:05:42 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,7 +58,7 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

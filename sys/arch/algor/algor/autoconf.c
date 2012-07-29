@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2012/07/29 18:05:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2012/07/29 18:05:39 mlelstv Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -77,7 +77,7 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 #if defined(ALGOR_P4032)

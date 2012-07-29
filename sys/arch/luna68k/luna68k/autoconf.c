@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.12 2009/03/18 10:22:31 cegger Exp $ */
+/* $NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2009/03/18 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,5 +87,5 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, 0); /* XXX partition 'a' XXX */
+	rootconf();
 }

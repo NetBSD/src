@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.51 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: autoconf.c,v 1.52 2012/07/29 18:05:39 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2012/07/29 18:05:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ cpu_rootconf(void)
 	if (booted_device == NULL)
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    bootinfo.booted_dev);
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

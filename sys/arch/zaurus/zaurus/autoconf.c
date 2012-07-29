@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2012/06/13 20:04:30 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2012/07/29 18:05:47 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2012/06/13 20:04:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2012/07/29 18:05:47 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -212,7 +212,7 @@ cpu_rootconf(void)
 
 	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void
