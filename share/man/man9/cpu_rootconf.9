@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_rootconf.9,v 1.7 2012/07/29 18:05:48 mlelstv Exp $
+.\"     $NetBSD: cpu_rootconf.9,v 1.8 2012/07/29 18:51:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 13, 2010
+.Dd July 29, 2012
 .Dt CPU_ROOTCONF 9
 .Os
 .Sh NAME
@@ -52,14 +52,14 @@ determine the root file system device and initialize machine-dependent
 file system state.
 .Fn cpu_rootconf
 provides the global variables
-.Fa booted_device,
+.Fa booted_device ,
 .Fa booted_partition ,
-.Fa booted_startblk
+.Fa booted_startblk ,
 and
 .Fa booted_nblks
 and invokes the machine-independent function
 .Fa rootconf
-which 
+which
 .Fa rootconf
 then calls the function
 .Fa setroot
@@ -77,6 +77,6 @@ Otherwise the
 .Fa booted_partition
 is used.
 .Sh SEE ALSO
+.Xr dk 4 ,
 .Xr boot 8 ,
-.Xr boothowto 9 ,
-.Xr dk 4
+.Xr boothowto 9
