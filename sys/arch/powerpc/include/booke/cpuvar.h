@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.13 2012/07/27 22:24:13 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.14 2012/07/29 21:39:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -194,6 +194,7 @@ void	*board_info_get_object(const char *);
 const void *
 	board_info_get_data(const char *, size_t *);
 
+extern char root_string[];
 extern paddr_t msgbuf_paddr;
 extern prop_dictionary_t board_properties;
 extern psize_t pmemsize;

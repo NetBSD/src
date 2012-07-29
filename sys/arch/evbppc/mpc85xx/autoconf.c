@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2012/07/29 21:39:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2012/07/29 21:39:43 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -43,11 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/07/29 18:05:42 mlelstv Exp $")
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/bus.h>
-#include <sys/cpu.h>
 
 #include <powerpc/booke/cpuvar.h>
 
@@ -67,6 +68,8 @@ cpu_configure(void)
 	spl0();
 }
 
+static volatile int rootconf_timo = 1;
+
 /*
  * Setup root device.
  * Configure swap area.
@@ -74,6 +77,23 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
+	/*
+	 * We wait up to 10 seconds for a bootable device to be found.
+	 */
+	while (rootconf_timo-- > 0) {
+		if (booted_device != NULL) {
+			aprint_normal_dev(booted_device, "boot device\n");
+			break;
+		}
+
+		if (root_string[0] != '\0'
+		    && (booted_device = device_find_by_xname(root_string)) != NULL) {
+			aprint_normal_dev(booted_device, "boot device\n");
+			break;
+		}
+
+		kpause("autoconf", true, 1, NULL);
+	}
 
 	rootconf();
 }
@@ -83,6 +103,16 @@ device_register(device_t dev, void *aux)
 {
 	if (cpu_md_ops.md_device_register != NULL)
 		(*cpu_md_ops.md_device_register)(dev, aux);
+
+	if (booted_device == NULL) {
+		if (root_string[0] != '\0'
+		    && !strcmp(device_xname(dev), root_string)) {
+			aprint_normal_dev(dev, "boot device\n");
+			booted_device = dev;
+		} else {
+			rootconf_timo = 5 * hz;
+		}
+	}
 }
 
 static bool mainbus_found;
