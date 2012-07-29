@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.272 2012/07/26 20:49:48 jakllsch Exp $ */
+/*	$NetBSD: wdc.c,v 1.273 2012/07/29 18:20:13 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.272 2012/07/26 20:49:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.273 2012/07/29 18:20:13 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1879,28 +1879,35 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #endif
 
 	if (flags & DRIVE_NOSTREAM) {
-		if (flags & DRIVE_CAP32) {
+		if ((flags & DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
 			len &= 3;
 		}
-		if (len) {
+		if (len > 1) {
 			bus_space_read_multi_2(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
+			bf = (char *)bf + (len & ~1);
+			len &= 1;
 		}
 	} else {
-		if (flags & DRIVE_CAP32) {
+		if ((flags & DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
 			bf = (char *)bf + (len & ~3);
 			len &= 3;
 		}
-		if (len) {
+		if (len > 1) {
 			bus_space_read_multi_stream_2(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
+			bf = (char *)bf + (len & ~1);
+			len &= 1;
 		}
 	}
+	if (len)
+		*((uint8_t *)bf) = bus_space_read_1(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0);
 	return;
 
 #ifndef __NO_STRICT_ALIGNMENT
