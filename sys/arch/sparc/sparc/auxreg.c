@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.39 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: auxreg.c,v 1.40 2012/07/29 00:04:05 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.39 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.40 2012/07/29 00:04:05 matt Exp $");
 
 #include "opt_blink.h"
 
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.39 2011/07/17 23:18:23 mrg Exp $");
 
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
+
+volatile u_char *auxio_reg;
+u_char auxio_regval;
 
 static int auxregmatch_mainbus(device_t, cfdata_t, void *);
 static int auxregmatch_obio(device_t, cfdata_t, void *);

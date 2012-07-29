@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.18 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: power.c,v 1.19 2012/07/29 00:04:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.18 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.19 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: power.c,v 1.18 2011/07/17 23:18:23 mrg Exp $");
 #include <machine/autoconf.h>
 
 #include <sparc/dev/power.h>
+
+volatile uint8_t *power_reg;
 
 static int powermatch(device_t, cfdata_t, void *);
 static void powerattach(device_t, device_t, void *);
