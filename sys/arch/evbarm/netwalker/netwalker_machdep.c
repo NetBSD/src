@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.6 2012/04/15 10:34:14 bsh Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.7 2012/07/29 00:07:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.6 2012/04/15 10:34:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.7 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -201,18 +201,8 @@ vm_offset_t pagetables_start;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char KERNEL_BASE_virt[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];

@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.13 2011/07/01 20:41:16 dyoung Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.14 2012/07/29 00:07:08 matt Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.13 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.14 2012/07/29 00:07:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -200,17 +200,7 @@ u_int free_pages;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

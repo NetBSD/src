@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.16 2011/07/01 19:11:34 dyoung Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.17 2012/07/29 00:07:09 matt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.16 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.17 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,12 +163,6 @@ vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
 static struct arm32_dma_range tsarm_dma_ranges[4];
@@ -176,10 +170,6 @@ static struct arm32_dma_range tsarm_dma_ranges[4];
 #if NISA > 0
 extern void isa_tsarm_init(u_int, u_int); 
 #endif
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

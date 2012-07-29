@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.19 2011/07/01 20:45:45 dyoung Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.20 2012/07/29 00:07:10 matt Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.19 2011/07/01 20:45:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.20 2012/07/29 00:07:10 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -200,17 +200,9 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

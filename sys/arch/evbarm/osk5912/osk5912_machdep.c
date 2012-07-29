@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.11 2011/07/01 20:44:21 dyoung Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.12 2012/07/29 00:07:09 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.11 2011/07/01 20:44:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.12 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -177,18 +177,9 @@ paddr_t physical_end;
 static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;	/* stack for SVC mode */
-
 /* Physical address of the message buffer. */
 paddr_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];
 extern char _end[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.2 2012/07/28 19:08:23 matt Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.3 2012/07/29 00:07:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.2 2012/07/28 19:08:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.3 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -184,19 +184,7 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 extern char etext[];
 extern char __data_start[], _edata[];

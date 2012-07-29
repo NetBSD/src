@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.19 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.20 2012/07/29 00:07:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.19 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.20 2012/07/29 00:07:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ static struct intrhandler {
 	/* struct evbnt ev; */
 } handler[ICU_LEN];
 
+vaddr_t pxaic_base;
 volatile int softint_pending;
 volatile int intr_mask;
 /* interrupt masks for each level */

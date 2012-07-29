@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.4 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: sbicvar.h,v 1.5 2012/07/29 00:07:10 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@ struct sbic_tinfo {
 	u_char  flags;
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
-} tinfo_t;
+};
 
 struct	sbic_softc {
 	struct	device sc_dev;

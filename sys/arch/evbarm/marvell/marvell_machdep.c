@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.10 2012/07/28 19:08:22 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.11 2012/07/29 00:07:09 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.10 2012/07/28 19:08:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.11 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -113,18 +113,7 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 extern char _end[];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.24 2011/07/01 20:38:17 dyoung Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.25 2012/07/29 00:07:07 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -192,17 +192,9 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

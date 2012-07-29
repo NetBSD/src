@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.38 2011/07/07 08:48:34 mrg Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.39 2012/07/29 00:07:08 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -239,18 +239,7 @@ u_int free_pages;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-pv_addr_t minidataclean;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

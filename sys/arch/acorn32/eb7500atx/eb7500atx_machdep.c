@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.22 2012/05/10 10:27:09 skrll Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.23 2012/07/29 00:07:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.22 2012/05/10 10:27:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.23 2012/07/29 00:07:10 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -156,18 +156,7 @@ int max_processes = 64;		/* Default number */
 
 u_int videodram_size = 0;	/* Amount of DRAM to reserve for video */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 paddr_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.37 2011/07/01 20:44:21 dyoung Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.38 2012/07/29 00:07:09 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.37 2011/07/01 20:44:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.38 2012/07/29 00:07:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -201,17 +201,7 @@ u_int free_pages;
 int max_processes = 64;		/* Default number */
 #endif				/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
