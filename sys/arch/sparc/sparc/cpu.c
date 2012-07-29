@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.235 2012/03/11 00:32:21 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.236 2012/07/29 00:04:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.235 2012/03/11 00:32:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.236 2012/07/29 00:04:05 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1058,7 +1058,7 @@ int hypersparc_getmid(void);
 #define cypress_getmid	hypersparc_getmid
 int viking_getmid(void);
 
-int	(*moduleerr_handler)(void);
+extern int (*moduleerr_handler)(void);
 int viking_module_error(void);
 
 struct module_info module_unknown = {

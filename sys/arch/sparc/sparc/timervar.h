@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.10 2011/07/17 23:18:23 mrg Exp $	*/
+/*	$NetBSD: timervar.h,v 1.11 2012/07/29 00:04:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ extern void tickle_tc(void);
 
 /* Common timer attach routine in timer.c: */
 void	timerattach(volatile int *, volatile int *);
-void	*sched_cookie;	/* for schedclock() interrupts */
+extern void	*sched_cookie;	/* for schedclock() interrupts */
 
 static inline u_long __attribute__((__unused__))
 new_interval(void)

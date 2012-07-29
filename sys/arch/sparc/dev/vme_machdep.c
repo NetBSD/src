@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.66 2012/01/27 18:53:01 para Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.67 2012/07/29 00:04:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.66 2012/01/27 18:53:01 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.67 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -168,7 +168,7 @@ CFATTACH_DECL_NEW(vme_iommu, sizeof(struct sparcvme_softc),
 
 static int vme_attached;
 
-int	(*vmeerr_handler)(void);
+extern int (*vmeerr_handler)(void);
 
 #define VMEMOD_D32 0x40 /* ??? */
 

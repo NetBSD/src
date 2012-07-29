@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.c,v 1.10 2011/07/17 23:32:37 mrg Exp $	*/
+/*	$NetBSD: auxiotwo.c,v 1.11 2012/07/29 00:04:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.10 2011/07/17 23:32:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.11 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: auxiotwo.c,v 1.10 2011/07/17 23:32:37 mrg Exp $");
 #include <sparc/include/tctrl.h>
 #include <sparc/sparc/auxiotwo.h>
 #include <sparc/sparc/vaddrs.h>
+
+volatile u_char *auxiotwo_reg;
+u_char auxiotwo_regval;
 
 static int serial_refcount;
 static int serial_power;
