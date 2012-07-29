@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1770 2012/07/26 20:05:39 christos Exp $
+#	$NetBSD: mi,v 1.1771 2012/07/29 20:36:05 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16882,6 +16882,7 @@
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_extract_data.html	comp-sys-htmlman	html
+./usr/share/man/html9/rootconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/round_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup.html		comp-sys-htmlman	html
@@ -23307,6 +23308,7 @@
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_extract_data.9		comp-sys-man		.man
+./usr/share/man/man9/rootconf.9			comp-sys-man		.man
 ./usr/share/man/man9/round_page.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
 ./usr/share/man/man9/roundup.9			comp-sys-man		.man
