@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.38 2011/07/01 20:38:16 dyoung Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.39 2012/07/29 00:07:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.38 2011/07/01 20:38:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.39 2012/07/29 00:07:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -158,17 +158,9 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

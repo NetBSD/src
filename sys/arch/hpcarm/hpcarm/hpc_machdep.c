@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.100 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.101 2012/07/29 00:07:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.100 2012/03/31 14:02:54 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.101 2012/07/29 00:07:06 matt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -77,7 +77,7 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif
 struct bootinfo *bootinfo, bootinfo_storage;
 char booted_kernel_storage[80];
-char *booted_kernel = booted_kernel_storage;
+extern char *booted_kernel;
 
 paddr_t physical_start;
 paddr_t physical_freestart;
@@ -87,12 +87,6 @@ paddr_t physical_end;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif /* !PMAP_STATIC_L1S */
-
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
 
 char *boot_args = NULL;
 char boot_file[16];
@@ -233,6 +227,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	__sleep_ctx = NULL;
 
 	/* parse kernel args */
+	booted_kernel = booted_kernel_storage;
 	boothowto = 0;
 	boot_file[0] = '\0';
 	if (argc > 0 && argv != NULL) {

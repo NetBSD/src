@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.101 2012/01/28 00:18:30 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.102 2012/07/29 00:07:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -212,6 +212,11 @@ typedef SLIST_HEAD(, pv_addr) pv_addrqh_t;
 
 extern pv_addrqh_t pmap_freeq;
 extern pv_addr_t kernelpages;
+extern pv_addr_t kernelstack;
+extern pv_addr_t abtstack;
+extern pv_addr_t fiqstack;
+extern pv_addr_t irqstack;
+extern pv_addr_t undstack;
 extern pv_addr_t systempage;
 extern pv_addr_t kernel_l1pt;
 
