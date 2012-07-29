@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.88 2012/07/26 20:49:47 jakllsch Exp $	*/
+/*	$NetBSD: atavar.h,v 1.89 2012/07/29 21:10:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -355,9 +355,6 @@ struct ata_channel {
 	/* ATAPI children */
 	device_t atapibus;
 	struct scsipi_channel ch_atapi_channel;
-
-	/* ATA children */
-	device_t ata_drives[ATA_MAXDRIVES];
 
 	/*
 	 * Channel queues.  May be the same for all channels, if hw
