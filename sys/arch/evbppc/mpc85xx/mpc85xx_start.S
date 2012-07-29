@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.5 2011/06/18 06:37:38 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.6 2012/07/29 21:36:27 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.5 2011/06/18 06:37:38 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.6 2012/07/29 21:36:27 matt Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -78,10 +78,10 @@ __start:
 /*
  * Startup entry.  Note, this must be the first thing in the text segment!
  */
-	mr	%r8,%r6
-	mr	%r7,%r5
-	mr	%r6,%r4
-	mr	%r5,%r3
+	mr	%r8,%r6		/* cmdline (char *) */
+	mr	%r7,%r5		/* consdev (char *) */
+	mr	%r6,%r4		/* os_hdr * */
+	mr	%r5,%r3		/* board info * */
 #ifdef DEBUG
 	/*
 	 * Set all the registers we don't care about to a known junk value.
@@ -231,11 +231,11 @@ __start:
 	/*
 	 * Force all dirty lines in the kernel area to memory.
 	 */
-	lis	%r8,kernel_text@ha
-	addi	%r8,%r8,kernel_text@l
-4:	dcbst	%r0,%r8
-	addi	%r8,%r8,32
-	cmplw	%r8,%r4
+	lis	%r9,kernel_text@ha
+	addi	%r9,%r9,kernel_text@l
+4:	dcbst	%r0,%r9
+	addi	%r9,%r9,32
+	cmplw	%r9,%r4
 	blt	%cr0,4b
 	mbar	1
 	msync
