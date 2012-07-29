@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2012/07/29 18:05:40 mlelstv Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2012/07/29 18:05:40 mlelstv Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -475,7 +475,8 @@ cpu_rootconf(void)
 
 	if (boot_device != NULL)
 		printf("boot device: %s\n", boot_device->dv_xname );
-	setroot(boot_device, 0);
+	booted_device = boot_device;
+	rootconf();
 }
 
 

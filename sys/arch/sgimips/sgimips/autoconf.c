@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 2012/07/29 18:05:46 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2012/07/29 18:05:46 mlelstv Exp $");
 
 #include "opt_ddb.h"
 
@@ -163,7 +163,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 		booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 /*

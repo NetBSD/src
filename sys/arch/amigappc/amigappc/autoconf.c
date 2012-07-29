@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2011/06/18 08:08:27 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:39 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/06/18 08:08:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,7 @@ cpu_rootconf(void)
 #ifdef DEBUG_KERNEL_START
 	printf("survived findroot()\n");
 #endif
-	setroot(booted_device, booted_partition);
-#ifdef DEBUG_KERNEL_START
-	printf("survived setroot()\n");
-#endif
+	rootconf();
 }
 
 /*ARGSUSED*/

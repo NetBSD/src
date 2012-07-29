@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.243 2012/05/28 19:24:29 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.244 2012/07/29 18:05:46 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243 2012/05/28 19:24:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.244 2012/07/29 18:05:46 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1000,17 +1000,15 @@ void
 cpu_rootconf(void)
 {
 	struct bootpath *bp;
-	int bootpartition;
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	if (bp == NULL)
-		bootpartition = 0;
+		booted_partition = 0;
 	else if (booted_device != bp->dev)
-		bootpartition = 0;
+		booted_partition = 0;
 	else
-		bootpartition = bp->val[2];
-
-	setroot(booted_device, bootpartition);
+		booted_partition = bp->val[2];
+	rootconf();
 }
 
 /*

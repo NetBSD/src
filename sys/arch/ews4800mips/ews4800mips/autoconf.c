@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2011/02/20 07:55:20 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2012/07/29 18:05:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2011/02/20 07:55:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2012/07/29 18:05:43 mlelstv Exp $");
 
 #include "opt_sbd.h"
 
@@ -112,7 +112,8 @@ cpu_rootconf(void)
 
 	if (bootdev_name &&
 	    (dv = device_find_by_xname(bootdev_name)) != NULL) {
-		setroot(dv, partition);
-	} else
-		setroot(0, 0);
+		booted_device = dv;
+		booted_partition = partition;
+	}
+	rootconf();
 }
