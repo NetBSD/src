@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.h,v 1.9 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: memreg.h,v 1.10 2012/07/29 00:04:05 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  * Sun-4c memory error register.
  * The register is a single word.
  */
-volatile u_int	*par_err_reg;	/* virtual address; NULL if not yet mapped */
+extern volatile u_int	*par_err_reg;	/* virtual address; NULL if not yet mapped */
 
 /*
  * Bits in parity error register.

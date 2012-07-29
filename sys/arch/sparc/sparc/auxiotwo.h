@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiotwo.h,v 1.4 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: auxiotwo.h,v 1.5 2012/07/29 00:04:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@
 #define ZS_DISABLE	1
 
 #ifndef _LOCORE
-volatile u_char *auxiotwo_reg;
-u_char auxiotwo_regval;
+extern volatile u_char *auxiotwo_reg;
+extern u_char auxiotwo_regval;
 unsigned int auxiotwobisc(int, int);
 void auxiotwoserialendis(int);
 void auxiotwoserialsetapm(int);
