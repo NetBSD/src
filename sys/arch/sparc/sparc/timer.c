@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.29 2011/07/17 23:18:23 mrg Exp $ */
+/*	$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.29 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,6 +78,8 @@ static struct intrhand level10;
 static struct intrhand level14;
 
 static u_int timer_get_timecount(struct timecounter *);
+
+void *sched_cookie;
 
 /*
  * timecounter local state
