@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.64 2012/07/13 16:31:49 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.65 2012/07/29 18:05:47 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.64 2012/07/13 16:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65 2012/07/29 18:05:47 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,7 @@ cpu_rootconf(void)
 
 	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:41 mlelstv Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:41 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 		booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 extern char	bootstring[];

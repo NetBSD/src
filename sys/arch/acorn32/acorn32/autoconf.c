@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2012/07/29 18:05:39 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2012/07/29 18:05:39 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -137,7 +137,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 #endif
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 
