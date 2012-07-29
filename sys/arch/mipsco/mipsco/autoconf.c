@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2011/02/20 07:56:16 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2012/07/29 18:05:44 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2011/02/20 07:56:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2012/07/29 18:05:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ cpu_rootconf(void)
 
 	printf("boot device: %s\n",
 	       booted_device ? booted_device->dv_xname : "<unknown>");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 dev_t	bootdev = 0;

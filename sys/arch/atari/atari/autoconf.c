@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2012/06/30 10:37:00 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2012/07/29 18:05:40 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2012/06/30 10:37:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2012/07/29 18:05:40 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -119,7 +119,7 @@ cpu_rootconf(void)
 		}
 	}
 #endif
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 /*ARGSUSED*/
