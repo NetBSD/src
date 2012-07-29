@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.122 2012/07/26 20:49:47 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.123 2012/07/29 21:10:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.122 2012/07/26 20:49:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.123 2012/07/29 21:10:50 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -307,9 +307,10 @@ atabusconfig_thread(void *arg)
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ata_drives[i] = config_found_ia(atabus_sc->sc_dev,
+		KASSERT(chp->ch_drive[i].drv_softc == NULL);
+		chp->ch_drive[i].drv_softc = config_found_ia(atabus_sc->sc_dev,
 		    "ata_hl", &adev, ataprint);
-		if (chp->ata_drives[i] != NULL)
+		if (chp->ch_drive[i].drv_softc != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
 		else {
 			s = splbio();
@@ -325,10 +326,15 @@ atabusconfig_thread(void *arg)
 		ata_print_modes(chp);
 	}
 #if NATARAID > 0
-	if (atac->atac_cap & ATAC_CAP_RAID)
-		for (i = 0; i < chp->ch_ndrive; i++)
-			if (chp->ata_drives[i] != NULL)
-				ata_raid_check_component(chp->ata_drives[i]);
+	if (atac->atac_cap & ATAC_CAP_RAID) {
+		for (i = 0; i < chp->ch_ndrive; i++) {
+			if ((chp->ch_drive[i].drv_softc != NULL) &&
+			    (chp->ch_drive[i].drive_flags & DRIVE_ATA)) {
+				ata_raid_check_component(
+				    chp->ch_drive[i].drv_softc);
+			}
+		}
+	}
 #endif /* NATARAID > 0 */
 
 	/*
@@ -528,16 +534,15 @@ atabus_detach(device_t self, int flags)
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if ((dev = chp->ata_drives[i]) != NULL) {
+		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 			ATADEBUG_PRINT(("%s.%d: %s: detaching %s\n", __func__,
 			    __LINE__, device_xname(self), device_xname(dev)),
 			    DEBUG_DETACH);
-			KASSERT(chp->ch_drive[i].drv_softc ==
-			        chp->ata_drives[i]);
 			error = config_detach(dev, flags);
 			if (error)
 				goto out;
-			KASSERT(chp->ata_drives[i] == NULL);
+			KASSERT(chp->ch_drive[i].drv_softc == NULL);
+			KASSERT((chp->ch_drive[i].drive_flags & DRIVE) == 0);
 		}
 	}
 
@@ -574,10 +579,7 @@ atabus_childdetached(device_t self, device_t child)
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		if (child == chp->ata_drives[i]) {
-			KASSERT(chp->ata_drives[i] ==
-			        chp->ch_drive[i].drv_softc);
-			chp->ata_drives[i] = NULL;
+		if (child == chp->ch_drive[i].drv_softc) {
 			chp->ch_drive[i].drv_softc = NULL;
 			chp->ch_drive[i].drive_flags = 0;
 			found = true;
@@ -1580,7 +1582,7 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 	}
 
 	for (i = 0; i < ATA_MAXDRIVES; i++) {
-		if (chp->ata_drives[i] != NULL) {
+		if (chp->ch_drive[i].drv_softc != NULL) {
 			return EBUSY;
 		}
 	}
