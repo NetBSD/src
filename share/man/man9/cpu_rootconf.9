@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_rootconf.9,v 1.6 2010/04/13 07:32:31 jruoho Exp $
+.\"     $NetBSD: cpu_rootconf.9,v 1.7 2012/07/29 18:05:48 mlelstv Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Os
 .Sh NAME
 .Nm cpu_rootconf ,
+.Nm rootconf ,
 .Nm setroot
 .Nd root file system setup
 .Sh SYNOPSIS
@@ -40,6 +41,8 @@
 .Ft void
 .Fn cpu_rootconf "void"
 .Ft void
+.Fn rootconf "void"
+.Ft void
 .Fn setroot "device_t bootdv" "int bootpartition"
 .Sh DESCRIPTION
 The
@@ -47,16 +50,33 @@ The
 is a machine-dependent interface invoked during system bootstrap to
 determine the root file system device and initialize machine-dependent
 file system state.
-.Pp
-The
 .Fn cpu_rootconf
-function invokes the machine-independent
-.Fn setroot
-function to record the boot/root device
-.Fa bootdv
-and the boot partition information
-.Fa bootpartition
+provides the global variables
+.Fa booted_device,
+.Fa booted_partition ,
+.Fa booted_startblk
+and
+.Fa booted_nblks
+and invokes the machine-independent function
+.Fa rootconf
+which 
+.Fa rootconf
+then calls the function
+.Fa setroot
+to record the boot/root device and the boot partition information
 for use in machine-independent code.
+.Pp
+For disk boot, if
+.Fa booted_nblks
+is not 0, then
+.Fa booted_startblk
+and
+.Fa booted_nblks
+are supposed to specify a disk wedge that is used as the root device.
+Otherwise the
+.Fa booted_partition
+is used.
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr boothowto 9
+.Xr boothowto 9 ,
+.Xr dk 4

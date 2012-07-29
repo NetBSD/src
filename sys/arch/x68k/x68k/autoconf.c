@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 2012/04/23 05:31:31 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.67 2012/07/29 18:05:47 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2012/04/23 05:31:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.67 2012/07/29 18:05:47 mlelstv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -80,7 +80,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void
