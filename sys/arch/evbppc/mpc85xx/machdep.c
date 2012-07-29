@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2012/07/22 23:46:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2012/07/29 21:39:43 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <sys/bitops.h>
 #include <sys/bus.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/reboot.h>
 #include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
@@ -114,12 +114,14 @@ struct uboot_bdinfo {
 /*4e*/	uint16_t bd_pad;
 };
 
+char root_string[16];
+
 /*
  * booke kernels need to set module_machine to this for modules to work.
  */
 char module_machine_booke[] = "powerpc-booke";
 
-void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
+void	initppc(vaddr_t, vaddr_t, void *, void *, char *, char *);
 
 #define	MEMREGIONS	4
 phys_ram_seg_t physmemr[MEMREGIONS];		/* All memory */
@@ -1045,9 +1047,45 @@ calltozero(void)
 	panic("call to 0 from %p", __builtin_return_address(0));
 }
 
+static void
+parse_cmdline(char *cp)
+{
+	int ourhowto = 0;
+	char c;
+	bool opt = false;
+	for (; (c = *cp) != '\0'; cp++) {
+		if (c == '-') {	
+			opt = true;
+			continue;
+		}
+		if (c == ' ') {
+			opt = false;
+			continue;
+		}
+		if (opt) {
+			switch (c) {
+			case 'a': ourhowto |= RB_ASKNAME; break;
+			case 'd': ourhowto |= AB_DEBUG; break;
+			case 'q': ourhowto |= AB_QUIET; break;
+			case 's': ourhowto |= RB_SINGLE; break;
+			case 'v': ourhowto |= AB_VERBOSE; break;
+			}
+			continue;
+		}
+		strlcpy(root_string, cp, sizeof(root_string));
+		break;
+	}
+	if (ourhowto) {
+		boothowto |= ourhowto;
+		printf(" boothowto=%#x(%#x)", boothowto, ourhowto);
+	}
+	if (root_string[0])
+		printf(" root=%s", root_string);
+}
+
 void
 initppc(vaddr_t startkernel, vaddr_t endkernel,
-	void *a0, void *a1, void *a2, void *a3)
+	void *a0, void *a1, char *a2, char *a3)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
@@ -1055,6 +1093,13 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	cn_tab = &e500_earlycons;
 	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
 	    startkernel, endkernel, a0, a1, a2, a3);
+
+	if (a2[0] != '\0')
+		printf(" consdev=<%s>", a2);
+	if (a3[0] != '\0') {
+		printf(" cmdline=<%s>", a3);
+		parse_cmdline(a3);
+	}
 
 	/*
 	 * Make sure we don't enter NAP or SLEEP if PSL_POW (MSR[WE]) is set.
