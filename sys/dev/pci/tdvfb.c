@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.3 2012/07/20 21:31:28 rkujawa Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.4 2012/07/29 20:31:53 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -38,10 +38,18 @@
  *
  * This driver currently only support boards with ICS GENDAC (which seems to
  * be most popular, however at least two different DACs were used with CVG).
+ *
+ * TODO (in no particular order):
+ * - Finally fix 16-bit depth handling on big-endian machines.
+ * - Expose card to userspace through /dev/3dfx compatible device file
+ *   (for Glide).
+ * - Allow mmap'ing of registers through wscons access op.
+ * - Complete wscons emul ops acceleration support.
+ * - Add support for others DACs (need hardware).
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.3 2012/07/20 21:31:28 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.4 2012/07/29 20:31:53 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.3 2012/07/20 21:31:28 rkujawa Exp $");
 #include <dev/pci/tdvfbvar.h>
 
 #include <dev/videomode/videomode.h>
+#include <dev/pci/wsdisplay_pci.h>
 
 #include "opt_wsemul.h"
 #include "opt_tdvfb.h"
@@ -93,6 +102,9 @@ static void	tdvfb_gendac_set_cvg_timing(struct tdvfb_softc *sc,
 static void	tdvfb_gendac_set_vid_timing(struct tdvfb_softc *sc, 
 		    struct tdvfb_dac_timing *timing);
 
+static paddr_t	tdvfb_mmap(void *v, void *vs, off_t offset, int prot);
+static int	tdvfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
+		    struct lwp *l);
 static void	tdvfb_init_screen(void *cookie, struct vcons_screen *scr, 
 		    int existing, long *defattr);
 static void	tdvfb_init_palette(struct tdvfb_softc *sc);
@@ -108,6 +120,17 @@ static void	tdvfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows);
 
 CFATTACH_DECL_NEW(tdvfb, sizeof(struct tdvfb_softc),
     tdvfb_match, tdvfb_attach, NULL, NULL);
+
+struct wsdisplay_accessops tdvfb_accessops = {
+	tdvfb_ioctl,
+	tdvfb_mmap,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL, 	/* load_font */
+	NULL,	/* pollc */
+	NULL	/* scroll */
+};
 
 static int
 tdvfb_match(device_t parent, cfdata_t match, void *aux)
@@ -172,7 +195,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal_dev(sc->sc_dev, "registers at 0x%08x, fb at 0x%08x\n", 
-	    sc->sc_cvg_pa, sc->sc_cvg_pa + TDV_OFF_FB);
+	    (uint32_t) sc->sc_cvg_pa, (uint32_t) sc->sc_cvg_pa + TDV_OFF_FB);
 
 	/* Do the low level setup. */
 	if (!tdvfb_init(sc)) {
@@ -186,12 +209,22 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_memsize = tdvfb_mem_size(sc);
 
+	aprint_normal_dev(sc->sc_dev, "%d MB framebuffer memory present\n", 
+	    sc->sc_memsize / 1024 / 1024);
+
 	/* Select video mode, 800x600 32bpp 60Hz by default... */
 	sc->sc_width = 800;
 	sc->sc_height = 600;
+#if BYTE_ORDER == BIG_ENDIAN
 	sc->sc_bpp = 32;	/* XXX: 16 would allow blitter use. */
+#else
+	sc->sc_bpp = 16;
+#endif 
 	sc->sc_linebytes = 1024 * (sc->sc_bpp / 8);
 	sc->sc_videomode = pick_mode_by_ref(sc->sc_width, sc->sc_height, 60);
+
+	aprint_normal_dev(sc->sc_dev, "setting %dx%d %d bpp resolution\n",
+	    sc->sc_width, sc->sc_height, sc->sc_bpp);
 
 	tdvfb_videomode_set(sc);
 
@@ -208,7 +241,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
-	    &sc->sc_accessops);
+	    &tdvfb_accessops);
 	sc->vd.init_screen = tdvfb_init_screen;
 
 	ri = &sc->sc_console_screen.scr_ri;
@@ -238,7 +271,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 
 	ws_aa.console = console;
 	ws_aa.scrdata = &sc->sc_screenlist;
-	ws_aa.accessops = &sc->sc_accessops;
+	ws_aa.accessops = &tdvfb_accessops;
 	ws_aa.accesscookie = &sc->vd;
 	
 	config_found(sc->sc_dev, &ws_aa, wsemuldisplaydevprint);
@@ -887,5 +920,79 @@ tdvfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 			tdvfb_rectfill(sc, x, y, wi, he, ri->ri_devcmap[bg]);
 		}
 	}
+}
+
+static int
+tdvfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct vcons_data *vd;
+	struct tdvfb_softc *sc;
+	struct wsdisplay_fbinfo *wsfbi;
+	struct vcons_screen *ms;
+
+	vd = v;
+	sc = vd->cookie;
+	ms = vd->active;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+		return 0;
+
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, l);
+
+	case WSDISPLAYIO_GET_BUSID:
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
+		    sc->sc_pcitag, data);
+
+	case WSDISPLAYIO_GINFO:
+		if (ms == NULL)
+			return ENODEV;
+
+		wsfbi = (void*) data;
+		wsfbi->height = ms->scr_ri.ri_height;
+		wsfbi->width = ms->scr_ri.ri_width;
+		wsfbi->depth = ms->scr_ri.ri_depth;	
+		wsfbi->cmsize = 256;
+		return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int*)data = sc->sc_linebytes;
+		return 0;
+	
+	case WSDISPLAYIO_SMODE: 
+		{
+			int new_mode = *(int*)data;
+			if (new_mode != sc->sc_mode) {
+				sc->sc_mode = new_mode;
+				if(new_mode == WSDISPLAYIO_MODE_EMUL) 
+					vcons_redraw_screen(ms);
+			}		
+			return 0;
+		}
+	}	
+	return EPASSTHROUGH;	
+}
+
+static paddr_t
+tdvfb_mmap(void *v, void *vs, off_t offset, int prot)
+{
+	struct vcons_data *vd;
+	struct tdvfb_softc *sc;
+	paddr_t pa;
+
+	vd = v;
+	sc = vd->cookie;
+
+	if (offset < sc->sc_memsize) {
+		pa = bus_space_mmap(sc->sc_cvgt, sc->sc_fbh + offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR);
+		return pa;
+	}
+
+	return -1;
 }
 
