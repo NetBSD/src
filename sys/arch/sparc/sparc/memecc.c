@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.13 2011/07/17 23:18:23 mrg Exp $	*/
+/*	$NetBSD: memecc.c,v 1.14 2012/07/29 00:04:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.13 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.14 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ static void	memecc_attach(device_t, device_t, void *);
 static int	memecc_match(device_t, cfdata_t, void *);
 static int	memecc_error(void);
 
-int	(*memerr_handler)(void);
+extern int (*memerr_handler)(void);
 
 CFATTACH_DECL_NEW(eccmemctl, sizeof(struct memecc_softc),
     memecc_match, memecc_attach, NULL, NULL);
