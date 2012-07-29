@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.76 2012/01/30 04:25:14 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.77 2012/07/29 00:04:05 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.76 2012/01/30 04:25:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.77 2012/07/29 00:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -114,7 +114,7 @@ void	sbus_attach_iommu(device_t, device_t, void *);
 void	sbus_attach_xbox(device_t, device_t, void *);
 
 static	int sbus_error(void);
-int	(*sbuserr_handler)(void);
+extern	int (*sbuserr_handler)(void);
 
 CFATTACH_DECL_NEW(sbus_mainbus, sizeof(struct sbus_softc),
     sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL);
