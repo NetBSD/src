@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2012/01/29 10:12:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2012/07/29 00:07:06 matt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2012/01/29 10:12:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2012/07/29 00:07:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -220,17 +220,9 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-extern pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

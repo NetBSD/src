@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.29 2011/07/01 20:42:36 dyoung Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.30 2012/07/29 00:07:08 matt Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.29 2011/07/01 20:42:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.30 2012/07/29 00:07:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,17 +146,10 @@ vm_offset_t physical_end;
 u_int free_pages;
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern int end;
 
 #ifdef PMAP_DEBUG

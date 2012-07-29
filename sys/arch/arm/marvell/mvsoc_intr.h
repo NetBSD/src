@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc_intr.h,v 1.2 2012/07/29 00:07:10 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define ARM_IRQ_HANDLER	_C_LABEL(mvsoc_irq_handler)
 
 #ifndef _LOCORE
-int (*find_pending_irqs)(void);
+extern int (*find_pending_irqs)(void);
 
 void mvsoc_irq_handler(void *);
 
