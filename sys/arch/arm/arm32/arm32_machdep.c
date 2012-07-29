@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.78 2012/07/16 06:33:05 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.79 2012/07/29 00:07:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.78 2012/07/16 06:33:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.79 2012/07/29 00:07:10 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -79,6 +79,10 @@ extern size_t md_root_size;		/* Memory disc size */
 #endif	/* MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
+pv_addr_t abtstack;
+pv_addr_t fiqstack;
+pv_addr_t irqstack;
+pv_addr_t undstack;
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;

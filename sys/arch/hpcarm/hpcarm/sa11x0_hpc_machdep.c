@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.4 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.5 2012/07/29 00:07:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.4 2012/03/31 14:02:54 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.5 2012/07/29 00:07:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.4 2012/03/31 14:02:54 nonak
 
 #include <uvm/uvm.h>
 
+#include <arm/arm32/machdep.h>
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
@@ -118,17 +119,8 @@ extern paddr_t physical_freeend;
 extern paddr_t physical_end;
 extern int physmem;
 
-/* Physical and virtual addresses for some global pages */
-extern pv_addr_t irqstack;
-extern pv_addr_t undstack;
-extern pv_addr_t abtstack;
-extern pv_addr_t kernelstack;
-
 extern vaddr_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern int end;
 
 #ifdef PMAP_DEBUG

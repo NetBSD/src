@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.72 2012/02/06 17:51:47 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.73 2012/07/29 00:07:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.72 2012/02/06 17:51:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.73 2012/07/29 00:07:10 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -130,18 +130,7 @@ vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

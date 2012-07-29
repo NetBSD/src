@@ -1,7 +1,13 @@
-/* $NetBSD: machdep.h,v 1.9 2009/03/14 14:45:55 dsl Exp $ */
+/* $NetBSD: machdep.h,v 1.10 2012/07/29 00:07:10 matt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
+
+extern u_int data_abort_handler_address;
+extern u_int prefetch_abort_handler_address;
+extern u_int undefined_handler_address;
+
+extern char *booted_kernel;
 
 /* misc prototypes used by the many arm machdeps */
 void halt(void);
