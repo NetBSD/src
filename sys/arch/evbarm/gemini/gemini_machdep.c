@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.18 2011/07/01 20:39:34 dyoung Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.19 2012/07/29 00:07:07 matt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.18 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.19 2012/07/29 00:07:07 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -221,19 +221,9 @@ paddr_t physical_end;
 static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;	/* stack for SVC mode */
-
 /* Physical address of the message buffer. */
 paddr_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char KERNEL_BASE_virt[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];

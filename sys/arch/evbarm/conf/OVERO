@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.13 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: OVERO,v 1.14 2012/07/29 00:07:07 matt Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -17,7 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA8
 options 	OMAP_3530
 options 	PMAPCOUNTERS
-makeoptions	CPUFLAGS="-mcpu=arm1136jf-s"
+makeoptions	CPUFLAGS="-march=arm11k -mtune=arm1136jf-s"
 
 # Architecture options
 
