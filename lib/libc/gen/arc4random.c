@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.13 2012/03/05 19:40:08 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.14 2012/07/29 14:44:13 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.13 2012/03/05 19:40:08 christos Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.14 2012/07/29 14:44:13 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -65,7 +65,8 @@ static inline uint32_t arc4_getword(struct arc4_stream *);
 static inline void
 arc4_init(struct arc4_stream *as)
 {
-	for (int n = 0; n < RSIZE; n++)
+	int n;
+	for (n = 0; n < RSIZE; n++)
 		as->s[n] = n;
 	as->i = 0;
 	as->j = 0;
@@ -78,9 +79,10 @@ static inline void
 arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
 	uint8_t si;
+	int n;
 
 	as->i--;
-	for (int n = 0; n < RSIZE; n++) {
+	for (n = 0; n < RSIZE; n++) {
 		as->i = (as->i + 1);
 		si = as->s[as->i];
 		as->j = (as->j + si + dat[n % datlen]);
@@ -94,8 +96,9 @@ static void
 arc4_stir(struct arc4_stream *as)
 {
 	int rdat[32];
-	static const int mib[] = { CTL_KERN, KERN_URND };
+	int mib[] = { CTL_KERN, KERN_URND };
 	size_t len;
+	size_t i, j;
 
 	/*
 	 * This code once opened and read /dev/urandom on each
@@ -106,7 +109,7 @@ arc4_stir(struct arc4_stream *as)
 	 * for us but much friendlier to other entropy consumers.
 	 */
 
-	for (size_t i = 0; i < __arraycount(rdat); i++) {
+	for (i = 0; i < __arraycount(rdat); i++) {
 		len = sizeof(rdat[i]);
 		if (sysctl(mib, 2, &rdat[i], &len, NULL, 0) == -1)
 			abort();
@@ -119,7 +122,7 @@ arc4_stir(struct arc4_stream *as)
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (size_t j = 0; j < RSIZE * 4; j++)
+	for (j = 0; j < RSIZE * 4; j++)
 		arc4_getbyte(as);
 }
 
