@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.110 2012/07/29 08:32:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.110 2012/07/29 08:32:27 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $")
 
 #include <sys/quotactl.h>
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/quota1.h> /* for INITQFNAMES; should be moved to quota.h */
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -59,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.109 2012/02/18 06:13:23 matt Exp $")
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
-const char *quotatypes[MAXQUOTAS];
+const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
 
 /*
  * Code pertaining to management of the in-core dquot data structures.
