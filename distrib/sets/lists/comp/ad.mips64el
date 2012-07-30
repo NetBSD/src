@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.86 2012/07/26 20:05:38 christos Exp $
+# $NetBSD: ad.mips64el,v 1.87 2012/07/30 16:10:11 matt Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -171,11 +171,11 @@
 ./usr/lib/64/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/64/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/64/libatf-c++.a			comp-c-lib		compat,atf
-./usr/lib/64/libatf-c++.so			base-sys-shlib		compat,pic,atf
+./usr/lib/64/libatf-c++.so			base-sys-lib		compat,pic,atf
 ./usr/lib/64/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/64/libatf-c++_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/64/libatf-c.a				comp-c-lib		compat,atf
-./usr/lib/64/libatf-c.so			base-sys-shlib		compat,pic,atf
+./usr/lib/64/libatf-c.so			base-sys-lib		compat,pic,atf
 ./usr/lib/64/libatf-c_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/64/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/64/libbfd.a				comp-obsolete		obsolete
@@ -275,7 +275,7 @@
 ./usr/lib/64/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libevent_pic.a			comp-c-piclib		compat,pic
-./usr/lib/64/libexecinfo.a				comp-c-lib		compat
+./usr/lib/64/libexecinfo.a			comp-c-lib		compat
 ./usr/lib/64/libexecinfo.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libexecinfo_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libexecinfo_pic.a			comp-c-piclib		compat,pic
@@ -776,11 +776,11 @@
 ./usr/lib/o32/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
 ./usr/lib/o32/libasn1_pic.a			comp-c-piclib		compat,pic,kerberos
 ./usr/lib/o32/libatf-c++.a			comp-c-lib		compat,atf
-./usr/lib/o32/libatf-c++.so			base-sys-shlib		compat,pic,atf
+./usr/lib/o32/libatf-c++.so			base-sys-lib		compat,pic,atf
 ./usr/lib/o32/libatf-c++_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/o32/libatf-c++_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/o32/libatf-c.a			comp-c-lib		compat,atf
-./usr/lib/o32/libatf-c.so			base-sys-shlib		compat,pic,atf
+./usr/lib/o32/libatf-c.so			base-sys-lib		compat,pic,atf
 ./usr/lib/o32/libatf-c_p.a			comp-c-proflib		compat,profile,atf
 ./usr/lib/o32/libatf-c_pic.a			comp-c-piclib		compat,pic,atf
 ./usr/lib/o32/libbfd.a				comp-obsolete		obsolete
@@ -1290,8 +1290,8 @@
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug	comp-atf-debug	debug,compat,atf
-./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug	comp-atf-debug	debug,compat,atf
+./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
@@ -1446,6 +1446,8 @@
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
@@ -1475,9 +1477,9 @@
 ./usr/libdata/debug/usr/lib/o32/libform.so.6.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgcc_s.so.1.0.debug	comp-sys-debug	gcc,debug,compat
-./usr/libdata/debug/usr/lib/o32/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libgnumalloc.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libgomp.so.1.0.debug	comp-sys-debug	debug,compat,gcc=45
+./usr/libdata/debug/usr/lib/o32/libgmp.so.10.2.debug	comp-sys-debug	obsolete
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.10.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/o32/libgssapi.so.9.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libhdb.so.13.0.debug		comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
