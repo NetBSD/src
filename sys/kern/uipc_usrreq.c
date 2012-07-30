@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.138 2012/07/30 10:42:24 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.139 2012/07/30 10:45:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.138 2012/07/30 10:42:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.139 2012/07/30 10:45:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1341,12 +1341,11 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 			*rp++ = 0;
 			unp_discard_now(fp);
 		}
-		goto out;
 	}
 
 	rw_exit(&p->p_cwdi->cwdi_lock);
 	kmem_free(fdp, nfds * sizeof(int));
-	return (error);
+	return error;
 }
 
 int
