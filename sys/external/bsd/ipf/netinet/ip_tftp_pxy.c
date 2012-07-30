@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_tftp_pxy.c,v 1.4 2012/07/22 16:43:59 darrenr Exp $	*/
+/*	$NetBSD: ip_tftp_pxy.c,v 1.5 2012/07/30 19:27:47 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -279,8 +279,8 @@ ipf_p_tftp_backchannel(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	tftpinfo_t *ti;
 	udphdr_t udp;
 	fr_info_t fi;
-	u_short slen;
-	nat_t *nat2;
+	u_short slen = 0;
+	nat_t *nat2 = NULL;
 	int nflags;
 	ip_t *ip;
 	int dir;
@@ -347,8 +347,10 @@ ipf_p_tftp_backchannel(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	MUTEX_ENTER(&softn->ipf_nat_new);
 	if (nat->nat_v[0] == 4)
 		nat2 = ipf_nat_add(&fi, ti->ti_rule, NULL, nflags, dir);
+#ifdef USE_INET6
 	else
 		nat2 = ipf_nat6_add(&fi, ti->ti_rule, NULL, nflags, dir);
+#endif
 	MUTEX_EXIT(&softn->ipf_nat_new);
 	if (nat2 != NULL) {
 		(void) ipf_nat_proto(&fi, nat2, IPN_UDP);
