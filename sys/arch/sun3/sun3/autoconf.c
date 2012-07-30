@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2012/07/29 18:05:46 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77 2012/07/30 17:21:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76 2012/07/29 18:05:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2012/07/30 17:21:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ cpu_rootconf(void)
 		}
 	if (find)
 		booted_device = (*find)(promname, bp->ctlrNum, bp->unitNum);
-	if (boot_device) {
+	if (booted_device) {
 		devname = booted_device->dv_xname;
 		if (device_class(booted_device) == DV_DISK) {
 			booted_partition = bp->partNum & 7;
