@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.81 2012/02/15 23:30:11 joerg Exp $
+#	$NetBSD: daily,v 1.82 2012/07/30 17:06:51 christos Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -89,7 +89,16 @@ if checkyesno find_core; then
 	ignfstypes="$(echo $find_core_ignore_fstypes | \
 		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
 		    -e's/^-o //')"
+	# Turn "foo bar" into "( -path foo -o -path bar ) -prune -o"
+	# Set ignpaths empty if no find_core_ignore_paths given
+	if [ -n "$find_core_ignore_paths" ]; then
+		ignpaths="$(printf " -o -path %s" $find_core_ignore_paths)"
+		ignpaths="( ${ignpaths# -o } ) -prune -o"
+	else
+		ignpaths=""
+	fi
 	find / \( $ignfstypes \) -prune -o \
+		${ignpaths} \
 		-name 'lost+found' -prune -o \
 		\( -name '*.core' -o -name 'core' \) -type f -print > $TMP
 #		\( -name '[#,]*' -o -name '.#*' -o -name a.out \
