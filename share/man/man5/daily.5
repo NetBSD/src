@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.5,v 1.5 2012/07/30 17:06:51 christos Exp $
+.\"	$NetBSD: daily.5,v 1.6 2012/07/30 17:29:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -173,10 +173,11 @@ Lists paths to ignore during the
 .Sy find_core
 phase.
 For example,
-.Ql /export
+.Ql Pa /export
 will not descend into any directories under the
-.Ql /export
-hierarchy. This, on a file server, allows to skip
+.Ql Pa /export
+hierarchy.
+This, on a file server, allows to skip
 user data while still scanning system files.
 .It Sy run_fsck_flags
 Extra options to be passed to
