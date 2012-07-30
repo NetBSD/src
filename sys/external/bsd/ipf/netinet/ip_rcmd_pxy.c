@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.4 2012/07/30 19:27:47 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.4 2012/07/30 19:27:47 pgoyette Exp $");
 
 #define	IPF_RCMD_PROXY
 
@@ -145,9 +145,11 @@ ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	fr_info_t fi;
 	u_short sp;
 	nat_t *nat2;
+#ifdef USE_INET6
 	ip6_t *ip6;
+#endif
 	int tcpsz;
-	int slen;
+	int slen = 0;
 	ip_t *ip;
 	mb_t *m;
 
@@ -156,7 +158,9 @@ ipf_p_rcmd_portmsg(fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	m = fin->fin_m;
 	ip = fin->fin_ip;
 	tcpsz = TCP_OFF(tcp) << 2;
+#ifdef USE_INET6
 	ip6 = (ip6_t *)fin->fin_ip;
+#endif
 	softc = fin->fin_main_soft;
 	softn = softc->ipf_nat_soft;
 	off = (char *)tcp - (char *)ip + tcpsz + fin->fin_ipoff;

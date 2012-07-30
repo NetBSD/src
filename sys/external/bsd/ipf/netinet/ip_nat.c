@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.5 2012/07/22 16:40:40 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.5 2012/07/22 16:40:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6 2012/07/30 19:27:46 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -2531,9 +2531,11 @@ ipf_nat_delrule(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, ipnat_t *np,
 			case 4 :
 				ipf_nat_delrdr(softn, np);
 				break;
+#ifdef USE_INET6
 			case 6 :
 				ipf_nat6_delrdr(softn, np);
 				break;
+#endif
 			}
 		}
 		if (np->in_redir & (NAT_MAPBLK|NAT_MAP)) {
@@ -2542,9 +2544,11 @@ ipf_nat_delrule(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, ipnat_t *np,
 			case 4 :
 				ipf_nat_delmap(softn, np);
 				break;
+#ifdef USE_INET6
 			case 6 :
 				ipf_nat6_delmap(softn, np);
 				break;
+#endif
 			}
 		}
 	}
@@ -7969,18 +7973,6 @@ ipf_nat_rehash(ipf_main_softc_t *softc, ipftuneable_t *t, ipftuneval_t *p)
 	}
 	softn->ipf_nat_stats.ns_side[1].ns_bucketlen = bucketlens[1];
 
-	if (softn->ipf_nat_stats.ns_side6[0].ns_bucketlen != NULL) {
-		KFREES(softn->ipf_nat_stats.ns_side6[0].ns_bucketlen,
-		       softn->ipf_nat_table_sz * sizeof(u_int));
-	}
-	softn->ipf_nat_stats.ns_side6[0].ns_bucketlen = bucketlens[0];
-
-	if (softn->ipf_nat_stats.ns_side6[1].ns_bucketlen != NULL) {
-		KFREES(softn->ipf_nat_stats.ns_side6[1].ns_bucketlen,
-		       softn->ipf_nat_table_sz * sizeof(u_int));
-	}
-	softn->ipf_nat_stats.ns_side6[1].ns_bucketlen = bucketlens[1];
-
 	softn->ipf_nat_maxbucket = maxbucket;
 	softn->ipf_nat_table_sz = newsize;
 	/*
@@ -7990,8 +7982,6 @@ ipf_nat_rehash(ipf_main_softc_t *softc, ipftuneable_t *t, ipftuneval_t *p)
 	 */
 	softn->ipf_nat_stats.ns_side[0].ns_inuse = 0;
 	softn->ipf_nat_stats.ns_side[1].ns_inuse = 0;
-	softn->ipf_nat_stats.ns_side6[0].ns_inuse = 0;
-	softn->ipf_nat_stats.ns_side6[1].ns_inuse = 0;
 
 	for (nat = softn->ipf_nat_instances; nat != NULL; nat = nat->nat_next) {
 		nat->nat_hnext[0] = NULL;
