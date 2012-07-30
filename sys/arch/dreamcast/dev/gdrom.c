@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.34 2010/09/01 16:48:00 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.34.14.1 2012/07/30 08:37:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.34 2010/09/01 16:48:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.34.14.1 2012/07/30 08:37:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,15 +586,35 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 		if (error != 0)
 			return error;
+#ifdef GDROMDEBUGTOC 
+		{ /* Dump the GDROM TOC */
+		unsigned char *ptr = (unsigned char *)&toc;
+		int i;
 
+		printf("gdrom: TOC\n");
+		for(i = 0; i < sizeof(toc); ++i) {
+			printf("%02x", *ptr++);
+			if( i%32 == 31)
+				printf("\n");
+			else if( i%4 == 3)
+				printf(",");
+		}
+		printf("\n");
+		}
+#endif
 		for (track = TOC_TRACK(toc.last);
 		    track >= TOC_TRACK(toc.first);
-		    --track)
+		    --track) {
+			if (track < 1 || track > 100)
+				return ENXIO;
 			if (TOC_CTRL(toc.entry[track - 1]))
 				break;
+		}
 
-		if (track < TOC_TRACK(toc.first) || track > 100)
-			return ENXIO;
+#ifdef GDROMDEBUGTOC 
+		printf("gdrom: Using track %d, LBA %u\n", track,
+		    TOC_LBA(toc.entry[track - 1]));
+#endif
 
 		*(int *)addr = htonl(TOC_LBA(toc.entry[track - 1])) -
 		    sc->openpart_start;
