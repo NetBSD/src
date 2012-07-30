@@ -1,3 +1,4 @@
+/*      $NetBSD: if_malo_pci.c,v 1.2 2012/07/30 20:30:41 degroote Exp $ */
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -21,6 +22,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.2 2012/07/30 20:30:41 degroote Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
