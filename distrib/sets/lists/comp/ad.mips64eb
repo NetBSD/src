@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.85 2012/07/26 20:05:38 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.86 2012/07/30 16:10:11 matt Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -1290,6 +1290,8 @@
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/64/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/64/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/64/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
@@ -1444,6 +1446,8 @@
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
+./usr/libdata/debug/usr/lib/o32/libatf-c.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
+./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/o32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug,compat
 ./usr/libdata/debug/usr/lib/o32/libbind9.so.5.7.debug	comp-bind-debug	debug,compat
