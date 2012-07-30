@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1399 2012/07/19 09:06:33 rkujawa Exp $
+# $NetBSD: mi,v 1.1400 2012/07/30 18:57:17 degroote Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1290,6 +1290,7 @@
 ./usr/share/man/cat4/macppc/snapper.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mainbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/makphy.0			man-sys-catman		.cat
+./usr/share/man/cat4/malo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mbe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mca.0			man-sys-catman		.cat
@@ -4133,6 +4134,7 @@
 ./usr/share/man/html4/macppc/snapper.html	man-sys-htmlman		html
 ./usr/share/man/html4/mainbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/makphy.html		man-sys-htmlman		html
+./usr/share/man/html4/malo.html			man-sys-htmlman		html
 ./usr/share/man/html4/mbe.html			man-sys-htmlman		html
 ./usr/share/man/html4/mc.html			man-sys-htmlman		html
 ./usr/share/man/html4/mca.html			man-sys-htmlman		html
@@ -6829,6 +6831,7 @@
 ./usr/share/man/man4/macppc/snapper.4		man-sys-man		.man
 ./usr/share/man/man4/mainbus.4			man-sys-man		.man
 ./usr/share/man/man4/makphy.4			man-sys-man		.man
+./usr/share/man/man4/malo.4				man-sys-man		.man
 ./usr/share/man/man4/mbe.4			man-sys-man		.man
 ./usr/share/man/man4/mc.4			man-sys-man		.man
 ./usr/share/man/man4/mca.4			man-sys-man		.man
