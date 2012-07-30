@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.80 2012/02/19 21:06:04 rmind Exp $	*/
+/*	$NetBSD: fault.c,v 1.81 2012/07/30 22:54:33 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.80 2012/02/19 21:06:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.81 2012/07/30 22:54:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,8 @@ data_abort_handler(trapframe_t *tf)
 
 			if (((insn & 0x0c100000) == 0x04000000) || /* STR[B] */
 			    ((insn & 0x0e1000b0) == 0x000000b0) || /* STR[HD]*/
-			    ((insn & 0x0a100000) == 0x08000000))   /* STM/CDT*/
+			    ((insn & 0x0a100000) == 0x08000000) || /* STM/CDT*/
+			    ((insn & 0x0f9000f0) == 0x01800090))   /* STREX[BDH] */
 				ftype = VM_PROT_WRITE; 
 			else if ((insn & 0x0fb00ff0) == 0x01000090)/* SWP */
 				ftype = VM_PROT_READ | VM_PROT_WRITE; 
