@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.28 2012/07/28 23:02:57 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.29 2012/07/30 00:56:01 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.28 2012/07/28 23:02:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.29 2012/07/30 00:56:01 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -336,7 +336,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	 * capabilities. (2.2.15)
 	 */
 	HWRITE1(hp, SDHC_TIMEOUT_CTL, SDHC_TIMEOUT_MAX);
-#if 0
+#if 1
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
 		HWRITE4(hp, SDHC_NINTR_STATUS, SDHC_CMD_TIMEOUT_ERROR << 16);
 #endif
@@ -552,12 +552,13 @@ sdhc_host_reset1(sdmmc_chipset_handle_t sch)
 
 	/* Set data timeout counter value to max for now. */
 	HWRITE1(hp, SDHC_TIMEOUT_CTL, SDHC_TIMEOUT_MAX);
-#if 0
+#if 1
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
 		HWRITE4(hp, SDHC_NINTR_STATUS, SDHC_CMD_TIMEOUT_ERROR << 16);
 #endif
 
 	/* Enable interrupts. */
+	mutex_enter(&hp->intr_mtx);
 	sdhcimask = SDHC_CARD_REMOVAL | SDHC_CARD_INSERTION |
 	    SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY |
 	    SDHC_DMA_INTERRUPT | SDHC_BLOCK_GAP_EVENT |
@@ -576,6 +577,7 @@ sdhc_host_reset1(sdmmc_chipset_handle_t sch)
 		HWRITE2(hp, SDHC_NINTR_SIGNAL_EN, sdhcimask);
 		HWRITE2(hp, SDHC_EINTR_SIGNAL_EN, SDHC_EINTR_SIGNAL_MASK);
 	}
+	mutex_exit(&hp->intr_mtx);
 
 out:
 	return error;
@@ -936,7 +938,7 @@ sdhc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		mutex_enter(&hp->host_mtx);
+		mutex_enter(&hp->intr_mtx);
 		if (enable) {
 			HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 			HSET2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_CARD_INTERRUPT);
@@ -944,7 +946,7 @@ sdhc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 			HCLR2(hp, SDHC_NINTR_SIGNAL_EN, SDHC_CARD_INTERRUPT);
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 		}
-		mutex_exit(&hp->host_mtx);
+		mutex_exit(&hp->intr_mtx);
 	}
 }
 
@@ -954,9 +956,9 @@ sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
 	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		mutex_enter(&hp->host_mtx);
+		mutex_enter(&hp->intr_mtx);
 		HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
-		mutex_exit(&hp->host_mtx);
+		mutex_exit(&hp->intr_mtx);
 	}
 }
 
@@ -984,6 +986,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
+		mutex_enter(&hp->intr_mtx);
 		if (ISSET(hp->flags, SHF_USE_DMA)) {
 			HCLR2(hp, SDHC_NINTR_SIGNAL_EN, ready);
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, ready);
@@ -991,6 +994,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			HSET2(hp, SDHC_NINTR_SIGNAL_EN, ready);
 			HSET2(hp, SDHC_NINTR_STATUS_EN, ready);
 		}  
+		mutex_exit(&hp->intr_mtx);
 	}
 
 	/*
@@ -1284,11 +1288,13 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	while (datalen > 0) {
 		if (!ISSET(HREAD4(hp, SDHC_PRESENT_STATE), imask)) {
+			mutex_enter(&hp->intr_mtx);
 			if (ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 				HSET4(hp, SDHC_NINTR_SIGNAL_EN, imask);
 			} else {
 				HSET2(hp, SDHC_NINTR_SIGNAL_EN, imask);
 			}
+			mutex_exit(&hp->intr_mtx);
 			if (!sdhc_wait_intr(hp, imask, SDHC_BUFFER_TIMEOUT)) {
 				error = ETIMEDOUT;
 				break;
@@ -1321,12 +1327,12 @@ sdhc_read_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 
 	if (((__uintptr_t)data & 3) == 0) {
 		while (datalen > 3) {
-			*(uint32_t *)data = HREAD4(hp, SDHC_DATA);
+			*(uint32_t *)data = le32toh(HREAD4(hp, SDHC_DATA));
 			data += 4;
 			datalen -= 4;
 		}
 		if (datalen > 1) {
-			*(uint16_t *)data = HREAD2(hp, SDHC_DATA);
+			*(uint16_t *)data = le16toh(HREAD2(hp, SDHC_DATA));
 			data += 2;
 			datalen -= 2;
 		}
@@ -1337,7 +1343,7 @@ sdhc_read_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 		}
 	} else if (((__uintptr_t)data & 1) == 0) {
 		while (datalen > 1) {
-			*(uint16_t *)data = HREAD2(hp, SDHC_DATA);
+			*(uint16_t *)data = le16toh(HREAD2(hp, SDHC_DATA));
 			data += 2;
 			datalen -= 2;
 		}
@@ -1361,12 +1367,12 @@ sdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 
 	if (((__uintptr_t)data & 3) == 0) {
 		while (datalen > 3) {
-			HWRITE4(hp, SDHC_DATA, *(uint32_t *)data);
+			HWRITE4(hp, SDHC_DATA, htole32(*(uint32_t *)data));
 			data += 4;
 			datalen -= 4;
 		}
 		if (datalen > 1) {
-			HWRITE2(hp, SDHC_DATA, *(uint16_t *)data);
+			HWRITE2(hp, SDHC_DATA, htole16(*(uint16_t *)data));
 			data += 2;
 			datalen -= 2;
 		}
@@ -1377,7 +1383,7 @@ sdhc_write_data_pio(struct sdhc_host *hp, uint8_t *data, u_int datalen)
 		}
 	} else if (((__uintptr_t)data & 1) == 0) {
 		while (datalen > 1) {
-			HWRITE2(hp, SDHC_DATA, *(uint16_t *)data);
+			HWRITE2(hp, SDHC_DATA, htole16(*(uint16_t *)data));
 			data += 2;
 			datalen -= 2;
 		}
@@ -1578,6 +1584,8 @@ sdhc_intr(void *arg)
 		DPRINTF(2,("%s: interrupt status=%x error=%x\n", HDEVNAME(hp),
 		    status, error));
 
+		mutex_enter(&hp->intr_mtx);
+
 		/* Claim this interrupt. */
 		done = 1;
 
@@ -1628,6 +1636,7 @@ sdhc_intr(void *arg)
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 			sdmmc_card_intr(hp->sdmmc);
 		}
+		mutex_exit(&hp->intr_mtx);
 	}
 
 	return done;
