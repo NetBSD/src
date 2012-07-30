@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.137 2012/06/02 16:16:16 martin Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.138 2012/07/30 10:42:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.137 2012/06/02 16:16:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.138 2012/07/30 10:42:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1235,25 +1235,22 @@ unp_drain(void)
 int
 unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 {
-	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	struct proc *p = l->l_proc;
-	int i, *fdp;
+	struct cmsghdr * const cm = mtod(rights, struct cmsghdr *);
+	struct proc * const p = l->l_proc;
 	file_t **rp;
-	file_t *fp;
-	int nfds, error = 0;
+	int error = 0;
 
-	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
+	const size_t nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(file_t *);
-	rp = (file_t **)CMSG_DATA(cm);
 
-	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
+	int * const fdp = kmem_alloc(nfds * sizeof(int), KM_SLEEP);
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
 	/* Make sure the recipient should be able to see the files.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
 		rp = (file_t **)CMSG_DATA(cm);
-		for (i = 0; i < nfds; i++) {
-			fp = *rp++;
+		for (size_t i = 0; i < nfds; i++) {
+			file_t * const fp = *rp++;
 			/*
 			 * If we are in a chroot'ed directory, and
 			 * someone wants to pass us a directory, make
@@ -1265,7 +1262,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 				if ((vp->v_type == VDIR) &&
 				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 					error = EPERM;
-					break;
+					goto out;
 				}
 			}
 		}
@@ -1273,40 +1270,30 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 
  restart:
 	rp = (file_t **)CMSG_DATA(cm);
-	if (error != 0) {
-		for (i = 0; i < nfds; i++) {
-			fp = *rp;
-			*rp++ = 0;
-			unp_discard_now(fp);
-		}
-		goto out;
-	}
-
 	/*
 	 * First loop -- allocate file descriptor table slots for the
 	 * new files.
 	 */
-	for (i = 0; i < nfds; i++) {
-		fp = *rp++;
+	for (size_t i = 0; i < nfds; i++) {
 		if ((error = fd_alloc(p, 0, &fdp[i])) != 0) {
 			/*
 			 * Back out what we've done so far.
 			 */
-			for (--i; i >= 0; i--) {
+			while (i-- > 0) {
 				fd_abort(p, NULL, fdp[i]);
 			}
 			if (error == ENOSPC) {
 				fd_tryexpand(p);
 				error = 0;
-			} else {
-				/*
-				 * This is the error that has historically
-				 * been returned, and some callers may
-				 * expect it.
-				 */
-				error = EMSGSIZE;
+				goto restart;
 			}
-			goto restart;
+			/*
+			 * This is the error that has historically
+			 * been returned, and some callers may
+			 * expect it.
+			 */
+			error = EMSGSIZE;
+			goto out;
 		}
 	}
 
@@ -1315,12 +1302,17 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	 * file passing state and affix the descriptors.
 	 */
 	rp = (file_t **)CMSG_DATA(cm);
-	for (i = 0; i < nfds; i++) {
-		int fd = fdp[i];
-		fp = *rp++;
+	int *ofdp = (int *)CMSG_DATA(cm);
+	for (size_t i = 0; i < nfds; i++) {
+		file_t * const fp = *rp++;
+		const int fd = fdp[i];
 		atomic_dec_uint(&unp_rights);
 		fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
 		fd_affix(p, fp, fd);
+		/*
+		 * Done with this file pointer, replace it with a fd;
+		 */
+		*ofdp++ = fd;
 		mutex_enter(&fp->f_lock);
 		fp->f_msgcount--;
 		mutex_exit(&fp->f_lock);
@@ -1334,15 +1326,26 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	}
 
 	/*
-	 * Copy temporary array to message and adjust length, in case of
-	 * transition from large file_t pointers to ints.
+	 * Adjust length, in case of transition from large file_t
+	 * pointers to ints.
 	 */
-	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
-	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
-	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
+	if (sizeof(file_t *) != sizeof(int)) {
+		cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
+		rights->m_len = CMSG_SPACE(nfds * sizeof(int));
+	}
  out:
+	if (__predict_false(error != 0)) {
+		rp = (file_t **)CMSG_DATA(cm);
+		for (size_t i = 0; i < nfds; i++) {
+			file_t * const fp = *rp;
+			*rp++ = 0;
+			unp_discard_now(fp);
+		}
+		goto out;
+	}
+
 	rw_exit(&p->p_cwdi->cwdi_lock);
-	free(fdp, M_TEMP);
+	kmem_free(fdp, nfds * sizeof(int));
 	return (error);
 }
 
