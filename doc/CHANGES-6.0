@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.164 2012/07/28 11:38:22 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.165 2012/07/30 08:39:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6597,4 +6597,50 @@ share/man/man4/wapbl.4				1.14
 	Don't claim that quotas don't work with WAPBL. Bump date. Should be
 	pulled up to -6.
 	[dholland, ticket #448]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.40
+
+	Make SCM_RIGHTS work correctly.  (make sure to advance m if we've
+	completely dealt with, the next mbuf (if any) comes into play).
+	[matt, ticket #452]
+
+sys/dev/fss.c					1.82
+sys/dev/fss.c					1.83
+usr.sbin/fssconfig/fssconfig.c			1.9
+
+	Initialize `fss_flags' before setting an individual bit.
+	Not a real problem as there is only one valid bit yet.
+
+	From Edgar Fuss via tech-kern@netbsd.org
+
+
+	Use `getdisksize()' to get the size of the mounted-on block device.
+
+	Should work for disks without partition table (wedges) now.
+
+
+	Minor fix to previous -- release vnode after last use, not before.
+	[hannken, ticket #449]
+
+sys/ufs/ufs/ufs_quota.c				1.109
+sys/ufs/ufs/ufs_quota.c				1.110
+sys/ufs/ufs/ufs_quota.h				1.21
+
+	Eliminate a common in a header file (add a missing extern) and
+	declare it in the approriate C file.
+
+
+	Restore accidentally lost initialization of quotatypes[].
+	Fixes (null) in the kernel message triggered when you go over quota,
+	and maybe other things. Reported by Matthew Mondor.
+	[dholland, ticket #450]
+
+
+sys/arch/dreamcast/dev/gdrom.c			1.35
+
+	- Adjust the TOC parsing to reject an TOC with invalid (zero) track
+	  ids.
+	  Avoids dereferencing off the start of the TOC track array.
+	- Add #ifdef GDROMDEBUGTOC for dumping out the gdrom TOC values
+	[abs, ticket #451]
 
