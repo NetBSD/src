@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.16 2012/07/25 01:07:49 matt Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.17 2012/07/30 00:53:59 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -196,7 +196,7 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 			/* Initial characters. */
 			if (utfbytes != 0) {
 				/* Incomplete encoding. */
-				s16[s16idx++] = 0xfffd;
+				s16[s16idx++] = htole16(0xfffd);
 				if (s16idx == s16len) {
 					s16[--s16idx] = 0;
 					return;
@@ -225,7 +225,7 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 		}
 		if (utfbytes == 0) {
 			if (utfchar >= 0x10000 && s16idx + 2 >= s16len)
-				utfchar = htole16(0xfffd);
+				utfchar = 0xfffd;
 			if (utfchar >= 0x10000) {
 				s16[s16idx++] =
 				    htole16(0xd800 | ((utfchar>>10)-0x40));
