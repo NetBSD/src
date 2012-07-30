@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.321 2012/07/28 19:08:25 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.322 2012/07/30 17:29:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321 2012/07/28 19:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322 2012/07/30 17:29:55 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -152,6 +152,8 @@ struct extent *dvmamap24;
 void	dumpsys(void);
 void	stackdump(void);
 
+extern struct consdev *cn_tab, consdev_prom;
+
 /*
  * Machine-dependent startup code
  */
@@ -167,6 +169,7 @@ cpu_startup(void)
 	paddr_t pa;
 	char pbuf[9];
 
+	cn_tab = &consdev_prom;
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
