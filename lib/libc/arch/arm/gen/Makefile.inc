@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.17 2012/07/11 18:24:27 reinoud Exp $
+# $NetBSD: Makefile.inc,v 1.18 2012/07/30 12:57:54 skrll Exp $
 
-SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c \
+SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divsi3.S \
 	fabs.c flt_rounds.c
 
 # Common ieee754 constants and functions
