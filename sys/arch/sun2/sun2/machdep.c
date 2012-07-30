@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2012/07/28 19:08:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2012/07/30 17:27:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2012/07/28 19:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2012/07/30 17:27:20 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -258,6 +258,7 @@ static vaddr_t dumppage;
 
 static void identifycpu(void);
 static void initcpu(void);
+extern struct consdev *cn_tab, consdev_prom;
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -274,6 +275,7 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
+	cn_tab = &consdev_prom;
 	/*
 	 * Initialize message buffer (for kernel printf).
 	 * This is put in physical pages four through seven
