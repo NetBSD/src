@@ -124,6 +124,8 @@
 #  ifndef alloca
 #   define alloca(s) __builtin_alloca((s))
 #  endif
+# else
+#   undef alloca
 # endif
 #endif
 
