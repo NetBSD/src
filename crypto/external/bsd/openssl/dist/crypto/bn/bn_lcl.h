@@ -284,14 +284,17 @@ extern "C" {
 #  if defined(__GNUC__) && __GNUC__>=2
 #   define BN_UMULT_HIGH(a,b)	({	\
 	register BN_ULONG ret;		\
-	asm ("dmultu	%1,%2"		\
-	     : "=h"(ret)		\
-	     : "r"(a), "r"(b) : "l");	\
+	asm ("dmultu	%1,%2"	"\n\t"	\
+	     "mfhi %0"		"\n\t"	\
+	     : "=r"(ret)		\
+	     : "r"(a), "r"(b) : "lo", "hi");	\
 	ret;			})
 #   define BN_UMULT_LOHI(low,high,a,b)	\
-	asm ("dmultu	%2,%3"		\
-	     : "=l"(low),"=h"(high)	\
-	     : "r"(a), "r"(b));
+	asm ("dmultu	%2,%3"	"\n\t"	\
+	     "mflo	%0"	"\n\t"	\
+	     "mfhi	%1"	"\n\t"	\
+	     : "=r"(low),"=r"(high)	\
+	     : "r"(a), "r"(b) : "lo", "hi");
 #  endif
 # endif		/* cpu */
 #endif		/* OPENSSL_NO_ASM */
