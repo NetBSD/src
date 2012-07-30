@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.4 2012/07/30 19:27:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.4 2012/07/30 19:27:46 pgoyette Exp $");
 
 #define	IPF_FTP_PROXY
 
@@ -834,7 +834,7 @@ ipf_p_ftp_pasvreply(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip,
 	ipnat_t *ipn;
 	fr_info_t fi;
 	ftpside_t *f;
-	nat_t *nat2;
+	nat_t *nat2 = NULL;
 	mb_t *m;
 
 	softc = fin->fin_main_soft;
@@ -1669,8 +1669,10 @@ ipf_p_ftp_eprt(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 	if (f->ftps_rptr[5] == f->ftps_rptr[7]) {
 		if (f->ftps_rptr[6] == '1' && nat->nat_v[0] == 4)
 			return ipf_p_ftp_eprt4(softf, fin, ip, nat, ftp, dlen);
+#ifdef USE_INET6
 		if (f->ftps_rptr[6] == '2' && nat->nat_v[0] == 6)
 			return ipf_p_ftp_eprt6(softf, fin, ip, nat, ftp, dlen);
+#endif
 	}
 	return 0;
 }
@@ -1902,7 +1904,7 @@ ipf_p_ftp_epsv(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 				   newbuf, s);
 }
 
-
+#ifdef USE_INET6
 int
 ipf_p_ftp_eprt6(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip,
 	nat_t *nat, ftpinfo_t *ftp, int dlen)
@@ -2107,3 +2109,4 @@ ipf_p_ftp_eprt6(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip,
 	f->ftps_cmd = FTPXY_C_EPRT;
 	return ipf_p_ftp_addport(softf, fin, ip, nat, ftp, dlen, port, inc);
 }
+#endif /* USE_INET6 */
