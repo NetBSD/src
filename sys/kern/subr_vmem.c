@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.73 2012/03/04 14:28:49 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.74 2012/07/30 17:49:24 njoly Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.73 2012/03/04 14:28:49 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.74 2012/07/30 17:49:24 njoly Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -82,7 +82,7 @@ VMEM_EVCNT_DEFINE(bt_inuse)
     kmutex_t name; char lockpad[COHERENCY_UNIT - sizeof(kmutex_t)]
 
 #define CONDVAR_DECL(name)	\
-    kcondvar_t name;
+    kcondvar_t name
 
 #else /* defined(_KERNEL) */
 #include <stdio.h>
