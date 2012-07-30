@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1052 2012/07/26 20:49:47 jakllsch Exp $
+#	$NetBSD: files,v 1.1053 2012/07/30 18:57:18 degroote Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -648,6 +648,10 @@ file	dev/ic/rtwphyio.c		rtw
 device	ral: arp, ether, ifnet, wlan, firmload
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
+
+# Marvell Libertas Open
+device  malo: arp, ether, ifnet, wlan, firmload
+file    dev/ic/malo.c           malo
 
 # 3Com Etherlink-III Ethernet controller
 #

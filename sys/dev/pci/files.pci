@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.358 2012/07/18 23:30:13 rkujawa Exp $
+#	$NetBSD: files.pci,v 1.359 2012/07/30 18:57:19 degroote Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -777,6 +777,10 @@ file	dev/pci/if_rtw_pci.c		rtw_pci
 # Ralink RT2500/RT2600 PCI/Mini-PCI
 attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
+
+# Marvel Libertas Open
+attach  malo at pci with malo_pci
+file    dev/pci/if_malo_pci.c       malo_pci
 
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
