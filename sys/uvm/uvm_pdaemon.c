@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.106 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.107 2012/07/30 23:56:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.106 2012/06/05 22:51:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.107 2012/07/30 23:56:48 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -82,6 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.106 2012/06/05 22:51:47 jym Exp $"
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+
+#ifdef UVMHIST
+UVMHIST_DEFINE(pdhist);
+#endif
 
 /*
  * UVMPD_NUMDIRTYREACTS is how many dirty pages the pagedaemon will reactivate
