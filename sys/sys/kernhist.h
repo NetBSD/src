@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.4 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.5 2012/07/30 23:56:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -93,6 +93,7 @@ LIST_HEAD(kern_history_head, kern_history);
  */
 #ifndef KERNHIST
 #define KERNHIST_DECL(NAME)
+#define KERNHIST_DEFINE(NAME)
 #define KERNHIST_INIT(NAME,N)
 #define KERNHIST_INIT_STATIC(NAME,BUF)
 #define KERNHIST_LOG(NAME,FMT,A,B,C,D)
@@ -106,7 +107,8 @@ LIST_HEAD(kern_history_head, kern_history);
 
 extern	struct kern_history_head kern_histories;
 
-#define KERNHIST_DECL(NAME) struct kern_history NAME
+#define KERNHIST_DECL(NAME) extern struct kern_history NAME
+#define KERNHIST_DEFINE(NAME) struct kern_history NAME
 
 #define KERNHIST_INIT(NAME,N) \
 do { \

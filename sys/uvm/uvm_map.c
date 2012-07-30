@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.317 2012/04/08 11:27:45 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.318 2012/07/30 23:56:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.317 2012/04/08 11:27:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.318 2012/07/30 23:56:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -98,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.317 2012/04/08 11:27:45 martin Exp $")
 
 #if defined(DDB) || defined(DEBUGPRINT)
 #include <uvm/uvm_ddb.h>
+#endif
+
+#ifdef UVMHIST
+UVMHIST_DEFINE(maphist);
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
