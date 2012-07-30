@@ -1,5 +1,5 @@
-/*	$Id: at91rm9200busvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91rm9200busvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $ */
+/*	$Id: at91rm9200busvar.h,v 1.4 2012/07/30 23:35:28 matt Exp $	*/
+/*	$NetBSD: at91rm9200busvar.h,v 1.4 2012/07/30 23:35:28 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -57,6 +57,6 @@ const char *at91rm9200bus_peripheral_name(int pid);
 void at91rm9200bus_search_peripherals(device_t self,
 				   device_t (*found_func)(device_t, bus_addr_t, int));
 
-const struct at91bus_machdep at91rm9200bus;
+extern const struct at91bus_machdep at91rm9200bus;
 
 #endif	// _AT91RM9200BUSVAR_H_
