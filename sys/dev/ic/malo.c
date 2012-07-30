@@ -1,3 +1,4 @@
+/*      $NetBSD: malo.c,v 1.2 2012/07/30 20:30:41 degroote Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -18,6 +19,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.2 2012/07/30 20:30:41 degroote Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 
