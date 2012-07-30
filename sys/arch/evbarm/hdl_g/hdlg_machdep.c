@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.17 2012/07/29 00:07:08 matt Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.18 2012/07/30 23:36:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.17 2012/07/29 00:07:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.18 2012/07/30 23:36:00 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -156,6 +156,8 @@ u_int free_pages;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
+
+pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
 
