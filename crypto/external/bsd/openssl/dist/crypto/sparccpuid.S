@@ -29,11 +29,11 @@ OPENSSL_wipe_cpu:
 #include <sys/trap.h>
 	ta	ST_CLEAN_WINDOWS
 #else
-	call	.walk.reg.wins
+	call	_walk_reg_wins
 #endif
 	nop
-	call	.PIC.zero.up
-	mov	.zero-(.-4),%o0
+	call	_PIC_zero_up
+	mov	_zero-(.-4),%o0
 	ld	[%o0],%f0
 	ld	[%o0],%f1
 
@@ -128,8 +128,8 @@ OPENSSL_wipe_cpu:
 	ret
 	restore
 
-.zero:	.long	0x0,0x0
-.PIC.zero.up:
+_zero:	.long	0x0,0x0
+_PIC_zero_up:
 	retl
 	add	%o0,%o7,%o0
 #ifdef DEBUG
@@ -137,7 +137,7 @@ OPENSSL_wipe_cpu:
 .type	walk_reg_wins,#function
 walk_reg_wins:
 #endif
-.walk.reg.wins:
+_walk_reg_wins:
 	save	%sp,FRAME,%sp
 	cmp	%i7,%o7
 	be	2f
@@ -145,7 +145,7 @@ walk_reg_wins:
 	cmp	%o7,0	! compiler never cleans %o7...
 	be	1f	! could have been a leaf function...
 	clr	%o1
-	call	.walk.reg.wins
+	call	_walk_reg_wins
 	nop
 1:	clr	%o2
 	clr	%o3
