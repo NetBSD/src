@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.39 2012/01/20 14:08:07 joerg Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.40 2012/07/30 07:31:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.39 2012/01/20 14:08:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.40 2012/07/30 07:31:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,15 +138,13 @@ copyout32_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 
 	q = (char *)mp->msg_control;
 
-	for (m = control; m != NULL; m = m->m_next) {
+	for (m = control; len > 0 && m != NULL; m = m->m_next) {
 		error = copyout32_msg_control_mbuf(l, mp, &len, m, &q, &truncated);
 		if (truncated) {
 			m = control;
 			break;
 		}
 		if (error)
-			break;
-		if (len <= 0)
 			break;
 	}
 
