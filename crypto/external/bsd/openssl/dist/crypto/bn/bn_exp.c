@@ -120,8 +120,10 @@
 #  define alloca _alloca
 # endif
 #elif defined(__GNUC__)
-# ifndef alloca
-#  define alloca(s) __builtin_alloca((s))
+# ifndef __SSP__
+#  ifndef alloca
+#   define alloca(s) __builtin_alloca((s))
+#  endif
 # endif
 #endif
 
