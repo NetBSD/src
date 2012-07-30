@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.39 2012/07/29 00:07:08 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.40 2012/07/30 23:36:00 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -238,6 +238,8 @@ u_int free_pages;
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
+
+pv_addr_t minidataclean;
 
 vm_offset_t msgbufphys;
 
