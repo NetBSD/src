@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.89 2011/12/12 19:03:10 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.89.2.1 2012/07/31 08:22:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2011/12/12 19:03:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.1 2012/07/31 08:22:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -188,15 +188,17 @@ luna68k_init(void)
 	boothowto = 0;
 	i = 0;
 	/*
-	 * 'bootarg' has;
+	 * 'bootarg' on LUNA has:
 	 *   "<args of x command> ENADDR=<addr> HOST=<host> SERVER=<name>"
 	 * where <addr> is MAC address of which network loader used (not
 	 * necessarily same as one at 0x4101.FFE0), <host> and <name>
-	 * are the values of HOST and SERVER environment variables,
+	 * are the values of HOST and SERVER environment variables.
+	 *
+	 * 'bootarg' on LUNA-II has "<args of x command>" only.
 	 *
 	 * NetBSD/luna68k cares only the first argment; any of "sda".
 	 */
-	for (cp = bootarg; *cp != ' '; cp++) {
+	for (cp = bootarg; *cp != ' ' && *cp != 0; cp++) {
 		BOOT_FLAG(*cp, boothowto);
 		if (i++ >= sizeof(bootarg))
 			break;
