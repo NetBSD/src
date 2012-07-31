@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.56 2012/07/23 15:51:48 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.57 2012/07/31 07:39:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -75,6 +75,7 @@
 #define PSR_FIQ32_MODE	0x00000011
 #define PSR_IRQ32_MODE	0x00000012
 #define PSR_SVC32_MODE	0x00000013
+#define PSR_MON32_MODE	0x00000016
 #define PSR_ABT32_MODE	0x00000017
 #define PSR_UND32_MODE	0x0000001b
 #define PSR_SYS32_MODE	0x0000001f
