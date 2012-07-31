@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.25 2012/07/31 07:23:16 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.26 2012/07/31 08:01:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -117,6 +117,7 @@ void validate_trapframe(trapframe_t *, int);
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_arm_debug.h"
+#include "opt_cputypes.h"
 
 #include <machine/cpu.h>
 
@@ -305,17 +306,26 @@ LOCK_CAS_DEBUG_LOCALS
 /*
  * PUSHFRAME - macro to push a trap frame on the stack in the current mode
  * Since the current mode is used, the SVC lr field is not defined.
- *
+ */
+
+#ifdef CPU_SA110
+/*
  * NOTE: r13 and r14 are stored separately as a work around for the
  * SA110 rev 2 STM^ bug
  */
+#define	PUSHUSERREGS							   \
+	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
+	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
+	stmia	r0, {r13-r14}^		/* Push the user mode registers */
+#else
+#define	PUSHUSERREGS							   \
+	stmia	sp, {r0-r14}^		/* Push the user mode registers */
+#endif
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
 	sub	sp, sp, #(4*18);	/* Adjust the stack pointer */	   \
-	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
-	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
 	str	r0, [sp, #-4]!		/* Push the SPSR on the stack */
@@ -369,9 +379,7 @@ LOCK_CAS_DEBUG_LOCALS
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
-	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
-	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
+	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
 	str	r0, [sp, #-4]!		/* Push the SPSR onto the stack */
