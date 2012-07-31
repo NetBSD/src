@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ ixp_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = ixp_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
@@ -187,15 +188,15 @@ ixp_setup_channel(struct ata_channel *chp)
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			IXP_UDMA_ENABLE(udma, chp->ch_channel, drive);
 			IXP_SET_MODE(udma, chp->ch_channel, drive, drvp->UDMA_mode);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			IXP_UDMA_DISABLE(udma, chp->ch_channel, drive);
 			IXP_SET_TIMING(mdma_timing, chp->ch_channel, drive,
 			    ixp_mdma_timings[drvp->DMA_mode]);
