@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.13 2012/02/19 21:06:05 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.14 2012/07/31 07:23:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -67,6 +67,7 @@ typedef struct trapframe {
 	register_t tf_r12;
 	register_t tf_usr_sp;
 	register_t tf_usr_lr;
+	register_t tf_fill;
 	register_t tf_svc_sp; /* Not used on arm26 */
 	register_t tf_svc_lr; /* Not used on arm26 */
 	register_t tf_pc;
