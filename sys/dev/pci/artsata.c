@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $	*/
+/*	$NetBSD: artsata.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $");
 
 #include "opt_pciide.h"
 
@@ -233,7 +233,6 @@ artisea_chansetup(struct pciide_softc *sc, int channel,
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
-	cp->ata_channel.ch_ndrive = 2;
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
@@ -349,6 +348,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = ARTISEA_NUM_CHAN;
 	sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
+	sc->sc_wdcdev.wdc_maxdrives = 1;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 

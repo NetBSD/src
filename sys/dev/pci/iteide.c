@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.16 2012/07/26 20:49:49 jakllsch Exp $	*/
+/*	$NetBSD: iteide.c,v 1.17 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.16 2012/07/26 20:49:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.17 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ ite_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = ite_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -188,13 +189,13 @@ ite_setup_channel(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
 		if ((chp->ch_atac->atac_cap & ATAC_CAP_UDMA) != 0 &&
-		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
+		    (drvp->drive_flags & ATA_DRIVE_UDMA) != 0) {
 			/* Setup UltraDMA mode */
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			modectl &= ~IT_MODE_DMA(channel, drive);
 
 #if 0
@@ -216,9 +217,9 @@ ite_setup_channel(struct ata_channel *chp)
 
 			mode = drvp->PIO_mode;
 		} else if ((chp->ch_atac->atac_cap & ATAC_CAP_DMA) != 0 &&
-		    (drvp->drive_flags & DRIVE_DMA) != 0) {
+		    (drvp->drive_flags & ATA_DRIVE_DMA) != 0) {
 			/* Setup multiword DMA mode */
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			modectl |= IT_MODE_DMA(channel, drive);
 
 			/* mode = min(pio, dma + 2) */

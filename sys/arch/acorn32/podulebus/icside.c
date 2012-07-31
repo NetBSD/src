@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.31 2012/07/26 20:49:45 jakllsch Exp $	*/
+/*	$NetBSD: icside.c,v 1.32 2012/07/31 15:50:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.31 2012/07/26 20:49:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.32 2012/07/31 15:50:31 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -259,6 +259,7 @@ icside_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = ide->channels;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_pa = pa;
 
 	for (channel = 0; channel < ide->channels; ++channel) {
@@ -270,7 +271,6 @@ icside_attach(device_t parent, device_t self, void *aux)
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
 		cp->ch_queue = &icp->ic_chqueue;
-		cp->ch_ndrive = 2;
 		wdr->cmd_iot = &sc->sc_tag;
 		wdr->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)
