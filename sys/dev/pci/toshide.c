@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.8 2012/07/26 20:49:50 jakllsch Exp $	*/
+/*	$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.8 2012/07/26 20:49:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ piccolo_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	/* 
 	 * XXX one for now. We'll figure out how to talk to the second channel
 	 * later, hopefully! Second interface config is via the
@@ -183,13 +184,13 @@ piccolo_setup_channel(struct ata_channel *chp)
 
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 
 			/*
@@ -214,7 +215,7 @@ piccolo_setup_channel(struct ata_channel *chp)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 
 		}
-		else if (drvp->drive_flags & DRIVE_DMA) {
+		else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/*
 			 * Use Multiword DMA
 			 */

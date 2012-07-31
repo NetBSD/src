@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.45 2012/07/26 20:49:50 jakllsch Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.46 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -142,7 +142,7 @@ struct pciide_softc {
 			struct idedma_table *dma_table;
 			bus_dmamap_t    dmamap_xfer;
 			int dma_flags;
-		} dma_maps[ATA_MAXDRIVES];
+		} dma_maps[WDC_MAXDRIVES];
 		bus_space_handle_t	dma_iohs[IDEDMA_NREGS];
 		/*
 		 * Some controllers require certain bits to

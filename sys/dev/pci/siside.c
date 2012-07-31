@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.32 2012/07/26 20:49:50 jakllsch Exp $	*/
+/*	$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.32 2012/07/26 20:49:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,6 +293,7 @@ sis_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	switch(sc->sis_type) {
 	case SIS_TYPE_NOUDMA:
 	case SIS_TYPE_66:
@@ -357,13 +358,13 @@ sis96x_setup_channel(struct ata_channel *chp)
 		    chp->ch_channel, drive);
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS96x_REG_CBL(chp->ch_channel)) & SIS96x_REG_CBL_33) {
@@ -373,7 +374,7 @@ sis96x_setup_channel(struct ata_channel *chp)
 			sis_tim |= sis_udma133new_tim[drvp->UDMA_mode];
 			sis_tim |= sis_pio133new_tim[drvp->PIO_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/*
 			 * use Multiword DMA
 			 * Timings will be used for both PIO and DMA,
@@ -423,17 +424,17 @@ sis_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if ((drvp->drive_flags & DRIVE_DMA) == 0 &&
-		    (drvp->drive_flags & DRIVE_UDMA) == 0)
+		if ((drvp->drive_flags & ATA_DRIVE_DMA) == 0 &&
+		    (drvp->drive_flags & ATA_DRIVE_UDMA) == 0)
 			goto pio;
 
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->ch_channel)) {
@@ -544,6 +545,7 @@ sis_sata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 

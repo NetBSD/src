@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.12 2012/07/26 20:49:47 jakllsch Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.13 2012/07/31 15:50:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.12 2012/07/26 20:49:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.13 2012/07/31 15:50:33 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,10 +138,10 @@ wdc_pnpbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chanlist[0] = &sc->sc_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->sc_channel.ch_channel = 0;
 	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
-	sc->sc_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->sc_channel);
 
 	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, IST_PNP,

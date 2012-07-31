@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.32 2012/07/26 20:49:49 jakllsch Exp $	*/
+/*	$NetBSD: hptide.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.32 2012/07/26 20:49:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ hpt_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		else
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 	}
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -334,26 +335,26 @@ hpt_setup_channel(struct ata_channel *chp)
 	}
 
 	/* Per drive settings */
-	for (drive = 0; drive < chp->ch_ndrive; drive++) {
+	for (drive = 0; drive < chp->ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
 					HPT_IDETIM(chp->ch_channel, drive));
 
 		/* add timing values, setup DMA if needed */
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* use Ultra/DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			if ((cable & HPT_CSEL_CBLID(chp->ch_channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
 			after = tim_udma[drvp->UDMA_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/*
 			 * use Multiword DMA.
 			 * Timings will be used for both PIO and DMA, so adjust

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.17 2012/07/26 20:49:48 jakllsch Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.18 2012/07/31 15:50:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.17 2012/07/26 20:49:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.18 2012/07/31 15:50:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -192,7 +192,7 @@ njata32_attach(struct njata32_softc *sc)
 	sc->sc_ch[0].ch_ata_channel.ch_channel = 0;
 	sc->sc_ch[0].ch_ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_ch[0].ch_ata_channel.ch_queue = &sc->sc_wdc_chqueue;
-	sc->sc_ch[0].ch_ata_channel.ch_ndrive = 2; /* max number of drives */
+	sc->sc_wdcdev.wdc_maxdrives = 2; /* max number of drives per channel */
 
 	/* map ATA registers */
 	for (i = 0; i < WDC_NREG; i++) {
@@ -317,20 +317,20 @@ njata32_setup_channel(struct ata_channel *chp)
 	int drive;
 	uint8_t mode;
 
-	KASSERT(chp->ch_ndrive != 0);
+	KASSERT(chp->ch_ndrives != 0);
 
 	sc->sc_timing_pio = 0;
 #if 0	/* ATA DMA is currently unused */
 	sc->sc_timing_dma = 0;
 #endif
 
-	for (drive = 0; drive < chp->ch_ndrive; drive++) {
+	for (drive = 0; drive < chp->ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;	/* no drive */
 
 #if 0	/* ATA DMA is currently unused */
-		if ((drvp->drive_flags & DRIVE_DMA) != 0) {
+		if ((drvp->drive_flags & ATA_DRIVE_DMA) != 0) {
 			/*
 			 * Multiword DMA
 			 */

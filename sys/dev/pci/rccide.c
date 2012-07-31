@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.25 2012/07/26 20:49:50 jakllsch Exp $	*/
+/*	$NetBSD: rccide.c,v 1.26 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.25 2012/07/26 20:49:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.26 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ serverworks_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = serverworks_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -211,14 +212,14 @@ serverworks_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		unit = drive + 2 * channel;
 		/* add timing values, setup DMA if needed */
 		pio_time |= pio_modes[drvp->PIO_mode] << (8 * (unit^1));
 		pio_mode |= drvp->PIO_mode << (4 * unit + 16);
 		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
-		    (drvp->drive_flags & DRIVE_UDMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
 			if (drvp->UDMA_mode > 2 &&
 			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
@@ -230,17 +231,17 @@ serverworks_setup_channel(struct ata_channel *chp)
 			udma_mode |= 1 << unit;
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
-		    (drvp->drive_flags & DRIVE_DMA)) {
+		    (drvp->drive_flags & ATA_DRIVE_DMA)) {
 			/* use Multiword DMA */
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_UDMA;
+			drvp->drive_flags &= ~ATA_DRIVE_UDMA;
 			splx(s);
 			dma_time |= dma_modes[drvp->DMA_mode] << (8 * (unit^1));
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_UDMA | ATA_DRIVE_DMA);
 			splx(s);
 		}
 	}

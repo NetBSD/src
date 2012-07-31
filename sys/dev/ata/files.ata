@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.23 2012/07/26 20:49:47 jakllsch Exp $
+#	$NetBSD: files.ata,v 1.24 2012/07/31 15:50:34 bouyer Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -34,3 +34,6 @@ file	dev/ata/sata_subr.c		sata			needs-flag
 
 # Common SATA FIS subroutines
 file	dev/ata/satafis_subr.c		sata_fis
+
+# SATA port multiplier support
+file	dev/ata/satapmp_subr.c		sata_pmp		needs-flag

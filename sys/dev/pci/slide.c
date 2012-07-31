@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.27 2012/07/26 20:49:50 jakllsch Exp $	*/
+/*	$NetBSD: slide.c,v 1.28 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.27 2012/07/26 20:49:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.28 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ sl82c105_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	idecr = pci_conf_read(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR);
 
@@ -207,12 +208,12 @@ sl82c105_setup_channel(struct ata_channel *chp)
 
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip. */
-		if ((drvp->drive_flags & DRIVE) == 0) {
+		if (drvp->drive_type == ATA_DRIVET_NONE) {
 			pci_conf_write(sc->sc_pc, sc->sc_tag, pxdx_reg, pxdx);
 			continue;
 		}
 
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/*
 			 * Timings will be used for both PIO and DMA,
 			 * so adjust DMA mode if needed.
@@ -226,7 +227,7 @@ sl82c105_setup_channel(struct ata_channel *chp)
 					 * Disable DMA.
 					 */
 					s = splbio();
-					drvp->drive_flags &= ~DRIVE_DMA;
+					drvp->drive_flags &= ~ATA_DRIVE_DMA;
 					splx(s);
 				}
 			} else {
@@ -235,12 +236,12 @@ sl82c105_setup_channel(struct ata_channel *chp)
 				 * DMA.
 				 */
 				s = splbio();
-				drvp->drive_flags &= ~DRIVE_DMA;
+				drvp->drive_flags &= ~ATA_DRIVE_DMA;
 				splx(s);
 			}
 		}
 
-		if (drvp->drive_flags & DRIVE_DMA) {
+		if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/* Use multi-word DMA. */
 			pxdx |= symph_mw_dma_times[drvp->DMA_mode].cmd_on <<
 			    PxDx_CMD_ON_SHIFT;

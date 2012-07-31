@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $	*/
+/*	$NetBSD: optiide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.23 2012/07/26 20:49:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ opti_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	init_ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag,
 	    OPTI_REG_INIT_CONTROL);
@@ -197,12 +198,12 @@ opti_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0) {
+		if (drvp->drive_type == ATA_DRIVET_NONE) {
 			mode[drive] = -1;
 			continue;
 		}
 
-		if ((drvp->drive_flags & DRIVE_DMA)) {
+		if ((drvp->drive_flags & ATA_DRIVE_DMA)) {
 			/*
 			 * Timings will be used for both PIO and DMA,
 			 * so adjust DMA mode if needed
@@ -233,7 +234,7 @@ opti_setup_channel(struct ata_channel *chp)
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
 			chp->ch_drive[d].DMA_mode = 0;
 			s = splbio();
-			chp->ch_drive[d].drive_flags &= ~DRIVE_DMA;
+			chp->ch_drive[d].drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 		}
 	}
