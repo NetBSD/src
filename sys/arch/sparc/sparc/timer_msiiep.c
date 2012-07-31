@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.26 2011/07/17 23:18:23 mrg Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.27 2012/07/31 16:38:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.26 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.27 2012/07/31 16:38:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,6 +86,7 @@ static int	clockintr_msiiep(void *);
 static int	statintr_msiiep(void *);
 static u_int	timer_get_timecount(struct timecounter *);
 
+void*	sched_cookie;
 
 static struct intrhand level10 = { .ih_fun = clockintr_msiiep };
 static struct intrhand level14 = { .ih_fun = statintr_msiiep  };
