@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.27 2012/06/02 15:52:24 christos Exp $
+#	$NetBSD: weekly,v 1.28 2012/07/31 12:11:50 jdf Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -94,7 +94,7 @@ if checkyesno rebuild_mandb; then
 	echo ""
 	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
 		echo "Rebuilding man page index:"
-		(umask 022; nice -n 5 /usr/sbin/makemandb -f)
+		(umask 022; nice -n 5 /usr/sbin/makemandb -f -q)
 	else
 		echo "Not rebuilding man page index"
 	fi
