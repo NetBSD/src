@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.244 2012/07/29 18:05:46 mlelstv Exp $ */
+/*	$NetBSD: autoconf.c,v 1.245 2012/07/31 14:23:33 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.244 2012/07/29 18:05:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245 2012/07/31 14:23:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -266,6 +266,8 @@ void
 bootstrap(void)
 {
 	extern uint8_t u0[];
+	extern struct consdev consdev_prom;
+
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #else
@@ -273,6 +275,7 @@ bootstrap(void)
 #endif
 	struct btinfo_boothowto *bi_howto;
 
+	cn_tab = &consdev_prom;
 	prom_init();
 
 	/* Find the number of CPUs as early as possible */
