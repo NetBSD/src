@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.487 2012/04/17 14:11:59 khorben Exp $
+.\"	$NetBSD: main,v 1.488 2012/07/31 07:49:45 wen Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1181,6 +1181,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Lars Heidieker Ta Mt para@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
+.It Ta Wen Heping Ta Mt wen@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
 .It Ta Iain Hibbert Ta Mt plunky@NetBSD.org
 .It Ta Kouichirou Hiratsuka Ta Mt hira@NetBSD.org
