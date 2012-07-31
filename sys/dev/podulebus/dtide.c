@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.27 2012/07/26 20:49:51 jakllsch Exp $ */
+/* $NetBSD: dtide.c,v 1.28 2012/07/31 15:50:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.27 2012/07/26 20:49:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.28 2012/07/31 15:50:37 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -93,6 +93,7 @@ dtide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
 	sc->sc_wdc.sc_atac.atac_nchannels = DTIDE_NCHANNELS;
 	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
+	sc->sc_wdc.wdc_maxdrives = 2;
 	sc->sc_magict = pa->pa_fast_t;
 	bus_space_map(pa->pa_fast_t, pa->pa_fast_base + DTIDE_MAGICBASE, 0, 1,
 	    &sc->sc_magich);
@@ -106,7 +107,6 @@ dtide_attach(device_t parent, device_t self, void *aux)
 		wdr->cmd_iot = bst;
 		wdr->ctl_iot = bst;
 		ch->ch_queue = &sc->sc_chq[i];
-		ch->ch_ndrive = 2;
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_cmdoffsets[i], 0, 8,
 		    &wdr->cmd_baseioh);
