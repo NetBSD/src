@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.188 2012/07/29 18:05:46 mlelstv Exp $ */
+/*	$NetBSD: autoconf.c,v 1.189 2012/07/31 13:35:48 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.188 2012/07/29 18:05:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.189 2012/07/31 13:35:48 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -280,6 +280,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	extern void* get_romtba(void);
 	extern void  OF_val2sym32(void *);
 	extern void OF_sym2val32(void *);
+	extern struct consdev consdev_prom;
 
 	/* Save OpenFrimware entry point */
 	romp   = ofw;
@@ -290,6 +291,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	console_node = OF_instance_to_package(promops.po_stdout);
 
 	/* Initialize the PROM console so printf will not panic */
+	cn_tab = &consdev_prom;
 	(*cn_tab->cn_init)(cn_tab);
 
 	DPRINTF(ACDB_BOOTARGS,
