@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.118 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.119 2012/07/31 15:59:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.118 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.119 2012/07/31 15:59:57 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -198,13 +198,6 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
 	struct ata_command ata_c;
 
-	/* if no ATAPI device detected at wdc attach time, skip */
-	if (chp->ch_drive[drive].drive_type != ATA_DRIVET_ATAPI) {
-		ATADEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
-		    drive), DEBUG_PROBE);
-		return -1;
-	}
-
 	memset(&ata_c, 0, sizeof(struct ata_command));
 	ata_c.r_command = ATAPI_SOFT_RESET;
 	ata_c.r_st_bmask = 0;
@@ -258,6 +251,13 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 	/* skip if already attached */
 	if (scsipi_lookup_periph(chan, target, 0) != NULL)
 		return;
+
+	/* if no ATAPI device detected at wdc attach time, skip */
+	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
+		ATADEBUG_PRINT(("wdc_atapi_probe_device: "
+		    "drive %d not present\n", target), DEBUG_PROBE);
+		return;
+	}
 
 	if (wdc_atapi_get_params(chan, target, id) == 0) {
 #ifdef ATAPI_DEBUG_PROBE
