@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.23 2009/01/18 01:19:33 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.24 2012/07/31 06:56:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -315,7 +315,7 @@ LOCK_CAS_DEBUG_LOCALS
 	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
 	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
@@ -325,10 +325,10 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAME							   \
-        ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */	   \
-        msr     spsr_all, r0;						   \
-        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */	   \
+	msr     spsr_all, r0;						   \
+	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+	mov     r0, r0;                 /* NOP for previous instruction */ \
 	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
  	ldr	lr, [sp], #0x0004	/* Pull the return address */
 
@@ -362,7 +362,7 @@ LOCK_CAS_DEBUG_LOCALS
 	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
 	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
-        mov     r0, r0;                 /* NOP for previous instruction */ \
+	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
 	str	r0, [sp, #-4]!
 
@@ -374,10 +374,10 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-        ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
-        msr     spsr_all, r0;		/* restore SPSR */		   \
-        ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
-        mov     r0, r0;	  		/* NOP for previous instruction */ \
+	ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
+	msr     spsr_all, r0;		/* restore SPSR */		   \
+	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
+	mov     r0, r0;	  		/* NOP for previous instruction */ \
 	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
