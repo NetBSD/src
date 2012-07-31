@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.165 2012/07/30 08:39:04 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.166 2012/07/31 08:14:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6315,10 +6315,6 @@ xsrc/external/mit/xorg-server/dist/hw/xfree86/common/xf86sbusBus.c 1.4
 	Fix colors on suncg6.
 	[macallan, ticket #415]
 
-lib/libc/arch/arm/gen/Makefile.inc		1.17
-
-	Fix ARM static binaries.
-	[reinoud, ticket #416]
 
 sys/dev/ldvar.h					1.21
 
