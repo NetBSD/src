@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.26 2012/07/31 08:01:30 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.27 2012/07/31 15:47:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -372,6 +372,8 @@ LOCK_CAS_DEBUG_LOCALS
 	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
 	SET_CPSR_MODE(r2, PSR_SVC32_MODE);				   \
 	mov	r2, sp;			/* Save	SVC sp */		   \
+	tst	sp, #4;			/* check for alignment */	   \
+	subne	sp, sp, #4;		/* adjust if not aligned */	   \
 	str	r0, [sp, #-4]!;		/* Push return address */	   \
 	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \
 	str	r2, [sp, #-4]!;		/* Push SVC sp */		   \
