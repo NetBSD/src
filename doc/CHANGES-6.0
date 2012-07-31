@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.166 2012/07/31 08:14:32 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.167 2012/07/31 09:27:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6640,3 +6640,55 @@ sys/arch/dreamcast/dev/gdrom.c			1.35
 	- Add #ifdef GDROMDEBUGTOC for dumping out the gdrom TOC values
 	[abs, ticket #451]
 
+sys/arch/luna68k/luna68k/locore.s		1.49
+sys/arch/luna68k/luna68k/machdep.c		1.91
+
+	Handle bootarg strings passed from firmware prompt properly on LUNA-II.
+	LUNA-II seems to use a different vector from LUNA to pass bootargs.
+
+	Now we can specify RB_ASKNAME and RB_SINGLE at boot on LUNA-II.
+	[tsutsui, ticket #453]
+
+doc/3RDPARTY:				1.951
+share/zoneinfo/Makefile:		1.43
+share/zoneinfo/africa:			1.1.1.31
+share/zoneinfo/antarctica:		1.1.1.21
+share/zoneinfo/asia:			1.1.1.52
+share/zoneinfo/australasia:		1.25
+share/zoneinfo/backward:		1.1.1.25
+share/zoneinfo/etcetera:		1.1.1.9
+share/zoneinfo/europe:			1.1.1.46
+share/zoneinfo/factory:			1.1.1.5
+share/zoneinfo/iso3166.tab:		1.1.1.20
+share/zoneinfo/leapseconds:		1.1.1.20
+share/zoneinfo/northamerica:		1.1.1.52
+share/zoneinfo/pacificnew:		1.1.1.5
+share/zoneinfo/solar87:			1.1.1.5
+share/zoneinfo/solar88:			1.1.1.5
+share/zoneinfo/solar89:			1.1.1.5
+share/zoneinfo/southamerica:		1.1.1.48
+share/zoneinfo/systemv:			1.1.1.6
+share/zoneinfo/yearistype.sh:		1.7
+share/zoneinfo/zone.tab:		1.1.1.42
+
+	Import tzdata2012d from ftp://ftp.iana.org/tz/releases/tzdata2012d.tar.gz
+
+	Major changes from tzdata2011b to tzdata2011c:
+	     africa
+		    Summer time changes for Morocco (to start late April 2012)
+
+	     asia
+		    Changes for 2012 for Gaza & the West Bank (Hebron) and Syria
+
+	     northamerica
+		    Haiti following US/Canada rules for 2012 (and we're assuming,
+		    for now anyway, for the future).
+
+	Major changes from tzdata2011c to tzdata2011d:
+
+	     Morocco does not observe DST from Jul 20 03:00 to
+	     Aug 20 02:00 [2012].
+
+	     Infrastructure changes to accommodate how the tz
+	     code and data are released on IANA.
+	[apb, ticket #455]
