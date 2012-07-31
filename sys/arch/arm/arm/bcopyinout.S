@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.18 2012/07/31 06:54:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,11 +43,15 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-#ifdef __XSCALE__
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
+/*
+ * armv6 and v7 have pld and strd so they can use the xscale
+ * bcopyinout as well.
+ */
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.18 2012/07/31 06:54:16 matt Exp $")	
 
 	.text
 	.align	0
