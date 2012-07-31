@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.5 2012/07/12 21:29:04 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.6 2012/07/31 07:21:06 matt Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
@@ -26,6 +26,10 @@
 #define _ARM_ARCH_4T
 #endif
 
+#ifdef __ARM_EABI__
+#define __ALIGNBYTES		(8 - 1)
+#else
 #define __ALIGNBYTES		(sizeof(int) - 1)
+#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */
