@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.237 2012/07/31 16:38:37 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.238 2012/07/31 20:12:27 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.237 2012/07/31 16:38:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238 2012/07/31 20:12:27 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1708,7 +1708,7 @@ turbosparc_hotfix(struct cpu_info *sc)
 }
 #endif /* SUN4M */
 
-#if defined(SUN4M) && !defined(MSIIEP)
+#if defined(SUN4M)
 struct module_info module_viking = {
 	CPUTYP_UNKNOWN,		/* set in cpumatch() */
 	VAC_NONE,
@@ -1735,9 +1735,9 @@ struct module_info module_viking = {
 	pmap_zero_page4m,
 	pmap_copy_page4m
 };
-#endif /* SUN4M && !defined(MSIIEP) */
+#endif /* SUN4M */
 
-#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
+#if defined(SUN4M) || defined(SUN4D)
 void
 cpumatch_viking(struct cpu_info *sc, struct module_info *mp, int node)
 {
@@ -1758,7 +1758,9 @@ static	int mxcc = -1;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		sc->zero_page = pmap_zero_page_viking_mxcc;
 		sc->copy_page = pmap_copy_page_viking_mxcc;
+#if !defined(MSIIEP)
 		moduleerr_handler = viking_module_error;
+#endif
 
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
@@ -1816,6 +1818,7 @@ viking_getmid(void)
 	return (0);
 }
 
+#if !defined(MSIIEP)
 int
 viking_module_error(void)
 {
@@ -1845,6 +1848,7 @@ viking_module_error(void)
 	}
 	return (fatal);
 }
+#endif /* MSIIEP */
 #endif /* SUN4M || SUN4D */
 
 #if defined(SUN4D)
@@ -1955,7 +1959,7 @@ struct cpu_conf {
 	{ CPU_SUN4C, 9, 0, ANY, ANY, "W8601/8701 or MB86903", &module_sun4c },
 #endif
 
-#if defined(SUN4M) && !defined(MSIIEP)
+#if defined(SUN4M)
 	{ CPU_SUN4M, 0, 4, 0, 4, "MB86904", &module_swift },
 	{ CPU_SUN4M, 0, 5, 0, 5, "MB86907", &module_turbosparc },
 	{ CPU_SUN4M, 1, 1, 1, 0, "CY7C601/604", &module_cypress },
