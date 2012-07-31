@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.24 2012/07/31 06:56:57 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.25 2012/07/31 07:23:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -71,6 +71,7 @@ typedef struct irqframe {
 	unsigned int if_r12;
 	unsigned int if_usr_sp;
 	unsigned int if_usr_lr;
+	unsigned int if_fill;
 	unsigned int if_svc_sp;
 	unsigned int if_svc_lr;
 	unsigned int if_pc;
@@ -311,13 +312,13 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
-	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
+	sub	sp, sp, #(4*18);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
 	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
-	str	r0, [sp, #-4]!
+	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	str	r0, [sp, #-4]!		/* Push the SPSR on the stack */
 
 /*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
@@ -325,12 +326,12 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAME							   \
-	ldr     r0, [sp], #0x0004;      /* Get the SPSR from stack */	   \
+	ldr     r0, [sp], #0x0004;      /* Pop the SPSR from stack */	   \
 	msr     spsr_all, r0;						   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
- 	ldr	lr, [sp], #0x0004	/* Pull the return address */
+	add	sp, sp, #(4*18);	/* Adjust the stack pointer */	   \
+ 	ldr	lr, [sp], #0x0004	/* Pop the return address */
 
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
@@ -343,19 +344,28 @@ LOCK_CAS_DEBUG_LOCALS
  * SA110 rev 2 STM^ bug
  */
 
+#ifdef _ARM_ARCH_6
+#define	SET_CPSR_MODE(tmp, mode)	\
+	cps	#(mode)
+#else
+#define	SET_CPSR_MODE(tmp, mode)	\
+	mrs     tmp, cpsr; 		/* Get the CPSR */		   \
+	bic     tmp, tmp, #(PSR_MODE);	/* Fix for SVC mode */		   \
+	orr     tmp, tmp, #(mode);					   \
+	msr     cpsr_c, tmp		/* Punch into SVC mode */
+#endif
+
 #define PUSHFRAMEINSVC							   \
 	stmdb	sp, {r0-r3};		/* Save 4 registers */		   \
 	mov	r0, lr;			/* Save xxx32 r14 */		   \
 	mov	r1, sp;			/* Save xxx32 sp */		   \
 	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
-	mrs     r2, cpsr; 		/* Get the CPSR */		   \
-	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
-	orr     r2, r2, #(PSR_SVC32_MODE);				   \
-	msr     cpsr_c, r2;		/* Punch into SVC mode */	   \
+	SET_CPSR_MODE(r2, PSR_SVC32_MODE);				   \
 	mov	r2, sp;			/* Save	SVC sp */		   \
 	str	r0, [sp, #-4]!;		/* Push return address */	   \
 	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \
 	str	r2, [sp, #-4]!;		/* Push SVC sp */		   \
+	sub	sp, sp, #4;		/* Keep stack aligned */	   \
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
@@ -363,8 +373,8 @@ LOCK_CAS_DEBUG_LOCALS
 	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	mrs	r0, spsr_all;		/* Put the SPSR on the stack */	   \
-	str	r0, [sp, #-4]!
+	mrs	r0, spsr_all;		/* Get the SPSR */		   \
+	str	r0, [sp, #-4]!		/* Push the SPSR onto the stack */
 
 /*
  * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
@@ -374,11 +384,11 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-	ldr     r0, [sp], #0x0004;	/* Get the SPSR from stack */	   \
+	ldr     r0, [sp], #0x0004;	/* Pop the SPSR from stack */	   \
 	msr     spsr_all, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	add	sp, sp, #(4*16);	/* Adjust the stack pointer */	   \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
 #endif /* _LOCORE */
