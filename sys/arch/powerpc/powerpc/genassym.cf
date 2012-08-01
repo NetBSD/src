@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2011/06/20 08:18:28 matt Exp $
+#	$NetBSD: genassym.cf,v 1.9 2012/08/01 20:35:52 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ include <powerpc/psl.h>
 define	IPL_HIGH		IPL_HIGH
 define	IPL_SCHED		IPL_SCHED
 define	IPL_VM			IPL_VM
+define	IPL_NONE		IPL_NONE
 
 define	CPU_MAXNUM		CPU_MAXNUM
 
