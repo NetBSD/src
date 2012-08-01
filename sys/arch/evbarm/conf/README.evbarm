@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.2 2012/07/26 17:26:59 tsutsui Exp $
+$NetBSD: README.evbarm,v 1.3 2012/08/01 10:50:05 kiyohara Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -31,6 +31,7 @@ MV2120		2011/07/20	HP Media Vault MV2011 Marvell Orion board
 NAPPI		2002/07/15	Netwise APlication Platform Board
 NETWALKER	2010/11/13	Sharp NetWalker
 NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")
+OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
 OVERO		2010/07/10	Gumstix Inc. OMAP3530 based Overo boards
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
