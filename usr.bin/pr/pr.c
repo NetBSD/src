@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.23 2012/07/24 02:13:04 ginsbach Exp $	*/
+/*	$NetBSD: pr.c,v 1.24 2012/08/01 02:27:48 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.23 2012/07/24 02:13:04 ginsbach Exp $");
+__RCSID("$NetBSD: pr.c,v 1.24 2012/08/01 02:27:48 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -1612,11 +1612,14 @@ static void
 usage(void)
 {
 	(void)fputs(
-	 "usage: pr [+page] [-col] [-adFmrt] [-e[ch][gap]] [-h header]\n",errf);
+	 "usage: pr [+page] [-col] [-adFfmprt] [-e[ch][gap]] [-h header]\n",
+		    errf);
 	(void)fputs(
-	 "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n",errf);
+	 "          [-i[ch][gap]] [-l line] [-n[ch][width]] [-o offset]\n",
+		    errf);
 	(void)fputs(
-	 "          [-s[ch]] [-w width] [-fp] [-] [file ...]\n", errf);
+	 "          [-s[ch]] [-T timefmt] [-w width] [-] [file ...]\n",
+		    errf);
 }
 
 /*
