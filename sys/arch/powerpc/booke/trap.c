@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2012/07/23 04:13:06 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2012/08/01 16:35:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.18 2012/07/23 04:13:06 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.19 2012/08/01 16:35:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.18 2012/07/23 04:13:06 matt Exp $");
 #include <powerpc/booke/pte.h>
 
 void trap(enum ppc_booke_exceptions, struct trapframe *);
-static void dump_trapframe(const struct trapframe *);
 
 static const char trap_names[][8] = {
 	[T_CRITIAL_INPUT] = "CRIT",
@@ -620,7 +619,7 @@ embedded_fp_round_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
-static void
+void
 dump_trapframe(const struct trapframe *tf)
 {
 	printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
