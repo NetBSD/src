@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.953 2012/07/27 18:21:59 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.954 2012/08/01 01:49:01 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -268,7 +268,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.3
-Current Vers:	4.1-ESV-R4/4.2.3-P2
+Current Vers:	4.1-ESV-R6/4.2.4-P1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
@@ -636,7 +636,7 @@ tree.
 
 Package:	libwrap
 Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
-Current Vers:	tcp_wrappers 7.6-ipv6.1
+Current Vers:	tcp_wrappers 7.6-ipv6.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
@@ -782,7 +782,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.23
-Current Vers:	2.4.30
+Current Vers:	2.4.32
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
