@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.27 2012/07/31 15:47:58 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.28 2012/08/01 05:40:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -371,13 +371,10 @@ LOCK_CAS_DEBUG_LOCALS
 	mov	r1, sp;			/* Save xxx32 sp */		   \
 	mrs	r3, spsr;		/* Save xxx32 spsr */		   \
 	SET_CPSR_MODE(r2, PSR_SVC32_MODE);				   \
-	mov	r2, sp;			/* Save	SVC sp */		   \
-	tst	sp, #4;			/* check for alignment */	   \
-	subne	sp, sp, #4;		/* adjust if not aligned */	   \
-	str	r0, [sp, #-4]!;		/* Push return address */	   \
-	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \
-	str	r2, [sp, #-4]!;		/* Push SVC sp */		   \
-	sub	sp, sp, #4;		/* Keep stack aligned */	   \
+	bic	r2, sp, #7;		/* Align new SVC sp */		   \
+	str	r0, [r2, #-4]!;		/* Push return address */	   \
+	stmdb	r2!, {sp, lr};		/* Push SVC sp, lr */		   \
+	sub	sp, r2, #4;		/* Keep stack aligned */	   \
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
