@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.31.2.3 2012/04/17 00:09:00 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.31.2.4 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -60,10 +60,11 @@ struct uvm_object {
 };
 
 /*
- * uo_pages
+ * tags for uo_pages
  */
 
-#define	UVM_PAGE_DIRTY_TAG	0	/* might be dirty (!PG_CLEAN) */
+#define	UVM_PAGE_DIRTY_TAG	1	/* might be dirty (!PG_CLEAN) */
+#define	UVM_PAGE_WRITEBACK_TAG	2	/* being written back */
 
 /*
  * UVM_OBJ_KERN is a 'special' uo_refs value which indicates that the
