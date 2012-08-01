@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.6 2012/07/27 03:03:34 kiyohara Exp $
+#       $NetBSD: files.marvell,v 1.7 2012/08/01 10:38:41 kiyohara Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -74,3 +74,8 @@ file	arch/arm/marvell/mvsocgpp.c		mvsocgpp	needs-flag
 
 # Secure Digital Input/Output (SDIO) Interface
 attach	mvsdio at mvsoc with mvsdio_mbus
+
+# Thermal Sensor
+device	mvsocts: sysmon_envsys
+attach	mvsocts at mvsoc
+file	arch/arm/marvell/mvsocts.c		mvsocts
