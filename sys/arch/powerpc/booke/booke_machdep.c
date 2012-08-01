@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.15 2012/07/18 18:51:59 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.16 2012/08/01 21:30:21 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.15 2012/07/18 18:51:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16 2012/08/01 21:30:21 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -569,4 +569,103 @@ booke_sstep(struct trapframe *tf)
 	mtspr(SPR_IAC1, tf->tf_srr0 + 4);
 	mtspr(SPR_DBCR1, dbcr1);
 	mtspr(SPR_DBCR0, dbcr0);
+}
+
+#ifdef DIAGNOSTIC
+static inline void
+swap_data(uint64_t *data, size_t a, size_t b)
+{
+	uint64_t swap = data[a];
+	data[a] = data[b];
+	data[b] = swap;
+}
+
+static void
+sort_data(uint64_t *data, size_t count)
+{
+#if 0
+	/*
+	 * Mostly classic bubble sort
+	 */
+	do {
+		size_t new_count = 0;
+		for (size_t i = 1; i < count; i++) {
+			if (tbs[i - 1] > tbs[i]) {
+				swap_tbs(tbs, i - 1, i);
+				new_count = i;
+			}
+		}
+		count = new_count;
+	} while (count > 0);
+#else
+	/*
+	 * Comb sort
+	 */
+	size_t gap = count;
+	bool swapped = false;
+	while (gap > 1 || swapped) {
+		if (gap > 1) {
+			/*
+			 * phi = (1 + sqrt(5)) / 2 [golden ratio]
+			 * N = 1 / (1 - e^-phi)) = 1.247330950103979
+			 *
+			 * We want to but can't use floating point to calculate
+			 *	gap = (size_t)((double)gap / N)
+			 *
+			 * So we will use the multicative inverse of N
+			 * (module 65536) to achieve the division.
+			 *
+			 * iN = 2^16 / 1.24733... = 52540
+			 * x / N == (x * iN) / 65536 
+			 */
+			gap = (gap * 52540) / 65536;
+		}
+
+		swapped = false;
+
+		for (size_t i = 0; gap + i < count; i++) {
+			if (data[i] > data[i + gap]) {
+				swap_data(data, i, i + gap);
+				swapped = true;
+			}
+		}
+	}
+#endif
+}
+#endif
+
+void
+dump_splhist(struct cpu_info *ci, void (*pr)(const char *, ...))
+{
+#ifdef DIAGNOSTIC
+	struct cpu_softc * const cpu = ci->ci_softc;
+	uint64_t tbs[NIPL*NIPL];
+	size_t ntbs = 0;
+	for (size_t to = 0; to < NIPL; to++) {
+		for (size_t from = 0; from < NIPL; from++) {
+			uint64_t tb = cpu->cpu_spl_tb[to][from];
+			if (tb == 0)
+				continue;
+			tbs[ntbs++] = (tb << 8) | (to << 4) | from;
+		}
+	}
+	sort_data(tbs, ntbs);
+
+	if (pr == NULL)
+		pr = printf;
+	uint64_t last_tb = 0;
+	for (size_t i = 0; i < ntbs; i++) {
+		uint64_t tb = tbs[i];
+		size_t from = tb & 15;
+		size_t to = (tb >> 4) & 15;
+		tb >>= 8;
+		(*pr)("%s(%zu) from %zu at %"PRId64"",
+		     from < to ? "splraise" : "splx",
+		     to, from, tb);
+		if (last_tb && from != IPL_NONE)
+			(*pr)(" (+%"PRId64")", tb - last_tb);
+		(*pr)("\n");
+		last_tb = tb;
+	}
+#endif
 }

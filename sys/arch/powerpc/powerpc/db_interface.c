@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.50 2012/02/01 09:51:00 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.51 2012/08/01 21:30:24 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2012/02/01 09:51:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2012/08/01 21:30:24 matt Exp $");
 
 #define USERACC
 
@@ -84,6 +84,7 @@ static void db_ppc4xx_useracc(db_expr_t, bool, db_expr_t, const char *);
 
 #ifdef PPC_BOOKE
 static void db_ppcbooke_reset(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppcbooke_splhist(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppcbooke_tf(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppcbooke_dumptlb(db_expr_t, bool, db_expr_t, const char *);
 #endif
@@ -130,6 +131,9 @@ const struct db_command db_machine_command_table[] = {
 	  "Display the contents of the trapframe",
 	  "address",
 	  "   address:\tthe struct trapframe to print") },
+	{ DDB_ADD_CMD("splhist", db_ppcbooke_splhist,	0,
+	  "Display the splraise/splx splx",
+	  NULL, NULL) },
 	{ DDB_ADD_CMD("tlb",	db_ppcbooke_dumptlb,	0,
 	  "Display instruction translation storage buffer information.",
 	  NULL,NULL) },
@@ -762,22 +766,20 @@ db_ppcbooke_reset(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 static void
-db_ppcbooke_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+db_ppcbooke_splhist(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	dump_splhist(curcpu(), db_printf);
+}
+
+static void
+db_ppcbooke_tf(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
 {
 	if (!have_addr)
 		return;
 
-	const struct trapframe * const tf = (const struct trapframe *)addr;
-
-	db_printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
-	    tf, tf->tf_exc, tf->tf_srr0, tf->tf_srr1, tf->tf_esr, tf->tf_dear);
-	db_printf("lr =%08lx ctr=%08lx cr =%08x xer=%08x\n",
-	    tf->tf_lr, tf->tf_ctr, tf->tf_cr, tf->tf_xer);
-	for (u_int r = 0; r < 32; r += 4) {
-		db_printf("r%02u=%08lx r%02u=%08lx r%02u=%08lx r%02u=%08lx\n",
-		    r+0, tf->tf_fixreg[r+0], r+1, tf->tf_fixreg[r+1],
-		    r+2, tf->tf_fixreg[r+2], r+3, tf->tf_fixreg[r+3]);
-	}
+	dump_trapframe((const struct trapframe *)addr, db_printf);
 }
 
 static void
