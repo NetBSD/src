@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.14 2012/05/23 10:08:14 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.15 2012/08/01 21:13:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.14 2012/05/23 10:08:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.15 2012/08/01 21:13:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,11 +787,6 @@ out_err:
  *	(e.g. vm_map) before calling flush.
  * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, we will not block
  * => if PGO_ALLPAGES is set, then all pages in the object will be processed.
- * => NOTE: we rely on the fact that the object's memq is a TAILQ and
- *	that new pages are inserted on the tail end of the list.   thus,
- *	we can make a complete pass through the object in one go by starting
- *	at the head and working towards the tail (new pages are put in
- *	front of us).
  * => NOTE: we are allowed to lock the page queues, so the caller
  *	must not be holding the page queue lock.
  *
@@ -808,19 +803,6 @@ out_err:
  *	object we need to wait for the other PG_BUSY pages to clear
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
- *
- * note on page traversal:
- *	we can traverse the pages in an object either by going down the
- *	linked list in "uobj->memq", or we can go over the address range
- *	by page doing hash table lookups for each address.    depending
- *	on how many pages are in the object it may be cheaper to do one
- *	or the other.   we set "by_list" to true if we are using memq.
- *	if the cost of a hash lookup was equal to the cost of the list
- *	traversal we could compare the number of pages in the start->stop
- *	range to the total number of pages in the object.   however, it
- *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the
- *	range by an estimate of the relatively higher cost of the hash lookup.
  */
 
 int
