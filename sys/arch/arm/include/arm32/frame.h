@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.28 2012/08/01 05:40:20 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.29 2012/08/01 22:46:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -56,6 +56,7 @@
 
 typedef struct irqframe {
 	unsigned int if_spsr;
+	unsigned int if_fill;	/* fill here so r0 will dword aligned */
 	unsigned int if_r0;
 	unsigned int if_r1;
 	unsigned int if_r2;
@@ -71,7 +72,6 @@ typedef struct irqframe {
 	unsigned int if_r12;
 	unsigned int if_usr_sp;
 	unsigned int if_usr_lr;
-	unsigned int if_fill;
 	unsigned int if_svc_sp;
 	unsigned int if_svc_lr;
 	unsigned int if_pc;
@@ -324,11 +324,11 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
-	sub	sp, sp, #(4*18);	/* Adjust the stack pointer */	   \
+	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
-	str	r0, [sp, #-4]!		/* Push the SPSR on the stack */
+	str	r0, [sp, #-8]!		/* Push the SPSR on the stack */
 
 /*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
@@ -336,11 +336,11 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAME							   \
-	ldr     r0, [sp], #0x0004;      /* Pop the SPSR from stack */	   \
+	ldr     r0, [sp], #0x0008;      /* Pop the SPSR from stack */	   \
 	msr     spsr_all, r0;						   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	add	sp, sp, #(4*18);	/* Adjust the stack pointer */	   \
+	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
  	ldr	lr, [sp], #0x0004	/* Pop the return address */
 
 /*
@@ -374,14 +374,14 @@ LOCK_CAS_DEBUG_LOCALS
 	bic	r2, sp, #7;		/* Align new SVC sp */		   \
 	str	r0, [r2, #-4]!;		/* Push return address */	   \
 	stmdb	r2!, {sp, lr};		/* Push SVC sp, lr */		   \
-	sub	sp, r2, #4;		/* Keep stack aligned */	   \
+	mov	sp, r2;			/* Keep stack aligned */	   \
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
-	str	r0, [sp, #-4]!		/* Push the SPSR onto the stack */
+	str	r0, [sp, #-8]!		/* Push the SPSR onto the stack */
 
 /*
  * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
@@ -391,11 +391,11 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-	ldr     r0, [sp], #0x0004;	/* Pop the SPSR from stack */	   \
+	ldr     r0, [sp], #0x0008;	/* Pop the SPSR from stack */	   \
 	msr     spsr_all, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
-	add	sp, sp, #(4*16);	/* Adjust the stack pointer */	   \
+	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
 #endif /* _LOCORE */
