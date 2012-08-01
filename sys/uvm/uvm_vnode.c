@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.5 2012/02/17 08:18:57 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.6 2012/08/01 21:12:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.5 2012/02/17 08:18:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.6 2012/08/01 21:12:23 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -261,7 +261,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		 *
 		 * XXX fragile API
 		 * note that the array can be the one supplied by the caller of
-		 * uvm_findpages.  in that case, fillflags used by the caller
+		 * uvn_findpages.  in that case, fillflags used by the caller
 		 * might not match strictly with ours.
 		 * in particular, the caller might have filled the array
 		 * without DIRTYONLY or DENSE but passed us UFP_DIRTYONLY.
