@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.1.2.5 2012/04/18 13:40:44 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.1.2.6 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.5 2012/04/18 13:40:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.1.2.6 2012/08/01 22:34:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,17 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 	KASSERT(mutex_owned(uobj->vmobjlock));
 #endif
 	KASSERT(uvm_page_array_peek(ar) == NULL);
-	if ((flags & UVM_PAGE_ARRAY_FILL_DIRTYONLY) != 0) {
+	if ((flags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0) {
+		unsigned int tagmask = UVM_PAGE_DIRTY_TAG;
+
+		if ((flags & UVM_PAGE_ARRAY_FILL_WRITEBACK) != 0) {
+			tagmask |= UVM_PAGE_WRITEBACK_TAG;
+		}
 		npages =
 		    (backward ? radix_tree_gang_lookup_tagged_node_reverse :
 		    radix_tree_gang_lookup_tagged_node)(
 		    &uobj->uo_pages, off >> PAGE_SHIFT, (void **)ar->ar_pages,
-		    maxpages, dense, UVM_PAGE_DIRTY_TAG);
+		    maxpages, dense, tagmask);
 	} else {
 		npages =
 		    (backward ? radix_tree_gang_lookup_node_reverse :

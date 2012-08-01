@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.h,v 1.1.2.5 2012/04/18 13:39:28 yamt Exp $	*/
+/*	$NetBSD: uvm_page_array.h,v 1.1.2.6 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -71,8 +71,9 @@ struct vm_page *uvm_page_array_fill_and_peek(struct uvm_page_array *,
 /*
  * flags for uvm_page_array_fill and uvm_page_array_fill_and_peek
  */
-#define	UVM_PAGE_ARRAY_FILL_DIRTYONLY	1	/* skip known-clean pages */
-#define	UVM_PAGE_ARRAY_FILL_DENSE	2	/* stop on a hole */
-#define	UVM_PAGE_ARRAY_FILL_BACKWARD	4	/* descend order */
+#define	UVM_PAGE_ARRAY_FILL_DIRTY	1	/* dirty pages */
+#define	UVM_PAGE_ARRAY_FILL_WRITEBACK	2	/* dirty or written-back */
+#define	UVM_PAGE_ARRAY_FILL_DENSE	4	/* stop on a hole */
+#define	UVM_PAGE_ARRAY_FILL_BACKWARD	8	/* descend order */
 
 #endif /* defined(_UVM_UVM_ARRAY_H_) */

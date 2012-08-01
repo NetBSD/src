@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.2.7 2012/01/24 02:11:33 yamt Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.2.8 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.7 2012/01/24 02:11:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.2.8 2012/08/01 22:34:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ uvm_pagegetdirty(struct vm_page *pg)
 	KASSERT((~pg->flags & (PG_CLEAN|PG_DIRTY)) != 0);
 	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
-	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+	    !!radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 	return pg->flags & (PG_CLEAN|PG_DIRTY);
 }
 
@@ -104,7 +104,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	KASSERT((newstatus & ~(PG_CLEAN|PG_DIRTY)) == 0);
 	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
-	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+	    !!radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 
 	if (oldstatus == newstatus) {
 		return;
@@ -131,7 +131,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 	pg->flags &= ~(PG_CLEAN|PG_DIRTY);
 	pg->flags |= newstatus;
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
-	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
+	    !!radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 	if ((pg->pqflags & PQ_STAT) != 0) {
 		stat_update((pg->pqflags & PQ_SWAPBACKED) != 0,
 		    oldstatus, newstatus);

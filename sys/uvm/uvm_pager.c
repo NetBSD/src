@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.107.2.3 2012/04/17 00:09:00 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.107.2.4 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107.2.3 2012/04/17 00:09:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.107.2.4 2012/08/01 22:34:14 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -367,6 +367,13 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			    pg->uanon->an_ref == 0);
 		}
 #endif /* defined(VMSWAP) */
+
+		if (write && uobj != NULL) {
+			KASSERT(radix_tree_get_tag(&uobj->uo_pages,
+			    pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG));
+			radix_tree_clear_tag(&uobj->uo_pages,
+			    pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG);
+		}
 
 		/*
 		 * process errors.  for reads, just mark the page to be freed.
