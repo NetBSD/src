@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.10 2012/07/18 20:46:36 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.11 2012/08/01 00:45:18 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,14 +111,14 @@
 #define	  ESR_ST		  0x00800000 /* 8: Store operation */
 #define	  ESR_DLK		  0x00200000 /* 10: dcache exception */
 #define	  ESR_ILK		  0x00100000 /* 11: icache exception */
-#define	  ESR_AP		  0x00100000 /* 12: Auxiliary Processor operation exception */
-#define	  ESR_PUO		  0x00100000 /* 13: Program Unimplemented Operation exception */
+#define	  ESR_AP		  0x00080000 /* 12: Auxiliary Processor operation exception */
+#define	  ESR_PUO		  0x00040000 /* 13: Program Unimplemented Operation exception */
 #define	  ESR_BO		  0x00020000 /* 14: Byte ordering exception */
 #define	  ESR_PIE		  0x00020000 /* 14: Program Imprecise Exception */
 #define	  ESR_SPV		  0x00000080 /* 24: SPE exception */
-#define	  ESR_VLEMI		  0x00000080 /* 26: VLE exception */
-#define	  ESR_MIF		  0x00000080 /* 30: VLE Misaligned Instruction Fetch */
-#define	  ESR_XTE		  0x00000080 /* 31: eXternal Transaction Error */
+#define	  ESR_VLEMI		  0x00000020 /* 26: VLE exception */
+#define	  ESR_MIF		  0x00000002 /* 30: VLE Misaligned Instruction Fetch */
+#define	  ESR_XTE		  0x00000001 /* 31: eXternal Transaction Error */
 #define	SPR_IVPR		63	/* E... Interrupt Vector Prefix Reg. */
 #define	SPR_USPRG0		256	/* E4.. User SPR General 0 */
 #define	SPR_USPRG3		259	/* E... User SPR General 3 */
