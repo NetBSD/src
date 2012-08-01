@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.33 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.34 2012/08/01 23:24:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/callout.h>
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <net/if.h>			/* for IFNAMSIZ */
+#include <net/bpf_jit.h>
 
 /*
  * Descriptor associated with each open bpf file.
@@ -70,6 +71,7 @@ struct bpf_d {
 	struct bpf_if *	bd_bif;		/* interface descriptor */
 	u_long		bd_rtout;	/* Read timeout in 'ticks' */
 	struct bpf_insn *bd_filter; 	/* filter code */
+	bpf_jit_filter	*bd_bfilter;	/* binary filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
 	u_long		bd_ccount;	/* number of packets captured */
