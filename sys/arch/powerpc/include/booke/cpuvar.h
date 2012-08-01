@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.15 2012/08/01 16:35:50 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.16 2012/08/01 21:30:24 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -172,6 +172,7 @@ uint8_t	cpu_read_1(bus_size_t);
 void	cpu_write_4(bus_size_t, uint32_t);
 void	cpu_write_1(bus_size_t, uint8_t);
 
+void	dump_splhist(struct cpu_info *, void (*)(const char *, ...));
 void	calc_delayconst(void);
 
 struct intrsw;
@@ -197,7 +198,7 @@ const void *
 	board_info_get_data(const char *, size_t *);
 
 /* trap.c */
-void dump_trapframe(const struct trapframe *);
+void	dump_trapframe(const struct trapframe *, void (*)(const char *, ...));
 
 extern char root_string[];
 extern paddr_t msgbuf_paddr;
