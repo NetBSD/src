@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.53 2012/02/19 21:06:04 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.54 2012/08/01 05:42:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.53 2012/02/19 21:06:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.54 2012/08/01 05:42:56 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -211,7 +211,8 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 	int error;
 	u_int nargs;
 	register_t *args;
-	register_t copyargs[2+SYS_MAXSYSARGS];
+	uint64_t copyargs64[sizeof(register_t)*(2+SYS_MAXSYSARGS+1)/sizeof(uint64_t)];
+	register_t *copyargs = (register_t *)copyargs64;
 	register_t rval[2];
 	ksiginfo_t ksi;
 	const uint32_t os_mask = insn & SWI_OS_MASK;
