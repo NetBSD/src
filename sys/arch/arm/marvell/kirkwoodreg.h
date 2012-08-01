@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.3 2012/07/21 04:30:34 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.4 2012/08/01 10:34:42 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -164,6 +164,11 @@
 #define KIRKWOOD_MLMB_MFIQIMHR		  0x218	/*Main FIQ Interrupt High Mask*/
 #define KIRKWOOD_MLMB_EIMHR		  0x21c	/*Endpoint Interrupt High Mask*/
 
+
+/*
+ * Kirkwood Thermal Sensor(6282 only)
+ */
+#define KIRKWOOD_TS_BASE	(MVSOC_DEVBUS_BASE + 0x0078)	/* XXXX: ??? */
 
 /*
  * Two-Wire Serial Interface Registers
