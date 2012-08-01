@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.15 2012/08/01 21:13:45 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.16 2012/08/01 22:34:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.15 2012/08/01 21:13:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.16 2012/08/01 22:34:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,8 +834,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	int error;
 	struct vm_page *pgs[maxpages], *pg;
 	struct uvm_page_array a;
-	bool wasclean, needs_clean, yld;
-	bool async = (origflags & PGO_SYNCIO) == 0;
+	bool wasclean, needs_clean;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp * const l = curlwp ? curlwp : &lwp0;
 	int flags;
@@ -844,6 +843,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool has_trans;
 	bool tryclean;		/* try to pull off from the syncer's list */
 	bool onworklst;
+	const bool integrity_sync =
+	    (origflags & (PGO_LAZY|PGO_SYNCIO)) == PGO_SYNCIO;
 	const bool dirtyonly = (origflags & (PGO_DEACTIVATE|PGO_FREE)) == 0;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
@@ -941,15 +942,17 @@ retry:
 	for (;;) {
 		bool protected;
 
+		/*
+		 * if we are asked to sync for integrity, we should wait on
+		 * pages being written back by another threads as well.
+		 */
+
 		pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff, 0,
-		    dirtyonly ? UVM_PAGE_ARRAY_FILL_DIRTYONLY : 0);
+		    dirtyonly ? (UVM_PAGE_ARRAY_FILL_DIRTY |
+		    (integrity_sync ? UVM_PAGE_ARRAY_FILL_WRITEBACK : 0)) : 0);
 		if (pg == NULL) {
 			break;
 		}
-
-		/*
-		 * if the current page is not interesting, move on to the next.
-		 */
 
 		KASSERT(pg->uobject == uobj);
 		KASSERT((pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
@@ -957,29 +960,41 @@ retry:
 		KASSERT(pg->offset >= startoff);
 		KASSERT(pg->offset >= nextoff);
 		KASSERT(!dirtyonly ||
-		    uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN);
+		    uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN ||
+		    radix_tree_get_tag(&uobj->uo_pages,
+			pg->offset >> PAGE_SHIFT, UVM_PAGE_WRITEBACK_TAG));
 		if (pg->offset >= endoff) {
 			break;
 		}
-		if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
-			KASSERT((pg->flags & PG_BUSY) != 0);
-			wasclean = false;
-			nextoff = pg->offset + PAGE_SIZE;
-			uvm_page_array_advance(&a);
+
+		/*
+		 * a preempt point.
+		 */
+
+		if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			nextoff = pg->offset; /* visit this page again */
+			mutex_exit(slock);
+			preempt();
+			/*
+			 * as we dropped the object lock, our cached pages can
+			 * be stale.
+			 */
+			uvm_page_array_clear(&a);
+			mutex_enter(slock);
 			continue;
 		}
 
 		/*
-		 * if the current page needs to be cleaned and it's busy,
-		 * wait for it to become unbusy.
+		 * if the current page is busy, wait for it to become unbusy.
 		 */
 
-		yld = (l->l_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD) && !pagedaemon;
-		if (pg->flags & PG_BUSY || yld) {
+		if ((pg->flags & PG_BUSY) != 0) {
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
-			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
-				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
+			if ((pg->flags & (PG_RELEASED|PG_PAGEOUT)) != 0
+			    && (flags & PGO_BUSYFAIL) != 0) {
+				UVMHIST_LOG(ubchist, "busyfail %p", pg,
+				    0,0,0);
 				error = EDEADLK;
 				if (busypg != NULL)
 					*busypg = pg;
@@ -992,15 +1007,19 @@ retry:
 				 */
 				break;
 			}
-			nextoff = pg->offset; /* visit this page again */
-			if ((pg->flags & PG_BUSY) != 0) {
-				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
-			} else {
-				KASSERT(yld);
-				mutex_exit(slock);
-				preempt();
+			/*
+			 * don't bother to wait on other's activities
+			 * unless we are asked to sync for integrity.
+			 */
+			if (!integrity_sync) {
+				wasclean = false;
+				nextoff = pg->offset + PAGE_SIZE;
+				uvm_page_array_advance(&a);
+				continue;
 			}
+			nextoff = pg->offset; /* visit this page again */
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
 			/*
 			 * as we dropped the object lock, our cached pages can
 			 * be stale.
@@ -1160,6 +1179,15 @@ retry:
 			    pgs[i-1]->offset + PAGE_SIZE == tpg->offset);
 			KASSERT(!needs_clean || uvm_pagegetdirty(pgs[i]) !=
 			    UVM_PAGE_STATUS_DIRTY);
+			if (needs_clean) {
+				/*
+				 * mark pages as WRITEBACK so that concurrent
+				 * fsync can find and wait for our activities.
+				 */
+				radix_tree_set_tag(&uobj->uo_pages,
+				    pgs[i]->offset >> PAGE_SHIFT,
+				    UVM_PAGE_WRITEBACK_TAG);
+			}
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
@@ -1254,11 +1282,11 @@ skip_scan:
 #endif /* !defined(DEBUG) */
 
 	/*
-	 * if we found or started any i/o and we're doing sync i/o,
+	 * if we found or started any i/o and we're asked to sync for integrity,
 	 * wait for all writes to finish.
 	 */
 
-	if (!wasclean && !async) {
+	if (!wasclean && integrity_sync) {
 		while (vp->v_numoutput != 0)
 			cv_wait(&vp->v_cv, slock);
 	}
@@ -1379,6 +1407,10 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	KASSERT(bytes != 0);
 
 	if (iowrite) {
+		/*
+		 * why += 2?
+		 * 1 for biodone, 1 for uvm_aio_aiodone.
+		 */
 		mutex_enter(vp->v_interlock);
 		vp->v_numoutput += 2;
 		mutex_exit(vp->v_interlock);

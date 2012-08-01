@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.6 2012/08/01 21:12:23 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.7 2012/08/01 22:34:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.6 2012/08/01 21:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.7 2012/08/01 22:34:14 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -245,7 +245,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	const unsigned int fillflags =
 	    ((flags & UFP_BACKWARD) ? UVM_PAGE_ARRAY_FILL_BACKWARD : 0) |
 	    ((flags & UFP_DIRTYONLY) ?
-	    (UVM_PAGE_ARRAY_FILL_DIRTYONLY|UVM_PAGE_ARRAY_FILL_DENSE) : 0);
+	    (UVM_PAGE_ARRAY_FILL_DIRTY|UVM_PAGE_ARRAY_FILL_DENSE) : 0);
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
 
