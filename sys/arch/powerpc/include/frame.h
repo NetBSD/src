@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.24 2012/02/19 21:06:23 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.25 2012/08/01 16:19:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,6 +113,7 @@ struct ktrapframe {
 	register_t ktf_sp;
 	register_t ktf_lr;
 	struct trapframe ktf_tf;
+	register_t ktf_cframe_lr;	/* for DDB */
 };
 
 #if defined(_KERNEL) || defined(_LKM)
