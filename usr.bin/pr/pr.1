@@ -1,4 +1,4 @@
-.\"	$NetBSD: pr.1,v 1.21 2012/07/27 20:49:48 wiz Exp $
+.\"	$NetBSD: pr.1,v 1.22 2012/08/01 02:36:17 ginsbach Exp $
 .\"
 .\" Copyright (c) 1991 Keith Muller.
 .\" Copyright (c) 1993
@@ -35,7 +35,7 @@
 .\"
 .\"     from: @(#)pr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 4, 2012
+.Dd July 31, 2012
 .Dt PR 1
 .Os
 .Sh NAME
@@ -47,18 +47,15 @@
 .Op Fl Ar column
 .Op Fl adFfmprt
 .Oo
-.Fl e
-.Oo Ar char Oc Ns Op Ar gap
+.Fl e Ns Oo Ar char Oc Ns Op Ar gap
 .Oc
 .Op Fl h Ar header
 .Oo
-.Fl i
-.Oo Ar char Oc Ns Op Ar gap
+.Fl i Ns Oo Ar char Oc Ns Op Ar gap
 .Oc
 .Op Fl l Ar lines
 .Oo
-.Fl n
-.Oo Ar char Oc Ns Op Ar width
+.Fl n Ns Oo Ar char Oc Ns Op Ar width
 .Oc
 .Op Fl o Ar offset
 .Oo
@@ -135,7 +132,7 @@ An extra
 character is output following every
 .Aq newline
 found in the input.
-.It Fl e Ar \&[char\&]\&[gap\&]
+.It Fl e Ns Oo Ar char Oc Ns Op Ar gap
 Expand each input
 .Aq tab
 to the next greater column
@@ -155,6 +152,12 @@ number of
 If any nondigit character,
 .Ar char ,
 is specified, it is used as the input tab character.
+If the first character of
+.Ar char
+is a digit then
+.Ar char
+is treated as
+.Ar gap .
 .It Fl F
 Use a
 .Aq Em form-feed
@@ -174,7 +177,7 @@ Use the string
 to replace the
 .Ar file name
 in the header line.
-.It Fl i Ar \&[char\&]\&[gap\&]
+.It Fl i Ns Oo Ar char Oc Ns Op Ar gap
 In output, replace multiple
 .Ao space Ac Ns s
 with
@@ -228,7 +231,7 @@ The options
 and
 .Fl i
 are assumed.
-.It Fl n Ar \&[char\&]\&[width\&]
+.It Fl n Ns Oo Ar char Oc Ns Op Ar width
 Provide
 .Ar width
 digit line numbering.
@@ -271,7 +274,7 @@ to be read on
 .Pa /dev/tty .
 .It Fl r
 Write no diagnostic reports on failure to open a file.
-.It Fl s Op Ar char
+.It Fl s Ns Op Ar char
 Separate text columns by the single character
 .Ar char
 instead of by the appropriate number of
