@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.14 2012/07/29 21:39:43 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.15 2012/08/01 16:35:50 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -62,6 +62,8 @@ struct cpu_softc {
 	struct evcnt cpu_ev_late_clock;
 	u_long cpu_ticks_per_clock_intr;
 	struct evcnt cpu_ev_exec_trap_sync;
+
+	uint64_t cpu_spl_tb[NIPL][NIPL];
 };
 
 struct cpunode_locators {
@@ -193,6 +195,9 @@ bool	board_info_get_bool(const char *);
 void	*board_info_get_object(const char *);
 const void *
 	board_info_get_data(const char *, size_t *);
+
+/* trap.c */
+void dump_trapframe(const struct trapframe *);
 
 extern char root_string[];
 extern paddr_t msgbuf_paddr;
