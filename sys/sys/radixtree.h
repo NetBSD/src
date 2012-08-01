@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.5.2.1 2011/11/25 13:58:11 yamt Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.5.2.2 2012/08/01 21:09:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -74,15 +74,16 @@ unsigned int radix_tree_gang_lookup_node_reverse(struct radix_tree *, uint64_t,
  * tag
  */
 
-typedef int radix_tree_tagid_t;
+typedef unsigned int radix_tree_tagmask_t;
 #define	RADIX_TREE_TAG_ID_MAX	2
-bool radix_tree_get_tag(struct radix_tree *, uint64_t, radix_tree_tagid_t);
-void radix_tree_set_tag(struct radix_tree *, uint64_t, radix_tree_tagid_t);
-void radix_tree_clear_tag(struct radix_tree *, uint64_t, radix_tree_tagid_t);
+radix_tree_tagmask_t radix_tree_get_tag(struct radix_tree *, uint64_t,
+    radix_tree_tagmask_t);
+void radix_tree_set_tag(struct radix_tree *, uint64_t, radix_tree_tagmask_t);
+void radix_tree_clear_tag(struct radix_tree *, uint64_t, radix_tree_tagmask_t);
 unsigned int radix_tree_gang_lookup_tagged_node(struct radix_tree *, uint64_t,
-    void **, unsigned int, bool, radix_tree_tagid_t);
+    void **, unsigned int, bool, radix_tree_tagmask_t);
 unsigned int radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *,
-    uint64_t, void **, unsigned int, bool, radix_tree_tagid_t);
-bool radix_tree_empty_tagged_tree_p(struct radix_tree *, radix_tree_tagid_t);
+    uint64_t, void **, unsigned int, bool, radix_tree_tagmask_t);
+bool radix_tree_empty_tagged_tree_p(struct radix_tree *, radix_tree_tagmask_t);
 
 #endif /* !defined(_SYS_RADIXTREE_H_) */
