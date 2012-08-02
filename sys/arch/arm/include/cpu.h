@@ -149,7 +149,7 @@ extern int cpu_do_powersave;
  * frame came from USR mode or not.
  */
 #ifdef __PROG32
-#define CLKF_USERMODE(frame)	((frame->cf_if.if_spsr & PSR_MODE) == PSR_USR32_MODE)
+#define CLKF_USERMODE(frame)	((frame->cf_tf.tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
 #define CLKF_USERMODE(frame)	((frame->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
 #endif
@@ -162,7 +162,7 @@ extern int cpu_do_powersave;
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
 	((curcpu()->ci_intr_depth > 1) ||				\
-	    (frame->cf_if.if_spsr & PSR_MODE) == PSR_UND32_MODE)
+	    (frame->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
 #define CLKF_INTR(frame)	(curcpu()->ci_intr_depth > 1) 
 #endif
@@ -171,7 +171,7 @@ extern int cpu_do_powersave;
  * CLKF_PC: Extract the program counter from a clockframe
  */
 #ifdef __PROG32
-#define CLKF_PC(frame)		(frame->cf_if.if_pc)
+#define CLKF_PC(frame)		(frame->cf_tf.tf_pc)
 #else
 #define CLKF_PC(frame)		(frame->cf_if.if_r15 & R15_PC)
 #endif

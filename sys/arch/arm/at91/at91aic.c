@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.8 2011/11/04 17:16:38 aymeric Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.8 2011/11/04 17:16:38 aymeric Exp $	*/
+/*	$Id: at91aic.c,v 1.9 2012/08/02 15:56:06 skrll Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.9 2012/08/02 15:56:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -362,10 +362,10 @@ at91aic_intr_disestablish(void *cookie)
 #include <arm/at91/at91dbgureg.h>
 #include <arm/at91/at91pdcreg.h>
 
-static inline void intr_process(struct intrq *iq, int pcpl, struct irqframe *frame);
+static inline void intr_process(struct intrq *iq, int pcpl, struct trapframe *frame);
 
 static inline void
-intr_process(struct intrq *iq, int pcpl, struct irqframe *frame)
+intr_process(struct intrq *iq, int pcpl, struct trapframe *frame)
 {
 	struct intrhand*	ih;
 	u_int			oldirqstate, intr;
@@ -404,7 +404,7 @@ intr_process(struct intrq *iq, int pcpl, struct irqframe *frame)
 }
 
 void
-at91aic_intr_dispatch(struct irqframe *frame)
+at91aic_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq*		iq;
 	int			pcpl = curcpl();
