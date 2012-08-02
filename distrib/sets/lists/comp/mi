@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1772 2012/07/30 16:43:36 njoly Exp $
+#	$NetBSD: mi,v 1.1773 2012/08/02 01:16:36 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1805,6 +1805,7 @@
 ./usr/include/net/agr/if_agrioctl.h		comp-c-include
 ./usr/include/net/bpf.h				comp-c-include
 ./usr/include/net/bpfdesc.h			comp-c-include
+./usr/include/net/bpf_jit.h			comp-c-include
 ./usr/include/net/dlt.h				comp-c-include
 ./usr/include/net/ethertypes.h			comp-c-include
 ./usr/include/net/if.h				comp-c-include
