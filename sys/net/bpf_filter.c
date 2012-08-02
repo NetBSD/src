@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.51 2012/08/01 23:24:29 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.52 2012/08/02 20:13:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.51 2012/08/01 23:24:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.52 2012/08/02 20:13:24 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -149,7 +149,10 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 		return (u_int)-1;
 	}
 
-	memset(mem, 0, sizeof(mem));
+	/*
+	 * Note: safe to leave memwords uninitialised, as the validation
+	 * step ensures that it will not be read, if it was not written.
+	 */
 	A = 0;
 	X = 0;
 	--pc;
