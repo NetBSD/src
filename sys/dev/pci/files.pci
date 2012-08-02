@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.359 2012/07/30 18:57:19 degroote Exp $
+#	$NetBSD: files.pci,v 1.360 2012/08/02 00:17:44 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -830,7 +830,7 @@ file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
 defflag	opt_machfb.h	MACHFB_DEBUG
-device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm, glyphcache
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
