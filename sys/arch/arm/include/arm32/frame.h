@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.29 2012/08/01 22:46:07 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.30 2012/08/02 15:56:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -54,31 +54,8 @@
  * System stack frames.
  */
 
-typedef struct irqframe {
-	unsigned int if_spsr;
-	unsigned int if_fill;	/* fill here so r0 will dword aligned */
-	unsigned int if_r0;
-	unsigned int if_r1;
-	unsigned int if_r2;
-	unsigned int if_r3;
-	unsigned int if_r4;
-	unsigned int if_r5;
-	unsigned int if_r6;
-	unsigned int if_r7;
-	unsigned int if_r8;
-	unsigned int if_r9;
-	unsigned int if_r10;
-	unsigned int if_r11;
-	unsigned int if_r12;
-	unsigned int if_usr_sp;
-	unsigned int if_usr_lr;
-	unsigned int if_svc_sp;
-	unsigned int if_svc_lr;
-	unsigned int if_pc;
-} irqframe_t;
-
 struct clockframe {
-	struct irqframe cf_if;
+	struct trapframe cf_tf;
 };
 
 /*
@@ -286,21 +263,20 @@ LOCK_CAS_DEBUG_LOCALS
 	and	r0, r0, #(PSR_MODE)	/* check for SVC32 mode */	;\
 	teq	r0, #(PSR_SVC32_MODE)					;\
 	bne	99f			/* nope, get out now */		;\
-	ldr	r0, [sp, #(IF_PC)]					;\
+	ldr	r0, [sp, #(TF_PC)]					;\
 	ldr	r1, .L_lock_cas_end					;\
 	cmp	r0, r1							;\
 	bge	99f							;\
 	ldr	r1, .L_lock_cas						;\
 	cmp	r0, r1							;\
-	strgt	r1, [sp, #(IF_PC)]					;\
+	strgt	r1, [sp, #(TF_PC)]					;\
 	LOCK_CAS_DEBUG_COUNT_RESTART					;\
 99:
 
 /*
  * ASM macros for pushing and pulling trapframes from the stack
  *
- * These macros are used to handle the irqframe and trapframe structures
- * defined above.
+ * These macros are used to handle the trapframe structure defined above.
  */
 
 /*

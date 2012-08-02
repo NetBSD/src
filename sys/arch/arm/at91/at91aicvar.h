@@ -1,4 +1,4 @@
-/*	$NetBSD: at91aicvar.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$NetBSD: at91aicvar.h,v 1.4 2012/08/02 15:56:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -57,6 +57,6 @@ void at91aic_init(void);
 void *at91aic_intr_establish(int irq, int ipl, int type, int (*ih_func)(void *), void *arg);
 void at91aic_intr_disestablish(void *cookie);
 void at91aic_intr_poll(void *ihp, int flags);
-void at91aic_intr_dispatch(struct irqframe *frame);
+void at91aic_intr_dispatch(struct trapframe *frame);
 
 #endif /* _AT91AICVAR_H_ */
