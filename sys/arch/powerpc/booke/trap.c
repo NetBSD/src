@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 2012/08/02 13:50:15 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 2012/08/02 14:07:47 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.21 2012/08/02 13:50:15 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.22 2012/08/02 14:07:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,6 +882,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			 * uncaught.
 			 */
 			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
 			    && !sigismember(&p->p_sigctx.ps_sigcatch,
 				    ksi.ksi_signo)) {
 				printf("%s: pid %d.%d (%s):"
