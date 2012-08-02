@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/08/01 23:24:29 rmind Exp $
+#	$NetBSD: Makefile,v 1.3 2012/08/02 00:22:32 matt Exp $
 #
 
 .include "../Makefile.inc"
@@ -15,7 +15,7 @@ SRCS=	bpf.c bpf_filter.c
 .PATH:	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
 
 .if (exists(${S}/arch/${MACHINE}/${MACHINE}/bpf_jit_machdep.c)) || \
-    (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/bpf_jit_machdep.c) || \
+    (exists(${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}/bpf_jit_machdep.c)) || \
     (exists(${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}/bpf_jit_machdep.c))
 SRCS+=		bpf_jit.c
 SRCS+=		bpf_jit_machdep.c
