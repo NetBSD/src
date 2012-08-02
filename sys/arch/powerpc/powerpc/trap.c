@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2012/08/02 13:50:14 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.148 2012/08/02 14:06:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2012/08/02 13:50:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2012/08/02 14:06:34 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -246,6 +246,7 @@ trap(struct trapframe *tf)
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
 		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
 		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGSEGV)) {
 			printf("trap: pid %d.%d (%s): user %s DSI trap @ %#lx "
 			    "by %#lx (DSISR %#x, err=%d)\n",
@@ -308,6 +309,7 @@ trap(struct trapframe *tf)
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
 		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
 		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGSEGV)) {
 			printf("trap: pid %d.%d (%s): user ISI trap @ %#lx "
 			    "(SRR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
@@ -335,6 +337,7 @@ trap(struct trapframe *tf)
 		if (fix_unaligned(l, tf) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
 			    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGBUS)) {
 				printf("trap: pid %d.%d (%s): user ALI trap @ "
 				    "%#lx by %#lx (DSISR %#x)\n",
@@ -360,6 +363,7 @@ trap(struct trapframe *tf)
 		break;
 #else
 		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
 		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGILL)) {
 			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
 			    "(SRR1=%#lx)\n",
@@ -377,6 +381,7 @@ trap(struct trapframe *tf)
 	case EXC_MCHK|EXC_USER:
 		ci->ci_ev_umchk.ev_count++;
 		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
 		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGBUS)) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
 			    "(SRR1=%#lx)\n",
@@ -422,6 +427,7 @@ trap(struct trapframe *tf)
 			} else
 				ksi.ksi_code = ILL_ILLOPC;
 			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
 			    && !sigismember(&p->p_sigctx.ps_sigcatch,
 				    ksi.ksi_signo)) {
 				printf("trap: pid %d.%d (%s): user PGM trap @"
