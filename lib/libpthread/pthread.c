@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.135 2012/05/04 12:26:33 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.136 2012/08/02 12:43:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.135 2012/05/04 12:26:33 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.136 2012/08/02 12:43:41 joerg Exp $");
 
 #define	__EXPOSE_STACK	1
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 #include <sys/mman.h>
-#include <sys/sysctl.h>
+#include <sys/lwp.h>
 #include <sys/lwpctl.h>
 #include <sys/tls.h>
 
@@ -153,21 +153,11 @@ pthread__init(void)
 {
 	pthread_t first;
 	char *p;
-	int i, mib[2];
-	size_t len;
+	int i;
 	extern int __isthreaded;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU; 
-
-	len = sizeof(pthread__concurrency);
-	if (sysctl(mib, 2, &pthread__concurrency, &len, NULL, 0) == -1)
-		err(1, "sysctl(hw.ncpu");
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSREV; 
+	pthread__concurrency = sysconf(_SC_NPROCESSORS_CONF);
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
