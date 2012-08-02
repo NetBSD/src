@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.22 2011/07/01 20:27:50 dyoung Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.23 2012/08/02 15:56:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.22 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.23 2012/08/02 15:56:07 skrll Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -74,7 +74,7 @@ volatile u_int32_t pci_intr_enabled;
 /* Interrupts pending. */
 static volatile int ipending;
 
-void	ixp12x0_intr_dispatch(struct irqframe *frame);
+void	ixp12x0_intr_dispatch(struct trapframe *);
 
 #define IXPREG(reg)	*((volatile u_int32_t*) (reg))
 
@@ -382,7 +382,7 @@ ixp12x0_intr_disestablish(void *cookie)
 }
 
 void
-ixp12x0_intr_dispatch(struct irqframe *frame)
+ixp12x0_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq*		iq;
 	struct intrhand*	ih;

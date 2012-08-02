@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.9 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.10 2012/08/02 15:56:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.10 2012/08/02 15:56:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: i80200_icu.c,v 1.9 2005/12/24 20:06:52 perry Exp $")
 static volatile uint32_t intctl;
 
 /* Pointer to board-specific external IRQ dispatcher. */
-void	(*i80200_extirq_dispatch)(struct irqframe *);
+void	(*i80200_extirq_dispatch)(struct trapframe *);
 
 static void
-i80200_default_extirq_dispatch(struct irqframe *framep)
+i80200_default_extirq_dispatch(struct trapframe *framep)
 {
 
 	panic("external IRQ with no dispatch routine");

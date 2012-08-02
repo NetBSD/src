@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.16 2011/07/01 19:31:17 dyoung Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.17 2012/08/02 15:56:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.16 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.17 2012/08/02 15:56:06 skrll Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -69,7 +69,7 @@ volatile u_int32_t vic2_intr_enabled;
 /* Interrupts pending. */
 static volatile int ipending;
 
-void	ep93xx_intr_dispatch(struct irqframe *frame);
+void	ep93xx_intr_dispatch(struct trapframe *);
 
 #define VIC1REG(reg)	*((volatile u_int32_t*) (EP93XX_AHB_VBASE + \
 	EP93XX_AHB_VIC1 + (reg)))
@@ -324,7 +324,7 @@ ep93xx_intr_disestablish(void *cookie)
 }
 
 void
-ep93xx_intr_dispatch(struct irqframe *frame)
+ep93xx_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq*		iq;
 	struct intrhand*	ih;
