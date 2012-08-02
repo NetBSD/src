@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.130 2012/02/19 21:06:33 rmind Exp $     */
+/*	$NetBSD: trap.c,v 1.131 2012/08/02 14:03:22 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2012/02/19 21:06:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2012/08/02 14:03:22 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -327,7 +327,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	}
 	if (trapsig) {
 		ksiginfo_t ksi;
-		if ((sig == SIGSEGV || sig == SIGILL) && cpu_printfataltraps)
+		if ((sig == SIGSEGV || sig == SIGILL)
+		    && cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, sig))
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, tf->tf_trap,
 			       tf->tf_code, tf->tf_pc, tf->tf_psl);
