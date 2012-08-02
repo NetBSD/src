@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.169 2012/08/01 23:24:29 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.170 2012/08/02 00:40:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.169 2012/08/01 23:24:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.170 2012/08/02 00:40:51 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -124,8 +124,8 @@ static kmutex_t bpf_mtx;
 static bool bpf_jit_enable __read_mostly = false;
 
 #ifndef BPF_JIT
-#define	bpf_jit(x, y)	NULL
-#define	bpf_destroy_jit_filter(x)
+#define	bpf_jit(x, y)			NULL
+#define	bpf_destroy_jit_filter(x)	(void)x
 #endif
 
 /*
