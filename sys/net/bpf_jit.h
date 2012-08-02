@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_jit.h,v 1.1 2012/08/01 23:24:29 rmind Exp $	*/
+/*	$NetBSD: bpf_jit.h,v 1.2 2012/08/02 01:05:05 rmind Exp $	*/
 
 /*-
  * Copyright (C) 2002-2003 NetGroup, Politecnico di Torino (Italy)
@@ -35,6 +35,8 @@
 
 #ifndef _NET_BPF_JIT_H_
 #define _NET_BPF_JIT_H_
+
+struct bpf_insn;
 
 /*
  * Prototype of a filtering function created by the JIT compiler.
