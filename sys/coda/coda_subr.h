@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.h,v 1.8 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_subr.h,v 1.9 2012/08/02 16:06:58 christos Exp $	*/
 
 /*
  *
@@ -43,5 +43,6 @@ void coda_debugoff(void);
 int  coda_kill(struct mount *whoIam, enum dc_status dcstat);
 void coda_save(struct cnode *cp);
 void coda_unsave(struct cnode *cp);
+void coda_print_cred(kauth_cred_t cred);
 
 

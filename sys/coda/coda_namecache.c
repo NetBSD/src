@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.24 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.25 2012/08/02 16:06:58 christos Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.24 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.25 2012/08/02 16:06:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -88,10 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.24 2009/04/18 14:58:02 tsutsui 
 #include <coda/coda.h>
 #include <coda/cnode.h>
 #include <coda/coda_namecache.h>
-
-#ifdef	DEBUG
-#include <coda/coda_vnops.h>
-#endif
+#include <coda/coda_subr.h>
 
 /*
  * Declaration of the name cache data structure.
@@ -202,8 +199,8 @@ coda_nc_find(struct cnode *dcp, const char *name, int namelen,
 			kauth_cred_getrefcnt(cncp->cred),
 			kauth_cred_geteuid(cncp->cred),
 			kauth_cred_getegid(cncp->cred));
-		print_cred(cred);
-		print_cred(cncp->cred);
+		coda_print_cred(cred);
+		coda_print_cred(cncp->cred);
 	    }
 #endif
 	    count++;

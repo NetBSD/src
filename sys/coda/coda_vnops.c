@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.89 2012/07/28 00:10:22 matt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.89 2012/07/28 00:10:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,8 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { NULL, NULL }
 };
 
+static void coda_print_vattr(struct vattr *);
+
 int (**coda_vnodeop_p)(void *);
 const struct vnodeopv_desc coda_vnodeop_opv_desc =
         { &coda_vnodeop_p, coda_vnodeop_entries };
@@ -227,6 +229,8 @@ coda_open(void *v)
 
     MARK_ENTRY(CODA_OPEN_STATS);
 
+    if (!VOP_ISLOCKED(vp))
+	VOP_LOCK(vp, LK_EXCLUSIVE);
     /* Check for open of control file. */
     if (IS_CTL_VP(vp)) {
 	/* if (WRITABLE(flag)) */
@@ -591,7 +595,7 @@ coda_getattr(void *v)
 	CODADEBUG(CODA_GETATTR, { myprintf(("%s: attr cache hit: %s\n",
 	    __func__, coda_f2s(&cp->c_fid)));})
 	CODADEBUG(CODA_GETATTR, if (!(codadebug & ~CODA_GETATTR))
-	    print_vattr(&cp->c_vattr); )
+	    coda_print_vattr(&cp->c_vattr); )
 
 	*vap = cp->c_vattr;
 	MARK_INT_SAT(CODA_GETATTR_STATS);
@@ -605,7 +609,7 @@ coda_getattr(void *v)
 	    __func__, coda_f2s(&cp->c_fid), error)); )
 
 	CODADEBUG(CODA_GETATTR, if (!(codadebug & ~CODA_GETATTR))
-	    print_vattr(vap);	)
+	    coda_print_vattr(vap);	)
 
 	/* If not open for write, store attributes in cnode */
 	if ((cp->c_owrite == 0) && (coda_attr_cache)) {
@@ -638,7 +642,7 @@ coda_setattr(void *v)
     }
 
     if (codadebug & CODADBGMSK(CODA_SETATTR)) {
-	print_vattr(vap);
+	coda_print_vattr(vap);
     }
     error = venus_setattr(vtomi(vp), &cp->c_fid, vap, cred, curlwp);
 
@@ -1816,11 +1820,13 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
     /* share the underlying vnode lock with the coda vnode */
     mutex_obj_hold((*vpp)->v_interlock);
     uvm_obj_setlock(&uvp->v_uobj, (*vpp)->v_interlock);
+    if (!VOP_ISLOCKED(*vpp))
+	VOP_LOCK(*vpp, LK_EXCLUSIVE);
     return(0);
 }
 
-void
-print_vattr(struct vattr *attr)
+static void
+coda_print_vattr(struct vattr *attr)
 {
     const char *typestr;
 
@@ -1874,24 +1880,6 @@ print_vattr(struct vattr *attr)
 	      (int)attr->va_mtime.tv_sec, (int)attr->va_mtime.tv_nsec));
     myprintf(("      ctime sec %d nsec %d\n",
 	      (int)attr->va_ctime.tv_sec, (int)attr->va_ctime.tv_nsec));
-}
-
-/* How to print a ucred */
-void
-print_cred(kauth_cred_t cred)
-{
-
-	uint16_t ngroups;
-	int i;
-
-	myprintf(("ref %d\tuid %d\n", kauth_cred_getrefcnt(cred),
-		 kauth_cred_geteuid(cred)));
-
-	ngroups = kauth_cred_ngroups(cred);
-	for (i=0; i < ngroups; i++)
-		myprintf(("\tgroup %d: (%d)\n", i, kauth_cred_group(cred, i)));
-	myprintf(("\n"));
-
 }
 
 /*
