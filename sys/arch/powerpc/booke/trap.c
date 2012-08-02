@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2012/08/01 21:30:22 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2012/08/02 13:50:15 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.20 2012/08/01 21:30:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.21 2012/08/02 13:50:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,7 +877,13 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			ksi.ksi_signo = SIGKILL;
 		}
 		if (rv != 0) {
-			if (cpu_printfataltraps) {
+			/*
+			 * Only print a fatal trap if the signal will be
+			 * uncaught.
+			 */
+			if (cpu_printfataltraps
+			    && !sigismember(&p->p_sigctx.ps_sigcatch,
+				    ksi.ksi_signo)) {
 				printf("%s: pid %d.%d (%s):"
 				    " %s exception in user mode\n",
 				    __func__, p->p_pid, l->l_lid, p->p_comm,
