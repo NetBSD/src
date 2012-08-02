@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.12 2010/12/20 00:25:29 matt Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.13 2012/08/02 15:56:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.12 2010/12/20 00:25:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.13 2012/08/02 15:56:07 skrll Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -117,7 +117,7 @@ const char * const becc_irqnames[] = {
 	"irq 31",
 };
 
-void	becc_intr_dispatch(struct irqframe *frame);
+void	becc_intr_dispatch(struct trapframe *frame);
 
 static inline uint32_t
 becc_icsr_read(void)
@@ -335,7 +335,7 @@ becc_intr_disestablish(void *cookie)
 }
 
 void
-becc_intr_dispatch(struct irqframe *frame)
+becc_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
