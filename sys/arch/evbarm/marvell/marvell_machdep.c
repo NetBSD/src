@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.12 2012/08/03 07:56:37 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.13 2012/08/03 08:01:35 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.12 2012/08/03 07:56:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.13 2012/08/03 08:01:35 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -812,12 +812,9 @@ marvell_device_register(device_t dev, void *aux)
 	    device_is_a(device_parent(dev), "mvsoc"))
 		prop_dictionary_set_uint32(dict, "frequency", mvTclk);
 #endif
-	if (device_is_a(dev, "gtidmac")) {
+	if (device_is_a(dev, "gtidmac"))
 		prop_dictionary_set_uint32(dict,
 		    "dmb_speed", mvTclk * sizeof(uint32_t));	/* XXXXXX */
-		prop_dictionary_set_uint32(dict,
-		    "xore-irq-begin", ORION_IRQ_XOR0);
-	}
 #if NGTPCI > 0 && defined(ORION)
 	if (device_is_a(dev, "gtpci")) {
 		extern struct bus_space
