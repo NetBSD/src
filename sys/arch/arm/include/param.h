@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2012/01/24 20:03:36 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.16 2012/08/03 07:59:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -81,6 +81,7 @@
 
 /* ARM-specific macro to align a stack pointer (downwards). */
 #define STACK_ALIGNBYTES	(8 - 1)
+#define	ALIGNBYTES32	3
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)

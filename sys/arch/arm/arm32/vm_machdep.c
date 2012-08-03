@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.56 2012/02/19 21:06:05 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.57 2012/08/03 07:59:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2012/02/19 21:06:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2012/08/03 07:59:22 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -184,10 +184,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*tf = *pcb1->pcb_tf;
 
 	/*
-	 * If specified, give the child a different stack.
+	 * If specified, give the child a different stack (make sure
+	 * it's 8-byte aligned).
 	 */
 	if (stack != NULL)
-		tf->tf_usr_sp = (u_int)stack + stacksize;
+		tf->tf_usr_sp = ((vaddr_t)(stack) + stacksize) & -8;
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r4 = (u_int)func;
