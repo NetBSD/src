@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.11 2012/07/29 00:07:09 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.12 2012/08/03 07:56:37 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.11 2012/07/29 00:07:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.12 2012/08/03 07:56:37 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -422,8 +422,9 @@ initarm(void *arg)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
-	/* copy command line U-Boot gave us */
-	strncpy(bootargs, (char *)u_boot_args[3], sizeof(bootargs));
+	/* copy command line U-Boot gave us, if args is valid. */
+	if (u_boot_args[3] != 0)	/* XXXXX: need more check?? */
+		strncpy(bootargs, (char *)u_boot_args[3], sizeof(bootargs));
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
