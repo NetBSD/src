@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.79 2012/08/02 00:17:44 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.80 2012/08/03 01:23:32 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.79 2012/08/02 00:17:44 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.80 2012/08/03 01:23:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,13 +774,12 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		mach64_defaultscreen.nrows = ri->ri_rows;
 		mach64_defaultscreen.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-			(sc->memsize / sc->sc_my_mode->hdisplay) -
-			    sc->sc_my_mode->vdisplay - 5,
-			sc->sc_my_mode->hdisplay,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			defattr);
-
+		    ((sc->memsize * 1024 * 1024) / sc->sc_my_mode->hdisplay) -
+		      sc->sc_my_mode->vdisplay - 5,
+		    sc->sc_my_mode->hdisplay,
+		    ri->ri_font->fontwidth,
+		    ri->ri_font->fontheight,
+		    defattr);
 		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);	
 	} else {
 		/*
@@ -795,12 +794,12 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		}
 
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-			(sc->memsize / sc->sc_my_mode->hdisplay) -
-			    sc->sc_my_mode->vdisplay - 5,
-			sc->sc_my_mode->hdisplay,
-			ri->ri_font->fontwidth,
-			ri->ri_font->fontheight,
-			defattr);
+		    ((sc->memsize * 1024 * 1024) / sc->sc_my_mode->hdisplay) -
+		      sc->sc_my_mode->vdisplay - 5,
+		    sc->sc_my_mode->hdisplay,
+		    ri->ri_font->fontwidth,
+		    ri->ri_font->fontheight,
+		    defattr);
 	}
 
 	sc->sc_bg = mach64_console_screen.scr_ri.ri_devcmap[WS_DEFAULT_BG];
