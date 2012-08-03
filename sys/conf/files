@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1055 2012/08/01 23:24:29 rmind Exp $
+#	$NetBSD: files,v 1.1056 2012/08/03 07:41:47 matt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1418,7 +1418,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
-file	compat/common/compat_mod.c	compat_netbsd
+file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
