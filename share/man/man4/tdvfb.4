@@ -1,4 +1,4 @@
-.\"	$NetBSD: tdvfb.4,v 1.5 2012/07/20 18:57:27 wiz Exp $
+.\"	$NetBSD: tdvfb.4,v 1.6 2012/08/03 21:40:34 rkujawa Exp $
 .\"
 .\" Copyright (c) 2012 Radoslaw Kujawa
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 20, 2012
+.Dd August 3, 2012
 .Dt TDVFB 4
 .Os
 .Sh NAME
@@ -87,16 +87,21 @@ attachment code is based mostly on the
 driver by
 .An Michael Lorenz .
 .Sh BUGS
-The
+3Dfx Voodoo2 has a simple 2D graphics engine. The
 .Nm
-driver is unaccelerated.
-3Dfx Voodoo2 has a simple 2D graphics engine but it is unsupported yet.
+driver has minimal support
+for this engine. It activated only when the card is running in a 16-bit mode
+(this is a hardware limitation).
 .Pp
-Video mode is hard-coded to 800x600 at 60Hz in 32-bits, it should be selectable
-at least via kernel configuration file.
-It is not possible to detect what resolutions are supported by the monitor,
-since Voodoo Graphics and Voodoo2 have no DDC interface.
+Video mode is hard-coded to 800x600 at 60Hz. Default bit depth for little
+endian machines is 16-bit, for big endian machines it is 32-bit. Resolution and
+depth should be selectable at least via kernel configuration file. It is not
+possible to detect what resolutions are supported by the monitor, since Voodoo
+Graphics and Voodoo2 have no DDC interface.
 .Pp
 8-bit depth is not supported by the hardware.
 16-bit depth is supported by the hardware and is the preferred depth, however it
-does not work correctly at the moment (this is a driver problem).
+does not work correctly on big endian machines at the moment (this is a driver
+problem).
+.Pp
+Sometimes the driver fails to detect RAMDAC.
