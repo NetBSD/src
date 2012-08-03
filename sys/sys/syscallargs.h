@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.237 2012/07/20 16:49:46 pooka Exp $ */
+/* $NetBSD: syscallargs.h,v 1.238 2012/08/03 11:32:56 pooka Exp $ */
 
 /*
  * System call argument lists.
@@ -35,15 +35,19 @@
 	typedef char call##_check_args[sizeof (struct call##_args) \
 		<= SYS_MAXSYSARGS * sizeof (register_t) ? 1 : -1];
 
+#ifndef RUMP_CLIENT
 struct sys_syscall_args {
 	syscallarg(int) code;
 	syscallarg(register_t) args[SYS_MAXSYSARGS];
 };
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_exit_args {
 	syscallarg(int) rval;
 };
 check_syscall_args(sys_exit)
+#endif /* !RUMP_CLIENT */
 
 struct sys_read_args {
 	syscallarg(int) fd;
@@ -71,6 +75,7 @@ struct sys_close_args {
 };
 check_syscall_args(sys_close)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_wait4_args {
 	syscallarg(pid_t) pid;
 	syscallarg(int *) status;
@@ -78,12 +83,15 @@ struct compat_50_sys_wait4_args {
 	syscallarg(struct rusage50 *) rusage;
 };
 check_syscall_args(compat_50_sys_wait4)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_creat_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
 };
 check_syscall_args(compat_43_sys_creat)
+#endif /* !RUMP_CLIENT */
 
 struct sys_link_args {
 	syscallarg(const char *) path;
@@ -126,25 +134,32 @@ struct sys_chown_args {
 };
 check_syscall_args(sys_chown)
 
+#ifndef RUMP_CLIENT
 struct sys_obreak_args {
 	syscallarg(char *) nsize;
 };
 check_syscall_args(sys_obreak)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_20_sys_getfsstat_args {
 	syscallarg(struct statfs12 *) buf;
 	syscallarg(long) bufsize;
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_20_sys_getfsstat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_lseek_args {
 	syscallarg(int) fd;
 	syscallarg(long) offset;
 	syscallarg(int) whence;
 };
 check_syscall_args(compat_43_sys_lseek)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_40_sys_mount_args {
 	syscallarg(const char *) type;
 	syscallarg(const char *) path;
@@ -152,6 +167,7 @@ struct compat_40_sys_mount_args {
 	syscallarg(void *) data;
 };
 check_syscall_args(compat_40_sys_mount)
+#endif /* !RUMP_CLIENT */
 
 struct sys_unmount_args {
 	syscallarg(const char *) path;
@@ -164,6 +180,7 @@ struct sys_setuid_args {
 };
 check_syscall_args(sys_setuid)
 
+#ifndef RUMP_CLIENT
 struct sys_ptrace_args {
 	syscallarg(int) req;
 	syscallarg(pid_t) pid;
@@ -171,6 +188,7 @@ struct sys_ptrace_args {
 	syscallarg(int) data;
 };
 check_syscall_args(sys_ptrace)
+#endif /* !RUMP_CLIENT */
 
 struct sys_recvmsg_args {
 	syscallarg(int) s;
@@ -235,29 +253,36 @@ struct sys_fchflags_args {
 };
 check_syscall_args(sys_fchflags)
 
+#ifndef RUMP_CLIENT
 struct sys_kill_args {
 	syscallarg(pid_t) pid;
 	syscallarg(int) signum;
 };
 check_syscall_args(sys_kill)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_stat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat43 *) ub;
 };
 check_syscall_args(compat_43_sys_stat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_lstat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat43 *) ub;
 };
 check_syscall_args(compat_43_sys_lstat)
+#endif /* !RUMP_CLIENT */
 
 struct sys_dup_args {
 	syscallarg(int) fd;
 };
 check_syscall_args(sys_dup)
 
+#ifndef RUMP_CLIENT
 struct sys_profil_args {
 	syscallarg(char *) samples;
 	syscallarg(size_t) size;
@@ -265,7 +290,9 @@ struct sys_profil_args {
 	syscallarg(u_int) scale;
 };
 check_syscall_args(sys_profil)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_ktrace_args {
 	syscallarg(const char *) fname;
 	syscallarg(int) ops;
@@ -273,19 +300,24 @@ struct sys_ktrace_args {
 	syscallarg(pid_t) pid;
 };
 check_syscall_args(sys_ktrace)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_13_sys_sigaction_args {
 	syscallarg(int) signum;
 	syscallarg(const struct sigaction13 *) nsa;
 	syscallarg(struct sigaction13 *) osa;
 };
 check_syscall_args(compat_13_sys_sigaction)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_13_sys_sigprocmask_args {
 	syscallarg(int) how;
 	syscallarg(int) mask;
 };
 check_syscall_args(compat_13_sys_sigprocmask)
+#endif /* !RUMP_CLIENT */
 
 struct sys___getlogin_args {
 	syscallarg(char *) namebuf;
@@ -298,16 +330,20 @@ struct sys___setlogin_args {
 };
 check_syscall_args(sys___setlogin)
 
+#ifndef RUMP_CLIENT
 struct sys_acct_args {
 	syscallarg(const char *) path;
 };
 check_syscall_args(sys_acct)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_13_sys_sigaltstack_args {
 	syscallarg(const struct sigaltstack13 *) nss;
 	syscallarg(struct sigaltstack13 *) oss;
 };
 check_syscall_args(compat_13_sys_sigaltstack)
+#endif /* !RUMP_CLIENT */
 
 struct sys_ioctl_args {
 	syscallarg(int) fd;
@@ -316,10 +352,12 @@ struct sys_ioctl_args {
 };
 check_syscall_args(sys_ioctl)
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_reboot_args {
 	syscallarg(int) opt;
 };
 check_syscall_args(compat_12_sys_reboot)
+#endif /* !RUMP_CLIENT */
 
 struct sys_revoke_args {
 	syscallarg(const char *) path;
@@ -339,12 +377,14 @@ struct sys_readlink_args {
 };
 check_syscall_args(sys_readlink)
 
+#ifndef RUMP_CLIENT
 struct sys_execve_args {
 	syscallarg(const char *) path;
 	syscallarg(char *const *) argp;
 	syscallarg(char *const *) envp;
 };
 check_syscall_args(sys_execve)
+#endif /* !RUMP_CLIENT */
 
 struct sys_umask_args {
 	syscallarg(mode_t) newmask;
@@ -356,12 +396,15 @@ struct sys_chroot_args {
 };
 check_syscall_args(sys_chroot)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_fstat_args {
 	syscallarg(int) fd;
 	syscallarg(struct stat43 *) sb;
 };
 check_syscall_args(compat_43_sys_fstat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_getkerninfo_args {
 	syscallarg(int) op;
 	syscallarg(char *) where;
@@ -369,23 +412,31 @@ struct compat_43_sys_getkerninfo_args {
 	syscallarg(int) arg;
 };
 check_syscall_args(compat_43_sys_getkerninfo)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_msync_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 };
 check_syscall_args(compat_12_sys_msync)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_sbrk_args {
 	syscallarg(intptr_t) incr;
 };
 check_syscall_args(sys_sbrk)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_sstk_args {
 	syscallarg(int) incr;
 };
 check_syscall_args(sys_sstk)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_mmap_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
@@ -395,38 +446,49 @@ struct compat_43_sys_mmap_args {
 	syscallarg(long) pos;
 };
 check_syscall_args(compat_43_sys_mmap)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_ovadvise_args {
 	syscallarg(int) anom;
 };
 check_syscall_args(sys_ovadvise)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_munmap_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 };
 check_syscall_args(sys_munmap)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mprotect_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) prot;
 };
 check_syscall_args(sys_mprotect)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_madvise_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) behav;
 };
 check_syscall_args(sys_madvise)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mincore_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(char *) vec;
 };
 check_syscall_args(sys_mincore)
+#endif /* !RUMP_CLIENT */
 
 struct sys_getgroups_args {
 	syscallarg(int) gidsetsize;
@@ -446,35 +508,45 @@ struct sys_setpgid_args {
 };
 check_syscall_args(sys_setpgid)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_setitimer_args {
 	syscallarg(int) which;
 	syscallarg(const struct itimerval50 *) itv;
 	syscallarg(struct itimerval50 *) oitv;
 };
 check_syscall_args(compat_50_sys_setitimer)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_swapon_args {
 	syscallarg(const char *) name;
 };
 check_syscall_args(compat_12_sys_swapon)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_getitimer_args {
 	syscallarg(int) which;
 	syscallarg(struct itimerval50 *) itv;
 };
 check_syscall_args(compat_50_sys_getitimer)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_gethostname_args {
 	syscallarg(char *) hostname;
 	syscallarg(u_int) len;
 };
 check_syscall_args(compat_43_sys_gethostname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sethostname_args {
 	syscallarg(char *) hostname;
 	syscallarg(u_int) len;
 };
 check_syscall_args(compat_43_sys_sethostname)
+#endif /* !RUMP_CLIENT */
 
 struct sys_dup2_args {
 	syscallarg(int) from;
@@ -503,19 +575,23 @@ struct sys_fsync_args {
 };
 check_syscall_args(sys_fsync)
 
+#ifndef RUMP_CLIENT
 struct sys_setpriority_args {
 	syscallarg(int) which;
 	syscallarg(id_t) who;
 	syscallarg(int) prio;
 };
 check_syscall_args(sys_setpriority)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_socket_args {
 	syscallarg(int) domain;
 	syscallarg(int) type;
 	syscallarg(int) protocol;
 };
 check_syscall_args(compat_30_sys_socket)
+#endif /* !RUMP_CLIENT */
 
 struct sys_connect_args {
 	syscallarg(int) s;
@@ -524,19 +600,24 @@ struct sys_connect_args {
 };
 check_syscall_args(sys_connect)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_accept_args {
 	syscallarg(int) s;
 	syscallarg(void *) name;
 	syscallarg(socklen_t *) anamelen;
 };
 check_syscall_args(compat_43_sys_accept)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_getpriority_args {
 	syscallarg(int) which;
 	syscallarg(id_t) who;
 };
 check_syscall_args(sys_getpriority)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_send_args {
 	syscallarg(int) s;
 	syscallarg(void *) buf;
@@ -544,7 +625,9 @@ struct compat_43_sys_send_args {
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_43_sys_send)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_recv_args {
 	syscallarg(int) s;
 	syscallarg(void *) buf;
@@ -552,11 +635,14 @@ struct compat_43_sys_recv_args {
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_43_sys_recv)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_13_sys_sigreturn_args {
 	syscallarg(struct sigcontext13 *) sigcntxp;
 };
 check_syscall_args(compat_13_sys_sigreturn)
+#endif /* !RUMP_CLIENT */
 
 struct sys_bind_args {
 	syscallarg(int) s;
@@ -580,59 +666,77 @@ struct sys_listen_args {
 };
 check_syscall_args(sys_listen)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sigvec_args {
 	syscallarg(int) signum;
 	syscallarg(struct sigvec *) nsv;
 	syscallarg(struct sigvec *) osv;
 };
 check_syscall_args(compat_43_sys_sigvec)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sigblock_args {
 	syscallarg(int) mask;
 };
 check_syscall_args(compat_43_sys_sigblock)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sigsetmask_args {
 	syscallarg(int) mask;
 };
 check_syscall_args(compat_43_sys_sigsetmask)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_13_sys_sigsuspend_args {
 	syscallarg(int) mask;
 };
 check_syscall_args(compat_13_sys_sigsuspend)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sigstack_args {
 	syscallarg(struct sigstack *) nss;
 	syscallarg(struct sigstack *) oss;
 };
 check_syscall_args(compat_43_sys_sigstack)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_recvmsg_args {
 	syscallarg(int) s;
 	syscallarg(struct omsghdr *) msg;
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_43_sys_recvmsg)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sendmsg_args {
 	syscallarg(int) s;
 	syscallarg(void *) msg;
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_43_sys_sendmsg)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_gettimeofday_args {
 	syscallarg(struct timeval50 *) tp;
 	syscallarg(void *) tzp;
 };
 check_syscall_args(compat_50_sys_gettimeofday)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_getrusage_args {
 	syscallarg(int) who;
 	syscallarg(struct rusage50 *) rusage;
 };
 check_syscall_args(compat_50_sys_getrusage)
+#endif /* !RUMP_CLIENT */
 
 struct sys_getsockopt_args {
 	syscallarg(int) s;
@@ -657,11 +761,13 @@ struct sys_writev_args {
 };
 check_syscall_args(sys_writev)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_settimeofday_args {
 	syscallarg(const struct timeval50 *) tv;
 	syscallarg(const void *) tzp;
 };
 check_syscall_args(compat_50_sys_settimeofday)
+#endif /* !RUMP_CLIENT */
 
 struct sys_fchown_args {
 	syscallarg(int) fd;
@@ -676,6 +782,7 @@ struct sys_fchmod_args {
 };
 check_syscall_args(sys_fchmod)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_recvfrom_args {
 	syscallarg(int) s;
 	syscallarg(void *) buf;
@@ -685,6 +792,7 @@ struct compat_43_sys_recvfrom_args {
 	syscallarg(socklen_t *) fromlenaddr;
 };
 check_syscall_args(compat_43_sys_recvfrom)
+#endif /* !RUMP_CLIENT */
 
 struct sys_setreuid_args {
 	syscallarg(uid_t) ruid;
@@ -704,17 +812,21 @@ struct sys_rename_args {
 };
 check_syscall_args(sys_rename)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_truncate_args {
 	syscallarg(const char *) path;
 	syscallarg(long) length;
 };
 check_syscall_args(compat_43_sys_truncate)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_ftruncate_args {
 	syscallarg(int) fd;
 	syscallarg(long) length;
 };
 check_syscall_args(compat_43_sys_ftruncate)
+#endif /* !RUMP_CLIENT */
 
 struct sys_flock_args {
 	syscallarg(int) fd;
@@ -769,42 +881,55 @@ struct compat_50_sys_utimes_args {
 };
 check_syscall_args(compat_50_sys_utimes)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_adjtime_args {
 	syscallarg(const struct timeval50 *) delta;
 	syscallarg(struct timeval50 *) olddelta;
 };
 check_syscall_args(compat_50_sys_adjtime)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_getpeername_args {
 	syscallarg(int) fdes;
 	syscallarg(void *) asa;
 	syscallarg(socklen_t *) alen;
 };
 check_syscall_args(compat_43_sys_getpeername)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_sethostid_args {
 	syscallarg(int32_t) hostid;
 };
 check_syscall_args(compat_43_sys_sethostid)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_getrlimit_args {
 	syscallarg(int) which;
 	syscallarg(struct orlimit *) rlp;
 };
 check_syscall_args(compat_43_sys_getrlimit)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_setrlimit_args {
 	syscallarg(int) which;
 	syscallarg(const struct orlimit *) rlp;
 };
 check_syscall_args(compat_43_sys_setrlimit)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_killpg_args {
 	syscallarg(int) pgid;
 	syscallarg(int) signum;
 };
 check_syscall_args(compat_43_sys_killpg)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
@@ -812,13 +937,16 @@ struct compat_50_sys_quotactl_args {
 	syscallarg(void *) arg;
 };
 check_syscall_args(compat_50_sys_quotactl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_getsockname_args {
 	syscallarg(int) fdec;
 	syscallarg(void *) asa;
 	syscallarg(socklen_t *) alen;
 };
 check_syscall_args(compat_43_sys_getsockname)
+#endif /* !RUMP_CLIENT */
 
 struct sys_nfssvc_args {
 	syscallarg(int) flag;
@@ -826,6 +954,7 @@ struct sys_nfssvc_args {
 };
 check_syscall_args(sys_nfssvc)
 
+#ifndef RUMP_CLIENT
 struct compat_43_sys_getdirentries_args {
 	syscallarg(int) fd;
 	syscallarg(char *) buf;
@@ -833,49 +962,65 @@ struct compat_43_sys_getdirentries_args {
 	syscallarg(long *) basep;
 };
 check_syscall_args(compat_43_sys_getdirentries)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_20_sys_statfs_args {
 	syscallarg(const char *) path;
 	syscallarg(struct statfs12 *) buf;
 };
 check_syscall_args(compat_20_sys_statfs)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_20_sys_fstatfs_args {
 	syscallarg(int) fd;
 	syscallarg(struct statfs12 *) buf;
 };
 check_syscall_args(compat_20_sys_fstatfs)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_getfh_args {
 	syscallarg(const char *) fname;
 	syscallarg(struct compat_30_fhandle *) fhp;
 };
 check_syscall_args(compat_30_sys_getfh)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_09_sys_getdomainname_args {
 	syscallarg(char *) domainname;
 	syscallarg(int) len;
 };
 check_syscall_args(compat_09_sys_getdomainname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_09_sys_setdomainname_args {
 	syscallarg(char *) domainname;
 	syscallarg(int) len;
 };
 check_syscall_args(compat_09_sys_setdomainname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_09_sys_uname_args {
 	syscallarg(struct outsname *) name;
 };
 check_syscall_args(compat_09_sys_uname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_sysarch_args {
 	syscallarg(int) op;
 	syscallarg(void *) parms;
 };
 check_syscall_args(sys_sysarch)
+#endif /* !RUMP_CLIENT */
 #if (defined(SYSVSEM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 
+#ifndef RUMP_CLIENT
 struct compat_10_sys_semsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
@@ -884,10 +1029,12 @@ struct compat_10_sys_semsys_args {
 	syscallarg(int) a5;
 };
 check_syscall_args(compat_10_sys_semsys)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 
+#ifndef RUMP_CLIENT
 struct compat_10_sys_msgsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
@@ -897,10 +1044,12 @@ struct compat_10_sys_msgsys_args {
 	syscallarg(int) a6;
 };
 check_syscall_args(compat_10_sys_msgsys)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL_OPT)) && !defined(_LP64)
 
+#ifndef RUMP_CLIENT
 struct compat_10_sys_shmsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
@@ -908,6 +1057,7 @@ struct compat_10_sys_shmsys_args {
 	syscallarg(int) a4;
 };
 check_syscall_args(compat_10_sys_shmsys)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
@@ -929,16 +1079,20 @@ struct sys_pwrite_args {
 };
 check_syscall_args(sys_pwrite)
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_ntp_gettime_args {
 	syscallarg(struct ntptimeval30 *) ntvp;
 };
 check_syscall_args(compat_30_sys_ntp_gettime)
+#endif /* !RUMP_CLIENT */
 #if defined(NTP) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys_ntp_adjtime_args {
 	syscallarg(struct timex *) tp;
 };
 check_syscall_args(sys_ntp_adjtime)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
@@ -957,49 +1111,63 @@ struct sys_seteuid_args {
 };
 check_syscall_args(sys_seteuid)
 
+#ifndef RUMP_CLIENT
 struct sys_lfs_bmapv_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(struct block_info *) blkiov;
 	syscallarg(int) blkcnt;
 };
 check_syscall_args(sys_lfs_bmapv)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_lfs_markv_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(struct block_info *) blkiov;
 	syscallarg(int) blkcnt;
 };
 check_syscall_args(sys_lfs_markv)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_lfs_segclean_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(u_long) segment;
 };
 check_syscall_args(sys_lfs_segclean)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_lfs_segwait_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(struct timeval50 *) tv;
 };
 check_syscall_args(compat_50_sys_lfs_segwait)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_stat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat12 *) ub;
 };
 check_syscall_args(compat_12_sys_stat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_fstat_args {
 	syscallarg(int) fd;
 	syscallarg(struct stat12 *) sb;
 };
 check_syscall_args(compat_12_sys_fstat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_lstat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat12 *) ub;
 };
 check_syscall_args(compat_12_sys_lstat)
+#endif /* !RUMP_CLIENT */
 
 struct sys_pathconf_args {
 	syscallarg(const char *) path;
@@ -1025,6 +1193,7 @@ struct sys_setrlimit_args {
 };
 check_syscall_args(sys_setrlimit)
 
+#ifndef RUMP_CLIENT
 struct compat_12_sys_getdirentries_args {
 	syscallarg(int) fd;
 	syscallarg(char *) buf;
@@ -1032,7 +1201,9 @@ struct compat_12_sys_getdirentries_args {
 	syscallarg(long *) basep;
 };
 check_syscall_args(compat_12_sys_getdirentries)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mmap_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
@@ -1043,11 +1214,14 @@ struct sys_mmap_args {
 	syscallarg(off_t) pos;
 };
 check_syscall_args(sys_mmap)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___syscall_args {
 	syscallarg(quad_t) code;
 	syscallarg(register_t) args[SYS_MAXSYSARGS];
 };
+#endif /* !RUMP_CLIENT */
 
 struct sys_lseek_args {
 	syscallarg(int) fd;
@@ -1081,22 +1255,28 @@ struct sys___sysctl_args {
 };
 check_syscall_args(sys___sysctl)
 
+#ifndef RUMP_CLIENT
 struct sys_mlock_args {
 	syscallarg(const void *) addr;
 	syscallarg(size_t) len;
 };
 check_syscall_args(sys_mlock)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_munlock_args {
 	syscallarg(const void *) addr;
 	syscallarg(size_t) len;
 };
 check_syscall_args(sys_munlock)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_undelete_args {
 	syscallarg(const char *) path;
 };
 check_syscall_args(sys_undelete)
+#endif /* !RUMP_CLIENT */
 
 struct compat_50_sys_futimes_args {
 	syscallarg(int) fd;
@@ -1122,6 +1302,7 @@ struct sys_poll_args {
 };
 check_syscall_args(sys_poll)
 
+#ifndef RUMP_CLIENT
 struct sys_afssys_args {
 	syscallarg(long) id;
 	syscallarg(long) a1;
@@ -1132,8 +1313,10 @@ struct sys_afssys_args {
 	syscallarg(long) a6;
 };
 check_syscall_args(sys_afssys)
+#endif /* !RUMP_CLIENT */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct compat_14_sys___semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -1141,42 +1324,54 @@ struct compat_14_sys___semctl_args {
 	syscallarg(union __semun *) arg;
 };
 check_syscall_args(compat_14_sys___semctl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_semget_args {
 	syscallarg(key_t) key;
 	syscallarg(int) nsems;
 	syscallarg(int) semflg;
 };
 check_syscall_args(sys_semget)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_semop_args {
 	syscallarg(int) semid;
 	syscallarg(struct sembuf *) sops;
 	syscallarg(size_t) nsops;
 };
 check_syscall_args(sys_semop)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_semconfig_args {
 	syscallarg(int) flag;
 };
 check_syscall_args(sys_semconfig)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct compat_14_sys_msgctl_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct msqid_ds14 *) buf;
 };
 check_syscall_args(compat_14_sys_msgctl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_msgget_args {
 	syscallarg(key_t) key;
 	syscallarg(int) msgflg;
 };
 check_syscall_args(sys_msgget)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_msgsnd_args {
 	syscallarg(int) msqid;
 	syscallarg(const void *) msgp;
@@ -1184,7 +1379,9 @@ struct sys_msgsnd_args {
 	syscallarg(int) msgflg;
 };
 check_syscall_args(sys_msgsnd)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_msgrcv_args {
 	syscallarg(int) msqid;
 	syscallarg(void *) msgp;
@@ -1193,68 +1390,88 @@ struct sys_msgrcv_args {
 	syscallarg(int) msgflg;
 };
 check_syscall_args(sys_msgrcv)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys_shmat_args {
 	syscallarg(int) shmid;
 	syscallarg(const void *) shmaddr;
 	syscallarg(int) shmflg;
 };
 check_syscall_args(sys_shmat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_14_sys_shmctl_args {
 	syscallarg(int) shmid;
 	syscallarg(int) cmd;
 	syscallarg(struct shmid_ds14 *) buf;
 };
 check_syscall_args(compat_14_sys_shmctl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_shmdt_args {
 	syscallarg(const void *) shmaddr;
 };
 check_syscall_args(sys_shmdt)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_shmget_args {
 	syscallarg(key_t) key;
 	syscallarg(size_t) size;
 	syscallarg(int) shmflg;
 };
 check_syscall_args(sys_shmget)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_clock_gettime_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(struct timespec50 *) tp;
 };
 check_syscall_args(compat_50_sys_clock_gettime)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_clock_settime_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(const struct timespec50 *) tp;
 };
 check_syscall_args(compat_50_sys_clock_settime)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_clock_getres_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(struct timespec50 *) tp;
 };
 check_syscall_args(compat_50_sys_clock_getres)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_timer_create_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(struct sigevent *) evp;
 	syscallarg(timer_t *) timerid;
 };
 check_syscall_args(sys_timer_create)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_timer_delete_args {
 	syscallarg(timer_t) timerid;
 };
 check_syscall_args(sys_timer_delete)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_timer_settime_args {
 	syscallarg(timer_t) timerid;
 	syscallarg(int) flags;
@@ -1262,46 +1479,59 @@ struct compat_50_sys_timer_settime_args {
 	syscallarg(struct itimerspec50 *) ovalue;
 };
 check_syscall_args(compat_50_sys_timer_settime)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_timer_gettime_args {
 	syscallarg(timer_t) timerid;
 	syscallarg(struct itimerspec50 *) value;
 };
 check_syscall_args(compat_50_sys_timer_gettime)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_timer_getoverrun_args {
 	syscallarg(timer_t) timerid;
 };
 check_syscall_args(sys_timer_getoverrun)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_nanosleep_args {
 	syscallarg(const struct timespec50 *) rqtp;
 	syscallarg(struct timespec50 *) rmtp;
 };
 check_syscall_args(compat_50_sys_nanosleep)
+#endif /* !RUMP_CLIENT */
 
 struct sys_fdatasync_args {
 	syscallarg(int) fd;
 };
 check_syscall_args(sys_fdatasync)
 
+#ifndef RUMP_CLIENT
 struct sys_mlockall_args {
 	syscallarg(int) flags;
 };
 check_syscall_args(sys_mlockall)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys___sigtimedwait_args {
 	syscallarg(const sigset_t *) set;
 	syscallarg(siginfo_t *) info;
 	syscallarg(struct timespec50 *) timeout;
 };
 check_syscall_args(compat_50_sys___sigtimedwait)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_sigqueueinfo_args {
 	syscallarg(pid_t) pid;
 	syscallarg(const siginfo_t *) info;
 };
 check_syscall_args(sys_sigqueueinfo)
+#endif /* !RUMP_CLIENT */
 
 struct sys_modctl_args {
 	syscallarg(int) cmd;
@@ -1366,6 +1596,7 @@ struct sys__ksem_timedwait_args {
 };
 check_syscall_args(sys__ksem_timedwait)
 
+#ifndef RUMP_CLIENT
 struct sys_mq_open_args {
 	syscallarg(const char *) name;
 	syscallarg(int) oflag;
@@ -1373,36 +1604,48 @@ struct sys_mq_open_args {
 	syscallarg(struct mq_attr *) attr;
 };
 check_syscall_args(sys_mq_open)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_close_args {
 	syscallarg(mqd_t) mqdes;
 };
 check_syscall_args(sys_mq_close)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_unlink_args {
 	syscallarg(const char *) name;
 };
 check_syscall_args(sys_mq_unlink)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_getattr_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(struct mq_attr *) mqstat;
 };
 check_syscall_args(sys_mq_getattr)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_setattr_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const struct mq_attr *) mqstat;
 	syscallarg(struct mq_attr *) omqstat;
 };
 check_syscall_args(sys_mq_setattr)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_notify_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const struct sigevent *) notification;
 };
 check_syscall_args(sys_mq_notify)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_send_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const char *) msg_ptr;
@@ -1410,7 +1653,9 @@ struct sys_mq_send_args {
 	syscallarg(unsigned) msg_prio;
 };
 check_syscall_args(sys_mq_send)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_mq_receive_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(char *) msg_ptr;
@@ -1418,7 +1663,9 @@ struct sys_mq_receive_args {
 	syscallarg(unsigned *) msg_prio;
 };
 check_syscall_args(sys_mq_receive)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_mq_timedsend_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const char *) msg_ptr;
@@ -1427,7 +1674,9 @@ struct compat_50_sys_mq_timedsend_args {
 	syscallarg(const struct timespec50 *) abs_timeout;
 };
 check_syscall_args(compat_50_sys_mq_timedsend)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_mq_timedreceive_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(char *) msg_ptr;
@@ -1436,33 +1685,42 @@ struct compat_50_sys_mq_timedreceive_args {
 	syscallarg(const struct timespec50 *) abs_timeout;
 };
 check_syscall_args(compat_50_sys_mq_timedreceive)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___posix_rename_args {
 	syscallarg(const char *) from;
 	syscallarg(const char *) to;
 };
 check_syscall_args(sys___posix_rename)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_swapctl_args {
 	syscallarg(int) cmd;
 	syscallarg(void *) arg;
 	syscallarg(int) misc;
 };
 check_syscall_args(sys_swapctl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_getdents_args {
 	syscallarg(int) fd;
 	syscallarg(char *) buf;
 	syscallarg(size_t) count;
 };
 check_syscall_args(compat_30_sys_getdents)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_minherit_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) inherit;
 };
 check_syscall_args(sys_minherit)
+#endif /* !RUMP_CLIENT */
 
 struct sys_lchmod_args {
 	syscallarg(const char *) path;
@@ -1483,69 +1741,88 @@ struct compat_50_sys_lutimes_args {
 };
 check_syscall_args(compat_50_sys_lutimes)
 
+#ifndef RUMP_CLIENT
 struct sys___msync13_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) flags;
 };
 check_syscall_args(sys___msync13)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys___stat13_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat13 *) ub;
 };
 check_syscall_args(compat_30_sys___stat13)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys___fstat13_args {
 	syscallarg(int) fd;
 	syscallarg(struct stat13 *) sb;
 };
 check_syscall_args(compat_30_sys___fstat13)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys___lstat13_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat13 *) ub;
 };
 check_syscall_args(compat_30_sys___lstat13)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___sigaltstack14_args {
 	syscallarg(const struct sigaltstack *) nss;
 	syscallarg(struct sigaltstack *) oss;
 };
 check_syscall_args(sys___sigaltstack14)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___posix_chown_args {
 	syscallarg(const char *) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
 };
 check_syscall_args(sys___posix_chown)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___posix_fchown_args {
 	syscallarg(int) fd;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
 };
 check_syscall_args(sys___posix_fchown)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___posix_lchown_args {
 	syscallarg(const char *) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
 };
 check_syscall_args(sys___posix_lchown)
+#endif /* !RUMP_CLIENT */
 
 struct sys_getsid_args {
 	syscallarg(pid_t) pid;
 };
 check_syscall_args(sys_getsid)
 
+#ifndef RUMP_CLIENT
 struct sys___clone_args {
 	syscallarg(int) flags;
 	syscallarg(void *) stack;
 };
 check_syscall_args(sys___clone)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_fktrace_args {
 	syscallarg(int) fd;
 	syscallarg(int) ops;
@@ -1553,6 +1830,7 @@ struct sys_fktrace_args {
 	syscallarg(pid_t) pid;
 };
 check_syscall_args(sys_fktrace)
+#endif /* !RUMP_CLIENT */
 
 struct sys_preadv_args {
 	syscallarg(int) fd;
@@ -1572,34 +1850,44 @@ struct sys_pwritev_args {
 };
 check_syscall_args(sys_pwritev)
 
+#ifndef RUMP_CLIENT
 struct compat_16_sys___sigaction14_args {
 	syscallarg(int) signum;
 	syscallarg(const struct sigaction *) nsa;
 	syscallarg(struct sigaction *) osa;
 };
 check_syscall_args(compat_16_sys___sigaction14)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___sigpending14_args {
 	syscallarg(sigset_t *) set;
 };
 check_syscall_args(sys___sigpending14)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___sigprocmask14_args {
 	syscallarg(int) how;
 	syscallarg(const sigset_t *) set;
 	syscallarg(sigset_t *) oset;
 };
 check_syscall_args(sys___sigprocmask14)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___sigsuspend14_args {
 	syscallarg(const sigset_t *) set;
 };
 check_syscall_args(sys___sigsuspend14)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_16_sys___sigreturn14_args {
 	syscallarg(struct sigcontext *) sigcntxp;
 };
 check_syscall_args(compat_16_sys___sigreturn14)
+#endif /* !RUMP_CLIENT */
 
 struct sys___getcwd_args {
 	syscallarg(char *) bufp;
@@ -1612,25 +1900,32 @@ struct sys_fchroot_args {
 };
 check_syscall_args(sys_fchroot)
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_fhopen_args {
 	syscallarg(const struct compat_30_fhandle *) fhp;
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_30_sys_fhopen)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_fhstat_args {
 	syscallarg(const struct compat_30_fhandle *) fhp;
 	syscallarg(struct stat13 *) sb;
 };
 check_syscall_args(compat_30_sys_fhstat)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_20_sys_fhstatfs_args {
 	syscallarg(const struct compat_30_fhandle *) fhp;
 	syscallarg(struct statfs12 *) buf;
 };
 check_syscall_args(compat_20_sys_fhstatfs)
+#endif /* !RUMP_CLIENT */
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_____semctl13_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -1638,26 +1933,31 @@ struct compat_50_sys_____semctl13_args {
 	syscallarg(union __semun *) arg;
 };
 check_syscall_args(compat_50_sys_____semctl13)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys___msgctl13_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct msqid_ds *) buf;
 };
 check_syscall_args(compat_50_sys___msgctl13)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys___shmctl13_args {
 	syscallarg(int) shmid;
 	syscallarg(int) cmd;
 	syscallarg(struct shmid_ds13 *) buf;
 };
 check_syscall_args(compat_50_sys___shmctl13)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
@@ -1667,67 +1967,90 @@ struct sys_lchflags_args {
 };
 check_syscall_args(sys_lchflags)
 
+#ifndef RUMP_CLIENT
 struct sys_utrace_args {
 	syscallarg(const char *) label;
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 };
 check_syscall_args(sys_utrace)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_getcontext_args {
 	syscallarg(struct __ucontext *) ucp;
 };
 check_syscall_args(sys_getcontext)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_setcontext_args {
 	syscallarg(const struct __ucontext *) ucp;
 };
 check_syscall_args(sys_setcontext)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_create_args {
 	syscallarg(const struct __ucontext *) ucp;
 	syscallarg(u_long) flags;
 	syscallarg(lwpid_t *) new_lwp;
 };
 check_syscall_args(sys__lwp_create)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_wait_args {
 	syscallarg(lwpid_t) wait_for;
 	syscallarg(lwpid_t *) departed;
 };
 check_syscall_args(sys__lwp_wait)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_suspend_args {
 	syscallarg(lwpid_t) target;
 };
 check_syscall_args(sys__lwp_suspend)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_continue_args {
 	syscallarg(lwpid_t) target;
 };
 check_syscall_args(sys__lwp_continue)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_wakeup_args {
 	syscallarg(lwpid_t) target;
 };
 check_syscall_args(sys__lwp_wakeup)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_setprivate_args {
 	syscallarg(void *) ptr;
 };
 check_syscall_args(sys__lwp_setprivate)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_kill_args {
 	syscallarg(lwpid_t) target;
 	syscallarg(int) signo;
 };
 check_syscall_args(sys__lwp_kill)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_detach_args {
 	syscallarg(lwpid_t) target;
 };
 check_syscall_args(sys__lwp_detach)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys__lwp_park_args {
 	syscallarg(const struct timespec50 *) ts;
 	syscallarg(lwpid_t) unpark;
@@ -1735,39 +2058,51 @@ struct compat_50_sys__lwp_park_args {
 	syscallarg(const void *) unparkhint;
 };
 check_syscall_args(compat_50_sys__lwp_park)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_unpark_args {
 	syscallarg(lwpid_t) target;
 	syscallarg(const void *) hint;
 };
 check_syscall_args(sys__lwp_unpark)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_unpark_all_args {
 	syscallarg(const lwpid_t *) targets;
 	syscallarg(size_t) ntargets;
 	syscallarg(const void *) hint;
 };
 check_syscall_args(sys__lwp_unpark_all)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_setname_args {
 	syscallarg(lwpid_t) target;
 	syscallarg(const char *) name;
 };
 check_syscall_args(sys__lwp_setname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_getname_args {
 	syscallarg(lwpid_t) target;
 	syscallarg(char *) name;
 	syscallarg(size_t) len;
 };
 check_syscall_args(sys__lwp_getname)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__lwp_ctl_args {
 	syscallarg(int) features;
 	syscallarg(struct lwpctl **) address;
 };
 check_syscall_args(sys__lwp_ctl)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_60_sys_sa_register_args {
 	syscallarg(void *) new;
 	syscallarg(void **) old;
@@ -1775,23 +2110,31 @@ struct compat_60_sys_sa_register_args {
 	syscallarg(ssize_t) stackinfo_offset;
 };
 check_syscall_args(compat_60_sys_sa_register)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_60_sys_sa_stacks_args {
 	syscallarg(int) num;
 	syscallarg(stack_t *) stacks;
 };
 check_syscall_args(compat_60_sys_sa_stacks)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_60_sys_sa_setconcurrency_args {
 	syscallarg(int) concurrency;
 };
 check_syscall_args(compat_60_sys_sa_setconcurrency)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_60_sys_sa_preempt_args {
 	syscallarg(int) sa_id;
 };
 check_syscall_args(compat_60_sys_sa_preempt)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___sigaction_sigtramp_args {
 	syscallarg(int) signum;
 	syscallarg(const struct sigaction *) nsa;
@@ -1800,27 +2143,34 @@ struct sys___sigaction_sigtramp_args {
 	syscallarg(int) vers;
 };
 check_syscall_args(sys___sigaction_sigtramp)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_pmc_get_info_args {
 	syscallarg(int) ctr;
 	syscallarg(int) op;
 	syscallarg(void *) args;
 };
 check_syscall_args(sys_pmc_get_info)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_pmc_control_args {
 	syscallarg(int) ctr;
 	syscallarg(int) op;
 	syscallarg(void *) args;
 };
 check_syscall_args(sys_pmc_control)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_rasctl_args {
 	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) op;
 };
 check_syscall_args(sys_rasctl)
+#endif /* !RUMP_CLIENT */
 
 struct compat_50_sys_kevent_args {
 	syscallarg(int) fd;
@@ -1832,6 +2182,7 @@ struct compat_50_sys_kevent_args {
 };
 check_syscall_args(compat_50_sys_kevent)
 
+#ifndef RUMP_CLIENT
 struct sys__sched_setparam_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
@@ -1839,7 +2190,9 @@ struct sys__sched_setparam_args {
 	syscallarg(const struct sched_param *) params;
 };
 check_syscall_args(sys__sched_setparam)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__sched_getparam_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
@@ -1847,7 +2200,9 @@ struct sys__sched_getparam_args {
 	syscallarg(struct sched_param *) params;
 };
 check_syscall_args(sys__sched_getparam)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__sched_setaffinity_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
@@ -1855,7 +2210,9 @@ struct sys__sched_setaffinity_args {
 	syscallarg(const cpuset_t *) cpuset;
 };
 check_syscall_args(sys__sched_setaffinity)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__sched_getaffinity_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
@@ -1863,6 +2220,7 @@ struct sys__sched_getaffinity_args {
 	syscallarg(cpuset_t *) cpuset;
 };
 check_syscall_args(sys__sched_getaffinity)
+#endif /* !RUMP_CLIENT */
 
 struct sys_fsync_range_args {
 	syscallarg(int) fd;
@@ -1872,11 +2230,13 @@ struct sys_fsync_range_args {
 };
 check_syscall_args(sys_fsync_range)
 
+#ifndef RUMP_CLIENT
 struct sys_uuidgen_args {
 	syscallarg(struct uuid *) store;
 	syscallarg(int) count;
 };
 check_syscall_args(sys_uuidgen)
+#endif /* !RUMP_CLIENT */
 
 struct sys_getvfsstat_args {
 	syscallarg(struct statvfs *) buf;
@@ -1899,12 +2259,14 @@ struct sys_fstatvfs1_args {
 };
 check_syscall_args(sys_fstatvfs1)
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys_fhstatvfs1_args {
 	syscallarg(const struct compat_30_fhandle *) fhp;
 	syscallarg(struct statvfs *) buf;
 	syscallarg(int) flags;
 };
 check_syscall_args(compat_30_sys_fhstatvfs1)
+#endif /* !RUMP_CLIENT */
 
 struct sys_extattrctl_args {
 	syscallarg(const char *) path;
@@ -2147,16 +2509,20 @@ struct sys___getdents30_args {
 };
 check_syscall_args(sys___getdents30)
 
+#ifndef RUMP_CLIENT
 struct compat_30_sys___fhstat30_args {
 	syscallarg(const struct compat_30_fhandle *) fhp;
 	syscallarg(struct stat30 *) sb;
 };
 check_syscall_args(compat_30_sys___fhstat30)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys___ntp_gettime30_args {
 	syscallarg(struct ntptimeval50 *) ntvp;
 };
 check_syscall_args(compat_50_sys___ntp_gettime30)
+#endif /* !RUMP_CLIENT */
 
 struct sys___socket30_args {
 	syscallarg(int) domain;
@@ -2194,45 +2560,60 @@ struct compat_50_sys___fhstat40_args {
 };
 check_syscall_args(compat_50_sys___fhstat40)
 
+#ifndef RUMP_CLIENT
 struct sys_aio_cancel_args {
 	syscallarg(int) fildes;
 	syscallarg(struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_cancel)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_aio_error_args {
 	syscallarg(const struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_error)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_aio_fsync_args {
 	syscallarg(int) op;
 	syscallarg(struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_fsync)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_aio_read_args {
 	syscallarg(struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_read)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_aio_return_args {
 	syscallarg(struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_return)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct compat_50_sys_aio_suspend_args {
 	syscallarg(const struct aiocb *const *) list;
 	syscallarg(int) nent;
 	syscallarg(const struct timespec50 *) timeout;
 };
 check_syscall_args(compat_50_sys_aio_suspend)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_aio_write_args {
 	syscallarg(struct aiocb *) aiocbp;
 };
 check_syscall_args(sys_aio_write)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_lio_listio_args {
 	syscallarg(int) mode;
 	syscallarg(struct aiocb *const *) list;
@@ -2240,6 +2621,7 @@ struct sys_lio_listio_args {
 	syscallarg(struct sigevent *) sig;
 };
 check_syscall_args(sys_lio_listio)
+#endif /* !RUMP_CLIENT */
 
 struct sys___mount50_args {
 	syscallarg(const char *) type;
@@ -2250,6 +2632,7 @@ struct sys___mount50_args {
 };
 check_syscall_args(sys___mount50)
 
+#ifndef RUMP_CLIENT
 struct sys_mremap_args {
 	syscallarg(void *) old_address;
 	syscallarg(size_t) old_size;
@@ -2258,24 +2641,32 @@ struct sys_mremap_args {
 	syscallarg(int) flags;
 };
 check_syscall_args(sys_mremap)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_pset_create_args {
 	syscallarg(psetid_t *) psid;
 };
 check_syscall_args(sys_pset_create)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_pset_destroy_args {
 	syscallarg(psetid_t) psid;
 };
 check_syscall_args(sys_pset_destroy)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_pset_assign_args {
 	syscallarg(psetid_t) psid;
 	syscallarg(cpuid_t) cpuid;
 	syscallarg(psetid_t *) opsid;
 };
 check_syscall_args(sys_pset_assign)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys__pset_bind_args {
 	syscallarg(idtype_t) idtype;
 	syscallarg(id_t) first_id;
@@ -2284,6 +2675,7 @@ struct sys__pset_bind_args {
 	syscallarg(psetid_t *) opsid;
 };
 check_syscall_args(sys__pset_bind)
+#endif /* !RUMP_CLIENT */
 
 struct sys___posix_fadvise50_args {
 	syscallarg(int) fd;
@@ -2303,17 +2695,21 @@ struct sys___select50_args {
 };
 check_syscall_args(sys___select50)
 
+#ifndef RUMP_CLIENT
 struct sys___gettimeofday50_args {
 	syscallarg(struct timeval *) tp;
 	syscallarg(void *) tzp;
 };
 check_syscall_args(sys___gettimeofday50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___settimeofday50_args {
 	syscallarg(const struct timeval *) tv;
 	syscallarg(const void *) tzp;
 };
 check_syscall_args(sys___settimeofday50)
+#endif /* !RUMP_CLIENT */
 
 struct sys___utimes50_args {
 	syscallarg(const char *) path;
@@ -2321,17 +2717,21 @@ struct sys___utimes50_args {
 };
 check_syscall_args(sys___utimes50)
 
+#ifndef RUMP_CLIENT
 struct sys___adjtime50_args {
 	syscallarg(const struct timeval *) delta;
 	syscallarg(struct timeval *) olddelta;
 };
 check_syscall_args(sys___adjtime50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___lfs_segwait50_args {
 	syscallarg(fsid_t *) fsidp;
 	syscallarg(struct timeval *) tv;
 };
 check_syscall_args(sys___lfs_segwait50)
+#endif /* !RUMP_CLIENT */
 
 struct sys___futimes50_args {
 	syscallarg(int) fd;
@@ -2345,50 +2745,65 @@ struct sys___lutimes50_args {
 };
 check_syscall_args(sys___lutimes50)
 
+#ifndef RUMP_CLIENT
 struct sys___setitimer50_args {
 	syscallarg(int) which;
 	syscallarg(const struct itimerval *) itv;
 	syscallarg(struct itimerval *) oitv;
 };
 check_syscall_args(sys___setitimer50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___getitimer50_args {
 	syscallarg(int) which;
 	syscallarg(struct itimerval *) itv;
 };
 check_syscall_args(sys___getitimer50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___clock_gettime50_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(struct timespec *) tp;
 };
 check_syscall_args(sys___clock_gettime50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___clock_settime50_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(const struct timespec *) tp;
 };
 check_syscall_args(sys___clock_settime50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___clock_getres50_args {
 	syscallarg(clockid_t) clock_id;
 	syscallarg(struct timespec *) tp;
 };
 check_syscall_args(sys___clock_getres50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___nanosleep50_args {
 	syscallarg(const struct timespec *) rqtp;
 	syscallarg(struct timespec *) rmtp;
 };
 check_syscall_args(sys___nanosleep50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_____sigtimedwait50_args {
 	syscallarg(const sigset_t *) set;
 	syscallarg(siginfo_t *) info;
 	syscallarg(struct timespec *) timeout;
 };
 check_syscall_args(sys_____sigtimedwait50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___mq_timedsend50_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const char *) msg_ptr;
@@ -2397,7 +2812,9 @@ struct sys___mq_timedsend50_args {
 	syscallarg(const struct timespec *) abs_timeout;
 };
 check_syscall_args(sys___mq_timedsend50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___mq_timedreceive50_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(char *) msg_ptr;
@@ -2406,7 +2823,9 @@ struct sys___mq_timedreceive50_args {
 	syscallarg(const struct timespec *) abs_timeout;
 };
 check_syscall_args(sys___mq_timedreceive50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys____lwp_park50_args {
 	syscallarg(const struct timespec *) ts;
 	syscallarg(lwpid_t) unpark;
@@ -2414,6 +2833,7 @@ struct sys____lwp_park50_args {
 	syscallarg(const void *) unparkhint;
 };
 check_syscall_args(sys____lwp_park50)
+#endif /* !RUMP_CLIENT */
 
 struct sys___kevent50_args {
 	syscallarg(int) fd;
@@ -2443,12 +2863,14 @@ struct sys___pollts50_args {
 };
 check_syscall_args(sys___pollts50)
 
+#ifndef RUMP_CLIENT
 struct sys___aio_suspend50_args {
 	syscallarg(const struct aiocb *const *) list;
 	syscallarg(int) nent;
 	syscallarg(const struct timespec *) timeout;
 };
 check_syscall_args(sys___aio_suspend50)
+#endif /* !RUMP_CLIENT */
 
 struct sys___stat50_args {
 	syscallarg(const char *) path;
@@ -2469,6 +2891,7 @@ struct sys___lstat50_args {
 check_syscall_args(sys___lstat50)
 #if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys_____semctl50_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -2476,35 +2899,43 @@ struct sys_____semctl50_args {
 	syscallarg(union __semun *) arg;
 };
 check_syscall_args(sys_____semctl50)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys___shmctl50_args {
 	syscallarg(int) shmid;
 	syscallarg(int) cmd;
 	syscallarg(struct shmid_ds *) buf;
 };
 check_syscall_args(sys___shmctl50)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys___msgctl50_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct msqid_ds *) buf;
 };
 check_syscall_args(sys___msgctl50)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
+#ifndef RUMP_CLIENT
 struct sys___getrusage50_args {
 	syscallarg(int) who;
 	syscallarg(struct rusage *) rusage;
 };
 check_syscall_args(sys___getrusage50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___timer_settime50_args {
 	syscallarg(timer_t) timerid;
 	syscallarg(int) flags;
@@ -2512,21 +2943,27 @@ struct sys___timer_settime50_args {
 	syscallarg(struct itimerspec *) ovalue;
 };
 check_syscall_args(sys___timer_settime50)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys___timer_gettime50_args {
 	syscallarg(timer_t) timerid;
 	syscallarg(struct itimerspec *) value;
 };
 check_syscall_args(sys___timer_gettime50)
+#endif /* !RUMP_CLIENT */
 #if defined(NTP) || !defined(_KERNEL_OPT)
 
+#ifndef RUMP_CLIENT
 struct sys___ntp_gettime50_args {
 	syscallarg(struct ntptimeval *) ntvp;
 };
 check_syscall_args(sys___ntp_gettime50)
+#endif /* !RUMP_CLIENT */
 #else
 #endif
 
+#ifndef RUMP_CLIENT
 struct sys___wait450_args {
 	syscallarg(pid_t) pid;
 	syscallarg(int *) status;
@@ -2534,6 +2971,7 @@ struct sys___wait450_args {
 	syscallarg(struct rusage *) rusage;
 };
 check_syscall_args(sys___wait450)
+#endif /* !RUMP_CLIENT */
 
 struct sys___mknod50_args {
 	syscallarg(const char *) path;
@@ -2705,6 +3143,7 @@ struct sys___quotactl_args {
 };
 check_syscall_args(sys___quotactl)
 
+#ifndef RUMP_CLIENT
 struct sys_posix_spawn_args {
 	syscallarg(pid_t *) pid;
 	syscallarg(const char *) path;
@@ -2714,7 +3153,9 @@ struct sys_posix_spawn_args {
 	syscallarg(char *const *) envp;
 };
 check_syscall_args(sys_posix_spawn)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_recvmmsg_args {
 	syscallarg(int) s;
 	syscallarg(struct mmsghdr *) mmsg;
@@ -2723,7 +3164,9 @@ struct sys_recvmmsg_args {
 	syscallarg(struct timespec *) timeout;
 };
 check_syscall_args(sys_recvmmsg)
+#endif /* !RUMP_CLIENT */
 
+#ifndef RUMP_CLIENT
 struct sys_sendmmsg_args {
 	syscallarg(int) s;
 	syscallarg(struct mmsghdr *) mmsg;
@@ -2731,11 +3174,13 @@ struct sys_sendmmsg_args {
 	syscallarg(unsigned int) flags;
 };
 check_syscall_args(sys_sendmmsg)
+#endif /* !RUMP_CLIENT */
 
 /*
  * System call prototypes.
  */
 
+#ifndef RUMP_CLIENT
 int	sys_syscall(struct lwp *, const struct sys_syscall_args *, register_t *);
 
 int	sys_exit(struct lwp *, const struct sys_exit_args *, register_t *);
@@ -3624,4 +4069,5 @@ int	sys_recvmmsg(struct lwp *, const struct sys_recvmmsg_args *, register_t *);
 
 int	sys_sendmmsg(struct lwp *, const struct sys_sendmmsg_args *, register_t *);
 
+#endif /* !RUMP_CLIENT */
 #endif /* _SYS_SYSCALLARGS_H_ */
