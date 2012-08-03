@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.3.10.2 2009/09/05 18:52:32 matt Exp $	*/
+/*	membar_ops.S,v 1.3.10.2 2009/09/05 18:52:32 matt Exp	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #endif
 
 	.text
+	.set noreorder
 
 LEAF(_membar_sync)
 	j	ra
