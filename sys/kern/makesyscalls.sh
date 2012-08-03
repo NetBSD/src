@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.124 2012/08/03 11:31:33 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.125 2012/08/03 18:08:01 matt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -532,6 +532,7 @@ function parseline() {
 
 	isvarargs = 0;
 	args64 = 0;
+	ptr = 0;
 	while (f <= end) {
 		if ($f == "...") {
 			f++;
@@ -567,6 +568,13 @@ function parseline() {
 			else
 				sycall_flags = "SYCALL_ARG"argc-1"_64 | " sycall_flags;
 			args64++;
+		}
+		if (index(argtype[argc], "*") != 0 && ptr == 0) {
+			if (sycall_flags == "0")
+				sycall_flags = "SYCALL_ARG_PTR";
+			else
+				sycall_flags = "SYCALL_ARG_PTR | " sycall_flags;
+			ptr = 1;
 		}
 		argname[argc]=$f;
 		f += 2;			# skip name, and any comma
