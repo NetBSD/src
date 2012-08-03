@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.41 2012/06/02 18:32:27 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.42 2012/08/03 07:54:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.41 2012/06/02 18:32:27 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.42 2012/08/03 07:54:14 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -947,6 +947,23 @@ bad:
 			    ndata + ELF_NOTE_PAX_NAMESZ,
 			    sizeof(epp->ep_pax_flags));
 			break;
+
+#ifdef __arm__
+		case ELF_NOTE_TYPE_ARMEABI_TAG:
+			if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
+			    np->n_descsz != ELF_NOTE_ARMEABI_DESCSZ ||
+			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
+			    ELF_NOTE_NETBSD_NAMESZ))
+				goto bad;
+			{
+				int tmp = *(int *)(ndata +
+				    roundup(ELF_NOTE_NETBSD_NAMESZ,
+					    sizeof(int)));
+				if (tmp == ELF_NOTE_ARMEABI_AAPCS)
+					epp->ep_flags |= EXEC_ARM_AAPCS;
+			}
+			break;
+#endif
 
 		case ELF_NOTE_TYPE_SUSE_VERSION_TAG:
 			break;
