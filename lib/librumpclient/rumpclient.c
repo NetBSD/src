@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.48 2012/03/21 10:10:37 matt Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.49 2012/08/03 11:31:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -29,13 +29,36 @@
  * Client side routines for rump syscall proxy.
  */
 
+#include "rumpuser_port.h"
+
+/*
+ * We use kqueue on NetBSD, poll elsewhere.  Theoretically we could
+ * use kqueue on other BSD's too, but I haven't tested those.  We
+ * want to use kqueue because it will give us the ability to get signal
+ * notifications but defer their handling to a stage where we do not
+ * hold the communication lock.  Taking a signal while holding on to
+ * that lock may cause a deadlock.  Therefore, block signals throughout
+ * the RPC when using poll.  This unfortunately means that the normal
+ * SIGINT way of stopping a process while it is undergoing rump kernel
+ * RPC will not work.  If anyone know which Linux system call handles
+ * the above scenario correctly, I'm all ears.
+ */
+
+#ifdef __NetBSD__
+#define USE_KQUEUE
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.48 2012/03/21 10:10:37 matt Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.49 2012/08/03 11:31:34 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/event.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+
+#ifdef USE_KQUEUE
+#include <sys/event.h>
+#endif
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -70,9 +93,11 @@ ssize_t (*host_sendmsg)(int, const struct msghdr *, int);
 int	(*host_setsockopt)(int, int, int, const void *, socklen_t);
 int	(*host_dup)(int);
 
+#ifdef USE_KQUEUE
 int	(*host_kqueue)(void);
 int	(*host_kevent)(int, const struct kevent *, size_t,
 		       struct kevent *, size_t, const struct timespec *);
+#endif
 
 int	(*host_execve)(const char *, char *const[], char *const[]);
 
@@ -197,14 +222,17 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
-			struct kevent kev[8];
-			int gotresp, dosig, rv, i;
+			int gotresp, dosig, rv;
 
 			spc->spc_istatus = SPCSTATUS_BUSY;
 			pthread_mutex_unlock(&spc->spc_mtx);
 
 			dosig = 0;
 			for (gotresp = 0; !gotresp; ) {
+#ifdef USE_KQUEUE
+				struct kevent kev[8];
+				int i;
+
 				/*
 				 * typically we don't have a frame waiting
 				 * when we come in here, so call kevent now
@@ -239,6 +267,15 @@ cliwaitresp(struct spclient *spc, struct respwait *rw, sigset_t *mask,
 				 * determine what happens next.
 				 */
  activity:
+#else /* USE_KQUEUE */
+				struct pollfd pfd;
+
+				pfd.fd = clispc.spc_fd;
+				pfd.events = POLLIN;
+
+				rv = host_poll(&pfd, 1, -1);
+#endif /* !USE_KQUEUE */
+
 				switch (readframe(spc)) {
 				case 0:
 					continue;
@@ -343,7 +380,29 @@ handshake_req(struct spclient *spc, int type, void *data,
 	if (type == HANDSHAKE_FORK) {
 		bonus = sizeof(rf);
 	} else {
+#ifdef __NetBSD__
+		/* would procfs work on NetBSD too? */
 		myprogname = getprogname();
+#else
+		int fd = open("/proc/self/comm", O_RDONLY);
+		if (fd == -1) {
+			myprogname = "???";
+		} else {
+			static char commname[128];
+
+			if (read(fd, commname, sizeof(commname)) > 0) {
+				char *n;
+
+				n = strrchr(commname, '\n');
+				if (n)
+					*n = '\0';
+				myprogname = commname;
+			} else {
+				myprogname = "???";
+			}
+			close(fd);
+		}
+#endif
 		bonus = strlen(myprogname)+1;
 	}
 
@@ -620,10 +679,9 @@ doconnect(void)
 {
 	struct respwait rw;
 	struct rsp_hdr rhdr;
-	struct kevent kev[NSIG+1];
 	char banner[MAXBANNER];
 	struct pollfd pfd;
-	int s, error, flags, i;
+	int s, error, flags;
 	ssize_t n;
 
 	if (kq != -1)
@@ -668,7 +726,7 @@ doconnect(void)
 
 	pfd.fd = s;
 	pfd.events = POLLIN;
-	while (host_connect(s, serv_sa, (socklen_t)serv_sa->sa_len) == -1) {
+	while (host_connect(s, serv_sa, parsetab[ptab_idx].slen) == -1) {
 		if (errno == EINTR)
 			continue;
 		ERRLOG(("rump_sp: client connect failed: %s\n",
@@ -702,6 +760,11 @@ doconnect(void)
 	clispc.spc_state = SPCSTATE_RUNNING;
 	clispc.spc_reconnecting = 0;
 
+#ifdef USE_KQUEUE
+{
+	struct kevent kev[NSIG+1];
+	int i;
+
 	/* setup kqueue, we want all signals and the fd */
 	if ((kq = dupgood(host_kqueue(), 0)) == -1) {
 		ERRLOG(("rump_sp: cannot setup kqueue"));
@@ -717,6 +780,8 @@ doconnect(void)
 		ERRLOG(("rump_sp: kevent() failed"));
 		return -1;
 	}
+}
+#endif /* USE_KQUEUE */
 
 	return 0;
 }
@@ -733,14 +798,14 @@ doinit(void)
 }
 
 void *rumpclient__dlsym(void *, const char *);
-void *rumphijack_dlsym(void *, const char *) __attribute__((__weak__));
 void *
 rumpclient__dlsym(void *handle, const char *symbol)
 {
 
 	return dlsym(handle, symbol);
 }
-__weak_alias(rumphijack_dlsym,rumpclient__dlsym)
+void *rumphijack_dlsym(void *, const char *)
+    __attribute__((__weak__, alias("rumpclient__dlsym")));
 
 static pid_t init_done = 0;
 
@@ -771,7 +836,7 @@ rumpclient_init(void)
 	sigfillset(&fullset);
 
 	/*
-	 * sag mir, wo die symbol sind.  zogen fort, der krieg beginnt.
+	 * sag mir, wo die symbols sind.  zogen fort, der krieg beginnt.
 	 * wann wird man je verstehen?  wann wird man je verstehen?
 	 */
 #define FINDSYM2(_name_,_syscall_)					\
@@ -784,7 +849,12 @@ rumpclient_init(void)
 			    dlerror());					\
 	}
 #define FINDSYM(_name_) FINDSYM2(_name_,_name_)
+#ifdef __NetBSD__
 	FINDSYM2(socket,__socket30)
+#else
+	FINDSYM(socket)
+#endif
+
 	FINDSYM(close)
 	FINDSYM(connect)
 	FINDSYM(fcntl)
@@ -793,13 +863,17 @@ rumpclient_init(void)
 	FINDSYM(sendmsg)
 	FINDSYM(setsockopt)
 	FINDSYM(dup)
-	FINDSYM(kqueue)
 	FINDSYM(execve)
+
+#ifdef USE_KQUEUE
+	FINDSYM(kqueue)
 #if !__NetBSD_Prereq__(5,99,7)
 	FINDSYM(kevent)
 #else
 	FINDSYM2(kevent,_sys___kevent50)
 #endif
+#endif /* USE_KQUEUE */
+
 #undef	FINDSYM
 #undef	FINDSY2
 
@@ -960,11 +1034,14 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 	case RUMPCLIENT_CLOSE_CLOSE:
 	case RUMPCLIENT_CLOSE_DUP2:
 		if (fd == clispc.spc_fd) {
-			struct kevent kev[2];
-
 			newfd = dupgood(clispc.spc_fd, 1);
 			if (newfd == -1)
 				return -1;
+
+#ifdef USE_KQUEUE
+			{
+			struct kevent kev[2];
+
 			/*
 			 * now, we have a new socket number, so change
 			 * the file descriptor that kqueue is
@@ -981,12 +1058,16 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 				return -1;
 			}
 			clispc.spc_fd = newfd;
+			}
 		}
 		if (fd == kq) {
 			newfd = dupgood(kq, 1);
 			if (newfd == -1)
 				return -1;
 			kq = newfd;
+#else /* USE_KQUEUE */
+			clispc.spc_fd = newfd;
+#endif /* !USE_KQUEUE */
 		}
 		break;
 	}

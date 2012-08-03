@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpclient.h,v 1.11 2011/12/16 23:19:28 joerg Exp $	*/
+/*	$NetBSD: rumpclient.h,v 1.12 2012/08/03 11:31:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,14 @@
 #define _RUMP_RUMPCLIENT_H_
 
 #include <sys/types.h>
-#include <sys/null.h>
+
+#if !defined(__returns_twice)
+#ifdef __GNUC__
+#define __returns_twice __attribute__((__returns_twice__))
+#else /* __GNUC__ */
+#define __returns_twice
+#endif /* !__GNUC__ */
+#endif /* !__returns_twice */
 
 struct rumpclient_fork;
 
@@ -61,6 +68,7 @@ enum rumpclient_closevariant {
 };
 int rumpclient__closenotify(int *, enum rumpclient_closevariant);
 
+
 /*
  * vfork needs to be implemented as an inline to make everything
  * run in the caller's stackframe.
@@ -72,7 +80,7 @@ rumpclient__dofork(pid_t (*forkfn)(void))
 	pid_t pid;
 	int childran = 0;
 
-	if ((rf = rumpclient_prefork()) == NULL)
+	if (!(rf = rumpclient_prefork()))
 		return -1;
                 
 	switch ((pid = forkfn())) {
