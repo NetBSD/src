@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.137 2012/05/02 23:33:11 rmind Exp $	*/
+/*	$NetBSD: exec.h,v 1.138 2012/08/03 07:54:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -224,6 +224,8 @@ struct exec_package {
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
 #define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
+
+#define	EXEC_ARM_AAPCS	0x8000		/* ARM MD flag: uses AAPCS ABI */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
