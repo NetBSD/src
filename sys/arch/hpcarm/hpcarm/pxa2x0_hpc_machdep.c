@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.16 2012/07/29 00:07:06 matt Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.17 2012/08/03 15:59:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.16 2012/07/29 00:07:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.17 2012/08/03 15:59:04 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.16 2012/07/29 00:07:06 matt
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
+#include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
