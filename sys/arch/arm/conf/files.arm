@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.106 2012/07/21 12:19:15 skrll Exp $
+#	$NetBSD: files.arm,v 1.107 2012/08/03 07:59:22 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -150,6 +150,7 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_cortex
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/cpufunc_asm_sheeva.S	cpu_sheeva
+file	arch/arm/arm/cpu_exec.c
 file	arch/arm/arm/fusu.S
 file	arch/arm/arm/idle_machdep.c
 file	arch/arm/arm/lock_cas.S
@@ -186,6 +187,10 @@ file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32
+
+#
+include "compat/netbsd32/files.netbsd32"
+file	arch/arm/arm32/netbsd32_machdep.c	arm32 & compat_netbsd32
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/ossaudio/files.ossaudio"
