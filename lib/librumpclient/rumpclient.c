@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.49 2012/08/03 11:31:34 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.50 2012/08/03 14:52:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.49 2012/08/03 11:31:34 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.50 2012/08/03 14:52:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -390,6 +390,7 @@ handshake_req(struct spclient *spc, int type, void *data,
 		} else {
 			static char commname[128];
 
+			memset(commname, 0, sizeof(commname));
 			if (read(fd, commname, sizeof(commname)) > 0) {
 				char *n;
 
