@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2012/07/26 20:50:44 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2012/08/03 09:11:31 kiyohara Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -29,7 +29,7 @@ KERNEL_SETS+=		IXM1200 HDL_G RPI
 KERNEL_SETS+=		IXM1200 NSLU2
 .endif
 
-KERNEL_SUFFIXES=	bin srec
+KERNEL_SUFFIXES=	bin srec ub
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
