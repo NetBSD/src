@@ -1,4 +1,4 @@
-.\"	$NetBSD: tdvfb.4,v 1.6 2012/08/03 21:40:34 rkujawa Exp $
+.\"	$NetBSD: tdvfb.4,v 1.7 2012/08/03 21:51:11 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Radoslaw Kujawa
 .\" All rights reserved.
@@ -87,15 +87,20 @@ attachment code is based mostly on the
 driver by
 .An Michael Lorenz .
 .Sh BUGS
-3Dfx Voodoo2 has a simple 2D graphics engine. The
+3Dfx Voodoo2 has a simple 2D graphics engine.
+The
 .Nm
 driver has minimal support
-for this engine. It activated only when the card is running in a 16-bit mode
+for this engine.
+It is activated only when the card is running in a 16-bit mode
 (this is a hardware limitation).
 .Pp
-Video mode is hard-coded to 800x600 at 60Hz. Default bit depth for little
-endian machines is 16-bit, for big endian machines it is 32-bit. Resolution and
-depth should be selectable at least via kernel configuration file. It is not
+Video mode is hard-coded to 800x600 at 60Hz.
+Default bit depth for little
+endian machines is 16-bit, for big endian machines it is 32-bit.
+Resolution and
+depth should be selectable at least via kernel configuration file.
+It is not
 possible to detect what resolutions are supported by the monitor, since Voodoo
 Graphics and Voodoo2 have no DDC interface.
 .Pp
