@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 2012/07/27 05:36:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.239 2012/08/03 13:14:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2012/07/27 05:36:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2012/08/03 13:14:20 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ paddr_t msgbufpa;
 
 int	machineid;
 int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+extern int	physmem;	/* max supported memory, changes to actual */
 
 extern  int   freebufspace;
 extern	u_int lowram;
