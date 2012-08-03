@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.77 2012/08/03 15:56:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.77 2012/08/03 15:56:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -143,17 +143,7 @@ vm_offset_t pagetables_start;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-extern pv_addr_t kernelstack;	/* in arm32_machdep.c */
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
