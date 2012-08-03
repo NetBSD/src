@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2012/02/13 17:07:45 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2012/08/03 07:59:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ typedef struct {
 		__vfpregset_t __vfpregs;
 	} __fpu;
 	__greg_t	_mc_tlsbase;
-} mcontext_t;
+} mcontext_t, mcontext32_t;
 
 /* Machine-dependent uc_flags */
 #define	_UC_ARM_VFP	0x00010000	/* FPU field is VFP */
