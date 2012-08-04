@@ -1,7 +1,8 @@
+#include <machine/asm.h>
 
 .globl	OPENSSL_cpuid_setup
 .section	.init
-	call	OPENSSL_cpuid_setup@GOTPCREL(%rip)
+	call	PIC_PLT(OPENSSL_cpuid_setup)
 
 .hidden	OPENSSL_ia32cap_P
 .comm	OPENSSL_ia32cap_P,8,4
