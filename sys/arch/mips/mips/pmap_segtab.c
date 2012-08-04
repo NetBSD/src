@@ -181,7 +181,7 @@ pmap_segmap(struct pmap *pmap, vaddr_t va)
 		return NULL;
 #endif
 
-	return stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
+	return stp->seg_tab[(va >> SEGSHIFT) & (NSEGPG - 1)];
 }
 
 pt_entry_t *
@@ -214,8 +214,8 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 {
 	pmap_segtab_t *stp = *stp_p;
 
-	KASSERT(((va / vinc) & (PMAP_SEGTABSIZE - 1)) == 0);
-	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++, va += vinc) {
+	KASSERT(((va / vinc) & (NSEGPG - 1)) == 0);
+	for (size_t i = 0; i < NSEGPG; i++, va += vinc) {
 #ifdef _LP64
 		if (vinc > NBSEG) {
 			if (stp->seg_seg[i] != NULL) {
@@ -341,7 +341,7 @@ pmap_segtab_alloc(void)
 	}
 
 #ifdef PARANOIADIAG
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+	for (i = 0; i < NSEGPG; i++) {
 		if (stp->seg_tab[i] != 0)
 			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
 	}
@@ -388,14 +388,19 @@ pmap_segtab_activate(struct pmap *pm, struct lwp *l)
 	if (l == curlwp) {
 		KASSERT(pm == l->l_proc->p_vmspace->vm_map.pmap);
 #ifdef _LP64
-		l->l_cpu->ci_pmap_segtab = pm->pm_segtab;
 		if (pm != pmap_kernel()) {
-			l->l_cpu->ci_pmap_seg0tab = pm->pm_segtab->seg_seg[0];
+			l->l_cpu->ci_pmap_segtab[0] = pm->pm_segtab;
+			l->l_cpu->ci_pmap_seg0tab[0] = pm->pm_segtab->seg_seg[0];
 		} else {
-			l->l_cpu->ci_pmap_seg0tab = NULL;
+			l->l_cpu->ci_pmap_segtab[0] = NULL;
+			l->l_cpu->ci_pmap_seg0tab[0] = NULL;
 		}
 #else
-		l->l_cpu->ci_pmap_seg0tab = pm->pm_segtab;
+		if (pm != pmap_kernel()) {
+			l->l_cpu->ci_pmap_seg0tab[0] = pm->pm_segtab;
+		} else {
+			l->l_cpu->ci_pmap_seg0tab[0] = NULL;
+		}
 #endif
 	}
 }
@@ -493,7 +498,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #endif
 		pte = (pt_entry_t *)mips_pmap_map_poolpage(pa);
 		pt_entry_t ** const pte_p =
-		    &stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
+		    &stp->seg_tab[(va >> SEGSHIFT) & (NSEGPG - 1)];
 #ifdef MULTIPROCESSOR
 		pt_entry_t *opte = atomic_cas_ptr(pte_p, NULL, pte);
 		/*
@@ -514,7 +519,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #else
 		*pte_p = pte;
 #endif
-		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
+		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (NSEGPG - 1)]);
 
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 #ifdef PARANOIADIAG

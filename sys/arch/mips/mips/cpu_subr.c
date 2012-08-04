@@ -80,9 +80,13 @@ struct cpu_info cpu_info_store
 	.ci_fpcurlwp = &lwp0,
 #endif
 	.ci_tlb_info = &pmap_tlb0_info,
-	.ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_seg0tab = {
+		[0] = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	},
 #ifdef _LP64
-	.ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_segtab = {
+		[0] = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	},
 #endif
 	.ci_cpl = IPL_HIGH,
 	.ci_tlb_slot = -1,
@@ -160,6 +164,11 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
+
+#ifdef _LP64
+	ci->ci_pmap_segtab[1] = cpu_info_store.ci_pmap_segtab[1];
+#endif
+	ci->ci_pmap_seg0tab[1] = cpu_info_store.ci_pmap_seg0tab[1];
 
 	/*
 	 * Attach its TLB info (which must be direct-mapped)

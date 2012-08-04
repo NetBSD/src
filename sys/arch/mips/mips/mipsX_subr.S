@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.57 2012/07/09 17:11:32 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.58 2012/08/04 07:20:31 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -355,38 +355,48 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	bnez	k0, MIPSX(tlblocked)		#03: a lie
 						# lui in delay slot
 #endif
-	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#00: k1=hi of seg0tab
-	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#01: k0=bad address
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
+	bgez	k0, 1f				#01: k0<0 -> kernel fault
+	 lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#02: k1=hi of seg0tab
+	PTR_ADDU k1, 1 << PTR_SCALESHIFT	#03: point to kernel slot
+1:
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+	_EXT	k0, k0, SEGSHIFT, 31-SEGSHIFT	#04: k0=VA[30:22]
+#else
+	PTR_SRL k0, (SEGSHIFT-PTR_SCALESHIFT)	#04: k0=seg offset (almost)
+#endif
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#04: k1=seg0tab
 MIPSX(tlb_miss_common):
 #ifdef _LP64
 	beqz	k1, MIPSX(nopagetable)		#05: is there a pagetable?
 	 nop					#06
 #endif
-	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#07: k0=seg offset (mask 0x3)
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+	_INS	k1, k0, PTR_SCALESHIFT, SEGLENGTH #07: k0=seg table index
+#else
+	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#07: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0				#08: k1=seg entry address
+#endif
 	PTR_L	k1, 0(k1)			#09: k1=seg entry
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
 #if (PGSHIFT & 1) == 0
-	 _EXT	k0, k0, PGSHIFT+1, PGSHIFT-3	#0c: k0=VA[13:21]
-	_INS	k1, k0, 3, PGSHIFT-3		#0d: k0=page table index
+	 _EXT	k0, k0, PGSHIFT+1, PTPLENGTH-1	#0c: k0=VA[21:13]
+	_INS	k1, k0, PTPSHIFT+1, PTPLENGTH-1	#0d: k0=page table index
 						#0d: k1=pte address
 #else
-	 _EXT	k0, k0, PGSHIFT, PGSHIFT-2	#0c: k0=VA[13:21]
-	_INS	k1, k0, 2, PGSHIFT-2		#0d: k0=page table index
+	 _EXT	k0, k0, PGSHIFT, PTPLENGTH	#0c: k0=VA[21:12]
+	_INS	k1, k0, PTPSHIFT, PTPLENGTH	#0d: k0=page table index
 						#0d: k1=pte address
 #endif
 #else
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
-	 PTR_SRL k0, (PGSHIFT-2)		#0c: k0=VPN (aka va>>10)
+	 PTR_SRL k0, PTPLENGTH			#0c: k0=VPN (aka va>>10)
 #if (PGSHIFT & 1) == 0
-	andi	k0, (NBPG-8)			#0d: k0=page table offset
+	andi	k0, (NPTEPG/2-1) << (PTPSHIFT+1)#0d: k0=page table offset
 #else
-	andi	k0, (NBPG-4)			#0d: k0=page table offset
+	andi	k0, (NPTEPG-1) << PTPSHIFT	#0d: k0=page table offset
 #endif
 	PTR_ADDU k1, k0				#0e: k1=pte address
 #endif
@@ -471,33 +481,55 @@ VECTOR(MIPSX(xtlb_miss), unknown)
 	 nop
 #endif
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
-#ifdef _LP64
 #ifdef MIPS3
 	nop					#01: nop
 #endif
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
-	 PTR_SRL k1,k0,2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)+PGSHIFT #03: clear valid bits
+#ifdef _LP64
+	PTR_SLL k1, k0, 2			#02: clear top 2 bits
+	PTR_SRL k1, (XSEGSHIFT+XSEGLENGTH+2)	#03: clear valid bits
 	bnez	k1, MIPSX(nopagetable)		#04: not legal address
-	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #05: k0=seg offset (almost)
-	lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#06: k1=hi of segtab
-	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#07: k0=seg offset (mask 0x3)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#08: k1=segment tab
-	PTR_ADDU k1, k0				#09: k1=seg entry address
-	PTR_L	k1, 0(k1)			#0a: k1=seg entry
+	 lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#06: k1=hi of segtab
+	bgez	k0, 1f				#07: k0<0 -> kernel access
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+	 _EXT	k0, k0, XSEGSHIFT, XSEGLENGTH	#08: k0=VA[30:22]
 #else
-	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
-	 dsrl	k0, 31				#03: clear low 31 bits
-	bnez	k0, MIPSX(nopagetable)		#04: not legal address
-	 nop
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#05: k1=segment tab base
-#endif /* _LP64 */
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0b: k0=bad address (again)
-#ifdef MIPS3
-	nop					#0c
+	 PTR_SRL k0, (XSEGSHIFT-PTR_SCALESHIFT)	#08: k0=seg offset (almost)
 #endif
-	b	MIPSX(tlb_miss_common)		#0d
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #0e: k0=seg offset (almost)
+	PTR_ADDU k1, 1 << PTR_SCALESHIFT	#09: point to kernel one
+1:	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#0a: k1=segment tab
+
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+	_INS	k1, k0, PTR_SCALESHIFT, XSEGLENGTH #0b: k0=seg table index
+#else
+	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#0b: k0=seg offset (mask 0x3)
+	PTR_ADDU k1, k0				#0c: k1=seg entry address
+#endif
+	PTR_L	k1, 0(k1)			#0d: k1=seg entry
+#else
+	bgez	k0, 1f				#02: k0<0 -> kernel fault
+	 lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#03: k1=hi of seg0tab
+	PTR_ADDU k1, 1 << PTR_SCALESHIFT	#04: point to kernel entry
+1:	PTR_SRA k0, 31				#05: clear low 31 bits
+	beqz	k0, 2f				#06: legal address
+	 PTR_ADDU k0, 1				#08: kernel=was -1, now 0
+	bnez	k0, MIPSX(nopagetable)		#09: not legal address
+	 nop					#0a:  delay slot
+2:	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#0b: k1=segment tab base
+#endif /* _LP64 */
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0e: k0=bad address (again)
+#ifdef MIPS3
+	nop					#0f
+#endif
+	b	MIPSX(tlb_miss_common)		#10
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+#ifdef _LP64
+	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#11: k0=VA[30:22]
+#else
+	 _EXT	k0, k0, SEGSHIFT, 31-SEGSHIFT	#11: k0=VA[30:22]
+#endif
+#else
+	 PTR_SRL k0, SEGSHIFT-PTR_SCALESHIFT	#11: k0=seg offset (almost)
+#endif
 	.set	at
 _VECTOR_END(MIPSX(xtlb_miss))
 #else
@@ -1606,6 +1638,11 @@ END(MIPSX(cache_exception))
  */
 LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	.set	noat
+#if defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
+#define	TLB_MISS_EXCEPTION_EXIT	_C_LABEL(MIPSX(tlbunlock_kern_gen_exception))
+#else
+#define	TLB_MISS_EXCEPTION_EXIT	_C_LABEL(MIPSX(kern_gen_exception))
+#endif
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -1614,9 +1651,15 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	dsll32	k1, k1, 0
 #endif
 	PTR_SUBU k0, k1
-	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+#ifdef _LP64
+	li	k1, (NSEGPG * NSEGPG * NPTEPG)
+#elif defined(newsmips)
+	li	k1, 0xfff00000
+#else
+	li	k1, -MIPS_KSEG2_START >> PGSHIFT
+#endif
 	PTR_SRL	k0, PGSHIFT
-	sltu	k1, k0, k1
+	sltu	k1, k0, k1			# index within range? (unsigned)
 #ifdef newsmips
 	/* news5000 has ROM work area at 0xfff00000. */
 	bnez	k1, 1f
@@ -1624,23 +1667,43 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	j	checkromwork
 	 nop					# - delay slot -
 1:
-#elif defined(MULTIPROCESSOR) && (MIPS64_RMIXL + MIPS64R2_RMIXL) > 0
-	beqz	k1, _C_LABEL(MIPSX(tlbunlock_kern_gen_exception)) # full trap processing
+#else
+	beqz	k1, TLB_MISS_EXCEPTION_EXIT	# full trap processing
 	 nop
-#else
+#endif
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
+	PTR_LA	k1, _C_LABEL(pmap_kern_segtab)
+	# 64: [39:31][30:22][21:12] -> [11:3][11:3][11:2]
+	# 32:        [31:22][21:12] ->       [11:2][11:2]
+#ifdef _LP64
 	/*
-	 * If we are beyond the bounds of Sysmap, let trap panic for us.
+	 * Get the top level page table pointer.
 	 */
-	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception)) # full trap processing
+	PTR_SRL	k0, (3 * PGSHIFT - 2*PTR_SCALESHIFT - 2)
+	and	k0, (NSEGPG-1) << PTR_SCALESHIFT
+	PTR_ADD k1, k0
+	PTR_L	k1, 0(k1)
+	beqz	k1, TLB_MISS_EXCEPTION_EXIT	# full trap processing
 	 nop					# - delay slot -
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
 #endif
-	PTR_L	k1, _C_LABEL(Sysmap)
+	PTR_SRL	k0, (2 * PGSHIFT - PTR_SCALESHIFT - 2)
+	and	k0, (NSEGPG-1) << PTR_SCALESHIFT
+	PTR_ADD k1, k0
+	PTR_L	k1, 0(k1)
+	beqz	k1, TLB_MISS_EXCEPTION_EXIT	# full trap processing
+	 nop					# - delay slot -
+	#
+	# Now get the index of the PTE in the bottom page.
+	#
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+	PTR_SRL	k0, PGSHIFT - 2
 #if (PGSHIFT & 1) == 0
-	PTR_SRL	k0, 1
-	PTR_SLL	k0, 3				# compute offset from index
+	and	k0, (NPTEPG/2-1) << 3
 #else
-	PTR_SLL	k0, 2				# compute offset from index
+	and	k0, (NPTEPG-1) << 2
 #endif
+
 	PTR_ADDU k1, k0
 	INT_L	k0, 0(k1)			# get PTE entry
 #if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
@@ -1735,14 +1798,48 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 	bgez	k0, TLB_INVALID_EXCEPTION_EXIT	# full trap processing
 	 nop					# - delay slot -
 	PTR_SUBU k0, k1
-	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
+#ifdef _LP64
+	li	k1, (NSEGPG * NSEGPG * NPTEPG)
+#elif defined(newsmips)
+	li	k1, 0xfff00000
+#else
+	li	k1, -MIPS_KSEG2_START >> PGSHIFT
+#endif
 	PTR_SRL	k0, PGSHIFT
 	sltu	k1, k0, k1
 	beqz	k1, TLB_INVALID_EXCEPTION_EXIT	# No. Failing beyond...
 	 nop					# - delay slot -
-	PTR_L	k1, _C_LABEL(Sysmap)
-	PTR_SLL	k0, 2				# compute offset from index
-	PTR_ADDU k1, k0
+
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
+	PTR_LA	k1, _C_LABEL(pmap_kern_segtab)
+	# 64: [39:31][30:22][21:12] -> [11:3][11:3][11:2]
+	# 32:        [31:22][21:12] ->       [11:2][11:2]
+#ifdef _LP64
+	/*
+	 * Get the top level page table pointer.
+	 */
+	PTR_SRL	k0, (3 * PGSHIFT - 2*PTR_SCALESHIFT - 2)
+	and	k0, (NSEGPG-1) << PTR_SCALESHIFT
+	PTR_ADD k1, k0
+	PTR_L	k1, 0(k1)
+	beqz	k1, TLB_MISS_EXCEPTION_EXIT	# full trap processing
+	 nop					# - delay slot -
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
+#endif
+	PTR_SRL	k0, (2 * PGSHIFT - PTR_SCALESHIFT - 2)
+	and	k0, (NSEGPG-1) << PTR_SCALESHIFT
+	PTR_ADD k1, k0
+	PTR_L	k1, 0(k1)
+	beqz	k1, TLB_MISS_EXCEPTION_EXIT	# full trap processing
+	 nop					# - delay slot -
+	#
+	# Now get the index of the PTE in the bottom page.
+	#
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
+	PTR_SRL	k0, PGSHIFT - 2
+	and	k0, (NPTEPG-1) << 2
+	PTR_ADDU k1, k0				# k1 now points to pte
+
 	tlbp					# Probe the invalid entry
 	COP0_SYNC
 
