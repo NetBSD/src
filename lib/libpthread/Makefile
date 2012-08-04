@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2012/04/04 10:59:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.77 2012/08/04 15:13:09 matt Exp $
 #
 
 WARNS?=	5
@@ -217,4 +217,4 @@ MLINKS+=	pthread_testcancel.3 pthread_setcanceltype.3
 # pthread_setspecific() and pthread_getspecific(), since the constness
 # of the argument to setspecific() has to be discarded *somewhere*
 # before returning it from getspecific().
-CFLAGS+= -Wno-cast-qual
+CWARNFLAGS+= -Wno-cast-qual
