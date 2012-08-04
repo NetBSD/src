@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $	*/
+/*	$NetBSD: u3g.c,v 1.25 2012/08/04 12:55:06 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.24 2011/12/23 00:51:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.25 2012/08/04 12:55:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,7 @@ static const struct usb_devno u3g_devs[] = {
 	/* OEM: Qualcomm, Inc. */
 	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_CDMA_MSM },
 	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_ZTE_MF626 },
+	{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM },
 
 	/* OEM: Sierra Wireless: */
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AC595U },
@@ -503,6 +504,11 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 
 	case USB_VENDOR_QUALCOMMINC:
 		if (uaa->product == USB_PRODUCT_QUALCOMMINC_ZTE_STOR)
+			return u3g_novatel_reinit(uaa->device);
+		break;
+
+	case USB_VENDOR_QUALCOMM:
+		if (uaa->product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
 			return u3g_novatel_reinit(uaa->device);
 		break;
 
