@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.14 2012/07/17 05:47:07 skrll Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.15 2012/08/04 04:06:00 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.14 2012/07/17 05:47:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.15 2012/08/04 04:06:00 kiyohara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -444,7 +444,7 @@ sdmmc_print(void *aux, const char *pnp)
 	struct sdmmc_attach_args *sa = aux;
 	struct sdmmc_function *sf = sa->sf;
 	struct sdmmc_cis *cis = &sf->sc->sc_fn0->cis;
-	int i;
+	int i, x;
 
 	if (pnp) {
 		if (sf->number == 0)
@@ -455,16 +455,22 @@ sdmmc_print(void *aux, const char *pnp)
 		if (i != 0)
 			printf("\"");
 
-		if (cis->manufacturer != SDMMC_VENDOR_INVALID &&
-		    cis->product != SDMMC_PRODUCT_INVALID) {
+		if ((cis->manufacturer != SDMMC_VENDOR_INVALID &&
+		    cis->product != SDMMC_PRODUCT_INVALID) ||
+		    sa->interface != SD_IO_SFIC_NO_STANDARD) {
+			x = !!(cis->manufacturer != SDMMC_VENDOR_INVALID);
+			x += !!(cis->product != SDMMC_PRODUCT_INVALID);
+			x += !!(sa->interface != SD_IO_SFIC_NO_STANDARD);
 			printf("%s(", i ? " " : "");
 			if (cis->manufacturer != SDMMC_VENDOR_INVALID)
 				printf("manufacturer 0x%x%s",
-				    cis->manufacturer,
-				    cis->product == SDMMC_PRODUCT_INVALID ?
-				    "" : ", ");
+				    cis->manufacturer, (--x == 0) ?  "" : ", ");
 			if (cis->product != SDMMC_PRODUCT_INVALID)
-				printf("product 0x%x", cis->product);
+				printf("product 0x%x%s",
+				    cis->product, (--x == 0) ?  "" : ", ");
+			if (sa->interface != SD_IO_SFIC_NO_STANDARD)
+				printf("standard function interface code 0x%x",
+				    sf->interface);
 			printf(")");
 		}
 		printf("%sat %s", i ? " " : "", pnp);
