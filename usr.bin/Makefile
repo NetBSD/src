@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2012/02/16 04:52:47 jmmv Exp $
+#	$NetBSD: Makefile,v 1.209 2012/08/04 15:50:16 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -36,7 +36,7 @@ SUBDIR= apply asa at audio audiocfg \
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
 
-.if MKMAKEMANDB == "no"
+.if (${MKMAKEMANDB} == "no")
 SUBDIR+= apropos whatis
 .endif
 
