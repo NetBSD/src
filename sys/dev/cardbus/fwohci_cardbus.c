@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.34 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.35 2012/08/04 03:55:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.34 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.35 2012/08/04 03:55:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,8 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	       PCI_REVISION(ca->ca_class));
 	aprint_naive("\n");
 
+	fwohci_init(&sc->sc_sc);
+
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_OHCI_MAP_REGISTER,
 	      PCI_MAPREG_TYPE_MEM, 0,
@@ -128,7 +130,7 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
-	if (fwohci_init(&sc->sc_sc) != 0) {
+	if (fwohci_attach(&sc->sc_sc) != 0) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}

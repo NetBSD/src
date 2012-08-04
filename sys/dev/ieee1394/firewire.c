@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.39 2012/04/29 18:31:40 dsl Exp $	*/
+/*	$NetBSD: firewire.c,v 1.40 2012/08/04 03:55:43 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.39 2012/04/29 18:31:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.40 2012/08/04 03:55:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -259,7 +259,6 @@ firewireattach(device_t parent, device_t self, void *aux)
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
 	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev)))
 		aprint_error_dev(self, "kthread_create failed\n");
-	config_pending_incr();
 
 	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
 	if (devlist == NULL) {
@@ -677,6 +676,15 @@ fw_init(struct firewire_comm *fc)
 #endif
 
 	fc->crom_src_buf = NULL;
+}
+
+void
+fw_destroy(struct firewire_comm *fc)
+{
+	mutex_destroy(&fc->arq->q_mtx);
+	mutex_destroy(&fc->ars->q_mtx);
+	mutex_destroy(&fc->atq->q_mtx);
+	mutex_destroy(&fc->ats->q_mtx);
 }
 
 #define BIND_CMP(addr, fwb) \
@@ -1934,8 +1942,6 @@ static void
 fw_bus_probe_thread(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
-
-	config_pending_decr();
 
 	mutex_enter(&fc->wait_lock);
 	while (fc->status != FWBUSDETACH) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.132 2011/07/31 13:51:53 uebayasi Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.133 2012/08/04 03:55:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.132 2011/07/31 13:51:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.133 2012/08/04 03:55:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -323,38 +323,15 @@ static void fwohci_arcv(struct fwohci_softc *, struct fwohci_dbch *);
 #define IRX_CH	36
 
 
-int
+/*
+ * Call fwohci_init before fwohci_attach to initialize the kernel's
+ * data structures well enough that fwohci_detach won't crash, even if
+ * fwohci_attach fails.
+ */
+
+void
 fwohci_init(struct fwohci_softc *sc)
 {
-	uint32_t reg;
-	uint8_t ui[8];
-	int i, mver;
-
-/* OHCI version */
-	reg = OREAD(sc, OHCI_VERSION);
-	mver = (reg >> 16) & 0xff;
-	aprint_normal_dev(sc->fc.dev, "OHCI version %x.%x (ROM=%d)\n",
-	    mver, reg & 0xff, (reg >> 24) & 1);
-	if (mver < 1 || mver > 9) {
-		aprint_error_dev(sc->fc.dev, "invalid OHCI version\n");
-		return ENXIO;
-	}
-
-/* Available Isochronous DMA channel probe */
-	OWRITE(sc, OHCI_IT_MASK, 0xffffffff);
-	OWRITE(sc, OHCI_IR_MASK, 0xffffffff);
-	reg = OREAD(sc, OHCI_IT_MASK) & OREAD(sc, OHCI_IR_MASK);
-	OWRITE(sc, OHCI_IT_MASKCLR, 0xffffffff);
-	OWRITE(sc, OHCI_IR_MASKCLR, 0xffffffff);
-	for (i = 0; i < 0x20; i++)
-		if ((reg & (1 << i)) == 0)
-			break;
-	sc->fc.nisodma = i;
-	aprint_normal_dev(sc->fc.dev, "No. of Isochronous channels is %d.\n",
-	    i);
-	if (i == 0)
-		return ENXIO;
-
 	sc->fc.arq = &sc->arrq.xferq;
 	sc->fc.ars = &sc->arrs.xferq;
 	sc->fc.atq = &sc->atrq.xferq;
@@ -395,6 +372,68 @@ fwohci_init(struct fwohci_softc *sc)
 	sc->atrq.off = OHCI_ATQOFF;
 	sc->atrs.off = OHCI_ATSOFF;
 
+	sc->fc.tcode = tinfo;
+
+	sc->fc.cyctimer = fwohci_cyctimer;
+	sc->fc.ibr = fwohci_ibr;
+	sc->fc.set_bmr = fwohci_set_bus_manager;
+	sc->fc.ioctl = fwohci_ioctl;
+	sc->fc.irx_enable = fwohci_irx_enable;
+	sc->fc.irx_disable = fwohci_irx_disable;
+
+	sc->fc.itx_enable = fwohci_itxbuf_enable;
+	sc->fc.itx_disable = fwohci_itx_disable;
+	sc->fc.timeout = fwohci_timeout;
+	sc->fc.set_intr = fwohci_set_intr;
+#if BYTE_ORDER == BIG_ENDIAN
+	sc->fc.irx_post = fwohci_irx_post;
+#else
+	sc->fc.irx_post = NULL;
+#endif
+	sc->fc.itx_post = NULL;
+
+	sc->intmask = sc->irstat = sc->itstat = 0;
+
+	fw_init(&sc->fc);
+}
+
+/*
+ * Call fwohci_attach after fwohci_init to initialize the hardware and
+ * attach children.
+ */
+
+int
+fwohci_attach(struct fwohci_softc *sc)
+{
+	uint32_t reg;
+	uint8_t ui[8];
+	int i, mver;
+
+/* OHCI version */
+	reg = OREAD(sc, OHCI_VERSION);
+	mver = (reg >> 16) & 0xff;
+	aprint_normal_dev(sc->fc.dev, "OHCI version %x.%x (ROM=%d)\n",
+	    mver, reg & 0xff, (reg >> 24) & 1);
+	if (mver < 1 || mver > 9) {
+		aprint_error_dev(sc->fc.dev, "invalid OHCI version\n");
+		return ENXIO;
+	}
+
+/* Available Isochronous DMA channel probe */
+	OWRITE(sc, OHCI_IT_MASK, 0xffffffff);
+	OWRITE(sc, OHCI_IR_MASK, 0xffffffff);
+	reg = OREAD(sc, OHCI_IT_MASK) & OREAD(sc, OHCI_IR_MASK);
+	OWRITE(sc, OHCI_IT_MASKCLR, 0xffffffff);
+	OWRITE(sc, OHCI_IR_MASKCLR, 0xffffffff);
+	for (i = 0; i < 0x20; i++)
+		if ((reg & (1 << i)) == 0)
+			break;
+	sc->fc.nisodma = i;
+	aprint_normal_dev(sc->fc.dev, "No. of Isochronous channels is %d.\n",
+	    i);
+	if (i == 0)
+		return ENXIO;
+
 	for (i = 0; i < sc->fc.nisodma; i++) {
 		sc->fc.it[i] = &sc->it[i].xferq;
 		sc->fc.ir[i] = &sc->ir[i].xferq;
@@ -405,8 +444,6 @@ fwohci_init(struct fwohci_softc *sc)
 		sc->it[i].off = OHCI_ITOFF(i);
 		sc->ir[i].off = OHCI_IROFF(i);
 	}
-
-	sc->fc.tcode = tinfo;
 
 	sc->fc.config_rom = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat,
 	    CROMSIZE, &sc->crom_dma, CROMSIZE, BUS_DMA_NOWAIT);
@@ -467,27 +504,6 @@ fwohci_init(struct fwohci_softc *sc)
 	    "EUI64 %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
 	    ui[0], ui[1], ui[2], ui[3], ui[4], ui[5], ui[6], ui[7]);
 
-	sc->fc.cyctimer = fwohci_cyctimer;
-	sc->fc.ibr = fwohci_ibr;
-	sc->fc.set_bmr = fwohci_set_bus_manager;
-	sc->fc.ioctl = fwohci_ioctl;
-	sc->fc.irx_enable = fwohci_irx_enable;
-	sc->fc.irx_disable = fwohci_irx_disable;
-
-	sc->fc.itx_enable = fwohci_itxbuf_enable;
-	sc->fc.itx_disable = fwohci_itx_disable;
-	sc->fc.timeout = fwohci_timeout;
-	sc->fc.set_intr = fwohci_set_intr;
-#if BYTE_ORDER == BIG_ENDIAN
-	sc->fc.irx_post = fwohci_irx_post;
-#else
-	sc->fc.irx_post = NULL;
-#endif
-	sc->fc.itx_post = NULL;
-
-	sc->intmask = sc->irstat = sc->itstat = 0;
-
-	fw_init(&sc->fc);
 	fwohci_reset(sc);
 
 	sc->fc.bdev =
@@ -499,10 +515,13 @@ fwohci_init(struct fwohci_softc *sc)
 int
 fwohci_detach(struct fwohci_softc *sc, int flags)
 {
-	int i;
+	int i, rv;
 
-	if (sc->fc.bdev != NULL)
-		config_detach(sc->fc.bdev, flags);
+	if (sc->fc.bdev != NULL) {
+		rv = config_detach(sc->fc.bdev, flags);
+		if (rv)
+			return rv;
+	}
 	if (sc->sid_buf != NULL)
 		fwdma_free(sc->sid_dma.dma_tag, sc->sid_dma.dma_map,
 		    sc->sid_dma.v_addr);
@@ -519,10 +538,7 @@ fwohci_detach(struct fwohci_softc *sc, int flags)
 		fwohci_db_free(sc, &sc->ir[i]);
 	}
 
-	mutex_destroy(&sc->arrq.xferq.q_mtx);
-	mutex_destroy(&sc->arrs.xferq.q_mtx);
-	mutex_destroy(&sc->atrq.xferq.q_mtx);
-	mutex_destroy(&sc->atrs.xferq.q_mtx);
+	fw_destroy(&sc->fc);
 
 	return 0;
 }
