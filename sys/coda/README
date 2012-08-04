@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2007/04/08 13:50:51 gdt Exp $
+$NetBSD: README,v 1.4 2012/08/04 12:47:00 christos Exp $
 
 Coda is a distributed filesystem.  It is derived from AFS, but
 supports disconnected operation, both reading and writing.  This
@@ -11,14 +11,22 @@ Coda servers do not need kernel support.
 For information on Coda, see
   http://www.coda.cs.cmu.edu
 
-As of April 2007, Coda is not quite stable enough for demanding
-production use, but is usable by those who are willing to deal with
-problems.  Help can be obtained via the list codalist@coda.cs.cmu.edu.
+As of Sat Aug  4 15:45:27 EEST 2012
+	- The coda/vcoda modules have been tested for read/write
+	  operations and load/unload on amd64 with a DEBUG/DIAGNOSTIC
+	  kernel and there are no locking errors.
+	- If you find issues with coda, please file a bug report.
+	  Also help can be obtained via the list codalist@coda.cs.cmu.edu.
+	- Pkgsrc/net/coda has the latest source available from cmu and
+	  has been fixed to co-exist with openafs (openafs has been modified)
 
-As of April 2007, pkgsrc/net/coda\* is old, and gdt recommends running
-code from Coda's CVS.
+To test:
+- Install pkgsrc/net/coda
 
-As of April 2007, the kernel code has not been tested on 64-bit
-architectures.  It runs on i386 and has previously been tested on
-sparc.
+# rm -fr /var/lib/coda			# remove junk if there was a crash
+# /usr/pkg/sbin/venus-setup xxxx	# xxxx the domain name
+# /usr/pkg/sbin/venus
+# clog guest@testserver.coda.cs.cmu.edu	# password is guest
+# echo foo > /coda/testserver.coda.cs.cmu.edu/playground/nb.test0 
 
+You should be able to access things in /coda
