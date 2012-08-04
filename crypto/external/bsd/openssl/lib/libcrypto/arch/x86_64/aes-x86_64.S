@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 .text	
 .type	_x86_64_AES_encrypt,@function
 .align	16
