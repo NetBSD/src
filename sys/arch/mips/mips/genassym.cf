@@ -305,9 +305,9 @@ define	CPU_INFO_EV_KERN_TLBMISSES	offsetof(struct cpu_info, ci_ev_kern_tlb_misse
 define	CPU_INFO_EV_USER_TLBINVALID	offsetof(struct cpu_info, ci_ev_traps[1][T_TLB_LD_MISS].ev_count)
 define	CPU_INFO_EV_KERN_TLBINVALID	offsetof(struct cpu_info, ci_ev_traps[0][T_TLB_LD_MISS].ev_count)
 define	CPU_INFO_EV_TLBLOCKED	offsetof(struct cpu_info, ci_ev_tlblocked.ev_count)
-define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
+define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab[0])
 ifdef _LP64
-define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
+define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab[0])
 endif
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)

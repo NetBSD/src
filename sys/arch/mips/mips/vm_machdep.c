@@ -165,7 +165,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 
 	if (!mm_md_direct_mapped_virt(ua2, NULL, NULL)) {
-		pt_entry_t * const pte = kvtopte(ua2);
+		pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), ua2);
 		const uint32_t x = (MIPS_HAS_R4K_MMU) ?
 		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
 
@@ -331,8 +331,6 @@ cpu_uarea_remap(struct lwp *l)
 void
 cpu_swapin(struct lwp *l)
 {
-	pt_entry_t *pte;
-	int i, x;
 	vaddr_t kva = (vaddr_t) lwp_getpcb(l);
 
 	if (mm_md_direct_mapped_virt(kva, NULL, NULL))
@@ -343,11 +341,11 @@ cpu_swapin(struct lwp *l)
 	 * part of the proc struct so cpu_switchto() can quickly map
 	 * in the user struct and kernel stack.
 	 */
-	x = (MIPS_HAS_R4K_MMU) ?
+	uint32_t x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
 	    MIPS1_PG_G;
-	pte = kvtopte(kva);
-	for (i = 0; i < UPAGES; i++)
+	pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), kva);
+	for (size_t i = 0; i < UPAGES; i++)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 }
 
@@ -506,17 +504,16 @@ kvtophys(vaddr_t kva)
 		return phys;
 
 	if (VM_MIN_KERNEL_ADDRESS <= kva && kva < VM_MAX_KERNEL_ADDRESS) {
-		pt_entry_t *pte = kvtopte(kva);
-		if ((size_t) (pte - Sysmap) >= Sysmapsize)  {
-			printf("oops: Sysmap overrun, max %d index %zd\n",
-			       Sysmapsize, pte - Sysmap);
+		pt_entry_t *pte = pmap_pte_lookup(pmap_kernel(), kva);
+		if (pte != NULL) {
+			if (!mips_pg_v(pte->pt_entry)) {
+				printf("%s: pte not valid for %#"PRIxVADDR"\n",
+				    __func__, kva);
+			}
+			phys = mips_tlbpfn_to_paddr(pte->pt_entry)
+			    | (kva & PGOFSET);
+			return phys;
 		}
-		if (!mips_pg_v(pte->pt_entry)) {
-			printf("kvtophys: pte not valid for %#"PRIxVADDR"\n",
-			    kva);
-		}
-		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
-		return phys;
 	}
 
 	panic("%s: Virtual address %#"PRIxVADDR": cannot map to physical\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19.18.4 2010/03/11 08:13:18 matt Exp $	*/
+/*	pte.h,v 1.19.18.4 2010/03/11 08:13:18 matt Exp	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -257,16 +257,4 @@ mips_paddr_to_tlbpfn(paddr_t pa)
 
 #endif /* ! _LOCORE */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * Kernel virtual address to page table entry and visa versa.
- */
-#define	kvtopte(va) \
-	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
-#define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
-
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
-#endif	/* defined(_KERNEL) && !defined(_LOCORE) */
 #endif /* __MIPS_PTE_H__ */

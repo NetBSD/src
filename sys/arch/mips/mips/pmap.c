@@ -156,6 +156,15 @@ CTASSERT((uint32_t)MIPS_MAX_MEM_ADDR == 0xbe000000);
 CTASSERT((uint32_t)MIPS_RESERVED_ADDR == 0xbfc80000);
 CTASSERT(MIPS_KSEG0_P(MIPS_PHYS_TO_KSEG0(0)));
 CTASSERT(MIPS_KSEG1_P(MIPS_PHYS_TO_KSEG1(0)));
+#ifdef ENABLE_MIPS_KSEGX
+CTASSERT(VM_KSEGX_ADDRESS % NBSEG == 0);
+CTASSERT(VM_KSEGX_SIZE % NBSEG == 0);
+#endif
+#ifdef _LP64
+CTASSERT(VM_MIN_KERNEL_ADDRESS % NBXSEG == 0);
+#else
+CTASSERT(VM_MIN_KERNEL_ADDRESS % NBSEG == 0);
+#endif
 
 #define	PMAP_COUNT(name)	(pmap_evcnt_##name.ev_count++ + 0)
 #define PMAP_COUNTER(name, desc) \
@@ -261,10 +270,29 @@ CTASSERT(PMAP_ASID_RESERVED == 0);
 kmutex_t pmap_pvlist_mutex __aligned(COHERENCY_UNIT);
 #endif
 
+/*
+ * We need the pmap_segtab's to be aligned on MIPS*R2 so we can use the
+ * EXT/INS instructions on their addresses.
+ */
+#if (MIPS32R2 + MIPS64R2 + MIPS64R2_RMIXL) > 0
+#define	SEGALIGN	__aligned(sizeof(void *)*NSEGPG) __section(".data1")
+#else
+#define	SEGALIGN	
+#endif
+#ifdef _LP64
+pmap_segtab_t	pmap_kstart_segtab SEGALIGN; /* first mid-level segtab for kernel */
+#endif
+pmap_segtab_t	pmap_kern_segtab SEGALIGN = { /* top level segtab for kernel */
+#ifdef _LP64
+	.seg_seg[(VM_MIN_KERNEL_ADDRESS & XSEGOFSET) >> SEGSHIFT] = &pmap_kstart_segtab,
+#endif
+};
+#undef SEGALIGN
+
 struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
 		.pm_count = 1,
-		.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+		.pm_segtab = &pmap_kern_segtab,
 #ifdef MULTIPROCESSOR
 		.pm_active = 1,
 		.pm_onproc = 1,
@@ -275,9 +303,6 @@ struct pmap_kernel kernel_pmap_store = {
 paddr_t mips_avail_start;	/* PA of first available physical page */
 paddr_t mips_avail_end;		/* PA of last available physical page */
 vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
-
-pt_entry_t	*Sysmap;		/* kernel pte table */
-unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
 
 static void pmap_pvlist_lock_init(void);
 
@@ -290,12 +315,12 @@ struct pool pmap_pv_pool;
 #ifndef PMAP_PV_LOWAT
 #define	PMAP_PV_LOWAT	16
 #endif
-int		pmap_pv_lowat = PMAP_PV_LOWAT;
+int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
-bool		pmap_initialized = false;
+bool	pmap_initialized = false;
 #define	PMAP_PAGE_COLOROK_P(a, b) \
 		((((int)(a) ^ (int)(b)) & pmap_page_colormask) == 0)
-u_int		pmap_page_colormask;
+u_int	pmap_page_colormask;
 
 #define PAGE_IS_MANAGED(pa)	\
 	(pmap_initialized == true && vm_physseg_find(atop(pa), NULL) != -1)
@@ -307,7 +332,6 @@ u_int		pmap_page_colormask;
 /* Forward function declarations */
 void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *, bool);
 void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *);
-pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 /*
  * PV table management functions.
@@ -321,6 +345,24 @@ struct pool_allocator pmap_pv_page_allocator = {
 
 #define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
+
+#ifdef PARANOIADIAG
+static inline void
+pmap_asid_check(pmap_t pmap, const char *func)
+{
+	if (!PMAP_IS_ACTIVE(pmap){
+		return;
+
+	__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
+	uint32_t asid = (MIPS_HAS_R4K_MMU)
+	    ? (asid & 0xff)
+	    : (asid & 0xfc0) >> 6;
+	if (asid != pai->pai_asid)
+		panic("%s: inconsistency for active TLB update: %u <-> %u",
+		    func, asid, pai->pai_asid);
+}
+#endif
+
 
 /*
  * Misc. functions.
@@ -381,7 +423,7 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 
 		va = (prot & VM_PROT_WRITE ? ci->ci_pmap_dstbase : ci->ci_pmap_srcbase)
 		    + mips_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS ? pv->pv_va : pa);
-		*old_pt_entry_p = *kvtopte(va);
+		*old_pt_entry_p = *pmap_pte_lookup(pmap_kernel(), va);
 		pmap_kenter_pa(va, pa, prot);
 #endif
 	}
@@ -434,7 +476,7 @@ pmap_unmap_ephemeral_page(struct vm_page *pg, vaddr_t va,
 	if (va >= VM_MIN_KERNEL_ADDRESS) {
 		pmap_kremove(va, PAGE_SIZE);
 		if (mips_pg_v(old_pt_entry.pt_entry)) {
-			*kvtopte(va) = old_pt_entry;
+			*pmap_pte_lookup(pmap_kernel(), va) = old_pt_entry;
 			pmap_tlb_update_addr(pmap_kernel(), va,
 			    old_pt_entry.pt_entry, false);
 		}
@@ -482,6 +524,8 @@ void
 pmap_bootstrap(void)
 {
 	vsize_t bufsz;
+	size_t sysmap_size;
+	pt_entry_t *sysmap;
 
 	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors)
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
@@ -509,28 +553,28 @@ pmap_bootstrap(void)
 	bufsz = buf_memcalc();
 	buf_setvalimit(bufsz);
 
-	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
+	sysmap_size = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
 	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
-	Sysmapsize += shminfo.shmall;
+	sysmap_size += shminfo.shmall;
 #endif
 #ifdef KSEG2IOBUFSIZE
-	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
+	sysmap_size += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
 #ifdef _LP64
 	/*
 	 * If we are using tmpfs, then we might want to use a great deal of
 	 * our memory with it.  Make sure we have enough VM to do that.
 	 */
-	Sysmapsize += physmem;
+	sysmap_size += physmem;
 #else
 	/* XXX: else runs out of space on 256MB sbmips!! */
-	Sysmapsize += 20000;
+	sysmap_size += 20000;
 #endif
 	/* Rounup to a even number of pte page tables */
-	Sysmapsize = (Sysmapsize + NPTEPG - 1) & -NPTEPG;
+	sysmap_size = (sysmap_size + NPTEPG - 1) & -NPTEPG;
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -540,7 +584,7 @@ pmap_bootstrap(void)
 	 */
 	mips_avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
 	mips_avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
-	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)Sysmapsize * NBPG;
+	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)sysmap_size * NBPG;
 
 #ifndef _LP64
 #ifdef ENABLE_MIPS_KSEGX
@@ -556,11 +600,11 @@ pmap_bootstrap(void)
  
 	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS
 	   || mips_virtual_end < VM_MIN_KERNEL_ADDRESS) {
-		printf("%s: chaning last kernel VA from %#"PRIxVADDR
+		printf("%s: changing last kernel VA from %#"PRIxVADDR
 		    " to %#"PRIxVADDR"\n", __func__,
 		    mips_virtual_end, VM_MAX_KERNEL_ADDRESS);
 		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
-		Sysmapsize =
+		sysmap_size =
 		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
 	}
 #endif
@@ -570,8 +614,66 @@ pmap_bootstrap(void)
 	 * Now actually allocate the kernel PTE array (must be done
 	 * after virtual_end is initialized).
 	 */
-	Sysmap = (pt_entry_t *)
-	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
+	sysmap = (pt_entry_t *)
+	    uvm_pageboot_alloc(sizeof(pt_entry_t) * sysmap_size);
+
+	vaddr_t va = VM_MIN_KERNEL_ADDRESS;
+#ifdef _LP64
+	/* 
+	 * Do we need more than one XSEG's worth virtual address space?
+	 * If so, we have to allocate the additional pmap_segtab_t's for them
+	 * and insert them into the kernel's top level segtab.
+	 */
+	const size_t xsegs = (sysmap_size + NBXSEG - 1) / NBXSEG;
+	if (xsegs > 1) {
+		pmap_segtab_t *stp = (pmap_segtab_t *)
+		    uvm_pageboot_alloc(sizeof(pmap_segtab_t) * (xsegs - 1));
+		for (size_t i = 1; i <= xsegs; i++, stp++) {
+			pmap_kern_segtab.seg_seg[i] = stp;
+		}
+	}
+	pmap_segtab_t ** const xstp = pmap_kern_segtab.seg_seg;
+	curcpu()->ci_pmap_segtab[1] = &pmap_kern_segtab;
+#else
+	const size_t xsegs = 1;
+	pmap_segtab_t * const stp = &pmap_kern_segtab;
+	curcpu()->ci_pmap_seg0tab[1] = &pmap_kern_segtab;
+#endif
+
+	for (size_t k = 0, i = 0; k < xsegs; k++) {
+#ifdef _LP64
+		pmap_segtab_t * const stp =
+		    xstp[(va >> XSEGSHIFT) & (NSEGPG - 1)];
+#endif
+		bool done = false;
+
+		for (size_t j = (va >> SEGSHIFT) & (NSEGPG - 1);
+		     !done && i < sysmap_size;
+		     i += NPTEPG, j++, va += NBSEG) {
+#ifdef ENABLE_MIPS_KSEGX
+			/*
+			 * Skip over the KSEGX region since they
+			 * don't need page table pages.
+			 */
+			if (va == VM_KSEGX_ADDRESS) {
+				va += VM_KSEGX_SIZE;
+				j += VM_KSEGX_SIZE / NBSEG;
+			}
+#endif
+			/*
+			 * Now set the page table pointer...
+			 */
+			stp->seg_tab[j] = &sysmap[i];
+#ifdef _LP64
+			/*
+			 * If we are at end of this XSEG, terminate the loop
+			 * so we advance to the next one.
+			 */
+			done = (j + 1 == NSEGPG);
+#endif
+		}
+	}
+	KASSERT(pmap_pte_lookup(pmap_kernel(), VM_MIN_KERNEL_ADDRESS) == sysmap);
 
 	/*
 	 * Initialize the pools.
@@ -592,11 +694,9 @@ pmap_bootstrap(void)
 	 * they will produce a global bit to store in the tlb.
 	 */
 	if (MIPS_HAS_R4K_MMU) {
-		u_int i;
-		pt_entry_t *spte;
-
-		for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
-			spte->pt_entry = MIPS3_PG_G;
+		for (; sysmap_size-- > 0; sysmap++) {
+			sysmap->pt_entry = MIPS3_PG_G;
+		}
 	}
 #endif	/* MIPS3_PLUS */
 }
@@ -922,10 +1022,10 @@ pmap_deactivate(struct lwp *l)
 	kpreempt_disable();
 	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
 #ifdef _LP64
-	curcpu()->ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
-	curcpu()->ci_pmap_seg0tab = NULL;
+	curcpu()->ci_pmap_segtab[0] = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+	curcpu()->ci_pmap_seg0tab[0] = NULL;
 #else
-	curcpu()->ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+	curcpu()->ci_pmap_seg0tab[0] = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 #endif
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
@@ -974,7 +1074,6 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 	KASSERT(kpreempt_disabled());
 
 	for (; sva < eva; sva += NBPG, pte++) {
-		struct vm_page *pg;
 		uint32_t pt_entry = pte->pt_entry;
 		if (!mips_pg_v(pt_entry))
 			continue;
@@ -982,11 +1081,20 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 		if (mips_pg_wired(pt_entry))
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
+
+		struct vm_page *pg;
 		pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(pt_entry));
 		if (pg) {
 			pmap_remove_pv(pmap, sva, pg,
 			   pt_entry & mips_pg_m_bit());
 		}
+#if 0
+		if (MIPS_HAS_R4K_MMU)
+			/* See above about G bit */
+			pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
+		else
+			pte->pt_entry = MIPS1_PG_NV;
+#endif
 		pte->pt_entry = mips_pg_nv_bit();
 		/*
 		 * Flush the TLB for the given address.
@@ -999,8 +1107,6 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	struct vm_page *pg;
-
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		printf("pmap_remove(%p, %#"PRIxVADDR", %#"PRIxVADDR")\n", pmap, sva, eva);
@@ -1014,49 +1120,14 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
-		pt_entry_t *pte = kvtopte(sva);
-		for (; sva < eva; sva += NBPG, pte++) {
-			uint32_t pt_entry = pte->pt_entry;
-			if (!mips_pg_v(pt_entry))
-				continue;
-			PMAP_COUNT(remove_kernel_pages);
-			if (mips_pg_wired(pt_entry))
-				pmap->pm_stats.wired_count--;
-			pmap->pm_stats.resident_count--;
-			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(pt_entry));
-			if (pg)
-				pmap_remove_pv(pmap, sva, pg, false);
-			if (MIPS_HAS_R4K_MMU)
-				/* See above about G bit */
-				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
-			else
-				pte->pt_entry = MIPS1_PG_NV;
-
-			/*
-			 * Flush the TLB for the given address.
-			 */
-			pmap_tlb_invalidate_addr(pmap, sva);
-		}
-		kpreempt_enable();
-		return;
-	}
-
-	PMAP_COUNT(remove_user_calls);
+	} else {
+		PMAP_COUNT(remove_user_calls);
 #ifdef PARANOIADIAG
-	if (eva > VM_MAXUSER_ADDRESS)
-		panic("pmap_remove: uva not in range");
-	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB flush: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
-	}
+		if (eva > VM_MAXUSER_ADDRESS)
+			panic("pmap_remove: uva not in range");
+		pmap_asid_check(asid, __func__);
 #endif
+	}
 #ifdef PMAP_FAULTINFO
 	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
 	curpcb->pcb_faultinfo.pfi_repeats = 0;
@@ -1188,10 +1259,6 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	const uint32_t pg_mask = ~(mips_pg_m_bit() | mips_pg_ro_bit());
-	pt_entry_t *pte;
-	u_int p;
-
 	PMAP_COUNT(protect);
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1203,7 +1270,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	p = (prot & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
+	uintptr_t p = (prot & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
 
 	kpreempt_disable();
 	if (pmap == pmap_kernel()) {
@@ -1219,36 +1286,13 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
 			panic("pmap_protect: kva not in range");
 #endif
-		pte = kvtopte(sva);
-		for (; sva < eva; sva += NBPG, pte++) {
-			uint32_t pt_entry = pte->pt_entry;
-			if (!mips_pg_v(pt_entry))
-				continue;
-			if (MIPS_HAS_R4K_MMU && (pt_entry & mips_pg_m_bit()))
-				mips_dcache_wb_range(sva, PAGE_SIZE);
-			pt_entry &= (pt_entry & pg_mask) | p;
-			pte->pt_entry = pt_entry;
-			pmap_tlb_update_addr(pmap, sva, pt_entry, true);
-		}
-		kpreempt_enable();
-		return;
-	}
-
+	} else {
 #ifdef PARANOIADIAG
-	if (eva > VM_MAXUSER_ADDRESS)
-		panic("pmap_protect: uva not in range");
-	if (PMAP_IS_ACTIVE(pmap)) {
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB update: %d <-> %d",
-			    asid, pai->pai_asid);
-		}
-	}
+		if (eva > VM_MAXUSER_ADDRESS)
+			panic("pmap_protect: uva not in range");
+		pmap_asid_check(asid, __func__);
 #endif
+	}
 
 	/*
 	 * Change protection on every valid mapping within this segment.
@@ -1289,12 +1333,11 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		unsigned entry;
 
 		kpreempt_disable();
-		if (pmap == pmap_kernel()) {
-			pte = kvtopte(va);
-		} else {
-			pte = pmap_pte_lookup(pmap, va);
-		}
-		entry = pte->pt_entry;
+		pte = pmap_pte_lookup(pmap, va);
+		if (pte)
+			entry = pte->pt_entry;
+		else
+			entry = 0;
 		kpreempt_enable();
 		if (!mips_pg_v(entry))
 			return;
@@ -1359,16 +1402,9 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 
 		KASSERT(pmap != NULL);
 		KASSERT(!mm_md_direct_mapped_virt(va, NULL, NULL));
-		if (pmap == pmap_kernel()) {
-			/*
-			 * Change entries in kernel pmap.
-			 */
-			pte = kvtopte(va);
-		} else {
-			pte = pmap_pte_lookup(pmap, va);
-			if (pte == NULL)
-				continue;
-		}
+		pte = pmap_pte_lookup(pmap, va);
+		if (pte == NULL)
+			continue;
 		pt_entry = pte->pt_entry;
 		if (pt_entry & MIPS3_PG_V) {
 			pt_entry = (pt_entry & ~MIPS3_PG_CACHEMODE) | newmode;
@@ -1401,6 +1437,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	bool cached = true;
 #endif
 	bool wired = (flags & PMAP_WIRED) != 0;
+	const bool kernel_pmap_p = (pmap == pmap_kernel());
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1411,7 +1448,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	KASSERTMSG(good_color,
 	    ("%s(%p, %#"PRIxVADDR", %#"PRIxPADDR", %x, %x): color mismatch\n",
 	     __func__, pmap, va, pa, prot, flags));
-	if (pmap == pmap_kernel()) {
+	if (kernel_pmap_p) {
 		PMAP_COUNT(kernel_mappings);
 		if (!good_color)
 			PMAP_COUNT(kernel_mappings_bad);
@@ -1529,42 +1566,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #endif
 #endif
 
+	/*
+	 * Kernel entries need the global bit.
+	 */
+	if (kernel_pmap_p)
+		npte |= (MIPS_HAS_R4K_MMU ? MIPS3_PG_G : MIPS1_PG_G);
+
 	kpreempt_disable();
-	if (pmap == pmap_kernel()) {
-		if (pg)
-			pmap_enter_pv(pmap, va, pg, &npte);
-
-		/* enter entries into kernel pmap */
-		pte = kvtopte(va);
-
-		if (MIPS_HAS_R4K_MMU)
-			npte |= mips3_paddr_to_tlbpfn(pa) | MIPS3_PG_G;
-		else
-			npte |= mips1_paddr_to_tlbpfn(pa) |
-			    MIPS1_PG_V | MIPS1_PG_G;
-
-		if (wired) {
-			pmap->pm_stats.wired_count++;
-			npte |= mips_pg_wired_bit();
-		}
-		const bool resident_p = mips_pg_v(pte->pt_entry);
-		if (resident_p) {
-			if (mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
-				pmap_remove(pmap, va, va + NBPG);
-				PMAP_COUNT(kernel_mappings_changed);
-			}
-		} else {
-			pmap->pm_stats.resident_count++;
-		}
-		pte->pt_entry = npte;
-
-		/*
-		 * Update the same virtual address entry.
-		 */
-		pmap_tlb_update_addr(pmap, va, npte, resident_p);
-		kpreempt_enable();
-		return 0;
-	}
 
 	pte = pmap_pte_reserve(pmap, va, flags);
 	if (__predict_false(pte == NULL)) {
@@ -1599,16 +1607,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #endif
 
 #ifdef PARANOIADIAG
-	if (PMAP_IS_ACTIVE(pmap)) {
-		uint32_t asid;
-
-		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pai->pai_asid) {
-			panic("inconsistency for active TLB update: %u <-> %u",
-			    asid, pai->pai_asid);
-		}
-	}
+	pmap_asid_check(asid, __func__);
 #endif
 
 	if (mips_pg_v(pte->pt_entry) &&
@@ -1620,7 +1619,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef PMAP_FAULTINFO
 		curpcb->pcb_faultinfo = tmp_fi;
 #endif
-		PMAP_COUNT(user_mappings_changed);
+		if (kernel_pmap_p)
+			PMAP_COUNT(kernel_mappings_changed);
+		else
+			PMAP_COUNT(user_mappings_changed);
 	}
 
 	KASSERT(mips_pg_v(npte));
@@ -1692,7 +1694,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		    | MIPS1_PG_WIRED | MIPS1_PG_V | MIPS1_PG_G;
 	}
 	kpreempt_disable();
-	pte = kvtopte(va);
+	pte = pmap_pte_lookup(pmap_kernel(), va);
+	KASSERT(pte != NULL);
 	KASSERT(!mips_pg_v(pte->pt_entry));
 	pte->pt_entry = npte;
 	pmap_tlb_update_addr(pmap_kernel(), va, npte, false);
@@ -1711,7 +1714,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	    (MIPS_HAS_R4K_MMU ? MIPS3_PG_NV | MIPS3_PG_G : MIPS1_PG_NV);
 
 	kpreempt_disable();
-	pt_entry_t *pte = kvtopte(va);
+	pt_entry_t *pte = pmap_pte_lookup(pmap_kernel(), va);
 	for (vaddr_t eva = va + len; va < eva; va += PAGE_SIZE, pte++) {
 		uint32_t pt_entry = pte->pt_entry;
 		if (!mips_pg_v(pt_entry)) {
@@ -1790,21 +1793,12 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	 * Don't need to flush the TLB since PG_WIRED is only in software.
 	 */
 	kpreempt_disable();
-	if (pmap == pmap_kernel()) {
-		/* change entries in kernel pmap */
-#ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
-			panic("pmap_unwire");
-#endif
-		pte = kvtopte(va);
-	} else {
-		pte = pmap_pte_lookup(pmap, va);
+	pte = pmap_pte_lookup(pmap, va);
 #ifdef DIAGNOSTIC
-		if (pte == NULL)
-			panic("pmap_unwire: pmap %p va %#"PRIxVADDR" invalid STE",
-			    pmap, va);
+	if (pte == NULL)
+		panic("pmap_unwire: pmap %p va %#"PRIxVADDR" invalid STE",
+		    pmap, va);
 #endif
-	}
 
 #ifdef DIAGNOSTIC
 	if (mips_pg_v(pte->pt_entry) == 0)
@@ -1850,18 +1844,15 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #endif
 		if (va >= mips_virtual_end)
 			panic("pmap_extract: illegal kernel mapped address %#"PRIxVADDR"", va);
-		pte = kvtopte(va);
-		kpreempt_disable();
-	} else {
-		kpreempt_disable();
-		if (!(pte = pmap_pte_lookup(pmap, va))) {
+	}
+	kpreempt_disable();
+	if (!(pte = pmap_pte_lookup(pmap, va))) {
 #ifdef DEBUG
-			if (pmapdebug & PDB_FOLLOW)
-				printf("not in segmap\n");
+		if (pmapdebug & PDB_FOLLOW)
+			printf("not in segtab\n");
 #endif
-			kpreempt_enable();
-			return false;
-		}
+		kpreempt_enable();
+		return false;
 	}
 	if (!mips_pg_v(pte->pt_entry)) {
 #ifdef DEBUG
@@ -2051,12 +2042,8 @@ pmap_clear_modify(struct vm_page *pg)
 		pt_entry_t *pte;
 		uint32_t pt_entry;
 		pv_next = pv->pv_next;
-		if (pmap == pmap_kernel()) {
-			pte = kvtopte(va);
-		} else {
-			pte = pmap_pte_lookup(pmap, va);
-			KASSERT(pte);
-		}
+		pte = pmap_pte_lookup(pmap, va);
+		KASSERT(pte);
 		pt_entry = pte->pt_entry & ~mips_pg_m_bit();
 		if (pte->pt_entry == pt_entry) {
 			continue;
@@ -2243,14 +2230,11 @@ again:
 				pt_entry_t *pte;
 				uint32_t pt_entry;
 
-				if (pmap == pmap_kernel()) {
-					pt_entry = kvtopte(va)->pt_entry;
+				pte = pmap_pte_lookup(pmap, va);
+				if (pte) {
+					pt_entry = pte->pt_entry;
 				} else {
-					pte = pmap_pte_lookup(pmap, va);
-					if (pte) {
-						pt_entry = pte->pt_entry;
-					} else
-						pt_entry = 0;
+					pt_entry = 0;
 				}
 				if (!mips_pg_v(pt_entry) ||
 				    mips_tlbpfn_to_paddr(pt_entry) !=
@@ -2539,18 +2523,6 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	KASSERT(pg != NULL);
 	pmap_clear_mdpage_attributes(VM_PAGE_TO_MD(pg), PG_MD_POOLPAGE);
 	uvm_km_pagefree(pg);
-}
-
-pt_entry_t *
-pmap_pte(pmap_t pmap, vaddr_t va)
-{
-	pt_entry_t *pte;
-
-	if (pmap == pmap_kernel())
-		pte = kvtopte(va);
-	else
-		pte = pmap_pte_lookup(pmap, va);
-	return pte;
 }
 
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */

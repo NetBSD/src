@@ -261,7 +261,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 
 			kpreempt_disable();
 
-			pte = kvtopte(vaddr);
+			pte = pmap_pte_lookup(pmap_kernel(), vaddr);
 			pt_entry = pte->pt_entry;
 			if (!mips_pg_v(pt_entry)) {
 				panic("ktlbmod: invalid pte");

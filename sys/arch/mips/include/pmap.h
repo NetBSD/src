@@ -109,17 +109,11 @@
 #define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
-#ifdef _LP64
-#define PMAP_SEGTABSIZE		NSEGPG
-#else
-#define PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
-#endif
-
 union pt_entry;
 
 typedef union pmap_segtab {
-	union pmap_segtab *	seg_seg[PMAP_SEGTABSIZE];
-	union pt_entry	*	seg_tab[PMAP_SEGTABSIZE];
+	union pmap_segtab *	seg_seg[NSEGPG];
+	union pt_entry	*	seg_tab[NPTEPG];
 } pmap_segtab_t;
 #else
 /*

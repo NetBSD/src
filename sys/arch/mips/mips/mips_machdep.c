@@ -1869,8 +1869,10 @@ cpu_dump(void)
 		cpuhdrp->pg_frame  = MIPS1_PG_FRAME;
 		cpuhdrp->pg_v      = MIPS1_PG_V;
 	}
+#ifdef OBSOLETE
 	cpuhdrp->sysmappa   = MIPS_KSEG0_TO_PHYS(Sysmap);
 	cpuhdrp->sysmapsize = Sysmapsize;
+#endif
 	cpuhdrp->nmemsegs   = mem_cluster_cnt;
 
 	/*
