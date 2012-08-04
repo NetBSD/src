@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.624 2012/07/04 01:08:26 christos Exp $
+$NetBSD: usbdevs,v 1.625 2012/08/04 13:03:17 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2392,6 +2392,7 @@ product PLANEX2 GWUS300MINIX	0xed06	GW-US300Mini-X/MiniW
 product PLANEX2 GWUSMICRON	0xed14	GW-USMicroN
 product PLANEX2 GWUSMICRON2	0xed16	GW-USMicroN2
 product PLANEX2 RTL8188CU_2	0xed17	RTL8188CU
+product PLANEX2 GWUSH300N	0xed18	GW-USH300N
 product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 product PLANEX3 GU1000T		0xab11	GU-1000T
 product PLANEX3 GWUS54MINI	0xab13	GW-US54Mini
