@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.12.96.3 2011/04/29 08:26:21 matt Exp $	*/
+/*	mips_opcode.h,v 1.12.96.3 2011/04/29 08:26:21 matt Exp	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,17 +145,16 @@ typedef union {
 #define OP_DADDIU	031		/* MIPS-II, for r4000 port */
 #define OP_LDL		032		/* MIPS-II, for r4000 port */
 #define OP_LDR		033		/* MIPS-II, for r4000 port */
-
-#define OP_SPECIAL2	034		/* QED opcodes */
-#define OP_SPECIAL3	037		/* QED opcodes */
+#define OP_SPECIAL2	034		/* QED/MIPS{32,64}R{1,2} opcodes */
+#define	OP_JALX		035
+#define	OP_MDMX		036
+#define OP_SPECIAL3	037		/* QED/MIPS{32,64}R{1,2} opcodes */
 
 #define OP_LB		040
 #define OP_LH		041
 #define OP_LWL		042
 #define OP_LW		043
 #define OP_LBU		044
-#define OP_LHU		045
-#define OP_LWR		046
 #define OP_LHU		045
 #define OP_LWR		046
 #define OP_LWU		047		/* MIPS-II, for r4000 port */
@@ -262,13 +261,27 @@ typedef union {
 #define OP_CLO		041		/* MIPS32/64 */
 #define OP_DCLZ		044		/* MIPS32/64 */
 #define OP_DCLO		045		/* MIPS32/64 */
+#define	OP_SDBBP	077		/* MIPS32/64 */
 
 /*
  * Values for the 'func' field when 'op' == OP_SPECIAL3.
  */
+#define	OP_EXT		000		/* MIPS32/64 r2 */
+#define	OP_DEXTM	001		/* MIPS32/64 r2 */
+#define	OP_DEXTU	002		/* MIPS32/64 r2 */
+#define	OP_DEXT		003		/* MIPS32/64 r2 */
+#define	OP_INS		004		/* MIPS32/64 r2 */
+#define	OP_DINSM	004		/* MIPS32/64 r2 */
+#define	OP_DINSU	006		/* MIPS32/64 r2 */
+#define	OP_DINS		007		/* MIPS32/64 r2 */
+#define	OP_BSHFL	040		/* MIPS32/64 r2 */
+#define	OP_DBSHFL	044		/* MIPS32/64 r2 */
 #define OP_RDHWR	073		/* MIPS32/64 r2 */
 
-
+#define	BSHFL_SBH	002		/* MIPS32/64 r2 */
+#define	BSHFL_SHD	005		/* MIPS32/64 r2 */
+#define	BSHFL_SEB	020		/* MIPS32/64 r2 */
+#define	BSHFL_SEH	030		/* MIPS32/64 r2 */
 /*
  * Values for the 'func' field when 'op' == OP_BCOND.
  */
