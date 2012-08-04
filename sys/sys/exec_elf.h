@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.124 2012/08/03 07:54:14 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.125 2012/08/04 09:24:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -904,7 +904,7 @@ typedef struct {
  * descsz: 4
  */
 #define	ELF_NOTE_TYPE_ARMEABI_TAG	4
-#define ELF_NOTE_ARMEABI_DESCSZ		4
+#define	ELF_NOTE_ARMEABI_DESCSZ		4
 #define	ELF_NOTE_ARMEABI_AAPCS		0x01
 
 /*
