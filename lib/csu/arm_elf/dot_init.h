@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.7 2012/08/03 08:01:42 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.8 2012/08/04 14:57:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <machine/asm.h>
 
-#if defined(__ARM_EABI__) && defined(__S)
+#if defined(__ARM_EABI__) && defined(CRTI)
 __asm(
 	".section\t\".note.netbsd.aeabi\", \"a\"\n"
 	"\t.p2align\t2\n\n"
