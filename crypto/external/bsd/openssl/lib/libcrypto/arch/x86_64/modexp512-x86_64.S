@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 .text	
 
 .type	MULADD_128x512,@function
