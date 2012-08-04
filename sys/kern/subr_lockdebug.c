@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.45 2011/07/26 13:07:20 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.45 2011/07/26 13:07:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.46 2012/08/04 12:38:20 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -325,7 +325,6 @@ lockdebug_free(volatile void *lock)
 		__cpu_simple_unlock(&ld_mod_lk);
 		panic("lockdebug_free: destroying uninitialized object %p"
 		    "(ld_lock=%p)", lock, ld->ld_lock);
-		lockdebug_abort1(ld, s, __func__, "record follows", true);
 		return;
 	}
 	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
@@ -764,7 +763,7 @@ lockdebug_abort1(lockdebug_t *ld, int s, const char *func,
 {
 
 	/*
-	 * Don't make the situation wose if the system is already going
+	 * Don't make the situation worse if the system is already going
 	 * down in flames.  Once a panic is triggered, lockdebug state
 	 * becomes stale and cannot be trusted.
 	 */
