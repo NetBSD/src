@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 .text	
 
 .globl	sha256_block_data_order
