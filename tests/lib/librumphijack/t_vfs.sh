@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.5 2011/12/01 21:54:10 christos Exp $
+#       $NetBSD: t_vfs.sh,v 1.6 2012/08/04 03:56:47 riastradh Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -90,6 +90,7 @@ test_case()
 test_case paxcopy
 test_case cpcopy
 test_case mv_nox
+test_case ln_nox
 
 #
 # use rumphijack to cp/pax stuff onto an image, unmount it, remount it
@@ -121,10 +122,10 @@ cpcopy()
 # which is not supported by rumpfs)
 #
 
-# stat default format sans changetime and filename
-statstr='%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%SB\" %k %b %#Xf'
 mv_nox()
 {
+	# stat default format sans changetime and filename
+	statstr='%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%SB\" %k %b %#Xf'
 
 	atf_check -s exit:0 touch /rump/mnt/filename
 	atf_check -s exit:0 -o save:stat.out \
@@ -135,7 +136,24 @@ mv_nox()
 	    stat -f "${statstr}" /rump/mnt/dir/same
 }
 
+ln_nox()
+{
+	# Omit st_nlink too, since it will increase.
+	statstr='%d %i %Sp %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%SB\" %k %b %#Xf'
+
+	atf_check -s exit:0 touch /rump/mnt/filename
+	atf_check -s exit:0 -o save:stat.out \
+	    stat -f "${statstr}" /rump/mnt/filename
+	atf_check -s exit:0 mkdir /rump/mnt/dir
+	atf_check -s exit:0 ln /rump/mnt/filename /rump/mnt/dir/same
+	atf_check -s exit:0 -o file:stat.out \
+	    stat -f "${statstr}" /rump/mnt/filename
+	atf_check -s exit:0 -o file:stat.out \
+	    stat -f "${statstr}" /rump/mnt/dir/same
+}
+
 simpletest mv_x
+simpletest ln_x
 simpletest runonprefix
 simpletest blanket
 simpletest doubleblanket
@@ -150,6 +168,15 @@ mv_x()
 	atf_check -s exit:0 cp -Rp ${thedir} ${thedir}.2
 	atf_check -s exit:0 mv ${thedir} /rump
 	atf_check -s exit:0 diff -ru ${thedir}.2 /rump/${thedir}
+}
+
+#
+# Fail to make a cross-kernel hard link.
+#
+ln_x()
+{
+	atf_check -s exit:0 touch ./loser
+	atf_check -s not-exit:0 -e ignore ln ./loser /rump/.
 }
 
 runonprefix()
@@ -187,7 +214,9 @@ atf_init_test_cases()
 	atf_add_test_case paxcopy
 	atf_add_test_case cpcopy
 	atf_add_test_case mv_x
+	atf_add_test_case ln_x
 	atf_add_test_case mv_nox
+	atf_add_test_case ln_nox
 	atf_add_test_case runonprefix
 	atf_add_test_case blanket
 	atf_add_test_case doubleblanket

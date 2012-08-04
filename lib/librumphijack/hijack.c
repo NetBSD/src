@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.94 2012/06/29 13:20:25 yamt Exp $	*/
+/*      $NetBSD: hijack.c,v 1.95 2012/08/04 03:56:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.94 2012/06/29 13:20:25 yamt Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.95 2012/08/04 03:56:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ enum dualcall {
 	DUALCALL_LSEEK,
 	DUALCALL_GETDENTS,
 	DUALCALL_UNLINK, DUALCALL_SYMLINK, DUALCALL_READLINK,
-	DUALCALL_RENAME,
+	DUALCALL_LINK, DUALCALL_RENAME,
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
@@ -227,6 +227,7 @@ struct sysnames {
 	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
 	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
 	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
+	{ DUALCALL_LINK,	"link",		RSYS_NAME(LINK)		},
 	{ DUALCALL_RENAME,	"rename",	RSYS_NAME(RENAME)	},
 	{ DUALCALL_MKDIR,	"mkdir",	RSYS_NAME(MKDIR)	},
 	{ DUALCALL_RMDIR,	"rmdir",	RSYS_NAME(RMDIR)	},
@@ -1080,10 +1081,12 @@ __getcwd(char *bufp, size_t len)
 	return rv;
 }
 
-int
-rename(const char *from, const char *to)
+static int
+moveish(const char *from, const char *to,
+    int (*rump_op)(const char *, const char *),
+    int (*host_op)(const char *, const char *))
 {
-	int (*op_rename)(const char *, const char *);
+	int (*op)(const char *, const char *);
 	enum pathtype ptf, ptt;
 
 	if ((ptf = path_isrump(from)) != PATH_HOST) {
@@ -1096,17 +1099,31 @@ rename(const char *from, const char *to)
 			from = path_host2rump(from);
 		if (ptt == PATH_RUMP)
 			to = path_host2rump(to);
-		op_rename = GETSYSCALL(rump, RENAME);
+		op = rump_op;
 	} else {
 		if (path_isrump(to) != PATH_HOST) {
 			errno = EXDEV;
 			return -1;
 		}
 
-		op_rename = GETSYSCALL(host, RENAME);
+		op = host_op;
 	}
 
-	return op_rename(from, to);
+	return op(from, to);
+}
+
+int
+link(const char *from, const char *to)
+{
+	return moveish(from, to,
+	    GETSYSCALL(rump, LINK), GETSYSCALL(host, LINK));
+}
+
+int
+rename(const char *from, const char *to)
+{
+	return moveish(from, to,
+	    GETSYSCALL(rump, RENAME), GETSYSCALL(host, RENAME));
 }
 
 int __socket30(int, int, int);
