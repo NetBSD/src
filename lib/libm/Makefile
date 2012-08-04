@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.124 2012/05/05 17:54:13 christos Exp $
+#  $NetBSD: Makefile,v 1.125 2012/08/04 15:16:16 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -118,7 +118,7 @@ WARNS?=5
 .PATH:	${.CURDIR}/noieee_src
 
 .if (${MACHINE_ARCH} == "alpha")
-CFLAGS+= -mfp-rounding-mode=d
+COPTS+= -mfp-rounding-mode=d
 .endif
 
 .if (${MACHINE_ARCH} != "vax")
