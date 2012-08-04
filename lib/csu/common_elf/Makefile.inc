@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2011/06/30 20:09:15 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2012/08/04 14:59:05 matt Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -15,7 +15,7 @@ CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE
 
 .if defined(HAVE_GCC)
-CFLAGS+=	-fno-unit-at-a-time
+COPTS+=		-fno-unit-at-a-time
 .endif
 
 .include <bsd.own.mk>
@@ -51,7 +51,7 @@ gcrt0.o: ${.CURDIR}/crt0.c crt0.o
 
 crti.o: crti.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
+	${COMPILE.c} -DCRTI ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -60,7 +60,7 @@ crti.o: crti.c
 
 crtn.o: crtn.c
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
+	${COMPILE.c} -DCRTN ${.IMPSRC} -o ${.TARGET}.o
 	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
