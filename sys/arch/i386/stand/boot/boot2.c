@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.57 2011/12/25 06:09:09 tsutsui Exp $	*/
+/*	$NetBSD: boot2.c,v 1.58 2012/08/04 03:51:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -429,10 +429,21 @@ void
 command_boot(char *arg)
 {
 	char *filename;
-	int howto;
+	int howto, tell;
 
-	if (parseboot(arg, &filename, &howto))
-		bootit(filename, howto, (howto & AB_VERBOSE) != 0);
+	if (!parseboot(arg, &filename, &howto))
+		return;
+
+	tell = ((howto & AB_VERBOSE) != 0);
+	if (filename != NULL) {
+		bootit(filename, howto, tell);
+	} else {
+		int i;
+		for (i = 0; i < NUMNAMES; i++) {
+			bootit(names[i][0], howto, tell);
+			bootit(names[i][1], howto, tell);
+		}
+	}
 }
 
 void
