@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.123 2012/05/30 14:30:35 nonaka Exp $
+#	$NetBSD: files.usb,v 1.124 2012/08/04 04:34:54 riastradh Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -90,6 +90,11 @@ file	dev/usb/ukbdmap.c		ukbd | btkbd
 device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# USB Apple trackpad
+device	uatp: hid, wsmousedev
+attach	uatp at uhidbus
+file	dev/usb/uatp.c			uatp
 
 # Touchscreens
 device	uts: hid, wsmousedev, tpcalib
