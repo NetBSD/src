@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.341 2012/07/30 19:40:52 degroote Exp $
+# $NetBSD: ALL,v 1.342 2012/08/04 04:39:40 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.341 $"
+#ident 		"ALL-$Revision: 1.342 $"
 
 maxusers	64		# estimated number of users
 
@@ -1202,6 +1202,10 @@ wsmouse* at ums? mux 0
 # USB eGalax touch-panel
 uep*	at uhub? port ?
 wsmouse* at uep? mux 0
+
+# USB Apple trackpad
+uatp*	at uhidev? reportid ?
+wsmouse* at uatp? mux 0
 
 uyurex* at uhidev? reportid ?
 
