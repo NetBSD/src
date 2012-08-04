@@ -56,7 +56,7 @@ static const char * const op_name[64] = {
 /* 0 */ "spec", "bcond","j",	"jal",	"beq",	"bne",	"blez", "bgtz",
 /* 8 */ "addi", "addiu","slti", "sltiu","andi", "ori",	"xori", "lui",
 /*16 */ "cop0", "cop1", "cop2", "cop3", "beql", "bnel", "blezl","bgtzl",
-/*24 */ "daddi","daddiu","ldl", "ldr",	"op34", "op35", "op36", "op37",
+/*24 */ "daddi","daddiu","ldl", "ldr",	"spec2", "jalx", "mdmx", "spec3",
 /*32 */ "lb",	"lh",	"lwl",	"lw",	"lbu",	"lhu",	"lwr",	"lwu",
 /*40 */ "sb",	"sh",	"swl",	"sw",	"sdl",	"sdr",	"swr",	"cache",
 /*48 */ "ll",	"lwc1", "lwc2", "lwc3", "lld",	"ldc1", "ldc2", "ld",
@@ -74,8 +74,26 @@ static const char * const spec_name[64] = {
 /*56 */ "dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
 };
 
-static const char * const spec2_name[4] = {		/* QED RM4650, R5000, etc. */
-/* 0 */ "mad", "madu", "mul", "spec3"
+static const char const spec2_name[64][8] = {	/* MIPSxxR{1,2} */
+/*  0 */ "mad", "madu", "mul", "sp2?3", "msub", "msubu", "sp2?6", "sp2?7",
+/*  8 */ "sp2?8", "sp2?9", "sp2?10", "sp2?11", "sp2?12", "sp2?13", "sp2?14", "sp2?15",
+/* 16 */ "sp2?16", "sp2?17", "sp2?18", "sp2?19", "sp2?20", "sp2?21", "sp2?22", "sp2?23",
+/* 24 */ "sp2?24", "sp2?25", "sp2?26", "sp2?27", "sp2?28", "sp2?29", "sp2?30", "sp2?31",
+/* 32 */ "clz", "clo", "sp2?34", "sp2?35", "dclz", "dclo", "sp2?38", "sp2?39",
+/* 40 */ "sp2?40", "sp2?41", "sp2?42", "sp2?43", "sp2?44", "sp2?45", "sp2?46", "sp2?47",
+/* 48 */ "sp2?48", "sp2?49", "sp2?50", "sp2?51", "sp2?52", "sp2?53", "sp2?54", "sp2?55",
+/* 56 */ "sp2?56", "sp2?57", "sp2?58", "sp2?59", "sp2?60", "sp2?61", "sp2?62", "sdbbp",
+};
+
+static const char const spec3_name[64][8] = {	/* MIPSxxR2 */
+/*  0 */ "ext", "dextm", "dextu", "dext", "ins", "dinsm", "dinsu", "dins",
+/*  8 */ "sp3?8", "sp3?9", "sp3?10", "sp3?11", "sp3?12", "sp3?13", "sp3?14", "sp3?15",
+/* 16 */ "sp3?16", "sp3?17", "sp3?18", "sp3?19", "sp3?20", "sp3?21", "sp3?22", "sp3?23",
+/* 24 */ "sp3?24", "sp3?25", "sp3?26", "sp3?27", "sp3?28", "sp3?29", "sp3?30", "sp3?31",
+/* 32 */ "bshfl", "sp3?33", "sp3?34", "sp3?35", "dbshfl", "sp3?37", "sp3?38", "sp3?39",
+/* 40 */ "sp3?40", "sp3?41", "sp3?42", "sp3?43", "sp3?44", "sp3?45", "sp3?46", "sp3?47",
+/* 48 */ "sp3?48", "sp3?49", "sp3?50", "sp3?51", "sp3?52", "sp3?53", "sp3?54", "sp3?55",
+/* 56 */ "sp3?56", "sp3?57", "sp3?58", "rdhwr", "sp3?60", "sp3?61", "sp3?62", "sp3?63",
 };
 
 static const char * const bcond_name[32] = {
@@ -197,6 +215,15 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			db_printf("nop");
 			break;
 		}
+		if (i.word == (1 << 6)) {
+			db_printf("ssnop");
+			break;
+		}
+		if (i.word == (3 << 6)) {
+			db_printf("ehb");
+			break;
+		}
+#ifdef __mips_o32
 		/* XXX
 		 * "addu" is a "move" only in 32-bit mode.  What's the correct
 		 * answer - never decode addu/daddu as "move"?
@@ -207,13 +234,13 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			    reg_name[i.RType.rs]);
 			break;
 		}
+#endif
 		db_printf("%s", spec_name[i.RType.func]);
 		switch (i.RType.func) {
 		case OP_SLL:
 		case OP_SRL:
 		case OP_SRA:
 		case OP_DSLL:
-
 		case OP_DSRL:
 		case OP_DSRA:
 		case OP_DSLL32:
@@ -244,7 +271,8 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			db_printf("\t%s", reg_name[i.RType.rs]);
+			db_printf("\t%s%s", reg_name[i.RType.rs],
+			    (insn & (1 << 10)) ? ".hb" : "");
 			bdslot = true;
 			break;
 		case OP_MTLO:
@@ -285,17 +313,70 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	case OP_SPECIAL2:
 		if (i.RType.func == OP_MUL)
 			db_printf("%s\t%s,%s,%s",
-				spec2_name[i.RType.func & 0x3],
+				spec2_name[i.RType.func],
 		    		reg_name[i.RType.rd],
 		    		reg_name[i.RType.rs],
 		    		reg_name[i.RType.rt]);
 		else
 			db_printf("%s\t%s,%s",
-				spec2_name[i.RType.func & 0x3],
+				spec2_name[i.RType.func],
 		    		reg_name[i.RType.rs],
 		    		reg_name[i.RType.rt]);
-			
 		break;
+
+	case OP_SPECIAL3: {
+		const char *s = NULL;
+		if (i.RType.func == OP_RDHWR) {
+			db_printf("%s\t%s,%s",
+				spec3_name[i.RType.func],
+		    		reg_name[i.RType.rt],
+		    		reg_name[i.RType.rd]);
+			break;
+		}
+		if (i.RType.func == OP_BSHFL) {
+			if (i.RType.rs == BSHFL_SEB)
+				s = "seb";
+			else if (i.RType.rs == BSHFL_SEH)
+				s = "seh";
+			else if (i.RType.rs == BSHFL_SBH)
+				s = "wsbh";
+		} else if (i.RType.func == OP_DBSHFL) {
+			if (i.RType.rs == BSHFL_SBH)
+				s = "dsbh";
+			else if (i.RType.rs == BSHFL_SHD)
+				s = "dshd";
+		}
+		if (s != NULL) {
+			db_printf("%s\t%s,%s",
+				s,
+				reg_name[i.RType.rd],
+				reg_name[i.RType.rt]);
+		} else if (i.RType.func <= OP_DINS) {
+			u_int pos = i.RType.shamt;
+			u_int size = i.RType.rd + 1;
+			if (i.RType.func == OP_DINSM
+			    || i.RType.func == OP_DEXTM)
+				size += 32;
+			if (i.RType.func == OP_DINSM
+			    || i.RType.func == OP_DINSU)
+				size -= pos;
+			if (i.RType.func == OP_DINSU
+			    || i.RType.func == OP_DEXTU)
+				pos += 32;
+			db_printf("%s\t%s,%s,%d,%d",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rt],
+				reg_name[i.RType.rs],
+				pos, size);
+		} else {
+			db_printf("%s\t%s,%s,%s",
+				spec3_name[i.RType.func],
+				reg_name[i.RType.rt],
+				reg_name[i.RType.rs],
+				reg_name[i.RType.rd]);
+		}
+		break;		
+	}
 
 	case OP_BCOND:
 		db_printf("%s\t%s,", bcond_name[i.IType.rt],
@@ -495,6 +576,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 	case OP_J:
 	case OP_JAL:
+	case OP_JALX:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & 0xF0000000) | (i.JType.target << 2));
 		bdslot = true;
@@ -573,7 +655,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 	}
 	db_printf("\n");
 	if (bdslot) {
-		db_printf("\t\tbdslot:\t");
+		db_printf("    bdslot:\t");
 		db_disasm(loc+4, false);
 		return (loc + 8);
 	}
