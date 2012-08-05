@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.15 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: ucom.9,v 1.16 2012/08/05 01:58:36 riastradh Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd July 9, 2012
 .Dt UCOM 9
 .Os
 .Sh NAME
@@ -169,11 +169,11 @@ called just after the
 driver closes the bulk pipes for the port.
 .It Fn "void (*ucom_read)" "void *sc, int portno, u_char **ptr, uint32_t *count"
 if the data delivered on the bulk pipe is not just the raw input characters
-this routine needs to adjust
+this routine needs to increment
 .Fa ptr
-and
+by as many characters to skip from the start of the raw input and decrement
 .Fa count
-so that they tell where to find the given number of raw characters.
+by as many characters to truncate from the end of the raw input.
 .It Fn "void (*ucom_write)" "void *sc, int portno, u_char *dst, u_char *src, uint32_t *count"
 if the data written to the bulk pipe is not just the raw characters then
 this routine needs to copy
