@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.125 2012/08/04 09:24:19 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.126 2012/08/05 01:43:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -893,19 +893,6 @@ typedef struct {
 #define ELF_NOTE_PAX_NAMESZ		4
 #define ELF_NOTE_PAX_NAME		"PaX\0"
 #define ELF_NOTE_PAX_DESCSZ		4
-
-/*
- * NetBSD-specific note type: aeabi.
- * There should be 1 NOTE per executable.
- * name: NetBSD\0
- * namesz: 6
- * desc:
- *	word[0]: ABI bitmask
- * descsz: 4
- */
-#define	ELF_NOTE_TYPE_ARMEABI_TAG	4
-#define	ELF_NOTE_ARMEABI_DESCSZ		4
-#define	ELF_NOTE_ARMEABI_AAPCS		0x01
 
 /*
  * NetBSD-specific core file information.
