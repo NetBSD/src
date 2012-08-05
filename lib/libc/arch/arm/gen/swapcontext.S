@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2012/08/05 05:10:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,13 +32,15 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.5 2008/04/28 20:22:55 martin Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.6 2012/08/05 05:10:38 skrll Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
 	stmfd	sp!, {r0-r1, lr}	/* Must save oucp, ucp, lr. */
+	sub	sp, #4
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
+	add	sp, #4
 	ldmfd	sp!, {r0-r1, lr}
 	RETc(ne)
 	str	lr, [r0, #(36 + 15*4)]	/* Adjust saved PC. */
