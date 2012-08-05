@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.14 2012/03/22 15:05:36 sborrill Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.15 2012/08/05 15:50:49 bouyer Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.14 2012/03/22 15:05:36 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.15 2012/08/05 15:50:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,8 +183,6 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		printf(": can't find matching pci device\n");
 		return;
 	}
-
-	sc->sc_flags = mpd->mpd_iop;
 
 	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY)
 		regbar = MFI_BAR_GEN2;

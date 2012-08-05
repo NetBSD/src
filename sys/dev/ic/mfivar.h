@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.16 2012/08/05 14:54:02 bouyer Exp $ */
+/* $NetBSD: mfivar.h,v 1.17 2012/08/05 15:50:49 bouyer Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -117,10 +117,10 @@ struct mfi_softc {
 	struct scsipi_adapter	sc_adapt;
 
 	const struct mfi_iop_ops *sc_iop;
+	enum mfi_iop		sc_ioptype;
 
 	void			*sc_ih;
 
-	uint32_t		sc_flags;
 	bool			sc_64bit_dma;
 
 	bus_space_tag_t		sc_iot;
