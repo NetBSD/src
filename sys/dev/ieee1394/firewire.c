@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.41 2012/08/05 02:36:16 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.41 2012/08/05 02:36:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -260,8 +260,10 @@ firewireattach(device_t parent, device_t self, void *aux)
 
 	/* create thread */
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
-	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev)))
+	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev))) {
 		aprint_error_dev(self, "kthread_create failed\n");
+		config_pending_decr();
+	}
 
 	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
 	if (devlist == NULL) {
