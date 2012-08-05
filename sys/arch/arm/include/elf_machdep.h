@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.9 2012/08/03 07:59:23 matt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10 2012/08/05 04:12:46 matt Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -28,6 +28,11 @@
 #define EF_ARM_OLD_ABI		0x00000100
 #define EF_ARM_SOFT_FLOAT	0x00000200
 #define EF_ARM_EABIMASK		0xff000000
+#define	EF_ARM_EABI_VER1	0x01000000
+#define	EF_ARM_EABI_VER2	0x02000000
+#define	EF_ARM_EABI_VER3	0x03000000
+#define	EF_ARM_EABI_VER4	0x04000000
+#define	EF_ARM_EABI_VER5	0x05000000
 
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_ARM:						\
