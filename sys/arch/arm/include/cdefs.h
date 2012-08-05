@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.6 2012/07/31 07:21:06 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.7 2012/08/05 04:13:19 matt Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
@@ -24,6 +24,11 @@
 
 #if defined (_ARM_ARCH_5) || defined (__ARM_ARCH_4T__)
 #define _ARM_ARCH_4T
+#endif
+
+#if defined(_ARM_ARCH_6) || defined (__ARM_ARCH_5TE__) || \
+    defined (__ARM_ARCH_5TEJ__)
+#define	_ARM_ARCH_DWORD_OK
 #endif
 
 #ifdef __ARM_EABI__
