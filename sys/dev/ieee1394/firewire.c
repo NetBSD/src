@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.40 2012/08/04 03:55:43 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.41 2012/08/05 02:36:16 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.40 2012/08/04 03:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.41 2012/08/05 02:36:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,6 +254,9 @@ firewireattach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&fc->busprobe_callout, (void *)fw_bus_probe, fc);
 
 	callout_schedule(&fc->timeout_callout, hz);
+
+	/* Tell config we will have started a thread to scan the bus.  */
+	config_pending_incr();
 
 	/* create thread */
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
@@ -1942,6 +1945,22 @@ static void
 fw_bus_probe_thread(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
+
+	/*
+	 * Tell config we've scanned the bus.
+	 *
+	 * XXX This is not right -- we haven't actually scanned it.  We
+	 * probably ought to call this after the first bus exploration.
+	 *
+	 * bool once = false;
+	 * ...
+	 * 	fw_attach_dev(fc);
+	 * 	if (!once) {
+	 * 		config_pending_decr();
+	 * 		once = true;
+	 * 	}
+	 */
+	config_pending_decr();
 
 	mutex_enter(&fc->wait_lock);
 	while (fc->status != FWBUSDETACH) {
