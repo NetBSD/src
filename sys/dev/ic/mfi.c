@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.40 2012/08/05 15:50:49 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.41 2012/08/05 17:23:25 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.40 2012/08/05 15:50:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.41 2012/08/05 17:23:25 bouyer Exp $");
 
 #include "bio.h"
 
@@ -1317,7 +1317,7 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
 		if (sc->sc_64bit_dma) {
 			sgl->sg64[i].addr = htole64(sgd[i].ds_addr);
-			sgl->sg64[i].len = htole64(sgd[i].ds_len);
+			sgl->sg64[i].len = htole32(sgd[i].ds_len);
 			DNPRINTF(MFI_D_DMA, "%s: addr: %#" PRIx64 " len: %#"
 			    PRIx64 "\n",
 			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
