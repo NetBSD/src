@@ -1,4 +1,4 @@
-/*	$NetBSD: fixdfdi.c,v 1.5 2011/07/04 06:23:50 matt Exp $	*/
+/*	$NetBSD: fixdfdi.c,v 1.6 2012/08/05 04:28:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,9 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)fixdfdi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fixdfdi.c,v 1.5 2011/07/04 06:23:50 matt Exp $");
+__RCSID("$NetBSD: fixdfdi.c,v 1.6 2012/08/05 04:28:58 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
 
 #include "quad.h"
 
