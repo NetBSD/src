@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.240 2012/07/27 20:52:49 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.241 2012/08/05 14:53:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.240 2012/07/27 20:52:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.241 2012/08/05 14:53:25 riastradh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -193,7 +193,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 void
 exit1(struct lwp *l, int rv)
 {
-	struct proc	*p, *q, *nq;
+	struct proc	*p, *child, *next_child, *old_parent, *new_parent;
 	struct pgrp	*pgrp;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
@@ -243,7 +243,7 @@ exit1(struct lwp *l, int rv)
 
 	/*
 	 * Bin any remaining signals and mark the process as dying so it will
-	 * not be found for, e.g. signals. 
+	 * not be found for, e.g. signals.
 	 */
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigclearall(p, NULL, &kq);
@@ -414,7 +414,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
 
-	SDT_PROBE(proc,,,exit, 
+	SDT_PROBE(proc,,,exit,
 		(WCOREDUMP(rv) ? CLD_DUMPED :
 		 (WIFSIGNALED(rv) ? CLD_KILLED : CLD_EXITED)),
 		0,0,0,0);
@@ -439,6 +439,7 @@ exit1(struct lwp *l, int rv)
 	 * p_opptr anymore.
 	 */
 	if (__predict_false(p->p_slflag & PSL_CHTRACED)) {
+		struct proc *q;
 		PROCLIST_FOREACH(q, &allproc) {
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
@@ -448,10 +449,10 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Give orphaned children to init(8).
 	 */
-	q = LIST_FIRST(&p->p_children);
-	wakeinit = (q != NULL);
-	for (; q != NULL; q = nq) {
-		nq = LIST_NEXT(q, p_sibling);
+	child = LIST_FIRST(&p->p_children);
+	wakeinit = (child != NULL);
+	for (; child != NULL; child = next_child) {
+		next_child = LIST_NEXT(child, p_sibling);
 
 		/*
 		 * Traced processes are killed since their existence
@@ -460,19 +461,20 @@ exit1(struct lwp *l, int rv)
 		 * triggered to reparent the process to its
 		 * original parent, so we must do this here.
 		 */
-		if (__predict_false(q->p_slflag & PSL_TRACED)) {
+		if (__predict_false(child->p_slflag & PSL_TRACED)) {
 			mutex_enter(p->p_lock);
-			q->p_slflag &= ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
+			child->p_slflag &=
+			    ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
 			mutex_exit(p->p_lock);
-			if (q->p_opptr != q->p_pptr) {
-				struct proc *t = q->p_opptr;
-				proc_reparent(q, t ? t : initproc);
-				q->p_opptr = NULL;
+			if (child->p_opptr != child->p_pptr) {
+				struct proc *t = child->p_opptr;
+				proc_reparent(child, t ? t : initproc);
+				child->p_opptr = NULL;
 			} else
-				proc_reparent(q, initproc);
-			killproc(q, "orphaned traced process");
+				proc_reparent(child, initproc);
+			killproc(child, "orphaned traced process");
 		} else
-			proc_reparent(q, initproc);
+			proc_reparent(child, initproc);
 	}
 
 	/*
@@ -490,12 +492,12 @@ exit1(struct lwp *l, int rv)
 	p->p_stat = SDEAD;
 
 	/* Put in front of parent's sibling list for parent to collect it */
-	q = p->p_pptr;
-	q->p_nstopchild++;
-	if (LIST_FIRST(&q->p_children) != p) {
+	old_parent = p->p_pptr;
+	old_parent->p_nstopchild++;
+	if (LIST_FIRST(&old_parent->p_children) != p) {
 		/* Put child where it can be found quickly */
 		LIST_REMOVE(p, p_sibling);
-		LIST_INSERT_HEAD(&q->p_children, p, p_sibling);
+		LIST_INSERT_HEAD(&old_parent->p_children, p, p_sibling);
 	}
 
 	/*
@@ -503,7 +505,7 @@ exit1(struct lwp *l, int rv)
 	 * flag set, notify init instead (and hope it will handle
 	 * this situation).
 	 */
-	if (q->p_flag & (PK_NOCLDWAIT|PK_CLDSIGIGN)) {
+	if (old_parent->p_flag & (PK_NOCLDWAIT|PK_CLDSIGIGN)) {
 		proc_reparent(p, initproc);
 		wakeinit = 1;
 
@@ -512,17 +514,17 @@ exit1(struct lwp *l, int rv)
 		 * parent, so in case he was wait(2)ing, he will
 		 * continue.
 		 */
-		if (LIST_FIRST(&q->p_children) == NULL)
-			cv_broadcast(&q->p_waitcv);
+		if (LIST_FIRST(&old_parent->p_children) == NULL)
+			cv_broadcast(&old_parent->p_waitcv);
 	}
 
 	/* Reload parent pointer, since p may have been reparented above */
-	q = p->p_pptr;
+	new_parent = p->p_pptr;
 
-	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 && 
+	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 &&
 	    p->p_exitsig != 0)) {
-		exit_psignal(p, q, &ksi);
-		kpsignal(q, &ksi, NULL);
+		exit_psignal(p, new_parent, &ksi);
+		kpsignal(new_parent, &ksi, NULL);
 	}
 
 	/* Calculate the final rusage info.  */
