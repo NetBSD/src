@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.15 2012/03/21 14:22:36 sborrill Exp $ */
+/* $NetBSD: mfivar.h,v 1.16 2012/08/05 14:54:02 bouyer Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -121,6 +121,7 @@ struct mfi_softc {
 	void			*sc_ih;
 
 	uint32_t		sc_flags;
+	bool			sc_64bit_dma;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -138,8 +139,11 @@ struct mfi_softc {
 	/* firmware determined max, totals and other information*/
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
+	uint32_t		sc_sgl_size;
 	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
+	uint16_t		sc_sgl_flags;
+	uint16_t		sc_reserved;
 	/* XXX these struct should be local to mgmt function */
 	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
