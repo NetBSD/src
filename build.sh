@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.254 2012/02/26 20:32:40 tsutsui Exp $
+#	$NetBSD: build.sh,v 1.255 2012/08/05 04:39:09 matt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -554,6 +554,14 @@ getarch()
 	#
 	case "${MACHINE}" in
 
+	evbearm-e[bl])
+		makewrappermachine=${MACHINE}
+		# MACHINE_ARCH is "arm" or "armeb", not "armel"
+		MACHINE_ARCH=earm${MACHINE##*-}
+		MACHINE_ARCH=${MACHINE_ARCH%el}
+		MACHINE=evbarm
+		;;
+
 	evbarm-e[bl])
 		makewrappermachine=${MACHINE}
 		# MACHINE_ARCH is "arm" or "armeb", not "armel"
@@ -671,7 +679,7 @@ validatearch()
 	#
 	case "${MACHINE_ARCH}" in
 
-	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
+	alpha|arm|armeb|earm|earmeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
 		;;
 
 	"")
@@ -689,7 +697,11 @@ validatearch()
 	case "${MACHINE}" in
 
 	evbarm)
-		arches="arm armeb"
+		arches="arm armeb earm earmeb"
+		;;
+
+	cats|iyonix|netwinder|shark|zaurus)
+		arches="arm earm"
 		;;
 
 	algor|arc|cobalt|pmax)
@@ -1656,7 +1668,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.254 2012/02/26 20:32:40 tsutsui Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.255 2012/08/05 04:39:09 matt Exp $
 # with these arguments: ${_args}
 #
 
