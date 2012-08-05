@@ -1,4 +1,4 @@
-/*      $NetBSD: malo.c,v 1.2 2012/07/30 20:30:41 degroote Exp $ */
+/*	$NetBSD: malo.c,v 1.3 2012/08/05 09:16:54 degroote Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.2 2012/07/30 20:30:41 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3 2012/08/05 09:16:54 degroote Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -246,8 +246,6 @@ struct malo_cmd_slot {
 #define malo_ctl_barrier(sc, t) \
 	bus_space_barrier((sc)->sc_mem2_bt, (sc)->sc_mem2_bh, 0x0c00, 0xff, (t))
 
-static int malo_init(struct ifnet *);
-static void malo_stop(struct ifnet *, int disable);
 static int	malo_alloc_cmd(struct malo_softc *sc);
 static void	malo_free_cmd(struct malo_softc *sc);
 static void	malo_send_cmd(struct malo_softc *sc, bus_addr_t addr);
@@ -832,7 +830,7 @@ malo_free_tx_ring(struct malo_softc *sc, struct malo_tx_ring *ring)
 	}
 }
 
-static int
+int
 malo_init(struct ifnet *ifp)
 {
 	struct malo_softc *sc = ifp->if_softc;
@@ -1049,7 +1047,7 @@ malo_start(struct ifnet *ifp)
 	}
 }
 
-static void
+void
 malo_stop(struct ifnet* ifp, int disable)
 {
 	struct malo_softc *sc = ifp->if_softc;
