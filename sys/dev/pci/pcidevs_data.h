@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1119 2012/07/27 21:50:52 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1120 2012/08/05 15:35:32 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1127 2012/07/27 21:50:32 matt Exp
+ *	NetBSD: pcidevs,v 1.1128 2012/08/05 15:34:50 bouyer Exp
  */
 
 /*
@@ -5865,54 +5865,56 @@ static const uint16_t pci_products[] = {
 	    21183, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066E, 
 	    21192, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_2208, 
+	    8192, 21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064A, 
-	    21201, 0,
+	    21209, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066, 
-	    21210, 0,
+	    21218, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078, 
-	    21218, 615, 0,
+	    21226, 615, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078_PCIE, 
-	    21218, 615, 4329, 0,
+	    21226, 615, 4329, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2116_1, 
-	    21226, 0,
+	    21234, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2116_2, 
-	    21226, 0,
+	    21234, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2308_3, 
-	    21234, 0,
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2004, 
 	    21242, 0,
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2008, 
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2004, 
 	    21250, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2008, 
+	    21258, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2008_1, 
-	    8192, 21250, 0,
+	    8192, 21258, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_3, 
-	    21258, 0,
+	    21266, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_4, 
-	    21258, 0,
+	    21266, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_5, 
-	    21258, 0,
+	    21266, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_1, 
-	    8192, 21258, 21266, 21273, 0,
+	    8192, 21266, 21274, 21281, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2108_2, 
-	    8192, 21258, 21273, 0,
+	    8192, 21266, 21281, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078DE, 
-	    21278, 0,
+	    21286, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_1, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_2, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_3, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_4, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_5, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2208_6, 
-	    21288, 0,
+	    21201, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2308_1, 
-	    21234, 0,
+	    21242, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS2308_2, 
-	    21234, 0,
+	    21242, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J, 
 	    21296, 0,
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909, 
@@ -9525,7 +9527,7 @@ static const char pci_words[] = { "."
 	    "(port\0" /* 3 refs @ 8180 */
 	    "1)\0" /* 1 refs @ 8186 */
 	    "2)\0" /* 1 refs @ 8189 */
-	    "MegaRAID\0" /* 8 refs @ 8192 */
+	    "MegaRAID\0" /* 9 refs @ 8192 */
 	    "Crypto\0" /* 2 refs @ 8201 */
 	    "Accelerator\0" /* 17 refs @ 8208 */
 	    "ADSP-2141\0" /* 1 refs @ 8220 */
@@ -11333,18 +11335,18 @@ static const char pci_words[] = { "."
 	    "SAS1064E\0" /* 2 refs @ 21174 */
 	    "SAS1068E\0" /* 2 refs @ 21183 */
 	    "SAS1066E\0" /* 1 refs @ 21192 */
-	    "SAS1064A\0" /* 1 refs @ 21201 */
-	    "SAS1066\0" /* 1 refs @ 21210 */
-	    "SAS1078\0" /* 2 refs @ 21218 */
-	    "SAS2116\0" /* 2 refs @ 21226 */
-	    "SAS2308\0" /* 3 refs @ 21234 */
-	    "SAS2004\0" /* 1 refs @ 21242 */
-	    "SAS2008\0" /* 2 refs @ 21250 */
-	    "SAS2108\0" /* 5 refs @ 21258 */
-	    "CRYPTO\0" /* 1 refs @ 21266 */
-	    "GEN2\0" /* 2 refs @ 21273 */
-	    "SAS1078DE\0" /* 1 refs @ 21278 */
-	    "SAS2208\0" /* 6 refs @ 21288 */
+	    "SAS2208\0" /* 7 refs @ 21201 */
+	    "SAS1064A\0" /* 1 refs @ 21209 */
+	    "SAS1066\0" /* 1 refs @ 21218 */
+	    "SAS1078\0" /* 2 refs @ 21226 */
+	    "SAS2116\0" /* 2 refs @ 21234 */
+	    "SAS2308\0" /* 3 refs @ 21242 */
+	    "SAS2004\0" /* 1 refs @ 21250 */
+	    "SAS2008\0" /* 2 refs @ 21258 */
+	    "SAS2108\0" /* 5 refs @ 21266 */
+	    "CRYPTO\0" /* 1 refs @ 21274 */
+	    "GEN2\0" /* 2 refs @ 21281 */
+	    "SAS1078DE\0" /* 1 refs @ 21286 */
 	    "53c875J\0" /* 1 refs @ 21296 */
 	    "FC909\0" /* 1 refs @ 21304 */
 	    "FC909A\0" /* 1 refs @ 21310 */
