@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.41 2012/08/05 17:23:25 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.41 2012/08/05 17:23:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $");
 
 #include "bio.h"
 
@@ -739,6 +739,8 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	int			i;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_attach\n", DEVNAME(sc));
+
+	sc->sc_ioptype = iop;
 
 	switch (iop) {
 	case MFI_IOP_XSCALE:
