@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.61 2011/05/10 00:33:58 matt Exp $
+#	$NetBSD: Makefile.rump,v 1.62 2012/08/05 15:37:39 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -24,7 +24,6 @@ CFLAGS+=	-std=gnu99
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
 CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
-CPPFLAGS+=	-DDIAGNOSTIC
 CPPFLAGS+=	-DCOMPAT_50=1
 CPPFLAGS+=	-DDEBUGPRINT
 CPPFLAGS+=	-I${.CURDIR} -I.
@@ -33,7 +32,15 @@ CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -isystem ${RUMPTOP}/..
 LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
-#CPPFLAGS+=	-DDEBUG
+
+RUMP_DIAGNOSTIC?=yes
+.if ${RUMP_DIAGNOSTIC} == "yes"
+CPPFLAGS+=	-DDIAGNOSTIC
+.endif
+
+.ifdef RUMP_DEBUG
+CPPFLAGS+=	-DDEBUG
+.endif
 
 .ifdef RUMP_LOCKDEBUG
 CPPFLAGS+=	-DLOCKDEBUG
