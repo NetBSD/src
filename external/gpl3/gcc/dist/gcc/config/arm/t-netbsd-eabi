@@ -1,0 +1,28 @@
+# Copyright (C) 2005, 2009 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# Use a version of div0 which raises SIGFPE, and a special __clear_cache.
+#LIB1ASMFUNCS += \
+#	_ashldi3 _ashrdi3 _divdi3 _floatdidf _udivmoddi4 _umoddi3 \
+#	_udivdi3 _lshrdi3 _moddi3 _muldi3 _negdi2 _cmpdi2 \
+#	_fixdfdi _fixsfdi _fixunsdfdi _fixunssfdi _floatdisf \
+#	_negdf2 _addsubdf3 _muldivdf3 _cmpdf2 _unorddf2 _fixdfsi _fixunsdfsi \
+#	_truncdfsf2 _negsf2 _addsubsf3 _muldivsf3 _cmpsf2 _unordsf2 \
+#	_fixsfsi _fixunssfsi
+LIB1ASMFUNCS += \
+	_floatundisf
