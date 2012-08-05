@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2 2012/08/05 04:22:01 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -48,6 +48,8 @@ ENTRY(__modsi3)
 #endif
 	RET
 
+ENTRY_NP(__aeabi_uidivmod)
+ENTRY_NP(__aeabi_uidiv)
 ENTRY(__udivsi3)
 .L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 
@@ -70,6 +72,8 @@ ENTRY(__udivsi3)
 	mov	r1, #0
 	RET
 
+ENTRY_NP(__aeabi_idivmod)
+ENTRY_NP(__aeabi_idiv)
 ENTRY(__divsi3)
 .L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 
