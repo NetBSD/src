@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.23 2012/05/09 08:17:33 martin Exp $
+# $NetBSD: md.evbppc,v 1.24 2012/08/05 04:14:40 riastradh Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -164,6 +164,8 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/tmpfs/tmpfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/tprof				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/tprof/tprof.kmod			base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/uatp				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/uatp/uatp.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/udf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/udf/udf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/umap				base-kernel-modules	kmod,compatmodules
@@ -345,6 +347,8 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/tmpfs/tmpfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/tprof				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/tprof/tprof.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/uatp				base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/uatp/uatp.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/udf				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/udf/udf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/umap				base-kernel-modules	kmod,compatmodules
