@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.8 2012/08/04 14:57:46 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.9 2012/08/05 01:44:43 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,22 +35,6 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 #include <machine/asm.h>
-
-#if defined(__ARM_EABI__) && defined(CRTI)
-__asm(
-	".section\t\".note.netbsd.aeabi\", \"a\"\n"
-	"\t.p2align\t2\n\n"
-
-	"\t.long\t" __S(ELF_NOTE_NETBSD_NAMESZ) "\n"
-	"\t.long\t" __S(ELF_NOTE_ARMEABI_DESCSZ) "\n"
-	"\t.long\t" __S(ELF_NOTE_TYPE_ARMEABI_TAG) "\n"
-	"\t.ascii\t" __S(ELF_NOTE_NETBSD_NAME) "\n"
-	"\t.long\t" __S(ELF_NOTE_ARMEABI_AAPCS) "\n\n"
-
-	"\t.previous\n"
-	"\t.p2align\t2\n"
-);
-#endif /* __ARM_EABI__ */
 
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
