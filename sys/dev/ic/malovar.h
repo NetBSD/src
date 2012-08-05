@@ -129,3 +129,5 @@ struct malo_softc {
 int malo_intr(void *arg);
 int malo_attach(struct malo_softc *sc);
 int malo_detach(void *arg);
+int malo_init(struct ifnet *);
+void malo_stop(struct ifnet *, int disable);

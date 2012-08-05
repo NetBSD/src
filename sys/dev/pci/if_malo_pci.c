@@ -1,4 +1,4 @@
-/*      $NetBSD: if_malo_pci.c,v 1.2 2012/07/30 20:30:41 degroote Exp $ */
+/*	$NetBSD: if_malo_pci.c,v 1.3 2012/08/05 09:16:54 degroote Exp $	*/
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.2 2012/07/30 20:30:41 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.3 2012/08/05 09:16:54 degroote Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -58,7 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.2 2012/07/30 20:30:41 degroote Exp
 
 static int malo_pci_match(device_t parent, cfdata_t match, void *aux);
 static void	malo_pci_attach(device_t, device_t, void *);
-static int	malo_pci_detach(struct device *, int);
+static int	malo_pci_detach(device_t, int);
+static bool malo_pci_suspend(device_t, const pmf_qual_t *);
+static bool malo_pci_resume(device_t, const pmf_qual_t *);
 
 struct malo_pci_softc {
 	struct malo_softc	sc_malo;
@@ -166,16 +168,46 @@ malo_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	malo_attach(sc);
+
+	if (pmf_device_register(self, malo_pci_suspend, malo_pci_resume))
+		pmf_class_network_register(self, &sc->sc_if);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
-malo_pci_detach(struct device *self, int flags)
+malo_pci_detach(device_t self, int flags)
 {
-	struct malo_pci_softc *psc = (struct malo_pci_softc *)self;
+	struct malo_pci_softc *psc = device_private(self);
 	struct malo_softc *sc = &psc->sc_malo;
 
 	malo_detach(sc);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);
+}
+
+static bool 
+malo_pci_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct malo_pci_softc *psc = device_private(self);
+	struct malo_softc *sc = &psc->sc_malo;
+	struct ifnet *ifp = &sc->sc_if;
+
+	malo_stop(ifp, 1);
+
+	return true;
+}
+
+static bool 
+malo_pci_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct malo_pci_softc *psc = device_private(self);
+	struct malo_softc *sc = &psc->sc_malo;
+	struct ifnet *ifp = &sc->sc_if;
+
+	if (ifp->if_flags & IFF_UP)
+		malo_init(ifp);
+
+	return true;
 }
