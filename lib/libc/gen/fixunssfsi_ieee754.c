@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunssfsi_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $	*/
+/*	$NetBSD: fixunssfsi_ieee754.c,v 1.2 2012/08/05 04:28:58 matt Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,13 +31,17 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fixunssfsi_ieee754.c,v 1.1 2011/07/09 02:30:27 matt Exp $");
+__RCSID("$NetBSD: fixunssfsi_ieee754.c,v 1.2 2012/08/05 04:28:58 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <float.h>
 #include <machine/ieee.h>
+
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
 
 uint32_t __fixunsgen32(int, bool, size_t, size_t, const uint32_t *);
 
