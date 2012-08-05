@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.39 2012/08/05 14:54:01 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.40 2012/08/05 15:50:49 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.39 2012/08/05 14:54:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.40 2012/08/05 15:50:49 bouyer Exp $");
 
 #include "bio.h"
 
@@ -416,14 +416,14 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			printf("%s: firmware fault\n", DEVNAME(sc));
 			return 1;
 		case MFI_STATE_WAIT_HANDSHAKE:
-			if (sc->sc_flags & MFI_IOP_SKINNY)
+			if (sc->sc_ioptype == MFI_IOP_SKINNY)
 				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			else
 				mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			max_wait = 2;
 			break;
 		case MFI_STATE_OPERATIONAL:
-			if (sc->sc_flags & MFI_IOP_SKINNY)
+			if (sc->sc_ioptype == MFI_IOP_SKINNY)
 				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
 			else
 				mfi_write(sc, MFI_IDB, MFI_INIT_READY);
