@@ -20,9 +20,11 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Use the AAPCS ABI by default.  */
+#undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS
 
 /* Assume that AAPCS ABIs should adhere to the full BPABI.  */ 
+#undef TARGET_BPABI
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
 /* BPABI targets use EABI frame unwinding tables.  */
