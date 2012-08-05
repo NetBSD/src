@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.12 2011/02/01 01:39:21 matt Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.13 2012/08/05 15:36:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.12 2011/02/01 01:39:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.13 2012/08/05 15:36:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -72,30 +72,9 @@ __weak_alias(ieee8023ad_marker_input,__rumpnet_stub);
 
 struct ifnet_head ifnet;
 
-u_long
-compat_cvtcmd(u_long cmd)
-{
-
-	return cmd;
-}
-
 int
 compat_ifconf(u_long cmd, void *data)
 {
 
 	return EOPNOTSUPP;
-}
-
-int
-compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
-	struct lwp *l)
-{
-	struct ifreq *ifr = data;
-	struct ifnet *ifp = ifunit(ifr->ifr_name);
-
-	if (!ifp)
-		return ENXIO;
-
-	return (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
 }
