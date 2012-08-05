@@ -3,9 +3,18 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
+#ifdef _SOFT_FLOAT
+static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=powerpc--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb2 20111202' --enable-__cxa_atexit --with-mpc=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --with-mpfr=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --with-gmp=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --enable-tls --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd6.0 --host=powerpc--netbsd -with-float-soft";
+static const char thread_model[] = "posix";
+
+static const struct {
+  const char *name, *value;
+} configure_default_options[] = { { "float", "soft"} };
+#else
 static const char configuration_arguments[] = "/usr/src/tools/gcc/../../external/gpl3/gcc/dist/configure --target=powerpc--netbsd --enable-long-long --enable-threads --with-bugurl=http://www.NetBSD.org/Misc/send-pr.html --with-pkgversion='NetBSD nb2 20111202' --enable-__cxa_atexit --with-mpc=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --with-mpfr=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --with-gmp=/var/obj/mknative/macppc/usr/src/destdir.macppc/usr --enable-tls --disable-multilib --disable-symvers --disable-libstdcxx-pch --build=x86_64-unknown-netbsd6.0 --host=powerpc--netbsd";
 static const char thread_model[] = "posix";
 
 static const struct {
   const char *name, *value;
 } configure_default_options[] = { { NULL, NULL} };
+#endif
