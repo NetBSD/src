@@ -29,17 +29,23 @@
 
 #include <machine/asm.h>
 
+RCSID("$NetBSD: __aeabi_uldivmod.S,v 1.2 2012/08/05 06:34:09 matt Exp $")
+
+/*
+ * typedef struct { unsigned long long quo, rem } ulldiv_t;
+ * __value_in_regs ulldiv_t __aeabi_uldivmod(unsigned long long n,
+ *	unsigned long long d);
+ */
+
 ENTRY(__aeabi_uldivmod)
 	push	{r4,lr}
 	sub	sp, sp, #8
 	mov	r4, sp
 	bl	PLT_SYM(__qdivrem)
-#ifdef _ARM_ARCH_DWORD_OK
-	ldrd	r2, [sp], #8
-#else
-	ldr	r2, [sp], #4
-	ldr	r3, [sp], #4
-#endif
-	pop	{r4,lr}
+	/*
+	 * The remainder is already on the stack just waiting to be popped
+	 * into r2/r3.
+	 */
+	pop	{r2-r4,lr}
 	RET
 END(__aeabi_uldivmod)
