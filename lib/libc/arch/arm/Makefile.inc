@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.13 2012/08/05 06:34:44 matt Exp $
+# $NetBSD: Makefile.inc,v 1.14 2012/08/06 01:54:21 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ SRCS+=	__aeabi_read_tp.S __sigaction14_sigtramp.c __sigtramp2.S
 CPPFLAGS += -DSOFTFLOAT
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
+SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
 CPPFLAGS += -DSOFTFLOAT_NEED_FIXUNS
 .endif
 
