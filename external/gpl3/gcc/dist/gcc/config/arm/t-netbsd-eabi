@@ -26,3 +26,10 @@
 #	_fixsfsi _fixunssfsi
 LIB1ASMFUNCS += \
 	_floatundisf
+
+# Add the BPABI C functions.
+LIB2FUNCS_EXTRA = $(srcdir)/config/arm/bpabi-netbsd.c \
+		  $(srcdir)/config/arm/unaligned-funcs.c
+
+# we don't have this
+LIB2FUNCS_STATIC_EXTRA = 
