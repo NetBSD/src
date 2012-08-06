@@ -67,7 +67,7 @@
 #define PACKAGE_VERSION "version-unused"
 
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
-#define SJLJ_EXCEPTIONS 1
+/* #undef SJLJ_EXCEPTIONS */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
