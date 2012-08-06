@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.14 2012/08/06 01:54:21 matt Exp $
+# $NetBSD: Makefile.inc,v 1.15 2012/08/06 07:55:21 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,8 @@ CPPFLAGS += -DSOFTFLOAT
 .if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
 SRCS+=	__aeabi_ldivmod.S __aeabi_uldivmod.S
 SRCS+=	__aeabi_lcmp.c __aeabi_ulcmp.c
-CPPFLAGS += -DSOFTFLOAT_NEED_FIXUNS
+SRCS+=	fixunsgen_ieee754.c fixunssfsi_ieee754.c
+SRCS+=	fixunsgen64_ieee754.c fixunsdfsi_ieee754.c
 .endif
 
 # for earm, use the 64-bit softfloat
