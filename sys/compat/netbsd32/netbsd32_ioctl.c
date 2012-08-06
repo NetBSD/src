@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.66 2012/05/28 14:19:10 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.66 2012/05/28 14:19:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,8 +679,8 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	fdfile_t *ff;
 	int tmp;
 #define STK_PARAMS	128
-	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
-	u_long stkbuf32[STK_PARAMS/sizeof(u_long)];
+	uint64_t stkbuf[STK_PARAMS/sizeof(uint64_t)];
+	uint64_t stkbuf32[STK_PARAMS/sizeof(uint64_t)];
 
 	/*
 	 * we need to translate some commands (_IOW) before calling sys_ioctl,
