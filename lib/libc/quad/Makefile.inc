@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2011/07/04 11:22:39 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2012/08/06 08:17:58 matt Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # Quad support
@@ -11,6 +11,8 @@ SRCS.quad=	cmpdi2.c divdi3.c fixdfdi.c fixsfdi.c fixunsdfdi.c \
 SRCS.quad+=	ashldi3.S ashrdi3.S lshrdi3.S
 .elif (${MACHINE_ARCH} == "m68000")
 SRCS.quad+=	ashldi3.S lshrdi3.S
+.elif (${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb")
+SRCS.quad+=	ashrdi3.c lshldi3.c lshrdi3.c
 .else
 SRCS.quad+=	ashldi3.c ashrdi3.c lshrdi3.c
 .endif
