@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1121 2012/08/05 17:55:20 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1122 2012/08/06 18:53:09 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1129 2012/08/05 17:40:00 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1130 2012/08/06 18:52:40 msaitoh Exp
  */
 
 /*
@@ -4911,6 +4911,8 @@ static const uint16_t pci_products[] = {
 	    18786, 692, 1716, 2427, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1, 
 	    18786, 692, 1716, 2427, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_KT, 
+	    18786, 17738, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_HB, 
 	    18793, 6671, 6281, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_IGD, 
@@ -10969,7 +10971,7 @@ static const char pci_words[] = { "."
 	    "Thermal\0" /* 7 refs @ 17718 */
 	    "DMI-PCI\0" /* 1 refs @ 17726 */
 	    "MEI\0" /* 8 refs @ 17734 */
-	    "KT\0" /* 3 refs @ 17738 */
+	    "KT\0" /* 4 refs @ 17738 */
 	    "P67\0" /* 1 refs @ 17741 */
 	    "UM67\0" /* 1 refs @ 17745 */
 	    "HM65\0" /* 1 refs @ 17750 */
@@ -11121,7 +11123,7 @@ static const char pci_words[] = { "."
 	    "82965PM\0" /* 6 refs @ 18760 */
 	    "80862A01\0" /* 1 refs @ 18768 */
 	    "82965GME\0" /* 2 refs @ 18777 */
-	    "82GM45\0" /* 3 refs @ 18786 */
+	    "82GM45\0" /* 4 refs @ 18786 */
 	    "82IGD_E\0" /* 2 refs @ 18793 */
 	    "82Q45\0" /* 4 refs @ 18801 */
 	    "82G45\0" /* 2 refs @ 18807 */

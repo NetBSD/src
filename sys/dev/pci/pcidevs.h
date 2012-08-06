@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1122 2012/08/05 17:55:20 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1123 2012/08/06 18:53:08 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1129 2012/08/05 17:40:00 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1130 2012/08/06 18:52:40 msaitoh Exp
  */
 
 /*
@@ -3066,6 +3066,7 @@
 #define	PCI_PRODUCT_INTEL_82GM45_HB	0x2a40		/* 82GM45 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD	0x2a42		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD_1	0x2a43		/* 82GM45 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82GM45_KT	0x2a47		/* 82GM45 KT */
 #define	PCI_PRODUCT_INTEL_82IGD_E_HB	0x2e00		/* 82IGD_E Host Bridge */
 #define	PCI_PRODUCT_INTEL_82IGD_E_IGD	0x2e02		/* 82IGD_E Integrated Graphics */
 #define	PCI_PRODUCT_INTEL_82Q45_HB	0x2e10		/* 82Q45 Host Bridge */
