@@ -28,7 +28,10 @@
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
 /* BPABI targets use EABI frame unwinding tables.  */
+#undef MUST_USE_SJLJ_EXCEPTIONS
 #define TARGET_UNWIND_INFO 1
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES 1
 
 /* Section 4.1 of the AAPCS requires the use of VFP format.  */
 #undef  FPUTYPE_DEFAULT
