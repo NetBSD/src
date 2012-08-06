@@ -1237,7 +1237,7 @@
 
 /* Define to 1 if the system has the type `long long int'. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_LONG_LONG_INT */
+#define HAVE_LONG_LONG_INT 1
 #endif
 
 
@@ -1459,7 +1459,7 @@
 
 /* Define to 1 if the system has the type `unsigned long long int'. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_UNSIGNED_LONG_LONG_INT */
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
 #endif
 
 
