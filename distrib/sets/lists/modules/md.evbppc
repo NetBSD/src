@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.25 2012/08/05 04:17:41 riastradh Exp $
+# $NetBSD: md.evbppc,v 1.26 2012/08/06 10:44:08 martin Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -68,10 +68,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/hdafg				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-4xx/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/modules/hdafg				base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/hdaudio				base-obsolete	obsolete
+./stand/powerpc-4xx/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-obsolete	obsolete
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/if_axe				base-kernel-modules	kmod,compatmodules
@@ -255,10 +255,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpioow/gpioow.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/gpiosim/gpiosim.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/hdafg				base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/hdaudio			base-kernel-modules	kmod,compatmodules
-./stand/powerpc-booke/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/modules/hdafg				base-obsolete	obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-obsolete	obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/hdaudio			base-obsolete	obsolete
+./stand/powerpc-booke/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-obsolete	obsolete
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/if_axe			base-kernel-modules	kmod,compatmodules
