@@ -28,10 +28,10 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: __aeabi_lcmp.c,v 1.1 2012/08/06 01:50:30 matt Exp $");
+__RCSID("$NetBSD: __aeabi_lcmp.c,v 1.2 2012/08/06 02:15:51 matt Exp $");
 
 #include "quad.h"
-#include "aeabi.h"
+#include <arm/aeabi.h>
 
 /*
  * Return -1, 0, 1 (like strcmp) if a [<, =, >] b
