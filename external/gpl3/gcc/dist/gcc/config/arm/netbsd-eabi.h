@@ -37,9 +37,9 @@
    config.gcc for big endian configurations.  */
 #undef  TARGET_LINKER_EMULATION
 #if TARGET_ENDIAN_DEFAULT == MASK_BIG
-#define TARGET_LINKER_EMULATION "armelfb_nbsd_eabi"
+#define TARGET_LINKER_EMULATION "-m armelfb_nbsd_eabi"
 #else
-#define TARGET_LINKER_EMULATION "armelf_nbsd_eabi"
+#define TARGET_LINKER_EMULATION "-m armelf_nbsd_eabi"
 #endif
 
 #undef MULTILIB_DEFAULTS
@@ -80,11 +80,15 @@
   { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
   { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
   { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },	\
+  { "be8_link_spec",		BE8_LINK_SPEC }, \
+  { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
 
 #define NETBSD_ENTRY_POINT "__start"
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "-X %{mbig-endian:-EB} %{mlittle-endian:-EL} \
+  "-X %{mbig-endian:-EB -m armelfb_nbsd_eabi} \
+   %{mlittle-endian:-EL -m armelf_nbsd_eabi} \
+   %(be8_link_spec) %(target_fix_v4bx_spec) \
    %(netbsd_link_spec)"
