@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.39 2012/06/30 15:03:56 reinoud Exp $
+# $NetBSD: md.i386,v 1.40 2012/08/06 10:44:08 martin Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -73,6 +73,10 @@
 ./@MODULEDIR@/fujbp/fujbp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk				base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk/fujhk.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hdafg				base-kernel-modules	kmod
+./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
