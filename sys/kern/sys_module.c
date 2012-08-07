@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.13 2011/07/08 09:32:45 mrg Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,17 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.13 2011/07/08 09:32:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/kobj.h>
 #include <sys/module.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+#include <opt_modular.h>
 
 static int
 handle_modctl_load(modctl_load_t *ml)
@@ -121,6 +124,9 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	modctl_load_t ml;
 	int error;
 	void *arg;
+#ifdef MODULAR
+	uintptr_t loadtype;
+#endif
 
 	arg = SCARG(uap, arg);
 
@@ -195,6 +201,27 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 			iov.iov_len = mslen - sizeof(modstat_t);
 			error = copyout(&iov, arg, sizeof(iov));
 		}
+		break;
+
+	case MODCTL_EXISTS:
+#ifndef MODULAR
+		error = ENOSYS;
+#else
+		loadtype = (uintptr_t)arg;
+		switch (loadtype) {	/* 0 = modload, 1 = autoload */
+		case 0:			/* FALLTHROUGH */
+		case 1:
+			error = kauth_authorize_system(kauth_cred_get(),
+			     KAUTH_SYSTEM_MODULE, 0,
+			     (void *)(uintptr_t)MODCTL_LOAD,
+			     (void *)loadtype, NULL);
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+#endif
 		break;
 
 	default:
