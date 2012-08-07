@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.78 2012/08/05 17:42:01 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.79 2012/08/07 19:38:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.78 2012/08/05 17:42:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.79 2012/08/07 19:38:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1370,6 +1370,149 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel 82946GZ/GL KT */
+	{   "Intel 82946GZ/GL KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel P965/G965 KT */
+	{   "Intel P965/G965 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82P965_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel PM965/GM965 KT */
+	{   "Intel PM965/GM965 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel GME965/GLE965 KT */
+	{   "Intel GME965/GLE965 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965GME_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Q963/Q965 KT */
+	{   "Intel Q963/Q965 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q965_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel G33/G31/P35/P31 KT */
+	{   "Intel Q35 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Q35 KT */
+	{   "Intel Q35 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Q33 KT */
+	{   "Intel Q33 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel X38 KT */
+	{   "Intel X38 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82X38_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 3200 KT */
+	{   "Intel 3200 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3200_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel GM45 KT */
+	{   "Intel GM45 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Q45 KT */
+	{   "Intel Q45 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 5 Series and Intel 3400 Series KT */
+	{   "Intel 6 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 6 Series KT */
+	{   "Intel 6 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 7 Series KT */
+	{   "Intel 7 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel C600/X79 Series KT */
+	{   "Intel 7 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
 
 	/* Intel EG20T UART */
 	{   "Intel EG20T UART #0",
