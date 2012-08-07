@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1729 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1730 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,7 +86,7 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	tdvfb(4): Add 3Dfx Voodoo Graphics (aka Voodoo1) support.
 		[rkujawa 20120720]
 	kernel: Change mii_statchg to take "struct ifnet *" instead of
-		"device_t".  [matt 20120722]
+		"device_t". [matt 20120722]
 	pr(1): Add support for POSIX -f and -p options. [ginsbach 20120724]
 	powerpc: Add support for FPU emulation on BookE. [matt 20120722]
 	zoneinfo: Import tzdata2012d. [apb 20120722]
@@ -94,6 +94,11 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	OpenSSL: Imported 1.0.1c [christos 20120726]
 	kernel: safepri is dead; replaced by macro IPL_SAFEPRI. [matt 20120727]
 	kernel: Add malo(4), a driver for Marvell Libertas IEEE 802.11b/g
-		wireless network devices, ported from OpenBSD. [degroote 20120730]
+		wireless network devices, ported from OpenBSD.
+		[degroote 20120730]
 	kernel: Add BPF JIT compiler, currently supporting amd64 and i386.
 		[rmind 20120802]
+	kernel, libc: Add modctl(MODCTL_EXISTS, ...) to determine if modules
+		can be loaded. [jnemeth 20120803]
+	modstat(8): Add -A, -a, and -e options for testing module loadability.
+		[jnemeth 20120803]

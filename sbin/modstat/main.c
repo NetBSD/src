@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2011/08/02 16:46:45 mbalmer Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2012/08/07 01:19:05 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,16 +28,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14 2011/08/02 16:46:45 mbalmer Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2012/08/07 01:19:05 jnemeth Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "prog_ops.h"
 
@@ -70,13 +73,19 @@ main(int argc, char **argv)
 	size_t len;
 	const char *name;
 	char sbuf[32];
-	int ch;
-	size_t maxnamelen = 16, i;
+	int ch, rc, modauto = 1;
+	size_t maxnamelen = 16, i, modautolen;
+	char loadable = '\0';
 
 	name = NULL;
 
-	while ((ch = getopt(argc, argv, "n:")) != -1) {
+	while ((ch = getopt(argc, argv, "Aaen:")) != -1) {
 		switch (ch) {
+		case 'A':			/* FALLTHROUGH */
+		case 'a':			/* FALLTHROUGH */
+		case 'e':
+			loadable = (char)ch;
+			break;
 		case 'n':
 			name = optarg;
 			break;
@@ -95,6 +104,56 @@ main(int argc, char **argv)
 
 	if (prog_init && prog_init() == -1)
 		err(1, "prog init failed");
+
+	if (loadable == 'A' || loadable == 'a') {
+		if (prog_modctl(MODCTL_EXISTS, (void *)(uintptr_t)1)) {
+			switch (errno) {
+			case ENOSYS:
+				errx(EXIT_FAILURE, "The kernel was compiled "
+				    "without options MODULAR.");
+				break;
+			case EPERM:
+				errx(EXIT_FAILURE, "Modules can not be "
+				    "autoloaded right now.");
+				break;
+			default:
+				err(EXIT_FAILURE, "modctl_exists for autoload");
+				break;
+			}
+		} else {
+			if (loadable == 'A') {
+				modautolen = sizeof(modauto);
+				rc = sysctlbyname("kern.module.autoload",
+				    &modauto, &modautolen, NULL, 0);
+				if (rc != 0) {
+					err(EXIT_FAILURE, "sysctl "
+					    "kern.module.autoload failed.");
+				}
+			}
+			errx(EXIT_SUCCESS, "Modules can be autoloaded%s.",
+			modauto ? "" : ", but kern.module.autoload = 0");
+		}
+	}
+
+	if (loadable == 'e') {
+		if (prog_modctl(MODCTL_EXISTS, (void *)(uintptr_t)0)) {
+			switch (errno) {
+			case ENOSYS:
+				errx(EXIT_FAILURE, "The kernel was compiled "
+				    "without options MODULAR.");
+				break;
+			case EPERM:
+				errx(EXIT_FAILURE, "You are not allowed to "
+				    "load modules right now.");
+				break;
+			default:
+				err(EXIT_FAILURE, "modctl_exists for autoload");
+				break;
+			}
+		} else {
+			errx(EXIT_SUCCESS, "You can load modules.");
+		}
+	}
 
 	for (len = 8192;;) {
 		iov.iov_base = malloc(len);
@@ -157,7 +216,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-n] [name]\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-Aaen] [name]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 

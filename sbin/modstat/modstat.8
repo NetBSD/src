@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.9 2011/08/02 16:46:45 mbalmer Exp $
+.\" $NetBSD: modstat.8,v 1.10 2012/08/07 01:19:05 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd August 2, 2011
+.Dd August 6, 2012
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd display status of loaded kernel modules
 .Sh SYNOPSIS
 .Nm
-.Op Fl n
+.Op Fl Aaen
 .Op Ar name
 .Sh DESCRIPTION
 The
@@ -49,6 +49,16 @@ utility displays the status of any kernel modules present in the kernel.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl A
+Tells you whether or not modules can be autoloaded at the moment.
+This option does take into consideration the sysctl
+.Li kern.module.autoload .
+.It Fl a
+Tells you whether or not modules can be autoloaded at the moment.
+This option does not take into consideration the sysctl
+.Li kern.module.autoload .
+.It Fl e
+Tells you whether or not you may load a module at the moment.
 .It Fl n Ar name
 Display the status of only the module with this name.
 Please note that
@@ -88,6 +98,7 @@ utility exits with a status of 0 on success
 and with a nonzero status if an error occurs.
 .Sh SEE ALSO
 .Xr module 7 ,
+.Xr sysctl 7 ,
 .Xr modload 8 ,
 .Xr modunload 8
 .Sh HISTORY

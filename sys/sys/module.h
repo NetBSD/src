@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.30 2011/11/21 04:36:05 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.31 2012/08/07 01:19:06 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -179,7 +179,8 @@ typedef struct modctl_load {
 typedef enum modctl {
 	MODCTL_LOAD,		/* modctl_load_t *ml */
 	MODCTL_UNLOAD,		/* char *name */
-	MODCTL_STAT		/* struct iovec *buffer */
+	MODCTL_STAT,		/* struct iovec *buffer */
+	MODCTL_EXISTS		/* enum: 0: load, 1: autoload */
 } modctl_t;
 
 /*
