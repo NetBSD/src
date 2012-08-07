@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.17 2012/01/04 16:05:53 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.18 2012/08/07 16:11:11 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 	 * Parse a string, containing tokens delimited by white space,
 	 * into an argument vector
 	 */
-	for (ap = argv; ap < &argv[9] &&
+	for (ap = argv; ap <= &argv[9] &&
 	    (*ap = strsep(&params, " \t")) != NULL;) {
 		if (**ap != '\0')
 			ap++;
