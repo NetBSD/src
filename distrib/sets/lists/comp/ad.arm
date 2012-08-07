@@ -1,8 +1,9 @@
-# $NetBSD: ad.arm,v 1.39 2012/02/16 21:15:05 christos Exp $
+# $NetBSD: ad.arm,v 1.40 2012/08/07 18:48:13 matt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/arm				comp-c-include
+./usr/include/arm/aeabi.h			comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
 ./usr/include/arm/arm26				comp-c-include
