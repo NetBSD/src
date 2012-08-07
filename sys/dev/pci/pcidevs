@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1130 2012/08/06 18:52:40 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1131 2012/08/07 19:26:36 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2684,6 +2684,7 @@ product INTEL C600_EHCI_2	0x1d2d	C600 USB
 product INTEL C600_LAN		0x1d33	C600 LAN
 product INTEL C600_MEI_1	0x1d3a	C600 MEI
 product INTEL C600_MEI_2	0x1d3b	C600 MEI
+product INTEL C600_KT		0x1d3d	C600 KT
 product INTEL C600_VPCIE	0x1d3e	C600 Virtual PCIE
 product INTEL C600_LPC		0x1d41	C600 LPC
 product INTEL C600_SAS_1	0x1d60	C600 SAS Controller
@@ -3023,6 +3024,7 @@ product INTEL 82801I_EXP_6	0x294a	82801I PCI Express Port #6
 product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 82946GZ_HB	0x2970	82946GZ Host Bridge
 product INTEL 82946GZ_IGD	0x2972	82946GZ	Integrated Graphics Device
+product INTEL 82946GZ_KT	0x2977	82946GZ	KT
 product INTEL 82G35_HB		0x2980	82G35 Host Bridge
 product INTEL 82G35_IGD		0x2982	82G35 Integrated Graphics Device
 product INTEL 82G35_IGD_1	0x2983	82G35 Integrated Graphics Device
@@ -3030,38 +3032,47 @@ product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
 product INTEL 82965Q_IGD_1	0x2993  82965Q Integrated Graphics Device
+product INTEL 82Q965_KT		0x2997  82Q965 KT
 product INTEL 82965G_HB		0x29a0  82965G Host Bridge
 product INTEL 82965G_EXP	0x29a1  82965G PCI Express Bridge
 product INTEL 82965G_IGD	0x29a2  82965G Integrated Graphics Device
 product INTEL 82965G_IGD_1	0x29a3  82965G Integrated Graphics Device
+product INTEL 82P965_KT		0x29a7  82P965/G965 KT
 product INTEL 82Q35_HB		0x29b0  82Q35 Host Bridge
 product INTEL 82Q35_EXP		0x29b1  82Q35 PCI Express Bridge
 product INTEL 82Q35_IGD		0x29b2  82Q35 Integrated Graphics Device
 product INTEL 82Q35_IGD_1	0x29b3  82Q35 Integrated Graphics Device
+product INTEL 82Q35_KT		0x29b7  82Q35 KT
 product INTEL 82G33_HB		0x29c0	82G33/P35 Host Bridge
 product INTEL 82G33_EXP		0x29c1	82G33 PCI Express Port
 product INTEL 82G33_IGD		0x29c2	82G33 Integrated Graphics Device
 product INTEL 82G33_IGD_1	0x29c3	82G33 Integrated Graphics Device
 product INTEL 82801I_LAN	0x29c4	82801I LAN Controller
+product INTEL 82G33_KT		0x29c7	82G33/G31/P35/P31 KT
 product INTEL 82Q33_HB		0x29d0  82Q35 Host Bridge
 product INTEL 82Q33_EXP		0x29d1  82Q35 PCI Express Bridge
 product INTEL 82Q33_IGD		0x29d2  82Q35 Integrated Graphics Device
 product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
+product INTEL 82Q33_KT		0x29d7  82Q33 KT
+product INTEL 82X38_KT		0x29e7  82X38 KT
+product INTEL 3200_KT		0x29f7  3200 KT
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
 product INTEL 80862A01		0x2a01  80862A01 Mobile PCI Express Root Port
 product INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
 product INTEL 82965PM_IGD_1	0x2a03	82965PM Integrated Graphics Device
 product INTEL 82965PM_MEI	0x2a04	82965PM MEI Controller
 product INTEL 82965PM_IDE	0x2a06	82965PM IDE Interface
-product INTEL 82965PM_KT	0x2a07	82965PM Serial Interface
+product INTEL 82965PM_KT	0x2a07	82965PM/GM KT
 product INTEL 82965GME_HB	0x2a10	82965GME Host Bridge
 product INTEL 82965GME_IGD	0x2a12	82965GME Integrated Graphics Device
+product INTEL 82965GME_KT	0x2a17	82965GME KT
 product INTEL 82GM45_HB		0x2a40	82GM45 Host Bridge
 product INTEL 82GM45_IGD	0x2a42	82GM45 Integrated Graphics Device
 product INTEL 82GM45_IGD_1	0x2a43	82GM45 Integrated Graphics Device
 product INTEL 82GM45_KT		0x2a47	82GM45 KT
 product INTEL 82IGD_E_HB	0x2e00	82IGD_E Host Bridge
 product INTEL 82IGD_E_IGD	0x2e02	82IGD_E Integrated Graphics
+product INTEL 82Q45_KT		0x2e07	82Q45 KT
 product INTEL 82Q45_HB		0x2e10	82Q45 Host Bridge
 product INTEL 82Q45_EXP		0x2e11	82Q45 PCI Express Bridge
 product INTEL 82Q45_IGD		0x2e12	82Q45 Integrated Graphics Device
