@@ -1,3 +1,4 @@
+/*	$NetBSD: rune.c,v 1.45 2012/08/08 20:16:50 wiz Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
