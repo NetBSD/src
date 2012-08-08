@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.170 2012/08/08 14:50:55 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.171 2012/08/08 15:58:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6733,4 +6733,123 @@ etc/weekly					1.28
 	Fuss on tech-userlevel on 20th of July 2012, 12:38.
 	[jdf, ticket #458]
 
+sys/arch/usermode/usermode/trap.c		1.66
+
+	Fix IO lockups in NetBSD/usermode.
+
+	1) Don't block IO signals since the return path is not garanteed to
+	enable the signal again.
+	2) Since signals can get dropped, do a 2nd pass over the routines.
+	[reinoud, ticket #463]
+
+sys/net/if_types.h				1.26
+
+	Avoid ambiguity by having only one comment close mark.
+	PR 46771 by bsiegert.
+	[wiz, ticket #464]
+
+usr.sbin/rtadvd/config.c			1.28
+
+	Fix a bug that incorrect RA packet is sent if rtadvd.conf exists.
+	Fixes PR#46580 reported by Takahiro HAYASHI.
+	[msaitoh, ticket #465]
+
+distrib/sets/lists/comp/mi			1.1771
+share/man/man9/Makefile				1.367
+share/man/man9/cpu_rootconf.9			1.7
+sys/arch/acorn26/acorn26/autoconf.c		1.9
+sys/arch/acorn32/acorn32/autoconf.c		1.18
+sys/arch/algor/algor/autoconf.c			1.21
+sys/arch/alpha/alpha/autoconf.c			1.52
+sys/arch/amiga/amiga/autoconf.c			1.113
+sys/arch/amigappc/amigappc/autoconf.c		1.5
+sys/arch/arc/arc/autoconf.c			1.34
+sys/arch/atari/atari/autoconf.c			1.63
+sys/arch/bebox/bebox/autoconf.c			1.25
+sys/arch/cats/cats/autoconf.c			1.17
+sys/arch/cesfic/cesfic/autoconf.c		1.26
+sys/arch/cobalt/cobalt/autoconf.c		1.30
+sys/arch/dreamcast/dreamcast/autoconf.c		1.10
+sys/arch/emips/emips/autoconf.c			1.6
+sys/arch/evbarm/evbarm/autoconf.c		1.13
+sys/arch/evbmips/adm5120/autoconf.c		1.5
+sys/arch/evbmips/alchemy/autoconf.c		1.18
+sys/arch/evbmips/atheros/autoconf.c		1.11
+sys/arch/evbmips/gdium/autoconf.c		1.5
+sys/arch/evbmips/loongson/autoconf.c		1.3
+sys/arch/evbmips/malta/autoconf.c		1.16
+sys/arch/evbmips/rasoc/autoconf.c		1.3
+sys/arch/evbmips/rmixl/autoconf.c		1.6
+sys/arch/evbppc/ev64260/autoconf.c		1.17
+sys/arch/evbppc/explora/autoconf.c		1.13
+sys/arch/evbppc/mpc85xx/autoconf.c		1.6
+sys/arch/evbppc/obs405/obs405_autoconf.c	1.6
+sys/arch/evbppc/pmppc/autoconf.c		1.7
+sys/arch/evbppc/virtex/autoconf.c		1.5
+sys/arch/evbppc/walnut/autoconf.c		1.21
+sys/arch/evbsh3/evbsh3/autoconf.c		1.11
+sys/arch/ews4800mips/ews4800mips/autoconf.c	1.9
+sys/arch/hp300/hp300/autoconf.c			1.100
+sys/arch/hp700/hp700/autoconf.c			1.48
+sys/arch/hpcarm/hpcarm/autoconf.c		1.20
+sys/arch/hpcmips/hpcmips/autoconf.c		1.25
+sys/arch/hpcsh/hpcsh/autoconf.c			1.26
+sys/arch/ia64/ia64/autoconf.c			1.6
+sys/arch/ibmnws/ibmnws/autoconf.c		1.12
+sys/arch/iyonix/iyonix/autoconf.c		1.14
+sys/arch/landisk/landisk/autoconf.c		1.6
+sys/arch/luna68k/luna68k/autoconf.c		1.13
+sys/arch/mac68k/mac68k/autoconf.c		1.73
+sys/arch/mipsco/mipsco/autoconf.c		1.25
+sys/arch/mmeye/mmeye/autoconf.c			1.9
+sys/arch/mvme68k/mvme68k/autoconf.c		1.46
+sys/arch/mvmeppc/mvmeppc/autoconf.c		1.13
+sys/arch/netwinder/netwinder/autoconf.c		1.11
+sys/arch/news68k/news68k/autoconf.c		1.21
+sys/arch/newsmips/newsmips/autoconf.c		1.36
+sys/arch/next68k/next68k/autoconf.c		1.26
+sys/arch/pmax/pmax/autoconf.c			1.79
+sys/arch/powerpc/oea/ofw_autoconf.c		1.17
+sys/arch/prep/prep/autoconf.c			1.25
+sys/arch/rs6000/rs6000/autoconf.c		1.4
+sys/arch/sandpoint/sandpoint/autoconf.c		1.27
+sys/arch/sbmips/sbmips/autoconf.c		1.8
+sys/arch/sgimips/sgimips/autoconf.c		1.43
+sys/arch/shark/shark/autoconf.c			1.18
+sys/arch/sparc/sparc/autoconf.c			1.244
+sys/arch/sparc64/sparc64/autoconf.c		1.188
+sys/arch/sun3/sun3/autoconf.c			1.76
+sys/arch/sun3/sun3/autoconf.c			1.77
+sys/arch/sun68k/sun68k/autoconf.c		1.29
+sys/arch/usermode/dev/cpu.c			1.72
+sys/arch/vax/vax/autoconf.c			1.94
+sys/arch/x68k/x68k/autoconf.c			1.67
+sys/arch/x86/x86/x86_autoconf.c			1.65
+sys/arch/xen/x86/autoconf.c			1.15
+sys/arch/zaurus/zaurus/autoconf.c		1.12
+sys/kern/init_main.c				1.445
+sys/sys/conf.h					1.143
+
+	Do not call setroot() from MD code and from MI code, which has
+	unwanted sideeffects in the RB_ASKNAME case. This fixes PR/46732.
+
+	No longer wrap MD cpu_rootconf(), as hp300 port stores reboot
+	information as a side effect. Instead call MI rootconf() from MD
+	code which makes rootconf() now a wrapper to setroot().
+
+	Adjust several MD routines to set the global
+	booted_device,booted_partition variables instead of passing
+	partial information to setroot().
+
+	Make cpu_rootconf(9) describe the calling order.
+
+	add rootconf(9) as a link to cpu_rootconf(9)
+
+	make this compile again
+	[mlelstv, ticket #466]
+
+sys/arch/hp300/stand/common/if_lereg.h		1.6
+
+	Fix hp300 netboot failure.
+	[tsutsui, ticket #468]
 
