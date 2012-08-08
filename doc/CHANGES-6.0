@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.167 2012/07/31 09:27:27 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.168 2012/08/08 09:02:14 jdc Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6692,3 +6692,18 @@ share/zoneinfo/zone.tab:		1.1.1.42
 	     Infrastructure changes to accommodate how the tz
 	     code and data are released on IANA.
 	[apb, ticket #455]
+
+sys/dev/sdmmc/sdhc.c			1.16,1.20,1.21,1.22,1.23 via patch,1.25
+sys/dev/sdmmc/sdhcreg.h			1.8
+sys/dev/sdmmc/sdmmc_mem.c		1.21,1.22
+sys/dev/sdmmc/sdmmcreg.h		1.10,1.11,1.12
+	Make SDMMC work on both big-endian and little-endian hosts.
+	[matt, ticket #441]
+
+libexec/ld.elf_so/headers.c		1.42
+libexec/ld.elf_so/arch/sparc64/mdreloc.c	1.53
+	Remove a debug assert that does not hold for PIE (e.g. phdr = 0x40,
+	but obj has not been mapped at 0, so obj->phdr is 0x100040).
+	Add special handling needed for OLO10 relocations.  PR#46724
+	[martin, ticket #447]
+
