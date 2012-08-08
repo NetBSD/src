@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.16 2011/11/06 21:22:23 jym Exp $
+#	$NetBSD: Makefile,v 1.17 2012/08/08 14:09:14 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
+
+.include <bsd.own.mk>
 
 RUMPPRG=dd
 SRCS=	args.c conv.c dd.c misc.c position.c
@@ -11,10 +13,7 @@ LDADD+=	-lutil
 CPPFLAGS+=	-DNO_CONV -DNO_MSGFMT -DSMALL
 .else
 SRCS+=		conv_tab.c
-.ifndef CRUNCHEDPROG
-DPADD+= 	${LIBRUMPCLIENT}
-LDADD+= 	-lrumpclient
-.else
+.ifdef CRUNCHEDPROG
 CPPFLAGS+=	-DSMALL
 .endif
 .endif
