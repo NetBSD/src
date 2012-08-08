@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.482 2012/08/08 14:15:03 christos Exp $
+# $NetBSD: mi,v 1.483 2012/08/08 16:23:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1628,7 +1628,7 @@
 ./usr/tests/include/sys/t_bitops		tests-include-tests	atf
 ./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
 ./usr/tests/include/sys/t_cdefs			tests-include-tests	atf
-./usr/tests/include/sys/t_socket		tests-include-tests	atf,debug,rump
+./usr/tests/include/sys/t_socket		tests-include-tests	atf,rump
 ./usr/tests/include/sys/t_tree			tests-include-tests	atf
 ./usr/tests/include/sys/t_types			tests-include-tests	atf
 ./usr/tests/include/t_bitstring			tests-include-tests	atf
