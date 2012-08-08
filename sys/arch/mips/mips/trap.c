@@ -378,9 +378,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 */
 		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
-		    __predict_false(ci->ci_pmap_seg0tab == NULL
-				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
-			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+		    __predict_false(ci->ci_pmap_seg0tab[0] == NULL
+				&& ci->ci_pmap_segtab[0]->seg_seg[0] != NULL)) {
+			ci->ci_pmap_seg0tab[0] = ci->ci_pmap_segtab[0]->seg_seg[0];
 			kpreempt_enable();
 			if (type & T_USER) {
 				userret(l);
