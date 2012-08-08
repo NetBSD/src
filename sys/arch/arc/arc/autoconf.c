@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33.10.1 2012/08/08 15:51:12 martin Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33.10.1 2012/08/08 15:51:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,8 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_device ? bootdev_data->partition : 0);
+	booted_partition = booted_device ? bootdev_data->partition : 0;
+	rootconf();
 }
 
 struct devmap {

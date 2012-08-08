@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2008/07/01 15:15:34 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28.36.1 2012/08/08 15:51:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2008/07/01 15:15:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28.36.1 2012/08/08 15:51:13 martin Exp $");
 
 #include "opt_kgdb.h"
 
@@ -313,8 +313,6 @@ void
 cpu_rootconf(void)
 {
 	struct prom_n2f *nf;
-	device_t boot_device;
-	int boot_partition;
 	const char *devname;
 	findfunc_t find;
 	char promname[4];
@@ -336,8 +334,8 @@ cpu_rootconf(void)
 		(void)str2hex(++prompath, &prom_part);
 
 	/* Default to "unknown" */
-	boot_device = NULL;
-	boot_partition = 0;
+	booted_device = NULL;
+	booted_partition = 0;
 	devname = "<unknown>";
 	partname[0] = '\0';
 	find = NULL;
@@ -349,18 +347,18 @@ cpu_rootconf(void)
 			break;
 		}
 	if (find)
-		boot_device = (*find)(promname, prom_ctlr, prom_unit);
-	if (boot_device) {
-		devname = boot_device->dv_xname;
-		if (device_class(boot_device) == DV_DISK) {
-			boot_partition = prom_part & 7;
-			partname[0] = 'a' + boot_partition;
+		booted_device = (*find)(promname, prom_ctlr, prom_unit);
+	if (booted_device) {
+		devname = booted_device->dv_xname;
+		if (device_class(booted_device) == DV_DISK) {
+			booted_partition = prom_part & 7;
+			partname[0] = 'a' + booted_partition;
 			partname[1] = '\0';
 		}
 	}
 
 	printf("boot device: %s%s\n", devname, partname);
-	setroot(boot_device, boot_partition);
+	rootconf();
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.15 2011/07/17 20:54:46 joerg Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.15.8.1 2012/08/08 15:51:03 martin Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.15 2011/07/17 20:54:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.15.8.1 2012/08/08 15:51:03 martin Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -475,7 +475,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.69.2.2 2012/07/02 21:33:00 jdc Exp $ */
+/* $NetBSD: cpu.c,v 1.69.2.3 2012/08/08 15:51:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.2 2012/07/02 21:33:00 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.3 2012/08/08 15:51:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -451,7 +451,8 @@ cpu_rootconf(void)
 
 	aprint_normal("boot device: %s\n",
 	    rdev ? device_xname(rdev) : "<unknown>");
-	setroot(rdev, 0);
+	booted_device = rdev;
+	rootconf();
 }
 
 bool
