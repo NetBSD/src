@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.18.1 2012/08/08 15:51:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ cpu_rootconf(void)
 {
 	if (booted_device == NULL) /* XXX: Platform support. Match to boot device. */
 		printf("WARNING: can't figure what device matches \"%s\"\n", "XXX");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 

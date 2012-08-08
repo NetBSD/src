@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.441.2.1 2012/07/05 18:12:46 riz Exp $	*/
+/*	$NetBSD: init_main.c,v 1.441.2.2 2012/08/08 15:51:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441.2.1 2012/07/05 18:12:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.441.2.2 2012/08/08 15:51:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -263,7 +263,6 @@ int	start_init_exec;		/* semaphore for start_init() */
 
 cprng_strong_t	*kern_cprng;
 
-static void rootconf(void);
 static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
@@ -641,7 +640,7 @@ main(void)
 	 * Now that autoconfiguration has completed, we can determine
 	 * the root and dump devices.
 	 */
-	rootconf();
+	cpu_rootconf();
 	cpu_dumpconf();
 
 	/* Mount the root file system. */
@@ -886,15 +885,11 @@ rootconf_handle_wedges(void)
 	}
 }
 
-static void
+void
 rootconf(void)
 {
-	cpu_rootconf();
-
-	if (booted_device == NULL)
-		return;
-
-	rootconf_handle_wedges();
+	if (booted_device != NULL)
+		rootconf_handle_wedges();
 
 	setroot(booted_device, booted_partition);
 }

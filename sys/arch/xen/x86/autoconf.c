@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.18.1 2012/07/05 18:12:49 riz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.18.2 2012/08/08 15:51:13 martin Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.18.1 2012/07/05 18:12:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.18.2 2012/08/08 15:51:13 martin Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -156,7 +156,7 @@ cpu_rootconf(void)
 
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 

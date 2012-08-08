@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2011/06/06 16:52:18 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.8.1 2012/08/08 15:51:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2011/06/06 16:52:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.8.1 2012/08/08 15:51:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,5 +151,5 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-	setroot(0, 0);
+	rootconf();
 }

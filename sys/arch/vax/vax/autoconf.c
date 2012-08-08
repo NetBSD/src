@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.93 2011/11/10 22:33:12 njoly Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.93.6.1 2012/08/08 15:51:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2011/11/10 22:33:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93.6.1 2012/08/08 15:51:08 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -102,7 +102,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 static int	mainbus_print(void *, const char *);

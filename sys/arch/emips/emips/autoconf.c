@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.8.1 2012/08/08 15:51:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2011/06/12 03:21:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.8.1 2012/08/08 15:51:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ cpu_rootconf(void)
 	    booted_device ? device_xname(booted_device) : "<unknown>",
 	    booted_partition);
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 /*

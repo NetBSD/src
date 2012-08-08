@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2011/12/12 11:23:57 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.1 2012/08/08 15:51:11 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/12/12 11:23:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.2.1 2012/08/08 15:51:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -82,7 +82,7 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.99 2012/01/27 18:52:55 para Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99 2012/01/27 18:52:55 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99.2.1 2012/08/08 15:51:05 martin Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -324,8 +324,6 @@ cpu_rootconf(void)
 		}
 	}
 
-	dv = booted_device;
-
 	/*
 	 * If wild carded root device and wired down NFS root file system,
 	 * pick the network interface device to use.
@@ -338,7 +336,7 @@ cpu_rootconf(void)
 			    dd != NULL; dd = LIST_NEXT(dd, dd_list)) {
 				if (device_class(dd->dd_dev) == DV_IFNET) {
 					/* Got it! */
-					dv = dd->dd_dev;
+					booted_device = dd->dd_dev;
 					break;
 				}
 			}
@@ -363,7 +361,7 @@ cpu_rootconf(void)
 	if (booted_device != NULL && device_class(booted_device) == DV_TAPE)
 		boothowto |= RB_ASKNAME;
 
-	setroot(dv, booted_partition);
+	rootconf();
 
 	/*
 	 * Set bootdev based on what we found as the root.
