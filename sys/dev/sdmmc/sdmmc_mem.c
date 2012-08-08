@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.20 2012/02/01 22:34:43 matt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.20.2.1 2012/08/08 06:18:59 jdc Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.20 2012/02/01 22:34:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.20.2.1 2012/08/08 06:18:59 jdc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -934,8 +934,6 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	resp[1] = be32toh(sf->raw_scr[0]);		// MSW
 	resp[0] |= (resp[1] & 0xff) << 24;
 	resp[1] >>= 8;
-	resp[0] = htole32(resp[0]);
-	resp[1] = htole32(resp[1]);
 
 	ver = SCR_STRUCTURE(resp);
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.8 2012/01/27 03:07:21 matt Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.8.2.1 2012/08/08 06:18:59 jdc Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -308,43 +308,35 @@
 #define SCR_SD_BUS_WIDTHS(scr)		MMC_RSP_BITS((scr), 48, 4)
 #define  SCR_SD_BUS_WIDTHS_1BIT		(1 << 0) /* 1bit (DAT0) */
 #define  SCR_SD_BUS_WIDTHS_4BIT		(1 << 2) /* 4bit (DAT0-3) */
-#define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 32, 16)
+#define SCR_SD_SPEC3(scr)		MMC_RSP_BITS((scr), 47, 1)
+#define SCR_EX_SECURITY(scr)		MMC_RSP_BITS((scr), 43, 4)
+#define SCR_RESERVED(scr)		MMC_RSP_BITS((scr), 34, 9)
+#define SCR_CMD_SUPPORT_CMD23(scr)	MMC_RSP_BITS((scr), 33, 1)
+#define SCR_CMD_SUPPORT_CMD20(scr)	MMC_RSP_BITS((scr), 32, 1)
 #define SCR_RESERVED2(scr)		MMC_RSP_BITS((scr), 0, 32)
 
 /* Status of Switch Function */
 #define SFUNC_STATUS_GROUP(status, group) \
 	be16toh(__bitfield((uint32_t *)(status), (7 - (group)) << 4, 16))
 
-/* Might be slow, but it should work on big and little endian systems. */
+/* This assumes the response fields are in host byte order in 32-bit units.  */
 #define MMC_RSP_BITS(resp, start, len)	__bitfield((resp), (start)-8, (len))
-static inline int
-__bitfield(uint32_t *src, int start, int len)
+static inline uint32_t
+__bitfield(const uint32_t *src, size_t start, size_t len)
 {
-	uint8_t *sp;
-	uint32_t dst, mask;
-	int shift, bs, bc;
-
-	if (start < 0 || len < 0 || len > 32)
+	if (start + len > 128 || len == 0 || len > 32)
 		return 0;
 
-	dst = 0;
-	mask = len % 32 ? UINT_MAX >> (32 - (len % 32)) : UINT_MAX;
-	shift = 0;
+	src += start / 32;
+	start %= 32;
 
-	while (len > 0) {
-		sp = (uint8_t *)src + start / 8;
-		bs = start % 8;
-		bc = 8 - bs;
-		if (bc > len)
-			bc = len;
-		dst |= (*sp >> bs) << shift;
-		shift += bc;
-		start += bc;
-		len -= bc;
+	uint32_t dst = src[0] >> start;
+
+	if (__predict_false((start + len - 1) / 32 != start / 32)) {
+		dst |= src[1] << (32 - start);
 	}
 
-	dst &= mask;
-	return (int)dst;
+	return dst & (__BIT(len) - 1);
 }
 
 #endif	/* _SDMMCREG_H_ */
