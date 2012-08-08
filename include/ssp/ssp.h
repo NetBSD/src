@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.9 2011/02/21 00:40:08 joerg Exp $	*/
+/*	$NetBSD: ssp.h,v 1.10 2012/08/08 20:23:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,8 @@
 #include <sys/cdefs.h>
 
 #if !defined(__cplusplus)
-# if _FORTIFY_SOURCE > 0 && __OPTIMIZE__ > 0 && __GNUC_PREREQ__(4, 1)
+# if _FORTIFY_SOURCE > 0 && !defined(__lint__) && \
+     (__OPTIMIZE__ > 0 || defined(__clang__)) && __GNUC_PREREQ__(4, 1)
 #  if _FORTIFY_SOURCE > 1
 #   define __SSP_FORTIFY_LEVEL 2
 #  else
