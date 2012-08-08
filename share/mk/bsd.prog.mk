@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.274 2012/02/29 20:07:57 tron Exp $
+#	$NetBSD: bsd.prog.mk,v 1.275 2012/08/08 13:56:14 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -310,24 +310,34 @@ _CCLINK=	${CXX} ${_CCLINKFLAGS}
 
 .if defined(RUMPPRG)
 PROG=			${RUMPPRG}
-.ifndef CRUNCHEDPROG
+. ifndef CRUNCHEDPROG
+.  if (${MKRUMP} != "no")
 PROGS=			${RUMPPRG} rump.${RUMPPRG}
-. if defined(SRCS)
+.  else
+PROGS=			${RUMPPRG}
+.  endif
+.  if defined(SRCS)
+.   if (${MKRUMP} != "no")
 SRCS.rump.${PROG}:=	${SRCS} ${PROG}_rumpops.c ${RUMPSRCS}
+.   endif
 SRCS+=			${PROG}_hostops.c
-. else
+.  else
 SRCS=			${PROG}.c ${PROG}_hostops.c
+.   if (${MKRUMP} != "no")
 SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
-. endif
+.   endif
+.  endif
+.   if (${MKRUMP} != "no")
 DPSRCS+=		${PROG}_rumpops.c ${RUMPSRCS}
 LDADD.rump.${PROG}+=	-lrumpclient
 DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
 _RUMPINSTALL.rump.${PROG}=# defined
-.else # CRUNCHEDPROG
+.   endif
+. else # CRUNCHEDPROG
 PROGS=			${PROG}
 CPPFLAGS+=		-DCRUNCHOPS
-.endif
+. endif
 .endif
 
 .if defined(PROG)

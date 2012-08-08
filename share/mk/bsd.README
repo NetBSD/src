@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.297 2012/07/14 16:04:06 spz Exp $
+#	$NetBSD: bsd.README,v 1.298 2012/08/08 13:56:13 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -361,6 +361,10 @@ MKZFS		If "no", do not build and install utilities and libraries
 		used to manage ZFS file system. Do not build zfs and solaris 
 		compatibility kernel modules.
 		Default: yes on i386/amd64, no elsewhere.
+
+MKRUMP		If "no", do not build and install rump related headers,
+		libraries, and programs.
+		Default: yes
 
 USE_HESIOD	If "no", disables building Hesiod support into
 		various system utilities/libraries that support it.
