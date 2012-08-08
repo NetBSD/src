@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1773 2012/08/02 01:16:36 matt Exp $
+#	$NetBSD: mi,v 1.1774 2012/08/08 14:08:02 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2293,20 +2293,20 @@
 ./usr/include/rpcsvc/ypclnt.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
-./usr/include/rump/p2k.h			comp-puffs-include
-./usr/include/rump/rump.h			comp-c-include
-./usr/include/rump/rump_namei.h			comp-c-include
-./usr/include/rump/rump_syscalls.h		comp-c-include
-./usr/include/rump/rump_syscalls_compat.h	comp-c-include
-./usr/include/rump/rumpclient.h			comp-c-include
-./usr/include/rump/rumpdefs.h			comp-c-include
-./usr/include/rump/rumpkern_if_pub.h		comp-c-include
-./usr/include/rump/rumpnet_if_pub.h		comp-c-include
-./usr/include/rump/rumpuser.h			comp-c-include
-./usr/include/rump/rumpvfs_if_pub.h		comp-c-include
-./usr/include/rump/rumpvnode_if.h		comp-c-include
-./usr/include/rump/scsitest.h			comp-c-include
-./usr/include/rump/ukfs.h			comp-c-include
+./usr/include/rump/p2k.h			comp-puffs-include	rump
+./usr/include/rump/rump.h			comp-c-include	rump
+./usr/include/rump/rump_namei.h			comp-c-include	rump
+./usr/include/rump/rump_syscalls.h		comp-c-include	rump
+./usr/include/rump/rump_syscalls_compat.h	comp-c-include	rump
+./usr/include/rump/rumpclient.h			comp-c-include	rump
+./usr/include/rump/rumpdefs.h			comp-c-include	rump
+./usr/include/rump/rumpkern_if_pub.h		comp-c-include	rump
+./usr/include/rump/rumpnet_if_pub.h		comp-c-include	rump
+./usr/include/rump/rumpuser.h			comp-c-include	rump
+./usr/include/rump/rumpvfs_if_pub.h		comp-c-include	rump
+./usr/include/rump/rumpvnode_if.h		comp-c-include	rump
+./usr/include/rump/scsitest.h			comp-c-include	rump
+./usr/include/rump/ukfs.h			comp-c-include	rump
 ./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/saslc.h				comp-c-include		crypto
 ./usr/include/sched.h				comp-c-include
@@ -2993,9 +2993,9 @@
 ./usr/lib/libossaudio.a				comp-c-lib
 ./usr/lib/libossaudio_g.a			-unknown-		debuglib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
-./usr/lib/libp2k.a				comp-puffs-lib
-./usr/lib/libp2k_g.a				-unknown-		debuglib
-./usr/lib/libp2k_p.a				comp-puffs-proflib	profile
+./usr/lib/libp2k.a				comp-puffs-lib		rump
+./usr/lib/libp2k_g.a				-unknown-		debuglib,rump
+./usr/lib/libp2k_p.a				comp-puffs-proflib	profile,rump
 ./usr/lib/libpam.a				comp-c-lib		pam
 ./usr/lib/libpam_g.a				-unknown-		pam,debuglib
 ./usr/lib/libpcap.a				comp-c-lib
@@ -3051,235 +3051,235 @@
 ./usr/lib/librt.a				comp-c-lib
 ./usr/lib/librt_g.a				-unknown-		debuglib
 ./usr/lib/librt_p.a				comp-c-proflib		profile
-./usr/lib/librump.a				comp-c-lib
-./usr/lib/librump_g.a				-unknown-		debuglib
-./usr/lib/librump_p.a				comp-c-proflib		profile
-./usr/lib/librumpclient.a				comp-c-lib
-./usr/lib/librumpclient_g.a			-unknown-		debuglib
-./usr/lib/librumpclient_p.a			comp-c-proflib		profile
+./usr/lib/librump.a				comp-c-lib		rump
+./usr/lib/librump_g.a				-unknown-		debuglib,rump
+./usr/lib/librump_p.a				comp-c-proflib		profile,rump
+./usr/lib/librumpclient.a			comp-c-lib		rump
+./usr/lib/librumpclient_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpclient_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpcrypto.a			comp-obsolete		obsolete
 ./usr/lib/librumpcrypto_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpcrypto_p.a			comp-obsolete		obsolete
-./usr/lib/librumpdev.a				comp-c-lib
-./usr/lib/librumpdev_audio.a			comp-c-lib
-./usr/lib/librumpdev_audio_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_bpf.a			comp-c-lib
-./usr/lib/librumpdev_bpf_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_cgd.a			comp-c-lib
-./usr/lib/librumpdev_cgd_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_cgd_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_disk.a			comp-c-lib
-./usr/lib/librumpdev_disk_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_disk_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_dm.a			comp-c-lib
-./usr/lib/librumpdev_dm_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_dm_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_drvctl.a			comp-c-lib
-./usr/lib/librumpdev_drvctl_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_drvctl_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_fss.a			comp-c-lib
-./usr/lib/librumpdev_fss_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_md.a			comp-c-lib
-./usr/lib/librumpdev_md_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_md_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_netsmb.a			comp-c-lib
-./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_pad.a			comp-c-lib
-./usr/lib/librumpdev_pad_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_pad_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_pud.a			comp-c-lib
-./usr/lib/librumpdev_pud_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_pud_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_putter.a			comp-c-lib
-./usr/lib/librumpdev_putter_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_putter_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_raidframe.a		comp-c-lib
-./usr/lib/librumpdev_raidframe_g.a		-unknown-		debuglib
-./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		profile
-./usr/lib/librumpdev_rnd.a			comp-c-lib
-./usr/lib/librumpdev_rnd_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_rnd_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_scsipi.a			comp-c-lib
-./usr/lib/librumpdev_scsipi_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_scsipi_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_scsitest.a			comp-c-lib
-./usr/lib/librumpdev_scsitest_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_scsitest_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_sysmon.a			comp-c-lib
-./usr/lib/librumpdev_sysmon_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_ubt.a			comp-c-lib
-./usr/lib/librumpdev_ubt_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_ucom.a			comp-c-lib
-./usr/lib/librumpdev_ucom_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_ugenhc.a			comp-c-lib
-./usr/lib/librumpdev_ugenhc_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_ugenhc_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_ulpt.a			comp-c-lib
-./usr/lib/librumpdev_ulpt_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_ulpt_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_umass.a			comp-c-lib
-./usr/lib/librumpdev_umass_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_umass_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_usb.a			comp-c-lib
-./usr/lib/librumpdev_usb_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_usb_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_wscons.a			comp-c-lib
-./usr/lib/librumpdev_wscons_g.a			-unknown-		debuglib
-./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_cd9660.a			comp-c-lib
-./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_efs.a			comp-c-lib
-./usr/lib/librumpfs_efs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_ext2fs.a			comp-c-lib
-./usr/lib/librumpfs_ext2fs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_fdesc.a			comp-c-lib
-./usr/lib/librumpfs_fdesc_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_fdesc_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_ffs.a			comp-c-lib
-./usr/lib/librumpfs_ffs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_hfs.a			comp-c-lib
-./usr/lib/librumpfs_hfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_kernfs.a			comp-c-lib
-./usr/lib/librumpfs_kernfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_kernfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_lfs.a			comp-c-lib
-./usr/lib/librumpfs_lfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_mfs.a			comp-c-lib
-./usr/lib/librumpfs_mfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_mfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_msdos.a			comp-c-lib
-./usr/lib/librumpfs_msdos_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_nfs.a			comp-c-lib
-./usr/lib/librumpfs_nfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_nfsserver.a			comp-c-lib
-./usr/lib/librumpfs_nfsserver_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_nfsserver_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_nilfs.a			comp-c-lib
-./usr/lib/librumpfs_nilfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_nilfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_ntfs.a			comp-c-lib
-./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_null.a			comp-c-lib
-./usr/lib/librumpfs_null_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_null_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev.a				comp-c-lib		rump
+./usr/lib/librumpdev_audio.a			comp-c-lib		rump
+./usr/lib/librumpdev_audio_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_bpf.a			comp-c-lib		rump
+./usr/lib/librumpdev_bpf_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_cgd.a			comp-c-lib		rump
+./usr/lib/librumpdev_cgd_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_cgd_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_disk.a			comp-c-lib		rump
+./usr/lib/librumpdev_disk_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_disk_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_dm.a			comp-c-lib		rump
+./usr/lib/librumpdev_dm_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_dm_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_drvctl.a			comp-c-lib		rump
+./usr/lib/librumpdev_drvctl_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_drvctl_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_fss.a			comp-c-lib		rump
+./usr/lib/librumpdev_fss_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_g.a			-unknown-		debuglib,rump,rump
+./usr/lib/librumpdev_md.a			comp-c-lib		rump
+./usr/lib/librumpdev_md_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_md_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_netsmb.a			comp-c-lib		rump
+./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_pad.a			comp-c-lib		rump,rump,rump
+./usr/lib/librumpdev_pad_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_pad_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_pud.a			comp-c-lib		rump
+./usr/lib/librumpdev_pud_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_pud_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_putter.a			comp-c-lib		rump
+./usr/lib/librumpdev_putter_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_putter_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_raidframe.a		comp-c-lib		rump
+./usr/lib/librumpdev_raidframe_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpdev_rnd.a			comp-c-lib		rump
+./usr/lib/librumpdev_rnd_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_rnd_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_scsipi.a			comp-c-lib		rump
+./usr/lib/librumpdev_scsipi_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_scsipi_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_scsitest.a			comp-c-lib		rump
+./usr/lib/librumpdev_scsitest_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpdev_scsitest_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpdev_sysmon.a			comp-c-lib		rump
+./usr/lib/librumpdev_sysmon_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ubt.a			comp-c-lib		rump
+./usr/lib/librumpdev_ubt_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ucom.a			comp-c-lib		rump
+./usr/lib/librumpdev_ucom_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ugenhc.a			comp-c-lib		rump
+./usr/lib/librumpdev_ugenhc_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_ugenhc_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_ulpt.a			comp-c-lib		rump
+./usr/lib/librumpdev_ulpt_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_ulpt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_umass.a			comp-c-lib		rump
+./usr/lib/librumpdev_umass_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_umass_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_usb.a			comp-c-lib		rump
+./usr/lib/librumpdev_usb_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_usb_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_wscons.a			comp-c-lib		rump
+./usr/lib/librumpdev_wscons_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_cd9660.a			comp-c-lib		rump
+./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_efs.a			comp-c-lib		rump
+./usr/lib/librumpfs_efs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ext2fs.a			comp-c-lib		rump
+./usr/lib/librumpfs_ext2fs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_fdesc.a			comp-c-lib		rump
+./usr/lib/librumpfs_fdesc_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_fdesc_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ffs.a			comp-c-lib		rump
+./usr/lib/librumpfs_ffs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_hfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_hfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_kernfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_kernfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_kernfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_lfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_lfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_mfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_mfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_mfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_msdos.a			comp-c-lib		rump
+./usr/lib/librumpfs_msdos_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_nfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nfsserver.a			comp-c-lib		rump
+./usr/lib/librumpfs_nfsserver_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpfs_nfsserver_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpfs_nilfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_nilfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_nilfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_ntfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_null.a			comp-c-lib		rump
+./usr/lib/librumpfs_null_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_null_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpfs_nullfs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_nullfs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_nullfs_p.a			comp-obsolete		obsolete
-./usr/lib/librumpfs_ptyfs.a			comp-c-lib
-./usr/lib/librumpfs_ptyfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_smbfs.a			comp-c-lib
-./usr/lib/librumpfs_smbfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_syspuffs.a			comp-c-lib
-./usr/lib/librumpfs_syspuffs_g.a		-unknown-		debuglib
-./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
-./usr/lib/librumpfs_sysvbfs.a			comp-c-lib
-./usr/lib/librumpfs_sysvbfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_tmpfs.a			comp-c-lib
-./usr/lib/librumpfs_tmpfs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_udf.a			comp-c-lib
-./usr/lib/librumpfs_udf_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ptyfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_ptyfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_smbfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_smbfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_syspuffs.a			comp-c-lib		rump
+./usr/lib/librumpfs_syspuffs_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpfs_sysvbfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_sysvbfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_tmpfs.a			comp-c-lib		rump
+./usr/lib/librumpfs_tmpfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_udf.a			comp-c-lib		rump
+./usr/lib/librumpfs_udf_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpfs_ufs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ufs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ufs_p.a			comp-obsolete		obsolete
-./usr/lib/librumpfs_umap.a			comp-c-lib
-./usr/lib/librumpfs_umap_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_umap_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_umap.a			comp-c-lib		rump
+./usr/lib/librumpfs_umap_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_umap_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpfs_umapfs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_umapfs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_umapfs_p.a			comp-obsolete		obsolete
-./usr/lib/librumpfs_union.a			comp-c-lib
-./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_v7fs.a			comp-c-lib
-./usr/lib/librumpfs_v7fs_g.a			-unknown-		debuglib
-./usr/lib/librumpfs_v7fs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs
-./usr/lib/librumpfs_zfs_g.a			-unknown-		zfs,debuglib
-./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,profile
-./usr/lib/librumphijack_g.a			-unknown-		debuglib
-./usr/lib/librumpkern_crypto.a			comp-c-lib
-./usr/lib/librumpkern_crypto_g.a		-unknown-		debuglib
-./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile
+./usr/lib/librumpfs_union.a			comp-c-lib		rump
+./usr/lib/librumpfs_union_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_v7fs.a			comp-c-lib		rump
+./usr/lib/librumpfs_v7fs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpfs_v7fs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpfs_zfs.a			comp-c-lib		zfs,rump
+./usr/lib/librumpfs_zfs_g.a			-unknown-		zfs,debuglib,rump
+./usr/lib/librumpfs_zfs_p.a			comp-c-piclib		zfs,profile,rump
+./usr/lib/librumphijack_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpkern_crypto.a			comp-c-lib		rump
+./usr/lib/librumpkern_crypto_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		profile,rump
 ./usr/lib/librumpkern_ksem.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
-./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs
-./usr/lib/librumpkern_solaris_g.a		-unknown-		debuglib,zfs
-./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs
-./usr/lib/librumpkern_tty.a			comp-c-lib
-./usr/lib/librumpkern_tty_g.a			-unknown-		debuglib
-./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile
-./usr/lib/librumpkern_z.a			comp-c-lib
-./usr/lib/librumpkern_z_g.a			-unknown-		debuglib
-./usr/lib/librumpkern_z_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet.a				comp-c-lib
-./usr/lib/librumpnet_agr.a			comp-c-lib
-./usr/lib/librumpnet_agr_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_agr_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_bridge.a			comp-c-lib
-./usr/lib/librumpnet_bridge_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_local.a			comp-c-lib
-./usr/lib/librumpnet_local_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_net.a			comp-c-lib
-./usr/lib/librumpnet_net80211.a			comp-c-lib
-./usr/lib/librumpnet_net80211_g.a		-unknown-		debuglib
-./usr/lib/librumpnet_net80211_p.a		comp-c-proflib		profile
-./usr/lib/librumpnet_net_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_netbt.a			comp-c-lib
-./usr/lib/librumpnet_netbt_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_netinet.a			comp-c-lib
-./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib
-./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
-./usr/lib/librumpnet_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_shmif.a			comp-c-lib
-./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_sockin.a			comp-c-lib
-./usr/lib/librumpnet_sockin_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile
-./usr/lib/librumpnet_virtif.a			comp-c-lib
-./usr/lib/librumpnet_virtif_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile
-./usr/lib/librumpuser.a				comp-c-lib
-./usr/lib/librumpuser_g.a			-unknown-		debuglib
-./usr/lib/librumpuser_p.a			comp-c-proflib		profile
-./usr/lib/librumpvfs.a				comp-c-lib
-./usr/lib/librumpvfs_fifofs.a			comp-c-lib
-./usr/lib/librumpvfs_fifofs_g.a			-unknown-		debuglib
-./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		profile
-./usr/lib/librumpvfs_g.a			-unknown-		debuglib
-./usr/lib/librumpvfs_layerfs.a			comp-c-lib
-./usr/lib/librumpvfs_layerfs_g.a		-unknown-		debuglib
-./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile
-./usr/lib/librumpvfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpkern_solaris.a			comp-c-lib		zfs,rump
+./usr/lib/librumpkern_solaris_g.a		-unknown-		debuglib,zfs,rump
+./usr/lib/librumpkern_solaris_p.a		comp-c-proflib		profile,zfs,rump
+./usr/lib/librumpkern_tty.a			comp-c-lib		rump
+./usr/lib/librumpkern_tty_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpkern_z.a			comp-c-lib		rump
+./usr/lib/librumpkern_z_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpkern_z_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet.a				comp-c-lib		rump
+./usr/lib/librumpnet_agr.a			comp-c-lib		rump
+./usr/lib/librumpnet_agr_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_agr_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_bridge.a			comp-c-lib		rump
+./usr/lib/librumpnet_bridge_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_local.a			comp-c-lib		rump
+./usr/lib/librumpnet_local_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_net.a			comp-c-lib		rump
+./usr/lib/librumpnet_net80211.a			comp-c-lib		rump
+./usr/lib/librumpnet_net80211_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpnet_net80211_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpnet_net_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_netbt.a			comp-c-lib		rump
+./usr/lib/librumpnet_netbt_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_netinet.a			comp-c-lib		rump
+./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpnet_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_shmif.a			comp-c-lib		rump
+./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_sockin.a			comp-c-lib		rump
+./usr/lib/librumpnet_sockin_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpnet_virtif.a			comp-c-lib		rump
+./usr/lib/librumpnet_virtif_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpuser.a				comp-c-lib		rump
+./usr/lib/librumpuser_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpuser_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpvfs.a				comp-c-lib		rump
+./usr/lib/librumpvfs_fifofs.a			comp-c-lib		rump
+./usr/lib/librumpvfs_fifofs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpvfs_fifofs_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpvfs_g.a			-unknown-		debuglib,rump
+./usr/lib/librumpvfs_layerfs.a			comp-c-lib		rump
+./usr/lib/librumpvfs_layerfs_g.a		-unknown-		debuglib,rump
+./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile,rump
+./usr/lib/librumpvfs_p.a			comp-c-proflib		profile,rump
 ./usr/lib/libsaslc.a				comp-c-clib		crypto
 ./usr/lib/libsaslc_g.a				-unknown-		crypto,debuglib
 ./usr/lib/libsaslc_p.a				comp-c-proflib		crypto,profile
@@ -3327,9 +3327,9 @@
 ./usr/lib/libtre.a				comp-c-lib
 ./usr/lib/libtre_g.a				comp-c-proflib		debuglib
 ./usr/lib/libtre_p.a				comp-c-proflib		profile
-./usr/lib/libukfs.a				comp-c-lib
-./usr/lib/libukfs_g.a				-unknown-		debuglib
-./usr/lib/libukfs_p.a				comp-c-proflib		profile
+./usr/lib/libukfs.a				comp-c-lib		rump
+./usr/lib/libukfs_g.a				-unknown-		debuglib,rump
+./usr/lib/libukfs_p.a				comp-c-proflib		profile,rump
 ./usr/lib/libumem.a				comp-zfs-lib		zfs
 ./usr/lib/libumem_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libumem_p.a				comp-zfs-proflib	profile,zfs
@@ -3397,7 +3397,7 @@
 ./usr/libdata/debug/bin/rcp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/bin/rm.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/rmdir.debug		comp-util-debug		debug
-./usr/libdata/debug/bin/rump.dd.debug		comp-util-debug		debug
+./usr/libdata/debug/bin/rump.dd.debug		comp-util-debug		debug,rump
 ./usr/libdata/debug/bin/sh.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/sleep.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/stty.debug		comp-util-debug		debug
@@ -3501,15 +3501,15 @@
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/routed.debug		comp-router-debug	debug
 ./usr/libdata/debug/sbin/rtsol.debug		comp-netutil-debug	use_inet6,debug
-./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug
-./usr/libdata/debug/sbin/rump.ifconfig.debug		comp-netutil-debug	debug
-./usr/libdata/debug/sbin/rump.modload.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/rump.modstat.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/rump.modunload.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/rump.ping.debug		comp-netutil-debug	debug
-./usr/libdata/debug/sbin/rump.raidctl.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/rump.route.debug		comp-netutil-debug	debug
-./usr/libdata/debug/sbin/rump.sysctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug,rump
+./usr/libdata/debug/sbin/rump.ifconfig.debug		comp-netutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.modload.debug		comp-sysutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.modstat.debug		comp-sysutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.modunload.debug	comp-sysutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.ping.debug		comp-netutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.raidctl.debug		comp-sysutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.route.debug		comp-netutil-debug	debug,rump
+./usr/libdata/debug/sbin/rump.sysctl.debug		comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/sbin/savecore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/scan_ffs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/scsictl.debug		comp-sysutil-debug	debug
@@ -3812,12 +3812,12 @@
 ./usr/libdata/debug/usr/bin/rpcinfo.debug	comp-rpcutil-debug	debug
 ./usr/libdata/debug/usr/bin/rs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rsh.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/rump.dhcpclient.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rump.halt.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rump.netstat.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/rump.sockstat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rump_allserver.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rump_server.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rump.dhcpclient.debug		comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/rump.halt.debug		comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/rump.netstat.debug	comp-netutil-debug	debug,rump
+./usr/libdata/debug/usr/bin/rump.sockstat.debug	comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/rump_allserver.debug		comp-util-debug		debug,rump
+./usr/libdata/debug/usr/bin/rump_server.debug		comp-util-debug		debug,rump
 ./usr/libdata/debug/usr/bin/rup.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/ruptime.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rusers.debug	comp-netutil-debug	debug
@@ -4194,10 +4194,10 @@
 ./usr/libdata/debug/usr/sbin/mopd.debug		comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopprobe.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moptrace.debug	comp-bootserver-debug	debug
-./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-obsolete	obsolete
-./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	debug
@@ -4279,24 +4279,24 @@
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
-./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_efs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_ffs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	crypto,debug
-./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_v7fs.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_efs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_ffs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	crypto,debug,rump
+./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump_v7fs.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rwhod.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/schedctl.debug	comp-sysutil-debug	debug
@@ -4420,7 +4420,7 @@
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
+./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint,rump
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpcc.ln			comp-obsolete		obsolete
@@ -4440,9 +4440,9 @@
 ./usr/libdata/lint/llib-lroken.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump,rump
+./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint,rump
+./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lsaslc.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
@@ -4456,7 +4456,7 @@
 ./usr/libdata/lint/llib-ltermcap.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lterminfo.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltre.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lutil.ln		comp-c-lintlib		lint
@@ -9317,7 +9317,7 @@
 ./usr/share/man/cat3/tzsetwall.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ualarm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/uid_from_user.0		comp-c-catman		.cat
-./usr/share/man/cat3/ukfs.0			comp-c-catman		.cat
+./usr/share/man/cat3/ukfs.0			comp-c-catman		.cat,rump
 ./usr/share/man/cat3/ulimit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/uname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unctrl.0			comp-c-catman		.cat
@@ -14441,7 +14441,7 @@
 ./usr/share/man/html3/ossaudio.html		comp-c-htmlman		html
 ./usr/share/man/html3/overlay.html		comp-c-htmlman		html
 ./usr/share/man/html3/overwrite.html		comp-c-htmlman		html
-./usr/share/man/html3/p2k.html			comp-puffs-htmlman	html
+./usr/share/man/html3/p2k.html			comp-puffs-htmlman	html,rump
 ./usr/share/man/html3/p_query.html		comp-c-htmlman		html
 ./usr/share/man/html3/pair_content.html		comp-c-htmlman		html
 ./usr/share/man/html3/pam.html			comp-c-htmlman		html,pam
@@ -15088,12 +15088,12 @@
 ./usr/share/man/html3/rpcbind.html		comp-c-htmlman		html
 ./usr/share/man/html3/rresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/rresvport_af.html		comp-c-htmlman		html
-./usr/share/man/html3/rump.html			comp-c-htmlman		html
-./usr/share/man/html3/rump_etfs.html			comp-c-htmlman		html
-./usr/share/man/html3/rump_lwproc.html			comp-c-htmlman		html
-./usr/share/man/html3/rumpclient.html			comp-c-htmlman		html
-./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html
-./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html
+./usr/share/man/html3/rump.html			comp-c-htmlman		html,rump
+./usr/share/man/html3/rump_etfs.html			comp-c-htmlman		html,rump
+./usr/share/man/html3/rump_lwproc.html			comp-c-htmlman		html,rump
+./usr/share/man/html3/rumpclient.html			comp-c-htmlman		html,rump
+./usr/share/man/html3/rumphijack.html			comp-c-htmlman		html,rump
+./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html,rump
 ./usr/share/man/html3/ruserok.html		comp-c-htmlman		html
 ./usr/share/man/html3/saslc.d.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/saslc_alloc.html		comp-c-htmlman		crypto,html
@@ -15616,7 +15616,7 @@
 ./usr/share/man/html3/tzsetwall.html		comp-c-htmlman		html
 ./usr/share/man/html3/ualarm.html		comp-c-htmlman		html
 ./usr/share/man/html3/uid_from_user.html	comp-c-htmlman		html
-./usr/share/man/html3/ukfs.html			comp-c-htmlman		html
+./usr/share/man/html3/ukfs.html			comp-c-htmlman		html,rump
 ./usr/share/man/html3/ulimit.html		comp-c-htmlman		html
 ./usr/share/man/html3/uname.html		comp-c-htmlman		html
 ./usr/share/man/html3/unctrl.html		comp-c-htmlman		html
@@ -20772,7 +20772,7 @@
 ./usr/share/man/man3/ossaudio.3			comp-c-man		.man
 ./usr/share/man/man3/overlay.3			comp-c-man		.man
 ./usr/share/man/man3/overwrite.3		comp-c-man		.man
-./usr/share/man/man3/p2k.3			comp-puffs-man		.man
+./usr/share/man/man3/p2k.3			comp-puffs-man		.man,rump
 ./usr/share/man/man3/p_query.3			comp-c-man		.man
 ./usr/share/man/man3/pair_content.3		comp-c-man		.man
 ./usr/share/man/man3/pam.3			comp-c-man		.man,pam
@@ -21426,12 +21426,12 @@
 ./usr/share/man/man3/rresvport.3		comp-c-man		.man
 ./usr/share/man/man3/rresvport_af.3		comp-c-man		.man
 ./usr/share/man/man3/rsa.3			comp-obsolete		obsolete
-./usr/share/man/man3/rump.3			comp-c-man		.man
-./usr/share/man/man3/rump_etfs.3			comp-c-man		.man
-./usr/share/man/man3/rump_lwproc.3			comp-c-man		.man
-./usr/share/man/man3/rumpclient.3			comp-c-man		.man
-./usr/share/man/man3/rumphijack.3			comp-c-man		.man
-./usr/share/man/man3/rumpuser.3			comp-c-man		.man
+./usr/share/man/man3/rump.3			comp-c-man		.man,rump
+./usr/share/man/man3/rump_etfs.3			comp-c-man		.man,rump
+./usr/share/man/man3/rump_lwproc.3			comp-c-man		.man,rump
+./usr/share/man/man3/rumpclient.3			comp-c-man		.man,rump
+./usr/share/man/man3/rumphijack.3			comp-c-man		.man,rump
+./usr/share/man/man3/rumpuser.3			comp-c-man		.man,rump
 ./usr/share/man/man3/ruserok.3			comp-c-man		.man
 ./usr/share/man/man3/saslc.d.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/saslc_alloc.3		comp-c-man		crypto,.man
@@ -21983,7 +21983,7 @@
 ./usr/share/man/man3/tzsetwall.3		comp-c-man		.man
 ./usr/share/man/man3/ualarm.3			comp-c-man		.man
 ./usr/share/man/man3/uid_from_user.3		comp-c-man		.man
-./usr/share/man/man3/ukfs.3			comp-c-man		.man
+./usr/share/man/man3/ukfs.3			comp-c-man		.man,rump
 ./usr/share/man/man3/ulimit.3			comp-c-man		.man
 ./usr/share/man/man3/uname.3			comp-c-man		.man
 ./usr/share/man/man3/unctrl.3			comp-c-man		.man

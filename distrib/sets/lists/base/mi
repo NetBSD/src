@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.999 2012/06/21 04:29:25 pgoyette Exp $
+# $NetBSD: mi,v 1.1000 2012/08/08 14:08:01 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -50,7 +50,7 @@
 ./bin/rm					base-util-root
 ./bin/rmail					base-obsolete		obsolete
 ./bin/rmdir					base-util-root
-./bin/rump.dd					base-util-root
+./bin/rump.dd					base-util-root		rump
 ./bin/sh					base-util-root
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root
@@ -344,15 +344,15 @@
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	use_inet6
-./sbin/rump.cgdconfig				base-sysutil-root	crypto
-./sbin/rump.ifconfig					base-netutil-root
-./sbin/rump.modload					base-sysutil-root
-./sbin/rump.modstat					base-sysutil-root
-./sbin/rump.modunload				base-sysutil-root
-./sbin/rump.ping					base-netutil-root
-./sbin/rump.raidctl					base-sysutil-root
-./sbin/rump.route					base-netutil-root
-./sbin/rump.sysctl					base-sysutil-root
+./sbin/rump.cgdconfig				base-sysutil-root	crypto,rump
+./sbin/rump.ifconfig				base-netutil-root	rump
+./sbin/rump.modload				base-sysutil-root	rump
+./sbin/rump.modstat				base-sysutil-root	rump
+./sbin/rump.modunload				base-sysutil-root	rump
+./sbin/rump.ping				base-netutil-root	rump
+./sbin/rump.raidctl				base-sysutil-root	rump
+./sbin/rump.route				base-netutil-root	rump
+./sbin/rump.sysctl				base-sysutil-root	rump
 ./sbin/savecore					base-sysutil-root
 ./sbin/scan_ffs					base-sysutil-root
 ./sbin/scan_lfs					base-sysutil-root
@@ -641,12 +641,12 @@
 ./usr/bin/rpcinfo				base-rpcutil-bin
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
-./usr/bin/rump.dhcpclient			base-util-bin
-./usr/bin/rump.halt			base-util-bin
-./usr/bin/rump.netstat				base-netutil-bin
-./usr/bin/rump.sockstat				base-util-bin
-./usr/bin/rump_allserver			base-util-bin
-./usr/bin/rump_server			base-util-bin
+./usr/bin/rump.dhcpclient			base-util-bin		rump
+./usr/bin/rump.halt				base-util-bin		rump
+./usr/bin/rump.netstat				base-netutil-bin	rump
+./usr/bin/rump.sockstat				base-util-bin		rump
+./usr/bin/rump_allserver			base-util-bin		rump
+./usr/bin/rump_server				base-util-bin		rump
 ./usr/bin/rup					base-netutil-bin
 ./usr/bin/ruptime				base-netutil-bin
 ./usr/bin/rusers				base-netutil-bin
@@ -1323,10 +1323,10 @@
 ./usr/sbin/mopd					base-bootserver-bin
 ./usr/sbin/mopprobe				base-bootserver-bin
 ./usr/sbin/moptrace				base-bootserver-bin
-./usr/sbin/mount_9p				base-puffs-bin
-./usr/sbin/mount_psshfs				base-puffs-bin
+./usr/sbin/mount_9p				base-puffs-bin		rump
+./usr/sbin/mount_psshfs				base-puffs-bin		rump
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
-./usr/sbin/mount_sysctlfs			base-puffs-bin
+./usr/sbin/mount_sysctlfs			base-puffs-bin		rump
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
@@ -1432,24 +1432,24 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
-./usr/sbin/rump.envstat				base-sysutil-bin
-./usr/sbin/rump.powerd				base-sysutil-bin
-./usr/sbin/rump.traceroute				base-netutil-bin
-./usr/sbin/rump_cd9660				base-puffs-bin
-./usr/sbin/rump_efs				base-puffs-bin
-./usr/sbin/rump_ext2fs				base-puffs-bin
-./usr/sbin/rump_ffs				base-puffs-bin
-./usr/sbin/rump_hfs				base-puffs-bin
-./usr/sbin/rump_lfs				base-puffs-bin
-./usr/sbin/rump_msdos				base-puffs-bin
-./usr/sbin/rump_nfs				base-puffs-bin
-./usr/sbin/rump_ntfs				base-puffs-bin
-./usr/sbin/rump_smbfs				base-puffs-bin		crypto
-./usr/sbin/rump_syspuffs			base-puffs-bin
-./usr/sbin/rump_sysvbfs				base-puffs-bin
-./usr/sbin/rump_tmpfs				base-puffs-bin
-./usr/sbin/rump_udf				base-puffs-bin
-./usr/sbin/rump_v7fs				base-puffs-bin
+./usr/sbin/rump.envstat				base-sysutil-bin	rump
+./usr/sbin/rump.powerd				base-sysutil-bin	rump
+./usr/sbin/rump.traceroute			base-netutil-bin	rump
+./usr/sbin/rump_cd9660				base-puffs-bin	rump
+./usr/sbin/rump_efs				base-puffs-bin	rump
+./usr/sbin/rump_ext2fs				base-puffs-bin	rump
+./usr/sbin/rump_ffs				base-puffs-bin	rump
+./usr/sbin/rump_hfs				base-puffs-bin	rump
+./usr/sbin/rump_lfs				base-puffs-bin	rump
+./usr/sbin/rump_msdos				base-puffs-bin	rump
+./usr/sbin/rump_nfs				base-puffs-bin	rump
+./usr/sbin/rump_ntfs				base-puffs-bin	rump
+./usr/sbin/rump_smbfs				base-puffs-bin	crypto,rump
+./usr/sbin/rump_syspuffs			base-puffs-bin	rump
+./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
+./usr/sbin/rump_tmpfs				base-puffs-bin	rump
+./usr/sbin/rump_udf				base-puffs-bin	rump
+./usr/sbin/rump_v7fs				base-puffs-bin	rump
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/schedctl				base-sysutil-bin
