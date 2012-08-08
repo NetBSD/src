@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.292 2012/04/21 08:28:00 veego Exp $
+#	$NetBSD: Makefile,v 1.293 2012/08/08 14:00:31 christos Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -256,8 +256,10 @@ BUILDTARGETS+=	do-lib
 .if ${MKKMOD} != "no"
 BUILDTARGETS+=	do-sys-modules
 .endif
+.if ${MKRUMP} != "no
 BUILDTARGETS+=	do-sys-rump-dev-lib do-sys-rump-fs-lib
 BUILDTARGETS+=	do-sys-rump-kern-lib do-sys-rump-net-lib
+.endif
 .if ${MKCOMPAT} != "no"
 BUILDTARGETS+=	do-compat-lib-csu
 BUILDTARGETS+=	do-compat-libgcc
