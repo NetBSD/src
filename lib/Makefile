@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.186 2012/07/12 20:14:44 christos Exp $
+#	$NetBSD: Makefile,v 1.187 2012/08/08 14:01:16 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -36,9 +36,12 @@ SUBDIR+=	libarch \
 		libintl libipsec libisns libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
-		librumpclient libtelnet libterminfo \
+		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
+.if (${MKRUMP} != "no")
+SUBDIR+=	librumpclient
+.endif
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey
 .endif
@@ -100,8 +103,10 @@ SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
+.if (${MKRUMP} != "no")
 SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
+.endif
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
@@ -147,7 +152,9 @@ SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
 SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
 SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
+.if (${MKRUMP} != "no")
 SUBDIR+=	librump		# depends on librumpuser
+.endif
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
@@ -169,9 +176,11 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKRUMP} != "no")
 SUBDIR+=	librumpdev	# depends on librump
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
+.endif
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on heimdal
@@ -183,6 +192,7 @@ SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 
 SUBDIR+=	../external/bsd/mdocml/lib
 
+.if (${MKRUMP} != "no")
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -192,6 +202,7 @@ SUBDIR+=	libukfs		# depends on librumpvfs, librump
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+.endif
 
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
