@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2012/07/27 05:36:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2012/08/08 16:29:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2012/07/27 05:36:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2012/08/08 16:29:50 drochner Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -119,7 +119,7 @@ struct vm_map *phys_map = NULL;
  * Declare these as initialized data so we can patch them.
  */
 /*int	maxmem;*/			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+extern int physmem;			/* max supported memory, changes to actual */
 
 extern	u_int lowram;
 
