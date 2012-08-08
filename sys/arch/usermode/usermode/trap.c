@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.63.2.2 2012/03/08 17:21:20 riz Exp $ */
+/* $NetBSD: trap.c,v 1.63.2.3 2012/08/08 15:32:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63.2.2 2012/03/08 17:21:20 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63.2.3 2012/08/08 15:32:25 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,10 +364,6 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	thunk_sigemptyset(&jump_ucp.uc_sigmask);
 	jump_ucp.uc_flags = _UC_STACK | _UC_CPU | _UC_SIGMASK;
 
-	/* prevent recursive IO signals */
-	if (sig == SIGIO)
-		thunk_sigaddset(&jump_ucp.uc_sigmask, SIGIO);
-
 	thunk_makecontext(&jump_ucp,
 			(void (*)(void)) f,
 		4, info, (void *) from_userland, (void *) pc, (void *) va);
@@ -612,13 +608,15 @@ sigio(siginfo_t *info, vaddr_t from_userland, vaddr_t pc, vaddr_t va)
 	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l); KASSERT(pcb);
 	struct intr_handler *sih;
-	unsigned int n;
+	unsigned int n, pass;
 
 //	thunk_printf("%s: l %p, pcb %p\n", __func__, l, pcb);
-	for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
-		sih = &sigio_intr_handler[n];
-		if (sih->func)
-			sih->func(sih->arg);
+	for (pass = 0; pass < 2; pass++) {
+		for (n = 0; n < SIGIO_MAX_HANDLERS; n++) {
+			sih = &sigio_intr_handler[n];
+			if (sih->func)
+				sih->func(sih->arg);
+		}
 	}
 
 	KASSERT(l == curlwp);
