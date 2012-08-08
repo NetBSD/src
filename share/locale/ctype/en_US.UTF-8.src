@@ -1,4 +1,4 @@
-/*	$NetBSD: en_US.UTF-8.src,v 1.4 2005/02/10 18:12:42 tnozaki Exp $	*/
+/*	$NetBSD: en_US.UTF-8.src,v 1.5 2012/08/08 18:40:37 tnozaki Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/share/mklocale/UTF-8.src,v 1.1 2004/03/27 08:14:14 tjr Exp $	*/
 
 /*
@@ -493,7 +493,7 @@ SWIDTH1   0x02b0 - 0x02ee
 
 GRAPH     0x0300 - 0x034f  0x0360 - 0x036f
 PRINT     0x0300 - 0x034f  0x0360 - 0x036f
-SWIDTH1   0x0300 - 0x034f  0x0360 - 0x036f
+SWIDTH0   0x0300 - 0x034f  0x0360 - 0x036f
 
 MAPUPPER  < 0x0345 0x0399 >
 
