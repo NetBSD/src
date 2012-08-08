@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2012/06/22 18:45:23 christos Exp $
+# $NetBSD: Makefile,v 1.27 2012/08/08 13:57:06 christos Exp $
 
 MKMAN=	no
 
@@ -45,7 +45,6 @@ TESTS_C+=		t_msync
 TESTS_C+=		t_nanosleep
 TESTS_C+=		t_pipe
 TESTS_C+=		t_pipe2
-TESTS_C+=		t_posix_fadvise
 TESTS_C+=		t_poll
 TESTS_C+=		t_recvmmsg
 TESTS_C+=		t_revoke
@@ -66,7 +65,11 @@ TESTS_C+=		t_write
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT}
 
 LDADD.t_getpid+=        -lpthread
+
+.if (${MKRUMP} != "no")
+TESTS_C+=		t_posix_fadvise
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lpthread
+.endif
 
 WARNS=			4
 
