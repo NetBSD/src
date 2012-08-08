@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.109 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.110 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11062,6 +11062,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	powerpc: Switch to GDB 7.3.1.  [mrg 20111024]
 	efa(4): Add driver for ELBOX FastATA 1200. [rkujawa 20111028]
 	postfix(1): Import version 2.8.6 [tron 20111028]
+	virtio(4): Add virtio driver. Speeds up I/O under KVM platform.
+		[hannken 20111030]
 	zoneinfo: Import tzdata2011n. [apb 20111102]
 	tre: Incorporate library. Adds agrep. This library provides
 		regcomp/regexec/regerror/regfree as a binary compatible
