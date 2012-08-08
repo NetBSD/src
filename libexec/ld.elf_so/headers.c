@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: headers.c,v 1.41.4.1 2012/08/08 06:24:51 jdc Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: headers.c,v 1.41.4.1 2012/08/08 06:24:51 jdc Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -356,7 +356,6 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		    obj->phsize, (long)obj->relocbase));
 		break;
 	}
-	assert(obj->phdr == phdr);
 	
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = (Elf_Addr)(uintptr_t)(obj->relocbase + ph->p_vaddr);
