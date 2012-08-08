@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.7 2007/02/02 23:08:22 christos Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.8 2012/08/08 16:56:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,8 +145,17 @@ union ieee_single_u {
 	struct ieee_single	sngu_sng;
 };
 
+#define	sngu_sign	sngu_sng.sng_sign
+#define	sngu_exp	sngu_sng.sng_exp
+#define	sngu_frac	sngu_sng.sng_frac
+
 union ieee_double_u {
 	double			dblu_d;
 	struct ieee_double	dblu_dbl;
 };
+
+#define	dblu_sign	dblu_dbl.dbl_sign
+#define	dblu_exp	dblu_dbl.dbl_exp
+#define	dblu_frach	dblu_dbl.dbl_frach
+#define	dblu_fracl	dblu_dbl.dbl_fracl
 #endif /* _SYS_IEEE754_H_ */
