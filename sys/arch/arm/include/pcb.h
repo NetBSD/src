@@ -47,7 +47,7 @@ struct trapframe;
 struct pcb_arm32 {
 	/*
 	 * WARNING!
-	 * cpuswitch.S relies on pcb32_r8 being quad-aligned in struct pcb
+	 * cpuswitchto.S relies on pcb32_r8 being quad-aligned in struct pcb
 	 * (due to the use of "strd" when compiled for XSCALE)
 	 */
 	u_int	pcb32_r8 __aligned(8);		/* used */
