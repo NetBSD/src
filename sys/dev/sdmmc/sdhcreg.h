@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.5 2012/02/01 22:53:19 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.5.2.1 2012/08/08 06:18:59 jdc Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -152,6 +152,11 @@
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
+#define	SDHC_WATERMARK_LEVEL		0x44	/* ESDHC */
+#define	 SDHC_WATERMARK_WRITE_SHIFT	16
+#define	 SDHC_WATERMARK_WRITE_MASK	0xff
+#define	 SDHC_WATERMARK_READ_SHIFT	0
+#define	 SDHC_WATERMARK_READ_MASK	0xff
 #define SDHC_MAX_CAPABILITIES		0x48
 #define	SDHC_HOST_VER			0xFC
 #define  SDHC_VVN_MASK			0x0f
