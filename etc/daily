@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.80.2.2 2012/08/08 14:26:49 martin Exp $
+#	$NetBSD: daily,v 1.80.2.3 2012/08/08 14:31:33 martin Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -263,9 +263,10 @@ if pkg_info ${_compat_K_flag} -q -E '*'; then
 	if checkyesno fetch_pkg_vulnerabilities; then
 		( umask 022 && pkg_admin ${_compat_K_flag} \
 		    fetch-pkg-vulnerabilities -u )
-	else
-		echo "fetch_pkg_vulnerabilities is set to NO in daily.conf(5)."
-		echo "You should set it to YES to enable vulnerability checks."
+	elif [ -z "$fetch_pkg_vulnerabilities" ]; then
+		echo "fetch_pkg_vulnerabilities is not set in daily.conf(5)."
+		echo "You should set it to YES to enable vulnerability checks"
+		echo "or set it to NO to get rid of this warning."
 	fi
 fi
 
