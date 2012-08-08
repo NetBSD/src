@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "pmap_segtab.c,v 1.1.2.11 2011/11/29 07:48:31 matt Exp");
 #include <mips/pte.h>
 
 CTASSERT(NBPG >= sizeof(pmap_segtab_t));
+
 #define PMAP_PTP_CACHE
 
 struct pmap_segtab_info {

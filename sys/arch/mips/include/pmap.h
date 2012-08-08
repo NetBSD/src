@@ -113,7 +113,7 @@ union pt_entry;
 
 typedef union pmap_segtab {
 	union pmap_segtab *	seg_seg[NSEGPG];
-	union pt_entry	*	seg_tab[NPTEPG];
+	union pt_entry	*	seg_tab[NSEGPG];
 } pmap_segtab_t;
 #else
 /*
