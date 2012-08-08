@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.169 2012/08/08 14:39:20 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.170 2012/08/08 14:50:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6715,7 +6715,7 @@ share/man/man5/daily.5				1.5
 	find_core
 	[christos, ticket #456]
 
-etc/daily					1.83
+etc/daily					1.83,1.85,1.86
 etc/defaults/daily.conf				1.18
 
 	PR/46757: Edgar Fuﬂ: Change default to pkg_vulnerabilities from NO to
