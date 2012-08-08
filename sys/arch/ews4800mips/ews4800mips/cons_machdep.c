@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.6 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.7 2012/08/08 09:02:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.6 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7 2012/08/08 09:02:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.6 2008/04/28 20:23:18 martin Exp 
 cons_decl(rom_);
 
 struct cons cons;
-struct consdev *cn_tab = NULL;
 struct consdev consdev_rom = {
 	rom_cnprobe,
 	rom_cninit,
