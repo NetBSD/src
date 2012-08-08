@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.125 2012/06/16 17:01:03 joerg Exp $
+# $NetBSD: md.i386,v 1.126 2012/08/08 18:37:51 drochner Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -91,7 +91,7 @@
 ./usr/include/i386/cdefs.h			comp-c-include
 ./usr/include/i386/conf.h			comp-obsolete		obsolete
 ./usr/include/i386/cpu.h			comp-c-include
-./usr/include/i386/cpufunc.h			comp-c-include
+./usr/include/i386/cpufunc.h			comp-c-obsolete		obsolete
 ./usr/include/i386/cputypes.h			comp-c-include
 ./usr/include/i386/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/i386/disklabel.h			comp-c-include
