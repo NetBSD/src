@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.80.2.4 2012/08/08 14:36:55 martin Exp $
+#	$NetBSD: daily,v 1.80.2.5 2012/08/08 14:49:24 martin Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -246,8 +246,8 @@ if checkyesno run_fsck; then
 	fsck -n -f ${run_fsck_flags} | grep -v '^\*\* Phase'
 fi
 
-echo ""
 if checkyesno run_rdist && [ -f /etc/Distfile ]; then
+	echo ""
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
 		logf="$(date +%Y.%b.%d)"
@@ -258,15 +258,15 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 fi
 
 if pkg_info ${_compat_K_flag} -q -E '*'; then
-	echo ""
-	echo "Fetching package vulnerabilities database:"
-	if checkyesno fetch_pkg_vulnerabilities; then
-		( umask 022 && pkg_admin ${_compat_K_flag} \
-		    fetch-pkg-vulnerabilities -u )
-	elif [ -z "$fetch_pkg_vulnerabilities" ]; then
+	if [ -z "fetch_pkg_vulnerabilities" ]; then
 		echo "fetch_pkg_vulnerabilities is not set in daily.conf(5)."
 		echo "You should set it to YES to enable vulnerability checks"
 		echo "or set it to NO to get rid of this warning."
+	elif checkyesno fetch_pkg_vulnerabilities; then
+		echo ""
+		echo "Fetching package vulnerabilities database:"
+		( umask 022 && pkg_admin ${_compat_K_flag} \
+		    fetch-pkg-vulnerabilities -u )
 	fi
 fi
 
