@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.137 2012/03/17 02:13:44 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.138 2012/08/08 14:04:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.137 2012/03/17 02:13:44 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.138 2012/08/08 14:04:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,10 +70,6 @@ __RCSID("$NetBSD: route.c,v 1.137 2012/03/17 02:13:44 christos Exp $");
 #include <time.h>
 #include <paths.h>
 #include <err.h>
-
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
-#include <rump/rumpclient.h>
 
 #include "keywords.h"
 #include "extern.h"
