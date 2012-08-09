@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.229 2012/07/22 14:33:04 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.230 2012/08/09 04:16:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.229 2012/07/22 14:33:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.230 2012/08/09 04:16:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4628,6 +4628,22 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
 		CSR_WRITE(sc, WMREG_EECD, reg);
 
+		/*
+		 * XXX: workaround for a bug in qemu-0.12.x and prior
+		 * and Xen.
+		 *
+		 * We use this workaround only for 82540 because qemu's
+		 * e1000 act as 82540.
+		 */
+		if (sc->sc_type >= WM_T_82540) {
+			reg |= EECD_SK;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+			reg &= ~EECD_SK;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+			delay(2);
+		}
+		/* XXX: end of workaround */
+		
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
