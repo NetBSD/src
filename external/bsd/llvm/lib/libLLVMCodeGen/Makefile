@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2012/06/16 17:01:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2012/08/09 14:37:06 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -18,6 +18,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
 	DwarfEHPrepare.cpp \
+	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
@@ -67,6 +68,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \
 	MachineSink.cpp \
+	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
 	OcamlGC.cpp \
 	OptimizePHIs.cpp \
@@ -88,7 +90,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegisterCoalescer.cpp \
 	RegisterPressure.cpp \
 	RegisterScavenging.cpp \
-	RenderMachineFunction.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
