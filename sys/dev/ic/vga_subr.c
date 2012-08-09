@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.24 2009/02/02 15:59:20 tsutsui Exp $ */
+/* $NetBSD: vga_subr.c,v 1.25 2012/08/09 20:25:05 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.24 2009/02/02 15:59:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.25 2012/08/09 20:25:05 uwe Exp $");
 
 /* for WSDISPLAY_BORDER_COLOR */
 #include "opt_wsdisplay_border.h"
@@ -225,7 +225,7 @@ vga_reset(struct vga_handle *vh, void (*md_initfunc)(struct vga_handle *))
 	if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
 		return;
 
-	reg = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_MISC_DATAR);
+	reg = vga_raw_read(vh, VGA_MISC_DATAR);
 	vh->vh_mono = !(reg & 0x01);
 
 	if (bus_space_map(vh->vh_iot, vh->vh_mono ? 0x3b0 : 0x3d0, 0x10,
@@ -402,19 +402,19 @@ vga_initregs(struct vga_handle *vh)
 	/* set DAC palette */
 	if (!vh->vh_mono) {
 		for (i = 0; i < 16; i++) {
-			bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga,
+			vga_raw_write(vh,
 			    VGA_DAC_ADDRW, vga_atc[i]);
-			bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga,
+			vga_raw_write(vh,
 			    VGA_DAC_PALETTE, vga_dacpal[i * 3 + 0]);
-			bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga,
+			vga_raw_write(vh,
 			    VGA_DAC_PALETTE, vga_dacpal[i * 3 + 1]);
-			bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga,
+			vga_raw_write(vh,
 			    VGA_DAC_PALETTE, vga_dacpal[i * 3 + 2]);
 		}
 	}
 
 	/* set misc output register */
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga,
+	vga_raw_write(vh,
 	    VGA_MISC_DATAW, VGA_MISCOUT | (vh->vh_mono ? 0 : 0x01));
 
 	/* reenable video */
