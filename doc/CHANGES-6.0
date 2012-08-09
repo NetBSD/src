@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.172 2012/08/09 06:58:00 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.173 2012/08/09 08:04:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6928,3 +6928,36 @@ sys/arch/sparc64/sparc64/trap.c			1.177
 	Do not spam the console when sending a sigill due to a T_ILLINST trap.
 	[martin, ticket #462]
 
+sys/dev/dm/dm_target_stripe.c			1.18
+
+	Fix problem reported by jym on current-user@ patch was provided by
+	mhitch@.
+	[haad, ticket #467]
+
+doc/3RDPARTY					1.955
+share/zoneinfo/australasia			1.26
+
+	Import tzdata2012e from ftp://ftp.iana.org/tz/releases/tzdata2012e.tar.gz
+
+	Major changes from tzdata2012d to tzdata2012e:
+
+	   * australasia (Pacific/Fakaofo): Tokelau is UTC+13, not UTC+14.
+	     (Thanks to Steffen Thorsen.)
+
+	   * Use a single version number for both code and data.
+
+	[apb, ticket #470]
+
+sys/dev/pci/if_wm.c				1.230
+sys/dev/pci/if_wm.c				1.231
+
+	Add workaround for QEMU and the variants that fail on EEPROM access.
+
+	This problem was discovered a few years ago, but some variants and
+	cloud services still have the bug. This problem is not NetBSD's bug
+	but qemus's bug. For NetBSD users, existence of buggy virtual machines
+	is sad thing, so we add a workaroud.
+
+	Fix the check of the device type in last commit.
+	Reported by Thomas Klausner.
+	[msaitoh, ticket #471]
