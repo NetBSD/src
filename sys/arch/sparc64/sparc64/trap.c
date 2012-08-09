@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168.8.3 2012/04/26 02:57:48 riz Exp $ */
+/*	$NetBSD: trap.c,v 1.168.8.4 2012/08/09 06:55:01 jdc Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.3 2012/04/26 02:57:48 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168.8.4 2012/08/09 06:55:01 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -627,13 +627,15 @@ badtrap:
 			preempt();
 		break;
 
-	case T_ILLINST:
 	case T_INST_EXCEPT:
 	case T_TEXTFAULT:
+#ifdef DEBUG
 		/* This is not an MMU issue!!!! */
 		printf("trap: pid=%d.%d comm=%s textfault at %lx!! sending SIGILL due to trap %d: %s\n", 
 		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
 		       pc, type, type < N_TRAP_TYPES ? trap_type[type] : T);
+#endif
+	case T_ILLINST:
 #if defined(DDB) && defined(DEBUG)
 		if (trapdebug & TDB_STOPSIG)
 			Debugger();
