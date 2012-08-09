@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.108 2012/01/11 20:41:28 macallan Exp $ */
+/* $NetBSD: vga.c,v 1.109 2012/08/09 23:56:35 uwe Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.108 2012/01/11 20:41:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.109 2012/08/09 23:56:35 uwe Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1565,7 +1565,7 @@ vga_save_palette(struct vga_config *vc)
 	for (i = 0; i < sizeof(vc->palette); i++)
 		*palette++ = vga_raw_read(vh, VGA_DAC_PALETTE);
 
-	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
+	vga_reset_state(vh);			/* reset flip/flop */
 }
 
 void
@@ -1583,6 +1583,6 @@ vga_restore_palette(struct vga_config *vc)
 	for (i = 0; i < sizeof(vc->palette); i++)
 		vga_raw_write(vh, VGA_DAC_PALETTE, *palette++);
 
-	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
+	vga_reset_state(vh);			/* reset flip/flop */
 	vga_enable(vh);
 }
