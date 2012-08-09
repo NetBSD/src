@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/04/04 10:42:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/08/09 14:37:06 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -20,8 +20,6 @@ SRCS+=	AliasAnalysis.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	DbgInfoPrinter.cpp \
-	DebugInfo.cpp \
-	DIBuilder.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
 	IVUsers.cpp \
