@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.52 2009/08/30 16:38:48 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.52.18.1 2012/08/09 06:49:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,11 @@
 
 #define	_POSIX_VERSION			200112L
 #define	_POSIX2_VERSION			200112L
+
+/*
+ * We support the posix_spawn() family of functions (unconditionally).
+ */
+#define	_POSIX_SPAWN			200809L
 
 /* execution-time symbolic constants */
 
@@ -297,6 +302,9 @@
 #define	_SC_2_PBS_LOCATE		83
 #define	_SC_2_PBS_MESSAGE		84
 #define	_SC_2_PBS_TRACK			85
+
+/* This is implemented */
+#define	_SC_SPAWN			86
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
