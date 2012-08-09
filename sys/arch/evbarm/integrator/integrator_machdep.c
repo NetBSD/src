@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.68 2011/07/01 20:39:34 dyoung Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.68.8.1 2012/08/09 06:36:48 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.68 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.68.8.1 2012/08/09 06:36:48 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -383,9 +383,6 @@ initarm(void *arg)
 	psize_t memsize;
 	vm_offset_t physical_freestart;
 	vm_offset_t physical_freeend;
-#if NPLCOM > 0 && defined(PLCONSOLE)
-	static struct bus_space plcom_bus_space;
-#endif
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -402,13 +399,29 @@ initarm(void *arg)
 	 */
 
 	if (PLCOMCNUNIT == 0) {
+		static struct bus_space plcom_bus_space;
+		static struct plcom_instance ifpga_pi0 = {
+			.pi_type = PLCOM_TYPE_PL010,
+			.pi_iot = &plcom_bus_space,
+			.pi_size = IFPGA_UART_SIZE,
+			.pi_iobase = 0x0
+		};
+
 		ifpga_create_io_bs_tag(&plcom_bus_space, (void*)0xfd600000);
-		plcomcnattach(&plcom_bus_space, 0, plcomcnspeed,
-		    IFPGA_UART_CLK, plcomcnmode, PLCOMCNUNIT);
+		plcomcnattach(&ifpga_pi0, plcomcnspeed, IFPGA_UART_CLK,
+		    plcomcnmode, PLCOMCNUNIT);
 	} else if (PLCOMCNUNIT == 1) {
+		static struct bus_space plcom_bus_space;
+		static struct plcom_instance ifpga_pi1 = {
+			.pi_type = PLCOM_TYPE_PL010,
+			.pi_iot = &plcom_bus_space,
+			.pi_size = IFPGA_UART_SIZE,
+			.pi_iobase = 0x0
+		};
+
 		ifpga_create_io_bs_tag(&plcom_bus_space, (void*)0xfd700000);
-		plcomcnattach(&plcom_bus_space, 0, plcomcnspeed,
-		    IFPGA_UART_CLK, plcomcnmode, PLCOMCNUNIT);
+		plcomcnattach(&ifpga_pi1, plcomcnspeed, IFPGA_UART_CLK,
+		    plcomcnmode, PLCOMCNUNIT);
 	}
 #endif
 
@@ -788,9 +801,6 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-#if NPLCOM > 0 && defined(PLCONSOLE)
-	static struct bus_space plcom_bus_space;
-#endif
 #if 0
 	char *console = CONSDEVNAME;
 #endif
@@ -802,17 +812,35 @@ consinit(void)
 
 #if NPLCOM > 0 && defined(PLCONSOLE)
 	if (PLCOMCNUNIT == 0) {
+		static struct bus_space plcom_bus_space;
+		static struct plcom_instance ifpga_pi1 = {
+			.pi_type = PLCOM_TYPE_PL010,
+			.pi_iot = &plcom_bus_space,
+			.pi_size = IFPGA_UART_SIZE,
+			.pi_iobase = 0x0
+		};
+
 		ifpga_create_io_bs_tag(&plcom_bus_space,
 		    (void*)UART0_BOOT_BASE);
-		if (plcomcnattach(&plcom_bus_space, 0, plcomcnspeed,
-		    IFPGA_UART_CLK, plcomcnmode, PLCOMCNUNIT))
+
+		if (plcomcnattach(&ifpga_pi1, plcomcnspeed, IFPGA_UART_CLK,
+		      plcomcnmode, PLCOMCNUNIT))
 			panic("can't init serial console");
 		return;
 	} else if (PLCOMCNUNIT == 1) {
+		static struct bus_space plcom_bus_space;
+		static struct plcom_instance ifpga_pi1 = {
+			.pi_type = PLCOM_TYPE_PL010,
+			.pi_iot = &plcom_bus_space,
+			.pi_size = IFPGA_UART_SIZE,
+			.pi_iobase = 0x0
+		};
+
 		ifpga_create_io_bs_tag(&plcom_bus_space,
 		    (void*)UART0_BOOT_BASE);
-		if (plcomcnattach(&plcom_bus_space, 0, plcomcnspeed,
-		    IFPGA_UART_CLK, plcomcnmode, PLCOMCNUNIT))
+
+		if (plcomcnattach(&ifpga_pi1, plcomcnspeed, IFPGA_UART_CLK,
+		      plcomcnmode, PLCOMCNUNIT))
 			panic("can't init serial console");
 		return;
 	}

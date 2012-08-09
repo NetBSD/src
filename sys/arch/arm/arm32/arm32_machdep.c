@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.76 2011/06/30 20:09:19 wiz Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.76.8.1 2012/08/09 06:36:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76 2011/06/30 20:09:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76.8.1 2012/08/09 06:36:46 jdc Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -59,10 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.76 2011/06/30 20:09:19 wiz Exp $
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -449,19 +450,21 @@ dosoftints(void)
 	const int opl = ci->ci_cpl;
 	const uint32_t softiplmask = SOFTIPLMASK(opl);
 
+	splhigh();
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
 		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
-		if (softints == 0)
+		KASSERT(opl == IPL_NONE || (softints & (1 << (opl - IPL_SOFTCLOCK))) == 0);
+		if (softints == 0) {
+			splx(opl);
 			return;
-		ci->ci_cpl = IPL_HIGH;
+		}
 #define	DOSOFTINT(n) \
-		if (softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
+		if (ci->ci_softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
 			ci->ci_softints &= \
 			    ~(1 << (IPL_SOFT ## n - IPL_SOFTCLOCK)); \
 			softint_switch(ci->ci_softlwps[SOFTINT_ ## n], \
 			    IPL_SOFT ## n); \
-			ci->ci_cpl = opl; \
 			continue; \
 		}
 		DOSOFTINT(SERIAL);

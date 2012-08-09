@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.33 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: plcom.c,v 1.33.2.1 2012/08/09 06:36:43 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -28,11 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,13 +88,13 @@
  */
 
 /*
- * COM driver for the Prime Cell PL010 UART, which is similar to the 16C550,
- * but has a completely different programmer's model.
+ * COM driver for the Prime Cell PL010 and PL011 UARTs. Both are is similar to
+ * the 16C550, but have a completely different programmer's model.
  * Derived from the NS16550AF com driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.33 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.33.2.1 2012/08/09 06:36:43 jdc Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -103,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.33 2012/02/02 19:42:59 tls Exp $");
 #include "opt_multiprocessor.h"
 
 #include "rnd.h"
-#ifdef RND_COM
-#include <sys/rnd.h>
-#endif
 
 /*
  * Override cnmagic(9) macro before including <sys/systm.h>.
@@ -138,6 +135,9 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.33 2012/02/02 19:42:59 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#ifdef RND_COM
+#include <sys/rnd.h>
+#endif
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
@@ -148,7 +148,8 @@ static void plcom_enable_debugport (struct plcom_softc *);
 
 void	plcom_config	(struct plcom_softc *);
 void	plcom_shutdown	(struct plcom_softc *);
-int	plcomspeed	(long, long);
+int	pl010comspeed	(long, long);
+int	pl011comspeed	(long, long);
 static	u_char	cflag2lcr (tcflag_t);
 int	plcomparam	(struct tty *, struct termios *);
 void	plcomstart	(struct tty *);
@@ -162,11 +163,10 @@ void	tiocm_to_plcom	(struct plcom_softc *, u_long, int);
 int	plcom_to_tiocm	(struct plcom_softc *);
 void	plcom_iflush	(struct plcom_softc *);
 
-int	plcom_common_getc (dev_t, bus_space_tag_t, bus_space_handle_t);
-void	plcom_common_putc (dev_t, bus_space_tag_t, bus_space_handle_t, int);
+int	plcom_common_getc (dev_t, struct plcom_instance *);
+void	plcom_common_putc (dev_t, struct plcom_instance *, int);
 
-int	plcominit	(bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
-			    bus_space_handle_t *);
+int	plcominit	(struct plcom_instance *, int, int, tcflag_t);
 
 dev_type_open(plcomopen);
 dev_type_close(plcomclose);
@@ -189,6 +189,8 @@ integrate void plcom_stsoft	(struct plcom_softc *, struct tty *);
 integrate void plcom_schedrx	(struct plcom_softc *);
 void	plcomdiag		(void *);
 
+bool	plcom_intstatus(struct plcom_instance *, u_int *);
+
 extern struct cfdriver plcom_cd;
 
 const struct cdevsw plcom_cdevsw = {
@@ -207,9 +209,9 @@ u_int plcom_rbuf_hiwat = (PLCOM_RING_SIZE * 1) / 4;
 u_int plcom_rbuf_lowat = (PLCOM_RING_SIZE * 3) / 4;
 
 static int	plcomconsunit = -1;
-static bus_space_tag_t plcomconstag;
-static bus_space_handle_t plcomconsioh;
-static int	plcomconsattached;
+static struct plcom_instance plcomcons_info;
+
+static int plcomconsattached;
 static int plcomconsrate;
 static tcflag_t plcomconscflag;
 static struct cnm_state plcom_cnm_state;
@@ -226,33 +228,76 @@ static int ppscap =
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-static int plcom_kgdb_unit;
-static bus_space_tag_t plcom_kgdb_iot;
-static bus_space_handle_t plcom_kgdb_ioh;
+static struct plcom_instance plcomkgdb_info;
 static int plcom_kgdb_attached;
 
 int	plcom_kgdb_getc (void *);
 void	plcom_kgdb_putc (void *, int);
 #endif /* KGDB */
 
-#define	PLCOMUNIT_MASK	0x7ffff
+#define	PLCOMUNIT_MASK		0x7ffff
 #define	PLCOMDIALOUT_MASK	0x80000
 
 #define	PLCOMUNIT(x)	(minor(x) & PLCOMUNIT_MASK)
 #define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
-				 device_is_active(&(sc)->sc_dev))
+				 device_is_active((sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
-#define PLCOM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, PLCOM_UART_SIZE, (f))
+#define PLCOM_BARRIER(pi, f)	\
+    bus_space_barrier((pi)->pi_iot, (pi)->pi_ioh, 0, (pi)->pi_size, (f))
 
-#define PLCOM_LOCK(sc) simple_lock(&(sc)->sc_lock)
-#define PLCOM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
+static uint8_t
+pread1(struct plcom_instance *pi, bus_size_t reg)
+{
+	if (!ISSET(pi->pi_flags, PLC_FLAG_32BIT_ACCESS))
+		return bus_space_read_1(pi->pi_iot, pi->pi_ioh, reg);
+
+	return bus_space_read_4(pi->pi_iot, pi->pi_ioh, reg & -4) >>
+	    (8 * (reg & 3));
+}
+int nhcr;
+static void
+pwrite1(struct plcom_instance *pi, bus_size_t o, uint8_t val)
+{
+	if (!ISSET(pi->pi_flags, PLC_FLAG_32BIT_ACCESS)) {
+		bus_space_write_1(pi->pi_iot, pi->pi_ioh, o, val);
+	} else {
+		const size_t shift = 8 * (o & 3);
+		o &= -4;
+		uint32_t tmp = bus_space_read_4(pi->pi_iot, pi->pi_ioh, o);
+		tmp = (val << shift) | (tmp & ~(0xff << shift));
+		bus_space_write_4(pi->pi_iot, pi->pi_ioh, o, tmp);
+	}
+}
+
+static void
+pwritem1(struct plcom_instance *pi, bus_size_t o, const uint8_t *datap,
+    bus_size_t count)
+{
+	if (!ISSET(pi->pi_flags, PLC_FLAG_32BIT_ACCESS)) {
+		bus_space_write_multi_1(pi->pi_iot, pi->pi_ioh, o, datap, count);
+	} else {
+		KASSERT((o & 3) == 0);
+		while (count--) {
+			bus_space_write_4(pi->pi_iot, pi->pi_ioh, o, *datap++);
+		};
+	}
+}
+
+#define	PREAD1(pi, reg)		pread1(pi, reg)
+#define	PREAD4(pi, reg)		\
+	(bus_space_read_4((pi)->pi_iot, (pi)->pi_ioh, (reg)))
+
+#define	PWRITE1(pi, reg, val)	pwrite1(pi, reg, val)
+#define	PWRITEM1(pi, reg, d, c)	pwritem1(pi, reg, d, c)
+#define	PWRITE4(pi, reg, val)	\
+	(bus_space_write_4((pi)->pi_iot, (pi)->pi_ioh, (reg), (val)))
 
 int
-plcomspeed(long speed, long frequency)
+pl010comspeed(long speed, long frequency)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -277,33 +322,48 @@ plcomspeed(long speed, long frequency)
 #undef	divrnd
 }
 
+int
+pl011comspeed(long speed, long frequency)
+{
+	int denom = 16 * speed;
+	int div = frequency / denom;
+	int rem = frequency % denom;
+	
+	int ibrd = div << 6;
+	int fbrd = (((8 * rem) / speed) + 1) / 2;
+	
+	/* Tolerance? */
+	return ibrd | fbrd;
+}
+
 #ifdef PLCOM_DEBUG
 int	plcom_debug = 0;
 
-void plcomstatus (struct plcom_softc *, char *);
+void plcomstatus (struct plcom_softc *, const char *);
 void
-plcomstatus(struct plcom_softc *sc, char *str)
+plcomstatus(struct plcom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_DCD) ? "+" : "-",
+	    ISSET(sc->sc_msr, PL01X_MSR_DCD) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_DTR) ? "+" : "-",
+	    ISSET(sc->sc_mcr, PL01X_MCR_DTR) ? "+" : "-",
 	    sc->sc_tx_stopped ? "+" : "-");
 
 	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
-	    ISSET(sc->sc_msr, MSR_CTS) ? "+" : "-",
+	    ISSET(sc->sc_msr, PL01X_MSR_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
-	    ISSET(sc->sc_mcr, MCR_RTS) ? "+" : "-",
+	    ISSET(sc->sc_mcr, PL01X_MCR_RTS) ? "+" : "-",
 	    sc->sc_rx_flags);
 }
 #endif
 
+#if 0
 int
 plcomprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
@@ -312,81 +372,132 @@ plcomprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 	/* Disable the UART.  */
 	bus_space_write_1(iot, ioh, plcom_cr, 0);
 	/* Make sure the FIFO is off.  */
-	bus_space_write_1(iot, ioh, plcom_lcr, LCR_8BITS);
+	bus_space_write_1(iot, ioh, plcom_lcr, PL01X_LCR_8BITS);
 	/* Disable interrupts.  */
 	bus_space_write_1(iot, ioh, plcom_iir, 0);
 
 	/* Make sure we swallow anything in the receiving register.  */
 	data = bus_space_read_1(iot, ioh, plcom_dr);
 
-	if (bus_space_read_1(iot, ioh, plcom_lcr) != LCR_8BITS)
+	if (bus_space_read_1(iot, ioh, plcom_lcr) != PL01X_LCR_8BITS)
 		return 0;
 
-	data = bus_space_read_1(iot, ioh, plcom_fr) & (FR_RXFF | FR_RXFE);
+	data = bus_space_read_1(iot, ioh, plcom_fr) & (PL01X_FR_RXFF | PL01X_FR_RXFE);
 
-	if (data != FR_RXFE)
+	if (data != PL01X_FR_RXFE)
 		return 0;
 
 	return 1;
 }
+#endif
 
+/*
+ * No locking in this routine; it is only called during attach,
+ * or with the port already locked.
+ */
 static void
 plcom_enable_debugport(struct plcom_softc *sc)
 {
-	int s;
+	struct plcom_instance *pi = &sc->sc_pi;
+
+	sc->sc_cr = PL01X_CR_UARTEN;
+	SET(sc->sc_mcr, PL01X_MCR_DTR | PL01X_MCR_RTS);
 
 	/* Turn on line break interrupt, set carrier. */
-	s = splserial();
-	PLCOM_LOCK(sc);
-	sc->sc_cr = CR_RIE | CR_RTIE | CR_UARTEN;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
-	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
-	    sc->sc_mcr);
-	PLCOM_UNLOCK(sc);
-	splx(s);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		SET(sc->sc_cr, PL010_CR_RIE | PL010_CR_RTIE);
+		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		if (sc->sc_set_mcr) {
+			/* XXX device_unit() abuse */
+			sc->sc_set_mcr(sc->sc_set_mcr_arg,
+			    device_unit(sc->sc_dev), sc->sc_mcr);
+		}
+		break;
+	case PLCOM_TYPE_PL011:
+		sc->sc_imsc = PL011_INT_RX | PL011_INT_RT;
+		SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
+		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr));
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+		break;
+	}
+
 }
 
 void
 plcom_attach_subr(struct plcom_softc *sc)
 {
-	int unit = sc->sc_iounit;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 	struct tty *tp;
 
+	aprint_naive("\n");
+
 	callout_init(&sc->sc_diag_callout, 0);
-	simple_lock_init(&sc->sc_lock);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+	case PLCOM_TYPE_PL011:
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "Unknown plcom type: %d\n", pi->pi_type);
+		return;
+	}
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_cr = 0;
+	sc->sc_imsc = 0;
 
-	if (plcomconstag && unit == plcomconsunit) {
+	if (bus_space_is_equal(pi->pi_iot, plcomcons_info.pi_iot) &&
+	    pi->pi_iobase == plcomcons_info.pi_iobase) {
 		plcomconsattached = 1;
-
-		plcomconstag = iot;
-		plcomconsioh = ioh;
 
 		/* Make sure the console is always "hardwired". */
 		delay(1000);			/* wait for output to finish */
 		SET(sc->sc_hwflags, PLCOM_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
-		/* Must re-enable the console immediately, or we will
-		   hang when trying to print.  */
-		sc->sc_cr = CR_UARTEN;
+		/*
+		 * Must re-enable the console immediately, or we will
+		 * hang when trying to print.
+		 */
+		sc->sc_cr = PL01X_CR_UARTEN;
+		if (pi->pi_type == PLCOM_TYPE_PL011) 
+			SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
 	}
 
-	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		break;
+		
+	case PLCOM_TYPE_PL011:
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+		break;
+	}		
 
-	/* The PL010 has a 16-byte fifo, but the tx interrupt triggers when
-	   there is space for 8 more bytes.  */
-	sc->sc_fifolen = 8;
-	printf("\n");
+	if (sc->sc_fifolen == 0) {
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			/*
+			 * The PL010 has a 16-byte fifo, but the tx interrupt
+			 * triggers when there is space for 8 more bytes.
+			*/
+			sc->sc_fifolen = 8;
+			break;
+		case PLCOM_TYPE_PL011:
+			/* Some revisions have a 32 byte TX FIFO */
+			sc->sc_fifolen = 16;
+			break;
+		}
+	}
+	aprint_normal("\n");
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
-		printf("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "txfifo disabled\n");
 	}
 
 	if (sc->sc_fifolen > 1)
@@ -402,8 +513,8 @@ plcom_attach_subr(struct plcom_softc *sc)
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = plcom_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate ring buffer\n");		
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (plcom_rbuf_size << 1);
@@ -416,9 +527,9 @@ plcom_attach_subr(struct plcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&plcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		tp->t_dev = cn_tab->cn_dev = makedev(maj, device_unit(sc->sc_dev));
 
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "console\n");
 	}
 
 #ifdef KGDB
@@ -426,23 +537,28 @@ plcom_attach_subr(struct plcom_softc *sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if (iot == plcom_kgdb_iot && unit == plcom_kgdb_unit) {
-		plcom_kgdb_attached = 1;
+	if (bus_space_is_equal(iot, plcomkgdb_info.pi_iot) &&
+	    pi->pi_iobase == plcomkgdb_info.pi_iobase) {
+		if (!ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE)) {
+			plcom_kgdb_attached = 1;
 
-		SET(sc->sc_hwflags, PLCOM_HW_KGDB);
-		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
+			SET(sc->sc_hwflags, PLCOM_HW_KGDB);
+		}
+		aprint_normal_dev(sc->sc_dev, "kgdb\n");
 	}
 #endif
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, plcomsoft, sc);
 
 #ifdef RND_COM
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_TTY, 0);
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
+	    RND_TYPE_TTY, 0);
 #endif
 
-	/* if there are no enable/disable functions, assume the device
-	   is always enabled */
+	/*
+	 * if there are no enable/disable functions, assume the device
+	 * is always enabled
+	 */
 	if (!sc->enable)
 		sc->enabled = 1;
 
@@ -454,21 +570,30 @@ plcom_attach_subr(struct plcom_softc *sc)
 void
 plcom_config(struct plcom_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_cr = 0;
-	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
+	sc->sc_imsc = 0;
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		break;
+		
+	case PLCOM_TYPE_PL011:
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+		break;
+	}		
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE|PLCOM_HW_KGDB))
 		plcom_enable_debugport(sc);
 }
 
 int
-plcom_detach(struct device *self, int flags)
+plcom_detach(device_t self, int flags)
 {
-	struct plcom_softc *sc = (struct plcom_softc *)self;
+	struct plcom_softc *sc = device_private(self);
 	int maj, mn;
 
 	if (sc->sc_hwflags & (PLCOM_HW_CONSOLE|PLCOM_HW_KGDB))
@@ -489,6 +614,15 @@ plcom_detach(struct device *self, int flags)
 	mn |= PLCOMDIALOUT_MASK;
 	vdevgone(maj, mn, mn, VCHR);
 
+	if (sc->sc_rbuf == NULL) {
+		/*
+		 * Ring buffer allocation failed in the plcom_attach_subr,
+		 * only the tty is allocated, and nothing else.
+		 */         
+		tty_free(sc->sc_tty);
+		return 0;
+	}
+
 	/* Free the receive buffer. */
 	free(sc->sc_rbuf, M_DEVBUF);
 
@@ -503,6 +637,10 @@ plcom_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+	callout_destroy(&sc->sc_diag_callout);
+
+	/* Destroy the lock. */
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }
@@ -524,11 +662,9 @@ plcom_activate(device_t self, enum devact act)
 void
 plcom_shutdown(struct plcom_softc *sc)
 {
+	struct plcom_instance *pi = &sc->sc_pi;
 	struct tty *tp = sc->sc_tty;
-	int s;
-
-	s = splserial();
-	PLCOM_LOCK(sc);	
+	mutex_spin_enter(&sc->sc_lock);
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -550,22 +686,44 @@ plcom_shutdown(struct plcom_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		plcom_modem(sc, 0);
-		PLCOM_UNLOCK(sc);
-		splx(s);
-		/* XXX tsleep will only timeout */
-		(void) tsleep(sc, TTIPRI, ttclos, hz);
-		s = splserial();
-		PLCOM_LOCK(sc);	
+		mutex_spin_exit(&sc->sc_lock);
+		/* XXX will only timeout */
+		(void) kpause(ttclos, false, hz, NULL);
+		mutex_spin_enter(&sc->sc_lock);
 	}
 
+	sc->sc_cr = 0;
+	sc->sc_imsc = 0;
 	/* Turn off interrupts. */
-	if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE)) {
 		/* interrupt on break */
-		sc->sc_cr = CR_RIE | CR_RTIE | CR_UARTEN;
-	else
-		sc->sc_cr = 0;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
+	
+		sc->sc_cr = PL01X_CR_UARTEN;
+		sc->sc_imsc = 0;
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			SET(sc->sc_cr, PL010_CR_RIE | PL010_CR_RTIE);
+			break;
+		case PLCOM_TYPE_PL011:
+			SET(sc->sc_cr, PL011_CR_RXE);
+			SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX);
+			break;
+		}
+	}
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		SET(sc->sc_cr, PL010_CR_RIE | PL010_CR_RTIE);
+		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		break;
+	case PLCOM_TYPE_PL011:
+		SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
+		SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX);
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+		break;
+	}
 
+	mutex_spin_exit(&sc->sc_lock);
 	if (sc->disable) {
 #ifdef DIAGNOSTIC
 		if (!sc->enabled)
@@ -574,16 +732,15 @@ plcom_shutdown(struct plcom_softc *sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
-	PLCOM_UNLOCK(sc);
-	splx(s);
 }
 
 int
 plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct plcom_softc *sc;
+	struct plcom_instance *pi;
 	struct tty *tp;
-	int s, s2;
+	int s;
 	int error;
 
 	sc = device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
@@ -591,8 +748,10 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return ENXIO;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return ENXIO;
+
+	pi = &sc->sc_pi;
 
 #ifdef KGDB
 	/*
@@ -617,29 +776,39 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		tp->t_dev = dev;
 
-		s2 = splserial();
-		PLCOM_LOCK(sc);
-
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
-				PLCOM_UNLOCK(sc);
-				splx(s2);
 				splx(s);
-				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "device enable failed\n");
 				return EIO;
 			}
+			mutex_spin_enter(&sc->sc_lock);
 			sc->enabled = 1;
 			plcom_config(sc);
+		} else {
+			mutex_spin_enter(&sc->sc_lock);
 		}
 
 		/* Turn on interrupts. */
 		/* IER_ERXRDY | IER_ERLS | IER_EMSC;  */
-		sc->sc_cr = CR_RIE | CR_RTIE | CR_MSIE | CR_UARTEN;
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
-
 		/* Fetch the current modem control status, needed later. */
-		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, plcom_fr);
+		sc->sc_cr = PL01X_CR_UARTEN;
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			SET(sc->sc_cr,
+			    PL010_CR_RIE | PL010_CR_RTIE | PL010_CR_MSIE);
+			PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+			sc->sc_msr = PREAD1(pi, PL01XCOM_FR);
+			break;
+		case PLCOM_TYPE_PL011:
+			SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
+			SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX |
+			    PL011_INT_MSMASK);
+			PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+			sc->sc_msr = PREAD4(pi, PL01XCOM_FR);
+			break;
+		}
 
 		/* Clear PPS capture state on first open. */
 
@@ -648,14 +817,12 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->ppsparam.mode = 0;
 		mutex_spin_exit(&timecounter_lock);
 
-		PLCOM_UNLOCK(sc);
-		splx(s2);
+		mutex_spin_exit(&sc->sc_lock);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
 		 * sticky bits from TIOCSFLAGS.
 		 */
-		t.c_ispeed = 0;
 		if (ISSET(sc->sc_hwflags, PLCOM_HW_CONSOLE)) {
 			t.c_ospeed = plcomconsrate;
 			t.c_cflag = plcomconscflag;
@@ -663,6 +830,8 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
 		}
+		t.c_ispeed = t.c_ospeed;
+
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
 			SET(t.c_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
@@ -678,8 +847,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splserial();
-		PLCOM_LOCK(sc);
+		mutex_spin_enter(&sc->sc_lock);
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -702,8 +870,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			plcomstatus(sc, "plcomopen  ");
 #endif
 
-		PLCOM_UNLOCK(sc);
-		splx(s2);
+		mutex_spin_exit(&sc->sc_lock);
 	}
 	
 	splx(s);
@@ -813,12 +980,15 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct tty *tp;
 	int error;
-	int s;
 
+	if (sc == NULL)
+		return ENXIO;
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
+
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -829,10 +999,20 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return error;
 
 	error = 0;
+	switch (cmd) {
+	case TIOCSFLAGS:
+		error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+	if (error) {
+		return error;
+	}
 
-	s = splserial();
-	PLCOM_LOCK(sc);	
-
+	mutex_spin_enter(&sc->sc_lock);
 	switch (cmd) {
 	case TIOCSBRK:
 		plcom_break(sc, 1);
@@ -855,10 +1035,6 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = kauth_authorize_device_tty(l->l_cred,
-		    KAUTH_DEVICE_TTY_PRIVSET, tp);
-		if (error)
-			break;
 		sc->sc_swflags = *(int *)data;
 		break;
 
@@ -918,20 +1094,20 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 	
 		case PPS_CAPTUREASSERT:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
+			sc->sc_ppsmask = PL01X_MSR_DCD;
+			sc->sc_ppsassert = PL01X_MSR_DCD;
 			sc->sc_ppsclear = -1;
 			break;
 	
 		case PPS_CAPTURECLEAR:
-			sc->sc_ppsmask = MSR_DCD;
+			sc->sc_ppsmask = PL01X_MSR_DCD;
 			sc->sc_ppsassert = -1;
 			sc->sc_ppsclear = 0;
 			break;
 
 		case PPS_CAPTUREBOTH:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
+			sc->sc_ppsmask = PL01X_MSR_DCD;
+			sc->sc_ppsassert = PL01X_MSR_DCD;
 			sc->sc_ppsclear = 0;
 			break;
 
@@ -963,9 +1139,9 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * The old API has no way to specify PPS polarity.
 		 */
 		mutex_spin_enter(&timecounter_lock);
-		sc->sc_ppsmask = MSR_DCD;
+		sc->sc_ppsmask = PL01X_MSR_DCD;
 #ifndef PPS_TRAILING_EDGE
-		sc->sc_ppsassert = MSR_DCD;
+		sc->sc_ppsassert = PL01X_MSR_DCD;
 		sc->sc_ppsclear = -1;
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.assert_timestamp);
@@ -983,8 +1159,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	PLCOM_UNLOCK(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 
 #ifdef PLCOM_DEBUG
 	if (plcom_debug)
@@ -1009,9 +1184,9 @@ plcom_break(struct plcom_softc *sc, int onoff)
 {
 
 	if (onoff)
-		SET(sc->sc_lcr, LCR_BRK);
+		SET(sc->sc_lcr, PL01X_LCR_BRK);
 	else
-		CLR(sc->sc_lcr, LCR_BRK);
+		CLR(sc->sc_lcr, PL01X_LCR_BRK);
 
 	if (!sc->sc_heldchange) {
 		if (sc->sc_tx_busy) {
@@ -1052,9 +1227,9 @@ tiocm_to_plcom(struct plcom_softc *sc, u_long how, int ttybits)
 
 	plcombits = 0;
 	if (ISSET(ttybits, TIOCM_DTR))
-		SET(plcombits, MCR_DTR);
+		SET(plcombits, PL01X_MCR_DTR);
 	if (ISSET(ttybits, TIOCM_RTS))
-		SET(plcombits, MCR_RTS);
+		SET(plcombits, PL01X_MCR_RTS);
  
 	switch (how) {
 	case TIOCMBIC:
@@ -1066,7 +1241,7 @@ tiocm_to_plcom(struct plcom_softc *sc, u_long how, int ttybits)
 		break;
 
 	case TIOCMSET:
-		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
+		CLR(sc->sc_mcr, PL01X_MCR_DTR | PL01X_MCR_RTS);
 		SET(sc->sc_mcr, plcombits);
 		break;
 	}
@@ -1088,18 +1263,20 @@ plcom_to_tiocm(struct plcom_softc *sc)
 	int ttybits = 0;
 
 	plcombits = sc->sc_mcr;
-	if (ISSET(plcombits, MCR_DTR))
+	if (ISSET(plcombits, PL01X_MCR_DTR))
 		SET(ttybits, TIOCM_DTR);
-	if (ISSET(plcombits, MCR_RTS))
+	if (ISSET(plcombits, PL01X_MCR_RTS))
 		SET(ttybits, TIOCM_RTS);
 
 	plcombits = sc->sc_msr;
-	if (ISSET(plcombits, MSR_DCD))
+	if (ISSET(plcombits, PL01X_MSR_DCD))
 		SET(ttybits, TIOCM_CD);
-	if (ISSET(plcombits, MSR_CTS))
+	if (ISSET(plcombits, PL01X_MSR_CTS))
 		SET(ttybits, TIOCM_CTS);
-	if (ISSET(plcombits, MSR_DSR))
+	if (ISSET(plcombits, PL01X_MSR_DSR))
 		SET(ttybits, TIOCM_DSR);
+	if (ISSET(plcombits, PL011_MSR_RI))
+		SET(ttybits, TIOCM_RI);
 
 	if (sc->sc_cr != 0)
 		SET(ttybits, TIOCM_LE);
@@ -1114,25 +1291,25 @@ cflag2lcr(tcflag_t cflag)
 
 	switch (ISSET(cflag, CSIZE)) {
 	case CS5:
-		SET(lcr, LCR_5BITS);
+		SET(lcr, PL01X_LCR_5BITS);
 		break;
 	case CS6:
-		SET(lcr, LCR_6BITS);
+		SET(lcr, PL01X_LCR_6BITS);
 		break;
 	case CS7:
-		SET(lcr, LCR_7BITS);
+		SET(lcr, PL01X_LCR_7BITS);
 		break;
 	case CS8:
-		SET(lcr, LCR_8BITS);
+		SET(lcr, PL01X_LCR_8BITS);
 		break;
 	}
 	if (ISSET(cflag, PARENB)) {
-		SET(lcr, LCR_PEN);
+		SET(lcr, PL01X_LCR_PEN);
 		if (!ISSET(cflag, PARODD))
-			SET(lcr, LCR_EPS);
+			SET(lcr, PL01X_LCR_EPS);
 	}
 	if (ISSET(cflag, CSTOPB))
-		SET(lcr, LCR_STP2);
+		SET(lcr, PL01X_LCR_STP2);
 
 	return lcr;
 }
@@ -1142,14 +1319,21 @@ plcomparam(struct tty *tp, struct termios *t)
 {
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
-	int ospeed;
+	struct plcom_instance *pi = &sc->sc_pi;
+	int ospeed = -1;
 	u_char lcr;
-	int s;
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
 
-	ospeed = plcomspeed(t->c_ospeed, sc->sc_frequency);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		ospeed = pl010comspeed(t->c_ospeed, sc->sc_frequency);
+		break;
+	case PLCOM_TYPE_PL011:
+		ospeed = pl011comspeed(t->c_ospeed, sc->sc_frequency);
+		break;
+	}
 
 	/* Check requested parameters. */
 	if (ospeed < 0)
@@ -1176,10 +1360,9 @@ plcomparam(struct tty *tp, struct termios *t)
 	    tp->t_cflag == t->c_cflag)
 		return 0;
 
-	lcr = ISSET(sc->sc_lcr, LCR_BRK) | cflag2lcr(t->c_cflag);
+	lcr = ISSET(sc->sc_lcr, PL01X_LCR_BRK) | cflag2lcr(t->c_cflag);
 
-	s = splserial();
-	PLCOM_LOCK(sc);	
+	mutex_spin_enter(&sc->sc_lock);
 
 	sc->sc_lcr = lcr;
 
@@ -1192,7 +1375,7 @@ plcomparam(struct tty *tp, struct termios *t)
 		sc->sc_fifo = 0;
 
 	if (sc->sc_fifo)
-		SET(sc->sc_lcr, LCR_FEN);
+		SET(sc->sc_lcr, PL01X_LCR_FEN);
 
 	/*
 	 * If we're not in a mode that assumes a connection is present, then
@@ -1201,36 +1384,36 @@ plcomparam(struct tty *tp, struct termios *t)
 	if (ISSET(t->c_cflag, CLOCAL | MDMBUF))
 		sc->sc_msr_dcd = 0;
 	else
-		sc->sc_msr_dcd = MSR_DCD;
+		sc->sc_msr_dcd = PL01X_MSR_DCD;
 	/*
 	 * Set the flow control pins depending on the current flow control
 	 * mode.
 	 */
 	if (ISSET(t->c_cflag, CRTSCTS)) {
-		sc->sc_mcr_dtr = MCR_DTR;
-		sc->sc_mcr_rts = MCR_RTS;
-		sc->sc_msr_cts = MSR_CTS;
+		sc->sc_mcr_dtr = PL01X_MCR_DTR;
+		sc->sc_mcr_rts = PL01X_MCR_RTS;
+		sc->sc_msr_cts = PL01X_MSR_CTS;
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
 		 * For DTR/DCD flow control, make sure we don't toggle DTR for
 		 * carrier detection.
 		 */
 		sc->sc_mcr_dtr = 0;
-		sc->sc_mcr_rts = MCR_DTR;
-		sc->sc_msr_cts = MSR_DCD;
+		sc->sc_mcr_rts = PL01X_MCR_DTR;
+		sc->sc_msr_cts = PL01X_MSR_DCD;
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
 		 * the other side happy if it mistakenly thinks we're doing
 		 * RTS/CTS flow control.
 		 */
-		sc->sc_mcr_dtr = MCR_DTR | MCR_RTS;
+		sc->sc_mcr_dtr = PL01X_MCR_DTR | PL01X_MCR_RTS;
 		sc->sc_mcr_rts = 0;
 		sc->sc_msr_cts = 0;
-		if (ISSET(sc->sc_mcr, MCR_DTR))
-			SET(sc->sc_mcr, MCR_RTS);
+		if (ISSET(sc->sc_mcr, PL01X_MCR_DTR))
+			SET(sc->sc_mcr, PL01X_MCR_RTS);
 		else
-			CLR(sc->sc_mcr, MCR_RTS);
+			CLR(sc->sc_mcr, PL01X_MCR_RTS);
 	}
 	sc->sc_msr_mask = sc->sc_msr_cts | sc->sc_msr_dcd;
 
@@ -1241,11 +1424,19 @@ plcomparam(struct tty *tp, struct termios *t)
 		SET(sc->sc_mcr, sc->sc_mcr_dtr);
 #endif
 
-	sc->sc_dlbl = ospeed;
-	sc->sc_dlbh = ospeed >> 8;
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		sc->sc_ratel = ospeed & 0xff;
+		sc->sc_rateh = (ospeed >> 8) & 0xff;
+		break;
+	case PLCOM_TYPE_PL011:
+		sc->sc_ratel = ospeed & ((1 << 6) - 1);
+		sc->sc_rateh = ospeed >> 6;
+		break;
+	}
 
 	/* And copy to tty. */
-	tp->t_ispeed = 0;
+	tp->t_ispeed = t->c_ospeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
@@ -1275,15 +1466,14 @@ plcomparam(struct tty *tp, struct termios *t)
 		sc->sc_r_lowat = plcom_rbuf_lowat;
 	}
 
-	PLCOM_UNLOCK(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MSR_DCD));
+	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, PL01X_MSR_DCD));
 
 #ifdef PLCOM_DEBUG
 	if (plcom_debug)
@@ -1303,8 +1493,7 @@ plcomparam(struct tty *tp, struct termios *t)
 void
 plcom_iflush(struct plcom_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 #ifdef DIAGNOSTIC
 	int reg;
 #endif
@@ -1315,40 +1504,56 @@ plcom_iflush(struct plcom_softc *sc)
 #endif
 	timo = 50000;
 	/* flush any pending I/O */
-	while (! ISSET(bus_space_read_1(iot, ioh, plcom_fr), FR_RXFE)
+	while (! ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)
 	    && --timo)
 #ifdef DIAGNOSTIC
 		reg =
 #else
 		    (void)
 #endif
-		    bus_space_read_1(iot, ioh, plcom_dr);
+		    PREAD1(pi, PL01XCOM_DR);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: plcom_iflush timeout %02x\n", sc->sc_dev.dv_xname,
-		       reg);
+		aprint_error_dev(sc->sc_dev, ": %s timeout %02x\n", __func__,
+		    reg);
 #endif
 }
 
 void
 plcom_loadchannelregs(struct plcom_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 
 	/* XXXXX necessary? */
 	plcom_iflush(sc);
 
-	bus_space_write_1(iot, ioh, plcom_cr, 0);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		PWRITE1(pi, PL010COM_CR, 0);
+		PWRITE1(pi, PL010COM_DLBL, sc->sc_ratel);
+		PWRITE1(pi, PL010COM_DLBH, sc->sc_rateh);
+		PWRITE1(pi, PL010COM_LCR, sc->sc_lcr);
 
-	bus_space_write_1(iot, ioh, plcom_dlbl, sc->sc_dlbl);
-	bus_space_write_1(iot, ioh, plcom_dlbh, sc->sc_dlbh);
-	bus_space_write_1(iot, ioh, plcom_lcr, sc->sc_lcr);
-	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
-	    sc->sc_mcr_active = sc->sc_mcr);
+		/* XXX device_unit() abuse */
+		if (sc->sc_set_mcr)
+			sc->sc_set_mcr(sc->sc_set_mcr_arg,
+			    device_unit(sc->sc_dev),
+			    sc->sc_mcr_active = sc->sc_mcr);
 
-	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
+		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		break;
+
+	case PLCOM_TYPE_PL011:
+		PWRITE4(pi, PL011COM_CR, 0);
+		PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
+		PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
+		PWRITE1(pi, PL011COM_LCRH, sc->sc_lcr);
+		sc->sc_mcr_active = sc->sc_mcr;
+		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
+		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr_active));
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		break;
+	}
 }
 
 int
@@ -1356,7 +1561,6 @@ plcomhwiflow(struct tty *tp, int block)
 {
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
-	int s;
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return 0;
@@ -1364,8 +1568,7 @@ plcomhwiflow(struct tty *tp, int block)
 	if (sc->sc_mcr_rts == 0)
 		return 0;
 
-	s = splserial();
-	PLCOM_LOCK(sc);
+	mutex_spin_enter(&sc->sc_lock);
 	
 	if (block) {
 		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
@@ -1383,8 +1586,7 @@ plcomhwiflow(struct tty *tp, int block)
 		}
 	}
 
-	PLCOM_UNLOCK(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 	return 1;
 }
 	
@@ -1394,6 +1596,8 @@ plcomhwiflow(struct tty *tp, int block)
 void
 plcom_hwiflow(struct plcom_softc *sc)
 {
+	struct plcom_instance *pi = &sc->sc_pi;
+
 	if (sc->sc_mcr_rts == 0)
 		return;
 
@@ -1404,9 +1608,19 @@ plcom_hwiflow(struct plcom_softc *sc)
 		SET(sc->sc_mcr, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
-	    sc->sc_mcr_active);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		if (sc->sc_set_mcr)
+			/* XXX device_unit() abuse */
+			sc->sc_set_mcr(sc->sc_set_mcr_arg,
+			     device_unit(sc->sc_dev), sc->sc_mcr_active);
+		break;
+	case PLCOM_TYPE_PL011:
+		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
+		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr_active));
+		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		break;
+	}
 }
 
 
@@ -1415,8 +1629,7 @@ plcomstart(struct tty *tp)
 {
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 	int s;
 
 	if (PLCOM_ISALIVE(sc) == 0)
@@ -1439,8 +1652,7 @@ plcomstart(struct tty *tp)
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
 
-		(void)splserial();
-		PLCOM_LOCK(sc);
+		mutex_spin_enter(&sc->sc_lock);
 
 		sc->sc_tba = tba;
 		sc->sc_tbc = tbc;
@@ -1450,9 +1662,19 @@ plcomstart(struct tty *tp)
 	sc->sc_tx_busy = 1;
 
 	/* Enable transmit completion interrupts if necessary. */
-	if (!ISSET(sc->sc_cr, CR_TIE)) {
-		SET(sc->sc_cr, CR_TIE);
-		bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		if (!ISSET(sc->sc_cr, PL010_CR_TIE)) {
+			SET(sc->sc_cr, PL010_CR_TIE);
+			PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+		}
+		break;
+	case PLCOM_TYPE_PL011:
+		if (!ISSET(sc->sc_imsc, PL011_INT_TX)) {
+			SET(sc->sc_imsc, PL011_INT_TX);
+			PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+		}
+		break;
 	}
 
 	/* Output the first chunk of the contiguous buffer. */
@@ -1462,11 +1684,11 @@ plcomstart(struct tty *tp)
 		n = sc->sc_tbc;
 		if (n > sc->sc_fifolen)
 			n = sc->sc_fifolen;
-		bus_space_write_multi_1(iot, ioh, plcom_dr, sc->sc_tba, n);
+		PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
-	PLCOM_UNLOCK(sc);
+	mutex_spin_exit(&sc->sc_lock);
 out:
 	splx(s);
 	return;
@@ -1480,10 +1702,8 @@ plcomstop(struct tty *tp, int flag)
 {
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
-	int s;
 
-	s = splserial();
-	PLCOM_LOCK(sc);
+	mutex_spin_enter(&sc->sc_lock);
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
@@ -1491,8 +1711,7 @@ plcomstop(struct tty *tp, int flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
-	PLCOM_UNLOCK(sc);	
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 }
 
 void
@@ -1500,20 +1719,17 @@ plcomdiag(void *arg)
 {
 	struct plcom_softc *sc = arg;
 	int overflows, floods;
-	int s;
 
-	s = splserial();
-	PLCOM_LOCK(sc);
+	mutex_spin_enter(&sc->sc_lock);
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
 	sc->sc_errors = 0;
-	PLCOM_UNLOCK(sc);
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -1522,11 +1738,11 @@ integrate void
 plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 {
 	int (*rint) (int, struct tty *) = tp->t_linesw->l_rint;
+	struct plcom_instance *pi = &sc->sc_pi;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char rsr;
 	int code;
-	int s;
 
 	end = sc->sc_ebuf;
 	get = sc->sc_rbget;
@@ -1542,16 +1758,16 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 	while (cc) {
 		code = get[0];
 		rsr = get[1];
-		if (ISSET(rsr, RSR_OE | RSR_BE | RSR_FE | RSR_PE)) {
-			if (ISSET(rsr, RSR_OE)) {
+		if (ISSET(rsr, PL01X_RSR_ERROR)) {
+			if (ISSET(rsr, PL01X_RSR_OE)) {
 				sc->sc_overflows++;
 				if (sc->sc_errors++ == 0)
 					callout_reset(&sc->sc_diag_callout,
 					    60 * hz, plcomdiag, sc);
 			}
-			if (ISSET(rsr, RSR_BE | RSR_FE))
+			if (ISSET(rsr, PL01X_RSR_BE | PL01X_RSR_FE))
 				SET(code, TTY_FE);
-			if (ISSET(rsr, RSR_PE))
+			if (ISSET(rsr, PL01X_RSR_PE))
 				SET(code, TTY_PE);
 		}
 		if ((*rint)(code, tp) == -1) {
@@ -1590,24 +1806,32 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 
 	if (cc != scc) {
 		sc->sc_rbget = get;
-		s = splserial();
-		PLCOM_LOCK(sc);
-		
+		mutex_spin_enter(&sc->sc_lock);
+
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= sc->sc_r_lowat) {
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				SET(sc->sc_cr, CR_RIE | CR_RTIE);
-				bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
+				switch (pi->pi_type) {
+				case PLCOM_TYPE_PL010:
+					SET(sc->sc_cr,
+					    PL010_CR_RIE | PL010_CR_RTIE);
+					PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+					break;
+				case PLCOM_TYPE_PL011:
+					SET(sc->sc_imsc,
+					    PL011_INT_RX | PL011_INT_RT);
+					PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+					break;
+				}
 			}
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 				plcom_hwiflow(sc);
 			}
 		}
-		PLCOM_UNLOCK(sc);
-		splx(s);
+		mutex_spin_exit(&sc->sc_lock);
 	}
 }
 
@@ -1627,21 +1851,18 @@ integrate void
 plcom_stsoft(struct plcom_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
-	int s;
 
-	s = splserial();
-	PLCOM_LOCK(sc);
+	mutex_spin_enter(&sc->sc_lock);
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
-	PLCOM_UNLOCK(sc);	
-	splx(s);
+	mutex_spin_exit(&sc->sc_lock);
 
 	if (ISSET(delta, sc->sc_msr_dcd)) {
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*tp->t_linesw->l_modem)(tp, ISSET(msr, MSR_DCD));
+		(void) (*tp->t_linesw->l_modem)(tp, ISSET(msr, PL01X_MSR_DCD));
 	}
 
 	if (ISSET(delta, sc->sc_msr_cts)) {
@@ -1687,23 +1908,47 @@ plcomsoft(void *arg)
 	}
 }
 
+bool
+plcom_intstatus(struct plcom_instance *pi, u_int *istatus)
+{
+	bool ret = false;
+	u_int stat = 0;
+
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		stat = PREAD1(pi, PL010COM_IIR);
+		ret = ISSET(stat, PL010_IIR_IMASK);
+		break;
+	case PLCOM_TYPE_PL011:
+		stat = PREAD4(pi, PL011COM_MIS);
+		ret = ISSET(stat, PL011_INT_ALLMASK);
+		break;
+	}
+	*istatus = stat;
+
+	return ret;
+}	
+
 int
 plcomintr(void *arg)
 {
 	struct plcom_softc *sc = arg;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct plcom_instance *pi = &sc->sc_pi;
 	u_char *put, *end;
 	u_int cc;
-	u_char rsr, iir;
+	u_int istatus = 0;
+	u_char rsr;
+	bool intr = false;
+
+	PLCOM_BARRIER(pi, BR | BW);
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return 0;
 
-	PLCOM_LOCK(sc);
-	iir = bus_space_read_1(iot, ioh, plcom_iir);
-	if (! ISSET(iir, IIR_IMASK)) {
-		PLCOM_UNLOCK(sc);
+	mutex_spin_enter(&sc->sc_lock);
+	intr = plcom_intstatus(pi, &istatus);
+	if (!intr) {
+		mutex_spin_exit(&sc->sc_lock);
 		return 0;
 	}
 
@@ -1712,23 +1957,22 @@ plcomintr(void *arg)
 	cc = sc->sc_rbavail;
 
 	do {
-		u_char	msr, delta, fr;
+		u_int msr = 0, delta, fr;
+		bool rxintr = false, txintr = false, msintr;
 
-		fr = bus_space_read_1(iot, ioh, plcom_fr);
+		/* don't need RI here*/
+		fr = PREAD1(pi, PL01XCOM_FR);
 
-		if (!ISSET(fr, FR_RXFE) &&
+		if (!ISSET(fr, PL01X_FR_RXFE) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			while (cc > 0) {
 				int cn_trapped = 0;
-				put[0] = bus_space_read_1(iot, ioh,
-				    plcom_dr);
-				rsr = bus_space_read_1(iot, ioh, plcom_rsr);
+				put[0] = PREAD1(pi, PL01XCOM_DR);
+				rsr = PREAD1(pi, PL01XCOM_RSR);
 				/* Clear any error status.  */
-				if (ISSET(rsr,
-				    (RSR_BE | RSR_OE | RSR_PE | RSR_FE)))
-					bus_space_write_1(iot, ioh, plcom_ecr,
-					    0);
-				if (ISSET(rsr, RSR_BE)) {
+				if (ISSET(rsr, PL01X_RSR_ERROR))
+					PWRITE1(pi, PL01XCOM_ECR, 0);
+				if (ISSET(rsr, PL01X_RSR_BE)) {
 					cn_trapped = 0;
 					cn_check_magic(sc->sc_tty->t_dev,
 					    CNC_BREAK, plcom_cnm_state);
@@ -1745,12 +1989,11 @@ plcomintr(void *arg)
 
 				put[1] = rsr;
 				cn_trapped = 0;
-				cn_check_magic(sc->sc_tty->t_dev,
-					       put[0], plcom_cnm_state);
+				cn_check_magic(sc->sc_tty->t_dev, put[0],
+				    plcom_cnm_state);
 				if (cn_trapped) {
-					fr = bus_space_read_1(iot, ioh,
-					    plcom_fr);
-					if (ISSET(fr, FR_RXFE))
+					fr = PREAD1(pi, PL01XCOM_FR);
+					if (ISSET(fr, PL01X_FR_RXFE))
 						break;
 
 					continue;
@@ -1760,8 +2003,9 @@ plcomintr(void *arg)
 					put = sc->sc_rbuf;
 				cc--;
 
-				fr = bus_space_read_1(iot, ioh, plcom_fr);
-				if (ISSET(fr, FR_RXFE))
+				/* don't need RI here*/
+				fr = PREAD1(pi, PL01XCOM_FR);
+				if (ISSET(fr, PL01X_FR_RXFE))
 					break;
 			}
 
@@ -1792,26 +2036,68 @@ plcomintr(void *arg)
 			 */
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				CLR(sc->sc_cr, CR_RIE | CR_RTIE);
-				bus_space_write_1(iot, ioh, plcom_cr,
-				    sc->sc_cr);
+				switch (pi->pi_type) {
+				case PLCOM_TYPE_PL010:
+					CLR(sc->sc_cr,
+					    PL010_CR_RIE | PL010_CR_RTIE);
+					PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+					break;
+				case PLCOM_TYPE_PL011:
+					CLR(sc->sc_imsc,
+					    PL011_INT_RT | PL011_INT_RX);
+					PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
+					break;
+				}
 			}
 		} else {
-			if (ISSET(iir, IIR_RIS)) {
-				bus_space_write_1(iot, ioh, plcom_cr, 0);
-				delay(10);
-				bus_space_write_1(iot, ioh, plcom_cr,
-				    sc->sc_cr);
-				continue;
+			switch (pi->pi_type) {
+			case PLCOM_TYPE_PL010:
+				rxintr = ISSET(istatus, PL010_IIR_RIS);
+				if (rxintr) {
+					PWRITE1(pi, PL010COM_CR, 0);
+					delay(10);
+					PWRITE1(pi, PL010COM_CR, sc->sc_cr);
+					continue;
+				}
+				break;
+			case PLCOM_TYPE_PL011:
+				rxintr = ISSET(istatus, PL011_INT_RX);
+				if (rxintr) {
+					PWRITE4(pi, PL011COM_CR, 0);
+					delay(10);
+					PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+					continue;
+				}
+				break;
 			}
 		}
 
-		msr = bus_space_read_1(iot, ioh, plcom_fr);
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			msr = PREAD1(pi, PL01XCOM_FR);
+			break;
+		case PLCOM_TYPE_PL011:
+			msr = PREAD4(pi, PL01XCOM_FR);
+			break;
+		}
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
+
 		/* Clear any pending modem status interrupt.  */
-		if (iir & IIR_MIS)
-			bus_space_write_1(iot, ioh, plcom_icr, 0);
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			msintr = ISSET(istatus, PL010_IIR_MIS);
+			if (msintr) {
+				PWRITE1(pi, PL010COM_ICR, 0);
+			}
+			break;
+		case PLCOM_TYPE_PL011:
+			msintr = ISSET(istatus, PL011_INT_MSMASK);
+			if (msintr) {
+				PWRITE4(pi, PL011COM_ICR, PL011_INT_MSMASK);
+			}
+			break;
+		}
 		/*
 		 * Pulse-per-second (PSS) signals on edge of DCD?
 		 * Process these even if line discipline is ignoring DCD.
@@ -1882,14 +2168,24 @@ plcomintr(void *arg)
 
 		/* 
 		 * Done handling any receive interrupts. See if data
-		 * can be * transmitted as well. Schedule tx done
-		 * event if no data left * and tty was marked busy.
+		 * can be transmitted as well. Schedule tx done
+		 * event if no data left and tty was marked busy.
 		 */
-		if (ISSET(iir, IIR_TIS)) {
+		
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			txintr = ISSET(istatus, PL010_IIR_TIS);
+			break;
+		case PLCOM_TYPE_PL011:
+			txintr = ISSET(istatus, PL011_INT_TX);
+			break;
+		}
+		if (txintr) {
 			/*
 			 * If we've delayed a parameter change, do it
 			 * now, and restart * output.
 			 */
+// PWRITE4(pi, PL011COM_ICR, PL011_INT_TX);
 			if (sc->sc_heldchange) {
 				plcom_loadchannelregs(sc);
 				sc->sc_heldchange = 0;
@@ -1907,19 +2203,29 @@ plcomintr(void *arg)
 				n = sc->sc_tbc;
 				if (n > sc->sc_fifolen)
 					n = sc->sc_fifolen;
-				bus_space_write_multi_1(iot, ioh, plcom_dr,
-				    sc->sc_tba, n);
+				PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 				sc->sc_tbc -= n;
 				sc->sc_tba += n;
 			} else {
 				/*
-				 * Disable transmit plcompletion
+				 * Disable transmit completion
 				 * interrupts if necessary.
 				 */
-				if (ISSET(sc->sc_cr, CR_TIE)) {
-					CLR(sc->sc_cr, CR_TIE);
-					bus_space_write_1(iot, ioh, plcom_cr,
-					    sc->sc_cr);
+				switch (pi->pi_type) {
+				case PLCOM_TYPE_PL010:
+					if (ISSET(sc->sc_cr, PL010_CR_TIE)) {
+						CLR(sc->sc_cr, PL010_CR_TIE);
+						PWRITE1(pi, PL010COM_CR,
+						    sc->sc_cr);
+					}
+					break;
+				case PLCOM_TYPE_PL011:
+					if (ISSET(sc->sc_imsc, PL011_INT_TX)) {
+						CLR(sc->sc_imsc, PL011_INT_TX);
+						PWRITE4(pi, PL011COM_IMSC,
+						    sc->sc_imsc);
+					}
+					break;
 				}
 				if (sc->sc_tx_busy) {
 					sc->sc_tx_busy = 0;
@@ -1927,17 +2233,19 @@ plcomintr(void *arg)
 				}
 			}
 		}
-	} while (ISSET((iir = bus_space_read_1(iot, ioh, plcom_iir)),
-	    IIR_IMASK));
 
-	PLCOM_UNLOCK(sc);
+	} while (plcom_intstatus(pi, &istatus));
+
+	mutex_spin_exit(&sc->sc_lock);
 
 	/* Wake up the poller. */
 	softint_schedule(sc->sc_si);
 
 #ifdef RND_COM
-	rnd_add_uint32(&sc->rnd_source, iir | rsr);
+	rnd_add_uint32(&sc->rnd_source, istatus | rsr);
 #endif
+
+	PLCOM_BARRIER(pi, BR | BW);
 
 	return 1;
 }
@@ -1956,7 +2264,7 @@ static int plcom_readahead[MAX_READAHEAD];
 static int plcom_readaheadcount = 0;
 
 int
-plcom_common_getc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh)
+plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 {
 	int s = splserial();
 	u_char stat, c;
@@ -1975,11 +2283,10 @@ plcom_common_getc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh)
 	}
 
 	/* block until a character becomes available */
-	while (ISSET(stat = bus_space_read_1(iot, ioh, plcom_fr), FR_RXFE))
+	while (ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE))
 		;
 
-	c = bus_space_read_1(iot, ioh, plcom_dr);
-	stat = bus_space_read_1(iot, ioh, plcom_iir);
+	c = PREAD1(pi, PL01XCOM_DR);
 	{
 		int cn_trapped = 0; /* unused */
 #ifdef DDB
@@ -1993,33 +2300,31 @@ plcom_common_getc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-plcom_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh,
-    int c)
+plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 {
 	int s = splserial();
 	int timo;
 
 	int cin, stat;
 	if (plcom_readaheadcount < MAX_READAHEAD 
-	     && !ISSET(stat = bus_space_read_1(iot, ioh, plcom_fr), FR_RXFE)) {
+	     && !ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)) {
 		int cn_trapped = 0;
-		cin = bus_space_read_1(iot, ioh, plcom_dr);
-		stat = bus_space_read_1(iot, ioh, plcom_iir);
+		cin = PREAD1(pi, PL01XCOM_DR);
 		cn_check_magic(dev, cin, plcom_cnm_state);
 		plcom_readahead[plcom_readaheadcount++] = cin;
 	}
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
-	while (!ISSET(bus_space_read_1(iot, ioh, plcom_fr), FR_TXFE) && --timo)
+	while (!ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFE) && --timo)
 		continue;
 
-	bus_space_write_1(iot, ioh, plcom_dr, c);
-	PLCOM_BARRIER(iot, ioh, BR | BW);
+	PWRITE1(pi, PL01XCOM_DR, c);
+	PLCOM_BARRIER(pi, BR | BW);
 
 	/* wait for this transmission to complete */
 	timo = 1500000;
-	while (!ISSET(bus_space_read_1(iot, ioh, plcom_fr), FR_TXFE) && --timo)
+	while (!ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFE) && --timo)
 		continue;
 
 	splx(s);
@@ -2029,30 +2334,58 @@ plcom_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh,
  * Initialize UART for use as console or KGDB line.
  */
 int
-plcominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
-    tcflag_t cflag, bus_space_handle_t *iohp)
+plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 {
-	bus_space_handle_t ioh;
+	u_char lcr;
 
-	if (bus_space_map(iot, iobase, PLCOM_UART_SIZE, 0, &ioh))
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		if (pi->pi_size == 0)
+			pi->pi_size = PL010COM_UART_SIZE;
+		break;
+	case PLCOM_TYPE_PL011:
+		if (pi->pi_size == 0)
+			pi->pi_size = PL011COM_UART_SIZE;
+		break;
+	default:
+		panic("Unknown plcom type");
+	}
+
+	if (bus_space_map(pi->pi_iot, pi->pi_iobase, pi->pi_size, 0,
+	    &pi->pi_ioh))
 		return ENOMEM; /* ??? */
 
-	rate = plcomspeed(rate, frequency);
-	bus_space_write_1(iot, ioh, plcom_cr, 0);
-	bus_space_write_1(iot, ioh, plcom_dlbl, rate);
-	bus_space_write_1(iot, ioh, plcom_dlbh, rate >> 8);
-	bus_space_write_1(iot, ioh, plcom_lcr, cflag2lcr(cflag) | LCR_FEN);
-	bus_space_write_1(iot, ioh, plcom_cr, CR_UARTEN);
+	lcr = cflag2lcr(cflag) | PL01X_LCR_FEN;
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL010:
+		PWRITE1(pi, PL010COM_CR, 0);
+
+		rate = pl010comspeed(rate, frequency);
+		PWRITE1(pi, PL010COM_DLBL, (rate & 0xff));
+		PWRITE1(pi, PL010COM_DLBH, ((rate >> 8) & 0xff));
+		PWRITE1(pi, PL010COM_LCR, lcr);
+		PWRITE1(pi, PL010COM_CR, PL01X_CR_UARTEN);
+		break;
+	case PLCOM_TYPE_PL011:
+		PWRITE4(pi, PL011COM_CR, 0);
+
+		rate = pl011comspeed(rate, frequency);
+		PWRITE1(pi, PL011COM_FBRD, rate & ((1 << 6) - 1));
+		PWRITE4(pi, PL011COM_IBRD, rate >> 6);
+		PWRITE1(pi, PL011COM_LCRH, lcr);
+		PWRITE4(pi, PL011COM_CR,
+		    PL01X_CR_UARTEN | PL011_CR_RXE | PL011_CR_TXE);
+		break;
+	}
 
 #if 0
 	/* Ought to do something like this, but we have no sc to
 	   dereference. */
 	/* XXX device_unit() abuse */
 	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
-	    MCR_DTR | MCR_RTS);
+	    PL01X_MCR_DTR | PL01X_MCR_RTS);
 #endif
 
-	*iohp = ioh;
 	return 0;
 }
 
@@ -2064,14 +2397,15 @@ struct consdev plcomcons = {
 	NULL, NULL, NODEV, CN_NORMAL
 };
 
-
 int
-plcomcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
+plcomcnattach(struct plcom_instance *pi, int rate, int frequency,
     tcflag_t cflag, int unit)
 {
 	int res;
 
-	res = plcominit(iot, iobase, rate, frequency, cflag, &plcomconsioh);
+	plcomcons_info = *pi;
+
+	res = plcominit(&plcomcons_info, rate, frequency, cflag);
 	if (res)
 		return res;
 
@@ -2079,7 +2413,6 @@ plcomcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 	cn_init_magic(&plcom_cnm_state);
 	cn_set_magic("\047\001"); /* default magic is BREAK */
 
-	plcomconstag = iot;
 	plcomconsunit = unit;
 	plcomconsrate = rate;
 	plcomconscflag = cflag;
@@ -2090,8 +2423,10 @@ plcomcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 void
 plcomcndetach(void)
 {
-	bus_space_unmap(plcomconstag, plcomconsioh, PLCOM_UART_SIZE);
-	plcomconstag = NULL;
+
+	bus_space_unmap(plcomcons_info.pi_iot, plcomcons_info.pi_ioh,
+	    plcomcons_info.pi_size);
+	plcomcons_info.pi_iot = NULL;
 
 	cn_tab = NULL;
 }
@@ -2099,7 +2434,7 @@ plcomcndetach(void)
 int
 plcomcngetc(dev_t dev)
 {
-	return plcom_common_getc(dev, plcomconstag, plcomconsioh);
+	return plcom_common_getc(dev, &plcomcons_info);
 }
 
 /*
@@ -2108,7 +2443,7 @@ plcomcngetc(dev_t dev)
 void
 plcomcnputc(dev_t dev, int c)
 {
-	plcom_common_putc(dev, plcomconstag, plcomconsioh, c);
+	plcom_common_putc(dev, &plcomcons_info, c);
 }
 
 void
@@ -2119,23 +2454,25 @@ plcomcnpollc(dev_t dev, int on)
 
 #ifdef KGDB
 int
-plcom_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
-   int frequency, tcflag_t cflag, int unit)
+plcom_kgdb_attach(struct plcom_instance *pi, int rate, int frequency,
+    tcflag_t cflag, int unit)
 {
 	int res;
 
-	if (iot == plcomconstag && iobase == plcomconsunit)
+	if (pi->pi_iot == plcomcons_info.pi_iot &&
+	    pi->pi_iobase == plcomcons_info.pi_iobase)
 		return EBUSY; /* cannot share with console */
 
-	res = plcominit(iot, iobase, rate, frequency, cflag, &plcom_kgdb_ioh);
+	res = plcominit(pi, rate, frequency, cflag);
 	if (res)
 		return res;
 
 	kgdb_attach(plcom_kgdb_getc, plcom_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
 
-	plcom_kgdb_iot = iot;
-	plcom_kgdb_unit = unit;
+	plcomkgdb_info.pi_iot = pi->pi_iot;
+	plcomkgdb_info.pi_ioh = pi->pi_ioh;
+	plcomkgdb_info.pi_iobase = pi->pi_iobase;
 
 	return 0;
 }
@@ -2144,6 +2481,7 @@ plcom_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 int
 plcom_kgdb_getc(void *arg)
 {
+
 	return plcom_common_getc(NODEV, plcom_kgdb_iot, plcom_kgdb_ioh);
 }
 
@@ -2158,17 +2496,19 @@ plcom_kgdb_putc(void *arg, int c)
 /* helper function to identify the plcom ports used by
  console or KGDB (and not yet autoconf attached) */
 int
-plcom_is_console(bus_space_tag_t iot, int unit,
+plcom_is_console(bus_space_tag_t iot, bus_addr_t iobase, 
     bus_space_handle_t *ioh)
 {
 	bus_space_handle_t help;
 
 	if (!plcomconsattached &&
-	    iot == plcomconstag && unit == plcomconsunit)
-		help = plcomconsioh;
+	    bus_space_is_equal(iot, plcomcons_info.pi_iot) &&
+	    iobase == plcomcons_info.pi_iobase)
+		help = plcomcons_info.pi_ioh;
 #ifdef KGDB
 	else if (!plcom_kgdb_attached &&
-	    iot == plcom_kgdb_iot && unit == plcom_kgdb_unit)
+	    bus_space_is_equal(iot, plcomkgdb_info.pi_iot) &&
+	    iobase == plcomkgdb_info.pi_iobase) 
 		help = plcom_kgdb_ioh;
 #endif
 	else

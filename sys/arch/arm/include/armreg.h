@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.48 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: armreg.h,v 1.48.8.1 2012/08/09 06:36:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -199,7 +199,7 @@
 #define CPU_ID_ARM11MPCORE	0x410fb020
 #define CPU_ID_ARM1136JS	0x4107b360
 #define CPU_ID_ARM1136JSR1	0x4117b360
-#define CPU_ID_ARM1176JS	0x410fb760
+#define CPU_ID_ARM1176JZS	0x410fb760
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
 #define CPU_ID_CORTEXA8R3	0x413fc080
@@ -316,6 +316,21 @@
 					    * in r0 steppings. See errata
 					    * 364296.
 					    */
+/* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
+#define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
+#define	ARM11X6_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
+#define	ARM11X6_AUXCTL_SB	0x00000004 /* static branch prediction */
+#define	ARM11X6_AUXCTL_TR	0x00000008 /* MicroTLB replacement strat. */
+#define	ARM11X6_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
+#define	ARM11X6_AUXCTL_RA	0x00000020 /* clean entire cache disable */
+#define	ARM11X6_AUXCTL_RV	0x00000040 /* block transfer cache disable */
+#define	ARM11X6_AUXCTL_CZ	0x00000080 /* restrict cache size */
+
+/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+#define	ARM1176_AUXCTL_PHD	0x10000000 /* inst. prefetch halting disable */
+#define	ARM1176_AUXCTL_BFD	0x20000000 /* branch folding disable */
+#define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
+#define	ARM1176_AUXCTL_FIO	0x80000000 /* low intr latency override */
 
 /* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */

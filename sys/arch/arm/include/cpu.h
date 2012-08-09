@@ -247,7 +247,7 @@ struct cpu_info {
 	struct pcb *ci_curpcb;		/* current pcb */
 #ifdef __HAVE_FAST_SOFTINTS
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
-	uint32_t ci_softints;
+	volatile uint32_t ci_softints;
 #endif
 #if !defined(PROCESS_ID_IS_CURLWP)
 	lwp_t *ci_curlwp;		/* current lwp */

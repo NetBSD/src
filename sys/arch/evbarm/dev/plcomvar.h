@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.8 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.8.2.1 2012/08/09 06:36:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,14 +44,16 @@
 #include <sys/timepps.h>
 #include <sys/simplelock.h>
 
-int  plcomcnattach	(bus_space_tag_t, bus_addr_t, int, int, tcflag_t, int);
+struct plcom_instance;
+
+int  plcomcnattach	(struct plcom_instance *, int, int, tcflag_t, int);
 void plcomcndetach	(void);
 
 #ifdef KGDB
-int  plcom_kgdb_attach	(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
+int  plcom_kgdb_attach	(struct plcom_instance *, int, int, tcflag_t);
 #endif
 
-int  plcom_is_console	(bus_space_tag_t, int, bus_space_handle_t *);
+int  plcom_is_console	(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 
 /* Hardware flag masks */
 #define	PLCOM_HW_NOIEN		0x01
@@ -66,18 +68,43 @@ int  plcom_is_console	(bus_space_tag_t, int, bus_space_handle_t *);
 /* Buffer size for character buffer */
 #define	PLCOM_RING_SIZE		2048
 
+struct plcom_instance {
+	u_int			pi_type;
+#define	PLCOM_TYPE_PL010 0
+#define	PLCOM_TYPE_PL011 1
+
+	uint32_t		pi_flags;	/* flags for this PLCOM */
+#define	PLC_FLAG_USE_DMA		0x0001
+#define	PLC_FLAG_32BIT_ACCESS		0x0002
+
+	void 			*pi_cookie;
+
+	bus_space_tag_t		pi_iot;
+	bus_space_handle_t	pi_ioh;
+	bus_addr_t		pi_iobase;
+	bus_addr_t		pi_size;
+	struct plcom_registers	*pi_regs;
+};
+
+struct plcomcons_info {
+	int	rate;
+	int	frequency;
+	int	type;
+
+	tcflag_t	cflag;
+};
+    
 struct plcom_softc {
-	struct device sc_dev;
-	void *sc_si;
+	device_t sc_dev;
+
 	struct tty *sc_tty;
+	void *sc_si;
 
 	struct callout sc_diag_callout;
 
-	bus_addr_t sc_iounit;
-	int sc_frequency;
+ 	int sc_frequency;
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+	struct plcom_instance sc_pi;
 
 	u_int sc_overflows,
 	      sc_floods,
@@ -112,12 +139,13 @@ struct plcom_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
-	volatile u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr,
-	    sc_mcr_active, sc_lcr, sc_cr, sc_dlbl, sc_dlbh;
+	volatile u_int sc_cr, sc_ratel, sc_rateh, sc_imsc;
+	volatile u_int sc_msr, sc_msr_delta, sc_msr_mask;
+	volatile u_char sc_mcr, sc_mcr_active, sc_lcr;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 	u_int sc_fifo;
 
-	/* Support routine to program mcr lines, if present.  */
+	/* Support routine to program mcr lines for PL010, if present.  */
 	void	(*sc_set_mcr)(void *, int, u_int);
 	void	*sc_set_mcr_arg;
 
@@ -136,12 +164,14 @@ struct plcom_softc {
 #ifdef RND_COM
 	krndsource_t  rnd_source;
 #endif
-	struct simplelock	sc_lock;
+	kmutex_t		sc_lock;
 };
 
+#if 0
 int  plcomprobe1	(bus_space_tag_t, bus_space_handle_t);
+#endif
 int  plcomintr		(void *);
 void plcom_attach_subr	(struct plcom_softc *);
-int  plcom_detach	(struct device *, int);
-int  plcom_activate	(struct device *, enum devact);
+int  plcom_detach	(device_t, int);
+int  plcom_activate	(device_t, enum devact);
 
