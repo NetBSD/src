@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/06/16 17:01:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2012/08/09 14:37:06 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -15,6 +15,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	CodeGenDAGPatterns.cpp \
 	CodeGenInstruction.cpp \
 	CodeGenRegisters.cpp \
+	CodeGenSchedule.cpp \
 	CodeGenTarget.cpp \
 	DAGISelEmitter.cpp \
 	DAGISelMatcher.cpp \

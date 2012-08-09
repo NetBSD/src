@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/06/17 07:40:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2012/08/09 14:37:06 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -51,7 +51,7 @@ TABLEGEN_SRC=	Intrinsics.td
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/Intrinsics.gen|-gen-intrinsic
 
-CLANG_TABLEGEN_SRC=	Attr.td StmtNodes.td DeclNodes.td \
+CLANG_TABLEGEN_SRC=	Attr.td StmtNodes.td DeclNodes.td CommentNodes.td \
 	Diagnostic.td arm_neon.td Options.td CC1AsOptions.td CC1Options.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
@@ -73,10 +73,14 @@ CLANG_TABLEGEN_OUTPUT.StmtNodes.td= \
 CLANG_TABLEGEN_OUTPUT.DeclNodes.td= \
 	clang/AST/DeclNodes.inc|-gen-clang-decl-nodes
 
+CLANG_TABLEGEN_OUTPUT.CommentNodes.td= \
+	clang/AST/CommentNodes.inc|-gen-clang-comment-nodes
+
 CLANG_TABLEGEN_INCLUDES.Diagnostic.td=	-I${CLANG_SRCDIR}/include/clang/Basic
 CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticAnalysisKinds.inc|-gen-clang-diags-defs^-clang-component=Analysis \
 	clang/Basic/DiagnosticASTKinds.inc|-gen-clang-diags-defs^-clang-component=AST \
+	clang/Basic/DiagnosticCommentKinds.inc|-gen-clang-diags-defs^-clang-component=Comment \
 	clang/Basic/DiagnosticCommonKinds.inc|-gen-clang-diags-defs^-clang-component=Common \
 	clang/Basic/DiagnosticDriverKinds.inc|-gen-clang-diags-defs^-clang-component=Driver \
 	clang/Basic/DiagnosticFrontendKinds.inc|-gen-clang-diags-defs^-clang-component=Frontend \
