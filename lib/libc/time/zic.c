@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.29 2011/09/04 10:10:26 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.30 2012/08/09 12:38:26 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,11 +10,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.29 2011/09/04 10:10:26 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.30 2012/08/09 12:38:26 christos Exp $");
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zic.c	8.25";
-
+#include "version.h"
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
@@ -514,7 +513,7 @@ char *	argv[];
 	}
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", elsieid);
+			(void) printf("%s\n", TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
