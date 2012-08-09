@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.35 2011/08/14 10:49:58 christos Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.36 2012/08/09 08:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.35 2011/08/14 10:49:58 christos Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.36 2012/08/09 08:09:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,20 +202,20 @@ safe_print(const char *str, FILE *fp)
 }
 
 /*
- * asc_ul()
- *	convert hex/octal character string into a u_long. We do not have to
+ * asc_u32()
+ *	convert hex/octal character string into a uint32_t. We do not have to
  *	check for overflow! (the headers in all supported formats are not large
  *	enough to create an overflow).
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	unsigned long value
+ *	uint32_t value
  */
 
-u_long
-asc_ul(char *str, int len, int base)
+uint32_t
+asc_u32(char *str, int len, int base)
 {
 	char *stop;
-	u_long tval = 0;
+	uint32_t tval = 0;
 
 	stop = str + len;
 
@@ -248,17 +248,24 @@ asc_ul(char *str, int len, int base)
 }
 
 /*
- * ul_asc()
- *	convert an unsigned long into an hex/oct ascii string. pads with LEADING
+ * u32_asc()
+ *	convert an uintmax_t into an hex/oct ascii string. pads with LEADING
  *	ascii 0's to fill string completely
  *	NOTE: the string created is NOT TERMINATED.
  */
 
 int
-ul_asc(u_long val, char *str, int len, int base)
+u32_asc(uintmax_t val, char *str, int len, int base)
 {
 	char *pt;
-	u_long digit;
+	uint32_t digit;
+	uintmax_t p;
+
+	p = val & TOP_HALF;
+	if (p && p != TOP_HALF)
+		return -1;
+
+	val &= BOTTOM_HALF;
 
 	/*
 	 * WARNING str is not '\0' terminated by this routine
@@ -282,7 +289,7 @@ ul_asc(u_long val, char *str, int len, int base)
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (u_long)0)
+			if ((val = (val >> 3)) == 0)
 				break;
 		}
 	}
@@ -292,27 +299,26 @@ ul_asc(u_long val, char *str, int len, int base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_long)0)
+	if (val != 0)
 		return -1;
 	return 0;
 }
 
-#if !defined(_LP64)
 /*
- * asc_ull()
- *	convert hex/octal character string into a unsigned long long. We do
+ * asc_umax()
+ *	convert hex/octal character string into a uintmax. We do
  *	not have to to check for overflow! (the headers in all supported
  *	formats are not large enough to create an overflow).
  *	NOTE: strings passed to us are NOT TERMINATED.
  * Return:
- *	unsigned long long value
+ *	uintmax_t value
  */
 
-unsigned long long
-asc_ull(char *str, int len, int base)
+uintmax_t
+asc_umax(char *str, int len, int base)
 {
 	char *stop;
-	unsigned long long tval = 0;
+	uintmax_t tval = 0;
 
 	stop = str + len;
 
@@ -345,17 +351,17 @@ asc_ull(char *str, int len, int base)
 }
 
 /*
- * ull_asc()
- *	convert an unsigned long long into a hex/oct ascii string. pads with
+ * umax_asc()
+ *	convert an uintmax_t into a hex/oct ascii string. pads with
  *	LEADING ascii 0's to fill string completely
  *	NOTE: the string created is NOT TERMINATED.
  */
 
 int
-ull_asc(unsigned long long val, char *str, int len, int base)
+umax_asc(uintmax_t val, char *str, int len, int base)
 {
 	char *pt;
-	unsigned long long digit;
+	uintmax_t digit;
 
 	/*
 	 * WARNING str is not '\0' terminated by this routine
@@ -373,13 +379,13 @@ ull_asc(unsigned long long val, char *str, int len, int base)
 				*pt-- = '0' + (char)digit;
 			else
 				*pt-- = 'a' + (char)(digit - 10);
-			if ((val = (val >> 4)) == (unsigned long long)0)
+			if ((val = (val >> 4)) == 0)
 				break;
 		}
 	} else {
 		while (pt >= str) {
 			*pt-- = '0' + (char)(val & 0x7);
-			if ((val = (val >> 3)) == (unsigned long long)0)
+			if ((val = (val >> 3)) == 0)
 				break;
 		}
 	}
@@ -389,11 +395,10 @@ ull_asc(unsigned long long val, char *str, int len, int base)
 	 */
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (unsigned long long)0)
+	if (val != 0)
 		return -1;
 	return 0;
 }
-#endif
 
 int
 check_Aflag(void)

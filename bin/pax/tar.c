@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.69 2012/03/20 18:42:28 matt Exp $	*/
+/*	$NetBSD: tar.c,v 1.70 2012/08/09 08:09:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.69 2012/03/20 18:42:28 matt Exp $");
+__RCSID("$NetBSD: tar.c,v 1.70 2012/08/09 08:09:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,12 +70,10 @@ __RCSID("$NetBSD: tar.c,v 1.69 2012/03/20 18:42:28 matt Exp $");
 
 static int expandname(char *, size_t,  char **, size_t *, const char *, size_t);
 static void longlink(ARCHD *, int);
-static u_long tar_chksm(char *, int);
+static uint32_t tar_chksm(char *, int);
 static char *name_split(char *, int);
-static int ul_oct(u_long, char *, int, int);
-#if !defined(_LP64)
-static int ull_oct(unsigned long long, char *, int, int);
-#endif
+static int u32_oct(uintmax_t, char *, int, int);
+static int umax_oct(uintmax_t, char *, int, int);
 static int tar_gnutar_exclude_one(const char *, size_t);
 static int check_sum(char *, size_t, char *, size_t, int);
 
@@ -111,14 +109,14 @@ char DEV_8[] = "/dev/rst8";
 static int
 check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
 {
-	u_long hdck, blck;
+	uint32_t hdck, blck;
 
-	hdck = asc_ul(hd, hdlen, OCT);
+	hdck = asc_u32(hd, hdlen, OCT);
 	blck = tar_chksm(bl, bllen);
 
 	if (hdck != blck) {
 		if (!quiet)
-			tty_warn(0, "Header checksum %lo does not match %lo",
+			tty_warn(0, "Header checksum %o does not match %o",
 			    hdck, blck);
 		return -1;
 	}
@@ -208,8 +206,8 @@ tar_trail(char *buf, int in_resync, int *cnt)
 }
 
 /*
- * ul_oct()
- *	convert an unsigned long to an octal string. many oddball field
+ * u32_oct()
+ *	convert an uintmax_t to an octal string. many oddball field
  *	termination characters are used by the various versions of tar in the
  *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
@@ -219,9 +217,16 @@ tar_trail(char *buf, int in_resync, int *cnt)
  */
 
 static int
-ul_oct(u_long val, char *str, int len, int term)
+u32_oct(uintmax_t val, char *str, int len, int term)
 {
 	char *pt;
+	uint64_t p;
+
+	p = val & TOP_HALF;
+	if (p && p != TOP_HALF)
+		return -1;
+
+	val &= BOTTOM_HALF;
 
 	/*
 	 * term selects the appropriate character(s) for the end of the string
@@ -250,20 +255,19 @@ ul_oct(u_long val, char *str, int len, int term)
 	 */
 	while (pt >= str) {
 		*pt-- = '0' + (char)(val & 0x7);
-		if ((val = val >> 3) == (u_long)0)
+		if ((val = val >> 3) == 0)
 			break;
 	}
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (u_long)0)
+	if (val != 0)
 		return -1;
 	return 0;
 }
 
-#if !defined(_LP64)
 /*
- * ull_oct()
+ * umax_oct()
  *	convert an unsigned long long to an octal string. one of many oddball
  *	field termination characters are used by the various versions of tar
  *	in the different fields. term selects which kind to use. str is '0'
@@ -274,7 +278,7 @@ ul_oct(u_long val, char *str, int len, int term)
  */
 
 static int
-ull_oct(unsigned long long val, char *str, int len, int term)
+umax_oct(uintmax_t val, char *str, int len, int term)
 {
 	char *pt;
 
@@ -311,11 +315,10 @@ ull_oct(unsigned long long val, char *str, int len, int term)
 
 	while (pt >= str)
 		*pt-- = '0';
-	if (val != (unsigned long long)0)
+	if (val != 0)
 		return -1;
 	return 0;
 }
-#endif
 
 /*
  * tar_chksm()
@@ -327,12 +330,12 @@ ull_oct(unsigned long long val, char *str, int len, int term)
  *	unsigned long checksum
  */
 
-static u_long
+static uint32_t
 tar_chksm(char *blk, int len)
 {
 	char *stop;
 	char *pt;
-	u_long chksm = BLNKSUM;	/* initial value is checksum field sum */
+	uint32_t chksm = BLNKSUM;	/* initial value is checksum field sum */
 
 	/*
 	 * add the part of the block before the checksum field
@@ -340,7 +343,7 @@ tar_chksm(char *blk, int len)
 	pt = blk;
 	stop = blk + CHK_OFFSET;
 	while (pt < stop)
-		chksm += (u_long)(*pt++ & 0xff);
+		chksm += (uint32_t)(*pt++ & 0xff);
 	/*
 	 * move past the checksum field and keep going, spec counts the
 	 * checksum field as the sum of 8 blanks (which is pre-computed as
@@ -351,7 +354,7 @@ tar_chksm(char *blk, int len)
 	pt += CHK_LEN;
 	stop = blk + len;
 	while (pt < stop)
-		chksm += (u_long)(*pt++ & 0xff);
+		chksm += (uint32_t)(*pt++ & 0xff);
 	return chksm;
 }
 
@@ -476,12 +479,12 @@ tar_rd(ARCHD *arcn, char *buf)
 		    &gnu_link_string, &gnu_link_length, hd->linkname,
 		    sizeof(hd->linkname));
 	}
-	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
+	arcn->sb.st_mode = (mode_t)(asc_u32(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
-	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
-	arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
+	arcn->sb.st_uid = (uid_t)asc_u32(hd->uid, sizeof(hd->uid), OCT);
+	arcn->sb.st_gid = (gid_t)asc_u32(hd->gid, sizeof(hd->gid), OCT);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
+	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
 	/*
@@ -571,7 +574,7 @@ tar_rd(ARCHD *arcn, char *buf)
  * tar_wr()
  *	write a tar header for the file specified in the ARCHD to the archive.
  *	Have to check for file types that cannot be stored and file names that
- *	are too long. Be careful of the term (last arg) to ul_oct, each field
+ *	are too long. Be careful of the term (last arg) to u32_oct, each field
  *	of tar has it own spec for the termination character(s).
  *	ASSUMED: space after header in header block is zero filled
  * Return:
@@ -658,7 +661,7 @@ tar_wr(ARCHD *arcn)
 		 */
 		hd->linkflag = AREGTYPE;
 		hd->name[len-1] = '/';
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if (arcn->type == PAX_SLK) {
 		/*
@@ -666,7 +669,7 @@ tar_wr(ARCHD *arcn)
 		 */
 		hd->linkflag = SYMTYPE;
 		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
 		/*
@@ -674,7 +677,7 @@ tar_wr(ARCHD *arcn)
 		 */
 		hd->linkflag = LNKTYPE;
 		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
+		if (u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
 		/*
@@ -692,10 +695,10 @@ tar_wr(ARCHD *arcn)
 	/*
 	 * copy those fields that are independent of the type
 	 */
-	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
-	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
-	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
-	    ul_oct((u_long)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
+	if (u32_oct((uintmax_t)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
+	    u32_oct((uintmax_t)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
+	    u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
+	    u32_oct((uintmax_t)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
 		goto out;
 
 	/*
@@ -703,7 +706,7 @@ tar_wr(ARCHD *arcn)
 	 * 0 tells the caller to now write the file data, 1 says no data needs
 	 * to be written
 	 */
-	if (ul_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
+	if (u32_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
 	    sizeof(hd->chksum), 3))
 		goto out;			/* XXX Something's wrong here
 						 * because a zero-byte file can
@@ -850,10 +853,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 * follow the spec to the letter. we should only have mode bits, strip
 	 * off all other crud we may be passed.
 	 */
-	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
+	arcn->sb.st_mode = (mode_t)(asc_u32(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->size, sizeof(hd->size), OCT);
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->mtime, sizeof(hd->mtime), OCT);
+	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->mtime, sizeof(hd->mtime), OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 
 	/*
@@ -864,10 +867,10 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
 	if (gid_from_group(hd->gname, &(arcn->sb.st_gid)) < 0)
-		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
+		arcn->sb.st_gid = (gid_t)asc_u32(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
 	if (uid_from_user(hd->uname, &(arcn->sb.st_uid)) < 0)
-		arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
+		arcn->sb.st_uid = (uid_t)asc_u32(hd->uid, sizeof(hd->uid), OCT);
 
 	/*
 	 * set the defaults, these may be changed depending on the file type
@@ -909,8 +912,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 			arcn->type = PAX_CHR;
 			arcn->sb.st_mode |= S_IFCHR;
 		}
-		devmajor = (dev_t)asc_ul(hd->devmajor,sizeof(hd->devmajor),OCT);
-		devminor = (dev_t)asc_ul(hd->devminor,sizeof(hd->devminor),OCT);
+		devmajor = (dev_t)asc_u32(hd->devmajor,sizeof(hd->devmajor),OCT);
+		devminor = (dev_t)asc_u32(hd->devminor,sizeof(hd->devminor),OCT);
 		arcn->sb.st_rdev = TODEV(devmajor, devminor);
 		break;
 	case SYMTYPE:
@@ -1012,7 +1015,7 @@ longlink(ARCHD *arcn, int type)
  * ustar_wr()
  *	write a ustar header for the file specified in the ARCHD to the archive
  *	Have to check for file types that cannot be stored and file names that
- *	are too long. Be careful of the term (last arg) to ul_oct, we only use
+ *	are too long. Be careful of the term (last arg) to u32_oct, we only use
  *	'\0' for the termination character (this is different than picky tar)
  *	ASSUMED: space after header in header block is zero filled
  * Return:
@@ -1116,7 +1119,7 @@ ustar_wr(ARCHD *arcn)
 	switch(arcn->type) {
 	case PAX_DIR:
 		hd->typeflag = DIRTYPE;
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 3))
 			return size_err("DIRTYPE", arcn);
 		break;
 	case PAX_CHR:
@@ -1125,16 +1128,16 @@ ustar_wr(ARCHD *arcn)
 			hd->typeflag = CHRTYPE;
 		else
 			hd->typeflag = BLKTYPE;
-		if (ul_oct((u_long)MAJOR(arcn->sb.st_rdev), hd->devmajor,
+		if (u32_oct((uintmax_t)MAJOR(arcn->sb.st_rdev), hd->devmajor,
 		   sizeof(hd->devmajor), 3) ||
-		   ul_oct((u_long)MINOR(arcn->sb.st_rdev), hd->devminor,
+		   u32_oct((uintmax_t)MINOR(arcn->sb.st_rdev), hd->devminor,
 		   sizeof(hd->devminor), 3) ||
-		   ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		   u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 3))
 			return size_err("DEVTYPE", arcn);
 		break;
 	case PAX_FIF:
 		hd->typeflag = FIFOTYPE;
-		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
+		if (u32_oct((uintmax_t)0L, hd->size, sizeof(hd->size), 3))
 			return size_err("FIFOTYPE", arcn);
 		break;
 	case PAX_GLL:
@@ -1148,7 +1151,7 @@ ustar_wr(ARCHD *arcn)
 		else
 			hd->typeflag = LNKTYPE;
 		strlcpy(hd->linkname, arcn->ln_name, sizeof(hd->linkname));
-		if (ul_oct((u_long)gnu_hack_len, hd->size,
+		if (u32_oct((uintmax_t)gnu_hack_len, hd->size,
 		    sizeof(hd->size), 3))
 			return size_err("LINKTYPE", arcn);
 		break;
@@ -1162,7 +1165,7 @@ ustar_wr(ARCHD *arcn)
 		if (arcn->type == PAX_GLF) {
 			hd->typeflag = LONGNAMETYPE;
 			arcn->pad = TAR_PAD(gnu_hack_len);
-			if (OFFT_OCT((u_long)gnu_hack_len, hd->size,
+			if (OFFT_OCT((uint32_t)gnu_hack_len, hd->size,
 			    sizeof(hd->size), 3)) {
 				tty_warn(1,"File is too long for ustar %s",
 				    arcn->org_name);
@@ -1194,13 +1197,13 @@ ustar_wr(ARCHD *arcn)
 	 * set the remaining fields. Some versions want all 16 bits of mode
 	 * we better humor them (they really do not meet spec though)....
 	 */
-	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
+	if (u32_oct((uintmax_t)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
 		return size_err("MODE", arcn);
-	if (ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3))
+	if (u32_oct((uintmax_t)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3))
 		return size_err("UID", arcn);
-	if (ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3))
+	if (u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3))
 		return size_err("GID", arcn);
-	if (ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+	if (u32_oct((uintmax_t)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		return size_err("MTIME", arcn);
 	user = user_from_uid(arcn->sb.st_uid, 1);
 	group = group_from_gid(arcn->sb.st_gid, 1);
@@ -1212,7 +1215,7 @@ ustar_wr(ARCHD *arcn)
 	 * return 0 tells the caller to now write the file data, 1 says no data
 	 * needs to be written
 	 */
-	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
+	if (u32_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
 	   sizeof(hd->chksum), 3))
 		return size_err("CHKSUM", arcn);
 	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.21 2011/03/26 12:01:06 martin Exp $	*/
+/*	$NetBSD: cpio.c,v 1.22 2012/08/09 08:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.21 2011/03/26 12:01:06 martin Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.22 2012/08/09 08:09:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,15 +297,15 @@ cpio_rd(ARCHD *arcn, char *buf)
 	 * ascii fields from the header
 	 */
 	arcn->pad = 0L;
-	arcn->sb.st_dev = (dev_t)asc_ul(hd->c_dev, sizeof(hd->c_dev), OCT);
-	arcn->sb.st_ino = (ino_t)asc_ul(hd->c_ino, sizeof(hd->c_ino), OCT);
-	arcn->sb.st_mode = (mode_t)asc_ul(hd->c_mode, sizeof(hd->c_mode), OCT);
-	arcn->sb.st_uid = (uid_t)asc_ul(hd->c_uid, sizeof(hd->c_uid), OCT);
-	arcn->sb.st_gid = (gid_t)asc_ul(hd->c_gid, sizeof(hd->c_gid), OCT);
-	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
+	arcn->sb.st_dev = (dev_t)asc_u32(hd->c_dev, sizeof(hd->c_dev), OCT);
+	arcn->sb.st_ino = (ino_t)asc_u32(hd->c_ino, sizeof(hd->c_ino), OCT);
+	arcn->sb.st_mode = (mode_t)asc_u32(hd->c_mode, sizeof(hd->c_mode), OCT);
+	arcn->sb.st_uid = (uid_t)asc_u32(hd->c_uid, sizeof(hd->c_uid), OCT);
+	arcn->sb.st_gid = (gid_t)asc_u32(hd->c_gid, sizeof(hd->c_gid), OCT);
+	arcn->sb.st_nlink = (nlink_t)asc_u32(hd->c_nlink, sizeof(hd->c_nlink),
 	    OCT);
-	arcn->sb.st_rdev = (dev_t)asc_ul(hd->c_rdev, sizeof(hd->c_rdev), OCT);
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime, sizeof(hd->c_mtime),
+	arcn->sb.st_rdev = (dev_t)asc_u32(hd->c_rdev, sizeof(hd->c_rdev), OCT);
+	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->c_mtime, sizeof(hd->c_mtime),
 	    OCT);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->c_filesize,
@@ -315,7 +315,7 @@ cpio_rd(ARCHD *arcn, char *buf)
 	 * check name size and if valid, read in the name of this entry (name
 	 * follows header in the archive)
 	 */
-	if ((nsz = (int)asc_ul(hd->c_namesize,sizeof(hd->c_namesize),OCT)) < 2)
+	if ((nsz = (int)asc_u32(hd->c_namesize,sizeof(hd->c_namesize),OCT)) < 2)
 		return -1;
 	arcn->nlen = nsz - 1;
 	if (rd_nm(arcn, nsz) < 0)
@@ -415,7 +415,7 @@ cpio_wr(ARCHD *arcn)
 		/*
 		 * set data size to hold link name
 		 */
-		if (ul_asc((u_long)arcn->ln_nlen, hd->c_filesize,
+		if (u32_asc((uintmax_t)arcn->ln_nlen, hd->c_filesize,
 		    sizeof(hd->c_filesize), OCT))
 			goto out;
 		break;
@@ -423,7 +423,7 @@ cpio_wr(ARCHD *arcn)
 		/*
 		 * all other file types have no file data
 		 */
-		if (ul_asc((u_long)0, hd->c_filesize, sizeof(hd->c_filesize),
+		if (u32_asc((uintmax_t)0, hd->c_filesize, sizeof(hd->c_filesize),
 		     OCT))
 			goto out;
 		break;
@@ -432,24 +432,24 @@ cpio_wr(ARCHD *arcn)
 	/*
 	 * copy the values to the header using octal ascii
 	 */
-	if (ul_asc((u_long)MAGIC, hd->c_magic, sizeof(hd->c_magic), OCT) ||
-	    ul_asc((u_long)arcn->sb.st_dev, hd->c_dev, sizeof(hd->c_dev),
+	if (u32_asc((uintmax_t)MAGIC, hd->c_magic, sizeof(hd->c_magic), OCT) ||
+	    u32_asc((uintmax_t)arcn->sb.st_dev, hd->c_dev, sizeof(hd->c_dev),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
+	    u32_asc((uintmax_t)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),
+	    u32_asc((uintmax_t)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_uid, hd->c_uid, sizeof(hd->c_uid),
+	    u32_asc((uintmax_t)arcn->sb.st_uid, hd->c_uid, sizeof(hd->c_uid),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
+	    u32_asc((uintmax_t)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
+	    u32_asc((uintmax_t)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
 		 OCT) ||
-	    ul_asc((u_long)arcn->sb.st_rdev, hd->c_rdev, sizeof(hd->c_rdev),
+	    u32_asc((uintmax_t)arcn->sb.st_rdev, hd->c_rdev, sizeof(hd->c_rdev),
 		OCT) ||
-	    ul_asc((u_long)arcn->sb.st_mtime,hd->c_mtime,sizeof(hd->c_mtime),
+	    u32_asc((uintmax_t)arcn->sb.st_mtime,hd->c_mtime,sizeof(hd->c_mtime),
 		OCT) ||
-	    ul_asc((u_long)nsz, hd->c_namesize, sizeof(hd->c_namesize), OCT))
+	    u32_asc((uintmax_t)nsz, hd->c_namesize, sizeof(hd->c_namesize), OCT))
 		goto out;
 
 	/*
@@ -578,29 +578,29 @@ vcpio_rd(ARCHD *arcn, char *buf)
 	/*
 	 * extract the hex ascii fields from the header
 	 */
-	arcn->sb.st_ino = (ino_t)asc_ul(hd->c_ino, sizeof(hd->c_ino), HEX);
-	arcn->sb.st_mode = (mode_t)asc_ul(hd->c_mode, sizeof(hd->c_mode), HEX);
-	arcn->sb.st_uid = (uid_t)asc_ul(hd->c_uid, sizeof(hd->c_uid), HEX);
-	arcn->sb.st_gid = (gid_t)asc_ul(hd->c_gid, sizeof(hd->c_gid), HEX);
-	arcn->sb.st_mtime = (time_t)asc_ul(hd->c_mtime,sizeof(hd->c_mtime),HEX);
+	arcn->sb.st_ino = (ino_t)asc_u32(hd->c_ino, sizeof(hd->c_ino), HEX);
+	arcn->sb.st_mode = (mode_t)asc_u32(hd->c_mode, sizeof(hd->c_mode), HEX);
+	arcn->sb.st_uid = (uid_t)asc_u32(hd->c_uid, sizeof(hd->c_uid), HEX);
+	arcn->sb.st_gid = (gid_t)asc_u32(hd->c_gid, sizeof(hd->c_gid), HEX);
+	arcn->sb.st_mtime = (time_t)(int32_t)asc_u32(hd->c_mtime,sizeof(hd->c_mtime),HEX);
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
 	arcn->sb.st_size = (off_t)ASC_OFFT(hd->c_filesize,
 	    sizeof(hd->c_filesize), HEX);
-	arcn->sb.st_nlink = (nlink_t)asc_ul(hd->c_nlink, sizeof(hd->c_nlink),
+	arcn->sb.st_nlink = (nlink_t)asc_u32(hd->c_nlink, sizeof(hd->c_nlink),
 	    HEX);
-	devmajor = (dev_t)asc_ul(hd->c_maj, sizeof(hd->c_maj), HEX);
-	devminor = (dev_t)asc_ul(hd->c_min, sizeof(hd->c_min), HEX);
+	devmajor = (dev_t)asc_u32(hd->c_maj, sizeof(hd->c_maj), HEX);
+	devminor = (dev_t)asc_u32(hd->c_min, sizeof(hd->c_min), HEX);
 	arcn->sb.st_dev = TODEV(devmajor, devminor);
-	devmajor = (dev_t)asc_ul(hd->c_rmaj, sizeof(hd->c_maj), HEX);
-	devminor = (dev_t)asc_ul(hd->c_rmin, sizeof(hd->c_min), HEX);
+	devmajor = (dev_t)asc_u32(hd->c_rmaj, sizeof(hd->c_maj), HEX);
+	devminor = (dev_t)asc_u32(hd->c_rmin, sizeof(hd->c_min), HEX);
 	arcn->sb.st_rdev = TODEV(devmajor, devminor);
-	arcn->crc = asc_ul(hd->c_chksum, sizeof(hd->c_chksum), HEX);
+	arcn->crc = asc_u32(hd->c_chksum, sizeof(hd->c_chksum), HEX);
 
 	/*
 	 * check the length of the file name, if ok read it in, return -1 if
 	 * bogus
 	 */
-	if ((nsz = (int)asc_ul(hd->c_namesize,sizeof(hd->c_namesize),HEX)) < 2)
+	if ((nsz = (int)asc_u32(hd->c_namesize,sizeof(hd->c_namesize),HEX)) < 2)
 		return -1;
 	arcn->nlen = nsz - 1;
 	if (rd_nm(arcn, nsz) < 0)
@@ -699,15 +699,15 @@ vcpio_wr(ARCHD *arcn)
 	 * file data crc's, and the crc if needed.
 	 */
 	if (docrc) {
-		if (ul_asc((u_long)VCMAGIC, hd->c_magic, sizeof(hd->c_magic),
+		if (u32_asc((uintmax_t)VCMAGIC, hd->c_magic, sizeof(hd->c_magic),
 			OCT) ||
-		    ul_asc((u_long)arcn->crc,hd->c_chksum,sizeof(hd->c_chksum),
+		    u32_asc((uintmax_t)arcn->crc,hd->c_chksum,sizeof(hd->c_chksum),
 			HEX))
 			goto out;
 	} else {
-		if (ul_asc((u_long)VMAGIC, hd->c_magic, sizeof(hd->c_magic),
+		if (u32_asc((uintmax_t)VMAGIC, hd->c_magic, sizeof(hd->c_magic),
 			OCT) ||
-		    ul_asc((u_long)0L, hd->c_chksum, sizeof(hd->c_chksum),HEX))
+		    u32_asc((uintmax_t)0, hd->c_chksum, sizeof(hd->c_chksum),HEX))
 			goto out;
 	}
 
@@ -733,7 +733,7 @@ vcpio_wr(ARCHD *arcn)
 		 * the size of the link
 		 */
 		arcn->pad = 0L;
-		if (ul_asc((u_long)arcn->ln_nlen, hd->c_filesize,
+		if (u32_asc((uintmax_t)arcn->ln_nlen, hd->c_filesize,
 		    sizeof(hd->c_filesize), HEX))
 			goto out;
 		break;
@@ -742,7 +742,7 @@ vcpio_wr(ARCHD *arcn)
 		 * no file data for the caller to process
 		 */
 		arcn->pad = 0L;
-		if (ul_asc((u_long)0L, hd->c_filesize, sizeof(hd->c_filesize),
+		if (u32_asc((uintmax_t)0, hd->c_filesize, sizeof(hd->c_filesize),
 		    HEX))
 			goto out;
 		break;
@@ -751,27 +751,27 @@ vcpio_wr(ARCHD *arcn)
 	/*
 	 * set the other fields in the header
 	 */
-	if (ul_asc((u_long)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
+	if (u32_asc((uintmax_t)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),
+	    u32_asc((uintmax_t)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_uid, hd->c_uid, sizeof(hd->c_uid),
+	    u32_asc((uintmax_t)arcn->sb.st_uid, hd->c_uid, sizeof(hd->c_uid),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
+	    u32_asc((uintmax_t)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_mtime, hd->c_mtime, sizeof(hd->c_mtime),
+	    u32_asc((uintmax_t)arcn->sb.st_mtime, hd->c_mtime, sizeof(hd->c_mtime),
 		HEX) ||
-	    ul_asc((u_long)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
+	    u32_asc((uintmax_t)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
 		HEX) ||
-	    ul_asc((u_long)MAJOR(arcn->sb.st_dev),hd->c_maj, sizeof(hd->c_maj),
+	    u32_asc((uintmax_t)MAJOR(arcn->sb.st_dev),hd->c_maj, sizeof(hd->c_maj),
 		HEX) ||
-	    ul_asc((u_long)MINOR(arcn->sb.st_dev),hd->c_min, sizeof(hd->c_min),
+	    u32_asc((uintmax_t)MINOR(arcn->sb.st_dev),hd->c_min, sizeof(hd->c_min),
 		HEX) ||
-	    ul_asc((u_long)MAJOR(arcn->sb.st_rdev),hd->c_rmaj,sizeof(hd->c_maj),
+	    u32_asc((uintmax_t)MAJOR(arcn->sb.st_rdev),hd->c_rmaj,sizeof(hd->c_maj),
 		HEX) ||
-	    ul_asc((u_long)MINOR(arcn->sb.st_rdev),hd->c_rmin,sizeof(hd->c_min),
+	    u32_asc((uintmax_t)MINOR(arcn->sb.st_rdev),hd->c_rmin,sizeof(hd->c_min),
 		HEX) ||
-	    ul_asc((u_long)nsz, hd->c_namesize, sizeof(hd->c_namesize), HEX))
+	    u32_asc((uintmax_t)nsz, hd->c_namesize, sizeof(hd->c_namesize), HEX))
 		goto out;
 
 	/*
