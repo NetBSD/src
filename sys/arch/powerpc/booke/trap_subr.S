@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.6.8.1 2012/08/09 06:52:14 jdc Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.6.8.1 2012/08/09 06:52:14 jdc Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -137,14 +137,24 @@ RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 /*
  * DDB expects to fetch the LR from the previous frame.  But it also
  * expects to be pointing at the instruction after the branch link.  Since
- * we didn't branch, we need to advance it by to fake out DDB.
+ * we didn't branch, we need to advance it by to fake out DDB.  But there's
+ * problem.  If the routine is in either its first or last two instructions
+ * (before or after its adjusted its stack pointer), we could possibly
+ * overwrite stored return address.  So that stored return address needs to
+ * saved and restored.
  */
-#ifdef DDB
+#if defined(DDB)
 #define FRAME_SAVE_SRR0_FOR_DDB						\
-	addi	%r30, %r30, 4;		/* ddb thinks its the next insn */ \
-	stw	%r30, FRAMELEN+SZREG(%r1); /* appease ddb stacktrace */
+	lwz	%r29, FRAMELEN+CFRAME_LR(%r1);	/* fetch old return address */\
+	stw	%r29, FRAME_CFRAME_LR(%r1);	/* save it */		 \
+	addi	%r30, %r30, 4;			/* point to s the next insn */ \
+	stw	%r30, FRAMELEN+CFRAME_LR(%r1)	/* appease ddb stacktrace */
+#define FRAME_RESTORE_RETURN_ADDRESS					\
+	lwz	%r3, FRAME_CFRAME_LR(%r1);	/* fetch old return address */ \
+	stw	%r3, FRAMELEN+CFRAME_LR(%r1)	/* restore it */
 #else
 #define FRAME_SAVE_SRR0_FOR_DDB
+#define FRAME_RESTORE_RETURN_ADDRESS
 #endif
 
 #ifdef PPC_HAVE_SPE
@@ -175,7 +185,6 @@ RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 	addi	%r1, %r2, USPACE-CALLFRAMELEN;				\
 					/* start stack at top of it */	\
 1:									\
-	stw	%r30, CFRAME_LR(%r1);	/* save in previous callframe */ \
 	stwu	%r31, -FRAMELEN(%r1);	/* get space for trapframe */	\
 	stw	%r0, FRAME_R0(%r1);	/* save r0 */			\
 	stw	%r31, FRAME_R1(%r1);	/* save (saved) r1 */		\
@@ -203,6 +212,7 @@ RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 	addi	tf, %r1, FRAME_TF	/* get address of trap frame */
 
 #define FRAME_EXC_EXIT(rfi, srr)					\
+	FRAME_RESTORE_RETURN_ADDRESS;	/* restore return address */	\
 	lmw	%r26, FRAME_LR(%r1);	/* get LR CR XER CTR SRR0/1 */	\
 	oris	%r31,%r31,PSL_CE@h;					\
 	mtspr	SPR_##srr##1, %r31;	/* restore SRR1 */		\
@@ -262,7 +272,6 @@ RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 	mtcr	%r31;			/* user mode exception? */	\
 	mr	%r31, %r1;		/* save SP (SRR1 is safe in CR) */ \
 	get_intr_sp;			/* get kernel stack pointer */	\
-	stw	%r30, CFRAME_LR(%r1);	/* save in .. */		\
 	stwu	%r31, -FRAMELEN(%r1);	/* get space for trapframe */	\
 	stw	%r0, FRAME_R0(%r1);	/* save r0 */			\
 	stw	%r31, FRAME_R1(%r1);	/* save (saved) r1 */		\
@@ -294,6 +303,7 @@ RCSID("$NetBSD: trap_subr.S,v 1.6 2011/06/21 05:33:04 matt Exp $")
 	addi	%r3, %r1, FRAME_TF	/* only argument is trapframe */
 
 #define FRAME_INTR_XEXIT(rfi, srr)					\
+	FRAME_RESTORE_RETURN_ADDRESS;	/* restore return address */	\
 	lwz	%r8, FRAME_LR(%r1);	/* get LR */			\
 	lwz	%r9, FRAME_CR(%r1);	/* get CR */			\
 	lwz	%r10, FRAME_XER(%r1);	/* get XER */			\
