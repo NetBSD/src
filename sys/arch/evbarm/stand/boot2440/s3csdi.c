@@ -32,6 +32,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include <machine/int_mwgwtypes.h>
 #include <machine/limits.h>
 
 #include <dev/sdmmc/sdmmcreg.h>
