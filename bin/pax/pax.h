@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.30 2009/04/07 19:52:35 perry Exp $	*/
+/*	$NetBSD: pax.h,v 1.31 2012/08/09 08:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -267,24 +267,17 @@ typedef struct oplist {
 #define _TFILE_BASE	"paxXXXXXXXXXX"
 
 /*
- * Macros to manipulate off_t as a unsigned long or unsigned long long
+ * Macros to manipulate off_t as uintmax_t
  */
-#if defined(_LP64)
-#define	OFFT_F			"%lu"
-#define	OFFT_FP(x)		"%" x "lu"
-#define	OFFT_T			u_long
-#define	ASC_OFFT(x,y,z)		asc_ul(x,y,z)
-#define	OFFT_ASC(w,x,y,z)	ul_asc((u_long)w,x,y,z)
-#define	OFFT_OCT(w,x,y,z)	ul_oct((u_long)w,x,y,z)
-#define	STRTOOFFT(x,y,z)	strtol(x,y,z)
-#define	OFFT_MAX		LONG_MAX
-#else
-#define	OFFT_F			"%llu"
-#define	OFFT_FP(x)		"%" x "llu"
-#define	OFFT_T			unsigned long long
-#define	ASC_OFFT(x,y,z)		asc_ull(x,y,z)
-#define	OFFT_ASC(w,x,y,z)	ull_asc((unsigned long long)w,x,y,z)
-#define	OFFT_OCT(w,x,y,z)	ull_oct((unsigned long long)w,x,y,z)
-#define	STRTOOFFT(x,y,z)	strtoll(x,y,z)
-#define	OFFT_MAX		LLONG_MAX
-#endif
+#define	OFFT_F			"%" PRIuMAX
+#define	OFFT_FP(x)		"%" x PRIuMAX
+#define	OFFT_T			uintmax_t
+#define	ASC_OFFT(x,y,z)		asc_umax(x,y,z)
+#define	OFFT_ASC(w,x,y,z)	umax_asc((uintmax_t)w,x,y,z)
+#define	OFFT_OCT(w,x,y,z)	umax_oct((uintmax_t)w,x,y,z)
+#define	STRTOOFFT(x,y,z)	strtoimax(x,y,z)
+#define	OFFT_MAX		INTMAX_MAX
+
+#define TOP_HALF	0xffffffff00000000ULL
+#define BOTTOM_HALF	0x00000000ffffffffULL
+
