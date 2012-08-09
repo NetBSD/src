@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/06/17 07:40:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2012/08/09 14:37:07 joerg Exp $
 
 LIB=	clangBasic
 
@@ -8,6 +8,7 @@ LIB=	clangBasic
 
 SRCS+=	Builtins.cpp \
 	ConvertUTF.c \
+	ConvertUTFWrapper.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	FileManager.cpp \
@@ -15,6 +16,7 @@ SRCS+=	Builtins.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
 	Module.cpp \
+	ObjCRuntime.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
 	TargetInfo.cpp \

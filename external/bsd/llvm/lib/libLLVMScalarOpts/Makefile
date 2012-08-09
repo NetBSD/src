@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/06/16 17:01:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/08/09 14:37:07 joerg Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -8,7 +8,6 @@ LIB=	LLVMScalarOpts
 
 SRCS+=	ADCE.cpp \
 	BasicBlockPlacement.cpp \
-	BoundsChecking.cpp \
 	CodeGenPrepare.cpp \
 	ConstantProp.cpp \
 	CorrelatedValuePropagation.cpp \
