@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2012/06/17 15:12:13 joerg Exp $
+# $NetBSD: Makefile,v 1.24 2012/08/09 14:39:01 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -100,7 +100,8 @@ SUBDIR+= \
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
-	libclangTooling
+	libclangTooling \
+	libclangASTMatchers
 .endif
 
 .include <bsd.subdir.mk>
