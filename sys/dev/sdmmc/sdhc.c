@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.10.2.2 2012/08/08 06:18:59 jdc Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.10.2.3 2012/08/09 06:36:48 jdc Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.10.2.2 2012/08/08 06:18:59 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.10.2.3 2012/08/09 06:36:48 jdc Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -268,9 +268,13 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	(void)sdhc_host_reset(hp);
 
 	/* Determine host capabilities. */
-	mutex_enter(&hp->host_mtx);
-	caps = HREAD4(hp, SDHC_CAPABILITIES);
-	mutex_exit(&hp->host_mtx);
+	if (ISSET(sc->sc_flags, SDHC_FLAG_HOSTCAPS)) {
+		caps = sc->sc_caps;
+	} else {
+		mutex_enter(&hp->host_mtx);
+		caps = HREAD4(hp, SDHC_CAPABILITIES);
+		mutex_exit(&hp->host_mtx);
+	}
 
 #if notyet
 	/* Use DMA if the host system and the controller support it. */
@@ -1018,7 +1022,8 @@ out:
 	}
 #endif
 
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)
+	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_LED_ON)) {
 		mutex_enter(&hp->host_mtx);
 		/* Turn off the LED. */
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);

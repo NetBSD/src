@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.6 2012/02/01 23:03:30 matt Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.6.2.1 2012/08/09 06:36:48 jdc Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -43,7 +43,11 @@ struct sdhc_softc {
 #define	SDHC_FLAG_ENHANCED	0x0020	/* Freescale ESDHC */
 #define	SDHC_FLAG_8BIT_MODE	0x0040	/* MMC 8bit mode is supported */
 #define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
+#define	SDHC_FLAG_NO_LED_ON	0x0100	/* LED_ON unsupported in HOST_CTL */
+#define	SDHC_FLAG_HOSTCAPS	0x0200	/* No device provided capabilities */
+
 	uint32_t		sc_clkbase;
+	uint32_t		sc_caps;/* attachment provided capabilities */
 };
 
 /* Host controller functions called by the attachment driver. */

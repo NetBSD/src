@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.104 2012/01/31 04:31:37 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.104.2.1 2012/08/09 06:36:44 jdc Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.104 2012/01/31 04:31:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.104.2.1 2012/08/09 06:36:44 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -747,7 +747,7 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	.cf_control		= cpufunc_control,
 	.cf_domains		= cpufunc_domains,
-	.cf_setttb		= arm1136_setttb,
+	.cf_setttb		= arm11x6_setttb,
 	.cf_faultstatus		= cpufunc_faultstatus,
 	.cf_faultaddress	= cpufunc_faultaddress,
 
@@ -762,25 +762,25 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	/* Cache operations */
 
-	.cf_icache_sync_all	= arm1136_icache_sync_all,	/* 411920 */
-	.cf_icache_sync_range	= arm1136_icache_sync_range,	/* 371025 */
+	.cf_icache_sync_all	= arm11x6_icache_sync_all,	/* 411920 */
+	.cf_icache_sync_range	= arm11x6_icache_sync_range,	/* 371025 */
 
-	.cf_dcache_wbinv_all	= arm1136_dcache_wbinv_all,	/* 411920 */
+	.cf_dcache_wbinv_all	= arm11x6_dcache_wbinv_all,	/* 411920 */
 	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
-	.cf_idcache_wbinv_all	= arm1136_idcache_wbinv_all,	/* 411920 */
-	.cf_idcache_wbinv_range = arm1136_idcache_wbinv_range,	/* 371025 */
+	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 411920 */
+	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371025 */
 
 	/* Other functions */
 
-	.cf_flush_prefetchbuf	= arm1136_flush_prefetchbuf,
+	.cf_flush_prefetchbuf	= arm11x6_flush_prefetchbuf,
 	.cf_drain_writebuf	= arm11_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= arm11_sleep,
+	.cf_sleep		= arm11_sleep,	/* arm1136_sleep_rev0 */
 
 	/* Soft functions */
 
@@ -789,10 +789,69 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	.cf_context_switch	= arm11_context_switch,
 
-	.cf_setup		= arm1136_setup
+	.cf_setup		= arm11x6_setup
 
 };
 #endif /* CPU_ARM1136 */
+
+#ifdef CPU_ARM1176
+struct cpu_functions arm1176_cpufuncs = {
+	/* CPU functions */
+
+	.cf_id			= cpufunc_id,
+	.cf_cpwait		= cpufunc_nullop,
+
+	/* MMU functions */
+
+	.cf_control		= cpufunc_control,
+	.cf_domains		= cpufunc_domains,
+	.cf_setttb		= arm11x6_setttb,
+	.cf_faultstatus		= cpufunc_faultstatus,
+	.cf_faultaddress	= cpufunc_faultaddress,
+
+	/* TLB functions */
+
+	.cf_tlb_flushID		= arm11_tlb_flushID,
+	.cf_tlb_flushID_SE	= arm11_tlb_flushID_SE,
+	.cf_tlb_flushI		= arm11_tlb_flushI,
+	.cf_tlb_flushI_SE	= arm11_tlb_flushI_SE,
+	.cf_tlb_flushD		= arm11_tlb_flushD,
+	.cf_tlb_flushD_SE	= arm11_tlb_flushD_SE,
+
+	/* Cache operations */
+
+	.cf_icache_sync_all	= arm11x6_icache_sync_all,	/* 415045 */
+	.cf_icache_sync_range	= arm11x6_icache_sync_range,	/* 371367 */
+
+	.cf_dcache_wbinv_all	= arm11x6_dcache_wbinv_all,	/* 415045 */
+	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
+	.cf_dcache_inv_range	= armv6_dcache_inv_range,
+	.cf_dcache_wb_range	= armv6_dcache_wb_range,
+
+	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 415045 */
+	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371367 */
+
+	/* Other functions */
+
+	.cf_flush_prefetchbuf	= arm11x6_flush_prefetchbuf,
+	.cf_drain_writebuf	= arm11_drain_writebuf,
+	.cf_flush_brnchtgt_C	= cpufunc_nullop,
+	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
+
+	.cf_sleep		= arm11x6_sleep,		/* no ref. */
+
+	/* Soft functions */
+
+	.cf_dataabt_fixup	= cpufunc_null_fixup,
+	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
+
+	.cf_context_switch	= arm11_context_switch,
+
+	.cf_setup		= arm11x6_setup
+
+};
+#endif /* CPU_ARM1176 */
+
 
 #ifdef CPU_ARM11MPCORE
 struct cpu_functions arm11mpcore_cpufuncs = {
@@ -1646,13 +1705,19 @@ set_cpufuncs(void)
 #if defined(CPU_ARM11)
 	if (cputype == CPU_ID_ARM1136JS ||
 	    cputype == CPU_ID_ARM1136JSR1 ||
-	    cputype == CPU_ID_ARM1176JS) {
+	    cputype == CPU_ID_ARM1176JZS) {
 		cpufuncs = arm11_cpufuncs;
 #if defined(CPU_ARM1136)
-		if (cputype != CPU_ID_ARM1176JS) {
+		if (cputype == CPU_ID_ARM1136JS &&
+		    cputype == CPU_ID_ARM1136JSR1) {
 			cpufuncs = arm1136_cpufuncs;
 			if (cputype == CPU_ID_ARM1136JS)
 				cpufuncs.cf_sleep = arm1136_sleep_rev0;
+		}
+#endif
+#if defined(CPU_ARM1176)
+		if (cputype == CPU_ID_ARM1176JZS) {
+			cpufuncs = arm1176_cpufuncs;
 		}
 #endif
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
@@ -2251,7 +2316,7 @@ late_abort_fixup(void *arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136) || \
+	defined(CPU_ARM10) || defined(CPU_ARM11) || \
 	defined(CPU_FA526) || defined(CPU_CORTEX) || defined(CPU_SHEEVA)
 
 #define IGN	0
@@ -2862,10 +2927,9 @@ armv7_dcache_wbinv_all(void)
 #endif /* CPU_CORTEX */
 
 
-
-#if defined(CPU_ARM1136)
+#if defined(CPU_ARM1136) || defined(CPU_ARM1176) 
 void
-arm1136_setup(char *args)
+arm11x6_setup(char *args)
 {
 	int cpuctrl, cpuctrl_wax;
 	uint32_t auxctrl, auxctrl_wax;
@@ -2920,7 +2984,8 @@ arm1136_setup(char *args)
 
 	auxctrl = 0;
 	auxctrl_wax = ~0;
-	/* This options enables the workaround for the 364296 ARM1136
+	/*
+	 * This options enables the workaround for the 364296 ARM1136
 	 * r0pX errata (possible cache data corruption with
 	 * hit-under-miss enabled). It sets the undocumented bit 31 in
 	 * the auxiliary control register and the FI bit in the control
@@ -2932,6 +2997,14 @@ arm1136_setup(char *args)
 		cpuctrl |= CPU_CONTROL_FI_ENABLE;
 		auxctrl = ARM11R0_AUXCTL_PFI;
 		auxctrl_wax = ~ARM11R0_AUXCTL_PFI;
+	}
+
+	/*
+	 * Enable an errata workaround
+	 */
+	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1176JZS) { /* ARM1176JZSr0 */
+		auxctrl = ARM1176_AUXCTL_PHD;
+		auxctrl_wax = ~ARM1176_AUXCTL_PHD;
 	}
 
 	/* Clear out the cache */
@@ -2948,17 +3021,17 @@ arm1136_setup(char *args)
 	cpu_control(~cpuctrl_wax, cpuctrl);
 
 	__asm volatile ("mrc	p15, 0, %0, c1, c0, 1\n\t"
-			"bic	%1, %0, %2\n\t"
-			"eor	%1, %0, %3\n\t"
+			"and	%1, %0, %2\n\t"
+			"orr	%1, %1, %3\n\t"
 			"teq	%0, %1\n\t"
 			"mcrne	p15, 0, %1, c1, c0, 1\n\t"
 			: "=r"(tmp), "=r"(tmp2) :
-			  "r"(~auxctrl_wax), "r"(auxctrl));
+			  "r"(auxctrl_wax), "r"(auxctrl));
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
 }
-#endif	/* CPU_ARM1136 */
+#endif	/* CPU_ARM1136 || CPU_ARM1176 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {

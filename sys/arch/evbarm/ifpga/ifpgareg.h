@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgareg.h,v 1.3 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: ifpgareg.h,v 1.3.118.1 2012/08/09 06:36:44 jdc Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,6 +32,7 @@
 /* System clock defaults. */
 
 #define IFPGA_UART_CLK			14745600 /* Uart REFCLK freq */
+#define IFPGA_UART_SIZE			0x24
 
 /*
  * IFPGA registers
