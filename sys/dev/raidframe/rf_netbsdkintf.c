@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.297 2012/04/07 01:39:38 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.298 2012/08/09 23:53:25 buhrow Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.297 2012/04/07 01:39:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298 2012/08/09 23:53:25 buhrow Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -376,7 +376,7 @@ raidattach(int num)
 	memset(raid_softc, 0, num * sizeof(struct raid_softc));
 
 	for (raidID = 0; raidID < num; raidID++) {
-		bufq_alloc(&raid_softc[raidID].buf_queue, "fcfs", 0);
+		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
@@ -983,7 +983,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
-	int     part, pmask;
+	int     part, pmask, s;
 	cfdata_t cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
@@ -1036,6 +1036,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCWLABEL:
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
+	case DIOCSSTRATEGY:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 	}
@@ -1088,6 +1089,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
+	case DIOCGSTRATEGY:
+	case DIOCSSTRATEGY:
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -1861,6 +1864,45 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    (struct dkwedge_list *)data, l);
 	case DIOCCACHESYNC:
 		return rf_sync_component_caches(raidPtr);
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(rs->buf_queue),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		struct bufq_state *new;
+		struct bufq_state *old;
+
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = rs->buf_queue;
+		bufq_move(new, old);
+		rs->buf_queue = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
+	    }
+
 	default:
 		retcode = ENOTTY;
 	}
