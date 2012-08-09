@@ -1,7 +1,9 @@
 # <pre>
-# @(#)Makefile	8.11
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
+
+# Version numbers of the code and data distributions.
+VERSION = 2012e
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -226,7 +228,9 @@ ZIC=		$(zic) $(ZFLAGS)
 AWK=		nawk
 
 # The path where SGML DTDs are kept.
-SGML_SEARCH_PATH= $(TOPDIR)/share/doc/sgml-lib/REC-html401-19991224/
+# The default is appropriate for Ubuntu.
+SGML_TOPDIR= /usr
+SGML_SEARCH_PATH= $(SGML_TOPDIR)/share/xml/xhtml/schema/dtd/REC-html401-19991224
 
 # The catalog file(s) to use when validating.
 SGML_CATALOG_FILES= HTML4.cat
@@ -241,6 +245,17 @@ VALIDATE_ENV = \
   SGML_SEARCH_PATH=$(SGML_SEARCH_PATH) \
   SP_CHARSET_FIXED=YES \
   SP_ENCODING=UTF-8
+
+# Flags to give 'tar' when making a distribution.
+# Try to use flags appropriate for GNU tar.
+GNUTARFLAGS=	--numeric-owner --owner=0 --group=0 --mode=go+u,go-w
+TARFLAGS=	`if tar $(GNUTARFLAGS) --version >/dev/null 2>&1; \
+		 then echo $(GNUTARFLAGS); \
+		 else :; \
+		 fi`
+
+# Flags to give 'gzip' when making a distribution.
+GZIPFLAGS=	-9n
 
 ###############################################################################
 
@@ -311,6 +326,10 @@ INSTALL:	ALL install date.1
 		-rm -f $(MANDIR)/man1/date.1
 		cp date.1 $(MANDIR)/man1/.
 
+version.h:
+		echo >$@ \
+		  'static char const TZVERSION[]="tz$(VERSION)";'
+
 zdump:		$(TZDOBJS)
 		$(CC) $(CFLAGS) $(LFLAGS) $(TZDOBJS) $(LDLIBS) -o $@
 
@@ -361,6 +380,7 @@ tzselect:	tzselect.ksh
 		sed \
 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
+			-e 's|\(TZVERSION\)=.*|\1=tz$(VERSION)|' \
 			<$? >$@
 		chmod +x $@
 
@@ -373,31 +393,55 @@ check_web:	$(WEB_PAGES)
 		$(VALIDATE_ENV) $(VALIDATE) $(VALIDATE_FLAGS) $(WEB_PAGES)
 
 clean:
-		rm -f core *.o *.out tzselect zdump zic yearistype date
+		rm -f core *.o *.out \
+		  date tzselect version.h zdump zic yearistype
 
 maintainer-clean: clean
 		@echo 'This command is intended for maintainers to use; it'
 		@echo 'deletes files that may need special tools to rebuild.'
-		rm -f *.[1-8].txt tzcode.tar.gz tzdata.tar.gz
+		rm -f *.[1-8].txt tzcode*.tar.gz tzdata*.tar.gz
 
 names:
 		@echo $(ENCHILADA)
 
+# Set the time stamps to those of the git repository, if available,
+# and if the files have not changed since then.
+# This uses GNU 'touch' syntax 'touch -d@N FILE',
+# where N is the number of seconds since 1970.
+# If git or GNU 'touch' is absent, do nothing.
+set-timestamps:
+		-TZ=UTC0 && export TZ && files=`git ls-files` && \
+		touch -d @1 test.out && rm -f test.out && \
+		for file in $$files; do \
+		  test -z "`git diff --name-only $$file`" || continue; \
+		  cmd="touch -d @`git log -1 --format='format:%ct' $$file \
+			` $$file" && \
+		  echo "$$cmd" && \
+		  $$cmd || exit; \
+		done
+
 # The zics below ensure that each data file can stand on its own.
 # We also do an all-files run to catch links to links.
 
-public:		$(ENCHILADA)
+public:		$(ENCHILADA) set-timestamps
 		make maintainer-clean
 		make "CFLAGS=$(GCC_DEBUG_FLAGS)"
-		-mkdir /tmp/,tzpublic
+		mkdir -m go-rwx /tmp/,tzpublic
 		-for i in $(TDATA) ; do zic -v -d /tmp/,tzpublic $$i 2>&1 | grep -v "starting year" ; done
 		for i in $(TDATA) ; do zic -d /tmp/,tzpublic $$i || exit; done
 		zic -v -d /tmp/,tzpublic $(TDATA) || exit
 		rm -f -r /tmp/,tzpublic
-		for i in *.[1-8] ; do sh workman.sh $$i > $$i.txt || exit; done
+		for i in *.[1-8] ; do \
+		  LC_ALL=C sh workman.sh $$i > $$i.txt && \
+		  touch -r $$i $$i.txt || exit; \
+		done
 		$(AWK) -f checktab.awk $(PRIMARY_YDATA)
-		tar cf - $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | gzip -9 > tzcode.tar.gz
-		tar cf - $(DATA) | gzip -9 > tzdata.tar.gz
+		LC_ALL=C && export LC_ALL && \
+		tar $(TARFLAGS) -cf - $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | \
+		  gzip $(GZIPFLAGS) > tzcode$(VERSION).tar.gz
+		LC_ALL=C && export LC_ALL && \
+		tar $(TARFLAGS) -cf - $(DATA) | \
+		  gzip $(GZIPFLAGS) > tzdata$(VERSION).tar.gz
 
 typecheck:
 		make clean
@@ -418,6 +462,7 @@ ialloc.o:	private.h
 localtime.o:	private.h tzfile.h
 scheck.o:	private.h
 strftime.o:	tzfile.h
-zic.o:		private.h tzfile.h
+zdump.o:	version.h
+zic.o:		private.h tzfile.h version.h
 
 .KEEP_STATE:
