@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909.2.10 2012/07/31 09:12:31 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.909.2.11 2012/08/09 08:04:09 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1143,8 +1143,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2011i / tzdata2012d
-Current Vers:	tzcode2012c / tzdata2012d
+Version:	tzcode2011i / tzdata2012e
+Current Vers:	tzcode2012e / tzdata2012e
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Maintainer:	Robert Elz <kre@munnari.oz.au>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
@@ -1158,7 +1158,8 @@ Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 The tzcode2009k -> 2011i patch was applied by hand, since we have too
 many diffs (re-entrant tzcode) to apply. The diffs have been submitted
-upstream but there is too much inertia to apply them.
+upstream but there is too much inertia to apply them. Check for .gitignore
+files.
 
 Package:	wpa_supplicant/hostapd
 Version:	0.7.3
