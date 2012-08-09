@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.58 2011/08/29 14:47:47 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.59 2012/08/09 08:09:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -181,12 +181,10 @@ int next_file(ARCHD *);
 void ls_list(ARCHD *, time_t, FILE *);
 void ls_tty(ARCHD *);
 void safe_print(const char *, FILE *);
-u_long asc_ul(char *, int, int);
-int ul_asc(u_long, char *, int, int);
-#if !defined(_LP64)
-unsigned long long asc_ull(char *, int, int);
-int ull_asc(unsigned long long, char *, int, int);
-#endif
+uint32_t asc_u32(char *, int, int);
+int u32_asc(uintmax_t, char *, int, int);
+uintmax_t asc_umax(char *, int, int);
+int umax_asc(uintmax_t, char *, int, int);
 int check_Aflag(void);
 
 /*
