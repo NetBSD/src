@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/02/01 07:46:21 kardel Exp $
+#	$NetBSD: Makefile,v 1.12 2012/08/09 14:40:52 joerg Exp $
 
 #NOGCCERROR=yes
 
@@ -76,6 +76,8 @@ SRCS=	cmd_args.c				\
 
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL}
+
+CWARNFLAGS.clang+=	-Wno-strncat-size
 
 .include "${.CURDIR}/../Makefile.inc"
 
