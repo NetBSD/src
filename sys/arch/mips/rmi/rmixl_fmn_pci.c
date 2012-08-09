@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rmixl_fmn_pci.c,v 1.1.2.1 2012/01/19 17:34:18 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rmixl_fmn_pci.c,v 1.1.2.2 2012/08/09 19:46:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,10 +237,14 @@ xlfmn_pci_attach(device_t parent, device_t self, void *aux)
 		 * allocated to it.
 		 */
 		if (oq_config & RMIXLP_FMN_OQ_CONFIG_SE) {
-			if (((64 * sb + ss) << 12) < sc->sc_spill_base)
-				sc->sc_spill_base = (64 * sb + ss) << 12;
-			if (((64 * sb + sl + 1) << 12) > sc->sc_spill_limit)
-				sc->sc_spill_limit = (64 * sb + sl + 1) << 12;
+			paddr_t spill_base = (64 * sb + ss) << 12;
+			paddr_t spill_limit =  (64 * sb + sl + 1) << 12;
+			if (spill_base < spill_limit) {
+				if (spill_base < sc->sc_spill_base)
+					sc->sc_spill_base = spill_base;
+				if (spill_limit > sc->sc_spill_limit)
+					sc->sc_spill_limit = spill_limit;
+			}
 		}
 
 		if ((oq_config & RMIXLP_FMN_OQ_CONFIG_OE) == 0)
@@ -297,15 +301,19 @@ xlfmn_pci_attach(device_t parent, device_t self, void *aux)
 	    "spill area: %s: base=%#"PRIxPADDR", limit=%#"PRIxPADDR"\n",
 	    buf, sc->sc_spill_base, sc->sc_spill_limit);
 
-	/*
-	 * Let's try to allocate the spill area.
-	 */
-	struct pglist mlist;
-	int error = uvm_pglistalloc(sc->sc_spill_limit - sc->sc_spill_base,
-	    sc->sc_spill_base, sc->sc_spill_limit, 0, 0, &mlist, 1, true);
-	if (error)
-		aprint_error_dev(sc->sc_dev,
-		    "failed to allocate spill area: %d\n", error);
+	if (sc->sc_spill_base < sc->sc_spill_limit) {
+		/*
+		 * Let's try to allocate the spill area.
+		 */
+		struct pglist mlist;
+		int error = uvm_pglistalloc(
+		    sc->sc_spill_limit - sc->sc_spill_base,
+		    sc->sc_spill_base, sc->sc_spill_limit,
+		    0, 0, &mlist, 1, true);
+		if (error)
+			aprint_error_dev(sc->sc_dev,
+			    "failed to allocate spill area: %d\n", error);
+	}
 
 	aprint_normal_dev(sc->sc_dev, "active queues: ");
 	const char *pfx = "";
