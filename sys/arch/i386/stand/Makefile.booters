@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.85 2011/06/20 06:52:37 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.86 2012/08/10 12:18:14 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,12 +12,10 @@ LIBC=		# nothing
 
 # Make sure we override any optimization options specified by the
 # user.
-.if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 COPTS=	${OPT_SIZE.${ACTIVE_CC}}
 

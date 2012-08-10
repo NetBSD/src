@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2011/06/22 02:49:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2012/08/10 12:18:15 joerg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -75,6 +75,6 @@ lib${LIB}.o:: ${OBJS}
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
 # XXX
-.if ${HAVE_GCC} == 45
+.if ${HAVE_GCC:U} == 45
 COPTS.biosdisk.c+=	-fno-strict-aliasing
 .endif
