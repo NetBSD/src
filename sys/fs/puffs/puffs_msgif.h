@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.79 2012/07/21 05:17:10 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.80 2012/08/10 16:49:35 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -152,16 +152,17 @@ struct puffs_kargs {
 };
 #define pa_root_rdev devunion.dev
 
-#define PUFFS_KFLAG_NOCACHE_NAME	0x01	/* don't use name cache     */
-#define PUFFS_KFLAG_NOCACHE_PAGE	0x02	/* don't use page cache	    */
-#define PUFFS_KFLAG_NOCACHE		0x03	/* no cache whatsoever      */
-#define PUFFS_KFLAG_ALLOPS		0x04	/* ignore pa_vnopmask       */
-#define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
-#define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
-#define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
-#define PUFFS_KFLAG_NOCACHE_ATTR	0x40	/* no attrib cache (unused) */
-#define PUFFS_KFLAG_CACHE_FS_TTL	0x80	/* cache use TTL from FS    */
-#define PUFFS_KFLAG_MASK		0xbf
+#define PUFFS_KFLAG_NOCACHE_NAME	0x001	/* don't use name cache     */
+#define PUFFS_KFLAG_NOCACHE_PAGE	0x002	/* don't use page cache	    */
+#define PUFFS_KFLAG_NOCACHE		0x003	/* no cache whatsoever      */
+#define PUFFS_KFLAG_ALLOPS		0x004	/* ignore pa_vnopmask       */
+#define PUFFS_KFLAG_WTCACHE		0x008	/* write-through page cache */
+#define PUFFS_KFLAG_IAONDEMAND		0x010	/* inactive only on demand  */
+#define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x020	/* full pnbuf in lookup     */
+#define PUFFS_KFLAG_NOCACHE_ATTR	0x040	/* no attrib cache (unused) */
+#define PUFFS_KFLAG_CACHE_FS_TTL	0x080	/* cache use TTL from FS    */
+#define PUFFS_KFLAG_CACHE_DOTDOT	0x100	/* don't send lookup for .. */
+#define PUFFS_KFLAG_MASK		0x1bf
 
 #define PUFFS_FHFLAG_DYNAMIC		0x01
 #define PUFFS_FHFLAG_NFSV2		0x02

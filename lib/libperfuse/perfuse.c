@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.29 2012/07/21 05:49:42 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.30 2012/08/10 16:49:36 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -514,6 +514,14 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	puffs_flags = PUFFS_KFLAG_CACHE_FS_TTL;
 #else
 	puffs_flags = PUFFS_KFLAG_NOCACHE_NAME;
+#endif
+
+	/*
+	 * Do not lookuo .. 
+	 * That means we keep all parent vnode active
+	 */
+#ifdef PUFFS_KFLAG_CACHE_DOTDOT
+	puffs_flags |= PUFFS_KFLAG_CACHE_DOTDOT;
 #endif
 	
 	/* 

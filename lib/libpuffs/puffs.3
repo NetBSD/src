@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.53 2012/04/18 14:24:26 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.54 2012/08/10 16:49:36 manu Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -252,6 +252,9 @@ will be called instead of
 .Fn puffs_node_getattr
 and
 .Fn puffs_node_setattr .
+.It Dv PUFFS_KFLAG_CACHE_DOTDOT
+Never send lookups for .. to the filesystem. Parent vnodes are all
+kept active until their children are reclaimed.
 .It Dv PUFFS_FLAG_OPDUMP
 This option makes the framework dump a textual representation of
 each operation before executing it.
