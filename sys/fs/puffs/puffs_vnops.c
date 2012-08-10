@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.172 2012/08/10 08:42:11 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.173 2012/08/10 14:52:56 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.172 2012/08/10 08:42:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.173 2012/08/10 14:52:56 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -761,6 +761,8 @@ puffs_vnop_create(void *v)
 			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
+	VPTOPP(*ap->a_vpp)->pn_nlookup++;
+
  out:
 	vput(dvp);
 
@@ -817,6 +819,8 @@ puffs_vnop_mknod(void *v)
 		update_va(*ap->a_vpp, NULL, rvap, 
 			   va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
+
+	VPTOPP(*ap->a_vpp)->pn_nlookup++;
 
  out:
 	vput(dvp);
@@ -1791,6 +1795,8 @@ puffs_vnop_mkdir(void *v)
 			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
 
+	VPTOPP(*ap->a_vpp)->pn_nlookup++;
+
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
@@ -1954,6 +1960,8 @@ puffs_vnop_symlink(void *v)
 		update_va(*ap->a_vpp, NULL, rvap, 
 			  va_ttl, cn_ttl, SETATTR_CHSIZE);
 	}
+
+	VPTOPP(*ap->a_vpp)->pn_nlookup++;
 
  out:
 	vput(dvp);
