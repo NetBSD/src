@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.483 2012/08/08 16:23:31 christos Exp $
+# $NetBSD: mi,v 1.484 2012/08/10 16:18:52 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -254,7 +254,7 @@
 ./usr/libdata/debug/usr/tests/fs/nfs					tests-fs-debug,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/t_mountd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice					tests-fs-debug,rump
-./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf,rump,rump
+./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug,rump
 ./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/psshfs					tests-fs-debug,rump
