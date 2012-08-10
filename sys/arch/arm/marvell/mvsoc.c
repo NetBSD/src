@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.8 2012/08/01 10:34:42 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.9 2012/08/10 02:18:20 matt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.8 2012/08/01 10:34:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.9 2012/08/10 02:18:20 matt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.8 2012/08/01 10:34:42 kiyohara Exp $");
 
 #include "locators.h"
 
+#ifdef MVSOC_CONSOLE_EARLY
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
+#include <dev/cons.h>
+#endif
 
 static int mvsoc_match(device_t, struct cfdata *, void *);
 static void mvsoc_attach(device_t, device_t, void *);
@@ -61,6 +66,53 @@ static vaddr_t regbase = 0xffffffff, dsc_base, pex_base;
 vaddr_t mlmb_base;
 
 void (*mvsoc_intr_init)(void);
+
+
+#ifdef MVSOC_CONSOLE_EARLY
+static vaddr_t com_base;
+
+static inline uint32_t
+uart_read(bus_size_t o)
+{
+	return *(volatile uint32_t *)(com_base + (o << 2));
+}
+
+static inline void
+uart_write(bus_size_t o, uint32_t v)
+{
+	*(volatile uint32_t *)(com_base + (o << 2)) = v;
+}
+
+static int
+mvsoc_cngetc(dev_t dv)
+{
+        if ((uart_read(com_lsr) & LSR_RXRDY) == 0)
+		return -1;
+
+	return uart_read(com_data) & 0xff;
+}
+
+static void
+mvsoc_cnputc(dev_t dv, int c)
+{
+	int timo = 150000;
+
+        while ((uart_read(com_lsr) & LSR_TXRDY) == 0 && --timo > 0)
+		;
+
+	uart_write(com_data, c);
+
+	timo = 150000;
+        while ((uart_read(com_lsr) & LSR_TSRE) == 0 && --timo > 0)
+		;
+}
+
+static struct consdev mvsoc_earlycons = {
+	.cn_putc = mvsoc_cnputc,
+	.cn_getc = mvsoc_cngetc,
+	.cn_pollc = nullcnpollc,
+};
+#endif
 
 
 /* attributes */
@@ -522,6 +574,11 @@ mvsoc_bootstrap(bus_addr_t iobase)
 	dsc_base = iobase + MVSOC_DSC_BASE;
 	mlmb_base = iobase + MVSOC_MLMB_BASE;
 	pex_base = iobase + MVSOC_PEX_BASE;
+#ifdef MVSOC_CONSOLE_EARLY
+	com_base = iobase + MVSOC_COM0_BASE;
+	cn_tab = &mvsoc_earlycons;
+	printf("Hello\n");
+#endif
 }
 
 /*
