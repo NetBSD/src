@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.20 2011/05/26 12:56:29 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.21 2012/08/10 12:12:18 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -89,9 +89,6 @@ LIBBIB=         ${LIBBIBDIR}/libbib.a
 CFLAGS+=	-DHAVE_CONFIG_H
 CFLAGS+=	-I${GROFF_DIST}/src/include -I${NETBSDSRCDIR}/gnu/usr.bin/groff/src/include
 CXXFLAGS+=	-fno-rtti -fno-exceptions
-
-# We only need -lsupc++
-USE_LIBSTDCXX=	no
 
 CWARNFLAGS.clang+=	-Wno-unused-value
 
