@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2011/06/20 07:44:00 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2012/08/10 12:20:11 joerg Exp $
 #
 
 SRCS+=	rcfile.c ctx.c cfopt.c subr.c nls.c rap.c mbuf.c rq.c file.c \
@@ -13,8 +13,6 @@ CPPFLAGS+= -I${SMBDIST}/include -I${SMBDIST}/mount_smbfs
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in ctx mbuf nb_name nbns_rq
 COPTS.${f}.c+=       -Wno-pointer-sign
 .endfor
-.endif
