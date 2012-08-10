@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2011/08/15 00:16:58 dholland Exp $
+#	$NetBSD: Makefile,v 1.34 2012/08/10 12:20:11 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -31,11 +31,9 @@ LDADD+= -lutil -ledit -lterminfo -lprop
 DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO} ${LIBPROP}
 .endif
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in fsdb ffs_appleufs
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
-.endif
 
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.pass1.c+=	-fno-tree-fre -fno-tree-lrs
