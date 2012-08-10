@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.92 2012/07/28 19:08:24 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.93 2012/08/10 12:48:14 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2012/07/28 19:08:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2012/08/10 12:48:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,6 +153,13 @@ luna68k_init(void)
 	extern char bootarg[64];
 
 	extern paddr_t avail_start, avail_end;
+
+	/* initialize cn_tab for early console */
+#if 1
+	cn_tab = &syscons;
+#else
+	cn_tab = &romcons;
+#endif
 
 	/*
 	 * Tell the VM system about available physical memory.  The
@@ -772,12 +779,7 @@ module_init_md(void)
 }
 #endif
 
-#if 1
-
-struct consdev *cn_tab = &syscons;
-
-#else
-
+#ifdef notyet
 /*
  * romcons is useful until m68k TC register is initialized.
  */
@@ -793,7 +795,6 @@ struct consdev romcons = {
 	makedev(7, 0), /* XXX */
 	CN_DEAD,
 };
-struct consdev *cn_tab = &romcons;
 
 #define __		((int **)0x41000000)
 #define GETC()		(*(int (*)())__[6])()
