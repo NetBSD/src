@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.99 2012/08/08 14:08:01 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.100 2012/08/10 16:22:31 joerg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -111,8 +111,8 @@
 ./usr/lib/64/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/64/libgcc_s.so.1			base-compat-shlib	compat,pic
-./usr/lib/64/libgcc_s.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/64/libgcc_s.so.1			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/64/libgcc_s.so.1.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/64/libgmp.so.10			base-compat-shlib	obsolete
 ./usr/lib/64/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/64/libgnumalloc.so.1			base-compat-shlib	compat,pic
@@ -185,8 +185,8 @@
 ./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/64/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
-./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
-./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/64/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libopcodes.so.5.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libossaudio.so.1			base-compat-shlib	compat,pic
@@ -259,7 +259,7 @@
 ./usr/lib/64/libssh.so.19.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
+./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds
 ./usr/lib/64/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/64/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
 ./usr/lib/64/libsupc++.so.0			base-compat-shlib	obsolete
@@ -413,8 +413,8 @@
 ./usr/lib/o32/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libgcc_s.so.1			base-compat-shlib	compat,pic
-./usr/lib/o32/libgcc_s.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libgcc_s.so.1			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/o32/libgcc_s.so.1.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/o32/libgmp.so.10			base-compat-shlib	obsolete
 ./usr/lib/o32/libgmp.so.10.2			base-compat-shlib	obsolete
 ./usr/lib/o32/libgnumalloc.so.1			base-compat-shlib	compat,pic
@@ -487,8 +487,8 @@
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/o32/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
-./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
-./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/o32/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
 ./usr/lib/o32/libopcodes.so.5.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/o32/libossaudio.so.1			base-compat-shlib	compat,pic
@@ -561,7 +561,7 @@
 ./usr/lib/o32/libssh.so.19.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssl.so.10			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx
+./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx
 ./usr/lib/o32/libsupc++.so.0			base-compat-shlib	obsolete

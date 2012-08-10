@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.89 2012/08/10 16:18:51 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.90 2012/08/10 16:22:32 joerg Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -293,17 +293,17 @@
 ./usr/lib/64/libform.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libform_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libform_pic.a			comp-c-piclib		compat,pic
-./usr/lib/64/libgcc.a				comp-c-lib		compat
-./usr/lib/64/libgcc_eh.a			comp-c-lib		compat,pic
+./usr/lib/64/libgcc.a				comp-c-lib		compat,gcccmds
+./usr/lib/64/libgcc_eh.a			comp-c-lib		compat,pic,gcccmds
 ./usr/lib/64/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/64/libgcc_eh_pic.a			comp-c-piclib		obsolete
 ./usr/lib/64/libgcc_p.a				comp-c-proflib		obsolete
 ./usr/lib/64/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/64/libgcc_s.a				comp-obsolete		obsolete
-./usr/lib/64/libgcc_s.so			base-sys-shlib		compat,pic
+./usr/lib/64/libgcc_s.so			base-sys-shlib		compat,pic,gcccmds
 ./usr/lib/64/libgcc_s_p.a			comp-obsolete		obsolete
 ./usr/lib/64/libgcc_s_pic.a			comp-obsolete		obsolete
-./usr/lib/64/libgcov.a				comp-c-lib		compat
+./usr/lib/64/libgcov.a				comp-c-lib		compat,gcccmds
 ./usr/lib/64/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/64/libgcov_pic.a			comp-obsolete		obsolete
 ./usr/lib/64/libgmp.a				comp-c-lib		obsolete
@@ -462,10 +462,10 @@
 ./usr/lib/64/libnpf.so				comp-sys-shlib		compat,npf,pic
 ./usr/lib/64/libnpf_p.a				comp-c-proflib		compat,npf,profile
 ./usr/lib/64/libnpf_pic.a			comp-c-piclib		compat,npf,pic
-./usr/lib/64/libobjc.a				comp-c-lib		compat
-./usr/lib/64/libobjc.so				base-sys-shlib		compat,pic
-./usr/lib/64/libobjc_p.a			comp-c-proflib		compat,profile
-./usr/lib/64/libobjc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libobjc.a				comp-c-lib		compat,gcccmds
+./usr/lib/64/libobjc.so				base-sys-shlib		compat,pic,gcccmds
+./usr/lib/64/libobjc_p.a			comp-c-proflib		compat,profile,gcccmds
+./usr/lib/64/libobjc_pic.a			comp-c-piclib		compat,pic,gcccmds
 ./usr/lib/64/libopcodes.a			comp-obsolete		obsolete
 ./usr/lib/64/libopcodes.so			base-obsolete		obsolete
 ./usr/lib/64/libopcodes_p.a			comp-obsolete		obsolete
@@ -612,11 +612,11 @@
 ./usr/lib/64/libssl.so				base-sys-shlib		compat,crypto,pic
 ./usr/lib/64/libssl_p.a				comp-c-proflib		compat,crypto,profile
 ./usr/lib/64/libssl_pic.a			comp-c-piclib		compat,crypto,pic
-./usr/lib/64/libstdc++.a			comp-c-lib		compat,cxx
-./usr/lib/64/libstdc++.so			base-sys-shlib		compat,pic,cxx
-./usr/lib/64/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
-./usr/lib/64/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
-./usr/lib/64/libsupc++.a			comp-c-lib		compat,cxx
+./usr/lib/64/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/64/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
+./usr/lib/64/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
+./usr/lib/64/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
+./usr/lib/64/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
 ./usr/lib/64/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/64/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/64/libtermcap.a			comp-c-lib		compat
@@ -898,7 +898,7 @@
 ./usr/lib/o32/libgcc_s.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libgcc_s_p.a			comp-obsolete		obsolete
 ./usr/lib/o32/libgcc_s_pic.a			comp-obsolete		obsolete
-./usr/lib/o32/libgcov.a				comp-c-lib		compat
+./usr/lib/o32/libgcov.a				comp-c-lib		compat,gcccmds
 ./usr/lib/o32/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/o32/libgcov_pic.a			comp-obsolete		obsolete
 ./usr/lib/o32/libgmp.a				comp-c-lib		obsolete
@@ -1057,10 +1057,10 @@
 ./usr/lib/o32/libnpf.so				comp-sys-shlib		compat,npf,pic
 ./usr/lib/o32/libnpf_p.a			comp-c-proflib		compat,npf,profile
 ./usr/lib/o32/libnpf_pic.a			comp-c-piclib		compat,npf,pic
-./usr/lib/o32/libobjc.a				comp-c-lib		compat
-./usr/lib/o32/libobjc.so			base-sys-shlib		compat,pic
-./usr/lib/o32/libobjc_p.a			comp-c-proflib		compat,profile
-./usr/lib/o32/libobjc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libobjc.a				comp-c-lib		compat,gcccmds
+./usr/lib/o32/libobjc.so			base-sys-shlib		compat,pic,gcccmds
+./usr/lib/o32/libobjc_p.a			comp-c-proflib		compat,profile,gcccmds
+./usr/lib/o32/libobjc_pic.a			comp-c-piclib		compat,pic,gcccmds
 ./usr/lib/o32/libopcodes.a			comp-obsolete		obsolete
 ./usr/lib/o32/libopcodes.so			base-obsolete		obsolete
 ./usr/lib/o32/libopcodes_p.a			comp-obsolete		obsolete
@@ -1211,7 +1211,7 @@
 ./usr/lib/o32/libstdc++.so			base-sys-shlib		compat,pic,cxx
 ./usr/lib/o32/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
 ./usr/lib/o32/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
-./usr/lib/o32/libsupc++.a			comp-c-lib		compat,cxx
+./usr/lib/o32/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
 ./usr/lib/o32/libsupc++.so			base-obsolete		obsolete
 ./usr/lib/o32/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/o32/libtermcap.a			comp-c-lib		compat
