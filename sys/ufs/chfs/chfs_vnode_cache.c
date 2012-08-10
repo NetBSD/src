@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode_cache.c,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: chfs_vnode_cache.c,v 1.2 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -40,21 +40,6 @@ chfs_vnocache_hash_init(void)
 {
 	return kmem_zalloc(VNODECACHE_SIZE *
 	    sizeof(struct chfs_vnode_cache *), KM_SLEEP);
-}
-
-/**
- * chfs_set_vnode_cache_state - set state of a vnode_cache
- * @chmp: fs super block info
- * @vc: vnode_cache
- * @state: new state
- */
-void
-chfs_vnode_cache_set_state(struct chfs_mount *chmp,
-    struct chfs_vnode_cache* vc, int state)
-{
-	/* XXX do we really need locking here? */
-	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
-	vc->state = state;
 }
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.4 2012/04/30 22:51:28 rmind Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.5 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -539,8 +539,7 @@ retry:
 		if (ino == CHFS_ROOTINO) {
 			chvc->nlink = 2;
 			chvc->pvno = CHFS_ROOTINO;
-			chfs_vnode_cache_set_state(chmp,
-			    chvc, VNO_STATE_CHECKEDABSENT);
+			chvc->state = VNO_STATE_CHECKEDABSENT;
 		}
 		chfs_vnode_cache_add(chmp, chvc);
 		mutex_exit(&chmp->chm_lock_vnocache);
