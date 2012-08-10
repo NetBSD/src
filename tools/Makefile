@@ -1,34 +1,44 @@
-#	$NetBSD: Makefile,v 1.155 2011/11/03 07:42:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.156 2012/08/10 16:13:36 joerg Exp $
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 TOOLCHAIN_BITS= gmake .WAIT
+.endif
+
 .if ${TOOLCHAIN_MISSING} == "no"
+.if defined(HAVE_GCC)
 .if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
 .endif
+.endif
+.endif
+
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= binutils .WAIT
+.endif
+
+.if defined(HAVE_GCC)
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no"
 TOOLCHAIN_BITS+= gdb
 .  endif
-TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
+TOOLCHAIN_BITS+= .WAIT
 # XXX Eventually, we want to be able to build dbsym and mdsetimage
 # XXX if EXTERNAL_TOOLCHAIN is set.
 .endif
 .endif
 
 .if defined(HAVE_PCC)
-TOOLCHAIN_BITS= gmake .WAIT
 .if ${TOOLCHAIN_MISSING} == "no"
-TOOLCHAIN_BITS+= binutils .WAIT
 TOOLCHAIN_BITS+= pcc
 .endif
-TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
 .endif
+
+TOOLCHAIN_BITS+= dbsym mdsetimage
 
 DTRACE_BITS=
 .if ${MKDTRACE} != "no"
