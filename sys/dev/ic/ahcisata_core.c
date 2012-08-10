@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.40 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.41 2012/08/10 16:35:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.40 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.41 2012/08/10 16:35:00 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -225,6 +225,11 @@ ahci_attach(struct ahci_softc *sc)
 		return;
 
 	sc->sc_ahci_cap = AHCI_READ(sc, AHCI_CAP);
+	if (sc->sc_achi_quirks & AHCI_QUIRK_BADPMP) {
+		aprint_verbose_dev(sc->sc_atac.atac_dev,
+		    "ignoring broken port multiplier support\n");
+		sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
+	}
 	sc->sc_atac.atac_nchannels = (sc->sc_ahci_cap & AHCI_CAP_NPMASK) + 1;
 	sc->sc_ncmds = ((sc->sc_ahci_cap & AHCI_CAP_NCS) >> 8) + 1;
 	ahci_rev = AHCI_READ(sc, AHCI_VS);
@@ -655,6 +660,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	if (drive > 0) {
 		KASSERT(sc->sc_ahci_cap & AHCI_CAP_SPM);
 	}
+again:
 	/* polled command, assume interrupts are disabled */
 	/* use slot 0 to send reset, the channel is idle */
 	cmd_h = &achp->ahcic_cmdh[0];
@@ -687,6 +693,16 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	switch(ahci_exec_fis(chp, 31, flags)) {
 	case ERR_DF:
 	case TIMEOUT:
+		if ((sc->sc_achi_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
+		    drive == PMP_PORT_CTL) {
+			/*
+			 * some controllers fails to reset when
+			 * targeting a PMP but a single drive is attached.
+			 * try again with port 0
+			 */
+			drive = 0;
+			goto again;
+		}
 		aprint_error("%s channel %d: clearing WDCTL_RST failed "
 		    "for drive %d\n", AHCINAME(sc), chp->ch_channel, drive);
 		if (sigp)
