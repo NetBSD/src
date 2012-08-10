@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_malloc.c,v 1.2 2012/02/28 02:48:39 christos Exp $	*/
+/*	$NetBSD: chfs_malloc.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -297,6 +297,8 @@ chfs_alloc_full_dnode(void)
 {
 	struct chfs_full_dnode *ret;
 	ret = kmem_alloc(sizeof(struct chfs_full_dnode), KM_SLEEP);
+	ret->nref = NULL;
+	ret->frags = 0;
 	return ret;
 }
 

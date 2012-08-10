@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -64,17 +64,12 @@ chfs_scan_make_vnode_cache(struct chfs_mount *chmp, ino_t vno)
 
 	vc = chfs_vnode_cache_alloc(vno);
 
-	//mutex_enter(&chmp->chm_lock_vnocache);
-
 	chfs_vnode_cache_add(chmp, vc);
-
-	//mutex_exit(&chmp->chm_lock_vnocache);
 
 	if (vno == CHFS_ROOTINO) {
 		vc->nlink = 2;
 		vc->pvno = CHFS_ROOTINO;
-		chfs_vnode_cache_set_state(chmp,
-		    vc, VNO_STATE_CHECKEDABSENT);
+		vc->state = VNO_STATE_CHECKEDABSENT;
 	}
 
 	return vc;
@@ -152,7 +147,6 @@ chfs_scan_check_vnode(struct chfs_mount *chmp,
 			return ENOMEM;
 		}
 	}
-	mutex_exit(&chmp->chm_lock_vnocache);
 
 	nref = chfs_alloc_node_ref(cheb);
 
@@ -179,6 +173,7 @@ chfs_scan_check_vnode(struct chfs_mount *chmp,
 		*vc->vno_version = le64toh(vnode->version);
 		chfs_add_vnode_ref_to_vc(chmp, vc, nref);
 	}
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 	mutex_enter(&chmp->chm_lock_sizes);
 	//dbg("B:lnr: %d |free_size: %d node's size: %d\n", cheb->lnr, cheb->free_size, le32toh(vnode->length));
@@ -228,15 +223,15 @@ chfs_scan_mark_dirent_obsolete(struct chfs_mount *chmp,
 	if (prev && prev == nref) {
 		vc->dirents = prev->nref_next;
 	} else if (prev && prev != (void *)vc) {
-		while (prev->nref_next && prev->nref_next !=
-		    (void *)vc && prev->nref_next != nref) {
+		while (prev->nref_next && prev->nref_next != (void *)vc) {
+			if (prev->nref_next == nref) {
+				prev->nref_next = nref->nref_next;
+				break;
+			}
 			prev = prev->nref_next;
 		}
-
-		if (prev->nref_next == nref) {
-			prev->nref_next = nref->nref_next;
-		}
 	}
+
 	/*dbg("XXX - start\n");
 	//nref = vc->dirents;
 	struct chfs_dirent *tmp;
@@ -366,7 +361,7 @@ chfs_scan_check_dirent_node(struct chfs_mount *chmp,
 	int err, namelen;
 	uint32_t crc;
 	struct chfs_dirent *fd;
-	struct chfs_vnode_cache *vc;
+	struct chfs_vnode_cache *parentvc;
 	struct chfs_flash_dirent_node *dirent = buf;
 
 	//struct chfs_node_ref *tmp;
@@ -406,17 +401,17 @@ chfs_scan_check_dirent_node(struct chfs_mount *chmp,
 
 	/* Check vnode_cache of parent node */
 	mutex_enter(&chmp->chm_lock_vnocache);
-	vc = chfs_scan_make_vnode_cache(chmp, le64toh(dirent->pvno));
-	mutex_exit(&chmp->chm_lock_vnocache);
-	if (!vc) {
+	parentvc = chfs_scan_make_vnode_cache(chmp, le64toh(dirent->pvno));
+	if (!parentvc) {
 		chfs_free_dirent(fd);
 		return ENOMEM;
 	}
 
 	fd->nref->nref_offset = ofs;
 
-	dbg("add dirent to #%llu\n", (unsigned long long)vc->vno);
-	chfs_add_node_to_list(chmp, vc, fd->nref, &vc->dirents);
+	dbg("add dirent to #%llu\n", (unsigned long long)parentvc->vno);
+	chfs_add_node_to_list(chmp, parentvc, fd->nref, &parentvc->dirents);
+	mutex_exit(&chmp->chm_lock_vnocache);
 	/*tmp = vc->dirents;
 	  dbg("START|vno: %d dirents dump\n", vc->vno);
 	  while (tmp) {
@@ -440,7 +435,7 @@ chfs_scan_check_dirent_node(struct chfs_mount *chmp,
 	  dbg(" ->name:    %s\n", fd->name);
 	  dbg(" ->type:    %d\n", fd->type);*/
 
-	chfs_add_fd_to_list(chmp, fd, vc);
+	chfs_add_fd_to_list(chmp, fd, parentvc);
 
 	/*struct chfs_node_ref *tmp;
 	  tmp = vc->dirents;
@@ -503,7 +498,7 @@ chfs_scan_check_data_node(struct chfs_mount *chmp,
 	if (!nref)
 		return ENOMEM;
 
-	nref->nref_offset = ofs | CHFS_UNCHECKED_NODE_MASK;
+	nref->nref_offset = CHFS_GET_OFS(ofs) | CHFS_UNCHECKED_NODE_MASK;
 
 	KASSERT(nref->nref_lnr == cheb->lnr);
 
@@ -515,8 +510,8 @@ chfs_scan_check_data_node(struct chfs_mount *chmp,
 		if (!vc)
 			return ENOMEM;
 	}
-	mutex_exit(&chmp->chm_lock_vnocache);
 	chfs_add_node_to_list(chmp, vc, nref, &vc->dnode);
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 	dbg("chmpfree: %u, chebfree: %u, dnode: %u\n", chmp->chm_free_size, cheb->free_size, dnode->length);
 
