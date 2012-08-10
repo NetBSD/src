@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.26 2011/03/07 05:09:11 joerg Exp $ */
+/* $NetBSD: crt0.c,v 1.27 2012/08/10 16:37:31 martin Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -45,8 +45,6 @@
  */
 
 __asm("\n\
-	.data\n\
-__data_start:					! Start of data section\n\
 	.text\n\
 	.align 4\n\
 	.global _start\n\
@@ -55,11 +53,9 @@ __data_start:					! Start of data section\n\
 	.register %g2,#scratch\n\
 _start:\n\
 __start:\n\
-	setx	__data_start, %o0, %g4		! Point %g4 to start of data section\n\
-	clr	%g4				! egcs thinks this is zero. XXX\n\
+	clr	%g4				! XXX depends on memory model used \n\
 	clr	%fp\n\
 	add	%sp, 8*16 + 0x7ff, %o0		! start of stack\n\
-	mov	%g1, %o1			! Cleanup routine\n\
 	mov	%g3, %o1			! XXXX our rtld uses %g3\n\
 	mov	%g2, %o2			! XXXX obj from rtld.\n\
 	ba,pt	%icc, ___start			! XXXX jump over the retl egcs 2.96 inserts\n\
@@ -115,7 +111,7 @@ ___start(char **sp,
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.26 2011/03/07 05:09:11 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.27 2012/08/10 16:37:31 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
