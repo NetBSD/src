@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.12 2011/05/26 12:56:29 joerg Exp $
+# $NetBSD: Makefile,v 1.13 2012/08/10 12:12:21 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
 DIST_SUBDIR=	src/roff/troff
 
-PROG=		troff
+PROG_CXX=	troff
 SRCS=		dictionary.cpp div.cpp env.cpp input.cpp \
 		majorminor.cpp mtsm.cpp node.cpp number.cpp reg.cpp
 CLEANFILES=	majorminor.cpp ${MAN}
