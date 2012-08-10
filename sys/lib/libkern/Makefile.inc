@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2005/12/20 19:35:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2012/08/10 16:05:27 joerg Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -47,6 +47,8 @@ KERNMAKE= \
 	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:Q} \
 	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
 	    LINTFLAGS=${KERNLINTFLAGS:Q} \
+	    LIBKERN_ARCH=${LIBKERN_ARCH:Q} \
+	    COMMON_MACHINE_ARCH=${COMMON_MACHINE_ARCH:Q} \
 	    ${KERNMISCMAKEFLAGS}
 
 ${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib

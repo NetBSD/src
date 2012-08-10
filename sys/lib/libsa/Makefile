@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2012/01/16 18:44:13 christos Exp $
+#	$NetBSD: Makefile,v 1.78 2012/08/10 16:05:27 joerg Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -91,9 +91,7 @@ lib${LIB}.o:: ${OBJS}
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
-.endif
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
 COPTS.bootp.c+=	-O0
