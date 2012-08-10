@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.28 2012/08/10 16:35:00 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.29 2012/08/10 16:40:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.28 2012/08/10 16:35:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.29 2012/08/10 16:40:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -294,7 +294,6 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_achi_quirks = ahci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
 					    PCI_PRODUCT(pa->pa_id));
-	/* from FreeBSD: marvell controllers have broken PMP support */
 
 	ahci_cap_64bit = (AHCI_READ(sc, AHCI_CAP) & AHCI_CAP_64BIT) != 0;
 	ahci_bad_64bit = ((sc->sc_achi_quirks & AHCI_PCI_QUIRK_BAD64) != 0);
