@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/09/07 17:49:19 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2012/08/10 12:20:12 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,9 +18,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	auth2-jpake.c \
 	roaming_common.c roaming_serv.c sandbox-rlimit.c
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.auth-options.c=	-Wno-pointer-sign
-.endif
 COPTS.ldapauth.c=	-Wno-format-nonliteral	# XXX: should fix
 
 .if (${USE_PAM} != "no")
