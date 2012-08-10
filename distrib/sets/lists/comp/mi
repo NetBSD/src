@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1774 2012/08/08 14:08:02 christos Exp $
+#	$NetBSD: mi,v 1.1775 2012/08/10 16:18:51 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3082,7 +3082,7 @@
 ./usr/lib/librumpdev_fss.a			comp-c-lib		rump
 ./usr/lib/librumpdev_fss_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpdev_g.a			-unknown-		debuglib,rump,rump
+./usr/lib/librumpdev_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpdev_md.a			comp-c-lib		rump
 ./usr/lib/librumpdev_md_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpdev_md_p.a			comp-c-proflib		profile,rump
@@ -3090,7 +3090,7 @@
 ./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpdev_pad.a			comp-c-lib		rump,rump,rump
+./usr/lib/librumpdev_pad.a			comp-c-lib		rump
 ./usr/lib/librumpdev_pad_g.a			-unknown-		debuglib,rump
 ./usr/lib/librumpdev_pad_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_pud.a			comp-c-lib		rump
@@ -4440,7 +4440,7 @@
 ./usr/libdata/lint/llib-lroken.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump,rump
+./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lsaslc.ln		comp-c-lintlib		lint,crypto
