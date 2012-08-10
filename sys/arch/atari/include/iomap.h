@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.14 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: iomap.h,v 1.15 2012/08/10 17:43:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -36,7 +36,7 @@
  * I/O Address maps
  */
 #ifdef _KERNEL
-vaddr_t	stio_addr;		/* Where the st io-area is mapped	*/
+extern vaddr_t	stio_addr;	/* Where the st io-area is mapped	*/
 #define	AD_STIO	(stio_addr)	/* .. see atari_init.c			*/
 
 /*
@@ -48,10 +48,10 @@ vaddr_t	stio_addr;		/* Where the st io-area is mapped	*/
  * with the PLX. Also, the Milan uses the first page of 'pci_io_addr' for
  * access to some of it's ISA I/O devices (RTC, Interrupt controller, etc.)
  */
-vaddr_t	pci_conf_addr;		/* KVA base of PCI config space		*/
-vaddr_t	pci_io_addr;		/* KVA base of PCI io-space		*/
-vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
-vaddr_t	pci_mem_uncached;	/* KVA base of an uncached PCI mem-page	*/
+extern vaddr_t	pci_conf_addr;	/* KVA base of PCI config space		*/
+extern vaddr_t	pci_io_addr;	/* KVA base of PCI io-space		*/
+extern vaddr_t	pci_mem_addr;	/* KVA base of PCI mem-space		*/
+extern vaddr_t	pci_mem_uncached; /* KVA base of an uncached PCI mem-page */
 #endif /* _KERNEL */
 
 #define	PCI_CONFB_PHYS		(0xA0000000L)
