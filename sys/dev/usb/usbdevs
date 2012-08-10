@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.625 2012/08/04 13:03:17 nonaka Exp $
+$NetBSD: usbdevs,v 1.626 2012/08/10 02:39:32 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1422,6 +1422,7 @@ product FTDI SERIAL_2232C	0x6010	2232C USB dual FAST SERIAL ADAPTER
 product FTDI SERIAL_4232H	0x6011	2232H USB quad FAST SERIAL ADAPTER
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
+product FTDI OPENRD_JTAGKEY	0x9e90	OpenRD JTAGKey FT2232D B
 product FTDI MHAM_KW		0xeee8	KW
 product FTDI MHAM_YS		0xeee9	YS
 product FTDI MHAM_Y6		0xeeea	Y6
