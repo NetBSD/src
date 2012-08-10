@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.174 2012/08/08 14:08:01 christos Exp $
+# $NetBSD: md.amd64,v 1.175 2012/08/10 16:22:31 joerg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -120,8 +120,8 @@
 ./usr/lib/i386/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libform.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libform.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libgcc_s.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libgcc_s.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libgcc_s.so.1			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/i386/libgcc_s.so.1.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/i386/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
@@ -191,8 +191,8 @@
 ./usr/lib/i386/libnetpgp.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
-./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic
-./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
+./usr/lib/i386/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/i386/libopcodes.so.5			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libopcodes.so.5.0		base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libossaudio.so.1			base-compat-shlib	compat,pic
@@ -262,7 +262,9 @@
 ./usr/lib/i386/libssh.so.19.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.10.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libstdcxx.so.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libstdcxx.so.1.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic
 ./usr/lib/i386/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic
 ./usr/lib/i386/libsupc++.so.1			base-obsolete		obsolete

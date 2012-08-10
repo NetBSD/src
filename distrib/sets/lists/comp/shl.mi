@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.231 2012/08/08 14:08:04 christos Exp $
+# $NetBSD: shl.mi,v 1.232 2012/08/10 16:22:33 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -39,7 +39,7 @@
 ./usr/lib/libform_pic.a				comp-c-piclib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib	gcc=3
 ./usr/lib/libg2c_pic.a				comp-obsolete		gcc=4,obsolete
-./usr/lib/libgcc_eh.a				comp-c-lib
+./usr/lib/libgcc_eh.a				comp-c-lib		gcccmds
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		obsolete
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libgcc_pic.a				comp-c-lib		gcc=4
@@ -102,7 +102,7 @@
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
-./usr/lib/libobjc_pic.a				comp-objc-piclib
+./usr/lib/libobjc_pic.a				comp-objc-piclib	gcccmds
 ./usr/lib/libopcodes.so.5			comp-c-shlib		binutils
 ./usr/lib/libopcodes.so.5.0			comp-c-shlib		binutils
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
@@ -212,7 +212,7 @@
 ./usr/lib/libssh_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssl_pic.a				comp-c-piclib		crypto
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
-./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx
+./usr/lib/libstdc++_pic.a			comp-cxx-piclib		cxx,gcccmds
 ./usr/lib/libtermcap_pic.a			comp-c-piclib
 ./usr/lib/libterminfo_pic.a			comp-c-piclib
 ./usr/lib/libtermlib_pic.a			comp-c-piclib

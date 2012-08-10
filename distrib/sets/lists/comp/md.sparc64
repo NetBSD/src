@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.155 2012/08/08 14:08:02 christos Exp $
+# $NetBSD: md.sparc64,v 1.156 2012/08/10 16:22:33 joerg Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -418,20 +418,20 @@
 ./usr/lib/sparc/libform_g.a			-unknown-		compat,debuglib
 ./usr/lib/sparc/libform_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libform_pic.a			comp-c-piclib		compat,pic
-./usr/lib/sparc/libgcc.a			comp-c-lib		compat
-./usr/lib/sparc/libgcc_eh.a			comp-c-lib		compat,pic
-./usr/lib/sparc/libgcc_eh_g.a			-unknown-		compat,debuglib,pic
+./usr/lib/sparc/libgcc.a			comp-c-lib		compat,gcccmds
+./usr/lib/sparc/libgcc_eh.a			comp-c-lib		compat,pic,gcccmds
+./usr/lib/sparc/libgcc_eh_g.a			-unknown-		compat,debuglib,pic,gcccmds
 ./usr/lib/sparc/libgcc_eh_p.a			comp-c-proflib		obsolete
 ./usr/lib/sparc/libgcc_eh_pic.a			comp-c-piclib		obsolete
-./usr/lib/sparc/libgcc_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libgcc_g.a			-unknown-		compat,debuglib,gcccmds
 ./usr/lib/sparc/libgcc_p.a			comp-c-proflib		obsolete
 ./usr/lib/sparc/libgcc_pic.a			comp-c-piclib		obsolete
 ./usr/lib/sparc/libgcc_s.a			comp-obsolete		obsolete
-./usr/lib/sparc/libgcc_s.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libgcc_s.so			base-sys-shlib		compat,pic,gcccmds
 ./usr/lib/sparc/libgcc_s_g.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcc_s_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcc_s_pic.a			comp-obsolete		obsolete
-./usr/lib/sparc/libgcov.a			comp-c-lib		compat
+./usr/lib/sparc/libgcov.a			comp-c-lib		compat,gcccmds
 ./usr/lib/sparc/libgcov_g.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libgcov_pic.a			comp-obsolete		obsolete
@@ -622,11 +622,11 @@
 ./usr/lib/sparc/libnpf_g.a			-unknown-		compat,debuglib,npf
 ./usr/lib/sparc/libnpf_p.a			comp-c-proflib		compat,profile,npf
 ./usr/lib/sparc/libnpf_pic.a			comp-c-piclib		compat,pic,npf
-./usr/lib/sparc/libobjc.a			comp-c-lib		compat
-./usr/lib/sparc/libobjc.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libobjc_g.a			-unknown-		compat,debuglib
-./usr/lib/sparc/libobjc_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libobjc_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libobjc.a			comp-c-lib		compat,gcccmds
+./usr/lib/sparc/libobjc.so			base-sys-shlib		compat,pic,gcccmds
+./usr/lib/sparc/libobjc_g.a			-unknown-		compat,debuglib,gcccmds
+./usr/lib/sparc/libobjc_p.a			comp-c-proflib		compat,profile,gcccmds
+./usr/lib/sparc/libobjc_pic.a			comp-c-piclib		compat,pic,gcccmds
 ./usr/lib/sparc/libopcodes.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libopcodes.so			base-obsolete		obsolete
 ./usr/lib/sparc/libopcodes_g.a			comp-obsolete		obsolete
@@ -808,14 +808,14 @@
 ./usr/lib/sparc/libssl_g.a			-unknown-		compat,debuglib,crypto
 ./usr/lib/sparc/libssl_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libssl_pic.a			comp-c-piclib		compat,pic,crypto
-./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx
-./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx
-./usr/lib/sparc/libstdc++_g.a			-unknown-		compat,debuglib,cxx
-./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
-./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
-./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx
+./usr/lib/sparc/libstdc++.a			comp-c-lib		compat,cxx,gcccmds
+./usr/lib/sparc/libstdc++.so			base-sys-shlib		compat,pic,cxx,gcccmds
+./usr/lib/sparc/libstdc++_g.a			-unknown-		compat,debuglib,cxx,gcccmds
+./usr/lib/sparc/libstdc++_p.a			comp-c-proflib		compat,profile,cxx,gcccmds
+./usr/lib/sparc/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx,gcccmds
+./usr/lib/sparc/libsupc++.a			comp-c-lib		compat,cxx,gcccmds
 ./usr/lib/sparc/libsupc++.so			base-obsolete		obsolete
-./usr/lib/sparc/libsupc++_g.a			-unknown-		compat,debuglib
+./usr/lib/sparc/libsupc++_g.a			-unknown-		compat,debuglib,gcccmds
 ./usr/lib/sparc/libsupc++_pic.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libtermcap.a			comp-c-lib		compat
 ./usr/lib/sparc/libtermcap.so			base-sys-shlib		compat,pic
