@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_nodeops.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_nodeops.c,v 1.2 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -80,6 +80,8 @@ chfs_add_node_to_list(struct chfs_mount *chmp,
     struct chfs_vnode_cache *vc,
     struct chfs_node_ref *new, struct chfs_node_ref **list)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
 	struct chfs_node_ref *nextref = *list;
 	struct chfs_node_ref *prevref = NULL;
 
@@ -104,15 +106,72 @@ chfs_add_node_to_list(struct chfs_mount *chmp,
 	    CHFS_GET_OFS(nextref->nref_offset) ==
 	    CHFS_GET_OFS(new->nref_offset)) {
 		new->nref_next = nextref->nref_next;
+		chfs_mark_node_obsolete(chmp, nextref);
 	} else {
 		new->nref_next = nextref;
 	}
+
+	KASSERT(new->nref_next != NULL);
 
 	if (prevref) {
 		prevref->nref_next = new;
 	} else {
 		*list = new;
 	}
+}
+
+/*
+ * Removes a node from a list. Usually used for removing data nodes.
+ */
+void
+chfs_remove_node_from_list(struct chfs_mount *chmp,
+	struct chfs_vnode_cache *vc,
+	struct chfs_node_ref *old_nref, struct chfs_node_ref **list)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
+	struct chfs_node_ref *tmpnref;
+
+	if (*list == (struct chfs_node_ref *)vc) {
+		return;
+	}
+
+	KASSERT(old_nref->nref_next != NULL);
+
+	if (*list == old_nref) {
+		*list = old_nref->nref_next;
+	} else {
+		tmpnref = *list;
+		while (tmpnref->nref_next &&
+			tmpnref->nref_next != (struct chfs_node_ref *)vc) {
+			if (tmpnref->nref_next == old_nref) {
+				tmpnref->nref_next = old_nref->nref_next;
+				break;
+			}
+			tmpnref = tmpnref->nref_next;
+		}
+	}
+}
+
+/*
+ * Removes a node from a list and obsoletes the nref.
+ * We should use this function carefully on data nodes, 
+ * because removing a frag will obsolete the node ref.
+ */
+void
+chfs_remove_and_obsolete(struct chfs_mount *chmp,
+	struct chfs_vnode_cache *vc,
+	struct chfs_node_ref *old_nref, struct chfs_node_ref **list)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
+	chfs_remove_node_from_list(chmp, vc, old_nref, list);
+
+	dbg("[MARK] vno: %llu lnr: %u ofs: %u\n", vc->vno, old_nref->nref_lnr,
+		old_nref->nref_offset);
+	chfs_mark_node_obsolete(chmp, old_nref);
 }
 
 void
@@ -140,8 +199,10 @@ chfs_add_fd_to_inode(struct chfs_mount *chmp,
 				TAILQ_INSERT_BEFORE(fd, new, fds);
 				TAILQ_REMOVE(&parent->dents, fd, fds);
 				if (fd->nref) {
-					chfs_mark_node_obsolete(chmp,
-					    fd->nref);
+					mutex_enter(&chmp->chm_lock_vnocache);
+					chfs_remove_and_obsolete(chmp, parent->chvc, fd->nref,
+						&parent->chvc->dirents);
+					mutex_exit(&chmp->chm_lock_vnocache);
 				}
 				chfs_free_dirent(fd);
 //				*prev = new;//XXX
@@ -186,12 +247,15 @@ void
 chfs_add_vnode_ref_to_vc(struct chfs_mount *chmp,
     struct chfs_vnode_cache *vc, struct chfs_node_ref *new)
 {
-	if ((struct chfs_vnode_cache*)(vc->v) != vc) {
-		chfs_mark_node_obsolete(chmp, vc->v);
-		new->nref_next = vc->v->nref_next;
-	} else {
-		new->nref_next = vc->v;
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+	struct chfs_node_ref *nref;
+
+	while (vc->v != (struct chfs_node_ref *)vc) {
+		nref = vc->v;
+		chfs_remove_and_obsolete(chmp, vc, nref, &vc->v);
 	}
+
+	new->nref_next = (struct chfs_node_ref *)vc;
 	vc->v = new;
 }
 
@@ -456,8 +520,6 @@ chfs_reserve_space_normal(struct chfs_mount *chmp, uint32_t size, int prio)
 
 		mutex_exit(&chmp->chm_lock_sizes);
 		ret = chfs_gcollect_pass(chmp);
-		/* gcollect_pass exits chm_lock_mountfields */
-		mutex_enter(&chmp->chm_lock_mountfields);
 		mutex_enter(&chmp->chm_lock_sizes);
 
 		if (chmp->chm_nr_erasable_blocks ||
