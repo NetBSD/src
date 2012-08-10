@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.42 2012/07/21 05:17:10 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.43 2012/08/10 08:42:10 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.42 2012/07/21 05:17:10 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.43 2012/08/10 08:42:10 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -315,6 +315,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_create *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_create == NULL) {
 				error = 0;
@@ -343,13 +344,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -358,6 +362,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mknod *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mknod == NULL) {
 				error = 0;
@@ -386,13 +391,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -659,6 +667,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mkdir *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mkdir == NULL) {
 				error = 0;
@@ -687,13 +696,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -719,6 +731,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_symlink *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_symlink == NULL) {
 				error = 0;
@@ -748,13 +761,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
