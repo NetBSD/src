@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2011/06/20 07:44:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.39 2012/08/10 12:20:11 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -26,8 +26,6 @@ DPADD+=${LIBPROP}
 LINKS=	${BINDIR}/newfs ${BINDIR}/mount_mfs
 MLINKS=	mount_mfs.8 mfs.8
 
-.include <bsd.prog.mk>
-
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.ffs_appleufs.c+=	-Wno-pointer-sign
-.endif
+
+.include <bsd.prog.mk>

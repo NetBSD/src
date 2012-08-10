@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2012/03/21 05:37:42 matt Exp $
+#	$NetBSD: Makefile,v 1.51 2012/08/10 12:20:10 joerg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -127,7 +127,7 @@ tc1:	libedit.a tc1.o
 .include <bsd.subdir.mk>
 
 # XXX
-.if ${HAVE_GCC} >= 45
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
 COPTS.editline.c+=	-Wno-cast-qual
 COPTS.tokenizer.c+=	-Wno-cast-qual
 COPTS.tokenizern.c+=	-Wno-cast-qual
