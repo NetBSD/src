@@ -1,0 +1,27 @@
+#	$NetBSD: OPENRD,v 1.1 2012/08/10 02:31:52 matt Exp $
+#
+# This is a working config file for OpenRD(.org) Client.  Note that the
+# default boot address will not work and the kernel has to load at 8MB
+# to work.
+#
+
+include "arch/evbarm/conf/SHEEVAPLUG"
+
+makeoptions 	KERNEL_BASE_PHYS=0x00800000
+makeoptions 	KERNEL_BASE_VIRT=0xc0800000
+no makeoptions	LOADADDRESS
+makeoptions	LOADADDRESS="0xc0800000"
+
+#options 	VERBOSE_INIT_ARM	# verbose bootstraping messages
+#options 	MVSOC_CONSOLE_EARLY
+
+# this just emits endless errors, disable for now.
+no mvsdio*
+no sdmmc* at mvsdio?
+no sbt* at sdmmc?
+no ld* at sdmmc?
+
+# This has two SATA ports
+mvsata*		at mvsoc? offset ? irq ?
+atabus*		at ata?
+wd*		at atabus? drive ?
