@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1123 2012/08/07 19:27:19 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1124 2012/08/10 16:24:43 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1131 2012/08/07 19:26:36 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1132 2012/08/10 16:24:17 bouyer Exp
  */
 
 /*
@@ -1623,6 +1623,8 @@ static const uint16_t pci_products[] = {
 	    9084, 9113, 8116, 6173, 0,
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC, 
 	    9084, 7464, 8116, 6173, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI2, 
+	    9084, 8116, 6173, 9107, 9101, 0,
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI, 
 	    9084, 6663, 7891, 6173, 0,
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_SATA, 
@@ -6769,6 +6771,30 @@ static const uint16_t pci_products[] = {
 	    22112, 22469, 8121, 6173, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_12, 
 	    22112, 22469, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_1, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_2, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_3, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_4, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_5, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_6, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_7, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_8, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_9, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_10, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_11, 
+	    22112, 22486, 8121, 6173, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_AHCI_12, 
+	    22112, 22486, 8121, 6173, 0,
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF116, 
 	    21885, 22492, 22496, 22149, 0,
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128, 
@@ -8239,6 +8265,8 @@ static const uint16_t pci_products[] = {
 	    27689, 692, 8116, 6173, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A, 
 	    27711, 27721, 5537, 5435, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_SATA, 
+	    27369, 692, 8116, 6173, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG, 
 	    27643, 27650, 27591, 692, 1716, 0,
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5, 
@@ -8658,7 +8686,7 @@ static const char pci_words[] = { "."
 	    "Hitach\0" /* 1 refs @ 673 */
 	    "AMP\0" /* 1 refs @ 680 */
 	    "Silicon\0" /* 4 refs @ 684 */
-	    "Integrated\0" /* 72 refs @ 692 */
+	    "Integrated\0" /* 73 refs @ 692 */
 	    "Seiko\0" /* 1 refs @ 703 */
 	    "Tatung\0" /* 1 refs @ 709 */
 	    "Hewlett-Packard\0" /* 1 refs @ 716 */
@@ -9382,7 +9410,7 @@ static const char pci_words[] = { "."
 	    "Escalade\0" /* 2 refs @ 6155 */
 	    "ATA\0" /* 51 refs @ 6164 */
 	    "RAID\0" /* 39 refs @ 6168 */
-	    "Controller\0" /* 809 refs @ 6173 */
+	    "Controller\0" /* 823 refs @ 6173 */
 	    "7000/8000\0" /* 1 refs @ 6184 */
 	    "Series\0" /* 83 refs @ 6194 */
 	    "9000\0" /* 5 refs @ 6201 */
@@ -9647,8 +9675,8 @@ static const char pci_words[] = { "."
 	    "MC97\0" /* 1 refs @ 8099 */
 	    "756b\0" /* 1 refs @ 8104 */
 	    "Hudson\0" /* 12 refs @ 8109 */
-	    "SATA\0" /* 107 refs @ 8116 */
-	    "AHCI\0" /* 57 refs @ 8121 */
+	    "SATA\0" /* 109 refs @ 8116 */
+	    "AHCI\0" /* 69 refs @ 8121 */
 	    "SD\0" /* 5 refs @ 8126 */
 	    "HD\0" /* 10 refs @ 8129 */
 	    "xHCI\0" /* 2 refs @ 8132 */
@@ -9802,10 +9830,10 @@ static const char pci_words[] = { "."
 	    "OHCI2\0" /* 1 refs @ 9066 */
 	    "OHCI3\0" /* 1 refs @ 9072 */
 	    "OHCI4\0" /* 1 refs @ 9078 */
-	    "SB700/SB800\0" /* 11 refs @ 9084 */
+	    "SB700/SB800\0" /* 12 refs @ 9084 */
 	    "(IDE\0" /* 6 refs @ 9096 */
-	    "mode)\0" /* 11 refs @ 9101 */
-	    "(AHCI\0" /* 3 refs @ 9107 */
+	    "mode)\0" /* 12 refs @ 9101 */
+	    "(AHCI\0" /* 4 refs @ 9107 */
 	    "RAID5\0" /* 1 refs @ 9113 */
 	    "SB800\0" /* 1 refs @ 9119 */
 	    "Mach64\0" /* 6 refs @ 9125 */
@@ -11604,7 +11632,7 @@ static const char pci_words[] = { "."
 	    "580\0" /* 1 refs @ 22100 */
 	    "XGL\0" /* 4 refs @ 22104 */
 	    "380\0" /* 1 refs @ 22108 */
-	    "nForce\0" /* 131 refs @ 22112 */
+	    "nForce\0" /* 143 refs @ 22112 */
 	    "MCP\0" /* 1 refs @ 22119 */
 	    "Xbox\0" /* 3 refs @ 22123 */
 	    "ATA100\0" /* 1 refs @ 22128 */
@@ -11663,7 +11691,7 @@ static const char pci_words[] = { "."
 	    "MCP77\0" /* 21 refs @ 22469 */
 	    "MCP78S\0" /* 1 refs @ 22475 */
 	    "210\0" /* 1 refs @ 22482 */
-	    "MCP79\0" /* 5 refs @ 22486 */
+	    "MCP79\0" /* 17 refs @ 22486 */
 	    "GTX\0" /* 1 refs @ 22492 */
 	    "550\0" /* 2 refs @ 22496 */
 	    "Riva\0" /* 1 refs @ 22500 */
@@ -12287,7 +12315,7 @@ static const char pci_words[] = { "."
 	    "PCI-Ethernet\0" /* 1 refs @ 27337 */
 	    "VT82C570M\0" /* 2 refs @ 27350 */
 	    "(Apollo)\0" /* 2 refs @ 27360 */
-	    "VT8251\0" /* 5 refs @ 27369 */
+	    "VT8251\0" /* 6 refs @ 27369 */
 	    "Port1\0" /* 1 refs @ 27376 */
 	    "Port2\0" /* 1 refs @ 27382 */
 	    "VLINK\0" /* 1 refs @ 27388 */
