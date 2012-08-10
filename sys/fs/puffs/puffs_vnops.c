@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.171 2012/07/27 07:38:44 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.172 2012/08/10 08:42:11 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.171 2012/07/27 07:38:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.172 2012/08/10 08:42:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -446,7 +446,7 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 	}
 
 	callinactive(pmp, ck, 0);
-	callreclaim(pmp, ck, 0);
+	callreclaim(pmp, ck, 1);
 }
 
 /*
