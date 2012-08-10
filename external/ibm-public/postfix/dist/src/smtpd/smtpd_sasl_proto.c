@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.3 2011/05/11 09:11:19 tron Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.4 2012/08/10 12:35:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -152,6 +152,12 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	|| (state->ehlo_discard_mask & EHLO_MASK_AUTH)) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "503 5.5.1 Error: authentication not enabled");
+	return (-1);
+    }
+#define IN_MAIL_TRANSACTION(state) ((state)->sender != 0)
+    if (IN_MAIL_TRANSACTION(state)) {
+	state->error_mask |= MAIL_ERROR_PROTOCOL;
+	smtpd_chat_reply(state, "503 5.5.1 Error: MAIL transaction in progress");
 	return (-1);
     }
     if (smtpd_milters != 0 && (err = milter_other_event(smtpd_milters)) != 0) {
