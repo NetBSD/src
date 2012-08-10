@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.484 2012/08/10 16:18:52 joerg Exp $
+# $NetBSD: mi,v 1.485 2012/08/10 16:22:34 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -637,7 +637,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_tan.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tanh.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcccmds
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename.debug		tests-lib-debug		debug,atf
@@ -2659,7 +2659,7 @@
 ./usr/tests/lib/libm/t_tanh			tests-lib-tests		atf
 ./usr/tests/lib/libobjc				tests-lib-tests		atf
 ./usr/tests/lib/libobjc/Atffile			tests-lib-tests		atf
-./usr/tests/lib/libobjc/t_threads		tests-lib-tests		atf
+./usr/tests/lib/libobjc/t_threads		tests-lib-tests		atf,gcccmds
 ./usr/tests/lib/libposix			tests-lib-tests		atf
 ./usr/tests/lib/libposix/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libposix/bsd			tests-lib-tests		atf
