@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -201,7 +201,7 @@ chfs_check_td_data(struct chfs_mount *chmp,
 		return 1;
 	}
 
-	nref->nref_offset = CHFS_GET_OFS(nref->nref_offset) | CHFS_NORMAL_NODE_MASK;
+	CHFS_MARK_REF_NORMAL(nref);
 	totlen = CHFS_PAD(sizeof(struct chfs_flash_data_node) + len);
 
 	mutex_enter(&chmp->chm_lock_sizes);
@@ -225,9 +225,6 @@ chfs_check_td_node(struct chfs_mount *chmp, struct chfs_tmp_dnode *td)
 		return 0;
 
 	ret = chfs_check_td_data(chmp, td);
-	if (ret == 1) {
-		chfs_mark_node_obsolete(chmp, td->node->nref);
-	}
 	return ret;
 }
 
@@ -289,9 +286,12 @@ static void
 chfs_kill_td(struct chfs_mount *chmp,
     struct chfs_tmp_dnode *td)
 {
-	/* check if we need to mark as obsolete, to avoid double mark */
-	if (!CHFS_REF_OBSOLETE(td->node->nref)) {
-		chfs_mark_node_obsolete(chmp, td->node->nref);
+	struct chfs_vnode_cache *vc;
+	if (td->node) {
+		mutex_enter(&chmp->chm_lock_vnocache);
+		vc = chfs_nref_to_vc(td->node->nref);
+		chfs_remove_and_obsolete(chmp, vc, td->node->nref, &vc->dnode);	
+		mutex_exit(&chmp->chm_lock_vnocache);
 	}
 
 	chfs_free_tmp_dnode(td);
@@ -422,8 +422,8 @@ chfs_add_tmp_dnode_to_tree(struct chfs_mount *chmp,
 	   obsoleted by an earlier node. Insert into the tree */
 	struct chfs_tmp_dnode_info *tmp_tdi = rb_tree_insert_node(&rii->tdi_root, newtdi);
 	if (tmp_tdi != newtdi) {
+		chfs_remove_tmp_dnode_from_tdi(newtdi, newtd);
 		chfs_add_tmp_dnode_to_tdi(tmp_tdi, newtd);
-		newtdi->tmpnode = NULL;
 		chfs_kill_tdi(chmp, newtdi);
 	}
 
@@ -473,6 +473,9 @@ new_fragment(struct chfs_full_dnode *fdn, uint32_t ofs, uint32_t size)
 		newfrag->ofs = ofs;
 		newfrag->size = size;
 		newfrag->node = fdn;
+		if (newfrag->node) {
+			newfrag->node->frags++;
+		}
 	} else {
 		chfs_err("cannot allocate a chfs_node_frag object\n");
 	}
@@ -544,8 +547,6 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 			    this->ofs + this->size - newfrag->ofs - newfrag->size);
 			if (!newfrag2)
 				return ENOMEM;
-			if (this->node)
-				this->node->frags++;
 
 			this->size = newfrag->ofs - this->ofs;
 
@@ -597,17 +598,34 @@ chfs_add_frag_to_fragtree(struct chfs_mount *chmp,
 }
 
 void
-chfs_kill_fragtree(struct rb_tree *fragtree)
+chfs_remove_frags_of_node(struct chfs_mount *chmp, struct rb_tree *fragtree,
+	struct chfs_node_ref *nref)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	struct chfs_node_frag *this, *next;
+
+	this = (struct chfs_node_frag *)RB_TREE_MIN(fragtree);
+	while (this) {
+		next = frag_next(fragtree, this);
+		if (this->node->nref == nref) {
+			rb_tree_remove_node(fragtree, this);
+		}
+		this = next;
+	}
+}
+
+void
+chfs_kill_fragtree(struct chfs_mount *chmp, struct rb_tree *fragtree)
+{
+	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	struct chfs_node_frag *this, *next;
 	//dbg("start\n");
 
 	this = (struct chfs_node_frag *)RB_TREE_MIN(fragtree);
 	while (this) {
-		//for (this = (struct chfs_node_frag *)RB_TREE_MIN(&fragtree); this != NULL; this = (struct chfs_node_frag *)rb_tree_iterate(&fragtree, &this->rb_node, RB_DIR_RIGHT)) {
 		next = frag_next(fragtree, this);
 		rb_tree_remove_node(fragtree, this);
-		chfs_free_node_frag(this);
+		chfs_obsolete_node_frag(chmp, this);
 		//dbg("one frag killed\n");
 		this = next;
 	}
@@ -618,8 +636,8 @@ uint32_t
 chfs_truncate_fragtree(struct chfs_mount *chmp,
 	struct rb_tree *fragtree, uint32_t size)
 {
-	struct chfs_node_frag *frag;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
+	struct chfs_node_frag *frag;
 
 	dbg("truncate to size: %u\n", size);
 
@@ -658,7 +676,8 @@ chfs_truncate_fragtree(struct chfs_mount *chmp,
 
 	/* FIXME Should we check the postion of the last node? (PAGE_CACHE size, etc.) */
 	if (frag->node && (frag->ofs & (PAGE_SIZE - 1)) == 0) {
-		frag->node->nref->nref_offset = CHFS_GET_OFS(frag->node->nref->nref_offset) | CHFS_PRISTINE_NODE_MASK;
+		frag->node->nref->nref_offset =
+			CHFS_GET_OFS(frag->node->nref->nref_offset) | CHFS_PRISTINE_NODE_MASK;
 	}
 
 	return size;
@@ -668,27 +687,21 @@ void
 chfs_obsolete_node_frag(struct chfs_mount *chmp,
     struct chfs_node_frag *this)
 {
+	struct chfs_vnode_cache *vc;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	if (this->node) {
+		KASSERT(this->node->frags != 0);
 		this->node->frags--;
-		if (!this->node->frags) {
-			struct chfs_vnode_cache *vc = chfs_nref_to_vc(this->node->nref);
-			chfs_mark_node_obsolete(chmp, this->node->nref);
-			
-			if (vc->dnode == this->node->nref) {
-				vc->dnode = this->node->nref->nref_next;
-			} else {
-				struct chfs_node_ref *tmp = vc->dnode;
-				while (tmp->nref_next != (struct chfs_node_ref*) vc 
-						&& tmp->nref_next != this->node->nref) {
-					tmp = tmp->nref_next;
-				}
-				if (tmp->nref_next == this->node->nref) {
-					tmp->nref_next = this->node->nref->nref_next;
-				}
-				// FIXME should we free here the this->node->nref?
-			}
-			
+		if (this->node->frags == 0) {
+			KASSERT(!CHFS_REF_OBSOLETE(this->node->nref));
+			mutex_enter(&chmp->chm_lock_vnocache);
+			vc = chfs_nref_to_vc(this->node->nref);
+			dbg("[MARK] lnr: %u ofs: %u\n", this->node->nref->nref_lnr, 
+				this->node->nref->nref_offset);
+
+			chfs_remove_and_obsolete(chmp, vc, this->node->nref, &vc->dnode);	
+			mutex_exit(&chmp->chm_lock_vnocache);
+
 			chfs_free_full_dnode(this->node);
 		} else {
 			CHFS_MARK_REF_NORMAL(this->node->nref);
@@ -712,8 +725,6 @@ chfs_add_full_dnode_to_inode(struct chfs_mount *chmp,
 	newfrag = new_fragment(fd, fd->ofs, fd->size);
 	if (unlikely(!newfrag))
 		return ENOMEM;
-
-	newfrag->node->frags = 1;
 
 	ret = chfs_add_frag_to_fragtree(chmp, &ip->fragtree, newfrag);
 	if (ret)
@@ -815,6 +826,7 @@ chfs_get_data_nodes(struct chfs_mount *chmp,
 		td->data_crc = le32toh(dnode->data_crc);
 		td->node->nref = nref;
 		td->node->size = le32toh(dnode->data_length);
+		td->node->frags = 1;
 		td->overlapped = 0;
 
 		if (td->version > rii->highest_version) {
@@ -892,6 +904,7 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 				if (chfs_check_td_node(chmp, tmp_td)) {
 					if (next_td) {
 						chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
+						chfs_kill_td(chmp, tmp_td);
 					} else {
 						break;
 					}
@@ -908,13 +921,10 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 							vers_next = (struct chfs_tmp_dnode_info *)rb_tree_iterate(&ver_tree, this, RB_DIR_LEFT);
 							while (tmp_td) {
 								next_td = tmp_td->next;
-								if (chfs_check_td_node(chmp, tmp_td) > 1) {
-									chfs_mark_node_obsolete(chmp,
-										tmp_td->node->nref);
-								}
+
 								chfs_free_full_dnode(tmp_td->node);
 								chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
-								chfs_free_tmp_dnode(tmp_td);
+								chfs_kill_td(chmp, tmp_td);
 								tmp_td = next_td;
 							}
 							chfs_free_tmp_dnode_info(this);
@@ -922,12 +932,15 @@ chfs_build_fragtree(struct chfs_mount *chmp, struct chfs_inode *ip,
 							if (!this)
 								break;
 							rb_tree_remove_node(&ver_tree, vers_next);
+							chfs_kill_tdi(chmp, vers_next);
 						}
 						return ret;
 					}
 
 					chfs_remove_tmp_dnode_from_tdi(this, tmp_td);
 					chfs_free_tmp_dnode(tmp_td);
+					// shouldn't obsolete tmp_td here,
+					// because tmp_td->node was added to the inode
 				}
 				tmp_td = next_td;
 			}
@@ -946,16 +959,15 @@ int chfs_read_inode(struct chfs_mount *chmp, struct chfs_inode *ip)
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
 retry:
-	/* XXX locking */
-	//mutex_enter(&chmp->chm_lock_vnocache);
+	mutex_enter(&chmp->chm_lock_vnocache);
 	switch (vc->state) {
 	case VNO_STATE_UNCHECKED:
 	case VNO_STATE_CHECKEDABSENT:
-//		chfs_vnode_cache_set_state(chmp, vc, VNO_STATE_READING);
 		vc->state = VNO_STATE_READING;
 		break;
 	case VNO_STATE_CHECKING:
 	case VNO_STATE_GC:
+		mutex_exit(&chmp->chm_lock_vnocache);
 		//sleep_on_spinunlock(&chmp->chm_lock_vnocache);
 		//KASSERT(!mutex_owned(&chmp->chm_lock_vnocache));
 		goto retry;
@@ -970,7 +982,7 @@ retry:
 	default:
 		panic("BUG() Bad vno cache state.");
 	}
-	//mutex_exit(&chmp->chm_lock_vnocache);
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 	return chfs_read_inode_internal(chmp, ip);
 }
