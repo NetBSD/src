@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.6 2012/04/13 14:50:35 ttoth Exp $	*/
+/*	$NetBSD: chfs.h,v 1.7 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -494,6 +494,10 @@ int chfs_update_eb_dirty(struct chfs_mount *,
     struct chfs_eraseblock *, uint32_t);
 void chfs_add_node_to_list(struct chfs_mount *, struct chfs_vnode_cache *,
     struct chfs_node_ref *, struct chfs_node_ref **);
+void chfs_remove_node_from_list(struct chfs_mount *, struct chfs_vnode_cache *,
+    struct chfs_node_ref *, struct chfs_node_ref **);
+void chfs_remove_and_obsolete(struct chfs_mount *, struct chfs_vnode_cache *,
+    struct chfs_node_ref *, struct chfs_node_ref **);
 void chfs_add_fd_to_inode(struct chfs_mount *,
     struct chfs_inode *, struct chfs_dirent *);
 void chfs_add_vnode_ref_to_vc(struct chfs_mount *, struct chfs_vnode_cache *,
@@ -522,7 +526,6 @@ chfs_nref_to_vc(struct chfs_node_ref *nref)
 			dbg("Empty!\n");
 		}
 	}
-	//dbg("vno: %llu\n", ((struct chfs_vnode_cache *)(nref))->vno);
 
 	//dbg("NREF_TO_VC: GET IT\n");
 	//dbg("nref_next: %p, lnr: %u, ofs: %u\n", nref->nref_next, nref->nref_lnr, nref->nref_offset);
@@ -564,7 +567,9 @@ void chfs_free_tmp_dnode_info(struct chfs_tmp_dnode_info *);
 /* chfs_readinode.c */
 int chfs_read_inode(struct chfs_mount *, struct chfs_inode *);
 int chfs_read_inode_internal(struct chfs_mount *, struct chfs_inode *);
-void chfs_kill_fragtree(struct rb_tree *);
+void chfs_remove_frags_of_node(struct chfs_mount *, struct rb_tree *,
+	struct chfs_node_ref *);
+void chfs_kill_fragtree(struct chfs_mount *, struct rb_tree *);
 uint32_t chfs_truncate_fragtree(struct chfs_mount *,
 	struct rb_tree *, uint32_t);
 int chfs_add_full_dnode_to_inode(struct chfs_mount *,
@@ -653,8 +658,6 @@ void chfs_change_size_wasted(struct chfs_mount *,
 /* chfs_vnode_cache.c */
 struct chfs_vnode_cache **chfs_vnocache_hash_init(void);
 void chfs_vnocache_hash_destroy(struct chfs_vnode_cache **);
-void chfs_vnode_cache_set_state(struct chfs_mount *,
-    struct chfs_vnode_cache *, int);
 struct chfs_vnode_cache* chfs_vnode_cache_get(struct chfs_mount *, ino_t);
 void chfs_vnode_cache_add(struct chfs_mount *, struct chfs_vnode_cache *);
 void chfs_vnode_cache_remove(struct chfs_mount *, struct chfs_vnode_cache *);

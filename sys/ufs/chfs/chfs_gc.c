@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.2 2011/11/24 21:09:37 agc Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -92,6 +92,7 @@ chfs_gc_thread(void *data)
 		if (chfs_gc_thread_should_wake(chmp)) {
 //			mutex_exit(&chmp->chm_lock_mountfields);
 			if (chfs_gcollect_pass(chmp) == ENOSPC) {
+				mutex_exit(&chmp->chm_lock_mountfields);
 				dbg_gc("No space for garbage collection\n");
 				panic("No space for garbage collection\n");
 				/* XXX why break here? i have added a panic
@@ -100,7 +101,7 @@ chfs_gc_thread(void *data)
 				break;
 			}
 			/* XXX gcollect_pass drops the mutex */
-			mutex_enter(&chmp->chm_lock_mountfields);
+			//mutex_enter(&chmp->chm_lock_mountfields);
 		}
 
 		cv_timedwait_sig(&gc->gcth_wakeup,
@@ -254,6 +255,8 @@ extern rb_tree_ops_t frag_rbtree_ops;
 int
 chfs_check(struct chfs_mount *chmp, struct  chfs_vnode_cache *chvc)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
 	struct chfs_inode *ip;
 	struct vnode *vp;
 	int ret;
@@ -273,7 +276,9 @@ chfs_check(struct chfs_mount *chmp, struct  chfs_vnode_cache *chvc)
 	rb_tree_init(&ip->fragtree, &frag_rbtree_ops);
 	TAILQ_INIT(&ip->dents);
 
+	mutex_exit(&chmp->chm_lock_vnocache);
 	ret = chfs_read_inode_internal(chmp, ip);
+	mutex_enter(&chmp->chm_lock_vnocache);
 	if (!ret) {
 		chfs_clear_inode(chmp, ip);
 	}
@@ -286,52 +291,39 @@ chfs_check(struct chfs_mount *chmp, struct  chfs_vnode_cache *chvc)
 void
 chfs_clear_inode(struct chfs_mount *chmp, struct chfs_inode *ip)
 {
+	KASSERT(mutex_owned(&chmp->chm_lock_vnocache));
+
 	struct chfs_dirent *fd, *tmpfd;
 	struct chfs_vnode_cache *chvc;
+	struct chfs_node_ref *nref;
 
-
-	/* XXX not sure if this is the correct locking */
-//	mutex_enter(&chmp->chm_lock_vnocache);
 	chvc = ip->chvc;
 	/* shouldnt this be: */
 	//bool deleted = (chvc && !(chvc->pvno || chvc->nlink));
 	int deleted = (chvc && !(chvc->pvno | chvc->nlink));
 
 	if (chvc && chvc->state != VNO_STATE_CHECKING) {
-//		chfs_vnode_cache_state_set(chmp, chvc, VNO_STATE_CLEARING);
 		chvc->state = VNO_STATE_CLEARING;
 	}
 
-	if (chvc->v && ((struct  chfs_vnode_cache *)chvc->v != chvc)) {
-		if (deleted)
-			chfs_mark_node_obsolete(chmp, chvc->v);
-		//chfs_free_refblock(chvc->v);
+	while (deleted && chvc->v != (struct chfs_node_ref *)chvc) {
+		nref = chvc->v;
+		chfs_remove_and_obsolete(chmp, chvc, nref, &chvc->v);
 	}
-//	mutex_enter(&chmp->chm_lock_vnocache);
 
-	chfs_kill_fragtree(&ip->fragtree);
-/*
-	fd = TAILQ_FIRST(&ip->dents);
-	while (fd) {
-		TAILQ_REMOVE(&ip->dents, fd, fds);
-		chfs_free_dirent(fd);
-		fd = TAILQ_FIRST(&ip->dents);
-	}
-*/
+	chfs_kill_fragtree(chmp, &ip->fragtree);
 
 	TAILQ_FOREACH_SAFE(fd, &ip->dents, fds, tmpfd) {
 		chfs_free_dirent(fd);
 	}
 
 	if (chvc && chvc->state == VNO_STATE_CHECKING) {
-		chfs_vnode_cache_set_state(chmp,
-		    chvc, VNO_STATE_CHECKEDABSENT);
+		chvc->state = VNO_STATE_CHECKEDABSENT;
 		if ((struct chfs_vnode_cache *)chvc->v == chvc &&
 		    (struct chfs_vnode_cache *)chvc->dirents == chvc &&
 		    (struct chfs_vnode_cache *)chvc->dnode == chvc)
 			chfs_vnode_cache_remove(chmp, chvc);
 	}
-
 }
 
 struct chfs_eraseblock *
@@ -427,7 +419,6 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
-//	mutex_enter(&chmp->chm_lock_mountfields);
 	for (;;) {
 		mutex_enter(&chmp->chm_lock_sizes);
 
@@ -437,7 +428,6 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 
 		if (chmp->chm_checked_vno > chmp->chm_max_vno) {
 			mutex_exit(&chmp->chm_lock_sizes);
-			mutex_exit(&chmp->chm_lock_mountfields);
 			dbg_gc("checked_vno (#%llu) > max_vno (#%llu)\n",
 			    (unsigned long long)chmp->chm_checked_vno,
 			    (unsigned long long)chmp->chm_max_vno);
@@ -474,7 +464,6 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 		case VNO_STATE_GC:
 		case VNO_STATE_CHECKING:
 			mutex_exit(&chmp->chm_lock_vnocache);
-			mutex_exit(&chmp->chm_lock_mountfields);
 			dbg_gc("VNO_STATE GC or CHECKING\n");
 			panic("CHFS BUG - vc state gc or checking\n");
 
@@ -486,12 +475,10 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 
 //			sleep_on_spinunlock(&chmp->chm_lock_vnocache);
 //			KASSERT(!mutex_owned(&chmp->chm_lock_vnocache));
-			mutex_exit(&chmp->chm_lock_mountfields);
 			return 0;
 
 		default:
 			mutex_exit(&chmp->chm_lock_vnocache);
-			mutex_exit(&chmp->chm_lock_mountfields);
 			dbg_gc("default\n");
 			panic("CHFS BUG - vc state is other what we"
 			    " checked\n");
@@ -500,19 +487,16 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 			;
 		}
 
-		chfs_vnode_cache_set_state(chmp, vc, VNO_STATE_CHECKING);
+		vc->state = VNO_STATE_CHECKING;
 
 		/* XXX check if this is too heavy to call under
 		 * chm_lock_vnocache
 		 */
 		ret = chfs_check(chmp, vc);
 		dbg_gc("set state\n");
-		chfs_vnode_cache_set_state(chmp,
-		    vc, VNO_STATE_CHECKEDABSENT);
+		vc->state = VNO_STATE_CHECKEDABSENT;
 
 		mutex_exit(&chmp->chm_lock_vnocache);
-		mutex_exit(&chmp->chm_lock_mountfields);
-
 		return ret;
 	}
 
@@ -527,11 +511,9 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 		dbg_gc("!eb\n");
 		if (!TAILQ_EMPTY(&chmp->chm_erase_pending_queue)) {
 			mutex_exit(&chmp->chm_lock_sizes);
-			mutex_exit(&chmp->chm_lock_mountfields);
 			return EAGAIN;
 		}
 		mutex_exit(&chmp->chm_lock_sizes);
-		mutex_exit(&chmp->chm_lock_mountfields);
 		return EIO;
 	}
 
@@ -557,7 +539,6 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 			//dbg_gc("!nref\n");
 			eb->gc_node = nref;
 			mutex_exit(&chmp->chm_lock_sizes);
-			mutex_exit(&chmp->chm_lock_mountfields);
 			panic("CHFS BUG - nref is NULL)\n");
 		}
 	}
@@ -576,19 +557,19 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 		goto lock_size;
 	}
 
-	dbg_gc("nref lnr: %u - offset: %u\n", nref->nref_lnr, nref->nref_offset);
-	vc = chfs_nref_to_vc(nref);
-
 	mutex_exit(&chmp->chm_lock_sizes);
 
 	//dbg_gc("enter vnocache lock on #%llu\n", vc->vno);
 	mutex_enter(&chmp->chm_lock_vnocache);
 
+	dbg_gc("nref lnr: %u - offset: %u\n", nref->nref_lnr, nref->nref_offset);
+	vc = chfs_nref_to_vc(nref);
+
 	dbg_gc("switch\n");
 	switch(vc->state) {
         case VNO_STATE_CHECKEDABSENT:
 		if (CHFS_REF_FLAGS(nref) == CHFS_PRISTINE_NODE_MASK) {
-			chfs_vnode_cache_set_state(chmp, vc, VNO_STATE_GC);
+			vc->state = VNO_STATE_GC;
 		}
 		break;
 
@@ -599,7 +580,6 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
         case VNO_STATE_CHECKING:
         case VNO_STATE_GC:
 		mutex_exit(&chmp->chm_lock_vnocache);
-		mutex_exit(&chmp->chm_lock_mountfields);
 		panic("CHFS BUG - vc state unchecked,"
 		    " checking or gc (vno #%llu, num #%d)\n",
 		    (unsigned long long)vc->vno, vc->state);
@@ -611,19 +591,15 @@ chfs_gcollect_pass(struct chfs_mount *chmp)
 
 //		sleep_on_spinunlock(&chmp->chm_lock_vnocache);
 //		KASSERT(!mutex_owned(&chmp->chm_lock_vnocache));
-		mutex_exit(&chmp->chm_lock_mountfields);
 		return 0;
 	}
 
 	if (vc->state == VNO_STATE_GC) {
 		dbg_gc("vc->state == VNO_STATE_GC\n");
+		vc->state = VNO_STATE_CHECKEDABSENT;
 		mutex_exit(&chmp->chm_lock_vnocache);
 		ret = chfs_gcollect_pristine(chmp, eb, NULL, nref);
 
-//		chfs_vnode_cache_state_set(chmp,
-//		    vc, VNO_STATE_CHECKEDABSENT);
-		/* XXX locking? */
-		vc->state = VNO_STATE_CHECKEDABSENT;
 		//TODO wake_up(&chmp->chm_vnocache_wq);
 		if (ret != EBADF)
 			goto test_gcnode;
@@ -691,7 +667,6 @@ eraseit:
 	}
 
 	mutex_exit(&chmp->chm_lock_sizes);
-	mutex_exit(&chmp->chm_lock_mountfields);
 	dbg_gc("return\n");
 	return ret;
 }
@@ -814,8 +789,10 @@ retry:
 
 	mutex_exit(&chmp->chm_lock_sizes);
 	//TODO should we set free_size?
-	chfs_mark_node_obsolete(chmp, nref);
+	//chfs_mark_node_obsolete(chmp, nref);
+	mutex_enter(&chmp->chm_lock_vnocache);
 	chfs_add_vnode_ref_to_vc(chmp, chvc, newnref);
+	mutex_exit(&chmp->chm_lock_vnocache);
 	return 0;
 }
 
@@ -881,7 +858,7 @@ chfs_gcollect_live(struct chfs_mount *chmp,
 	}
 
 
-	/* It's a dirent? */
+	/* Is it a dirent? */
 	dbg_gc("find full dirent\n");
 	is_dirent = false;
 	TAILQ_FOREACH(fd, &ip->dents, fds) {
@@ -928,7 +905,6 @@ chfs_gcollect_dirent(struct chfs_mount *chmp,
 {
 	struct vnode *vnode = NULL;
 	struct chfs_inode *ip;
-	struct chfs_node_ref *prev;
 	dbg_gc("gcollect_dirent\n");
 
 	vnode = chfs_vnode_lookup(chmp, fd->vno);
@@ -940,23 +916,11 @@ chfs_gcollect_dirent(struct chfs_mount *chmp,
 
 	ip = VTOI(vnode);
 
-	prev = parent->chvc->dirents;
-	if (prev == fd->nref) {
-		parent->chvc->dirents = prev->nref_next;
-		dbg_gc("fd nref removed from dirents list\n");
-		prev = NULL;
-	}
-	while (prev) {
-		if (prev->nref_next == fd->nref) {
-			prev->nref_next = fd->nref->nref_next;
-			dbg_gc("fd nref removed from dirents list\n");
-			break;
-		}
-		prev = prev->nref_next;
-	}
+	mutex_enter(&chmp->chm_lock_vnocache);
+	chfs_remove_and_obsolete(chmp, parent->chvc, fd->nref,
+		&parent->chvc->dirents);
+	mutex_exit(&chmp->chm_lock_vnocache);
 
-	prev = fd->nref;
-	chfs_mark_node_obsolete(chmp, fd->nref);
 	return chfs_write_flash_dirent(chmp,
 	    parent, ip, fd, fd->vno, ALLOC_GC);
 }
@@ -1048,7 +1012,11 @@ chfs_gcollect_deletion_dirent(struct chfs_mount *chmp,
 
 //		kmem_free(chfdn, nref_len);
 
-		chfs_mark_node_obsolete(chmp, fd->nref);
+		mutex_enter(&chmp->chm_lock_vnocache);
+		chfs_remove_and_obsolete(chmp, parent->chvc, fd->nref,
+			&parent->chvc->dirents);
+		mutex_exit(&chmp->chm_lock_vnocache);
+		//chfs_mark_node_obsolete(chmp, fd->nref);
 		return chfs_write_flash_dirent(chmp,
 		    parent, NULL, fd, fd->vno, ALLOC_GC);
 	}
@@ -1065,7 +1033,8 @@ chfs_gcollect_dnode(struct chfs_mount *chmp,
     struct chfs_eraseblock *orig_cheb, struct chfs_inode *ip,
     struct chfs_full_dnode *fn, uint32_t orig_start, uint32_t orig_end)
 {
-	struct chfs_node_ref *nref, *prev;
+	struct chfs_node_ref *nref;
+	//struct chfs_node_ref *prev;
 	struct chfs_full_dnode *newfn;
 	struct chfs_flash_data_node *fdnode;
 	int ret = 0, retries = 0;
@@ -1211,26 +1180,16 @@ retry:
 	newfn->nref = nref;
 	newfn->ofs = fn->ofs;
 	newfn->size = fn->size;
-	newfn->frags = fn->frags;
+	newfn->frags = 0;
 
-	//TODO should we remove fd from dnode list?
-
-	prev = ip->chvc->dnode;
-	if (prev == fn->nref) {
-		ip->chvc->dnode = prev->nref_next;
-		prev = NULL;
-	}
-	while (prev) {
-		if (prev->nref_next == fn->nref) {
-			prev->nref_next = fn->nref->nref_next;
-			break;
-		}
-		prev = prev->nref_next;
-	}
+	mutex_enter(&chmp->chm_lock_vnocache);
+	chfs_remove_frags_of_node(chmp, &ip->fragtree, fn->nref);
+	chfs_remove_and_obsolete(chmp, ip->chvc, fn->nref, &ip->chvc->dnode);
 
 	chfs_add_full_dnode_to_inode(chmp, ip, newfn);
 	chfs_add_node_to_list(chmp,
 	    ip->chvc, newfn->nref, &ip->chvc->dnode);
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 out:
 	kmem_free(data, totlen);

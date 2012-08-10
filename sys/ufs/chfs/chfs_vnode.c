@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.5 2012/04/13 14:50:35 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.6 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -211,7 +211,6 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 
 	mutex_enter(&chmp->chm_lock_vnocache);
 	chvc = chfs_vnode_cache_get(chmp, vno);
-	mutex_exit(&chmp->chm_lock_vnocache);
 
 	chvc->pvno = pdir->ino;
 	chvc->vno_version = kmem_alloc(sizeof(uint64_t), KM_SLEEP);
@@ -220,8 +219,8 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		chvc->nlink = 1;
 	else
 		chvc->nlink = 2;
-//	chfs_vnode_cache_set_state(chmp, chvc, VNO_STATE_CHECKEDABSENT);
 	chvc->state = VNO_STATE_CHECKEDABSENT;
+	mutex_exit(&chmp->chm_lock_vnocache);
 
 	ip = VTOI(vp);
 	ip->ino = vno;
