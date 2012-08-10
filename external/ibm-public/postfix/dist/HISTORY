@@ -16829,3 +16829,20 @@ Apologies for any names omitted.
 	command must wait until its requests have reached the pickup
 	and qmgr servers before closing the UNIX-domain request
 	sockets.  Files: postqueue/postqueue.c, postqueue/Makefile.in.
+
+20120621
+
+	Bugfix (introduced: Postfix 2.8): the unused "pass" trigger
+	client could close the wrong file descriptors.  File:
+	util/unix_pass_trigger.c.
+
+20120702
+
+	Bugfix (introduced: 19990127): the BIFF client leaked an
+	unprivileged UDP socket. Fix by Jaroslav Skarvada.  File:
+	local/biff_notify.c.
+
+20120730
+
+	Bugfix (introduced: 20000314): AUTH is not allowed after
+	MAIL. Timo Sirainen.  File: smtpd/smtpd_sasl_proto.c.
