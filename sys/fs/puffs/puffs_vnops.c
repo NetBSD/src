@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.173 2012/08/10 14:52:56 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.174 2012/08/10 16:49:35 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.173 2012/08/10 14:52:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.174 2012/08/10 16:49:35 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -418,6 +418,7 @@ static void callreclaim(struct puffs_mount *, puffs_cookie_t, int);
 static int  flushvncache(struct vnode *, off_t, off_t, bool);
 static void update_va(struct vnode *, struct vattr *, struct vattr *,
 		      struct timespec *, struct timespec *, int);
+static void update_parent(struct vnode *, struct vnode *);
 
 
 #define PUFFS_ABORT_LOOKUP	1
@@ -503,6 +504,23 @@ puffs_vnop_lookup(void *v)
 
 	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %x\n",
 	    cnp->cn_nameptr, dvp, cnp->cn_nameiop));
+
+	/*
+	 * If dotdot cache is enabled, unlock parent, lock ..
+	 * (grand-parent) and relock parent.
+	 */
+	if (PUFFS_USE_DOTDOTCACHE(pmp) && (cnp->cn_flags & ISDOTDOT)) {
+		VOP_UNLOCK(dvp);
+
+		vp = VPTOPP(ap->a_dvp)->pn_parent;
+		vref(vp);
+
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+
+		*ap->a_vpp = vp;
+		return 0;
+	}
 
 	/*
 	 * Check if someone fed it into the cache
@@ -674,6 +692,11 @@ puffs_vnop_lookup(void *v)
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
 
 	VPTOPP(vp)->pn_nlookup++;
+
+	if (PUFFS_USE_DOTDOTCACHE(pmp) &&
+	    (VPTOPP(vp)->pn_parent != dvp))
+		update_parent(vp, dvp);
+
  out:
 	if (cvp != NULL) {
 		mutex_exit(&cpn->pn_sizemtx);
@@ -763,6 +786,10 @@ puffs_vnop_create(void *v)
 
 	VPTOPP(*ap->a_vpp)->pn_nlookup++;
 
+	if (PUFFS_USE_DOTDOTCACHE(pmp) &&
+	    (VPTOPP(*ap->a_vpp)->pn_parent != dvp))
+		update_parent(*ap->a_vpp, dvp);
+
  out:
 	vput(dvp);
 
@@ -821,6 +848,10 @@ puffs_vnop_mknod(void *v)
 	}
 
 	VPTOPP(*ap->a_vpp)->pn_nlookup++;
+
+	if (PUFFS_USE_DOTDOTCACHE(pmp) &&
+	    (VPTOPP(*ap->a_vpp)->pn_parent != dvp))
+		update_parent(*ap->a_vpp, dvp);
 
  out:
 	vput(dvp);
@@ -990,6 +1021,20 @@ update_va(struct vnode *vp, struct vattr *vap, struct vattr *rvap,
 
 		pn->pn_va_timeout = TTL_TO_TIMEOUT(va_ttl);
 	}
+}
+
+static void 
+update_parent(struct vnode *vp, struct vnode *dvp)
+{
+	struct puffs_node *pn = VPTOPP(vp);
+
+	if (pn->pn_parent != NULL) {
+		KASSERT(pn->pn_parent != dvp);
+		vrele(pn->pn_parent);
+	}
+
+	vref(dvp);
+	pn->pn_parent = dvp;
 }
 
 int
@@ -1363,6 +1408,13 @@ puffs_vnop_reclaim(void *v)
 		int nlookup = VPTOPP(vp)->pn_nlookup;
 
 		callreclaim(MPTOPUFFSMP(vp->v_mount), VPTOPNC(vp), nlookup);
+	}
+
+	if (PUFFS_USE_DOTDOTCACHE(pmp)) {
+		if (__predict_true(VPTOPP(vp)->pn_parent != NULL))
+			vrele(VPTOPP(vp)->pn_parent);
+		else
+			KASSERT(vp->v_vflag & VV_ROOT);
 	}
 
 	puffs_putvnode(vp);
@@ -1797,6 +1849,10 @@ puffs_vnop_mkdir(void *v)
 
 	VPTOPP(*ap->a_vpp)->pn_nlookup++;
 
+	if (PUFFS_USE_DOTDOTCACHE(pmp) &&
+	    (VPTOPP(*ap->a_vpp)->pn_parent != dvp))
+		update_parent(*ap->a_vpp, dvp);
+
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
@@ -1963,6 +2019,10 @@ puffs_vnop_symlink(void *v)
 
 	VPTOPP(*ap->a_vpp)->pn_nlookup++;
 
+	if (PUFFS_USE_DOTDOTCACHE(pmp) && 
+	    (VPTOPP(*ap->a_vpp)->pn_parent != dvp))
+		update_parent(*ap->a_vpp, dvp);
+
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(symlink);
@@ -2060,8 +2120,14 @@ puffs_vnop_rename(void *v)
 	 * XXX: stay in touch with the cache.  I don't like this, but
 	 * don't have a better solution either.  See also puffs_link().
 	 */
-	if (error == 0)
+	if (error == 0) {
 		puffs_updatenode(fpn, PUFFS_UPDATECTIME, 0);
+
+		if (PUFFS_USE_DOTDOTCACHE(pmp) &&
+		    (VPTOPP(fvp)->pn_parent != tdvp))
+			update_parent(fvp, tdvp);
+	}
+
 
  out:
 	if (doabort)
