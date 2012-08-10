@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.17 2011/05/14 14:00:03 nonaka Exp $
+#	$NetBSD: files.pxa2x0,v 1.17.10.1 2012/08/10 12:15:52 jdc Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -29,7 +29,7 @@ file arch/arm/xscale/pxa2x0_gpio.c		pxagpio needs-flag
 attach com at pxaip with pxauart
 file arch/arm/xscale/pxa2x0_com.c		pxauart
 file arch/arm/xscale/pxa2x0_a4x_space.c		pxauart | obio
-file arch/arm/xscale/pxa2x0_a4x_io.S		pxauart | obio
+file arch/arm/arm/bus_space_a4x.S		pxauart | obio
 defflag	opt_com.h			FFUARTCONSOLE STUARTCONSOLE
 					BTUARTCONSOLE HWUARTCONSOLE
 
