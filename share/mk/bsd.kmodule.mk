@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.36 2012/03/15 02:00:52 joerg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.37 2012/08/10 16:34:23 joerg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -18,9 +18,7 @@ CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE -DSYSCTL_INCLUDE_DESCR
 
 # XXX until the kernel is fixed again...
-.if defined(HAVE_GCC) || defined(HAVE_PCC) || defined(HAVE_LLVM)
 CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
-.endif
 
 # XXX This is a workaround for platforms that have relative relocations
 # that, when relocated by the module loader, result in addresses that
