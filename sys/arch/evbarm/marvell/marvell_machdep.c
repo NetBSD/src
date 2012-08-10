@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.13 2012/08/03 08:01:35 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.14 2012/08/10 02:33:11 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.13 2012/08/03 08:01:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.14 2012/08/10 02:33:11 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -294,10 +294,10 @@ initarm(void *arg)
 	u_int l1pagetable;
 	int loop, pt_index, cs, memtag = 0, iotag = 0, window;
 
+	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
+
 	/* map some peripheral registers */
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), marvell_devmap);
-
-	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
 	/* Get ready for splfoo() */
 	switch (mvsoc_model()) {
