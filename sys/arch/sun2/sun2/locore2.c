@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.25 2011/07/17 20:54:48 joerg Exp $	*/
+/*	$NetBSD: locore2.c,v 1.26 2012/08/10 14:52:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.25 2011/07/17 20:54:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.26 2012/08/10 14:52:26 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.25 2011/07/17 20:54:48 joerg Exp $");
 #include <sys/exec_elf.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
@@ -255,6 +257,7 @@ _verify_hardware(void)
 void 
 _bootstrap(void)
 {
+	extern struct consdev consdev_prom;	/* XXX */
 	vaddr_t va;
 
 	/* First, Clear BSS. */
@@ -262,6 +265,12 @@ _bootstrap(void)
 
 	/* Initialize the PROM. */
 	prom_init();
+
+	/*
+	 * Initialize console to point to the PROM (output only) table
+	 * for early printf calls.
+	 */
+	cn_tab = &consdev_prom;
 
 	/* Copy the IDPROM from control space. */
 	idprom_init();
