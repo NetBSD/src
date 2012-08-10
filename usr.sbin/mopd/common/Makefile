@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2011/08/25 16:47:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2012/08/10 12:10:29 joerg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -20,8 +20,5 @@ version.c: VERSION
 
 .include <bsd.lib.mk>
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.print.c+=	-Wno-pointer-sign
-.endif
-
 COPTS.log.c+=	-Wno-format-nonliteral
