@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.14 2011/03/07 05:09:11 joerg Exp $ */
+/* $NetBSD: crt0.c,v 1.15 2012/08/10 12:37:39 martin Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -56,7 +56,7 @@ _start:\n\
 	sub	%sp, 24, %sp		! expand to standard stack frame size\n\
 	mov	%g3, %o3\n\
 	mov	%g2, %o4\n\
-	call	___start\n\
+	ba	___start\n\
 	 mov	%g1, %o5\n\
 ");
 
@@ -100,7 +100,7 @@ ___start(int argc, char **argv, char **envp,
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.14 2011/03/07 05:09:11 joerg Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.15 2012/08/10 12:37:39 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
