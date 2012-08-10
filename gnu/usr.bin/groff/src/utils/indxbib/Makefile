@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2010/12/16 22:54:22 joerg Exp $
+# $NetBSD: Makefile,v 1.8 2012/08/10 12:12:22 joerg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/utils/indxbib/Makefile,v 1.7 2003/05/01 13:22:21 ru Exp $
 
 DIST_SUBDIR=	src/utils/indxbib
 
-PROG=		indxbib
+PROG_CXX=	indxbib
 SRCS=		indxbib.cpp signal.c
 DPADD+=		${LIBBIB}
 LDADD+=		${LIBBIB}
