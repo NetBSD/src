@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.8 2012/07/22 00:53:22 rmind Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.9 2012/08/10 09:26:58 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -661,7 +661,6 @@ chfs_read(void *v)
 		goto out;
 	}
 
-
 	dbg("start reading\n");
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = ip->size - uio->uio_offset;
@@ -706,10 +705,14 @@ chfs_read(void *v)
 			break;
 		brelse(bp, 0);
 	}
+
 	if (bp != NULL)
 		brelse(bp, 0);
 
 out:
+	// FIXME HACK
+	ip->ino = ip->chvc->vno;
+
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->iflag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
@@ -725,6 +728,7 @@ out:
 
 	dbg("[END]\n");
 	fstrans_done(vp->v_mount);
+
 	return (error);
 }
 
@@ -989,7 +993,7 @@ out:
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 
-	//XXX hack, i write the next line after i know ip->i_size and vp->v_size don't equal
+	//FIXME HACK
 	chfs_set_vnode_size(vp, vp->v_size);
 
 
@@ -1492,22 +1496,18 @@ chfs_reclaim(void *v)
 
 	//dbg("reclaim() | ino: %llu\n", (unsigned long long)ip->ino);
 	//mutex_enter(&ip->inode_lock);
+	mutex_enter(&chmp->chm_lock_mountfields);
 
 	mutex_enter(&chmp->chm_lock_vnocache);
-	chfs_vnode_cache_set_state(chmp,
-	    ip->chvc, VNO_STATE_CHECKEDABSENT);
+	ip->chvc->state = VNO_STATE_CHECKEDABSENT;
 	mutex_exit(&chmp->chm_lock_vnocache);
 
 	chfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 
-	if (ip->ch_type == CHT_REG || ip->ch_type == CHT_LNK ||
-		ip->ch_type == CHT_CHR || ip->ch_type == CHT_BLK || 
-		ip->ch_type == CHT_FIFO || ip->ch_type == CHT_SOCK) {
-		chfs_kill_fragtree(&ip->fragtree);
-	}
+	chfs_kill_fragtree(chmp, &ip->fragtree);
 
 	fd = TAILQ_FIRST(&ip->dents);
-	while(fd) {
+	while (fd) {
 		TAILQ_REMOVE(&ip->dents, fd, fds);
 		chfs_free_dirent(fd);
 		fd = TAILQ_FIRST(&ip->dents);
@@ -1525,6 +1525,9 @@ chfs_reclaim(void *v)
 	genfs_node_destroy(vp);
 	pool_put(&chfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
+
+	mutex_exit(&chmp->chm_lock_mountfields);
+
 	return (0);
 }
 
@@ -1570,9 +1573,9 @@ chfs_strategy(void *v)
 	if (read) {
 		err = chfs_read_data(chmp, vp, bp);
 	} else {
-		fd = chfs_alloc_full_dnode();
-
 		mutex_enter(&chmp->chm_lock_mountfields);
+
+		fd = chfs_alloc_full_dnode();
 
 		err = chfs_write_flash_dnode(chmp, vp, bp, fd);
 		if (err) {
@@ -1580,6 +1583,7 @@ chfs_strategy(void *v)
 			goto out;
 		}
 
+		ip = VTOI(vp);
 		err = chfs_add_full_dnode_to_inode(chmp, ip, fd);
 		/*if (err) {
 			mutex_exit(&chmp->chm_lock_mountfields);
