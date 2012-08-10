@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2011/08/14 17:50:16 christos Exp $
+#	$NetBSD: Makefile,v 1.47 2012/08/10 12:10:28 joerg Exp $
 #
 
 .include <bsd.own.mk>
@@ -44,11 +44,9 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs ${UFSSRC}/ext2fs
 
 .if !defined(HOSTPROGNAME)
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in i386 macppc
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
-.endif
 .endif
 
 .include <bsd.prog.mk>
