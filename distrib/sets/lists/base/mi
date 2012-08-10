@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1000 2012/08/08 14:08:01 christos Exp $
+# $NetBSD: mi,v 1.1001 2012/08/10 16:22:31 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -850,6 +850,7 @@
 ./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
+./usr/include/gcc-4.1				base-obsolete		!gcc,obsolete
 ./usr/include/gcc-4.1				base-c-usr		gcc=4
 ./usr/include/gcc-4.1				base-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.5				base-c-usr
