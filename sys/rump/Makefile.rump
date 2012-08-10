@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.62 2012/08/05 15:37:39 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.63 2012/08/10 16:05:27 joerg Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -16,7 +16,7 @@ CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .endif
 
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 3
+.if (defined(HAVE_GCC) && ${HAVE_GCC} >= 3) || defined(HAVE_LLVM)
 CFLAGS+=	-Wsign-compare
 CFLAGS+=	-Wno-pointer-sign -Wno-attributes
 CFLAGS+=	-std=gnu99
