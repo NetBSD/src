@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.6 2012/08/10 08:22:49 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.7 2012/08/11 20:09:08 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -3527,7 +3527,9 @@ parse_control(
 			tmpctl.parsegettc.parse_state |= parse->timedata.parse_state &
 				(PARSEB_PPS|PARSEB_S_PPS);
 
-			(void) parsestate(tmpctl.parsegettc.parse_state, tt, BUFFER_SIZES(start, tt, 512));
+			(void)parsestate(tmpctl.parsegettc.parse_state, tt, BUFFER_SIZES(start, tt, 512));
+
+			tt += strlen(tt);
 
 			tt = ap(start, 512, tt, "\"");
 
@@ -3546,13 +3548,18 @@ parse_control(
 		}
 		else
 		{
+			int count = tmpctl.parseformat.parse_count - 1;
+
 			start = tt = add_var(&out->kv_list, 80, RO|DEF);
 			tt = ap(start, 80, tt, "refclock_format=\"");
 
-			tt = ap(start, 80, tt, "*.*s", 
-			tmpctl.parseformat.parse_count,
-			tmpctl.parseformat.parse_count,
-			tmpctl.parseformat.parse_buffer);
+			if (count > 0) {
+				tt = ap(start, 80, tt, "%*.*s", 
+			        	count,
+			        	count,
+			        	tmpctl.parseformat.parse_buffer);
+			}
+
 			tt = ap(start, 80, tt, "\"");
 		}
 
@@ -4535,8 +4542,8 @@ gps16x_message(
 					if (utc.valid)
 					{
 						p = ap(buffer, sizeof(buffer), p, "gps_utc_correction=\"");
-						p += strlen(p);
 						mk_utcinfo(p, utc.t0t.wn, utc.WNlsf, utc.DNt, utc.delta_tls, utc.delta_tlsf, BUFFER_SIZE(buffer, p));
+						p += strlen(p);
 						p = ap(buffer, sizeof(buffer), p, "\"");
 					}
 					else
@@ -5457,7 +5464,6 @@ trimbletsip_message(
 				t = ap(pbuffer, sizeof(pbuffer), t, "-MANUAL, ");
 			else
 				t = ap(pbuffer, sizeof(pbuffer), t, "-AUTO, ");
-			t += strlen(t);
 			
 			t = ap(pbuffer, sizeof(pbuffer), t, "satellites %02d %02d %02d %02d, PDOP %.2f, HDOP %.2f, VDOP %.2f, TDOP %.2f",
 				mb(1), mb(2), mb(3), mb(4),
