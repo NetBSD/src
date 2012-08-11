@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.2 2012/08/05 01:43:59 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.2 2012/08/05 01:43:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -86,7 +86,7 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 		return ENOEXEC;
 
 	if (netbsd32_p)
-		itp_suffix = (elf_aapcs_p) ? "eabi" : "apcs32";
+		itp_suffix = (elf_aapcs_p) ? "eabi" : "oabi";
 
 	if (itp_suffix != NULL)
 		(void)compat_elf_check_interp(epp, itp, itp_suffix);
