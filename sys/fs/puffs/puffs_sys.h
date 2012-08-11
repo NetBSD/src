@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.81 2012/07/27 07:38:44 manu Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.82 2012/08/11 01:10:11 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -92,6 +92,8 @@ extern int puffsdebug; /* puffs_subr.c */
     ((pmp)->pmp_flags & PUFFS_KFLAG_LOOKUP_FULLPNBUF)
 #define PUFFS_USE_FS_TTL(pmp)	\
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_FS_TTL)
+#define PUFFS_USE_DOTDOTCACHE(pmp)	\
+    ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_DOTDOT)
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
@@ -228,6 +230,7 @@ struct puffs_node {
 	int		pn_cn_grace;	/* grace time before reclaim */
 	int		pn_va_timeout;	/* attribute cache */
 	struct vattr *	pn_va_cache;	/* attribute cache */
+	struct vnode *  pn_parent;	/* parent cache */
 
 	LIST_ENTRY(puffs_node) pn_hashent;
 };
