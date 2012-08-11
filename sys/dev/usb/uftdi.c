@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.52 2012/08/10 02:40:17 matt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.53 2012/08/11 07:09:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.52 2012/08/10 02:40:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.53 2012/08/11 07:09:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +63,18 @@ int uftdidebug = 0;
 #define UFTDI_MAX_PORTS		4
 
 /*
- * These are the maximum number of bytes transferred per frame.
- * The output buffer size cannot be increased due to the size encoding.
+ * These are the default number of bytes transferred per frame if the
+ * endpoint doesn't tell us.  The output buffer size is a hard limit
+ * for devices that use a 6-bit size encoding.
  */
 #define UFTDIIBUFSIZE 64
 #define UFTDIOBUFSIZE 64
+
+/*
+ * Magic constants!  Where do these come from?  They're what Linux uses...
+ */
+#define	UFTDI_MAX_IBUFSIZE	512
+#define	UFTDI_MAX_OBUFSIZE	256
 
 struct uftdi_softc {
 	device_t		sc_dev;		/* base device */
@@ -255,6 +262,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_iface[idx] = iface;
 
 		uca.bulkin = uca.bulkout = -1;
+		uca.ibufsize = uca.obufsize = 0;
 		for (i = 0; i < id->bNumEndpoints; i++) {
 			int addr, dir, attr;
 			ed = usbd_interface2endpoint_descriptor(iface, i);
@@ -268,11 +276,22 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 			addr = ed->bEndpointAddress;
 			dir = UE_GET_DIR(ed->bEndpointAddress);
 			attr = ed->bmAttributes & UE_XFERTYPE;
-			if (dir == UE_DIR_IN && attr == UE_BULK)
+			if (dir == UE_DIR_IN && attr == UE_BULK) {
 				uca.bulkin = addr;
-			else if (dir == UE_DIR_OUT && attr == UE_BULK)
+				uca.ibufsize = UGETW(ed->wMaxPacketSize);
+				if (uca.ibufsize >= UFTDI_MAX_IBUFSIZE)
+					uca.ibufsize = UFTDI_MAX_IBUFSIZE;
+			} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
 				uca.bulkout = addr;
-			else {
+				uca.obufsize = UGETW(ed->wMaxPacketSize)
+				    - sc->sc_hdrlen;
+				if (uca.obufsize >= UFTDI_MAX_OBUFSIZE)
+					uca.obufsize = UFTDI_MAX_OBUFSIZE;
+				/* Limit length if we have a 6-bit header.  */
+				if ((sc->sc_hdrlen > 0) &&
+				    (uca.obufsize > UFTDIOBUFSIZE))
+					uca.obufsize = UFTDIOBUFSIZE;
+			} else {
 				aprint_error_dev(self,
 				    "unexpected endpoint\n");
 				goto bad;
@@ -291,9 +310,11 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 
 		uca.portno = FTDI_PIT_SIOA + idx;
 		/* bulkin, bulkout set above */
-		uca.ibufsize = UFTDIIBUFSIZE;
-		uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
-		uca.ibufsizepad = UFTDIIBUFSIZE;
+		if (uca.ibufsize == 0)
+			uca.ibufsize = UFTDIIBUFSIZE;
+		uca.ibufsizepad = uca.ibufsize;
+		if (uca.obufsize == 0)
+			uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
 		uca.opkthdrlen = sc->sc_hdrlen;
 		uca.device = dev;
 		uca.iface = iface;
@@ -301,7 +322,9 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 		uca.arg = sc;
 		uca.info = NULL;
 
-		DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
+		DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
+			uca.bulkin, uca.bulkout,
+			uca.ibufsize, uca.obufsize));
 		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL,
 		    &uca, ucomprint, ucomsubmatch);
 	}
