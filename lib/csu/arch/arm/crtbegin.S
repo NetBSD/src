@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1 2012/08/11 01:33:36 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.2 2012/08/11 07:25:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1 2012/08/11 01:33:36 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.2 2012/08/11 07:25:13 matt Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
@@ -132,7 +132,7 @@ __do_global_dtors_aux:
 	adrne	lr, 1b			/* set up to return to loop start */
 #ifdef _ARM_ARCH_4T
 	bxne	ip			/* call it */
-#els
+#else
 	movne	pc, ip			/* call entry */
 #endif
 
