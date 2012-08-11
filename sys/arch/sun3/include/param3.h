@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.54 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: param3.h,v 1.55 2012/08/11 14:35:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,3 +43,11 @@
 
 #define	KERNBASE3	0x0E000000	/* start of kernel virtual */
 #define	KERN_END3	0x0FE00000	/* end of kernel virtual */
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ * Note maximum value can't be so large due to limited KVA space as above.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
