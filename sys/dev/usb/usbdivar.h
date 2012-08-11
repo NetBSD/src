@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.98 2012/07/15 21:13:31 mrg Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.99 2012/08/11 21:54:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 /*
  * Discussion about locking in the USB code:
  *
- * The host controller presents one lock at IPL_USB.
+ * The host controller presents one lock at IPL_SCHED.
  *
- * List of hardware interface methods, and which locks are held when each
- * is called by this module:
+ * List of hardware interface methods, and whether the lock is held
+ * when each is called by this module:
  *
  *	BUS METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
