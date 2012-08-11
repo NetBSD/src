@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.8.2.2 2007/03/12 05:51:20 rmind Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.8.2.3 2012/08/11 17:43:21 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8.2.2 2007/03/12 05:51:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8.2.3 2012/08/11 17:43:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8.2.2 2007/03/12 05:51:20 rmind Ex
 
 #include <dev/cons.h>
 
-#if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
+#if defined(COMPAT_13) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 #endif
