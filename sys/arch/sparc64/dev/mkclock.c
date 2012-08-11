@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.9 2011/07/29 08:37:36 mrg Exp $ */
+/*	$NetBSD: mkclock.c,v 1.10 2012/08/11 21:48:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.9 2011/07/29 08:37:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2012/08/11 21:48:30 mrg Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -273,6 +273,7 @@ mkclock_wenable(struct todr_chip_handle *handle, int onoff)
 	int s, err = 0;
 	static int writers;
 
+	/* XXXSMP */
 	s = splhigh();
 	if (onoff)
 		prot = writers++ == 0 ? VM_PROT_READ|VM_PROT_WRITE : 0;
