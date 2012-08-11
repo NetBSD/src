@@ -1,6 +1,6 @@
-/*	$NetBSD: crtend.S,v 1.1 2012/08/11 01:33:36 matt Exp $	*/
+/*	$NetBSD: crtend.S,v 1.2 2012/08/11 07:26:25 matt Exp $	*/
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtend.S,v 1.1 2012/08/11 01:33:36 matt Exp $")
+RCSID("$NetBSD: crtend.S,v 1.2 2012/08/11 07:26:25 matt Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
