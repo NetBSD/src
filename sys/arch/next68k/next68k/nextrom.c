@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.24 2011/12/18 04:29:32 tsutsui Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.25 2012/08/11 01:21:04 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.24 2011/12/18 04:29:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.25 2012/08/11 01:21:04 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -50,8 +50,8 @@ int mon_getc(void);
 int mon_putc(int);
 
 extern char etext[], edata[], end[];
-int nsym;
-char *ssym, *esym;
+extern int nsym;
+extern char *ssym, *esym;
 
 volatile struct mon_global *mg;
 
