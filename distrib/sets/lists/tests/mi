@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.485 2012/08/10 16:22:34 joerg Exp $
+# $NetBSD: mi,v 1.486 2012/08/11 03:19:48 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1483,8 +1483,8 @@
 ./usr/tests/examples/Atffile			tests-asm-tests		atf
 ./usr/tests/examples/t_asm			tests-asm-tests		atf
 ./usr/tests/fs					tests-fs-tests
-./usr/tests/fs/Atffile				tests-fs-tests		atf
-./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
+./usr/tests/fs/Atffile				tests-fs-tests		atf,rump
+./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/h_ffs_server			tests-fs-tests		atf,rump
@@ -2711,14 +2711,14 @@
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sched			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
-./usr/tests/lib/librumpclient				tests-lib-tests		atf,rump
+./usr/tests/lib/librumpclient				tests-lib-tests		atf
 ./usr/tests/lib/librumpclient/Atffile			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/h_exec			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/h_execthr			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/h_ution			tests-obsolete		obsolete
 ./usr/tests/lib/librumpclient/t_exec			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumpclient/t_fd			tests-lib-tests		atf,rump
-./usr/tests/lib/librumphijack			tests-lib-tests		atf,rump
+./usr/tests/lib/librumphijack			tests-lib-tests		atf
 ./usr/tests/lib/librumphijack/Atffile			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumphijack/h_client			tests-lib-tests		atf,rump
 ./usr/tests/lib/librumphijack/h_cwd			tests-lib-tests		atf,rump
