@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2012/07/28 19:08:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2012/07/28 19:08:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2012/07/28 19:08:24 matt Exp $");
 #include "ksyms.h"
 
 int nsym;
-char *ssym, *esym;
+char *ssym;
+extern char *esym;
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
