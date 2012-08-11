@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.1 2008/03/15 10:16:43 rearnsha Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.2 2012/08/11 16:23:53 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -47,18 +47,48 @@
 #define VFP_FPSID_ARCH_V2	0x00010000	/* Arch VFPv2 */
 #define VFP_FPSID_PART_MSK	0x0000ff00	/* Part number */
 #define VFP_FPSID_PART_VFP10	0x00001000	/* VFP10 */
+#define VFP_FPSID_PART_VFP11	0x00002000	/* VFP11 */
 #define VFP_FPSID_VAR_MSK	0x000000f0	/* Variant */
 #define VFP_FPSID_VAR_ARM10	0x000000a0	/* Variant ARM10 */
+#define VFP_FPSID_VAR_ARM11	0x000000b0	/* Variant ARM11 */
 #define VFP_FPSID_REV_MSK	0x0000000f	/* Revision */
-
-#define VFP_FPEXC_EX		0x80000000	/* Exception status bit */
-#define VFP_FPEXC_EN		0x40000000	/* Enable bit */
-
-#define VFP_FPSCR_DN		0x02000000	/* Default NaN mode */
-#define VFP_FPSCR_FZ		0x01000000	/* Flush-to-zero mode */
-
 
 #define FPU_VFP10_ARM10E	0x410001a0	/* Really a VFPv2 part */
 #define FPU_VFP11_ARM11		0x410120b0
+
+#define VFP_FPEXC_EX		0x80000000	/* Exception status bit */
+#define VFP_FPEXC_EN		0x40000000	/* VFP Enable bit */
+#define VFP_FPEXC_FP2V		0x10000000	/* FPINST2 instruction valid */
+#define VFP_FPEXC_VECITR	0x00000700	/* Vector iteration count */
+#define VFP_FPEXC_INV		0x00000080	/* Input exception flag */
+#define VFP_FPEXC_UFC		0x00000080	/* Potential underflow flag */
+#define VFP_FPEXC_OFC		0x00000080	/* Potential overflow flag */
+#define VFP_FPEXC_IOC		0x00000080	/* Potential inv. op. flag */
+
+#define VFP_FPSCR_N	0x80000000	/* set if compare <= result */
+#define VFP_FPSCR_Z	0x40000000	/* set if compare = result */
+#define VFP_FPSCR_C	0x20000000	/* set if compare (=,>=,UNORD) result */
+#define VFP_FPSCR_V	0x10000000	/* set if compare UNORD result */
+#define VFP_FPSCR_DN	0x02000000	/* Default NaN mode */
+#define VFP_FPSCR_FZ	0x01000000	/* Flush-to-zero mode */
+#define VFP_FPSCR_RMODE	0x00c00000	/* Rounding Mode */
+#define VFP_FPSCR_RZ	0x00c00000	/* round towards zero (RZ) */
+#define VFP_FPSCR_RM	0x00800000	/* round towards +INF (RP) */
+#define VFP_FPSCR_RP	0x00400000	/* round towards -INF (RM) */
+#define VFP_FPSCR_RN	0x00000000	/* round to nearest (RN) */
+#define VFP_FPSCR_STRIDE 0x00300000	/* Vector Stride */
+#define VFP_FPSCR_LEN	0x00070000	/* Vector Length */
+#define VFP_FPSCR_IDE	0x00008000	/* Inout Subnormal Exception Enable */
+#define VFP_FPSCR_IXE	0x00001000	/* Inexact Exception Enable */
+#define VFP_FPSCR_UFE	0x00000800	/* Underflow Exception Enable */
+#define VFP_FPSCR_OFE	0x00000400	/* Overflow Exception Enable */
+#define VFP_FPSCR_DZE	0x00000200	/* Inexact Exception Enable */
+#define VFP_FPSCR_IOE	0x00000100	/* Invalid Operation Cumulative Flag */
+#define VFP_FPSCR_IDC	0x00000080	/* Input Subnormal Cumlative Flag */
+#define VFP_FPSCR_IXC	0x00000010	/* Inexact Cumulative Flag */
+#define VFP_FPSCR_UFC	0x00000008	/* Underflow Cumulative Flag */
+#define VFP_FPSCR_OFC	0x00000004	/* Overflow Cumulative Flag */
+#define VFP_FPSCR_DZC	0x00000002	/* DivByZero Cumulative Flag */
+#define VFP_FPSCR_IOC	0x00000001	/* Invalid Operation Cumulative Flag */
 
 #endif /* _VFPREG_H */
