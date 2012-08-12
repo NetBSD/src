@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.13 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.13.14.1 2012/08/12 12:59:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.13 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.13.14.1 2012/08/12 12:59:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -246,11 +246,8 @@ notfound:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	if (nameiop == CREATE || nameiop == RENAME)
-		return (EROFS);
-	return (ENOENT);
+	cache_enter(vdp, *vpp, cnp);
+	return (nameiop == CREATE || nameiop == RENAME) ? EROFS : ENOENT;
 
 found:
 	if (numdirpasses == 2)
@@ -317,7 +314,6 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	return (0);
+	cache_enter(vdp, *vpp, cnp);
+	return 0;
 }
