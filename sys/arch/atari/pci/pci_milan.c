@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.12 2009/03/16 23:11:10 dsl Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.13 2012/08/12 20:50:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.12 2009/03/16 23:11:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.13 2012/08/12 20:50:39 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
  */
 pcireg_t	milan_pci_confread(pcitag_t);
 void		milan_pci_confwrite(u_long, pcireg_t);
-u_long		plx_status;
+extern u_long	plx_status;
 
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
