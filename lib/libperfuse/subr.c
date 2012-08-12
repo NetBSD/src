@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.15.2.2 2012/04/23 16:48:58 riz Exp $ */
+/*  $NetBSD: subr.c,v 1.15.2.3 2012/08/12 13:13:20 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -33,6 +33,7 @@
 #include <syslog.h>
 #include <puffs.h>
 #include <paths.h>
+#include <sys/hash.h>
 #include <sys/extattr.h>
 
 #include "perfuse_priv.h"
@@ -46,12 +47,14 @@ struct perfuse_ns_map {
 #define PERFUSE_NS_MAP(ns, native_ns)	\
 	{ ns ".", sizeof(ns), native_ns }
 
-static size_t node_path(puffs_cookie_t, char *, size_t);
+static __inline struct perfuse_node_hashlist *perfuse_nidhash(struct 
+    perfuse_state *, uint64_t);
 
 struct puffs_node *
 perfuse_new_pn(struct puffs_usermount *pu, const char *name,
 	struct puffs_node *parent)
 {
+	struct perfuse_state *ps = puffs_getspecific(pu);
 	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
 
@@ -65,52 +68,48 @@ perfuse_new_pn(struct puffs_usermount *pu, const char *name,
 	pnd->pnd_rfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_wfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_nodeid = PERFUSE_UNKNOWN_NODEID;
-	pnd->pnd_fuse_nlookup = 1;
-	pnd->pnd_puffs_nlookup = 1;
-	pnd->pnd_parent = parent;
-	pnd->pnd_pn = (puffs_cookie_t)pn;
-	(void)strlcpy(pnd->pnd_name, name, MAXPATHLEN);
-	TAILQ_INIT(&pnd->pnd_pcq);
-	TAILQ_INIT(&pnd->pnd_children);
-
 	if (parent != NULL) {
-		struct perfuse_node_data *parent_pnd;
-
-		parent_pnd = PERFUSE_NODE_DATA(parent);
-		TAILQ_INSERT_TAIL(&parent_pnd->pnd_children, pnd, pnd_next);
-
-		parent_pnd->pnd_childcount++;
+		pnd->pnd_parent_nodeid = PERFUSE_NODE_DATA(parent)->pnd_nodeid;
+	} else {
+		pnd->pnd_parent_nodeid = FUSE_ROOT_ID;
 	}
+	pnd->pnd_fuse_nlookup = 0;
+	pnd->pnd_puffs_nlookup = 0;
+	pnd->pnd_pn = (puffs_cookie_t)pn;
+	if (strcmp(name, "..") != 0)
+		(void)strlcpy(pnd->pnd_name, name, MAXPATHLEN);
+	else
+		pnd->pnd_name[0] = 0; /* anonymous for now */
+	TAILQ_INIT(&pnd->pnd_pcq);
+
+	puffs_pn_setpriv(pn, pnd);
+
+	ps->ps_nodecount++;
 
 	return pn;
 }
 
 void
-perfuse_destroy_pn(struct puffs_node *pn)
+perfuse_destroy_pn(struct puffs_usermount *pu, struct puffs_node *pn)
 {
+	struct perfuse_state *ps = puffs_getspecific(pu);
 	struct perfuse_node_data *pnd;
 
 	if ((pnd = puffs_pn_getpriv(pn)) != NULL) {
-		if (pnd->pnd_parent != NULL) {
-			struct perfuse_node_data *parent_pnd;
-
-			parent_pnd = PERFUSE_NODE_DATA(pnd->pnd_parent);
-			TAILQ_REMOVE(&parent_pnd->pnd_children, pnd, pnd_next);
-
-			PERFUSE_NODE_DATA(pnd->pnd_parent)->pnd_childcount--;
-		}
+		if (pnd->pnd_all_fd != NULL)
+			free(pnd->pnd_all_fd);
 
 		if (pnd->pnd_dirent != NULL)
 			free(pnd->pnd_dirent);
-
-		if (pnd->pnd_all_fd != NULL)
-			free(pnd->pnd_all_fd);
+		
 #ifdef PERFUSE_DEBUG
 		if (pnd->pnd_flags & PND_OPEN)
 			DERRX(EX_SOFTWARE, "%s: file open", __func__);
 
 		if (!TAILQ_EMPTY(&pnd->pnd_pcq))
 			DERRX(EX_SOFTWARE, "%s: non empty pnd_pcq", __func__);
+
+		pnd->pnd_flags |= PND_INVALID;
 #endif /* PERFUSE_DEBUG */
 
 		free(pnd);
@@ -118,9 +117,10 @@ perfuse_destroy_pn(struct puffs_node *pn)
 
 	puffs_pn_put(pn);
 
+	ps->ps_nodecount--;
+
 	return;
 }
-
 
 void
 perfuse_new_fh(puffs_cookie_t opc, uint64_t fh, int mode)
@@ -200,30 +200,17 @@ perfuse_get_fh(puffs_cookie_t opc, int mode)
 	return FUSE_UNKNOWN_FH;
 }
 
-static size_t
-node_path(puffs_cookie_t opc, char *buf, size_t buflen)
-{
-	struct perfuse_node_data *pnd;
-	size_t written;
-	
-	pnd = PERFUSE_NODE_DATA(opc);
-	if (pnd->pnd_parent == opc)
-		return 0;
-
-	written = node_path(pnd->pnd_parent, buf, buflen);
-	buf += written;
-	buflen -= written;
-	
-	return written + snprintf(buf, buflen, "/%s", pnd->pnd_name);
-}
-
+/* ARGSUSED0 */
 char *
-perfuse_node_path(puffs_cookie_t opc)
+perfuse_node_path(struct perfuse_state *ps, puffs_cookie_t opc)
 {
 	static char buf[MAXPATHLEN + 1];
 
-	if (node_path(opc, buf, sizeof(buf)) == 0)
+#if 0
+	if (node_path(ps, opc, buf, sizeof(buf)) == 0)
 		sprintf(buf, "/");
+#endif
+	sprintf(buf, "%s", PERFUSE_NODE_DATA(opc)->pnd_name);
 
 	return buf;
 }
@@ -272,4 +259,59 @@ perfuse_native_ns(const int attrnamespace, const char *attrname,
 	}
 
 	return (const char *)attrname;
+}
+
+static __inline struct perfuse_node_hashlist *
+perfuse_nidhash(struct perfuse_state *ps, uint64_t nodeid)
+{       
+        uint32_t hash;
+        
+        hash = hash32_buf(&nodeid, sizeof(nodeid), HASH32_BUF_INIT);
+
+	return &ps->ps_nidhash[hash % ps->ps_nnidhash];
+}    
+
+struct perfuse_node_data *
+perfuse_node_bynodeid(struct perfuse_state *ps, uint64_t nodeid)
+{
+	struct perfuse_node_hashlist *plist;
+	struct perfuse_node_data *pnd;
+
+	plist = perfuse_nidhash(ps, nodeid);
+
+	LIST_FOREACH(pnd, plist, pnd_nident)
+		if (pnd->pnd_nodeid == nodeid)
+			break;
+
+	return pnd;
+}
+
+void
+perfuse_node_cache(struct perfuse_state *ps, puffs_cookie_t opc)
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+	struct perfuse_node_hashlist *nidlist;
+
+	if (pnd->pnd_flags & PND_REMOVED)
+		DERRX(EX_SOFTWARE, "%s: \"%s\" already removed", 
+		      __func__, pnd->pnd_name);
+
+	nidlist = perfuse_nidhash(ps, pnd->pnd_nodeid);
+	LIST_INSERT_HEAD(nidlist, pnd, pnd_nident);
+
+	return;
+}
+
+void
+perfuse_cache_flush(puffs_cookie_t opc)
+{
+	struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
+
+	if (pnd->pnd_flags & PND_REMOVED)
+		DERRX(EX_SOFTWARE, "%s: \"%s\" already removed", 
+		      __func__, pnd->pnd_name);
+
+	LIST_REMOVE(pnd, pnd_nident);
+
+	return;
 }
