@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_pass_trigger.c,v 1.1.1.1 2011/03/02 19:32:46 tron Exp $	*/
+/*	$NetBSD: unix_pass_trigger.c,v 1.1.1.1.8.1 2012/08/12 19:25:23 martin Exp $	*/
 
 /*++
 /* NAME
@@ -65,7 +65,7 @@
 struct unix_pass_trigger {
     int     fd;
     char   *service;
-    int    *pair;
+    int     pair[2];
 };
 
 /* unix_pass_trigger_event - disconnect from peer */
@@ -131,7 +131,8 @@ int     unix_pass_trigger(const char *service, const char *buf, ssize_t len, int
     up = (struct unix_pass_trigger *) mymalloc(sizeof(*up));
     up->fd = fd;
     up->service = mystrdup(service);
-    up->pair = pair;
+    up->pair[0] = pair[0];
+    up->pair[1] = pair[1];
 
     /*
      * Write the request...

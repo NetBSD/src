@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.5 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.6 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1267,3 +1267,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	amdtemp(4): Add support for Family 12h. [nonaka 20120302]
 	postfix(1): Add support for SQLite tables. [tron 20120304]
 	postfix(1): Import version 2.8.11 [tron 20120609]
+	postfix(1): Import version 2.8.12 [tron 20120810]
