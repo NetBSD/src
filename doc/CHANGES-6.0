@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.178 2012/08/12 18:44:28 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.179 2012/08/12 19:04:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7177,4 +7177,49 @@ sys/arch/i386/conf/GENERIC			1.1078
 
 	Add uts(4)
 	[sborrill, ticket #474]
+
+sys/dev/pci/if_ath_pci.c			1.46
+
+	Fix error branches in ath pci attachment.
+	Should fix double pci_intr_disestablish if ath_attach fails.
+	(Still not sure why ath_attach sometimes fails here.)
+	[riastradh, ticket #476]
+
+lib/libm/arch/i387/fenv.c			1.4
+lib/libm/arch/x86_64/fenv.c			1.2
+
+	Mask off the result of feenableexcept and fedisableexcept on x86.
+	These shouldn't return bits outside FE_ALL_EXCEPT.
+	[riastradh, ticket #477]
+
+sys/dev/pci/if_wpi.c				1.53
+
+	Fix error branch in wpi(4) firmware loading.
+	Fixes panic if firmware is not available.
+	[riastradh, ticket #478]
+
+sys/arch/i386/stand/boot/boot2.c		1.58
+
+	Fix i386 `boot' command to try the usual set of kernel names.
+	Without this, the `boot' command will try only `netbsd', not
+	`netbsd.gz', `netbsd.old', &c.
+
+	Patch from PR port-i386/44562.
+	[riastradh, ticket #479]
+
+sys/dev/pci/if_msk.c				1.42
+
+	Fix null pointer dereference in msk_rxeof.                         
+                                                                   
+	This triggers when processing an RX interrupt that was queued while
+	stopping the interface, which caused my machine to panic last night.
+	In this case, just drop the packet.
+
+	From OpenBSD's if_msk.c rev. 1.71.                                  
+	[riastradh, ticket #480]
+
+sys/kern/subr_disk_mbr.c			1.43
+
+	Apply workaround for installcd mountroot failure on some i386 machines.
+	[tsutsui, ticket #482]
 
