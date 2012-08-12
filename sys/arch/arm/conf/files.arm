@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.107 2012/08/03 07:59:22 matt Exp $
+#	$NetBSD: files.arm,v 1.108 2012/08/12 05:05:47 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -54,7 +54,7 @@ file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 file	arch/arm/fpe-arm/armfpe.S		armfpe
 
 # VFP support
-file	arch/arm/vfp/vfp_init.c			fpu_vfp
+file	arch/arm/vfp/vfp_init.c			arm32
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG

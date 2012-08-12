@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 2011/11/17 15:02:22 joerg Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 2012/08/12 05:05:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2011/11/17 15:02:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2012/08/12 05:05:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2011/11/17 15:02:22 joerg Exp $
 #include <sys/syscallargs.h>
 
 #include <machine/sysarch.h>
+#include <machine/pcb.h>
+#include <arm/vfpreg.h>
 
 /* Prototypes */
 static int arm32_sync_icache(struct lwp *, const void *, register_t *);
 static int arm32_drain_writebuf(struct lwp *, const void *, register_t *);
+static int arm32_vfp_fpscr(struct lwp *, const void *, register_t *);
 
 static int
 arm32_sync_icache(struct lwp *l, const void *args, register_t *retval)
@@ -86,6 +89,34 @@ arm32_drain_writebuf(struct lwp *l, const void *args, register_t *retval)
 	return(0);
 }
 
+static int
+arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+
+#ifdef FPU_VFP
+	/*
+	 * Save the current VFP state (to make sure the FPSCR copy is
+	 * up to date).
+	 */
+	vfp_savecontext();
+#endif
+
+	retval[0] = pcb->pcb_vfp.vfp_fpscr;
+	if (uap) {
+		struct arm_vfp_fpscr_args ua;
+		int error;
+		if ((error = copyin(uap, &ua, sizeof(ua))) != 0)
+			return (error);
+		if (((ua.fpscr_clear|ua.fpscr_set) & ~VFP_FPSCR_RMODE) != 0)
+			return EINVAL;
+		pcb->pcb_vfp.vfp_fpscr &= ~ua.fpscr_clear;
+		pcb->pcb_vfp.vfp_fpscr |= ua.fpscr_set;
+	}
+
+	return 0;
+}
+
 int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
@@ -102,6 +133,10 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 	case ARM_DRAIN_WRITEBUF : 
 		error = arm32_drain_writebuf(l, SCARG(uap, parms), retval);
+		break;
+
+	case ARM_VFP_FPSCR :
+		error = arm32_vfp_fpscr(l, SCARG(uap, parms), retval);
 		break;
 
 	default:

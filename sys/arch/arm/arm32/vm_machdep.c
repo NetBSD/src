@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2012/08/03 07:59:22 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2012/08/03 07:59:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -137,16 +137,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif
 
-	l2->l_md.md_flags = l1->l_md.md_flags & MDP_VFPUSED;
-
-#ifdef FPU_VFP
-	/*
-	 * Copy the floating point state from the VFP to the PCB
-	 * if this process has state stored there.
-	 */
-	if (pcb1->pcb_vfpcpu != NULL)
-		vfp_saveregs_lwp(l1, 1);
-#endif
+	l2->l_md.md_flags = l1->l_md.md_flags & MDLWP_VFPUSED;
 
 	/* Copy the pcb */
 	*pcb2 = *pcb1;
@@ -209,21 +200,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-#ifdef FPU_VFP
-	struct pcb *pcb;
-#endif
-
 #ifdef ARMFPE
 	/* Abort any active FP operation and deactivate the context */
 	arm_fpe_core_abort(FP_CONTEXT(l), NULL, NULL);
 	arm_fpe_core_changecontext(0);
 #endif	/* ARMFPE */
-
-#ifdef FPU_VFP
-	pcb = lwp_getpcb(l);
-	if (pcb->pcb_vfpcpu != NULL)
-		vfp_saveregs_lwp(l, 0);
-#endif
 
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */

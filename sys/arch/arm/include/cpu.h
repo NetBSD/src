@@ -78,9 +78,6 @@
 #ifndef _LOCORE
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#ifdef FPU_VFP
-#include <arm/vfpvar.h>
-#endif
 #endif	/* !_LOCORE */
 
 #include <arm/armreg.h>
@@ -258,11 +255,9 @@ struct cpu_info {
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
+	uint32_t ci_vfp_id;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
-#endif
-#ifdef FPU_VFP
-	struct vfp_info ci_vfp;
 #endif
 };
 
@@ -396,6 +391,12 @@ void swi_handler(trapframe_t *);
 
 /* arm_machdep.c */
 void ucas_ras_check(trapframe_t *);
+
+/* vfp_init.c */
+void vfp_attach(void);
+void vfp_discardcontext(void);
+void vfp_savecontext(void);
+extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */
 

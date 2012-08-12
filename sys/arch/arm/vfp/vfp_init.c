@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.3 2009/11/21 20:32:28 rmind Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.4 2012/08/12 05:05:47 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -34,11 +34,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <arm/undefined.h>
-#include <machine/cpu.h>
-
-#include <arm/vfpvar.h>
 #include <arm/vfpreg.h>
 
 /* 
@@ -46,20 +44,50 @@
  */
 
 /* FMRX <X>, fpsid */
-#define read_fpsid(X)	__asm __volatile("mrc p10, 7, %0, c0, c0, 0" \
-			    : "=r" (*(X)) : : "memory")
-/* FMRX <X>, fpscr */
-#define read_fpscr(X)	__asm __volatile("mrc p10, 7, %0, c1, c0, 0" \
-			    : "=r" (*(X)))
+static inline uint32_t
+read_fpsid(void)
+{
+	uint32_t rv;
+	__asm __volatile("mrc p10, 7, %0, c0, c0, 0" : "=r" (rv));
+	return rv;
+}
+
 /* FMRX <X>, fpexc */
-#define read_fpexc(X)	__asm __volatile("mrc p10, 7, %0, c8, c0, 0" \
-			    : "=r" (*(X)))
+static inline uint32_t
+read_fpscr(void)
+{
+	uint32_t rv;
+	__asm __volatile("mrc p10, 7, %0, c1, c0, 0" : "=r" (rv));
+	return rv;
+}
+
+/* FMRX <X>, fpexc */
+static inline uint32_t
+read_fpexc(void)
+{
+	uint32_t rv;
+	__asm __volatile("mrc p10, 7, %0, c8, c0, 0" : "=r" (rv));
+	return rv;
+}
+
 /* FMRX <X>, fpinst */
-#define read_fpinst(X)	__asm __volatile("mrc p10, 7, %0, c9, c0, 0" \
-			    : "=r" (*(X)))
+static inline uint32_t
+read_fpinst(void)
+{
+	uint32_t rv;
+	__asm __volatile("mrc p10, 7, %0, c9, c0, 0" : "=r" (rv));
+	return rv;
+}
+
 /* FMRX <X>, fpinst2 */
-#define read_fpinst2(X)	__asm __volatile("mrc p10, 7, %0, c10, c0, 0" \
-			    : "=r" (*(X)))
+static inline uint32_t
+read_fpinst2(void)
+{
+	uint32_t rv;
+	__asm __volatile("mrc p10, 7, %0, c10, c0, 0" : "=r" (rv));
+	return rv;
+}
+
 /* FSTMD <X>, {d0-d15} */
 #define save_vfpregs(X)	__asm __volatile("stc p11, c0, [%0], {32}" : \
 			    : "r" (X) : "memory")
@@ -80,10 +108,22 @@
 #define load_vfpregs(X)	__asm __volatile("ldc p11, c0, [%0], {32}" : \
 			    : "r" (X) : "memory");
 
+#ifdef FPU_VFP
+
 /* The real handler for VFP bounces.  */
 static int vfp_handler(u_int, u_int, trapframe_t *, int);
+static int vfp_handler(u_int, u_int, trapframe_t *, int);
 
-static void vfp_load_regs(struct vfpreg *);
+static void vfp_state_load(lwp_t *, bool);
+static void vfp_state_save(lwp_t *);
+static void vfp_state_release(lwp_t *);
+
+const pcu_ops_t arm_vfp_ops = {
+	.pcu_id = PCU_FPU,
+	.pcu_state_load = vfp_state_load,
+	.pcu_state_save = vfp_state_save,
+	.pcu_state_release = vfp_state_release,
+};
 
 struct evcnt vfpevent_use;
 struct evcnt vfpevent_reuse;
@@ -98,51 +138,114 @@ struct evcnt vfpevent_reuse;
 static int undefined_test;
 
 static int
-vfp_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
+vfp_test(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 {
 
 	frame->tf_pc += INSN_SIZE;
 	++undefined_test;
-	return(0);
+	return 0;
 }
 
+#endif /* FPU_VFP */
+
+struct evcnt vfp_fpscr_ev = 
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "VFP", "FPSCR traps");
+EVCNT_ATTACH_STATIC(vfp_fpscr_ev);
+
+static int
+vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
+{
+	struct lwp * const l = curlwp;
+	const u_int regno = (insn >> 12) & 0xf;
+	/*
+	 * Only match move to/from the FPSCR register and we
+	 * can't be using the SP,LR,PC as a source.
+	 */
+	if ((insn & 0xffef0fff) != 0xeee10a10 || regno > 12)
+		return 1;
+
+	struct pcb * const pcb = lwp_getpcb(l);
+
+#ifdef FPU_VFP
+	/*
+	 * If FPU is valid somewhere, let's just reenable VFP and
+	 * retry the instruction (only safe thing to do since the
+	 * pcb has a stale copy).
+	 */
+	if (pcb->pcb_vfp.vfp_fpexc & VFP_FPEXC_EN)
+		return 1;
+#endif
+
+	if (__predict_false((l->l_md.md_flags & MDLWP_VFPUSED) == 0)) {
+		l->l_md.md_flags |= MDLWP_VFPUSED;
+		pcb->pcb_vfp.vfp_fpscr =
+		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
+	}
+
+	/*
+	 * We know know the pcb has the saved copy.
+	 */
+	register_t * const regp = &frame->tf_r0 + regno;
+	if (insn & 0x00100000) {
+		*regp = pcb->pcb_vfp.vfp_fpscr;
+	} else {
+		pcb->pcb_vfp.vfp_fpscr = *regp;
+	}
+
+	vfp_fpscr_ev.ev_count++;
+		
+	frame->tf_pc += INSN_SIZE;
+	return 0;
+}
+
+#ifndef FPU_VFP
+/*
+ * If we don't want VFP support, we still need to handle emulating VFP FPSCR
+ * instructions.
+ */
 void
 vfp_attach(void)
 {
-	void *uh;
-	uint32_t fpsid;
+	install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+}
+
+#else
+void
+vfp_attach(void)
+{
+	struct cpu_info * const ci = curcpu();
 	const char *model = NULL;
+	void *uh;
 
 	uh = install_coproc_handler(VFP_COPROC, vfp_test);
 
 	undefined_test = 0;
 
-	read_fpsid(&fpsid);
+	const uint32_t fpsid = read_fpsid();
 
 	remove_coproc_handler(uh);
 
 	if (undefined_test != 0) {
-		aprint_normal("%s: No VFP detected\n",
-		    curcpu()->ci_dev->dv_xname);
-		curcpu()->ci_vfp.vfp_id = 0;
+		aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
+		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		ci->ci_vfp_id = 0;
 		return;
 	}
 
-	curcpu()->ci_vfp.vfp_id = fpsid;
-	switch (fpsid & ~ VFP_FPSID_REV_MSK)
-		{
-		case FPU_VFP10_ARM10E:
-			model = "VFP10 R1";
-			break;
-		case FPU_VFP11_ARM11:
-			model = "VFP11";
-			break;
-		default:
-			aprint_normal("%s: unrecognized VFP version %x\n",
-			    curcpu()->ci_dev->dv_xname, fpsid);
-			fpsid = 0;	/* Not recognised. */
-			return;
-		}
+	ci->ci_vfp_id = fpsid;
+	switch (fpsid & ~ VFP_FPSID_REV_MSK) {
+	case FPU_VFP10_ARM10E:
+		model = "VFP10 R1";
+		break;
+	case FPU_VFP11_ARM11:
+		model = "VFP11";
+		break;
+	default:
+		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
+		    fpsid);
+		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		return;
+	}
 
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
@@ -158,54 +261,38 @@ vfp_attach(void)
 }
 
 /* The real handler for VFP bounces.  */
-static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
+static int
+vfp_handler(u_int address, u_int insn, trapframe_t *frame,
     int fault_code)
 {
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb;
-	struct lwp *l;
+	struct cpu_info * const ci = curcpu();
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER)
 		panic("VFP fault in non-user mode");
 
-	if (ci->ci_vfp.vfp_id == 0)
+	if (ci->ci_vfp_id == 0)
 		/* No VFP detected, just fault.  */
 		return 1;
 
-	l = curlwp;
-	pcb = lwp_getpcb(l);
+	/*
+	 * If we are just changing/fetching FPSCR, don't bother loading it.
+	 */
+	if (!vfp_fpscr_handler(address, insn, frame, fault_code))
+		return 0;
 
-	if ((l->l_md.md_flags & MDP_VFPUSED) && ci->ci_vfp.vfp_fpcurlwp == l) {
-		uint32_t fpexc;
+	pcu_load(&arm_vfp_ops);
 
-		printf("VFP bounce @%x (insn=%x) lwp=%p\n", address,
-		    instruction, l);
-		read_fpexc(&fpexc);
-		if ((fpexc & VFP_FPEXC_EN) == 0)
-			printf("vfp not enabled\n");
-		vfp_saveregs_lwp(l, 1);
-		printf(" fpexc = 0x%08x  fpscr = 0x%08x\n", fpexc,
-		    pcb->pcb_vfp.vfp_fpscr);
-		printf(" fpinst = 0x%08x fpinst2 = 0x%08x\n", 
-		    pcb->pcb_vfp.vfp_fpinst,
-		    pcb->pcb_vfp.vfp_fpinst2);
-		return 1;
-	}
+	/* Need to restart the faulted instruction.  */
+//	frame->tf_pc -= INSN_SIZE;
+	return 0;
+}
 
-	if (ci->ci_vfp.vfp_fpcurlwp != NULL)
-		vfp_saveregs_cpu(ci, 1);
-
-	KDASSERT(ci->ci_vfp.vfp_fpcurlwp == NULL);
-
-	KDASSERT(pcb->pcb_vfpcpu == NULL);
-
-//	VFPCPU_LOCK(pcb, s);
-
-	pcb->pcb_vfpcpu = ci;
-	ci->ci_vfp.vfp_fpcurlwp = l;
-
-//	VFPCPU_UNLOCK(pcb, s);
+static void
+vfp_state_load(lwp_t *l, bool used)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
 	/*
 	 * Instrument VFP usage -- if a process has not previously
@@ -215,150 +302,128 @@ static int vfp_handler(u_int address, u_int instruction, trapframe_t *frame,
 	 * If a process has used the VFP, count a "used VFP, and took
 	 * a trap to use it again" event.
 	 */
-	if ((l->l_md.md_flags & MDP_VFPUSED) == 0) {
+	if (__predict_false((l->l_md.md_flags & MDLWP_VFPUSED) == 0)) {
 		vfpevent_use.ev_count++;
-		l->l_md.md_flags |= MDP_VFPUSED;
+		l->l_md.md_flags |= MDLWP_VFPUSED;
 		pcb->pcb_vfp.vfp_fpscr =
 		    (VFP_FPSCR_DN | VFP_FPSCR_FZ);	/* Runfast */
-	} else
+	} else {
 		vfpevent_reuse.ev_count++;
+	}
 
-	vfp_load_regs(&pcb->pcb_vfp);
-
-	/* Need to restart the faulted instruction.  */
-//	frame->tf_pc -= INSN_SIZE;
-	return 0;
-}
-
-static void
-vfp_load_regs(struct vfpreg *fregs)
-{
-	uint32_t fpexc;
+	if (fregs->vfp_fpexc & VFP_FPEXC_EN) {
+		/*
+		 * If we think the VFP is enabled, it must have be disabled by
+		 * vfp_state_release for another LWP so we can just restore
+		 * FPEXC and return since our VFP state is still loaded.
+		 */
+		write_fpexc(fregs->vfp_fpexc);
+		return;
+	}
 
 	/* Enable the VFP (so that we can write the registers).  */
-	read_fpexc(&fpexc);
+	uint32_t fpexc = read_fpexc();
 	KDASSERT((fpexc & VFP_FPEXC_EX) == 0);
 	write_fpexc(fpexc | VFP_FPEXC_EN);
 
 	load_vfpregs(fregs->vfp_regs);
 	write_fpscr(fregs->vfp_fpscr);
+
 	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
+		struct cpu_info * const ci = curcpu();
 		/* Need to restore the exception handling state.  */
-		switch (curcpu()->ci_vfp.vfp_id) {
+		switch (ci->ci_vfp_id) {
 		case FPU_VFP10_ARM10E:
 		case FPU_VFP11_ARM11:
 			write_fpinst2(fregs->vfp_fpinst2);
 			write_fpinst(fregs->vfp_fpinst);
 			break;
 		default:
-			panic("vfp_load_regs: Unsupported VFP");
+			panic("%s: Unsupported VFP %#x",
+			    __func__, ci->ci_vfp_id);
 		}
 	}
-	/* Finally, restore the FPEXC and enable the VFP. */
-	write_fpexc(fregs->vfp_fpexc | VFP_FPEXC_EN);
+
+	/* Finally, restore the FPEXC but don't enable the VFP. */
+	fregs->vfp_fpexc |= VFP_FPEXC_EN;
+	write_fpexc(fregs->vfp_fpexc);
 }
 
 void
-vfp_saveregs_cpu(struct cpu_info *ci, int save)
+vfp_state_save(lwp_t *l)
 {
-	struct lwp *l;
-	struct pcb *pcb;
-	uint32_t fpexc;
+	struct pcb * const pcb = lwp_getpcb(l);
+	struct vfpreg * const fregs = &pcb->pcb_vfp;
 
-	KDASSERT(ci == curcpu());
-
-	l = ci->ci_vfp.vfp_fpcurlwp;
-	if (l == NULL)
-		return;
-
-	pcb = lwp_getpcb(l);
-	read_fpexc(&fpexc);
-
-	if (save) {
-		struct vfpreg *fregs = &pcb->pcb_vfp;
-
-		/*
-		 * Enable the VFP (so we can read the registers).  
-		 * Make sure the exception bit is cleared so that we can
-		 * safely dump the registers.
-		 */
-		write_fpexc((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
-
-		fregs->vfp_fpexc = fpexc;
-		if (fpexc & VFP_FPEXC_EX) {
-			/* Need to save the exception handling state */
-			switch (ci->ci_vfp.vfp_id) {
-			case FPU_VFP10_ARM10E:
-			case FPU_VFP11_ARM11:
-				read_fpinst(&fregs->vfp_fpinst);
-				read_fpinst2(&fregs->vfp_fpinst2);
-				break;
-			default:
-				panic("vfp_saveregs_cpu: Unsupported VFP");
-			}
-		}
-		read_fpscr(&fregs->vfp_fpscr);
-		save_vfpregs(fregs->vfp_regs);
-	}
-	/* Disable the VFP.  */
-	write_fpexc(fpexc & ~VFP_FPEXC_EN);
-//	VFPCPU_LOCK(pcb, s);
-
-        pcb->pcb_vfpcpu = NULL;
-        ci->ci_vfp.vfp_fpcurlwp = NULL;
-//	VFPCPU_UNLOCK(pcb, s);
-}
-
-void
-vfp_saveregs_lwp(struct lwp *l, int save)
-{
-	struct cpu_info *ci = curcpu();
-	struct cpu_info *oci;
-	struct pcb *pcb;
-
-	pcb = lwp_getpcb(l);
-	KDASSERT(pcb != NULL);
-
-//	VFPCPU_LOCK(pcb, s);
-
-	oci = pcb->pcb_vfpcpu;
-	if (oci == NULL) {
-		// VFPCPU_UNLOCK(pcb, s);
-		return;
-	}
-
-#if defined(MULTIPROCESSOR)
 	/*
-	 * On a multiprocessor system this is where we would send an IPI
-	 * to the processor holding the VFP state for this process.
+	 * If it's already disabled, then the state has been saved
+	 * (or discarded).
 	 */
-#error MULTIPROCESSOR
-#else
-	KASSERT(ci->ci_vfp.vfp_fpcurlwp == l);
-//	VFPCPU_UNLOCK(pcb, s);
-	vfp_saveregs_cpu(ci, save);
-#endif
+	if ((fregs->vfp_fpexc & VFP_FPEXC_EN) == 0)
+		return;
+
+	/*
+	 * Enable the VFP (so we can read the registers).  
+	 * Make sure the exception bit is cleared so that we can
+	 * safely dump the registers.
+	 */
+	uint32_t fpexc = read_fpexc();
+	write_fpexc((fpexc | VFP_FPEXC_EN) & ~VFP_FPEXC_EX);
+
+	fregs->vfp_fpexc = fpexc;
+	if (fpexc & VFP_FPEXC_EX) {
+		struct cpu_info * const ci = curcpu();
+		/* Need to save the exception handling state */
+		switch (ci->ci_vfp_id) {
+		case FPU_VFP10_ARM10E:
+		case FPU_VFP11_ARM11:
+			fregs->vfp_fpinst = read_fpinst();
+			fregs->vfp_fpinst2 = read_fpinst2();
+			break;
+		default:
+			panic("%s: Unsupported VFP %#x",
+			    __func__, ci->ci_vfp_id);
+		}
+	}
+	fregs->vfp_fpscr = read_fpscr();
+	save_vfpregs(fregs->vfp_regs);
+
+	/* Disable the VFP.  */
+	write_fpexc(fpexc);
+}
+
+void
+vfp_state_release(lwp_t *l)
+{
+	struct pcb * const pcb = lwp_getpcb(l);
+
+	/*
+	 * Now mark the VFP as disabled (and our state has been already
+	 * saved or is being discarded).
+	 */
+	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
+
+	/*
+	 * Turn off the FPU so the next time a VFP instruction is issued
+	 * an exception happens.  We don't know if this LWP's state was
+	 * loaded but if we turned off the FPU for some other LWP, when
+	 * pcu_load invokes vfp_state_load it will see that VFP_FPEXC_EN
+	 * is still set so it just restroe fpexc and return since its
+	 * contents are still sitting in the VFP.
+	 */
+	write_fpexc(read_fpexc() & ~VFP_FPEXC_EN);
 }
 
 void
 vfp_savecontext(void)
 {
-	struct cpu_info *ci = curcpu();
-	uint32_t fpexc;
-
-	if (ci->ci_vfp.vfp_fpcurlwp != NULL) {
-		read_fpexc(&fpexc);
-		write_fpexc(fpexc & ~VFP_FPEXC_EN);
-	}
+	pcu_save(&arm_vfp_ops);
 }
 
 void
-vfp_loadcontext(struct lwp *l)
+vfp_discardcontext(void)
 {
-	uint32_t fpexc;
-
-	if (curcpu()->ci_vfp.vfp_fpcurlwp == l) {
-		read_fpexc(&fpexc);
-		write_fpexc(fpexc | VFP_FPEXC_EN);
-	}
+	pcu_discard(&arm_vfp_ops);
 }
+
+#endif /* FPU_VFP */

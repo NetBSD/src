@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.82 2012/07/14 07:55:28 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.83 2012/08/12 05:05:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2012/07/14 07:55:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2012/08/12 05:05:47 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -62,10 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2012/07/14 07:55:28 matt Exp $");
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
 #include <arm/fpe-arm/armfpe.h>
-#endif
-
-#ifdef FPU_VFP
-#include <arm/vfpvar.h>
 #endif
 
 char cpu_model[256];
@@ -161,9 +157,7 @@ cpu_attach(struct device *dv)
 		initialise_arm_fpe();
 #endif
 
-#ifdef FPU_VFP
 	vfp_attach();
-#endif
 }
 
 enum cpu_class {
