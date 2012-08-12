@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.55 2011/07/04 08:07:29 manu Exp $	*/
+/*	$NetBSD: p2k.c,v 1.56 2012/08/12 02:51:18 manu Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,7 @@ struct p2k_mount {
 };
 
 struct p2k_node {
+	struct puffs_node p2n_pn;
 	struct vnode *p2n_vp;
 
 	LIST_ENTRY(p2k_node) p2n_entries;
