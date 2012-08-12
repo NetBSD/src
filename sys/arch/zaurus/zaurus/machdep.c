@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2012/07/29 00:07:06 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2012/08/12 17:25:32 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2012/07/29 00:07:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2012/08/12 17:25:32 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,6 +162,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2012/07/29 00:07:06 matt Exp $");
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
+
+#include <arm/sa11x0/sa11x0_ostvar.h>
 
 #include <arch/zaurus/zaurus/zaurus_reg.h>
 #include <arch/zaurus/zaurus/zaurus_var.h>
@@ -457,11 +459,16 @@ zaurus_restart(void)
 
 		/* External reset circuit presumably asserts nRESET_GPIO. */
 		pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
-	} else if (ZAURUS_ISC860) {
-		/* XXX not yet */
-		printf("zaurus_restart() for C7x0 is not implemented yet.\n");
+	} else {
+		/* SL-C7x0/SL-C860 */
+		/* Clear all reset status */
+		ioreg_write(ZAURUS_POWMAN_VBASE + POWMAN_RCSR,
+		    POWMAN_HWR|POWMAN_WDR|POWMAN_SMR|POWMAN_GPR);
+
+		/* watchdog reset */
+		saost_reset();
 	}
-	delay(1 * 1000* 1000);	/* wait 1s */
+	delay(1 * 1000 * 1000);	/* wait 1s */
 }
 
 static inline pd_entry_t *
@@ -544,6 +551,12 @@ static const struct pmap_devmap zaurus_devmap[] = {
 	    ZAURUS_STUART_VBASE,
 	    _A(PXA2X0_STUART_BASE),
 	    _S(4 * COM_NPORTS),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+    },
+    {
+	    ZAURUS_POWMAN_VBASE,
+	    _A(PXA2X0_POWMAN_BASE),
+	    _S(PXA2X0_POWMAN_SIZE),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
 
