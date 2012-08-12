@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.175 2012/08/10 12:16:13 jdc Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.176 2012/08/12 13:19:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -6973,3 +6973,180 @@ sys/dev/pci/if_wm.c				1.231
 	Fix the check of the device type in last commit.
 	Reported by Thomas Klausner.
 	[msaitoh, ticket #471]
+
+sys/fs/adosfs/adlookup.c			1.16
+sys/fs/cd9660/cd9660_lookup.c			1.20
+sys/fs/efs/efs_vnops.c				1.26
+sys/fs/filecorefs/filecore_lookup.c		1.14
+sys/fs/hfs/hfs_vnops.c				1.26
+sys/fs/msdosfs/msdosfs_lookup.c			1.24
+sys/fs/nilfs/nilfs_vnops.c			1.18
+sys/fs/ntfs/ntfs_vnops.c			1.52
+sys/fs/puffs/puffs_node.c			1.25
+sys/fs/puffs/puffs_vnops.c			1.168
+sys/fs/smbfs/smbfs_vnops.c			1.80
+sys/fs/tmpfs/tmpfs_vnops.c			1.98
+sys/fs/udf/udf_vnops.c				1.72
+sys/fs/unionfs/unionfs_vnops.c			1.6
+sys/kern/vfs_cache.c				1.89
+sys/nfs/nfs_vnops.c				1.295
+sys/ufs/chfs/chfs_vnops.c			1.8
+sys/ufs/ext2fs/ext2fs_lookup.c			1.70
+sys/ufs/ufs/ufs_lookup.c			1.117
+
+	Move some the test for MAKEENTRY into the cache_enter(9).  Make some
+	variables in vfs_cache.c static, __read_mostly, etc.
+
+	[manu, ticket #484]
+
+lib/libp2k/p2k.c				1.56
+
+	libpuffs and libp2k both use the cookie to different structure,
+	which now leads to struct p2k_node corruption now that libpuffs
+	used pn_nlookup field in struct puffs_node to avoid race
+	conditions.
+
+	Attempt to fix that by adding a struct puffs_node at the
+	beginning of struct p2k_node. This seems to fix kern/46734
+	[manu, ticket #483]
+
+lib/libperfuse/debug.c				1.12
+lib/libperfuse/ops.c				1.59
+lib/libperfuse/perfuse.c			1.29
+lib/libperfuse/perfuse.c			1.30
+lib/libperfuse/perfuse_if.h			1.20
+lib/libperfuse/perfuse_priv.h			1.31
+lib/libperfuse/subr.c				1.19
+lib/libpuffs/dispatcher.c			1.42
+lib/libpuffs/dispatcher.c			1.43
+lib/libpuffs/puffs.3				1.53
+lib/libpuffs/puffs.3				1.54
+lib/libpuffs/puffs.h				1.123
+lib/libpuffs/puffs_ops.3			1.31
+sys/fs/puffs/puffs_msgif.c			1.90
+sys/fs/puffs/puffs_msgif.c			1.91
+sys/fs/puffs/puffs_msgif.c			1.92
+sys/fs/puffs/puffs_msgif.h			1.79
+sys/fs/puffs/puffs_msgif.h			1.80
+sys/fs/puffs/puffs_sys.h			1.80
+sys/fs/puffs/puffs_sys.h			1.81
+sys/fs/puffs/puffs_sys.h			1.82
+sys/fs/puffs/puffs_vfsops.c			1.102
+sys/fs/puffs/puffs_vfsops.c			1.103
+sys/fs/puffs/puffs_vfsops.c			1.105
+sys/fs/puffs/puffs_vnops.c			1.167
+sys/fs/puffs/puffs_vnops.c			1.171
+sys/fs/puffs/puffs_vnops.c			1.172
+sys/fs/puffs/puffs_vnops.c			1.173
+sys/fs/puffs/puffs_vnops.c			1.174
+usr.sbin/perfused/msg.c				1.21
+usr.sbin/perfused/perfused.c			1.24
+
+	- Fix same vnodes associated with multiple cookies
+	The scheme used to retreive known nodes on lookup was flawed, as
+	it only used parent and name. This produced a different cookie
+	for the same file if it was renamed, when looking up ../ or when
+	dealing with multiple files associated with the same name
+	through link(2).
+
+	We therefore abandon the use of node name and introduce hashed
+	lists of inodes. This causes a huge rewrite of reclaim code,
+	which do not attempt to keep parents allocated until all their
+	children are reclaimed
+
+	- Fix race conditions in reclaim
+	There are a few situations where we issue multiple FUSE
+	operations for a PUFFS operation. On reclaim, we therefore have
+	to wait for all FUSE operation to complete, not just the current
+	exchanges. We do this by introducing node reference count with
+	node_ref() and node_rele().
+
+	- Detect data loss caused by FAF
+	VOP_PUTPAGES causes FAF writes where the kernel does not check
+	the operation result. At least issue a warning on error.
+
+	- Enjoy FAF shortcut on setattr
+	No need to wait for the result if the kernel does not want it.
+	There is however an exception for setattr that touch the size,
+	we need to wait for completion because we have other operations
+	queued for after the resize.
+
+	- Fix fchmod() on write-open file
+	fchmod() on a node open with write privilege will send setattr
+	with both mode  and size set. This confuses some FUSE
+	filesystem. Therefore we send two FUSE  operations, one for
+	mode, and one for size.
+
+	- Remove node TTL handling for netbsd-5 for simplicity sake. The
+	code still builds on netbsd-5 but does not have the node TTL
+	feature anymore. It works fine with kernel support on netbsd-6.
+	
+	- Improve PUFFS_KFLAG_CACHE_FS_TTL by reclaiming older inactive nodes.
+
+	The normal kernel behavior is to retain inactive nodes in the
+	freelist until it runs out of vnodes. This has some merit for
+	local filesystems, where the cost of an allocation is about the
+	same as the cost of a lookup. But that situation is not true for
+	distributed filesystems. On the other hand, keeping inactive
+	nodes for a long time hold memory in the file server process,
+	and when the kernel runs out of vnodes, it produce reclaim
+	avalanches that increase lattency for other operations.
+
+	We do not reclaim inactive vnodes immediatly either, as they may
+	be looked up again shortly. Instead we introduce a grace time
+	and we reclaim nodes that have been inactive beyond the grace
+	time.
+
+	- Fix lookup/reclaim race condition.
+
+	The above improvement undercovered a race condition between
+	lookup and reclaim. If we reclaimed a vnode associated with a
+	userland cookie while a lookup returning that same cookiewas
+	inprogress, then the kernel ends up with a vnode associated with
+	a cookie that has been reclaimed in userland. Next operation on
+	the cookie will crash (or at least confuse) the filesystem.
+
+	We fix this by introducing a lookup count in kernel and
+	userland. On reclaim, the kernel sends the count, which enable
+	userland to detect situation where it initiated a lookup that is
+	not completed in kernel. In such a situation, the reclaim must
+	be ignored, as the node is about to be looked up again.
+	
+	Fix hang unmount bug introduced by last commit.
+
+	We introduced a slow queue for delayed reclaims, while the
+	existing queue for unmount, flush and exist has been renamed
+	fast queue. Both queues had timestamp for when an operation
+	should be done, but it was useless for the fast queue, which is
+	always used to run an operation ASAP. And the timestamp test had
+	an error that turned ASAP into "at next tick", but nobody what
+	there to wake the thread at next tick, hence the hang. The fix
+	is to remove the useless and buggy timestamp test for fast
+	queue.
+	
+	Rename slow sopreq queue into node sopreq queue, to refet the
+	fact that is only intended for postponed node reclaims. When
+	purging the node sopreq queue, do not call puffs_msg_sendresp(),
+	as it makes no sense.
+
+	Fix race condition between (create|mknod|mkdir|symlino) and
+	reclaim, just like we did it between lookup and reclaim.
+	
+	Missing bit in previous commit (prevent race between
+	create|mknod|mkdir|symlink and reclaim)
+	
+	Bump date for previous.
+	New sentence, new line; remove trailing whitespace; fix typos;
+	punctuation nits.
+	
+	Add PUFFS_KFLAG_CACHE_DOTDOT so that vnodes hold a reference on their
+	parent, keeping them active, and allowing to lookup .. without sending
+	a request to the filesystem.
+
+	Enable the featuure for perfused, as this is how FUSE works.
+	
+	Missing bit in previous commit (PUFFS_KFLAG_CACHE_DOTDOT option
+	to avoid looking up ..)
+	[manu, ticket #438]
+
+
