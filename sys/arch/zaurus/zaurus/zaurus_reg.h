@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_reg.h,v 1.4 2012/01/29 10:12:42 tsutsui Exp $	*/
+/*	$NetBSD: zaurus_reg.h,v 1.5 2012/08/12 17:25:32 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -49,7 +49,8 @@
 #define ZAURUS_FFUART_VBASE	0xfd600000
 #define ZAURUS_BTUART_VBASE	0xfd700000
 #define ZAURUS_STUART_VBASE	0xfd800000
-#define ZAURUS_VBASE_FREE	0xfd900000
+#define ZAURUS_POWMAN_VBASE	0xfd900000
+#define ZAURUS_VBASE_FREE	0xfda00000
 
 #define ioreg_read(a)		(*(volatile uint32_t *)(a))
 #define ioreg_write(a,v)	(*(volatile uint32_t *)(a)=(v))
