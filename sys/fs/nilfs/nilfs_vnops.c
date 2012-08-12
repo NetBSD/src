@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.16 2011/11/18 21:18:50 christos Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.16.6.1 2012/08/12 12:59:47 martin Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.16 2011/11/18 21:18:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.16.6.1 2012/08/12 12:59:47 martin Exp $");
 #endif /* not lint */
 
 
@@ -760,7 +760,7 @@ out:
 	 * the file might not be found and thus putting it into the namecache
 	 * might be seen as negative caching.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE)
 		cache_enter(dvp, *vpp, cnp);
 
 	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returing error %d\n", error));

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.2.4.1 2012/05/07 03:01:12 riz Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.2.4.2 2012/08/12 12:59:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -154,9 +154,9 @@ chfs_lookup(void *v)
 	// Store the result of this lookup in the cache.  Avoid this if the
 	// request was for creation, as it does not improve timings on
 	// emprical tests.
-	if ((cnp->cn_flags & MAKEENTRY) && cnp->cn_nameiop != CREATE
-	    && (cnp->cn_flags & ISDOTDOT) == 0)
+	if (cnp->cn_nameiop != CREATE && (cnp->cn_flags & ISDOTDOT) == 0) {
 		cache_enter(dvp, *vpp, cnp);
+	}
 
 out:
 	// If there were no errors, *vpp cannot be null and it must be

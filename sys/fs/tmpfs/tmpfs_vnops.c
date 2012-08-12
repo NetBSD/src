@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.94.2.1 2012/02/27 20:25:33 riz Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.94.2.2 2012/08/12 12:59:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.94.2.1 2012/02/27 20:25:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.94.2.2 2012/08/12 12:59:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -285,7 +285,7 @@ done:
 	 * Cache the result, unless request was for creation (as it does
 	 * not improve the performance).
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) != 0 && cnp->cn_nameiop != CREATE) {
+	if (cnp->cn_nameiop != CREATE) {
 		cache_enter(dvp, *vpp, cnp);
 	}
 out:

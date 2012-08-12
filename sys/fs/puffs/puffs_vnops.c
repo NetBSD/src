@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.163.2.2 2012/04/23 16:49:00 riz Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163.2.3 2012/08/12 12:59:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.2 2012/04/23 16:49:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.3 2012/08/12 12:59:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -590,9 +590,8 @@ puffs_vnop_lookup(void *v)
 
 			/* save negative cache entry */
 			} else {
-				if ((cnp->cn_flags & MAKEENTRY)
-				    && PUFFS_USE_NAMECACHE(pmp)
-				    && !PUFFS_USE_FS_TTL(pmp))
+				if (PUFFS_USE_NAMECACHE(pmp) &&
+				    !PUFFS_USE_FS_TTL(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
 		}
@@ -651,7 +650,7 @@ puffs_vnop_lookup(void *v)
 
 	*ap->a_vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
+	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
 	/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.49.10.1 2012/05/07 03:01:13 riz Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.49.10.2 2012/08/12 12:59:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.10.1 2012/05/07 03:01:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.49.10.2 2012/08/12 12:59:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,10 +724,9 @@ ntfs_lookup(void *v)
 		    (unsigned long long)VTONT(*ap->a_vpp)->i_number));
 	}
 
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(dvp, *ap->a_vpp, cnp);
+	cache_enter(dvp, *ap->a_vpp, cnp);
 
-	return (error);
+	return error;
 }
 
 /*
