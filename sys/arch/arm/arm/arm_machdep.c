@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.31 2012/02/19 21:06:04 rmind Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.32 2012/08/12 05:05:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.31 2012/02/19 21:06:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.32 2012/08/12 05:05:47 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -106,6 +106,12 @@ struct cpu_info cpu_info_store = {
 	.ci_cpl = IPL_HIGH,
 #ifndef PROCESS_ID_IS_CURLWP
 	.ci_curlwp = &lwp0,
+#endif
+};
+
+const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
+#if defined(FPU_VFP)
+	[PCU_FPU] = &arm_vfp_ops,
 #endif
 };
 
@@ -174,9 +180,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 	pcb->pcb_flags = 0;
 #ifdef FPU_VFP
-	l->l_md.md_flags &= ~MDP_VFPUSED;
-	if (pcb->pcb_vfpcpu != NULL)
-		vfp_saveregs_lwp(l, 0);
+	vfp_discardcontext();
 #endif
 }
 
