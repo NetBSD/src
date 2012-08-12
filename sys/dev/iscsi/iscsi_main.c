@@ -52,20 +52,20 @@ int iscsi_perf_level = 0;
 iscsi_softc_t *sc = NULL;
 
 /* the list of sessions */
-session_list_t sessions = TAILQ_HEAD_INITIALIZER(sessions);
+session_list_t iscsi_sessions = TAILQ_HEAD_INITIALIZER(iscsi_sessions);
 
 /* connections to clean up */
-connection_list_t cleanup_list = TAILQ_HEAD_INITIALIZER(cleanup_list);
-bool detaching = FALSE;
-struct lwp *cleanproc = NULL;
+connection_list_t iscsi_cleanup_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanup_list);
+bool iscsi_detaching = FALSE;
+struct lwp *iscsi_cleanproc = NULL;
 
 /* the number of active send threads (for cleanup thread) */
-uint32_t num_send_threads = 0;
+uint32_t iscsi_num_send_threads = 0;
 
 /* Our node name, alias, and ISID */
-uint8_t InitiatorName[ISCSI_STRING_LENGTH] = "";
-uint8_t InitiatorAlias[ISCSI_STRING_LENGTH] = "";
-login_isid_t InitiatorISID;
+uint8_t iscsi_InitiatorName[ISCSI_STRING_LENGTH] = "";
+uint8_t iscsi_InitiatorAlias[ISCSI_STRING_LENGTH] = "";
+login_isid_t iscsi_InitiatorISID;
 
 /******************************************************************************/
 
@@ -74,17 +74,18 @@ login_isid_t InitiatorISID;
 */
 
 void iscsiattach(int);
-void iscsi_attach(device_t parent, device_t self, void *aux);
-int iscsi_match(device_t, cfdata_t, void *);
-int iscsi_detach(device_t, int);
+
+static void iscsi_attach(device_t parent, device_t self, void *aux);
+static int iscsi_match(device_t, cfdata_t, void *);
+static int iscsi_detach(device_t, int);
 
 
 CFATTACH_DECL_NEW(iscsi, sizeof(struct iscsi_softc), iscsi_match, iscsi_attach,
 			  iscsi_detach, NULL);
 
 
-int iscsiopen(dev_t, int, int, PTHREADOBJ);
-int iscsiclose(dev_t, int, int, PTHREADOBJ);
+static dev_type_open(iscsiopen);
+static dev_type_close(iscsiclose);
 
 struct cdevsw iscsi_cdevsw = {
 	iscsiopen, iscsiclose,
@@ -131,7 +132,7 @@ iscsiclose(dev_t dev, int flag, int mode, PTHREADOBJ p)
  *    Not much to do here, either - this is a pseudo-device.
  */
 
-int
+static int
 iscsi_match(device_t self, cfdata_t cfdata, void *arg)
 {
 	return 1;
@@ -178,7 +179,7 @@ iscsiattach(int n)
  * iscsi_attach:
  *    One-time inits go here. Not much for now, probably even less later.
  */
-void
+static void
 iscsi_attach(device_t parent, device_t self, void *aux)
 {
 
@@ -187,7 +188,7 @@ iscsi_attach(device_t parent, device_t self, void *aux)
 	sc = (iscsi_softc_t *) device_private(self);
 	sc->sc_dev = self;
 	if (kthread_create(PRI_NONE, 0, NULL, iscsi_cleanup_thread,
-	    NULL, &cleanproc, "Cleanup") != 0) {
+	    NULL, &iscsi_cleanproc, "Cleanup") != 0) {
 		panic("Can't create cleanup thread!");
 	}
 	aprint_normal("%s: attached.  major = %d\n", iscsi_cd.cd_name,
@@ -198,16 +199,16 @@ iscsi_attach(device_t parent, device_t self, void *aux)
  * iscsi_detach:
  *    Cleanup.
  */
-int
+static int
 iscsi_detach(device_t self, int flags)
 {
 
 	DEBOUT(("ISCSI: detach\n"));
 	kill_all_sessions();
-	detaching = TRUE;
-	while (cleanproc != NULL) {
-		wakeup(&cleanup_list);
-		tsleep(&cleanup_list, PWAIT, "detach_wait", 20);
+	iscsi_detaching = TRUE;
+	while (iscsi_cleanproc != NULL) {
+		wakeup(&iscsi_cleanup_list);
+		tsleep(&iscsi_cleanup_list, PWAIT, "detach_wait", 20);
 	}
 	return 0;
 }
