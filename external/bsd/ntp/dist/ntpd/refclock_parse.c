@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.7 2012/08/11 20:09:08 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.8 2012/08/12 06:16:51 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2423,12 +2423,23 @@ ap(char *buffer, size_t len, char *pos, const char *fmt, ...)
 {
 	va_list va;
 	int l;
+	size_t rem = len - (pos - buffer);
+
+	if (rem == 0)
+		return pos;
 
 	va_start(va, fmt);
-	l = vsnprintf(pos, len - (pos - buffer), fmt, va);
+	l = vsnprintf(pos, rem, fmt, va);
 	va_end(va);
-	if (l != -1)
-		pos += l;
+
+	if (l != -1) {
+		rem--;
+		if (rem >= l)
+			pos += l;
+		else
+			pos += rem;
+	}
+
 	return pos;
 }
 
@@ -5419,7 +5430,7 @@ trimbletsip_message(
 		
 		if (s)
 		{
-			snprintf(t, BUFFER_SIZE(pbuffer, t), "%s=\"", s->varname);
+			t = ap(pbuffer, sizeof(pbuffer), t, "%s=\"", s->varname);
 		}
 		else
 		{
@@ -5429,12 +5440,10 @@ trimbletsip_message(
 
 		var_flag = s->varmode;
 
-		t += strlen(t);
-		
 		switch(cmd)
 		{
 		case CMD_RCURTIME:
-			snprintf(t, BUFFER_SIZE(pbuffer, t), "%f, %d, %f",
+			t = ap(pbuffer, sizeof(pbuffer), t, "%f, %d, %f",
 				 getflt((unsigned char *)&mb(0)), getshort((unsigned char *)&mb(4)),
 				 getflt((unsigned char *)&mb(6)));
 			break;
