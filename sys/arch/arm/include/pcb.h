@@ -94,7 +94,6 @@ struct pcb {
 	} pcb_un;
 	struct	fpe_sp_state pcb_fpstate;	/* FPA Floating Point state */
 	struct	vfpreg pcb_vfp;			/* VFP registers */
-	struct	cpu_info *pcb_vfpcpu;		/* CPU holding VFP state */
 };
 #define	pcb_ff	pcb_fpstate			/* for arm26 */
 
