@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.89 2011/10/19 01:39:29 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.89.8.1 2012/08/12 13:13:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.89 2011/10/19 01:39:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.89.8.1 2012/08/12 13:13:21 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -93,6 +94,8 @@ static pool_cache_t parkpc;
 #ifdef PUFFSDEBUG
 static int totalpark;
 #endif
+
+int puffs_sopreq_expire_timeout = PUFFS_SOPREQ_EXPIRE_TIMEOUT;
 
 static int
 makepark(void *arg, void *obj, int flags)
@@ -839,6 +842,30 @@ puffsop_msg(void *this, struct puffs_req *preq)
 	puffs_msgpark_release1(park, 2);
 }
 
+/*
+ * Node expiry. We come here after an inactive on an unexpired node.
+ * The expiry has been queued and is done in sop thread.
+ */
+static void
+puffsop_expire(struct puffs_mount *pmp, puffs_cookie_t cookie)
+{
+	struct vnode *vp;
+
+	KASSERT(PUFFS_USE_FS_TTL(pmp));
+
+	/* 
+	 * If it still exists and has no reference,
+	 * vrele should cause it to be reclaimed.
+	 * Otherwise, we have nothing to do.
+	 */
+	if (puffs_cookie2vnode(pmp, cookie, 0, 0, &vp) == 0) {
+		VPTOPP(vp)->pn_stat &= ~PNODE_SOPEXP;
+		vrele(vp); 
+	}
+
+	return;
+}
+
 static void
 puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
@@ -966,7 +993,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 			kmem_free(psopr, sizeof(*psopr));
 			puffs_msg_sendresp(pmp, preq, ENXIO);
 		} else {
-			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopfastreqs,
 			    psopr, psopr_entries);
 			cv_signal(&pmp->pmp_sopcv);
 			mutex_exit(&pmp->pmp_sopmtx);
@@ -990,7 +1017,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 			kmem_free(psopr, sizeof(*psopr));
 			puffs_msg_sendresp(pmp, preq, ENXIO);
 		} else {
-			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopfastreqs,
 			    psopr, psopr_entries);
 			cv_signal(&pmp->pmp_sopcv);
 			mutex_exit(&pmp->pmp_sopmtx);
@@ -1014,6 +1041,8 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
  * server, i.e. a long-term kernel lock which will be released only
  * once the file server acknowledges a request
  */
+#define TIMED_OUT(expire) \
+    ((int)((unsigned int)hardclock_ticks - (unsigned int)expire) > 0)
 void
 puffs_sop_thread(void *arg)
 {
@@ -1022,12 +1051,35 @@ puffs_sop_thread(void *arg)
 	struct puffs_sopreq *psopr;
 	bool keeprunning;
 	bool unmountme = false;
+	int timeo;
+
+	timeo = PUFFS_USE_FS_TTL(pmp) ? puffs_sopreq_expire_timeout : 0;
 
 	mutex_enter(&pmp->pmp_sopmtx);
 	for (keeprunning = true; keeprunning; ) {
-		while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) == NULL)
-			cv_wait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx);
-		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		/*
+		 * We have a fast queue for flush and umount, and a node 
+		 * queue for delayes node reclaims. Requests on node queue 			 * are not honoured before clock reaches psopr_at. This 
+		 * code assumes that requests are ordered by psopr_at.
+		 */
+		do {
+			psopr = TAILQ_FIRST(&pmp->pmp_sopfastreqs);
+			if (psopr != NULL) {
+				TAILQ_REMOVE(&pmp->pmp_sopfastreqs,
+					     psopr, psopr_entries);
+				break;
+			}
+
+			psopr = TAILQ_FIRST(&pmp->pmp_sopnodereqs);
+			if ((psopr != NULL) && TIMED_OUT(psopr->psopr_at)) {
+				TAILQ_REMOVE(&pmp->pmp_sopnodereqs,
+					     psopr, psopr_entries);
+				break;
+			}
+
+			cv_timedwait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx, timeo);
+		} while (1 /* CONSTCOND */);
+
 		mutex_exit(&pmp->pmp_sopmtx);
 
 		switch (psopr->psopr_sopreq) {
@@ -1036,6 +1088,9 @@ puffs_sop_thread(void *arg)
 			break;
 		case PUFFS_SOPREQ_FLUSH:
 			puffsop_flush(pmp, &psopr->psopr_pf);
+			break;
+		case PUFFS_SOPREQ_EXPIRE:
+			puffsop_expire(pmp, psopr->psopr_ck);
 			break;
 		case PUFFS_SOPREQ_UNMOUNT:
 			puffs_msg_sendresp(pmp, &psopr->psopr_preq, 0);
@@ -1058,10 +1113,18 @@ puffs_sop_thread(void *arg)
 	/*
 	 * Purge remaining ops.
 	 */
-	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) != NULL) {
-		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopfastreqs)) != NULL) {
+		TAILQ_REMOVE(&pmp->pmp_sopfastreqs, psopr, psopr_entries);
 		mutex_exit(&pmp->pmp_sopmtx);
 		puffs_msg_sendresp(pmp, &psopr->psopr_preq, ENXIO);
+		kmem_free(psopr, sizeof(*psopr));
+		mutex_enter(&pmp->pmp_sopmtx);
+	}
+
+	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopnodereqs)) != NULL) {
+		TAILQ_REMOVE(&pmp->pmp_sopnodereqs, psopr, psopr_entries);
+		mutex_exit(&pmp->pmp_sopmtx);
+		KASSERT(psopr->psopr_sopreq == PUFFS_SOPREQ_EXPIRE);
 		kmem_free(psopr, sizeof(*psopr));
 		mutex_enter(&pmp->pmp_sopmtx);
 	}
