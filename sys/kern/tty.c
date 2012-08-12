@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.250 2012/03/12 18:27:08 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.251 2012/08/12 14:45:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.250 2012/03/12 18:27:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.251 2012/08/12 14:45:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,11 +224,14 @@ tty_get_qsize(int *qsize, int newsize)
 	return 0;
 }
 
-static void
+static int
 tty_set_qsize(struct tty *tp, int newsize)
 {
 	struct clist rawq, canq, outq;
 	struct clist orawq, ocanq, ooutq;
+
+	if (outq.c_cc != 0)
+		return EBUSY;
 
 	clalloc(&rawq, newsize, 1);
 	clalloc(&canq, newsize, 1);
@@ -252,6 +255,8 @@ tty_set_qsize(struct tty *tp, int newsize)
 	clfree(&orawq);
 	clfree(&ocanq);
 	clfree(&ooutq);
+
+	return 0;
 }
 
 static int
@@ -1350,7 +1355,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case TIOCSQSIZE:
 		if ((error = tty_get_qsize(&s, *(int *)data)) == 0 &&
 		    s != tp->t_qsize)
-			tty_set_qsize(tp, s);
+			error = tty_set_qsize(tp, s);
 		return error;
 	default:
 		/* We may have to load the compat module for this. */
