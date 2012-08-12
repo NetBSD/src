@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.176 2012/08/12 13:19:14 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.177 2012/08/12 14:48:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7149,4 +7149,27 @@ usr.sbin/perfused/perfused.c			1.24
 	to avoid looking up ..)
 	[manu, ticket #438]
 
+sys/dev/ic/vga.c				1.109
+
+	Reset flip/flop using dedicated vga_reset_state() macro we already have.
+	Explicit vga_raw_read() used here before was incorrect since it reads
+	from *wrong* io handle!
+
+	Fixes weird problem under VirtualBox where first switch to a different
+	VT caused text mode color 0 (normally black) to become something else.
+	[uwe, ticket #472]
+
+
+etc/mtree/NetBSD.dist.base			1.98
+
+	Do not create obsolete ./usr/include/quota directory anymore.
+	[msaitoh, ticket #473]
+
+sys/kern/subr_kmem.c				1.46 (via patch)
+
+	split allocation lookup table to decrease overall memory used
+	making allocator more flexible for allocations larger then 4kb
+	move the encoded "size" under DEBUG back to the begining of allocated
+	chunk
+	[para, ticket #486]
 
