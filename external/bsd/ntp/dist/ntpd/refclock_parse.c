@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.8 2012/08/12 06:16:51 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.9 2012/08/12 07:22:24 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2434,7 +2434,7 @@ ap(char *buffer, size_t len, char *pos, const char *fmt, ...)
 
 	if (l != -1) {
 		rem--;
-		if (rem >= l)
+		if (rem >= (size_t)l)
 			pos += l;
 		else
 			pos += rem;
