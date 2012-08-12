@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119.4.2 2012/07/05 17:26:14 riz Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.4.3 2012/08/12 13:13:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,7 @@ struct puffs_kcache {
 struct puffs_node {
 	off_t			pn_size;
 	int			pn_flags;
+	int			pn_nlookup;
 	struct vattr		pn_va;
 
 	void			*pn_data;	/* private data		*/

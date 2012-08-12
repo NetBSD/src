@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.22.2.1 2012/06/24 16:11:24 jdc Exp $ */
+/*  $NetBSD: perfused.c,v 1.22.2.2 2012/08/12 13:13:21 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -254,11 +254,12 @@ new_mount(int fd, int pmnt_flags)
 	pc.pc_get_outhdr = perfused_get_outhdr;
 	pc.pc_get_outpayload = perfused_get_outpayload;
 	pc.pc_umount = perfused_umount;
+	pc.pc_fsreq = perfused_gotframe;
 
 	pu = perfuse_init(&pc, &pmi);
 	
 	puffs_framev_init(pu, perfused_readframe, perfused_writeframe, 
-			  perfused_cmpframe, perfused_gotframe, perfused_fdnotify);
+			  perfused_cmpframe, pc.pc_fsreq, perfused_fdnotify);
 
 	if (puffs_framev_addfd(pu, fd, PUFFS_FBIO_READ|PUFFS_FBIO_WRITE) == -1)
 		DERR(EX_SOFTWARE, "puffs_framev_addfd failed");
@@ -374,10 +375,10 @@ sigusr1_handler(int sig)
 	if (perfuse_diagflags & PDF_TRACE) {
 		perfuse_trace_dump(perfused_mount, perfused_trace);
 		perfuse_diagflags &= ~PDF_TRACE;
-		DPRINTF("trace dumped, trace disabled");
+		DPRINTF("trace dumped, trace disabled\n");
 	} else {
 		perfuse_diagflags |= PDF_TRACE;
-		DPRINTF("trace enabled");
+		DPRINTF("trace enabled\n");
 	}
 
 	return;

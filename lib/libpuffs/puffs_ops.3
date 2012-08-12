@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.29.4.2 2012/07/05 17:26:14 riz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.29.4.3 2012/08/12 13:13:21 martin Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 13, 2010
+.Dd April 18, 2012
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -297,7 +297,7 @@ Wait for all I/O for complete until returning.
 Initiate I/O, but do not wait for completion.
 .It Dv MNT_LAZY
 Synchorize data not synchoronized by the file system syncer,
-i.e. data not written when
+i.e., data not written when
 .Fn node_fsync
 is called with
 .Dv FSYNC_LAZY .
@@ -393,17 +393,17 @@ If the located entry is a block device or character device file,
 the dev_t for the entry should be set using
 .Fn puffs_newinfo_setrdev .
 .Pp
-If 
+If
 .Fn puffs_init
 was called with
 .Dv PUFFS_KFLAG_CACHE_FS_TTL
-then 
+then
 .Fn puffs_newinfo_setva ,
 .Fn puffs_newinfo_setvattl ,
 and
 .Fn puffs_newinfo_setcnttl
 can be called to specify the new node attributes, cached attributes
-time to live, and cached name timeto live.
+time to live, and cached name time to live.
 .Pp
 The type of operation is found from
 .Va pcn-\*[Gt]pcn_nameiop :
@@ -701,12 +701,12 @@ is a vector for offsets corresponding to read offsets.
 One cookie should be filled out for each directory entry.
 The value of the cookie should equal the offset of the
 .Em next
-directory entry, i.e. which offset should be passed to readdir for
+directory entry, i.e., which offset should be passed to readdir for
 the first entry read to be the entry following the current one.
 .Fa ncookies
 is the number of slots for cookies in the cookie vector upon entry to
 the function and must be set to the amount of cookies stored in the
-vector (i.e. amount of directory entries read) upon exit.
+vector (i.e., amount of directory entries read) upon exit.
 There is always enough space in the cookie vector for the maximal number
 of entries that will fit into the directory entry buffer.
 For filling out the vector, the helper function
@@ -793,7 +793,7 @@ In case the file
 .Fa opc
 has a link count of zero, it may be safely removed now.
 .It Fn puffs_node_abortop "pu" "opc" "pcn"
-In case the operation following lookup (e.g. mkdir or remove) is not
+In case the operation following lookup (e.g., mkdir or remove) is not
 executed for some reason, abortop will be issued.
 This is useful only for servers which cache state between lookup
 and a directory operation and is generally left unimplemented.
@@ -820,7 +820,7 @@ should call the file system inactive method for the specified node.
 The node number 1 always means the operation cookie
 .Ar opc ,
 while the node number 2 can be used to specify the second node argument
-present in some methods, e.g. remove.
+present in some methods, e.g., remove.
 .It Fn puffs_newinfo_setcookie pni cookie
 Set cookie for node provided by this method to
 .Ar cookie .
@@ -848,7 +848,8 @@ and
 .Fn fhtovp
 producing device type nodes.
 .It Fn puffs_newinfo_setva pni vap
-Set the attributes for newly created vnode. This call is valid for 
+Set the attributes for newly created vnode.
+This call is valid for
 .Fn lookup ,
 .Fn create ,
 .Fn mkdir ,
@@ -857,12 +858,12 @@ and
 .Fn symlink ,
 if
 .Fn puffs_init
-vas called with 
+was called with
 .Dv PUFFS_KFLAG_CACHE_FS_TTL
 flag set.
 .It Fn puffs_newinfo_setvattl pni va_ttl
-Set cached attribute time to live for newly created vnode. 
-This call is valid for 
+Set cached attribute time to live for newly created vnode.
+This call is valid for
 .Fn lookup ,
 .Fn create ,
 .Fn mkdir ,
@@ -871,11 +872,12 @@ and
 .Fn symlink ,
 if
 .Fn puffs_init
-vas called with 
+was called with
 .Dv PUFFS_KFLAG_CACHE_FS_TTL
 flag set.
 .It Fn puffs_newinfo_setcnttl pni cn_ttl
-Set cached name time to live for newly created vnode. This call is valid for 
+Set cached name time to live for newly created vnode.
+This call is valid for
 .Fn lookup ,
 .Fn create ,
 .Fn mkdir ,
@@ -884,7 +886,7 @@ and
 .Fn symlink ,
 if
 .Fn puffs_init
-vas called with 
+was called with
 .Dv PUFFS_KFLAG_CACHE_FS_TTL
 flag set.
 .El

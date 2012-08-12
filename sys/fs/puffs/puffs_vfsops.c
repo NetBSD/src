@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.100.8.1 2012/04/23 16:49:01 riz Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.100.8.2 2012/08/12 13:13:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.8.1 2012/04/23 16:49:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.100.8.2 2012/08/12 13:13:21 martin Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/extattr.h>
@@ -306,7 +307,8 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	cv_init(&pmp->pmp_sopcv, "puffsop");
 	TAILQ_INIT(&pmp->pmp_msg_touser);
 	TAILQ_INIT(&pmp->pmp_msg_replywait);
-	TAILQ_INIT(&pmp->pmp_sopreqs);
+	TAILQ_INIT(&pmp->pmp_sopfastreqs);
+	TAILQ_INIT(&pmp->pmp_sopnodereqs);
 
 	if ((error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    puffs_sop_thread, pmp, NULL, "puffsop")) != 0)
@@ -427,7 +429,7 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 			mutex_enter(&pmp->pmp_sopmtx);
 			KASSERT(pmp->pmp_sopthrcount == 0);
 		} else {
-			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopfastreqs,
 			    psopr, psopr_entries);
 			cv_signal(&pmp->pmp_sopcv);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.38.2.2 2012/07/05 17:26:14 riz Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.38.2.3 2012/08/12 13:13:21 martin Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.38.2.2 2012/07/05 17:26:14 riz Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.38.2.3 2012/08/12 13:13:21 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -301,6 +301,12 @@ dispatch(struct puffs_cc *pcc)
 						    &pcn.pcn_po_full);
 				}
 			}
+
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -309,6 +315,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_create *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_create == NULL) {
 				error = 0;
@@ -337,13 +344,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -352,6 +362,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mknod *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mknod == NULL) {
 				error = 0;
@@ -380,13 +391,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -653,6 +667,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mkdir *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mkdir == NULL) {
 				error = 0;
@@ -681,13 +696,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -713,6 +731,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_symlink *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_symlink == NULL) {
 				error = 0;
@@ -742,13 +761,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (!error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -810,8 +832,24 @@ dispatch(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RECLAIM:
 		{
-
+			struct puffs_vnmsg_reclaim *auxt = auxbuf;
+			struct puffs_node *pn;
+		
 			if (pops->puffs_node_reclaim == NULL) {
+				error = 0;
+				break;
+			}
+
+			/*
+			 * This fixes a race condition, 
+			 * where a node in reclaimed by kernel 
+			 * after a lookup request is sent, 
+			 * but before the reply, leaving the kernel
+			 * with a invalid vnode/cookie reference.
+			 */
+			pn = PU_CMAP(pu, opcookie);
+			pn->pn_nlookup -= auxt->pvnr_nlookup;
+			if (pn->pn_nlookup >= 1) {
 				error = 0;
 				break;
 			}
