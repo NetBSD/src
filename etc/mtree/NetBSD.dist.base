@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.97.2.1 2012/06/14 09:48:46 sborrill Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.97.2.2 2012/08/12 13:38:48 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -173,7 +173,6 @@
 ./usr/include/ppath
 ./usr/include/prop
 ./usr/include/protocols
-./usr/include/quota
 ./usr/include/readline
 ./usr/include/rpc
 ./usr/include/rpcsvc
