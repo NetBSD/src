@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.15 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.16 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.15 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.16 2012/08/12 03:35:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -417,7 +417,8 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
  * npf_nat_inspect: inspect packet against NAT ruleset and return a policy.
  */
 static npf_natpolicy_t *
-npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, ifnet_t *ifp, const int di)
+npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
+    const int di)
 {
 	npf_ruleset_t *rlset;
 	npf_natpolicy_t *np;
@@ -582,7 +583,7 @@ npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
  */
 int
 npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
-    ifnet_t *ifp, const int di)
+    const ifnet_t *ifp, const int di)
 {
 	npf_session_t *nse = NULL;
 	npf_natpolicy_t *np;
@@ -643,7 +644,7 @@ npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
 	 * stream depends on other, stateless filtering rules.
 	 */
 	if (se == NULL) {
-		nse = npf_session_establish(npc, nbuf, di);
+		nse = npf_session_establish(npc, nbuf, ifp, di);
 		if (nse == NULL) {
 			error = ENOMEM;
 			goto out;

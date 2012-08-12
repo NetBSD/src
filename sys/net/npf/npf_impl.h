@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.20 2012/07/28 00:43:24 matt Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.21 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -124,9 +124,9 @@ typedef struct {
 
 #if defined(_NPF_TESTING)
 void		npf_state_sample(npf_state_t *, bool);
-#define	NPF_TCP_STATE_SAMPLE(n, r)	npf_state_sample(n, r)
+#define	NPF_STATE_SAMPLE(n, r)	npf_state_sample(n, r)
 #else
-#define	NPF_TCP_STATE_SAMPLE(n, r)
+#define	NPF_STATE_SAMPLE(n, r)
 #endif
 
 /*
@@ -248,7 +248,7 @@ npf_rule_t *	npf_ruleset_replace(const char *, npf_ruleset_t *);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, nbuf_t *, npf_ruleset_t *,
-		    ifnet_t *, const int, const int);
+		    const ifnet_t *, const int, const int);
 int		npf_rule_apply(npf_cache_t *, nbuf_t *, npf_rule_t *, int *);
 
 /* Rule interface. */
@@ -273,8 +273,10 @@ npf_sehash_t *	sess_htable_create(void);
 void		sess_htable_destroy(npf_sehash_t *);
 void		sess_htable_reload(npf_sehash_t *);
 
-npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *, const int, int *);
-npf_session_t *	npf_session_establish(const npf_cache_t *, nbuf_t *, const int);
+npf_session_t *	npf_session_inspect(npf_cache_t *, nbuf_t *,
+		    const ifnet_t *, const int, int *);
+npf_session_t *	npf_session_establish(const npf_cache_t *, nbuf_t *,
+		    const ifnet_t *, const int);
 void		npf_session_release(npf_session_t *);
 void		npf_session_expire(npf_session_t *);
 bool		npf_session_pass(const npf_session_t *, npf_rproc_t **);
@@ -305,7 +307,7 @@ bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
 void		npf_nat_freealg(npf_natpolicy_t *, npf_alg_t *);
 
 int		npf_do_nat(npf_cache_t *, npf_session_t *, nbuf_t *,
-		    ifnet_t *, const int);
+		    const ifnet_t *, const int);
 void		npf_nat_expire(npf_nat_t *);
 void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);

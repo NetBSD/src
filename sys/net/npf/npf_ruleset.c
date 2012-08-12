@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.14 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.14 2012/08/12 03:35:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -354,7 +354,7 @@ npf_ruleset_replace(const char *name, npf_ruleset_t *rlset)
  */
 npf_rule_t *
 npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_ruleset_t *mainrlset,
-    ifnet_t *ifp, const int di, const int layer)
+    const ifnet_t *ifp, const int di, const int layer)
 {
 	const int di_mask = (di & PFIL_IN) ? NPF_RULE_IN : NPF_RULE_OUT;
 	npf_ruleset_t *rlset = mainrlset;

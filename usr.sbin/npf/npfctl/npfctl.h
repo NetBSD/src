@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.18 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.19 2012/08/12 03:35:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -161,14 +161,15 @@ int		npfctl_ncode_disassemble(nc_inf_t *, const void *, size_t);
 #define	NPFCTL_NAT_STATIC	2
 
 void		npfctl_config_init(bool);
-int		npfctl_config_send(int);
+int		npfctl_config_send(int, const char *);
 int		npfctl_config_show(int);
+unsigned long	npfctl_debug_addif(const char *);
 
 void		npfctl_build_rproc(const char *, npfvar_t *);
 void		npfctl_build_group(const char *, int, u_int);
 void		npfctl_build_rule(int, u_int, sa_family_t,
 		    const opt_proto_t *, const filt_opts_t *, const char *);
-void		npfctl_build_nat(int, int, u_int, const addr_port_t *,
+void		npfctl_build_natseg(int, int, u_int, const addr_port_t *,
 		    const addr_port_t *, const filt_opts_t *);
 void		npfctl_build_table(const char *, u_int, const char *);
 

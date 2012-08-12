@@ -1,0 +1,29 @@
+$NetBSD: README,v 1.1 2012/08/12 03:35:14 rmind Exp $
+
+npftest - a tool for regression testing and debugging NPF.
+It uses RUMP framework to run NPF kernel module in the userspace.
+
+---
+
+Test:
+
+npfctl debug npftest.conf /tmp/npf.plist
+npftest -c /tmp/npf.plist -t
+
+Stream:
+
+tcpdump -w stream.pcap -i $INTERFACE "host $HOST and tcp"
+npfctl debug
+npftest -c /tmp/npf.plist -s stream.pcap -o stream_npf_data.txt
+
+---
+
+Update RUMP libraries once the kernel side has been changed.  Hint:
+
+cd src/sys/net/npf
+sudo make includes
+
+cd src/sys/rump/dev/lib/libnpf
+make distclean
+MKDEBUG=yes MKDEBUGLIB=yes DBG=-g make -j8
+sudo MKDEBUG=yes MKDEBUGLIB=yes DBG=-g make install

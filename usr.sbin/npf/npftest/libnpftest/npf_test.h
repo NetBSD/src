@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.4 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.5 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -25,6 +25,8 @@
 #include <net/ethertypes.h>
 
 int		npf_test_load(const void *);
+unsigned	npf_test_addif(const char *, unsigned, bool);
+unsigned	npf_test_getif(const char *);
 int		npf_test_handlepkt(const void *, size_t, unsigned,
 		    bool, int64_t *);
 
@@ -39,5 +41,8 @@ bool		npf_nbuf_test(bool);
 bool		npf_processor_test(bool);
 bool		npf_table_test(bool);
 bool		npf_state_test(bool);
+
+bool		npf_rule_test(bool);
+bool		npf_nat_test(bool);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.17 2012/07/19 22:22:53 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.18 2012/08/12 03:35:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.17 2012/07/19 22:22:53 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.18 2012/08/12 03:35:13 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -347,7 +347,7 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_RELOAD:
 		npfctl_config_init(false);
 		npfctl_parsecfg(argc < 3 ? NPF_CONF_PATH : argv[2]);
-		ret = npfctl_config_send(fd);
+		ret = npfctl_config_send(fd, NULL);
 		if (ret) {
 			errx(EXIT_FAILURE, "ioctl: %s", strerror(ret));
 		}
@@ -398,9 +398,11 @@ main(int argc, char **argv)
 
 	if (strcmp(cmd, "debug") == 0) {
 		const char *cfg = argc > 2 ? argv[2] : "/etc/npf.conf";
+		const char *out = argc > 3 ? argv[3] : "/tmp/npf.plist";
+
 		npfctl_config_init(true);
 		npfctl_parsecfg(cfg);
-		npfctl_config_send(0);
+		npfctl_config_send(0, out);
 		return EXIT_SUCCESS;
 	}
 

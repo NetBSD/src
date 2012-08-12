@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.9 2012/07/15 00:22:59 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.10 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -107,6 +107,9 @@ int		npf_sessions_send(int, const char *);
 int		npf_sessions_recv(int, const char *);
 
 #ifdef _NPF_PRIVATE
+
+#include <ifaddrs.h>
+
 void		_npf_config_error(nl_config_t *, nl_error_t *);
 void		_npf_config_setsubmit(nl_config_t *, const char *);
 int		_npf_rule_foreach(nl_config_t *, nl_rule_callback_t);
@@ -120,6 +123,8 @@ void		_npf_nat_getinfo(nl_nat_t *, int *, u_int *, npf_addr_t *,
 int		_npf_rproc_setnorm(nl_rproc_t *, bool, bool, u_int, u_int);
 int		_npf_rproc_setlog(nl_rproc_t *, u_int);
 void		_npf_table_foreach(nl_config_t *, nl_table_callback_t);
+
+void		_npf_debug_addif(nl_config_t *, struct ifaddrs *, u_int);
 #endif
 
 __END_DECLS
