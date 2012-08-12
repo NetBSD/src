@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.5 2012/06/24 17:01:35 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.6 2012/08/12 13:26:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ iscsi_send_thread(void *par)
 
 	sess = conn->session;
 	/* so cleanup thread knows there's someone left */
-	num_send_threads++;
+	iscsi_num_send_threads++;
 
 	do {
 		while (!conn->terminating) {
@@ -411,14 +411,14 @@ iscsi_send_thread(void *par)
 		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 	}
 
-	TAILQ_INSERT_TAIL(&cleanup_list, conn, connections);
+	TAILQ_INSERT_TAIL(&iscsi_cleanup_list, conn, connections);
 	splx(s);
 
-	wakeup(&cleanup_list);
+	wakeup(&iscsi_cleanup_list);
 
 	conn->sendproc = NULL;
 	DEBC(conn, 5, ("Send thread exits\n"));
-	num_send_threads--;
+	iscsi_num_send_threads--;
 	kthread_exit(0);
 }
 
@@ -624,7 +624,7 @@ init_login_pdu(connection_t *conn, pdu_t *ppdu, bool next)
 					 NEXT_PHASE(c_phase);
 	}
 
-	memcpy(isid, &InitiatorISID, 6);
+	memcpy(isid, &iscsi_InitiatorISID, 6);
 	isid->TSIH = conn->session->TSIH;
 
 	pdu->p.login_req.CID = htons(conn->id);
