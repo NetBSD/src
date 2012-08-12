@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.60 2012/05/15 18:11:28 mrg Exp $	*/
+/*	$NetBSD: eso.c,v 1.61 2012/08/12 18:39:32 gson Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.60 2012/05/15 18:11:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61 2012/08/12 18:39:32 gson Exp $");
 
 #include "mpu.h"
 
@@ -260,12 +260,15 @@ eso_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	bus_addr_t vcbase;
 	const char *intrstring;
-	int idx;
+	int idx, error;
 	uint8_t a2mode, mvctl;
 
 	sc = device_private(self);
 	pa = aux;
 	aprint_naive(": Audio controller\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": ESS Solo-1 PCI AudioDrive ");
@@ -314,7 +317,10 @@ eso_attach(device_t parent, device_t self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Reset the device; bail out upon failure. */
-	if (eso_reset(sc) != 0) {
+	mutex_spin_enter(&sc->sc_intr_lock);
+	error = eso_reset(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
+	if (error != 0) {
 		aprint_error_dev(&sc->sc_dev, "can't reset\n");
 		return;
 	}
@@ -328,6 +334,8 @@ eso_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL,
 	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ | ESO_IO_IRQCTL_HVIRQ |
 	    ESO_IO_IRQCTL_MPUIRQ);
+
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* Set up A1's sample rate generator for new-style parameters. */
 	a2mode = eso_read_mixreg(sc, ESO_MIXREG_A2MODE);
@@ -373,16 +381,16 @@ eso_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gain[idx][ESO_LEFT] = sc->sc_gain[idx][ESO_RIGHT] = v;
 		eso_set_gain(sc, idx);
 	}
+
 	eso_set_recsrc(sc, ESO_MIXREG_ERS_MIC);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
