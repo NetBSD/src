@@ -151,8 +151,8 @@
 
 /* Only one for the following should be defined */
 #ifdef _LP64
-#undef SIXTY_FOUR_BIT_LONG
-#define SIXTY_FOUR_BIT
+#define SIXTY_FOUR_BIT_LONG
+#undef SIXTY_FOUR_BIT
 #undef THIRTY_TWO_BIT
 #else
 #undef SIXTY_FOUR_BIT_LONG
