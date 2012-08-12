@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.55 2012/08/11 14:35:33 tsutsui Exp $	*/
+/*	$NetBSD: param3.h,v 1.56 2012/08/12 20:00:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,3 +51,6 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
+
+/* Use smaller UBC_NWINS to avoid KVA space shortage. */
+#define	UBC_NWINS	512
