@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.177 2012/08/12 14:48:46 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.178 2012/08/12 18:44:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7172,4 +7172,9 @@ sys/kern/subr_kmem.c				1.46 (via patch)
 	move the encoded "size" under DEBUG back to the begining of allocated
 	chunk
 	[para, ticket #486]
+
+sys/arch/i386/conf/GENERIC			1.1078
+
+	Add uts(4)
+	[sborrill, ticket #474]
 
