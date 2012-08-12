@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.32 2012/05/09 22:29:06 jdf Exp $
+.\"	$NetBSD: expr.1,v 1.33 2012/08/12 17:27:04 wiz Exp $
 .\"
 .\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,18 +145,23 @@ an error occurred (such as memory allocation failure).
 .Sh EXAMPLES
 .Bl -enum
 .It
-The following example adds one to the variable a.
+The following example adds one to variable
+.Dq a :
 .Dl a=`expr $a + 1`
 .It
 The following example returns zero, due to subtraction having higher precedence
-than '\*[Am]' operator.
+than the
+.Dq \*[Am]
+operator:
 .Dl expr 1 '\*[Am]' 1 - 1
 .It
 The following example returns the filename portion of a pathname stored
-in variable a.
+in variable
+.Dq a :
 .Dl expr "/$a" Li : '.*/\e(.*\e)'
 .It
-The following example returns the number of characters in variable a.
+The following example returns the number of characters in variable
+.Dq a :
 .Dl expr $a Li : '.*'
 .El
 .Sh COMPATIBILITY
@@ -164,8 +169,11 @@ This implementation of
 .Nm
 internally uses 64 bit representation of integers and checks for
 over- and underflows.
-It also treats / (division mark) and
-option '--' correctly depending upon context.
+It also treats
+.Dq /
+(the division mark) and option
+.Dq --
+correctly depending upon context.
 .Pp
 .Nm
 on other systems (including
@@ -182,12 +190,16 @@ can only process values between -2147483648 and +2147483647.
 On other systems,
 .Nm
 might also not work correctly for regular expressions where
-either side contains single forward slash, like this:
+either side contains
+.Dq /
+(a single forward slash), like this:
 .Bd -literal -offset indent
 expr / : '.*/\e(.*\e)'
 .Ed
 .Pp
-If this is the case, you might use // (double forward slash)
+If this is the case, you might use
+.Dq //
+(a double forward slash)
 to avoid confusion with the division operator:
 .Bd -literal -offset indent
 expr "//$a" : '.*/\e(.*\e)'
@@ -196,11 +208,13 @@ expr "//$a" : '.*/\e(.*\e)'
 According to
 .St -p1003.2 ,
 .Nm
-has to recognize special option '--', treat it as an end of command
-line options and ignore it.
+has to recognize special option
+.Dq -- ,
+treat it as a delimiter to mark the end of command
+line options, and ignore it.
 Some
 .Nm
-implementations don't recognize it at all, others
+implementations don't recognize it at all; others
 might ignore it even in cases where doing so results in syntax
 error.
 There should be same result for both following examples,
@@ -215,7 +229,9 @@ Although
 .Nx
 .Nm
 handles both cases correctly, you should not depend on this behavior
-for portability reasons and avoid passing bare '--' as first
+for portability reasons and avoid passing a bare
+.Dq --
+as the first
 argument.
 .Sh STANDARDS
 The
