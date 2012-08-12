@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.42.2.1 2012/04/03 16:14:02 riz Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.42.2.2 2012/08/12 14:45:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42.2.1 2012/04/03 16:14:02 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42.2.2 2012/08/12 14:45:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -77,10 +77,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.42.2.1 2012/04/03 16:14:02 riz Exp $
 
 #include <lib/libkern/libkern.h>
 
-static const struct kmem_cache_info {
+struct kmem_cache_info {
 	size_t		kc_size;
 	const char *	kc_name;
-} kmem_cache_sizes[] = {
+};
+
+static const struct kmem_cache_info kmem_cache_sizes[] = {
 	{  8, "kmem-8" },
 	{ 16, "kmem-16" },
 	{ 24, "kmem-24" },
@@ -103,23 +105,38 @@ static const struct kmem_cache_info {
 	{ 512, "kmem-512" },
 	{ 768, "kmem-768" },
 	{ 1024, "kmem-1024" },
+	{ 0, NULL }
+};
+
+static const struct kmem_cache_info kmem_cache_big_sizes[] = {
 	{ 2048, "kmem-2048" },
 	{ 4096, "kmem-4096" },
+	{ 8192, "kmem-8192" },
+	{ 16384, "kmem-16384" },
 	{ 0, NULL }
 };
 
 /*
  * KMEM_ALIGN is the smallest guaranteed alignment and also the
- * smallest allocateable quantum.  Every cache size is a multiply
- * of CACHE_LINE_SIZE and gets CACHE_LINE_SIZE alignment.
+ * smallest allocateable quantum.
+ * Every cache size >= CACHE_LINE_SIZE gets CACHE_LINE_SIZE alignment.
  */
 #define	KMEM_ALIGN		8
 #define	KMEM_SHIFT		3
-#define	KMEM_MAXSIZE		4096
+#define	KMEM_MAXSIZE		1024
 #define	KMEM_CACHE_COUNT	(KMEM_MAXSIZE >> KMEM_SHIFT)
 
 static pool_cache_t kmem_cache[KMEM_CACHE_COUNT] __cacheline_aligned;
 static size_t kmem_cache_maxidx __read_mostly;
+
+#define	KMEM_BIG_ALIGN		2048
+#define	KMEM_BIG_SHIFT		11
+#define	KMEM_BIG_MAXSIZE	16384
+#define	KMEM_CACHE_BIG_COUNT	(KMEM_BIG_MAXSIZE >> KMEM_BIG_SHIFT)
+
+static pool_cache_t kmem_cache_big[KMEM_CACHE_BIG_COUNT] __cacheline_aligned;
+static size_t kmem_cache_big_maxidx __read_mostly;
+
 
 #if defined(DEBUG)
 int kmem_guard_depth = 0;
@@ -160,6 +177,10 @@ static void kmem_size_check(void *, size_t);
 CTASSERT(KM_SLEEP == PR_WAITOK);
 CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
+/*
+ * kmem_intr_alloc: allocate wired memory.
+ */
+
 void *
 kmem_intr_alloc(size_t size, km_flag_t kmflags)
 {
@@ -175,27 +196,40 @@ kmem_intr_alloc(size_t size, km_flag_t kmflags)
 		    (kmflags & KM_SLEEP) != 0);
 	}
 #endif
-	allocsz = kmem_roundup_size(size) + REDZONE_SIZE + SIZE_SIZE;
-	index = (allocsz - 1) >> KMEM_SHIFT;
+	size = kmem_roundup_size(size);
+	allocsz = size + REDZONE_SIZE + SIZE_SIZE;
 
-	if (index >= kmem_cache_maxidx) {
+	if ((index = ((allocsz -1) >> KMEM_SHIFT))
+	    < kmem_cache_maxidx) {
+		pc = kmem_cache[index];
+	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
+            < kmem_cache_big_maxidx) {
+		pc = kmem_cache_big[index];
+	} else {	
 		int ret = uvm_km_kmem_alloc(kmem_va_arena,
 		    (vsize_t)round_page(size),
 		    ((kmflags & KM_SLEEP) ? VM_SLEEP : VM_NOSLEEP)
 		     | VM_INSTANTFIT, (vmem_addr_t *)&p);
-		return ret ? NULL : p;
+		if (ret) {
+			return NULL;
+		}
+		FREECHECK_OUT(&kmem_freecheck, p);
+		return p;
 	}
 
-	pc = kmem_cache[index];
 	p = pool_cache_get(pc, kmflags);
 
 	if (__predict_true(p != NULL)) {
-		kmem_poison_check(p, kmem_roundup_size(size));
+		kmem_poison_check(p, size);
 		FREECHECK_OUT(&kmem_freecheck, p);
-		kmem_size_set(p, allocsz);
+		kmem_size_set(p, size);
 	}
-	return p;
+	return p + SIZE_SIZE;
 }
+
+/*
+ * kmem_intr_zalloc: allocate zeroed wired memory.
+ */
 
 void *
 kmem_intr_zalloc(size_t size, km_flag_t kmflags)
@@ -208,6 +242,10 @@ kmem_intr_zalloc(size_t size, km_flag_t kmflags)
 	}
 	return p;
 }
+
+/*
+ * kmem_intr_free: free wired memory allocated by kmem_alloc.
+ */
 
 void
 kmem_intr_free(void *p, size_t size)
@@ -224,22 +262,30 @@ kmem_intr_free(void *p, size_t size)
 		return;
 	}
 #endif
-	allocsz = kmem_roundup_size(size) + REDZONE_SIZE + SIZE_SIZE;
-	index = (allocsz - 1) >> KMEM_SHIFT;
+	size = kmem_roundup_size(size);
+	allocsz = size + REDZONE_SIZE + SIZE_SIZE;
 
-	if (index >= kmem_cache_maxidx) {
+	if ((index = ((allocsz -1) >> KMEM_SHIFT))
+	    < kmem_cache_maxidx) {
+		pc = kmem_cache[index];
+	} else if ((index = ((allocsz - 1) >> KMEM_BIG_SHIFT))
+            < kmem_cache_big_maxidx) {
+		pc = kmem_cache_big[index];
+	} else {
+		FREECHECK_IN(&kmem_freecheck, p);
 		uvm_km_kmem_free(kmem_va_arena, (vaddr_t)p,
 		    round_page(size));
 		return;
 	}
 
-	kmem_size_check(p, allocsz);
+	p = (uint8_t *)p - SIZE_SIZE;
+	kmem_size_check(p, size);
 	FREECHECK_IN(&kmem_freecheck, p);
-	LOCKDEBUG_MEM_CHECK(p, allocsz - (REDZONE_SIZE + SIZE_SIZE));
-	kmem_poison_check((uint8_t *)p + size, allocsz - size - SIZE_SIZE);
+	LOCKDEBUG_MEM_CHECK(p, size);
+	kmem_poison_check((uint8_t *)p + SIZE_SIZE + size,
+      	    allocsz - (SIZE_SIZE + size));
 	kmem_poison_fill(p, allocsz);
 
-	pc = kmem_cache[index];
 	pool_cache_put(pc, p);
 }
 
@@ -287,17 +333,19 @@ kmem_free(void *p, size_t size)
 	kmem_intr_free(p, size);
 }
 
-static void
+static size_t
 kmem_create_caches(const struct kmem_cache_info *array,
-    pool_cache_t alloc_table[], size_t maxsize)
+    pool_cache_t alloc_table[], size_t maxsize, int shift, int ipl)
 {
-	size_t table_unit = (1 << KMEM_SHIFT);
+	size_t maxidx = 0;
+	size_t table_unit = (1 << shift);
 	size_t size = table_unit;
 	int i;
 
 	for (i = 0; array[i].kc_size != 0 ; i++) {
 		const char *name = array[i].kc_name;
 		size_t cache_size = array[i].kc_size;
+		struct pool_allocator *pa;
 		int flags = PR_NOALIGN;
 		pool_cache_t pc;
 		size_t align;
@@ -313,27 +361,33 @@ kmem_create_caches(const struct kmem_cache_info *array,
 			flags |= PR_NOTOUCH;
 
 		/* check if we reached the requested size */
-		if (cache_size > maxsize) {
+		if (cache_size > maxsize || cache_size > PAGE_SIZE) {
 			break;
 		}
-		if ((cache_size >> KMEM_SHIFT) > kmem_cache_maxidx) {
-			kmem_cache_maxidx = cache_size >> KMEM_SHIFT;
+		if ((cache_size >> shift) > maxidx) {
+			maxidx = cache_size >> shift;
 		}
 
+		if ((cache_size >> shift) > maxidx) {
+			maxidx = cache_size >> shift;
+		}
+
+		pa = &pool_allocator_kmem;
 #if defined(KMEM_POISON)
 		pc = pool_cache_init(cache_size, align, 0, flags,
-		    name, &pool_allocator_kmem, IPL_VM, kmem_poison_ctor,
+		    name, pa, ipl,kmem_poison_ctor,
 		    NULL, (void *)cache_size);
 #else /* defined(KMEM_POISON) */
 		pc = pool_cache_init(cache_size, align, 0, flags,
-		    name, &pool_allocator_kmem, IPL_VM, NULL, NULL, NULL);
+		    name, pa, ipl, NULL, NULL, NULL);
 #endif /* defined(KMEM_POISON) */
 
 		while (size <= cache_size) {
-			alloc_table[(size - 1) >> KMEM_SHIFT] = pc;
+			alloc_table[(size - 1) >> shift] = pc;
 			size += table_unit;
 		}
 	}
+	return maxidx;
 }
 
 void
@@ -344,7 +398,10 @@ kmem_init(void)
 	uvm_kmguard_init(&kmem_guard, &kmem_guard_depth, &kmem_guard_size,
 	    kmem_va_arena);
 #endif
-	kmem_create_caches(kmem_cache_sizes, kmem_cache, KMEM_MAXSIZE);
+	kmem_cache_maxidx = kmem_create_caches(kmem_cache_sizes,
+	    kmem_cache, KMEM_MAXSIZE, KMEM_SHIFT, IPL_VM);
+       	kmem_cache_big_maxidx = kmem_create_caches(kmem_cache_big_sizes,
+	    kmem_cache_big, PAGE_SIZE, KMEM_BIG_SHIFT, IPL_VM);
 }
 
 size_t
@@ -421,23 +478,19 @@ kmem_poison_check(void *p, size_t sz)
 static void
 kmem_size_set(void *p, size_t sz)
 {
-	void *szp;
-
-	szp = (uint8_t *)p + sz - SIZE_SIZE;
-	memcpy(szp, &sz, sizeof(sz));
+	
+	memcpy(p, &sz, sizeof(sz));
 }
 
 static void
 kmem_size_check(void *p, size_t sz)
 {
-	uint8_t *szp;
 	size_t psz;
 
-	szp = (uint8_t *)p + sz - SIZE_SIZE;
-	memcpy(&psz, szp, sizeof(psz));
+	memcpy(&psz, p, sizeof(psz));
 	if (psz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu",
-		    (const uint8_t *)p + SIZE_SIZE, sz - SIZE_SIZE, psz);
+		    (const uint8_t *)p + SIZE_SIZE, sz, psz);
 	}
 }
 #endif	/* defined(KMEM_SIZE) */
