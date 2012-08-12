@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.5 2012/06/24 17:01:35 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.6 2012/08/12 13:26:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1276,14 +1276,14 @@ assemble_login_parameters(connection_t *conn, ccb_t *ccb, pdu_t *pdu)
 	}
 	ccb->temp_data = state;
 
-	if (!InitiatorName[0]) {
+	if (!iscsi_InitiatorName[0]) {
 		DEBOUT(("No InitiatorName\n"));
 		return ISCSI_STATUS_PARAMETER_MISSING;
 	}
-	set_key_s(state, K_InitiatorName, InitiatorName);
+	set_key_s(state, K_InitiatorName, iscsi_InitiatorName);
 
-	if (InitiatorAlias[0])
-		set_key_s(state, K_InitiatorAlias, InitiatorAlias);
+	if (iscsi_InitiatorAlias[0])
+		set_key_s(state, K_InitiatorAlias, iscsi_InitiatorAlias);
 
 	conn->Our_MaxRecvDataSegmentLength =
 		(par->is_present.MaxRecvDataSegmentLength)
@@ -1298,7 +1298,7 @@ assemble_login_parameters(connection_t *conn, ccb_t *ccb, pdu_t *pdu)
 	if (par->is_present.user_name)
 		copyinstr(par->user_name, state->user_name, MAX_STRING, &sz);
 	else
-		strlcpy(state->user_name, InitiatorName,
+		strlcpy(state->user_name, iscsi_InitiatorName,
 			sizeof(state->user_name));
 
 	next = TRUE;
