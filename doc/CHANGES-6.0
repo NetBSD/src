@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.179 2012/08/12 19:04:01 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.180 2012/08/12 19:27:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7222,4 +7222,23 @@ sys/kern/subr_disk_mbr.c			1.43
 
 	Apply workaround for installcd mountroot failure on some i386 machines.
 	[tsutsui, ticket #482]
+
+doc/3RDPARTY					1.957
+doc/CHANGES					1.1731
+external/ibm-public/postfix/dist/HISTORY	patch
+external/ibm-public/postfix/dist/src/dns/dns_lookup.c patch
+external/ibm-public/postfix/dist/src/global/mail_version.h patch
+external/ibm-public/postfix/dist/src/local/biff_notify.c patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_sasl_proto.c patch
+external/ibm-public/postfix/dist/src/util/unix_pass_trigger.c patch
+
+	Update Postfix to version 2.8.12:
+	- The local(8) delivery agent's BIFF client leaked an unprivileged UDP
+	  socket. Fix by Jaroslav Skarvada. This bug was introduced 19990127.
+	- The SMTP server did not reject the AUTH command while a MAIL FROM
+	  transaction was in progress. Reported by Timo Sirainen.
+	  This bug was introduced 20000314.
+	- The unused "pass" trigger client could close the wrong file
+	  descriptors. This bug was introduced with Postfix 2.8.
+	[tron, ticket #481]
 
