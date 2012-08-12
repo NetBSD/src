@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.39 2012/02/02 19:43:05 tls Exp $ */
+/* $NetBSD: if_msk.c,v 1.39.2.1 2012/08/12 18:58:28 martin Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.39 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.39.2.1 2012/08/12 18:58:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1703,8 +1703,10 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 	MSK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
-	dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
+	if (cur_rx->sk_mbuf == NULL)
+		return;
 
+	dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
 	bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 	    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
