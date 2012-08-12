@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.63 2011/04/07 10:03:47 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.64 2012/08/12 05:05:47 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.63 2011/04/07 10:03:47 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.64 2012/08/12 05:05:47 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -235,15 +235,6 @@ ENTRY(cpu_switchto)
 	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
-#ifdef FPU_VFP
-	/*
-	 * Now's a good time to 'save' the VFP context.  Note that we
-	 * don't really force a save here, which can save time if we
-	 * end up restarting the same context.
-	 */
-	bl	_C_LABEL(vfp_savecontext)
-#endif
-
 	/* Restore saved context */
 
 .Ldo_switch:
@@ -290,10 +281,6 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
 
-#ifdef FPU_VFP
-	mov	r0, r6
-	bl	_C_LABEL(vfp_loadcontext)
-#endif
 #ifdef ARMFPE
 	add	r0, r7, #(PCB_SIZE) & 0x00ff
 	add	r0, r0, #(PCB_SIZE) & 0xff00 
