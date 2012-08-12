@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.45 2011/10/18 23:04:35 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.45.8.1 2012/08/12 18:51:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.45 2011/10/18 23:04:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.45.8.1 2012/08/12 18:51:09 martin Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -215,8 +215,10 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 bad3:
 	pci_intr_disestablish(pc, psc->sc_ih);
+	psc->sc_ih = NULL;
 bad1:
 	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+	psc->sc_mapsz = 0;
 bad:
 	return;
 }
@@ -232,10 +234,16 @@ ath_pci_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if (psc->sc_ih != NULL)
+	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
 
-	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+	if (psc->sc_mapsz != 0) {
+		bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
+		psc->sc_mapsz = 0;
+	}
+
 	return 0;
 }
 
