@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.11 2012/07/25 07:26:18 skrll Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.12 2012/08/12 10:13:17 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -113,6 +113,7 @@ struct plcom_softc {
 	int sc_hwflags,
 	    sc_swflags;
 	u_int sc_fifolen;
+	u_int sc_txintrfill;
 
 	u_int sc_r_hiwat,
 	      sc_r_lowat;
