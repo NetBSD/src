@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.42 2011/06/30 20:09:41 wiz Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.42.8.1 2012/08/12 19:02:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.42 2011/06/30 20:09:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.42.8.1 2012/08/12 19:02:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,9 +364,11 @@ scan_iso_vrs(mbr_args_t *a)
 		a->lp->d_partitions[0].p_size   = a->lp->d_secperunit;
 		a->lp->d_partitions[0].p_cdsession = is_iso9660;
 		a->lp->d_partitions[0].p_fstype = FS_ISO9660;
+#ifdef notyet
 	} else {
 		a->lp->d_partitions[0].p_size   = 0;
 		a->lp->d_partitions[0].p_fstype = FS_UNUSED;
+#endif
 	}
 
 	/* add udf partition if found */
