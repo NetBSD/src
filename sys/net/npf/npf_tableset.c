@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.14 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.13 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.14 2012/08/12 03:35:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.13 2012/07/15 00:23:00 rmind Exp 
 #include "npf_impl.h"
 
 /*
- * Table entry, table and key-wrapper structures.
+ * Table structures.
  */
 
 struct npf_tblent {
@@ -76,7 +76,7 @@ struct npf_table {
 	u_int			t_refcnt;
 	/* Table ID. */
 	u_int			t_id;
-	/* The storage type can be: 1. Hash 2. RB-tree. */
+	/* The storage type can be: a) hash b) tree. */
 	int			t_type;
 	struct npf_hashl *	t_hashl;
 	u_long			t_hashmask;
@@ -95,7 +95,7 @@ npf_tableset_sysinit(void)
 {
 
 	tblent_cache = pool_cache_init(sizeof(npf_tblent_t), coherency_unit,
-	    0, 0, "npftenpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    0, 0, "npftblpl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 void
