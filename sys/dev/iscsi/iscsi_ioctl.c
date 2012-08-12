@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.4 2012/06/24 17:01:35 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.5 2012/08/12 13:26:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ register_event(iscsi_register_event_parameters_t *par)
 	TAILQ_INSERT_TAIL(&event_handlers, handler, link);
 
 	if (was_empty) {
-		wakeup(&cleanup_list);
+		wakeup(&iscsi_cleanup_list);
 	}
 	CS_END;
 
@@ -368,7 +368,7 @@ find_session(uint32_t id)
 {
 	session_t *curr;
 
-	TAILQ_FOREACH(curr, &sessions, sessions)
+	TAILQ_FOREACH(curr, &iscsi_sessions, sessions)
 		if (curr->id == id) {
 			break;
 		}
@@ -543,7 +543,7 @@ kill_session(session_t *session, uint32_t status, int logout, bool recover)
 	}
 
 	/* remove from session list */
-	TAILQ_REMOVE(&sessions, session, sessions);
+	TAILQ_REMOVE(&iscsi_sessions, session, sessions);
 	session->sessions.tqe_next = NULL;
 	session->sessions.tqe_prev = NULL;
 
@@ -930,7 +930,7 @@ login(iscsi_login_parameters_t *par, PTHREADOBJ p)
 
 	DEB(99, ("ISCSI: login\n"));
 
-	if (!InitiatorName[0]) {
+	if (!iscsi_InitiatorName[0]) {
 		DEB(1, ("No Initiator Name\n"));
 		par->status = ISCSI_STATUS_NO_INITIATOR_NAME;
 		return;
@@ -968,7 +968,7 @@ login(iscsi_login_parameters_t *par, PTHREADOBJ p)
 	}
 
 	CS_BEGIN;
-	TAILQ_INSERT_HEAD(&sessions, session, sessions);
+	TAILQ_INSERT_HEAD(&iscsi_sessions, session, sessions);
 	CS_END;
 
 	/* Session established, map LUNs? */
@@ -1345,19 +1345,19 @@ set_node_name(iscsi_set_node_name_parameters_t *par)
 		par->status = ISCSI_STATUS_PARAMETER_INVALID;
 		return;
 	}
-	strlcpy(InitiatorName, par->InitiatorName, sizeof(InitiatorName));
-	strlcpy(InitiatorAlias, par->InitiatorAlias, sizeof(InitiatorAlias));
-	memcpy(&InitiatorISID, par->ISID, 6);
+	strlcpy(iscsi_InitiatorName, par->InitiatorName, sizeof(iscsi_InitiatorName));
+	strlcpy(iscsi_InitiatorAlias, par->InitiatorAlias, sizeof(iscsi_InitiatorAlias));
+	memcpy(&iscsi_InitiatorISID, par->ISID, 6);
 	DEB(5, ("ISCSI: set_node_name, ISID A=%x, B=%x, C=%x, D=%x\n",
-			InitiatorISID.ISID_A, InitiatorISID.ISID_B,
-			InitiatorISID.ISID_C, InitiatorISID.ISID_D));
+			iscsi_InitiatorISID.ISID_A, iscsi_InitiatorISID.ISID_B,
+			iscsi_InitiatorISID.ISID_C, iscsi_InitiatorISID.ISID_D));
 
-	if (!InitiatorISID.ISID_A && !InitiatorISID.ISID_B &&
-		!InitiatorISID.ISID_C && !InitiatorISID.ISID_D) {
-		InitiatorISID.ISID_A = T_FORMAT_EN;
-		InitiatorISID.ISID_B = htons(0x1);
-		InitiatorISID.ISID_C = 0x37;
-		InitiatorISID.ISID_D = 0;
+	if (!iscsi_InitiatorISID.ISID_A && !iscsi_InitiatorISID.ISID_B &&
+		!iscsi_InitiatorISID.ISID_C && !iscsi_InitiatorISID.ISID_D) {
+		iscsi_InitiatorISID.ISID_A = T_FORMAT_EN;
+		iscsi_InitiatorISID.ISID_B = htons(0x1);
+		iscsi_InitiatorISID.ISID_C = 0x37;
+		iscsi_InitiatorISID.ISID_D = 0;
 	}
 
 	par->status = ISCSI_STATUS_SUCCESS;
@@ -1427,7 +1427,7 @@ kill_all_sessions(void)
 {
 	session_t *sess;
 
-	while ((sess = TAILQ_FIRST(&sessions)) != NULL) {
+	while ((sess = TAILQ_FIRST(&iscsi_sessions)) != NULL) {
 		kill_session(sess, ISCSI_STATUS_DRIVER_UNLOAD, LOGOUT_SESSION,
 				FALSE);
 	}
@@ -1474,11 +1474,11 @@ iscsi_cleanup_thread(void *par)
 	uint32_t status;
 
 	s = splbio();
-	while ((conn = TAILQ_FIRST(&cleanup_list)) != NULL ||
-		num_send_threads ||
-		!detaching) {
+	while ((conn = TAILQ_FIRST(&iscsi_cleanup_list)) != NULL ||
+		iscsi_num_send_threads ||
+		!iscsi_detaching) {
 		if (conn != NULL) {
-			TAILQ_REMOVE(&cleanup_list, conn, connections);
+			TAILQ_REMOVE(&iscsi_cleanup_list, conn, connections);
 			splx(s);
 
 			sess = conn->session;
@@ -1502,7 +1502,7 @@ iscsi_cleanup_thread(void *par)
 				/* unlink and free the session */
 				if (sess->sessions.tqe_next != NULL ||
 					sess->sessions.tqe_prev != NULL)
-					TAILQ_REMOVE(&sessions, sess, sessions);
+					TAILQ_REMOVE(&iscsi_sessions, sess, sessions);
 
 				if (sess->target_list != NULL)
 					free(sess->target_list, M_TEMP);
@@ -1520,7 +1520,7 @@ iscsi_cleanup_thread(void *par)
 			/* Go to sleep, but wake up every 30 seconds to check for */
 			/* dead event handlers */
 			splx(s);
-			rc = tsleep(&cleanup_list, PWAIT, "cleanup",
+			rc = tsleep(&iscsi_cleanup_list, PWAIT, "cleanup",
 				(TAILQ_FIRST(&event_handlers)) ? 30 * hz : 0);
 			s = splbio();
 			/* if timed out, not woken up */
@@ -1539,7 +1539,7 @@ iscsi_cleanup_thread(void *par)
 	for (s = 0; TAILQ_FIRST(&event_handlers) != NULL && s < 60; s++)
 		tsleep(&s, PWAIT, "waiteventclr", hz);
 
-	cleanproc = NULL;
+	iscsi_cleanproc = NULL;
 	DEB(5, ("Cleanup thread exits\n"));
 	kthread_exit(0);
 }
