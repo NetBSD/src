@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.29 2011/07/01 20:31:39 dyoung Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.30 2012/08/12 17:21:29 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.29 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.30 2012/08/12 17:21:29 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.29 2011/07/01 20:31:39 dyoung Exp $
 #include <arm/sa11x0/sa11x0_reg.h> 
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_ostreg.h>
+#include <arm/sa11x0/sa11x0_ostvar.h>
 
 static int	saost_match(device_t, cfdata_t, void *);
 static void	saost_attach(device_t, device_t, void *);
@@ -326,4 +327,25 @@ delay(u_int usecs)
 		usecs -= delta;
 		otick = xtick;
 	}
+}
+
+void
+saost_reset(void)
+{
+	struct saost_softc *sc = saost_sc;
+	uint32_t counter;
+	uint32_t saved_ints;
+
+	saved_ints = disable_interrupts(I32_bit|F32_bit);
+
+	counter = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
+	counter += TIMER_FREQUENCY;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_MR3, counter);
+
+	/* Enable watchdog */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_WR, 1);
+
+	delay(1 * 1000 * 1000);
+
+	restore_interrupts(saved_ints);
 }
