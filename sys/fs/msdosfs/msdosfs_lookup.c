@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.23 2010/11/30 10:43:03 dholland Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.23.14.1 2012/08/12 12:59:50 martin Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23 2010/11/30 10:43:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23.14.1 2012/08/12 12:59:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ notfound:
 	 * e.g. creating a file 'foo' won't invalidate a negative entry 
 	 * for 'FOO'.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
 #endif
 
@@ -553,10 +553,9 @@ foundroot:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp);
 
-	return (0);
+	return 0;
 }
 
 /*

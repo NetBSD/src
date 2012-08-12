@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.293 2011/11/28 08:05:06 tls Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.293.4.1 2012/08/12 12:59:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.293 2011/11/28 08:05:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.293.4.1 2012/08/12 12:59:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -267,6 +267,9 @@ nfs_cache_enter(struct vnode *dvp, struct vnode *vp,
 {
 	struct nfsnode *dnp = VTONFS(dvp);
 
+	if ((cnp->cn_flags & MAKEENTRY) == 0) {
+		return;
+	}
 	if (vp != NULL) {
 		struct nfsnode *np = VTONFS(vp);
 
@@ -996,8 +999,7 @@ dorpc:
 #endif
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
 	}
-	if ((cnp->cn_flags & MAKEENTRY) &&
-	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
+	if (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN)) {
 		nfs_cache_enter(dvp, newvp, cnp);
 	}
 	*vpp = newvp;
@@ -1009,8 +1011,7 @@ dorpc:
 		 * (the nfsm_* macros will jump to nfsm_reqdone
 		 * on error).
 		 */
-		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
-		    cnp->cn_nameiop != CREATE) {
+		if (error == ENOENT && cnp->cn_nameiop != CREATE) {
 			nfs_cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP) {
@@ -1549,8 +1550,7 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 		if (newvp)
 			vput(newvp);
 	} else {
-		if (cnp->cn_flags & MAKEENTRY)
-			nfs_cache_enter(dvp, newvp, cnp);
+		nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
 	VTONFS(dvp)->n_flag |= NMODIFIED;
@@ -2252,8 +2252,7 @@ nfs_mkdir(void *v)
 		}
 	} else {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		if (cnp->cn_flags & MAKEENTRY)
-			nfs_cache_enter(dvp, newvp, cnp);
+		nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
 	vput(dvp);
