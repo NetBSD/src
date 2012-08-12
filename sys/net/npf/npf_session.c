@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.16 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.17 2012/08/12 03:35:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.16 2012/07/19 21:52:29 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.17 2012/08/12 03:35:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,18 +107,24 @@ __KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.16 2012/07/19 21:52:29 spz Exp $")
  * WARNING: update npf_session_restore() when adding fields.
  */
 
+struct npf_secomid;
+typedef struct npf_secomid npf_secomid_t;
+
 typedef struct {
-	/* Session entry node and backpointer to the actual session. */
+	/* Session entry node and back-pointer to the actual session. */
 	rb_node_t		se_rbnode;
-	npf_session_t *		se_backptr;
+	union {
+		npf_session_t *	se_backptr;
+		void *		se_common_id;
+	};
 	/* Size of the addresses. */
 	int			se_alen;
 	/* Source and destination addresses. */
 	npf_addr_t		se_src_addr;
 	npf_addr_t		se_dst_addr;
 	/* Source and destination ports (TCP / UDP) or generic IDs. */
-	uint32_t		se_src_id;
-	uint32_t		se_dst_id;
+	uint16_t		se_src_id;
+	uint16_t		se_dst_id;
 } npf_sentry_t;
 
 struct npf_session {
@@ -128,8 +134,12 @@ struct npf_session {
 	/* Entry in the session hash or G/C list. */
 	LIST_ENTRY(npf_session)	s_list;
 	u_int			s_refcnt;
-	/* Session type.  Supported: TCP, UDP, ICMP. */
-	int			s_type;
+	/* Protocol and interface (common IDs). */
+	struct npf_secomid {
+		uint16_t	proto;
+		uint16_t	if_idx;
+	} s_common_id;
+	/* Flags and the protocol state. */
 	int			s_flags;
 	npf_state_t		s_state;
 	/* Association of rule procedure data. */
@@ -228,7 +238,8 @@ npf_session_sysfini(void)
 
 /*
  * Session hash table and RB-tree helper routines.
- * Order: (src.id, dst.id, src.addr, dst.addr), where (node1 < node2).
+ * The order is (src.id, dst.id, src.addr, dst.addr, common_id),
+ * where (node1 < node2) shall be negative.
  */
 
 static signed int
@@ -240,7 +251,7 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	int ret;
 
 	/*
-	 * Ports are the main criteria and are first.
+	 * Ports are expected to vary most, therefore they are first.
 	 */
 	if (sen1->se_src_id != sen2->se_src_id) {
 		return (sen1->se_src_id < sen2->se_src_id) ? -1 : 1;
@@ -248,6 +259,7 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	if (sen1->se_dst_id != sen2->se_dst_id) {
 		return (sen1->se_dst_id < sen2->se_dst_id) ? -1 : 1;
 	}
+
 	/*
 	 * Note that hash should minimise differentiation on addresses.
 	 */
@@ -260,7 +272,10 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 	if ((ret = memcmp(&sen1->se_dst_addr, &sen2->se_dst_addr, sz)) != 0) {
 		return ret;
 	}
-	return 0;
+
+	const npf_secomid_t *id1 = &sen1->se_backptr->s_common_id;
+	const npf_secomid_t *id2 = ctx ? ctx : &sen2->se_backptr->s_common_id;
+	return memcmp(id1, id2, sizeof(npf_secomid_t));
 }
 
 static signed int
@@ -270,7 +285,7 @@ sess_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
 	const npf_sentry_t * const sen2 = key;
 
 	KASSERT(sen1->se_alen != 0 && sen2->se_alen != 0);
-	return sess_rbtree_cmp_nodes(NULL, sen1, sen2);
+	return sess_rbtree_cmp_nodes(sen2->se_common_id, sen1, sen2);
 }
 
 static const rb_tree_ops_t sess_rbtree_ops = {
@@ -281,13 +296,17 @@ static const rb_tree_ops_t sess_rbtree_ops = {
 };
 
 static inline npf_sehash_t *
-sess_hash_bucket(npf_sehash_t *stbl, const int proto, npf_sentry_t *sen)
+sess_hash_bucket(npf_sehash_t *stbl, const npf_secomid_t *scid,
+    const npf_sentry_t *sen)
 {
 	const int sz = sen->se_alen;
 	uint32_t hash, mix;
 
-	/* Sum protocol and both addresses (for both directions). */
-	mix = proto + npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
+	/*
+	 * Sum protocol, interface and both addresses (for both directions).
+	 */
+	mix = scid->proto + scid->if_idx;
+	mix += npf_addr_sum(sz, &sen->se_src_addr, &sen->se_dst_addr);
 	hash = hash32_buf(&mix, sizeof(uint32_t), HASH32_BUF_INIT);
 	return &stbl[hash & SESS_HASH_MASK];
 }
@@ -434,12 +453,13 @@ npf_session_tracking(bool track)
 }
 
 /*
- * npf_session_inspect: look if there is an established session (connection).
+ * npf_session_inspect: lookup for an established session (connection).
  *
  * => If found, we will hold a reference for caller.
  */
 npf_session_t *
-npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
+npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const ifnet_t *ifp,
+    const int di, int *error)
 {
 	npf_sehash_t *sh;
 	npf_sentry_t *sen;
@@ -473,7 +493,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	}
 
 	/* Note: take protocol from the key. */
-	const int proto = npf_cache_ipproto(key);
+	const u_int proto = npf_cache_ipproto(key);
 
 	switch (proto) {
 	case IPPROTO_TCP: {
@@ -515,10 +535,19 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 	senkey.se_alen = key->npc_alen;
 
 	/*
+	 * Note: this is a special case where we use common ID pointer
+	 * to pass the structure for the key comparator.
+	 */
+	npf_secomid_t scid;
+	memset(&scid, 0, sizeof(npf_secomid_t));
+	scid = (npf_secomid_t){ .proto = proto, .if_idx = ifp->if_index };
+	senkey.se_common_id = &scid;
+
+	/*
 	 * Get a hash bucket from the cached key data.
 	 * Pre-check if there are any entries in the hash table.
 	 */
-	sh = sess_hash_bucket(sess_hashtbl, proto, &senkey);
+	sh = sess_hash_bucket(sess_hashtbl, &scid, &senkey);
 	if (sh->sh_count == 0) {
 		return NULL;
 	}
@@ -531,6 +560,8 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 		return NULL;
 	}
 	se = sen->se_backptr;
+	KASSERT(se->s_common_id.proto == proto);
+	KASSERT(se->s_common_id.if_idx == ifp->if_index);
 	flags = se->s_flags;
 
 	/* Check if session is active and not expired. */
@@ -539,7 +570,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
 		return NULL;
 	}
 
-	/* Match session entry and packet directions. */
+	/* Match directions of the session entry and the packet. */
 	const bool sforw = (sen == &se->s_forw_entry);
 	const bool pforw = (flags & PFIL_ALL) == di;
 	if (__predict_false(sforw != pforw)) {
@@ -569,14 +600,15 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di, int *error)
  * => Session will be activated on the first reference release.
  */
 npf_session_t *
-npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
+npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
+    const ifnet_t *ifp, const int di)
 {
 	const struct tcphdr *th;
 	const struct udphdr *uh;
 	npf_sentry_t *fw, *bk;
 	npf_sehash_t *sh;
 	npf_session_t *se;
-	int proto, alen;
+	u_int proto, alen;
 	bool ok;
 
 	/*
@@ -604,6 +636,12 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	se->s_rproc = NULL;
 	se->s_nat = NULL;
 
+	/* Initialize protocol state. */
+	if (!npf_state_init(npc, nbuf, &se->s_state)) {
+		ok = false;
+		goto out;
+	}
+
 	/* Unique IDs: IP addresses.  Setup "forwards" entry first. */
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	alen = npc->npc_alen;
@@ -611,15 +649,11 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	memcpy(&fw->se_src_addr, npc->npc_srcip, alen);
 	memcpy(&fw->se_dst_addr, npc->npc_dstip, alen);
 
-	/* Initialize protocol state. */
-	if (!npf_state_init(npc, nbuf, &se->s_state)) {
-		ok = false;
-		goto out;
-	}
-
-	/* Procotol. */
+	/* Protocol and interface. */
 	proto = npf_cache_ipproto(npc);
-	se->s_type = proto;
+	memset(&se->s_common_id, 0, sizeof(npf_secomid_t));
+	se->s_common_id.proto = proto;
+	se->s_common_id.if_idx = ifp->if_index;
 
 	switch (proto) {
 	case IPPROTO_TCP:
@@ -679,8 +713,8 @@ npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf, const int di)
 	/*
 	 * Insert the session and both entries into the tree.
 	 */
-	sh = sess_hash_bucket(sess_hashtbl, se->s_type, fw);
-	KASSERT(sh == sess_hash_bucket(sess_hashtbl, se->s_type, bk));
+	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, fw);
+	KASSERT(sh == sess_hash_bucket(sess_hashtbl, &se->s_common_id, bk));
 
 	rw_enter(&sh->sh_lock, RW_WRITER);
 	ok = (rb_tree_insert_node(&sh->sh_tree, fw) == fw);
@@ -759,7 +793,7 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 	 * never happen in practice, though.
 	 */
 	sen = &se->s_back_entry;
-	sh = sess_hash_bucket(sess_hashtbl, se->s_type, sen);
+	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
 	rw_enter(&sh->sh_lock, RW_WRITER);
 	rb_tree_remove_node(&sh->sh_tree, sen);
@@ -784,7 +818,7 @@ npf_session_setnat(npf_session_t *se, npf_nat_t *nt, const int di)
 			sen->se_src_id = tport;
 		}
 	}
-	sh = sess_hash_bucket(sess_hashtbl, se->s_type, sen);
+	sh = sess_hash_bucket(sess_hashtbl, &se->s_common_id, sen);
 
 	/* Insert into the new bucket. */
 	rw_enter(&sh->sh_lock, RW_WRITER);
@@ -878,7 +912,8 @@ npf_session_retnat(npf_session_t *se, const int di, bool *forw)
 static inline bool
 npf_session_expired(const npf_session_t *se, const struct timespec *tsnow)
 {
-	const int etime = npf_state_etime(&se->s_state, se->s_type);
+	const u_int proto = se->s_common_id.proto;
+	const int etime = npf_state_etime(&se->s_state, proto);
 	struct timespec tsdiff;
 
 	if (__predict_false(se->s_flags & SE_EXPIRE)) {
@@ -1120,11 +1155,11 @@ npf_session_restore(npf_sehash_t *stbl, prop_dictionary_t sedict)
 
 	/*
 	 * Find a hash bucket and insert each entry.
-	 * Warning: must reset back pointer.
+	 * Warning: must reset back pointers.
 	 */
 	fw = &se->s_forw_entry;
 	fw->se_backptr = se;
-	fsh = sess_hash_bucket(stbl, se->s_type, fw);
+	fsh = sess_hash_bucket(stbl, &se->s_common_id, fw);
 	if (rb_tree_insert_node(&fsh->sh_tree, fw) != fw) {
 		error = EINVAL;
 		goto out;
@@ -1133,7 +1168,7 @@ npf_session_restore(npf_sehash_t *stbl, prop_dictionary_t sedict)
 
 	bk = &se->s_back_entry;
 	bk->se_backptr = se;
-	bsh = sess_hash_bucket(stbl, se->s_type, bk);
+	bsh = sess_hash_bucket(stbl, &se->s_common_id, bk);
 	if (rb_tree_insert_node(&bsh->sh_tree, bk) != bk) {
 		rb_tree_remove_node(&fsh->sh_tree, fw);
 		error = EINVAL;
@@ -1173,15 +1208,16 @@ npf_sessions_dump(void)
 		RB_TREE_FOREACH(sen, &sh->sh_tree) {
 			struct timespec tsdiff;
 			struct in_addr ip;
-			int etime;
+			int proto, etime;
 
 			se = sen->se_backptr;
+			proto = se->s_common_id.proto;
 			timespecsub(&tsnow, &se->s_atime, &tsdiff);
-			etime = npf_state_etime(&se->s_state, se->s_type);
+			etime = npf_state_etime(&se->s_state, proto);
 
 			printf("    %p[%p]: %s proto %d flags 0x%x tsdiff %d "
 			    "etime %d\n", sen, se, sen == &se->s_forw_entry ?
-			    "forw" : "back",  se->s_type, se->s_flags,
+			    "forw" : "back", proto, se->s_flags,
 			    (int)tsdiff.tv_sec, etime);
 			memcpy(&ip, &sen->se_src_addr, sizeof(ip));
 			printf("\tsrc (%s, %d) ",

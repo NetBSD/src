@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.17 2012/07/19 22:22:53 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.18 2012/08/12 03:35:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.17 2012/07/19 22:22:53 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.18 2012/08/12 03:35:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -60,7 +60,15 @@ static struct ifaddrs *		ifs_list = NULL;
 unsigned long
 npfctl_find_ifindex(const char *ifname)
 {
-	return if_nametoindex(ifname);
+	unsigned long if_idx = if_nametoindex(ifname);
+
+	if (!if_idx) {
+		if ((if_idx = npfctl_debug_addif(ifname)) != 0) {
+			return if_idx;
+		}
+		yyerror("unknown interface '%s'", ifname);
+	}
+	return if_idx;
 }
 
 static bool
@@ -308,6 +316,7 @@ npfctl_parse_iface(const char *ifname)
 
 		if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
 			goto out;
+
 	}
 	if (!gotif) {
 		yyerror("interface '%s' not found", ifname);
@@ -560,8 +569,8 @@ npfctl_icmpcode(int proto, uint8_t type, const char *code)
 npfvar_t *
 npfctl_parse_icmp(int proto, int type, int code)
 {
-	npfvar_t *vp=npfvar_create(".icmp");
-	int      varnum;
+	npfvar_t *vp = npfvar_create(".icmp");
+	int varnum;
 
 	switch (proto) {
 	case IPPROTO_ICMP:
@@ -585,4 +594,3 @@ out:
 	npfvar_destroy(vp);
 	return NULL;
 }
-

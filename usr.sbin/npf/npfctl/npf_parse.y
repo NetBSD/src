@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.11 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.12 2012/08/12 03:35:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <netdb.h>
 
 #include "npfctl.h"
+
+#define	YYSTACKSIZE	4096
 
 const char *		yyfilename;
 
@@ -277,11 +279,11 @@ mapseg
 map
 	: MAP ifindex map_sd mapseg map_type mapseg PASS filt_opts
 	{
-		npfctl_build_nat($3, $5, $2, &$4, &$6, &$8);
+		npfctl_build_natseg($3, $5, $2, &$4, &$6, &$8);
 	}
 	| MAP ifindex map_sd mapseg map_type mapseg
 	{
-		npfctl_build_nat($3, $5, $2, &$4, &$6, NULL);
+		npfctl_build_natseg($3, $5, $2, &$4, &$6, NULL);
 	}
 	;
 
