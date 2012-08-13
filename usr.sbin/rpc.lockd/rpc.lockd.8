@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.lockd.8,v 1.6 2002/02/02 01:42:45 wiz Exp $
+.\"	$NetBSD: rpc.lockd.8,v 1.7 2012/08/13 12:22:21 pgoyette Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 24, 1995
+.Dd August 11, 2012
 .Dt RPC.LOCKD 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm
 .Op Fl d Ar debug_level
 .Op Fl g Ar grace period
+.Op Fl 46
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,6 +72,17 @@ option allow to specify the grace period, in seconds. During the grace period
 .Nm
 only accepts requests from hosts which are reinitialising locks which
 existed before the server restart. Default is 30 seconds.
+.It Fl 4
+Listen for requests using IPv4.
+Do not listen using IPv6 unless the
+.Fl 6
+option is also specified.
+By default,
+.Nm
+listens for requests using both IPv4 and IPv6 if available.
+.It Fl 6
+Listen for requests using IPv6.
+It is an error if IPv6 is not available.
 .El
 .Pp
 Error conditions are logged to syslog, irrespective of the debug level,
