@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.14 2012/07/01 23:21:06 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.15 2012/08/13 01:18:31 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 29, 2012
+.Dd August 12, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Sh DESCRIPTION
 .Nm
 is the default configuration file for NPF packet filter.
-It can contain definitions, grouped rules, rule procedures, and tables.
+It can contain definitions, grouped rules, rule procedures,
+translation policies, and tables.
 .Ss Definitions
 Definitions are general purpose keywords which can be used in the
 ruleset to make it more flexible and easier to manage.
@@ -56,7 +57,7 @@ The default group must always be defined.
 Rules, which are the main part of NPF configuration, describe the criteria
 used to inspect and make decisions about packets.
 Currently, NPF supports filtering on the following criteria: interface,
-traffic direction, protocol, IPv4 address or network, TCP/UDP port
+traffic direction, protocol, IP address or network, TCP/UDP port
 or range, TCP flags, and ICMP type/code.
 Supported actions are blocking or passing the packet.
 .Pp
@@ -229,3 +230,6 @@ group (default) {
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .
+.Sh AUTHORS
+NPF was designed and implemented by
+.An Mindaugas Rasiukevicius .
