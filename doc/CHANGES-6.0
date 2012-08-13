@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.182 2012/08/13 20:34:40 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.183 2012/08/13 23:24:21 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7356,4 +7356,21 @@ doc/CHANGES					patch
 	Mention urtwn, wm, and RaspberryPi support in the changes between
 	NetBSD 5.0 and NetBSD 6.0.
 	[jdc, ticket #496]
+
+distrib/sets/lists/base/mi				1.997
+etc/mtree/NetBSD.dist.base				1.101 via patch
+external/Makefile					1.18 via patch
+external/README						1.15
+external/realtek/Makefile				1.1
+external/realtek/Makefile.inc				1.1
+external/realtek/urtwn/Makefile				1.1
+external/realtek/urtwn/dist/Realtek-Firmware-License.txt 1.1
+external/realtek/urtwn/dist/rtl8192cfw.bin		1.1
+external/realtek/urtwn/dist/rtl8192cfwU.bin		1.1
+share/man/man4/urtwn.4					1.4 via patch
+sys/dev/usb/if_urtwn.c					1.5
+
+	Add firmware for the RealTek RTL8192CU family of wireless chipsets,
+	and adapt the urtwn(4) driver to use the new files.
+	[abs, ticket #497]
 
