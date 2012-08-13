@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.486 2012/08/11 03:19:48 nakayama Exp $
+# $NetBSD: mi,v 1.487 2012/08/13 11:26:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -718,6 +718,9 @@
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/carp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/fdpass				tests-net-debug
+./usr/libdata/debug/usr/tests/net/fdpass/fdpass32.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/icmp/t_forward.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/icmp/t_ping.debug		tests-net-debug		debug,atf,rump
@@ -2826,6 +2829,12 @@
 ./usr/tests/net/carp				tests-net-tests
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/carp/t_basic		tests-net-tests		atf,rump
+./usr/tests/net/fdpass				tests-net-tests
+./usr/tests/net/fdpass/Atffile			tests-net-tests		atf
+./usr/tests/net/fdpass/fdpass32			tests-net-tests		atf
+./usr/tests/net/fdpass/fdpass64			tests-net-tests		atf
+./usr/tests/net/fdpass/t_fdpass			tests-net-tests		atf
+./usr/tests/net/icmp/t_forward		tests-net-tests		atf,rump
 ./usr/tests/net/icmp				tests-net-tests
 ./usr/tests/net/icmp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_forward		tests-net-tests		atf,rump
