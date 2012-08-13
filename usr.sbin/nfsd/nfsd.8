@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.22 2012/08/13 08:19:11 christos Exp $
+.\"   $NetBSD: nfsd.8,v 1.23 2012/08/13 08:39:28 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,37 +72,29 @@ Specifies how many server threads to create.
 The default is 4.
 A server should run enough threads to handle
 the maximum level of concurrency from its clients.
-.It Fl 6
-Listen to only IPv6 requests.
+.It Fl 4
+Only listen to IPv4 requests.
 By default
 .Nm
 listens to both IPv6 and IPv4 and tries to register for both.
-.It Fl 4
-Listen to only IPv4 requests.
+.It Fl 6
+Only listen to IPv6 requests.
 .It Fl t
 Serve only
 .Tn TCP NFS
 clients.
 By default
 .Nm
-serves both 
+serves both
 .Tn TCP NFS
 and
-.TN UDP NFS
+.Tn UDP NFS
 clients
 .It Fl u
 Serve only
 .Tn UDP NFS
 clients.
 .El
-.Pp
-For example,
-.Dq Li "nfsd -n 6"
-serves
-.Tn UDP
-and
-.Tn TCP
-transports using six threads.
 .Pp
 .Nm
 listens for service requests at the port indicated in the
@@ -111,10 +103,15 @@ server specification; see
 .%T "Network File System Protocol Specification" ,
 RFC 1094 and
 .%T "NFS: Network File System Version 3 Protocol Specification" .
-.Pp
-The
-.Nm
-utility exits 0 on success, and \*[Gt]0 if an error occurs.
+.Sh EXIT STATUS
+.Ex -std nfsd
+.Sh EXAMPLES
+.Dq Li "nfsd -n 6"
+serves
+.Tn UDP
+and
+.Tn TCP
+transports using six threads.
 .Sh SEE ALSO
 .Xr nfsstat 1 ,
 .Xr nfssvc 2 ,
