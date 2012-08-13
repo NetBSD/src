@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.47 2012/04/07 05:07:32 christos Exp $ */
+/*      $NetBSD: edquota.c,v 1.48 2012/08/13 22:21:05 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.47 2012/04/07 05:07:32 christos Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.48 2012/08/13 22:21:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,18 +89,15 @@ static const char *quotagroup = QUOTAGROUP;
 
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
-/* flags for quotause */
-#define	FOUND	0x01
-#define	XGRACE	0x02	/* extended grace periods (per-id) */
-#define	DEFAULT	0x04
-
 struct quotause {
 	struct	quotause *next;
-	long	flags;
+	unsigned found:1,	/* found after running editor */
+		xgrace:1,	/* grace periods are per-id */
+		isdefault:1;
+
 	struct	quotaval qv[EDQUOTA_NUMOBJTYPES];
 	char	fsname[MAXPATHLEN + 1];
 	char	implementation[32];
-	char	*qfname;
 };
 
 struct quotalist {
@@ -169,10 +166,11 @@ quotause_create(void)
 	}
 
 	qup->next = NULL;
-	qup->flags = 0;
+	qup->found = 0;
+	qup->xgrace = 0;
+	qup->isdefault = 0;
 	memset(qup->qv, 0, sizeof(qup->qv));
 	qup->fsname[0] = '\0';
-	qup->qfname = NULL;
 
 	return qup;
 }
@@ -183,7 +181,6 @@ quotause_create(void)
 static void
 quotause_destroy(struct quotause *qup)
 {
-	free(qup->qfname);
 	free(qup);
 }
 
@@ -352,7 +349,7 @@ getprivs1(long id, int idtype, const char *filesys)
 #endif
 
 ////////////////////////////////////////////////////////////
-// ffs quota v2
+// generic quota interface
 
 static int
 dogetprivs2(struct quotahandle *qh, int idtype, id_t id, int defaultq,
@@ -386,7 +383,7 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 	qup = quotause_create();
 	strcpy(qup->fsname, filesys);
 	if (defaultq)
-		qup->flags |= DEFAULT;
+		qup->isdefault = 1;
 
 	qh = quota_open(filesys);
 	if (qh == NULL) {
@@ -402,7 +399,7 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 
 	restrictions = quota_getrestrictions(qh);
 	if ((restrictions & QUOTA_RESTRICT_UNIFORMGRACE) == 0) {
-		qup->flags |= XGRACE;		
+		qup->xgrace = 1;
 	}
 
 	if (*idtypename_p == NULL) {
@@ -437,7 +434,7 @@ putprivs2(uint32_t id, int idtype, struct quotause *qup)
 	struct quotakey qk;
 	char idname[32];
 
-	if (qup->flags & DEFAULT) {
+	if (qup->isdefault) {
 		snprintf(idname, sizeof(idname), "%s default",
 			 idtype == QUOTA_IDTYPE_USER ? "user" : "group");
 		id = QUOTA_DEFAULTID;
@@ -543,12 +540,12 @@ putprivs(uint32_t id, int idtype, struct quotalist *qlist)
 	struct quotause *qup;
 
         for (qup = qlist->head; qup; qup = qup->next) {
-		if (qup->qfname == NULL)
-			putprivs2(id, idtype, qup);
 #if 0
-		else
+		if (qup->qfname != NULL)
 			putprivs1(id, idtype, qup);
+		else
 #endif
+			putprivs2(id, idtype, qup);
 	}
 }
 
@@ -721,7 +718,7 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 		struct quotaval *q = qup->qv;
 		fprintf(fd, "%s (%s):\n",
 		     qup->fsname, qup->implementation);
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
+		if (!qup->isdefault || qup->xgrace) {
 			fprintf(fd, "\tblocks in use: %s, "
 			    "limits (soft = %s, hard = %s",
 			    intprt(b1, 21, q[QO_BLK].qv_usage,
@@ -730,17 +727,17 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 			    HN_NOSPACE | HN_B, Hflag),
 			    intprt(b3, 21, q[QO_BLK].qv_hardlimit,
 				HN_NOSPACE | HN_B, Hflag));
-			if (qup->flags & XGRACE)
+			if (qup->xgrace)
 				fprintf(fd, ", ");
 		} else
 			fprintf(fd, "\tblocks: (");
 			
-		if (qup->flags & (XGRACE|DEFAULT)) {
+		if (qup->xgrace || qup->isdefault) {
 		    fprintf(fd, "grace = %s",
 			timepprt(b0, 21, q[QO_BLK].qv_grace, Hflag));
 		}
 		fprintf(fd, ")\n");
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
+		if (!qup->isdefault || qup->xgrace) {
 			fprintf(fd, "\tinodes in use: %s, "
 			    "limits (soft = %s, hard = %s",
 			    intprt(b1, 21, q[QO_FL].qv_usage,
@@ -749,12 +746,12 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 			    HN_NOSPACE, Hflag),
 			    intprt(b3, 21, q[QO_FL].qv_hardlimit,
 			     HN_NOSPACE, Hflag));
-			if (qup->flags & XGRACE)
+			if (qup->xgrace)
 				fprintf(fd, ", ");
 		} else
 			fprintf(fd, "\tinodes: (");
 
-		if (qup->flags & (XGRACE|DEFAULT)) {
+		if (qup->xgrace || qup->isdefault) {
 		    fprintf(fd, "grace = %s",
 			timepprt(b0, 21, q[QO_FL].qv_grace, Hflag));
 		}
@@ -943,7 +940,7 @@ readprivs(struct quotalist *qlist, int infd, int dflag)
 			if (version == 1 && dflag) {
 				q[QO_BLK].qv_grace = graceb;
 				q[QO_FL].qv_grace = gracei;
-				qup->flags |= FOUND;
+				qup->found = 1;
 				continue;
 			}
 
@@ -981,7 +978,7 @@ readprivs(struct quotalist *qlist, int infd, int dflag)
 			q[QO_FL].qv_hardlimit  = hardi;
 			if (version == 2)
 				q[QO_FL].qv_grace = gracei;
-			qup->flags |= FOUND;
+			qup->found = 1;
 		}
 	}
 out:
@@ -991,8 +988,8 @@ out:
 	 */
 	for (qup = qlist->head; qup; qup = qup->next) {
 		struct quotaval *q = qup->qv;
-		if (qup->flags & FOUND) {
-			qup->flags &= ~FOUND;
+		if (qup->found) {
+			qup->found = 0;
 			continue;
 		}
 		q[QO_BLK].qv_softlimit = UQUAD_MAX;
