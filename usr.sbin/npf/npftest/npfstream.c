@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.1.2.3 2012/07/25 20:45:24 jdc Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.1.2.4 2012/08/13 17:49:52 riz Exp $	*/
 
 /*
  * NPF stream processor.
@@ -44,10 +44,10 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 	bool forw;
 
 	if (ntohs(eth->ether_type) != ETHERTYPE_IP) {
-		errx(EXIT_FAILURE, "process_tcpip: not IP protocol (%d)",
-		    eth->ether_type);
+		ip = (const struct ip *)((const char *)data + 4);
+	} else {
+		ip = (const struct ip *)(eth + 1);
 	}
-	ip = (const struct ip *)(eth + 1);
 	hlen = ip->ip_hl << 2;
 	th = (const struct tcphdr *)((const uint8_t *)ip + hlen);
 

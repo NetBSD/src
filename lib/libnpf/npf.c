@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7.2.3 2012/07/16 22:13:25 riz Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.4 2012/08/13 17:49:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.3 2012/07/16 22:13:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.4 2012/08/13 17:49:51 riz Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <prop/proplib.h>
 
 #include <stdlib.h>
@@ -56,6 +57,8 @@ struct nl_config {
 	/* Priority counters. */
 	pri_t			ncf_rule_pri;
 	pri_t			ncf_nat_pri;
+	/* Debug information. */
+	prop_dictionary_t	ncf_debug;
 	/* Error report. */
 	prop_dictionary_t	ncf_err;
 	/* Custom file to externalise property-list. */
@@ -112,6 +115,9 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	npf_dict = prop_dictionary_create();
 	if (npf_dict == NULL) {
 		return ENOMEM;
+	}
+	if (ncf->ncf_debug) {
+		prop_dictionary_set(npf_dict, "debug", ncf->ncf_debug);
 	}
 	prop_dictionary_set(npf_dict, "rules", ncf->ncf_rules_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
@@ -212,6 +218,9 @@ npf_config_destroy(nl_config_t *ncf)
 	}
 	if (ncf->ncf_err) {
 		prop_object_release(ncf->ncf_err);
+	}
+	if (ncf->ncf_debug) {
+		prop_object_release(ncf->ncf_debug);
 	}
 	free(ncf);
 }
@@ -752,4 +761,64 @@ npf_sessions_send(int fd, const char *fpath)
 	error = prop_dictionary_send_ioctl(sdict, fd, IOC_NPF_SESSIONS_LOAD);
 	prop_object_release(sdict);
 	return error;
+}
+
+static prop_dictionary_t
+_npf_debug_initonce(nl_config_t *ncf)
+{
+	if (!ncf->ncf_debug) {
+		prop_array_t iflist = prop_array_create();
+		ncf->ncf_debug = prop_dictionary_create();
+		prop_dictionary_set(ncf->ncf_debug, "interfaces", iflist);
+		prop_object_release(iflist);
+	}
+	return ncf->ncf_debug;
+}
+
+void
+_npf_debug_addif(nl_config_t *ncf, struct ifaddrs *ifa, u_int if_idx)
+{
+	prop_dictionary_t ifdict, dbg = _npf_debug_initonce(ncf);
+	prop_array_t iflist = prop_dictionary_get(dbg, "interfaces");
+
+	if (_npf_prop_array_lookup(iflist, "name", ifa->ifa_name)) {
+		return;
+	}
+
+	ifdict = prop_dictionary_create();
+	prop_dictionary_set_cstring(ifdict, "name", ifa->ifa_name);
+	prop_dictionary_set_uint32(ifdict, "flags", ifa->ifa_flags);
+	if (!if_idx) {
+		if_idx = if_nametoindex(ifa->ifa_name);
+	}
+	prop_dictionary_set_uint32(ifdict, "idx", if_idx);
+
+	const struct sockaddr *sa = ifa->ifa_addr;
+	npf_addr_t addr;
+	size_t alen = 0;
+
+	switch (sa ? sa->sa_family : -1) {
+	case AF_INET: {
+		const struct sockaddr_in *sin = (const void *)sa;
+		alen = sizeof(sin->sin_addr);
+		memcpy(&addr, &sin->sin_addr, alen);
+		break;
+	}
+	case AF_INET6: {
+		const struct sockaddr_in6 *sin6 = (const void *)sa;
+		alen = sizeof(sin6->sin6_addr);
+		memcpy(&addr, &sin6->sin6_addr, alen);
+		break;
+	}
+	default:
+		break;
+	}
+
+	if (alen) {
+		prop_data_t addrdata = prop_data_create_data(&addr, alen);
+		prop_dictionary_set(ifdict, "addr", addrdata);
+		prop_object_release(addrdata);
+	}
+	prop_array_add(iflist, ifdict);
+	prop_object_release(ifdict);
 }

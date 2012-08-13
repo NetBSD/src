@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.1.2.3 2012/07/25 20:45:24 jdc Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.1.2.4 2012/08/13 17:49:53 riz Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -23,6 +23,32 @@ npf_test_load(const void *xml)
 {
 	prop_dictionary_t npf_dict = prop_dictionary_internalize(xml);
 	return npfctl_reload(0, npf_dict);
+}
+
+unsigned
+npf_test_addif(const char *ifname, unsigned if_idx, bool verbose)
+{
+	ifnet_t *ifp = if_alloc(IFT_OTHER);
+
+	/*
+	 * This is a "fake" interface with explicitly set index.
+	 */
+	strlcpy(ifp->if_xname, ifname, sizeof(ifp->if_xname));
+	if (verbose) {
+		printf("+ Interface %s\n", ifp->if_xname);
+	}
+	ifp->if_dlt = DLT_NULL;
+	if_attach(ifp);
+	ifp->if_index = if_idx;
+	if_alloc_sadl(ifp);
+	return if_idx;
+}
+
+unsigned
+npf_test_getif(const char *ifname)
+{
+	ifnet_t *ifp = ifunit(ifname);
+	return ifp ? ifp->if_index : 0;
 }
 
 /*
