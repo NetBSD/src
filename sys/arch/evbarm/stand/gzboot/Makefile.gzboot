@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.19 2012/08/06 02:14:15 matt Exp $
+#	$NetBSD: Makefile.gzboot,v 1.20 2012/08/13 10:25:02 khorben Exp $
 
 NOMAN=  # defined
 
@@ -49,6 +49,7 @@ CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 COPTS+=	-ffreestanding
+COPTS+=	-fno-stack-protector
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
