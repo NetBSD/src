@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.4 2012/08/13 13:12:51 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -609,6 +609,7 @@ chfs_remove_frags_of_node(struct chfs_mount *chmp, struct rb_tree *fragtree,
 		next = frag_next(fragtree, this);
 		if (this->node->nref == nref) {
 			rb_tree_remove_node(fragtree, this);
+			chfs_free_node_frag(this);
 		}
 		this = next;
 	}

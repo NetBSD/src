@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.6 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.7 2012/08/13 13:12:51 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -83,7 +83,7 @@ chfs_readvnode(struct mount* mp, ino_t ino, struct vnode** vpp)
 
 	if (chvc && ino != CHFS_ROOTINO) {
 		/* debug... */
-		printf("readvnode; offset: %" PRIu32 ", lnr: %d\n",
+		dbg("offset: %" PRIu32 ", lnr: %d\n",
 		    CHFS_GET_OFS(chvc->v->nref_offset), chvc->v->nref_lnr);
 
 		KASSERT((void *)chvc != (void *)chvc->v);
