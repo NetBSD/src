@@ -15,6 +15,8 @@ SRCS+=		npf_nbuf_test.c
 SRCS+=		npf_processor_test.c
 SRCS+=		npf_table_test.c
 SRCS+=		npf_state_test.c
+SRCS+=		npf_rule_test.c
+SRCS+=		npf_nat_test.c
 
 CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../../sys/net/npf
