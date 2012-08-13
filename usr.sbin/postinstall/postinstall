@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.139 2012/08/13 10:20:52 martin Exp $
+# $NetBSD: postinstall,v 1.140 2012/08/13 15:17:16 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1774,14 +1774,19 @@ do_ptyfsoldnodes()
 
 		if [ ${pcnt} -gt 0 -o ${tcnt} -gt 0 ]; then
 			if [ "$1" = "fix" ]; then
+				tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
 				find "${DEST_DIR}/dev" -xdev -type c -ls | \
 					${AWK} '{print $7 $12}' | \
 					${AWK} -F, "/^${maj_p},/{ print \$2}" \
-					| xargs rm
+					> "${tmp}"
 				find "${DEST_DIR}/dev" -xdev -type c -ls | \
 					${AWK} '{print $7 $12}' | \
 					${AWK} -F, "/^${maj_t},/{ print \$2}" \
-					| xargs rm
+					>> "${tmp}"
+				while read node; do
+					rm "${node}"
+					msg "Removed ${node}"
+				done < "${tmp}"
 			else
 				failed=1
 			fi
