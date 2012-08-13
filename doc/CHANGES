@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.7 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.8 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -566,6 +566,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		OpenBSD. [msaitoh 20100209]
 	aibs(4): New driver for ASUSTeK AI Booster (ACPI ASOC ATK0110)
 		hardware monitor with limit support.	[cnst 20100209]
+	wm(4): Add support for Intel 82575, 82576 and 82580 Ethernet.
+		[msaitoh 20100216]
 	u3g(4): Support Huawei K3765.  [pooka 20100219]
 	wbsio(4): New driver for Winbond Super I/O attachment of
 		lm(4) on any port.	[cnst 20100221]
@@ -681,6 +683,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	autoconf(9): Add config_mountroot(9), which defers device configuration
 		after mountroot(), like config_interrupt(9) that defers
 		configuration after interrupts are enabled. [tsutsui 20100625]
+	wm(4): Add support for Intel I340 Ethernet. [msaitoh 20100625]
 	hpcarm: Use rtc_offset passed from hpcboot. [tsutsui 20100626]
 	network: Add mpls(4) - MultiProtocol Label Switching support
 		[kefren 20100626]
@@ -1022,6 +1025,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	file(1): Import 5.07 [christos 20110512]
 	m68k: Fix a regression bug in FPU_EMULATE code that causes weird awk(1)
 		behavior. [tsutsui 20110514]
+	wm(4): Add support for Intel 82579 with 6 series chipset(PCH2).
+		[msaitoh 20110524]
 	userconf(4), boot.cfg(5), boot(8), i386, amd64: Support userconf(4)
 		command in boot.cfg(5)/boot(8) on i386/amd64.
 		[uebayasi 20110526]
@@ -1266,6 +1271,11 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	re(4): Add support for RTL8168E-VL. [nonaka 20120302]
 	amdtemp(4): Add support for Family 12h. [nonaka 20120302]
 	postfix(1): Add support for SQLite tables. [tron 20120304]
+	kernel: Add urtwn(4), a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
+		802.11b/g/n wireless network devices, ported from OpenBSD.
+		[nonaka 20120325]
+	wm(4): Add support for Intel I350 Ethernet. [msaitoh 20120525]
 	postfix(1): Import version 2.8.11 [tron 20120609]
+	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
 	OpenSSH: Imported 1.0.1c [christos 20120726]
 	postfix(1): Import version 2.8.12 [tron 20120810]
