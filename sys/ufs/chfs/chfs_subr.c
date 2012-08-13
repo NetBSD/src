@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.5 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.6 2012/08/13 13:12:51 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -299,7 +299,8 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 		// remove from the list
 		mutex_enter(&chmp->chm_lock_vnocache);
 		chfs_remove_frags_of_node(chmp, &ip->fragtree, fd->nref);
-		chfs_remove_and_obsolete(chmp, ip->chvc, fd->nref, &ip->chvc->dnode);
+		// don't obsolete here, because setattr will obsolete this node
+		chfs_remove_node_from_list(chmp, ip->chvc, fd->nref, &ip->chvc->dnode);
 		mutex_exit(&chmp->chm_lock_vnocache);
 
 		blknum = lastfrag->ofs / PAGE_SIZE;
