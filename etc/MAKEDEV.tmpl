@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.156 2012/06/05 13:20:01 tsutsui Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.157 2012/08/13 08:30:51 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -804,7 +804,7 @@ case $i in
 
 all)
 	makedev all_md
-	makedev std fd ptm pty0 pty1 pty2 pty3
+	makedev std fd ptm
 	makedev dk0 dk1 dk2 dk3 dk4 dk5 dk6 dk7
 	makedev dk8 dk9 dk10 dk11 dk12 dk13 dk14 dk15
 	makedev ccd0 ccd1 ccd2 ccd3
@@ -1271,6 +1271,7 @@ pty[0-9]*)
 	# pty16 => 16 pairs, [tp]typg to [tp]typv
 	# pty17 => 16 pairs, [tp]typw to [tp]typL
 	# pty18 => 14 pairs, [tp]typM to [tp]typZ
+	warn "$i: creating BSD style tty nodes with ptyfs is a security issue"
 	class=${i#pty}
 	d1="p q r s t u v w x y z P Q R S T"
 	if [ "$class" -ge 64 ]
