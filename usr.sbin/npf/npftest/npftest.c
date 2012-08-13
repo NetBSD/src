@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.3.2.2 2012/06/26 00:07:17 riz Exp $	*/
+/*	$NetBSD: npftest.c,v 1.3.2.3 2012/08/13 17:49:52 riz Exp $	*/
 
 /*
  * NPF testing framework.
@@ -30,13 +30,13 @@ static void
 usage(void)
 {
 	printf("usage: %s: [ -q | -v ] [ -c <config> ] "
-	    "[ -i 'interfaces' ] < -b | -t | -s file >\n"
+	    "[ -i <interface> ] < -b | -t | -s file >\n"
 	    "\t-b: benchmark\n"
 	    "\t-t: regression test\n"
-	    "\t-c <config>: NPF configuration file\n"
-	    "\t-i 'interfaces': interfaces to create\n"
-	    "\t-q: quiet mode\n"
 	    "\t-s <file>: pcap stream\n"
+	    "\t-c <config>: NPF configuration file\n"
+	    "\t-i <interface>: primary interface\n"
+	    "\t-q: quiet mode\n"
 	    "\t-v: verbose mode\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
@@ -56,48 +56,48 @@ result(const char *testcase, bool ok)
 	}
 }
 
-#if 0
 static void
-construct_interfaces(char *ifs)
+load_npf_config_ifs(prop_dictionary_t dbg_dict)
 {
-	char *ifname, *addr, *mask, *sptr;
+	prop_dictionary_t ifdict;
+	prop_object_iterator_t it;
+	prop_array_t iflist;
 
-	/*
-	 * Format: ifname0[,ip0,mask1];ifname1,...
-	 */
-	ifname = strtok_r(ifs, ";", &sptr);
-	while (ifname) {
-		/* Address and netmask. */
-		addr = strchr(ifname, ',');
-		if (addr) {
-			*addr++ = '\0';
-		}
-		mask = strchr(addr, ',');
-		if (mask) {
-			*mask++ = '\0';
-		}
+	iflist = prop_dictionary_get(dbg_dict, "interfaces");
+	it = prop_array_iterator(iflist);
+	while ((ifdict = prop_object_iterator_next(it)) != NULL) {
+		const char *ifname;
+		unsigned if_idx;
 
-		/* Construct; next.. */
-		setup_rump_if(ifname, addr, mask);
-		ifname = strtok_r(NULL, ";", &sptr);
+		prop_dictionary_get_cstring_nocopy(ifdict, "name", &ifname);
+		prop_dictionary_get_uint32(ifdict, "idx", &if_idx);
+		(void)rumpns_npf_test_addif(ifname, if_idx, verbose);
 	}
+	prop_object_iterator_release(it);
 }
-#endif
 
 static void
 load_npf_config(const char *config)
 {
-	prop_dictionary_t npf_dict;
+	prop_dictionary_t npf_dict, dbg_dict;
 	void *xml;
 	int error;
 
+	/* Read the configuration from the specified file. */
 	npf_dict = prop_dictionary_internalize_from_file(config);
 	if (!npf_dict) {
 		err(EXIT_FAILURE, "prop_dictionary_internalize_from_file");
 	}
 	xml = prop_dictionary_externalize(npf_dict);
+
+	/* Inspect the debug data.  Create the interfaces, if any. */
+	dbg_dict = prop_dictionary_get(npf_dict, "debug");
+	if (dbg_dict) {
+		load_npf_config_ifs(dbg_dict);
+	}
 	prop_object_release(npf_dict);
 
+	/* Pass the XML configuration for NPF kernel component to load. */
 	error = rumpns_npf_test_load(xml);
 	if (error) {
 		errx(EXIT_FAILURE, "npf_test_load: %s\n", strerror(error));
@@ -109,18 +109,27 @@ load_npf_config(const char *config)
 	}
 }
 
+/*
+ * Need to override for cprng_fast32(), since RUMP uses arc4random() for it.
+ */
+uint32_t
+arc4random(void)
+{
+	return random();
+}
+
 int
 main(int argc, char **argv)
 {
 	bool benchmark, test, ok;
-	char *config, *interfaces, *stream;
-	int ch;
+	char *config, *interface, *stream;
+	int idx = -1, ch;
 
 	benchmark = false;
 	test = false;
 
 	config = NULL;
-	interfaces = NULL;
+	interface = NULL;
 	stream = NULL;
 
 	verbose = false;
@@ -141,7 +150,7 @@ main(int argc, char **argv)
 			config = optarg;
 			break;
 		case 'i':
-			interfaces = optarg;
+			interface = optarg;
 			break;
 		case 's':
 			stream = optarg;
@@ -154,8 +163,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* Either benchmark or test. */
-	if (benchmark == test && (!stream || !interfaces)) {
+	/*
+	 * Either benchmark or test.  If stream analysis, then the interface
+	 * is needed as well.
+	 */
+	if (benchmark == test && (stream && !interface)) {
 		usage();
 	}
 
@@ -169,6 +181,11 @@ main(int argc, char **argv)
 	if (config) {
 		load_npf_config(config);
 	}
+	if (interface && (idx = rumpns_npf_test_getif(interface)) == 0) {
+		errx(EXIT_FAILURE, "failed to find the interface");
+	}
+
+	srandom(1);
 
 	if (test) {
 		ok = rumpns_npf_nbuf_test(verbose);
@@ -184,13 +201,15 @@ main(int argc, char **argv)
 		result("state", ok);
 	}
 
+	if (test && config) {
+		ok = rumpns_npf_rule_test(verbose);
+		result("rule", ok);
+
+		ok = rumpns_npf_nat_test(verbose);
+		result("nat", ok);
+	}
+
 	if (stream) {
-		unsigned idx = if_nametoindex(interfaces);
-		if (idx == 0) {
-			err(EXIT_FAILURE, "if_nametoindex");
-		} else if (verbose) {
-			printf("Interface %s index %u\n", interfaces, idx);
-		}
 		process_stream(stream, NULL, idx);
 	}
 

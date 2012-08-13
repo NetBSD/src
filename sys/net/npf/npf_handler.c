@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.13.2.4 2012/07/16 22:13:26 riz Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.13.2.5 2012/08/13 17:49:52 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.13.2.4 2012/07/16 22:13:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.13.2.5 2012/08/13 17:49:52 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,7 +142,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	}
 
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, di, &error);
+	se = npf_session_inspect(&npc, nbuf, ifp, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
 	if (se && npf_session_pass(se, &rp)) {
@@ -193,7 +193,7 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * session.  It will be released on session destruction.
 	 */
 	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
-		se = npf_session_establish(&npc, nbuf, di);
+		se = npf_session_establish(&npc, nbuf, ifp, di);
 		if (se) {
 			npf_session_setpass(se, rp);
 		}
