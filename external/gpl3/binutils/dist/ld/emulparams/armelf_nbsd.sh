@@ -6,3 +6,9 @@ TARGET2_TYPE=got-rel
 unset DATA_START_SYMBOLS
 unset STACK_ADDR
 unset EMBEDDED
+
+case "$target" in
+  arm*-*-netbsdelf*-eabi*)
+    LIB_PATH='=/usr/lib/oabi'
+    ;;
+esac
