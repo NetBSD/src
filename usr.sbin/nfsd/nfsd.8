@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.21 2008/03/17 09:57:11 yamt Exp $
+.\"   $NetBSD: nfsd.8,v 1.22 2012/08/13 08:19:11 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfsd.8	8.4 (Berkeley) 3/29/95
 .\"
-.Dd March 17, 2008
+.Dd August 12, 2012
 .Dt NFSD 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 server
 .Sh SYNOPSIS
 .Nm
-.Op Fl 6rut
+.Op Fl 46rut
 .Op Fl n Ar num_threads
 .Sh DESCRIPTION
 .Nm
@@ -73,20 +73,31 @@ The default is 4.
 A server should run enough threads to handle
 the maximum level of concurrency from its clients.
 .It Fl 6
-Listen to IPv6 requests as well as IPv4 requests. If IPv6 support is not
-available, nfsd will silently continue and just use IPv4.
+Listen to only IPv6 requests.
+By default
+.Nm
+listens to both IPv6 and IPv4 and tries to register for both.
+.It Fl 4
+Listen to only IPv4 requests.
 .It Fl t
-Serve
+Serve only
 .Tn TCP NFS
 clients.
+By default
+.Nm
+serves both 
+.Tn TCP NFS
+and
+.TN UDP NFS
+clients
 .It Fl u
-Serve
+Serve only
 .Tn UDP NFS
 clients.
 .El
 .Pp
 For example,
-.Dq Li "nfsd -t -u -n 6"
+.Dq Li "nfsd -n 6"
 serves
 .Tn UDP
 and
