@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1732 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1733 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -90,7 +90,6 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	pr(1): Add support for POSIX -f and -p options. [ginsbach 20120724]
 	powerpc: Add support for FPU emulation on BookE. [matt 20120722]
 	zoneinfo: Import tzdata2012d. [apb 20120722]
-	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
 	OpenSSL: Imported 1.0.1c [christos 20120726]
 	kernel: safepri is dead; replaced by macro IPL_SAFEPRI. [matt 20120727]
 	kernel: Add malo(4), a driver for Marvell Libertas IEEE 802.11b/g
