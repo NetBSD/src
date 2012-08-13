@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.11 2012/08/13 12:22:21 pgoyette Exp $	*/
+/*	$NetBSD: lockd.c,v 1.12 2012/08/13 12:37:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.11 2012/08/13 12:22:21 pgoyette Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.12 2012/08/13 12:37:18 wiz Exp $");
 #endif
 
 /*
@@ -234,7 +234,7 @@ sigalarm_handler(int s)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s[-d <debuglevel>] [-g <grace period>]",
+	(void)fprintf(stderr, "Usage: %s [-46] [-d debug_level] [-g grace_period]\n",
 	    getprogname());
 	exit(1);
 }
