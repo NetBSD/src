@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.140 2012/08/13 15:17:16 martin Exp $
+# $NetBSD: postinstall,v 1.141 2012/08/13 18:22:25 martin Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1787,6 +1787,7 @@ do_ptyfsoldnodes()
 					rm "${node}"
 					msg "Removed ${node}"
 				done < "${tmp}"
+				rm "${tmp}"
 			else
 				failed=1
 			fi
