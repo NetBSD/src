@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.8 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.9 2012/08/13 01:18:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,8 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * NPF n-code disassembler.
+ *
+ * FIXME: config generation should be redesigned..
+ */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.8 2012/07/19 21:52:29 spz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.9 2012/08/13 01:18:32 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +45,7 @@ __RCSID("$NetBSD: npf_disassemble.c,v 1.8 2012/07/19 21:52:29 spz Exp $");
 #include <err.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <net/if.h>
 
 #include <util.h>
@@ -54,6 +60,8 @@ enum {
 	NPF_SHOW_DSTADDR,
 	NPF_SHOW_SRCPORT,
 	NPF_SHOW_DSTPORT,
+	NPF_SHOW_PROTO,
+	NPF_SHOW_FAMILY,
 	NPF_SHOW_ICMP,
 	NPF_SHOW_TCPF,
 	NPF_SHOW_COUNT,
@@ -121,6 +129,22 @@ npfctl_ncode_add_vp(nc_inf_t *ni, char *buf, unsigned idx)
 	npfvar_t *vp = npfvar_create(".string");
 	npfvar_add_element(vp, NPFVAR_STRING, buf, strlen(buf) + 1);
 	npfvar_add_elements(vl, vp);
+}
+
+static void
+npf_tcpflags2str(char *buf, unsigned tfl)
+{
+	int i = 0;
+
+	if (tfl & TH_FIN)	buf[i++] = 'F';
+	if (tfl & TH_SYN)	buf[i++] = 'S';
+	if (tfl & TH_RST)	buf[i++] = 'R';
+	if (tfl & TH_PUSH)	buf[i++] = 'P';
+	if (tfl & TH_ACK)	buf[i++] = 'A';
+	if (tfl & TH_URG)	buf[i++] = 'U';
+	if (tfl & TH_ECE)	buf[i++] = 'E';
+	if (tfl & TH_CWR)	buf[i++] = 'C';
+	buf[i] = '\0';
 }
 
 static const char *
@@ -209,11 +233,40 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		uint8_t proto = op & 0xff;
 
 		snprintf(buf, bufsiz, "addrlen=%u, proto=%u", addrlen, proto);
+		if (!ni) {
+			break;
+		}
+		switch (proto) {
+		case 0xff:
+			/* None. */
+			break;
+		case IPPROTO_TCP:
+			ni->ni_proto |= NC_MATCH_TCP;
+			break;
+		case IPPROTO_UDP:
+			ni->ni_proto |= NC_MATCH_UDP;
+			break;
+		case IPPROTO_ICMP:
+			ni->ni_proto |= NC_MATCH_ICMP;
+			/* FALLTHROUGH */
+		default:
+			snprintf(buf, bufsiz, "proto %d", proto);
+			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_PROTO);
+			break;
+		}
+		switch (addrlen) {
+		case 4:
+		case 16:
+			snprintf(buf, bufsiz, "family inet%s",
+			    addrlen == 16 ? "6" : "");
+			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_FAMILY);
+			break;
+		}
 		break;
 	}
 	case NPF_OPERAND_SUBNET: {
 		snprintf(buf, bufsiz, "/%d", op);
-		if (ni) {
+		if (ni && op != NPF_NO_NETMASK) {
 			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
 			    NPF_SHOW_SRCADDR : NPF_SHOW_DSTADDR);
 		}
@@ -242,13 +295,18 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 			return NULL;
 		}
 		snprintf(buf, bufsiz, "type=%d, code=%d", type, code);
-		if (ni) {
-			ni->ni_proto |= NC_MATCH_ICMP;
-			if (type || code) {
-				snprintf(buf, bufsiz,
-				    "icmp-type %d code %d", type, code);
-				npfctl_ncode_add_vp(ni, buf, NPF_SHOW_ICMP);
-			}
+		if (!ni) {
+			break;
+		}
+		ni->ni_proto |= NC_MATCH_ICMP;
+		if (*ni->ni_ipc == NPF_OPCODE_ICMP6) {
+			snprintf(buf, bufsiz, "proto \"ipv6-icmp\"");
+			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_PROTO);
+		}
+		if (type || code) {
+			snprintf(buf, bufsiz,
+			    "icmp-type %d code %d", type, code);
+			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_ICMP);
 		}
 		break;
 	}
@@ -259,7 +317,10 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 			    op, ni->ni_pc - ni->ni_buf);
 			return NULL;
 		}
-		snprintf(buf, bufsiz, "flags=0x%x, mask=%0xx", tf, tf_mask);
+		char tf_buf[16], tfm_buf[16];
+		npf_tcpflags2str(tf_buf, tf);
+		npf_tcpflags2str(tfm_buf, tf_mask);
+		snprintf(buf, bufsiz, "flags %s/%s", tf_buf, tfm_buf);
 		if (ni) {
 			ni->ni_proto |= NC_MATCH_TCP;
 			npfctl_ncode_add_vp(ni, buf, NPF_SHOW_TCPF);
@@ -274,10 +335,23 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 		} else {
 			snprintf(buf, bufsiz, "%d-%d", p1, p2);
 		}
-		if (ni) {
-			npfctl_ncode_add_vp(ni, buf, ni->ni_srcdst ?
-			    NPF_SHOW_SRCPORT : NPF_SHOW_DSTPORT);
+
+		if (!ni) {
+			break;
 		}
+		switch (*ni->ni_ipc) {
+		case NPF_OPCODE_TCP_PORTS:
+			ni->ni_proto |= NC_MATCH_TCP;
+			break;
+		case NPF_OPCODE_UDP_PORTS:
+			ni->ni_proto |= NC_MATCH_UDP;
+			break;
+		}
+		int sd = ni->ni_srcdst ?  NPF_SHOW_SRCPORT : NPF_SHOW_DSTPORT;
+		if (ni->ni_vlist[sd]) {
+			break;
+		}
+		npfctl_ncode_add_vp(ni, buf, sd);
 		break;
 	}
 	default:
@@ -351,7 +425,6 @@ npfctl_ncode_disassemble(nc_inf_t *ni, const void *v, size_t len)
 		}
 		ni->ni_left -= sizeof(opcode);
 		ni->ni_pc++;
-
 		for (size_t i = 0; i < __arraycount(insn->op); i++) {
 			const uint8_t o = insn->op[i];
 			const char *op;
@@ -381,21 +454,26 @@ out:
 static void
 npfctl_show_fromto(const char *name, npfvar_t *vl, bool showany)
 {
-	size_t count = npfvar_get_count(vl), last = count - 1;
-	bool one = (count == 1);
+	size_t count = npfvar_get_count(vl);
+	char *s;
 
-	if (count == 0) {
+	switch (count) {
+	case 0:
 		if (showany) {
 			printf("%s any ", name);
 		}
 		return;
+	case 1:
+		s = npfvar_get_data(vl, NPFVAR_STRING, 0);
+		printf("%s %s ", name, s);
+		return;
 	}
-	printf("%s%s ", name, one ? "" : " {");
-
+	printf("%s%s", name, " { ");
 	for (size_t i = 0; i < count; i++) {
-		char *s = npfvar_get_data(vl, NPFVAR_STRING, i);
-		printf("%s%s ", s, i == last ? (one ? "" : " }") : ",");
+		s = npfvar_get_data(vl, NPFVAR_STRING, i);
+		printf("%s%s", (i && s[0] != '/') ? ", " : "", s);
 	}
+	printf(" } ");
 	npfvar_destroy(vl);
 }
 
@@ -403,23 +481,47 @@ static bool
 npfctl_show_ncode(const void *nc, size_t len)
 {
 	nc_inf_t *ni = npfctl_ncode_disinf(NULL);
+	bool any, protoshown = false;
 	npfvar_t *vl;
-	bool any;
 
 	if (npfctl_ncode_disassemble(ni, nc, len) != 0) {
 		printf("<< ncode >> ");
 		return true;
 	}
 
+	if ((vl = ni->ni_vlist[NPF_SHOW_FAMILY]) != NULL) {
+		printf("%s ", npfvar_expand_string(vl));
+		npfvar_destroy(vl);
+	}
+
+	if ((vl = ni->ni_vlist[NPF_SHOW_PROTO]) != NULL) {
+		printf("%s ", npfvar_expand_string(vl));
+		npfvar_destroy(vl);
+		protoshown = true;
+	}
+
 	switch (ni->ni_proto) {
 	case NC_MATCH_TCP:
-		printf("proto tcp ");
+		if (!protoshown) {
+			printf("proto tcp ");
+		}
+		if ((vl = ni->ni_vlist[NPF_SHOW_TCPF]) != NULL) {
+			printf("%s ", npfvar_expand_string(vl));
+			npfvar_destroy(vl);
+		}
 		break;
 	case NC_MATCH_ICMP:
-		printf("proto icmp ");
+		if (!protoshown) {
+			printf("proto icmp ");
+		}
 		if ((vl = ni->ni_vlist[NPF_SHOW_ICMP]) != NULL) {
 			printf("%s ", npfvar_expand_string(vl));
 			npfvar_destroy(vl);
+		}
+		break;
+	case NC_MATCH_UDP:
+		if (!protoshown) {
+			printf("proto udp ");
 		}
 		break;
 	default:
@@ -520,7 +622,7 @@ npfctl_show_rule(nl_rule_t *nrl, unsigned nlevel)
 	}
 
 	nc = _npf_rule_ncode(nrl, &nclen);
-	if (!nc || npfctl_show_ncode(nc, nclen)) {
+	if (!nc || !npfctl_show_ncode(nc, nclen)) {
 		printf("all ");
 	}
 
@@ -551,6 +653,8 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 	u_int flags;
 	int type;
 
+	/* TODO: bi-NAT */
+
 	_npf_rule_getinfo(nrl, &rg.rg_name, &rg.rg_attr, &rg.rg_ifnum);
 
 	/* Get the interface, if any. */
@@ -559,7 +663,57 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 		ifname = if_indextoname(rg.rg_ifnum, ifnamebuf);
 	}
 	_npf_nat_getinfo(nt, &type, &flags, &taddr, &alen, &port);
-	return; /* TODO */
+
+	struct sockaddr_storage ss;
+	char taddrbuf[64], tportbuf[16];
+
+	if (alen == 4) {
+		struct sockaddr_in *sin = (void *)&ss;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_port = 0;
+		memcpy(&sin->sin_addr, &taddr, sizeof(sin->sin_addr));
+		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
+		    "%a", (struct sockaddr *)sin);
+	} else {
+		assert(alen == 16);
+		struct sockaddr_in6 *sin6 = (void *)&ss;
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_port = 0;
+		memcpy(&sin6->sin6_addr, &taddr, sizeof(sin6->sin6_addr));
+		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
+		    "%a", (struct sockaddr *)sin6);
+	}
+
+	if (port) {
+		snprintf(tportbuf, sizeof(tportbuf),
+		    " port %d", ntohs(port));
+	}
+
+	const char *seg1 = "any", *seg2 = "any", *sp1 = "", *sp2 = "", *mt;
+	switch (type) {
+	case NPF_NATIN:
+		mt = "<-";
+		seg1 = taddrbuf;
+		sp1 = port ? tportbuf : "";
+		break;
+	case NPF_NATOUT:
+		mt = "->";
+		seg2 = taddrbuf;
+		sp2 = port ? tportbuf : "";
+		break;
+	default:
+		assert(false);
+	}
+	printf("map %s dynamic %s%s %s %s%s pass ", ifname,
+	    seg1, sp1, mt, seg2, sp2);
+
+	const void *nc;
+	size_t nclen;
+
+	nc = _npf_rule_ncode(nrl, &nclen);
+	printf("%s\n", (!nc || !npfctl_show_ncode(nc, nclen)) ? " any " : "");
 }
 
 int
