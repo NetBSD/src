@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.181 2012/08/13 17:50:43 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.182 2012/08/13 20:34:40 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -7279,4 +7279,81 @@ usr.sbin/npf/npftest/npftest.h			1.4
 
 	Various NPF fixes: npftest, sessions, and fix bi-NAT regression.
 	[rmind, ticket #485]
+
+sys/arch/sun2/include/param.h			1.15
+sys/arch/sun3/include/param.h			1.61
+sys/arch/sun3/include/param3.h			1.55-1.56
+sys/arch/sun3/include/param3x.h			1.18
+
+	Fix possible kernel virtual address shortage on sun2 and sun3.
+	[tsutsui, ticket #487]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.298
+
+	Make raidframe usable with dkctl(8) for getting and setting buffer
+	queue strategies.  Make raidframe use the default disk strategy for
+	the current environment as other disk drivers do.
+	[buhrow, ticket #488]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.15
+usr.sbin/npf/npfctl/npf_disassemble.c		1.9
+usr.sbin/npf/npfctl/npfctl.8			1.9
+
+	npfctl show: add most of the missing cases.  Minor improvements
+	to man pages.
+	[rmind, ticket #489]
+
+etc/MAKEDEV.tmpl				1.154,1.157 via patch
+
+	Don't create BSD style pty nodes by default anymore since ptyfs
+	is mounted by default. This is a security issue, since it allows
+	pty access through the old style node.  Also, create wedges (dk*)
+	by default, to reduce diffs to -current.
+	[christos, ticket #490]
+
+distrib/sets/lists/base/ad.mips64eb		1.98 via patch
+distrib/sets/lists/base/ad.mips64el		1.97 via patch
+distrib/sets/lists/base/md.amd64		1.173 via patch
+distrib/sets/lists/base/md.sparc64		1.163 via patch
+distrib/sets/lists/base/shl.mi			1.634 via patch
+distrib/sets/lists/comp/ad.mips64eb		1.85 via patch
+distrib/sets/lists/comp/ad.mips64el		1.86 via patch
+distrib/sets/lists/comp/md.amd64		1.172 via patch
+distrib/sets/lists/comp/md.sparc64		1.154 via patch
+distrib/sets/lists/comp/mi			1.1770
+distrib/sets/lists/comp/shl.mi			1.230 via patch
+doc/3RDPARTY					1.952
+doc/CHANGES					1.1723 via patch
+
+	Update OpenSSL to version 1.0.1c with AES-NI patch.
+	[christos, ticket #491]
+
+usr.sbin/postinstall/postinstall		1.139-1.141
+
+	Companion to ticket #490: remove legacy tty/pty nodes during
+	postinstall.
+	[martin, ticket #492]
+
+sys/arch/evbarm/stand/gzboot/Makefile.gzboot	1.20
+
+	Fix build failure on evbarm with USE_SSP=yes.
+	[khorben, ticket #493]
+
+sys/dev/pci/eso.c				1.61
+
+	Avoid panic in eso_attach() on boot.  PR#46791.
+	[gson, ticket #494]
+
+sys/dev/usb/uftdi.c				1.53
+
+	Use as large a packet size as the ftdi endpoint specifies, so
+	we can communicate with devices that use packets larger than 64
+	bytes.
+	[riastradh, ticket #495]
+
+doc/CHANGES					patch
+
+	Mention urtwn, wm, and RaspberryPi support in the changes between
+	NetBSD 5.0 and NetBSD 6.0.
+	[jdc, ticket #496]
 
