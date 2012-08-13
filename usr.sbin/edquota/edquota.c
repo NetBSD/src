@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.48 2012/08/13 22:21:05 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.49 2012/08/13 23:08:58 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.48 2012/08/13 22:21:05 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.49 2012/08/13 23:08:58 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,6 +478,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 	int nfst, i;
 	struct quotalist *qlist;
 	struct quotause *qup;
+	int seenany = 0;
 
 	qlist = quotalist_create();
 
@@ -488,6 +489,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 	for (i = 0; i < nfst; i++) {
 		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
+		seenany = 1;
 		if (filesys &&
 		    strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
@@ -511,6 +513,10 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		}
 
 		quotalist_append(qlist, qup);
+	}
+
+	if (!seenany) {
+		errx(1, "No mounted filesystems have quota support");
 	}
 
 #if 0
