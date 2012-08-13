@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.129.2.7 2012/07/16 22:08:03 riz Exp $
+# $NetBSD: postinstall,v 1.129.2.8 2012/08/13 20:22:20 riz Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1740,6 +1740,54 @@ do_obsolete()
 	) | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
+	return ${failed}
+}
+
+
+#
+#	ptyfsoldnodes
+#
+additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
+do_ptyfsoldnodes()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes  fix|check"
+
+	# check if ptyfs is in use
+	failed=0;
+	if ${EGREP} "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+		maj_t=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
+			'/mkdev ttyp0 c [0-9]* 0 666/{print $4}' )
+		maj_p=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
+			'/mkdev ptyp0 c [0-9]* 0 666/{print $4}' )
+
+		pcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
+			${AWK} '{print $7 $12}' | \
+			${AWK} -F, "/^${maj_p},/{ print \$2}" | wc -l )
+		tcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
+			${AWK} '{print $7 $12}' | \
+			${AWK} -F, "/^${maj_t},/{ print \$2}" | wc -l )
+
+		if [ ${pcnt} -gt 0 -o ${tcnt} -gt 0 ]; then
+			if [ "$1" = "fix" ]; then
+				tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
+				find "${DEST_DIR}/dev" -xdev -type c -ls | \
+					${AWK} '{print $7 $12}' | \
+					${AWK} -F, "/^${maj_p},/{ print \$2}" \
+					> "${tmp}"
+				find "${DEST_DIR}/dev" -xdev -type c -ls | \
+					${AWK} '{print $7 $12}' | \
+					${AWK} -F, "/^${maj_t},/{ print \$2}" \
+					>> "${tmp}"
+				while read node; do
+					rm "${node}"
+					msg "Removed ${node}"
+				done < "${tmp}"
+				rm "${tmp}"
+			else
+				failed=1
+			fi
+		fi
+	fi
 	return ${failed}
 }
 
