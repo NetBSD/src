@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.14 2010/11/03 18:52:44 christos Exp $
+$NetBSD: README,v 1.14.8.1 2012/08/13 23:18:23 riz Exp $
 
 Organization of Sources:
 
@@ -81,6 +81,8 @@ The licenses currently used are:
 
 	public-domain	Non-license for code that has been explicitly put
 			into the Public Domain.
+
+	realtek		RealTek license.
 
 	zlib		Zlib (BSD-like) license.
 			http://www.zlib.net/zlib_license.html

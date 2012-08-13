@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.7 2012/06/23 22:54:57 riz Exp $
+# $NetBSD: mi,v 1.984.2.8 2012/08/13 23:18:22 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -166,6 +166,10 @@
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
 ./libdata/firmware/if_otus/otus-license		base-firmware-root
 ./libdata/firmware/if_otus/otus-main		base-firmware-root
+./libdata/firmware/if_urtwn			base-firmware-root
+./libdata/firmware/if_urtwn/Realtek-Firmware-License.txt	base-firmware-root
+./libdata/firmware/if_urtwn/rtl8192cfw.bin	base-firmware-root
+./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
@@ -182,7 +186,7 @@
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/upgt				base-firmware-root
-./libdata/firmware/urtwn			base-firmware-root
+./libdata/firmware/urtwn			base-firmware-root obsolete
 ./libdata/firmware/zyd				base-firmware-root
 ./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
