@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.3 2012/06/05 21:15:33 bouyer Exp $
+# $NetBSD: shl.mi,v 1.616.2.4 2012/08/13 20:19:23 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -20,8 +20,8 @@
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.7				base-crypto-shlib	crypto,dynamicroot
-./lib/libcrypto.so.7.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.8.0				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1				base-lvm-shlib		lvm,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
@@ -182,8 +182,8 @@
 ./usr/lib/libcrypt.so.1				base-sys-shlib
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so				base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.7			base-crypto-shlib	crypto
-./usr/lib/libcrypto.so.7.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.8.0			base-crypto-shlib	crypto
 ./usr/lib/libctf.so				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2				base-sys-shlib		dtrace
 ./usr/lib/libctf.so.2.0				base-sys-shlib		dtrace
@@ -655,8 +655,8 @@
 ./usr/lib/libssh.so.18				base-secsh-shlib	crypto
 ./usr/lib/libssh.so.18.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
-./usr/lib/libssl.so.9				base-crypto-shlib	crypto
-./usr/lib/libssl.so.9.0				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10				base-crypto-shlib	crypto
+./usr/lib/libssl.so.10.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so				base-sys-shlib		gcc,cxx
 ./usr/lib/libstdc++.so.5			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx

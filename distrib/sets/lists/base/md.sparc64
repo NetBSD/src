@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.147.2.3 2012/06/05 21:15:33 bouyer Exp $
+# $NetBSD: md.sparc64,v 1.147.2.4 2012/08/13 20:19:24 riz Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -72,8 +72,8 @@
 ./usr/lib/sparc/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcrypto.so.7			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libcrypto.so.7.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libcrypto.so.8.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic,crypto
@@ -246,8 +246,8 @@
 ./usr/lib/sparc/libss.so.6.0			base-compat-shlib	obsolete
 ./usr/lib/sparc/libssh.so.18			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssh.so.18.0			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssl.so.9			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssl.so.9.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.10			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.10.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	gcc=4,compat,pic
 ./usr/lib/sparc/libstdc++.so.7.1		base-compat-shlib	gcc=45,compat,pic
