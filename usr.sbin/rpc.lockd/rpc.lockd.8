@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.lockd.8,v 1.7 2012/08/13 12:22:21 pgoyette Exp $
+.\"	$NetBSD: rpc.lockd.8,v 1.8 2012/08/13 12:37:05 wiz Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -40,38 +40,21 @@
 .Nd NFS file locking daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl d Ar debug_level
-.Op Fl g Ar grace period
 .Op Fl 46
+.Op Fl d Ar debug_level
+.Op Fl g Ar grace_period
 .Sh DESCRIPTION
 The
 .Nm
 daemon provides monitored and unmonitored file and record locking services
-in an NFS environment.  To monitor the status of hosts requesting locks,
-the locking daemon typically operates in conjunction
-with
+in an NFS environment.
+To monitor the status of hosts requesting locks, the locking daemon
+typically operates in conjunction with
 .Xr rpc.statd 8 .
 .Pp
 Options and operands available for
-.Nm
-:
-.Bl -tag -width Ds
-.It Fl d
-The
-.Fl d
-option causes debugging information to be written to syslog, recording
-all RPC transactions to the daemon.  These messages are logged with level
-LOG_DEBUG and facility LOG_DAEMON.  Specifying a debug_level of 1 results
-in the generation of one log line per protocol operation.  Higher
-debug levels can be specified, causing display of operation arguments
-and internal operations of the daemon.
-.It Fl g
-The
-.Fl g
-option allow to specify the grace period, in seconds. During the grace period
-.Nm
-only accepts requests from hosts which are reinitialising locks which
-existed before the server restart. Default is 30 seconds.
+.Nm :
+.Bl -tag -width XgXgrace_periodXX
 .It Fl 4
 Listen for requests using IPv4.
 Do not listen using IPv6 unless the
@@ -83,10 +66,33 @@ listens for requests using both IPv4 and IPv6 if available.
 .It Fl 6
 Listen for requests using IPv6.
 It is an error if IPv6 is not available.
+.It Fl d Ar debug_level
+Cause debugging information to be written to syslog, recording all
+RPC transactions to the daemon.
+These messages are logged with level
+.Dv LOG_DEBUG
+and facility
+.Dv LOG_DAEMON .
+Specifying a
+.Ar debug_level
+of 1 results in the generation of one log line per protocol operation.
+Higher debug levels can be specified, causing display of operation
+arguments and internal operations of the daemon.
+.It Fl g Ar grace_period
+Set the grace period (in seconds) to
+.Ar grace_period .
+During the grace period
+.Nm
+only accepts requests from hosts which are reinitialising locks which
+existed before the server restarted.
+Default is 30 seconds.
 .El
 .Pp
 Error conditions are logged to syslog, irrespective of the debug level,
-using log level LOG_ERR and facility LOG_DAEMON.
+using log level
+.Dv LOG_ERR
+and facility
+.Dv LOG_DAEMON .
 .Pp
 The
 .Nm
@@ -107,7 +113,7 @@ RPC protocol specification for the network lock manager protocol.
 .Xr rpc.statd 8
 .Sh STANDARDS
 The implementation is based on the specification in X/Open CAE Specification
-C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9
+C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9.
 .Sh HISTORY
 A version of
 .Nm
@@ -115,11 +121,10 @@ appeared in
 .Tn SunOS 4 .
 .Sh BUGS
 The current implementation provides only the server side of the protocol
-(i.e. clients running other OS types can establish locks on a
+(i.e., clients running other OS types can establish locks on a
 .Nx
-fileserver,
-but there is currently no means for a
+fileserver, but there is currently no means for a
 .Nx
 client to establish locks).
 .Pp
-The current implementation serialises locks requests that could be shared.
+The current implementation serialises lock requests that could be shared.
