@@ -1,11 +1,11 @@
-/*	$NetBSD: component.c,v 1.1 2010/10/14 22:39:30 haad Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2012/08/14 22:31:44 rmind Exp $	*/
 
 /*
  * Public Domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/10/14 22:39:30 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2012/08/14 22:31:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -13,7 +13,6 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/10/14 22:39:30 haad Exp $");
 #include <sys/stat.h>
 
 #include "rump_private.h"
-#include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
 extern const struct cdevsw npf_cdevsw;
@@ -25,7 +24,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	error = devsw_attach("npf", NULL, &bmajor, &npf_cdevsw, &cmajor);
 	if (error) {
-		panic("npf attaching failed: %d", error);
+		panic("npf attach failed: %d", error);
 	}
 
 	error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/npf", cmajor, 0);
