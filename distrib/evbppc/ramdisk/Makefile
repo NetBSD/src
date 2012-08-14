@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2012/07/27 22:40:48 matt Exp $
+#	$NetBSD: Makefile,v 1.16 2012/08/14 07:24:40 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,7 +21,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
-MAKEDEVTARGETS=	std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 pty0
+MAKEDEVTARGETS=	std md0 wd0 wd1 wd2 wd3 cd0 cd1 sd0 sd1 sd2 sd3 st0 ipty
 MAKEDEVTARGETS+= ld0 ld1
 MAKEDEVTARGETS+= drvctl dk0 dk1 dk2 dk3
 MAKEDEVTARGETS+= flash0 flash1 flash2 flash3 flash4 flash5 flash6 flash7
