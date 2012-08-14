@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.14 2011/02/16 10:08:05 jruoho Exp $	*/
+/*	$NetBSD: aps.c,v 1.15 2012/08/14 14:36:43 jruoho Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.14 2011/02/16 10:08:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.15 2012/08/14 14:36:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,10 +337,16 @@ aps_attach(device_t parent, device_t self, void *aux)
 	INITDATA(APS_SENSOR_LIDOPEN, ENVSYS_INDICATOR, "lid open");
 
 	sc->sc_sme = sysmon_envsys_create();
+
 	for (i = 0; i < APS_NUM_SENSORS; i++) {
+
 		sc->sc_sensor[i].state = ENVSYS_SVALID;
+
+		if (sc->sc_sensor[i].units == ENVSYS_INTEGER)
+			sc->sc_sensor[i].flags = ENVSYS_FHAS_ENTROPY;
+
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
+			&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
 			goto out;
 		}
