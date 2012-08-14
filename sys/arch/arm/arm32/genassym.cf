@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.47 2012/08/02 15:56:06 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.48 2012/08/14 20:42:33 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -156,7 +156,6 @@ define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 ifndef PROCESS_ID_IS_CURLWP
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 endif
-define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
