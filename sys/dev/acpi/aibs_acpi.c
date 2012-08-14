@@ -1,4 +1,4 @@
-/* $NetBSD: aibs_acpi.c,v 1.3 2011/08/06 05:03:56 jruoho Exp $ */
+/* $NetBSD: aibs_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.3 2011/08/06 05:03:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aibs_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -478,21 +478,23 @@ aibs_sensor_add(device_t self, ACPI_OBJECT *obj)
 	if (sc->sc_model != false)
 		as->as_limh += as->as_liml;	/* A range in the new model. */
 
+	as->as_sensor.state = ENVSYS_SINVALID;
+
 	switch (AIBS_TYPE(as->as_type)) {
 
 	case AIBS_TYPE_FAN:
 		as->as_sensor.units = ENVSYS_SFANRPM;
-		as->as_sensor.flags |= ENVSYS_FMONLIMITS;
+		as->as_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 		break;
 
 	case AIBS_TYPE_TEMP:
 		as->as_sensor.units = ENVSYS_STEMP;
-		as->as_sensor.flags |= ENVSYS_FMONLIMITS;
+		as->as_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 		break;
 
 	case AIBS_TYPE_VOLT:
 		as->as_sensor.units = ENVSYS_SVOLTS_DC;
-		as->as_sensor.flags |= ENVSYS_FMONLIMITS;
+		as->as_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 		break;
 
 	default:
@@ -501,7 +503,6 @@ aibs_sensor_add(device_t self, ACPI_OBJECT *obj)
 	}
 
 	(void)strlcpy(as->as_sensor.desc, name, sizeof(as->as_sensor.desc));
-	as->as_sensor.state = ENVSYS_SINVALID;
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &as->as_sensor) != 0) {
 		rv = AE_AML_INTERNAL;
