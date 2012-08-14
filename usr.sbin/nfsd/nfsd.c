@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.59 2012/08/13 08:19:11 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.60 2012/08/14 08:23:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.59 2012/08/13 08:19:11 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.60 2012/08/14 08:23:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ tryconf(struct conf *cfg, int t, int reregister)
 	if (cfg->nc == NULL) {
 		syslog(LOG_ERR, "getnetconfigent %s failed: %m",
 		    cfg_netconf[t]);
-		return -1;
+		goto out;
 	}
 
 	cfg->nb.buf = cfg->ai->ai_addr;
@@ -166,11 +166,16 @@ tryconf(struct conf *cfg, int t, int reregister)
 	if (reregister)
 		if (!rpcb_set(RPCPROG_NFS, 2, cfg->nc, &cfg->nb)) {
 			syslog(LOG_ERR, "rpcb_set %s failed", cfg_netconf[t]);
-			freenetconfigent(cfg->nc);
-			cfg->nc = NULL;
-			return -1;
+			goto out1;
 		}
 	return 0;
+out1:
+	freenetconfigent(cfg->nc);
+	cfg->nc = NULL;
+out:
+	freeaddrinfo(cfg->ai);
+	cfg->ai = NULL;
+	return -1;
 }
 
 static int
