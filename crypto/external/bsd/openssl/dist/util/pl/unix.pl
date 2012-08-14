@@ -60,7 +60,7 @@ sub do_lib_rule
 
 	$target =~ s/\//$o/g if $o ne '/';
 	$target="$target";
-	($Name=$name) =~ tr/a-z/A-Z/;
+	(Name=name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";
 	$ret.="\t\$(RM) $target\n";

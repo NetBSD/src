@@ -1,4 +1,4 @@
-.file	"rc5-586.s"
+#include <machine/asm.h>
 .text
 .globl	RC5_32_encrypt
 .type	RC5_32_encrypt,@function

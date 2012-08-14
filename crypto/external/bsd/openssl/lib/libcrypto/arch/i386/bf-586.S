@@ -1,4 +1,4 @@
-.file	"bf-586.s"
+#include <machine/asm.h>
 .text
 .globl	BF_encrypt
 .type	BF_encrypt,@function

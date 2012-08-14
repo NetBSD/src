@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.2 2011/06/06 06:44:57 spz Exp $
+#	$NetBSD: evp.inc,v 1.2.4.1 2012/08/14 07:57:03 riz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -18,7 +18,8 @@ EVP_SRCS = encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c \
 	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c m_ecdsa.c pmeth_lib.c \
-	pmeth_fn.c m_sigver.c m_wp.c pmeth_gn.c evp_fips.c
+	pmeth_fn.c m_sigver.c m_wp.c pmeth_gn.c evp_fips.c \
+	e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 SRCS += ${EVP_SRCS}
 
 .for cryptosrc in ${EVP_SRCS}

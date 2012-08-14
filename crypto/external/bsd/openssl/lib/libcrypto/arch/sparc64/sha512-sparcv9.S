@@ -747,9 +747,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o0,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o0,0,%o0
 	add	%o4,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o0,0,%o0
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -815,9 +815,9 @@ sha256_block_data_order:
 	srlx	%o5,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o0,0,%g3
+	add	%g5,%g4,%g4
 	add	%o0,%g2,%g2			! +=X[i]
 	xor	%g3,%o0,%o0
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -882,9 +882,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o1,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o1,0,%o1
 	add	%o5,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o1,0,%o1
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -950,9 +950,9 @@ sha256_block_data_order:
 	srlx	%g1,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o1,0,%g3
+	add	%g5,%g4,%g4
 	add	%o1,%g2,%g2			! +=X[i]
 	xor	%g3,%o1,%o1
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1017,9 +1017,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o2,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o2,0,%o2
 	add	%g1,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o2,0,%o2
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1085,9 +1085,9 @@ sha256_block_data_order:
 	srlx	%o7,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o2,0,%g3
+	add	%g5,%g4,%g4
 	add	%o2,%g2,%g2			! +=X[i]
 	xor	%g3,%o2,%o2
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1152,9 +1152,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o3,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o3,0,%o3
 	add	%o7,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o3,0,%o3
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1220,9 +1220,9 @@ sha256_block_data_order:
 	srlx	%o0,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o3,0,%g3
+	add	%g5,%g4,%g4
 	add	%o3,%g2,%g2			! +=X[i]
 	xor	%g3,%o3,%o3
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1287,9 +1287,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o4,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o4,0,%o4
 	add	%o0,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o4,0,%o4
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1355,9 +1355,9 @@ sha256_block_data_order:
 	srlx	%o1,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o4,0,%g3
+	add	%g5,%g4,%g4
 	add	%o4,%g2,%g2			! +=X[i]
 	xor	%g3,%o4,%o4
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1422,9 +1422,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o5,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o5,0,%o5
 	add	%o1,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o5,0,%o5
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1490,9 +1490,9 @@ sha256_block_data_order:
 	srlx	%o2,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o5,0,%g3
+	add	%g5,%g4,%g4
 	add	%o5,%g2,%g2			! +=X[i]
 	xor	%g3,%o5,%o5
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1557,9 +1557,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%g1,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%g1,0,%g1
 	add	%o2,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%g1,0,%g1
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1625,9 +1625,9 @@ sha256_block_data_order:
 	srlx	%o3,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%g1,0,%g3
+	add	%g5,%g4,%g4
 	add	%g1,%g2,%g2			! +=X[i]
 	xor	%g3,%g1,%g1
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2
@@ -1692,9 +1692,9 @@ sha256_block_data_order:
 	xor	%g4,%g5,%g5
 	srlx	%o7,32,%g4		! X[i]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
-	srl	%o7,0,%o7
 	add	%o3,%g2,%g2			! +=X[i+9]
-	add	%g5,%g2,%g2
+	add	%g5,%g4,%g4
+	srl	%o7,0,%o7
 	add	%g4,%g2,%g2
 
 	sllx	%g2,32,%g3
@@ -1760,9 +1760,9 @@ sha256_block_data_order:
 	srlx	%o4,32,%g4	! X[i+9]
 	xor	%g3,%g5,%g5		! sigma1(X[i+14])
 	srl	%o7,0,%g3
+	add	%g5,%g4,%g4
 	add	%o7,%g2,%g2			! +=X[i]
 	xor	%g3,%o7,%o7
-	add	%g5,%g2,%g2
 	add	%g4,%g2,%g2
 
 	srl	%g2,0,%g2

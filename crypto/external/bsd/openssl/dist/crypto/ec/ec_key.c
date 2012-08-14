@@ -64,7 +64,9 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
-#include <string.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 EC_KEY *EC_KEY_new(void)
 	{
@@ -78,6 +80,7 @@ EC_KEY *EC_KEY_new(void)
 		}
 
 	ret->version = 1;	
+	ret->flags = 0;
 	ret->group   = NULL;
 	ret->pub_key = NULL;
 	ret->priv_key= NULL;
@@ -197,6 +200,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 	dest->enc_flag  = src->enc_flag;
 	dest->conv_form = src->conv_form;
 	dest->version   = src->version;
+	dest->flags = src->flags;
 
 	return dest;
 	}
@@ -236,6 +240,11 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 	BN_CTX	*ctx = NULL;
 	BIGNUM	*priv_key = NULL, *order = NULL;
 	EC_POINT *pub_key = NULL;
+
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		return FIPS_ec_key_generate_key(eckey);
+#endif
 
 	if (!eckey || !eckey->group)
 		{
@@ -400,7 +409,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 
 	tx = BN_CTX_get(ctx);
 	ty = BN_CTX_get(ctx);
-
+#ifndef OPENSSL_NO_EC2M
 	if (is_char_two)
 		{
 		if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,
@@ -411,6 +420,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 			goto err;
 		}
 	else
+#endif
 		{
 		if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
 								x, y, ctx))
@@ -535,4 +545,19 @@ int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 	if (key->group == NULL)
 		return 0;
 	return EC_GROUP_precompute_mult(key->group, ctx);
+	}
+
+int EC_KEY_get_flags(const EC_KEY *key)
+	{
+	return key->flags;
+	}
+
+void EC_KEY_set_flags(EC_KEY *key, int flags)
+	{
+	key->flags |= flags;
+	}
+
+void EC_KEY_clear_flags(EC_KEY *key, int flags)
+	{
+	key->flags &= ~flags;
 	}

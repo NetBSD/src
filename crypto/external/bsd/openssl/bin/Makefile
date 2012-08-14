@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/08/17 05:30:01 christos Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2012/08/14 07:55:56 riz Exp $
 
 WARNS?=	2	# XXX -Wcast-qual
 
@@ -10,7 +10,7 @@ BINDIR=/usr/bin
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.5 2011/08/17 05:30:01 christos Exp $
+#	$Id: Makefile,v 1.5.4.1 2012/08/14 07:55:56 riz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -40,20 +40,8 @@ SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c er
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}
 
-# with normal OpenSSL, OPENSSL_NO_{IDEA,MDC2,RC5} changes ABI due to change in
-# struct/union.  we nuked all of them in our header files and it is now safe.
-.if ${MKCRYPTO_IDEA} == "no"
-CPPFLAGS+= -DOPENSSL_NO_IDEA
-.else
-LDADD+=	-lcrypto_idea
-DPADD+=	${LIBCRYPTO_IDEA}
-.endif
-.if ${MKCRYPTO_MDC2} == "no"
-CPPFLAGS+= -DOPENSSL_NO_MDC2
-.else
-LDADD+=	-lcrypto_mdc2
-DPADD+=	${LIBCRYPTO_MDC2}
-.endif
+# with normal OpenSSL, OPENSSL_NO_RC5 changes ABI due to change in
+# struct/union.  we nuked it in our header files and it is now safe.
 .if ${MKCRYPTO_RC5} == "no"
 CPPFLAGS+= -DOPENSSL_NO_RC5
 .else

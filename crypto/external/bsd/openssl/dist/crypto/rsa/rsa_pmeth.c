@@ -63,6 +63,9 @@
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_CMS
+#include <openssl/cms.h>
+#endif
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
 #endif
@@ -153,7 +156,7 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 		OPENSSL_free(rctx);
 		}
 	}
-
+#ifdef OPENSSL_FIPS
 /* FIP checker. Return value indicates status of context parameters:
  * 1  : redirect to FIPS.
  * 0  : don't redirect to FIPS.
@@ -177,6 +180,7 @@ static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx)
 		return rv;
 	return 1;
 	}
+#endif
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					const unsigned char *tbs, size_t tbslen)
@@ -218,7 +222,20 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 			return ret;
 			}
 #endif
-		if (rctx->pad_mode == RSA_X931_PADDING)
+
+		if (EVP_MD_type(rctx->md) == NID_mdc2)
+			{
+			unsigned int sltmp;
+			if (rctx->pad_mode != RSA_PKCS1_PADDING)
+				return -1;
+			ret = RSA_sign_ASN1_OCTET_STRING(NID_mdc2,
+						tbs, tbslen, sig, &sltmp, rsa);
+
+			if (ret <= 0)
+				return ret;
+			ret = sltmp;
+			}
+		else if (rctx->pad_mode == RSA_X931_PADDING)
 			{
 			if (!setup_tbuf(rctx, ctx))
 				return -1;
@@ -547,12 +564,23 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
 		case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 		case EVP_PKEY_CTRL_PKCS7_SIGN:
-#ifndef OPENSSL_NO_CMS
-		case EVP_PKEY_CTRL_CMS_ENCRYPT:
-		case EVP_PKEY_CTRL_CMS_DECRYPT:
-		case EVP_PKEY_CTRL_CMS_SIGN:
-#endif
 		return 1;
+#ifndef OPENSSL_NO_CMS
+		case EVP_PKEY_CTRL_CMS_DECRYPT:
+		{
+		X509_ALGOR *alg = NULL;
+		ASN1_OBJECT *encalg = NULL;
+		if (p2)
+			CMS_RecipientInfo_ktri_get0_algs(p2, NULL, NULL, &alg);
+		if (alg)
+			X509_ALGOR_get0(&encalg, NULL, NULL, alg);
+		if (encalg && OBJ_obj2nid(encalg) == NID_rsaesOaep)
+			rctx->pad_mode = RSA_PKCS1_OAEP_PADDING;
+		}
+		case EVP_PKEY_CTRL_CMS_ENCRYPT:
+		case EVP_PKEY_CTRL_CMS_SIGN:
+		return 1;
+#endif
 		case EVP_PKEY_CTRL_PEER_KEY:
 			RSAerr(RSA_F_PKEY_RSA_CTRL,
 			RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
