@@ -114,16 +114,14 @@ extern int cpu_do_powersave;
 #if defined (PROCESS_ID_IS_CURCPU)
 #define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#define GET_CURPCB(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURPCB]
 #elif defined (PROCESS_ID_IS_CURLWP)
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
-#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
 #elif !defined(MULTIPROCESSOR)
 #define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#define GET_CURPCB(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURPCB]
 #endif
+#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
 
 #else /* !_LOCORE */
 
@@ -231,17 +229,17 @@ static inline void cpu_dosoftints(void);
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct device *ci_dev;		/* Device corresponding to this CPU */
+	device_t ci_dev;		/* Device corresponding to this CPU */
 	cpuid_t ci_cpuid;
-	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
-	u_int32_t ci_arm_cputype;	/* CPU type */
-	u_int32_t ci_arm_cpurev;	/* CPU revision */
-	u_int32_t ci_ctrl;		/* The CPU control register */
+	uint32_t ci_arm_cpuid;		/* aggregate CPU id */
+	uint32_t ci_arm_cputype;	/* CPU type */
+	uint32_t ci_arm_cpurev;		/* CPU revision */
+	uint32_t ci_ctrl;		/* The CPU control register */
 	int ci_cpl;			/* current processor level (spl) */
 	int ci_astpending;		/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
-	struct pcb *ci_curpcb;		/* current pcb */
+	struct cpu_softc *ci_softc;	/* platform softc */
 #ifdef __HAVE_FAST_SOFTINTS
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 	volatile uint32_t ci_softints;
@@ -295,9 +293,6 @@ curcpu(void)
 #else
 #define	curcpu()	(&cpu_info_store)
 #endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
-#ifndef curpcb
-#define	curpcb		(curcpu()->ci_curpcb)
-#endif
 #ifndef curlwp
 #define	curlwp		(curcpu()->ci_curlwp)
 #endif
