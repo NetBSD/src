@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.50 2012/08/14 03:55:48 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.51 2012/08/14 04:48:42 dholland Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.50 2012/08/14 03:55:48 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.51 2012/08/14 04:48:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,6 +448,7 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 	const char *impl;
 	unsigned restrictions;
 	const char *idtypename;
+	int serrno;
 
 	qup = quotause_create();
 	strcpy(qup->fsname, filesys);
@@ -456,7 +457,9 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 
 	qh = quota_open(filesys);
 	if (qh == NULL) {
+		serrno = errno;
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
@@ -480,14 +483,18 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 	}
 
 	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_BLOCKS, qup)) {
+		serrno = errno;
 		quota_close(qh);
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
 	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_FILES, qup)) {
+		serrno = errno;
 		quota_close(qh);
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
@@ -572,7 +579,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		qup = getprivs2(id, idtype, fst[i].f_mntonname, defaultq,
 				&qlist->idtypename);
 		if (qup == NULL) {
-			warnx("getprivs2 failed for id %ld", id);
+			warn("Reading quotas failed for id %ld", id);
 			continue;
 		}
 
@@ -789,7 +796,8 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 		fprintf(fd, "%s (%s):\n", qup->fsname, qup->implementation);
 
 		comm = source_is_real(qup->source[QO_BLK]) ? "" : "#";
-		fprintf(fd, "\tblocks:\n");
+		fprintf(fd, "\tblocks:%s\n",
+			Hflag ? "" : " (sizes in 1K-blocks)");
 		fprintf(fd, "\t\t%susage: %s\n", comm,
 			intprt(b1, 21, q[QO_BLK].qv_usage,
 			       HN_NOSPACE | HN_B, Hflag));
@@ -935,9 +943,9 @@ readprivs(struct quotalist *qlist, int infd, int dflag)
 				 * same number. Sigh.
 				 */
 				intprt(b0, 21, current,
-				       HN_NOSPACE | HN_B, Hflag);
+				       HN_NOSPACE | objtypeflags, Hflag);
 				intprt(b1, 21, qv->qv_usage,
-				       HN_NOSPACE | HN_B, Hflag);
+				       HN_NOSPACE | objtypeflags, Hflag);
 				if (strcmp(b0, b1)) {
 					warnx("Line %u: cannot change usage",
 					      lineno);
