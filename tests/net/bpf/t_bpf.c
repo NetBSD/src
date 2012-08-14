@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpf.c,v 1.4 2012/01/13 16:28:44 christos Exp $	*/
+/*	$NetBSD: t_bpf.c,v 1.5 2012/08/14 19:40:30 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_bpf.c,v 1.5 2012/08/14 19:40:30 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -117,8 +119,10 @@ ATF_TC_BODY(bpfwritetrunc, tc)
 	vm_page_size = sysconf(_SC_PAGE_SIZE);
 	ATF_REQUIRE(iov_max > 1 && vm_page_size > 1);
 
-	/* Minimize memory consumption by using many iovecs
-	 * all pointing to one memory region */
+	/*
+	 * Minimize memory consumption by using many iovecs
+	 * all pointing to one memory region.
+	 */
 	iov = calloc(iov_max, sizeof(struct iovec));
 	ATF_REQUIRE(iov != NULL);
 
@@ -129,7 +133,7 @@ ATF_TC_BODY(bpfwritetrunc, tc)
 	ATF_REQUIRE(iov[0].iov_base != MAP_FAILED);
 
 	iovlen = 1;
-	while(sz + iov[0].iov_len <= total)
+	while (sz + iov[0].iov_len <= total)
 	{
 		iov[iovlen].iov_len  = iov[0].iov_len;
 		iov[iovlen].iov_base = iov[0].iov_base;
@@ -137,7 +141,7 @@ ATF_TC_BODY(bpfwritetrunc, tc)
 		iovlen++;
 	}
 
-	if(sz < total)
+	if (sz < total)
 	{
 		iov[iovlen].iov_len = total - sz;
 		iov[iovlen].iov_base = iov[0].iov_base;
