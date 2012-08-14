@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.487 2012/08/13 11:26:13 christos Exp $
+# $NetBSD: mi,v 1.488 2012/08/14 19:13:54 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -716,6 +716,8 @@
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/bpfilter				tests-net-debug
+./usr/libdata/debug/usr/tests/net/bpfilter/t_bpfilter.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/carp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/fdpass				tests-net-debug
@@ -2826,6 +2828,9 @@
 ./usr/tests/net/bpf/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/bpf/t_bpf		tests-net-tests		atf,rump
 ./usr/tests/net/bpf/t_div-by-zero		tests-net-tests		atf,rump
+./usr/tests/net/bpfilter			tests-net-tests
+./usr/tests/net/bpfilter/Atffile		tests-net-tests		atf,rump
+./usr/tests/net/bpfilter/t_bpfilter		tests-net-tests		atf,rump
 ./usr/tests/net/carp				tests-net-tests
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/carp/t_basic		tests-net-tests		atf,rump
