@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2012/07/15 00:22:59 rmind Exp $
+#	$NetBSD: Makefile,v 1.1 2012/08/14 22:31:44 rmind Exp $
 #
 # Public Domain.
 #
 
 .PATH:	${.CURDIR}/../../../../net/npf
 
-LIB=	rumpdev_npf
+LIB=	rumpnet_npf
 
 SRCS=	npf.c npf_alg.c npf_ctl.c npf_handler.c
 SRCS+=	npf_inet.c npf_instr.c npf_log.c npf_mbuf.c npf_nat.c
