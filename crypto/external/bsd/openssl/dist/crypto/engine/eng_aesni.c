@@ -164,7 +164,7 @@ aesni_bind_helper(ENGINE *e)
 {
 	int engage;
 	if (sizeof(OPENSSL_ia32cap_P) > 4) {
-		engage = (int)((OPENSSL_ia32cap_P >> 30) >> 27) & 1;
+		engage = (int)((OPENSSL_ia32cap_P[0] >> 30) >> 27) & 1;
 	} else {
 		IA32CAP OPENSSL_ia32_cpuid(void);
 		engage = (int)(OPENSSL_ia32_cpuid() >> 57) & 1;
