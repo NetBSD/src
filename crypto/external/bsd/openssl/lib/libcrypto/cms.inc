@@ -1,4 +1,4 @@
-#	$NetBSD: cms.inc,v 1.3 2011/06/05 23:09:50 spz Exp $
+#	$NetBSD: cms.inc,v 1.3.4.1 2012/08/14 07:57:02 riz Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gcmsaty
 #
@@ -9,7 +9,7 @@
 
 
 CMS_SRCS = cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c \
-    cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c
+    cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c cms_pwri.c
 SRCS += ${CMS_SRCS}
 
 .for cryptosrc in ${CMS_SRCS}

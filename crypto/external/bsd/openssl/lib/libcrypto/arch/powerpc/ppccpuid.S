@@ -1,47 +1,85 @@
 .machine	"any"
 .text
 
-.globl	OPENSSL_cpuid_setup
-.type	OPENSSL_cpuid_setup,@function
+.globl	OPENSSL_ppc64_probe
+.type	OPENSSL_ppc64_probe,@function
 .align	4
-OPENSSL_cpuid_setup:
+OPENSSL_ppc64_probe:
+	fcfid	1,1
+	rldicl	0,0,32,32
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
+.globl	OPENSSL_altivec_probe
+.type	OPENSSL_altivec_probe,@function
+.align	4
+OPENSSL_altivec_probe:
+.long	0x10000484
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,@function
 .align	4
 OPENSSL_wipe_cpu:
 	xor	0,0,0
+	fmr	0,31
+	fmr	1,31
+	fmr	2,31
 	mr	3,1
+	fmr	3,31
 	xor	4,4,4
+	fmr	4,31
 	xor	5,5,5
+	fmr	5,31
 	xor	6,6,6
+	fmr	6,31
 	xor	7,7,7
+	fmr	7,31
 	xor	8,8,8
+	fmr	8,31
 	xor	9,9,9
+	fmr	9,31
 	xor	10,10,10
+	fmr	10,31
 	xor	11,11,11
+	fmr	11,31
 	xor	12,12,12
+	fmr	12,31
+	fmr	13,31
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 
 .globl	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,@function
 .align	4
 OPENSSL_atomic_add:
-.Loop:	lwarx	5,0,3
+.Ladd:	lwarx	5,0,3
 	add	0,4,5
 	stwcx.	0,0,3
-	bne-	.Loop
+	bne-	.Ladd
 	mr	3,0
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0
 
 .globl	OPENSSL_rdtsc
 .type	OPENSSL_rdtsc,@function
 .align	4
 OPENSSL_rdtsc:
-	mftb	3
+.Lrdtsc:
 	mftbu	4
+	mftb	3
+	mftbu	5
+	cmplw	4,5
+	bne-	.Lrdtsc
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 
 .globl	OPENSSL_cleanse
 .type	OPENSSL_cleanse,@function
@@ -51,12 +89,13 @@ OPENSSL_cleanse:
 	li	0,0
 	bge	.Lot
 	cmplwi	4,0
-	bclr	14,2
-.Little:	mtctr	4
+	beqlr-
+.Little:
+	mtctr	4
 	stb	0,0(3)
 	addi	3,3,1
-	bdnz+	$-8
-	blr	
+	bdnz	$-8
+	blr
 .Lot:	andi.	5,3,3
 	beq	.Laligned
 	stb	0,0(3)
@@ -66,9 +105,13 @@ OPENSSL_cleanse:
 .Laligned:
 	srwi	5,4,2
 	mtctr	5
+.Lstore4:
 	stw	0,0(3)
 	addi	3,3,4
-	bdnz+	$-8
+	bdnz	.Lstore4
 	andi.	4,4,3
 	bne	.Little
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0

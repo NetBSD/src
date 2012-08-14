@@ -5,33 +5,33 @@
 .type	sha256_block_data_order,@function
 .align	6
 sha256_block_data_order:
-	mflr	0
 	stwu	1,-192(1)
+	mflr	0
 	slwi	5,5,6
 
-	stw	3,40(1)
+	stw	3,104(1)
 
-	stw	0,44(1)
-	stw	2,48(1)
-	stw	13,52(1)
-	stw	14,56(1)
-	stw	15,60(1)
-	stw	16,64(1)
-	stw	17,68(1)
-	stw	18,72(1)
-	stw	19,76(1)
-	stw	20,80(1)
-	stw	21,84(1)
-	stw	22,88(1)
-	stw	23,92(1)
-	stw	24,96(1)
-	stw	25,100(1)
-	stw	26,104(1)
-	stw	27,108(1)
-	stw	28,112(1)
-	stw	29,116(1)
-	stw	30,120(1)
-	stw	31,124(1)
+	stw	2,112(1)
+	stw	13,116(1)
+	stw	14,120(1)
+	stw	15,124(1)
+	stw	16,128(1)
+	stw	17,132(1)
+	stw	18,136(1)
+	stw	19,140(1)
+	stw	20,144(1)
+	stw	21,148(1)
+	stw	22,152(1)
+	stw	23,156(1)
+	stw	24,160(1)
+	stw	25,164(1)
+	stw	26,168(1)
+	stw	27,172(1)
+	stw	28,176(1)
+	stw	29,180(1)
+	stw	30,184(1)
+	stw	31,188(1)
+	stw	0,196(1)
 
 	lwz	8,0(3)
 	mr	31,4
@@ -43,40 +43,23 @@ sha256_block_data_order:
 	lwz	14,24(3)
 	lwz	15,28(3)
 
-	b	.LPICmeup
+	bl	.LPICmeup
 .LPICedup:
 	andi.	0,31,3
 	bne	.Lunaligned
 .Laligned:
 	add	5,31,5
-	stw	5,32(1)
-	stw	31,36(1)
+	stw	5,96(1)
+	stw	31,100(1)
 	bl	.Lsha2_block_private
-.Ldone:
-	lwz	0,44(1)
-	lwz	2,48(1)
-	lwz	13,52(1)
-	lwz	14,56(1)
-	lwz	15,60(1)
-	lwz	16,64(1)
-	lwz	17,68(1)
-	lwz	18,72(1)
-	lwz	19,76(1)
-	lwz	20,80(1)
-	lwz	21,84(1)
-	lwz	22,88(1)
-	lwz	23,92(1)
-	lwz	24,96(1)
-	lwz	25,100(1)
-	lwz	26,104(1)
-	lwz	27,108(1)
-	lwz	28,112(1)
-	lwz	29,116(1)
-	lwz	30,120(1)
-	lwz	31,124(1)
-	mtlr	0
-	addi	1,1,192
-	blr	
+	b	.Ldone
+
+
+
+
+
+
+
 .align	4
 .Lunaligned:
 	subfic	6,31,4096
@@ -86,16 +69,16 @@ sha256_block_data_order:
 	ble-	.Laligned
 	subfc	5,6,5
 	add	6,31,6
-	stw	5,28(1)
-	stw	6,32(1)
-	stw	31,36(1)
+	stw	5,92(1)
+	stw	6,96(1)
+	stw	31,100(1)
 	bl	.Lsha2_block_private
 
-	lwz	5,28(1)
+	lwz	5,92(1)
 .Lcross_page:
 	li	6,16
 	mtctr	6
-	addi	20,1,128
+	addi	20,1,24
 .Lmemcpy:
 	lbz	16,0(31)
 	lbz	17,1(31)
@@ -109,18 +92,47 @@ sha256_block_data_order:
 	addi	20,20,4
 	bc	16,0,.Lmemcpy
 
-	stw	31,24(1)
-	addi	6,1,192
-	addi	31,1,128
-	stw	5,28(1)
-	stw	6,32(1)
-	stw	31,36(1)
+	stw	31,88(1)
+	addi	6,1,88
+	addi	31,1,24
+	stw	5,92(1)
+	stw	6,96(1)
+	stw	31,100(1)
 	bl	.Lsha2_block_private
-	lwz	31,24(1)
-	lwz	5,28(1)
+	lwz	31,88(1)
+	lwz	5,92(1)
 	addic.	5,5,-64
 	bne-	.Lunaligned
-	b	.Ldone
+
+.Ldone:
+	lwz	0,196(1)
+	lwz	2,112(1)
+	lwz	13,116(1)
+	lwz	14,120(1)
+	lwz	15,124(1)
+	lwz	16,128(1)
+	lwz	17,132(1)
+	lwz	18,136(1)
+	lwz	19,140(1)
+	lwz	20,144(1)
+	lwz	21,148(1)
+	lwz	22,152(1)
+	lwz	23,156(1)
+	lwz	24,160(1)
+	lwz	25,164(1)
+	lwz	26,168(1)
+	lwz	27,172(1)
+	lwz	28,176(1)
+	lwz	29,180(1)
+	lwz	30,184(1)
+	lwz	31,188(1)
+	mtlr	0
+	addi	1,1,192
+	blr	
+.long	0
+.byte	0,12,4,1,0x80,18,3,0
+.long	0
+
 .align	4
 .Lsha2_block_private:
 	lwz	16,0(31)
@@ -1250,9 +1262,9 @@ sha256_block_data_order:
 
 	bdnz+	.Lrounds
 
-	lwz	3,40(1)
-	lwz	31,36(1)
-	lwz	5,32(1)
+	lwz	3,104(1)
+	lwz	31,100(1)
+	lwz	5,96(1)
 	subi	7,7,192
 
 	lwz	16,0(3)
@@ -1266,7 +1278,7 @@ sha256_block_data_order:
 	lwz	23,28(3)
 	add	8,8,16
 	add	9,9,17
-	stw	31,36(1)
+	stw	31,100(1)
 	add	10,10,18
 	stw	8,0(3)
 	add	11,11,19
@@ -1284,24 +1296,19 @@ sha256_block_data_order:
 	stw	15,28(3)
 	bne	.Lsha2_block_private
 	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 .align	6
 .LPICmeup:
-	bl	.LPIC
-	addi	7,7,60
-	b	.LPICedup
-	nop	
-	nop	
-	nop	
-	nop	
-	nop	
-.LPIC:	mflr	7
+	mflr	0
+	bcl	20,31,$+4
+	mflr	7
+	addi	7,7,56
+	mtlr	0
 	blr	
-	nop	
-	nop	
-	nop	
-	nop	
-	nop	
-	nop	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+.space	28
 .long	0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5
 .long	0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5
 .long	0xd807aa98,0x12835b01,0x243185be,0x550c7dc3

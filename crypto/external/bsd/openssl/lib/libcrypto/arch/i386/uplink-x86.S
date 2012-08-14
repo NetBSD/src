@@ -1,4 +1,4 @@
-.file	"uplink-x86.s"
+#include <machine/asm.h>
 .text
 .globl	OPENSSL_UplinkTable
 .type	_$lazy1,@function

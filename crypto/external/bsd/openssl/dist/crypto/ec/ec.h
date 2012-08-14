@@ -151,14 +151,24 @@ const EC_METHOD *EC_GFp_mont_method(void);
  */
 const EC_METHOD *EC_GFp_nist_method(void);
 
-#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistp224_method(void);
+
+/** Returns 64-bit optimized methods for nistp256
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistp256_method(void);
+
+/** Returns 64-bit optimized methods for nistp521
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistp521_method(void);
 #endif
 
-
+#ifndef OPENSSL_NO_EC2M
 /********************************************************************/ 
 /*           EC_METHOD for curves over GF(2^m)                      */
 /********************************************************************/
@@ -167,6 +177,8 @@ const EC_METHOD *EC_GFp_nistp224_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GF2m_simple_method(void);
+
+#endif
 
 
 /********************************************************************/
@@ -289,6 +301,7 @@ int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, co
  */
 int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_EC2M
 /** Sets the parameter of a ec over GF2m defined by y^2 + x*y = x^3 + a*x^2 + b
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the polynomial defining the underlying field
@@ -308,7 +321,7 @@ int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, c
  *  \return 1 on success and 0 if an error occured
  */
 int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
-
+#endif
 /** Returns the number of bits needed to represent a field element 
  *  \param  group  EC_GROUP object
  *  \return number of bits needed to represent a field element
@@ -349,7 +362,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx);
  *  \return newly created EC_GROUP object with the specified parameters
  */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-
+#ifndef OPENSSL_NO_EC2M
 /** Creates a new EC_GROUP object with the specified parameters defined
  *  over GF2m (defined by the equation y^2 + x*y = x^3 + a*x^2 + b)
  *  \param  p    BIGNUM with the polynomial defining the underlying field
@@ -359,7 +372,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
  *  \return newly created EC_GROUP object with the specified parameters
  */
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-
+#endif
 /** Creates a EC_GROUP object with a curve specified by a NID
  *  \param  nid  NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
@@ -488,7 +501,7 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
  */
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
-
+#ifndef OPENSSL_NO_EC2M
 /** Sets the affine coordinates of a EC_POINT over GF2m
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -521,7 +534,7 @@ int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
  */
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
-
+#endif
 /** Encodes a EC_POINT object to a octet string
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -660,9 +673,11 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /* EC_GROUP_get_basis_type() returns the NID of the basis type
  * used to represent the field elements */
 int EC_GROUP_get_basis_type(const EC_GROUP *);
+#ifndef OPENSSL_NO_EC2M
 int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
 int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1, 
 	unsigned int *k2, unsigned int *k3);
+#endif
 
 #define OPENSSL_EC_NAMED_CURVE	0x001
 
@@ -696,10 +711,20 @@ typedef struct ec_key_st EC_KEY;
 #define EC_PKEY_NO_PARAMETERS	0x001
 #define EC_PKEY_NO_PUBKEY	0x002
 
+/* some values for the flags field */
+#define EC_FLAG_NON_FIPS_ALLOW	0x1
+#define EC_FLAG_FIPS_CHECKED	0x2
+
 /** Creates a new EC_KEY object.
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
+
+int EC_KEY_get_flags(const EC_KEY *key);
+
+void EC_KEY_set_flags(EC_KEY *key, int flags);
+
+void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
 /** Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
@@ -988,6 +1013,12 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_NISTP224_GROUP_SET_CURVE		 225
 #define EC_F_EC_GFP_NISTP224_POINTS_MUL			 228
 #define EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES 226
+#define EC_F_EC_GFP_NISTP256_GROUP_SET_CURVE		 230
+#define EC_F_EC_GFP_NISTP256_POINTS_MUL			 231
+#define EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES 232
+#define EC_F_EC_GFP_NISTP521_GROUP_SET_CURVE		 233
+#define EC_F_EC_GFP_NISTP521_POINTS_MUL			 234
+#define EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES 235
 #define EC_F_EC_GFP_NIST_FIELD_MUL			 200
 #define EC_F_EC_GFP_NIST_FIELD_SQR			 201
 #define EC_F_EC_GFP_NIST_GROUP_SET_CURVE		 202
@@ -1062,6 +1093,8 @@ void ERR_load_EC_strings(void);
 #define EC_F_I2D_ECPRIVATEKEY				 192
 #define EC_F_I2O_ECPUBLICKEY				 151
 #define EC_F_NISTP224_PRE_COMP_NEW			 227
+#define EC_F_NISTP256_PRE_COMP_NEW			 236
+#define EC_F_NISTP521_PRE_COMP_NEW			 237
 #define EC_F_O2I_ECPUBLICKEY				 152
 #define EC_F_OLD_EC_PRIV_DECODE				 222
 #define EC_F_PKEY_EC_CTRL				 197
@@ -1082,6 +1115,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_DISCRIMINANT_IS_ZERO			 118
 #define EC_R_EC_GROUP_NEW_BY_NAME_FAILURE		 119
 #define EC_R_FIELD_TOO_LARGE				 143
+#define EC_R_GF2M_NOT_SUPPORTED				 147
 #define EC_R_GROUP2PKPARAMETERS_FAILURE			 120
 #define EC_R_I2D_ECPKPARAMETERS_FAILURE			 121
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
