@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.14 2012/08/13 00:52:45 matt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.15 2012/08/14 13:02:19 he Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.14 2012/08/13 00:52:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15 2012/08/14 13:02:19 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -882,7 +882,7 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWBAR1, owin1.powbar);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWAR1, owin1.powar);
 		pq3pci_owin_record(sc, 1, &owin1);
-		if (!pq3pci_owin_init(sc, &sc->sc_pci_mem_bst, false) {
+		if (!pq3pci_owin_init(sc, &sc->sc_pci_mem_bst, false)) {
 			return;
 		}
 
@@ -907,7 +907,7 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWBAR2, owin2.powbar);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWAR2, owin2.powar);
 		pq3pci_owin_record(sc, 2, &owin1);
-		if (!pq3pci_owin_init(sc, &sc->sc_pci_io_bst, true) {
+		if (!pq3pci_owin_init(sc, &sc->sc_pci_io_bst, true)) {
 			return;
 		}
 
