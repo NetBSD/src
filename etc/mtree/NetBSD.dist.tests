@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.81 2012/08/13 11:17:43 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.82 2012/08/14 19:13:54 alnsn Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -101,6 +101,7 @@
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/bpf
+./usr/libdata/debug/usr/tests/net/bpfilter
 ./usr/libdata/debug/usr/tests/net/carp
 ./usr/libdata/debug/usr/tests/net/fdpass
 ./usr/libdata/debug/usr/tests/net/icmp
@@ -244,6 +245,7 @@
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/bpf
+./usr/tests/net/bpfilter
 ./usr/tests/net/carp
 ./usr/tests/net/fdpass
 ./usr/tests/net/icmp
