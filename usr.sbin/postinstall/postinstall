@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.142 2012/08/14 10:38:40 apb Exp $
+# $NetBSD: postinstall,v 1.143 2012/08/14 12:07:57 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,8 +54,6 @@
 # environment to override the locations of some tools.
 : ${AWK:=awk}
 : ${DB:=db}
-: ${EGREP:=egrep}
-: ${FGREP:=fgrep}
 : ${GREP:=grep}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
@@ -429,7 +427,7 @@ file_exists_exact()
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
-			| ${FGREP} -x "${_basename}" >/dev/null \
+			| ${GREP} -F -x "${_basename}" >/dev/null \
 			|| return 1
 		_path="${_dirname}"
 	done
@@ -1493,7 +1491,7 @@ ${pcpath} was a directory, should be a file.
 	# then it will not be deleted.
 	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
 	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
-	    | ${EGREP} "^\\.?${pcpath}/" ;
+	    | ${GREP} -E "^\\.?${pcpath}/" ;
 	    echo "${pcpath}" ) \
 	| obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
@@ -1734,7 +1732,7 @@ do_ptyfsoldnodes()
 
 	# check if ptyfs is in use
 	failed=0;
-	if ${EGREP} "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+	if ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
 		maj_t=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
 			'/mkdev ttyp0 c [0-9]* 0 666/{print $4}' )
 		maj_p=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
