@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.83 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.84 2012/08/14 20:39:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2012/08/12 05:05:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2012/08/14 20:39:49 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -67,14 +67,14 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2012/08/12 05:05:47 matt Exp $");
 char cpu_model[256];
 
 /* Prototypes */
-void identify_arm_cpu(struct device *dv, struct cpu_info *);
+void identify_arm_cpu(device_t dv, struct cpu_info *);
 
 /*
  * Identify the master (boot) CPU
  */
   
 void
-cpu_attach(struct device *dv)
+cpu_attach(device_t dv)
 {
 	int usearmfpe;
 
@@ -157,7 +157,7 @@ cpu_attach(struct device *dv)
 		initialise_arm_fpe();
 #endif
 
-	vfp_attach();
+	vfp_attach();		/* XXX SMP */
 }
 
 enum cpu_class {
@@ -491,7 +491,7 @@ static const char * const wtnames[] = {
 };
 
 void
-identify_arm_cpu(struct device *dv, struct cpu_info *ci)
+identify_arm_cpu(device_t dv, struct cpu_info *ci)
 {
 	u_int cpuid;
 	enum cpu_class cpu_class = CPU_CLASS_NONE;
