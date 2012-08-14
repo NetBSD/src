@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.64 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.65 2012/08/14 20:42:33 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.64 2012/08/12 05:05:47 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.65 2012/08/14 20:42:33 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -173,10 +173,8 @@ ENTRY(cpu_switchto)
 	str	r6, [r7, #(CI_CURLWP)]
 #endif
 
-	/* Hook in a new pcb */
-	ldr	r0, [r6, #(L_PCB)]
-	str	r0, [r7, #(CI_CURPCB)]
-	mov	r7, r0
+	/* Get the new pcb */
+	ldr	r7, [r6, #(L_PCB)]
 
 	/* At this point we can allow IRQ's again. */
 #ifndef __HAVE_UNNESTED_INTRS
@@ -400,9 +398,6 @@ ENTRY_NP(softint_switch)
 	str	r5, [r7, #(CI_CURLWP)]		/* save new lwp */
 #endif
 
-	/* Hook in a new pcb */
-	str	r2, [r7, #(CI_CURPCB)]
-
 	/*
 	 * Normally, we'd get {r8-r13} but since this is a softint lwp
 	 * it's existing state doesn't matter.  We start the stack just
@@ -437,7 +432,6 @@ ENTRY_NP(softint_switch)
 #if !defined(PROCESS_ID_IS_CURLWP) || defined(MULTIPROCESSOR)
 	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
 #endif
-	str	r2, [r7, #(CI_CURPCB)]		/* restore the curpcb */
 	ldr	sp, [r2, #(PCB_SP)]	/* now running on the old stack. */
 
 	/* At this point we can allow IRQ's again. */
