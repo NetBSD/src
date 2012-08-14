@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.143 2012/08/14 12:07:57 apb Exp $
+# $NetBSD: postinstall,v 1.144 2012/08/14 13:11:24 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,6 +57,7 @@
 : ${GREP:=grep}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
+: ${STAT:=stat}
 
 #
 #	helper functions
@@ -1729,43 +1730,49 @@ additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
 do_ptyfsoldnodes()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes  fix|check"
+	_ptyfs_op="$1"
 
-	# check if ptyfs is in use
+	# Check whether ptyfs is in use
 	failed=0;
-	if ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
-		maj_t=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
-			'/mkdev ttyp0 c [0-9]* 0 666/{print $4}' )
-		maj_p=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
-			'/mkdev ptyp0 c [0-9]* 0 666/{print $4}' )
+	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+		msg "ptyfs is not in use"
+		return 0
+	fi
 
-		pcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
-			${AWK} '{print $7 $12}' | \
-			${AWK} -F, "/^${maj_p},/{ print \$2}" | wc -l )
-		tcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
-			${AWK} '{print $7 $12}' | \
-			${AWK} -F, "/^${maj_t},/{ print \$2}" | wc -l )
+	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
+	# are tty or pty device nodes.  ttyv* is typically not a
+	# pty device, but we check it anyway.
+	#
+	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
+	# otherwise we could have used a single glob pattern.
+	#
+	# If there are no files that match a particular pattern,
+	# then stat prints something like:
+	#    stat: /dev/[pt]tyx?: lstat: No such file or directory
+	# and we ignore it.  XXX: We also ignore other error messages.
+	#
+	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
+	for d1 in p q r s t u v w x y z P Q R S T; do
+		${STAT} -f "%SHr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
+	done \
+	| ${AWK} '/^[pt]ty/ {print $2}' >"${_ptyfs_tmp}"
 
-		if [ ${pcnt} -gt 0 -o ${tcnt} -gt 0 ]; then
-			if [ "$1" = "fix" ]; then
-				tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
-				find "${DEST_DIR}/dev" -xdev -type c -ls | \
-					${AWK} '{print $7 $12}' | \
-					${AWK} -F, "/^${maj_p},/{ print \$2}" \
-					> "${tmp}"
-				find "${DEST_DIR}/dev" -xdev -type c -ls | \
-					${AWK} '{print $7 $12}' | \
-					${AWK} -F, "/^${maj_t},/{ print \$2}" \
-					>> "${tmp}"
-				while read node; do
-					rm "${node}"
-					msg "Removed ${node}"
-				done < "${tmp}"
-				rm "${tmp}"
+	_desc="legacy device node"
+	while read node; do
+		if [ "${_ptyfs_op}" = "check" ]; then
+			msg "Remove ${_desc} ${node}"
+			failed=1
+		else # "fix"
+			if rm "${node}"; then
+				msg "Removed ${_desc} ${node}"
 			else
+				warn "Failed to remove ${_desc} ${node}"
 				failed=1
 			fi
 		fi
-	fi
+	done < "${_ptyfs_tmp}"
+	rm "${_ptyfs_tmp}"
+
 	return ${failed}
 }
 
