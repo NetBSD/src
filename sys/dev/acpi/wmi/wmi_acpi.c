@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.13 2011/07/17 02:46:01 jakllsch Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.14 2012/08/14 14:38:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.13 2011/07/17 02:46:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.14 2012/08/14 14:38:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -238,7 +238,7 @@ acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 
 	for (i = offset = 0; i < n; ++i) {
 
-		if ((wmi = kmem_zalloc(sizeof(*wmi), KM_NOSLEEP)) == NULL)
+		if ((wmi = kmem_zalloc(sizeof(*wmi), KM_SLEEP)) == NULL)
 			goto fail;
 
 		(void)memcpy(&wmi->guid, obj->Buffer.Pointer + offset, siz);
@@ -265,16 +265,9 @@ acpi_wmi_del(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 
-	if (SIMPLEQ_EMPTY(&sc->wmi_head) != 0)
-		return;
-
 	while (SIMPLEQ_FIRST(&sc->wmi_head) != NULL) {
-
 		wmi = SIMPLEQ_FIRST(&sc->wmi_head);
 		SIMPLEQ_REMOVE_HEAD(&sc->wmi_head, wmi_link);
-
-		KASSERT(wmi != NULL);
-
 		kmem_free(wmi, sizeof(*wmi));
 	}
 }

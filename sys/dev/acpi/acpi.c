@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.253 2012/04/10 13:48:24 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.254 2012/08/14 14:38:02 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.253 2012/04/10 13:48:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254 2012/08/14 14:38:02 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -708,7 +708,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
 
-		ad = kmem_zalloc(sizeof(*ad), KM_NOSLEEP);
+		ad = kmem_zalloc(sizeof(*ad), KM_SLEEP);
 
 		if (ad == NULL)
 			return AE_NO_MEMORY;
