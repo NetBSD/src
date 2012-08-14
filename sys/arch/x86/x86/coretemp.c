@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.28 2011/10/06 14:05:26 jruoho Exp $ */
+/* $NetBSD: coretemp.c,v 1.29 2012/08/14 14:36:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.28 2011/10/06 14:05:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.29 2012/08/14 14:36:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -171,8 +171,8 @@ coretemp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": thermal sensor, %u C resolution\n", (uint32_t)msr);
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
-	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
+	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL | ENVSYS_FHAS_ENTROPY;
 
 	(void)pmf_device_register(self, NULL, NULL);
 	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),

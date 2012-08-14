@@ -1,4 +1,4 @@
-/*	$NetBSD: hpacel_acpi.c,v 1.3 2011/09/07 08:43:20 cegger Exp $ */
+/*	$NetBSD: hpacel_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.3 2011/09/07 08:43:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpacel_acpi.c,v 1.4 2012/08/14 14:36:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -516,6 +516,7 @@ hpacel_sensor_init(device_t self)
 
 		sc->sc_sensor[i].units = ENVSYS_INTEGER;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].flags = ENVSYS_FHAS_ENTROPY;
 
 		(void)snprintf(sc->sc_sensor[i].desc,
 		    ENVSYS_DESCLEN, "%c-acceleration", zyx[i]);

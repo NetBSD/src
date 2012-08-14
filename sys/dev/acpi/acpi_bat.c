@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.111 2011/07/13 09:58:53 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.112 2012/08/14 14:36:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.111 2011/07/13 09:58:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.112 2012/08/14 14:36:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -745,6 +745,10 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sensor[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
+
+	/* Attach rnd(9) to the (dis)charge rates. */
+	sc->sc_sensor[ACPIBAT_CHARGERATE].flags |= ENVSYS_FHAS_ENTROPY;
+	sc->sc_sensor[ACPIBAT_DISCHARGERATE].flags |= ENVSYS_FHAS_ENTROPY;
 
 	sc->sc_sme = sysmon_envsys_create();
 
