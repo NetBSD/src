@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.81 2012/07/30 22:54:33 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.82 2012/08/14 20:42:33 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.81 2012/07/30 22:54:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.82 2012/08/14 20:42:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -895,19 +895,11 @@ badaddr_read(void *addr, size_t size, void *rptr)
 		uint16_t v2;
 		uint32_t v4;
 	} u;
-	struct pcb *curpcb_save;
 	int rv, s;
 
 	cpu_drain_writebuf();
 
-	/*
-	 * We might be called at interrupt time, so arrange to steal
-	 * lwp0's PCB temporarily, if required, so that pcb_onfault
-	 * handling works correctly.
-	 */
 	s = splhigh();
-	if ((curpcb_save = curpcb) == NULL)
-		curpcb = lwp_getpcb(&lwp0);
 
 	/* Read from the test address. */
 	switch (size) {
@@ -930,12 +922,9 @@ badaddr_read(void *addr, size_t size, void *rptr)
 		break;
 
 	default:
-		curpcb = curpcb_save;
-		panic("%s: invalid size (%lu)", __func__, (u_long)size);
+		panic("%s: invalid size (%zu)", __func__, size);
 	}
 
-	/* Restore curpcb */
-	curpcb = curpcb_save;
 	splx(s);
 
 	/* Return EFAULT if the address was invalid, else zero */
