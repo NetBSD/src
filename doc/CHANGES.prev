@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.113 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.114 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11178,7 +11178,27 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	kernel: Add urtwn(4), a driver for Realtek RTL8188CU/RTL8192CU USB IEEE
 		802.11b/g/n wireless network devices, ported from OpenBSD.
 		[nonaka 20120325]
+	sysinst(8): Use 1MB alignment rather than the default 63 sectors for
+		fdisk partition boundary for >128GB disks, as fdisk(8) does.
+		[tsutsui 20120407]
+	x68k: Make floppy driver actually work with proper bounce buffer
+		xfer ops on machines with extended high memories.
+		[tsutsui 20120506]
 	wm(4): Add support for Intel I350 Ethernet. [msaitoh 20120525]
-	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
+	i386: Make xf86-video-intel driver work on Atom N455 + GMA3150
+		graphics chipset. [tsutsui 20120608]
 	postfix(1): Import version 2.8.11 [tron 20120609]
+	newfs(8), sysinst(8): Use 32KB/4KB for default block/fragment size
+		on >= 128 GB partitions for modern AFT disks.
+		[tsutsui 20120630]
+	amd64, i386: Fix PR/46583, BIOS bootloader problems with partitions
+		that start above 1TB. [tsutsui 20120703]
+	luna68k: Switch luna68k wscons framebuffer driver to using
+		rasops(9) APIs instead of deprecated rcons(4).
+		This allows "options FONT_foo" in kernel config files.
+		[tsutsui 20120720]
+	luna68k: Fix hangup after reboot(2) problem.  [tsutsui 20120723]
+	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
+	luna68k: Handle bootarg strings passed from firmware prompt properly
+		on LUNA-II. [tsutsui 20120728]
 	postfix(1): Import version 2.8.12 [tron 20120810]
