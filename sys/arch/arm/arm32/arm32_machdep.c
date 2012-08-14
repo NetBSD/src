@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.79 2012/07/29 00:07:10 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.80 2012/08/14 20:42:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.79 2012/07/29 00:07:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.80 2012/08/14 20:42:33 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -251,11 +251,11 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = lwp_getpcb(&lwp0);
-	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_sp =
+	struct pcb * pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_flags = 0;
+	pcb->pcb_un.un_32.pcb32_sp =
 	    uvm_lwp_getuarea(&lwp0) + USPACE_SVC_STACK_TOP;
-	curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
+	pcb->pcb_tf = (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
 }
 
 /*
