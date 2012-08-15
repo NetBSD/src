@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.81 2012/08/15 17:02:41 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.82 2012/08/15 17:43:59 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.81 2012/08/15 17:02:41 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.82 2012/08/15 17:43:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1897,6 +1897,8 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				mach64_init_engine(sc);
 				mach64_init_lut(sc);
 				mach64_modeswitch(sc, sc->sc_my_mode);
+				mach64_clearscreen(sc);
+				glyphcache_wipe(&sc->sc_gc);
 				vcons_redraw_screen(ms);
 			}
 		}
