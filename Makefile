@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.297 2012/08/14 13:12:15 apb Exp $
+#	$NetBSD: Makefile,v 1.298 2012/08/15 12:50:12 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -191,6 +191,7 @@ _POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
 _POSTINSTALL_ENV= \
 	AWK=${TOOL_AWK:Q}		\
 	DB=${TOOL_DB:Q}			\
+	HOST_SH=${HOST_SH:Q}		\
 	MAKE=${MAKE:Q}			\
 	PWD_MKDB=${TOOL_PWD_MKDB:Q}	\
 	STAT=${TOOL_STAT:Q}
