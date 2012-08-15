@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.79 2012/08/07 19:38:28 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.79 2012/08/07 19:38:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1164,7 +1164,24 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Oxford Semiconductor OX16PCI958 UARTs */
+	/* EXSYS EX-41098-2 UARTs */
+	{   "EXSYS EX-41098-2 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_OX16PCI958,
+		PCI_VENDOR_OXFORDSEMI, 0x0671 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ},
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI958 UARTs (wildcard)*/
 	{   "Oxford Semiconductor OX16PCI958 UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_OX16PCI958,
 		0, 0 },
