@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.185 2012/08/15 00:36:50 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.186 2012/08/15 01:26:45 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8219,4 +8219,21 @@ usr.sbin/edquota/edquota.c			1.48-1.52
 
 	Make editor-based edquota work again.
 	[dholland, ticket #498]
+
+share/doc/smm/04.quotas/quotas.ms		1.5-1.7
+
+	Update the quota documentation.
+	[dholland, ticket #499]
+
+distrib/emips/ramdisk/Makefile			1.2
+distrib/evbmips/instkernel/ramdisk/Makefile	1.12 via patch
+distrib/evbppc/ramdisk/Makefile			1.16 via patch
+distrib/i386/ramdisks/ramdisk-rescuetiny/Makefile 1.2
+distrib/i386/ramdisks/ramdisk-tiny/Makefile	1.2
+distrib/ibmnws/netboot/ramdisk/Makefile		1.11 via patch
+distrib/pmax/ramdisk/Makefile			1.46
+distrib/sandpoint/ramdisk/Makefile		1.10 via patch
+
+	Change all install media to use ipty instead of pty0.
+	[martin, ticket #500]
 
