@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.16 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.17 2012/08/15 18:44:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.16 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.17 2012/08/15 18:44:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -164,6 +164,7 @@ npf_mk_rproc(prop_array_t rprocs, const char *rpname)
 	prop_object_iterator_t it;
 	prop_dictionary_t rpdict;
 	npf_rproc_t *rp;
+	uint64_t rpval;
 
 	it = prop_array_iterator(rprocs);
 	while ((rpdict = prop_object_iterator_next(it)) != NULL) {
@@ -178,10 +179,12 @@ npf_mk_rproc(prop_array_t rprocs, const char *rpname)
 		return NULL;
 	}
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	if (!prop_dictionary_get_uint64(rpdict, "rproc-ptr", (uint64_t *)&rp)) {
+	if (!prop_dictionary_get_uint64(rpdict, "rproc-ptr", &rpval)) {
 		rp = npf_rproc_create(rpdict);
-		prop_dictionary_set_uint64(rpdict, "rproc-ptr",
-		    (uint64_t)(uintptr_t)rp);
+		rpval = (uint64_t)(uintptr_t)rp;
+		prop_dictionary_set_uint64(rpdict, "rproc-ptr", rpval);
+	} else {
+		rp = (npf_rproc_t *)(uintptr_t)rpval;
 	}
 	return rp;
 }
