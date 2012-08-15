@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.144 2012/08/14 13:11:24 apb Exp $
+# $NetBSD: postinstall,v 1.145 2012/08/15 12:48:19 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,6 +55,7 @@
 : ${AWK:=awk}
 : ${DB:=db}
 : ${GREP:=grep}
+: ${HOST_SH:=sh}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
 : ${STAT:=stat}
@@ -1739,8 +1740,35 @@ do_ptyfsoldnodes()
 		return 0
 	fi
 
+	# Find the device major numbers for the pty master and slave
+	# devices, by parsing the output from "MAKEDEV -s pty0".
+	#
+	# Output from MAKEDEV looks like this:
+	# ./ttyp0 type=char device=netbsd,5,0 mode=666 gid=0 uid=0
+	# ./ptyp0 type=char device=netbsd,6,0 mode=666 gid=0 uid=0
+	#
+	# Output from awk, used in the eval statement, looks like this:
+	# maj_ptym=6; maj_ptys=5;
+	#
+	eval "$(
+	    ${HOST_SH} "${DEST_DIR}/dev/MAKEDEV" -s pty0 2>/dev/null \
+	    | ${AWK} '\
+	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
+	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
+		      maj_ptym = gensub(after_re, "", 1, maj_ptym); }
+	    /ttyp0/ { maj_ptys = gensub(before_re, "", 1, $0);
+		      maj_ptys = gensub(after_re, "", 1, maj_ptys); }
+	    END { print "maj_ptym=" maj_ptym "; maj_ptys=" maj_ptys ";"; }
+	    '
+	    )"
+	#msg "Major numbers are maj_ptym=${maj_ptym} maj_ptys=${maj_ptys}"
+	if [ -z "$maj_ptym" ] || [ -z "$maj_ptys" ]; then
+		msg "Cannot find device major numbers for pty master and slave"
+		return 1
+	fi
+
 	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
-	# are tty or pty device nodes.  ttyv* is typically not a
+	# have the expected device major numbers.  ttyv* is typically not a
 	# pty device, but we check it anyway.
 	#
 	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
@@ -1753,9 +1781,13 @@ do_ptyfsoldnodes()
 	#
 	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
 	for d1 in p q r s t u v w x y z P Q R S T; do
-		${STAT} -f "%SHr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
+		${STAT} -f "%Hr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
 	done \
-	| ${AWK} '/^[pt]ty/ {print $2}' >"${_ptyfs_tmp}"
+	| while read -r major node ; do
+		case "$major" in
+		${maj_ptym}|${maj_ptys}) echo "$node" ;;
+		esac
+	done >"${_ptyfs_tmp}"
 
 	_desc="legacy device node"
 	while read node; do
