@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.20 2010/10/20 13:40:02 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.21 2012/08/15 14:51:30 manu Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -2501,7 +2501,7 @@ eay_bn2v(var, bn)
 	vchar_t **var;
 	BIGNUM *bn;
 {
-	*var = vmalloc(bn->top * BN_BYTES);
+	*var = vmalloc(BN_num_bytes(bn));
 	if (*var == NULL)
 		return(-1);
 
