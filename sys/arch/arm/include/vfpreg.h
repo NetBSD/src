@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.2 2012/08/11 16:23:53 matt Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.3 2012/08/15 03:57:58 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -79,12 +79,14 @@
 #define VFP_FPSCR_STRIDE 0x00300000	/* Vector Stride */
 #define VFP_FPSCR_LEN	0x00070000	/* Vector Length */
 #define VFP_FPSCR_IDE	0x00008000	/* Inout Subnormal Exception Enable */
+#define VFP_FPSCR_E	0x00001f00	/* IXE|UFE|OFE|DZE|IOE */
 #define VFP_FPSCR_IXE	0x00001000	/* Inexact Exception Enable */
 #define VFP_FPSCR_UFE	0x00000800	/* Underflow Exception Enable */
 #define VFP_FPSCR_OFE	0x00000400	/* Overflow Exception Enable */
 #define VFP_FPSCR_DZE	0x00000200	/* Inexact Exception Enable */
 #define VFP_FPSCR_IOE	0x00000100	/* Invalid Operation Cumulative Flag */
 #define VFP_FPSCR_IDC	0x00000080	/* Input Subnormal Cumlative Flag */
+#define VFP_FPSCR_C	0x0000001f	/* IXC|UFC|OFC|DZC|IOC */
 #define VFP_FPSCR_IXC	0x00000010	/* Inexact Cumulative Flag */
 #define VFP_FPSCR_UFC	0x00000008	/* Underflow Cumulative Flag */
 #define VFP_FPSCR_OFC	0x00000004	/* Overflow Cumulative Flag */
