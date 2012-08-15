@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.188 2012/08/15 15:34:04 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.189 2012/08/15 17:37:13 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8260,4 +8260,10 @@ sys/arch/zaurus/conf/GENERIC			patch
 	Enable DIAGNOSTIC in DEBUG kernels to allow for option
 	being switched off in GENERIC.
 	[martin, ticket #502]
+
+usr.sbin/postinstall/postinstall		1.142-1.145
+Makefile					1.295-1.298
+
+	Make test for and removal of old pty device nodes more portable.
+	[martin, ticket #503]
 
