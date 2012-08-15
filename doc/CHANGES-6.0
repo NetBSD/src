@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.186 2012/08/15 01:26:45 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.187 2012/08/15 15:23:15 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8236,4 +8236,10 @@ distrib/sandpoint/ramdisk/Makefile		1.10 via patch
 
 	Change all install media to use ipty instead of pty0.
 	[martin, ticket #500]
+
+sys/arch/amd64/include/vmparam.h		1.31
+sys/arch/i386/include/vmparam.h			1.75
+
+	Avoid early panic on modern IBM hardware.
+	[sborrill, ticket #501]
 
