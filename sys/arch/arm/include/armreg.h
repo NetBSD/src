@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.58 2012/08/14 21:12:59 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.59 2012/08/15 17:20:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -302,6 +302,7 @@
 #define CPU_CONTROL_SYST_ENABLE 0x00000100 /* S: System protection bit */
 #define CPU_CONTROL_ROM_ENABLE	0x00000200 /* R: ROM protection bit */
 #define CPU_CONTROL_CPCLK	0x00000400 /* F: Implementation defined */
+#define CPU_CONTROL_SWP_ENABLE	0x00000400 /* SW: SWP{B} perform normally. */
 #define CPU_CONTROL_BPRD_ENABLE 0x00000800 /* Z: Branch prediction enable */
 #define CPU_CONTROL_IC_ENABLE   0x00001000 /* I: IC enable */
 #define CPU_CONTROL_VECRELOC	0x00002000 /* V: Vector relocation */
