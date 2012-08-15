@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.184 2012/08/14 07:59:47 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.185 2012/08/15 00:36:50 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8214,4 +8214,9 @@ sys/dev/usb/if_urtwn.c					1.5
 	Add firmware for the RealTek RTL8192CU family of wireless chipsets,
 	and adapt the urtwn(4) driver to use the new files.
 	[abs, ticket #497]
+
+usr.sbin/edquota/edquota.c			1.48-1.52
+
+	Make editor-based edquota work again.
+	[dholland, ticket #498]
 
