@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.1 2012/08/14 19:09:15 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.2 2012/08/15 21:36:00 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.1 2012/08/14 19:09:15 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.2 2012/08/15 21:36:00 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -185,21 +185,14 @@ pingtest(const char *dst, unsigned int wirelen, const char tail[7])
 	return rv;
 }
 
-ATF_TC(bpfiltermchain);
-ATF_TC_HEAD(bpfiltermchain, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "Checks that bpf program "
-	    "can read bytes from mbuf chain.");
-}
-
-ATF_TC_BODY(bpfiltermchain, tc)
+static void
+magic_ping_test(unsigned int wirelen)
 {
 	struct bpf_program prog;
 	struct bpf_stat bstat;
 	struct ifreq ifr;
 	struct timeval tv;
-	unsigned int bufsize, wirelen;
+	unsigned int bufsize;
 	bool pinged;
 	ssize_t n;
 	char *buf;
@@ -238,17 +231,17 @@ ATF_TC_BODY(bpfiltermchain, tc)
 	RL(rump_sys_ioctl(bpfd, BIOCSETF, &prog));
 	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
 
-	wirelen = MINCLSIZE + 1;
 	pinged = pingtest("10.1.1.10", wirelen, magic_echo_reply_tail);
 	ATF_CHECK(pinged);
 
 	buf = malloc(bufsize);
 	hdr = (struct bpf_hdr *)buf;
 	ATF_REQUIRE(buf != NULL);
+	ATF_REQUIRE(bufsize > sizeof(struct bpf_hdr));
 
 	n = rump_sys_read(bpfd, buf, bufsize);
 
-	ATF_CHECK(n > (int)sizeof(struct bpf_hdr *));
+	ATF_CHECK(n > (int)sizeof(struct bpf_hdr));
 	ATF_CHECK(hdr->bh_caplen == MIN(SNAPLEN, wirelen));
 
 	RL(rump_sys_ioctl(bpfd, BIOCGSTATS, &bstat));
@@ -259,10 +252,40 @@ ATF_TC_BODY(bpfiltermchain, tc)
 	kill(child, SIGKILL);
 }
 
+ATF_TC(bpfiltercontig);
+ATF_TC_HEAD(bpfiltercontig, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program "
+	    "can read bytes from contiguous buffer.");
+}
+
+ATF_TC_BODY(bpfiltercontig, tc)
+{
+
+	magic_ping_test(128);
+}
+
+
+ATF_TC(bpfiltermchain);
+ATF_TC_HEAD(bpfiltermchain, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that bpf program "
+	    "can read bytes from mbuf chain.");
+}
+
+ATF_TC_BODY(bpfiltermchain, tc)
+{
+
+	magic_ping_test(MINCLSIZE + 1);
+}
+
 
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, bpfiltercontig);
 	ATF_TP_ADD_TC(tp, bpfiltermchain);
 
 	return atf_no_error();
