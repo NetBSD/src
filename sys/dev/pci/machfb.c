@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.80 2012/08/03 01:23:32 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.81 2012/08/15 17:02:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.80 2012/08/03 01:23:32 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.81 2012/08/15 17:02:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,12 @@ __KERNEL_RCSID(0,
 #include "opt_machfb.h"
 
 #define MACH64_REG_SIZE		1024
-#define MACH64_REG_OFF		0x7ffc00
+#define MACH64_REG_OFF		0x7ff800
 
 #define	NBARS		3	/* number of Mach64 PCI BARs */
 
 struct vga_bar {
 	bus_addr_t vb_base;
-	pcireg_t vb_busaddr;
 	bus_size_t vb_size;
 	pcireg_t vb_type;
 	int vb_flags;
@@ -99,23 +98,22 @@ struct mach64_softc {
 
 #define sc_aperbase 	sc_bars[0].vb_base
 #define sc_apersize	sc_bars[0].vb_size
-#define sc_aperphys 	sc_bars[0].vb_busaddr
 
 #define sc_iobase	sc_bars[1].vb_base
 #define sc_iosize	sc_bars[1].vb_size
 
 #define sc_regbase	sc_bars[2].vb_base
 #define sc_regsize	sc_bars[2].vb_size
-#define sc_regphys	sc_bars[2].vb_busaddr
 
 	bus_space_tag_t sc_regt;
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_regh;
 	bus_space_handle_t sc_memh;
+#if 0
 	void *sc_aperture;		/* mapped aperture vaddr */
 	void *sc_registers;		/* mapped registers vaddr */
-	
+#endif
 	uint32_t sc_nbus, sc_ndev, sc_nfunc;
 	size_t memsize;
 	int memtype;
@@ -295,7 +293,6 @@ static void	mach64_feed_bytes(struct mach64_softc *, int, uint8_t *);
 static void	mach64_showpal(struct mach64_softc *);
 #endif
 
-static void	set_address(struct rasops_info *, void *);
 static void	machfb_blank(struct mach64_softc *, int);
 static int	machfb_drm_print(void *, const char *);
 
@@ -412,19 +409,19 @@ static struct fbdriver machfb_fbdriver = {
 static inline uint32_t
 regr(struct mach64_softc *sc, uint32_t index)
 {
-	return bus_space_read_4(sc->sc_regt, sc->sc_regh, index);
+	return bus_space_read_4(sc->sc_regt, sc->sc_regh, index + 0x400);
 }
 
 static inline uint8_t
 regrb(struct mach64_softc *sc, uint32_t index)
 {
-	return bus_space_read_1(sc->sc_regt, sc->sc_regh, index);
+	return bus_space_read_1(sc->sc_regt, sc->sc_regh, index + 0x400);
 }
 
 static inline void
 regw(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
-	bus_space_write_4(sc->sc_regt, sc->sc_regh, index, data);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
 	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4, 
 	    BUS_SPACE_BARRIER_WRITE);
 }
@@ -432,16 +429,16 @@ regw(struct mach64_softc *sc, uint32_t index, uint32_t data)
 static inline void
 regws(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
-	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, index, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4, 
+	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 4, 
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
 static inline void
 regwb(struct mach64_softc *sc, uint32_t index, uint8_t data)
 {
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, index, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 1, 
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, index + 0x400, data);
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 1, 
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -524,6 +521,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	pcireg_t screg;
 	uint32_t reg;
 	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE;
+	int use_mmio = FALSE;
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
@@ -557,8 +555,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		(void)pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, reg,
 		    sc->sc_bars[bar].vb_type, &sc->sc_bars[bar].vb_base,
 		    &sc->sc_bars[bar].vb_size, &sc->sc_bars[bar].vb_flags);
-		sc->sc_bars[bar].vb_busaddr = pci_conf_read(sc->sc_pc,
-		    sc->sc_pcitag, reg) & 0xfffffff0;
 	}
 	aprint_debug_dev(sc->sc_dev, "aperture size %08x\n",
 	    (uint32_t)sc->sc_apersize);
@@ -569,31 +565,44 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		    &sc->sc_rom.vb_size, &sc->sc_rom.vb_flags);
 	sc->sc_memt = pa->pa_memt;
 
-	if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
-		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
-		panic("%s: failed to map aperture", device_xname(sc->sc_dev));
-	}
-	sc->sc_aperture = (void *)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	/* use MMIO register aperture if available */
+	if ((sc->sc_regbase != 0) && (sc->sc_regbase != 0xffffffff)) {
+		if (pci_mapreg_map(pa, MACH64_BAR_MMIO,  PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_regt, &sc->sc_regh, &sc->sc_regbase, 
+		    &sc->sc_regsize) == 0) {
 
-	/* If the BAR was never mapped, fix it up in MMIO. */
-	if(sc->sc_regsize == 0) {
+			/*
+			 * the MMIO aperture maps both 1KB register blocks, but
+			 * all register offsets are relative to the 2nd one so
+			 * for now fix this up in MACH64_REG_OFF and the access
+			 * functions
+			 */
+			aprint_normal_dev(sc->sc_dev, "using MMIO aperture\n");
+			use_mmio = TRUE;
+		}
+	} 
+	if (!use_mmio) {
+		if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
+			BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
+			panic("%s: failed to map aperture",
+			    device_xname(sc->sc_dev));
+		}
+
+		/* If the BAR was never mapped, fix it up in MMIO. */
 		sc->sc_regsize = MACH64_REG_SIZE;
 		sc->sc_regbase = sc->sc_aperbase + MACH64_REG_OFF;
-		sc->sc_regphys = sc->sc_aperphys + MACH64_REG_OFF;
+		sc->sc_regt = sc->sc_memt;
+		bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
+		    sc->sc_regsize, &sc->sc_regh);
 	}
-
-	sc->sc_regt = sc->sc_memt;
-	bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
-	    sc->sc_regsize, &sc->sc_regh);
-	sc->sc_registers = (char *)sc->sc_aperture + 0x7ffc00;
 
 	mach64_init(sc);
 
 	aprint_normal_dev(sc->sc_dev,
 	    "%d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
 	    (u_int)(sc->sc_apersize / (1024 * 1024)),
-	    (u_int)sc->sc_aperphys, (u_int)(sc->sc_regsize / 1024),
-	    (u_int)sc->sc_regphys);
+	    (u_int)sc->sc_aperbase, (u_int)(sc->sc_regsize / 1024),
+	    (u_int)sc->sc_regbase);
 
 	printf("%s: %d KB ROM at 0x%08x\n", device_xname(sc->sc_dev),
 	    (int)sc->sc_rom.vb_size >> 10, (uint32_t)sc->sc_rom.vb_base);
@@ -639,9 +648,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	memtype_names = is_gx ? mach64_gx_memtype_names : mach64_memtype_names;
 
 	sc->memsize = mach64_get_memsize(sc);
-	if (sc->memsize == 8192)
-		/* The last page is used as register aperture. */
-		sc->memsize -= 4;
+
 	if(is_gx)
 		sc->memtype = (regr(sc, CONFIG_STAT0) >> 3) & 0x07;
 	else
@@ -817,7 +824,18 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
-
+	if (use_mmio) {
+		/*
+		 * Now that we took over, turn off the aperture registers if we 
+		 * don't use them. Can't do this earlier since on some hardware
+		 * we use firmware calls as early console output which may in
+		 * turn try to access these registers.
+		 */
+		reg = regr(sc, BUS_CNTL);
+		aprint_debug_dev(sc->sc_dev, "BUS_CNTL: %08x\n", reg);
+		reg |= BUS_APER_REG_DIS;
+		regw(sc, BUS_CNTL, reg);
+	}
 	config_found_ia(self, "drm", aux, machfb_drm_print);
 }
 
@@ -846,7 +864,6 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_flg = RI_CENTER;
 	if (ri->ri_depth == 8)
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
-	set_address(ri, sc->sc_aperture);
 
 #ifdef VCONS_DRAW_INTR
 	scr->scr_flags |= VCONS_DONT_READ;
@@ -882,31 +899,6 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 static void
 mach64_init(struct mach64_softc *sc)
 {
-	uint32_t *p32, saved_value;
-	uint8_t *p;
-	int need_swap;
-
-	/*
-	 * Test whether the aperture is byte swapped or not
-	 */
-	p32 = (uint32_t*)sc->sc_aperture;
-	saved_value = *p32;
-	p = (uint8_t*)(u_long)sc->sc_aperture;
-	*p32 = 0x12345678;
-	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
-		need_swap = 0;
-	else
-		need_swap = 1;
-	if (need_swap) {
-		sc->sc_aperture = (char *)sc->sc_aperture + 0x800000;
-#if 0
-		/* what the fsck is this for? */
-		sc->sc_aperbase += 0x800000;
-		sc->sc_apersize -= 0x800000;
-#endif
-	}
-	*p32 = saved_value;
-	
 	sc->sc_blanked = 0;
 }
 
@@ -1142,7 +1134,7 @@ mach64_init_engine(struct mach64_softc *sc)
 
 	regw(sc, SC_LEFT, 0);
 	regw(sc, SC_TOP, 0);
-	regw(sc, SC_BOTTOM, sc->sc_my_mode->vdisplay - 1);
+	regw(sc, SC_BOTTOM, 0x3fff);
 	regw(sc, SC_RIGHT, pitch_value - 1);
 
 	regw(sc, DP_BKGD_CLR, WS_DEFAULT_BG);
@@ -1951,35 +1943,35 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 
 	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);
-	if (reg != sc->sc_regphys) {
+	if (reg != sc->sc_regbase) {
 #ifdef DIAGNOSTIC
 		printf("%s: BAR 0x18 changed! (%x %x)\n", 
-		    device_xname(sc->sc_dev), (uint32_t)sc->sc_regphys, 
+		    device_xname(sc->sc_dev), (uint32_t)sc->sc_regbase, 
 		    (uint32_t)reg);
 #endif
-		sc->sc_regphys = reg;
+		sc->sc_regbase = reg;
 	}
 
 	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x10) & 0xffffff00);
-	if (reg != sc->sc_aperphys) {
+	if (reg != sc->sc_aperbase) {
 #ifdef DIAGNOSTIC
 		printf("%s: BAR 0x10 changed! (%x %x)\n", 
-		    device_xname(sc->sc_dev), (uint32_t)sc->sc_aperphys, 
+		    device_xname(sc->sc_dev), (uint32_t)sc->sc_aperbase, 
 		    (uint32_t)reg);
 #endif
-		sc->sc_aperphys = reg;
+		sc->sc_aperbase = reg;
 	}
 
-	if ((offset >= sc->sc_aperphys) && 
-	    (offset < (sc->sc_aperphys + sc->sc_apersize))) {
+	if ((offset >= sc->sc_aperbase) && 
+	    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 
-	if ((offset >= sc->sc_regphys) && 
-	    (offset < (sc->sc_regphys + sc->sc_regsize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+	if ((offset >= sc->sc_regbase) && 
+	    (offset < (sc->sc_regbase + sc->sc_regsize))) {
+		pa = bus_space_mmap(sc->sc_regt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
@@ -1995,22 +1987,11 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	if ((offset >= PCI_MAGIC_IO_RANGE) &&
 	    (offset <= PCI_MAGIC_IO_RANGE + 0x10000)) {
 	    	return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
-	    	   0, prot, BUS_SPACE_MAP_LINEAR);
+	    	   0, prot, 0);
 	}
 #endif
 
 	return -1;
-}
-
-/* set ri->ri_bits according to fb, ri_xorigin and ri_yorigin */
-static void
-set_address(struct rasops_info *ri, void *fb)
-{
-#ifdef notdef
-	printf(" %d %d %d\n", ri->ri_xorigin, ri->ri_yorigin, ri->ri_stride);
-#endif
-	ri->ri_bits = (void *)((char *)fb + ri->ri_stride * ri->ri_yorigin + 
-	    ri->ri_xorigin);
 }
 
 #if 0
@@ -2074,7 +2055,6 @@ machfb_fbattach(struct mach64_softc *sc)
 	fb->fb_type.fb_width = sc->virt_x;
 	fb->fb_type.fb_height = sc->virt_y;
 	
-	fb->fb_pixels = sc->sc_aperture;
 	fb_attach(fb, sc->sc_console);
 }
 
