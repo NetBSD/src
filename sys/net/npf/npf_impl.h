@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.21 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.22 2012/08/15 19:47:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -121,13 +121,6 @@ typedef struct {
 	int		nst_state;
 	npf_tcpstate_t	nst_tcpst[2];
 } npf_state_t;
-
-#if defined(_NPF_TESTING)
-void		npf_state_sample(npf_state_t *, bool);
-#define	NPF_STATE_SAMPLE(n, r)	npf_state_sample(n, r)
-#else
-#define	NPF_STATE_SAMPLE(n, r)
-#endif
 
 /*
  * INTERFACES.
@@ -332,5 +325,6 @@ void		npf_rulenc_dump(const npf_rule_t *);
 void		npf_sessions_dump(void);
 void		npf_state_dump(const npf_state_t *);
 void		npf_nat_dump(const npf_nat_t *);
+void		npf_state_setsampler(void (*)(npf_state_t *, bool));
 
 #endif	/* _NPF_IMPL_H_ */
