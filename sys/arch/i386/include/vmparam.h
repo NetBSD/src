@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.72 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.72.14.1 2012/08/15 15:22:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,7 +127,7 @@
 #define	VM_PHYSSEG_MAX		1
 #define	VM_NFREELIST		1
 #else
-#define	VM_PHYSSEG_MAX		10	/* 1 "hole" + 9 free lists */
+#define	VM_PHYSSEG_MAX		16	/* 1 "hole" + 15 free lists */
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_FIRST16	1
 #endif /* XEN */
