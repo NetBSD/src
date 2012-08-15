@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.129.2.8 2012/08/13 20:22:20 riz Exp $
+# $NetBSD: postinstall,v 1.129.2.9 2012/08/15 17:36:46 sborrill Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,11 +54,11 @@
 # environment to override the locations of some tools.
 : ${AWK:=awk}
 : ${DB:=db}
-: ${EGREP:=egrep}
-: ${FGREP:=fgrep}
 : ${GREP:=grep}
+: ${HOST_SH:=sh}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
+: ${STAT:=stat}
 
 #
 #	helper functions
@@ -411,31 +411,6 @@ find_file_in_dirlist()
 	return 1
 }
 
-# stat op format target value
-#	Call stat(1) on the given target according to the given format,
-#	if stat(1) is available (it is presumed to live in /usr/bin).
-#	If it is not available, this routine will always succeed, otherwise
-#	it returns 0 or 1, depending on whether or not the output from
-#	stat(1) matches the expected value.
-#
-stat()
-{
-	_stop="$1"
-	_stfmt="$2"
-	_sttgt="$3"
-	_stval="$4"
-
-	if [ ! -x /usr/bin/stat ]; then
-		msg \
-    "(/usr/bin/stat not available; skipping ${_stop} on ${_sttgt})"
-		return 0
-	fi
-
-	_stres="$(/usr/bin/stat -q -f "${_stfmt}" "${_sttgt}")"
-	[ "${_stres}" = "${_stval}" ]
-	return $?
-}
-
 # file_exists_exact path
 #	Returns true if a file exists in the ${DEST_DIR} whose name
 #	is exactly ${path}, interpreted in a case-sensitive way
@@ -454,7 +429,7 @@ file_exists_exact()
 		_dirname="$(dirname "${_path}" 2>/dev/null)"
 		_basename="$(basename "${_path}" 2>/dev/null)"
 		ls -fa "${DEST_DIR}${_dirname}" 2> /dev/null \
-			| ${FGREP} -x "${_basename}" >/dev/null \
+			| ${GREP} -F -x "${_basename}" >/dev/null \
 			|| return 1
 		_path="${_dirname}"
 	done
@@ -1515,7 +1490,7 @@ ${pcpath} was a directory, should be a file.
 	# then it will not be deleted.
 	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
 	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
-	    | ${EGREP} "^\\.?${pcpath}/" ;
+	    | ${GREP} -E "^\\.?${pcpath}/" ;
 	    echo "${pcpath}" ) \
 	| obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
@@ -1751,43 +1726,80 @@ additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
 do_ptyfsoldnodes()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes  fix|check"
+	_ptyfs_op="$1"
 
-	# check if ptyfs is in use
+	# Check whether ptyfs is in use
 	failed=0;
-	if ${EGREP} "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
-		maj_t=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
-			'/mkdev ttyp0 c [0-9]* 0 666/{print $4}' )
-		maj_p=$( ${AWK} < "${DEST_DIR}/dev/MAKEDEV" \
-			'/mkdev ptyp0 c [0-9]* 0 666/{print $4}' )
+	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+		msg "ptyfs is not in use"
+		return 0
+	fi
 
-		pcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
-			${AWK} '{print $7 $12}' | \
-			${AWK} -F, "/^${maj_p},/{ print \$2}" | wc -l )
-		tcnt=$( find "${DEST_DIR}/dev" -xdev -type c -ls | \
-			${AWK} '{print $7 $12}' | \
-			${AWK} -F, "/^${maj_t},/{ print \$2}" | wc -l )
+	# Find the device major numbers for the pty master and slave
+	# devices, by parsing the output from "MAKEDEV -s pty0".
+	#
+	# Output from MAKEDEV looks like this:
+	# ./ttyp0 type=char device=netbsd,5,0 mode=666 gid=0 uid=0
+	# ./ptyp0 type=char device=netbsd,6,0 mode=666 gid=0 uid=0
+	#
+	# Output from awk, used in the eval statement, looks like this:
+	# maj_ptym=6; maj_ptys=5;
+	#
+	eval "$(
+	    ${HOST_SH} "${DEST_DIR}/dev/MAKEDEV" -s pty0 2>/dev/null \
+	    | ${AWK} '\
+	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
+	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
+		      maj_ptym = gensub(after_re, "", 1, maj_ptym); }
+	    /ttyp0/ { maj_ptys = gensub(before_re, "", 1, $0);
+		      maj_ptys = gensub(after_re, "", 1, maj_ptys); }
+	    END { print "maj_ptym=" maj_ptym "; maj_ptys=" maj_ptys ";"; }
+	    '
+	    )"
+	#msg "Major numbers are maj_ptym=${maj_ptym} maj_ptys=${maj_ptys}"
+	if [ -z "$maj_ptym" ] || [ -z "$maj_ptys" ]; then
+		msg "Cannot find device major numbers for pty master and slave"
+		return 1
+	fi
 
-		if [ ${pcnt} -gt 0 -o ${tcnt} -gt 0 ]; then
-			if [ "$1" = "fix" ]; then
-				tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
-				find "${DEST_DIR}/dev" -xdev -type c -ls | \
-					${AWK} '{print $7 $12}' | \
-					${AWK} -F, "/^${maj_p},/{ print \$2}" \
-					> "${tmp}"
-				find "${DEST_DIR}/dev" -xdev -type c -ls | \
-					${AWK} '{print $7 $12}' | \
-					${AWK} -F, "/^${maj_t},/{ print \$2}" \
-					>> "${tmp}"
-				while read node; do
-					rm "${node}"
-					msg "Removed ${node}"
-				done < "${tmp}"
-				rm "${tmp}"
+	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
+	# have the expected device major numbers.  ttyv* is typically not a
+	# pty device, but we check it anyway.
+	#
+	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
+	# otherwise we could have used a single glob pattern.
+	#
+	# If there are no files that match a particular pattern,
+	# then stat prints something like:
+	#    stat: /dev/[pt]tyx?: lstat: No such file or directory
+	# and we ignore it.  XXX: We also ignore other error messages.
+	#
+	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
+	for d1 in p q r s t u v w x y z P Q R S T; do
+		${STAT} -f "%Hr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
+	done \
+	| while read -r major node ; do
+		case "$major" in
+		${maj_ptym}|${maj_ptys}) echo "$node" ;;
+		esac
+	done >"${_ptyfs_tmp}"
+
+	_desc="legacy device node"
+	while read node; do
+		if [ "${_ptyfs_op}" = "check" ]; then
+			msg "Remove ${_desc} ${node}"
+			failed=1
+		else # "fix"
+			if rm "${node}"; then
+				msg "Removed ${_desc} ${node}"
 			else
+				warn "Failed to remove ${_desc} ${node}"
 				failed=1
 			fi
 		fi
-	fi
+	done < "${_ptyfs_tmp}"
+	rm "${_ptyfs_tmp}"
+
 	return ${failed}
 }
 
