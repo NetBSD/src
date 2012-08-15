@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.11 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.12 2012/08/15 18:44:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.11 2012/08/12 03:35:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12 2012/08/15 18:44:56 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -456,7 +456,7 @@ _npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, u_int minttl,
     u_int maxmss)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl;
+	uint32_t fl = 0;
 
 	prop_dictionary_set_bool(rpdict, "randomize-id", rnd);
 	prop_dictionary_set_bool(rpdict, "no-df", no_df);
@@ -472,7 +472,7 @@ int
 _npf_rproc_setlog(nl_rproc_t *rp, u_int if_idx)
 {
 	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl;
+	uint32_t fl = 0;
 
 	prop_dictionary_set_uint32(rpdict, "log-interface", if_idx);
 
