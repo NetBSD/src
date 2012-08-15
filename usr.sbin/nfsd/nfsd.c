@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.60 2012/08/14 08:23:30 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.61 2012/08/15 00:16:06 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.60 2012/08/14 08:23:30 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.61 2012/08/15 00:16:06 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ tryconf(struct conf *cfg, int t, int reregister)
 	struct addrinfo hints;
 	int ecode;
 
-	memset(cfg, 0, sizeof(cfg));
+	memset(cfg, 0, sizeof(*cfg));
 	memset(&hints, 0, sizeof hints);
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = cfg_family[t];
