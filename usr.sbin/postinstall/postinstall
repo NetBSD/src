@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.145 2012/08/15 12:48:19 apb Exp $
+# $NetBSD: postinstall,v 1.146 2012/08/15 16:21:41 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1908,19 +1908,6 @@ main()
 				if [ -f "${OPTARG}/etc/Makefile" ]; then
 					SOURCEMODE=true
 				fi
-			elif [ -f "${OPTARG%%:*}" -a -f "${OPTARG##*:}" \
-			       -a ! -f "${OPTARG}" ]
-			then
-				# Backward compatibility: allow arg to refer
-				# to a colon-separated list of tgz files.
-				# Remove this after NetBSD-5.0 is released.
-				cat >&2 <<EOF
-*** WARNING: The "-s tgzfile1:tgzfile2" option is deprecated.  Please use
-             "-s tgzfile1 -s tgzfile2" in future.
-EOF
-				TGZMODE=true
-				TGZLIST="${TGZLIST}${TGZLIST:+ }$( \
-					IFS=: eval shell_quote \${OPTARG} )"
 			else
 				err 2 "Invalid argument for -s option"
 			fi
