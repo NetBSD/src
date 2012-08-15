@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.170 2012/08/02 00:40:51 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.170 2012/08/02 00:40:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1379,9 +1379,14 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 
 		bf = bpf_jit_enable ? d->bd_bfilter : NULL;
 		if (bf) {
+			/*
+			 * XXX THIS is totally broken when pkt
+			 * points to mbuf. FreeBSD does a runtime
+			 * check, we don't.
+			 */
 			slen = (*(bf->func))(pkt, pktlen, pktlen);
 		} else {
-			slen = bpf_filter(d->bd_filter, pkt, pktlen, pktlen);
+			slen = bpf_filter(d->bd_filter, pkt, pktlen, buflen);
 		}
 		if (!slen) {
 			continue;
@@ -1404,7 +1409,7 @@ static void
 _bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
 {
 
-	bpf_deliver(bp, memcpy, pkt, pktlen, 0, true);
+	bpf_deliver(bp, memcpy, pkt, pktlen, pktlen, true);
 }
 
 /*
@@ -1702,11 +1707,11 @@ bpf_freed(struct bpf_d *d)
 	 * been detached from its interface and it yet hasn't been marked
 	 * free.
 	 */
-	if (d->bd_sbuf) {
+	if (d->bd_sbuf != NULL) {
 		free(d->bd_sbuf, M_DEVBUF);
-		if (d->bd_hbuf)
+		if (d->bd_hbuf != NULL)
 			free(d->bd_hbuf, M_DEVBUF);
-		if (d->bd_fbuf)
+		if (d->bd_fbuf != NULL)
 			free(d->bd_fbuf, M_DEVBUF);
 	}
 	if (d->bd_filter)
