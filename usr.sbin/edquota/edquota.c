@@ -1,4 +1,4 @@
-/*      $NetBSD: edquota.c,v 1.46 2012/01/30 19:19:20 dholland Exp $ */
+/*      $NetBSD: edquota.c,v 1.46.2.1 2012/08/15 00:35:04 riz Exp $ */
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.46 2012/01/30 19:19:20 dholland Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.46.2.1 2012/08/15 00:35:04 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,18 +88,23 @@ static const char *quotagroup = QUOTAGROUP;
 
 #define MAX_TMPSTR	(100+MAXPATHLEN)
 
-/* flags for quotause */
-#define	FOUND	0x01
-#define	XGRACE	0x02	/* extended grace periods (per-id) */
-#define	DEFAULT	0x04
+enum sources {
+	SRC_EDITED,	/* values came from user */
+	SRC_QUOTA,	/* values came from a specific quota entry */
+	SRC_DEFAULT,	/* values were copied from the default quota entry */
+	SRC_CLEAR,	/* values arose by zeroing out a quota entry */
+};
 
 struct quotause {
 	struct	quotause *next;
-	long	flags;
+	unsigned found:1,	/* found after running editor */
+		xgrace:1,	/* grace periods are per-id */
+		isdefault:1;
+
 	struct	quotaval qv[EDQUOTA_NUMOBJTYPES];
+	enum sources source[EDQUOTA_NUMOBJTYPES];
 	char	fsname[MAXPATHLEN + 1];
 	char	implementation[32];
-	char	*qfname;
 };
 
 struct quotalist {
@@ -151,6 +156,46 @@ getidbyname(const char *name, int idtype)
 	return -1;
 }
 
+/*
+ * check if a source is "real" (reflects actual data) or not
+ */
+static bool
+source_is_real(enum sources source)
+{
+	switch (source) {
+	    case SRC_EDITED:
+	    case SRC_QUOTA:
+		return true;
+	    case SRC_DEFAULT:
+	    case SRC_CLEAR:
+		return false;
+	}
+	assert(!"encountered invalid source");
+	return false;
+}
+
+/*
+ * some simple string tools
+ */
+
+static /*const*/ char *
+skipws(/*const*/ char *s)
+{
+	while (*s == ' ' || *s == '\t') {
+		s++;
+	}
+	return s;
+}
+
+static /*const*/ char *
+skipword(/*const*/ char *s)
+{
+	while (*s != '\0' && *s != '\n' && *s != ' ' && *s != '\t') {
+		s++;
+	}
+	return s;
+}
+
 ////////////////////////////////////////////////////////////
 // quotause operations
 
@@ -161,6 +206,7 @@ static struct quotause *
 quotause_create(void)
 {
 	struct quotause *qup;
+	unsigned i;
 
 	qup = malloc(sizeof(*qup));
 	if (qup == NULL) {
@@ -168,10 +214,14 @@ quotause_create(void)
 	}
 
 	qup->next = NULL;
-	qup->flags = 0;
-	memset(qup->qv, 0, sizeof(qup->qv));
+	qup->found = 0;
+	qup->xgrace = 0;
+	qup->isdefault = 0;
+	for (i=0; i<EDQUOTA_NUMOBJTYPES; i++) {
+		quotaval_clear(&qup->qv[i]);
+		qup->source[i] = SRC_CLEAR;
+	}
 	qup->fsname[0] = '\0';
-	qup->qfname = NULL;
 
 	return qup;
 }
@@ -182,7 +232,6 @@ quotause_create(void)
 static void
 quotause_destroy(struct quotause *qup)
 {
-	free(qup->qfname);
 	free(qup);
 }
 
@@ -345,7 +394,7 @@ getprivs1(long id, int idtype, const char *filesys)
 #endif
 
 ////////////////////////////////////////////////////////////
-// ffs quota v2
+// generic quota interface
 
 static int
 dogetprivs2(struct quotahandle *qh, int idtype, id_t id, int defaultq,
@@ -356,13 +405,30 @@ dogetprivs2(struct quotahandle *qh, int idtype, id_t id, int defaultq,
 	qk.qk_idtype = idtype;
 	qk.qk_id = defaultq ? QUOTA_DEFAULTID : id;
 	qk.qk_objtype = objtype;
-	if (quota_get(qh, &qk, &qup->qv[objtype])) {
-		/* no entry, get default entry */
-		qk.qk_id = QUOTA_DEFAULTID;
-		if (quota_get(qh, &qk, &qup->qv[objtype])) {
-			return -1;
-		}
+	if (quota_get(qh, &qk, &qup->qv[objtype]) == 0) {
+		/* succeeded */
+		qup->source[objtype] = SRC_QUOTA;
+		return 0;
 	}
+	if (errno != ENOENT) {
+		/* serious failure */
+		return -1;
+	}
+
+	/* no entry, get default entry */
+	qk.qk_id = QUOTA_DEFAULTID;
+	if (quota_get(qh, &qk, &qup->qv[objtype]) == 0) {
+		/* succeeded */
+		qup->source[objtype] = SRC_DEFAULT;
+		return 0;
+	}
+	if (errno != ENOENT) {
+		return -1;
+	}
+
+	/* use a zeroed-out entry */
+	quotaval_clear(&qup->qv[objtype]);
+	qup->source[objtype] = SRC_CLEAR;
 	return 0;
 }
 
@@ -375,15 +441,18 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 	const char *impl;
 	unsigned restrictions;
 	const char *idtypename;
+	int serrno;
 
 	qup = quotause_create();
 	strcpy(qup->fsname, filesys);
 	if (defaultq)
-		qup->flags |= DEFAULT;
+		qup->isdefault = 1;
 
 	qh = quota_open(filesys);
 	if (qh == NULL) {
+		serrno = errno;
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
@@ -395,7 +464,7 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 
 	restrictions = quota_getrestrictions(qh);
 	if ((restrictions & QUOTA_RESTRICT_UNIFORMGRACE) == 0) {
-		qup->flags |= XGRACE;		
+		qup->xgrace = 1;
 	}
 
 	if (*idtypename_p == NULL) {
@@ -407,14 +476,18 @@ getprivs2(long id, int idtype, const char *filesys, int defaultq,
 	}
 
 	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_BLOCKS, qup)) {
+		serrno = errno;
 		quota_close(qh);
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
 	if (dogetprivs2(qh, idtype, id, defaultq, QUOTA_OBJTYPE_FILES, qup)) {
+		serrno = errno;
 		quota_close(qh);
 		quotause_destroy(qup);
+		errno = serrno;
 		return NULL;
 	}
 
@@ -430,7 +503,7 @@ putprivs2(uint32_t id, int idtype, struct quotause *qup)
 	struct quotakey qk;
 	char idname[32];
 
-	if (qup->flags & DEFAULT) {
+	if (qup->isdefault) {
 		snprintf(idname, sizeof(idname), "%s default",
 			 idtype == QUOTA_IDTYPE_USER ? "user" : "group");
 		id = QUOTA_DEFAULTID;
@@ -444,18 +517,24 @@ putprivs2(uint32_t id, int idtype, struct quotause *qup)
 		err(1, "%s: quota_open", qup->fsname);
 	}
 
-	qk.qk_idtype = idtype;
-	qk.qk_id = id;
-	qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-	if (quota_put(qh, &qk, &qup->qv[QO_BLK])) {
-		err(1, "%s: quota_put (%s blocks)", qup->fsname, idname);
+	if (source_is_real(qup->source[QUOTA_OBJTYPE_BLOCKS])) {
+		qk.qk_idtype = idtype;
+		qk.qk_id = id;
+		qk.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
+		if (quota_put(qh, &qk, &qup->qv[QO_BLK])) {
+			err(1, "%s: quota_put (%s blocks)", qup->fsname,
+			    idname);
+		}
 	}
 
-	qk.qk_idtype = idtype;
-	qk.qk_id = id;
-	qk.qk_objtype = QUOTA_OBJTYPE_FILES;
-	if (quota_put(qh, &qk, &qup->qv[QO_FL])) {
-		err(1, "%s: quota_put (%s files)", qup->fsname, idname);
+	if (source_is_real(qup->source[QUOTA_OBJTYPE_FILES])) {
+		qk.qk_idtype = idtype;
+		qk.qk_id = id;
+		qk.qk_objtype = QUOTA_OBJTYPE_FILES;
+		if (quota_put(qh, &qk, &qup->qv[QO_FL])) {
+			err(1, "%s: quota_put (%s files)", qup->fsname,
+			    idname);
+		}
 	}
 
 	quota_close(qh);
@@ -474,6 +553,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 	int nfst, i;
 	struct quotalist *qlist;
 	struct quotause *qup;
+	int seenany = 0;
 
 	qlist = quotalist_create();
 
@@ -484,6 +564,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 	for (i = 0; i < nfst; i++) {
 		if ((fst[i].f_flag & ST_QUOTA) == 0)
 			continue;
+		seenany = 1;
 		if (filesys &&
 		    strcmp(fst[i].f_mntonname, filesys) != 0 &&
 		    strcmp(fst[i].f_mntfromname, filesys) != 0)
@@ -491,22 +572,16 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		qup = getprivs2(id, idtype, fst[i].f_mntonname, defaultq,
 				&qlist->idtypename);
 		if (qup == NULL) {
-			/*
-			 * XXX: returning NULL is totally wrong. On
-			 * serious error, abort; on minor error, warn
-			 * and continue.
-			 *
-			 * Note: we cannot warn unconditionally here
-			 * because this case apparently includes "no
-			 * quota entry on this volume" and that causes
-			 * the atf tests to fail. Bletch.
-			 */
-			/*return NULL;*/
-			/*warnx("getprivs2 failed");*/
+			/* XXX the atf tests demand failing silently */
+			/*warn("Reading quotas failed for id %ld", id);*/
 			continue;
 		}
 
 		quotalist_append(qlist, qup);
+	}
+
+	if (!seenany) {
+		errx(1, "No mounted filesystems have quota support");
 	}
 
 #if 0
@@ -516,9 +591,7 @@ getprivs(long id, int defaultq, int idtype, const char *filesys)
 		/* if we get there, filesys is not mounted. try the old way */
 		qup = getprivs1(id, idtype, filesys);
 		if (qup == NULL) {
-			/* XXX. see above */
-			/*return NULL;*/
-			/*warnx("getprivs1 failed");*/
+			warnx("getprivs1 failed");
 			return qlist;
 		}
 		quotalist_append(qlist, qup);
@@ -536,12 +609,12 @@ putprivs(uint32_t id, int idtype, struct quotalist *qlist)
 	struct quotause *qup;
 
         for (qup = qlist->head; qup; qup = qup->next) {
-		if (qup->qfname == NULL)
-			putprivs2(id, idtype, qup);
 #if 0
-		else
+		if (qup->qfname != NULL)
 			putprivs1(id, idtype, qup);
+		else
 #endif
+			putprivs2(id, idtype, qup);
 	}
 }
 
@@ -700,6 +773,7 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 	struct quotause *qup;
 	FILE *fd;
 	char b0[32], b1[32], b2[32], b3[32];
+	const char *comm;
 
 	(void)ftruncate(outfd, 0);
 	(void)lseek(outfd, (off_t)0, SEEK_SET);
@@ -712,46 +786,39 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 	}
 	for (qup = qlist->head; qup; qup = qup->next) {
 		struct quotaval *q = qup->qv;
-		fprintf(fd, "%s (%s):\n",
-		     qup->fsname, qup->implementation);
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
-			fprintf(fd, "\tblocks in use: %s, "
-			    "limits (soft = %s, hard = %s",
-			    intprt(b1, 21, q[QO_BLK].qv_usage,
-			    HN_NOSPACE | HN_B, Hflag), 
-			    intprt(b2, 21, q[QO_BLK].qv_softlimit,
-			    HN_NOSPACE | HN_B, Hflag),
-			    intprt(b3, 21, q[QO_BLK].qv_hardlimit,
-				HN_NOSPACE | HN_B, Hflag));
-			if (qup->flags & XGRACE)
-				fprintf(fd, ", ");
-		} else
-			fprintf(fd, "\tblocks: (");
-			
-		if (qup->flags & (XGRACE|DEFAULT)) {
-		    fprintf(fd, "grace = %s",
-			timepprt(b0, 21, q[QO_BLK].qv_grace, Hflag));
-		}
-		fprintf(fd, ")\n");
-		if ((qup->flags & DEFAULT) == 0 || (qup->flags & XGRACE) != 0) {
-			fprintf(fd, "\tinodes in use: %s, "
-			    "limits (soft = %s, hard = %s",
-			    intprt(b1, 21, q[QO_FL].qv_usage,
-			    HN_NOSPACE, Hflag),
-			    intprt(b2, 21, q[QO_FL].qv_softlimit,
-			    HN_NOSPACE, Hflag),
-			    intprt(b3, 21, q[QO_FL].qv_hardlimit,
-			     HN_NOSPACE, Hflag));
-			if (qup->flags & XGRACE)
-				fprintf(fd, ", ");
-		} else
-			fprintf(fd, "\tinodes: (");
 
-		if (qup->flags & (XGRACE|DEFAULT)) {
-		    fprintf(fd, "grace = %s",
-			timepprt(b0, 21, q[QO_FL].qv_grace, Hflag));
+		fprintf(fd, "%s (%s):\n", qup->fsname, qup->implementation);
+
+		comm = source_is_real(qup->source[QO_BLK]) ? "" : "#";
+		fprintf(fd, "\tblocks:%s\n",
+			Hflag ? "" : " (sizes in 1K-blocks)");
+		fprintf(fd, "\t\t%susage: %s\n", comm,
+			intprt(b1, 21, q[QO_BLK].qv_usage,
+			       HN_NOSPACE | HN_B, Hflag));
+		fprintf(fd, "\t\t%slimits: soft %s, hard %s\n", comm,
+			intprt(b2, 21, q[QO_BLK].qv_softlimit,
+			       HN_NOSPACE | HN_B, Hflag),
+			intprt(b3, 21, q[QO_BLK].qv_hardlimit,
+			       HN_NOSPACE | HN_B, Hflag));
+		if (qup->xgrace || qup->isdefault) {
+			fprintf(fd, "\t\t%sgrace: %s\n", comm,
+				timepprt(b0, 21, q[QO_BLK].qv_grace, Hflag));
 		}
-		fprintf(fd, ")\n");
+
+		comm = source_is_real(qup->source[QO_FL]) ? "" : "#";
+		fprintf(fd, "\tinodes:\n");
+		fprintf(fd, "\t\t%susage: %s\n", comm,
+			intprt(b1, 21, q[QO_FL].qv_usage,
+			       HN_NOSPACE, Hflag));
+		fprintf(fd, "\t\t%slimits: soft %s, hard %s\n", comm,
+			intprt(b2, 21, q[QO_FL].qv_softlimit,
+			       HN_NOSPACE, Hflag),
+			intprt(b3, 21, q[QO_FL].qv_hardlimit,
+			       HN_NOSPACE, Hflag));
+		if (qup->xgrace || qup->isdefault) {
+			fprintf(fd, "\t\t%sgrace: %s\n", comm,
+				timepprt(b0, 21, q[QO_FL].qv_grace, Hflag));
+		}
 	}
 	fclose(fd);
 	return 1;
@@ -763,239 +830,278 @@ writeprivs(struct quotalist *qlist, int outfd, const char *name,
 static int
 readprivs(struct quotalist *qlist, int infd, int dflag)
 {
-	struct quotause *qup;
-	FILE *fd;
-	int cnt;
-	char fsp[BUFSIZ];
-	static char line0[BUFSIZ], line1[BUFSIZ], line2[BUFSIZ];
-	static char scurb[BUFSIZ], scuri[BUFSIZ], ssoft[BUFSIZ], shard[BUFSIZ];
-	static char stime[BUFSIZ];
-	uint64_t softb, hardb, softi, hardi;
-	time_t graceb = -1, gracei = -1;
-	int version;
+	FILE *fd;			/* file */
+	unsigned lineno;		/* line number in file */
+	char line[BUFSIZ];		/* input buffer */
+	size_t len;			/* length of input buffer */
+	bool seenheader;		/* true if past the file header */
+	struct quotause *qup;		/* current filesystem */
+	bool haveobjtype;		/* true if objtype is valid */
+	unsigned objtype;		/* current object type */
+	int objtypeflags;		/* humanize flags */
+	/* XXX make following const later (requires non-local cleanup) */
+	/*const*/ char *text, *text2, *t; /* scratch values */
+	char b0[32], b1[32];
+	uint64_t soft, hard, current;
+	time_t grace;
+	struct quotaval *qv;
+
+	lineno = 0;
+	seenheader = false;
+	qup = NULL;
+	haveobjtype = false;
+	objtype = QUOTA_OBJTYPE_BLOCKS; /* for gcc 4.5 */
+	objtypeflags = HN_B;
 
 	(void)lseek(infd, (off_t)0, SEEK_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
 		warn("Can't re-read temp file");
-		return 0;
+		return -1;
 	}
-	/*
-	 * Discard title line, then read pairs of lines to process.
-	 */
-	(void) fgets(line1, sizeof (line1), fd);
-	while (fgets(line0, sizeof (line0), fd) != NULL &&
-	       fgets(line1, sizeof (line2), fd) != NULL &&
-	       fgets(line2, sizeof (line2), fd) != NULL) {
-		if (sscanf(line0, "%s (version %d):\n", fsp, &version) != 2) {
-			warnx("%s: bad format", line0);
-			goto out;
-		}
-#define last_char(str) ((str)[strlen(str) - 1])
-		if (last_char(line1) != '\n') {
-			warnx("%s:%s: bad format", fsp, line1);
-			goto out;
-		}
-		last_char(line1) = '\0';
-		if (last_char(line2) != '\n') {
-			warnx("%s:%s: bad format", fsp, line2);
-			goto out;
-		}
-		last_char(line2) = '\0';
-		if (dflag && version == 1) {
-			if (sscanf(line1,
-			    "\tblocks: (grace = %s\n", stime) != 1) {
-				warnx("%s:%s: bad format", fsp, line1);
-				goto out;
-			}
-			if (last_char(stime) != ')') {
-				warnx("%s:%s: bad format", fsp, line1);
-				goto out;
-			}
-			last_char(stime) = '\0';
-			if (timeprd(stime, &graceb) != 0) {
-				warnx("%s:%s: bad number", fsp, stime);
-				goto out;
-			}
-			if (sscanf(line2,
-			    "\tinodes: (grace = %s\n", stime) != 1) {
-				warnx("%s:%s: bad format", fsp, line2);
-				goto out;
-			}
-			if (last_char(stime) != ')') {
-				warnx("%s:%s: bad format", fsp, line2);
-				goto out;
-			}
-			last_char(stime) = '\0';
-			if (timeprd(stime, &gracei) != 0) {
-				warnx("%s:%s: bad number", fsp, stime);
-				goto out;
-			}
-		} else {
-			cnt = sscanf(line1,
-			    "\tblocks in use: %s limits (soft = %s hard = %s "
-			    "grace = %s", scurb, ssoft, shard, stime);
-			if (cnt == 3) {
-				if (version != 1 ||
-				    last_char(scurb) != ',' ||
-				    last_char(ssoft) != ',' ||
-				    last_char(shard) != ')') {
-					warnx("%s:%s: bad format %d",
-					    fsp, line1, cnt);
-					goto out;
-				}
-				stime[0] = '\0';
-			} else if (cnt == 4) {
-				if (version < 2 ||
-				    last_char(scurb) != ',' ||
-				    last_char(ssoft) != ',' ||
-				    last_char(shard) != ',' ||
-				    last_char(stime) != ')') {
-					warnx("%s:%s: bad format %d",
-					    fsp, line1, cnt);
-					goto out;
-				}
-			} else {
-				warnx("%s: %s: bad format cnt %d", fsp, line1,
-				    cnt);
-				goto out;
-			}
-			/* drop last char which is ',' or ')' */
-			last_char(scurb) = '\0';
-			last_char(ssoft) = '\0';
-			last_char(shard) = '\0';
-			last_char(stime) = '\0';
-			
-			if (intrd(ssoft, &softb, HN_B) != 0) {
-				warnx("%s:%s: bad number", fsp, ssoft);
-				goto out;
-			}
-			if (intrd(shard, &hardb, HN_B) != 0) {
-				warnx("%s:%s: bad number", fsp, shard);
-				goto out;
-			}
-			if (cnt == 4) {
-				if (timeprd(stime, &graceb) != 0) {
-					warnx("%s:%s: bad number", fsp, stime);
-					goto out;
-				}
-			}
 
-			cnt = sscanf(line2,
-			    "\tinodes in use: %s limits (soft = %s hard = %s "
-			    "grace = %s", scuri, ssoft, shard, stime);
-			if (cnt == 3) {
-				if (version != 1 ||
-				    last_char(scuri) != ',' ||
-				    last_char(ssoft) != ',' ||
-				    last_char(shard) != ')') {
-					warnx("%s:%s: bad format %d",
-					    fsp, line2, cnt);
-					goto out;
-				}
-				stime[0] = '\0';
-			} else if (cnt == 4) {
-				if (version < 2 ||
-				    last_char(scuri) != ',' ||
-				    last_char(ssoft) != ',' ||
-				    last_char(shard) != ',' ||
-				    last_char(stime) != ')') {
-					warnx("%s:%s: bad format %d",
-					    fsp, line2, cnt);
-					goto out;
-				}
-			} else {
-				warnx("%s: %s: bad format", fsp, line2);
-				goto out;
-			}
-			/* drop last char which is ',' or ')' */
-			last_char(scuri) = '\0';
-			last_char(ssoft) = '\0';
-			last_char(shard) = '\0';
-			last_char(stime) = '\0';
-			if (intrd(ssoft, &softi, 0) != 0) {
-				warnx("%s:%s: bad number", fsp, ssoft);
-				goto out;
-			}
-			if (intrd(shard, &hardi, 0) != 0) {
-				warnx("%s:%s: bad number", fsp, shard);
-				goto out;
-			}
-			if (cnt == 4) {
-				if (timeprd(stime, &gracei) != 0) {
-					warnx("%s:%s: bad number", fsp, stime);
-					goto out;
-				}
-			}
-		}
-		for (qup = qlist->head; qup; qup = qup->next) {
-			struct quotaval *q = qup->qv;
-			char b1[32], b2[32];
-			if (strcmp(fsp, qup->fsname))
-				continue;
-			if (version == 1 && dflag) {
-				q[QO_BLK].qv_grace = graceb;
-				q[QO_FL].qv_grace = gracei;
-				qup->flags |= FOUND;
+	/*
+	 * Read back the same format we wrote.
+	 */
+
+	while (fgets(line, sizeof(line), fd)) {
+		lineno++;
+		if (!seenheader) {
+			if ((!strncmp(line, "Default ", 8) && dflag) ||
+			    (!strncmp(line, "Quotas for ", 11) && !dflag)) {
+				/* ok. */
+				seenheader = 1;
 				continue;
 			}
-
-			if (strcmp(intprt(b1, 21, q[QO_BLK].qv_usage,
-			    HN_NOSPACE | HN_B, Hflag),
-			    scurb) != 0 ||
-			    strcmp(intprt(b2, 21, q[QO_FL].qv_usage,
-			    HN_NOSPACE, Hflag),
-			    scuri) != 0) {
-				warnx("%s: cannot change current allocation",
-				    fsp);
-				break;
-			}
-			/*
-			 * Cause time limit to be reset when the quota
-			 * is next used if previously had no soft limit
-			 * or were under it, but now have a soft limit
-			 * and are over it.
-			 */
-			if (q[QO_BLK].qv_usage &&
-			    q[QO_BLK].qv_usage >= softb &&
-			    (q[QO_BLK].qv_softlimit == 0 ||
-			     q[QO_BLK].qv_usage < q[QO_BLK].qv_softlimit))
-				q[QO_BLK].qv_expiretime = 0;
-			if (q[QO_FL].qv_usage &&
-			    q[QO_FL].qv_usage >= softi &&
-			    (q[QO_FL].qv_softlimit == 0 ||
-			     q[QO_FL].qv_usage < q[QO_FL].qv_softlimit))
-				q[QO_FL].qv_expiretime = 0;
-			q[QO_BLK].qv_softlimit = softb;
-			q[QO_BLK].qv_hardlimit = hardb;
-			if (version == 2)
-				q[QO_BLK].qv_grace = graceb;
-			q[QO_FL].qv_softlimit  = softi;
-			q[QO_FL].qv_hardlimit  = hardi;
-			if (version == 2)
-				q[QO_FL].qv_grace = gracei;
-			qup->flags |= FOUND;
+			warnx("Header line missing");
+			goto fail;
 		}
-	}
-out:
-	fclose(fd);
-	/*
-	 * Disable quotas for any filesystems that have not been found.
-	 */
-	for (qup = qlist->head; qup; qup = qup->next) {
-		struct quotaval *q = qup->qv;
-		if (qup->flags & FOUND) {
-			qup->flags &= ~FOUND;
+		len = strlen(line);
+		if (len == 0) {
+			/* ? */
 			continue;
 		}
-		q[QO_BLK].qv_softlimit = UQUAD_MAX;
-		q[QO_BLK].qv_hardlimit = UQUAD_MAX;
-		q[QO_BLK].qv_grace = 0;
-		q[QO_FL].qv_softlimit = UQUAD_MAX;
-		q[QO_FL].qv_hardlimit = UQUAD_MAX;
-		q[QO_FL].qv_grace = 0;
+		if (line[len - 1] != '\n') {
+			warnx("Line %u too long", lineno);
+			goto fail;
+		}
+		line[--len] = '\0';
+		if (line[len - 1] == '\r') {
+			line[--len] = '\0';
+		}
+		if (len == 0) {
+			/* blank line */
+			continue;
+		}
+
+		/*
+		 * If the line has:     it is:
+                 *      two tabs        values
+		 *      one tab         the next objtype
+		 *      no tabs         the next filesystem
+		 */
+		if (line[0] == '\t' && line[1] == '\t') {
+			if (qup == NULL) {
+				warnx("Line %u: values with no filesystem",
+				      lineno);
+				goto fail;
+			}
+			if (!haveobjtype) {
+				warnx("Line %u: values with no object type",
+				      lineno);
+				goto fail;
+			}
+			qv = &qup->qv[objtype];
+
+			text = line + 2;
+			if (*text == '#') {
+				/* commented out; ignore */
+				continue;
+			}
+			else if (!strncmp(text, "usage:", 6)) {
+
+				/* usage: %llu */
+				text += 6;
+				t = skipws(text);
+				if (intrd(t, &current, objtypeflags) != 0) {
+					warnx("Line %u: Bad number %s",
+					      lineno, t);
+					goto fail;
+				}
+
+				/*
+				 * Because the humanization can lead
+				 * to roundoff, check if the two
+				 * values produce the same humanized
+				 * string, rather than if they're the
+				 * same number. Sigh.
+				 */
+				intprt(b0, 21, current,
+				       HN_NOSPACE | objtypeflags, Hflag);
+				intprt(b1, 21, qv->qv_usage,
+				       HN_NOSPACE | objtypeflags, Hflag);
+				if (strcmp(b0, b1)) {
+					warnx("Line %u: cannot change usage",
+					      lineno);
+				}
+				continue;
+
+			} else if (!strncmp(text, "limits:", 7)) {
+
+				/* limits: soft %llu, hard %llu */
+				text += 7;
+				text2 = strchr(text, ',');
+				if (text2 == NULL) {
+					warnx("Line %u: expected comma",
+					      lineno);
+					goto fail;
+				}
+				*text2 = '\0';
+				text2++;
+
+				t = skipws(text);
+				t = skipword(t);
+				t = skipws(t);
+				if (intrd(t, &soft, objtypeflags) != 0) {
+					warnx("Line %u: Bad number %s",
+					      lineno, t);
+					goto fail;
+				}
+				t = skipws(text2);
+				t = skipword(t);
+				t = skipws(t);
+				if (intrd(t, &hard, objtypeflags) != 0) {
+					warnx("Line %u: Bad number %s",
+					      lineno, t);
+					goto fail;
+				}
+
+				/*
+				 * Cause time limit to be reset when the quota
+				 * is next used if previously had no soft limit
+				 * or were under it, but now have a soft limit
+				 * and are over it.
+				 */
+				if (qv->qv_usage && qv->qv_usage >= soft &&
+				    (qv->qv_softlimit == 0 ||
+				     qv->qv_usage < qv->qv_softlimit)) {
+					qv->qv_expiretime = 0;
+				}
+				if (soft != qv->qv_softlimit ||
+				    hard != qv->qv_hardlimit) {
+					qv->qv_softlimit = soft;
+					qv->qv_hardlimit = hard;
+					qup->source[objtype] = SRC_EDITED;
+				}
+				qup->found = 1;
+
+			} else if (!strncmp(text, "grace:", 6)) {
+
+				text += 6;
+				/* grace: %llu */
+				t = skipws(text);
+				if (timeprd(t, &grace) != 0) {
+					warnx("Line %u: Bad number %s",
+					      lineno, t);
+					goto fail;
+				}
+				if (qup->isdefault || qup->xgrace) {
+					if (grace != qv->qv_grace) {
+						qv->qv_grace = grace;
+						qup->source[objtype] =
+							SRC_EDITED;
+					}
+					qup->found = 1;
+				} else {
+					warnx("Line %u: Cannot set individual "
+					      "grace time on this filesystem",
+					      lineno);
+					goto fail;
+				}
+
+			} else {
+				warnx("Line %u: Unknown/unexpected value line",
+				      lineno);
+				goto fail;
+			}
+		} else if (line[0] == '\t') {
+			text = line + 1;
+			if (*text == '#') {
+				/* commented out; ignore */
+				continue;
+			}
+			else if (!strncmp(text, "blocks:", 7)) {
+				objtype = QUOTA_OBJTYPE_BLOCKS;
+				objtypeflags = HN_B;
+				haveobjtype = true;
+			} else if (!strncmp(text, "inodes:", 7)) {
+				objtype = QUOTA_OBJTYPE_FILES;
+				objtypeflags = 0;
+				haveobjtype = true;
+			} else {
+				warnx("Line %u: Unknown/unexpected object "
+				      "type (%s)", lineno, text);
+				goto fail;
+			}
+		} else {
+			t = strchr(line, ' ');
+			if (t == NULL) {
+				t = strchr(line, ':');
+				if (t == NULL) {
+					t = line + len;
+				}
+			}
+			*t = '\0';
+
+			if (*line == '#') {
+				/* commented out; ignore */
+				continue;
+			}
+
+			for (qup = qlist->head; qup; qup = qup->next) {
+				if (!strcmp(line, qup->fsname))
+					break;
+			}
+			if (qup == NULL) {
+				warnx("Line %u: Filesystem %s invalid or has "
+				      "no quota support", lineno, line);
+				goto fail;
+			}
+			haveobjtype = false;
+		}
 	}
-	return 1;
+
+	fclose(fd);
+
+	/*
+	 * Disable quotas for any filesystems that we didn't see,
+	 * because they must have been deleted in the editor.
+	 *
+	 * XXX this should be improved so it results in
+	 * quota_delete(), not just writing out a blank quotaval.
+	 */
+	for (qup = qlist->head; qup; qup = qup->next) {
+		if (qup->found) {
+			qup->found = 0;
+			continue;
+		}
+
+		if (source_is_real(qup->source[QUOTA_OBJTYPE_BLOCKS])) {
+			quotaval_clear(&qup->qv[QUOTA_OBJTYPE_BLOCKS]);
+			qup->source[QUOTA_OBJTYPE_BLOCKS] = SRC_EDITED;
+		}
+
+		if (source_is_real(qup->source[QUOTA_OBJTYPE_FILES])) {
+			quotaval_clear(&qup->qv[QUOTA_OBJTYPE_FILES]);
+			qup->source[QUOTA_OBJTYPE_FILES] = SRC_EDITED;
+		}
+	}
+	return 0;
+
+fail:
+	sleep(3);
+	fclose(fd);
+	return -1;
 }
 
 ////////////////////////////////////////////////////////////
@@ -1016,6 +1122,8 @@ replicate(const char *fs, int idtype, const char *protoname,
 	for (qup = protoprivs->head; qup; qup = qup->next) {
 		qup->qv[QO_BLK].qv_expiretime = 0;
 		qup->qv[QO_FL].qv_expiretime = 0;
+		qup->source[QO_BLK] = SRC_EDITED;
+		qup->source[QO_FL] = SRC_EDITED;
 	}
 	for (i=0; i<numnames; i++) {
 		id = getidbyname(names[i], idtype);
@@ -1109,6 +1217,8 @@ assign(const char *fs, int idtype,
 				q[QO_BLK].qv_grace = graceb;
 				q[QO_FL].qv_grace = gracei;
 			}
+			lqup->source[QO_BLK] = SRC_EDITED;
+			lqup->source[QO_FL] = SRC_EDITED;
 		}
 		putprivs(id, idtype, curprivs);
 		quotalist_destroy(curprivs);
@@ -1147,7 +1257,7 @@ editone(const char *fs, int idtype, const char *name,
 	if (editit(tmppath) == 0)
 		goto fail;
 
-	if (readprivs(curprivs, tmpfd, dflag) == 0)
+	if (readprivs(curprivs, tmpfd, dflag) < 0)
 		goto fail;
 
 	putprivs(id, idtype, curprivs);
