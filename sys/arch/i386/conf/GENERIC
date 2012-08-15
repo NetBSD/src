@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1066.2.6 2012/08/12 18:41:35 martin Exp $
+# $NetBSD: GENERIC,v 1.1066.2.7 2012/08/15 15:33:00 sborrill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1066.2.6 $"
+#ident 		"GENERIC-$Revision: 1.1066.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -107,7 +107,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
