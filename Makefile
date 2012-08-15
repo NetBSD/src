@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.291.2.1 2012/05/09 20:06:36 riz Exp $
+#	$NetBSD: Makefile,v 1.291.2.2 2012/08/15 17:36:46 sborrill Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -188,20 +188,27 @@ afterinstall: .PHONY .MAKE
 .endif
 
 _POSTINSTALL=	${.CURDIR}/usr.sbin/postinstall/postinstall
+_POSTINSTALL_ENV= \
+	AWK=${TOOL_AWK:Q}		\
+	DB=${TOOL_DB:Q}			\
+	HOST_SH=${HOST_SH:Q}		\
+	MAKE=${MAKE:Q}			\
+	PWD_MKDB=${TOOL_PWD_MKDB:Q}	\
+	STAT=${TOOL_STAT:Q}
 
 postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
-	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ check; if [ $$? -gt 1 ]; then exit 1; fi
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN .PHONY
 	@echo "   === Post installation fixes ==="
-	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix
 	@echo "   ==============================="
 
 postinstall-fix-obsolete: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
-	AWK=${TOOL_AWK:Q} MAKE=${MAKE:Q} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
+	${_POSTINSTALL_ENV} ${HOST_SH} ${_POSTINSTALL} -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
 
 
