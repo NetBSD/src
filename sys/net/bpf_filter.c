@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.52 2012/08/02 20:13:24 rmind Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.53 2012/08/15 21:31:39 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.52 2012/08/02 20:13:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.53 2012/08/15 21:31:39 alnsn Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -78,6 +78,7 @@ m_xword(const struct mbuf *m, uint32_t k, int *err)
 	u_char *cp, *np;
 	struct mbuf *m0;
 
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len >= k + 4) {
@@ -109,6 +110,7 @@ m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 	u_char *cp;
 	struct mbuf *m0;
 
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len >= k + 2) {
