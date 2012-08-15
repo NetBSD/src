@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.3 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.4 2012/08/15 19:47:38 rmind Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -17,6 +17,14 @@
 static npf_state_t	cstream_state;
 static void *		cstream_ptr;
 static bool		cstream_retval;
+
+static void		npf_state_sample(npf_state_t *, bool);
+
+void
+npf_test_init(void)
+{
+	npf_state_setsampler(npf_state_sample);
+}
 
 int
 npf_test_load(const void *xml)
@@ -54,7 +62,7 @@ npf_test_getif(const char *ifname)
 /*
  * State sampler - this routine is called from inside of NPF state engine.
  */
-void
+static void
 npf_state_sample(npf_state_t *nst, bool retval)
 {
 	/* Pointer will serve as an ID. */
