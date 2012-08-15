@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.348.2.5 2012/06/15 08:48:45 sborrill Exp $
+# $NetBSD: GENERIC,v 1.348.2.6 2012/08/15 15:32:59 sborrill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.348.2.5 $"
+#ident 		"GENERIC-$Revision: 1.348.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -86,7 +86,7 @@ powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support

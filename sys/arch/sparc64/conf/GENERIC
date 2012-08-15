@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148.2.1 2012/06/12 17:48:04 riz Exp $
+# $NetBSD: GENERIC,v 1.148.2.2 2012/08/15 15:33:00 sborrill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148.2.1 $"
+#ident 		"GENERIC-$Revision: 1.148.2.2 $"
 
 maxusers	64
 
@@ -105,7 +105,7 @@ options 	DDB_VERBOSE_HELP	# enable verbose online help
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
