@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.187 2012/08/15 15:23:15 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.188 2012/08/15 15:34:04 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8242,4 +8242,22 @@ sys/arch/i386/include/vmparam.h			1.75
 
 	Avoid early panic on modern IBM hardware.
 	[sborrill, ticket #501]
+
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/XEN3_DOM0			patch
+sys/arch/amd64/conf/XEN3_DOMU			patch
+sys/arch/cobalt/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/XEN3_DOM0			patch
+sys/arch/i386/conf/XEN3_DOMU			patch
+sys/arch/mvmeppc/conf/GENERIC			patch
+sys/arch/shark/conf/GENERIC			patch
+sys/arch/sparc64/conf/GENERIC			patch
+sys/arch/sparc64/conf/GENERIC.DEBUG		patch
+sys/arch/zaurus/conf/GENERIC			patch
+
+	Switch off DIAGNOSTIC and/or DEBUG on release kernels.
+	Enable DIAGNOSTIC in DEBUG kernels to allow for option
+	being switched off in GENERIC.
+	[martin, ticket #502]
 
