@@ -1,4 +1,4 @@
-/*	$NetBSD: machfbreg.h,v 1.4 2010/05/04 05:08:01 macallan Exp $	*/
+/*	$NetBSD: machfbreg.h,v 1.5 2012/08/15 15:39:23 macallan Exp $	*/
 
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -26,6 +26,11 @@
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
+
+/* BARs */
+#define MACH64_BAR_APERTURE	0x10 /* all mach64 have this */
+#define MACH64_BAR_IO		0x14 /* most mach64 have this */
+#define MACH64_BAR_MMIO		0x18 /* Rage Pro and newer */
 
 /* NON-GUI MEMORY MAPPED Registers - expressed in BYTE offsets */
 
@@ -254,9 +259,13 @@
 #define AUTO_BLKWRT_DIS         0x000002000
 
 /* BUS_CNTL register constants */
+#define BUS_APER_REG_DIS        0x00000010	/* register block 0 */
+#define BUS_EXTRA_PIPE_DIS	0x00000020	/* disable extra pipeline */
+#define BUS_DISABLE_MASTER	0x00000040	/* disable busmaster */
+#define BUS_WRITE_ROM_EN	0x00000080	/* write to flash ROM */
 #define BUS_FIFO_ERR_ACK        0x00200000
 #define BUS_HOST_ERR_ACK        0x00800000
-#define BUS_APER_REG_DIS        0x00000010
+#define BUS_EXT_REG_EN		0x08000000	/* register block 1 */
 
 /* GEN_TEST_CNTL register constants */
 #define GEN_OVR_OUTPUT_EN       0x20
