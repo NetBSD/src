@@ -1,4 +1,4 @@
-# $NetBSD: ad.armeb,v 1.6 2012/08/07 18:48:13 matt Exp $
+# $NetBSD: ad.armeb,v 1.7 2012/08/15 20:38:50 matt Exp $
 #
 # The armeb MACHINE_ARCH never existed in NetBSD as a.out, so we
 #	skip the old a.out compatibility tools.
@@ -74,6 +74,7 @@
 ./usr/include/arm/sysarch.h			comp-c-include
 ./usr/include/arm/trap.h			comp-c-include
 ./usr/include/arm/types.h			comp-c-include
+./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/varargs.h			comp-obsolete		obsolete
 ./usr/include/arm/wchar_limits.h		comp-c-include
 ./usr/include/arm32/bootconfig.h		comp-obsolete		obsolete
