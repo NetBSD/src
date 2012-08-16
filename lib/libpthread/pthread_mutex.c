@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.53 2012/03/13 01:05:55 joerg Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.54 2012/08/16 04:49:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.53 2012/03/13 01:05:55 joerg Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.54 2012/08/16 04:49:47 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -379,8 +379,10 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 #endif
 	self = pthread__self();
 	value = atomic_cas_ptr_ni(&ptm->ptm_owner, self, NULL);
-	if (__predict_true(value == self))
+	if (__predict_true(value == self)) {
+		pthread__smt_wake();
 		return 0;
+	}
 	return pthread__mutex_unlock_slow(ptm);
 }
 
@@ -475,6 +477,7 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	 * are dependent upon 'thread'.
 	 */
 	thread = atomic_swap_ptr(&ptm->ptm_waiters, NULL);
+	pthread__smt_wake();
 
 	for (;;) {
 		/*

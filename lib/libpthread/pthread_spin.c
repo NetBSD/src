@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.5 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.5 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.6 2012/08/16 04:49:47 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/ras.h>
@@ -133,6 +133,7 @@ pthread_spin_unlock(pthread_spinlock_t *lock)
 
 	self = pthread__self();
 	pthread__spinunlock(self, &lock->pts_spin);
+	pthread__smt_wake();
 
 	return 0;
 }
