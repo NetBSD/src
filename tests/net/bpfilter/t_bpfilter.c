@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.2 2012/08/15 21:36:00 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.3 2012/08/16 19:42:23 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.2 2012/08/15 21:36:00 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.3 2012/08/16 19:42:23 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -33,6 +33,7 @@ __RCSID("$NetBSD: t_bpfilter.c,v 1.2 2012/08/15 21:36:00 alnsn Exp $");
 #include <sys/mbuf.h>
 #include <sys/sysctl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <net/if.h>
@@ -186,7 +187,7 @@ pingtest(const char *dst, unsigned int wirelen, const char tail[7])
 }
 
 static void
-magic_ping_test(unsigned int wirelen)
+magic_ping_test(const char *name, unsigned int wirelen)
 {
 	struct bpf_program prog;
 	struct bpf_stat bstat;
@@ -198,22 +199,28 @@ magic_ping_test(unsigned int wirelen)
 	char *buf;
 	pid_t child;
 	int bpfd;
+	int status;
+	char token;
+	int channel[2];
 
 	struct bpf_hdr *hdr;
+
+	RL(pipe(channel));
 
 	prog.bf_len = __arraycount(magic_echo_reply_prog);
 	prog.bf_insns = magic_echo_reply_prog;
 
 	child = fork();
 	RZ(rump_init());
-	netcfg_rump_makeshmif("bpfiltermchain", ifr.ifr_name);
+	netcfg_rump_makeshmif(name, ifr.ifr_name);
 
 	switch (child) {
 	case -1:
 		atf_tc_fail_errno("fork failed");
 	case 0:
 		netcfg_rump_if(ifr.ifr_name, "10.1.1.10", "255.0.0.0");
-		pause();
+		ATF_CHECK(write(channel[1], "U", 1) == 1);
+		ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'D');
 		return;
 	default:
 		break;
@@ -223,13 +230,15 @@ magic_ping_test(unsigned int wirelen)
 
 	RL(bpfd = rump_sys_open("/dev/bpf", O_RDONLY));
 
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	tv.tv_sec = 0;
+	tv.tv_usec = 500;
 	RL(rump_sys_ioctl(bpfd, BIOCSRTIMEOUT, &tv));
 
 	RL(rump_sys_ioctl(bpfd, BIOCGBLEN, &bufsize));
 	RL(rump_sys_ioctl(bpfd, BIOCSETF, &prog));
 	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'U');
 
 	pinged = pingtest("10.1.1.10", wirelen, magic_echo_reply_tail);
 	ATF_CHECK(pinged);
@@ -245,11 +254,15 @@ magic_ping_test(unsigned int wirelen)
 	ATF_CHECK(hdr->bh_caplen == MIN(SNAPLEN, wirelen));
 
 	RL(rump_sys_ioctl(bpfd, BIOCGSTATS, &bstat));
-	ATF_CHECK(bstat.bs_capt > 1); /* XXX == 1 */
+	ATF_CHECK(bstat.bs_capt >= 1); /* XXX == 1 */
 
 	rump_sys_close(bpfd);
 	free(buf);
-	kill(child, SIGKILL);
+
+	ATF_CHECK(write(channel[1], "D", 1) == 1);
+
+	RL(waitpid(child, &status, 0));
+	ATF_CHECK(!WIFSIGNALED(status));
 }
 
 ATF_TC(bpfiltercontig);
@@ -263,7 +276,7 @@ ATF_TC_HEAD(bpfiltercontig, tc)
 ATF_TC_BODY(bpfiltercontig, tc)
 {
 
-	magic_ping_test(128);
+	magic_ping_test("bpfiltercontig", 128);
 }
 
 
@@ -278,7 +291,7 @@ ATF_TC_HEAD(bpfiltermchain, tc)
 ATF_TC_BODY(bpfiltermchain, tc)
 {
 
-	magic_ping_test(MINCLSIZE + 1);
+	magic_ping_test("bpfiltermchain", MINCLSIZE + 1);
 }
 
 
