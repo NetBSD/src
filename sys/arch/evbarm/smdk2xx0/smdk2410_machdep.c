@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.30 2012/07/29 00:07:09 matt Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.31 2012/08/16 18:22:46 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.30 2012/07/29 00:07:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.31 2012/08/16 18:22:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -181,19 +181,6 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.30 2012/07/29 00:07:09 matt E
 /* copy the image to RAM */
 #endif
 #endif
-
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = (u_int)0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -276,7 +263,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
 
-	cpu_reset_address = vtophys((u_int)s3c2410_softreset);
+	cpu_reset_address_paddr = vtophys((u_int)s3c2410_softreset);
 
 	/*
 	 * If we are still cold then hit the air brakes

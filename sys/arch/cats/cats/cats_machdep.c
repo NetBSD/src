@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.73 2012/07/29 00:07:10 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.73 2012/07/29 00:07:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -108,14 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.73 2012/07/29 00:07:10 matt Exp $
  * on where the ROM appears when you turn the MMU off.
  */
 
-u_int cpu_reset_address = DC21285_ROM_BASE;
-
 u_int dc21285_fclk = FCLK;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 struct ebsaboot ebsabootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -860,6 +853,8 @@ initarm(void *arm_bootargs)
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
+
+	cpu_reset_address_paddr = DC21285_ROM_BASE;
 
 	/* Setup the IRQ system */
 	printf("irq ");

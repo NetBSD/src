@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.109 2012/07/23 15:51:48 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.110 2012/08/16 18:22:38 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.109 2012/07/23 15:51:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.110 2012/08/16 18:22:38 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1322,7 +1322,6 @@ struct cpu_functions sheeva_cpufuncs = {
 
 struct cpu_functions cpufuncs;
 u_int cputype;
-u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
@@ -1555,7 +1554,6 @@ set_cpufuncs(void)
 #ifdef CPU_ARM2
 	if (cputype == CPU_ID_ARM2) {
 		cpufuncs = arm2_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1563,7 +1561,6 @@ set_cpufuncs(void)
 #ifdef CPU_ARM250
 	if (cputype == CPU_ID_ARM250) {
 		cpufuncs = arm250_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1572,7 +1569,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000300) {
 		cpufuncs = arm3_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1581,7 +1577,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		pmap_pte_init_generic();
 		return 0;
@@ -1592,7 +1587,6 @@ set_cpufuncs(void)
 	    CPU_ID_IS7(cputype) &&
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		pmap_pte_init_generic();
 		return 0;
@@ -1603,7 +1597,6 @@ set_cpufuncs(void)
 	    CPU_ID_IS7(cputype) &&
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V4T) {
 		cpufuncs = arm7tdmi_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		return 0;
@@ -1613,7 +1606,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		get_cachetype_cp15();
 		pmap_pte_init_arm8();
 		return 0;
@@ -1624,7 +1616,6 @@ set_cpufuncs(void)
 	     (cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_TI) &&
 	    (cputype & 0x0000f000) == 0x00009000) {
 		cpufuncs = arm9_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		arm9_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
 		arm9_dcache_sets_max =
@@ -1644,7 +1635,6 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_ARM926EJS ||
 	    cputype == CPU_ID_ARM1026EJS) {
 		cpufuncs = armv5_ec_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		return 0;
@@ -1654,7 +1644,6 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_MV88SV131 ||
 	    cputype == CPU_ID_MV88FR571_VD) {
 		cpufuncs = sheeva_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		cpu_do_powersave = 1;			/* Enable powersave */
@@ -1669,7 +1658,6 @@ set_cpufuncs(void)
 		 * option on ARM1020T).
 		 */
 		cpufuncs = arm10_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
 		armv5_dcache_sets_max =
@@ -1692,7 +1680,6 @@ set_cpufuncs(void)
 			arm_dcache_l2_nsets)) - armv5_dcache_sets_inc;
 		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
 		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		pmap_pte_init_arm11mpcore();
 		if (arm_cache_prefer_mask)
@@ -1721,7 +1708,6 @@ set_cpufuncs(void)
 			cpufuncs = arm1176_cpufuncs;
 		}
 #endif
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
 #ifdef ARM11_CACHE_WRITE_THROUGH
@@ -1738,7 +1724,6 @@ set_cpufuncs(void)
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 		return 0;
@@ -1747,7 +1732,6 @@ set_cpufuncs(void)
 #ifdef CPU_SA1100
 	if (cputype == CPU_ID_SA1100) {
 		cpufuncs = sa11x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 
@@ -1760,7 +1744,6 @@ set_cpufuncs(void)
 #ifdef CPU_SA1110
 	if (cputype == CPU_ID_SA1110) {
 		cpufuncs = sa11x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 
@@ -1773,7 +1756,6 @@ set_cpufuncs(void)
 #ifdef CPU_FA526
 	if (cputype == CPU_ID_FA526) {
 		cpufuncs = fa526_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 
@@ -1786,7 +1768,6 @@ set_cpufuncs(void)
 #ifdef CPU_IXP12X0
 	if (cputype == CPU_ID_IXP1200) {
 		cpufuncs = ixp12x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 		return 0;
@@ -1843,7 +1824,6 @@ set_cpufuncs(void)
 		if (rev == 0 || rev == 1)
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 		return 0;
@@ -1872,7 +1852,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 		return 0;
@@ -1889,7 +1868,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 
@@ -1909,7 +1887,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 
@@ -1919,7 +1896,6 @@ set_cpufuncs(void)
 #if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = cortex_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
 		pmap_pte_init_armv7();

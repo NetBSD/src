@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.20 2012/07/29 00:07:09 matt Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.21 2012/08/16 18:22:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.20 2012/07/29 00:07:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.21 2012/08/16 18:22:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -150,20 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.20 2012/07/29 00:07:09 matt Exp 
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define	KERNEL_VM_SIZE		0x0C000000
-
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0x00000000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;

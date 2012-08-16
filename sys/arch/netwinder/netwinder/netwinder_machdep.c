@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.77 2012/08/03 15:56:06 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.78 2012/08/16 18:22:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.77 2012/08/03 15:56:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78 2012/08/16 18:22:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -110,20 +110,9 @@ bs_protos(generic);
 #define	ISA_GETBYTE(r)		generic_bs_r_1(0, isa_base, (r))
 #define	ISA_PUTBYTE(r,v)	generic_bs_w_1(0, isa_base, (r), (v))
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
 static void netwinder_reset(void);
-u_int cpu_reset_address;
 
 u_int dc21285_fclk = 63750000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 struct nwbootinfo nwbootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -827,7 +816,7 @@ initarm(void *arg)
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Now that pmap is inited, we can set cpu_reset_address */
-	cpu_reset_address = (u_int)vtophys((vaddr_t)netwinder_reset);
+	cpu_reset_address_paddr = vtophys((vaddr_t)netwinder_reset);
 
 	/* Setup the IRQ system */
 	printf("irq ");

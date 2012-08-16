@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.19 2012/07/29 00:07:07 matt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.20 2012/08/16 18:22:42 matt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.19 2012/07/29 00:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20 2012/08/16 18:22:42 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -189,24 +189,6 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.19 2012/07/29 00:07:07 matt Exp
 # define GEMINI_PUTCHAR(c)
 # define GEMINI_PUTHEX(n)
 #endif	/* VERBOSE_INIT_ARM */
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define FIQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;

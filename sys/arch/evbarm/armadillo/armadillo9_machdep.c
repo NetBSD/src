@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.22 2012/07/29 00:07:07 matt Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.23 2012/08/16 18:22:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.22 2012/07/29 00:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.23 2012/08/16 18:22:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,6 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.22 2012/07/29 00:07:07 matt
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>
+
+/* Define various stack sizes in pages */
+#define IRQ_STACK_SIZE	8
+#define ABT_STACK_SIZE	8
+#define UND_STACK_SIZE	8
 
 #include <arm/arm32/machdep.h>
 
@@ -194,18 +199,6 @@ static struct armadillo_model_t armadillo_model_table[] = {
  */
 #define KERNEL_VM_SIZE		0x0c000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0x80090000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	8
-#define ABT_STACK_SIZE	8
-#define UND_STACK_SIZE	8
 
 BootConfig bootconfig;	/* Boot config storage */
 char *boot_args = NULL;

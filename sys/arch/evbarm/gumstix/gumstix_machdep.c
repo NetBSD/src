@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.40 2012/07/30 23:36:00 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.41 2012/08/16 18:22:43 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -205,20 +205,6 @@
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
-
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];

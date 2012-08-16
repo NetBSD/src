@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.14 2012/08/10 02:33:11 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.15 2012/08/16 18:22:45 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.14 2012/08/10 02:33:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.15 2012/08/16 18:22:45 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -85,23 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.14 2012/08/10 02:33:11 matt Ex
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0c000000
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0xffff0000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
@@ -293,6 +276,8 @@ initarm(void *arg)
 	uint32_t target, attr, base, size;
 	u_int l1pagetable;
 	int loop, pt_index, cs, memtag = 0, iotag = 0, window;
+
+	cpu_reset_address_paddr = 0xffff0000;
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 

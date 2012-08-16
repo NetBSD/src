@@ -1,7 +1,29 @@
-/* $NetBSD: machdep.h,v 1.10 2012/07/29 00:07:10 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.11 2012/08/16 18:22:40 matt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
+
+/* Define various stack sizes in pages */ 
+#ifndef IRQ_STACK_SIZE
+#define IRQ_STACK_SIZE	1
+#endif
+#ifndef ABT_STACK_SIZE
+#define ABT_STACK_SIZE	1
+#endif
+#ifndef UND_STACK_SIZE
+#ifdef IPKDB
+#define UND_STACK_SIZE	2
+#else
+#define UND_STACK_SIZE	1
+#endif
+#endif
+#ifndef FIQ_STACK_SIZE
+#define FIQ_STACK_SIZE	1
+#endif
+
+
+extern void (*cpu_reset_address)(void);
+extern paddr_t cpu_reset_address_paddr;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
