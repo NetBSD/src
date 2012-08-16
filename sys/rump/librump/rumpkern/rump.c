@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.242 2012/06/09 15:48:38 christos Exp $	*/
+/*	$NetBSD: rump.c,v 1.243 2012/08/16 17:25:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.242 2012/06/09 15:48:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.243 2012/08/16 17:25:36 pgoyette Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -309,6 +309,7 @@ rump__init(int rump_version)
 	callout_startup();
 
 	kprintf_init();
+	pserialize_init();
 	loginit();
 
 	kauth_init();
