@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.2 2012/08/16 23:22:44 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.1 2012/07/26 06:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.2 2012/08/16 23:22:44 jakllsch Exp $");
 
 #include "opt_broadcom.h"
 #include "locators.h"
@@ -137,7 +137,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmarange.dr_sysbase = 0;
 	sc->sc_dmarange.dr_busbase = 0xc0000000;	/* 0x40000000 if L2 */
-	sc->sc_dmarange.dr_len = MEMSIZE * 1024 * 1024;
+	sc->sc_dmarange.dr_len = physmem / PAGE_SIZE;	/* XXXJAK */
 	bcm2835_bus_dma_tag._ranges = &sc->sc_dmarange;
 	bcm2835_bus_dma_tag._nranges = 1;
 
