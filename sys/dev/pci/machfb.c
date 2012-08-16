@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.82 2012/08/15 17:43:59 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.82 2012/08/15 17:43:59 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0,
 #include "opt_wsemul.h"
 #include "opt_machfb.h"
 
-#define MACH64_REG_SIZE		1024
+#define MACH64_REG_SIZE		0x800
 #define MACH64_REG_OFF		0x7ff800
 
 #define	NBARS		3	/* number of Mach64 PCI BARs */
@@ -588,12 +588,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			    device_xname(sc->sc_dev));
 		}
 
-		/* If the BAR was never mapped, fix it up in MMIO. */
-		sc->sc_regsize = MACH64_REG_SIZE;
-		sc->sc_regbase = sc->sc_aperbase + MACH64_REG_OFF;
 		sc->sc_regt = sc->sc_memt;
 		bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
-		    sc->sc_regsize, &sc->sc_regh);
+		    MACH64_REG_SIZE, &sc->sc_regh);
 	}
 
 	mach64_init(sc);
@@ -781,7 +778,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		mach64_defaultscreen.nrows = ri->ri_rows;
 		mach64_defaultscreen.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-		    ((sc->memsize * 1024 * 1024) / sc->sc_my_mode->hdisplay) -
+		    ((sc->memsize * 1024) / sc->sc_my_mode->hdisplay) -
 		      sc->sc_my_mode->vdisplay - 5,
 		    sc->sc_my_mode->hdisplay,
 		    ri->ri_font->fontwidth,
@@ -801,7 +798,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		}
 
 		glyphcache_init(&sc->sc_gc, sc->sc_my_mode->vdisplay + 5,
-		    ((sc->memsize * 1024 * 1024) / sc->sc_my_mode->hdisplay) -
+		    ((sc->memsize * 1024) / sc->sc_my_mode->hdisplay) -
 		      sc->sc_my_mode->vdisplay - 5,
 		    sc->sc_my_mode->hdisplay,
 		    ri->ri_font->fontwidth,
@@ -1918,8 +1915,9 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct mach64_softc *sc = vd->cookie;
 	paddr_t pa;
+#if 0
 	pcireg_t reg;
-	
+#endif	
 #ifndef __sparc64__
 	/* 
 	 *'regular' framebuffer mmap()ing 
@@ -1928,13 +1926,12 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 * IIc which uses 0x2000 for the 2nd register block )
 	 * Other 64bit architectures might run into similar problems.
 	 */
-	if (offset<sc->sc_apersize) {
+	if (offset < (sc->memsize * 1024)) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase, offset, 
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 #endif
-
 	/*
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
@@ -1943,7 +1940,7 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	    NULL, NULL, NULL, NULL) != 0) {
 		return -1;
 	}
-
+#if 0
 	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);
 	if (reg != sc->sc_regbase) {
 #ifdef DIAGNOSTIC
@@ -1963,7 +1960,7 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 #endif
 		sc->sc_aperbase = reg;
 	}
-
+#endif
 	if ((offset >= sc->sc_aperbase) && 
 	    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
@@ -1992,7 +1989,6 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	    	   0, prot, 0);
 	}
 #endif
-
 	return -1;
 }
 
