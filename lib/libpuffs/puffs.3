@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.55 2012/08/10 21:00:45 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.56 2012/08/16 09:25:43 manu Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -235,6 +235,12 @@ to avoid doing a full comparison for every path equal in length to
 the one searched for.
 Especially if the file system uses the abovementioned function, it
 is a good idea to define this flag.
+.It Dv PUFFS_FLAG_PNCOOKIE
+Tell puffs that cookies map to
+.Vt struct pnode .
+This is automagically set if
+.Fn puffs_pn_new
+is called.
 .It Dv PUFFS_KFLAG_CACHE_FS_TTL
 Enforce name and attribute caches based on file system-supplied TTL.
 In lookup, create, mknod, mkdir, and symlink, the file system must
