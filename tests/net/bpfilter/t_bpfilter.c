@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.3 2012/08/16 19:42:23 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.4 2012/08/16 20:16:06 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.3 2012/08/16 19:42:23 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.4 2012/08/16 20:16:06 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -221,6 +221,8 @@ magic_ping_test(const char *name, unsigned int wirelen)
 		netcfg_rump_if(ifr.ifr_name, "10.1.1.10", "255.0.0.0");
 		ATF_CHECK(write(channel[1], "U", 1) == 1);
 		ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'D');
+		close(channel[0]);
+		close(channel[1]);
 		return;
 	default:
 		break;
@@ -260,6 +262,9 @@ magic_ping_test(const char *name, unsigned int wirelen)
 	free(buf);
 
 	ATF_CHECK(write(channel[1], "D", 1) == 1);
+
+	close(channel[0]);
+	close(channel[1]);
 
 	RL(waitpid(child, &status, 0));
 	ATF_CHECK(!WIFSIGNALED(status));
