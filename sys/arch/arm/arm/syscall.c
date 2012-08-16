@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.54 2012/08/01 05:42:56 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.54 2012/08/01 05:42:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.54 2012/08/01 05:42:56 matt Exp $");
 #endif
 
 void
-swi_handler(trapframe_t *frame)
+swi_handler(trapframe_t *tf)
 {
 	lwp_t *l = curlwp;
 	struct pcb *pcb;
@@ -107,15 +107,15 @@ swi_handler(trapframe_t *frame)
 	 * be safe to enable them, but check anyway. 
 	 */
 #ifdef acorn26
-	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
+	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
-	KASSERT((frame->tf_spsr & IF32_bits) == 0);
-	restore_interrupts(frame->tf_spsr & IF32_bits);
+	KASSERT((tf->tf_spsr & IF32_bits) == 0);
+	restore_interrupts(tf->tf_spsr & IF32_bits);
 #endif
 
 #ifdef acorn26
-	frame->tf_pc += INSN_SIZE;
+	tf->tf_pc += INSN_SIZE;
 #endif
 
 #ifndef THUMB_CODE
@@ -123,13 +123,13 @@ swi_handler(trapframe_t *frame)
 	 * Make sure the program counter is correctly aligned so we
 	 * don't take an alignment fault trying to read the opcode.
 	 */
-	if (__predict_false(((frame->tf_pc - INSN_SIZE) & 3) != 0)) {
+	if (__predict_false(((tf->tf_pc - INSN_SIZE) & 3) != 0)) {
 		ksiginfo_t ksi;
 		/* Give the user an illegal instruction signal. */
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (uint32_t *)(intptr_t) (frame->tf_pc-INSN_SIZE);
+		ksi.ksi_addr = (uint32_t *)(intptr_t) (tf->tf_pc-INSN_SIZE);
 #if 0
 		/* maybe one day we'll do emulations */
 		(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
@@ -142,27 +142,27 @@ swi_handler(trapframe_t *frame)
 #endif
 
 #ifdef THUMB_CODE
-	if (frame->tf_spsr & PSR_T_bit) {
+	if (tf->tf_spsr & PSR_T_bit) {
 		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
-		insn = fusword((void *)(frame->tf_pc - THUMB_INSN_SIZE));
+		insn = fusword((void *)(tf->tf_pc - THUMB_INSN_SIZE));
 		if (insn & 0x00ff)
 			insn = (insn & 0x00ff) | 0xef000000;
 		else
-			insn = frame->tf_ip | 0xef000000;
+			insn = tf->tf_ip | 0xef000000;
 	}
 	else
 #endif
 	{
 	/* XXX fuword? */
 #ifdef __PROG32
-		insn = *(uint32_t *)(frame->tf_pc - INSN_SIZE);
+		insn = *(uint32_t *)(tf->tf_pc - INSN_SIZE);
 #else
-		insn = *(uint32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
+		insn = *(uint32_t *)((tf->tf_r15 & R15_PC) - INSN_SIZE);
 #endif
 	}
 
 	pcb = lwp_getpcb(l);
-	pcb->pcb_tf = frame;
+	pcb->pcb_tf = tf;
 
 #ifdef CPU_ARM7
 	/*
@@ -182,7 +182,7 @@ swi_handler(trapframe_t *frame)
 	 * then we hit the bug.
 	 */
 	if ((insn & 0x0f000000) != 0x0f000000) {
-		frame->tf_pc -= INSN_SIZE;
+		tf->tf_pc -= INSN_SIZE;
 		curcpu()->ci_arm700bugcount.ev_count++;
 		userret(l);
 		return;
@@ -192,7 +192,7 @@ swi_handler(trapframe_t *frame)
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	LWP_CACHE_CREDS(l, l->l_proc);
-	(*l->l_proc->p_md.md_syscall)(frame, l, insn);
+	(*l->l_proc->p_md.md_syscall)(tf, l, insn);
 }
 
 void syscall(struct trapframe *, lwp_t *, uint32_t);
@@ -204,7 +204,7 @@ syscall_intern(struct proc *p)
 }
 
 void
-syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
+syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 {
 	struct proc * const p = l->l_proc;
 	const struct sysent *callp;
@@ -232,11 +232,11 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLTRP;
 #ifdef THUMB_CODE
-		if (frame->tf_spsr & PSR_T_bit) 
-			ksi.ksi_addr = (void *)(frame->tf_pc - THUMB_INSN_SIZE);
+		if (tf->tf_spsr & PSR_T_bit) 
+			ksi.ksi_addr = (void *)(tf->tf_pc - THUMB_INSN_SIZE);
 		else
 #endif
-			ksi.ksi_addr = (void *)(frame->tf_pc - INSN_SIZE);
+			ksi.ksi_addr = (void *)(tf->tf_pc - INSN_SIZE);
 		ksi.ksi_trap = insn;
 		trapsignal(l, &ksi);
 		userret(l);
@@ -248,13 +248,13 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 	nargs = callp->sy_narg;
 	if (nargs > 4) {
 		args = copyargs;
-		memcpy(args, &frame->tf_r0, 4 * sizeof(register_t));
-		error = copyin((void *)frame->tf_usr_sp, args + 4,
+		memcpy(args, &tf->tf_r0, 4 * sizeof(register_t));
+		error = copyin((void *)tf->tf_usr_sp, args + 4,
 		    (nargs - 4) * sizeof(register_t));
 		if (error)
 			goto bad;
 	} else {
-		args = &frame->tf_r0;
+		args = &tf->tf_r0;
 	}
 
 	if (!__predict_false(p->p_trace_enabled)
@@ -271,13 +271,13 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 
 	switch (error) {
 	case 0:
-		frame->tf_r0 = rval[0];
-		frame->tf_r1 = rval[1];
+		tf->tf_r0 = rval[0];
+		tf->tf_r1 = rval[1];
 
 #ifdef __PROG32
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+		tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 #else
-		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+		tf->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
 #endif
 		break;
 
@@ -286,11 +286,11 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 		 * Reconstruct the pc to point at the swi.
 		 */
 #ifdef THUMB_CODE
-		if (frame->tf_spsr & PSR_T_bit)
-			frame->tf_pc -= THUMB_INSN_SIZE;
+		if (tf->tf_spsr & PSR_T_bit)
+			tf->tf_pc -= THUMB_INSN_SIZE;
 		else
 #endif
-			frame->tf_pc -= INSN_SIZE;
+			tf->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
@@ -299,11 +299,11 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 
 	default:
 	bad:
-		frame->tf_r0 = error;
+		tf->tf_r0 = error;
 #ifdef __PROG32
-		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
+		tf->tf_spsr |= PSR_C_bit;	/* carry bit */
 #else
-		frame->tf_r15 |= R15_FLAG_C;	/* carry bit */
+		tf->tf_r15 |= R15_FLAG_C;	/* carry bit */
 #endif
 		break;
 	}
@@ -316,13 +316,13 @@ child_return(void *arg)
 {
 	lwp_t *l = arg;
 	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *frame = pcb->pcb_tf;
+	struct trapframe *tf = pcb->pcb_tf;
 
-	frame->tf_r0 = 0;
+	tf->tf_r0 = 0;
 #ifdef __PROG32
-	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+	tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 #else
-	frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+	tf->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
 #endif
 
 	userret(l);
