@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.76 2012/07/07 20:45:09 wiz Exp $
+.\"	$NetBSD: find.1,v 1.77 2012/08/16 13:34:10 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd July 7, 2012
+.Dd August 16, 2012
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -67,10 +67,8 @@ of each file in the tree.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl H
-The
-.Fl H
-option causes the file information and file type (see
-.Xr stat 2 ) ,
+Causes the file information and file type (see
+.Xr stat 2 )
 returned for each symbolic link encountered on the command line to be
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
@@ -78,27 +76,21 @@ be for the link itself.
 File information of all symbolic links not on the command line is that
 of the link itself.
 .It Fl L
-The
-.Fl L
-option causes the file information and file type (see
+Causes the file information and file type (see
 .Xr stat 2 )
 returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
 .It Fl P
-The
-.Fl P
-option causes the file information and file type (see
+Causes the file information and file type (see
 .Xr stat 2 )
 returned for each symbolic link to be those of the link itself.
 .It Fl d
-The
-.Fl d
-option causes
+Causes
 .Nm
 to perform a depth-first traversal, i.e., directories
-are visited in post-order and all entries in a directory will be acted
+are visited in post-order, and all entries in a directory will be acted
 on before the directory itself.
 By default,
 .Nm
@@ -107,34 +99,26 @@ Note, the default is
 .Ar not
 a breadth-first traversal.
 .It Fl E
-The
-.Fl E
-option causes
+Causes
 .Ar regexp
 arguments to primaries to be interpreted as extended regular
 expressions (see
 .Xr re_format 7 ) .
 .It Fl f
-The
-.Fl f
-option specifies a file hierarchy for
+Specifies a file hierarchy for
 .Nm
 to traverse.
 File hierarchies may also be specified as the operands immediately
 following the options.
 .It Fl h
-The
-.Fl h
-option causes the file information and file type (see
-.Xr stat 2 ) ,
+Causes the file information and file type (see
+.Xr stat 2 )
 returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
 .It Fl s
-The
-.Fl s
-option causes the entries of each directory to be sorted in
+Causes the entries of each directory to be sorted in
 lexicographical order.
 Note that the sorting is done only inside of each directory;
 files in different directories are not sorted.
@@ -146,9 +130,7 @@ which is different from
 .Dq Li "find ... \&| sort"
 order.
 .It Fl X
-The
-.Fl X
-option is a modification to permit
+Modifies the output to permit
 .Nm
 to be safely used in conjunction with
 .Xr xargs 1 .
@@ -171,9 +153,7 @@ primaries can be used to format the output in a way that
 .Xr xargs 1
 can accept.
 .It Fl x
-The
-.Fl x
-option restricts the search to the file system containing the
+Restricts the search to the file system containing the
 directory specified.
 Does not list mount points to other file systems.
 .El
@@ -190,6 +170,7 @@ a preceding minus sign means
 .Dq less than Ar n ,
 and neither means
 .Dq exactly Ar n .
+.Pp
 .Bl -tag -width Ds -compact
 .It Ic -amin Ar n
 True if the difference between the file last access time and the time
@@ -200,7 +181,7 @@ minutes.
 .Pp
 .It Ic -anewer Ar file
 True if the current file has a more recent last access time than
-.Ar file  .
+.Ar file .
 .Pp
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
@@ -219,7 +200,7 @@ minutes.
 .Pp
 .It Ic -cnewer Ar file
 True if the current file has a more recent last change time than
-.Ar file  .
+.Ar file .
 .Pp
 .It Ic -ctime Ar n
 True if the difference between the time of last change of file status
@@ -420,7 +401,7 @@ mounted read-only.
 .Pp
 .It Ic -group Ar gname
 True if the file belongs to the group
-.Ar gname  .
+.Ar gname .
 If
 .Ar gname
 is numeric and there is no such group name, then
@@ -428,14 +409,26 @@ is numeric and there is no such group name, then
 is treated as a group id.
 .Pp
 .It Ic -iname Ar pattern
-True if the last component of the pathname being examined
-matches
+True if the last component of the pathname being examined matches
+.Ar pattern
+in a case-insensitive manner.
+Special shell pattern matching characters
+.Po
+.Dq \&[ ,
+.Dq \&] ,
+.Dq \&* ,
+and
+.Dq \&?
+.Pc
+may be used as part of
 .Ar pattern .
-Case insensitive.
+These characters may be matched explicitly by escaping them with a
+backslash
+.Pq Dq \e .
 .Pp
 .It Ic -inum Ar n
 True if the file has inode number
-.Ar n  .
+.Ar n .
 .Pp
 .It Ic -iregex Ar regexp
 True if the path name of the current file matches the case-insensitive
@@ -513,33 +506,7 @@ is not supported.
 .Pp
 .It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
-.Ar pattern  .
-Special shell pattern matching characters
-.Po
-.Dq \&[ ,
-.Dq \&] ,
-.Dq \&* ,
-.Dq \&?
-.Pc
-may be used as part of
-.Ar pattern  .
-These characters may be matched explicitly by escaping them with a
-backslash
-.Pq Dq \e .
-.Pp
-.It Ic -newer Ar file
-True if the current file has a more recent last modification time than
-.Ar file  .
-.Pp
-.It Ic -nouser
-True if the file belongs to an unknown user.
-.Pp
-.It Ic -nogroup
-True if the file belongs to an unknown group.
-.Pp
-.It Ic -path Ar pattern
-True if the pathname being examined matches
-.Ar pattern  .
+.Ar pattern .
 Special shell pattern matching characters
 .Po
 .Dq \&[ ,
@@ -549,7 +516,34 @@ and
 .Dq \&?
 .Pc
 may be used as part of
-.Ar pattern  .
+.Ar pattern .
+These characters may be matched explicitly by escaping them with a
+backslash
+.Pq Dq \e .
+.Pp
+.It Ic -newer Ar file
+True if the current file has a more recent last modification time than
+.Ar file .
+.Pp
+.It Ic -nouser
+True if the file belongs to an unknown user.
+.Pp
+.It Ic -nogroup
+True if the file belongs to an unknown group.
+.Pp
+.It Ic -path Ar pattern
+True if the pathname being examined matches
+.Ar pattern .
+Special shell pattern matching characters
+.Po
+.Dq \&[ ,
+.Dq \&] ,
+.Dq \&* ,
+and
+.Dq \&?
+.Pc
+may be used as part of
+.Ar pattern .
 These characters may be matched explicitly by escaping them with a
 backslash
 .Pq Dq \e .
@@ -642,7 +636,7 @@ within the path.
 .Pp
 .It Ic -size Ar n Ns Op Cm c
 True if the file's size, rounded up, in 512-byte blocks is
-.Ar n  .
+.Ar n .
 If
 .Ar n
 is followed by a
@@ -678,7 +672,7 @@ whiteout
 .Pp
 .It Ic -user Ar uname
 True if the file belongs to the user
-.Ar uname  .
+.Ar uname .
 If
 .Ar uname
 is numeric and there is no such user name, then
@@ -688,7 +682,9 @@ is treated as a user id (and considered a numeric argument).
 .It Ic -xdev
 This primary always evaluates to true.
 It causes find not to descend past directories that have a different
-device ID (st_dev, see
+device ID
+.Va ( st_dev ,
+see
 .Xr stat 2
 S5.6.2 [POSIX.1]).
 .El
@@ -747,44 +743,44 @@ will do so as well.
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
-.It Li "find  /  \e!  -name  \*q*.c\*q  \-print"
+.It Li "find / \e! -name \*q*.c\*q \-print"
 Print out a list of all the files whose names do not end in
 .Dq \&.c .
-.It Li "find  /  \-newer  ttt  \-user  wnj  \-print"
+.It Li "find / \-newer ttt \-user wnj \-print"
 Print out a list of all the files owned by user
 .Dq wnj
 that are newer than the file
 .Dq ttt .
-.It Li "find  .  \-type  f  \-mmin  \-30  \-print  \-or  \-mindepth  1  \-prune"
+.It Li "find . \-type f \-mmin \-30 \-print \-or \-mindepth 1 \-prune"
 Print out a list of all the files in the current directory that are
 newer than 30 minutes.
-.It Li "find  .  \-type  f  \-atime  +10  \-mindepth  2  \-print"
+.It Li "find . \-type f \-atime +10 \-mindepth 2 \-print"
 Print out a list of all the files in any sub-directories that have not
 been accessed in the past ten days.
-.It Li "find  .  \-mtime  +90  \-exec  rm  \-i  {}  +  \-or  \-mindepth  1  \-prune"
+.It Li "find . \-mtime +90 \-exec rm \-i {} + \-or \-mindepth 1 \-prune"
 Interactively remove all of the files in the current directory that have
 not been modified in 90 days.
-.It Li "find  .  \-type  f  \-mtime  +90  \-ok  mv  {}  {}.old  \e;"
+.It Li "find . \-type f \-mtime +90 \-ok mv {} {}.old \e;"
 Interactively rename all of the files in the current directory and all
 sub-directories that have not been modified in 90 days.
-.It Li "find  /  \e!  \e(  \-newer  ttt  \-user  wnj  \e)  \-print"
+.It Li "find / \e! \e( \-newer ttt \-user wnj \e) \-print"
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
 .Dq wnj .
-.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-print"
+.It Li "find / \e( \-newer ttt \-or \-user wnj \e) \-print"
 Print out a list of all the files that are either owned by
 .Dq wnj
 or that are newer than
 .Dq ttt .
-.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-exit  1"
+.It Li "find / \e( \-newer ttt \-or \-user wnj \e) \-exit 1"
 Return immediately with a value of 1 if any files are found that are either
 owned by
 .Dq wnj
 or that are newer than
 .Dq ttt ,
 but do not print them.
-.It Li "find  /  \e(  \-newer  ttt  \-or  \-user  wnj  \e)  \-ls  \-exit  1"
+.It Li "find / \e( \-newer ttt \-or \-user wnj \e) \-ls \-exit 1"
 Same as above, but list the first file matching the criteria before exiting
 with a value of 1.
 .El
@@ -798,6 +794,7 @@ with a value of 1.
 .Xr getgrent 3 ,
 .Xr getpwent 3 ,
 .Xr strmode 3 ,
+.Xr re_format 7 ,
 .Xr symlink 7 ,
 .Xr sysctl 8
 .Sh STANDARDS
