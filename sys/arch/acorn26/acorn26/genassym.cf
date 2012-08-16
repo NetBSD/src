@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.12 2009/12/10 05:10:00 rmind Exp $
+# $NetBSD: genassym.cf,v 1.13 2012/08/16 16:23:48 matt Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -75,5 +75,3 @@ endif
 
 define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
-define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
-
