@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.4 2012/07/29 00:07:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.5 2012/08/16 18:22:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,18 +207,6 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.4 2012/07/29 00:07:09 matt Ex
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = (u_int)0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 /* Declared extern elsewhere in the kernel */
 BootConfig bootconfig;		/* Boot config storage */
@@ -313,7 +301,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
 
-	cpu_reset_address = vtophys((u_int)s3c2440_softreset);
+	cpu_reset_address_paddr = vtophys((uintptr_t)s3c2440_softreset);
 
 	/*
 	 * If we are still cold then hit the air brakes
