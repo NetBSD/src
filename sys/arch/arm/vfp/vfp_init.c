@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.4 2012/08/12 05:05:47 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.5 2012/08/16 18:16:25 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -36,6 +36,7 @@
 #include <sys/proc.h>
 #include <sys/cpu.h>
 
+#include <arm/pcb.h>
 #include <arm/undefined.h>
 #include <arm/vfpreg.h>
 
