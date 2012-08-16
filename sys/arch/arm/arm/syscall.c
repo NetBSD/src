@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $");
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/pcb.h>
 #include <arm/swi.h>
 
 #ifdef acorn26
@@ -97,8 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55 2012/08/16 17:04:21 matt Exp $");
 void
 swi_handler(trapframe_t *tf)
 {
-	lwp_t *l = curlwp;
-	struct pcb *pcb;
+	lwp_t * const l = curlwp;
 	uint32_t insn;
 
 	/*
@@ -161,8 +159,7 @@ swi_handler(trapframe_t *tf)
 #endif
 	}
 
-	pcb = lwp_getpcb(l);
-	pcb->pcb_tf = tf;
+	lwp_settrapframe(l, tf);
 
 #ifdef CPU_ARM7
 	/*
@@ -314,9 +311,8 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 void
 child_return(void *arg)
 {
-	lwp_t *l = arg;
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = pcb->pcb_tf;
+	lwp_t * const l = arg;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_r0 = 0;
 #ifdef __PROG32

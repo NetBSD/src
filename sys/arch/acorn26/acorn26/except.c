@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.28 2012/05/11 15:39:17 skrll Exp $ */
+/* $NetBSD: except.c,v 1.29 2012/08/16 17:35:01 matt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.28 2012/05/11 15:39:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.29 2012/08/16 17:35:01 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -93,9 +93,8 @@ checkvectors(void)
 void
 prefetch_abort_handler(struct trapframe *tf)
 {
-	vaddr_t pc;
-	struct proc *p;
-	struct lwp *l;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -109,18 +108,11 @@ prefetch_abort_handler(struct trapframe *tf)
 	 */
 
 	curcpu()->ci_data.cpu_ntrap++;
-	l = curlwp;
-	if (l == NULL)
-		l = &lwp0;
-	p = l->l_proc;
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
-		struct pcb *pcb = lwp_getpcb(l);
-		pcb->pcb_tf = tf;
+	if (TRAP_USERMODE(tf)) {
+		lwp_settrapframe(l, tf);
 		LWP_CACHE_CREDS(l, p);
-	}
-
-	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+	} else {
 #ifdef DDB
 		db_printf("Prefetch abort in kernel mode\n");
 		kdb_trap(T_FAULT, tf);
@@ -134,7 +126,7 @@ prefetch_abort_handler(struct trapframe *tf)
 	}
 
 	/* User-mode prefetch abort */
-	pc = tf->tf_r15 & R15_PC;
+	vaddr_t pc = tf->tf_r15 & R15_PC;
 
 	do_fault(tf, l, &p->p_vmspace->vm_map, pc, VM_PROT_EXECUTE);
 
@@ -144,13 +136,13 @@ prefetch_abort_handler(struct trapframe *tf)
 void
 data_abort_handler(struct trapframe *tf)
 {
-	vaddr_t pc, va;
-	vsize_t asize;
-	struct proc *p;
-	struct lwp *l;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
 	vm_prot_t atype;
 	bool usrmode, twopages;
 	struct vm_map *map;
+	vaddr_t pc, va;
+	vsize_t asize;
 
 	/*
 	 * Data aborts in kernel mode are possible (copyout etc), so
@@ -167,13 +159,8 @@ data_abort_handler(struct trapframe *tf)
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 	curcpu()->ci_data.cpu_ntrap++;
-	l = curlwp;
-	if (l == NULL)
-		l = &lwp0;
-	p = l->l_proc;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
-		struct pcb *pcb = lwp_getpcb(l);
-		pcb->pcb_tf = tf;
+		lwp_settrapframe(l, tf);
 		LWP_CACHE_CREDS(l, p);
 	}
 	pc = tf->tf_r15 & R15_PC;
@@ -190,7 +177,7 @@ data_abort_handler(struct trapframe *tf)
 	if (twopages)
 		do_fault(tf, l, map, va + asize - 4, atype);
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if (TRAP_USERMODE(tf))
 		userret(l);
 }
 
@@ -202,16 +189,13 @@ do_fault(struct trapframe *tf, struct lwp *l,
     struct vm_map *map, vaddr_t va, vm_prot_t atype)
 {
 	int error;
-	struct pcb *pcb;
-	void *onfault;
-	bool user;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
-	pcb = lwp_getpcb(l);
-	onfault = pcb->pcb_onfault;
-	user = (tf->tf_r15 & R15_MODE) == R15_MODE_USR;
+	struct pcb * const pcb = lwp_getpcb(l);
+	void * const onfault = pcb->pcb_onfault;
+	const bool user = TRAP_USERMODE(tf);
 
 	if (cpu_intr_p()) {
 		KASSERT(!user);
@@ -459,7 +443,7 @@ data_abort_usrmode(struct trapframe *tf)
 {
 	register_t insn;
 
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
+	if (TRAP_USERMODE(tf))
 		return true;
 	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	if ((insn & 0x0d200000) == 0x04200000)
@@ -471,33 +455,30 @@ data_abort_usrmode(struct trapframe *tf)
 void
 address_exception_handler(struct trapframe *tf)
 {
-	struct lwp *l;
-	vaddr_t pc;
+	struct lwp * const l = curlwp;
+	struct pcb * const pcb = lwp_getpcb(l);
 	ksiginfo_t ksi;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
+
 	curcpu()->ci_data.cpu_ntrap++;
-	l = curlwp;
-	if (l == NULL)
-		l = &lwp0;
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
-		struct pcb *pcb = lwp_getpcb(l);
-		pcb->pcb_tf = tf;
+	if (TRAP_USERMODE(tf)) {
+		lwp_settrapframe(l, tf);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	}
 
-	if (curpcb->pcb_onfault != NULL) {
+	if (pcb->pcb_onfault != NULL) {
 		tf->tf_r0 = EFAULT;
 		tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
-		    (register_t)curpcb->pcb_onfault;
+		    (uintptr_t)pcb->pcb_onfault;
 		return;
 	}
 
-	pc = tf->tf_r15 & R15_PC;
+	vaddr_t pc = tf->tf_r15 & R15_PC;
 
-	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+	if (!TRAP_USERMODE(tf)) {
 #ifdef DDB
 		db_printf("Address exception in kernel mode\n");
 		kdb_trap(T_FAULT, tf);

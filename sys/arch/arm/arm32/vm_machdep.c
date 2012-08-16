@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.59 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2012/08/16 17:35:01 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $")
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/cpu.h>
 #include <sys/buf.h>
 #include <sys/pmc.h>
 #include <sys/exec.h>
@@ -63,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2012/08/12 05:05:47 matt Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
@@ -118,7 +119,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb1, *pcb2;
-	struct trapframe *tf;
 	struct switchframe *sf;
 	vaddr_t uv;
 
@@ -147,7 +147,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note: this stack is not in use if we are forking from p1
 	 */
 	uv = uvm_lwp_getuarea(l2);
-	pcb2->pcb_un.un_32.pcb32_sp = uv + USPACE_SVC_STACK_TOP;
+	pcb2->pcb_sp = uv + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the kernel stack with a known pattern */
@@ -170,9 +170,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	arm_fpe_copycontext(FP_CONTEXT(l1), FP_CONTEXT(l2));
 #endif	/* ARMFPE */
 
-	tf = (struct trapframe *)pcb2->pcb_un.un_32.pcb32_sp - 1;
-	pcb2->pcb_tf = tf;
-	*tf = *pcb1->pcb_tf;
+	struct trapframe *tf = (struct trapframe *)pcb2->pcb_sp - 1;
+	lwp_settrapframe(l2, tf);
+	*tf = *lwp_trapframe(l1);
 
 	/*
 	 * If specified, give the child a different stack (make sure
@@ -186,7 +186,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sf->sf_r5 = (u_int)arg;
 	sf->sf_sp = (u_int)tf;
 	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb2->pcb_un.un_32.pcb32_sp = (u_int)sf;
+	pcb2->pcb_sp = (u_int)sf;
 }
 
 /*

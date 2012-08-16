@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.32 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.33 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.32 2012/08/12 05:05:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.33 2012/08/16 17:35:01 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.32 2012/08/12 05:05:47 matt Exp $"
 
 #include <arm/cpufunc.h>
 
-#include <machine/pcb.h>
 #include <machine/vmparam.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -152,11 +151,7 @@ EVCNT_ATTACH_STATIC(_lock_cas_fail);
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct pcb *pcb;
-	struct trapframe *tf;
-
-	pcb = lwp_getpcb(l);
-	tf = pcb->pcb_tf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = l->l_proc->p_psstrp;
@@ -173,12 +168,11 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 #endif
 
+	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT
 	if (pack->ep_esch->es_makecmds == exec_aout_makecmds)
-		pcb->pcb_flags = PCB_NOALIGNFLT;
-	else
+		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
-	pcb->pcb_flags = 0;
 #ifdef FPU_VFP
 	vfp_discardcontext();
 #endif
