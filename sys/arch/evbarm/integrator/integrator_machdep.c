@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.70 2012/07/29 00:07:08 matt Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.71 2012/08/16 18:22:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.70 2012/07/29 00:07:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.71 2012/08/16 18:22:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -117,19 +117,6 @@ void ifpga_reset(void) __attribute__((noreturn));
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = (u_int) ifpga_reset;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -373,6 +360,8 @@ initarm(void *arg)
 	psize_t memsize;
 	vm_offset_t physical_freestart;
 	vm_offset_t physical_freeend;
+
+	cpu_reset_address = ifpga_reset;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions

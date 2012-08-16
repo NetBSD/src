@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.5 2012/07/29 00:07:06 matt Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.6 2012/08/16 18:22:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.5 2012/07/29 00:07:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.6 2012/08/16 18:22:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -99,25 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.5 2012/07/29 00:07:06 matt 
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x00C00000)
 #define	KERNEL_VM_SIZE		0x05000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
 extern BootConfig bootconfig;		/* Boot config storage */
 
 extern paddr_t physical_start;
 extern paddr_t physical_freestart;
 extern paddr_t physical_freeend;
 extern paddr_t physical_end;
-extern int physmem;
 
 extern vaddr_t msgbufphys;
 
