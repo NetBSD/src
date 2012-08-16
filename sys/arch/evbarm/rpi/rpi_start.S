@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.2 2012/07/26 12:39:27 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.3 2012/08/16 21:46:18 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -88,7 +88,11 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.2 2012/07/26 12:39:27 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.3 2012/08/16 21:46:18 jakllsch Exp $")
+
+/* Location (in MiB) to put temporary MMU tables just below. */
+/* Raspberry Pi start.elf will give us anywhere between 128MiB and 240MiB */
+#define MINSPLIT 128
 
 /*
  * Workaround Erratum 411920 
@@ -254,7 +258,7 @@ Ll1_s_frame:
 
 Ltemp_l1_table:
 	/* Put the temporary L1 translation table at the end of SDRAM. */
-	.word	0x00000000 + MEMSIZE * 0x100000 - L1_TABLE_SIZE
+	.word	0x00000000 + MINSPLIT * 0x100000 - L1_TABLE_SIZE
 	
 Lstart:
 	.word	start
@@ -305,11 +309,11 @@ Lctl_ID_dis:
 mmu_init_table:
 	/* Add 1MB of VA==PA at 0x00000000 so we can keep the kernel going */
 	MMU_INIT(0x00000000, 0x00000000,
-	    (MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE, 
+	    (MINSPLIT * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE, 
 	    L1_S_PROTO | L1_S_AP_KRW)
 
 	MMU_INIT(KERNEL_BASE, 0x0,
-	    (MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    (MINSPLIT * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 	    L1_S_PROTO | L1_S_AP_KRW  | L1_S_B | L1_S_C)
 
 	/* Map the 16MB of peripherals */
