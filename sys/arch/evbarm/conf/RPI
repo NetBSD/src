@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.1 2012/07/26 06:21:57 skrll Exp $
+#	$NetBSD: RPI,v 1.2 2012/08/16 23:45:58 jakllsch Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -169,9 +169,6 @@ mainbus0	at root
 
 # The cpu
 cpu0		at mainbus?
-
-# Specify the memory size in megabytes - default start.elf file
-options		MEMSIZE=192
 
 # OBIO
 obio0		at mainbus?
