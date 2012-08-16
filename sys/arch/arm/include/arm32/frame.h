@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.30 2012/08/02 15:56:07 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.31 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -143,9 +143,9 @@ void validate_trapframe(trapframe_t *, int);
 	teq	r0, #(PSR_USR32_MODE)					;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
 	bne	1f			/* Not USR mode skip AFLT */	;\
-	ldr	r1, [r4, #CI_CURPCB]	/* get curpcb from cpu_info */	;\
-	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
-	tst	r1, #PCB_NOALIGNFLT					;\
+	ldr	r1, [r1, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
+	ldr	r1, [r1, #L_MD_FLAGS]	/* Fetch l_md.md_flags */	;\
+	tst	r1, #MDLWP_NOALIGNFLT					;\
 	beq	1f			/* AFLTs already enabled */	;\
 	ldr	r2, .Laflt_cpufuncs					;\
 	ldr	r1, [r4, #CI_CTRL]	/* Fetch control register */	;\
@@ -172,9 +172,9 @@ void validate_trapframe(trapframe_t *, int);
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	bne	2f			/* Yup. Go deal with it */	;\
-	ldr	r1, [r4, #CI_CURPCB]	/* Get current PCB */		;\
-	ldr	r0, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
-	tst	r0, #PCB_NOALIGNFLT					;\
+	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
+	ldr	r0, [r1, #L_MD_FLAGS]	/* get md_flags from lwp */	;\
+	tst	r0, #MDLWP_NOALIGNFLT					;\
 	beq	3f			/* Keep AFLTs enabled */	;\
 	ldr	r1, [r4, #CI_CTRL]	/* Fetch control register */	;\
 	ldr	r2, .Laflt_cpufuncs					;\
@@ -224,6 +224,7 @@ void validate_trapframe(trapframe_t *, int);
 2:
 #endif /* EXEC_AOUT */
 
+#ifndef _ARM_ARCH_6
 #ifdef ARM_LOCK_CAS_DEBUG
 #define	LOCK_CAS_DEBUG_LOCALS						 \
 .L_lock_cas_restart:							;\
@@ -272,6 +273,11 @@ LOCK_CAS_DEBUG_LOCALS
 	strgt	r1, [sp, #(TF_PC)]					;\
 	LOCK_CAS_DEBUG_COUNT_RESTART					;\
 99:
+
+#else
+#define	LOCK_CAS_CHECK			/* nothing */
+#define	LOCK_CAS_CHECK_LOCALS		/* nothing */
+#endif
 
 /*
  * ASM macros for pushing and pulling trapframes from the stack
