@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.14 2012/07/29 00:07:07 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.15 2012/08/16 18:26:22 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.14 2012/07/29 00:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.15 2012/08/16 18:26:22 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -177,24 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.14 2012/07/29 00:07:07 matt Exp
 #include <evbarm/beagle/beagle.h>
 
 #include "omapwdt32k.h"
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define FIQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
