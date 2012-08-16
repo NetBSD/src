@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.14 2012/07/29 00:07:08 matt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.15 2012/08/16 18:22:43 matt Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.14 2012/07/29 00:07:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.15 2012/08/16 18:22:43 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -166,24 +166,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.14 2012/07/29 00:07:08 matt Ex
  * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0C000000
-
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;

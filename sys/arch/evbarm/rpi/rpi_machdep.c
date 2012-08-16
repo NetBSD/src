@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.3 2012/07/29 00:07:09 matt Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.4 2012/08/16 18:22:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.3 2012/07/29 00:07:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.4 2012/08/16 18:22:46 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -160,19 +160,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.3 2012/07/29 00:07:09 matt Exp $")
 #include "ksyms.h"
 
 static void setup_real_page_tables(void);
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address;
-
-/* Define various stack sizes in pages */
-#define FIQ_STACK_SIZE	1
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
@@ -503,10 +490,7 @@ initarm(void *arg)
 #endif
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
    
-	/* flag used in locore.s */
-	extern u_int cpu_reset_needs_v4_MMU_disable;
-	cpu_reset_needs_v4_MMU_disable = 0;
-	cpu_reset_address = (u_int) bcm2835_system_reset;
+	cpu_reset_address = bcm2835_system_reset;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");

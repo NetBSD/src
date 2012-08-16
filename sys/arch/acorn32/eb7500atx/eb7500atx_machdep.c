@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.23 2012/07/29 00:07:10 matt Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.24 2012/08/16 18:22:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.23 2012/07/29 00:07:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.24 2012/08/16 18:22:38 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -119,16 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.23 2012/07/29 00:07:10 matt 
  * This is machine architecture dependent as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
-u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
 
 #define VERBOSE_INIT_ARM
-
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
 
 struct bootconfig bootconfig;	/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */

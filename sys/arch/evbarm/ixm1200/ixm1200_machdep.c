@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.50 2012/07/29 00:07:08 matt Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.51 2012/08/16 18:22:44 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.50 2012/07/29 00:07:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51 2012/08/16 18:22:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -133,8 +133,6 @@ void ixp12x0_reset(void) __attribute__((noreturn));
  * on where the ROM appears when you turn the MMU off.
  */
 
-u_int cpu_reset_address = (u_int) ixp12x0_reset;
-
 /*
  * Define the default console speed for the board.
  */
@@ -147,11 +145,6 @@ u_int cpu_reset_address = (u_int) ixp12x0_reset;
 #ifndef CONADDR
 #define CONADDR IXPCOM_UART_BASE
 #endif
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE  1
-#define ABT_STACK_SIZE  1
-#define UND_STACK_SIZE  1
 
 BootConfig bootconfig;          /* Boot config storage */
 char *boot_args = NULL;
@@ -343,6 +336,8 @@ initarm(void *arg)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
         Elf_Shdr *sh;
 #endif
+
+	cpu_reset_address = ixp12x0_reset;
 
         /*
          * Since we map v0xf0000000 == p0x90000000, it's possible for

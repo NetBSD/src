@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.81 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.82 2012/08/16 18:22:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.81 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.82 2012/08/16 18:22:39 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.81 2012/08/16 17:35:01 matt Exp 
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
 
-//void (*cpu_reset_address)(void);	/* Used by locore */
-//paddr_t cpu_reset_address_paddr;	/* Used by locore */
+void (*cpu_reset_address)(void);	/* Used by locore */
+paddr_t cpu_reset_address_paddr;	/* Used by locore */
 
 struct vm_map *phys_map = NULL;
 
