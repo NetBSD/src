@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.15 2012/07/27 03:10:23 kiyohara Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.16 2012/08/16 17:25:28 matt Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -130,6 +130,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_DYNAMIC
 #options 	MEMORY_DISK_ROOT_SIZE=22528	# Size in blocks
 #options 	MEMORY_RBFLAGS=RB_AUTOBOOT
+
+options 	DKWEDGE_AUTODISCOVER
+options 	DKWEDGE_METHOD_GPT
 
 # Miscellaneous kernel options
 
@@ -480,6 +483,7 @@ pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	drvctl			# device control
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
