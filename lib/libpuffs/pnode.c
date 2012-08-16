@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.12 2012/04/18 00:57:22 manu Exp $	*/
+/*	$NetBSD: pnode.c,v 1.13 2012/08/16 09:25:43 manu Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.12 2012/04/18 00:57:22 manu Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.13 2012/08/16 09:25:43 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -59,6 +59,8 @@ puffs_pn_new(struct puffs_usermount *pu, void *privdata)
 	puffs_vattr_null(&pn->pn_va);
 
 	LIST_INSERT_HEAD(&pu->pu_pnodelst, pn, pn_entries);
+
+	pu->pu_flags |= PUFFS_FLAG_PNCOOKIE;
 
 	return pn;
 }
