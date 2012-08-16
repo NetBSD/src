@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29 2010/07/07 01:30:33 chs Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,15 +76,14 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 void
 linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = lwp_trapframe(l);
 	struct linux_sigframe *fp, frame;
 	int onstack, error;
 	const int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = process_frame(l);
 
 	/*
 	 * The Linux version of this code is in
@@ -195,12 +194,10 @@ int
 linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
 	register_t *retval)
 {
+	struct trapframe * const tf = lwp_trapframe(l);
+	struct proc * const p = l->l_proc;
 	struct linux_sigframe *sfp, frame;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
 	sigset_t mask;
-
-	tf = process_frame(l);
 
 	/*
 	 * The trampoline code hands us the context.
@@ -219,7 +216,6 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
 		return EINVAL;
 
 	/* Restore register context. */
-	tf = process_frame(l);
 	tf->tf_r0    = frame.sf_sc.sc_r0;
 	tf->tf_r1    = frame.sf_sc.sc_r1;
 	tf->tf_r2    = frame.sf_sc.sc_r2;
