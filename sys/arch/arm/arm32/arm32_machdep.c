@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.80 2012/08/14 20:42:33 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.81 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.80 2012/08/14 20:42:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.81 2012/08/16 17:35:01 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -70,7 +70,12 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.80 2012/08/14 20:42:33 matt Exp 
 
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
+
 #include <machine/bootconfig.h>
+#include <machine/pcb.h>
+
+//void (*cpu_reset_address)(void);	/* Used by locore */
+//paddr_t cpu_reset_address_paddr;	/* Used by locore */
 
 struct vm_map *phys_map = NULL;
 
@@ -251,11 +256,10 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	struct pcb * pcb = lwp_getpcb(&lwp0);
-	pcb->pcb_flags = 0;
-	pcb->pcb_un.un_32.pcb32_sp =
-	    uvm_lwp_getuarea(&lwp0) + USPACE_SVC_STACK_TOP;
-	pcb->pcb_tf = (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
+	struct lwp * const l = &lwp0;
+	struct pcb * const pcb = lwp_getpcb(l);
+	pcb->pcb_sp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
+	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_sp - 1);
 }
 
 /*

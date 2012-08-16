@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.20 2010/12/20 00:25:26 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.21 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.20 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.21 2012/08/16 17:35:01 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -77,10 +77,7 @@ userret(struct lwp *l)
 	mi_userret(l);
 
 #if defined(__PROG32) && defined(DIAGNOSTIC)
-	{
-		struct pcb *pcb = lwp_getpcb(l);
-		KASSERT((pcb->pcb_tf->tf_spsr & IF32_bits) == 0);
-	}
+	KASSERT((lwp_trapframe(l)->tf_spsr & IF32_bits) == 0);
 #endif
 }
 
@@ -94,8 +91,7 @@ userret(struct lwp *l)
 void
 ast(struct trapframe *tf)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp * const l = curlwp;
 
 #ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */
@@ -109,19 +105,12 @@ ast(struct trapframe *tf)
 	KASSERT((tf->tf_spsr & IF32_bits) == 0);
 #endif
 
-
 	curcpu()->ci_data.cpu_ntrap++;
 	//curcpu()->ci_data.cpu_nast++;
 
 #ifdef DEBUG
 	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
-	if (l == NULL)
-		panic("ast: no curlwp!");
-	if (lwp_getpcb(l) == NULL)
-		panic("ast: no pcb!");
 #endif	
-
-	p = l->l_proc;
 
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;

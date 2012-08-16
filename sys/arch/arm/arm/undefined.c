@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.46 2012/08/12 05:05:47 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.47 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.46 2012/08/12 05:05:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.47 2012/08/16 17:35:01 matt Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.46 2012/08/12 05:05:47 matt Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
@@ -70,10 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.46 2012/08/12 05:05:47 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/frame.h>
-#include <arm/undefined.h>
+#include <machine/pcb.h>
 #include <machine/trap.h>
+
+#include <arm/undefined.h>
 
 #include <arch/arm/arm/disassem.h>
 
@@ -363,13 +365,12 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 	if (user) {
-		struct pcb *pcb = lwp_getpcb(l);
 		/*
 		 * Modify the fault_code to reflect the USR/SVC state at
 		 * time of fault.
 		 */
 		fault_code = FAULT_USER;
-		pcb->pcb_tf = frame;
+		lwp_settrapframe(l, frame);
 	} else
 		fault_code = 0;
 

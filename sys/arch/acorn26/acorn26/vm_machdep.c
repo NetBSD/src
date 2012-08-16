@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.28 2012/02/19 21:05:58 rmind Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.29 2012/08/16 17:35:01 matt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2012/02/19 21:05:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 2012/08/16 17:35:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 2012/02/19 21:05:58 rmind Exp $"
 #include <machine/frame.h>
 #include <machine/intr.h>
 #include <machine/machdep.h>
+#include <machine/pcb.h>
 
 /*
  * Finish a fork operation, with thread l2 nearly set up.
@@ -122,21 +123,21 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	sf = (struct switchframe *)tf - 1;
 	/* Duplicate old process's trapframe (if it had one) */
-	if (pcb1->pcb_tf == NULL)
+	if (lwp_trapframe(l1) == NULL)
 		memset(tf, 0, sizeof(*tf));
 	else
-		*tf = *pcb1->pcb_tf;
+		*tf = *lwp_trapframe(l1);
 	/* If specified, give the child a different stack. */
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
-	pcb2->pcb_tf = tf;
+	lwp_settrapframe(l2, tf);
 	/* Fabricate a new switchframe */
 	memset(sf, 0, sizeof(*sf));
 
 	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
 	sf->sf_pc  = (register_t)lwp_trampoline | R15_MODE_SVC;
 
-	pcb2->pcb_tf = tf;
+	lwp_settrapframe(l2, tf);
 	pcb2->pcb_sf = sf;
 	pcb2->pcb_onfault = NULL;
 	sf->sf_r4 = (register_t)func;

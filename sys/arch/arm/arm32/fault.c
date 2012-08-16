@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.82 2012/08/14 20:42:33 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.83 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.82 2012/08/14 20:42:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.83 2012/08/16 17:35:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.82 2012/08/14 20:42:33 matt Exp $");
 
 #include <arm/cpuconf.h>
 
-#include <machine/frame.h>
 #include <arm/arm32/katelib.h>
+
 #include <machine/intr.h>
+#include <machine/pcb.h>
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #ifdef KGDB
@@ -153,9 +154,6 @@ static const struct data_abort data_aborts[] = {
 	{dab_buserr,	"External Translation Abort (L2)"},
 	{NULL,		"Permission Fault (P)"}
 };
-
-/* Determine if a fault came from user mode */
-#define	TRAP_USERMODE(tf)	((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
 
 /* Determine if 'x' is a permission fault */
 #define	IS_PERMISSION_FAULT(x)					\
@@ -220,9 +218,9 @@ void
 data_abort_handler(trapframe_t *tf)
 {
 	struct vm_map *map;
-	struct pcb *pcb;
-	struct lwp *l;
-	u_int user, far, fsr;
+	struct lwp * const l = curlwp;
+	struct cpu_info * const ci = curcpu();
+	u_int far, fsr;
 	vm_prot_t ftype;
 	void *onfault;
 	vaddr_t va;
@@ -237,7 +235,7 @@ data_abort_handler(trapframe_t *tf)
 
 	UVMHIST_CALLED(maphist);
 	/* Update vmmeter statistics */
-	curcpu()->ci_data.cpu_ntrap++;
+	ci->ci_data.cpu_ntrap++;
 
 	/* Re-enable interrupts if they were enabled previously */
 	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
@@ -245,18 +243,17 @@ data_abort_handler(trapframe_t *tf)
 		restore_interrupts(tf->tf_spsr & IF32_bits);
 
 	/* Get the current lwp structure */
-	KASSERT(curlwp != NULL);
-	l = curlwp;
 
 	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, far=0x%x, fsr=0x%x)",
 	    tf->tf_pc, l, far, fsr);
 
 	/* Data abort came from user mode? */
-	if ((user = TRAP_USERMODE(tf)) != 0)
+	bool user = (TRAP_USERMODE(tf) != 0);
+	if (user)
 		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
-	pcb = lwp_getpcb(l);
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
@@ -287,12 +284,12 @@ data_abort_handler(trapframe_t *tf)
 	/* fusubailout is used by [fs]uswintr to avoid page faulting */
 	if (__predict_false(pcb->pcb_onfault == fusubailout)) {
 		tf->tf_r0 = EFAULT;
-		tf->tf_pc = (register_t)(intptr_t) pcb->pcb_onfault;
+		tf->tf_pc = (intptr_t) pcb->pcb_onfault;
 		return;
 	}
 
 	if (user) {
-		pcb->pcb_tf = tf;
+		lwp_settrapframe(l, tf);
 	}
 
 	/*
@@ -359,7 +356,7 @@ data_abort_handler(trapframe_t *tf)
 	 *	2. pcb_onfault not set or
 	 *	3. pcb_onfault set and not LDRT/LDRBT/STRT/STRBT instruction.
 	 */
-	if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS ||
+	if (!user && (va >= VM_MIN_KERNEL_ADDRESS ||
 	    (va < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW)) &&
 	    __predict_true((pcb->pcb_onfault == NULL ||
 	     (ReadWord(tf->tf_pc) & 0x05200000) != 0x04200000))) {
@@ -379,7 +376,7 @@ data_abort_handler(trapframe_t *tf)
 			 * userland that actually runs in a priveledged mode
 			 * but uses USR mode permissions for its accesses.
 			 */
-			user = 1;
+			user = true;
 			goto do_trapsignal;
 		}
 	} else {
@@ -524,9 +521,7 @@ out:
 static int
 dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 {
-	const char *mode;
-
-	mode = TRAP_USERMODE(tf) ? "user" : "kernel";
+	const char * const mode = TRAP_USERMODE(tf) ? "user" : "kernel";
 
 	if (l != NULL) {
 		printf("Fatal %s mode data abort: '%s'\n", mode,
@@ -578,14 +573,12 @@ dab_fatal(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 static int
 dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-
 	/* Alignment faults are always fatal if they occur in kernel mode */
 	if (!TRAP_USERMODE(tf))
 		dab_fatal(tf, fsr, far, l, NULL);
 
 	/* pcb_onfault *must* be NULL at this point */
-	KDASSERT(pcb->pcb_onfault == NULL);
+	KDASSERT(((struct pcb *)lwp_getpcb(l))->pcb_onfault == NULL);
 
 	/* See if the CPU state needs to be fixed up */
 	(void) data_abort_fixup(tf, fsr, far, l);
@@ -597,7 +590,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	pcb->pcb_tf = tf;
+	lwp_settrapframe(l, tf);
 
 	return (1);
 }
@@ -647,7 +640,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 		 * If the current trapframe is at the top of the kernel stack,
 		 * the fault _must_ have come from user mode.
 		 */
-		if (tf != ((trapframe_t *)pcb->pcb_un.un_32.pcb32_sp) - 1) {
+		if (tf != ((trapframe_t *)pcb->pcb_sp) - 1) {
 			/*
 			 * Kernel mode. We're either about to die a
 			 * spectacular death, or pcb_onfault will come
@@ -704,7 +697,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
-	pcb->pcb_tf = tf;
+	lwp_settrapframe(l, tf);
 
 	return (1);
 }
@@ -801,7 +794,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)(intptr_t) tf->tf_pc;
-		pcb->pcb_tf = tf;
+		lwp_settrapframe(l, tf);
 		goto do_trapsignal;
 	default:
 		break;
@@ -813,7 +806,7 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
-	pcb->pcb_tf = tf;
+	lwp_settrapframe(l, tf);
 	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)", fault_pc, l, tf,
 	    0);
 

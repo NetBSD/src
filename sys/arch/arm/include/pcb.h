@@ -42,8 +42,6 @@
 #include <arm/arm32/pte.h>
 #include <arm/reg.h>
 
-struct trapframe;
-
 struct pcb_arm32 {
 	/*
 	 * WARNING!
@@ -72,26 +70,28 @@ struct pcb_arm32 {
 #define	pcb_dacr	pcb_un.un_32.pcb32_dacr
 #define	pcb_cstate	pcb_un.un_32.pcb32_cstate
 #define	pcb_user_pid_rw	pcb_un.un_32.pcb32_user_pid_rw
+#ifdef __PROG32
+#define	pcb_sp		pcb_un.un_32.pcb32_sp
+#endif
 
 struct pcb_arm26 {
 	struct	switchframe *pcb26_sf;
 };
 #define	pcb_sf	pcb_un.un_26.pcb26_sf
+#ifdef __PROG26
+#define	pcb_sp		pcb_sf.sf_r13
+#endif
 
 /*
  * WARNING!
  * See warning for struct pcb_arm32, above, before changing struct pcb!
  */
 struct pcb {
-	u_int	pcb_flags;
-#define	PCB_OWNFPU	0x00000001
-#define	PCB_NOALIGNFLT	0x00000002		/* For EXEC_AOUT */
-	struct	trapframe *pcb_tf;
-	void *	pcb_onfault;			/* On fault handler */
 	union	{
 		struct	pcb_arm32 un_32;
 		struct	pcb_arm26 un_26;
 	} pcb_un;
+	void *	pcb_onfault;			/* On fault handler */
 	struct	fpe_sp_state pcb_fpstate;	/* FPA Floating Point state */
 	struct	vfpreg pcb_vfp;			/* VFP registers */
 };
