@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.11 2011/05/14 17:42:28 jmmv Exp $
+#       $NetBSD: t_tcpip.sh,v 1.12 2012/08/16 12:57:24 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,7 +190,7 @@ test_nfs()
 
 	# finally, le nfschuck
 	export RUMPHIJACK='blanket=/var/run,socket=all,vfs=all'
-	atf_check -s exit:0 nfsd -tu
+	atf_check -s exit:0 nfsd
 
 	#
 	# now, time for the client server and associated madness.
