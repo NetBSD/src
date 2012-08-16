@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2012/08/14 20:42:33 matt Exp $
+#	$NetBSD: genassym.cf,v 1.49 2012/08/16 17:35:01 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -50,6 +50,7 @@ include <arm/fiq.h>
 include <arm/arm32/pte.h>
 include <machine/pmap.h>
 include <machine/frame.h>
+include <machine/pcb.h>
 include <machine/vmparam.h>
 
 include "opt_multiprocessor.h"
@@ -109,10 +110,12 @@ define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
+define	MDLWP_NOALIGNFLT	MDLWP_NOALIGNFLT
+
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
-define	PCB_TF			offsetof(struct pcb, pcb_tf)
-define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
 define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
 define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
@@ -123,7 +126,6 @@ define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
 define	PCB_SIZE		sizeof(struct pcb)
 

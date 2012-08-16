@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.65 2012/08/14 20:42:33 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.66 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.65 2012/08/14 20:42:33 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.66 2012/08/16 17:35:01 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -295,7 +295,7 @@ ENTRY(cpu_switchto)
 	 */
 
 	ldr	r2, [r5, #(P_RASLIST)]
-	ldr	r1, [r7, #(PCB_TF)]	/* r1 = trapframe (used below) */
+	ldr	r1, [r6, #(L_MD_TF)]	/* r1 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
 
@@ -316,7 +316,7 @@ ENTRY(cpu_switchto)
 	mov	r0, r5			/* first ras_lookup() arg */
 	bl	_C_LABEL(ras_lookup)
 	cmn	r0, #1			/* -1 means "not in a RAS" */
-	ldrne	r1, [r7, #(PCB_TF)]
+	ldrne	r1, [r6, #(L_MD_TF)]
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
@@ -403,7 +403,7 @@ ENTRY_NP(softint_switch)
 	 * it's existing state doesn't matter.  We start the stack just
 	 * below the trapframe.
 	 */
-	ldr	sp, [r2, #(PCB_TF)]	/* get new lwp's stack ptr */
+	ldr	sp, [r5, #(L_MD_TF)]	/* get new lwp's stack ptr */
 
 	/* At this point we can allow IRQ's again. */
 #ifndef __HAVE_UNNESTED_INTRS
