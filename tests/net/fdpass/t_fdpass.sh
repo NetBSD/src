@@ -1,4 +1,4 @@
-# $NetBSD: t_fdpass.sh,v 1.1 2012/08/13 11:15:06 christos Exp $
+# $NetBSD: t_fdpass.sh,v 1.2 2012/08/16 08:39:43 martin Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,7 @@ have32() {
 	local src="$(atf_get_srcdir)"
 	if cmp "${src}/fdpass64" "${src}/fdpass32" > /dev/null
 	then
-		echo "no -m32 support"
+		# echo "no -m32 support"
 		return 1
 	else
 		return 0
