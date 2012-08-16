@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.4 2012/08/16 18:22:46 matt Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.5 2012/08/16 23:40:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.4 2012/08/16 18:22:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.5 2012/08/16 23:40:19 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -227,6 +227,9 @@ int plcomcnmode = PLCONMODE;
 #include <sys/kgdb.h>
 #endif
 
+/* Smallest amount of RAM start.elf could give us. */
+#define RPI_MINIMUM_ARM_RAM_SPLIT (128U * 1024 * 1024)
+
 void
 cpu_reboot(int howto, char *bootstr)
 {
@@ -324,6 +327,65 @@ static const struct pmap_devmap rpi_devmap[] = {
 #undef  _A
 #undef  _S
 
+#define LINUX_ARM_MACHTYPE_BCM2708 3138
+
+#define LINUX_ATAG_NONE		0x00000000
+struct linux_atag_header {
+	uint32_t size;
+	uint32_t tag;
+} __packed __aligned(4); 
+
+#define LINUX_ATAG_MEM		0x54410002
+struct linux_atag_mem {
+	uint32_t size;
+	uint32_t start;
+} __packed __aligned(4);
+
+#define LINUX_ATAG_CMDLINE	0x54410009
+struct linux_atag_cmdline {
+	char cmdline[1];
+} __packed __aligned(4);
+
+struct linux_atag {
+	struct linux_atag_header	hdr;
+	union {
+		struct linux_atag_mem		mem;
+		struct linux_atag_cmdline	cmdline;
+	} u;
+} __packed __aligned(4);
+
+static void
+parse_linux_atags(void *atag_base)
+{
+	struct linux_atag *atp;
+
+	for (atp = atag_base;
+	    atp->hdr.size >= sizeof(struct linux_atag_header)/sizeof(uint32_t);
+	    atp = (void *)((uintptr_t)atp + sizeof(uint32_t) * atp->hdr.size)) {
+		printf("atag: size %08x tag %08x\n", atp->hdr.size, atp->hdr.tag);
+		if (atp->hdr.tag == LINUX_ATAG_MEM) {
+			if (bootconfig.dramblocks > 1) {
+				printf("Ignoring RAM block 0x%08x-0x%08x\n",
+				    atp->u.mem.start, atp->u.mem.start +
+				    atp->u.mem.size - 1);
+				continue;
+			}
+			physical_end = atp->u.mem.size;
+			physmem = physical_end / PAGE_SIZE;
+			KASSERT(atp->u.mem.start == 0);
+			physical_start = atp->u.mem.start;
+			bootconfig.dram[bootconfig.dramblocks].address = 0x0;
+			bootconfig.dram[bootconfig.dramblocks].pages = physmem;
+			++bootconfig.dramblocks;
+		}
+
+		if (atp->hdr.tag == LINUX_ATAG_CMDLINE) {
+			strncpy(bootargs, atp->u.cmdline.cmdline,
+			    sizeof(bootargs));
+		}
+	}
+}
+
 /*
  * u_int initarm(...)
  *
@@ -364,13 +426,19 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 #endif
 
-	bootconfig.dramblocks = 1;
-	physical_end = (MEMSIZE * 1024 * 1024); /* MEMSIZE */
-	physmem = physical_end / PAGE_SIZE;
-	physical_start = 0;
+	extern const uint32_t rpi_boot_regs[4];
+	if (rpi_boot_regs[0] == 0 &&
+	    rpi_boot_regs[1] == LINUX_ARM_MACHTYPE_BCM2708) {
+		parse_linux_atags((void *)KERN_PHYSTOV(rpi_boot_regs[2]));
+	} else {
+		bootconfig.dramblocks = 1;
+		physical_end = RPI_MINIMUM_ARM_RAM_SPLIT;
+		physmem = physical_end / PAGE_SIZE;
+		physical_start = 0;
 
-	bootconfig.dram[0].address = 0x0;
-	bootconfig.dram[0].pages = physmem;
+		bootconfig.dram[0].address = 0x0;
+		bootconfig.dram[0].pages = physmem;
+	}
 
 	/*
 	 * Our kernel is at the beginning of memory, so set our free space to
@@ -499,6 +567,9 @@ initarm(void *arg)
 #ifdef __HAVE_MEMORY_DISK__
 	md_root_setconf(memory_disk, sizeof memory_disk);
 #endif
+
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
 
 #ifdef BOOTHOWTO
 	boothowto |= BOOTHOWTO;

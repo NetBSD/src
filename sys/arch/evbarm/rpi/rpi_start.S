@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.3 2012/08/16 21:46:18 jakllsch Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.4 2012/08/16 23:40:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -88,7 +88,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.3 2012/08/16 21:46:18 jakllsch Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.4 2012/08/16 23:40:19 jakllsch Exp $")
 
 /* Location (in MiB) to put temporary MMU tables just below. */
 /* Raspberry Pi start.elf will give us anywhere between 128MiB and 240MiB */
@@ -126,6 +126,9 @@ RCSID("$NetBSD: rpi_start.S,v 1.3 2012/08/16 21:46:18 jakllsch Exp $")
 
 	.global	_C_LABEL(rpi_start)
 _C_LABEL(rpi_start):
+	adr	r8, rpi_boot_regs
+	stmia	r8!, {r0-r3}
+
 	mrs	r0, cpsr
 	bic	r0, r0, #PSR_MODE
 	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)
@@ -323,3 +326,7 @@ mmu_init_table:
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+
+	.globl	_C_LABEL(rpi_boot_regs)
+rpi_boot_regs:
+	.space 4 * 4
