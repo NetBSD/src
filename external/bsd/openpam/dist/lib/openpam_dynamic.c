@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dynamic.c,v 1.3 2012/01/03 18:56:49 christos Exp $	*/
+/*	$NetBSD: openpam_dynamic.c,v 1.3.2.1 2012/08/16 02:41:05 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -123,11 +123,14 @@ openpam_dynamic(const char *path)
 	}
 	return (module);
 buf_err:
+	serrno = errno;
 	if (dlh != NULL)
 		dlclose(dlh);
 	FREE(module);
+	errno = serrno;
 err:
-	openpam_log(PAM_LOG_ERROR, "%s: %s", epath, strerror(errno));
+	openpam_log(errno == ENOENT ? PAM_LOG_DEBUG : PAM_LOG_ERROR, "%s: %s",
+	    epath, strerror(errno));
 	return (NULL);
 }
 
