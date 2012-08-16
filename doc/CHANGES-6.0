@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.190 2012/08/16 02:41:29 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.191 2012/08/16 21:19:27 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8255,6 +8255,7 @@ sys/arch/shark/conf/GENERIC			patch
 sys/arch/sparc64/conf/GENERIC			patch
 sys/arch/sparc64/conf/GENERIC.DEBUG		patch
 sys/arch/zaurus/conf/GENERIC			patch
+sys/arch/zaurus/conf/INSTALL			patch
 
 	Switch off DIAGNOSTIC and/or DEBUG on release kernels.
 	Enable DIAGNOSTIC in DEBUG kernels to allow for option
