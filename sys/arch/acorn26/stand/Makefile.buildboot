@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.12 2011/01/22 19:19:14 joerg Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13 2012/08/16 16:23:32 matt Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -73,6 +73,7 @@ RELOC=8000
 LINKFLAGS=-N
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
+	${_MKTARGET_LINK}
 	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS} ${LIBSA}
 	${SIZE} ${.TARGET}
