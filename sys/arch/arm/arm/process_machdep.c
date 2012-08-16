@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.22 2009/11/21 20:32:17 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.23 2012/08/16 16:41:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2012/08/16 16:41:53 matt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2009/11/21 20:32:17 rmind E
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(l);
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	KASSERT(tf != NULL);
 	memcpy((void *)regs->r, (void *)&tf->tf_r0, sizeof(regs->r));
@@ -190,7 +190,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct trapframe *tf = process_frame(l);
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	KASSERT(tf != NULL);
 	memcpy(&tf->tf_r0, regs->r, sizeof(regs->r));
@@ -234,7 +234,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 int
 process_set_pc(struct lwp *l, void *addr)
 {
-	struct trapframe *tf = process_frame(l);
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	KASSERT(tf != NULL);
 #ifdef __PROG32
