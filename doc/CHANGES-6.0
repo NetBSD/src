@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.189 2012/08/15 17:37:13 sborrill Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.190 2012/08/16 02:41:29 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8266,4 +8266,15 @@ Makefile					1.295-1.298
 
 	Make test for and removal of old pty device nodes more portable.
 	[martin, ticket #503]
+
+sys/arch/x68k/dev/event_var.h			1.9
+
+	Fix keyboard KASSERT on x68k DIAGNOSTIC kernel when running Xserver.	
+	[tsutsui, ticket #504]
+
+external/bsd/openpam/dist/lib/openpam_dynamic.c	1.4
+
+	Suppress error messages from not finding a file to load that can
+	always happen on MKPIC=no environment. PR#46801.
+	[tsutsui, ticket #505]
 
