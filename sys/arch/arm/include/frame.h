@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.16 2012/08/16 16:41:54 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.17 2012/08/16 17:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -79,6 +79,12 @@ typedef struct trapframe {
 #define tf_r14 tf_usr_lr
 #define tf_r15 tf_pc
 
+#ifdef __PROG32
+#define TRAP_USERMODE(tf)	(((tf)->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
+#elif defined(__PROG26)
+#define TRAP_USERMODE(tf)	(((tf)->tf_r15 & R15_MODE) == R15_MODE_USR)
+#endif
+
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
  */
@@ -99,7 +105,8 @@ __BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 void *getframe(struct lwp *, int, int *);
 __END_DECLS
-#define lwp_trapframe(l) (((struct pcb *)lwp_getpcb(l))->pcb_tf)
+#define lwp_trapframe(l)		((l)->l_md.md_tf)
+#define lwp_settrapframe(l, tf)		((l)->l_md.md_tf = (tf))
 #endif
 
 #endif /* _LOCORE */
