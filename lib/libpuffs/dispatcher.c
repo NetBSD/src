@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.43 2012/08/10 08:42:10 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.44 2012/08/16 09:25:43 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.43 2012/08/10 08:42:10 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.44 2012/08/16 09:25:43 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -125,7 +125,7 @@ dispatch(struct puffs_cc *pcc)
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf; /* help with typecasting */
 	puffs_cookie_t opcookie;
-	int error = 0, buildpath;
+	int error = 0, buildpath, pncookie;
 
 	/* XXX: smaller hammer, please */
 	if ((PUFFSOP_OPCLASS(preq->preq_opclass == PUFFSOP_VFS &&
@@ -145,6 +145,9 @@ dispatch(struct puffs_cc *pcc)
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH;
+	pncookie = pu->pu_flags & PUFFS_FLAG_PNCOOKIE;
+	assert(!buildpath || pncookie);
+
 	preq->preq_setbacks = 0;
 
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
@@ -302,7 +305,7 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
-			if (!error) {
+			if (pncookie && !error) {
 				if (pn == NULL)
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 				pn->pn_nlookup++;
@@ -349,7 +352,7 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
-			if (!error) {
+			if (pncookie && !error) {
 				if (pn == NULL)
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 				pn->pn_nlookup++;
@@ -396,7 +399,7 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
-			if (!error) {
+			if (pncookie && !error) {
 				if (pn == NULL)
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 				pn->pn_nlookup++;
@@ -701,7 +704,7 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
-			if (!error) {
+			if (pncookie && !error) {
 				if (pn == NULL)
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 				pn->pn_nlookup++;
@@ -766,7 +769,7 @@ dispatch(struct puffs_cc *pcc)
 				}
 			}
 
-			if (!error) {
+			if (pncookie && !error) {
 				if (pn == NULL)
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 				pn->pn_nlookup++;
@@ -835,6 +838,12 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_reclaim *auxt = auxbuf;
 			struct puffs_node *pn;
 		
+			if (pops->puffs_node_reclaim2 != NULL) {
+				error = pops->puffs_node_reclaim2(pu, opcookie,
+					     auxt->pvnr_nlookup);
+				break;
+			}
+
 			if (pops->puffs_node_reclaim == NULL) {
 				error = 0;
 				break;
@@ -847,11 +856,13 @@ dispatch(struct puffs_cc *pcc)
 			 * but before the reply, leaving the kernel
 			 * with a invalid vnode/cookie reference.
 			 */
-			pn = PU_CMAP(pu, opcookie);
-			pn->pn_nlookup -= auxt->pvnr_nlookup;
-			if (pn->pn_nlookup >= 1) {
-				error = 0;
-				break;
+			if (pncookie) {
+				pn = PU_CMAP(pu, opcookie);
+				pn->pn_nlookup -= auxt->pvnr_nlookup;
+				if (pn->pn_nlookup >= 1) {
+					error = 0;
+					break;
+				}
 			}
 
 			error = pops->puffs_node_reclaim(pu, opcookie);
