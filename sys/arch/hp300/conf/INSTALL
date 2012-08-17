@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.48 2011/12/18 05:49:27 dholland Exp $
+# $NetBSD: INSTALL,v 1.49 2012/08/17 20:11:39 abs Exp $
 #
 # INSTALL machine description file
 #
@@ -123,6 +123,8 @@ options 	INET		# Internet protocols
 
 # workstation console options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK

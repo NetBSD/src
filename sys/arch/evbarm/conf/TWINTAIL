@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.50 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: TWINTAIL,v 1.51 2012/08/17 20:11:38 abs Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -185,6 +185,7 @@ wsdisplay*	at lcd? console ?
 options FONT_SONY8x16
 #options FONT_VT220L8x8
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options G4250_LCD_TOSHIBA_LTM035
 #options G4250_LCD_NEC_NL3224BC35
 

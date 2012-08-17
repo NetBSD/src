@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.72 2012/02/04 19:02:25 christos Exp $
+#	$NetBSD: P5064,v 1.73 2012/08/17 20:11:37 abs Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.72 $"
+#ident 		"P5064-$Revision: 1.73 $"
 
 maxusers 32
 
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs

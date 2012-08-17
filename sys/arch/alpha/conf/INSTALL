@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.102 2011/12/18 05:49:23 dholland Exp $
+# $NetBSD: INSTALL,v 1.103 2012/08/17 20:11:37 abs Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -92,6 +92,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 config		netbsd	root on ? type ?
 

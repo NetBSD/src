@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.63 2011/12/18 05:49:22 dholland Exp $
+#	$NetBSD: P4032,v 1.64 2012/08/17 20:11:37 abs Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.63 $"
+#ident 		"P4032-$Revision: 1.64 $"
 
 maxusers 32
 
@@ -106,6 +106,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs
