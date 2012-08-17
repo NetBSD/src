@@ -1,21 +1,21 @@
-#	$NetBSD: Makefile,v 1.187 2012/08/08 14:01:16 christos Exp $
+#	$NetBSD: Makefile,v 1.188 2012/08/17 16:22:27 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
-SUBDIR=		csu
+SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
 . if ${HAVE_GCC} == 4
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../gnu/lib/crtstuff4
+SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
 .  endif
-SUBDIR+=	../gnu/lib/libgcc4
+SUBDIR+=	../gnu/lib/libgcc4 .WAIT
 . else
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/gcc/lib/crtstuff
+SUBDIR+=	../external/gpl3/gcc/lib/crtstuff .WAIT
 .  endif
-SUBDIR+=	../external/gpl3/gcc/lib/libgcc
+SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
 . endif
 .endif
 
@@ -202,9 +202,42 @@ SUBDIR+=	libukfs		# depends on librumpvfs, librump
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
+
+.if !defined(BSD_MK_COMPAT_FILE)
+SUBDIR+=	../sys/rump/dev/lib
+SUBDIR+=	../sys/rump/fs/lib
+SUBDIR+=	../sys/rump/kern/lib
+SUBDIR+=	../sys/rump/net/lib
+.endif
 .endif
 
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
+
+#
+# build_install logic for src/Makefile.
+# Compute a list of subdirectories delimited by .WAIT.
+# Run "make dependall && make install" for all subdirectories in a group
+# concurrently, but wait after each group.
+#
+SUBDIR_GROUPS=	1
+CUR_GROUP:=	1
+.for dir in ${SUBDIR}
+.  if ${dir} == ".WAIT"
+CUR_GROUP:=	${CUR_GROUP}1
+SUBDIR_GROUPS:=	${SUBDIR_GROUPS} ${CUR_GROUP}
+.  else
+SUBDIR_GROUP.${CUR_GROUP}+=	${dir}
+.endif
+
+.endfor
+
+build_install:
+.for group in ${SUBDIR_GROUPS}
+.  if !empty(SUBDIR_GROUP.${group})
+	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/dependall-/}
+	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/install-/}
+.  endif
+.endfor
 
 .include <bsd.subdir.mk>
