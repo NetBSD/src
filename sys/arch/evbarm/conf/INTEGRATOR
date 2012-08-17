@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.66 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: INTEGRATOR,v 1.67 2012/08/17 20:11:38 abs Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -217,6 +217,7 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 
 # WSCONS Support
 #options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #pckbc0		at isa?
 #pckbd*		at pckbc?

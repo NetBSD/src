@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.62 2011/11/22 21:25:25 tls Exp $
+#	$NetBSD: POWERMAC,v 1.63 2012/08/17 20:11:40 abs Exp $
 #
 # POWERMAC config file
 #
@@ -64,6 +64,7 @@ options 	PCIVERBOSE	# verbose PCI device messages
 
 #options 	ZS_TXDMA	# Use dma on zs output
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.

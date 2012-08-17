@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.9 2012/06/22 20:42:23 abs Exp $
+# $NetBSD: VAX780,v 1.10 2012/08/17 20:11:41 abs Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -111,6 +111,7 @@ options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 # WS console uses VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_DEFAULTSCREENS=8
 #options 	FONT_QVSS8x15
 

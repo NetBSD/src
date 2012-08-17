@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.4 2012/08/08 02:18:36 nisimura Exp $
+#	$NetBSD: MINI2440,v 1.5 2012/08/17 20:11:38 abs Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -189,6 +189,7 @@ lcd0		at ssio?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	FONT_VT220L8x16
 #options 	FONT_VT220L8x10
 #options 	LCD_DEBUG
