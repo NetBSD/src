@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.49 2011/12/18 05:49:29 dholland Exp $
+#	$NetBSD: INSTALL,v 1.50 2012/08/17 20:11:40 abs Exp $
 #
 # INSTALL
 
@@ -79,6 +79,8 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # rcons options; note that 1-bit and 8-bit displays are supported by default.
 options 	RCONS_2BPP		# Support for 2-bit display

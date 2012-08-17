@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.32 2011/12/18 05:49:26 dholland Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.33 2012/08/17 20:11:39 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -125,6 +125,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI de
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 #options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
