@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.76 2012/03/10 21:51:50 joerg Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.77 2012/08/17 20:11:38 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -106,6 +106,7 @@ audio* at eso?
 options WSEMUL_VT100 # VT100 / VT220 emulation
 options WS_KERNEL_FG=WSCOL_WHITE
 options WS_KERNEL_BG=WSCOL_BLACK
+options WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options WSDISPLAY_DEFAULTSCREENS=4
 options PCDISPLAY_SOFTCURSOR
 isab0 at mainbus0 # ISA-bus

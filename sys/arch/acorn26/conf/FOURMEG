@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.39 2011/11/22 21:24:51 tls Exp $
+# $NetBSD: FOURMEG,v 1.40 2012/08/17 20:11:37 abs Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -113,6 +113,7 @@ options 	NFS_BOOT_BOOTPARAM
 #options 	WSEMUL_NODUMB
 #options 	WSEMUL_SUN
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x8		# 8x8 font for console
 options 	RASOPS_SMALL
 

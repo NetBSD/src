@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5 2012/03/10 21:51:51 joerg Exp $
+# $NetBSD: GENERIC,v 1.6 2012/08/17 20:11:38 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5 $"
+#ident		"GENERIC-$Revision: 1.6 $"
 
 maxusers	64
 
@@ -150,6 +150,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	FONT_GALLANT12x22
 
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 
