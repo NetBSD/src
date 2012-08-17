@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.19 2012/01/22 03:53:32 tsutsui Exp $
+#	$NetBSD: Makefile.bootcd,v 1.19.2.1 2012/08/17 20:50:51 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -43,7 +43,7 @@ CDSOURCE?=	false
 .if ${CDRELEASE} == false
 CDROMS_RELEASEDIR?=	${MACHINE}/installation/cdrom
 .else
-CDROMS_RELEASEDIR?=	iso
+CDROMS_RELEASEDIR?=	images
 .endif
 .if defined(CDRELEASE_NOISOS)
 CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
