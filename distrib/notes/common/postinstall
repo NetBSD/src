@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.75 2012/05/26 05:51:13 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.76 2012/08/17 19:55:14 riz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -346,27 +346,24 @@ Precompiled binaries can be found at
 usually in the
 .Pa \*M/\*V/All
 subdir.
-You can install them with the following commands under
-.Xr sh 1 :
+If you installed
+.Xr pkgin 1 
+in the
+.Ic sysinst
+post-installation configuration menu, you can use it to automatically install
+binary packages over the network.
+Assuming that
+.Pa /usr/pkg/etc/pkgin/repositories.conf
+is correctly configured, you can install them with the following commands:
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
-.Ic # export PKG_PATH
-.Ic # pkg_add -v tcsh
-.Ic # pkg_add -v bash
-.Ic # pkg_add -v perl
-.Ic # pkg_add -v apache
-.Ic # pkg_add -v kde
-.Ic # pkg_add -v firefox
+.Ic # pkgin install tcsh
+.Ic # pkgin install bash
+.Ic # pkgin install perl
+.Ic # pkgin install apache
+.Ic # pkgin install kde
+.Ic # pkgin install firefox
 \&...
-.Ed
-.Pp
-If you are using
-.Xr csh 1
-then replace the first two lines with the following:
-.Pp
-.Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 .Ed
 .(Note
 Some mirror sites don't mirror the
@@ -378,21 +375,12 @@ The above commands will install the Tenex-csh and Bourne Again shells,
 the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
-.(Note
-In some cases the
-.Xr pkg_add 1
-command will complain about a version mismatch of packages with a message
-like the following:
-.Dl Warning: package `foo' was built for a different version of the OS:
-.Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
-This warning is harmless if the formal major release numbers are the same
-between the pkg and your host.
-Please refer to the NetBSD release glossary and graphs at
-.Lk http://www.NetBSD.org/releases/release-map.html
-for more information about NetBSD's release numbering scheme.
-.Note)
 .It
-The framework for compiling packages can be obtained by
+If you did not install it from the 
+.Ic sysinst
+post-installation configuration menu, the
+.Xr pkgsrc 7
+framework for compiling packages can be obtained by
 retrieving the file
 .Lk ftp://ftp.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
 It is typically extracted into

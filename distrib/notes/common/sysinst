@@ -1,6 +1,6 @@
-.\"	$NetBSD: sysinst,v 1.101 2011/05/27 17:50:41 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.102 2012/08/17 19:55:14 riz Exp $
 .\"
-.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -390,7 +390,11 @@ progress as this may leave the keyboard locked to
 The main menu will be displayed.
 .\} \" \n[mac68k]
 .ie \n[alpha]:\n[amd64]:\n[i386] \{\
-Insert the CD into the drive and boot the computer.
+Insert the CD into the drive 
+.if \n[amd64]:\n[i386] \{\
+or the USB memstick into an available USB port
+.\}
+and boot the computer from it.
 .if \n[alpha] \{\
 Type
 .Pp
@@ -438,6 +442,7 @@ After language selection, the main menu will be displayed.
   * c: Re-install sets or install additional sets *
   * d: Reboot the computer                        *
   * e: Utility menu                               *
+  * f: Config menu                                *
   * x: Exit Install System                        *
   .***********************************************.
 . cs \n(.f
@@ -499,7 +504,13 @@ The CD-ROM device is usually cd0 and the partition
 .\}
 .el \{\
 .Me CD-ROM
-as the medium.
+as the medium
+.if \n[amd64]:\n[i386] \{\
+if booted from CD-ROM, or
+.Me Local directory
+if booted from USB memstick
+.\}
+\&.
 The default values for the path and device should be ok.
 .\}
 .It
@@ -1603,11 +1614,32 @@ the device node files will be created.
 If you have already configured networking, you will be asked if you want to
 use this configuration for normal operation.
 If so, these values will be installed in the network configuration files.
-The next menu will allow you to select the time zone that you're in,
-to make sure your clock has the right offset from UTC.
-Finally you will be asked to select a password encryption algorithm
-and can then set a password for the "root" account, to prevent
-the machine from coming up without access restrictions.
+.It
+.To 2 "Configure additional items"
+.Em Configure additional items
+.Pp
+The next menu will allow you to select a number of additional items
+to configure, including the time zone that you're in,
+to make sure your clock has the right offset from UTC,
+the root user's shell, and the initial root password.
+.Pp
+You can also enable installation of binary packages, which installs the
+.Xr pkgin 1
+tool for managing binary packages for third-party software.
+This will
+feel familiar to users of other package tools, such as
+.Ic apt-get
+or
+.Ic yum .
+Or, you can install the
+.Xr pkgsrc 7
+tree for installing third-party software from source.
+.Pp
+Finally, you can enable some daemons such as
+.Xr sshd 8 ,
+.Xr ntpd 8 ,
+or
+.Xr mdnsd 8 .
 .if \n[sparc64] \{\
 .It
 .To 2 "Ensure you have the correct kernel installed"
