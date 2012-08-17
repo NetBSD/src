@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2012/01/22 03:53:29 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2012/08/17 16:56:35 riz Exp $
 
-LIVEIMGBASE=	amd64emu		# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live-wd0root	# gives ${IMGBASE}.img
 
 BOOTDISK=	wd0			# for QEMU etc.
 
