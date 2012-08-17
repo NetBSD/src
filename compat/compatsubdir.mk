@@ -1,8 +1,10 @@
-#	$NetBSD: compatsubdir.mk,v 1.7 2011/01/31 10:58:14 matt Exp $
+#	$NetBSD: compatsubdir.mk,v 1.8 2012/08/17 16:22:27 joerg Exp $
 
 # Build netbsd libraries.
 
 .include <bsd.own.mk>
+
+TARGETS+=	build_install
 
 .if ${MKCOMPAT} != "no"
 .if !make(includes)
