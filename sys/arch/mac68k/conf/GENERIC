@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2012/03/10 21:51:53 joerg Exp $
+# $NetBSD: GENERIC,v 1.207 2012/08/17 20:11:40 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.206 $"
+#ident 		"GENERIC-$Revision: 1.207 $"
 
 maxusers	16		# estimated number of users
 
@@ -172,6 +172,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
 
 # rcons options; note that 1-bit and 8-bit displays are supported by default.

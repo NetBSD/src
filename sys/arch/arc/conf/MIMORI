@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.58 2011/11/22 21:24:59 tls Exp $
+#	$NetBSD: MIMORI,v 1.59 2012/08/17 20:11:38 abs Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -119,6 +119,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # wscons terminal emulation
 options 	WSEMUL_VT100	# VT100 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.68 2011/12/18 05:49:31 dholland Exp $
+# 	$NetBSD: INSTALL,v 1.69 2012/08/17 20:11:41 abs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -67,6 +67,8 @@ options 	FONT_BOLD8x16		# Font for fb devices
 options 	FONT_GALLANT12x22
 
 options		WSEMUL_VT100
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_BLACK
 

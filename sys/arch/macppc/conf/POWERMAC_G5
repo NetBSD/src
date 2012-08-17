@@ -81,6 +81,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 # wscons options
 #options 	WSEMUL_SUN			# sun terminal emulation
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.170 2012/03/10 21:51:52 joerg Exp $
+# $NetBSD: GENERIC,v 1.171 2012/08/17 20:11:39 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 maxusers	32		# estimated number of users
 
@@ -177,6 +177,7 @@ options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
 # workstation console options
 options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK

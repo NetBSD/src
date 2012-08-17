@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.70 2012/03/10 21:51:53 joerg Exp $
+#	$NetBSD: GENERIC,v 1.71 2012/08/17 20:11:40 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 maxusers	32		# estimated number of users
 
@@ -230,6 +230,7 @@ wsdisplay0      at wsemuldisplaydev? console 1
 wsdisplay*      at wsemuldisplaydev?
 
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?

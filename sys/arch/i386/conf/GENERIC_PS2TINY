@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.65 2012/03/10 21:51:53 joerg Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.66 2012/08/17 20:11:39 abs Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -143,9 +143,6 @@ options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
-options 	WSEMUL_VT100	# VT100 / VT220 emulation
-options 	WS_KERNEL_FG=WSCOL_GREEN
-
 # Kernel root file system and dump configuration.
 config		netbsd root on ? type ?
 #config		netbsd root on ? type nfs
@@ -170,6 +167,10 @@ pckbd*		at pckbc?		# PC keyboard
 wskbd*		at pckbd? console ?
 vga0		at isa?
 wsdisplay*	at vga? console ?
+
+options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_DEFAULTSCREENS=4
 
 com0	at isa? port 0x3f8 irq 4	# "SERIAL_!"

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.116 2012/07/14 18:50:22 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.117 2012/08/17 20:11:40 abs Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -55,6 +55,8 @@ options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_GALLANT12x22	# big, Sun-like font
 options 	FONT_QVSS8x15		# a smaller font for lower resolutions
 

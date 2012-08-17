@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.40 2011/12/18 05:49:28 dholland Exp $
+#	$NetBSD: GENERIC,v 1.41 2012/08/17 20:11:40 abs Exp $
 #
 #
 
@@ -80,6 +80,7 @@ options 	NFS_BOOT_DHCP
 #
 # builtin terminal emulations
 #options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 # different kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK

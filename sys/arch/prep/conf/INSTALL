@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.57 2011/12/18 05:49:31 dholland Exp $
+#	$NetBSD: INSTALL,v 1.58 2012/08/17 20:11:41 abs Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -62,6 +62,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #
 # builtin terminal emulations
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK

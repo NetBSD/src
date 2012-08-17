@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.14 2012/07/24 22:37:08 matt Exp $
+#	$NetBSD: P2020DS,v 1.15 2012/08/17 20:11:39 abs Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.14 $"
+ident 		"P2020DS-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -140,6 +140,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 #options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?

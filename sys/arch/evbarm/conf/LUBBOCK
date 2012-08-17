@@ -171,6 +171,7 @@ sm0		at obio? addr 0x0c000000 intr 3 	# on-board SMC 91C96
 lcd0		at obio?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # SA1111 companion chip
 sacc0	at obio? addr 0x10000000 intr 1

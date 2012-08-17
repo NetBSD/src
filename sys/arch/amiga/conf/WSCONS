@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.65 2012/06/07 23:30:52 rkujawa Exp $
+# $NetBSD: WSCONS,v 1.66 2012/08/17 20:11:38 abs Exp $
 
 # GENERIC with wscons(4)
 #
@@ -9,6 +9,7 @@ include	"arch/amiga/conf/GENERIC"
 amidisplaycc0	at mainbus0		# wscons interface to custom chips
 wsdisplay0	at amidisplaycc0 console ?
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x10
 options 	FONT_VT220ISO8x16
 

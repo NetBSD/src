@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.15 2011/12/18 05:49:26 dholland Exp $
+# $NetBSD: GDIUM,v 1.16 2012/08/17 20:11:39 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.15 $"
+#ident 		"GDIUM-$Revision: 1.16 $"
 
 maxusers	16
 
@@ -142,6 +142,7 @@ config		netbsd		root on ? type ?
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22
 # compatibility to other console drivers

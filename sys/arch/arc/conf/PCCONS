@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.55 2006/04/15 12:26:22 tsutsui Exp $
+#	$NetBSD: PCCONS,v 1.56 2012/08/17 20:11:38 abs Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
 #
@@ -6,6 +6,7 @@
 include		"arch/arc/conf/GENERIC"
 
 no options 	WSEMUL_VT100	# VT100 emulation
+no options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 pc0 at jazzio?
 opms0 at jazzio?

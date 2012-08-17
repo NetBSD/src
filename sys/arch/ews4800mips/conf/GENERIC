@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.37 2012/03/10 21:51:51 joerg Exp $
+# $NetBSD: GENERIC,v 1.38 2012/08/17 20:11:39 abs Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37 $"
+#ident		"GENERIC-$Revision: 1.38 $"
 
 maxusers	16
 
@@ -168,6 +168,7 @@ options 	NFS_BOOT_DHCP
 
 # workstation console options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_BLACK
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2012/03/10 21:51:55 joerg Exp $
+# $NetBSD: GENERIC,v 1.142 2012/08/17 20:11:41 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	32
 
@@ -165,6 +165,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN

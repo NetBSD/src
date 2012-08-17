@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.288 2012/06/07 23:32:47 rkujawa Exp $
+# $NetBSD: GENERIC,v 1.289 2012/08/17 20:11:38 abs Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.288 $"
+#ident 		"GENERIC-$Revision: 1.289 $"
 
 
 maxusers	8
@@ -267,6 +267,7 @@ options        KFONT_CONS_ISO8859_1
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
 

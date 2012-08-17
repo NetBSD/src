@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.14 2012/03/10 21:51:56 joerg Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.15 2012/08/17 20:11:41 abs Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.14 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -176,6 +176,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # builtin terminal emulations
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
