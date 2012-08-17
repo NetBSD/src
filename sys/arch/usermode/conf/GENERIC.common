@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.17 2012/01/23 12:08:31 reinoud Exp $
+# $NetBSD: GENERIC.common,v 1.18 2012/08/17 19:43:25 abs Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -71,7 +71,7 @@ options 	WSEMUL_VT100
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSKBD_DEFAULT_KEYREPEAT_DEL1=1000
 options 	WSKBD_DEFAULT_KEYREPEAT_DELN=200
-options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 pseudo-device	loop
 pseudo-device	pty
