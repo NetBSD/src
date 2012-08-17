@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.252 2012/08/17 16:14:31 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.252 2012/08/17 16:14:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,14 +230,19 @@ tty_set_qsize(struct tty *tp, int newsize)
 	struct clist rawq, canq, outq;
 	struct clist orawq, ocanq, ooutq;
 
-	if (tp->t_outq.c_cc != 0)
-		return EBUSY;
-
 	clalloc(&rawq, newsize, 1);
 	clalloc(&canq, newsize, 1);
 	clalloc(&outq, newsize, 0);
 
 	mutex_spin_enter(&tty_lock);
+
+	if (tp->t_outq.c_cc != 0) {
+		mutex_spin_exit(&tty_lock);
+		clfree(&rawq);
+		clfree(&canq);
+		clfree(&outq);
+		return EBUSY;
+	}
 
 	orawq = tp->t_rawq;
 	ocanq = tp->t_canq;
