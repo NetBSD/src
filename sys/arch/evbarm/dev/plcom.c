@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.41 2012/08/12 10:13:17 reinoud Exp $	*/
+/*	$NetBSD: plcom.c,v 1.42 2012/08/17 09:38:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.41 2012/08/12 10:13:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.42 2012/08/17 09:38:51 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -428,10 +428,8 @@ plcom_enable_debugport(struct plcom_softc *sc)
 void
 plcom_attach_subr(struct plcom_softc *sc)
 {
-	static const uint8_t txintr_fill[] = {14, 12, 8, 4, 2};
 	struct plcom_instance *pi = &sc->sc_pi;
 	struct tty *tp;
-	int tx_tresh;
 
 	aprint_naive("\n");
 
@@ -480,7 +478,6 @@ plcom_attach_subr(struct plcom_softc *sc)
 		break;
 	}		
 
-	tx_tresh = PREAD4(pi, PL011COM_IFLS) & 7;
 	if (sc->sc_fifolen == 0) {
 		switch (pi->pi_type) {
 		case PLCOM_TYPE_PL010:
@@ -488,13 +485,11 @@ plcom_attach_subr(struct plcom_softc *sc)
 			 * The PL010 has a 16-byte fifo, but the tx interrupt
 			 * triggers when there is space for 8 more bytes.
 			*/
-			sc->sc_fifolen = 8;	/* XXX can be bumped to 16 */
-			sc->sc_txintrfill = 8;
+			sc->sc_fifolen = 8;
 			break;
 		case PLCOM_TYPE_PL011:
 			/* Some revisions have a 32 byte TX FIFO */
 			sc->sc_fifolen = 16;
-			sc->sc_txintrfill = txintr_fill[tx_tresh];
 			break;
 		}
 	}
@@ -1684,16 +1679,11 @@ plcomstart(struct tty *tp)
 
 	/* Output the first chunk of the contiguous buffer. */
 	{
-		int n, maxn;
-
-		maxn = sc->sc_fifolen;
-		if (!ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFE))
-			maxn = sc->sc_txintrfill;
+		int n;
 
 		n = sc->sc_tbc;
-		if (n > maxn)
-			n = maxn;
-
+		if (n > sc->sc_fifolen)
+			n = sc->sc_fifolen;
 		PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
@@ -2211,8 +2201,8 @@ plcomintr(void *arg)
 				int n;
 
 				n = sc->sc_tbc;
-				if (n > sc->sc_txintrfill)
-					n = sc->sc_txintrfill;
+				if (n > sc->sc_fifolen)
+					n = sc->sc_fifolen;
 				PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 				sc->sc_tbc -= n;
 				sc->sc_tba += n;
