@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.192 2012/08/17 20:52:50 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.193 2012/08/17 23:58:23 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8312,4 +8312,23 @@ etc/Makefile					1.398
 	default, to keep all the large files (such as ISOs) together.
 	[riz, ticket #506]
 
+
+distrib/notes/amd64/contents			1.2
+distrib/notes/common/main			1.489
+distrib/notes/common/postinstall		1.76
+distrib/notes/common/sysinst			1.102
+distrib/notes/evbppc/contents			1.2
+distrib/notes/hp300/contents			1.16
+distrib/notes/hpcsh/contents			1.2
+distrib/notes/i386/contents			1.27
+distrib/notes/landisk/contents			1.2
+distrib/notes/macppc/contents			1.10
+distrib/notes/mmeye/contents			1.2
+
+	Bring release notes more up-to-date.
+	[riz, ticket #507]
+
+sys/sys/param.h					patched by hand
+
+	Welcome to NetBSD 6.0_RC1!
 
