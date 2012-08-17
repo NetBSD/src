@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.2 2012/08/16 23:45:58 jakllsch Exp $
+#	$NetBSD: RPI,v 1.3 2012/08/17 19:43:24 abs Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -198,7 +198,7 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options		FONT_QVSS8x15
