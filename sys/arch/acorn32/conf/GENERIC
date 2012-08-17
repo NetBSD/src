@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.102 2012/03/10 21:51:48 joerg Exp $
+# 	$NetBSD: GENERIC,v 1.103 2012/08/17 19:43:24 abs Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.102 $"
+#ident		"GENERIC-$Revision: 1.103 $"
 
 # estimated number of users
 maxusers	32
@@ -201,7 +201,7 @@ options 	WSEMUL_VT100
 options         WS_KERNEL_FG=WSCOL_GREEN
 
 #options 	WSDISPLAY_COMPAT_RAWKBD
-options		WSDISPLAY_COMPAT_USL
+options		WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options		WSDISPLAY_SCROLLSUPPORT
 
 vidcvideo0	at vidc?		# wscons driver for VIDC

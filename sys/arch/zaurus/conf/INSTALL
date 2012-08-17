@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.15 2012/04/07 09:10:47 nonaka Exp $
+# $NetBSD: INSTALL,v 1.16 2012/08/17 19:43:26 abs Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -51,7 +51,7 @@ no options 		SYSVSHM
 options 		PIPE_SOCKETPAIR
 
 no options 		WSDISPLAY_COMPAT_PCVT
-no options 		WSDISPLAY_COMPAT_USL
+no options 		WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 no options 		WSDISPLAY_COMPAT_RAWKBD
 options 		RASOPS_SMALL
 
