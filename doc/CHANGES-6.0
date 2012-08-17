@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.191 2012/08/16 21:19:27 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.192 2012/08/17 20:52:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8278,4 +8278,38 @@ external/bsd/openpam/dist/lib/openpam_dynamic.c	1.4
 	Suppress error messages from not finding a file to load that can
 	always happen on MKPIC=no environment. PR#46801.
 	[tsutsui, ticket #505]
+
+distrib/amd64/installimage/Makefile		1.2
+distrib/amd64/liveimage/emuimage/Makefile	1.2
+distrib/amd64/liveimage/usbimage/Makefile	1.2
+distrib/common/Makefile.bootcd			1.20
+distrib/i386/installimage/Makefile		1.2
+distrib/i386/liveimage/emuimage/Makefile	1.2
+distrib/i386/liveimage/usbimage/Makefile	1.2
+distrib/pmax/liveimage/emuimage/Makefile	1.2
+distrib/sparc/liveimage/emuimage/Makefile	1.2
+distrib/sparc64/liveimage/emuimage/Makefile	1.2
+distrib/sun2/liveimage/emuimage/Makefile	1.2
+distrib/sun3/liveimage/emuimage/Makefile	1.2
+distrib/vax/liveimage/emuimage/Makefile		1.2
+etc/Makefile					1.398
+
+	Change the naming scheme of "live" images and usb install images
+	to incorporate the OS name and version.
+
+	XXX should also not hardcode ${BOOTDISK} in the name, but that would
+	require reordering stuff and more testing than I have time for right
+	now. Another day.
+
+	As discussed on current-users@ back in March, with some adjustments.
+
+
+	Install fully-populated .iso images in ${RELEASEDIR}/images instead
+	of ${RELEASEDIR}/iso, since we'll be putting non-iso images in there
+	too.
+
+	Install live images and install images into ${RELEASEDIR}/images by
+	default, to keep all the large files (such as ISOs) together.
+	[riz, ticket #506]
+
 
