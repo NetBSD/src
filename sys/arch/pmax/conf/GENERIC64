@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.10 2012/03/10 21:51:55 joerg Exp $
+# $NetBSD: GENERIC64,v 1.11 2012/08/17 20:11:41 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.10 $"
+#ident		"GENERIC-$Revision: 1.11 $"
 
 maxusers	64
 
@@ -150,6 +150,7 @@ options 	FONT_BOLD8x16
 options 	FONT_GALLANT12x22
 
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_BLACK
 

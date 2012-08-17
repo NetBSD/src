@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.67 2012/03/10 21:51:48 joerg Exp $
+# $NetBSD: GENERIC,v 1.68 2012/08/17 20:11:37 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -149,6 +149,7 @@ options 	NFS_BOOT_RWSIZE=1024	# XXX "ea" driver bug workaround
 #options 	WSEMUL_NODUMB
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x8		# 8x8 font for console
 
 config		netbsd	root on ? type ?
