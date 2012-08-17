@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.26 2012/03/10 21:51:52 joerg Exp $
+#	$NetBSD: JORNADA820,v 1.27 2012/08/17 19:43:25 abs Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 # estimated number of users
 maxusers	32
@@ -222,7 +222,7 @@ saost*	at saip? addr 0x90000000 size 0x20
 #options	J720KBD_LAYOUT=KB_FR
 #options 	FONT_VT220L8x10
 # The X server requires theses two options
-#options         WSDISPLAY_COMPAT_USL
+#options         WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options         WSDISPLAY_COMPAT_RAWKBD
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
