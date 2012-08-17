@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.396 2012/01/22 03:53:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.396.2.1 2012/08/17 20:50:51 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -481,7 +481,7 @@ iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR iso-image-mi
 #	LIVEIMG_RELEASEDIR specifies where to install live images and
 #	it can be set in MD etc.${MACHINE}/Makefile.inc.
 #
-LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/liveimage
+LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/images
 
 live-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib live_image \
@@ -495,7 +495,7 @@ live-image: .PHONY check_DESTDIR check_RELEASEDIR
 #	INSTIMG_RELEASEDIR specifies where to install live images and
 #	it can be set in MD etc.${MACHINE}/Makefile.inc.
 #
-INSTIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/installimage
+INSTIMG_RELEASEDIR?= ${RELEASEDIR}/images
 
 install-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \
