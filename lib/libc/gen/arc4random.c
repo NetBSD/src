@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.16 2012/08/18 15:04:53 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.17 2012/08/18 15:55:07 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.16 2012/08/18 15:04:53 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.17 2012/08/18 15:55:07 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -150,18 +150,24 @@ arc4_stir(struct arc4_stream *as)
 		arc4_getbyte(as);
 }
 
-static inline uint8_t
-arc4_getbyte(struct arc4_stream *as)
+static __always_inline uint8_t
+arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 {
 	uint8_t si, sj;
 
-	as->i = (as->i + 1);
-	si = as->s[as->i];
-	as->j = (as->j + si);
-	sj = as->s[as->j];
-	as->s[as->i] = sj;
-	as->s[as->j] = si;
+	*i = *i + 1;
+	si = as->s[*i];
+	*j = *j + si;
+	sj = as->s[*j];
+	as->s[*i] = sj;
+	as->s[*j] = si;
 	return (as->s[(si + sj) & 0xff]);
+}
+
+static inline uint8_t
+arc4_getbyte(struct arc4_stream *as)
+{
+	return arc4_getbyte_ij(as, &as->i, &as->j);
 }
 
 static inline uint32_t
@@ -210,17 +216,25 @@ arc4random_buf(void *buf, size_t len)
 {
 	uint8_t *bp = buf;
 	uint8_t *ep = bp + len;
+	uint8_t i, j;
 	int skip;
 
 	LOCK(&rs);
 	arc4_check_init(&rs);
 
-	skip = arc4_getbyte(&rs) % 3;
+	/* cache i and j - compiler can't know 'buf' doesn't alias them */
+	i = rs.i;
+	j = rs.j;
+
+	skip = arc4_getbyte_ij(&rs, &i, &j) % 3;
 	while (skip--)
-		(void)arc4_getbyte(&rs);
+		(void)arc4_getbyte_ij(&rs, &i, &j);
 
 	while (bp < ep)
-		*bp++ = arc4_getbyte(&rs);
+		*bp++ = arc4_getbyte_ij(&rs, &i, &j);
+	rs.i = i;
+	rs.j = j;
+
 	UNLOCK(&rs);
 }
 
