@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.302 2012/07/27 05:36:13 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.303 2012/08/18 08:54:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.302 2012/07/27 05:36:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.303 2012/08/18 08:54:06 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1170,6 +1170,16 @@ sched_pstats(void)
 		/* Calculating p_pctcpu only for ps(1) */
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 
+		if (__predict_false(runtm < 0)) {
+			if (!backwards) {
+				backwards = true;
+				printf("WARNING: negative runtime; "
+				    "monotonic clock has gone backwards\n");
+			}
+			mutex_exit(p->p_lock);
+			continue;
+		}
+
 		/*
 		 * Check if the process exceeds its CPU resource allocation.
 		 * If over the hard limit, kill it with SIGKILL.
@@ -1193,13 +1203,7 @@ sched_pstats(void)
 			}
 		}
 		mutex_exit(p->p_lock);
-		if (__predict_false(runtm < 0)) {
-			if (!backwards) {
-				backwards = true;
-				printf("WARNING: negative runtime; "
-				    "monotonic clock has gone backwards\n");
-			}
-		} else if (__predict_false(sig)) {
+		if (__predict_false(sig)) {
 			KASSERT((p->p_flag & PK_SYSTEM) == 0);
 			psignal(p, sig);
 		}
