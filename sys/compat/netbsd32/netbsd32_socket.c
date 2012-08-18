@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.40 2012/07/30 07:31:16 matt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.41 2012/08/18 15:25:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.40 2012/07/30 07:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.41 2012/08/18 15:25:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 
 		resid -= CMSG32_ALIGN(cmsg32.cmsg_len);
 		cidx += cmsg->cmsg_len;
-	} while ((cc = CMSG32_NXTHDR(mp, cc)) && resid > 0);
+	} while (resid > 0 && (cc = CMSG32_NXTHDR(mp, &cmsg32)));
 
 	/* If we allocated a buffer, attach to mbuf */
 	if (cidx > MLEN) {
