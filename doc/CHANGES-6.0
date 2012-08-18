@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.193 2012/08/17 23:58:23 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.194 2012/08/18 22:15:05 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8327,6 +8327,24 @@ distrib/notes/mmeye/contents			1.2
 
 	Bring release notes more up-to-date.
 	[riz, ticket #507]
+
+sys/uvm/uvm_map.c				1.319
+
+	Avoid leaking a uvm_object reference when merging a new map entry
+	with the entries on both sides.  PR#46807.
+	[chs, ticket #508]
+
+sys/compat/netbsd32/netbsd32_socket.c		1.41
+
+	Fix a local user (non privileged) DoS on all 64bit arches but amd64
+	(no separate VA) and alpha (for lack of compat32).
+	[martin, ticket #510]
+
+distrib/sparc/miniroot/Makefile.inc		1.19
+etc/etc.vax/MAKEDEV.conf			1.17
+
+	Update vax and sparc to MAKEDEV ipty rather than pty0.  PR#46812.
+	[martin, ticket #512]
 
 sys/sys/param.h					patched by hand
 
