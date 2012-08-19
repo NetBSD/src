@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.10 2012/03/11 01:06:06 mrg Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.11 2012/08/19 07:55:54 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.11 2012/08/19 07:55:54 christos Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
