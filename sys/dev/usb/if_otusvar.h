@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.1 2010/11/03 20:03:02 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.2 2012/08/19 07:55:54 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -17,6 +17,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _IF_OTUSVAR_H_
+#define _IF_OTUSVAR_H_
 
 #ifndef HAVE_EDCA
 /************************************************************
@@ -277,3 +279,5 @@ struct otus_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 };
+
+#endif /* _IF_OTUSVAR_H_ */
