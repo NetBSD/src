@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.10.2.5 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.10.2.6 2012/08/19 17:40:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.5 2012/08/13 17:49:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.10.2.6 2012/08/19 17:40:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -751,7 +751,7 @@ npf_nat_save(prop_dictionary_t sedict, prop_array_t natlist, npf_nat_t *nt)
 	prop_object_iterator_t it;
 	prop_dictionary_t npdict;
 	prop_data_t nd, npd;
-	uintptr_t itnp;
+	uint64_t itnp;
 
 	/* Set NAT entry data. */
 	nd = prop_data_create_data(nt, sizeof(npf_nat_t));
@@ -762,8 +762,8 @@ npf_nat_save(prop_dictionary_t sedict, prop_array_t natlist, npf_nat_t *nt)
 	it = prop_array_iterator(natlist);
 	while ((npdict = prop_object_iterator_next(it)) != NULL) {
 		CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-		prop_dictionary_get_uint64(npdict, "id-ptr", (uint64_t *)&itnp);
-		if (itnp == (uintptr_t)np) {
+		prop_dictionary_get_uint64(npdict, "id-ptr", &itnp);
+		if ((uintptr_t)itnp == (uintptr_t)np) {
 			break;
 		}
 	}
