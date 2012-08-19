@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.1.2.2 2012/08/09 06:36:49 jdc Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.1.2.3 2012/08/19 17:45:23 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.1.2.2 2012/08/09 06:36:49 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.1.2.3 2012/08/19 17:45:23 riz Exp $");
 
 #define _INTR_PRIVATE
 
@@ -93,8 +93,8 @@ struct bcm2835icu_softc *bcmicu_sc;
 static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 	"(unused  0)",	"(unused  1)",	"(unused  2)",	"timer3",
 	"(unused  4)",	"(unused  5)",	"(unused  6)",	"jpeg",
-	"(unused  8)",	"usb",		"(unused 10)",	"(unused 11)"
-	"(unused 12)",	"(unused 13)",	"(unused 14)",	"(unused 15)"
+	"(unused  8)",	"usb",		"(unused 10)",	"(unused 11)",
+	"(unused 12)",	"(unused 13)",	"(unused 14)",	"(unused 15)",
 	"(unused 16)",	"(unused 17)",	"dma2",		"dma3",
 	"(unused 20)",	"(unused 21)",	"(unused 22)",	"(unused 23)",
 	"(unused 24)",	"(unused 25)",	"(unused 26)",	"(unused 27)",
