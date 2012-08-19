@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusreg.h,v 1.2 2010/11/03 20:03:02 christos Exp $	*/
+/*	$NetBSD: if_otusreg.h,v 1.3 2012/08/19 07:55:54 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -17,6 +17,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifndef _IF_OTUSREG_H_
+#define _IF_OTUSREG_H_
 
 /* USB Endpoints addresses. */
 #define AR_EPT_BULK_TX_NO	(UE_DIR_OUT | 1)
@@ -416,3 +418,4 @@ typedef struct ar5416eeprom {
 	CAL_CTL_DATA		ctlData[AR5416_NUM_CTLS];
 	uint8_t			padding[3];
 } __packed AR5416_EEPROM;
+#endif /* _IF_OTUSREG_H_ */
