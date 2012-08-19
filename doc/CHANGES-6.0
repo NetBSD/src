@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.194 2012/08/18 22:15:05 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.195 2012/08/19 17:47:18 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8345,6 +8345,28 @@ etc/etc.vax/MAKEDEV.conf			1.17
 
 	Update vax and sparc to MAKEDEV ipty rather than pty0.  PR#46812.
 	[martin, ticket #512]
+
+sys/kern/kern_synch.c				1.303
+
+	Fix cpu limits when time goes backwards. PR#46811.
+	[christos, ticket #513]
+
+lib/libnpf/npf.c				1.12
+sys/net/npf/npf_ctl.c				1.17
+sys/net/npf/npf_nat.c				1.17
+
+	NPF fixes for Amiga.
+	[rmind, ticket #511]
+
+distrib/sets/lists/base/mi			1.1002
+
+	Do not obsolete terminfo.db.
+	[mrg, ticket #514]
+
+sys/arch/arm/broadcom/bcm2835_intr.c		1.2
+
+	Fix interrupt strings.
+	[skrll, ticket #515]
 
 sys/sys/param.h					patched by hand
 
