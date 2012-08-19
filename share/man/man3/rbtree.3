@@ -1,4 +1,4 @@
-.\"     $NetBSD: rbtree.3,v 1.6 2012/02/17 08:22:47 yamt Exp $
+.\"     $NetBSD: rbtree.3,v 1.7 2012/08/19 19:31:13 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2012
+.Dd August 19, 2012
 .Dt RBTREE 3
 .Os
 .Sh NAME
@@ -38,19 +38,19 @@
 .Sh SYNOPSIS
 .In sys/rbtree.h
 .Ft void
-.Fn rb_tree_init "rb_tree_t *" "const rb_tree_ops_t *"
+.Fn rb_tree_init "rb_tree_t *rbt" "const rb_tree_ops_t *ops"
 .Ft void *
-.Fn rb_tree_insert_node "rb_tree_t *" "void *"
+.Fn rb_tree_insert_node "rb_tree_t *rbt" "void *rb"
 .Ft void
-.Fn rb_tree_remove_node "rb_tree_t *" "void *"
+.Fn rb_tree_remove_node "rb_tree_t *rbt" "void *rb"
 .Ft void *
-.Fn rb_tree_find_node "rb_tree_t *" "const void *"
+.Fn rb_tree_find_node "rb_tree_t *rbt" "const void *key"
 .Ft void *
-.Fn rb_tree_find_node_geq "rb_tree_t *" "const void *"
+.Fn rb_tree_find_node_geq "rb_tree_t *rbt" "const void *key"
 .Ft void *
-.Fn rb_tree_find_node_leq "rb_tree_t *" "const void *"
+.Fn rb_tree_find_node_leq "rb_tree_t *rbt" "const void *key"
 .Ft void *
-.Fn rb_tree_iterate "rb_tree_t *" "void *" "const unsigned int"
+.Fn rb_tree_iterate "rb_tree_t *rbt" "void *rb" "const unsigned int direction"
 .Sh DESCRIPTION
 .Nm
 provides red-black trees.
@@ -74,20 +74,39 @@ The maximum height of a red-black tree is 2lg (n+1).
 .It Vt rb_tree_t
 A red-black tree.
 .It Vt typedef signed int \
-(* rbto_compare_nodes_fn)(void *, const void *, const void *);
+(* rbto_compare_nodes_fn)(void *context, const void *node1, const void *node2);
 The node-comparison operator.
 Defines an ordering on nodes.
-Returns a negative value if the first node precedes the second node.
-Returns a positive value if the first node follows the second node.
-Returns 0 if the first node and the second are identical according
-to the ordering.
+Returns a negative value if the first node
+.Ar node1
+precedes the second node
+.Ar node2 .
+Returns a positive value if the first node
+.Ar node1
+follows the second node
+.Ar node2 .
+Returns 0 if the first node
+.Ar node1
+and the second node
+.Ar node2
+are identical according to the ordering.
 .It Vt typedef signed int \
-(* rbto_compare_key_fn)(void *, const void *, const void *);
+(* rbto_compare_key_fn)(void *context, const void *node, const void *key);
 The node-key comparison operator.
 Defines the order of nodes and keys.
-Returns a negative value if the node precedes the key.
-Returns a positive value if the node follows the key.
-Returns 0 if the node is identical to the key according to the ordering.
+Returns a negative value if the node
+.Ar node
+precedes the key
+.Ar key .
+Returns a positive value if the node
+.Ar node
+follows the key
+.Ar key .
+Returns 0 if the node
+.Ar node
+is identical to the key
+.Ar key
+according to the ordering.
 .It Vt rb_tree_ops_t
 Defines the operator for comparing two nodes in the same tree,
 the operator for comparing a node in the tree with a key,
