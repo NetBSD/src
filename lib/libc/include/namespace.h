@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.155 2012/07/09 21:25:46 rmind Exp $	*/
+/*	$NetBSD: namespace.h,v 1.156 2012/08/20 21:38:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -155,6 +155,10 @@
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define arc4random		_arc4random
+#define arc4random_addrandom	_arc4random_addrandom
+#define arc4random_buf		_arc4random_buf
+#define arc4random_stir		_arc4random_stir
+#define arc4random_uniform	_arc4random_uniform
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define atoll			_atoll
