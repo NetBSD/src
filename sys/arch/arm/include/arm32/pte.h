@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2012/08/16 07:26:23 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 2012/08/20 13:03:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -167,6 +167,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_V6_APX	0x00008000	/* ARMv6 AP eXtension */
 #define	L1_S_V6_S	0x00010000	/* ARMv6 Shared */
 #define	L1_S_V6_nG	0x00020000	/* ARMv6 not-Global */
+#define	L1_S_V6_SS	0x00040000	/* ARMv6 SuperSection */
+#define	L1_S_V6_NS	0x00080000	/* ARMv6 Not Secure */
 
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
@@ -298,7 +300,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	TEX_XSCALE_X	0x01		/* X modifies C and B */
 
 /*
- * Type Extension bits for ARM V6 MMU
+ * Type Extension bits for ARM V6 and V7 MMU
  *
  * TEX C B                                    Shared
  * 000 0 0  Strong order                      yes
