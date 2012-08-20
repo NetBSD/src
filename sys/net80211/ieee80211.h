@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.21 2010/11/03 20:05:21 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.22 2012/08/20 07:30:10 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -170,13 +170,22 @@ struct ieee80211_qosframe_addr4 {
 
 #define	IEEE80211_NWID_LEN			32
 
-#define	IEEE80211_QOS_TXOP			0x00ff
+/*
+ * QoS Control field (see 7.1.3.5).
+ */
 /* bit 8 is reserved */
-#define	IEEE80211_QOS_ACKPOLICY			0x60
+#define	IEEE80211_QOS_TXOP			0xff00
+#define	IEEE80211_QOS_AMSDU			0x0080  /* 11n */
+#define	IEEE80211_QOS_ACKPOLICY_NORMAL          0x0000
+#define	IEEE80211_QOS_ACKPOLICY_NOACK           0x0020
+#define	IEEE80211_QOS_ACKPOLICY_NOEXPLACK       0x0040
+#define	IEEE80211_QOS_ACKPOLICY			0x0060
 #define	IEEE80211_QOS_ACKPOLICY_S		5
-#define	IEEE80211_QOS_ESOP			0x10
+#define	IEEE80211_QOS_ACKPOLICY_MASK		0x0060
+#define	IEEE80211_QOS_ACKPOLICY_BA		0x0060
+#define	IEEE80211_QOS_ESOP			0x0010
 #define	IEEE80211_QOS_ESOP_S			4
-#define	IEEE80211_QOS_TID			0x0f
+#define	IEEE80211_QOS_TID			0x000f
 
 /* does frame have QoS sequence control data */
 #define	IEEE80211_QOS_HAS_SEQ(wh) \
