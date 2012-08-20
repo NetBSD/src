@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.2 2012/08/19 07:55:54 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.3 2012/08/20 07:32:49 christos Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -52,10 +52,6 @@ enum ieee80211_edca_ac {
 	EDCA_AC_VO  = 3		/* Voice */
 };
 #define EDCA_NUM_AC	4
-
-/* XXX: OpenBSD has more of these defined with the standard referenced */
-#define IEEE80211_QOS_ACK_POLICY_NOACK		0x0020
-#define IEEE80211_QOS_ACK_POLICY_MASK		0x0060
 
 static __inline int
 ieee80211_has_addr4(const struct ieee80211_frame *wh)
