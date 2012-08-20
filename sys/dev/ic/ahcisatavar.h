@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.12 2012/08/13 19:42:50 bouyer Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.13 2012/08/20 12:48:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@ struct ahci_softc {
 	bus_dma_segment_t sc_cmd_hdr_seg;
 	int sc_cmd_hdr_nseg;
 	int sc_atac_capflags;
-	int sc_achi_quirks;
+	int sc_ahci_quirks;
 #define AHCI_PCI_QUIRK_FORCE	__BIT(0)  /* force attach */
 #define AHCI_PCI_QUIRK_BAD64	__BIT(1)  /* broken 64-bit DMA */
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */

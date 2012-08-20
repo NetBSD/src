@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.42 2012/08/20 11:59:29 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.43 2012/08/20 12:48:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.42 2012/08/20 11:59:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.43 2012/08/20 12:48:47 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -225,7 +225,7 @@ ahci_attach(struct ahci_softc *sc)
 		return;
 
 	sc->sc_ahci_cap = AHCI_READ(sc, AHCI_CAP);
-	if (sc->sc_achi_quirks & AHCI_QUIRK_BADPMP) {
+	if (sc->sc_ahci_quirks & AHCI_QUIRK_BADPMP) {
 		aprint_verbose_dev(sc->sc_atac.atac_dev,
 		    "ignoring broken port multiplier support\n");
 		sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
@@ -693,7 +693,7 @@ again:
 	switch(ahci_exec_fis(chp, 31, flags)) {
 	case ERR_DF:
 	case TIMEOUT:
-		if ((sc->sc_achi_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
+		if ((sc->sc_ahci_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
 		    drive == PMP_PORT_CTL) {
 			/*
 			 * some controllers fails to reset when
