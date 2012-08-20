@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.29.8.1 2012/08/20 19:39:27 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.29.8.1 2012/08/20 19:39:27 riz Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -338,8 +338,6 @@ iq80310_intr_init(void)
 		TAILQ_INIT(&iq->iq_list);
 
 		sprintf(iq->iq_name, "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-		    NULL, "iq80310", iq->iq_name);
 	}
 
 	iq80310_intr_calculate_masks();
@@ -379,6 +377,8 @@ iq80310_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 	oldirqstate = disable_interrupts(I32_bit);
 
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
+	evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+	    NULL, "iq80310", iq->iq_name);
 
 	iq80310_intr_calculate_masks();
 
