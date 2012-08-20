@@ -1,5 +1,4 @@
-/* $NetBSD: rune.c,v 1.43 2012/01/20 16:31:30 joerg Exp $ */
-
+/*	$NetBSD: rune.c,v 1.43.2.1 2012/08/20 19:27:04 riz Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -162,7 +161,7 @@ _rune_read_file(const char * __restrict var, size_t lenvar,
 
 	variable_len = be32toh((uint32_t)frl->frl_variable_len);
 
-	n = (len * sizeof(*fre)) + variable_len;
+	n = len * sizeof(*fre);
 	if (lenvar < n)
 		return EFTYPE;
 	lenvar -= n;
@@ -219,14 +218,14 @@ do {									\
 	READ_RANGE(maplower);
 	READ_RANGE(mapupper);
 
-	memcpy((void *)rune, (void const *)frune, variable_len);
-	rl->rl_variable_len = variable_len;
-	rl->rl_variable = (void *)rune;
-
-	if (lenvar > 0) {
+	if (lenvar < variable_len) {
 		ret = EFTYPE;
 		goto err;
 	}
+
+	memcpy((void *)rune, (void const *)frune, variable_len);
+	rl->rl_variable_len = variable_len;
+	rl->rl_variable = (void *)rune;
 
 	_rune_find_codeset(rlp->rlp_codeset, sizeof(rlp->rlp_codeset),
 	    (char *)rl->rl_variable, &rl->rl_variable_len);
