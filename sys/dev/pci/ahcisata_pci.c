@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.29 2012/08/10 16:40:40 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.30 2012/08/20 12:48:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.29 2012/08/10 16:40:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30 2012/08/20 12:48:47 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.29 2012/08/10 16:40:40 bouyer Exp
 struct ahci_pci_quirk { 
 	pci_vendor_id_t  vendor;	/* Vendor ID */
 	pci_product_id_t product;	/* Product ID */
-	int              quirks;	/* quirks; same as sc_achi_quirks */
+	int              quirks;	/* quirks; same as sc_ahci_quirks */
 };
 
 static const struct ahci_pci_quirk ahci_pci_quirks[] = {
@@ -292,11 +292,11 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	sc->sc_achi_quirks = ahci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
+	sc->sc_ahci_quirks = ahci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
 					    PCI_PRODUCT(pa->pa_id));
 
 	ahci_cap_64bit = (AHCI_READ(sc, AHCI_CAP) & AHCI_CAP_64BIT) != 0;
-	ahci_bad_64bit = ((sc->sc_achi_quirks & AHCI_PCI_QUIRK_BAD64) != 0);
+	ahci_bad_64bit = ((sc->sc_ahci_quirks & AHCI_PCI_QUIRK_BAD64) != 0);
 
 	if (pci_dma64_available(pa) && ahci_cap_64bit) {
 		if (!ahci_bad_64bit)
