@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.41 2012/08/10 16:35:00 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.42 2012/08/20 11:59:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.41 2012/08/10 16:35:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.42 2012/08/20 11:59:29 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -644,6 +644,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	uint32_t sig;
 
 	KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
+again:
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -660,7 +661,6 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	if (drive > 0) {
 		KASSERT(sc->sc_ahci_cap & AHCI_CAP_SPM);
 	}
-again:
 	/* polled command, assume interrupts are disabled */
 	/* use slot 0 to send reset, the channel is idle */
 	cmd_h = &achp->ahcic_cmdh[0];
@@ -701,6 +701,7 @@ again:
 			 * try again with port 0
 			 */
 			drive = 0;
+			ahci_channel_stop(sc, chp, flags);
 			goto again;
 		}
 		aprint_error("%s channel %d: clearing WDCTL_RST failed "
