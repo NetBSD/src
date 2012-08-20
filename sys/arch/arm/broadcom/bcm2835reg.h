@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.2 2012/08/20 07:45:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
 
 #define	BCM2835_ARMICU_BASE	(BCM2835_ARM_BASE + 0x0200)
 #define	BCM2835_ARMICU_SIZE	0x200
+
+#define	BCM2835_ARMMBOX_BASE	(BCM2835_ARM_BASE + 0x0880)
+#define	BCM2835_ARMMBOX_SIZE	0x40
 
 #define	BCM2835_ARMICU_VBASE	BCM2835_IOPHYSTOVIRT(BCM2835_ARMICU_BASE)
 

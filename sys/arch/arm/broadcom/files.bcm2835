@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.1 2012/07/26 06:21:57 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.2 2012/08/20 07:45:24 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -26,6 +26,11 @@ file	arch/arm/arm/bus_space_a4x.S		obio
 device	bcmicu: pic, pic_splfuncs
 attach	bcmicu at obio with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
+
+# VC Mailbox (BCM2835_ARMMBOX_BASE)
+device	bcmmbox
+attach	bcmmbox at obio with bcmmbox
+file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
