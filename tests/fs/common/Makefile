@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/08/11 10:52:12 uch Exp $
+#	$NetBSD: Makefile,v 1.8 2012/08/20 16:37:35 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,6 +7,11 @@ LIB=	vfstest
 SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
 	fstest_nfs.c fstest_puffs.c fstest_rumpfs.c fstest_sysvbfs.c	\
 	fstest_tmpfs.c fstest_v7fs.c
+
+.ifdef WANT_ZFS_TESTS
+SRCS+=	fstest_zfs.c
+CPPFLAGS+=-DWANT_ZFS_TESTS
+.endif
 
 WARNS=	3
 

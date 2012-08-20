@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.35 2011/08/11 10:52:12 uch Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.36 2012/08/20 16:39:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
 FSPROTOS(tmpfs);
 FSPROTOS(v7fs);
+FSPROTOS(zfs);
 
 #ifndef FSTEST_IMGNAME
 #define FSTEST_IMGNAME "image.fs"
@@ -154,7 +155,7 @@ do {									\
 #define ATF_TP_FSADD(fs,func)						\
   ATF_TP_ADD_TC(tp,fs##_##func)
 
-#define ATF_TC_FSAPPLY(func,desc)					\
+#define ATF_TC_FSAPPLY_NOZFS(func,desc)					\
   ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc)				\
   ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc)					\
   ATF_TC_FSADD(ffslog,MOUNT_FFS,func,desc)				\
@@ -168,7 +169,7 @@ do {									\
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)				\
   ATF_TC_FSADD(v7fs,MOUNT_V7FS,func,desc)
 
-#define ATF_TP_FSAPPLY(func)						\
+#define ATF_TP_FSAPPLY_NOZFS(func)					\
   ATF_TP_FSADD(ext2fs,func);						\
   ATF_TP_FSADD(ffs,func);						\
   ATF_TP_FSADD(ffslog,func);						\
@@ -181,6 +182,24 @@ do {									\
   ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(tmpfs,func);						\
   ATF_TP_FSADD(v7fs,func);
+
+/* XXX: this will not scale */
+#ifdef WANT_ZFS_TESTS
+#define ATF_TC_FSAPPLY(func,desc)					\
+  ATF_TC_FSAPPLY_NOZFS(func,desc)					\
+  ATF_TC_FSADD(zfs,MOUNT_ZFS,func,desc)
+#define ATF_TP_FSAPPLY(func)						\
+  ATF_TP_FSAPPLY_NOZFS(func)						\
+  ATF_TP_FSADD(zfs,func);
+
+#else /* !WANT_ZFS_TESTS */
+
+#define ATF_TC_FSAPPLY(func,desc)					\
+  ATF_TC_FSAPPLY_NOZFS(func,desc)
+#define ATF_TP_FSAPPLY(func)						\
+  ATF_TP_FSAPPLY_NOZFS(func)
+
+#endif /* WANT_ZFS_TESTS */
 
 /*
  * Same as above, but generate a file system image first and perform
@@ -261,6 +280,8 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "tmpfs") == 0)
 #define FSTYPE_V7FS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "v7fs") == 0)
+#define FSTYPE_ZFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "zfs") == 0)
 
 #define FSTEST_ENTER()							\
 	if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
