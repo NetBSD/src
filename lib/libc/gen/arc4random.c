@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.18 2012/08/20 20:27:46 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.19 2012/08/20 20:32:09 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.18 2012/08/20 20:27:46 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.19 2012/08/20 20:32:09 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -214,7 +214,6 @@ arc4random_buf(void *buf, size_t len)
 	uint8_t *bp = buf;
 	uint8_t *ep = bp + len;
 	uint8_t i, j;
-	int skip;
 
 	LOCK(&rs);
 	arc4_check_init(&rs);
@@ -222,10 +221,6 @@ arc4random_buf(void *buf, size_t len)
 	/* cache i and j - compiler can't know 'buf' doesn't alias them */
 	i = rs.i;
 	j = rs.j;
-
-	skip = arc4_getbyte_ij(&rs, &i, &j) % 3;
-	while (skip--)
-		(void)arc4_getbyte_ij(&rs, &i, &j);
 
 	while (bp < ep)
 		*bp++ = arc4_getbyte_ij(&rs, &i, &j);
@@ -265,9 +260,6 @@ arc4random_uniform(uint32_t upper_bound)
 
 	LOCK(&rs);
 	arc4_check_init(&rs);
-
-	if (arc4_getbyte(&rs) & 1)
-		(void)arc4_getbyte(&rs);
 
 	/*
 	 * This could theoretically loop forever but each retry has
