@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.15 2012/08/16 18:26:22 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.16 2012/08/20 12:40:40 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.15 2012/08/16 18:26:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.16 2012/08/20 12:40:40 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -348,9 +348,9 @@ static const struct pmap_devmap devmap[] = {
 		 * this gets us the ICU, I2C, USB, GPT[10-11], MMC, McSPI
 		 * UART[12], clock manager, sDMA, ...
 		 */
-		.pd_va = _A(OMAP3530_L4_CORE_VBASE),
-		.pd_pa = _A(OMAP3530_L4_CORE_BASE),
-		.pd_size = _S(1 << 20),
+		.pd_va = _A(OMAP_L4_CORE_VBASE),
+		.pd_pa = _A(OMAP_L4_CORE_BASE),
+		.pd_size = _S(OMAP_L4_CORE_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -360,23 +360,38 @@ static const struct pmap_devmap devmap[] = {
 		 * this gets us the console UART3, GPT[2-9], WDT1, 
 		 * and GPIO[2-6].
 		 */
-		.pd_va = _A(OMAP3530_L4_PERIPHERAL_VBASE),
-		.pd_pa = _A(OMAP3530_L4_PERIPHERAL_BASE),
-		.pd_size = _S(1 << 20),
+		.pd_va = _A(OMAP_L4_PERIPHERAL_VBASE),
+		.pd_pa = _A(OMAP_L4_PERIPHERAL_BASE),
+		.pd_size = _S(OMAP_L4_PERIPHERAL_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+#if defined(OMAP_L4_WAKEUP_BASE) && (OMAP_L4_WAKEUP_BASE != OMAP_L4_CORE_BASE)
 	{
 		/*
 		 * Map all 256KB of the L4 Wakeup area
 		 * this gets us GPIO1, WDT2, GPT1, 32K and power/reset regs
 		 */
-		.pd_va = _A(OMAP3530_L4_WAKEUP_VBASE),
-		.pd_pa = _A(OMAP3530_L4_WAKEUP_BASE),
-		.pd_size = _S(1 << 18),
+		.pd_va = _A(OMAP_L4_WAKEUP_VBASE),
+		.pd_pa = _A(OMAP_L4_WAKEUP_BASE),
+		.pd_size = _S(OMAP_L4_WAKEUP_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+#endif
+#ifdef OMAP_L4_FAST_BASE
+	{
+		/*
+		 * Map all of the L4 Fast area
+		 * this gets us GPIO1, WDT2, GPT1, 32K and power/reset regs
+		 */
+		.pd_va = _A(OMAP_L4_FAST_VBASE),
+		.pd_pa = _A(OMAP_L4_FAST_BASE),
+		.pd_size = _S(OMAP_L4_FAST_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
 	{0}
 };
 
