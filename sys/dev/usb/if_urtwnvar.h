@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.1 2012/03/25 00:11:16 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.2 2012/08/20 07:32:49 christos Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -94,7 +94,6 @@ struct urtwn_host_cmd_ring {
 };
 
 #if 1	/* XXX: sys/net80211/ieee80211.h */
-#define	IEEE80211_QOS_ACKPOLICY_BA	0x60	/* Block ACK */
 
 #define	IEEE80211_HTINFO_2NDCHAN	0x03	/* secondary/ext chan offset */
 #define	IEEE80211_HTINFO_2NDCHAN_S	0
