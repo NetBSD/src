@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.102 2012/07/29 00:07:10 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.103 2012/08/20 13:03:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -207,16 +207,18 @@ typedef struct pv_addr {
 	paddr_t pv_pa;
 	vaddr_t pv_va;
 	vsize_t pv_size;
+	uint8_t pv_cache;
+	uint8_t pv_prot;
 } pv_addr_t;
 typedef SLIST_HEAD(, pv_addr) pv_addrqh_t;
 
 extern pv_addrqh_t pmap_freeq;
-extern pv_addr_t kernelpages;
 extern pv_addr_t kernelstack;
 extern pv_addr_t abtstack;
 extern pv_addr_t fiqstack;
 extern pv_addr_t irqstack;
 extern pv_addr_t undstack;
+extern pv_addr_t idlestack;
 extern pv_addr_t systempage;
 extern pv_addr_t kernel_l1pt;
 
@@ -472,12 +474,15 @@ void	pmap_pte_init_arm9(void);
 #if defined(CPU_ARM10)
 void	pmap_pte_init_arm10(void);
 #endif /* CPU_ARM10 */
-#if defined(CPU_ARM11)
+#if defined(CPU_ARM11)	/* ARM_MMU_V6 */
 void	pmap_pte_init_arm11(void);
 #endif /* CPU_ARM11 */
-#if defined(CPU_ARM11MPCORE)
+#if defined(CPU_ARM11MPCORE)	/* ARM_MMU_V6 */
 void	pmap_pte_init_arm11mpcore(void);
 #endif
+#if ARM_MMU_V7 == 1
+void	pmap_pte_init_armv7(void);
+#endif /* ARM_MMU_V7 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1
@@ -495,10 +500,6 @@ void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
 #define	PMAP_UAREA(va)		pmap_uarea(va)
 void	pmap_uarea(vaddr_t);
 #endif /* ARM_MMU_XSCALE == 1 */
-
-#if ARM_MMU_V7 == 1
-void	pmap_pte_init_armv7(void);
-#endif /* ARM_MMU_V7 */
 
 extern pt_entry_t		pte_l1_s_cache_mode;
 extern pt_entry_t		pte_l1_s_cache_mask;
@@ -532,6 +533,7 @@ extern pt_entry_t		pte_l2_l_prot_w;
 extern pt_entry_t		pte_l2_l_prot_ro;
 extern pt_entry_t		pte_l2_l_prot_mask;
 
+extern pt_entry_t		pte_l1_ss_proto;
 extern pt_entry_t		pte_l1_s_proto;
 extern pt_entry_t		pte_l1_c_proto;
 extern pt_entry_t		pte_l2_s_proto;
@@ -546,8 +548,8 @@ extern void (*pmap_zero_page_func)(paddr_t);
 /*
  * Definitions for MMU domains
  */
-#define	PMAP_DOMAINS		15	/* 15 'user' domains (0-14) */
-#define	PMAP_DOMAIN_KERNEL	15	/* The kernel uses domain #15 */
+#define	PMAP_DOMAINS		15	/* 15 'user' domains (1-15) */
+#define	PMAP_DOMAIN_KERNEL	0	/* The kernel uses domain #0 */
 
 /*
  * These macros define the various bit masks in the PTE.
@@ -642,6 +644,11 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L1_S_PROTO_armv6	(L1_TYPE_S)
 #define	L1_S_PROTO_armv7	(L1_TYPE_S)
 
+#define	L1_SS_PROTO_generic	0
+#define	L1_SS_PROTO_xscale	0
+#define	L1_SS_PROTO_armv6	(L1_TYPE_S | L1_S_V6_SS)
+#define	L1_SS_PROTO_armv7	(L1_TYPE_S | L1_S_V6_SS)
+
 #define	L1_C_PROTO_generic	(L1_TYPE_C | L1_C_IMP2)
 #define	L1_C_PROTO_xscale	(L1_TYPE_C)
 #define	L1_C_PROTO_armv6	(L1_TYPE_C)
@@ -684,6 +691,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		pte_l2_l_cache_mask
 #define	L2_S_CACHE_MASK		pte_l2_s_cache_mask
 
+#define	L1_SS_PROTO		pte_l1_ss_proto
 #define	L1_S_PROTO		pte_l1_s_proto
 #define	L1_C_PROTO		pte_l1_c_proto
 #define	L2_S_PROTO		pte_l2_s_proto
@@ -710,6 +718,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
 
+#define	L1_SS_PROTO		L1_SS_PROTO_generic
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
 #define	L2_S_PROTO		L2_S_PROTO_generic
@@ -738,6 +747,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 /* These prototypes make writeable mappings, while the other MMU types
  * make read-only mappings. */
+#define	L1_SS_PROTO		L1_SS_PROTO_armv6
 #define	L1_S_PROTO		L1_S_PROTO_armv6
 #define	L1_C_PROTO		L1_C_PROTO_armv6
 #define	L2_S_PROTO		L2_S_PROTO_armv6n
@@ -764,6 +774,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_generic
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_generic
 
+#define	L1_SS_PROTO		L1_SS_PROTO_generic
 #define	L1_S_PROTO		L1_S_PROTO_generic
 #define	L1_C_PROTO		L1_C_PROTO_generic
 #define	L2_S_PROTO		L2_S_PROTO_generic
@@ -790,6 +801,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_xscale
 #define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_xscale
 
+#define	L1_SS_PROTO		L1_SS_PROTO_xscale
 #define	L1_S_PROTO		L1_S_PROTO_xscale
 #define	L1_C_PROTO		L1_C_PROTO_xscale
 #define	L2_S_PROTO		L2_S_PROTO_xscale
@@ -818,6 +830,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 
 /* These prototypes make writeable mappings, while the other MMU types
  * make read-only mappings. */
+#define	L1_SS_PROTO		L1_SS_PROTO_armv7
 #define	L1_S_PROTO		L1_S_PROTO_armv7
 #define	L1_C_PROTO		L1_C_PROTO_armv7
 #define	L2_S_PROTO		L2_S_PROTO_armv7
@@ -852,9 +865,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
 				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : L2_S_PROT_RO))
 
 /*
- * Macros to test if a mapping is mappable with an L1 Section mapping
- * or an L2 Large Page mapping.
+ * Macros to test if a mapping is mappable with an L1 SuperSection,
+ * L1 Section, or an L2 Large Page mapping.
  */
+#define	L1_SS_MAPPABLE_P(va, pa, size)					\
+	((((va) | (pa)) & L1_SS_OFFSET) == 0 && (size) >= L1_SS_SIZE)
+
 #define	L1_S_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L1_S_OFFSET) == 0 && (size) >= L1_S_SIZE)
 
