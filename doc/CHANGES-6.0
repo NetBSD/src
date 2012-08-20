@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.195 2012/08/19 17:47:18 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.196 2012/08/20 19:40:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8367,6 +8367,39 @@ sys/arch/arm/broadcom/bcm2835_intr.c		1.2
 
 	Fix interrupt strings.
 	[skrll, ticket #515]
+
+sys/kern/tty.c					1.251-1.253
+
+	Avoid clist corruption on new qsize ioctl.  PR#46780.
+	[christos, ticket #516]
+
+sys/net/if_ethersubr.c				1.190
+
+	Prevent panic on bridge teardown. PR#46587.
+	[christos, ticket #517]
+
+lib/libc/locale/rune.c				1.44-1.45
+
+	Fix locale loading on statically compiled bash. PR#46781.
+	[tnozaki, ticket #518]
+
+distrib/sets/lists/xfont/mi			1.40
+external/mit/xorg/share/fonts/misc/font-misc-misc/Makefile 1.2
+
+	Build and install iso10646-1 encoded 10x20 font to match behavior
+	of upstream and modular X.org from pkgsrc. PR#46755
+	[tron, ticket #519]
+
+sys/dev/usb/umass_scsipi.c			1.46 via patch
+
+	Make a number of USB memory sticks and SD card readers work
+	which were not usable before.
+	[drochner, ticket #520]
+
+sys/arch/evbarm/iq80310/iq80310_intr.c		1.31
+
+	Move evcnt_attach_dynamic() calls later to avoid assertions.
+	[chs, ticket #509]
 
 sys/sys/param.h					patched by hand
 
