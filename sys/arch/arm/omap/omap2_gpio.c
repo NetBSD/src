@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.8 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.9 2012/08/20 12:38:28 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.8 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.9 2012/08/20 12:38:28 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -346,6 +346,13 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	    || oa->obio_addr == GPIO4_BASE_3530
 	    || oa->obio_addr == GPIO5_BASE_3530
 	    || oa->obio_addr == GPIO6_BASE_3530)
+		return 1;
+#endif
+#ifdef TI_AM335X
+	if (oa->obio_addr == GPIO0_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO1_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO2_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO3_BASE_TI_AM335X)
 		return 1;
 #endif
 
