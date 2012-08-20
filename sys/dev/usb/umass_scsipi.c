@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.38.10.1 2012/04/23 16:28:31 riz Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.38.10.2 2012/08/20 19:34:20 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.10.1 2012/04/23 16:28:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.38.10.2 2012/08/20 19:34:20 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -395,7 +395,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
 	struct scsipi_xfer *xs = priv;
 	struct scsipi_periph *periph = xs->xs_periph;
-	int cmdlen;
+	int cmdlen, senselen;
 	int s;
 #ifdef UMASS_DEBUG
 	struct timeval tv;
@@ -423,16 +423,20 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		scbus->sc_sense_cmd.opcode = SCSI_REQUEST_SENSE;
 		scbus->sc_sense_cmd.byte2 = periph->periph_lun <<
 		    SCSI_CMD_LUN_SHIFT;
-		scbus->sc_sense_cmd.length = sizeof(xs->sense);
 
 		if (sc->sc_cmd == UMASS_CPROTO_UFI ||
 		    sc->sc_cmd == UMASS_CPROTO_ATAPI)
 			cmdlen = UFI_COMMAND_LENGTH;	/* XXX */
 		else
 			cmdlen = sizeof(scbus->sc_sense_cmd);
+		if (periph->periph_version < 0x05) /* SPC-3 */
+			senselen = 18;
+		else
+			senselen = sizeof(xs->sense);
+		scbus->sc_sense_cmd.length = senselen;
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &scbus->sc_sense_cmd, cmdlen,
-					  &xs->sense, sizeof(xs->sense),
+					  &xs->sense, senselen,
 					  DIR_IN, xs->timeout,
 					  umass_scsipi_sense_cb, xs);
 		return;
