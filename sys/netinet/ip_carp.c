@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.49 2012/08/20 14:14:32 bouyer Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.49 2012/08/20 14:14:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.50 2012/08/20 16:01:37 christos Exp $");
 
 /*
  * TODO:
@@ -2019,7 +2019,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFCAP:
-		if ((error = ifioctl_common(ifp, cmd, addr)) == ENETRESET)
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
 
