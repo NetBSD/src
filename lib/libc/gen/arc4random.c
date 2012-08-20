@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.17 2012/08/18 15:55:07 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.18 2012/08/20 20:27:46 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.17 2012/08/18 15:55:07 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.18 2012/08/20 20:27:46 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,13 +44,13 @@ __RCSID("$NetBSD: arc4random.c,v 1.17 2012/08/18 15:55:07 dsl Exp $");
 __weak_alias(arc4random,_arc4random)
 #endif
 
-#define RSIZE 256
 struct arc4_stream {
-	mutex_t mtx;
-	int initialized;
+	uint8_t stirred;
+	uint8_t pad;
 	uint8_t i;
 	uint8_t j;
-	uint8_t s[RSIZE];
+	uint8_t s[(uint8_t)~0u + 1u];	/* 256 to you and me */
+	mutex_t mtx;
 };
 
 #ifdef _REENTRANT
@@ -67,35 +67,33 @@ struct arc4_stream {
 #define UNLOCK(rs)
 #endif
 
+#define S(n) (n)
+#define S4(n) S(n), S(n + 1), S(n + 2), S(n + 3)
+#define S16(n) S4(n), S4(n + 4), S4(n + 8), S4(n + 12)
+#define S64(n) S16(n), S16(n + 16), S16(n + 32), S16(n + 48)
+#define S256 S64(0), S64(64), S64(128), S64(192)
 
-/* XXX lint explodes with an internal error if only mtx is initialized! */
-static struct arc4_stream rs = { .i = 0, .mtx = MUTEX_INITIALIZER };
+static struct arc4_stream rs = { .i = 0xff, .j = 0, .s = { S256 },
+		.stirred = 0, .mtx = MUTEX_INITIALIZER };
+
+#undef S
+#undef S4
+#undef S16
+#undef S64
+#undef S256
 
 static inline void arc4_addrandom(struct arc4_stream *, u_char *, int);
-static void arc4_stir(struct arc4_stream *);
+static __noinline void arc4_stir(struct arc4_stream *);
 static inline uint8_t arc4_getbyte(struct arc4_stream *);
 static inline uint32_t arc4_getword(struct arc4_stream *);
-
-static __noinline void
-arc4_init(struct arc4_stream *as)
-{
-	int n;
-	for (n = 0; n < RSIZE; n++)
-		as->s[n] = n;
-	as->i = 0;
-	as->j = 0;
-
-	as->initialized = 1;
-	arc4_stir(as);
-}
 
 static inline int
 arc4_check_init(struct arc4_stream *as)
 {
-	if (__predict_true(rs.initialized))
+	if (__predict_true(rs.stirred))
 		return 0;
 
-	arc4_init(as);
+	arc4_stir(as);
 	return 1;
 }
 
@@ -103,20 +101,18 @@ static inline void
 arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
 	uint8_t si;
-	int n;
+	size_t n;
 
-	as->i--;
-	for (n = 0; n < RSIZE; n++) {
+	for (n = 0; n < __arraycount(as->s); n++) {
 		as->i = (as->i + 1);
 		si = as->s[as->i];
 		as->j = (as->j + si + dat[n % datlen]);
 		as->s[as->i] = as->s[as->j];
 		as->s[as->j] = si;
 	}
-	as->j = as->i;
 }
 
-static void
+static __noinline void
 arc4_stir(struct arc4_stream *as)
 {
 	int rdat[32];
@@ -146,8 +142,10 @@ arc4_stir(struct arc4_stream *as)
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (j = 0; j < RSIZE * 4; j++)
+	for (j = 0; j < __arraycount(as->s) * 4; j++)
 		arc4_getbyte(as);
+
+	as->stirred = 1;
 }
 
 static __always_inline uint8_t
@@ -185,8 +183,7 @@ void
 arc4random_stir(void)
 {
 	LOCK(&rs);
-	if (__predict_false(!arc4_check_init(&rs)))	/* init() stirs */
-		arc4_stir(&rs);
+	arc4_stir(&rs);
 	UNLOCK(&rs);
 }
 
