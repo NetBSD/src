@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.6 2011/06/30 20:09:23 wiz Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.7 2012/08/20 12:40:40 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -273,19 +273,28 @@ mmu_init_table:
 		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 
 	/* Map first 1MB of L4 CORE (so console will work) */
-	MMU_INIT(OMAP3530_L4_CORE_VBASE, OMAP3530_L4_CORE_BASE,
-		1,
+	MMU_INIT(OMAP_L4_CORE_VBASE, OMAP_L4_CORE_BASE,
+		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 
-	/* Map first(all) 1MB of L4 PERIPHERAL (so console will work) */
-	MMU_INIT(OMAP3530_L4_PERIPHERAL_VBASE, OMAP3530_L4_PERIPHERAL_BASE,
-		1,
+	/* Map first 4MB of L4 PERIPHERAL (so console will work) */
+	MMU_INIT(OMAP_L4_PERIPHERAL_VBASE, OMAP_L4_PERIPHERAL_BASE,
+		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 
-	/* Map all 256KB of L4 WAKEUP (so console will work) */
-	MMU_INIT(OMAP3530_L4_WAKEUP_VBASE, OMAP3530_L4_WAKEUP_BASE,
-		1,
+#ifdef OMAP_L4_WAKEUP_BASE
+	/* Map all 4MB of L4 WAKEUP (so console will work) */
+	MMU_INIT(OMAP_L4_WAKEUP_VBASE, OMAP_L4_WAKEUP_BASE,
+		(OMAP_L4_WAKEUP_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
+
+#ifdef OMAP_L4_FAST_BASE
+	/* Map first 1MB of L4 FAST (so console will work) */
+	MMU_INIT(OMAP_L4_FAST_VBASE, OMAP_L4_FAST_BASE,
+		(OMAP_L4_FAST_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO | L1_S_APv7_KRW)
+#endif
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
