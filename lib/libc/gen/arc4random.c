@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.19 2012/08/20 20:32:09 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.19 2012/08/20 20:32:09 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,6 +42,10 @@ __RCSID("$NetBSD: arc4random.c,v 1.19 2012/08/20 20:32:09 dsl Exp $");
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
+__weak_alias(arc4random_addrandom,_arc4random_addrandom)
+__weak_alias(arc4random_buf,_arc4random_buf)
+__weak_alias(arc4random_stir,_arc4random_stir)
+__weak_alias(arc4random_uniform,_arc4random_uniform)
 #endif
 
 struct arc4_stream {
