@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.11 2012/08/19 20:54:56 martin Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.12 2012/08/20 08:07:52 martin Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.11 2012/08/19 20:54:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.12 2012/08/20 08:07:52 martin Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -70,12 +70,13 @@ check_permission(void)
 	int err;
 
 	err = modctl(MODCTL_EXISTS, 0);
-	if (err == ENOSYS)
+	if (err == 0) return;
+	if (errno == ENOSYS)
 		atf_tc_skip("Kernel does not have 'options MODULAR'.");
-	else if (err == EPERM)
+	else if (errno == EPERM)
 		atf_tc_skip("Module loading administratively forbidden");
-	ATF_REQUIRE_EQ_MSG(err, 0, "unexpected error code %d from "
-	    "modctl(MODCTL_EXISTS, 0)", err);
+	ATF_REQUIRE_EQ_MSG(errno, 0, "unexpected error %d from "
+	    "modctl(MODCTL_EXISTS, 0)", errno);
 }
 
 static bool
