@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2012/08/20 15:38:58 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ BDFFILES+=	k14.bdf nil2.bdf
 BDFFILES+=	4x6.bdf 5x7.bdf 5x8.bdf 6x10.bdf 6x12.bdf 6x13.bdf \
 		6x13B.bdf 6x13O.bdf 6x9.bdf 7x13.bdf 7x13B.bdf 7x13O.bdf \
 		7x14.bdf 7x14B.bdf 8x13.bdf 8x13B.bdf 8x13O.bdf 9x15.bdf \
-		9x15B.bdf 9x18.bdf 9x18B.bdf
+		9x15B.bdf 9x18.bdf 9x18B.bdf 10x20.bdf
 
 # Most fonts have 22 output types, but ISO8859-8 and ISO8859-11 are
 # missing a few.

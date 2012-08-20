@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2010/04/11 02:41:38 jakllsch Exp $
+# $NetBSD: mi,v 1.40 2012/08/20 15:38:59 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8440,6 +8440,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/10x20-KOI8-R.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/10x20.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/12x13ja.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/12x24.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/12x24rk.pcf.gz		xfont	share,xorg,x11fonts
