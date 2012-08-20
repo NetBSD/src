@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.249.8.1 2012/03/19 23:23:10 riz Exp $	*/
+/*	$NetBSD: tty.c,v 1.249.8.2 2012/08/20 19:15:36 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.8.1 2012/03/19 23:23:10 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.8.2 2012/08/20 19:15:36 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ tty_get_qsize(int *qsize, int newsize)
 	return 0;
 }
 
-static void
+static int
 tty_set_qsize(struct tty *tp, int newsize)
 {
 	struct clist rawq, canq, outq;
@@ -235,6 +235,14 @@ tty_set_qsize(struct tty *tp, int newsize)
 	clalloc(&outq, newsize, 0);
 
 	mutex_spin_enter(&tty_lock);
+
+	if (tp->t_outq.c_cc != 0) {
+		mutex_spin_exit(&tty_lock);
+		clfree(&rawq);
+		clfree(&canq);
+		clfree(&outq);
+		return EBUSY;
+	}
 
 	orawq = tp->t_rawq;
 	ocanq = tp->t_canq;
@@ -252,6 +260,8 @@ tty_set_qsize(struct tty *tp, int newsize)
 	clfree(&orawq);
 	clfree(&ocanq);
 	clfree(&ooutq);
+
+	return 0;
 }
 
 static int
@@ -1350,7 +1360,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case TIOCSQSIZE:
 		if ((error = tty_get_qsize(&s, *(int *)data)) == 0 &&
 		    s != tp->t_qsize)
-			tty_set_qsize(tp, s);
+			error = tty_set_qsize(tp, s);
 		return error;
 	default:
 		/* We may have to load the compat module for this. */
