@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.3 2012/06/01 13:19:39 nonaka Exp $	*/
+/*	$NetBSD: if_run.c,v 1.4 2012/08/20 07:32:49 christos Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.3 2012/06/01 13:19:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4 2012/08/20 07:32:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2308,7 +2308,6 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	txwi->txop = RT2860_TX_TXOP_BACKOFF;
 
-#define IEEE80211_QOS_ACKPOLICY_NOACK	0x20
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (!hasqos || (qos & IEEE80211_QOS_ACKPOLICY) !=
 	    IEEE80211_QOS_ACKPOLICY_NOACK)) {
