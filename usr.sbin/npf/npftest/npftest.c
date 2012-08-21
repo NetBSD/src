@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.5 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.6 2012/08/21 20:52:11 rmind Exp $	*/
 
 /*
  * NPF testing framework.
@@ -42,7 +42,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static void
+static bool
 result(const char *testcase, bool ok)
 {
 	if (!quiet) {
@@ -51,9 +51,7 @@ result(const char *testcase, bool ok)
 	if (verbose) {
 		puts("-----");
 	}
-	if (!ok) {
-		exit(EXIT_FAILURE);
-	}
+	return !ok;
 }
 
 static void
@@ -121,7 +119,7 @@ arc4random(void)
 int
 main(int argc, char **argv)
 {
-	bool benchmark, test, ok;
+	bool benchmark, test, ok, fail;
 	char *config, *interface, *stream;
 	int idx = -1, ch;
 
@@ -188,27 +186,28 @@ main(int argc, char **argv)
 	}
 
 	srandom(1);
+	fail = false;
 
 	if (test) {
 		ok = rumpns_npf_nbuf_test(verbose);
-		result("nbuf", ok);
+		fail |= result("nbuf", ok);
 
 		ok = rumpns_npf_processor_test(verbose);
-		result("processor", ok);
+		fail |= result("processor", ok);
 
 		ok = rumpns_npf_table_test(verbose);
-		result("table", ok);
+		fail |= result("table", ok);
 
 		ok = rumpns_npf_state_test(verbose);
-		result("state", ok);
+		fail |= result("state", ok);
 	}
 
 	if (test && config) {
 		ok = rumpns_npf_rule_test(verbose);
-		result("rule", ok);
+		fail |= result("rule", ok);
 
 		ok = rumpns_npf_nat_test(verbose);
-		result("nat", ok);
+		fail |= result("nat", ok);
 	}
 
 	if (stream) {
@@ -217,5 +216,5 @@ main(int argc, char **argv)
 
 	rump_unschedule();
 
-	return EXIT_SUCCESS;
+	return fail ? EXIT_FAILURE : EXIT_SUCCESS;
 }
