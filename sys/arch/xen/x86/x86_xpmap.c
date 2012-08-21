@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.47 2012/08/21 01:17:46 rmind Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.48 2012/08/21 09:06:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.47 2012/08/21 01:17:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.48 2012/08/21 09:06:02 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -117,6 +117,19 @@ void xen_failsafe_handler(void);
 
 #define HYPERVISOR_mmu_update_self(req, count, success_count) \
 	HYPERVISOR_mmu_update((req), (count), (success_count), DOMID_SELF)
+
+/*
+ * kcpuset internally uses an array of uint32_t while xen uses an array of
+ * u_long. As we're little-endian we can cast one to the other.
+ */
+typedef union {
+#ifdef _LP64
+	uint32_t xcpum_km[2];
+#else
+	uint32_t xcpum_km[1];
+#endif	
+	u_long   xcpum_xm;
+} xcpumask_t;
 
 void
 xen_failsafe_handler(void)
@@ -364,17 +377,17 @@ xpq_queue_invlpg(vaddr_t va)
 void
 xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 {
-	uint32_t xcpumask = 0;
+	xcpumask_t xcpumask;
 	mmuext_op_t op;
 
-	kcpuset_copybits(kc, &xcpumask, sizeof(xcpumask));
+	kcpuset_copybits(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_MULTI;
 	op.arg1.linear_addr = va;
-	op.arg2.vcpumask = &xcpumask;
+	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");
@@ -405,16 +418,16 @@ xen_bcast_invlpg(vaddr_t va)
 void
 xen_mcast_tlbflush(kcpuset_t *kc)
 {
-	uint32_t xcpumask = 0;
+	xcpumask_t xcpumask;
 	mmuext_op_t op;
 
-	kcpuset_copybits(kc, &xcpumask, sizeof(xcpumask));
+	kcpuset_copybits(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
-	op.arg2.vcpumask = &xcpumask;
+	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");
