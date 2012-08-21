@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_test.c,v 1.2 2012/07/01 23:21:07 rmind Exp $	*/
+/*	$NetBSD: npf_state_test.c,v 1.3 2012/08/21 20:52:11 rmind Exp $	*/
 
 /*
  * NPF state tracking test.
@@ -164,6 +164,7 @@ npf_state_test(bool verbose)
 {
 	npf_state_t nst;
 	bool snew = true;
+	bool ok = true;
 
 	for (u_int i = 0; i < __arraycount(packet_sequence); i++) {
 		if (process_packet(i, &nst, &snew)) {
@@ -173,7 +174,7 @@ npf_state_test(bool verbose)
 			printf("Failed on packet %d, state dump:\n", i);
 			npf_state_dump(&nst);
 		}
-		return false;
+		ok = false;
 	}
-	return true;
+	return ok;
 }
