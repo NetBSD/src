@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.196 2012/08/20 19:40:57 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.197 2012/08/21 05:36:23 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8400,6 +8400,11 @@ sys/arch/evbarm/iq80310/iq80310_intr.c		1.31
 
 	Move evcnt_attach_dynamic() calls later to avoid assertions.
 	[chs, ticket #509]
+
+sys/arch/evbmips/conf/ALCHEMY			1.44
+
+	Bump SYMTAB_SPACE to fix evbmips* build.
+	[riz, ticket #521]
 
 sys/sys/param.h					patched by hand
 
