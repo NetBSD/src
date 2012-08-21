@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.1 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.2 2012/08/21 20:52:11 rmind Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -99,10 +99,11 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 bool
 npf_rule_test(bool verbose)
 {
+	bool fail = false;
+
 	for (unsigned i = 0; i < __arraycount(test_cases); i++) {
 		const struct test_case *t = &test_cases[i];
 		ifnet_t *ifp = ifunit(t->ifname);
-		struct mbuf *m = fill_packet(t);
 		int serror, error;
 
 		if (ifp == NULL) {
@@ -110,6 +111,7 @@ npf_rule_test(bool verbose)
 			return false;
 		}
 
+		struct mbuf *m = fill_packet(t);
 		error = npf_rule_raw_test(verbose, m, ifp, t->di);
 		serror = npf_packet_handler(NULL, &m, ifp, t->di);
 
@@ -122,9 +124,7 @@ npf_rule_test(bool verbose)
 			    "-> returned %d and %d.\n",
 			    i + 1, t->stateful_ret, t->ret, serror, error);
 		}
-		if (serror != t->stateful_ret || error != t->ret) {
-			return false;
-		}
+		fail |= (serror != t->stateful_ret || error != t->ret);
 	}
-	return true;
+	return !fail;
 }

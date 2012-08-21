@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nbuf_test.c,v 1.1 2012/04/14 21:57:29 rmind Exp $	*/
+/*	$NetBSD: npf_nbuf_test.c,v 1.2 2012/08/21 20:52:11 rmind Exp $	*/
 
 /*
  * NPF nbuf interface test.
@@ -157,20 +157,17 @@ npf_nbuf_test(bool verbose)
 {
 	struct mbuf *m1, *m2;
 	char *bufa, *bufb;
+	bool fail = false;
 
 	m1 = mbuf_random_len(MBUF_CHAIN_LEN);
 	bufa = mbuf_getstring(m1);
 	bufb = parse_nbuf_chain(m1, m1->m_data);
-	if (!validate_mbuf_data(m1, verbose, bufa, bufb)) {
-		return false;
-	}
+	fail |= !validate_mbuf_data(m1, verbose, bufa, bufb);
 
 	m2 = mbuf_bytesize(MBUF_CHAIN_LEN);
 	bufa = mbuf_getstring(m2);
 	bufb = parse_nbuf_chain(m2, m2->m_data);
-	if (!validate_mbuf_data(m2, verbose, bufa, bufb)) {
-		return false;
-	}
+	fail |= !validate_mbuf_data(m2, verbose, bufa, bufb);
 
-	return true;
+	return !fail;
 }
