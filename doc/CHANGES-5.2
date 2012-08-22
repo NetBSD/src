@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.177 2012/07/25 12:16:18 jdc Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.178 2012/08/22 20:43:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8460,4 +8460,38 @@ src/dist/bind/win32utils/win32-build.txt	patch
 
 	Update bind to bind-9.7.6-P2 (includes fix for CVE-2012-3817).
 	[spz, ticket #1782]
+
+sys/sys/sysctl.h		patch
+
+	define CTLTYPE_LONG, needed for ticket 1770
+	[dsl, ticket #1769]
+
+sys/kern/vfs_bio.c				1.236 - 1.239
+
+	Fix processing of vm.bufmem_lowater and vm.bufmem_hiwater on 64bit
+	systems, fixing part of PR kern/46536
+	[dsl, ticket #1770]
+
+sys/dev/vnd.c				 	patch
+
+	Implement wedge ioctls and wedge autodiscovery for vnd(4)
+	[buhrow, ticket #1771]
+
+sys/netinet/in.c				1.143
+
+	Simply use the ifa_addr pointer, rather than taking its address.
+	Resolves failure to match addresses in SIOC[GD]LIFADDR calls.
+	Diagnosis and fix is due to Mark Keaton of BBN.
+	[gdt, ticket #1776]
+
+usr.sbin/rpc.lockd/lock_proc.c			1.10
+
+	Fix broken IPv6 support. My Mac OS X Lion NFS client now happily
+	talks to my NetBSD 6.0_BETA2 NFS server over IPv6.
+	[tron, ticket #1777]
+
+usr.bin/cksum/cksum.1				1.44 via patch
+
+	Omit outdated cryptographic claims as noted in PR 44160.
+	[dholland, ticket #1778]
 
