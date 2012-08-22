@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.1 2012/08/22 22:18:21 matt Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.2 2012/08/22 22:56:21 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -225,9 +225,9 @@ gpio*		at omapgpio?
 # options		I2C_HIGH_TIME_nSEC=1000
 
 # On-board 16550 UARTs
-com0		at obio0 addr 0x48066000 intr 74 mult 4	# UART3 (console)
-#options 	CONSADDR=0x48066000, CONSPEED=38400
-options 	CONSADDR=0x48066000, CONSPEED=115200
+com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
+#options 	CONSADDR=0x49020000, CONSPEED=38400
+options 	CONSADDR=0x49020000, CONSPEED=115200
 
 # Operating System Timer
 omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
