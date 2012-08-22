@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.178 2012/08/22 20:43:35 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.179 2012/08/22 21:35:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8494,4 +8494,33 @@ usr.bin/cksum/cksum.1				1.44 via patch
 
 	Omit outdated cryptographic claims as noted in PR 44160.
 	[dholland, ticket #1778]
+
+sys/arch/vax/include/cpu.h			1.94 via patch
+
+	Change cpu_idle to be an inline which sets IPL to 1 and then back to 0
+	so simh can recognize the kernel is idle, and sleep instead of
+	eating 100% CPU.
+	[abs, ticket #1780]
+
+distrib/sets/lists/comp/mi			patch
+
+	Fix set lists for MKDEBUG builds
+	[matt, ticket #1781]
+
+sys/net/if_types.h				1.26
+
+	Avoid ambiguity by having only one comment close mark.
+	PR 46771 by bsiegert.
+	[wiz, ticket #1786]
+
+sys/arch/x86/x86/intel_busclock.c		patch
+
+	Add support for Xeon E5
+	[sborrill, ticket #1787]
+
+sys/uvm/uvm_map.c				1.319
+
+	avoid leaking a uvm_object reference when merging a new map entry
+	with the entries on both sides.  fixes PR 46807.
+	[chs, ticket #1790]
 
