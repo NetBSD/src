@@ -210,3 +210,11 @@ on/off configurable.  This introduces new parameters: smtp_pix_workarounds
 (default: disable_esmtp, delay_dotcrlf) and smtp_pix_workaround_maps
 (workarounds indexed by server IP address).  The default settings
 are backwards compatible.
+
+----------------
+NetBSD addition:
+
+This includes the bugfix for CVE-2011-1720 (Memory corruption in
+Postfix SMTP server Cyrus SASL support).
+http://www.postfix.org/CVE-2011-1720.html
+ftp://ftp.porcupine.org/mirrors/postfix-release/official/postfix-2.3-2.5-cve-2011-1720-patch
