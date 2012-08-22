@@ -1,7 +1,7 @@
-/*	$NetBSD: chipsfb_ofbus.c,v 1.2 2011/07/19 15:07:43 dyoung Exp $ */
+/*	$NetBSD: chipsfb_ofbus.c,v 1.3 2012/08/22 21:15:17 macallan Exp $ */
 
 /*
- * Copyright (c) 2006 Michael Lorenz
+ * Copyright (c) 2011 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.2 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.3 2012/08/22 21:15:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ chipsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	int chosen_phandle, ct_node;
 	int stdout_ihandle, stdout_phandle;
 	uint32_t regs[16];
-	//char mode_buffer[64];
 
 	stdout_phandle = 0;
 
@@ -109,16 +108,15 @@ chipsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 		return ENXIO;
 
 	chipsfb_mem_paddr = be32toh(regs[10]);
-	/* 2MB RAM aperture, bufferable and cacheable */
-	chipsfb_mem_vaddr = ofw_map(chipsfb_mem_paddr, 0x00200000, L2_B | L2_C);
+	/* 2MB RAM aperture, bufferable and not cacheable */
+	chipsfb_mem_vaddr = ofw_map(chipsfb_mem_paddr, 0x00200000, L2_B);
 	/* 128kB MMIO registers */
 	chipsfb_mmio_vaddr = ofw_map(chipsfb_mem_paddr + CT_OFF_BITBLT,
 	    0x00020000, 0);
 
 	memcpy(&chipsfb_memt, memt, sizeof(struct bus_space));
 	chipsfb_memt.bs_cookie = (void *)chipsfb_mem_vaddr;
-	memcpy(&chipsfb_iot, memt, sizeof(struct bus_space));
-	chipsfb_iot.bs_cookie = (void *)chipsfb_mmio_vaddr;
+	memcpy(&chipsfb_iot, iot, sizeof(struct bus_space));
 
 	/*
 	 * check if the firmware output device is indeed the ct65550
@@ -182,6 +180,7 @@ chipsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fbsize = 0x00800000;	/* 8MB aperture */
 	sc->sc_fbh = chipsfb_mem_vaddr;
 	sc->sc_mmregh = chipsfb_mmio_vaddr;
+	sc->sc_ioregh = isa_io_data_vaddr();
 	sc->sc_mmap = chipsfb_ofbus_mmap;
 	sc->sc_ioctl = NULL;
 	sc->memsize = 0x00200000;
@@ -213,10 +212,6 @@ chipsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "depth", depth);
 	prop_dictionary_set_bool(dict, "is_console", isconsole);
 
-	if (bus_space_map(sc->sc_iot, 0, 0x400, 0, &sc->sc_ioregh) != 0) {
-		aprint_error("unable to map IO registers\n");
-		return;
-	}
 	chipsfb_do_attach(sc);
 }
 
