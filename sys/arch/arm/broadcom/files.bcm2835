@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.4 2012/08/22 13:19:47 jakllsch Exp $
+#	$NetBSD: files.bcm2835,v 1.5 2012/08/22 13:21:31 jakllsch Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -7,7 +7,7 @@ include "arch/arm/pic/files.pic"
 
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/broadcom/bcm2835_dma.c
-file	arch/arm/broadcom/bcm2835_box_subr.c
+file	arch/arm/broadcom/bcm2835_mbox_subr.c
 
 # OBIO just an attach point
 #, [mult=1], [intrbase=-1], [nobyteacc=0]
