@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.16 2012/08/20 12:40:40 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.16 2012/08/20 12:40:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -366,7 +366,9 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
-#if defined(OMAP_L4_WAKEUP_BASE) && (OMAP_L4_WAKEUP_BASE != OMAP_L4_CORE_BASE)
+#if defined(OMAP_L4_WAKEUP_BASE) \
+    && (OMAP_L4_WAKEUP_BASE < OMAP_L4_CORE_BASE \
+	|| OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE <= OMAP_L4_WAKEUP_BASE)
 	{
 		/*
 		 * Map all 256KB of the L4 Wakeup area
