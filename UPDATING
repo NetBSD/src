@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.237 2012/05/07 11:20:24 wiz Exp $
+$NetBSD: UPDATING,v 1.238 2012/08/22 04:16:47 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20120726:
+	The update of openssl requires cleaning both the openssl build
+	directory and DESTDIR; update builds done without taking these
+	steps may fail, or if not, have been observed to cause
+	third-party software to link incorrectly.
 
 20120507:
 	The database schema for makemandb was changed. You will
