@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.9 2007/11/04 23:12:50 christos Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.9.12.1 2012/08/22 20:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.9 2007/11/04 23:12:50 christos Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.9.12.1 2012/08/22 20:34:10 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -156,6 +156,7 @@ get_client(struct sockaddr *host_addr, rpcvers_t vers)
 	const char *netid;
 	struct netconfig *nconf;
 	char host[NI_MAXHOST];
+	int error;
 
 	(void)gettimeofday(&time_now, NULL);
 
@@ -194,9 +195,11 @@ get_client(struct sockaddr *host_addr, rpcvers_t vers)
 	 * Need a host string for clnt_tp_create. Use NI_NUMERICHOST
 	 * to avoid DNS lookups.
 	 */
-	if (getnameinfo(host_addr, (socklen_t)host_addr->sa_len, host,
-	    sizeof(host), NULL, 0, NI_NUMERICHOST) != 0) {
-		syslog(LOG_ERR, "unable to get name string for caller");
+	error = getnameinfo(host_addr, (socklen_t)host_addr->sa_len, host,
+	    sizeof(host), NULL, 0, NI_NUMERICHOST);
+	if (error != 0) {
+		syslog(LOG_ERR, "unable to get name string for caller: %s",
+		    gai_strerror(error));
 		return NULL;
 	}
 
@@ -482,7 +485,7 @@ nlm_lock_msg_1_svc(nlm_lockargs *arg, struct svc_req *rqstp)
 	result.cookie = arg->cookie;
 	result.stat.stat = getlock(&arg4, rqstp, LOCK_ASYNC | LOCK_MON);
 	transmit_result(NLM_LOCK_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 
 	return NULL;
 }
@@ -533,7 +536,7 @@ nlm_cancel_msg_1_svc(nlm_cancargs *arg, struct svc_req *rqstp)
 	 */
 	result.stat.stat = unlock(&arg4, LOCK_CANCEL);
 	transmit_result(NLM_CANCEL_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return NULL;
 }
 
@@ -577,7 +580,7 @@ nlm_unlock_msg_1_svc(nlm_unlockargs *arg, struct svc_req *rqstp)
 	result.cookie = arg->cookie;
 
 	transmit_result(NLM_UNLOCK_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return NULL;
 }
 
@@ -625,7 +628,7 @@ nlm_granted_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 	result.cookie = arg->cookie;
 	result.stat.stat = nlm_granted;
 	transmit_result(NLM_GRANTED_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return NULL;
 }
 
@@ -907,7 +910,7 @@ nlm4_lock_msg_4_svc(nlm4_lockargs *arg, struct svc_req *rqstp)
 	result.stat.stat = (enum nlm4_stats)getlock(arg, rqstp,
 	    LOCK_MON | LOCK_ASYNC | LOCK_V4);
 	transmit4_result(NLM4_LOCK_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 
 	return NULL;
 }
@@ -953,7 +956,7 @@ nlm4_cancel_msg_4_svc(nlm4_cancargs *arg, struct svc_req *rqstp)
 	result.stat.stat = (enum nlm4_stats)unlock(&arg->alock,
 	    LOCK_CANCEL | LOCK_V4);
 	transmit4_result(NLM4_CANCEL_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return NULL;
 }
 
@@ -991,7 +994,7 @@ nlm4_unlock_msg_4_svc(nlm4_unlockargs *arg, struct svc_req *rqstp)
 	result.cookie = arg->cookie;
 
 	transmit4_result(NLM4_UNLOCK_RES, &result,
-	    (struct sockaddr *)(void *)svc_getcaller(rqstp->rq_xprt));
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return NULL;
 }
 
