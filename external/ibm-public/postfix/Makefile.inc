@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2.2.2 2009/09/15 06:01:40 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.2.2.2.2.1 2012/08/22 20:41:56 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
 
+# don't enable SERVER_SASL_TYPE cyrus, this code is affected by CVE-2011-1720
 CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
 	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
