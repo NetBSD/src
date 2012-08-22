@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.79 2012/07/25 12:16:25 jdc Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.80 2012/08/22 20:42:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5046,4 +5046,15 @@ src/dist/bind/win32utils/win32-build.txt	patch
 
 	Update bind to bind-9.7.6-P2 (includes fix for CVE-2012-3817).
 	[spz, ticket #1782]
+
+usr.bin/cksum/cksum.1				1.44 via patch
+
+	Omit outdated cryptographic claims as noted in PR 44160.
+	[dholland, ticket #1778]
+
+gnu/usr.sbin/postfix/Makefile.inc		patch
+
+	insert comment warning about postfix vulnerability CVE-2011-1720
+	in Cyrus SASL support, which is not compiled in netbsd-5-0
+	[spz, ticket #1779]
 
