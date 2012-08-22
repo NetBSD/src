@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.14.1 2012/08/22 19:52:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.14.1 2012/08/22 19:52:40 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -285,7 +285,8 @@ copyfault:
 		 */
 		switch (*(u_char *)frame->tf_rip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((u_int64_t)&frame->tf_rsp - 44);
+			vframe = (void *)((u_int64_t)&frame->tf_rsp - 
+			    offsetof(struct trapframe, tf_rip));
 			resume = resume_iret;
 			break;
 /*
