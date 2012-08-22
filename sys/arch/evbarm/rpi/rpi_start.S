@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.4 2012/08/16 23:40:19 jakllsch Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.5 2012/08/22 12:36:35 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -81,14 +81,13 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_broadcom.h"
 #include "opt_cputypes.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.4 2012/08/16 23:40:19 jakllsch Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.5 2012/08/22 12:36:35 jakllsch Exp $")
 
 /* Location (in MiB) to put temporary MMU tables just below. */
 /* Raspberry Pi start.elf will give us anywhere between 128MiB and 240MiB */

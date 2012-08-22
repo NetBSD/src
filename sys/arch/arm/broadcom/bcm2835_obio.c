@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.4 2012/08/20 07:45:24 skrll Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.5 2012/08/22 12:36:35 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.4 2012/08/20 07:45:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5 2012/08/22 12:36:35 jakllsch Exp $");
 
-#include "opt_broadcom.h"
 #include "locators.h"
 #include "obio.h"
 

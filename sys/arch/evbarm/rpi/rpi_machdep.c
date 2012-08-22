@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.5 2012/08/16 23:40:19 jakllsch Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.6 2012/08/22 12:36:35 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,10 +122,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.5 2012/08/16 23:40:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.6 2012/08/22 12:36:35 jakllsch Exp $");
 
 #include "opt_evbarm_boardtype.h"
-#include "opt_broadcom.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
