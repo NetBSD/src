@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.245 2012/07/24 20:40:47 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.246 2012/08/22 20:02:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4684,4 +4684,20 @@ dist/bind/lib/isc/random.c			patch
 
 	Address bind CVE-2012-3817.
 	[spz, ticket #1455]
+
+gnu/dist/postfix/src/smtpd/smtpd_sasl_proto.c	patch
+gnu/dist/postfix/README_FILES/RELEASE_NOTES	patch
+
+	Apply patch from upstream, fixing CVE-2011-1720
+	[reed, ticket #1452]
+
+usr.bin/cksum/cksum.1				1.44 via patch
+
+	Omit outdated cryptographic claims as noted in PR 44160
+	[dholland, ticket #1453]
+
+sys/arch/amd64/amd64/trap.c			patch
+
+	Fix potential stack frame corruption
+	[spz, ticket #1454]
 
