@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.6 2012/08/13 13:12:51 ttoth Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.7 2012/08/22 09:20:13 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -216,11 +216,6 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 {
 	struct chfs_mount *chmp;
 	struct chfs_inode *ip;
-	struct buf *bp;
-	int blknum, append;
-	int error = 0;
-	char *buf = NULL;
-	struct chfs_full_dnode *fd;
 
 	ip = VTOI(vp);
 	chmp = ip->chmp;
@@ -246,104 +241,25 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 	vflushbuf(vp, 0);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
-	chfs_flush_pending_wbuf(chmp);
 
-	/* handle truncate to zero as a special case */
-	if (size == 0) {
-		dbg("truncate to zero");
-		chfs_truncate_fragtree(ip->chmp,
-		    &ip->fragtree, size);
+	if (ip->size < size) {
+		uvm_vnp_setsize(vp, size);
 		chfs_set_vnode_size(vp, size);
+		ip->iflag |= IN_CHANGE | IN_UPDATE;
 
 		mutex_exit(&chmp->chm_lock_mountfields);
-
 		return 0;
 	}
 
-
-	/* allocate zeros for the new data */
-	buf = kmem_zalloc(size, KM_SLEEP);
-	bp = getiobuf(vp, true);
-
-	if (ip->size != 0) {
-		/* read the whole data */
-		bp->b_blkno = 0;
-		bp->b_bufsize = bp->b_resid = bp->b_bcount = ip->size;
-		bp->b_data = kmem_alloc(ip->size, KM_SLEEP);
-
-		error = chfs_read_data(chmp, vp, bp);
-		if (error) {
-			mutex_exit(&chmp->chm_lock_mountfields);
-			putiobuf(bp);
-
-			return error;
-		}
-
-		/* create the new data */
-		dbg("create new data vap%llu ip%llu\n",
-			(unsigned long long)size, (unsigned long long)ip->size);
-		append = size - ip->size;
-		if (append > 0) {
-			memcpy(buf, bp->b_data, ip->size);
-		} else {
-			memcpy(buf, bp->b_data, size);
-			chfs_truncate_fragtree(ip->chmp,
-				&ip->fragtree, size);
-		}
-
-		kmem_free(bp->b_data, ip->size);
-
-		struct chfs_node_frag *lastfrag = frag_last(&ip->fragtree);
-		fd = lastfrag->node;
-
-		// remove from the list
-		mutex_enter(&chmp->chm_lock_vnocache);
-		chfs_remove_frags_of_node(chmp, &ip->fragtree, fd->nref);
-		// don't obsolete here, because setattr will obsolete this node
-		chfs_remove_node_from_list(chmp, ip->chvc, fd->nref, &ip->chvc->dnode);
-		mutex_exit(&chmp->chm_lock_vnocache);
-
-		blknum = lastfrag->ofs / PAGE_SIZE;
-		lastfrag->size = append > PAGE_SIZE ? PAGE_SIZE : size % PAGE_SIZE;
-	} else {
-		fd = chfs_alloc_full_dnode();
-		blknum = 0;
+	if (size != 0) {
+		ubc_zerorange(&vp->v_uobj, size, ip->size - size, UBC_UNMAP_FLAG(vp));
 	}
-
+	
+	chfs_truncate_fragtree(ip->chmp, &ip->fragtree, size);
+	uvm_vnp_setsize(vp, size);
 	chfs_set_vnode_size(vp, size);
-
-	// write the new data
-	for (bp->b_blkno = blknum; bp->b_blkno * PAGE_SIZE < size; bp->b_blkno++) {
-		uint64_t writesize = MIN(size - bp->b_blkno * PAGE_SIZE, PAGE_SIZE);
-
-		bp->b_bufsize = bp->b_resid = bp->b_bcount = writesize;
-		bp->b_data = kmem_alloc(writesize, KM_SLEEP);
-
-		memcpy(bp->b_data, buf + (bp->b_blkno * PAGE_SIZE), writesize);
-
-		if (bp->b_blkno != blknum) {
-			fd = chfs_alloc_full_dnode();
-		}
-
-		error = chfs_write_flash_dnode(chmp, vp, bp, fd);
-		if (error) {
-			mutex_exit(&chmp->chm_lock_mountfields);
-			kmem_free(bp->b_data, writesize);
-			putiobuf(bp);
-
-			return error;
-		}
-		if (bp->b_blkno != blknum) {
-			chfs_add_full_dnode_to_inode(chmp, ip, fd);
-		}
-		kmem_free(bp->b_data, writesize);
-	}
-
+	ip->iflag |= IN_CHANGE | IN_UPDATE;
 	mutex_exit(&chmp->chm_lock_mountfields);
-
-	kmem_free(buf, size);
-	putiobuf(bp);
-
 	return 0;
 }
 #if 0

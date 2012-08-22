@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.4 2012/08/13 13:12:51 ttoth Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.5 2012/08/22 09:20:13 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -604,6 +604,10 @@ chfs_remove_frags_of_node(struct chfs_mount *chmp, struct rb_tree *fragtree,
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	struct chfs_node_frag *this, *next;
 
+	if (nref == NULL) {
+		return;
+	}
+
 	this = (struct chfs_node_frag *)RB_TREE_MIN(fragtree);
 	while (this) {
 		next = frag_next(fragtree, this);
@@ -1086,6 +1090,7 @@ chfs_read_data(struct chfs_mount* chmp, struct vnode *vp,
 	frag = (struct chfs_node_frag *)rb_tree_find_node_leq(&ip->fragtree, &ofs);
 
 	if (!frag || frag->ofs > ofs || frag->ofs + frag->size <= ofs) {
+		bp->b_resid = 0;
 		dbg("not found in frag tree\n");
 		return 0;
 	}
