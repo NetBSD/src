@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.5 2006/07/19 01:17:47 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.5.4.1 2012/08/22 19:43:38 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -183,6 +183,27 @@ int     smtpd_sasl_auth_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 5.5.4 Syntax: AUTH mechanism");
 	return (-1);
+    }
+
+    /* Don't reuse the SASL handle after authentication failure. */
+#ifndef SMTPD_FLAG_AUTH_USED
+#define SMTPD_FLAG_AUTH_USED	(1<<15)
+#endif
+#ifndef XSASL_TYPE_CYRUS
+#define XSASL_TYPE_CYRUS	"cyrus"
+#endif
+    if (state->flags & SMTPD_FLAG_AUTH_USED) {
+	smtpd_sasl_disconnect(state);
+#ifdef USE_TLS
+	if (state->tls_context != 0)
+	    smtpd_sasl_connect(state, VAR_SMTPD_SASL_TLS_OPTS,
+			       var_smtpd_sasl_tls_opts);
+	else
+#endif
+	    smtpd_sasl_connect(state, VAR_SMTPD_SASL_OPTS,
+			       var_smtpd_sasl_opts);
+    } else if (strcmp(var_smtpd_sasl_type, XSASL_TYPE_CYRUS) == 0) {
+	state->flags |= SMTPD_FLAG_AUTH_USED;
     }
 
     /*
