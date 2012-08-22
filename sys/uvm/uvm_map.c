@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.4 2010/11/21 18:09:00 riz Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.5 2012/08/22 21:33:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.4 2010/11/21 18:09:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.5 2012/08/22 21:33:56 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1560,9 +1560,8 @@ forwardmerge:
 		/*
 		 * drop our reference to uobj since we are extending a reference
 		 * that we already have (the ref count can not drop to zero).
-		 * (if merged, we've already detached)
 		 */
-		if (uobj && uobj->pgops->pgo_detach && !merged)
+		if (uobj && uobj->pgops->pgo_detach)
 			uobj->pgops->pgo_detach(uobj);
 
 		if (merged) {
