@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187.4.5 2011/12/31 22:11:12 snj Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.4.6 2012/08/22 20:29:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.5 2011/12/31 22:11:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.6 2012/08/22 20:29:20 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -253,6 +253,8 @@ extern struct cfdriver vnd_cd;
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);
 
+static struct	dkdriver vnddkdriver = { vndstrategy, minphys };
+
 void
 vndattach(int num)
 {
@@ -281,7 +283,7 @@ vnd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
+	disk_init(&sc->sc_dkdev, device_xname(self), &vnddkdriver);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -362,8 +364,20 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 * not already valid.
 	 */
 	if ((sc->sc_flags & (VNF_INITED|VNF_VLABEL)) == VNF_INITED &&
-	    sc->sc_dkdev.dk_openmask == 0)
-		vndgetdisklabel(dev, sc);
+	    sc->sc_dkdev.dk_openmask == 0) {
+		/*See if we have wedges, then check for the disklabel*/
+		if (sc->sc_dkdev.dk_nwedges == 0) 
+			vndgetdisklabel(dev, sc);
+	}
+
+	/*
+	 * If there are wedges, and this is not RAW_PART, then we
+	 * need to fail.
+	 */
+	if (sc->sc_dkdev.dk_nwedges != 0 && part != RAW_PART) {
+		error = EBUSY;
+		goto done;
+	}
 
 	/* Check that the partitions exists. */
 	if (part != RAW_PART) {
@@ -975,6 +989,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	struct dkwedge_info *dkw;
+	struct dkwedge_list *dkwl;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1261,7 +1277,15 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    0, 0, "vndxpl", NULL, IPL_BIO);
 
 		/* Try and read the disklabel. */
-		vndgetdisklabel(dev, vnd);
+		/*Discover wedges if there are any*/
+		vndgetdefaultlabel(vnd, vnd->sc_dkdev.dk_label); /*XXX: */
+		vndunlock(vnd); /*XXX*/
+		dkwedge_discover(&vnd->sc_dkdev);
+		if ((error = vndlock(vnd)) != 0)
+			goto close_and_exit;
+
+		if (vnd->sc_dkdev.dk_nwedges == 0)
+			vndgetdisklabel(dev, vnd);
 
 		vndunlock(vnd);
 
@@ -1322,6 +1346,7 @@ unlock_and_exit:
 		pool_destroy(&vnd->sc_vxpool);
 
 		/* Detatch the disk. */
+		dkwedge_delall(&vnd->sc_dkdev);
 		disk_detach(&vnd->sc_dkdev);
 		break;
 
@@ -1465,6 +1490,33 @@ unlock_and_exit:
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
 		VOP_UNLOCK(vnd->sc_vp, 0);
 		return error;
+
+	case DIOCAWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_add(dkw);
+
+	case DIOCDWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_del(dkw);
+
+	case DIOCLWEDGES:
+		dkwl = (void *) data;
+
+		return dkwedge_list(&vnd->sc_dkdev, dkwl, l);
 
 	default:
 		return (ENOTTY);
