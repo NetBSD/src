@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.231 2011/11/26 02:17:07 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.232 2012/08/23 10:39:25 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.229 2011/11/26 02:16:27 nonaka Exp
+ *	NetBSD: pcmciadevs,v 1.230 2012/08/23 10:37:56 kiyohara Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -105,6 +105,7 @@
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
 #define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft Corporation */
+#define	PCMCIA_VENDOR_AMBICOM	0x02df	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
 #define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
@@ -180,6 +181,10 @@
 /* Alvarion Ltd. */
 #define	PCMCIA_CIS_ALVARION_BREEZENET	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ALVARION_BREEZENET	0x0001
+
+/* AmbiCom Inc */
+#define	PCMCIA_CIS_AMBICOM_WL54CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AMBICOM_WL54CF	0x8103
 
 /* Anycom */
 #define	PCMCIA_CIS_ANYCOM_LSE041	{ NULL, NULL, NULL, NULL }
@@ -627,7 +632,6 @@
  * Cards we know only by their cis, sorted by name.
  */
 #define	PCMCIA_VENDOR_ACCTON	-1	/* ACCTON */
-#define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_BILLIONTON	-1	/* Billionton Systems Inc. */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
