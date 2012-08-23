@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.9 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.10 2012/08/23 11:29:51 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -467,17 +467,33 @@ chfs_setattr(void *v)
 		return EINVAL;
 	}
 
-	if (error == 0 && (vap->va_flags != VNOVAL))
+	if (error == 0 && (vap->va_flags != VNOVAL)) {
 		error = chfs_chflags(vp, vap->va_flags, cred);
+		return error;
+	}
 
-	if (error == 0 && (vap->va_size != VNOVAL))
+	if (ip->flags & (IMMUTABLE | APPEND)) {
+		error = EPERM;
+		return error;
+	}
+
+	if (error == 0 && (vap->va_size != VNOVAL)) {
 		error = chfs_chsize(vp, vap->va_size, cred);
+		if (error)
+			return error;
+	}
 
-	if (error == 0 && (vap->va_uid != VNOVAL || vap->va_gid != VNOVAL))
+	if (error == 0 && (vap->va_uid != VNOVAL || vap->va_gid != VNOVAL)) {
 		error = chfs_chown(vp, vap->va_uid, vap->va_gid, cred);
+		if (error)
+			return error;
+	}
 
-	if (error == 0 && (vap->va_mode != VNOVAL))
+	if (error == 0 && (vap->va_mode != VNOVAL)) {
 		error = chfs_chmod(vp, vap->va_mode, cred);
+		if (error)
+			return error;
+	}
 
 #if 0
 	/* why do we need that? */
@@ -1054,11 +1070,18 @@ chfs_remove(void *v)
 	struct chfs_inode *parent = VTOI(dvp);
 	int error = 0;
 
+	if (vp->v_type == VDIR || (ip->flags & (IMMUTABLE | APPEND)) ||
+		(parent->flags & APPEND)) {
+		error = EPERM;
+		goto out;
+	}
+
 	KASSERT(ip->chvc->vno != ip->chvc->pvno);
 
 	error = chfs_do_unlink(ip,
 	    parent, cnp->cn_nameptr, cnp->cn_namelen);
 
+out:
 	vput(dvp);
 	vput(vp);
 
