@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.229 2011/11/26 02:16:27 nonaka Exp $
+$NetBSD: pcmciadevs,v 1.230 2012/08/23 10:37:56 kiyohara Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -98,6 +98,7 @@ vendor IODATA2			0x028a	I-O DATA
 vendor ASUSTEK			0x02aa	Asustek Computer
 vendor SIEMENS			0x02ac	Siemens
 vendor MICROSOFT		0x02d2	Microsoft Corporation
+vendor AMBICOM			0x02df	AmbiCom Inc
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor ACTIONTEC		0x1668	ACTIONTEC
@@ -154,6 +155,9 @@ product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Alvarion Ltd. */
 product ALVARION BREEZENET	0x0001 Alvarion Ltd. BreezeNET PC-DS.11b
+
+/* AmbiCom Inc */
+product AMBICOM WL54CF		0x8103 AmbiCom WL54-CF
 
 /* Anycom */
 product ANYCOM LSE041		0x0004 AnyCom BlueCard LSE041 R1B
@@ -443,7 +447,6 @@ product XIRCOM CEM56		0x110b Xircom CreditCard Ethernet + Modem 56
  * Cards we know only by their cis, sorted by name.
  */
 vendor ACCTON			-1	ACCTON
-vendor AMBICOM			-1	AmbiCom Inc
 vendor AMD			-1	AMD
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor CNET			-1	CNet
