@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.299 2012/08/23 15:45:03 joerg Exp $
+#	$NetBSD: bsd.README,v 1.300 2012/08/23 21:21:16 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1068,11 +1068,14 @@ MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions to be set to 644. This allows .a files
 		from different builds to be bit identical.
 
+SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+		is not "no".
+
 SHLIB_MAJOR
 SHLIB_MINOR
 SHLIB_TEENY	Major, minor, and teeny version numbers of shared library
 
-USE_SHLIBDIR	If not "no", use ${SHLIBDIR} instead of ${LIBDIR}
+USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
@@ -1610,12 +1613,18 @@ included before <bsd.shlib.mk>.
 <bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
 
+SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is not "no", use ${SHLIBINSTALLDIR}
+		instead of ${LIBDIR} as the base path for shared library
+		installation.  [/lib]
+
 SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
 		a program.  [/lib for programs in /bin and /sbin, /usr/lib
 		for all others.]
 
-_LIBSODIR	Set to ${SHLIBDIR} if ${USE_SHLIBDIR} is not "no",
+_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is not "no",
 		otherwise set to ${LIBDIR}
+
+SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
 
 SHLINKDIR	Path to use for shared linker when building a program.
 		[/libexec for programs in /bin and /sbin, /usr/libexec for
