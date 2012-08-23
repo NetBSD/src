@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.15 2012/08/16 18:22:45 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.16 2012/08/23 10:48:19 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.15 2012/08/16 18:22:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.16 2012/08/23 10:48:19 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -78,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.15 2012/08/16 18:22:45 matt Ex
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
-#define KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#define KERNEL_VM_BASE		(KERNEL_BASE + 0x02000000)
 
 /*
- * The range 0xc1000000 - 0xccffffff is available for kernel VM space
- * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ * The range 0xc2000000 - 0xcdffffff is available for kernel VM space
+ * Core-logic registers and I/O mappings occupy 0xfe000000 - 0xffffffff
  */
 #define KERNEL_VM_SIZE		0x0c000000
 
@@ -102,7 +102,7 @@ extern char _end[];
 
 #define KERNEL_PT_SYS		0   /* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define KERNEL_PT_KERNEL_NUM	4
+#define KERNEL_PT_KERNEL_NUM	((KERNEL_VM_BASE - KERNEL_BASE) >> 22)
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
 /* Page tables for mapping kernel VM */
 #define KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
