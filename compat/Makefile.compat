@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.compat,v 1.8 2012/08/23 15:45:02 joerg Exp $
+#	$NetBSD: Makefile.compat,v 1.9 2012/08/23 21:21:14 joerg Exp $
 
 #
 # Makefile fragment to help implement a multilib set of libraries
@@ -11,6 +11,7 @@ _COMPAT_OPTIONS_MK_=1
 
 LIBDIR=			/usr/lib/${MLIBDIR}
 SHLIBDIR=		/usr/lib/${MLIBDIR}
+SHLIBINSTALLDIR=	/usr/lib/${MLIBDIR}
 
 _GCC_CRTBEGIN=		${DESTDIR}/usr/lib/${MLIBDIR}/crtbegin.o
 _GCC_CRTBEGINS=		${DESTDIR}/usr/lib/${MLIBDIR}/crtbeginS.o
@@ -25,5 +26,8 @@ NONLS=		# defined
 NOMAN=		# defined
 NOINFO=		# defined
 NOCHECKVER=	# defined
+
+# ld.elf_so
+SHLINKINSTALLDIR=	/libexec
 
 .endif # _COMPAT_OPTIONS_MK_ }
