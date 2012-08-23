@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle.h,v 1.5 2012/08/22 22:18:22 matt Exp $	*/
+/*	$NetBSD: beagle.h,v 1.6 2012/08/23 01:27:25 matt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -96,7 +96,7 @@
 #define OMAP_L4_CORE_VBASE	OMAP_KERNEL_IO_VBASE
 #define OMAP_L4_PERIPHERAL_VBASE	(OMAP_L4_CORE_VBASE + OMAP_L4_CORE_SIZE)
 #define OMAP_KERNEL_IO_VEND	(OMAP_L4_PERIPHERAL_VBASE + OMAP_L4_PERIPHERAL_SIZE)
-#define CONSADDR_VA	((CONSADDR - OMAP_L4_CORE_BASE) + OMAP_L4_CORE_VBASE)
+#define CONSADDR_VA	((CONSADDR - OMAP_L4_PERIPHERAL_BASE) + OMAP_L4_PERIPHERAL_VBASE)
 #else
 #error unknown OMAP variant
 #endif
