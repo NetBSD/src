@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2012/08/04 15:17:16 matt Exp $
+#	$NetBSD: Makefile,v 1.113 2012/08/23 15:45:02 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -14,7 +14,6 @@ WARNS?=4
 PIE_CFLAGS=
 PIE_LDFLAGS=
 .include <bsd.init.mk>			# for MKPIC definition
-.include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 
 .if defined(LDELFSO_MACHINE_CPU) && !empty(LDELFSO_MACHINE_CPU) && \
     exists(${.CURDIR}/arch/${LDELFSO_MACHINE_CPU})
@@ -81,8 +80,6 @@ xprintf.c: errlist_concat.h
 
 CLEANFILES+=	errlist_concat.h
 
-BINDIR=		${SHLINKINSTALLDIR}
-
 CPPFLAGS+=	-DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-DRTLD_LOADER
@@ -96,11 +93,6 @@ COPTS=		-O3 -fomit-frame-pointer
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
-.endif
-
-
-.if ${SHLIBDIR} != ${LIBDIR}
-CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
 # rtld.c and symbol.c use alloca, so disable SSP warnings.
@@ -133,8 +125,15 @@ ${PROG}: ${OBJS} ${DPADD}
 	${_MKMSG_LINK} ${PROG}
 	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 
-.if ${SHLINKINSTALLDIR} != "/usr/libexec"
-SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
+.if ${MKDYNAMICROOT} == "no"
+BINDIR=		/usr/libexec
+.else
+BINDIR=		/libexec
+.endif
+SHLINKDIR=	${BINDIR}
+
+.if ${SHLINKDIR} != "/usr/libexec"
+SYMLINKS+=	${SHLINKDIR}/${PROG} /usr/libexec/${PROG}
 .endif
 
 .include <bsd.prog.mk>
