@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.60.4.5 2012/01/25 18:06:26 riz Exp $	*/
+/*	$NetBSD: fss.c,v 1.60.4.6 2012/08/23 08:59:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.5 2012/01/25 18:06:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.6 2012/08/23 08:59:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,8 +589,9 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct lwp *l)
 {
 	int error, bits, fsbsize;
+	uint64_t numsec;
+	unsigned int secsize;
 	struct timespec ts;
-	struct partinfo dpart;
 	struct vattr va;
 	struct nameidata nd;
 
@@ -668,17 +669,17 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 
 	sc->sc_bdev = nd.ni_vp->v_rdev;
-	vrele(nd.ni_vp);
 
 	/*
 	 * Get the block device size.
 	 */
 
-	error = bdev_ioctl(sc->sc_bdev, DIOCGPART, &dpart, FREAD, l);
+	error = getdisksize(nd.ni_vp, &numsec, &secsize);
+	vrele(nd.ni_vp);
 	if (error)
 		return error;
 
-	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
+	*bsize = (off_t)numsec*secsize;
 
 	/*
 	 * Get the backing store

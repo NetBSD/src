@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.6.6.1 2011/06/18 17:00:26 bouyer Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.6.6.2 2012/08/23 08:59:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -168,10 +168,10 @@ configure:
 		err(1, "open: %s", argv[0]);
 	}
 
+	fss.fss_flags = 0;
 	if ((xflag || istmp) && isreg)
 		fss.fss_flags |= FSS_UNLINK_ON_CREATE;
-	else
-		fss.fss_flags = 0;
+
 	if (ioctl(fd, FSSIOCSET, &fss) < 0) {
 		if (istmp)
 			unlink(fss.fss_bstore);
