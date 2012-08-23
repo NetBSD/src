@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.13 2012/06/05 08:44:10 abs Exp $
+#	$NetBSD: NETWALKER,v 1.14 2012/08/23 00:20:16 kiyohara Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -38,7 +38,6 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	TMPFS		# memory file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
