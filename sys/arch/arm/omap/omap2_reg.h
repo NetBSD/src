@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.7 2012/08/22 22:18:21 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.8 2012/08/23 01:27:24 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -93,7 +93,7 @@
 #define TI_DM37XX_L4_WAKEUP_SIZE	0x00010000	/* 64KB */
 
 #define TI_DM37XX_L4_PERIPHERAL_BASE	0x49000000
-#define TI_DM37XX_L4_PERIPHERAL_SIZE	0x00100000	/* 1MB */
+#define TI_DM37XX_L4_PERIPHERAL_SIZE	0x01000000	/* 16MB */
 
 #define TI_DM37XX_L4_EMULATION_BASE	0x54000000
 #define TI_DM37XX_L4_EMULATION_SIZE	0x00800000	/* 8MB */
@@ -518,7 +518,7 @@
 /*
  * GPT - General Purpose Timers
  */
-#ifdef OMAP_3530
+#if defined(OMAP_3530) || defined(TI_DM37XX)
 #define	GPT1_BASE			0x48318000
 #define	GPT2_BASE			0x49032000
 #define	GPT3_BASE			0x49034000
@@ -530,7 +530,20 @@
 #define	GPT9_BASE			0x49040000
 #define	GPT10_BASE			0x48086000
 #define	GPT11_BASE			0x48088000
+#if defined(OMAP_3530)
 #define	GPT12_BASE			0x48304000
+#endif
+#elif defined(TI_AM33XX)
+#if 0
+#define	GPT0_BASE			0x44e05000
+#define	GPT1_BASE			0x44e31000	/* 1ms */
+#define	GPT2_BASE			0x48040000
+#define	GPT3_BASE			0x48042000
+#define	GPT4_BASE			0x48044000
+#define	GPT5_BASE			0x48048000
+#define	GPT6_BASE			0x4804A000
+#define	GPT7_BASE			0x4804C000
+#endif
 #else
 #define	GPT1_BASE			0x48028000
 #define	GPT2_BASE			0x4802a000
