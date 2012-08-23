@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.231 2011/11/26 02:17:07 nonaka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.232 2012/08/23 10:39:25 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.229 2011/11/26 02:16:27 nonaka Exp
+ *	NetBSD: pcmciadevs,v 1.230 2012/08/23 10:37:56 kiyohara Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -188,6 +188,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Alvarion Ltd.",
 	    "Alvarion Ltd. BreezeNET PC-DS.11b",	}
+	,
+	{
+	    PCMCIA_VENDOR_AMBICOM, PCMCIA_PRODUCT_AMBICOM_WL54CF,
+	    PCMCIA_CIS_AMBICOM_WL54CF,
+	    0,
+	    "AmbiCom Inc",
+	    "AmbiCom WL54-CF",	}
 	,
 	{
 	    PCMCIA_VENDOR_ANYCOM, PCMCIA_PRODUCT_ANYCOM_LSE041,
@@ -2286,6 +2293,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_AMBICOM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "AmbiCom Inc",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_BREEZECOM,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2451,14 +2466,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "ACCTON",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_AMBICOM,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "AmbiCom Inc",
 	    NULL,
 	},
 	{
