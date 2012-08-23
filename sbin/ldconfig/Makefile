@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2010/07/06 05:59:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2012/08/23 15:45:03 joerg Exp $
 
 .include <bsd.own.mk>   # For MKPIC
 .include <bsd.shlib.mk>
@@ -12,10 +12,6 @@
 
 PROG=	ldconfig
 SRCS=	ldconfig.c shlib.c
-
-.if ${SHLIBINSTALLDIR} != ${LIBDIR}
-CPPFLAGS+=-DSTANDARD_SEARCH_DIRS=\"${SHLIBINSTALLDIR}\",\"${LIBDIR}\"
-.endif
 
 .endif
 
