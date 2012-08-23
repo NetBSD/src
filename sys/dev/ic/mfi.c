@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.43 2012/08/23 09:59:13 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.44 2012/08/23 12:24:33 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.43 2012/08/23 09:59:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.44 2012/08/23 12:24:33 bouyer Exp $");
 
 #include "bio.h"
 
@@ -2712,7 +2712,6 @@ static int
 mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
 {
 	uint32_t     offset = 0;
-	uint32_t     tbolt_contg_length = sc->sc_tbolt_reqmsgpool->am_size;
 	uint8_t      *addr = MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
 
 	/* Request Decriptors alignement restrictions */
@@ -2745,7 +2744,7 @@ mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
 	sc->sc_last_reply_idx = 0;
 	offset = (sc->sc_sg_frame_busaddr + (MEGASAS_MAX_SZ_CHAIN_FRAME *
 	    sc->sc_max_cmds)) - MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
-	KASSERT(offset <= tbolt_contg_length);
+	KASSERT(offset <= sc->sc_tbolt_reqmsgpool->am_size);
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 0,
 	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool)->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
