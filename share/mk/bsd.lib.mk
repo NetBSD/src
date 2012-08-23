@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.323 2012/08/23 15:45:03 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.324 2012/08/23 21:21:16 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -540,7 +540,11 @@ lib${LIB}_g.a:: ${GOBJS} __archivebuild
 
 _LIBLDOPTS=
 .if ${SHLIBDIR} != "/usr/lib"
-_LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} -L=${SHLIBDIR}
+_LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
+		-L=${SHLIBDIR}
+.elif ${SHLIBINSTALLDIR} != "/usr/lib"
+_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
+		-L=${SHLIBINSTALLDIR}
 .endif
 
 # gcc -shared now adds -lc automatically. For libraries other than libc and
