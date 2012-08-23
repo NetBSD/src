@@ -1,4 +1,4 @@
-.\"	$NetBSD: cprng.9,v 1.5 2011/12/17 21:24:40 wiz Exp $
+.\"	$NetBSD: cprng.9,v 1.6 2012/08/23 11:59:02 drochner Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Nd cryptographic pseudo-random number generators
 .Sh SYNOPSIS
 .In sys/cprng.h
-.Ft cprng_strong_t
+.Ft cprng_strong_t *
 .Fn cprng_strong_create "const char *const name" "int ipl" "int flags"
 .Ft void
 .Fn cprng_strong_destroy "cprng_strong_t *cprng"
@@ -208,14 +208,14 @@ A maximum of
 .Dv CPRNG_MAX_LEN
 bytes may be requested at once; this is a restriction of the
 CTR_DRBG specification.
-.It Fn cprng_strong32 "cprng"
-.Pp
-Generate 32 bits using cprng_strong generator
-.Fa cprng .
-.It Fn cprng_strong64 "cprng"
-.Pp
-Generate 64 bits using cprng_strong generator
-.Fa cprng .
+.It Fn cprng_strong32
+Generate 32 bits using the
+.Dq kern_cprng
+cprng_strong generator.
+.It Fn cprng_strong64
+Generate 64 bits using the
+.Dq kern_cprng
+cprng_strong generator.
 .It Fn cprng_strong_getflags "cprng"
 .Pp
 Get the flags currently in use by generator
