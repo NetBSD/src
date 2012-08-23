@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.6 2012/08/23 01:27:24 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.6 2012/08/23 01:27:24 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -155,10 +155,12 @@ typedef struct {
 static const gptimer_instance_t gptimer_instance_tab[] = {
 	GPT_ENTRY( 2), GPT_ENTRY( 3), GPT_ENTRY( 4), GPT_ENTRY( 5),
 	GPT_ENTRY( 6), GPT_ENTRY( 7), GPT_ENTRY( 8), GPT_ENTRY( 9),
-	GPT_ENTRY(10), GPT_ENTRY(11), GPT_ENTRY(12),
+	GPT_ENTRY(10), GPT_ENTRY(11),
+#ifdef GPT12_BASE
+	GPT_ENTRY(12),
+#endif
 };
 #undef	GPT_ENTRY
-#define GPTIMER_INSTANCE_CNT	__arraycount(gptimer_instance_tab)
 
 static const gptimer_instance_t *
 		gpt_lookup(struct obio_attach_args *);
@@ -183,11 +185,14 @@ obiomputmr_match(device_t parent, cfdata_t match, void *aux)
 	if (obio->obio_size == 0)
 		obio->obio_size = 256;	/* Per the OMAP TRM. */
 
-	if (gpt_lookup(obio) == NULL)
-		return 0;
+	if (gpt_lookup(obio) != NULL) {
+		/* We implicitly trust the config file. */
+		return 1;
+	}
 
-	/* We implicitly trust the config file. */
-	return 1;
+	KASSERT(obio->obio_addr != GPT2_BASE);
+
+	return 0;
 }
 
 void
@@ -274,7 +279,8 @@ gpt_lookup(struct obio_attach_args *obio)
 	uint i;
 
 	for (i = 0, ip = gptimer_instance_tab;
-	     i < GPTIMER_INSTANCE_CNT; i++, ip++) {
+	     i < __arraycount(gptimer_instance_tab);
+	     i++, ip++) {
 		if (ip->addr == obio->obio_addr && ip->intr == obio->obio_intr)
 			return ip;
 	}
@@ -288,15 +294,15 @@ gpt_enable(
 	struct obio_attach_args *obio,
 	const gptimer_instance_t *ip)
 {
-	bus_space_handle_t ioh;
-	uint32_t r;
-	int err;
-
 	KASSERT(ip != NULL);
 
 	aprint_normal(" #%d", ip->gptn);
 
-	err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
+#if defined(OMAP_2430) || defined(OMAP_2420)
+	bus_space_handle_t ioh;
+	uint32_t r;
+
+	int err = bus_space_map(obio->obio_iot, OMAP2_CM_BASE,
 	    OMAP2_CM_SIZE, 0, &ioh);
 	KASSERT(err == 0);
 
@@ -313,4 +319,5 @@ gpt_enable(
 	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN1_CORE, r);
 
 	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
+#endif
 }
