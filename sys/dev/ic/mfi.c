@@ -1,5 +1,30 @@
-/* $NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.43 2012/08/23 09:59:13 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
+
+/*
+ * Copyright (c) 2012 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -16,8 +41,39 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+ /*-
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *            Copyright 1994-2009 The FreeBSD Project.
+ *            All rights reserved.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ *    THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FREEBSD PROJECT OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY,OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION)HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * The views and conclusions contained in the software and documentation
+ * are those of the authors and should not be interpreted as representing
+ * official policies,either expressed or implied, of the FreeBSD Project.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.43 2012/08/23 09:59:13 bouyer Exp $");
 
 #include "bio.h"
 
@@ -29,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_param.h>
 
@@ -50,14 +107,15 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.42 2012/08/05 22:47:36 bouyer Exp $");
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
-/*		    | MFI_D_CMD */
+/*		    | MFI_D_CMD  */
 /*		    | MFI_D_INTR */
 /*		    | MFI_D_MISC */
 /*		    | MFI_D_DMA */
-		    | MFI_D_IOCTL
+/*		    | MFI_D_IOCTL */
 /*		    | MFI_D_RW */
 /*		    | MFI_D_MEM */
 /*		    | MFI_D_CCB */
+/*		    | MFI_D_SYNC */
 		;
 #endif
 
@@ -82,9 +140,10 @@ static int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* commands */
 static int		mfi_scsi_ld(struct mfi_ccb *, struct scsipi_xfer *);
-static int		mfi_scsi_io(struct mfi_ccb *, struct scsipi_xfer *,
-				uint32_t, uint32_t);
-static void		mfi_scsi_xs_done(struct mfi_ccb *);
+static int		mfi_scsi_ld_io(struct mfi_ccb *, struct scsipi_xfer *,
+				uint64_t, uint32_t);
+static void		mfi_scsi_ld_done(struct mfi_ccb *);
+static void		mfi_scsi_xs_done(struct mfi_ccb *, int, int);
 static int		mfi_mgmt_internal(struct mfi_softc *,
 			    uint32_t, uint32_t, uint32_t, void *, uint8_t *);
 static int		mfi_mgmt(struct mfi_ccb *,struct scsipi_xfer *,
@@ -120,7 +179,8 @@ static const struct mfi_iop_ops mfi_iop_xscale = {
 	mfi_xscale_intr_dis,
 	mfi_xscale_intr_ena,
 	mfi_xscale_intr,
-	mfi_xscale_post
+	mfi_xscale_post,
+	mfi_scsi_ld_io,
 };
 
 static uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
@@ -134,7 +194,8 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_intr_dis,
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
-	mfi_ppc_post
+	mfi_ppc_post,
+	mfi_scsi_ld_io,
 };
 
 uint32_t	mfi_gen2_fw_state(struct mfi_softc *sc);
@@ -148,7 +209,8 @@ static const struct mfi_iop_ops mfi_iop_gen2 = {
 	mfi_gen2_intr_dis,
 	mfi_gen2_intr_ena,
 	mfi_gen2_intr,
-	mfi_gen2_post
+	mfi_gen2_post,
+	mfi_scsi_ld_io,
 };
 
 u_int32_t	mfi_skinny_fw_state(struct mfi_softc *);
@@ -162,7 +224,33 @@ static const struct mfi_iop_ops mfi_iop_skinny = {
 	mfi_skinny_intr_dis,
 	mfi_skinny_intr_ena,
 	mfi_skinny_intr,
-	mfi_skinny_post
+	mfi_skinny_post,
+	mfi_scsi_ld_io,
+};
+
+static int	mfi_tbolt_init_desc_pool(struct mfi_softc *);
+static int	mfi_tbolt_init_MFI_queue(struct mfi_softc *);
+static void	mfi_tbolt_build_mpt_ccb(struct mfi_ccb *);
+int		mfi_tbolt_scsi_ld_io(struct mfi_ccb *, struct scsipi_xfer *,
+		    uint64_t, uint32_t);
+static void	mfi_tbolt_scsi_ld_done(struct mfi_ccb *);
+static int	mfi_tbolt_create_sgl(struct mfi_ccb *, int);
+void		mfi_tbolt_sync_map_info(struct work *, void *);
+static void	mfi_sync_map_complete(struct mfi_ccb *);
+
+u_int32_t	mfi_tbolt_fw_state(struct mfi_softc *);
+void		mfi_tbolt_intr_dis(struct mfi_softc *);
+void		mfi_tbolt_intr_ena(struct mfi_softc *);
+int		mfi_tbolt_intr(struct mfi_softc *sc);
+void		mfi_tbolt_post(struct mfi_softc *, struct mfi_ccb *);
+
+static const struct mfi_iop_ops mfi_iop_tbolt = {
+	mfi_tbolt_fw_state,
+	mfi_tbolt_intr_dis,
+	mfi_tbolt_intr_ena,
+	mfi_tbolt_intr,
+	mfi_tbolt_post,
+	mfi_tbolt_scsi_ld_io,
 };
 
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
@@ -186,6 +274,8 @@ mfi_get_ccb(struct mfi_softc *sc)
 	splx(s);
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_get_ccb: %p\n", DEVNAME(sc), ccb);
+	if (ccb == NULL)
+		aprint_error_dev(sc->sc_dev, "out of ccb\n");
 
 	return ccb;
 }
@@ -211,7 +301,12 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_sgl = NULL;
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
-
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		/* erase tb_request_desc but preserve SMID */
+		int index = ccb->ccb_tb_request_desc.header.SMID;
+		ccb->ccb_tb_request_desc.words = 0;
+		ccb->ccb_tb_request_desc.header.SMID = index;
+	}
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
@@ -223,12 +318,12 @@ mfi_destroy_ccb(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	uint32_t		i;
 
-	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
+	DNPRINTF(MFI_D_CCB, "%s: mfi_destroy_ccb\n", DEVNAME(sc));
 
 
 	for (i = 0; (ccb = mfi_get_ccb(sc)) != NULL; i++) {
 		/* create a dma map for transfer */
-		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		bus_dmamap_destroy(sc->sc_datadmat, ccb->ccb_dmamap);
 	}
 
 	if (i < sc->sc_max_cmds)
@@ -245,11 +340,24 @@ mfi_init_ccb(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	uint32_t		i;
 	int			error;
+	bus_addr_t		io_req_base_phys;
+	uint8_t			*io_req_base;
+	int offset;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		/*
+		 * The first 256 bytes (SMID 0) is not used.
+		 * Don't add to the cmd list.
+		 */
+		io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool) +
+			MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) +
+			MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+	}
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
 		ccb = &sc->sc_ccb[i];
@@ -270,13 +378,29 @@ mfi_init_ccb(struct mfi_softc *sc)
 		    (MFIMEM_DVA(sc->sc_sense) + MFI_SENSE_SIZE * i);
 
 		/* create a dma map for transfer */
-		error = bus_dmamap_create(sc->sc_dmat,
+		error = bus_dmamap_create(sc->sc_datadmat,
 		    MAXPHYS, sc->sc_max_sgl, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
-			printf("%s: cannot create ccb dmamap (%d)\n",
-			    DEVNAME(sc), error);
+			aprint_error_dev(sc->sc_dev,
+			    "cannot create ccb dmamap (%d)\n", error);
 			goto destroy;
+		}
+		if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+			offset = MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * i;
+			ccb->ccb_tb_io_request =
+			    (struct mfi_mpi2_request_raid_scsi_io *)
+			    (io_req_base + offset);
+			ccb->ccb_tb_pio_request =
+			    io_req_base_phys + offset;
+			offset = MEGASAS_MAX_SZ_CHAIN_FRAME * i;
+			ccb->ccb_tb_sg_frame =
+			    (mpi2_sge_io_union *)(sc->sc_reply_pool_limit +
+			    offset);
+			ccb->ccb_tb_psg_frame = sc->sc_sg_frame_busaddr +
+			    offset;
+			/* SMID 0 is reserved. Set SMID/index from 1 */
+			ccb->ccb_tb_request_desc.header.SMID = i + 1;
 		}
 
 		DNPRINTF(MFI_D_CCB,
@@ -296,7 +420,7 @@ destroy:
 	while (i) {
 		i--;
 		ccb = &sc->sc_ccb[i];
-		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		bus_dmamap_destroy(sc->sc_datadmat, ccb->ccb_dmamap);
 	}
 
 	free(sc->sc_ccb, M_DEVBUF);
@@ -413,17 +537,19 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		cur_state = fw_state;
 		switch (fw_state) {
 		case MFI_STATE_FAULT:
-			printf("%s: firmware fault\n", DEVNAME(sc));
+			aprint_error_dev(sc->sc_dev, "firmware fault\n");
 			return 1;
 		case MFI_STATE_WAIT_HANDSHAKE:
-			if (sc->sc_ioptype == MFI_IOP_SKINNY)
+			if (sc->sc_ioptype == MFI_IOP_SKINNY ||
+			    sc->sc_ioptype == MFI_IOP_TBOLT)
 				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			else
 				mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			max_wait = 2;
 			break;
 		case MFI_STATE_OPERATIONAL:
-			if (sc->sc_ioptype == MFI_IOP_SKINNY)
+			if (sc->sc_ioptype == MFI_IOP_SKINNY ||
+			    sc->sc_ioptype == MFI_IOP_TBOLT)
 				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
 			else
 				mfi_write(sc, MFI_IDB, MFI_INIT_READY);
@@ -438,9 +564,16 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		case MFI_STATE_FLUSH_CACHE:
 			max_wait = 20;
 			break;
+		case MFI_STATE_BOOT_MESSAGE_PENDING:
+			if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+				mfi_write(sc, MFI_SKINNY_IDB, MFI_INIT_HOTPLUG);
+				max_wait = 180;
+				break;
+			}
+			/* FALLTHROUGH */
 		default:
-			printf("%s: unknown firmware state %d\n",
-			    DEVNAME(sc), fw_state);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown firmware state %d\n", fw_state);
 			return 1;
 		}
 		for (i = 0; i < (max_wait * 10); i++) {
@@ -451,8 +584,8 @@ mfi_transition_firmware(struct mfi_softc *sc)
 				break;
 		}
 		if (fw_state == cur_state) {
-			printf("%s: firmware stuck in state %#x\n",
-			    DEVNAME(sc), fw_state);
+			aprint_error_dev(sc->sc_dev,
+			    "firmware stuck in state %#x\n", fw_state);
 			return 1;
 		}
 	}
@@ -494,7 +627,8 @@ mfi_initialize_firmware(struct mfi_softc *sc)
 	    qinfo->miq_pi_addr_lo, qinfo->miq_ci_addr_lo);
 
 	if (mfi_poll(ccb)) {
-		printf("%s: mfi_initialize_firmware failed\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "mfi_initialize_firmware failed\n");
 		return 1;
 	}
 
@@ -718,6 +852,14 @@ mfi_detach(struct mfi_softc *sc, int flags)
 
 	/* TBD: shutdown firmware */
 
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		workqueue_destroy(sc->sc_ldsync_wq);
+		mfi_put_ccb(sc->sc_ldsync_ccb);
+		mfi_freemem(sc, &sc->sc_tbolt_reqmsgpool);
+		mfi_freemem(sc, &sc->sc_tbolt_ioc_init);
+		mfi_freemem(sc, &sc->sc_tbolt_verbuf);
+	}
+
 	if ((error = mfi_destroy_ccb(sc)) != 0)
 		return error;
 
@@ -755,6 +897,9 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	case MFI_IOP_SKINNY:
 		sc->sc_iop = &mfi_iop_skinny;
 		break;
+	case MFI_IOP_TBOLT:
+		sc->sc_iop = &mfi_iop_tbolt;
+		break;
 	default:
 		 panic("%s: unknown iop %d", DEVNAME(sc), iop);
 	}
@@ -767,24 +912,74 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	status = mfi_fw_state(sc);
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
 	max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
-	if (sc->sc_64bit_dma) {
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_sgl_size = sizeof(struct mfi_sg_ieee);
+	} else if (sc->sc_64bit_dma) {
 		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
 		sc->sc_sgl_size = sizeof(struct mfi_sg64);
-		sc->sc_sgl_flags = MFI_FRAME_SGL64;
 	} else {
 		sc->sc_max_sgl = max_sgl;
 		sc->sc_sgl_size = sizeof(struct mfi_sg32);
-		sc->sc_sgl_flags = MFI_FRAME_SGL32;
 	}
 	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
 	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
 
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		uint32_t tb_mem_size;
+		/* for Alignment */
+		tb_mem_size = MEGASAS_THUNDERBOLT_MSG_ALLIGNMENT;
+
+		tb_mem_size +=
+		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1);
+		sc->sc_reply_pool_size =
+		    ((sc->sc_max_cmds + 1 + 15) / 16) * 16;
+		tb_mem_size +=
+		    MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size;
+
+		/* this is for SGL's */
+		tb_mem_size += MEGASAS_MAX_SZ_CHAIN_FRAME * sc->sc_max_cmds;
+		sc->sc_tbolt_reqmsgpool = mfi_allocmem(sc, tb_mem_size);
+		if (sc->sc_tbolt_reqmsgpool == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to allocate thunderbolt "
+			    "request message pool\n");
+			goto nopcq;
+		}
+		if (mfi_tbolt_init_desc_pool(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "Thunderbolt pool preparation error\n");
+			goto nopcq;
+		}
+
+		/*
+		 * Allocate DMA memory mapping for MPI2 IOC Init descriptor,
+		 * we are taking it diffrent from what we have allocated for
+		 * Request and reply descriptors to avoid confusion later
+		 */
+		sc->sc_tbolt_ioc_init = mfi_allocmem(sc,
+		    sizeof(struct mpi2_ioc_init_request));
+		if (sc->sc_tbolt_ioc_init == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to allocate thunderbolt IOC init memory");
+			goto nopcq;
+		}
+
+		sc->sc_tbolt_verbuf = mfi_allocmem(sc,
+		    MEGASAS_MAX_NAME*sizeof(bus_addr_t));
+		if (sc->sc_tbolt_verbuf == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to allocate thunderbolt version buffer\n");
+			goto nopcq;
+		}
+
+	}
 	/* consumer/producer and reply queue memory */
 	sc->sc_pcq = mfi_allocmem(sc, (sizeof(uint32_t) * sc->sc_max_cmds) +
 	    sizeof(struct mfi_prod_cons));
 	if (sc->sc_pcq == NULL) {
-		aprint_error("%s: unable to allocate reply queue memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate reply queue memory\n");
 		goto nopcq;
 	}
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_pcq), 0,
@@ -797,46 +992,55 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_frames_size = frames * MFI_FRAME_SIZE;
 	sc->sc_frames = mfi_allocmem(sc, sc->sc_frames_size * sc->sc_max_cmds);
 	if (sc->sc_frames == NULL) {
-		aprint_error("%s: unable to allocate frame memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate frame memory\n");
 		goto noframe;
 	}
 	/* XXX hack, fix this */
 	if (MFIMEM_DVA(sc->sc_frames) & 0x3f) {
-		aprint_error("%s: improper frame alignment (%#llx) FIXME\n",
-		    DEVNAME(sc), (long long int)MFIMEM_DVA(sc->sc_frames));
+		aprint_error_dev(sc->sc_dev,
+		    "improper frame alignment (%#llx) FIXME\n",
+		    (long long int)MFIMEM_DVA(sc->sc_frames));
 		goto noframe;
 	}
 
 	/* sense memory */
 	sc->sc_sense = mfi_allocmem(sc, sc->sc_max_cmds * MFI_SENSE_SIZE);
 	if (sc->sc_sense == NULL) {
-		aprint_error("%s: unable to allocate sense memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate sense memory\n");
 		goto nosense;
 	}
 
 	/* now that we have all memory bits go initialize ccbs */
 	if (mfi_init_ccb(sc)) {
-		aprint_error("%s: could not init ccb list\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not init ccb list\n");
 		goto noinit;
 	}
 
 	/* kickstart firmware with all addresses and pointers */
-	if (mfi_initialize_firmware(sc)) {
-		aprint_error("%s: could not initialize firmware\n",
-		    DEVNAME(sc));
-		goto noinit;
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		if (mfi_tbolt_init_MFI_queue(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not initialize firmware\n");
+			goto noinit;
+		}
+	} else {
+		if (mfi_initialize_firmware(sc)) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not initialize firmware\n");
+			goto noinit;
+		}
 	}
 
 	if (mfi_get_info(sc)) {
-		aprint_error("%s: could not retrieve controller information\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not retrieve controller information\n");
 		goto noinit;
 	}
 
-	aprint_normal("%s: logical drives %d, version %s, %dMB RAM\n",
-	    DEVNAME(sc),
+	aprint_normal_dev(sc->sc_dev,
+	    "logical drives %d, version %s, %dMB RAM\n",
 	    sc->sc_info.mci_lds_present,
 	    sc->sc_info.mci_package_version,
 	    sc->sc_info.mci_memory_size);
@@ -849,8 +1053,9 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
-	if (sc->sc_ld_cnt)
-		adapt->adapt_openings = sc->sc_max_cmds / sc->sc_ld_cnt;
+	/* keep a few commands for management */
+	if (sc->sc_max_cmds > 4)
+		adapt->adapt_openings = sc->sc_max_cmds - 4;
 	else
 		adapt->adapt_openings = sc->sc_max_cmds;
 	adapt->adapt_max_periph = adapt->adapt_openings;
@@ -859,7 +1064,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
-	chan->chan_bustype = &scsi_bustype;
+	chan->chan_bustype = &scsi_sas_bustype;
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
 	chan->chan_nluns = 8;
@@ -875,7 +1080,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	if (bio_register(sc->sc_dev, mfi_ioctl) != 0)
 		panic("%s: controller registration failed", DEVNAME(sc));
 	if (mfi_create_sensors(sc) != 0)
-		aprint_error("%s: unable to create sensors\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "unable to create sensors\n");
 #endif /* NBIO > 0 */
 
 	return 0;
@@ -886,6 +1091,12 @@ nosense:
 noframe:
 	mfi_freemem(sc, &sc->sc_pcq);
 nopcq:
+	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
+		if (sc->sc_tbolt_reqmsgpool)
+			mfi_freemem(sc, &sc->sc_tbolt_reqmsgpool);
+		if (sc->sc_tbolt_verbuf)
+			mfi_freemem(sc, &sc->sc_tbolt_verbuf);
+	}
 	return 1;
 }
 
@@ -895,25 +1106,49 @@ mfi_poll(struct mfi_ccb *ccb)
 	struct mfi_softc *sc = ccb->ccb_sc;
 	struct mfi_frame_header	*hdr;
 	int			to = 0;
+	int			rv = 0;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_poll\n", DEVNAME(sc));
 
 	hdr = &ccb->ccb_frame->mfr_header;
 	hdr->mfh_cmd_status = 0xff;
-	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
+	if (!sc->sc_MFA_enabled)
+		hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
+
+	/* no callback, caller is supposed to do the cleanup */
+	ccb->ccb_done = NULL;
 
 	mfi_post(sc, ccb);
-	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
-	    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
-	    sc->sc_frames_size, BUS_DMASYNC_POSTREAD);
-
-	while (hdr->mfh_cmd_status == 0xff) {
-		delay(1000);
-		if (to++ > 5000) /* XXX 5 seconds busywait sucks */
-			break;
+	if (sc->sc_MFA_enabled) {
+		/*
+		 * depending on the command type, result may be posted
+		 * to *hdr, or not. In addition it seems there's
+		 * no way to avoid posting the SMID to the reply queue.
+		 * So pool using the interrupt routine.
+		 */
+		 while (ccb->ccb_state != MFI_CCB_DONE) {
+			delay(1000);
+			if (to++ > 5000) { /* XXX 5 seconds busywait sucks */
+				rv = 1;
+				break;
+			}
+			mfi_tbolt_intrh(sc);
+		 }
+	} else {
 		bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
 		    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
 		    sc->sc_frames_size, BUS_DMASYNC_POSTREAD);
+
+		while (hdr->mfh_cmd_status == 0xff) {
+			delay(1000);
+			if (to++ > 5000) { /* XXX 5 seconds busywait sucks */
+				rv = 1;
+				break;
+			}
+			bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+			    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
+			    sc->sc_frames_size, BUS_DMASYNC_POSTREAD);
+		}
 	}
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
 	    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
@@ -922,16 +1157,16 @@ mfi_poll(struct mfi_ccb *ccb)
 	if (ccb->ccb_data != NULL) {
 		DNPRINTF(MFI_D_INTR, "%s: mfi_mgmt_done sync\n",
 		    DEVNAME(sc));
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (ccb->ccb_direction & MFI_DATA_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+		bus_dmamap_unload(sc->sc_datadmat, ccb->ccb_dmamap);
 	}
 
-	if (hdr->mfh_cmd_status == 0xff) {
-		printf("%s: timeout on ccb %d\n", DEVNAME(sc),
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "timeout on ccb %d\n",
 		    hdr->mfh_context);
 		ccb->ccb_flags |= MFI_CCB_F_ERR;
 		return 1;
@@ -971,8 +1206,9 @@ mfi_intr(void *arg)
 		ctx = pcq->mpc_reply_q[consumer];
 		pcq->mpc_reply_q[consumer] = MFI_INVALID_CTX;
 		if (ctx == MFI_INVALID_CTX)
-			printf("%s: invalid context, p: %d c: %d\n",
-			    DEVNAME(sc), producer, consumer);
+			aprint_error_dev(sc->sc_dev,
+			    "invalid context, p: %d c: %d\n",
+			    producer, consumer);
 		else {
 			/* XXX remove from queue and call scsi_done */
 			ccb = &sc->sc_ccb[ctx];
@@ -1000,13 +1236,13 @@ mfi_intr(void *arg)
 }
 
 static int
-mfi_scsi_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint32_t blockno,
+mfi_scsi_ld_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint64_t blockno,
     uint32_t blockcnt)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mfi_io_frame   *io;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io: %d\n",
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld_io: %d\n",
 	    device_xname(periph->periph_channel->chan_adapter->adapt_dev),
 	    periph->periph_target);
 
@@ -1026,12 +1262,12 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint32_t blockno,
 	io->mif_header.mfh_flags = 0;
 	io->mif_header.mfh_sense_len = MFI_SENSE_SIZE;
 	io->mif_header.mfh_data_len= blockcnt;
-	io->mif_lba_hi = 0;
-	io->mif_lba_lo = blockno;
+	io->mif_lba_hi = (blockno >> 32);
+	io->mif_lba_lo = (blockno & 0xffffffff);
 	io->mif_sense_addr_lo = htole32(ccb->ccb_psense);
 	io->mif_sense_addr_hi = 0;
 
-	ccb->ccb_done = mfi_scsi_xs_done;
+	ccb->ccb_done = mfi_scsi_ld_done;
 	ccb->ccb_xs = xs;
 	ccb->ccb_frame_size = MFI_IO_FRAME_SIZE;
 	ccb->ccb_sgl = &io->mif_sgl;
@@ -1046,11 +1282,17 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint32_t blockno,
 }
 
 static void
-mfi_scsi_xs_done(struct mfi_ccb *ccb)
+mfi_scsi_ld_done(struct mfi_ccb *ccb)
+{
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
+	mfi_scsi_xs_done(ccb, hdr->mfh_cmd_status, hdr->mfh_scsi_status);
+}
+
+static void
+mfi_scsi_xs_done(struct mfi_ccb *ccb, int status, int scsi_status)
 {
 	struct scsipi_xfer	*xs = ccb->ccb_xs;
 	struct mfi_softc	*sc = ccb->ccb_sc;
-	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 
 	DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done %#lx %#lx\n",
 	    DEVNAME(sc), (u_long)ccb, (u_long)ccb->ccb_frame);
@@ -1058,26 +1300,26 @@ mfi_scsi_xs_done(struct mfi_ccb *ccb)
 	if (xs->data != NULL) {
 		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done sync\n",
 		    DEVNAME(sc));
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (xs->xs_control & XS_CTL_DATA_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+		bus_dmamap_unload(sc->sc_datadmat, ccb->ccb_dmamap);
 	}
 
-	if (hdr->mfh_cmd_status != MFI_STAT_OK) {
+	if (status != MFI_STAT_OK) {
 		xs->error = XS_DRIVER_STUFFUP;
 		DNPRINTF(MFI_D_INTR, "%s: mfi_scsi_xs_done stuffup %#x\n",
-		    DEVNAME(sc), hdr->mfh_cmd_status);
+		    DEVNAME(sc), status);
 
-		if (hdr->mfh_scsi_status != 0) {
+		if (scsi_status != 0) {
 			bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_sense),
 			    ccb->ccb_psense - MFIMEM_DVA(sc->sc_sense),
 			    MFI_SENSE_SIZE, BUS_DMASYNC_POSTREAD);
 			DNPRINTF(MFI_D_INTR,
 			    "%s: mfi_scsi_xs_done sense %#x %lx %lx\n",
-			    DEVNAME(sc), hdr->mfh_scsi_status,
+			    DEVNAME(sc), scsi_status,
 			    (u_long)&xs->sense, (u_long)ccb->ccb_sense);
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			memcpy(&xs->sense, ccb->ccb_sense,
@@ -1119,7 +1361,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsipi_xfer *xs)
 	memset(pf->mpf_cdb, 0, 16);
 	memcpy(pf->mpf_cdb, &xs->cmdstore, xs->cmdlen);
 
-	ccb->ccb_done = mfi_scsi_xs_done;
+	ccb->ccb_done = mfi_scsi_ld_done;
 	ccb->ccb_xs = xs;
 	ccb->ccb_frame_size = MFI_PASS_FRAME_SIZE;
 	ccb->ccb_sgl = &pf->mpf_sgl;
@@ -1153,7 +1395,10 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct mfi_ccb		*ccb;
 	struct scsi_rw_6	*rw;
 	struct scsipi_rw_10	*rwb;
-	uint32_t		blockno, blockcnt;
+	struct scsipi_rw_12	*rw12;
+	struct scsipi_rw_16	*rw16;
+	uint64_t		blockno;
+	uint32_t		blockcnt;
 	uint8_t			target;
 	uint8_t			mbox[MFI_MBOX_SIZE];
 	int			s;
@@ -1163,19 +1408,26 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		/* Not supported. */
 		return;
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* Not supported. */
+	{
+		struct scsipi_xfer_mode *xm = arg;
+		xm->xm_mode = PERIPH_CAP_TQING;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(&sc->sc_chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
+	}
 	case ADAPTER_REQ_RUN_XFER:
 		break;
 	}
 
 	xs = arg;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_scsipi_request req %d opcode: %#x\n",
-	    DEVNAME(sc), req, xs->cmd->opcode);
-
 	periph = xs->xs_periph;
 	target = periph->periph_target;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_scsipi_request req %d opcode: %#x "
+	    "target %d lun %d\n", DEVNAME(sc), req, xs->cmd->opcode,
+	    periph->periph_target, periph->periph_lun);
 
 	s = splbio();
 	if (target >= MFI_MAX_LD || !sc->sc_ld[target].ld_present ||
@@ -1198,13 +1450,32 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	switch (xs->cmd->opcode) {
 	/* IO path */
+	case READ_16:
+	case WRITE_16:
+		rw16 = (struct scsipi_rw_16 *)xs->cmd;
+		blockno = _8btol(rw16->addr);
+		blockcnt = _4btol(rw16->length);
+		if (sc->sc_iop->mio_ld_io(ccb, xs, blockno, blockcnt)) {
+			goto stuffup;
+		}
+		break;
+
+	case READ_12:
+	case WRITE_12:
+		rw12 = (struct scsipi_rw_12 *)xs->cmd;
+		blockno = _4btol(rw12->addr);
+		blockcnt = _4btol(rw12->length);
+		if (sc->sc_iop->mio_ld_io(ccb, xs, blockno, blockcnt)) {
+			goto stuffup;
+		}
+		break;
+
 	case READ_10:
 	case WRITE_10:
 		rwb = (struct scsipi_rw_10 *)xs->cmd;
 		blockno = _4btol(rwb->addr);
 		blockcnt = _2btol(rwb->length);
-		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
-			mfi_put_ccb(ccb);
+		if (sc->sc_iop->mio_ld_io(ccb, xs, blockno, blockcnt)) {
 			goto stuffup;
 		}
 		break;
@@ -1214,8 +1485,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		rw = (struct scsi_rw_6 *)xs->cmd;
 		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		blockcnt = rw->length ? rw->length : 0x100;
-		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
-			mfi_put_ccb(ccb);
+		if (sc->sc_iop->mio_ld_io(ccb, xs, blockno, blockcnt)) {
 			goto stuffup;
 		}
 		break;
@@ -1224,7 +1494,6 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_mgmt(ccb, xs,
 		    MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE, 0, NULL, mbox)) {
-			mfi_put_ccb(ccb);
 			goto stuffup;
 		}
 		break;
@@ -1239,7 +1508,6 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 	default:
 		if (mfi_scsi_ld(ccb, xs)) {
-			mfi_put_ccb(ccb);
 			goto stuffup;
 		}
 		break;
@@ -1250,8 +1518,8 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	if (xs->xs_control & XS_CTL_POLL) {
 		if (mfi_poll(ccb)) {
 			/* XXX check for sense in ccb->ccb_sense? */
-			printf("%s: mfi_scsipi_request poll failed\n",
-			    DEVNAME(sc));
+			aprint_error_dev(sc->sc_dev,
+			    "mfi_scsipi_request poll failed\n");
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			xs->sense.scsi_sense.response_code =
 			    SSD_RCODE_VALID | SSD_RCODE_CURRENT;
@@ -1282,6 +1550,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	return;
 
 stuffup:
+	mfi_put_ccb(ccb);
 	xs->error = XS_DRIVER_STUFFUP;
 	scsipi_done(xs);
 	splx(s);
@@ -1302,14 +1571,17 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	if (!ccb->ccb_data)
 		return 1;
 
-	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap,
+	KASSERT(flags == BUS_DMA_NOWAIT || !cpu_intr_p());
+	error = bus_dmamap_load(sc->sc_datadmat, ccb->ccb_dmamap,
 	    ccb->ccb_data, ccb->ccb_len, NULL, flags);
 	if (error) {
-		if (error == EFBIG)
-			printf("more than %d dma segs\n",
+		if (error == EFBIG) {
+			aprint_error_dev(sc->sc_dev, "more than %d dma segs\n",
 			    sc->sc_max_sgl);
-		else
-			printf("error %d loading dma map\n", error);
+		} else {
+			aprint_error_dev(sc->sc_dev,
+			    "error %d loading dma map\n", error);
+		}
 		return 1;
 	}
 
@@ -1317,31 +1589,43 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 	sgl = ccb->ccb_sgl;
 	sgd = ccb->ccb_dmamap->dm_segs;
 	for (i = 0; i < ccb->ccb_dmamap->dm_nsegs; i++) {
-		if (sc->sc_64bit_dma) {
+		if (sc->sc_ioptype == MFI_IOP_TBOLT &&
+		    (hdr->mfh_cmd == MFI_CMD_PD_SCSI_IO ||
+		     hdr->mfh_cmd == MFI_CMD_LD_READ ||
+		     hdr->mfh_cmd == MFI_CMD_LD_WRITE)) {
+			sgl->sg_ieee[i].addr = htole64(sgd[i].ds_addr);
+			sgl->sg_ieee[i].len = htole32(sgd[i].ds_len);
+			sgl->sg_ieee[i].flags = 0;
+			DNPRINTF(MFI_D_DMA, "%s: addr: %#" PRIx64 " len: %#"
+			    PRIx32 "\n",
+			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
+			hdr->mfh_flags |= MFI_FRAME_IEEE_SGL | MFI_FRAME_SGL64;
+		} else if (sc->sc_64bit_dma) {
 			sgl->sg64[i].addr = htole64(sgd[i].ds_addr);
 			sgl->sg64[i].len = htole32(sgd[i].ds_len);
 			DNPRINTF(MFI_D_DMA, "%s: addr: %#" PRIx64 " len: %#"
-			    PRIx64 "\n",
+			    PRIx32 "\n",
 			    DEVNAME(sc), sgl->sg64[i].addr, sgl->sg64[i].len);
+			hdr->mfh_flags |= MFI_FRAME_SGL64;
 		} else {
 			sgl->sg32[i].addr = htole32(sgd[i].ds_addr);
 			sgl->sg32[i].len = htole32(sgd[i].ds_len);
 			DNPRINTF(MFI_D_DMA, "%s: addr: %#x  len: %#x\n",
 			    DEVNAME(sc), sgl->sg32[i].addr, sgl->sg32[i].len);
+			hdr->mfh_flags |= MFI_FRAME_SGL32;
 		}
 	}
 
 	if (ccb->ccb_direction == MFI_DATA_IN) {
 		hdr->mfh_flags |= MFI_FRAME_DIR_READ;
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	} else {
 		hdr->mfh_flags |= MFI_FRAME_DIR_WRITE;
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	}
 
-	hdr->mfh_flags |= sc->sc_sgl_flags;
 	hdr->mfh_sg_count = ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_frame_size += sc->sc_sgl_size * ccb->ccb_dmamap->dm_nsegs;
 	ccb->ccb_extra_frames = (ccb->ccb_frame_size - 1) / MFI_FRAME_SIZE;
@@ -1372,6 +1656,7 @@ mfi_mgmt_internal(struct mfi_softc *sc, uint32_t opc, uint32_t dir,
 		return rv;
 
 	if (cold) {
+		rv = 1;
 		if (mfi_poll(ccb))
 			goto done;
 	} else {
@@ -1442,12 +1727,12 @@ mfi_mgmt_done(struct mfi_ccb *ccb)
 	if (ccb->ccb_data != NULL) {
 		DNPRINTF(MFI_D_INTR, "%s: mfi_mgmt_done sync\n",
 		    DEVNAME(sc));
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (ccb->ccb_direction & MFI_DATA_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+		bus_dmamap_unload(sc->sc_datadmat, ccb->ccb_dmamap);
 	}
 
 	if (hdr->mfh_cmd_status != MFI_STAT_OK)
@@ -2058,8 +2343,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensor == NULL) {
-		aprint_error("%s: can't allocate envsys_data_t\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data_t\n");
 		return ENOMEM;
 	}
 
@@ -2083,8 +2367,8 @@ mfi_create_sensors(struct mfi_softc *sc)
 	sc->sc_sme->sme_refresh = mfi_sensor_refresh;
 	rv = sysmon_envsys_register(sc->sc_sme);
 	if (rv != 0) {
-		aprint_error("%s: unable to register with sysmon (rv = %d)\n",
-		    DEVNAME(sc), rv);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon (rv = %d)\n", rv);
 		goto out;
 	}
 	return 0;
@@ -2188,6 +2472,7 @@ mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 
 	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
 	    ccb->ccb_extra_frames);
+	ccb->ccb_state = MFI_CCB_RUNNING;
 }
 
 static uint32_t
@@ -2230,6 +2515,7 @@ mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
+	ccb->ccb_state = MFI_CCB_RUNNING;
 }
 
 u_int32_t
@@ -2272,6 +2558,7 @@ mfi_gen2_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
+	ccb->ccb_state = MFI_CCB_RUNNING;
 }
 
 u_int32_t
@@ -2313,4 +2600,660 @@ mfi_skinny_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 	mfi_write(sc, MFI_IQPL, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));
 	mfi_write(sc, MFI_IQPH, 0x00000000);
+	ccb->ccb_state = MFI_CCB_RUNNING;
+}
+
+#define MFI_FUSION_ENABLE_INTERRUPT_MASK	(0x00000008)
+
+void
+mfi_tbolt_intr_ena(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, ~MFI_FUSION_ENABLE_INTERRUPT_MASK);
+	mfi_read(sc, MFI_OMSK);
+}
+
+void
+mfi_tbolt_intr_dis(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, 0xFFFFFFFF);
+	mfi_read(sc, MFI_OMSK);
+}
+
+int
+mfi_tbolt_intr(struct mfi_softc *sc)
+{
+	int32_t status;
+
+	status = mfi_read(sc, MFI_OSTS);
+
+	if (ISSET(status, 0x1)) {
+		mfi_write(sc, MFI_OSTS, status);
+		mfi_read(sc, MFI_OSTS);
+		if (ISSET(status, MFI_STATE_CHANGE_INTERRUPT))
+			return 0;
+		return 1;
+	}
+	if (!ISSET(status, MFI_FUSION_ENABLE_INTERRUPT_MASK))
+		return 0;
+	mfi_read(sc, MFI_OSTS);
+	return 1;
+}
+
+u_int32_t
+mfi_tbolt_fw_state(struct mfi_softc *sc)
+{
+	return mfi_read(sc, MFI_OSP);
+}
+
+void
+mfi_tbolt_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	if (sc->sc_MFA_enabled) {
+		if ((ccb->ccb_flags & MFI_CCB_F_TBOLT) == 0)
+			mfi_tbolt_build_mpt_ccb(ccb);
+		mfi_write(sc, MFI_IQPL,
+		    ccb->ccb_tb_request_desc.words & 0xFFFFFFFF);
+		mfi_write(sc, MFI_IQPH, 
+		    ccb->ccb_tb_request_desc.words >> 32);
+		ccb->ccb_state = MFI_CCB_RUNNING;
+		return;
+	}
+	uint64_t bus_add = ccb->ccb_pframe;
+	bus_add |= (MFI_REQ_DESCRIPT_FLAGS_MFA
+	    << MFI_REQ_DESCRIPT_FLAGS_TYPE_SHIFT);
+	mfi_write(sc, MFI_IQPL, bus_add);
+	mfi_write(sc, MFI_IQPH, bus_add >> 32);
+	ccb->ccb_state = MFI_CCB_RUNNING;
+}
+
+static void
+mfi_tbolt_build_mpt_ccb(struct mfi_ccb *ccb)
+{
+	union mfi_mpi2_request_descriptor *req_desc = &ccb->ccb_tb_request_desc;
+	struct mfi_mpi2_request_raid_scsi_io *io_req = ccb->ccb_tb_io_request;
+	struct mpi25_ieee_sge_chain64 *mpi25_ieee_chain;
+
+	io_req->Function = MPI2_FUNCTION_PASSTHRU_IO_REQUEST;
+	io_req->SGLOffset0 =
+	    offsetof(struct mfi_mpi2_request_raid_scsi_io, SGL) / 4;
+	io_req->ChainOffset =
+	    offsetof(struct mfi_mpi2_request_raid_scsi_io, SGL) / 16;
+
+	mpi25_ieee_chain =
+	    (struct mpi25_ieee_sge_chain64 *)&io_req->SGL.IeeeChain;
+	mpi25_ieee_chain->Address = ccb->ccb_pframe;
+
+	/*
+	  In MFI pass thru, nextChainOffset will always be zero to
+	  indicate the end of the chain.
+	*/
+	mpi25_ieee_chain->Flags= MPI2_IEEE_SGE_FLAGS_CHAIN_ELEMENT
+		| MPI2_IEEE_SGE_FLAGS_IOCPLBNTA_ADDR;
+
+	/* setting the length to the maximum length */
+	mpi25_ieee_chain->Length = 1024;
+
+	req_desc->header.RequestFlags = (MPI2_REQ_DESCRIPT_FLAGS_SCSI_IO <<
+	    MFI_REQ_DESCRIPT_FLAGS_TYPE_SHIFT);
+	ccb->ccb_flags |= MFI_CCB_F_TBOLT;
+	bus_dmamap_sync(ccb->ccb_sc->sc_dmat,
+	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool), 
+	    ccb->ccb_tb_pio_request -
+	     MFIMEM_DVA(ccb->ccb_sc->sc_tbolt_reqmsgpool),
+	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+}
+
+/*
+ * Description:
+ *      This function will prepare message pools for the Thunderbolt controller
+ */
+static int
+mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
+{
+	uint32_t     offset = 0;
+	uint32_t     tbolt_contg_length = sc->sc_tbolt_reqmsgpool->am_size;
+	uint8_t      *addr = MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
+
+	/* Request Decriptors alignement restrictions */
+	KASSERT(((uintptr_t)addr & 0xFF) == 0);
+
+	/* Skip request message pool */
+	addr = &addr[MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1)];
+
+	/* Reply Frame Pool is initialized */
+	sc->sc_reply_frame_pool = (struct mfi_mpi2_reply_header *) addr;
+	KASSERT(((uintptr_t)addr & 0xFF) == 0);
+
+	offset = (uintptr_t)sc->sc_reply_frame_pool
+	    - (uintptr_t)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
+	sc->sc_reply_frame_busaddr =
+	    MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) + offset;
+
+	/* initializing reply address to 0xFFFFFFFF */
+	memset((uint8_t *)sc->sc_reply_frame_pool, 0xFF,
+	       (MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size));
+
+	/* Skip Reply Frame Pool */
+	addr += MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size;
+	sc->sc_reply_pool_limit = (void *)addr;
+
+	offset = MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size;
+	sc->sc_sg_frame_busaddr = sc->sc_reply_frame_busaddr + offset;
+
+	/* initialize the last_reply_idx to 0 */
+	sc->sc_last_reply_idx = 0;
+	offset = (sc->sc_sg_frame_busaddr + (MEGASAS_MAX_SZ_CHAIN_FRAME *
+	    sc->sc_max_cmds)) - MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
+	KASSERT(offset <= tbolt_contg_length);
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 0,
+	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool)->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	return 0;
+}
+
+/*
+ * This routine prepare and issue INIT2 frame to the Firmware
+ */
+
+static int
+mfi_tbolt_init_MFI_queue(struct mfi_softc *sc)
+{
+	struct mpi2_ioc_init_request   *mpi2IocInit;
+	struct mfi_init_frame		*mfi_init;
+	struct mfi_ccb			*ccb;
+	bus_addr_t			phyAddress;
+	mfi_address			*mfiAddressTemp;
+	int				s;
+	char				*verbuf;
+	char				wqbuf[10];
+
+	/* Check if initialization is already completed */
+	if (sc->sc_MFA_enabled) {
+		return 1;
+	}
+
+	mpi2IocInit =
+	    (struct mpi2_ioc_init_request *)MFIMEM_KVA(sc->sc_tbolt_ioc_init);
+
+	s = splbio();
+	if ((ccb = mfi_get_ccb(sc)) == NULL) {
+		splx(s);
+		return (EBUSY);
+	}
+
+
+	mfi_init = &ccb->ccb_frame->mfr_init;
+
+	memset(mpi2IocInit, 0, sizeof(struct mpi2_ioc_init_request));
+	mpi2IocInit->Function  = MPI2_FUNCTION_IOC_INIT;
+	mpi2IocInit->WhoInit   = MPI2_WHOINIT_HOST_DRIVER;
+
+	/* set MsgVersion and HeaderVersion host driver was built with */
+	mpi2IocInit->MsgVersion = MPI2_VERSION;
+	mpi2IocInit->HeaderVersion = MPI2_HEADER_VERSION;
+	mpi2IocInit->SystemRequestFrameSize = MEGASAS_THUNDERBOLT_NEW_MSG_SIZE/4;
+	mpi2IocInit->ReplyDescriptorPostQueueDepth =
+	    (uint16_t)sc->sc_reply_pool_size;
+	mpi2IocInit->ReplyFreeQueueDepth = 0; /* Not supported by MR. */
+
+	/* Get physical address of reply frame pool */
+	phyAddress = sc->sc_reply_frame_busaddr;
+	mfiAddressTemp =
+	    (mfi_address *)&mpi2IocInit->ReplyDescriptorPostQueueAddress;
+	mfiAddressTemp->u.addressLow = (uint32_t)phyAddress;
+	mfiAddressTemp->u.addressHigh = (uint32_t)((uint64_t)phyAddress >> 32);
+
+	/* Get physical address of request message pool */
+	phyAddress =  MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
+	mfiAddressTemp = (mfi_address *)&mpi2IocInit->SystemRequestFrameBaseAddress;
+	mfiAddressTemp->u.addressLow = (uint32_t)phyAddress;
+	mfiAddressTemp->u.addressHigh = (uint32_t)((uint64_t)phyAddress >> 32);
+
+	mpi2IocInit->ReplyFreeQueueAddress =  0; /* Not supported by MR. */
+	mpi2IocInit->TimeStamp = time_uptime;
+
+	verbuf = MFIMEM_KVA(sc->sc_tbolt_verbuf);
+	snprintf(verbuf, strlen(MEGASAS_VERSION) + 2, "%s\n",
+                MEGASAS_VERSION);
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_verbuf), 0,
+	    MFIMEM_MAP(sc->sc_tbolt_verbuf)->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	mfi_init->driver_ver_lo = htole32(MFIMEM_DVA(sc->sc_tbolt_verbuf));
+	mfi_init->driver_ver_hi =
+		    htole32((uint64_t)MFIMEM_DVA(sc->sc_tbolt_verbuf) >> 32);
+
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_ioc_init), 0,
+	    MFIMEM_MAP(sc->sc_tbolt_ioc_init)->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+	/* Get the physical address of the mpi2 ioc init command */
+	phyAddress =  MFIMEM_DVA(sc->sc_tbolt_ioc_init);
+	mfi_init->mif_qinfo_new_addr_lo = htole32(phyAddress);
+	mfi_init->mif_qinfo_new_addr_hi = htole32((uint64_t)phyAddress >> 32);
+
+	mfi_init->mif_header.mfh_cmd = MFI_CMD_INIT;
+	mfi_init->mif_header.mfh_data_len = sizeof(struct mpi2_ioc_init_request);
+	if (mfi_poll(ccb) != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to send IOC init2 "
+		    "command at 0x%" PRIx64 "\n",
+		    (uint64_t)ccb->ccb_pframe);
+		splx(s);
+		return 1;
+	}
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_verbuf), 0,
+	    MFIMEM_MAP(sc->sc_tbolt_verbuf)->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_tbolt_ioc_init), 0,
+	    MFIMEM_MAP(sc->sc_tbolt_ioc_init)->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
+	mfi_put_ccb(ccb);
+	splx(s);
+
+	if (mfi_init->mif_header.mfh_cmd_status == 0) {
+		sc->sc_MFA_enabled = 1;
+	}
+	else {
+		aprint_error_dev(sc->sc_dev, "Init command Failed %x\n",
+		    mfi_init->mif_header.mfh_cmd_status);
+		return 1;
+	}
+
+	snprintf(wqbuf, sizeof(wqbuf), "%swq", DEVNAME(sc));
+	if (workqueue_create(&sc->sc_ldsync_wq, wqbuf, mfi_tbolt_sync_map_info,
+	    sc, PRIBIO, IPL_BIO, 0) != 0) {
+		aprint_error_dev(sc->sc_dev, "workqueue_create failed\n");
+		return 1;
+	}
+	workqueue_enqueue(sc->sc_ldsync_wq, &sc->sc_ldsync_wk, NULL);
+	return 0;
+}
+
+int
+mfi_tbolt_intrh(void *arg)
+{
+	struct mfi_softc	*sc = arg;
+	struct mfi_ccb		*ccb;
+	union mfi_mpi2_reply_descriptor *desc;
+	int smid, num_completed;
+
+	if (!mfi_tbolt_intr(sc))
+		return 0;
+
+	DNPRINTF(MFI_D_INTR, "%s: mfi_tbolt_intrh %#lx %#lx\n", DEVNAME(sc),
+	    (u_long)sc, (u_long)sc->sc_last_reply_idx);
+
+	KASSERT(sc->sc_last_reply_idx < sc->sc_reply_pool_size);
+
+	desc = (union mfi_mpi2_reply_descriptor *)
+	    ((uintptr_t)sc->sc_reply_frame_pool +
+	     sc->sc_last_reply_idx * MEGASAS_THUNDERBOLT_REPLY_SIZE);
+
+	bus_dmamap_sync(sc->sc_dmat,
+	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1),
+	    MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	num_completed = 0;
+	while ((desc->header.ReplyFlags & MPI2_RPY_DESCRIPT_FLAGS_TYPE_MASK) !=
+	    MPI2_RPY_DESCRIPT_FLAGS_UNUSED) {
+		smid = desc->header.SMID;
+		KASSERT(smid > 0 && smid <= sc->sc_max_cmds);
+		ccb = &sc->sc_ccb[smid - 1];
+		DNPRINTF(MFI_D_INTR,
+		    "%s: mfi_tbolt_intr SMID %#x reply_idx %#x "
+		    "desc %#" PRIx64 " ccb %p\n", DEVNAME(sc), smid,
+		    sc->sc_last_reply_idx, desc->words, ccb);
+		KASSERT(ccb->ccb_state == MFI_CCB_RUNNING);
+		if (ccb->ccb_flags & MFI_CCB_F_TBOLT_IO &&
+		    ccb->ccb_tb_io_request->ChainOffset != 0) {
+			bus_dmamap_sync(sc->sc_dmat,
+			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+			    ccb->ccb_tb_psg_frame -
+				MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
+			    MEGASAS_MAX_SZ_CHAIN_FRAME,  BUS_DMASYNC_POSTREAD);
+		}
+		if (ccb->ccb_flags & MFI_CCB_F_TBOLT_IO) {
+			bus_dmamap_sync(sc->sc_dmat,
+			    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+			    ccb->ccb_tb_pio_request -
+				MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
+			    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		}
+		if (ccb->ccb_done)
+			ccb->ccb_done(ccb);
+		else
+			ccb->ccb_state = MFI_CCB_DONE;
+		sc->sc_last_reply_idx++;
+		if (sc->sc_last_reply_idx >= sc->sc_reply_pool_size) {
+			sc->sc_last_reply_idx = 0;
+		}
+		desc->words = ~0x0;
+		/* Get the next reply descriptor */
+		desc = (union mfi_mpi2_reply_descriptor *)
+		    ((uintptr_t)sc->sc_reply_frame_pool +
+		     sc->sc_last_reply_idx * MEGASAS_THUNDERBOLT_REPLY_SIZE);
+		num_completed++;
+	}
+	if (num_completed == 0)
+		return 0;
+
+	bus_dmamap_sync(sc->sc_dmat,
+	    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1),
+	    MEGASAS_THUNDERBOLT_REPLY_SIZE * sc->sc_reply_pool_size,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	mfi_write(sc, MFI_RPI, sc->sc_last_reply_idx);
+	return 1;
+}
+
+
+int
+mfi_tbolt_scsi_ld_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs,
+    uint64_t blockno, uint32_t blockcnt)
+{
+	struct scsipi_periph *periph = xs->xs_periph;
+	struct mfi_mpi2_request_raid_scsi_io    *io_req;
+	int sge_count;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_tbolt_scsi_ld_io: %d\n",
+	    device_xname(periph->periph_channel->chan_adapter->adapt_dev),
+	    periph->periph_target);
+
+	if (!xs->data)
+		return 1;
+
+	ccb->ccb_done = mfi_tbolt_scsi_ld_done;
+	ccb->ccb_xs = xs;
+	ccb->ccb_data = xs->data;
+	ccb->ccb_len = xs->datalen;
+
+	io_req = ccb->ccb_tb_io_request;
+
+	/* Just the CDB length,rest of the Flags are zero */
+	io_req->IoFlags = xs->cmdlen;
+	memset(io_req->CDB.CDB32, 0, 32);
+	memcpy(io_req->CDB.CDB32, &xs->cmdstore, xs->cmdlen);
+
+	io_req->RaidContext.TargetID = periph->periph_target;
+	io_req->RaidContext.Status = 0;
+	io_req->RaidContext.exStatus = 0;
+	io_req->RaidContext.timeoutValue = MFI_FUSION_FP_DEFAULT_TIMEOUT;
+	io_req->Function = MPI2_FUNCTION_LD_IO_REQUEST;
+	io_req->DevHandle = periph->periph_target;
+
+	ccb->ccb_tb_request_desc.header.RequestFlags =
+	    (MFI_REQ_DESCRIPT_FLAGS_LD_IO << MFI_REQ_DESCRIPT_FLAGS_TYPE_SHIFT);
+	io_req->DataLength = blockcnt * MFI_SECTOR_LEN;
+
+	if (xs->xs_control & XS_CTL_DATA_IN) {
+		io_req->Control = MPI2_SCSIIO_CONTROL_READ;
+		ccb->ccb_direction = MFI_DATA_IN;
+	} else {
+		io_req->Control = MPI2_SCSIIO_CONTROL_WRITE;
+		ccb->ccb_direction = MFI_DATA_OUT;
+	}
+
+	sge_count = mfi_tbolt_create_sgl(ccb,
+	    (xs->xs_control & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK
+	    );
+	if (sge_count < 0)
+		return 1;
+	KASSERT(sge_count <= ccb->ccb_sc->sc_max_sgl);
+	io_req->RaidContext.numSGE = sge_count;
+	io_req->SGLFlags = MPI2_SGE_FLAGS_64_BIT_ADDRESSING;
+	io_req->SGLOffset0 =
+	    offsetof(struct mfi_mpi2_request_raid_scsi_io, SGL) / 4;
+
+	io_req->SenseBufferLowAddress = htole32(ccb->ccb_psense);
+	io_req->SenseBufferLength = MFI_SENSE_SIZE;
+
+	ccb->ccb_flags |= MFI_CCB_F_TBOLT | MFI_CCB_F_TBOLT_IO;
+	bus_dmamap_sync(ccb->ccb_sc->sc_dmat,
+	    MFIMEM_MAP(ccb->ccb_sc->sc_tbolt_reqmsgpool), 
+	    ccb->ccb_tb_pio_request -
+	     MFIMEM_DVA(ccb->ccb_sc->sc_tbolt_reqmsgpool),
+	    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	return 0;
+}
+
+
+static void
+mfi_tbolt_scsi_ld_done(struct mfi_ccb *ccb)
+{
+	struct mfi_mpi2_request_raid_scsi_io *io_req = ccb->ccb_tb_io_request;
+	mfi_scsi_xs_done(ccb, io_req->RaidContext.Status,
+	    io_req->RaidContext.exStatus);
+}
+
+static int
+mfi_tbolt_create_sgl(struct mfi_ccb *ccb, int flags)
+{
+	struct mfi_softc	*sc = ccb->ccb_sc;
+	bus_dma_segment_t	*sgd;
+	int			error, i, sge_idx, sge_count;
+	struct mfi_mpi2_request_raid_scsi_io *io_req;
+	struct mpi25_ieee_sge_chain64 *sgl_ptr;
+
+	DNPRINTF(MFI_D_DMA, "%s: mfi_tbolt_create_sgl %#lx\n", DEVNAME(sc),
+	    (u_long)ccb->ccb_data);
+
+	if (!ccb->ccb_data)
+		return -1;
+
+	KASSERT(flags == BUS_DMA_NOWAIT || !cpu_intr_p());
+	error = bus_dmamap_load(sc->sc_datadmat, ccb->ccb_dmamap,
+	    ccb->ccb_data, ccb->ccb_len, NULL, flags);
+	if (error) {
+		if (error == EFBIG)
+			aprint_error_dev(sc->sc_dev, "more than %d dma segs\n",
+			    sc->sc_max_sgl);
+		else
+			aprint_error_dev(sc->sc_dev,
+			    "error %d loading dma map\n", error);
+		return -1;
+	}
+
+	io_req = ccb->ccb_tb_io_request;
+	sgl_ptr = &io_req->SGL.IeeeChain.Chain64;
+	sge_count = ccb->ccb_dmamap->dm_nsegs;
+	sgd = ccb->ccb_dmamap->dm_segs;
+	KASSERT(sge_count <= sc->sc_max_sgl);
+	KASSERT(sge_count <=
+	    (MEGASAS_THUNDERBOLT_MAX_SGE_IN_MAINMSG - 1 +
+	     MEGASAS_THUNDERBOLT_MAX_SGE_IN_CHAINMSG));
+
+	if (sge_count > MEGASAS_THUNDERBOLT_MAX_SGE_IN_MAINMSG) {
+		/* One element to store the chain info */
+		sge_idx = MEGASAS_THUNDERBOLT_MAX_SGE_IN_MAINMSG - 1;
+		DNPRINTF(MFI_D_DMA,
+		    "mfi sge_idx %d sge_count %d io_req paddr 0x%" PRIx64 "\n",
+		    sge_idx, sge_count, ccb->ccb_tb_pio_request);
+	} else {
+		sge_idx = sge_count;
+	}
+
+	for (i = 0; i < sge_idx; i++) {
+		sgl_ptr->Address = htole64(sgd[i].ds_addr);
+		sgl_ptr->Length = htole32(sgd[i].ds_len);
+		sgl_ptr->Flags = 0;
+		if (sge_idx < sge_count) {
+			DNPRINTF(MFI_D_DMA,
+			    "sgl %p %d 0x%" PRIx64 " len 0x%" PRIx32
+			    " flags 0x%x\n", sgl_ptr, i,
+			    sgl_ptr->Address, sgl_ptr->Length,
+			    sgl_ptr->Flags);
+		}
+		sgl_ptr++;
+	}
+	io_req->ChainOffset = 0;
+	if (sge_idx < sge_count) {
+		struct mpi25_ieee_sge_chain64 *sg_chain;
+		io_req->ChainOffset = MEGASAS_THUNDERBOLT_CHAIN_OFF_MAINMSG;
+		sg_chain = sgl_ptr;
+		/* Prepare chain element */
+		sg_chain->NextChainOffset = 0;
+		sg_chain->Flags = (MPI2_IEEE_SGE_FLAGS_CHAIN_ELEMENT |
+		    MPI2_IEEE_SGE_FLAGS_IOCPLBNTA_ADDR);
+		sg_chain->Length =  (sizeof(mpi2_sge_io_union) *
+		    (sge_count - sge_idx));
+		sg_chain->Address = ccb->ccb_tb_psg_frame;
+		DNPRINTF(MFI_D_DMA,
+		    "sgl %p chain 0x%" PRIx64 " len 0x%" PRIx32
+		    " flags 0x%x\n", sg_chain, sg_chain->Address,
+		    sg_chain->Length, sg_chain->Flags);
+		sgl_ptr = &ccb->ccb_tb_sg_frame->IeeeChain.Chain64;
+		for (; i < sge_count; i++) {
+			sgl_ptr->Address = htole64(sgd[i].ds_addr);
+			sgl_ptr->Length = htole32(sgd[i].ds_len);
+			sgl_ptr->Flags = 0;
+			DNPRINTF(MFI_D_DMA,
+			    "sgl %p %d 0x%" PRIx64 " len 0x%" PRIx32
+			    " flags 0x%x\n", sgl_ptr, i, sgl_ptr->Address,
+			    sgl_ptr->Length, sgl_ptr->Flags);
+			sgl_ptr++;
+		}
+		bus_dmamap_sync(sc->sc_dmat,
+		    MFIMEM_MAP(sc->sc_tbolt_reqmsgpool), 
+		    ccb->ccb_tb_psg_frame - MFIMEM_DVA(sc->sc_tbolt_reqmsgpool),
+		    MEGASAS_MAX_SZ_CHAIN_FRAME,  BUS_DMASYNC_PREREAD);
+	}
+
+	if (ccb->ccb_direction == MFI_DATA_IN) {
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+	} else {
+		bus_dmamap_sync(sc->sc_datadmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	}
+	return sge_count;
+}
+
+/*
+ * The ThunderBolt HW has an option for the driver to directly
+ * access the underlying disks and operate on the RAID.  To
+ * do this there needs to be a capability to keep the RAID controller
+ * and driver in sync.  The FreeBSD driver does not take advantage
+ * of this feature since it adds a lot of complexity and slows down
+ * performance.  Performance is gained by using the controller's
+ * cache etc.
+ *
+ * Even though this driver doesn't access the disks directly, an
+ * AEN like command is used to inform the RAID firmware to "sync"
+ * with all LD's via the MFI_DCMD_LD_MAP_GET_INFO command.  This
+ * command in write mode will return when the RAID firmware has
+ * detected a change to the RAID state.  Examples of this type
+ * of change are removing a disk.  Once the command returns then
+ * the driver needs to acknowledge this and "sync" all LD's again.
+ * This repeats until we shutdown.  Then we need to cancel this
+ * pending command.
+ *
+ * If this is not done right the RAID firmware will not remove a
+ * pulled drive and the RAID won't go degraded etc.  Effectively,
+ * stopping any RAID mangement to functions.
+ *
+ * Doing another LD sync, requires the use of an event since the
+ * driver needs to do a mfi_wait_command and can't do that in an
+ * interrupt thread.
+ *
+ * The driver could get the RAID state via the MFI_DCMD_LD_MAP_GET_INFO
+ * That requires a bunch of structure and it is simplier to just do
+ * the MFI_DCMD_LD_GET_LIST versus walking the RAID map.
+ */
+
+void
+mfi_tbolt_sync_map_info(struct work *w, void *v)
+{
+	struct mfi_softc *sc = v;
+	int i;
+	struct mfi_ccb *ccb = NULL;
+	uint8_t mbox[MFI_MBOX_SIZE];
+	struct mfi_ld *ld_sync = NULL;
+	size_t ld_size;
+	int s;
+
+	DNPRINTF(MFI_D_SYNC, "%s: mfi_tbolt_sync_map_info\n", DEVNAME(sc));
+again:
+	s = splbio();
+	if (sc->sc_ldsync_ccb != NULL) {
+		splx(s);
+		return;
+	}
+
+	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL)) {
+		aprint_error_dev(sc->sc_dev, "MR_DCMD_LD_GET_LIST failed\n");
+		goto err;
+	}
+
+	ld_size = sizeof(*ld_sync) * sc->sc_ld_list.mll_no_ld;
+	
+	ld_sync = (struct mfi_ld *) malloc(ld_size, M_DEVBUF,
+	     M_WAITOK | M_ZERO);
+	if (ld_sync == NULL) {
+		aprint_error_dev(sc->sc_dev, "Failed to allocate sync\n");
+		goto err;
+	}
+	for (i = 0; i < sc->sc_ld_list.mll_no_ld; i++) {
+		ld_sync[i] = sc->sc_ld_list.mll_list[i].mll_ld;
+	}
+
+	if ((ccb = mfi_get_ccb(sc)) == NULL) {
+		aprint_error_dev(sc->sc_dev, "Failed to get sync command\n");
+		free(ld_sync, M_DEVBUF);
+		goto err;
+	}
+	sc->sc_ldsync_ccb = ccb;
+	
+	memset(mbox, 0, MFI_MBOX_SIZE);
+	mbox[0] = sc->sc_ld_list.mll_no_ld;
+	mbox[1] = MFI_DCMD_MBOX_PEND_FLAG;
+	if (mfi_mgmt(ccb, NULL, MR_DCMD_LD_MAP_GET_INFO, MFI_DATA_OUT,
+	    ld_size, ld_sync, mbox)) {
+		aprint_error_dev(sc->sc_dev, "Failed to create sync command\n");
+		goto err;
+	}
+	/*
+	 * we won't sleep on this command, so we have to override
+	 * the callback set up by mfi_mgmt()
+	 */
+	ccb->ccb_done = mfi_sync_map_complete;
+
+	mfi_post(sc, ccb);
+	splx(s);
+	return;
+
+err:
+	if (ld_sync)
+		free(ld_sync, M_DEVBUF);
+	if (ccb)
+		mfi_put_ccb(ccb);
+	sc->sc_ldsync_ccb = NULL;
+	splx(s);
+	kpause("ldsyncp", 0, hz, NULL);
+	goto again;
+}
+
+static void
+mfi_sync_map_complete(struct mfi_ccb *ccb)
+{
+	struct mfi_softc *sc = ccb->ccb_sc;
+	int aborted = 0;
+
+	DNPRINTF(MFI_D_SYNC, "%s: mfi_sync_map_complete\n",
+	    DEVNAME(ccb->ccb_sc));
+	KASSERT(sc->sc_ldsync_ccb == ccb);
+	mfi_mgmt_done(ccb);
+	free(ccb->ccb_data, M_DEVBUF);
+	if (ccb->ccb_flags & MFI_CCB_F_ERR) {
+		aprint_error_dev(sc->sc_dev, "sync command failed\n");
+		aborted = 1;
+	}
+	mfi_put_ccb(ccb);
+	sc->sc_ldsync_ccb = NULL;
+
+	/* set it up again so the driver can catch more events */
+	if (!aborted) {
+		workqueue_enqueue(sc->sc_ldsync_wq, &sc->sc_ldsync_wk, NULL);
+	}
 }

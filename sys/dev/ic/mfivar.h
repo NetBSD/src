@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.17 2012/08/05 15:50:49 bouyer Exp $ */
+/* $NetBSD: mfivar.h,v 1.18 2012/08/23 09:59:13 bouyer Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -18,6 +18,7 @@
 
 #include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
+#include <sys/workqueue.h>
 
 #define DEVNAME(_s)     (device_xname((_s)->sc_dev))
 
@@ -34,6 +35,7 @@ extern uint32_t			mfi_debug;
 #define	MFI_D_RW		0x0020
 #define	MFI_D_MEM		0x0040
 #define	MFI_D_CCB		0x0080
+#define	MFI_D_SYNC		0x0100
 #else
 #define DPRINTF(x, ...)
 #define DNPRINTF(n, x, ...)
@@ -80,6 +82,17 @@ struct mfi_ccb {
 #define MFI_DATA_IN	1
 #define MFI_DATA_OUT	2
 
+	/*
+	 * memory structure used by ThunderBolt controller.
+	 * The legacy structures above are used too, depending on
+	 * the command type.
+	 */
+	union mfi_mpi2_request_descriptor	ccb_tb_request_desc;
+	struct mfi_mpi2_request_raid_scsi_io	*ccb_tb_io_request;
+	bus_addr_t				ccb_tb_pio_request;
+	mpi2_sge_io_union			*ccb_tb_sg_frame;
+	bus_addr_t				ccb_tb_psg_frame;
+
 	struct scsipi_xfer	*ccb_xs;
 
 	void			(*ccb_done)(struct mfi_ccb *);
@@ -87,10 +100,13 @@ struct mfi_ccb {
 	volatile enum {
 		MFI_CCB_FREE,
 		MFI_CCB_READY,
+		MFI_CCB_RUNNING,
 		MFI_CCB_DONE
 	}			ccb_state;
 	uint32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
+#define MFI_CCB_F_TBOLT			(1<<1) /* Thunderbolt descriptor */
+#define MFI_CCB_F_TBOLT_IO		(1<<2) /* Thunderbolt I/O descriptor */
 	TAILQ_ENTRY(mfi_ccb)	ccb_link;
 };
 
@@ -100,7 +116,8 @@ enum mfi_iop {
 	MFI_IOP_XSCALE,
 	MFI_IOP_PPC,
 	MFI_IOP_GEN2,
-	MFI_IOP_SKINNY
+	MFI_IOP_SKINNY,
+	MFI_IOP_TBOLT
 };
 
 struct mfi_iop_ops {
@@ -108,7 +125,10 @@ struct mfi_iop_ops {
 	void 			(*mio_intr_dis)(struct mfi_softc *);
 	void 			(*mio_intr_ena)(struct mfi_softc *);
 	int 			(*mio_intr)(struct mfi_softc *);
-	void 			(*mio_post)(struct mfi_softc *, struct mfi_ccb *);
+	void 			(*mio_post)(struct mfi_softc *,
+				    struct mfi_ccb *);
+	int			(*mio_ld_io)(struct mfi_ccb *,
+				    struct scsipi_xfer *, uint64_t, uint32_t);
 };
 
 struct mfi_softc {
@@ -125,8 +145,9 @@ struct mfi_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmat;
 	bus_size_t		sc_size;
+	bus_dma_tag_t		sc_dmat;
+	bus_dma_tag_t		sc_datadmat;
 
 	/* save some useful information for logical drives that is missing
 	 * in sc_ld_list
@@ -142,8 +163,6 @@ struct mfi_softc {
 	uint32_t		sc_sgl_size;
 	uint32_t		sc_max_ld;
 	uint32_t		sc_ld_cnt;
-	uint16_t		sc_sgl_flags;
-	uint16_t		sc_reserved;
 	/* XXX these struct should be local to mgmt function */
 	struct mfi_ctrl_info	sc_info;
 	struct mfi_ld_list	sc_ld_list;
@@ -158,6 +177,27 @@ struct mfi_softc {
 	/* frame memory */
 	struct mfi_mem		*sc_frames;
 	uint32_t		sc_frames_size;
+
+	/* thunderbolt memory */
+	struct mfi_mem		*sc_tbolt_reqmsgpool;
+
+	struct mfi_mem		*sc_tbolt_ioc_init;
+	/* Virtual address of reply Frame Pool, part of sc_tbolt_reqmsgpool */
+	int			sc_reply_pool_size;
+	struct mfi_mpi2_reply_header*   sc_reply_frame_pool;
+	bus_addr_t		sc_reply_frame_busaddr;
+	uint8_t 		*sc_reply_pool_limit;
+	bus_addr_t		sc_sg_frame_busaddr;
+	int 			sc_last_reply_idx;
+
+	struct mfi_mem		*sc_tbolt_verbuf;
+
+	bool			sc_MFA_enabled;
+
+	/* workqueue for the ld sync command */
+	struct workqueue	*sc_ldsync_wq;
+	struct work		sc_ldsync_wk;
+	struct mfi_ccb		*sc_ldsync_ccb;
 
 	/* sense memory */
 	struct mfi_mem		*sc_sense;
@@ -175,3 +215,4 @@ void	mfi_childdetached(device_t, device_t);
 int	mfi_attach(struct mfi_softc *, enum mfi_iop);
 int	mfi_detach(struct mfi_softc *, int);
 int	mfi_intr(void *);
+int	mfi_tbolt_intrh(void *);
