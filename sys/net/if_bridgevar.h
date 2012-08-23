@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.14 2009/04/04 10:00:23 bouyer Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.15 2012/08/23 12:06:32 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -162,7 +162,7 @@ struct ifbifconf {
 struct ifbareq {
 	char		ifba_ifsname[IFNAMSIZ];	/* member if name */
 	/*XXX: time_t */
-	unsigned long	ifba_expire;		/* address expire time */
+	long		ifba_expire;		/* address expire time */
 	uint8_t		ifba_flags;		/* address flags */
 	uint8_t		ifba_dst[ETHER_ADDR_LEN];/* destination address */
 };

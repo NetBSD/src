@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.13 2011/08/29 14:29:21 joerg Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.14 2012/08/23 12:06:32 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.13 2011/08/29 14:29:21 joerg Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.14 2012/08/23 12:06:32 drochner Exp $");
 #endif
 
 
@@ -485,7 +485,7 @@ show_addresses(int sock, const char *bridge, const char *prefix)
 		ifba = ifbac.ifbac_req + i;
 		memcpy(ea.ether_addr_octet, ifba->ifba_dst,
 		    sizeof(ea.ether_addr_octet));
-		printf("%s%s %s %lu ", prefix, ether_ntoa(&ea),
+		printf("%s%s %s %ld ", prefix, ether_ntoa(&ea),
 		    ifba->ifba_ifsname, ifba->ifba_expire);
 		printb("flags", ifba->ifba_flags, IFBAFBITS);
 		printf("\n");
