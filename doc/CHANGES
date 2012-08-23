@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1733 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1734 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,3 +101,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		can be loaded. [jnemeth 20120803]
 	modstat(8): Add -A, -a, and -e options for testing module loadability.
 		[jnemeth 20120803]
+	arm: Add support for BEAGLEBOARDXM (TI DM37XX cpus) boards.  [matt 20120822]
