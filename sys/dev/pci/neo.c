@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.47 2011/11/24 03:35:59 mrg Exp $	*/
+/*	$NetBSD: neo.c,v 1.48 2012/08/24 09:01:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.47 2011/11/24 03:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.48 2012/08/24 09:01:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.47 2011/11/24 03:35:59 mrg Exp $");
  *
  * The Neomagic 256 AV/ZX have 2 PCI I/O region descriptors. Both of
  * them describe a memory region. The frame buffer is the first region
- * and the register set is the secodn region.
+ * and the register set is the second region.
  *
  * The register manipulation logic is taken from the Linux driver,
  * which is in the public domain.
