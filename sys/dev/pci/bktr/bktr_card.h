@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.h,v 1.3 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.h,v 1.5 2005/12/06 23:43:57 wiz Exp $	*/
+/*	$NetBSD: bktr_card.h,v 1.6 2012/08/24 09:01:23 msaitoh Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp$ */
 
 /*
@@ -56,7 +56,7 @@
  *  options BKTR_OVERRIDE_CARD  <card type>
  *  eg options BKTR_OVERRIDE CARD=1
  *
- * or using the sysclt  hw.bt848.card
+ * or using the sysctl  hw.bt848.card
  *  eg sysctl -w hw.bt848.card=1
  *
  * where <card type> is one of the following card defines.
