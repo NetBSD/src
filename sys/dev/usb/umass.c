@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.145 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: umass.c,v 1.146 2012/08/24 12:20:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.145 2012/06/10 06:15:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.146 2012/08/24 12:20:02 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -1183,11 +1183,14 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		DIF(UDMASS_BBB, umass_bbb_dump_csw(sc, &sc->csw));
 
-		if ((sc->sc_quirks & UMASS_QUIRK_IGNORE_RESIDUE) == 0) {
-			residue = UGETDW(sc->csw.dCSWDataResidue);
-		} else {
-			residue = sc->transfer_datalen - sc->transfer_actlen;
-		}
+#ifdef UMASS_DEBUG
+		residue = UGETDW(sc->csw.dCSWDataResidue);
+		if (residue != sc->transfer_datalen - sc->transfer_actlen)
+			printf("%s: dCSWDataResidue=%d req=%d act=%d\n",
+			       device_xname(sc->sc_dev), residue,
+			       sc->transfer_datalen, sc->transfer_actlen);
+#endif
+		residue = sc->transfer_datalen - sc->transfer_actlen;
 
 		/* Translate weird command-status signatures. */
 		if ((sc->sc_quirks & UMASS_QUIRK_WRONG_CSWSIG) &&
