@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.184 2012/04/05 07:26:36 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.185 2012/08/24 05:52:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.184 2012/04/05 07:26:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.185 2012/08/24 05:52:17 dholland Exp $");
 
 #include "veriexec.h"
 
@@ -510,7 +510,8 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag, fflag;
+	int error, ioflag, fflag;
+	size_t count;
 
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	fflag = fp->f_flag;
@@ -540,7 +541,8 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag, fflag;
+	int error, ioflag, fflag;
+	size_t count;
 
 	ioflag = IO_ADV_ENCODE(fp->f_advice) | IO_UNIT;
 	fflag = fp->f_flag;
