@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.8 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -156,7 +156,7 @@ struct udav_cdata {
 	struct udav_chain	udav_tx_chain[UDAV_TX_LIST_CNT];
 	struct udav_chain	udav_rx_chain[UDAV_TX_LIST_CNT];
 #if 0
-	/* XXX: Intrrupt Endpoint is not yet supported! */
+	/* XXX: Interrupt Endpoint is not yet supported! */
 	struct udav_intrpkg	udav_ibuf;
 #endif
 	int			udav_tx_prod;
