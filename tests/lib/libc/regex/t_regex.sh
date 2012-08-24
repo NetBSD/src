@@ -1,4 +1,4 @@
-# $NetBSD: t_regex.in,v 1.3 2011/10/11 23:04:21 dholland Exp $
+# $NetBSD: t_regex.sh,v 1.1 2012/08/24 20:24:40 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,37 +25,49 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-h_check()
+check()
 {
+	local dataname="${1}"; shift
+
 	prog="$(atf_get_srcdir)/h_regex"
-	data="$(atf_get_srcdir)/data/$1.in"
+	data="$(atf_get_srcdir)/data/${dataname}.in"
 
 	atf_check -x "${prog} <${data}"
 	atf_check -x "${prog} -el <${data}"
 	atf_check -x "${prog} -er <${data}"
 }
 
-tc:basic:Checks basic functionality
-tc:paren:Checks parentheses
-tc:anchor:Checks anchors and REG_NEWLINE
-tc:error:Checks syntax errors and non-errors
-tc:meta:Checks metacharacters and backslashes
-tc:backref:Checks back references
-tc:repet_ordinary:Checks ordinary repetitions
-tc:repet_bounded:Checks bounded repetitions
-tc:repet_multi:Checks multiple repetitions
-tc:bracket:Checks brackets
-tc:complex:Checks various complex examples
-tc:subtle:Checks various subtle examples
-tc:c_comments:Checks matching C comments
-tc:subexp:Checks subexpressions
-tc:startend:Checks STARTEND option
-tc:nospec:Checks NOSPEC option
-tc:zero:Checks NULs
-tc:word_bound:Checks word boundaries
-tc:regress:Checks various past problems and suspected problems
+create_tc()
+{
+	local name="${1}"; shift
+	local descr="${1}"; shift
+
+	atf_test_case "${name}"
+	eval "${name}_head() { atf_set 'descr' '${descr}'; }"
+	eval "${name}_body() { check '${name}'; }"
+
+	atf_add_test_case "${name}"
+}
 
 atf_init_test_cases()
 {
-tc_list
+	create_tc basic "Checks basic functionality"
+	create_tc paren "Checks parentheses"
+	create_tc anchor "Checks anchors and REG_NEWLINE"
+	create_tc error "Checks syntax errors and non-errors"
+	create_tc meta "Checks metacharacters and backslashes"
+	create_tc backref "Checks back references"
+	create_tc repet_ordinary "Checks ordinary repetitions"
+	create_tc repet_bounded "Checks bounded repetitions"
+	create_tc repet_multi "Checks multiple repetitions"
+	create_tc bracket "Checks brackets"
+	create_tc complex "Checks various complex examples"
+	create_tc subtle "Checks various subtle examples"
+	create_tc c_comments "Checks matching C comments"
+	create_tc subexp "Checks subexpressions"
+	create_tc startend "Checks STARTEND option"
+	create_tc nospec "Checks NOSPEC option"
+	create_tc zero "Checks NULs"
+	create_tc word_bound "Checks word boundaries"
+	create_tc regress "Checks various past problems and suspected problems"
 }

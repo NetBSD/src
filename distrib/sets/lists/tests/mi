@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.488 2012/08/14 19:13:54 alnsn Exp $
+# $NetBSD: mi,v 1.489 2012/08/24 20:24:39 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -448,7 +448,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/regex/t_exhaust.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/regex/t_regex_att.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/rpc				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/rpc/t_xdr.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/setjmp				tests-lib-debug
@@ -688,8 +689,9 @@
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
 ./usr/libdata/debug/usr/tests/lib/libtre				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libtre/h_regex_att.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libtre/h_regex_att.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libtre/t_exhaust.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libtre/t_regex_att.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libutil/t_efun.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_parsedate.debug		tests-lib-debug		debug,atf
@@ -2347,7 +2349,7 @@
 ./usr/tests/lib/libc/regex/data/word_bound.in	tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/data/zero.in		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/h_regex		tests-lib-tests		atf
-./usr/tests/lib/libc/regex/h_regex_att		tests-lib-tests		atf
+./usr/tests/lib/libc/regex/h_regex_att		tests-obsolete		obsolete
 ./usr/tests/lib/libc/regex/t_exhaust		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/t_regex		tests-lib-tests		atf
 ./usr/tests/lib/libc/regex/t_regex_att		tests-lib-tests		atf
@@ -2745,7 +2747,7 @@
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
 ./usr/tests/lib/libtre				tests-lib-tests		atf
 ./usr/tests/lib/libtre/Atffile			tests-lib-tests		atf
-./usr/tests/lib/libtre/h_regex_att		tests-lib-tests		atf
+./usr/tests/lib/libtre/h_regex_att		tests-obsolete		obsolete
 ./usr/tests/lib/libtre/t_exhaust		tests-lib-tests		atf
 ./usr/tests/lib/libtre/t_regex_att		tests-lib-tests		atf
 ./usr/tests/lib/libtre/data			tests-lib-tests		atf
