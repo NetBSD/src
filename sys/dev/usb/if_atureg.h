@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.8 2009/09/04 18:10:08 dyoung Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -36,11 +36,11 @@
 #define ATU_CONFIG_NO		1
 #define ATU_IFACE_IDX		0
 
-/* the number of simultaniuously requested RX transfers */
+/* the number of simultaneously requested RX transfers */
 #define ATU_RX_LIST_CNT	1
 
 /*
- * the number of simultaniously started TX transfers
+ * the number of simultaneously started TX transfers
  * my measurements :
  * 1		430.82 KB/sec
  * 2		534.66 KB/sec
