@@ -1,4 +1,4 @@
-/*	$NetBSD: att.c,v 1.7 2011/11/06 18:32:17 christos Exp $	*/
+/*	$NetBSD: t_regex_att.c,v 1.1 2012/08/24 20:24:40 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: att.c,v 1.7 2011/11/06 18:32:17 christos Exp $");
+__RCSID("$NetBSD: t_regex_att.c,v 1.1 2012/08/24 20:24:40 jmmv Exp $");
+
+#include <sys/param.h>
 
 #include <stdio.h>
 #include <regex.h>
@@ -46,16 +48,6 @@ __RCSID("$NetBSD: att.c,v 1.7 2011/11/06 18:32:17 christos Exp $");
 #include <vis.h>
 #include <ctype.h>
 #include <atf-c.h>
-
-ATF_TC(regex_att);
-
-ATF_TC_HEAD(regex_att, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "Driver for parsing AT&T format"
-	    " input files available from:"
-	    " http://www2.research.att.com/~gsf/testregex/");
-}
 
 static const char sep[] = "\r\n\t";
 static const char delim[3] = "\\\\\0";
@@ -386,14 +378,23 @@ checkmatches(const char *matches, size_t nm, const regmatch_t *pm,
 	free(res);
 }
 
-ATF_TC_BODY(regex_att, tc)
+static void
+att_test(const struct atf_tc *tc, const char *data_name)
 {
 	regex_t re;
-	char *line, *lastpattern = NULL;
+	char *line, *lastpattern = NULL, data_path[MAXPATHLEN];
 	size_t len, lineno = 0;
 	int skipping = 0;
+	FILE *input_file;
 
-	for (; (line = fparseln(stdin, &len, &lineno, delim, 0))
+	snprintf(data_path, sizeof(data_path), "%s/data/%s.dat",
+	    atf_tc_get_config_var(tc, "srcdir"), data_name);
+
+	input_file = fopen(data_path, "r");
+	if (input_file == NULL)
+		atf_tc_fail("Failed to open input file %s", data_path);
+
+	for (; (line = fparseln(input_file, &len, &lineno, delim, 0))
 	    != NULL; free(line)) {
 		char *name, *pattern, *input, *matches, *comment;
 		regmatch_t *pm;
@@ -524,11 +525,105 @@ ATF_TC_BODY(regex_att, tc)
 		}
 		free(pm);
 	}
+
+	fclose(input_file);
+}
+
+ATF_TC(basic);
+ATF_TC_HEAD(basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests basic functionality");
+}
+ATF_TC_BODY(basic, tc)
+{
+	att_test(tc, "basic");
+}
+
+ATF_TC(categorization);
+ATF_TC_HEAD(categorization, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests implementation categorization");
+}
+ATF_TC_BODY(categorization, tc)
+{
+	att_test(tc, "categorization");
+}
+
+ATF_TC(nullsubexpr);
+ATF_TC_HEAD(nullsubexpr, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests (...)*");
+}
+ATF_TC_BODY(nullsubexpr, tc)
+{
+	att_test(tc, "nullsubexpr");
+}
+
+ATF_TC(leftassoc);
+ATF_TC_HEAD(leftassoc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests left-associative "
+	    "implementations");
+}
+ATF_TC_BODY(leftassoc, tc)
+{
+#if SKIP_LEFTASSOC
+	/* jmmv: I converted the original shell-based tests to C and they
+	 * disabled this test in a very unconventional way without giving
+	 * any explation.  Mark as broken here, but I don't know why. */
+	atf_tc_expect_fail("Reason for breakage unknown");
+#endif
+	att_test(tc, "leftassoc");
+}
+
+ATF_TC(rightassoc);
+ATF_TC_HEAD(rightassoc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests right-associative "
+	    "implementations");
+}
+ATF_TC_BODY(rightassoc, tc)
+{
+#if SKIP_RIGHTASSOC
+	/* jmmv: I converted the original shell-based tests to C and they
+	 * disabled this test in a very unconventional way without giving
+	 * any explation.  Mark as broken here, but I don't know why. */
+	atf_tc_expect_fail("Reason for breakage unknown");
+#endif
+	att_test(tc, "rightassoc");
+}
+
+ATF_TC(forcedassoc);
+ATF_TC_HEAD(forcedassoc, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests subexpression grouping to "
+	    "force association");
+}
+ATF_TC_BODY(forcedassoc, tc)
+{
+	att_test(tc, "forcedassoc");
+}
+
+ATF_TC(repetition);
+ATF_TC_HEAD(repetition, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Tests implicit vs. explicit "
+	    "repetition");
+}
+ATF_TC_BODY(repetition, tc)
+{
+	att_test(tc, "repetition");
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, regex_att);
+	ATF_TP_ADD_TC(tp, basic);
+	ATF_TP_ADD_TC(tp, categorization);
+	ATF_TP_ADD_TC(tp, nullsubexpr);
+	ATF_TP_ADD_TC(tp, leftassoc);
+	ATF_TP_ADD_TC(tp, rightassoc);
+	ATF_TP_ADD_TC(tp, forcedassoc);
+	ATF_TP_ADD_TC(tp, repetition);
 	return atf_no_error();
 }
