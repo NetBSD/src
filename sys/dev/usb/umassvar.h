@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.33 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.34 2012/08/24 12:20:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -184,7 +184,6 @@ struct umass_softc {
 #define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
 #define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
 #define	UMASS_QUIRK_NOGETMAXLUN		0x00000008
-#define	UMASS_QUIRK_IGNORE_RESIDUE	0x00000010
 
 #define UMASS_QUIRK_USE_DEFAULTMATCH	-1
 
