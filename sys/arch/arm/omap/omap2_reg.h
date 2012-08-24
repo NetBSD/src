@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.8 2012/08/23 01:27:24 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.9 2012/08/24 06:34:08 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -108,7 +108,7 @@
 #define OMAP2_CM_BASE			0x48008000
 #endif
 #ifdef OMAP_3530
-#define OMAP2_CM_BASE			0x48004000
+#define OMAP2_CM_BASE			(OMAP3530_L4_CORE_BASE + 0x04000)
 #endif
 #ifdef OMAP_4430
 #define OMAP2_CM_BASE			(OMAP4430_L4_CORE_BASE + 0x04000)
@@ -117,7 +117,7 @@
 #define OMAP2_CM_BASE			TI_AM335X_L4_WAKEUP_BASE
 #endif
 #ifdef TI_DM37XX
-#define OMAP2_CM_BASE			TI_DM37XX_L4_WAKEUP_BASE
+#define OMAP2_CM_BASE			0x48004000
 #endif
 
 #define	OMAP2_CM_CLKSEL_MPU	0x140
@@ -127,7 +127,6 @@
 #define	OMAP2_CM_ICLKEN2_CORE	0x214
 #define	OMAP2_CM_CLKSEL2_CORE	0x244
 #define	OMAP2_CM_SIZE		(OMAP2_CM_CLKSEL2_CORE + 4)
-
 
 /*
  * bit defines for OMAP2_CM_CLKSEL_MPU
@@ -280,6 +279,15 @@
 		|OMAP2_CM_CLKSEL2_CORE_RESb)
 
 
+#define	OMAP3_CM_CLKSEL1_PLL_MPU	0x940
+#define	OMAP3_CM_CLKSEL2_PLL_MPU	0x944
+
+#define	OMAP3_CM_CLKSEL1_PLL_MPU_CLK_SRC	__BITS(21,9)
+#define	OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_MULT	__BITS(18,8)
+#define	OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_DIV	__BITS(6,0)
+
+#define	OMAP3_CM_CLKSEL2_PLL_MPU_DPLL_CLKOUT_DIV	__BITS(4,0)
+
 /*
  * Power Management registers base, offsets, and size
  */
@@ -333,6 +341,17 @@
 
 #define OMAP_RST_DPLL3		__BIT(2)
 #define OMAP_RST_GS		__BIT(1)
+
+#define	OMAP3_PRM_CLKSEL	0x40	// from PLL_MOD
+#define	OMAP3_PRM_CLKSEL_CLKIN	__BITS(2,0)
+#define	OMAP3_PRM_CLKSEL_CLKIN_12000KHZ		0
+#define	OMAP3_PRM_CLKSEL_CLKIN_13000KHZ		1
+#define	OMAP3_PRM_CLKSEL_CLKIN_19200KHZ		2
+#define	OMAP3_PRM_CLKSEL_CLKIN_26000KHZ		3
+#define	OMAP3_PRM_CLKSEL_CLKIN_38400KHZ		4
+#define	OMAP3_PRM_CLKSEL_CLKIN_16800KHZ		5
+#define OMAP3_PRM_CLKSEL_FREQS	{ 12000, 13000, 19200, 26000, 38400, 16800, 0, 0 }
+#define	OMAP3_PRM_CLKSEL_MULT	1000
 
 /*
  * L3 Interconnect Target Agent Common Registers
