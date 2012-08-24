@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.20 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.21 2012/08/24 09:01:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -55,7 +55,7 @@ struct esiop_xfer {
 
 /*
  * This describes a command handled by the SCSI controller
- * These are chained in either a free list or a active list
+ * These are chained in either a free list or an active list
  * We have one queue per target
  */
 

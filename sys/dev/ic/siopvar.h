@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.28 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.29 2012/08/24 09:01:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -42,7 +42,7 @@ struct siop_xfer {
 
 /*
  * This describes a command handled by the SCSI controller
- * These are chained in either a free list or a active list
+ * These are chained in either a free list or an active list
  * We have one queue per target
  */
 
