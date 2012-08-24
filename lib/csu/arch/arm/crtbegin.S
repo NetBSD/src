@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.2 2012/08/11 07:25:13 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.3 2012/08/24 16:37:45 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.2 2012/08/11 07:25:13 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.3 2012/08/24 16:37:45 matt Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
@@ -211,14 +211,12 @@ __do_global_ctors_aux:
 	cmp	ip, #0
 	beq	1f
 
-	ldr	r2, .L__EH_FRAME_LIST__
-	ldr	r3, .L__dwarf_eh_object
+	ldr	r0, .L__EH_FRAME_LIST__
+	ldr	r1, .L__dwarf_eh_object
 #ifdef PIC
-	add	r2, r2, r7		/* object addr = got addr + offset */
-	add	r3, r3, r7		/* object addr = got addr + offset */
+	add	r0, r0, r7		/* object addr = got addr + offset */
+	add	r1, r1, r7		/* object addr = got addr + offset */
 #endif
-	ldr	r0, [r2]
-	ldr	r1, [r3]
 
 #ifdef _ARM_ARCH_4T
 	blx	ip
