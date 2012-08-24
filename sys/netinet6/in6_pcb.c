@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.120 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.120 2012/06/25 15:28:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.121 2012/08/24 06:03:18 dholland Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1049,7 +1049,6 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 	}
 	return (match);
 }
-#undef continue
 
 /*
  * WARNING: return value (rtentry) could be IPv4 one if in6pcb is connected to
