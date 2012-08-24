@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.36 2011/07/26 22:21:02 dyoung Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.37 2012/08/24 09:01:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.36 2011/07/26 22:21:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.37 2012/08/24 09:01:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ tcic_check_reserved_bits(bus_space_tag_t iot, bus_space_handle_t ioh)
 		return 0;
 
 	DPRINTF(("tcic: chkrsvd 4\n"));
-	/* R_IENA bits 7,2 are reserverd. */
+	/* R_IENA bits 7,2 are reserved. */
 	val = bus_space_read_1(iot, ioh, TCIC_R_IENA);
 	if (val & TCIC_IENA_RSVD)
 		return 0;

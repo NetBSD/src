@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.56 2012/07/22 14:33:05 matt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.57 2012/08/24 09:01:23 msaitoh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -77,7 +77,7 @@
  *   to send any packets.
  *
  * Note that this device appears to only support loading the station
- * address via autload from the EEPROM (i.e. there's no way to manaully
+ * address via autoload from the EEPROM (i.e. there's no way to manaully
  * set it).
  *
  * (Adam Weinberger wanted me to name this driver if_gir.c.)
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.56 2012/07/22 14:33:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.57 2012/08/24 09:01:23 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"

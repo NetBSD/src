@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.19 2005/12/11 12:21:25 christos Exp $        */
+/*      $NetBSD: adwlib.h,v 1.20 2012/08/24 09:01:22 msaitoh Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -817,7 +817,7 @@ typedef struct adw_scsi_req_q {
 	u_int8_t	sg_working_ix;	/* ,uCode working SG variable. */
 	u_int8_t	cdb[12];	/* SCSI CDB bytes 0-11. */
 	u_int32_t	sg_real_addr;	/* SG list physical address. */
-	u_int32_t	scsiq_rptr;	/* Iternal pointer to ADW_SCSI_REQ_Q */
+	u_int32_t	scsiq_rptr;	/* Internal pointer to ADW_SCSI_REQ_Q */
 	u_int8_t	cdb16[4];	/* SCSI CDB bytes 12-15. */
 	u_int32_t	ccb_ptr;	/* CCB Physical Address */
 	u_int32_t	carr_va;	/* Carrier v-address (unused) */

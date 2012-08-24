@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.8 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -142,7 +142,7 @@ struct url_cdata {
 	struct url_chain	url_tx_chain[URL_TX_LIST_CNT];
 	struct url_chain	url_rx_chain[URL_TX_LIST_CNT];
 #if 0
-	/* XXX: Intrrupt Endpoint is not yet supported! */
+	/* XXX: Interrupt Endpoint is not yet supported! */
 	struct url_intrpkg	url_ibuf;
 #endif
 	int			url_tx_prod;

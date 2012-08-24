@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.95 2012/06/14 05:14:41 blymn Exp $	*/
+/*	$NetBSD: usb.h,v 1.96 2012/08/24 09:01:23 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ typedef u_int8_t uDWord[4];
 		     (w)[3] = (u_int8_t)((v) >> 24))
 #else
 /*
- * On little-endian machines that can handle unanliged accesses
+ * On little-endian machines that can handle unaligned accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
 #define UGETW(w) (*(u_int16_t *)(w))
