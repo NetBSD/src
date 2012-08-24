@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.277 2012/08/23 21:21:16 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.278 2012/08/24 20:26:24 jmmv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -405,6 +405,7 @@ PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
 
 ##### PROG specific flags.
 
+_DPADD.${_P}=		${DPADD}    ${DPADD.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
@@ -445,7 +446,7 @@ NODPSRCS+=	${f}
 .endif
 .endfor
 
-${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
 	${_CCLINK.${_P}} -Wl,-nostdlib \
@@ -478,7 +479,7 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
@@ -497,7 +498,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 .endif	# !commands(${_P})
 .endif	# USE_COMBINE
 
-${_P}.ro: ${OBJS.${_P}} ${DPADD}
+${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 
