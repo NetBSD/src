@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.99 2012/06/02 21:27:51 dsl Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.100 2012/08/24 05:47:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -374,12 +374,10 @@
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
-#else
-#ifdef __lint__
+#elif defined(__lint__)
 #define	__RENAME(x)	__symbolrename(x)
 #else
 #error "No function renaming possible"
-#endif /* __lint__ */
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
