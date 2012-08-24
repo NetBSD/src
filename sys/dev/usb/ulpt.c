@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.91 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.91 2012/03/11 01:06:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,7 +572,8 @@ ulptclose(dev_t dev, int flag, int mode,
 
 	if (sc->sc_has_callout) {
 		DPRINTFN(2, ("ulptclose: stopping read callout\n"));
-		callout_stop(&sc->sc_read_callout);
+		callout_halt(&sc->sc_read_callout, NULL);
+		callout_destroy(&sc->sc_read_callout);
 		sc->sc_has_callout = 0;
 	}
 
