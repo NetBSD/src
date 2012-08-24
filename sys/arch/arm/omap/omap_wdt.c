@@ -148,7 +148,13 @@ int
 omapwdt32k_enable(int enable)
 {
 	int s;
-	int prev_state = omapwdt32k_sc->sc_armed;
+	int prev_state;
+
+	/* Just return if ddb is entered before the watchdog driver starts. */
+	if (omapwdt32k_sc == NULL)
+		return (0);
+
+	prev_state = omapwdt32k_sc->sc_armed;
 
 	/* Normalize the int to a boolean so we can compare values directly.
 	 */
