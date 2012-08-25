@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.3 2012/08/24 16:37:45 matt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.4 2012/08/25 15:39:05 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.3 2012/08/24 16:37:45 matt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.4 2012/08/25 15:39:05 matt Exp $")
 
 	.section	.ctors, "aw", %progbits
 	.p2align 2
@@ -122,7 +122,7 @@ __do_global_dtors_aux:
 	add	r4, r4, r7		/* addr = offset + got */
 	add	r5, r5, r7		/* addr = offset + got */
 #endif
-	sub	r5, r5, #4		/* skip first entry */
+	add	r4, r4, #4		/* skip first entry */
 1:
 	cmp	r4, r5			/* end of list */
 	ldrne	ip, [r4], #4		/* ip = *r4++; */
