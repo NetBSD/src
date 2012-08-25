@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.31 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.32 2012/08/25 14:08:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -143,7 +143,7 @@ void validate_trapframe(trapframe_t *, int);
 	teq	r0, #(PSR_USR32_MODE)					;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
 	bne	1f			/* Not USR mode skip AFLT */	;\
-	ldr	r1, [r1, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
+	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
 	ldr	r1, [r1, #L_MD_FLAGS]	/* Fetch l_md.md_flags */	;\
 	tst	r1, #MDLWP_NOALIGNFLT					;\
 	beq	1f			/* AFLTs already enabled */	;\
