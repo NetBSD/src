@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.95 2012/08/04 03:56:47 riastradh Exp $	*/
+/*      $NetBSD: hijack.c,v 1.96 2012/08/25 18:00:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -28,22 +28,29 @@
 /* Disable namespace mangling, Fortification is useless here anyway. */
 #undef _FORTIFY_SOURCE
 
+#include "rumpuser_port.h"
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.95 2012/08/04 03:56:47 riastradh Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.96 2012/08/25 18:00:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/quotactl.h>
+#include <sys/time.h>
 
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
+#ifdef PLATFORM_HAS_KQUEUE
+#include <sys/event.h>
+#endif
+
+#ifdef PLATFORM_HAS_NBQUOTA
+#include <sys/quotactl.h>
+#endif
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -55,14 +62,23 @@ __RCSID("$NetBSD: hijack.c,v 1.95 2012/08/04 03:56:47 riastradh Exp $");
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <rump/rumpclient.h>
+#include <rump/rump_syscalls.h>
+
 #include "hijack.h"
 
+/*
+ * XXX: Consider autogenerating this, syscnames[] and syscalls[] with
+ * a DSL where the tool also checks the symbols exported by this library
+ * to make sure all relevant calls are accounted for.
+ */
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
@@ -81,7 +97,6 @@ enum dualcall {
 	DUALCALL_CHMOD, DUALCALL_LCHMOD, DUALCALL_FCHMOD,
 	DUALCALL_CHOWN, DUALCALL_LCHOWN, DUALCALL_FCHOWN,
 	DUALCALL_OPEN,
-	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1,
 	DUALCALL_CHDIR, DUALCALL_FCHDIR,
 	DUALCALL_LSEEK,
 	DUALCALL_GETDENTS,
@@ -90,16 +105,37 @@ enum dualcall {
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
-	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
-	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
+	DUALCALL_FSYNC,
 	DUALCALL___GETCWD,
-	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
 	DUALCALL_ACCESS,
 	DUALCALL_MKNOD,
-	DUALCALL___SYSCTL,
-	DUALCALL_GETVFSSTAT, DUALCALL_NFSSVC,
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
-#if __NetBSD_Prereq__(5,99,48)
+
+#ifdef PLATFORM_HAS_NBSYSCTL
+	DUALCALL___SYSCTL,
+#endif
+
+#ifdef PLATFORM_HAS_NFSSVC
+	DUALCALL_NFSSVC,
+#endif
+
+#ifdef PLATFORM_HAS_NBVFSSTAT
+	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1, DUALCALL_GETVFSSTAT, 
+#endif
+
+#ifdef PLATFORM_HAS_NBMOUNT
+	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
+#endif
+
+#ifdef PLATFORM_HAS_FSYNC_RANGE
+	DUALCALL_FSYNC_RANGE,
+#endif
+
+#ifdef PLATFORM_HAS_CHFLAGS
+	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
+#endif
+
+#ifdef PLATFORM_HAS_NBQUOTA
 	DUALCALL_QUOTACTL,
 #endif
 	DUALCALL__NUM
@@ -112,6 +148,7 @@ enum dualcall {
  * Would be nice to get this automatically in sync with libc.
  * Also, this does not work for compat-using binaries!
  */
+#ifdef __NetBSD__
 #if !__NetBSD_Prereq__(5,99,7)
 #define REALSELECT select
 #define REALPOLLTS pollts
@@ -124,7 +161,7 @@ enum dualcall {
 #define REALFUTIMES futimes
 #define REALMKNOD mknod
 #define REALFHSTAT __fhstat40
-#else
+#else /* >= 5.99.7 */
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #define REALKEVENT _sys___kevent50
@@ -136,7 +173,7 @@ enum dualcall {
 #define REALFUTIMES __futimes50
 #define REALMKNOD __mknod50
 #define REALFHSTAT __fhstat50
-#endif
+#endif /* < 5.99.7 */
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
 #define REALPWRITE _sys_pwrite
@@ -146,6 +183,30 @@ enum dualcall {
 #define REALFHOPEN __fhopen40
 #define REALFHSTATVFS1 __fhstatvfs140
 #define OLDREALQUOTACTL __quotactl50	/* 5.99.48-62 only */
+#define REALSOCKET __socket30
+
+#define LSEEK_ALIAS _lseek
+#define VFORK __vfork14
+
+#else /* !NetBSD */
+
+#define REALREAD read
+#define REALPREAD pread
+#define REALPWRITE pwrite
+#define REALGETDENTS getdents
+#define REALSELECT select
+#define REALPOLLTS ppoll
+#define REALSTAT stat
+#define REALLSTAT lstat
+#define REALFSTAT fstat
+#define REALUTIMES utimes
+#define REALLUTIMES lutimes
+#define REALFUTIMES futimes
+#define REALMKNOD mknod
+#define REALFHSTAT fhstat
+#define REALSOCKET socket
+
+#endif /* NetBSD */
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -169,7 +230,11 @@ int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
+int REALSOCKET(int, int, int);
+
+#ifdef PLATFORM_HAS_NBQUOTA
 int OLDREALQUOTACTL(const char *, struct plistref *);
+#endif
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -177,7 +242,7 @@ struct sysnames {
 	const char *scm_hostname;
 	const char *scm_rumpname;
 } syscnames[] = {
-	{ DUALCALL_SOCKET,	"__socket30",	RSYS_NAME(SOCKET)	},
+	{ DUALCALL_SOCKET,	S(REALSOCKET),	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
 	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
@@ -218,8 +283,6 @@ struct sysnames {
 	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
 	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
 	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
-	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
-	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
 	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
@@ -234,27 +297,51 @@ struct sysnames {
 	{ DUALCALL_TRUNCATE,	"truncate",	RSYS_NAME(TRUNCATE)	},
 	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
 	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
-	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
-	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
-	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
 	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
-	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
-	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
-	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
 	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
 	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
-	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
-	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
-	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
 	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
 	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)		},
 	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)		},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
+
+#ifdef PLATFORM_HAS_NBSYSCTL
+	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
+#endif
+
+#ifdef PLATFORM_HAS_NFSSVC
+	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBVFSSTAT
+	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
+	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
+	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBMOUNT
+	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
+	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
+#endif
+
+#ifdef PLATFORM_HAS_FSYNC_RANGE
+	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
+#endif
+
+#ifdef PLATFORM_HAS_CHFLAGS
+	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
+	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
+	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
+#endif /* PLATFORM_HAS_CHFLAGS */
+
+#ifdef PLATFORM_HAS_NBQUOTA
 #if __NetBSD_Prereq__(5,99,63)
 	{ DUALCALL_QUOTACTL,	"__quotactl",	RSYS_NAME(__QUOTACTL)	},
 #elif __NetBSD_Prereq__(5,99,48)
 	{ DUALCALL_QUOTACTL,	S(OLDREALQUOTACTL),RSYS_NAME(QUOTACTL)	},
 #endif
+#endif /* PLATFORM_HAS_NBQUOTA */
+
 };
 #undef S
 
@@ -469,7 +556,9 @@ static struct {
 } socketmap[] = {
 	{ PF_LOCAL, "local" },
 	{ PF_INET, "inet" },
+#ifdef PF_LINK
 	{ PF_LINK, "link" },
+#endif
 #ifdef PF_OROUTE
 	{ PF_OROUTE, "oroute" },
 #endif
@@ -484,7 +573,7 @@ static struct {
 static void
 sockparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	bool value;
 	int i;
 
@@ -545,7 +634,7 @@ static int nblanket;
 static void
 blanketparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	int i;
 
 	for (nblanket = 0, p = buf; p; p = strchr(p+1, ':'), nblanket++)
@@ -587,7 +676,7 @@ static struct {
 static void
 vfsparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	bool turnon;
 	unsigned int fullmask;
 	int i;
@@ -1126,9 +1215,8 @@ rename(const char *from, const char *to)
 	    GETSYSCALL(rump, RENAME), GETSYSCALL(host, RENAME));
 }
 
-int __socket30(int, int, int);
 int
-__socket30(int domain, int type, int protocol)
+REALSOCKET(int domain, int type, int protocol)
 {
 	int (*op_socket)(int, int, int);
 	int fd;
@@ -1207,7 +1295,7 @@ fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
-	int rv, minfd, i, maxdup2;
+	int rv, minfd;
 
 	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
 
@@ -1218,7 +1306,10 @@ fcntl(int fd, int cmd, ...)
 		va_end(ap);
 		return dodup(fd, minfd);
 
-	case F_CLOSEM:
+#ifdef F_CLOSEM
+	case F_CLOSEM: {
+		int maxdup2, i;
+
 		/*
 		 * So, if fd < HIJACKOFF, we want to do a host closem.
 		 */
@@ -1257,7 +1348,10 @@ fcntl(int fd, int cmd, ...)
 
 		/* hmm, maybe we should close rump fd's not within dup2mask? */
 		return rump_sys_fcntl(fd, F_CLOSEM);
+	}
+#endif /* F_CLOSEM */
 
+#ifdef F_MAXFD
 	case F_MAXFD:
 		/*
 		 * For maxfd, if there's a rump kernel fd, return
@@ -1281,6 +1375,7 @@ fcntl(int fd, int cmd, ...)
 			return op_fcntl(fd, F_MAXFD);
 		}
 		/*NOTREACHED*/
+#endif /* F_MAXFD */
 
 	default:
 		if (fd_isrump(fd)) {
@@ -1534,8 +1629,10 @@ fork(void)
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
 }
+#ifdef VFORK
 /* we do not have the luxury of not requiring a stackframe */
-__strong_alias(__vfork14,fork);
+__strong_alias(VFORK,fork);
+#endif
 
 int
 daemon(int nochdir, int noclose)
@@ -1971,6 +2068,7 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	return REALPOLLTS(fds, nfds, tsp, NULL);
 }
 
+#ifdef PLATFORM_HAS_KQUEUE
 int
 REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	struct kevent *eventlist, size_t nevents,
@@ -2001,6 +2099,7 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
+#endif /* PLATFORM_HAS_KQUEUE */
 
 /*
  * mmapping from a rump kernel is not supported, so disallow it.
@@ -2016,6 +2115,7 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 	return host_mmap(addr, len, prot, flags, fd, offset);
 }
 
+#ifdef PLATFORM_HAS_NBSYSCTL
 /*
  * these go to one or the other on a per-process configuration
  */
@@ -2039,6 +2139,7 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
 
 	return op___sysctl(name, namelen, old, oldlenp, new, newlen);
 }
+#endif
 
 /*
  * Rest are std type calls.
@@ -2138,16 +2239,20 @@ FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 	(int, struct stat *),						\
 	(fd, sb))
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
 	(int fd, struct statvfs *buf, int flags),			\
 	(int, struct statvfs *, int),					\
 	(fd, buf, flags))
+#endif
 
 FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
 	(int fd, off_t offset, int whence),				\
 	(int, off_t, int),						\
 	(fd, offset, whence))
-__strong_alias(_lseek,lseek);
+#ifdef LSEEK_ALIAS
+__strong_alias(LSEEK_ALIAS,lseek);
+#endif
 
 FDCALL(int, REALGETDENTS, DUALCALL_GETDENTS,				\
 	(int fd, char *buf, size_t nbytes),				\
@@ -2174,20 +2279,24 @@ FDCALL(int, fsync, DUALCALL_FSYNC,					\
 	(int),								\
 	(fd))
 
+#ifdef PLATFORM_HAS_FSYNC_RANGE
 FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
 	(int fd, int how, off_t start, off_t length),			\
 	(int, int, off_t, off_t),					\
 	(fd, how, start, length))
+#endif
 
 FDCALL(int, futimes, DUALCALL_FUTIMES,					\
 	(int fd, const struct timeval *tv),				\
 	(int, const struct timeval *),					\
 	(fd, tv))
 
+#ifdef PLATFORM_HAS_CHFLAGS
 FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
 	(int fd, u_long flags),						\
 	(int, u_long),							\
 	(fd, flags))
+#endif
 
 /*
  * path-based selectors
@@ -2223,10 +2332,12 @@ PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
 	(const char *, mode_t),						\
 	(path, mode))
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
 	(const char *path, struct statvfs *buf, int flags),		\
 	(const char *, struct statvfs *, int),				\
 	(path, buf, flags))
+#endif
 
 PATHCALL(int, unlink, DUALCALL_UNLINK,					\
 	(const char *path),						\
@@ -2263,6 +2374,7 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *, const struct timeval *),				\
 	(path, tv))
 
+#ifdef PLATFORM_HAS_CHFLAGS
 PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
@@ -2272,6 +2384,7 @@ PATHCALL(int, lchflags, DUALCALL_LCHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
 	(path, flags))
+#endif /* PLATFORM_HAS_CHFLAGS */
 
 PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
@@ -2294,6 +2407,7 @@ PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
  * about the "source" directory in a generic call (and besides,
  * it might not even exist, cf. nfs).
  */
+#ifdef PLATFORM_HAS_NBMOUNT
 PATHCALL(int, REALMOUNT, DUALCALL_MOUNT,				\
 	(const char *type, const char *path, int flags,			\
 	    void *data, size_t dlen),					\
@@ -2304,7 +2418,9 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *path, int flags),					\
 	(const char *, int),						\
 	(path, flags))
+#endif /* PLATFORM_HAS_NBMOUNT */
 
+#ifdef PLATFORM_HAS_NBQUOTA
 #if __NetBSD_Prereq__(5,99,63)
 PATHCALL(int, __quotactl, DUALCALL_QUOTACTL,				\
 	(const char *path, struct quotactl_args *args),			\
@@ -2316,6 +2432,7 @@ PATHCALL(int, OLDREALQUOTACTL, DUALCALL_QUOTACTL,			\
 	(const char *, struct plistref *),				\
 	(path, p))
 #endif
+#endif /* PLATFORM_HAS_NBQUOTA */
 
 PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
 	(const char *path, void *fhp, size_t *fh_size),			\
@@ -2326,10 +2443,12 @@ PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
  * These act different on a per-process vfs configuration
  */
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
 	(struct statvfs *buf, size_t buflen, int flags),		\
 	(struct statvfs *, size_t, int),				\
 	(buf, buflen, flags))
+#endif
 
 VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
 	(const void *fhp, size_t fh_size, int flags),			\
@@ -2346,8 +2465,10 @@ VFSCALL(VFSBIT_FHCALLS, int, REALFHSTATVFS1, DUALCALL_FHSTATVFS1,	\
 	(const char *, size_t, struct statvfs *, int),			\
 	(fhp, fh_size, sb, flgs))
 
-/* finally, put nfssvc here.  "keep the namespace clean" */
 
+#ifdef PLATFORM_HAS_NFSSVC
+
+/* finally, put nfssvc here.  "keep the namespace clean" */
 #include <nfs/rpcv2.h>
 #include <nfs/nfs.h>
 
@@ -2370,3 +2491,4 @@ nfssvc(int flags, void *argstructp)
 
 	return op_nfssvc(flags, argstructp);
 }
+#endif /* PLATFORM_HAS_NFSSVC */

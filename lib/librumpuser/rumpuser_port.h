@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.1 2012/07/27 09:09:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.2 2012/08/25 18:00:06 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -17,6 +17,24 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
+#include <sys/param.h>
+
+#define PLATFORM_HAS_KQUEUE
+#define PLATFORM_HAS_CHFLAGS
+#define PLATFORM_HAS_NBMOUNT
+#define PLATFORM_HAS_NFSSVC
+#define PLATFORM_HAS_FSYNC_RANGE
+#define PLATFORM_HAS_NBSYSCTL
+
+#if __NetBSD_Prereq__(5,99,48)
+#define PLATFORM_HAS_NBQUOTA
+#endif
+
+/*
+ * This includes also statvfs1() and fstatvfs1().  They could be
+ * reasonably easily emulated on other platforms.
+ */
+#define PLATFORM_HAS_NBVFSSTAT
 #endif
 
 #ifdef __linux__
@@ -29,6 +47,31 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+
+#if defined(__linux__)
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* this is inline simply to make this header self-contained */
+static inline int 
+getenv_r(const char *name, char *buf, size_t buflen)
+{
+	char *tmp;
+
+	if ((tmp = getenv(name)) != NULL) {
+		if (strlen(tmp) >= buflen) {
+			errno = ERANGE;
+			return -1;
+		}
+		strcpy(buf, tmp);
+		return 0;
+	} else {
+		errno = ENOENT;
+		return -1;
+	}
+}
+#endif
 
 #ifndef __RCSID
 #define __RCSID(a)
@@ -61,6 +104,14 @@
 #define __printflike(a,b)
 #endif
 
+#ifndef __noinline
+#ifdef __GNUC__
+#define __noinline __attribute__((__noinline__))
+#else
+#define __noinline
+#endif
+#endif
+
 #ifndef __arraycount
 #define __arraycount(_ar_) (sizeof(_ar_)/sizeof(_ar_[0]))
 #endif
@@ -71,6 +122,17 @@
 
 #ifdef __linux__
 #define arc4random() random()
+#endif
+
+#ifndef __NetBSD_Prereq__
+#define __NetBSD_Prereq__(a,b,c) 0
+#endif
+
+#if !defined(__CMSG_ALIGN)
+#include <sys/socket.h>
+#ifdef CMSG_ALIGN
+#define __CMSG_ALIGN(a) CMSG_ALIGN(a)
+#endif
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */

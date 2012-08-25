@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/03/21 05:37:44 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2012/08/25 18:00:06 pooka Exp $
 #
 
 LIB=		rumphijack
@@ -10,7 +10,7 @@ MAN=		rumphijack.3
 
 SRCS=		hijack.c hijackdlsym.c
 
-CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT
+CPPFLAGS+=	-D_DIAGNOSTIC -D_REENTRANT -I${.CURDIR}/../librumpuser
 
 WARNS?=		5
 

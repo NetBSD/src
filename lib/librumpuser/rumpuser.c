@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.18 2012/07/27 09:09:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.19 2012/08/25 18:00:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.18 2012/07/27 09:09:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.19 2012/08/25 18:00:06 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -500,24 +500,7 @@ int
 rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
 {
 
-#ifdef __linux__
-	char *tmp;
-
-	*error = 0;
-	if ((tmp = getenv(name)) != NULL) {
-		if (strlen(tmp) >= blen) {
-			*error = ERANGE;
-			return -1;
-		}
-		strcpy(buf, tmp);
-		return 0;
-	} else {
-		*error = ENOENT;
-		return -1;
-	}
-#else
 	DOCALL(int, getenv_r(name, buf, blen));
-#endif
 }
 
 int
