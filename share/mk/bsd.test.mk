@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.20 2012/08/24 20:28:19 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.21 2012/08/25 22:21:16 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -139,8 +139,8 @@ test:
 	mkfifo ${_TESTS_FIFO}; \
 	cat ${_TESTS_FIFO} | tee ${_TESTS_LOG} | \
 	    ${TESTS_ENV} ${DESTDIR}/usr/bin/atf-report & \
-	${TESTS_ENV} ${DESTDIR}/usr/bin/atf-run >>${_TESTS_FIFO}; \
-	result=$${?}; \
+	result=0; \
+	${TESTS_ENV} ${DESTDIR}/usr/bin/atf-run >>${_TESTS_FIFO} || result=1; \
 	wait; \
 	rm -f ${_TESTS_FIFO}; \
 	echo; \
