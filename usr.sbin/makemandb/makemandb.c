@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.11 2012/08/11 21:07:13 wiz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.12 2012/08/25 12:37:12 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.11 2012/08/11 21:07:13 wiz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.12 2012/08/25 12:37:12 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -2036,6 +2036,6 @@ append(secbuff *sbuff, const char *src)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-flo]\n", getprogname());
+	fprintf(stderr, "Usage: %s [-floqv] [-C path]\n", getprogname());
 	exit(1);
 }
