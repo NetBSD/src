@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.960 2012/08/20 21:20:19 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.961 2012/08/25 11:14:58 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1236,10 +1236,10 @@ Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
 
 Package:	services, protocols
-Version:	2010-10-04 (services), 2010-05-27 (protocols)
-Current Vers:	2012-01-04 (services), 2011-11-01 (protocols)
+Version:	2012-08-24 (services), 2012-08-21 (protocols)
+Current Vers:	2012-08-24 (services), 2012-08-21 (protocols)
 Maintainer:	IANA
-Archive Site:	http://www.iana.org/assignments/port-numbers (services)
+Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
 Home Page:	http://www.iana.org/
 Mailing List:
@@ -1247,15 +1247,11 @@ Responsible:	christos
 License:	None
 Location:	etc
 Notes:
-1. Download the latest converter from:
-	http://www.sethwklein.net/iana-etc.html
-2. Unpack it and edit the Makefile to reflect the latest location of the files
-3. Run
-	gmake get
-	gmake
-4. Add NetBSD rcsid to the generated protocols and services.
-5. Append the local services from the current services file.
-6. Run:
+1. Build package net/iana-etc
+2. Add NetBSD rcsid to the generated protocols and services in the package
+   work area.
+3. Append the local services from the current services file.
+4. Run:
 	services_mkdb -u services > /usr/src/etc/services
 	cp protocols /usr/src/etc/protocols
 
