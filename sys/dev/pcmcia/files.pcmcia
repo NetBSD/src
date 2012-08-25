@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.57 2008/09/30 16:51:45 jmcneill Exp $
+#	$NetBSD: files.pcmcia,v 1.58 2012/08/25 08:20:03 kiyohara Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -140,3 +140,7 @@ file	dev/pcmcia/slhci_pcmcia.c		slhci_pcmcia
 device	btbc: btbus, bluetooth
 attach	btbc at pcmcia
 file	dev/pcmcia/btbc.c			btbc
+
+# Marvell 88W8385
+attach	malo at pcmcia with malo_pcmcia
+file	dev/pcmcia/if_malo_pcmcia.c		malo_pcmcia
