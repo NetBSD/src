@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.18 2012/08/23 09:59:13 bouyer Exp $ */
+/* $NetBSD: mfivar.h,v 1.19 2012/08/26 16:05:29 bouyer Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -206,6 +206,8 @@ struct mfi_softc {
 
 	struct sysmon_envsys    *sc_sme;
 	envsys_data_t		*sc_sensor;
+	bool			sc_bbuok;
+	bool			sc_running;
 
 	device_t		sc_child;
 };
