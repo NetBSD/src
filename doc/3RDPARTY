@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.962 2012/08/26 14:23:21 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.963 2012/08/26 15:41:01 apb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -23,6 +23,21 @@
 #     should be repeated on each line, except:
 # 5.) The Notes: field tag should appear on a line by itself; all
 #     remaining lines until the end of the record are notes.
+#
+# Package:	name or brief description (required, must be first)
+# Version:	version that is included with NetBSD (required)
+# Current Vers:	version that is available upstream (required)
+# Maintainer:	name and/or email address of upstream maintainer (required)
+# Archive Site:	URL to archive of upstream releases
+# Home Page:	URL to web page for upstream project
+# Mailing List:	email address or URL related to upstream mailing list
+# License:	description of license
+# Responsible:	comma-separated list of NetBSD developers
+# Location:	comma-separated list of subdirectories in the NetBSD src tree
+# Notes:
+# Multiple lines of free-form text,
+# Must be last.
+#
 
 Package:	acpica
 Version:	20110623
