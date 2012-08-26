@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.77 2012/08/16 13:34:10 wiz Exp $
+.\"	$NetBSD: find.1,v 1.78 2012/08/26 14:26:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd August 16, 2012
+.Dd August 26, 2012
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -212,7 +212,7 @@ was started, rounded up to the next full 24-hour period, is
 .Pp
 .It Ic -delete
 Delete found files, symbolic links and directories.
-Always returns True.
+Always returns true.
 This executes from the current working directory as
 .Nm
 recurses down the tree.
@@ -223,7 +223,7 @@ returns that contain a
 .Xr ( fts 3
 should not return such pathnames).
 Depth-first traversal processing is implied by this option.
-This can also be invoked as
+This primary can also be invoked as
 .Ic -rm .
 .Pp
 .It Ic -empty
@@ -444,7 +444,7 @@ True if the file has
 links.
 .Pp
 .It Ic -rm
-This is an alias for
+This primary is an alias for
 .Ic -delete .
 .Pp
 .It Ic -ls
@@ -589,14 +589,17 @@ This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
 by a newline character.
 If none of
+.Ic -delete ,
 .Ic -exec ,
+.Ic -execdir ,
 .Ic -exit ,
 .Ic -fprint ,
 .Ic -ls ,
 .Ic -ok ,
 .Ic -print0 ,
+.Ic -printx ,
 nor
-.Ic -printx
+.Ic -rm
 is specified, the given expression shall be effectively replaced by
 .Cm \&( Ns Ar given\& expression Ns Cm \&)
 .Ic -print .
