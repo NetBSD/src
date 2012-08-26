@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.45 2012/08/26 16:05:29 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.45 2012/08/26 16:05:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $");
 
 #include "bio.h"
 
@@ -789,7 +789,7 @@ mfi_get_info(struct mfi_softc *sc)
 	    sc->sc_info.mci_host.mih_port_count);
 
 	for (i = 0; i < 8; i++)
-		printf("%.0lx ", sc->sc_info.mci_host.mih_port_addr[i]);
+		printf("%.0" PRIx64 " ", sc->sc_info.mci_host.mih_port_addr[i]);
 	printf("\n");
 
 	printf("%s: type %.x port_count %d port_addr ",
@@ -797,8 +797,10 @@ mfi_get_info(struct mfi_softc *sc)
 	    sc->sc_info.mci_device.mid_type,
 	    sc->sc_info.mci_device.mid_port_count);
 
-	for (i = 0; i < 8; i++)
-		printf("%.0lx ", sc->sc_info.mci_device.mid_port_addr[i]);
+	for (i = 0; i < 8; i++) {
+		printf("%.0" PRIx64 " ",
+		    sc->sc_info.mci_device.mid_port_addr[i]);
+	}
 	printf("\n");
 #endif /* MFI_DEBUG */
 
@@ -2582,11 +2584,17 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		case MFI_BBU_GOOD:
 			edata->value_cur = 1;
 			edata->state = ENVSYS_SVALID;
+			if (!sc->sc_bbuok)
+				aprint_normal_dev(sc->sc_dev,
+				    "BBU state changed to good\n");
 			sc->sc_bbuok = true;
 			break;
 		case MFI_BBU_BAD:
 			edata->value_cur = 0;
 			edata->state = ENVSYS_SCRITICAL;
+			if (sc->sc_bbuok)
+				aprint_normal_dev(sc->sc_dev,
+				    "BBU state changed to bad\n");
 			sc->sc_bbuok = false;
 			break;
 		case MFI_BBU_UNKNOWN:
