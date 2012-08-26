@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.961 2012/08/25 11:14:58 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.962 2012/08/26 14:23:21 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -77,7 +77,7 @@ Archive Site:	none
 Home Page:	none
 Mailing List:	none
 Responsible:	sam, alc
-License:	BSD-like (2 clause), ISC
+License:	BSD-like (2-clause), ISC
 Location:	sys/external/isc/atheros_hal/dist
 Notes:
 
@@ -95,12 +95,13 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.9.1-P1
-Current Vers:	9.9.1-P1
+Version:	9.9.1-P2
+Current Vers:	9.9.1-P2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
-Home Page:	http://www.isc.org/sw/bind/
-Mailing List:
+Home Page:	http://www.isc.org/software/bind/
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/bind/dist
@@ -113,11 +114,11 @@ The libc and include parts of the resolver are now part of libbind.
 
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
-Current Vers:	libbind-6.0-rc1
+Current Vers:	libbind-6.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/libbind/
-Home Page:	http://www.isc.org/sw/bind/
-Mailing List:
+Home Page:	http://www.isc.org/software/libbind/
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-workers
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/libbind/dist
@@ -162,14 +163,14 @@ Notes:
 Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
-Version:	1.116
-Current Vers:	1.116
-Maintainer:	n/a
-Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
-Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
+Version:	1.151
+Current Vers:	1.156
+Maintainer:	The FreeBSD Project
+Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
+Home Page:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
 Responsible:
-License:	See URL above.
+License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
 Location:	share/misc/bsd-family-tree
 Notes:
 
@@ -665,9 +666,9 @@ working directory '.' to avoid potential security problems.
 Package:	m4
 Version:	20091026
 Current Vers:	20091026
-Maintainer:	OpenBSD
+Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
-Home Page:	http://openbsd.org
+Home Page:	http://www.openbsd.org/
 Mailing List:	
 License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
@@ -1323,9 +1324,9 @@ Current Vers:	0.8.0
 Maintainer:	http://laurikari.net/tre
 Archive Site:	http://laurikari.net/tre
 Home Page:	http://laurikari.net/tre
-Mailing List:	http://laurikari.net/mailman/listinfo/tre-general
+Mailing List:
 Responsible:	agc, christos
-License:	BSD
+License:	BSD (2-clause)
 Location:	external/bsd/tre/dist
 Notes:
 		Need to feed back local changes
