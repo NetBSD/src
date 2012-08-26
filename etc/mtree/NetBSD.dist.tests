@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.82 2012/08/14 19:13:54 alnsn Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.83 2012/08/26 23:03:22 jmmv Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -269,6 +269,8 @@
 ./usr/tests/sbin/resize_ffs
 ./usr/tests/sbin/route
 ./usr/tests/sbin/sysctl
+./usr/tests/share
+./usr/tests/share/mk
 ./usr/tests/sys
 ./usr/tests/sys/rc
 ./usr/tests/usr.bin
