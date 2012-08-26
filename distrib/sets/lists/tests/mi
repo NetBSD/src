@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.489 2012/08/24 20:24:39 jmmv Exp $
+# $NetBSD: mi,v 1.490 2012/08/26 23:03:21 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2931,6 +2931,14 @@
 ./usr/tests/sbin/sysctl/Atffile			tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl/t_perm			tests-sbin-tests	atf
 ./usr/tests/sbin/sysctl/t_sysctl		tests-sbin-tests	atf
+./usr/tests/share				tests-sys-tests
+./usr/tests/share/Atffile			tests-sys-tests		atf
+./usr/tests/share/mk				tests-mk-tests
+./usr/tests/share/mk/Atffile			tests-mk-tests		atf
+./usr/tests/share/mk/t_lib			tests-mk-tests		atf
+./usr/tests/share/mk/t_own			tests-mk-tests		atf
+./usr/tests/share/mk/t_prog			tests-mk-tests		atf
+./usr/tests/share/mk/t_test			tests-mk-tests		atf
 ./usr/tests/sys					tests-sys-tests
 ./usr/tests/sys/Atffile				tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
