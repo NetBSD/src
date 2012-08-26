@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1738 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1739 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -106,3 +106,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	mfi(8): Added tagged queuing support.  [bouyer 20120823]
 	mfi(8): Added support for LSI SAS2208-based controllers.
 		[bouyer 20120823]
+	mkdep(1): Add -P option.  [jmmv 20120826]
