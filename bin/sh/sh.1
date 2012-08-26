@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.107 2012/06/11 18:28:10 njoly Exp $
+.\"	$NetBSD: sh.1,v 1.108 2012/08/26 14:30:38 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd June 11, 2012
+.Dd August 26, 2012
 .Dt SH 1
 .Os
 .Sh NAME
@@ -233,7 +233,7 @@ explicitly tested if the command is used to control an
 .Ic elif ,
 .Ic while ,
 or
-.Ic until ;
+.Ic until ,
 or if the command is the left hand operand of an
 .Dq \*[Am]\*[Am]
 or
@@ -345,7 +345,7 @@ is treated as a line continuation.
 .Ss Single Quotes
 Enclosing characters in single quotes preserves the literal meaning of all
 the characters (except single quotes, making it impossible to put
-single-quotes in a single-quoted string).
+single quotes in a single-quoted string).
 .Ss Double Quotes
 Enclosing characters within double quotes preserves the literal
 meaning of all characters except dollar sign
@@ -755,7 +755,6 @@ Built-in commands grouped into a (list) will not affect the current shell.
 The second form does not fork another shell so is slightly more efficient.
 Grouping commands together this way allows you to redirect
 their output as though they were one program:
-.Pp
 .Bd -literal -offset indent
 { echo -n \*q hello \*q ; echo \*q world" ; } \*[Gt] greeting
 .Ed
@@ -849,7 +848,7 @@ if
 is unset.
 .It @
 Expands to the positional parameters, starting from one.
-When the expansion occurs within double-quotes, each positional
+When the expansion occurs within double quotes, each positional
 parameter expands as a separate argument.
 If there are no positional parameters, the
 expansion of @ generates zero arguments, even when @ is
@@ -896,7 +895,7 @@ single field.
 It is only field splitting or pathname expansion that can
 create multiple fields from a single word.
 The single exception to this
-rule is the expansion of the special parameter @ within double-quotes, as
+rule is the expansion of the special parameter @ within double quotes, as
 was described above.
 .Pp
 The order of word expansion is:
@@ -954,7 +953,7 @@ The parameter name or symbol can be enclosed in braces, which are
 optional except for positional parameters with more than one digit or
 when parameter is followed by a character that could be interpreted as
 part of the name.
-If a parameter expansion occurs inside double-quotes:
+If a parameter expansion occurs inside double quotes:
 .Bl -enum
 .It
 Pathname expansion is not performed on the results of the expansion.
@@ -992,9 +991,6 @@ An interactive shell need not exit.
 Use Alternative Value.
 If parameter is unset or null, null is
 substituted; otherwise, the expansion of word is substituted.
-.El
-.Pp
-.Bl -tag -width aaparameterwordaaaaa
 .It ${#parameter}
 String Length.
 The length in characters of the value of parameter.
@@ -1006,7 +1002,7 @@ In each case, pattern matching notation (see
 .Sx Shell Patterns ) ,
 rather than regular expression notation, is used to evaluate the patterns.
 If parameter is * or @, the result of the expansion is unspecified.
-Enclosing the full parameter expansion string in double-quotes does not
+Enclosing the full parameter expansion string in double quotes does not
 cause the following four varieties of pattern characters to be quoted,
 whereas quoting characters within the braces has this effect.
 .Bl -tag -width aaparameterwordaaaaa
@@ -1067,8 +1063,8 @@ The format for arithmetic expansion is as follows:
 .Pp
 .Dl $((expression))
 .Pp
-The expression is treated as if it were in double-quotes, except
-that a double-quote inside the expression is not treated specially.
+The expression is treated as if it were in double quotes, except
+that a double quote inside the expression is not treated specially.
 The shell expands all tokens in the expression for parameter expansion,
 command substitution, and quote removal.
 .Pp
@@ -1090,7 +1086,7 @@ sign.
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
-expansions and substitutions that did not occur in double-quotes for
+expansions and substitutions that did not occur in double quotes for
 field splitting and multiple fields can result.
 .Pp
 The shell treats each character of the
@@ -1136,7 +1132,7 @@ and
 .Dq \&[ .
 These characters lose their special meanings if they are quoted.
 When command or variable substitution is performed
-and the dollar sign or back quotes are not double quoted,
+and the dollar sign or backquotes are not double-quoted,
 the value of the variable or the output of
 the command is scanned for these characters and they are turned into
 meta-characters.
@@ -1144,13 +1140,15 @@ meta-characters.
 An asterisk
 .Pq Dq *
 matches any string of characters.
-A question mark matches any single character.
+A question mark
+.Pq Dq \&?
+matches any single character.
 A left bracket
 .Pq Dq \&[
 introduces a character class.
-The end of the character class is indicated by a
+The end of the character class is indicated by a right bracket
 .Pq Dq \&] ;
-if the
+if this
 .Dq \&]
 is missing then the
 .Dq \&[
@@ -1158,16 +1156,21 @@ matches a
 .Dq \&[
 rather than introducing a character class.
 A character class matches any of the characters between the square brackets.
-A range of characters may be specified using a minus sign.
+A range of characters may be specified using a minus sign
+.Pq Dq - .
 The character class may be complemented
-by making an exclamation point the first character of the character class.
+by making an exclamation mark
+.Pq Dq \&!
+the first character of the character class.
 .Pp
 To include a
 .Dq \&]
 in a character class, make it the first character listed (after the
 .Dq \&! ,
 if any).
-To include a minus sign, make it the first or last character listed.
+To include a
+.Dq - ,
+make it the first or last character listed.
 .Ss Built-ins
 This section lists the built-in commands which are built-in because they
 need to perform some operation that can't be performed by a separate
@@ -1481,7 +1484,6 @@ and
 and the option
 .Op c ,
 which requires an argument.
-.Pp
 .Bd -literal -offset indent
 while getopts abc: f
 do
@@ -1495,7 +1497,6 @@ shift $(expr $OPTIND - 1)
 .Ed
 .Pp
 This code will accept any of the following as equivalent:
-.Pp
 .Bd -literal -offset indent
 cmd \-acarg file file
 cmd \-a \-c arg file file
@@ -1945,7 +1946,7 @@ children of the shell, and is used in the history editing modes.
 The number of lines in the history buffer for the shell.
 .El
 .Sh FILES
-.Bl -item -width HOMEprofilexxxx
+.Bl -item
 .It
 .Pa $HOME/.profile
 .It
