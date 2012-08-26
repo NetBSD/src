@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.114 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.115 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11197,8 +11197,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		rasops(9) APIs instead of deprecated rcons(4).
 		This allows "options FONT_foo" in kernel config files.
 		[tsutsui 20120720]
+	zoneinfo: Import tzdata2012d. [apb 20120722]
 	luna68k: Fix hangup after reboot(2) problem.  [tsutsui 20120723]
 	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
 	luna68k: Handle bootarg strings passed from firmware prompt properly
 		on LUNA-II. [tsutsui 20120728]
+	zoneinfo: Import tzdata2012e. [apb 20120808]
 	postfix(1): Import version 2.8.12 [tron 20120810]
