@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.44 2012/08/23 12:24:33 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.45 2012/08/26 16:05:29 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.44 2012/08/23 12:24:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.45 2012/08/26 16:05:29 bouyer Exp $");
 
 #include "bio.h"
 
@@ -133,6 +133,12 @@ static void		mfi_freemem(struct mfi_softc *, struct mfi_mem **);
 static int		mfi_transition_firmware(struct mfi_softc *);
 static int		mfi_initialize_firmware(struct mfi_softc *);
 static int		mfi_get_info(struct mfi_softc *);
+static int		mfi_get_bbu(struct mfi_softc *,
+			    struct mfi_bbu_status *);
+/* return codes for mfi_get_bbu */
+#define MFI_BBU_GOOD	0
+#define MFI_BBU_BAD	1
+#define MFI_BBU_UNKNOWN	2
 static uint32_t		mfi_read(struct mfi_softc *, bus_size_t);
 static void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
 static int		mfi_poll(struct mfi_ccb *);
@@ -144,8 +150,8 @@ static int		mfi_scsi_ld_io(struct mfi_ccb *, struct scsipi_xfer *,
 				uint64_t, uint32_t);
 static void		mfi_scsi_ld_done(struct mfi_ccb *);
 static void		mfi_scsi_xs_done(struct mfi_ccb *, int, int);
-static int		mfi_mgmt_internal(struct mfi_softc *,
-			    uint32_t, uint32_t, uint32_t, void *, uint8_t *);
+static int		mfi_mgmt_internal(struct mfi_softc *, uint32_t,
+			    uint32_t, uint32_t, void *, uint8_t *, bool);
 static int		mfi_mgmt(struct mfi_ccb *,struct scsipi_xfer *,
 			    uint32_t, uint32_t, uint32_t, void *, uint8_t *);
 static void		mfi_mgmt_done(struct mfi_ccb *);
@@ -167,6 +173,9 @@ static int		mfi_destroy_sensors(struct mfi_softc *);
 static void		mfi_sensor_refresh(struct sysmon_envsys *,
 				envsys_data_t *);
 #endif /* NBIO > 0 */
+static bool		mfi_shutdown(device_t, int);
+static bool		mfi_suspend(device_t, const pmf_qual_t *);
+static bool		mfi_resume(device_t, const pmf_qual_t *);
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
@@ -274,7 +283,7 @@ mfi_get_ccb(struct mfi_softc *sc)
 	splx(s);
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_get_ccb: %p\n", DEVNAME(sc), ccb);
-	if (ccb == NULL)
+	if (__predict_false(ccb == NULL && sc->sc_running))
 		aprint_error_dev(sc->sc_dev, "out of ccb\n");
 
 	return ccb;
@@ -646,7 +655,7 @@ mfi_get_info(struct mfi_softc *sc)
 	DNPRINTF(MFI_D_MISC, "%s: mfi_get_info\n", DEVNAME(sc));
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_CTRL_GET_INFO, MFI_DATA_IN,
-	    sizeof(sc->sc_info), &sc->sc_info, NULL))
+	    sizeof(sc->sc_info), &sc->sc_info, NULL, cold ? true : false))
 		return 1;
 
 #ifdef MFI_DEBUG
@@ -796,6 +805,63 @@ mfi_get_info(struct mfi_softc *sc)
 	return 0;
 }
 
+static int
+mfi_get_bbu(struct mfi_softc *sc, struct mfi_bbu_status *stat)
+{
+	DNPRINTF(MFI_D_MISC, "%s: mfi_get_bbu\n", DEVNAME(sc));
+
+	if (mfi_mgmt_internal(sc, MR_DCMD_BBU_GET_STATUS, MFI_DATA_IN,
+	    sizeof(*stat), stat, NULL, cold ? true : false))
+		return MFI_BBU_UNKNOWN;
+#ifdef MFI_DEBUG
+	printf("bbu type %d, voltage %d, current %d, temperature %d, "
+	    "status 0x%x\n", stat->battery_type, stat->voltage, stat->current,
+	    stat->temperature, stat->fw_status);
+	printf("details: ");
+	switch(stat->battery_type) {
+	case MFI_BBU_TYPE_IBBU:
+		printf("guage %d relative charge %d charger state %d "
+		    "charger ctrl %d\n", stat->detail.ibbu.gas_guage_status,
+		    stat->detail.ibbu.relative_charge ,
+		    stat->detail.ibbu.charger_system_state ,
+		    stat->detail.ibbu.charger_system_ctrl);
+		printf("\tcurrent %d abs charge %d max error %d\n",
+		    stat->detail.ibbu.charging_current ,
+		    stat->detail.ibbu.absolute_charge ,
+		    stat->detail.ibbu.max_error);
+		break;
+	case MFI_BBU_TYPE_BBU:
+		printf("guage %d relative charge %d charger state %d\n",
+		    stat->detail.ibbu.gas_guage_status,
+		    stat->detail.bbu.relative_charge ,
+		    stat->detail.bbu.charger_status );
+		printf("\trem capacity %d fyll capacity %d SOH %d\n",
+		    stat->detail.bbu.remaining_capacity ,
+		    stat->detail.bbu.full_charge_capacity ,
+		    stat->detail.bbu.is_SOH_good);
+	default:
+		printf("\n");
+	}
+#endif
+	switch(stat->battery_type) {
+	case MFI_BBU_TYPE_BBU:
+		return (stat->detail.bbu.is_SOH_good ? 
+		    MFI_BBU_GOOD : MFI_BBU_BAD);
+	case MFI_BBU_TYPE_NONE:
+		return MFI_BBU_UNKNOWN;
+	default:
+		if (stat->fw_status &
+		    (MFI_BBU_STATE_PACK_MISSING |
+		     MFI_BBU_STATE_VOLTAGE_LOW |
+		     MFI_BBU_STATE_TEMPERATURE_HIGH |
+		     MFI_BBU_STATE_LEARN_CYC_FAIL |
+		     MFI_BBU_STATE_LEARN_CYC_TIMEOUT |
+		     MFI_BBU_STATE_I2C_ERR_DETECT))
+			return MFI_BBU_BAD;
+		return MFI_BBU_GOOD;
+	}
+}
+
 static void
 mfiminphys(struct buf *bp)
 {
@@ -849,8 +915,7 @@ mfi_detach(struct mfi_softc *sc, int flags)
 #endif /* NBIO > 0 */
 
 	mfi_intr_disable(sc);
-
-	/* TBD: shutdown firmware */
+	mfi_shutdown(sc->sc_dev, 0);
 
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
 		workqueue_destroy(sc->sc_ldsync_wq);
@@ -870,6 +935,51 @@ mfi_detach(struct mfi_softc *sc, int flags)
 	mfi_freemem(sc, &sc->sc_pcq);
 
 	return 0;
+}
+
+static bool
+mfi_shutdown(device_t dev, int how)
+{
+	struct mfi_softc	*sc = device_private(dev);
+	uint8_t			mbox[MFI_MBOX_SIZE];
+	int s = splbio();
+	DNPRINTF(MFI_D_MISC, "%s: mfi_shutdown\n", DEVNAME(sc));
+	if (sc->sc_running) {
+		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
+		if (mfi_mgmt_internal(sc, MR_DCMD_CTRL_CACHE_FLUSH,
+		    MFI_DATA_NONE, 0, NULL, mbox, true)) {
+			aprint_error_dev(dev, "shutdown: cache flush failed\n");
+			goto fail;
+		}
+
+		mbox[0] = 0;
+		if (mfi_mgmt_internal(sc, MR_DCMD_CTRL_SHUTDOWN,
+		    MFI_DATA_NONE, 0, NULL, mbox, true)) {
+			aprint_error_dev(dev, "shutdown: "
+			    "firmware shutdown failed\n");
+			goto fail;
+		}
+		sc->sc_running = false;
+	}
+	splx(s);
+	return true;
+fail:
+	splx(s);
+	return false;
+}
+
+static bool
+mfi_suspend(device_t dev, const pmf_qual_t *q)
+{
+	/* XXX to be implemented */
+	return false;
+}
+
+static bool
+mfi_resume(device_t dev, const pmf_qual_t *q)
+{
+	/* XXX to be implemented */
+	return false;
 }
 
 int
@@ -1032,18 +1142,55 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 			goto noinit;
 		}
 	}
+	sc->sc_running = true;
 
 	if (mfi_get_info(sc)) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not retrieve controller information\n");
 		goto noinit;
 	}
-
 	aprint_normal_dev(sc->sc_dev,
-	    "logical drives %d, version %s, %dMB RAM\n",
+	    "%s version %s\n",
+	    sc->sc_info.mci_product_name,
+	    sc->sc_info.mci_package_version);
+
+
+	aprint_normal_dev(sc->sc_dev, "logical drives %d, %dMB RAM, ",
 	    sc->sc_info.mci_lds_present,
-	    sc->sc_info.mci_package_version,
 	    sc->sc_info.mci_memory_size);
+	sc->sc_bbuok = false;
+	if (sc->sc_info.mci_hw_present & MFI_INFO_HW_BBU) {
+		struct mfi_bbu_status	bbu_stat;
+		int mfi_bbu_status = mfi_get_bbu(sc, &bbu_stat);
+		aprint_normal("BBU type ");
+		switch (bbu_stat.battery_type) {
+		case MFI_BBU_TYPE_BBU:
+			aprint_normal("BBU");
+			break;
+		case MFI_BBU_TYPE_IBBU:
+			aprint_normal("IBBU");
+			break;
+		default:
+			aprint_normal("unknown type %d", bbu_stat.battery_type);
+		}
+		aprint_normal(", status ");
+		switch(mfi_bbu_status) {
+		case MFI_BBU_GOOD:
+			aprint_normal("good\n");
+			sc->sc_bbuok = true;
+			break;
+		case MFI_BBU_BAD:
+			aprint_normal("bad\n");
+			break;
+		case MFI_BBU_UNKNOWN:
+			aprint_normal("unknown\n");
+			break;
+		default:
+			panic("mfi_bbu_status");
+		}
+	} else {
+		aprint_normal("BBU not present\n");
+	}
 
 	sc->sc_ld_cnt = sc->sc_info.mci_lds_present;
 	sc->sc_max_ld = sc->sc_ld_cnt;
@@ -1082,6 +1229,11 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	if (mfi_create_sensors(sc) != 0)
 		aprint_error_dev(sc->sc_dev, "unable to create sensors\n");
 #endif /* NBIO > 0 */
+	if (!pmf_device_register1(sc->sc_dev, mfi_suspend, mfi_resume,
+	    mfi_shutdown)) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+	}
 
 	return 0;
 noinit:
@@ -1439,6 +1591,16 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		splx(s);
 		return;
 	}
+	if ((xs->cmd->opcode == SCSI_SYNCHRONIZE_CACHE_10 ||
+	    xs->cmd->opcode == SCSI_SYNCHRONIZE_CACHE_16) && sc->sc_bbuok) {
+		/* the cache is stable storage, don't flush */
+		xs->error = XS_NOERROR;
+		xs->status = SCSI_OK;
+		xs->resid = 0;
+		scsipi_done(xs);
+		splx(s);
+		return;
+	}
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL) {
 		DNPRINTF(MFI_D_CMD, "%s: mfi_scsipi_request no ccb\n", DEVNAME(sc));
@@ -1491,6 +1653,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		break;
 
 	case SCSI_SYNCHRONIZE_CACHE_10:
+	case SCSI_SYNCHRONIZE_CACHE_16:
 		mbox[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE;
 		if (mfi_mgmt(ccb, xs,
 		    MR_DCMD_CTRL_CACHE_FLUSH, MFI_DATA_NONE, 0, NULL, mbox)) {
@@ -1644,7 +1807,7 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 
 static int
 mfi_mgmt_internal(struct mfi_softc *sc, uint32_t opc, uint32_t dir,
-    uint32_t len, void *buf, uint8_t *mbox)
+    uint32_t len, void *buf, uint8_t *mbox, bool poll)
 {
 	struct mfi_ccb		*ccb;
 	int			rv = 1;
@@ -1655,7 +1818,7 @@ mfi_mgmt_internal(struct mfi_softc *sc, uint32_t opc, uint32_t dir,
 	if (rv)
 		return rv;
 
-	if (cold) {
+	if (poll) {
 		rv = 1;
 		if (mfi_poll(ccb))
 			goto done;
@@ -1825,7 +1988,7 @@ mfi_ioctl_inq(struct mfi_softc *sc, struct bioc_inq *bi)
 	/* get figures */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
 	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
-	    sizeof *cfg, cfg, NULL))
+	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
 	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
@@ -1848,7 +2011,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	    DEVNAME(sc), bv->bv_volid);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL))
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL, false))
 		goto done;
 
 	i = bv->bv_volid;
@@ -1857,7 +2020,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 	    DEVNAME(sc), mbox[0]);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_INFO, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox))
+	    sizeof(sc->sc_ld_details), &sc->sc_ld_details, mbox, false))
 		goto done;
 
 	if (bv->bv_volid >= sc->sc_ld_list.mll_no_ld) {
@@ -1949,7 +2112,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
 	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
-	    sizeof *cfg, cfg, NULL))
+	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
 	size = cfg->mfc_size;
@@ -1958,7 +2121,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
-	    size, cfg, NULL))
+	    size, cfg, NULL, false))
 		goto freeme;
 
 	ar = cfg->mfc_array;
@@ -2023,7 +2186,7 @@ mfi_ioctl_disk(struct mfi_softc *sc, struct bioc_disk *bd)
 	*((uint16_t *)&mbox) = ar[arr].pd[disk].mar_pd.mfp_id;
 	memset(pd, 0, sizeof(*pd));
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *pd, pd, mbox))
+	    sizeof *pd, pd, mbox, false))
 		goto freeme;
 
 	bd->bd_size = pd->mpd_size * 512; /* bytes per block */
@@ -2082,7 +2245,7 @@ mfi_ioctl_alarm(struct mfi_softc *sc, struct bioc_alarm *ba)
 		return EINVAL;
 	}
 
-	if (mfi_mgmt_internal(sc, opc, dir, sizeof(ret), &ret, NULL))
+	if (mfi_mgmt_internal(sc, opc, dir, sizeof(ret), &ret, NULL, false))
 		rv = EINVAL;
 	else
 		if (ba->ba_opcode == BIOC_GASTATUS)
@@ -2111,7 +2274,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL))
+	    MFI_PD_LIST_SIZE, pd, NULL, false))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
@@ -2145,7 +2308,7 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	}
 
 
-	if (mfi_mgmt_internal(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox))
+	if (mfi_mgmt_internal(sc, cmd, MFI_DATA_NONE, 0, NULL, mbox, false))
 		goto done;
 
 	rv = 0;
@@ -2168,7 +2331,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	pd = malloc(MFI_PD_LIST_SIZE, M_DEVBUF, M_WAITOK);
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_LIST, MFI_DATA_IN,
-	    MFI_PD_LIST_SIZE, pd, NULL))
+	    MFI_PD_LIST_SIZE, pd, NULL, false))
 		goto done;
 
 	for (i = 0, found = 0; i < pd->mpl_no_pd; i++)
@@ -2213,7 +2376,7 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 
 
 	if (mfi_mgmt_internal(sc, MD_DCMD_PD_SET_STATE, MFI_DATA_NONE,
-	    0, NULL, mbox))
+	    0, NULL, mbox, false))
 		goto done;
 
 	rv = 0;
@@ -2246,7 +2409,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	/* send single element command to retrieve size for full structure */
 	cfg = malloc(sizeof *cfg, M_DEVBUF, M_WAITOK);
 	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
-	    sizeof *cfg, cfg, NULL))
+	    sizeof *cfg, cfg, NULL, false))
 		goto freeme;
 
 	size = cfg->mfc_size;
@@ -2255,7 +2418,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	/* memory for read config */
 	cfg = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (mfi_mgmt_internal(sc, MD_DCMD_CONF_GET, MFI_DATA_IN,
-	    size, cfg, NULL))
+	    size, cfg, NULL, false))
 		goto freeme;
 
 	/* calculate offset to hs structure */
@@ -2281,7 +2444,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	memset(mbox, 0, sizeof mbox);
 	*((uint16_t *)&mbox) = hs[i].mhs_pd.mfp_id;
 	if (mfi_mgmt_internal(sc, MR_DCMD_PD_GET_INFO, MFI_DATA_IN,
-	    sizeof *pd, pd, mbox)) {
+	    sizeof *pd, pd, mbox, false)) {
 		DNPRINTF(MFI_D_IOCTL, "%s: mfi_vol_hs illegal PD\n",
 		    DEVNAME(sc));
 		goto freeme;
@@ -2336,7 +2499,7 @@ static int
 mfi_create_sensors(struct mfi_softc *sc)
 {
 	int i;
-	int nsensors = sc->sc_ld_cnt;
+	int nsensors = sc->sc_ld_cnt + 1;
 	int rv;
 
 	sc->sc_sme = sysmon_envsys_create();
@@ -2347,7 +2510,19 @@ mfi_create_sensors(struct mfi_softc *sc)
 		return ENOMEM;
 	}
 
-	for (i = 0; i < nsensors; i++) {
+	/* BBU */
+	sc->sc_sensor[0].units = ENVSYS_INDICATOR;
+	sc->sc_sensor[0].state = ENVSYS_SINVALID;
+	sc->sc_sensor[0].value_cur = 0;
+	/* Enable monitoring for BBU state changes, if present */
+	if (sc->sc_info.mci_hw_present & MFI_INFO_HW_BBU)
+		sc->sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
+	snprintf(sc->sc_sensor[0].desc,
+	    sizeof(sc->sc_sensor[0].desc), "%s BBU", DEVNAME(sc));
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[0]))
+		goto out;
+
+	for (i = 1; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
 		sc->sc_sensor[i].value_cur = ENVSYS_DRIVE_EMPTY;
@@ -2356,7 +2531,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 		/* logical drives */
 		snprintf(sc->sc_sensor[i].desc,
 		    sizeof(sc->sc_sensor[i].desc), "%s:%d",
-		    DEVNAME(sc), i);
+		    DEVNAME(sc), i - 1);
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i]))
 			goto out;
@@ -2388,11 +2563,44 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int s;
 	int error;
 
-	if (edata->sensor >= sc->sc_ld_cnt)
+	if (edata->sensor >= sc->sc_ld_cnt + 1)
 		return;
 
+	if (edata->sensor == 0) {
+		/* BBU */
+		struct mfi_bbu_status	bbu_stat;
+		int bbu_status;
+		if ((sc->sc_info.mci_hw_present & MFI_INFO_HW_BBU) == 0)
+			return;
+
+		KERNEL_LOCK(1, curlwp);
+		s = splbio();
+		bbu_status = mfi_get_bbu(sc, &bbu_stat);
+		splx(s);
+		KERNEL_UNLOCK_ONE(curlwp);
+		switch(bbu_status) {
+		case MFI_BBU_GOOD:
+			edata->value_cur = 1;
+			edata->state = ENVSYS_SVALID;
+			sc->sc_bbuok = true;
+			break;
+		case MFI_BBU_BAD:
+			edata->value_cur = 0;
+			edata->state = ENVSYS_SCRITICAL;
+			sc->sc_bbuok = false;
+			break;
+		case MFI_BBU_UNKNOWN:
+		default:
+			edata->value_cur = 0;
+			edata->state = ENVSYS_SINVALID;
+			sc->sc_bbuok = false;
+			break;
+		}
+		return;
+	}
+
 	memset(&bv, 0, sizeof(bv));
-	bv.bv_volid = edata->sensor;
+	bv.bv_volid = edata->sensor - 1;
 	KERNEL_LOCK(1, curlwp);
 	s = splbio();
 	error = mfi_ioctl_vol(sc, &bv);
@@ -3180,7 +3388,7 @@ again:
 	}
 
 	if (mfi_mgmt_internal(sc, MR_DCMD_LD_GET_LIST, MFI_DATA_IN,
-	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL)) {
+	    sizeof(sc->sc_ld_list), &sc->sc_ld_list, NULL, false)) {
 		aprint_error_dev(sc->sc_dev, "MR_DCMD_LD_GET_LIST failed\n");
 		goto err;
 	}
@@ -3237,7 +3445,7 @@ static void
 mfi_sync_map_complete(struct mfi_ccb *ccb)
 {
 	struct mfi_softc *sc = ccb->ccb_sc;
-	int aborted = 0;
+	bool aborted = !sc->sc_running;
 
 	DNPRINTF(MFI_D_SYNC, "%s: mfi_sync_map_complete\n",
 	    DEVNAME(ccb->ccb_sc));
@@ -3246,7 +3454,7 @@ mfi_sync_map_complete(struct mfi_ccb *ccb)
 	free(ccb->ccb_data, M_DEVBUF);
 	if (ccb->ccb_flags & MFI_CCB_F_ERR) {
 		aprint_error_dev(sc->sc_dev, "sync command failed\n");
-		aborted = 1;
+		aborted = true;
 	}
 	mfi_put_ccb(ccb);
 	sc->sc_ldsync_ccb = NULL;
