@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.99 2011/10/15 21:08:53 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.100 2012/08/26 23:09:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.99 2011/10/15 21:08:53 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.100 2012/08/26 23:09:42 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -515,8 +515,12 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	 * Validate new format crash dump
 	 */
 	sz = Pread(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr), dump_off);
-	if (sz != sizeof(cpu_hdr))
+	if (sz != sizeof(cpu_hdr)) {
+		_kvm_err(kd, 0, "read %zx bytes at offset %"PRIx64
+		    " for cpu_hdr instead of requested %zu",
+		    sz, dump_off, sizeof(cpu_hdr));
 		return (-1);
+	}
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
@@ -529,27 +533,37 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	 */
 	kd->cpu_dsize = cpu_hdr.c_size;
 	kd->cpu_data = _kvm_malloc(kd, kd->cpu_dsize);
-	if (kd->cpu_data == NULL)
+	if (kd->cpu_data == NULL) {
+		_kvm_err(kd, kd->program, "no cpu_data");
 		goto fail;
+	}
 	sz = Pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size,
 	    dump_off + hdr_size);
-	if (sz != cpu_hdr.c_size)
+	if (sz != cpu_hdr.c_size) {
+		_kvm_err(kd, kd->program, "size %zu != cpu_hdr.csize %"PRIu32,
+		    sz, cpu_hdr.c_size);
 		goto fail;
+	}
 	hdr_size += kd->cpu_dsize;
 
 	/*
 	 * Leave phys mem pointer at beginning of memory data
 	 */
 	kd->dump_off = dump_off + hdr_size;
-	if (Lseek(kd, kd->pmfd, kd->dump_off, SEEK_SET) == -1)
+	if (Lseek(kd, kd->pmfd, kd->dump_off, SEEK_SET) == -1) {
+		_kvm_err(kd, kd->program, "failed to seek to %" PRId64,
+		    (int64_t)kd->dump_off);
 		goto fail;
+	}
 
 	/*
 	 * Create a kcore_hdr.
 	 */
 	kd->kcore_hdr = _kvm_malloc(kd, sizeof(kcore_hdr_t));
-	if (kd->kcore_hdr == NULL)
+	if (kd->kcore_hdr == NULL) {
+		_kvm_err(kd, kd->program, "failed to allocate header");
 		goto fail;
+	}
 
 	kd->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
 	kd->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
