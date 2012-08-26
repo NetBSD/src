@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.c,v 1.5 2012/03/20 18:50:31 matt Exp $ */
+/* $NetBSD: quota2.c,v 1.6 2012/08/26 09:34:42 dholland Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <err.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <ufs/ufs/quota2.h>
 
 #include "fsutil.h"
