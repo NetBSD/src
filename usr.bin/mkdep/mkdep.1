@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdep.1,v 1.16 2011/06/30 20:09:42 wiz Exp $
+.\"	$NetBSD: mkdep.1,v 1.17 2012/08/26 22:37:19 jmmv Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mkdep.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 15, 2010
+.Dd August 26, 2012
 .Dt MKDEP 1
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm
 .Op Fl aDdopq
 .Op Fl f Ar file
+.Op Fl P Ar prefix
 .Op Fl s Ar suffixes
 .Li --
 .Op Ar flags
@@ -81,6 +82,14 @@ Write the include file dependencies to
 instead of the default ``.depend''.
 .It Fl o
 Add an additional .OPTIONAL line for each dependent file.
+.It Fl P
+Prepend the string given in
+.Ar prefix
+to every target filename.
+This is useful for programs that have source files in multiple subdirectories
+and a single Makefile that references all of them explicitly (without using
+the VPATH functionality because there can be files with the same name in
+each subdirectory).
 .It Fl p
 Cause
 .Nm

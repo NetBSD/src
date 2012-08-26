@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdep.sh,v 1.3 2011/06/14 11:44:25 njoly Exp $
+# $NetBSD: t_mkdep.sh,v 1.4 2012/08/26 22:37:19 jmmv Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,12 +28,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+atf_test_case prefix
+prefix_head() {
+	atf_set "descr" "Test adding a prefix to a single target"
+	atf_set "require.progs" "mkdep cc"
+}
+prefix_body() {
+
+	atf_check touch sample.c
+
+	atf_check mkdep -f sample.d -P some/path/ sample.c
+	atf_check -o ignore grep '^some/path/sample.o:' sample.d
+}
+
 atf_test_case suffixes
 suffixes_head() {
 	atf_set "descr" "Test suffixes list"
 	atf_set "require.progs" "mkdep cc"
 }
-
 suffixes_body() {
 
 	atf_check touch sample.c
@@ -51,6 +63,21 @@ suffixes_body() {
 	atf_check -o ignore grep '^sample:' sample.d
 }
 
+atf_test_case prefix_and_suffixes
+prefix_and_suffixes_head() {
+	atf_set "descr" "Test the combination of a prefix and suffixes"
+	atf_set "require.progs" "mkdep cc"
+}
+prefix_and_suffixes_body() {
+
+	atf_check touch sample.c
+
+	atf_check mkdep -f sample.d -s '.a .b' -P c/d sample.c
+	atf_check -o ignore grep '^c/dsample.b c/dsample.a:' sample.d
+}
+
 atf_init_test_cases() {
+	atf_add_test_case prefix
 	atf_add_test_case suffixes
+	atf_add_test_case prefix_and_suffixes
 }
