@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2012/08/08 13:57:05 christos Exp $
+# $NetBSD: Makefile,v 1.39 2012/08/26 23:03:20 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,10 @@ SUBDIR+=	crypto
 
 . if ${MKIPFILTER} != "no"
 SUBDIR+=	ipf
+. endif
+
+. if ${MKSHARE} != "no"
+SUBDIR+=	share
 . endif
 
 .include <bsd.test.mk>
