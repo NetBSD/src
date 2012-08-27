@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.103 2012/07/19 13:30:01 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.104 2012/08/27 21:42:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.103 2012/07/19 13:30:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.104 2012/08/27 21:42:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -215,26 +215,28 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		see->see_pes.pes_type = powertype;
 
 		switch (crittype) {
-		case PENVSYS_EVENT_LIMITS:
-			see->see_evsent = ENVSYS_SVALID;
-			break;
 		case PENVSYS_EVENT_CAPACITY:
-			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			see->see_evstate = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		case PENVSYS_EVENT_STATE_CHANGED:
 			if (edata->units == ENVSYS_BATTERY_CAPACITY)
-				see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+				see->see_evstate = 
+				    ENVSYS_BATTERY_CAPACITY_NORMAL;
 			else if (edata->units == ENVSYS_DRIVE)
-				see->see_evsent = ENVSYS_DRIVE_EMPTY;
+				see->see_evstate = ENVSYS_DRIVE_EMPTY;
+			else if (edata->units == ENVSYS_INDICATOR)
+				see->see_evstate = ENVSYS_SVALID;
 			else
 				panic("%s: bad units for "
 				      "PENVSYS_EVENT_STATE_CHANGED", __func__);
 			break;
 		case PENVSYS_EVENT_CRITICAL:
+		case PENVSYS_EVENT_LIMITS:
 		default:
-			see->see_evsent = 0;
+			see->see_evstate = ENVSYS_SVALID;
 			break;
 		}
+		see->see_evvalue = 0;
 
 		(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
 		    sizeof(see->see_pes.pes_dvname));
@@ -846,7 +848,7 @@ sme_deliver_event(sme_event_t *see)
 		/*
 		 * Send event if state has changed
 		 */
-		if (edata->state == see->see_evsent)
+		if (edata->state == see->see_evstate)
 			break;
 
 		for (i = 0; sse[i].state != -1; i++)
@@ -862,7 +864,7 @@ sme_deliver_event(sme_event_t *see)
 		else
 			sysmon_penvsys_event(&see->see_pes, sse[i].event);
 
-		see->see_evsent = edata->state;
+		see->see_evstate = edata->state;
 		DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d send_ev=%d\n",
 		    __func__, see->see_sme->sme_name, edata->desc,
 		    edata->sensor, edata->state,
@@ -878,17 +880,24 @@ sme_deliver_event(sme_event_t *see)
 	 *	State has returned from CRITICAL to non-CRITICAL
 	 */
 	case PENVSYS_EVENT_CRITICAL:
+		DPRINTF(("%s: CRITICAL: old/new state %d/%d, old/new value "
+		    "%d/%d\n", __func__, see->see_evstate, edata->state,
+		    see->see_evvalue, edata->value_cur));
 		if (edata->state == ENVSYS_SVALID &&
-		    see->see_evsent != 0) {
+		    see->see_evstate != ENVSYS_SVALID) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_NORMAL);
-			see->see_evsent = 0;
-		} else if (edata->state == ENVSYS_SCRITICAL &&
-		    see->see_evsent != edata->value_cur) {
+			see->see_evstate = ENVSYS_SVALID;
+			break;
+		} else if (edata->state != ENVSYS_SCRITICAL)
+			break;
+		if (see->see_evstate != ENVSYS_SCRITICAL ||
+		    see->see_evvalue != edata->value_cur) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_CRITICAL);
-			see->see_evsent = edata->value_cur;
+			see->see_evstate = ENVSYS_SCRITICAL;
 		}
+		see->see_evvalue = edata->value_cur;
 		break;
 
 	/*
@@ -899,7 +908,7 @@ sme_deliver_event(sme_event_t *see)
 		/* 
 		 * the state has not been changed, just ignore the event.
 		 */
-		if (edata->value_cur == see->see_evsent)
+		if (edata->value_cur == see->see_evvalue)
 			break;
 
 		switch (edata->units) {
@@ -912,6 +921,11 @@ sme_deliver_event(sme_event_t *see)
 			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
 			    edata->value_cur);
 			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			break;
+		case ENVSYS_INDICATOR:
+			sdt = sme_find_table_entry(SME_DESC_INDICATOR,
+			    edata->value_cur);
+			state = see->see_evvalue;	/* force state change */
 			break;
 		default:
 			panic("%s: bad units for PENVSYS_EVENT_STATE_CHANGED",
@@ -939,7 +953,7 @@ sme_deliver_event(sme_event_t *see)
 			 */
 			sysmon_penvsys_event(&see->see_pes, see->see_type);
 
-		see->see_evsent = edata->value_cur;
+		see->see_evvalue = edata->value_cur;
 
 		/* 
 		 * There's no need to continue if it's a drive sensor.
