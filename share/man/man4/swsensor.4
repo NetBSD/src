@@ -1,4 +1,4 @@
-.\"	$NetBSD: swsensor.4,v 1.10 2011/06/19 07:17:18 wiz Exp $
+.\"	$NetBSD: swsensor.4,v 1.11 2012/08/27 20:30:11 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 19, 2011
+.Dd August 27, 2012
 .Dt SWSENSOR 4
 .Os
 .Sh NAME
@@ -112,10 +112,13 @@ while
 .Dl Ic modload -i mode=1 -i limit=50 swsensor
 will create a sensor which has an initial, device-provided limit of 50.
 .Pp
-The sensor's raw value can be manually updated by modifying the
+The sensor's raw value and state can be manually updated by modifying the
 .Xr sysctl 8
-variable
-.Dq hw.swsensor.cur_value .
+variables
+.Dq hw.swsensor.cur_value 
+and
+.Dq hw.swsensor.state
+variables respectively.
 .Sh SEE ALSO
 .Xr modctl 2 ,
 .Xr envstat 8 ,
