@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.12 2011/06/19 15:52:48 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.13 2012/08/27 20:29:11 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.12 2011/06/19 15:52:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.13 2012/08/27 20:29:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,11 +48,13 @@ int swsensorattach(int);
 static struct sysctllog *swsensor_sysctllog = NULL;
 
 static int sensor_value_sysctl = 0;
+static int sensor_state_sysctl = 0;
 
 static struct sysmon_envsys *swsensor_sme;
 static envsys_data_t swsensor_edata;
 
 static int32_t sw_sensor_value;
+static int32_t sw_sensor_state;
 static int32_t sw_sensor_limit;
 static int32_t sw_sensor_mode;
 static int32_t sw_sensor_defprops;
@@ -71,6 +73,7 @@ sysctl_swsensor_setup(void)
 	int ret;
 	int node_sysctl_num;
 	const struct sysctlnode *me = NULL;
+	const struct sysctlnode *me2;
 
 	KASSERT(swsensor_sysctllog == NULL);
 
@@ -83,14 +86,24 @@ sysctl_swsensor_setup(void)
 		return;
 
 	node_sysctl_num = me->sysctl_num;
-	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me,
+	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me2,
 			     CTLFLAG_READWRITE,
 			     CTLTYPE_INT, "cur_value", NULL,
 			     NULL, 0, &sw_sensor_value, 0,
 			     CTL_HW, node_sysctl_num, CTL_CREATE, CTL_EOL);
 
 	if (ret == 0)
-		sensor_value_sysctl = me->sysctl_num;
+		sensor_value_sysctl = me2->sysctl_num;
+
+	node_sysctl_num = me->sysctl_num;
+	ret = sysctl_createv(&swsensor_sysctllog, 0, NULL, &me2,
+			     CTLFLAG_READWRITE,
+			     CTLTYPE_INT, "state", NULL,
+			     NULL, 0, &sw_sensor_state, 0,
+			     CTL_HW, node_sysctl_num, CTL_CREATE, CTL_EOL);
+
+	if (ret == 0)
+		sensor_state_sysctl = me2->sysctl_num;
 }
 
 /*
@@ -115,8 +128,12 @@ swsensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/*
 	 * Set state.  If we're handling the limits ourselves, do the
 	 * compare; otherwise just assume the value is valid.
+	 * If sensor state has been set from userland (via sysctl),
+	 * just report that value.
 	 */
-	if ((sw_sensor_mode == 2) && (edata->upropset & PROP_CRITMIN) &&
+	if (sw_sensor_state != ENVSYS_SVALID)
+		edata->state = sw_sensor_state;
+	else if ((sw_sensor_mode == 2) && (edata->upropset & PROP_CRITMIN) &&
 	    (edata->upropset & PROP_DRIVER_LIMITS) &&
 	    (edata->value_cur < edata->limits.sel_critmin))
 		edata->state = ENVSYS_SCRITUNDER;
@@ -321,6 +338,7 @@ swsensor_init(void *arg)
 
 	/* Wait for refresh to validate the sensor value */
 	swsensor_edata.state = ENVSYS_SINVALID;
+	sw_sensor_state = ENVSYS_SVALID;
 
 	error = sysmon_envsys_sensor_attach(swsensor_sme, &swsensor_edata);
 	if (error != 0) {
