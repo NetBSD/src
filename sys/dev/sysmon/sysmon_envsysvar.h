@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.42 2012/07/15 17:41:39 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.43 2012/08/27 21:42:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -44,7 +44,8 @@ enum sme_descr_type {
 	SME_DESC_UNITS = 1,
 	SME_DESC_STATES,
 	SME_DESC_DRIVE_STATES,
-	SME_DESC_BATTERY_CAPACITY
+	SME_DESC_BATTERY_CAPACITY,
+	SME_DESC_INDICATOR
 };
 
 #ifdef ENVSYS_DEBUG
@@ -75,7 +76,8 @@ typedef struct sme_event {
 	envsys_data_t		*see_edata;	/* our sensor data */
 	sysmon_envsys_lim_t	see_lims;	/* limit values */
 	int			see_type;	/* type of the event */
-	int			see_evsent;	/* event already sent */
+	int			see_evstate;	/* state of prev event */
+	int			see_evvalue;	/* value of prev event */
 	int 			see_flags;	/* see above */
 #define SEE_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
