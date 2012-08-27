@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.122 2012/07/19 13:31:06 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.123 2012/08/27 14:08:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.122 2012/07/19 13:31:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.123 2012/08/27 14:08:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -516,7 +516,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 /*
  * sysmon_envsys_sensor_attach:
  *
- * 	+ Attachs a sensor into a sysmon_envsys device checking that units
+ * 	+ Attaches a sensor into a sysmon_envsys device checking that units
  * 	  is set to a valid type and description is unique and not empty.
  */
 int
@@ -555,7 +555,7 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	TAILQ_INSERT_TAIL(&sme->sme_sensors_list, edata, sensors_head);
 
 	/*
-	 * Give the sensor a index position.
+	 * Give the sensor an index position.
 	 */
 	edata->sensor = sme->sme_nsensors;
 	sme->sme_nsensors++;
@@ -1290,6 +1290,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	int error;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	char indexstr[ENVSYS_DESCLEN];
+	bool mon_supported, allow_rfact;
 
 	/*
 	 * Add the index sensor string.
@@ -1328,13 +1329,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE) ||
 	    (edata->units == ENVSYS_BATTERY_CAPACITY) ||
-	    (edata->units == ENVSYS_BATTERY_CHARGE)) {
-		if (sme_sensor_upbool(dict, "monitoring-supported", false))
+	    (edata->units == ENVSYS_BATTERY_CHARGE))
+		mon_supported = false;
+	else
+		mon_supported = true;
+	if (sme_sensor_upbool(dict, "monitoring-supported", mon_supported))
 			goto out;
-	} else {
-		if (sme_sensor_upbool(dict, "monitoring-supported", true))
-			goto out;
-	}
 
 	/*
 	 * Add the allow-rfact boolean object, true if
@@ -1347,13 +1347,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 */
 	if (edata->units == ENVSYS_SVOLTS_DC ||
 	    edata->units == ENVSYS_SVOLTS_AC) {
-		if (edata->flags & ENVSYS_FCHANGERFACT) {
-			if (sme_sensor_upbool(dict, "allow-rfact", true))
+		if (edata->flags & ENVSYS_FCHANGERFACT)
+			allow_rfact = true;
+		else
+			allow_rfact = false;
+		if (sme_sensor_upbool(dict, "allow-rfact", allow_rfact))
 				goto out;
-		} else {
-			if (sme_sensor_upbool(dict, "allow-rfact", false))
-				goto out;
-		}
 	}
 
 	error = sme_update_sensor_dictionary(dict, edata,
