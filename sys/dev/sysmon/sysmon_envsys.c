@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.123 2012/08/27 14:08:36 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.124 2012/08/27 14:15:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.123 2012/08/27 14:08:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.124 2012/08/27 14:15:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1334,7 +1334,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	else
 		mon_supported = true;
 	if (sme_sensor_upbool(dict, "monitoring-supported", mon_supported))
-			goto out;
+		goto out;
 
 	/*
 	 * Add the allow-rfact boolean object, true if
@@ -1352,7 +1352,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		else
 			allow_rfact = false;
 		if (sme_sensor_upbool(dict, "allow-rfact", allow_rfact))
-				goto out;
+			goto out;
 	}
 
 	error = sme_update_sensor_dictionary(dict, edata,
