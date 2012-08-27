@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sensor_indicator,v 1.4 2007/10/11 00:30:47 xtraeme Exp $
+#	$NetBSD: sensor_indicator,v 1.5 2012/08/27 21:50:19 pgoyette Exp $
 #
 # Generic script for indicator and integer sensors.
 #
@@ -31,6 +31,10 @@ warning-under)
 	;;
 warning-over)
 	logger -p warning "${0}: ($1) warning limit exceeded [${3}]" >&1
+	exit 0
+	;;
+state-changed)
+	logger -p warning "${0}: ($1) state changed [${3}] : ${4}" >&1
 	exit 0
 	;;
 *)
