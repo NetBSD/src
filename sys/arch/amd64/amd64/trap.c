@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2012/08/28 15:54:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2012/07/15 15:17:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2012/08/28 15:54:40 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,8 +152,6 @@ int	trapdebug = 0;
 #endif
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-
-#undef TRAP_SIGDEBUG
 
 #ifdef TRAP_SIGDEBUG
 static void frame_dump(struct trapframe *);
