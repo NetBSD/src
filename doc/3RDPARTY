@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.963 2012/08/26 15:41:01 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.964 2012/08/28 07:55:01 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1270,6 +1270,11 @@ Notes:
 4. Run:
 	services_mkdb -u services > /usr/src/etc/services
 	cp protocols /usr/src/etc/protocols
+5. Fix protocols
+   - fix manet alias to MANET; giving an alias with the same name is a no/op
+   - protocol 84 is defined for as ttp and iptm, merge the two entries since
+     libc getprotoent() does not read the whole file and merge in the "files"
+     implementation.
 
 Package:	pigz
 Version:	2.1.6
