@@ -27,6 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 atf_test_case defaults__build_and_install
+defaults__build_and_install_head() {
+	atf_set "require.progs" "/usr/bin/mandoc"
+}
 defaults__build_and_install_body() {
 	cat >hello.c <<EOF
 #include <stdio.h>
