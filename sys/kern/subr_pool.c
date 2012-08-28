@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.197 2012/06/05 22:51:47 jym Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.198 2012/08/28 15:52:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.197 2012/06/05 22:51:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198 2012/08/28 15:52:19 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -462,6 +462,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	int off, slack;
 
 #ifdef DEBUG
+	if (__predict_true(!cold))
+		mutex_enter(&pool_head_lock);
 	/*
 	 * Check that the pool hasn't already been initialised and
 	 * added to the list of all pools.
@@ -471,6 +473,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			panic("pool_init: pool %s already initialised",
 			    wchan);
 	}
+	if (__predict_true(!cold))
+		mutex_exit(&pool_head_lock);
 #endif
 
 	if (palloc == NULL)
