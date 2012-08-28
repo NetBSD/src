@@ -1,4 +1,4 @@
-# $NetBSD: protocols,v 1.24 2012/08/25 11:14:34 christos Exp $
+# $NetBSD: protocols,v 1.25 2012/08/28 07:53:45 christos Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 #    Last Updated
@@ -128,8 +128,8 @@ iso-ip        80 ISO-IP       # ISO Internet Protocol                 [Marshall_
 vmtp          81 VMTP         # VMTP                                  [Dave_Cheriton]
 secure-vmtp   82 SECURE-VMTP  # SECURE-VMTP                           [Dave_Cheriton]
 vines         83 VINES        # VINES                                 [Brian Horn]
-ttp           84 TTP          # TTP                                   [Jim_Stevens]
-iptm          84 IPTM         # Protocol Internet Protocol Traffic    [Jim_Stevens]
+ttp           84 TTP iptm IPTM # TTP                                   [Jim_Stevens]
+#iptm          84 IPTM         # Protocol Internet Protocol Traffic    [Jim_Stevens]
 #                            Manager
 nsfnet-igp    85 NSFNET-IGP   # NSFNET-IGP                            [Hans_Werner_Braun]
 dgp           86 DGP          # Dissimilar Gateway Protocol           [M/A-COM Government Systems, "Dissimilar Gateway Protocol Specification, Draft
@@ -188,7 +188,7 @@ rsvp-e2e-ignore 134 RSVP-E2E-IGNORE # [RFC3175]
 mobility     135 Mobility     # Header                                       [RFC6275]
 udplite      136 UDPLite      # [RFC3828]
 mpls-in-ip   137 MPLS-in-IP   # [RFC4023]
-manet        138 manet        # MANET Protocols                       [RFC5498]
+manet        138 MANET        # MANET Protocols                       [RFC5498]
 hip          139 HIP          # Host Identity Protocol                [RFC5201]
 shim6        140 Shim6        # Shim6 Protocol                        [RFC5533]
 wesp         141 WESP         # Wrapped Encapsulating Security        [RFC5840]
