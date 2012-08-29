@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.66 2012/03/29 13:05:10 christos Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.67 2012/08/29 18:50:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.66 2012/03/29 13:05:10 christos Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.67 2012/08/29 18:50:35 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -221,9 +221,9 @@ _gr_parse(const char *entry, struct group *grp, char *buf, size_t buflen)
 	}
 				/* grab ALIGNed char **gr_mem from buf */
 	ep = _gr_memfrombuf(memc * sizeof(char *) + ALIGNBYTES, &buf, &buflen);
-	grp->gr_mem = (char **)ALIGN(ep);
-	if (grp->gr_mem == NULL)
+	if (ep == NULL)
 		return 0;
+	grp->gr_mem = (char **)ALIGN(ep);
 
 	for (memc = 0; *entry != '\0'; memc++) {
 		count = strcspn(entry, ",");	/* parse member */
