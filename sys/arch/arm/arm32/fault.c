@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.83 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.84 2012/08/29 16:48:11 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.83 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.84 2012/08/29 16:48:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -836,7 +836,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(l->l_cpu->ci_intr_depth > 0)) {
+	if (__predict_false(curcpu()->ci_intr_depth > 0)) {
 		printf("\nNon-emulated prefetch abort with intr_depth > 0\n");
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 	}
