@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.110 2012/08/16 18:22:38 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.111 2012/08/29 07:14:03 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.110 2012/08/16 18:22:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.111 2012/08/29 07:14:03 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2697,14 +2697,6 @@ arm11_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
-
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    /* | CPU_CONTROL_BPRD_ENABLE */;
@@ -2751,14 +2743,6 @@ void
 arm11mpcore_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
-
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
 
 	cpuctrl = CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
@@ -2814,14 +2798,6 @@ void
 armv7_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
-
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE ;
@@ -2910,14 +2886,6 @@ arm11x6_setup(char *args)
 	uint32_t tmp, tmp2;
 	uint32_t sbz=0;
 	uint32_t cpuid;
-
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
 
 	cpuid = cpu_id();
 

@@ -110,10 +110,10 @@ extern int cpu_do_powersave;
 /* Not yet used in 26-bit code */
 #endif
 
-#if defined (PROCESS_ID_IS_CURCPU)
+#if defined (TPIDRPRW_IS_CURCPU)
 #define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#elif defined (PROCESS_ID_IS_CURLWP)
+#elif defined (TPIDRPRW_IS_CURLWP)
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
 #elif !defined(MULTIPROCESSOR)
@@ -243,9 +243,7 @@ struct cpu_info {
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 	volatile uint32_t ci_softints;
 #endif
-#if !defined(PROCESS_ID_IS_CURLWP)
 	lwp_t *ci_curlwp;		/* current lwp */
-#endif
 #ifdef _ARM_ARCH_6
 	uint32_t ci_ccnt_freq;		/* cycle count frequency */
 #endif
@@ -260,7 +258,7 @@ struct cpu_info {
 
 #ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
-#if defined(PROCESS_ID_IS_CURLWP)
+#if defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
 {
@@ -281,7 +279,7 @@ curcpu(void)
 {
 	return curlwp->l_cpu;
 }
-#elif defined(PROCESS_ID_IS_CURCPU)
+#elif defined(TPIDRPRW_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
 {
@@ -291,7 +289,7 @@ curcpu(void)
 }
 #else
 #define	curcpu()	(&cpu_info_store)
-#endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
+#endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
 #ifndef curlwp
 #define	curlwp		(curcpu()->ci_curlwp)
 #endif
