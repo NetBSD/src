@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.84 2012/08/14 20:39:49 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.85 2012/08/29 17:44:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,15 +46,16 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2012/08/14 20:39:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2012/08/29 17:44:25 matt Exp $");
 
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+
 #include <uvm/uvm_extern.h>
-#include <machine/cpu.h>
 
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
@@ -66,45 +67,94 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2012/08/14 20:39:49 matt Exp $");
 
 char cpu_model[256];
 
+#ifdef MULTIPROCESSOR
+volatile u_int arm_cpu_hatched = 0;
+u_int arm_cpu_max = 0;
+uint32_t arm_cpu_mbox __cacheline_aligned = 0;
+uint32_t arm_cpu_marker __cacheline_aligned = 1;
+#endif
+
 /* Prototypes */
 void identify_arm_cpu(device_t dv, struct cpu_info *);
+void identify_cortex_caches(device_t dv);
+void identify_features(device_t dv);
 
 /*
  * Identify the master (boot) CPU
  */
   
 void
-cpu_attach(device_t dv)
+cpu_attach(device_t dv, cpuid_t id)
 {
-	int usearmfpe;
+	struct cpu_info *ci;
 
-	usearmfpe = 1;	/* when compiled in, its enabled by default */
+	if (id == 0) {
+		ci = curcpu();
 
-	curcpu()->ci_dev = dv;
+		/* Get the CPU ID from coprocessor 15 */
 
-	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
-	    NULL, dv->dv_xname, "arm700swibug");
-	
-	/* Get the CPU ID from coprocessor 15 */
-
-	curcpu()->ci_arm_cpuid = cpu_id();
-	curcpu()->ci_arm_cputype = curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK;
-	curcpu()->ci_arm_cpurev =
-	    curcpu()->ci_arm_cpuid & CPU_ID_REVISION_MASK;
-
-	identify_arm_cpu(dv, curcpu());
-
-	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
-	    curcpu()->ci_arm_cpurev < 3) {
-		aprint_normal("%s: SA-110 with bugged STM^ instruction\n",
-		       dv->dv_xname);
+		ci->ci_arm_cpuid = cpu_id();
+		ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
+		ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+	} else {
+#ifdef MULTIPROCESSOR
+		KASSERT(cpu_info[id] == NULL);
+		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+		KASSERT(ci != NULL);
+		ci->ci_cpl = IPL_HIGH;
+		ci->ci_cpuid = id;
+		ci->ci_data.cpu_core_id = id;
+		ci->ci_data.cpu_cc_freq = cpu_info_store.ci_data.cpu_cc_freq;
+		ci->ci_arm_cpuid = cpu_info_store.ci_arm_cpuid;
+		ci->ci_arm_cputype = cpu_info_store.ci_arm_cputype;
+		ci->ci_arm_cpurev = cpu_info_store.ci_arm_cpurev;
+		cpu_info[ci->ci_cpuid] = ci;
+		if ((arm_cpu_hatched & (1 << id)) == 0) {
+			ci->ci_dev = dv;
+			dv->dv_private = ci;
+			aprint_naive(": disabled\n");
+			aprint_normal(": disabled (unresponsive)\n");
+			return;
+		}
+#else
+		aprint_naive(": disabled\n");
+		aprint_normal(": disabled (uniprocessor kernel)\n");
+		return;
+#endif
 	}
 
+	ci->ci_dev = dv;
+	dv->dv_private = ci;
+
+	evcnt_attach_dynamic(&ci->ci_arm700bugcount, EVCNT_TYPE_MISC,
+	    NULL, device_xname(dv), "arm700swibug");
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * and we are done if this is a secondary processor.
+	 */
+	if (!CPU_IS_PRIMARY(ci)) {
+		aprint_naive(": %s\n", cpu_model);
+		aprint_normal(": %s\n", cpu_model);
+		mi_cpu_attach(ci);
+		return;
+	}
+#endif
+
+	identify_arm_cpu(dv, ci);
+
+#ifdef CPU_STRONGARM
+	if (ci->ci_arm_cputype == CPU_ID_SA110 &&
+	    ci->ci_arm_cpurev < 3) {
+		aprint_normal_dev(dv, "SA-110 with bugged STM^ instruction\n");
+	}
+#endif
+
 #ifdef CPU_ARM8
-	if ((curcpu()->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((ci->ci_arm_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
-		aprint_normal("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
+		aprint_normal_dev(dv, "ARM810 cp15=%02x", clock);
 		aprint_normal(" clock:%s", (clock & 1) ? " dynamic" : "");
 		aprint_normal("%s", (clock & 2) ? " sync" : "");
 		switch ((clock >> 2) & 3) {
@@ -150,6 +200,7 @@ cpu_attach(device_t dv)
 	 */
 
 
+	int usearmfpe = 1;
 	if (boot_args)
 		get_bootconf_option(boot_args, "armfpe",
 		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
@@ -493,12 +544,11 @@ static const char * const wtnames[] = {
 void
 identify_arm_cpu(device_t dv, struct cpu_info *ci)
 {
-	u_int cpuid;
 	enum cpu_class cpu_class = CPU_CLASS_NONE;
-	int i;
+	const u_int cpuid = ci->ci_arm_cpuid;
+	const char * const xname = device_xname(dv);
 	const char *steppingstr;
-
-	cpuid = ci->ci_arm_cpuid;
+	int i;
 
 	if (cpuid == 0) {
 		aprint_error("Processor failed probe - no CPU ID\n");
@@ -521,10 +571,19 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	if (cpuids[i].cpuid == 0)
 		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
-	aprint_naive(": %s\n", cpu_model);
-	aprint_normal(": %s\n", cpu_model);
+	if (ci->ci_data.cpu_cc_freq != 0) {
+		char freqbuf[8];
+		humanize_number(freqbuf, sizeof(freqbuf), ci->ci_data.cpu_cc_freq,
+		    "Hz", 1000);
 
-	aprint_normal("%s:", dv->dv_xname);
+		aprint_naive(": %s %s\n", freqbuf, cpu_model);
+		aprint_normal(": %s %s\n", freqbuf, cpu_model);
+	} else {
+		aprint_naive(": %s\n", cpu_model);
+		aprint_normal(": %s\n", cpu_model);
+	}
+
+	aprint_normal("%s:", xname);
 
 	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
@@ -573,26 +632,33 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
+#ifdef CPU_CORTEX
+	if (CPU_ID_CORTEX_P(cpuid)) {
+		identify_cortex_caches(dv);
+		if (0)
+			identify_features(dv);
+	} else
+#endif
 	/* Print cache info. */
-	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
-		goto skip_pcache;
+	if (arm_picache_line_size != 0 || arm_pdcache_line_size != 0) {
 
-	if (arm_pcache_unified) {
-		aprint_normal("%s: %dKB/%dB %d-way %s unified cache\n",
-		    dv->dv_xname, arm_pdcache_size / 1024,
-		    arm_pdcache_line_size, arm_pdcache_ways,
-		    wtnames[arm_pcache_type]);
-	} else {
-		aprint_normal("%s: %dKB/%dB %d-way Instruction cache\n",
-		    dv->dv_xname, arm_picache_size / 1024,
-		    arm_picache_line_size, arm_picache_ways);
-		aprint_normal("%s: %dKB/%dB %d-way %s Data cache\n",
-		    dv->dv_xname, arm_pdcache_size / 1024, 
-		    arm_pdcache_line_size, arm_pdcache_ways,
-		    wtnames[arm_pcache_type]);
+		if (arm_pcache_unified) {
+			aprint_normal_dev(dv, "%dKB/%dB %d-way %s unified cache\n",
+			    arm_pdcache_size / 1024,
+			    arm_pdcache_line_size, arm_pdcache_ways,
+			    wtnames[arm_pcache_type]);
+		} else {
+			aprint_normal_dev(dv, "%dKB/%dB %d-way Instruction cache\n",
+			    arm_picache_size / 1024,
+			    arm_picache_line_size, arm_picache_ways);
+			aprint_normal_dev(dv, "%dKB/%dB %d-way %s Data cache\n",
+			    arm_pdcache_size / 1024, 
+			    arm_pdcache_line_size, arm_pdcache_ways,
+			    wtnames[arm_pcache_type]);
+		}
+
 	}
 
- skip_pcache:
 
 	switch (cpu_class) {
 #ifdef CPU_ARM2
@@ -646,19 +712,100 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 #endif
 		break;
 	default:
-		if (cpu_classes[cpu_class].class_option == NULL)
-			aprint_error("%s: %s does not fully support this CPU."
-			       "\n", dv->dv_xname, ostype);
-		else {
-			aprint_error("%s: This kernel does not fully support "
-			       "this CPU.\n", dv->dv_xname);
-			aprint_normal("%s: Recompile with \"options %s\" to "
-			       "correct this.\n", dv->dv_xname,
-			       cpu_classes[cpu_class].class_option);
+		if (cpu_classes[cpu_class].class_option == NULL) {
+			aprint_error_dev(dv, "%s does not fully support this CPU.\n",
+			     ostype);
+		} else {
+			aprint_error_dev(dv, "This kernel does not fully support "
+			       "this CPU.\n");
+			aprint_normal_dev(dv, "Recompile with \"options %s\" to "
+			       "correct this.\n", cpu_classes[cpu_class].class_option);
 		}
 		break;
 	}
-			       
 }
 
-/* End of cpu.c */
+#ifdef CPU_CORTEX
+static void
+print_cortex_cache(device_t dv, u_int level, const char *desc)
+{
+	uint32_t ccsidr = armreg_ccsidr_read();
+	u_int linesize = 1 << ((ccsidr & 7) + 4);
+	u_int nways = ((ccsidr >> 3) & 0x3ff) + 1;
+	u_int nsets = ((ccsidr >> 13) & 0x7fff) + 1;
+	u_int totalsize = linesize * nways * nsets;
+	static const char * const wstrings[] = {
+		"", " write-back", " write-through", ""
+	};
+	static const char * const astrings[] = {
+		"",
+		" with write allocate",
+		" with read allocate",
+		" with read and write allocate"
+	};
+
+	//aprint_debug_dev(dv, "ccsidr=%#x\n", ccsidr);
+
+	u_int wtype = (ccsidr >> 30) & 3;
+	u_int atype = (ccsidr >> 28) & 3;
+
+	aprint_normal_dev(dv, "%uKB/%uB %u-way%s L%u %s cache%s\n",
+	    totalsize / 1024, linesize, nways, wstrings[wtype], level + 1,
+	    desc, astrings[atype]);
+}
+
+void
+identify_cortex_caches(device_t dv)
+{
+	const uint32_t orig_csselr = armreg_csselr_read();
+	uint32_t clidr = armreg_clidr_read();
+	u_int level;
+
+	//aprint_debug_dev(dv, "clidr=%011o\n", clidr);
+
+	for (level = 0, clidr &= 077777777; clidr & 7; clidr >>= 3, level++) {
+		if (clidr & 1) {
+			armreg_csselr_write(2*level + 1);
+			print_cortex_cache(dv, level, "Instruction");
+		}
+		if (clidr & 6) {
+			armreg_csselr_write(2*level + 0);
+			print_cortex_cache(dv, level,
+			    (clidr & 4) ? "Unified" : "Data");
+		}
+	}
+
+	armreg_csselr_write(orig_csselr);
+
+
+}
+
+void
+identify_features(device_t dv)
+{
+	uint32_t isar0 = armreg_isar0_read();
+	uint32_t isar1 = armreg_isar1_read();
+	uint32_t isar2 = armreg_isar2_read();
+	uint32_t isar3 = armreg_isar3_read();
+	uint32_t isar4 = armreg_isar4_read();
+	uint32_t isar5 = armreg_isar5_read();
+
+	uint32_t mmfr0 = armreg_mmfr0_read();
+	uint32_t mmfr1 = armreg_mmfr1_read();
+	uint32_t mmfr2 = armreg_mmfr2_read();
+	uint32_t mmfr3 = armreg_mmfr3_read();
+
+	uint32_t pfr0 = armreg_pfr0_read();
+	uint32_t pfr1 = armreg_pfr1_read();
+
+	aprint_normal_dev(dv,
+	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
+	    isar0, isar1, isar2, isar3, isar4, isar5);
+	aprint_normal_dev(dv,
+	    "mmfr: [0]=%#x [1]=%#x [2]=%#x [3]=%#x\n",
+	    mmfr0, mmfr1, mmfr2, mmfr3);
+	aprint_normal_dev(dv,
+	    "pfr: [0]=%#x [1]=%#x\n",
+	    pfr0, pfr1);
+}
+#endif /* CPU_CORTEX */
