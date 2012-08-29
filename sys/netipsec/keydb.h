@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.11 2012/01/11 14:37:45 drochner Exp $	*/
+/*	$NetBSD: keydb.h,v 1.12 2012/08/29 20:37:51 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -104,8 +104,6 @@ struct secasvar {
 	struct sadb_key *key_auth;	/* Key for Authentication */
 	struct sadb_key *key_enc;	/* Key for Encryption */
 	u_int ivlen;			/* length of IV */
-	void *sched;			/* intermediate encryption key */
-	size_t schedlen;
 
 	struct secreplay *replay;	/* replay prevention */
 	time_t created;			/* for lifetime */
