@@ -28,12 +28,12 @@
 
 
 /*
- * support for ARM cortexa8 Performance Monitor Counters
+ * support for ARM cortex Performance Monitor Counters
  * based on arm11_pmc.c
  */
 
 #include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.1 2010/06/19 19:44:57 matt Exp $"); */
+/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.2 2012/08/29 19:10:15 matt Exp $"); */
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,69 +41,32 @@
 #include <sys/kernel.h>  
 #include <sys/time.h>
 #include <sys/timetc.h>
+
 #include <dev/clock_subr.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/arm32/machdep.h>
 
 #ifndef CORTEX_PMC_CCNT_HZ
 # define CORTEX_PMC_CCNT_HZ	400000000	/* 400MHz */
 #endif
 
-void cortexa8_pmc_ccnt_init(void);
+#define COUNTS_PER_USEC	(curcpu()->ci_data.cpu_cc_freq / (1000*1000))
 
-#define COUNTS_PER_USEC	(CORTEX_PMC_CCNT_HZ / 1000000)
-
-static uint32_t counts_per_wrap = ~0UL;		/* XXX off by 1 */
-
-#define PMNC "c9, c12, 0"
-#define CCNT "c9, c13, 0"
-
-static inline uint32_t
-cortexa8_pmc_ctrl_read(void)
-{
-	uint32_t val;
-
-	__asm volatile ("mrc p15, 0, %0, " PMNC : "=r" (val));
-
-	return val;
-}
-
-static inline void
-cortexa8_pmc_ctrl_write(uint32_t val)
-{
-	__asm volatile ("mcr p15, 0, %0, " PMNC :: "r" (val));
-}
-
-static inline uint32_t
-cortexa8_pmc_ccnt_read(void)
-{
-	uint32_t val;
-
-	__asm volatile ("mrc p15, 0, %0, " CCNT : "=r" (val));
-
-	return val;
-}
-
-static inline void
-cortexa8_pmc_ccnt_write(uint32_t val)
-{
-  __asm volatile ("mcr p15, 0, %0, c9, c12, 2"  :: "r" (CORTEX_CNTENC_C));
-  __asm volatile ("mcr p15, 0, %0, " CCNT :: "r" (val));
-  __asm volatile ("mcr p15, 0, %0, c9, c12, 1" :: "r" (CORTEX_CNTENS_C));
-}
+static const uint32_t counts_per_wrap = ~0UL - 1;
 
 /*
  * enable the PMC CCNT for delay()
  */
 void
-cortexa8_pmc_ccnt_init(void)
+cortex_pmc_ccnt_init(void)
 {
-  uint32_t val;
-  
-  val = ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C;
-	
-  cortexa8_pmc_ctrl_write(val);
-  __asm volatile ("mcr p15, 0, %0, c9, c12, 1" :: "r" (CORTEX_CNTENS_C));
+	if (curcpu()->ci_data.cpu_cc_freq == 0) {
+		curcpu()->ci_data.cpu_cc_freq = CORTEX_PMC_CCNT_HZ;
+	}
 }
 
 /*
@@ -112,7 +75,6 @@ cortexa8_pmc_ccnt_init(void)
  *	NOTE: at 400MHz we are restricted to (uint32_t)~0 "counts"
  *	if this is a problem, accumulate counts in LL vars
  */
-#define DELAY_ARG_LIMIT (((uint32_t)~0) / COUNTS_PER_USEC)	/* about 10 sec */
 void
 delay(u_int arg)
 {
@@ -121,29 +83,32 @@ delay(u_int arg)
 	uint32_t last;
 	uint32_t delta = 0;
 	uint32_t usecs = 0;
+	const uint32_t counts_per_usec = COUNTS_PER_USEC;
+	const uint32_t delay_arg_limit = ~0UL / counts_per_usec; /* about 10 sec */
 
-	if (arg > DELAY_ARG_LIMIT)
-		panic("delay: arg %u overflow, limit is %d usec\n", arg, DELAY_ARG_LIMIT);
+	if (arg > delay_arg_limit)
+		panic("%s: arg %u overflow, limit is %u usec\n",
+		    __func__, arg, delay_arg_limit);
 
-	last = cortexa8_pmc_ccnt_read();
+	last = armreg_pmccntr_read();
 	delta = usecs = 0;
 	while (arg > usecs) {
-		cur  = cortexa8_pmc_ccnt_read();
+		cur = armreg_pmccntr_read();
 		
 		/* overflow flag is moved to a separate register
 		   and is not read from PMC Control Register */
-		__asm volatile ("mrc p15, 0, %0, c9, c12, 3" : "=r" (ctrl));
-		if(ctrl & CORTEX_CNTOFL_C){
+		ctrl = armreg_pmovsr_read();
+		if (ctrl & CORTEX_CNTOFL_C) {
 		  /* Reset overflow flag for cycle counter in overflow register */
-		  __asm volatile ("mcr p15, 0, %0, c9, c12, 3" :: "r" (CORTEX_CNTOFL_C));
-		  delta += (last + (counts_per_wrap - cur));
+			armreg_pmovsr_write(CORTEX_CNTOFL_C);
+			delta += (last + (counts_per_wrap - cur));
 		} else {
 			delta += (cur - last);
 		}
 		last = cur;
-		if (delta >= COUNTS_PER_USEC) {
-			usecs += delta / COUNTS_PER_USEC;
-			delta %= COUNTS_PER_USEC;
+		if (delta >= counts_per_usec) {
+			usecs += delta / counts_per_usec;
+			delta %= counts_per_usec;
 		}
 	}
 }
