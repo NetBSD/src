@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.8 2012/03/31 02:45:37 tsutsui Exp $
+#	$NetBSD: MV2120,v 1.9 2012/08/29 08:29:58 skrll Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -321,7 +321,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 pseudo-device	dm
