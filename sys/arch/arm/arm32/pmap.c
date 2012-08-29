@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.232 2012/08/29 05:51:30 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.233 2012/08/29 17:08:41 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2012/08/29 05:51:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2012/08/29 17:08:41 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3361,8 +3361,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		}
 	}
 
-	*ptep = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot) |
-	    pte_l2_s_cache_mode;
+	*ptep = L2_S_PROTO | pa | L2_S_PROT(PTE_KERNEL, prot)
+	    | ((flags & PMAP_NOCACHE) ? 0 : pte_l2_s_cache_mode);
 	PTE_SYNC(ptep);
 
 	if (pg) {
