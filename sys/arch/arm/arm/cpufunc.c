@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.112 2012/08/29 18:29:04 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.113 2012/08/29 18:37:14 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.112 2012/08/29 18:29:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.113 2012/08/29 18:37:14 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2834,53 +2834,6 @@ armv7_setup(char *args)
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
-}
-
-/* Clean the data cache to the level of coherency. Slow. */
-void
-armv7_dcache_wbinv_all(void)
-{
-	u_int clidr, loc, level;
-
-	/* Cache Level ID Register */
-	__asm volatile("mrc\tp15, 1, %0, c0, c0, 1" : "=r" (clidr));
-
-	loc = (clidr >> 24) & 7; /* Level of Coherency */
-
-	for (level = 0; level <= loc; level++) {
-		u_int ctype, csid;
-		int line_size, ways, nsets, wayshift, setshift;
-
-		ctype = (clidr >> (level * 3)) & 7;
-		/* We're supposed to stop when ctype == 0, but we
-		 * trust that loc isn't larger than necesssary. */
-		if (ctype < 2) continue; /* no cache / only icache */
-
-		csid = get_cachesize_cp15(level << 1);
-		line_size = CPU_CSID_LEN(csid);
-		ways = CPU_CSID_ASSOC(csid);
-		nsets = (csid >> 13) & 0x7fff;
-
-		wayshift = __builtin_clz(ways); /* leading zeros */
-		setshift = line_size + 4;
-
-		for (; nsets >= 0; nsets--) {
-			int way;
-
-			for (way = ways; way >= 0; way--) {
-				/* Clean by set/way */
-				const u_int sw = (way << wayshift)
-				    | (nsets << setshift)
-				    | (level << 1);
-
-				__asm volatile("mcr\tp15, 0, %0, c7, c10, 2"
-				    :: "r"(sw));
-			}
-		}
-	}
-
-	__asm volatile("dsb");
-	__asm volatile("isb");
 }
 #endif /* CPU_CORTEX */
 
