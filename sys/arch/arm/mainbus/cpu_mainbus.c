@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.12 2012/08/29 17:44:25 matt Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.13 2012/08/29 23:16:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,24 +41,18 @@
  * Created      : 10/10/95
  */
 
+#include "locators.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.12 2012/08/29 17:44:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.13 2012/08/29 23:16:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#if 0
-#include <sys/conf.h>
-#include <uvm/uvm_extern.h>
-#include <machine/io.h>
-#endif
-#include <machine/cpu.h>
-#if 0
-#include <arm/cpus.h>
-#include <arm/undefined.h>
-#endif
+
+#include <arm/mainbus/mainbus.h>
 
 /*
  * Prototypes
@@ -72,11 +66,38 @@ static void cpu_mainbus_attach(device_t, device_t, void *);
  * Probe for the main cpu. Currently all this does is return 1 to
  * indicate that the cpu was found.
  */ 
+#ifdef MULTIPROCESSOR
+extern u_int arm_cpu_max;
+#else
+#define	arm_cpu_max		0
+#endif
  
 static int
 cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return(1);
+	struct mainbus_attach_args * const mb = aux;
+	int id = mb->mb_core;
+
+	if (id != MAINBUSCF_CORE_DEFAULT) {
+		if (id > arm_cpu_max || kcpuset_isset(kcpuset_attached, id))
+			return 0;
+		if (id == 0 && cpu_info_store.ci_dev != NULL)
+			return 0;
+		return 1;
+	}
+
+	for (id = 0; id <= arm_cpu_max; id++) {
+#ifdef MULTIPROCESSOR
+		if (cpu_info[id] != NULL && cpu_info[id]->ci_dev != NULL)
+			continue;
+#else
+		if (id != 0 || cpu_info_store.ci_dev != NULL)
+			continue;
+#endif
+		mb->mb_core = id;
+		return 1;
+	}
+	return 0;
 }
 
 /*
@@ -88,7 +109,9 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	cpu_attach(self, 0);
+	struct mainbus_attach_args * const mb = aux;
+
+	cpu_attach(self, mb->mb_core);
 }
 
 CFATTACH_DECL_NEW(cpu_mainbus, 0,

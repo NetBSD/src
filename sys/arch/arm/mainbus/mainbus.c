@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.19 2012/07/14 07:57:26 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.20 2012/08/29 23:16:35 matt Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2012/07/14 07:57:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2012/08/29 23:16:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,8 @@ mainbusprint(void *aux, const char *mainbus)
 		aprint_normal(" irq %d", mb->mb_irq);
 	if (mb->mb_drq != -1)
 		aprint_normal(" drq 0x%08x", mb->mb_drq);
+	if (mb->mb_core != MAINBUSCF_CORE_DEFAULT)
+		aprint_normal(" core %d", mb->mb_core);
 
 /* XXXX print flags */
 	return (QUIET);
@@ -142,6 +144,7 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
 			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
 		}
+		mb.mb_core = cf->cf_loc[MAINBUSCF_CORE];
 		mb.mb_intrbase = cf->cf_loc[MAINBUSCF_INTRBASE];
 		mb.mb_iot = &mainbus_bs_tag;
 
