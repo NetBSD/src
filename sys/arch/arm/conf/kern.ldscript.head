@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.head,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: kern.ldscript.head,v 1.3 2012/08/29 22:43:57 matt Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -12,6 +12,8 @@ SECTIONS
   {
     *(.text)
     *(.text.*)
+    __stub_start = .
     *(.stub)
+    __stub_end = .
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
