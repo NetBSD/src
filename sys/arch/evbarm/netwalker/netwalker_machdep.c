@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.8 2012/08/16 18:22:45 matt Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.9 2012/08/29 19:10:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.8 2012/08/16 18:22:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9 2012/08/29 19:10:17 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -887,9 +887,7 @@ process_kernel_args(char *args)
 static void
 init_clocks(void)
 {
-	extern void cortexa8_pmc_ccnt_init(void);
-
-	cortexa8_pmc_ccnt_init();
+	cortex_pmc_ccnt_init();
 }
 
 struct iomux_setup {
