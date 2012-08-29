@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.42 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.42.2.1 2012/08/29 08:42:24 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -168,6 +168,76 @@ static int load_x509(const char *file, char **filenameptr,
 
 	*filenameptr = racoon_strdup(file);
 	STRDUP_FATAL(*filenameptr);
+
+	return 0;
+}
+
+static int process_rmconf()
+{
+
+	/* check a exchange mode */
+	if (cur_rmconf->etypes == NULL) {
+		yyerror("no exchange mode specified.\n");
+		return -1;
+	}
+
+	if (cur_rmconf->idvtype == IDTYPE_UNDEFINED)
+		cur_rmconf->idvtype = IDTYPE_ADDRESS;
+
+	if (cur_rmconf->idvtype == IDTYPE_ASN1DN) {
+		if (cur_rmconf->mycertfile) {
+			if (cur_rmconf->idv)
+				yywarn("Both CERT and ASN1 ID "
+				       "are set. Hope this is OK.\n");
+			/* TODO: Preparse the DN here */
+		} else if (cur_rmconf->idv) {
+			/* OK, using asn1dn without X.509. */
+		} else {
+			yyerror("ASN1 ID not specified "
+				"and no CERT defined!\n");
+			return -1;
+		}
+	}
+
+	if (duprmconf_finish(cur_rmconf))
+		return -1;
+
+	if (set_isakmp_proposal(cur_rmconf) != 0)
+		return -1;
+
+	/* DH group settting if aggressive mode is there. */
+	if (check_etypeok(cur_rmconf, (void*) ISAKMP_ETYPE_AGG)) {
+		struct isakmpsa *p;
+		int b = 0;
+
+		/* DH group */
+		for (p = cur_rmconf->proposal; p; p = p->next) {
+			if (b == 0 || (b && b == p->dh_group)) {
+				b = p->dh_group;
+				continue;
+			}
+			yyerror("DH group must be equal "
+				"in all proposals "
+				"when aggressive mode is "
+				"used.\n");
+			return -1;
+		}
+		cur_rmconf->dh_group = b;
+
+		if (cur_rmconf->dh_group == 0) {
+			yyerror("DH group must be set in the proposal.\n");
+			return -1;
+		}
+
+		/* DH group settting if PFS is required. */
+		if (oakley_setdhgroup(cur_rmconf->dh_group,
+				&cur_rmconf->dhgrp) < 0) {
+			yyerror("failed to set DH value.\n");
+			return -1;
+		}
+	}
+
+	insrmconf(cur_rmconf);
 
 	return 0;
 }
@@ -1643,7 +1713,7 @@ remote_statement
 			vfree($2);
 			vfree($4);
 		}
-		remote_specs_block
+		remote_specs_inherit_block
 	| REMOTE QUOTEDSTRING
 		{
 			struct remoteconf *new;
@@ -1686,7 +1756,7 @@ remote_statement
 			new->remote = $2;
 			cur_rmconf = new;
 		}
-		remote_specs_block
+		remote_specs_inherit_block
 	|	REMOTE remote_index
 		{
 			struct remoteconf *new;
@@ -1703,81 +1773,20 @@ remote_statement
 		remote_specs_block
 	;
 
+remote_specs_inherit_block
+	:	remote_specs_block
+	|	EOS /* inheritance without overriding any settings */
+		{
+			if (process_rmconf() != 0)
+				return -1;
+		}
+	;
+
 remote_specs_block
 	:	BOC remote_specs EOC
 		{
-			/* check a exchange mode */
-			if (cur_rmconf->etypes == NULL) {
-				yyerror("no exchange mode specified.\n");
+			if (process_rmconf() != 0)
 				return -1;
-			}
-
-			if (cur_rmconf->idvtype == IDTYPE_UNDEFINED)
-				cur_rmconf->idvtype = IDTYPE_ADDRESS;
-
-			if (cur_rmconf->idvtype == IDTYPE_ASN1DN) {
-				if (cur_rmconf->mycertfile) {
-					if (cur_rmconf->idv)
-						yywarn("Both CERT and ASN1 ID "
-						       "are set. Hope this is OK.\n");
-					/* TODO: Preparse the DN here */
-				} else if (cur_rmconf->idv) {
-					/* OK, using asn1dn without X.509. */
-				} else {
-					yyerror("ASN1 ID not specified "
-						"and no CERT defined!\n");
-					return -1;
-				}
-			}
-
-			if (duprmconf_finish(cur_rmconf))
-				return -1;
-
-#if 0
-			/* this pointer copy will never happen, because duprmconf_shallow
-			 * already copied all pointers.
-			 */
-			if (cur_rmconf->spspec == NULL &&
-			    cur_rmconf->inherited_from != NULL) {
-				cur_rmconf->spspec = cur_rmconf->inherited_from->spspec;
-			}
-#endif
-			if (set_isakmp_proposal(cur_rmconf) != 0)
-				return -1;
-
-			/* DH group settting if aggressive mode is there. */
-			if (check_etypeok(cur_rmconf, (void*) ISAKMP_ETYPE_AGG)) {
-				struct isakmpsa *p;
-				int b = 0;
-
-				/* DH group */
-				for (p = cur_rmconf->proposal; p; p = p->next) {
-					if (b == 0 || (b && b == p->dh_group)) {
-						b = p->dh_group;
-						continue;
-					}
-					yyerror("DH group must be equal "
-						"in all proposals "
-						"when aggressive mode is "
-						"used.\n");
-					return -1;
-				}
-				cur_rmconf->dh_group = b;
-
-				if (cur_rmconf->dh_group == 0) {
-					yyerror("DH group must be set in the proposal.\n");
-					return -1;
-				}
-
-				/* DH group settting if PFS is required. */
-				if (oakley_setdhgroup(cur_rmconf->dh_group,
-						&cur_rmconf->dhgrp) < 0) {
-					yyerror("failed to set DH value.\n");
-					return -1;
-				}
-			}
-
-			insrmconf(cur_rmconf);
 		}
 	;
 remote_index
