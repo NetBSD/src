@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.14 2012/07/29 00:07:07 matt Exp $
+#	$NetBSD: OVERO,v 1.15 2012/08/29 08:29:58 skrll Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -298,7 +298,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # userland interface to drivers, including autoconf and properties retrieval
