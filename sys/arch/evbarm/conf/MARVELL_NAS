@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.8 2012/07/27 03:10:23 kiyohara Exp $
+#	$NetBSD: MARVELL_NAS,v 1.9 2012/08/29 08:29:58 skrll Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -303,7 +303,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # data mover pseudo-devices
-pseudo-device	swdmover		# softare dmover(9) back-end
+pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
