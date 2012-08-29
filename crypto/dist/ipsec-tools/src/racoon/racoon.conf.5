@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.61 2010/06/22 20:51:04 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.61.4.1 2012/08/29 08:42:24 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 22, 2010
+.Dd August 29, 2012
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -375,7 +375,7 @@ This problem is known to be fixed in Linux 2.6.25 and later.
 .\"
 .Ss Remote Nodes Specifications
 .Bl -tag -width Ds -compact
-.It Ic remote Ar name Bo Ic inherit Ar parent_name Bc Ic { Ar statements Ic }
+.It Ic remote Ar name Bo Ic inherit Ar parent_name Bc Ic ({ Ar statements Ic } | ;)
 Specifies the IKE phase 1 parameters for each remote node.
 .Pp
 If connection is initiated using racoonctl, a unique match using the
