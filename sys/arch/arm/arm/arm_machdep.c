@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.34 2012/08/29 07:14:03 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.35 2012/08/29 23:10:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.34 2012/08/29 07:14:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.35 2012/08/29 23:10:31 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -100,11 +100,24 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.34 2012/08/29 07:14:03 matt Exp $"
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
+#ifdef __PROG32
+extern const uint32_t undefinedinstruction_bounce[];
+#endif
+
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
 	.ci_cpl = IPL_HIGH,
 	.ci_curlwp = &lwp0,
+#ifdef __PROG32
+	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#endif
 };
+
+#ifdef MULTIPROCESSOR
+struct cpu_info *cpu_info[MAXCPUS] = {
+	[0] = &cpu_info_store
+};
+#endif
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #if defined(FPU_VFP)
