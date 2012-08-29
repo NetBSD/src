@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.22 2011/03/17 14:42:58 vanhu Exp $	*/
+/*	$NetBSD: oakley.c,v 1.22.2.1 2012/08/29 11:24:28 tteras Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1288,6 +1288,7 @@ oakley_validate_auth(iph1)
 {
 	vchar_t *my_hash = NULL;
 	int result;
+	int no_verify_needed = -1;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsshash = NULL;
 #endif
@@ -1361,8 +1362,6 @@ oakley_validate_auth(iph1)
 		plog(LLV_DEBUG, LOCATION, NULL, "HASH for PSK validated.\n");
 	    }
 		break;
-	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
-	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 #ifdef ENABLE_HYBRID
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_RSA_I:
 	case OAKLEY_ATTR_AUTH_METHOD_HYBRID_DSS_I:
@@ -1370,7 +1369,10 @@ oakley_validate_auth(iph1)
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_RSASIG_R:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_I:
 	case OAKLEY_ATTR_AUTH_METHOD_XAUTH_DSSSIG_R:
+		no_verify_needed = 0;
 #endif
+	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
+	case OAKLEY_ATTR_AUTH_METHOD_RSASIG:
 	    {
 		int error = 0;
 		int certtype;
@@ -1454,6 +1456,9 @@ oakley_validate_auth(iph1)
 		case ISAKMP_CERT_PLAINRSA:
 			if (get_plainrsa_fromlocal(iph1, 0))
 				return ISAKMP_INTERNAL_ERROR;
+			/* suppress CERT validation warning, unless hybrid mode in use */
+			if (no_verify_needed == -1)
+				no_verify_needed = 1;
 			break;
 		case ISAKMP_CERT_DNS:
 			/* don't use received cert */
@@ -1480,12 +1485,12 @@ oakley_validate_auth(iph1)
 		if ((error = oakley_check_certid(iph1)) != 0)
 			return error;
 
-		/* Generate a warning if verify_cert */
+		/* Generate a warning unless verify_cert */
 		if (iph1->rmconf->verify_cert) {
-			plog(LLV_DEBUG, LOCATION, NULL,
+			plog(LLV_DEBUG, LOCATION, iph1->remote,
 			     "CERT validated\n");
-		} else {
-			plog(LLV_WARNING, LOCATION, NULL,
+		} else if (no_verify_needed != 1) {
+			plog(LLV_WARNING, LOCATION, iph1->remote,
 			     "CERT validation disabled by configuration\n");
 		}
 
