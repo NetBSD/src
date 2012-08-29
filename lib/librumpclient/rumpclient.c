@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.50 2012/08/03 14:52:31 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.51 2012/08/29 10:38:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.50 2012/08/03 14:52:31 pooka Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.51 2012/08/29 10:38:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -681,7 +681,6 @@ doconnect(void)
 	struct respwait rw;
 	struct rsp_hdr rhdr;
 	char banner[MAXBANNER];
-	struct pollfd pfd;
 	int s, error, flags;
 	ssize_t n;
 
@@ -725,8 +724,6 @@ doconnect(void)
 	if (s == -1)
 		return -1;
 
-	pfd.fd = s;
-	pfd.events = POLLIN;
 	while (host_connect(s, serv_sa, parsetab[ptab_idx].slen) == -1) {
 		if (errno == EINTR)
 			continue;
