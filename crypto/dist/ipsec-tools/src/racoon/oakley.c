@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.22.2.1 2012/08/29 11:24:28 tteras Exp $	*/
+/*	$NetBSD: oakley.c,v 1.22.2.2 2012/08/29 11:35:09 tteras Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1434,7 +1434,7 @@ oakley_validate_auth(iph1)
 			}
 
 			if (error != 0) {
-				plog(LLV_ERROR, LOCATION, NULL,
+				plog(LLV_ERROR, LOCATION, iph1->remote,
 				     "the peer's certificate is not verified.\n");
 				return ISAKMP_NTYPE_INVALID_CERT_AUTHORITY;
 			}
