@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.41 2012/08/16 18:22:43 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.42 2012/08/29 19:10:16 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -530,12 +530,8 @@ initarm(void *arg)
 	pxa2x0_gpio_bootstrap(GUMSTIX_GPIO_VBASE);
 
 	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
-#elif defined(CPU_CORTEXA8)
-	{
-		void cortexa8_pmc_ccnt_init(void);
-
-		cortexa8_pmc_ccnt_init();
-	}
+#elif defined(CPU_CORTEX)
+	cortex_pmc_ccnt_init();
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
