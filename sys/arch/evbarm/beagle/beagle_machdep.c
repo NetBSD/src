@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.18 2012/08/29 18:05:41 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.18 2012/08/29 18:05:41 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -137,15 +137,17 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp
 #include "prcm.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/exec.h>
-#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
 #include <sys/msgbuf.h>
+#include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
-#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -161,9 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.17 2012/08/22 22:18:22 matt Exp
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #include <arm/armreg.h>
 #include <arm/undefined.h>
 
@@ -232,6 +231,12 @@ static void kgdb_port_init(void);
 
 static void setup_real_page_tables(void);
 static void init_clocks(void);
+#if defined(OMAP_3530) || defined(TI_DM37XX)
+static void omap3_cpu_clk(void);
+#endif
+#if defined(OMAP_4430)
+static void omap4_cpu_clk(void);
+#endif
 
 bs_protos(bs_notimpl);
 
@@ -366,9 +371,7 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
-#if defined(OMAP_L4_WAKEUP_BASE) \
-    && (OMAP_L4_WAKEUP_BASE < OMAP_L4_CORE_BASE \
-	|| OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE <= OMAP_L4_WAKEUP_BASE)
+#if defined(OMAP_L4_WAKEUP_BASE) && defined(OMAP_L4_WAKEUP_VBASE)
 	{
 		/*
 		 * Map all 256KB of the L4 Wakeup area
@@ -390,6 +393,19 @@ static const struct pmap_devmap devmap[] = {
 		.pd_va = _A(OMAP_L4_FAST_VBASE),
 		.pd_pa = _A(OMAP_L4_FAST_BASE),
 		.pd_size = _S(OMAP_L4_FAST_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
+#ifdef OMAP_L4_ABE_BASE
+	{
+		/*
+		 * Map all of the L4 Fast area
+		 * this gets us GPIO1, WDT2, GPT1, 32K and power/reset regs
+		 */
+		.pd_va = _A(OMAP_L4_ABE_VBASE),
+		.pd_pa = _A(OMAP_L4_ABE_BASE),
+		.pd_size = _S(OMAP_L4_ABE_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -458,7 +474,13 @@ initarm(void *arg)
 	 * peripherals and SDRAM.  The temporary first level translation table
 	 * is at the end of SDRAM.
 	 */
-
+#if defined(OMAP_3530) || defined(TI_DM37XX)
+	omap3_cpu_clk();		// find our CPU speed.
+#endif
+#if defined(OMAP_4430)
+	if (0)
+	omap4_cpu_clk();		// find our CPU speed.
+#endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
@@ -977,3 +999,47 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 	printf("OK.\n");
 #endif
 }
+
+#if defined(OMAP_3530) || defined(TI_DM37XX)
+void
+omap3_cpu_clk(void)
+{
+	const vaddr_t prm_base = OMAP2_PRM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const uint32_t prm_clksel = *(volatile uint32_t *)(prm_base + PLL_MOD + OMAP3_PRM_CLKSEL);
+	static const uint32_t prm_clksel_freqs[] = OMAP3_PRM_CLKSEL_FREQS;
+	const uint32_t sys_clk = prm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP3_PRM_CLKSEL_CLKIN)];
+	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const uint32_t dpll1 = *(volatile uint32_t *)(cm_base + OMAP3_CM_CLKSEL1_PLL_MPU);
+	const uint32_t dpll2 = *(volatile uint32_t *)(cm_base + OMAP3_CM_CLKSEL2_PLL_MPU);
+	const uint32_t m = __SHIFTOUT(dpll1, OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_MULT);
+	const uint32_t n = __SHIFTOUT(dpll1, OMAP3_CM_CLKSEL1_PLL_MPU_DPLL_DIV);
+	const uint32_t m2 = __SHIFTOUT(dpll2, OMAP3_CM_CLKSEL2_PLL_MPU_DPLL_CLKOUT_DIV);
+
+	/*
+	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
+	 */
+	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * m) / ((n + 1) * m2 * 2)) * OMAP3_PRM_CLKSEL_MULT;
+}
+#endif /* OMAP_3530 || TI_DM37XX */
+
+#if defined(OMAP_4430)
+void
+omap4_cpu_clk(void)
+{
+	const vaddr_t prm_base = OMAP2_PRM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	const vaddr_t cm_base = OMAP2_CM_BASE - OMAP_L4_CORE_BASE + OMAP_L4_CORE_VBASE;
+	static const uint32_t cm_clksel_freqs[] = OMAP4_CM_CLKSEL_FREQS;
+	const uint32_t prm_clksel = *(volatile uint32_t *)(prm_base + OMAP4_CM_SYS_CLKSEL);
+	const uint32_t sys_clk = cm_clksel_freqs[__SHIFTOUT(prm_clksel, OMAP4_CM_SYS_CLKSEL_CLKIN)];
+	const uint32_t dpll1 = *(volatile uint32_t *)(cm_base + OMAP4_CM_CLKSEL_DPLL_MPU);
+	const uint32_t dpll2 = *(volatile uint32_t *)(cm_base + OMAP4_CM_DIV_M2_DPLL_MPU);
+	const uint32_t m = __SHIFTOUT(dpll1, OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_MULT);
+	const uint32_t n = __SHIFTOUT(dpll1, OMAP4_CM_CLKSEL_DPLL_MPU_DPLL_DIV);
+	const uint32_t m2 = __SHIFTOUT(dpll2, OMAP4_CM_DIV_M2_DPLL_MPU_DPLL_CLKOUT_DIV);
+
+	/*
+	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
+	 */
+	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * 2 * m) / ((n + 1) * m2)) * OMAP4_CM_CLKSEL_MULT;
+}
+#endif /* OMAP_4400 */
