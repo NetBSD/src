@@ -350,8 +350,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
-
-struct device;
 void	cpu_attach(device_t, cpuid_t);
 #endif
 
