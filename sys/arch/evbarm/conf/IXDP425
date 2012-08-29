@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.36 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: IXDP425,v 1.37 2012/08/29 08:29:58 skrll Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -252,5 +252,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
