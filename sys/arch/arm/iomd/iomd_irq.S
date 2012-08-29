@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.13 2010/12/20 00:25:28 matt Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.14 2012/08/29 07:06:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -120,6 +120,8 @@ ASENTRY_NP(irq_entry)
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
 	ENABLE_ALIGNMENT_FAULTS
+
+	str	r7, [sp, #TF_FILL]	/* save r7 */
 
 	/* Load r8 with the IOMD interrupt requests */
 
@@ -339,6 +341,7 @@ exitirq:
 	sub	r0, r0, #1
 	str	r0, [r4, #CI_INTR_DEPTH]
 
+	ldr	r7, [sp, #TF_FILL]		/* restore r7 */
 	LOCK_CAS_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS

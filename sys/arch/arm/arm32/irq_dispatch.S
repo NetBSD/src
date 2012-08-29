@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.11 2011/05/28 20:53:57 jakllsch Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.12 2012/08/29 07:06:27 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -90,12 +90,8 @@
  *	which can be used by different platforms.
  */
 	.text
-	.align	0
 
-LOCK_CAS_CHECK_LOCALS
-
-AST_ALIGNMENT_FAULT_LOCALS
-
+	.p2align	5
 ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
@@ -111,11 +107,11 @@ ASENTRY_NP(irq_entry)
 	 *	r4	address of current cpu_info
 	 *	r6	old value of `ci_intr_depth'
 	 */
-	mov	r0, sp			/* arg for dispatcher */
 	ldr	r6, [r4, #CI_INTR_DEPTH]
 	add	r1, r6, #1
 	str	r1, [r4, #CI_INTR_DEPTH]
 
+	mov	r0, sp			/* arg for dispatcher */
 	bl	ARM_IRQ_HANDLER
 
 	/*
@@ -129,3 +125,9 @@ ASENTRY_NP(irq_entry)
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
+
+	.align	0
+
+LOCK_CAS_CHECK_LOCALS
+
+AST_ALIGNMENT_FAULT_LOCALS
