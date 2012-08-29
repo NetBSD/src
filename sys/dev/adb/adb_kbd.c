@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.17 2012/06/02 21:36:43 dsl Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.18 2012/08/29 02:44:07 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.17 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.18 2012/08/29 02:44:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,6 +86,8 @@ struct adbkbd_softc {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;
 #endif
+	bool sc_emul_usb;
+
 	uint8_t sc_buffer[16];
 	uint8_t sc_pollbuf[16];
 	uint8_t sc_us;
@@ -151,6 +153,7 @@ const struct wsmouse_accessops adbkms_accessops = {
 
 static int  adbkbd_sysctl_mid(SYSCTLFN_ARGS);
 static int  adbkbd_sysctl_right(SYSCTLFN_ARGS);
+static int  adbkbd_sysctl_usb(SYSCTLFN_ARGS);
 static void adbkbd_setup_sysctl(struct adbkbd_softc *);
 
 #endif /* NWSMOUSE > 0 */
@@ -215,6 +218,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_trans[2] = 111;	/* F12 */
 	sc->sc_power = 0x7f;
 	sc->sc_timestamp = 0;
+	sc->sc_emul_usb = FALSE;
 
 	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -340,9 +344,8 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &am, 
 	    wsmousedevprint);
 
-	if (sc->sc_wsmousedev != NULL)
-		adbkbd_setup_sysctl(sc);
 #endif
+	adbkbd_setup_sysctl(sc);
 
 	/* finally register the power button */
 	sysmon_task_queue_init();
@@ -573,7 +576,11 @@ adbkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_ADB;
+		if (sc->sc_emul_usb) {
+			*(int *)data = WSKBD_TYPE_USB;
+		} else {
+			*(int *)data = WSKBD_TYPE_ADB;
+		}
 		return 0;
 	case WSKBDIO_SETLEDS:
 		adbkbd_set_leds(sc, *(int *)data);
@@ -674,34 +681,6 @@ adbkms_disable(void *v)
 {
 }
 
-static void
-adbkbd_setup_sysctl(struct adbkbd_softc *sc)
-{
-	const struct sysctlnode *me, *node;
-	int ret;
-
-	DPRINTF("%s: sysctl setup\n", device_xname(sc->sc_dev));
-	ret = sysctl_createv(NULL, 0, NULL, &me,
-	       CTLFLAG_READWRITE,
-	       CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
-	       NULL, 0, NULL, 0,
-	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	ret = sysctl_createv(NULL, 0, NULL,
-	    (void *)&node, 
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_INT, "middle", "middle mouse button", adbkbd_sysctl_mid, 
-		    1, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
-		    CTL_EOL);
-
-	ret = sysctl_createv(NULL, 0, NULL, 
-	    (void *)&node, 
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_INT, "right", "right mouse button", adbkbd_sysctl_right, 
-		    2, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, CTL_CREATE, 
-		    CTL_EOL);
-}
-
 static int
 adbkbd_sysctl_mid(SYSCTLFN_ARGS)
 {
@@ -754,6 +733,77 @@ adbkbd_sysctl_right(SYSCTLFN_ARGS)
 	}
 }
 
+#endif /* NWSMOUSE > 0 */
+
+static int
+adbkbd_sysctl_usb(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adbkbd_softc *sc=(struct adbkbd_softc *)node.sysctl_data;
+	const int *np = newp;
+	bool reg;
+
+	DPRINTF("%s\n", __func__);
+	reg = sc->sc_emul_usb;
+	if (np) {
+		/* we're asked to write */	
+		node.sysctl_data = &reg;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			
+			sc->sc_emul_usb = *(bool *)node.sysctl_data;
+			if (sc->sc_emul_usb) {
+				wskbd_set_evtrans(sc->sc_wskbddev,
+				    adb_to_usb, 128);
+			} else {
+				wskbd_set_evtrans(sc->sc_wskbddev, NULL, 0);
+			}
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_data = &reg;
+		node.sysctl_size = sizeof(reg);
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+}
+
+static void
+adbkbd_setup_sysctl(struct adbkbd_softc *sc)
+{
+	const struct sysctlnode *me, *node;
+	int ret;
+
+	DPRINTF("%s: sysctl setup\n", device_xname(sc->sc_dev));
+	ret = sysctl_createv(NULL, 0, NULL, &me,
+	       CTLFLAG_READWRITE,
+	       CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	       NULL, 0, NULL, 0,
+	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	ret = sysctl_createv(NULL, 0, NULL,
+	    (void *)&node, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_BOOL, "emulate_usb", "USB keyboard emulation", 
+	    adbkbd_sysctl_usb, 1, (void *)sc, 0, CTL_MACHDEP, 
+	    me->sysctl_num, CTL_CREATE, CTL_EOL);
+#if NWSMOUSE > 0
+	if (sc->sc_wsmousedev != NULL) {
+		ret = sysctl_createv(NULL, 0, NULL,
+		    (void *)&node, 
+		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    CTLTYPE_INT, "middle", "middle mouse button", 
+		    adbkbd_sysctl_mid, 1, (void *)sc, 0, CTL_MACHDEP, 
+		    me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+		ret = sysctl_createv(NULL, 0, NULL, 
+		    (void *)&node, 
+		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    CTLTYPE_INT, "right", "right mouse button", 
+		    adbkbd_sysctl_right, 2, (void *)sc, 0, CTL_MACHDEP, 
+		    me->sysctl_num, CTL_CREATE, CTL_EOL);
+	}
+#endif /* NWSMOUSE > 0 */
+}
+
 SYSCTL_SETUP(sysctl_adbkbdtrans_setup, "adbkbd translator setup")
 {
 
@@ -763,4 +813,3 @@ SYSCTL_SETUP(sysctl_adbkbdtrans_setup, "adbkbd translator setup")
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 }
-#endif /* NWSMOUSE > 0 */
