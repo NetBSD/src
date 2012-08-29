@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.233 2012/08/29 17:08:41 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.234 2012/08/29 18:56:45 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -209,9 +209,10 @@
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
+#include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2012/08/29 17:08:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2012/08/29 18:56:45 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5989,20 +5990,16 @@ pmap_pte_init_generic(void)
 	 * Cortex CPUs which can read the L1 caches).
 	 */
 	if (cpufuncs.cf_dcache_wb_range == (void *) cpufunc_nullop
-#if ARM_MMU_V7 > 1
-	    || (CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)
-		&& !CPU_ID_CORTEX_A8_P(curcpu()->ci_arm_cpuid))
+#if ARM_MMU_V7 > 0
+	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)
+#endif
+#if ARM_MMU_V6 > 0
+	    || CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid) /* arm116 errata 399234 */
 #endif
 	    || false) {
 		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
 		pte_l2_l_cache_mode_pt = L2_B|L2_C;
 		pte_l2_s_cache_mode_pt = L2_B|L2_C;
-#if ARM_MMU_V6 > 1
-	} else if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)) {
-		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C; /* arm116 errata 399234 */
-		pte_l2_l_cache_mode_pt = L2_B|L2_C; /* arm116 errata 399234 */
-		pte_l2_s_cache_mode_pt = L2_B|L2_C; /* arm116 errata 399234 */
-#endif
 	} else {
 		pte_l1_s_cache_mode_pt = L1_S_C;	/* write through */
 		pte_l2_l_cache_mode_pt = L2_C;		/* write through */
