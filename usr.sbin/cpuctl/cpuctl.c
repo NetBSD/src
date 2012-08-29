@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.20 2012/01/13 16:05:16 cegger Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.21 2012/08/29 17:13:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.20 2012/01/13 16:05:16 cegger Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.21 2012/08/29 17:13:22 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,12 +192,38 @@ cpu_ucode(char **argv)
 {
 	int error;
 	struct cpu_ucode uc;
+	unsigned long id = 0; /* gcc */
+	char *ep;
+	cpuset_t *cpuset;
 
+	uc.cpu_nr = -1;
+	if (argv[0] != NULL) {
+		id = strtoul(argv[0], &ep, 0);
+		if (id != ULONG_MAX && *ep == '\0') {
+			uc.cpu_nr = id;
+			argv++;
+		}
+	}
 	if (argv[0] != NULL)
 		strlcpy(uc.fwname, argv[0], sizeof(uc.fwname));
 	else
 		memset(uc.fwname, '\0', sizeof(uc.fwname));
 
+	error = ucodeupdate_check(fd, &uc);
+	if (error)
+		errx(EXIT_FAILURE, "unsupported");
+
+	if (uc.cpu_nr == CPU_UCODE_CURRENT_CPU) {
+		cpuset = cpuset_create();
+		if (cpuset == NULL)
+			err(EXIT_FAILURE, "cpuset_create");
+		cpuset_zero(cpuset);
+		cpuset_set(id, cpuset);
+		if (_sched_setaffinity(0, 0, cpuset_size(cpuset), cpuset) < 0) {
+			err(EXIT_FAILURE, "_sched_setaffinity");
+		}
+		cpuset_destroy(cpuset);
+	}
 	error = ioctl(fd, IOC_CPU_UCODE_APPLY, &uc);
 	if (error < 0) {
 		if (uc.fwname[0])
@@ -214,8 +240,6 @@ cpu_identify(char **argv)
 	char name[32];
 	unsigned int id, np;
 	cpuset_t *cpuset;
-	struct cpu_ucode ucode;
-	char ucbuf[16];
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
 	id = getcpuid(argv);
@@ -238,17 +262,7 @@ cpu_identify(char **argv)
 		}
 		cpuset_destroy(cpuset);
 	}
-	identifycpu(name);
-
-	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0)
-		ucode.version = (uint64_t)-1;
-	if (ucode.version == (uint64_t)-1)
-		strcpy(ucbuf, "?");
-	else
-		snprintf(ucbuf, sizeof(ucbuf), "0x%"PRIx64,
-		    ucode.version);
-
-	printf("%s: UCode version: %s\n", name, ucbuf);
+	identifycpu(fd, name);
 }
 
 static u_int
