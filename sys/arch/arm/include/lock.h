@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.19 2012/07/23 12:36:41 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.20 2012/08/29 07:04:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,19 +74,42 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 #endif
 
 #if defined(_KERNEL)
-static __inline int
-__swp(int __val, volatile unsigned char *__ptr)
+static __inline __cpu_simple_lock_t
+__swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 {
 #ifdef _ARM_ARCH_6
-	int __rv, __tmp;
-	__asm volatile(
-		"1:\t"
-		"ldrexb\t%[__rv], [%[__ptr]]"			"\n\t"
-		"strexb\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
-		"cmp\t%[__tmp], #0"				"\n\t"
-		"bne 1b"
-	    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
-	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+	__cpu_simple_lock_t __rv, __tmp;
+	if (sizeof(*__ptr) == 1) {
+		__asm volatile(
+			"1:\t"
+			"ldrexb\t%[__rv], [%[__ptr]]"			"\n\t"
+			"cmp\t%[__rv],%[__val]"				"\n\t"
+			"strexbne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
+			"cmpne\t%[__tmp], #0"				"\n\t"
+			"bne\t1b"					"\n\t"
+#ifdef _ARM_ARCH_7
+			"dmb"
+#else
+			"mrc p15, 0, %[__tmp], c7, c10, 5"
+#endif
+		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
+		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+	} else {
+		__asm volatile(
+			"1:\t"
+			"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
+			"cmp\t%[__rv],%[__val]"				"\n\t"
+			"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
+			"cmpne\t%[__tmp], #0"				"\n\t"
+			"bne\t1b"					"\n\t"
+#ifdef _ARM_ARCH_7
+			"nop"
+#else
+			"mrc p15, 0, %[__tmp], c7, c10, 5"
+#endif
+		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
+		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+	}
 	return __rv;
 #else
 	__asm volatile("swpb %0, %1, [%2]"
@@ -95,13 +118,41 @@ __swp(int __val, volatile unsigned char *__ptr)
 #endif
 }
 #else
+/*
+ * On Cortex-A9 (SMP), SWP no longer guarantees atomic results.  Thus we pad
+ * out SWP so that when the A9 generates an undefined exception we can replace
+ * the SWP/MOV instructions with the right LDREX/STREX instructions.
+ *
+ * This is why we force the SWP into the template needed for LDREX/STREX
+ * including the extra instructions and extra register for testing the result.
+ */
 static __inline int
 __swp(int __val, volatile int *__ptr)
 {
-
-	__asm volatile("swp %0, %1, [%2]"
-	    : "=&r" (__val) : "r" (__val), "r" (__ptr) : "memory");
-	return __val;
+	int __rv, __tmp;
+	__asm volatile(
+		"1:\t"
+#ifdef _ARM_ARCH_6
+		"ldrex\t%[__rv], [%[__ptr]]"			"\n\t"
+		"cmp\t%[__rv],%[__val]"				"\n\t"
+		"strexne\t%[__tmp], %[__val], [%[__ptr]]"	"\n\t"
+#else
+		"swp\t%[__rv], %[__val], [%[__ptr]]"		"\n\t"
+		"cmp\t%[__rv],%[__val]"				"\n\t"
+		"movs\t%[__tmp], #0"				"\n\t"
+#endif
+		"cmpne\t%[__tmp], #0"				"\n\t"
+		"bne\t1b"					"\n\t"
+#ifdef _ARM_ARCH_7
+		"dmb"
+#elif defined(_ARM_ARCH_6)
+		"mrc p15, 0, %[__tmp], c7, c10, 5"
+#else
+		"nop"
+#endif
+	    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
+	    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
+	return __rv;
 }
 #endif /* _KERNEL */
 
@@ -110,6 +161,9 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dsb");
+#endif
 }
 
 static __inline void __attribute__((__unused__))
@@ -131,7 +185,13 @@ static __inline void __attribute__((__unused__))
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dmb");
+#endif
 	*alp = __SIMPLELOCK_UNLOCKED;
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dsb");
+#endif
 }
 
 #endif /* _ARM_LOCK_H_ */
