@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.354 2012/07/27 20:52:49 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.355 2012/08/29 18:56:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.354 2012/07/27 20:52:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.355 2012/08/29 18:56:39 dholland Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1079,7 +1079,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #endif
 	else {
 #ifdef notyet
-		printf("Cannot get path for pid %d [%s] (error %d)",
+		printf("Cannot get path for pid %d [%s] (error %d)\n",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
 		data->ed_pack.ep_path = NULL;
