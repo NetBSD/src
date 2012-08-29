@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.11 2011/06/05 17:03:16 matt Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.12 2012/08/29 17:44:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.11 2011/06/05 17:03:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.12 2012/08/29 17:44:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	cpu_attach(self);
+	cpu_attach(self, 0);
 }
 
 CFATTACH_DECL_NEW(cpu_mainbus, 0,

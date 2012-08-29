@@ -352,7 +352,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 
 struct device;
-void	cpu_attach(struct device *);
+void	cpu_attach(device_t, cpuid_t);
 #endif
 
 /*
