@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.33 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.34 2012/08/29 07:14:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.33 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.34 2012/08/29 07:14:03 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -103,9 +103,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
 	.ci_cpl = IPL_HIGH,
-#ifndef PROCESS_ID_IS_CURLWP
 	.ci_curlwp = &lwp0,
-#endif
 };
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {

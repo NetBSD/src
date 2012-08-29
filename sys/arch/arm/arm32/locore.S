@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2012/08/16 18:22:40 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.27 2012/08/29 07:14:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.26 2012/08/16 18:22:40 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.27 2012/08/29 07:14:04 matt Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -56,12 +56,11 @@ ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
 	adr	r1, .Lstart
-	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
-	sub	r2, r2, r1		/* get zero init data */
+	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
+	sub	r2, r2, r1		/* get zero init data and cpu_info_store */
 
-#ifdef PROCESS_ID_IS_CURCPU
-	ldr	r3, .Lcpu_info_store
-	mcr	p15, 0, r3, c13, c0, 4
+#if defined(TPIDRPRW_IS_CURCPU) || defined(TPIDRPRW_IS_CURLWP)
+	mcr	p15, 0, r8, c13, c0, 4
 #endif
 
 	mov	r3, #0
@@ -69,6 +68,9 @@ ASENTRY_NP(start)
 	str	r3, [r1], #0x0004	/* Zero the bss */
 	subs	r2, r2, #4
 	bgt	.L1
+
+	mrc	p15, 0, r3, c0, c0, 0	/* get our cpuid and save it early */
+	str	r3, [r8, #CI_ARM_CPUID]
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
@@ -87,14 +89,16 @@ ASENTRY_NP(start)
 	b	_C_LABEL(panic)
 	/* NOTREACHED */
 
-#ifdef PROCESS_ID_IS_CURCPU
-.Lcpu_info_store:	
-	.word	_C_LABEL(cpu_info_store)
-#endif
-
 .Lstart:
 	.word	_edata
 	.word	_end
+#if defined(TPIDRPRW_IS_CURCPU)
+	.word	_C_LABEL(cpu_info_store)
+#elif defined(TPIDRPRW_IS_CURLWP)
+	.word	_C_LABEL(lwp0)
+#else
+	.word	0
+#endif
 	.word	svcstk + INIT_ARM_STACK_SIZE
 
 .Lmainreturned:
@@ -115,11 +119,15 @@ svcstk:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
+#ifdef _ARM_ARCH_6
+	cpsid	if, #PSR_SVC32_MODE
+#else
 	mrs     r2, cpsr
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(IF32_bits)
 	msr     cpsr_c, r2
+#endif
 
 	ldr	r0, .Lcpufuncs
 	mov	lr, pc
@@ -142,9 +150,12 @@ ENTRY_NP(cpu_reset)
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
-	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r0, c1, c0, 0
-	mcreq   15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
+	mrc	p15, 0, r0, c1, c0, 0
+	bic	r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
+	bic	r0, #(CPU_CONTROL_IC_ENABLE)
+	orr	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
+	mcr	p15, 0, r0, c1, c0, 0
+	mcreq	p15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
