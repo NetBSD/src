@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.32 2012/08/25 14:08:17 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.33 2012/08/29 07:09:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -102,18 +102,51 @@ void validate_trapframe(trapframe_t *, int);
  * This macro is used by DO_AST_AND_RESTORE_ALIGNMENT_FAULTS to process
  * any pending softints.
  */
-#ifdef __HAVE_FAST_SOFTINTS
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
 #define	DO_PENDING_SOFTINTS						\
 	ldr	r0, [r4, #CI_INTR_DEPTH]/* Get current intr depth */	;\
 	teq	r0, #0			/* Test for 0. */		;\
 	bne	10f			/*   skip softints if != 0 */	;\
 	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
 	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
-	movs	r0, r1, lsr r0		/* shift mask by cpl */		;\
+	lsrs	r0, r1, r0		/* shift mask by cpl */		;\
 	blne	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
 10:
 #else
 #define	DO_PENDING_SOFTINTS		/* nothing */
+#endif
+
+#ifdef MULTIPROCESSOR
+#define	KERNEL_LOCK							\
+	mov	r0, #1							;\
+	mov	r1, #0							;\
+	bl	_C_LABEL(_kernel_lock)
+
+#define	KERNEL_UNLOCK							\
+	mov	r0, #1							;\
+	mov	r1, #0							;\
+	mov	r2, #0							;\
+	bl	_C_LABEL(_kernel_unlock)
+#else
+#define	KERNEL_LOCK			/* nothing */
+#define	KERNEL_UNLOCK			/* nothing */
+#endif
+
+#ifdef _ARM_ARCH_6
+#define	GET_CPSR(rb)			/* nothing */
+#define	CPSID_I(ra,rb)			cpsid	i
+#define	CPSIE_I(ra,rb)			cpsie	i
+#else
+#define	GET_CPSR(rb)							\
+	mrs	rb, cpsr		/* fetch CPSR */
+
+#define	CPSID_I(ra,rb)							\
+	orr	ra, rb, #(IF32_bits)					;\
+	msr	cpsr_c, ra		/* Disable interrupts */
+
+#define	CPSIE_I(ra,rb)							\
+	bic	ra, rb, #(IF32_bits)					;\
+	msr	cpsr_c, ra		/* Restore interrupts */
 #endif
 
 /*
@@ -139,8 +172,8 @@ void validate_trapframe(trapframe_t *, int);
  * is invoked immediately after PUSHFRAMEINSVC or PUSHFRAME.
  */
 #define	ENABLE_ALIGNMENT_FAULTS						\
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
-	teq	r0, #(PSR_USR32_MODE)					;\
+	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
+	teq	r7, #(PSR_USR32_MODE)					;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
 	bne	1f			/* Not USR mode skip AFLT */	;\
 	ldr	r1, [r4, #CI_CURLWP]	/* get curlwp from cpu_info */	;\
@@ -152,7 +185,7 @@ void validate_trapframe(trapframe_t *, int);
 	mov	r0, #-1							;\
 	mov	lr, pc							;\
 	ldr	pc, [r2, #CF_CONTROL]	/* Enable alignment faults */	;\
-1:
+1:	KERNEL_LOCK
 
 /*
  * This macro must be invoked just before PULLFRAMEFROMSVCANDEXIT or
@@ -162,12 +195,9 @@ void validate_trapframe(trapframe_t *, int);
  */
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
-	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r5, cpsr		/* save CPSR */			;\
-	orr	r1, r5, #(IF32_bits)					;\
-	msr	cpsr_c, r1		/* Disable interrupts */	;\
-	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
-	teq	r0, #(PSR_USR32_MODE)					;\
+	GET_CPSR(r5)			/* save CPSR */			;\
+	CPSID_I(r1, r5)			/* Disable interrupts */	;\
+	teq	r7, #(PSR_USR32_MODE)	/* Returning to USR mode? */	;\
 	bne	3f			/* Nope, get out now */		;\
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
@@ -185,43 +215,39 @@ void validate_trapframe(trapframe_t *, int);
 	/* NOTREACHED */						\
 2:	mov	r1, #0x00000000						;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	bic	r5, r5, #(IF32_bits)				;\
-	msr	cpsr_c, r5		/* Restore interrupts */	;\
+	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	orr	r0, r5, #(IF32_bits)	/* Disable IRQs */		;\
-	msr	cpsr_c, r0						;\
+	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b			/* Back around again */		;\
-3:
+3:	KERNEL_UNLOCK
 
 #else	/* !EXEC_AOUT */
 
 #define	AST_ALIGNMENT_FAULT_LOCALS
 
-#define	ENABLE_ALIGNMENT_FAULTS		GET_CURCPU(r4)
+#define	ENABLE_ALIGNMENT_FAULTS						\
+	and	r7, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
+	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
+	KERNEL_LOCK
 
 #define	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS				\
 	DO_PENDING_SOFTINTS						;\
-	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
-	mrs	r5, cpsr		/* save CPSR */			;\
-	orr	r1, r5, #(IF32_bits)					;\
-	msr	cpsr_c, r1		/* Disable interrupts */	;\
-	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
-	teq	r0, #(PSR_USR32_MODE)					;\
+	GET_CPSR(r5)			/* save CPSR */			;\
+	CPSID_I(r1, r5)			/* Disable interrupts */	;\
+	teq	r7, #(PSR_USR32_MODE)					;\
 	bne	2f			/* Nope, get out now */		;\
 1:	ldr	r1, [r4, #CI_ASTPENDING] /* Pending AST? */		;\
 	teq	r1, #0x00000000						;\
 	beq	2f			/* Nope. Just bail */		;\
 	mov	r1, #0x00000000						;\
 	str	r1, [r4, #CI_ASTPENDING] /* Clear astpending */		;\
-	bic	r5, r5, #(IF32_bits)					;\
-	msr	cpsr_c, r5		/* Restore interrupts */	;\
+	CPSIE_I(r5, r5)			/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	bl	_C_LABEL(ast)		/* ast(frame) */		;\
-	orr	r0, r5, #(IF32_bits)	/* Disable IRQs */		;\
-	msr	cpsr_c, r0						;\
+	CPSID_I(r0, r5)			/* Disable interrupts */	;\
 	b	1b							;\
-2:
+2:	KERNEL_UNLOCK			/* unlock the kernel */
 #endif /* EXEC_AOUT */
 
 #ifndef _ARM_ARCH_6
