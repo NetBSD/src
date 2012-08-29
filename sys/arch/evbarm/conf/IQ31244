@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.56 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: IQ31244,v 1.57 2012/08/29 08:29:58 skrll Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -220,5 +220,5 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
