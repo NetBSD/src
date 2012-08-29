@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.31 2012/04/17 13:00:09 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.32 2012/08/29 17:13:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,13 +57,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.31 2012/04/17 13:00:09 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.32 2012/08/29 17:13:23 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bitops.h>
 #include <sys/sysctl.h>
+#include <sys/cpuio.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -79,6 +80,7 @@ __RCSID("$NetBSD: i386.c,v 1.31 2012/04/17 13:00:09 cegger Exp $");
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/cacheinfo.h>
+#include <x86/cpu_ucode.h>
 
 #include "../cpuctl.h"
 
@@ -1233,7 +1235,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 }
 
 void
-identifycpu(const char *cpuname)
+identifycpu(int fd, const char *cpuname)
 {
 	const char *name = "", *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, i, xmax;
@@ -1248,6 +1250,11 @@ identifycpu(const char *cpuname)
 	size_t sz;
 	char buf[512];
 	char *bp;
+	struct cpu_ucode_version ucode;
+	union {
+		struct cpu_ucode_version_amd amd;
+		struct cpu_ucode_version_intel1 intel1;
+	} ucvers;
 
 	ci = &cistore;
 	memset(ci, 0, sizeof(*ci));
@@ -1519,6 +1526,21 @@ identifycpu(const char *cpuname)
 	    CPUID2FAMILY(ci->ci_signature), CPUID2MODEL(ci->ci_signature),
 	    CPUID2EXTFAMILY(ci->ci_signature), CPUID2EXTMODEL(ci->ci_signature),
 	    CPUID2STEPPING(ci->ci_signature));
+
+	if (cpu_vendor == CPUVENDOR_AMD)
+		ucode.loader_version = CPU_UCODE_LOADER_AMD;
+	else if (cpu_vendor == CPUVENDOR_INTEL)
+		ucode.loader_version = CPU_UCODE_LOADER_INTEL1;
+	else
+		return;
+	ucode.data = &ucvers;
+	if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &ucode) < 0)
+		return;
+	if (cpu_vendor == CPUVENDOR_AMD)
+		printf("%s: UCode version: 0x%"PRIx64"\n", cpuname, ucvers.amd.version);
+	else if (cpu_vendor == CPUVENDOR_INTEL)
+		printf("%s: microcode version 0x%x, platform ID %d\n", cpuname,
+		       ucvers.intel1.ucodeversion, ucvers.intel1.platformid);
 }
 
 static const char *
@@ -1995,4 +2017,50 @@ powernow_probe(struct cpu_info *ci)
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
 	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
 	    buf);
+}
+
+int
+ucodeupdate_check(int fd, struct cpu_ucode *uc)
+{
+	struct cpu_info ci;
+	int loader_version, res;
+	struct cpu_ucode_version versreq;
+	extern int cpu_info_level;
+
+	x86_identify();
+	ci.ci_cpuid_level = cpu_info_level;
+	cpu_probe_base_features(&ci);
+	if (!strcmp((char *)ci.ci_vendor, "AuthenticAMD"))
+		loader_version = CPU_UCODE_LOADER_AMD;
+	else if (!strcmp((char *)ci.ci_vendor, "GenuineIntel"))
+		loader_version = CPU_UCODE_LOADER_INTEL1;
+	else
+		return -1;
+
+	/* check whether the kernel understands this loader version */
+	versreq.loader_version = loader_version;
+	versreq.data = 0;
+	res = ioctl(fd, IOC_CPU_UCODE_GET_VERSION, &versreq);
+	if (res)
+		return -1;
+
+	switch (loader_version) {
+	case CPU_UCODE_LOADER_AMD:
+		if (uc->cpu_nr != -1) {
+			/* printf? */
+			return -1;
+		}
+		uc->cpu_nr = CPU_UCODE_ALL_CPUS;
+		break;
+	case CPU_UCODE_LOADER_INTEL1:
+		if (uc->cpu_nr == -1)
+			uc->cpu_nr = CPU_UCODE_ALL_CPUS; /* for Xen */
+		else
+			uc->cpu_nr = CPU_UCODE_CURRENT_CPU;
+		break;
+	default: /* can't happen */
+		return -1;
+	}
+	uc->loader_version = loader_version;
+	return 0;
 }
