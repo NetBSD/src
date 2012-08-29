@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.77 2012/08/29 20:37:50 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.77 2012/08/29 20:37:50 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3052,11 +3052,6 @@ key_delsav(struct secasvar *sav)
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
 	}
-	if (sav->sched) {
-		memset(sav->sched, 0, sav->schedlen);
-		KFREE(sav->sched);
-		sav->sched = NULL;
-	}
 	if (sav->replay != NULL) {
 		KFREE(sav->replay);
 		sav->replay = NULL;
@@ -3189,8 +3184,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->replay = NULL;
 	sav->key_auth = NULL;
 	sav->key_enc = NULL;
-	sav->sched = NULL;
-	sav->schedlen = 0;
 	sav->lft_c = NULL;
 	sav->lft_h = NULL;
 	sav->lft_s = NULL;
@@ -3411,10 +3404,6 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	if (sav->key_enc != NULL) {
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
-	}
-	if (sav->sched) {
-		KFREE(sav->sched);
-		sav->sched = NULL;
 	}
 	if (sav->lft_c != NULL) {
 		KFREE(sav->lft_c);
