@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.127 2012/06/27 00:37:09 jym Exp $
+#	$NetBSD: files.xen,v 1.128 2012/08/29 17:13:22 drochner Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -94,6 +94,7 @@ file	arch/xen/x86/xenfunc.c
 
 file	arch/xen/xen/xen_ucode.c	dom0ops | cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	dom0ops | cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_intel.c	dom0ops | cpu_ucode needs-flag
 
 file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
