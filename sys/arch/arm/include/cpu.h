@@ -90,7 +90,7 @@ extern int cpu_do_powersave;
 #ifdef _LOCORE
 
 #if defined(_ARM_ARCH_6)
-#define IRQdisable	cprid	i
+#define IRQdisable	cpsid	i
 #define IRQenable	cpsie	i
 #elif defined(__PROG32)
 #define IRQdisable \
@@ -219,13 +219,12 @@ void	arm32_vector_init(vaddr_t, int);
  */
 static inline int curcpl(void);
 static inline void set_curcpl(int);
-#ifdef __HAVE_FAST_SOFTINTS
 static inline void cpu_dosoftints(void);
-#endif
 
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 #include <sys/cpu_data.h>
+
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* Device corresponding to this CPU */
@@ -244,33 +243,31 @@ struct cpu_info {
 	volatile uint32_t ci_softints;
 #endif
 	lwp_t *ci_curlwp;		/* current lwp */
-#ifdef _ARM_ARCH_6
-	uint32_t ci_ccnt_freq;		/* cycle count frequency */
-#endif
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
+	register_t ci_undefsave[3];
 	uint32_t ci_vfp_id;
-#ifdef MULTIPROCESSOR
+#if defined(_ARM_ARCH_7)
+	uint64_t ci_lastintr;
+#endif
+#if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif
 };
 
-#ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
 #if defined(TPIDRPRW_IS_CURLWP)
 static inline struct lwp *
 _curlwp(void)
 {
-	struct lwp *l;
-	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(l));
-	return l;
+	return (struct lwp *) armreg_tpidrprw_read();
 }
 
 static inline void
 _curlwp_set(struct lwp *l)
 {
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : "=r"(l));
+	armreg_tpidrprw_write((uintptr_t)l);
 }
 
 #define	curlwp		(_curlwp())
@@ -283,19 +280,35 @@ curcpu(void)
 static inline struct cpu_info *
 curcpu(void)
 {
-	struct cpu_info *ci;
-	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(ci));
-	return ci;
+	return (struct cpu_info *) armreg_tpidrprw_read();
 }
-#else
+#elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
+#else
+#error MULTIPROCESSOR requires TPIDRPRW_IS_CURLWP or TPIDRPRW_IS_CURCPU
 #endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
+
 #ifndef curlwp
 #define	curlwp		(curcpu()->ci_curlwp)
 #endif
-#define cpu_number()	0
+
+#define CPU_INFO_ITERATOR	int
+#if defined(MULTIPROCESSOR)
+extern struct cpu_info *cpu_info[];
+#define cpu_number()	(curcpu()->ci_cpuid)
+void cpu_boot_secondary_processors(void);
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
+#define CPU_INFO_FOREACH(cii, ci)			\
+	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
+#else 
+#define cpu_number()            0
+
+#define CPU_IS_PRIMARY(ci)	true
+#define CPU_INFO_FOREACH(cii, ci)			\
+	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
 #define	LWP0_CPU_INFO	(&cpu_info_store)
-#endif /* !MULTIPROCESSOR */
 
 static inline int
 curcpl(void)
@@ -309,16 +322,18 @@ set_curcpl(int pri)
 	curcpu()->ci_cpl = pri;
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-void	dosoftints(void);
 static inline void
 cpu_dosoftints(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
+	void	dosoftints(void);
+#ifndef __HAVE_PIC_FAST_SOFTINTS
 	struct cpu_info * const ci = curcpu();
 	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
 		dosoftints();
-}
 #endif
+#endif
+}
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -330,14 +345,14 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Scheduling glue
  */
 
-#define setsoftast() (curcpu()->ci_astpending = 1)
+#define setsoftast()			(curcpu()->ci_astpending = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
 
-#define cpu_signotify(l)            setsoftast()
+#define cpu_signotify(l)		setsoftast()
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -345,6 +360,12 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+
+/*
+ * We've already preallocated the stack for the idlelwps for additional CPUs.  
+ * This hook allows to return them.
+ */
+vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
 
 #ifndef acorn26
 /*

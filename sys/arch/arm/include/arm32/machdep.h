@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.12 2012/08/29 19:10:16 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.13 2012/08/29 23:10:31 matt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -27,7 +27,8 @@ extern paddr_t cpu_reset_address_paddr;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
+//extern u_int undefined_handler_address;
+#define	undefined_handler_address	(curcpu()->ci_undefsave[2])
 
 extern char *booted_kernel;
 
