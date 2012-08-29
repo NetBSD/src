@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatareg.h,v 1.2 2012/07/23 14:07:03 jakllsch Exp $	*/
+/*	$NetBSD: mvsatareg.h,v 1.3 2012/08/29 16:50:10 jakllsch Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -254,7 +254,7 @@ struct crqb {
 	uint32_t cprdbh;	/* cPRD Desriptor Table Base High Address */
 	uint16_t ctrlflg;	/* Control Flags */
 	uint16_t atacommand[11];
-} __packed;
+} __packed __aligned(8);
 
 struct crqb_gen2e {
 	uint32_t cprdbl;	/* cPRD Desriptor Table Base Low Address */
@@ -262,7 +262,7 @@ struct crqb_gen2e {
 	uint32_t ctrlflg;	/* Control Flags */
 	uint32_t drbc;		/* Data Region Byte Count */
 	uint32_t atacommand[4];
-} __packed;
+} __packed __aligned(8);
 
 
 #define CRQB_CRQBL_EPRD_MASK	0xfffffff0
@@ -301,7 +301,7 @@ struct eprd {
 	uint16_t eot;		/* End Of Table */
 	uint32_t prdbah;	/* address bits[63:32] */
 	uint32_t resv;
-} __packed;
+} __packed __aligned(8);
 
 #define EPRD_PRDBAL_MASK	0xfffffffe	/* phy memory region mask */
 
@@ -314,7 +314,7 @@ struct crpb {
 	uint16_t id;		/* CRPB ID */
 	uint16_t rspflg;	/* CPRB Response Flags */
 	uint32_t ts;		/* CPRB Time Stamp */
-} __packed;
+} __packed __aligned(8);
 
 /* ID */
 #define CRPB_CHOSTQUETAG(x)	(((x) >> 0) & 0x7f)	/* CRPB Host Q Tag */
