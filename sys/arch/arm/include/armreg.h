@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.59 2012/08/15 17:20:27 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.60 2012/08/29 17:44:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -212,8 +212,9 @@
 #define CPU_ID_CORTEXA9R4	0x413fc090
 #define CPU_ID_CORTEXA15R2	0x412fc0f0
 #define CPU_ID_CORTEXA15R3	0x413fc0f0
-#define CPU_ID_CORTEX_P(n)	((n & 0xff0fff00) == 0x410fc000)
-#define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ffff0) == 0x410fc080)
+#define CPU_ID_CORTEX_P(n)	((n & 0xff0ff000) == 0x410fc000)
+#define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
+#define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -343,6 +344,16 @@
 #define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
 #define	ARM1176_AUXCTL_FIO	0x80000000 /* low intr latency override */
 
+/* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+#define	CORTEXA9_AUXCTL_PARITY	0x00000200 /* Enable parity */
+#define	CORTEXA9_AUXCTL_1WAY	0x00000100 /* Alloc in one way only */
+#define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache */
+#define	CORTEXA9_AUXCTL_SMP	0x00000040 /* CPU is in SMP mode */
+#define	CORTEXA9_AUXCTL_WRZERO	0x00000008 /* Write full line of zeroes */
+#define	CORTEXA9_AUXCTL_L1PLD	0x00000004 /* L1 Dside prefetch */
+#define	CORTEXA9_AUXCTL_L2PLD	0x00000002 /* L2 Dside prefetch */
+#define	CORTEXA9_AUXCTL_FW	0x00000001 /* Forward Cache/TLB ops */
+
 /* XScale Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
 #define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
@@ -358,6 +369,16 @@
 #define	MPCORE_AUXCTL_F 	0x00000008 /* instruction folding enable */
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
+
+/* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
+#define	CORTEXA9_AUXCTL_L2_PLD	0x00000002 /* Prefetch hint enable */
+#define	CORTEXA9_AUXCTL_L1_PLD	0x00000004 /* Data prefetch hint enable */
+#define	CORTEXA9_AUXCTL_WR_ZERO	0x00000008 /* Ena. write full line of 0s mode */
+#define	CORTEXA9_AUXCTL_SMP	0x00000040 /* Coherency is active */
+#define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache bit */
+#define	CORTEXA9_AUXCTL_ONEWAY	0x00000100 /* Allocate in on cache way only */
+#define	CORTEXA9_AUXCTL_PARITY	0x00000200 /* Support parity checking */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
@@ -509,4 +530,72 @@
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
+#ifndef _LOCORE
+#define	ARMREG_READ_INLINE(name, __insnstring)			\
+static inline uint32_t armreg_##name##_read(void)		\
+{								\
+	uint32_t __rv;						\
+	__asm __volatile("mrc " __insnstring : "=r"(__rv));	\
+	return __rv;						\
+}
+
+#define	ARMREG_WRITE_INLINE(name, __insnstring)			\
+static inline void armreg_##name##_write(uint32_t __val)	\
+{								\
+	__asm __volatile("mcr " __insnstring :: "r"(__val));	\
+}
+
+/* c0 registers */
+ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
+ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
+ARMREG_READ_INLINE(mpidr, "p15,0,%0,c0,c0,5") /* Multiprocess Affinity Register */
+ARMREG_READ_INLINE(pfr0, "p15,0,%0,c0,c1,0") /* Processor Feature Register 0 */
+ARMREG_READ_INLINE(pfr1, "p15,0,%0,c0,c1,1") /* Processor Feature Register 1 */
+ARMREG_READ_INLINE(mmfr0, "p15,0,%0,c0,c1,4") /* Memory Model Feature Register 0 */
+ARMREG_READ_INLINE(mmfr1, "p15,0,%0,c0,c1,5") /* Memory Model Feature Register 1 */
+ARMREG_READ_INLINE(mmfr2, "p15,0,%0,c0,c1,6") /* Memory Model Feature Register 2 */
+ARMREG_READ_INLINE(mmfr3, "p15,0,%0,c0,c1,7") /* Memory Model Feature Register 3 */
+ARMREG_READ_INLINE(isar0, "p15,0,%0,c0,c2,0") /* Instruction Set Attribute Register 0 */
+ARMREG_READ_INLINE(isar1, "p15,0,%0,c0,c2,1") /* Instruction Set Attribute Register 1 */
+ARMREG_READ_INLINE(isar2, "p15,0,%0,c0,c2,2") /* Instruction Set Attribute Register 2 */
+ARMREG_READ_INLINE(isar3, "p15,0,%0,c0,c2,3") /* Instruction Set Attribute Register 3 */
+ARMREG_READ_INLINE(isar4, "p15,0,%0,c0,c2,4") /* Instruction Set Attribute Register 4 */
+ARMREG_READ_INLINE(isar5, "p15,0,%0,c0,c2,5") /* Instruction Set Attribute Register 5 */
+ARMREG_READ_INLINE(ccsidr, "p15,1,%0,c0,c0,0") /* Cache Size ID Register */
+ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
+ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
+ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
+/* c2 registers */
+ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+/* c9 registers */
+ARMREG_READ_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
+ARMREG_WRITE_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
+ARMREG_READ_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
+ARMREG_WRITE_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
+ARMREG_READ_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
+ARMREG_WRITE_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
+ARMREG_READ_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_WRITE_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+/* c13 registers */
+ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
+ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
+ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
+/* c13 registers */
+ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
+ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
+ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
+ARMREG_WRITE_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
+
+
+#define	MPIDR_31		0x80000000
+#define	MPIDR_U			0x40000000	// 1 = Uniprocessor
+#define	MPIDR_MT		0x01000000	// AFF0 for SMT
+#define	MPIDR_AFF2		0x00ff0000
+#define	MPIDR_AFF1		0x0000ff00
+#define	MPIDR_AFF0		0x000000ff
+
+#endif /* _LOCORE*/
 #endif	/* _ARM_ARMREG_H */
