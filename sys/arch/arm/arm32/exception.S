@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.16 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.17 2012/08/29 23:10:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -50,7 +50,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-	RCSID("$NetBSD: exception.S,v 1.16 2008/04/27 18:58:44 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.17 2012/08/29 23:10:31 matt Exp $")
 
 	.text	
 	.align	0
@@ -213,15 +213,12 @@ exception_exit:
  */
 ASENTRY_NP(undefined_entry)
 	stmfd	sp!, {r0, r1}
-	ldr	r0, Lundefined_handler_indirection
+	GET_CURCPU(r0)
 	ldr	r1, [sp], #0x0004
-	str	r1, [r0, #0x0000]
+	str	r1, [r0, #CI_UNDEFSAVE]!
 	ldr	r1, [sp], #0x0004
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
-
-Lundefined_handler_indirection:
-	.word	Lundefined_handler_indirection_data
 
 /*
  * assembly bounce code for calling the kernel
@@ -236,20 +233,3 @@ ENTRY_NP(undefinedinstruction_bounce)
 	mov	r0, sp
 	adr	lr, exception_exit
 	b	_C_LABEL(undefinedinstruction)
-
-	.data
-	.align	0
-
-/*
- * Indirection data
- * 2 words use for preserving r0 and r1
- * 3rd word contains the undefined handler address.
- */
-
-Lundefined_handler_indirection_data:
-	.word	0
-	.word	0
-
-	.global	_C_LABEL(undefined_handler_address)
-_C_LABEL(undefined_handler_address):
-	.word	_C_LABEL(undefinedinstruction_bounce)
