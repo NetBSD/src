@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.111 2012/08/29 07:14:03 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.112 2012/08/29 18:29:04 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.111 2012/08/29 07:14:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.112 2012/08/29 18:29:04 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1718,6 +1718,10 @@ set_cpufuncs(void)
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
 
+		/*
+		 * Start and reset the PMC Cycle Counter.
+		 */
+		armreg_pmcrv6_write(ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C);
 		return 0;
 	}
 #endif /* CPU_ARM11 */
@@ -1901,7 +1905,11 @@ set_cpufuncs(void)
 		pmap_pte_init_armv7();
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
-
+		/*
+		 * Start and reset the PMC Cycle Counter.
+		 */
+		armreg_pmcr_write(ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C);
+		armreg_pmcntenset_write(CORTEX_CNTENS_C);
 		return 0;
 	}
 #endif /* CPU_CORTEX */
