@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.231 2012/08/27 12:05:30 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.232 2012/08/29 05:51:30 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2012/08/27 12:05:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2012/08/29 05:51:30 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4976,7 +4976,7 @@ vector_page_setprot(int prot)
 
 	ptep = &l2b->l2b_kva[l2pte_index(vector_page)];
 
-	*ptep = (*ptep & ~L1_S_PROT_MASK) | L1_S_PROT(PTE_KERNEL, prot);
+	*ptep = (*ptep & ~L2_S_PROT_MASK) | L2_S_PROT(PTE_KERNEL, prot);
 	PTE_SYNC(ptep);
 	cpu_tlb_flushD_SE(vector_page);
 	cpu_cpwait();
