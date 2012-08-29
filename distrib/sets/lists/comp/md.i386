@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.126 2012/08/08 18:37:51 drochner Exp $
+# $NetBSD: md.i386,v 1.127 2012/08/29 17:13:21 drochner Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -165,6 +165,7 @@
 ./usr/include/x86/bus.h				comp-obsolete		obsolete
 ./usr/include/x86/cacheinfo.h			comp-c-include
 ./usr/include/x86/cpu.h				comp-c-include
+./usr/include/x86/cpu_ucode.h			comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include
