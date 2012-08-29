@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.67 2012/08/29 07:14:04 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.68 2012/08/29 16:45:34 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.67 2012/08/29 07:14:04 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.68 2012/08/29 16:45:34 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -140,7 +140,7 @@ ENTRY(cpu_switchto)
 	mov	r6, r1
 	mov	r4, r0
 
-#ifdef TPIDRPRW_ID_IS_CURCPU
+#ifdef TPIDRPRW_IS_CURCPU
 	GET_CURCPU(r7)
 #elif defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r0, c13, c0, 4		/* get old lwp (r4 maybe 0) */
