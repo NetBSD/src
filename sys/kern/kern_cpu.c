@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.56 2012/06/13 23:00:05 joerg Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.57 2012/08/29 17:13:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,9 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.56 2012/06/13 23:00:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.57 2012/08/29 17:13:21 drochner Exp $");
 
 #include "opt_cpu_ucode.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +266,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 #ifdef CPU_UCODE
 	case IOC_CPU_UCODE_GET_VERSION:
-		error = cpu_ucode_get_version(data);
+		error = cpu_ucode_get_version((struct cpu_ucode_version *)data);
+		break;
+
+	/* XXX ifdef COMPAT */
+	case OIOC_CPU_UCODE_GET_VERSION:
+		error = compat6_cpu_ucode_get_version((struct compat6_cpu_ucode *)data);
 		break;
 
 	case IOC_CPU_UCODE_APPLY:
@@ -274,7 +280,17 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		    NULL, NULL, NULL, NULL);
 		if (error != 0)
 			break;
-		error = cpu_ucode_apply(data);
+		error = cpu_ucode_apply((const struct cpu_ucode *)data);
+		break;
+
+	/* XXX ifdef COMPAT */
+	case OIOC_CPU_UCODE_APPLY:
+		error = kauth_authorize_machdep(l->l_cred,
+		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
+		    NULL, NULL, NULL, NULL);
+		if (error != 0)
+			break;
+		error = compat6_cpu_ucode_apply((const struct compat6_cpu_ucode *)data);
 		break;
 #endif
 
@@ -554,7 +570,7 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 		sc->sc_blobsize = 0;
 	}
 
-	error = cpu_ucode_md_open(&fwh, fwname);
+	error = cpu_ucode_md_open(&fwh, sc->loader_version, fwname);
 	if (error != 0) {
 		aprint_error("ucode: firmware_open failed: %i\n", error);
 		goto err0;
