@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.1 2012/08/14 21:12:59 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2 2012/08/29 18:45:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cpu.h>
 
 #if defined(CPU_CORTEX) || defined(CPU_ARM11)
-#define cpu_hascounter()	true
+#define cpu_hascounter()	(curcpu()->ci_data.cpu_cc_freq != 0)
 #else
 #define cpu_hascounter()	false
 #endif
@@ -61,19 +61,17 @@ cpu_counter32(void)
 	const bool cortex_p = false;
 #endif
 
-	uint32_t rv;
 	if (cortex_p)
-		__asm __volatile("mrc p15, 0, %0, c9, c12, 1" : "=r"(rv));
+		return armreg_pmccntr_read();
 	else
-		__asm __volatile("mrc p15, 0, %0, c15, c12, 1" : "=r"(rv));
-	return rv;
+		return armreg_pmccntrv6_read();
 }
 #endif
 
 static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
-	return ci->ci_ccnt_freq;
+	return ci->ci_data.cpu_cc_freq;
 }
 
 #endif /* _KERNEL */
