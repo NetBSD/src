@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.11 2012/08/16 18:22:40 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.12 2012/08/29 19:10:16 matt Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -32,6 +32,7 @@ extern u_int undefined_handler_address;
 extern char *booted_kernel;
 
 /* misc prototypes used by the many arm machdeps */
+void cortex_pmc_ccnt_init(void);
 void halt(void);
 void parse_mi_bootargs(char *);
 void data_abort_handler(trapframe_t *);

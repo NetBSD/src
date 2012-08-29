@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.18 2012/08/29 18:05:41 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.19 2012/08/29 19:10:16 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.18 2012/08/29 18:05:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.19 2012/08/29 19:10:16 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -645,8 +645,6 @@ initarm(void *arg)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-void cortexa8_pmc_ccnt_init(void);
-
 static void
 init_clocks(void)
 {
@@ -663,7 +661,7 @@ init_clocks(void)
 	}
 	beagle_putchar('G');
 #endif
-	cortexa8_pmc_ccnt_init();
+	cortex_pmc_ccnt_init();
 }
 
 #ifndef CONSADDR
