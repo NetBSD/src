@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.47 2012/05/25 23:37:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.48 2012/08/29 20:39:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -963,3 +963,60 @@ struct livengood_tcpip_ctxdesc {
 
 /* for PCI express Capability registers */
 #define	WM_PCI_PCIE_DCSR2_16MS	0x00000005
+
+/* advanced TX descriptor for 82575 and newer */
+typedef union nq_txdesc {
+	struct {
+		uint64_t nqtxd_addr;
+		uint32_t nqtxd_cmdlen;
+		uint32_t nqtxd_fields;
+	} nqtx_data;
+	struct {
+		uint32_t nqtxc_vl_len;
+		uint32_t nqtxc_sn;
+		uint32_t nqtxc_cmd;
+		uint32_t nqtxc_mssidx;
+	} nqrx_ctx;
+} __packed nq_txdesc_t;
+
+
+/* Commands for nqtxd_cmdlen and nqtxc_cmd */
+#define	NQTX_CMD_EOP	(1U << 24)	/* end of packet */
+#define	NQTX_CMD_IFCS	(1U << 25)	/* insert FCS */
+#define	NQTX_CMD_RS	(1U << 27)	/* report status */
+#define	NQTX_CMD_DEXT	(1U << 29)	/* descriptor extension */
+#define	NQTX_CMD_VLE	(1U << 30)	/* VLAN enable */
+#define	NQTX_CMD_TSE	(1U << 31)	/* TCP segmentation enable */
+
+/* Descriptor types (if DEXT is set) */
+#define	NQTX_DTYP_C	(2U << 20)	/* context */
+#define	NQTX_DTYP_D	(3U << 20)	/* data */
+
+#define NQTXD_FIELDS_IDX_SHIFT		4	/* context index shift */
+#define NQTXD_FIELDS_IDX_MASK		0xf
+#define NQTXD_FIELDS_PAYLEN_SHIFT	14	/* payload len shift */
+#define NQTXD_FIELDS_PAYLEN_MASK	0x3ffff
+
+#define NQTXD_FIELDS_IXSM		(1U << 8) /* do IP checksum */
+#define NQTXD_FIELDS_TUXSM		(1U << 9) /* do TCP/UDP checksum */
+
+#define NQTXC_VLLEN_IPLEN_SHIFT		0	/* IP header len */
+#define NQTXC_VLLEN_IPLEN_MASK		0x1ff
+#define NQTXC_VLLEN_MACLEN_SHIFT	9	/* MAC header len */
+#define NQTXC_VLLEN_MACLEN_MASK		0x7f
+#define NQTXC_VLLEN_VLAN_SHIFT		16	/* vlan number */
+#define NQTXC_VLLEN_VLAN_MASK		0xffff
+
+#define NQTXC_CMD_MKRLOC_SHIFT		0	/* IP checksum offset */
+#define NQTXC_CMD_MKRLOC_MASK		0x1ff
+#define NQTXC_CMD_SNAP			(1U << 9)
+#define NQTXC_CMD_IP4			(1U << 10)
+#define NQTXC_CMD_IP6			(0U << 10)
+#define NQTXC_CMD_TCP			(1U << 11)
+#define NQTXC_CMD_UDP			(0U << 11)
+#define NQTXC_MSSIDX_IDX_SHIFT		4	/* context index shift */
+#define NQTXC_MSSIDX_IDX_MASK		0xf
+#define NQTXC_MSSIDX_L4LEN_SHIFT	8	/* L4 header len shift */
+#define NQTXC_MSSIDX_L4LEN_MASK		0xff
+#define NQTXC_MSSIDX_MSS_SHIFT		16	/* MSS */
+#define NQTXC_MSSIDX_MSS_MASK		0xffff
