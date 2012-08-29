@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.8 2012/08/22 22:18:22 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.9 2012/08/29 18:04:23 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -107,10 +107,7 @@ RCSID("$NetBSD: beagle_start.S,v 1.8 2012/08/22 22:18:22 matt Exp $")
 	.global	_C_LABEL(beagle_start)
 _C_LABEL(beagle_start):
 	/* Move into supervisor mode and disable IRQs/FIQs. */
-	mrs	r0, cpsr
-	bic	r0, r0, #PSR_MODE
-	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)
-	msr	cpsr, r0
+	cpsid	if, #PSR_SVC32_MODE
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -282,9 +279,7 @@ mmu_init_table:
 		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO | L1_S_APv7_KRW)
 
-#if defined(OMAP_L4_WAKEUP_BASE) \
-    && (OMAP_L4_WAKEUP_BASE < OMAP_L4_CORE_BASE \
-	|| OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE <= OMAP_L4_WAKEUP_BASE)
+#if defined(OMAP_L4_WAKEUP_BASE) && defined(OMAP_L4_WAKEUP_VBASE)
 	/* Map all 4MB of L4 WAKEUP (so console will work) */
 	MMU_INIT(OMAP_L4_WAKEUP_VBASE, OMAP_L4_WAKEUP_BASE,
 		(OMAP_L4_WAKEUP_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
