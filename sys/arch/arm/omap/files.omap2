@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.13 2012/08/22 22:18:21 matt Exp $
+#	$NetBSD: files.omap2,v 1.14 2012/08/29 17:48:17 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -39,7 +39,7 @@ file	arch/arm/arm/bus_space_a4x.S		obio
 device	omapicu: pic, pic_splfuncs
 attach	omapicu at obio with omap2icu
 file	arch/arm/omap/omap2_icu.c		(omap2 | omap3) & omapicu
-file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu
+file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 
 # OMAP2 GPIO controllers
 device	omapgpio: gpiobus
