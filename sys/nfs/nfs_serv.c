@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.164 2012/08/27 11:35:13 chs Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.165 2012/08/29 14:00:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.164 2012/08/27 11:35:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.165 2012/08/29 14:00:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 
 		/* Server uses server cache, so kill cache last. */
 		nfsrv_finicache();
+		nfs_fini();
 		return 0;
 	default:
 		return ENOTTY;
