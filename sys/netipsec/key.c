@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.77 2012/08/29 20:37:50 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.78 2012/08/30 12:16:49 drochner Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.77 2012/08/29 20:37:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.78 2012/08/30 12:16:49 drochner Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -3040,9 +3040,9 @@ key_delsav(struct secasvar *sav)
 		sav->tdb_xform = NULL;
 	} else {
 		if (sav->key_auth != NULL)
-			memset(_KEYBUF(sav->key_auth), 0, _KEYLEN(sav->key_auth));
+			explicit_bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		if (sav->key_enc != NULL)
-			memset(_KEYBUF(sav->key_enc), 0, _KEYLEN(sav->key_enc));
+			explicit_bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
 	}
 	if (sav->key_auth != NULL) {
 		KFREE(sav->key_auth);
