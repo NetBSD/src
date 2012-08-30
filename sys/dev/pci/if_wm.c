@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.232 2012/08/29 20:39:24 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.233 2012/08/30 23:14:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.232 2012/08/29 20:39:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.233 2012/08/30 23:14:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1882,7 +1882,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wm_ioctl;
-	if (sc->sc_type == WM_T_I350)
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		ifp->if_start = wm_nq_start;
 	else
 		ifp->if_start = wm_start;
@@ -1934,9 +1934,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
 	 */
-	if (sc->sc_type == WM_T_82575 || sc->sc_type == WM_T_82576)
-		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
-	else if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
