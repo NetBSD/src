@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.303 2012/08/18 08:54:06 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.304 2012/08/30 02:26:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.303 2012/08/18 08:54:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.304 2012/08/30 02:26:38 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -522,6 +522,7 @@ mi_switch(lwp_t *l)
 
 	binuptime(&bt);
 
+	KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
@@ -712,8 +713,13 @@ mi_switch(lwp_t *l)
 		}
 
 		/* Switch to the new LWP.. */
+		KASSERT(curlwp == ci->ci_curlwp);
+		KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 		prevlwp = cpu_switchto(l, newl, returning);
 		ci = curcpu();
+		KASSERT(curlwp == ci->ci_curlwp);
+		KASSERTMSG(l == curlwp, "l %p curlwp %p prevlwp %p",
+		    l, curlwp, prevlwp);
 
 		/*
 		 * Switched away - we have new curlwp.
