@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.18 2012/08/29 02:44:07 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.19 2012/08/30 01:27:44 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.18 2012/08/29 02:44:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.19 2012/08/30 01:27:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.18 2012/08/29 02:44:07 macallan Exp $"
 #include <dev/adb/adb_keymap.h>
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_adbkbd.h"
 #include "adbdebug.h"
 #include "wsmouse.h"
 
@@ -336,6 +337,10 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
+#ifdef ADBKBD_EMUL_USB
+	sc->sc_emul_usb = TRUE;
+	wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb, 128);
+#endif /* ADBKBD_EMUL_USB */
 
 #if NWSMOUSE > 0
 	/* attach the mouse device */
