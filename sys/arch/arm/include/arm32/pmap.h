@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.103 2012/08/20 13:03:41 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.104 2012/08/30 02:10:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -403,8 +403,12 @@ extern int pmap_needs_pte_sync;
  * this at compile time.
  */
 #if (ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7 != 0) && (ARM_NMMUS == 1) 
-#define	PMAP_NEEDS_PTE_SYNC	1
 #define	PMAP_INCLUDE_PTE_SYNC
+#if (ARM_MMU_V7 > 0)
+#define	PMAP_NEEDS_PTE_SYNC	1
+#else
+#define	PMAP_NEEDS_PTE_SYNC	1
+#endif
 #elif (ARM_MMU_SA1 == 0)
 #define	PMAP_NEEDS_PTE_SYNC	0
 #endif
@@ -419,22 +423,23 @@ extern int pmap_needs_pte_sync;
 #define	PMAP_INCLUDE_PTE_SYNC
 #endif
 
-#define	PTE_SYNC(pte)							\
-do {									\
-	if (PMAP_NEEDS_PTE_SYNC)					\
-		cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t));\
-} while (/*CONSTCOND*/0)
+static inline void
+pmap_ptesync(pt_entry_t *ptep, size_t cnt)
+{
+	if (PMAP_NEEDS_PTE_SYNC)
+		cpu_dcache_wb_range((vaddr_t)ptep, cnt * sizeof(pt_entry_t));
+#if ARM_MMU_V7 > 0
+	__asm("dsb");
+#endif
+}
 
-#define	PTE_SYNC_RANGE(pte, cnt)					\
-do {									\
-	if (PMAP_NEEDS_PTE_SYNC) {					\
-		cpu_dcache_wb_range((vaddr_t)(pte),			\
-		    (cnt) << 2); /* * sizeof(pt_entry_t) */		\
-	}								\
-} while (/*CONSTCOND*/0)
+#define	PTE_SYNC(ptep)			pmap_ptesync((ptep), 1)
+#define	PTE_SYNC_RANGE(ptep, cnt)	pmap_ptesync((ptep), (cnt))
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
+#define	l1pte_supersection_p(pde) (l1pte_section_p(pde)	\
+				&& ((pde) & L1_S_V6_SUPER) != 0)
 #define	l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
 #define	l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 
