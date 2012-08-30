@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.222 2012/01/30 23:31:27 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.222 2012/01/30 23:31:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -447,7 +447,7 @@ config_create_interruptthreads(void)
 
 	for (i = 0; i < interrupt_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
-		    config_interrupts_thread, NULL, NULL, "config");
+		    config_interrupts_thread, NULL, NULL, "configintr");
 	}
 }
 
@@ -474,7 +474,7 @@ config_create_mountrootthreads(void)
 
 	for (i = 0; i < mountroot_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
-		    config_mountroot_thread, NULL, NULL, "config");
+		    config_mountroot_thread, NULL, NULL, "configroot");
 	}
 }
 
