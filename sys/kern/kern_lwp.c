@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.171 2012/07/22 22:40:19 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.172 2012/08/30 02:26:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.171 2012/07/22 22:40:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172 2012/08/30 02:26:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -919,6 +919,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
+	KASSERTMSG(new == curlwp, "l %p curlwp %p prevlwp %p", new, curlwp, prev);
 
 	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
 
@@ -983,6 +984,7 @@ lwp_exit(struct lwp *l)
 	mutex_enter(p->p_lock);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
+		KASSERT(p != &proc0);
 		/* XXXSMP kernel_lock not held */
 		exit1(l, 0);
 		/* NOTREACHED */
