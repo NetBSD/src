@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.234 2012/08/29 18:56:45 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.235 2012/08/30 02:05:56 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2012/08/29 18:56:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2012/08/30 02:05:56 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3516,7 +3516,12 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		 */
 		KDASSERT(pm == pmap_kernel());
 		pmap_release_pmap_lock(pm);
-		pa = (l1pd & L1_S_FRAME) | (va & L1_S_OFFSET);
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+		if (l1pte_supersection_p(l1pd)) {
+			pa = (l1pd & L1_SS_FRAME) | (va & L1_SS_OFFSET);
+		} else
+#endif
+			pa = (l1pd & L1_S_FRAME) | (va & L1_S_OFFSET);
 	} else {
 		/*
 		 * Note that we can't rely on the validity of the L1
@@ -5319,6 +5324,7 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va)
 	pde = *pdep;
 
 	if (l1pte_section_p(pde)) {
+		__CTASSERT((L1_S_CACHE_MASK & L1_S_V6_SUPER) == 0);
 		if ((pde & L1_S_CACHE_MASK) != pte_l1_s_cache_mode_pt) {
 			*pdep = (pde & ~L1_S_CACHE_MASK) |
 			    pte_l1_s_cache_mode_pt;
