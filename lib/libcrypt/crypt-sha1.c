@@ -1,4 +1,4 @@
-/* $NetBSD: crypt-sha1.c,v 1.4 2011/05/09 19:15:28 drochner Exp $ */
+/* $NetBSD: crypt-sha1.c,v 1.5 2012/08/30 12:16:49 drochner Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crypt-sha1.c,v 1.4 2011/05/09 19:15:28 drochner Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.5 2012/08/30 12:16:49 drochner Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -190,7 +190,7 @@ __crypt_sha1 (const char *pw, const char *salt)
     *ep = '\0';
 
     /* Don't leave anything around in vm they could use. */
-    memset(hmac_buf, 0, sizeof hmac_buf);
+    __explicit_bzero(hmac_buf, sizeof hmac_buf);
 
     return passwd;
 }	
