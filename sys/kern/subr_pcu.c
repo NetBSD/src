@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.11 2012/04/18 13:43:13 yamt Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.12 2012/08/30 02:24:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.11 2012/04/18 13:43:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.12 2012/08/30 02:24:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -89,7 +89,7 @@ pcu_switchpoint(lwp_t *l)
 	u_int id;
 	/* int s; */
 
-	KASSERT(l == curlwp);
+	KASSERTMSG(l == curlwp, "l %p != curlwp %p", l, curlwp);
 
 	if (__predict_true(pcu_inuse == 0)) {
 		/* PCUs are not in use. */
