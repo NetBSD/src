@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.152 2011/11/27 03:24:00 jmcneill Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.153 2012/08/30 02:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.152 2011/11/27 03:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153 2012/08/30 02:23:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.152 2011/11/27 03:24:00 jmcneill Exp
 bool	kernel_lock_dodebug;
 
 __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
-    __aligned(CACHE_LINE_SIZE);
+    __cacheline_aligned;
 
 void
 assert_sleepable(void)
