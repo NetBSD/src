@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.34 2012/02/23 12:24:05 para Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.35 2012/08/30 02:25:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.34 2012/02/23 12:24:05 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.35 2012/08/30 02:25:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -471,7 +471,9 @@ sched_catchlwp(struct cpu_info *ci)
 		if (l == NULL) {
 			break;
 		}
-		KASSERT(l->l_stat == LSRUN);
+		KASSERTMSG(l->l_stat == LSRUN, "%s l %p (%s) l_stat %d",
+		    ci->ci_data.cpu_name,
+		    l, (l->l_name ? l->l_name : l->l_proc->p_comm), l->l_stat);
 
 		/* Look for threads, whose are allowed to migrate */
 		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
