@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2012/08/30 12:31:25 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2012/08/31 01:23:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/mman.h>
-#ifdef __NetBSD__
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/sysctl.h>
 #endif
 #include <paths.h>
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 
 	if (xflag) {
 		if (argc == 0) {
-#ifdef __NetBSD__
+#if !HAVE_NBTOOL_CONFIG_H
 			char path_unix[MAXPATHLEN];
 			size_t len = sizeof(path_unix) - 1;
 			path_unix[0] = '/';
