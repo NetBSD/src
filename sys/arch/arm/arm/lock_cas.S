@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.8 2012/08/16 16:49:10 matt Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.9 2012/08/31 23:42:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include "opt_multiprocessor.h"
-#if defined(MULTIPROCESSOR)
-#error need to write MP support for ucas_* functions
-#endif
-
 #include "opt_arm_debug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
+
+#if defined(MULTIPROCESSOR) && !defined(_ARM_ARCH_6)
+#error need to write MP support for ucas_* functions
+#endif
 
 	.text
 	.align	0
@@ -108,8 +108,8 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 #endif /* !_ARM_ARCH_6 */
 
 #ifdef __PROG32
-#define SAVE_REGS	stmfd	sp!, {r4-r6}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#define SAVE_REGS	stmfd	sp!, {r4-r5}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r5}
 #else
 /* Need to save R14_svc because it'll get trampled if we take a page fault. */
 #define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
@@ -127,9 +127,19 @@ ENTRY(ucas_32)
 
 	.globl	_C_LABEL(ucas_32_ras_start)
 _C_LABEL(ucas_32_ras_start):
+#ifdef MULTIPROCESSOR
+1:	ldrex	r5, [r0]		/* we should have access */
+	cmp	r1, r5
+	bne	2f
+	strex	ip, r2, [r0]
+	cmp	ip, #0
+	bne	1b
+2:
+#else
 	ldrt	r5, [r0]
 	cmp	r1, r5
 	streqt	r2, [r0]
+#endif
 	.globl _C_LABEL(ucas_32_ras_end)
 _C_LABEL(ucas_32_ras_end):
 
