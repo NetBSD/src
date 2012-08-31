@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.29 2012/07/30 00:56:01 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.29 2012/07/30 00:56:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -311,7 +311,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	/*
 	 * Determine the base clock frequency. (2.2.24)
 	 */
-	hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	if (hp->specver == SDHC_SPEC_VERS_300) {
+		hp->clkbase = SDHC_BASE_V3_FREQ_KHZ(caps);
+	} else {
+		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
+	}
 	if (hp->clkbase == 0) {
 		if (sc->sc_clkbase == 0) {
 			/* The attachment driver must tell us. */
