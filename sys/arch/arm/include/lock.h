@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.20 2012/08/29 07:04:14 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.21 2012/08/31 17:29:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 #ifdef _ARM_ARCH_7
 			"dmb"
 #else
-			"mrc p15, 0, %[__tmp], c7, c10, 5"
+			"mcr\tp15, 0, %[__tmp], c7, c10, 5"
 #endif
 		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
 		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
@@ -105,7 +105,7 @@ __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 #ifdef _ARM_ARCH_7
 			"nop"
 #else
-			"mrc p15, 0, %[__tmp], c7, c10, 5"
+			"mcr\tp15, 0, %[__tmp], c7, c10, 5"
 #endif
 		    : [__rv] "=&r" (__rv), [__tmp] "=&r"(__tmp)
 		    : [__val] "r" (__val), [__ptr] "r" (__ptr) : "cc", "memory");
@@ -146,7 +146,7 @@ __swp(int __val, volatile int *__ptr)
 #ifdef _ARM_ARCH_7
 		"dmb"
 #elif defined(_ARM_ARCH_6)
-		"mrc p15, 0, %[__tmp], c7, c10, 5"
+		"mcr\tp15, 0, %[__tmp], c7, c10, 5"
 #else
 		"nop"
 #endif
