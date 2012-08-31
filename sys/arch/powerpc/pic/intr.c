@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2012/06/07 04:37:09 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.23 2012/08/31 13:12:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2012/06/07 04:37:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2012/08/31 13:12:52 macallan Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -352,8 +352,9 @@ intr_typename(int type)
 static void
 intr_calculatemasks(void)
 {
-	imask_t newmask[NIPL] = { [IPL_NONE...IPL_HIGH] = 0 };
+	imask_t newmask[NIPL];
 	struct intr_source *is;
+	struct intrhand *ih;
 	int irq;
 
 	for (u_int ipl = IPL_NONE; ipl < NIPL; ipl++) {
@@ -362,7 +363,9 @@ intr_calculatemasks(void)
 
 	/* First, figure out which ipl each IRQ uses. */
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		newmask[is->is_ipl] |= PIC_VIRQ_TO_MASK(irq);
+		for (ih = is->is_hand; ih != NULL; ih = ih->ih_next) {
+			newmask[ih->ih_ipl] |= PIC_VIRQ_TO_MASK(irq);
+		}
 	}
 
 	/*
@@ -379,7 +382,7 @@ intr_calculatemasks(void)
 		newmask[ipl] |= newmask[ipl - 1];
 	}
 
-#ifdef DEBUG_IPL
+#ifdef PIC_DEBUG
 	for (u_int ipl = 0; ipl < NIPL; ipl++) {
 		printf("%u: %08x -> %08x\n", ipl, imask[ipl], newmask[ipl]);
 	}
@@ -661,10 +664,10 @@ spllower(int ncpl)
 void
 genppc_cpu_configure(void)
 {
-	aprint_normal("biomask %x netmask %x ttymask %x\n",
-	    (u_int)imask[IPL_BIO] & 0x1fffffff,
-	    (u_int)imask[IPL_NET] & 0x1fffffff,
-	    (u_int)imask[IPL_TTY] & 0x1fffffff);
+	aprint_normal("vmmask %x schedmask %x highmask %x\n",
+	    (u_int)imask[IPL_VM] & 0x7fffffff,
+	    (u_int)imask[IPL_SCHED] & 0x7fffffff,
+	    (u_int)imask[IPL_HIGH] & 0x7fffffff);
 
 	spl0();
 }
