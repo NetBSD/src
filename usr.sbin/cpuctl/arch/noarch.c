@@ -1,4 +1,4 @@
-/*	$NetBSD: noarch.c,v 1.3 2012/08/29 17:13:23 drochner Exp $	*/
+/*	$NetBSD: noarch.c,v 1.4 2012/08/31 07:27:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,14 @@
 #include <sys/types.h>
 
 #ifndef lint
-__RCSID("$NetBSD: noarch.c,v 1.3 2012/08/29 17:13:23 drochner Exp $");
+__RCSID("$NetBSD: noarch.c,v 1.4 2012/08/31 07:27:27 drochner Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
+
+struct cpu_ucode {
+	int dummy;
+};
 
 #include "../cpuctl.h"
 
@@ -45,7 +49,7 @@ identifycpu(int fd, const char *cpuname)
 }
 
 int
-ucodeupdate_check(int, struct cpu_ucode *uc)
+ucodeupdate_check(int fd, struct cpu_ucode *uc)
 {
 
 	return 0;
