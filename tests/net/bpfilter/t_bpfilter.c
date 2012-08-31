@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.4 2012/08/16 20:16:06 alnsn Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.5 2012/08/31 04:02:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.4 2012/08/16 20:16:06 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.5 2012/08/31 04:02:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -276,6 +276,7 @@ ATF_TC_HEAD(bpfiltercontig, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Checks that bpf program "
 	    "can read bytes from contiguous buffer.");
+	atf_tc_set_md_var(tc, "timeout", "30");
 }
 
 ATF_TC_BODY(bpfiltercontig, tc)
@@ -291,6 +292,7 @@ ATF_TC_HEAD(bpfiltermchain, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Checks that bpf program "
 	    "can read bytes from mbuf chain.");
+	atf_tc_set_md_var(tc, "timeout", "30");
 }
 
 ATF_TC_BODY(bpfiltermchain, tc)
