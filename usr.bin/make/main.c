@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.201 2012/08/30 21:17:05 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.202 2012/08/31 02:59:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.201 2012/08/30 21:17:05 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.202 2012/08/31 02:59:37 pgoyette Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.201 2012/08/30 21:17:05 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.202 2012/08/31 02:59:37 pgoyette Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1235,7 +1235,7 @@ main(int argc, char **argv)
 			} else if (expandVars) {
 				char tmp[128];
 								
-				if (snprintf(tmp, sizeof(tmp), "${%s}", var) >= sizeof(tmp))
+				if (snprintf(tmp, sizeof(tmp), "${%s}", var) >= (ssize_t)(sizeof(tmp)))
 					Fatal("%s: variable name too big: %s",
 					      progname, var);
 				value = p1 = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
@@ -2051,7 +2051,7 @@ getBoolean(const char *name, Boolean bf)
     char tmp[64];
     char *cp;
 
-    if (snprintf(tmp, sizeof(tmp), "${%s:tl}", name) < sizeof(tmp)) {
+    if (snprintf(tmp, sizeof(tmp), "${%s:tl}", name) < (ssize_t)(sizeof(tmp))) {
 	cp = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
 
 	if (cp) {
