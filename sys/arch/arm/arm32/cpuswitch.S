@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.68 2012/08/29 16:45:34 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.69 2012/08/31 11:45:38 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.68 2012/08/29 16:45:34 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.69 2012/08/31 11:45:38 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -351,6 +351,8 @@ ENTRY(lwp_trampoline)
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
+
+AST_ALIGNMENT_FAULT_LOCALS
 
 #ifdef __HAVE_FAST_SOFTINTS
 /*
