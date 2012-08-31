@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.3 2012/08/16 16:49:10 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.4 2012/08/31 23:41:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -49,13 +49,20 @@ ENTRY_NP(_atomic_swap_32)
 1:
 #ifdef _ARM_ARCH_6
 	ldrex	r0, [r2]
-	strex	r3, r1, [r2]
+	cmp	r0, r1
+	strexne	ip, r1, [r2]
 #else
 	swp	r0, r1, [r2]
-	mov	r3, #0
+	cmp	r0, r1
+	movsne	ip, #0
 #endif
-	cmp	r3, #0
+	cmpne	ip, #0
 	bne	1b
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
 	RET
 	END(_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
@@ -78,6 +85,11 @@ ENTRY_NP(_atomic_swap_8)
 #endif
 	cmp	r3, #0
 	bne	1b
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
 	RET
 	END(_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
