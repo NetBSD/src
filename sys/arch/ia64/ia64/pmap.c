@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27 2010/11/12 07:59:26 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.28 2012/08/31 14:31:46 chs Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2010/11/12 07:59:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2012/08/31 14:31:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1239,9 +1239,6 @@ pmap_clear_modify(struct vm_page *pg)
 	pmap_t oldpmap;
 	pv_entry_t pv;
 
-	if (pg->flags & PG_FAKE)
-		return rv;
-
 	TAILQ_FOREACH(pv, &md->pv_list, pv_list) {
 		PMAP_LOCK(pv->pv_pmap);
 		oldpmap = pmap_install(pv->pv_pmap);
@@ -1448,7 +1445,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
          * Enter on the PV list if part of our managed memory.
          */
 
-        if ((flags & (PG_FAKE)) == 0) {
+        if (pg != NULL) {
                 pmap_insert_entry(pmap, va, pg);
                 managed = true;
         }
@@ -1478,7 +1475,7 @@ validate:
 
 
 /*
- *	Routine:	pmap_page_purge: => was: pmap_remove_all
+ *	Routine:	pmap_page_purge
  *	Function:
  *		Removes this physical page from
  *		all physical maps in which it resides.
@@ -1497,15 +1494,6 @@ pmap_page_purge(struct vm_page *pg)
 	pmap_t oldpmap;
 	pv_entry_t pv;
 
-#if defined(DIAGNOSTIC)
-	/*
-	 * XXX this makes pmap_page_protect(NONE) illegal for non-managed
-	 * pages!
-	 */
-	if (pg->flags & PG_FAKE) {
-		panic("pmap_page_protect: illegal for unmanaged page, va: 0x%lx", VM_PAGE_TO_PHYS(pg));
-	}
-#endif
 	//UVM_LOCK_ASSERT_PAGEQ();
 
 	while ((pv = TAILQ_FIRST(&md->pv_list)) != NULL) {
