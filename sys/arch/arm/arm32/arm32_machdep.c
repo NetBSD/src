@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.82 2012/08/16 18:22:39 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.82 2012/08/16 18:22:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -61,7 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.82 2012/08/16 18:22:39 matt Exp 
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,6 +91,7 @@ pv_addr_t abtstack;
 pv_addr_t fiqstack;
 pv_addr_t irqstack;
 pv_addr_t undstack;
+pv_addr_t idlestack;
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
@@ -96,7 +100,6 @@ int kernel_debug = 0;
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
-
 
 /* Prototypes */
 
@@ -116,28 +119,30 @@ extern void configure(void);
 void
 arm32_vector_init(vaddr_t va, int which)
 {
-	extern unsigned int page0[], page0_data[];
-	unsigned int *vectors = (int *) va;
-	unsigned int *vectors_data = vectors + (page0_data - page0);
-	int vec;
+	if (CPU_IS_PRIMARY(curcpu())) {
+		extern unsigned int page0[], page0_data[];
+		unsigned int *vectors = (int *) va;
+		unsigned int *vectors_data = vectors + (page0_data - page0);
+		int vec;
 
-	/*
-	 * Loop through the vectors we're taking over, and copy the
-	 * vector's insn and data word.
-	 */
-	for (vec = 0; vec < ARM_NVEC; vec++) {
-		if ((which & (1 << vec)) == 0) {
-			/* Don't want to take over this vector. */
-			continue;
+		/*
+		 * Loop through the vectors we're taking over, and copy the
+		 * vector's insn and data word.
+		 */
+		for (vec = 0; vec < ARM_NVEC; vec++) {
+			if ((which & (1 << vec)) == 0) {
+				/* Don't want to take over this vector. */
+				continue;
+			}
+			vectors[vec] = page0[vec];
+			vectors_data[vec] = page0_data[vec];
 		}
-		vectors[vec] = page0[vec];
-		vectors_data[vec] = page0_data[vec];
+
+		/* Now sync the vectors. */
+		cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
+
+		vector_page = va;
 	}
-
-	/* Now sync the vectors. */
-	cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
-
-	vector_page = va;
 
 	if (va == ARM_VECTORS_HIGH) {
 		/*
@@ -211,6 +216,11 @@ cpu_startup(void)
 	vaddr_t maxaddr;
 	u_int loop;
 	char pbuf[9];
+
+	/*
+	 * Until we better locking, we have to live under the kernel lock.
+	 */
+	//KERNEL_LOCK(1, NULL);
 
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
@@ -413,6 +423,7 @@ parse_mi_bootargs(char *args)
 #error IPLs are screwed up
 #endif
 
+#ifndef __HAVE_PIC_FAST_SOFTINTS
 #define	SOFTINT2IPLMAP \
 	(((IPL_SOFTSERIAL - IPL_SOFTCLOCK) << (SOFTINT_SERIAL * 4)) | \
 	 ((IPL_SOFTNET    - IPL_SOFTCLOCK) << (SOFTINT_NET    * 4)) | \
@@ -441,7 +452,7 @@ softint_trigger(uintptr_t mask)
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
-	lwp_t ** lp = &curcpu()->ci_softlwps[level];
+	lwp_t ** lp = &l->l_cpu->ci_softlwps[level];
 	KASSERT(*lp == NULL || *lp == l);
 	*lp = l;
 	*machdep = 1 << SOFTINT2IPL(level);
@@ -482,6 +493,7 @@ dosoftints(void)
 		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
 	}
 }
+#endif /* !__HAVE_PIC_FAST_SOFTINTS */
 #endif /* __HAVE_FAST_SOFTINTS */
 
 #ifdef MODULAR
@@ -500,3 +512,52 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 
 	return (pa < ctob(physmem)) ? 0 : EFAULT;
 }
+
+#ifdef __HAVE_CPU_UAREA_ALLOC_IDLELWP
+vaddr_t
+cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
+{
+	const vaddr_t va = idlestack.pv_va + ci->ci_cpuid * USPACE;
+	// printf("%s: %s: va=%lx\n", __func__, ci->ci_data.cpu_name, va);
+	return va;
+}
+#endif
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+	uint32_t mbox;
+	kcpuset_copybits(kcpuset_attached, &mbox, sizeof(mbox));
+	atomic_swap_32(&arm_cpu_mbox, mbox);
+	membar_producer();
+#ifdef _ARM_ARCH_7
+	__asm __volatile("sev; sev; sev");
+#endif
+}
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+
+	if (ci) {
+		/* Unicast, remote CPU */
+		printf("%s: -> %s", __func__, ci->ci_data.cpu_name);
+		intr_ipi_send(ci->ci_kcpuset, IPI_XCALL);
+	} else {
+		printf("%s: -> !%s", __func__, ci->ci_data.cpu_name);
+		/* Broadcast to all but ourselves */
+		kcpuset_t *kcp;
+		kcpuset_create(&kcp, (ci != NULL));
+		KASSERT(kcp != NULL);
+		kcpuset_copy(kcp, kcpuset_running);
+		kcpuset_clear(kcp, cpu_index(ci));
+		intr_ipi_send(kcp, IPI_XCALL);
+		kcpuset_destroy(kcp);
+	}
+	printf("\n");
+}
+#endif /* MULTIPROCESSOR */

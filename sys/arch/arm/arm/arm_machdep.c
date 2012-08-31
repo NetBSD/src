@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.35 2012/08/29 23:10:31 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.36 2012/08/31 23:59:51 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.35 2012/08/29 23:10:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36 2012/08/31 23:59:51 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.35 2012/08/29 23:10:31 matt Exp $"
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
+#include <sys/kcpuset.h>
 
 #ifdef EXEC_AOUT
 #include <sys/exec_aout.h>
@@ -211,20 +213,73 @@ startlwp(void *arg)
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
-	bool immed = (flags & RESCHED_IMMED) != 0;
+	struct lwp * const l = ci->ci_data.cpu_onproc;
+	const bool immed = (flags & RESCHED_IMMED) != 0;
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const cur_ci = curcpu();
+	u_long ipi = IPI_NOP;
+#endif
 
+	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		/*
+		 * No point doing anything, it will switch soon.
+		 * Also here to prevent an assertion failure in
+		 * kpreempt() due to preemption being set on a
+		 * soft interrupt LWP.
+		 */
+		return;
+	}
 	if (ci->ci_want_resched && !immed)
 		return;
 
+	if (l == ci->ci_data.cpu_idlelwp) {
+#ifdef MULTIPROCESSOR
+		/*
+		 * If the other CPU is idling, it must be waiting for an
+		 * event.  So give it one.
+		 */
+		if (ci != cur_ci)
+			goto send_ipi;
+#endif
+		return;
+	}
+#ifdef MULTIPROCESSOR
+	atomic_swap_uint(&ci->ci_want_resched, 1);
+#else
 	ci->ci_want_resched = 1;
-	if (curlwp != ci->ci_data.cpu_idlelwp)
-		setsoftast();
+#endif
+	if (flags & RESCHED_KPREEMPT) {
+#ifdef __HAVE_PREEMPTION
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACITBE);
+		if (ci == cur_ci) {
+			softint_trigger(SOFTINT_KPREEMPT);
+		} else {
+			ipi = IPI_KPREEMPT;
+			goto send_ipi;
+		}
+#endif /* __HAVE_PREEMPTION */
+		return;
+	}
+	ci->ci_astpending = 1;
+#ifdef MULTIPROCESSOR
+	if (ci == curcpu() || !immed)
+		return;
+	ipi = IPI_AST;
+
+   send_ipi:
+	intr_ipi_send(ci->ci_kcpuset, ipi);
+#endif /* MULTIPROCESSOR */
 }
 
 bool
 cpu_intr_p(void)
 {
-	return curcpu()->ci_intr_depth != 0;
+	struct cpu_info * const ci = curcpu();
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+	if (ci->ci_cpl < IPL_VM)
+		return false;
+#endif
+	return ci->ci_intr_depth != 0;
 }
 
 void
