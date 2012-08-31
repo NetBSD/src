@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.60 2012/08/29 17:44:25 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.61 2012/08/31 11:40:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -530,7 +530,7 @@
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
-#ifndef _LOCORE
+#if !defined(_LOCORE) && !defined(_STANDALONE)
 #define	ARMREG_READ_INLINE(name, __insnstring)			\
 static inline uint32_t armreg_##name##_read(void)		\
 {								\
@@ -589,6 +589,8 @@ ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
 ARMREG_WRITE_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
 
+#endif /* !_LOCORE && !_STANDALONE */
+
 
 #define	MPIDR_31		0x80000000
 #define	MPIDR_U			0x40000000	// 1 = Uniprocessor
@@ -597,5 +599,4 @@ ARMREG_WRITE_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6
 #define	MPIDR_AFF1		0x0000ff00
 #define	MPIDR_AFF0		0x000000ff
 
-#endif /* _LOCORE*/
 #endif	/* _ARM_ARMREG_H */
