@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2012/08/20 16:37:35 pooka Exp $
+#	$NetBSD: Makefile,v 1.18 2012/08/31 14:46:53 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -38,7 +38,7 @@ LDADD+=-lrumpvfs -lrump -lrumpuser -lpthread			# base
 
 LDADD+=-lutil
 
-.ifdef WANT_ZFS_TESTS
+.if (${MKZFS} != "no")
 LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd
 CPPFLAGS+=-DWANT_ZFS_TESTS
 .endif
