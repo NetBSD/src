@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13 2012/02/16 02:33:37 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14 2012/08/31 11:52:39 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2012/02/16 02:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2012/08/31 11:52:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,11 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.13 2012/02/16 02:33:37 christos Exp
 #include <ddb/db_variables.h>
 #include <ddb/db_command.h>
 
+#ifdef _KERNEL
 static long nil;
 
 int db_access_und_sp(const struct db_variable *, db_expr_t *, int);
 int db_access_abt_sp(const struct db_variable *, db_expr_t *, int);
 int db_access_irq_sp(const struct db_variable *, db_expr_t *, int);
+#endif
 
 const struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_REGS->tf_spsr, FCN_NULL, NULL },
@@ -71,9 +73,11 @@ const struct db_variable db_regs[] = {
 	{ "svc_sp", (long *)&DDB_REGS->tf_svc_sp, FCN_NULL, NULL },
 	{ "svc_lr", (long *)&DDB_REGS->tf_svc_lr, FCN_NULL, NULL },
 	{ "pc", (long *)&DDB_REGS->tf_pc, FCN_NULL, NULL },
+#ifdef _KERNEL
 	{ "und_sp", &nil, db_access_und_sp, NULL },
 	{ "abt_sp", &nil, db_access_abt_sp, NULL },
 	{ "irq_sp", &nil, db_access_irq_sp, NULL },
+#endif
 };
 
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -94,6 +98,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
 };
 
+#ifdef _KERNEL
 int
 db_access_und_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
@@ -121,7 +126,6 @@ db_access_irq_sp(const struct db_variable *vp, db_expr_t *valp, int rw)
 	return(0);
 }
 
-#ifdef _KERNEL
 void
 db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
