@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_start.S,v 1.4 2011/06/30 20:09:20 wiz Exp $ */
+/*	$NetBSD: omap_start.S,v 1.5 2012/09/01 14:46:25 matt Exp $ */
 
 /*
  * Machine dependent startup code for OMAP boards.
@@ -88,8 +88,6 @@
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#undef DOMAIN_CLIENT	/* assym.h defines as 1, but pte.h defines as 0x01 */
-#include <arm/arm32/pmap.h>
 #include <arm/omap/omap_reg.h>
 
 /*
@@ -228,14 +226,14 @@ mmu_init_table:
 	/* Map SDRAM where we're executing from VA==PA, read-only */
 	MMU_INIT(KERNEL_BASE_phys, KERNEL_BASE_phys,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KR))
+		L1_S_PROTO | L1_S_AP_KR)
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE_phys,
 		(MEMSIZE_BYTES + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_AP_KRW | L1_S_B | L1_S_C)
 	/* Map TIPB VA==PA so peripherals will work. */
 	MMU_INIT(OMAP_TIPB_PBASE, OMAP_TIPB_PBASE,
 		(OMAP_TIPB_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP_KRW)
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
