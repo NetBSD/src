@@ -1,9 +1,11 @@
-#	$NetBSD: files.pic,v 1.3 2011/03/11 03:16:14 bsh Exp $
+#	$NetBSD: files.pic,v 1.4 2012/09/01 00:00:42 matt Exp $
 #
 # Configuration info for the common PIC code.
 #
 define	pic
 define	pic_splfuncs
+defflag opt_arm_intr_impl.h		__HAVE_PIC_SET_PRIORITY
+defflag opt_arm_intr_impl.h		__HAVE_PIC_SOFTINT
 
 file	arch/arm/pic/pic.c		pic
 file	arch/arm/pic/pic_splfuncs.c	pic & pic_splfuncs
