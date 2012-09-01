@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.52 2012/08/31 23:59:51 matt Exp $
+#	$NetBSD: genassym.cf,v 1.53 2012/09/01 14:46:25 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,7 @@ define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
+define	L1_S_AP_KR		L1_S_AP(AP_KR)
 define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
 define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
 define	L1_TABLE_SIZE		L1_TABLE_SIZE

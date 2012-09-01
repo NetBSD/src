@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 2012/08/29 22:25:05 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 2012/09/01 14:46:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,7 @@
 #include <arm/cdefs.h>
 
 #define	__BIT(n)	(1 << (n))
+#define __BITS(hi,lo)	((~((~0)<<((hi)+1)))&((~0)<<(lo)))
 
 #define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
