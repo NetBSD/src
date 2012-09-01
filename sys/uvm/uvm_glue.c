@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.159 2012/04/08 11:27:45 martin Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.160 2012/09/01 00:26:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.159 2012/04/08 11:27:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.160 2012/09/01 00:26:37 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -366,8 +366,12 @@ uvm_uarea_alloc(void)
 }
 
 vaddr_t
-uvm_uarea_system_alloc(void)
+uvm_uarea_system_alloc(struct cpu_info *ci)
 {
+#ifdef __HAVE_CPU_UAREA_ALLOC_IDLELWP
+	if (__predict_false(ci != NULL))
+		return cpu_uarea_alloc_idlelwp(ci);
+#endif
 
 	return (vaddr_t)pool_cache_get(uvm_uarea_system_cache, PR_WAITOK);
 }
