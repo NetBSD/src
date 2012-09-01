@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.7 2011/07/28 13:42:16 uebayasi Exp $
+#	$NetBSD: files.ddb,v 1.8 2012/09/01 00:28:12 matt Exp $
 
 #
 # DDB options
@@ -6,7 +6,7 @@
 defflag opt_ddb.h		DDB DDB_VERBOSE_HELP
 defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 				DDB_BREAK_CHAR DDB_KEYCODE
-				DDB_COMMANDONENTER 
+				DDB_COMMANDONENTER DB_MAX_LINE
 
 file	ddb/db_access.c			ddb | kgdb
 file	ddb/db_break.c			ddb

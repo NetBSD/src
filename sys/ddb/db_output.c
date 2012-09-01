@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.31 2011/07/17 20:54:50 joerg Exp $	*/
+/*	$NetBSD: db_output.c,v 1.32 2012/09/01 00:28:12 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,8 +30,10 @@
  * Printf and character output for debugger.
  */
 
+#include "opt_ddbparam.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.31 2011/07/17 20:54:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.32 2012/09/01 00:28:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
