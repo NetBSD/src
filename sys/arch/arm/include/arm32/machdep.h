@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.14 2012/08/31 23:59:52 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.15 2012/09/01 12:05:09 martin Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -29,6 +29,21 @@ extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 // extern u_int undefined_handler_address;
 #define	undefined_handler_address (curcpu()->ci_undefsave[2])
+
+/*
+ * Physical / virtual address structure. In a number of places (particularly
+ * during bootstrapping) we need to keep track of the physical and virtual
+ * addresses of various pages
+ */
+typedef struct pv_addr {
+	SLIST_ENTRY(pv_addr) pv_list;
+	paddr_t pv_pa;
+	vaddr_t pv_va;
+	vsize_t pv_size;
+	uint8_t pv_cache;
+	uint8_t pv_prot;
+} pv_addr_t;
+typedef SLIST_HEAD(, pv_addr) pv_addrqh_t;
 
 struct bootmem_info {
 	paddr_t bmi_start;
