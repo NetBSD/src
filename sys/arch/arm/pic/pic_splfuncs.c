@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.3 2012/07/14 07:52:53 matt Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.4 2012/09/01 00:00:42 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,15 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.3 2012/07/14 07:52:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.4 2012/09/01 00:00:42 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/evcnt.h>
-#include <sys/atomic.h>
-#include <sys/malloc.h>
-#include <sys/mallocvar.h>
-#include <sys/atomic.h>
+#include <sys/kernel.h>
+
+#include <dev/cons.h>
 
 #include <arm/armreg.h>
 #include <arm/cpu.h>
@@ -63,11 +63,13 @@ _spllower(int newipl)
 	const int oldipl = ci->ci_cpl;
 	KASSERT(panicstr || newipl <= ci->ci_cpl);
 	if (newipl < ci->ci_cpl) {
-		register_t psw = disable_interrupts(I32_bit);
+		register_t psw = cpsid(I32_bit);
 		ci->ci_intr_depth++;
 		pic_do_pending_ints(psw, newipl, NULL);
 		ci->ci_intr_depth--;
-		restore_interrupts(psw);
+		if ((psw & I32_bit) == 0)
+			cpsie(I32_bit);
+		cpu_dosoftints();
 	}
 	return oldipl;
 }
@@ -77,12 +79,26 @@ splx(int savedipl)
 {
 	struct cpu_info * const ci = curcpu();
 	KASSERT(savedipl < NIPL);
-	if (savedipl < ci->ci_cpl) {
-		register_t psw = disable_interrupts(I32_bit);
-		ci->ci_intr_depth++;
-		pic_do_pending_ints(psw, savedipl, NULL);
-		ci->ci_intr_depth--;
-		restore_interrupts(psw);
+
+	if (__predict_false(savedipl == ci->ci_cpl)) {
+		return;
 	}
-	ci->ci_cpl = savedipl;
+
+	register_t psw = cpsid(I32_bit);
+	KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
+	    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
+
+	ci->ci_intr_depth++;
+	pic_do_pending_ints(psw, savedipl, NULL);
+	ci->ci_intr_depth--;
+	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+	    ci->ci_cpl, savedipl);
+	cpu_dosoftints();
+	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+	    ci->ci_cpl, savedipl);
+	if ((psw & I32_bit) == 0)
+		cpsie(I32_bit);
+
+	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
+	    ci->ci_cpl, savedipl);
 }

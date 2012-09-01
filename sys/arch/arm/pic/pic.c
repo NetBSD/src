@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.12 2012/07/20 21:53:57 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.13 2012/09/01 00:00:42 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,15 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.12 2012/07/20 21:53:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.13 2012/09/01 00:00:42 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
-#include <sys/evcnt.h>
-#include <sys/atomic.h>
-#include <sys/kmem.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/xcall.h>
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -74,10 +76,80 @@ EVCNT_ATTACH_STATIC(pic_deferral_ev);
 void
 pic_set_priority(struct cpu_info *ci, int newipl)
 {
-	register_t psw = disable_interrupts(I32_bit);
+	register_t psw = cpsid(I32_bit);
+	if (pic_list[0] != NULL)
+		(pic_list[0]->pic_ops->pic_set_priority)(pic_list[0], newipl);
 	ci->ci_cpl = newipl;
-	(pic_list[0]->pic_set_priority)(newipl);
-	restore_interrupts(psw);
+	if ((psw & I32_bit) == 0)
+		cpsie(I32_bit);
+}
+#endif
+
+#ifdef MULTIPROCESSOR
+int
+pic_ipi_nop(void *arg)
+{
+	/* do nothing */
+	return 1;
+}
+
+int
+pic_ipi_xcall(void *arg)
+{
+	xc_ipi_handler();
+	return 1;
+}
+
+void
+intr_cpu_init(struct cpu_info *ci)
+{
+	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic != NULL && pic->pic_ops->pic_cpu_init != NULL) {
+			(*pic->pic_ops->pic_cpu_init)(pic, ci);
+		}
+	}
+}
+
+typedef void (*pic_ipi_send_func_t)(struct pic_softc *, u_long);
+
+static struct pic_softc *
+pic_ipi_sender(void)
+{
+	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic != NULL && pic->pic_ops->pic_ipi_send != NULL) {
+			return pic;
+		}
+	}
+	return NULL;
+}
+
+void
+intr_ipi_send(const kcpuset_t *kcp, u_long ipi)
+{
+	struct pic_softc * const pic = pic_ipi_sender();
+	KASSERT(ipi < NIPI);
+	if (cold && pic == NULL)
+		return;
+	KASSERT(pic != NULL);
+	(*pic->pic_ops->pic_ipi_send)(pic, kcp, ipi);
+}
+#endif /* MULTIPROCESSOR */
+
+#ifdef __HAVE_PIC_FAST_SOFTINTS
+int
+pic_handle_softint(void *arg)
+{
+	void softint_switch(lwp_t *, int);
+	struct cpu_info * const ci = curcpu(); 
+	const size_t softint = (size_t) arg;
+	int s = splhigh();
+	ci->ci_intr_depth--;	// don't count these as interrupts
+	softint_switch(ci->ci_softlwps[softint], s);
+	ci->ci_intr_depth++;
+	splx(s);
+	return 1;
 }
 #endif
 
@@ -185,6 +257,7 @@ pic_dispatch(struct intrsource *is, void *frame)
 {
 	int rv;
 
+
 	if (__predict_false(is->is_arg == NULL)
 	    && __predict_true(frame != NULL)) {
 		rv = (*is->is_func)(frame);
@@ -194,7 +267,11 @@ pic_dispatch(struct intrsource *is, void *frame)
 		pic_deferral_ev.ev_count++;
 		return;
 	}
-	is->is_ev.ev_count++;
+
+	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
+	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
+	pcpu->pcpu_evs[is->is_irq].ev_count++;
+	percpu_putref(is->is_pic->pic_percpu);
 }
 
 void
@@ -367,8 +444,10 @@ void
 pic_do_pending_ints(register_t psw, int newipl, void *frame)
 {
 	struct cpu_info * const ci = curcpu();
-	if (__predict_false(newipl == IPL_HIGH))
+	if (__predict_false(newipl == IPL_HIGH)) {
+		KASSERTMSG(ci->ci_cpl == IPL_HIGH, "cpl %d", ci->ci_cpl);
 		return;
+	}
 	while ((pic_pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
 		KASSERT(pic_pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -384,8 +463,34 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 	}
 	if (ci->ci_cpl != newipl)
 		pic_set_priority(ci, newipl);
-#ifdef __HAVE_FAST_SOFTINTS
-	cpu_dosoftints();
+}
+
+static void
+pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
+{
+	struct pic_percpu * const pcpu = v0;
+	struct pic_softc * const pic = v1;
+
+	pcpu->pcpu_evs = kmem_zalloc(pic->pic_maxsources * sizeof(pcpu->pcpu_evs[0]),
+	    KM_SLEEP);
+	KASSERT(pcpu->pcpu_evs != NULL);
+
+#define	PCPU_NAMELEN	32
+	const size_t namelen = strlen(pic->pic_name) + 4 + strlen(ci->ci_data.cpu_name);
+
+	KASSERT(namelen < PCPU_NAMELEN);
+	pcpu->pcpu_name = kmem_alloc(PCPU_NAMELEN, KM_SLEEP);
+#ifdef MULTIPROCESSOR
+	snprintf(pcpu->pcpu_name, PCPU_NAMELEN,
+	    "%s (%s)", pic->pic_name, ci->ci_data.cpu_name);
+#else
+	strlcpy(pcpu->pcpu_name, pic->pic_name, PCPU_NAMELEN);
+#endif
+	pcpu->pcpu_magic = PICPERCPU_MAGIC;
+#if 0
+	printf("%s: %s %s: <%s>\n",
+	    __func__, ci->ci_data.cpu_name, pic->pic_name,
+	    pcpu->pcpu_name);
 #endif
 }
 
@@ -393,6 +498,8 @@ void
 pic_add(struct pic_softc *pic, int irqbase)
 {
 	int slot, maybe_slot = -1;
+
+	KASSERT(strlen(pic->pic_name) > 0);
 
 	for (slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const xpic = pic_list[slot];
@@ -422,10 +529,32 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT(pic->pic_maxsources <= PIC_MAXSOURCES);
 	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 
+	/*
+	 * Allocate a pointer to each cpu's evcnts and then, for each cpu,
+	 * allocate its evcnts and then attach an evcnt for each pin.
+	 * We can't allocate the evcnt structures directly since
+	 * percpu will move the contents of percpu memory around and 
+	 * corrupt the pointers in the evcnts themselves.  Remember, any
+	 * problem can be solved with sufficient indirection.
+	 */
+	pic->pic_percpu = percpu_alloc(sizeof(struct pic_percpu));
+	KASSERT(pic->pic_percpu != NULL);
+
+	/*
+	 * Now allocate the per-cpu evcnts.
+	 */
+	percpu_foreach(pic->pic_percpu, pic_percpu_allocate, pic);
+
 	pic->pic_sources = &pic_sources[pic_sourcebase];
 	pic->pic_irqbase = irqbase;
 	pic_sourcebase += pic->pic_maxsources;
 	pic->pic_id = slot;
+#ifdef __HAVE_PIC_SET_PRIORITY
+	KASSERT((slot == 0) == (pic->pic_ops->pic_set_priority != NULL));
+#endif
+#ifdef MULTIPROCESSOR
+	KASSERT((slot == 0) == (pic->pic_ops->pic_ipi_send != NULL));
+#endif
 	pic_list[slot] = pic;
 }
 
@@ -440,6 +569,17 @@ pic_alloc_irq(struct pic_softc *pic)
 	}
 
 	return -1;
+}
+
+static void
+pic_percpu_evcnt_attach(void *v0, void *v1, struct cpu_info *ci)
+{
+	struct pic_percpu * const pcpu = v0;
+	struct intrsource * const is = v1;
+
+	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
+	evcnt_attach_dynamic(&pcpu->pcpu_evs[is->is_irq], EVCNT_TYPE_INTR, NULL,
+	    pcpu->pcpu_name, is->is_source);
 }
 
 void *
@@ -465,15 +605,17 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	is->is_type = type;
 	is->is_func = func;
 	is->is_arg = arg;
-	
+
 	if (pic->pic_ops->pic_source_name)
 		(*pic->pic_ops->pic_source_name)(pic, irq, is->is_source,
 		    sizeof(is->is_source));
 	else
 		snprintf(is->is_source, sizeof(is->is_source), "irq %d", irq);
 
-	evcnt_attach_dynamic(&is->is_ev, EVCNT_TYPE_INTR, NULL,
-	    pic->pic_name, is->is_source);
+	/*
+	 * Now attach the per-cpu evcnts.
+	 */
+	percpu_foreach(pic->pic_percpu, pic_percpu_evcnt_attach, is);
 
 	pic->pic_sources[irq] = is;
 
@@ -522,16 +664,31 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	return is;
 }
 
+static void
+pic_percpu_evcnt_deattach(void *v0, void *v1, struct cpu_info *ci)
+{
+	struct pic_percpu * const pcpu = v0;
+	struct intrsource * const is = v1;
+
+	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
+	evcnt_detach(&pcpu->pcpu_evs[is->is_irq]);
+}
+
 void
 pic_disestablish_source(struct intrsource *is)
 {
 	struct pic_softc * const pic = is->is_pic;
 	const int irq = is->is_irq;
 
+	KASSERT(is == pic->pic_sources[irq]);
+
 	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~31, __BIT(irq));
 	pic->pic_sources[irq] = NULL;
 	pic__iplsources[pic_ipl_offset[is->is_ipl] + is->is_iplidx] = NULL;
-	evcnt_detach(&is->is_ev);
+	/*
+	 * Now detach the per-cpu evcnts.
+	 */
+	percpu_foreach(pic->pic_percpu, pic_percpu_evcnt_deattach, is);
 
 	kmem_free(is, sizeof(*is));
 }
@@ -539,12 +696,10 @@ pic_disestablish_source(struct intrsource *is)
 void *
 intr_establish(int irq, int ipl, int type, int (*func)(void *), void *arg)
 {
-	int slot;
-
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 
-	for (slot = 0; slot < PIC_MAXPICS; slot++) {
+	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const pic = pic_list[slot];
 		if (pic == NULL || pic->pic_irqbase < 0)
 			continue;
@@ -562,5 +717,9 @@ void
 intr_disestablish(void *ih)
 {
 	struct intrsource * const is = ih;
+
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
+
 	pic_disestablish_source(is);
 }
