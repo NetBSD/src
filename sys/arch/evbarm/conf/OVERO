@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.15 2012/08/29 08:29:58 skrll Exp $
+#	$NetBSD: OVERO,v 1.16 2012/09/01 14:51:21 matt Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -17,7 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA8
 options 	OMAP_3530
 options 	PMAPCOUNTERS
-makeoptions	CPUFLAGS="-march=arm11k -mtune=arm1136jf-s"
+makeoptions	CPUFLAGS="-mcpu=cortex-a8"
 
 # Architecture options
 
@@ -154,7 +154,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=600000
 
 config		netbsd		root on ? type ?
 
