@@ -5439,6 +5439,14 @@ zfs_netbsd_unlock(void *v)
 
 	return 0;
 }
+
+static int
+zfs_netbsd_islocked(void *v)
+{
+
+	return LK_EXCLUSIVE;
+}
+
 /*
 int
 zfs_netbsd_getpages(void *v)
@@ -5485,7 +5493,6 @@ zfs_netbsd_putpages(void *v)
 #define zfs_netbsd_mmap genfs_mmap
 #define zfs_netbsd_getpages genfs_compat_getpages
 //#define zfs_netbsd_putpages genfs_putpages
-#define zfs_netbsd_islocked genfs_islocked
 
 int (**zfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
