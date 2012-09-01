@@ -1,0 +1,20 @@
+# $NetBSD: files.cortex,v 1.1 2012/09/01 00:03:14 matt Exp $
+
+device	armperiph {}
+attach	armperiph at mainbus
+file	arch/arm/cortex/armperiph.c		armperiph
+
+# ARM Generic Interrupt Controller (initially on Cortex-A9)
+device	armgic: pic, pic_splfuncs
+attach	armgic at armperiph
+file	arch/arm/cortex/gic.c			armgic
+
+# A9 MPCore Global Timer
+device	a9tmr
+attach	a9tmr at armperiph
+file	arch/arm/cortex/a9tmr.c			a9tmr
+
+# A9 MPcore Watchdog Timer
+device	a9wdt: sysmon_wdog
+attach	a9wdt at armperiph
+file	arch/arm/cortex/a9wdt.c			a9wdt
