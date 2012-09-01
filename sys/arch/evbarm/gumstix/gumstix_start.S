@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.9 2011/01/31 06:28:03 matt Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.10 2012/09/01 14:52:35 matt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gumstix_start.S,v 1.9 2011/01/31 06:28:03 matt Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.10 2012/09/01 14:52:35 matt Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -168,13 +168,14 @@ _C_LABEL(gumstix_start):
 	b	5f
 
 4:
-	str	r3, [r0, r2]
-	add	r2, r2, #4
+	str	r3, [r0, r2, lsl #2]
+	add	r2, r2, #1
 	add	r3, r3, #(L1_S_SIZE)
 	adds	r1, r1, #-1
 	bhi	4b
 5:
 	ldmia	r4!, {r1, r2, r3}	/* # of sections, PA|attr, VA */
+	lsr	r2, r2, #L1_S_SHIFT
 	cmp	r1, #0
 	bne	4b
 
@@ -211,8 +212,8 @@ _C_LABEL(gumstix_start):
 	CPWAIT(r0)
 
 	/* Jump to kernel code in TRUE VA */
-	adr	r0, Lstart
-	ldr	pc, [r0]
+	ldr	r0, Lstart
+	bx	r0
 
 Lstart:
 	.word	start
@@ -238,15 +239,15 @@ ram_size:
 
 #define MMU_INIT(va, pa, n_sec, attr)	  \
 	.word	n_sec			; \
-	.word	(va) >> (L1_S_SHIFT-2)	; \
+	.word	(va)			; \
 	.word	(pa) | (attr)		;
 
 mmu_init_table:
+#if defined(GUMSTIX)
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
 	    1 << (32 - L1_S_SHIFT), L1_S_PROTO | L1_S_AP_KRW)
 
-#if defined(GUMSTIX)
 #define SDRAM_START	0xa0000000
 
 	/* map SDRAM VA==PA, write-back cacheable (first 64M only)*/
@@ -258,6 +259,10 @@ mmu_init_table:
 	    64, L1_S_PROTO | L1_S_C | L1_S_AP_KRW)
 
 #elif defined(OVERO)
+	/* fill all table VA==PA */
+	MMU_INIT(0x00000000, 0x00000000,
+	    1 << (32 - L1_S_SHIFT), L1_S_PROTO | L1_S_APv7_KRW)
+
 #define SDRAM_START	0x80000000
 
 	/* Map VA to PA, write-back cacheable (first 64M only) */
