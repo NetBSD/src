@@ -1,4 +1,4 @@
-/* $NetBSD: imxuartreg.h,v 1.4 2010/11/13 06:12:17 bsh Exp $ */
+/* $NetBSD: imxuartreg.h,v 1.5 2012/09/01 14:46:25 matt Exp $ */
 /*
  * register definitions for Freescale i.MX31 and i.MX31L UARTs
  *
@@ -17,13 +17,6 @@
  */
 #ifndef	_IMXUARTREG_H
 #define	_IMXUARTREG_H
-
-#ifdef	__ASSEMBLER__
-#define	__BIT(n)	(1<<(n))
-#define	__BITS(hi,lo)   ((~((~0)<<((hi)+1)))&((~0)<<(lo)))
-#else
-#include <sys/cdefs.h>
-#endif
 
 /*
  * Registers are 32 bits wide; the 16 MSBs are unused --
