@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2012/06/05 08:44:11 abs Exp $
+# $NetBSD: GENERIC,v 1.116 2012/09/01 18:17:50 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 maxusers	32		# estimated number of users
 
@@ -635,7 +635,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 zyd*	at uhub? port ?		# Zydas ZD1211
 

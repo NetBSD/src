@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.25 2012/09/01 14:50:11 matt Exp $
+#	$NetBSD: NSLU2,v 1.26 2012/09/01 18:17:50 jakllsch Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -217,7 +217,7 @@ ukphy*	at mii? phy ?		# Generic/Unknown PHY
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 
 # USB Generic driver
 ugen*		at uhub? port ? configuration ? interface ?

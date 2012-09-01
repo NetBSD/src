@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.29 2012/09/01 14:50:11 matt Exp $
+# $NetBSD: HDL_G,v 1.30 2012/09/01 18:17:49 jakllsch Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -326,7 +326,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11b adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?

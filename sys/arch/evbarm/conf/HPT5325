@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.4 2012/08/29 08:29:58 skrll Exp $
+#	$NetBSD: HPT5325,v 1.5 2012/09/01 18:17:49 jakllsch Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -321,7 +321,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 zyd*	at uhub? port ?		# Zydas ZD1211
 

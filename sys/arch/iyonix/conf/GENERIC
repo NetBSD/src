@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.71 2012/08/17 20:11:40 abs Exp $
+#	$NetBSD: GENERIC,v 1.72 2012/09/01 18:17:50 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	32		# estimated number of users
 
@@ -596,7 +596,7 @@ uaudio*	at uhub? port ? configuration ?
 
 # USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 #rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1078 2012/08/10 11:32:32 sborrill Exp $
+# $NetBSD: GENERIC,v 1.1079 2012/09/01 18:17:50 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1078 $"
+#ident 		"GENERIC-$Revision: 1.1079 $"
 
 maxusers	64		# estimated number of users
 
@@ -1230,7 +1230,7 @@ urndis*	at uhub? port ?		# Microsoft RNDIS specification
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 otus*	at uhub? port ?		# Atheros AR9001U
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
 upgt*	at uhub? port ?		# Intersil PrismGT

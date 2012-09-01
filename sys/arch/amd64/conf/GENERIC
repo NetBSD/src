@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362 2012/09/01 15:25:33 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.363 2012/09/01 18:17:49 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.362 $"
+#ident 		"GENERIC-$Revision: 1.363 $"
 
 maxusers	64		# estimated number of users
 
@@ -964,7 +964,7 @@ uscanner* at uhub? port ?
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 otus*	at uhub? port ?		# Atheros AR9001U
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
 urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2012/08/17 20:11:41 abs Exp $
+# $NetBSD: GENERIC,v 1.143 2012/09/01 18:17:51 jakllsch Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	32
 
@@ -387,7 +387,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel at76c50x 802.11b
-#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers

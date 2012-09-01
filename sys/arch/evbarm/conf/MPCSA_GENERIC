@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.29 2012/06/05 08:44:09 abs Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.30 2012/09/01 18:17:49 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -514,7 +514,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter

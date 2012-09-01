@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2012/03/10 21:51:53 joerg Exp $
+# $NetBSD: GENERIC,v 1.32 2012/09/01 18:17:51 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.31 $"
+#ident          "GENERIC-$Revision: 1.32 $"
 
 maxusers	16		# estimated number of users
 
@@ -338,7 +338,7 @@ cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
-ral*	at uhub? port ?		#
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11b adapters

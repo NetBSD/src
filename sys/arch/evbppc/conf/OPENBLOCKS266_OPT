@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.16 2011/07/23 21:12:58 jakllsch Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.17 2012/09/01 18:17:50 jakllsch Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -219,7 +219,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11b adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 zyd*	at uhub? port ?		# Zydas ZD1211
 
