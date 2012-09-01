@@ -1,7 +1,11 @@
-#	$NetBSD: files.beagle,v 1.1 2008/10/22 10:50:56 matt Exp $
+#	$NetBSD: files.beagle,v 1.2 2012/09/01 00:20:49 matt Exp $
 #
 # TI OMAP2 evaluation board configuration info
 #
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/beagle/beagle_machdep.c
 
@@ -10,6 +14,7 @@ defparam opt_machdep.h				BOOT_ARGS
 
 # CPU support and integrated peripherals
 include "arch/arm/omap/files.omap2"
+include "arch/arm/cortex/files.cortex"
 
 # NS16550 compatible serial ports
 attach com at obio with obiouart
