@@ -1,7 +1,11 @@
-#	$NetBSD: files.marvell,v 1.1 2010/10/02 06:15:52 kiyohara Exp $
+#	$NetBSD: files.marvell,v 1.2 2012/09/01 00:20:49 matt Exp $
 #
 # Marvell Orion, Discovery Innovation and Kirkwood NASs configuration info
 #
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/marvell/marvell_machdep.c
 
