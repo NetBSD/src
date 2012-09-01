@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.4 2012/09/01 00:06:54 matt Exp $ */
+/* $Id: imx_space.c,v 1.5 2012/09/01 14:44:42 matt Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.4 2012/09/01 00:06:54 matt Exp $ */
+/*	$NetBSD: imx_space.c,v 1.5 2012/09/01 14:44:42 matt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -206,10 +206,9 @@ int
 imx_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	      int flag, bus_space_handle_t *bshp)
 {
-	u_long startpa, endpa, pa;
-	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap	*pd;
+	paddr_t startpa, endpa, pa;
+	vaddr_t va;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
