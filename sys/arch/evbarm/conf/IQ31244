@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.57 2012/08/29 08:29:58 skrll Exp $
+#	$NetBSD: IQ31244,v 1.58 2012/09/01 14:50:11 matt Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -132,7 +132,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=390000
+options 	SYMTAB_SPACE=550000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
