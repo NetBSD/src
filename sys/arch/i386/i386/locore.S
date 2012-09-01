@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.101 2012/06/27 00:37:08 jym Exp $	*/
+/*	$NetBSD: locore.S,v 1.102 2012/09/01 23:19:46 cherry Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.101 2012/06/27 00:37:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102 2012/09/01 23:19:46 cherry Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -233,10 +233,10 @@ _C_LABEL(tablesize):	.long	0
 tmpstk:
 #ifdef XEN
 	.align 		PAGE_SIZE, 0x0	# Align on page boundary
+	.globl tmpgdt
 _C_LABEL(tmpgdt):
 	.space 		PAGE_SIZE	# Xen expects a page
 #endif /* XEN */
-	.globl tmpgdt
 #ifndef XEN
 #define	_RELOC(x)	((x) - KERNBASE)
 #else
