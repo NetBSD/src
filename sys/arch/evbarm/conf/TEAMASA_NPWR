@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.72 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.73 2012/09/01 14:50:12 matt Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -139,7 +139,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=390000
+options 	SYMTAB_SPACE=550000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs
