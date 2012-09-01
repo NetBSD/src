@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.17 2012/09/01 00:01:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.17 2012/09/01 00:01:43 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -69,7 +69,7 @@ u_int arm_fpe_core_workspace;
  * Error messages for the various exceptions, numbered 0-5
  */
  
-static const char *exception_errors[] = {
+static const char * const exception_errors[] = {
 	"invalid operation",
 	"division by zero (0)",
 	"overflow",
@@ -172,11 +172,11 @@ arm_fpe_boot(void)
 void
 arm_fpe_postproc(u_int fpframe, struct trapframe *frame)
 {
-	register int sig;
-	register struct proc *p;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	int sig;
 
-	p = curproc;
-	p->p_addr->u_pcb.pcb_tf = frame;
+	l->l_md.md_tf = frame;
 
 	/* take pending signals */
 
