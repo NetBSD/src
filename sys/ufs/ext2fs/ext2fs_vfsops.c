@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.165 2012/09/01 15:46:11 chs Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.166 2012/09/01 17:01:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.165 2012/09/01 15:46:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.166 2012/09/01 17:01:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1249,21 +1249,24 @@ ext2fs_checksb(struct ext2fs *fs, int ronly)
 		return (EINVAL);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
+		char buf[256];
 		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
 			printf("ext2fs: unsupported first inode position\n");
 			return (EINVAL);      /* XXX needs translation */
 		}
 		u32 = fs2h32(fs->e2fs_features_incompat) & ~EXT2F_INCOMPAT_SUPP;
 		if (u32) {
-			printf("ext2fs: unsupported incompat feature 0x%x\n",
-			       u32);
-			return (EINVAL);      /* XXX needs translation */
+			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported incompat features: %s\n",
+			    buf);
+			return EINVAL;	/* XXX needs translation */
 		}
 		u32 = fs2h32(fs->e2fs_features_rocompat) & ~EXT2F_ROCOMPAT_SUPP;
 		if (!ronly && u32) {
-			printf("ext2fs: unsupported ro-incompat feature 0x%x\n",
-			       u32);
-			return (EROFS);      /* XXX needs translation */
+			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported ro-incompat features: %s\n",
+			    buf);
+			return EROFS;	/* XXX needs translation */
 		}
 	}
 	return (0);
