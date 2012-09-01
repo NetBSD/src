@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.74 2012/07/30 17:49:24 njoly Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.75 2012/09/01 12:28:58 para Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.74 2012/07/30 17:49:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.75 2012/09/01 12:28:58 para Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -241,13 +241,23 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 #else /* defined(_KERNEL) */
 
 #define	xmalloc(sz, flags) \
-    kmem_alloc(sz, ((flags) & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
-#define	xfree(p, sz)		kmem_free(p, sz);
+    kmem_intr_alloc(sz, ((flags) & VM_SLEEP) ? KM_SLEEP : KM_NOSLEEP);
+#define	xfree(p, sz)		kmem_intr_free(p, sz);
 
-#define BT_MINRESERVE 6
-#define BT_MAXFREE 64
-#define STATIC_VMEM_COUNT 5
+/*
+ * Memory for arenas initialized during bootstrap.
+ * There is memory for STATIC_VMEM_COUNT bootstrap arenas.
+ *
+ * BT_RESERVE calculation:
+ * we allocate memory for boundry tags with vmem, therefor we have
+ * to keep a reserve of bts used to allocated memory for bts. 
+ * This reserve is 4 for each arena involved in allocating vmems memory.
+ * BT_MAXFREE: don't cache excessive counts of bts in arenas
+ */
+#define STATIC_VMEM_COUNT 4
 #define STATIC_BT_COUNT 200
+#define BT_MINRESERVE 4
+#define BT_MAXFREE 64
 /* must be equal or greater then qcache multiplier for kmem_va_arena */
 #define STATIC_QC_POOL_COUNT 8
 
@@ -283,7 +293,7 @@ bt_refillglobal(vm_flag_t flags)
 	int i;
 
 	mutex_enter(&vmem_btag_lock);
-	if (vmem_btag_freelist_count > (BT_MINRESERVE * 16)) {
+	if (vmem_btag_freelist_count > 0) {
 		mutex_exit(&vmem_btag_lock);
 		return 0;
 	}
@@ -325,7 +335,7 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 	VMEM_LOCK(vm);
 	mutex_enter(&vmem_btag_lock);
 	while (!LIST_EMPTY(&vmem_btag_freelist) &&
-	    vm->vm_nfreetags < (BT_MINRESERVE * 2)) {
+	    vm->vm_nfreetags <= BT_MINRESERVE) {
 		bt = LIST_FIRST(&vmem_btag_freelist);
 		LIST_REMOVE(bt, bt_freelist);
 		LIST_INSERT_HEAD(&vm->vm_freetags, bt, bt_freelist);
@@ -349,7 +359,7 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	bt_t *bt;
 again:
 	VMEM_LOCK(vm);
-	if (vm->vm_nfreetags < BT_MINRESERVE &&
+	if (vm->vm_nfreetags <= BT_MINRESERVE &&
 	    (flags & VM_POPULATING) == 0) {
 		VMEM_UNLOCK(vm);
 		if (bt_refill(vm, VM_NOSLEEP | VM_INSTANTFIT)) {
