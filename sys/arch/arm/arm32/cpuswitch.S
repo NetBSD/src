@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.69 2012/08/31 11:45:38 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.70 2012/09/01 14:46:51 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.69 2012/08/31 11:45:38 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.70 2012/09/01 14:46:51 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -337,7 +337,7 @@ ENTRY(lwp_trampoline)
 
 	mov	r0, r5
 	mov	r1, sp
-#ifdef _ARM_ARCH_4T
+#ifdef _ARM_ARCH_5
 	blx	r4
 #else
 	mov	lr, pc
