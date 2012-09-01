@@ -1,0 +1,30 @@
+#	$NetBSD: std.bcm53xx,v 1.1 2012/09/01 00:15:11 matt Exp $
+#
+# standard NetBSD/evbarm for BEAGLEBAORD options
+
+machine	evbarm arm
+include		"conf/std"	# MI standard options
+
+# Pull in BCM53xx config definitions.
+include "arch/evbarm/conf/files.bcm53xx"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	COM_TOLERANCE=40
+options 	ARM32
+options 	CORTEX_PMC
+options 	CORTEX_PMC_CCNT_HZ=500000000
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	EVBARM_BOARDTYPE="bcm53xx"
+
+makeoptions	LOADADDRESS="0x80100000"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
+options		ARM_GENERIC_TODR
