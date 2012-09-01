@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.57 2012/08/29 17:13:21 drochner Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.58 2012/09/01 00:24:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.57 2012/08/29 17:13:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58 2012/09/01 00:24:43 matt Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -145,6 +145,12 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	ci->ci_index = ncpu;
 	kcpuset_set(kcpuset_attached, cpu_index(ci));
+
+	/*
+	 * Create a convenience cpuset of just ourselves.
+	 */
+	kcpuset_create(&ci->ci_data.cpu_kcpuset, true);
+	kcpuset_set(ci->ci_data.cpu_kcpuset, cpu_index(ci));
 
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
