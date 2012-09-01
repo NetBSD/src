@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2011/01/22 19:19:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.32 2012/09/01 00:29:00 matt Exp $
 
 NOMAN= # defined
 
@@ -78,6 +78,7 @@ vers.c: ${.CURDIR}/../boot/version
 	    ${.CURDIR}/../boot/version "bebox" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 	${STRIP} -o ${PROG} ${PROG}.elf
