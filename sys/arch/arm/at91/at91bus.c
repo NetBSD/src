@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.13 2012/07/30 23:35:27 matt Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,11 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.13 2012/07/30 23:35:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
+
+/* Define various stack sizes in pages */
+#define IRQ_STACK_SIZE	8
+#define ABT_STACK_SIZE	8
+#ifdef IPKDB
+#define UND_STACK_SIZE	16
+#else
+#define UND_STACK_SIZE	8
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,15 +99,6 @@ int cnmode = CONMODE;
 #define	KERNEL_VM_SIZE		0x0C000000
 
 
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	8
-#define ABT_STACK_SIZE	8
-#ifdef IPKDB
-#define UND_STACK_SIZE	16
-#else
-#define UND_STACK_SIZE	8
-#endif
 
 /* boot configuration: */
 vm_offset_t physical_start;
