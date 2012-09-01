@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.22 2012/04/07 03:25:00 tsutsui Exp $
+#	$NetBSD: ARMADILLO210,v 1.23 2012/09/01 14:50:11 matt Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -125,7 +125,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options	DDB_ONPANIC=1
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options 	SYMTAB_SPACE=450000
+#options 	SYMTAB_SPACE=600000
 
 #options 	PMAP_INCLUDE_PTE_SYNC
 #options 	LOCKDEBUG
