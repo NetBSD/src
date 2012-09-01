@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccmreg.h,v 1.1 2012/04/17 09:33:31 bsh Exp $	*/
+/*	$NetBSD: imx51_ccmreg.h,v 1.2 2012/09/01 00:07:32 matt Exp $	*/
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -32,8 +32,10 @@
 /* register offset address */
 
 #define	CCMC_BASE	0x73fd4000
+#define	CCMC_IMX6_BASE	0x020c4040
 #define	CCMC_CCR	0x0000
 #define	 CCR_FPM_MULT	__BIT(12)
+#define	 CCR_COSC_EN	__BIT(12)
 #define	CCMC_CCDR	0x0004
 #define	CCMC_CSR	0x0008
 #define	CCMC_CCSR	0x000c
@@ -52,6 +54,7 @@
 #define	 CBCDR_DDR_HIGH_FREQ_CLK_SEL	__BIT(30)
 #define	 CBCDR_DDR_CLK_PODF_SHIFT	27
 #define	 CBCDR_DDR_CLK_PODF_MASK	__BITS(29, CBCDR_DDR_CLK_PODF_SHIFT)
+#define  CDCDR_PERIPH_CLK2		__BITS(29, 27)
 #define	 CBCDR_EMI_CLK_SEL		__BIT(26)
 #define	 CBCDR_PERIPH_CLK_SEL	__BIT(25)
 #define	 CBCDR_EMI_SLOW_PODF_SHIFT	22
@@ -91,6 +94,7 @@
 #define	CCMC_CS1CDR	0x0028
 #define	CCMC_CS2CDR	0x002c
 #define	CCMC_CDCDR	0x0030
+#define	CCMC_CHSCCDR	0x0034		// i.MX6
 #define	CCMC_CSCDR2	0x0038
 #define	CCMC_CSCDR3	0x003c
 #define	CCMC_CSCDR4	0x0040
