@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.67 2012/06/05 08:44:13 abs Exp $
+#	$NetBSD: XEN3_DOM0,v 1.68 2012/09/01 18:17:50 jakllsch Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -599,7 +599,7 @@ urndis*	at uhub? port ?		# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
