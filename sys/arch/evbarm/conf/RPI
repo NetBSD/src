@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.6 2012/09/01 14:50:11 matt Exp $
+#	$NetBSD: RPI,v 1.7 2012/09/01 19:05:46 jakllsch Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -194,6 +194,13 @@ sdmmc*  at sdhc?
 
 ld*     at sdmmc?
 
+# On-SoC USB 2.0 OTG Controller (as USB host) - some day soon(tm)
+#unimplementedusbhcd* at obio?
+#usb* at unimplementedusbhcd?
+
+# USB device drivers, just as soon as we have something to attach them to
+#include "dev/usb/usbdevices.config"
+
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
 options 	WSEMUL_VT100		# sun terminal emulation
@@ -209,19 +216,6 @@ options		FONT_QVSS8x15
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-
-# On-board USB - some day soon(tm)
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
-#uhidev*		at uhub?
-#ukbd*		at uhidev?
-#ums*		at uhidev?
-#wskbd*		at ukbd?
-#wsmouse*	at ums?
-
-#axe*		at uhub? port ? configuration ? interface ?
 
 # Pseudo-Devices
 
