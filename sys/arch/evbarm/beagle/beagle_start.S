@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.9 2012/08/29 18:04:23 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.10 2012/09/01 14:54:59 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -144,15 +144,14 @@ _C_LABEL(beagle_start):
 	adr	itable, mmu_init_table
 	ldr	l1sfrm, Ll1_s_frame
 	b	3f
-2:	str	pa, [l1table, va]
-	add	va, va, #4
+2:	str	pa, [l1table, va, lsl #2]
+	add	va, va, #1
 	add	pa, pa, #(L1_S_SIZE)
 	adds	n_sec, n_sec, #-1
 	bhi	2b
 3:	ldmia	itable!, {va,pa,n_sec,attr}
 	/* Convert va to l1 offset:	va = 4 * (va >> L1_S_SHIFT)	*/
-	mov	va, va, LSR #L1_S_SHIFT
-	mov	va, va, LSL #2
+	lsr	va, va, #L1_S_SHIFT
 	/* Convert pa to l1 entry:	pa = (pa & L1_S_FRAME) | attr	*/
 	and	pa, pa, l1sfrm
 	orr	pa, pa, attr
