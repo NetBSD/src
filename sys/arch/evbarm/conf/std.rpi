@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.1 2012/07/26 06:21:57 skrll Exp $
+#	$NetBSD: std.rpi,v 1.2 2012/09/01 17:11:56 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -13,8 +13,9 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-#options 	ARM11_CACHE_WRITE_THROUGH
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0xc0000000
 
 options 	EVBARM_BOARDTYPE="rpi"
