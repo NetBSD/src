@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.105 2012/09/01 12:05:09 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.106 2012/09/01 12:19:32 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -72,7 +72,6 @@
 
 #include <arm/cpuconf.h>
 #include <arm/arm32/pte.h>
-#include <arm/arm32/machdep.h>
 #ifndef _LOCORE
 #if defined(_KERNEL_OPT)
 #include "opt_arm32_pmap.h"
@@ -197,6 +196,21 @@ struct pmap {
 	struct pmap_statistics	pm_stats;
 	LIST_ENTRY(pmap)	pm_list;
 };
+
+/*
+ * Physical / virtual address structure. In a number of places (particularly
+ * during bootstrapping) we need to keep track of the physical and virtual
+ * addresses of various pages
+ */
+typedef struct pv_addr {
+	SLIST_ENTRY(pv_addr) pv_list;
+	paddr_t pv_pa;
+	vaddr_t pv_va;
+	vsize_t pv_size;
+	uint8_t pv_cache;
+	uint8_t pv_prot;
+} pv_addr_t;
+typedef SLIST_HEAD(, pv_addr) pv_addrqh_t;
 
 extern pv_addrqh_t pmap_freeq;
 extern pv_addr_t kernelstack;
