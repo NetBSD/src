@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2012/07/27 05:36:09 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.34 2012/09/01 12:15:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,16 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2012/07/27 05:36:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2012/09/01 12:15:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/syslog.h>
 
-#include <machine/intr.h>
-#include <machine/cpu.h>
+#include <uvm/uvm_extern.h>
 
 #include <arm/arm32/machdep.h>
  
