@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.1 2012/09/01 00:15:11 matt Exp $
+#	$NetBSD: BCM5301X,v 1.2 2012/09/01 11:04:17 matt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -120,6 +120,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MEMORY_DISK_DYNAMIC
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+options 	DKWEDGE_AUTODISCOVER
+options 	DKWEDGE_METHOD_GPT
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -260,3 +263,4 @@ pseudo-device	pty			# pseudo-terminals
 #options	RND_COM
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	drvctl			# device control
