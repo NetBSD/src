@@ -1,0 +1,64 @@
+#	$NetBSD: files.bcm53xx,v 1.1 2012/09/01 00:04:44 matt Exp $
+#
+# Configuration info for Broadcom BCM5301X ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/broadcom/bcm53xx_board.c
+file	arch/arm/broadcom/bcmgen_space.c
+
+# Console parameters
+defparam opt_broadcom.h				CONADDR
+defparam opt_broadcom.h				CONSPEED
+defparam opt_broadcom.h				CONMODE
+defflag opt_broadcom.h				BCM53XX_CONSOLE_EARLY
+
+# ChipCommonA attach point
+device	bcmcca { [channel=-1] } : bus_space_generic, gpiobus, sysmon_wdog
+attach	bcmcca at mainbus
+attach	com at bcmcca with com_cca
+file	arch/arm/broadcom/bcm53xx_cca.c		bcmcca|com_cca	needs-flag
+
+# ChipCommonB attach point
+device	bcmccb { [port=-1], [mdio=-1], [phy=-1] } : bus_space_generic
+attach	bcmccb at mainbus
+file	arch/arm/broadcom/bcm53xx_ccb.c		bcmccb
+file	arch/arm/broadcom/bcm53xx_idm.c		bcmccb
+
+device	bcmpax : pcibus
+attach	bcmpax at bcmccb with bcmpax_ccb
+file	arch/arm/broadcom/bcm53xx_pax.c		bcmpax_ccb
+
+device	bcmi2c : i2cbus, i2cexec
+attach	bcmi2c at bcmccb with bcmi2c_ccb
+file	arch/arm/broadcom/bcm53xx_i2c.c		bcmi2c_ccb
+
+device	bcmrng
+attach	bcmrng at bcmccb with bcmrng_ccb
+file	arch/arm/broadcom/bcm53xx_rng.c		bcmrng_ccb	needs-flag
+
+device	bcmmdio : mii
+attach	bcmmdio at bcmccb with bcmmdio_ccb
+file	arch/arm/broadcom/bcm53xx_mdio.c	bcmmdio_ccb
+
+device	bcmeth { } : ether, ifnet, arp
+attach	bcmeth at bcmccb with bcmeth_ccb
+file	arch/arm/broadcom/bcm53xx_eth.c		bcmeth_ccb
+
+# USB2 Host Controller (EHCI)
+device	bcmusb { }
+attach	bcmusb at bcmccb with bcmusb_ccb
+attach	ohci at bcmusb with ohci_bcmusb
+attach	ehci at bcmusb with ehci_bcmusb
+file	arch/arm/broadcom/bcm53xx_usb.c		bcmusb_ccb
+
+# External Mass Media Controller (SDHC)
+attach	sdhc at bcmccb with sdhc_ccb
+file	arch/arm/broadcom/bcm53xx_sdhc.c	sdhc_ccb
