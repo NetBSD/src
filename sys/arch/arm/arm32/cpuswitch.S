@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.70 2012/09/01 14:46:51 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.71 2012/09/01 22:20:52 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.70 2012/09/01 14:46:51 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.71 2012/09/01 22:20:52 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -347,6 +347,7 @@ ENTRY(lwp_trampoline)
 	GET_CPSR(r0)
 	CPSID_I(r0, r0)			/* Kill irq's */
 
+	GET_CURCPU(r4)			/* for DO_AST */
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAME
 
