@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.124 2012/08/04 04:34:54 riastradh Exp $
+#	$NetBSD: files.usb,v 1.125 2012/09/01 18:17:51 jakllsch Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -379,7 +379,8 @@ attach	upgt at usbdevif
 file	dev/usb/if_upgt.c		upgt
 
 # Ralink Technology RT2500USB
-attach	ral at usbdevif with ural
+device	ural: arp, ether, ifnet, wlan, firmload
+attach	ural at usbdevif
 file	dev/usb/if_ural.c		ural
 
 device	rum: ether, ifnet, arp, wlan, firmload
