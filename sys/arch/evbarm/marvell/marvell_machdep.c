@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.16 2012/08/23 10:48:19 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.17 2012/09/01 00:20:49 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.16 2012/08/23 10:48:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.17 2012/09/01 00:20:49 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -90,25 +90,8 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
-u_int free_pages;
-
-vm_offset_t msgbufphys;
-
+extern int KERNEL_BASE_phys[];
 extern char _end[];
-
-#define KERNEL_PT_SYS		0   /* Page table for mapping proc0 zero page */
-#define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define KERNEL_PT_KERNEL_NUM	((KERNEL_VM_BASE - KERNEL_BASE) >> 22)
-#define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
-/* Page tables for mapping kernel VM */
-#define KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
-#define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
-
-pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -156,59 +139,9 @@ marvell_system_reset(void)
 	/* assert soft reset */
 	write_mlmbreg(MVSOC_MLMB_SSRR, MVSOC_MLMB_SSRR_SYSTEMSOFTRST);
 	/* if we're still running, jump to the reset address */
+	cpu_reset_address = 0;
+	cpu_reset_address_paddr = 0xffff0000;
 	cpu_reset();
-	/*NOTREACHED*/
-}
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-
-	/*
-	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
-	 */
-	if (cold) {
-		doshutdownhooks();
-		printf("The operating system has halted.\r\n");
-		printf("Please press any key to reboot.\r\n");
-		cngetc();
-		printf("rebooting...\r\n");
-		marvell_system_reset();
-	}
-
-	/*
-	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the
-	 * unmount.  It looks like syslogd is getting woken up only to find
-	 * that it cannot page part of the binary in as the filesystem has
-	 * been unmounted.
-	 */
-	if (!(howto & RB_NOSYNC))
-		bootsync();
-
-	/* Say NO to interrupts */
-	splhigh();
-
-	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		dumpsys();
-
-	/* Run any shutdown hooks */
-	doshutdownhooks();
-
-	/* Make sure IRQ's are disabled */
-	IRQdisable;
-
-	if (howto & RB_HALT) {
-		printf("The operating system has halted.\r\n");
-		printf("Please press any key to reboot.\r\n");
-		cngetc();
-	}
-
-	printf("rebooting...\r\n");
-	marvell_system_reset();
-
 	/*NOTREACHED*/
 }
 
@@ -274,10 +207,10 @@ u_int
 initarm(void *arg)
 {
 	uint32_t target, attr, base, size;
-	u_int l1pagetable;
-	int loop, pt_index, cs, memtag = 0, iotag = 0, window;
+	int cs, memtag = 0, iotag = 0, window;
 
-	cpu_reset_address_paddr = 0xffff0000;
+	/* Use the mapped reset routine! */
+	cpu_reset_address = marvell_system_reset;
 
 	mvsoc_bootstrap(MARVELL_INTERREGS_VBASE);
 
@@ -416,6 +349,7 @@ initarm(void *arg)
 #endif
 
 	bootconfig.dramblocks = 0;
+	paddr_t physical_end;
 	physical_end = physmem = 0;
 	for (cs = MARVELL_TAG_SDRAM_CS0; cs <= MARVELL_TAG_SDRAM_CS3; cs++) {
 		mvsoc_target(cs, &target, &attr, &base, &size);
@@ -434,331 +368,14 @@ initarm(void *arg)
 		bootconfig.dramblocks++;
 	}
 
-	/*
-	 * Set up the variables that define the availablilty of
-	 * physical memory.  For now, we're going to set
-	 * physical_freestart to 0xa0008000 (where the kernel
-	 * was loaded), and allocate the memory we need downwards.
-	 * If we get too close to the L1 table that we set up, we
-	 * will panic.  We will update physical_freestart and
-	 * physical_freeend later to reflect what pmap_bootstrap()
-	 * wants to see.
-	 *
-	 * XXX pmap_bootstrap() needs an enema.
-	 */
-	physical_start = bootconfig.dram[0].address;
-
-	/*
-	 * Our kernel is at the beginning of memory, so set our free space to
-	 * all the memory after the kernel.
-	 */
-	physical_freestart = KERN_VTOPHYS(round_page((vaddr_t)_end));
-	physical_freeend = physical_end;
-
-#ifdef VERBOSE_INIT_ARM
-	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
-#endif
-
-	/*
-	 * Okay, the kernel starts 8kB in from the bottom of physical
-	 * memory.  We are going to allocate our bootstrap pages upwards
-	 * from physical_freestart.
-	 *
-	 * We need to allocate some fixed page tables to get the kernel
-	 * going.  We allocate one page directory and a number of page
-	 * tables and store the physical addresses in the kernel_pt_table
-	 * array.
-	 *
-	 * The kernel page directory must be on a 16K boundary.  The page
-	 * tables must be on 4K bounaries.  What we do is allocate the
-	 * page directory on the first 16K boundary that we encounter, and
-	 * the page tables on 4K boundaries otherwise.  Since we allocate
-	 * at least 3 L2 page tables, we are guaranteed to encounter at
-	 * least one 16K aligned region.
-	 */
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Allocating page tables\n");
-#endif
-
-	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
-
-#ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
-	    physical_freestart, free_pages, free_pages);
-#endif
-
-	/*
-	 * Define a macro to simplify memory allocation.  As we allocate the
-	 * memory, make sure that we don't walk over our temporary first level
-	 * translation table.
-	 */
-#define valloc_pages(var, np)						\
-	(var).pv_pa = physical_freestart;				\
-	physical_freestart += ((np) * PAGE_SIZE);			\
-	if (physical_freestart > (physical_freeend - L1_TABLE_SIZE))	\
-		panic("initarm: out of memory");			\
-	free_pages -= (np);						\
-	(var).pv_va = KERN_PHYSTOV((var).pv_pa);			\
-	memset((char *)(var).pv_va, 0, ((np) * PAGE_SIZE));
-
-	pt_index = 0;
-	kernel_l1pt.pv_pa = 0;
-	kernel_l1pt.pv_va = 0;
-	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
-		/* Are we 16KB aligned for an L1 ? */
-		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0 &&
-		    kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
-		} else {
-			valloc_pages(kernel_pt_table[pt_index],
-			    L2_TABLE_SIZE / PAGE_SIZE);
-			++pt_index;
-		}
-	}
-
-	/* This should never be able to happen but better confirm that. */
-	if (!kernel_l1pt.pv_pa ||
-	    (kernel_l1pt.pv_pa & (L1_TABLE_SIZE - 1)) != 0)
-		panic("initarm: Failed to align the kernel page directory");
-
-	/*
-	 * Allocate a page for the system page mapped to V0x00000000
-	 * This page will just contain the system vectors and can be
-	 * shared by all processes.
-	 */
-	valloc_pages(systempage, 1);
-	systempage.pv_va = 0x00000000;
-
-	/* Allocate stacks for all modes */
-	valloc_pages(irqstack, IRQ_STACK_SIZE);
-	valloc_pages(abtstack, ABT_STACK_SIZE);
-	valloc_pages(undstack, UND_STACK_SIZE);
-	valloc_pages(kernelstack, UPAGES);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va);
-	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va);
-	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va);
-	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va);
-#endif
-
-	/* Allocate the message buffer. */
-	{
-		pv_addr_t msgbuf;
-
-		valloc_pages(msgbuf, round_page(MSGBUFSIZE) / PAGE_SIZE);
-		msgbufphys = msgbuf.pv_pa;
-	}
-
-	/*
-	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables
-	 */
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Creating L1 page table at 0x%08lx\n", kernel_l1pt.pv_pa);
-#endif
-
-	/*
-	 * Now we start construction of the L1 page table
-	 * We start by mapping the L2 page tables into the L1.
-	 * This means that we can replace L1 mappings later on if necessary
-	 */
-	l1pagetable = kernel_l1pt.pv_va;
-
-	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pagetable, 0x00000000,
-	    &kernel_pt_table[KERNEL_PT_SYS]);
-	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
-		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
-		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-
-	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr =
-	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Mapping kernel\n");
-#endif
-
-	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	{
-		extern char etext[], _end[];
-		size_t textsize = (uintptr_t)etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (uintptr_t)_end - KERNEL_TEXT_BASE;
-		u_int logical;
-
-		textsize = (textsize + PGOFSET) & ~PGOFSET;
-		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-
-		logical = 0x00000000;	/* offset of kernel in RAM */
-
-		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, totalsize - textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	}
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Constructing L2 page tables\n");
-#endif
-
-	/* Map the stack pages */
-	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
-
-	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop)
-		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
-		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-
-	/* Map the vector page. */
-	pmap_map_entry(l1pagetable, ARM_VECTORS_LOW, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	/*
-	 * Map integrated peripherals at same address in first level page
-	 * table so that we can continue to use console.
-	 */
-	pmap_devmap_bootstrap(l1pagetable, marvell_devmap);
-
-	/*
-	 * Now we have the real page tables in place so we can switch to them.
-	 * Once this is done we will be running with the REAL kernel page
-	 * tables.
-	 */
-
-	/* Switch tables */
-#ifdef VERBOSE_INIT_ARM
-	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
-#endif
-
-	cpu_setttb(kernel_l1pt.pv_pa);
-	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
-
-	/*
-	 * Moved from cpu_startup() as data_abort_handler() references
-	 * this during uvm init.
-	 */
-	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("bootstrap done.\n");
-#endif
-
-	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
-
-	/*
-	 * Pages were allocated during the secondary bootstrap for the
-	 * stacks for different CPU modes.
-	 * We must now set the r13 registers in the different CPU modes to
-	 * point to these stacks.
-	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
-	 * of the stack memory.
-	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("init subsystems: stacks ");
-#endif
-
-	set_stackptr(PSR_IRQ32_MODE,
-	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_ABT32_MODE,
-	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_UND32_MODE,
-	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-
-	/*
-	 * Well we should set a data abort handler.
-	 * Once things get going this will change as we will need a proper
-	 * handler.
-	 * Until then we will use a handler that just panics but tells us
-	 * why.
-	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slightly better one.
-	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("vectors ");
-#endif
-	data_abort_handler_address = (u_int)data_abort_handler;
-	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
-	undefined_handler_address = (u_int)undefinedinstruction_bounce;
-
-	/* Initialise the undefined instruction handlers */
-#ifdef VERBOSE_INIT_ARM
-	printf("undefined ");
-#endif
-	undefined_init();
-
-	/* Load memory into UVM. */
-#ifdef VERBOSE_INIT_ARM
-	printf("page ");
-#endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
-	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
-	    atop(physical_freestart), atop(physical_freeend),
-	    VM_FREELIST_DEFAULT);
-
-	/* Boot strap pmap telling it where the kernel page table is */
-#ifdef VERBOSE_INIT_ARM
-	printf("pmap ");
-#endif
-	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("done.\n");
-#endif
-
-#ifdef __HAVE_MEMORY_DISK__
-	md_root_setconf(memory_disk, sizeof memory_disk);
-#endif
-
-	boot_args = bootargs;
-	parse_mi_bootargs(boot_args);
-
-#ifdef BOOTHOWTO
-	boothowto |= BOOTHOWTO;
-#endif
-
-#ifdef KGDB
-	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
-	}
-#endif
-
-#ifdef DDB
-	db_machine_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
+	arm32_bootmem_init(0, physical_end, (uintptr_t) KERNEL_BASE_phys);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0,
+	    marvell_devmap, false);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = marvell_device_register;
 
-	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 
 void
