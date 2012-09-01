@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.233 2012/08/30 23:14:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.234 2012/09/01 02:08:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.233 2012/08/30 23:14:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.234 2012/09/01 02:08:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2786,6 +2786,8 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
 	 * XXX It would be nice if the mbuf pkthdr had offset
 	 * fields for the protocol headers.
 	 */
+	*cmdlenp = 0;
+	*fieldsp = 0;
 
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
@@ -2827,7 +2829,6 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
 		*cmdlenp |= NQTX_CMD_VLE;
 	}
 
-	*fieldsp = 0;
 	mssidx = 0;
 
 	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
@@ -2980,7 +2981,6 @@ wm_nq_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
-	uint32_t cmdlen, fields, dcmdlen;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -3100,6 +3100,7 @@ wm_nq_start(struct ifnet *ifp)
 		txs->txs_ndesc = segs_needed;
 
 		/* Set up offload parameters for this packet. */
+		uint32_t cmdlen, fields, dcmdlen;
 		if (m0->m_pkthdr.csum_flags &
 		    (M_CSUM_TSOv4|M_CSUM_TSOv6|
 		    M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
@@ -3112,6 +3113,8 @@ wm_nq_start(struct ifnet *ifp)
 			}
 		} else {
 			do_csum = false;
+			cmdlen = 0;
+			fields = 0;
 		}
 
 		/* Sync the DMA map. */
