@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.34 2012/01/29 22:55:40 rmind Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.35 2012/09/01 00:24:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct lwp;
 #include <sys/pcu.h>
 #include <sys/percpu_types.h>
 #include <sys/queue.h>
+#include <sys/kcpuset.h>
 
 /*
  * MI per-cpu data
@@ -107,6 +108,7 @@ struct cpu_data {
 	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 	char		cpu_name[8];		/* eg, "cpu4" */
+	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
 };
 
 /* compat definitions */
@@ -114,12 +116,14 @@ struct cpu_data {
 #define	ci_index		ci_data.cpu_index
 #define	ci_biglock_count	ci_data.cpu_biglock_count
 #define	ci_biglock_wanted	ci_data.cpu_biglock_wanted
+#define	ci_cpuname		ci_data.cpu_name
 #define	ci_spin_locks		ci_data.cpu_spin_locks
 #define	ci_simple_locks		ci_data.cpu_simple_locks
 #define	ci_lockstat		ci_data.cpu_lockstat
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 #define	ci_pcu_curlwp		ci_data.cpu_pcu_curlwp
+#define	ci_kcpuset		ci_data.cpu_kcpuset
 
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
