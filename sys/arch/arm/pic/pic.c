@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.13 2012/09/01 00:00:42 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.14 2012/09/01 01:44:16 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.13 2012/09/01 00:00:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.14 2012/09/01 01:44:16 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -476,7 +476,9 @@ pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
 	KASSERT(pcpu->pcpu_evs != NULL);
 
 #define	PCPU_NAMELEN	32
+#ifdef DIAGNOSTIC
 	const size_t namelen = strlen(pic->pic_name) + 4 + strlen(ci->ci_data.cpu_name);
+#endif
 
 	KASSERT(namelen < PCPU_NAMELEN);
 	pcpu->pcpu_name = kmem_alloc(PCPU_NAMELEN, KM_SLEEP);
