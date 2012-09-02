@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.18 2012/08/29 02:38:31 macallan Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.19 2012/09/02 21:14:56 he Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,7 @@
 /*
  * WSKBD interfaces.
  */
+#include <dev/wscons/wsksymvar.h>
 
 /*
  * Keyboard access functions (must be provided by all keyboards).
