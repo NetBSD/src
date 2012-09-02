@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.19 2012/08/30 01:27:44 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.20 2012/09/02 21:06:54 he Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.19 2012/08/30 01:27:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.20 2012/09/02 21:06:54 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,9 +155,10 @@ const struct wsmouse_accessops adbkms_accessops = {
 static int  adbkbd_sysctl_mid(SYSCTLFN_ARGS);
 static int  adbkbd_sysctl_right(SYSCTLFN_ARGS);
 static int  adbkbd_sysctl_usb(SYSCTLFN_ARGS);
-static void adbkbd_setup_sysctl(struct adbkbd_softc *);
 
 #endif /* NWSMOUSE > 0 */
+
+static void adbkbd_setup_sysctl(struct adbkbd_softc *);
 
 #ifdef ADBKBD_DEBUG
 #define DPRINTF printf
