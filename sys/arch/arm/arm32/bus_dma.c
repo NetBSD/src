@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.55 2012/09/02 14:43:21 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.56 2012/09/02 14:46:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55 2012/09/02 14:43:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2012/09/02 14:46:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -970,7 +970,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			if (__predict_false(pmap_pde_section(pde))) {
 				paddr_t s_frame = L1_S_FRAME;
 				paddr_t s_offset = L1_S_OFFSET;
-#if ARM_MMU_V7 > 0
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 				if (__predict_false(pmap_pde_supersection(pde))) {
 					s_frame = L1_SS_FRAME;
 					s_frame = L1_SS_OFFSET;

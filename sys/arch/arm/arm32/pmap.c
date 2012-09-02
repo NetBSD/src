@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.235 2012/08/30 02:05:56 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235 2012/08/30 02:05:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5738,7 +5738,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 	size = resid;
 
 	while (resid > 0) {
-#ifdef _ARM_ARCH_6
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 		/* See if we can use a supersection mapping. */
 		if (L1_SS_PROTO && L1_SS_MAPPABLE_P(va, pa, resid)) {
 			/* Supersection are always domain 0 */
