@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.1 2012/09/01 00:03:14 matt Exp $
+# $NetBSD: files.cortex,v 1.2 2012/09/02 16:55:10 matt Exp $
 
 device	armperiph {}
 attach	armperiph at mainbus
@@ -8,6 +8,11 @@ file	arch/arm/cortex/armperiph.c		armperiph
 device	armgic: pic, pic_splfuncs
 attach	armgic at armperiph
 file	arch/arm/cortex/gic.c			armgic
+
+# ARM PL310 L2 Cache Controller(initially on Cortex-A9)
+device	arml2cc
+attach	arml2cc at armperiph
+file	arch/arm/cortex/pl310.c			arml2cc
 
 # A9 MPCore Global Timer
 device	a9tmr
