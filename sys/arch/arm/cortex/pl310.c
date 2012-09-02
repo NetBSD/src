@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.1 2012/09/02 16:55:10 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.2 2012/09/02 16:56:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.1 2012/09/02 16:55:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.2 2012/09/02 16:56:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,7 +154,7 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 		    i_size / 1024, i_linesize, i_assoc);
 	}
 
-	aprint_normal_dev(self, "%uKB/%uB %u-way L2 %s cache\n",
+	aprint_normal_dev(self, "%uKB/%uB %u-way write-back L2 %s cache\n",
 	    d_size / 1024, d_linesize, d_assoc,
 	    (cfg_harvard_p ? "Data" : "Unified"));
 }
