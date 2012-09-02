@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.1 2012/09/01 00:15:11 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.2 2012/09/02 05:02:36 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,15 +41,20 @@
 
 #include <arm/cortex/a9tmr_reg.h>
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.1 2012/09/01 00:15:11 matt Exp $")
+#ifndef CONADDR
+#define	CONADDR		0x18000300
+#endif
+
+RCSID("$NetBSD: bcm53xx_start.S,v 1.2 2012/09/02 05:02:36 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
 
 #if defined(VERBOSE_INIT_ARM)
-#define	PUTC(n)		mov r0, n; bl xputc
+#define	XPUTC(n)	mov r0, n; bl xputc
+#define XPUTC_COM	1
 #else
-#define	PUTC(n)
+#define	XPUTC(n)
 #endif
 
 /*
@@ -61,150 +66,55 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.1 2012/09/01 00:15:11 matt Exp $")
 
 	.global	_C_LABEL(bcm53xx_start)
 _C_LABEL(bcm53xx_start):
-	cpsid	if, #PSR_SVC32_MODE
-
-	PUTC(#64)
-	bl	_C_LABEL(armv7_icache_inv_all)	@ invalidate i-cache
+	/*
+	 * Let's turn on the CCA watchdog in case something goes horribly wrong.
+	 */
+	ldr	r0, .Lcca_wdog
+	ldr	r1, .Lcca_wdog + 4
+	str	r1, [r0]
 
 	/*
-	 * Step 1a, invalidate the all cache tags in all ways on the SCU.
+	 * Cal the initial start code for the a9
 	 */
-	PUTC(#65)
-	mrc	p15, 4, r3, c15, c0, 0		@ read cbar
+	bl	a9_start
 
-	mrc	p15, 0, r0, c0, c0, 5		@ get MPIDR
-	and	r0, r0, #7			@ get our cpu numder
-	lsl	r0, r0, #2			@ multiply by 4
-	mov	r1, #0xf			@ select all ways
-	lsl	r1, r1, r0			@ shift into place
-	str	r1, [r3, #12]			@ write scu invalidate all
-	dsb
-	isb
-
-	/*
-	 * Step 1b, invalidate the data cache
-	 */
-	PUTC(#66)
-	bl	_C_LABEL(armv7_dcache_wbinv_all)	@ writeback/invalidate d-cache
-
-	/*
-	 * Step 2, disable the data cache
-	 */
-	mrc	p15, 0, r2, c1, c0, 0		@ get system ctl register (save)
-	bic	r1, r2, #CPU_CONTROL_DC_ENABLE	@ clear data cache enable
-	mcr	p15, 0, r1, c1, c0, 0		@ set system ctl register
-	isb
-
-	/*
-	 * Step 3, enable the SCU (and set SMP mode)
-	 */
-	ldr	r1, [r3, #4]			@ read scu config
-	orr	r1, r1, #0xf0			@ set smp mode
-	str	r1, [r3, #4]			@ write scu config
-	ldr	r1, [r3, #0]			@ read scu control
-	orr	r1, r1, #1			@ set scu enable flag
-	str	r1, [r3, #4]			@ write scu control
-	dsb
-	isb
-
-	/*
-	 * Step 4a, enable the data cache
-	 */
-	mcr	p15, 0, r2, c1, c0, 0		@ reenable caches
-	isb
-
-	/*
-	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
-	 */
-	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
-	orr	r0, #0x40			@ enable SMP mode
-	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
-	isb
-	orr	r0, #0x1			@ enable cache/tlb/coherency
-	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
-	isb
-
-	PUTC(#67)
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
 	 * at KERNEL_BASE with caches on.
 	 */
-	/* Build page table from scratch */
-	ldr	r0, .Ltemp_l1_table	/* The page table address - entered into TTB later */
-	mov	r1, r0			/* Start address to clear memory. */
-	/* Zero the entire table so all virtual addresses are invalid. */
-	mov	r2, #L1_TABLE_SIZE	/* in bytes */
-	mov	r3, #0
-	mov	r4, r3
-	mov	r5, r3
-	mov	r6, r3
-	mov	r7, r3
-	mov	r8, r3
-	mov	r10, r3
-	mov	r11, r3
-1:	stmia	r1!, {r3-r8,r10-r11}
-	stmia	r1!, {r3-r8,r10-r11}
-	stmia	r1!, {r3-r8,r10-r11}
-	stmia	r1!, {r3-r8,r10-r11}
-	subs	r2, r2, #(4 * 4 * 8)	/* bytes per loop */
-	bne	1b
+	ldr	r0, .Ltemp_l1_table	/* The L1PT address - entered into TTB later */
+	adr	r1, mmu_init_table
+	bl	arm_boot_l1pt_init
 
-	/* Now create our entries per the mmu_init_table. */
-	l1table	.req r0
-	va	.req r1
-	pa	.req r2
-	n_sec	.req r3
-	attr	.req r4
-	itable	.req r5
-
-	adr	itable, mmu_init_table
-	b	3f
-
-2:	str	pa, [l1table, va]
-	add	va, va, #4
-	add	pa, pa, #(L1_S_SIZE)
-	subs	n_sec, n_sec, #1
-	bhi	2b
-
-3:	ldmia	itable!, {va,pa,n_sec,attr}
-	/* Convert va to l1 offset:	va = 4 * (va >> L1_S_SHIFT)	*/
-	lsr	va, va, #L1_S_SHIFT
-	lsl	va, va, #2
-	/* Convert pa to l1 entry:	pa = (pa & L1_S_FRAME) | attr	*/
-	bfc	pa, #0, #L1_S_SHIFT
-	orr	pa, pa, attr
-	cmp	n_sec, #0
-	bne	2b
-
-	.unreq	va
-	.unreq	pa
-	.unreq	n_sec
-	.unreq	attr
-	.unreq	itable
-	.unreq	l1table
-
-	PUTC(#68)
+	XPUTC(#68)
 	/*
 	 * Before we turn on the MMU, let's the other process out of the
 	 * SKU ROM but setting the magic LUT address to our own mp_start
 	 * routine. 
 	 */
 	ldr	r1, .Lsku_rom_lut
-	adr	r2, mp_start
+	adr	r2, a9_mpstart
 	str	r2, [r1]
 	sev				/* wake up the others */
 
 	/*
 	 * init the CPU TLB, Cache, MMU.
 	 */
-	PUTC(#69)
+	XPUTC(#69)
 
 	ldr	r0, .Ltemp_l1_table	/* The page table address */
-	bl	cpu_init
+	bl	a9_cpuinit
 
-	PUTC(#33)
-	PUTC(#10)
-	PUTC(#13)
+	XPUTC(#33)
+	XPUTC(#10)
+	XPUTC(#13)
+
+	/*
+	 * Let's turn off the CCA watchdog since nothing went horribly wrong.
+	 */
+	ldr	r0, .Lcca_wdog
+	mov	r1, #0
+	str	r1, [r0]
 
 	/*
 	 * Jump to start in locore.S, which in turn will call initarm and main.
@@ -220,44 +130,15 @@ _C_LABEL(bcm53xx_start):
 .Lsku_rom_lut:
 	.word	0xffff0400
 
+.Lcca_wdog:
+	.word	0x18000080
+	.word	0x0fffffff	/* maximum watchdog time out, about 10 seconds */
+
 .Ltemp_l1_table:
 	/* Put the temporary L1 translation table far enough away. */
 	.word	KERNEL_BASE_phys + 31 * 0x100000 - L1_TABLE_SIZE
-	
-/*
- * Coprocessor register initialization values
- */
 
-	.p2align 3
-	/* bits to clear in the Control Register */
-.Lcontrol_clr:
-	.word	0
-
-	/* bits to set in the Control Register */
-.Lcontrol_set:
-	.word CPU_CONTROL_MMU_ENABLE	|			\
-	      CPU_CONTROL_AFLT_ENABLE	|			\
-	      CPU_CONTROL_DC_ENABLE	|			\
-	      CPU_CONTROL_SYST_ENABLE	|			\
-	      CPU_CONTROL_SWP_ENABLE	|			\
-	      CPU_CONTROL_IC_ENABLE
-#if 0
-	        (15 << 3) |	/* SBOP */			\
-		(1 << 16) | 	/* SBO */			\
-		(1 << 18) |	/* SBO */			\
-		(3 << 22)	/* SB0 */
-#endif
-
-	/* bits to disable the caches */
-.Lctl_ID_dis:
-	.word	~(CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE)
-
-/* We'll modify va and pa at run time so we can use relocatable addresses. */
-#define MMU_INIT(va,pa,n_sec,attr) \
-	.word	va					    ; \
-	.word	pa					    ; \
-	.word	n_sec					    ; \
-	.word	attr					    ;
+#include <arm/cortex/a9_mpsubr.S>
 
 mmu_init_table:
 	/* Add 32MB of VA==PA at 0x80000000 so we can keep the kernel going */
@@ -287,239 +168,3 @@ mmu_init_table:
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
-
-cpu_init:
-	/*
-	 * In theory, because the MMU is off, we shouldn't need all of this,
-	 * but let's not take any chances and do a typical sequence to set
-	 * the Translation Table Base.
-	 */
-	mov	ip, lr
-	mov	r10, r0
-	mov	r1, #0			/* SBZ */
-
-        ldr     r3, .Lctl_ID_dis	/* Disable I+D caches */
-	mrc	p15, 0, r2, c1, c0, 0	/*  "       "   "     */
-	and	r2, r2, r3		/*  "       "   "     */
-	mcr	p15, 0, r2, c1, c0, 0	/*  "       "   "     */
-
-	PUTC(#70)
-	mov	r1, #0
-	mcr	p15, 0, r1, c7, c10, 4	/* Drain the write buffers. */
-
-	PUTC(#71)
-	mcr	p15, 0, r10, c2, c0, 0	/* Set Translation Table Base */
-
-	PUTC(#72)
-	mov	r1, #0
-	mcr	p15, 0, r1, c8, c7, 0	/* Invalidate TLBs */
-
-	/* Set the Domain Access register.  Very important! */
-	PUTC(#74)
-	mov     r1, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r1, c3, c0, 0
-
-	/*
-	 * Enable the MMU, etc.
-	 */
-	PUTC(#75)
-	mrc	p15, 0, r0, c1, c0, 0
-
-	ldr	r2, .Lcontrol_clr
-	bic	r0, r0, r2
-	ldr	r3, .Lcontrol_set
-	orr	r0, r0, r3
-	
-	dsb
-	.align 5
-	@ turn mmu on!
-	mov	r0, r0
-	mcr	p15, 0, r0, c1, c0, 0
-
-	/*
-	 * Ensure that the coprocessor has finished turning on the MMU.
-	 */
-	mrc	p15, 0, r0, c0, c0, 0	/* Read an arbitrary value. */
-	mov	r0, r0			/* Stall until read completes. */
-
-	bx	ip			/* return */
-
-#if defined(VERBOSE_INIT_ARM)
-#define	TIMO	0x25000
-xputc:
-	mov	r2, #1
-	ldr	r3, .Lcomlock
-10:
-	ldrex	r1, [r3]
-	cmp	r1, #0
-	bne	10b
-	strex	r1, r2, [r3]
-	cmp	r1, #0
-	bne	10b
-
-	mov	r2, #TIMO
-	ldr	r3, .Luart0
-1:	ldrb	r1, [r3, #COM_LSR]
-	tst	r1, #LSR_TXRDY
-	bne	2f
-	subs	r2, r2, #1
-	bne	1b
-2:
-	strb	r0, [r3, #COM_DATA]
-
-	mov	r2, #TIMO
-3:	ldrb	r1, [r3, #COM_LSR]
-	tst	r1, #LSR_TSRE
-	bne	4f
-	subs	r2, r2, #1
-	bne	3b
-4:
-	ldr	r3, .Lcomlock
-	mov	r0, #0
-	str	r0, [r3]
-	dsb
-	bx	lr
-
-.Luart0:
-	.word	0x18000300
-
-.Lcomlock:
-	.word	comlock
-
-	.pushsection .data
-comlock:
-	.p2align 2
-	.word	0		@ not in bss
-
-	.popsection
-#endif /* VERBOSE_INIT_ARM */
-
-/*
- * Secondary processors come here after exiting the SKU ROM.
- */
-mp_start:
-#ifdef MULTIPROCESSOR
-	/*
-	 * Step 1, invalidate the caches
-	 */
-	bl	_C_LABEL(armv7_icache_inv_all)	@ toss i-cache
-	bl	_C_LABEL(armv7_dcache_inv_all)	@ toss d-cache
-
-	mrc	p15, 0, r4, c0, c0, 5		@ get MPIDR
-	and	r4, r4, #7			@ get our cpu numder
-
-	/*
-	 * Step 2, wait for the SCU to be enabled
-	 */
-	mrc	p15, 4, r3, c15, c0, 0		@ read cbar
-1:	ldr	r0, [r3, #0]			@ read scu control
-	tst	r0, #1				@ enable bit set yet?
-	bne	1b				@ try again
-
-	lsl	r0, r4, #2			@ multiply our cpu num by 4
-	mov	r1, #0xf			@ select all ways
-	lsl	r1, r1, r0			@ shift into place
-	str	r1, [r3, #12]			@ write scu invalidate all
-	dsb
-	isb
-
-	/*
-	 * Step 3, set ACTLR.SMP=1 (and ACTRL.FX=1)
-	 */
-	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
-	orr	r0, #0x40			@ enable SMP
-	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
-	isb
-	orr	r0, #0x01			@ enable cache/tlb/coherency
-	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
-	isb
-
-	/*
-	 * We should be in SMP mode now.
-	 */
-
-#if defined(VERBOSE_INIT_ARM)
-	add	r0, r4, #48
-	bl	xputc
-#endif
-
-	ldr	r0, .Lcpu_hatched		@ now show we've hatched
-	mov	r5, #1
-	lsl	r5, r5, r4
-	mov	r1, r5
-	bl	_C_LABEL(atomic_or_32)
-
-	PUTC(#97)
-#endif
-
-	cpsid	if, #PSR_SVC32_MODE		@ make sure we are in SVC mode
-
-	/* Now we will wait for someone tell this cpu to start running */
-#ifdef MULTIPROCESSOR
-	ldr	r0, .Lcpu_mbox
-#else
-	cmp	r0, r0
-#endif
-2:
-#ifdef MULTIPROCESSOR
-	dmb
-	ldr	r2, [r0]
-	tst	r2, r5
-#endif
-	@wfeeq
-	beq	2b
-
-#ifdef MULTIPROCESSOR
-3:	PUTC(#98)
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
-
-	ldr	r0, .Lkernel_l1pt		/* get address of l1pt pvaddr */
-	ldr	r0, [r0, #PV_PA]		/* Now get the phys addr */
-	bl	cpu_init
-
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
-
-	/* MMU, L1, are now on. */
-
-	ldr	r0, .Lcpu_info			/* get pointer to cpu_infos */
-	ldr	r5, [r0, r4, lsl #2]		/* load our cpu_info */
-	ldr	r6, [r5, #CI_IDLELWP]		/* get the idlelwp */
-	ldr	r7, [r6, #L_PCB]		/* now get its pcb */
-	ldr	sp, [r7, #PCB_SP]		/* finally, we can load our SP */
-#ifdef TPIDRPRW_IS_CURCPU
-	mcr	p15, 0, r5, c13, c0, 4		/* squirrel away curcpu() */
-#elif defined(TPIDRPRW_IS_CURLWP)
-	mcr	p15, 0, r6, c13, c0, 4		/* squirrel away curlwp() */
-#else
-#error either TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP must be defined
-#endif
-	str	r6, [r5, #CI_CURLWP]		/* and note we are running on it */
-
-	ldr	r0, .Lcpu_marker
-	str	pc, [r0]
-
-	mov	r0, r5				/* pass cpu_info */
-	mov	r1, r4				/* pass cpu_id */
-	ldr	r2, .Lbcm53xx_cpu_hatch		/* pass md_cpu_hatch */
-	bl	_C_LABEL(cpu_hatch)
-	b	_C_LABEL(idle_loop)
-
-	/* NOT REACHED */
-
-.Lkernel_l1pt:
-	.word	_C_LABEL(kernel_l1pt)
-.Lcpu_info:
-	.word	_C_LABEL(cpu_info)
-.Lcpu_max:
-	.word	_C_LABEL(arm_cpu_max)
-.Lcpu_hatched:
-	.word	_C_LABEL(arm_cpu_hatched)
-.Lcpu_mbox:
-	.word	_C_LABEL(arm_cpu_mbox)
-.Lcpu_marker:
-	.word	_C_LABEL(arm_cpu_marker)
-.Lbcm53xx_cpu_hatch:
-	.word	_C_LABEL(bcm53xx_cpu_hatch)
-#endif /* MULTIPROCESSOR */
