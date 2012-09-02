@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.2 2012/09/02 05:01:54 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,14 +34,23 @@
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
+#include <arm/cortex/scu_reg.h>
 #include "assym.h"
+
+
+/* We'll modify va and pa at run time so we can use relocatable addresses. */
+#define MMU_INIT(va,pa,n_sec,attr) \
+	.word	va					    ; \
+	.word	pa					    ; \
+	.word	n_sec					    ; \
+	.word	attr					    ;
 
 /*
  * Set up a preliminary mapping in the MMU to allow us to run
  * at KERNEL_BASE with caches on.
  */
 arm_boot_l1pt_init:
-	mv	ip, r1			@ save mmu table addr
+	mov	ip, r1			@ save mmu table addr
 	/* Build page table from scratch */
 	mov	r1, r0			/* Start address to clear memory. */
 	/* Zero the entire table so all virtual addresses are invalid. */
@@ -72,8 +81,8 @@ arm_boot_l1pt_init:
 	mov	itable, ip		@ reclaim table address
 	b	3f
 
-2:	str	pa, [l1table, va]
-	add	va, va, #4
+2:	str	pa, [l1table, va, lsl #2]
+	add	va, va, #1
 	add	pa, pa, #(L1_S_SIZE)
 	subs	n_sec, n_sec, #1
 	bhi	2b
@@ -81,14 +90,13 @@ arm_boot_l1pt_init:
 3:	ldmia	itable!, {va,pa,n_sec,attr}
 	/* Convert va to l1 offset:	va = 4 * (va >> L1_S_SHIFT)	*/
 	lsr	va, va, #L1_S_SHIFT
-	lsl	va, va, #2
 	/* Convert pa to l1 entry:	pa = (pa & L1_S_FRAME) | attr	*/
 #ifdef _ARM_ARCH_7
 	bfc	pa, #0, #L1_S_SHIFT
 #else
 	lsr	pa, pa, #L1_S_SHIFT
 	lsl	pa, pa, #L1_S_SHIFT
-#ndif
+#endif
 	orr	pa, pa, attr
 	cmp	n_sec, #0
 	bne	2b
@@ -100,9 +108,6 @@ arm_boot_l1pt_init:
 	.unreq	attr
 	.unreq	itable
 	.unreq	l1table
-
-.Lctl_ID:
-	.word	CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE
 
 a9_cpuinit:
 	/*
@@ -159,8 +164,29 @@ a9_cpuinit:
 
 	bx	ip			/* return */
 
-#if defined(VERBOSE_INIT_ARM) && XPUTC
+/*
+ * Coprocessor register initialization values
+ */
+
+	.p2align 2
+	/* bits to clear in the Control Register */
+.Lcontrol_clr:
+	.word	0
+
+	/* bits to set in the Control Register */
+.Lcontrol_set:
+	.word CPU_CONTROL_MMU_ENABLE	|			\
+	      CPU_CONTROL_AFLT_ENABLE	|			\
+	      CPU_CONTROL_DC_ENABLE	|			\
+	      CPU_CONTROL_SYST_ENABLE	|			\
+	      CPU_CONTROL_SWP_ENABLE	|			\
+	      CPU_CONTROL_IC_ENABLE
+
+#if defined(VERBOSE_INIT_ARM) && XPUTC_COM
 #define	TIMO	0x25000
+#ifndef COM_MULT
+#define	COM_MULT	1
+#endif
 xputc:
 #ifdef MULTIPROCESSOR
 	mov	r2, #1
@@ -172,11 +198,12 @@ xputc:
 	strex	r1, r2, [r3]
 	cmp	r1, #0
 	bne	10b
+	dsb
 #endif
 
 	mov	r2, #TIMO
 	ldr	r3, .Luart0
-1:	ldrb	r1, [r3, #COM_LSR]
+1:	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
 	tst	r1, #LSR_TXRDY
 	bne	2f
 	subs	r2, r2, #1
@@ -185,7 +212,7 @@ xputc:
 	strb	r0, [r3, #COM_DATA]
 
 	mov	r2, #TIMO
-3:	ldrb	r1, [r3, #COM_LSR]
+3:	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
 	tst	r1, #LSR_TSRE
 	bne	4f
 	subs	r2, r2, #1
@@ -200,7 +227,7 @@ xputc:
 	bx	lr
 
 .Luart0:
-	.word	CONSADDR
+	.word	CONADDR
 
 #ifdef MULTIPROCESSOR
 .Lcomlock:
@@ -229,12 +256,12 @@ a9_start:
 	 */
 	XPUTC(#65)
 	mrc	p15, 4, r3, c15, c0, 0		@ read cbar
-	ldr	r0, [r3, #4]			@ read scu config
+	ldr	r0, [r3, #SCU_CFG]		@ read scu config
 	and	r0, r0, #7			@ get cpu max
-	add	r0, r0, #1			@ adjust to cpu num
-	lsl	r0, r0, #4			@ multiply by 16
-	sub	r0, r0, #1			@ make it into a mask
-	str	r0, [r3, #12]			@ write scu invalidate all
+	add	r0, r0, #2			@ adjust to cpu num
+	mov	r1, #0xf			@ select all ways
+	lsl	r1, r1, r0			@ shift into place
+	str	r1, [r3, #SCU_INV_ALL_REG]	@ write scu invalidate all
 	dsb
 	isb
 
@@ -255,12 +282,9 @@ a9_start:
 	/*
 	 * Step 3, enable the SCU (and set SMP mode)
 	 */
-	ldr	r1, [r3, #4]			@ read scu config
-	orr	r1, r1, #0xf0			@ set smp mode
-	str	r1, [r3, #4]			@ write scu config
-	ldr	r1, [r3, #0]			@ read scu control
-	orr	r1, r1, #1			@ set scu enable flag
-	str	r1, [r3, #4]			@ write scu control
+	ldr	r1, [r3, #SCU_CTL]		@ read scu control
+	orr	r1, r1, #SCU_CTL_SCU_ENA	@ set scu enable flag
+	str	r1, [r3, #SCU_CTL]		@ write scu control
 	dsb
 	isb
 
@@ -274,12 +298,15 @@ a9_start:
 	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
 	 */
 	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
-	orr	r0, #0x41			@ enable cache/tlb/coherency
+	orr	r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
+	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
+	isb
+	orr	r0, #CORTEXA9_AUXCTL_FW		@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
 
 	bx	r10
-ASEND(a9_startup)
+ASEND(a9_start)
 
 /*
  * Secondary processors come here after exiting the SKU ROM.
@@ -296,16 +323,20 @@ a9_mpstart:
 	 * Step 2, wait for the SCU to be enabled
 	 */
 	mrc	p15, 4, r3, c15, c0, 0		@ read cbar
-1:	ldr	r0, [r3, #0]			@ read scu control
-	tst	r0, #1				@ enable bit set yet?
+1:	ldr	r0, [r3, #SCU_CTL]		@ read scu control
+	tst	r0, #SCU_CTL_SCU_ENA		@ enable bit set yet?
 	bne	1b				@ try again
 
 	/*
 	 * Step 3, set ACTLR.SMP=1 (and ACTRL.FX=1)
 	 */
 	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
-	orr	r0, #0x41			@ enable cache/tlb/coherency
+	orr	r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
+	mov	r0, r0
+	orr	r0, #CORTEXA9_AUXCTL_FW		@ enable cache/tlb/coherency
+	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
+	mov	r0, r0
 
 	/*
 	 * We should be in SMP mode now.
@@ -380,7 +411,7 @@ a9_mpstart:
 	ldr	r2, .Lbcm53xx_cpu_hatch		/* pass md_cpu_hatch */
 	bl	_C_LABEL(cpu_hatch)
 	b	_C_LABEL(idle_loop)
-
+ASEND(a9_mpstart)
 	/* NOT REACHED */
 
 .Lkernel_l1pt:
