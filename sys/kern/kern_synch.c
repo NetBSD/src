@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.304 2012/08/30 02:26:38 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.304 2012/08/30 02:26:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -713,11 +713,15 @@ mi_switch(lwp_t *l)
 		}
 
 		/* Switch to the new LWP.. */
+#ifdef MULTIPROCESSOR
 		KASSERT(curlwp == ci->ci_curlwp);
+#endif
 		KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 		prevlwp = cpu_switchto(l, newl, returning);
 		ci = curcpu();
+#ifdef MULTIPROCESSOR
 		KASSERT(curlwp == ci->ci_curlwp);
+#endif
 		KASSERTMSG(l == curlwp, "l %p curlwp %p prevlwp %p",
 		    l, curlwp, prevlwp);
 
