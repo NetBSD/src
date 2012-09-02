@@ -1,4 +1,4 @@
-#	$NetBSD: std.marvell,v 1.1 2010/10/02 06:15:52 kiyohara Exp $
+#	$NetBSD: std.marvell,v 1.2 2012/09/02 13:34:50 matt Exp $
 #
 # standard NetBSD/evbarm for MAEVELL options
 
@@ -13,6 +13,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 
 options 	COM_REGMAP
 
