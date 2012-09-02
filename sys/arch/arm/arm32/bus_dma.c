@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.54 2011/07/01 20:57:45 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.55 2012/09/02 14:43:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.54 2011/07/01 20:57:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.55 2012/09/02 14:43:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,17 +962,23 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Get the physical address for this segment.
 		 *
-		 * XXX Don't support checking for coherent mappings
+		 * XXX Doesn't support checking for coherent mappings
 		 * XXX in user address space.
 		 */
 		if (__predict_true(pmap == pmap_kernel())) {
 			(void) pmap_get_pde_pte(pmap, vaddr, &pde, &ptep);
 			if (__predict_false(pmap_pde_section(pde))) {
-				curaddr = (*pde & L1_S_FRAME) |
-				    (vaddr & L1_S_OFFSET);
+				paddr_t s_frame = L1_S_FRAME;
+				paddr_t s_offset = L1_S_OFFSET;
+#if ARM_MMU_V7 > 0
+				if (__predict_false(pmap_pde_supersection(pde))) {
+					s_frame = L1_SS_FRAME;
+					s_frame = L1_SS_OFFSET;
+}
+#endif
+				curaddr = (*pde & s_frame) | (vaddr & s_offset);
 				if (*pde & L1_S_CACHE_MASK) {
-					map->_dm_flags &=
-					    ~ARM32_DMAMAP_COHERENT;
+					map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
 				}
 			} else {
 				pte = *ptep;
