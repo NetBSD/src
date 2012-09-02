@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2011/04/04 20:37:45 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8 2012/09/02 13:57:18 matt Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -55,8 +55,8 @@ struct pci_attach_args;
  */
 struct arm32_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
