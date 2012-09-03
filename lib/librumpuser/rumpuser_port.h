@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.2 2012/08/25 18:00:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3 2012/09/03 11:33:35 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -25,6 +25,7 @@
 #define PLATFORM_HAS_NFSSVC
 #define PLATFORM_HAS_FSYNC_RANGE
 #define PLATFORM_HAS_NBSYSCTL
+#define PLATFORM_HAS_NBFILEHANDLE
 
 #if __NetBSD_Prereq__(5,99,48)
 #define PLATFORM_HAS_NBQUOTA
