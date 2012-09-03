@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.185.2.1 2012/05/21 15:25:56 riz Exp $	 */
+/* $NetBSD: machdep.c,v 1.185.2.2 2012/09/03 19:01:25 riz Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.1 2012/05/21 15:25:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.2 2012/09/03 19:01:25 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -247,6 +247,13 @@ cpu_dumpconf(void)
 	 */
 	if (dumplo < btodb(PAGE_SIZE))
 		dumplo = btodb(PAGE_SIZE);
+
+	/*
+	 * If we have nothing to dump (XXX implement crash dumps),
+	 * make it clear for savecore that there is no dump.
+	 */
+	if (dumpsize <= 0)
+		dumplo = 0;
 }
 
 static int
