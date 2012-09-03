@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.262.10.3 2012/05/22 18:46:09 riz Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.262.10.4 2012/09/03 18:36:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.10.3 2012/05/22 18:46:09 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.262.10.4 2012/09/03 18:36:33 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,22 @@ scsibusattach(device_t parent, device_t self, void *aux)
 	    chan->chan_ntargets == 1 ? "" : "s",
 	    chan->chan_nluns,
 	    chan->chan_nluns == 1 ? "" : "s");
+
+	/*
+	 * XXX 
+	 * newer adapters support more than 256 outstanding commands
+	 * per periph and don't use the tag (they eventually allocate one
+	 * internally). Right now scsipi always allocate a tag and
+	 * is limited to 256 tags, per scsi specs.
+	 * this should be revisited
+	 */
+	if (chan->chan_flags & SCSIPI_CHAN_OPENINGS) {
+		if (chan->chan_max_periph > 256)
+			chan->chan_max_periph = 256;
+	} else {
+		if (chan->chan_adapter->adapt_max_periph > 256)
+			chan->chan_adapter->adapt_max_periph = 256;
+	}
 
 	if (scsipi_adapter_addref(chan->chan_adapter))
 		return;
