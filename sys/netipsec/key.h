@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: key.h,v 1.11.8.1 2012/09/03 19:19:55 riz Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -116,6 +116,10 @@ u_int16_t key_portfromsaddr (const union sockaddr_union *);
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_SECA);
 #endif /* MALLOC_DECLARE */
+
+/* XXX: referenced by kernfs, but not implemented... */
+extern TAILQ_HEAD(_satailq, secasvar) satailq;
+extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
 
 #endif /* defined(_KERNEL) */
 #endif /* !_NETIPSEC_KEY_H_ */
