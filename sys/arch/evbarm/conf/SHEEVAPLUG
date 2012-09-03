@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.19 2012/09/01 18:17:50 jakllsch Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.20 2012/09/03 17:46:08 msaitoh Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -229,12 +229,12 @@ ld*	at sdmmc?
 #wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-#atapibus* at atapi?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
-#cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
-#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 
 # USB bus support
 usb*	at ehci?
