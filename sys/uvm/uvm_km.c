@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.130 2012/09/03 15:55:42 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.131 2012/09/03 16:07:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.130 2012/09/03 15:55:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.131 2012/09/03 16:07:17 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -790,7 +790,7 @@ again:
 		uvm_maxkaddr = pmap_growkernel(va + size);
 		if (uvm_maxkaddr < va + size)
 			panic("%s: pmap_growkernel(%#"PRIxVADDR") failed",
-			    __func__, va + size);
+			    __func__, (vaddr_t) (va + size));
 	}
 #endif
 
