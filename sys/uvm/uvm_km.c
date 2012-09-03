@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.128 2012/07/09 11:19:34 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.129 2012/09/03 14:21:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.128 2012/07/09 11:19:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.129 2012/09/03 14:21:24 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -322,6 +322,20 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	 */
 
 	kernel_map = &kernel_map_store;
+
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * Since we just set kernel_map, the check in uvm_map_prepare to grow the
+	 * kernel's VA space never happened so we must do it here.  If the kernel
+	 * pmap can't map the requested space, then allocate more resources for it.
+	 */
+	if (uvm_maxkaddr < kmembase + kmemsize) {
+		uvm_maxkaddr = pmap_growkernel(kmembase + kmemsize);
+		if (uvm_maxkaddr < kmembase + kmemsize)
+			panic("%s: pmap_growkernel(%#"PRIxVADDR") failed",
+			    __func__, kmembase + kmemsize);
+	}
+#endif
 
 	pool_subsystem_init();
 	vmem_bootstrap();
