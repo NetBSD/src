@@ -1,11 +1,11 @@
-#	$NetBSD: MV2120,v 1.9 2012/08/29 08:29:58 skrll Exp $
+#	$NetBSD: MV2120,v 1.10 2012/09/03 17:12:50 msaitoh Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options 	SYMTAB_SPACE="(1024 * 912)"
+options 	SYMTAB_SPACE="(1024 * 1000)"
 
 makeoptions	DEBUG="-g"
 
