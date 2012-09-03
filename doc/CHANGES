@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.8 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.9 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1213,6 +1213,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		using large pages). [chs 20111204]
 	adventure(6): New save file format. Please regenerate (restore
 		and re-save) any old save files. [dholland 20120107]
+	ipsec(4): Make FAST_IPSEC the default IPSEC implementation.
+		[drochner 20120109]
 	x86, xen: Add cpu ucode loading support via cpuctl(8). [cegger 20120113]
 	sandpoint: Netronix NH-230/231 and compatible NAS are supported.
 		[phx 20120114]
