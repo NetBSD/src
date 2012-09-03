@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.97 2012/09/03 11:33:35 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.98 2012/09/03 12:07:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include "rumpuser_port.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.97 2012/09/03 11:33:35 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.98 2012/09/03 12:07:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,7 +102,6 @@ enum dualcall {
 	DUALCALL_OPEN,
 	DUALCALL_CHDIR, DUALCALL_FCHDIR,
 	DUALCALL_LSEEK,
-	DUALCALL_GETDENTS,
 	DUALCALL_UNLINK, DUALCALL_SYMLINK, DUALCALL_READLINK,
 	DUALCALL_LINK, DUALCALL_RENAME,
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
@@ -113,6 +112,7 @@ enum dualcall {
 
 #ifndef __linux__
 	DUALCALL___GETCWD,
+	DUALCALL_GETDENTS,
 #endif
 
 #ifndef __linux__
@@ -211,6 +211,7 @@ int REALSTAT(const char *, struct stat *);
 int REALLSTAT(const char *, struct stat *);
 int REALFSTAT(int, struct stat *);
 int REALMKNOD(const char *, mode_t, dev_t);
+int REALGETDENTS(int, char *, size_t);
 
 int __getcwd(char *, size_t);
 
@@ -219,7 +220,6 @@ int __getcwd(char *, size_t);
 #define REALREAD read
 #define REALPREAD pread
 #define REALPWRITE pwrite
-#define REALGETDENTS readdir
 #define REALSELECT select
 #define REALPOLLTS ppoll
 #define REALUTIMES utimes
@@ -242,7 +242,6 @@ int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 ssize_t REALREAD(int, void *, size_t);
 ssize_t REALPREAD(int, void *, size_t, off_t);
 ssize_t REALPWRITE(int, const void *, size_t, off_t);
-int REALGETDENTS(int, char *, size_t);
 int REALUTIMES(const char *, const struct timeval [2]);
 int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
@@ -308,7 +307,6 @@ struct sysnames {
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
 	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
-	{ DUALCALL_GETDENTS,	S(REALGETDENTS),RSYS_NAME(GETDENTS)	},
 	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
 	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
 	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
@@ -323,6 +321,7 @@ struct sysnames {
 
 #ifndef __linux__
 	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+	{ DUALCALL_GETDENTS,	S(REALGETDENTS),RSYS_NAME(GETDENTS)	},
 #endif
 
 #ifndef __linux__
@@ -2307,10 +2306,12 @@ FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
 __strong_alias(LSEEK_ALIAS,lseek);
 #endif
 
+#ifndef __linux__
 FDCALL(int, REALGETDENTS, DUALCALL_GETDENTS,				\
 	(int fd, char *buf, size_t nbytes),				\
 	(int, char *, size_t),						\
 	(fd, buf, nbytes))
+#endif
 
 FDCALL(int, fchown, DUALCALL_FCHOWN,					\
 	(int fd, uid_t owner, gid_t group),				\
