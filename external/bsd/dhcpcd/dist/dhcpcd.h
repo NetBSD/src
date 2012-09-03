@@ -141,7 +141,7 @@ void start_rebind(void *);
 void start_reboot(struct interface *);
 void start_expire(void *);
 void send_decline(struct interface *);
-void open_sockets(struct interface *);
+int open_sockets(struct interface *);
 void close_sockets(struct interface *);
 void drop_dhcp(struct interface *, const char *);
 void drop_interface(struct interface *, const char *);

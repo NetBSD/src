@@ -327,6 +327,9 @@ int
 ipv6_remove_subnet(struct ra *rap, struct ipv6_addr *addr)
 {
 	struct rt6 *rt;
+#if HAVE_ROUTE_METRIC
+	struct rt6 *ort;
+#endif
 	int r;
 
 	/* We need to delete the subnet route to have our metric or
@@ -340,7 +343,15 @@ ipv6_remove_subnet(struct ra *rap, struct ipv6_addr *addr)
 #else
 		rt->metric = 0;
 #endif
+#if HAVE_ROUTE_METRIC
+		/* For some reason, Linux likes to re-add the subnet
+		   route under the original metric.
+		   I would love to find a way of stopping this! */
+		if ((ort = find_route6(routes, rt)) == NULL ||
+		    ort->metric != rt->metric)
+#else
 		if (!find_route6(routes, rt))
+#endif
 			r = del_route6(rt);
 		free(rt);
 	}
@@ -367,12 +378,13 @@ ipv6_build_routes(void)
 	TAILQ_FOREACH(rap, &ipv6_routers, next) {
 		if (rap->expired)
 			continue;
-		if (options & DHCPCD_IPV6RA_OWN)
+		if (options & DHCPCD_IPV6RA_OWN) {
 			TAILQ_FOREACH(addr, &rap->addrs, next) {
 				rt = make_prefix(rap, addr);
 				if (rt)
 					TAILQ_INSERT_TAIL(&dnr, rt, next);
 			}
+		}
 		rt = make_router(rap);
 		if (rt)
 			TAILQ_INSERT_TAIL(&dnr, rt, next);

@@ -216,7 +216,10 @@ make_env(const struct interface *iface, const char *reason, char ***argv)
 		e--;
 	}
 	*--p = '\0';
-	if ((dhcp && iface->state->new) || (ra && ipv6rs_has_ra(iface))) {
+	if (strcmp(reason, "TEST") == 0) {
+		env[8] = strdup("if_up=false");
+		env[9] = strdup("if_down=false");
+	} else if ((dhcp && iface->state->new) || (ra && ipv6rs_has_ra(iface))){
 		env[8] = strdup("if_up=true");
 		env[9] = strdup("if_down=false");
 	} else {
@@ -692,8 +695,10 @@ build_routes(void)
 		dnr = get_routes(ifp);
 		dnr = massage_host_routes(dnr, ifp);
 		dnr = add_subnet_route(dnr, ifp);
-		dnr = add_router_host_route(dnr, ifp);
-		dnr = add_destination_route(dnr, ifp);
+		if (ifp->state->options->options & DHCPCD_GATEWAY) {
+			dnr = add_router_host_route(dnr, ifp);
+			dnr = add_destination_route(dnr, ifp);
+		}
 		for (rt = dnr; rt && (rtn = rt->next, 1); lrt = rt, rt = rtn) {
 			rt->iface = ifp;
 			rt->metric = ifp->metric;
