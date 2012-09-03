@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.297 2012/01/23 13:55:02 hauke Exp $
+# $NetBSD: GENERIC,v 1.297.2.1 2012/09/03 18:51:36 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.297 $"
+#ident 		"GENERIC-$Revision: 1.297.2.1 $"
 
 maxusers	32
 
@@ -283,8 +283,8 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
-radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
-options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+#radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
+#options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 r128fb*		at pci? function ?	# ATI Rage 128
