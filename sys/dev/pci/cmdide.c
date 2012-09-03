@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.37 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.37 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	/*
 	 * Older CMD64X doesn't have independent channels
@@ -339,6 +338,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd0643_9_setup_channel;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	ATADEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
@@ -483,6 +483,7 @@ cmd680_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd680_setup_channel;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x80, 0x00);
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x84, 0x00);
