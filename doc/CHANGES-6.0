@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.197 2012/08/21 05:36:23 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.198 2012/09/03 19:27:21 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8409,4 +8409,102 @@ sys/arch/evbmips/conf/ALCHEMY			1.44
 sys/sys/param.h					patched by hand
 
 	Welcome to NetBSD 6.0_RC1!
+
+external/bsd/ntp/dist/ntpd/ntp_io.c		1.10
+
+	Make ntpd broadcast transmission work again.
+	[kardel, ticket #522]
+
+sys/dev/scsipi/scsiconf.c			1.269
+
+	Don't send more than 256 commands per target, to avoid a panic.
+	[bouyer, ticket #523]
+
+sys/dev/ic/isp_netbsd.c				1.86
+
+	Avoid a DIAGNOSTIC panic in the isp(4) driver.
+	[bouyer, ticket #524]
+
+share/man/man3/rbtree.3				1.7 via patch
+
+	Add more function argument names to the man page.  PR#46814.
+	[dholland, ticket #526]
+
+doc/CHANGES					patch
+distrib/notes/common/main			patch
+
+	Mention switch to FAST_IPSEC in January.
+	[drochner, ticket #527]
+
+sys/arch/macppc/conf/GENERIC				patch
+
+	Disable radeonfb for the release, as it causes problems on
+	some (but not all) hardware.
+	[macallan, ticket #528]
+
+sys/arch/x86/acpi/acpi_wakeup.c			1.32
+
+	Fix inverted test, which unbreaks ACPI suspend on UP, and possibly
+	other bugs on MP.
+	[jakllsch, ticket #529]
+
+sys/nfs/nfs_serv.c				1.164
+
+	Fix panic that can happen when an NFS rename fails.
+	[chs, ticket #530]
+
+external/gpl3/binutils/dist/bfd/elf32-vax.c	1.7
+
+	Fix vax shared libraries, so the vax port works again.
+	[martin, ticket #531]
+
+sys/arch/vax/vax/machdep.c			1.189
+
+	Silence savecore warnings on vax - crash dumps are not
+	properly implemented on vax.
+	[martin, ticket #532]
+
+sys/arch/i386/i386/i386func.S			1.17
+
+	Fix support for 486.
+	[rmind, ticket #533]
+
+sys/dev/pci/if_wm.c				1.232-1.234
+sys/dev/pci/if_wmreg.h				1.48
+
+	Make VLANs and checksum offload work for WM_F_NEWQUEUE devices.
+	Tested on 82575{EB,GB}, 82576, 82580, I350 and ICH9.
+	[bouyer, ticket #534]
+
+sys/arch/powerpc/pic/intr.c			1.23
+
+	Fix interrupt problems on PPC.
+	[macallan, ticket #535]
+
+sys/dev/pci/mfi_pci.c				1.17
+
+	Add missing definition for Symbios SAS 9261-8i.  PR#46877.
+	[jnemeth, ticket #536]
+
+sys/nfs/nfs_serv.c				1.165
+
+	Clean up properly after unloading nfsserver module, to avoid
+	crashes.
+	[christos, ticket #537]
+
+sys/netipsec/key.c				patch
+sys/netipsec/key.h				patch
+
+	Prevent a panic with FAST_IPSEC.
+	[msaitoh, ticket #537]
+
+sys/arch/amd64/amd64/machdep.c			1.190 via patch
+
+	Fix X on NetBSD/amd64 Xen DOM0.  PR#46634.
+	[cherry, ticket #539]
+
+external/gpl3/gcc/dist/gcc/builtins.c		1.2
+
+	Fix gcc on STRICT_ALIGNMENT arches. PR#46865.
+	[martin, ticket #540]
 
