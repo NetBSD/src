@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.85 2011/12/12 18:28:34 jdc Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.85.2.1 2012/09/03 18:38:34 riz Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.85 2011/12/12 18:28:34 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.85.2.1 2012/09/03 18:38:34 riz Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -1603,14 +1603,14 @@ isp_mbox_wait_complete(struct ispsoftc *isp, mbreg_t *mbp)
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;
 		for (olim = 0; olim < maxc; olim++) {
-			utv.tv_sec = 0;
-			utv.tv_usec = usecs;
+			utv.tv_sec = usecs / 1000000;
+			utv.tv_usec = usecs % 1000000;
 			timeradd(&tv, &utv, &tv);
 		}
-		timeradd(&tv, &start, &tv);
-		to = tvhzto(&tv);
+		to = tvtohz(&tv);
 		if (to == 0)
 			to = 1;
+		timeradd(&tv, &start, &tv);
 
 		isp->isp_osinfo.mbox_sleep_ok = 0;
 		isp->isp_osinfo.mbox_sleeping = 1;
