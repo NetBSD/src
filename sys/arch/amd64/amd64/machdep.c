@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175.2.6 2012/06/12 23:13:07 riz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175.2.7 2012/09/03 19:22:45 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.6 2012/06/12 23:13:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.7 2012/09/03 19:22:45 riz Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1758,8 +1758,8 @@ init_x86_64(paddr_t first_avail)
 	/* Determine physical address space */
 	avail_start = first_avail;
 	avail_end = ctob(xen_start_info.nr_pages);
-	pmap_pa_start = XPMAP_OFFSET;
-	pmap_pa_end = pmap_pa_start + ctob(xen_start_info.nr_pages);
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
+	pmap_pa_end = avail_end;
 	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
 	    pmap_pa_start, avail_start, avail_end));
 #endif	/* !XEN */
