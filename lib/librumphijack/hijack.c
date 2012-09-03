@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.96 2012/08/25 18:00:06 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.97 2012/09/03 11:33:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include "rumpuser_port.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.96 2012/08/25 18:00:06 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.97 2012/09/03 11:33:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,8 +92,11 @@ enum dualcall {
 	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
-	DUALCALL_KEVENT,
+
+#ifndef __linux__
 	DUALCALL_STAT, DUALCALL_LSTAT, DUALCALL_FSTAT,
+#endif
+
 	DUALCALL_CHMOD, DUALCALL_LCHMOD, DUALCALL_FCHMOD,
 	DUALCALL_CHOWN, DUALCALL_LCHOWN, DUALCALL_FCHOWN,
 	DUALCALL_OPEN,
@@ -106,10 +109,23 @@ enum dualcall {
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
 	DUALCALL_FSYNC,
-	DUALCALL___GETCWD,
 	DUALCALL_ACCESS,
+
+#ifndef __linux__
+	DUALCALL___GETCWD,
+#endif
+
+#ifndef __linux__
 	DUALCALL_MKNOD,
+#endif
+
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
+#endif
+
+#ifdef PLATFORM_HAS_KQUEUE
+	DUALCALL_KEVENT,
+#endif
 
 #ifdef PLATFORM_HAS_NBSYSCTL
 	DUALCALL___SYSCTL,
@@ -146,9 +162,11 @@ enum dualcall {
 
 /*
  * Would be nice to get this automatically in sync with libc.
- * Also, this does not work for compat-using binaries!
+ * Also, this does not work for compat-using binaries (we should
+ * provide all previous interfaces, not just the current ones)
  */
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
+
 #if !__NetBSD_Prereq__(5,99,7)
 #define REALSELECT select
 #define REALPOLLTS pollts
@@ -174,6 +192,7 @@ enum dualcall {
 #define REALMKNOD __mknod50
 #define REALFHSTAT __fhstat50
 #endif /* < 5.99.7 */
+
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
 #define REALPWRITE _sys_pwrite
@@ -188,25 +207,32 @@ enum dualcall {
 #define LSEEK_ALIAS _lseek
 #define VFORK __vfork14
 
-#else /* !NetBSD */
+int REALSTAT(const char *, struct stat *);
+int REALLSTAT(const char *, struct stat *);
+int REALFSTAT(int, struct stat *);
+int REALMKNOD(const char *, mode_t, dev_t);
+
+int __getcwd(char *, size_t);
+
+#elif defined(__linux__) /* glibc, really */
 
 #define REALREAD read
 #define REALPREAD pread
 #define REALPWRITE pwrite
-#define REALGETDENTS getdents
+#define REALGETDENTS readdir
 #define REALSELECT select
 #define REALPOLLTS ppoll
-#define REALSTAT stat
-#define REALLSTAT lstat
-#define REALFSTAT fstat
 #define REALUTIMES utimes
 #define REALLUTIMES lutimes
 #define REALFUTIMES futimes
-#define REALMKNOD mknod
 #define REALFHSTAT fhstat
 #define REALSOCKET socket
 
-#endif /* NetBSD */
+#else /* !NetBSD && !linux */
+
+#error platform not supported
+
+#endif /* platform */
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -216,16 +242,11 @@ int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 ssize_t REALREAD(int, void *, size_t);
 ssize_t REALPREAD(int, void *, size_t, off_t);
 ssize_t REALPWRITE(int, const void *, size_t, off_t);
-int REALSTAT(const char *, struct stat *);
-int REALLSTAT(const char *, struct stat *);
-int REALFSTAT(int, struct stat *);
 int REALGETDENTS(int, char *, size_t);
 int REALUTIMES(const char *, const struct timeval [2]);
 int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
-int __getcwd(char *, size_t);
-int REALMKNOD(const char *, mode_t, dev_t);
 int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
@@ -269,10 +290,11 @@ struct sysnames {
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
-	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+#ifndef __linux__
 	{ DUALCALL_STAT,	S(REALSTAT),	RSYS_NAME(STAT)		},
 	{ DUALCALL_LSTAT,	S(REALLSTAT),	RSYS_NAME(LSTAT)	},
 	{ DUALCALL_FSTAT,	S(REALFSTAT),	RSYS_NAME(FSTAT)	},
+#endif
 	{ DUALCALL_CHOWN,	"chown",	RSYS_NAME(CHOWN)	},
 	{ DUALCALL_LCHOWN,	"lchown",	RSYS_NAME(LCHOWN)	},
 	{ DUALCALL_FCHOWN,	"fchown",	RSYS_NAME(FCHOWN)	},
@@ -286,7 +308,7 @@ struct sysnames {
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
 	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
-	{ DUALCALL_GETDENTS,	"__getdents30",	RSYS_NAME(GETDENTS)	},
+	{ DUALCALL_GETDENTS,	S(REALGETDENTS),RSYS_NAME(GETDENTS)	},
 	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
 	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
 	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
@@ -297,13 +319,26 @@ struct sysnames {
 	{ DUALCALL_TRUNCATE,	"truncate",	RSYS_NAME(TRUNCATE)	},
 	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
 	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
-	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
 	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
+
+#ifndef __linux__
+	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+#endif
+
+#ifndef __linux__
 	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
-	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)		},
-	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)		},
+	{ DUALCALL_FHOPEN,	S(REALFHOPEN),	RSYS_NAME(FHOPEN)	},
+	{ DUALCALL_FHSTAT,	S(REALFHSTAT),	RSYS_NAME(FHSTAT)	},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
+#endif
+
+#ifdef PLATFORM_HAS_KQUEUE
+	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+#endif
 
 #ifdef PLATFORM_HAS_NBSYSCTL
 	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
@@ -1120,6 +1155,7 @@ fchdir(int fd)
 	return rv;
 }
 
+#ifndef __linux__
 int
 __getcwd(char *bufp, size_t len)
 {
@@ -1169,6 +1205,7 @@ __getcwd(char *bufp, size_t len)
 
 	return rv;
 }
+#endif
 
 static int
 moveish(const char *from, const char *to,
@@ -1509,6 +1546,20 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 		msg_convert(msg, fd_host2host);
 	}
 	return ret;
+}
+
+ssize_t
+recv(int fd, void *buf, size_t len, int flags)
+{
+
+	return recvfrom(fd, buf, len, flags, NULL, NULL);
+}
+
+ssize_t
+send(int fd, const void *buf, size_t len, int flags)
+{
+
+	return sendto(fd, buf, len, flags, NULL, 0);
 }
 
 static int
@@ -2234,10 +2285,12 @@ FDCALL(ssize_t, pwritev, DUALCALL_PWRITEV, 				\
 	(int, const struct iovec *, int, off_t),			\
 	(fd, iov, iovcnt, offset))
 
+#ifndef __linux__
 FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 	(int fd, struct stat *sb),					\
 	(int, struct stat *),						\
 	(fd, sb))
+#endif
 
 #ifdef PLATFORM_HAS_NBVFSSTAT
 FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
@@ -2302,6 +2355,7 @@ FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
  * path-based selectors
  */
 
+#ifndef __linux__
 PATHCALL(int, REALSTAT, DUALCALL_STAT,					\
 	(const char *path, struct stat *sb),				\
 	(const char *, struct stat *),					\
@@ -2311,6 +2365,7 @@ PATHCALL(int, REALLSTAT, DUALCALL_LSTAT,				\
 	(const char *path, struct stat *sb),				\
 	(const char *, struct stat *),					\
 	(path, sb))
+#endif
 
 PATHCALL(int, chown, DUALCALL_CHOWN,					\
 	(const char *path, uid_t owner, gid_t group),			\
@@ -2396,10 +2451,12 @@ PATHCALL(int, access, DUALCALL_ACCESS,					\
 	(const char *, int),						\
 	(path, mode))
 
+#ifndef __linux__
 PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
 	(const char *path, mode_t mode, dev_t dev),			\
 	(const char *, mode_t, dev_t),					\
 	(path, mode, dev))
+#endif
 
 /*
  * Note: with mount the decisive parameter is the mount
@@ -2434,10 +2491,12 @@ PATHCALL(int, OLDREALQUOTACTL, DUALCALL_QUOTACTL,			\
 #endif
 #endif /* PLATFORM_HAS_NBQUOTA */
 
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
 	(const char *path, void *fhp, size_t *fh_size),			\
 	(const char *, void *, size_t *),				\
 	(path, fhp, fh_size))
+#endif
 
 /*
  * These act different on a per-process vfs configuration
@@ -2450,6 +2509,7 @@ VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
 	(buf, buflen, flags))
 #endif
 
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
 	(const void *fhp, size_t fh_size, int flags),			\
 	(const char *, size_t, int),					\
@@ -2464,6 +2524,7 @@ VFSCALL(VFSBIT_FHCALLS, int, REALFHSTATVFS1, DUALCALL_FHSTATVFS1,	\
 	(const void *fhp, size_t fh_size, struct statvfs *sb, int flgs),\
 	(const char *, size_t, struct statvfs *, int),			\
 	(fhp, fh_size, sb, flgs))
+#endif
 
 
 #ifdef PLATFORM_HAS_NFSSVC
