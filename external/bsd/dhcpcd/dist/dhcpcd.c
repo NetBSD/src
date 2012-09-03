@@ -163,7 +163,7 @@ printf("usage: "PACKAGE"\t[-ABbDdEGgHJKkLnpqTVw]\n"
 	"\t\t[-z, --allowinterfaces pattern] [interface] [...]\n"
 	"       "PACKAGE"\t-k, --release [interface]\n"
 	"       "PACKAGE"\t-U, --dumplease interface\n"
-	"       "PACKAGE"\t-v, --version\n"
+	"       "PACKAGE"\t--version\n"
 	"       "PACKAGE"\t-x, --exit [interface]\n");
 }
 
@@ -326,7 +326,11 @@ send_message(struct interface *iface, int type,
 	}
 
 	/* Ensure sockets are open. */
-	open_sockets(iface);
+	if (open_sockets(iface) == -1) {
+		if (!(options & DHCPCD_TEST))
+			drop_dhcp(iface, "FAIL");
+		return;
+	}
 
 	/* If we couldn't open a UDP port for our IP address
 	 * then we cannot renew.
@@ -785,6 +789,12 @@ configure_interface1(struct interface *iface)
 	if (ifo->metric != -1)
 		iface->metric = ifo->metric;
 
+	/* We want to disable kernel interface RA as early as possible. */
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS) {
+		if (check_ipv6(iface->name) != 1)
+			ifo->options &= ~DHCPCD_IPV6RS;
+	}
+
 	/* If we haven't specified a ClientID and our hardware address
 	 * length is greater than DHCP_CHADDR_LEN then we enforce a ClientID
 	 * of the hardware address family and the hardware address. */
@@ -1167,12 +1177,8 @@ start_interface(void *arg)
 	free(iface->state->offer);
 	iface->state->offer = NULL;
 
-	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS) {
-		if (check_ipv6(iface->name) == 1)
-			ipv6rs_start(iface);
-		else
-			ifo->options &= ~DHCPCD_IPV6RS;
-	}
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS)
+		ipv6rs_start(iface);
 
 	if (iface->state->arping_index < ifo->arping_len) {
 		start_arping(iface);
@@ -1708,11 +1714,13 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 	return 0;
 }
 
-void
+int
 open_sockets(struct interface *iface)
 {
+	int r = 0;
+
 	if (iface->raw_fd == -1) {
-		if (open_socket(iface, ETHERTYPE_IP) == -1)
+		if ((r = open_socket(iface, ETHERTYPE_IP)) == -1)
 			syslog(LOG_ERR, "%s: open_socket: %m", iface->name);
 		else
 			add_event(iface->raw_fd, handle_dhcp_packet, iface);
@@ -1723,9 +1731,12 @@ open_sockets(struct interface *iface)
 	    (iface->state->new->cookie == htonl(MAGIC_COOKIE) ||
 	    iface->state->options->options & DHCPCD_INFORM))
 	{
-		if (open_udp_socket(iface) == -1 && errno != EADDRINUSE)
+		if (open_udp_socket(iface) == -1 && errno != EADDRINUSE) {
 			syslog(LOG_ERR, "%s: open_udp_socket: %m", iface->name);
+			r = -1;
+		}
 	}
+	return r;
 }
 
 void
