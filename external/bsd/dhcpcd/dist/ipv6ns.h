@@ -31,12 +31,12 @@
 #include "dhcpcd.h"
 #include "ipv6rs.h"
 
+#define MAX_REACHABLE_TIME	3600	/* seconds */
 #define REACHABLE_TIME		30 	/* seconds */
 #define RETRANS_TIMER		1  	/* second */
 #define DELAY_FIRST_PROBE_TIME	5	/* seconds */
 
 int ipv6ns_open(void);
-void ipv6ns_unreachable(void *);
 void ipv6ns_sendprobe(void *);
 void ipv6ns_handledata(void *);
 #endif
