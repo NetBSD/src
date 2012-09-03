@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $	*/
+/*	$NetBSD: key.c,v 1.76.2.1 2012/09/03 19:19:54 riz Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.76 2012/01/09 15:42:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.76.2.1 2012/09/03 19:19:54 riz Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -138,6 +138,10 @@ static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 static int key_prefered_oldsa = 0;	/* prefered old sa rather than new sa.*/
 
 static u_int32_t acq_seq = 0;
+
+/* XXX: referenced by kernfs, but not implemented... */
+struct _satailq satailq;
+struct _sptailq sptailq;
 
 static LIST_HEAD(_sptree, secpolicy) sptree[IPSEC_DIR_MAX];	/* SPD */
 static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
@@ -7776,6 +7780,9 @@ key_do_init(void)
 	LIST_INIT(&acqtree);
 #endif
 	LIST_INIT(&spacqtree);
+
+	TAILQ_INIT(&satailq);
+	TAILQ_INIT(&sptailq);
 
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
