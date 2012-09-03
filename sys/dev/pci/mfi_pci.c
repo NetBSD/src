@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.12.16.2 2012/05/19 15:06:03 riz Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.12.16.3 2012/09/03 19:13:35 riz Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12.16.2 2012/05/19 15:06:03 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12.16.3 2012/09/03 19:13:35 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 
 static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
 	{ PCI_VENDOR_SYMBIOS,	0x9261,		"SAS 9260-8i" },
+	{ PCI_VENDOR_SYMBIOS,	0x9263,		"SAS 9261-8i" },
 	{ PCI_VENDOR_IBM,	0x03c7,		"IBM ServeRAID M5014 SAS/SATA" },
 	{ 0x0,			0,		"" }
 };
