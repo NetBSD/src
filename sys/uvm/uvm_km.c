@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.131 2012/09/03 16:07:17 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.132 2012/09/03 17:30:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.131 2012/09/03 16:07:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.132 2012/09/03 17:30:04 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -782,16 +782,17 @@ again:
 
 #ifdef PMAP_GROWKERNEL
 	/*
-	 * Since we just set kernel_map, the check in uvm_map_prepare to grow the
-	 * kernel's VA space never happened so we must do it here.  If the kernel
-	 * pmap can't map the requested space, then allocate more resources for it.
+	 * These VA allocations happen independently of uvm_map so if this allocation
+	 * extends beyond the current limit, then allocate more resources for it.
 	 */
+	mutex_enter(&kernel_map->misc_lock);
 	if (uvm_maxkaddr < va + size) {
 		uvm_maxkaddr = pmap_growkernel(va + size);
-		if (uvm_maxkaddr < va + size)
-			panic("%s: pmap_growkernel(%#"PRIxVADDR") failed",
-			    __func__, (vaddr_t) (va + size));
+		KASSERTMSG(uvm_maxkaddr >= va + size,
+		    "%#"PRIxVADDR" %#"PRIxPTR" %#zx",
+		    uvm_maxkaddr, va, size);
 	}
+	mutex_exit(&kernel_map->misc_lock);
 #endif
 
 	loopva = va;
