@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfilter.c,v 1.5 2012/08/31 04:02:21 pgoyette Exp $	*/
+/*	$NetBSD: t_bpfilter.c,v 1.6 2012/09/03 21:27:14 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfilter.c,v 1.5 2012/08/31 04:02:21 pgoyette Exp $");
+__RCSID("$NetBSD: t_bpfilter.c,v 1.6 2012/09/03 21:27:14 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -199,7 +199,6 @@ magic_ping_test(const char *name, unsigned int wirelen)
 	char *buf;
 	pid_t child;
 	int bpfd;
-	int status;
 	char token;
 	int channel[2];
 
@@ -219,10 +218,10 @@ magic_ping_test(const char *name, unsigned int wirelen)
 		atf_tc_fail_errno("fork failed");
 	case 0:
 		netcfg_rump_if(ifr.ifr_name, "10.1.1.10", "255.0.0.0");
-		ATF_CHECK(write(channel[1], "U", 1) == 1);
-		ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'D');
 		close(channel[0]);
+		ATF_CHECK(write(channel[1], "U", 1) == 1);
 		close(channel[1]);
+		pause();
 		return;
 	default:
 		break;
@@ -240,6 +239,7 @@ magic_ping_test(const char *name, unsigned int wirelen)
 	RL(rump_sys_ioctl(bpfd, BIOCSETF, &prog));
 	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
 
+	close(channel[1]);
 	ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'U');
 
 	pinged = pingtest("10.1.1.10", wirelen, magic_echo_reply_tail);
@@ -261,13 +261,9 @@ magic_ping_test(const char *name, unsigned int wirelen)
 	rump_sys_close(bpfd);
 	free(buf);
 
-	ATF_CHECK(write(channel[1], "D", 1) == 1);
-
 	close(channel[0]);
-	close(channel[1]);
 
-	RL(waitpid(child, &status, 0));
-	ATF_CHECK(!WIFSIGNALED(status));
+	kill(child, SIGKILL);
 }
 
 ATF_TC(bpfiltercontig);
