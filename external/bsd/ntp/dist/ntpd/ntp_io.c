@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.9 2012/02/01 21:21:25 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9.2.1 2012/09/03 18:32:38 riz Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1592,9 +1592,11 @@ refresh_interface(
 {
 #ifdef  OS_MISSES_SPECIFIC_ROUTE_UPDATES
 	if (interface->fd != INVALID_SOCKET) {
+		int bcast = (interface->flags & INT_BCASTOPEN) != 0;
 		close_and_delete_fd_from_list(interface->fd);
+		interface->flags &= ~INT_BCASTOPEN;
 		interface->fd = open_socket(&interface->sin,
-					    0, 0, interface);
+					    bcast, 0, interface);
 		 /*
 		  * reset TTL indication so TTL is is set again 
 		  * next time around
@@ -2047,6 +2049,9 @@ update_interfaces(
 		msyslog(LOG_INFO, "peers refreshed");
 	}
 
+	if (sys_bclient)
+		io_setbclient();
+
 	return new_interface_found;
 }
 
@@ -2073,9 +2078,6 @@ create_sockets(
 	create_wildcards(port);
 
 	update_interfaces(port, NULL, NULL);
-
-	if (sys_bclient)
-		io_setbclient();
 
 	/*
 	 * Now that we have opened all the sockets, turn off the reuse
