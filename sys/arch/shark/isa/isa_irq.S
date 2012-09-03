@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.13 2010/12/20 00:25:43 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.14 2012/09/03 16:35:33 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -113,8 +113,8 @@
 /*
  * Register usage
  *
+ *  r5  - Pointer to handler pointer list
  *  r6  - Address of current handler
- *  r7  - Pointer to handler pointer list
  *  r8  - Current IRQ requests.
  *  r9  - Used to count through possible IRQ bits.
  *  r10 - Base address of IOMD
@@ -183,17 +183,17 @@ ASENTRY_NP(irq_entry)
 	 */
 
 	mov	r9, #(NIPL - 1)
-	ldr	r7, .Lspl_masks
+	ldr	r5, .Lspl_masks
 
 .Lfind_highest_ipl:
-	ldr	r2, [r7, r9, lsl #2]
+	ldr	r2, [r5, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
 	beq	.Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
-	ldr	r2, [r7, r9, lsl #2]
+	ldr	r2, [r5, r9, lsl #2]
 	mvn	r2, r2
 	orr	r0, r0, r2
 
@@ -210,7 +210,7 @@ ASENTRY_NP(irq_entry)
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, .Lirqhandlers
+	ldr	r5, .Lirqhandlers
 	mov	r9, #0x00000001
 
 irqloop:
@@ -218,7 +218,7 @@ irqloop:
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
-	ldr	r6, [r7]		/* Get address of first handler structure */
+	ldr	r6, [r5]		/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
@@ -255,7 +255,7 @@ irqdone:
 	stmia   r3, {r1-r2}		/* store ev_count */
 
 nextirq:
-	add	r7, r7, #0x00000004	/* update pointer to handlers */
+	add	r5, r5, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
 	teq	r9, #(1 << 16)		/* done the last bit ? */
 	bne	irqloop			/* no - loop back. */
