@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.132 2012/09/03 17:30:04 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.133 2012/09/03 19:53:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.132 2012/09/03 17:30:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.133 2012/09/03 19:53:42 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -785,14 +785,14 @@ again:
 	 * These VA allocations happen independently of uvm_map so if this allocation
 	 * extends beyond the current limit, then allocate more resources for it.
 	 */
-	mutex_enter(&kernel_map->misc_lock);
+	mutex_enter(&uvm_kentry_lock);
 	if (uvm_maxkaddr < va + size) {
 		uvm_maxkaddr = pmap_growkernel(va + size);
 		KASSERTMSG(uvm_maxkaddr >= va + size,
 		    "%#"PRIxVADDR" %#"PRIxPTR" %#zx",
 		    uvm_maxkaddr, va, size);
 	}
-	mutex_exit(&kernel_map->misc_lock);
+	mutex_exit(&uvm_kentry_lock);
 #endif
 
 	loopva = va;
