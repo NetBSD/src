@@ -52,6 +52,8 @@ struct ra {
 	struct timeval received;
 	unsigned char flags;
 	uint32_t lifetime;
+	uint32_t reachable;
+	uint32_t retrans;
 	uint32_t mtu;
 	TAILQ_HEAD(, ipv6_addr) addrs;
 	TAILQ_HEAD(, ra_opt) options;
