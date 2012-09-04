@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.321 2012/09/03 19:53:42 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.322 2012/09/04 13:37:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.321 2012/09/03 19:53:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322 2012/09/04 13:37:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1182,10 +1182,8 @@ retry:
 	 * If the kernel pmap can't map the requested space,
 	 * then allocate more resources for it.
 	 */
-	mutex_enter(&uvm_kentry_lock);
 	if (map == kernel_map && uvm_maxkaddr < (start + size))
 		uvm_maxkaddr = pmap_growkernel(start + size);
-	mutex_exit(&uvm_kentry_lock);
 #endif
 
 	UVMMAP_EVCNT_INCR(map_call);
