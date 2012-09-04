@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Exp $	*/
+/*	$NetBSD: if_smsh_gpmc.c,v 1.2 2012/09/04 00:19:48 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.2 2012/09/04 00:19:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Ex
 #include <sys/systm.h>
 
 #include <arm/omap/omap2_gpmcvar.h>
-
-#include <evbarm/gumstix/gumstixvar.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
