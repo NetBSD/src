@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.14 2011/06/26 13:15:22 christos Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.15 2012/09/04 22:31:58 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.14 2011/06/26 13:15:22 christos Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.15 2012/09/04 22:31:58 alnsn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,10 @@ ATF_TC_BODY(simpleping, tc)
 	char ifname[IFNAMSIZ];
 	pid_t cpid;
 	bool win, win2;
+	char token;
+	int channel[2];
+
+	RL(pipe(channel));
 
 	cpid = fork();
 	rump_init();
@@ -78,13 +82,18 @@ ATF_TC_BODY(simpleping, tc)
 		atf_tc_fail_errno("fork failed");
 	case 0:
 		netcfg_rump_if(ifname, "1.1.1.10", "255.255.255.0");
+		close(channel[0]);
+		ATF_CHECK(write(channel[1], "U", 1) == 1);
+		close(channel[1]);
 		pause();
 		break;
 	default:
 		break;
 	}
 
-	usleep(500000);
+	close(channel[1]);
+	ATF_CHECK(read(channel[0], &token, 1) == 1 && token == 'U');
+	close(channel[0]);
 
 	netcfg_rump_if(ifname, "1.1.1.20", "255.255.255.0");
 
