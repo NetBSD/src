@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.20 2012/09/01 00:20:49 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.20 2012/09/01 00:20:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -175,6 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.20 2012/09/01 00:20:49 matt Exp
 
 #include <evbarm/beagle/beagle.h>
 
+#include "prcm.h"
 #include "omapwdt32k.h"
 
 BootConfig bootconfig;		/* Boot config storage */
@@ -200,6 +201,7 @@ static void kgdb_port_init(void);
 #endif
 
 static void init_clocks(void);
+static void beagle_reset(void);
 #if defined(OMAP_3530) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
 #endif
@@ -385,6 +387,8 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
+	cpu_reset_address = beagle_reset;
+
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (beagle) booting ...\n");
@@ -478,6 +482,17 @@ consinit(void)
 
 	beagle_putchar('f');
 	beagle_putchar('g');
+}
+
+void
+beagle_reset(void)
+{
+#if NPRCM > 0
+	prcm_cold_reset();
+#endif
+#if NOMAPWDT32K > 0
+	omapwdt32k_reboot();
+#endif
 }
 
 #ifdef KGDB

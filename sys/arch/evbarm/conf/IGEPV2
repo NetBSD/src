@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.10 2012/08/23 00:20:16 kiyohara Exp $
+#	$NetBSD: IGEPV2,v 1.11 2012/09/04 00:19:20 matt Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -180,6 +180,33 @@ obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
 
+smsh0		at gpmc0 addr 0x2c000000 intr 272	# gpio5 16 (gpio 176)
+ukphy*		at mii?
+
+# SDHC controllers
+sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
+#sdhc1		at obio0 addr 0x480B4000 size 0x0400 intr 86
+#sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+
+# NAND controller
+omapnand0	at gpmc? addr 0x20000000
+
+# NAND layer
+nand0		at nandbus?
+
+# use the bad block table
+options NAND_BBT
+
+# Define flash partitions for board
+flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
+flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
+flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
+flash3		at nand0 offset 0x280000 size 0x400000		# kernel
+flash4		at nand0 offset 0x680000 size 0			# filesystem
+
+
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
 omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
@@ -187,7 +214,7 @@ omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
 #omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
 #omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
 omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
-#omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
+omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
@@ -218,6 +245,9 @@ options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# Power, Reset and Clock Management
+prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
