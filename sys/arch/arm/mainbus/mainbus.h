@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.h,v 1.4 2012/08/29 23:16:35 matt Exp $ */
+/* $NetBSD: mainbus.h,v 1.5 2012/09/04 00:21:08 matt Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Created      : 15/12/94
  */
 
+#ifndef _ARM_MAINBUS_MAINBUS_H_
+#define _ARM_MAINBUS_MAINBUS_H_
+
 #include <sys/bus.h>
 
 /*
@@ -58,4 +61,4 @@ struct mainbus_attach_args {
 	bus_space_tag_t	mb_iot;		/* bus space tag */
 };
 
-/* End of mainbus.h */
+#endif /* _ARM_MAINBUS_MAINBUS_H_ */
