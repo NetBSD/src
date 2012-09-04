@@ -1,4 +1,4 @@
-#	$NetBSD: files.beagle,v 1.2 2012/09/01 00:20:49 matt Exp $
+#	$NetBSD: files.beagle,v 1.3 2012/09/04 00:19:20 matt Exp $
 #
 # TI OMAP2 evaluation board configuration info
 #
@@ -21,3 +21,5 @@ attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
 defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
+attach smsh at gpmc with smsh_gpmc
+file	arch/evbarm/gumstix/if_smsh_gpmc.c	smsh_gpmc
