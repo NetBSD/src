@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.1 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.2 2012/09/05 00:20:57 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.1 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.2 2012/09/05 00:20:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -849,6 +849,15 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * Once this is done we will be running with the REAL kernel page
 	 * tables.
 	 */
+
+#if defined(VERBOSE_INIT_ARM) && 0
+	printf("TTBR0=%#x", armreg_ttbr_read());
+#ifdef _ARM_ARCH_6
+	printf(" TTBR1=%#x TTBCR=%#x",
+	    armreg_ttbr1_read(), armreg_ttbcr_read());
+#endif
+	printf("\n");
+#endif
 
 	/* Switch tables */
 #ifdef VERBOSE_INIT_ARM
