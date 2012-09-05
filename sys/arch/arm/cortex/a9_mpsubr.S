@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.2 2012/09/02 05:01:54 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.3 2012/09/05 00:21:30 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,10 +135,14 @@ a9_cpuinit:
 	mcr	p15, 0, r1, c8, c7, 0	/* Invalidate TLBs */
 
 	/* Set the Domain Access register.  Very important! */
-	XPUTC(#74)
+	XPUTC(#73)
 	mov     r1, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r1, c3, c0, 0
 
+	XPUTC(#74)
+	mov	r0, #0			/* make sure TTBCR is 0 */
+	mcr	p15, 0, r0, c1, c0, 2
+	
 	/*
 	 * Enable the MMU, etc.
 	 */
