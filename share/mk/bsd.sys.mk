@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.217 2012/08/10 16:11:43 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.218 2012/09/05 22:40:30 riz Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -8,6 +8,7 @@ _BSD_SYS_MK_=1
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
+CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 .endif
 
 # Enable c99 mode by default.
