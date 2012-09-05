@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.6 2011/07/31 09:58:19 plunky Exp $
+# $NetBSD: Makefile.rules.inc,v 1.7 2012/09/05 19:31:04 christos Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -66,10 +66,15 @@ ${src:.asn1=.ts}: ${src} ${TOOL_ASN1_COMPILE}
 	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
 .endif
 
+.if ${MKREPRO:Uno} == "yes"
+NORMALIZE_SRC=-e "s@${NETBSDSRCDIR}@/usr/src@g" 
+.endif
+
 .for x2c in ${ASN1_FILES.${src}}
 ${x2c:.x=.c}: ${x2c}
-	@cmp -s ${x2c} ${x2c:.x=.c} 2> /dev/null || cp ${x2c} ${x2c:.x=.c}
-
+	@${TOOL_SED} ${NORMALIZE_SRC} < ${x2c} > ${x2c}.r
+	@cmp -s ${x2c}.r ${x2c:.x=.c} 2> /dev/null || cp ${x2c}.r ${x2c:.x=.c}
+	@rm -f ${x2c}.r
 .endfor
 
 .endfor
