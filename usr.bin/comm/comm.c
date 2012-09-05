@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.19 2011/08/30 21:36:38 joerg Exp $	*/
+/*	$NetBSD: comm.c,v 1.20 2012/09/05 04:01:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.19 2011/08/30 21:36:38 joerg Exp $");
+__RCSID("$NetBSD: comm.c,v 1.20 2012/09/05 04:01:23 simonb Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -197,7 +197,7 @@ getnextln(char *buf, FILE *fp)
 	size_t i = 0;
 	int c;
 
-	while ((c = fgetc(fp)) != '\n' && c != EOF) {
+	while ((c = getc(fp)) != '\n' && c != EOF) {
 		buf[i++] = c;
 
 		if (i >= MAXLINELEN)
