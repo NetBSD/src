@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.9 2012/05/19 16:00:41 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.10 2012/09/05 18:57:34 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.9 2012/05/19 16:00:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.10 2012/09/05 18:57:34 tls Exp $");
 
 void
 cprng_init(void)
@@ -171,7 +171,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	c->reseed.state = RSTATE_IDLE;
 	c->reseed.cb = cprng_strong_reseed;
 	c->reseed.arg = c;
-	c->entropy_serial = rnd_filled;
+	c->entropy_serial = rnd_initial_entropy ? rnd_filled : -1;
 	mutex_init(&c->reseed.mtx, MUTEX_DEFAULT, IPL_VM);
 	strlcpy(c->reseed.name, name, sizeof(c->reseed.name));
 
@@ -228,8 +228,14 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 	}
 	mutex_enter(&c->mtx);
 
+	/* If we were initialized with the pool empty, rekey ASAP */
+	if (__predict_false(c->entropy_serial == -1) && rnd_initial_entropy) {
+		goto rekeyany;		/* We have _some_ entropy, use it. */
+	}
+		
 	if (nist_ctr_drbg_generate(&c->drbg, p, len, &cc, sizeof(cc))) {
 		/* A generator failure really means we hit the hard limit. */
+rekeyany:
 		if (c->flags & CPRNG_REKEY_ANY) {
 			uint8_t key[NIST_BLOCK_KEYLEN_BYTES];
 
