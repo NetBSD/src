@@ -92,7 +92,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.10 2012/09/01 14:54:59 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.11 2012/09/05 00:06:21 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -108,6 +108,9 @@ RCSID("$NetBSD: beagle_start.S,v 1.10 2012/09/01 14:54:59 matt Exp $")
 _C_LABEL(beagle_start):
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
+
+	ldr	r4, .Luboot_args
+	stmia	r4, {r0-r3}
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -216,6 +219,8 @@ _C_LABEL(beagle_start):
 	
 	/* NOTREACHED */
 
+.Luboot_args:
+	.word	uboot_args
 Ll1_s_frame:
 	.word	L1_S_FRAME
 Ltemp_l1_table:
