@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.6 2012/02/02 07:09:53 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.7 2012/09/05 01:32:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -236,6 +236,11 @@
 #define PM2_RE_WRITE_MODE	0x00008ab8
 #define		PM2WM_WRITE_EN		0x00000001
 #define		PM2WM_TO_HOST		0x00000008
+#define PM2_RE_PIXEL_SIZE	0x00008ad0
+#define		PM2PS_8BIT		0x00000000
+#define		PM2PS_16BIT		0x00000001
+#define		PM2PS_32BIT		0x00000002
+#define		PM2PS_24BIT		0x00000004
 
 #define PM2_RE_MODE		0x000080a0
 #define		PM2RM_MASK_MIRROR	0x00000001 /* mask is right-to-left */
@@ -316,5 +321,7 @@
 #define PM2_RE_DEPTH		0x000089a8
 #define PM2_RE_STENCIL_MODE	0x00008988
 #define PM2_RE_ROP_MODE		0x00008828
+#define PM2_RE_PACKEDDATA_LIMIT	0x00008150
+
 
 #endif /* PM2_REG_H */
