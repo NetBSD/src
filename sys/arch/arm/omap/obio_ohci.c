@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -21,9 +21,10 @@
  */
 
 #include "opt_omap.h"
+#include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.6 2012/02/13 17:34:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +53,6 @@ struct obioohci_softc {
 	void		*sc_ih;
 	bus_addr_t	sc_addr;
 	bus_addr_t	sc_size;
-	void		*sc_powerhook;
 };
 
 static int	obioohci_match(struct device *, struct cfdata *, void *);
@@ -65,7 +65,6 @@ CFATTACH_DECL_NEW(obioohci, sizeof(struct obioohci_softc),
     obioohci_match, obioohci_attach, obioohci_detach, ohci_activate);
 
 static void	obioohci_clkinit(struct obio_attach_args *);
-static void	obioohci_power(int, void *);
 static void	obioohci_enable(struct obioohci_softc *);
 static void	obioohci_disable(struct obioohci_softc *);
 
@@ -75,30 +74,52 @@ static void	obioohci_disable(struct obioohci_softc *);
 static int
 obioohci_match(device_t parent, cfdata_t cf, void *aux)
 {
-
 	struct obio_attach_args *obio = aux;
 
-	if ((obio->obio_addr == -1)
-	|| (obio->obio_size == 0)
-	|| (obio->obio_intr == -1))
-		panic("obioohci must have addr, size and intr"
-			" specified in config.");
+	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT
+	    || obio->obio_size == OBIOCF_SIZE_DEFAULT
+	    || obio->obio_intr == OBIOCF_INTR_DEFAULT)
+		return 0;
+
+#if defined(OMAP_2430) || defined(OMAP_2420)
+	if (obio->obio_addr != OHCI1_BASE_2430)
+		return 0;
+#endif
+#if defined(OMAP_3530)
+	if (obio->obio_addr != OHCI1_BASE_3530)
+		return 0;
+#endif
+#if defined(OMAP_4430)
+	if (obio->obio_addr != OHCI1_BASE_4430)
+		return 0;
+#endif
 
 	obioohci_clkinit(obio);
 
-	return 1;	/* XXX */
+	return 1;
 }
 
 static void
 obioohci_attach(device_t parent, device_t self, void *aux)
 {
+	struct obio_softc *psc = device_private(parent);
 	struct obioohci_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 	usbd_status r;
 
-	sc->sc.sc_size = 0;
-	sc->sc_ih = NULL;
-	sc->sc.sc_bus.dmatag = 0;
+	KASSERT(psc->sc_obio_dev == NULL);
+	psc->sc_obio_dev = self;
+
+	aprint_naive(": USB Controller\n");
+	aprint_normal(": USB Controller\n");
+
+	sc->sc_addr = obio->obio_addr;
+
+	sc->sc.iot = obio->obio_iot;
+	sc->sc.sc_dev = self;
+	sc->sc.sc_size = obio->obio_size;
+	sc->sc.sc_bus.dmatag = obio->obio_dmat;
+	sc->sc.sc_bus.hci_private = &sc->sc;
 
 	/* Map I/O space */
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
@@ -106,10 +127,6 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map memory space\n");
 		return;
 	}
-	sc->sc.iot = obio->obio_iot;
-	sc->sc_addr = obio->obio_addr;
-	sc->sc.sc_size = obio->obio_size;
-	sc->sc.sc_bus.dmatag = obio->obio_dmat;
 
 	/* XXX copied from ohci_pci.c. needed? */
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
@@ -123,40 +140,26 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
-	    OHCI_MIE);
+	    OHCI_ALL_INTRS);
 
-#if 1
 	sc->sc_ih = intr_establish(obio->obio_intr, IPL_USB, IST_LEVEL,
 		ohci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error(": unable to establish interrupt\n");
 		goto free_map;
 	}
-#else
-	sc->sc_ih = obioohci_fake_intr_establish(ohci_intr, &sc->sc);
-#endif
 
-	strlcpy(sc->sc.sc_vendor, "OMAP2", sizeof(sc->sc.sc_vendor));
+	strlcpy(sc->sc.sc_vendor, "OMAP", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", r);
 		goto free_intr;
 	}
 
-	sc->sc_powerhook = powerhook_establish(device_xname(self),
-	    obioohci_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		aprint_error_dev(self, "cannot establish powerhook\n");
-	}
-
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus, usbctlprint);
-
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 	return;
 
 free_intr:
-#ifdef NOTYET
-	obio_gpio_intr_disestablish(sc->sc_ih);
-#endif
 	sc->sc_ih = NULL;
 free_map:
 	obioohci_disable(sc);
@@ -177,14 +180,9 @@ obioohci_detach(device_t self, int flags)
 	if (error)
 		return error;
 
-	if (sc->sc_powerhook) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
-
 	if (sc->sc_ih) {
 #ifdef NOTYET
-		obio_gpio_intr_disestablish(sc->sc_ih);
+		intr_disestablish(sc->sc_ih);
 #endif
 		sc->sc_ih = NULL;
 	}
@@ -207,42 +205,11 @@ obioohci_detach(device_t self, int flags)
 }
 
 static void
-obioohci_power(int why, void *arg)
-{
-	struct obioohci_softc *sc = (struct obioohci_softc *)arg;
-	int s;
-
-	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-#if 0
-		ohci_power(why, &sc->sc);
-#endif
-#ifdef NOTYET
-		pxa2x0_clkman_config(CKEN_USBHC, 0);
-#endif
-		break;
-
-	case PWR_RESUME:
-#ifdef NOTYET
-		pxa2x0_clkman_config(CKEN_USBHC, 1);
-#endif
-		obioohci_enable(sc);
-#if 0
-		ohci_power(why, &sc->sc);
-#endif
-		break;
-	}
-	sc->sc.sc_bus.use_polling--;
-	splx(s);
-}
-
-static void
 obioohci_enable(struct obioohci_softc *sc)
 {
+#ifdef NOTYET
 	printf("%s: TBD\n", __func__);
+#endif
 }
 
 static void
@@ -265,7 +232,7 @@ obioohci_disable(struct obioohci_softc *sc)
 static void
 obioohci_clkinit(struct obio_attach_args *obio)
 {
-	
+#if defined(OMAP_2430) || defined(OMAP_2420)
 	bus_space_handle_t ioh;
 	uint32_t r;
 	int err;
@@ -286,23 +253,5 @@ obioohci_clkinit(struct obio_attach_args *obio)
 	bus_space_write_4(obio->obio_iot, ioh, OMAP2_CM_ICLKEN2_CORE, r);
 
 	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
-}
-
-#if 0
-int (*obioohci_fake_intr_func)(void *);
-void *obioohci_fake_intr_arg;
-
-void *
-obioohci_fake_intr_establish(int (*func)(void *), void *arg)
-{
-	obioohci_fake_intr_func = func;
-	obioohci_fake_intr_arg = arg;
-	return (void *)1;
-}
-
-void
-obioohci_fake_intr(void)
-{
-	(void)(*obioohci_fake_intr_func)(obioohci_fake_intr_arg);
-}
 #endif
+}
