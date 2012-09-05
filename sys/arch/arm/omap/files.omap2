@@ -1,10 +1,11 @@
-#	$NetBSD: files.omap2,v 1.14 2012/08/29 17:48:17 matt Exp $
+#	$NetBSD: files.omap2,v 1.15 2012/09/05 00:19:59 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
 #
 
 include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
 
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/omap/omap_dma.c
@@ -98,7 +99,6 @@ attach	prcm at obio
 file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
 
 # OHCI USB controller
-##attach	ohci at obio with obioohci:		omapgpio
 attach	ohci at obio with obioohci
 file	arch/arm/omap/obio_ohci.c		obioohci
 
