@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.4 2012/08/23 01:27:24 matt Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.5 2012/09/05 00:08:21 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -252,13 +252,15 @@ pseudo-device	wsfont
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 # On-board USB
-#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
+#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #usb*		at ohci?
 #usb*		at ehci?
 #uhub*		at usb?
 #uhub*		at uhub? port ?
 #umass*		at uhub? port ? configuration ? interface ?
+#scsibus*	at scsi?
+#sd*		at scsibus? target ? lun ?
 #wd*		at umass?
 #uhidev*		at uhub?
 #ukbd*		at uhidev?
