@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.4 2012/09/05 18:06:52 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.5 2012/09/05 18:57:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.4 2012/09/05 18:06:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.5 2012/09/05 18:57:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -168,7 +168,7 @@ static	      void	rnd_add_data_ts(krndsource_t *, const void *const,
 					uint32_t, uint32_t, uint32_t);
 
 int			rnd_ready = 0;
-static int		rnd_have_entropy = 0;
+int			rnd_initial_entropy = 0;
 
 #ifdef DIAGNOSTIC
 static int		rnd_tested = 0;
@@ -255,11 +255,11 @@ rnd_wakeup_readers(void)
 	 */
 	if (rndpool_get_entropy_count(&rnd_pool) > RND_ENTROPY_THRESHOLD * 8) {
 #ifdef RND_VERBOSE
-		if (!rnd_have_entropy)
+		if (!rnd_initial_entropy)
 			printf("rnd: have initial entropy (%u)\n",
 			       rndpool_get_entropy_count(&rnd_pool));
 #endif
-		rnd_have_entropy = 1;
+		rnd_initial_entropy = 1;
 		mutex_spin_exit(&rndpool_mtx);
 	} else {
 		mutex_spin_exit(&rndpool_mtx);
@@ -447,7 +447,7 @@ rnd_init(void)
 					     RND_POOLBITS / 2));
 		if (rndpool_get_entropy_count(&rnd_pool) >
 		    RND_ENTROPY_THRESHOLD * 8) {
-                	rnd_have_entropy = 1;
+                	rnd_initial_entropy = 1;
 		}
                 mutex_spin_exit(&rndpool_mtx);
 #ifdef RND_VERBOSE
@@ -914,7 +914,7 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 		}
 		timed_in++;
 	}
-	if (__predict_false(!rnd_have_entropy)) {
+	if (__predict_false(!rnd_initial_entropy)) {
 		u_int32_t c;
 
 #ifdef RND_VERBOSE
