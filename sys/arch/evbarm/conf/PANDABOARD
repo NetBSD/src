@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.1 2012/09/01 00:22:13 matt Exp $
+#	$NetBSD: PANDABOARD,v 1.2 2012/09/05 00:06:21 matt Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -136,7 +136,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -171,6 +171,7 @@ cpu0		at mainbus?
 
 # A9 core devices
 armperiph0	at mainbus?
+arml2cc0	at armperiph?				# L2 Cache Controller
 armgic0		at armperiph?				# Interrupt Controller
 a9tmr0		at armperiph?				# Global Timer
 a9wdt0		at armperiph?				# Watchdog
@@ -185,7 +186,7 @@ L3i0		at mainbus?
 obio0		at mainbus? base 0x4a000000 size 0x1000000	# L4 CORE (CFG)
 obio1		at mainbus? base 0x4a300000 size 0x0040000	# L4 WAKEUP
 obio2		at mainbus? base 0x48000000 size 0x1000000	# L4 PERIPHERAL
-#obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
+obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x50000000
@@ -221,9 +222,8 @@ options 	CONSADDR=0x48020000, CONSPEED=115200
 #omapmputmr2	at obio2 addr 0x48036000 intr 72	# GP Timer 4 L4PER
 #options 	OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
-# Watchdog timers
+# Watchdog timers (no WDT1)
 #omapwdt32k*	at obio3 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
 #omapwdt32k*	at obio1 addr 0x4a314000 size 2048	# WDT2
 
 # onboard video
@@ -250,24 +250,26 @@ options 	CONSADDR=0x48020000, CONSPEED=115200
 #pseudo-device	wsfont
 
 # Power, Reset and Clock Management
-prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+prcm*		at obio1 addr 0x4A306000 size 0x2000	# PRM Module
 
 # On-board USB
-#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 109
-#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 108
-#usb*		at ohci?
-#usb*		at ehci?
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
+ohci*		at obio0 addr 0x4A064800 size 0x0400 intr 108	# 76 + 32
+ehci*		at obio0 addr 0x4A064c00 size 0x0400 intr 109	# 77 + 32
+usb*		at ohci?
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+umass*		at uhub? port ? configuration ? interface ?
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?
+wd*		at umass?
 #uhidev*		at uhub?
 #ukbd*		at uhidev?
 #ums*		at uhidev?
 #wskbd*		at ukbd?
 #wsmouse*	at ums?
 
-#axe*		at uhub? port ? configuration ? interface ?
+axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
 

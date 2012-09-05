@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.22 2012/09/05 00:06:21 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -167,12 +167,14 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
+#include <arm/mainbus/mainbus.h>
 
 #include <arm/omap/omap_com.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_wdtvar.h>
 #include <arm/omap/omap2_prcm.h>
 
+#include <evbarm/include/autoconf.h>
 #include <evbarm/beagle/beagle.h>
 
 #include "prcm.h"
@@ -181,6 +183,8 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.21 2012/09/04 00:19:20 matt Exp
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
+
+u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
 
 /* Same things, but for the free (unused by the kernel) memory. */
 
@@ -201,6 +205,7 @@ static void kgdb_port_init(void);
 #endif
 
 static void init_clocks(void);
+static void beagle_device_register(device_t, void *);
 static void beagle_reset(void);
 #if defined(OMAP_3530) || defined(TI_DM37XX)
 static void omap3_cpu_clk(void);
@@ -368,7 +373,6 @@ initarm(void *arg)
 	omap3_cpu_clk();		// find our CPU speed.
 #endif
 #if defined(OMAP_4430)
-	if (0)
 	omap4_cpu_clk();		// find our CPU speed.
 #endif
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
@@ -383,6 +387,8 @@ initarm(void *arg)
 #if 1
 	beagle_putchar('h');
 #endif
+	printf("uboot arg = %#x, %#x, %#x, %#x\n",
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -419,7 +425,7 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, false);
 
 	/* we've a specific device_register routine */
-	//evbarm_device_register = beagle_device_register;
+	evbarm_device_register = beagle_device_register;
 
 	db_trap_callback = beagle_db_trap;
 
@@ -487,11 +493,15 @@ consinit(void)
 void
 beagle_reset(void)
 {
+#if defined(OMAP_4430)
+	*(volatile uint32_t *)(OMAP_L4_CORE_VBASE + (OMAP_L4_WAKEUP_BASE - OMAP_L4_CORE_BASE) + OMAP4_PRM_RSTCTRL) = OMAP4_PRM_RSTCTRL_WARM;
+#else
 #if NPRCM > 0
 	prcm_cold_reset();
 #endif
 #if NOMAPWDT32K > 0
 	omapwdt32k_reboot();
+#endif
 #endif
 }
 
@@ -572,6 +582,42 @@ omap4_cpu_clk(void)
 	/*
 	 * MPU_CLK supplies ARM_FCLK which is twice the CPU frequency.
 	 */
-	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * 2 * m) / ((n + 1) * m2)) * OMAP4_CM_CLKSEL_MULT;
+	curcpu()->ci_data.cpu_cc_freq = ((sys_clk * 2 * m) / ((n + 1) * m2)) * OMAP4_CM_CLKSEL_MULT / 2;
+	printf("%s: %"PRIu64": sys_clk=%u m=%u n=%u (%u) m2=%u mult=%u\n",
+	    __func__, curcpu()->ci_data.cpu_cc_freq,
+	    sys_clk, m, n, n+1, m2, OMAP4_CM_CLKSEL_MULT);
 }
 #endif /* OMAP_4400 */
+
+void
+beagle_device_register(device_t self, void *aux)
+{
+	prop_dictionary_t dict = device_properties(self);
+
+	if (device_is_a(self, "armperiph")
+	    && device_is_a(device_parent(self), "mainbus")) {
+		/*
+		 * XXX KLUDGE ALERT XXX
+		 * The iot mainbus supplies is completely wrong since it scales
+		 * addresses by 2.  The simpliest remedy is to replace with our
+		 * bus space used for the armcore regisers (which armperiph uses). 
+		 */
+		struct mainbus_attach_args * const mb = aux;
+		mb->mb_iot = &omap_bs_tag;
+		return;
+	}
+ 
+	/*
+	 * We need to tell the A9 Global/Watchdog Timer
+	 * what frequency it runs at.
+	 */
+	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
+		/*
+		 * This clock always runs at (arm_clk div 2) and only goes
+		 * to timers that are part of the A9 MP core subsystem.
+		 */
+                prop_dictionary_set_uint32(dict, "frequency",
+		    curcpu()->ci_data.cpu_cc_freq / 2);
+		return;
+	}	
+}
