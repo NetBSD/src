@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/06/27 11:52:58 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2012/09/05 22:58:53 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ v7fs_file_util.c v7fs_superblock_util.c fsutil.c progress.c
 
 FSCK=	${NETBSDSRCDIR}/sbin/fsck
 V7FS=	${NETBSDSRCDIR}/sys/fs/v7fs
-CPPFLAGS+= -I${FSCK} -I${V7FS} -DV7FS_EI -g
+CPPFLAGS+= -I${FSCK} -I${V7FS} -DV7FS_EI
 .PATH:	${FSCK} ${V7FS}
 
 LDADD+=-lutil
