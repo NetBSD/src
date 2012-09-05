@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.15 2012/09/05 01:48:39 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.16 2012/09/05 23:19:13 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.15 2012/09/05 01:48:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16 2012/09/05 23:19:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,15 +239,17 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	bool			is_console;
-	int i, j;
-	uint32_t flags;
+	int 			i, j;
+	uint32_t		flags;
+	uint8_t			cmap[768];
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
-	sc->sc_is_pm2 = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DLABS_PERMEDIA2);
+	sc->sc_is_pm2 = (PCI_PRODUCT(pa->pa_id) == 
+	    PCI_PRODUCT_3DLABS_PERMEDIA2);
 	pci_aprint_devinfo(pa, NULL);
 
 	/* fill in parameters from properties */
@@ -321,16 +323,6 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	j = 0;
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap_red[i] = rasops_cmap[j];
-		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
-		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
-		pm2fb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
-		    rasops_cmap[j + 2]);
-		j += 3;
-	}
-
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
@@ -348,8 +340,19 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
+			   &defattr);
 		}
+	}
+
+	j = 0;
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
+	for (i = 0; i < 256; i++) {
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		pm2fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 
 	aa.console = is_console;
@@ -447,7 +450,8 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	if (kauth_authorize_machdep(kauth_cred_get(), 
+	    KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
 		    device_xname(sc->sc_dev));
@@ -492,6 +496,8 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
+	if (sc->sc_depth == 8)
+		ri->ri_flg |= RI_8BIT_IS_RGB /*| RI_ENABLE_ALPHA*/;
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -743,6 +749,7 @@ pm2fb_bitblt(struct pm2fb_softc *sc, int xs, int ys, int xd, int yd,
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
 	if (sc->sc_depth == 8) {
+		int adjust;
 		/*
 		 * use packed mode for some extra speed
 		 * this copies 32bit quantities even in 8 bit mode, so we need
@@ -766,9 +773,10 @@ pm2fb_bitblt(struct pm2fb_softc *sc, int xs, int ys, int xd, int yd,
 		rxd = xd >> 2;
 		rwi = wi >> 2;
 		/* adjust for non-aligned x */
+		adjust = (xs & 3) - (xd & 3);
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 		    PM2_RE_PACKEDDATA_LIMIT,
-		    (xd << 16) | (xd + wi) | (((xd - xs) & 3) << 29));
+		    (xd << 16) | (xd + wi) | (adjust << 29));
 	} else {
 		/* we're in 16 or 32bit mode */
 		if (rop == 3) {
