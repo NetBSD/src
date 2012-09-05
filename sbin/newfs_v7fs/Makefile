@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2012/08/10 12:20:11 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2012/09/05 23:01:42 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ FSCK=	${NETBSDSRCDIR}/sbin/fsck
 
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
-CPPFLAGS+=-DV7FS_EI -I${V7FS} -I${FSCK} -g
+CPPFLAGS+=-DV7FS_EI -I${V7FS} -I${FSCK}
 .PATH: ${V7FS} ${FSCK}
 
 COPTS.newfs_v7fs.c+=	-Wno-pointer-sign
