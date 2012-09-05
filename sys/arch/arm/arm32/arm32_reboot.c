@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.1 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.2 2012/09/05 06:29:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.1 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.2 2012/09/05 06:29:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,6 +173,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
