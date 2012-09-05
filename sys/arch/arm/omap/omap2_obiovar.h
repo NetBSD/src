@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_obiovar.h,v 1.1 2008/08/27 11:03:10 matt Exp $ */
+/* $NetBSD: omap2_obiovar.h,v 1.2 2012/09/05 00:19:59 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -32,6 +32,7 @@
 #define _ARM_OMAP_OMAP2_OBIOVAR_H_
 
 struct obio_attach_args {
+	const char *obio_name;
 	bus_space_tag_t	obio_iot;
 	bus_addr_t	obio_addr;
 	bus_size_t	obio_size;
@@ -39,6 +40,16 @@ struct obio_attach_args {
 	bus_dma_tag_t	obio_dmat;
 	unsigned int	obio_mult;
 	unsigned int	obio_intrbase;
+};
+
+struct obio_softc {
+	device_t		sc_dev;
+	bus_dma_tag_t		sc_dmat;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_addr_t		sc_base;
+	bus_size_t		sc_size;
+	device_t		sc_obio_dev;
 };
 
 #endif /* _ARM_OMAP_OMAP2_OBIOVAR_H_ */

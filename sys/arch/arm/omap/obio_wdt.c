@@ -33,7 +33,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.5 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.6 2012/09/05 00:19:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -79,8 +79,8 @@ obiowdt32k_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_period = OMAPWDT32K_DEFAULT_PERIOD;
 	sc->sc_iot = obio->obio_iot;
 
-	if (bus_space_map(sc->sc_iot, obio->obio_addr, obio->obio_size,
-			  0, &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, obio->obio_addr, obio->obio_size, 0,
+		&sc->sc_ioh))
 		panic("%s: Cannot map registers", device_xname(self));
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, WIDR);
