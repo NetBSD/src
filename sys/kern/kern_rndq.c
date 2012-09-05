@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.3 2012/04/17 02:50:38 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.4 2012/09/05 18:06:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.3 2012/04/17 02:50:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.4 2012/09/05 18:06:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -904,9 +904,17 @@ rnd_timeout(void *arg)
 u_int32_t
 rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 {
+	static int timed_in;
 
 	KASSERT(mutex_owned(&rndpool_mtx));
-	if (!rnd_have_entropy) {
+	if (__predict_false(!timed_in)) {
+		if (boottime.tv_sec) {
+			rndpool_add_data(&rnd_pool, &boottime,
+					 sizeof(boottime), 0);
+		}
+		timed_in++;
+	}
+	if (__predict_false(!rnd_have_entropy)) {
 		u_int32_t c;
 
 #ifdef RND_VERBOSE
