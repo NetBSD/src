@@ -231,7 +231,10 @@ omapwdt32k_tickle(struct sysmon_wdog *smw)
 void
 omapwdt32k_reboot(void)
 {
-	int s = splhigh();
+	if (omapwdt32k_sc == NULL)
+		return;
+
+	const int s = splhigh();
 
 	omapwdt32k_set_timeout(0);
 	omapwdt32k_start();
