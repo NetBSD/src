@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.104 2012/08/27 21:42:04 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.105 2012/09/06 12:21:40 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.104 2012/08/27 21:42:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.105 2012/09/06 12:21:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.104 2012/08/27 21:42:04 p
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/callout.h>
-
-/* #define ENVSYS_DEBUG */
-/* #define ENVSYS_OBJECTS_DEBUG */
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
