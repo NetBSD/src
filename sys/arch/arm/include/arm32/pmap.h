@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.108 2012/09/06 02:07:25 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.109 2012/09/06 04:42:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -405,7 +405,16 @@ extern int pmap_needs_pte_sync;
 #if (ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7 != 0) && (ARM_NMMUS == 1) 
 #define	PMAP_INCLUDE_PTE_SYNC
 #if (ARM_MMU_V7 > 0)
+#if defined(CPU_CORTEXA8)
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) \
+    || defined(CPU_CORTEXA15)
+#define	PMAP_NEEDS_PTE_SYNC	CPU_ID_IS_CORTEX_A8(curcpu()->ci_arm_cpuid)
+#else
+#define	PMAP_NEEDS_PTE_SYNC	1
+#endif
+#else
 #define	PMAP_NEEDS_PTE_SYNC	0
+#endif
 #else
 #define	PMAP_NEEDS_PTE_SYNC	1
 #endif
