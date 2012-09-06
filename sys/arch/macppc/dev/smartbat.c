@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.9 2012/09/05 21:23:31 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.10 2012/09/06 05:03:59 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.9 2012/09/05 21:23:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.10 2012/09/06 05:03:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.9 2012/09/05 21:23:31 macallan Exp $"
 #define BAT_MAX_CHARGE		3
 #define BAT_CHARGE		4
 #define BAT_CHARGING		5
-#define BAT_FULL		6
-#define BAT_NSENSORS		7  /* number of sensors */
+#define BAT_CHARGE_STATE	6
+#define BAT_FULL		7
+#define BAT_NSENSORS		8  /* number of sensors */
 
 struct smartbat_softc {
 	device_t sc_dev;
@@ -122,7 +123,10 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 	 * we can have more than one instance but only the first one needs
 	 * to report AC status
 	 */
-	sc->sc_have_ac = (device_unit(self) == 0);
+	sc->sc_have_ac = FALSE;
+	if (sc->sc_num == 0)
+		sc->sc_have_ac = TRUE;
+
 	printf(" addr %d: smart battery\n", sc->sc_num);
 
 	smartbat_update(sc, 1);
@@ -130,8 +134,6 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 	sc->sc_oflags = ~sc->sc_flags;
 
 	smartbat_setup_envsys(sc);
-	sc->sc_pmu_ops->register_callback(sc->sc_pmu_ops->cookie,
-	    smartbat_poll, sc);
 
 	if (sc->sc_have_ac) {
 		memset(&sc->sc_sm_acpower, 0, sizeof(struct sysmon_pswitch));
@@ -141,6 +143,8 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 			printf("%s: unable to register AC power status with " \
 			       "sysmon\n",
 			    device_xname(sc->sc_dev));
+		sc->sc_pmu_ops->register_callback(sc->sc_pmu_ops->cookie,
+		    smartbat_poll, sc);
 	}
 }
 
@@ -192,15 +196,21 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 	INITDATA(BAT_PRESENT, ENVSYS_INDICATOR, "Battery present");
 	INITDATA(BAT_VOLTAGE, ENVSYS_SVOLTS_DC, "Battery voltage");
 	INITDATA(BAT_CURRENT, ENVSYS_SAMPS, "Battery current");
-	INITDATA(BAT_MAX_CHARGE, ENVSYS_SAMPHOUR, "Battery design cap");
-	INITDATA(BAT_CHARGE, ENVSYS_SAMPHOUR, "Battery charge");
+	INITDATA(BAT_MAX_CHARGE, ENVSYS_SWATTHOUR, "Battery design cap");
+	INITDATA(BAT_CHARGE, ENVSYS_SWATTHOUR, "Battery charge");
 	INITDATA(BAT_CHARGING, ENVSYS_BATTERY_CHARGE, "Battery charging");
-#if 0
 	INITDATA(BAT_CHARGE_STATE, ENVSYS_BATTERY_CAPACITY,
 	    "Battery charge state");
-#endif
 	INITDATA(BAT_FULL, ENVSYS_INDICATOR, "Battery full");
 #undef INITDATA
+
+	sc->sc_bat_sensor[BAT_CHARGE_STATE].value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
+	sc->sc_bat_sensor[BAT_CHARGE_STATE].state = ENVSYS_SVALID;
+	sc->sc_bat_sensor[BAT_CHARGING].value_cur = TRUE;
+	sc->sc_bat_sensor[BAT_CHARGING].state = ENVSYS_SVALID;
+	sc->sc_bat_sensor[BAT_CHARGING].value_cur = TRUE;
+	sc->sc_bat_sensor[BAT_CHARGING].state = ENVSYS_SVALID;
+
 	for (i = 0; i < BAT_NSENSORS; i++) {
 		sc->sc_bat_sensor[i].flags = ENVSYS_FMONNOTSUPP;
 		if (sysmon_envsys_sensor_attach(sc->sc_bat_sme,
@@ -254,7 +264,9 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 				edata->value_cur = 1;
 			else
 				edata->value_cur = 0;
-
+			break;
+		case BAT_CHARGE_STATE:
+			edata->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		case BAT_FULL:
 			edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
