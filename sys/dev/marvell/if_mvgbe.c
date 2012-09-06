@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.18 2012/07/22 14:32:59 matt Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.19 2012/09/06 03:45:02 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.18 2012/07/22 14:32:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19 2012/09/06 03:45:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1293,6 +1293,7 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	struct mvgbe_chain *c;
 	struct mvgbe_rx_desc *r;
 	int align;
+	vaddr_t offset;
 
 	if (m == NULL) {
 		void *buf = NULL;
@@ -1335,10 +1336,14 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	c = &sc->sc_cdata.mvgbe_rx_chain[i];
 	r = c->mvgbe_desc;
 	c->mvgbe_mbuf = m_new;
-	r->bufptr = dmamap->dm_segs[0].ds_addr +
-	    (((vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf));
+	offset = (vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf;
+	r->bufptr = dmamap->dm_segs[0].ds_addr + offset;
 	r->bufsize = MVGBE_JLEN & ~MVGBE_RXBUF_MASK;
 	r->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA | MVGBE_RX_ENABLE_INTERRUPT;
+
+	/* Invalidate RX buffer */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, offset, r->bufsize,
+	    BUS_DMASYNC_PREREAD);
 
 	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
