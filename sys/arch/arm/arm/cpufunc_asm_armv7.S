@@ -71,6 +71,10 @@ END(armv7_tlb_flushID_SE)
 
 
 ENTRY(armv7_setttb)
+	mrc	p15, 0, r1, c0, c0, 5	@ get MPIDR
+	cmp	r1, #0
+	orrlt	r0, #0x5b		@ MP, cachable (Normal in/out WB)
+	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 0	@ invalidate all I+D TLBs
