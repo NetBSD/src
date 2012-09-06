@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.10 2012/09/06 05:03:59 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.11 2012/09/06 13:05:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.10 2012/09/06 05:03:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.11 2012/09/06 13:05:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,8 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 	INITDATA(BAT_FULL, ENVSYS_INDICATOR, "Battery full");
 #undef INITDATA
 
-	sc->sc_bat_sensor[BAT_CHARGE_STATE].value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
+	sc->sc_bat_sensor[BAT_CHARGE_STATE].value_cur = 
+	    ENVSYS_BATTERY_CAPACITY_NORMAL;
 	sc->sc_bat_sensor[BAT_CHARGE_STATE].state = ENVSYS_SVALID;
 	sc->sc_bat_sensor[BAT_CHARGING].value_cur = TRUE;
 	sc->sc_bat_sensor[BAT_CHARGING].state = ENVSYS_SVALID;
@@ -266,7 +267,23 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 				edata->value_cur = 0;
 			break;
 		case BAT_CHARGE_STATE:
-			edata->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			{
+				int ch = sc->sc_max_charge * 100 / 
+				    sc->sc_charge;
+				if (ch < 6) {
+					edata->value_cur = 
+					    ENVSYS_BATTERY_CAPACITY_CRITICAL;
+				} else if (ch < 11) {
+					edata->value_cur = 
+					    ENVSYS_BATTERY_CAPACITY_WARNING;
+				} else if (ch < 20) {
+					edata->value_cur = 
+					    ENVSYS_BATTERY_CAPACITY_LOW;
+				} else {
+					edata->value_cur = 
+					    ENVSYS_BATTERY_CAPACITY_NORMAL;
+				}
+			}
 			break;
 		case BAT_FULL:
 			edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
@@ -279,6 +296,14 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		case BAT_PRESENT:
 			edata->value_cur = present;
 			edata->state = ENVSYS_SVALID;
+			break;
+		case BAT_CHARGE_STATE:
+			/*
+			 * envsys crashes if this isn't a valid value even
+			 * when the sensor itself is invalid
+			 */
+			edata->value_cur = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			edata->state = ENVSYS_SINVALID;
 			break;
 		default:
 			edata->state = ENVSYS_SINVALID;
@@ -299,6 +324,8 @@ smartbat_refresh_ac(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
 			edata->state = ENVSYS_SVALID;
 			break;
+		default:
+			edata->state = ENVSYS_SINVALID;
 	}
 }
 
