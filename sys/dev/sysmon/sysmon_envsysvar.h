@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.43 2012/08/27 21:42:04 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.44 2012/09/06 12:10:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -39,6 +39,8 @@
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
+
+#include "opt_envsys.h"
 
 enum sme_descr_type {
 	SME_DESC_UNITS = 1,

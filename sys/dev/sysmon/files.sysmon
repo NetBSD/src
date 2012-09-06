@@ -1,4 +1,4 @@
-#	$NetBSD: files.sysmon,v 1.13 2010/10/19 11:55:38 pgoyette Exp $
+#	$NetBSD: files.sysmon,v 1.14 2012/09/06 12:10:28 macallan Exp $
 
 define	sysmon_taskq
 file	dev/sysmon/sysmon_taskq.c	sysmon_taskq 		needs-flag
@@ -11,6 +11,7 @@ file	dev/sysmon/sysmon_envsys.c		sysmon_envsys	needs-flag
 file	dev/sysmon/sysmon_envsys_events.c	sysmon_envsys
 file	dev/sysmon/sysmon_envsys_tables.c	sysmon_envsys
 file	dev/sysmon/sysmon_envsys_util.c 	sysmon_envsys
+defflag opt_envsys.h ENVSYS_DEBUG ENVSYS_OBJECTS_DEBUG
 
 define	sysmon_wdog
 file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
