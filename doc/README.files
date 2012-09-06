@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4 2007/12/14 21:15:52 pavel Exp $
+#	$NetBSD: README.files,v 1.5 2012/09/06 22:20:38 riz Exp $
 
 What's in this directory:
 
@@ -9,6 +9,8 @@ CHANGES.prev	Changes in previous NetBSD releases.
 LAST_MINUTE	Last minute changes and notes about the release.
 
 README.files	This file.
+
+images/		Bootable images, including ISOs and USB disk images.
 
 patches/	Post-release binary code patches.
 
