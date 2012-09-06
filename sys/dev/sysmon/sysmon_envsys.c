@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.124 2012/08/27 14:15:52 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.125 2012/09/06 12:21:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.124 2012/08/27 14:15:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.125 2012/09/06 12:21:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.124 2012/08/27 14:15:52 pgoyette
 #include <sys/kmem.h>
 #include <sys/rnd.h>
 
-/* #define ENVSYS_DEBUG */
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
