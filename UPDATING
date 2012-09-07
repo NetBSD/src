@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.234.2.1 2012/02/16 19:56:43 riz Exp $
+$NetBSD: UPDATING,v 1.234.2.2 2012/09/07 22:19:27 bouyer Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20120813:
+	The update of openssl requires cleaning both the openssl build
+	directory and DESTDIR; update builds done without taking these
+	steps may fail, or if not, have been observed to cause
+	third-party software to link incorrectly.
 
 20120216:
 	Default for MKCATPAGES changed to NO. Update builds will fail
