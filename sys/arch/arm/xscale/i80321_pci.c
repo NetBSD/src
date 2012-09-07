@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.12 2012/02/12 16:31:01 matt Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.13 2012/09/07 03:05:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.12 2012/02/12 16:31:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13 2012/09/07 03:05:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ void		i80321_pci_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
 pcireg_t	i80321_pci_conf_read(void *, pcitag_t, int);
 void		i80321_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void		i80321_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 #define	PCI_CONF_LOCK(s)	(s) = disable_interrupts(I32_bit)
 #define	PCI_CONF_UNLOCK(s)	restore_interrupts((s))
@@ -90,6 +91,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_decompose_tag = i80321_pci_decompose_tag;
 	pc->pc_conf_read = i80321_pci_conf_read;
 	pc->pc_conf_write = i80321_pci_conf_write;
+	pc->pc_conf_interrupt = i80321_pci_conf_interrupt;
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	/*
@@ -131,7 +133,7 @@ i80321_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+i80321_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 }
 
