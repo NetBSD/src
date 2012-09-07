@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.3 2007/01/06 00:50:54 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.4 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -35,6 +35,8 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+#include "assym.h"
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -107,7 +109,7 @@ ENTRY_NP(armv5_icache_sync_all)
 	RET
 
 .Larmv5_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 
 ENTRY(armv5_dcache_wb_range)
 	ldr	ip, .Larmv5_line_size

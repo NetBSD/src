@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.114 2012/09/07 04:39:14 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.115 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.114 2012/09/07 04:39:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.115 2012/09/07 11:48:59 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -92,23 +92,14 @@ struct arm_pmc_funcs *arm_pmc;
 #endif
 
 /* PRIMARY CACHE VARIABLES */
-int	arm_picache_size;
-int	arm_picache_line_size;
-int	arm_picache_ways;
-
-int	arm_pdcache_size;	/* and unified */
-int	arm_pdcache_line_size;
-int	arm_pdcache_ways;
 #if (ARM_MMU_V6 + ARM_MMU_V7) != 0
-int	arm_cache_prefer_mask;
+u_int	arm_cache_prefer_mask;
 #endif
+struct	arm_cache_info arm_pcache;
+struct	arm_cache_info arm_scache;
 
-
-int	arm_pcache_type;
-int	arm_pcache_unified;
-
-int	arm_dcache_align;
-int	arm_dcache_align_mask;
+u_int	arm_dcache_align;
+u_int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
@@ -1355,6 +1346,43 @@ get_cachesize_cp15(int cssr)
 }
 #endif
 
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+static void
+get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
+{
+	u_int csid;
+	u_int nsets;
+
+	if (clidr & 6) {
+		csid = get_cachesize_cp15(level << 1); /* select L1 dcache values */
+		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->dcache_ways = CPU_CSID_ASSOC(csid) + 1;
+		info->dcache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
+		info->dcache_size = info->dcache_line_size * info->dcache_ways * nsets;
+
+		if (level == 0) {
+			arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid) + 1;
+			arm_dcache_log2_linesize = CPU_CSID_LEN(csid) + 4;
+			arm_dcache_log2_nsets = 31 - __builtin_clz(nsets);
+		}
+	}
+
+	info->cache_unified = (clidr == 4);
+
+	if (clidr & 1) {
+		csid = get_cachesize_cp15((level << 1)|CPU_CSSR_InD); /* select L1 icache values */
+		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->icache_ways = CPU_CSID_ASSOC(csid) + 1;
+		info->icache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
+		info->icache_size = info->icache_line_size * info->icache_ways * nsets;
+	} else {
+		info->icache_ways = info->dcache_ways;
+		info->icache_line_size = info->dcache_line_size;
+		info->icache_size = info->dcache_size;
+	}
+}
+#endif /* (ARM_MMU_V6 + ARM_MMU_V7) > 0 */
+
 static void
 get_cachetype_cp15(void)
 {
@@ -1376,57 +1404,43 @@ get_cachetype_cp15(void)
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 	if (CPU_CT_FORMAT(ctype) == 4) {
-		u_int csid0, csid1;
+		u_int clidr = armreg_clidr_read();
 
-		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
-		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
-
-		csid0 = get_cachesize_cp15(CPU_CSSR_L1); /* select L1 dcache values */
-		arm_pdcache_ways = CPU_CSID_ASSOC(csid0) + 1;
-		arm_pdcache_line_size = dsize;
-		arm_pdcache_size = arm_pdcache_line_size * arm_pdcache_ways;
-		arm_pdcache_size *= (CPU_CSID_NUMSETS(csid0) + 1);
 		arm_cache_prefer_mask = PAGE_SIZE;
+		arm_pcache.cache_type = CPU_CT_CTYPE_WB14;
 
-		arm_dcache_align = arm_pdcache_line_size;
-
-		csid1 = get_cachesize_cp15(CPU_CSSR_L1|CPU_CSSR_InD); /* select L1 icache values */
-		arm_picache_ways = CPU_CSID_ASSOC(csid1) + 1;
-		arm_picache_line_size = isize;
-		arm_picache_size = arm_picache_line_size * arm_picache_ways;
-		arm_picache_size *= (CPU_CSID_NUMSETS(csid1) + 1);
-		arm_cache_prefer_mask = PAGE_SIZE;
-
-		arm_dcache_align = arm_pdcache_line_size;
-
-		arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid1) + 1;
-		arm_dcache_log2_linesize = CPU_CSID_LEN(csid1) + 2;
-		arm_dcache_log2_nsets = CPU_CSID_NUMSETS(csid1) + 1;
-		arm_pcache_type = CPU_CT_CTYPE_WB14;
+		get_cacheinfo_clidr(&arm_pcache, 0, clidr & 7);
+		arm_dcache_align = arm_pcache.dcache_line_size;
+		clidr >>= 3;
+		if (clidr & 7) {
+			get_cacheinfo_clidr(&arm_scache, 1, clidr & 7);
+			if (arm_scache.dcache_line_size < arm_dcache_align)
+				arm_dcache_align = arm_scache.dcache_line_size;
+		}
 		goto out;
 	}
 #endif /* ARM_MMU_V6 + ARM_MMU_V7 > 0 */
 
 	if ((ctype & CPU_CT_S) == 0)
-		arm_pcache_unified = 1;
+		arm_pcache.cache_unified = 1;
 
 	/*
 	 * If you want to know how this code works, go read the ARM ARM.
 	 */
 
-	arm_pcache_type = CPU_CT_CTYPE(ctype);
+	arm_pcache.cache_type = CPU_CT_CTYPE(ctype);
 
-	if (arm_pcache_unified == 0) {
+	if (arm_pcache.cache_unified == 0) {
 		isize = CPU_CT_ISIZE(ctype);
 		multiplier = (isize & CPU_CT_xSIZE_M) ? 3 : 2;
-		arm_picache_line_size = 1U << (CPU_CT_xSIZE_LEN(isize) + 3);
+		arm_pcache.icache_line_size = 1U << (CPU_CT_xSIZE_LEN(isize) + 3);
 		if (CPU_CT_xSIZE_ASSOC(isize) == 0) {
 			if (isize & CPU_CT_xSIZE_M)
-				arm_picache_line_size = 0; /* not present */
+				arm_pcache.icache_line_size = 0; /* not present */
 			else
-				arm_picache_ways = 1;
+				arm_pcache.icache_ways = 1;
 		} else {
-			arm_picache_ways = multiplier <<
+			arm_pcache.icache_ways = multiplier <<
 			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 			if (CPU_CT_xSIZE_P & isize)
@@ -1436,19 +1450,19 @@ get_cachetype_cp15(void)
 				    - PAGE_SIZE;
 #endif
 		}
-		arm_picache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
+		arm_pcache.icache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
 	}
 
 	dsize = CPU_CT_DSIZE(ctype);
 	multiplier = (dsize & CPU_CT_xSIZE_M) ? 3 : 2;
-	arm_pdcache_line_size = 1U << (CPU_CT_xSIZE_LEN(dsize) + 3);
+	arm_pcache.dcache_line_size = 1U << (CPU_CT_xSIZE_LEN(dsize) + 3);
 	if (CPU_CT_xSIZE_ASSOC(dsize) == 0) {
 		if (dsize & CPU_CT_xSIZE_M)
-			arm_pdcache_line_size = 0; /* not present */
+			arm_pcache.dcache_line_size = 0; /* not present */
 		else
-			arm_pdcache_ways = 1;
+			arm_pcache.dcache_ways = 1;
 	} else {
-		arm_pdcache_ways = multiplier <<
+		arm_pcache.dcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 		if (CPU_CT_xSIZE_P & dsize)
@@ -1457,9 +1471,9 @@ get_cachetype_cp15(void)
 				  - CPU_CT_xSIZE_ASSOC(dsize)) - PAGE_SIZE;
 #endif
 	}
-	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
+	arm_pcache.dcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
 
-	arm_dcache_align = arm_pdcache_line_size;
+	arm_dcache_align = arm_pcache.dcache_line_size;
 
 	arm_dcache_log2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
 	arm_dcache_log2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
@@ -1515,20 +1529,20 @@ get_cachetype_table(void)
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
-			arm_pcache_type = cachetab[i].ct_pcache_type;
-			arm_pcache_unified = cachetab[i].ct_pcache_unified;
-			arm_pdcache_size = cachetab[i].ct_pdcache_size;
-			arm_pdcache_line_size =
+			arm_pcache.cache_type = cachetab[i].ct_pcache_type;
+			arm_pcache.cache_unified = cachetab[i].ct_pcache_unified;
+			arm_pcache.dcache_size = cachetab[i].ct_pdcache_size;
+			arm_pcache.dcache_line_size =
 			    cachetab[i].ct_pdcache_line_size;
-			arm_pdcache_ways = cachetab[i].ct_pdcache_ways;
-			arm_picache_size = cachetab[i].ct_picache_size;
-			arm_picache_line_size =
+			arm_pcache.dcache_ways = cachetab[i].ct_pdcache_ways;
+			arm_pcache.icache_size = cachetab[i].ct_picache_size;
+			arm_pcache.icache_line_size =
 			    cachetab[i].ct_picache_line_size;
-			arm_picache_ways = cachetab[i].ct_picache_ways;
+			arm_pcache.icache_ways = cachetab[i].ct_picache_ways;
 		}
 	}
-	arm_dcache_align = arm_pdcache_line_size;
 
+	arm_dcache_align = arm_pcache.dcache_line_size;
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 

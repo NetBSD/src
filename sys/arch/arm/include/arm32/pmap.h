@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.109 2012/09/06 04:42:39 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.110 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -413,7 +413,7 @@ extern int pmap_needs_pte_sync;
 #define	PMAP_NEEDS_PTE_SYNC	1
 #endif
 #else
-#define	PMAP_NEEDS_PTE_SYNC	0
+#define	PMAP_NEEDS_PTE_SYNC	1
 #endif
 #else
 #define	PMAP_NEEDS_PTE_SYNC	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.85 2012/08/29 17:44:25 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.86 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2012/08/29 17:44:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2012/09/07 11:48:59 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -86,6 +86,7 @@ void identify_features(device_t dv);
 void
 cpu_attach(device_t dv, cpuid_t id)
 {
+	const char * const xname = device_xname(dv);
 	struct cpu_info *ci;
 
 	if (id == 0) {
@@ -127,7 +128,40 @@ cpu_attach(device_t dv, cpuid_t id)
 	dv->dv_private = ci;
 
 	evcnt_attach_dynamic(&ci->ci_arm700bugcount, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dv), "arm700swibug");
+	    NULL, xname, "arm700swibug");
+
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_WRTBUF_0], EVCNT_TYPE_TRAP,
+	    NULL, xname, "vector abort");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_WRTBUF_1], EVCNT_TYPE_TRAP,
+	    NULL, xname, "terminal abort");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSERR_0], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external linefetch abort (S)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSERR_1], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external linefetch abort (P)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSERR_2], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external non-linefetch abort (S)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSERR_3], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external non-linefetch abort (P)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSTRNL1], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external translation abort (L1)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_BUSTRNL2], EVCNT_TYPE_TRAP,
+	    NULL, xname, "external translation abort (L2)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_ALIGN_0], EVCNT_TYPE_TRAP,
+	    NULL, xname, "alignment abort (0)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_ALIGN_1], EVCNT_TYPE_TRAP,
+	    NULL, xname, "alignment abort (1)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_TRANS_S], EVCNT_TYPE_TRAP,
+	    NULL, xname, "translation abort (S)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_TRANS_P], EVCNT_TYPE_TRAP,
+	    NULL, xname, "translation abort (P)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_DOMAIN_S], EVCNT_TYPE_TRAP,
+	    NULL, xname, "domain abort (S)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_DOMAIN_P], EVCNT_TYPE_TRAP,
+	    NULL, xname, "domain abort (P)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_PERM_S], EVCNT_TYPE_TRAP,
+	    NULL, xname, "permission abort (S)");
+	evcnt_attach_dynamic_nozero(&ci->ci_abt_evs[FAULT_PERM_P], EVCNT_TYPE_TRAP,
+	    NULL, xname, "permission abort (P)");
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -538,8 +572,27 @@ static const char * const wtnames[] = {
 	"**unknown 12**",
 	"**unknown 13**",
 	"write-back-locking-C",
-	"**unknown 15**",
+	"write-back-locking-D",
 };
+
+static void
+print_cache_info(device_t dv, struct arm_cache_info *info, u_int level)
+{
+	if (info->cache_unified) {
+		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u Unified cache\n",
+		    info->dcache_size / 1024,
+		    info->dcache_line_size, info->dcache_ways,
+		    wtnames[info->cache_type], level + 1);
+	} else {
+		aprint_normal_dev(dv, "%dKB/%dB %d-way L%u Instruction cache\n",
+		    info->icache_size / 1024,
+		    info->icache_line_size, info->icache_ways, level + 1);
+		aprint_normal_dev(dv, "%dKB/%dB %d-way %s L%u Data cache\n",
+		    info->dcache_size / 1024, 
+		    info->dcache_line_size, info->dcache_ways,
+		    wtnames[info->cache_type], level + 1);
+	}
+}
 
 void
 identify_arm_cpu(device_t dv, struct cpu_info *ci)
@@ -632,7 +685,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
-#ifdef CPU_CORTEX
+#if defined(CPU_CORTEX) && 0
 	if (CPU_ID_CORTEX_P(cpuid)) {
 		identify_cortex_caches(dv);
 		if (0)
@@ -640,23 +693,11 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	} else
 #endif
 	/* Print cache info. */
-	if (arm_picache_line_size != 0 || arm_pdcache_line_size != 0) {
-
-		if (arm_pcache_unified) {
-			aprint_normal_dev(dv, "%dKB/%dB %d-way %s unified cache\n",
-			    arm_pdcache_size / 1024,
-			    arm_pdcache_line_size, arm_pdcache_ways,
-			    wtnames[arm_pcache_type]);
-		} else {
-			aprint_normal_dev(dv, "%dKB/%dB %d-way Instruction cache\n",
-			    arm_picache_size / 1024,
-			    arm_picache_line_size, arm_picache_ways);
-			aprint_normal_dev(dv, "%dKB/%dB %d-way %s Data cache\n",
-			    arm_pdcache_size / 1024, 
-			    arm_pdcache_line_size, arm_pdcache_ways,
-			    wtnames[arm_pcache_type]);
-		}
-
+	if (arm_pcache.icache_line_size != 0 || arm_pcache.dcache_line_size != 0) {
+		print_cache_info(dv, &arm_pcache, 0);
+	}
+	if (arm_scache.icache_line_size != 0 || arm_scache.dcache_line_size != 0) {
+		print_cache_info(dv, &arm_scache, 1);
 	}
 
 
@@ -725,7 +766,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	}
 }
 
-#ifdef CPU_CORTEX
+#if defined(CPU_CORTEX) && 0
 static void
 print_cortex_cache(device_t dv, u_int level, const char *desc)
 {
