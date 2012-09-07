@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.17 2012/09/01 00:20:49 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.18 2012/09/07 04:40:13 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.17 2012/09/01 00:20:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.18 2012/09/07 04:40:13 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -81,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.17 2012/09/01 00:20:49 matt Ex
 #define KERNEL_VM_BASE		(KERNEL_BASE + 0x02000000)
 
 /*
- * The range 0xc2000000 - 0xcdffffff is available for kernel VM space
+ * The range 0xc2000000 - 0xdfffffff is available for kernel VM space
  * Core-logic registers and I/O mappings occupy 0xfe000000 - 0xffffffff
  */
-#define KERNEL_VM_SIZE		0x0c000000
+#define KERNEL_VM_SIZE		0x1e000000
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
