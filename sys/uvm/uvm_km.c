@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.120.2.2 2012/03/17 17:29:34 bouyer Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.120.2.3 2012/09/07 22:17:34 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.120.2.2 2012/03/17 17:29:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.120.2.3 2012/09/07 22:17:34 riz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -170,7 +170,7 @@ int nkmempages = 0;
 vaddr_t kmembase;
 vsize_t kmemsize;
 
-vmem_t *kmem_arena;
+vmem_t *kmem_arena = NULL;
 vmem_t *kmem_va_arena;
 
 /*
@@ -297,6 +297,18 @@ uvm_km_bootstrap(vaddr_t start, vaddr_t end)
 	kmem_arena = vmem_create("kmem", kmembase, kmemsize, PAGE_SIZE,
 	    NULL, NULL, NULL,
 	    0, VM_NOSLEEP | VM_BOOTSTRAP, IPL_VM);
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * kmem_arena VA allocations happen independently of uvm_map.
+	 * grow kernel to accommodate the kmem_arena.
+	 */
+	if (uvm_maxkaddr < kmembase + kmemsize) {
+		uvm_maxkaddr = pmap_growkernel(kmembase + kmemsize);
+		KASSERTMSG(uvm_maxkaddr >= kmembase + kmemsize,
+		    "%#"PRIxVADDR" %#"PRIxVADDR" %#"PRIxVSIZE,
+		    uvm_maxkaddr, kmembase, kmemsize);
+	}
+#endif
 
 	vmem_init(kmem_arena);
 
@@ -747,6 +759,16 @@ again:
 	if (rc != 0)
 		return rc;
 
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * These VA allocations happen independently of uvm_map 
+	 * so this allocation must not extend beyond the current limit.
+	 */
+	KASSERTMSG(uvm_maxkaddr >= va + size,
+	    "%#"PRIxVADDR" %#"PRIxPTR" %#zx",
+	    uvm_maxkaddr, va, size);
+#endif
+
 	loopva = va;
 	loopsize = size;
 
@@ -810,6 +832,9 @@ uvm_km_va_starved_p(void)
 {
 	vmem_size_t total;
 	vmem_size_t free;
+
+	if (kmem_arena == NULL)
+		return false;
 
 	total = vmem_size(kmem_arena, VMEM_ALLOC|VMEM_FREE);
 	free = vmem_size(kmem_arena, VMEM_FREE);
