@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.113 2012/08/29 18:37:14 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.114 2012/09/07 04:39:14 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.113 2012/08/29 18:37:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.114 2012/09/07 04:39:14 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1333,9 +1333,9 @@ static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
    above numbers.  */
-static int	arm_dcache_l2_nsets;
-static int	arm_dcache_l2_assoc;
-static int	arm_dcache_l2_linesize;
+static int	arm_dcache_log2_nsets;
+static int	arm_dcache_log2_assoc;
+static int	arm_dcache_log2_linesize;
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 static inline u_int
@@ -1376,7 +1376,7 @@ get_cachetype_cp15(void)
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 	if (CPU_CT_FORMAT(ctype) == 4) {
-		u_int csid0, csid1, csid2;
+		u_int csid0, csid1;
 
 		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
 		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
@@ -1399,10 +1399,9 @@ get_cachetype_cp15(void)
 
 		arm_dcache_align = arm_pdcache_line_size;
 
-		csid2 = get_cachesize_cp15(CPU_CSSR_L2); /* select L2 cache values */
-		arm_dcache_l2_assoc = CPU_CSID_ASSOC(csid2) + 1;
-		arm_dcache_l2_linesize = 1 << (CPU_CSID_LEN(csid2) + 2);
-		arm_dcache_l2_nsets = CPU_CSID_NUMSETS(csid2) + 1;
+		arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid1) + 1;
+		arm_dcache_log2_linesize = CPU_CSID_LEN(csid1) + 2;
+		arm_dcache_log2_nsets = CPU_CSID_NUMSETS(csid1) + 1;
 		arm_pcache_type = CPU_CT_CTYPE_WB14;
 		goto out;
 	}
@@ -1462,9 +1461,9 @@ get_cachetype_cp15(void)
 
 	arm_dcache_align = arm_pdcache_line_size;
 
-	arm_dcache_l2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
-	arm_dcache_l2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
-	arm_dcache_l2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
+	arm_dcache_log2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
+	arm_dcache_log2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
+	arm_dcache_log2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
 	    CPU_CT_xSIZE_ASSOC(dsize) - CPU_CT_xSIZE_LEN(dsize);
 
  out:
@@ -1617,11 +1616,11 @@ set_cpufuncs(void)
 	    (cputype & 0x0000f000) == 0x00009000) {
 		cpufuncs = arm9_cpufuncs;
 		get_cachetype_cp15();
-		arm9_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		arm9_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
 		arm9_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    (1U << (arm_dcache_log2_linesize + arm_dcache_log2_nsets)) -
 		    arm9_dcache_sets_inc;
-		arm9_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		arm9_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		arm9_dcache_index_max = 0U - arm9_dcache_index_inc;
 #ifdef	ARM9_CACHE_WRITE_THROUGH
 		pmap_pte_init_arm9();
@@ -1659,11 +1658,11 @@ set_cpufuncs(void)
 		 */
 		cpufuncs = arm10_cpufuncs;
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		armv5_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
 		armv5_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    (1U << (arm_dcache_log2_linesize + arm_dcache_log2_nsets)) -
 		    armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		armv5_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		pmap_pte_init_generic();
 		return 0;
@@ -1675,10 +1674,10 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_ARM11MPCORE) {
 		cpufuncs = arm11mpcore_cpufuncs;
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv5_dcache_sets_max = (1U << (arm_dcache_l2_linesize +
-			arm_dcache_l2_nsets)) - armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		armv5_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
+		armv5_dcache_sets_max = (1U << (arm_dcache_log2_linesize +
+			arm_dcache_log2_nsets)) - armv5_dcache_sets_inc;
+		armv5_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		cpu_do_powersave = 1;			/* Enable powersave */
 		pmap_pte_init_arm11mpcore();
