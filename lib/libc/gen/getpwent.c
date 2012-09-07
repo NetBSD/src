@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.79 2012/03/29 14:43:58 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.80 2012/09/07 04:50:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.79 2012/03/29 14:43:58 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.80 2012/09/07 04:50:35 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1294,7 +1294,7 @@ _nis_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 
 	data = NULL;
 	rv = NS_NOTFOUND;
-	_DIAGASSERT(state->maptype > 0 && state->maptype < sizeof(map_arr)/sizeof(const char*));
+	/*_DIAGASSERT(state->maptype > 0 && state->maptype < sizeof(map_arr)/sizeof(const char*));*/
 
 							/* search map */
 	nisr = yp_match(state->domain, map_arr[state->maptype], buffer, (int)strlen(buffer),
