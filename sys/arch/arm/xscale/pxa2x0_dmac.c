@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.10 2012/01/29 09:08:04 tsutsui Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.11 2012/09/07 17:11:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -462,20 +462,20 @@ dmac_dmover_attach(struct pxadmac_softc *sc)
 		 * small buffers here, since we set up the DMAC source
 		 * descriptor with 'ds_addr_hold' set to true.
 		 */
-		if (bus_dmamem_alloc(sc->sc_dmat,
-				arm_pdcache_line_size, arm_pdcache_line_size, 0,
+		if (bus_dmamem_alloc(sc->sc_dmat, arm_pcache.dcache_line_size,
+				arm_pcache.dcache_line_size, 0,
 				&ds->ds_zero_seg, 1, &dummy, BUS_DMA_NOWAIT) ||
-		    bus_dmamem_alloc(sc->sc_dmat,
-				arm_pdcache_line_size, arm_pdcache_line_size, 0,
+		    bus_dmamem_alloc(sc->sc_dmat, arm_pcache.dcache_line_size,
+				arm_pcache.dcache_line_size, 0,
 				&ds->ds_fill_seg, 1, &dummy, BUS_DMA_NOWAIT)) {
 			panic("dmac_dmover_attach: bus_dmamem_alloc failed");
 		}
 
 		if (bus_dmamem_map(sc->sc_dmat, &ds->ds_zero_seg, 1,
-				arm_pdcache_line_size, &ds->ds_zero_va,
+				arm_pcache.dcache_line_size, &ds->ds_zero_va,
 				BUS_DMA_NOWAIT) ||
 		    bus_dmamem_map(sc->sc_dmat, &ds->ds_fill_seg, 1,
-				arm_pdcache_line_size, &ds->ds_fill_va,
+				arm_pcache.dcache_line_size, &ds->ds_fill_va,
 				BUS_DMA_NOWAIT)) {
 			panic("dmac_dmover_attach: bus_dmamem_map failed");
 		}
@@ -483,7 +483,7 @@ dmac_dmover_attach(struct pxadmac_softc *sc)
 		/*
 		 * Make sure the zero-fill source buffer really is zero filled
 		 */
-		memset(ds->ds_zero_va, 0, arm_pdcache_line_size);
+		memset(ds->ds_zero_va, 0, arm_pcache.dcache_line_size);
 	}
 
 	dmover_backend_register(&sc->sc_dmover.dd_backend);
@@ -590,7 +590,7 @@ dmac_dmover_run(struct dmover_backend *dmb)
 			 * Simply load up the pre-zeroed source buffer
 			 */
 			if (bus_dmamap_load(sc->sc_dmat, ds->ds_src_dmap,
-			    ds->ds_zero_va, arm_pdcache_line_size, NULL,
+			    ds->ds_zero_va, arm_pcache.dcache_line_size, NULL,
 			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ))
 				goto error;
 
@@ -607,10 +607,10 @@ dmac_dmover_run(struct dmover_backend *dmb)
 			 * burst size (which is hardcoded to 8 for dmover).
 			 */
 			memset(ds->ds_fill_va, dreq->dreq_immediate[0],
-			    arm_pdcache_line_size);
+			    arm_pcache.dcache_line_size);
 
 			if (bus_dmamap_load(sc->sc_dmat, ds->ds_src_dmap,
-			    ds->ds_fill_va, arm_pdcache_line_size, NULL,
+			    ds->ds_fill_va, arm_pcache.dcache_line_size, NULL,
 			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ))
 				goto error;
 
