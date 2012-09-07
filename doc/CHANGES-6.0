@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.201 2012/09/07 22:20:19 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.202 2012/09/07 22:21:56 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8520,4 +8520,9 @@ share/man/man7/release.7			1.33, 1.34
 
 	Update documentation regarding bootable images.
 	[riz, ticket #548]
+
+UPDATING					1.238 via patch
+	Add note about cleaning required by last month's openssl update.
+	Closes PR 46816. 
+	[dholland, ticket #549]
 
