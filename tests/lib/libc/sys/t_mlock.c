@@ -1,4 +1,4 @@
-/* $NetBSD: t_mlock.c,v 1.2 2012/04/21 01:15:13 jruoho Exp $ */
+/* $NetBSD: t_mlock.c,v 1.3 2012/09/07 20:27:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,14 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.2 2012/04/21 01:15:13 jruoho Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.3 2012/09/07 20:27:12 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#define _KMEMUSER
+#include <machine/vmparam.h>
 
 #include <errno.h>
 #include <atf-c.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -77,24 +80,42 @@ ATF_TC_HEAD(mlock_err, tc)
 
 ATF_TC_BODY(mlock_err, tc)
 {
+	void *invalid_ptr;
+	int null_errno = ENOMEM;	/* error expected for NULL */
+
+	if ((uintptr_t)VM_MIN_ADDRESS > 0)
+		null_errno = EINVAL;	/* NULL is not inside user VM */
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(ENOMEM, mlock(NULL, page) == -1);
+	ATF_REQUIRE_ERRNO(null_errno, mlock(NULL, page) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(ENOMEM, mlock((char *)0, page) == -1);
+	ATF_REQUIRE_ERRNO(null_errno, mlock((char *)0, page) == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, mlock((char *)-1, page) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(ENOMEM, munlock(NULL, page) == -1);
+	ATF_REQUIRE_ERRNO(null_errno, munlock(NULL, page) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(ENOMEM, munlock((char *)0, page) == -1);
+	ATF_REQUIRE_ERRNO(null_errno, munlock((char *)0, page) == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EINVAL, munlock((char *)-1, page) == -1);
+
+	/*
+	 * Try to create a pointer to an unmapped page - first after current
+	 * brk will likely do.
+	 */
+	invalid_ptr = (void*)(((uintptr_t)sbrk(0)+page) & ~(page-1));
+	printf("testing with (hopefully) invalid pointer %p\n", invalid_ptr);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(ENOMEM, mlock(invalid_ptr, page) == -1);
+
+	errno = 0;
+	ATF_REQUIRE_ERRNO(ENOMEM, munlock(invalid_ptr, page) == -1);
 }
 
 ATF_TC(mlock_limits);
