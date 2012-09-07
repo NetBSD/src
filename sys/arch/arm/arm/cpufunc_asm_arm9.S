@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm9.S,v 1.7 2010/01/03 04:25:16 uebayasi Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm9.S,v 1.8 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 ARM Limited
@@ -33,6 +33,8 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+#include "assym.h"
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -110,7 +112,7 @@ ENTRY_NP(arm9_icache_sync_all)
 	mov	pc, lr
 
 .Larm9_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 
 ENTRY(arm9_dcache_wb_range)
 	ldr	ip, .Larm9_line_size

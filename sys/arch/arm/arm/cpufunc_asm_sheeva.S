@@ -31,10 +31,11 @@
 
 #include <machine/cpu.h>
 #include <machine/asm.h>
-#include <arm/arm32/vmparam.h>
+
+#include "assym.h"
 
 .Lsheeva_cache_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 .Lsheeva_asm_page_mask:
 	.word	_C_LABEL(PAGE_MASK)
 

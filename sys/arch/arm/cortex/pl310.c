@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.2 2012/09/02 16:56:41 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.3 2012/09/07 11:49:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.2 2012/09/02 16:56:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.3 2012/09/07 11:49:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.2 2012/09/02 16:56:41 matt Exp $");
 
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/pl310_reg.h>
+#include <arm/cortex/pl310_var.h>
 
 static int arml2cc_match(device_t, cfdata_t, void *);
 static void arml2cc_attach(device_t, device_t, void *);
@@ -54,6 +55,8 @@ struct arml2cc_softc {
 
 CFATTACH_DECL_NEW(arml2cc, sizeof(struct arml2cc_softc),
     arml2cc_match, arml2cc_attach, NULL, NULL);
+
+static void arml2cc_disable(struct arml2cc_softc *);
 
 static bool attached;
 
@@ -132,29 +135,59 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": ARM PL310 L2%s Cache Controller\n", revstr);
+	aprint_normal(": ARM PL310%s L2 Cache Controller%s\n",
+	    revstr, arml2cc_read_4(sc, L2C_CTL) ? "" : " (disabled)");
 
-	uint32_t cfg = arml2cc_read_4(sc, L2C_CACHE_TYPE);
-	//u_int cfg_ctype = __SHIFTOUT(cfg, CACHE_TYPE_CTYPE);
-	bool cfg_harvard_p = __SHIFTOUT(cfg, CACHE_TYPE_HARVARD) != 0;
-	u_int cfg_dsize = __SHIFTOUT(cfg, CACHE_TYPE_DSIZE);
-	u_int d_waysize = 8192 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xWAYSIZE);
-	u_int d_assoc = 8 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xASSOC);
-	u_int d_linesize = 32 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xLINESIZE);
-	u_int d_size = d_waysize * d_assoc;
+	arml2cc_disable(sc);
+	aprint_normal_dev(self, "cache %s\n",
+	    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
+}
 
-	if (cfg_harvard_p) {
-		u_int cfg_isize = __SHIFTOUT(cfg, CACHE_TYPE_ISIZE);
-		u_int i_waysize = 8192 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xWAYSIZE);
-		u_int i_assoc = 8 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xASSOC);
-		u_int i_linesize = 32 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xLINESIZE);
-		u_int i_size = i_waysize * i_assoc;
+void
+arml2cc_disable(struct arml2cc_softc *sc)
+{
+	uint32_t way_mask = __BIT(arm_scache.dcache_ways) - 1;
+	register_t psw = cpsid(I32_bit);
 
-		aprint_normal_dev(self, "%uKB/%uB %u-way L2 Instruction cache\n",
-		    i_size / 1024, i_linesize, i_assoc);
+	arml2cc_write_4(sc, L2C_CLEAN_INV_WAY, way_mask);
+	while (arml2cc_read_4(sc, L2C_CLEAN_INV_WAY) != 0) {
+		/* spin */
 	}
 
-	aprint_normal_dev(self, "%uKB/%uB %u-way write-back L2 %s cache\n",
-	    d_size / 1024, d_linesize, d_assoc,
-	    (cfg_harvard_p ? "Data" : "Unified"));
+	arml2cc_write_4(sc, L2C_CACHE_SYNC, 0);
+	while (arml2cc_read_4(sc, L2C_CACHE_SYNC) & 1) {
+		/* spin */
+	}
+
+	arml2cc_write_4(sc, L2C_CTL, 0);	// turn it off */
+	cpsie(psw);
+}
+
+void
+arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
+{
+	struct arm_cache_info * const info = &arm_scache;
+
+	uint32_t cfg = bus_space_read_4(bst, bsh, o + L2C_CACHE_TYPE);
+
+	info->cache_type = __SHIFTOUT(cfg, CACHE_TYPE_CTYPE);
+	info->cache_unified = __SHIFTOUT(cfg, CACHE_TYPE_HARVARD) == 0;
+	u_int cfg_dsize = __SHIFTOUT(cfg, CACHE_TYPE_DSIZE);
+
+	u_int d_waysize = 8192 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xWAYSIZE);
+	info->dcache_ways = 8 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xASSOC);
+	info->dcache_line_size = 32 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xLINESIZE);
+	info->dcache_size = info->dcache_ways * d_waysize;
+
+	if (info->cache_unified) {
+		info->icache_ways = info->dcache_ways;
+		info->icache_line_size = info->dcache_line_size;
+		info->icache_size = info->dcache_size;
+	} else {
+		u_int cfg_isize = __SHIFTOUT(cfg, CACHE_TYPE_ISIZE);
+		u_int i_waysize = 8192 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xWAYSIZE);
+		info->icache_ways = 8 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xASSOC);
+		info->icache_line_size = 32 << __SHIFTOUT(cfg_isize, CACHE_TYPE_xLINESIZE);
+		info->icache_size = i_waysize * info->icache_ways;
+	}
 }
