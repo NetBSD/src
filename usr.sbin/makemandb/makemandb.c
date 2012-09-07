@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.13 2012/08/29 20:33:01 wiz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.14 2012/09/07 11:29:04 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.13 2012/08/29 20:33:01 wiz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.14 2012/09/07 11:29:04 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -361,7 +361,7 @@ main(int argc, char *argv[])
 	if (manconf) {
 		char *arg;
 		size_t command_len = shquote(manconf, NULL, 0) + 1;
-		arg = malloc(command_len );
+		arg = emalloc(command_len);
 		shquote(manconf, arg, command_len);
 		easprintf(&command, "man -p -C %s", arg);
 		free(arg);
