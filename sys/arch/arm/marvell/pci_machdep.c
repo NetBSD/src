@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2011/04/04 20:37:46 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2012/09/07 03:05:12 matt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2011/04/04 20:37:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2012/09/07 03:05:12 matt Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -97,6 +97,7 @@ struct arm32_pci_chipset arm32_gtpci_chipset = {
 #ifdef __HAVE_PCI_CONF_HOOK
 	gtpci_conf_hook,
 #endif
+	gtpci_conf_interrupt,
 };
 #endif
 
@@ -148,13 +149,13 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 #ifdef __HAVE_PCI_CONF_HOOK
 	mvpex_conf_hook,
 #endif
+	mvpex_conf_interrupt,
 };
 #endif
 
 
 void
-pci_conf_interrupt(pci_chipset_tag_t v, int bus, int dev, int pin, int swiz,
-		   int *iline)
+gtpci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
 {
 
 	/* nothing */
