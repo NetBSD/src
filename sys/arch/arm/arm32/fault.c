@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.84 2012/08/29 16:48:11 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.85 2012/09/07 11:48:59 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.84 2012/08/29 16:48:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85 2012/09/07 11:48:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,8 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Grab the current pcb */
 	struct pcb * const pcb = lwp_getpcb(l);
+
+	curcpu()->ci_abt_evs[fsr & FAULT_TYPE_MASK].ev_count++;
 
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
