@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.15 2012/07/09 17:45:22 matt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.16 2012/09/07 18:05:11 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.15 2012/07/09 17:45:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.16 2012/09/07 18:05:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -364,12 +364,16 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		for (u_int i = 0;
 		     i < line_size;
 		     src_va += 32, dst_va += 32, i += 32) {
-			__asm(
-				"lmw	24,0(%0)" "\n\t"
-				"stmw	24,0(%1)"
-			    :: "b"(src_va), "b"(dst_va)
+			register_t tmp;
+			__asm __volatile(
+				"mr	%[tmp],31"	"\n\t"
+				"lmw	24,0(%[src])"	"\n\t"
+				"stmw	24,0(%[dst])"	"\n\t"
+				"mr	31,%[tmp]"	"\n\t"
+			    : [tmp] "=&r"(tmp)
+			    : [src] "b"(src_va), [dst] "b"(dst_va)
 			    : "r24", "r25", "r26", "r27",
-			      "r28", "r29", "r30", "r31");
+			      "r28", "r29", "r30", "memory");
 		}
 	}
 	pmap_md_unmap_poolpage(src_va, NBPG);
