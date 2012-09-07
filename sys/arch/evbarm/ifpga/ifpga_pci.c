@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.14 2011/04/04 20:37:48 dyoung Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.15 2012/09/07 04:32:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.14 2011/04/04 20:37:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.15 2012/09/07 04:32:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,11 @@ struct arm32_pci_chipset ifpga_pci_chipset = {
 	ifpga_pci_intr_string,
 	ifpga_pci_intr_evcnt,
 	ifpga_pci_intr_establish,
-	ifpga_pci_intr_disestablish
+	ifpga_pci_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	NULL,
+#endif
+	ifpga_pci_conf_interrupt,
 };
 
 /*
