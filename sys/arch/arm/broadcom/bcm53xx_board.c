@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.1 2012/09/01 00:04:44 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.2 2012/09/07 11:52:30 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.2 2012/09/07 11:52:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.1 2012/09/01 00:04:44 matt Exp $
 #define ARMCORE_PRIVATE
 
 #include <arm/cortex/a9tmr_var.h>
+#include <arm/cortex/pl310_var.h>
 #include <arm/mainbus/mainbus.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>
@@ -63,23 +64,20 @@ static struct cpu_softc cpu_softc;
 static struct bcm53xx_clock_info clk_info;
 
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
-	0,
-	0,
-	NULL,			/* _cookie */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	NULL,			/* sync_post */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap
+	._dmamap_create = _bus_dmamap_create,
+	._dmamap_destroy = _bus_dmamap_destroy,
+	._dmamap_load = _bus_dmamap_load,
+	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,
+	._dmamap_load_uio = _bus_dmamap_load_uio,
+	._dmamap_load_raw = _bus_dmamap_load_raw,
+	._dmamap_unload = _bus_dmamap_unload,
+	._dmamap_sync_pre = _bus_dmamap_sync,
+	._dmamap_sync_post = NULL,
+	._dmamem_alloc = _bus_dmamem_alloc,
+	._dmamem_free = _bus_dmamem_free,
+	._dmamem_map = _bus_dmamem_map,
+	._dmamem_unmap = _bus_dmamem_unmap,
+	._dmamem_mmap = _bus_dmamem_mmap
 };
 
 #ifdef BCM53XX_CONSOLE_EARLY
@@ -490,6 +488,8 @@ bcm53xx_bootstrap(vaddr_t iobase)
 	    bcs.bcs_armcore_clk_pllarmb, bcs.bcs_armcore_clk_policy);
 
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
+
+	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh, ARMCORE_L2C_BASE);
 }
 
 #ifdef MULTIPROCESSOR
