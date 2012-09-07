@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.53 2012/09/01 14:46:25 matt Exp $
+#	$NetBSD: genassym.cf,v 1.54 2012/09/07 11:48:59 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -78,6 +78,8 @@ define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
+define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
+
 define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
@@ -103,6 +105,7 @@ ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
 endif
 
+define	PAGE_MASK		PAGE_MASK
 define	PAGE_SIZE		PAGE_SIZE
 define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
