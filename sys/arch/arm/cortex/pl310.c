@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.3 2012/09/07 11:49:00 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.4 2012/09/07 21:18:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.3 2012/09/07 11:49:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4 2012/09/07 21:18:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,13 +134,19 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	const bool enabled_p = arml2cc_read_4(sc, L2C_CTL) != 0;
+
 	aprint_naive("\n");
 	aprint_normal(": ARM PL310%s L2 Cache Controller%s\n",
-	    revstr, arml2cc_read_4(sc, L2C_CTL) ? "" : " (disabled)");
+	    revstr, enabled_p ? "" : " (disabled)");
 
-	arml2cc_disable(sc);
-	aprint_normal_dev(self, "cache %s\n",
-	    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
+	if (enabled_p) {
+		arml2cc_disable(sc);
+		aprint_normal_dev(self, "cache %s\n",
+		    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
+	}
+
+	KASSERT(arm_pcache.dcache_line_size == arm_scache.dcache_line_size);
 }
 
 void
@@ -191,3 +197,37 @@ arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
 		info->icache_size = i_waysize * info->icache_ways;
 	}
 }
+
+#if 0
+static void
+arml2cc_dcache_wb_range(vaddr_t va, vsize_t len)
+{
+	const size_t line_size = arm_pcache.dcache_line_size;
+	const size_t line_mask = line_size - 1;
+	size_t off = va & line_mask;
+	size_t page_len = 0;
+	paddr_t pa = 0;
+	if (off) {
+		len += off;
+		va -= off;
+	}
+	for (const vaddr_t endva = va + roundup2(len, line_size);
+	     va < endva;
+	     va += line_size) {
+		armreg_dccmvac(va);		/* this may fault */
+		__asm __volatile("dsb");
+		if (page_len == 0) {
+			armreg_ats1cpr_write(va);
+			pa = armreg_par_read();
+			const psize = __predict_false(pa & 1) ? L1_SS_SIZE : L2_S_SIZE;
+			pa &= -psize;
+			endpa = pa + psize;
+			page_len = (va & (psize - 1);
+		}
+		size_t set = va 
+		arml2cc_write_4(sc, L2C_CLEAN_PA, pa);
+		
+		va += line_size;
+	}
+}
+#endif
