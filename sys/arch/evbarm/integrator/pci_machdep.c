@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2012/09/07 03:06:05 matt Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.6 2012/09/07 04:32:04 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2012/09/07 03:06:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2012/09/07 04:32:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,9 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2012/09/07 03:06:05 matt Exp $")
 #include <dev/pci/pciconf.h>
 
 #include <evbarm/ifpga/ifpgareg.h>
+#include <evbarm/ifpga/ifpga_pcivar.h>
 
 void
-pci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
+ifpga_pci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 {
 	printf("pci_conf_interrupt(v(%p), bus(%d), dev(%d), ipin(%d), swiz(%d), *iline(%p)\n", v, bus, dev, ipin, swiz, iline);
         if (dev >= 9)
