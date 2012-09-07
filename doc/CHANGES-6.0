@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.198 2012/09/03 19:27:21 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.199 2012/09/07 15:43:22 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8496,7 +8496,7 @@ sys/netipsec/key.c				patch
 sys/netipsec/key.h				patch
 
 	Prevent a panic with FAST_IPSEC.
-	[msaitoh, ticket #537]
+	[msaitoh, ticket #538]
 
 sys/arch/amd64/amd64/machdep.c			1.190 via patch
 
