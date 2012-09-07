@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.10 2010/06/02 06:44:32 kiyohara Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.11 2012/09/07 04:25:37 matt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -52,7 +52,8 @@ pcitag_t gtpci_make_tag(void *, int, int, int);
 void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t gtpci_conf_read(void *, pcitag_t, int);
 void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+int gtpci_conf_hook(void *, int, int, int, pcireg_t);
+void gtpci_conf_interrupt(void *, int, int, int, int, int *);
 int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *gtpci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);

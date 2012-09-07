@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2012/09/07 03:05:12 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2012/09/07 04:25:36 matt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2012/09/07 03:05:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2012/09/07 04:25:36 matt Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -154,6 +154,8 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 #endif
 
 
+#if NGTPCI > 0
+/* ARGSUSED */
 void
 gtpci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
 {
@@ -161,8 +163,6 @@ gtpci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz, int *iline)
 	/* nothing */
 }
 
-
-#if NGTPCI > 0
 #if NGTPCI_MBUS > 0
 #define GTPCI_MBUS_CA		0x0c78	/* Configuration Address */
 #define GTPCI_MBUS_CD		0x0c7c	/* Configuration Data */
@@ -266,6 +266,14 @@ gtpci_gpp_intr_disestablish(void *v, void *ih)
 #endif
 
 #if NMVPEX_MBUS > 0
+/* ARGSUSED */
+void
+mvpex_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *ilinep)
+{
+
+	/* nothing */
+}
+
 static pcireg_t
 mvpex_mbus_conf_read(void *v, pcitag_t tag, int reg)
 {
