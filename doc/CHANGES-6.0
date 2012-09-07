@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.199 2012/09/07 15:43:22 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.200 2012/09/07 22:14:53 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8507,4 +8507,10 @@ external/gpl3/gcc/dist/gcc/builtins.c		1.2
 
 	Fix gcc on STRICT_ALIGNMENT arches. PR#46865.
 	[martin, ticket #540]
+
+doc/README.files				1.5
+share/man/man7/release.7			1.33, 1.34
+
+	Update documentation regarding bootable images.
+	[riz, ticket #548]
 
