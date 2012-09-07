@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.200 2012/09/07 22:14:53 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.201 2012/09/07 22:20:19 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8507,6 +8507,13 @@ external/gpl3/gcc/dist/gcc/builtins.c		1.2
 
 	Fix gcc on STRICT_ALIGNMENT arches. PR#46865.
 	[martin, ticket #540]
+
+sys/uvm/uvm_km.c				1.129-1.135
+sys/uvm/uvm_map.c				1.320-1.322
+
+	Fix a pmap_growkernel issue which caused some systems to reset
+	very early in the boot sequence. PR#46885.
+	[para, ticket #547]
 
 doc/README.files				1.5
 share/man/man7/release.7			1.33, 1.34
