@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.8 2012/01/27 18:52:51 para Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.9 2012/09/07 03:05:12 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.8 2012/01/27 18:52:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.9 2012/09/07 03:05:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ int	ixp425_pci_bus_maxdevs(void *, int);
 void	ixp425_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 void	ixp425_pci_conf_setup(void *, struct ixp425_softc *, pcitag_t, int);
 void	ixp425_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void	ixp425_pci_conf_interrupt(void *, int, int, int, int, int *);
 pcitag_t ixp425_pci_make_tag(void *, int, int, int);
 pcireg_t ixp425_pci_conf_read(void *, pcitag_t, int);
 
@@ -80,6 +81,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 	pc->pc_decompose_tag = ixp425_pci_decompose_tag;
 	pc->pc_conf_read = ixp425_pci_conf_read;
 	pc->pc_conf_write = ixp425_pci_conf_write;
+	pc->pc_conf_interrupt = ixp425_pci_conf_interrupt;
 
 	/*
 	 * Initialize the bus space tags.
@@ -105,7 +107,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+ixp425_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 }
 

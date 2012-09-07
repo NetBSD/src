@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.12 2012/09/06 02:02:04 matt Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.13 2012/09/07 03:05:11 matt Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.12 2012/09/06 02:02:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.13 2012/09/07 03:05:11 matt Exp $");
 
 #include <sys/cdefs.h>
 
@@ -84,7 +84,7 @@ void		gemini_pci_decompose_tag(void *, pcitag_t, int *, int *,
 pcireg_t	gemini_pci_conf_read(void *, pcitag_t, int);
 void		gemini_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 int		gemini_pci_conf_hook(void *, int, int, int, pcireg_t);
-int		gemini_pci_conf_interrupt(void *, int, int, int, int, int *);
+void		gemini_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		gemini_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);

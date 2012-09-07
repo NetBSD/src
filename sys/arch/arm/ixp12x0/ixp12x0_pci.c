@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.12 2012/09/07 03:05:12 matt Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.12 2012/09/07 03:05:12 matt Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -60,6 +60,7 @@ pcitag_t ixp12x0_pci_make_tag(void *, int, int, int);
 void ixp12x0_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t ixp12x0_pci_conf_read(void *, pcitag_t, int);
 void ixp12x0_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void ixp12x0_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 static vaddr_t ixp12x0_pci_conf_setup(void *, struct ixp12x0_softc *, pcitag_t, int);
 
@@ -92,6 +93,7 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_decompose_tag = ixp12x0_pci_decompose_tag;
 	pc->pc_conf_read = ixp12x0_pci_conf_read;
 	pc->pc_conf_write = ixp12x0_pci_conf_write;
+	pc->pc_conf_interrupt = ixp12x0_pci_conf_interrupt;
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio", 0, IXP12X0_PCI_IO_SIZE - 1,
@@ -111,7 +113,7 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+ixp12x0_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 	/* Nothing */
 }

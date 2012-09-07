@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.17 2012/01/27 18:52:51 para Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.18 2012/09/07 03:05:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.17 2012/01/27 18:52:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18 2012/09/07 03:05:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ pcitag_t s3c2800_pci_make_tag(void *, int, int, int);
 void	s3c2800_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t s3c2800_pci_conf_read(void *, pcitag_t, int);
 void	s3c2800_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void	s3c2800_pci_conf_interrupt(void *, int, int, int, int, int *);
 int	s3c2800_pci_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
 const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t);
@@ -206,7 +207,11 @@ struct arm32_pci_chipset sspci_chipset = {
 	s3c2800_pci_intr_string,
 	s3c2800_pci_intr_evcnt,
 	s3c2800_pci_intr_establish,
-	s3c2800_pci_intr_disestablish
+	s3c2800_pci_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	NULL,
+#endif
+	s3c2800_pci_conf_interrupt,
 };
 
 
@@ -383,11 +388,10 @@ sspci_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
-		   int swiz, int *iline)
+s3c2800_pci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 {
 #ifdef PCI_DEBUG
-	printf("pci_conf_interrupt(pc(%lx), bus(%d), dev(%d), func(%d), swiz(%d), *iline(%p)\n", (unsigned long) pc, bus, dev, func, swiz, iline);
+	printf("pci_conf_interrupt(v(%p), bus(%d), dev(%d), ipin(%d), swiz(%d), *iline(%p)\n", v, bus, dev, ipin, swiz, iline);
 #endif
 	if (bus == 0) {
 		*iline = dev;
