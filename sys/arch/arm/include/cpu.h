@@ -251,6 +251,7 @@ struct cpu_info {
 #if defined(_ARM_ARCH_7)
 	uint64_t ci_lastintr;
 #endif
+	struct evcnt ci_abt_evs[FAULT_TYPE_MASK+1];
 #if defined(MP_CPU_INFO_MEMBERS)
 	MP_CPU_INFO_MEMBERS
 #endif

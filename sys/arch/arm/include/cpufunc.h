@@ -698,28 +698,34 @@ u_int	get_r15(void);
  * CPU functions from locore.S
  */
 
-void cpu_reset		(void) __attribute__((__noreturn__));
+void cpu_reset		(void) __dead;
 
 /*
  * Cache info variables.
  */
 
 /* PRIMARY CACHE VARIABLES */
-extern int	arm_picache_size;
-extern int	arm_picache_line_size;
-extern int	arm_picache_ways;
+struct arm_cache_info {
+	u_int icache_size;
+	u_int icache_line_size;
+	u_int icache_ways;
+	u_int icache_sets;
 
-extern int	arm_pdcache_size;	/* and unified */
-extern int	arm_pdcache_line_size;
-extern int	arm_pdcache_ways;
-extern int	arm_cache_prefer_mask;
+	u_int dcache_size;
+	u_int dcache_line_size;
+	u_int dcache_ways;
+	u_int dcache_sets;
 
-extern int	arm_pcache_type;
-extern int	arm_pcache_unified;
+	u_int cache_type;
+	bool cache_unified;
+};
 
-extern int	arm_dcache_align;
-extern int	arm_dcache_align_mask;
+extern u_int arm_cache_prefer_mask;
+extern u_int arm_dcache_align;
+extern u_int arm_dcache_align_mask;
 
+extern struct arm_cache_info arm_pcache;
+extern struct arm_cache_info arm_scache;
 #endif	/* _KERNEL */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
