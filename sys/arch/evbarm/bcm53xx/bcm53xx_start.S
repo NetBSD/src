@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.2 2012/09/02 05:02:36 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.3 2012/09/07 11:53:50 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.2 2012/09/02 05:02:36 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.3 2012/09/07 11:53:50 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -151,7 +151,7 @@ mmu_init_table:
 	    L1_S_PROTO | L1_S_APv7_KRW  | L1_S_B | L1_S_C)
 
 	/* Map the 2MB of primary peripherals */
-	MMU_INIT(KERNEL_IO_VBASE, BCM53XX_IOREG_PBASE,
+	MMU_INIT(KERNEL_IO_IOREG_VBASE, BCM53XX_IOREG_PBASE,
 	    (BCM53XX_IOREG_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 	    L1_S_PROTO | L1_S_APv7_KRW)
 
@@ -161,8 +161,7 @@ mmu_init_table:
 	    L1_S_PROTO | L1_S_APv7_KRW)
 
 	/* Map the 1MB of armcore peripherals */
-	MMU_INIT(KERNEL_IO_VBASE + BCM53XX_IOREG_SIZE,
-	    BCM53XX_ARMCORE_PBASE,
+	MMU_INIT(KERNEL_IO_ARMCORE_VBASE, BCM53XX_ARMCORE_PBASE,
 	    (BCM53XX_ARMCORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 	    L1_S_PROTO | L1_S_APv7_KRW)
 
