@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pcivar.h,v 1.2 2009/07/21 16:04:16 dyoung Exp $ */
+/*	$NetBSD: ifpga_pcivar.h,v 1.3 2012/09/07 04:32:03 matt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -29,6 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _EVBARM_IFPGA_PCIVAR_H_
+#define _EVBARM_IFPGA_PCIVAR_H_
+
 struct ifpga_pci_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_io_ioh;
@@ -53,3 +56,7 @@ struct ifpga_pci_softc {
 #define IFPGA_PCI_APP1_CONF_BASE	0x61000041
 #define IFPGA_PCI_APP1_CONF_T0_MAP	0x000a		/* Type 0 cycle */
 #define IFPGA_PCI_APP1_CONF_T1_MAP	0x000b		/* Type 1 cycle */
+
+void	ifpga_pci_conf_interrupt(void *, int, int, int, int, int *);
+
+#endif /* !_EVBARM_IFPGA_PCIVAR_H_ */
