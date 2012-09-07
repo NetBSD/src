@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.10 2012/09/05 18:57:34 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.11 2012/09/07 02:42:13 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.10 2012/09/05 18:57:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.11 2012/09/07 02:42:13 tls Exp $");
 
 void
 cprng_init(void)
@@ -230,6 +230,7 @@ cprng_strong(cprng_strong_t *const c, void *const p, size_t len, int flags)
 
 	/* If we were initialized with the pool empty, rekey ASAP */
 	if (__predict_false(c->entropy_serial == -1) && rnd_initial_entropy) {
+		c->entropy_serial = 0;
 		goto rekeyany;		/* We have _some_ entropy, use it. */
 	}
 		
