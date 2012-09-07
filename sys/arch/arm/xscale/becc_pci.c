@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.12 2012/09/07 02:11:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.11 2012/01/27 18:52:51 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.12 2012/09/07 02:11:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ void		becc_pci_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
 pcireg_t	becc_pci_conf_read(void *, pcitag_t, int);
 void		becc_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void		becc_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		becc_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
@@ -103,6 +104,7 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_decompose_tag = becc_pci_decompose_tag;
 	pc->pc_conf_read = becc_pci_conf_read;
 	pc->pc_conf_write = becc_pci_conf_write;
+	pc->pc_conf_interrupt = becc_pci_conf_interrupt;
 
 	pc->pc_intr_v = cookie;
 	pc->pc_intr_map = becc_pci_intr_map;
@@ -139,7 +141,7 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+becc_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 }
 
