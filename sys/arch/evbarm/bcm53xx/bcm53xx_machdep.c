@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.1 2012/09/01 00:15:11 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,12 +33,13 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.1 2012/09/01 00:15:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
 #include "opt_kgdb.h"
 #include "com.h"
+#include "pci.h"
 #include "bcmrng_ccb.h"
 
 #include <sys/param.h>
@@ -130,19 +131,42 @@ int comcnmode = CONMODE | CLOCAL;
 
 static const struct pmap_devmap devmap[] = {
 	{
-		KERNEL_IO_VBASE,
+		KERNEL_IO_IOREG_VBASE,
 		BCM53XX_IOREG_PBASE,		/* 0x18000000 */
 		BCM53XX_IOREG_SIZE,		/* 2MB */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
 	{
-		KERNEL_IO_VBASE + BCM53XX_IOREG_SIZE,
+		KERNEL_IO_ARMCORE_VBASE,
 		BCM53XX_ARMCORE_PBASE,		/* 0x19000000 */
-		BCM53XX_ARMCORE_SIZE,		/* 16MB */
+		BCM53XX_ARMCORE_SIZE,		/* 1MB */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+#if NPCI > 0
+	{
+		KERNEL_IO_PCIE0_OWIN_VBASE,
+		BCM53XX_PCIE0_OWIN_PBASE,	/* 0x08000000 */
+		BCM53XX_PCIE0_OWIN_SIZE,	/* 4MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	{
+		KERNEL_IO_PCIE1_OWIN_VBASE,
+		BCM53XX_PCIE1_OWIN_PBASE,	/* 0x40000000 */
+		BCM53XX_PCIE1_OWIN_SIZE,	/* 4MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+	{
+		KERNEL_IO_PCIE2_OWIN_VBASE,
+		BCM53XX_PCIE2_OWIN_PBASE,	/* 0x48000000 */
+		BCM53XX_PCIE2_OWIN_SIZE,	/* 4MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+#endif /* NPCI > 0 */
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -162,7 +186,7 @@ u_int
 initarm(void *arg)
 {
 	pmap_devmap_register(devmap);
-	bcm53xx_bootstrap(KERNEL_IO_VBASE);
+	bcm53xx_bootstrap(KERNEL_IO_IOREG_VBASE);
 
 #ifdef MULTIPROCESSOR
 	uint32_t scu_cfg = bus_space_read_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
