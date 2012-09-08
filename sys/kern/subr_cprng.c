@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.11 2012/09/07 02:42:13 tls Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.12 2012/09/08 02:58:13 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.11 2012/09/07 02:42:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.12 2012/09/08 02:58:13 msaitoh Exp $");
 
 void
 cprng_init(void)
@@ -284,7 +284,8 @@ rekeyany:
 	 * If the generator has just been keyed, perform
 	 * the statistical RNG test.
 	 */
-	if (__predict_false(c->drbg.reseed_counter == 1)) {
+	if (__predict_false(c->drbg.reseed_counter == 1) &&
+	    (flags & FASYNC) == 0) {
 		rngtest_t *rt = kmem_alloc(sizeof(*rt), KM_NOSLEEP);
 
 		if (rt) {
