@@ -1,4 +1,4 @@
-/* $NetBSD: t_mlock.c,v 1.3 2012/09/07 20:27:12 martin Exp $ */
+/* $NetBSD: t_mlock.c,v 1.4 2012/09/08 12:25:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.3 2012/09/07 20:27:12 martin Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.4 2012/09/08 12:25:05 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -83,8 +83,10 @@ ATF_TC_BODY(mlock_err, tc)
 	void *invalid_ptr;
 	int null_errno = ENOMEM;	/* error expected for NULL */
 
+#ifdef VM_MIN_ADDRESS
 	if ((uintptr_t)VM_MIN_ADDRESS > 0)
 		null_errno = EINVAL;	/* NULL is not inside user VM */
+#endif
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(null_errno, mlock(NULL, page) == -1);
