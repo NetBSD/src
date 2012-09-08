@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.80 2012/09/07 04:50:35 dholland Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.80 2012/09/07 04:50:35 dholland Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1273,7 +1273,7 @@ _nis_parse(const char *entry, struct passwd *pw, char *buf, size_t buflen,
  */
 static int
 _nis_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
-	struct nis_state *state, const char * const *map_arr)
+	struct nis_state *state, const char * const *map_arr, size_t nmaps)
 {
 	char	*data;
 	int	nisr, rv, datalen;
@@ -1294,7 +1294,8 @@ _nis_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 
 	data = NULL;
 	rv = NS_NOTFOUND;
-	/*_DIAGASSERT(state->maptype > 0 && state->maptype < sizeof(map_arr)/sizeof(const char*));*/
+	_DIAGASSERT(state->maptype != NISMAP_UNKNOWN &&
+		    (unsigned)state->maptype < nmaps);
 
 							/* search map */
 	nisr = yp_match(state->domain, map_arr[state->maptype], buffer, (int)strlen(buffer),
@@ -1532,7 +1533,7 @@ _nis_getpwuid(void *nsrv, void *nscb, va_list ap)
 	snprintf(_nis_passwdbuf, sizeof(_nis_passwdbuf), "%u", (unsigned int)uid);
 	rv = _nis_pwscan(&rerror, &_nis_passwd,
 	    _nis_passwdbuf, sizeof(_nis_passwdbuf),
-	    &_nis_state, __nis_pw_u_map);
+	    &_nis_state, __nis_pw_u_map, __arraycount(__nis_pw_u_map));
 	if (!_nis_state.stayopen)
 		_nis_end(&_nis_state);
 	if (rv == NS_SUCCESS && uid == _nis_passwd.pw_uid)
@@ -1565,14 +1566,14 @@ _nis_getpwuid_r(void *nsrv, void *nscb, va_list ap)
 	if (_nis_state.stayopen)
 	  { /* use global state only if stayopen is set - otherwise we would blow up getpwent_r() ... */
 	    rv = _nis_pwscan(retval, pw, buffer, buflen,
-		&_nis_state, __nis_pw_u_map);
+		&_nis_state, __nis_pw_u_map, __arraycount(__nis_pw_u_map));
 	  }
 	else
 	  { /* keep old semantic if no stayopen set - no need to call _nis_start() here - _nis_pwscan() will do it for us ... */
 	    /* use same way as in getgrent.c ... */
 	    memset(&state, 0, sizeof(state));
 	    rv = _nis_pwscan(retval, pw, buffer, buflen,
-		&state, __nis_pw_u_map);
+		&state, __nis_pw_u_map, __arraycount(__nis_pw_u_map));
 	    _nis_end(&state);
 	  }
 	if (rv != NS_SUCCESS)
@@ -1602,7 +1603,7 @@ _nis_getpwnam(void *nsrv, void *nscb, va_list ap)
 	snprintf(_nis_passwdbuf, sizeof(_nis_passwdbuf), "%s", name);
 	rv = _nis_pwscan(&rerror, &_nis_passwd,
 	    _nis_passwdbuf, sizeof(_nis_passwdbuf),
-	    &_nis_state, __nis_pw_n_map);
+	    &_nis_state, __nis_pw_n_map, __arraycount(__nis_pw_n_map));
 	if (!_nis_state.stayopen)
 		_nis_end(&_nis_state);
 	if (rv == NS_SUCCESS && strcmp(name, _nis_passwd.pw_name) == 0)
@@ -1635,14 +1636,14 @@ _nis_getpwnam_r(void *nsrv, void *nscb, va_list ap)
 	if (_nis_state.stayopen)
 	  { /* use global state only if stayopen is set - otherwise we would blow up getpwent_r() ... */
 	    rv = _nis_pwscan(retval, pw, buffer, buflen,
-		&_nis_state, __nis_pw_n_map);
+		&_nis_state, __nis_pw_n_map, __arraycount(__nis_pw_n_map));
 	  }
 	else
 	  { /* keep old semantic if no stayopen set - no need to call _nis_start() here - _nis_pwscan() will do it for us ... */
 	    /* use same way as in getgrent.c ... */
 	    memset(&state, 0, sizeof(state));
 	    rv = _nis_pwscan(retval, pw, buffer, buflen,
-		&state, __nis_pw_n_map);
+		&state, __nis_pw_n_map, __arraycount(__nis_pw_n_map));
 	    _nis_end(&state);
 	  }
 	if (rv != NS_SUCCESS)
