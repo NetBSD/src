@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.6 2012/08/12 13:26:18 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.7 2012/09/09 06:06:29 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1510,7 +1510,6 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	ccb->lun += 0x1000000000000LL;
 	ccb->cmd[1] += 0x10;
 #endif
-	ccb->disp = CCBDISP_SCSIPI;
 	send_command(ccb, CCBDISP_SCSIPI, waitok, FALSE);
 }
 
