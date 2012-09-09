@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.78 2012/03/13 21:13:40 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.79 2012/09/09 16:42:23 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.78 2012/03/13 21:13:40 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.79 2012/09/09 16:42:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,6 +100,12 @@ __weak_alias(gethostbyaddr,_gethostbyaddr)
 __weak_alias(gethostbyname,_gethostbyname)
 __weak_alias(gethostent,_gethostent)
 #endif
+
+#define maybe_ok(res, nm, ok) (((res)->options & RES_NOCHECKNAME) != 0U || \
+                               (ok)(nm) != 0)
+#define maybe_hnok(res, hn) maybe_ok((res), (hn), res_hnok)
+#define maybe_dnok(res, dn) maybe_ok((res), (dn), res_dnok)
+
 
 #define	MAXALIASES	35
 #define	MAXADDRS	35
@@ -258,7 +264,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		return NULL;
 	}
 	n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
-	if ((n < 0) || !(*name_ok)(bp)) {
+	if ((n < 0) || !maybe_ok(res, bp, name_ok)) {
 		h_errno = NO_RECOVERY;
 		return NULL;
 	}
@@ -288,7 +294,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
 		n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
-		if ((n < 0) || !(*name_ok)(bp)) {
+		if ((n < 0) || !maybe_ok(res, bp, name_ok)) {
 			had_error++;
 			continue;
 		}
@@ -311,7 +317,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			if (ap >= &host_aliases[MAXALIASES-1])
 				continue;
 			n = dn_expand(answer->buf, eom, cp, tbuf, (int)sizeof tbuf);
-			if ((n < 0) || !(*name_ok)(tbuf)) {
+			if ((n < 0) || !maybe_ok(res, tbuf, name_ok)) {
 				had_error++;
 				continue;
 			}
@@ -341,7 +347,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		}
 		if (qtype == T_PTR && type == T_CNAME) {
 			n = dn_expand(answer->buf, eom, cp, tbuf, (int)sizeof tbuf);
-			if (n < 0 || !res_dnok(tbuf)) {
+			if (n < 0 || !maybe_dnok(res, tbuf)) {
 				had_error++;
 				continue;
 			}
@@ -379,7 +385,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				continue;	/* XXX - had_error++ ? */
 			}
 			n = dn_expand(answer->buf, eom, cp, bp, (int)(ep - bp));
-			if ((n < 0) || !res_hnok(bp)) {
+			if ((n < 0) || !maybe_hnok(res, bp)) {
 				had_error++;
 				break;
 			}
