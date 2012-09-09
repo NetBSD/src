@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.111 2012/08/26 02:32:14 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.111 2012/08/26 02:32:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.112 2012/09/09 04:27:49 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -335,7 +335,7 @@ quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
 static int
 quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 	/* The user can always query about his own quota. */
-	if (id == kauth_cred_getuid(l->l_cred))
+	if (id == kauth_cred_geteuid(l->l_cred))
 		return 0;
 	return kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);
