@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.c,v 1.1.1.1 2009/04/12 15:33:47 christos Exp $	*/
+/*	$NetBSD: logging.c,v 1.1.1.2 2012/09/09 16:08:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: logging.c,v 1.9 2008/11/14 02:36:51 marka Exp";
+static const char rcsid[] = "Id: logging.c,v 1.9 2008/11/14 02:36:51 marka Exp ";
 #endif /* not lint */
 
 #include "port_before.h"
