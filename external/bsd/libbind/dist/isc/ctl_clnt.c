@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl_clnt.c,v 1.1.1.1 2009/04/12 15:33:49 christos Exp $	*/
+/*	$NetBSD: ctl_clnt.c,v 1.1.1.2 2012/09/09 16:08:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_clnt.c,v 1.11 2008/11/14 02:36:51 marka Exp";
+static const char rcsid[] = "Id: ctl_clnt.c,v 1.11 2008/11/14 02:36:51 marka Exp ";
 #endif /* not lint */
 
 /* Extern. */

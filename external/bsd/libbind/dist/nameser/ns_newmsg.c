@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_newmsg.c,v 1.1.1.1 2009/04/12 15:33:51 christos Exp $	*/
+/*	$NetBSD: ns_newmsg.c,v 1.1.1.2 2012/09/09 16:08:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_newmsg.c,v 1.3 2009/02/26 10:48:57 marka Exp";
+static const char rcsid[] = "Id: ns_newmsg.c,v 1.3 2009/02/26 10:48:57 marka Exp ";
 #endif
 
 #include <arpa/nameser.h>
