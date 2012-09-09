@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.28 2012/09/09 16:38:52 christos Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.29 2012/09/09 17:11:23 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -150,18 +150,18 @@ dots in a name, the name will be tried first as an absolute
 name before any search list elements are appended to it.
 .It Sy timeout:n
 sets the amount of time the resolver will wait for a response from a remote
-name server before retrying the query via a different name server.  Measured in
-seconds, the default is
+name server before retrying the query via a different name server.
+Measured in seconds, the default is
 .Dv RES_TIMEOUT
 (see
-.Pa <resolv.h> ) .
+.Aq Pa resolv.h ) .
 .It Sy attempts:n
 sets the number of times the resolver will send a query to its name servers
-before giving up and returning an error to the calling application.  The
-default is
+before giving up and returning an error to the calling application.
+The default is
 .Dv RES_DFLRETRY
 (see
-.Pa <resolv.h> ) .
+.Aq Pa resolv.h ) .
 .It Sy rotate
 sets
 .Dv RES_ROTATE
@@ -176,7 +176,9 @@ sets
 in
 .Ft _res.options ,
 which disables the modern BIND checking of incoming host names and mail names
-for invalid characters such as underscore (_), non-ASCII, or control characters.
+for invalid characters such as underscore
+.Pq Sq _ ,
+non-ASCII, or control characters.
 .It Sy edns0
 attach OPT pseudo-RR for ENDS0 extension specified in RFC 2671,
 to inform DNS server of our receive buffer size.
@@ -207,9 +209,11 @@ in
 .Ft _res.options .
 This option causes
 .Fn res_nsearch
-to not attempt to resolve a unqualified name as if it were a top level  
+to not attempt to resolve a unqualified name as if it were a top level
 domain (TLD).
-This option can cause problems if the site has "localhost" as a TLD rather
+This option can cause problems if the site has
+.Dq localhost
+as a TLD rather
 than having localhost on one or more elements of the search list.
 This option has no effect if neither
 .Dv RES_DEFNAMES
@@ -271,8 +275,8 @@ resides in
 .%A Michael J. Karels
 .%T "Name Server Operations Guide for BIND"
 .%N Release 4.9.4
-.%I CSRG,
-.%I Department of Electrical Engineering and Computer Sciences,
+.%I CSRG ,
+.%I Department of Electrical Engineering and Computer Sciences ,
 .%I University of California, Berkeley
 .%D July 16, 1996
 .%U http://www.dns.net/dnsrd/docs/bog/bog.html
