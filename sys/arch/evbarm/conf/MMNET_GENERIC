@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.7 2012/09/01 18:17:49 jakllsch Exp $
+# $NetBSD: MMNET_GENERIC,v 1.8 2012/09/09 04:27:12 msaitoh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -86,7 +86,8 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-makeoptions	DEBUG="-Os -g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPTS="-Os"
 options     SYMTAB_SPACE=600000
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
