@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.5 2012/09/01 18:17:50 jakllsch Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.6 2012/09/09 04:27:12 msaitoh Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -155,7 +155,8 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 #options 	DEBUG_KGDB
-makeoptions	DEBUG="-g -O2"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	COPTS="-O2"
 options 	SYMTAB_SPACE=850000
 #options 	AUDIO_DEBUG=2
 
