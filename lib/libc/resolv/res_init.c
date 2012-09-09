@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.25 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.25 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -678,6 +678,9 @@ res_setoptions(res_state statp, const char *options, const char *source)
 		} else if (!strncmp(cp, "no-check-names",
 				    sizeof("no-check-names") - 1)) {
 			statp->options |= RES_NOCHECKNAME;
+		} else if (!strncmp(cp, "check-names",
+				    sizeof("check-names") - 1)) {
+			statp->options &= ~RES_NOCHECKNAME;
 		}
 #ifdef RES_USE_EDNS0
 		else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
