@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.1 2009/04/12 15:33:42 christos Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.1.1.2 2012/09/09 16:07:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.12 2007/08/27 03:32:26 marka Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.12 2007/08/27 03:32:26 marka Exp ";
 #endif
 
 #include "port_before.h"

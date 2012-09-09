@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_p.h,v 1.1.1.1 2009/04/12 15:33:42 christos Exp $	*/
+/*	$NetBSD: lcl_p.h,v 1.1.1.2 2012/09/09 16:07:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: lcl_p.h,v 1.3 2005/04/27 04:56:31 sra Exp
+ * Id: lcl_p.h,v 1.3 2005/04/27 04:56:31 sra Exp 
  */
 
 /*! \file

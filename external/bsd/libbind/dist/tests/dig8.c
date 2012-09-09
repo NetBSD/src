@@ -1,4 +1,4 @@
-/*	$NetBSD: dig8.c,v 1.1.1.1 2009/04/12 15:33:58 christos Exp $	*/
+/*	$NetBSD: dig8.c,v 1.1.1.2 2012/09/09 16:08:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: dig8.c,v 1.4 2009/03/03 23:49:07 tbox Exp";
+static const char rcsid[] = "Id: dig8.c,v 1.4 2009/03/03 23:49:07 tbox Exp ";
 #endif
 
 /*
@@ -1049,7 +1049,7 @@ where:	server,\n\
 	fprintf(stderr, "\
 notes:	defname and search don't work; use fully-qualified names.\n\
 	this is DiG version %s (libbind %d)\n\
-	Id: dig8.c,v 1.4 2009/03/03 23:49:07 tbox Exp\n", VSTRING, __RES);
+	Id: dig8.c,v 1.4 2009/03/03 23:49:07 tbox Exp \n", VSTRING, __RES);
 }
 
 static int

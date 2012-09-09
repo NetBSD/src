@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_pr.c,v 1.1.1.1 2009/04/12 15:33:38 christos Exp $	*/
+/*	$NetBSD: lcl_pr.c,v 1.1.1.2 2012/09/09 16:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: lcl_pr.c,v 1.4 2006/03/09 23:57:56 marka Exp";
+static const char rcsid[] = "Id: lcl_pr.c,v 1.4 2006/03/09 23:57:56 marka Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 /* extern */

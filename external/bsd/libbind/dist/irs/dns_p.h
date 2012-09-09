@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_p.h,v 1.1.1.1 2009/04/12 15:33:38 christos Exp $	*/
+/*	$NetBSD: dns_p.h,v 1.1.1.2 2012/09/09 16:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: dns_p.h,v 1.4 2005/04/27 04:56:22 sra Exp
+ * Id: dns_p.h,v 1.4 2005/04/27 04:56:22 sra Exp 
  */
 
 #ifndef _DNS_P_H_INCLUDED

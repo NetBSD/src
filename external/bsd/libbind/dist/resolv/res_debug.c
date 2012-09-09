@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.1 2009/04/12 15:33:57 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.2 2012/09/09 16:08:10 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

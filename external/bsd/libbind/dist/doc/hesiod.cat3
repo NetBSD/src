@@ -18,7 +18,7 @@ SSYYNNOOPPSSIISS
        vvooiidd hheessiioodd__eenndd((vvooiidd **_c_o_n_t_e_x_t))
 
 DDEESSCCRRIIPPTTIIOONN
-       This family of functions allows you to perform lookups of Hesiod infor‐
+       This family of functions allows you to perform lookups of Hesiod infor-
        mation, which is stored as text records in the Domain Name Service.  To
        perform lookups, you must first initialize a _c_o_n_t_e_x_t, an opaque  object
        which  stores information used internally by the library between calls.
@@ -29,27 +29,27 @@ DDEESSCCRRIIPPTTIIOONN
        _h_e_s_i_o_d___r_e_s_o_l_v_e is the primary interface to the library.  If successful,
        it  returns  a  list of one or more strings giving the records matching
        _n_a_m_e and _t_y_p_e.  The last element of the list  is  followed  by  a  NULL
-       pointer.  It is the caller’s responsibility to call _h_e_s_i_o_d___f_r_e_e___l_i_s_t to
+       pointer.  It is the caller's responsibility to call _h_e_s_i_o_d___f_r_e_e___l_i_s_t to
        free the resources used by the returned list.
 
-       _h_e_s_i_o_d___t_o___b_i_n_d converts _n_a_m_e and _t_y_p_e into the DNS name  used  by  _h_e_s_‐
-       _i_o_d___r_e_s_o_l_v_e.   It  is  the caller’s responsibility to free the returned
+       _h_e_s_i_o_d___t_o___b_i_n_d converts _n_a_m_e and _t_y_p_e into the DNS name  used  by  _h_e_s_-
+       _i_o_d___r_e_s_o_l_v_e.   It  is  the caller's responsibility to free the returned
        string using _f_r_e_e.
 
 RREETTUURRNN VVAALLUUEESS
        If successful, _h_e_s_i_o_d___i_n_i_t returns 0; otherwise it returns -1 and  sets
-       _e_r_r_n_o  to  indicate  the  error.   On  failure, _h_e_s_i_o_d___r_e_s_o_l_v_e and _h_e_s_‐
+       _e_r_r_n_o  to  indicate  the  error.   On  failure, _h_e_s_i_o_d___r_e_s_o_l_v_e and _h_e_s_-
        _i_o_d___t_o___b_i_n_d return NULL and set the global variable _e_r_r_n_o  to  indicate
        the error.
 
 EENNVVIIRROONNMMEENNTT
        If  the  environment  variable  HHEESS__DDOOMMAAIINN is set, it will override the
        domain in the Hesiod configuration file.  If the  environment  variable
-       HHEESSIIOODD__CCOONNFFIIGG  is set, it specifies the location of the Hesiod configu‐
+       HHEESSIIOODD__CCOONNFFIIGG  is set, it specifies the location of the Hesiod configu-
        ration file.
 
 SSEEEE AALLSSOO
-       ‘Hesiod - Project Athena Technical Plan -- Name Service’
+       `Hesiod - Project Athena Technical Plan -- Name Service'
 
 EERRRROORRSS
        Hesiod calls may fail because of:
@@ -72,7 +72,7 @@ EERRRROORRSS
        ENOENT _h_e_s_i_o_d___r_e_s_o_l_v_e failed  because  the  name  server  had  no  text
               records matching _n_a_m_e and _t_y_p_e, or _h_e_s_i_o_d___t_o___b_i_n_d failed because
               the _n_a_m_e argument had a domain  extension  which  could  not  be
-              resolved with type ‘‘rhs-extension’’ in the local Hesiod domain.
+              resolved with type ``rhs-extension'' in the local Hesiod domain.
 
 AAUUTTHHOORR
        Steve Dyer, IBM/Project Athena
@@ -81,7 +81,7 @@ AAUUTTHHOORR
        Technology.
 
 BBUUGGSS
-       The  strings  corresponding to the _e_r_r_n_o values set by the Hesiod func‐
+       The  strings  corresponding to the _e_r_r_n_o values set by the Hesiod func-
        tions are not particularly indicative of what  went  wrong,  especially
        for _E_N_O_E_X_E_C and _E_N_O_E_N_T.
 

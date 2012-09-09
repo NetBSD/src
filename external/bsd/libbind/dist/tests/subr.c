@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.1.1.1 2009/04/12 15:33:59 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.1.1.2 2012/09/09 16:08:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@
 
 #ifndef lint
 static const char sccsid[] = "@(#)subr.c	5.24 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: subr.c,v 1.3 2009/03/03 23:49:07 tbox Exp";
+static const char rcsid[] = "Id: subr.c,v 1.3 2009/03/03 23:49:07 tbox Exp ";
 #endif /* not lint */
 
 /*

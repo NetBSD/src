@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.h,v 1.1.1.1 2009/04/12 15:33:33 christos Exp $	*/
+/*	$NetBSD: eventlib.h,v 1.1.1.2 2012/09/09 16:07:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 /* eventlib.h - exported interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib.h,v 1.7 2008/11/14 02:36:51 marka Exp
+ * Id: eventlib.h,v 1.7 2008/11/14 02:36:51 marka Exp 
  */
 
 #ifndef _EVENTLIB_H

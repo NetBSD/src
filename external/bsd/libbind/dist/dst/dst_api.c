@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 2009/04/12 15:33:31 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.2 2012/09/09 16:07:47 christos Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp";
+static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #endif
 
 /*

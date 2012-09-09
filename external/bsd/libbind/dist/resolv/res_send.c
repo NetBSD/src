@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.1 2009/04/12 15:33:58 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.1.1.2 2012/09/09 16:08:10 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp";
+static const char rcsid[] = "Id: res_send.c,v 1.22 2009/01/22 23:49:23 tbox Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 /*! \file

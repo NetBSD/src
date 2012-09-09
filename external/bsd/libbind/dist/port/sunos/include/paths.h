@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.1.1.1 2009/04/12 15:33:51 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.1.1.2 2012/09/09 16:08:05 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: paths.h,v 1.3 2007/06/18 23:47:38 tbox Exp */
+/* Id: paths.h,v 1.3 2007/06/18 23:47:38 tbox Exp  */
 
 #define _PATH_DEVNULL "/dev/null"
 

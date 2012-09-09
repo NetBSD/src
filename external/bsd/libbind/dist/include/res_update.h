@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.h,v 1.1.1.1 2009/04/12 15:33:32 christos Exp $	*/
+/*	$NetBSD: res_update.h,v 1.1.1.2 2012/09/09 16:07:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- *	Id: res_update.h,v 1.3 2005/04/27 04:56:15 sra Exp
+ *	Id: res_update.h,v 1.3 2005/04/27 04:56:15 sra Exp 
  */
 
 #ifndef __RES_UPDATE_H

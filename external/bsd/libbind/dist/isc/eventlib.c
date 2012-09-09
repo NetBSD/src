@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.c,v 1.1.1.1 2009/04/12 15:33:46 christos Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.1.1.2 2012/09/09 16:08:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.10 2006/03/09 23:57:56 marka Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.10 2006/03/09 23:57:56 marka Exp ";
 #endif
 
 #include "port_before.h"

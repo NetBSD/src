@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.1 2009/04/12 15:33:40 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.2 2012/09/09 16:07:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: pathnames.h,v 1.3 2005/04/27 04:56:34 sra Exp
+ * Id: pathnames.h,v 1.3 2005/04/27 04:56:34 sra Exp 
  */
 
 #ifndef _PATH_IRS_CONF

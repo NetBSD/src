@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.1.1.1 2009/04/12 15:33:45 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.2 2012/09/09 16:08:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: heap.c,v 1.4 2006/03/09 23:57:56 marka Exp";
+static const char rcsid[] = "Id: heap.c,v 1.4 2006/03/09 23:57:56 marka Exp ";
 #endif /* not lint */
 
 #include "port_before.h"

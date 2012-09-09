@@ -1,7 +1,7 @@
-/*	$NetBSD: putenv.c,v 1.1.1.1 2009/04/12 15:33:26 christos Exp $	*/
+/*	$NetBSD: putenv.c,v 1.1.1.2 2012/09/09 16:07:43 christos Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: putenv.c,v 1.2 2005/04/27 04:56:11 sra Exp";
+static const char rcsid[] = "Id: putenv.c,v 1.2 2005/04/27 04:56:11 sra Exp ";
 #endif
 
 #include "port_before.h"

@@ -1,7 +1,7 @@
-GETNAMEINFO(3)           BSD Library Functions Manual           GETNAMEINFO(3)
+GETNAMEINFO(3)         FreeBSD Library Functions Manual         GETNAMEINFO(3)
 
 NNAAMMEE
-     ggeettnnaammeeiinnffoo - address-to-name translation in protocol-independent manner
+     ggeettnnaammeeiinnffoo -- address-to-name translation in protocol-independent manner
 
 SSYYNNOOPPSSIISS
      ##iinncclluuddee <<ssyyss//ssoocckkeett..hh>>
@@ -9,7 +9,7 @@ SSYYNNOOPPSSIISS
 
      _i_n_t
      ggeettnnaammeeiinnffoo(_c_o_n_s_t _s_t_r_u_c_t _s_o_c_k_a_d_d_r _*_s_a, _s_o_c_k_l_e_n___t _s_a_l_e_n, _c_h_a_r _*_h_o_s_t,
-             _s_i_z_e___t _h_o_s_t_l_e_n, _c_h_a_r _*_s_e_r_v, _s_i_z_e___t _s_e_r_v_l_e_n, _i_n_t _f_l_a_g_s);
+         _s_i_z_e___t _h_o_s_t_l_e_n, _c_h_a_r _*_s_e_r_v, _s_i_z_e___t _s_e_r_v_l_e_n, _i_n_t _f_l_a_g_s);
 
 DDEESSCCRRIIPPTTIIOONN
      The ggeettnnaammeeiinnffoo() function is defined for protocol-independent address-
@@ -41,12 +41,12 @@ SSEEEE AALLSSOO
      getaddrinfo(3), gethostbyaddr(3), getservbyport(3), hosts(5),
      services(5), hostname(7),
 
-     R. Gilligan, S.  Thomson, J. Bound, and W. Stevens, ‘‘Basic Socket Inter‐
-     face Extensions for IPv6,’’ RFC2133, April 1997.
+     R. Gilligan, S.  Thomson, J. Bound, and W. Stevens, ``Basic Socket Inter-
+     face Extensions for IPv6,'' RFC2133, April 1997.
 
 SSTTAANNDDAARRDDSS
-     The ggeettaaddddrriinnffoo() function is defined IEEE POSIX 1003.1g draft specifica‐
-     tion, and documented in ‘‘Basic Socket Interface Extensions for IPv6’’
+     The ggeettaaddddrriinnffoo() function is defined IEEE POSIX 1003.1g draft specifica-
+     tion, and documented in ``Basic Socket Interface Extensions for IPv6''
      (RFC2133).
 
-BSD                            January 11, 1999                            BSD
+                               January 11, 1999

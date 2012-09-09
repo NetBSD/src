@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: port_after.h.in,v 1.60 2008/02/28 05:34:17 marka Exp */
+/* Id: port_after.h.in,v 1.60 2008/02/28 05:34:17 marka Exp  */
 
 #ifndef port_after_h
 #define port_after_h

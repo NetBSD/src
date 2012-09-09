@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent.c,v 1.1.1.1 2009/04/12 15:33:35 christos Exp $	*/
+/*	$NetBSD: getservent.c,v 1.1.1.2 2012/09/09 16:07:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: getservent.c,v 1.4 2005/04/27 04:56:26 sra Exp";
+static const char rcsid[] = "Id: getservent.c,v 1.4 2005/04/27 04:56:26 sra Exp ";
 #endif
 
 /* Imports */
