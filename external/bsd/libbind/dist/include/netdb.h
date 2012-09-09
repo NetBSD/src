@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.1 2009/04/12 15:33:32 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.2 2012/09/09 16:07:48 christos Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.22 2008/02/28 05:34:17 marka Exp
+ *	Id: netdb.h,v 1.22 2008/02/28 05:34:17 marka Exp 
  */
 
 #ifndef _NETDB_H_

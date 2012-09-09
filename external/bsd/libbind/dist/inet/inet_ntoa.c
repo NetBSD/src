@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntoa.c,v 1.1.1.1 2009/04/12 15:33:34 christos Exp $	*/
+/*	$NetBSD: inet_ntoa.c,v 1.1.1.2 2012/09/09 16:07:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)inet_ntoa.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: inet_ntoa.c,v 1.2 2005/04/27 04:56:21 sra Exp";
+static const char rcsid[] = "Id: inet_ntoa.c,v 1.2 2005/04/27 04:56:21 sra Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

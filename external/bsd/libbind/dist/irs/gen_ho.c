@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_ho.c,v 1.1.1.1 2009/04/12 15:33:37 christos Exp $	*/
+/*	$NetBSD: gen_ho.c,v 1.1.1.2 2012/09/09 16:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gen_ho.c,v 1.5 2006/03/09 23:57:56 marka Exp";
+static const char rcsid[] = "Id: gen_ho.c,v 1.5 2006/03/09 23:57:56 marka Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */

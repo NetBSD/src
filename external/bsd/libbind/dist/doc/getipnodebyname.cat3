@@ -1,8 +1,8 @@
-GETIPNODEBYNAME(3)       BSD Library Functions Manual       GETIPNODEBYNAME(3)
+GETIPNODEBYNAME(3)     FreeBSD Library Functions Manual     GETIPNODEBYNAME(3)
 
 NNAAMMEE
-     ggeettiippnnooddeebbyynnaammee, ggeettiippnnooddeebbyyaaddddrr - get network host entry
-     ffrreeeehhoosstteenntt - free network host entry
+     ggeettiippnnooddeebbyynnaammee, ggeettiippnnooddeebbyyaaddddrr -- get network host entry
+     ffrreeeehhoosstteenntt -- free network host entry
 
 SSYYNNOOPPSSIISS
      ##iinncclluuddee <<nneettddbb..hh>>
@@ -19,9 +19,9 @@ SSYYNNOOPPSSIISS
 DDEESSCCRRIIPPTTIIOONN
      GGeettiippnnooddeebbyynnaammee(), and ggeettiippnnooddeebbyyaaddddrr() each return a pointer to a
      _h_o_s_t_e_n_t structure (see below) describing an internet host referenced by
-     name or by address, as the function names indicate.  This structure con‐
+     name or by address, as the function names indicate.  This structure con-
      tains either the information obtained from the name server, or broken-out
-     fields from a line in _/_e_t_c_/_h_o_s_t_s.  If the local name server is not run‐
+     fields from a line in _/_e_t_c_/_h_o_s_t_s.  If the local name server is not run-
      ning, these routines do a lookup in _/_e_t_c_/_h_o_s_t_s.
 
            struct  hostent {
@@ -47,14 +47,14 @@ DDEESSCCRRIIPPTTIIOONN
      h_addr_list  A zero-terminated array of network addresses for the host.
                   Host addresses are returned in network byte order.
 
-     h_addr       The first address in h_addr_list; this is for backward com‐
+     h_addr       The first address in h_addr_list; this is for backward com-
                   patibility.
 
      This structure should be freed after use by calling ffrreeeehhoosstteenntt().
 
      When using the nameserver, ggeettiipphhoossttbbyyaaddddrr() will search for the named
-     host in each parent domain given in the “search” directive of
-     resolv.conf(5) unless the name contains a dot (“.”).  If the name con‐
+     host in each parent domain given in the ``search'' directive of
+     resolv.conf(5) unless the name contains a dot (``.'').  If the name con-
      tains no dot, and if the environment variable HOSTALIASES contains the
      name of an alias file, the alias file will first be searched for an alias
      matching the input name.  See hostname(7) for the domain search procedure
@@ -93,7 +93,7 @@ FFIILLEESS
      /etc/hosts     See hosts(5).
 
 DDIIAAGGNNOOSSTTIICCSS
-     Error return status from ggeettiippnnooddeebbyynnaammee() and ggeettiippnnooddeebbyyaaddddrr() is indi‐
+     Error return status from ggeettiippnnooddeebbyynnaammee() and ggeettiippnnooddeebbyyaaddddrr() is indi-
      cated by return of a null pointer.  In this case _e_r_r_o_r may then be
      checked to see whether this is a temporary failure or an invalid or
      unknown host.  _e_r_r_n_o can have the following values:
