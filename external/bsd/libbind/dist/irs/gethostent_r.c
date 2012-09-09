@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent_r.c,v 1.1.1.1 2009/04/12 15:33:41 christos Exp $	*/
+/*	$NetBSD: gethostent_r.c,v 1.1.1.2 2012/09/09 16:07:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gethostent_r.c,v 1.9 2005/09/03 12:41:37 marka Exp";
+static const char rcsid[] = "Id: gethostent_r.c,v 1.9 2005/09/03 12:41:37 marka Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>

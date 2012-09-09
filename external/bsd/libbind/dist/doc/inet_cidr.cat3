@@ -1,7 +1,7 @@
-INET_CIDR(3)             BSD Library Functions Manual             INET_CIDR(3)
+INET_CIDR(3)           FreeBSD Library Functions Manual           INET_CIDR(3)
 
 NNAAMMEE
-     iinneett__cciiddrr__nnttoopp, iinneett__cciiddrr__ppttoonn - network translation routines
+     iinneett__cciiddrr__nnttoopp, iinneett__cciiddrr__ppttoonn -- network translation routines
 
 SSYYNNOOPPSSIISS
      ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
@@ -10,13 +10,13 @@ SSYYNNOOPPSSIISS
      ##iinncclluuddee <<aarrppaa//iinneett..hh>>
 
      iinneett__cciiddrr__nnttoopp(_i_n_t _a_f, _c_o_n_s_t _v_o_i_d _*_s_r_c, _i_n_t _b_i_t_s, _c_h_a_r _*_d_s_t,
-             _s_i_z_e___t _s_i_z_e);
+         _s_i_z_e___t _s_i_z_e);
 
      iinneett__cciiddrr__ppttoonn(_i_n_t _a_f, _c_o_n_s_t _c_h_a_r _*_s_r_c, _v_o_i_d _*_d_s_t, _i_n_t _*_b_i_t_s);
 
 DDEESSCCRRIIPPTTIIOONN
      These routines are used for converting addresses to and from network and
-     presentation forms with CIDR (Classless Inter-Domain Routing) representa‐
+     presentation forms with CIDR (Classless Inter-Domain Routing) representa-
      tion, embedded net mask.
 
                      130.155.16.1/20
@@ -45,7 +45,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      _s_r_c is an address in presentation format.
 
-     _b_i_t_s returns the number of bits in the netmask or -1 if a CIDR represen‐
+     _b_i_t_s returns the number of bits in the netmask or -1 if a CIDR represen-
      tation was not supplied.
 
      iinneett__cciiddrr__ppttoonn() returns 0 on succces or -1 on error.  Check errno for
