@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.11 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.12 2012/09/10 21:42:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.11 2012/07/19 21:52:29 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12 2012/09/10 21:42:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -155,13 +155,14 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
  * or TCP/UDP ports of the original packet, which is embedded.
  */
 static bool
-npf_icmp_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
+npf_icmp_uniqid(const int npcinf, const int type,
+    npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
 	struct icmp      *ic;
 	struct icmp6_hdr *ic6;
 	u_int            offby;
 
-	if (npf_iscached(npc, NPC_IP4)) {
+	if (npcinf & NPC_IP4) {
 		/* Per RFC 792. */
 		switch (type) {
 		case ICMP_UNREACH:
@@ -209,7 +210,7 @@ npf_icmp_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 		/* No unique IDs. */
 		return false;
 	}
-	if (npf_iscached(npc, NPC_IP6)) {
+	if (npcinf & NPC_IP6) {
 		switch (type) {
 		/* Per RFC 4443. */
 		case ICMP6_DST_UNREACH:
@@ -307,7 +308,8 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 
 	/* Fetch relevant data into the separate ("key") cache. */
 	struct icmp *ic = &npc->npc_l4.icmp;
-	if (!npf_icmp_uniqid(ic->icmp_type, key, nbuf, n_ptr)) {
+	if (!npf_icmp_uniqid(npc->npc_info & NPC_IP46, ic->icmp_type,
+	    key, nbuf, n_ptr)) {
 		return false;
 	}
 
