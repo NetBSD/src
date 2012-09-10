@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.4 2012/09/10 08:50:37 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.3 2011/08/13 15:38:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.4 2012/09/10 08:50:37 msaitoh Exp $");
 
 #include "gpio.h"
 
@@ -71,6 +71,7 @@ struct mvsocgpp_softc {
 	struct mvsocgpp_pic {
 		struct pic_softc gpio_pic;
 		int group;
+		int shift;
 		uint32_t edge;
 		uint32_t level;
 	} *sc_pic;
@@ -183,6 +184,7 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(", intr %d\n", mva->mva_irq + j);
 
 		(sc->sc_pic + j)->group = j;
+		(sc->sc_pic + j)->shift = (j & 3) * 8;
 	}
 
 #ifdef MVSOCGPP_DUMPREG
@@ -244,6 +246,7 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 	uint32_t mask;
 	int pin = mvsocgpp_pic->group << 3;
 
+	irq_mask = irq_mask << mvsocgpp_pic->shift;
 	MVSOCGPP_WRITE(sc, MVSOCGPP_GPIOIC(pin),
 	    MVSOCGPP_READ(sc, MVSOCGPP_GPIOIC(pin)) & ~irq_mask);
 	if (irq_mask & mvsocgpp_pic->edge) {
@@ -266,6 +269,7 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 	struct mvsocgpp_pic *mvsocgpp_pic = (struct mvsocgpp_pic *)pic;
 	int pin = mvsocgpp_pic->group << 3;
 
+	irq_mask = irq_mask << mvsocgpp_pic->shift;
 	MVSOCGPP_WRITE(sc, MVSOCGPP_GPIOIM(pin),
 	    MVSOCGPP_READ(sc, MVSOCGPP_GPIOIM(pin)) & ~irq_mask);
 	MVSOCGPP_WRITE(sc, MVSOCGPP_GPIOILM(pin),
@@ -281,9 +285,10 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	int pin = mvsocgpp_pic->group << 3;
 
 	pending = MVSOCGPP_READ(sc, MVSOCGPP_GPIOIC(pin));
-	pending &= (0xff << mvsocgpp_pic->group);
+	pending &= (0xff << mvsocgpp_pic->shift);
 	pending &= (MVSOCGPP_READ(sc, MVSOCGPP_GPIOIM(pin)) |
 		    MVSOCGPP_READ(sc, MVSOCGPP_GPIOILM(pin)));
+	pending = pending >> mvsocgpp_pic->shift;
 
 	if (pending == 0)
 		return 0;
