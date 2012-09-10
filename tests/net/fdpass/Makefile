@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/08/16 10:14:03 martin Exp $
+# $NetBSD: Makefile,v 1.3 2012/09/10 11:29:06 adam Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ PROGS=          fdpass64 fdpass32
 MAN.fdpass64=    # empty
 BINDIR.fdpass64= ${TESTSDIR}
 
-.if ${MACHINE} == "sparc64" || ${MACHINE} == "amd64"
+.if (${MACHINE} == "sparc64" || ${MACHINE} == "amd64") && ${MKCOMPAT} != "no"
 COPTS.fdpass32.c	+= -m32
 LDFLAGS.fdpass32	+= -m32
 .endif
