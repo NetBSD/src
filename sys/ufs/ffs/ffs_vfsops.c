@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.277 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.278 2012/09/10 07:57:50 manu Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.277 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278 2012/09/10 07:57:50 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1491,12 +1491,6 @@ ffs_unmount(struct mount *mp, int mntflags)
 		return error;
 	}
 #endif /* WAPBL */
-#ifdef UFS_EXTATTR
-	if (ump->um_fstype == UFS1) {
-		ufs_extattr_stop(mp, l);
-		ufs_extattr_uepm_destroy(&ump->um_extattr);
-	}
-#endif /* UFS_EXTATTR */
 
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
@@ -1543,6 +1537,14 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 #ifdef QUOTA2
 	if ((error = quota2_umount(mp, flags)) != 0)
 		return (error);
+#endif
+#ifdef UFS_EXTATTR
+	if (ump->um_fstype == UFS1) {
+		if (ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)
+			ufs_extattr_stop(mp, l);
+		if (ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED)
+			ufs_extattr_uepm_destroy(&ump->um_extattr);
+	}
 #endif
 	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)
 		return (error);
