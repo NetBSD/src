@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.67 2011/08/16 16:25:15 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.68 2012/09/10 20:53:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.67 2011/08/16 16:25:15 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.68 2012/09/10 20:53:18 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -321,6 +321,7 @@ read_char(EditLine *el, Char *cp)
  again:
 	el->el_signal->sig_no = 0;
 	while ((num_read = read(el->el_infd, cbuf + cbp, (size_t)1)) == -1) {
+		int e = errno;
 		switch (el->el_signal->sig_no) {
 		case SIGCONT:
 			FUN(el,set)(el, EL_REFRESH);
@@ -331,9 +332,10 @@ read_char(EditLine *el, Char *cp)
 		default:
 			break;
 		}
-		if (!tried && read__fixio(el->el_infd, errno) == 0)
+		if (!tried && read__fixio(el->el_infd, e) == 0)
 			tried = 1;
 		else {
+			errno = e;
 			*cp = '\0';
 			return -1;
 		}
@@ -347,6 +349,7 @@ read_char(EditLine *el, Char *cp)
 		if ((bytes = ct_mbtowc(cp, cbuf, cbp)) == -1) {
 			ct_mbtowc_reset;
 			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
+				errno = EILSEQ;
 				*cp = '\0';
 				return -1;
 			}
@@ -427,6 +430,8 @@ FUN(el,getc)(EditLine *el, Char *cp)
 	(void) fprintf(el->el_errfile, "Reading a character\n");
 #endif /* DEBUG_READ */
 	num_read = (*el->el_read.read_char)(el, cp);
+	if (num_read < 0)
+		el->el_errno = errno;
 #ifdef WIDECHAR
 	if (el->el_flags & NARROW_READ)
 		*cp = *(char *)(void *)cp;
@@ -572,6 +577,7 @@ FUN(el,gets)(EditLine *el, int *nread)
 #endif /* DEBUG_EDIT */
 		/* if EOF or error */
 		if ((num = read_getcmd(el, &cmdnum, &ch)) != OKCMD) {
+			num = -1;
 #ifdef DEBUG_READ
 			(void) fprintf(el->el_errfile,
 			    "Returning from el_gets %d\n", num);
