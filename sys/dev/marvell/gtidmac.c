@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.8 2012/07/23 06:09:47 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008, 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.8 2012/07/23 06:09:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -155,9 +155,9 @@ static void gtidmac_process(struct dmover_backend *);
 static void gtidmac_dmover_run(struct dmover_backend *);
 static void gtidmac_dmover_done(void *, int, bus_dmamap_t *, bus_dmamap_t *,
 				int);
-__inline int gtidmac_dmmap_load(struct gtidmac_softc *, bus_dmamap_t,
+static __inline int gtidmac_dmmap_load(struct gtidmac_softc *, bus_dmamap_t,
 				dmover_buffer_type, dmover_buffer *, int);
-__inline void gtidmac_dmmap_unload(struct gtidmac_softc *, bus_dmamap_t, int);
+static __inline void gtidmac_dmmap_unload(struct gtidmac_softc *, bus_dmamap_t, int);
 
 static uint32_t gtidmac_finish(void *, int, int);
 static uint32_t mvxore_finish(void *, int, int);
@@ -857,7 +857,7 @@ gtidmac_dmover_done(void *object, int chan, bus_dmamap_t *dmamap_in,
 		gtidmac_dmover_run(dmb);
 }
 
-__inline int
+static __inline int
 gtidmac_dmmap_load(struct gtidmac_softc *sc, bus_dmamap_t dmamap,
 		   dmover_buffer_type dmbuf_type, dmover_buffer *dmbuf,
 		   int read)
@@ -894,7 +894,7 @@ gtidmac_dmmap_load(struct gtidmac_softc *sc, bus_dmamap_t dmamap,
 	return error;
 }
 
-__inline void
+static __inline void
 gtidmac_dmmap_unload(struct gtidmac_softc *sc, bus_dmamap_t dmamap, int read)
 {
 
