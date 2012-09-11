@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.68 2012/09/10 20:53:18 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.69 2012/09/11 12:31:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.68 2012/09/10 20:53:18 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.69 2012/09/11 12:31:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -233,7 +233,7 @@ FUN(el,push)(EditLine *el, const Char *str)
 
 
 /* read_getcmd():
- *	Return next command from the input stream.
+ *	Get next command from the input stream, return OKCMD on success.
  *	Character values > 255 are not looked up in the map, but inserted.
  */
 private int
@@ -246,7 +246,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 	do {
 		if ((num = FUN(el,getc)(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
-			return num;
+			return 0;	/* not OKCMD */
 		}
 
 #ifdef	KANJI
