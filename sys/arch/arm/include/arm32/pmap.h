@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.110 2012/09/07 11:48:59 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.111 2012/09/11 15:28:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -595,7 +595,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_XSCALE_X))
 #define	L1_S_CACHE_MASK_armv6	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX))
-#define	L1_S_CACHE_MASK_armv7	(L1_S_B|L1_S_C)
+#define	L1_S_CACHE_MASK_armv7	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_ARMV6_TEX)|L1_S_V6_S)
 
 #define	L2_L_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_L_PROT_W_generic	(L2_AP(AP_W))
@@ -620,7 +620,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_L_TEX(TEX_XSCALE_X))
 #define	L2_L_CACHE_MASK_armv6	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX))
-#define	L2_L_CACHE_MASK_armv7	(L2_B|L2_C)
+#define	L2_L_CACHE_MASK_armv7	(L2_B|L2_C|L2_V6_L_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
@@ -651,7 +651,7 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #else
 #define	L2_S_CACHE_MASK_armv6c	L2_S_CACHE_MASK_generic
 #endif
-#define	L2_S_CACHE_MASK_armv7	(L2_B|L2_C)
+#define	L2_S_CACHE_MASK_armv7	(L2_B|L2_C|L2_V6_XS_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
