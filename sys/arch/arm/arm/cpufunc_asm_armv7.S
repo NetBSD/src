@@ -73,7 +73,7 @@ END(armv7_tlb_flushID_SE)
 ENTRY(armv7_setttb)
 	mrc	p15, 0, r1, c0, c0, 5	@ get MPIDR
 	cmp	r1, #0
-	orrlt	r0, #0x5b		@ MP, cachable (Normal in/out WB)
+	orrlt	r0, #0x43		@ MP, cachable (Normal in WB, out none)
 	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
 #ifdef MULTIPROCESSOR
@@ -90,14 +90,13 @@ END(armv7_setttb)
 
 /* LINTSTUB: void armv7_icache_sync_range(vaddr_t, vsize_t); */
 ENTRY_NP(armv7_icache_sync_range)
-1:
-	mcr	p15, 0, r0, c7, c5, 1	@ invalidate the I-Cache line
-	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache line
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
-	and	r2, r2, #7		@ get line size (log2(size)-4)
-	add	r2, r2, #4		@ adjust
-	mov	ip, #1			@ make a bit mask
+	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+1:
+	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache line
+	mcr	p15, 0, r0, c7, c5, 1	@ invalidate the I-Cache line
 	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
@@ -123,13 +122,12 @@ ENTRY_NP(armv7_icache_sync_all)
 END(armv7_icache_sync_all)
 
 ENTRY(armv7_dcache_wb_range)
-1:
-	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache
 	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
-	and	r2, r2, #7		@ get line size (log2(size)-4)
-	add	r2, r2, #4		@ adjust
-	mov	ip, #1			@ make a bit mask
+	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+1:
+	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache to PoC
 	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
@@ -139,13 +137,12 @@ END(armv7_dcache_wb_range)
 
 /* LINTSTUB: void armv7_dcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_dcache_wbinv_range)
+	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
+	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	mov	ip, #16			@ make a bit mask
+	lsl	r2, ip, r2		@ and shift into position
 1:
 	mcr	p15, 0, r0, c7, c14, 1	@ wb and inv the D-Cache line
-	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
-	and	r2, r2, #7		@ get line size (log2(size)-4)
-	add	r2, r2, #4		@ adjust
-	mov	ip, #1			@ make a bit mask
-	lsl	r2, ip, r2		@ and shift into position
 	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
@@ -155,13 +152,12 @@ END(armv7_dcache_wbinv_range)
 
 /* * LINTSTUB: void armv7_dcache_inv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_dcache_inv_range)
+	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
+	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	mov	ip, #16			@ make a bit mask
+	lsl	r2, ip, r2		@ and shift into position
 1:
 	mcr	p15, 0, r0, c7, c6, 1	@ invalidate the D-Cache line  
-	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
-	and	r2, r2, #7		@ get line size (log2(size)-4)
-	add	r2, r2, #4		@ adjust
-	mov	ip, #1			@ make a bit mask
-	lsl	r2, ip, r2		@ and shift into position
 	add	r0, r0, r2 
 	subs	r1, r1, r2
 	bhi	1b
@@ -173,14 +169,13 @@ END(armv7_dcache_inv_range)
 
 /* * LINTSTUB: void armv7_idcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv7_idcache_wbinv_range)
+	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
+	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
+	mov	ip, #16			@ make a bit mask
+	lsl	r2, ip, r2		@ and shift into position
 1:
 	mcr	p15, 0, r0, c7, c5, 1	@ invalidate the I-Cache line
 	mcr	p15, 0, r0, c7, c14, 1 	@ wb and inv the D-Cache line
-	mrc	p15, 1, r2, c0, c0, 0	@ read CCSIDR
-	and	r2, r2, #7		@ get line size (log2(size)-4)
-	add	r2, r2, #4		@ adjust
-	mov	ip, #1			@ make a bit mask
-	lsl	r2, ip, r2		@ and shift into position
 	add	r0, r0, r2
 	subs	r1, r1, r2
 	bhi	1b
