@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.76 2012/09/11 11:57:18 christos Exp $
+.\"	$NetBSD: editline.3,v 1.77 2012/09/11 20:29:58 christos Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,7 +221,10 @@ and must be copied if the data is to be retained.
 Read a character from the tty.
 .Fa ch
 is modified to contain the character read.
-Returns the number of characters read if successful, \-1 otherwise.
+Returns the number of characters read if successful, \-1 otherwise,
+in which case
+.Dv errno
+can be inspected for the cause.
 .It Fn el_push
 Pushes
 .Fa str
