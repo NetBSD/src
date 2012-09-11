@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.58 2012/09/01 14:50:11 matt Exp $
+#	$NetBSD: IQ31244,v 1.59 2012/09/11 19:43:09 msaitoh Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -40,6 +40,7 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
@@ -208,6 +209,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 #pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.5 2012/09/05 00:08:21 matt Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.6 2012/09/11 19:43:09 msaitoh Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -37,6 +37,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	TMPFS		# memory file system
@@ -282,6 +283,7 @@ options		OMAP_CK_REF_SPEED=12000000
 #pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

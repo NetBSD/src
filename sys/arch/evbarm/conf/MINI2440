@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.6 2012/08/23 00:20:16 kiyohara Exp $
+#	$NetBSD: MINI2440,v 1.7 2012/09/11 19:43:09 msaitoh Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -65,6 +65,7 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
@@ -360,6 +361,7 @@ wd* at umass?
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

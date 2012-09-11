@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.16 2012/09/01 14:51:21 matt Exp $
+#	$NetBSD: OVERO,v 1.17 2012/09/11 19:43:10 msaitoh Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -46,8 +46,8 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
