@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.70 2012/03/11 21:14:56 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.71 2012/09/11 11:58:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.70 2012/03/11 21:14:56 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.71 2012/09/11 11:58:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -439,7 +439,7 @@ FUN(el,get)(EditLine *el, int op, ...)
 		break;
 
 	case EL_UNBUFFERED:
-		*va_arg(ap, int *) = (!(el->el_flags & UNBUFFERED));
+		*va_arg(ap, int *) = (el->el_flags & UNBUFFERED) != 0;
 		rv = 0;
 		break;
 
