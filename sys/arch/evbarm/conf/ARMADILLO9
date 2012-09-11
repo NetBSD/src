@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.36 2012/09/01 14:50:11 matt Exp $
+#	$NetBSD: ARMADILLO9,v 1.37 2012/09/11 19:43:09 msaitoh Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -33,6 +33,7 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
@@ -263,6 +264,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
