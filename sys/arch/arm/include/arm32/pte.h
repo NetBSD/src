@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 2012/08/20 13:03:41 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.13 2012/09/11 15:28:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_INV	0x00		/* Invalid (fault) */
 #define	L2_TYPE_L	0x01		/* Large Page */
 #define	L2_TYPE_S	0x02		/* Small Page */
-#define	L2_TYPE_T	0x03		/* Tiny Page */
+#define	L2_TYPE_T	0x03		/* Tiny Page (not armv7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
 	/*
