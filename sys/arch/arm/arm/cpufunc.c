@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.115 2012/09/07 11:48:59 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.115 2012/09/07 11:48:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -134,6 +134,10 @@ struct cpu_functions arm2_cpufuncs = {
 	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= cpufunc_nullop,
 	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
 
@@ -186,6 +190,10 @@ struct cpu_functions arm250_cpufuncs = {
 	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= cpufunc_nullop,
 	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
 
@@ -237,6 +245,10 @@ struct cpu_functions arm3_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm3_cache_flush,
 	.cf_dcache_inv_range	= (void *)arm3_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm3_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm3_cache_flush,
@@ -293,6 +305,10 @@ struct cpu_functions arm6_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_inv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm67_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm67_cache_flush,
@@ -356,6 +372,10 @@ struct cpu_functions arm7_cpufuncs = {
 	.cf_dcache_inv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= arm67_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm67_cache_flush,
 
@@ -413,6 +433,10 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm7tdmi_cache_flushID,
 	.cf_dcache_inv_range	= (void *)arm7tdmi_cache_flushID,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm7tdmi_cache_flushID,
 	.cf_idcache_wbinv_range	= (void *)arm7tdmi_cache_flushID,
@@ -472,6 +496,10 @@ struct cpu_functions arm8_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= (void *)arm8_cache_purgeID,
 	.cf_dcache_wb_range	= (void *)arm8_cache_cleanID,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= arm8_cache_purgeID,
 	.cf_idcache_wbinv_range = (void *)arm8_cache_purgeID,
 
@@ -528,6 +556,10 @@ struct cpu_functions arm9_cpufuncs = {
 	.cf_dcache_wbinv_range	= arm9_dcache_wbinv_range,
 /*XXX*/	.cf_dcache_inv_range	= arm9_dcache_wbinv_range,
 	.cf_dcache_wb_range	= arm9_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm9_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = arm9_idcache_wbinv_range,
@@ -587,6 +619,10 @@ struct cpu_functions armv5_ec_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= armv5_ec_dcache_wbinv_range,
 	.cf_dcache_wb_range	= armv5_ec_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv5_ec_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_ec_idcache_wbinv_range,
 
@@ -644,6 +680,10 @@ struct cpu_functions arm10_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv5_dcache_wbinv_range,
 /*XXX*/	.cf_dcache_inv_range	= armv5_dcache_wbinv_range,
 	.cf_dcache_wb_range	= armv5_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= armv5_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_idcache_wbinv_range,
@@ -703,6 +743,10 @@ struct cpu_functions arm11_cpufuncs = {
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv6_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv6_idcache_wbinv_range,
 
@@ -761,6 +805,10 @@ struct cpu_functions arm1136_cpufuncs = {
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 411920 */
 	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371025 */
 
@@ -818,6 +866,10 @@ struct cpu_functions arm1176_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 415045 */
 	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371367 */
@@ -878,6 +930,10 @@ struct cpu_functions arm11mpcore_cpufuncs = {
 	.cf_dcache_inv_range	= armv5_dcache_inv_range,
 	.cf_dcache_wb_range	= armv5_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv6_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_idcache_wbinv_range,
 
@@ -936,6 +992,10 @@ struct cpu_functions sa110_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
 
@@ -992,6 +1052,10 @@ struct cpu_functions sa11x0_cpufuncs = {
 	.cf_dcache_wbinv_range	= sa1_cache_purgeD_rng,
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
@@ -1050,6 +1114,10 @@ struct cpu_functions fa526_cpufuncs = {
 	.cf_dcache_inv_range	= fa526_dcache_inv_range,
 	.cf_dcache_wb_range	= fa526_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= fa526_idcache_wbinv_all,
 	.cf_idcache_wbinv_range	= fa526_idcache_wbinv_range,
 
@@ -1106,6 +1174,10 @@ struct cpu_functions ixp12x0_cpufuncs = {
 	.cf_dcache_wbinv_range	= sa1_cache_purgeD_rng,
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
@@ -1165,6 +1237,10 @@ struct cpu_functions xscale_cpufuncs = {
 	.cf_dcache_inv_range	= xscale_cache_flushD_rng,
 	.cf_dcache_wb_range	= xscale_cache_cleanD_rng,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= xscale_cache_purgeID,
 	.cf_idcache_wbinv_range = xscale_cache_purgeID_rng,
 
@@ -1221,6 +1297,10 @@ struct cpu_functions cortex_cpufuncs = {
 	.cf_dcache_inv_range	= armv7_dcache_inv_range,
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
 	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_icache_sync_range	= armv7_icache_sync_range,
 	.cf_idcache_wbinv_range = armv7_idcache_wbinv_range,
@@ -1282,6 +1362,10 @@ struct cpu_functions sheeva_cpufuncs = {
 	.cf_dcache_wbinv_range	= sheeva_dcache_wbinv_range,
 	.cf_dcache_inv_range	= sheeva_dcache_inv_range,
 	.cf_dcache_wb_range	= sheeva_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= armv5_ec_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = sheeva_idcache_wbinv_range,

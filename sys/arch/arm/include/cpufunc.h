@@ -131,6 +131,10 @@ struct cpu_functions {
 	void	(*cf_dcache_inv_range)	(vaddr_t, vsize_t);
 	void	(*cf_dcache_wb_range)	(vaddr_t, vsize_t);
 
+	void	(*cf_sdcache_wbinv_range)(vaddr_t, paddr_t, psize_t);
+	void	(*cf_sdcache_inv_range)	(vaddr_t, paddr_t, psize_t);
+	void	(*cf_sdcache_wb_range)	(vaddr_t, paddr_t, psize_t);
+
 	void	(*cf_idcache_wbinv_all)	(void);
 	void	(*cf_idcache_wbinv_range)(vaddr_t, vsize_t);
 
@@ -178,6 +182,10 @@ extern u_int cputype;
 #define	cpu_dcache_wbinv_range(a, s) cpufuncs.cf_dcache_wbinv_range((a), (s))
 #define	cpu_dcache_inv_range(a, s) cpufuncs.cf_dcache_inv_range((a), (s))
 #define	cpu_dcache_wb_range(a, s) cpufuncs.cf_dcache_wb_range((a), (s))
+
+#define	cpu_sdcache_wbinv_range(a, b, s) cpufuncs.cf_sdcache_wbinv_range((a), (b), (s))
+#define	cpu_sdcache_inv_range(a, b, s) cpufuncs.cf_sdcache_inv_range((a), (b), (s))
+#define	cpu_sdcache_wb_range(a, b, s) cpufuncs.cf_sdcache_wb_range((a), (b), (s))
 
 #define	cpu_idcache_wbinv_all()	cpufuncs.cf_idcache_wbinv_all()
 #define	cpu_idcache_wbinv_range(a, s) cpufuncs.cf_idcache_wbinv_range((a), (s))
