@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.6 2012/09/09 04:27:12 msaitoh Exp $
+#	$NetBSD: HPT5325,v 1.7 2012/09/11 19:43:09 msaitoh Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -45,6 +45,7 @@ file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
@@ -453,6 +454,7 @@ pseudo-device	swcrypto		# software crypto implementation
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

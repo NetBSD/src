@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.48 2012/08/17 20:11:38 abs Exp $
+#	$NetBSD: SMDK2410,v 1.49 2012/09/11 19:43:10 msaitoh Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -51,6 +51,7 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
@@ -336,6 +337,7 @@ ugen*	at uhub? port ?
 #pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter
