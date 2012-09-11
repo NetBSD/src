@@ -1,11 +1,11 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.3 2012/09/11 20:51:25 matt Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Matt Thomas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,31 +29,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_OP_ASM_H_
-#define	_ATOMIC_OP_ASM_H_
+#include "atomic_op_asm.h"
 
-#include <machine/asm.h>
+/*
+ * While SWP{B} is sufficient on its own for pre-ARMv7 CPUs, on MP ARMv7 cores
+ * SWP{B} is disabled since it's no longer atomic among multiple CPUs.  They
+ * will actually raise an UNDEFINED exception.
+ *
+ * So if we use the LDREX/STREX template, but use a SWP instruction followed
+ * by a MOV instruction (using a temporary register), that gives a handler
+ * for the SWP UNDEFINED exception enough information to "patch" this instance
+ * SWP with correct forms of LDREX/STREX.  (note that this would happen even
+ * "read-only" pages.  If the page gets tossed, we will get another exception
+ * and fix yet again).
+ */
 
-#if defined(_KERNEL)
-
-#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
-
-#else /* _KERNEL */
-
-#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
-
-#endif /* _KERNEL */
-
-#ifdef __ARMEB__
-#define	HI	r0
-#define	LO	r1
-#define	NHI	r2
-#define	NLO	r3
-#else
-#define	LO	r0
-#define	HI	r1
-#define	NLO	r2
-#define	NHI	r3
+ENTRY_NP(_atomic_swap_64)
+	str	r4, [sp, #-4]!		/* save temporary */
+	mov	r4, r0			/* return value will be in r0 */
+#ifndef __ARM_EABI__
+	mov	r3, r2			/* r2 will be overwriten by r1 */
+	mov	r2, r1			/* and r1 will be overwritten by ldrexd */
 #endif
-
-#endif /* _ATOMIC_OP_ASM_H_ */
+1:
+	ldrexd	r0, [r4]		/* load old value */
+	strexd	ip, r2, [r4]		/* store new value */
+	cmpne	ip, #0			/*    succeed? */
+	bne	1b			/*    no, try again */
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
+	ldr	r4, [sp], #4		/* restore temporary */
+	RET
+	END(_atomic_swap_64)
+ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)

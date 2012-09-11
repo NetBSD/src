@@ -1,11 +1,10 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.3 2012/09/11 20:51:25 matt Exp $	*/
-
+/*	$NetBSD: atomic_dec_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas <matt@3am-software.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,14 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,31 +28,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_OP_ASM_H_
-#define	_ATOMIC_OP_ASM_H_
+#include "atomic_op_asm.h"
 
-#include <machine/asm.h>
+#ifdef _ARM_ARCH_6
 
-#if defined(_KERNEL)
-
-#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
-
-#else /* _KERNEL */
-
-#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
-
-#endif /* _KERNEL */
-
-#ifdef __ARMEB__
-#define	HI	r0
-#define	LO	r1
-#define	NHI	r2
-#define	NLO	r3
+ENTRY_NP(_atomic_dec_64)
+	mvn	r2, #0
+	mov	r3, r0			/* need r0 for return value */
+1:	ldrexd	r0, [r3]		/* load old value (return value) */
+	adds	LO, LO, r2		/* calculate new value */
+	adc	HI, HI, r2		/* calculate new value */
+	strexd	ip, r0, [r3]		/* try to store */
+	cmp	ip, #0			/*   succeed? */
+	bne	1b			/*     no, try again? */
+#ifdef _ARM_ARCH_7
+	dmb
 #else
-#define	LO	r0
-#define	HI	r1
-#define	NLO	r2
-#define	NHI	r3
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
+	adds	LO, LO, #1
+	adc	HI, HI, #0
+	RET				/* return old value */
+	END(_atomic_dec_64)
+ATOMIC_OP_ALIAS(atomic_dec_64,_atomic_dec_64)
 
-#endif /* _ATOMIC_OP_ASM_H_ */
+ENTRY_NP(_atomic_dec_64_nv)
+	mvn	r2, #0
+	mov	r3, r0			/* need r0 for return value */
+1:	ldrexd	r0, [r3]		/* load old value */
+	adds	LO, LO, r2		/* calculate new value */
+	adc	HI, HI, r2		/* calculate new value */
+	strexd	ip, r0, [r3]		/* try to store */
+	cmp	ip, #0			/*   succeed? */
+	bne	1b			/*     no, try again? */
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
+	RET				/* return new value */
+	END(_atomic_dec_64_nv)
+ATOMIC_OP_ALIAS(atomic_dec_64_nv,_atomic_dec_64_nv)
+
+#endif /* _ARM_ARCH_6 */
