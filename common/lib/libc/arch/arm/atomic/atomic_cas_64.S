@@ -1,11 +1,10 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.3 2012/09/11 20:51:25 matt Exp $	*/
-
+/*	$NetBSD: atomic_cas_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Matt Thomas <matt@3am-software.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,14 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,31 +28,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ATOMIC_OP_ASM_H_
-#define	_ATOMIC_OP_ASM_H_
+#include "atomic_op_asm.h"
 
-#include <machine/asm.h>
-
-#if defined(_KERNEL)
-
-#define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
-
-#else /* _KERNEL */
-
-#define	ATOMIC_OP_ALIAS(a,s)	WEAK_ALIAS(a,s)
-
-#endif /* _KERNEL */
-
-#ifdef __ARMEB__
-#define	HI	r0
-#define	LO	r1
-#define	NHI	r2
-#define	NLO	r3
+#if defined(_ARM_ARCH_6)
+/*
+ * ARMv6 has load-exclusive/store-exclusive which works for both user
+ * and kernel.
+ */
+ENTRY_NP(_atomic_cas_64)
+	stmfd	sp!, {r4, r5, r6}	/* save temporaries */
+	mov	r6, r0			/* we need r0 for return value */
+#ifdef __ARM_EABI__
+	ldrd	r4, [sp]		/* fetch new value */
 #else
-#define	LO	r0
-#define	HI	r1
-#define	NLO	r2
-#define	NHI	r3
+	ldr	r5, [sp, #4]		/* fetch new value */
+	ldr	r4, [sp, #0]		/* fetch new value */
+	mov	r3, r2			/* r2 will be overwritten by r1 which ... */
+	mov	r2, r1			/* r1 will be overwritten by ldrexd */
 #endif
+1:
+	ldrexd	r0, [r6]		/* load current value */
+	teq	r0, r2			/*   compare to old? 1st half */
+	teqeq	r1, r3			/*   compare to old? 2nd half */
+	bne	2f			/*     jump to return if different */
+	strexd	ip, r4, [r6]		/* store new value */
+	cmp	ip, #0			/*   succeed? */
+	bne	1b			/*     nope, try again. */
+#ifdef _ARM_ARCH_7
+	dsb
+#else
+	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
+#endif
+2:
+	ldmfd	sp!, {r4, r5, r6}	/* restore temporaries */
+	RET				/* return. */
+	END(_atomic_cas_64)
 
-#endif /* _ATOMIC_OP_ASM_H_ */
+ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
+
+#endif /* _ARCH_ARM_6 */
