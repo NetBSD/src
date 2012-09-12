@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.51 2012/08/29 10:38:53 msaitoh Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.52 2012/09/12 12:38:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpclient.c,v 1.51 2012/08/29 10:38:53 msaitoh Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.52 2012/09/12 12:38:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -877,6 +877,7 @@ rumpclient_init(void)
 
 	if ((p = getenv("RUMP__PARSEDSERVER")) == NULL) {
 		if ((p = getenv("RUMP_SERVER")) == NULL) {
+			fprintf(stderr, "error: RUMP_SERVER not set\n");
 			errno = ENOENT;
 			goto out;
 		}
