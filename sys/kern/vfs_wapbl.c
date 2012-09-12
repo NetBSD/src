@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.52 2012/04/29 22:55:11 chs Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.52.2.1 2012/09/12 06:15:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52 2012/04/29 22:55:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52.2.1 2012/09/12 06:15:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -415,7 +415,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	 * to complete a transaction. (probably truncate)
 	 */
 	/* XXX for now pick something minimal */
-	if ((count * blksize) < MAXPHYS) {
+	if ((count * blksize) < mp->mnt_maxphys) {
 		return ENOSPC;
 	}
 
@@ -841,6 +841,7 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 {
 	int doflush;
 	unsigned lockcount;
+	uint32_t maxphys;
 
 	KDASSERT(wl);
 
@@ -851,7 +852,8 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 	 */
 	mutex_enter(&wl->wl_mtx);
 	lockcount = wl->wl_lock_count;
-	doflush = ((wl->wl_bufbytes + (lockcount * MAXPHYS)) >
+	maxphys = wl->wl_mount->mnt_maxphys;
+	doflush = ((wl->wl_bufbytes + (lockcount * maxphys)) >
 		   wl->wl_bufbytes_max / 2) ||
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||

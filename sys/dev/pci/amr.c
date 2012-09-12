@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.55 2012/07/27 16:25:11 jakllsch Exp $	*/
+/*	$NetBSD: amr.c,v 1.55.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.55 2012/07/27 16:25:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.55.2.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,9 +401,11 @@ amr_attach(device_t parent, device_t self, void *aux)
 	amr->amr_flags |= AMRF_CCBS;
 
 	if (amr_max_xfer == 0) {
-		amr_max_xfer = min(((AMR_MAX_SEGS - 1) * PAGE_SIZE), MAXPHYS);
+		amr_max_xfer = min(((AMR_MAX_SEGS - 1) * PAGE_SIZE),
+				   device_maxphys(amr->amr_dv));
 		amr_max_segs = (amr_max_xfer + (PAGE_SIZE * 2) - 1) / PAGE_SIZE;
 	}
+	amr->amr_dv->dv_maxphys = amr_max_xfer;
 
 	for (i = 0; i < AMR_MAX_CMDS; i++, ac++) {
 		rv = bus_dmamap_create(amr->amr_dmat, amr_max_xfer,
@@ -1364,7 +1366,8 @@ amrioctl(dev_t dev, u_long cmd, void *data, int flag,
 		return EOPNOTSUPP;
 	}
 
-	if (au_length <= 0 || au_length > MAXPHYS || au_cmd[0] == 0x06)
+	if (au_length <= 0 || au_length > device_maxphys(amr->amr_dv) ||
+	    au_cmd[0] == 0x06)
 		return (EINVAL);
 
 	/*

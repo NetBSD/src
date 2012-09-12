@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.92 2011/02/10 14:46:45 pooka Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.92.14.1 2012/09/12 06:15:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.92 2011/02/10 14:46:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.92.14.1 2012/09/12 06:15:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				error = EINVAL;
 				goto done;
 			}
-			bp->b_bcount = MIN(MAXPHYS, iovp->iov_len);
+			bp->b_bcount = iovp->iov_len;
 			bp->b_data = iovp->iov_base;
 
 			/*
@@ -307,7 +307,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			(*min_phys)(bp);
 			todo = bp->b_bufsize = bp->b_bcount;
 #if defined(DIAGNOSTIC)
-			if (todo > MAXPHYS)
+			if (todo > MACHINE_MAXPHYS)
 				panic("todo(%zu) > MAXPHYS; minphys broken",
 				    todo);
 #endif /* defined(DIAGNOSTIC) */
@@ -423,6 +423,6 @@ void
 minphys(struct buf *bp)
 {
 
-	if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
+	if (bp->b_bcount > MACHINE_MAXPHYS)
+		bp->b_bcount = MACHINE_MAXPHYS;
 }

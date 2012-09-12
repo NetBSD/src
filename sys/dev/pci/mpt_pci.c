@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.22 2012/03/18 21:05:21 martin Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.22.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.22 2012/03/18 21:05:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.22.2.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -228,6 +228,8 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 		/* Error message already printed. */
 		return;
 	}
+
+	mpt->sc_dev->dv_maxphys = MIN(mpt->sc_dev->dv_maxphys, MPT_MAX_XFER);
 
 	/* Attach to scsipi. */
 	mpt_scsipi_attach(mpt);

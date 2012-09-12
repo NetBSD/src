@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.254 2012/08/14 14:38:02 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.254.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254 2012/08/14 14:38:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.1 2012/09/12 06:15:32 tls Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -437,6 +437,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	acpi_unmap_rsdt(rsdt);
+
+	/* Clamp the max transfer size - assume LPC devs may be beneath us. */
+	self->dv_maxphys = MIN(parent->dv_maxphys, 64 * 1024);
 
 	sc->sc_dev = self;
 	sc->sc_root = NULL;

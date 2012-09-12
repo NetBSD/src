@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.10 2012/03/18 21:05:21 martin Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.10.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -131,6 +131,12 @@
 	((((mpt)->request_frame_size << 2) -			\
 	  sizeof(MSG_SCSI_IO_REQUEST) -				\
 	  sizeof(SGE_IO_UNION)) / sizeof(SGE_SIMPLE32))
+
+/*
+ * Subtract one from the SGL limit, since we need an extra one to handle
+ * an non-page-aligned transfer.
+ */
+#define MPT_MAX_XFER		((MPT_SGL_MAX - 1) * PAGE_SIZE)
 
 /*
  * Convert a physical address returned from IOC to a virtual address

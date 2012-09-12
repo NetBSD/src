@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.71 2011/06/30 20:09:31 wiz Exp $ */
+/* $NetBSD: pnpbios.c,v 1.71.12.1 2012/09/12 06:15:32 tls Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.71 2011/06/30 20:09:31 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.71.12.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,9 @@ pnpbios_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	pnpbios_softc = sc;
+
+	/* We *don't* clamp xfer size here as both PCI and ISA devs
+	   may attach beneath us */
 	sc->sc_dev = self;
 	sc->sc_ic = paa->paa_ic;
 
