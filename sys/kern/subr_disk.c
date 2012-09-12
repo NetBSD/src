@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.100 2010/10/14 00:47:16 mrg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.100.18.1 2012/09/12 06:15:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100 2010/10/14 00:47:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.1 2012/09/12 06:15:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100 2010/10/14 00:47:16 mrg Exp $");
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
+#include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <lib/libkern/libkern.h>
@@ -176,6 +177,42 @@ disk_find(const char *name)
 		return stat->io_parent;
 
 	return (NULL);
+}
+
+/*
+ * Searches for the disk corresponding to a supplied block device
+ * using major, minor, unit.
+ */
+struct disk *
+disk_find_blk(dev_t dev)
+{
+	devmajor_t major;
+	int unit;
+	char name[16];	/* XXX */
+	const char *swname;
+
+	major = major(dev);
+	unit = DISKUNIT(dev);
+
+	if ((swname = devsw_blk2name(major)) == NULL) {
+		return NULL;
+	}
+
+	if (snprintf(name, sizeof(name), "%s%d",
+		     swname, unit) > sizeof(name)) {
+		return NULL;
+	}
+
+	return disk_find(name);
+}
+
+int disk_maxphys(const struct disk *const diskp)
+{
+	struct buf b = { b_bcount: MACHINE_MAXPHYS };
+
+	diskp->dk_driver->d_minphys(&b);
+
+	return b.b_bcount;
 }
 
 void

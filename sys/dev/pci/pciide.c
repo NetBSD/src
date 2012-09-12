@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.219 2010/11/06 00:29:09 jakllsch Exp $	*/
+/*	$NetBSD: pciide.c,v 1.219.18.1 2012/09/12 06:15:32 tls Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.219 2010/11/06 00:29:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.219.18.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <sys/param.h>
 
@@ -107,6 +107,9 @@ pciide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
+
+	/* Clamp max transfer size - XXX how to do 128K on pciide? */
+	self->dv_maxphys = MIN(parent->dv_maxphys, IDEDMA_BYTE_COUNT_MAX);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

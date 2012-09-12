@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.322 2012/09/04 13:37:42 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.322.2.1 2012/09/12 06:15:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322 2012/09/04 13:37:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.1 2012/09/12 06:15:35 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3205,8 +3205,14 @@ uvm_map_willneed(struct vm_map *map, vaddr_t start, vaddr_t end)
 		 * XXX It might be useful to pmap_enter() the already-in-core
 		 * pages by inventing a "weak" mode for uvm_fault() which would
 		 * only do the PGO_LOCKED pgo_get().
+		 *
+		 * XXX The readahead contexts are vnode-associated.  That
+		 * XXX means we can't readhead on swap-backed objects.
+		 * XXX Should the readahead context move to the uobj?
 		 */
-		if (UVM_ET_ISOBJ(entry) && amap == NULL && uobj != NULL) {
+		if (UVM_ET_ISOBJ(entry) && uobj != NULL &&
+		    UVM_OBJ_IS_VNODE(uobj) && amap == NULL) {
+                        struct vnode *vp = (struct vnode *)uobj;
 			off_t offset;
 			off_t size;
 
@@ -3218,7 +3224,7 @@ uvm_map_willneed(struct vm_map *map, vaddr_t start, vaddr_t end)
 			if (entry->end < end) {
 				size -= end - entry->end;
 			}
-			uvm_readahead(uobj, offset, size);
+			uvm_readahead(uobj, offset, size, vp->v_ractx);
 		}
 		entry = entry->next;
 	}

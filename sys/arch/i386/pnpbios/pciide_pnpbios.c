@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.30 2012/07/31 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.30.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.30 2012/07/31 15:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.30.2.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,9 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t cmd_baseioh, ctl_ioh;
 	int i, drive, size;
 	uint8_t idedma_ctl;
+
+	/* Clamp max transfer size - XXX how to do 128K on pciide? */
+	self->dv_maxphys = MIN(parent->dv_maxphys, IDEDMA_BYTE_COUNT_MAX);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

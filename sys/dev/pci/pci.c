@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.142.12.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142.12.1 2012/09/12 06:15:32 tls Exp $");
 
 #include "opt_pci.h"
 
@@ -141,6 +141,9 @@ pciattach(device_t parent, device_t self, void *aux)
 	static const int wildcard[PCICF_NLOCS] = {
 		PCICF_DEV_DEFAULT, PCICF_FUNCTION_DEFAULT
 	};
+
+	/* Clamp the maximum transfer size.  The hook may clamp it further. */
+	self->dv_maxphys = MIN(parent->dv_maxphys, INT_MAX);
 
 	sc->sc_dev = self;
 

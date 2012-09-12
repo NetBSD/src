@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.18.2.1 2012/09/12 06:15:31 tls Exp $	*/
 
 #ifdef __x86_64__
 
@@ -45,8 +45,10 @@
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #ifndef	MAXPHYS
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* default I/O transfer size max */
 #endif
+
+#define	MACHINE_MAXPHYS	(1024 * 1024)	/* absolute I/O transfer size max */
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

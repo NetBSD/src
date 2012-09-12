@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.57 2012/06/10 17:05:18 mlelstv Exp $	*/
+/*	$NetBSD: disk.h,v 1.57.2.1 2012/09/12 06:15:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -522,6 +522,8 @@ void	disk_unbusy(struct disk *, long, int);
 bool	disk_isbusy(struct disk *);
 void	disk_blocksize(struct disk *, int);
 struct disk *disk_find(const char *);
+struct disk *disk_find_blk(dev_t);
+int	disk_maxphys(const struct disk *const);
 int	disk_ioctl(struct disk *, u_long, void *, int, struct lwp *);
 
 void	dkwedge_init(void);

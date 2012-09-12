@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $	*/
+/*	$NetBSD: isa.c,v 1.138.18.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138.18.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,9 @@ isaattach(device_t parent, device_t self, void *aux)
 		ISACF_IOMEM_DEFAULT, ISACF_IOSIZ_DEFAULT,
 		ISACF_IRQ_DEFAULT, ISACF_DRQ_DEFAULT, ISACF_DRQ2_DEFAULT
 	};
+
+	/* Clamp the maximum transfer size.  The hook may clamp it further. */
+	self->dv_maxphys = MIN(parent->dv_maxphys, 64 * 1024);
 
 	TAILQ_INIT(&sc->sc_knowndevs);
 	sc->sc_dynamicdevs = 0;

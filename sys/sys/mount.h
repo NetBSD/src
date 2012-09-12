@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.207 2012/02/01 05:34:42 dholland Exp $	*/
+/*	$NetBSD: mount.h,v 1.207.6.1 2012/09/12 06:15:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -116,12 +116,13 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	krwlock_t	mnt_unmounting;		/* to prevent new activity */
 	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
-	int		mnt_refcnt;		/* ref count on this structure */
+	int		mnt_refcnt;		/* refcnt on this structure */
 	int		mnt_recursecnt;		/* count of write locks */
 	int		mnt_flag;		/* flags */
 	int		mnt_iflag;		/* internal flags */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
+	uint32_t	mnt_maxphys;		/* largest xfer allowed */
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */

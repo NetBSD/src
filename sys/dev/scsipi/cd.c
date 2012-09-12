@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.309.2.1 2012/09/12 06:15:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.309 2012/05/06 17:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.309.2.1 2012/09/12 06:15:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1097,6 +1097,14 @@ cdminphys(struct buf *bp)
 			bp->b_bcount = xmax;
 	}
 
+        /* Impose any restrictions inherited down the device tree */
+	xmax = cd->sc_dev->dv_maxphys;
+	if (bp->b_bcount > xmax)
+		bp->b_bcount = xmax;
+        
+	/* Adapters could enforce their own limits on the
+	   attached scsibuses via the device tree, but existing
+	   drivers mostly do it in their own minphys routines. */
 	(*cd->sc_periph->periph_channel->chan_adapter->adapt_minphys)(bp);
 }
 
