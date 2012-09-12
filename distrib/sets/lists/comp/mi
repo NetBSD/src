@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1777 2012/08/15 21:03:09 pgoyette Exp $
+#	$NetBSD: mi,v 1.1778 2012/09/12 14:07:51 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4218,6 +4218,7 @@
 ./usr/libdata/debug/usr/sbin/netgroup_mkdb.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/sbin/nfsd.debug		comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/npfctl.debug	comp-npf-debug		npf,debug
+./usr/libdata/debug/usr/sbin/npftest.debug	comp-npf-debug		npf,rump,debug
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		crypto,debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
