@@ -1,0 +1,76 @@
+Notes on eliminating fixed (usually 64K) MAXPHYS, for more efficient
+operation both with single disk drives/SSDs (transfers in the 128K-256K
+range of sizes are advantageous for many workloads), and particularly with
+RAID sets (consider a typical 12-disk chassis of 2.5" SAS drives, set up
+as an entirely ordinary P+Q parity RAID array with a single hot spare.  To
+feed 64K transfers to each of the resulting 8 data disks requires 512K
+transfers fed to the RAID controller -- is it any wonder NetBSD performs
+so poorly with such hardware for many workloads?).
+
+The basic approach taken here:
+
+	1) Propagate maximum-transfer size down the device tree at
+	   autoconf time.  Drivers take the max of their own
+	   transfer-size limitations and their parents' limitations,
+	   apply that in their minphys() routines (if they are disk
+	   drivers) and propagate it down to their children.
+
+	2) This is just about sufficient, for physio, since once you've
+	   got the disk, you can find its minphys routine, and *that*
+	   can get access to the device-instance's softc which has the
+	   size determined by autoconf.
+
+	3) For filesystem I/O, however, we need to be able to find that
+	   maximum transfer size starting not with a device_t but with
+	   a disk driver name (or major number) and unit number.
+
+	   The "disk" interface within the kernel is extended to
+	   let us fish out the dkdevice's minphys routine starting
+	   with the data we've got.  We then feed a fake, huge buffer
+	   to that minphys and see what we get back.
+
+	   This is stashed in the mount point's datastructure and is
+	   then available to the filesystem and pager code via
+	   vp->v_mount any time you've got a filesystem-backed vnode.
+
+The rest is a "simple" matter of making the necessary MD adjustments
+and figuring out where the rest of the hidden 64K bottlenecks are....
+
+MAXPHYS is retained and is used as a default.  A new MACHINE_MAXPHYS
+must be defined, and is the actual largest transfer any hardware for
+a given port can do, or which the portmaster considers appropriate.
+
+MACHINE_MAXPHYS is used to size some on-stack arrays in the pager code
+so don't go too crazy with it.
+
+==== STATUS ====
+
+All work done on amd64.  Not hard to get it going on other ports.  Every
+top-level bus attachment will need code to clamp transfer sizes
+appropriately; see the PCI or ISA code here, or for an unfortunate
+example of when you have to clamp more than you'd like, the pnpbios code.
+
+Access through physio: done?  Disk drivers other than sd, cd, wd
+will need their minphys functions adjusted like those were, and
+will be limited to MAXPHYS per transfer until they do.
+
+	A notable exception is RAIDframe.  It could benefit immediately
+	but needs something a little more sophisticated done to its
+	minphys -- per-unit, it needs to sum up the maxphyses of the unit's
+	data (not parity!) components and return that value.
+
+Access through filesystems - for read, controlled by uvm readahead code.
+We can stash the ra max size in the ra ctx -- we can get it from v_mount
+in the vnode (the uobj!) *if* we put it into struct mount.  Then we only
+have to do the awful walk-the-device-list crap at mount time.  This likely
+wins!
+
+	Unfortunately, there is still a bottleneck, probably from
+	the pager code (genfs I/O code).  The genfs read/getpages
+	code is repellent and huge.  Haven't even started on it yet.
+
+I have attacked the genfs write path already, but though my printfs
+show the appropriate maxpages value propagates down, the resulting
+stream of I/O requests is 64K.  This needs further investigation:
+with maxcontig now gone from the FFS code, where on earth are we
+still clamping the I/O size?

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.h,v 1.4 2009/06/10 01:54:08 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.h,v 1.4.22.1 2012/09/12 06:15:36 tls Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -30,13 +30,30 @@
 #define _UVM_UVM_READAHEAD_H_
 
 struct uvm_object;
-struct uvm_ractx;
+
+/*
+ * uvm_ractx: read-ahead context.
+ */
+
+struct uvm_ractx {
+        int ra_flags;
+#define UVM_RA_VALID        1
+        size_t ra_iochunk;
+        size_t ra_winsize;      /* window size */
+        off_t ra_winstart;      /* window start offset */
+        off_t ra_next;          /* next offset to read-ahead */
+};
+
+#define UVM_RA_WINSIZE_INIT	MAXPHYS		/* initial window size */
+#define UVM_RA_WINSIZE_MAX	(MAXPHYS * 8)	/* max window size */
+#define UVM_RA_WINSIZE_SEQUENTIAL	UVM_RA_WINSIZE_MAX
+#define UVM_RA_MINSIZE		(MAXPHYS * 2)	/* min size to start i/o */
 
 void uvm_ra_init(void);
 struct uvm_ractx *uvm_ra_allocctx(void);
 void uvm_ra_freectx(struct uvm_ractx *);
 void uvm_ra_request(struct uvm_ractx *, int, struct uvm_object *, off_t,
     size_t);
-int uvm_readahead(struct uvm_object *, off_t, off_t);
+int uvm_readahead(struct uvm_object *, off_t, off_t, struct uvm_ractx *);
 
 #endif /* defined(_UVM_UVM_READAHEAD_H_) */

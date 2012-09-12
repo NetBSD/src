@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.223.2.1 2012/09/12 06:15:34 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.1 2012/09/12 06:15:34 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1370,10 +1370,14 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
-	if (parent != NULL)
+	if (parent != NULL) {
 		dev->dv_depth = parent->dv_depth + 1;
-	else
+		dev->dv_maxphys = parent->dv_maxphys;
+	} else {
 		dev->dv_depth = 0;
+		dev->dv_maxphys = MACHINE_MAXPHYS;
+	}
+	aprint_debug_dev(dev, "dv_maxphys = %d", dev->dv_maxphys);
 	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */

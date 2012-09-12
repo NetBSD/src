@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.55.2.1 2012/09/12 06:15:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55 2012/05/22 14:20:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55.2.1 2012/09/12 06:15:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,11 +806,16 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kmutex_t * const slock = uobj->vmobjlock;
 	off_t off;
-	/* Even for strange MAXPHYS, the shift rounds down to a page */
-#define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, error, npages, nback;
 	int freeflag;
-	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
+#if 1
+	unsigned int maxpages;
+	struct vm_page *pgs[MACHINE_MAXPHYS >> PAGE_SHIFT];
+#else
+	unsigned int maxpages = 64;
+	struct vm_page *pgs[64];
+#endif
+	struct vm_page *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
@@ -823,6 +828,18 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool has_trans;
 	bool cleanall;
 	bool onworklst;
+	static int printed;
+
+        if (vp && vp->v_mount && vp->v_mount->mnt_maxphys) {
+                maxpages = vp->v_mount->mnt_maxphys >> PAGE_SHIFT;
+        } else {
+                maxpages = MAXPHYS >> PAGE_SHIFT;
+        }
+
+	if (!printed || maxpages > printed ) {
+		printf("putpages: maxpages %d\n", maxpages);
+		printed = maxpages;
+	}
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 

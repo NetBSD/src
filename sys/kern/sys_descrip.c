@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.27 2012/08/05 04:26:10 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.27.2.1 2012/09/12 06:15:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.27 2012/08/05 04:26:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.27.2.1 2012/09/12 06:15:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,7 +708,9 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 
 	case POSIX_FADV_WILLNEED:
 		vp = fp->f_data;
-		error = uvm_readahead(&vp->v_uobj, offset, endoffset - offset);
+		error = uvm_readahead(&vp->v_uobj, offset,
+				      endoffset - offset,
+				      vp->v_ractx);
 		break;
 
 	case POSIX_FADV_DONTNEED:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyvar.h,v 1.5 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mlyvar.h,v 1.5.44.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  * The firmware interface allows for a 16-bit s/g list length.  We limit
  * ourselves to a reasonable maximum.
  */
-#define	MLY_MAX_SEGS	17
+#define	MLY_MAX_SEGS	257
 #define	MLY_SGL_SIZE	(MLY_MAX_SEGS * sizeof(struct mly_sg_entry))
 
 #define	MLY_MAX_XFER	((MLY_MAX_SEGS - 1) * PAGE_SIZE)

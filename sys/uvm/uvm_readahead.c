@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.8 2011/06/12 03:36:04 rmind Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.8.12.1 2012/09/12 06:15:36 tls Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8 2011/06/12 03:36:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.12.1 2012/09/12 06:15:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -54,32 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8 2011/06/12 03:36:04 rmind Exp 
 #define	DPRINTF(a)	/* nothing */
 #endif /* defined(READAHEAD_DEBUG) */
 
-/*
- * uvm_ractx: read-ahead context.
- */
-
-struct uvm_ractx {
-	int ra_flags;
-#define	RA_VALID	1
-	off_t ra_winstart;	/* window start offset */
-	size_t ra_winsize;	/* window size */
-	off_t ra_next;		/* next offset to read-ahead */
-};
-
 #if defined(sun2) || defined(sun3)
 /* XXX: on sun2 and sun3 MAXPHYS is 0xe000 */
 #undef MAXPHYS	
 #define MAXPHYS		0x8000	/* XXX */
 #endif
 
-#define	RA_WINSIZE_INIT	MAXPHYS			/* initial window size */
-#define	RA_WINSIZE_MAX	(MAXPHYS * 8)		/* max window size */
-#define	RA_WINSIZE_SEQENTIAL	RA_WINSIZE_MAX	/* fixed window size used for
-						   SEQUENTIAL hint */
-#define	RA_MINSIZE	(MAXPHYS * 2)		/* min size to start i/o */
-#define	RA_IOCHUNK	MAXPHYS			/* read-ahead i/o chunk size */
-
-static off_t ra_startio(struct uvm_object *, off_t, size_t);
+static off_t ra_startio(struct uvm_object *, off_t, size_t, size_t);
 static struct uvm_ractx *ra_allocctx(void);
 static void ra_freectx(struct uvm_ractx *);
 
@@ -116,10 +97,13 @@ ra_freectx(struct uvm_ractx *ra)
  *
  * => start i/o for each RA_IOCHUNK sized chunk.
  * => return offset to which we started i/o.
+ *
+ * => If the next layer up has given us less than IOCHUNK, assume
+ *    it knew best (don't always perform minimal readahead).
  */
 
 static off_t
-ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
+ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 {
 	const off_t endoff = off + sz;
 
@@ -127,16 +111,26 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 	    __func__, uobj, off, endoff));
 	off = trunc_page(off);
 	while (off < endoff) {
-		const size_t chunksize = RA_IOCHUNK;
+		const size_t chunksize = MIN(chunksz, round_page(sz));
 		int error;
 		size_t donebytes;
 		int npages;
 		int orignpages;
 		size_t bytelen;
 
-		KASSERT((chunksize & (chunksize - 1)) == 0);
+		if ((chunksize & (chunksize - 1)) != 0) {
+		    panic("bad chunksize %d, iochunk %d, request size %d",
+			  (int)chunksize, (int)chunksz, (int)sz);
+		}
+		/* KASSERT((chunksize & (chunksize - 1)) == 0); */
 		KASSERT((off & PAGE_MASK) == 0);
 		bytelen = ((off + chunksize) & -(off_t)chunksize) - off;
+		if ((bytelen & PAGE_MASK) != 0) {
+			panic("bad bytelen %d with off %d, chunksize %d"
+			      "(iochunk %d, sz %d)",
+			      (int)bytelen, (int)off, (int)chunksize,
+			      (int)chunksz, (int)sz);
+		}
 		KASSERT((bytelen & PAGE_MASK) == 0);
 		npages = orignpages = bytelen >> PAGE_SHIFT;
 		KASSERT(npages != 0);
@@ -178,6 +172,7 @@ uvm_ra_allocctx(void)
 	ra = ra_allocctx();
 	if (ra != NULL) {
 		ra->ra_flags = 0;
+		ra->ra_iochunk = MAXPHYS;
 	}
 
 	return ra;
@@ -219,14 +214,14 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
 		 * always do read-ahead with a large window.
 		 */
 
-		if ((ra->ra_flags & RA_VALID) == 0) {
+		if ((ra->ra_flags & UVM_RA_VALID) == 0) {
 			ra->ra_winstart = ra->ra_next = 0;
-			ra->ra_flags |= RA_VALID;
+			ra->ra_flags |= UVM_RA_VALID;
 		}
 		if (reqoff < ra->ra_winstart) {
 			ra->ra_next = reqoff;
 		}
-		ra->ra_winsize = RA_WINSIZE_SEQENTIAL;
+		ra->ra_winsize = UVM_RA_WINSIZE_SEQUENTIAL;
 		goto do_readahead;
 	}
 
@@ -243,11 +238,11 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
 	 * initialize context and return.
 	 */
 
-	if ((ra->ra_flags & RA_VALID) == 0) {
+	if ((ra->ra_flags & UVM_RA_VALID) == 0) {
 initialize:
 		ra->ra_winstart = ra->ra_next = reqoff + reqsize;
-		ra->ra_winsize = RA_WINSIZE_INIT;
-		ra->ra_flags |= RA_VALID;
+		ra->ra_winsize = UVM_RA_WINSIZE_INIT;
+		ra->ra_flags |= UVM_RA_VALID;
 		goto done;
 	}
 
@@ -301,9 +296,9 @@ do_readahead:
 		size_t rasize = reqoff + ra->ra_winsize - ra->ra_next;
 
 #if defined(DIAGNOSTIC)
-		if (rasize > RA_WINSIZE_MAX) {
+		if (rasize > UVM_RA_WINSIZE_MAX) {
 			printf("%s: corrupted context", __func__);
-			rasize = RA_WINSIZE_MAX;
+			rasize = UVM_RA_WINSIZE_MAX;
 		}
 #endif /* defined(DIAGNOSTIC) */
 
@@ -312,11 +307,11 @@ do_readahead:
 		 * otherwise we end up with a stream of small i/o.
 		 */
 
-		if (rasize >= RA_MINSIZE) {
+		if (rasize >= UVM_RA_MINSIZE) {
 			off_t next;
 
 			mutex_exit(uobj->vmobjlock);
-			next = ra_startio(uobj, raoff, rasize);
+			next = ra_startio(uobj, raoff, rasize, ra->ra_iochunk);
 			mutex_enter(uobj->vmobjlock);
 			ra->ra_next = next;
 		}
@@ -330,21 +325,22 @@ do_readahead:
 	 */
 
 	ra->ra_winstart = reqoff + reqsize;
-	ra->ra_winsize = MIN(RA_WINSIZE_MAX, ra->ra_winsize + reqsize);
+	ra->ra_winsize = MIN(UVM_RA_WINSIZE_MAX, ra->ra_winsize + reqsize);
 
 done:;
 }
 
 int
-uvm_readahead(struct uvm_object *uobj, off_t off, off_t size)
+uvm_readahead(struct uvm_object *uobj, off_t off, off_t size,
+	      struct uvm_ractx *ra)
 {
 
 	/*
 	 * don't allow too much read-ahead.
 	 */
-	if (size > RA_WINSIZE_MAX) {
-		size = RA_WINSIZE_MAX;
+	if (size > UVM_RA_WINSIZE_MAX) {
+		size = UVM_RA_WINSIZE_MAX;
 	}
-	ra_startio(uobj, off, size);
+	ra_startio(uobj, off, size, ra->ra_iochunk);
 	return 0;
 }

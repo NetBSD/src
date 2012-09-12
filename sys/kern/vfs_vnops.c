@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.185 2012/08/24 05:52:17 dholland Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.185.2.1 2012/09/12 06:15:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.185 2012/08/24 05:52:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.185.2.1 2012/09/12 06:15:34 tls Exp $");
 
 #include "veriexec.h"
 
@@ -943,8 +943,22 @@ vn_ra_allocctx(struct vnode *vp)
 		ra = uvm_ra_allocctx();
 		mutex_enter(vp->v_interlock);
 		if (ra != NULL && vp->v_ractx == NULL) {
-			vp->v_ractx = ra;
-			ra = NULL;
+			size_t iochunk = 512, ioc = 512;
+
+			while(1) {
+				size_t mp_mp = MAX(vp->v_mount->mnt_maxphys,
+						   MAXPHYS); /* XXX NFS */
+				size_t ra_max = MIN(mp_mp, UVM_RA_WINSIZE_MAX);
+				if (ioc > ra_max) {
+					ra->ra_iochunk = iochunk;
+					vp->v_ractx = ra;
+					ra = NULL;
+					break;
+				} else {
+					iochunk = ioc;
+					ioc *= 2;
+				}
+			}
 		}
 	}
 	if (ra != NULL) {

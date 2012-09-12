@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.18 2012/03/18 21:05:21 martin Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.18.2.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.18 2012/03/18 21:05:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.18.2.1 2012/09/12 06:15:32 tls Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -250,8 +250,11 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 		req->sense_pbuf = (pptr - MPT_SENSE_SIZE);
 		req->sense_vbuf = (vptr - MPT_SENSE_SIZE);
 
-		error = bus_dmamap_create(mpt->sc_dmat, MAXPHYS,
-		    MPT_SGL_MAX, MAXPHYS, 0, 0, &req->dmap);
+		error = bus_dmamap_create(mpt->sc_dmat,
+		    MPT_SGL_MAX * PAGE_SIZE ,
+		    MPT_SGL_MAX,
+		    MPT_SGL_MAX * PAGE_SIZE,
+		    0, 0, &req->dmap);
 		if (error) {
 			aprint_error_dev(mpt->sc_dev, "unable to create req %d DMA map, "
 			    "error = %d\n", i, error);
@@ -1365,13 +1368,6 @@ mpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 static void
 mpt_minphys(struct buf *bp)
 {
-
-/*
- * Subtract one from the SGL limit, since we need an extra one to handle
- * an non-page-aligned transfer.
- */
-#define	MPT_MAX_XFER	((MPT_SGL_MAX - 1) * PAGE_SIZE)
-
 	if (bp->b_bcount > MPT_MAX_XFER)
 		bp->b_bcount = MPT_MAX_XFER;
 	minphys(bp);

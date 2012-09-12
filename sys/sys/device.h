@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.142 2012/07/07 16:15:21 tsutsui Exp $ */
+/* $NetBSD: device.h,v 1.142.2.1 2012/09/12 06:15:35 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -84,6 +84,7 @@
 #ifdef _KERNEL
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/param.h>
 #include <sys/pmf.h>
 #endif
 
@@ -146,6 +147,7 @@ struct device {
 	cfdriver_t	dv_cfdriver;	/* our cfdriver */
 	cfattach_t	dv_cfattach;	/* our cfattach */
 	int		dv_unit;	/* device unit number */
+	int		dv_maxphys;	/* maximum transfer size supported */
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pseudo- or root node) */
@@ -499,6 +501,15 @@ device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
 void		device_register(device_t, void *);
 void		device_register_post_config(device_t, void *);
+
+static inline int device_maxphys(device_t device)
+{
+	if (__predict_true(device->dv_maxphys))	{
+		return device->dv_maxphys;
+	}
+
+	return MAXPHYS;		/* XXX should emit error */
+}
 
 devclass_t	device_class(device_t);
 cfdata_t	device_cfdata(device_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.298 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.298.2.1 2012/09/12 06:15:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.298 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.298.2.1 2012/09/12 06:15:33 tls Exp $");
 
 #include "opt_scsi.h"
 
@@ -971,6 +971,14 @@ sdminphys(struct buf *bp)
 			bp->b_bcount = xmax;
 	}
 
+	/* Impose any restrictions inherited down the device tree */
+	xmax = sd->sc_dev->dv_maxphys;
+	if (bp->b_bcount > xmax)
+		bp->b_bcount = xmax;
+
+	/* Adapters could enforce their own limits on the
+	   attached scsibuses via the device tree, but existing
+	   drivers mostly do it in their own minphys routines. */
 	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.17 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.17.6.1 2012/09/12 06:15:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.17 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.17.6.1 2012/09/12 06:15:32 tls Exp $");
 
 
 
@@ -92,6 +92,9 @@ fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
 
 	fdc->sc_dev = self;
 	fdc->sc_ic = aa->ic;
+
+	/* This is really ISA DMA under the covers: clamp max transfer size */
+	self->dv_maxphys = MIN(parent->dv_maxphys, 64 * 1024);
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &fdc->sc_iot,
             &pdc->sc_baseioh)) {
