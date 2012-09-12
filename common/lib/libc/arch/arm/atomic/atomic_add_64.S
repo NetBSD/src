@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_add_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
+/*	$NetBSD: atomic_add_64.S,v 1.2 2012/09/12 18:23:33 matt Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,7 +51,7 @@ ENTRY_NP(_atomic_add_64)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	ldmfd	sp!, {r4, r5}
+	ldr	r4, [sp], #4		/* restore temporary */
 	RET				/* return old value */
 	END(_atomic_add_64)
 ATOMIC_OP_ALIAS(atomic_add_64,_atomic_add_64)
@@ -74,7 +74,7 @@ ENTRY_NP(_atomic_add_64_nv)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
-	ldmfd	sp!, {r4, r5}
+	ldr	r4, [sp], #4		/* restore temporary */
 	RET				/* return new value */
 	END(_atomic_add_64_nv)
 ATOMIC_OP_ALIAS(atomic_add_64_nv,_atomic_add_64_nv)
