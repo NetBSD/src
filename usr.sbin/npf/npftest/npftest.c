@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.6 2012/08/21 20:52:11 rmind Exp $	*/
+/*	$NetBSD: npftest.c,v 1.7 2012/09/12 08:47:14 martin Exp $	*/
 
 /*
  * NPF testing framework.
@@ -29,17 +29,35 @@ static bool verbose, quiet;
 static void
 usage(void)
 {
-	printf("usage: %s: [ -q | -v ] [ -c <config> ] "
-	    "[ -i <interface> ] < -b | -t | -s file >\n"
+	printf("usage:\n"
+	    "  %s [ -q | -v ] [ -c <config> ] "
+	        "[ -i <interface> ] < -b | -t | -s file >\n"
+	    "  %s -T <testname> -c <config>\n"
+	    "  %s -L\n"
+	    "where:\n"
 	    "\t-b: benchmark\n"
 	    "\t-t: regression test\n"
+	    "\t-T <testname>: specific test\n"
 	    "\t-s <file>: pcap stream\n"
 	    "\t-c <config>: NPF configuration file\n"
 	    "\t-i <interface>: primary interface\n"
+	    "\t-L: list testnames and description for -T\n"
 	    "\t-q: quiet mode\n"
 	    "\t-v: verbose mode\n",
-	    getprogname());
+	    getprogname(), getprogname(), getprogname());
 	exit(EXIT_FAILURE);
+}
+
+static void
+describe_tests(void)
+{
+	printf(	"nbuf\tbasic npf mbuf handling\n"
+		"processor\tncode processing\n"
+		"table\ttable handling\n"
+		"state\tstate handling and processing\n"
+		"rule\trule processing\n"
+		"nat\tNAT rule processing\n");
+	exit(EXIT_SUCCESS);
 }
 
 static bool
@@ -119,13 +137,15 @@ arc4random(void)
 int
 main(int argc, char **argv)
 {
-	bool benchmark, test, ok, fail;
-	char *config, *interface, *stream;
+	bool benchmark, test, ok, fail, tname_matched;
+	char *config, *interface, *stream, *testname;
 	int idx = -1, ch;
 
 	benchmark = false;
 	test = false;
 
+	tname_matched = false;
+	testname = NULL;
 	config = NULL;
 	interface = NULL;
 	stream = NULL;
@@ -133,7 +153,7 @@ main(int argc, char **argv)
 	verbose = false;
 	quiet = false;
 
-	while ((ch = getopt(argc, argv, "bqvc:i:s:t")) != -1) {
+	while ((ch = getopt(argc, argv, "bqvc:i:s:tT:L")) != -1) {
 		switch (ch) {
 		case 'b':
 			benchmark = true;
@@ -156,6 +176,12 @@ main(int argc, char **argv)
 		case 't':
 			test = true;
 			break;
+		case 'T':
+			test = true;
+			testname = optarg;
+			break;
+		case 'L':
+			describe_tests();
 		default:
 			usage();
 		}
@@ -189,25 +215,43 @@ main(int argc, char **argv)
 	fail = false;
 
 	if (test) {
-		ok = rumpns_npf_nbuf_test(verbose);
-		fail |= result("nbuf", ok);
+		if (!testname || strcmp("nbuf", testname) == 0) {
+			ok = rumpns_npf_nbuf_test(verbose);
+			fail |= result("nbuf", ok);
+			tname_matched = true;
+		}
 
-		ok = rumpns_npf_processor_test(verbose);
-		fail |= result("processor", ok);
+		if (!testname || strcmp("processor", testname) == 0) {
+			ok = rumpns_npf_processor_test(verbose);
+			fail |= result("processor", ok);
+			tname_matched = true;
+		}
 
-		ok = rumpns_npf_table_test(verbose);
-		fail |= result("table", ok);
+		if (!testname || strcmp("table", testname) == 0) {
+			ok = rumpns_npf_table_test(verbose);
+			fail |= result("table", ok);
+			tname_matched = true;
+		}
 
-		ok = rumpns_npf_state_test(verbose);
-		fail |= result("state", ok);
+		if (!testname || strcmp("state", testname) == 0) {
+			ok = rumpns_npf_state_test(verbose);
+			fail |= result("state", ok);
+			tname_matched = true;
+		}
 	}
 
 	if (test && config) {
-		ok = rumpns_npf_rule_test(verbose);
-		fail |= result("rule", ok);
+		if (!testname || strcmp("rule", testname) == 0) {
+			ok = rumpns_npf_rule_test(verbose);
+			fail |= result("rule", ok);
+			tname_matched = true;
+		}
 
-		ok = rumpns_npf_nat_test(verbose);
-		fail |= result("nat", ok);
+		if (!testname || strcmp("nat", testname) == 0) {
+			ok = rumpns_npf_nat_test(verbose);
+			fail |= result("nat", ok);
+			tname_matched = true;
+		}
 	}
 
 	if (stream) {
@@ -215,6 +259,9 @@ main(int argc, char **argv)
 	}
 
 	rump_unschedule();
+
+	if (testname && !tname_matched)
+		errx(EXIT_FAILURE, "test \"%s\" unknown", testname);
 
 	return fail ? EXIT_FAILURE : EXIT_SUCCESS;
 }
