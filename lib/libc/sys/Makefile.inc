@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.215 2012/06/22 18:28:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.216 2012/09/12 02:00:53 manu Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -120,7 +120,7 @@ ASM=	access.S acct.S \
 	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S rename.S \
 		renameat.S revoke.S rmdir.S \
 	semconfig.S semget.S semop.S \
-		sendmmsg.S sendmsg.S sendto.S setegid.S setcontext.S seteuid.S \
+		sendmmsg.S sendmsg.S sendto.S setegid.S seteuid.S \
 		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
@@ -156,7 +156,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
-	__select50.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
