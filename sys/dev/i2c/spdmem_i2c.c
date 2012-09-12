@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.5 2012/05/31 16:09:33 pgoyette Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.5 2012/05/31 16:09:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,9 +152,9 @@ spdmem_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
+		sysctl_spdmem_setup(&spdmem_sysctl_clog);
 		error = config_init_component(cfdriver_ioconf_spdmem,
 		    cfattach_ioconf_spdmem, cfdata_ioconf_spdmem);
-		sysctl_spdmem_setup(&spdmem_sysctl_clog);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
