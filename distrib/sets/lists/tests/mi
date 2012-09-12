@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.490 2012/08/26 23:03:21 jmmv Exp $
+# $NetBSD: mi,v 1.491 2012/09/12 02:00:51 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -573,6 +573,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigqueue.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_socketpair.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_stat.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_swapcontext.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ucontext.debug		tests-lib-debug		debug,atf
@@ -674,6 +675,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_siglongjmp.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sched.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
@@ -2486,6 +2488,7 @@
 ./usr/tests/lib/libc/sys/t_sigqueue		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_socketpair		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_stat			tests-lib-tests		atf
+./usr/tests/lib/libc/sys/t_swapcontext		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_timer_create		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_truncate		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_ucontext		tests-lib-tests		atf
@@ -2714,6 +2717,7 @@
 ./usr/tests/lib/libpthread/t_siglongjmp		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
+./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		atf
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sched			tests-lib-tests		atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.21 2008/06/23 10:38:39 ad Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.22 2012/09/12 02:00:53 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,18 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.21 2008/06/23 10:38:39 ad Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.22 2012/09/12 02:00:53 manu Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+#include <string.h>
 #include <sys/lwpctl.h>
+
+#include "../libc/include/extern.h" /* for _sys_setcontext() */
+
+int	pthread_setcontext(const ucontext_t *);
 
 __strong_alias(__libc_thr_setspecific,pthread_setspecific)
 __strong_alias(__libc_thr_getspecific,pthread_getspecific)
 __strong_alias(__libc_thr_curcpu,pthread_curcpu_np)
+
+__strong_alias(setcontext,pthread_setcontext)
 
 int
 pthread_setspecific(pthread_key_t key, const void *value)
@@ -74,4 +81,17 @@ pthread_curcpu_np(void)
 {
 
 	return pthread__self()->pt_lwpctl->lc_curcpu;
+}
+
+/*
+ * Override setcontext so that pthread private pointer is preserved
+ */
+int
+pthread_setcontext(const ucontext_t *ucp)
+{
+	ucontext_t uc;
+
+	(void)memcpy(&uc, ucp, sizeof(uc));
+	uc.uc_flags &= ~_UC_TLSBASE;
+	return _sys_setcontext(&uc);
 }
