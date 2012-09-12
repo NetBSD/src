@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.22 2012/09/12 02:00:53 manu Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.23 2012/09/12 14:55:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.22 2012/09/12 02:00:53 manu Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.23 2012/09/12 14:55:48 matt Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
@@ -89,9 +89,16 @@ pthread_curcpu_np(void)
 int
 pthread_setcontext(const ucontext_t *ucp)
 {
+#ifdef _UC_TLSBASE
 	ucontext_t uc;
-
-	(void)memcpy(&uc, ucp, sizeof(uc));
-	uc.uc_flags &= ~_UC_TLSBASE;
-	return _sys_setcontext(&uc);
+	/*
+	 * Only copy and clear _UC_TLSBASE if it is set.
+	 */
+	if (ucp->uc_flags & _UC_TLSBASE) {
+		uc = *ucp;
+		uc.uc_flags &= ~_UC_TLSBASE;
+		ucp = &uc;
+	}
+#endif /* _UC_TLSBASE */
+	return _sys_setcontext(ucp);
 }
