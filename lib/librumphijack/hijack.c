@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.98 2012/09/03 12:07:42 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.99 2012/09/12 10:35:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include "rumpuser_port.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.98 2012/09/03 12:07:42 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.99 2012/09/12 10:35:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1502,7 +1502,7 @@ msg_convert(struct msghdr *msg, int (*func)(int))
 			int *fdp = (void *)CMSG_DATA(cmsg);
 			const size_t size =
 			    cmsg->cmsg_len - __CMSG_ALIGN(sizeof(*cmsg));
-			const int nfds = size / sizeof(int);
+			const int nfds = (int)(size / sizeof(int));
 			const int * const efdp = fdp + nfds;
 
 			while (fdp < efdp) {
@@ -1957,7 +1957,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		int rpipe[2] = {-1,-1}, hpipe[2] = {-1,-1};
 		struct pollarg parg;
 		void *trv_val;
-		int sverrno = 0, lrv, trv;
+		int sverrno = 0, rv_rump, rv_host, errno_rump, errno_host;
 
 		/*
 		 * ok, this is where it gets tricky.  We must support
@@ -2047,30 +2047,63 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
 		op_pollts = GETSYSCALL(rump, POLLTS);
-		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
-		sverrno = errno;
+		rv_rump = op_pollts(pfd_rump, nfds+1, ts, NULL);
+		errno_rump = errno;
 		write(hpipe[1], &rv, sizeof(rv));
 		pthread_join(pt, &trv_val);
-		trv = (int)(intptr_t)trv_val;
+		rv_host = (int)(intptr_t)trv_val;
+		errno_host = parg.errnum;
 
-		/* check who "won" and merge results */
-		if (lrv != 0 && pfd_host[nfds].revents & POLLIN) {
-			rv = trv;
+		/* strip cross-thread notification from real results */
+		if (pfd_host[nfds].revents & POLLIN) {
+			assert((pfd_rump[nfds].revents & POLLIN) == 0);
+			assert(rv_host > 0);
+			rv_host--;
+		}
+		if (pfd_rump[nfds].revents & POLLIN) {
+			assert((pfd_host[nfds].revents & POLLIN) == 0);
+			assert(rv_rump > 0);
+			rv_rump--;
+		}
 
-			for (i = 0; i < nfds; i++) {
-				if (pfd_rump[i].fd != -1)
-					fds[i].revents = pfd_rump[i].revents;
+		/* then merge the results into what's reported to the caller */
+		if (rv_rump > 0 || rv_host > 0) {
+			/* SUCCESS */
+
+			rv = 0;
+			if (rv_rump > 0) {
+				for (i = 0; i < nfds; i++) {
+					if (pfd_rump[i].fd != -1)
+						fds[i].revents
+						    = pfd_rump[i].revents;
+				}
+				rv += rv_rump;
 			}
-			sverrno = parg.errnum;
-		} else if (trv != 0 && pfd_rump[nfds].revents & POLLIN) {
-			rv = trv;
+			if (rv_host > 0) {
+				for (i = 0; i < nfds; i++) {
+					if (pfd_host[i].fd != -1)
+						fds[i].revents
+						    = pfd_host[i].revents;
+				}
+				rv += rv_host;
+			}
+			assert(rv > 0);
+			sverrno = 0;
+		} else if (rv_rump == -1 || rv_host == -1) {
+			/* ERROR */
 
-			for (i = 0; i < nfds; i++) {
-				if (pfd_host[i].fd != -1)
-					fds[i].revents = pfd_host[i].revents;
+			/* just pick one kernel at "random" */
+			rv = -1;
+			if (rv_host == -1) {
+				sverrno = errno_host;
+			} else if (rv_rump == -1) {
+				sverrno = errno_rump;
 			}
 		} else {
+			/* TIMEOUT */
+
 			rv = 0;
+			assert(rv_rump == 0 && rv_host == 0);
 		}
 
  out:
