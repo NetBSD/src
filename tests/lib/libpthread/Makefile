@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/04/06 16:04:16 jruoho Exp $
+# $NetBSD: Makefile,v 1.8 2012/09/12 02:00:55 manu Exp $
 
 NOMAN=		# defined
 
@@ -35,6 +35,7 @@ TESTS_C+=	t_sigmask
 TESTS_C+=	t_sigsuspend
 TESTS_C+=	t_siglongjmp
 TESTS_C+=	t_sleep
+TESTS_C+=	t_swapcontext
 
 LDADD.t_sem+=	-lrt
 

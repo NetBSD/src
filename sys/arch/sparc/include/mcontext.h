@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2011/02/25 14:07:13 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13 2012/09/12 02:00:54 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #define _UC_SETSTACK	0x00010000
 #define _UC_CLRSTACK	0x00020000
+#define _UC_TLSBASE	0x00080000
 
 /*
  * Layout of mcontext_t according the System V Application Binary Interface,

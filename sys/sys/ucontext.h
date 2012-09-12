@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.16 2012/05/21 14:15:19 martin Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.17 2012/09/12 02:00:54 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -57,21 +57,48 @@ struct __ucontext {
 #define _UC_STACK	0x02		/* valid uc_stack */
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
-#define	_UC_MD		0x40070020	/* MD bits.  see below */
+#define	_UC_MD		0x400f0020	/* MD bits.  see below */
 
 /*
- * _UC_MD includes:
- *	_UC_SETSTACK	0x00010000 (many ports) and 0x00020000 (arm)
- *	_UC_CLRSTACK	0x00020000 (many ports) and 0x00040000 (arm)
- *	_UC_POWERPC_VEC	0x00010000 (powerpc)
- *	_UC_M68K_UC_USER 0x40000000 (m68k)
- *	_UC_UNIQUE	0x00000020 (alpha)
- *	_UC_ARM_VFP	0x00010000 (arm)
- *	_UC_VM		0x00040000 (i386)
- *	_UC_FXSAVE	0x00000020 (i386)
- *
  * if your port needs more MD bits, please try to choose bits from _UC_MD
  * first, rather than picking random unused bits.
+ *
+ * _UC_MD details
+ *
+ * 	_UC_TLSBASE	Context contains valid pthread private pointer 
+ *			All ports must define this MD flag
+ * 			0x00040000	hppa, mips
+ * 			0x00000020	alpha
+ *			0x00080000	all other ports
+ *
+ *	_UC_SETSTACK	Context uses signal stack
+ *			0x00020000	arm
+ *			[undefined]	alpha, powerpc and vax
+ *			0x00010000	other ports
+ *
+ *	_UC_CLRSTACK	Context does not use signal stack
+ *			0x00040000	arm
+ *			[undefined]	alpha, powerpc and vax
+ *			0x00020000	other ports
+ *
+ *	_UC_POWERPC_VEC Context does not use signal stack
+ *			0x00010000	powerpc only
+ *
+ *	_UC_POWERPC_SPE	Context contains valid SPE context
+ *			0x00020000	powerpc only
+ *
+ *	_UC_M68K_UC_USER Used by m68k machdep code, but undocumented
+ *			0x40000000	m68k only
+ *
+ *	_UC_ARM_VFP	Unused
+ *			0x00010000	arm only
+ *
+ *	_UC_VM		Context contains valid virtual 8086 context
+ *			0x00040000	i386, amd64 only
+ *
+ *	_UC_FXSAVE	Context contains FPU context in that 
+ *			is in FXSAVE format in XMM space 
+ *			0x00000020	i386, amd64 only
  */
 
 #ifdef _KERNEL

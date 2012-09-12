@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.341 2012/07/28 00:57:04 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.341 2012/07/28 00:57:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1793,7 +1793,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
-	*flags |= _UC_CPU | _UC_UNIQUE;
+	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any, and copy it. */
 	if (fpu_used_p(l)) {
@@ -1840,7 +1840,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
 		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
-	if (flags & _UC_UNIQUE)
+	if (flags & _UC_TLSBASE)
 		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_UNIQUE]);
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
