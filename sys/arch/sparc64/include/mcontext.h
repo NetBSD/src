@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2006/03/16 16:05:53 cube Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9 2012/09/12 02:00:54 manu Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_
@@ -74,5 +74,6 @@ typedef struct {
 
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
+#define	_UC_TLSBASE	0x00080000
 
 #endif /* _SPARC64_MCONTEXT_H_ */

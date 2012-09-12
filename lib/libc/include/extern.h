@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2011/09/19 21:24:58 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2012/09/12 02:00:53 manu Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <stdarg.h>
+#include <ucontext.h>
 
 __BEGIN_DECLS
 extern char *__minbrk;
@@ -66,5 +67,7 @@ int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);
+
+int	_sys_setcontext(const ucontext_t *);
 
 __END_DECLS
