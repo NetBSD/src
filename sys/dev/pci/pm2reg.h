@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.7 2012/09/05 01:32:01 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.8 2012/09/12 12:07:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -322,6 +322,8 @@
 #define PM2_RE_STENCIL_MODE	0x00008988
 #define PM2_RE_ROP_MODE		0x00008828
 #define PM2_RE_PACKEDDATA_LIMIT	0x00008150
+#define PM2_RE_DATA		0x00008aa0	/* pixel data */
+#define PM2_RE_SOURCEDATA	0x00008aa8	/* raw data */
 
 
 #endif /* PM2_REG_H */
