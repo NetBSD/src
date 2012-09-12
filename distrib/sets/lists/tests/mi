@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.492 2012/09/12 14:07:52 martin Exp $
+# $NetBSD: mi,v 1.493 2012/09/12 19:20:38 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2861,7 +2861,7 @@
 ./usr/tests/net/net/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_raw		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_unix		tests-net-tests		atf,rump
-./usr/tests/net/npf			tests-net-tests		atf,rump
+./usr/tests/net/npf			tests-net-tests
 ./usr/tests/net/npf/Atffile		tests-net-tests		atf,rump
 ./usr/tests/net/npf/npftest.conf	tests-net-tests		atf,rump
 ./usr/tests/net/npf/t_npf		tests-net-tests		atf,rump
