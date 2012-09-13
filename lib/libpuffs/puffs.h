@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119.4.3 2012/08/12 13:13:21 martin Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.4.4 2012/09/13 20:20:16 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -248,8 +248,10 @@ struct puffs_ops {
 	    struct timespec *, int);
 	int (*puffs_node_write2)(struct puffs_usermount *, puffs_cookie_t,
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int, int);
+	int (*puffs_node_reclaim2)(struct puffs_usermount *,
+	    puffs_cookie_t, int);
 
-	void *puffs_ops_spare[29];
+	void *puffs_ops_spare[28];
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -283,7 +285,8 @@ enum {
 #define PUFFS_FLAG_BUILDPATH	0x80000000	/* node paths in pnode */
 #define PUFFS_FLAG_OPDUMP	0x40000000	/* dump all operations */
 #define PUFFS_FLAG_HASHPATH	0x20000000	/* speedup: hash paths */
-#define PUFFS_FLAG_MASK		0xe0000000
+#define PUFFS_FLAG_PNCOOKIE	0x10000000	/* cookies are pnodes */
+#define PUFFS_FLAG_MASK		0xf0000000
 
 #define PUFFS_FLAG_KERN(a)	((a) & PUFFS_KFLAG_MASK)
 #define PUFFS_FLAG_LIB(a)	((a) & PUFFS_FLAG_MASK)
@@ -405,7 +408,9 @@ enum {
 	    struct timespec *, int);					\
 	int fsname##_node_write2(struct puffs_usermount *,		\
 	    puffs_cookie_t, uint8_t *, off_t, size_t *,			\
-	    const struct puffs_cred *, int, int);
+	    const struct puffs_cred *, int, int);			\
+	int fsname##_node_reclaim2(struct puffs_usermount *,		\
+	    puffs_cookie_t, int);
 
 
 #define PUFFSOP_INIT(ops)						\
