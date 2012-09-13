@@ -1,6 +1,6 @@
-/*	$NetBSD: atomic_or_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
+/*	$NetBSD: atomic_or_64.S,v 1.2 2012/09/13 00:36:12 matt Exp $	*/
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

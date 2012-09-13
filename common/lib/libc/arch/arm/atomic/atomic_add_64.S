@@ -1,5 +1,4 @@
-/*	$NetBSD: atomic_add_64.S,v 1.2 2012/09/12 18:23:33 matt Exp $	*/
-
+/*	$NetBSD: atomic_add_64.S,v 1.3 2012/09/13 00:36:12 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
