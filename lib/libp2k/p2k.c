@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.55.4.1 2012/08/12 13:02:59 martin Exp $	*/
+/*	$NetBSD: p2k.c,v 1.55.4.2 2012/09/13 20:20:17 riz Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -357,6 +357,13 @@ p2k_init(uint32_t puffs_flags)
 			printf("P2K WIZARD MODE: using uid %d\n", wizarduid);
 		}
 	}
+
+	/*
+	 * Explicitely tell that our cookies can be treated as
+	 * puffs_node, since we never let libpuffs know by 
+	 * calling  call puffs_pn_new()
+	 */
+	puffs_flags |= PUFFS_FLAG_PNCOOKIE;
 
 	p2m = allocp2m();
 	if (p2m == NULL)
