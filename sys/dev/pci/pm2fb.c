@@ -1,7 +1,7 @@
-/*	$NetBSD: pm2fb.c,v 1.18 2012/09/13 02:09:00 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.19 2012/09/13 21:12:40 macallan Exp $	*/
 
 /*
- * Copyright (c) 2009 Michael Lorenz
+ * Copyright (c) 2009, 2012 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.18 2012/09/13 02:09:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.19 2012/09/13 21:12:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1242,14 +1242,12 @@ pm2fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 /*
- * Permedia2 requires a stride that's a multiple of 32 pixels.
- * For now reject modes with odd widths, although at some point we may want
- * to just pick the next bigger stride and waste a few kB of video memory
+ * Permedia2 can't blit outside of 2048x2048, so reject anything higher
+ * max. dot clock is probably too high
  */
 
 #define MODE_IS_VALID(m) (((m)->hdisplay < 2048) && \
-	((m)->dot_clock < 230000) && \
-	(((m)->hdisplay & 32) == 0))
+	((m)->dot_clock < 230000))
 
 static void
 pm2_setup_i2c(struct pm2fb_softc *sc)
@@ -1458,7 +1456,7 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 static void
 pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 {
-	int t1, t2, t3, t4;
+	int t1, t2, t3, t4, stride;
 	uint32_t vclk;
 	uint8_t sync = 0;
 	
@@ -1477,8 +1475,15 @@ pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 	    (mode->htotal - mode->hdisplay) >> 3);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HGATE_END,
 	    (mode->htotal - mode->hdisplay) >> 3);
+
+	/* first round up to the next multiple of 32 */
+	stride = (mode->hdisplay + 31) & ~31;
+	/* then find the next bigger one that we have partial products for */
+	while ((partprodPermedia[stride >> 5] == -1) && (stride < 2048)) {
+		stride += 32;
+	}
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_STRIDE,
-	    (mode->hdisplay) >> 3);
+	    stride >> 3);
 
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VTOTAL,
 	    mode->vtotal - 1);
@@ -1511,7 +1516,7 @@ pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 	sc->sc_width = mode->hdisplay;
 	sc->sc_height = mode->vdisplay;
 	sc->sc_depth = 8;
-	sc->sc_stride = sc->sc_width;
-	aprint_normal_dev(sc->sc_dev, "using %d x %d in 8 bit\n",
-	    sc->sc_width, sc->sc_height);
+	sc->sc_stride = stride;
+	aprint_normal_dev(sc->sc_dev, "using %d x %d in 8 bit, stride %d\n",
+	    sc->sc_width, sc->sc_height, stride);
 }
