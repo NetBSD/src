@@ -1,11 +1,10 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
-
+/*	$NetBSD: atomic_swap_64.S,v 1.2 2012/09/13 00:36:12 matt Exp $	*/
 /*-
- * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Matt Thomas.
+ * by Matt Thomas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,19 +29,6 @@
  */
 
 #include "atomic_op_asm.h"
-
-/*
- * While SWP{B} is sufficient on its own for pre-ARMv7 CPUs, on MP ARMv7 cores
- * SWP{B} is disabled since it's no longer atomic among multiple CPUs.  They
- * will actually raise an UNDEFINED exception.
- *
- * So if we use the LDREX/STREX template, but use a SWP instruction followed
- * by a MOV instruction (using a temporary register), that gives a handler
- * for the SWP UNDEFINED exception enough information to "patch" this instance
- * SWP with correct forms of LDREX/STREX.  (note that this would happen even
- * "read-only" pages.  If the page gets tossed, we will get another exception
- * and fix yet again).
- */
 
 ENTRY_NP(_atomic_swap_64)
 	str	r4, [sp, #-4]!		/* save temporary */
