@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.25.2.2 2012/08/12 13:13:20 martin Exp $ */
+/*  $NetBSD: perfuse.c,v 1.25.2.3 2012/09/13 22:31:03 riz Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -682,9 +682,8 @@ perfuse_fsreq(struct puffs_usermount *pu, perfuse_msg_t *pm)
 		DWARN("operation unique = %"PRId64" failed", foh->unique);
 		break;
 	default:
-		DERRX(EX_SOFTWARE,
-		     "Unexpected frame: unique = %"PRId64", error = %d",
-		     foh->unique, foh->error);
+		DWARNX("Unexpected frame: unique = %"PRId64", error = %d",
+		        foh->unique, foh->error);
 		/* NOTREACHED */
 		break;
 	}
