@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.180 2012/08/23 09:00:32 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.181 2012/09/13 23:59:18 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8532,4 +8532,14 @@ usr.sbin/fssconfig/fssconfig.c			1.9
 	Use `getdisksize()' to get the size of the mounted-on block device.
 	Should work for disks without partition table (like wedges) now.
 	[hannken, ticket #1784]
+
+dist/bind/CHANGES				patch
+dist/bind/version				patch
+dist/bind/lib/dns/master.c			patch
+dist/bind/lib/dns/rdata.c			patch
+dist/bind/lib/dns/rdataslab.c			patch
+dist/bind/lib/dns/include/dns/rdata.h		patch
+
+	Apply fix for CVE-2012-4244 from upstream.
+	[1796, ticket #spz]
 
