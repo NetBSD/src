@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.32 2011/08/30 17:06:21 plunky Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.33 2012/09/13 11:09:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -397,7 +397,7 @@ unlock(nlm4_lock *lck, int flags)
 			/* nothing to do */
 			break;
 		default:
-			syslog(LOG_NOTICE, "unknow status %d for %s",
+			syslog(LOG_NOTICE, "unknown status %d for %s",
 			    fl->status, fl->client_name);
 		}
 		sigunlock();
@@ -458,7 +458,7 @@ sigchild_handler(int sig)
 				break;
 		}
 		if (fl == NULL) {
-			syslog(LOG_NOTICE, "unknow child %d", pid);
+			syslog(LOG_NOTICE, "unknown child %d", pid);
 		} else {
 			/*
 			 * protect from pid reusing.
@@ -839,7 +839,7 @@ notify(const char *hostname, int state)
 			case LKST_DYING:
 				break;
 			default:
-				syslog(LOG_NOTICE, "unknow status %d for %s",
+				syslog(LOG_NOTICE, "unknown status %d for %s",
 				    fl->status, fl->client_name);
 			}
 		}
