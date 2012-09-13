@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.98 2012/05/21 14:15:18 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.99 2012/09/13 11:53:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.98 2012/05/21 14:15:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.99 2012/09/13 11:53:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -777,7 +777,7 @@ netbsd32_cpu_getmcontext(
 	gr[_REG_O5]  = tf->tf_out[5];
 	gr[_REG_O6]  = tf->tf_out[6];
 	gr[_REG_O7]  = tf->tf_out[7];
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	mcp->__gwins = 0;
 
@@ -1186,7 +1186,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_global[4] = (uint64_t)gr[_REG32_G4];
 		tf->tf_global[5] = (uint64_t)gr[_REG32_G5];
 		tf->tf_global[6] = (uint64_t)gr[_REG32_G6];
-		tf->tf_global[7] = (uint64_t)gr[_REG32_G7];
+		/* done in lwp_setprivate */
+		/* tf->tf_global[7] = (uint64_t)gr[_REG32_G7]; */
 		tf->tf_out[0]    = (uint64_t)gr[_REG32_O0];
 		tf->tf_out[1]    = (uint64_t)gr[_REG32_O1];
 		tf->tf_out[2]    = (uint64_t)gr[_REG32_O2];
@@ -1197,7 +1198,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		tf->tf_out[7]    = (uint64_t)gr[_REG32_O7];
 		/* %asi restored above; %fprs not yet supported. */
 
-		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_G7]);
+		if (flags & _UC_TLSBASE)
+			lwp_setprivate(l, (void *)(uintptr_t)gr[_REG32_G7]);
 
 		/* XXX mcp->__gwins */
 	}
@@ -1281,11 +1283,11 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_O5]  = tf->tf_out[5];
 	gr[_REG32_O6]  = tf->tf_out[6];
 	gr[_REG32_O7]  = tf->tf_out[7];
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	mcp->__gwins = 0;
 	mcp->__xrs.__xrs_id = 0;	/* Solaris extension? */
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	/* Save FP register context, if any. */
 	if (l->l_md.md_fpstate != NULL) {

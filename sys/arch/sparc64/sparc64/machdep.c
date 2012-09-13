@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 2012/07/28 19:08:25 matt Exp $ */
+/*	$NetBSD: machdep.c,v 1.270 2012/09/13 11:53:45 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2012/07/28 19:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2012/09/13 11:53:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2492,7 +2492,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		gr[_REG_nPC] = ras_pc + 4;
 	}
 
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	mcp->__gwins = NULL;
 
@@ -2581,7 +2581,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_global[4] = (uint64_t)gr[_REG_G4];
 		tf->tf_global[5] = (uint64_t)gr[_REG_G5];
 		tf->tf_global[6] = (uint64_t)gr[_REG_G6];
-		tf->tf_global[7] = (uint64_t)gr[_REG_G7];
+		/* done in lwp_setprivate */
+		/* tf->tf_global[7] = (uint64_t)gr[_REG_G7]; */
 		tf->tf_out[0]    = (uint64_t)gr[_REG_O0];
 		tf->tf_out[1]    = (uint64_t)gr[_REG_O1];
 		tf->tf_out[2]    = (uint64_t)gr[_REG_O2];
@@ -2593,6 +2594,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */
+
+		if (flags & _UC_TLSBASE)
+			lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_G7]);
 	}
 
 	/* Restore FP register context, if any. */
