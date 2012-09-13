@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.80 2010/03/26 20:52:01 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.80.14.1 2012/09/13 22:22:45 riz Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.80 2010/03/26 20:52:01 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.80.14.1 2012/09/13 22:22:45 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.80 2010/03/26 20:52:01 mjacob Exp $")
 #include <machine/autoconf.h>
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
+#include "opt_isp.h"
 
 static void isp_sbus_reset0(ispsoftc_t *);
 static void isp_sbus_reset1(ispsoftc_t *);
@@ -357,6 +358,7 @@ isp_sbus_mbxdma(ispsoftc_t *isp)
 	for (n = 0; n < isp->isp_maxcmds - 1; n++) {
 		isp->isp_xflist[n].cmd = &isp->isp_xflist[n+1];
 	}
+	isp->isp_xffree = isp->isp_xflist;
 	n = sizeof (bus_dmamap_t) * isp->isp_maxcmds;
 	sbc->sbus_dmamap = (bus_dmamap_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (sbc->sbus_dmamap == NULL) {
