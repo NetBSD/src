@@ -1,3 +1,8 @@
+	--- 9.9.1-P3 released ---
+
+3364.	[security]	Named could die on specially crafted record.
+			[RT #30416]
+
 	--- 9.9.1-P2 released ---
 
 3349.	[bug]		Change #3345 was incomplete. [RT #30233]
