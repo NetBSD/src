@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.203 2012/09/13 08:05:24 martin Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.204 2012/09/13 20:29:06 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8546,4 +8546,22 @@ external/bsd/bind/dist/version			1.3
                           [RT #30416]
 	[spz, ticket #559]
 
+
+lib/libp2k/p2k.c				1.57
+lib/libpuffs/dispatcher.c			1.44
+lib/libpuffs/pnode.c				1.13
+lib/libpuffs/puffs.3				1.56
+lib/libpuffs/puffs.h				1.124
+lib/libpuffs/puffs_ops.3			1.35
+
+	Fix a regression in libpuffs for third-party file systems which
+	do not map cookies to struct puffs_node.  We are not aware of
+	the existence of any such file systems.
+	[manu, ticket #525]
+
+sys/arch/arm/include/byte_swap.h		1.9,1.12
+
+	Disable arm32 __asm for _byte_swap_u16_variable since gcc4.5 produces
+	decent code for it.  Fixes PR/46898.
+	[martin, ticket #542]
 
