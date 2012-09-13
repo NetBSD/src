@@ -3,6 +3,11 @@
 3331.	[security]	dns_rdataslab_fromrdataset could produce bad
 			rdataslabs. [RT #29644]
 
+	--- 9.7.6-P3 released ---
+
+3364.	[security]	Named could die on specially crafted record.
+			[RT #30416]
+
 	--- 9.7.6-P2 released ---
 
 3346.	[security]	Bad-cache data could be used before it was
