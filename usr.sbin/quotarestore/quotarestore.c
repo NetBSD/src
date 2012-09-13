@@ -1,4 +1,4 @@
-/*	$NetBSD: quotarestore.c,v 1.2 2012/02/14 17:33:38 joerg Exp $	*/
+/*	$NetBSD: quotarestore.c,v 1.3 2012/09/13 21:44:50 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: quotarestore.c,v 1.2 2012/02/14 17:33:38 joerg Exp $");
+__RCSID("$NetBSD: quotarestore.c,v 1.3 2012/09/13 21:44:50 joerg Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: quotarestore.c,v 1.2 2012/02/14 17:33:38 joerg Exp $");
 
 #include <quota.h>
 
-static const char const ws[] = " \t\r\n";
+static const char ws[] = " \t\r\n";
 
 static char **idtypenames;
 static unsigned numidtypes;

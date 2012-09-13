@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.31 2012/09/13 21:44:50 joerg Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.31 2012/09/13 21:44:50 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -220,7 +220,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 static int
 sdhc_cfprint(void *aux, const char *pnp)
 {
-	const struct sdmmcbus_attach_args const * saa = aux;
+	const struct sdmmcbus_attach_args * const saa = aux;
 	const struct sdhc_host * const hp = saa->saa_sch;
 	
 	if (pnp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.75 2012/09/01 12:28:58 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.76 2012/09/13 21:44:50 joerg Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.75 2012/09/01 12:28:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.76 2012/09/13 21:44:50 joerg Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -895,7 +895,7 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
  */
 
 static int
-vmem_fit(const bt_t const *bt, vmem_size_t size, vmem_size_t align,
+vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align,
     vmem_size_t phase, vmem_size_t nocross,
     vmem_addr_t minaddr, vmem_addr_t maxaddr, vmem_addr_t *addrp)
 {
