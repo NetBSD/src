@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.5 2012/08/13 19:55:10 riz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.151.2.6 2012/09/13 22:20:58 riz Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -836,7 +836,7 @@ all)
 
 init)
 	# unless overridden by MD entry, this is equal to 'all'
-	makedev all
+	makedev all opty
 	;;
 
 %MI_DEVICES_BEGIN%
