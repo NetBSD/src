@@ -30,7 +30,7 @@
 #ifndef BPF_WHOLEPACKET
 # define BPF_WHOLEPACKET ~0U
 #endif
-static const struct bpf_insn const arp_bpf_filter [] = {
+static const struct bpf_insn arp_bpf_filter [] = {
 #ifndef BPF_SKIPTYPE
 	/* Make sure this is an ARP packet... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
@@ -75,7 +75,7 @@ static const size_t arp_bpf_filter_len =
  *   http://www.isc.org/
  */
 
-static const struct bpf_insn const dhcp_bpf_filter [] = {
+static const struct bpf_insn dhcp_bpf_filter [] = {
 #ifndef BPF_SKIPTYPE
 	/* Make sure this is an IP packet... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
