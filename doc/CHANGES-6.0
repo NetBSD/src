@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.204 2012/09/13 20:29:06 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.205 2012/09/13 22:36:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8564,4 +8564,44 @@ sys/arch/arm/include/byte_swap.h		1.9,1.12
 	Disable arm32 __asm for _byte_swap_u16_variable since gcc4.5 produces
 	decent code for it.  Fixes PR/46898.
 	[martin, ticket #542]
+
+etc/MAKEDEV.tmpl				1.158
+
+	Make the "init" target create optys as well.  PR#46902.
+	[martin, ticket #543]
+
+sys/dev/sbus/isp_sbus.c				1.81
+
+	Fix isp(4) at sbus so it doesn't hang the machine.
+	[macallan, ticket #550]
+
+sys/ufs/ufs/ufs_quota.c				1.112
+
+	Fix quotactl authorization.
+	[manu, ticket #551]
+
+sbin/mount_ptyfs/mount_ptyfs.8			1.9-1.10
+
+	ptyfs(8) is not experimental.
+	[dholland, ticket #552]
+
+sys/ufs/ffs/ffs_vfsops.c			1.278
+
+	Fix unmount of file systems with extended attributes enabled.
+	[manu, ticket #553]
+
+lib/libperfuse/perfuse.c			1.31
+
+	Don't unmount FUSE file systems on a non-fatal error.
+	[manu, ticket #554]
+
+sys/net/npf/npf_alg_icmp.c			1.12
+
+	Fix a bug in NPF's icmp handling.
+	[rmind, ticket #555]
+
+sys/ufs/ufs/ufs_extattr.c			1.40
+
+	Fix unmount in the case where an attribute was autocreated.
+	[manu, ticket #556]
 
