@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1125 2012/08/10 16:24:43 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1126 2012/09/13 12:16:47 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1132 2012/08/10 16:24:17 bouyer Exp
+ *	NetBSD: pcidevs,v 1.1133 2012/09/13 12:11:06 nonaka Exp
  */
 
 /*
@@ -919,6 +919,9 @@
 #define	PCI_PRODUCT_ALTEON_ACENIC_COPPER	0x0002		/* ACEnic 1000baseT Ethernet */
 #define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* ACEnic BCM5700 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* ACEnic BCM5701 10/100/1000 Ethernet */
+
+/* Altera products */
+#define	PCI_PRODUCT_ALTERA_EP4CGX15BF14C8N	0x4c15		/* EP4CGX15BF14C8N */
 
 /* Altima products */
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 Gigabit Ethernet */
