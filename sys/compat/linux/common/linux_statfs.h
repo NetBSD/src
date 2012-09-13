@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_statfs.h,v 1.5 2010/11/02 18:14:05 chs Exp $	*/
+/*	$NetBSD: linux_statfs.h,v 1.6 2012/09/13 13:59:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@ bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 	int i;
 
 	for (i = 0; i < linux_fstypes_cnt; i++) {
-		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
-			lsp->l_ftype = linux_fstypes[i].linux;
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].mty_bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].mty_linux;
 			break;
 		}
 	}
@@ -97,8 +97,8 @@ bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
 	int i, div;
 
 	for (i = 0; i < linux_fstypes_cnt; i++) {
-		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
-			lsp->l_ftype = linux_fstypes[i].linux;
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].mty_bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].mty_linux;
 			break;
 		}
 	}
