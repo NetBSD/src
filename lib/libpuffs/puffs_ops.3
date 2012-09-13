@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.29.4.3 2012/08/12 13:13:21 martin Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.29.4.4 2012/09/13 20:20:15 riz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -226,6 +226,10 @@
 .Ft int
 .Fo puffs_node_reclaim
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fc
+.Ft int
+.Fo puffs_node_reclaim2
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int nlookup"
 .Fc
 .Ft int
 .Fo puffs_node_inactive
@@ -618,6 +622,8 @@ This is to retain the
 open file semantics.
 The data may be removed only when
 .Fn puffs_node_reclaim
+or
+.Fn puffs_node_reclaim2
 is called for the node, as this assures there are no further users.
 .It Fn puffs_node_link "pu" "opc" "targ" "pcn"
 Create a hard link for the node
@@ -792,6 +798,22 @@ with it may be freed.
 In case the file
 .Fa opc
 has a link count of zero, it may be safely removed now.
+.It Fn puffs_node_reclaim2 "pu" "opc" "nlookup"
+Same as
+.Fn puffs_node_reclaim 
+with an addditional argument for the number of lookups that have been done
+on the node (Node creation is counted as a lookup). This can be used by the
+filesystem to avoid a race condition, where the kernel sends a reclaim 
+while it does not have received the reply for a lookup. If the filesystem
+tracks lookup count, and compares to 
+.Fa nlookup
+it can detect this situation and ignore the reclaim. 
+.Pp
+If the filesystem maps cookies to
+.Vt struct puffs_node
+then the framework will do that work, and 
+.Fn puffs_node_reclaim
+can be reliabily used without the race condition.
 .It Fn puffs_node_abortop "pu" "opc" "pcn"
 In case the operation following lookup (e.g., mkdir or remove) is not
 executed for some reason, abortop will be issued.
@@ -803,6 +825,8 @@ The node
 has lost its last reference in the kernel.
 However, the cookie must still remain valid until
 .Fn puffs_node_reclaim
+or
+.Fn puffs_node_reclaim2
 is called.
 .It Fn puffs_setback "pcc" "op"
 Issue a "setback" operation which will be handled when the request response
