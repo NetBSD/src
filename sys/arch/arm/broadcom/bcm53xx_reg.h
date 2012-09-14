@@ -398,7 +398,7 @@
 #define	PCIE_CFG_IND_DATA	0x124
 #define	PCIE_CFG_ADDR		0x1f8
 #define	 CFG_ADDR_BUS		__BITS(27,20)
-#define	 CFG_ADDR_DEV		__BITS(27,15)
+#define	 CFG_ADDR_DEV		__BITS(19,15)
 #define	 CFG_ADDR_FUNC		__BITS(14,12)
 #define	 CFG_ADDR_REG		__BITS(11,2)
 #define	 CFG_ADDR_TYPE		__BITS(1,0)
