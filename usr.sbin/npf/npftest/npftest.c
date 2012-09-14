@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.7 2012/09/12 08:47:14 martin Exp $	*/
+/*	$NetBSD: npftest.c,v 1.8 2012/09/14 15:37:03 joerg Exp $	*/
 
 /*
  * NPF testing framework.
@@ -26,7 +26,7 @@
 
 static bool verbose, quiet;
 
-static void
+__dead static void
 usage(void)
 {
 	printf("usage:\n"
@@ -48,7 +48,7 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static void
+__dead static void
 describe_tests(void)
 {
 	printf(	"nbuf\tbasic npf mbuf handling\n"
