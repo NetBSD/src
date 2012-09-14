@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.4 2012/09/07 21:18:58 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.5 2012/09/14 03:51:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4 2012/09/07 21:18:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.5 2012/09/14 03:51:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/pl310_reg.h>
@@ -51,14 +52,28 @@ struct arml2cc_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
+	kmutex_t sc_lock;
+	uint32_t sc_waymask;
+	struct evcnt sc_ev_inv __aligned(8);
+	struct evcnt sc_ev_wb;
+	struct evcnt sc_ev_wbinv;
+	bool sc_enabled;
 };
+
+__CTASSERT(offsetof(struct arml2cc_softc, sc_ev_inv.ev_count) % 8 == 0);
+__CTASSERT(offsetof(struct arml2cc_softc, sc_ev_wb.ev_count) % 8 == 0);
+__CTASSERT(offsetof(struct arml2cc_softc, sc_ev_wbinv.ev_count) % 8 == 0);
 
 CFATTACH_DECL_NEW(arml2cc, sizeof(struct arml2cc_softc),
     arml2cc_match, arml2cc_attach, NULL, NULL);
 
 static void arml2cc_disable(struct arml2cc_softc *);
+static void arml2cc_enable(struct arml2cc_softc *);
+static void arml2cc_sdcache_wb_range(vaddr_t, paddr_t, psize_t);
+static void arml2cc_sdcache_inv_range(vaddr_t, paddr_t, psize_t);
+static void arml2cc_sdcache_wbinv_range(vaddr_t, paddr_t, psize_t);
 
-static bool attached;
+static struct arml2cc_softc *arml2cc_sc;
 
 static inline uint32_t
 arml2cc_read_4(struct arml2cc_softc *sc, bus_size_t o)
@@ -79,7 +94,7 @@ arml2cc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mpcore_attach_args * const mpcaa = aux;
 
-	if (attached)
+	if (arml2cc_sc)
 		return 0;
 
 	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
@@ -116,9 +131,21 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 {
         struct arml2cc_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
+	const char * const xname = device_xname(self);
 
+	arml2cc_sc = sc;
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
+	sc->sc_waymask = __BIT(arm_scache.dcache_ways) - 1;
+
+	evcnt_attach_dynamic(&sc->sc_ev_inv, EVCNT_TYPE_MISC, NULL,
+	    xname, "L2 inv requests");
+	evcnt_attach_dynamic(&sc->sc_ev_wb, EVCNT_TYPE_MISC, NULL,
+	    xname, "L2 wb requests");
+	evcnt_attach_dynamic(&sc->sc_ev_wbinv, EVCNT_TYPE_MISC, NULL,
+	    xname, "L2 wbinv requests");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, 
 	    L2CC_BASE, L2CC_SIZE, &sc->sc_memh);
@@ -140,33 +167,82 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ARM PL310%s L2 Cache Controller%s\n",
 	    revstr, enabled_p ? "" : " (disabled)");
 
+#if 1
 	if (enabled_p) {
-		arml2cc_disable(sc);
+		if (1) {
+			arml2cc_disable(sc);
+			aprint_normal_dev(self, "cache %s\n",
+			    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
+			sc->sc_enabled = false;
+		} else {
+			cpufuncs.cf_sdcache_wb_range = arml2cc_sdcache_wb_range;
+			cpufuncs.cf_sdcache_inv_range = arml2cc_sdcache_inv_range;
+			cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
+			sc->sc_enabled = true;
+		}
+	}
+#else
+	if (!enabled_p) {
+		arml2cc_enable(sc);
 		aprint_normal_dev(self, "cache %s\n",
 		    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
 	}
+	cpufuncs.cf_sdcache_wb_range = arml2cc_sdcache_wb_range;
+	cpufuncs.cf_sdcache_inv_range = arml2cc_sdcache_inv_range;
+	cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
+	sc->sc_enabled = true;
+#endif
 
 	KASSERT(arm_pcache.dcache_line_size == arm_scache.dcache_line_size);
 }
 
-void
+static inline void
+arml2cc_cache_op(struct arml2cc_softc *sc, bus_size_t off, uint32_t val)
+{
+	arml2cc_write_4(sc, off, val);
+	while (arml2cc_read_4(sc, off) & 1) {
+		/* spin */
+	}
+}
+
+static inline void
+arml2cc_cache_way_op(struct arml2cc_softc *sc, bus_size_t off, uint32_t way_mask)
+{
+	arml2cc_write_4(sc, off, way_mask);
+	while (arml2cc_read_4(sc, off) & way_mask) {
+		/* spin */
+	}
+}
+
+static inline void
+arml2cc_cache_sync(struct arml2cc_softc *sc)
+{
+	arml2cc_cache_op(sc, L2C_CACHE_SYNC, 0);
+}
+
+static inline void
 arml2cc_disable(struct arml2cc_softc *sc)
 {
-	uint32_t way_mask = __BIT(arm_scache.dcache_ways) - 1;
-	register_t psw = cpsid(I32_bit);
+	mutex_spin_enter(&sc->sc_lock);
 
-	arml2cc_write_4(sc, L2C_CLEAN_INV_WAY, way_mask);
-	while (arml2cc_read_4(sc, L2C_CLEAN_INV_WAY) != 0) {
-		/* spin */
-	}
+	arml2cc_cache_way_op(sc, L2C_CLEAN_INV_WAY, sc->sc_waymask);
+	arml2cc_cache_sync(sc);
 
-	arml2cc_write_4(sc, L2C_CACHE_SYNC, 0);
-	while (arml2cc_read_4(sc, L2C_CACHE_SYNC) & 1) {
-		/* spin */
-	}
+	arml2cc_write_4(sc, L2C_CTL, 0);	// turn it off
+	mutex_spin_exit(&sc->sc_lock);
+}
 
-	arml2cc_write_4(sc, L2C_CTL, 0);	// turn it off */
-	cpsie(psw);
+static inline void
+arml2cc_enable(struct arml2cc_softc *sc)
+{
+	mutex_spin_enter(&sc->sc_lock);
+
+	arml2cc_write_4(sc, L2C_CTL, 1);	// turn it on
+
+	//arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
+	arml2cc_cache_sync(sc);
+
+	mutex_spin_exit(&sc->sc_lock);
 }
 
 void
@@ -198,36 +274,49 @@ arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
 	}
 }
 
-#if 0
 static void
-arml2cc_dcache_wb_range(vaddr_t va, vsize_t len)
+arml2cc_cache_range_op(paddr_t pa, psize_t len, bus_size_t cache_op)
 {
-	const size_t line_size = arm_pcache.dcache_line_size;
+	struct arml2cc_softc * const sc = arml2cc_sc;
+	const size_t line_size = arm_scache.dcache_line_size;
 	const size_t line_mask = line_size - 1;
-	size_t off = va & line_mask;
-	size_t page_len = 0;
-	paddr_t pa = 0;
+	size_t off = pa & line_mask;
 	if (off) {
 		len += off;
-		va -= off;
+		pa -= off;
 	}
-	for (const vaddr_t endva = va + roundup2(len, line_size);
-	     va < endva;
-	     va += line_size) {
-		armreg_dccmvac(va);		/* this may fault */
-		__asm __volatile("dsb");
-		if (page_len == 0) {
-			armreg_ats1cpr_write(va);
-			pa = armreg_par_read();
-			const psize = __predict_false(pa & 1) ? L1_SS_SIZE : L2_S_SIZE;
-			pa &= -psize;
-			endpa = pa + psize;
-			page_len = (va & (psize - 1);
+	len = roundup2(len, line_size);
+	off = pa & PAGE_MASK;
+	for (const paddr_t endpa = pa + len; pa < endpa; off = 0) {
+		psize_t seglen = min(len, PAGE_SIZE - off);
+
+		mutex_spin_enter(&sc->sc_lock);
+		if (!sc->sc_enabled)
+			return;
+		for (paddr_t segend = pa + seglen; pa < segend; pa += line_size) {
+			arml2cc_cache_op(sc, cache_op, pa);
 		}
-		size_t set = va 
-		arml2cc_write_4(sc, L2C_CLEAN_PA, pa);
-		
-		va += line_size;
+		mutex_spin_exit(&sc->sc_lock);
 	}
 }
-#endif
+
+static void
+arml2cc_sdcache_inv_range(vaddr_t va, paddr_t pa, psize_t len)
+{
+	atomic_inc_64(&arml2cc_sc->sc_ev_inv.ev_count);
+	arml2cc_cache_range_op(pa, len, L2C_INV_PA);
+}
+
+static void
+arml2cc_sdcache_wb_range(vaddr_t va, paddr_t pa, psize_t len)
+{
+	atomic_inc_64(&arml2cc_sc->sc_ev_wb.ev_count);
+	arml2cc_cache_range_op(pa, len, L2C_CLEAN_PA);
+}
+
+static void
+arml2cc_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t len)
+{
+	atomic_inc_64(&arml2cc_sc->sc_ev_wbinv.ev_count);
+	arml2cc_cache_range_op(pa, len, L2C_CLEAN_INV_PA);
+}
