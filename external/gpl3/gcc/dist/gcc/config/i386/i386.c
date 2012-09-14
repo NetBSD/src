@@ -20104,7 +20104,9 @@ ix86_local_alignment (tree exp, enum machine_mode mode,
   if (!TARGET_64BIT
       && align == 64
       && ix86_preferred_stack_boundary < 64
-      && (mode == DImode || (type && TYPE_MODE (type) == DImode))
+      && (mode == DImode || (type && TYPE_MODE (type) == DImode)
+          || mode == DFmode || (type && TYPE_MODE (type) == DFmode)
+          || mode == DCmode || (type && TYPE_MODE (type) == DCmode))
       && (!type || !TYPE_USER_ALIGN (type))
       && (!decl || !DECL_USER_ALIGN (decl)))
     align = 32;
@@ -20150,7 +20152,8 @@ ix86_local_alignment (tree exp, enum machine_mode mode,
 	    || TREE_CODE (type) == QUAL_UNION_TYPE)
 	   && TYPE_FIELDS (type))
     {
-      if (DECL_MODE (TYPE_FIELDS (type)) == DFmode && align < 64)
+      if (DECL_MODE (TYPE_FIELDS (type)) == DFmode && align < 64
+          && (TARGET_64BIT || ix86_preferred_stack_boundary >= 64))
 	return 64;
       if (ALIGN_MODE_128 (DECL_MODE (TYPE_FIELDS (type))) && align < 128)
 	return 128;
@@ -20159,7 +20162,8 @@ ix86_local_alignment (tree exp, enum machine_mode mode,
 	   || TREE_CODE (type) == INTEGER_TYPE)
     {
 
-      if (TYPE_MODE (type) == DFmode && align < 64)
+      if (TYPE_MODE (type) == DFmode && align < 64
+          && (TARGET_64BIT || ix86_preferred_stack_boundary >= 64))
 	return 64;
       if (ALIGN_MODE_128 (TYPE_MODE (type)) && align < 128)
 	return 128;
