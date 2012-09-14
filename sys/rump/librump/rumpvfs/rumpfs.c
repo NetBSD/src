@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.110 2012/03/30 18:09:12 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.111 2012/09/14 16:29:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.110 2012/03/30 18:09:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.111 2012/09/14 16:29:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1251,14 +1251,14 @@ rump_vop_open(void *v)
 		if (rn->rn_readfd != -1)
 			return 0;
 		rn->rn_readfd = rumpuser_open(rn->rn_hostpath,
-		    O_RDONLY, &error);
+		    RUMPUSER_OPEN_RDONLY, &error);
 	}
 
 	if (mode & FWRITE) {
 		if (rn->rn_writefd != -1)
 			return 0;
 		rn->rn_writefd = rumpuser_open(rn->rn_hostpath,
-		    O_WRONLY, &error);
+		    RUMPUSER_OPEN_WRONLY, &error);
 	}
 
 	return error;
