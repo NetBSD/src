@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.25 2012/09/14 03:58:47 matt Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2012/09/14 03:58:47 matt Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -193,7 +193,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		db_read_bytes((db_addr_t)((u_int32_t *)scp + scp_offset),
 		    sizeof(savecode), (void *)&savecode);
 #else
-		savecode = ((u_int32_t *)scp)[scp_offset];
+		if ((scp & 3) == 0) {
+			savecode = ((u_int32_t *)scp)[scp_offset];
+		} else {
+			savecode = 0;
+		}
 #endif
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
