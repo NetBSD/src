@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.2.8.4 2012/07/25 12:05:57 jdc Exp $	*/
+/*	$NetBSD: master.c,v 1.2.8.5 2012/09/14 00:00:42 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,7 @@
 /*%
  * max message size - header - root - type - class - ttl - rdlen
  */
-#define MINTSIZ (65535 - 12 - 1 - 2 - 2 - 4 - 2)
+#define MINTSIZ DNS_RDATA_MAXLENGTH
 /*%
  * Size for tokens in the presentation format,
  * The largest tokens are the base64 blocks in KEY and CERT records,
