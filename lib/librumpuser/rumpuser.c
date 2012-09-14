@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.19 2012/08/25 18:00:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.20 2012/09/14 16:29:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.19 2012/08/25 18:00:06 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.20 2012/09/14 16:29:22 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -317,10 +317,32 @@ rumpuser_memsync(void *addr, size_t len, int *error)
 }
 
 int
-rumpuser_open(const char *path, int flags, int *error)
+rumpuser_open(const char *path, int ruflags, int *error)
 {
+	int flags;
 
-	DOCALL(int, (open(path, flags, 0644)));
+	switch (ruflags & RUMPUSER_OPEN_ACCMODE) {
+	case RUMPUSER_OPEN_RDONLY:
+		flags = O_RDONLY;
+		break;
+	case RUMPUSER_OPEN_WRONLY:
+		flags = O_WRONLY;
+		break;
+	case RUMPUSER_OPEN_RDWR:
+		flags = O_RDWR;
+		break;
+	default:
+		*error = EINVAL;
+		return -1;
+	}
+
+#define TESTSET(_ru_, _h_) if (ruflags & _ru_) flags |= _h_;
+	TESTSET(RUMPUSER_OPEN_CREATE, O_CREAT);
+	TESTSET(RUMPUSER_OPEN_EXCL, O_EXCL);
+	TESTSET(RUMPUSER_OPEN_DIRECT, O_DIRECT);
+#undef TESTSET
+
+	DOCALL_KLOCK(int, (open(path, flags, 0644)));
 }
 
 int
