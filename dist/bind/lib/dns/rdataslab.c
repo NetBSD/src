@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.5.8.5 2012/07/25 12:06:02 jdc Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.5.8.6 2012/09/14 00:00:43 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -300,6 +300,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 		length = x[i].rdata.length;
 		if (rdataset->type == dns_rdatatype_rrsig)
 			length++;
+		INSIST(length <= 0xffff);
 		*rawbuf++ = (length & 0xff00) >> 8;
 		*rawbuf++ = (length & 0x00ff);
 #if DNS_RDATASET_FIXED
