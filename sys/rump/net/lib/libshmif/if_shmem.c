@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.44 2011/11/19 22:51:31 tls Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.45 2012/09/14 16:29:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44 2011/11/19 22:51:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.45 2012/09/14 16:29:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -290,7 +290,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	int memfd = -1; /* XXXgcc */
 
 	if (path) {
-		memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
+		memfd = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &error);
 		if (memfd == -1)
 			return error;
 	}
@@ -470,7 +471,8 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			kmem_free(path, ifd->ifd_len);
 			break;
 		}
-		memfd = rumpuser_open(path, O_RDWR | O_CREAT, &rv);
+		memfd = rumpuser_open(path,
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_CREATE, &rv);
 		if (memfd == -1) {
 			kmem_free(path, ifd->ifd_len);
 			break;
