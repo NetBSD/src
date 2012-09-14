@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.2 2012/09/14 03:52:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.1 2012/09/01 00:03:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.2 2012/09/14 03:52:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,6 +129,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": A9 Global 64-bit Timer (%s)\n", freqbuf);
 
+	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
 	sc->sc_memh = mpcaa->mpcaa_memh;
@@ -320,5 +321,5 @@ a9tmr_get_timecount(struct timecounter *tc)
 {
 	struct a9tmr_softc * const sc = tc->tc_priv;
 
-	return bus_space_read_4(sc->sc_memt, sc->sc_global_memh, TMR_GBL_CTR_L);
+	return (u_int) (a9tmr_gettime(sc));
 }
