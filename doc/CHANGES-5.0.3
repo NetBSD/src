@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.80 2012/08/22 20:42:55 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.81 2012/09/14 00:01:22 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5057,4 +5057,14 @@ gnu/usr.sbin/postfix/Makefile.inc		patch
 	insert comment warning about postfix vulnerability CVE-2011-1720
 	in Cyrus SASL support, which is not compiled in netbsd-5-0
 	[spz, ticket #1779]
+
+dist/bind/CHANGES				patch
+dist/bind/version				patch
+dist/bind/lib/dns/master.c			patch
+dist/bind/lib/dns/rdata.c			patch
+dist/bind/lib/dns/rdataslab.c			patch
+dist/bind/lib/dns/include/dns/rdata.h		patch
+
+	Apply fix for CVE-2012-4244 from upstream.
+	[1796, ticket #spz]
 
