@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.117 2012/09/14 18:56:15 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.118 2012/09/14 22:20:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.117 2012/09/14 18:56:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.118 2012/09/14 22:20:50 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
@@ -59,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.117 2012/09/14 18:56:15 rmind Exp $")
  *
  * Lock order
  *
- *	uvm_object::vmobjlock ->
- *		uao_list_lock
+ *	uao_list_lock ->
+ *		uvm_object::vmobjlock
  */
 
 /*
@@ -152,9 +151,6 @@ static void	uao_free(struct uvm_aobj *);
 static int	uao_get(struct uvm_object *, voff_t, struct vm_page **,
 		    int *, int, vm_prot_t, int, int);
 static int	uao_put(struct uvm_object *, voff_t, voff_t, int);
-
-static void uao_detach_locked(struct uvm_object *);
-static void uao_reference_locked(struct uvm_object *);
 
 #if defined(VMSWAP)
 static struct uao_swhash_elt *uao_find_swhash_elt
@@ -362,7 +358,8 @@ uao_free(struct uvm_aobj *aobj)
 {
 	struct uvm_object *uobj = &aobj->u_obj;
 
-	uao_dropswap_range(aobj, 0, 0);
+	KASSERT(mutex_owned(uobj->vmobjlock));
+	uao_dropswap_range(uobj, 0, 0);
 	mutex_exit(uobj->vmobjlock);
 
 #if defined(VMSWAP)
@@ -512,124 +509,62 @@ uao_init(void)
 }
 
 /*
- * uao_reference: add a ref to an aobj
- *
- * => aobj must be unlocked
- * => just lock it and call the locked version
+ * uao_reference: hold a reference to an anonymous UVM object.
  */
-
 void
 uao_reference(struct uvm_object *uobj)
 {
-
-	/*
- 	 * kernel_object already has plenty of references, leave it alone.
- 	 */
-
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+	/* Kernel object is persistent. */
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
 		return;
-
-	mutex_enter(uobj->vmobjlock);
-	uao_reference_locked(uobj);
-	mutex_exit(uobj->vmobjlock);
+	}
+	atomic_inc_uint(&uobj->uo_refs);
 }
 
 /*
- * uao_reference_locked: add a ref to an aobj that is already locked
- *
- * => aobj must be locked
- * this needs to be separate from the normal routine
- * since sometimes we need to add a reference to an aobj when
- * it's already locked.
+ * uao_detach: drop a reference to an anonymous UVM object.
  */
-
-static void
-uao_reference_locked(struct uvm_object *uobj)
-{
-	UVMHIST_FUNC("uao_reference"); UVMHIST_CALLED(maphist);
-
-	/*
- 	 * kernel_object already has plenty of references, leave it alone.
- 	 */
-
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
-		return;
-
-	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)",
-		    uobj, uobj->uo_refs,0,0);
-}
-
-/*
- * uao_detach: drop a reference to an aobj
- *
- * => aobj must be unlocked
- * => just lock it and call the locked version
- */
-
 void
 uao_detach(struct uvm_object *uobj)
 {
+	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+	struct vm_page *pg;
+
+	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
 
 	/*
- 	 * detaching from kernel_object is a noop.
- 	 */
+	 * Detaching from kernel object is a NOP.
+	 */
 
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		return;
 
-	mutex_enter(uobj->vmobjlock);
-	uao_detach_locked(uobj);
-}
-
-/*
- * uao_detach_locked: drop a reference to an aobj
- *
- * => aobj must be locked, and is unlocked (or freed) upon return.
- * this needs to be separate from the normal routine
- * since sometimes we need to detach from an aobj when
- * it's already locked.
- */
-
-static void
-uao_detach_locked(struct uvm_object *uobj)
-{
-	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	struct vm_page *pg;
-	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
-
 	/*
- 	 * detaching from kernel_object is a noop.
- 	 */
-
-	if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
-		mutex_exit(uobj->vmobjlock);
-		return;
-	}
+	 * Drop the reference.  If it was the last one, destroy the object.
+	 */
 
 	UVMHIST_LOG(maphist,"  (uobj=0x%x)  ref=%d", uobj,uobj->uo_refs,0,0);
-	uobj->uo_refs--;
-	if (uobj->uo_refs) {
-		mutex_exit(uobj->vmobjlock);
+	if (atomic_dec_uint_nv(&uobj->uo_refs) > 0) {
 		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
 		return;
 	}
 
 	/*
- 	 * remove the aobj from the global list.
- 	 */
+	 * Remove the aobj from the global list.
+	 */
 
 	mutex_enter(&uao_list_lock);
 	LIST_REMOVE(aobj, u_list);
 	mutex_exit(&uao_list_lock);
 
 	/*
- 	 * free all the pages left in the aobj.  for each page,
-	 * when the page is no longer busy (and thus after any disk i/o that
-	 * it's involved in is complete), release any swap resources and
-	 * free the page itself.
- 	 */
+	 * Free all the pages left in the aobj.  For each page, when the
+	 * page is no longer busy (and thus after any disk I/O that it is
+	 * involved in is complete), release any swap resources and free
+	 * the page itself.
+	 */
 
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
 		pmap_page_protect(pg, VM_PROT_NONE);
@@ -648,8 +583,8 @@ uao_detach_locked(struct uvm_object *uobj)
 	mutex_exit(&uvm_pageqlock);
 
 	/*
- 	 * finally, free the aobj itself.
- 	 */
+	 * Finally, free the anonymous UVM object itself.
+	 */
 
 	uao_free(aobj);
 }
@@ -1135,8 +1070,8 @@ gotpage:
 				 * it from being used again.
 				 */
 
-				swslot = uao_set_swslot(&aobj->u_obj, pageidx,
-							SWSLOT_BAD);
+				swslot = uao_set_swslot(uobj, pageidx,
+				    SWSLOT_BAD);
 				if (swslot > 0) {
 					uvm_swap_markbad(swslot, 1);
 				}
@@ -1211,73 +1146,55 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 bool
 uao_swap_off(int startslot, int endslot)
 {
-	struct uvm_aobj *aobj, *nextaobj;
-	bool rv;
+	struct uvm_aobj *aobj;
 
 	/*
-	 * walk the list of all aobjs.
+	 * Walk the list of all anonymous UVM objects.  Grab the first.
 	 */
-
-restart:
 	mutex_enter(&uao_list_lock);
-	for (aobj = LIST_FIRST(&uao_list);
-	     aobj != NULL;
-	     aobj = nextaobj) {
+	if ((aobj = LIST_FIRST(&uao_list)) == NULL) {
+		mutex_exit(&uao_list_lock);
+		return false;
+	}
+	uao_reference(&aobj->u_obj);
+
+	do {
+		struct uvm_aobj *nextaobj;
+		bool rv;
 
 		/*
-		 * try to get the object lock, start all over if we fail.
-		 * most of the time we'll get the aobj lock,
-		 * so this should be a rare case.
+		 * Prefetch the next object and immediately hold a reference
+		 * on it, so neither the current nor the next entry could
+		 * disappear while we are iterating.
 		 */
-
-		if (!mutex_tryenter(aobj->u_obj.vmobjlock)) {
-			mutex_exit(&uao_list_lock);
-			/* XXX Better than yielding but inadequate. */
-			kpause("livelock", false, 1, NULL);
-			goto restart;
+		if ((nextaobj = LIST_NEXT(aobj, u_list)) != NULL) {
+			uao_reference(&nextaobj->u_obj);
 		}
-
-		/*
-		 * add a ref to the aobj so it doesn't disappear
-		 * while we're working.
-		 */
-
-		uao_reference_locked(&aobj->u_obj);
-
-		/*
-		 * now it's safe to unlock the uao list.
-		 */
-
 		mutex_exit(&uao_list_lock);
 
 		/*
-		 * page in any pages in the swslot range.
-		 * if there's an error, abort and return the error.
+		 * Page in all pages in the swap slot range.
 		 */
-
+		mutex_enter(aobj->u_obj.vmobjlock);
 		rv = uao_pagein(aobj, startslot, endslot);
+		mutex_exit(aobj->u_obj.vmobjlock);
+
+		/* Drop the reference of the current object. */
+		uao_detach(&aobj->u_obj);
 		if (rv) {
-			uao_detach_locked(&aobj->u_obj);
+			if (nextaobj) {
+				uao_detach(&nextaobj->u_obj);
+			}
 			return rv;
 		}
 
-		/*
-		 * we're done with this aobj.
-		 * relock the list and drop our ref on the aobj.
-		 */
-
+		aobj = nextaobj;
 		mutex_enter(&uao_list_lock);
-		nextaobj = LIST_NEXT(aobj, u_list);
-		uao_detach_locked(&aobj->u_obj);
-	}
+	} while (aobj);
 
-	/*
-	 * done with traversal, unlock the list
-	 */
 	mutex_exit(&uao_list_lock);
 	return false;
 }
-
 
 /*
  * page in any pages from aobj in the given range.
