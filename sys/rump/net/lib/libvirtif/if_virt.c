@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.26 2011/11/19 22:51:31 tls Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.27 2012/09/14 16:29:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.26 2011/11/19 22:51:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.27 2012/09/14 16:29:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -97,7 +97,7 @@ rump_virtif_create(int num)
 		return E2BIG;
 
 	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
-	fd = rumpuser_open(tapdev, O_RDWR, &error);
+	fd = rumpuser_open(tapdev, RUMPUSER_OPEN_RDWR, &error);
 	if (fd == -1) {
 		printf("virtif_create: can't open /dev/tap%d: %d\n",
 		    num, error);

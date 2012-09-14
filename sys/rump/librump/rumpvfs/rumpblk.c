@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.47 2011/11/19 22:51:31 tls Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.48 2012/09/14 16:29:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.47 2011/11/19 22:51:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.48 2012/09/14 16:29:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -504,16 +504,16 @@ backend_open(struct rblkdev *rblk, const char *path)
 	int error, fd;
 
 	KASSERT(rblk->rblk_fd == -1);
-	fd = rumpuser_open(path, O_RDWR, &error);
+	fd = rumpuser_open(path, RUMPUSER_OPEN_RDWR, &error);
 	if (error) {
-		fd = rumpuser_open(path, O_RDONLY, &error);
+		fd = rumpuser_open(path, RUMPUSER_OPEN_RDONLY, &error);
 		if (error)
 			return error;
 		rblk->rblk_mode = FREAD;
 
 #ifdef HAS_ODIRECT
 		rblk->rblk_dfd = rumpuser_open(path,
-		    O_RDONLY | O_DIRECT, &error);
+		    RUMPUSER_OPEN_RDONLY | RUMPUSER_OPEN_DIRECT, &error);
 		if (error) {
 			close(fd);
 			return error;
@@ -524,7 +524,7 @@ backend_open(struct rblkdev *rblk, const char *path)
 
 #ifdef HAS_ODIRECT
 		rblk->rblk_dfd = rumpuser_open(path,
-		    O_RDWR | O_DIRECT, &error);
+		    RUMPUSER_OPEN_RDWR | RUMPUSER_OPEN_DIRECT, &error);
 		if (error) {
 			close(fd);
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.72 2012/03/15 02:02:22 joerg Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.73 2012/09/14 16:29:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,20 @@ void *rumpuser_filemmap(int fd, off_t, size_t, int, int *);
 void  rumpuser_unmap(void *, size_t);
 int   rumpuser_memsync(void *, size_t, int *);
 
+/*
+ * Open modes.  these "accidentally" happen to match the respective
+ * NetBSD bit representations to preserve NetBSD binary compat for
+ * current users.  If you need to add new ones, just pick any numbers.
+ */
+#define RUMPUSER_OPEN_RDONLY	0x000000
+#define RUMPUSER_OPEN_WRONLY	0x000001
+#define RUMPUSER_OPEN_RDWR	0x000002
+#define RUMPUSER_OPEN_ACCMODE	0x000003 /* "yay" */
+#define RUMPUSER_OPEN_CREATE	0x000200
+#define RUMPUSER_OPEN_EXCL	0x000800
+#define RUMPUSER_OPEN_DIRECT	0x080000
 int rumpuser_open(const char *, int, int *);
+
 int rumpuser_ioctl(int, u_long, void *, int *);
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);

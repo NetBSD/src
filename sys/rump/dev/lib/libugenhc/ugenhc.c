@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.10 2012/06/10 06:15:55 mrg Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.11 2012/09/14 16:29:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.10 2012/06/10 06:15:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.11 2012/09/14 16:29:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -602,7 +602,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, O_RDWR, &error);
+			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
 			if (fd != -1)
 				break;
 			kpause("ugwait", false, hz/4, NULL);
@@ -627,7 +627,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, O_RDWR, &error);
+			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
 			if (fd == -1)
 				break;
 
@@ -971,6 +971,7 @@ ugenhc_open(struct usbd_pipe *pipe)
 			}
 
 			makeugendevstr(sc->sc_devnum, endpt, buf);
+			/* XXX: theoretically should convert oflags */
 			fd = rumpuser_open(buf, oflags, &error);
 			if (fd == -1) {
 				return USBD_INVAL; /* XXX: no mapping */
