@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.182 2012/09/15 09:27:17 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.183 2012/09/15 09:33:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8584,4 +8584,14 @@ share/zoneinfo/zone.tab					patch
 		(Thanks to Steffen Thorsen.)
 		* Use a single version number for both code and data.
 	[apb, ticket #1783]
+
+sys/dev/ic/gem.c				1.99 via patch
+sys/dev/ic/gemreg.h				1.15 via patch
+sys/dev/ic/gemvar.h				1.24 via patch
+
+	Apply lockup fixes from Havard Eidnes/OpenBSD in PR port-sparc64/46260:
+	- add an additional watchdog for RX overflow
+	- re-initialise the chip on device timeout
+	Also alter the interrupt blanking rate to 8 packets, as per OpenSolaris.
+	[jdc, ticket #1789]
 
