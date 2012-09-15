@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.4 2012/09/11 19:43:09 msaitoh Exp $
+#	$NetBSD: BCM5301X,v 1.5 2012/09/15 06:10:13 matt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -18,7 +18,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 #makeoptions	DEFCOPTS="-O0"
-#options 	UVMHIST,UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
+options 	UVMHIST
+#options 	UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
 options 	BCM53XX_CONSOLE_EARLY
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEXA9
@@ -130,6 +131,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
 #options 	PCI_CONFIG_DUMP	# Verbose PCI autoconfiguration messages
+options 	PCI_NETBSD_CONFIGURE # perform PCI configuration
 options 	RNDVERBOSE	# Verbose rnd messages
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfiguration messages
@@ -149,7 +151,7 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	DDB_COMMANDONENTER="t; show event"
+options 	DDB_COMMANDONENTER="show event"
 options 	DB_MAX_LINE=INT_MAX
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -200,6 +202,11 @@ bcmpax*		at bcmccb? port ?
 pci*		at bcmpax?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
+
+ahcisata*	at pci? dev ? function ?
+atabus* 	at ahcisata? channel ?
+wd*		at atabus? drive ?
+wm*		at pci? dev ? function ?
 
 bcmmdio0	at bcmccb0
 bcmeth*		at bcmccb? port ?
