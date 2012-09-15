@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.238 2012/08/22 04:16:47 dholland Exp $
+$NetBSD: UPDATING,v 1.239 2012/09/15 18:03:42 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -37,7 +37,7 @@ Recent changes:
 20120216:
 	Default for MKCATPAGES changed to NO. Update builds will fail
 	unless DESTDIR is cleaned manually. If you built between 20120207
-	and 20120216, daily and weekly could have created an unreable
+	and 20120216, daily and weekly could have created an unreadable
 	/var/db/man.db index for apropos. Running makemandb -f or
 	the next run of weekly will fix it.
 
