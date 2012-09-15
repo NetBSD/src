@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.68 2012/09/09 04:27:12 msaitoh Exp $
+#	$NetBSD: GUMSTIX,v 1.69 2012/09/15 06:13:43 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -253,7 +253,7 @@ pxapcic0 at pxaip? addr 0x20000000		# cfstix, netCF
 pcmcia*	at pxapcic?
 
 # Marvell 88W8385
-#malo*	at pcmcia? function ?		# wifistix, netwifimicrosd, netpro-vx
+malo*	at pcmcia? function ?		# wifistix, netwifimicrosd, netpro-vx
 
 
 # PCMCIA serial interfaces
