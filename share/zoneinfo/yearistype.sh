@@ -1,12 +1,10 @@
 #! /bin/sh
 #
-#	$NetBSD: yearistype.sh,v 1.6 2006/09/23 17:34:36 kleink Exp $
+#	$NetBSD: yearistype.sh,v 1.6.2.1 2012/09/15 09:04:09 bouyer Exp $
 #
 
 : 'This file is in the public domain, so clarified as of'
 : '2006-07-17 by Arthur David Olson.'
-
-: '@(#)yearistype.sh	8.2'
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
