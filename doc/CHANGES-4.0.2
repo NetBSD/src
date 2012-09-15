@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.106 2012/09/15 09:05:52 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.107 2012/09/15 09:09:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1468,4 +1468,15 @@ Major changes from tzdata2011d to tzdata2011e:
 
     * Use a single version number for both code and data.
 
+
+dist/bind/CHANGES					patch
+dist/bind/version					patch
+dist/bind/lib/dns/master.c				patch
+dist/bind/lib/dns/rdata.c				patch
+dist/bind/lib/dns/rdataslab.c				patch
+dist/bind/lib/dns/include/dns/rdata.h			patch
+
+	apply fix for CVE-2012-4244 ("Named could die on specially crafted
+	record") from upstream.
+	[spz, ticket #1457]
 
