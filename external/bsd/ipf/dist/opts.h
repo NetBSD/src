@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
+/*	$NetBSD: opts.h,v 1.3 2012/09/15 16:56:05 plunky Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,11 @@
 #define	__OPTS_H__
 
 #ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 #define	OPT_REMOVE	0x000001
 #define	OPT_DEBUG	0x000002

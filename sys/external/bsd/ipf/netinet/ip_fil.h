@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.4 2012/09/15 16:56:45 plunky Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -30,7 +30,11 @@
 #endif
 
 #ifndef	SOLARIS
-# define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 
 #if defined(__STDC__) || defined(__GNUC__) || defined(_AIX51)
