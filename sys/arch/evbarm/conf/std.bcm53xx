@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.2 2012/09/01 11:04:17 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.3 2012/09/15 06:10:50 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -18,6 +18,8 @@ options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_CPU_COUNTER
+options 	__HAVE_ATOMIC64_OPS
+options 	__HAVE_PCI_CONF_HOOK
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="bcm53xx"
