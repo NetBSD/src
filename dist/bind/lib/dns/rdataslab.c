@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.3.4.1.2.3 2012/06/05 20:01:32 bouyer Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.3.4.1.2.4 2012/09/15 09:09:23 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
@@ -287,6 +287,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 #if DNS_RDATASET_FIXED
 		offsettable[x[i].order] = rawbuf - offsetbase;
 #endif
+		INSIST(x[i].rdata.length <= 0xffff);
 		*rawbuf++ = (x[i].rdata.length & 0xff00) >> 8;
 		*rawbuf++ = (x[i].rdata.length & 0x00ff);
 #if DNS_RDATASET_FIXED
