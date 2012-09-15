@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1779 2012/09/13 21:05:20 martin Exp $
+#	$NetBSD: mi,v 1.1780 2012/09/15 17:41:59 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1930,7 +1930,7 @@
 ./usr/include/netinet/ip_state.h		comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_sync.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_var.h			comp-c-include
-./usr/include/netinet/ipf_rb.h			comp-obsolete		obsolete
+./usr/include/netinet/ipf_rb.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ipl.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/pim.h			comp-c-include
 ./usr/include/netinet/pim_var.h			comp-c-include
