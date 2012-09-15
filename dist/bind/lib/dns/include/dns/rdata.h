@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.1.1.3.4.1.2.1 2011/01/23 21:52:15 bouyer Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.3.4.1.2.2 2012/09/15 09:09:24 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -127,6 +127,18 @@ struct dns_rdata {
 #define DNS_RDATA_INIT { NULL, 0, 0, 0, 0, {(void*)(-1), (void *)(-1)}}
 
 #define DNS_RDATA_UPDATE	0x0001		/*%< update pseudo record */
+
+/*
+ * The maximum length of a RDATA that can be sent on the wire.
+ * Max packet size (65535) less header (12), less name (1), type (2),
+ * class (2), ttl(4), length (2).
+ *
+ * None of the defined types that support name compression can exceed
+ * this and all new types are to be sent uncompressed.
+ */
+
+#define DNS_RDATA_MAXLENGTH    65512U
+
 
 /*
  * Flags affecting rdata formatting style.  Flags 0xFFFF0000
