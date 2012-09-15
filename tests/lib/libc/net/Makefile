@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/11/01 22:36:53 pgoyette Exp $
+# $NetBSD: Makefile,v 1.7 2012/09/15 16:22:58 plunky Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,6 @@ PROGS+=		h_servent
 
 LDADD.h_nsd_recurse+=	-lpthread
 
-CLEANFILES+=	aton_ether_subr_.c
+CLEANFILES+=	aton_ether_subr.c
 
 .include <bsd.test.mk>
