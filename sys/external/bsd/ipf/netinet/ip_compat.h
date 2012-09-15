@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.4 2012/09/15 16:56:45 plunky Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -27,7 +27,11 @@
 #endif
 
 #ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 #if (defined(SOLARIS2) && (SOLARIS2 >= 8))
 # ifndef	USE_INET6
@@ -128,30 +132,55 @@ struct file;
 # endif
 #endif
 
-#define	NETBSD_GE_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ >= (x)))
-#define	NETBSD_GT_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ > (x)))
-#define	NETBSD_LT_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ < (x)))
-#define	FREEBSD_GE_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version >= (x)))
-#define	FREEBSD_GT_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version > (x)))
-#define	FREEBSD_LT_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version < (x)))
-#define	BSDOS_GE_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION >= (x)))
-#define	BSDOS_GT_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION > (x)))
-#define	BSDOS_LT_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION < (x)))
-#define	OPENBSD_GE_REV(x)	(defined(OpenBSD) && (OpenBSD >= (x)))
-#define	OPENBSD_GT_REV(x)	(defined(OpenBSD) && (OpenBSD > (x)))
-#define	OPENBSD_LT_REV(x)	(defined(OpenBSD) && (OpenBSD < (x)))
-#define	BSD_GE_YEAR(x)		(defined(BSD) && (BSD >= (x)))
-#define	BSD_GT_YEAR(x)		(defined(BSD) && (BSD > (x)))
-#define	BSD_LT_YEAR(x)		(defined(BSD) && (BSD < (x)))
+#if defined(__NetBSD_Version__)
+# define NETBSD_GE_REV(x)	(__NetBSD_Version__ >= (x))
+# define NETBSD_GT_REV(x)	(__NetBSD_Version__ > (x))
+# define NETBSD_LT_REV(x)	(__NetBSD_Version__ < (x))
+#else
+# define NETBSD_GE_REV(x)	0
+# define NETBSD_GT_REV(x)	0
+# define NETBSD_LT_REV(x)	0
+#endif
+
+#if defined(__FreeBSD_version)
+# define FREEBSD_GE_REV(x)	(__FreeBSD_version >= (x))
+# define FREEBSD_GT_REV(x)	(__FreeBSD_version > (x))
+# define FREEBSD_LT_REV(x)	(__FreeBSD_version < (x))
+#else
+# define FREEBSD_GE_REV(x)	0
+# define FREEBSD_GT_REV(x)	0
+# define FREEBSD_LT_REV(x)	0
+#endif
+
+#if defined(_BSDI_VERSION)
+# define BSDOS_GE_REV(x)	(_BSDI_VERSION >= (x))
+# define BSDOS_GT_REV(x)	(_BSDI_VERSION > (x))
+# define BSDOS_LT_REV(x)	(_BSDI_VERSION < (x))
+#else
+# define BSDOS_GE_REV(x)	0
+# define BSDOS_GT_REV(x)	0
+# define BSDOS_LT_REV(x)	0
+#endif
+
+#if defined(OpenBSD)
+# define OPENBSD_GE_REV(x)	(OpenBSD >= (x))
+# define OPENBSD_GT_REV(x)	(OpenBSD > (x))
+# define OPENBSD_LT_REV(x)	(OpenBSD < (x))
+#else
+# define OPENBSD_GE_REV(x)	0
+# define OPENBSD_GT_REV(x)	0
+# define OPENBSD_LT_REV(x)	0
+#endif
+
+#if defined(BSD)
+# define BSD_GE_YEAR(x)		(BSD >= (x))
+# define BSD_GT_YEAR(x)		(BSD > (x))
+# define BSD_LT_YEAR(x)		(BSD < (x))
+#else
+# define BSD_GE_YEAR(x)		0
+# define BSD_GT_YEAR(x)		0
+# define BSD_LT_YEAR(x)		0
+#endif
 
 
 /* ----------------------------------------------------------------------- */
