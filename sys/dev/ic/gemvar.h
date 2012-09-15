@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.18 2008/02/01 10:53:25 jdc Exp $ */
+/*	$NetBSD: gemvar.h,v 1.18.20.1 2012/09/15 09:32:36 bouyer Exp $ */
 
 /*
  *
@@ -118,6 +118,7 @@ struct gem_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data	sc_mii;		/* MII media control */
 	struct callout	sc_tick_ch;	/* tick callout */
+	struct callout	sc_rx_watchdog;	/* RX watchdog callout */
 
 	/* The following bus handles are to be provided by the bus front-end */
 	bus_space_tag_t	sc_bustag;	/* bus tag */
@@ -214,6 +215,10 @@ struct gem_softc {
 	struct evcnt sc_ev_rxfull;
 	struct evcnt sc_ev_rxhist[9];
 #endif
+ 
+	/* For use by the RX watchdog */
+	u_int32_t 	sc_rx_fifo_wr_ptr;
+	u_int32_t	sc_rx_fifo_rd_ptr;
 };
 
 #ifdef GEM_COUNTERS
