@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.4 2012/09/15 16:56:45 plunky Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.4 2012/09/15 16:56:45 plunky Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -21,8 +21,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
 #if defined(__FreeBSD__) && !defined(_KERNEL)
 # include <osreldate.h>
 #endif
-#ifndef SOLARIS
-# define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#ifndef	SOLARIS
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
