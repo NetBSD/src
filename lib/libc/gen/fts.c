@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.44 2012/03/14 00:25:19 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.45 2012/09/15 19:31:12 spz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.44 2012/03/14 00:25:19 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.45 2012/09/15 19:31:12 spz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ fts_open(char * const *argv, int options,
 	}
 
 	/* Allocate/initialize the stream */
-	if ((sp = malloc((unsigned int)sizeof(FTS))) == NULL)
+	if ((sp = malloc(sizeof(FTS))) == NULL)
 		return (NULL);
 	memset(sp, 0, sizeof(FTS));
 	sp->fts_compar = compar;
