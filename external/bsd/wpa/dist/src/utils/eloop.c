@@ -25,8 +25,8 @@ struct eloop_sock {
 	void *eloop_data;
 	void *user_data;
 	eloop_sock_handler handler;
-	WPA_TRACE_REF(eloop);
-	WPA_TRACE_REF(user);
+	WPA_TRACE_REF(eloop)
+	WPA_TRACE_REF(user)
 	WPA_TRACE_INFO
 };
 
@@ -36,8 +36,8 @@ struct eloop_timeout {
 	void *eloop_data;
 	void *user_data;
 	eloop_timeout_handler handler;
-	WPA_TRACE_REF(eloop);
-	WPA_TRACE_REF(user);
+	WPA_TRACE_REF(eloop)
+	WPA_TRACE_REF(user)
 	WPA_TRACE_INFO
 };
 
