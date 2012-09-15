@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.78.4.2 2011/06/18 16:40:31 bouyer Exp $ */
+/*	$NetBSD: gem.c,v 1.78.4.3 2012/09/15 09:32:36 bouyer Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78.4.2 2011/06/18 16:40:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78.4.3 2012/09/15 09:32:36 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -93,6 +93,8 @@ static void	gem_stop(struct ifnet *, int);
 int		gem_ioctl(struct ifnet *, u_long, void *);
 void		gem_tick(void *);
 void		gem_watchdog(struct ifnet *);
+void		gem_rx_watchdog(void *);
+void		gem_pcs_start(struct gem_softc *sc);
 void		gem_shutdown(void *);
 void		gem_pcs_start(struct gem_softc *sc);
 void		gem_pcs_stop(struct gem_softc *sc, int);
@@ -504,6 +506,8 @@ gem_attach(sc, enaddr)
 #endif
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_init(&sc->sc_rx_watchdog, 0);
+	callout_setfunc(&sc->sc_rx_watchdog, gem_rx_watchdog, sc);
 	return;
 
 	/*
@@ -691,6 +695,8 @@ gem_reset_rx(struct gem_softc *sc)
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h, GEM_RX_CONFIG, 1, 0))
 		aprint_error_dev(&sc->sc_dev, "cannot disable read dma\n");
+	/* Wait 5ms extra. */
+	delay(5000);
 
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h2, GEM_RESET, GEM_RESET_RX);
@@ -775,7 +781,7 @@ gem_rx_common(struct gem_softc *sc)
 	    (3 * sc->sc_rxfifosize / 256) |
 	    ((sc->sc_rxfifosize / 256) << 12));
 	bus_space_write_4(t, h, GEM_RX_BLANKING,
-	    (6 << GEM_RX_BLANKING_TIME_SHIFT) | 6);
+	    (6 << GEM_RX_BLANKING_TIME_SHIFT) | 8);
 }
 
 /*
@@ -1762,6 +1768,8 @@ gem_rint(sc)
 		if (gem_add_rxbuf(sc, i) != 0) {
 			GEM_COUNTER_INCR(sc, sc_ev_rxnobuf);
 			ifp->if_ierrors++;
+			aprint_error_dev(&sc->sc_dev,
+			    "receive error: RX no buffer space\n");
 			GEM_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -2143,12 +2151,20 @@ gem_intr(v)
 		/*
 		 * At least with GEM_SUN_GEM and some GEM_SUN_ERI
 		 * revisions GEM_MAC_RX_OVERFLOW happen often due to a
-		 * silicon bug so handle them silently. Moreover, it's
-		 * likely that the receiver has hung so we reset it.
+		 * silicon bug so handle them silently.  So if we detect
+		 * an RX FIFO overflow, we fire off a timer, and check
+		 * whether we're still making progress by looking at the
+		 * RX FIFO write and read pointers.
 		 */
 		if (rxstat & GEM_MAC_RX_OVERFLOW) {
 			ifp->if_ierrors++;
-			gem_reset_rxdma(sc);
+			aprint_error_dev(&sc->sc_dev,
+			    "receive error: RX overflow sc->rxptr %d, complete %d\n", sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION));
+			sc->sc_rx_fifo_wr_ptr =
+				bus_space_read_4(t, h, GEM_RX_FIFO_WR_PTR);
+			sc->sc_rx_fifo_rd_ptr =
+				bus_space_read_4(t, h, GEM_RX_FIFO_RD_PTR);
+			callout_schedule(&sc->sc_rx_watchdog, 400);
 		} else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
 			printf("%s: MAC rx fault, status 0x%02x\n",
 			    device_xname(&sc->sc_dev), rxstat);
@@ -2177,6 +2193,61 @@ gem_intr(v)
 	return (r);
 }
 
+void
+gem_rx_watchdog(void *arg)
+{
+	struct gem_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t h = sc->sc_h1;
+	u_int32_t rx_fifo_wr_ptr;
+	u_int32_t rx_fifo_rd_ptr;
+	u_int32_t state;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		aprint_error_dev(&sc->sc_dev, "receiver not running\n");
+		return;
+	}
+
+	rx_fifo_wr_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_WR_PTR);
+	rx_fifo_rd_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_RD_PTR);
+	state = bus_space_read_4(t, h, GEM_MAC_MAC_STATE);
+	if ((state & GEM_MAC_STATE_OVERFLOW) == GEM_MAC_STATE_OVERFLOW &&
+	    ((rx_fifo_wr_ptr == rx_fifo_rd_ptr) ||
+	     ((sc->sc_rx_fifo_wr_ptr == rx_fifo_wr_ptr) &&
+	      (sc->sc_rx_fifo_rd_ptr == rx_fifo_rd_ptr))))
+	{
+		/*
+		 * The RX state machine is still in overflow state and
+		 * the RX FIFO write and read pointers seem to be
+		 * stuck.  Whack the chip over the head to get things
+		 * going again.
+		 */
+		aprint_error_dev(&sc->sc_dev,
+		    "receiver stuck in overflow, resetting\n");
+		gem_init(ifp);
+	} else {
+		if ((state & GEM_MAC_STATE_OVERFLOW) != GEM_MAC_STATE_OVERFLOW) {
+			aprint_error_dev(&sc->sc_dev,
+				"rx_watchdog: not in overflow state: 0x%x\n",
+				state);
+		}
+		if (rx_fifo_wr_ptr != rx_fifo_rd_ptr) {
+			aprint_error_dev(&sc->sc_dev,
+				"rx_watchdog: wr & rd ptr different\n");
+		}
+		if (sc->sc_rx_fifo_wr_ptr != rx_fifo_wr_ptr) {
+			aprint_error_dev(&sc->sc_dev,
+				"rx_watchdog: wr pointer != saved\n");
+		}
+		if (sc->sc_rx_fifo_rd_ptr != rx_fifo_rd_ptr) {
+			aprint_error_dev(&sc->sc_dev,
+				"rx_watchdog: rd pointer != saved\n");
+		}
+		aprint_error_dev(&sc->sc_dev, "resetting anyway\n");
+		gem_init(ifp);
+	}
+}
 
 void
 gem_watchdog(ifp)
@@ -2194,6 +2265,7 @@ gem_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
+	gem_init(ifp);
 	gem_start(ifp);
 }
 
