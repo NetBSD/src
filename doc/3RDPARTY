@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.6.2.6 2012/03/02 17:43:43 riz Exp $
+#      $NetBSD: 3RDPARTY,v 1.647.2.6.2.7 2012/09/15 09:26:27 bouyer Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -924,16 +924,18 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:	tzcode2012b / tzdata2012b
-Current Vers:	tzcode2011i / tzdata2012b
+Version:	tzcode2004a / tzdata2012e
+Current Vers:	tzcode2012e / tzdata2012e
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Maintainer:	Robert Elz <kre@munnari.oz.au>
-Archive Site:	ftp://elsie.nci.nih.gov/pub/
+Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
+Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, apb
 License:	Public domain
+Location:	lib/libc/time,share/zoneinfo
 Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
 for import.
