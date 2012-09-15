@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.3,v 1.1.2.22 2012/09/14 00:00:19 riz Exp $
+# $NetBSD: CHANGES-5.1.3,v 1.1.2.23 2012/09/15 09:27:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1.2 release to the NetBSD 5.1.3
 release:
@@ -2153,4 +2153,46 @@ dist/bind/lib/dns/include/dns/rdata.h		patch
 
 	Apply fix for CVE-2012-4244 from upstream.
 	[1796, ticket #spz]
+
+doc/3RDPARTY						patch
+share/zoneinfo/africa					patch
+share/zoneinfo/antarctica				patch
+share/zoneinfo/asia					patch
+share/zoneinfo/australasia				patch
+share/zoneinfo/backward					patch
+share/zoneinfo/etcetera					patch
+share/zoneinfo/europe					patch
+share/zoneinfo/factory					patch
+share/zoneinfo/iso3166.tab				patch
+share/zoneinfo/leapseconds				patch
+share/zoneinfo/northamerica				patch
+share/zoneinfo/pacificnew				patch
+share/zoneinfo/solar87					patch
+share/zoneinfo/solar88					patch
+share/zoneinfo/solar89					patch
+share/zoneinfo/southamerica				patch
+share/zoneinfo/systemv					patch
+share/zoneinfo/yearistype.sh				patch
+share/zoneinfo/zone.tab					patch
+
+	Update to tzdata2012e
+	Major changes from tzdata2011b to tzdata2011c:
+	africa
+		Summer time changes for Morocco (to start late April 2012)
+	asia
+		Changes for 2012 for Gaza & the West Bank (Hebron) and Syria
+
+	northamerica
+		Haiti following US/Canada rules for 2012 (and we're assuming,
+		for now anyway, for the future).
+
+	Major changes from tzdata2011c to tzdata2011d:
+		Morocco does not observe DST from Jul 20 03:00 to
+		Aug 20 02:00 [2012].
+
+	Major changes from tzdata2011d to tzdata2011e:
+		* australasia (Pacific/Fakaofo): Tokelau is UTC+13, not UTC+14.
+		(Thanks to Steffen Thorsen.)
+		* Use a single version number for both code and data.
+	[apb, ticket #1783]
 
