@@ -70,7 +70,7 @@ struct wpa_driver_test_global {
 struct wpa_driver_test_data {
 	struct wpa_driver_test_global *global;
 	void *ctx;
-	WPA_TRACE_REF(ctx);
+	WPA_TRACE_REF(ctx)
 	u8 own_addr[ETH_ALEN];
 	int test_socket;
 #ifdef DRIVER_TEST_UNIX
