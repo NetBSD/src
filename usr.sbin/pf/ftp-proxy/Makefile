@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/02/04 00:19:52 rmind Exp $
+#	$NetBSD: Makefile,v 1.7 2012/09/15 17:46:25 plunky Exp $
 #	$OpenBSD: Makefile,v 1.3 2006/11/26 11:31:13 deraadt Exp $
 
 PROG=	ftp-proxy
@@ -23,7 +23,7 @@ LDADD+=		-lnpf -lprop
 # IP Filter support
 .if (${MKIPFILTER} != "no")
 SRCS+=	ipf.c
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/ipf -DWITH_IPF
+CPPFLAGS+=-DWITH_IPF
 .endif
 
 BINDIR= /usr/sbin
