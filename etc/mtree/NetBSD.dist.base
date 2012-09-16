@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.104 2012/08/22 06:45:16 spz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.105 2012/09/16 16:15:29 rmind Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -195,6 +195,7 @@
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.1
+./usr/lib/npf
 ./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
