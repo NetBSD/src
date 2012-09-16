@@ -1,4 +1,4 @@
-.\"	$NetBSD: lzf.1,v 1.1 2012/09/16 18:59:29 tls Exp $
+.\"	$NetBSD: lzf.1,v 1.2 2012/09/16 21:33:30 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, inc.
 .\" All rights reserved.
@@ -63,17 +63,22 @@
 .Sh DESCRIPTION
 .Nm
 is a simple program to compress or uncompress files using LZF
-(sometimes known as "Lempel-Ziv Fast") coding.  LZF is extremely
-fast, about 75% of the performance of
+(sometimes known as "Lempel-Ziv Fast") coding.
+LZF is extremely fast, about 75% of the performance of
 .Xr memcpy 3
 for many inputs, while offering a moderate compression ratio,
 usually between 1.5:1 and 2:1.
 .Pp
 When compressing, it removes each input file and replaces it with an
-output file with the suffix ".lzf" appended.  When uncompressing, it
-removes each input file and replaces it with an output file with the
-suffix ".lzf" removed.  If no files are specified as arguments, standard
-input and standard output are used as input and output respectively.
+output file with the suffix
+.Dq Pa .lzf
+appended.
+When uncompressing, it removes each input file and replaces it with
+an output file with the suffix
+.Dq Pa .lzf
+removed.
+If no files are specified as arguments, standard input and standard
+output are used as input and output respectively.
 .Pp
 If invoked as
 .Nm lzf ,
@@ -87,30 +92,30 @@ the default mode of operation is to uncompress to standard output.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width width
+.It Fl b
+This option selects a compression blocksize.
+Small compression block sizes give poor compression and slow
+operation; the default of 64KiB is strongly recommended.
+Block sizes larger than 64KiB are silently reduced to 64KiB in
+order to not produce output incompatible with other versions of
+.Nm .
 .It Fl c
 This option selects compression.
 .It Fl d
 This option selects decompression.
 .It Fl f
 This option forces overwrite of preexisting output files, if any.
-option, allowing non-compressed data to pass through unchanged.
+.\" option, allowing non-compressed data to pass through unchanged.
 .It Fl h
 This option prints command usage.
-.It Fl b
-This option selects a compression blocksize.  Small compression block
-sizes give poor compression and slow operation; the default of 64KiB is
-strongly recommended.  Block sizes larger than 64KiB are silently reduced
-to 64KiB in order to not produce output incompatible with other versions
-of
-.Nm .
 .It Fl v
 This option prints compression statistics for each file processed.
 .El
 .Sh SEE ALSO
-.Xr gzip 1 ,
 .Xr bzip2 1 ,
 .Xr compress 1 ,
-.Xr xz 1 ,
+.Xr gzip 1 ,
+.Xr xz 1
 .Sh HISTORY
 The
 .Nm
@@ -131,10 +136,13 @@ program was written by
 .Sh BUGS
 Some versions of
 .Nm
-install a program named "lzcat"
+install a program named
+.Dq Pa lzcat
 instead of
 .Nm lzfcat .
-Because the "lzcat" name is also used by
+Because the
+.Pq lzcat
+name is also used by
 .Xr xz 1 ,
 in
 .Nx
