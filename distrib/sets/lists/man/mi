@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1402 2012/08/08 14:08:04 christos Exp $
+# $NetBSD: mi,v 1.1403 2012/09/16 18:59:26 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -273,6 +273,8 @@
 ./usr/share/man/cat1/lsextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/lua.0			man-util-catman		.cat
 ./usr/share/man/cat1/lzcat.0			man-util-catman		.cat
+./usr/share/man/cat1/lzf.0			man-util-catman		.cat
+./usr/share/man/cat1/lzfcat.0			man-util-catman		.cat
 ./usr/share/man/cat1/lzma.0			man-util-catman		.cat
 ./usr/share/man/cat1/lzmainfo.0			man-util-catman		.cat
 ./usr/share/man/cat1/m4.0			man-util-catman		.cat
@@ -539,6 +541,7 @@
 ./usr/share/man/cat1/unexpand.0			man-util-catman		.cat
 ./usr/share/man/cat1/uniq.0			man-util-catman		.cat
 ./usr/share/man/cat1/units.0			man-util-catman		.cat
+./usr/share/man/cat1/unlzf.0			man-util-catman		.cat
 ./usr/share/man/cat1/unlzma.0			man-util-catman		.cat
 ./usr/share/man/cat1/unvis.0			man-util-catman		.cat
 ./usr/share/man/cat1/unxz.0			man-util-catman		.cat
@@ -3223,6 +3226,8 @@
 ./usr/share/man/html1/lsextattr.html		man-util-htmlman	html
 ./usr/share/man/html1/lua.html			man-util-htmlman	html
 ./usr/share/man/html1/lzcat.html		man-util-htmlman	html
+./usr/share/man/html1/lzf.html			man-util-htmlman	html
+./usr/share/man/html1/lzfcat.html		man-util-htmlman	html
 ./usr/share/man/html1/lzma.html			man-util-htmlman	html
 ./usr/share/man/html1/lzmainfo.html		man-util-htmlman	html
 ./usr/share/man/html1/m4.html			man-util-htmlman	html
@@ -3481,6 +3486,7 @@
 ./usr/share/man/html1/unexpand.html		man-util-htmlman	html
 ./usr/share/man/html1/uniq.html			man-util-htmlman	html
 ./usr/share/man/html1/units.html		man-util-htmlman	html
+./usr/share/man/html1/unlzf.html		man-util-htmlman	html
 ./usr/share/man/html1/unlzma.html		man-util-htmlman	html
 ./usr/share/man/html1/unvis.html		man-util-htmlman	html
 ./usr/share/man/html1/unxz.html			man-util-htmlman	html
@@ -5816,6 +5822,8 @@
 ./usr/share/man/man1/lsextattr.1		man-util-man		.man
 ./usr/share/man/man1/lua.1			man-util-man		.man
 ./usr/share/man/man1/lzcat.1			man-util-man		.man
+./usr/share/man/man1/lzf.1			man-util-man		.man
+./usr/share/man/man1/lzfcat.1			man-util-man		.man
 ./usr/share/man/man1/lzma.1			man-util-man		.man
 ./usr/share/man/man1/lzmainfo.1			man-util-man		.man
 ./usr/share/man/man1/m4.1			man-util-man		.man
@@ -6082,6 +6090,7 @@
 ./usr/share/man/man1/unexpand.1			man-util-man		.man
 ./usr/share/man/man1/uniq.1			man-util-man		.man
 ./usr/share/man/man1/units.1			man-util-man		.man
+./usr/share/man/man1/unlzf.1			man-util-man		.man
 ./usr/share/man/man1/unlzma.1			man-util-man		.man
 ./usr/share/man/man1/unvis.1			man-util-man		.man
 ./usr/share/man/man1/unxz.1			man-util-man		.man
