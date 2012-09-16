@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.5 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.6 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 
 #include "npfctl.h"
@@ -113,6 +114,13 @@ any			return ANY;
 			yylval.num = strtoul(buf+2, &endp, 16);
 			free(buf);
 			return HEX;
+		}
+
+{NUMBER}"."{NUMBER} {
+			char *endp, *buf = xstrndup(yytext, yyleng);
+			yylval.fpnum = strtod(buf, &endp);
+			free(buf);
+			return FPNUM;
 		}
 
 [0-9a-fA-F]+":"[0-9a-fA-F:]* {

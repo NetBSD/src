@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2012/08/06 10:31:41 martin Exp $
+#	$NetBSD: Makefile,v 1.111 2012/09/16 13:47:41 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,8 @@ SUBDIR+=	nfsserver
 SUBDIR+=	nilfs
 SUBDIR+=	npf
 SUBDIR+=	npf_alg_icmp
+SUBDIR+=	npf_ext_log
+SUBDIR+=	npf_ext_normalise
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
