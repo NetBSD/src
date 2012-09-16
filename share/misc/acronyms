@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.212 2012/08/24 06:04:02 dholland Exp $
+$NetBSD: acronyms,v 1.213 2012/09/16 00:02:41 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -409,6 +409,7 @@ RTFD	read the fine/fucking documentation
 RTFM	read the fine/fucking manual
 RTFMP	read the fine/fucking man page
 RTFS	read the fine/fucking source
+SAR	search and rescue
 SAR	some assembly required
 SCNR	sorry, could not resist
 SEP	someone else's problem
