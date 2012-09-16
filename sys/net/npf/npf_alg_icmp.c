@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.12 2012/09/10 21:42:53 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.13 2012/09/16 13:44:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12 2012/09/10 21:42:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.13 2012/09/16 13:44:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -151,109 +151,110 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 }
 
 /*
- * npf_icmp_uniqid: retrieve unique identifiers - either ICMP query ID
+ * npf_icmp{4,6}_uniqid: retrieve unique identifiers - either ICMP query ID
  * or TCP/UDP ports of the original packet, which is embedded.
  */
+
 static bool
-npf_icmp_uniqid(const int npcinf, const int type,
-    npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
+npf_icmp4_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
-	struct icmp      *ic;
+	struct icmp *ic;
+	u_int offby;
+
+	/* Per RFC 792. */
+	switch (type) {
+	case ICMP_UNREACH:
+	case ICMP_SOURCEQUENCH:
+	case ICMP_REDIRECT:
+	case ICMP_TIMXCEED:
+	case ICMP_PARAMPROB:
+		/* Should contain original IP header. */
+		offby = offsetof(struct icmp, icmp_ip);
+		if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
+			return false;
+		}
+		/* Fetch into the cache. */
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
+			return false;
+		}
+		switch (npf_cache_ipproto(npc)) {
+		case IPPROTO_TCP:
+			return npf_fetch_tcp(npc, nbuf, n_ptr);
+		case IPPROTO_UDP:
+			return npf_fetch_udp(npc, nbuf, n_ptr);
+		default:
+			return false;
+		}
+		return true;
+
+	case ICMP_ECHOREPLY:
+	case ICMP_ECHO:
+	case ICMP_TSTAMP:
+	case ICMP_TSTAMPREPLY:
+	case ICMP_IREQ:
+	case ICMP_IREQREPLY:
+		/* Should contain ICMP query ID. */
+		ic = &npc->npc_l4.icmp;
+		offby = offsetof(struct icmp, icmp_id);
+		if (nbuf_advfetch(&nbuf, &n_ptr, offby,
+		    sizeof(uint16_t), &ic->icmp_id)) {
+			return false;
+		}
+		npc->npc_info |= NPC_ICMP_ID;
+		return true;
+	default:
+		break;
+	}
+	/* No unique IDs. */
+	return false;
+}
+
+static bool
+npf_icmp6_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
+{
 	struct icmp6_hdr *ic6;
-	u_int            offby;
+	u_int offby;
 
-	if (npcinf & NPC_IP4) {
-		/* Per RFC 792. */
-		switch (type) {
-		case ICMP_UNREACH:
-		case ICMP_SOURCEQUENCH:
-		case ICMP_REDIRECT:
-		case ICMP_TIMXCEED:
-		case ICMP_PARAMPROB:
-			/* Should contain original IP header. */
-			offby = offsetof(struct icmp, icmp_ip);
-			if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-				return false;
-			}
-			/* Fetch into the cache. */
-			if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
-				return false;
-			}
-			switch (npf_cache_ipproto(npc)) {
-			case IPPROTO_TCP:
-				return npf_fetch_tcp(npc, nbuf, n_ptr);
-			case IPPROTO_UDP:
-				return npf_fetch_udp(npc, nbuf, n_ptr);
-			default:
-				return false;
-			}
-			return true;
-
-		case ICMP_ECHOREPLY:
-		case ICMP_ECHO:
-		case ICMP_TSTAMP:
-		case ICMP_TSTAMPREPLY:
-		case ICMP_IREQ:
-		case ICMP_IREQREPLY:
-			/* Should contain ICMP query ID. */
-			ic = &npc->npc_l4.icmp;
-			offby = offsetof(struct icmp, icmp_id);
-			if (nbuf_advfetch(&nbuf, &n_ptr, offby,
-			    sizeof(uint16_t), &ic->icmp_id)) {
-				return false;
-			}
-			npc->npc_info |= NPC_ICMP_ID;
-			return true;
-		default:
-			break;
+	/* Per RFC 4443. */
+	switch (type) {
+	case ICMP6_DST_UNREACH:
+	case ICMP6_PACKET_TOO_BIG:
+	case ICMP6_TIME_EXCEEDED:
+	case ICMP6_PARAM_PROB:
+		/* Should contain original IP header. */
+		offby = sizeof(struct icmp6_hdr);
+		if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
+			return false;
 		}
-		/* No unique IDs. */
-		return false;
-	}
-	if (npcinf & NPC_IP6) {
-		switch (type) {
-		/* Per RFC 4443. */
-		case ICMP6_DST_UNREACH:
-		case ICMP6_PACKET_TOO_BIG:
-		case ICMP6_TIME_EXCEEDED:
-		case ICMP6_PARAM_PROB:
-			/* Should contain original IP header. */
-			offby = sizeof(struct icmp6_hdr);
-			if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-				return false;
-			}
-			/* Fetch into the cache. */
-			if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
-				return false;
-			}
-			switch (npf_cache_ipproto(npc)) {
-			case IPPROTO_TCP:
-				return npf_fetch_tcp(npc, nbuf, n_ptr);
-			case IPPROTO_UDP:
-				return npf_fetch_udp(npc, nbuf, n_ptr);
-			default:
-				return false;
-			}
-			return true;
-
-		case ICMP6_ECHO_REQUEST:
-		case ICMP6_ECHO_REPLY:
-			/* Should contain ICMP query ID. */
-			ic6 = &npc->npc_l4.icmp6;
-			offby = offsetof(struct icmp6_hdr, icmp6_id);
-			if (nbuf_advfetch(&nbuf, &n_ptr, offby,
-			    sizeof(uint16_t), &ic6->icmp6_id)) {
-				return false;
-			}
-			npc->npc_info |= NPC_ICMP_ID;
-			return true;
-		default:
-			break;
+		/* Fetch into the cache. */
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
+			return false;
 		}
-		/* No unique IDs. */
-		return false;
+		switch (npf_cache_ipproto(npc)) {
+		case IPPROTO_TCP:
+			return npf_fetch_tcp(npc, nbuf, n_ptr);
+		case IPPROTO_UDP:
+			return npf_fetch_udp(npc, nbuf, n_ptr);
+		default:
+			return false;
+		}
+		return true;
+
+	case ICMP6_ECHO_REQUEST:
+	case ICMP6_ECHO_REPLY:
+		/* Should contain ICMP query ID. */
+		ic6 = &npc->npc_l4.icmp6;
+		offby = offsetof(struct icmp6_hdr, icmp6_id);
+		if (nbuf_advfetch(&nbuf, &n_ptr, offby,
+		    sizeof(uint16_t), &ic6->icmp6_id)) {
+			return false;
+		}
+		npc->npc_info |= NPC_ICMP_ID;
+		return true;
+	default:
+		break;
 	}
-	/* Whatever protocol that may have been ... */
+	/* No unique IDs. */
 	return false;
 }
 
@@ -287,6 +288,8 @@ static bool
 npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 {
 	npf_cache_t *key = keyptr;
+	bool ret;
+
 	KASSERT(key->npc_info == 0);
 
 	/* IP + ICMP?  Get unique identifiers from ICMP packet. */
@@ -306,10 +309,22 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 		return false;
 	}
 
-	/* Fetch relevant data into the separate ("key") cache. */
+	/*
+	 * Fetch relevant data into the separate ("key") cache.
+	 */
 	struct icmp *ic = &npc->npc_l4.icmp;
-	if (!npf_icmp_uniqid(npc->npc_info & NPC_IP46, ic->icmp_type,
-	    key, nbuf, n_ptr)) {
+
+	if (npf_iscached(npc, NPC_IP4)) {
+		ret = npf_icmp4_uniqid(ic->icmp_type, key, nbuf, n_ptr);
+	} else if (npf_iscached(npc, NPC_IP6)) {
+		KASSERT(offsetof(struct icmp, icmp_id) ==
+		    offsetof(struct icmp6_hdr, icmp6_id));
+		ret = npf_icmp6_uniqid(ic->icmp_type, key, nbuf, n_ptr);
+	} else {
+		ret = false;
+	}
+
+	if (!ret) {
 		return false;
 	}
 
