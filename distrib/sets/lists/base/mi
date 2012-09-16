@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1006 2012/09/13 21:05:17 martin Exp $
+# $NetBSD: mi,v 1.1007 2012/09/16 16:15:29 rmind Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -932,6 +932,7 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-sys-usr
+./usr/lib/npf					base-sys-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
