@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.16 2012/07/21 17:11:01 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.17 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16 2012/07/21 17:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.17 2012/09/16 13:47:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16 2012/07/21 17:11:01 rmind Exp $");
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
@@ -655,119 +654,6 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 
 	/* Advance to TCP/UDP checksum and rewrite it. */
 	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(uint16_t), cksum)) {
-		return false;
-	}
-	return true;
-}
-
-static inline bool
-npf_normalize_ip4(npf_cache_t *npc, nbuf_t *nbuf,
-    bool rnd, bool no_df, int minttl)
-{
-	void *n_ptr = nbuf_dataptr(nbuf);
-	struct ip *ip = &npc->npc_ip.v4;
-	uint16_t cksum = ip->ip_sum;
-	uint16_t ip_off = ip->ip_off;
-	uint8_t ttl = ip->ip_ttl;
-	u_int offby = 0;
-
-	KASSERT(rnd || minttl || no_df);
-
-	/* Randomize IPv4 ID. */
-	if (rnd) {
-		uint16_t oid = ip->ip_id, nid;
-
-		nid = htons(ip_randomid(ip_ids, 0));
-		offby = offsetof(struct ip, ip_id);
-		if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(nid), &nid)) {
-			return false;
-		}
-		cksum = npf_fixup16_cksum(cksum, oid, nid);
-		ip->ip_id = nid;
-	}
-
-	/* IP_DF flag cleansing. */
-	if (no_df && (ip_off & htons(IP_DF)) != 0) {
-		uint16_t nip_off = ip_off & ~htons(IP_DF);
-
-		if (nbuf_advstore(&nbuf, &n_ptr,
-		    offsetof(struct ip, ip_off) - offby,
-		    sizeof(uint16_t), &nip_off)) {
-			return false;
-		}
-		cksum = npf_fixup16_cksum(cksum, ip_off, nip_off);
-		ip->ip_off = nip_off;
-		offby = offsetof(struct ip, ip_off);
-	}
-
-	/* Enforce minimum TTL. */
-	if (minttl && ttl < minttl) {
-		if (nbuf_advstore(&nbuf, &n_ptr,
-		    offsetof(struct ip, ip_ttl) - offby,
-		    sizeof(uint8_t), &minttl)) {
-			return false;
-		}
-		cksum = npf_fixup16_cksum(cksum, ttl, minttl);
-		ip->ip_ttl = minttl;
-		offby = offsetof(struct ip, ip_ttl);
-	}
-
-	/* Update IP checksum. */
-	offby = offsetof(struct ip, ip_sum) - offby;
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
-		return false;
-	}
-	ip->ip_sum = cksum;
-	return true;
-}
-
-bool
-npf_normalize(npf_cache_t *npc, nbuf_t *nbuf,
-    bool no_df, bool rnd, u_int minttl, u_int maxmss)
-{
-	void *n_ptr = nbuf_dataptr(nbuf);
-	struct tcphdr *th = &npc->npc_l4.tcp;
-	uint16_t cksum, mss;
-	u_int offby;
-	int wscale;
-
-	/* Normalize IPv4. */
-	if (npf_iscached(npc, NPC_IP4) && (rnd || minttl)) {
-		if (!npf_normalize_ip4(npc, nbuf, rnd, no_df, minttl)) {
-			return false;
-		}
-	} else if (!npf_iscached(npc, NPC_IP4)) {
-		/* XXX: no IPv6 */
-		return false;
-	}
-
-	/*
-	 * TCP Maximum Segment Size (MSS) "clamping".  Only if SYN packet.
-	 * Fetch MSS and check whether rewrite to lower is needed.
-	 */
-	if (maxmss == 0 || !npf_iscached(npc, NPC_TCP) ||
-	    (th->th_flags & TH_SYN) == 0) {
-		/* Not required; done. */
-		return true;
-	}
-	mss = 0;
-	if (!npf_fetch_tcpopts(npc, nbuf, &mss, &wscale)) {
-		return false;
-	}
-	if (ntohs(mss) <= maxmss) {
-		return true;
-	}
-
-	/* Calculate TCP checksum, then rewrite MSS and the checksum. */
-	maxmss = htons(maxmss);
-	cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
-	th->th_sum = cksum;
-	mss = maxmss;
-	if (!npf_fetch_tcpopts(npc, nbuf, &mss, &wscale)) {
-		return false;
-	}
-	offby = npf_cache_hlen(npc) + offsetof(struct tcphdr, th_sum);
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
 		return false;
 	}
 	return true;

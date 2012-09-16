@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.12 2012/07/15 00:23:00 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.13 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12 2012/07/15 00:23:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.13 2012/09/16 13:47:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,7 +107,7 @@ npf_init(void)
 	npf_session_sysinit();
 	npf_nat_sysinit();
 	npf_alg_sysinit();
-	npflogattach(1);
+	npf_ext_sysinit();
 
 	/* Load empty configuration. */
 	dict = prop_dictionary_create();
@@ -136,7 +136,6 @@ npf_fini(void)
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npflogdetach();
 	npf_pfil_unregister();
 
 	/* Flush all sessions, destroy configuration (ruleset, etc). */
@@ -144,6 +143,7 @@ npf_fini(void)
 	npf_core_destroy(npf_core);
 
 	/* Finally, safe to destroy the subsystems. */
+	npf_ext_sysfini();
 	npf_alg_sysfini();
 	npf_nat_sysfini();
 	npf_session_sysfini();
@@ -171,7 +171,7 @@ npf_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 		return npf_fini();
 	case MODULE_CMD_AUTOUNLOAD:
-		if (npf_pfil_registered_p() || !npf_default_pass()) {
+		if (npf_autounload_p()) {
 			return EBUSY;
 		}
 		break;
@@ -368,6 +368,12 @@ npf_default_pass(void)
 {
 	KASSERT(rw_lock_held(&npf_lock));
 	return npf_core->n_default_pass;
+}
+
+bool
+npf_autounload_p(void)
+{
+	return !npf_pfil_registered_p() && npf_default_pass();
 }
 
 /*
