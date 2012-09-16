@@ -1,4 +1,4 @@
-.\" $NetBSD: kcpuset.9,v 1.3 2012/07/07 21:26:36 rmind Exp $ */
+.\" $NetBSD: kcpuset.9,v 1.4 2012/09/16 22:22:45 rmind Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 7, 2012
+.Dd September 16, 2012
 .Dt KCPUSET 9
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Nm kcpuset_countset ,
 .Nm kcpuset_atomic_set ,
 .Nm kcpuset_atomic_clear
+.Nm kcpuset_export_32
 .Nd dynamic kernel CPU sets
 .Sh SYNOPSIS
 .In sys/kcpuset.h
@@ -90,6 +91,8 @@
 .Fn kcpuset_atomic_set "kcpuset_t *kcp" "cpuid_t cpu"
 .Ft void
 .Fn kcpuset_atomic_clear "kcpuset_t *kcp" "cpuid_t cpu"
+.Ft void
+.Fn kcpuset_export_u32 "const kcpuset_t *kcp" "uint32_t *bitfield" "size_t len"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
@@ -231,6 +234,16 @@ from the
 set
 .Fa kcp
 atomically.
+.Fn kcpuset_export_u32 "kcp" "bitfield" "len"
+Exports the CPU set
+.Fa kcp
+into a format of 32-bit integer array,
+specified by
+.Fa bitfield
+and length in bytes by
+.Fa len .
+An integers is in the host byte-order and represents a bit field.
+The first bit at index zero represents CPU number 0, and so on.
 .El
 .Sh CODE REFERENCES
 The
