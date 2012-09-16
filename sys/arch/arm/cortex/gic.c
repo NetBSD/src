@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.2 2012/09/14 03:52:50 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.3 2012/09/16 22:09:34 rmind Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.2 2012/09/14 03:52:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.3 2012/09/16 22:09:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -437,7 +437,7 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	}
 
 	uint32_t targets;
-	kcpuset_copybits(kcp, &targets, sizeof(targets));
+	kcpuset_export_u32(kcp, &targets, sizeof(targets));
 	uint32_t sgir = __SHIFTOUT(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
 	sgir |= __SHIFTOUT(targets, GICD_SGIR_TargetList);
 
