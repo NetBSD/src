@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.71 2012/06/27 12:28:28 cheusov Exp $ */
+/* $NetBSD: kern_auth.c,v 1.72 2012/09/16 14:35:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.71 2012/06/27 12:28:28 cheusov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.72 2012/09/16 14:35:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -930,7 +930,7 @@ kauth_authorize_action_internal(kauth_scope_t scope, kauth_cred_t cred,
 
 	/* Short-circuit requests coming from the kernel. */
 	if (cred == NOCRED || cred == FSCRED)
-		return (0);
+		return KAUTH_RESULT_ALLOW;
 
 	KASSERT(scope != NULL);
 
