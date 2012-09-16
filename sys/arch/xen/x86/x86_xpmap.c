@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.48 2012/08/21 09:06:02 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.49 2012/09/16 22:09:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.48 2012/08/21 09:06:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.49 2012/09/16 22:09:34 rmind Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -380,7 +380,7 @@ xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 	xcpumask_t xcpumask;
 	mmuext_op_t op;
 
-	kcpuset_copybits(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
+	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
@@ -421,7 +421,7 @@ xen_mcast_tlbflush(kcpuset_t *kc)
 	xcpumask_t xcpumask;
 	mmuext_op_t op;
 
-	kcpuset_copybits(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
+	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
