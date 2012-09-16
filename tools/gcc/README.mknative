@@ -1,6 +1,4 @@
-$NetBSD: README.mknative,v 1.9 2011/09/21 02:15:18 mrg Exp $
-
-XXX THIS FILE DOES NOT DESCRIBE GCC 4.5 METHODS PROPERLY XXX
+$NetBSD: README.mknative,v 1.10 2012/09/16 15:09:55 skrll Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -27,8 +25,9 @@ work.
 
 3. In src/tools/gcc, do "nbmake-MACHINE bootstrap-libgcc".
 
-   This will create just enough glue in src/gnu/lib/libgcc4/arch to make it
-   possible to build, based on the toolchain built in ${.OBJDIR}/build.
+   This will create just enough glue in src/external/gpl3/gcc/lib/libgcc/arch
+   to make it possible to build, based on the toolchain built in
+   ${.OBJDIR}/build.
    Because the files generated in this step contain things like
    -DCROSS_COMPILE, they are not suitable for committing.  Step 8 below
    will regenerate the "proper" libgcc config files.
@@ -36,13 +35,17 @@ work.
 4. At top level, do
    "nbmake-MACHINE do-distrib-dirs obj includes MKGCC=no MKBINUTILS=no".
 
-5. In src/gnu/lib/libgcc4, do "nbmake-MACHINE obj includes".
+5. In src/external/gpl3/gcc/lib/libgcc, do "nbmake-MACHINE obj includes".
 
-6. If the platform sets USE_COMPILERCRTSTUFF=yes, then in src/gnu/lib/crtstuff4
-   do "nbmake-MACHINE dependall install"
+6. If the platform sets USE_COMPILERCRTSTUFF=yes, then in
+   src/external/gpl3/gcc/lib/crtstuff/ do "nbmake-MACHINE dependall install"
 
-7. In each of src/lib/csu, src/gnu/lib/libgcc4, and src/lib,
-   do "nbmake-MACHINE dependall install".
+7. In each of src/lib/csu, src/external/gpl3/gcc/lib/libgcc,
+   src/external/lgpl3/gmp/lib/libgmp,  src/external/lgpl3/mpfr/lib/libmpfr,
+   src/external/lgpl2/mpc/lib/libmpc and src/lib,
+   do "nbmake-MACHINE includes dependall install".
+
+   It is important to have LIBISPRIVATE=no while doing src/external/lgpl[23]/*
 
    Optionally, all of the following may be set in the environment to reduce
    the amount of code needed to build at this step.  Basically, it must be
