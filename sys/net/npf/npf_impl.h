@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.22 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.23 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -94,9 +94,6 @@ typedef npf_table_t *		npf_tableset_t;
  * DEFINITIONS.
  */
 
-#define	NPF_DECISION_BLOCK	0
-#define	NPF_DECISION_PASS	1
-
 typedef bool (*npf_algfunc_t)(npf_cache_t *, nbuf_t *, void *);
 
 #define	NPF_NCODE_LIMIT		1024
@@ -157,7 +154,6 @@ int		npf_pfil_register(void);
 void		npf_pfil_unregister(void);
 bool		npf_pfil_registered_p(void);
 int		npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
-void		npf_log_packet(npf_cache_t *, nbuf_t *, int);
 
 /* Protocol helpers. */
 bool		npf_fetch_ip(npf_cache_t *, nbuf_t *, void *);
@@ -186,7 +182,6 @@ int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
 bool		npf_fetch_tcpopts(const npf_cache_t *, nbuf_t *,
 		    uint16_t *, int *);
-bool		npf_normalize(npf_cache_t *, nbuf_t *, bool, bool, u_int, u_int);
 bool		npf_return_block(npf_cache_t *, nbuf_t *, const int);
 
 /* Complex instructions. */
@@ -252,10 +247,15 @@ npf_natpolicy_t *npf_rule_getnat(const npf_rule_t *);
 void		npf_rule_setnat(npf_rule_t *, npf_natpolicy_t *);
 npf_rproc_t *	npf_rule_getrproc(npf_rule_t *);
 
+void		npf_ext_sysinit(void);
+void		npf_ext_sysfini(void);
+int		npf_ext_construct(const char *,
+		    npf_rproc_t *, prop_dictionary_t);
+
 npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
 void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
-void		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int);
+void		npf_rproc_run(npf_cache_t *, nbuf_t *, npf_rproc_t *, int *);
 
 /* Session handling interface. */
 void		npf_session_sysinit(void);

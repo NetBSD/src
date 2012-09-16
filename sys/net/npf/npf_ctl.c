@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.17 2012/08/15 18:44:56 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.18 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.17 2012/08/15 18:44:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.18 2012/09/16 13:47:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -162,29 +162,51 @@ static npf_rproc_t *
 npf_mk_rproc(prop_array_t rprocs, const char *rpname)
 {
 	prop_object_iterator_t it;
-	prop_dictionary_t rpdict;
+	prop_dictionary_t rpdict, extdict;
+	prop_array_t extlist;
 	npf_rproc_t *rp;
+	const char *name;
 	uint64_t rpval;
 
 	it = prop_array_iterator(rprocs);
 	while ((rpdict = prop_object_iterator_next(it)) != NULL) {
-		const char *iname;
-		prop_dictionary_get_cstring_nocopy(rpdict, "name", &iname);
-		KASSERT(iname != NULL);
-		if (strcmp(rpname, iname) == 0)
+		prop_dictionary_get_cstring_nocopy(rpdict, "name", &name);
+		KASSERT(name != NULL);
+		if (strcmp(rpname, name) == 0)
 			break;
 	}
 	prop_object_iterator_release(it);
-	if (rpdict == NULL) {
+	if (!rpdict) {
 		return NULL;
 	}
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	if (!prop_dictionary_get_uint64(rpdict, "rproc-ptr", &rpval)) {
-		rp = npf_rproc_create(rpdict);
+	if (prop_dictionary_get_uint64(rpdict, "rproc-ptr", &rpval)) {
+		return (npf_rproc_t *)(uintptr_t)rpval;
+	}
+
+	extlist = prop_dictionary_get(rpdict, "extcalls");
+	if (prop_object_type(extlist) != PROP_TYPE_ARRAY) {
+		return NULL;
+	}
+
+	rp = npf_rproc_create(rpdict);
+	if (!rp) {
+		return NULL;
+	}
+	it = prop_array_iterator(extlist);
+	while ((extdict = prop_object_iterator_next(it)) != NULL) {
+		if (!prop_dictionary_get_cstring_nocopy(extdict,
+		    "name", &name) || npf_ext_construct(name, rp, extdict)) {
+			npf_rproc_release(rp);
+			rp = NULL;
+			break;
+		}
+	}
+	prop_object_iterator_release(it);
+
+	if (rp) {
 		rpval = (uint64_t)(uintptr_t)rp;
 		prop_dictionary_set_uint64(rpdict, "rproc-ptr", rpval);
-	} else {
-		rp = (npf_rproc_t *)(uintptr_t)rpval;
 	}
 	return rp;
 }
@@ -242,6 +264,18 @@ npf_mk_singlerule(prop_dictionary_t rldict, prop_array_t rps, npf_rule_t **rl,
 		return EINVAL;
 	}
 
+	/* Make the rule procedure, if any. */
+	if (rps && prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rnm)) {
+		rp = npf_mk_rproc(rps, rnm);
+		if (rp == NULL) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			goto err;
+		}
+	} else {
+		rp = NULL;
+	}
+
 	error = 0;
 	obj = prop_dictionary_get(rldict, "ncode");
 	if (obj) {
@@ -256,26 +290,14 @@ npf_mk_singlerule(prop_dictionary_t rldict, prop_array_t rps, npf_rule_t **rl,
 		nc_size = 0;
 	}
 
-	/* Check for rule procedure. */
-	if (rps && prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rnm)) {
-		rp = npf_mk_rproc(rps, rnm);
-		if (rp == NULL) {
-			if (nc) {
-				npf_ncode_free(nc, nc_size);	/* XXX */
-			}
-			NPF_ERR_DEBUG(errdict);
-			error = EINVAL;
-			goto err;
-		}
-	} else {
-		rp = NULL;
-	}
-
 	/* Finally, allocate and return the rule. */
 	*rl = npf_rule_alloc(rldict, rp, nc, nc_size);
 	KASSERT(*rl != NULL);
 	return 0;
 err:
+	if (rp) {
+		npf_rproc_release(rp);
+	}
 	prop_dictionary_get_int32(rldict, "priority", &p); /* XXX */
 	prop_dictionary_set_int32(errdict, "id", p);
 	return error;
@@ -511,12 +533,13 @@ fail:
 	}
 
 	/* Error report. */
-	prop_dictionary_set_int32(errdict, "errno", error);
 #ifndef _NPF_TESTING
+	prop_dictionary_set_int32(errdict, "errno", error);
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
-#endif
 	prop_object_release(errdict);
-	return 0;
+	error = 0;
+#endif
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.2 2012/02/20 00:18:20 rmind Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.3 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * NPF rule procedure interface.
+ * NPF extension and rule procedure interface.
  */
 
 #include <sys/cdefs.h>
@@ -41,55 +41,176 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
 
 #include "npf_impl.h"
 
-#define	NPF_RNAME_LEN		16
+#define	EXT_NAME_LEN		32
 
-/* Rule procedure structure. */
+typedef struct npf_ext {
+	char			ext_callname[EXT_NAME_LEN];
+	LIST_ENTRY(npf_ext)	ext_entry;
+	const npf_ext_ops_t *	ext_ops;
+	unsigned		ext_refcnt;
+} npf_ext_t;
+
+#define	RPROC_NAME_LEN		32
+#define	RPROC_EXT_COUNT		16
+
 struct npf_rproc {
-	/* Name. */
-	char			rp_name[NPF_RNAME_LEN];
-	/* Reference count. */
+	/* Name, reference count and flags. */
+	char			rp_name[RPROC_NAME_LEN];
 	u_int			rp_refcnt;
 	uint32_t		rp_flags;
-	/* Normalisation options. */
-	bool			rp_rnd_ipid;
-	bool			rp_no_df;
-	u_int			rp_minttl;
-	u_int			rp_maxmss;
-	/* Logging interface. */
-	u_int			rp_log_ifid;
+	/* Associated extensions and their metadata . */
+	unsigned		rp_ext_count;
+	npf_ext_t *		rp_ext[RPROC_EXT_COUNT];
+	void *			rp_ext_meta[RPROC_EXT_COUNT];
 };
 
+static LIST_HEAD(, npf_ext)	ext_list	__cacheline_aligned;
+static kmutex_t			ext_lock	__cacheline_aligned;
+
+void
+npf_ext_sysinit(void)
+{
+	mutex_init(&ext_lock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&ext_list);
+}
+
+void
+npf_ext_sysfini(void)
+{
+	KASSERT(LIST_EMPTY(&ext_list));
+	mutex_destroy(&ext_lock);
+}
+
+/*
+ * NPF extension management for the rule procedures.
+ */
+
+static npf_ext_t *
+npf_ext_lookup(const char *name)
+{
+	npf_ext_t *ext = NULL;
+
+	KASSERT(mutex_owned(&ext_lock));
+
+	LIST_FOREACH(ext, &ext_list, ext_entry)
+		if (strcmp(ext->ext_callname, name) == 0)
+			break;
+	return ext;
+}
+
+void *
+npf_ext_register(const char *name, const npf_ext_ops_t *ops)
+{
+	npf_ext_t *ext;
+
+	ext = kmem_zalloc(sizeof(npf_ext_t), KM_SLEEP);
+	strlcpy(ext->ext_callname, name, EXT_NAME_LEN);
+	ext->ext_ops = ops;
+
+	mutex_enter(&ext_lock);
+	if (npf_ext_lookup(name)) {
+		mutex_exit(&ext_lock);
+		kmem_free(ext, sizeof(npf_ext_t));
+		return NULL;
+	}
+	LIST_INSERT_HEAD(&ext_list, ext, ext_entry);
+	mutex_exit(&ext_lock);
+
+	return (void *)ext;
+}
+
+int
+npf_ext_unregister(void *extid)
+{
+	npf_ext_t *ext = extid;
+
+	/*
+	 * Check if in-use first (re-check with the lock held).
+	 */
+	if (ext->ext_refcnt) {
+		return EBUSY;
+	}
+
+	mutex_enter(&ext_lock);
+	if (ext->ext_refcnt) {
+		mutex_exit(&ext_lock);
+		return EBUSY;
+	}
+	KASSERT(npf_ext_lookup(ext->ext_callname));
+	LIST_REMOVE(ext, ext_entry);
+	mutex_exit(&ext_lock);
+
+	kmem_free(ext, sizeof(npf_ext_t));
+	return 0;
+}
+
+int
+npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
+{
+	const npf_ext_ops_t *extops;
+	npf_ext_t *ext;
+	unsigned i;
+	int error;
+
+	if (rp->rp_ext_count >= RPROC_EXT_COUNT) {
+		return ENOSPC;
+	}
+
+	mutex_enter(&ext_lock);
+	ext = npf_ext_lookup(name);
+	if (ext) {
+		atomic_inc_uint(&ext->ext_refcnt);
+		extops = ext->ext_ops;
+		KASSERT(extops != NULL);
+	}
+	mutex_exit(&ext_lock);
+	if (!ext) {
+		return ENOENT;
+	}
+
+	error = extops->ctor(rp, params);
+	if (error) {
+		atomic_dec_uint(&ext->ext_refcnt);
+		return error;
+	}
+	i = rp->rp_ext_count++;
+	rp->rp_ext[i] = ext;
+	return 0;
+}
+
+/*
+ * Rule procedure management.
+ */
+
+/*
+ * npf_rproc_create: construct a new rule procedure, lookup and associate
+ * the extension calls with it.
+ */
 npf_rproc_t *
 npf_rproc_create(prop_dictionary_t rpdict)
 {
+	const char *name;
 	npf_rproc_t *rp;
-	const char *rname;
+
+	if (!prop_dictionary_get_cstring_nocopy(rpdict, "name", &name)) {
+		return NULL;
+	}
 
 	rp = kmem_intr_zalloc(sizeof(npf_rproc_t), KM_SLEEP);
 	rp->rp_refcnt = 1;
 
-	/* Name and flags. */
-	prop_dictionary_get_cstring_nocopy(rpdict, "name", &rname);
-	strlcpy(rp->rp_name, rname, NPF_RNAME_LEN);
+	strlcpy(rp->rp_name, name, RPROC_NAME_LEN);
 	prop_dictionary_get_uint32(rpdict, "flags", &rp->rp_flags);
-
-	/* Logging interface ID (integer). */
-	prop_dictionary_get_uint32(rpdict, "log-interface", &rp->rp_log_ifid);
-
-	/* IP ID randomisation and IP_DF flag cleansing. */
-	prop_dictionary_get_bool(rpdict, "randomize-id", &rp->rp_rnd_ipid);
-	prop_dictionary_get_bool(rpdict, "no-df", &rp->rp_no_df);
-
-	/* Minimum IP TTL and maximum TCP MSS. */
-	prop_dictionary_get_uint32(rpdict, "min-ttl", &rp->rp_minttl);
-	prop_dictionary_get_uint32(rpdict, "max-mss", &rp->rp_maxmss);
-
 	return rp;
 }
 
+/*
+ * npf_rproc_acquire: acquire the reference on the rule procedure.
+ */
 void
 npf_rproc_acquire(npf_rproc_t *rp)
 {
@@ -97,36 +218,56 @@ npf_rproc_acquire(npf_rproc_t *rp)
 	atomic_inc_uint(&rp->rp_refcnt);
 }
 
+/*
+ * npf_rproc_release: drop the reference count and destroy the rule
+ * procedure on the last reference.
+ */
 void
 npf_rproc_release(npf_rproc_t *rp)
 {
 
-	/* Destroy on last reference. */
 	KASSERT(rp->rp_refcnt > 0);
 	if (atomic_dec_uint_nv(&rp->rp_refcnt) != 0) {
 		return;
+	}
+	/* XXXintr */
+	for (unsigned i = 0; i < rp->rp_ext_count; i++) {
+		npf_ext_t *ext = rp->rp_ext[i];
+		const npf_ext_ops_t *extops = ext->ext_ops;
+
+		extops->dtor(rp, rp->rp_ext_meta[i]);
+		atomic_dec_uint(&ext->ext_refcnt);
 	}
 	kmem_intr_free(rp, sizeof(npf_rproc_t));
 }
 
 void
-npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int error)
+npf_rproc_assign(npf_rproc_t *rp, void *params)
 {
-	const uint32_t flags = rp->rp_flags;
+	unsigned i = rp->rp_ext_count;
+
+	/* Note: params may be NULL. */
+	KASSERT(i < RPROC_EXT_COUNT);
+	rp->rp_ext_meta[i] = params;
+}
+
+/*
+ * npf_rproc_run: run the rule procedure by executing each extension call.
+ *
+ * => Reference on the rule procedure must be held.
+ */
+void
+npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
+{
+	const unsigned extcount = rp->rp_ext_count;
 
 	KASSERT(rp->rp_refcnt > 0);
 
-	/* Normalise the packet, if required. */
-	if ((flags & NPF_RPROC_NORMALIZE) != 0 && !error) {
-		(void)npf_normalize(npc, nbuf,
-		    rp->rp_rnd_ipid, rp->rp_no_df,
-		    rp->rp_minttl, rp->rp_maxmss);
-		npf_stats_inc(NPF_STAT_RPROC_NORM);
-	}
+	for (unsigned i = 0; i < extcount; i++) {
+		const npf_ext_t *ext = rp->rp_ext[i];
+		const npf_ext_ops_t *extops = ext->ext_ops;
 
-	/* Log packet, if required. */
-	if ((flags & NPF_RPROC_LOG) != 0) {
-		npf_log_packet(npc, nbuf, rp->rp_log_ifid);
-		npf_stats_inc(NPF_STAT_RPROC_LOG);
+		KASSERT(ext->ext_refcnt > 0);
+		extops->proc(npc, nbuf, rp->rp_ext_meta[i], decision);
 	}
 }

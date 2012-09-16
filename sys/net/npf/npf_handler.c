@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.21 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.22 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.21 2012/08/12 03:35:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.22 2012/09/16 13:47:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,10 +207,11 @@ pass:
 	error = npf_do_nat(&npc, se, nbuf, ifp, di);
 block:
 	/*
-	 * Execute rule procedure, if any.
+	 * Execute the rule procedure, if any is associated.
+	 * It may reverse the decision from pass to block.
 	 */
 	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp, error);
+		npf_rproc_run(&npc, nbuf, rp, &decision);
 	}
 out:
 	/*

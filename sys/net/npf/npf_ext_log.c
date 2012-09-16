@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_log.c,v 1.4 2012/06/22 13:43:17 rmind Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.1 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,14 +30,14 @@
  */
 
 /*
- * NPF logging interface.
+ * NPF logging extension.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.4 2012/06/22 13:43:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.1 2012/09/16 13:47:41 rmind Exp $");
 
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/module.h>
 
 #include <sys/conf.h>
 #include <sys/kmem.h>
@@ -50,6 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: npf_log.c,v 1.4 2012/06/22 13:43:17 rmind Exp $");
 #include <net/bpf.h>
 
 #include "npf_impl.h"
+
+NPF_EXT_MODULE(npf_ext_log, "");
+
+#define	NPFEXT_LOG_VER		1
+
+static void *		npf_ext_log_id;
+
+typedef struct {
+	unsigned int	if_idx;
+} npf_ext_log_t;
 
 typedef struct npflog_softc {
 	LIST_ENTRY(npflog_softc)	sc_entry;
@@ -146,9 +156,27 @@ npflog_clone_destroy(ifnet_t *ifp)
 	return 0;
 }
 
-void
-npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
+static int
+npf_log_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 {
+	npf_ext_log_t *meta;
+
+	meta = kmem_zalloc(sizeof(npf_ext_log_t), KM_SLEEP);
+	prop_dictionary_get_uint32(params, "log-interface", &meta->if_idx);
+	npf_rproc_assign(rp, meta);
+	return 0;
+}
+
+static void
+npf_log_dtor(npf_rproc_t *rp, void *meta)
+{
+	kmem_free(meta, sizeof(npf_ext_log_t));
+}
+
+static void
+npf_log(npf_cache_t *npc, nbuf_t *nbuf, void *meta, int *decision)
+{
+	const npf_ext_log_t *log = meta;
 	struct mbuf *m = nbuf;
 	ifnet_t *ifp;
 	int family;
@@ -165,7 +193,7 @@ npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
 	KERNEL_LOCK(1, NULL);
 
 	/* Find a pseudo-interface to log. */
-	ifp = if_byindex(if_idx);
+	ifp = if_byindex(log->if_idx);
 	if (ifp == NULL) {
 		/* No interface. */
 		KERNEL_UNLOCK_ONE(NULL);
@@ -177,4 +205,50 @@ npf_log_packet(npf_cache_t *npc, nbuf_t *nbuf, int if_idx)
 	ifp->if_obytes += m->m_pkthdr.len;
 	bpf_mtap_af(ifp, family, m);
 	KERNEL_UNLOCK_ONE(NULL);
+}
+
+/*
+ * Module interface.
+ */
+static int
+npf_ext_log_modcmd(modcmd_t cmd, void *arg)
+{
+	static const npf_ext_ops_t npf_log_ops = {
+		.version	= NPFEXT_LOG_VER,
+		.ctx		= NULL,
+		.ctor		= npf_log_ctor,
+		.dtor		= npf_log_dtor,
+		.proc		= npf_log
+	};
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/*
+		 * Initialise the NPF logging extension.
+		 */
+		npflogattach(1);
+		npf_ext_log_id = npf_ext_register("log", &npf_log_ops);
+		if (!npf_ext_log_id) {
+			npflogdetach();
+			return EEXIST;
+		}
+		break;
+
+	case MODULE_CMD_FINI:
+		error = npf_ext_unregister(npf_ext_log_id);
+		if (error) {
+			return error;
+		}
+		npflogdetach();
+		break;
+
+	case MODULE_CMD_AUTOUNLOAD:
+		/* Allow auto-unload only if NPF permits it. */
+		return npf_autounload_p() ? 0 : EBUSY;
+
+	default:
+		return ENOTTY;
+	}
+	return 0;
 }

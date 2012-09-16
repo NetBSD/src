@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.12 2012/08/15 18:44:56 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.13 2012/09/16 13:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.12 2012/08/15 18:44:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.13 2012/09/16 13:47:42 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -76,6 +76,11 @@ struct nl_rproc {
 
 struct nl_table {
 	prop_dictionary_t	ntl_dict;
+};
+
+struct nl_ext {
+	const char *		nxt_name;
+	prop_dictionary_t	nxt_dict;
 };
 
 /*
@@ -250,6 +255,43 @@ _npf_prop_array_lookup(prop_array_t array, const char *key, const char *name)
 }
 
 /*
+ * NPF EXTENSION INTERFACE.
+ */
+
+nl_ext_t *
+npf_ext_construct(const char *name)
+{
+	nl_ext_t *ext;
+
+	ext = malloc(sizeof(*ext));
+	if (ext == NULL) {
+		return NULL;
+	}
+	ext->nxt_name = strdup(name);
+	if (ext->nxt_name == NULL) {
+		free(ext);
+		return NULL;
+	}
+	ext->nxt_dict = prop_dictionary_create();
+
+	return ext;
+}
+
+void
+npf_ext_param_u32(nl_ext_t *ext, const char *key, uint32_t val)
+{
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_dictionary_set_uint32(extdict, key, val);
+}
+
+void
+npf_ext_param_bool(nl_ext_t *ext, const char *key, bool val)
+{
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_dictionary_set_bool(extdict, key, val);
+}
+
+/*
  * RULE INTERFACE.
  */
 
@@ -367,6 +409,7 @@ _npf_rule_foreach1(prop_array_t rules, unsigned nlevel, nl_rule_callback_t func)
 
 		subrules = prop_dictionary_get(rldict, "subrules");
 		(void)_npf_rule_foreach1(subrules, nlevel + 1, func);
+		prop_object_release(subrules);
 	}
 	prop_object_iterator_release(it);
 	return 0;
@@ -428,6 +471,7 @@ nl_rproc_t *
 npf_rproc_create(const char *name)
 {
 	prop_dictionary_t rpdict;
+	prop_array_t extcalls;
 	nl_rproc_t *nrp;
 
 	nrp = malloc(sizeof(nl_rproc_t));
@@ -440,8 +484,34 @@ npf_rproc_create(const char *name)
 		return NULL;
 	}
 	prop_dictionary_set_cstring(rpdict, "name", name);
+
+	extcalls = prop_array_create();
+	if (extcalls == NULL) {
+		prop_object_release(rpdict);
+		free(nrp);
+		return NULL;
+	}
+	prop_dictionary_set(rpdict, "extcalls", extcalls);
+	prop_object_release(extcalls);
+
 	nrp->nrp_dict = rpdict;
 	return nrp;
+}
+
+int
+npf_rproc_extcall(nl_rproc_t *rp, nl_ext_t *ext)
+{
+	prop_dictionary_t rpdict = rp->nrp_dict;
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_array_t extcalls;
+
+	extcalls = prop_dictionary_get(rpdict, "extcalls");
+	if (_npf_prop_array_lookup(extcalls, "name", ext->nxt_name)) {
+		return EEXIST;
+	}
+	prop_dictionary_set_cstring(extdict, "name", ext->nxt_name);
+	prop_array_add(extcalls, extdict);
+	return 0;
 }
 
 bool
@@ -449,36 +519,6 @@ npf_rproc_exists_p(nl_config_t *ncf, const char *name)
 {
 
 	return _npf_prop_array_lookup(ncf->ncf_rproc_list, "name", name);
-}
-
-int
-_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, u_int minttl,
-    u_int maxmss)
-{
-	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl = 0;
-
-	prop_dictionary_set_bool(rpdict, "randomize-id", rnd);
-	prop_dictionary_set_bool(rpdict, "no-df", no_df);
-	prop_dictionary_set_uint32(rpdict, "min-ttl", minttl);
-	prop_dictionary_set_uint32(rpdict, "max-mss", maxmss);
-
-	prop_dictionary_get_uint32(rpdict, "flags", &fl);
-	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_NORMALIZE);
-	return 0;
-}
-
-int
-_npf_rproc_setlog(nl_rproc_t *rp, u_int if_idx)
-{
-	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl = 0;
-
-	prop_dictionary_set_uint32(rpdict, "log-interface", if_idx);
-
-	prop_dictionary_get_uint32(rpdict, "flags", &fl);
-	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_LOG);
-	return 0;
 }
 
 int

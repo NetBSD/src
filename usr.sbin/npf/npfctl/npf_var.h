@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.3 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.4 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -35,25 +35,35 @@
 #define	NPFVAR_STRING		0
 #define	NPFVAR_IDENTIFIER	1
 #define	NPFVAR_VAR_ID		2
-#define NPFVAR_NUM		3
-#define NPFVAR_PORT_RANGE	4
+#define	NPFVAR_NUM		3
+#define	NPFVAR_PORT_RANGE	4
 
 /* Note: primitive types are equivalent. */
-#define NPFVAR_PRIM		NPFVAR_PORT_RANGE
-#define NPFVAR_TYPE(x)		(((x) > NPFVAR_PRIM) ? (x) : 0)
+#define	NPFVAR_PRIM		NPFVAR_PORT_RANGE
+#define	NPFVAR_TYPE(x)		(((x) > NPFVAR_PRIM) ? (x) : 0)
 
 #define	NPFVAR_TABLE		5
 #define	NPFVAR_FAM		6
-#define	NPFVAR_TCPFLAG		7
-#define	NPFVAR_ICMP		8
-#define	NPFVAR_PROC_OP		9
-#define	NPFVAR_MODULE_ARG	10
+#define	NPFVAR_PROC		7
+#define	NPFVAR_PROC_PARAM	8
+#define	NPFVAR_TCPFLAG		9
+#define	NPFVAR_ICMP		10
 #define	NPFVAR_ICMP6		11
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
-	"string", "identifier", "var_id", "num", "table", "fam", "port_range",
-	"tcpflag", "icmp", "proc_op", "module_arg", "icmp6"
+	[NPFVAR_STRING]		= "string",
+	[NPFVAR_IDENTIFIER]	= "identifier",
+	[NPFVAR_VAR_ID]		= "var_id",
+	[NPFVAR_NUM]		= "num",
+	[NPFVAR_PORT_RANGE]	= "port-range",
+	[NPFVAR_TABLE]		= "table",
+	[NPFVAR_FAM]		= "fam",
+	[NPFVAR_PROC]		= "proc",
+	[NPFVAR_PROC_PARAM]	= "proc_param",
+	[NPFVAR_TCPFLAG]	= "tcpflag",
+	[NPFVAR_ICMP]		= "icmp",
+	[NPFVAR_ICMP6]		= "icmp6"
 };
 #endif
 

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.635 2012/08/08 14:08:02 christos Exp $
+# $NetBSD: shl.mi,v 1.636 2012/09/16 13:47:43 rmind Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -726,6 +726,12 @@
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
 ./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
+./usr/lib/npf/ext_log.so			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0.0			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0		base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0.0		base-npf-shlib		npf
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns

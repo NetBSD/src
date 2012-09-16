@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.20 2012/07/19 21:52:29 spz Exp $	*/
+/*	$NetBSD: npf.h,v 1.21 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		5
+#define	NPF_VERSION		6
 
 /*
  * Public declarations and definitions.
@@ -60,11 +60,11 @@ typedef uint8_t			npf_netmask_t;
 
 #if defined(_KERNEL)
 
-/* Network buffer. */
-typedef void			nbuf_t;
+#define	NPF_DECISION_BLOCK	0
+#define	NPF_DECISION_PASS	1
 
-struct npf_rproc;
-typedef struct npf_rproc	npf_rproc_t;
+#define	NPF_EXT_MODULE(name, req)	\
+    MODULE(MODULE_CLASS_MISC, name, "npf," req)
 
 /*
  * Packet information cache.
@@ -133,7 +133,12 @@ npf_cache_hlen(const npf_cache_t *npc)
 	return npc->npc_hlen;
 }
 
-/* Network buffer interface. */
+/*
+ * Network buffer interface.
+ */
+
+typedef void	nbuf_t;
+
 void *		nbuf_dataptr(void *);
 void *		nbuf_advance(nbuf_t **, void *, u_int);
 int		nbuf_advfetch(nbuf_t **, void **, u_int, size_t, void *);
@@ -143,6 +148,32 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
+
+/*
+ * NPF extensions and rule procedure interface.
+ */
+
+struct npf_rproc;
+typedef struct npf_rproc	npf_rproc_t;
+
+void		npf_rproc_assign(npf_rproc_t *, void *);
+
+typedef struct {
+	unsigned int	version;
+	void *		ctx;
+	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
+	void		(*dtor)(npf_rproc_t *, void *);
+	void		(*proc)(npf_cache_t *, nbuf_t *, void *, int *);
+} npf_ext_ops_t;
+
+void *		npf_ext_register(const char *, const npf_ext_ops_t *);
+int		npf_ext_unregister(void *);
+
+/*
+ * Misc.
+ */
+
+bool		npf_autounload_p(void);
 
 #endif	/* _KERNEL */
 
@@ -157,10 +188,6 @@ int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 #define	NPF_RULE_IN			0x10000000
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
-
-/* Rule procedure flags. */
-#define	NPF_RPROC_LOG			0x0001
-#define	NPF_RPROC_NORMALIZE		0x0002
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1
@@ -216,9 +243,6 @@ typedef enum {
 	/* Raced packets. */
 	NPF_STAT_RACE_SESSION,
 	NPF_STAT_RACE_NAT,
-	/* Rule procedure cases. */
-	NPF_STAT_RPROC_LOG,
-	NPF_STAT_RPROC_NORM,
 	/* Fragments. */
 	NPF_STAT_FRAGMENTS,
 	NPF_STAT_REASSEMBLY,
