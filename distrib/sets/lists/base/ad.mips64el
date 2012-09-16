@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.99 2012/08/10 16:22:31 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.100 2012/09/16 18:59:24 tls Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -163,8 +163,8 @@
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.7			base-compat-shlib	compat,pic
-./usr/lib/64/liblzf.so.0			base-compat-shlib	compat,pic
-./usr/lib/64/liblzf.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblzf.so.1			base-compat-shlib	compat,pic
+./usr/lib/64/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
@@ -467,8 +467,8 @@
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.7			base-compat-shlib	compat,pic
-./usr/lib/o32/liblzf.so.0			base-compat-shlib	compat,pic
-./usr/lib/o32/liblzf.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzf.so.1			base-compat-shlib	compat,pic
+./usr/lib/o32/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic
