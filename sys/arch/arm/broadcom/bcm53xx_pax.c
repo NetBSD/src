@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.2 2012/09/14 04:53:58 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.3 2012/09/16 12:10:57 he Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -367,6 +367,7 @@ bcmpax_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *ilinep
 	*ilinep = 5; /* (ipin + swiz) & 3; */
 }
 
+#ifdef __HAVE_PCI_CONF_HOOK
 static int
 bcmpax_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
@@ -375,6 +376,7 @@ bcmpax_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 
 	return PCI_CONF_ENABLE_MEM | PCI_CONF_MAP_MEM;
 }
+#endif
 
 static int
 bcmpax_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pihp)
