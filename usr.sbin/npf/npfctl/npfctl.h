@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.19 2012/08/12 03:35:13 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.20 2012/09/16 13:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -79,15 +79,15 @@ typedef struct rule_group {
 	u_int		rg_ifnum;
 } rule_group_t;
 
-typedef struct proc_op {
-	const char *	po_name;
-	npfvar_t *	po_opts;
-} proc_op_t;
+typedef struct proc_call {
+	const char *	pc_name;
+	npfvar_t *	pc_opts;
+} proc_call_t;
 
-typedef struct module_arg {
-	const char *	ma_name;
-	npfvar_t *	ma_opts;
-} module_arg_t;
+typedef struct proc_param {
+	const char *	pp_param;
+	const char *	pp_value;
+} proc_param_t;
 
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void *		zalloc(size_t);
@@ -111,6 +111,16 @@ npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
+
+/*
+ * NPF extension loading.
+ */
+
+typedef struct npf_extmod npf_extmod_t;
+
+npf_extmod_t *	npf_extmod_get(const char *, nl_ext_t **);
+int		npf_extmod_param(npf_extmod_t *, nl_ext_t *,
+		    const char *, const char *);
 
 /*
  * N-code generation interface.
