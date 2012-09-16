@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.84 2012/09/16 22:09:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.84 2012/09/16 22:09:33 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -528,7 +528,7 @@ void
 cpu_boot_secondary_processors(void)
 {
 	uint32_t mbox;
-	kcpuset_copybits(kcpuset_attached, &mbox, sizeof(mbox));
+	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
 	atomic_swap_32(&arm_cpu_mbox, mbox);
 	membar_producer();
 #ifdef _ARM_ARCH_7
