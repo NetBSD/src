@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1007 2012/09/16 16:15:29 rmind Exp $
+# $NetBSD: mi,v 1.1008 2012/09/16 18:59:24 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -548,6 +548,8 @@
 ./usr/bin/lsextattr				base-util-bin
 ./usr/bin/lua					base-util-bin
 ./usr/bin/lzcat					base-util-bin
+./usr/bin/lzf					base-util-bin
+./usr/bin/lzfcat				base-util-bin
 ./usr/bin/lzma					base-util-bin
 ./usr/bin/lzmainfo				base-util-bin
 ./usr/bin/m4					base-util-bin
@@ -715,6 +717,7 @@
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
+./usr/bin/unlzf					base-util-bin
 ./usr/bin/unlzma				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
