@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.636 2012/09/16 13:47:43 rmind Exp $
+# $NetBSD: shl.mi,v 1.637 2012/09/16 18:59:25 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -41,8 +41,8 @@
 ./lib/libkvm.so.6				base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
 ./lib/liblzf.so					base-sys-shlib		dynamicroot
-./lib/liblzf.so.0				base-sys-shlib		dynamicroot
-./lib/liblzf.so.0.0				base-sys-shlib		dynamicroot
+./lib/liblzf.so.1				base-sys-shlib		dynamicroot
+./lib/liblzf.so.1.0				base-sys-shlib		dynamicroot
 ./lib/liblzma.so				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
@@ -335,8 +335,8 @@
 ./usr/lib/liblzma.so.1				base-sys-shlib
 ./usr/lib/liblzma.so.1.1			base-sys-shlib
 ./usr/lib/liblzf.so				base-sys-shlib
-./usr/lib/liblzf.so.0				base-sys-shlib
-./usr/lib/liblzf.so.0.0				base-sys-shlib
+./usr/lib/liblzf.so.1				base-sys-shlib
+./usr/lib/liblzf.so.1.0				base-sys-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libm.so.0.10				base-sys-shlib

@@ -34,7 +34,6 @@
  * either the BSD or the GPL.
  */
 
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -53,12 +52,10 @@
 #define BLOCKSIZE (1024 * 64 - 1)
 #define MAX_BLOCKSIZE BLOCKSIZE
 
-typedef unsigned char u8;
-
 static off_t nr_read, nr_written;
 
 static const char *imagename;
-static enum { compress, uncompress, lzcat } mode = compress;
+static enum { compress, uncompress, lzfcat } mode = compress;
 static int verbose = 0;
 static int force = 0;
 static long blocksize = BLOCKSIZE;
@@ -105,7 +102,7 @@ usage (int rc)
            "\n"
            "usage: lzf [-dufhvb] [file ...]\n"
            "       unlzf [file ...]\n"
-           "       lzcat [file ...]\n"
+           "       lzfcat [file ...]\n"
            "\n%s",
            opt);
 
@@ -373,7 +370,7 @@ run_file (const char *fname)
   struct stat mystat;
   char oname[PATH_MAX + 1];
 
-  if (mode != lzcat)
+  if (mode != lzfcat)
     if (compose_name (fname, oname))
       return -1;
 
@@ -400,7 +397,7 @@ run_file (const char *fname)
       return -1;
     }
 
-  if (mode == lzcat)
+  if (mode == lzfcat)
     {
       rc = uncompress_fd (fd, 1);
       close (fd);
@@ -468,7 +465,7 @@ main (int argc, char *argv[])
     mode = uncompress;
 
   if (strstr (imagename, "cat"))
-    mode = lzcat;
+    mode = lzfcat;
 
 #ifdef HAVE_GETOPT_LONG
   while ((optc = getopt_long (argc, argv, "cdfhvb:", longopts, 0)) != -1)
@@ -509,7 +506,7 @@ main (int argc, char *argv[])
     {                           // stdin stdout
       if (!force)
         {
-          if ((mode == uncompress || mode == lzcat) && isatty (0))
+          if ((mode == uncompress || mode == lzfcat) && isatty (0))
             {
               fprintf (stderr, "%s: compressed data not read from a terminal. Use -f to force decompression.\n", imagename);
               exit (1);
