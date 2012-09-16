@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.115 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.116 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11090,6 +11090,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	m68k: Add TLS (thread local storage) support.  [joerg 20111122]
 	audio(9): Audio drivers are now MP-safe. [jmcneill 20111123]
 	xbdback(4): driver is now MP-SAFE. [jym 20111123]
+	rndctl(8): implement boot-time save/restore of kernel RNG state.
+		[tls 20111123]
 	resolvconf(8): import openresolv-3.4.5 [roy 20111124]
 	mount_chfs(8): Add mount_chfs(8), a tool for mounting CHFS volumes.
 		[ahoka 20111124]
@@ -11181,6 +11183,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sysinst(8): Use 1MB alignment rather than the default 63 sectors for
 		fdisk partition boundary for >128GB disks, as fdisk(8) does.
 		[tsutsui 20120407]
+	kernel:	Rewrite most of the entropy-gathering and entropy-distributing
+		code, separating the rnd(4) pseudodevice from the bitstream
+		generation code (now cprng(9)) and entropy-pool code (rnd(9))
+		[tls 20120417]
 	x68k: Make floppy driver actually work with proper bounce buffer
 		xfer ops on machines with extended high memories.
 		[tsutsui 20120506]
