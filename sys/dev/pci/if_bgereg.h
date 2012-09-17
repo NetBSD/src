@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.56 2010/02/03 15:36:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.57 2012/09/17 11:54:36 tsutsui Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -318,6 +318,7 @@
 #define BGE_CHIPID_BCM5787_A2		0xb002
 #define BGE_CHIPID_BCM5906_A1		0xc001
 #define BGE_CHIPID_BCM5906_A2		0xc002
+#define BGE_CHIPID_BCM57762		0x57766000
 #define BGE_CHIPID_BCM57780_A0		0x57780000
 #define BGE_CHIPID_BCM57780_A1		0x57780001
 
@@ -344,6 +345,7 @@
 #define BGE_ASICREV_BCM57780		0x57780
 #define BGE_ASICREV_BCM5717		0x5717
 #define BGE_ASICREV_BCM57765		0x57785
+#define BGE_ASICREV_BCM57766		0x57766
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 8)
@@ -2328,7 +2330,7 @@ struct bge_gib {
 #define ETHER_ALIGN 2
 
 #define BGE_FRAMELEN		ETHER_MAX_LEN
-#define BGE_MAX_FRAMELEN	(ETHER_MAX_LEN + ETHER_HDR_LEN + ETHER_CRC_LEN)
+#define BGE_MAX_FRAMELEN	1536
 #define BGE_JUMBO_FRAMELEN	ETHER_MAX_LEN_JUMBO
 #define BGE_JUMBO_MTU		(BGE_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define BGE_PAGE_SIZE		PAGE_SIZE
