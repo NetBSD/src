@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2012/09/01 02:03:35 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2012/09/17 15:37:33 msaitoh Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -16,7 +16,7 @@ EVBARM_BOARDS+=		ADI_BRH BCM5301X CP3100 GEMINI GUMSTIX INTEGRATOR \
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
 # Little endian platforms (armv5t+)
-EVBARM_BOARDS+=		SHEEVAPLUG TISDP2420
+EVBARM_BOARDS+=		BEAGLEBOARD OPENRD SHEEVAPLUG TISDP2420
 .endif
 
 .if ${MACHINE_ARCH} == "armeb"
@@ -35,7 +35,7 @@ KERNEL_SETS+=		IXM1200 HDL_G
 .endif
 
 .if ${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "earm"
-KERNEL_SETS+=		BEAGLEBOARD RPI
+KERNEL_SETS+=		RPI
 .endif
 
 .if ${MACHINE_ARCH} == "armeb"
