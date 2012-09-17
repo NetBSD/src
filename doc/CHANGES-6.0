@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.206 2012/09/14 01:58:42 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.207 2012/09/17 18:43:25 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8604,6 +8604,11 @@ sys/ufs/ufs/ufs_extattr.c			1.40
 
 	Fix unmount in the case where an attribute was autocreated.
 	[manu, ticket #556]
+
+sys/arch/evbmips/conf/MALTA			1.68
+
+	Bump SYMTAB_SPACE by 30k.
+	[cyber, ticket #564]
 
 sys/sys/param.h					patched by hand
 
