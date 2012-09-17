@@ -1,4 +1,4 @@
-# $NetBSD: t_hashes.sh,v 1.1 2010/07/10 16:43:25 jmmv Exp $
+# $NetBSD: t_hashes.sh,v 1.1.8.1 2012/09/17 19:00:26 riz Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,9 +93,6 @@ mdc2_head()
 }
 mdc2_body()
 {
-	[ -x "$(atf_get_srcdir)/h_mdc2test" ] \
-	    || atf_skip "MDC2 support not available; system built" \
-	                "with MKCRYPTO_MDC2=no"
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_mdc2test"
 }
 
