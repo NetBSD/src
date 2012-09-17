@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.81.2.4 2012/08/13 20:19:24 riz Exp $
+# $NetBSD: ad.mips64el,v 1.81.2.5 2012/09/17 19:00:26 riz Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -73,6 +73,8 @@
 ./usr/lib/64/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libcrypto.so.8.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libcrypto_rc5.so.7			base-compat-shlib	compat,pic,crypto,crypto_rc5
+./usr/lib/64/libcrypto_rc5.so.7.0		base-compat-shlib	compat,pic,crypto,crypto_rc5
 ./usr/lib/64/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/64/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdes.so.8			base-compat-shlib	compat,pic,crypto

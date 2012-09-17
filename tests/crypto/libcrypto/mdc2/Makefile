@@ -1,14 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2011/07/05 10:03:10 spz Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2012/09/17 19:03:11 riz Exp $
 
 HELPER_NAME=	mdc2test
 HELPER_DIR=	mdc2
 
 .include <bsd.init.mk>
 
-.if ${MKCRYPTO_MDC2} != "no"
-LDADD= -lcrypto_mdc2 -lcrypto
-.else
-CPPFLAGS+= -DOPENSSL_NO_MDC2
-.endif
+LDADD= -lcrypto
 
 LDADD+=         -Wl,--no-fatal-warnings
