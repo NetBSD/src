@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.111 2012/07/15 07:31:18 matt Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.112 2012/09/17 11:43:50 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.108 2012/07/15 07:30:57 matt Exp
+ *	NetBSD: miidevs,v 1.109 2012/09/17 11:42:38 tsutsui Exp
  */
 
 /*-
@@ -63,6 +63,7 @@
 #define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
+#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
@@ -240,6 +241,8 @@
 #define	MII_STR_BROADCOM2_BCM5761	"BCM5761 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM2_BCM5709S	0x003f
 #define	MII_STR_BROADCOM2_BCM5709S	"BCM5709S 1000/2500baseSX PHY"
+#define	MII_MODEL_BROADCOM3_BCM57765	0x0024
+#define	MII_STR_BROADCOM3_BCM57765	"BCM57765 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
