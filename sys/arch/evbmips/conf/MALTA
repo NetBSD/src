@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.65 2012/02/09 18:58:14 matt Exp $
+#	$NetBSD: MALTA,v 1.65.2.1 2012/09/17 18:40:12 riz Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.65 $"
+#ident 		"MALTA-$Revision: 1.65.2.1 $"
 
 maxusers	32
 
@@ -37,7 +37,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=445000	# size for embedded symbol table
+options 	SYMTAB_SPACE=475000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
