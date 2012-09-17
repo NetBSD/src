@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1134 2012/09/17 11:35:30 tsutsui Exp $
+$NetBSD: pcidevs,v 1.1135 2012/09/17 22:03:20 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -626,6 +626,7 @@ vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
 vendor EVE		0x1adb	EVE
 vendor QUMRANET		0x1af4	Qumranet
+vendor ASMEDIA		0x1b21  ASMedia
 vendor FRESCO		0x1b73	Fresco Logic
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -1132,6 +1133,9 @@ product ARECA ARC1681		0x1681	ARC-1681
 
 /* ASIX Electronics products */
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
+
+/* ASMedia products */
+product ASMEDIA ASM1061		0x0621	ASM1061 AHCI SATA III Controller
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
