@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.108 2012/07/15 07:30:57 matt Exp $
+$NetBSD: miidevs,v 1.109 2012/09/17 11:42:38 tsutsui Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ oui ATHEROS			0x001374	Atheros
 oui ATTANSIC			0x00c82e	Attansic Technology
 oui BROADCOM			0x001018	Broadcom Corporation
 oui BROADCOM2			0x000af7	Broadcom Corporation
+oui BROADCOM3			0x001be9	Broadcom Corporation
 oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
@@ -179,6 +180,7 @@ model BROADCOM2 BCM5784		0x003a BCM5784 10/100/1000baseT PHY
 model BROADCOM2 BCM5709C	0x003c BCM5709 10/100/1000baseT PHY
 model BROADCOM2 BCM5761		0x003d BCM5761 10/100/1000baseT PHY
 model BROADCOM2 BCM5709S	0x003f BCM5709S 1000/2500baseSX PHY
+model BROADCOM3 BCM57765	0x0024 BCM57765 1000BASE-T media interface
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
