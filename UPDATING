@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.239 2012/09/15 18:03:42 dholland Exp $
+$NetBSD: UPDATING,v 1.240 2012/09/17 05:56:27 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,9 +18,10 @@ Recent changes:
 
 20120726:
 	The update of openssl requires cleaning both the openssl build
-	directory and DESTDIR; update builds done without taking these
-	steps may fail, or if not, have been observed to cause
-	third-party software to link incorrectly.
+	directory and DESTDIR. *Even non-update builds require cleaning
+	DESTDIR.* Builds done without taking these steps may fail, or in
+	some cases may succeed and install broken openssl libraries that
+	cause third-party software to link incorrectly and/or crash.
 
 20120507:
 	The database schema for makemandb was changed. You will
