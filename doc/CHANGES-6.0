@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.207 2012/09/17 18:43:25 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.208 2012/09/17 19:06:24 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8609,6 +8609,34 @@ sys/arch/evbmips/conf/MALTA			1.68
 
 	Bump SYMTAB_SPACE by 30k.
 	[cyber, ticket #564]
+
+distrib/sets/lists/base/ad.mips64eb		1.94-1.95 via patch
+distrib/sets/lists/base/ad.mips64el		1.93-1.94 via patch
+distrib/sets/lists/base/md.amd64		1.169-1.170 via patch
+distrib/sets/lists/base/md.sparc64		1.159-1.160 via patch
+distrib/sets/lists/base/shl.mi			1.629,1.630,1.632 via patch
+distrib/sets/lists/comp/ad.mips64eb		1.81-1.82 via patch
+distrib/sets/lists/comp/ad.mips64el		1.821.83 via patch
+distrib/sets/lists/comp/md.amd64		1.168-1.169 via patch
+distrib/sets/lists/comp/md.sparc64		1.150-1.151 via patch
+distrib/sets/lists/comp/mi			1.1769 via patch
+distrib/sets/lists/comp/shl.mi			1.226-1.227 via patch
+distrib/sets/lists/tests/mi			1.477 via patch
+distrib/sets/sets.subr				1.137 via patch
+etc/Makefile					1.397 via patch
+share/man/man5/mk.conf.5			1.60 via patch
+share/mk/bsd.README				1.297 via patch
+share/mk/bsd.own.mk				1.700 via patch
+tests/crypto/libcrypto/Makefile			patch
+tests/crypto/libcrypto/t_ciphers.sh		1.4 via patch
+tests/crypto/libcrypto/t_hashes.sh		1.2 via patch
+tests/crypto/libcrypto/idea/Makefile		patch
+tests/crypto/libcrypto/mdc2/Makefile		patch
+usr.sbin/racoon/Makefile			1.25 via patch
+
+	Clean up MKCRYPTO_IDEA and MKCRYPTO_MDC2 removal, so that
+	a tree with MKCRYPTO_RC5=yes actually builds.
+	[spz, ticket #557]
 
 sys/sys/param.h					patched by hand
 
