@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.292.2.2 2012/03/02 18:27:55 riz Exp $
+#	$NetBSD: bsd.README,v 1.292.2.3 2012/09/17 19:00:33 riz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -139,12 +139,6 @@ MKCOMPLEX	If "no", don't build libm support for <complex.h>
 MKCRYPTO	If "no", no cryptography support will be built into the system,
 		and also acts as "MKKERBEROS=no".
 		Default: yes
-
-MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
-		Default: no
-
-MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
-		Default: no
 
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
 		Default: no
@@ -1402,8 +1396,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
-		LIBCRYPTO_IDEA?=${DESTDIR}/usr/lib/libcrypto_idea.a
-		LIBCRYPTO_MDC2?=${DESTDIR}/usr/lib/libcrypto_mdc2.a
 		LIBCRYPTO_RC5?=	${DESTDIR}/usr/lib/libcrypto_rc5.a
 		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a

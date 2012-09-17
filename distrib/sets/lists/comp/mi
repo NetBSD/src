@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.6 2012/08/13 20:19:20 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.7 2012/09/17 19:00:28 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2765,12 +2765,12 @@
 ./usr/lib/libcrypt_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypto.a				comp-c-lib		crypto
 ./usr/lib/libcrypto_g.a				-unknown-		debuglib,crypto
-./usr/lib/libcrypto_idea.a			comp-c-lib		crypto_idea
-./usr/lib/libcrypto_idea_g.a			-unknown-		debuglib,crypto_idea
-./usr/lib/libcrypto_idea_p.a			comp-c-proflib		profile,crypto_idea
-./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
-./usr/lib/libcrypto_mdc2_g.a			-unknown-		debuglib,crypto_mdc2
-./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		profile,crypto_mdc2
+./usr/lib/libcrypto_idea.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_idea_g.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_idea_p.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_mdc2.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_mdc2_g.a			comp-obsolete		obsolete
+./usr/lib/libcrypto_mdc2_p.a			comp-obsolete		obsolete
 ./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
 ./usr/lib/libcrypto_rc5_g.a			-unknown-		debuglib,crypto_rc5
@@ -4354,8 +4354,8 @@
 ./usr/libdata/lint/llib-lcompat.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lcrypt.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lcrypto.ln		comp-c-lintlib		lint,crypto
-./usr/libdata/lint/llib-lcrypto_idea.ln		comp-c-lintlib		lint,crypto_idea
-./usr/libdata/lint/llib-lcrypto_mdc2.ln		comp-c-lintlib		lint,crypto_mdc2
+./usr/libdata/lint/llib-lcrypto_idea.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lcrypto_mdc2.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
