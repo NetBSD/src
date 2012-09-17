@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1127 2012/09/17 11:38:33 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1128 2012/09/17 22:03:44 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1134 2012/09/17 11:35:30 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.1135 2012/09/17 22:03:20 matt Exp
  */
 
 /*
@@ -633,6 +633,7 @@
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
+#define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -1139,6 +1140,9 @@
 
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
+
+/* ASMedia products */
+#define	PCI_PRODUCT_ASMEDIA_ASM1061	0x0621		/* ASM1061 AHCI SATA III Controller */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
