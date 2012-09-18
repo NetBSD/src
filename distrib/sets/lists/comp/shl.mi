@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.235 2012/09/16 18:59:25 tls Exp $
+# $NetBSD: shl.mi,v 1.236 2012/09/18 15:14:42 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -446,3 +446,5 @@
 ./usr/libdata/debug/usr/lib/libz.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
+./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug	comp-sys-debug	debug,npf
+./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-sys-debug	debug,npf
