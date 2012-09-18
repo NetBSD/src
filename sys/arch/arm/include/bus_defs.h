@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2 2012/09/18 05:47:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -299,7 +299,7 @@ struct bus_space {
 /*
  * Private flags stored in the DMA map.
  */
-#define	ARM32_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
+#define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -398,6 +398,19 @@ struct arm32_bus_dma_tag {
 	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
+
+	/*
+	 * DMA tag utility functions
+	 */
+	int	(*_dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+		     bus_dma_tag_t *, int);
+	void	(*_dmatag_destroy)(bus_dma_tag_t);
+
+	/*
+	 * State for bounce buffers
+	 */
+	int	_tag_needs_free;
+	int	(*_may_bounce)(bus_dma_tag_t, bus_dmamap_t, int, int *);
 };
 
 /*
@@ -430,15 +443,51 @@ struct arm32_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _ARM32_BUS_DMA_PRIVATE
-
 /* _dm_buftype */
-#define	ARM32_BUFTYPE_INVALID		0
-#define	ARM32_BUFTYPE_LINEAR		1
-#define	ARM32_BUFTYPE_MBUF		2
-#define	ARM32_BUFTYPE_UIO		3
-#define	ARM32_BUFTYPE_RAW		4
+#define	_BUS_DMA_BUFTYPE_INVALID	0
+#define	_BUS_DMA_BUFTYPE_LINEAR		1
+#define	_BUS_DMA_BUFTYPE_MBUF		2
+#define	_BUS_DMA_BUFTYPE_UIO		3
+#define	_BUS_DMA_BUFTYPE_RAW		4
 
+#ifdef _ARM32_BUS_DMA_PRIVATE
+#define	_BUS_AVAIL_END	physical_end
+/*
+ * Cookie used for bounce buffers. A pointer to one of these it stashed in
+ * the DMA map.
+ */
+struct arm32_bus_dma_cookie {
+	int	id_flags;		/* flags; see below */
+
+	/*
+	 * Information about the original buffer used during
+	 * DMA map syncs.  Note that origibuflen is only used
+	 * for ID_BUFTYPE_LINEAR.
+	 */
+	union {
+		void	*un_origbuf;		/* pointer to orig buffer if
+						   bouncing */
+		char	*un_linearbuf;
+		struct mbuf	*un_mbuf;
+		struct uio	*un_uio;
+	} id_origbuf_un;
+#define	id_origbuf		id_origbuf_un.un_origbuf
+#define	id_origlinearbuf	id_origbuf_un.un_linearbuf
+#define	id_origmbuf		id_origbuf_un.un_mbuf
+#define	id_origuio		id_origbuf_un.un_uio
+	bus_size_t id_origbuflen;	/* ...and size */
+
+	void	*id_bouncebuf;		/* pointer to the bounce buffer */
+	bus_size_t id_bouncebuflen;	/* ...and size */
+	int	id_nbouncesegs;		/* number of valid bounce segs */
+	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
+					       physical memory segments */
+};
+
+/* id_flags */
+#define	_BUS_DMA_IS_BOUNCING		0x04	/* is bouncing current xfer */
+#define	_BUS_DMA_HAS_BOUNCE		0x02	/* has bounce buffers */
 #endif /* _ARM32_BUS_DMA_PRIVATE */
+#define	_BUS_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
 
 #endif /* _ARM32_BUS_DEFS_H_ */

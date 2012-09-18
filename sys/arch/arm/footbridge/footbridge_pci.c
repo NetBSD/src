@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.22 2012/02/12 16:34:07 matt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.23 2012/09/18 05:47:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.22 2012/02/12 16:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.23 2012/09/18 05:47:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,23 +102,11 @@ struct arm32_dma_range footbridge_dma_ranges[1];
  * of these functions.
  */
 struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag = {
-	footbridge_dma_ranges,
-	1,
-	NULL,
-	_bus_dmamap_create, 
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,	/* pre */
-	NULL,			/* post */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
+	._ranges = footbridge_dma_ranges,
+	._nranges = 1,
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
 };
 
 /*

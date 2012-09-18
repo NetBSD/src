@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_pci_dma.c,v 1.8 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixp12x0_pci_dma.c,v 1.9 2012/09/18 05:47:27 matt Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.8 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci_dma.c,v 1.9 2012/09/18 05:47:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,4 +74,7 @@ ixp12x0_pci_dma_init(struct ixp12x0_softc *sc)
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+
+	dmat->_dmatag_subregion = _bus_dmatag_subregion;
+	dmat->_dmatag_destroy = _bus_dmatag_destroy;
 }

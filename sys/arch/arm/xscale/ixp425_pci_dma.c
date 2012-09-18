@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_pci_dma.c,v 1.6 2012/09/18 05:47:28 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.6 2012/09/18 05:47:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,4 +74,7 @@ ixp425_pci_dma_init(struct ixp425_softc *sc)
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+
+	dmat->_dmatag_subregion = _bus_dmatag_subregion;
+	dmat->_dmatag_destroy = _bus_dmatag_destroy;
 }
