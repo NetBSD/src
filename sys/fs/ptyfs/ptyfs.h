@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.8 2009/03/15 16:43:55 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.9 2012/09/18 21:33:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -123,11 +123,6 @@ struct ptyfs_args {
 };
 
 #define PTYFS_ARGSVERSION	2
-
-#define PTYFSMNT_CHROOT		0x01
-
-#define PTYFSMNT_BITS "\177\20" \
-    "b\00chroot\0"
 
 /*
  * Kernel stuff follows
