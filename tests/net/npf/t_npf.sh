@@ -1,4 +1,4 @@
-# $NetBSD: t_npf.sh,v 1.1 2012/09/12 14:06:31 martin Exp $
+# $NetBSD: t_npf.sh,v 1.2 2012/09/18 08:28:15 martin Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@ add_test()
 	atf_test_case "npf_${name}"
 	eval "npf_${name}_head() { \
 			atf_set \"descr\" \"${desc}\"; \
+			atf_set \"require.progs\" \"npfctl npftest\"; \
 		}; \
 	    npf_${name}_body() { \
 			run_test \"${name}\"; \
@@ -53,7 +54,7 @@ atf_init_test_cases()
 	LIST=/tmp/t_npf.$$
 	trap "rm -f $LIST" EXIT
 
-	npftest -L > $LIST
+	sh -ec 'npftest -L || printf "dummy\tnone\n"' > $LIST 2>/dev/null
 
 	while read tag desc
 	do
