@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.9 2011/09/16 15:36:18 joerg Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.10 2012/09/18 15:18:01 christos Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.172 2011/06/03 01:37:40 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.9 2011/09/16 15:36:18 joerg Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.10 2012/09/18 15:18:01 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1315,12 +1315,49 @@ main(int ac, char **av)
 	}
 
 	(void)chdir("/");
+
+	if (sock != STDERR_FILENO + 1) {
+		if (dup2(sock, STDERR_FILENO + 1) == -1) {
+			error("dup2: %s", strerror(errno));
+			cleanup_exit(1);
+		}
+		close(sock);
+	}
+#if defined(F_CLOSEM)
+	if (fcntl(sock + 1, F_CLOSEM, 0) == -1) {
+		error("fcntl F_CLOSEM: %s", strerror(errno));
+		cleanup_exit(1);
+	}
+#else
+	{
+		int nfiles;
+#if defined(_SC_OPEN_MAX)
+		nfiles = sysconf(_SC_OPEN_MAX);
+#elif defined(RLIMIT_NOFILE)
+		if (getrlimit(RLIMIT_CORE, &rlim) < 0) {
+			error("getrlimit RLIMIT_NOFILE: %s", strerror(errno));
+			cleanup_exit(1);
+		}
+		nfiles = rlim.rlim_cur;
+#elif defined(OPEN_MAX)
+		nfiles = OPEN_MAX;
+#elif defined(NOFILE)
+		nfiles = NOFILE;
+#else
+		nfiles = 1024;
+#endif
+		for (fd = sock + 1; fd < nfiles; fd++)
+			close(fd);
+	}
+#endif
 	if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		/* XXX might close listen socket */
-		(void)dup2(fd, STDIN_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
-		if (fd > 2)
+		if (dup2(fd, STDIN_FILENO) == -1 ||
+		    dup2(fd, STDOUT_FILENO) == -1 ||
+		    dup2(fd, STDERR_FILENO) == -1) {
+			error("dup2: %s", strerror(errno));
+			cleanup_exit(1);
+		}
+		if (fd > STDERR_FILENO)
 			close(fd);
 	}
 
