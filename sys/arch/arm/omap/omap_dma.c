@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_dma.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap_dma.c,v 1.4 2012/09/18 05:47:28 matt Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.4 2012/09/18 05:47:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,22 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap_dma.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $");
 #include <sys/bus.h>
 
 struct arm32_bus_dma_tag omap_bus_dma_tag = {
-	0,
-	0,
-	NULL,			/* _cookie */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	NULL,			/* sync_post */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
 };
-
