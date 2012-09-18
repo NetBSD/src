@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.105 2012/09/16 16:15:29 rmind Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.106 2012/09/18 15:12:31 skrll Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -208,6 +208,7 @@
 ./usr/libdata/debug/usr/games
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
+./usr/libdata/debug/usr/lib/npf
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
