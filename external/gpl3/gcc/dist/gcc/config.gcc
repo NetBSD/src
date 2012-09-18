@@ -754,7 +754,7 @@ arm*-*-netbsd*)
 arm*-*-linux*)			# ARM GNU/Linux with ELF
 	tm_file="dbxelf.h elfos.h linux.h glibc-stdint.h arm/elf.h arm/linux-gas.h arm/linux-elf.h"
 	case $target in
-	arm*b-*)
+	arm*b-*-linux*)
 		tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
 		;;
 	esac
@@ -854,7 +854,7 @@ avr-*-rtems*)
 	extra_objs="avr-devices.o"
 	;;
 avr-*-*)
-	tm_file="avr/avr.h dbxelf.h newlib-stdint.h"
+	tm_file="avr/avr.h dbxelf.h avr/avr-stdint.h"
 	use_gcc_stdint=wrap
 	extra_gcc_objs="driver-avr.o avr-devices.o"
 	extra_objs="avr-devices.o"
@@ -2489,7 +2489,7 @@ sparc*-*-solaris2*)
 	tm_file="${tm_file} sparc/sol2.h"
 	case ${target} in
 	    sparc64-*-* | sparcv9-*-*)
-		tm_file="${tm_file} sparc/sol2-64.h"
+		tm_file="sparc/sol2-64.h ${tm_file}"
 		;;
 	    *)
 		test x$with_cpu != x || with_cpu=v9
