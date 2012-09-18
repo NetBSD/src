@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.2 2012/07/15 20:44:20 matt Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3 2012/09/18 05:47:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -606,10 +606,14 @@ do {									\
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
 
-#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
-#define bus_dmatag_destroy(t)
+#define	bus_dmatag_subregion(t, mna, mxa, nt, f)		\
+	(*(t)->_dmatag_subregion)((t), (mna), (mxa), (nt), (f))
+#define	bus_dmatag_destroy(t)					\
+	(*(t)->_dmatag_destroy)(t)
 
 #ifdef _ARM32_BUS_DMA_PRIVATE
+
+extern paddr_t physical_start, physical_end;
 
 int	arm32_dma_range_intersect(struct arm32_dma_range *, int,
 	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
@@ -629,6 +633,25 @@ void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
+#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
+#define	_BUS_DMAMAP_SYNC_FUNCS \
+	._dmamap_sync_pre = _bus_dmamap_sync,	\
+	._dmamap_sync_post = _bus_dmamap_sync
+#else
+#define	_BUS_DMAMAP_SYNC_FUNCS \
+	._dmamap_sync_pre = _bus_dmamap_sync
+#endif
+
+#define	_BUS_DMAMAP_FUNCS \
+	._dmamap_create = _bus_dmamap_create,		\
+	._dmamap_destroy = _bus_dmamap_destroy,		\
+	._dmamap_load = _bus_dmamap_load,		\
+	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,	\
+	._dmamap_load_raw = _bus_dmamap_load_raw,	\
+	._dmamap_load_uio = _bus_dmamap_load_uio,	\
+	._dmamap_unload = _bus_dmamap_unload,		\
+	_BUS_DMAMAP_SYNC_FUNCS
+
 int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
@@ -641,10 +664,26 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 
+#define	_BUS_DMAMEM_FUNCS \
+	._dmamem_alloc = _bus_dmamem_alloc,	\
+	._dmamem_free = _bus_dmamem_free,	\
+	._dmamem_map = _bus_dmamem_map,		\
+	._dmamem_unmap = _bus_dmamem_unmap,	\
+	._dmamem_mmap = _bus_dmamem_mmap
+
 int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high);
+
+int	_bus_dmatag_subregion(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+	    bus_dma_tag_t *, int);
+void 	_bus_dmatag_destroy(bus_dma_tag_t);
+
+#define	_BUS_DMATAG_FUNCS \
+	._dmatag_subregion = _bus_dmatag_subregion,	\
+	._dmatag_destroy = _bus_dmatag_destroy
+
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 
 #endif /* _ARM32_BUS_FUNCS_H_ */

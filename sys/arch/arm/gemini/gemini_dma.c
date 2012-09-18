@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_dma.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_dma.c,v 1.3 2012/09/18 05:47:27 matt Exp $	*/
 
 /* adapted from:
  *	NetBSD: pxa2x0_dma.c,v 1.4 2005/12/11 12:16:51 christos Exp
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.3 2012/09/18 05:47:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,22 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_dma.c,v 1.2 2011/07/01 19:32:28 dyoung Exp $"
 #include <sys/bus.h>
 
 struct arm32_bus_dma_tag gemini_bus_dma_tag = {
-	0,
-	0,
-	NULL,			/* _cookie */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	NULL,			/* sync_post */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
 };
 
