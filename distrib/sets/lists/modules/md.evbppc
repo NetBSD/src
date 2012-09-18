@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.26 2012/08/06 10:44:08 martin Exp $
+# $NetBSD: md.evbppc,v 1.27 2012/09/18 08:36:21 martin Exp $
 ./stand/powerpc-4xx							base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@						base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules					base-kernel-modules	kmod,compatmodules
@@ -112,6 +112,10 @@
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf/npf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_alg_icmp			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-4xx/@OSRELEASE@/npf_ext_log				base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/npf_ext_log/npf_ext_log.kmod		base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/npf_ext_normalise			base-kernel-modules	kmod
+./stand/powerpc-4xx/@OSRELEASE@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/ntfs/ntfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-4xx/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
@@ -299,6 +303,10 @@
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf/npf.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_alg_icmp			base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod,compatmodules
+./stand/powerpc-booke/@OSRELEASE@/npf_ext_log				base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/npf_ext_log/npf_ext_log.kmod		base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/npf_ext_normalise			base-kernel-modules	kmod
+./stand/powerpc-booke/@OSRELEASE@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs				base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/ntfs/ntfs.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/powerpc-booke/@OSRELEASE@/modules/null				base-kernel-modules	kmod,compatmodules
