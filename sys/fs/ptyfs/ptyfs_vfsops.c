@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.43 2012/09/18 21:33:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.43 2012/09/18 21:33:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,7 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 	struct ptyfsmount *pmnt = mp->mnt_data;
 
 	rv = mp->mnt_stat.f_mntonname;
-	if (cwdi->cwdi_rdir == NULL ||
-	    (pmnt->pmnt_flags & PTYFSMNT_CHROOT) == 0)
+	if (cwdi->cwdi_rdir == NULL)
 		return rv;
 
 	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
