@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1008 2012/09/16 18:59:24 tls Exp $
+# $NetBSD: mi,v 1.1009 2012/09/18 15:14:40 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -976,6 +976,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root
+./usr/libdata/debug/usr/lib/npf			base-sys-usr
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
