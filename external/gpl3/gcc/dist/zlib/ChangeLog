@@ -1,3 +1,7 @@
+2012-07-02  Release Manager
+
+	* GCC 4.5.4 released.
+
 2011-04-28  Release Manager
 
 	* GCC 4.5.3 released.
@@ -615,7 +619,7 @@ Changes in 1.0.6 (19 Jan 1998)
 - use _fdopen instead of fdopen for MSC >= 6.0 (Thomas Fanslau)
 - added makelcc.bat for lcc-win32 (Tom St Denis)
 - in Makefile.dj2, use copy and del instead of install and rm (Frank Donahoe)
-- Avoid expanded $Id: ChangeLog,v 1.1.1.1 2011/06/21 01:23:23 mrg Exp $. Use "rcs -kb" or "cvs admin -kb" to avoid Id expansion.
+- Avoid expanded $Id: ChangeLog,v 1.1.1.2 2012/09/18 06:16:00 skrll Exp $. Use "rcs -kb" or "cvs admin -kb" to avoid Id expansion.
 - check for unistd.h in configure (for off_t)
 - remove useless check parameter in inflate_blocks_free
 - avoid useless assignment of s->check to itself in inflate_blocks_new
