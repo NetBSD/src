@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.4 2012/09/18 05:47:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.3 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.4 2012/09/18 05:47:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,15 @@ ixme_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_dt._dmamap_unload = _bus_dmamap_unload;
 	sc->sc_dt._dmamap_sync_pre = _bus_dmamap_sync;
 	sc->sc_dt._dmamap_sync_post = NULL;
+
 	sc->sc_dt._dmamem_alloc = _bus_dmamem_alloc;
 	sc->sc_dt._dmamem_free = _bus_dmamem_free;
 	sc->sc_dt._dmamem_map = _bus_dmamem_map;
 	sc->sc_dt._dmamem_unmap = _bus_dmamem_unmap;
 	sc->sc_dt._dmamem_mmap = _bus_dmamem_mmap;
+
+	sc->sc_dt._dmatag_subregion = _bus_dmatag_subregion;
+	sc->sc_dt._dmatag_destroy = _bus_dmatag_destroy;
 
 	config_search_ia(ixme_search, self, "ixme", NULL);
 }
