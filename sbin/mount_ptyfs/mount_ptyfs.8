@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_ptyfs.8,v 1.10 2012/09/09 17:11:49 wiz Exp $
+.\"	$NetBSD: mount_ptyfs.8,v 1.11 2012/09/18 21:35:43 christos Exp $
 .\"
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 9, 2012
+.Dd September 18, 2012
 .Dt MOUNT_PTYFS 8
 .Os
 .Sh NAME
@@ -36,7 +36,6 @@
 .Nd mount the /dev/pts file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
 .Op Fl g Ar group|gid
 .Op Fl m Ar mode
 .Op Fl o Ar options
@@ -63,10 +62,6 @@ or they are already open via traditional BSD style ptys.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl c
-Allows
-.Ar ptyfs
-to be mounted inside a chrooted environment.
 .It Fl g Ar group|gid
 Specify the group ownership of the slave pseudo-tty.
 .It Fl m Ar mode
@@ -80,9 +75,6 @@ flag followed by a comma separated string of options.
 .Pp
 .Nm
 specific options are
-.Dv chroot
-which corresponds to
-.Fl c ,
 .Dv group
 which corresponds to
 .Fl g ,
@@ -112,3 +104,4 @@ utility first appeared in
 .Nx 3.0 .
 .Sh BUGS
 This filesystem may not be NFS-exported.
+Multiple instances are not allowed.
