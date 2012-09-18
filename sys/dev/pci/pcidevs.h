@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1128 2012/09/17 22:03:44 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1129 2012/09/18 05:08:38 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1135 2012/09/17 22:03:20 matt Exp
+ *	NetBSD: pcidevs,v 1.1136 2012/09/18 05:08:10 matt Exp
  */
 
 /*
@@ -1142,7 +1142,7 @@
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
 
 /* ASMedia products */
-#define	PCI_PRODUCT_ASMEDIA_ASM1061	0x0621		/* ASM1061 AHCI SATA III Controller */
+#define	PCI_PRODUCT_ASMEDIA_ASM1061	0x0612		/* ASM1061 AHCI SATA III Controller */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
