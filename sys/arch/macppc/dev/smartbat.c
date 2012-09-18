@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.11 2012/09/06 13:05:53 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.12 2012/09/18 04:36:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.11 2012/09/06 13:05:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.12 2012/09/18 04:36:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,8 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 		case BAT_CHARGE_STATE:
 			{
-				int ch = sc->sc_max_charge * 100 / 
-				    sc->sc_charge;
+				int ch = sc->sc_charge * 100 / 
+				    sc->sc_max_charge;
 				if (ch < 6) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_CRITICAL;
