@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.76 2011/11/18 04:03:50 christos Exp $
+	$NetBSD: syscalls.master,v 1.77 2012/09/19 21:19:14 pooka Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -712,7 +712,9 @@
 461	UNIMPL		fchmodat
 462	UNIMPL		faccessat
 463	UNIMPL		pselect6
-464	UNIMPL		ppoll
+464	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+			    struct linux_timespec *timeout, \
+			    linux_sigset_t *sigset); }
 465	UNIMPL		unshare
 466	STD		{ int|linux_sys||set_robust_list( \
 			    struct linux_robust_list_head *head, size_t len); }
