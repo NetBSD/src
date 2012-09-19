@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.966 2012/09/03 10:31:51 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.967 2012/09/19 06:54:04 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -571,7 +571,7 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less-444
-Current Vers:	less-444
+Current Vers:	less-451
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
