@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.89 2012/05/25 10:47:25 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.90 2012/09/19 23:06:22 abs Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 25, 2012
+.Dd September 19, 2012
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -580,9 +580,9 @@ unconditionally.
 .
 .It Sy MKSTRIPIDENT
 .YorN
-Indicates whether program binaries and shared libraries should be built
-to include RCS IDs for use with
-.Xr ident 1 .
+Indicates whether RCS IDs, for use with
+.Xr ident 1 ,
+should be stripped from program binaries and shared libraries.
 .DFLTn
 .
 .It Sy MKUNPRIVED
