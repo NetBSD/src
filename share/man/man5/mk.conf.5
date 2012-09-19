@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.61 2012/07/14 17:12:27 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.62 2012/09/19 23:06:22 abs Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 14, 2012
+.Dd September 19, 2012
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -641,9 +641,9 @@ will be built and installed.
 .
 .It Sy MKSTRIPIDENT
 .YorN
-Indicates whether program binaries and shared libraries should be built
-to include RCS IDs for use with
-.Xr ident 1 .
+Indicates whether RCS IDs, for use with
+.Xr ident 1 ,
+should be stripped from program binaries and shared libraries.
 .DFLTn
 .
 .It Sy MKUNPRIVED
