@@ -78,10 +78,23 @@
 #include <syslog.h>
 #endif
 
+#ifdef HAVE_SYS_BYTEORDER_H
+#  include <sys/byteorder.h>
+#  if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+#    undef _BIG_ENDIAN
+#    define _BIG_ENDIAN	4321
+#    define _BYTE_ORDER	_BIG_ENDIAN
+#  elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+#    undef _LITTLE_ENDIAN
+#    define _LITTLE_ENDIAN	1234
+#    define _BYTE_ORDER	_LITTLE_ENDIAN
+#  endif
+#endif
+
 /*
  *
  */
-
+#if _BYTE_ORDER == 1234
 #define ISCSI_HTONLL6(x) (uint64_t) \
       ( ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000ff0000000000uLL) >> 40))     \
       | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000ff00000000uLL) >> 24))     \
@@ -97,6 +110,10 @@
       | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000000000ff0000uLL) << 8))      \
       | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000000000ff00uLL) << 24))     \
       | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x00000000000000ffuLL) << 40)))
+#else
+#define ISCSI_HTONLL6(x)	((uint64_t)(x)&0x0000ffffffffffffuLL)
+#define ISCSI_NTOHLL6(x)	((uint64_t)(x)&0x0000ffffffffffffuLL)
+#endif
 
 /*
  * Debugging Levels
