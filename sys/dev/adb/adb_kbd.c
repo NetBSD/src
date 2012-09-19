@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.20 2012/09/02 21:06:54 he Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.21 2012/09/19 04:55:06 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.20 2012/09/02 21:06:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.21 2012/09/19 04:55:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,10 +89,10 @@ struct adbkbd_softc {
 #endif
 	bool sc_emul_usb;
 
+	uint32_t sc_power;
 	uint8_t sc_buffer[16];
 	uint8_t sc_pollbuf[16];
-	uint8_t sc_us;
-	uint8_t sc_power, sc_pe;
+	uint8_t sc_us, sc_pe;
 };	
 
 /*
@@ -218,7 +218,16 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_capslock = 0;
 	sc->sc_trans[1] = 103;	/* F11 */
 	sc->sc_trans[2] = 111;	/* F12 */
-	sc->sc_power = 0x7f;
+	
+	/*
+	 * Most ADB keyboards send 0x7f 0x7f when the power button is pressed.
+	 * Some older PowerBooks, like the 3400c, will send a single scancode
+	 * 0x7e instead. Unfortunately Fn-Command on some more recent *Books
+	 * sends the same scancode, so by default sc_power is set to a value
+	 * that can't occur as a scancode and only set to 0x7e on hardware that
+	 * needs it
+	 */
+	sc->sc_power = 0xffff;
 	sc->sc_timestamp = 0;
 	sc->sc_emul_usb = FALSE;
 
@@ -312,11 +321,9 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 		break;
 	case ADB_PBG3KBD:
 		printf("PowerBook G3 keyboard\n");
-		sc->sc_power = 0x7e;
 		break;
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
-		sc->sc_power = 0x7e;
 		break;
 	case ADB_IBOOKKBD:
 		printf("iBook keyboard\n");
@@ -426,7 +433,6 @@ adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 
 			/* power button, report to sysmon */
 			sc->sc_pe = k1;
-		
 			sysmon_task_queue_sched(0, adbkbd_powerbutton, sc);
 		}
 	} else {
