@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.219 2011/10/14 09:23:28 hannken Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.220 2012/09/19 21:19:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.219 2011/10/14 09:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.220 2012/09/19 21:19:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.219 2011/10/14 09:23:28 hannken Exp
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/prot.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
@@ -119,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.219 2011/10/14 09:23:28 hannken Exp
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 #include <compat/linux/common/linux_emuldata.h>
+#include <compat/linux/common/linux_sched.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -918,6 +920,42 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
 	}
 
 	return 0;
+}
+
+int
+linux_sys_ppoll(struct lwp *l,
+	const struct linux_sys_ppoll_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(struct pollfd *) fds;
+		syscallarg(int) nfds;
+		syscallarg(struct linux_timespec *) timeout;
+		syscallarg(linux_sigset_t *) sigset;
+	} */
+	struct linux_timespec lts0, *lts;
+	struct timespec ts0, *ts = NULL;
+	linux_sigset_t lsigmask0, *lsigmask;
+	sigset_t sigmask0, *sigmask = NULL;
+	int error;
+
+	lts = SCARG(uap, timeout);
+	if (lts) {
+		if ((error = copyin(lts, &lts0, sizeof(lts0))) != 0)
+			return error;
+		linux_to_native_timespec(&ts0, &lts0);
+		ts = &ts0;
+	}
+
+	lsigmask = SCARG(uap, sigset);
+	if (lsigmask) {
+		if ((error = copyin(lsigmask, &lsigmask0, sizeof(lsigmask0))))
+			return error;
+		linux_to_native_sigset(&sigmask0, &lsigmask0);
+		sigmask = &sigmask0;
+	}
+
+	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds),
+	    ts, sigmask);
 }
 
 /*
