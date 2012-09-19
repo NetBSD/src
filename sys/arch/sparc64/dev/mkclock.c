@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.10 2012/08/11 21:48:30 mrg Exp $ */
+/*	$NetBSD: mkclock.c,v 1.11 2012/09/19 20:34:57 jdc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2012/08/11 21:48:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.11 2012/09/19 20:34:57 jdc Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -204,7 +204,11 @@ mkclock_ebus_attach(struct device *parent, struct device *self, void *aux)
 	/* hard code to 8K? */
 	sz = ea->ea_reg[0].size;
 
-	if (bus_space_map(sc->sc_bst,
+	/* Use the PROM address if there. */
+	if (ea->ea_nvaddr)
+		sparc_promaddr_to_handle(sc->sc_bst, ea->ea_vaddr[0],
+			&sc->sc_bsh);
+	else if (bus_space_map(sc->sc_bst,
 			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
