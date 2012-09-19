@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccm.c,v 1.2 2012/09/01 00:07:32 matt Exp $	*/
+/*	$NetBSD: imx51_ccm.c,v 1.3 2012/09/19 07:28:38 bsh Exp $	*/
 /*
  * Copyright (c) 2010, 2011, 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.2 2012/09/01 00:07:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.3 2012/09/19 07:28:38 bsh Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -141,7 +141,7 @@ imx51_get_clock(enum imx51_clock clk)
 	bus_space_tag_t iot = ccm_softc->sc_iot;
 	bus_space_handle_t ioh = ccm_softc->sc_ioh;
 
-	u_int freq;
+	u_int freq = 0;
 	u_int sel;
 	uint32_t cacrr;	/* ARM clock root register */
 	uint32_t ccsr;
@@ -164,17 +164,17 @@ imx51_get_clock(enum imx51_clock clk)
 		/* FALLTHROUGH */
 	case IMX51CLK_PLL1STEP:
 		ccsr = bus_space_read_4(iot, ioh, CCMC_CCSR);
-		switch (__SHIFTOUT(ccsr, CCSR_STEP_SEL)) {
+		switch (__SHIFTOUT(ccsr, CCSR_STEP_SEL_MASK)) {
 		case 0:
 			return imx51_get_clock(IMX51CLK_LP_APM);
 		case 1:
 			return 0; /* XXX PLL bypass clock */
 		case 2:
 			return ccm_softc->sc_pll[2-1].pll_freq /
-			    (1 + __SHIFTOUT(ccsr, CCSR_PLL2_DIV_PODF));
+			    (1 + __SHIFTOUT(ccsr, CCSR_PLL2_DIV_PODF_MASK));
 		case 3:
 			return ccm_softc->sc_pll[3-1].pll_freq /
-			    (1 + __SHIFTOUT(ccsr & CCSR_PLL3_DIV_PODF))
+			    (1 + __SHIFTOUT(ccsr, CCSR_PLL3_DIV_PODF_MASK));
 		}
 		/*NOTREACHED*/
 	case IMX51CLK_PLL2SW:
@@ -204,9 +204,8 @@ imx51_get_clock(enum imx51_clock clk)
 		if ((cbcdr & CBCDR_PERIPH_CLK_SEL) == 0)
 			freq = imx51_get_clock(IMX51CLK_PLL2SW);
 		else {
-			freq = 0;
 			cbcmr = bus_space_read_4(iot, ioh,  CCMC_CBCMR);
-			switch (__SHIFTOUT(cbcmr, CBCMR_PERIPH_APM_SEL)) {
+			switch (__SHIFTOUT(cbcmr, CBCMR_PERIPH_APM_SEL_MASK)) {
 			case 0:
 				freq = imx51_get_clock(IMX51CLK_PLL1SW);
 				break;
@@ -225,16 +224,15 @@ imx51_get_clock(enum imx51_clock clk)
 	case IMX51CLK_MAIN_BUS_CLK:
 		freq = imx51_get_clock(IMX51CLK_MAIN_BUS_CLK_SRC);
 		cdcr = bus_space_read_4(iot, ioh, CCMC_CDCR);
-		return freq / __SHIFTOUT(cdcr, CDCR_PERIPH_CLK_DVFS_PODF);
+		return freq / __SHIFTOUT(cdcr, CDCR_PERIPH_CLK_DVFS_PODF_MASK);
 	case IMX51CLK_AHB_CLK_ROOT:
 		freq = imx51_get_clock(IMX51CLK_MAIN_BUS_CLK);
 		cbcdr = bus_space_read_4(iot, ioh, CCMC_CBCDR);
-		return freq / (1 + __SHIFTOUT(cbcdr, CBCDR_AHB_PODF));
+		return freq / (1 + __SHIFTOUT(cbcdr, CBCDR_AHB_PODF_MASK));
 	case IMX51CLK_IPG_CLK_ROOT:
 		freq = imx51_get_clock(IMX51CLK_AHB_CLK_ROOT);
 		cbcdr = bus_space_read_4(iot, ioh, CCMC_CBCDR);
-		return freq / (1 + __SHIFTOUT(cbcdr, CBCDR_IPG_PODF));
-
+		return freq / (1 + __SHIFTOUT(cbcdr, CBCDR_IPG_PODF_MASK));
 	case IMX51CLK_PERCLK_ROOT:
 		cbcmr = bus_space_read_4(iot, ioh, CCMC_CBCMR);
 		if (cbcmr & CBCMR_PERCLK_IPG_SEL)
@@ -243,15 +241,16 @@ imx51_get_clock(enum imx51_clock clk)
 			freq = imx51_get_clock(IMX51CLK_LP_APM);
 		else
 			freq = imx51_get_clock(IMX51CLK_MAIN_BUS_CLK_SRC);
+
 		cbcdr = bus_space_read_4(iot, ioh, CCMC_CBCDR);
 
 #ifdef IMXCCMDEBUG
 		printf("cbcmr=%x cbcdr=%x\n", cbcmr, cbcdr);
 #endif
 
-		freq /= 1 + __SHIFTOUT(cbcdr & CBCDR_PERCLK_PRED1);
-		freq /= 1 + __SHIFTOUT(cbcdr & CBCDR_PERCLK_PRED2);
-		freq /= 1 + __SHIFTOUT(cbcdr & CBCDR_PERCLK_PODF);
+		freq /= 1 + __SHIFTOUT(cbcdr, CBCDR_PERCLK_PRED1_MASK);
+		freq /= 1 + __SHIFTOUT(cbcdr, CBCDR_PERCLK_PRED2_MASK);
+		freq /= 1 + __SHIFTOUT(cbcdr, CBCDR_PERCLK_PODF_MASK);
 		return freq;
 	case IMX51CLK_UART_CLK_ROOT:
 		cscdr1 = bus_space_read_4(iot, ioh, CCMC_CSCDR1);
@@ -261,9 +260,8 @@ imx51_get_clock(enum imx51_clock clk)
 		printf("cscdr1=%x cscmr1=%x\n", cscdr1, cscmr1);
 #endif
 
-		sel = __SHIFTOUT(cscmr1 & CSCMR1_UART_CLK_SEL);
+		sel = __SHIFTOUT(cscmr1, CSCMR1_UART_CLK_SEL_MASK);
 
-		freq = 0; /* shut up GCC */
 		switch (sel) {
 		case 0:
 		case 1:
@@ -275,12 +273,11 @@ imx51_get_clock(enum imx51_clock clk)
 			break;
 		}
 
-		return freq / (1 + __SHIFTOUT(cscdr1. CSCDR1_UART_CLK_PRED));
-			/ (1 + __SHIFTOUT(cscdr1, CSCDR1_UART_CLK_PODF));
+		return freq / (1 + __SHIFTOUT(cscdr1, CSCDR1_UART_CLK_PRED_MASK)) /
+		    (1 + __SHIFTOUT(cscdr1, CSCDR1_UART_CLK_PODF_MASK));
 	case IMX51CLK_IPU_HSP_CLK_ROOT:
-		freq = 0;
 		cbcmr = bus_space_read_4(iot, ioh,  CCMC_CBCMR);
-		switch (__SHIFTOUT(cbcmr, CBCMR_IPU_HSP_CLK_SEL)) {
+		switch (__SHIFTOUT(cbcmr, CBCMR_IPU_HSP_CLK_SEL_MASK)) {
 			case 0:
 				freq = imx51_get_clock(IMX51CLK_ARM_AXI_A_CLK);
 				break;
@@ -336,7 +333,7 @@ imx51_get_pll_freq(u_int pll_no)
 	}
 
 	pdf = dp_op & DP_OP_PDF_MASK;
-	mfi = max(5, __SHIFTOUT(dp_op, DP_OP_MFI));
+	mfi = max(5, __SHIFTOUT(dp_op, DP_OP_MFI_MASK));
 	mfd = dp_mfd;
 	if (dp_mfn & __BIT(26))
 		/* 27bit signed value */
