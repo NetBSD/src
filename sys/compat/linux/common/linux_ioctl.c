@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.56 2011/10/14 09:23:28 hannken Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.57 2012/09/19 21:24:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.56 2011/10/14 09:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.57 2012/09/19 21:24:29 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.56 2011/10/14 09:23:28 hannken Exp
 #include <compat/ossaudio/ossaudio.h>
 #define LINUX_TO_OSS(v) ((const void *)(v))	/* do nothing, same ioctl() encoding */
 
+#include <dev/ic/mfiio.h>
+#define LINUX_MEGARAID_CMD	_LINUX_IOWR('M', 1, struct mfi_ioc_packet)
+#define LINUX_MEGARAID_GET_AEN	_LINUX_IOW('M', 3, struct mfi_ioc_aen)
+
 /*
  * Most ioctl command are just converted to their NetBSD values,
  * and passed on. The ones that take structure pointers and (flag)
@@ -80,7 +84,28 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		error = oss_ioctl_mixer(l, LINUX_TO_OSS(uap), retval);
+		switch(SCARG(uap, com)) {
+		case LINUX_MEGARAID_CMD:
+		case LINUX_MEGARAID_GET_AEN:
+		{
+			struct sys_ioctl_args ua;
+			u_long com = 0;
+			if (SCARG(uap, com) & IOC_IN)
+				com |= IOC_OUT;
+			if (SCARG(uap, com) & IOC_OUT)
+				com |= IOC_IN;
+			SCARG(&ua, fd) = SCARG(uap, fd);
+			SCARG(&ua, com) = SCARG(uap, com);
+			SCARG(&ua, com) &= ~IOC_DIRMASK;
+			SCARG(&ua, com) |= com;
+			SCARG(&ua, data) = SCARG(uap, data);
+			error = sys_ioctl(l, (const void *)&ua, retval);
+			break;
+		}
+		default:
+			error = oss_ioctl_mixer(l, LINUX_TO_OSS(uap), retval);
+			break;
+		}
 		break;
 	case 'Q':
 		error = oss_ioctl_sequencer(l, LINUX_TO_OSS(uap), retval);

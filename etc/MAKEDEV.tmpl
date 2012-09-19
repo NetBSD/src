@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.158 2012/09/05 08:25:53 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.159 2012/09/19 21:24:28 bouyer Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -254,6 +254,7 @@
 #	lockstat kernel locking statistics
 #	magma*	Magma multiport serial/parallel cards
 #	midi*	MIDI
+#	mfi*	LSI MegaRAID/MegaSAS control interface
 #	mlx*	Mylex DAC960 control interface
 #	mly*	Mylex AcceleRAID/eXtremeRAID control interface
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
@@ -1555,6 +1556,11 @@ io)
 iop[0-9]*)
 	unit=${i#iop}
 	mkdev iop$unit c %iop_chr% $unit
+	;;
+
+mfi[0-9]*)
+	unit=${i#mfi}
+	mkdev mfi$unit c %mfi_chr% $unit
 	;;
 
 mlx[0-9]*)

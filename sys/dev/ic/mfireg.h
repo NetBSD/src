@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.7 2012/08/26 16:05:29 bouyer Exp $ */
+/* $NetBSD: mfireg.h,v 1.8 2012/09/19 21:24:29 bouyer Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -42,6 +42,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_MFIREG_H_
+#define _DEV_IC_MFIREG_H_
 
 /* management interface constants */
 #define MFI_MGMT_VD			0x01
@@ -1703,3 +1706,5 @@ typedef union _mfi_address {
 
 #define MEGASAS_MAX_NAME        32
 #define MEGASAS_VERSION         "4.23"
+
+#endif /* _DEV_IC_MFIREG_H_ */
