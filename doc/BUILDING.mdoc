@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.90 2012/09/19 23:06:22 abs Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.91 2012/09/19 23:08:37 abs Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -287,7 +287,7 @@ can be provided only in the environment or via the
 .Fl M
 flag of
 .Nm build.sh ;
-it cannot usefully be set inside a Makefile, including 
+it cannot usefully be set inside a Makefile, including
 .Pa mk.conf
 or
 .Sy ${MAKECONF} .
@@ -744,7 +744,7 @@ If set, then in addition to the effects described for
 .Sy MKUPDATE=yes
 above, this implies the effects of
 .Sy NOCLEANDIR
-(i.e., 
+(i.e.,
 .Dq make cleandir
 is avoided).
 .DFLTn
@@ -757,7 +757,7 @@ option.
 .
 .It Sy NBUILDJOBS
 Now obsolete.
-Use the 
+Use the
 .Xr make 1
 option
 .Fl j ,
@@ -838,9 +838,9 @@ builds are listed here.
 .It Fl j Ar njob
 Run up to
 .Ar njob
-.Xr make 1 
+.Xr make 1
 subjobs in parallel.
-Makefiles should use .WAIT or have explicit dependencies 
+Makefiles should use .WAIT or have explicit dependencies
 as necessary to enforce build ordering.
 .
 .It Fl m Ar dir
@@ -1192,7 +1192,7 @@ must be populated by
 .Dq make release
 or equivalent.
 The build must have been performed with
-.Sy MKUNPRIVED=yes 
+.Sy MKUNPRIVED=yes
 because
 .Dq make install-image
 relies on information in
@@ -1225,7 +1225,7 @@ is attempted, RELEASEDIR must be populated by
 .Dq make release
 or equivalent.
 The build must have been performed with
-.Sy MKUNPRIVED=yes 
+.Sy MKUNPRIVED=yes
 because
 .Dq make install-image
 relies on information in
@@ -1367,7 +1367,7 @@ This command will first run
 .Dq make obj
 and
 .Dq make cleandir
-in the 
+in the
 .Pa tools
 subdirectory unless the
 .Fl o
@@ -1501,7 +1501,7 @@ wrapper script so that the resulting name is of the form
 .
 .It Fl C Ar cdextras
 Append
-.Ar cdextras 
+.Ar cdextras
 to the
 .Sy CDEXTRA
 variable,
@@ -1549,16 +1549,16 @@ Print a help message.
 .It Fl j Ar njob
 Run up to
 .Ar njob
-.Xr make 1 
+.Xr make 1
 subjobs in parallel;
-passed through to 
+passed through to
 .Xr make 1 .
 If you see failures for reasons other than running out of memory
 while using
 .Sy build.sh
 with
 .Fl j ,
-please save complete build logs 
+please save complete build logs
 so the failures can be analyzed.
 .Pp
 To achieve the fastest builds,
@@ -1772,7 +1772,7 @@ Set the environment variable
 .Ar var
 to an optional
 .Ar value .
-This is propagated to the 
+This is propagated to the
 .Sy \*[toolprefix]make
 wrapper.
 .
@@ -1806,7 +1806,7 @@ Set
 .It Fl Z Ar var
 Unset ("zap") the environment variable
 .Ar var .
-This is propagated to the 
+This is propagated to the
 .Sy \*[toolprefix]make
 wrapper.
 .
@@ -1904,7 +1904,7 @@ portion of the release build.
 .Bl -tag -width "NBUILDJOBS"
 .
 .It Sy NBUILDJOBS
-Use the 
+Use the
 .Xr make 1
 option
 .Fl j
