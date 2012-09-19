@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_parse.y,v 1.12 2011/09/15 16:25:17 christos Exp $	*/
+/*	$NetBSD: testlang_parse.y,v 1.13 2012/09/19 11:51:56 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -149,7 +149,8 @@ static void	perform_delay(struct timespec *);
 
 static const char *input_functions[] = {
 	"getch", "getnstr", "getstr", "mvgetnstr", "mvgetstr", "mvgetnstr",
-	"mvgetstr", "wgetch", "wgetnstr", "wgetstr"
+	"mvgetstr", "mvscanw", "mvwscanw", "scanw", "wgetch", "wgetnstr",
+	"wgetstr"
 };
 
 static const unsigned ninput_functions =
