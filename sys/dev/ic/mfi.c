@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.47 2012/09/19 21:24:29 bouyer Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.47 2012/09/19 21:24:29 bouyer Exp $");
 
 #include "bio.h"
 
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_param.h>
 
@@ -100,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46 2012/08/26 16:22:32 bouyer Exp $");
 
 #include <dev/ic/mfireg.h>
 #include <dev/ic/mfivar.h>
+#include <dev/ic/mfiio.h>
 
 #if NBIO > 0
 #include <dev/biovar.h>
@@ -176,6 +179,16 @@ static void		mfi_sensor_refresh(struct sysmon_envsys *,
 static bool		mfi_shutdown(device_t, int);
 static bool		mfi_suspend(device_t, const pmf_qual_t *);
 static bool		mfi_resume(device_t, const pmf_qual_t *);
+
+static dev_type_open(mfifopen);
+static dev_type_close(mfifclose);
+static dev_type_ioctl(mfifioctl);
+const struct cdevsw mfi_cdevsw = {
+	mfifopen, mfifclose, noread, nowrite, mfifioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+};
+
+extern struct cfdriver mfi_cd;
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
@@ -3471,4 +3484,152 @@ mfi_sync_map_complete(struct mfi_ccb *ccb)
 	if (!aborted) {
 		workqueue_enqueue(sc->sc_ldsync_wq, &sc->sc_ldsync_wk, NULL);
 	}
+}
+
+static int
+mfifopen(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	struct mfi_softc *sc;
+
+	if ((sc = device_lookup_private(&mfi_cd, minor(dev))) == NULL)
+		return (ENXIO);
+	return (0);
+}
+
+static int
+mfifclose(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	struct mfi_softc *sc;
+
+	sc = device_lookup_private(&mfi_cd, minor(dev));
+	return (0);
+}
+
+static int
+mfifioctl(dev_t dev, u_long cmd, void *data, int flag,
+    struct lwp *l)
+{
+	struct mfi_softc *sc;
+	struct mfi_ioc_packet *ioc = data;
+	uint8_t *udata;
+	struct mfi_ccb *ccb = NULL;
+	int ctx, i, s, error;
+	union mfi_sense_ptr sense_ptr;
+
+	switch(cmd) {
+	case MFI_CMD:
+		sc = device_lookup_private(&mfi_cd, ioc->mfi_adapter_no);
+		break;
+	default:
+		return ENOTTY;
+	}
+	if (sc == NULL)
+		return (ENXIO);
+	if (sc->sc_opened)
+		return (EBUSY);
+
+	switch(cmd) {
+	case MFI_CMD:
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
+		if (error)
+			return error;
+		if (ioc->mfi_sge_count > MAX_IOCTL_SGE)
+			return EINVAL;
+		s = splbio();
+		if ((ccb = mfi_get_ccb(sc)) == NULL)
+			return ENOMEM;
+		ccb->ccb_data = NULL;
+		ctx = ccb->ccb_frame->mfr_header.mfh_context;
+		memcpy(ccb->ccb_frame, ioc->mfi_frame.raw,
+		   sizeof(*ccb->ccb_frame));
+		ccb->ccb_frame->mfr_header.mfh_context = ctx;
+		ccb->ccb_frame->mfr_header.mfh_scsi_status = 0;
+		ccb->ccb_frame->mfr_header.mfh_pad0 = 0;
+		ccb->ccb_frame_size =
+		    (sizeof(union mfi_sgl) * ioc->mfi_sge_count) +
+		    ioc->mfi_sgl_off;
+		if (ioc->mfi_sge_count > 0) {
+			ccb->ccb_sgl = (union mfi_sgl *)
+			    &ccb->ccb_frame->mfr_bytes[ioc->mfi_sgl_off];
+		}
+		if (ccb->ccb_frame->mfr_header.mfh_flags & MFI_FRAME_DIR_READ)
+			ccb->ccb_direction = MFI_DATA_IN;
+		if (ccb->ccb_frame->mfr_header.mfh_flags & MFI_FRAME_DIR_WRITE)
+			ccb->ccb_direction = MFI_DATA_OUT;
+		ccb->ccb_len = ccb->ccb_frame->mfr_header.mfh_data_len;
+		if (ccb->ccb_len > MAXPHYS) {
+			error = ENOMEM;
+			goto out;
+		}
+		if (ccb->ccb_len &&
+		    (ccb->ccb_direction & (MFI_DATA_IN | MFI_DATA_OUT)) != 0) {
+			udata = malloc(ccb->ccb_len, M_DEVBUF, M_WAITOK|M_ZERO);
+			if (udata == NULL) {
+				error = ENOMEM;
+				goto out;
+			}
+			ccb->ccb_data = udata;
+			if (ccb->ccb_direction & MFI_DATA_OUT) {
+				for (i = 0; i < ioc->mfi_sge_count; i++) {
+					error = copyin(ioc->mfi_sgl[i].iov_base,
+					    udata, ioc->mfi_sgl[i].iov_len);
+					if (error)
+						goto out;
+					udata = &udata[
+					    ioc->mfi_sgl[i].iov_len];
+				}
+			}
+			if (mfi_create_sgl(ccb, BUS_DMA_WAITOK)) {
+				error = EIO;
+				goto out;
+			}
+		}
+		if (ccb->ccb_frame->mfr_header.mfh_cmd == MFI_CMD_PD_SCSI_IO) {
+			ccb->ccb_frame->mfr_io.mif_sense_addr_lo =
+			    htole32(ccb->ccb_psense);
+			ccb->ccb_frame->mfr_io.mif_sense_addr_hi = 0;
+		}
+		ccb->ccb_done = mfi_mgmt_done;
+		mfi_post(sc, ccb);
+		while (ccb->ccb_state != MFI_CCB_DONE)
+			tsleep(ccb, PRIBIO, "mfi_fioc", 0);
+
+		if (ccb->ccb_direction & MFI_DATA_IN) {
+			udata = ccb->ccb_data;
+			for (i = 0; i < ioc->mfi_sge_count; i++) {
+				error = copyout(udata,
+				    ioc->mfi_sgl[i].iov_base,
+				    ioc->mfi_sgl[i].iov_len);
+				if (error)
+					goto out;
+				udata = &udata[
+				    ioc->mfi_sgl[i].iov_len];
+			}
+		}
+		if (ioc->mfi_sense_len) {
+			memcpy(&sense_ptr.sense_ptr_data[0],
+			&ioc->mfi_frame.raw[ioc->mfi_sense_off],
+			sizeof(sense_ptr.sense_ptr_data));
+			error = copyout(ccb->ccb_sense,
+			    sense_ptr.user_space,
+			    sizeof(sense_ptr.sense_ptr_data));
+			if (error)
+				goto out;
+		}
+		memcpy(ioc->mfi_frame.raw, ccb->ccb_frame,
+		   sizeof(*ccb->ccb_frame));
+		break;
+	default:
+		printf("mfifioctl unhandled cmd 0x%lx\n", cmd);
+		return ENOTTY;
+	}
+
+out:
+	if (ccb->ccb_data)
+		free(ccb->ccb_data, M_DEVBUF);
+	if (ccb)
+		mfi_put_ccb(ccb);
+	splx(s);
+	return error;
 }
