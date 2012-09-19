@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.6 2011/09/15 11:46:19 blymn Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.7 2012/09/19 11:51:08 blymn Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -3005,7 +3005,8 @@ cmd_mvderwin(int nargs, char **args)
 void
 cmd_mvhline(int nargs, char **args)
 {
-	int y, x, ch, n;
+	int y, x, n;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 4) == 1)
 		return;
@@ -3022,11 +3023,7 @@ cmd_mvhline(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[2], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[2];
 
 	if (sscanf(args[3], "%d", &n) == 0) {
 		report_count(1);
@@ -3035,7 +3032,7 @@ cmd_mvhline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(mvhline(y, x, ch, n));
+	report_return(mvhline(y, x, ch[0], n));
 }
 
 
@@ -3087,7 +3084,7 @@ cmd_mvscanw(int nargs, char **args)
 
 	/* XXX - call2 */
 	report_count(2);
-	report_int(mvscanw(y, x, args[2], &string));
+	report_return(mvscanw(y, x, args[2], &string));
 	report_status(string);
 }
 
@@ -3095,7 +3092,8 @@ cmd_mvscanw(int nargs, char **args)
 void
 cmd_mvvline(int nargs, char **args)
 {
-	int y, x, ch, n;
+	int y, x, n;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 4) == 1)
 		return;
@@ -3112,11 +3110,7 @@ cmd_mvvline(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[2], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[2];
 
 	if (sscanf(args[3], "%d", &n) == 0) {
 		report_count(1);
@@ -3125,7 +3119,7 @@ cmd_mvvline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(mvvline(y, x, ch, n));
+	report_return(mvvline(y, x, ch[0], n));
 }
 
 
@@ -3176,8 +3170,9 @@ cmd_mvwhline(int nargs, char **args)
 void
 cmd_mvwvline(int nargs, char **args)
 {
-	int y, x, ch, n;
+	int y, x, n;
 	WINDOW *win;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 5) == 1)
 		return;
@@ -3200,11 +3195,7 @@ cmd_mvwvline(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[3], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[3];
 
 	if (sscanf(args[4], "%d", &n) == 0) {
 		report_count(1);
@@ -3213,7 +3204,7 @@ cmd_mvwvline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(mvwvline(win, y, x, ch, n));
+	report_return(mvwvline(win, y, x, ch[0], n));
 }
 
 
@@ -4421,16 +4412,13 @@ cmd_use_default_colors(int nargs, char **args)
 void
 cmd_vline(int nargs, char **args)
 {
-	int ch, count;
+	int count;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 2) == 1)
 		return;
 
-	if (sscanf(args[0], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[0];
 
 	if (sscanf(args[1], "%d", &count) == 0) {
 		report_count(1);
@@ -4439,7 +4427,7 @@ cmd_vline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(vline(ch, count));
+	report_return(vline(ch[0], count));
 }
 
 
@@ -5762,7 +5750,8 @@ void
 cmd_wvline(int nargs, char **args)
 {
 	WINDOW *win;
-	int ch, n;
+	int n;
+	chtype *ch;
 
 	if (check_arg_count(nargs, 3) == 1)
 		return;
@@ -5773,11 +5762,7 @@ cmd_wvline(int nargs, char **args)
 		return;
 	}
 
-	if (sscanf(args[1], "%d", &ch) == 0) {
-		report_count(1);
-		report_error("BAD ARGUMENT");
-		return;
-	}
+	ch = (chtype *) args[1];
 
 	if (sscanf(args[2], "%d", &n) == 0) {
 		report_count(1);
@@ -5786,7 +5771,7 @@ cmd_wvline(int nargs, char **args)
 	}
 
 	report_count(1);
-	report_return(wvline(win, ch, n));
+	report_return(wvline(win, ch[0], n));
 }
 
 
