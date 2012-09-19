@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.91 2012/09/19 23:08:37 abs Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.92 2012/09/19 23:31:36 abs Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1030,10 +1030,10 @@ After performing this operation,
 it is recommended that you use
 .Xr etcupdate 8
 to update files in
-.Sy INSTALLWORLDDIR Ns Pa /etc
-and that you use
+.Sy INSTALLWORLDDIR Ns Pa /etc ,
+and
 .Xr postinstall 8
-to check for inconsistencies (and possibly to fix them).
+to check for or fix inconsistencies.
 .It Sy sets
 Create distribution sets from
 .Sy DESTDIR
