@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.82 2012/08/03 12:42:10 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.83 2012/09/20 17:47:05 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -11,7 +11,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.82 2012/08/03 12:42:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.83 2012/09/20 17:47:05 pooka Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -5700,4 +5700,5 @@ struct sysent rump_sysent[] = {
 	    (sy_call_t *)rump_enosys },		/* 511 = filler */
 };
 CTASSERT(__arraycount(rump_sysent) == SYS_NSYSENT);
+__strong_alias(sysent,rump_sysent);
 #endif /* RUMP_CLIENT */
