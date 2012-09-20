@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.967 2012/09/19 06:54:04 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.968 2012/09/20 21:16:48 jdf Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -577,7 +577,7 @@ Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
 Mailing List:	less-announce-request@greenwoodsoftware.com
 Responsible:	mrg
-License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less418)
+License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less-418)
 Location:	external/bsd/less/dist
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
