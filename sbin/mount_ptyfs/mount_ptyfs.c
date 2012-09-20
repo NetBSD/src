@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.14 2012/09/18 21:35:43 christos Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.15 2012/09/20 18:56:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.14 2012/09/18 21:35:43 christos Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.15 2012/09/20 18:56:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,12 +100,14 @@ __RCSID("$NetBSD: mount_ptyfs.c,v 1.14 2012/09/18 21:35:43 christos Exp $");
 
 #define ALTF_GROUP	0x1
 #define ALTF_MODE	0x2
+#define ALTF_CHROOT	0x4			/* compat */
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
 	{ "group", 0, ALTF_GROUP, 1 },
 	{ "mode", 0, ALTF_MODE, 1 },
+	{ "chroot", 0, ALTF_CHROOT, 1 },	/* compat */
 	MOPT_NULL,
 };
 
@@ -163,8 +165,12 @@ mount_ptyfs(int argc, char *argv[])
 	args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
 	args.flags = 0;
 
-	while ((ch = getopt(argc, argv, "g:m:o:")) != -1)
+	while ((ch = getopt(argc, argv, "cg:m:o:")) != -1)
 		switch (ch) {
+		case 'c':	/* compat */
+		compat:
+			warnx("-c and -o chroot options are obsolete");
+			break;
 		case 'o':
 			altflags = 0;
 			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
@@ -174,6 +180,8 @@ mount_ptyfs(int argc, char *argv[])
 				args.gid = getgrp(getmntoptstr(mp, "group"));
 			if (altflags & ALTF_MODE)
 				args.mode = (mode_t)getmntoptnum(mp, "mode");
+			if (altflags & ALTF_CHROOT)
+				goto compat;
 			freemntopts(mp);
 			break;
 		case 'g':
