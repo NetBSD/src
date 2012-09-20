@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.13 2012/08/20 12:48:47 bouyer Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.14 2012/09/20 17:53:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -60,7 +60,7 @@ struct ahci_softc {
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */
 #define AHCI_QUIRK_BADPMPRESET	__BIT(3)  /* broken PMP support for reset */
 
-	int32_t sc_ahci_cap;	/* copy of AHCI_CAP */
+	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
 	int sc_ncmds; /* number of command slots */
 	struct ata_channel *sc_chanarray[AHCI_MAX_PORTS];
 	struct ahci_channel {
