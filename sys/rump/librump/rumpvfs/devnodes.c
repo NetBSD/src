@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.6 2011/02/10 11:00:45 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.7 2012/09/21 16:38:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6 2011/02/10 11:00:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.7 2012/09/21 16:38:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,7 +130,7 @@ makeonenode(char *buf, devmajor_t blk, devmajor_t chr, devminor_t dmin,
 
 	/* block device */
 	snprintf(buf, MAXPATHLEN, "/dev/%s%s%s", base, cstr1, cstr2);
-	if (blk != NODEV) {
+	if (blk != NODEVMAJOR) {
 		switch (doesitexist(buf, true, blk, dmin)) {
 		case DIFFERENT:
 			aprint_verbose("mkdevnodes: block device %s "
