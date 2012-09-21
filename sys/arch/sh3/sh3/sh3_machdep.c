@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.100 2012/07/08 20:14:12 dsl Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.101 2012/09/21 09:05:08 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.100 2012/07/08 20:14:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.101 2012/09/21 09:05:08 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -432,7 +432,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	/* FPU context is currently not handled by the kernel. */
 	memset(&mcp->__fpregs, 0, sizeof (mcp->__fpregs));
@@ -465,7 +465,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (error)
 			return error;
 
-		tf->tf_gbr    = gr[_REG_GBR];
+		/* done in lwp_setprivate */
+		/* tf->tf_gbr    = gr[_REG_GBR];  */
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];
 		tf->tf_macl   = gr[_REG_MACL];
@@ -488,7 +489,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_r0     = gr[_REG_R0];
 		tf->tf_r15    = gr[_REG_R15];
 
-		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_GBR]);
+		if (flags & _UC_TLSBASE)
+			lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_GBR]);
 	}
 
 #if 0
