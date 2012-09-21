@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100reg.h,v 1.5 2009/05/27 00:32:10 macallan Exp $ */
+/*	$NetBSD: p9100reg.h,v 1.6 2012/09/21 01:07:44 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@
 	#define ENGINE_BUSY	0x40000000
 #define COMMAND_BLIT		0x2004
 #define COMMAND_QUAD		0x2008
+#define COMMAND_PIXEL8		0x200c
 /* pixel data for monochrome colour expansion */
 #define PIXEL_1			0x2080	
 /* apparently bits 2-6 control how many pixels we write - n+1 */
@@ -171,12 +172,12 @@
 	#define ROP_2BIT_PATTERN	0x04000 /* 4-colour pattern instead of mono */
 	#define ROP_PIX1_TRANS		0x08000	/* transparent background in mono */
 	#define ROP_OVERSIZE		0x10000
-	#define ROP_PATTERN			0x20000		/* the manual says pattern enable */
-	#define ROP_TRANS			0x20000		/* but XFree86 says trans */
-	#define ROP_SRC 			0xCC
-	#define ROP_PAT				0xF0
-	#define ROP_DST 			0xAA
-	#define ROP_SET				0xff
+	#define ROP_PATTERN		0x20000		/* the manual says pattern enable */
+	#define ROP_TRANS		0x20000		/* but XFree86 says trans */
+	#define ROP_SRC 		0xCC
+	#define ROP_PAT			0xF0
+	#define ROP_DST 		0xAA
+	#define ROP_SET			0xff
 
 #define PIXEL_8				0x221c
 #define WINDOW_MIN			0x2220
