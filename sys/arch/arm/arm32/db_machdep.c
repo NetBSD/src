@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14 2012/08/31 11:52:39 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.15 2012/09/21 22:12:35 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.14 2012/08/31 11:52:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.15 2012/09/21 22:12:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,6 +91,9 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0,
 			"Displays the last panic string",
 		     	NULL,NULL) },
+	{ DDB_ADD_CMD("fault",	db_show_fault_cmd,	0,
+			"Displays the fault registers",
+		     	NULL,NULL) },
 #endif
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
@@ -134,6 +137,15 @@ db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 
 	db_printf("Panic string: %s\n", panicstr);
 	(void)splx(s);
+}
+
+void
+db_show_fault_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	db_printf("DFAR=%#x DFSR=%#x IFAR=%#x IFSR=%#x TTBR=%#x\n",
+	    armreg_dfar_read(), armreg_dfsr_read(),
+	    armreg_ifar_read(), armreg_ifsr_read(),
+	    armreg_ttbr_read());
 }
 #endif
 
