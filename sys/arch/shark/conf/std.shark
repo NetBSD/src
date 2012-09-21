@@ -1,4 +1,4 @@
-#	$NetBSD: std.shark,v 1.8 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.shark,v 1.9 2012/09/21 14:21:58 matt Exp $
 #
 # standard NetBSD/shark options
 
@@ -12,6 +12,7 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
