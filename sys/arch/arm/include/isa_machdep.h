@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8 2011/07/01 21:16:40 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.9 2012/09/21 14:21:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,42 +114,6 @@ void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
  */
 
 extern struct arm32_bus_dma_tag isa_bus_dma_tag;
-
-/*
- * Cookie used by ISA DMA.  A pointer to one of these is stashed in
- * the DMA map.
- */
-struct arm32_isa_dma_cookie {
-	int	id_flags;		/* flags; see below */
-
-	/*
-	 * Information about the original buffer used during
-	 * DMA map syncs.  Note that origbuflen is only used
-	 * for ID_BUFTYPE_LINEAR.
-	 */
-	void	*id_origbuf;		/* pointer to orig buffer if
-					   bouncing */
-	bus_size_t id_origbuflen;	/* ...and size */
-	int	id_buftype;		/* type of buffer */
-
-	void	*id_bouncebuf;		/* pointer to the bounce buffer */
-	bus_size_t id_bouncebuflen;	/* ...and size */
-	int	id_nbouncesegs;		/* number of valid bounce segs */
-	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
-					       physical memory segments */
-};
-
-/* id_flags */
-#define	ID_MIGHT_NEED_BOUNCE	0x01	/* map could need bounce buffers */
-#define	ID_HAS_BOUNCE		0x02	/* map currently has bounce buffers */
-#define	ID_IS_BOUNCING		0x04	/* map is bouncing current xfer */
-
-/* id_buftype */
-#define	ID_BUFTYPE_INVALID	0
-#define	ID_BUFTYPE_LINEAR	1
-#define	ID_BUFTYPE_MBUF		2
-#define	ID_BUFTYPE_UIO		3
-#define	ID_BUFTYPE_RAW		4
 
 /* bus space tags */
 extern struct bus_space isa_io_bs_tag;
