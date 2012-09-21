@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.32 2012/07/27 09:09:05 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.33 2012/09/21 14:33:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -104,6 +104,39 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_RAISE };
 
 enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK, HANDSHAKE_EXEC };
+
+/*
+ * error types used for RUMPSP_ERROR
+ */
+enum rumpsp_err { RUMPSP_ERR_NONE = 0, RUMPSP_ERR_TRYAGAIN, RUMPSP_ERR_AUTH,
+	RUMPSP_ERR_INVALID_PREFORK, RUMPSP_ERR_RFORK_FAILED,
+	RUMPSP_ERR_INEXEC, RUMPSP_ERR_NOMEM, RUMPSP_ERR_MALFORMED_REQUEST };
+
+/*
+ * The mapping of the above types to errno.  They are almost never exposed
+ * to the client after handshake (except for a server resource shortage
+ * and the client trying to be funny).  This is a function instead of
+ * an array to catch missing values.  Theoretically, the compiled code
+ * should be the same.
+ */
+static int
+errmap(enum rumpsp_err error)
+{
+
+	switch (error) {
+	/* XXX: no EAUTH on Linux */
+	case RUMPSP_ERR_NONE:			return 0;
+	case RUMPSP_ERR_AUTH:			return EPERM;
+	case RUMPSP_ERR_TRYAGAIN:		return EAGAIN;
+	case RUMPSP_ERR_INVALID_PREFORK:	return ESRCH;
+	case RUMPSP_ERR_RFORK_FAILED:		return EIO; /* got a light? */
+	case RUMPSP_ERR_INEXEC:			return EBUSY;
+	case RUMPSP_ERR_NOMEM:			return ENOMEM;
+	case RUMPSP_ERR_MALFORMED_REQUEST:	return EINVAL;
+	}
+
+	return -1;
+}
 
 #define AUTHLEN 4 /* 128bit fork auth */
 
@@ -402,7 +435,7 @@ kickwaiter(struct spclient *spc)
 	rw->rw_done = 1;
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
-		error = rw->rw_error = spc->spc_hdr.rsp_error;
+		error = rw->rw_error = errmap(spc->spc_hdr.rsp_error);
 	}
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
