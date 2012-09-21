@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.56 2012/01/11 16:08:57 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.57 2012/09/21 01:07:44 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56 2012/01/11 16:08:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.57 2012/09/21 01:07:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56 2012/01/11 16:08:57 macallan Exp $");
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
@@ -132,6 +133,7 @@ struct p9100_softc {
 	volatile uint32_t sc_last_offset;
 	struct vcons_data vd;
 	uint8_t		sc_dac_power;
+	glyphcache	sc_gc;
 };
 
 
@@ -167,6 +169,7 @@ CFATTACH_DECL_NEW(pnozz, sizeof(struct p9100_softc),
     p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
 
 static dev_type_open(p9100open);
+static dev_type_close(p9100close);
 static dev_type_ioctl(p9100ioctl);
 static dev_type_mmap(p9100mmap);
 
@@ -177,7 +180,7 @@ const struct cdevsw pnozz_cdevsw = {
 
 /* frame buffer generic driver */
 static struct fbdriver p9100fbdriver = {
-	p9100unblank, p9100open, nullclose, p9100ioctl, nopoll,
+	p9100unblank, p9100open, p9100close, p9100ioctl, nopoll,
 	p9100mmap, nokqfilter
 };
 
@@ -197,7 +200,7 @@ static int	p9100_set_depth(struct p9100_softc *, int);
 
 #if NWSDISPLAY > 0
 static void	p9100_sync(struct p9100_softc *);
-static void	p9100_bitblt(void *, int, int, int, int, int, int, uint32_t);
+static void	p9100_bitblt(void *, int, int, int, int, int, int, int);
 static void 	p9100_rectfill(void *, int, int, int, int, uint32_t);
 static void	p9100_clearscreen(struct p9100_softc *);
 
@@ -212,8 +215,11 @@ static void	p9100_copyrows(void *, int, int, int);
 static void	p9100_eraserows(void *, int, int, long);
 /*static int	p9100_mapchar(void *, int, u_int *);*/
 static void	p9100_putchar(void *, int, int, u_int, long);
+static void	p9100_putchar_aa(void *, int, int, u_int, long);
 static void	p9100_cursor(void *, int, int, int);
+#if 0
 static int	p9100_allocattr(void *, int, int, int, long *);
+#endif
 
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
@@ -292,7 +298,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	int isconsole;
 	int node = sa->sa_node;
 	int i, j;
-	uint8_t ver;
+	uint8_t ver, cmap[768];
 
 #if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
@@ -412,18 +418,6 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 
-	/* Initialize the default color map. */
-	j = 0;
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap.cm_map[i][0] = rasops_cmap[j];
-		j++;
-		sc->sc_cmap.cm_map[i][1] = rasops_cmap[j];
-		j++;
-		sc->sc_cmap.cm_map[i][2] = rasops_cmap[j];
-		j++;
-	}
-	p9100loadcmap(sc, 0, 256);
-
 	/* make sure we are not blanked */
 	if (isconsole)
 		p9100_set_video(sc, 1);
@@ -448,11 +442,34 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 #if NWSDISPLAY > 0
 	wsfont_init();
 
+#ifdef PNOZZ_DEBUG
+	/* make the glyph cache visible */
+	sc->sc_height -= 100;
+#endif
+
+	sc->sc_gc.gc_bitblt = p9100_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = ROP_SRC;
+
 	vcons_init(&sc->vd, sc, &p9100_defscreendesc, &p9100_accessops);
 	sc->vd.init_screen = p9100_init_screen;
 
 	vcons_init_screen(&sc->vd, &p9100_console_screen, 1, &defattr);
 	p9100_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+	/* Initialize the default color map. */
+	rasops_get_cmap(&p9100_console_screen.scr_ri, cmap, 768);
+
+	j = 0;
+	for (i = 0; i < 256; i++) {
+		sc->sc_cmap.cm_map[i][0] = cmap[j];
+		j++;
+		sc->sc_cmap.cm_map[i][1] = cmap[j];
+		j++;
+		sc->sc_cmap.cm_map[i][2] = cmap[j];
+		j++;
+	}
+	p9100loadcmap(sc, 0, 256);
 
 	sc->sc_bg = (defattr >> 16) & 0xff;
 	p9100_clearscreen(sc);
@@ -463,6 +480,13 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	p9100_defscreendesc.ncols = ri->ri_cols;
 	p9100_defscreendesc.textops = &ri->ri_ops;
 	p9100_defscreendesc.capabilities = ri->ri_caps;
+
+	glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+			(0x200000 / sc->sc_stride) - sc->sc_height - 5,
+			sc->sc_width,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
 
 	if(isconsole) {
 		wsdisplay_cnattach(&p9100_defscreendesc, ri, 0, 0, defattr);
@@ -501,6 +525,22 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 	if (device_lookup(&pnozz_cd, unit) == NULL)
 		return (ENXIO);
 	return (0);
+}
+
+int
+p9100close(dev_t dev, int flags, int mode, struct lwp *l)
+{
+	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
+
+#if NWSDISPLAY > 0
+	p9100_init_engine(sc);
+	p9100_set_depth(sc, 8);
+	p9100loadcmap(sc, 0, 256);
+	p9100_clearscreen(sc);
+	glyphcache_wipe(&sc->sc_gc);
+	vcons_redraw_screen(sc->vd.active);
+#endif
+	return 0;
 }
 
 int
@@ -688,7 +728,7 @@ p9100_init_engine(struct p9100_softc *sc)
 	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
 	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
 	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, 0x3fff3fff);
 	p9100_ctl_write_4(sc, DRAW_MODE, 0);
 	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);
 	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);
@@ -732,7 +772,7 @@ p9100_set_color_reg(struct p9100_softc *sc, int reg, int32_t col)
 /* screen-to-screen blit */
 static void
 p9100_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
-    int he, uint32_t rop)
+    int he, int rop)
 {
 	struct p9100_softc *sc = cookie;
 	uint32_t src, dst, srcw, dstw;
@@ -747,6 +787,7 @@ p9100_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	p9100_sync(sc);
 	
 	p9100_ctl_write_4(sc, RASTER_OP, rop);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, 0x3fff3fff);
 
 	p9100_ctl_write_4(sc, ABS_XY0, src << sc->sc_depthshift);
 	p9100_ctl_write_4(sc, ABS_XY1, srcw << sc->sc_depthshift);
@@ -768,6 +809,7 @@ p9100_rectfill(void *cookie, int xs, int ys, int wi, int he, uint32_t col)
 	src = ((xs & 0x3fff) << 16) | (ys & 0x3fff);
 	srcw = (((xs + wi) & 0x3fff) << 16) | ((ys + he) & 0x3fff);
 	p9100_sync(sc);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, 0x3fff3fff);
 	p9100_set_color_reg(sc, FOREGROUND_COLOR, col);
 	p9100_set_color_reg(sc, BACKGROUND_COLOR, col);
 	p9100_ctl_write_4(sc, RASTER_OP, ROP_PAT);
@@ -794,6 +836,7 @@ p9100_setup_mono(struct p9100_softc *sc, int x, int y, int wi, int he,
 	p9100_set_color_reg(sc,FOREGROUND_COLOR,bg);
 	p9100_set_color_reg(sc,BACKGROUND_COLOR,fg);
 
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, 0x3fff3fff);
 	p9100_ctl_write_4(sc, RASTER_OP, ROP_SRC);
 	p9100_ctl_write_4(sc, ABS_X0, x);
 	p9100_ctl_write_4(sc, ABS_XY1, (x << 16) | (y & 0xFFFFL));
@@ -1089,7 +1132,7 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct p9100_softc *sc = scr->scr_cookie;
 
-	int fg, bg, uc, i;
+	int fg, bg, i;
 	uint8_t *data;
 	int x, y, wi, he;
 
@@ -1107,9 +1150,7 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (c == 0x20) {
 		p9100_rectfill(sc, x, y, wi, he, bg);
 	} else {
-		uc = c - font->firstchar;
-		data = (uint8_t *)font->data + uc *
-		    ri->ri_fontscale;
+		data = WSFONT_GLYPH(c, font);
 
 		p9100_setup_mono(sc, x, y, wi, 1, fg, bg);
 		for (i = 0; i < he; i++) {
@@ -1117,6 +1158,107 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 			    data);
 			data += font->stride;
 		}
+	}
+}
+
+static void
+p9100_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct p9100_softc *sc = scr->scr_cookie;
+	uint32_t bg, latch = 0, bg8, fg8, pixel;
+	int i, j, x, y, wi, he, r, g, b, aval, rwi;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint8_t *data8;
+	int rv;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	rwi = (wi + 3) & ~3;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	if (c == 0x20) {
+		p9100_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	p9100_sync(sc);
+
+	p9100_ctl_write_4(sc, RASTER_OP, ROP_SRC);
+	p9100_ctl_write_4(sc, ABS_X0, x);
+	p9100_ctl_write_4(sc, ABS_XY1, (x << 16) | (y & 0xFFFFL));
+	p9100_ctl_write_4(sc, ABS_X2, (x + rwi));
+	p9100_ctl_write_4(sc, ABS_Y3, 1);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, ((x + wi - 1) << 16) | 0x3fff);
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	//r128fb_wait(sc, 16);
+
+	for (i = 0; i < he; i++) {
+		for (j = 0; j < wi; j++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+			r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch = (latch << 8) | pixel;
+			/* write in 32bit chunks */
+			if ((j & 3) == 3) {
+				bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh,
+				    COMMAND_PIXEL8, latch);
+				latch = 0;
+			}
+			data8++;
+		}
+		/* if we have pixels left in latch write them out */
+		if ((j & 3) != 0) {
+			latch = latch << ((4 - (j & 3)) << 3);	
+			bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh,
+			    COMMAND_PIXEL8, latch);
+		}
+	}
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 }
 
@@ -1174,6 +1316,7 @@ p9100_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						p9100_set_depth(sc, 8);
 						p9100loadcmap(sc, 0, 256);
 						p9100_clearscreen(sc);
+						glyphcache_wipe(&sc->sc_gc);
 						vcons_redraw_screen(ms);
 					}
 				}
@@ -1225,6 +1368,8 @@ p9100_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	if (ri->ri_depth == 8)
+		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 #ifdef PNOZZ_USE_LATCH
 	ri->ri_bits = bus_space_vaddr(sc->sc_bustag, sc->sc_fb_memh);
@@ -1242,8 +1387,12 @@ p9100_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = p9100_eraserows;
 	ri->ri_ops.copycols  = p9100_copycols;
 	ri->ri_ops.erasecols = p9100_erasecols;
-	ri->ri_ops.putchar   = p9100_putchar;
-	ri->ri_ops.allocattr = p9100_allocattr;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = p9100_putchar_aa;
+		if (0) ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
+		     0, &sc->sc_gc.gc_attr);
+	} else
+		ri->ri_ops.putchar = p9100_putchar;
 }
 
 static int
@@ -1380,7 +1529,7 @@ p9100_eraserows(void *cookie, int row, int nrows, long fillattr)
 	p9100_rectfill(scr->scr_cookie, x, y, width, height, bg);
 }
 
-
+#if 0
 static int
 p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 {
@@ -1402,7 +1551,6 @@ p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 	return 0;
 }
 
-#if 0
 static int
 p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 {
