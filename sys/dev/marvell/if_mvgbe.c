@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.19 2012/09/06 03:45:02 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.20 2012/09/21 00:26:15 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19 2012/09/06 03:45:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.20 2012/09/21 00:26:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -206,6 +206,7 @@ struct mvgbe_softc {
 	struct mvgbe_ring_data *sc_rdata;
 	bus_dmamap_t sc_ring_map;
 	int sc_if_flags;
+	int sc_wdogsoft;
 
 	LIST_HEAD(__mvgbe_jfreehead, mvgbe_jpool_entry) sc_jfree_listhead;
 	LIST_HEAD(__mvgbe_jinusehead, mvgbe_jpool_entry) sc_jinuse_listhead;
@@ -903,7 +904,8 @@ mvgbe_start(struct ifnet *ifp)
 		/*
 		 * Set a timeout in case the chip goes out to lunch.
 		 */
-		ifp->if_timer = 5;
+		ifp->if_timer = 1;
+		sc->sc_wdogsoft = 1;
 	}
 }
 
@@ -1162,11 +1164,22 @@ mvgbe_watchdog(struct ifnet *ifp)
 	 */
 	mvgbe_txeof(sc);
 	if (sc->sc_cdata.mvgbe_tx_cnt != 0) {
-		aprint_error_ifnet(ifp, "watchdog timeout\n");
+		if (sc->sc_wdogsoft) {
+			/*
+			 * There is race condition between CPU and DMA
+			 * engine. When DMA engine encounters queue end,
+			 * it clears MVGBE_TQC_ENQ bit.
+			 */
+			MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+			ifp->if_timer = 5;
+			sc->sc_wdogsoft = 0;
+		} else {
+			aprint_error_ifnet(ifp, "watchdog timeout\n");
 
-		ifp->if_oerrors++;
+			ifp->if_oerrors++;
 
-		mvgbe_init(ifp);
+			mvgbe_init(ifp);
+		}
 	}
 }
 
@@ -1589,7 +1602,8 @@ do_defrag:
 		f = &sc->sc_rdata->mvgbe_tx_ring[current];
 		f->bufptr = txseg[i].ds_addr;
 		f->bytecnt = txseg[i].ds_len;
-		f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
+		if (i != 0)
+			f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
 		last = current;
 		current = MVGBE_TX_RING_NEXT(current);
 	}
@@ -1610,7 +1624,6 @@ do_defrag:
 	}
 	if (txmap->dm_nsegs == 1)
 		f->cmdsts = cmdsts		|
-		    MVGBE_BUFFER_OWNED_BY_DMA	|
 		    MVGBE_TX_GENERATE_CRC	|
 		    MVGBE_TX_ENABLE_INTERRUPT	|
 		    MVGBE_TX_ZERO_PADDING	|
@@ -1619,7 +1632,6 @@ do_defrag:
 	else {
 		f = &sc->sc_rdata->mvgbe_tx_ring[first];
 		f->cmdsts = cmdsts		|
-		    MVGBE_BUFFER_OWNED_BY_DMA	|
 		    MVGBE_TX_GENERATE_CRC	|
 		    MVGBE_TX_FIRST_DESC;
 
@@ -1629,14 +1641,22 @@ do_defrag:
 		    MVGBE_TX_ENABLE_INTERRUPT	|
 		    MVGBE_TX_ZERO_PADDING	|
 		    MVGBE_TX_LAST_DESC;
+
+		/* Sync descriptors except first */
+		MVGBE_CDTXSYNC(sc,
+		    (MVGBE_TX_RING_CNT - 1 == *txidx) ? 0 : (*txidx) + 1,
+		    txmap->dm_nsegs - 1,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
 	sc->sc_cdata.mvgbe_tx_chain[last].mvgbe_mbuf = m_head;
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_txmap_head, link);
 	sc->sc_cdata.mvgbe_tx_map[last] = entry;
 
-	/* Sync descriptors before handing to chip */
-	MVGBE_CDTXSYNC(sc, *txidx, txmap->dm_nsegs,
+	/* Finally, sync first descriptor */
+	sc->sc_rdata->mvgbe_tx_ring[first].cmdsts |=
+	    MVGBE_BUFFER_OWNED_BY_DMA;
+	MVGBE_CDTXSYNC(sc, *txidx, 1,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->sc_cdata.mvgbe_tx_cnt += i;
