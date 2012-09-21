@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.128 2012/09/06 15:24:26 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.129 2012/09/21 14:10:14 ginsbach Exp $
 
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
@@ -53,6 +53,7 @@ AP	access point
 AP	application processor
 API	application programming interface
 APIC	advanced programmable interrupt controller
+APIPA	automatic private IP addressing
 AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
