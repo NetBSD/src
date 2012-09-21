@@ -5089,7 +5089,7 @@ formatbn(const BIGNUM *a, const int radix)
 	if (mp_radix_size(__UNCONST(a), radix, &len) != MP_OKAY) {
 		return NULL;
 	}
-	if ((s = netpgp_allocate(1, len)) == NULL) {
+	if ((s = netpgp_allocate(1, len)) != NULL) {
 		if (mp_toradix_n(__UNCONST(a), s, radix, len) != MP_OKAY) {
 			netpgp_deallocate(s, len);
 			return NULL;
