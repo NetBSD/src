@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.37 2010/08/18 21:11:50 macallan Exp $
+#	$NetBSD: files.sbus,v 1.38 2012/09/21 01:07:44 macallan Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -127,7 +127,7 @@ file	dev/sbus/zx.c			zx
 defflag	opt_pnozz.h	PNOZZ_DEBUG
 defflag opt_pnozz.h	PNOZZ_EMUL_CG3
 defflag opt_pnozz.h	PNOZZ_USE_LATCH
-device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
+device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons, glyphcache
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag
 
