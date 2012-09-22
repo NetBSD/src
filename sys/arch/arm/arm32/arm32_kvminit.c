@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.3 2012/09/06 02:03:01 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.4 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3 2012/09/06 02:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.4 2012/09/22 00:33:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -866,11 +866,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	cpu_idcache_wbinv_all();
-	cpu_setttb(l1pt_pa);
+	cpu_setttb(l1pt_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 #ifdef VERBOSE_INIT_ARM
-	printf("OK.\n");
+	printf("TTBR0=%#x OK", armreg_ttbr_read());
 #endif
 }

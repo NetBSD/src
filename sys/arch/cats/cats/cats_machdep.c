@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.75 2012/09/22 00:33:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.75 2012/09/22 00:33:38 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -710,7 +710,7 @@ initarm(void *arm_bootargs)
 	fcomcndetach();
 #endif
 	
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*

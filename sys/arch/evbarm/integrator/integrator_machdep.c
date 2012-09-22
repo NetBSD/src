@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.71 2012/08/16 18:22:43 matt Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.72 2012/09/22 00:33:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.71 2012/08/16 18:22:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.72 2012/09/22 00:33:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -652,7 +652,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
