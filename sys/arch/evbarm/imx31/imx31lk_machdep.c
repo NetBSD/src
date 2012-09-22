@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.15 2012/08/16 18:22:43 matt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.16 2012/09/22 00:33:39 matt Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.15 2012/08/16 18:22:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.16 2012/09/22 00:33:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -641,7 +641,7 @@ printf("%s: textsize %#lx, totalsize %#lx\n",
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	//imx31lk_consinit(2);
