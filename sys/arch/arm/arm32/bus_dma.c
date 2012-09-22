@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.58 2012/09/18 05:47:26 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.59 2012/09/22 01:48:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.58 2012/09/18 05:47:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.59 2012/09/22 01:48:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,13 +92,13 @@ EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int);
 static struct arm32_dma_range *
-	_bus_dma_inrange(struct arm32_dma_range *, int, bus_addr_t);
+	_bus_dma_paddr_inrange(struct arm32_dma_range *, int, paddr_t);
 
 /*
  * Check to see if the specified page is in an allowed DMA range.
  */
 inline struct arm32_dma_range *
-_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
+_bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
     bus_addr_t curaddr)
 {
 	struct arm32_dma_range *dr;
@@ -111,6 +111,26 @@ _bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
 	}
 
 	return (NULL);
+}
+
+/*
+ * Check to see if the specified busaddr is in an allowed DMA range.
+ */
+static inline paddr_t
+_bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
+{
+	struct arm32_dma_range *dr;
+	u_int i;
+
+	if (t->_nranges == 0)
+		return curaddr;
+
+	for (i = 0, dr = t->_ranges; i < t->_nranges; i++, dr++) {
+		if (dr->dr_busbase <= curaddr
+		    && round_page(curaddr) <= dr->dr_busbase + dr->dr_len)
+			return curaddr - dr->dr_busbase + dr->dr_sysbase;
+	}
+	panic("%s: curaddr %#lx not in range", __func__, curaddr);
 }
 
 /*
@@ -140,7 +160,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	if (t->_ranges != NULL) {
 		/* XXX cache last result? */
 		const struct arm32_dma_range * const dr =
-		    _bus_dma_inrange(t->_ranges, t->_nranges, paddr);
+		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
 		if (dr == NULL)
 			return (EINVAL);
 		
@@ -685,27 +705,30 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		/* FALLTHROUGH */
 
 	case BUS_DMASYNC_PREREAD: {
-		vsize_t misalignment = va & arm_dcache_align_mask;
+		const size_t line_size = arm_dcache_align;
+		const size_t line_mask = arm_dcache_align_mask;
+		vsize_t misalignment = va & line_mask;
 		if (misalignment) {
-			va &= ~arm_dcache_align_mask;
-			pa &= ~arm_dcache_align_mask;
-			cpu_dcache_wbinv_range(va, arm_dcache_align);
-			cpu_sdcache_wbinv_range(va, pa, arm_dcache_align);
-			if (len <= arm_dcache_align - misalignment)
+			va -= misalignment;
+			pa -= misalignment;
+			len += misalignment;
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
+			if (len <= line_size)
 				break;
-			len -= arm_dcache_align - misalignment;
-			va += arm_dcache_align;
-			pa += arm_dcache_align;
+			va += line_size;
+			pa += line_size;
+			len -= line_size;
 		}
-		misalignment = len & arm_dcache_align_mask;
+		misalignment = len & line_mask;
 		len -= misalignment;
 		cpu_dcache_inv_range(va, len);
 		cpu_sdcache_inv_range(va, pa, len);
 		if (misalignment) {
 			va += len;
 			pa += len;
-			cpu_dcache_wbinv_range(va, arm_dcache_align);
-			cpu_sdcache_wbinv_range(va, pa, arm_dcache_align);
+			cpu_dcache_wbinv_range(va, line_size);
+			cpu_sdcache_wbinv_range(va, pa, line_size);
 		}
 		break;
 	}
@@ -740,7 +763,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			ds++;
 		}
 
-		paddr_t pa = ds->ds_addr + offset;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
 		size_t seglen = min(len, ds->ds_len - offset);
 
 		_bus_dmamap_sync_segment(va + offset, pa, seglen, ops, false);
@@ -777,7 +800,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		 */
 		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = mtod(m, vaddr_t) + voff;
-		paddr_t pa = ds->ds_addr + ds_off;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
 		/*
 		 * We can save a lot of work here if we know the mapping
@@ -832,7 +855,7 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
-		paddr_t pa = ds->ds_addr + ds_off;
+		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
 		_bus_dmamap_sync_segment(va, pa, seglen, ops, false);
 
