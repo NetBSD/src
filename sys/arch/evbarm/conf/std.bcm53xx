@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.4 2012/09/18 15:00:33 matt Exp $
+#	$NetBSD: std.bcm53xx,v 1.5 2012/09/22 19:49:34 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -14,6 +14,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	COM_TOLERANCE=40
 options 	ARM32
+options 	FPU_VFP
 options 	CORTEX_PMC
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
