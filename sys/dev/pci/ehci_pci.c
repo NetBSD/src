@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.56 2012/07/20 01:26:19 uwe Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.57 2012/09/22 14:27:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.56 2012/07/20 01:26:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.57 2012/09/22 14:27:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,10 +395,8 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
 		if (legsup & EHCI_LEG_HC_BIOS_OWNED) {
 			/* Ask BIOS to give up ownership */
-			legsup &= ~EHCI_LEG_HC_BIOS_OWNED;
-			legsup |= EHCI_LEG_HC_OS_OWNED;
 			pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP,
-			    legsup);
+			    legsup | EHCI_LEG_HC_OS_OWNED);
 			for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
 				legsup = pci_conf_read(pc, tag,
 				    addr + PCI_EHCI_USBLEGSUP);
