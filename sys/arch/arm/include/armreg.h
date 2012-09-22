@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.65 2012/09/11 15:31:54 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.66 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -576,6 +576,12 @@ ARMREG_READ_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register
 ARMREG_WRITE_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
 ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
 ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+/* c5 registers */
+ARMREG_READ_INLINE(dfsr, "p15,0,%0,c5,c0,0") /* Data Fault Status Register */
+ARMREG_READ_INLINE(ifsr, "p15,0,%0,c5,c0,1") /* Instruction Fault Status Register */
+/* c6 registers */
+ARMREG_READ_INLINE(dfar, "p15,0,%0,c6,c0,0") /* Data Fault Address Register */
+ARMREG_READ_INLINE(ifar, "p15,0,%0,c6,c0,2") /* Instruction Fault Address Register */
 /* c7 registers */
 ARMREG_WRITE_INLINE(icialluis, "p15,0,%0,c7,c1,0") /* Instruction Inv All (IS) */
 ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Invalidate All (IS) */

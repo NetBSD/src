@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.39 2012/08/16 18:22:46 matt Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.40 2012/09/22 00:33:40 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.39 2012/08/16 18:22:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.40 2012/09/22 00:33:40 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -678,7 +678,7 @@ initarm(void *arg)
 #endif
 	LEDSTEP();
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
