@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.5 2012/09/15 06:10:13 matt Exp $
+#	$NetBSD: BCM5301X,v 1.6 2012/09/22 19:53:03 matt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -23,7 +23,6 @@ options 	UVMHIST
 options 	BCM53XX_CONSOLE_EARLY
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEXA9
-#options 	FPU_VFP
 options 	BCM5301
 options 	PMAPCOUNTERS
 
@@ -155,7 +154,7 @@ options 	DDB_COMMANDONENTER="show event"
 options 	DB_MAX_LINE=INT_MAX
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+options 	SYMTAB_SPACE=575000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -186,7 +185,7 @@ cpu0		at mainbus?
 # The MPCore interrupt controller and global timer
 armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0		at armperiph?		# ARM Generic Interrupt Controller
-arml2cc0	at armperiph?		# ARM PL310 L2CC
+arml2cc0	at armperiph? flags 1	# ARM PL310 L2CC
 a9tmr0		at armperiph?		# A9 Global Timer
 a9wdt0		at armperiph? flags 1	# A9 Watchdog Timer
 
@@ -205,8 +204,11 @@ pci*		at ppb?
 
 ahcisata*	at pci? dev ? function ?
 atabus* 	at ahcisata? channel ?
+#options 	ATADEBUG
 wd*		at atabus? drive ?
 wm*		at pci? dev ? function ?
+makphy*		at mii?
+ukphy*		at mii?
 
 bcmmdio0	at bcmccb0
 bcmeth*		at bcmccb? port ?
@@ -253,7 +255,7 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-wd*		at umass?
+#wd*		at umass?
 
 axe*		at uhub? port ? configuration ? interface ?
 
