@@ -27,18 +27,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _ARM32_BUS_DMA_PRIVATE
 #define PCIE_PRIVATE
 
 #include "locators.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.3 2012/09/16 12:10:57 he Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.4 2012/09/22 01:47:46 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcireg.h>
@@ -47,6 +49,10 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.3 2012/09/16 12:10:57 he Exp $");
 
 #include <arm/broadcom/bcm53xx_reg.h>
 #include <arm/broadcom/bcm53xx_var.h>
+
+#ifndef __HAVE_PCI_CONF_HOOK
+#error __HAVE_PCI_CONF_HOOK must be defined
+#endif
 
 static const struct {
 	paddr_t owin_base;
@@ -60,6 +66,15 @@ static const struct {
 static int bcmpax_ccb_match(device_t, cfdata_t, void *);
 static void bcmpax_ccb_attach(device_t, device_t, void *);
 
+struct bcmpax_intrhand {
+	TAILQ_ENTRY(bcmpax_intrhand) ih_link;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int ih_ipl;
+};
+
+TAILQ_HEAD(bcmpax_ihqh, bcmpax_intrhand);
+
 struct bcmpax_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
@@ -69,7 +84,12 @@ struct bcmpax_softc {
 	kmutex_t *sc_cfg_lock;
 	bool sc_linkup;
 	int sc_pba_flags;
+	uint32_t sc_intrgen;
 	struct arm32_pci_chipset sc_pc;
+	struct bcmpax_ihqh sc_intrs;
+	void *sc_ih[6];
+	int sc_port;
+	char sc_intrstring[4][32];
 };
 
 static inline uint32_t
@@ -98,11 +118,10 @@ static void *bcmpax_intr_establish(void *, pci_intr_handle_t, int,
 	   int (*)(void *), void *);
 static void bcmpax_intr_disestablish(void *, void *);
 
-#ifdef __HAVE_PCI_CONF_HOOK
 static int bcmpax_conf_hook(void *, int, int, int, pcireg_t);
-#endif
 static void bcmpax_conf_interrupt(void *, int, int, int, int, int *);
 
+static int bcmpax_intr(void *);
 
 CFATTACH_DECL_NEW(bcmpax_ccb, sizeof(struct bcmpax_softc),
 	bcmpax_ccb_match, bcmpax_ccb_attach, NULL, NULL);
@@ -124,25 +143,77 @@ bcmpax_ccb_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
+static int
+bcmpax_iwin_init(struct bcmpax_softc *sc)
+{
+	uint32_t megs = (physical_end + 0xfffff - physical_start) >> 20;
+	uint32_t iwin_megs = min(256, megs);
+#if 1
+#if 1
+	bus_addr_t iwin1_start = physical_start;
+#else
+	bus_addr_t iwin1_start = 0;
+#endif
+#if 1
+	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, iwin1_start | min(megs, 128));
+	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, iwin1_start | 1);
+#else
+	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, iwin1_start | min(megs, 128));
+	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, iwin1_start | 1);
+#endif
+	bcmpax_conf_write(sc, 0, PCI_MAPREG_START+4, iwin1_start);
+	if (iwin_megs > 128) {
+		bus_addr_t iwin2_start = iwin1_start + 128*1024*1024;
+#if 1
+		bcmpax_write_4(sc, PCIE_IARR_2_LOWER, iwin2_start | min(megs - 128, 128));
+		bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, iwin2_start | 1);
+#else
+		bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, iwin2_start | min(megs - 128, 128));
+		bcmpax_write_4(sc, PCIE_IARR_2_LOWER, iwin2_start | 1);
+#endif
+		bcmpax_conf_write(sc, 0, PCI_MAPREG_START+8, iwin2_start);
+	}
+#endif
+
+	if (megs <= iwin_megs) {
+		/*
+		 * We could can DMA to all of memory so we don't need to subregion!
+		 */
+		return 0;
+	}
+
+	return bus_dmatag_subregion(sc->sc_dmat, physical_start,
+	    physical_start + (iwin_megs << 20) - 1, &sc->sc_dmat, 0);
+}
+
 static void
 bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmpax_softc * const sc = device_private(self);
 	struct bcmccb_attach_args * const ccbaa = aux;
 	const struct bcm_locators * const loc = &ccbaa->ccbaa_loc;
+	const char * const xname = device_xname(self);
 
 	sc->sc_dev = self;
-
-	sc->sc_bst = ccbaa->ccbaa_ccb_bst;
 	sc->sc_dmat = ccbaa->ccbaa_dmat;
 
+	for (u_int i = 0; i < 4; i++) {
+		snprintf(sc->sc_intrstring[i], sizeof(sc->sc_intrstring[i]),
+		    "%s int%c", xname, 'a' + i);
+	}
+
+	sc->sc_bst = ccbaa->ccbaa_ccb_bst;
 	bus_space_subregion(sc->sc_bst, ccbaa->ccbaa_ccb_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
+	/*
+	 * Kick the hardware into RC mode.
+	 */
 	bcmpax_write_4(sc, PCIE_CLK_CONTROL, 3);
 	delay(250);
 	bcmpax_write_4(sc, PCIE_CLK_CONTROL, 1);
 	// delay(100*1000);
+
 
 	uint32_t v = bcmpax_read_4(sc, PCIE_STRAP_STATUS);
 	const bool enabled = (v & STRAP_PCIE_IF_ENABLE) != 0;
@@ -162,6 +233,8 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
 	sc->sc_cfg_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
 
+	TAILQ_INIT(&sc->sc_intrs);
+
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = bcmpax_attach_hook;
 	sc->sc_pc.pc_bus_maxdevs = bcmpax_bus_maxdevs;
@@ -177,13 +250,35 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc.pc_intr_establish = bcmpax_intr_establish;
 	sc->sc_pc.pc_intr_disestablish = bcmpax_intr_disestablish;
 
-#ifdef __HAVE_PCI_CONF_HOOK
 	sc->sc_pc.pc_conf_hook = bcmpax_conf_hook;
-#endif
 	sc->sc_pc.pc_conf_interrupt = bcmpax_conf_interrupt;
 
+	sc->sc_pba_flags |= PCI_FLAGS_MRL_OKAY;
+	sc->sc_pba_flags |= PCI_FLAGS_MRM_OKAY;
+	sc->sc_pba_flags |= PCI_FLAGS_MWI_OKAY;
 	// sc->sc_pba_flags |= PCI_FLAGS_MSI_OKAY;
 	// sc->sc_pba_flags |= PCI_FLAGS_MSIX_OKAY;
+
+	for (size_t i = 0; i < loc->loc_nintrs; i++) {
+		sc->sc_ih[i] = intr_establish(loc->loc_intrs[0] + i, IPL_VM,
+		    IST_LEVEL, bcmpax_intr, sc);
+		if (sc->sc_ih[i] == NULL) {
+			aprint_error_dev(self,
+			    "failed to establish interrupt #%zu (%zu)\n", i,
+			    loc->loc_intrs[0] + i);
+			while (i-- > 0) { 
+				intr_disestablish(sc->sc_ih[i]);
+			}
+			return;
+		}
+	}
+	aprint_normal_dev(self, "interrupting on irqs %d-%d\n",
+	     loc->loc_intrs[0], loc->loc_intrs[0] + loc->loc_nintrs - 1);
+
+	/*
+	 * Enable INTA-INTD
+	 */
+	bcmpax_write_4(sc, PCIE_SYS_RC_INTX_EN, 0x0f);
 
 	int offset;
 	const bool ok = pci_get_capability(&sc->sc_pc, 0, PCI_CAP_PCIEXPRESS,
@@ -191,7 +286,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	KASSERT(ok);
 
 	/*
-	 * Now we wait (.1sec) for the link to come up.
+	 * Now we wait (.25 sec) for the link to come up.
 	 */
 	offset += PCI_PCIE_LCSR;
 	for (size_t timo = 0;; timo++) {
@@ -209,6 +304,22 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_linkup) {
+		/*
+		 * Enable the inbound (device->memory) map.
+		 */
+		int error = bcmpax_iwin_init(sc);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "failed to subregion dma tag: %d\n", error);
+			return;
+		}
+
+		aprint_normal_dev(self, "iwin[1]=%#x/%#x iwin[2]=%#x/%#x\n",
+		    bcmpax_read_4(sc, PCIE_FUNC0_IMAP1),
+		    bcmpax_read_4(sc, PCIE_IARR_1_LOWER),
+		    bcmpax_read_4(sc, PCIE_FUNC0_IMAP2),
+		    bcmpax_read_4(sc, PCIE_IARR_2_LOWER));
+
 		paddr_t base = bcmpax_owins[loc->loc_port].owin_base;
 		psize_t size = bcmpax_owins[loc->loc_port].owin_size;
 		KASSERT((size & ~PCIE_OARR_ADDR) == 0);
@@ -225,7 +336,7 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 		struct extent *memext = extent_create("pcimem", base,
 		     base + size, NULL, 0, EX_NOWAIT);
 
-		int error = pci_configure_bus(&sc->sc_pc,
+		error = pci_configure_bus(&sc->sc_pc,
 		    NULL, memext, NULL, 0, arm_pcache.dcache_line_size);
 
 		extent_destroy(memext);
@@ -367,26 +478,64 @@ bcmpax_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *ilinep
 	*ilinep = 5; /* (ipin + swiz) & 3; */
 }
 
-#ifdef __HAVE_PCI_CONF_HOOK
 static int
 bcmpax_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 	if (func > 0)
 		return 0;
 
-	return PCI_CONF_ENABLE_MEM | PCI_CONF_MAP_MEM;
+	return PCI_CONF_ENABLE_MEM | PCI_CONF_MAP_MEM | PCI_CONF_ENABLE_BM;
 }
-#endif
+
+static int
+bcmpax_intr(void *v)
+{
+	struct bcmpax_softc * const sc = v;
+
+	while (bcmpax_read_4(sc, PCIE_SYS_RC_INTX_CSR)) {
+		struct bcmpax_intrhand *ih;
+		mutex_enter(sc->sc_lock);
+		const uint32_t lastgen = sc->sc_intrgen;
+		TAILQ_FOREACH(ih, &sc->sc_intrs, ih_link) {
+			int (* const func)(void *) = ih->ih_func;
+			void * const arg = ih->ih_arg;
+			mutex_exit(sc->sc_lock);
+			int rv = (*func)(arg);
+			if (rv) {
+				return rv;
+			}
+			mutex_enter(sc->sc_lock);
+			/*
+			 * Check to see if the interrupt list changed.
+			 * If so, restart from the beginning.
+			 */
+			if (lastgen != sc->sc_intrgen)
+				break;
+		}
+		mutex_exit(sc->sc_lock);
+	}
+
+	return 0;
+}
 
 static int
 bcmpax_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pihp)
 {
-	return EINVAL;
+	if (pa->pa_intrpin == 0)
+		return EINVAL;
+
+	*pihp = pa->pa_intrpin;
+	return 0;
 }
 
 static const char *
 bcmpax_intr_string(void *v, pci_intr_handle_t pih)
 {
+	struct bcmpax_softc * const sc = v;
+
+	if (pih)
+		return sc->sc_intrstring[pih - PCI_INTERRUPT_PIN_A];
+
 	return NULL;
 }
 
@@ -400,10 +549,39 @@ static void *
 bcmpax_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
    int (*func)(void *), void *arg)
 {
-	return NULL;
+	struct bcmpax_softc * const sc = v;
+
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
+	KASSERT(ipl == IPL_VM);
+	KASSERT(func != NULL);
+	KASSERT(arg != NULL);
+
+	if (pih == 0)
+		return NULL;
+
+	struct bcmpax_intrhand * const ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
+
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+
+	mutex_enter(sc->sc_lock);
+	TAILQ_INSERT_TAIL(&sc->sc_intrs, ih, ih_link);
+	mutex_exit(sc->sc_lock);
+
+	return ih;
 }
 
 static void
-bcmpax_intr_disestablish(void *v, void *ih)
+bcmpax_intr_disestablish(void *v, void *vih)
 {
+	struct bcmpax_softc * const sc = v;
+	struct bcmpax_intrhand * const ih = vih;
+
+	mutex_enter(sc->sc_lock);
+	TAILQ_REMOVE(&sc->sc_intrs, ih, ih_link);
+	sc->sc_intrgen++;
+	mutex_exit(sc->sc_lock);
+
+	kmem_free(ih, sizeof(*ih));
 }
