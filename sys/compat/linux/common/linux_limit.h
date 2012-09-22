@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.5 2009/03/29 01:02:50 mrg Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.6 2012/09/22 22:34:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,12 @@ static int linux_to_bsd_limit(int);
 #define linux_to_bsd_rlimit(b, l) \
     linux_to_bsd_rlimit1(b, l, rlim_cur); \
     linux_to_bsd_rlimit1(b, l, rlim_max)
+
+#define linux32_to_bsd_rlimit1(b, l, f) \
+    (b)->f = (l)->f == LINUX32_RLIM_INFINITY ? RLIM_INFINITY : (l)->f
+#define linux32_to_bsd_rlimit(b, l) \
+    linux32_to_bsd_rlimit1(b, l, rlim_cur); \
+    linux32_to_bsd_rlimit1(b, l, rlim_max)
 
 static int
 linux_to_bsd_limit(int lim)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.10 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.11 2012/09/22 22:34:03 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.10 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.11 2012/09/22 22:34:03 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ linux32_sys_setrlimit(struct lwp *l, const struct linux32_sys_setrlimit_args *ua
 	if (which < 0)
 		return -which;
 
-	linux_to_bsd_rlimit(&rl, &orl);
+	linux32_to_bsd_rlimit(&rl, &orl);
 
 	return dosetrlimit(l, l->l_proc, which, &rl);
 }
