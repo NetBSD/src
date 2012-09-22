@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.237 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.237 2012/09/22 00:33:37 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2995,12 +2995,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		bool is_cached = pmap_is_cached(pm);
 
 		*ptep = npte;
+		PTE_SYNC(ptep);
 		if (is_cached) {
 			/*
 			 * We only need to frob the cache/tlb if this pmap
 			 * is current
 			 */
-			PTE_SYNC(ptep);
 			if (va != vector_page && l2pte_valid(npte)) {
 				/*
 				 * This mapping is likely to be accessed as
@@ -4206,8 +4206,7 @@ pmap_activate(struct lwp *l)
 		 * same user vmspace as before... Simply update
 		 * the TTB (no TLB flush required)
 		 */
-		__asm volatile("mcr p15, 0, %0, c2, c0, 0" ::
-		    "r"(npm->pm_l1->l1_physaddr));
+		cpu_setttb(npm->pm_l1->l1_physaddr, false);
 		cpu_cpwait();
 	} else {
 		/*
@@ -6476,6 +6475,22 @@ pmap_pte_init_armv7(void)
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv7;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv7;
 
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		/*
+		 * write-back, no write-allocate, shareable for normal pages.
+		 */
+		pte_l1_s_cache_mode = L1_S_C | L1_S_B | L1_S_V6_S;
+		pte_l2_l_cache_mode = L2_C | L2_B | L2_XS_S;
+		pte_l2_s_cache_mode = L2_C | L2_B | L2_XS_S;
+
+		/*
+		 * write-back, no write-allocate, shareable for page tables.
+		 */
+		pte_l1_s_cache_mode_pt = L1_S_C | L1_S_B | L1_S_V6_S;
+		pte_l2_l_cache_mode_pt = L2_C | L2_B | L2_XS_S;
+		pte_l2_s_cache_mode_pt = L2_C | L2_B | L2_XS_S;
+	}
+
 	pte_l1_s_prot_u = L1_S_PROT_U_armv7;
 	pte_l1_s_prot_w = L1_S_PROT_W_armv7;
 	pte_l1_s_prot_ro = L1_S_PROT_RO_armv7;
@@ -6495,6 +6510,8 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_proto = L1_S_PROTO_armv7;
 	pte_l1_c_proto = L1_C_PROTO_armv7;
 	pte_l2_s_proto = L2_S_PROTO_armv7;
+
+	pmap_needs_pte_sync = 1;
 }
 #endif /* ARM_MMU_V7 */
 

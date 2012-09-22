@@ -60,7 +60,7 @@ struct cpu_functions {
 
 	u_int	(*cf_control)		(u_int, u_int);
 	void	(*cf_domains)		(u_int);
-	void	(*cf_setttb)		(u_int);
+	void	(*cf_setttb)		(u_int, bool);
 	u_int	(*cf_faultstatus)	(void);
 	u_int	(*cf_faultaddress)	(void);
 
@@ -164,7 +164,7 @@ extern u_int cputype;
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
-#define cpu_setttb(t)		cpufuncs.cf_setttb(t)
+#define cpu_setttb(t, f)	cpufuncs.cf_setttb(t, f)
 #define cpu_faultstatus()	cpufuncs.cf_faultstatus()
 #define cpu_faultaddress()	cpufuncs.cf_faultaddress()
 
@@ -238,7 +238,7 @@ u_int	arm3_control		(u_int, u_int);
 #endif	/* CPU_ARM3 */
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
-void	arm67_setttb		(u_int);
+void	arm67_setttb		(u_int, bool);
 void	arm67_tlb_flush		(void);
 void	arm67_tlb_purge		(u_int);
 void	arm67_cache_flush	(void);
@@ -256,7 +256,7 @@ void	arm7_setup		(char *);
 #ifdef CPU_ARM7TDMI
 int	arm7_dataabt_fixup	(void *);
 void	arm7tdmi_setup		(char *);
-void	arm7tdmi_setttb		(u_int);
+void	arm7tdmi_setttb		(u_int, bool);
 void	arm7tdmi_tlb_flushID	(void);
 void	arm7tdmi_tlb_flushID_SE	(u_int);
 void	arm7tdmi_cache_flushID	(void);
@@ -264,7 +264,7 @@ void	arm7tdmi_context_switch	(u_int);
 #endif /* CPU_ARM7TDMI */
 
 #ifdef CPU_ARM8
-void	arm8_setttb		(u_int);
+void	arm8_setttb		(u_int, bool);
 void	arm8_tlb_flushID	(void);
 void	arm8_tlb_flushID_SE	(u_int);
 void	arm8_cache_flushID	(void);
@@ -290,7 +290,7 @@ u_int	arm8_clock_config	(u_int, u_int);
 
 #ifdef CPU_FA526
 void	fa526_setup		(char *);
-void	fa526_setttb		(u_int);
+void	fa526_setttb		(u_int, bool);
 void	fa526_context_switch	(u_int);
 void	fa526_cpu_sleep		(int);
 void	fa526_tlb_flushI_SE	(u_int);
@@ -323,7 +323,7 @@ void	sa11x0_setup		(char *);
 #endif
 
 #if defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
-void	sa1_setttb		(u_int);
+void	sa1_setttb		(u_int, bool);
 
 void	sa1_tlb_flushID_SE	(u_int);
 
@@ -351,7 +351,7 @@ void	sa1_cache_syncI_rng	(vaddr_t, vsize_t);
 #endif
 
 #ifdef CPU_ARM9
-void	arm9_setttb		(u_int);
+void	arm9_setttb		(u_int, bool);
 
 void	arm9_tlb_flushID_SE	(u_int);
 
@@ -386,7 +386,7 @@ void	arm10_setup		(char *);
 #endif
 
 #if defined(CPU_ARM9E) || defined (CPU_ARM10) || defined(CPU_SHEEVA)
-void	armv5_ec_setttb			(u_int);
+void	armv5_ec_setttb			(u_int, bool);
 
 void	armv5_ec_icache_sync_all	(void);
 void	armv5_ec_icache_sync_range	(vaddr_t, vsize_t);
@@ -401,7 +401,7 @@ void	armv5_ec_idcache_wbinv_range	(vaddr_t, vsize_t);
 #endif
 
 #if defined (CPU_ARM10) || defined (CPU_ARM11MPCORE)
-void	armv5_setttb		(u_int);
+void	armv5_setttb		(u_int, bool);
 
 void	armv5_icache_sync_all	(void);
 void	armv5_icache_sync_range	(vaddr_t, vsize_t);
@@ -425,7 +425,7 @@ void	arm11mpcore_setup		(char *);
 #endif
 
 #if defined(CPU_ARM11) || defined(CPU_CORTEX)
-void	arm11_setttb		(u_int);
+void	arm11_setttb		(u_int, bool);
 
 void	arm11_tlb_flushID_SE	(u_int);
 void	arm11_tlb_flushI_SE	(u_int);
@@ -445,7 +445,7 @@ void	armv11_idcache_wbinv_all(void);
 void	arm11_drain_writebuf	(void);
 void	arm11_sleep		(int);
 
-void	armv6_setttb		(u_int);
+void	armv6_setttb		(u_int, bool);
 
 void	armv6_icache_sync_all	(void);
 void	armv6_icache_sync_range	(vaddr_t, vsize_t);
@@ -460,7 +460,7 @@ void	armv6_idcache_wbinv_range (vaddr_t, vsize_t);
 #endif
 
 #if defined(CPU_CORTEX)
-void	armv7_setttb(u_int);
+void	armv7_setttb(u_int, bool);
 
 void	armv7_icache_sync_range(vaddr_t, vsize_t);
 void	armv7_dcache_wb_range(vaddr_t, vsize_t);
@@ -479,7 +479,7 @@ void	armv7_setup		(char *string);
 
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176)
-void	arm11x6_setttb			(u_int);
+void	arm11x6_setttb			(u_int, bool);
 void	arm11x6_idcache_wbinv_all	(void);
 void	arm11x6_dcache_wbinv_all	(void);
 void	arm11x6_icache_sync_all		(void);
@@ -526,7 +526,7 @@ void	xscale_cpu_sleep	(int);
 
 u_int	xscale_control		(u_int, u_int);
 
-void	xscale_setttb		(u_int);
+void	xscale_setttb		(u_int, bool);
 
 void	xscale_tlb_flushID_SE	(u_int);
 

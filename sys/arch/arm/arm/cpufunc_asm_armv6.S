@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.4 2010/12/10 02:06:22 bsh Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.5 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -47,15 +47,16 @@
  * addresses that are about to change.
  */
 ENTRY(armv6_setttb)
+	cmp	r1, #0
 #ifdef PMAP_CACHE_VIVT
-	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
-	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
+	mcrne	p15, 0, r0, c7, c5, 0	/* Flush I cache */
+	mcrne	p15, 0, r0, c7, c14, 0	/* clean and invalidate D cache */
 #endif
-	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	mcrne	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
 
 /*

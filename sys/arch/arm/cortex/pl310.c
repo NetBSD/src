@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.5 2012/09/14 03:51:01 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.6 2012/09/22 00:33:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.5 2012/09/14 03:51:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.6 2012/09/22 00:33:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,9 +167,8 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ARM PL310%s L2 Cache Controller%s\n",
 	    revstr, enabled_p ? "" : " (disabled)");
 
-#if 1
 	if (enabled_p) {
-		if (1) {
+		if (device_cfdata(self)->cf_flags & 1) {
 			arml2cc_disable(sc);
 			aprint_normal_dev(self, "cache %s\n",
 			    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
@@ -180,18 +179,17 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 			cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
 			sc->sc_enabled = true;
 		}
+	} else if ((device_cfdata(self)->cf_flags & 1) == 0) {
+		if (!enabled_p) {
+			arml2cc_enable(sc);
+			aprint_normal_dev(self, "cache %s\n",
+			    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
+		}
+		cpufuncs.cf_sdcache_wb_range = arml2cc_sdcache_wb_range;
+		cpufuncs.cf_sdcache_inv_range = arml2cc_sdcache_inv_range;
+		cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
+		sc->sc_enabled = true;
 	}
-#else
-	if (!enabled_p) {
-		arml2cc_enable(sc);
-		aprint_normal_dev(self, "cache %s\n",
-		    arml2cc_read_4(sc, L2C_CTL) ? "enabled" : "disabled");
-	}
-	cpufuncs.cf_sdcache_wb_range = arml2cc_sdcache_wb_range;
-	cpufuncs.cf_sdcache_inv_range = arml2cc_sdcache_inv_range;
-	cpufuncs.cf_sdcache_wbinv_range = arml2cc_sdcache_wbinv_range;
-	sc->sc_enabled = true;
-#endif
 
 	KASSERT(arm_pcache.dcache_line_size == arm_scache.dcache_line_size);
 }
