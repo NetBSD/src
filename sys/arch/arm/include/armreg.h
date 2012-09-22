@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.67 2012/09/22 01:44:12 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.68 2012/09/22 19:45:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -321,6 +321,15 @@
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
+/* ARMv6/ARMv7 Co-Processor Access Control Register (CP15, 0, c1, c0, 2) */
+#define	CPACR_V7_ASEDIS		0x80000000 /* Disable Advanced SIMD Ext. */
+#define	CPACR_V7_D32DIS		0x40000000 /* Disable VFP regs 15-31 */
+#define	CPACR_CPn(n)		(3 << (2*n))
+#define	CPACR_NOACCESS		0 /* reset value */
+#define	CPACR_PRIVED		1 /* Privileged mode access */
+#define	CPACR_RESERVED		2
+#define	CPACR_ALL		3 /* Privileged and User mode access */
+
 /* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
 #define	ARM11X6_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
@@ -570,8 +579,10 @@ ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
 ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 /* c1 registers */
-ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Register */
-ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Register */
+ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
 /* c2 registers */
 ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
