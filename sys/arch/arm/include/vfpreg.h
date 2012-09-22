@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.4 2012/08/16 07:24:25 matt Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.5 2012/09/22 01:44:12 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -48,6 +48,7 @@
 #define VFP_FPSID_PART_MSK	0x0000ff00	/* Part number */
 #define VFP_FPSID_PART_VFP10	0x00001000	/* VFP10 */
 #define VFP_FPSID_PART_VFP11	0x00002000	/* VFP11 */
+#define VFP_FPSID_PART_VFP30	0x00003000	/* VFP30 */
 #define VFP_FPSID_VAR_MSK	0x000000f0	/* Variant */
 #define VFP_FPSID_VAR_ARM10	0x000000a0	/* Variant ARM10 */
 #define VFP_FPSID_VAR_ARM11	0x000000b0	/* Variant ARM11 */
@@ -55,6 +56,7 @@
 
 #define FPU_VFP10_ARM10E	0x410001a0	/* Really a VFPv2 part */
 #define FPU_VFP11_ARM11		0x410120b0
+#define FPU_VFP30_CORTEXA9	0x41033090
 
 #define VFP_FPEXC_EX		0x80000000	/* Exception status bit */
 #define VFP_FPEXC_EN		0x40000000	/* VFP Enable bit */
