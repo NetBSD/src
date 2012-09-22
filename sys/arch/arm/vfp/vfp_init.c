@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.5 2012/08/16 18:16:25 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.6 2012/09/22 01:44:12 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -222,6 +222,23 @@ vfp_attach(void)
 
 	undefined_test = 0;
 
+#ifdef FPU_VFP
+	uint32_t cpacr = armreg_cpacr_read();
+	cpacr &= ~__BITS(21,20);
+	cpacr &= ~__BITS(23,22);
+
+	cpacr |= __SHIFTIN(1, __BITS(21,20));
+	cpacr |= __SHIFTIN(1, __BITS(23,22));
+	armreg_cpacr_write(cpacr);
+	cpacr = armreg_cpacr_read();
+	if ((cpacr & __BITS(23,22)) == 0) {
+		aprint_normal_dev(ci->ci_dev, "NEON not present\n");
+	}
+	if ((cpacr & __BITS(21,20)) == 0) {
+		aprint_normal_dev(ci->ci_dev, "VFP not present\n");
+	}
+#endif
+
 	const uint32_t fpsid = read_fpsid();
 
 	remove_coproc_handler(uh);
@@ -241,6 +258,9 @@ vfp_attach(void)
 	case FPU_VFP11_ARM11:
 		model = "VFP11";
 		break;
+	case FPU_VFP30_CORTEXA9:
+		model = "NEON MPE w/ VFP 3.0";
+		break;
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
 		    fpsid);
@@ -250,7 +270,7 @@ vfp_attach(void)
 
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
-		    curcpu()->ci_dev->dv_unit, curcpu()->ci_dev->dv_xname,
+		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
 		    model);
 	}
 	evcnt_attach_dynamic(&vfpevent_use, EVCNT_TYPE_MISC, NULL,
