@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm9.S,v 1.8 2012/09/07 11:48:59 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm9.S,v 1.9 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 ARM Limited
@@ -43,14 +43,18 @@
  * addresses that are about to change.
  */
 ENTRY(arm9_setttb)
+	cmp	r1, #0
+	beq	1f
+
 	stmfd	sp!, {r0, lr}
 	bl	_C_LABEL(arm9_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
-
+	cmp	r0, #1			/* make sure EQ=0 */
+1:
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mov	pc, lr
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	RET
 
 /*
  * TLB functions

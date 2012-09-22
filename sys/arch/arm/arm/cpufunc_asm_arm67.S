@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.4 2010/01/03 04:25:16 uebayasi Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.5 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -45,22 +45,26 @@
  * addresses that are about to change.
  */
 ENTRY(arm67_setttb)
-	mcr	p15, 0, r0, c7, c0, 0
+	cmp	r1, #0
+
+	/* wbinv entire L1 I$ and D$ caches */
+	movne	r2, #0
+	mcrne	p15, 0, r2, c7, c0, 0
 
 	/* Write the TTB */
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c5, c0, 0
+	mcrne	p15, 0, r0, c5, c0, 0
 
 	/* For good measure we will flush the IDC as well */
-	mcr	p15, 0, r0, c7, c0, 0
+	mcrne	p15, 0, r0, c7, c0, 0
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
 	mov	r0, r0
 
-	mov	pc, lr
+	RET
 
 /*
  * TLB functions

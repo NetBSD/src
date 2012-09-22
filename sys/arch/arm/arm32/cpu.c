@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86 2012/09/07 11:48:59 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.87 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.86 2012/09/07 11:48:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2012/09/22 00:33:37 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -685,12 +685,10 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 	aprint_normal("\n");
 
-#if defined(CPU_CORTEX) && 0
+#if defined(CPU_CORTEX)
 	if (CPU_ID_CORTEX_P(cpuid)) {
-		identify_cortex_caches(dv);
-		if (0)
-			identify_features(dv);
-	} else
+		identify_features(dv);
+	}
 #endif
 	/* Print cache info. */
 	if (arm_pcache.icache_line_size != 0 || arm_pcache.dcache_line_size != 0) {
@@ -766,61 +764,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	}
 }
 
-#if defined(CPU_CORTEX) && 0
-static void
-print_cortex_cache(device_t dv, u_int level, const char *desc)
-{
-	uint32_t ccsidr = armreg_ccsidr_read();
-	u_int linesize = 1 << ((ccsidr & 7) + 4);
-	u_int nways = ((ccsidr >> 3) & 0x3ff) + 1;
-	u_int nsets = ((ccsidr >> 13) & 0x7fff) + 1;
-	u_int totalsize = linesize * nways * nsets;
-	static const char * const wstrings[] = {
-		"", " write-back", " write-through", ""
-	};
-	static const char * const astrings[] = {
-		"",
-		" with write allocate",
-		" with read allocate",
-		" with read and write allocate"
-	};
-
-	//aprint_debug_dev(dv, "ccsidr=%#x\n", ccsidr);
-
-	u_int wtype = (ccsidr >> 30) & 3;
-	u_int atype = (ccsidr >> 28) & 3;
-
-	aprint_normal_dev(dv, "%uKB/%uB %u-way%s L%u %s cache%s\n",
-	    totalsize / 1024, linesize, nways, wstrings[wtype], level + 1,
-	    desc, astrings[atype]);
-}
-
-void
-identify_cortex_caches(device_t dv)
-{
-	const uint32_t orig_csselr = armreg_csselr_read();
-	uint32_t clidr = armreg_clidr_read();
-	u_int level;
-
-	//aprint_debug_dev(dv, "clidr=%011o\n", clidr);
-
-	for (level = 0, clidr &= 077777777; clidr & 7; clidr >>= 3, level++) {
-		if (clidr & 1) {
-			armreg_csselr_write(2*level + 1);
-			print_cortex_cache(dv, level, "Instruction");
-		}
-		if (clidr & 6) {
-			armreg_csselr_write(2*level + 0);
-			print_cortex_cache(dv, level,
-			    (clidr & 4) ? "Unified" : "Data");
-		}
-	}
-
-	armreg_csselr_write(orig_csselr);
-
-
-}
-
+#if defined(CPU_CORTEX)
 void
 identify_features(device_t dv)
 {
@@ -836,16 +780,25 @@ identify_features(device_t dv)
 	uint32_t mmfr2 = armreg_mmfr2_read();
 	uint32_t mmfr3 = armreg_mmfr3_read();
 
+	if (__SHIFTOUT(mmfr3, __BITS(23,20))) {
+		/*
+		 * Updates to the translation tables do not require a clean
+		 * to the point of unification to ensure visibility by subsequent
+		 * translation table walks.
+		 */
+		pmap_needs_pte_sync = 0;
+	}
+
 	uint32_t pfr0 = armreg_pfr0_read();
 	uint32_t pfr1 = armreg_pfr1_read();
 
-	aprint_normal_dev(dv,
+	aprint_verbose_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
 	    isar0, isar1, isar2, isar3, isar4, isar5);
-	aprint_normal_dev(dv,
+	aprint_verbose_dev(dv,
 	    "mmfr: [0]=%#x [1]=%#x [2]=%#x [3]=%#x\n",
 	    mmfr0, mmfr1, mmfr2, mmfr3);
-	aprint_normal_dev(dv,
+	aprint_verbose_dev(dv,
 	    "pfr: [0]=%#x [1]=%#x\n",
 	    pfr0, pfr1);
 }
