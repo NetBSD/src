@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.5 2012/08/29 19:10:16 matt Exp $
+#	$NetBSD: std.beagle,v 1.6 2012/09/22 19:49:34 matt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -18,6 +18,7 @@ options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
 
 makeoptions	LOADADDRESS="0x80300000"
 makeoptions	BOARDTYPE="beagle"
