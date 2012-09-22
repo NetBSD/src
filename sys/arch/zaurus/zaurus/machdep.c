@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2012/08/16 18:22:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2012/09/22 00:33:42 matt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2012/08/16 18:22:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2012/09/22 00:33:42 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1029,7 +1029,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

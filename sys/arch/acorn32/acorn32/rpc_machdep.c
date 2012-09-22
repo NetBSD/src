@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.85 2012/08/16 18:22:37 matt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.86 2012/09/22 00:33:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.85 2012/08/16 18:22:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.86 2012/09/22 00:33:36 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -798,7 +798,7 @@ initarm(void *cookie)
 	printf("switching to new L1 page table\n");
 #endif
 
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 
 	/*
 	 * We must now clean the cache again....

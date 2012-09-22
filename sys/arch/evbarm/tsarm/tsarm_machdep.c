@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.18 2012/08/16 18:22:46 matt Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.19 2012/09/22 00:33:41 matt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.18 2012/08/16 18:22:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.19 2012/09/22 00:33:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -660,7 +660,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

@@ -47,9 +47,13 @@ END(armv7_wait)
 
 ENTRY(armv7_context_switch)
 	dsb				@ data synchronization barrier
+	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
+	cmp	r2, #0
+	orrlt	r0, #0x5b		@ MP, cachable (Normal WB)
+	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTB
 #ifdef MULTIPROCESSOR
-	mcr	p15, 0, r0, c8, c3, 0	@ flush I+D tlb single entry
+	mcr	p15, 0, r0, c8, c3, 0	@ flush the I+D
 #else
 	mcr	p15, 0, r0, c8, c7, 0	@ flush the I+D
 #endif
@@ -71,15 +75,16 @@ END(armv7_tlb_flushID_SE)
 
 
 ENTRY(armv7_setttb)
-	mrc	p15, 0, r1, c0, c0, 5	@ get MPIDR
-	cmp	r1, #0
-	orrlt	r0, #0x43		@ MP, cachable (Normal in WB, out none)
+	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
+	cmp	r2, #0
+	orrlt	r0, #0x5b		@ MP, cachable (Normal WB)
 	orrge	r0, #0x1b		@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTB
+	cmp	r1, #0
 #ifdef MULTIPROCESSOR
-	mcr	p15, 0, r0, c8, c3, 0	@ invalidate all I+D TLBs
+	mcrne	p15, 0, r0, c8, c3, 0	@ invalidate all I+D TLBs
 #else
-	mcr	p15, 0, r0, c8, c7, 0   @ invalidate all I+D TLBs
+	mcrne	p15, 0, r0, c8, c7, 0   @ invalidate all I+D TLBs
 #endif
 	dsb				@ data synchronization barrier
 	isb

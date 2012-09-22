@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.8 2012/07/18 20:09:19 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.9 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -46,15 +46,14 @@
  */
 ENTRY(arm11_setttb)
 #ifdef PMAP_CACHE_VIVT
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv6_idcache_wbinv_all)
-	ldmfd	sp!, {r0, lr}
+#error arm11 does not have a VIVT cache.
 #endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	cmp	r1, #0
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcrne	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 
 /*

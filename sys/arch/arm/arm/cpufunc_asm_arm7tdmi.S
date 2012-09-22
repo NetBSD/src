@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.4 2010/01/03 04:25:16 uebayasi Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.5 2012/09/22 00:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 John Fremlin
@@ -44,13 +44,18 @@
  * addresses that are about to change.
  */
 ENTRY(arm7tdmi_setttb)
+	mov	r3, lr		/* ditto with lr */
+	mov	r2, r1		/* store the flush flag in a safe place */
 	mov	r1, r0		/* store the TTB in a safe place */
-	mov	r2, lr		/* ditto with lr */
 
-	bl	_C_LABEL(arm7tdmi_cache_flushID)
+	cmp	r2, #0
+	blne	_C_LABEL(arm7tdmi_cache_flushID)
 
 	/* Write the TTB */
 	mcr	p15, 0, r1, c2, c0, 0
+
+	cmp	r2, #0		@ do we need to flush
+	moveq	pc, r3		@   if not, return
 
 	/* If we have updated the TTB we must flush the TLB */
 	bl	_C_LABEL(arm7tdmi_tlb_flushID)
@@ -58,7 +63,7 @@ ENTRY(arm7tdmi_setttb)
 	/* For good measure we will flush the IDC as well */
 	bl	_C_LABEL(arm7tdmi_cache_flushID)
 
-	mov	pc, r2
+	mov	pc, r3
 
 /*
  * TLB functions
