@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.8 2011/06/05 16:52:26 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9 2012/09/23 06:05:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ ENTRY(mutex_exit)
 2:
 	b	_C_LABEL(mutex_vector_exit)
 
-#endif	/* __HAVE_MUTEX_STUBS */
+#endif	/* !LOCKDEBUG */
 
 /*
  * void rw_enter(krwlock_t *krw, krw_t op);
@@ -190,4 +190,4 @@ ENTRY(rw_exit)
 
 #endif	/* __HAVE_RW_STUBS */
 
-#endif	/* !LOCKDEBUG */
+#endif	/* __HAVE_MUTEX_STUBS */
