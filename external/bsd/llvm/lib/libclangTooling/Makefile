@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/09/23 17:22:25 joerg Exp $
 
 LIB=	clangTooling
 
@@ -7,8 +7,9 @@ LIB=	clangTooling
 .PATH: ${CLANG_SRCDIR}/lib/Tooling
 
 SRCS+=	ArgumentsAdjusters.cpp \
-	CommandLineClangTool.cpp \
+	CommonOptionsParser.cpp \
 	CompilationDatabase.cpp \
+	JSONCompilationDatabase.cpp \
 	Refactoring.cpp \
 	RefactoringCallbacks.cpp \
 	Tooling.cpp

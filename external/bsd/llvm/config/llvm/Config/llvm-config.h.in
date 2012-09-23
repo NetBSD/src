@@ -41,6 +41,9 @@
 /* Has gcc/MSVC atomic intrinsics */
 #define LLVM_HAS_ATOMICS 1
 
+/* Host triple LLVM will be executed on */
+#define LLVM_HOSTTRIPLE "x86_64--netbsd"
+
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"
 

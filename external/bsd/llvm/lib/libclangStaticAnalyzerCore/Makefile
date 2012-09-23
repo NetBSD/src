@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2012/09/23 17:22:25 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -8,7 +8,7 @@ LIB=	clangStaticAnalyzerCore
 
 SRCS+=	APSIntType.cpp \
 	AnalysisManager.cpp \
-	BasicConstraintManager.cpp \
+	AnalyzerOptions.cpp \
 	BasicValueFactory.cpp \
 	BlockCounter.cpp \
 	BugReporter.cpp \
@@ -19,6 +19,7 @@ SRCS+=	APSIntType.cpp \
 	CheckerHelpers.cpp \
 	CheckerManager.cpp \
 	CheckerRegistry.cpp \
+	ConstraintManager.cpp \
 	CoreEngine.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \

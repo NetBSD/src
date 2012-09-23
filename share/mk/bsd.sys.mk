@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.218 2012/09/05 22:40:30 riz Exp $
+#	$NetBSD: bsd.sys.mk,v 1.219 2012/09/23 17:22:25 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -33,7 +33,7 @@ CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-CFLAGS+=	-Wa,--fatal-warnings
+#CFLAGS+=	-Wa,--fatal-warnings
 .endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
@@ -109,7 +109,7 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
-COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
+COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 .endif
@@ -132,7 +132,7 @@ CFLAGS+=	-Wa,-Av8plus
 
 .if !defined(NOGCCERROR)
 .if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
-CPUFLAGS+=	-Wa,--fatal-warnings
+#CPUFLAGS+=	-Wa,--fatal-warnings
 .endif
 .endif
 

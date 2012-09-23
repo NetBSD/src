@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2012/08/09 14:37:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.20 2012/09/23 17:22:23 joerg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -64,6 +64,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
+	MachinePostDominators.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \
@@ -100,6 +101,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
+	StackColoring.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
 	StrongPHIElimination.cpp \
@@ -108,6 +110,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetInstrInfoImpl.cpp \
 	TargetLoweringObjectFileImpl.cpp \
 	TargetOptionsImpl.cpp \
+	TargetSchedule.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp
