@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.44 2012/06/27 00:37:08 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.45 2012/09/23 01:05:22 chs Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -231,6 +231,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
