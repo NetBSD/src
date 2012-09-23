@@ -7,6 +7,9 @@
 /* Bug report URL. */
 #define BUG_REPORT_URL "http://llvm.org/bugs/"
 
+/* Define if we have libxml2 */
+/* #undef CLANG_HAVE_LIBXML */
+
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR ""
 
@@ -19,7 +22,7 @@
 /* Define if position independent code is enabled */
 #define ENABLE_PIC 1
 
-/* Define if timestamp information (e.g., __DATE___) is allowed */
+/* Define if timestamp information (e.g., __DATE__) is allowed */
 #define ENABLE_TIMESTAMPS 0
 
 /* Directory where gcc is installed. */
@@ -552,6 +555,9 @@
 
 /* Has gcc/MSVC atomic intrinsics */
 #define LLVM_HAS_ATOMICS 1
+
+/* Host triple LLVM will be executed on */
+#define LLVM_HOSTTRIPLE "x86_64--netbsd"
 
 /* Installation directory for include files */
 #define LLVM_INCLUDEDIR "/usr/include"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2012/08/09 14:39:01 joerg Exp $
+# $NetBSD: Makefile,v 1.25 2012/09/23 17:22:23 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,7 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMMipsAsmParser \
 	libLLVMMipsAsmPrinter \
+	libLLVMMipsDisassembler \
 	libLLVMMipsMCTargetDesc \
 	libLLVMMipsTargetInfo
 
@@ -90,7 +91,8 @@ SUBDIR+= \
 	libclangFrontendTool \
 	libclangLex \
 	libclangParse \
-	libclangRewrite \
+	libclangRewriteFrontend \
+	libclangRewriteCore \
 	libclangSema \
 	libclangSerialization \
 	libclangStaticAnalyzerCheckers \
