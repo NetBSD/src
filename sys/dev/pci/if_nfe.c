@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.56 2012/07/22 14:33:03 matt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.57 2012/09/23 01:12:01 chs Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.56 2012/07/22 14:33:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.57 2012/09/23 01:12:01 chs Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -255,8 +255,6 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	sc->sc_dmat = pa->pa_dmat;
-
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
@@ -323,6 +321,11 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		    NFE_HW_VLAN | NFE_PWR_MGMT;
 		break;
 	}
+
+	if (pci_dma64_available(pa) && (sc->sc_flags & NFE_40BIT_ADDR) != 0)
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	nfe_poweron(self);
 
