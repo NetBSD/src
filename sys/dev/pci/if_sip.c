@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.154 2012/07/22 14:33:03 matt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.155 2012/09/23 01:10:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.154 2012/07/22 14:33:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.155 2012/09/23 01:10:59 chs Exp $");
 
 
 
@@ -737,10 +737,13 @@ sipcom_check_64bit(const struct pci_attach_args *pa)
 		/* Accton EN1407-T, Planex GN-1000TE */
 		{ 0x1113,	0x1407 },
 
-		/* Netgear GA-621 */
+		/* Netgear GA621 */
 		{ 0x1385,	0x621a },
 
-		/* SMC EZ Card */
+		/* Netgear GA622 */
+		{ 0x1385,	0x622a },
+
+		/* SMC EZ Card 1000 (9462TX) */
 		{ 0x10b8,	0x9462 },
 
 		{ 0, 0}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.121 2011/11/11 23:01:59 jakllsch Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.122 2012/09/23 01:10:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121 2011/11/11 23:01:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.122 2012/09/23 01:10:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1542,6 +1542,13 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 		case 0x12:
 			strcpy(psc->sc_tulip.sc_name, "Cogent EM100TX");
 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			break;
+
+		case 0x13:
+			strcpy(psc->sc_tulip.sc_name, "Cogent ???");
+ 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			psc->sc_flags |= TULIP_PCI_SHAREDINTR |
+			    TULIP_PCI_SHAREDROM;
 			break;
 
 		case 0x15:
