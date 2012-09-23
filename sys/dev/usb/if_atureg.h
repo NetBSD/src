@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.10 2012/09/23 01:08:17 chs Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -91,7 +91,10 @@ enum atu_radio_type {
 	RadioRFMD = 0,
 	RadioRFMD2958,
 	RadioRFMD2958_SMC,
-	RadioIntersil
+	RadioIntersil,
+	AT76C503_i3863,
+	AT76C503_rfmd_acc,
+	AT76C505_rfmd
 };
 
 struct atu_type {
