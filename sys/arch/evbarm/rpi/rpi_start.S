@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.6 2012/09/16 14:14:56 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.7 2012/09/23 15:56:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -87,7 +87,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.6 2012/09/16 14:14:56 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.7 2012/09/23 15:56:32 skrll Exp $")
 
 /*
  * Workaround Erratum 411920 
@@ -308,11 +308,11 @@ Lctl_ID_dis:
 mmu_init_table:
 	/* Add 1MB of VA==PA at 0x00000000 so we can keep the kernel going */
 	MMU_INIT(0x0, 0x0,
-	    (_end - KERNEL_BASE + L1_S_SIZE - 1),
+	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW)
 
 	MMU_INIT(KERNEL_BASE, 0x0,
-	    (_end - KERNEL_BASE + L1_S_SIZE - 1),
+	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW  | L1_S_B | L1_S_C)
 
 	/* Map the 16MB of peripherals */
