@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.44 2012/01/30 19:41:20 drochner Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.45 2012/09/23 01:11:14 chs Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.44 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.45 2012/09/23 01:11:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 			}
 #ifdef GEM_DEBUG
 			/* PROM dump */
-			printf("%s: PROM dump (0x0000 to %04lx)\n", device_xname(sc->sc_dev),
+			printf("%s: PROM dump (0x0000 to %04zx)\n", device_xname(sc->sc_dev),
 			    (sizeof buf) - 1);
 			i = 0;
 			j = 0;
