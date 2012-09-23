@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.219 2012/09/23 17:22:25 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.220 2012/09/23 19:20:44 joerg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -33,7 +33,7 @@ CFLAGS+=	-Wno-sign-compare
 CFLAGS+=	${${ACTIVE_CC} != "clang":? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-#CFLAGS+=	-Wa,--fatal-warnings
+CFLAGS+=	-Wa,--fatal-warnings
 .endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
@@ -132,7 +132,7 @@ CFLAGS+=	-Wa,-Av8plus
 
 .if !defined(NOGCCERROR)
 .if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
-#CPUFLAGS+=	-Wa,--fatal-warnings
+CPUFLAGS+=	-Wa,--fatal-warnings
 .endif
 .endif
 
