@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.4MB,v 1.9 2007/10/18 15:28:34 yamt Exp $	*/
+/*	$NetBSD: kern.ldscript.4MB,v 1.10 2012/09/23 01:01:17 chs Exp $	*/
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")
@@ -33,8 +33,20 @@ SECTIONS
    AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
    {
      *(.data)
-     *(.data.*)
    }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.cacheline_aligned :
+   AT (LOADADDR(.text) + (ADDR(.data.cacheline_aligned) - ADDR(.text)))
+   {
+     *(.data.cacheline_aligned)
+   }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.read_mostly :
+   AT (LOADADDR(.text) + (ADDR(.data.read_mostly) - ADDR(.text)))
+   {
+     *(.data.read_mostly)
+   }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
    _edata = . ;
    PROVIDE (edata = .) ;
    __bss_start = . ;
