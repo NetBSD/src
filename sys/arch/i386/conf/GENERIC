@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1079 2012/09/01 18:17:50 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.1080 2012/09/23 01:05:21 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1079 $"
+#ident 		"GENERIC-$Revision: 1.1080 $"
 
 maxusers	64		# estimated number of users
 
@@ -39,6 +39,7 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #padlock0	at cpu0		# VIA PadLock
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
+vmt0		at cpu0		# VMware Tools
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -1561,6 +1562,7 @@ viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 
+
 # Pull in optional local configuration
 cinclude "arch/i386/conf/GENERIC.local"
 
@@ -1594,9 +1596,6 @@ options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
-# NPF
-#pseudo-device	npf
-
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
@@ -1621,6 +1620,8 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device 	etherip 		# Tunnel Ethernet over IP
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
