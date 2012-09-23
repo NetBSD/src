@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2012/02/10 17:35:48 para Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2012/09/23 22:31:38 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,13 +45,6 @@
 #ifndef MSGBUFSIZE
 #define	MSGBUFSIZE		(3*NBPG)
 #endif
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT		((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT		((256 * 1024 * 1024) >> PAGE_SHIFT)
 
 #endif /* _KERNEL && !_MODULE */
 
