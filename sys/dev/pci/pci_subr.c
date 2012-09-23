@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.93 2012/09/23 01:10:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.93 2012/09/23 01:10:10 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -118,6 +118,7 @@ static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
+	{ "HD audio",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
