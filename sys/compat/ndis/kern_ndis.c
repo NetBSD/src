@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ndis.c,v 1.22 2011/05/14 12:44:16 rmind Exp $	*/
+/*	$NetBSD: kern_ndis.c,v 1.23 2012/09/23 01:14:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.22 2011/05/14 12:44:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.23 2012/09/23 01:14:40 chs Exp $");
 #endif
 
 #include <sys/param.h>
@@ -410,8 +410,6 @@ ndis_create_kthreads(void)
 	struct ndis_req		*r;
 	int			i, error = 0;
 
-	printf("in ndis_create_kthreads\n");
-	
 #ifdef __FreeBSD__
 	mtx_init(&ndis_thr_mtx, "NDIS thread lock", NULL, MTX_SPIN);
 #else /* __NetBSD__ */
