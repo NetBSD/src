@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/10/11 13:53:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2012/09/23 17:22:22 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -7,7 +7,9 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/lli
 
-SRCS=	lli.cpp
+SRCS=	lli.cpp \
+	RecordingMemoryManager.cpp \
+	RemoteTarget.cpp
 
 LLVM_LIBS+= \
 	X86CodeGen \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/08/10 16:33:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/09/23 17:22:22 joerg Exp $
 
 LIB=dns
 
@@ -11,6 +11,8 @@ DIST=	${IDIST}/lib/dns
 
 .PATH.c:	${DIST}/unix ${DIST}/sec/dst ${DIST}
 CPPFLAGS+=	-I${BIND_SRCDIR}/include/dns -I${DIST}
+
+CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 
 .for f in lookup byaddr request sdb validator
 COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing

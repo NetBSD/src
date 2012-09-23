@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2012/04/04 10:59:48 joerg Exp $
+# $NetBSD: Makefile,v 1.6 2012/09/23 17:22:25 joerg Exp $
 
 NOMAN=		# defined
 
@@ -10,8 +10,7 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 
 COPTS.h_raw.c=	-fstack-protector-all -Wstack-protector
 COPTS.h_raw.c+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
-COPTS.h_raw.c+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
-
+COPTS.h_raw.c+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 
 # Bootstrap hack
 
