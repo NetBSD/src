@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.5 2011/06/12 11:31:30 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.6 2012/09/23 00:31:05 chs Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.5 2011/06/12 11:31:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6 2012/09/23 00:31:05 chs Exp $");
 
 #include <sys/param.h>
 
@@ -189,7 +189,7 @@ acpi_md_ncpus(void)
 }
 
 void
-acpi_md_callback(void)
+acpi_md_callback(struct acpi_softc *sc)
 {
 	/* Nothing. */
 }

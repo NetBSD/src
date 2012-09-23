@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.5 2011/06/12 11:31:30 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.6 2012/09/23 00:31:05 chs Exp $	*/
 
 ACPI_STATUS		acpi_md_OsInitialize(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
@@ -28,4 +28,5 @@ void		acpi_md_OsDisableInterrupt(void);
 int		acpi_md_sleep(int);
 uint32_t	acpi_md_pdc(void);
 uint32_t	acpi_md_ncpus(void);
-void		acpi_md_callback(void);
+struct acpi_softc;
+void		acpi_md_callback(struct acpi_softc *);

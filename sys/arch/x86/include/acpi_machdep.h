@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.10 2011/06/12 11:31:31 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.11 2012/09/23 00:31:05 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -75,6 +75,7 @@ void		acpi_md_sleep_init(void);
 
 uint32_t	acpi_md_pdc(void);
 uint32_t	acpi_md_ncpus(void);
-void		acpi_md_callback(void);
+struct acpi_softc;
+void		acpi_md_callback(struct acpi_softc *);
 
 #endif /* !_X86_ACPI_MACHDEP_H_ */
