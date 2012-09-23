@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.132 2012/05/01 18:28:47 riz Exp $	*/
+/*	$NetBSD: net.c,v 1.133 2012/09/23 17:37:51 jdf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -435,9 +435,9 @@ recombine_host_domain(void)
 
 	strlcpy(recombined, net_host, sizeof(recombined));
 
-	if (l <= 0 ||
+	if (strlen(net_domain) != 0 && (l <= 0 ||
 	    net_host[l - 1] != '.' ||
-	    strcasecmp(net_domain, net_host + l) != 0) {
+	    strcasecmp(net_domain, net_host + l) != 0)) {
 		/* net_host isn't an FQDN. */
 		strlcat(recombined, ".", sizeof(recombined));
 		strlcat(recombined, net_domain, sizeof(recombined));
