@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.31 2012/09/23 01:08:17 chs Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.32 2012/09/23 14:40:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.31 2012/09/23 01:08:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.32 2012/09/23 14:40:29 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -802,7 +802,8 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	struct zyd_cmd cmd;
 	struct rq rq;
 	uint16_t xferflags;
-	usbd_status error;
+	int error;
+	usbd_status uerror;
 	int s = 0;
 
 	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL)
@@ -824,12 +825,12 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0, &cmd,
 	    sizeof (uint16_t) + ilen, xferflags, ZYD_INTR_TIMEOUT, NULL);
-	error = usbd_transfer(xfer);
-	if (error != USBD_IN_PROGRESS && error != 0) {
+	uerror = usbd_transfer(xfer);
+	if (uerror != USBD_IN_PROGRESS && uerror != 0) {
 		if (flags & ZYD_CMD_FLAG_READ)
 			splx(s);
 		printf("%s: could not send command (error=%s)\n",
-		    device_xname(sc->sc_dev), usbd_errstr(error));
+		    device_xname(sc->sc_dev), usbd_errstr(uerror));
 		(void)usbd_free_xfer(xfer);
 		return EIO;
 	}
