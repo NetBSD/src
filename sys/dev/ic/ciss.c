@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $	*/
+/*	$NetBSD: ciss.c,v 1.28 2012/09/23 01:13:52 chs Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.28 2012/09/23 01:13:52 chs Exp $");
 
 #include "bio.h"
 
@@ -1410,6 +1410,10 @@ ciss_create_sensors(struct ciss_softc *sc)
 {
 	int			i;
 	int nsensors = sc->maxunits;
+
+	if (nsensors == 0) {
+		return 0;
+	}
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
