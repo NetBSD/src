@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.12 2012/09/23 17:22:23 joerg Exp $
 
 LIB=	LLVMMipsCodeGen
 
@@ -13,6 +13,8 @@ SRCS+=	Mips16InstrInfo.cpp \
 	MipsAsmPrinter.cpp \
 	MipsCodeEmitter.cpp \
 	MipsDelaySlotFiller.cpp \
+	MipsDirectObjLower.cpp \
+	MipsELFWriterInfo.cpp \
 	MipsFrameLowering.cpp \
 	MipsInstrInfo.cpp \
 	MipsISelDAGToDAG.cpp \
@@ -35,6 +37,7 @@ TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/Mips
 TABLEGEN_OUTPUT= \
 	MipsGenRegisterInfo.inc|-gen-register-info \
 	MipsGenInstrInfo.inc|-gen-instr-info \
+	MipsGenAsmMatcher.inc|-gen-asm-matcher \
 	MipsGenAsmWriter.inc|-gen-asm-writer \
 	MipsGenCallingConv.inc|-gen-callingconv \
 	MipsGenCodeEmitter.inc|-gen-emitter \

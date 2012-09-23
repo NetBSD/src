@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2012/04/29 19:19:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.21 2012/09/23 17:22:22 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -30,7 +30,8 @@ CLANG_LIBS+= \
 	clangParse \
 	clangSema \
 	clangAnalysis \
-	clangRewrite \
+	clangRewriteFrontend \
+	clangRewriteCore \
 	clangAST \
 	clangLex \
 	clangBasic
