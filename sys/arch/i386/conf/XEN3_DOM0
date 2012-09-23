@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.68 2012/09/01 18:17:50 jakllsch Exp $
+#	$NetBSD: XEN3_DOM0,v 1.69 2012/09/23 01:05:21 chs Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -788,6 +788,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter
