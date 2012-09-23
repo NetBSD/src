@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2012/08/10 16:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2012/09/23 17:22:22 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,8 @@ CPPFLAGS+=-DNO_VERSION_DATE
 COPTS.${f}.c+=  -fno-strict-aliasing
 .endfor
 .endif
+
+CWARNFLAGS.clang+=	-Wno-tautological-constant-out-of-range-compare
 
 .PATH: ${DIST}/unix ${DIST}
 
