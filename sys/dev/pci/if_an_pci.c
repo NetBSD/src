@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.33 2012/01/30 19:41:19 drochner Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.34 2012/09/23 01:10:59 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.33 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.34 2012/09/23 01:10:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ static const struct an_pci_product {
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PC4500 },
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PC4800 },
 	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_PCI350 },
+	{ PCI_VENDOR_AIRONET,		PCI_PRODUCT_AIRONET_MPI350 },
 	{ 0,				0			   }
 };
 
