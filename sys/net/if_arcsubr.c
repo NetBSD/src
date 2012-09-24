@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.63 2010/04/05 07:22:22 joerg Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.64 2012/09/24 03:05:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.63 2010/04/05 07:22:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.64 2012/09/24 03:05:53 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -633,7 +633,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		ifp->if_flags |= IFF_MULTICAST|IFF_ALLMULTI;
 	if (ifp->if_flags & IFF_LINK0 && arc_ipmtu > ARC_PHDS_MAXMTU)
 		log(LOG_ERR,
-		    "%s: arc_ipmtu is %d, but must not exceed %d",
+		    "%s: arc_ipmtu is %d, but must not exceed %d\n",
 		    ifp->if_xname, arc_ipmtu, ARC_PHDS_MAXMTU);
 
 	ifp->if_output = arc_output;
