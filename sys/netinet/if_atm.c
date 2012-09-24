@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.32 2011/02/01 19:43:12 chuck Exp $       */
+/*      $NetBSD: if_atm.c,v 1.33 2012/09/24 03:05:53 msaitoh Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.32 2011/02/01 19:43:12 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.33 2012/09/24 03:05:53 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -125,7 +125,7 @@ atm_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		}
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sockaddr_dl_measure(namelen, addrlen)) {
-			log(LOG_DEBUG, "atm_rtrequest: bad gateway value");
+			log(LOG_DEBUG, "atm_rtrequest: bad gateway value\n");
 			break;
 		}
 
@@ -228,7 +228,7 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 	const struct sockaddr_dl *sdl;
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		log(LOG_INFO, "atmresolve: BCAST/MCAST packet detected/dumped");
+		log(LOG_INFO, "atmresolve: BCAST/MCAST packet detected/dumped\n");
 		goto bad;
 	}
 
