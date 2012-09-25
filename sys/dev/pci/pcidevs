@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1137 2012/09/23 01:09:10 chs Exp $
+$NetBSD: pcidevs,v 1.1138 2012/09/25 06:26:53 gson Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3493,6 +3493,7 @@ product LAVA OCTOPUS550_1	0x0181	Quad Serial
 product LAVA LAVAPORT_2		0x0200	Serial
 product LAVA LAVAPORT_0		0x0201	Serial
 product LAVA LAVAPORT_1		0x0202	Serial
+product LAVA SSERIAL		0x0500	Single Serial
 product LAVA 650		0x0600	Serial
 product LAVA TWOSP_1P		0x8000	Parallel
 product LAVA PARALLEL2		0x8001	Dual Parallel
