@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1130 2012/09/23 01:09:43 chs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1131 2012/09/25 06:29:27 gson Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1137 2012/09/23 01:09:10 chs Exp
+ *	NetBSD: pcidevs,v 1.1138 2012/09/25 06:26:53 gson Exp
  */
 
 /*
@@ -3500,6 +3500,7 @@
 #define	PCI_PRODUCT_LAVA_LAVAPORT_2	0x0200		/* Serial */
 #define	PCI_PRODUCT_LAVA_LAVAPORT_0	0x0201		/* Serial */
 #define	PCI_PRODUCT_LAVA_LAVAPORT_1	0x0202		/* Serial */
+#define	PCI_PRODUCT_LAVA_SSERIAL	0x0500		/* Single Serial */
 #define	PCI_PRODUCT_LAVA_650	0x0600		/* Serial */
 #define	PCI_PRODUCT_LAVA_TWOSP_1P	0x8000		/* Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLEL2	0x8001		/* Dual Parallel */
