@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: h_nbperf.sh,v 1.1 2012/07/22 20:38:20 joerg Exp $
+# $NetBSD: h_nbperf.sh,v 1.2 2012/09/25 20:53:46 joerg Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,6 @@
 #
 
 set -e
-head -n $4 $1 | nbperf -a $2 > hash.c 2> /dev/null
+head -n $4 $1 | nbperf -m hash.map -o hash.c -a $2 2> /dev/null
 cc -o testprog -I. $5
 head -n $4 $1 | ./testprog | $3
