@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_driver.c,v 1.1 2012/07/22 20:38:20 joerg Exp $	*/
+/*	$NetBSD: hash_driver.c,v 1.2 2012/09/25 20:53:46 joerg Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@ main(void)
 	while ((len = getline(&line, &len, stdin)) > 0) {
 		if (len && line[len - 1] == '\n')
 			--len;
-		printf("%" PRId32 "\n", 1 + hash(line, len));
+		printf("%" PRId32 "\n", hash(line, len));
 	}
 	free(line);
 	return 0;

@@ -1,4 +1,4 @@
-# $NetBSD: t_nbperf.sh,v 1.1 2012/07/22 20:38:20 joerg Exp $
+# $NetBSD: t_nbperf.sh,v 1.2 2012/09/25 20:53:46 joerg Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 cleanup()
 {
-	rm -f reference.txt hash.c testprog
+	rm -f reference.txt hash.c hash.map testprog
 }
 
 atf_test_case chm
@@ -38,8 +38,11 @@ chm_head()
 chm_body()
 { 
 	for n in 4 32 128 1024 65536; do
-		seq $n > reference.txt
+		seq 0 $(($n - 1)) > reference.txt
 		atf_check -o file:reference.txt \
+		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 chm cat \
+		    $n $(atf_get_srcdir)/hash_driver.c
+		atf_check -o file:hash.map \
 		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 chm cat \
 		    $n $(atf_get_srcdir)/hash_driver.c
 	done
@@ -57,8 +60,11 @@ chm3_head()
 chm3_body()
 { 
 	for n in 4 32 128 1024 65536; do
-		seq $n > reference.txt
+		seq 0 $(($n - 1)) > reference.txt
 		atf_check -o file:reference.txt \
+		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 chm3 cat \
+		    $n $(atf_get_srcdir)/hash_driver.c
+		atf_check -o file:hash.map \
 		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 chm3 cat \
 		    $n $(atf_get_srcdir)/hash_driver.c
 	done
@@ -68,8 +74,31 @@ chm3_clean()
 	cleanup
 }
 
+atf_test_case bdz
+bdz_head()
+{
+	atf_set "descr" "Checks bdz algorithm"
+}
+bdz_body()
+{ 
+	for n in 4 32 128 1024 65536 131072; do
+		seq 0 $(($n - 1)) > reference.txt
+		atf_check -o file:reference.txt \
+		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 bdz "sort -n" \
+		    $n $(atf_get_srcdir)/hash_driver.c
+		atf_check -o file:hash.map \
+		    $(atf_get_srcdir)/h_nbperf /usr/share/dict/web2 bdz cat \
+		    $n $(atf_get_srcdir)/hash_driver.c
+	done
+}
+bdz_clean()
+{
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case chm
 	atf_add_test_case chm3
+	atf_add_test_case bdz
 }
