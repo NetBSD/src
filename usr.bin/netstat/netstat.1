@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.62 2011/11/11 15:09:33 gdt Exp $
+.\"	$NetBSD: netstat.1,v 1.63 2012/09/25 14:16:27 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -166,6 +166,14 @@ By default, show the IP Multicast virtual-interface and routing tables.
 If the
 .Fl s
 option is also present, show multicast routing statistics.
+.It Fl h
+When used with
+.Fl b
+in combination with either
+.Fl i
+or
+.Fl I ,
+output "human-readable" byte counts.
 .It Fl I Ar interface
 Show information about the specified interface;
 used with a
@@ -184,14 +192,6 @@ for the specified
 or
 .Ar protocol ,
 respectively.
-.It Fl h
-When used with
-.Fl b
-in combination with either
-.Fl i
-or
-.Fl I ,
-output "human-readable" byte counts.
 .It Fl i
 Show the state of interfaces which have been auto-configured
 (interfaces statically configured into a system, but not
