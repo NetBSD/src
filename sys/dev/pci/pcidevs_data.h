@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1129 2012/09/23 01:09:44 chs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1130 2012/09/25 06:29:27 gson Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1137 2012/09/23 01:09:10 chs Exp
+ *	NetBSD: pcidevs,v 1.1138 2012/09/25 06:26:53 gson Exp
  */
 
 /*
@@ -5710,6 +5710,8 @@ static const uint16_t pci_products[] = {
 	    10463, 0,
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_1, 
 	    10463, 0,
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SSERIAL, 
+	    6336, 10463, 0,
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_650, 
 	    10463, 0,
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P, 
@@ -9666,7 +9668,7 @@ static const char pci_words[] = { "."
 	    "VL-PCI\0" /* 3 refs @ 6317 */
 	    "Bridge\0" /* 565 refs @ 6324 */
 	    "2051\0" /* 2 refs @ 6331 */
-	    "Single\0" /* 5 refs @ 6336 */
+	    "Single\0" /* 6 refs @ 6336 */
 	    "Solution\0" /* 2 refs @ 6343 */
 	    "(host\0" /* 1 refs @ 6352 */
 	    "Bridge)\0" /* 2 refs @ 6358 */
@@ -10314,7 +10316,7 @@ static const char pci_words[] = { "."
 	    "ADDI-DATA\0" /* 1 refs @ 10436 */
 	    "APCI-7800\0" /* 1 refs @ 10446 */
 	    "8-port\0" /* 4 refs @ 10456 */
-	    "Serial\0" /* 84 refs @ 10463 */
+	    "Serial\0" /* 85 refs @ 10463 */
 	    "S5920\0" /* 1 refs @ 10470 */
 	    "Target\0" /* 1 refs @ 10476 */
 	    "AR5201\0" /* 3 refs @ 10483 */
