@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.11 2012/09/25 06:55:10 skrll Exp $
+$NetBSD: README.mknative,v 1.12 2012/09/25 11:12:16 skrll Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -48,7 +48,7 @@ work.
 8. In each of src/external/lgpl3/gmp/lib/libgmp,
    src/external/lgpl3/mpfr/lib/libmpfr, src/external/lgpl2/mpc/lib/libmpc
    do "nbmake-MACHINE obj includes LIBISPRIVATE=no", and
-   "nbmake-MACHINE obj includes dependall install".
+   "nbmake-MACHINE dependall install".
 
    It is important to have LIBISPRIVATE=no while doing includes as this
    installs a header file that is not part of standard build.
