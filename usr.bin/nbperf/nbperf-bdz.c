@@ -1,6 +1,6 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.4 2011/10/21 23:47:11 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.5 2012/09/25 20:53:46 joerg Exp $	*/
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.4 2011/10/21 23:47:11 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.5 2012/09/25 20:53:46 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -72,10 +72,7 @@ struct state {
 	struct graph3 graph;
 	uint32_t *visited;
 	uint32_t *holes64k;
-	uint16_t *holes256;
-	uint8_t *holes256_64;
-	uint8_t *holes256_128;
-	uint8_t *holes256_192;
+	uint16_t *holes64;
 	uint8_t *g;
 	uint32_t *result_map;
 };
@@ -123,17 +120,8 @@ assign_nodes(struct state *state)
 		if (i % 65536 == 0)
 			state->holes64k[i >> 16] = holes;
 
-		if (i % 256 == 0)
-			state->holes256[i >> 8] = holes - state->holes64k[i >> 16];
-
-		if (i % 256 == 64)
-			state->holes256_64[i >> 8] = holes - state->holes256[i >> 8] - state->holes64k[i >> 16];
-
-		if (i % 256 == 128)
-			state->holes256_128[i >> 8] = holes - state->holes256[i >> 8] - state->holes64k[i >> 16];
-
-		if (i % 256 == 192)
-			state->holes256_192[i >> 8] = holes - state->holes256[i >> 8] - state->holes64k[i >> 16];
+		if (i % 64 == 0)
+			state->holes64[i >> 6] = holes - state->holes64k[i >> 16];
 
 		if (state->visited[i] > 1) {
 			j = state->visited[i] - 2;
@@ -143,28 +131,13 @@ assign_nodes(struct state *state)
 		if (state->g[i] == 3)
 			++holes;
 	}
-
-	if (i % 65536 != 0)
-		state->holes64k[(i >> 16) + 1] = holes;
-
-	if (i % 256 != 0)
-		state->holes256[(i >> 8) + 1] = holes - state->holes64k[((i >> 8) + 1) >> 8];
-
-	if (i % 256 != 64)
-		state->holes256_64[(i >> 8) + 1] = holes - state->holes256[(i >> 8) + 1] - state->holes64k[((i >> 8) + 1) >> 8];
-
-	if (i % 256 != 128)
-		state->holes256_128[(i >> 8) + 1] = holes - state->holes256[(i >> 8) + 1] - state->holes64k[((i >> 8) + 1) >> 8];
-
-	if (i % 256 != 192)
-		state->holes256_192[(i >> 8) + 1] = holes - state->holes256[(i >> 8) + 1] - state->holes64k[((i >> 8) + 1) >> 8];
 }
 
 static void
 print_hash(struct nbperf *nbperf, struct state *state)
 {
-	size_t i, j;
-	uint32_t sum;
+	uint64_t sum;
+	size_t i;
 
 	fprintf(nbperf->output, "#include <stdlib.h>\n");
 	fprintf(nbperf->output, "#include <strings.h>\n\n");
@@ -175,19 +148,50 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	    "%s(const void * __restrict key, size_t keylen)\n",
 	    nbperf->hash_name);
 	fprintf(nbperf->output, "{\n");
-	fprintf(nbperf->output,
-	    "\tstatic const uint32_t g[%" PRId32 "] = {\n",
-	    (state->graph.v + 15) / 16);
-	for (i = 0; i < state->graph.v; i += 16) {
-		for (j = 0, sum = 0; j < 16; ++j)
-			sum |= (uint32_t)state->g[i + j] << (2 * j);
 
-		fprintf(nbperf->output, "%s0x%08" PRIx32 "ULL,%s",
-		    (i / 16 % 4 == 0 ? "\t    " : " "),
-		    sum,
-		    (i / 16 % 4 == 3 ? "\n" : ""));
+	fprintf(nbperf->output,
+	    "\tstatic const uint64_t g1[%" PRId32 "] = {\n",
+	    (state->graph.v + 63) / 64);
+	sum = 0;
+	for (i = 0; i < state->graph.v; ++i) {
+		sum |= ((uint64_t)state->g[i] & 1) << (i & 63);
+		if (i % 64 == 63) {
+			fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+			    (i / 64 % 2 == 0 ? "\t    " : " "),
+			    sum,
+			    (i / 64 % 2 == 1 ? "\n" : ""));
+			sum = 0;
+		}
 	}
-	fprintf(nbperf->output, "%s\t};\n", (i / 16 % 4 ? "\n" : "")); 
+	if (i % 64 != 0) {
+		fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+		    (i / 64 % 2 == 0 ? "\t    " : " "),
+		    sum,
+		    (i / 64 % 2 == 1 ? "\n" : ""));
+	}
+	fprintf(nbperf->output, "%s\t};\n", (i % 2 ? "\n" : ""));
+
+	fprintf(nbperf->output,
+	    "\tstatic const uint64_t g2[%" PRId32 "] = {\n",
+	    (state->graph.v + 63) / 64);
+	sum = 0;
+	for (i = 0; i < state->graph.v; ++i) {
+		sum |= (((uint64_t)state->g[i] & 2) >> 1) << (i & 63);
+		if (i % 64 == 63) {
+			fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+			    (i / 64 % 2 == 0 ? "\t    " : " "),
+			    sum,
+			    (i / 64 % 2 == 1 ? "\n" : ""));
+			sum = 0;
+		}
+	}
+	if (i % 64 != 0) {
+		fprintf(nbperf->output, "%s0x%016" PRIx64 "ULL,%s",
+		    (i / 64 % 2 == 0 ? "\t    " : " "),
+		    sum,
+		    (i / 64 % 2 == 1 ? "\n" : ""));
+	}
+	fprintf(nbperf->output, "%s\t};\n", (i % 2 ? "\n" : ""));
 
 	fprintf(nbperf->output,
 	    "\tstatic const uint32_t holes64k[%" PRId32 "] = {\n",
@@ -200,111 +204,45 @@ print_hash(struct nbperf *nbperf, struct state *state)
 	fprintf(nbperf->output, "%s\t};\n", (i / 65536 % 4 ? "\n" : ""));
 
 	fprintf(nbperf->output,
-	    "\tstatic const uint16_t holes256[%" PRId32 "] = {\n",
-	    (state->graph.v + 255) / 256);
-	for (i = 0; i < state->graph.v; i += 256)
+	    "\tstatic const uint16_t holes64[%" PRId32 "] = {\n",
+	    (state->graph.v + 63) / 64);
+	for (i = 0; i < state->graph.v; i += 64)
 		fprintf(nbperf->output, "%s0x%04" PRIx32 ",%s",
-		    (i / 256 % 4 == 0 ? "\t    " : " "),
-		    state->holes256[i >> 8],
-		    (i / 256 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 256 % 4 ? "\n" : "")); 
+		    (i / 64 % 4 == 0 ? "\t    " : " "),
+		    state->holes64[i >> 6],
+		    (i / 64 % 4 == 3 ? "\n" : ""));
+	fprintf(nbperf->output, "%s\t};\n", (i / 64 % 4 ? "\n" : "")); 
 
-	fprintf(nbperf->output,
-	    "\tstatic const uint8_t holes256_64[%" PRId32 "] = {\n",
-	    (state->graph.v + 255) / 256);
-	for (i = 64; i < state->graph.v; i += 256)
-		fprintf(nbperf->output, "%s0x%02" PRIx32 ",%s",
-		    (i / 256 % 4 == 0 ? "\t    " : " "),
-		    state->holes256_64[i >> 8],
-		    (i / 256 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 256 % 4 ? "\n" : "")); 
-
-	fprintf(nbperf->output,
-	    "\tstatic const uint8_t holes256_128[%" PRId32 "] = {\n",
-	    (state->graph.v + 255) / 256);
-	for (i = 128; i < state->graph.v; i += 256)
-		fprintf(nbperf->output, "%s0x%02" PRIx32 ",%s",
-		    (i / 256 % 4 == 0 ? "\t    " : " "),
-		    state->holes256_128[i >> 8],
-		    (i / 256 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 256 % 4 ? "\n" : "")); 
-
-	fprintf(nbperf->output,
-	    "\tstatic const uint8_t holes256_192[%" PRId32 "] = {\n",
-	    (state->graph.v + 255) / 256);
-	for (i = 192; i < state->graph.v; i += 256)
-		fprintf(nbperf->output, "%s0x%02" PRIx32 ",%s",
-		    (i / 256 % 4 == 0 ? "\t    " : " "),
-		    state->holes256_192[i >> 8],
-		    (i / 256 % 4 == 3 ? "\n" : ""));
-	fprintf(nbperf->output, "%s\t};\n", (i / 256 % 4 ? "\n" : "")); 
-
+	fprintf(nbperf->output, "\tuint64_t m;\n");
+	fprintf(nbperf->output, "\tuint32_t idx, i, idx2;\n");
 	fprintf(nbperf->output, "\tuint32_t h[%zu];\n\n", nbperf->hash_size);
-	fprintf(nbperf->output, "\tuint32_t m;\n");
-	fprintf(nbperf->output, "\tuint32_t a1, a2, b1, b2, c1, c2, idx, idx2;\n\n");
 
 	(*nbperf->print_hash)(nbperf, "\t", "key", "keylen", "h");
 
-	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n", state->graph.v);
-	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n", state->graph.v);
-	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n", state->graph.v);
-
-	fprintf(nbperf->output, "\n\ta1 = h[0] >> 4;\n");
-	fprintf(nbperf->output, "\ta2 = 2 * (h[0] & 15);\n");
-	fprintf(nbperf->output, "\tb1 = h[1] >> 4;\n");
-	fprintf(nbperf->output, "\tb2 = 2 * (h[1] & 15);\n");
-	fprintf(nbperf->output, "\tc1 = h[2] >> 4;\n");
-	fprintf(nbperf->output, "\tc2 = 2 * (h[2] & 15);\n");
+	fprintf(nbperf->output, "\n\th[0] = h[0] %% %" PRIu32 ";\n",
+	    state->graph.v);
+	fprintf(nbperf->output, "\th[1] = h[1] %% %" PRIu32 ";\n",
+	    state->graph.v);
+	fprintf(nbperf->output, "\th[2] = h[2] %% %" PRIu32 ";\n",
+	    state->graph.v);
 
 	fprintf(nbperf->output,
-	    "\tidx = h[(((g[a1] >> a2) & 3) + ((g[b1] >> b2) & 3) +\n"
-	    "\t    ((g[c1] >> c2) & 3)) %% 3];\n\n");
+	    "\tidx = 9 + ((g1[h[0] >> 6] >> (h[0] & 63)) &1)"
+	    "\t      + ((g1[h[1] >> 6] >> (h[1] & 63)) & 1)"
+	    "\t      + ((g1[h[2] >> 6] >> (h[2] & 63)) & 1)"
+	    "\t      - ((g2[h[0] >> 6] >> (h[0] & 63)) & 1)"
+	    "\t      - ((g2[h[1] >> 6] >> (h[1] & 63)) & 1)"
+	    "\t      - ((g2[h[2] >> 6] >> (h[2] & 63)) & 1);"
+	    );
 
 	fprintf(nbperf->output,
-	    "\tswitch ((idx >> 5) & 7) {\n"
-	    "\tcase 0:\n"
-	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8];\n"
-	    "\t\tbreak;\n"
-	    "\tcase 1: case 2:\n"
-	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t\t    - holes256_64[idx >> 8];\n"
-	    "\t\tbreak;\n"
-	    "\tcase 3: case 4:\n"
-	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t\t    - holes256_128[idx >> 8];\n"
-	    "\t\tbreak;\n"
-	    "\tcase 5: case 6:\n"
-	    "\t\tidx2 = idx - holes64k[idx >> 16] - holes256[idx >> 8]\n"
-	    "\t\t    - holes256_192[idx >> 8];\n"
-	    "\t\tbreak;\n"
-	    "\tcase 7:\n"
-	    "\t\tidx2 = idx - holes64k[(idx + 32) >> 16] -\n"
-	    "\t\t    holes256[(idx + 32) >> 8];\n"
-	    "\t\tbreak;\n"
-	    "\tdefault:\n"
-	    "\t\tabort();\n"
-	    "\t}\n"
-	    "\tswitch ((idx >> 4) & 3) {\n"
-	    "\tcase 1:\n"
-	    "\t\tm = (g[(idx >> 4) - 1] & (g[(idx >> 4) - 1] >> 1) & 0x55555555U);\n"
-	    "\t\tidx2 -= popcount32(m);\n"
-	    "\tcase 0:\n"
-	    "\t\tm = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
-	    "\t\tm &= ((2U << (2 * (idx & 15))) - 1);\n"
-	    "\t\tidx2 -= popcount32(m);\n"
-	    "\t\tbreak;\n"
-	    "\tcase 2:\n"
-	    "\t\tm = (g[(idx >> 4) + 1] & (g[(idx >> 4) + 1] >> 1) & 0x55555555U);\n"
-	    "\t\tidx2 += popcount32(m);\n"
-	    "\tcase 3:\n"
-	    "\t\tm = (g[idx >> 4] & (g[idx >> 4] >> 1) & 0x55555555U);\n"
-	    "\t\tm &= ~((2U << (2 * (idx & 15))) - 1);\n"
-	    "\t\tidx2 += popcount32(m);\n"
-	    "\t\tbreak;\n"
-	    "\t}\n\n");
-
+	    "\tidx = h[idx %% 3];\n");
 	fprintf(nbperf->output,
-	    "\treturn idx2;\n");
+	    "\tidx2 = idx - holes64[idx >> 6] - holes64k[idx >> 16];\n"
+	    "\tidx2 -= popcount64(g1[idx >> 6] & g2[idx >> 6]\n"
+	    "\t                   & (((uint64_t)1 << idx) - 1));\n"
+	    "\treturn idx2;");
+
 	fprintf(nbperf->output, "}\n");
 
 	if (nbperf->map_output != NULL) {
@@ -338,19 +276,15 @@ bdz_compute(struct nbperf *nbperf)
 
 	graph3_setup(&state.graph, v, e);
 
-	state.holes64k = calloc(sizeof(uint32_t), (v + 65535) / 65536 + 1);
-	state.holes256 = calloc(sizeof(uint16_t), (v + 255) / 256 + 1);
-	state.holes256_64 = calloc(sizeof(uint8_t), (v + 255) / 256 + 1);
-	state.holes256_128 = calloc(sizeof(uint8_t), (v + 255) / 256 + 1);
-	state.holes256_192 = calloc(sizeof(uint8_t), (v + 255) / 256 + 1);
-	state.g = calloc(sizeof(uint32_t), v);
+	state.holes64k = calloc(sizeof(uint32_t), (v + 65535) / 65536);
+	state.holes64 = calloc(sizeof(uint16_t), (v + 63) / 64 );
+	state.g = calloc(sizeof(uint32_t), v | 63);
 	state.visited = calloc(sizeof(uint32_t), v);
 	state.result_map = calloc(sizeof(uint32_t), e);
 
-	if (state.holes64k == NULL || state.holes256 == NULL ||
-	    state.holes256_64 == NULL || state.holes256_128 == NULL ||
-	    state.holes256_192 == NULL || state.g == NULL ||
-	    state.visited == NULL || state.result_map == NULL)
+	if (state.holes64k == NULL || state.holes64 == NULL ||
+	    state.g == NULL || state.visited == NULL ||
+	    state.result_map == NULL)
 		err(1, "malloc failed");
 
 	if (graph3_hash(nbperf, &state.graph))
@@ -367,10 +301,7 @@ failed:
 	free(state.visited);
 	free(state.g);
 	free(state.holes64k);
-	free(state.holes256);
-	free(state.holes256_64);
-	free(state.holes256_128);
-	free(state.holes256_192);
+	free(state.holes64);
 	free(state.result_map);
 	return retval;
 }
