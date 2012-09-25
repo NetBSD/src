@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.12 2012/08/31 23:56:15 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.13 2012/09/25 05:24:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -61,10 +61,15 @@ struct kmutex {
 
 		/* Spin mutex */
 		struct {
+			/*
+			 * Since the low bit of mtax_owner is used to flag this
+			 * mutex as a spin mutex, we can't use the first byte
+			 * or the last byte to store the ipl or lock values.
+			 */
 			volatile uint8_t	mtxs_dummy;
 			ipl_cookie_t		mtxs_ipl;
-			volatile uint8_t	mtxs_unused;
 			__cpu_simple_lock_t	mtxs_lock;
+			volatile uint8_t	mtxs_unused;
 		} s;
 	} u;
 };
