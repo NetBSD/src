@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.81 2012/09/25 06:31:44 gson Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.81 2012/09/25 06:31:44 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,6 +551,15 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers single port serial PCI card */
+	{   "Lava Computers SSERIAL-PCI",
+	    {	PCI_VENDOR_LAVA,	PCI_PRODUCT_LAVA_SSERIAL, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
