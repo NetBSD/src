@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.45 2012/09/15 19:31:12 spz Exp $	*/
+/*	$NetBSD: fts.c,v 1.46 2012/09/26 15:33:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.45 2012/09/15 19:31:12 spz Exp $");
+__RCSID("$NetBSD: fts.c,v 1.46 2012/09/26 15:33:43 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -205,7 +205,7 @@ fts_open(char * const *argv, int options,
 	sp->fts_cur->fts_info = FTS_INIT;
 
 	/*
-	 * If using chdir(2), grab a file descriptor pointing to dot to insure
+	 * If using chdir(2), grab a file descriptor pointing to dot to ensure
 	 * that we can get back here; this could be avoided for some paths,
 	 * but almost certainly not worth the effort.  Slashes, symbolic links,
 	 * and ".." are all fairly nasty problems.  Note, if we can't get the
@@ -488,7 +488,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 		return (sp->fts_cur = NULL);
 	}
 
-	/* Nul terminate the pathname. */
+	/* NUL terminate the pathname. */
 	sp->fts_path[p->fts_pathlen] = '\0';
 
 	/*
