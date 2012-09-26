@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.15 2012/08/13 01:18:31 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.16 2012/09/26 21:58:27 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2012
+.Dd September 26, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -132,40 +132,64 @@ There are two types of storage: "tree" (red-black tree is used) and
 "hash".
 .\" -----
 .Sh GRAMMAR
+The following is a non-formal BNF-like definition of the grammar.
+The definition is simplified and is intended to be human readable,
+therefore it does not strictly represent the full syntax, which
+is more flexible.
 .Bd -literal
-line		= ( def | table | map | group | rproc )
+; Syntax of a single line.  Lines can be separated by LF (\n) or
+; a semicolon.  Comments start with a hash (#) character.
 
-var		= $\*[Lt]name\*[Gt]
-iface		= ( \*[Lt]interface\*[Gt] | var )
-def		= ( var "=" "{ "\*[Lt]value_1\*[Gt]", "\*[Lt]value_2\*[Gt]", ... }" | "\*[Lt]value\*[Gt]" )
+syntax		= var-def | table-def | map | group | rproc | comment
 
-table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
-		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
+; Variable definition.  Names can be alpha-numeric, including "_" character.
 
-map-di		= ( "->" | "<-" | "<->" )
-map-type	= ( "static" | "dynamic" )
-map		= "map" iface map-type \*[Lt]seg1\*[Gt] map-di \*[Lt]seg2\*[Gt] [ "pass" filt-opts ]
+var-name	= "$" . string
+interface	= interface-name | var-name
+var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
 
-rproc		= "procedure" \*[Lt]name\*[Gt] procs
-procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
-op		= ( "log" iface | "normalise" "(" norm-opt1 "," norm-opt2 ... ")" )
-norm-opt	= [ "random-id" | "min-ttl" \*[Lt]num\*[Gt] | "max-mss" \*[Lt]num\*[Gt] | "no-df" ]
+; Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
-group		= "group" "(" ( "default" | group-opts ) ")" ruleset
-group-opts	= [ name \*[Lt]name\*[Gt] "," ] "interface" iface [ "," ( "in" | "out" ) ]
+table-id	= \*[Lt]tid\*[Gt]
+table-def	= "table" table-id "type" ( "hash" | "tree" )
+		  ( "dynamic" | "file" path )
 
-ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
+; Mapping for address translation.
 
-rule		= ( "block" block-opts | "pass" ) [ "stateful" ] [ "in" | out" ] [ "final" ]
-		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] [ proto-opts ] ]
-		  ( "all" | filt-opts ) [ "apply" rproc ] }
+map		= "map" interface ( "static" | "dynamic" )
+		  net-seg ( "->" | "<-" | "<->" ) net-seg
+		  [ "pass" filt-opts ]
 
-fam-opt		= [ "inet" | "inet6" ]
-block-opts	= [ "return-rst" | "return-icmp" | "return" ]
-filt-addr	= iface | var | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt]
-port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] "-" \*[Lt]port-to\*[Gt] | var ) ]
-filt-opts	= [ "from" filt-addr [ port-opts ] ] [ "to" filt-addr [ port-opts ] ]
-proto-opts	= [ "flags" \*[Lt]tcp_flags\*[Gt] | "icmp-type" \*[Lt]type\*[Gt] "code" \*[Lt]code\*[Gt] ]
+; Rule procedure definition.  The name should be in the double quotes.
+; 
+; Each call can have its own options in a form of key-value pairs.
+; Both key and values may be strings (either in double quotes or not)
+; and numbers, depending on the extension.
+
+proc		= "procedure" proc-name "{" *( proc-call [ new-line ] ) "}"
+proc-opts	= key " " val [ "," proc-opts ]
+proc-call	= call-name ":" proc-opts new-line
+
+; Group definition and the ruleset.
+
+group		= "group" "(" ( "default" | group-opts ) ")" "{" ruleset "}"
+group-opts	= [ "name" string ] [ "interface" interface ] [ "in" | "out" ]
+ruleset		= [ rule new-line ] [ ruleset ]
+
+rule		= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
+		  [ "in" | out" ] [ "final" ] [ "on" iface ]
+		  [ "family" fam-opt ] [ "proto" protocol [ proto-opts ] ]
+		  ( "all" | filt-opts ) [ "apply" proc-name ]
+
+block-opts	= "return-rst" | "return-icmp" | "return"
+fam-opt		= "inet" | "inet6"
+proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
+		  "icmp-type" type [ "code" icmp-code ]
+
+addr-mask	= addr [ "/" mask ]
+filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
+filt-addr	= [ interface | var-name | addr-mask | table-id | "any" ]
+filt-port	= "port" ( port-num | port-from "-" port-to | var-name )
 .Ed
 .\" -----
 .Sh FILES
@@ -197,12 +221,8 @@ procedure "log" {
 	log: npflog0
 }
 
-procedure "rid" {
-	normalise: "random-id"
-}
-
 group (name "external", interface $ext_if) {
-	pass stateful out final from $ext_if apply "rid"
+	pass stateful out final from $ext_if
 
 	block in final from \*[Lt]1\*[Gt]
 	pass stateful in final family inet proto tcp to $ext_if port ssh apply "log"
