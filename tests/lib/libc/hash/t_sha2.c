@@ -1,6 +1,6 @@
-/*	$NetBSD: t_sha2.c,v 1.2 2010/11/03 16:10:22 christos Exp $	*/
+/*	$NetBSD: t_sha2.c,v 1.3 2012/09/26 22:23:30 joerg Exp $	*/
 /*-
- * Copyright (c) 20010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sha2.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
+__RCSID("$NetBSD: t_sha2.c,v 1.3 2012/09/26 22:23:30 joerg Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
