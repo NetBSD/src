@@ -9,7 +9,7 @@ static const char thread_model[] = "posix";
 static const struct {
   const char *name, *value;
 } configure_default_options[] = {
-#ifdef _SOFT_FLOAT_
+#ifdef _SOFT_FLOAT
   { "float", "soft" },
 #endif
   { NULL, NULL }
