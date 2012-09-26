@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.237 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.238 2012/09/26 18:18:08 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.237 2012/09/22 00:33:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.238 2012/09/26 18:18:08 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4001,6 +4001,17 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		}
 	}
 #endif /* CPU_SA110 */
+
+	/*
+	 * If 'rv == 0' at this point, it generally indicates that there is a
+	 * stale TLB entry for the faulting address.  That might be due to a
+	 * wrong setting of pmap_needs_pte_sync.  So set it and retry.
+	 */
+	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1
+	    && pmap_needs_pte_sync == 0) {
+		pmap_needs_pte_sync = 1;
+		rv = 1;
+	}
 
 #ifdef DEBUG
 	/*
