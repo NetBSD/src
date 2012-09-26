@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.52 2012/03/20 17:44:18 matt Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,12 +47,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.52 2012/03/20 17:44:18 matt Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.53 2012/09/26 23:13:00 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ieee1394.h>
@@ -104,6 +105,8 @@ static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 #endif
 static int getnameinfo_atalk(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
+static int getnameinfo_local(const struct sockaddr *, socklen_t, char *,
+    socklen_t, char *, socklen_t, int);
 
 static int getnameinfo_link(const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int);
@@ -130,6 +133,9 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
 		    serv, servlen, flags);
 	case AF_LINK:
 		return getnameinfo_link(sa, salen, host, hostlen,
+		    serv, servlen, flags);
+	case AF_LOCAL:
+		return getnameinfo_local(sa, salen, host, hostlen,
 		    serv, servlen, flags);
 	default:
 		return EAI_FAMILY;
@@ -194,6 +200,29 @@ errout:
 		host[m] = '\0';	/* XXX ??? */
 
 	return EAI_MEMORY;
+}
+
+/*
+ * getnameinfo_local():
+ * Format an local address into a printable format.
+ */
+/* ARGSUSED */
+static int
+getnameinfo_local(const struct sockaddr *sa, socklen_t salen,
+    char *host, socklen_t hostlen, char *serv, socklen_t servlen,
+    int flags)
+{
+	const struct sockaddr_un *sun =
+	    (const struct sockaddr_un *)(const void *)sa;
+
+	if (serv != NULL && servlen > 0)
+		serv[0] = '\0';
+
+	if (host && hostlen > 0)
+		strlcpy(host, sun->sun_path,
+		    MIN(sizeof(sun->sun_path) + 1, hostlen));
+
+	return 0;
 }
 
 /*
