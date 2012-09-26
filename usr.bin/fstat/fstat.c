@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.96 2012/03/24 21:51:23 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.97 2012/09/26 23:01:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.96 2012/03/24 21:51:23 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.97 2012/09/26 23:01:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -767,31 +767,36 @@ getmnton(struct mount *m)
 static const char *
 inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
 {
-	char addr[256];
+	char addr[256], serv[256];
+	struct sockaddr_in sin;
+	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+
+	(void)memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_addr = *a;
+	sin.sin_port = htons(p);
+
+	serv[0] = '\0';
+
+	if (getnameinfo((struct sockaddr *)&sin, sin.sin_len,
+	    addr, sizeof(addr), serv, sizeof(serv), niflags)) {
+		if (inet_ntop(AF_INET, a, addr, sizeof(addr)) == NULL)
+			strlcpy(addr, "invalid", sizeof(addr));
+	}
+
+	if (serv[0] == '\0')
+		snprintf(serv, sizeof(serv), "%u", p);
 
 	if (a->s_addr == INADDR_ANY) {
 		if (p == 0)
-			addr[0] = '\0';
+			buf[0] = '\0';
 		else
-			strlcpy(addr, "*", sizeof(addr));
-	} else {
-		struct sockaddr_in sin;
-		const int niflags = NI_NUMERICHOST;
-
-		(void)memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET6;
-		sin.sin_len = sizeof(sin);
-		sin.sin_addr = *a;
-
-		if (getnameinfo((struct sockaddr *)&sin, sin.sin_len,
-		    addr, sizeof(addr), NULL, 0, niflags))
-			if (inet_ntop(AF_INET, a, addr, sizeof(addr)) == NULL)
-				strlcpy(addr, "invalid", sizeof(addr));
+			snprintf(buf, len, "*:%s", serv);
+		return buf;
 	}
-	if (addr[0])
-		snprintf(buf, len, "%s:%u", addr, p);
-	else
-		strlcpy(buf, addr, len);
+
+	snprintf(buf, len, "%s:%s", addr, serv);
 	return buf;
 }
 
@@ -799,39 +804,47 @@ inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
 static const char *
 inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
 {
-	char addr[256];
+	char addr[256], serv[256];
+	struct sockaddr_in6 sin6;
+	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+
+	(void)memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_addr = *a;
+	sin6.sin6_port = htons(p);
+
+	if (IN6_IS_ADDR_LINKLOCAL(a) &&
+	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
+		sin6.sin6_scope_id =
+			ntohs(*(uint16_t *)&sin6.sin6_addr.s6_addr[2]);
+		sin6.sin6_addr.s6_addr[2] = 0;
+		sin6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	serv[0] = '\0';
+
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+	    addr, sizeof(addr), serv, sizeof(serv), niflags)) {
+		if (inet_ntop(AF_INET6, a, addr, sizeof(addr)) == NULL)
+			strlcpy(addr, "invalid", sizeof(addr));
+	}
+
+	if (serv[0] == '\0')
+		snprintf(serv, sizeof(serv), "%u", p);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(a)) {
 		if (p == 0)
-			addr[0] = '\0';
+			buf[0] = '\0';
 		else
-			strlcpy(addr, "*", sizeof(addr));
-	} else {
-		struct sockaddr_in6 sin6;
-		const int niflags = NI_NUMERICHOST;
-
-		(void)memset(&sin6, 0, sizeof(sin6));
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_len = sizeof(sin6);
-		sin6.sin6_addr = *a;
-
-		if (IN6_IS_ADDR_LINKLOCAL(a) &&
-		    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-			sin6.sin6_scope_id =
-				ntohs(*(uint16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-
-		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-		    addr, sizeof(addr), NULL, 0, niflags))
-			if (inet_ntop(AF_INET6, a, addr, sizeof(addr)) == NULL)
-				strlcpy(addr, "invalid", sizeof(addr));
+			snprintf(buf, len, "*:%s", serv);
+		return buf;
 	}
-	if (addr[0])
-		snprintf(buf, len, "[%s]:%u", addr, p);
+
+	if (strchr(addr, ':') == NULL)
+		snprintf(buf, len, "%s:%s", addr, serv);
 	else
-		strlcpy(buf, addr, len);
+		snprintf(buf, len, "[%s]:%s", addr, serv);
 
 	return buf;
 }
