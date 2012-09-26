@@ -11,6 +11,7 @@ static const struct {
 } configure_default_options[] = {
 #ifdef _SOFT_FLOAT
   { "float", "soft" },
-#endif
+#else
   { NULL, NULL }
+#endif
 };
