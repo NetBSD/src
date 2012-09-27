@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.2 2012/09/14 03:52:19 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.3 2012/09/27 00:23:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.2 2012/09/14 03:52:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.3 2012/09/27 00:23:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,6 +133,9 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
 	sc->sc_memh = mpcaa->mpcaa_memh;
+
+	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "missing interrupts");
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
 	    TMR_GLOBAL_BASE, TMR_GLOBAL_BASE, &sc->sc_global_memh);
@@ -298,6 +301,7 @@ clockhandler(void *arg)
 
 	hardclock(cf);
 
+#if 0
 	/*
 	 * Try to make up up to a seconds amount of missed clock interrupts
 	 */
@@ -307,6 +311,10 @@ clockhandler(void *arg)
 	     delta -= sc->sc_autoinc, ticks--) {
 		hardclock(cf);
 	}
+#else
+	if (delta > sc->sc_autoinc)
+		sc->sc_ev_missing_ticks.ev_count += delta / sc->sc_autoinc;
+#endif
 
 	return 1;
 }
