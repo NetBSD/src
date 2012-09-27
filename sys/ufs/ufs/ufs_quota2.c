@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.34 2012/02/13 06:23:41 dholland Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.34 2012/02/13 06:23:41 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -290,8 +290,7 @@ quota2_umount(struct mount *mp, int flags)
 }
 
 static int 
-quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
-    struct buf **bpp, struct quota2_entry **q2ep)
+quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq)
 {
 	int error, error2;
 	struct buf *hbp, *bp;
@@ -361,8 +360,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq,
 	if (hbp != bp) {
 		bwrite(hbp);
 	}
-	*q2ep = q2e;
-	*bpp = bp;
+	bwrite(bp);
 	return 0;
 }
 
@@ -416,18 +414,17 @@ getinoquota2(struct inode *ip, bool alloc, bool modify, struct buf **bpp,
 			}
 			/* need to alloc a new on-disk quot */
 			mutex_enter(&dqlock);
-			error = quota2_q2ealloc(ump, i, ino_ids[i], dq,
-			    &bpp[i], &q2ep[i]);
+			error = quota2_q2ealloc(ump, i, ino_ids[i], dq);
 			mutex_exit(&dqlock);
 			if (error)
 				return error;
-		} else {
-			error = getq2e(ump, i, dq->dq2_lblkno,
-			    dq->dq2_blkoff, &bpp[i], &q2ep[i],
-			    modify ? B_MODIFY : 0);
-			if (error)
-				return error;
 		}
+		KASSERT(dq->dq2_lblkno != 0 || dq->dq2_blkoff != 0);
+		error = getq2e(ump, i, dq->dq2_lblkno,
+		    dq->dq2_blkoff, &bpp[i], &q2ep[i],
+		    modify ? B_MODIFY : 0);
+		if (error)
+			return error;
 	}
 	return 0;
 }
@@ -622,13 +619,14 @@ quota2_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* need to alloc a new on-disk quot */
 		mutex_enter(&dqlock);
-		error = quota2_q2ealloc(ump, key->qk_idtype, key->qk_id, dq,
-		    &bp, &q2ep);
+		error = quota2_q2ealloc(ump, key->qk_idtype, key->qk_id, dq);
 		mutex_exit(&dqlock);
-	} else {
-		error = getq2e(ump, key->qk_idtype, dq->dq2_lblkno,
-		    dq->dq2_blkoff, &bp, &q2ep, B_MODIFY);
+		if (error)
+			goto out_il;
 	}
+	KASSERT(dq->dq2_lblkno != 0 || dq->dq2_blkoff != 0);
+	error = getq2e(ump, key->qk_idtype, dq->dq2_lblkno,
+	    dq->dq2_blkoff, &bp, &q2ep, B_MODIFY);
 	if (error)
 		goto out_il;
 	
