@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.2 2012/09/27 00:24:36 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1 2012/09/01 00:04:44 matt Exp $")
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
+
+#include <dev/pci/pcidevs.h>
 
 struct bcmusb_softc {
 	device_t usbsc_dev;
@@ -112,6 +114,9 @@ ohci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
 	sc->sc_bus.hci_private = sc;
 
+	sc->sc_id_vendor = PCI_VENDOR_BROADCOM;
+	strlcpy(sc->sc_vendor, "Broadcom", sizeof(sc->sc_vendor));
+
 	aprint_naive(": OHCI USB controller\n");
 	aprint_normal(": OHCI USB controller\n");
 
@@ -167,6 +172,9 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	if (usbsc->usbsc_ohci_dev != NULL) {
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->usbsc_ohci_dev;
 	}
+
+	sc->sc_id_vendor = PCI_VENDOR_BROADCOM;
+	strlcpy(sc->sc_vendor, "Broadcom", sizeof(sc->sc_vendor));
 
 	aprint_naive(": EHCI USB controller\n");
 	aprint_normal(": ECHI USB controller\n");
