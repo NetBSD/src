@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $	*/
+/*	$NetBSD: bpf.c,v 1.172 2012/09/27 18:28:56 alnsn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.172 2012/09/27 18:28:56 alnsn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
 #include <net/slip.h>
 
 #include <net/bpf.h>
-#include <net/bpf_jit.h>
 #include <net/bpfdesc.h>
 
 #include <net/if_arc.h>
@@ -119,14 +118,6 @@ struct bpf_stat	bpf_gstats;
  * and opening/closing the device.
  */
 static kmutex_t bpf_mtx;
-
-/* BPF JIT compilation. */
-static bool bpf_jit_enable __read_mostly = false;
-
-#ifndef BPF_JIT
-#define	bpf_jit(x, y)			NULL
-#define	bpf_destroy_jit_filter(x)	(void)x
-#endif
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -1063,7 +1054,6 @@ int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
-	bpf_jit_filter *jfunc, *ofunc;
 	size_t flen, size;
 	int s;
 
@@ -1085,28 +1075,20 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			free(fcode, M_DEVBUF);
 			return EINVAL;
 		}
-
-		/* Perform JIT compilation. */
-		jfunc = bpf_jit(fcode, flen);
 	} else {
 		fcode = NULL;
-		jfunc = NULL;
 	}
 
 	s = splnet();
 	old = d->bd_filter;
-	ofunc = d->bd_bfilter;
 	d->bd_filter = fcode;
-	d->bd_bfilter = jfunc;
 	reset_d(d);
 	splx(s);
 
 	if (old) {
 		free(old, M_DEVBUF);
 	}
-	if (ofunc) {
-		bpf_destroy_jit_filter(ofunc);
-	}
+
 	return 0;
 }
 
@@ -1368,7 +1350,6 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	 * interfaces shared any data.  This is not the case.
 	 */
 	for (d = bp->bif_dlist; d != NULL; d = d->bd_next) {
-		bpf_jit_filter *bf;
 		u_int slen;
 
 		if (!d->bd_seesent && !rcv) {
@@ -1377,17 +1358,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		d->bd_rcount++;
 		bpf_gstats.bs_recv++;
 
-		bf = bpf_jit_enable ? d->bd_bfilter : NULL;
-		if (bf) {
-			/*
-			 * XXX THIS is totally broken when pkt
-			 * points to mbuf. FreeBSD does a runtime
-			 * check, we don't.
-			 */
-			slen = (*(bf->func))(pkt, pktlen, pktlen);
-		} else {
-			slen = bpf_filter(d->bd_filter, pkt, pktlen, buflen);
-		}
+		slen = bpf_filter(d->bd_filter, pkt, pktlen, buflen);
 		if (!slen) {
 			continue;
 		}
@@ -1716,8 +1687,6 @@ bpf_freed(struct bpf_d *d)
 	}
 	if (d->bd_filter)
 		free(d->bd_filter, M_DEVBUF);
-	if (d->bd_bfilter)
-		bpf_destroy_jit_filter(d->bd_bfilter);
 }
 
 /*

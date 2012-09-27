@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1057 2012/09/01 11:21:22 matt Exp $
+#	$NetBSD: files,v 1.1058 2012/09/27 18:28:56 alnsn Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -184,7 +184,6 @@ include "dev/sysmon/files.sysmon"
 #
 define	bpf_filter
 defparam opt_bpf.h	BPF_BUFSIZE
-defflag opt_bpf.h	BPF_JIT
 
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
@@ -1648,7 +1647,6 @@ file	miscfs/syncfs/sync_vnops.c
 
 file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
-file	net/bpf_jit.c			bpf_filter & bpf_jit
 file	net/bpf_stub.c
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
