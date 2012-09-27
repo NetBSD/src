@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.3 2012/09/27 00:22:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.3 2012/09/27 00:22:39 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -82,6 +82,8 @@ extern int KERNEL_BASE_virt[];
 BootConfig bootconfig;
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;     
+
+u_int uboot_args[4] = { 0 };
 
 static void bcm53xx_system_reset(void);
 
@@ -214,6 +216,9 @@ initarm(void *arg)
 	bcm53xx_rng_start(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh);
 #endif
 
+	printf("uboot arg = %#x, %#x, %#x, %#x\n",
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);      
+
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (" ___STRING(EVBARM_BOARDTYPE) ") booting ...\n");
 
@@ -226,10 +231,15 @@ initarm(void *arg)
 	    arm_cpu_max + 1, arm_cpu_max + 1 ? "s" : "",
 	    arm_cpu_hatched);
 #endif
+	printf(", CLIDR=%010o CTR=%#x",
+	    armreg_clidr_read(), armreg_ctr_read());
 	printf("\n");
 #endif
 
-	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), bcm53xx_memprobe(),
+	psize_t memsize = bcm53xx_memprobe();
+	//memsize = 128*1024*1024;
+
+	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), memsize,
 	    (paddr_t)KERNEL_BASE_phys);
 
 	/*
