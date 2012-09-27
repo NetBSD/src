@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.3 2012/09/07 11:53:50 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.4 2012/09/27 00:22:39 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.3 2012/09/07 11:53:50 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.4 2012/09/27 00:22:39 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -66,6 +66,12 @@ RCSID("$NetBSD: bcm53xx_start.S,v 1.3 2012/09/07 11:53:50 matt Exp $")
 
 	.global	_C_LABEL(bcm53xx_start)
 _C_LABEL(bcm53xx_start):
+	/*
+	 * Save any arguments u-boot passed us.
+	 */
+	ldr	r4, .Luboot_args
+	stmia	r4, {r0-r3}
+
 	/*
 	 * Let's turn on the CCA watchdog in case something goes horribly wrong.
 	 */
@@ -126,6 +132,9 @@ _C_LABEL(bcm53xx_start):
 	nop
 
 	/* NOTREACHED */
+
+.Luboot_args:
+	.word	uboot_args
 
 .Lsku_rom_lut:
 	.word	0xffff0400
