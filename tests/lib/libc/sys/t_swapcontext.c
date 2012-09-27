@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.1 2012/09/12 02:00:55 manu Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.2 2012/09/27 09:56:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -89,7 +89,7 @@ mainfunc(void)
 		nctx.uc_flags &= ~_UC_TLSBASE;
 #endif /* _UC_TLSBASE */
        
-	makecontext(&nctx, (void *)*swapfunc, 0);
+	makecontext(&nctx, swapfunc, 0);
        
 	_lwp_setprivate(&val2);
 	otls = _lwp_getprivate();
