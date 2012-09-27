@@ -34,11 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_gdtoa.c,v 1.3 2012/09/27 00:37:56 christos Exp $");
+__RCSID("$NetBSD: t_gdtoa.c,v 1.4 2012/09/27 08:19:18 martin Exp $");
 
 #include <atf-c.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /* reported by Maksymilian Arciemowicz */
 
