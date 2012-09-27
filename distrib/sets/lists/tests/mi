@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.495 2012/09/18 08:30:35 martin Exp $
+# $NetBSD: mi,v 1.496 2012/09/27 00:38:57 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -591,6 +591,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/t_clone.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_context.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_convfp.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/t_cdb.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-obsolete		obsolete
@@ -2510,6 +2511,7 @@
 ./usr/tests/lib/libc/t_clone			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_context			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_convfp			tests-lib-tests		atf
+./usr/tests/lib/libc/t_cdb			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_gdtoa			tests-lib-tests		atf
 ./usr/tests/lib/libc/t_hsearch			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_inet			tests-obsolete		obsolete
