@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1781 2012/09/18 15:14:41 skrll Exp $
+#	$NetBSD: mi,v 1.1782 2012/09/27 18:28:53 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1805,7 +1805,7 @@
 ./usr/include/net/agr/if_agrioctl.h		comp-c-include
 ./usr/include/net/bpf.h				comp-c-include
 ./usr/include/net/bpfdesc.h			comp-c-include
-./usr/include/net/bpf_jit.h			comp-c-include
+./usr/include/net/bpf_jit.h			comp-c-include		obsolete
 ./usr/include/net/dlt.h				comp-c-include
 ./usr/include/net/ethertypes.h			comp-c-include
 ./usr/include/net/if.h				comp-c-include
