@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.4 2012/09/22 01:47:46 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.5 2012/09/27 00:25:26 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -146,9 +146,9 @@ bcmpax_ccb_match(device_t parent, cfdata_t cf, void *aux)
 static int
 bcmpax_iwin_init(struct bcmpax_softc *sc)
 {
+#if 0
 	uint32_t megs = (physical_end + 0xfffff - physical_start) >> 20;
 	uint32_t iwin_megs = min(256, megs);
-#if 1
 #if 1
 	bus_addr_t iwin1_start = physical_start;
 #else
@@ -173,7 +173,6 @@ bcmpax_iwin_init(struct bcmpax_softc *sc)
 #endif
 		bcmpax_conf_write(sc, 0, PCI_MAPREG_START+8, iwin2_start);
 	}
-#endif
 
 	if (megs <= iwin_megs) {
 		/*
@@ -184,6 +183,13 @@ bcmpax_iwin_init(struct bcmpax_softc *sc)
 
 	return bus_dmatag_subregion(sc->sc_dmat, physical_start,
 	    physical_start + (iwin_megs << 20) - 1, &sc->sc_dmat, 0);
+#else
+	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, 0);
+	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, 0);
+	bcmpax_write_4(sc, PCIE_IARR_2_LOWER, 0);
+	bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, 0);
+	return 0;
+#endif
 }
 
 static void
