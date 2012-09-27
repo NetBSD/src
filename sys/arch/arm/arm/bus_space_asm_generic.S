@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.7 2012/07/15 20:48:53 matt Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.8 2012/09/27 00:23:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -38,6 +38,12 @@
 #include <arm/cpuconf.h>
 #include <arm/byte_swap.h>
 
+#ifdef _ARM_ARCH_7
+#define	DSB	dsb
+#else
+#define	DSB
+#endif
+
 /*
  * Generic bus_space functions.
  */
@@ -47,17 +53,20 @@
  */
 
 ENTRY_NP(generic_bs_r_1)
+	DSB
 	ldrb	r0, [r1, r2]
 	RET
 END(generic_bs_r_1)
 
 #if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY_NP(generic_armv4_bs_r_2)
+	DSB
 	ldrh	r0, [r1, r2]
 	RET
 END(generic_armv4_bs_r_2)
 
 ENTRY_NP(generic_armv4_bs_r_2_swap)
+	DSB
 	ldrh	r0, [r1, r2]
 	BSWAP16(r0, r0, r1)
 	RET
@@ -65,11 +74,13 @@ END(generic_armv4_bs_r_2_swap)
 #endif
 
 ENTRY_NP(generic_bs_r_4)
+	DSB
 	ldr	r0, [r1, r2]
 	RET
 END(generic_bs_r_4)
 
 ENTRY_NP(generic_bs_r_4_swap)
+	DSB
 	ldr	r0, [r1, r2]
 	BSWAP32(r0, r0, r1)
 	RET
@@ -81,6 +92,7 @@ END(generic_bs_r_4_swap)
 
 ENTRY_NP(generic_bs_w_1)
 	strb	r3, [r1, r2]
+	DSB
 	RET
 END(generic_bs_w_1)
 
@@ -89,6 +101,7 @@ ENTRY_NP(generic_armv4_bs_w_2_swap)
 	BSWAP16(r3, r3, r0)		/* swap and fallthrough */
 ENTRY_NP(generic_armv4_bs_w_2)
 	strh	r3, [r1, r2]
+	DSB
 	RET
 END(generic_armv4_bs_w_2)
 #endif
@@ -97,6 +110,7 @@ ENTRY_NP(generic_bs_w_4_swap)
 	BSWAP32(r3, r3, r0)
 ENTRY_NP(generic_bs_w_4)
 	str	r3, [r1, r2]
+	DSB
 	RET
 END(generic_bs_w_4)
 
@@ -110,6 +124,7 @@ ENTRY_NP(generic_bs_rm_1)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrb	r3, [r0]
 	strb	r3, [r1], #1
@@ -126,6 +141,7 @@ ENTRY_NP(generic_armv4_bs_rm_2)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrh	r3, [r0]
 	strh	r3, [r1], #2
@@ -136,11 +152,13 @@ ENTRY_NP(generic_armv4_bs_rm_2)
 END(generic_armv4_bs_rm_2)
 
 ENTRY_NP(generic_armv4_bs_rm_2_swap)
+	DSB
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrh	r3, [r0]
 	BSWAP16(r3, r3, ip)
@@ -158,6 +176,7 @@ ENTRY_NP(generic_bs_rm_4)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldr	r3, [r0]
 	str	r3, [r1], #4
@@ -173,6 +192,7 @@ ENTRY_NP(generic_bs_rm_4_swap)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldr	r3, [r0]
 	BSWAP32(r3, r3, ip)
@@ -199,6 +219,7 @@ ENTRY_NP(generic_bs_wm_1)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wm_1)
 
@@ -215,6 +236,7 @@ ENTRY_NP(generic_armv4_bs_wm_2)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_armv4_bs_wm_2)
 
@@ -231,6 +253,7 @@ ENTRY_NP(generic_armv4_bs_wm_2_swap)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_armv4_bs_wm_2_swap)
 #endif
@@ -247,6 +270,7 @@ ENTRY_NP(generic_bs_wm_4)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wm_4)
 
@@ -263,6 +287,7 @@ ENTRY_NP(generic_bs_wm_4_swap)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wm_4_swap)
 
@@ -276,6 +301,7 @@ ENTRY_NP(generic_bs_rr_1)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrb	r3, [r0], #1
 	strb	r3, [r1], #1
@@ -292,6 +318,7 @@ ENTRY_NP(generic_armv4_bs_rr_2)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrh	r3, [r0], #2
 	strh	r3, [r1], #2
@@ -307,6 +334,7 @@ ENTRY_NP(generic_armv4_bs_rr_2_swap)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldrh	r3, [r0], #2
 	BSWAP16(r3, r3, ip)
@@ -339,6 +367,7 @@ ENTRY_NP(generic_bs_rr_4_swap)
 	ldr	r2, [sp, #0]
 	teq	r2, #0
 	RETc(eq)
+	DSB
 
 1:	ldr	r3, [r0], #4
 	BSWAP32(r3, r3, ip)
@@ -365,6 +394,7 @@ ENTRY_NP(generic_bs_wr_1)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wr_1)
 
@@ -381,6 +411,7 @@ ENTRY_NP(generic_armv4_bs_wr_2)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_armv4_bs_wr_2)
 
@@ -397,6 +428,7 @@ ENTRY_NP(generic_armv4_bs_wr_2_swap)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_armv4_bs_wr_2_swap)
 #endif
@@ -413,6 +445,7 @@ ENTRY_NP(generic_bs_wr_4)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wr_4)
 
@@ -429,6 +462,7 @@ ENTRY_NP(generic_bs_wr_4_swap)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_wr_4_swap)
 
@@ -447,6 +481,7 @@ ENTRY_NP(generic_bs_sr_1)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_sr_1)
 
@@ -464,6 +499,7 @@ ENTRY_NP(generic_armv4_bs_sr_2)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_armv4_bs_sr_2)
 #endif
@@ -481,6 +517,7 @@ ENTRY_NP(generic_bs_sr_4)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 END(generic_bs_sr_4)
 
@@ -505,6 +542,7 @@ ENTRY_NP(generic_armv4_bs_c_2)
 	subs	r2, r2, #1
 	bne	1b
 
+	DSB
 	RET
 
 2:	add	r0, r0, r2, lsl #1
@@ -517,6 +555,7 @@ ENTRY_NP(generic_armv4_bs_c_2)
 	subs	r2, r2, #1
 	bne	3b
 
+	DSB
 	RET
 END(generic_armv4_bs_c_2)
 #endif
