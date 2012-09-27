@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.54 2012/05/21 14:15:19 martin Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.55 2012/09/27 20:43:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.54 2012/05/21 14:15:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.55 2012/09/27 20:43:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,19 +354,14 @@ sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap,
 	lwpid_t dep;
 
 	mutex_enter(p->p_lock);
-	error = lwp_wait1(l, SCARG(uap, wait_for), &dep, 0);
+	error = lwp_wait(l, SCARG(uap, wait_for), &dep, false);
 	mutex_exit(p->p_lock);
 
-	if (error)
-		return error;
-
-	if (SCARG(uap, departed)) {
+	if (!error && SCARG(uap, departed)) {
 		error = copyout(&dep, SCARG(uap, departed), sizeof(dep));
-		if (error)
-			return error;
 	}
 
-	return 0;
+	return error;
 }
 
 int

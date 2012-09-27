@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.172 2012/08/30 02:26:02 matt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.173 2012/09/27 20:43:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172 2012/08/30 02:26:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.173 2012/09/27 20:43:15 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -533,22 +533,21 @@ lwp_unstop(struct lwp *l)
  * Must be called with p->p_lock held.
  */
 int
-lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
+lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 {
-	struct proc *p = l->l_proc;
-	struct lwp *l2;
-	int nfound, error;
-	lwpid_t curlid;
-	bool exiting;
+	const lwpid_t curlid = l->l_lid;
+	proc_t *p = l->l_proc;
+	lwp_t *l2;
+	int error;
 
 	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nlwpwait++;
 	l->l_waitingfor = lid;
-	curlid = l->l_lid;
-	exiting = ((flags & LWPWAIT_EXITCONTROL) != 0);
 
 	for (;;) {
+		int nfound;
+
 		/*
 		 * Avoid a race between exit1() and sigexit(): if the
 		 * process is dumping core, then we need to bail out: call
@@ -558,10 +557,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		if ((p->p_sflag & PS_WCORE) != 0) {
 			mutex_exit(p->p_lock);
 			lwp_userret(l);
-#ifdef DIAGNOSTIC
-			panic("lwp_wait1");
-#endif
-			/* NOTREACHED */
+			KASSERT(false);
 		}
 
 		/*
@@ -651,13 +647,14 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		}
 
 		/*
-		 * The kernel is careful to ensure that it can not deadlock
-		 * when exiting - just keep waiting.
+		 * Note: since the lock will be dropped, need to restart on
+		 * wakeup to run all LWPs again, e.g. there may be new LWPs.
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
 			cv_wait(&p->p_lwpcv, p->p_lock);
-			continue;
+			error = EAGAIN;
+			break;
 		}
 
 		/*
