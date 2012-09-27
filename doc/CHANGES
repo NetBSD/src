@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1743 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1744 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -119,3 +119,4 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	mfi(4): add a command pass-through ioctl, and associated COMPAT_LINUX
 		support. This allows to use the LSI MegaCLI linux binary
 		on a NetBSD host.  [bouyer 20120919]
+	zoneinfo: Import tzdata2012f. [apb 20120927]
