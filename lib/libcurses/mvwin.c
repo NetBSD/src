@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.16 2011/09/15 11:58:05 blymn Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.17 2012/09/28 06:03:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.16 2011/09/15 11:58:05 blymn Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.17 2012/09/28 06:03:45 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,7 +52,13 @@ int
 mvderwin(WINDOW *win, int dy, int dx)
 {
 	WINDOW *parent;
-	int ox, oy, i;
+	int x, y, i;
+	__LINE *lp, *olp;
+#ifdef HAVE_WCHAR
+	__LDATA *cp;
+	int j;
+	nschar_t *np;
+#endif /* HAVE_WCHAR */
 
 	if (win == NULL)
 		return ERR;
@@ -66,19 +72,41 @@ mvderwin(WINDOW *win, int dy, int dx)
 	    ((win->maxy + dy) > parent->maxy))
 		return ERR;
 
-	ox = win->begx;
-	oy = win->begy;
+	x = parent->begx + dx;
+	y = parent->begy + dy;
 
-	win->begx = parent->begx + dx;
-	win->begy = parent->begy + dy;
-
-	__set_subwin(parent, win);
-
-	win->begx = ox;
-	win->begy = oy;
-
-	for (i = 0; i < win->maxy; i++)
-                win->alines[i]->flags = __ISDIRTY;
+	win->ch_off = x;
+	/* Point the line pointers to line space */
+	for (lp = win->lspace, i = 0; i < win->maxy; i++, lp++) {
+		lp->flags = __ISDIRTY;
+		win->alines[i] = lp;
+		olp = parent->alines[i + dy];
+#ifdef DEBUG
+		lp->sentinel = SENTINEL_VALUE;
+#endif
+		lp->line = &olp->line[win->ch_off];
+		lp->firstchp = &olp->firstch;
+		lp->lastchp = &olp->lastch;
+#ifndef HAVE_WCHAR
+		lp->hash = __hash((char *)(void *)lp->line,
+		    (size_t) (win->maxx * __LDATASIZE));
+#else
+		for (cp = lp->line, j = 0; j < win->maxx; j++, cp++) {
+			lp->hash = __hash_more(&cp->ch, sizeof(wchar_t),
+			    lp->hash);
+			lp->hash = __hash_more(&cp->attr, sizeof(wchar_t),
+			    lp->hash);
+			if (cp->nsp) {
+				np = cp->nsp;
+				while (np) {
+					lp->hash = __hash_more(&np->ch,
+					    sizeof(wchar_t), lp->hash);
+					np = np->next;
+				}
+			}
+		}
+#endif /* HAVE_WCHAR */
+	}
 
 	return OK;
 }
