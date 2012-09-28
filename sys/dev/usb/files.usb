@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.90 2008/10/10 16:37:16 joerg Exp $
+#	$NetBSD: files.usb,v 1.90.4.1 2012/09/28 10:58:16 sborrill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -85,6 +85,11 @@ file	dev/usb/ukbdmap.c		ukbd | btkbd
 device	ums: hid, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# Touchscreens
+device 	uts: hid, wsmousedev, tpcalib
+attach 	uts at uhidbus
+file 	dev/usb/uts.c	 		uts
 
 # eGalax USB Touch Panel
 device	uep: wsmousedev, tpcalib
