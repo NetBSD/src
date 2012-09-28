@@ -37,6 +37,7 @@ uhcireg.h		Hardware definitions for UHCI
 uhcivar.h		API for uhci.c
 uhid.c			USB generic HID driver
 uhidev.c		USB HID class driver
+uts.can 		USB touchscreen driver
 uhidev.h		  and definitions for it
 uhub.c			USB hub driver
 uipaq.c			HP ipaq22xx driver
