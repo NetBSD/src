@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_mainbus.c,v 1.2 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: nslu2_mainbus.c,v 1.3 2012/09/28 20:08:13 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_mainbus.c,v 1.2 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_mainbus.c,v 1.3 2012/09/28 20:08:13 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ static void
 ixp425_mainbus_attach(struct device *parent, struct device *self, void *arg)
 {
 
+	ixp425_intr_evcnt_attach();
 	ixp425_attach((struct ixp425_softc *) self);
 }
 
