@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.183 2012/09/15 09:33:05 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.184 2012/09/28 10:58:51 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8594,4 +8594,20 @@ sys/dev/ic/gemvar.h				1.24 via patch
 	- re-initialise the chip on device timeout
 	Also alter the interrupt blanking rate to 8 packets, as per OpenSolaris.
 	[jdc, ticket #1789]
+
+lib/libusbhid/usb_hid_usages			1.5  via patch
+share/man/man4/Makefile				1.578 via patch
+share/man/man4/uts.4				1.1
+share/man/man4/wsmouse.4			1.19 via patch
+sys/arch/amd64/conf/GENERIC			1.346-1.347 via patch
+sys/arch/i386/conf/GENERIC			1.1078 via patch
+sys/dev/usb/FILES				1.12 via patch
+sys/dev/usb/usbdevices.config			1.12 via patch
+sys/dev/usb/files.usb				1.119-1.120 via patch
+sys/dev/usb/usbhid.h				1.14 via patch
+sys/dev/usb/uts.c				1.1
+distrib/sets/lists/man/mi			1.1370 via patch
+
+	Add uts(4) driver for USB touchscreens.
+	[liamjfoy, #1797]
 
