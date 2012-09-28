@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.7 2011/07/01 20:42:36 dyoung Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.8 2012/09/28 20:08:13 ryo Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.7 2011/07/01 20:42:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.8 2012/09/28 20:08:13 ryo Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.
@@ -65,5 +65,6 @@ ixp425_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixp425_softc *sc = (void *) self;
 
+	ixp425_intr_evcnt_attach();
 	ixp425_attach(sc);
 }
