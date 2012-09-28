@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.915.2.12 2012/01/25 21:18:14 riz Exp $
+# $NetBSD: GENERIC,v 1.915.2.13 2012/09/28 10:58:15 sborrill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.915.2.12 $"
+#ident 		"GENERIC-$Revision: 1.915.2.13 $"
 
 maxusers	64		# estimated number of users
 
@@ -1102,6 +1102,10 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # USB Mice
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
+
+# USB generic touchscreen
+uts*    at uhidev? reportid ?
+wsmouse* at uts? mux 0
 
 # USB eGalax touch-panel
 uep*	at uhub? port ?
