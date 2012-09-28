@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.23 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.24 2012/09/28 20:08:13 ryo Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.23 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.24 2012/09/28 20:08:13 ryo Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -308,14 +308,25 @@ ixp425_intr_init(void)
 		TAILQ_INIT(&iq->iq_list);
 
 		sprintf(iq->iq_name, "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-				     NULL, "ixp425", iq->iq_name);
 	}
 
 	ixp425_intr_calculate_masks();
 
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
+}
+
+void
+ixp425_intr_evcnt_attach(void)
+{
+	struct intrq *iq;
+	int i;
+
+	for (i = 0; i < NIRQ; i++) {
+		iq = &intrq[i];
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+		    NULL, "ixp425", iq->iq_name);
+	}
 }
 
 void *

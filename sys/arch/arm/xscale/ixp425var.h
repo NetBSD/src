@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.13 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.14 2012/09/28 20:08:13 ryo Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -146,6 +146,7 @@ void	ixp425_attach(struct ixp425_softc *);
 void	ixp425_icu_init(void);
 void	ixp425_clk_bootstrap(bus_space_tag_t);
 void	ixp425_intr_init(void);
+void	ixp425_intr_evcnt_attach(void);
 void	*ixp425_intr_establish(int, int, int (*)(void *), void *);
 void    ixp425_intr_disestablish(void *);
 
