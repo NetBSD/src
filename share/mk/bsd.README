@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.301 2012/09/20 15:48:54 abs Exp $
+#	$NetBSD: bsd.README,v 1.302 2012/09/29 12:03:41 jkoshy Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -156,6 +156,11 @@ MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
+
+MKDTRACE	If "no", do not build and install the kernel modules,
+		utilities and libraries used to implement the dtrace(1)
+		facility.
+		Default: no
 
 MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't
