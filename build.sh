@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.255 2012/08/05 04:39:09 matt Exp $
+#	$NetBSD: build.sh,v 1.256 2012/09/29 04:02:42 tsutsui Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1668,7 +1668,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.255 2012/08/05 04:39:09 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.256 2012/09/29 04:02:42 tsutsui Exp $
 # with these arguments: ${_args}
 #
 
@@ -1819,14 +1819,13 @@ buildmodules()
 
 	statusmsg "Building kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 	if [ "${MKOBJDIRS}" != "no" ]; then
-		make_in_dir sys/modules obj ||
-		    bomb "Failed to make obj in sys/modules"
+		make_in_dir sys/modules obj
 	fi
 	if [ "${MKUPDATE}" = "no" ]; then
 		make_in_dir sys/modules cleandir
 	fi
-	${runcmd} "${makewrapper}" ${parallel} do-sys-modules ||
-	    bomb "Failed to make do-sys-modules"
+	make_in_dir sys/modules dependall
+	make_in_dir sys/modules install
 
 	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 }
