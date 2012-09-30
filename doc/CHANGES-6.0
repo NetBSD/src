@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.208 2012/09/17 19:06:24 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.209 2012/09/30 18:26:54 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8641,4 +8641,14 @@ usr.sbin/racoon/Makefile			1.25 via patch
 sys/sys/param.h					patched by hand
 
 	Welcome to NetBSD 6.0_RC2!
+
+doc/3RDPARTY					1.970 via patch
+share/zoneinfo/australasia			1.27 via patch
+
+	Merge tzdata2012f from
+	http://www.iana.org/time-zones/repository/releases/tzdata2012f.tar.gz
+	Changes from tzdata2012e to tzdata2012f:
+	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
+	      January 20 this year.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #578]
 
