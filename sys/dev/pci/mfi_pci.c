@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.5.14.1 2010/03/28 15:03:22 snj Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.5.14.2 2012/09/30 18:03:43 bouyer Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5.14.1 2010/03/28 15:03:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5.14.2 2012/09/30 18:03:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 
 static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
 	{ PCI_VENDOR_SYMBIOS,	0x9261,		"SAS 9260-8i" },
+	{ PCI_VENDOR_SYMBIOS,	0x9263,		"SAS 9261-8i" },
 	{ 0x0,			0,		"" }
 };
 
