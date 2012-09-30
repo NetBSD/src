@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.93 2012/09/30 20:19:51 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.94 2012/09/30 20:54:52 dsl Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -104,9 +104,6 @@ endif
 
 if defined(_KERNEL) && defined(_KERNEL_OPT)
 include "ioapic.h"
-ifndef XEN
-include "apmbios.h"
-endif
 endif
 
 include <compat/sys/signal.h>
