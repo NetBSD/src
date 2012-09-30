@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.129.2.9 2012/08/15 17:36:46 sborrill Exp $
+# $NetBSD: postinstall,v 1.129.2.10 2012/09/30 18:59:53 bouyer Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2077,7 +2077,7 @@ EOF
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
+    ${HOST_SH} ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
 Note that this may overwrite local changes.
 _Fix_me_
 		    fi
