@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.78.2.2 2012/07/05 17:29:15 riz Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.78.2.3 2012/09/30 18:53:58 bouyer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -72,6 +72,9 @@ message reinstall
 message upgrade
 {zaktualizowac}
 
+message mount_failed
+{Montowanie %s nie powiodlo sie. Kontynuowac?
+}
 
 message hello
 {Witaj w sysinst, systemie instalacyjnym NetBSD-@@VERSION@@.
@@ -120,11 +123,6 @@ Czy napewno chcesz przeinstalowac pakiety dystrybucjne NetBSD?
 (Jest to ostatnie ostrzezenie zanim zacznie sie modyfikacja danych na
 twoich dyskach.)
 }
-
-message mount_failed
-{Mounting %s failed. Continue?
-}
-/* XXX: Translate. */
 
 message nodisk
 {Nie moge znalezc zadnych twardych dyskow do uzycia z NetBSD. Zostaniesz
@@ -684,9 +682,9 @@ message makedev
 * +not successful (Error number %d.). Try mounting it anyway?
 */
 message badfs
-{Wyglada na to, ze /dev/%s%c nie jest systemem plikow BSD albo nie powiodlo sie
-jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
-}
+{Wyglada na to, ze /dev/%s%c nie jest systemem plikow BSD ewentualnie
+fsck dysku nie powiodlo sie. Zamontowac dysk pomimo tego? (Numer
+bledu %d.)}
 
 message rootmissing
 { docelowy / jest zagubiony %s.
@@ -894,6 +892,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Zaktualizuj NetBSD na twardym dysku}
 message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj dodatkowe pakiety}
 message Reboot_the_computer {Zrestartuj komputer}
 message Utility_menu {Menu Narzedziowe}
+message Config_menu {Menu konfiguracji}
 message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
 message Run_bin_sh {Uruchom /bin/sh}
@@ -977,57 +976,66 @@ Aby obejrzec ten plik, mozesz wpisac ^Z, przejrzec jego zawartosc,
 a nastepnie wpisac "fg".}
 
 message binpkg
-{To configure the binary package system, please choose the network location
-to fetch packages from.  Once your system comes up, you can use 'pkgin'
-to install additional packages, or remove packages.}
+{Aby skonfigurowac binarny system pakietow, wybierz lokalizacje siecowa, z
+ktorej nalezy pobrac pakiety. Gdy system wstanie, mozesz wykorzystac 'pkgin' do
+zainstalowania albo odinstalowania dodatkowych pakietow.}
 
 message pkgpath
-{The following are the protocol, host, directory, user, and password that
-will be used.  If "user" is "ftp", then the password is not needed.
+{Ponizej wyszczegolniono protokol, hosta, katalog, nazwe uzytkownika oraz haslo,
+ktore beda wykorzystane do nawiazania polaczenia. Haslo nie jest wymagane gdy
+nazwa uzytkownika to "ftp".
 
 }
-message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
-message rcconf_backup_succeeded {rc.conf backup saved to %s.}
-message rcconf_restore_failed {Restoring backup rc.conf failed.}
-message rcconf_delete_failed {Deleting old %s entry failed.}
-message Pkg_dir {Package directory}
-message configure_prior {configure a prior installation of}
-message configure {configure}
-message change {change}
-message password_set {password set}
-message YES {YES}
-message NO {NO}
-message DONE {DONE}
-message abandoned {Abandoned}
-message empty {***EMPTY***}
-message timezone {Timezone}
-message change_rootpw {Change root password}
-message enable_binpkg {Enable installation of binary packages}
-message enable_sshd {Enable sshd}
-message enable_ntpd {Enable ntpd}
-message run_ntpdate {Run ntpdate at boot}
-message enable_mdnsd {Enable mdnsd}
-message configmenu {Configure the additional items as needed.}
-message doneconfig {Finished configuring}
-message Install_pkgin {Install pkgin and update package summary}
+message rcconf_backup_failed {Stworzenie kopii zapasowej rc.conf nie powiodlo
+sie. Kontynuowac?}
+message rcconf_backup_succeeded {Kopia zapasowa rc.conf zostala zapisana do %s.}
+message rcconf_restore_failed {Przywracania kopii zapasowej rc.conf nie powiodlo
+sie.}
+message rcconf_delete_failed {Usuwanie starego wpisu %s nie powiodlo sie.}
+message Pkg_dir {Katalog z pakietami}
+message configure_prior {skonfiguruj przed instalacja}
+message configure {skonfiguruj}
+message change {zmien}
+message password_set {ustawiono haslo}
+message YES {TAK}
+message NO {NIE}
+message DONE {ZAKONCZ}
+message abandoned {Porzucony}
+message empty {***PUSTE***}
+message timezone {Strefa czasowa}
+message change_rootpw {Zmien haslo root'a}
+message enable_binpkg {Wlacz instalacje pakietow binarnych}
+message enable_sshd {Wlacz sshd}
+message enable_ntpd {Wlacz ntpd}
+message run_ntpdate {uruchom ntpdate podczas startu systemu}
+message enable_mdnsd {Wlacz mdnsd}
+message configmenu {Skonfiguruj dodatkowe elementy w razie potrzeby.}
+message doneconfig {Konfiguracja zakonczona}
+message Install_pkgin {Zainstaluj pkgin i uaktualnij podsumowanie pakietow}
 message binpkg_installed 
-{You are now configured to use pkgin to install binary packages.  To
-install a package, run:
+{Skonfigurowales system tak aby wykorzystywal pkgin do instalacji pakietow
+binarnych. Aby zainstalowac pakiet, wykonaj:
 
 pkgin install <packagename>
 
-from a root shell.  Read the pkgin(1) manual page for further information.}
-message Install_pkgsrc {Fetch and unpack pkgsrc}
+z powloki root'a. Jesli potrzebujesz wiecej informacji przeczytaj strone
+podrecznika pkgin(1).}
+message Install_pkgsrc {Pobierz i rozpakuj pkgsrc}
 message pkgsrc
-{Installing pkgsrc requires unpacking an archive retrieved over the network.
-The following are the host, directory, user, and password that
-will be used.  If "user" is "ftp", then the password is not needed.
+{Instalacja pkgsrc wymaga rozpakowania archiwum pobranego z sieci.
+Ponizej wyszczegolniono protokol, hosta, katalog, nazwe uzytkownika oraz haslo,
+ktore beda wykorzystane do nawiazania polaczenia. Haslo nie jest wymagane gdy
+nazwa uzytkownika to "ftp".
 
 }
-message Pkgsrc_dir {pkgsrc directory}
-message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
-message retry_pkgsrc_network {Network configuration failed.  Retry?}
-message quit_pkgsrc {Quit without installing pkgsrc}
+message Pkgsrc_dir {katalog pkgsrc}
+message get_pkgsrc {Pobierz i rozpakuj pkgsrc w celu tworzenia pakietow ze
+zrodel}
+message retry_pkgsrc_network {Konfiguracja sieci nie powiodla sie. Sprobowac
+ponownie?}
+message quit_pkgsrc {Zakoncz bez zainstalowania pkgsrc}
 message pkgin_failed 
-{Installation of pkgin failed, possibly because no binary packages  exist.  Please check the package path and try again.}
-message failed {Failed}
+{Instalacja pkgin nie powiodla sie, prawdopodobnie dlatego ze nie znaleziono 
+pakietow binarnych.
+Sprawdz sciezke pakietow i sprobuj ponownie.}
+message failed {Nie powiodlo sie}
