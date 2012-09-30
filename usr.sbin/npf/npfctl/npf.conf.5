@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.22 2012/09/30 21:09:30 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.23 2012/09/30 21:15:08 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,11 +160,11 @@ on packets originating from 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
 .Ss Procedures
-Rule procedure is defined as a collection of extension calls (it may have
-none).
-Every extension call has a name and a list of options in a form of
+A rule procedure is defined as a collection of extension calls (it
+may have none).
+Every extension call has a name and a list of options in the form of
 key-value pairs.
-Depending on the call, key might represent the argument and the value
+Depending on the call, the key might represent the argument and the value
 might be optional.
 For example:
 .Bd -literal
@@ -174,11 +174,15 @@ procedure "someproc" {
 }
 .Ed
 .Pp
-In this case, procedure has a call to logging and normalisation modules.
+In this case, the procedure calls the logging and normalisation modules.
 .Ss Misc
-Text after a hash (#) character is considered a comment.
-The \\ character at the end of a line marks a continuation line,
-i.e. the next line is considered an extension of the present line.
+Text after a hash
+.Pq Sq #
+character is considered a comment.
+The backslash
+.Pq Sq \e
+character at the end of a line marks a continuation line,
+i.e., the next line is considered an extension of the present line.
 .Sh GRAMMAR
 The following is a non-formal BNF-like definition of the grammar.
 The definition is simplified and is intended to be human readable,
