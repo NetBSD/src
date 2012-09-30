@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.58 2010/05/19 20:41:59 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.59 2012/09/30 05:08:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,10 @@
 #include "opt_mbuftrace.h"
 #endif
 #include <sys/mbuf.h>
+#endif
+
+#ifndef _STANDALONE
+#include <net/if.h>
 #endif
 
 /*
