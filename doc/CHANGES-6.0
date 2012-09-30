@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.209 2012/09/30 18:26:54 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.210 2012/09/30 19:00:33 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8651,4 +8651,50 @@ share/zoneinfo/australasia			1.27 via patch
 	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
 	      January 20 this year.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #578]
+
+UPDATING					1.239
+
+	Fix typo, noticed by stu314 on freenode.
+	[dholland, ticket #561]
+
+doc/CHANGES				patch
+
+	Add forgotten CHANGES entries for rndctl entropy save/load and all the
+	kernel entropy changes.
+	[tls, ticket #562]
+
+distrib/utils/sysinst/msg.mi.es			1.47
+
+	Add Spanish translations for sysinst's new configuration menu,
+	plus adding a few that were left previously.
+	Translation provided by jmmv.
+	[martin, ticket #563]
+
+UPDATING					1.240
+
+	Strengthen the entry about the openssl update, to clarify and emphasize
+	that just doing a non-update build isn't enough; you really do have to
+	nuke $DESTDIR.
+	[dholland, ticket #565]
+
+distrib/utils/sysinst/menus.mi			1.47
+distrib/utils/sysinst/msg.mi.de			1.70
+distrib/utils/sysinst/msg.mi.en			1.175
+distrib/utils/sysinst/msg.mi.es			1.46
+distrib/utils/sysinst/msg.mi.fr			1.129
+distrib/utils/sysinst/msg.mi.pl			1.86
+
+	Add translations for "Config menu" (was hardcoded before)
+	Add translations for Polish config menu entries (provided by
+	Marcin Piotr Pawlowski).
+	Add Spanish translations for sysinst's new configuration menu,
+	plus adding a few that were left previously.  Translation provided
+	by jmmv.
+	[jdf, ticket #567]
+
+usr.sbin/postinstall/postinstall		1.147
+
+	Make sure that the "to fix, run: ..." instructions actually work
+	cut-and-paste.
+	[ast, ticket #568]
 
