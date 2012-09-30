@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.19 2012/09/30 07:43:03 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.20 2012/09/30 12:59:31 spz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,6 +106,31 @@ group (name "my_group", interface wm0, in) {
 }
 .Ed
 .Ss Rules
+With a rule statement NPF is instructed to
+.Cd pass
+or
+.Cd block
+a packet depending on packet header information, transit direction and
+interface it arrives on, either immediately upon match (keyword
+.Cd final )
+or using the last match.
+The rule can also instruct NPF to create an entry in the state table
+when passing the packet, to notify the sender when blocking it, and
+to apply a procedure to the packet (e.g. "log") in either case.
+.Pp
+A "fully-featured" rule would for example be:
+.Bd -literal
+pass stateful in final family inet proto tcp flags S/SA \\
+	from $source port $sport to $dest port $dport apply "someproc"
+.Ed
+.Pp
+Any protocol in /etc/protocols can be specified. Further packet
+specification at present is limited to protocol TCP understanding flags,
+TCP and UDP understanding source and destination ports, and ICMP and
+IPv6-ICMP understanding icmp-type.
+.Pp
+Fragments are not selectable since NPF always reassembles packets
+before further processing.
 .Ss Map
 Network Address Translation (NAT) is expressed in a form of segment mapping.
 At present, only dynamic translation is supported.
