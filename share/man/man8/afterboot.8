@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.48 2012/03/11 23:42:07 njoly Exp $
+.\"	$NetBSD: afterboot.8,v 1.49 2012/09/30 20:49:12 riastradh Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -374,42 +374,34 @@ and then starting the server with the command
 The first time the server is started, it will generate a new keypair,
 which will be stored inside the directory
 .Pa /etc/ssh .
-.Ss BIND Name Server (DNS)
-If you are using the BIND Name Server, check the
-.Pa /etc/resolv.conf
-file.
-It may look something like:
-.Bd -literal -offset indent
-domain some.thing.dom
-nameserver 192.168.0.1
-nameserver 192.168.4.55
-search some.thing.dom. thing.dom.
-.Ed
+.Ss Host names and DNS
+The system resolves host names according the rules for hosts in the
+name service switch configuration at
+.Pa /etc/nsswitch.conf .
+By default, it will query
+.Pa /etc/hosts
+first, and then the DNS resolver specified in
+.Pa /etc/resolv.conf .
 .Pp
-For further details, see
-.Xr resolv.conf 5 .
-Note the name service lookup order is set via
-.Xr nsswitch.conf 5
-mechanism.
-.Pp
-If using a caching name server add the line "nameserver 127.0.0.1" first.
-To get a local caching name server to run
-you will need to set
+If your network does not have a usable DNS resolver, e.g. one provided
+by DHCP, you can run a local caching recursive resolver by setting
 .Dq named=YES
 in
 .Pa /etc/rc.conf
-and create the
-.Pa named.conf
-file in the appropriate place for
-.Xr named 8 ,
-usually in
-.Pa /etc/namedb .
-The same holds true if the machine is going to be a
-name server for your domain.
-In both these cases, make sure that
+and either rebooting or running the following command:
+.Bd -literal -offset indent
+.Ic /etc/rc.d/named start
+.Ed
+.Pp
 .Xr named 8
-is running
-(otherwise there are long waits for resolver timeouts).
+is configured in
+.Pa /etc/named.conf
+by default to run as a local caching recursive resolver.
+Then, to make the system use it, put the following in
+.Pa /etc/resolv.conf :
+.Bd -literal -offset indent
+nameserver 127.0.0.1
+.Ed
 .Ss RPC-based network services
 Several services depend on the RPC portmapper
 .Xr rpcbind 8
@@ -988,8 +980,10 @@ for details on how to do so.
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr group 5 ,
+.Xr hosts 5 ,
 .Xr ifconfig.if 5 ,
 .Xr mailer.conf 5 ,
+.Xr named.conf 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
 .Xr printcap 5 ,
