@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.731 2012/09/30 20:19:51 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.732 2012/09/30 20:54:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.731 2012/09/30 20:19:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.732 2012/09/30 20:54:52 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -177,7 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.731 2012/09/30 20:19:51 dsl Exp $");
 #endif
 
 #include "acpica.h"
-#include "apmbios.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
