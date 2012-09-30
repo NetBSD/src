@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.95 2012/09/30 20:19:52 dsl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.96 2012/09/30 20:54:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.95 2012/09/30 20:19:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.96 2012/09/30 20:54:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.95 2012/09/30 20:19:52 dsl Exp $");
 #include "isa.h"
 #include "isadma.h"
 #include "mca.h"
-#include "apmbios.h"
 #include "pnpbios.h"
 #include "acpica.h"
 #include "ipmi.h"
