@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.20 2012/09/30 12:59:31 spz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.21 2012/09/30 13:15:03 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,10 @@ pass stateful in final family inet proto tcp flags S/SA \\
 	from $source port $sport to $dest port $dport apply "someproc"
 .Ed
 .Pp
-Any protocol in /etc/protocols can be specified. Further packet
+Any protocol in
+.Pa /etc/protocols
+can be specified.
+Further packet
 specification at present is limited to protocol TCP understanding flags,
 TCP and UDP understanding source and destination ports, and ICMP and
 IPv6-ICMP understanding icmp-type.
