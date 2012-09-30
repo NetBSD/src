@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.138.16.2 2010/02/14 13:27:45 bouyer Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.138.16.3 2012/09/30 17:59:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.16.2 2010/02/14 13:27:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.16.3 2012/09/30 17:59:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1866,6 +1866,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 		fdirfor_ret = VOP_GETATTR(fdirp, &fdirfor, cred);
 	}
 	if (error) {
+		fromnd.ni_cnd.cn_nameiop = 0;
 		nfsm_reply(2 * NFSX_WCCDATA(v3));
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);
