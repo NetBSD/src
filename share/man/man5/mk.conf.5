@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.62 2012/09/19 23:06:22 abs Exp $
+.\"	$NetBSD: mk.conf.5,v 1.63 2012/09/30 03:48:16 jkoshy Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2012
+.Dd September 30, 2012
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -238,11 +238,80 @@ or
 .Xr mdsetimage 8 .
 .DFLTy
 .
+.It Sy MKBSDTAR
+.YorN
+If
+.Dq yes ,
+.Sy libarchive Ns - Ns
+based implementations of
+.Xr cpio 1
+and
+.Xr tar 1
+are built and installed.
+If
+.Dq no ,
+.Xr pax 1
+based frontends are used.
+.DFLTn
+.
 .It Sy MKCATPAGES
 .YorN
 Indicates whether preformatted plaintext manual pages will be created
 and installed.
 .DFLTy
+.
+.It Sy MKCLEANSRC
+.YorN
+Indicates whether
+.Sq "make clean"
+and
+.Sq "make cleandir"
+will delete file names in
+.Sy CLEANFILES
+or
+.Sy CLEANDIRFILES
+from both the object directory,
+.Sy .OBJDIR ,
+and the source directory,
+.Sy .SRCDIR .
+.Pp
+If
+.Dq yes ,
+then these file names will be deleted relative to both
+.Sy .OBJDIR
+and
+.Sy .CURDIR .
+If
+.Dq no ,
+then the deletion will be performed relative to
+.Sy .OBJDIR
+only.
+.DFLTy
+.
+.It Sy MKCLEANVERIFY
+.YorN
+Controls whether
+.Sq "make clean"
+and
+.Sq "make cleandir"
+will verify that files have been deleted.
+If
+.Dq yes ,
+then file deletions will be verified using
+.Xr ls 1 .
+If
+.Dq no ,
+then file deletions will not be verified.
+.DFLTy
+.
+.It Sy MKCOMPAT
+.YorN
+Indicates whether support for multiple ABIs is to be built and
+installed.
+.DFLTy
+on amd64, mips and sparc64,
+.Dq no
+on other architectures.
 .
 .It Sy MKCOMPLEX
 .YorN
@@ -300,6 +369,13 @@ Indicates whether system documentation destined for
 .Sy DESTDIR Ns Pa /usr/share/doc
 will be installed.
 .DFLTy
+.
+.It Sy MKDTRACE
+.YorN
+Indicates whether the kernel modules, utilities and libraries for
+.Xr dtrace 1
+support are to be built and installed.
+.DFLTn
 .
 .It Sy MKDYNAMICROOT
 .YorN
@@ -472,6 +548,13 @@ installed into
 .Sy DESTDIR Ns Pa /usr/libdata/lint .
 .DFLTy
 .
+.It Sy MKLVM
+.YorN
+If not
+.Dq no ,
+build and install the logical volume manager.
+.DFLTy
+.
 .It Sy MKMAN
 .YorN
 Indicates whether manual pages will be installed.
@@ -499,6 +582,11 @@ Indicates whether the mDNS (Multicast DNS) infrastructure
 .YorN
 Indicates whether Native Language System (NLS) locale zone files will be
 built and installed.
+.DFLTy
+.
+.It Sy MKNPF
+.YorN
+Indicates whether the NPF packet filter is to be built and installed.
 .DFLTy
 .
 .It Sy MKOBJ
@@ -591,6 +679,16 @@ Indicates whether Position Independent Executables (PIE)
 are built and installed.
 .DFLTn
 .
+.It Sy MKPIGZGZIP
+.YorN
+If
+.Dq no ,
+the
+.Xr pigz 1
+utility is not installed as
+.Xr gzip 1 .
+.DFLTn
+.
 .It Sy MKPOSTFIX
 .YorN
 Indicates whether Postfix is built.
@@ -606,6 +704,22 @@ will be built and installed.
 however, some platforms turn off
 .Sy MKPROFILE
 by default at times due to toolchain problems with profiled code.
+.
+.It Sy MKREPRO
+.YorN
+Indicates whether builds are to be reproducible.
+If
+.Dq yes ,
+two builds from the same source tree will produce the same build
+results.
+.DFLTn
+.
+.It Sy MKRUMP
+.YorN
+Indicates whether the
+.Xr rump 3
+headers, libraries and programs are to be installed.
+.DFLTy
 .
 .It Sy MKSHARE
 .YorN
@@ -682,11 +796,27 @@ depending on the value of
 .DFLTn
 .Pp
 .
+.It Sy MKX11FONTS
+.YorN
+If
+.Dq no ,
+do not build and install the X fonts.
+.DFLTy
+.
 .It Sy MKYP
 .YorN
 Indicates whether the YP (NIS) infrastructure
 (libraries and support programs) is built.
 .DFLTy
+.
+.It Sy MKZFS
+.YorN
+Indicates whether the ZFS kernel module and the utilities and
+libraries used to manage the ZFS system are to be built.
+.DFLTy
+on i386 and amd64,
+.Dq no
+on other architectures.
 .
 .It Sy OBJMACHINE
 If defined, creates objdirs of the form
