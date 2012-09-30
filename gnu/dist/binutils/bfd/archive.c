@@ -1325,7 +1325,7 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
   struct ar_hdr *hdr;
   char *temp, *temp1;
   bfd_size_type amt;
-  char tmpbuf[11];
+  char tmpbuf[1024];
 
   if (member && (member->flags & BFD_IN_MEMORY) != 0)
     {
@@ -1355,7 +1355,8 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
   strncpy (hdr->ar_fmag, ARFMAG, 2);
 
   /* Goddamned sprintf doesn't permit MAXIMUM field lengths.  */
-  sprintf ((hdr->ar_date), "%-12ld", (long) status.st_mtime);
+  sprintf (tmpbuf, "%-12ld", (long) status.st_mtime);
+  memcpy(hdr->ar_date, tmpbuf, sizeof(hdr->ar_date));
 #ifdef HPUX_LARGE_AR_IDS
   /* HP has a very "special" way to handle UID/GID's with numeric values
      > 99999.  */
@@ -1363,7 +1364,10 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
     hpux_uid_gid_encode (hdr->ar_gid, (long) status.st_uid);
   else
 #endif
-    sprintf ((hdr->ar_uid), "%ld", (long) status.st_uid);
+  {
+  sprintf (tmpbuf, "%ld", (long) status.st_uid);
+  memcpy(hdr->ar_uid, tmpbuf, sizeof(hdr->ar_uid));
+  }
 #ifdef HPUX_LARGE_AR_IDS
   /* HP has a very "special" way to handle UID/GID's with numeric values
      > 99999.  */
@@ -1371,8 +1375,12 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
     hpux_uid_gid_encode (hdr->ar_uid, (long) status.st_gid);
   else
 #endif
-  sprintf ((hdr->ar_gid), "%ld", (long) status.st_gid);
-  sprintf ((hdr->ar_mode), "%-8o", (unsigned int) status.st_mode);
+  {
+  sprintf (tmpbuf, "%ld", (long) status.st_gid);
+  memcpy(hdr->ar_gid, tmpbuf, sizeof(hdr->ar_gid));
+  }
+  sprintf (tmpbuf, "%-8o", (unsigned int) status.st_mode);
+  memcpy(hdr->ar_mode, tmpbuf, sizeof(hdr->ar_mode));
   sprintf (tmpbuf, "%-10ld", (long) status.st_size);
   memcpy(hdr->ar_size, tmpbuf, sizeof(hdr->ar_size));
   /* Correct for a lossage in sprintf whereby it null-terminates.  I cannot

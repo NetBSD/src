@@ -147,7 +147,7 @@ char *real_name;
 void
 ar_open (char *name, int t)
 {
-  char *tname = (char *) xmalloc (strlen (name) + 10);
+  char *tname = (char *) xmalloc (4096);
   const char *bname = lbasename (name);
   real_name = name;
 
