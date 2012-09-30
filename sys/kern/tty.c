@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.254 2012/09/30 11:49:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.254 2012/09/30 11:49:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1928,7 +1928,6 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		goto loop;
 	}
  read:
-	mutex_spin_exit(&tty_lock);
 
 	/*
 	 * Input present, check for input mapping and processing.
@@ -1940,16 +1939,14 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		 */
 		if (CCEQ(cc[VDSUSP], c) &&
 		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
-			mutex_spin_enter(&tty_lock);
 			ttysig(tp, TTYSIG_PG1, SIGTSTP);
 			if (first) {
 				error = ttypause(tp, hz);
-				mutex_spin_exit(&tty_lock);
 				if (error)
 					break;
-				goto loop;
-			} else
 				mutex_spin_exit(&tty_lock);
+				goto loop;
+			}
 			break;
 		}
 		/*
@@ -1973,11 +1970,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			break;
 		first = 0;
 	}
+
 	/*
 	 * Look to unblock output now that (presumably)
 	 * the input queue has gone down.
 	 */
-	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG / 5) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    cc[VSTART] != _POSIX_VDISABLE &&
