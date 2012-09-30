@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.43 2011/11/11 15:09:33 gdt Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.44 2012/09/30 05:13:12 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,9 @@
 
 #ifndef _NETINET_IF_INARP_H_
 #define _NETINET_IF_INARP_H_
+
+#include <sys/queue.h>		/* for LIST_ENTRY */
+#include <netinet/in.h>		/* for struct in_addr */
 
 struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp) la_list;
