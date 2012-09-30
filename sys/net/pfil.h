@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.29 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.30 2012/09/30 05:02:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -74,7 +74,7 @@ struct pfil_head {
 	pfil_list_t	ph_ifnetevent; /* XXX naming collision */
 	int		ph_type;
 	union {
-		u_long		phu_val;
+		unsigned long	phu_val;
 		void		*phu_ptr;
 	} ph_un;
 #define	ph_af		ph_un.phu_val
@@ -96,7 +96,7 @@ int	pfil_remove_hook(int (*func)(void *, struct mbuf **,
 int	pfil_head_register(struct pfil_head *);
 int	pfil_head_unregister(struct pfil_head *);
 
-struct pfil_head *pfil_head_get(int, u_long);
+struct pfil_head *pfil_head_get(int, unsigned long);
 
 static __inline struct packet_filter_hook *
 pfil_hook_get(int dir, struct pfil_head *ph)
