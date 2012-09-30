@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.h,v 1.6 2012/09/30 21:05:14 dsl Exp $	*/
+/*	$NetBSD: apmbios.h,v 1.7 2012/09/30 21:36:20 dsl Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -108,14 +108,6 @@
  */
 #define	APM_MAJOR_VERS(info) (((info)&0xff00)>>8)
 #define	APM_MINOR_VERS(info) ((info)&0xff)
-
-#define APM_CPUIDLE_SLOW       0x04
-#define APM_DISABLED           0x08
-#define APM_DISENGAGED         0x10
-
-#define APM_IDLE_SLOWS		(APM_CPUIDLE_SLOW << 16)
-#define APM_BIOS_PM_DISABLED	(APM_DISABLED << 16)
-#define APM_BIOS_PM_DISENGAGED	(APM_DISENGAGED << 16)
 
 #define	APMDEBUG_INFO		0x01
 #define	APMDEBUG_EVENTS		0x04
