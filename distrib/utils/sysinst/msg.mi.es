@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.39.2.2 2012/07/05 17:29:16 riz Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.39.2.3 2012/09/30 18:46:39 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -125,7 +125,7 @@ sus discos.)
 }
 
 message mount_failed
-{Mounting %s failed. Continue?
+{No se ha podido montar %s.  ¿Desea continuar?
 }
 
 message nodisk
@@ -703,8 +703,9 @@ message makedev
 }
 
 message badfs
-{Parece que /dev/%s%c no es un sistema de archivos BSD o el fsck no ha sido
-correcto.  ¿Continuar?  (Error número %d.)
+{Parece ser que /dev/%s%c no es un sistema de archivos BSD o bien el
+fsck ha fallado.  ¿Desea montarlo de todos modos?  (Código de error:
+%d.)
 }
 
 message rootmissing
@@ -920,6 +921,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Actualizar NetBSD en un disco duro}
 message Re_install_sets_or_install_additional_sets {Reinstalar conjuntos o instalar conjuntos adicionales}
 message Reboot_the_computer {Reiniciar la computadora}
 message Utility_menu {Menú de utilidades}
+message Config_menu {Menu de configuración}
 message exit_utility_menu {Exit}
 message NetBSD_VERSION_Utilities {Utilidades de NetBSD-@@VERSION@@}
 message Run_bin_sh {Ejecutar /bin/sh}
@@ -1011,63 +1013,74 @@ actualizar /etc/mailer.conf usted mismo para asegurarse de que los mensajes
 de correo electrónico se envíen correctamente.}
 
 message license
-{To use the network interface %s, you must agree to the license in
-file %s.
-To view this file now, you can type ^Z, look at the contents of
-the file and then type "fg" to resume.}
+{Para usar la interfaz de red %s, debe de aceptar la licencia en el archivo %s.
+Para ver este archivo ahora, pulse ^Z, mire el contendido del archivo, y luego
+teclee "fg" para continuar la instalación.}
 
 message binpkg
-{To configure the binary package system, please choose the network location
-to fetch packages from.  Once your system comes up, you can use 'pkgin'
-to install additional packages, or remove packages.}
-
+{Para configurar el sistema de paquetes binários, por favor escoja el
+sitio de red desde el cual descargar los paquetes.  Una vez el sistema
+arranque, puede usar 'pkgin' para instalar paquetes adicionales, o
+eliminar paquetes ya instalados.}
+	
 message pkgpath
-{The following are the protocol, host, directory, user, and password that
-will be used.  If "user" is "ftp", then the password is not needed.
+{Las siguientes entradas representan el protocolo, la máquina, el
+directorio, el usuario y la contraseña que se usarán.  Si el "usuario"
+es "ftp", entonces la contraseña es opcional.
 
 }
-message rcconf_backup_failed {Making backup of rc.conf failed. Continue?}
-message rcconf_backup_succeeded {rc.conf backup saved to %s.}
-message rcconf_restore_failed {Restoring backup rc.conf failed.}
-message rcconf_delete_failed {Deleting old %s entry failed.}
-message Pkg_dir {Package directory}
+message rcconf_backup_failed
+{Error al intentar hacer una cópia de seguridad de rc.conf.  ¿Desea continuar?}
+message rcconf_backup_succeeded
+{La cópia de seguridad de rc.conf se ha guardado en %s.}
+message rcconf_restore_failed
+{La recuperación de rc.conf desde su cópia de seguridad ha fallado.}
+message rcconf_delete_failed {La eliminación del viejo %s ha fallado.}
+message Pkg_dir {Directorio del paquete}
 message configure_prior {configure a prior installation of}
-message configure {configure}
-message change {change}
-message password_set {password set}
-message YES {YES}
+message configure {Configurar}
+message change {Cambiar}
+message password_set {Contraseña configurada}
+message YES {SI}
 message NO {NO}
-message DONE {DONE}
-message abandoned {Abandoned}
-message empty {***EMPTY***}
-message timezone {Timezone}
-message change_rootpw {Change root password}
-message enable_binpkg {Enable installation of binary packages}
-message enable_sshd {Enable sshd}
-message enable_ntpd {Enable ntpd}
-message run_ntpdate {Run ntpdate at boot}
-message enable_mdnsd {Enable mdnsd}
-message configmenu {Configure the additional items as needed.}
-message doneconfig {Finished configuring}
-message Install_pkgin {Install pkgin and update package summary}
+message DONE {HECHO}
+message abandoned {Abandonado}
+message empty {***VACÍO***}
+message timezone {Zona horaria}
+message change_rootpw {Cambiar la contraseña de root}
+message enable_binpkg {Activar la instalación de paquetes binarios}
+message enable_sshd {Activar sshd}
+message enable_ntpd {Activar ntpd}
+message run_ntpdate {Ejecutar ntpdate durante el arranque}
+message enable_mdnsd {Activar mdnsd}
+message configmenu {Configurar elementos adicionales bajo demanda.}
+message doneconfig {Terminar configuración}
+message Install_pkgin {Instalar pkgin y actualizar la lista de paquetes}
 message binpkg_installed 
-{You are now configured to use pkgin to install binary packages.  To
-install a package, run:
+{El sistema se ha configurado para usar pkgin para instalar paquetes
+binarios.  Para instalar un paquete, ejecute:
 
-pkgin install <packagename>
+pkgin install <nombre_del_paquete>
 
-from a root shell.  Read the pkgin(1) manual page for further information.}
-message Install_pkgsrc {Fetch and unpack pkgsrc}
+desde una línea de comandos de root.  Lea la página de manual pkgin(1)
+para más detalles.}
+message Install_pkgsrc {Descargar y desempaquetar pkgsrc}
 message pkgsrc
-{Installing pkgsrc requires unpacking an archive retrieved over the network.
-The following are the host, directory, user, and password that
-will be used.  If "user" is "ftp", then the password is not needed.
+{La instalación de pkgsrc necesita desempaquetar un archivo descargado
+desde la red.
+Las siguientes entradas corresponden a la máquina, directorio, usuario
+y contraseña a usar para la conexión.  Si "usuario" es "ftp", entonces
+la contraseña es opcional.
 
 }
-message Pkgsrc_dir {pkgsrc directory}
-message get_pkgsrc {Fetch and unpack pkgsrc for building from source}
-message retry_pkgsrc_network {Network configuration failed.  Retry?}
-message quit_pkgsrc {Quit without installing pkgsrc}
+message Pkgsrc_dir {Directorio de pkgsrc}
+message get_pkgsrc
+{Descargar y desempaquetar pkgsrc para compilar desde código fuente}
+message retry_pkgsrc_network
+{La configuración de la red ha fallado.  ¿Reintentar?}
+message quit_pkgsrc {Salir sin instalar pkgsrc}
 message pkgin_failed 
-{Installation of pkgin failed, possibly because no binary packages  exist.  Please check the package path and try again.}
-message failed {Failed}
+{La instalación de pkgin ha fallado, posiblemente porque no existen
+paquetes binarios.  Por favor verifique el camino a los paquetes y
+reinténtelo de nuevo.}
+message failed {Error}
