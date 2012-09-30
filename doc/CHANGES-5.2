@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.185 2012/09/28 10:59:34 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.186 2012/09/30 18:19:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8610,4 +8610,43 @@ distrib/sets/lists/man/mi			1.1370 via patch
 
 	Add uts(4) driver for USB touchscreens.
 	[liamjfoy, #1797]
+
+lib/libcurses/get_wch.c				1.10
+
+	fixes an out of bounds memory write in libcurses
+	[blymn, ticket #1791]
+
+lib/libmenu/internals.c				1.14, 1.15
+
+	fix a bug with menu presentation and item linking when O_ROWMAJOR
+	is set.  Fix lib/46620.
+	[blymn, ticket #1792]
+
+sys/nfs/nfs_serv.c				1.164 via patch
+
+	fix error handling in nfsrv_rename(): when the first nfs_namei() fails,
+	don't try to free not-yet-allocated resources.
+	[chs, ticket #1794]
+
+sys/dev/pci/mfi_pci.c				1.17 via patch
+
+	PR/46877 - Wolfgang Stukenbrock -- missing definition for Symbios
+	SAS 9261-8i
+	[jnemeth, ticket #1795]
+
+doc/3RDPARTY					1.970 via patch
+share/zoneinfo/australasia			1.27 via patch
+
+	Merge tzdata2012f from
+	http://www.iana.org/time-zones/repository/releases/tzdata2012f.tar.gz
+	Changes from tzdata2012e to tzdata2012f:
+	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
+	      January 20 this year.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1798]
+
+gnu/dist/binutils/bfd/archive.c			patch
+gnu/dist/binutils/binutils/arsup.c		patch
+
+	Fix buffer overflow in ar(1), from toolchain/46827
+	[christos, ticket #1793]
 
