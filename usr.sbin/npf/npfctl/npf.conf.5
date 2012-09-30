@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.18 2012/09/29 19:50:03 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.19 2012/09/30 07:43:03 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ definitions to call on filtered packets.
 The minimal
 .Nm
 must contain a mandatory
-.Cd default group.
+.Cd default group .
 .Sh SYNTAX
 .Ss Variables
 Variables are specified using the dollar ($) sign, which is used both
@@ -96,7 +96,6 @@ The file should contain a list of IP addresses and/or networks in the form of:
 .Ed
 .Pp
 Tables of type "hash" can only contain IP addresses.
-.Pp
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
@@ -106,9 +105,7 @@ group (name "my_group", interface wm0, in) {
 	# List of rules
 }
 .Ed
-.Pp
 .Ss Rules
-.Pp
 .Ss Map
 Network Address Translation (NAT) is expressed in a form of segment mapping.
 At present, only dynamic translation is supported.
@@ -135,7 +132,6 @@ on packets originating from 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
 .Ss Procedures
-.Pp
 .Ss Misc
 Text after a hash (#) character is considered a comment.
 The \\ character at the end of a line marks a continuation line,
@@ -170,7 +166,7 @@ map		= "map" interface ( "static" | "dynamic" )
 		  [ "pass" filt-opts ]
 
 ; Rule procedure definition.  The name should be in the double quotes.
-; 
+;
 ; Each call can have its own options in a form of key-value pairs.
 ; Both key and values may be strings (either in double quotes or not)
 ; and numbers, depending on the extension.
