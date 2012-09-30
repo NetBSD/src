@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.730 2012/07/27 22:55:29 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.731 2012/09/30 20:19:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.730 2012/07/27 22:55:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.731 2012/09/30 20:19:51 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -188,10 +188,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.730 2012/07/27 22:55:29 drochner Exp $
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
-#endif
-
-#if NAPMBIOS > 0
-#include <machine/apmvar.h>
 #endif
 
 #include "isa.h"
@@ -893,21 +889,6 @@ haltsys:
 			splx(s);
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
-#endif
-#if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
-		/* turn off, if we can.  But try to turn disk off and
-		 * wait a bit first--some disk drives are slow to clean up
-		 * and users have reported disk corruption.
-		 */
-		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS),
-		    APM_SYS_OFF);
-		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
-		printf("WARNING: APM powerdown failed!\n");
-		/*
-		 * RB_POWERDOWN implies RB_HALT... fall into it...
-		 */
 #endif
 	}
 
