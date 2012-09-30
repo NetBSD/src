@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.27 2011/07/17 20:54:50 joerg Exp $ */
+/*	$NetBSD: apm.c,v 1.28 2012/09/30 21:36:19 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,13 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.27 2011/07/17 20:54:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.28 2012/09/30 21:36:19 dsl Exp $");
 
 #include "opt_apm.h"
-
-#ifdef APM_NOIDLE
-#error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
-#endif
 
 #if defined(DEBUG) && !defined(APMDEBUG)
 #define	APMDEBUG
@@ -123,17 +119,6 @@ const struct cdevsw apm_cdevsw = {
 };
 
 /* configurable variables */
-int	apm_bogus_bios = 0;
-#ifdef APM_DISABLE
-int	apm_enabled = 0;
-#else
-int	apm_enabled = 1;
-#endif
-#ifdef APM_NO_IDLE
-int	apm_do_idle = 0;
-#else
-int	apm_do_idle = 1;
-#endif
 #ifdef APM_NO_STANDBY
 int	apm_do_standby = 0;
 #else
@@ -148,16 +133,6 @@ int	apm_v11_enabled = 1;
 int	apm_v12_enabled = 0;
 #else
 int	apm_v12_enabled = 1;
-#endif
-#ifdef APM_FORCE_64K_SEGMENTS
-int	apm_force_64k_segments = 1;
-#else
-int	apm_force_64k_segments = 0;
-#endif
-#ifdef APM_ALLOW_BOGUS_SEGMENTS
-int	apm_allow_bogus_segments = 1;
-#else
-int	apm_allow_bogus_segments = 0;
 #endif
 
 /* variables used during operation (XXX cgd) */
@@ -597,20 +572,6 @@ apm_set_ver(struct apm_softc *sc)
 ok:
 	aprint_normal("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
-	if (sc->sc_detail & APM_IDLE_SLOWS) {
-#ifdef DIAGNOSTIC
-		/* not relevant often */
-		aprint_normal(" (slowidle)");
-#endif
-		/* leave apm_do_idle at its user-configured setting */
-	} else
-		apm_do_idle = 0;
-#ifdef DIAGNOSTIC
-	if (sc->sc_detail & APM_BIOS_PM_DISABLED)
-		aprint_normal(" (BIOS mgmt disabled)");
-	if (sc->sc_detail & APM_BIOS_PM_DISENGAGED)
-		aprint_normal(" (BIOS managing devices)");
-#endif
 }
 
 int
