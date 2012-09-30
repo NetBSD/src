@@ -1,4 +1,4 @@
-/*	$NetBSD: h_quota2_tests.c,v 1.3 2011/06/11 18:03:17 christos Exp $	*/
+/*	$NetBSD: h_quota2_tests.c,v 1.4 2012/09/30 21:26:57 bouyer Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -34,7 +34,19 @@ quota_test0(const char *testopts)
 	static char buf[512];
 	int fd;
 	int error;
-	rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
+	unsigned int i;
+	int chowner = 1;
+	for (i =0; testopts && i < strlen(testopts); i++) {
+		switch(testopts[i]) {
+		case 'C':
+			chowner = 0;
+			break;
+		default:
+			errx(1, "test4: unknown option %c", testopts[i]);
+		}
+	}
+	if (chowner)
+		rump_sys_chown(".", TEST_NONROOT_ID, TEST_NONROOT_ID);
 	rump_sys_chmod(".", 0777);
 	if (rump_sys_setegid(TEST_NONROOT_ID) != 0) {
 		error = errno;
