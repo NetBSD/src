@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.108 2012/09/15 09:24:50 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.109 2012/09/30 18:23:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1470,4 +1470,14 @@ dist/bind/lib/dns/include/dns/rdata.h			patch
 	apply fix for CVE-2012-4244 ("Named could die on specially crafted
 	record") from upstream.
 	[spz, ticket #1457]
+
+doc/3RDPARTY					1.970 via patch
+share/zoneinfo/australasia			1.27 via patch
+
+	Merge tzdata2012f from
+	http://www.iana.org/time-zones/repository/releases/tzdata2012f.tar.gz
+	Changes from tzdata2012e to tzdata2012f:
+	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
+	      January 20 this year.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1458]
 
