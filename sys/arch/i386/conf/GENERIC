@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1080 2012/09/23 01:05:21 chs Exp $
+# $NetBSD: GENERIC,v 1.1081 2012/09/30 21:36:18 dsl Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1080 $"
+#ident 		"GENERIC-$Revision: 1.1081 $"
 
 maxusers	64		# estimated number of users
 
@@ -312,7 +312,6 @@ config		netbsd	root on ? type ?
 #apm0		at mainbus0		# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
-#options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
 #options 	APM_POWER_PRINT		# Print stats on the console
