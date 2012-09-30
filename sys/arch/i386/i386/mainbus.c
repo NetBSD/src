@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.94 2012/02/07 16:34:44 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.95 2012/09/30 20:19:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94 2012/02/07 16:34:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.95 2012/09/30 20:19:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94 2012/02/07 16:34:44 dyoung Exp $");
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
-
-#if NAPMBIOS > 0
-#include <machine/bioscall.h>
-#include <machine/apmvar.h>
-#endif
 
 #if NPNPBIOS > 0
 #include <arch/i386/pnpbios/pnpbiosvar.h>
@@ -316,14 +311,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_iba.iba_memt = x86_bus_space_mem;
 		config_found_ia(self, "isabus", &mba.mba_iba, isabusprint);
 	}
-#endif
-
-#if NAPMBIOS > 0
-#if NACPICA > 0
-	if (acpi_active == 0)
-#endif
-	if (apm_busprobe())
-		config_found_ia(self, "apmbus", 0, 0);
 #endif
 
 	if (!pmf_device_register(self, NULL, NULL))
