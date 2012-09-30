@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.92 2012/04/20 22:23:24 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.93 2012/09/30 20:19:51 dsl Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,10 +107,6 @@ include "ioapic.h"
 ifndef XEN
 include "apmbios.h"
 endif
-endif
-if NAPMBIOS > 0
-include <machine/bioscall.h>
-include <machine/apmvar.h>
 endif
 
 include <compat/sys/signal.h>
@@ -262,24 +258,6 @@ ifdef XEN
 define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
 else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-endif
-
-if NAPMBIOS > 0
-define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
-define	APM_CODE16		offsetof(struct apm_connect_info, apm_code16_seg_base)
-define	APM_DATA		offsetof(struct apm_connect_info, apm_data_seg_base)
-define	APM_CODE32_LEN		offsetof(struct apm_connect_info, apm_code32_seg_len)
-define	APM_DATA_LEN		offsetof(struct apm_connect_info, apm_data_seg_len)
-define	APM_ENTRY		offsetof(struct apm_connect_info, apm_entrypt)
-define	APM_DETAIL		offsetof(struct apm_connect_info, apm_detail)
-define	APM_SIZE		sizeof(struct apm_connect_info)
-define	BIOSCALLREG_EAX		offsetof(struct bioscallregs, EAX)
-define	BIOSCALLREG_EBX		offsetof(struct bioscallregs, EBX)
-define	BIOSCALLREG_ECX		offsetof(struct bioscallregs, ECX)
-define	BIOSCALLREG_EDX		offsetof(struct bioscallregs, EDX)
-define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
-define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
-define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
