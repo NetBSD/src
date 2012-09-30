@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.25 2011/07/17 20:54:51 joerg Exp $ */
+/*	$NetBSD: apmdev.c,v 1.26 2012/09/30 21:36:20 dsl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,14 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.25 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.26 2012/09/30 21:36:20 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
-#endif
-
-#ifdef APM_NOIDLE
-#error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
 #endif
 
 #if defined(DEBUG) && !defined(APMDEBUG)
@@ -132,16 +128,6 @@ const struct cdevsw apmdev_cdevsw = {
 
 /* configurable variables */
 int	apm_bogus_bios = 0;
-#ifdef APM_DISABLE
-int	apm_enabled = 0;
-#else
-int	apm_enabled = 1;
-#endif
-#ifdef APM_NO_IDLE
-int	apm_do_idle = 0;
-#else
-int	apm_do_idle = 1;
-#endif
 #ifdef APM_NO_STANDBY
 int	apm_do_standby = 0;
 #else
@@ -598,14 +584,6 @@ apm_set_ver(struct apm_softc *sc)
 ok:
 	aprint_normal("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
-	if (sc->sc_detail & APM_IDLE_SLOWS) {
-#ifdef DIAGNOSTIC
-		/* not relevant often */
-		aprint_normal(" (slowidle)");
-#endif
-		/* leave apm_do_idle at its user-configured setting */
-	} else
-		apm_do_idle = 0;
 #ifdef DIAGNOSTIC
 	if (sc->sc_detail & APM_BIOS_PM_DISABLED)
 		aprint_normal(" (BIOS mgmt disabled)");
