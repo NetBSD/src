@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.82 2012/09/15 09:27:22 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.83 2012/09/30 18:13:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5109,4 +5109,14 @@ share/zoneinfo/zone.tab					patch
 		(Thanks to Steffen Thorsen.)
 		* Use a single version number for both code and data.
 	[apb, ticket #1783]
+
+doc/3RDPARTY					1.970 via patch
+share/zoneinfo/australasia			1.27 via patch
+
+	Merge tzdata2012f from
+	http://www.iana.org/time-zones/repository/releases/tzdata2012f.tar.gz
+	Changes from tzdata2012e to tzdata2012f:
+	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
+	      January 20 this year.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1798]
 
