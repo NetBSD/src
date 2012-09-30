@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.6 2012/02/13 17:55:12 dholland Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.7 2012/09/30 21:26:58 bouyer Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -51,6 +51,13 @@ test_case log_unlink quota_log \
 test_case log_unlink_remount quota_log \
     "an unlinked file cleaned by the log replay after remount" \
     -oRL le 1 user
+
+
+test_case_root defaut_deny_user quota_defaut_deny \
+    "new quota entry denied by default entry" 5 -b le 1 user
+
+test_case_root defaut_deny_user_big quota_defaut_deny \
+    "new quota entry denied by default entry, with list on more than one block" 5000 -b le 1 user
 
 
 quota_walk_list()
@@ -160,5 +167,47 @@ quota_log()
 	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_quota2_tests \
 	    ${srv2args} -b 5 ${IMG} ${RUMP_SERVER}
 	#shutdown and check filesystem
+	rump_quota_shutdown
+}
+
+quota_defaut_deny()
+{
+	local nusers=$1; shift
+	create_ffs_server $*
+	local q=$4
+	local expect
+
+	case ${q} in
+	user)
+		expect=u
+		fail=g
+		;;
+	group)
+		expect=g
+		fail=u
+		;;
+	*)
+		atf_fail "wrong quota type"
+		;;
+	esac
+
+	# create $nusers users, so we are sure the free list has entries
+	# from block 1. Start from 10, as non-root id is 1.
+	# set default to deny all
+	( echo "@format netbsd-quota-dump v1"
+	  echo "# idtype id objtype   hard soft usage expire grace"
+	  echo "$q default block   0 0 0 0 0"
+	  echo "$q default file   0 0 0 0 0"
+	  local i=10;
+	  while [ $i -lt $(($nusers + 10)) ]; do
+		echo "$q $i block   0 0 0 0 0"
+		echo "$q $i file   0 0 0 0 0"
+		i=$((i + 1))
+	  done
+	) | atf_check -s exit:0 \
+		   env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=vfs=getvfsstat,blanket=/mnt quotarestore -d /mnt
+	atf_check -s exit:0 rump.halt
+	#now start the server which does the limits tests
+	$(atf_get_srcdir)/h_quota2_tests -oC -b 0 ${IMG} ${RUMP_SERVER}
 	rump_quota_shutdown
 }
