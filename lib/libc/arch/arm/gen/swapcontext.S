@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5.24.1 2012/10/01 17:53:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.5 2008/04/28 20:22:55 martin Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.5.24.1 2012/10/01 17:53:44 riz Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -41,6 +41,7 @@ ENTRY(swapcontext)
 	cmp	r0, #0
 	ldmfd	sp!, {r0-r1, lr}
 	RETc(ne)
+	str	sp, [r0, #(36 + 13*4)]	/* Adjust saved SP. */
 	str	lr, [r0, #(36 + 15*4)]	/* Adjust saved PC. */
 #ifdef SOFTFLOAT
 	/* Ahem. */
