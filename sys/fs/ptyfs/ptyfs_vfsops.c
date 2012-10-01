@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.42.18.1 2012/10/01 17:35:05 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.18.1 2012/10/01 17:35:05 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,9 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 	size_t len;
 	char *bp;
 	int error;
-	struct ptyfsmount *pmnt = mp->mnt_data;
 
 	rv = mp->mnt_stat.f_mntonname;
-	if (cwdi->cwdi_rdir == NULL ||
-	    (pmnt->pmnt_flags & PTYFSMNT_CHROOT) == 0)
+	if (cwdi->cwdi_rdir == NULL)
 		return rv;
 
 	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
@@ -243,9 +241,11 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
+#if 0
 	/* Don't allow more than one mount */
 	if (ptyfs_count)
 		return EBUSY;
+#endif
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
@@ -272,9 +272,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 
 	/* Point pty access to us */
-
-	ptm_ptyfspty.arg = mp;
-	ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
+	if (ptyfs_count == 0) {
+		ptm_ptyfspty.arg = mp;
+		ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
+	}
 	ptyfs_count++;
 	return 0;
 }
@@ -297,19 +298,21 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 		flags |= FORCECLOSE;
 
 	if ((error = vflush(mp, 0, flags)) != 0)
-		return (error);
+		return error;
 
-	/* Restore where pty access was pointing */
-	(void)pty_sethandler(ptyfs_save_ptm);
-	ptyfs_save_ptm = NULL;
-	ptm_ptyfspty.arg = NULL;
+	ptyfs_count--;
+	if (ptyfs_count == 0) {
+		/* Restore where pty access was pointing */
+		(void)pty_sethandler(ptyfs_save_ptm);
+		ptyfs_save_ptm = NULL;
+		ptm_ptyfspty.arg = NULL;
+	}
 
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
 	free(mp->mnt_data, M_PTYFSMNT);
 	mp->mnt_data = NULL;
-	ptyfs_count--;
 
 	return 0;
 }
