@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.212 2012/10/01 20:22:30 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.213 2012/10/01 23:09:00 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8771,4 +8771,12 @@ share/examples/npf/treetablefile		1.1
 
 	Update the NPF examples, and install them.
 	[rmind, ticket #584]
+
+sys/kern/kern_exit.c				1.242 via patch
+sys/kern/kern_lwp.c				1.173 via patch
+sys/kern/sys_lwp.c				1.55 via patch
+sys/sys/lwp.h					1.164 via patch
+
+	Fix a race condition in exit_lwps, lwp_rwait.  PR#46168, PR#46402.
+	[rmind, ticket #583]
 
