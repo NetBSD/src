@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.159.2.1 2012/05/21 15:25:56 riz Exp $	*/
+/*	$NetBSD: lwp.h,v 1.159.2.2 2012/10/01 23:07:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -320,9 +320,7 @@ void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
-/* Flags for _lwp_wait1 */
-#define LWPWAIT_EXITCONTROL	0x00000001
-int	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
+int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
 void	lwp_unstop(lwp_t *);

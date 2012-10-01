@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.236.2.1 2012/04/12 17:05:36 riz Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.236.2.2 2012/10/01 23:07:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.1 2012/04/12 17:05:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.2 2012/10/01 23:07:07 riz Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -598,16 +598,11 @@ exit1(struct lwp *l, int rv)
 void
 exit_lwps(struct lwp *l)
 {
-	struct proc *p;
-	struct lwp *l2;
-	int error;
-	lwpid_t waited;
+	proc_t *p = l->l_proc;
+	lwp_t *l2;
 	int nlocks;
 
 	KERNEL_UNLOCK_ALL(l, &nlocks);
-
-	p = l->l_proc;
-	KASSERT(mutex_owned(p->p_lock));
 
 #ifdef KERN_SA
 	if (p->p_sa != NULL) {
@@ -642,6 +637,8 @@ exit_lwps(struct lwp *l)
 #endif
 
  retry:
+	KASSERT(mutex_owned(p->p_lock));
+
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
 	 * LWPs and then wait for everyone else to finish.
@@ -656,30 +653,20 @@ exit_lwps(struct lwp *l)
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 		    	/* setrunnable() will release the lock. */
 			setrunnable(l2);
-			DPRINTF(("exit_lwps: Made %d.%d runnable\n",
-			    p->p_pid, l2->l_lid));
 			continue;
 		}
 		lwp_unlock(l2);
 	}
+
+	/*
+	 * Wait for every LWP to exit.  Note: LWPs can get suspended/slept
+	 * behind us or there may even be new LWPs created.  Therefore, a
+	 * full retry is required on error.
+	 */
 	while (p->p_nlwps > 1) {
-		DPRINTF(("exit_lwps: waiting for %d LWPs (%d zombies)\n",
-		    p->p_nlwps, p->p_nzlwps));
-		error = lwp_wait1(l, 0, &waited, LWPWAIT_EXITCONTROL);
-		if (p->p_nlwps == 1)
-			break;
-		if (error == EDEADLK) {
-			/*
-			 * LWPs can get suspended/slept behind us.
-			 * (eg. sa_setwoken)
-			 * kick them again and retry.
-			 */
+		if (lwp_wait(l, 0, NULL, true)) {
 			goto retry;
 		}
-		if (error)
-			panic("exit_lwps: lwp_wait1 failed with error %d",
-			    error);
-		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}
 
 	KERNEL_LOCK(nlocks, l);
