@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.2 2006/08/29 18:17:33 he Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.3 2012/10/01 17:32:28 dsl Exp $	*/
 /*	$OpenBSD: apmvar.h,v 1.2 2001/10/03 20:06:01 drahn Exp $	*/
 
 /*
@@ -75,35 +75,7 @@
 #define	APM_EVENT_TYPE(e)	((e) & APM_EVENT_MASK)
 #define	APM_EVENT_INDEX(e)	((e) >> 16)
 
-/*
- * LP (Laptop Package)
- *
- * Copyright (C) 1994 by HOSOKAWA Tatsumi <hosokawa@mt.cs.keio.ac.jp>
- *
- * This software may be used, modified, copied, and distributed, in
- * both source and binary form provided that the above copyright and
- * these terms are retained. Under no circumstances is the author 
- * responsible for the proper functioning of this software, nor does 
- * the author assume any responsibility for damages incurred with its 
- * use.
- *
- * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)
- */
-
 #include <dev/apm/apmio.h>
-
-struct apm_connect_info {
-	u_int apm_code32_seg_base;	/* real-mode style segment selector */
-	u_int apm_code16_seg_base;
-	u_int apm_data_seg_base;
-	u_int apm_entrypt;
-	u_short	apm_segsel;		/* segment selector for APM */
-	u_short _pad1;
-	u_int apm_code32_seg_len;
-	u_int apm_code16_seg_len;
-	u_int apm_data_seg_len;
-	u_int apm_detail;
-};
 
 #define APM_BATTERY_ABSENT 4
 
