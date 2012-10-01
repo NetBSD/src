@@ -5414,6 +5414,9 @@ zfs_netbsd_pathconf(void *v)
 		case _PC_CHOWN_RESTRICTED:
 			*ap->a_retval = 1;
 			return (0);
+		case _PC_NO_TRUNC:
+			*ap->a_retval = 1;
+			return (0);
 		case _PC_VDISABLE:
 			*ap->a_retval = _POSIX_VDISABLE;
 			return (0);
