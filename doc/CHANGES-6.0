@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.210 2012/09/30 19:00:33 bouyer Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.211 2012/10/01 17:58:21 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8697,4 +8697,47 @@ usr.sbin/postinstall/postinstall		1.147
 	Make sure that the "to fix, run: ..." instructions actually work
 	cut-and-paste.
 	[ast, ticket #568]
+
+sbin/mount_ptyfs/mount_ptyfs.8			1.11-1.12
+sbin/mount_ptyfs/mount_ptyfs.c			1.13-1.14
+sys/fs/ptyfs/ptyfs.h				1.9
+sys/fs/ptyfs/ptyfs_vfsops.c			1.43-1.44
+
+	Update ptyfs to allow multiple mounts, remove some always-on
+	options, and update the documentation.
+	[christos, ticket #566]
+
+sys/dev/pci/ehci_pci.c				1.57
+
+	Fix fatal hangup during EHCI probe on some HP boxes.  PR#46828.
+	[tstsui, ticket #569]
+
+distrib/utils/sysinst/net.c			1.133
+
+	Prevent sysinst from setting an FQDN in rc.conf when the user entered no
+	domain (i.e., sets only the hostname).  PR#46946.
+	[jdf, ticket #570]
+
+external/apache2/mDNSResponder/dist/mDNSShared/dnssd_clientstub.c 1.4
+
+	Fix setsockopt(2) error in 64bit environment.  Makes ntpd(8) stop
+	complaining at boot. PR#46693.
+	[taca, ticket #571]
+
+usr.sbin/traceroute/traceroute.c		1.81
+
+	Fix display of multipath routes.
+	[zafer, ticket #573]
+
+sys/arch/macppc/include/param.h			1.20
+sys/arch/powerpc/include/param.h		1.28
+
+	Increase powerpc NKMEMPAGES_MAX_DEFAULT to 256MB. Fixes
+	hangs on platforms (ofppc) which did not already have this overridden.
+	[mrg, ticket #575]
+
+lib/libc/arch/arm/gen/swapcontext.S		1.7
+
+	Fix up the stack pointer in the ucontext returned by getcontext.
+	[skrll, ticket #576]
 
