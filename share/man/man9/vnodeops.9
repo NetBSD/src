@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.86 2012/10/01 18:16:36 njoly Exp $
+.\"     $NetBSD: vnodeops.9,v 1.87 2012/10/01 20:49:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1180,7 +1180,7 @@ return 1 if appropriate privileges are required for the
 system call, otherwise zero
 .It _PC_NO_TRUNC
 return 0 if file names longer than
-.Brq NAME_MAX
+.Brq Dv NAME_MAX
 are silently truncated
 .El
 .Pp
