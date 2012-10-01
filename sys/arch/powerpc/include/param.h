@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 2012/01/30 06:04:32 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.27.2.1 2012/10/01 17:51:14 riz Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,7 +110,7 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 #endif
 #ifndef NKMEMPAGES_MAX_DEFAULT
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((256 * 1024 * 1024) >> PAGE_SHIFT)
 #endif
 
 #if defined(_KERNEL) && !defined(_LOCORE)
