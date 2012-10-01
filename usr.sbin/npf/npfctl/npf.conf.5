@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.9.2.3 2012/08/13 19:43:44 riz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.9.2.4 2012/10/01 20:05:56 riz Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2012
+.Dd September 30, 2012
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -36,144 +36,222 @@
 .\" -----
 .Sh DESCRIPTION
 .Nm
-is the default configuration file for NPF packet filter.
-It can contain definitions, grouped rules, rule procedures,
-translation policies, and tables.
-.Ss Definitions
-Definitions are general purpose keywords which can be used in the
-ruleset to make it more flexible and easier to manage.
-Most commonly, definitions are used to define one of the following:
-IP addresses, networks, ports, or interfaces.
-Definitions can contain multiple elements.
-.Ss Groups
-Having one huge ruleset for all interfaces or directions might be
-inefficient; therefore, NPF requires that all rules be defined within groups.
-Groups can be thought of as higher level rules which have subrules.
-The main properties of a group are its interface and traffic direction.
-Packets matching group criteria are passed to the ruleset of that group.
-If a packet does not match any group, it is passed to the default group.
-The default group must always be defined.
-.Ss Rules
-Rules, which are the main part of NPF configuration, describe the criteria
-used to inspect and make decisions about packets.
-Currently, NPF supports filtering on the following criteria: interface,
-traffic direction, protocol, IP address or network, TCP/UDP port
-or range, TCP flags, and ICMP type/code.
-Supported actions are blocking or passing the packet.
+is the default configuration file for the NPF packet filter.
 .Pp
-Each rule has a priority, which is set according to its order in the ruleset.
-Rules defined first are accordingly inspected first.
-All rules in the group are inspected sequentially, and the last matching
-dictates the action to be taken.
-Rules, however, may be explicitly marked as final.
-In such cases, processing stops after encountering the first matching rule
-marked as final.
-If there is no matching rule in the custom group, then rules in the default
-group will be inspected.
+This manual page serves as a reference for editing
+.Nm .
+Please refer to the official NPF documentation for comprehensive and
+in-depth information.
 .Pp
-Stateful filtering is supported using the "stateful" keyword.
-In such cases, state (a session) is created and any further packets
-of the connection are tracked.
-Packets in backwards stream, after having been confirmed to belong to
-the same connection, are passed without ruleset inspection.
-Rules may have associated rule procedures (described in a later section),
-which are applied for all packets of a connection.
-.Pp
-Definitions (prefixed with "$") and tables (specified by an ID within
-"\*[Lt]\*[Gt]" marks) can be used in the filter options of rules.
-.Ss Rule procedures and normalisation
-Rule procedures are provided to perform packet transformations and various
-additional procedures on the packets.
-It should be noted that rule procedures are applied for the connections,
-that is, both for packets which match the rule and for further packets
-of the connection, which are passed without ruleset inspection.
-Currently, two facilities are supported:
-traffic normalisation and packet logging.
-Packet normalisation has the following functionality:
-IP ID randomisation, IP_DF flag cleansing, TCP minimum TTL enforcement,
-and maximum MSS enforcement ("MSS clamping").
-If a matching rule is going to drop the packet, normalisation functions
-are not performed.
-Packet logging is performed both in packet passing and blocking cases.
-Note that the logging interface has to be created manually, using
-.Xr ifconfig 8
-routine, for example:
-.Pp
-ifconfig npflog0 create
-.Ss Network address translation
-Rules for address translation can be added.
-Translation is performed on the specified interface, assigning the specified
-address of said interface.
-Currently, three types of translation are supported:
-Network Address Port Translation (NAPT) - a regular NAT,
-also known as "outbound NAT";
-Port forwarding (redirection) - also known as "inbound NAT";
-Bi-directional NAT - a combination of inbound and outbound NAT.
-.Pp
-Minimal filtering criteria on local network and destination are provided.
-Note that address translation implies routing, therefore IP forwarding
-is required to be enabled:
-net.inet.ip.forwarding = 1.
-See
-.Xr sysctl 7
-for more details.
-.Ss Tables
-Certain configurations might use very large sets of IP addresses or change
-sets frequently.
-Storing large IP sets in the configuration file or performing frequent
-reloads can have a significant performance cost.
-.Pp
-In order to achieve high performance, NPF has tables.
-NPF tables provide separate storage designed for large IP sets and frequent
-updates without reloading the entire ruleset.
-Tables can be managed dynamically or loaded from a separate file, which
-is useful for large static tables.
-There are two types of storage: "tree" (red-black tree is used) and
-"hash".
-.\" -----
-.Sh GRAMMAR
+There are multiple structural elements
+.Nm
+may contain:
+.Cd variable
+and
+.Cd table
+definitions (with or without content), abstraction
+.Cd groups ,
+packet filtering
+.Cd rules ,
+.Cd map
+rules for address translation and
+.Cd procedure
+definitions to call on filtered packets.
+The minimal
+.Nm
+must contain a mandatory
+.Cd default group .
+.Sh SYNTAX
+.Ss Variables
+Variables are specified using the dollar ($) sign, which is used both
+in definitions and uses of a variable.
+Variables are defined by assigning a value to them as follows:
 .Bd -literal
-line		= ( def | table | map | group | rproc )
+$var1 = 10.0.0.1
+.Ed
+.Pp
+A variable may also be defined as a set:
+.Bd -literal
+$var2 = { 10.0.0.1, 10.0.0.2 }
+.Ed
+.Pp
+Common variable definitions are for IP addresses, networks, ports,
+and interfaces.
+.Ss Tables
+Tables are specified using a number between angle brackets
+\*[Lt] and \*[Gt].
+The number used to specify a table should be between 0 and 15.
+The following is an example of table definition:
+.Bd -literal
+table <1> type hash dynamic
+.Pp
+.Ed
+Currently, tables support two storage types: "hash" or "tree".
+They can also be "dynamic" or static i.e. loaded from the specified file.
+.Pp
+The file should contain a list of IP addresses and/or networks in the form of:
+.Bd -literal
+10.0.0.0/24
+10.1.1.1
+.Ed
+.Pp
+Tables of type "hash" can only contain IP addresses.
+.Ss Groups
+Groups may have the following options: name, interface, and direction.
+They are defined in the following form:
+.Pp
+.Bd -literal
+group (name "my_group", interface wm0, in) {
+	# List of rules
+}
+.Ed
+.Ss Rules
+With a rule statement NPF is instructed to
+.Cd pass
+or
+.Cd block
+a packet depending on packet header information, transit direction and
+interface it arrives on, either immediately upon match (keyword
+.Cd final )
+or using the last match.
+The rule can also instruct NPF to create an entry in the state table
+when passing the packet, to notify the sender when blocking it, and
+to apply a procedure to the packet (e.g. "log") in either case.
+.Pp
+A "fully-featured" rule would for example be:
+.Bd -literal
+pass stateful in final family inet proto tcp flags S/SA \\
+	from $source port $sport to $dest port $dport apply "someproc"
+.Ed
+.Pp
+Any protocol in
+.Pa /etc/protocols
+can be specified.
+Further packet
+specification at present is limited to protocol TCP understanding flags,
+TCP and UDP understanding source and destination ports, and ICMP and
+IPv6-ICMP understanding icmp-type.
+.Pp
+Fragments are not selectable since NPF always reassembles packets
+before further processing.
+.Ss Map
+Network Address Translation (NAT) is expressed in a form of segment mapping.
+At present, only dynamic translation is supported.
+The following mapping types are available:
+.Pp
+.Bl -tag -width <-> -compact
+.It Pa ->
+outbound NAT (translation of the source)
+.It Pa <-
+inbound NAT (translation of the destination)
+.It Pa <->
+bi-directional NAT (combination of inbound and outbound NAT)
+.El
+.Pp
+The following would translate the source to the IP address specified
+by the $pub_ip for the packets on the interface $ext_if.
+.Bd -literal
+map $ext_if dynamic 10.1.1.0/24 -> $pub_if
+.Ed
+.Pp
+Translations are implicitly filtered by limiting the operation to the
+network segments specified, that is, translation would be performed only
+on packets originating from 10.1.1.0/24 network.
+Explicit filter criteria can be specified using "pass <criteria>" as
+an additional option of the mapping.
+.Ss Procedures
+A rule procedure is defined as a collection of extension calls (it
+may have none).
+Every extension call has a name and a list of options in the form of
+key-value pairs.
+Depending on the call, the key might represent the argument and the value
+might be optional.
+For example:
+.Bd -literal
+procedure "someproc" {
+	log: npflog0
+	normalise: "random-id", "min-ttl" 64
+}
+.Ed
+.Pp
+In this case, the procedure calls the logging and normalisation modules.
+.Ss Misc
+Text after a hash
+.Pq Sq #
+character is considered a comment.
+The backslash
+.Pq Sq \e
+character at the end of a line marks a continuation line,
+i.e., the next line is considered an extension of the present line.
+.Sh GRAMMAR
+The following is a non-formal BNF-like definition of the grammar.
+The definition is simplified and is intended to be human readable,
+therefore it does not strictly represent the full syntax, which
+is more flexible.
+.Bd -literal
+; Syntax of a single line.  Lines can be separated by LF (\n) or
+; a semicolon.  Comments start with a hash (#) character.
 
-var		= $\*[Lt]name\*[Gt]
-iface		= ( \*[Lt]interface\*[Gt] | var )
-def		= ( var "=" "{ "\*[Lt]value_1\*[Gt]", "\*[Lt]value_2\*[Gt]", ... }" | "\*[Lt]value\*[Gt]" )
+syntax		= var-def | table-def | map | group | rproc | comment
 
-table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
-		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
+; Variable definition.  Names can be alpha-numeric, including "_" character.
 
-map-di		= ( "->" | "<-" | "<->" )
-map-type	= ( "static" | "dynamic" )
-map		= "map" iface map-type \*[Lt]seg1\*[Gt] map-di \*[Lt]seg2\*[Gt] [ "pass" filt-opts ]
+var-name	= "$" . string
+interface	= interface-name | var-name
+var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
 
-rproc		= "procedure" \*[Lt]name\*[Gt] procs
-procs		= "{" op1 \*[Lt]newline\*[Gt], op2 \*[Lt]newline\*[Gt], ... "}"
-op		= ( "log" iface | "normalise" "(" norm-opt1 "," norm-opt2 ... ")" )
-norm-opt	= [ "random-id" | "min-ttl" \*[Lt]num\*[Gt] | "max-mss" \*[Lt]num\*[Gt] | "no-df" ]
+; Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
-group		= "group" "(" ( "default" | group-opts ) ")" ruleset
-group-opts	= [ name \*[Lt]name\*[Gt] "," ] "interface" iface [ "," ( "in" | "out" ) ]
+table-id	= \*[Lt]tid\*[Gt]
+table-def	= "table" table-id "type" ( "hash" | "tree" )
+		  ( "dynamic" | "file" path )
 
-ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
+; Mapping for address translation.
 
-rule		= ( "block" block-opts | "pass" ) [ "stateful" ] [ "in" | out" ] [ "final" ]
-		  [ "on" iface ] [ "family" fam-opt ] [ "proto" \*[Lt]protocol\*[Gt] [ proto-opts ] ]
-		  ( "all" | filt-opts ) [ "apply" rproc ] }
+map		= "map" interface ( "static" | "dynamic" )
+		  net-seg ( "->" | "<-" | "<->" ) net-seg
+		  [ "pass" filt-opts ]
 
-fam-opt		= [ "inet" | "inet6" ]
-block-opts	= [ "return-rst" | "return-icmp" | "return" ]
-filt-addr	= iface | var | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt]
-port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] "-" \*[Lt]port-to\*[Gt] | var ) ]
-filt-opts	= [ "from" filt-addr [ port-opts ] ] [ "to" filt-addr [ port-opts ] ]
-proto-opts	= [ "flags" \*[Lt]tcp_flags\*[Gt] | "icmp-type" \*[Lt]type\*[Gt] "code" \*[Lt]code\*[Gt] ]
+; Rule procedure definition.  The name should be in the double quotes.
+;
+; Each call can have its own options in a form of key-value pairs.
+; Both key and values may be strings (either in double quotes or not)
+; and numbers, depending on the extension.
+
+proc		= "procedure" proc-name "{" *( proc-call [ new-line ] ) "}"
+proc-opts	= key " " val [ "," proc-opts ]
+proc-call	= call-name ":" proc-opts new-line
+
+; Group definition and the ruleset.
+
+group		= "group" "(" ( "default" | group-opts ) ")" "{" ruleset "}"
+group-opts	= [ "name" string ] [ "interface" interface ] [ "in" | "out" ]
+ruleset		= [ rule new-line ] [ ruleset ]
+
+rule		= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
+		  [ "in" | out" ] [ "final" ] [ "on" iface ]
+		  [ "family" fam-opt ] [ "proto" protocol [ proto-opts ] ]
+		  ( "all" | filt-opts ) [ "apply" proc-name ]
+
+block-opts	= "return-rst" | "return-icmp" | "return"
+fam-opt		= "inet" | "inet6"
+proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
+		  "icmp-type" type [ "code" icmp-code ]
+
+addr-mask	= addr [ "/" mask ]
+filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
+filt-addr	= [ interface | var-name | addr-mask | table-id | "any" ]
+filt-port	= "port" ( port-num | port-from "-" port-to | var-name )
 .Ed
 .\" -----
 .Sh FILES
-.Bl -tag -width /dev/npf.conf -compact
+.Bl -tag -width /usr/share/examples/npf -compact
 .It Pa /dev/npf
 control device
 .It Pa /etc/npf.conf
 default configuration file
+.It Pa /usr/share/examples/npf
+directory containing further examples
 .El
 .\" -----
 .Sh EXAMPLES
@@ -197,12 +275,8 @@ procedure "log" {
 	log: npflog0
 }
 
-procedure "rid" {
-	normalise: "random-id"
-}
-
 group (name "external", interface $ext_if) {
-	pass stateful out final from $ext_if apply "rid"
+	pass stateful out final from $ext_if
 
 	block in final from \*[Lt]1\*[Gt]
 	pass stateful in final family inet proto tcp to $ext_if port ssh apply "log"
