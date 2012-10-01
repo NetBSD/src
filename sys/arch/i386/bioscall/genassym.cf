@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2008/09/20 18:29:05 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.5 2012/10/01 17:26:41 dsl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,21 +66,11 @@
 
 include <sys/types.h>
 include <i386/include/bioscall.h>
-include <i386/include/apmvar.h>
 
 ifdef NOTDEF
 include <machine/bioscall.h>
-include <machine/apmvar.h>
 endif
 
-define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
-define	APM_CODE16		offsetof(struct apm_connect_info, apm_code16_seg_base)
-define	APM_DATA		offsetof(struct apm_connect_info, apm_data_seg_base)
-define	APM_CODE32_LEN		offsetof(struct apm_connect_info, apm_code32_seg_len)
-define	APM_DATA_LEN		offsetof(struct apm_connect_info, apm_data_seg_len)
-define	APM_ENTRY		offsetof(struct apm_connect_info, apm_entrypt)
-define	APM_DETAIL		offsetof(struct apm_connect_info, apm_detail)
-define	APM_SIZE		sizeof(struct apm_connect_info)
 define	BIOSCALLREG_EAX		offsetof(struct bioscallregs, EAX)
 define	BIOSCALLREG_EBX		offsetof(struct bioscallregs, EBX)
 define	BIOSCALLREG_ECX		offsetof(struct bioscallregs, ECX)
