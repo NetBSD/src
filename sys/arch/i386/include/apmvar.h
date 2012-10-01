@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.25 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.26 2012/10/01 17:30:39 dsl Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,36 +36,4 @@
 #include <dev/apm/apmio.h>
 #endif /* _LCORE */
 
-/*
- * virtual & physical address of the trampoline
- * that we use: page 1.
- */
-#define APM_BIOSTRAMP	PAGE_SIZE
-
-#ifndef _LOCORE
-/* filled in by apmcall */ 
-
-struct apm_connect_info {
-	u_int apm_code32_seg_base;	/* real-mode style segment selector */
-	u_int apm_code16_seg_base;
-	u_int apm_data_seg_base;
-	u_int apm_entrypt;
-	u_short	apm_segsel;		/* segment selector for APM */
-	u_short _pad1;
-	u_int apm_code32_seg_len;
-	u_int apm_code16_seg_len;
-	u_int apm_data_seg_len;
-	u_int apm_detail;
-};
-
-#ifdef _KERNEL
-extern struct apm_connect_info apminfo;	/* in locore */
-extern int apmpresent;
-int apmcall(int function, struct bioscallregs *regs);
-void bioscall(int function, struct bioscallregs *regs);
-int apm_set_powstate(void *, u_int, u_int);
-void apminit(void);
-int apm_busprobe(void);
-#endif /* _KERNEL */
-#endif /* _LOCORE */
 #endif /* __i386_apm_h__ */
