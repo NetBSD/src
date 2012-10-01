@@ -636,7 +636,7 @@ static DNSServiceErrorType ConnectToServer(DNSServiceRef *ref, DNSServiceFlags f
 	else
 		{
 		#ifdef SO_NOSIGPIPE
-		const unsigned long optval = 1;
+		int optval = 1;
 		#endif
 		*ref = NULL;
 		sdr->sockfd    = socket(AF_DNSSD, SOCK_STREAM, 0);
