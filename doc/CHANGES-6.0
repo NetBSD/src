@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.211 2012/10/01 17:58:21 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.212 2012/10/01 20:22:30 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8740,4 +8740,35 @@ lib/libc/arch/arm/gen/swapcontext.S		1.7
 
 	Fix up the stack pointer in the ucontext returned by getcontext.
 	[skrll, ticket #576]
+
+sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	1.8
+
+	Avoid crashing when writing to certain DRM sysctls.
+	[chs, ticket #579]
+
+sys/ufs/ufs/ufs_quota2.c			1.35
+tests/fs/ffs/h_quota2_tests.c			1.4
+tests/fs/ffs/t_miscquota.sh			1.7
+
+	Fix quota2 list corruption issue when defaultquotas are 0 (deny any file
+	and block allocation).
+	[bouyer, ticket #580]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.16-1.23
+usr.sbin/npf/npfctl/npfctl.c			1.19
+
+	Improve npf.conf(5) manpage, minor formatting fix for npfctl.
+	[rmind, ticket #582]
+
+distrib/sets/lists/base/mi			1.1003
+etc/mtree/NetBSD.dist.base			1.104
+share/examples/Makefile				1.21
+share/examples/npf/Makefile			1.1
+share/examples/npf/hashtablefile		1.1
+share/examples/npf/host-npf.conf		1.1-1.2
+share/examples/npf/soho_gw-npf.conf		1.1-1.2
+share/examples/npf/treetablefile		1.1
+
+	Update the NPF examples, and install them.
+	[rmind, ticket #584]
 
