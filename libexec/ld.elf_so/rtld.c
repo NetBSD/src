@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.158 2012/08/15 03:46:06 matt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.159 2012/10/01 03:03:46 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.158 2012/08/15 03:46:06 matt Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.159 2012/10/01 03:03:46 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -775,7 +775,7 @@ _rtld_dlcheck(void *handle)
 			break;
 
 	if (obj == NULL || obj->dl_refcount == 0) {
-		xwarnx("Invalid shared object handle %p", handle);
+		_rtld_error("Invalid shared object handle %p", handle);
 		return NULL;
 	}
 	return obj;
@@ -1335,7 +1335,6 @@ dlinfo(void *handle, int req, void *v)
 		}
 	} else {
 		if ((obj = _rtld_dlcheck(handle)) == NULL) {
-			_rtld_error("Invalid handle");
 			_rtld_shared_exit();
 			return -1;
 		}
