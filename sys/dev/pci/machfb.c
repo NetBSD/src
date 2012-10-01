@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.84 2012/10/01 09:25:01 jdc Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.84 2012/10/01 09:25:01 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOBILITY, 230000 },
 #endif
+	{ PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT, 230000 },
