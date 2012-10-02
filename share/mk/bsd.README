@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.303 2012/09/30 03:07:25 jkoshy Exp $
+#	$NetBSD: bsd.README,v 1.304 2012/10/02 04:53:11 jkoshy Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -221,6 +221,9 @@ MKISCSI		If "no", don't build or install iSCSI library or applications
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
+		Default: yes
+
+MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
 MKLDAP		If "no", disables building of LDAP infrastructure
