@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.254 2012/09/30 11:49:44 mlelstv Exp $	*/
+/*	$NetBSD: tty.c,v 1.255 2012/10/02 23:10:34 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.254 2012/09/30 11:49:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.255 2012/10/02 23:10:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1957,7 +1957,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		/*
 		 * Give user character.
 		 */
+		mutex_spin_exit(&tty_lock);
  		error = ureadc(c, uio);
+		mutex_spin_enter(&tty_lock);
 		if (error)
 			break;
  		if (uio->uio_resid == 0)
