@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.37 2011/02/26 12:07:45 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38 2012/10/02 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2011/02/26 12:07:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2012/10/02 23:54:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2011/02/26 12:07:45 tsutsui Exp $")
 #include <machine/bus.h>
 #include <machine/bus_dma_hpcmips.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 static int _hpcmips_bd_map_load_buffer(bus_dmamap_t, void *, bus_size_t,
     struct vmspace *, int, vaddr_t *, int *, int);
