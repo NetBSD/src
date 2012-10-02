@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.111 2010/06/24 13:03:06 hannken Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.111 2010/06/24 13:03:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1254,7 +1254,7 @@ xenix_sys_nap(struct lwp *l, const struct xenix_sys_nap_args *uap, register_t *r
 
 	rqt.tv_sec = 0;
 	rqt.tv_nsec = SCARG(uap, millisec) * 1000;
-	error = nanosleep1(l, &rqt, &rmt);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt, &rmt);
 	/* If interrupted we can either report EINTR, or the time left */
 	if (error != 0 && error != EINTR)
 		return error;
