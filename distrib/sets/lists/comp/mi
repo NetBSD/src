@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1782 2012/09/27 18:28:53 alnsn Exp $
+#	$NetBSD: mi,v 1.1783 2012/10/02 01:47:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4727,6 +4727,7 @@
 ./usr/share/man/cat2/chroot.0			comp-c-catman		.cat
 ./usr/share/man/cat2/clock_getres.0		comp-c-catman		.cat
 ./usr/share/man/cat2/clock_gettime.0		comp-c-catman		.cat
+./usr/share/man/cat2/clock_nanosleep.0		comp-c-catman		.cat
 ./usr/share/man/cat2/clock_settime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/clone.0			comp-c-catman		.cat
 ./usr/share/man/cat2/close.0			comp-c-catman		.cat
@@ -11178,6 +11179,7 @@
 ./usr/share/man/html2/chroot.html		comp-c-htmlman		html
 ./usr/share/man/html2/clock_getres.html		comp-c-htmlman		html
 ./usr/share/man/html2/clock_gettime.html	comp-c-htmlman		html
+./usr/share/man/html2/clock_nanosleep.html	comp-c-htmlman		html
 ./usr/share/man/html2/clock_settime.html	comp-c-htmlman		html
 ./usr/share/man/html2/clone.html		comp-c-htmlman		html
 ./usr/share/man/html2/close.html		comp-c-htmlman		html
@@ -17399,6 +17401,7 @@
 ./usr/share/man/man2/chroot.2			comp-c-man		.man
 ./usr/share/man/man2/clock_getres.2		comp-c-man		.man
 ./usr/share/man/man2/clock_gettime.2		comp-c-man		.man
+./usr/share/man/man2/clock_nanosleep.2		comp-c-man		.man
 ./usr/share/man/man2/clock_settime.2		comp-c-man		.man
 ./usr/share/man/man2/clone.2			comp-c-man		.man
 ./usr/share/man/man2/close.2			comp-c-man		.man
