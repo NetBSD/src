@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.20 2012/09/21 00:26:15 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.21 2012/10/02 15:22:46 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.20 2012/09/21 00:26:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.21 2012/10/02 15:22:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1676,6 +1676,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 	struct mbuf *m;
 	bus_dmamap_t dmamap;
 	uint32_t rxstat;
+	uint16_t bufsize;
 	int idx, cur, total_len;
 
 	idx = sc->sc_cdata.mvgbe_rx_prod;
@@ -1715,6 +1716,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 		cdata->mvgbe_rx_chain[idx].mvgbe_mbuf = NULL;
 		total_len = cur_rx->bytecnt;
 		rxstat = cur_rx->cmdsts;
+		bufsize = cur_rx->bufsize;
 
 		cdata->mvgbe_rx_map[idx] = NULL;
 
@@ -1743,20 +1745,30 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			goto sw_csum;
 
 		if (rxstat & MVGBE_RX_IP_FRAME_TYPE) {
+			int flgs = 0;
+
 			/* Check IPv4 header checksum */
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
-				m->m_pkthdr.csum_flags |=
-				    M_CSUM_IPv4_BAD;
+				flgs |= M_CSUM_IPv4_BAD;
+
 			/* Check TCPv4/UDPv4 checksum */
-			if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-			    MVGBE_RX_L4_TYPE_TCP)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			else if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-			    MVGBE_RX_L4_TYPE_UDP)
-				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (!(rxstat & MVGBE_RX_L4_CHECKSUM))
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+			if ((bufsize & MVGBE_RX_MAX_FRAME_LEN_ERROR) == 0) {
+				/* Not fragmented */
+
+				if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+				    MVGBE_RX_L4_TYPE_TCP)
+					flgs |= M_CSUM_TCPv4;
+				else if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+				    MVGBE_RX_L4_TYPE_UDP)
+					flgs |= M_CSUM_UDPv4;
+
+				if (((flgs & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
+				    && !(rxstat & MVGBE_RX_L4_CHECKSUM))
+					flgs |= M_CSUM_TCP_UDP_BAD;
+			}
+
+			m->m_pkthdr.csum_flags = flgs;
 		}
 sw_csum:
 
