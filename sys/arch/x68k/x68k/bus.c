@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35 2010/06/06 04:50:08 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.36 2012/10/02 23:54:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35 2010/06/06 04:50:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2012/10/02 23:54:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35 2010/06/06 04:50:08 mrg Exp $");
 #include <m68k/cacheops.h>
 #include <machine/bus.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #if defined(M68040) || defined(M68060)
 static inline void dmasync_flush(bus_addr_t, bus_size_t);
