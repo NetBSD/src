@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2012/07/09 17:48:31 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2012/10/02 23:51:39 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,7 +58,7 @@
 
 #define	PMAP_NEED_PROCWR
 
-#include <common/pmap/tlb/vmpagemd.h>
+#include <uvm/pmap/vmpagemd.h>
 
 #include <powerpc/booke/pte.h>
 
@@ -144,6 +144,6 @@ pmap_md_tlb_asid_max(void)
 #define	POOL_VTOPHYS(va)	((paddr_t)(vaddr_t)(va))
 #define	POOL_PHYSTOV(pa)	((vaddr_t)(paddr_t)(pa))
 
-#include <common/pmap/tlb/pmap.h>
+#include <uvm/pmap/pmap.h>
 
 #endif /* !_POWERPC_BOOKE_PMAP_H_ */

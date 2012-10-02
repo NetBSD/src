@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.16 2012/08/01 21:30:24 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.17 2012/10/02 23:51:39 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,7 @@ struct generic_attach_args {
 typedef __BSD_PT_ENTRY_T	pt_entry_t;
 #endif
 
-#include <common/pmap/tlb/tlb.h>
+#include <uvm/pmap/tlb.h>
 
 struct tlb_md_io_ops {
 	/*
