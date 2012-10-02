@@ -1,4 +1,4 @@
-#	$NetBSD: files.ews4800mips,v 1.5 2011/02/20 07:55:20 matt Exp $
+#	$NetBSD: files.ews4800mips,v 1.6 2012/10/02 23:54:52 christos Exp $
 
 maxpartitions 16
 
@@ -20,7 +20,7 @@ file arch/ews4800mips/ews4800mips/pdinfo.c		disk
 file arch/ews4800mips/ews4800mips/sector.c		disk
 file arch/ews4800mips/ews4800mips/vtoc.c		disk
 
-file common/bus_dma/bus_dmamem_common.c
+file dev/bus_dma/bus_dmamem_common.c
 
 file arch/ews4800mips/ews4800mips/cons_machdep.c
 file dev/cons.c

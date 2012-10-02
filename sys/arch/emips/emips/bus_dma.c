@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2011/02/22 08:20:20 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3 2012/10/02 23:54:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2012/10/02 23:54:53 christos Exp $");
 
 #include "opt_cputype.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
 #define _EMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #include <mips/cache.h>
 

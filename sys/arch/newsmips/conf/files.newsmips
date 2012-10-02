@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.28 2011/02/20 07:56:31 matt Exp $
+#	$NetBSD: files.newsmips,v 1.29 2012/10/02 23:54:53 christos Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -96,7 +96,7 @@ file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
 file dev/cons.c
 
-file common/bus_dma/bus_dmamem_common.c
+file dev/bus_dma/bus_dmamem_common.c
 
 #
 # Machine-independent SCSI driver.

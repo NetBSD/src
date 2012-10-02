@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2011/03/06 14:52:37 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2012/10/02 23:54:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2011/03/06 14:52:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2012/10/02 23:54:52 christos Exp $");
 
 /* #define	BUS_DMA_DEBUG */
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2011/03/06 14:52:37 tsutsui Exp $")
 #include <machine/bus.h>
 #include <machine/sbdvar.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #include <uvm/uvm_extern.h>
 

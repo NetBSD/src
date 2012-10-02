@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.68 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: bus_dma.c,v 1.69 2012/10/02 23:54:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69 2012/10/02 23:54:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/07/01 19:22:35 dyoung Exp $");
 #include <sys/bus.h>
 #include <machine/intr.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 int	_bus_dmamap_load_buffer_direct(bus_dma_tag_t,
 	    bus_dmamap_t, void *, bus_size_t, struct vmspace *, int,

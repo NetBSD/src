@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.56 2011/07/09 17:32:30 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.57 2012/10/02 23:54:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.57 2012/10/02 23:54:54 christos Exp $");
 
 #include "opt_cputype.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2011/07/09 17:32:30 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #include <mips/cache.h>
 

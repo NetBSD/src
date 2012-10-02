@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.78 2012/04/29 07:17:11 tsutsui Exp $
+#	$NetBSD: files.x68k,v 1.79 2012/10/02 23:54:54 christos Exp $
 #
 # new style config file for x68k architecture
 #
@@ -39,7 +39,7 @@ file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
-file	common/bus_dma/bus_dmamem_common.c
+file	dev/bus_dma/bus_dmamem_common.c
 
 file	dev/cons.c
 file	dev/cninit.c
