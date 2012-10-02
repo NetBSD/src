@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.174 2012/03/22 17:46:07 dholland Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.175 2012/10/02 01:44:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.174 2012/03/22 17:46:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.175 2012/10/02 01:44:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -303,7 +303,35 @@ sys___nanosleep50(struct lwp *l, const struct sys___nanosleep50_args *uap,
 	if (error)
 		return (error);
 
-	error = nanosleep1(l, &rqt, SCARG(uap, rmtp) ? &rmt : NULL);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
+	    SCARG(uap, rmtp) ? &rmt : NULL);
+	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt));
+	return error1 ? error1 : error;
+}
+
+/* ARGSUSED */
+int
+sys_clock_nanosleep(struct lwp *l, const struct sys_clock_nanosleep_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(int) flags;
+		syscallarg(struct timespec *) rqtp;
+		syscallarg(struct timespec *) rmtp;
+	} */
+	struct timespec rmt, rqt;
+	int error, error1;
+
+	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
+	if (error)
+		return (error);
+
+	error = nanosleep1(l, SCARG(uap, clock_id), SCARG(uap, flags), &rqt,
+	    SCARG(uap, rmtp) ? &rmt : NULL);
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 
@@ -312,21 +340,27 @@ sys___nanosleep50(struct lwp *l, const struct sys___nanosleep50_args *uap,
 }
 
 int
-nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
+nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
+    struct timespec *rmt)
 {
 	struct timespec rmtstart;
 	int error, timo;
+
+	if ((error = clock_gettime1(clock_id, &rmtstart)) != 0)
+		return ENOTSUP;
+
+	if (flags & TIMER_ABSTIME)
+		timespecsub(rqt, &rmtstart, rqt);
 
 	if ((error = itimespecfix(rqt)) != 0)
 		return error;
 
 	timo = tstohz(rqt);
 	/*
-	 * Avoid inadvertantly sleeping forever
+	 * Avoid inadvertently sleeping forever
 	 */
 	if (timo == 0)
 		timo = 1;
-	getnanouptime(&rmtstart);
 again:
 	error = kpause("nanoslp", true, timo, NULL);
 	if (rmt != NULL || error == 0) {
@@ -334,7 +368,7 @@ again:
 		struct timespec t0;
 		struct timespec *t;
 
-		getnanouptime(&rmtend);
+		(void)clock_gettime1(clock_id, &rmtend);
 		t = (rmt != NULL) ? rmt : &t0;
 		timespecsub(&rmtend, &rmtstart, t);
 		timespecsub(rqt, t, t);
