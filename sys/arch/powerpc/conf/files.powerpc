@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.83 2012/03/29 15:42:59 matt Exp $
+#	$NetBSD: files.powerpc,v 1.84 2012/10/02 23:51:39 christos Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC PPC_HAVE_SPE
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE OPENPIC_DISTRIBUTE
@@ -67,9 +67,9 @@ file	arch/powerpc/booke/copyout.c			ppc_booke
 file	arch/powerpc/booke/kcopy.c			ppc_booke
 file	arch/powerpc/booke/spe.c			ppc_booke
 file	arch/powerpc/booke/trap.c			ppc_booke
-file	common/pmap/tlb/pmap.c				ppc_booke
-file	common/pmap/tlb/pmap_segtab.c			ppc_booke
-file	common/pmap/tlb/pmap_tlb.c			ppc_booke
+file	uvm/pmap/pmap.c					ppc_booke
+file	uvm/pmap/pmap_segtab.c				ppc_booke
+file	uvm/pmap/pmap_tlb.c				ppc_booke
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
