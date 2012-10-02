@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.36 2011/11/18 04:08:56 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.37 2012/10/02 01:44:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.36 2011/11/18 04:08:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.37 2012/10/02 01:44:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -265,7 +265,8 @@ linux32_sys_nanosleep(struct lwp *l,
 		return error;
 	linux32_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqts,
+	    SCARG_P32(uap, rmtp) ? &rmts : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 
@@ -360,11 +361,10 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 	} */
 	struct linux32_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
-	int error, error1;
+	int error, error1, flags;
 	clockid_t id;
 
-	if (SCARG(uap, flags) != 0)
-		return EINVAL;          /* XXX deal with TIMER_ABSTIME */
+	flags = SCARG(uap, flags) != 0 ? TIMER_ABSTIME : 0;
 
 	error = linux_to_native_clockid(&id, SCARG(uap, which));
 	if (error != 0)
@@ -375,7 +375,8 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 		return error;
 	linux32_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
+	error = nanosleep1(l, id, flags, &rqts,
+	    SCARG_P32(uap, rmtp) ? &rmts : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 
