@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.76 2012/08/17 19:55:14 riz Exp $
+.\"	$NetBSD: postinstall,v 1.77 2012/10/02 17:43:52 roy Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -199,7 +199,7 @@ or
 for more information.
 Instead of manually configuring network and naming service,
 DHCP can be used by setting
-.Li dhclient=YES
+.Li dhcpcd=YES
 in
 .Pa /etc/rc.conf .
 .Pp
