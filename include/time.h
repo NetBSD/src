@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.40 2010/12/16 18:36:47 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.41 2012/10/02 01:42:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -142,6 +142,7 @@ extern int getdate_err;
 #include <sys/time.h>		/* XXX for struct timespec */
 struct sigevent;
 struct itimerspec;
+int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 #ifndef __LIBC12_SOURCE__
 int clock_getres(clockid_t, struct timespec *)
     __RENAME(__clock_getres50);
