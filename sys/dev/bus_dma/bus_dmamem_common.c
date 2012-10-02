@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dmamem_common.c,v 1.1 2012/10/02 23:39:43 christos Exp $	*/
+/*	$NetBSD: bus_dmamem_common.c,v 1.2 2012/10/02 23:49:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dmamem_common.c,v 1.1 2012/10/02 23:39:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dmamem_common.c,v 1.2 2012/10/02 23:49:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dmamem_common.c,v 1.1 2012/10/02 23:39:43 christ
 
 #include <uvm/uvm.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 /*
  * _bus_dmamem_alloc_range_common --
