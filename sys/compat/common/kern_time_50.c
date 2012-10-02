@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.22 2012/01/04 14:31:17 apb Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.23 2012/10/02 01:44:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.22 2012/01/04 14:31:17 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.23 2012/10/02 01:44:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -152,7 +152,8 @@ compat_50_sys_nanosleep(struct lwp *l,
 		return error;
 	timespec50_to_timespec(&rqt50, &rqt);
 
-	error = nanosleep1(l, &rqt, SCARG(uap, rmtp) ? &rmt : NULL);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
+	    SCARG(uap, rmtp) ? &rmt : NULL);
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 

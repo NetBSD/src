@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.41 2010/04/08 11:51:14 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.42 2012/10/02 01:44:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.41 2010/04/08 11:51:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42 2012/10/02 01:44:28 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -422,12 +422,41 @@ netbsd32___nanosleep50(struct lwp *l, const struct netbsd32___nanosleep50_args *
 		return (error);
 	netbsd32_to_timespec(&ts32, &rqt);
 
-	error = nanosleep1(l, &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
+	    SCARG_P32(uap, rmtp) ? &rmt : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 
 	netbsd32_from_timespec(&rmt, &ts32);
-	error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
+	error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32));
+	return error1 ? error1 : error;
+}
+
+int
+netbsd32_clock_nanosleep(struct lwp *l, const struct netbsd32_clock_nanosleep_args *uap, register_t *retval)
+{
+	/* {
+		clockid_t clock_id;
+		int flags;
+		syscallarg(const netbsd32_timespecp_t) rqtp;
+		syscallarg(netbsd32_timespecp_t) rmtp;
+	} */
+	struct netbsd32_timespec ts32;
+	struct timespec rqt, rmt;
+	int error, error1;
+
+	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
+	if (error)
+		return (error);
+	netbsd32_to_timespec(&ts32, &rqt);
+
+	error = nanosleep1(l, SCARG(uap, clock_id), SCARG(uap, flags),
+	    &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	netbsd32_from_timespec(&rmt, &ts32);
+	error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32));
 	return error1 ? error1 : error;
 }
 

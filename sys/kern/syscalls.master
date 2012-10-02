@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.260 2012/06/22 18:26:35 christos Exp $
+	$NetBSD: syscalls.master,v 1.261 2012/10/02 01:44:28 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -938,3 +938,6 @@
 			    struct timespec *timeout); }
 476	STD		{ int|sys||sendmmsg(int s, struct mmsghdr *mmsg, \
 			    unsigned int vlen, unsigned int flags); }
+477	STD 		{ int|sys||clock_nanosleep(clockid_t clock_id, \
+			    int flags, const struct timespec *rqtp, \
+			    struct timespec *rmtp); }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.95 2012/04/08 11:27:44 martin Exp $
+	$NetBSD: syscalls.master,v 1.96 2012/10/02 01:44:28 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1030,3 +1030,12 @@
 				const netbsd32_posix_spawnattrp attrp, \
 				netbsd32_charpp argv, netbsd32_charpp envp); }
 
+475	UNIMPL		{ int|netbsd32||recvmmsg(int s, struct mmsghdr *mmsg, \
+			    unsigned int vlen, unsigned int flags, \
+			    netbsd32_timespecp_t timeout); }
+476	UNIMPL		{ int|netbsd32||sendmmsg(int s, struct mmsghdr *mmsg, \
+			    unsigned int vlen, unsigned int flags); }
+477	STD 		{ int|netbsd32||clock_nanosleep(\
+			    netbsd32_clockid_t clock_id, \
+			    int flags, const netbsd32_timespecp_t rqtp, \
+			    netbsd32_timespecp_t rmtp); }
