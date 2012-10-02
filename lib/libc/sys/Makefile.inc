@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.216 2012/09/12 02:00:53 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.217 2012/10/02 01:46:40 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -75,8 +75,8 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
-	chdir.S chflags.S chmod.S chown.S chroot.S __clock_getres50.S \
-		__clock_gettime50.S \
+	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
+		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
@@ -327,3 +327,4 @@ MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
 MLINKS+=accept.2 paccept.2
+MLINKS+=nanosleep.2 clock_nanosleep.2
