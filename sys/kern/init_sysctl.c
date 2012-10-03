@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.190 2012/06/02 21:36:46 dsl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.191 2012/10/03 07:22:59 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190 2012/06/02 21:36:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.191 2012/10/03 07:22:59 mlelstv Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -967,6 +967,13 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
+
+	/*
+	 * sysctl passes down unsigned values, require them
+	 * to be positive
+	 */
+	if (new_vnodes <= 0)
+		return (EINVAL);
 
 	/* Limits: 75% of KVA and physical memory. */
 	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
