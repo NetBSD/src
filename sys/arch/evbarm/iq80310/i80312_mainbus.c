@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.14 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.15 2012/10/03 16:51:44 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.14 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_mainbus.c,v 1.15 2012/10/03 16:51:44 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	psize_t memsize;
 
 	i80312_mainbus_found = 1;
+	iq80310_intr_evcnt_attach();
 
 	/*
 	 * Fill in the space tag for the i80312's own devices,
