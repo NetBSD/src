@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.9 2012/10/03 13:01:27 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.10 2012/10/03 13:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.9 2012/10/03 13:01:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.10 2012/10/03 13:06:06 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -108,6 +108,16 @@ int plcomcnmode = PLCONMODE;
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_ARM_RAM_SPLIT (128U * 1024 * 1024)
 
+static inline
+pd_entry_t *
+read_ttb(void)
+{
+	long ttb;
+
+	__asm volatile("mrc   p15, 0, %0, c2, c0, 0" : "=r" (ttb));
+
+	return (pd_entry_t *)(ttb & ~((1<<14)-1));
+}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -123,19 +133,6 @@ int plcomcnmode = PLCONMODE;
  * registers segment-aligned and segment-rounded in order to avoid
  * using the 2nd page tables.
  */
-#define _A(a)	((a) & ~L1_S_OFFSET)
-#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
-static inline
-pd_entry_t *
-read_ttb(void)
-{
-	long ttb;
-
-	__asm volatile("mrc   p15, 0, %0, c2, c0, 0" : "=r" (ttb));
-
-	return (pd_entry_t *)(ttb & ~((1<<14)-1));
-}
 
 #define _A(a)	((a) & ~L1_S_OFFSET)
 #define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
