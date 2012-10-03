@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.264 2012/06/30 23:33:10 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.265 2012/10/03 18:58:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,14 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264 2012/06/30 23:33:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.265 2012/10/03 18:58:32 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
-#include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
@@ -131,13 +130,6 @@ static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
-
-#ifdef KVM86
-#include <machine/kvm86.h>
-#define KVM86MODE (kvm86_incall)
-#else
-#define KVM86MODE (0)
-#endif
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -340,7 +332,7 @@ trap(struct trapframe *frame)
 		trap_print(frame, l);
 	}
 #endif
-	if (type != T_NMI && !KVM86MODE &&
+	if (type != T_NMI &&
 	    !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
@@ -372,9 +364,6 @@ trap(struct trapframe *frame)
 	switch (type) {
 
 	case T_ASTFLT:
-		if (KVM86MODE) {
-			break;
-		}
 		/*FALLTHROUGH*/
 
 	default:
@@ -399,12 +388,6 @@ trap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
-#ifdef KVM86
-		if (KVM86MODE) {
-			kvm86_gpfault(frame);
-			return;
-		}
-#endif
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
