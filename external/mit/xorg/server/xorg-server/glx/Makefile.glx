@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.9 2011/08/02 07:41:01 mrg Exp $
+#	$NetBSD: Makefile.glx,v 1.10 2012/10/03 21:50:14 gsutre Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -14,6 +14,7 @@ SRCS.glx= \
         glapi_gentable.c \
         glthread.c \
         glxdri.c \
+        glxdri2.c \
         extension_string.c \
         indirect_util.c \
         indirect_program.c \
@@ -47,6 +48,8 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/include \
 	-I${X11SRCDIR.xorg-server}/glx \
 	-I${X11SRCDIR.xorg-server}/Xext \
+	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri \
+	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2 \
 	-I${X11SRCDIR.MesaLib}/include \
 	-I${X11SRCDIR.MesaLib}/src/glx \
 	-I${X11SRCDIR.MesaLib}/src/mesa \
