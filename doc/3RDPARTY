@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.971 2012/09/27 17:46:46 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.972 2012/10/03 19:19:09 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1029,13 +1029,13 @@ using the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
-Current Vers:	5.8
+Current Vers:	5.8.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	agc
-License:	GPLv2 (5.7), GPLv3+ (5.8)
+License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
 Location:	gnu/usr.bin/rcs
 Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
