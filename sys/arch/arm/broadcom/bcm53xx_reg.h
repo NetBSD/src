@@ -213,6 +213,20 @@
 
 #define	TIMER_FREQ		BCM53XX_REF_CLK
 
+#ifdef SRAB_PRIVATE
+#define	SRAB_CMDSTAT		0x002c
+#define  SRA_PAGE		__BITS(31,24)
+#define  SRA_OFFSET		__BITS(23,16)
+#define	 SRA_PAGEOFFSET		__BITS(31,16)
+#define	 SRA_RST		__BIT(2)
+#define	 SRA_WRITE		__BIT(1)
+#define	 SRA_GORDYN		__BIT(0)
+#define	SRAB_WDH		0x0030
+#define	SRAB_WDL		0x0034
+#define	SRAB_RDH		0x0038
+#define	SRAB_RDL		0x003c
+#endif
+
 #ifdef MII_PRIVATE
 #define	MII_INTERNAL		0x0038003	/* internal phy bitmask */
 #define	MIIMGT			0x000
@@ -313,17 +327,17 @@
 #define CRU_GPIO_PULL_DOWN	0x11e0
 
 #define CRU_STRAPS_CONTROL	0x12a0
-#define  STRAP_BOOT_DEV		 __BITS(17,16)
-#define  STRAP_NAND_TYPE	 __BITS(15,12)
-#define  STRAP_NAND_PAGE	 __BITS(11,10)
-#define  STRAP_DDR3		 __BIT(9)
-#define  STRAP_P5_VOLT_15	 __BIT(8)
-#define  STRAP_P5_MODE		 __BITS(7,6)
-#define  STRAP_PCIE0_MODE	 __BIT(5)
-#define  STRAP_USB3_SEL		 __BIT(4)
-#define  STRAP_EX_EXTCLK	 __BIT(3)
-#define  STRAP_HW_FWDG_EN	 __BIT(2)
-#define  STRAP_LED_SERIAL_MODE	 __BIT(1)
+#define  STRAP_BOOT_DEV		__BITS(17,16)
+#define  STRAP_NAND_TYPE	__BITS(15,12)
+#define  STRAP_NAND_PAGE	__BITS(11,10)
+#define  STRAP_DDR3		__BIT(9)
+#define  STRAP_P5_VOLT_15	__BIT(8)
+#define  STRAP_P5_MODE		__BITS(7,6)
+#define  STRAP_PCIE0_MODE	__BIT(5)
+#define  STRAP_USB3_SEL		__BIT(4)
+#define  STRAP_EX_EXTCLK	__BIT(3)
+#define  STRAP_HW_FWDG_EN	__BIT(2)
+#define  STRAP_LED_SERIAL_MODE	__BIT(1)
 #define  STRAP_BISR_BYPASS_AUTOLOAD	 __BIT(0)
 
 #endif /* CRU_PRIVATE */
@@ -634,8 +648,7 @@
 
 struct gmac_txdb {
 	uint32_t txdb_flags;
-	uint16_t txdb_buflen;
-	uint16_t txdb_addrext;
+	uint32_t txdb_buflen;
 	uint32_t txdb_addrlo;
 	uint32_t txdb_addrhi;
 };
@@ -646,8 +659,7 @@ struct gmac_txdb {
 
 struct gmac_rxdb {
 	uint32_t rxdb_flags;
-	uint16_t rxdb_buflen;
-	uint16_t rxdb_addrext;
+	uint32_t rxdb_buflen;
 	uint32_t rxdb_addrlo;
 	uint32_t rxdb_addrhi;
 };
@@ -670,10 +682,46 @@ struct gmac_rxdb {
 #define	RXSTS_DESC_COUNT	__BITS(27,24)	// # of descriptors - 1
 
 #define	GMAC_DEVCONTROL		0x000
+#define  ENABLE_DEL_G_TXC	__BIT(21)
+#define  ENABLE_DEL_G_RXC	__BIT(20)
+#define	 TXC_DRNG		__BITS(19,18)
+#define	 RXC_DRNG		__BITS(17,16)
+#define  TXQ_FLUSH		__BIT(8)
+#define  NWAY_AUTO_POLL_EN	__BIT(7)
+#define  FLOW_CTRL_MODE		__BITS(6,5)
+#define  MIB_RD_RESET_EN	__BIT(4)
+#define  RGMII_LINK_STATUS_SEL	__BIT(3)
+#define  CPU_FLOW_CTRL_ON	__BIT(2)
+#define  RXQ_OVERFLOW_CTRL_SEL	__BIT(1)
+#define  TXARB_STRICT_MODE	__BIT(0)
 #define GMAC_DEVSTATUS		0x004
 #define GMAC_BISTSTATUS		0x00c
 #define GMAC_INTSTATUS		0x020
 #define GMAC_INTMASK		0x024
+#define  TXQECCUNCORRECTED	__BIT(31)       
+#define  TXQECCCORRECTED	__BIT(30)
+#define  RXQECCUNCORRECTED	__BIT(29)
+#define  RXQECCCORRECTED	__BIT(28)
+#define  XMTINT_3		__BIT(27)
+#define  XMTINT_2		__BIT(26)
+#define  XMTINT_1		__BIT(25)
+#define  XMTINT_0		__BIT(24)
+#define  RCVINT			__BIT(16)
+#define  XMTUF			__BIT(15)
+#define  RCVFIFOOF		__BIT(14)
+#define  RCVDESCUF		__BIT(13)
+#define  DESCPROTOERR		__BIT(12)
+#define  DATAERR		__BIT(11)
+#define  DESCERR		__BIT(10)
+#define  INT_SW_LINK_ST_CHG	__BIT(8)
+#define  INT_TIMEOUT		__BIT(7)
+#define  MIB_TX_INT		__BIT(6)
+#define  MIB_RX_INT		__BIT(5)
+#define  MDIOINT		__BIT(4)
+#define  NWAYLINKSTATINT	__BIT(3)
+#define  TXQ_FLUSH_DONEINT	__BIT(2)
+#define  MIB_TX_OVERFLOW	__BIT(1)
+#define  MIB_RX_OVERFLOW	__BIT(0)
 #define GMAC_GPTIMER		0x028
 
 #define GMAC_INTRCVLAZY		0x100
@@ -697,24 +745,96 @@ struct gmac_rxdb {
 #define GMAC_CLOCKCONTROLSTATUS	0x1e0
 #define GMAC_POWERCONTROL	0x1e8
 
-#define GMAC_XMTCONTROL_0	0x200
-#define GMAC_XMTPTR_0		0x204
-#define GMAC_XMTADDR_LOW_0	0x208
-#define GMAC_XMTADDR_HIGH_0	0x20c
-#define GMAC_XMTSTATUS0_0	0x210
-#define GMAC_XMTSTATUS1_0	0x214
-#define GMAC_RCVCONTROL		0x220
+#define GMAC_XMTCONTROL		0x200
+#define  XMTCTL_PREFETCH_THRESH	__BITS(25,24)
+#define  XMTCTL_PREFETCH_CTL	__BITS(23,21)
+#define  XMTCTL_BURSTLEN	__BITS(20,18)
+#define  XMTCTL_ADDREXT		__BITS(17,16)
+#define  XMTCTL_DMA_ACT_INDEX	__BIT(13)
+#define  XMTCTL_PARITY_DIS	__BIT(11)
+#define  XMTCTL_OUTSTANDING_READS __BITS(7,6)
+#define  XMTCTL_BURST_ALIGN_EN	__BIT(5)
+#define  XMTCTL_DMA_LOOPBACK	__BIT(2)
+#define  XMTCTL_SUSPEND		__BIT(1)
+#define  XMTCTL_ENABLE		__BIT(0)
+#define GMAC_XMTPTR             0x204
+#define  XMT_LASTDSCR		__BITS(11,4)
+#define GMAC_XMTADDR_LOW        0x208
+#define GMAC_XMTADDR_HIGH       0x20c
+#define GMAC_XMTSTATUS0         0x210
+#define  XMTSTATE		__BITS(31,28)
+#define  XMTSTATE_DIS		0
+#define  XMTSTATE_ACTIVE	1
+#define  XMTSTATE_IDLE_WAIT	2
+#define  XMTSTATE_STOPPED	3
+#define  XMTSTATE_SUSP_PENDING	4
+#define  XMT_CURRDSCR		__BITS(11,4)
+#define GMAC_XMTSTATUS1         0x214
+#define  XMTERR			__BITS(31,28)
+#define  XMT_ACTIVEDSCR		__BITS(11,4)
+#define GMAC_RCVCONTROL         0x220
+#define  RCVCTL_PREFETCH_THRESH	__BITS(25,24)
+#define  RCVCTL_PREFETCH_CTL	__BITS(23,21)
+#define  RCVCTL_BURSTLEN	__BITS(20,18)
+#define  RCVCTL_ADDREXT		__BITS(17,16)
+#define  RCVCTL_DMA_ACT_INDEX	__BIT(13)
+#define  RCVCTL_PARITY_DIS	__BIT(11)
+#define  RCVCTL_OFLOW_CONTINUE	__BIT(10)
+#define  RCVCTL_SEPRXHDRDESC	__BIT(9)
+#define  RCVCTL_RCVOFFSET	__BITS(7,1)
+#define  RCVCTL_ENABLE		__BIT(0)
 #define GMAC_RCVPTR		0x224
+#define	 RCVPTR			__BITS(11,4)
 #define GMAC_RCVADDR_LOW	0x228
 #define GMAC_RCVADDR_HIGH	0x22c
 #define GMAC_RCVSTATUS0		0x230
+#define  RCVSTATE		__BITS(31,28)
+#define  RCVSTATE_DIS		0
+#define  RCVSTATE_ACTIVE	1
+#define  RCVSTATE_IDLE_WAIT	2
+#define  RCVSTATE_STOPPED	3
+#define  RCVSTATE_SUSP_PENDING	4
+#define  RCV_CURRDSCR		__BITS(11,4)
 #define GMAC_RCVSTATUS1		0x234
+#define  RCV_ACTIVEDSCR		__BITS(11,4)
 
 #define GMAC_TX_GD_OCTETS_LO	0x300
 
 
 #define	UNIMAC_IPG_HD_BPG_CNTL	0x804
 #define	UNIMAC_COMMAND_CONFIG	0x808
+#define  RUNT_FILTER_DIS	__BIT(30)
+#define  OOB_EFC_EN		__BIT(29)
+#define  IGNORE_TX_PAUSE	__BIT(28)
+#define  PRBL_ENA		__BIT(27)
+#define  RX_ERR_DIS		__BIT(26)
+#define  LINE_LOOPBACK		__BIT(25)
+#define  NO_LENGTH_CHECK	__BIT(24)
+#define  CNTRL_FRM_ENA		__BIT(23)
+#define  ENA_EXT_CONFIG		__BIT(22)
+#define  EN_INTERNAL_TX_CRS	__BIT(21)
+#define  SW_OVERRIDE_RX		__BIT(18)
+#define  SW_OVERRIDE_TX		__BIT(17)
+#define  MAC_LOOP_CON		__BIT(16)
+#define  LOOP_ENA		__BIT(15)
+#define  RCS_CORRUPT_URUN_EN	__BIT(14)
+#define  SW_RESET		__BIT(13)
+#define  OVERFLOW_EN		__BIT(12)
+#define  RX_LOW_LATENCY_EN	__BIT(11)
+#define  HD_ENA			__BIT(10)
+#define  TX_ADDR_INS		__BIT(9)
+#define  PAUSE_IGNORE		__BIT(8)   
+#define  PAUSE_FWD		__BIT(7)     
+#define  CRC_FWD		__BIT(6) 
+#define  PAD_EN			__BIT(5)    
+#define  PROMISC_EN		__BIT(4) 
+#define  ETH_SPEED		__BITS(3,2)
+#define  ETH_SPEED_10		0
+#define  ETH_SPEED_100		1
+#define  ETH_SPEED_1000		2
+#define  ETH_SPEED_2500		3
+#define  RX_ENA			__BIT(1) 
+#define  TX_ENA			__BIT(0) 
 #define	UNIMAC_MAC_0		0x80c		// bits 16:47 of macaddr
 #define	UNIMAC_MAC_1		0x810		// bits 0:15 of macaddr
 #define	UNIMAC_FRAME_LEN	0x814

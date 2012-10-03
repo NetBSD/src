@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_var.h,v 1.1 2012/09/01 00:04:44 matt Exp $	*/
+/*	$NetBSD: bcm53xx_var.h,v 1.2 2012/10/03 19:18:41 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -108,6 +108,11 @@ void	bcm53xx_device_register(device_t, void *);
 psize_t	bcm53xx_memprobe(void);
 void	bcm53xx_print_clocks(void);
 void	bcm53xx_rng_start(bus_space_tag_t, bus_space_handle_t);
+void	bcm53xx_srab_init(void);
+uint32_t	bcm53xx_srab_read_4(u_int);
+uint64_t	bcm53xx_srab_read_8(u_int);
+void	bcm53xx_srab_write_4(u_int, uint32_t);
+void	bcm53xx_srab_write_8(u_int, uint64_t);
 extern struct arm32_bus_dma_tag bcm53xx_dma_tag;
 extern struct bus_space bcmgen_bs_tag;
 extern bus_space_tag_t bcm53xx_ioreg_bst;
