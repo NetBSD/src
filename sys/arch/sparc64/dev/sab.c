@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.48 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: sab.c,v 1.49 2012/10/03 07:16:49 mlelstv Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.48 2011/06/02 00:24:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.49 2012/10/03 07:16:49 mlelstv Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -677,7 +677,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (EBUSY);
 
 	mutex_spin_enter(&tty_lock);
-	if ((tp->t_state & TS_ISOPEN) == 0) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
