@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.23 2011/11/18 22:18:08 jmcneill Exp $
+#	$NetBSD: files.compat,v 1.24 2012/10/03 18:58:32 dsl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -14,7 +14,6 @@ defflag opt_xen.h		XEN PAE
 # XXX define fake options to make config create the .h files
 defflag	lapic.h			XXXLAPIC
 defflag	apm.h			XXXAPM
-defflag	apmbios.h		XXXAPMBIOS
 defflag	eisa.h			XXXEISA
 defflag	isadma.h		XXXISADMA
 defflag	mca.h			XXXMCA
@@ -28,7 +27,6 @@ defflag	opt_pcifixup.h		XXXOPT_PCIFIXUP
 
 # VM86 emulation
 defflag	opt_vm86.h			XXXVM86
-defflag	opt_kvm86.h			XXXKVM86
 
 # User-settable LDT (used by WINE)
 defflag	opt_user_ldt.h			XXXUSER_LDT
