@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.366 2012/09/30 20:19:51 dsl Exp $
+#	$NetBSD: files.i386,v 1.367 2012/10/03 18:58:31 dsl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -20,7 +20,6 @@ obsolete defflag	XBOX
 
 # VM86 emulation
 defflag			VM86
-defflag			KVM86
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -328,10 +327,6 @@ include "dev/apm/files.apm"
 
 # VM86 mode
 file	arch/i386/i386/vm86.c			vm86
-
-# VM86 in kernel
-file	arch/i386/i386/kvm86.c			kvm86
-file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
