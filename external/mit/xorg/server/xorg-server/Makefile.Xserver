@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.12 2011/08/02 09:11:37 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.13 2012/10/03 21:50:14 gsutre Exp $
 
 .for _SL in \
 	mi \
@@ -41,6 +41,7 @@
 	hw/xfree86/dixmods/xtrap \
 	hw/xfree86/doc \
 	hw/xfree86/dri \
+	hw/xfree86/dri2 \
 	hw/xfree86/dummy \
 	hw/xfree86/i2c \
 	hw/xfree86/init \
