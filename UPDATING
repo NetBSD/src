@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.240 2012/09/17 05:56:27 dholland Exp $
+$NetBSD: UPDATING,v 1.241 2012/10/03 19:17:00 wiz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -17,14 +17,14 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20120726:
-	The update of openssl requires cleaning both the openssl build
-	directory and DESTDIR. *Even non-update builds require cleaning
+	The update of OpenSSL requires cleaning both the OpenSSL build
+	directory and DESTDIR.  *Even non-update builds require cleaning
 	DESTDIR.* Builds done without taking these steps may fail, or in
-	some cases may succeed and install broken openssl libraries that
+	some cases may succeed and install broken OpenSSL libraries that
 	cause third-party software to link incorrectly and/or crash.
 
 20120507:
-	The database schema for makemandb was changed. You will
+	The database schema for makemandb was changed.  You will
 	need to update the database using 'makemandb -f' or wait
 	for the next weekly run to fix it.
 
@@ -36,10 +36,10 @@ Recent changes:
 	mk.conf.
 
 20120216:
-	Default for MKCATPAGES changed to NO. Update builds will fail
-	unless DESTDIR is cleaned manually. If you built between 20120207
+	Default for MKCATPAGES changed to NO.  Update builds will fail
+	unless DESTDIR is cleaned manually.  If you built between 20120207
 	and 20120216, daily and weekly could have created an unreadable
-	/var/db/man.db index for apropos. Running makemandb -f or
+	/var/db/man.db index for apropos.  Running makemandb -f or
 	the next run of weekly will fix it.
 
 20111227:
@@ -59,11 +59,11 @@ Recent changes:
 	bit compatibility very painful) has been fixed in a
 	non-backwards-compatible way.  If you replace your kernel,
 	replace your rndctl executable too.
-	
+
 20111001:
 	the prop_*_send_syscall() functions from proplib(3) have been
 	changed and their new version is not backward compatible with the old
-	one. So ensure that all consumers of these functions (currently:
+	one.  So ensure that all consumers of these functions (currently:
 	quota2 code and its tests) are updated together with the new lib.
 
 20110817:
@@ -81,19 +81,19 @@ Recent changes:
 	sparc64, mips and powerpc platforms have changed.
 
 20110803:
-	The layout of external/public-domain/xz has changed. To do an
+	The layout of external/public-domain/xz has changed.  To do an
 	update build you will have to remove the contents of the OBJDIR
 	for external/public-domain/xz/bin by hand as the xz entry there
 	is now a directory.
 
 20110410:
-	The configuration of src/tools/gcc has changed. To do an
+	The configuration of src/tools/gcc has changed.  To do an
 	update build you have to clean both tools/binutils and
 	tools/gcc by hand.
 
 20110328:
 	Building the Xorg binary was moved into a subdirectory to fix
-	ordering issues with "make all". It may be necessary to remove
+	ordering issues with "make all".  It may be necessary to remove
 	the OBJDIR for external/mit/xorg/server/xorg-server/hw/xfree86
 	if your update build fails, as the "Xorg" entry there is now a
 	directory.
@@ -106,13 +106,13 @@ Recent changes:
 
 20101217:
 	The tcpdump(8) program was changed to drop privileges and chroot(2)
-	by default. It may be necessary to manually update passwd(5) and
+	by default.  It may be necessary to manually update passwd(5) and
 	group(5) in order to make the program work with existing setups.
 
 20101125:
 	The latest changes to setenv(3) dissallow setting environment
-	variables with names that contain '='. Revision 1.18 of env.c
-	assumed that this was allowed. Installing a new libc with an
+	variables with names that contain '='.  Revision 1.18 of env.c
+	assumed that this was allowed.  Installing a new libc with an
 	old copy of /usr/bin/env causes env x=1 printenv | grep x= to
 	break which affects the autoconf tests for dependency finding,
 	so building gcc will end up printing:
@@ -142,7 +142,7 @@ Recent changes:
 	include ctype_local.h, so you have to make cleandir in tools/mklocale.
 
 20100520:
-	The location of the xkb compiled descriptions has changed. Please
+	The location of the xkb compiled descriptions has changed.  Please
 	remove usr/X11R7/lib/X11/xkb/compiled from your $DESTDIR.
 
 20100222:
@@ -175,7 +175,7 @@ Recent changes:
 
 20090718:
 	libc build changed so that strchr() provides the extra entry
-	point for index(). Update build of libc.a (and libc_pic.a)
+	point for index().  Update build of libc.a (and libc_pic.a)
 	may fail because the archive contains the unwanted index.o.
 	(Similarly for strrchr() and rindex().)
 
@@ -193,7 +193,7 @@ Recent changes:
 20090501:
 	Several new functions were added to string.h/libc, and this
 	can cause autoconf problems during the tool build for people
-	who fail to clean out their tools objects properly. If you
+	who fail to clean out their tools objects properly.  If you
 	note messages about stpcpy, stpncpy or strnlen accompanying a
 	failure during the tool build, clean out all your tools
 	objects and start again.
@@ -203,7 +203,7 @@ Recent changes:
 	cleaning your src/tools directory and $TOOLDIR and rebuilding them.
 
 20090126:
-	The __posix_fadvise50 system call changed assembly stub type. You
+	The __posix_fadvise50 system call changed assembly stub type.  You
 	need to 'rm -f __posix_fadvise50.*' in the libc build directory
 	to avoid using the old assembly stub.
 
@@ -213,17 +213,17 @@ Recent changes:
 	``pkg_admin rebuild''.
 
 20090110:
-	time_t and dev_t have been bumped to 64 bit quantities. To upgrade:
-	1. Make sure your kernel has COMPAT_50 in it. Build and install.
+	time_t and dev_t have been bumped to 64 bit quantities.  To upgrade:
+	1. Make sure your kernel has COMPAT_50 in it.  Build and install.
 	   This is needed even in the MODULAR kernel because there is
 	   conditionally compiled code in rtsock.c.
 	2. make sure build.sh completes and the binaries in a chroot work
 	   before installing.
 	3. If you don't use build.sh and you build directly to root, and
-	   your build breaks in the middle, don't despair. Make sure headers
+	   your build breaks in the middle, don't despair.  Make sure headers
 	   are installed properly, and start building libraries first libc
 	   and libutil, install them and then continue building all the
-	   libraries in src/lib and src/gnu/lib and install them. Once
+	   libraries in src/lib and src/gnu/lib and install them.  Once
 	   the new libraries are installed, you can restart the build.
 	4. If you compile packages and you notice link time warnings,
 	   rebuild the required packages to update their shared libraries.
@@ -233,7 +233,7 @@ Recent changes:
 	   will be upgraded and it will not be backwards compatible.
 	6. The utmpx/wtmpx files (/var/run/utmpx and /var/log/wtmpx, see
 	   lastlogx(5)) have been versioned, and there is a heuristic
-	   for utmp. You are better off removing the old files after
+	   for utmp.  You are better off removing the old files after
 	   upgrading.  The automated clearing of /var/run during
 	   boot, and the automated rotating of files in /var/log by
 	   newsyslog(8), may mean that you do not have to remove the
@@ -244,7 +244,7 @@ Recent changes:
 	   /etc/daily limits the bad consequences of failure to remove
 	   the file.
 	8. Application software that writes time_t to binary files on
-	   disk will break or need attention. Most notably: if you are
+	   disk will break or need attention.  Most notably: if you are
 	   using PostgreSQL < 8.4, you need to dump your databases,
 	   rebuild PostgreSQL with the new time_t, then restore.
 
@@ -285,11 +285,11 @@ Recent changes:
 
 20080813:
 	MKDEBUG build was broken because the .depend files did not know
-	about .go files. You need to remove all .depend files and rebuild.
+	about .go files.  You need to remove all .depend files and rebuild.
 
 20080802:
 	A regression in binary compatibility for pthread_mutex_t has
-	been fixed. Unfortunately, the price is breaking compatibility
+	been fixed.  Unfortunately, the price is breaking compatibility
 	for -current.
 
 	Threaded programs (using libpthread) and C++ programs (using
@@ -315,10 +315,10 @@ Recent changes:
 	isn't defined.
 
 20080531:
-	The ioctl number of DRVSUSPENDDEV command on /dev/drvctl changed 
-	from 125 (conflicted with DRVCTLCOMMAND) to 129. The drvctl(8)
+	The ioctl number of DRVSUSPENDDEV command on /dev/drvctl changed
+	from 125 (conflicted with DRVCTLCOMMAND) to 129.  The drvctl(8)
 	utility needs to be rebuilt and reinstalled as older binaries
-	won't work correctly. The following sequence of commands:
+	won't work correctly.  The following sequence of commands:
 
 	  $ (cd sys/sys/ && nbmake-$arch includes)
 	  $ (cd sbin/drvctl/ && nbmake-$arch clean)
@@ -342,20 +342,20 @@ Recent changes:
 
 20080126:
 	The posix_fadvise system call has been changed from an assembly
-	stub, to a c file that calls an assembly stub. You need to
+	stub, to a c file that calls an assembly stub.  You need to
 	'rm -f posix_fadvise.* .depend' in the libc build directory to
 	avoid using the old assembly stub.
 
 20071209:
-	The acpiec(4) driver has been split into two attachments. If you
+	The acpiec(4) driver has been split into two attachments.  If you
 	get ACPI errors before the attachment, please update your kernel
 	configuration file appropriately or see GENERIC for more details.
 
 20071115:
 	The it(4) driver has been renamed to itesio(4) and the old port
 	argument specified in the kernel configuration file is not valid
-	anymore. The itesio(4) driver now uses the Super I/O address port
-	rather than the EC address port. Please update your kernel
+	anymore.  The itesio(4) driver now uses the Super I/O address port
+	rather than the EC address port.  Please update your kernel
 	configuration file appropriately or see GENERIC for more details.
 
 20071028:
@@ -377,7 +377,7 @@ Recent changes:
 	and userland are from after 20070913.
 
 20070703:
-	nbinstall has been renamed ${MACHINE_GNU_ARCH}-install. It
+	nbinstall has been renamed ${MACHINE_GNU_ARCH}-install.  It
 	calls the target-specific strip program, and the logic to pass
 	down STRIP from make has been removed.  This requires a
 	re-installation of tools.
@@ -386,7 +386,7 @@ Recent changes:
 	The way OS emulations lookup filenames inside the emulation root
 	has been changed.  Rather than modify the pathname (and copy back
 	to userspace) namei() and lookup() directly check the emulation
-	root. One side effect is that absolute symlinks inside the emulated
+	root.  One side effect is that absolute symlinks inside the emulated
 	root file system will be relative to that file system - unless they
 	start /../ this is useful when the emulated root is a real install
 	that has such links.
@@ -394,8 +394,8 @@ Recent changes:
 	the emulated root.
 
 20070412:
-	The pckbc driver on sgimips IP32 has been removed. Use macekbc
-	instead. See the GENERIC32_IP3x kernel configuration for an
+	The pckbc driver on sgimips IP32 has been removed.  Use macekbc
+	instead.  See the GENERIC32_IP3x kernel configuration for an
 	example.
 
 20070319:
@@ -407,7 +407,7 @@ Recent changes:
 	incorrectly, and ensure that you have at least
 	src/lib/libc/Makefile 1.130.
 
-20070210: 
+20070210:
         src/sys/sys/{sa.h,savar.h} were removed.
           find ${OBJDIR} \( -name .depend -o -name '*.d' \) -print \
               | xargs egrep -l '/sa.h|/savar.h' | xargs rm
@@ -438,12 +438,12 @@ Recent changes:
 20061108:
 	The configure script used in the src/tools/gcc compiler has been
 	changed to indicate that our libc has ssp support built-in and
-	does not depend on -lssp and -lssp-nonshared. You'll need to
+	does not depend on -lssp and -lssp-nonshared.  You'll need to
 	make clean in src/tools/gcc first to rebuild the compiler.
 
 20061009:
 	The sysctl variables net.inet{,6}.tcp{,6}.newreno are no longer
-	available. Use net.inet{,6}.tcp{,6}.congctl.selected instead.
+	available.  Use net.inet{,6}.tcp{,6}.congctl.selected instead.
 
 20060814:
 	The vt, vidcconsole, kbd, and rpckbd drivers on acorn32 have been
@@ -452,9 +452,9 @@ Recent changes:
 	few years should cope.
 
 20060703:
-	MPACPI is no more. We always configure PCI interrupts using ACPI
-	if we have an ACPI kernel. The option MPACPI_SCANPCI has been renamed
-	to ACPI_SCANPCI. Thanks to work from fvdl.
+	MPACPI is no more.  We always configure PCI interrupts using ACPI
+	if we have an ACPI kernel.  The option MPACPI_SCANPCI has been renamed
+	to ACPI_SCANPCI.  Thanks to work from fvdl.
 
 20060627:
 	socket(2) has changed, and its system call has been versioned.
@@ -505,7 +505,7 @@ Hints for a more successful build:
 	on any other part of the source tree that depends on up to
 	date functionality.  If you use build.sh, you should not have
 	this problem.
- 
+
 What to do if things don't work:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When things don't work there are usually a few things that commonly
