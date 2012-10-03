@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.95 2012/09/23 00:31:05 chs Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.96 2012/10/03 17:04:25 chs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.95 2012/09/23 00:31:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.96 2012/10/03 17:04:25 chs Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -942,6 +942,13 @@ mpacpi_find_interrupts(void *self)
 		printf("mpacpi: %d PCI busses\n", mpacpi_npci);
 #endif
 	mpacpi_config_irouting(acpi);
+#if NIOAPIC > 0
+	/*
+	 * XXX fix up the SCI interrupt polarity.
+	 * it's installed before we have parsed the MADT.
+	 */
+	ioapic_reenable();
+#endif
 	if (mp_verbose)
 		for (i = 0; i < mp_nintr; i++)
 			mpacpi_print_intr(&mp_intrs[i]);
