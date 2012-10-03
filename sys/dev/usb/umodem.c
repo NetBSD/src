@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.64 2012/06/14 05:14:41 blymn Exp $	*/
+/*	$NetBSD: umodem.c,v 1.65 2012/10/03 07:07:04 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.64 2012/06/14 05:14:41 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.65 2012/10/03 07:07:04 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,9 @@ umodem_attach(device_t parent, device_t self, void *aux)
 	uca.methods = &umodem_methods;
 	uca.info = NULL;
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler");
+
 	if (umodem_common_attach(self, sc, uaa, &uca))
 		return;
 	return;
@@ -138,6 +141,8 @@ int
 umodem_detach(device_t self, int flags)
 {
 	struct umodem_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
 
 	return umodem_common_detach(sc, flags);
 }
