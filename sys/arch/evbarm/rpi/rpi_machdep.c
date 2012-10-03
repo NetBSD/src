@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.10 2012/10/03 13:06:06 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.11 2012/10/03 13:13:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.10 2012/10/03 13:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.11 2012/10/03 13:13:38 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -107,17 +107,6 @@ int plcomcnmode = PLCONMODE;
 
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_ARM_RAM_SPLIT (128U * 1024 * 1024)
-
-static inline
-pd_entry_t *
-read_ttb(void)
-{
-	long ttb;
-
-	__asm volatile("mrc   p15, 0, %0, c2, c0, 0" : "=r" (ttb));
-
-	return (pd_entry_t *)(ttb & ~((1<<14)-1));
-}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -231,7 +220,8 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	/* map some peripheral registers */
-	pmap_devmap_bootstrap((vaddr_t)read_ttb(), rpi_devmap);
+	pmap_devmap_bootstrap((vaddr_t)armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1),
+	    rpi_devmap);
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
