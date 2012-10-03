@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.732 2012/09/30 20:54:52 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.733 2012/10/03 18:58:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.732 2012/09/30 20:54:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.733 2012/10/03 18:58:32 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1442,7 +1442,7 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 
-	/* Needed early, for bioscall() and kvm86_call() */
+	/* Needed early, for bioscall() */
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 #endif /* !XEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.97 2011/02/22 06:37:24 dholland Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.98 2012/10/03 18:58:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97 2011/02/22 06:37:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2012/10/03 18:58:31 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -90,11 +90,6 @@ extern void platform_init(void);
 #include <i386/pci/pcibios.h>
 #endif
 
-#include "opt_kvm86.h"
-#ifdef KVM86
-#include <machine/kvm86.h>
-#endif
-
 /*
  * Determine i/o configuration for a machine.
  */
@@ -111,10 +106,6 @@ cpu_configure(void)
 #endif
 #ifdef PCIBIOS
 	pcibios_init();
-#endif
-
-#ifdef KVM86
-	kvm86_init();
 #endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)

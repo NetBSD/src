@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2012/07/29 18:05:47 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2012/10/03 18:58:33 dsl Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2012/07/29 18:05:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2012/10/03 18:58:33 dsl Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -104,11 +104,6 @@ int x86_ndisks;
 #include <i386/pci/pcibios.h>
 #endif
 
-#include "opt_kvm86.h"
-#ifdef KVM86
-#include <machine/kvm86.h>
-#endif
-
 /*
  * Determine i/o configuration for a machine.
  */
@@ -125,10 +120,6 @@ cpu_configure(void)
 #endif /* NBIOS32 > 0 && DOM0OPS */
 #ifdef PCIBIOS
 	pcibios_init();
-#endif
-
-#ifdef KVM86
-	kvm86_init();
 #endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
