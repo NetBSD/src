@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.96 2012/07/07 16:18:50 tsutsui Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.97 2012/10/03 23:32:43 jakllsch Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.96 2012/07/07 16:18:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.97 2012/10/03 23:32:43 jakllsch Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -771,7 +771,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS - 1)
+	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS)
 				   / N_INUSEBITS)
 				  * sizeof(*pmp->pm_inusemap),
 				  M_MSDOSFSFAT, M_WAITOK);
