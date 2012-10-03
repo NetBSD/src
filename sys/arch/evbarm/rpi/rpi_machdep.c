@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.8 2012/10/03 13:00:47 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.9 2012/10/03 13:01:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.8 2012/10/03 13:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.9 2012/10/03 13:01:27 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.8 2012/10/03 13:00:47 skrll Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/db_machdep.h>
-#include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
 
 #include <machine/vmparam.h>
