@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.7 2002/10/08 17:39:17 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.8 2012/10/03 16:51:44 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -94,6 +94,7 @@ void	iq80310_7seg_snake(void);
 void	iq80310_pci_init(pci_chipset_tag_t, void *);
 
 void	iq80310_intr_init(void);
+void	iq80310_intr_evcnt_attach(void);
 void	*iq80310_intr_establish(int, int, int (*)(void *), void *);
 void	iq80310_intr_disestablish(void *);
 
