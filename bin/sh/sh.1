@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.108 2012/08/26 14:30:38 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.109 2012/10/03 19:37:36 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -416,9 +416,9 @@ are stripped off and assigned to the environment of the simple command.
 Redirection operators and their arguments (as described below) are
 stripped off and saved for processing.
 .It
-The remaining words are expanded as described in
-the section called
-.Dq Expansions ,
+The remaining words are expanded as described in the
+.Sx Word Expansions
+section below,
 and the first remaining word is considered the command name and the
 command is located.
 The remaining words are considered the arguments of the command.
@@ -484,10 +484,11 @@ All the text on successive lines up to the delimiter is saved away and
 made available to the command on standard input, or file descriptor n if
 it is specified.
 If the delimiter as specified on the initial line is
-quoted, then the here-doc-text is treated literally, otherwise the text is
+quoted, then the here-doc-text is treated literally; otherwise, the text is
 subjected to parameter expansion, command substitution, and arithmetic
-expansion (as described in the section on
-.Dq Expansions ) .
+expansion as described in the
+.Sx Word Expansions
+section below.
 If the operator is
 .Dq \*[Lt]\*[Lt]-
 instead of
@@ -886,7 +887,7 @@ For a pipeline, the process ID is that of the last command in the pipeline.
 Expands to the name of the shell or shell script.
 .El
 .Ss Word Expansions
-This clause describes the various expansions that are performed on words.
+This section describes the various expansions that are performed on words.
 Not all expansions are performed on every word, as explained later.
 .Pp
 Tilde expansions, parameter expansions, command substitutions, arithmetic
@@ -1585,8 +1586,9 @@ The prompt is printed if the
 option is specified and the standard input is a terminal.
 Then a line is read from the standard input.
 The trailing newline is deleted from the
-line and the line is split as described in the section on word splitting
-above, and the pieces are assigned to the variables in order.
+line and the line is split as described in the
+.Sx Word Expansions
+section above, and the pieces are assigned to the variables in order.
 If there are more pieces than variables, the remaining pieces
 (along with the characters in
 .Ev IFS
@@ -1629,8 +1631,9 @@ command performs three different functions.
 With no arguments, it lists the values of all shell variables.
 .Pp
 If options are given, it sets the specified option
-flags, or clears them as described in the section called
-.Sx Argument List Processing .
+flags, or clears them as described in the
+.Sx Argument List Processing
+section.
 .Pp
 The third use of the set command is to set the values of the shell's
 positional parameters to the specified arguments.
@@ -1827,8 +1830,9 @@ When
 is being used interactively from a terminal, the current command
 and the command history (see
 .Ic fc
-in
-.Sx Built-ins )
+in the
+.Sx Built-ins
+section)
 can be edited using emacs-mode or vi-mode command-line editing.
 The command
 .Ql set -o emacs
@@ -1885,8 +1889,9 @@ This environment variable also functions as the default argument for the
 built-in.
 .It Ev PATH
 The default search path for executables.
-See the above section
-.Sx Path Search .
+See the
+.Sx Path Search
+section above.
 .It Ev CDPATH
 The search path used with the
 .Ic cd
