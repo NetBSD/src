@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.30 2011/10/08 22:16:03 jnemeth Exp $
+.\"	$NetBSD: fstat.1,v 1.31 2012/10/03 19:35:08 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,9 +61,9 @@ the named file arguments, or to the file system containing the
 current directory if there are no additional filename arguments.
 For example, to find all files open in the file system where the
 directory
-.Pa /usr/src
+.Pa /var/log
 resides, type
-.Dq Li fstat -f /usr/src .
+.Dq Li fstat -f /var/log .
 Please see the
 .Sx BUGS
 section for issues with this option.
@@ -96,8 +96,7 @@ these data structures are dynamically created or deleted and it is
 possible for them to disappear while
 .Nm
 is running.
-This
-is normal and  unavoidable since the rest of the system is running while
+This is normal and unavoidable since the rest of the system is running while
 .Nm
 itself is running.
 .It Ar
@@ -233,7 +232,7 @@ and a full duplex socket shows a double arrow
 .Pq Dq \*[Lt]-\*[Gt] .
 .Pp
 For internet sockets
-.Nm fstat
+.Nm
 also attempts to print the internet address and port for the
 local end of a connection.
 If the socket is connected, it also prints the remote internet address
