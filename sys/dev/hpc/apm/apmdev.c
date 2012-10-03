@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.26 2012/09/30 21:36:20 dsl Exp $ */
+/*	$NetBSD: apmdev.c,v 1.27 2012/10/03 23:55:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.26 2012/09/30 21:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.27 2012/10/03 23:55:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -584,12 +584,6 @@ apm_set_ver(struct apm_softc *sc)
 ok:
 	aprint_normal("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
-#ifdef DIAGNOSTIC
-	if (sc->sc_detail & APM_BIOS_PM_DISABLED)
-		aprint_normal(" (BIOS mgmt disabled)");
-	if (sc->sc_detail & APM_BIOS_PM_DISENGAGED)
-		aprint_normal(" (BIOS managing devices)");
-#endif
 }
 
 static int
