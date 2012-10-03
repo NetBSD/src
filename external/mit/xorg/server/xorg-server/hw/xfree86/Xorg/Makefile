@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/10/22 14:40:41 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.5 2012/10/03 21:50:14 gsutre Exp $
 
 .include <bsd.own.mk>
 
@@ -58,6 +58,7 @@ LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.os}
 LDADD+=	${LDADD.glx}
 LDADD+=	${LDADD.hw/xfree86/dri}
+LDADD+=	${LDADD.hw/xfree86/dri2}
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
@@ -99,6 +100,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.os} \
 	${DPADD.glx} \
 	${DPADD.hw/xfree86/dri} \
+	${DPADD.hw/xfree86/dri2} \
 	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
