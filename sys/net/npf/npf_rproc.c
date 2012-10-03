@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.3 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.4 2012/10/03 12:24:56 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -164,13 +164,15 @@ npf_ext_construct(const char *name, npf_rproc_t *rp, prop_dictionary_t params)
 	ext = npf_ext_lookup(name);
 	if (ext) {
 		atomic_inc_uint(&ext->ext_refcnt);
-		extops = ext->ext_ops;
-		KASSERT(extops != NULL);
 	}
 	mutex_exit(&ext_lock);
+
 	if (!ext) {
 		return ENOENT;
 	}
+
+	extops = ext->ext_ops;
+	KASSERT(extops != NULL);
 
 	error = extops->ctor(rp, params);
 	if (error) {
