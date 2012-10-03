@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.17 2012/04/26 03:16:13 christos Exp $
+#	$NetBSD: wtf,v 1.18 2012/10/03 19:50:06 wiz Exp $
 #
 # Public domain
 #
@@ -8,7 +8,7 @@
 PROGNAME="$(basename "$0")"
 
 usage() {
-	echo "Usage: $PROGNAME [-f dbfile] [is] <acronym>"
+	echo "usage: $PROGNAME [-f dbfile] [is] <acronym> ..."
 	exit 1
 }
 
@@ -39,21 +39,21 @@ if [ -z "$acronyms" ]; then
 fi
 
 if [ -z "$acronyms" ]; then
-	echo "$PROGNAME: acronyms database not found!" >&2
+	echo "$PROGNAME: acronym database not found!" >&2
 	exit 1
 fi
 
 
 for f in $acronyms; do
 	if [ ! -f $f ]; then
-		echo "$PROGNAME: cannot open acronyms database file \`$f'" >&2
+		echo "$PROGNAME: cannot open acronym database file \`$f'" >&2
 		exit 1
 	fi
 done
 
 rv=0
 for i; do
-	# Search acronyms list first
+	# Search acronym list first
 	target="$(echo "$i" | tr '[a-z]' '[A-Z]')"
 	ans="$(fgrep -h "$target" $acronyms 2>/dev/null \
 	     | sed -ne "\|^$target[[:space:]]|s|^$target[[:space:]]*||p")"
