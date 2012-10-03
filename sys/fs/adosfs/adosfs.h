@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.11 2009/08/30 12:36:38 phx Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.12 2012/10/03 07:20:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -116,7 +116,6 @@ struct adosfsmount {
 	struct mount *mp;	/* owner mount */
 	u_int32_t dostype;	/* type of volume */
 	u_long rootb;		/* root block number */
-	u_long secsperblk;	/* sectors per block */
 	u_long bsize;		/* size of blocks */
 	u_long nwords;		/* size of blocks in long words */
 	u_long dbsize;		/* data bytes per block */
