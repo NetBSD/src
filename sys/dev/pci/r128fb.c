@@ -1,7 +1,7 @@
-/*	$NetBSD: r128fb.c,v 1.35 2012/05/23 18:39:30 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.36 2012/10/04 10:22:45 macallan Exp $	*/
 
 /*
- * Copyright (c) 2007 Michael Lorenz
+ * Copyright (c) 2007, 2012 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.35 2012/05/23 18:39:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.36 2012/10/04 10:22:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef GLYPHCACHE_DEBUG
 	/* leave some visible VRAM unused so we can see the glyph cache */
-	sc->sc_height -= 100;
+	sc->sc_height -= 200;
 #endif
 
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
@@ -379,7 +379,8 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, sc->sc_pcitag, data);
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, 
+		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
@@ -549,8 +550,6 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = r128fb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = r128fb_putchar_aa;
-		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
-		     0, &sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = r128fb_putchar;
 }
