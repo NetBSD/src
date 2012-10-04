@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.39 2012/09/23 01:05:21 chs Exp $
+# $NetBSD: XEN3_DOMU,v 1.40 2012/10/04 21:23:45 dsl Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -16,7 +16,6 @@ maxusers	32		# estimated number of users
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
 
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
