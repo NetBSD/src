@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.3 2011/02/01 23:40:12 jakllsch Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.4 2012/10/04 14:21:00 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -429,6 +429,6 @@ struct mvgbe_rx_desc {
 #define MVGBE_RX_FIRST_DESC		(1 << 27)
 #define MVGBE_RX_UNKNOWN_DA		(1 << 28)
 #define MVGBE_RX_ENABLE_INTERRUPT	(1 << 29)
-#define MVGBE_RX_L4_CHECKSUM		(1 << 30)
+#define MVGBE_RX_L4_CHECKSUM_OK		(1 << 30)
 
 #endif	/* _MVGEREG_H_ */

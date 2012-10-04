@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.21 2012/10/02 15:22:46 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.22 2012/10/04 14:21:00 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.21 2012/10/02 15:22:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.22 2012/10/04 14:21:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1748,26 +1748,31 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			int flgs = 0;
 
 			/* Check IPv4 header checksum */
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			flgs |= M_CSUM_IPv4;
 			if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
 				flgs |= M_CSUM_IPv4_BAD;
+			else if ((bufsize & MVGBE_RX_MAX_FRAME_LEN_ERROR)
+			    == 0) {
+				/*
+				 * Check TCPv4/UDPv4 checksum for
+				 * non-fragmented packet only.
+				 *
+				 * It seemd that sometimes
+				 * MVGBE_RX_L4_CHECKSUM_OK bit was set to 0
+				 * even if the checksum is correct and the
+				 * packet was not fragmented. So we don't set
+				 * M_CSUM_TCP_UDP_BAD even if csum bit is 0.
+				 */
 
-			/* Check TCPv4/UDPv4 checksum */
-			if ((bufsize & MVGBE_RX_MAX_FRAME_LEN_ERROR) == 0) {
-				/* Not fragmented */
-
-				if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-				    MVGBE_RX_L4_TYPE_TCP)
+				if (((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+					MVGBE_RX_L4_TYPE_TCP) &&
+				    ((rxstat & MVGBE_RX_L4_CHECKSUM_OK) != 0))
 					flgs |= M_CSUM_TCPv4;
-				else if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-				    MVGBE_RX_L4_TYPE_UDP)
+				else if (((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+					MVGBE_RX_L4_TYPE_UDP) &&
+				    ((rxstat & MVGBE_RX_L4_CHECKSUM_OK) != 0))
 					flgs |= M_CSUM_UDPv4;
-
-				if (((flgs & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
-				    && !(rxstat & MVGBE_RX_L4_CHECKSUM))
-					flgs |= M_CSUM_TCP_UDP_BAD;
 			}
-
 			m->m_pkthdr.csum_flags = flgs;
 		}
 sw_csum:
