@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.19 2012/09/13 21:12:40 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.20 2012/10/04 10:35:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.19 2012/09/13 21:12:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.20 2012/10/04 10:35:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ static void	pm2fb_init(struct pm2fb_softc *);
 static void	pm2fb_flush_engine(struct pm2fb_softc *);
 static void	pm2fb_rectfill(struct pm2fb_softc *, int, int, int, int,
 			    uint32_t);
+static void	pm2fb_rectfill_a(void *, int, int, int, int, long);
 static void	pm2fb_bitblt(void *, int, int, int, int, int, int, int);
 
 static void	pm2fb_cursor(void *, int, int, int);
@@ -364,6 +365,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	sc->sc_gc.gc_bitblt = pm2fb_bitblt;
+	sc->sc_gc.gc_rectfill = pm2fb_rectfill_a;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = 3;
 
@@ -386,9 +388,10 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		/* XXX use actual memory size instead of assuming 8MB */
+
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height - 5,
+			min(2047, (sc->sc_fbsize / sc->sc_stride))
+			 - sc->sc_height - 5,
 			sc->sc_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
@@ -400,7 +403,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
 			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			   (sc->sc_fbsize / sc->sc_stride) - sc->sc_height - 5,
+			   min(2047, (sc->sc_fbsize / sc->sc_stride))
+			    - sc->sc_height - 5,
 			   sc->sc_width,
 			   ri->ri_font->fontwidth,
 			   ri->ri_font->fontheight,
@@ -585,7 +589,7 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
@@ -832,6 +836,15 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+pm2fb_rectfill_a(void *cookie, int x, int y, int wi, int he, long attr)
+{
+	struct pm2fb_softc *sc = cookie;
+
+	pm2fb_rectfill(sc, x, y, wi, he,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
@@ -1033,6 +1046,8 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			}
 			}
 		}
+		if (attr & 1)
+			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
 }
 
@@ -1043,7 +1058,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
-	uint32_t bg, /*latch = 0,*/ bg8, fg8, pixel;
+	uint32_t bg, fg, /*latch = 0,*/ bg8, fg8, pixel;
 	int i, x, y, wi, he, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
 	uint8_t *data8;
@@ -1059,10 +1074,13 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	he = font->fontheight;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	if (c == 0x20) {
 		pm2fb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & 1)
+			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
@@ -1161,10 +1179,19 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 				    PM2_RE_DATA, latch);
 	}
 #endif
+	/* 
+	 * XXX
+	 * occasionally characters end up in the cache only partially drawn
+	 * apparently the blitter might end up grabbing them before they're
+	 * completely flushed out into video memory
+	 * so we let the pipeline drain a little bit before continuing
+	 */
+	pm2fb_wait(sc, 20);
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	}
+	} else if (attr & 1)
+		pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
 static void
@@ -1439,7 +1466,15 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 			}
 		}
 	}
+#if 0
+	/*
+	 * XXX
+	 * output between switching modes and attaching a wsdisplay will
+	 * go through firmware calls on sparc64 and potentially mess up
+	 * our drawing engine state
+	 */
 	DPRINTF("best: %d kHz ( %d off ), %d %d %d\n", bfreq, bdiff, bm, bn, bp);
+#endif
 	temp = pm2fb_read_dac(sc, PM2V_DAC_CLOCK_CONTROL) & 0xfc;
 	pm2fb_write_dac(sc, PM2V_DAC_CONTROL, 0);
 	pm2fb_write_dac(sc, PM2V_DAC_CLOCK_A_M, bm);
