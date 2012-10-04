@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.28 2012/10/02 14:15:04 abs Exp $
+.\"	$NetBSD: sed.1,v 1.29 2012/10/04 19:28:36 dholland Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -196,8 +196,8 @@ One special feature of
 .Nm
 regular expressions is that they can default to the last regular
 expression used.
-If a regular expression is empty, i.e., just the delimiter characters
-are specified, the last regular expression encountered is used instead.
+If a regular expression is empty, with nothing between the delimiter
+characters, the last regular expression encountered is used instead.
 The last regular expression is defined as the last regular expression
 used as part of an address or substitute command, and at run-time, not
 compile-time.
