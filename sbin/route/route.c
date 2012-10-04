@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.138 2012/08/08 14:04:26 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.139 2012/10/04 00:01:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.138 2012/08/08 14:04:26 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.139 2012/10/04 00:01:48 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1648,11 +1648,11 @@ static void
 mask_addr(struct sou *soup)
 {
 	int olen = soup->so_mask->sa.sa_len;
-	char *cp1 = olen + (char *)&soup->so_mask, *cp2;
+	char *cp1 = olen + (char *)soup->so_mask, *cp2;
 
-	for (soup->so_mask->sa.sa_len = 0; cp1 > (char *)&soup->so_mask; )
+	for (soup->so_mask->sa.sa_len = 0; cp1 > (char *)soup->so_mask; )
 		if (*--cp1 != 0) {
-			soup->so_mask->sa.sa_len = 1 + cp1 - (char *)&soup->so_mask;
+			soup->so_mask->sa.sa_len = 1 + cp1 - (char *)soup->so_mask;
 			break;
 		}
 	if ((rtm_addrs & RTA_DST) == 0)
@@ -1674,11 +1674,11 @@ mask_addr(struct sou *soup)
 		break;
 #endif /* SMALL */
 	}
-	cp1 = soup->so_mask->sa.sa_len + 1 + (char *)&soup->so_dst;
-	cp2 = soup->so_dst->sa.sa_len + 1 + (char *)&soup->so_dst;
+	cp1 = soup->so_mask->sa.sa_len + 1 + (char *)soup->so_dst;
+	cp2 = soup->so_dst->sa.sa_len + 1 + (char *)soup->so_dst;
 	while (cp2 > cp1)
 		*--cp2 = 0;
-	cp2 = soup->so_mask->sa.sa_len + 1 + (char *)&soup->so_mask;
+	cp2 = soup->so_mask->sa.sa_len + 1 + (char *)soup->so_mask;
 	while (cp1 > soup->so_dst->sa.sa_data)
 		*--cp1 &= *--cp2;
 #ifndef SMALL
