@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.88 2012/09/24 23:13:37 khorben Exp $
+# $NetBSD: XEN3_DOM0,v 1.89 2012/10/04 21:23:45 dsl Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -16,7 +16,6 @@ options 	DOM0OPS
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
 
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # CPU features
