@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.191 2012/10/05 04:26:06 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.191 2012/10/05 04:26:06 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1502,21 +1502,21 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING)) {
+	    {
+		struct ifaddr *ifa = (struct ifaddr *)data;
+		if (ifa->ifa_addr->sa_family != AF_LINK
+		    && (ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		       (IFF_UP|IFF_RUNNING)) {
 			ifp->if_flags |= IFF_UP;
 			if ((error = (*ifp->if_init)(ifp)) != 0)
 				return error;
 		}
 #ifdef INET
-		{
-			struct ifaddr *ifa = (struct ifaddr *)data;
-
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit(ifp, ifa);
-		}
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(ifp, ifa);
 #endif /* INET */
 		return 0;
+	    }
 
 	case SIOCSIFMTU:
 	    {
