@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.39 2012/10/05 01:05:14 christos Exp $	*/
+/*	$NetBSD: mtree.c,v 1.40 2012/10/05 01:13:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.39 2012/10/05 01:05:14 christos Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.40 2012/10/05 01:13:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: mtree.c,v 1.39 2012/10/05 01:05:14 christos Exp $");
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;
-int	cflag, Cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
+int	cflag, Cflag, dflag, Dflag, eflag, iflag, jflag, lflag, mflag,
     	nflag, qflag, rflag, sflag, tflag, uflag, Uflag;
 char	fullpath[MAXPATHLEN];
 
@@ -107,6 +107,9 @@ main(int argc, char **argv)
 			break;
 		case 'I':
 			parsetags(&includetags, optarg);
+			break;
+		case 'j':
+			jflag = 1;
 			break;
 		case 'k':
 			keys = F_TYPE;
