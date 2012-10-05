@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.27 2009/04/04 21:49:49 apb Exp $	*/
+/*	$NetBSD: mtree.h,v 1.28 2012/10/05 00:59:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -123,6 +123,22 @@ NODE		*spec(FILE *);
 void		 free_nodes(NODE *);
 char		*vispath(const char *);
 
+#ifdef __FreeBSD__
+#define KEY_DIGEST "digest"
+#else
+#define KEY_DIGEST
+#endif
+
+#define	MD5KEY		"md5"		KEY_DIGEST
+#ifdef __FreeBSD__
+#define	RMD160KEY	"ripemd160"	KEY_DIGEST
+#else
+#define	RMD160KEY	"rmd160"	KEY_DIGEST
+#endif
+#define	SHA1KEY		"sha1"		KEY_DIGEST
+#define	SHA256KEY	"sha256"	KEY_DIGEST
+#define	SHA384KEY	"sha384"
+#define	SHA512KEY	"sha512"
 
 #define	RP(p)	\
 	((p)->fts_path[0] == '.' && (p)->fts_path[1] == '/' ? \
