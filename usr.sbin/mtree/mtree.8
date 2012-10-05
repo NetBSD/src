@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.61 2012/10/05 01:30:36 christos Exp $
+.\"	$NetBSD: mtree.8,v 1.62 2012/10/05 01:31:05 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -450,6 +450,8 @@ The current file's permissions as a numeric (octal) or symbolic
 value.
 .It Sy nlink
 The number of hard links the file is expected to have.
+.It Sy nochange
+Make sure this file or directory exists but otherwise ignore all attributes.
 .It Sy optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
