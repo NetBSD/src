@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.3 2012/10/05 02:48:36 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.4 2012/10/05 03:24:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -433,7 +433,8 @@ bcmeth_ifinit(struct ifnet *ifp)
 	/* 5. Load RCVADDR_LO with new pointer */
 	bcmeth_rxq_reset(sc, &sc->sc_rxq);
 
-	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl, BCMETH_RCVOFFSET
+	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl,
+	    __SHIFTIN(BCMETH_RCVOFFSET, RCVCTL_RCVOFFSET)
 	    | RCVCTL_PARITY_DIS
 	    | RCVCTL_OFLOW_CONTINUE
 	    | __SHIFTIN(4, RCVCTL_BURSTLEN));
@@ -852,8 +853,8 @@ bcmeth_rxq_produce(
 
 		producer->rxdb_buflen = MCLBYTES;
 		producer->rxdb_addrlo = map->dm_segs[0].ds_addr;
-		producer->rxdb_flags |= RXDB_FLAG_IC;
 		producer->rxdb_flags &= RXDB_FLAG_ET;
+		producer->rxdb_flags |= RXDB_FLAG_IC;
 		*rxq->rxq_mtail = m;
 		rxq->rxq_mtail = &m->m_next;
 		m->m_len = MCLBYTES;
