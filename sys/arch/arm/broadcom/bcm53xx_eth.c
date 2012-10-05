@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.5 2012/10/05 03:57:21 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.6 2012/10/05 04:05:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -900,9 +900,11 @@ bcmeth_rx_input(
 	case RXSTS_PKTTYPE_BC:
 		m->m_flags |= M_BCAST|M_MCAST;
 		break;
+	default:
+		if (sc->sc_cmdcfg & PROMISC_EN) 
+			m->m_flags |= M_PROMISC;
+		break;
 	}
-	if (sc->sc_cmdcfg & PROMISC_EN) 
-		m->m_flags |= M_PROMISC;
 	m->m_pkthdr.rcvif = ifp;
 
 	ifp->if_ipackets++;
