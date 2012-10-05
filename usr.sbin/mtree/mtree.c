@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.41 2012/10/05 01:26:56 christos Exp $	*/
+/*	$NetBSD: mtree.c,v 1.42 2012/10/05 09:18:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.41 2012/10/05 01:26:56 christos Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.42 2012/10/05 09:18:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-CcDdeLlMnPrSUuWx] [-i|-m] [-E tags]\n"
+	    "usage: %s [-CcDdejLlMnPqrSUuWx] [-i|-m] [-E tags]\n"
 	    "\t\t[-f spec] [-f spec]\n"
 	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
 	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n",
