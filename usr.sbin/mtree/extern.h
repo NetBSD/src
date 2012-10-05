@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2012/10/05 01:01:07 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 2012/10/05 01:05:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,7 +70,7 @@ const char *rlink(const char *);
 int	 verify(void);
 
 extern int	dflag, eflag, iflag, lflag, mflag,
-		nflag, rflag, sflag, tflag, uflag;
+		nflag, qflag, rflag, sflag, tflag, uflag;
 extern int	mtree_Mflag, mtree_Sflag, mtree_Wflag;
 extern size_t	mtree_lineno;
 extern u_int32_t crc_total;

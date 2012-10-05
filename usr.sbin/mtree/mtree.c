@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.38 2012/10/05 01:01:07 christos Exp $	*/
+/*	$NetBSD: mtree.c,v 1.39 2012/10/05 01:05:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.38 2012/10/05 01:01:07 christos Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.39 2012/10/05 01:05:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: mtree.c,v 1.38 2012/10/05 01:01:07 christos Exp $");
 
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, Cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
-    	nflag, rflag, sflag, tflag, uflag, Uflag;
+    	nflag, qflag, rflag, sflag, tflag, uflag, Uflag;
 char	fullpath[MAXPATHLEN];
 
 __dead static	void	usage(void);
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	init_excludes();
 
 	while ((ch = getopt(argc, argv,
-	    "cCdDeE:f:I:ik:K:lLmMnN:p:PrR:s:StuUWxX:"))
+	    "cCdDeE:f:I:ik:K:lLmMnN:p:PqrR:s:StuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -147,6 +147,9 @@ main(int argc, char **argv)
 		case 'P':
 			ftsoptions &= ~FTS_LOGICAL;
 			ftsoptions |= FTS_PHYSICAL;
+			break;
+		case 'q':
+			qflag = 1;
 			break;
 		case 'r':
 			rflag = 1;
