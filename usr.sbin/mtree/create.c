@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.64 2012/10/05 01:19:54 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.65 2012/10/05 01:21:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.64 2012/10/05 01:19:54 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.65 2012/10/05 01:21:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ statf(int indent, FTSENT *p)
 {
 	u_int32_t len, val;
 	int fd, offset;
-	const char *name;
+	const char *name = NULL;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
 	char *digestbuf;
 #endif
@@ -189,14 +189,14 @@ statf(int indent, FTSENT *p)
 		if (keys & F_UNAME &&
 		    (name = user_from_uid(p->fts_statp->st_uid, 1)) != NULL)
 			output(indent, &offset, "uname=%s", name);
-		else /* if (keys & F_UID) */
+		if (keys & F_UID || (keys & F_UNAME && name == NULL))
 			output(indent, &offset, "uid=%u", p->fts_statp->st_uid);
 	}
 	if (keys & (F_GID | F_GNAME) && p->fts_statp->st_gid != gid) {
 		if (keys & F_GNAME &&
 		    (name = group_from_gid(p->fts_statp->st_gid, 1)) != NULL)
 			output(indent, &offset, "gname=%s", name);
-		else /* if (keys & F_GID) */
+		if (keys & F_GID || (keys & F_GNAME && name == NULL))
 			output(indent, &offset, "gid=%u", p->fts_statp->st_gid);
 	}
 	if (keys & F_MODE && (p->fts_statp->st_mode & MBITS) != mode)
@@ -318,7 +318,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	uid_t suid;
 	mode_t smode;
 	u_long sflags = 0;
-	const char *name;
+	const char *name = NULL;
 	gid_t savegid;
 	uid_t saveuid;
 	mode_t savemode;
@@ -385,14 +385,14 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 			if (keys & F_UNAME &&
 			    (name = user_from_uid(saveuid, 1)) != NULL)
 				printf(" uname=%s", name);
-			else /* if (keys & F_UID) */
+			if (keys & F_UID || (keys & F_UNAME && name == NULL))
 				printf(" uid=%lu", (u_long)saveuid);
 		}
 		if (keys & (F_GID | F_GNAME)) {
 			if (keys & F_GNAME &&
 			    (name = group_from_gid(savegid, 1)) != NULL)
 				printf(" gname=%s", name);
-			else /* if (keys & F_UID) */
+			if (keys & F_GID || (keys & F_GNAME && name == NULL))
 				printf(" gid=%lu", (u_long)savegid);
 		}
 		if (keys & F_MODE)
