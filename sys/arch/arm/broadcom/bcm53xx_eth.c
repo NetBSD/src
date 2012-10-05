@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.2 2012/10/04 00:14:24 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.3 2012/10/05 02:48:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -430,7 +430,6 @@ bcmeth_ifinit(struct ifnet *ifp)
 
 	sc->sc_intmask = DESCPROTOERR|DATAERR|DESCERR;
 
-#if 1
 	/* 5. Load RCVADDR_LO with new pointer */
 	bcmeth_rxq_reset(sc, &sc->sc_rxq);
 
@@ -438,7 +437,6 @@ bcmeth_ifinit(struct ifnet *ifp)
 	    | RCVCTL_PARITY_DIS
 	    | RCVCTL_OFLOW_CONTINUE
 	    | __SHIFTIN(4, RCVCTL_BURSTLEN));
-#endif
 
 	/* 6. Load XMTADDR_LO with new pointer */
 	bcmeth_txq_reset(sc, &sc->sc_txq);
@@ -461,19 +459,29 @@ bcmeth_ifinit(struct ifnet *ifp)
 	devctl &= ~CPU_FLOW_CTRL_ON;
 	bcmeth_write_4(sc, GMAC_DEVCONTROL, devctl);
 
+	/* Setup lazy receive (at most 1ms). */
+	bcmeth_write_4(sc, GMAC_INTRCVLAZY, __SHIFTIN(10, INTRCVLAZY_FRAMECOUNT)
+	     | __SHIFTIN(125000000 / 1000, INTRCVLAZY_TIMEOUT));
+
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
 	sc->sc_intmask |= XMTINT_0|XMTUF;
 	bcmeth_write_4(sc, sc->sc_txq.txq_reg_xmtctl,
 	    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtctl) | XMTCTL_ENABLE);
 
 
-#if 1
 	/* 12. Enable receive queues in RQUEUE, */
 	sc->sc_intmask |= RCVINT|RCVDESCUF|RCVFIFOOF;
 	bcmeth_write_4(sc, sc->sc_rxq.rxq_reg_rcvctl,
 	    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvctl) | RCVCTL_ENABLE);
 
 	bcmeth_rxq_produce(sc, &sc->sc_rxq);	/* fill with rx buffers */
+
+#if 0
+	aprint_normal_dev(sc->sc_dev,
+	    "devctl=%#x ucmdcfg=%#x xmtctl=%#x rcvctl=%#x\n",
+	    devctl, sc->sc_cmdcfg,
+	    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtctl),
+	    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvctl));
 #endif
 
 	sc->sc_soft_flags = 0;
@@ -844,6 +852,7 @@ bcmeth_rxq_produce(
 
 		producer->rxdb_buflen = MCLBYTES;
 		producer->rxdb_addrlo = map->dm_segs[0].ds_addr;
+		producer->rxdb_flags |= RXDB_FLAG_IC;
 		producer->rxdb_flags &= RXDB_FLAG_ET;
 		*rxq->rxq_mtail = m;
 		rxq->rxq_mtail = &m->m_next;
@@ -967,7 +976,7 @@ bcmeth_rxq_consume(
 			rxq->rxq_mtail = &rxq->rxq_mhead;
 		m_last->m_next = NULL;
 
-		if (rxsts & (/*RXSTS_CRC_ERROR|*/RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
+		if (rxsts & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
 			aprint_error_dev(sc->sc_dev, "[%zu]: count=%zu rxsts=%#x\n",
 			    consumer - rxq->rxq_first, desc_count, rxsts);
 			/*
@@ -1037,6 +1046,25 @@ bcmeth_rxq_reset(
 	struct bcmeth_softc *sc,
 	struct bcmeth_rxqueue *rxq)
 {
+	/*
+	 * sync all the descriptors
+	 */
+	bcmeth_rxq_desc_postsync(sc, rxq, rxq->rxq_first,
+	    rxq->rxq_last - rxq->rxq_first);
+
+	/*
+	 * Make sure we own all descriptors in the ring.
+	 */
+	struct gmac_rxdb *rxdb;
+	for (rxdb = rxq->rxq_first; rxdb < rxq->rxq_last - 1; rxdb++) {
+		rxdb->rxdb_flags = 0;
+	}
+
+	/*
+	 * Last descriptor has the wrap flag.
+	 */
+	rxdb->rxdb_flags = RXDB_FLAG_ET;
+
 	/*
 	 * Reset the producer consumer indexes.
 	 */
