@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.61 2012/10/05 00:58:46 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.62 2012/10/05 01:01:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.61 2012/10/05 00:58:46 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.62 2012/10/05 01:01:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,9 +118,11 @@ cwalk(void)
 		    "<unknown>";
 	}
 
-	printf(
-	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
-	    user, host, fullpath, ctime(&clocktime));
+	if (!nflag)
+		printf(
+	    	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n"
+		    "#\t   date: %s",
+		    user, host, fullpath, ctime(&clocktime));
 
 	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
@@ -131,12 +133,13 @@ cwalk(void)
 		}
 		switch(p->fts_info) {
 		case FTS_D:
-			printf("\n# %s\n", p->fts_path);
+			if (!nflag)
+				printf("\n# %s\n", p->fts_path);
 			statd(t, p, &uid, &gid, &mode, &flags);
 			statf(p);
 			break;
 		case FTS_DP:
-			if (p->fts_level > 0)
+			if (!nflag && p->fts_level > 0)
 				printf("# %s\n..\n\n", p->fts_path);
 			break;
 		case FTS_DNR:

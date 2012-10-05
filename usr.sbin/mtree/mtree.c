@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37 2011/08/29 20:37:43 joerg Exp $	*/
+/*	$NetBSD: mtree.c,v 1.38 2012/10/05 01:01:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37 2011/08/29 20:37:43 joerg Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.38 2012/10/05 01:01:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: mtree.c,v 1.37 2011/08/29 20:37:43 joerg Exp $");
 
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, Cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
-    	rflag, sflag, tflag, uflag, Uflag;
+    	nflag, rflag, sflag, tflag, uflag, Uflag;
 char	fullpath[MAXPATHLEN];
 
 __dead static	void	usage(void);
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	init_excludes();
 
 	while ((ch = getopt(argc, argv,
-	    "cCdDeE:f:I:ik:K:lLmMN:p:PrR:s:StuUWxX:"))
+	    "cCdDeE:f:I:ik:K:lLmMnN:p:PrR:s:StuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -131,6 +131,9 @@ main(int argc, char **argv)
 			break;
 		case 'M':
 			mtree_Mflag = 1;
+			break;
+		case 'n':
+			nflag = 1;
 			break;
 		case 'N':
 			if (! setup_getid(optarg))
@@ -225,7 +228,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-CcDdeLlMPrSUuWx] [-i|-m] [-E tags] [-f spec]\n"
+	    "usage: %s [-CcDdeLlMnPrSUuWx] [-i|-m] [-E tags] [-f spec]\n"
 	    "\t\t[-I tags] [-K keywords] [-k keywords] [-N dbdir] [-p path]\n"
 	    "\t\t[-R keywords] [-s seed] [-X exclude-file]\n",
 	    getprogname());
