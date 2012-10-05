@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.40 2012/03/25 16:07:04 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.41 2012/10/05 01:05:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.40 2012/03/25 16:07:04 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.41 2012/10/05 01:05:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,8 +175,17 @@ miss(NODE *p, char *tail)
 		if (p->type != F_DIR && (dflag || p->flags & F_VISIT))
 			continue;
 		strcpy(tail, p->name);
-		if (!(p->flags & F_VISIT))
-			printf("missing: %s", path);
+		if (!(p->flags & F_VISIT)) {
+			/* Don't print missing message if file exists as a 
+			   symbolic link and the -q flag is set. */
+			struct stat statbuf;
+
+			if (qflag && stat(path, &statbuf) == 0 &&
+			    S_ISDIR(statbuf.st_mode))
+				p->flags |= F_VISIT;
+			else
+				(void)printf("%s missing", path);
+		}
 		switch (p->type) {
 		case F_BLOCK:
 		case F_CHAR:
