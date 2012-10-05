@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.4 2012/10/05 03:24:51 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.5 2012/10/05 03:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -249,12 +249,12 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": mac-address property is missing\n");
 			return;
 		}
-		sc->sc_enaddr[0] = (mac1 >> 0) & 0xff;
-		sc->sc_enaddr[1] = (mac1 >> 8) & 0xff;
-		sc->sc_enaddr[2] = (mac0 >> 0) & 0xff;
-		sc->sc_enaddr[3] = (mac0 >> 8) & 0xff;
-		sc->sc_enaddr[4] = (mac0 >> 16) & 0xff;
-		sc->sc_enaddr[5] = (mac0 >> 24) & 0xff;
+		sc->sc_enaddr[0] = (mac0 >> 0) & 0xff;
+		sc->sc_enaddr[1] = (mac0 >> 8) & 0xff;
+		sc->sc_enaddr[2] = (mac0 >> 16) & 0xff;
+		sc->sc_enaddr[3] = (mac0 >> 24) & 0xff;
+		sc->sc_enaddr[4] = (mac1 >> 0) & 0xff;
+		sc->sc_enaddr[5] = (mac1 >> 8) & 0xff;
 	} else {
 		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
@@ -373,12 +373,12 @@ bcmeth_mediastatus(struct ifnet *ifp, struct ifmediareq *ifm)
 static uint64_t
 bcmeth_macaddr_create(const uint8_t *enaddr)
 {
-	return (enaddr[2] << 0)			// UNIMAC_MAC_0
-	    |  (enaddr[3] << 8)			// UNIMAC_MAC_0
-	    |  (enaddr[4] << 16)		// UNIMAC_MAC_0
-	    |  (enaddr[5] << 24)		// UNIMAC_MAC_0
-	    |  ((uint64_t)enaddr[0] << 32)	// UNIMAC_MAC_1
-	    |  ((uint64_t)enaddr[1] << 40);	// UNIMAC_MAC_1
+	return (enaddr[3] << 0)			// UNIMAC_MAC_0
+	    |  (enaddr[2] << 8)			// UNIMAC_MAC_0
+	    |  (enaddr[1] << 16)		// UNIMAC_MAC_0
+	    |  (enaddr[0] << 24)		// UNIMAC_MAC_0
+	    |  ((uint64_t)enaddr[5] << 32)	// UNIMAC_MAC_1
+	    |  ((uint64_t)enaddr[4] << 40);	// UNIMAC_MAC_1
 }
 
 static int
@@ -903,7 +903,6 @@ bcmeth_rx_input(
 	}
 	if (sc->sc_cmdcfg & PROMISC_EN) 
 		m->m_flags |= M_PROMISC;
-	m->m_flags |= M_HASFCS;
 	m->m_pkthdr.rcvif = ifp;
 
 	ifp->if_ipackets++;
@@ -1359,7 +1358,7 @@ bcmeth_txq_consume(
 			txq->txq_free += txfree;
 			txq->txq_lastintr -= min(txq->txq_lastintr, txfree);
 #if 0
-			printf("%s: empty: freed %zu descriptors going form %zu to %zu\n",
+			printf("%s: empty: freed %zu descriptors going from %zu to %zu\n",
 			    __func__, txfree, txq->txq_free - txfree, txq->txq_free);
 #endif
 			KASSERT(txq->txq_lastintr == 0);
