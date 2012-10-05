@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.30 2012/10/05 01:31:05 christos Exp $	*/
+/*	$NetBSD: mtree.h,v 1.31 2012/10/05 09:17:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -86,7 +86,7 @@ typedef struct _node {
 #define	F_UID		0x00080000		/* uid */
 #define	F_UNAME		0x00100000		/* user name */
 #define	F_VISIT		0x00200000		/* file visited */
-#define	F_NOCHANGE	0x00400000		/* check existance, but not */
+#define	F_NOCHANGE	0x00400000		/* check existence, but not */
 						/* other properties */
 #define	F_SHA256	0x00800000		/* SHA256 digest */
 #define	F_SHA384	0x01000000		/* SHA384 digest */
