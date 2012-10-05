@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2012/10/05 01:13:50 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.36 2012/10/05 01:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ void	 parsetags(slist_t *, char *);
 u_int	 parsetype(const char *);
 void	 read_excludes_file(const char *);
 const char *rlink(const char *);
-int	 verify(void);
+int	 verify(FILE *);
 
 extern int	dflag, eflag, iflag, jflag, lflag, mflag,
 		nflag, qflag, rflag, sflag, tflag, uflag;
