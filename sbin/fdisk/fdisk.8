@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.77 2012/04/08 22:00:37 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.78 2012/10/05 18:07:46 njoly Exp $
 .\"
 .Dd April 6, 2012
 .Dt FDISK 8
@@ -138,7 +138,6 @@ Only if you reply affirmatively to this question will
 write anything to the disk.
 .Pp
 Available options:
-.Pp
 .Bl -tag -width Ds
 .It Fl 0
 Specify partition slot 0 to be printed or updated.
@@ -431,13 +430,12 @@ In this case there is no free space in either the disk or in the extended
 partition.
 .Pp
 The various fields in each partition entry are:
-.br
-.in +4
+.Bd -filled -offset 4n -compact
 .Em ptn_number : id_name
 (sysid
 .Em id_number )
-.br
-.in +4
+.Ed
+.Bd -filled -offset 8n -compact
 bootmenu:
 .Em bootmenu
 .br
@@ -448,8 +446,7 @@ size
 MB, Cyls
 .Em first Ns No - Ns Em next )
 .Op , Active
-.in -4
-.in -4
+.Ed
 .Bl -tag -width "bootmenu"
 .It Em ptn_number
 is the number of the partition.
@@ -490,7 +487,7 @@ If the
 .Fl v
 flag is specified, the beginning and end of each partition are also
 displayed as follows:
-.in +4
+.Bd -filled -offset 4n -compact
 beg: cylinder
 .Em cylinder ,
 head
@@ -504,7 +501,7 @@ head
 .Em head ,
 sector
 .Em sector
-.in -4
+.Ed
 .Bl -tag -width "bootmenu"
 .It Em "cylinder" , Em "head" , Em "sector"
 are the beginning or ending address of a partition.
