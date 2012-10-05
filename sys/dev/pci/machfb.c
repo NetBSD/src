@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.84 2012/10/01 09:25:01 jdc Exp $	*/
+/*	$NetBSD: machfb.c,v 1.85 2012/10/05 01:12:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.84 2012/10/01 09:25:01 jdc Exp $");
+	"$NetBSD: machfb.c,v 1.85 2012/10/05 01:12:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -888,8 +888,6 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.cursor = mach64_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = mach64_putchar_aa8;
-		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
-		     0, &sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = mach64_putchar_mono;
 }
@@ -1515,8 +1513,8 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 
 		if (!CHAR_IN_FONT(c, font))
 			return;
-		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0x0f];
-		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0x0f];
+		bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
+		fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 		x = ri->ri_xorigin + col * wi;
 		y = ri->ri_yorigin + row * he;
 		if (c == 0x20) {
