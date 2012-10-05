@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.51 2012/10/05 18:03:54 njoly Exp $
+.\"	$NetBSD: afterboot.8,v 1.52 2012/10/05 21:28:38 wiz Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -341,15 +341,15 @@ If you run
 you will have to kill it by running
 .Bd -literal -offset indent
 .Ic /etc/rc.d/dhclient stop
-.Pp
 .Ed
+.Pp
 If you run
 .Xr dhcpcd 8
 you will have to kill it by running
 .Bd -literal -offset indent
 .Ic /etc/rc.d/dhcpcd stop
-.Pp
 .Ed
+.Pp
 before you flush the routes.
 .Pp
 If you wish to route packets between interfaces, add one or both
@@ -459,8 +459,8 @@ add following entry to local passwd database via
 .Xr vipw 8 :
 .Bd -literal -offset indent
 .Li +:*::::::::
-.Pp
 .Ed
+.Pp
 Note this entry has to be the very last one.
 This traditional way works with the default
 .Xr nsswitch.conf 5
