@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.58 2012/10/05 01:13:50 christos Exp $
+.\"	$NetBSD: mtree.8,v 1.59 2012/10/05 01:19:54 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -489,7 +489,10 @@ and
 These may be specified without leading or trailing commas, but will be
 stored internally with them.
 .It Sy time
-The last modification time of the file.
+The last modification time of the file,
+in second and nanoseconds.
+The value should include a period character and exactly nine digits after
+the period.
 .It Sy type
 The type of the file; may be set to any one of the following:
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.63 2012/10/05 01:13:50 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.64 2012/10/05 01:19:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.63 2012/10/05 01:13:50 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.64 2012/10/05 01:19:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,11 +213,11 @@ statf(int indent, FTSENT *p)
 		    (long long)p->fts_statp->st_size);
 	if (keys & F_TIME)
 #if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
-		output(indent, &offset, "time=%ld.%ld",
+		output(indent, &offset, "time=%ld.%09ld",
 		    (long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 #else
-		output(indent, &offset, "time=%ld.%ld",
+		output(indent, &offset, "time=%ld.%09ld",
 		    (long)p->fts_statp->st_mtime, (long)0);
 #endif
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
