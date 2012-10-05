@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.41 2012/10/05 01:05:14 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.42 2012/10/05 01:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.41 2012/10/05 01:05:14 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.42 2012/10/05 01:26:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,11 +64,11 @@ static void	miss(NODE *, char *);
 static int	vwalk(void);
 
 int
-verify(void)
+verify(FILE *fi)
 {
 	int rval;
 
-	root = spec(stdin);
+	root = spec(fi);
 	rval = vwalk();
 	miss(root, path);
 	return (rval);
