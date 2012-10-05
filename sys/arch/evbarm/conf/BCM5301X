@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.6 2012/09/22 19:53:03 matt Exp $
+#	$NetBSD: BCM5301X,v 1.7 2012/10/05 06:04:17 matt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -273,6 +273,8 @@ axe*		at uhub? port ? configuration ? interface ?
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
+pseudo-device	vlan
+pseudo-device	bridge
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
