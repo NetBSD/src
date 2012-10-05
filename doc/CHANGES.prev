@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.116 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.117 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9966,7 +9966,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ddb(4): Add 'show vmem' and 'show all vmems' commands.
 		[cegger 20081207]
 	re(4): Add support for a 8168C/8111C revision. [alc 20081208]
-	tab(1): Add tabs utility, fixes PR bin/11227. [roy 20081211]
+	tabs(1): Add tabs utility, fixes PR bin/11227. [roy 20081211]
 	httpd(8): Add rc.d script to control httpd daemon. [mishka 20081211]
 	ath(4): Switch from the binary HAL to the open-source HAL released by
 		Sam Leffler. [alc 20081211]
@@ -10228,7 +10228,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		i386 and sparc64 are finished. [dyoung 20090625]
 	dhcpcd(8): Import dhcpcd-5.0.5 [roy 20090704]
 	dhcpcd(8): Import dhcpcd-5.0.6 [roy 20090708]
-	sysmon_envsys(8): Enhancements to allow access to driver-internal
+	sysmon_envsys(9): Enhancements to allow access to driver-internal
 		limit values [pgoyette 20090710]
 	libc: Add getdelim(3) and getline(3) conforming to
 		IEEE Std 1003.1-2008 (``POSIX.1'') [roy 20090713]
@@ -10268,7 +10268,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20090804]
 	openssl(1): Import SNAP-20090805 to fix the namespace issues
 		(BLOCK, CSTRING, etc) [christos 20090805]
-	tcx(8):	support wsdisplay and acceleration [macallan 20090806]
+	sparc: support wsdisplay and acceleration for tcx(4) [macallan 20090806]
 	rumpvfs: Use unmodified kernel vnode pager.  [pooka 20090806]
 	zfs: Import OpenSolaris zfs source code to NetBSD, add NetBSD
 		patches. [haad 20090808]
@@ -10276,8 +10276,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	evbarm: Support for Gumstix Verdex and Verdex Pro. [kiyohara 20090809]
 	gpioiic(4): New driver to create an I2C bus using GPIO pins in
 		bit-banging mode. [mbalmer 20090809]
-	voyagerfb(8): a driver for the Gdium Liberty 1000's video controller
-		[macallan 20090812]
+	mips/voyagerfb(4): a driver for the Gdium Liberty 1000's video
+		controller [macallan 20090812]
 	mips: removed a.out support [matt 20090812]
 	secmode_keylock, keylock, gpiolock(4): Add support for multi-position
 		keylocks. [mbalmer 20090814]
@@ -10289,13 +10289,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20090818]
 	amd64, i386: Suspend and resume is now supported when using the
 		genfb(4) display driver. [jmcneill 20090823]
-	tcx(4): imported the xf86-video-suntcx driver and added hardware
+	sparc/tcx(4): imported the xf86-video-suntcx driver and added hardware
 		acceleration [macallan 20090827]
 	unzip(1): A libarchive-based unzip frontend, emulating most of
 		infozip's command line. [joerg 20090903]
 	rumpcrypto: Add rump component for kernel crypto routines.
 		[pooka 20090903]
-	zx(4): imported the xf86-video-sunleo 1.2.0 driver from Xorg
+	sparc/zx(4): imported the xf86-video-sunleo 1.2.0 driver from Xorg
 		[macallan 20090905]
 	hdaudio(4): New standards-compliant Intel High Definition Audio driver
 		written to replace azalia(4). [sborrill 20090906]
@@ -10331,7 +10331,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20090930]
 	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 212.1
 		[tsarna 20090929]
-	lom(4), sparc64: Add a driver for LOMlite lights out management
+	sparc64/lom(4): Add a driver for LOMlite lights out management
 		hardware monitor and watchdog timer. [nakayama 20091002]
 	i386: Add support for enhanced speedstep on VIA C7 Esther CPUs.
 		[jmcneill 20091002]
@@ -10362,9 +10362,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	m4(1): Import the OpenBSD one since it implements features from gm4
 		that the new flex wants [christos 20091026]
 	yacc(1): Import byacc-20091028 [christos 20091028]
-	pm2fb: A driver for Permedia2-based graphics cards like Sun's PGX32
-		[macallan 20091028]
-	xf86-video-igs: an Xorg driver for IGS CyberPro 20x0 graphics
+	sparc/pm2fb(4): A driver for Permedia2-based graphics cards like
+		Sun's PGX32 [macallan 20091028]
+	shark: xf86-video-igs: an Xorg driver for IGS CyberPro 20x0 graphics
 		controllers, currently only for rev. 5 sharks
 		[macallan 20091110]
 	raid(4): RAIDframe parity maps, which greatly improve parity rewrite
@@ -10411,7 +10411,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bind: Update to 9.7.0-rc1. [christos 20091226]
 	openssl(1): Import SNAP-20091226 [christos 20091226]
 	openssh: Import 5.3. [christos 20091226]
-	gfb: Add a driver for Sun XVR-1000 graphics boards
+	sparc/gfb(4): Add a driver for Sun XVR-1000 graphics boards
 		[macallan 20091229]
 	wm(4): Add support for i82583V	[msaitoh 20091230]
 	libc: Import tzcode2009k [mlelstv 20091231]
@@ -10467,7 +10467,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	u3g(4): Support Huawei K3765.  [pooka 20100219]
 	wbsio(4): New driver for Winbond Super I/O attachment of
 		lm(4) on any port.	[cnst 20100221]
-	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
+	wcfb(4): A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
 	netstat(8): Add -h which humanizes numbers from -bi.  [pooka 20100224]
 	ld.elf_so(1): Implement negative symbol lookup cache [roy 20100227]
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
@@ -10490,7 +10490,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	aibs(4): Remove aiboost(4) as obsolete and redundant
 		since the introduction of aibs(4).	[cnst 20100319]
 	rump(3): Support bluetooth.  [pooka 20100322]
-	cgtwelve: A driver for Sun CG12 / Matrox SG3 graphics boards
+	sparc/cgtwelve(4): A driver for Sun CG12 / Matrox SG3 graphics boards
 		[macallan 20100323]
 	rump(3): Support unionfs, layerfs, nullfs and umapfs.  [pooka 20100330]
 	dhcpcd(8): Import dhcpcd-5.2.2. [roy 20100331]
@@ -10542,7 +10542,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jym 20100505]
 	cron(8): Import 4.1 from isc. [christos 20100506]
 	atf(7): Import 0.8.  [jmmv 20100508]
-	bozohttpd: Update to bozohttpd-20100509.  [mrg 20100509]
+	httpd(8): Import bozohttpd-20100509.  [mrg 20100509]
 	rump(3): Add uniprocessor locking routines.  They can be used in
 		virtual uniprocessor configurations for a significant
 		performance boost.  [pooka 20100518]
@@ -10565,7 +10565,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
 	vnode(9): Remove member v_vnlock. [hannken 20100605]
 	acpi(4): Updated ACPICA to 20100528. [jruoho 20100606]
-	lcd(4): Driver for hp700 lcds added. [skrll 20100601]
+	hp700/lcd(4): Driver for hp700 lcds added. [skrll 20100601]
 	ofppc: Support Gigabit Ethernet Controller for MV64361 on PegasosII
 		by mvgbe@gt.  [kiyohara 20100609]
 	arm: Added support for Cortex-A8 CPUs. [jmcneill 20100616]
@@ -10609,7 +10609,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bebox: Support xserver.  It tested only s3(TRIO 64V+).
 		[kiyohara 20100801]
 	tests(7): Convert the sort tests to ATF.  [jmmv 20100801]
-	wpa: New wpa_supplicant and hostapd 0.7.2 [christos 20100804]
+	wpa: New wpa_supplicant(8) and hostapd(8) 0.7.2 [christos 20100804]
 	tests(7): Add elementary tests for the audio subsystem.
 		[pooka 20100804]
 	hpcarm: Improve console speed on W-ZERO3 machines using
@@ -10633,7 +10633,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dreamcast: Fix a long standing GD-ROM driver bug so that file system
 		on GD-ROM works properly.  The problem is reported and tracked
 		by Yasushi Oshima. [tsutsui 20100831]
-	omapfb: a simple driver for OMAP 3xxx on-chip video, especially the
+	omapfb(4): a simple driver for OMAP 3xxx on-chip video, especially the
 		Beagleboard [macallan 20100831]
 	rump_lwproc(3): Add an interface for process/thread management
 		in a rump kernel.  [pooka 20100901]
@@ -10726,8 +10726,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	raid(4):  Add support for non 512-byte sector devices.  [mrg 20101203]
 	sysinst(8): Drop the question to select a password cipher algorithm.
 		[jmmv 20101204]
-	libpcap(3): Update to 1.1.1; see src/external/bsd/libpcap/dist/CHANGES
-		for the list of changes [christos 20101205]
+	pcap(3): Update libpcap to 1.1.1; see
+		src/external/bsd/libpcap/dist/CHANGES for the list of changes
+		[christos 20101205]
 	tcpdump(8): Update to 4.1.1; see src/external/bsd/tcpdump/dist/CHANGES
 		for the list of changes [christos 20101205]
 	prenice(1): Add new command to change process priorities based upon
@@ -10808,7 +10809,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		available via sysctl. [matt 20110129]
 	route: make routing socket interface 64-bit clean. [matt 20110131]
 	dhcpcd(8): Import dhcpcd-5.2.11. [roy 20110204]
-	hp300: Switch NetBSD/hp300 to wscons with rasops.
+	hp300: Switch NetBSD/hp300 to wscons(4) with rasops(9).
 		Simply ported from OpenBSD/hp300.  [tsutsui 20110206]
 	rumphijack(3): Improve select(2) emulation.  Commit was done
 		through a rump TCP/IP stack.  [pooka 20110211]
@@ -10885,13 +10886,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	hppa: add TLS support.  [skrll 20110317]
 	gdtoa: Import the latest [christos 20110319]
 	sandpoint: D-Link DSM-G600 support. [phx 20110319]
-	shark: chipsfb now works on shark. [macallan 20110323]
+	shark: chipsfb(4) now works on shark. [macallan 20110323]
 	postfix(1): Import version 2.8.2 [tron 20110323]
 	sparc: add TLS (thread local storage) support.  [martin 20110330]
 	sparc64: add TLS (thread local storage) support.  [martin 20110330]
 	alpha: add TLS (thread local storage) support.  [skrll 20110331]
 	atf(7): Import 0.13.  [jmmv 20110331]
-	ssh-askpass: Updated to 1.2.0. [mbalmer 20110403]
+	ssh-askpass(1): Updated to 1.2.0. [mbalmer 20110403]
 	rdcide(4): add a driver for the IDE controller found in RDC's
 		vortex86 and PMX-1000 system-on-chip.  [bouyer 20110404]
 	rdcpcib(4): add a driver for the PCI/ISA bridge and watchdog timer
@@ -11004,8 +11005,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mips: Switch to GCC 4.5.3  [matt 20110804]
 	powerpc: Switch to GCC 4.5.3  [matt 20110804]
 	amiga: Add basic PCI support. [rkujawa 20110804]
-	p5pb(4): Add driver for Phase5 PCI bridge, as present on CyberVision
-		PPC and BlizzardVision PPC. [rkujawa 20110804]
+	amiga/p5pb(4): Add driver for Phase5 PCI bridge, as present on
+		CyberVision PPC and BlizzardVision PPC. [rkujawa 20110804]
 	modload(8): A module name must contain at least one / character when
 		the module is to be loaded from a filesystem path, it must not
 		contain a / character when the module is to be loaded from
@@ -11027,12 +11028,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	postfix(1): Import version 2.8.5 [tron 20110910]
 	build: Both the source tree and the obj directories will be cleaned
 		by "make clean" or "make cleandir".  [apb 20110910]
-	wpa: New wpa_supplicant and hostapd 0.7.3 [christos 20110910]
+	wpa: New wpa_supplicant(8) and hostapd(8) 0.7.3 [christos 20110910]
 	yacc(1): Import byacc-20110908 [christos 20110910]
 	traceroute(8): Updated to 1.4a12 [christos 20110910]
 	bind: Update to 9.9.0a1 [christos 20110911]
 	file(1): Update to 5.09 [christos 20110916]
-	mppb(4): Add driver for Prometheus Zorro III to PCI bridge.
+	amiga/mppb(4): Add driver for Prometheus Zorro III to PCI bridge.
 		[rkujawa 20110917]
 	xen: Provide experimental support for suspend/resume in
 		NetBSD domUs. [jym 20110920]
@@ -11060,7 +11061,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sparc64: Switch to GDB 7.3.1.  [mrg 20111024]
 	arm: Switch to GDB 7.3.1.  [mrg 20111024]
 	powerpc: Switch to GDB 7.3.1.  [mrg 20111024]
-	efa(4): Add driver for ELBOX FastATA 1200. [rkujawa 20111028]
+	amiga/efa(4): Add driver for ELBOX FastATA 1200. [rkujawa 20111028]
 	postfix(1): Import version 2.8.6 [tron 20111028]
 	virtio(4): Add virtio driver. Speeds up I/O under KVM platform.
 		[hannken 20111030]
@@ -11096,8 +11097,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mount_chfs(8): Add mount_chfs(8), a tool for mounting CHFS volumes.
 		[ahoka 20111124]
 	chfs: Add CHFS, a file system for flash(9) devices. [ahoka 20111124]
-	x68k: Add powsw(4), a revised power switch driver [isaki 20111127]
-	rtadvd: Add RDNSS and DNSSL support (RFC6106) [roy 20111210]
+	x68k: Add x68k/powsw(4), a revised power switch driver [isaki 20111127]
+	rtadvd(8): Add RDNSS and DNSSL support (RFC6106) [roy 20111210]
 	isibootd(8): Add isibootd(8), a dumb netboot server command for
 		OMRON luna68k machines.  [tsutsui 20111217]
 	libsa: Allow libsa to have a file system dependent ls command and
@@ -11119,13 +11120,13 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sandpoint: Netronix NH-230/231 and compatible NAS are supported.
 		[phx 20120114]
 	atf(7): Import 0.15.  [jmmv 20120116]
-	p5pb(4): DCE Computer G-REX 1200 and G-REX 4000 PCI bridges are now
-		supported. [rkujawa 20120119]
+	amiga/p5pb(4): DCE Computer G-REX 1200 and G-REX 4000 PCI bridges are
+		now supported. [rkujawa 20120119]
 	build.sh: Add live-image and install-image targets.  [tsutsui 20120122]
 	tpm(4):	 Add a Trusted Computing Module driver from bsssd
 		[christos 20120122]
-	valkyriefb and videopll: drivers to support the onboard video
-		circuitry found in for example the Performa 6360.
+	macppc/valkyriefb(4) and macppc/videopll(4): drivers to support the
+		onboard video circuitry found in for example the Performa 6360.
 		[macallan 20120123]
 	dhcpcd(8): Import dhcpcd-5.5.0 [roy 20120125]
 	x86: Stop building boot ROM images for old NICs. [jnemeth 20120127]
@@ -11149,20 +11150,20 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		the libquota(3) API. [dholland 20120201]
 	repquota(8): The repquota -x dump format is now tabular, not XML.
 		[dholland 20120201]
-	mac68k: Add timecounter support to the CSI Hurdler Centronics
-		Parallel Interface cpi(4) driver. [hauke 20120201]
+	mac68k: Add timecounter(9) support to the CSI Hurdler Centronics
+		Parallel Interface mac68k/cpi(4) driver. [hauke 20120201]
 	ntp: import ntp 4.2.6p5.
 		[kardel 20120201]
 	dhcpcd(8): Import dhcpcd-5.5.3 [roy 20120202]
 	dhcpcd(8): Import dhcpcd-5.5.4 [roy 20120206]
-	userland: New apropos implementation using SQLite Full Text Index
+	userland: New apropos(1) implementation using SQLite Full Text Index
 		[joerg 20120207]
-	userland: Man pages are formatted with mandoc by default.
+	userland: Man pages are formatted with mandoc(1) by default.
 		[joerg 20120207]
-	posix_spawn: Import Charles Zhang's summer of code project.
+	posix_spawn(3): Import Charles Zhang's summer of code project.
 		[martin 20120212]
-	quotactl(8): quotactl(8) was removed in favor of quotadump and
-		quotarestore. [dholland 20120212]
+	quotactl(8): quotactl(8) was removed in favor of quotadump(8) and
+		quotarestore(8). [dholland 20120212]
 	quotadump(8): Added quotadump, which is the same as repquota -x,
 		for creating backups of quota information.
 		[dholland 20120212]
