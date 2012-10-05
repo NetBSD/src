@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.28 2012/10/05 00:59:35 christos Exp $	*/
+/*	$NetBSD: mtree.h,v 1.29 2012/10/05 01:26:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -120,6 +120,7 @@ const char	*inotype(u_int);
 u_int		 nodetoino(u_int);
 int		 setup_getid(const char *);
 NODE		*spec(FILE *);
+int		 mtree_specspec(FILE *, FILE *);
 void		 free_nodes(NODE *);
 char		*vispath(const char *);
 
