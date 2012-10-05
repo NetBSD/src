@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.42 2012/10/05 01:26:56 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.43 2012/10/05 01:31:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.42 2012/10/05 01:26:56 christos Exp $");
+__RCSID("$NetBSD: verify.c,v 1.43 2012/10/05 01:31:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,8 @@ vwalk(void)
 			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME)) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
-				if (compare(ep, p))
+				if ((ep->flags & F_NOCHANGE) == 0 &&
+				    compare(ep, p))
 					rval = MISMATCHEXIT;
 				if (!(ep->flags & F_IGN) &&
 				    ep->type == F_DIR &&
