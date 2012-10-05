@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.57 2012/09/21 01:07:44 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.58 2012/10/05 01:19:03 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.57 2012/09/21 01:07:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.58 2012/10/05 01:19:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,6 @@ static void	p9100_eraserows(void *, int, int, long);
 static void	p9100_putchar(void *, int, int, u_int, long);
 static void	p9100_putchar_aa(void *, int, int, u_int, long);
 static void	p9100_cursor(void *, int, int, int);
-#if 0
-static int	p9100_allocattr(void *, int, int, int, long *);
-#endif
 
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
@@ -1389,8 +1386,6 @@ p9100_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.erasecols = p9100_erasecols;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = p9100_putchar_aa;
-		if (0) ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
-		     0, &sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = p9100_putchar;
 }
@@ -1530,27 +1525,6 @@ p9100_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 #if 0
-static int
-p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
-{
-	if ((fg == 0) && (bg == 0))
-	{
-		fg = WS_DEFAULT_FG;
-		bg = WS_DEFAULT_BG;
-	}
-
-	*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16 | (flags & 0xff);
-
-	if (flags & WSATTR_REVERSE) {
-		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16 |
-		    (flags & 0xff) << 8;
-	} else
-		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16 |
-		    (flags & 0xff) << 8;
-
-	return 0;
-}
-
 static int
 p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 {
