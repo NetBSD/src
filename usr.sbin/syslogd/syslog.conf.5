@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.18 2010/01/01 21:44:07 wiz Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.19 2012/10/05 16:15:45 msaitoh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 1, 2010
+.Dd October 16, 2012
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -500,7 +500,7 @@ and
 .Sh SIGNING
 .Xr syslogd 8
 is able to digitally sign all processed messages.
-The used protocol is defined by RFC nnnn (syslog-sign):
+The used protocol is defined by RFC 5848 (syslog-sign):
 at the start of a session the signing sender sends so called certificate
 blocks containing its public key; after that it periodically sends a signed
 message containing hashes of previous messages.
