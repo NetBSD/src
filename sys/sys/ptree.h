@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.h,v 1.7 2012/07/15 00:16:28 rmind Exp $	*/
+/*	$NetBSD: ptree.h,v 1.8 2012/10/06 22:15:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ typedef bool (*pt_filter_t)(void *, const void *, int);
 void	ptree_init(pt_tree_t *, const pt_tree_ops_t *, void *, size_t, size_t);
 bool	ptree_insert_node(pt_tree_t *, void *);
 bool	ptree_insert_mask_node(pt_tree_t *, void *, pt_bitlen_t);
+bool	ptree_mask_node_p(pt_tree_t *, const void *, pt_bitlen_t *);
 void *	ptree_find_filtered_node(pt_tree_t *, const void *, pt_filter_t, void *);
 #define	ptree_find_node(pt,key)	\
 	ptree_find_filtered_node((pt), (key), NULL, NULL)
