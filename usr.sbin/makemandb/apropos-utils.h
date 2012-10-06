@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.3 2012/05/07 11:18:16 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.4 2012/10/06 15:33:59 wiz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include "sqlite3.h"
 
-#define DBPATH "/var/db/man.db"
+#define MANCONF "/etc/man.conf"
 #define SECMAX 9
 
 /* Flags for opening the database */
@@ -84,8 +84,9 @@ typedef struct query_args {
 char *lower(char *);
 void concat(char **, const char *);
 void concat2(char **, const char *, size_t);
-sqlite3 *init_db(int);
+sqlite3 *init_db(int, const char *);
 void close_db(sqlite3 *);
+char *get_dbpath(const char *);
 int run_query(sqlite3 *, const char *[3], query_args *);
 int run_query_html(sqlite3 *, query_args *);
 int run_query_pager(sqlite3 *, query_args *);

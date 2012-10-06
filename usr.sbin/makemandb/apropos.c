@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.7 2012/09/07 11:28:46 wiz Exp $	*/
+/*	$NetBSD: apropos.c,v 1.8 2012/10/06 15:33:59 wiz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.7 2012/09/07 11:28:46 wiz Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.8 2012/10/06 15:33:59 wiz Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 	if (query == NULL)
 		errx(EXIT_FAILURE, "Try using more relevant keywords");
 
-	if ((db = init_db(MANDB_READONLY)) == NULL)
+	if ((db = init_db(MANDB_READONLY, MANCONF)) == NULL)
 		exit(EXIT_FAILURE);
 
 	/* If user wants to page the output, then set some settings */

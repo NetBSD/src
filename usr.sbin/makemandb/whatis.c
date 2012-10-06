@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.3 2012/02/20 18:27:30 joerg Exp $	*/
+/*	$NetBSD: whatis.c,v 1.4 2012/10/06 15:33:59 wiz Exp $	*/
 /*-
  * Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whatis.c,v 1.3 2012/02/20 18:27:30 joerg Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.4 2012/10/06 15:33:59 wiz Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	if ((db = init_db(MANDB_READONLY)) == NULL)
+	if ((db = init_db(MANDB_READONLY, MANCONF)) == NULL)
 		exit(EXIT_FAILURE);
 
 	retval = 0;

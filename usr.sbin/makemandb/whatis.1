@@ -1,4 +1,4 @@
-.\" $NetBSD: whatis.1,v 1.1 2012/02/07 19:13:32 joerg Exp $
+.\" $NetBSD: whatis.1,v 1.2 2012/10/06 15:33:59 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 1, 2012
+.Dd October 5, 2012
 .Dt WHATIS 1
 .Os
 .Sh NAME
@@ -39,12 +39,19 @@
 .Sh DESCRIPTION
 The
 .Nm
-program queries the database
-.Pa /var/db/man.db
-for manual pages with name
+program queries the apropos database built by
+.Xr makemandb 8 .
+It searches for manual pages with name
 .Ar command
-and prints the name of the manual page, the section and the description from
-the section NAME.
+and outputs name of the matching manual pages along with the section and the
+brief description from the NAME section.
+.Sh FILES
+.Bl -hang -width /etc/man.conf -compact
+.It Pa /etc/man.conf
+The location of the Sqlite FTS database can be configured using the
+.Cd _mandb
+tag.
+.El
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr makemandb 8

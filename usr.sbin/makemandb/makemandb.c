@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.14 2012/09/07 11:29:04 wiz Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.15 2012/10/06 15:33:59 wiz Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.14 2012/09/07 11:29:04 wiz Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.15 2012/10/06 15:33:59 wiz Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -310,7 +310,6 @@ main(int argc, char *argv[])
 			manconf = optarg;
 			break;
 		case 'f':
-			remove(DBPATH);
 			mflags.recreate = 1;
 			break;
 		case 'l':
@@ -338,7 +337,22 @@ main(int argc, char *argv[])
 	init_secbuffs(&rec);
 	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL);
 
-	if ((db = init_db(MANDB_CREATE)) == NULL)
+	if (manconf) {
+		char *arg;
+		size_t command_len = shquote(manconf, NULL, 0) + 1;
+		arg = emalloc(command_len);
+		shquote(manconf, arg, command_len);
+		easprintf(&command, "man -p -C %s", arg);
+		free(arg);
+	} else {
+		command = estrdup("man -p");
+		manconf = MANCONF;
+	}
+
+	if (mflags.recreate)
+		remove(get_dbpath(manconf));
+
+	if ((db = init_db(MANDB_CREATE, manconf)) == NULL)
 		exit(EXIT_FAILURE);
 
 	sqlite3_exec(db, "PRAGMA synchronous = 0", NULL, NULL, 	&errmsg);
@@ -358,16 +372,6 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (manconf) {
-		char *arg;
-		size_t command_len = shquote(manconf, NULL, 0) + 1;
-		arg = emalloc(command_len);
-		shquote(manconf, arg, command_len);
-		easprintf(&command, "man -p -C %s", arg);
-		free(arg);
-	} else {
-		command = estrdup("man -p");
-	}
 
 	/* Call man -p to get the list of man page dirs */
 	if ((file = popen(command, "r")) == NULL) {
