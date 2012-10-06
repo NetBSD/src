@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.10 2012/07/21 17:11:02 rmind Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.11 2012/10/06 23:50:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10 2012/07/21 17:11:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.11 2012/10/06 23:50:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,8 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 	[NPF_TCPS_LAST_ACK]	= 30,
 	[NPF_TCPS_TIME_WAIT]	= 60 * 2 * 2,
 };
+
+static bool npf_strict_order_rst __read_mostly = false;
 
 #define	NPF_TCP_MAXACKWIN	66000
 
@@ -391,17 +393,20 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		/* Workaround for some TCP stacks. */
 		ack = tstate->nst_end;
 	}
-	if (seq == end) {
-		/* If packet contains no data - assume it is valid. */
-		end = fstate->nst_end;
-		seq = end;
+
+	if (__predict_false(tcpfl & TH_RST)) {
+		/* RST to the initial SYN may have zero SEQ - fix it up. */
+		if (seq == 0 && nst->nst_state == NPF_TCPS_SYN_SENT) {
+			end = fstate->nst_end;
+			seq = end;
+		}
+
+		/* Strict in-order sequence for RST packets. */
+		if (npf_strict_order_rst && (fstate->nst_end - seq) > 1) {
+			return false;
+		}
 	}
-#if 0
-	/* Strict in-order sequence for RST packets. */
-	if ((tcpfl & TH_RST) != 0 && (fstate->nst_end - seq) > 1) {
-		return false;
-	}
-#endif
+
 	/*
 	 * Determine whether the data is within previously noted window,
 	 * that is, upper boundary for valid data (I).
