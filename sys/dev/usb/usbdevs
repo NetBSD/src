@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.629 2012/10/05 22:04:56 khorben Exp $
+$NetBSD: usbdevs,v 1.630 2012/10/06 14:37:41 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -843,6 +843,7 @@ product APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE IPAD		0x129a	Apple iPad
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 product APPLE BLUETOOTH2	0x8205	Bluetooth
+product APPLE BLUETOOTH_HOST_C	0x821f	Bluetooth USB Host Controller
 product APPLE BLUETOOTH		0x8300	Bluetooth
 
 /* ArkMicroChips products */
