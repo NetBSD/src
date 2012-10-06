@@ -51,6 +51,47 @@
 /* #define SLJIT_CONFIG_AUTO 1 */
 /* #define SLJIT_CONFIG_UNSUPPORTED 1 */
 
+#include <machine/sljitarch.h>
+
+#if defined(_KERNEL) && !defined(SLJIT_MALLOC)
+#define SLJIT_MALLOC(size) malloc((size), M_TEMP, M_WAITOK)
+#endif
+
+#if defined(_KERNEL) && !defined(SLJIT_FREE)
+#define SLJIT_FREE(ptr) free((ptr), M_TEMP)
+#endif
+
+#if defined(_KERNEL) && !defined(SLJIT_CACHE_FLUSH)
+#define SLJIT_CACHE_FLUSH(from, to)
+#endif
+
+#if defined(_KERNEL)
+#define SLJIT_UTIL_GLOBAL_LOCK 0
+#define SLJIT_EXECUTABLE_ALLOCATOR 0
+#define SLJIT_MALLOC_EXEC(sz) SLJIT_MALLOC(sz)
+#define SLJIT_FREE_EXEC(ptr) SLJIT_FREE(ptr)
+#endif
+
+#ifdef _KERNEL
+#ifdef DIAGNOSTIC
+#define SLJIT_DEBUG 1
+#else
+#define SLJIT_DEBUG 0
+#endif
+#endif
+
+#ifdef _KERNEL
+#define SLJIT_VERBOSE 0
+#endif
+
+#ifdef _KERNEL
+#include <sys/cdefs.h>
+#include <sys/malloc.h>
+#ifdef SLJIT_DEBUG
+#include <sys/systm.h>
+#endif
+#endif
+
 /* --------------------------------------------------------------------- */
 /*  Utilities                                                            */
 /* --------------------------------------------------------------------- */
