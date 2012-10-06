@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.22 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.23 2012/10/06 23:38:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.22 2012/09/16 13:47:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.23 2012/10/06 23:38:20 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,8 +136,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
 
-		int ret __unused = npf_cache_all(&npc, nbuf);
-		KASSERT((ret & NPC_IPFRAG) == 0);
+		if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
+			se = NULL;
+			goto out;
+		}
 		npf_stats_inc(NPF_STAT_REASSEMBLY);
 	}
 
