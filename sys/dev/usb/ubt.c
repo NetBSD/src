@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.48 2012/06/02 21:36:45 dsl Exp $	*/
+/*	$NetBSD: ubt.c,v 1.49 2012/10/06 14:37:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48 2012/06/02 21:36:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.49 2012/10/06 14:37:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -305,26 +305,34 @@ static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
 /*
- * Match against the whole device, since we want to take
- * both interfaces. If a device should be ignored then add
+ * To match or ignore forcibly, add
  *
- *	{ VendorID, ProductID }
+ *	{ { VendorID, ProductID } , UMATCH_VENDOR_PRODUCT|UMATCH_NONE }
  *
- * to the ubt_ignore list.
+ * to the ubt_dev list.
  */
-static const struct usb_devno ubt_ignore[] = {
-	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
+const struct ubt_devno {
+	struct usb_devno	devno;
+	int			match;
+} ubt_dev[] = {
+	{ { USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
+	  UMATCH_NONE },
+	{ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH_HOST_C },
+	  UMATCH_VENDOR_PRODUCT },
 };
+#define ubt_lookup(vendor, product) \
+	((const struct ubt_devno *)usb_lookup(ubt_dev, vendor, product))
 
 int 
 ubt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
+	const struct ubt_devno *dev;
 
 	DPRINTFN(50, "ubt_match\n");
 
-	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
-		return UMATCH_NONE;
+	if ((dev = ubt_lookup(uaa->vendor, uaa->product)) != NULL)
+		return dev->match;
 
 	if (uaa->class == UDCLASS_WIRELESS
 	    && uaa->subclass == UDSUBCLASS_RF
