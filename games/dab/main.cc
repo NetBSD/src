@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cc,v 1.5 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: main.cc,v 1.6 2012/10/06 19:39:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * main.C: Main dots program
  */
 #include "defs.h"
-RCSID("$NetBSD: main.cc,v 1.5 2008/04/28 20:22:54 martin Exp $")
+RCSID("$NetBSD: main.cc,v 1.6 2012/10/06 19:39:51 christos Exp $")
 
 #include <stdio.h>
 #include <unistd.h>
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 	}
     }
 
-    sc = TTYSCRN::create(acs, ny, nx);
+    sc = TTYSCRN::create(acs, &ny, &nx);
     if (sc == NULL)
 	::errx(1, "Dimensions too large for current screen.");
 
