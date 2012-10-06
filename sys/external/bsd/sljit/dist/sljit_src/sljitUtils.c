@@ -106,9 +106,9 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 
 #else /* _WIN32 */
 
-#include <pthread.h>
-
 #if (defined SLJIT_EXECUTABLE_ALLOCATOR && SLJIT_EXECUTABLE_ALLOCATOR)
+
+#include <pthread.h>
 
 static pthread_mutex_t allocator_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -125,6 +125,8 @@ static SLJIT_INLINE void allocator_release_lock(void)
 #endif /* SLJIT_EXECUTABLE_ALLOCATOR */
 
 #if (defined SLJIT_UTIL_GLOBAL_LOCK && SLJIT_UTIL_GLOBAL_LOCK)
+
+#include <pthread.h>
 
 static pthread_mutex_t global_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -148,7 +150,10 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 
 #if (defined SLJIT_UTIL_STACK && SLJIT_UTIL_STACK)
 
-#ifdef _WIN32
+#ifdef _KERNEL
+#include <sys/param.h>
+#include <uvm/uvm.h>
+#elif defined(_WIN32)
 #include "windows.h"
 #else
 #include <sys/mman.h>
@@ -168,6 +173,9 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 #ifdef _WIN32
 	SYSTEM_INFO si;
 #endif
+#ifdef _KERNEL
+	vaddr_t v;
+#endif
 
 	if (limit > max_limit || limit < 1)
 		return NULL;
@@ -179,7 +187,11 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	}
 #else
 	if (!sljit_page_align) {
+#ifdef _KERNEL
+		sljit_page_align = PAGE_SIZE;
+#else
 		sljit_page_align = sysconf(_SC_PAGESIZE);
+#endif
 		/* Should never happen. */
 		if (sljit_page_align < 0)
 			sljit_page_align = 4096;
@@ -194,7 +206,17 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	if (!stack)
 		return NULL;
 
-#ifdef _WIN32
+#ifdef _KERNEL
+	v = uvm_km_alloc(kernel_map, max_limit, PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
+	base.ptr = (void *)v;
+	if (base.ptr == NULL) {
+		SLJIT_FREE(stack);
+		return NULL;
+	}
+	stack->base = base.uw;
+	stack->limit = stack->base + limit;
+	stack->max_limit = stack->base + max_limit;
+#elif defined(_WIN32)
 	base.ptr = VirtualAlloc(0, max_limit, MEM_RESERVE, PAGE_READWRITE);
 	if (!base.ptr) {
 		SLJIT_FREE(stack);
@@ -225,7 +247,10 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 
 SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* stack)
 {
-#ifdef _WIN32
+#ifdef _KERNEL
+	uvm_km_free(kernel_map, (vaddr_t)stack->base,
+	    stack->max_limit - stack->base, UVM_KMF_WIRED);
+#elif defined(_WIN32)
 	VirtualFree((void*)stack->base, 0, MEM_RELEASE);
 #else
 	munmap((void*)stack->base, stack->max_limit - stack->base);
