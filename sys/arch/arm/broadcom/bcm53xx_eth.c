@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.6 2012/10/05 04:05:53 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.7 2012/10/06 01:30:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -835,9 +835,8 @@ bcmeth_rxq_produce(
 	struct bcmeth_rxqueue *rxq)
 {
 	struct gmac_rxdb *producer = rxq->rxq_producer;
-#if 0
-	size_t inuse = rxq->rxq_inuse;
-#endif
+	bool produced = false;
+
 	while (rxq->rxq_inuse < rxq->rxq_threshold) {
 		struct mbuf *m;
 		IF_DEQUEUE(&sc->sc_rx_bufcache, m);
@@ -854,7 +853,6 @@ bcmeth_rxq_produce(
 		producer->rxdb_buflen = MCLBYTES;
 		producer->rxdb_addrlo = map->dm_segs[0].ds_addr;
 		producer->rxdb_flags &= RXDB_FLAG_ET;
-		producer->rxdb_flags |= RXDB_FLAG_IC;
 		*rxq->rxq_mtail = m;
 		rxq->rxq_mtail = &m->m_next;
 		m->m_len = MCLBYTES;
@@ -866,15 +864,18 @@ bcmeth_rxq_produce(
 			    rxq->rxq_last - rxq->rxq_producer);
 			producer = rxq->rxq_producer = rxq->rxq_first;
 		}
+		produced = true;
 	}
-	if (producer != rxq->rxq_producer) {
+	if (produced) {
 		membar_producer();
-		bcmeth_rxq_desc_presync(sc, rxq, rxq->rxq_producer,
-		    producer - rxq->rxq_producer);
-		rxq->rxq_producer = producer;
+		if (producer != rxq->rxq_producer) {
+			bcmeth_rxq_desc_presync(sc, rxq, rxq->rxq_producer,
+			    producer - rxq->rxq_producer);
+			rxq->rxq_producer = producer;
+		}
 		bcmeth_write_4(sc, rxq->rxq_reg_rcvptr,
 		    rxq->rxq_descmap->dm_segs[0].ds_addr
-		    + ((uintptr_t)rxq->rxq_producer & RCVPTR));
+		    + ((uintptr_t)producer & RCVPTR));
 	}
 	return true;
 }
@@ -1059,13 +1060,13 @@ bcmeth_rxq_reset(
 	 */
 	struct gmac_rxdb *rxdb;
 	for (rxdb = rxq->rxq_first; rxdb < rxq->rxq_last - 1; rxdb++) {
-		rxdb->rxdb_flags = 0;
+		rxdb->rxdb_flags = RXDB_FLAG_IC;
 	}
 
 	/*
 	 * Last descriptor has the wrap flag.
 	 */
-	rxdb->rxdb_flags = RXDB_FLAG_ET;
+	rxdb->rxdb_flags = RXDB_FLAG_ET|RXDB_FLAG_IC;
 
 	/*
 	 * Reset the producer consumer indexes.
