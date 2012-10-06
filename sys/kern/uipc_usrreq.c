@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.139 2012/07/30 10:45:03 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.140 2012/10/06 22:58:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.139 2012/07/30 10:45:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.140 2012/10/06 22:58:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1247,29 +1247,30 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
 	/* Make sure the recipient should be able to see the files.. */
-	if (p->p_cwdi->cwdi_rdir != NULL) {
-		rp = (file_t **)CMSG_DATA(cm);
-		for (size_t i = 0; i < nfds; i++) {
-			file_t * const fp = *rp++;
-			/*
-			 * If we are in a chroot'ed directory, and
-			 * someone wants to pass us a directory, make
-			 * sure it's inside the subtree we're allowed
-			 * to access.
-			 */
-			if (fp->f_type == DTYPE_VNODE) {
-				vnode_t *vp = (vnode_t *)fp->f_data;
-				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
-					error = EPERM;
-					goto out;
-				}
+	rp = (file_t **)CMSG_DATA(cm);
+	for (size_t i = 0; i < nfds; i++) {
+		file_t * const fp = *rp++;
+		if (fp == NULL) {
+			error = EINVAL;
+			goto out;
+		}
+		/*
+		 * If we are in a chroot'ed directory, and
+		 * someone wants to pass us a directory, make
+		 * sure it's inside the subtree we're allowed
+		 * to access.
+		 */
+		if (p->p_cwdi->cwdi_rdir != NULL && fp->f_type == DTYPE_VNODE) {
+			vnode_t *vp = (vnode_t *)fp->f_data;
+			if ((vp->v_type == VDIR) &&
+			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
+				error = EPERM;
+				goto out;
 			}
 		}
 	}
 
  restart:
-	rp = (file_t **)CMSG_DATA(cm);
 	/*
 	 * First loop -- allocate file descriptor table slots for the
 	 * new files.
