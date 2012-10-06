@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.20 2012/10/04 10:35:54 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.21 2012/10/06 14:41:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.20 2012/10/04 10:35:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.21 2012/10/06 14:41:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ static int 	pm2fb_putpalreg(struct pm2fb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
 static void	pm2fb_init(struct pm2fb_softc *);
+static inline void pm2fb_wait(struct pm2fb_softc *, int);
 static void	pm2fb_flush_engine(struct pm2fb_softc *);
 static void	pm2fb_rectfill(struct pm2fb_softc *, int, int, int, int,
 			    uint32_t);
@@ -402,16 +403,16 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
-			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
+			   &defattr);
+		}
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 			   min(2047, (sc->sc_fbsize / sc->sc_stride))
 			    - sc->sc_height - 5,
 			   sc->sc_width,
 			   ri->ri_font->fontwidth,
 			   ri->ri_font->fontheight,
 			   defattr);
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
-			   &defattr);
-		}
 	}
 
 	j = 0;
