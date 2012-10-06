@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.cc,v 1.4 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: ttyscrn.cc,v 1.5 2012/10/06 19:39:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include "defs.h"
-RCSID("$NetBSD: ttyscrn.cc,v 1.4 2008/04/28 20:22:54 martin Exp $")
+RCSID("$NetBSD: ttyscrn.cc,v 1.5 2012/10/06 19:39:51 christos Exp $")
 
 #include <stdio.h>
 #include <curses.h>
@@ -191,7 +191,7 @@ void TTYSCRN::ties(const PLAYER& p)
     mvwprintw(stdscr, _sy + TTYSCRN::offsties, _sx, "G =:%5zd", p.getTies());
 }
 
-TTYSCRN* TTYSCRN::create(int acs, size_t y, size_t x)
+TTYSCRN* TTYSCRN::create(int acs, size_t *y, size_t *x)
 {
     int tx, ty;
 
@@ -201,11 +201,15 @@ TTYSCRN* TTYSCRN::create(int acs, size_t y, size_t x)
     ty = getmaxy(stdscr);
 
     if (tx == ERR || ty == ERR
-	|| static_cast<size_t>(tx) < x * 2 + TTYSCRN::offsx + 12
-	|| static_cast<size_t>(ty) < y * 2 + TTYSCRN::offsy) {
+	|| static_cast<size_t>(tx) < *x * 2 + TTYSCRN::offsx + 14
+	|| static_cast<size_t>(ty) < *y * 2 + TTYSCRN::offsy) {
 	endwin();
 	return NULL;
     }
+    if (*x == 0)
+	*x = (tx - 14 - TTYSCRN::offsx) / 2;
+    if (*y == 0)
+	*y = (ty - TTYSCRN::offsy) / 2;
     cbreak();
     noecho();
 
