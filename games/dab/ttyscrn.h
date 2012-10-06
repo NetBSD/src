@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: ttyscrn.h,v 1.4 2012/10/06 19:39:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 class TTYSCRN : public GAMESCREEN {
   public:
     // Constructor that can fail
-    static TTYSCRN*  create(int acs, size_t y, size_t x);
+    static TTYSCRN*  create(int acs, size_t *y, size_t *x);
     ~TTYSCRN();
 
     // Screen virtuals

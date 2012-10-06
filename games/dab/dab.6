@@ -1,4 +1,4 @@
-.\"	$NetBSD: dab.6,v 1.5 2010/01/15 19:39:10 joerg Exp $
+.\"	$NetBSD: dab.6,v 1.6 2012/10/06 19:39:51 christos Exp $
 .\"
 .\" Copyright (c) 2003 Thomas Klausner.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 24, 2003
+.Dd October 7, 2012
 .Dt DAB 6
 .Os
 .Sh NAME
@@ -95,6 +95,10 @@ and
 .Ar ydim
 define the size of the board in the x and y
 dimensions.
+If the dimensions specified are
+.Dv 0
+then the maximum dimensions for the size of the screen are
+used.
 .Sh SEE ALSO
 .Rs
 .%A Elwyn R. Berlekamp
