@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.83 2012/10/05 01:28:20 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.84 2012/10/07 18:40:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.83 2012/10/05 01:28:20 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.84 2012/10/07 18:40:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -415,8 +415,15 @@ dump_nodes(const char *dir, NODE *root, int pathlast)
 char *
 vispath(const char *path)
 {
-	const char extra[] = { ' ', '\t', '\n', '\\', '#', '*', '?', '[',
-	    '#', '\0' };
+	const char extra[] = { ' ', '\t', '\n', '\\', '#',
+#ifdef notyet
+	    /*
+	     * We don't encode the globbing characters yet, because they
+	     * get encoded as \c and strunvis fails to decode them
+	     */
+	    '*', '?', '[',
+#endif
+	    '\0' };
 	static char pathbuf[4*MAXPATHLEN + 1];
 
 	strsvis(pathbuf, path, VIS_CSTYLE, extra);
