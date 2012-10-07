@@ -101,8 +101,8 @@ int hostapd_get_hw_features(struct hostapd_iface *iface)
 }
 
 
-static int hostapd_prepare_rates(struct hostapd_data *hapd,
-				 struct hostapd_hw_modes *mode)
+int hostapd_prepare_rates(struct hostapd_data *hapd,
+			  struct hostapd_hw_modes *mode)
 {
 	int i, num_basic_rates = 0;
 	int basic_rates_a[] = { 60, 120, 240, -1 };
@@ -162,7 +162,8 @@ static int hostapd_prepare_rates(struct hostapd_data *hapd,
 		hapd->iface->num_rates++;
 	}
 
-	if (hapd->iface->num_rates == 0 || num_basic_rates == 0) {
+	if ((hapd->iface->num_rates == 0 || num_basic_rates == 0) &&
+	    (!hapd->iconf->ieee80211n || !hapd->iconf->require_ht)) {
 		wpa_printf(MSG_ERROR, "No rates remaining in supported/basic "
 			   "rate sets (%d,%d).",
 			   hapd->iface->num_rates, num_basic_rates);
@@ -265,11 +266,11 @@ static void ieee80211n_get_pri_sec_chan(struct wpa_scan_res *bss,
 		oper = (struct ieee80211_ht_operation *) elems.ht_operation;
 		*pri_chan = oper->control_chan;
 		if (oper->ht_param & HT_INFO_HT_PARAM_REC_TRANS_CHNL_WIDTH) {
-			if (oper->ht_param &
-			    HT_INFO_HT_PARAM_SECONDARY_CHNL_ABOVE)
+			int sec = oper->ht_param &
+				HT_INFO_HT_PARAM_SECONDARY_CHNL_OFF_MASK;
+			if (sec == HT_INFO_HT_PARAM_SECONDARY_CHNL_ABOVE)
 				*sec_chan = *pri_chan + 4;
-			else if (oper->ht_param &
-				 HT_INFO_HT_PARAM_SECONDARY_CHNL_BELOW)
+			else if (sec == HT_INFO_HT_PARAM_SECONDARY_CHNL_BELOW)
 				*sec_chan = *pri_chan - 4;
 		}
 	}
@@ -406,24 +407,11 @@ static int ieee80211n_check_40mhz_2g4(struct hostapd_iface *iface,
 }
 
 
-static void wpa_scan_results_free(struct wpa_scan_results *res)
-{
-	size_t i;
-
-	if (res == NULL)
-		return;
-
-	for (i = 0; i < res->num; i++)
-		os_free(res->res[i]);
-	os_free(res->res);
-	os_free(res);
-}
-
-
 static void ieee80211n_check_scan(struct hostapd_iface *iface)
 {
 	struct wpa_scan_results *scan_res;
 	int oper40;
+	int res;
 
 	/* Check list of neighboring BSSes (from scan) to see whether 40 MHz is
 	 * allowed per IEEE 802.11n/D7.0, 11.14.3.2 */
@@ -452,7 +440,8 @@ static void ieee80211n_check_scan(struct hostapd_iface *iface)
 		iface->conf->ht_capab &= ~HT_CAP_INFO_SUPP_CHANNEL_WIDTH_SET;
 	}
 
-	hostapd_setup_interface_complete(iface, 0);
+	res = ieee80211n_allowed_ht40_channel_pair(iface);
+	hostapd_setup_interface_complete(iface, !res);
 }
 
 
@@ -482,9 +471,6 @@ static int ieee80211n_supported_ht_capab(struct hostapd_iface *iface)
 {
 	u16 hw = iface->current_mode->ht_capab;
 	u16 conf = iface->conf->ht_capab;
-
-	if (!iface->conf->ieee80211n)
-		return 1;
 
 	if ((conf & HT_CAP_INFO_LDPC_CODING_CAP) &&
 	    !(hw & HT_CAP_INFO_LDPC_CODING_CAP)) {
@@ -585,12 +571,14 @@ int hostapd_check_ht_capab(struct hostapd_iface *iface)
 {
 #ifdef CONFIG_IEEE80211N
 	int ret;
+	if (!iface->conf->ieee80211n)
+		return 0;
+	if (!ieee80211n_supported_ht_capab(iface))
+		return -1;
 	ret = ieee80211n_check_40mhz(iface);
 	if (ret)
 		return ret;
 	if (!ieee80211n_allowed_ht40_channel_pair(iface))
-		return -1;
-	if (!ieee80211n_supported_ht_capab(iface))
 		return -1;
 #endif /* CONFIG_IEEE80211N */
 
@@ -601,7 +589,7 @@ int hostapd_check_ht_capab(struct hostapd_iface *iface)
 /**
  * hostapd_select_hw_mode - Select the hardware mode
  * @iface: Pointer to interface data.
- * Returns: 0 on success, -1 on failure
+ * Returns: 0 on success, < 0 on failure
  *
  * Sets up the hardware mode, channel, rates, and passive scanning
  * based on the configuration.
@@ -628,18 +616,51 @@ int hostapd_select_hw_mode(struct hostapd_iface *iface)
 		hostapd_logger(iface->bss[0], NULL, HOSTAPD_MODULE_IEEE80211,
 			       HOSTAPD_LEVEL_WARNING,
 			       "Hardware does not support configured mode "
-			       "(%d)", (int) iface->conf->hw_mode);
-		return -1;
+			       "(%d) (hw_mode in hostapd.conf)",
+			       (int) iface->conf->hw_mode);
+		return -2;
 	}
 
 	ok = 0;
 	for (j = 0; j < iface->current_mode->num_channels; j++) {
 		struct hostapd_channel_data *chan =
 			&iface->current_mode->channels[j];
-		if (!(chan->flag & HOSTAPD_CHAN_DISABLED) &&
-		    (chan->chan == iface->conf->channel)) {
-			ok = 1;
-			break;
+		if (chan->chan == iface->conf->channel) {
+			if (chan->flag & HOSTAPD_CHAN_DISABLED) {
+				wpa_printf(MSG_ERROR,
+					   "channel [%i] (%i) is disabled for "
+					   "use in AP mode, flags: 0x%x",
+					   j, chan->chan, chan->flag);
+			} else {
+				ok = 1;
+				break;
+			}
+		}
+	}
+	if (ok && iface->conf->secondary_channel) {
+		int sec_ok = 0;
+		int sec_chan = iface->conf->channel +
+			iface->conf->secondary_channel * 4;
+		for (j = 0; j < iface->current_mode->num_channels; j++) {
+			struct hostapd_channel_data *chan =
+				&iface->current_mode->channels[j];
+			if (!(chan->flag & HOSTAPD_CHAN_DISABLED) &&
+			    (chan->chan == sec_chan)) {
+				sec_ok = 1;
+				break;
+			}
+		}
+		if (!sec_ok) {
+			hostapd_logger(iface->bss[0], NULL,
+				       HOSTAPD_MODULE_IEEE80211,
+				       HOSTAPD_LEVEL_WARNING,
+				       "Configured HT40 secondary channel "
+				       "(%d) not found from the channel list "
+				       "of current mode (%d) %s",
+				       sec_chan, iface->current_mode->mode,
+				       hostapd_hw_mode_txt(
+					       iface->current_mode->mode));
+			ok = 0;
 		}
 	}
 	if (iface->conf->channel == 0) {
@@ -647,7 +668,7 @@ int hostapd_select_hw_mode(struct hostapd_iface *iface)
 		 * the channel automatically */
 		wpa_printf(MSG_ERROR, "Channel not configured "
 			   "(hw_mode/channel in hostapd.conf)");
-		return -1;
+		return -3;
 	}
 	if (ok == 0 && iface->conf->channel != 0) {
 		hostapd_logger(iface->bss[0], NULL,
@@ -665,15 +686,7 @@ int hostapd_select_hw_mode(struct hostapd_iface *iface)
 		hostapd_logger(iface->bss[0], NULL, HOSTAPD_MODULE_IEEE80211,
 			       HOSTAPD_LEVEL_WARNING,
 			       "Hardware does not support configured channel");
-		return -1;
-	}
-
-	if (hostapd_prepare_rates(iface->bss[0], iface->current_mode)) {
-		wpa_printf(MSG_ERROR, "Failed to prepare rates table.");
-		hostapd_logger(iface->bss[0], NULL, HOSTAPD_MODULE_IEEE80211,
-					   HOSTAPD_LEVEL_WARNING,
-					   "Failed to prepare rates table.");
-		return -1;
+		return -4;
 	}
 
 	return 0;

@@ -22,7 +22,7 @@
 #include "config.h"
 #include "base64.h"
 #include "uuid.h"
-#include "eap_peer/eap_methods.h"
+#include "p2p/p2p.h"
 
 
 /**
@@ -270,238 +270,6 @@ static int wpa_config_process_blob(struct wpa_config *config, FILE *f,
 #endif /* CONFIG_NO_CONFIG_BLOBS */
 
 
-struct global_parse_data {
-	char *name;
-	int (*parser)(const struct global_parse_data *data,
-		      struct wpa_config *config, int line, const char *value);
-	void *param1, *param2, *param3;
-};
-
-
-static int wpa_config_parse_int(const struct global_parse_data *data,
-				struct wpa_config *config, int line,
-				const char *pos)
-{
-	int *dst;
-	dst = (int *) (((u8 *) config) + (long) data->param1);
-	*dst = atoi(pos);
-	wpa_printf(MSG_DEBUG, "%s=%d", data->name, *dst);
-
-	if (data->param2 && *dst < (long) data->param2) {
-		wpa_printf(MSG_ERROR, "Line %d: too small %s (value=%d "
-			   "min_value=%ld)", line, data->name, *dst,
-			   (long) data->param2);
-		*dst = (long) data->param2;
-		return -1;
-	}
-
-	if (data->param3 && *dst > (long) data->param3) {
-		wpa_printf(MSG_ERROR, "Line %d: too large %s (value=%d "
-			   "max_value=%ld)", line, data->name, *dst,
-			   (long) data->param3);
-		*dst = (long) data->param3;
-		return -1;
-	}
-
-	return 0;
-}
-
-
-static int wpa_config_parse_str(const struct global_parse_data *data,
-				struct wpa_config *config, int line,
-				const char *pos)
-{
-	size_t len;
-	char **dst, *tmp;
-
-	len = os_strlen(pos);
-	if (data->param2 && len < (size_t) data->param2) {
-		wpa_printf(MSG_ERROR, "Line %d: too short %s (len=%lu "
-			   "min_len=%ld)", line, data->name,
-			   (unsigned long) len, (long) data->param2);
-		return -1;
-	}
-
-	if (data->param3 && len > (size_t) data->param3) {
-		wpa_printf(MSG_ERROR, "Line %d: too long %s (len=%lu "
-			   "max_len=%ld)", line, data->name,
-			   (unsigned long) len, (long) data->param3);
-		return -1;
-	}
-
-	tmp = os_strdup(pos);
-	if (tmp == NULL)
-		return -1;
-
-	dst = (char **) (((u8 *) config) + (long) data->param1);
-	os_free(*dst);
-	*dst = tmp;
-	wpa_printf(MSG_DEBUG, "%s='%s'", data->name, *dst);
-
-	return 0;
-}
-
-
-static int wpa_config_process_country(const struct global_parse_data *data,
-				      struct wpa_config *config, int line,
-				      const char *pos)
-{
-	if (!pos[0] || !pos[1]) {
-		wpa_printf(MSG_DEBUG, "Invalid country set");
-		return -1;
-	}
-	config->country[0] = pos[0];
-	config->country[1] = pos[1];
-	wpa_printf(MSG_DEBUG, "country='%c%c'",
-		   config->country[0], config->country[1]);
-	return 0;
-}
-
-
-static int wpa_config_process_load_dynamic_eap(
-	const struct global_parse_data *data, struct wpa_config *config,
-	int line, const char *so)
-{
-	int ret;
-	wpa_printf(MSG_DEBUG, "load_dynamic_eap=%s", so);
-	ret = eap_peer_method_load(so);
-	if (ret == -2) {
-		wpa_printf(MSG_DEBUG, "This EAP type was already loaded - not "
-			   "reloading.");
-	} else if (ret) {
-		wpa_printf(MSG_ERROR, "Line %d: Failed to load dynamic EAP "
-			   "method '%s'.", line, so);
-		return -1;
-	}
-
-	return 0;
-}
-
-
-#ifdef CONFIG_WPS
-
-static int wpa_config_process_uuid(const struct global_parse_data *data,
-				   struct wpa_config *config, int line,
-				   const char *pos)
-{
-	char buf[40];
-	if (uuid_str2bin(pos, config->uuid)) {
-		wpa_printf(MSG_ERROR, "Line %d: invalid UUID", line);
-		return -1;
-	}
-	uuid_bin2str(config->uuid, buf, sizeof(buf));
-	wpa_printf(MSG_DEBUG, "uuid=%s", buf);
-	return 0;
-}
-
-
-static int wpa_config_process_os_version(const struct global_parse_data *data,
-					 struct wpa_config *config, int line,
-					 const char *pos)
-{
-	if (hexstr2bin(pos, config->os_version, 4)) {
-		wpa_printf(MSG_ERROR, "Line %d: invalid os_version", line);
-		return -1;
-	}
-	wpa_printf(MSG_DEBUG, "os_version=%08x",
-		   WPA_GET_BE32(config->os_version));
-	return 0;
-}
-
-#endif /* CONFIG_WPS */
-
-
-#ifdef OFFSET
-#undef OFFSET
-#endif /* OFFSET */
-/* OFFSET: Get offset of a variable within the wpa_config structure */
-#define OFFSET(v) ((void *) &((struct wpa_config *) 0)->v)
-
-#define FUNC(f) #f, wpa_config_process_ ## f, OFFSET(f), NULL, NULL
-#define FUNC_NO_VAR(f) #f, wpa_config_process_ ## f, NULL, NULL, NULL
-#define _INT(f) #f, wpa_config_parse_int, OFFSET(f)
-#define INT(f) _INT(f), NULL, NULL
-#define INT_RANGE(f, min, max) _INT(f), (void *) min, (void *) max
-#define _STR(f) #f, wpa_config_parse_str, OFFSET(f)
-#define STR(f) _STR(f), NULL, NULL
-#define STR_RANGE(f, min, max) _STR(f), (void *) min, (void *) max
-
-static const struct global_parse_data global_fields[] = {
-#ifdef CONFIG_CTRL_IFACE
-	{ STR(ctrl_interface) },
-	{ STR(ctrl_interface_group) } /* deprecated */,
-#endif /* CONFIG_CTRL_IFACE */
-	{ INT_RANGE(eapol_version, 1, 2) },
-	{ INT(ap_scan) },
-	{ INT(fast_reauth) },
-	{ STR(opensc_engine_path) },
-	{ STR(pkcs11_engine_path) },
-	{ STR(pkcs11_module_path) },
-	{ STR(driver_param) },
-	{ INT(dot11RSNAConfigPMKLifetime) },
-	{ INT(dot11RSNAConfigPMKReauthThreshold) },
-	{ INT(dot11RSNAConfigSATimeout) },
-#ifndef CONFIG_NO_CONFIG_WRITE
-	{ INT(update_config) },
-#endif /* CONFIG_NO_CONFIG_WRITE */
-	{ FUNC_NO_VAR(load_dynamic_eap) },
-#ifdef CONFIG_WPS
-	{ FUNC(uuid) },
-	{ STR_RANGE(device_name, 0, 32) },
-	{ STR_RANGE(manufacturer, 0, 64) },
-	{ STR_RANGE(model_name, 0, 32) },
-	{ STR_RANGE(model_number, 0, 32) },
-	{ STR_RANGE(serial_number, 0, 32) },
-	{ STR(device_type) },
-	{ FUNC(os_version) },
-	{ STR(config_methods) },
-	{ INT_RANGE(wps_cred_processing, 0, 2) },
-#endif /* CONFIG_WPS */
-	{ FUNC(country) },
-	{ INT(bss_max_count) },
-	{ INT_RANGE(filter_ssids, 0, 1) }
-};
-
-#undef FUNC
-#undef _INT
-#undef INT
-#undef INT_RANGE
-#undef _STR
-#undef STR
-#undef STR_RANGE
-#define NUM_GLOBAL_FIELDS (sizeof(global_fields) / sizeof(global_fields[0]))
-
-
-static int wpa_config_process_global(struct wpa_config *config, char *pos,
-				     int line)
-{
-	size_t i;
-	int ret = 0;
-
-	for (i = 0; i < NUM_GLOBAL_FIELDS; i++) {
-		const struct global_parse_data *field = &global_fields[i];
-		size_t flen = os_strlen(field->name);
-		if (os_strncmp(pos, field->name, flen) != 0 ||
-		    pos[flen] != '=')
-			continue;
-
-		if (field->parser(field, config, line, pos + flen + 1)) {
-			wpa_printf(MSG_ERROR, "Line %d: failed to "
-				   "parse '%s'.", line, pos);
-			ret = -1;
-		}
-		break;
-	}
-	if (i == NUM_GLOBAL_FIELDS) {
-		wpa_printf(MSG_ERROR, "Line %d: unknown global field '%s'.",
-			   line, pos);
-		ret = -1;
-	}
-
-	return ret;
-}
-
-
 struct wpa_config * wpa_config_read(const char *name)
 {
 	FILE *f;
@@ -564,11 +332,13 @@ struct wpa_config * wpa_config_read(const char *name)
 	config->ssid = head;
 	wpa_config_debug_dump_networks(config);
 
+#ifndef WPA_IGNORE_CONFIG_ERRORS
 	if (errors) {
 		wpa_config_free(config);
 		config = NULL;
 		head = NULL;
 	}
+#endif /* WPA_IGNORE_CONFIG_ERRORS */
 
 	return config;
 }
@@ -726,6 +496,18 @@ static void write_wep_key(FILE *f, int idx, struct wpa_ssid *ssid)
 }
 
 
+#ifdef CONFIG_P2P
+static void write_p2p_client_list(FILE *f, struct wpa_ssid *ssid)
+{
+	char *value = wpa_config_get(ssid, "p2p_client_list");
+	if (value == NULL)
+		return;
+	fprintf(f, "\tp2p_client_list=%s\n", value);
+	os_free(value);
+}
+#endif /* CONFIG_P2P */
+
+
 static void wpa_config_write_network(FILE *f, struct wpa_ssid *ssid)
 {
 	int i;
@@ -745,6 +527,7 @@ static void wpa_config_write_network(FILE *f, struct wpa_ssid *ssid)
 	write_pairwise(f, ssid);
 	write_group(f, ssid);
 	write_auth_alg(f, ssid);
+	STR(bgscan);
 #ifdef IEEE8021X_EAPOL
 	write_eap(f, ssid);
 	STR(identity);
@@ -800,6 +583,9 @@ static void wpa_config_write_network(FILE *f, struct wpa_ssid *ssid)
 	INT(ieee80211w);
 #endif /* CONFIG_IEEE80211W */
 	STR(id_str);
+#ifdef CONFIG_P2P
+	write_p2p_client_list(f, ssid);
+#endif /* CONFIG_P2P */
 
 #undef STR
 #undef INT
@@ -876,8 +662,13 @@ static void wpa_config_write_global(FILE *f, struct wpa_config *config)
 		fprintf(f, "model_number=%s\n", config->model_number);
 	if (config->serial_number)
 		fprintf(f, "serial_number=%s\n", config->serial_number);
-	if (config->device_type)
-		fprintf(f, "device_type=%s\n", config->device_type);
+	{
+		char _buf[WPS_DEV_TYPE_BUFSIZE], *buf;
+		buf = wps_dev_type_bin2str(config->device_type,
+					   _buf, sizeof(_buf));
+		if (os_strcmp(buf, "0-00000000-0") != 0)
+			fprintf(f, "device_type=%s\n", buf);
+	}
 	if (WPA_GET_BE32(config->os_version))
 		fprintf(f, "os_version=%08x\n",
 			WPA_GET_BE32(config->os_version));
@@ -887,14 +678,80 @@ static void wpa_config_write_global(FILE *f, struct wpa_config *config)
 		fprintf(f, "wps_cred_processing=%d\n",
 			config->wps_cred_processing);
 #endif /* CONFIG_WPS */
+#ifdef CONFIG_P2P
+	if (config->p2p_listen_reg_class)
+		fprintf(f, "p2p_listen_reg_class=%u\n",
+			config->p2p_listen_reg_class);
+	if (config->p2p_listen_channel)
+		fprintf(f, "p2p_listen_channel=%u\n",
+			config->p2p_listen_channel);
+	if (config->p2p_oper_reg_class)
+		fprintf(f, "p2p_oper_reg_class=%u\n",
+			config->p2p_oper_reg_class);
+	if (config->p2p_oper_channel)
+		fprintf(f, "p2p_oper_channel=%u\n", config->p2p_oper_channel);
+	if (config->p2p_go_intent != DEFAULT_P2P_GO_INTENT)
+		fprintf(f, "p2p_go_intent=%u\n", config->p2p_go_intent);
+	if (config->p2p_ssid_postfix)
+		fprintf(f, "p2p_ssid_postfix=%s\n", config->p2p_ssid_postfix);
+	if (config->persistent_reconnect)
+		fprintf(f, "persistent_reconnect=%u\n",
+			config->persistent_reconnect);
+	if (config->p2p_intra_bss != DEFAULT_P2P_INTRA_BSS)
+		fprintf(f, "p2p_intra_bss=%u\n", config->p2p_intra_bss);
+	if (config->p2p_group_idle)
+		fprintf(f, "p2p_group_idle=%u\n", config->p2p_group_idle);
+	if (config->p2p_pref_chan) {
+		unsigned int i;
+		fprintf(f, "p2p_pref_chan=");
+		for (i = 0; i < config->num_p2p_pref_chan; i++) {
+			fprintf(f, "%s%u:%u", i > 0 ? "," : "",
+				config->p2p_pref_chan[i].op_class,
+				config->p2p_pref_chan[i].chan);
+		}
+		fprintf(f, "\n");
+	}
+#endif /* CONFIG_P2P */
 	if (config->country[0] && config->country[1]) {
 		fprintf(f, "country=%c%c\n",
 			config->country[0], config->country[1]);
 	}
 	if (config->bss_max_count != DEFAULT_BSS_MAX_COUNT)
 		fprintf(f, "bss_max_count=%u\n", config->bss_max_count);
+	if (config->bss_expiration_age != DEFAULT_BSS_EXPIRATION_AGE)
+		fprintf(f, "bss_expiration_age=%u\n",
+			config->bss_expiration_age);
+	if (config->bss_expiration_scan_count !=
+	    DEFAULT_BSS_EXPIRATION_SCAN_COUNT)
+		fprintf(f, "bss_expiration_scan_count=%u\n",
+			config->bss_expiration_scan_count);
 	if (config->filter_ssids)
 		fprintf(f, "filter_ssids=%d\n", config->filter_ssids);
+	if (config->max_num_sta != DEFAULT_MAX_NUM_STA)
+		fprintf(f, "max_num_sta=%u\n", config->max_num_sta);
+	if (config->disassoc_low_ack)
+		fprintf(f, "disassoc_low_ack=%u\n", config->disassoc_low_ack);
+#ifdef CONFIG_INTERWORKING
+	if (config->home_realm)
+		fprintf(f, "home_realm=%s\n", config->home_realm);
+	if (config->home_username)
+		fprintf(f, "home_username=%s\n", config->home_username);
+	if (config->home_password)
+		fprintf(f, "home_password=%s\n", config->home_password);
+	if (config->home_ca_cert)
+		fprintf(f, "home_ca_cert=%s\n", config->home_ca_cert);
+	if (config->home_imsi)
+		fprintf(f, "home_imsi=%s\n", config->home_imsi);
+	if (config->home_milenage)
+		fprintf(f, "home_milenage=%s\n", config->home_milenage);
+	if (config->interworking)
+		fprintf(f, "interworking=%u\n", config->interworking);
+	if (!is_zero_ether_addr(config->hessid))
+		fprintf(f, "hessid=" MACSTR "\n", MAC2STR(config->hessid));
+	if (config->access_network_type != DEFAULT_ACCESS_NETWORK_TYPE)
+		fprintf(f, "access_network_type=%d\n",
+			config->access_network_type);
+#endif /* CONFIG_INTERWORKING */
 }
 
 #endif /* CONFIG_NO_CONFIG_WRITE */
@@ -921,8 +778,11 @@ int wpa_config_write(const char *name, struct wpa_config *config)
 	wpa_config_write_global(f, config);
 
 	for (ssid = config->ssid; ssid; ssid = ssid->next) {
-		if (ssid->key_mgmt == WPA_KEY_MGMT_WPS)
-			continue; /* do not save temporary WPS networks */
+		if (ssid->key_mgmt == WPA_KEY_MGMT_WPS || ssid->temporary)
+			continue; /* do not save temporary networks */
+		if (wpa_key_mgmt_wpa_psk(ssid->key_mgmt) && !ssid->psk_set &&
+		    !ssid->passphrase)
+			continue; /* do not save invalid network */
 		fprintf(f, "\nnetwork={\n");
 		wpa_config_write_network(f, ssid);
 		fprintf(f, "}\n");

@@ -40,6 +40,9 @@ struct ieee802_11_elems {
 	const u8 *ht_capabilities;
 	const u8 *ht_operation;
 	const u8 *vendor_ht_cap;
+	const u8 *p2p;
+	const u8 *link_id;
+	const u8 *interworking;
 
 	u8 ssid_len;
 	u8 supp_rates_len;
@@ -64,6 +67,8 @@ struct ieee802_11_elems {
 	u8 ht_capabilities_len;
 	u8 ht_operation_len;
 	u8 vendor_ht_cap_len;
+	u8 p2p_len;
+	u8 interworking_len;
 };
 
 typedef enum { ParseOK = 0, ParseUnknown = 1, ParseFailed = -1 } ParseRes;
@@ -74,5 +79,7 @@ ParseRes ieee802_11_parse_elems(const u8 *start, size_t len,
 int ieee802_11_ie_count(const u8 *ies, size_t ies_len);
 struct wpabuf * ieee802_11_vendor_ie_concat(const u8 *ies, size_t ies_len,
 					    u32 oui_type);
+struct ieee80211_hdr;
+const u8 * get_hdr_bssid(const struct ieee80211_hdr *hdr, size_t len);
 
 #endif /* IEEE802_11_COMMON_H */
