@@ -19,6 +19,8 @@
 #include "crypto/crypto.h"
 #include "crypto/dh_group5.h"
 #include "crypto/sha256.h"
+#include "crypto/random.h"
+#include "common/ieee802_11_defs.h"
 #include "wps_i.h"
 
 
@@ -47,6 +49,8 @@ int wps_build_public_key(struct wps_data *wps, struct wpabuf *msg)
 		wpabuf_free(pubkey);
 		return -1;
 	}
+	wpa_hexdump_buf_key(MSG_DEBUG, "WPS: DH Private Key", wps->dh_privkey);
+	wpa_hexdump_buf(MSG_DEBUG, "WPS: DH own Public Key", pubkey);
 
 	wpabuf_put_be16(msg, ATTR_PUBLIC_KEY);
 	wpabuf_put_be16(msg, wpabuf_len(pubkey));
@@ -156,10 +160,65 @@ int wps_build_authenticator(struct wps_data *wps, struct wpabuf *msg)
 
 int wps_build_version(struct wpabuf *msg)
 {
-	wpa_printf(MSG_DEBUG, "WPS:  * Version");
+	/*
+	 * Note: This attribute is deprecated and set to hardcoded 0x10 for
+	 * backwards compatibility reasons. The real version negotiation is
+	 * done with Version2.
+	 */
+	wpa_printf(MSG_DEBUG, "WPS:  * Version (hardcoded 0x10)");
 	wpabuf_put_be16(msg, ATTR_VERSION);
 	wpabuf_put_be16(msg, 1);
+	wpabuf_put_u8(msg, 0x10);
+	return 0;
+}
+
+
+int wps_build_wfa_ext(struct wpabuf *msg, int req_to_enroll,
+		      const u8 *auth_macs, size_t auth_macs_count)
+{
+#ifdef CONFIG_WPS2
+	u8 *len;
+
+	wpabuf_put_be16(msg, ATTR_VENDOR_EXT);
+	len = wpabuf_put(msg, 2); /* to be filled */
+	wpabuf_put_be24(msg, WPS_VENDOR_ID_WFA);
+
+	wpa_printf(MSG_DEBUG, "WPS:  * Version2 (0x%x)", WPS_VERSION);
+	wpabuf_put_u8(msg, WFA_ELEM_VERSION2);
+	wpabuf_put_u8(msg, 1);
 	wpabuf_put_u8(msg, WPS_VERSION);
+
+	if (req_to_enroll) {
+		wpa_printf(MSG_DEBUG, "WPS:  * Request to Enroll (1)");
+		wpabuf_put_u8(msg, WFA_ELEM_REQUEST_TO_ENROLL);
+		wpabuf_put_u8(msg, 1);
+		wpabuf_put_u8(msg, 1);
+	}
+
+	if (auth_macs && auth_macs_count) {
+		size_t i;
+		wpa_printf(MSG_DEBUG, "WPS:  * AuthorizedMACs (count=%d)",
+			   (int) auth_macs_count);
+		wpabuf_put_u8(msg, WFA_ELEM_AUTHORIZEDMACS);
+		wpabuf_put_u8(msg, auth_macs_count * ETH_ALEN);
+		wpabuf_put_data(msg, auth_macs, auth_macs_count * ETH_ALEN);
+		for (i = 0; i < auth_macs_count; i++)
+			wpa_printf(MSG_DEBUG, "WPS:    AuthorizedMAC: " MACSTR,
+				   MAC2STR(&auth_macs[i * ETH_ALEN]));
+	}
+
+	WPA_PUT_BE16(len, (u8 *) wpabuf_put(msg, 0) - len - 2);
+#endif /* CONFIG_WPS2 */
+
+#ifdef CONFIG_WPS_TESTING
+	if (WPS_VERSION > 0x20) {
+		wpa_printf(MSG_DEBUG, "WPS:  * Extensibility Testing - extra "
+			   "attribute");
+		wpabuf_put_be16(msg, ATTR_EXTENSIBILITY_TEST);
+		wpabuf_put_be16(msg, 1);
+		wpabuf_put_u8(msg, 42);
+	}
+#endif /* CONFIG_WPS_TESTING */
 	return 0;
 }
 
@@ -196,20 +255,28 @@ int wps_build_registrar_nonce(struct wps_data *wps, struct wpabuf *msg)
 
 int wps_build_auth_type_flags(struct wps_data *wps, struct wpabuf *msg)
 {
+	u16 auth_types = WPS_AUTH_TYPES;
+#ifdef CONFIG_WPS2
+	auth_types &= ~WPS_AUTH_SHARED;
+#endif /* CONFIG_WPS2 */
 	wpa_printf(MSG_DEBUG, "WPS:  * Authentication Type Flags");
 	wpabuf_put_be16(msg, ATTR_AUTH_TYPE_FLAGS);
 	wpabuf_put_be16(msg, 2);
-	wpabuf_put_be16(msg, WPS_AUTH_TYPES);
+	wpabuf_put_be16(msg, auth_types);
 	return 0;
 }
 
 
 int wps_build_encr_type_flags(struct wps_data *wps, struct wpabuf *msg)
 {
+	u16 encr_types = WPS_ENCR_TYPES;
+#ifdef CONFIG_WPS2
+	encr_types &= ~WPS_ENCR_WEP;
+#endif /* CONFIG_WPS2 */
 	wpa_printf(MSG_DEBUG, "WPS:  * Encryption Type Flags");
 	wpabuf_put_be16(msg, ATTR_ENCR_TYPE_FLAGS);
 	wpabuf_put_be16(msg, 2);
-	wpabuf_put_be16(msg, WPS_ENCR_TYPES);
+	wpabuf_put_be16(msg, encr_types);
 	return 0;
 }
 
@@ -266,7 +333,7 @@ int wps_build_encr_settings(struct wps_data *wps, struct wpabuf *msg,
 	wpabuf_put_be16(msg, block_size + wpabuf_len(plain));
 
 	iv = wpabuf_put(msg, block_size);
-	if (os_get_random(iv, block_size) < 0)
+	if (random_get_bytes(iv, block_size) < 0)
 		return -1;
 
 	data = wpabuf_put(msg, 0);
@@ -299,7 +366,8 @@ int wps_build_oob_dev_password(struct wpabuf *msg, struct wps_context *wps)
 	}
 	wps->oob_dev_pw_id |= 0x0010;
 
-	if (os_get_random(dev_password_bin, WPS_OOB_DEVICE_PASSWORD_LEN) < 0) {
+	if (random_get_bytes(dev_password_bin, WPS_OOB_DEVICE_PASSWORD_LEN) <
+	    0) {
 		wpa_printf(MSG_ERROR, "WPS: OOB device password "
 			   "generation error");
 		return -1;
@@ -320,3 +388,35 @@ int wps_build_oob_dev_password(struct wpabuf *msg, struct wps_context *wps)
 	return 0;
 }
 #endif /* CONFIG_WPS_OOB */
+
+
+/* Encapsulate WPS IE data with one (or more, if needed) IE headers */
+struct wpabuf * wps_ie_encapsulate(struct wpabuf *data)
+{
+	struct wpabuf *ie;
+	const u8 *pos, *end;
+
+	ie = wpabuf_alloc(wpabuf_len(data) + 100);
+	if (ie == NULL) {
+		wpabuf_free(data);
+		return NULL;
+	}
+
+	pos = wpabuf_head(data);
+	end = pos + wpabuf_len(data);
+
+	while (end > pos) {
+		size_t frag_len = end - pos;
+		if (frag_len > 251)
+			frag_len = 251;
+		wpabuf_put_u8(ie, WLAN_EID_VENDOR_SPECIFIC);
+		wpabuf_put_u8(ie, 4 + frag_len);
+		wpabuf_put_be32(ie, WPS_DEV_OUI_WFA);
+		wpabuf_put_data(ie, pos, frag_len);
+		pos += frag_len;
+	}
+
+	wpabuf_free(data);
+
+	return ie;
+}

@@ -24,6 +24,9 @@
 #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__)
 #include <net/if_dl.h>
 #endif /* defined(__FreeBSD__) || defined(__DragonFly__) || defined(__FreeBSD_kernel__) */
+#ifdef __sun__
+#include <sys/sockio.h>
+#endif /* __sun__ */
 
 #include "common.h"
 #include "eloop.h"
@@ -311,7 +314,7 @@ static int wired_init_sockets(struct wpa_driver_wired_data *drv, u8 *own_addr)
 
 static int wired_send_eapol(void *priv, const u8 *addr,
 			    const u8 *data, size_t data_len, int encrypt,
-			    const u8 *own_addr)
+			    const u8 *own_addr, u32 flags)
 {
 	struct wpa_driver_wired_data *drv = priv;
 	struct ieee8023_hdr *hdr;
@@ -461,6 +464,10 @@ static int wpa_driver_wired_multi(const char *ifname, const u8 *addr, int add)
 {
 	struct ifreq ifr;
 	int s;
+
+#ifdef __sun__
+	return -1;
+#endif /* __sun__ */
 
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {

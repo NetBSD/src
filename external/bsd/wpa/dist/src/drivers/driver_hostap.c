@@ -32,6 +32,7 @@
 #include "netlink.h"
 #include "linux_ioctl.h"
 #include "common/ieee802_11_defs.h"
+#include "common/ieee802_11_common.h"
 
 
 /* MTU to be set for the wlan#ap device; this is mainly needed for IEEE 802.1X
@@ -84,8 +85,8 @@ static void handle_data(struct hostap_driver_data *drv, u8 *buf, size_t len,
 
 	sa = hdr->addr2;
 	os_memset(&event, 0, sizeof(event));
-	event.rx_from_unknown.frame = buf;
-	event.rx_from_unknown.len = len;
+	event.rx_from_unknown.bssid = get_hdr_bssid(hdr, len);
+	event.rx_from_unknown.addr = sa;
 	wpa_supplicant_event(drv->hapd, EVENT_RX_FROM_UNKNOWN, &event);
 
 	pos = (u8 *) (hdr + 1);
@@ -148,7 +149,6 @@ static void handle_frame(struct hostap_driver_data *drv, u8 *buf, size_t len)
 {
 	struct ieee80211_hdr *hdr;
 	u16 fc, extra_len, type, stype;
-	unsigned char *extra = NULL;
 	size_t data_len = len;
 	int ver;
 	union wpa_event_data event;
@@ -185,7 +185,6 @@ static void handle_frame(struct hostap_driver_data *drv, u8 *buf, size_t len)
 			return;
 		}
 		len -= extra_len + 2;
-		extra = buf + len;
 	} else if (ver == 1 || ver == 2) {
 		handle_tx_callback(drv, buf, data_len, ver == 2 ? 1 : 0);
 		return;
@@ -289,7 +288,8 @@ static int hostap_send_mlme(void *priv, const u8 *msg, size_t len)
 
 
 static int hostap_send_eapol(void *priv, const u8 *addr, const u8 *data,
-			     size_t data_len, int encrypt, const u8 *own_addr)
+			     size_t data_len, int encrypt, const u8 *own_addr,
+			     u32 flags)
 {
 	struct hostap_driver_data *drv = priv;
 	struct ieee80211_hdr *hdr;
@@ -763,7 +763,8 @@ static int hostap_set_generic_elem(void *priv,
 
 
 static int hostap_set_ap_wps_ie(void *priv, const struct wpabuf *beacon,
-				const struct wpabuf *proberesp)
+				const struct wpabuf *proberesp,
+				const struct wpabuf *assocresp)
 {
 	struct hostap_driver_data *drv = priv;
 
@@ -1034,6 +1035,16 @@ static int hostap_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
 	struct hostap_driver_data *drv = priv;
 	struct ieee80211_mgmt mgmt;
 
+	if (is_broadcast_ether_addr(addr)) {
+		/*
+		 * New Prism2.5/3 STA firmware versions seem to have issues
+		 * with this broadcast deauth frame. This gets the firmware in
+		 * odd state where nothing works correctly, so let's skip
+		 * sending this for the hostap driver.
+		 */
+		return 0;
+	}
+
 	memset(&mgmt, 0, sizeof(mgmt));
 	mgmt.frame_control = IEEE80211_FC(WLAN_FC_TYPE_MGMT,
 					  WLAN_FC_STYPE_DEAUTH);
@@ -1043,6 +1054,25 @@ static int hostap_sta_deauth(void *priv, const u8 *own_addr, const u8 *addr,
 	mgmt.u.deauth.reason_code = host_to_le16(reason);
 	return hostap_send_mlme(drv, (u8 *) &mgmt, IEEE80211_HDRLEN +
 				sizeof(mgmt.u.deauth));
+}
+
+
+static int hostap_set_freq(void *priv, struct hostapd_freq_params *freq)
+{
+	struct hostap_driver_data *drv = priv;
+	struct iwreq iwr;
+
+	os_memset(&iwr, 0, sizeof(iwr));
+	os_strlcpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
+	iwr.u.freq.m = freq->channel;
+	iwr.u.freq.e = 0;
+
+	if (ioctl(drv->ioctl_sock, SIOCSIWFREQ, &iwr) < 0) {
+		perror("ioctl[SIOCSIWFREQ]");
+		return -1;
+	}
+
+	return 0;
 }
 
 
@@ -1112,6 +1142,33 @@ static struct hostapd_hw_modes * hostap_get_hw_feature_data(void *priv,
 	mode->rates[3] = 110;
 
 	return mode;
+}
+
+
+static void wpa_driver_hostap_poll_client(void *priv, const u8 *own_addr,
+					  const u8 *addr, int qos)
+{
+	struct ieee80211_hdr hdr;
+
+	os_memset(&hdr, 0, sizeof(hdr));
+
+	/*
+	 * WLAN_FC_STYPE_NULLFUNC would be more appropriate,
+	 * but it is apparently not retried so TX Exc events
+	 * are not received for it.
+	 * This is the reason the driver overrides the default
+	 * handling.
+	 */
+	hdr.frame_control = IEEE80211_FC(WLAN_FC_TYPE_DATA,
+					 WLAN_FC_STYPE_DATA);
+
+	hdr.frame_control |=
+		host_to_le16(WLAN_FC_FROMDS);
+	os_memcpy(hdr.IEEE80211_DA_FROMDS, addr, ETH_ALEN);
+	os_memcpy(hdr.IEEE80211_BSSID_FROMDS, own_addr, ETH_ALEN);
+	os_memcpy(hdr.IEEE80211_SA_FROMDS, own_addr, ETH_ALEN);
+
+	hostap_send_mlme(priv, (u8 *)&hdr, sizeof(hdr));
 }
 
 #else /* HOSTAPD */
@@ -1306,7 +1363,8 @@ static int wpa_driver_hostap_set_key(const char *ifname, void *priv,
 		   HOSTAP_CRYPT_ALG_NAME_LEN);
 	param->u.crypt.flags = set_tx ? HOSTAP_CRYPT_FLAG_SET_TX_KEY : 0;
 	param->u.crypt.idx = key_idx;
-	os_memcpy(param->u.crypt.seq, seq, seq_len);
+	if (seq)
+		os_memcpy(param->u.crypt.seq, seq, seq_len);
 	param->u.crypt.key_len = key_len;
 	os_memcpy((u8 *) (param + 1), key, key_len);
 
@@ -1619,6 +1677,8 @@ const struct wpa_driver_ops wpa_driver_hostap_ops = {
 	.sta_clear_stats = hostap_sta_clear_stats,
 	.get_hw_feature_data = hostap_get_hw_feature_data,
 	.set_ap_wps_ie = hostap_set_ap_wps_ie,
+	.set_freq = hostap_set_freq,
+	.poll_client = wpa_driver_hostap_poll_client,
 #else /* HOSTAPD */
 	.get_bssid = wpa_driver_hostap_get_bssid,
 	.get_ssid = wpa_driver_hostap_get_ssid,

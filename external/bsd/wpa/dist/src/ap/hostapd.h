@@ -27,9 +27,12 @@ struct sta_info;
 struct hostap_sta_driver_data;
 struct ieee80211_ht_capabilities;
 struct full_dynamic_vlan;
+enum wps_event;
+union wps_event_data;
 
 struct hostapd_probereq_cb {
-	int (*cb)(void *ctx, const u8 *sa, const u8 *ie, size_t ie_len);
+	int (*cb)(void *ctx, const u8 *sa, const u8 *da, const u8 *bssid,
+		  const u8 *ie, size_t ie_len);
 	void *ctx;
 };
 
@@ -46,55 +49,6 @@ struct hostapd_frame_info {
 	u32 ssi_signal;
 };
 
-
-struct hostapd_driver_ops {
-	int (*set_ap_wps_ie)(struct hostapd_data *hapd);
-	int (*send_mgmt_frame)(struct hostapd_data *hapd, const void *msg,
-			       size_t len);
-	int (*send_eapol)(struct hostapd_data *hapd, const u8 *addr,
-			  const u8 *data, size_t data_len, int encrypt);
-	int (*set_authorized)(struct hostapd_data *hapd, struct sta_info *sta,
-			      int authorized);
-	int (*set_key)(const char *ifname, struct hostapd_data *hapd,
-		       enum wpa_alg alg, const u8 *addr, int key_idx,
-		       int set_tx, const u8 *seq, size_t seq_len,
-		       const u8 *key, size_t key_len);
-	int (*read_sta_data)(struct hostapd_data *hapd,
-			     struct hostap_sta_driver_data *data,
-			     const u8 *addr);
-	int (*sta_clear_stats)(struct hostapd_data *hapd, const u8 *addr);
-	int (*set_sta_flags)(struct hostapd_data *hapd, struct sta_info *sta);
-	int (*set_drv_ieee8021x)(struct hostapd_data *hapd, const char *ifname,
-				 int enabled);
-	int (*set_radius_acl_auth)(struct hostapd_data *hapd,
-				   const u8 *mac, int accepted,
-				   u32 session_timeout);
-	int (*set_radius_acl_expire)(struct hostapd_data *hapd,
-				     const u8 *mac);
-	int (*set_bss_params)(struct hostapd_data *hapd, int use_protection);
-	int (*set_beacon)(struct hostapd_data *hapd,
-			  const u8 *head, size_t head_len,
-			  const u8 *tail, size_t tail_len, int dtim_period,
-			  int beacon_int);
-	int (*vlan_if_add)(struct hostapd_data *hapd, const char *ifname);
-	int (*vlan_if_remove)(struct hostapd_data *hapd, const char *ifname);
-	int (*set_wds_sta)(struct hostapd_data *hapd, const u8 *addr, int aid,
-			   int val);
-	int (*set_sta_vlan)(const char *ifname, struct hostapd_data *hapd,
-			    const u8 *addr, int vlan_id);
-	int (*get_inact_sec)(struct hostapd_data *hapd, const u8 *addr);
-	int (*sta_deauth)(struct hostapd_data *hapd, const u8 *addr,
-			  int reason);
-	int (*sta_disassoc)(struct hostapd_data *hapd, const u8 *addr,
-			    int reason);
-	int (*sta_add)(struct hostapd_data *hapd,
-		       const u8 *addr, u16 aid, u16 capability,
-		       const u8 *supp_rates, size_t supp_rates_len,
-		       u16 listen_interval,
-		       const struct ieee80211_ht_capabilities *ht_capab);
-	int (*sta_remove)(struct hostapd_data *hapd, const u8 *addr);
-	int (*set_countermeasures)(struct hostapd_data *hapd, int enabled);
-};
 
 /**
  * struct hostapd_data - hostapd per-BSS data structure
@@ -123,12 +77,12 @@ struct hostapd_data {
 
 	const struct wpa_driver_ops *driver;
 	void *drv_priv;
-	struct hostapd_driver_ops drv;
 
 	void (*new_assoc_sta_cb)(struct hostapd_data *hapd,
 				 struct sta_info *sta, int reassoc);
 
 	void *msg_ctx; /* ctx for wpa_msg() calls */
+	void *msg_ctx_parent; /* parent interface ctx for wpa_msg() calls */
 
 	struct radius_client_data *radius;
 	u32 acct_session_id_hi, acct_session_id_lo;
@@ -155,6 +109,10 @@ struct hostapd_data {
 
 	int parameter_set_count;
 
+	/* Time Advertisement */
+	u8 time_update_counter;
+	struct wpabuf *time_adv;
+
 #ifdef CONFIG_FULL_DYNAMIC_VLAN
 	struct full_dynamic_vlan *full_dynamic_vlan;
 #endif /* CONFIG_FULL_DYNAMIC_VLAN */
@@ -162,10 +120,12 @@ struct hostapd_data {
 	struct l2_packet_data *l2;
 	struct wps_context *wps;
 
+	int beacon_set_done;
 	struct wpabuf *wps_beacon_ie;
 	struct wpabuf *wps_probe_resp_ie;
 #ifdef CONFIG_WPS
 	unsigned int ap_pin_failures;
+	unsigned int ap_pin_failures_consecutive;
 	struct upnp_wps_device_sm *wps_upnp;
 	unsigned int ap_pin_lockout_time;
 #endif /* CONFIG_WPS */
@@ -177,9 +137,39 @@ struct hostapd_data {
 				 int freq);
 	void *public_action_cb_ctx;
 
+	int (*vendor_action_cb)(void *ctx, const u8 *buf, size_t len,
+				int freq);
+	void *vendor_action_cb_ctx;
+
 	void (*wps_reg_success_cb)(void *ctx, const u8 *mac_addr,
 				   const u8 *uuid_e);
 	void *wps_reg_success_cb_ctx;
+
+	void (*wps_event_cb)(void *ctx, enum wps_event event,
+			     union wps_event_data *data);
+	void *wps_event_cb_ctx;
+
+	void (*sta_authorized_cb)(void *ctx, const u8 *mac_addr,
+				  int authorized, const u8 *p2p_dev_addr);
+	void *sta_authorized_cb_ctx;
+
+	void (*setup_complete_cb)(void *ctx);
+	void *setup_complete_cb_ctx;
+
+#ifdef CONFIG_P2P
+	struct p2p_data *p2p;
+	struct p2p_group *p2p_group;
+	struct wpabuf *p2p_beacon_ie;
+	struct wpabuf *p2p_probe_resp_ie;
+
+	/* Number of non-P2P association stations */
+	int num_sta_no_p2p;
+
+	/* Periodic NoA (used only when no non-P2P clients in the group) */
+	int noa_enabled;
+	int noa_start;
+	int noa_duration;
+#endif /* CONFIG_P2P */
 };
 
 
@@ -202,6 +192,7 @@ struct hostapd_iface {
 	struct ap_info *ap_hash[STA_HASH_SIZE];
 	struct ap_info *ap_iter_list;
 
+	unsigned int drv_flags;
 	struct hostapd_hw_modes *hw_features;
 	int num_hw_features;
 	struct hostapd_hw_modes *current_mode;
@@ -264,13 +255,17 @@ void hostapd_new_assoc_sta(struct hostapd_data *hapd, struct sta_info *sta,
 /* utils.c */
 int hostapd_register_probereq_cb(struct hostapd_data *hapd,
 				 int (*cb)(void *ctx, const u8 *sa,
+					   const u8 *da, const u8 *bssid,
 					   const u8 *ie, size_t ie_len),
 				 void *ctx);
 void hostapd_prune_associations(struct hostapd_data *hapd, const u8 *addr);
 
 /* drv_callbacks.c (TODO: move to somewhere else?) */
 int hostapd_notif_assoc(struct hostapd_data *hapd, const u8 *addr,
-			const u8 *ie, size_t ielen);
+			const u8 *ie, size_t ielen, int reassoc);
 void hostapd_notif_disassoc(struct hostapd_data *hapd, const u8 *addr);
+void hostapd_event_sta_low_ack(struct hostapd_data *hapd, const u8 *addr);
+int hostapd_probe_req_rx(struct hostapd_data *hapd, const u8 *sa, const u8 *da,
+			 const u8 *bssid, const u8 *ie, size_t ie_len);
 
 #endif /* HOSTAPD_H */

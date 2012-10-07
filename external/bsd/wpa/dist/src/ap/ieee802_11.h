@@ -46,6 +46,7 @@ static inline int ieee802_11_get_mib_sta(struct hostapd_data *hapd,
 #endif /* NEED_AP_MLME */
 u16 hostapd_own_capab_info(struct hostapd_data *hapd, struct sta_info *sta,
 			   int probe);
+u8 * hostapd_eid_ext_capab(struct hostapd_data *hapd, u8 *eid);
 u8 * hostapd_eid_supp_rates(struct hostapd_data *hapd, u8 *eid);
 u8 * hostapd_eid_ext_supp_rates(struct hostapd_data *hapd, u8 *eid);
 u8 * hostapd_eid_ht_capabilities(struct hostapd_data *hapd, u8 *eid);
@@ -56,12 +57,24 @@ void ieee802_11_send_sa_query_req(struct hostapd_data *hapd,
 void hostapd_get_ht_capab(struct hostapd_data *hapd,
 			  struct ieee80211_ht_capabilities *ht_cap,
 			  struct ieee80211_ht_capabilities *neg_ht_cap);
-u16 copy_sta_ht_capab(struct sta_info *sta, const u8 *ht_capab,
-		      size_t ht_capab_len);
+u16 copy_sta_ht_capab(struct hostapd_data *hapd, struct sta_info *sta,
+		      const u8 *ht_capab, size_t ht_capab_len);
 void update_ht_state(struct hostapd_data *hapd, struct sta_info *sta);
 void hostapd_tx_status(struct hostapd_data *hapd, const u8 *addr,
 		       const u8 *buf, size_t len, int ack);
 void ieee802_11_rx_from_unknown(struct hostapd_data *hapd, const u8 *src,
 				int wds);
+u8 * hostapd_eid_assoc_comeback_time(struct hostapd_data *hapd,
+				     struct sta_info *sta, u8 *eid);
+void ieee802_11_sa_query_action(struct hostapd_data *hapd,
+				const u8 *sa, const u8 action_type,
+				const u8 *trans_id);
+u8 * hostapd_eid_interworking(struct hostapd_data *hapd, u8 *eid);
+u8 * hostapd_eid_adv_proto(struct hostapd_data *hapd, u8 *eid);
+u8 * hostapd_eid_roaming_consortium(struct hostapd_data *hapd, u8 *eid);
+u8 * hostapd_eid_time_adv(struct hostapd_data *hapd, u8 *eid);
+u8 * hostapd_eid_time_zone(struct hostapd_data *hapd, u8 *eid);
+int hostapd_update_time_adv(struct hostapd_data *hapd);
+void hostapd_client_poll_ok(struct hostapd_data *hapd, const u8 *addr);
 
 #endif /* IEEE802_11_H */

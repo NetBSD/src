@@ -35,43 +35,21 @@
 #include "wpa_auth_glue.h"
 #include "ap_drv_ops.h"
 #include "ap_config.h"
+#include "p2p_hostapd.h"
 
 
-static int hostapd_flush_old_stations(struct hostapd_data *hapd);
+static int hostapd_flush_old_stations(struct hostapd_data *hapd, u16 reason);
 static int hostapd_setup_encryption(char *iface, struct hostapd_data *hapd);
+static int hostapd_broadcast_wep_clear(struct hostapd_data *hapd);
 
 extern int wpa_debug_level;
 
 
-int hostapd_reload_config(struct hostapd_iface *iface)
+static void hostapd_reload_bss(struct hostapd_data *hapd)
 {
-	struct hostapd_data *hapd = iface->bss[0];
-	struct hostapd_config *newconf, *oldconf;
-	size_t j;
-
-	if (iface->config_read_cb == NULL)
-		return -1;
-	newconf = iface->config_read_cb(iface->config_fname);
-	if (newconf == NULL)
-		return -1;
-
-	/*
-	 * Deauthenticate all stations since the new configuration may not
-	 * allow them to use the BSS anymore.
-	 */
-	for (j = 0; j < iface->num_bss; j++)
-		hostapd_flush_old_stations(iface->bss[j]);
-
 #ifndef CONFIG_NO_RADIUS
-	/* TODO: update dynamic data based on changed configuration
-	 * items (e.g., open/close sockets, etc.) */
-	radius_client_flush(hapd->radius, 0);
+	radius_client_reconfig(hapd->radius, hapd->conf->radius);
 #endif /* CONFIG_NO_RADIUS */
-
-	oldconf = hapd->iconf;
-	hapd->iconf = newconf;
-	hapd->conf = &newconf->bss[0];
-	iface->conf = newconf;
 
 	if (hostapd_setup_wpa_psk(hapd->conf)) {
 		wpa_printf(MSG_ERROR, "Failed to re-configure WPA PSK "
@@ -79,13 +57,15 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 	}
 
 	if (hapd->conf->ieee802_1x || hapd->conf->wpa)
-		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 1);
+		hostapd_set_drv_ieee8021x(hapd, hapd->conf->iface, 1);
 	else
-		hapd->drv.set_drv_ieee8021x(hapd, hapd->conf->iface, 0);
+		hostapd_set_drv_ieee8021x(hapd, hapd->conf->iface, 0);
 
-	if (hapd->conf->wpa && hapd->wpa_auth == NULL)
+	if (hapd->conf->wpa && hapd->wpa_auth == NULL) {
 		hostapd_setup_wpa(hapd);
-	else if (hapd->conf->wpa) {
+		if (hapd->wpa_auth)
+			wpa_init_keys(hapd->wpa_auth);
+	} else if (hapd->conf->wpa) {
 		const u8 *wpa_ie;
 		size_t wpa_ie_len;
 		hostapd_reconfig_wpa(hapd);
@@ -110,10 +90,50 @@ int hostapd_reload_config(struct hostapd_iface *iface)
 		wpa_printf(MSG_ERROR, "Could not set SSID for kernel driver");
 		/* try to continue */
 	}
+	wpa_printf(MSG_DEBUG, "Reconfigured interface %s", hapd->conf->iface);
+}
+
+
+int hostapd_reload_config(struct hostapd_iface *iface)
+{
+	struct hostapd_data *hapd = iface->bss[0];
+	struct hostapd_config *newconf, *oldconf;
+	size_t j;
+
+	if (iface->config_read_cb == NULL)
+		return -1;
+	newconf = iface->config_read_cb(iface->config_fname);
+	if (newconf == NULL)
+		return -1;
+
+	/*
+	 * Deauthenticate all stations since the new configuration may not
+	 * allow them to use the BSS anymore.
+	 */
+	for (j = 0; j < iface->num_bss; j++) {
+		hostapd_flush_old_stations(iface->bss[j],
+					   WLAN_REASON_PREV_AUTH_NOT_VALID);
+		hostapd_broadcast_wep_clear(iface->bss[j]);
+
+#ifndef CONFIG_NO_RADIUS
+		/* TODO: update dynamic data based on changed configuration
+		 * items (e.g., open/close sockets, etc.) */
+		radius_client_flush(iface->bss[j]->radius, 0);
+#endif /* CONFIG_NO_RADIUS */
+	}
+
+	oldconf = hapd->iconf;
+	iface->conf = newconf;
+
+	for (j = 0; j < iface->num_bss; j++) {
+		hapd = iface->bss[j];
+		hapd->iconf = newconf;
+		hapd->conf = &newconf->bss[j];
+		hostapd_reload_bss(hapd);
+	}
 
 	hostapd_config_free(oldconf);
 
-	wpa_printf(MSG_DEBUG, "Reconfigured interface %s", hapd->conf->iface);
 
 	return 0;
 }
@@ -125,8 +145,8 @@ static void hostapd_broadcast_key_clear_iface(struct hostapd_data *hapd,
 	int i;
 
 	for (i = 0; i < NUM_WEP_KEYS; i++) {
-		if (hapd->drv.set_key(ifname, hapd, WPA_ALG_NONE, NULL, i,
-				      i == 0 ? 1 : 0, NULL, 0, NULL, 0)) {
+		if (hostapd_drv_set_key(ifname, hapd, WPA_ALG_NONE, NULL, i,
+					0, NULL, 0, NULL, 0)) {
 			wpa_printf(MSG_DEBUG, "Failed to clear default "
 				   "encryption keys (ifname=%s keyidx=%d)",
 				   ifname, i);
@@ -135,9 +155,9 @@ static void hostapd_broadcast_key_clear_iface(struct hostapd_data *hapd,
 #ifdef CONFIG_IEEE80211W
 	if (hapd->conf->ieee80211w) {
 		for (i = NUM_WEP_KEYS; i < NUM_WEP_KEYS + 2; i++) {
-			if (hapd->drv.set_key(ifname, hapd, WPA_ALG_NONE, NULL,
-					      i, i == 0 ? 1 : 0, NULL, 0,
-					      NULL, 0)) {
+			if (hostapd_drv_set_key(ifname, hapd, WPA_ALG_NONE,
+						NULL, i, 0, NULL,
+						0, NULL, 0)) {
 				wpa_printf(MSG_DEBUG, "Failed to clear "
 					   "default mgmt encryption keys "
 					   "(ifname=%s keyidx=%d)", ifname, i);
@@ -162,11 +182,10 @@ static int hostapd_broadcast_wep_set(struct hostapd_data *hapd)
 
 	idx = ssid->wep.idx;
 	if (ssid->wep.default_len &&
-	    hapd->drv.set_key(hapd->conf->iface,
-			      hapd, WPA_ALG_WEP, NULL, idx,
-			      idx == ssid->wep.idx,
-			      NULL, 0, ssid->wep.key[idx],
-			      ssid->wep.len[idx])) {
+	    hostapd_drv_set_key(hapd->conf->iface,
+				hapd, WPA_ALG_WEP, broadcast_ether_addr, idx,
+				1, NULL, 0, ssid->wep.key[idx],
+				ssid->wep.len[idx])) {
 		wpa_printf(MSG_WARNING, "Could not set WEP encryption.");
 		errors++;
 	}
@@ -184,9 +203,10 @@ static int hostapd_broadcast_wep_set(struct hostapd_data *hapd)
 				continue;
 
 			idx = key->idx;
-			if (hapd->drv.set_key(ifname, hapd, WPA_ALG_WEP, NULL,
-					      idx, idx == key->idx, NULL, 0,
-					      key->key[idx], key->len[idx])) {
+			if (hostapd_drv_set_key(ifname, hapd, WPA_ALG_WEP,
+						broadcast_ether_addr, idx, 1,
+						NULL, 0, key->key[idx],
+						key->len[idx])) {
 				wpa_printf(MSG_WARNING, "Could not set "
 					   "dynamic VLAN WEP encryption.");
 				errors++;
@@ -235,6 +255,15 @@ static void hostapd_cleanup(struct hostapd_data *hapd)
 
 	os_free(hapd->probereq_cb);
 	hapd->probereq_cb = NULL;
+
+#ifdef CONFIG_P2P
+	wpabuf_free(hapd->p2p_beacon_ie);
+	hapd->p2p_beacon_ie = NULL;
+	wpabuf_free(hapd->p2p_probe_resp_ie);
+	hapd->p2p_probe_resp_ie = NULL;
+#endif /* CONFIG_P2P */
+
+	wpabuf_free(hapd->time_adv);
 }
 
 
@@ -284,12 +313,18 @@ static int hostapd_setup_encryption(char *iface, struct hostapd_data *hapd)
 		return 0;
 	}
 
+	/*
+	 * When IEEE 802.1X is not enabled, the driver may need to know how to
+	 * set authentication algorithms for static WEP.
+	 */
+	hostapd_drv_set_authmode(hapd, hapd->conf->auth_algs);
+
 	for (i = 0; i < 4; i++) {
 		if (hapd->conf->ssid.wep.key[i] &&
-		    hapd->drv.set_key(iface, hapd, WPA_ALG_WEP, NULL, i,
-				      i == hapd->conf->ssid.wep.idx, NULL, 0,
-				      hapd->conf->ssid.wep.key[i],
-				      hapd->conf->ssid.wep.len[i])) {
+		    hostapd_drv_set_key(iface, hapd, WPA_ALG_WEP, NULL, i,
+					i == hapd->conf->ssid.wep.idx, NULL, 0,
+					hapd->conf->ssid.wep.key[i],
+					hapd->conf->ssid.wep.len[i])) {
 			wpa_printf(MSG_WARNING, "Could not set WEP "
 				   "encryption.");
 			return -1;
@@ -303,9 +338,10 @@ static int hostapd_setup_encryption(char *iface, struct hostapd_data *hapd)
 }
 
 
-static int hostapd_flush_old_stations(struct hostapd_data *hapd)
+static int hostapd_flush_old_stations(struct hostapd_data *hapd, u16 reason)
 {
 	int ret = 0;
+	u8 addr[ETH_ALEN];
 
 	if (hostapd_drv_none(hapd) || hapd->drv_priv == NULL)
 		return 0;
@@ -316,17 +352,9 @@ static int hostapd_flush_old_stations(struct hostapd_data *hapd)
 		ret = -1;
 	}
 	wpa_printf(MSG_DEBUG, "Deauthenticate all stations");
-
-	/* New Prism2.5/3 STA firmware versions seem to have issues with this
-	 * broadcast deauth frame. This gets the firmware in odd state where
-	 * nothing works correctly, so let's skip sending this for the hostap
-	 * driver. */
-	if (hapd->driver && os_strcmp(hapd->driver->name, "hostap") != 0) {
-		u8 addr[ETH_ALEN];
-		os_memset(addr, 0xff, ETH_ALEN);
-		hapd->drv.sta_deauth(hapd, addr,
-				     WLAN_REASON_PREV_AUTH_NOT_VALID);
-	}
+	os_memset(addr, 0xff, ETH_ALEN);
+	hostapd_drv_sta_deauth(hapd, addr, reason);
+	hostapd_free_stas(hapd);
 
 	return ret;
 }
@@ -344,7 +372,6 @@ static int hostapd_validate_bssid_configuration(struct hostapd_iface *iface)
 	u8 mask[ETH_ALEN] = { 0 };
 	struct hostapd_data *hapd = iface->bss[0];
 	unsigned int i = iface->conf->num_bss, bits = 0, j;
-	int res;
 	int auto_addr = 0;
 
 	if (hostapd_drv_none(hapd))
@@ -407,17 +434,6 @@ static int hostapd_validate_bssid_configuration(struct hostapd_iface *iface)
 skip_mask_ext:
 	wpa_printf(MSG_DEBUG, "BSS count %lu, BSSID mask " MACSTR " (%d bits)",
 		   (unsigned long) iface->conf->num_bss, MAC2STR(mask), bits);
-
-	res = hostapd_valid_bss_mask(hapd, hapd->own_addr, mask);
-	if (res == 0)
-		return 0;
-
-	if (res < 0) {
-		wpa_printf(MSG_ERROR, "Driver did not accept BSSID mask "
-			   MACSTR " for start address " MACSTR ".",
-			   MAC2STR(mask), MAC2STR(hapd->own_addr));
-		return -1;
-	}
 
 	if (!auto_addr)
 		return 0;
@@ -495,14 +511,19 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 		hapd->interface_added = 1;
 		if (hostapd_if_add(hapd->iface->bss[0], WPA_IF_AP_BSS,
 				   hapd->conf->iface, hapd->own_addr, hapd,
-				   &hapd->drv_priv, force_ifname, if_addr)) {
+				   &hapd->drv_priv, force_ifname, if_addr,
+				   hapd->conf->bridge[0] ? hapd->conf->bridge :
+				   NULL)) {
 			wpa_printf(MSG_ERROR, "Failed to add BSS (BSSID="
 				   MACSTR ")", MAC2STR(hapd->own_addr));
 			return -1;
 		}
 	}
 
-	hostapd_flush_old_stations(hapd);
+	if (conf->wmm_enabled < 0)
+		conf->wmm_enabled = hapd->iconf->ieee80211n;
+
+	hostapd_flush_old_stations(hapd, WLAN_REASON_PREV_AUTH_NOT_VALID);
 	hostapd_set_privacy(hapd, 0);
 
 	hostapd_broadcast_wep_clear(hapd);
@@ -611,6 +632,12 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 
 	ieee802_11_set_beacon(hapd);
 
+	if (hapd->wpa_auth && wpa_init_keys(hapd->wpa_auth) < 0)
+		return -1;
+
+	if (hapd->driver && hapd->driver->set_operstate)
+		hapd->driver->set_operstate(hapd->drv_priv, 1);
+
 	return 0;
 }
 
@@ -623,9 +650,6 @@ static void hostapd_tx_queue_params(struct hostapd_iface *iface)
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		p = &iface->conf->tx_queue[i];
-
-		if (!p->configured)
-			continue;
 
 		if (hostapd_set_tx_queue_params(hapd, i, p->aifs, p->cwmin,
 						p->cwmax, p->burst)) {
@@ -717,6 +741,17 @@ int hostapd_setup_interface_complete(struct hostapd_iface *iface, int err)
 		}
 	}
 
+	if (iface->current_mode) {
+		if (hostapd_prepare_rates(hapd, iface->current_mode)) {
+			wpa_printf(MSG_ERROR, "Failed to prepare rates "
+				   "table.");
+			hostapd_logger(hapd, NULL, HOSTAPD_MODULE_IEEE80211,
+				       HOSTAPD_LEVEL_WARNING,
+				       "Failed to prepare rates table.");
+			return -1;
+		}
+	}
+
 	if (hapd->iconf->rts_threshold > -1 &&
 	    hostapd_set_rts(hapd, hapd->iconf->rts_threshold)) {
 		wpa_printf(MSG_ERROR, "Could not set RTS threshold for "
@@ -752,6 +787,20 @@ int hostapd_setup_interface_complete(struct hostapd_iface *iface, int err)
 			   "configuration", __func__);
 		return -1;
 	}
+
+	/*
+	 * WPS UPnP module can be initialized only when the "upnp_iface" is up.
+	 * If "interface" and "upnp_iface" are the same (e.g., non-bridge
+	 * mode), the interface is up only after driver_commit, so initialize
+	 * WPS after driver_commit.
+	 */
+	for (j = 0; j < iface->num_bss; j++) {
+		if (hostapd_init_wps_complete(iface->bss[j]))
+			return -1;
+	}
+
+	if (hapd->setup_complete_cb)
+		hapd->setup_complete_cb(hapd->setup_complete_cb_ctx);
 
 	wpa_printf(MSG_DEBUG, "%s: Setup of interface done.",
 		   iface->bss[0]->conf->iface);
@@ -807,7 +856,6 @@ hostapd_alloc_bss_data(struct hostapd_iface *hapd_iface,
 	if (hapd == NULL)
 		return NULL;
 
-	hostapd_set_driver_ops(&hapd->drv);
 	hapd->new_assoc_sta_cb = hostapd_new_assoc_sta;
 	hapd->iconf = conf;
 	hapd->conf = bss;
@@ -829,7 +877,7 @@ void hostapd_interface_deinit(struct hostapd_iface *iface)
 	for (j = 0; j < iface->num_bss; j++) {
 		struct hostapd_data *hapd = iface->bss[j];
 		hostapd_free_stas(hapd);
-		hostapd_flush_old_stations(hapd);
+		hostapd_flush_old_stations(hapd, WLAN_REASON_DEAUTH_LEAVING);
 		hostapd_cleanup(hapd);
 	}
 }
@@ -859,8 +907,8 @@ void hostapd_new_assoc_sta(struct hostapd_data *hapd, struct sta_info *sta,
 			   int reassoc)
 {
 	if (hapd->tkip_countermeasures) {
-		hapd->drv.sta_deauth(hapd, sta->addr,
-				     WLAN_REASON_MICHAEL_MIC_FAILURE);
+		hostapd_drv_sta_deauth(hapd, sta->addr,
+				       WLAN_REASON_MICHAEL_MIC_FAILURE);
 		return;
 	}
 
@@ -869,6 +917,15 @@ void hostapd_new_assoc_sta(struct hostapd_data *hapd, struct sta_info *sta,
 	/* IEEE 802.11F (IAPP) */
 	if (hapd->conf->ieee802_11f)
 		iapp_new_station(hapd->iapp, sta);
+
+#ifdef CONFIG_P2P
+	if (sta->p2p_ie == NULL && !sta->no_p2p_set) {
+		sta->no_p2p_set = 1;
+		hapd->num_sta_no_p2p++;
+		if (hapd->num_sta_no_p2p == 1)
+			hostapd_p2p_non_p2p_sta_connected(hapd);
+	}
+#endif /* CONFIG_P2P */
 
 	/* Start accounting here, if IEEE 802.1X and WPA are not used.
 	 * IEEE 802.1X/WPA code will start accounting after the station has
