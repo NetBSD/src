@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_var.h,v 1.2 2012/10/03 19:18:41 matt Exp $	*/
+/*	$NetBSD: bcm53xx_var.h,v 1.3 2012/10/07 19:16:39 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,6 +106,7 @@ bool	bcm53xx_idm_device_init(const struct bcm_locators *, bus_space_tag_t,
 	    bus_space_handle_t);
 void	bcm53xx_device_register(device_t, void *);
 psize_t	bcm53xx_memprobe(void);
+void	bcm53xx_dma_bootstrap(psize_t);
 void	bcm53xx_print_clocks(void);
 void	bcm53xx_rng_start(bus_space_tag_t, bus_space_handle_t);
 void	bcm53xx_srab_init(void);
