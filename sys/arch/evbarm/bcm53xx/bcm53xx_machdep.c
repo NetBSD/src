@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.3 2012/09/27 00:22:39 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.4 2012/10/07 19:17:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.3 2012/09/27 00:22:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.4 2012/10/07 19:17:24 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -237,10 +237,12 @@ initarm(void *arg)
 #endif
 
 	psize_t memsize = bcm53xx_memprobe();
-	//memsize = 128*1024*1024;
+	//memsize = 512*1024*1024;
 
 	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), memsize,
 	    (paddr_t)KERNEL_BASE_phys);
+
+	bcm53xx_dma_bootstrap(memsize);
 
 	/*
 	 * This is going to do all the hard work of setting up the first and
