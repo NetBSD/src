@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.7 2012/10/06 01:30:46 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.8 2012/10/07 20:14:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.7 2012/10/06 01:30:46 matt Exp $")
 #include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -63,8 +64,9 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.7 2012/10/06 01:30:46 matt Exp $")
 #define	BCMETH_MAXTXMBUFS	32
 #define	BCMETH_NTXSEGS		30
 #define	BCMETH_MAXRXMBUFS	255
-#define	BCMETH_MINRXMBUFS	32
+#define	BCMETH_MINRXMBUFS	64
 #define	BCMETH_NRXSEGS		1
+#define	BCMETH_RINGSIZE		PAGE_SIZE
 
 static int bcmeth_ccb_match(device_t, cfdata_t, void *);
 static void bcmeth_ccb_attach(device_t, device_t, void *);
@@ -132,19 +134,27 @@ struct bcmeth_softc {
 	uint32_t sc_maxfrm;
 	uint32_t sc_cmdcfg;
 	uint32_t sc_intmask;
+	uint32_t sc_rcvlazy;
 	volatile uint32_t sc_soft_flags;
 #define	SOFT_RXINTR		0x01
-#define	SOFT_RXUNDERFLOW	0x02
-#define	SOFT_TXINTR		0x04
-#define	SOFT_REINIT		0x08
+#define	SOFT_TXINTR		0x02
 
 	struct evcnt sc_ev_intr;
 	struct evcnt sc_ev_soft_intr;
+	struct evcnt sc_ev_work;;
 	struct evcnt sc_ev_tx_stall;
 
 	struct ifqueue sc_rx_bufcache;
 	struct bcmeth_mapcache *sc_rx_mapcache;     
 	struct bcmeth_mapcache *sc_tx_mapcache;
+
+	struct workqueue *sc_workq;
+	struct work sc_work;
+
+	volatile uint32_t sc_work_flags;
+#define	WORK_RXINTR		0x01
+#define	WORK_RXUNDERFLOW	0x02
+#define	WORK_REINIT		0x04
 
 	uint8_t sc_enaddr[ETHER_ADDR_LEN];
 };
@@ -188,6 +198,7 @@ static void bcmeth_rxq_reset(struct bcmeth_softc *,
 
 static int bcmeth_intr(void *);
 static void bcmeth_soft_intr(void *);
+static void bcmeth_worker(struct work *, void *);
 
 static int bcmeth_mediachange(struct ifnet *);
 static void bcmeth_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -296,6 +307,13 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	error = workqueue_create(&sc->sc_workq, xname, bcmeth_worker, sc,
+	    (PRI_USER + MAXPRI_USER) / 2, IPL_SOFTNET, WQ_MPSAFE|WQ_PERCPU);
+	if (error) {
+		aprint_error(": failed to create workqueue: %d\n", error);
+		return;
+	}
+
 	sc->sc_soft_ih = softint_establish(SOFTINT_MPSAFE | SOFTINT_NET,
 	    bcmeth_soft_intr, sc);
 
@@ -350,6 +368,8 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "intr");
 	evcnt_attach_dynamic(&sc->sc_ev_soft_intr, EVCNT_TYPE_INTR,
 	    NULL, xname, "soft intr");
+	evcnt_attach_dynamic(&sc->sc_ev_work, EVCNT_TYPE_MISC,
+	    NULL, xname, "work items");
 	evcnt_attach_dynamic(&sc->sc_ev_tx_stall, EVCNT_TYPE_MISC,
 	    NULL, xname, "tx stalls");
 }
@@ -461,8 +481,9 @@ bcmeth_ifinit(struct ifnet *ifp)
 	bcmeth_write_4(sc, GMAC_DEVCONTROL, devctl);
 
 	/* Setup lazy receive (at most 1ms). */
-	bcmeth_write_4(sc, GMAC_INTRCVLAZY, __SHIFTIN(10, INTRCVLAZY_FRAMECOUNT)
-	     | __SHIFTIN(125000000 / 1000, INTRCVLAZY_TIMEOUT));
+	sc->sc_rcvlazy =  __SHIFTIN(4, INTRCVLAZY_FRAMECOUNT)
+	     | __SHIFTIN(125000000 / 1000, INTRCVLAZY_TIMEOUT);
+	bcmeth_write_4(sc, GMAC_INTRCVLAZY, sc->sc_rcvlazy);
 
 	/* 11. Enable transmit queues in TQUEUE, and ensure that the transmit scheduling mode is correctly set in TCTRL. */
 	sc->sc_intmask |= XMTINT_0|XMTUF;
@@ -937,7 +958,7 @@ bcmeth_rxq_consume(
 			return;
 		}
 		
-		uint32_t rcvsts0 = bcmeth_read_4(sc, GMAC_RCVSTATUS0);
+		uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
 		uint32_t currdscr = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
 		if (consumer == rxq->rxq_first + currdscr) {
 			rxq->rxq_consumer = consumer;
@@ -1092,19 +1113,18 @@ bcmeth_rxq_attach(
 	struct bcmeth_rxqueue *rxq,
 	u_int qno)
 {
-	size_t map_size = PAGE_SIZE;
-	size_t desc_count = map_size / sizeof(rxq->rxq_first[0]);
+	size_t desc_count = BCMETH_RINGSIZE / sizeof(rxq->rxq_first[0]);
 	int error;
 	void *descs;
 
 	KASSERT(desc_count == 256 || desc_count == 512);
 
-	error = bcmeth_dmamem_alloc(sc->sc_dmat, map_size,
+	error = bcmeth_dmamem_alloc(sc->sc_dmat, BCMETH_RINGSIZE,
 	   &rxq->rxq_descmap_seg, &rxq->rxq_descmap, &descs);
 	if (error)
 		return error;
 
-	memset(descs, 0, map_size);
+	memset(descs, 0, BCMETH_RINGSIZE);
 	rxq->rxq_first = descs;
 	rxq->rxq_last = rxq->rxq_first + desc_count;
 	rxq->rxq_consumer = descs;
@@ -1143,19 +1163,18 @@ bcmeth_txq_attach(
 	struct bcmeth_txqueue *txq,
 	u_int qno)
 {
-	size_t map_size = PAGE_SIZE;
-	size_t desc_count = map_size / sizeof(txq->txq_first[0]);
+	size_t desc_count = BCMETH_RINGSIZE / sizeof(txq->txq_first[0]);
 	int error;
 	void *descs;
 
 	KASSERT(desc_count == 256 || desc_count == 512);
 
-	error = bcmeth_dmamem_alloc(sc->sc_dmat, map_size,
+	error = bcmeth_dmamem_alloc(sc->sc_dmat, BCMETH_RINGSIZE,
 	   &txq->txq_descmap_seg, &txq->txq_descmap, &descs);
 	if (error)
 		return error;
 
-	memset(descs, 0, map_size);
+	memset(descs, 0, BCMETH_RINGSIZE);
 	txq->txq_first = descs;
 	txq->txq_last = txq->txq_first + desc_count;
 	txq->txq_consumer = descs;
@@ -1504,6 +1523,7 @@ bcmeth_intr(void *arg)
 {
 	struct bcmeth_softc * const sc = arg;
 	uint32_t soft_flags = 0;
+	uint32_t work_flags = 0;
 	int rv = 0;
 
 	mutex_enter(sc->sc_hwlock);
@@ -1518,13 +1538,36 @@ bcmeth_intr(void *arg)
 			break;
 		}
 #if 0
-		aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x intmask=%#x\n", 
-		    __func__, ievent, bcmeth_read_4(sc, GMAC_INTMASK));
+		aprint_normal_dev(sc->sc_dev, "%s: intstatus=%#x intmask=%#x\n", 
+		    __func__, intstatus, bcmeth_read_4(sc, GMAC_INTMASK));
 #endif
 		if (intstatus & RCVINT) {
+			struct bcmeth_rxqueue * const rxq = &sc->sc_rxq;
 			intstatus &= ~RCVINT;
 			sc->sc_intmask &= ~RCVINT;
-			soft_flags |= SOFT_RXINTR;
+
+			uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
+			uint32_t descs = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
+			if (descs < rxq->rxq_consumer - rxq->rxq_first) {
+				/*
+				 * We wrapped at the end so count how far
+				 * we are from the end.
+				 */
+				descs += rxq->rxq_last - rxq->rxq_consumer;
+			} else {
+				descs -= rxq->rxq_consumer - rxq->rxq_first;
+			}
+			/*
+			 * If we "timedout" we can't be hogging so use
+			 * softints.  If we exceeded then we might hogging
+			 * so let the workqueue deal with them.
+			 */
+			const uint32_t framecount = __SHIFTOUT(sc->sc_rcvlazy, INTRCVLAZY_FRAMECOUNT);
+			if (descs < framecount) {
+				soft_flags |= SOFT_RXINTR;
+			} else {
+				work_flags |= WORK_RXINTR;
+			}
 		}
 
 		if (intstatus & XMTINT_0) {
@@ -1536,7 +1579,7 @@ bcmeth_intr(void *arg)
 		if (intstatus & RCVDESCUF) {
 			intstatus &= ~RCVDESCUF;
 			sc->sc_intmask &= ~RCVDESCUF;
-			soft_flags |= SOFT_RXUNDERFLOW;
+			work_flags |= WORK_RXUNDERFLOW;
 		}
 
 		if (intstatus) {
@@ -1544,15 +1587,28 @@ bcmeth_intr(void *arg)
 			    intstatus);
 			Debugger();
 			sc->sc_intmask &= ~intstatus;
-			soft_flags |= SOFT_REINIT;
+			work_flags |= WORK_REINIT;
 			break;
 		}
 	}
 
-	if (soft_flags) {
+	if (work_flags | soft_flags) {
 		bcmeth_write_4(sc, GMAC_INTMASK, sc->sc_intmask);
-		atomic_or_uint(&sc->sc_soft_flags, soft_flags);
-		softint_schedule(sc->sc_soft_ih);
+	}
+
+	if (work_flags) {
+		if (sc->sc_work_flags == 0) {
+			workqueue_enqueue(sc->sc_workq, &sc->sc_work, NULL);
+		}
+		atomic_or_32(&sc->sc_work_flags, work_flags);
+		rv = 1;
+	}
+
+	if (soft_flags) {
+		if (sc->sc_soft_flags == 0) {
+			softint_schedule(sc->sc_soft_ih);
+		}
+		atomic_or_32(&sc->sc_soft_flags, soft_flags);
 		rv = 1;
 	}
 
@@ -1573,27 +1629,6 @@ bcmeth_soft_intr(void *arg)
 
 	sc->sc_ev_soft_intr.ev_count++;
 
-	if (soft_flags & SOFT_REINIT) {
-		int s = splnet();
-		bcmeth_ifinit(ifp);
-		splx(s);
-		soft_flags = 0;
-	}
-
-	if (soft_flags & SOFT_RXUNDERFLOW) {
-		struct bcmeth_rxqueue * const rxq = &sc->sc_rxq;
-		size_t threshold = 5 * rxq->rxq_threshold / 4;
-		if (threshold >= rxq->rxq_last - rxq->rxq_first) {
-			threshold = rxq->rxq_last - rxq->rxq_first - 1;
-		} else {
-			sc->sc_intmask |= RCVDESCUF;
-		}
-		aprint_normal_dev(sc->sc_dev,
-		    "increasing receive buffers from %zu to %zu\n",
-		    rxq->rxq_threshold, threshold);
-		rxq->rxq_threshold = threshold;
-	}
-
 	if ((soft_flags & SOFT_TXINTR)
 	    || bcmeth_txq_active_p(sc, &sc->sc_txq)) {
 		/*
@@ -1610,7 +1645,7 @@ bcmeth_soft_intr(void *arg)
 		sc->sc_intmask |= XMTINT_0;
 	}
 
-	if (soft_flags & (SOFT_RXINTR|SOFT_RXUNDERFLOW)) {
+	if (soft_flags & SOFT_RXINTR) {
 		/*
 		 * Let's consume 
 		 */
@@ -1621,8 +1656,55 @@ bcmeth_soft_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		bcmeth_rxq_produce(sc, &sc->sc_rxq);
 		bcmeth_write_4(sc, GMAC_INTMASK, sc->sc_intmask);
-	} else {
-		KASSERT((soft_flags & SOFT_RXUNDERFLOW) == 0);
+	}
+
+	mutex_exit(sc->sc_lock);
+}
+
+void
+bcmeth_worker(struct work *wk, void *arg)
+{
+	struct bcmeth_softc * const sc = arg;
+	struct ifnet * const ifp = &sc->sc_if;
+
+	mutex_enter(sc->sc_lock);
+
+	sc->sc_ev_work.ev_count++;
+
+	uint32_t work_flags = atomic_swap_32(&sc->sc_work_flags, 0);
+	if (work_flags & WORK_REINIT) {
+		int s = splnet();
+		sc->sc_soft_flags = 0;
+		bcmeth_ifinit(ifp);
+		splx(s);
+		work_flags &= ~WORK_RXUNDERFLOW;
+	}
+
+	if (work_flags & WORK_RXUNDERFLOW) {
+		struct bcmeth_rxqueue * const rxq = &sc->sc_rxq;
+		size_t threshold = 5 * rxq->rxq_threshold / 4;
+		if (threshold >= rxq->rxq_last - rxq->rxq_first) {
+			threshold = rxq->rxq_last - rxq->rxq_first - 1;
+		} else {
+			sc->sc_intmask |= RCVDESCUF;
+		}
+		aprint_normal_dev(sc->sc_dev,
+		    "increasing receive buffers from %zu to %zu\n",
+		    rxq->rxq_threshold, threshold);
+		rxq->rxq_threshold = threshold;
+	}
+
+	if (work_flags & WORK_RXINTR) {
+		/*
+		 * Let's consume 
+		 */
+		bcmeth_rxq_consume(sc, &sc->sc_rxq);
+		sc->sc_intmask |= RCVINT;
+	}
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		bcmeth_write_4(sc, GMAC_INTMASK, sc->sc_intmask);
 	}
 
 	mutex_exit(sc->sc_lock);
