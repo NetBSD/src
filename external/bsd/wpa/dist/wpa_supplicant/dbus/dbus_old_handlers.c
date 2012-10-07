@@ -116,7 +116,7 @@ DBusMessage * wpas_dbus_global_add_interface(DBusMessage *message,
 		DBusMessageIter iter_dict;
 		struct wpa_dbus_dict_entry entry;
 
-		if (!wpa_dbus_dict_open_read(&iter, &iter_dict))
+		if (!wpa_dbus_dict_open_read(&iter, &iter_dict, NULL))
 			goto error;
 		while (wpa_dbus_dict_has_dict_entry(&iter_dict)) {
 			if (!wpa_dbus_dict_get_entry(&iter_dict, &entry))
@@ -922,7 +922,7 @@ DBusMessage * wpas_dbus_iface_set_network(DBusMessage *message,
 
 	dbus_message_iter_init(message, &iter);
 
-	if (!wpa_dbus_dict_open_read(&iter, &iter_dict)) {
+	if (!wpa_dbus_dict_open_read(&iter, &iter_dict, NULL)) {
 		reply = wpas_dbus_new_invalid_opts_error(message, NULL);
 		goto out;
 	}
@@ -1202,7 +1202,7 @@ DBusMessage * wpas_dbus_iface_set_smartcard_modules(
 	if (!dbus_message_iter_init(message, &iter))
 		goto error;
 
-	if (!wpa_dbus_dict_open_read(&iter, &iter_dict))
+	if (!wpa_dbus_dict_open_read(&iter, &iter_dict, NULL))
 		goto error;
 
 	while (wpa_dbus_dict_has_dict_entry(&iter_dict)) {
@@ -1324,7 +1324,7 @@ DBusMessage * wpas_dbus_iface_set_blobs(DBusMessage *message,
 
 	dbus_message_iter_init(message, &iter);
 
-	if (!wpa_dbus_dict_open_read(&iter, &iter_dict))
+	if (!wpa_dbus_dict_open_read(&iter, &iter_dict, NULL))
 		return wpas_dbus_new_invalid_opts_error(message, NULL);
 
 	while (wpa_dbus_dict_has_dict_entry(&iter_dict)) {
@@ -1431,6 +1431,38 @@ DBusMessage * wpas_dbus_iface_remove_blobs(DBusMessage *message,
 	if (err_msg)
 		return dbus_message_new_error(message, WPAS_ERROR_REMOVE_ERROR,
 					      err_msg);
+
+	return wpas_dbus_new_success_reply(message);
+}
+
+
+/**
+ * wpas_dbus_iface_flush - Clear BSS of old or all inactive entries
+ * @message: Pointer to incoming dbus message
+ * @wpa_s: %wpa_supplicant data structure
+ * Returns: a dbus message containing a UINT32 indicating success (1) or
+ *          failure (0), or returns a dbus error message with more information
+ *
+ * Handler function for "flush" method call. Handles requests for an
+ * interface with an optional "age" parameter that specifies the minimum
+ * age of a BSS to be flushed.
+ */
+DBusMessage * wpas_dbus_iface_flush(DBusMessage *message,
+				    struct wpa_supplicant *wpa_s)
+{
+	int flush_age = 0;
+
+	if (os_strlen(dbus_message_get_signature(message)) != 0 &&
+	    !dbus_message_get_args(message, NULL,
+				   DBUS_TYPE_INT32, &flush_age,
+				   DBUS_TYPE_INVALID)) {
+		return wpas_dbus_new_invalid_opts_error(message, NULL);
+	}
+
+	if (flush_age == 0)
+		wpa_bss_flush(wpa_s);
+	else
+		wpa_bss_flush_by_age(wpa_s, flush_age);
 
 	return wpas_dbus_new_success_reply(message);
 }

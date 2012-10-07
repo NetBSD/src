@@ -69,6 +69,7 @@
 #define MADWIFI_NG
 #endif /* IEEE80211_IOCTL_SETWMMPARAMS */
 
+#define WPA_KEY_RSC_LEN 8
 
 #ifdef HOSTAPD
 
@@ -461,7 +462,7 @@ wpa_driver_madwifi_set_key(const char *ifname, void *priv, enum wpa_alg alg,
 	memset(&wk, 0, sizeof(wk));
 	wk.ik_type = cipher;
 	wk.ik_flags = IEEE80211_KEY_RECV | IEEE80211_KEY_XMIT;
-	if (addr == NULL) {
+	if (addr == NULL || is_broadcast_ether_addr(addr)) {
 		memset(wk.ik_macaddr, 0xff, IEEE80211_ADDR_LEN);
 		wk.ik_keyix = key_idx;
 		wk.ik_flags |= IEEE80211_KEY_DEFAULT;
@@ -733,6 +734,8 @@ static void madwifi_raw_receive(void *ctx, const u8 *src_addr, const u8 *buf,
 
 	os_memset(&event, 0, sizeof(event));
 	event.rx_probe_req.sa = mgmt->sa;
+	event.rx_probe_req.da = mgmt->da;
+	event.rx_probe_req.bssid = mgmt->bssid;
 	event.rx_probe_req.ie = mgmt->u.probe_req.variable;
 	event.rx_probe_req.ie_len =
 		len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
@@ -787,7 +790,8 @@ madwifi_set_wps_ie(void *priv, const u8 *ie, size_t len, u32 frametype)
 
 static int
 madwifi_set_ap_wps_ie(void *priv, const struct wpabuf *beacon,
-		      const struct wpabuf *proberesp)
+		      const struct wpabuf *proberesp,
+		      const struct wpabuf *assocresp)
 {
 	if (madwifi_set_wps_ie(priv, beacon ? wpabuf_head(beacon) : NULL,
 			       beacon ? wpabuf_len(beacon) : 0,
@@ -801,6 +805,24 @@ madwifi_set_ap_wps_ie(void *priv, const struct wpabuf *beacon,
 #else /* CONFIG_WPS */
 #define madwifi_set_ap_wps_ie NULL
 #endif /* CONFIG_WPS */
+
+static int madwifi_set_freq(void *priv, struct hostapd_freq_params *freq)
+{
+	struct madwifi_driver_data *drv = priv;
+	struct iwreq iwr;
+
+	os_memset(&iwr, 0, sizeof(iwr));
+	os_strlcpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
+	iwr.u.freq.m = freq->channel;
+	iwr.u.freq.e = 0;
+
+	if (ioctl(drv->ioctl_sock, SIOCSIWFREQ, &iwr) < 0) {
+		perror("ioctl[SIOCSIWFREQ]");
+		return -1;
+	}
+
+	return 0;
+}
 
 static void
 madwifi_new_sta(struct madwifi_driver_data *drv, u8 addr[IEEE80211_ADDR_LEN])
@@ -846,7 +868,7 @@ madwifi_new_sta(struct madwifi_driver_data *drv, u8 addr[IEEE80211_ADDR_LEN])
 		ielen += 2;
 
 no_ie:
-	drv_event_assoc(hapd, addr, iebuf, ielen);
+	drv_event_assoc(hapd, addr, iebuf, ielen, 0);
 
 	if (memcmp(addr, drv->acct_mac, ETH_ALEN) == 0) {
 		/* Cached accounting data is not valid anymore. */
@@ -1065,7 +1087,7 @@ madwifi_wireless_event_init(struct madwifi_driver_data *drv)
 
 static int
 madwifi_send_eapol(void *priv, const u8 *addr, const u8 *data, size_t data_len,
-		   int encrypt, const u8 *own_addr)
+		   int encrypt, const u8 *own_addr, u32 flags)
 {
 	struct madwifi_driver_data *drv = priv;
 	unsigned char buf[3000];
@@ -1509,8 +1531,7 @@ wpa_driver_madwifi_set_key(const char *ifname, void *priv, enum wpa_alg alg,
 	wk.ik_keyix = key_idx;
 	wk.ik_keylen = key_len;
 #ifdef WORDS_BIGENDIAN
-#define WPA_KEY_RSC_LEN 8
-	{
+	if (seq) {
 		size_t i;
 		u8 tmp[WPA_KEY_RSC_LEN];
 		os_memset(tmp, 0, sizeof(tmp));
@@ -1519,7 +1540,8 @@ wpa_driver_madwifi_set_key(const char *ifname, void *priv, enum wpa_alg alg,
 		os_memcpy(&wk.ik_keyrsc, tmp, WPA_KEY_RSC_LEN);
 	}
 #else /* WORDS_BIGENDIAN */
-	os_memcpy(&wk.ik_keyrsc, seq, seq_len);
+	if (seq)
+		os_memcpy(&wk.ik_keyrsc, seq, seq_len);
 #endif /* WORDS_BIGENDIAN */
 	os_memcpy(wk.ik_keydata, key, key_len);
 
@@ -1838,6 +1860,7 @@ const struct wpa_driver_ops wpa_driver_madwifi_ops = {
 	.sta_clear_stats        = madwifi_sta_clear_stats,
 	.commit			= madwifi_commit,
 	.set_ap_wps_ie		= madwifi_set_ap_wps_ie,
+	.set_freq		= madwifi_set_freq,
 #else /* HOSTAPD */
 	.get_bssid		= wpa_driver_madwifi_get_bssid,
 	.get_ssid		= wpa_driver_madwifi_get_ssid,
