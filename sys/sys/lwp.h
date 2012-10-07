@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.164 2012/09/27 20:43:15 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.165 2012/10/07 20:43:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -411,7 +411,7 @@ lwp_eprio(lwp_t *l)
 	pri_t pri;
 
 	pri = l->l_priority;
-	if (l->l_kpriority && pri < PRI_KERNEL)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }
