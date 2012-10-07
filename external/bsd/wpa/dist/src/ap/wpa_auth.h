@@ -143,7 +143,9 @@ struct wpa_auth_config {
 	int peerkey;
 	int wmm_enabled;
 	int wmm_uapsd;
+	int disable_pmksa_caching;
 	int okc;
+	int tx_status;
 #ifdef CONFIG_IEEE80211W
 	enum mfp_options ieee80211w;
 #endif /* CONFIG_IEEE80211W */
@@ -160,6 +162,7 @@ struct wpa_auth_config {
 	struct ft_remote_r0kh *r0kh_list;
 	struct ft_remote_r1kh *r1kh_list;
 	int pmk_r1_push;
+	int ft_over_ds;
 #endif /* CONFIG_IEEE80211R */
 };
 
@@ -205,6 +208,7 @@ struct wpa_auth_callbacks {
 struct wpa_authenticator * wpa_init(const u8 *addr,
 				    struct wpa_auth_config *conf,
 				    struct wpa_auth_callbacks *cb);
+int wpa_init_keys(struct wpa_authenticator *wpa_auth);
 void wpa_deinit(struct wpa_authenticator *wpa_auth);
 int wpa_reconfig(struct wpa_authenticator *wpa_auth,
 		 struct wpa_auth_config *conf);
@@ -259,6 +263,8 @@ int wpa_auth_pmksa_add_preauth(struct wpa_authenticator *wpa_auth,
 			       int session_timeout,
 			       struct eapol_state_machine *eapol);
 int wpa_auth_sta_set_vlan(struct wpa_state_machine *sm, int vlan_id);
+void wpa_auth_eapol_key_tx_status(struct wpa_authenticator *wpa_auth,
+				  struct wpa_state_machine *sm, int ack);
 
 #ifdef CONFIG_IEEE80211R
 u8 * wpa_sm_write_assoc_resp_ies(struct wpa_state_machine *sm, u8 *pos,
