@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.4 2012/10/03 19:18:40 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.5 2012/10/07 19:16:39 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.4 2012/10/03 19:18:40 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.5 2012/10/07 19:16:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,8 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 
 static struct cpu_softc cpu_softc;
 static struct bcm53xx_clock_info clk_info;
+
+struct arm32_dma_range bcm53xx_dma_ranges[2];
 
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
 	_BUS_DMAMAP_FUNCS,
@@ -483,6 +485,26 @@ bcm53xx_bootstrap(vaddr_t iobase)
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
 
 	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh, ARMCORE_L2C_BASE);
+}
+
+void
+bcm53xx_dma_bootstrap(psize_t memsize)
+{
+	if (memsize > 256*1024*1024) {
+		/*
+		 * By setting up two ranges, bus_dmamem_alloc will always
+		 * try to allocate from range 0 first resulting in allocations
+		 * below 256MB which for PCI and GMAC are coherent.
+		 */
+		bcm53xx_dma_ranges[0].dr_sysbase = 0x80000000;
+		bcm53xx_dma_ranges[0].dr_busbase = 0x80000000;
+		bcm53xx_dma_ranges[0].dr_len = 0x10000000;
+		bcm53xx_dma_ranges[1].dr_sysbase = 0x90000000;
+		bcm53xx_dma_ranges[1].dr_busbase = 0x90000000;
+		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
+		bcm53xx_dma_tag._ranges = bcm53xx_dma_ranges;
+		bcm53xx_dma_tag._nranges = __arraycount(bcm53xx_dma_ranges);
+	}
 }
 
 #ifdef MULTIPROCESSOR
