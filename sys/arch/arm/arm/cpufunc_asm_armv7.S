@@ -99,6 +99,10 @@ ENTRY_NP(armv7_icache_sync_range)
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+	sub	ip, r2, #1		@ make into a mask
+	and	r3, r0, ip		@ get offset into cache line
+	add	r1, r1, r3		@ add to length
+	bic	r0, r0, ip		@ clear offset from start.
 1:
 	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache line
 	mcr	p15, 0, r0, c7, c5, 1	@ invalidate the I-Cache line
@@ -131,6 +135,10 @@ ENTRY(armv7_dcache_wb_range)
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+	sub	ip, r2, #1		@ make into a mask
+	and	r3, r0, ip		@ get offset into cache line
+	add	r1, r1, r3		@ add to length
+	bic	r0, r0, ip		@ clear offset from start.
 1:
 	mcr	p15, 0, r0, c7, c10, 1	@ wb the D-Cache to PoC
 	add	r0, r0, r2
@@ -146,6 +154,10 @@ ENTRY(armv7_dcache_wbinv_range)
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+	sub	ip, r2, #1		@ make into a mask
+	and	r3, r0, ip		@ get offset into cache line
+	add	r1, r1, r3		@ add to length
+	bic	r0, r0, ip		@ clear offset from start.
 1:
 	mcr	p15, 0, r0, c7, c14, 1	@ wb and inv the D-Cache line
 	add	r0, r0, r2
@@ -161,6 +173,10 @@ ENTRY(armv7_dcache_inv_range)
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+	sub	ip, r2, #1		@ make into a mask
+	and	r3, r0, ip		@ get offset into cache line
+	add	r1, r1, r3		@ add to length
+	bic	r0, r0, ip		@ clear offset from start.
 1:
 	mcr	p15, 0, r0, c7, c6, 1	@ invalidate the D-Cache line  
 	add	r0, r0, r2 
@@ -178,6 +194,10 @@ ENTRY(armv7_idcache_wbinv_range)
 	and	r2, r2, #7		@ get line size (log2(size)-4, 0=16)
 	mov	ip, #16			@ make a bit mask
 	lsl	r2, ip, r2		@ and shift into position
+	sub	ip, r2, #1		@ make into a mask
+	and	r3, r0, ip		@ get offset into cache line
+	add	r1, r1, r3		@ add to length
+	bic	r0, r0, ip		@ clear offset from start.
 1:
 	mcr	p15, 0, r0, c7, c5, 1	@ invalidate the I-Cache line
 	mcr	p15, 0, r0, c7, c14, 1 	@ wb and inv the D-Cache line
