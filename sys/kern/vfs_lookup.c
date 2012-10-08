@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.192 2011/09/27 02:10:55 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.193 2012/10/08 23:41:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.192 2011/09/27 02:10:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.193 2012/10/08 23:41:39 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -511,7 +511,7 @@ namei_cleanup(struct namei_state *state)
  * to the starting dir.
  */
 static struct vnode *
-namei_getstartdir(struct namei_state *state)
+namei_getstartdir(struct namei_state *state, struct vnode *forcecwd)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
@@ -545,7 +545,11 @@ namei_getstartdir(struct namei_state *state)
 	}
 
 	/* current dir */
-	curdir = cwdi->cwdi_cdir;
+	if (forcecwd != NULL) {
+		curdir = forcecwd;
+	} else {
+		curdir = cwdi->cwdi_cdir;
+	}
 
 	if (ndp->ni_pnbuf[0] != '/') {
 		startdir = curdir;
@@ -581,6 +585,8 @@ namei_getstartdir(struct namei_state *state)
 static struct vnode *
 namei_getstartdir_for_nfsd(struct namei_state *state, struct vnode *startdir)
 {
+	KASSERT(startdir != NULL);
+
 	/* always use the real root, and never set an emulation root */
 	state->ndp->ni_rootdir = rootvnode;
 	state->ndp->ni_erootdir = NULL;
@@ -628,7 +634,7 @@ namei_ktrace(struct namei_state *state)
  * appropriate.
  */
 static int
-namei_start(struct namei_state *state, struct vnode *forcecwd,
+namei_start(struct namei_state *state, struct vnode *forcecwd, int isnfsd,
 	    struct vnode **startdir_ret)
 {
 	struct nameidata *ndp = state->ndp;
@@ -647,11 +653,11 @@ namei_start(struct namei_state *state, struct vnode *forcecwd,
 	ndp->ni_loopcnt = 0;
 
 	/* Get starting directory, set up root, and ktrace. */
-	if (forcecwd != NULL) {
+	if (isnfsd) {
 		startdir = namei_getstartdir_for_nfsd(state, forcecwd);
 		/* no ktrace */
 	} else {
-		startdir = namei_getstartdir(state);
+		startdir = namei_getstartdir(state, forcecwd);
 		namei_ktrace(state);
 	}
 
@@ -1098,14 +1104,14 @@ done:
  */
 static int
 namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
-	 int neverfollow, int inhibitmagic)
+	 int neverfollow, int inhibitmagic, int isnfsd)
 {
 	struct nameidata *ndp = state->ndp;
 	struct componentname *cnp = state->cnp;
 	struct vnode *searchdir, *foundobj;
 	int error;
 
-	error = namei_start(state, forcecwd, &searchdir);
+	error = namei_start(state, forcecwd, isnfsd, &searchdir);
 	if (error) {
 		ndp->ni_dvp = NULL;
 		ndp->ni_vp = NULL;
@@ -1412,7 +1418,7 @@ namei_oneroot(struct namei_state *state, struct vnode *forcecwd,
  */
 static int
 namei_tryemulroot(struct namei_state *state, struct vnode *forcecwd,
-	 int neverfollow, int inhibitmagic)
+	 int neverfollow, int inhibitmagic, int isnfsd)
 {
 	int error;
 
@@ -1429,7 +1435,7 @@ namei_tryemulroot(struct namei_state *state, struct vnode *forcecwd,
     emul_retry:
 	state->attempt_retry = 0;
 
-	error = namei_oneroot(state, forcecwd, neverfollow, inhibitmagic);
+	error = namei_oneroot(state, forcecwd, neverfollow, inhibitmagic, isnfsd);
 	if (error) {
 		/*
 		 * Once namei has started up, the existence of ni_erootdir
@@ -1466,7 +1472,8 @@ namei(struct nameidata *ndp)
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state, NULL,
-				  0/*!neverfollow*/, 0/*!inhibitmagic*/);
+				  0/*!neverfollow*/, 0/*!inhibitmagic*/,
+				  0/*isnfsd*/);
 	namei_cleanup(&state);
 
 	if (error) {
@@ -1499,7 +1506,7 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state, forcecwd,
-				  neverfollow, 1/*inhibitmagic*/);
+				  neverfollow, 1/*inhibitmagic*/, 1/*isnfsd*/);
 	namei_cleanup(&state);
 
 	if (error) {
