@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/08/29 15:53:01 christos Exp $
+# $NetBSD: Makefile,v 1.3 2012/10/08 00:03:20 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,10 +12,12 @@ ap_config.c \
 ap_drv_ops.c \
 ap_mlme.c \
 authsrv.c \
+beacon.c \
 ctrl_iface_ap.c \
 drv_callbacks.c \
 hostapd.c \
 ieee802_11_auth.c \
+ieee802_11_shared.c \
 ieee802_1x.c \
 peerkey_auth.c \
 pmksa_cache_auth.c \
@@ -81,6 +83,7 @@ eap_server_methods.c
 # crypto
 SRCS+= \
 md5.c \
+random.c \
 sha1.c \
 sha1-pbkdf2.c
 
