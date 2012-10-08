@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.8 2012/10/07 20:14:08 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.9 2012/10/08 20:54:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -308,7 +308,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = workqueue_create(&sc->sc_workq, xname, bcmeth_worker, sc,
-	    (PRI_USER + MAXPRI_USER) / 2, IPL_SOFTNET, WQ_MPSAFE|WQ_PERCPU);
+	    (PRI_USER + MAXPRI_USER) / 2, IPL_NET, WQ_MPSAFE|WQ_PERCPU);
 	if (error) {
 		aprint_error(": failed to create workqueue: %d\n", error);
 		return;
@@ -1563,7 +1563,8 @@ bcmeth_intr(void *arg)
 			 * so let the workqueue deal with them.
 			 */
 			const uint32_t framecount = __SHIFTOUT(sc->sc_rcvlazy, INTRCVLAZY_FRAMECOUNT);
-			if (descs < framecount) {
+			if (descs < framecount
+			    || (curcpu()->ci_curlwp->l_flag & LW_IDLE)) {
 				soft_flags |= SOFT_RXINTR;
 			} else {
 				work_flags |= WORK_RXINTR;
