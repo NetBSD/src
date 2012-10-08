@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.80 2011/11/25 16:52:47 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.81 2012/10/08 23:44:09 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.25 2011/11/25 16:51:43 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.26 2012/10/08 23:43:33 dholland Exp 
  */
 
 /*
@@ -152,8 +152,9 @@ struct nameidata {
 					   (pseudo) */
 #define	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
+#define DIDNDAT		0x00000400	/* did NDAT() (temporary) */
 #define	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-#define	MODMASK		0x010000fc	/* mask of operational modifiers */
+#define	MODMASK		0x010004fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
@@ -171,7 +172,7 @@ struct nameidata {
 #define	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 
 /*
- * Initialization of an nameidata structure.
+ * Initialization of a nameidata structure.
  */
 #define NDINIT(ndp, op, flags, pathbuf) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
@@ -179,6 +180,15 @@ struct nameidata {
 	(ndp)->ni_pathbuf = pathbuf; \
 	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
+
+/*
+ * Use this to set the start directory for openat()-type operations.
+ */
+#define NDAT(ndp, dir) {			\
+	(ndp)->ni_cnd.cn_flags |= DIDNDAT;	\
+	(ndp)->ni_dvp = (dir);			\
+}
+
 #endif
 
 /*
@@ -311,8 +321,9 @@ extern struct nchstats nchstats;
 #define NAMEI_FOLLOW	0x00000040
 #define NAMEI_NOFOLLOW	0x00000000
 #define NAMEI_EMULROOTSET	0x00000080
+#define NAMEI_DIDNDAT	0x00000400
 #define NAMEI_NOCHROOT	0x01000000
-#define NAMEI_MODMASK	0x010000fc
+#define NAMEI_MODMASK	0x010004fc
 #define NAMEI_NOCROSSMOUNT	0x0000100
 #define NAMEI_RDONLY	0x0000200
 #define NAMEI_ISDOTDOT	0x0002000
