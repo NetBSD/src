@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.211 2012/07/09 04:35:13 chs Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.212 2012/10/08 19:20:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.211 2012/07/09 04:35:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.212 2012/10/08 19:20:45 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -160,7 +160,7 @@ static void sopendfree_thread(void *);
 static kcondvar_t pendfree_thread_cv;
 static lwp_t *sopendfree_lwp;
 
-static void sysctl_kern_somaxkva_setup(void);
+static void sysctl_kern_socket_setup(void);
 static struct sysctllog *socket_sysctllog;
 
 static vsize_t
@@ -453,7 +453,7 @@ void
 soinit(void)
 {
 
-	sysctl_kern_somaxkva_setup();
+	sysctl_kern_socket_setup();
 
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -2366,6 +2366,7 @@ sopoll(struct socket *so, int events)
 #include <sys/sysctl.h>
 
 static int sysctl_kern_somaxkva(SYSCTLFN_PROTO);
+static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 
 /*
  * sysctl helper routine for kern.somaxkva.  ensures that the given
@@ -2396,8 +2397,32 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 	return (error);
 }
 
+/*
+ * sysctl helper routine for kern.sbmax. Basically just ensures that
+ * any new value is not too small.
+ */
+static int
+sysctl_kern_sbmax(SYSCTLFN_ARGS)
+{
+	int error, new_sbmax;
+	struct sysctlnode node;
+
+	new_sbmax = sb_max;
+	node = *rnode;
+	node.sysctl_data = &new_sbmax;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	KERNEL_LOCK(1, NULL);
+	error = sb_max_set(new_sbmax);
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return (error);
+}
+
 static void
-sysctl_kern_somaxkva_setup(void)
+sysctl_kern_socket_setup(void)
 {
 
 	KASSERT(socket_sysctllog == NULL);
@@ -2414,4 +2439,11 @@ sysctl_kern_somaxkva_setup(void)
 				    "used for socket buffers"),
 		       sysctl_kern_somaxkva, 0, NULL, 0,
 		       CTL_KERN, KERN_SOMAXKVA, CTL_EOL);
+
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sbmax",
+		       SYSCTL_DESCR("Maximum socket buffer size"),
+		       sysctl_kern_sbmax, 0, NULL, 0,
+		       CTL_KERN, KERN_SBMAX, CTL_EOL);
 }
