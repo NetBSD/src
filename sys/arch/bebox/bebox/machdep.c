@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2012/10/08 15:34:58 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2012/10/08 15:34:58 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $
 #include <machine/powerpc.h>
 
 #include <powerpc/pic/picvar.h> 
+#include <powerpc/pio.h>
+#include <powerpc/prep_bus.h>
 #include <powerpc/psl.h>
 
 #include <dev/cons.h>
@@ -315,5 +317,12 @@ cpu_reboot(int howto, char *what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
+
+	/* Left and Right LED on.  Max 15 for both LED. */
+#define LEFT_LED(x)	(((x) & 0xf) << 4)
+#define RIGHT_LED(x)	(((x) & 0xf))
+
+	outb(PREP_BUS_SPACE_IO + 0x0c00, LEFT_LED(15) | RIGHT_LED(15));
+
 	while (1);
 }
