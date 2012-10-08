@@ -87,9 +87,6 @@
 #ifdef _KERNEL
 #include <sys/cdefs.h>
 #include <sys/malloc.h>
-#ifdef SLJIT_DEBUG
-#include <sys/systm.h>
-#endif
 #endif
 
 /* --------------------------------------------------------------------- */

@@ -380,7 +380,11 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_exec(void* ptr);
 #endif
 
 #if (defined SLJIT_DEBUG && SLJIT_DEBUG) || (defined SLJIT_VERBOSE && SLJIT_VERBOSE)
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
 #include <stdio.h>
+#endif
 #endif
 
 #if (defined SLJIT_DEBUG && SLJIT_DEBUG)
