@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.191 2012/10/03 07:22:59 mlelstv Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.192 2012/10/08 19:20:45 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.191 2012/10/03 07:22:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.192 2012/10/08 19:20:45 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -156,7 +156,6 @@ static int sysctl_kern_cptime(SYSCTLFN_PROTO);
 #if NPTY > 0
 static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
-static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
 static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
@@ -535,12 +534,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Maximum raw I/O transfer size"),
 		       NULL, MAXPHYS, NULL, 0,
 		       CTL_KERN, KERN_MAXPHYS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sbmax",
-		       SYSCTL_DESCR("Maximum socket buffer size"),
-		       sysctl_kern_sbmax, 0, NULL, 0,
-		       CTL_KERN, KERN_SBMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "monotonic_clock",
@@ -1348,30 +1341,6 @@ sysctl_kern_maxptys(SYSCTLFN_ARGS)
 	return (0);
 }
 #endif /* NPTY > 0 */
-
-/*
- * sysctl helper routine for kern.sbmax. Basically just ensures that
- * any new value is not too small.
- */
-static int
-sysctl_kern_sbmax(SYSCTLFN_ARGS)
-{
-	int error, new_sbmax;
-	struct sysctlnode node;
-
-	new_sbmax = sb_max;
-	node = *rnode;
-	node.sysctl_data = &new_sbmax;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	KERNEL_LOCK(1, NULL);
-	error = sb_max_set(new_sbmax);
-	KERNEL_UNLOCK_ONE(NULL);
-
-	return (error);
-}
 
 /*
  * sysctl helper routine for kern.urandom node. Picks a random number
