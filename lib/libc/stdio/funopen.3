@@ -1,4 +1,4 @@
-.\"	$NetBSD: funopen.3,v 1.21 2012/06/09 22:49:18 njoly Exp $
+.\"	$NetBSD: funopen.3,v 1.22 2012/10/08 18:15:09 njoly Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,16 +47,16 @@
 .Sh SYNOPSIS
 .In stdio.h
 .Ft FILE *
-.Fn funopen "void  *cookie" "int  (*readfn)(void *, char *, int)" "int (*writefn)(void *, const char *, int)" "off_t (*seekfn)(void *, off_t, int)" "int (*closefn)(void *)"
-.Fn funopen2 "void  *cookie" "ssize_t  (*readfn)(void *, void *, size_t)" "ssize_t (*writefn)(void *, const void *, size_t)" "off_t (*seekfn)(void *, off_t, int)" "int (*flushfn)(void *)" "int (*closefn)(void *)"
+.Fn funopen "void *cookie" "int (*readfn)(void *, char *, int)" "int (*writefn)(void *, const char *, int)" "off_t (*seekfn)(void *, off_t, int)" "int (*closefn)(void *)"
+.Fn funopen2 "void *cookie" "ssize_t (*readfn)(void *, void *, size_t)" "ssize_t (*writefn)(void *, const void *, size_t)" "off_t (*seekfn)(void *, off_t, int)" "int (*flushfn)(void *)" "int (*closefn)(void *)"
 .Ft FILE *
-.Fn fropen "void  *cookie" "int  (*readfn)(void *, char *, int)"
+.Fn fropen "void *cookie" "int (*readfn)(void *, char *, int)"
 .Ft FILE *
-.Fn fropen2 "void  *cookie" "ssize_t  (*readfn)(void *, void *, size_t)"
+.Fn fropen2 "void *cookie" "ssize_t (*readfn)(void *, void *, size_t)"
 .Ft FILE *
-.Fn fwopen "void  *cookie" "int  (*writefn)(void *, const char *, int)"
+.Fn fwopen "void *cookie" "int (*writefn)(void *, const char *, int)"
 .Ft FILE *
-.Fn fwopen2 "void  *cookie" "ssize_t  (*writefn)(void *, const void *, size_t)"
+.Fn fwopen2 "void *cookie" "ssize_t (*writefn)(void *, const void *, size_t)"
 .Sh DESCRIPTION
 The
 .Fn funopen
