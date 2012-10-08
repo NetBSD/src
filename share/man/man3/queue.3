@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.42 2009/04/20 09:56:07 mschuett Exp $
+.\"	$NetBSD: queue.3,v 1.43 2012/10/08 18:20:34 njoly Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,7 +154,7 @@
 .Nd "implementations of singly-linked lists, simple queues, lists, tail queues, and circular queues"
 .Sh SYNOPSIS
 .In sys/queue.h
-.sp
+.Pp
 .Fn SLIST_HEAD "HEADNAME" "TYPE"
 .Fn SLIST_HEAD_INITIALIZER "head"
 .Fn SLIST_ENTRY "TYPE"
@@ -171,7 +171,7 @@
 .Fn SLIST_FIRST "SLIST_HEAD *head"
 .Ft TYPE *
 .Fn SLIST_NEXT "TYPE *elm" "SLIST_ENTRY NAME"
-.sp
+.Pp
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
 .Fn SIMPLEQ_HEAD_INITIALIZER "head"
 .Fn SIMPLEQ_ENTRY "TYPE"
@@ -192,7 +192,7 @@
 .Ft TYPE *
 .Fn SIMPLEQ_LAST "SIMPLEQ_HEAD *head" "TYPE *elm" "SIMPLEQ_ENTRY NAME"
 .Fn SIMPLEQ_CONCAT "SIMPLEQ_HEAD *head1" "SIMPLEQ_HEAD *head2"
-.sp
+.Pp
 .Fn STAILQ_HEAD "HEADNAME" "TYPE"
 .Fn STAILQ_HEAD_INITIALIZER "head"
 .Fn STAILQ_ENTRY "TYPE"
@@ -213,7 +213,7 @@
 .Ft TYPE *
 .Fn STAILQ_LAST "STAILQ_HEAD *head" "TYPE *elm" "STAILQ_ENTRY NAME"
 .Fn STAILQ_CONCAT "STAILQ_HEAD *head1" "STAILQ_HEAD *head2"
-.sp
+.Pp
 .Fn LIST_HEAD "HEADNAME" "TYPE"
 .Fn LIST_HEAD_INITIALIZER "head"
 .Fn LIST_ENTRY "TYPE"
@@ -229,7 +229,7 @@
 .Fn LIST_FIRST "LIST_HEAD *head"
 .Ft TYPE *
 .Fn LIST_NEXT "TYPE *elm" "LIST_ENTRY NAME"
-.sp
+.Pp
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
 .Fn TAILQ_HEAD_INITIALIZER "head"
 .Fn TAILQ_ENTRY "TYPE"
@@ -254,7 +254,7 @@
 .Ft TYPE *
 .Fn TAILQ_PREV "TYPE *elm" "HEADNAME" "TAILQ_ENTRY NAME"
 .Fn TAILQ_CONCAT "TAILQ_HEAD *head1" "TAILQ_HEAD *head2" "TAILQ_ENTRY NAME"
-.sp
+.Pp
 .Fn CIRCLEQ_HEAD "HEADNAME" "TYPE"
 .Fn CIRCLEQ_HEAD_INITIALIZER "head"
 .Fn CIRCLEQ_ENTRY "TYPE"
@@ -319,7 +319,7 @@ Each head entry requires two pointers rather than one.
 .El
 .Pp
 Simple queues are ideal for applications with large datasets and few or
-no removals, or for implementing a FIFO	queue.
+no removals, or for implementing a FIFO queue.
 .Pp
 All doubly linked types of data structures (lists, tail queues, and circle
 queues) additionally allow:
@@ -588,7 +588,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 SIMPLEQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Li HEADNAME
 is the name of the structure to be defined, and
@@ -598,7 +598,7 @@ A pointer to the head of the simple queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -771,7 +771,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 LIST_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Fa HEADNAME
 is the name of the structure to be defined, and
@@ -781,7 +781,7 @@ A pointer to the head of the list can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -902,7 +902,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 TAILQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Li HEADNAME
 is the name of the structure to be defined, and
@@ -912,7 +912,7 @@ A pointer to the head of the tail queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
@@ -1063,7 +1063,7 @@ structure is declared as follows:
 .Bd -literal -offset indent
 CIRCLEQ_HEAD(HEADNAME, TYPE) head;
 .Ed
-.sp
+.Pp
 where
 .Li HEADNAME
 is the name of the structure to be defined, and
@@ -1073,7 +1073,7 @@ A pointer to the head of the circular queue can later be declared as:
 .Bd -literal -offset indent
 struct HEADNAME *headp;
 .Ed
-.sp
+.Pp
 (The names
 .Li head
 and
