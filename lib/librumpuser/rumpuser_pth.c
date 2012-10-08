@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.8 2012/07/27 09:09:05 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.9 2012/10/08 18:02:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.8 2012/07/27 09:09:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.9 2012/10/08 18:02:04 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -238,9 +238,12 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 	}
 
 	rv = pthread_create(ptidp, &pattr, f, arg);
-#ifdef __NetBSD__
+#if defined(__NetBSD__)
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname, NULL);
+#elif defined(__linux__)
+	if (rv == 0 && thrname)
+		pthread_setname_np(ptid, thrname);
 #endif
 
 	if (joinable) {
