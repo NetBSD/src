@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.25 2011/11/25 16:51:43 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.26 2012/10/08 23:43:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -144,8 +144,9 @@ NAMEIFL	NOFOLLOW	0x00000000	/* do not follow symbolic links
 					   (pseudo) */
 NAMEIFL	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
+NAMEIFL DIDNDAT		0x00000400	/* did NDAT() (temporary) */
 NAMEIFL	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-NAMEIFL	MODMASK		0x010000fc	/* mask of operational modifiers */
+NAMEIFL	MODMASK		0x010004fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
@@ -163,7 +164,7 @@ NAMEIFL	INRELOOKUP	0x0800000	/* set while inside relookup() */
 NAMEIFL	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 
 /*
- * Initialization of an nameidata structure.
+ * Initialization of a nameidata structure.
  */
 #define NDINIT(ndp, op, flags, pathbuf) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
@@ -171,6 +172,15 @@ NAMEIFL	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 	(ndp)->ni_pathbuf = pathbuf; \
 	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
+
+/*
+ * Use this to set the start directory for openat()-type operations.
+ */
+#define NDAT(ndp, dir) {			\
+	(ndp)->ni_cnd.cn_flags |= DIDNDAT;	\
+	(ndp)->ni_dvp = (dir);			\
+}
+
 #endif
 
 /*

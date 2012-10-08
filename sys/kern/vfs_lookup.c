@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.193 2012/10/08 23:41:39 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.194 2012/10/08 23:43:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.193 2012/10/08 23:41:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.194 2012/10/08 23:43:33 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1468,10 +1468,20 @@ int
 namei(struct nameidata *ndp)
 {
 	struct namei_state state;
+	struct vnode *forcecwd;
 	int error;
 
+	if (ndp->ni_cnd.cn_flags & DIDNDAT) {
+		/* Gross. This is done this way so it can go into 6.1. */
+		forcecwd = ndp->ni_dvp;
+		ndp->ni_dvp = NULL;
+		KASSERT(forcecwd != NULL);
+	} else {
+		forcecwd = NULL;
+	}
+
 	namei_init(&state, ndp);
-	error = namei_tryemulroot(&state, NULL,
+	error = namei_tryemulroot(&state, forcecwd,
 				  0/*!neverfollow*/, 0/*!inhibitmagic*/,
 				  0/*isnfsd*/);
 	namei_cleanup(&state);
@@ -1503,6 +1513,8 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 {
 	struct namei_state state;
 	int error;
+
+	KASSERT((ndp->ni_cnd.cn_flags & DIDNDAT) == 0); /* not allowed */
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state, forcecwd,
@@ -1611,6 +1623,8 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 {
 	struct namei_state state;
 	int error;
+
+	KASSERT((ndp->ni_cnd.cn_flags & DIDNDAT) == 0); /* not allowed */
 
 	/*
 	 * Note: the name sent in here (is not|should not be) allowed
