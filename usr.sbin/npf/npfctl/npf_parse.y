@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.6 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.7 2012/10/09 23:08:21 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -55,17 +55,23 @@ yyerror(const char *fmt, ...)
 	extern char *yytext;
 
 	char *msg, *context = xstrndup(yytext, yyleng);
-	size_t len = strlen(context);
-	char *dst = zalloc(len * 4 + 1);
+	bool eol = (*context == '\n');
 	va_list ap;
 
 	va_start(ap, fmt);
 	vasprintf(&msg, fmt, ap);
 	va_end(ap);
 
-	strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
-	fprintf(stderr, "%s:%d:%d: %s near '%s'\n", yyfilename, yylineno,
-	    yycolumn, msg, dst);
+	fprintf(stderr, "%s:%d:%d: %s", yyfilename,
+	    yylineno - (int)eol, yycolumn, msg);
+	if (!eol) {
+		size_t len = strlen(context);
+		char *dst = zalloc(len * 4 + 1);
+
+		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
+		fprintf(stderr, " near '%s'", dst);
+	}
+	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
 }
 
