@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.38.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.38.2.1 2012/10/09 13:36:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,8 @@ cmdide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

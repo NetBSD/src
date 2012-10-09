@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.43 2012/08/20 12:48:47 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.43.2.1 2012/10/09 13:36:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.43 2012/08/20 12:48:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.43.2.1 2012/10/09 13:36:04 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -393,7 +393,8 @@ ahci_attach(struct ahci_softc *sc)
 			    achp->ahcic_cmd_tbl[j],
 			    (uint64_t)achp->ahcic_bus_cmd_tbl[j]), DEBUG_PROBE);
 			/* The xfer DMA map */
-			error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
+			error = bus_dmamap_create(sc->sc_dmat,
+			    sc->sc_atac.atac_dev->dv_maxphys,
 			    AHCI_NPRD, 0x400000 /* 4MB */, 0,
 			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 			    &achp->ahcic_datad[j]);
@@ -1462,8 +1463,8 @@ ahci_atapibus_attach(struct atabus_softc * ata_sc)
 static void
 ahci_atapi_minphys(struct buf *bp)
 {
-	if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
+	if (bp->b_bcount > MACHINE_MAXPHYS)
+		bp->b_bcount = MACHINE_MAXPHYS;
 	minphys(bp);
 }
 
