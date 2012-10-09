@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.11 2012/03/13 18:40:34 elad Exp $ */
+/*	$NetBSD: wcfb.c,v 1.12 2012/10/09 21:59:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.11 2012/03/13 18:40:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.12 2012/10/09 21:59:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ struct wcfb_softc {
 	void (*eraserows)(void *, int, int, long);
 	void (*putchar)(void *, int, int, u_int, long);
 	void (*cursor)(void *, int, int, int);
-	
+	int sc_is_jfb;
 };
 
 static void	wcfb_init_screen(void *, struct vcons_screen *, int, long *);
@@ -130,7 +130,23 @@ static void	wcfb_erasecols(void *, int, int, int, long);
 static void	wcfb_copyrows(void *, int, int, int);
 static void	wcfb_eraserows(void *, int, int, long);
 
+static void	wcfb_acc_putchar(void *, int, int, u_int, long);
+static void	wcfb_acc_cursor(void *, int, int, int);
+static void	wcfb_acc_copycols(void *, int, int, int, int);
+static void	wcfb_acc_erasecols(void *, int, int, int, long);
+static void	wcfb_acc_copyrows(void *, int, int, int);
+static void	wcfb_acc_eraserows(void *, int, int, long);
+
 static void 	wcfb_putpalreg(struct wcfb_softc *, int, int, int, int);
+
+static void	wcfb_bitblt(struct wcfb_softc *, int, int, int, int, int,
+			int, uint32_t);
+static void	wcfb_rectfill(struct wcfb_softc *, int, int, int, int, int);
+static void	wcfb_rop_common(struct wcfb_softc *, bus_addr_t, int, int, int, 
+			int, int, int, uint32_t, int32_t);
+static void	wcfb_rop_jfb(struct wcfb_softc *, int, int, int, int, int, int, 
+			uint32_t, int32_t);
+static int	wcfb_rop_wait(struct wcfb_softc *);
 
 static int
 wcfb_match(device_t parent, cfdata_t match, void *aux)
@@ -156,7 +172,8 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	uint32_t		reg;
 	unsigned long		defattr;
 	bool			is_console = 0;
-	void *wtf;
+	void 			*wtf;
+	uint32_t		sub;
 
 	sc->sc_dev = self;
 	sc->putchar = NULL;
@@ -195,14 +212,29 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
 	sc->sc_fb0off =
-	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR0) - sc->sc_fb;
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
+	        WC_FB8_ADDR0) - sc->sc_fb;
 	sc->sc_fb0 = sc->sc_fbaddr + sc->sc_fb0off;
 	sc->sc_fb1off = 
-	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR1) - sc->sc_fb;
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
+	        WC_FB8_ADDR1) - sc->sc_fb;
 	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
+
+	sub = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
+	printf("subsys: %08x\n", sub);
+	switch (sub) {
+		case WC_XVR1200:
+			sc->sc_is_jfb = 1;
+			break;
+		default:
+			sc->sc_is_jfb = 0;
+	}
 
 	reg = bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_RESOLUTION);
 	sc->sc_height = (reg >> 16) + 1;
+#ifdef WCFB_DEBUG
+	sc->sc_height -= 200;
+#endif
 	sc->sc_width = (reg & 0xffff) + 1;
 	sc->sc_stride = 1 <<
 	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_CONFIG) &
@@ -210,11 +242,14 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	printf("%s: %d x %d, %d\n", device_xname(sc->sc_dev), 
 	    sc->sc_width, sc->sc_height, sc->sc_stride);
 
-	sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height, KM_SLEEP);
-	if (sc->sc_shadow == NULL) {
-		printf("%s: failed to allocate shadow buffer\n",
-		    device_xname(self));
-		return;
+	if (sc->sc_is_jfb == 0) {
+		sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height,
+		    KM_SLEEP);
+		if (sc->sc_shadow == NULL) {
+			printf("%s: failed to allocate shadow buffer\n",
+			    device_xname(self));
+			return;
+		}
 	}
 
 	for (i = 0x40; i < 0x100; i += 16) {
@@ -269,10 +304,17 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		memset(sc->sc_fb0, ri->ri_devcmap[(defattr >> 16) & 0xff],
-		    sc->sc_stride * sc->sc_height);
-		memset(sc->sc_fb1, ri->ri_devcmap[(defattr >> 16) & 0xff],
-		    sc->sc_stride * sc->sc_height);
+		if (sc->sc_is_jfb) {
+			wcfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+				ri->ri_devcmap[(defattr >> 16) & 0xff]);
+		} else {
+			memset(sc->sc_fb0,
+			    ri->ri_devcmap[(defattr >> 16) & 0xff],
+			    sc->sc_stride * sc->sc_height);
+			memset(sc->sc_fb1,
+			    ri->ri_devcmap[(defattr >> 16) & 0xff],
+			    sc->sc_stride * sc->sc_height);
+		}
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
@@ -340,7 +382,8 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
+	if (kauth_authorize_machdep(kauth_cred_get(), 
+	    KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
@@ -370,8 +413,11 @@ wcfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER /*| RI_FULLCLEAR*/;
 
-	ri->ri_bits = sc->sc_shadow;
-
+	if (sc->sc_is_jfb) {
+		ri->ri_bits = sc->sc_fb0;
+	} else {
+		ri->ri_bits = sc->sc_shadow;
+	}
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
 	}
@@ -389,12 +435,21 @@ wcfb_init_screen(void *cookie, struct vcons_screen *scr,
 	sc->copycols = ri->ri_ops.copycols;
 	sc->erasecols = ri->ri_ops.erasecols;
 
-	ri->ri_ops.copyrows = wcfb_copyrows;
-	ri->ri_ops.copycols = wcfb_copycols;
-	ri->ri_ops.eraserows = wcfb_eraserows;
-	ri->ri_ops.erasecols = wcfb_erasecols;
-	ri->ri_ops.putchar = wcfb_putchar;
-	ri->ri_ops.cursor = wcfb_cursor;
+	if (sc->sc_is_jfb) {
+		ri->ri_ops.copyrows = wcfb_acc_copyrows;
+		ri->ri_ops.copycols = wcfb_acc_copycols;
+		ri->ri_ops.eraserows = wcfb_acc_eraserows;
+		ri->ri_ops.erasecols = wcfb_acc_erasecols;
+		ri->ri_ops.putchar = wcfb_acc_putchar;
+		ri->ri_ops.cursor = wcfb_acc_cursor;
+	} else {
+		ri->ri_ops.copyrows = wcfb_copyrows;
+		ri->ri_ops.copycols = wcfb_copycols;
+		ri->ri_ops.eraserows = wcfb_eraserows;
+		ri->ri_ops.erasecols = wcfb_erasecols;
+		ri->ri_ops.putchar = wcfb_putchar;
+		ri->ri_ops.cursor = wcfb_cursor;
+	}
 }
 
 static void
@@ -570,5 +625,266 @@ wcfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 		    ri->ri_emuwidth);
 		to0 += sc->sc_stride;
 		to1 += sc->sc_stride;
+	}
+}
+
+static void
+wcfb_bitblt(struct wcfb_softc *sc, int sx, int sy, int dx, int dy, int w,
+		 int h, uint32_t rop)
+{
+	wcfb_rop_wait(sc);
+	wcfb_rop_jfb(sc, sx, sy, dx, dy, w, h, rop, 0xff);
+}
+
+static void
+wcfb_rectfill(struct wcfb_softc *sc, int x, int y, int w, int h, int bg)
+{
+	int32_t mask;
+
+	/* pixels to set... */
+	mask = 0xff & bg;
+	if (mask != 0) {
+		wcfb_rop_wait(sc);
+		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_SET, mask);
+	}
+
+	/* pixels to clear... */
+	mask = 0xff & ~bg;
+	if (mask != 0) {
+		wcfb_rop_wait(sc);
+		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_CLEAR, mask);
+	}
+}
+
+void
+wcfb_rop_common(struct wcfb_softc *sc, bus_addr_t reg, int sx, int sy,
+    int dx, int dy, int w, int h, uint32_t rop, int32_t planemask)
+{
+	int dir = 0;
+
+	/*
+	 * Compute rop direction. This only really matters for
+	 * screen-to-screen copies.
+	 */
+	if (sy < dy /* && sy + h > dy */) {
+		sy += h - 1;
+		dy += h;
+		dir |= WC_BLT_DIR_BACKWARDS_Y;
+	}
+	if (sx < dx /* && sx + w > dx */) {
+		sx += w - 1;
+		dx += w;
+		dir |= WC_BLT_DIR_BACKWARDS_X;
+	}
+
+	/* Which one of those below is your magic number for today? */
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x61000001);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x6301c080);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x80000000);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, rop);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, planemask);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x64000303);
+	/*
+	 * This value is a pixel offset within the destination area. It is
+	 * probably used to define complex polygon shapes, with the
+	 * last pixel in the list being back to (0,0).
+	 */
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, WCFB_COORDS(0, 0));
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x00030000);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x2200010d);
+
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x33f01000 | dir);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, WCFB_COORDS(dx, dy));
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, WCFB_COORDS(w, h));
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, WCFB_COORDS(sx, sy));
+}
+
+
+static void
+wcfb_rop_jfb(struct wcfb_softc *sc, int sx, int sy, int dx, int dy,
+             int w, int h, uint32_t rop, int32_t planemask)
+{
+	bus_addr_t reg = WC_JFB_ENGINE;
+	uint32_t spr, splr;
+
+#if 0
+	/*
+	 * Pick the current spr and splr values from the communication
+	 * area if possible.
+	 */
+	if (sc->sc_comm != NULL) {
+		spr = sc->sc_comm[IFB_SHARED_TERM8_SPR >> 2];
+		splr = sc->sc_comm[IFB_SHARED_TERM8_SPLR >> 2];
+	} else 
+#endif
+	{
+		/* supposedly sane defaults */
+		spr = 0x54ff0303;
+		splr = 0x5c0000ff;
+	}
+
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x00400016);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x5b000002);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x5a000000);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, spr);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, splr);
+
+	wcfb_rop_common(sc, reg, sx, sy, dx, dy, w, h, rop, planemask);
+
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x5a000001);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, reg, 0x5b000001);
+}
+
+static int
+wcfb_rop_wait(struct wcfb_softc *sc)
+{
+	int i;
+
+	for (i = 1000000; i != 0; i--) {
+		if (bus_space_read_4(sc->sc_regt, sc->sc_regh,
+		    WC_STATUS) & WC_STATUS_DONE)
+			break;
+		delay(1);
+	}
+
+	return i;
+}
+
+static void
+wcfb_acc_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	int x, y, wi, he;
+	uint32_t bg;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	if (c == 0x20) {
+		wcfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+	/* we wait until the blitter is idle... */
+	wcfb_rop_wait(sc);
+	/* ... draw the character into buffer 0 ... */
+	sc->putchar(ri, row, col, c, attr);
+	/* ... and then blit it into buffer 1 */
+	wcfb_bitblt(sc, x, y, x, y, wi, he, WC_ROP_COPY);
+}	
+
+static void
+wcfb_acc_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he;
+	
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		if (ri->ri_flg & RI_CURSOR) {
+			wcfb_bitblt(sc, x, y, x, y, wi, he, WC_ROP_XOR);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			x = ri->ri_ccol * wi + ri->ri_xorigin;
+			y = ri->ri_crow * he + ri->ri_yorigin;
+			wcfb_bitblt(sc, x, y, x, y, wi, he, WC_ROP_XOR);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		scr->scr_ri.ri_crow = row;
+		scr->scr_ri.ri_ccol = col;
+		scr->scr_ri.ri_flg &= ~RI_CURSOR;
+	}
+
+}
+
+static void
+wcfb_acc_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		wcfb_bitblt(sc, xs, y, xd, y, width, height, WC_ROP_COPY);
+	}
+}
+
+static void
+wcfb_acc_erasecols(void *cookie, int row, int startcol, int ncols,
+		long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_font->fontwidth * ncols;
+		height = ri->ri_font->fontheight;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		wcfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
+	}
+}
+
+static void
+wcfb_acc_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		wcfb_bitblt(sc, x, ys, x, yd, width, height, WC_ROP_COPY);
+	}
+}
+
+static void
+wcfb_acc_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct wcfb_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, fg, bg, ul;
+	
+	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
+
+		wcfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
