@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.234 2012/09/01 02:08:28 matt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.235 2012/10/09 10:25:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.234 2012/09/01 02:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.235 2012/10/09 10:25:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3154,7 +3154,7 @@ wm_nq_start(struct ifnet *ifp)
 			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_fields =
 			    htole32(fields);
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: adv data desc %d 0x%" PRIx64 "\n",
+			    ("%s: TX: adv data desc %d 0x%" PRIxPADDR "\n",
 			    device_xname(sc->sc_dev), nexttx, 
 			    dmamap->dm_segs[0].ds_addr));
 			DPRINTF(WM_DEBUG_TX,
