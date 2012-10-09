@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.151.2.1 2012/06/23 22:54:59 riz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.151.2.2 2012/10/09 23:03:47 riz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -642,13 +642,30 @@ then you should specify an alternate location for the DHCP client's lease
 file in the
 .Sy dhclient_flags
 variable - for example, "-lf /tmp/dhclient.leases".
-.It Sy dhcpcd_flags
-Additional arguments to pass to
-.Xr dhcpcd 8
-when requesting configuration via
-.Sy ifconfig_xxN
+.It Sy dhcpcd
+Boolean value.
+Set true to configure some or all network interfaces using dhcpcd.
+If you set
+.Sy dhcpcd
+true, then
+.Pa /var
+must be in
+.Sy critical_filesystems_local ,
 or
-.Pa /etc/ifconfig.xxN .
+.Pa /var
+must be on the root file system.
+If you need to restrict dhcpcd to one or a number of interfaces,
+or need a separate configuration per interface,
+then this should be done in the configuration file - see
+.Xr dhcpcd.conf 5
+for details.
+.It Sy dhcpcd_flags
+Passes
+.Sy dhcpcd_flags
+to dhcpcd.
+See
+.Xr dhcpcd 8
+for complete documentation.
 .It Sy flushroutes
 Boolean value.
 Flushes the route table on networking startup.
@@ -816,12 +833,7 @@ variable contains a single line with embedded semicolons,
 then the value is split into multiple lines prior to further parsing,
 treating the semicolon as a line separator.
 .Pp
-One common case is to set
-.Sy ifconfig_xxN Ns Li \&= Ns Qq dhcp ,
-which will cause
-.Xr dhcpcd 8
-to be started for the interface.
-Another common case it to set the
+One common case it to set the
 .Sy ifconfig_xxN
 variable to a set of arguments to be passed to an
 .Xr ifconfig 8
