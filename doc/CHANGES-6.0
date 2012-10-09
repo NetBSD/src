@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.214 2012/10/09 23:12:57 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.215 2012/10/09 23:59:32 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8802,4 +8802,32 @@ usr.sbin/npf/npfctl/npf_parse.y			1.14
 
 	Print the correct line number in npfctl.
 	[rmind, ticket #590]
+
+sys/kern/uipc_usrreq.c				1.140 via patch
+
+	Avoid a NULL dereferencing crash.
+	[christos, ticket #593]
+
+sys/net/npf/npf_handler.c			1.23
+
+	npf_packet_handler: drop the packet if IPv6 reassembly did not work.
+	[rmind, ticket #594]
+
+distrib/notes/macppc/install			1.39
+
+	Add some text to "Common Problems" about Open Firmware 3.x not
+	setting up the console and how to work around the problem. PR#35348.
+	[jnemeth, ticket #595]
+
+external/bsd/wpa/dist/src/eap_server/eap_server_tls_common.c	patch
+
+	Fix overflow in hostapd.  PRE-SA-2012-07.
+	[christos, ticket #597]
+
+external/bsd/bind/dist/CHANGES			1.7
+external/bsd/bind/dist/bin/named/query.c	1.9
+external/bsd/bind/dist/version			1.4
+
+	Update to BIND 9.9.1-P4, to address CVE-2012-5166.
+	[christos, ticket #598]
 
