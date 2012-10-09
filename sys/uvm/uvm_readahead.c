@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.8.12.2 2012/10/09 20:07:28 bouyer Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.8.12.3 2012/10/09 21:37:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.12.2 2012/10/09 20:07:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.12.3 2012/10/09 21:37:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -118,6 +118,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 		size_t donebytes;
 		int npages;
 		int orignpages;
+		size_t bytelen;
 
 		if ((chunksize & (PAGE_SIZE - 1)) != 0) {
 		    panic("bad chunksize %d, iochunk %d, request size %d",
@@ -125,7 +126,16 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 		}
 		/* KASSERT((chunksize & (PAGE_SIZE - 1)) == 0); */
 		KASSERT((off & PAGE_MASK) == 0);
-		npages = orignpages = chunksize >> PAGE_SHIFT;
+		KASSERT((chunksz & (chunksz - 1)) == 0);
+		bytelen = ((off + chunksz) & -(off_t)chunksz) - off;
+		if ((bytelen & PAGE_MASK) != 0) {
+			panic("bad bytelen %d with off %d, chunksize %d"
+			    "(iochunk %d, sz %d)",
+			    (int)bytelen, (int)off, (int)chunksize,
+			    (int)chunksz, (int)sz);
+		}
+		KASSERT((bytelen & PAGE_MASK) == 0);
+		npages = orignpages = bytelen >> PAGE_SHIFT;
 		KASSERT(npages != 0);
 
 		/*
@@ -135,8 +145,8 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 		mutex_enter(uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, UVM_ADV_RANDOM, 0);
-		DPRINTF(("%s:  off=%" PRIu64 ", chunksize=%zu -> %d\n",
-		    __func__, off, chunksize, error));
+		DPRINTF(("%s:  off=%" PRIu64 ", bytelen=%zu -> %d\n",
+		    __func__, off, bytelen, error));
 		if (error != 0 && error != EBUSY) {
 			if (error != EINVAL) { /* maybe past EOF */
 				DPRINTF(("%s: error=%d\n", __func__, error));
