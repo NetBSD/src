@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfbreg.h,v 1.1 2010/03/10 05:16:17 macallan Exp $ */
+/*	$NetBSD: wcfbreg.h,v 1.2 2012/10/09 21:59:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -34,13 +34,35 @@
 #ifndef WCFBREG_H
 #define WCFBREG_H
 
-#define WC_RESOLUTION	0x8070	
-#define WC_CONFIG	0x8074	/* contains log2(stride) in 0x00ff0000 */
-#define WC_FB8_ADDR0	0x8080
-#define WC_FB8_ADDR1	0x8084
+#define WC_IFB_ENGINE		0x8000
+#define WC_JFB_ENGINE		0x6000
+
+#define WC_COMPONENT_SELECT	0x8040
+#define WC_STATUS		0x8044
+	#define WC_STATUS_DONE	0x00000004
+#define WC_RESOLUTION		0x8070	
+#define WC_CONFIG		0x8074	/* log2(stride) in 0x00ff0000 */
+#define WC_FB32_ADDR0		0x8078
+#define WC_FB32_ADDR1		0x807c
+#define WC_FB8_ADDR0		0x8080
+#define WC_FB8_ADDR1		0x8084
+#define WC_FB32_UNKNOWN		0x8088
+#define WC_FB8_UNKNOWN1		0x808c
+#define WC_FB8_UNKNOWN2		0x8090
+
+/* standard ternary ROP in <<16 */
+#define WC_ROP_CLEAR	0x00000000
+#define WC_ROP_COPY	0x00330000
+#define WC_ROP_XOR	0x00cc0000
+#define WC_ROP_SET	0x00ff0000
 
 #define WC_CMAP_INDEX	0x80bc
 #define WC_CMAP_DATA	0x80c0
+
+#define WCFB_COORDS(x, y)	((y) << 16 | (x))
+/* blitter directions */
+#define WC_BLT_DIR_BACKWARDS_Y	(0x08 | 0x02)
+#define WC_BLT_DIR_BACKWARDS_X	(0x04 | 0x01)
 
 /*
  * 80e4 DPMS state register
@@ -54,3 +76,6 @@
 	#define	WC_DPMS_ON			0x00000003
 
 #endif
+
+#define WC_XVR1200	0x10443d3d
+
