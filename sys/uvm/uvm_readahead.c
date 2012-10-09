@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.8.12.1 2012/09/12 06:15:36 tls Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.8.12.2 2012/10/09 20:07:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.12.1 2012/09/12 06:15:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.8.12.2 2012/10/09 20:07:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -109,30 +109,23 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 
 	DPRINTF(("%s: uobj=%p, off=%" PRIu64 ", endoff=%" PRIu64 "\n",
 	    __func__, uobj, off, endoff));
-	off = trunc_page(off);
+
+	KASSERT((off & (PAGE_SIZE - 1)) == 0);
+	KASSERT((chunksz & (PAGE_SIZE - 1)) == 0);
 	while (off < endoff) {
 		const size_t chunksize = MIN(chunksz, round_page(sz));
 		int error;
 		size_t donebytes;
 		int npages;
 		int orignpages;
-		size_t bytelen;
 
-		if ((chunksize & (chunksize - 1)) != 0) {
+		if ((chunksize & (PAGE_SIZE - 1)) != 0) {
 		    panic("bad chunksize %d, iochunk %d, request size %d",
 			  (int)chunksize, (int)chunksz, (int)sz);
 		}
-		/* KASSERT((chunksize & (chunksize - 1)) == 0); */
+		/* KASSERT((chunksize & (PAGE_SIZE - 1)) == 0); */
 		KASSERT((off & PAGE_MASK) == 0);
-		bytelen = ((off + chunksize) & -(off_t)chunksize) - off;
-		if ((bytelen & PAGE_MASK) != 0) {
-			panic("bad bytelen %d with off %d, chunksize %d"
-			      "(iochunk %d, sz %d)",
-			      (int)bytelen, (int)off, (int)chunksize,
-			      (int)chunksz, (int)sz);
-		}
-		KASSERT((bytelen & PAGE_MASK) == 0);
-		npages = orignpages = bytelen >> PAGE_SHIFT;
+		npages = orignpages = chunksize >> PAGE_SHIFT;
 		KASSERT(npages != 0);
 
 		/*
@@ -142,8 +135,8 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz, size_t chunksz)
 		mutex_enter(uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, UVM_ADV_RANDOM, 0);
-		DPRINTF(("%s:  off=%" PRIu64 ", bytelen=%zu -> %d\n",
-		    __func__, off, bytelen, error));
+		DPRINTF(("%s:  off=%" PRIu64 ", chunksize=%zu -> %d\n",
+		    __func__, off, chunksize, error));
 		if (error != 0 && error != EBUSY) {
 			if (error != EINVAL) { /* maybe past EOF */
 				DPRINTF(("%s: error=%d\n", __func__, error));
@@ -203,6 +196,9 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
 {
 
 	KASSERT(mutex_owned(uobj->vmobjlock));
+
+	KASSERT((reqoff & (PAGE_SIZE - 1)) == 0);
+	KASSERT((reqsize & (PAGE_SIZE - 1)) == 0);
 
 	if (ra == NULL || advice == UVM_ADV_RANDOM) {
 		return;
