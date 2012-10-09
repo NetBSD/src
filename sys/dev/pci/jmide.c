@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.18 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: jmide.c,v 1.18.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.18 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.18.2.1 2012/10/09 13:36:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,8 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	    PCI_JM_CONTROL1);
 	struct pciide_product_desc *pp;
 	int ahci_used = 0;
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev = self;
 
@@ -453,6 +455,8 @@ jmahci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal("\n");
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_atac.atac_dev = self;
 	sc->sc_ahcit = jma->jma_ahcit;

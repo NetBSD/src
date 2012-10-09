@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.24 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ geodeide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

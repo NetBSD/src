@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.26 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: rccide.c,v 1.26.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.26 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.26.2.1 2012/10/09 13:36:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,8 @@ rccide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

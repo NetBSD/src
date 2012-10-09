@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.40 2011/10/24 20:52:34 jakllsch Exp $	*/
+/*	$NetBSD: atareg.h,v 1.40.12.1 2012/10/09 13:36:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -137,6 +137,11 @@
 
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
+
+/* max transfer size for READ and WRITE commands */
+#define WDC_SECCNT_MAX			(1 << 7)
+#define WDC_SECCNT_MAX_LBA		(1 << 8)
+#define WDC_SECCNT_MAX_LBAEXT		(1 << 16)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <dev/ata/ataconf.h>
