@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.213 2012/10/01 23:09:00 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.214 2012/10/09 23:12:57 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8779,4 +8779,27 @@ sys/sys/lwp.h					1.164 via patch
 
 	Fix a race condition in exit_lwps, lwp_rwait.  PR#46168, PR#46402.
 	[rmind, ticket #583]
+
+etc/rc.d/named					1.23
+
+	Handle "keys" directory and directory permissions better, so
+	that DNSSEC validation works out of the box. PR#47024.
+	[christos, ticket #587]
+
+share/man/man5/ifconfig.if.5			1.16
+share/man/man5/rc.conf.5			1.154 via patch
+
+	Discourage the use of ifconfig_bge0=dhcp and prefer setting dhcpcd=YES
+	in rc.conf(5) instead.
+	[roy, ticket #588]
+
+sys/arch/powerpc/powerpc/trap.c			patch
+
+	Silence trap printfs caused by OpenSSL.
+	[christos, ticket #589]
+
+usr.sbin/npf/npfctl/npf_parse.y			1.14
+
+	Print the correct line number in npfctl.
+	[rmind, ticket #590]
 
