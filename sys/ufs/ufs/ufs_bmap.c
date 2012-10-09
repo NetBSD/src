@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.49 2011/03/06 17:08:39 bouyer Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.49.14.1 2012/10/09 21:53:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49 2011/03/06 17:08:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.49.14.1 2012/10/09 21:53:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,12 +138,12 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	if (runp) {
 		/*
 		 * XXX
-		 * If MAXBSIZE is the largest transfer the disks can handle,
+		 * If mnt_maxphys is the largest transfer the disks can handle,
 		 * we probably want maxrun to be 1 block less so that we
 		 * don't create a block larger than the device can handle.
 		 */
 		*runp = 0;
-		maxrun = MAXPHYS / mp->mnt_stat.f_iosize - 1;
+		maxrun = mp->mnt_maxphys / mp->mnt_stat.f_iosize - 1;
 	}
 
 	if (bn >= 0 && bn < NDADDR) {
