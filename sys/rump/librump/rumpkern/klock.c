@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.4 2012/02/20 22:35:14 mrg Exp $	*/
+/*	$NetBSD: klock.c,v 1.5 2012/10/09 13:35:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4 2012/02/20 22:35:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.5 2012/10/09 13:35:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/evcnt.h>
 
 #include <rump/rumpuser.h>
 
@@ -45,6 +46,22 @@ __KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.4 2012/02/20 22:35:14 mrg Exp $");
 struct rumpuser_mtx *rump_giantlock;
 static int giantcnt;
 static struct lwp *giantowner;
+
+static struct evcnt ev_biglock_fast;
+static struct evcnt ev_biglock_slow;
+static struct evcnt ev_biglock_recurse;
+
+void 
+rump_biglock_init(void)
+{
+
+	evcnt_attach_dynamic(&ev_biglock_fast, EVCNT_TYPE_MISC, NULL,
+	    "rump biglock", "fast");
+	evcnt_attach_dynamic(&ev_biglock_slow, EVCNT_TYPE_MISC, NULL,
+	    "rump biglock", "slow");
+	evcnt_attach_dynamic(&ev_biglock_recurse, EVCNT_TYPE_MISC, NULL,
+	    "rump biglock", "recurse");
+}
 
 void
 rump_kernel_bigwrap(int *nlocks)
@@ -74,11 +91,15 @@ _kernel_lock(int nlocks)
 		if (giantowner == l) {
 			giantcnt += nlocks;
 			nlocks = 0;
+			ev_biglock_recurse.ev_count++;
 		} else {
 			if (!rumpuser_mutex_tryenter(rump_giantlock)) {
 				rump_unschedule_cpu1(l, NULL);
 				rumpuser_mutex_enter_nowrap(rump_giantlock);
 				rump_schedule_cpu(l);
+				ev_biglock_slow.ev_count++;
+			} else {
+				ev_biglock_fast.ev_count++;
 			}
 			giantowner = l;
 			giantcnt = 1;
