@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.38 2011/05/30 06:19:53 wiz Exp $
+.\"	$NetBSD: install,v 1.38.6.1 2012/10/09 23:51:14 riz Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -649,6 +649,25 @@ If your system is a PowerBook,
 .Nx
 may have turned down the brightness of the backlight.
 Use the buttons to turn your brightness back up.
+.Pp
+Open Firmware 3.x and newer often won't setup the console if you don't
+drop to a prompt, and
+.Nx
+doesn't know how to setup the console itself.
+To get the system to boot when you have auto-boot? set to true, you
+can try this workaround.
+First, try one of the following commands:
+.sp
+.Dl setenv boot-command \*[q] screen\*[q] output boot
+.Dl setenv boot-command ." screen" output boot
+.Dl setenv boot-command ." Booting NetBSD..." cr \*[q] screen\*[q] output boot
+.sp
+You should follow the command with:
+.sp
+.Dl reset-all
+.sp
+This will cause Open Firmware to output some text to the screen prior
+to booting, thus forcing it to setup the console.
 .Pp
 Otherwise, you need a serial console.
 See the section entitled
