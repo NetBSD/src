@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $	*/
+/*	$NetBSD: toshide.c,v 1.9.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.9 2012/07/31 15:50:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.9.2.1 2012/10/09 13:36:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ piccolo_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
 	const struct pciide_product_desc *pp;
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

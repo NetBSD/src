@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.11 2011/11/02 16:54:50 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.11.12.1 2012/10/09 13:36:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -41,7 +41,7 @@ struct ahci_dma_prd {
 #define AHCI_PRD_DBC_IPC  0x80000000 /* interrupt on completion */
 } __packed __aligned(8);
 
-#define AHCI_NPRD ((MAXPHYS/PAGE_SIZE) + 1)
+#define AHCI_NPRD ((MACHINE_MAXPHYS/PAGE_SIZE) + 1)
 
 /* command table: describe a command to send to drive */
 struct ahci_cmd_tbl {

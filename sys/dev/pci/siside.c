@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: siside.c,v 1.33.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33.2.1 2012/10/09 13:36:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ siside_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t csr;
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

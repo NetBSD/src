@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.400 2012/07/31 15:50:34 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.400.2.1 2012/10/09 13:36:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.400 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.400.2.1 2012/10/09 13:36:04 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -356,17 +356,24 @@ wdattach(device_t parent, device_t self, void *aux)
 		wd->sc_capacity28 =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
+		    wd->sc_dev->dv_maxphys =
+			min(WDC_SECCNT_MAX_LBAEXT * DEV_BSIZE, parent->dv_maxphys);
+
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_verbose(" LBA addressing\n");
 		wd->sc_capacity28 = wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
+		    wd->sc_dev->dv_maxphys =
+			min(WDC_SECCNT_MAX_LBA * DEV_BSIZE, parent->dv_maxphys);
 	} else {
 		aprint_verbose(" chs addressing\n");
 		wd->sc_capacity28 = wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
+		    wd->sc_dev->dv_maxphys =
+			min(WDC_SECCNT_MAX * DEV_BSIZE, parent->dv_maxphys);
 	}
 	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * DEV_BSIZE);
 	aprint_normal_dev(self, "%s, %d cyl, %d head, %d sec, "
@@ -488,7 +495,7 @@ wdstrategy(struct buf *bp)
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
-	    (bp->b_bcount / lp->d_secsize) >= (1 << NBBY)) {
+	    bp->b_bcount > wd->sc_dev->dv_maxphys) {
 		bp->b_error = EINVAL;
 		goto done;
 	}
@@ -719,9 +726,11 @@ wdstart1(struct wd_softc *wd, struct buf *bp)
 	else
 		wd->sc_wdc_bio.flags = 0;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (wd->sc_wdc_bio.blkno +
+	    ((wd->sc_wdc_bio.blkno +
 	     wd->sc_wdc_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
-	    wd->sc_capacity28)
+	    wd->sc_capacity28 ||
+	    (wd->sc_wdc_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
+	    WDC_SECCNT_MAX_LBA))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
@@ -862,9 +871,10 @@ wdrestart(void *v)
 static void
 wdminphys(struct buf *bp)
 {
+	device_t wddev = device_lookup(&wd_cd, WDUNIT(bp->b_dev));
 
-	if (bp->b_bcount > (512 * 128)) {
-		bp->b_bcount = (512 * 128);
+	if (bp->b_bcount > wddev->dv_maxphys) {
+		bp->b_bcount = wddev->dv_maxphys;
 	}
 	minphys(bp);
 }
@@ -1625,7 +1635,8 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	wd->sc_wdc_bio.blkno = blkno;
 	wd->sc_wdc_bio.flags = ATA_POLL;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (wd->sc_wdc_bio.blkno + nblks) > wd->sc_capacity28)
+	    ((wd->sc_wdc_bio.blkno + nblks) > wd->sc_capacity28 ||
+	    nblks > WDC_SECCNT_MAX_LBA))
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
@@ -2056,8 +2067,7 @@ wdioctlstrategy(struct buf *bp)
 	 */
 
 	if ((bp->b_bcount % wi->wi_softc->sc_dk.dk_label->d_secsize) != 0 ||
-	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
-	     (1 << NBBY)) {
+	    bp->b_bcount > wi->wi_softc->sc_dev->dv_maxphys) {
 		error = EINVAL;
 		goto bad;
 	}

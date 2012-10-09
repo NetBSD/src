@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.28 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: slide.c,v 1.28.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.28 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.28.2.1 2012/10/09 13:36:06 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ slide_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = device_private(self);
 	const struct pciide_product_desc *pp = NULL;
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

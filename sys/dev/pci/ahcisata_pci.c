@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.30 2012/08/20 12:48:47 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.30.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30 2012/08/20 12:48:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.1 2012/10/09 13:36:05 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -263,6 +263,8 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
 	pci_intr_handle_t intrhandle;
+
+	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
 	sc->sc_atac.atac_dev = self;
 
