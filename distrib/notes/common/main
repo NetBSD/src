@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.490 2012/10/10 16:08:14 apb Exp $
+.\"	$NetBSD: main,v 1.491 2012/10/10 17:55:16 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,6 +504,15 @@ and
 .Xr groff 1
 can still be found in pkgsrc as
 .Pa textproc/groff .
+.It
+.Xr kame_ipsec 4
+has been replaced by
+.Xr fast_ipsec 4 .
+The option to use the old implementation (see
+.Xr options 4 )
+will be removed in the next
+.Nx
+release.
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -751,6 +760,12 @@ using either the
 .Xr sysctl 8
 command or through
 .Xr sysctl.conf 5 .
+.Pp
+The implementation of SHA2-HMAC in KAME_IPSEC as used in NetBSD-5
+and before did not comply to current standards.
+FAST_IPSEC does, with the result that old and new systems cannot
+communicate over IPSEC, if one of the affected authentication
+algorithms (hmac_sha256, hmac_sha384, hmac_sha512) is used.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 4.x releases
 .Pp
