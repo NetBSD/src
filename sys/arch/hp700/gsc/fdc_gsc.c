@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_gsc.c,v 1.10 2011/07/01 18:33:09 dyoung Exp $	*/
+/*	$NetBSD: fdc_gsc.c,v 1.11 2012/10/10 17:00:37 skrll Exp $	*/
 
 /*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.10 2011/07/01 18:33:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.11 2012/10/10 17:00:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.10 2011/07/01 18:33:09 dyoung Exp $");
 int fdc_gsc_probe(device_t, cfdata_t, void *);
 void fdc_gsc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(fdc_gsc, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc_gsc, sizeof(struct fdc_softc),
     fdc_gsc_probe, fdc_gsc_attach, NULL, NULL);
 
 int
