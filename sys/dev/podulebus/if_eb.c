@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.14 2009/05/12 14:42:58 cegger Exp $ */
+/* $NetBSD: if_eb.c,v 1.15 2012/10/10 22:17:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.14 2009/05/12 14:42:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.15 2012/10/10 22:17:44 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -76,7 +76,7 @@ void ebattach(device_t, device_t, void *);
 
 /* driver structure for autoconf */
 
-CFATTACH_DECL(eb, sizeof(struct eb_softc),
+CFATTACH_DECL_NEW(eb, sizeof(struct eb_softc),
     ebprobe, ebattach, NULL, NULL);
 
 /*
@@ -107,7 +107,9 @@ ebattach(device_t parent, device_t self, void *aux)
 	struct podulebus_attach_args *pa = aux;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
-/*	dprintf(("Attaching %s...\n", device_xname(&sc->sc_dev)));*/
+	sc->sc_8005.sc_dev = self;
+
+/*	dprintf(("Attaching %s...\n", device_xname(self)));*/
 
 	/* Set the address of the controller for easy access */
 	podulebus_shift_tag(pa->pa_mod_t, EB_8004_SHIFT, &sc->sc_8005.sc_iot);
