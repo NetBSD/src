@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.7 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.8 2012/10/10 22:17:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -50,7 +50,7 @@ enum seeq_variant {
  */
 
 struct seeq8005_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	/* These fields should be initialised by the board driver. */
 	bus_space_tag_t sc_iot;		/* I/O base addr */
