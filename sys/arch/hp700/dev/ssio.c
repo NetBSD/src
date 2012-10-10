@@ -1,4 +1,4 @@
-/*	$NetBSD: ssio.c,v 1.3 2012/04/14 06:04:34 skrll Exp $	*/
+/*	$NetBSD: ssio.c,v 1.4 2012/10/10 16:51:10 skrll Exp $	*/
 
 /*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
 
@@ -106,8 +106,6 @@ struct ssio_iv {
 struct ssio_iv ssio_intr_table[SSIO_NINTS];
 
 struct ssio_softc {
-	struct device sc_dev;
-
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ic1h;
 	bus_space_handle_t sc_ic2h;
