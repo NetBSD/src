@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.50 2012/03/13 21:13:37 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.51 2012/10/10 22:50:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.50 2012/03/13 21:13:37 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.51 2012/10/10 22:50:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,15 +68,8 @@ __weak_alias(vsyslog,_vsyslog)
 __weak_alias(syslogp,_syslogp)
 __weak_alias(vsyslogp,_vsyslogp)
 
-__weak_alias(closelog_r,_closelog_r)
-__weak_alias(openlog_r,_openlog_r)
-__weak_alias(setlogmask_r,_setlogmask_r)
-__weak_alias(syslog_r,_syslog_r)
-__weak_alias(vsyslog_r,_vsyslog_r)
 __weak_alias(syslog_ss,_syslog_ss)
 __weak_alias(vsyslog_ss,_vsyslog_ss)
-__weak_alias(syslogp_r,_syslogp_r)
-__weak_alias(vsyslogp_r,_vsyslogp_r)
 __weak_alias(syslogp_ss,_syslogp_ss)
 __weak_alias(vsyslogp_ss,_vsyslogp_ss)
 #endif
@@ -94,8 +87,6 @@ static void	connectlog_r(struct syslog_data *);
 #ifdef _REENTRANT
 static mutex_t	syslog_mutex = MUTEX_INITIALIZER;
 #endif
-
-static char hostname[MAXHOSTNAMELEN];
 
 /*
  * syslog, vsyslog --
@@ -304,13 +295,21 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		prlen = strftime(p, tbuf_left, "%FT%TZ", &tmnow);
 		*/
 	}
+
+	if (data->log_hostname[0] == '\0' && gethostname(data->log_hostname,
+	    sizeof(data->log_hostname)) == -1) {
+		/* can this really happen? */
+		data->log_hostname[0] = '-';
+		data->log_hostname[1] = '\0';
+	}
+
 	DEC();
-	prlen = snprintf_ss(p, tbuf_left, " %s ", hostname);
-	DEC();
+	prlen = snprintf_ss(p, tbuf_left, " %s ", data->log_hostname);
 
 	if (data->log_tag == NULL)
 		data->log_tag = getprogname();
 
+	DEC();
 	prlen = snprintf_ss(p, tbuf_left, "%s ",
 	    data->log_tag ? data->log_tag : "-");
 	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
@@ -424,7 +423,7 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	/* Get connected, output the message to the local logger. */
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-	opened = !data->opened;
+	opened = !data->log_opened;
 	if (opened)
 		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
 	connectlog_r(data);
@@ -483,7 +482,7 @@ disconnectlog_r(struct syslog_data *data)
 		(void)close(data->log_file);
 		data->log_file = -1;
 	}
-	data->connected = 0;		/* retry connect */
+	data->log_connected = 0;		/* retry connect */
 }
 
 static void
@@ -500,16 +499,16 @@ connectlog_r(struct syslog_data *data)
 		if ((data->log_file = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC,
 		    0)) == -1)
 			return;
-		data->connected = 0;
+		data->log_connected = 0;
 	}
-	if (!data->connected) {
+	if (!data->log_connected) {
 		if (connect(data->log_file,
 		    (const struct sockaddr *)(const void *)&sun,
 		    (socklen_t)sizeof(sun)) == -1) {
 			(void)close(data->log_file);
 			data->log_file = -1;
 		} else
-			data->connected = 1;
+			data->log_connected = 1;
 	}
 }
 
@@ -526,14 +525,7 @@ openlog_unlocked_r(const char *ident, int logstat, int logfac,
 	if (data->log_stat & LOG_NDELAY)	/* open immediately */
 		connectlog_r(data);
 
-	/* We could cache this, but then it might change */
-	if (gethostname(hostname, sizeof(hostname)) == -1
-	    || hostname[0] == '\0') {
-		/* can this really happen? */
-		hostname[0] = '-';
-		hostname[1] = '\0';
-	}
-	data->opened = 1;
+	data->log_opened = 1;
 }
 
 void
@@ -553,7 +545,7 @@ closelog_r(struct syslog_data *data)
 		mutex_lock(&syslog_mutex);
 	(void)close(data->log_file);
 	data->log_file = -1;
-	data->connected = 0;
+	data->log_connected = 0;
 	data->log_tag = NULL;
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
