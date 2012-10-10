@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.42 2012/08/17 09:38:51 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.43 2012/10/10 21:54:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.42 2012/08/17 09:38:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.43 2012/10/10 21:54:13 skrll Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -2382,7 +2382,7 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 	/* Ought to do something like this, but we have no sc to
 	   dereference. */
 	/* XXX device_unit() abuse */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(sc->sc_dev),
 	    PL01X_MCR_DTR | PL01X_MCR_RTS);
 #endif
 
