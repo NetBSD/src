@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.20 2012/05/14 11:05:29 skrll Exp $	*/
+/*	$NetBSD: iomd.c,v 1.21 2012/10/10 22:00:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.20 2012/05/14 11:05:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.21 2012/10/10 22:00:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 
 	/* Map the IOMD */
 	if (bus_space_map(iot, (int) iomd_base, IOMD_SIZE, 0, &ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	sc->sc_ioh = ioh;
 
@@ -191,7 +191,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	aprint_normal("version %d\n", bus_space_read_1(iot, ioh, IOMD_VERSION));
 
 	/* Report the DRAM refresh rate */
-	aprint_normal("%s: ", self->dv_xname);
+	aprint_normal("%s: ", device_xname(self));
 	aprint_normal("DRAM refresh=");
 	switch (refresh) {
 	case 0x0:
@@ -221,7 +221,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	 * attached
 	 */
 	tmp = bus_space_read_1(iot, ioh, IOMD_IOTCR);
-	aprint_normal("%s: I/O timings: combo %c, NPCCS1/2 %c", self->dv_xname,
+	aprint_normal("%s: I/O timings: combo %c, NPCCS1/2 %c", device_xname(self),
 	    'A' + ((tmp >>2) & 3), 'A' + (tmp & 3));
 	tmp = bus_space_read_1(iot, ioh, IOMD_ECTCR);
 	aprint_normal(", EASI ");
@@ -257,7 +257,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 
 	/* Attach kbd device when configured */
 	if (bus_space_subregion(iot, ioh, IOMD_KBDDAT, 8, &ia.ia_kbd.ka_ioh))
-		panic("%s: Cannot map kbd registers", self->dv_xname);
+		panic("%s: Cannot map kbd registers", device_xname(self));
 	ia.ia_kbd.ka_name = "kbd";
 	ia.ia_kbd.ka_iot = iot;
 	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
@@ -267,7 +267,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	/* Attach iic device */
 
 	if (bus_space_subregion(iot, ioh, IOMD_IOCR, 4, &ia.ia_iic.ia_ioh))
-		panic("%s: Cannot map iic registers", self->dv_xname);
+		panic("%s: Cannot map iic registers", device_xname(self));
 	ia.ia_iic.ia_name = "iic";
 	ia.ia_iic.ia_iot = iot;
 	ia.ia_iic.ia_irq = -1;
@@ -280,7 +280,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 
 		if (bus_space_subregion(iot, ioh, IOMD_MSDATA, 8,
 			&ia.ia_opms.pa_ioh))
-			panic("%s: Cannot map opms registers", self->dv_xname);
+			panic("%s: Cannot map opms registers", device_xname(self));
 		ia.ia_opms.pa_name = "opms";
 		ia.ia_opms.pa_iot = iot;
 		ia.ia_opms.pa_irq = IRQ_MSDRX;
@@ -291,10 +291,10 @@ iomdattach(device_t parent, device_t self, void *aux)
 
 		if (bus_space_subregion(iot, ioh, IOMD_MOUSEX, 8,
 			&ia.ia_qms.qa_ioh))
-			panic("%s: Cannot map qms registers", self->dv_xname);
+			panic("%s: Cannot map qms registers", device_xname(self));
 
 		if (bus_space_map(iot, IO_MOUSE_BUTTONS, 4, 0, &ia.ia_qms.qa_ioh_but))
-			panic("%s: Cannot map registers", self->dv_xname);
+			panic("%s: Cannot map registers", device_xname(self));
 		ia.ia_qms.qa_name = "qms";
 		ia.ia_qms.qa_iot = iot;
 		ia.ia_qms.qa_irq = IRQ_VSYNC;
