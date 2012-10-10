@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59 2011/04/24 16:26:58 rmind Exp $	*/
+/*	$NetBSD: ite.c,v 1.60 2012/10/10 17:49:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2011/04/24 16:26:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2012/10/10 17:49:50 tsutsui Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -135,6 +135,7 @@ struct itesw itesw[] = {
 struct	tty *ite_tty[NITE];
 struct	ite_softc *kbd_ite = NULL;
 struct  ite_softc con_itesoftc;
+struct	device con_itedev;
 
 struct  tty *kbd_tty = NULL;
 
@@ -170,12 +171,12 @@ const struct cdevsw ite_cdevsw = {
 };
 
 int
-itematch(device_t pdp, cfdata_t cdp, void *auxp)
+itematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct grf_softc *gp;
 	
-	gp = auxp;
-	if (cdp->cf_loc[GRFCF_GRFADDR] != gp->g_cfaddr)
+	gp = aux;
+	if (cf->cf_loc[GRFCF_GRFADDR] != gp->g_cfaddr)
 		return 0;
 
 	return 1;
@@ -186,13 +187,14 @@ itematch(device_t pdp, cfdata_t cdp, void *auxp)
  * an ite device, it is also called from ite_cninit().
  */
 void
-iteattach(device_t pdp, device_t dp, void *auxp)
+iteattach(device_t parent, device_t self, void *aux)
 {
 	struct ite_softc *ip;
 	struct grf_softc *gp;
 
-	gp = (struct grf_softc *)auxp;
-	ip = device_private(dp);
+	gp = aux;
+	ip = device_private(self);
+	ip->device = self;
 	if(con_itesoftc.grf != NULL
 		/*&& con_itesoftc.grf->g_unit == gp->g_unit*/) {
 		/*
@@ -205,7 +207,7 @@ iteattach(device_t pdp, device_t dp, void *auxp)
 		kbd_ite = ip;
 	}
 	ip->grf = gp;
-	iteinit(device_unit(&ip->device)); /* XXX */
+	iteinit(device_unit(self)); /* XXX */
 	aprint_normal(": rows %d cols %d", ip->rows, ip->cols);
 	if (kbd_ite == NULL)
 		kbd_ite = ip;
@@ -240,7 +242,7 @@ iteinit(dev_t dev)
 	ip->cursorx = 0;
 	ip->cursory = 0;
 
-	ip->isw = &itesw[device_unit(&ip->device)]; /* XXX */
+	ip->isw = &itesw[device_unit(ip->device)]; /* XXX */
 	SUBR_INIT(ip);
 	SUBR_CURSOR(ip, DRAW_CURSOR);
 	if (!ip->tabs)
@@ -258,6 +260,7 @@ ite_config_console(void)
 		return;
 	con_itesoftc.grf = gp;
 	con_itesoftc.tabs = cons_tabs;
+	con_itesoftc.device = &con_itedev;
 }
 
 /*
@@ -270,7 +273,7 @@ iteon(dev_t dev, int flag)
 	struct ite_softc *ip;
 
 	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
-	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
+	    (ip = getitesp(dev)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return(ENXIO);
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -309,7 +312,7 @@ iteoff(dev_t dev, int flag)
 
 	/* XXX check whether when call from grf.c */
 	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
-	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
+	    (ip = getitesp(dev)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return;
 	if (flag & 2)
 		ip->flags |= ITE_INGRF;
@@ -538,7 +541,7 @@ ite_reinit(dev_t dev)
 
 	/* XXX check whether when call from grf.c */
 	if (unit < 0 || unit >= ite_cd.cd_ndevs ||
-	    (ip = getitesp(unit)) == NULL)
+	    (ip = getitesp(dev)) == NULL)
 		return;
 
 	ip->flags &= ~ITE_INITED;
@@ -714,7 +717,7 @@ ite_filter(u_char c)
 	struct key key;
 	int s, i;
 
-	if (!kbd_ite || !(kbd_tty = ite_tty[device_unit(&kbd_ite->device)]))
+	if (!kbd_ite || !(kbd_tty = ite_tty[device_unit(kbd_ite->device)]))
 		return;
 
 	/* have to make sure we're at spltty in here */
@@ -2086,7 +2089,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 	case BEL:
 #if NBELL > 0
-		if (kbd_ite && ite_tty[device_unit(&kbd_ite->device)])
+		if (kbd_ite && ite_tty[device_unit(kbd_ite->device)])
 			opm_bell();
 #endif
 		break;
