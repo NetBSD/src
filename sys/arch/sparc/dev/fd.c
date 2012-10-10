@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.150 2011/07/17 23:18:23 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.151 2012/10/10 16:51:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.150 2011/07/17 23:18:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.151 2012/10/10 16:51:50 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -174,7 +174,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct device	*sc_dev;
+	device_t	sc_dev;
 	bus_space_tag_t	sc_bustag;
 
 	struct callout sc_timo_ch;	/* timeout callout */
@@ -259,7 +259,7 @@ struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device	*sc_dv;		/* generic device info */
+	device_t	sc_dv;		/* generic device info */
 	struct disk	sc_dk;		/* generic disk info */
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
@@ -342,7 +342,7 @@ void	fdcretry(struct fdc_softc *);
 void	fdfinish(struct fd_softc *, struct buf *);
 int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
 void	fd_do_eject(struct fd_softc *);
-void	fd_mountroot_hook(struct device *);
+void	fd_mountroot_hook(device_t);
 static int fdconf(struct fdc_softc *);
 static void establish_chip_type(
 		struct fdc_softc *,
@@ -547,7 +547,7 @@ fdcattach_mainbus(device_t parent, device_t self, void *aux)
 			ma->ma_size,
 			BUS_SPACE_MAP_LINEAR,
 			&fdc->sc_handle) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map registers\n", device_xname(self));
 		return;
 	}
 
@@ -580,7 +580,7 @@ fdcattach_obio(device_t parent, device_t self, void *aux)
 			 sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &fdc->sc_handle) != 0) {
 		printf("%s: cannot map control registers\n",
-			self->dv_xname);
+			device_xname(self));
 		return;
 	}
 
@@ -890,7 +890,7 @@ fdstrategy(struct buf *bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)device_parent(fd->sc_dv);
+		struct fdc_softc *fdc = device_private(device_parent(fd->sc_dv));
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -1012,7 +1012,7 @@ fd_motor_off(void *arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)device_parent(fd->sc_dv));
+	fd_set_motor(device_private(device_parent(fd->sc_dv)));
 	splx(s);
 }
 
@@ -2305,7 +2305,7 @@ fd_do_eject(struct fd_softc *fd)
 
 /* ARGSUSED */
 void
-fd_mountroot_hook(struct device *dev)
+fd_mountroot_hook(device_t dev)
 {
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.52 2009/11/23 00:11:45 rmind Exp $	*/
+/*	$NetBSD: mha.c,v 1.53 2012/10/10 16:55:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.52 2009/11/23 00:11:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.53 2012/10/10 16:55:50 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -337,7 +337,7 @@ mhaattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = sc->sc_dev;
+	sc->sc_adapter.adapt_dev = self;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -674,7 +674,7 @@ mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct mha_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct mha_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct acb *acb;
 	int s, flags;
 
@@ -1949,7 +1949,7 @@ mha_timeout(void *arg)
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mha_softc *sc =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s;
 
 	s = splbio();
