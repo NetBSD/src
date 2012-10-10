@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.55.2.1 2012/09/12 06:15:35 tls Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.55.2.2 2012/10/10 16:30:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55.2.1 2012/09/12 06:15:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55.2.2 2012/10/10 16:30:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -830,7 +830,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool onworklst;
 	static int printed;
 
-        if (vp && vp->v_mount && vp->v_mount->mnt_maxphys) {
+        if (vp->v_mount && vp->v_mount->mnt_maxphys) {
                 maxpages = vp->v_mount->mnt_maxphys >> PAGE_SHIFT;
         } else {
                 maxpages = MAXPHYS >> PAGE_SHIFT;
