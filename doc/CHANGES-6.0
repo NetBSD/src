@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.215 2012/10/09 23:59:32 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.216 2012/10/10 17:08:14 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8830,4 +8830,10 @@ external/bsd/bind/dist/version			1.4
 
 	Update to BIND 9.9.1-P4, to address CVE-2012-5166.
 	[christos, ticket #598]
+
+distrib/notes/common/main			1.490
+
+	Refer to the list of mirrors at http://www.NetBSD.org/mirrors
+	in "Quick install notes for the impatient".
+	[apb, ticket #599]
 
