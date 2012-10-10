@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.21 2012/05/23 16:11:37 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.22 2012/10/10 15:46:33 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.21 2012/05/23 16:11:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.22 2012/10/10 15:46:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ aspattach(device_t parent, device_t self, void *aux)
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
-	if (strcmp(parent->dv_xname, "mainbus0") == 0) {
+	if (strcmp(device_xname(parent), "mainbus0") == 0) {
 		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
 		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
 		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];

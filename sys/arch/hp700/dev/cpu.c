@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2012/05/23 21:11:34 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.29 2012/10/10 15:46:34 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2012/05/23 21:11:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2012/10/10 15:46:34 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -122,7 +122,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Print the CPU type, spec, level, category, and speed. */
-	aprint_normal("\n%s: %s, PA-RISC %s", self->dv_xname,
+	aprint_normal("\n%s: %s, PA-RISC %s", device_xname(self),
 	    hppa_cpu_info->hci_chip_type,
 	    hppa_cpu_info->hci_chip_spec);
 	aprint_normal(", lev %s, cat %c, ",
@@ -132,7 +132,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	if (mhz % 100 > 9)
 		aprint_normal(".%02d", mhz % 100);
 
-	aprint_normal(" MHz clk\n%s: %s", self->dv_xname,
+	aprint_normal(" MHz clk\n%s: %s", device_xname(self),
 	    pdc_model.sh? "shadows, ": "");
 
 	if (pdc_cache.dc_conf.cc_fsel)
@@ -158,7 +158,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	 * Describe the floating-point support.
 	 */
 	KASSERT(fpu_present);
-	aprint_normal("%s: %s floating point, rev %d\n", self->dv_xname,
+	aprint_normal("%s: %s floating point, rev %d\n", device_xname(self),
 	    hppa_mod_info(HPPA_TYPE_FPU, (fpu_version >> 16) & 0x1f),
 	    (fpu_version >> 11) & 0x1f);
 
