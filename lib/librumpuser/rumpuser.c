@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.20 2012/09/14 16:29:22 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.21 2012/10/10 11:15:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.20 2012/09/14 16:29:22 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.21 2012/10/10 11:15:57 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -572,7 +572,13 @@ rumpuser_seterrno(int error)
 	errno = error;
 }
 
-#ifdef __NetBSD__
+/*
+ * On NetBSD we use kqueue, on Linux we use inotify.  The underlying
+ * interface requirements aren't quite the same, but we have a very
+ * good chance of doing the fd->path mapping on Linux thanks to dcache,
+ * so just keep the existing interfaces for now.
+ */
+#if defined(__NetBSD__)
 int
 rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
 {
@@ -614,6 +620,62 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	if (opaque)
 		*opaque = kev.udata;
 	return rv;
+}
+
+#elif defined(__linux__)
+#include <sys/inotify.h>
+
+int
+rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
+{
+	char procbuf[PATH_MAX], linkbuf[PATH_MAX];
+	ssize_t nn;
+
+	if (inotify == -1) {
+		inotify = inotify_init();
+		if (inotify == -1) {
+			seterror(errno);
+			return -1;
+		}
+	}
+
+	/* ok, need to map fd into path for inotify */
+	snprintf(procbuf, sizeof(procbuf), "/proc/self/fd/%d", fd);
+	nn = readlink(procbuf, linkbuf, sizeof(linkbuf));
+	if (nn >= (ssize_t)sizeof(linkbuf)) {
+		nn = -1;
+		errno = E2BIG; /* pick something */
+	}
+	if (nn == -1) {
+		seterror(errno);
+		close(inotify);
+		return -1;
+	}
+
+	if (inotify_add_watch(inotify, linkbuf, IN_MODIFY) == -1) {
+		seterror(errno);
+		close(inotify);
+		return -1;
+	}
+
+	return inotify;
+}
+
+int
+rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
+{
+	struct inotify_event iev;
+	ssize_t nn;
+
+	do {
+		KLOCK_WRAP(nn = read(kq, &iev, sizeof(iev)));
+	} while (errno == EINTR);
+
+	if (nn == -1) {
+		seterror(errno);
+		return -1;
+	}
+	return (nn/sizeof(iev));
 }
 #endif
 
