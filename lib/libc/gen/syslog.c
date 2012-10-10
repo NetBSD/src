@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.51 2012/10/10 22:50:51 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.52 2012/10/10 23:53:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.51 2012/10/10 22:50:51 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.52 2012/10/10 23:53:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -289,12 +289,18 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		}
 	} else {
 		prlen = snprintf_ss(p, tbuf_left, "-");
-
-		/* if gmtime_r() was signal-safe we could output the UTC-time:
+#if 0
+		/*
+		 * if gmtime_r() was signal-safe we could output
+		 * the UTC-time:
+		 */
 		gmtime_r(&now, &tmnow);
 		prlen = strftime(p, tbuf_left, "%FT%TZ", &tmnow);
-		*/
+#endif
 	}
+
+	if (data == &sdata)
+		mutex_lock(&syslog_mutex);
 
 	if (data->log_hostname[0] == '\0' && gethostname(data->log_hostname,
 	    sizeof(data->log_hostname)) == -1) {
@@ -312,6 +318,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	DEC();
 	prlen = snprintf_ss(p, tbuf_left, "%s ",
 	    data->log_tag ? data->log_tag : "-");
+
+	if (data == &sdata)
+		mutex_unlock(&syslog_mutex);
+
 	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
 		iovcnt = 0;
 		iov[iovcnt].iov_base = p;
