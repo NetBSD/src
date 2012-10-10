@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.50 2012/10/10 22:17:44 skrll Exp $ */
+/* $NetBSD: seeq8005.c,v 1.51 2012/10/10 22:40:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.50 2012/10/10 22:17:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.51 2012/10/10 22:40:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,12 @@ int seeq8005_debug = 0;
 #define DPRINTF(f, x)
 #endif
 
-#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> ETHER_MAX_LEN) */
+#ifndef EA_TX_BUFFER_SIZE
+#define EA_TX_BUFFER_SIZE		0x800		/* (> ETHER_MAX_LEN) */
+#endif
+#ifndef EA_TX_BUFFER_COUNT
+#define EA_TX_BUFFER_COUNT		1		/* (> 0) */
+#endif
 
 #define SEEQ_READ16(sc, iot, ioh, reg)					\
 	((sc)->sc_flags & SF_8BIT ?					\
@@ -225,12 +230,11 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	/*
 	 * Set up tx and rx buffers.
 	 *
-	 * We use approximately a quarter of the packet memory for TX
+	 * We set aside EA_TX_BUFFER_SIZE * EA_TX_BUFFER_COUNT for TX
 	 * buffers and the rest for RX buffers
 	 */
-	/* sc->sc_tx_bufs = sc->sc_buffersize / SEEQ_TX_BUFFER_SIZE / 4; */
-	sc->sc_tx_bufs = 1;
-	sc->sc_tx_bufsize = sc->sc_tx_bufs * SEEQ_TX_BUFFER_SIZE;
+	sc->sc_tx_bufs = EA_TX_BUFFER_COUNT;
+	sc->sc_tx_bufsize = sc->sc_tx_bufs * EA_TX_BUFFER_SIZE;
 	sc->sc_rx_bufsize = sc->sc_buffersize - sc->sc_tx_bufsize;
 	sc->sc_enabled = 0;
 
@@ -443,6 +447,7 @@ ea_stoprx(struct seeq8005_softc *sc)
 	timeout = 20000;
 	do {
 		status = SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS);
+		delay(1);
 	} while ((status & SEEQ_STATUS_RX_ON) && --timeout > 0);
 	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for rx termination\n",
@@ -604,6 +609,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
 		    sc->sc_command | SEEQ_CMD_FIFO_WRITE);
+
+		ea_await_fifo_empty(sc);
+
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_DMA_ADDR, addr);
 	}
 
@@ -901,7 +909,7 @@ ea_txpacket(struct seeq8005_softc *sc)
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 	/* If there's nothing to send, return. */
-	if (!m0) {
+	if (m0 == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
@@ -968,20 +976,18 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 	/* Follow it with a NULL packet header */
 	memset(hdr, 0, 4);
 	ea_writebuf(sc, hdr, bufstart + 4 + len, 4);
-	SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
-	SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
 
 	/* Ok we now have a packet len bytes long in our packet buffer */
 	DPRINTF(SEEQ_DEBUG_TX, ("ea_writembuf: length=%d\n", len));
 
 	/* Write the packet header */
-	nextpacket = len + 4;
+	nextpacket = bufstart + len + 4;
 	hdr[0] = (nextpacket >> 8) & 0xff;
 	hdr[1] = nextpacket & 0xff;
 	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
 		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
 	hdr[3] = 0; /* Status byte -- will be updated by hardware. */
-	ea_writebuf(sc, hdr, 0x0000, 4);
+	ea_writebuf(sc, hdr, bufstart, 4);
 
 	return len;
 }
@@ -1195,9 +1201,6 @@ ea_rxint(struct seeq8005_softc *sc)
 			log(LOG_ERR,
 			    "%s: rx packet size error at %04x (len=%d)\n",
 			    device_xname(sc->sc_dev), addr, len);
-			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
-			SEEQ_WRITE16(sc, iot, ioh, SEEQ_CONFIG2,
-					  sc->sc_config2);
 			ea_init(ifp);
 			return;
 		}
