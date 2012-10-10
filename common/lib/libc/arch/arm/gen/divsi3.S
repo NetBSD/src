@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.2 2012/08/05 04:22:01 matt Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.3 2012/10/10 02:16:54 christos Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -20,22 +20,6 @@
  * stack is aligned as there's a possibility of branching to .L_overflow
  * which makes a C call
  */
-
-ENTRY(__umodsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	.L_udivide
-	add	sp, sp, #4	/* unalign stack */
-	mov	r0, r1
-	ldmfd	sp!, {pc}
-
-ENTRY(__modsi3)
-	stmfd	sp!, {lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	.L_divide
-	add	sp, sp, #4	/* unalign stack */
-	mov	r0, r1
-	ldmfd	sp!, {pc}
 
 .L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
