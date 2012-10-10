@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.48 2012/06/10 15:00:49 christos Exp $ */
+/* $NetBSD: seeq8005.c,v 1.49 2012/10/10 22:11:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.48 2012/06/10 15:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.49 2012/10/10 22:11:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ static void ea_read(struct seeq8005_softc *, int, int);
 static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
 static void ea_txint(struct seeq8005_softc *);
 static void ea_rxint(struct seeq8005_softc *);
-static void eatxpacket(struct seeq8005_softc *);
+static void ea_txpacket(struct seeq8005_softc *);
 static int ea_writembuf(struct seeq8005_softc *, struct mbuf *, int);
 static void ea_mc_reset(struct seeq8005_softc *);
 static void ea_mc_reset_8004(struct seeq8005_softc *);
@@ -832,7 +832,7 @@ ea_init(struct ifnet *ifp)
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
 			  sc->sc_command | SEEQ_CMD_RX_ON);
 
-	/* TX_ON gets set by eatxpacket when there's something to transmit. */
+	/* TX_ON gets set by ea_txpacket when there's something to transmit. */
 
 
 	/* Set flags appropriately. */
@@ -864,7 +864,7 @@ ea_start(struct ifnet *ifp)
 
 	/*
 	 * Don't do anything if output is active.  seeq8005intr() will call
-	 * us (actually eatxpacket()) back when the card's ready for more
+	 * us (actually ea_txpacket()) back when the card's ready for more
 	 * frames.
 	 */
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -876,7 +876,7 @@ ea_start(struct ifnet *ifp)
 
 	/* tx packets */
 
-	eatxpacket(sc);
+	ea_txpacket(sc);
 	splx(s);
 }
 
@@ -888,7 +888,7 @@ ea_start(struct ifnet *ifp)
  */
 
 static void
-eatxpacket(struct seeq8005_softc *sc)
+ea_txpacket(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1107,7 +1107,7 @@ ea_txint(struct seeq8005_softc *sc)
 
 		/* Tx next packet */
 
-		eatxpacket(sc);
+		ea_txpacket(sc);
 	}
 }
 
