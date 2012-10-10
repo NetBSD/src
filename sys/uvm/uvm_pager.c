@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.108.6.1 2012/10/10 16:31:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108 2012/01/27 19:48:42 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108.6.1 2012/10/10 16:31:54 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -95,8 +95,8 @@ uvm_pager_realloc_emerg(void)
 	KASSERT(!emerginuse);
 
 	new_emergva = uvm_km_alloc(kernel_map,
-	    round_page(MAXPHYS) + ptoa(uvmexp.ncolors), ptoa(uvmexp.ncolors),
-	    UVM_KMF_VAONLY);
+	    round_page(MACHINE_MAXPHYS) + ptoa(uvmexp.ncolors),
+	    ptoa(uvmexp.ncolors), UVM_KMF_VAONLY);
 
 	KASSERT(new_emergva != 0);
 
@@ -118,7 +118,7 @@ uvm_pager_realloc_emerg(void)
 
 	if (old_emergva)
 		uvm_km_free(kernel_map, old_emergva,
-		    round_page(MAXPHYS) + ptoa(old_emerg_ncolors),
+		    round_page(MACHINE_MAXPHYS) + ptoa(old_emerg_ncolors),
 		    UVM_KMF_VAONLY);
 }
 
@@ -209,7 +209,7 @@ ReStart:
 			mutex_exit(&pager_map_wanted_lock);
 			kva = emergva + ptoa(first_color);
 			/* The shift implicitly truncates to PAGE_SIZE */
-			KASSERT(npages <= (MAXPHYS >> PAGE_SHIFT));
+			KASSERT(npages <= (MACHINE_MAXPHYS >> PAGE_SHIFT));
 			goto enter;
 		}
 		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
