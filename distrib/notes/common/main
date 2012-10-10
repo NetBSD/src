@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.489 2012/08/17 18:20:19 riz Exp $
+.\"	$NetBSD: main,v 1.490 2012/10/10 16:08:14 apb Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,11 @@ These can be found
 on an FTP site near you, usually located in the
 .Pa /pub/NetBSD/iso/
 directory.
-Check the NetBSD website for details.
+Check the list of
+.Nx
+mirrors at
+.Lk http://www.NetBSD.org/mirrors
+for details.
 .Pp
 Option 2: bootable CD-ROM images from
 .Pa \*M/installation/cdrom/ .
