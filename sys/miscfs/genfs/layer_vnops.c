@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.50 2011/07/11 08:34:01 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.51 2012/10/10 06:55:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50 2011/07/11 08:34:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.51 2012/10/10 06:55:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,8 +353,10 @@ layer_lookup(void *v)
 	dvp = ap->a_dvp;
 
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+		*ap->a_vpp = NULL;
 		return EROFS;
+	}
 
 	ldvp = LAYERVPTOLOWERVP(dvp);
 	ap->a_dvp = ldvp;
