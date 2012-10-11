@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.136 2011/10/28 22:08:14 dyoung Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.137 2012/10/11 20:05:50 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.136 2011/10/28 22:08:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.137 2012/10/11 20:05:50 christos Exp $");
 
 #include "ppp.h"
 
@@ -1645,7 +1645,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	m->m_data += PPP_HDRLEN;
 	m->m_len -= PPP_HDRLEN;
 #ifdef GATEWAY  
-	if (ip6flow_fastforward(m))
+	if (ip6flow_fastforward(&m))
 		return;
 #endif
 	schednetisr(NETISR_IPV6);
