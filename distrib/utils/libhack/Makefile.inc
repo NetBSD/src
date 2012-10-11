@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.23 2009/01/02 00:20:18 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.24 2012/10/11 17:11:16 christos Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -23,6 +23,8 @@ HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o \
 
 CPPFLAGS.runetable.c+= -I${HACKSRC}/../../../lib/libc/citrus \
 			-DALL_80_TO_FF_SW1
+
+CPPFLAGS.syslog.c+= -I${HACKSRC}/../../../lib/libc/include
 
 libhack.o: ${HACKOBJS}
 	${LD} -r -o $@ ${HACKOBJS}
