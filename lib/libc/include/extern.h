@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2012/09/12 02:00:53 manu Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2012/10/11 17:09:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -49,21 +49,22 @@ char *__hldtoa(long double, const char *, int, int *, int *,  char **);
 char *__ldtoa(long double *, int, int, int *, int *, char **);
 #endif
 
+#ifndef __LIBC12_SOURCE__
 struct syslog_data;
 void	syslog_ss(int, struct syslog_data *, const char *, ...)
-    __attribute__((__format__(__printf__,3,4)));
-void	vsyslog_ss(int, struct syslog_data *, const char *, va_list);
+    __RENAME(__syslog_ss60) __printflike(3, 4);
 void    vsyslog_ss(int, struct syslog_data *, const char *, va_list) 
-    __attribute__((__format__(__printf__,3,0))); 
+    __RENAME(__vsyslog_ss60) __printflike(3, 0); 
 void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, ...) __attribute__((__format__(__printf__,5,0))); 
+    const char *, ...) __RENAME(__syslogp_ss60) __printflike(5, 0);
 void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
-    const char *, va_list) __attribute__((__format__(__printf__,5,0))); 
+    const char *, va_list) __RENAME(__vsyslogp_ss60) __printflike(5, 0);
+#endif
 
 int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
-    __attribute__((__format__(__printf__, 3, 4)));
+    __printflike(3, 4);
 int	vsnprintf_ss(char * __restrict, size_t, const char * __restrict,
-    va_list) __attribute__((__format__(__printf__, 3, 0)));
+    va_list) __printflike(3, 0);
 
 void	_malloc_prefork(void);
 void	_malloc_postfork(void);
