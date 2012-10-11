@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.52 2012/10/10 23:53:43 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.53 2012/10/11 17:09:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.52 2012/10/10 23:53:43 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.53 2012/10/11 17:09:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,11 +67,6 @@ __weak_alias(syslog,_syslog)
 __weak_alias(vsyslog,_vsyslog)
 __weak_alias(syslogp,_syslogp)
 __weak_alias(vsyslogp,_vsyslogp)
-
-__weak_alias(syslog_ss,_syslog_ss)
-__weak_alias(vsyslog_ss,_vsyslog_ss)
-__weak_alias(syslogp_ss,_syslogp_ss)
-__weak_alias(vsyslogp_ss,_vsyslogp_ss)
 #endif
 
 static struct syslog_data sdata = SYSLOG_DATA_INIT;
