@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.19 2012/01/19 13:19:34 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.20 2012/10/11 20:05:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19 2012/01/19 13:19:34 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.20 2012/10/11 20:05:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19 2012/01/19 13:19:34 liamjfoy Exp $
  * using the cached details.
  *
  * Example:
- * ether/fddi_input -> ip6flow_fastfoward -> if_output
+ * ether/fddi_input -> ip6flow_fastforward -> if_output
  */
 
 static struct pool ip6flow_pool;
@@ -208,11 +208,12 @@ ip6flow_init(int table_size)
  * routine to deal with.
  */
 int
-ip6flow_fastforward(struct mbuf *m)
+ip6flow_fastforward(struct mbuf **mp)
 {
 	struct ip6flow *ip6f;
 	struct ip6_hdr *ip6;
 	struct rtentry *rt;
+	struct mbuf *m;
 	const struct sockaddr *dst;
 	int error;
 
@@ -222,6 +223,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if (!ip6_forwarding || ip6flow_inuse == 0)
 		return 0;
 
+	m = *mp;
 	/*
 	 * At least size of IPv6 Header?
 	 */
@@ -239,10 +241,12 @@ ip6flow_fastforward(struct mbuf *m)
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
 		}
+		*mp = m;
 	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			return 0;
 		}
+		*mp = m;
 	}
 
 	ip6 = mtod(m, struct ip6_hdr *);
