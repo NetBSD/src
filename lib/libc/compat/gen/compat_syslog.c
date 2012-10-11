@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_syslog.c,v 1.1 2012/10/10 22:52:26 christos Exp $	*/
+/*	$NetBSD: compat_syslog.c,v 1.2 2012/10/11 17:09:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -39,6 +39,15 @@
 #include <sys/syslog.h>
 #include <compat/sys/syslog.h>
 
+void	syslog_ss(int, struct syslog_data60 *, const char *, ...)
+    __printflike(3, 4);
+void    vsyslog_ss(int, struct syslog_data60 *, const char *, va_list) 
+    __printflike(3, 0); 
+void	syslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
+    const char *, ...) __printflike(5, 0);
+void	vsyslogp_ss(int, struct syslog_data60 *, const char *, const char *, 
+    const char *, va_list) __printflike(5, 0);
+
 #ifdef __weak_alias
 __weak_alias(closelog_r,_closelog_r)
 __weak_alias(openlog_r,_openlog_r)
@@ -47,6 +56,11 @@ __weak_alias(syslog_r,_syslog_r)
 __weak_alias(vsyslog_r,_vsyslog_r)
 __weak_alias(syslogp_r,_syslogp_r)
 __weak_alias(vsyslogp_r,_vsyslogp_r)
+
+__weak_alias(syslog_ss,_syslog_ss)
+__weak_alias(vsyslog_ss,_vsyslog_ss)
+__weak_alias(syslogp_ss,_syslogp_ss)
+__weak_alias(vsyslogp_ss,_vsyslogp_ss)
 #endif /* __weak_alias */
 
 __warn_references(closelog_r,
@@ -127,6 +141,7 @@ vsyslog_r(int pri, struct syslog_data60 *data60, const char *fmt, __va_list ap)
 	syslog_data_convert(&data, data60);
 	__vsyslog_r60(pri, &data, fmt, ap);
 }
+
 void
 syslogp_r(int pri, struct syslog_data60 *data60, const char *msgid,
     const char *sdfmt, const char *msgfmt, ...)
@@ -148,4 +163,43 @@ vsyslogp_r(int pri, struct syslog_data60 *data60, const char *msgid,
 	syslog_data_convert(&data, data60);
 
 	__vsyslogp_r60(pri, &data, msgid, sdfmt, msgfmt, ap);
+}
+
+/*
+ * These are semi-private
+ */
+#define LOG_SIGNAL_SAFE (int)0x80000000
+
+void
+syslog_ss(int pri, struct syslog_data60 *data, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsyslog_r(pri | LOG_SIGNAL_SAFE, data, fmt, ap);
+	va_end(ap);
+}
+
+void
+syslogp_ss(int pri, struct syslog_data60 *data, const char *msgid,
+    const char *sdfmt, const char *msgfmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, msgfmt);
+	vsyslogp_r(pri | LOG_SIGNAL_SAFE, data, msgid, sdfmt, msgfmt, ap);
+	va_end(ap);
+}
+
+void
+vsyslog_ss(int pri, struct syslog_data60 *data, const char *fmt, va_list ap)
+{
+	vsyslog_r(pri | LOG_SIGNAL_SAFE, data, fmt, ap);
+}
+
+void
+vsyslogp_ss(int pri, struct syslog_data60 *data, const char *msgid,
+    const char *sdfmt, const char *msgfmt, va_list ap)
+{
+	vsyslogp_r(pri | LOG_SIGNAL_SAFE, data, msgid, sdfmt, msgfmt, ap);
 }
