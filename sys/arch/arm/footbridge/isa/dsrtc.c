@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.11 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.12 2012/10/11 08:53:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.11 2009/07/21 07:35:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.12 2012/10/11 08:53:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.11 2009/07/21 07:35:55 skrll Exp $");
 #define NRTC_PORTS	2
 
 struct dsrtc_softc {
-	struct device	sc_dev;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct todr_chip_handle sc_todr;
 };
 
-void dsrtcattach(struct device *parent, struct device *self, void *aux);
-int dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux);
+void dsrtcattach(device_t parent, device_t self, void *aux);
+int dsrtcmatch(device_t parent, cfdata_t cf, void *aux);
 int ds1687_read(struct dsrtc_softc *sc, int addr);
 void ds1687_write(struct dsrtc_softc *sc, int addr, int data);
 #if 0
