@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.129 2012/09/21 14:10:14 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.130 2012/10/11 18:00:25 ginsbach Exp $
 
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
@@ -182,6 +182,7 @@ CFG	control-flow graph
 CG	control gate
 CGA	color graphics {array,adapter}
 CGI	common gateway interface
+CGN	carrier grade NAT
 CHAP	challenge-handshake authentication protocol
 CHS	cylinder/head/sector
 CI	{common, component} interface
@@ -646,6 +647,7 @@ LSB	least significant bit [or: byte]
 LSB	Linux standards base
 LSI	large scale integration
 LSL	load segment limit
+LSN	large scale NAT
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
 LTR	left to right
@@ -739,6 +741,7 @@ MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
 NAN	not a number
+NAPT	network address [and] port translation
 NAS	network attached storage
 NAT	network address translation
 NAV	network allocation vector
@@ -975,6 +978,7 @@ RR	round robin
 RR	random replacement
 RS	relay station
 RSA	Rivest, Shamir and Adleman
+RSIP	realm specific Internet Protocol
 RSS	really simple syndication
 RSS	residual sum of squares
 RT	real time
