@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.45 2012/09/14 16:29:22 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.46 2012/10/11 10:50:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.45 2012/09/14 16:29:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.46 2012/10/11 10:50:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -722,8 +722,7 @@ shmif_rcv(void *arg)
 		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
 			passup = true;
-		} else if (memcmp(eth->ether_dhost, etherbroadcastaddr,
-		    ETHER_ADDR_LEN) == 0) {
+		} else if (ETHER_IS_MULTICAST(eth->ether_dhost)) {
 			passup = true;
 		} else if (ifp->if_flags & IFF_PROMISC) {
 			m->m_flags |= M_PROMISC;
