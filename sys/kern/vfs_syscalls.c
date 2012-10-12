@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.457 2012/06/27 12:28:28 cheusov Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.458 2012/10/12 02:37:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.457 2012/06/27 12:28:28 cheusov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.458 2012/10/12 02:37:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3871,176 +3871,340 @@ sys___posix_rename(struct lwp *l, const struct sys___posix_rename_args *uap, reg
  * (retain == 0)	deleted unless `from' and `to' refer to the same
  *			object in the file system's name space (BSD).
  * (retain == 1)	always retained (POSIX).
+ *
+ * XXX Synchronize with nfsrv_rename in nfs_serv.c.
  */
 int
 do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 {
-	struct vnode *tvp, *fvp, *tdvp;
-	struct pathbuf *frompb, *topb;
-	struct nameidata fromnd, tond;
-	struct mount *fs;
+	struct pathbuf *fpb, *tpb;
+	struct nameidata fnd, tnd;
+	struct vnode *fdvp, *fvp;
+	struct vnode *tdvp, *tvp;
+	struct mount *mp, *tmp;
 	int error;
 
-	error = pathbuf_maybe_copyin(from, seg, &frompb);
-	if (error) {
-		return error;
-	}
-	error = pathbuf_maybe_copyin(to, seg, &topb);
-	if (error) {
-		pathbuf_destroy(frompb);
-		return error;
-	}
+	KASSERT(from != NULL);
+	KASSERT(to != NULL);
 
-	NDINIT(&fromnd, DELETE, LOCKPARENT | TRYEMULROOT | INRENAME,
-	    frompb);
-	if ((error = namei(&fromnd)) != 0) {
-		pathbuf_destroy(frompb);
-		pathbuf_destroy(topb);
-		return (error);
-	}
-	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp);
-	fvp = fromnd.ni_vp;
+	error = pathbuf_maybe_copyin(from, seg, &fpb);
+	if (error)
+		goto out0;
+	KASSERT(fpb != NULL);
 
-	fs = fvp->v_mount;
-	error = VFS_RENAMELOCK_ENTER(fs);
-	if (error) {
-		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		vrele(fvp);
+	error = pathbuf_maybe_copyin(to, seg, &tpb);
+	if (error)
 		goto out1;
+	KASSERT(tpb != NULL);
+
+	/*
+	 * Lookup from.
+	 *
+	 * XXX LOCKPARENT is wrong because we don't actually want it
+	 * locked yet, but (a) namei is insane, and (b) VOP_RENAME is
+	 * insane, so for the time being we need to leave it like this.
+	 */
+	NDINIT(&fnd, DELETE, (LOCKPARENT | TRYEMULROOT | INRENAME), fpb);
+	if ((error = namei(&fnd)) != 0)
+		goto out2;
+
+	/*
+	 * Pull out the important results of the lookup, fdvp and fvp.
+	 * Of course, fvp is bogus because we're about to unlock fdvp.
+	 */
+	fdvp = fnd.ni_dvp;
+	fvp = fnd.ni_vp;
+	KASSERT(fdvp != NULL);
+	KASSERT(fvp != NULL);
+	KASSERT((fdvp == fvp) || (VOP_ISLOCKED(fdvp) == LK_EXCLUSIVE));
+
+	/*
+	 * Make sure neither fdvp nor fvp is locked.
+	 */
+	if (fdvp != fvp)
+		VOP_UNLOCK(fdvp);
+	/* XXX KASSERT(VOP_ISLOCKED(fdvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT(VOP_ISLOCKED(fvp) != LK_EXCLUSIVE); */
+
+	/*
+	 * Reject renaming `.' and `..'.  Can't do this until after
+	 * namei because we need namei's parsing to find the final
+	 * component name.  (namei should just leave us with the final
+	 * component name and not look it up itself, but anyway...)
+	 *
+	 * This was here before because we used to relookup from
+	 * instead of to and relookup requires the caller to check
+	 * this, but now file systems may depend on this check, so we
+	 * must retain it until the file systems are all rototilled.
+	 */
+	if (((fnd.ni_cnd.cn_namelen == 1) &&
+		(fnd.ni_cnd.cn_nameptr[0] == '.')) ||
+	    ((fnd.ni_cnd.cn_namelen == 2) &&
+		(fnd.ni_cnd.cn_nameptr[0] == '.') &&
+		(fnd.ni_cnd.cn_nameptr[1] == '.'))) {
+		error = EINVAL;	/* XXX EISDIR?  */
+		goto abort0;
 	}
 
 	/*
-	 * close, partially, yet another race - ideally we should only
-	 * go as far as getting fromnd.ni_dvp before getting the per-fs
-	 * lock, and then continue to get fromnd.ni_vp, but we can't do
-	 * that with namei as it stands.
+	 * Lookup to.
 	 *
-	 * This still won't prevent rmdir from nuking fromnd.ni_vp
-	 * under us. The real fix is to get the locks in the right
-	 * order and do the lookups in the right places, but that's a
-	 * major rototill.
+	 * XXX LOCKPARENT is wrong, but...insanity, &c.  Also, using
+	 * fvp here to decide whether to add CREATEDIR is a load of
+	 * bollocks because fvp might be the wrong node by now, since
+	 * fdvp is unlocked.
 	 *
-	 * Note: this logic (as well as this whole function) is cloned
-	 * in nfs_serv.c. Proceed accordingly.
+	 * XXX Why not pass CREATEDIR always?
 	 */
-	vrele(fvp);
-	if ((fromnd.ni_cnd.cn_namelen == 1 && 
-	     fromnd.ni_cnd.cn_nameptr[0] == '.') ||
-	    (fromnd.ni_cnd.cn_namelen == 2 && 
-	     fromnd.ni_cnd.cn_nameptr[0] == '.' &&
-	     fromnd.ni_cnd.cn_nameptr[1] == '.')) {
-		error = EINVAL;
-		VFS_RENAMELOCK_EXIT(fs);
-		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		goto out1;
-	}
-	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
-	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd, 0);
-	if (error) {
-		VOP_UNLOCK(fromnd.ni_dvp);
-		VFS_RENAMELOCK_EXIT(fs);
-		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		goto out1;
-	}
-	VOP_UNLOCK(fromnd.ni_vp);
-	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp);
-	fvp = fromnd.ni_vp;
+	NDINIT(&tnd, RENAME,
+	    (LOCKPARENT | NOCACHE | TRYEMULROOT | INRENAME |
+		((fvp->v_type == VDIR)? CREATEDIR : 0)),
+	    tpb);
+	if ((error = namei(&tnd)) != 0)
+		goto abort0;
 
-	NDINIT(&tond, RENAME,
-	    LOCKPARENT | LOCKLEAF | NOCACHE | TRYEMULROOT
-	      | INRENAME | (fvp->v_type == VDIR ? CREATEDIR : 0),
-	    topb);
-	if ((error = namei(&tond)) != 0) {
-		VFS_RENAMELOCK_EXIT(fs);
-		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		vrele(fvp);
-		goto out1;
-	}
-	tdvp = tond.ni_dvp;
-	tvp = tond.ni_vp;
+	/*
+	 * Pull out the important results of the lookup, tdvp and tvp.
+	 * Of course, tvp is bogus because we're about to unlock tdvp.
+	 */
+	tdvp = tnd.ni_dvp;
+	tvp = tnd.ni_vp;
+	KASSERT(tdvp != NULL);
+	KASSERT((tdvp == tvp) || (VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE));
 
+	/*
+	 * Make sure neither tdvp nor tvp is locked.
+	 */
+	if (tdvp != tvp)
+		VOP_UNLOCK(tdvp);
+	/* XXX KASSERT(VOP_ISLOCKED(tdvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) != LK_EXCLUSIVE)); */
+
+	/*
+	 * Reject renaming onto `.' or `..'.  relookup is unhappy with
+	 * these, which is why we must do this here.  Once upon a time
+	 * we relooked up from instead of to, and consequently didn't
+	 * need this check, but now that we relookup to instead of
+	 * from, we need this; and we shall need it forever forward
+	 * until the VOP_RENAME protocol changes, because file systems
+	 * will no doubt begin to depend on this check.
+	 */
+	if (((tnd.ni_cnd.cn_namelen == 1) &&
+		(tnd.ni_cnd.cn_nameptr[0] == '.')) ||
+	    ((tnd.ni_cnd.cn_namelen == 2) &&
+		(tnd.ni_cnd.cn_nameptr[0] == '.') &&
+		(tnd.ni_cnd.cn_nameptr[1] == '.'))) {
+		error = EINVAL;	/* XXX EISDIR?  */
+		goto abort1;
+	}
+
+	/*
+	 * Get the mount point.  If the file system has been unmounted,
+	 * which it may be because we're not holding any vnode locks,
+	 * then v_mount will be NULL.  We're not really supposed to
+	 * read v_mount without holding the vnode lock, but since we
+	 * have fdvp referenced, if fdvp->v_mount changes then at worst
+	 * it will be set to NULL, not changed to another mount point.
+	 * And, of course, since it is up to the file system to
+	 * determine the real lock order, we can't lock both fdvp and
+	 * tdvp at the same time.
+	 */
+	mp = fdvp->v_mount;
+	if (mp == NULL) {
+		error = ENOENT;
+		goto abort1;
+	}
+
+	/*
+	 * Make sure the mount points match.  Again, although we don't
+	 * hold any vnode locks, the v_mount fields may change -- but
+	 * at worst they will change to NULL, so this will never become
+	 * a cross-device rename, because we hold vnode references.
+	 *
+	 * XXX Because nothing is locked and the compiler may reorder
+	 * things here, unmounting the file system at an inopportune
+	 * moment may cause rename to fail with ENXDEV when it really
+	 * should fail with ENOENT.
+	 */
+	tmp = tdvp->v_mount;
+	if (tmp == NULL) {
+		error = ENOENT;
+		goto abort1;
+	}
+
+	if (mp != tmp) {
+		error = EXDEV;
+		goto abort1;
+	}
+
+	/*
+	 * Take the vfs rename lock to avoid cross-directory screw cases.
+	 * Nothing is locked currently, so taking this lock is safe.
+	 */
+	if (fdvp != tdvp) {
+		error = VFS_RENAMELOCK_ENTER(mp);
+		if (error)
+			goto abort1;
+	}
+
+	/*
+	 * Now fdvp, fvp, tdvp, and (if nonnull) tvp are referenced,
+	 * and nothing is locked except for the vfs rename lock.
+	 *
+	 * The next step is a little rain dance to conform to the
+	 * insane lock protocol, even though it does nothing to ward
+	 * off race conditions.
+	 *
+	 * We need tdvp and tvp to be locked.  However, because we have
+	 * unlocked tdvp in order to hold no locks while we take the
+	 * vfs rename lock, tvp may be wrong here, and we can't safely
+	 * lock it even if the sensible file systems will just unlock
+	 * it straight away.  Consequently, we must lock tdvp and then
+	 * relookup tvp to get it locked.
+	 *
+	 * Finally, because the VOP_RENAME protocol is brain-damaged
+	 * and various file systems insanely depend on the semantics of
+	 * this brain damage, the lookup of to must be the last lookup
+	 * before VOP_RENAME.
+	 */
+	vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+	error = relookup(tdvp, &tnd.ni_vp, &tnd.ni_cnd, 0);
+	if (error)
+		goto abort2;
+
+	/*
+	 * Drop the old tvp and pick up the new one -- which might be
+	 * the same, but that doesn't matter to us.  After this, tdvp
+	 * and tvp should both be locked.
+	 */
+	if (tvp != NULL)
+		vrele(tvp);
+	tvp = tnd.ni_vp;
+	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
+	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
+
+	/*
+	 * The old do_sys_rename had various consistency checks here
+	 * involving fvp and tvp.  fvp is bogus already here, and tvp
+	 * will become bogus soon in any sensible file system, so the
+	 * only purpose in putting these checks here is to give lip
+	 * service to these screw cases and to acknowledge that they
+	 * exist, not actually to handle them, but here you go
+	 * anyway...
+	 */
+
+	/*
+	 * Acknowledge that directories and non-directories aren't
+	 * suposed to mix.
+	 */
 	if (tvp != NULL) {
-		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
+		if ((fvp->v_type == VDIR) && (tvp->v_type != VDIR)) {
 			error = ENOTDIR;
-			goto out;
-		} else if (fvp->v_type != VDIR && tvp->v_type == VDIR) {
+			goto abort3;
+		} else if ((fvp->v_type != VDIR) && (tvp->v_type == VDIR)) {
 			error = EISDIR;
-			goto out;
+			goto abort3;
 		}
 	}
 
-	if (fvp == tdvp)
+	/*
+	 * Acknowledge some random screw case, among the dozens that
+	 * might arise.
+	 */
+	if (fvp == tdvp) {
 		error = EINVAL;
+		goto abort3;
+	}
 
 	/*
-	 * Source and destination refer to the same object.
+	 * Acknowledge that POSIX has a wacky screw case.
+	 *
+	 * XXX Eventually the retain flag needs to be passed on to
+	 * VOP_RENAME.
 	 */
 	if (fvp == tvp) {
-		if (retain)
-			error = -1;
-		else if (fromnd.ni_dvp == tdvp &&
-		    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-		    !memcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
-		          fromnd.ni_cnd.cn_namelen))
-			error = -1;
-	}
-	/*
-	 * Prevent cross-mount operation.
-	 */
-	if (error == 0) {
-		if (tond.ni_dvp->v_mount != fromnd.ni_dvp->v_mount) {
-			error = EXDEV;
+		if (retain) {
+			error = 0;
+			goto abort3;
+		} else if ((fdvp == tdvp) &&
+		    (fnd.ni_cnd.cn_namelen == tnd.ni_cnd.cn_namelen) &&
+		    (0 == memcmp(fnd.ni_cnd.cn_nameptr, tnd.ni_cnd.cn_nameptr,
+			fnd.ni_cnd.cn_namelen))) {
+			error = 0;
+			goto abort3;
 		}
 	}
+
+	/*
+	 * Make sure veriexec can screw us up.  (But a race can screw
+	 * up veriexec, of course -- remember, fvp and (soon) tvp are
+	 * bogus.)
+	 */
 #if NVERIEXEC > 0
-	if (!error) {
+	{
 		char *f1, *f2;
 		size_t f1_len;
 		size_t f2_len;
 
-		f1_len = fromnd.ni_cnd.cn_namelen + 1;
+		f1_len = fnd.ni_cnd.cn_namelen + 1;
 		f1 = kmem_alloc(f1_len, KM_SLEEP);
-		strlcpy(f1, fromnd.ni_cnd.cn_nameptr, f1_len);
+		strlcpy(f1, fnd.ni_cnd.cn_nameptr, f1_len);
 
-		f2_len = tond.ni_cnd.cn_namelen + 1;
+		f2_len = tnd.ni_cnd.cn_namelen + 1;
 		f2 = kmem_alloc(f2_len, KM_SLEEP);
-		strlcpy(f2, tond.ni_cnd.cn_nameptr, f2_len);
+		strlcpy(f2, tnd.ni_cnd.cn_nameptr, f2_len);
 
 		error = veriexec_renamechk(curlwp, fvp, f1, tvp, f2);
 
 		kmem_free(f1, f1_len);
 		kmem_free(f2, f2_len);
+
+		if (error)
+			goto abort3;
 	}
 #endif /* NVERIEXEC > 0 */
 
-out:
-	if (!error) {
-		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
-				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
-		VFS_RENAMELOCK_EXIT(fs);
-	} else {
-		VOP_ABORTOP(tond.ni_dvp, &tond.ni_cnd);
-		if (tdvp == tvp)
-			vrele(tdvp);
-		else
-			vput(tdvp);
-		if (tvp)
-			vput(tvp);
-		VFS_RENAMELOCK_EXIT(fs);
-		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		vrele(fvp);
-	}
-out1:
-	pathbuf_destroy(frompb);
-	pathbuf_destroy(topb);
-	return (error == -1 ? 0 : error);
+	/*
+	 * All ready.  Incant the rename vop.
+	 */
+	/* XXX KASSERT(VOP_ISLOCKED(fdvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT(VOP_ISLOCKED(fvp) != LK_EXCLUSIVE); */
+	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
+	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
+	error = VOP_RENAME(fdvp, fvp, &fnd.ni_cnd, tdvp, tvp, &tnd.ni_cnd);
+
+	/*
+	 * VOP_RENAME releases fdvp, fvp, tdvp, and tvp, and unlocks
+	 * tdvp and tvp.  But we can't assert any of that.
+	 */
+	/* XXX KASSERT(VOP_ISLOCKED(fdvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT(VOP_ISLOCKED(fvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT(VOP_ISLOCKED(tdvp) != LK_EXCLUSIVE); */
+	/* XXX KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) != LK_EXCLUSIVE)); */
+
+	/*
+	 * So all we have left to do is to drop the rename lock and
+	 * destroy the pathbufs.
+	 */
+	if (fdvp != tdvp)
+		VFS_RENAMELOCK_EXIT(mp);
+	goto out2;
+
+abort3:	if ((tvp != NULL) && (tvp != tdvp))
+		VOP_UNLOCK(tvp);
+abort2:	VOP_UNLOCK(tdvp);
+	if (fdvp != tdvp)
+		VFS_RENAMELOCK_EXIT(mp);
+abort1:	VOP_ABORTOP(tdvp, &tnd.ni_cnd);
+	vrele(tdvp);
+	if (tvp != NULL)
+		vrele(tvp);
+abort0:	VOP_ABORTOP(fdvp, &fnd.ni_cnd);
+	vrele(fdvp);
+	vrele(fvp);
+out2:	pathbuf_destroy(tpb);
+out1:	pathbuf_destroy(fpb);
+out0:	return error;
 }
 
 /*
