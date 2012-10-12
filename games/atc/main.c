@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2012/10/12 10:44:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2012/10/12 10:44:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,17 +90,17 @@ main(int argc, char *argv[])
 		case '?':
 		case 'u':
 		default: 
-			f_usage++;
+			f_usage = 1;
 			break;
 		case 'l':
-			f_list++;
+			f_list = 1;
 			break;
 		case 's':
 		case 't':
-			f_showscore++;
+			f_showscore = 1;
 			break;
 		case 'p':
-			f_printpath++;
+			f_printpath = 1;
 			break;
 		case 'r':
 			seed = atoi(optarg);
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 		}
 	}
 	if (optind < argc)
-		f_usage++;
+		f_usage = 1;
 	srandom(seed);
 
 	if (f_usage)
