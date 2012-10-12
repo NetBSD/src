@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5 2012/03/20 12:38:33 minoura Exp $
+$NetBSD: version,v 1.6 2012/10/12 18:06:27 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -10,3 +10,5 @@ is taken as the current.
 1.2:	Fix serial console output.
 1.3:	Avoid exception on 68060 in UFS ops.
 1.4:	ffsv2 support.
+1.5:	Make key interrupt to get boot menu works properly even after
+	non ASCII keys (CTRL, OPT.1 etc.) are pressed during boot.
