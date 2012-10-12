@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1747 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1748 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	zoneinfo: Import tzdata2012f. [apb 20120927]
 	kernel: add clock_nanosleep(2) [christos 20121001]
 	wpa:	New wpa_supplicant(8) and hostapd(8) 1.0 [christos 20121007]
+	x68k: Add network bootloader for Neptune-X and Nereid Ethernet.
+		[tsutsui,isaki 20121012]
