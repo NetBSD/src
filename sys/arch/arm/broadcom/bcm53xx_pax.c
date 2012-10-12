@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.5 2012/09/27 00:25:26 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.6 2012/10/12 17:18:02 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -218,8 +218,6 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	bcmpax_write_4(sc, PCIE_CLK_CONTROL, 3);
 	delay(250);
 	bcmpax_write_4(sc, PCIE_CLK_CONTROL, 1);
-	// delay(100*1000);
-
 
 	uint32_t v = bcmpax_read_4(sc, PCIE_STRAP_STATUS);
 	const bool enabled = (v & STRAP_PCIE_IF_ENABLE) != 0;
@@ -290,6 +288,13 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	const bool ok = pci_get_capability(&sc->sc_pc, 0, PCI_CAP_PCIEXPRESS,
 	    &offset, NULL);
 	KASSERT(ok);
+
+	/*
+	 * This will force the device to negotiate to a max of gen1.
+	 */
+	if (device_cfdata(self)->cf_flags & 1) {
+		bcmpax_conf_write(sc, 0, offset + PCI_PCIE_LCSR2, 1); 
+	}
 
 	/*
 	 * Now we wait (.25 sec) for the link to come up.
