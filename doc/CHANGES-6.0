@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.216 2012/10/10 17:08:14 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.217 2012/10/12 22:11:10 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8836,4 +8836,12 @@ distrib/notes/common/main			1.490
 	Refer to the list of mirrors at http://www.NetBSD.org/mirrors
 	in "Quick install notes for the impatient".
 	[apb, ticket #599]
+
+distrib/notes/common/main			patched by hand
+
+	Update the release notes.
+
+sys/sys/param.h					patched by hand
+
+	Welcome to 6.0!
 
