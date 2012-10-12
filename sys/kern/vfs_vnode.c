@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.16 2012/10/12 21:10:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -78,11 +78,15 @@
  *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
  *	- Reclamation of inactive vnode, via vget(9).
  *
+ *	Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9)
+ *	was another, traditional way.  Currently, only the draining thread
+ *	recycles the vnodes.  This behaviour might be revisited.
+ *
  *	The life-cycle ends when the last reference is dropped, usually
  *	in VOP_REMOVE(9).  In such case, VOP_INACTIVE(9) is called to inform
  *	the file system that vnode is inactive.  Via this call, file system
- *	indicates whether vnode should be recycled (usually, count of links
- *	is checked i.e. whether file was removed).
+ *	indicates whether vnode can be recycled (usually, it checks its own
+ *	references, e.g. count of links, whether the file was removed).
  *
  *	Depending on indication, vnode can be put into a free list (cache),
  *	or cleaned via vclean(9), which calls VOP_RECLAIM(9) to disassociate
@@ -120,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.16 2012/10/12 21:10:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,18 +151,23 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $
 u_int			numvnodes		__cacheline_aligned;
 
 static pool_cache_t	vnode_cache		__read_mostly;
-static kmutex_t		vnode_free_list_lock	__cacheline_aligned;
 
+/*
+ * There are two free lists: one is for vnodes which have no buffer/page
+ * references and one for those which do (i.e. v_holdcnt is non-zero).
+ * Vnode recycling mechanism first attempts to look into the former list.
+ */
+static kmutex_t		vnode_free_list_lock	__cacheline_aligned;
 static vnodelst_t	vnode_free_list		__cacheline_aligned;
 static vnodelst_t	vnode_hold_list		__cacheline_aligned;
-static vnodelst_t	vrele_list		__cacheline_aligned;
+static kcondvar_t	vdrain_cv		__cacheline_aligned;
 
+static vnodelst_t	vrele_list		__cacheline_aligned;
 static kmutex_t		vrele_lock		__cacheline_aligned;
 static kcondvar_t	vrele_cv		__cacheline_aligned;
 static lwp_t *		vrele_lwp		__cacheline_aligned;
 static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
-static kcondvar_t	vdrain_cv		__cacheline_aligned;
 
 static int		cleanvnode(void);
 static void		vdrain_thread(void *);
