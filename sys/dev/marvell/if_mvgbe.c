@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.22 2012/10/04 14:21:00 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.23 2012/10/12 10:38:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.22 2012/10/04 14:21:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.23 2012/10/12 10:38:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1741,9 +1741,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			continue;
 		}
 
-		if (total_len <= MVGBE_RX_CSUM_MIN_BYTE)  /* XXX documented? */
-			goto sw_csum;
-
 		if (rxstat & MVGBE_RX_IP_FRAME_TYPE) {
 			int flgs = 0;
 
@@ -1751,8 +1748,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			flgs |= M_CSUM_IPv4;
 			if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
 				flgs |= M_CSUM_IPv4_BAD;
-			else if ((bufsize & MVGBE_RX_MAX_FRAME_LEN_ERROR)
-			    == 0) {
+			else if ((bufsize & MVGBE_RX_IP_FRAGMENT) == 0) {
 				/*
 				 * Check TCPv4/UDPv4 checksum for
 				 * non-fragmented packet only.
@@ -1775,7 +1771,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			}
 			m->m_pkthdr.csum_flags = flgs;
 		}
-sw_csum:
 
 		/*
 		 * Try to allocate a new jumbo buffer. If that

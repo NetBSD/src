@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.4 2012/10/04 14:21:00 msaitoh Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.5 2012/10/12 10:38:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -430,5 +430,7 @@ struct mvgbe_rx_desc {
 #define MVGBE_RX_UNKNOWN_DA		(1 << 28)
 #define MVGBE_RX_ENABLE_INTERRUPT	(1 << 29)
 #define MVGBE_RX_L4_CHECKSUM_OK		(1 << 30)
+
+#define MVGBE_RX_IP_FRAGMENT		(1 << 2)
 
 #endif	/* _MVGEREG_H_ */
