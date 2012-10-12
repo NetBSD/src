@@ -1,4 +1,5 @@
-/*	$NetBSD: conf.c,v 1.10 2012/10/12 20:15:52 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.1 2012/10/12 20:15:53 tsutsui Exp $	*/
+/*	Id: conf.c,v 1.7 2011/04/10 09:20:27 isaki Exp 	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -28,6 +29,9 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
+#include <lib/libsa/dev_net.h>
+#include <netinet/in.h>
+#include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/lfs.h>
 #include <lib/libsa/cd9660.h>
@@ -36,30 +40,25 @@
 #include "libx68k.h"
 
 struct devsw devsw[] = {
-	{ "sd",	sdstrategy, sdopen, sdclose, noioctl },
-	{ "cd",	cdstrategy, cdopen, cdclose, noioctl },
-	{ "fd",	fdstrategy, fdopen, fdclose, noioctl },
-	{ 0, 0, 0, 0, 0 }
+	{ "nfs", net_strategy, net_open, net_close, net_ioctl },
 };
-
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 const struct devspec devspec[] = {
-	{ "sd", 0, 7, 0 },
-	{ "cd", 1, 7, 0 },
-	{ "fd", 2, 3, 0 },
-	{ NULL, 0, 0, 0 }
+	{ "nfs", 0, 1, 1 },
+	{ 0,    0, 0, 0 },
 };
 
 struct fs_ops file_system[] = {
-	FS_OPS(ffsv1),
-	FS_OPS(ffsv2),
-	FS_OPS(lfsv1),
-	FS_OPS(lfsv2),
-	FS_OPS(cd9660),
-	FS_OPS(ustarfs),
+	FS_OPS(nfs),
 };
-
 int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 struct open_file files[SOPEN_MAX];
+
+extern struct netif_driver ne_netif_driver;
+
+struct netif_driver *netif_drivers[] = {
+	&ne_netif_driver,
+};
+int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
