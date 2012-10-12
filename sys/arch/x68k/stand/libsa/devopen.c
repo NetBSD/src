@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2011/04/11 14:00:02 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6 2012/10/12 20:15:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -60,14 +60,19 @@ devparse(const char *fname, int *dev, int *unit, int *part, char **file)
 	s += strlen(devspec[i].ds_name);
 	*dev = devspec[i].ds_dev;
 
-	*unit = *s++ - '0';
-	if (*unit < 0 || *unit > devspec[i].ds_maxunit)
-		/* bad unit */
-		return ENODEV;
-	*part = *s++ - 'a';
-	if (*part < 0 || *part > MAXPARTITIONS)
-		/* bad partition */
-		return ENODEV;
+	if (devspec[i].ds_net) {
+		*unit = 0;
+		*part = 0;
+	} else {
+		*unit = *s++ - '0';
+		if (*unit < 0 || *unit > devspec[i].ds_maxunit)
+			/* bad unit */
+			return ENODEV;
+		*part = *s++ - 'a';
+		if (*part < 0 || *part > MAXPARTITIONS)
+			/* bad partition */
+			return ENODEV;
+	}
 
 	if (*s++ != ':')
 		return ENODEV;

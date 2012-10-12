@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.5 2007/11/18 04:59:51 isaki Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.6 2012/10/12 20:15:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -34,6 +34,7 @@ struct devspec {
 	const char *ds_name;
 	int ds_dev;
 	int ds_maxunit;
+	int ds_net;
 };
 
 /* consio.c */
@@ -68,3 +69,7 @@ extern int devopen_open_dir;
 
 /* chdsk.c */
 int changedisk_hook(struct open_file *);
+
+/* clock.c */
+void delay(int);
+extern int rtc_offset;
