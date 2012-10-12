@@ -27,13 +27,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _ARM32_BUS_DMA_PRIVATE
 #define GMAC_PRIVATE
 
 #include "locators.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.9 2012/10/08 20:54:10 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.10 2012/10/12 23:25:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -61,12 +62,14 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.9 2012/10/08 20:54:10 matt Exp $")
 #include <arm/broadcom/bcm53xx_var.h>
 
 #define	BCMETH_RCVOFFSET	6
-#define	BCMETH_MAXTXMBUFS	32
+#define	BCMETH_MAXTXMBUFS	128
 #define	BCMETH_NTXSEGS		30
 #define	BCMETH_MAXRXMBUFS	255
 #define	BCMETH_MINRXMBUFS	64
 #define	BCMETH_NRXSEGS		1
 #define	BCMETH_RINGSIZE		PAGE_SIZE
+
+#define	BCMETH_RCVMAGIC		0xfeedface
 
 static int bcmeth_ccb_match(device_t, cfdata_t, void *);
 static void bcmeth_ccb_attach(device_t, device_t, void *);
@@ -86,6 +89,7 @@ struct bcmeth_txqueue {
 	bus_size_t txq_reg_xmtptr;
 	bus_size_t txq_reg_xmtctl;
 	bus_size_t txq_reg_xmtsts0;
+	bus_size_t txq_reg_xmtsts1;
 	bus_dma_segment_t txq_descmap_seg;
 };
 
@@ -104,6 +108,7 @@ struct bcmeth_rxqueue {
 	bus_size_t rxq_reg_rcvptr;
 	bus_size_t rxq_reg_rcvctl;
 	bus_size_t rxq_reg_rcvsts0;
+	bus_size_t rxq_reg_rcvsts1;
 	bus_dma_segment_t rxq_descmap_seg;
 };
 
@@ -141,8 +146,10 @@ struct bcmeth_softc {
 
 	struct evcnt sc_ev_intr;
 	struct evcnt sc_ev_soft_intr;
-	struct evcnt sc_ev_work;;
+	struct evcnt sc_ev_work;
 	struct evcnt sc_ev_tx_stall;
+	struct evcnt sc_ev_rx_badmagic_lo;
+	struct evcnt sc_ev_rx_badmagic_hi;
 
 	struct ifqueue sc_rx_bufcache;
 	struct bcmeth_mapcache *sc_rx_mapcache;     
@@ -203,6 +210,13 @@ static void bcmeth_worker(struct work *, void *);
 static int bcmeth_mediachange(struct ifnet *);
 static void bcmeth_mediastatus(struct ifnet *, struct ifmediareq *);
 
+static struct arm32_dma_range bcmeth_dma_ranges[2];
+static struct arm32_bus_dma_tag bcmeth_dma_tag = {
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+
 static inline uint32_t
 bcmeth_read_4(struct bcmeth_softc *sc, bus_size_t o)
 {
@@ -251,6 +265,25 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ccbaa->ccbaa_dmat;
 	bus_space_subregion(sc->sc_bst, ccbaa->ccbaa_ccb_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+
+	/*
+	 * Initialize a bus_dma_tag to prefer memory over 256MB.
+	 */
+	if (bcmeth_dma_tag._nranges != sc->sc_dmat->_nranges) {
+		KASSERT(sc->sc_dmat->_nranges == 2);
+		bcmeth_dma_ranges[0] = sc->sc_dmat->_ranges[1];
+		bcmeth_dma_ranges[1] = sc->sc_dmat->_ranges[0];
+		bcmeth_dma_tag._ranges = bcmeth_dma_ranges;
+		bcmeth_dma_tag._nranges = sc->sc_dmat->_nranges;
+	}
+
+	/*
+	 * If we initialized our dma tag, then use it.
+	 */
+	if (bcmeth_dma_tag._nranges > 0) {
+		sc->sc_dmat = &bcmeth_dma_tag;
+		KASSERT(sc->sc_dmat->_ranges[0].dr_busbase - sc->sc_dmat->_ranges[1].dr_busbase == 0x10000000);
+	}
 
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
         if (eaprop == NULL) {
@@ -372,6 +405,10 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "work items");
 	evcnt_attach_dynamic(&sc->sc_ev_tx_stall, EVCNT_TYPE_MISC,
 	    NULL, xname, "tx stalls");
+	evcnt_attach_dynamic(&sc->sc_ev_rx_badmagic_lo, EVCNT_TYPE_MISC,
+	    NULL, xname, "rx badmagic lo");
+	evcnt_attach_dynamic(&sc->sc_ev_rx_badmagic_hi, EVCNT_TYPE_MISC,
+	    NULL, xname, "rx badmagic hi");
 }
 
 static int
@@ -763,15 +800,14 @@ bcmeth_dmamem_alloc(
 	*kvap = NULL;
 	*map = NULL;
 
-	error = bus_dmamem_alloc(dmat, map_size, PAGE_SIZE, 0,
+	error = bus_dmamem_alloc(dmat, map_size, 2*PAGE_SIZE, 0,
 	   seg, 1, &nseg, 0);
 	if (error)
 		return error;
 
 	KASSERT(nseg == 1);
 
-	error = bus_dmamem_map(dmat, seg, nseg, map_size, (void **)kvap,
-	    BUS_DMA_COHERENT);
+	error = bus_dmamem_map(dmat, seg, nseg, map_size, (void **)kvap, 0);
 	if (error == 0) {
 		error = bus_dmamap_create(dmat, map_size, 1, map_size, 0, 0,
 		    map);
@@ -826,8 +862,12 @@ bcmeth_rx_buf_alloc(
 		return NULL;
 	}
 	KASSERT(map->dm_mapsize == MCLBYTES);
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD);
+	*mtod(m, uint32_t *) = BCMETH_RCVMAGIC;
+	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	bus_dmamap_sync(sc->sc_dmat, map, sizeof(uint32_t),
+	    map->dm_mapsize - sizeof(uint32_t), BUS_DMASYNC_PREREAD);
 
 	return m;
 }
@@ -977,19 +1017,26 @@ bcmeth_rxq_consume(
 		bus_dmamap_sync(sc->sc_dmat, map, 0, arm_dcache_align,
 		    BUS_DMASYNC_POSTREAD);
 		memcpy(&rxsts, rxq->rxq_mhead->m_data, 4);
+#if 0
+		KASSERTMSG(rxsts != BCMETH_RCVMAGIC, "currdscr=%u consumer=%zd",
+		    currdscr, consumer - rxq->rxq_first);
+#endif
 
 		/*
 		 * Get the count of descriptors.  Fetch the correct number
 		 * of mbufs.
 		 */
-		size_t desc_count = __SHIFTOUT(rxsts, RXSTS_DESC_COUNT) + 1;
+		size_t desc_count = rxsts != BCMETH_RCVMAGIC ? __SHIFTOUT(rxsts, RXSTS_DESC_COUNT) + 1 : 1;
 		struct mbuf *m = rxq->rxq_mhead;
 		struct mbuf *m_last = m;
 		for (size_t i = 1; i < desc_count; i++) {
 			if (++consumer == rxq->rxq_last) {
 				consumer = rxq->rxq_first;
 			}
-			KASSERT(consumer != rxq->rxq_first + currdscr);
+			KASSERTMSG(consumer != rxq->rxq_first + currdscr,
+			    "i=%zu rxsts=%#x desc_count=%zu currdscr=%u consumer=%zd",
+			    i, rxsts, desc_count, currdscr,
+			    consumer - rxq->rxq_first);
 			m_last = m_last->m_next;
 		}
 
@@ -1000,7 +1047,15 @@ bcmeth_rxq_consume(
 			rxq->rxq_mtail = &rxq->rxq_mhead;
 		m_last->m_next = NULL;
 
-		if (rxsts & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
+		if (rxsts == BCMETH_RCVMAGIC) {	
+			ifp->if_ierrors++;
+			if ((m->m_ext.ext_paddr >> 28) == 8) {
+				sc->sc_ev_rx_badmagic_lo.ev_count++;
+			} else {
+				sc->sc_ev_rx_badmagic_hi.ev_count++;
+			}
+			IF_ENQUEUE(&sc->sc_rx_bufcache, m);
+		} else if (rxsts & (RXSTS_CRC_ERROR|RXSTS_OVERSIZED|RXSTS_PKT_OVERFLOW)) {
 			aprint_error_dev(sc->sc_dev, "[%zu]: count=%zu rxsts=%#x\n",
 			    consumer - rxq->rxq_first, desc_count, rxsts);
 			/*
@@ -1137,6 +1192,7 @@ bcmeth_rxq_attach(
 	rxq->rxq_reg_rcvctl = GMAC_RCVCONTROL;
 	rxq->rxq_reg_rcvptr = GMAC_RCVPTR;
 	rxq->rxq_reg_rcvsts0 = GMAC_RCVSTATUS0;
+	rxq->rxq_reg_rcvsts1 = GMAC_RCVSTATUS1;
 
 	return 0;
 }
@@ -1186,6 +1242,7 @@ bcmeth_txq_attach(
 	txq->txq_reg_xmtctl = GMAC_XMTCONTROL;
 	txq->txq_reg_xmtptr = GMAC_XMTPTR;
 	txq->txq_reg_xmtsts0 = GMAC_XMTSTATUS0;
+	txq->txq_reg_xmtsts1 = GMAC_XMTSTATUS1;
 
 	bcmeth_txq_reset(sc, txq);
 
@@ -1292,7 +1349,8 @@ bcmeth_txq_produce(
 	     producer->txdb_flags, producer->txdb_buflen,
 	     producer->txdb_addrlo, producer->txdb_addrhi);
 #endif
-	bcmeth_txq_desc_presync(sc, txq, start, count);
+	if (count)
+		bcmeth_txq_desc_presync(sc, txq, start, count);
 
 	/*
 	 * Reduce free count by the number of segments we consumed.
@@ -1308,12 +1366,11 @@ bcmeth_txq_produce(
 	    txq->txq_producer - txq->txq_first, producer - txq->txq_first);
 #endif
 
-	if (++producer == txq->txq_last)
+	if (producer + 1 == txq->txq_last)
 		txq->txq_producer = txq->txq_first;
 	else
-		txq->txq_producer = producer;
+		txq->txq_producer = producer + 1;
 	IF_ENQUEUE(&txq->txq_mbufs, m);
-	bpf_mtap(&sc->sc_if, m);
 
 	/*
 	 * Let the transmitter know there's more to do
@@ -1415,6 +1472,7 @@ bcmeth_txq_consume(
 			printf("%s: mbuf %p: consumed a %u byte packet\n",
 			    __func__, m, m->m_pkthdr.len);
 #endif
+			bpf_mtap(ifp, m);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)
@@ -1584,8 +1642,22 @@ bcmeth_intr(void *arg)
 		}
 
 		if (intstatus) {
-			aprint_error_dev(sc->sc_dev, "intr: intstatus=%#x\n",
-			    intstatus);
+			aprint_error_dev(sc->sc_dev,
+			    "intr: intstatus=%#x\n", intstatus);
+			aprint_error_dev(sc->sc_dev,
+			    "rcvbase=%p/%#lx rcvptr=%#x rcvsts=%#x/%#x\n",
+			    sc->sc_rxq.rxq_first,
+			    sc->sc_rxq.rxq_descmap->dm_segs[0].ds_addr,
+			    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvptr),
+			    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvsts0),
+			    bcmeth_read_4(sc, sc->sc_rxq.rxq_reg_rcvsts1));
+			aprint_error_dev(sc->sc_dev,
+			    "xmtbase=%p/%#lx xmtptr=%#x xmtsts=%#x/%#x\n",
+			    sc->sc_txq.txq_first,
+			    sc->sc_txq.txq_descmap->dm_segs[0].ds_addr,
+			    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtptr),
+			    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtsts0),
+			    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtsts1));
 			Debugger();
 			sc->sc_intmask &= ~intstatus;
 			work_flags |= WORK_REINIT;
