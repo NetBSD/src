@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.95 2012/04/08 11:27:44 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.96 2012/10/12 19:45:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -674,9 +674,9 @@ struct netbsd32_stat12 {		/* NetBSD-1.2 stat struct */
 	uid_t		st_uid;		/* user ID of the file's owner */
 	gid_t		st_gid;		/* group ID of the file's group */
 	uint32_t	st_rdev;	/* device type */
-	struct netbsd32_timespec st_atimespec;/* time of last access */
-	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
-	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
+	struct netbsd32_timespec50 st_atimespec;/* time of last access */
+	struct netbsd32_timespec50 st_mtimespec;/* time of last data modification */
+	struct netbsd32_timespec50 st_ctimespec;/* time of last file status change */
 	netbsd32_int64	st_size;	/* file size, in bytes */
 	netbsd32_int64	st_blocks;	/* blocks allocated for file */
 	uint32_t	st_blksize;	/* optimal blocksize for I/O */
@@ -696,9 +696,9 @@ struct netbsd32_stat43 {		/* BSD-4.3 stat struct */
 	uint16_t  st_gid;		/* group ID of the file's group */
 	uint16_t  st_rdev;		/* device type */
 	int32_t	  st_size;		/* file size, in bytes */
-	struct netbsd32_timespec st_atimespec;/* time of last access */
-	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
-	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
+	struct netbsd32_timespec50 st_atimespec;/* time of last access */
+	struct netbsd32_timespec50 st_mtimespec;/* time of last data modification */
+	struct netbsd32_timespec50 st_ctimespec;/* time of last file status change */
 	int32_t	  st_blksize;		/* optimal blocksize for I/O */
 	int32_t	  st_blocks;		/* blocks allocated for file */
 	uint32_t  st_flags;		/* user defined flags for file */
@@ -713,16 +713,16 @@ struct netbsd32_stat13 {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	uint32_t  st_rdev;		/* device type */
-	struct netbsd32_timespec st_atimespec;/* time of last access */
-	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
-	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
+	struct netbsd32_timespec50 st_atimespec;/* time of last access */
+	struct netbsd32_timespec50 st_mtimespec;/* time of last data modification */
+	struct netbsd32_timespec50 st_ctimespec;/* time of last file status change */
 	netbsd32_int64	  st_size;		/* file size, in bytes */
 	netbsd32_uint64  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	uint32_t  st_flags;		/* user defined flags for file */
 	uint32_t  st_gen;		/* file generation number */
 	uint32_t  st_spare;		/* file generation number */
-	struct	  netbsd32_timespec st_birthtimespec;
+	struct	  netbsd32_timespec50 st_birthtimespec;
 	uint32_t  st_spare2;
 };
 
