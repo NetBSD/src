@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.6 2011/02/16 13:15:49 jruoho Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.7 2012/10/12 13:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6 2011/02/16 13:15:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.7 2012/10/12 13:02:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,6 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.6 2011/02/16 13:15:49 jruoho Exp $");
 #include <dev/acpi/wmi/wmi_acpivar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#include <sys/sysctl.h>
+
+/*
+ * HP CMI whitepaper:
+ *     http://h20331.www2.hp.com/Hpsub/downloads/cmi_whitepaper.pdf
+ */
 
 #define _COMPONENT			ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME			("wmi_hp")
@@ -93,6 +100,12 @@ ACPI_MODULE_NAME			("wmi_hp")
 
 #define WMI_HP_HOTKEY_BRIGHTNESS_UP	0x02
 #define WMI_HP_HOTKEY_BRIGHTNESS_DOWN	0x03
+#define WMI_HP_HOTKEY_PROG1		0x20e6
+#define WMI_HP_HOTKEY_MEDIA1		0x20e8
+#define WMI_HP_HOTKEY_MEDIA2		0x2142
+#define WMI_HP_HOTKEY_INFO		0x213b
+#define WMI_HP_HOTKEY_DIRECTION		0x2169
+#define WMI_HP_HOTKEY_HELP		0x231b
 /*      WMI_HP_HOTKEY_UNKNOWN		0xXX */
 
 #define WMI_HP_SWITCH_WLAN		0x01
@@ -118,12 +131,21 @@ ACPI_MODULE_NAME			("wmi_hp")
 
 #define WMI_HP_GUID_EVENT		"95F24279-4D7B-4334-9387-ACCDC67EF61C"
 #define WMI_HP_GUID_METHOD		"5FB7F034-2C63-45E9-BE91-3D44E2C707E4"
+#define WMI_HP_GUID_CMI			"2D114B49-2DFB-4130-B8FE-4A3C09E75133"
 
 #define WMI_HP_SENSOR_WLAN		0
 #define WMI_HP_SENSOR_BT		1
 #define WMI_HP_SENSOR_WWAN		2
-#define WMI_HP_SENSOR_COUNT		3
-#define WMI_HP_SENSOR_SIZE		3 * sizeof(envsys_data_t)
+#define WMI_HP_SENSOR_HDDTEMP		3
+#define WMI_HP_SENSOR_DISPLAY		4
+#define WMI_HP_SENSOR_DOCK		5
+#define WMI_HP_SENSOR_COUNT		6
+#define WMI_HP_SENSOR_SIZE	WMI_HP_SENSOR_COUNT * sizeof(envsys_data_t)
+
+#define ACPI_HP_CMI_PATHS		0x01
+#define ACPI_HP_CMI_ENUMS		0x02
+#define ACPI_HP_CMI_FLAGS		0x04
+#define ACPI_HP_CMI_MAX_INSTANCE	0x08
 
 struct wmi_hp_softc {
 	device_t		sc_dev;
@@ -143,13 +165,17 @@ static void	wmi_hp_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void	wmi_hp_hotkey(void *);
 static bool	wmi_hp_method(struct wmi_hp_softc *);
 static bool	wmi_hp_method_read(struct wmi_hp_softc *, uint8_t);
-
-#if 0
 static bool	wmi_hp_method_write(struct wmi_hp_softc *, uint8_t, uint32_t);
-#endif
 
 static void	wmi_hp_sensor_init(struct wmi_hp_softc *);
-static void	wmi_hp_sensor_update(void *);
+static void	wmi_hp_sensor_switch_update(void *);
+static void	wmi_hp_sensor_refresh(struct sysmon_envsys *, envsys_data_t *);
+
+static void sysctl_wmi_hp_setup(struct wmi_hp_softc *);
+static int sysctl_wmi_hp_set_als(SYSCTLFN_PROTO);
+static struct sysctllog *wmihp_sysctllog = NULL;
+static int wmihp_als = 0;
+static struct wmi_hp_softc *wmi_hp_sc = NULL;  /* XXX */
 
 CFATTACH_DECL_NEW(wmihp, sizeof(struct wmi_hp_softc),
     wmi_hp_match, wmi_hp_attach, wmi_hp_detach, NULL);
@@ -193,7 +219,9 @@ wmi_hp_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_sensor == NULL)
 		return;
 
+	wmi_hp_sc = sc; /* XXX Can I pass sc as a cookie to sysctl? */
 	wmi_hp_sensor_init(sc);
+	sysctl_wmi_hp_setup(sc);
 }
 
 static int
@@ -214,6 +242,11 @@ wmi_hp_detach(device_t self, int flags)
 		kmem_free(sc->sc_arg, WMI_HP_METHOD_ARG_SIZE);
 
 	pmf_device_deregister(self);
+
+	if (wmihp_sysctllog != NULL)
+		sysctl_teardown(&wmihp_sysctllog);
+	wmihp_sysctllog = NULL;
+	wmi_hp_sc = NULL;
 
 	return 0;
 }
@@ -283,7 +316,7 @@ wmi_hp_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	switch (val) {
 
 	case WMI_HP_EVENT_SWITCH:
-		rv = AcpiOsExecute(handler, wmi_hp_sensor_update, self);
+		rv = AcpiOsExecute(handler, wmi_hp_sensor_switch_update, self);
 		break;
 
 	case WMI_HP_EVENT_HOTKEY:
@@ -327,6 +360,24 @@ wmi_hp_hotkey(void *aux)
 		pmf_event_inject(NULL, PMFE_DISPLAY_BRIGHTNESS_DOWN);
 		break;
 
+	case WMI_HP_HOTKEY_PROG1:
+		aprint_debug_dev(self, "PROG1 hotkey pressed\n");
+		break;
+	case WMI_HP_HOTKEY_MEDIA1:
+		aprint_debug_dev(self, "MEDIA1 hotkey pressed\n");
+		break;
+	case WMI_HP_HOTKEY_MEDIA2:
+		aprint_debug_dev(self, "MEDIA2 hotkey pressed\n");
+		break;
+	case WMI_HP_HOTKEY_INFO:
+		aprint_debug_dev(self, "INFO hotkey pressed\n");
+		break;
+	case WMI_HP_HOTKEY_DIRECTION:
+		aprint_debug_dev(self, "DIRECTION hotkey pressed\n");
+		break;
+	case WMI_HP_HOTKEY_HELP:
+		aprint_debug_dev(self, "HELP hotkey pressed\n");
+		break;
 	default:
 		aprint_debug_dev(self, "unknown hotkey 0x%02x\n", sc->sc_val);
 		break;
@@ -370,13 +421,37 @@ wmi_hp_method(struct wmi_hp_softc *sc)
 	 */
 	val = (uint32_t *)obj->Buffer.Pointer;
 
-	if (val[1] != 0) {
-		rv = AE_ERROR;
-		goto out;
-	}
-
 	sc->sc_val = val[2];
 
+	switch (val[1]) {
+	case 0: /* Ok. */
+		break;
+	case 2: /* wrong signature */
+		rv = AE_ERROR;
+		aprint_debug_dev(sc->sc_dev, "wrong signature "
+		    "(cmd = 0x%02X): %s\n", cmd, AcpiFormatException(rv));
+		break;
+	case 3: /* unknown command */
+		rv = AE_ERROR;
+		aprint_debug_dev(sc->sc_dev, "unknown command "
+		    "(cmd = 0x%02X): %s\n", cmd, AcpiFormatException(rv));
+		break;
+	case 4: /* unknown command type */
+		rv = AE_ERROR;
+		aprint_debug_dev(sc->sc_dev, "unknown command type "
+		    "(cmd = 0x%02X): %s\n", cmd, AcpiFormatException(rv));
+		break;
+	case 5: /* invalid parameters */
+		rv = AE_ERROR;
+		aprint_debug_dev(sc->sc_dev, "invalid parameters "
+		    "(cmd = 0x%02X): %s\n", cmd, AcpiFormatException(rv));
+		break;
+	default: /* unknown error */
+		rv = AE_ERROR;
+		aprint_debug_dev(sc->sc_dev, "unknown error "
+		    "(cmd = 0x%02X): %s\n", cmd, AcpiFormatException(rv));
+		break;
+	}
 out:
 	if (obuf.Pointer != NULL)
 		ACPI_FREE(obuf.Pointer);
@@ -403,7 +478,6 @@ wmi_hp_method_read(struct wmi_hp_softc *sc, uint8_t cmd)
 	return wmi_hp_method(sc);
 }
 
-#if 0
 static bool
 wmi_hp_method_write(struct wmi_hp_softc *sc, uint8_t cmd, uint32_t val)
 {
@@ -416,26 +490,19 @@ wmi_hp_method_write(struct wmi_hp_softc *sc, uint8_t cmd, uint32_t val)
 
 	return wmi_hp_method(sc);
 }
-#endif
+
 
 static void
-wmi_hp_sensor_init(struct wmi_hp_softc *sc)
+wmi_hp_switch_init(struct wmi_hp_softc *sc)
 {
-	int i, j, sensor[3];
+	int i, sensor[3];
 
 	const char desc[][ENVSYS_DESCLEN] = {
 		"wireless", "bluetooth", "mobile"
 	};
 
-	KDASSERT(sc->sc_sme == NULL);
-	KDASSERT(sc->sc_sensor != NULL);
-
-	(void)memset(sc->sc_sensor, 0, WMI_HP_SENSOR_SIZE);
-
 	if (wmi_hp_method_read(sc, WMI_HP_METHOD_CMD_SWITCH) != true)
 		return;
-
-	sc->sc_sme = sysmon_envsys_create();
 
 	sensor[0] = WMI_HP_SWITCH_WLAN;
 	sensor[1] = WMI_HP_SWITCH_BT;
@@ -445,7 +512,7 @@ wmi_hp_sensor_init(struct wmi_hp_softc *sc)
 	CTASSERT(WMI_HP_SENSOR_BT   == 1);
 	CTASSERT(WMI_HP_SENSOR_WWAN == 2);
 
-	for (i = j = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++) {
 
 		if ((sc->sc_val & sensor[i]) == 0)
 			continue;
@@ -457,21 +524,69 @@ wmi_hp_sensor_init(struct wmi_hp_softc *sc)
 
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 			&sc->sc_sensor[i]) != 0)
-			goto fail;
+			break;
+	}
+}
 
-		j++;
+static void
+wmi_hp_sensor_init(struct wmi_hp_softc *sc)
+{
+	int sensor;
+
+	KDASSERT(sc->sc_sme == NULL);
+	KDASSERT(sc->sc_sensor != NULL);
+
+	(void)memset(sc->sc_sensor, 0, WMI_HP_SENSOR_SIZE);
+
+	sc->sc_sme = sysmon_envsys_create();
+
+	wmi_hp_switch_init(sc);
+
+	if (wmi_hp_method_read(sc, WMI_HP_METHOD_CMD_HDDTEMP) == true) {
+		sensor = WMI_HP_SENSOR_HDDTEMP;
+		(void)strlcpy(sc->sc_sensor[sensor].desc, "hddtemp",
+		    ENVSYS_DESCLEN);
+		sc->sc_sensor[sensor].state = ENVSYS_SVALID;
+		sc->sc_sensor[sensor].units = ENVSYS_STEMP;
+		sc->sc_sensor[sensor].value_cur =
+		    sc->sc_val * 1000000 + 273150000;
+
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+			&sc->sc_sensor[sensor]);
 	}
 
-	if (j == 0)
-		goto fail;
+	if (wmi_hp_method_read(sc, WMI_HP_METHOD_CMD_DISPLAY) == true) {
+		sensor = WMI_HP_SENSOR_DISPLAY;
+		(void)strlcpy(sc->sc_sensor[sensor].desc, "display",
+		    ENVSYS_DESCLEN);
+		sc->sc_sensor[sensor].state = ENVSYS_SVALID;
+		sc->sc_sensor[sensor].units = ENVSYS_INDICATOR;
+		sc->sc_sensor[sensor].value_cur = sc->sc_val;
+		
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+			&sc->sc_sensor[sensor]);
+	}
 
-	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	if (wmi_hp_method_read(sc, WMI_HP_METHOD_CMD_DOCK) == true) {
+		sensor = WMI_HP_SENSOR_DOCK;
+		(void)strlcpy(sc->sc_sensor[sensor].desc, "docking station",
+		    ENVSYS_DESCLEN);
+		sc->sc_sensor[sensor].state = ENVSYS_SVALID;
+		sc->sc_sensor[sensor].units = ENVSYS_INDICATOR;
+		sc->sc_sensor[sensor].value_cur = sc->sc_val;
+		
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+			&sc->sc_sensor[sensor]);
+	}
+
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = wmi_hp_sensor_refresh;
 	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 
 	if (sysmon_envsys_register(sc->sc_sme) != 0)
 		goto fail;
 
-	wmi_hp_sensor_update(sc->sc_dev);
+	wmi_hp_sensor_switch_update(sc->sc_dev);
 
 	return;
 
@@ -486,7 +601,7 @@ fail:
 }
 
 static void
-wmi_hp_sensor_update(void *aux)
+wmi_hp_sensor_switch_update(void *aux)
 {
 	struct wmi_hp_softc *sc;
 	device_t self = aux;
@@ -531,6 +646,37 @@ wmi_hp_sensor_update(void *aux)
 	}
 }
 
+static void
+wmi_hp_sensor_read(struct wmi_hp_softc *sc, envsys_data_t *sensor, int cmd)
+{
+	if (wmi_hp_method_read(sc, cmd) == true) {
+		sensor->state = ENVSYS_SVALID;
+		sensor->value_cur = sc->sc_val;
+	} else {
+		sensor->state = ENVSYS_SINVALID;
+	}
+}
+
+static void
+wmi_hp_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct wmi_hp_softc *sc = sme->sme_cookie;
+	envsys_data_t *sensor;
+
+	sensor = &sc->sc_sensor[WMI_HP_SENSOR_HDDTEMP];
+	wmi_hp_sensor_read(sc, sensor, WMI_HP_METHOD_CMD_HDDTEMP);
+	if (sensor->state == ENVSYS_SVALID) {
+		sensor->value_cur = sensor->value_cur * 1000000 +
+		    273150000;
+	}
+
+	wmi_hp_sensor_read(sc, &sc->sc_sensor[WMI_HP_SENSOR_DISPLAY],
+	    WMI_HP_METHOD_CMD_DISPLAY);
+
+	wmi_hp_sensor_read(sc, &sc->sc_sensor[WMI_HP_SENSOR_DOCK],
+	    WMI_HP_METHOD_CMD_DOCK);
+}
+
 MODULE(MODULE_CLASS_DRIVER, wmihp, "acpiwmi");
 
 #ifdef _MODULE
@@ -565,4 +711,66 @@ wmihp_modcmd(modcmd_t cmd, void *aux)
 	}
 
 	return rv;
+}
+
+static int
+sysctl_wmi_hp_set_als(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int err;
+	int als = wmihp_als;
+	struct wmi_hp_softc *sc = wmi_hp_sc;
+
+	node = *rnode;
+	node.sysctl_data = &als;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err != 0 || newp == NULL)
+		return err;;
+
+	if (als < 0 || als > 1)
+		return EINVAL;
+
+	if (wmi_hp_method_write(sc, WMI_HP_METHOD_CMD_ALS, als) == true) {
+		wmihp_als = als;
+		return 0;
+	}
+
+	return EIO;
+}
+
+static void
+sysctl_wmi_hp_setup(struct wmi_hp_softc *sc)
+{
+	const struct sysctlnode *rnode;
+	int err;
+
+	err = sysctl_createv(&wmihp_sysctllog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		return;
+
+	err = sysctl_createv(&wmihp_sysctllog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		return;
+
+	err = sysctl_createv(&wmihp_sysctllog, 0, &rnode, &rnode,
+	    0, CTLTYPE_NODE, "wmi", SYSCTL_DESCR("ACPI HP WMI"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		return;
+
+	if (wmi_hp_method_read(sc, WMI_HP_METHOD_CMD_ALS) == true) {
+		(void)sysctl_createv(NULL, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "als",
+		    SYSCTL_DESCR("Ambient Light Sensor"),
+		    sysctl_wmi_hp_set_als, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	}
 }
