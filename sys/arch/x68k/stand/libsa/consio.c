@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.9 2011/07/17 20:54:49 joerg Exp $	*/
+/*	$NetBSD: consio.c,v 1.10 2012/10/12 18:01:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -103,10 +103,21 @@ putchar(int c)
 int
 check_getchar(void)
 {
+	int keycode;
 
 	switch (x68k_console_device) {
 	case ITE:
-		return IOCS_B_KEYSNS() & 0xff;
+		while ((keycode = IOCS_B_KEYSNS()) != 0) {
+			keycode &= 0xff;
+			if (keycode != 0) {
+				/* valid ASCII code */
+				return keycode;
+			}
+			/* discard non ASCII keys (CTRL, OPT.1 etc) */
+			(void)IOCS_B_KEYINP();
+		} 
+		/* no input */
+		return 0;
 	case SERIAL:
 		return IOCS_ISNS232C() & 0xff;
 	}
