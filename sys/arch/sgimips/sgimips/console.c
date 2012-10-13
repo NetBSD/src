@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.42 2011/07/01 18:54:32 dyoung Exp $	*/
+/*	$NetBSD: console.c,v 1.43 2012/10/13 17:58:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.42 2011/07/01 18:54:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.43 2012/10/13 17:58:54 jdc Exp $");
 
 #include "opt_kgdb.h"
 
@@ -117,7 +117,7 @@ consinit(void)
 			/* XXX Hardcoded iotag, MACE address XXX */
 			pckbc_cnattach(SGIMIPS_BUS_SPACE_NORMAL,
 			    MACE_BASE + 0x320000, 8,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif
 #endif
 			return;
@@ -194,7 +194,7 @@ gio_video_init(const char *consdev)
 			pckbc_cnattach(SGIMIPS_BUS_SPACE_HPC,
 			    HPC_BASE_ADDRESS_0 +
 			    HPC3_PBUS_CH6_DEVREGS + IOC_KB_REGS, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif
 			break;
 		}
