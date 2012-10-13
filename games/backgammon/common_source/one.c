@@ -1,4 +1,4 @@
-/*	$NetBSD: one.c,v 1.8 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: one.c,v 1.9 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,43 +34,42 @@
 #if 0
 static char sccsid[] = "@(#)one.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: one.c,v 1.8 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: one.c,v 1.9 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-static int checkd(int);
+static int checkd(struct move *, int);
 static int last(void);
 
 int
-makmove(int i)
+makmove(struct move *mm, int i)
 {
 	int     n, d;
 	int     max;
-	struct move *mm = &gm;
 
 	d = mm->d0;
 	n = abs(mm->g[i] - mm->p[i]);
 	max = (*offptr < 0 ? 7 : last());
 	if (board[mm->p[i]] * cturn <= 0)
-		return (checkd(d) + 2);
+		return (checkd(mm, d) + 2);
 	if (mm->g[i] != home && board[mm->g[i]] * cturn < -1)
-		return (checkd(d) + 3);
+		return (checkd(mm, d) + 3);
 	if (i || mm->D0 == mm->D1) {
 		if (n == max ? mm->D1 < n : mm->D1 != n)
-			return (checkd(d) + 1);
+			return (checkd(mm, d) + 1);
 	} else {
 		if (n == max ? mm->D0 < n && mm->D1 < n : mm->D0 != n && mm->D1 != n)
-			return (checkd(d) + 1);
+			return (checkd(mm, d) + 1);
 		if (n == max ? mm->D0 < n : mm->D0 != n) {
 			if (mm->d0)
-				return (checkd(d) + 1);
+				return (checkd(mm, d) + 1);
 			mswap(mm);
 		}
 	}
 	if (mm->g[i] == home && *offptr < 0)
-		return (checkd(d) + 4);
+		return (checkd(mm, d) + 4);
 	mm->h[i] = 0;
 	board[mm->p[i]] -= cturn;
 	if (mm->g[i] != home) {
@@ -98,10 +97,9 @@ makmove(int i)
 }
 
 void
-moverr(int i)
+moverr(struct move *mm, int i)
 {
 	int     j;
-	struct move *mm = &gm;
 
 	if (tflag)
 		curmove(20, 0);
@@ -116,15 +114,13 @@ moverr(int i)
 			writec(',');
 	}
 	writel("... ");
-	movback(i);
+	movback(mm, i);
 }
 
 
 static int
-checkd(int d)
+checkd(struct move *mm, int d)
 {
-	struct move *mm = &gm;
-
 	if (mm->d0 != d)
 		mswap(mm);
 	return (0);
@@ -142,19 +138,17 @@ last(void)
 }
 
 void
-movback(int i)
+movback(struct move *mm, int i)
 {
 	int     j;
 
 	for (j = i - 1; j >= 0; j--)
-		backone(j);
+		backone(mm, j);
 }
 
 void
-backone(int i)
+backone(struct move *mm, int i)
 {
-	struct move *mm = &gm;
-
 	board[mm->p[i]] += cturn;
 	if (mm->g[i] != home) {
 		board[mm->g[i]] -= cturn;
