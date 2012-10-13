@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2012/10/13 18:44:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2010/03/22 05:10:19 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2012/10/13 18:44:14 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,6 +94,7 @@ main(int argc __unused, char **argv)
 	int     l;		/* non-descript index */
 	char    c;		/* non-descript character storage */
 	time_t  t;		/* time for random num generator */
+	struct move *mm = &gm;
 
 	/* revoke setgid privileges */
 	setgid(getgid());
@@ -245,17 +246,17 @@ main(int argc __unused, char **argv)
 		if (!rflag) {
 			if (tflag)
 				curmove(17, 0);
-			while (D0 == D1)	/* no doubles */
+			while (mm->D0 == mm->D1)	/* no doubles */
 				roll();
 
 			/* print rolls */
 			writel(rollr);
-			writec(D0 + '0');
+			writec(mm->D0 + '0');
 			writel(rollw);
-			writec(D1 + '0');
+			writec(mm->D1 + '0');
 
 			/* winner goes first */
-			if (D0 > D1) {
+			if (mm->D0 > mm->D1) {
 				writel(rstart);
 				cturn = 1;
 			} else {
@@ -292,7 +293,7 @@ main(int argc __unused, char **argv)
 			if (cturn == pnum)	/* computer's move */
 				move(0);
 			else {	/* player's move */
-				mvlim = movallow();
+				mm->mvlim = movallow();
 				/* reprint roll */
 				if (tflag)
 					curmove(cturn == -1 ? 18 : 19, 0);
@@ -380,13 +381,13 @@ main(int argc __unused, char **argv)
 				case '\n':
 					roll();
 					writel(" rolls ");
-					writec(D0 + '0');
+					writec(mm->D0 + '0');
 					writec(' ');
-					writec(D1 + '0');
+					writec(mm->D1 + '0');
 					writel(".  ");
 
 					/* see if he can move */
-					if ((mvlim = movallow()) == 0) {
+					if ((mm->mvlim = movallow()) == 0) {
 
 						/* can't move */
 						writel(toobad1);
@@ -435,7 +436,7 @@ main(int argc __unused, char **argv)
 				proll();
 
 				/* can he move? */
-				if ((mvlim = movallow()) == 0) {
+				if ((mm->mvlim = movallow()) == 0) {
 
 					/* he can't */
 					writel(toobad2);

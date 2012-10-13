@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.11 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: table.c,v 1.12 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.11 2010/03/22 05:10:19 mrg Exp $");
+__RCSID("$NetBSD: table.c,v 1.12 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ struct state {
 	int     fcode;
 	int     newst;
 };
+
+static int mvl;			/* working copy of move->mvlim */
 
 static const struct state atmata[] = {
 
@@ -85,6 +87,7 @@ checkmove(int ist)
 {
 	int     j, n;
 	char    c;
+	struct move *mm = &gm;
 
 domove:
 	if (ist == 0) {
@@ -96,7 +99,7 @@ domove:
 	}
 	ist = mvl = ncin = 0;
 	for (j = 0; j < 5; j++)
-		p[j] = g[j] = -1;
+		mm->p[j] = mm->g[j] = -1;
 
 dochar:
 	c = readc();
@@ -166,9 +169,9 @@ dochar:
 		else
 			goto domove;
 	}
-	if (n == -1 && mvl >= mvlim)
+	if (n == -1 && mvl >= mm->mvlim)
 		return (0);
-	if (n == -1 && mvl < mvlim - 1)
+	if (n == -1 && mvl < mm->mvlim - 1)
 		return (-4);
 
 	if (n == -6) {
@@ -202,6 +205,7 @@ dotable(int c, int i)
 {
 	int     a;
 	int     test;
+	struct move *mm = &gm;
 
 	test = (c == 'R');
 
@@ -220,40 +224,40 @@ dotable(int c, int i)
 				break;
 
 			case 2:
-				if (p[mvl] == -1)
-					p[mvl] = c - '0';
+				if (mm->p[mvl] == -1)
+					mm->p[mvl] = c - '0';
 				else
-					p[mvl] = p[mvl] * 10 + c - '0';
+					mm->p[mvl] = mm->p[mvl] * 10 + c - '0';
 				break;
 
 			case 3:
-				if (g[mvl] != -1) {
-					if (mvl < mvlim)
+				if (mm->g[mvl] != -1) {
+					if (mvl < mm->mvlim)
 						mvl++;
-					p[mvl] = p[mvl - 1];
+					mm->p[mvl] = mm->p[mvl - 1];
 				}
-				g[mvl] = p[mvl] + cturn * (c - '0');
-				if (g[mvl] < 0)
-					g[mvl] = 0;
-				if (g[mvl] > 25)
-					g[mvl] = 25;
+				mm->g[mvl] = mm->p[mvl] + cturn * (c - '0');
+				if (mm->g[mvl] < 0)
+					mm->g[mvl] = 0;
+				if (mm->g[mvl] > 25)
+					mm->g[mvl] = 25;
 				break;
 
 			case 4:
-				if (g[mvl] == -1)
-					g[mvl] = c - '0';
+				if (mm->g[mvl] == -1)
+					mm->g[mvl] = c - '0';
 				else
-					g[mvl] = g[mvl] * 10 + c - '0';
+					mm->g[mvl] = mm->g[mvl] * 10 + c - '0';
 				break;
 
 			case 5:
-				if (mvl < mvlim)
+				if (mvl < mm->mvlim)
 					mvl++;
-				p[mvl] = g[mvl - 1];
+				mm->p[mvl] = mm->g[mvl - 1];
 				break;
 
 			case 6:
-				if (mvl < mvlim)
+				if (mvl < mm->mvlim)
 					mvl++;
 				break;
 
@@ -273,11 +277,11 @@ dotable(int c, int i)
 				break;
 
 			case 8:
-				p[mvl] = bar;
+				mm->p[mvl] = bar;
 				break;
 
 			case 9:
-				g[mvl] = home;
+				mm->g[mvl] = home;
 			}
 
 			if (!test || a != '\n')
@@ -295,11 +299,12 @@ static int
 rsetbrd(void)
 {
 	int     i, j, n;
+	struct move *mm = &gm;
 
 	n = 0;
 	mvl = 0;
 	for (i = 0; i < 4; i++)
-		p[i] = g[i] = -1;
+		mm->p[i] = mm->g[i] = -1;
 	for (j = 0; j < ncin; j++)
 		if ((n = dotable(cin[j], n)) < 0)
 			return n;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.17 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: subs.c,v 1.18 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.17 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: subs.c,v 1.18 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,15 +155,17 @@ writel(const char *l)
 void
 proll(void)
 {
-	if (d0)
-		swap;
+	struct move *mm = &gm;
+
+	if (mm->d0)
+		mswap(mm);
 	if (cturn == 1)
 		writel("Red's roll:  ");
 	else
 		writel("White's roll:  ");
-	writec(D0 + '0');
+	writec(mm->D0 + '0');
 	writec('\040');
-	writec(D1 + '0');
+	writec(mm->D1 + '0');
 	if (tflag)
 		cline();
 }
@@ -453,6 +455,7 @@ roll(void)
 	char    c;
 	int     row;
 	int     col;
+	struct move *mm = &gm;
 
 	row = col = 0;
 	if (iroll) {
@@ -467,13 +470,13 @@ roll(void)
 		if (c != '\n') {
 			while (c < '1' || c > '6')
 				c = readc();
-			D0 = c - '0';
+			mm->D0 = c - '0';
 			writec(' ');
 			writec(c);
 			c = readc();
 			while (c < '1' || c > '6')
 				c = readc();
-			D1 = c - '0';
+			mm->D1 = c - '0';
 			writec(' ');
 			writec(c);
 			if (tflag) {
@@ -491,7 +494,7 @@ roll(void)
 		} else
 			writec('\n');
 	}
-	D0 = rnum(6) + 1;
-	D1 = rnum(6) + 1;
-	d0 = 0;
+	mm->D0 = rnum(6) + 1;
+	mm->D1 = rnum(6) + 1;
+	mm->d0 = 0;
 }

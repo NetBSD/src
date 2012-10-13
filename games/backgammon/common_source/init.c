@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.8 2003/08/07 09:36:57 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.9 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.8 2003/08/07 09:36:57 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.9 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <termios.h>
+
+#include "back.h"
 
 /*
  * variable initialization.
@@ -65,6 +67,7 @@ int     rfl = 0;
 const char   *const color[] = {"White", "Red", "white", "red"};
 
 
+struct move gm;
 const char	*const *Colorptr;
 const char	*const *colorptr;
 int	*inopp;
@@ -80,19 +83,12 @@ int	colen;
 int	cturn;
 int	curc;
 int	curr;
-int	d0;
-int	dice[2];
 int	dlast;
-int	g[5];
 int	gvalue;
-int	h[4];
 int	home;
 int	in[2];
-int	mvl;
-int	mvlim;
 int	ncin;
 int	off[2];
-int	p[5];
 int	rscore;
 int	table[6][6];
 int	wscore;

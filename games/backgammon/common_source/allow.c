@@ -1,4 +1,4 @@
-/*	$NetBSD: allow.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: allow.c,v 1.7 2012/10/13 18:44:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: allow.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: allow.c,v 1.7 2012/10/13 18:44:14 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,67 +45,68 @@ movallow(void)
 {
 	int     i, m, iold;
 	int     r;
+	struct move *mm = &gm;
 
-	if (d0)
-		swap;
-	m = (D0 == D1 ? 4 : 2);
+	if (mm->d0)
+		mswap(mm);
+	m = (mm->D0 == mm->D1 ? 4 : 2);
 	for (i = 0; i < 4; i++)
-		p[i] = bar;
+		mm->p[i] = bar;
 	i = iold = 0;
 	while (i < m) {
 		if (*offptr == 15)
 			break;
-		h[i] = 0;
+		mm->h[i] = 0;
 		if (board[bar]) {
 			if (i == 1 || m == 4)
-				g[i] = bar + cturn * D1;
+				mm->g[i] = bar + cturn * mm->D1;
 			else
-				g[i] = bar + cturn * D0;
+				mm->g[i] = bar + cturn * mm->D0;
 			if ((r = makmove(i)) != 0) {
-				if (d0 || m == 4)
+				if (mm->d0 || m == 4)
 					break;
-				swap;
+				mswap(mm);
 				movback(i);
 				if (i > iold)
 					iold = i;
 				for (i = 0; i < 4; i++)
-					p[i] = bar;
+					mm->p[i] = bar;
 				i = 0;
 			} else
 				i++;
 			continue;
 		}
-		if ((p[i] += cturn) == home) {
+		if ((mm->p[i] += cturn) == home) {
 			if (i > iold)
 				iold = i;
 			if (m == 2 && i) {
 				movback(i);
-				p[i--] = bar;
-				if (p[i] != bar)
+				mm->p[i--] = bar;
+				if (mm->p[i] != bar)
 					continue;
 				else
 					break;
 			}
-			if (d0 || m == 4)
+			if (mm->d0 || m == 4)
 				break;
-			swap;
+			mswap(mm);
 			movback(i);
 			for (i = 0; i < 4; i++)
-				p[i] = bar;
+				mm->p[i] = bar;
 			i = 0;
 			continue;
 		}
 		if (i == 1 || m == 4)
-			g[i] = p[i] + cturn * D1;
+			mm->g[i] = mm->p[i] + cturn * mm->D1;
 		else
-			g[i] = p[i] + cturn * D0;
-		if (g[i] * cturn > home) {
+			mm->g[i] = mm->p[i] + cturn * mm->D0;
+		if (mm->g[i] * cturn > home) {
 			if (*offptr >= 0)
-				g[i] = home;
+				mm->g[i] = home;
 			else
 				continue;
 		}
-		if (board[p[i]] * cturn > 0 && (r = makmove(i)) == 0)
+		if (board[mm->p[i]] * cturn > 0 && (r = makmove(i)) == 0)
 			i++;
 	}
 	movback(i);
