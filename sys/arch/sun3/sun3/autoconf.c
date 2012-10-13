@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77 2012/07/30 17:21:31 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78 2012/10/13 06:37:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2012/07/30 17:21:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78 2012/10/13 06:37:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ cpu_configure(void)
  * setup the confargs for each child match and attach call.
  */
 int 
-bus_scan(struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+bus_scan(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -154,13 +154,13 @@ bus_print(void *args, const char *name)
 /****************************************************************/
 
 /* This takes the args: name, ctlr, unit */
-typedef struct device * (*findfunc_t)(char *, int, int);
+typedef device_t (*findfunc_t)(char *, int, int);
 
-static struct device * net_find (char *, int, int);
+static device_t net_find(char *, int, int);
 #if NSCSIBUS > 0
-static struct device * scsi_find(char *, int, int);
+static device_t scsi_find(char *, int, int);
 #endif
-static struct device * xx_find  (char *, int, int);
+static device_t xx_find(char *, int, int);
 
 struct prom_n2f {
 	const char name[4];
@@ -218,7 +218,7 @@ cpu_rootconf(void)
 	if (find)
 		booted_device = (*find)(promname, bp->ctlrNum, bp->unitNum);
 	if (booted_device) {
-		devname = booted_device->dv_xname;
+		devname = device_xname(booted_device);
 		if (device_class(booted_device) == DV_DISK) {
 			booted_partition = bp->partNum & 7;
 			partname[0] = 'a' + booted_partition;
@@ -237,7 +237,7 @@ cpu_rootconf(void)
 /*
  * Network device:  Just use controller number.
  */
-static struct device *
+static device_t
 net_find(char *name, int ctlr, int unit)
 {
 	return device_find_by_driver_unit(name, ctlr);
@@ -248,10 +248,10 @@ net_find(char *name, int ctlr, int unit)
  * SCSI device:  The controller number corresponds to the
  * scsibus number, and the unit number is (targ*8 + LUN).
  */
-static struct device *
+static device_t
 scsi_find(char *name, int ctlr, int unit)
 {
-	struct device *scsibus;
+	device_t scsibus;
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 	int target, lun;
@@ -278,7 +278,7 @@ scsi_find(char *name, int ctlr, int unit)
  * Xylogics SMD disk: (xy, xd)
  * Assume wired-in unit numbers for now...
  */
-static struct device *
+static device_t
 xx_find(char *name, int ctlr, int unit)
 {
 	return device_find_by_driver_unit(name, ctlr * 2 + unit);

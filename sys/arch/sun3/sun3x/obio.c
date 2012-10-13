@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.32 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.33 2012/10/13 06:37:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.32 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.33 2012/10/13 06:37:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ static paddr_t obio_alist[] = {
 #define OBIO_ALIST_LEN	__arraycount(obio_alist)
 
 static void 
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct obio_softc *sc = device_private(self);
