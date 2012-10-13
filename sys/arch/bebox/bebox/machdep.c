@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2012/10/08 15:34:58 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2012/10/13 17:58:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2012/10/08 15:34:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2012/10/13 17:58:54 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -239,7 +239,7 @@ consinit(void)
 		 */
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		disable_device("vga");
 		return;
@@ -252,7 +252,7 @@ consinit(void)
 		vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}

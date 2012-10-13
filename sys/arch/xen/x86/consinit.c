@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.15 2011/07/01 18:37:08 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2011/07/01 18:37:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2012/10/13 17:58:55 jdc Exp $");
 
 #include "opt_kgdb.h"
 
@@ -167,7 +167,7 @@ consinit(void)
 			error = ENODEV;
 #if (NPCKBC > 0)
 			error = pckbc_cnattach(x86_bus_space_io, IO_KBD, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif
 #if (NUKBD > 0)
 			if (error)

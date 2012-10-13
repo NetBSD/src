@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.19 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.20 2012/10/13 17:58:53 jdc Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.19 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.20 2012/10/13 17:58:53 jdc Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -267,7 +267,7 @@ c_nec_pci_cons_init(void)
 			    &necpb_main_context.nc_pc, 0, 3, 0) == 0) {
 #if NPCKBC_JAZZIO > 0
 				pckbc_cnattach(&jazzio_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT, 0);
 #endif
 				return;
 			}
@@ -286,7 +286,7 @@ c_nec_pci_cons_init(void)
 			    &necpb_main_context.nc_pc, 0, 3, 0) == 0) {
 #if NPCKBC_JAZZIO > 0
 				pckbc_cnattach(&jazzio_bus, PICA_SYS_KBD,
-				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT, 0);
 #endif
 				return;
 			}

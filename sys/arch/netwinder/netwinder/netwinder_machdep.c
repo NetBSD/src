@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.79 2012/09/22 00:33:41 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.80 2012/10/13 17:58:55 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.79 2012/09/22 00:33:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.80 2012/10/13 17:58:55 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -919,7 +919,7 @@ consinit(void)
 				   0, 8, 0);
 #if NPCKBC > 0
 		res = pckbc_cnattach(&isa_io_bs_tag,
-				     IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+				     IO_KBD, KBCMDP, PCKBC_KBD_SLOT, 0);
 		if (res)
 			printf("pckbc_cnattach: %d!\n", res);
 #endif

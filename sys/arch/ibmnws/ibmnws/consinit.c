@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5 2011/07/01 20:47:43 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.6 2012/10/13 17:58:53 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ consinit(void)
 	if (!strcmp(CONSOLE, "genfb")) {
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}

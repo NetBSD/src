@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.22 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.23 2012/10/13 17:58:54 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.22 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.23 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ dec_2100_a500_cons_init(void)
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&tcp->tc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		switch (CTB_TURBOSLOT_TYPE(ctbslot)) {
 		case CTB_TURBOSLOT_TYPE_ISA:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2012/03/02 13:20:57 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2012/10/13 17:58:55 jdc Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2012/03/02 13:20:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2012/10/13 17:58:55 jdc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -553,7 +553,7 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 		int rc = ENXIO;
 #if NPCKBC > 0
 		if (rc != 0)
-			rc = pckbc_cnattach(&bonito_iot, IO_KBD, KBCMDP, 0);
+			rc = pckbc_cnattach(&bonito_iot, IO_KBD, KBCMDP, 0, 0);
 #endif
 #if NUKBD > 0
 		if (rc != 0)
