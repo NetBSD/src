@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.38 2010/01/09 09:16:32 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.39 2012/10/13 06:43:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.38 2010/01/09 09:16:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.39 2012/10/13 06:43:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -130,7 +130,7 @@ const struct cdevsw par_cdevsw = {
 };
 
 int
-parmatch(device_t pdp, cfdata_t cfp, void *aux)
+parmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -141,7 +141,7 @@ parmatch(device_t pdp, cfdata_t cfp, void *aux)
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
 		ia->ia_addr = 0xe8c000;
 	ia->ia_size = 0x2000;
-	if (intio_map_allocate_region(pdp, ia, INTIO_MAP_TESTONLY))
+	if (intio_map_allocate_region(parent, ia, INTIO_MAP_TESTONLY))
 		return 0;
 	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
 		ia->ia_intr = 99;
@@ -154,19 +154,19 @@ parmatch(device_t pdp, cfdata_t cfp, void *aux)
 }
 
 void
-parattach(device_t pdp, device_t dp, void *aux)
+parattach(device_t parent, device_t self, void *aux)
 {
-	struct par_softc *sc = device_private(dp);
+	struct par_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	int r;
 	
 	par_attached = 1;
 
-	sc->sc_dev = dp;
+	sc->sc_dev = self;
 	sc->sc_flags = PARF_ALIVE;
 	aprint_normal(": parallel port (write only, interrupt)\n");
 	ia->ia_size = 0x2000;
-	r = intio_map_allocate_region(pdp, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
 		panic("IO map for PAR corruption??");
