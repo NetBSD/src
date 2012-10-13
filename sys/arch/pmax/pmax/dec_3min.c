@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.71 2011/07/09 17:32:30 matt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.72 2012/10/13 06:51:23 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.71 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.72 2012/10/13 06:51:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -102,7 +102,7 @@ void		dec_3min_init(void);		/* XXX */
 static void	dec_3min_bus_reset(void);
 static void	dec_3min_cons_init(void);
 static void	dec_3min_intr(uint32_t, vaddr_t, uint32_t);
-static void	dec_3min_intr_establish(struct device *, void *,
+static void	dec_3min_intr_establish(device_t, void *,
 		    int, int (*)(void *), void *);
 
 static void	kn02ba_wbflush(void);
@@ -233,7 +233,7 @@ dec_3min_cons_init(void)
 }
 
 static void
-dec_3min_intr_establish(struct device *dev, void *cookie, int level,
+dec_3min_intr_establish(device_t dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 	uint32_t mask;
