@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.27 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: bog.c,v 1.28 2012/10/13 20:12:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.27 2011/08/26 06:18:17 dholland Exp $");
+__RCSID("$NetBSD: bog.c,v 1.28 2012/10/13 20:12:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static int validword(const char *);
 static void checkdict(void);
 static void newgame(const char *);
 static int compar(const void *, const void *);
+static void clearwordpath(int full);
 static void usage(void) __dead;
 
 struct dictindex dictindex[26];
@@ -286,19 +287,13 @@ main(int argc, char *argv[])
 static char *
 batchword(FILE *fp)
 {
-	int *p, *q;
 	char *w;
 
-	q = &wordpath[MAXWORDLEN + 1];
-	p = wordpath;
-	while (p < q)
-		*p++ = -1;
+	clearwordpath(1);
 	while ((w = nextword(fp)) != NULL) {
 		if (wordlen < minlength)
 			continue;
-		p = wordpath;
-		while (p < q && *p != -1)
-			*p++ = -1;
+		clearwordpath(0);
 		usedbits = 0;
 		if (checkword(w, -1, wordpath) != -1)
 			return (w);
@@ -314,7 +309,7 @@ batchword(FILE *fp)
 static void
 playgame(void)
 {
-	int i, *p, *q;
+	int i;
 	time_t t;
 	char buf[MAXWORDLEN + 1];
 
@@ -326,10 +321,7 @@ playgame(void)
 
 	time(&start_t);
 
-	q = &wordpath[MAXWORDLEN + 1];
-	p = wordpath;
-	while (p < q)
-		*p++ = -1;
+	clearwordpath(1);
 	showboard(board);
 	startwords();
 	if (setjmp(env)) {
@@ -362,9 +354,7 @@ playgame(void)
 			continue;
 		}
 
-		p = wordpath;
-		while (p < q && *p != -1)
-			*p++ = -1;
+		clearwordpath(0);
 		usedbits = 0;
 
 		if (checkword(buf, -1, wordpath) < 0)
@@ -554,13 +544,12 @@ checkdict(void)
 	char *p, *w;
 	const char **pw;
 	int i;
-	int prevch, previndex, *pi, *qi, st;
+	int prevch, previndex, st;
 
 	mwordsp = mwords;
 	nmwords = 0;
 	pw = pword;
 	prevch ='a';
-	qi = &wordpath[MAXWORDLEN + 1];
 
 	(void) dictseek(dictfp, 0L, SEEK_SET);
 	while ((w = nextword(dictfp)) != NULL) {
@@ -598,9 +587,7 @@ checkdict(void)
 			}
 		}
 
-		pi = wordpath;
-		while (pi < qi && *pi != -1)
-			*pi++ = -1;
+		clearwordpath(0);
 		usedbits = 0;
 		if (checkword(w, -1, wordpath) == -1)
 			continue;
@@ -695,6 +682,20 @@ newgame(const char *b)
 		}
 	}
 
+}
+
+/*
+ * Clear wordpath[].
+ */
+static void
+clearwordpath(int full)
+{
+	size_t pos;
+	const size_t max = MAXWORDLEN + 1;
+
+	for (pos = 0; pos < max && (full || wordpath[pos] != -1); pos++) {
+		wordpath[pos] = -1;
+	}
 }
 
 static int
