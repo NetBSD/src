@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.11 2012/10/03 13:13:38 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.12 2012/10/13 14:22:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.11 2012/10/03 13:13:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.12 2012/10/13 14:22:12 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/bus.h>
 
@@ -63,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.11 2012/10/03 13:13:38 skrll Exp $
 #endif
 
 #include "ksyms.h"
-
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
