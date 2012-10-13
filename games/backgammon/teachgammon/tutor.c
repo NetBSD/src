@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.c,v 1.10 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: tutor.c,v 1.11 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tutor.c,v 1.10 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: tutor.c,v 1.11 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,10 +48,9 @@ static int brdeq(const int *, const int *);
 static void clrest(void);
 
 void
-tutor(void)
+tutor(struct move *mm)
 {
 	int     i, j;
-	struct move *mm = &gm;
 
 	i = 0;
 	begscr = 18;
@@ -73,17 +72,17 @@ tutor(void)
 				curmove(18, 0);
 			writel(better);
 			nexturn();
-			movback(mm->mvlim);
+			movback(mm, mm->mvlim);
 			if (tflag) {
 				refresh();
 				clrest();
 			}
 			if ((!tflag) || curr == 19) {
-				proll();
+				proll(mm);
 				writec('\t');
 			} else
 				curmove(curr > 19 ? curr - 2 : curr + 4, 25);
-			getmove();
+			getmove(mm);
 			if (cturn == 0)
 				leave();
 			continue;
@@ -108,7 +107,7 @@ tutor(void)
 		}
 		if (mm->mvlim)
 			for (j = 0; j < mm->mvlim; j++)
-				if (makmove(j))
+				if (makmove(mm, j))
 					writel("AARGH!!!\n");
 		if (tflag)
 			refresh();
@@ -117,13 +116,13 @@ tutor(void)
 		mm->D1 = test[i].new2;
 		mm->d0 = 0;
 		i++;
-		mm->mvlim = movallow();
+		mm->mvlim = movallow(mm);
 		if (mm->mvlim) {
 			if (tflag)
 				clrest();
-			proll();
+			proll(mm);
 			writec('\t');
-			getmove();
+			getmove(mm);
 			if (tflag)
 				refresh();
 			if (cturn == 0)

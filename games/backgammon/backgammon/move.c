@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.11 2012/10/13 18:44:14 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.12 2012/10/13 19:19:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.11 2012/10/13 18:44:14 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.12 2012/10/13 19:19:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,11 +100,10 @@ static int movegood(void);
 
 /* zero if first move */
 void
-move(int okay)
+move(struct move *mm, int okay)
 {
 	int     i;		/* index */
 	int     l;		/* last man */
-	struct move *mm = &gm;
 
 	l = 0;
 	if (okay) {
@@ -116,7 +115,7 @@ move(int okay)
 			if (cturn != 1 && cturn != -1)
 				return;
 		}
-		roll();
+		roll(mm);
 	}
 	race = 0;
 	for (i = 0; i < 26; i++) {
@@ -144,7 +143,7 @@ move(int okay)
 	fixtty(&noech);
 
 	/* find out how many moves */
-	mm->mvlim = movallow();
+	mm->mvlim = movallow(mm);
 	if (mm->mvlim == 0) {
 		writel(" but cannot use it.\n");
 		nexturn();
@@ -167,7 +166,7 @@ move(int okay)
 		wrint(mm->p[i] = cp[i]);
 		writec('-');
 		wrint(mm->g[i] = cg[i]);
-		makmove(i);
+		makmove(mm, i);
 	}
 	writec('.');
 
@@ -227,12 +226,12 @@ trymove(struct move *mm, int mvnum, int swapped)
 			mm->g[mvnum] = home;
 		}
 		/* try to move */
-		if (makmove(mvnum))
+		if (makmove(mm, mvnum))
 			continue;
 		else
 			trymove(mm, mvnum + 1, 2);
 		/* undo move to try another */
-		backone(mvnum);
+		backone(mm, mvnum);
 	}
 
 	/* swap dice and try again */

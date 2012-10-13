@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2012/10/13 18:44:14 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2012/10/13 19:19:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2012/10/13 18:44:14 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2012/10/13 19:19:38 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ main(int argc __unused, char **argv)
 	int     l;		/* non-descript index */
 	char    c;		/* non-descript character storage */
 	time_t  t;		/* time for random num generator */
-	struct move *mm = &gm;
+	struct move mmstore, *mm;
 
 	/* revoke setgid privileges */
 	setgid(getgid());
@@ -118,12 +118,15 @@ main(int argc __unused, char **argv)
 	t = time(NULL);
 	srandom(t);		/* 'random' seed */
 
+	/* need this now beceause getarg() may try to load a game */
+	mm = &mmstore;
+	move_init(mm);
 #ifdef V7
 	while (*++argv != 0)	/* process arguments */
 #else
 	while (*++argv != -1)	/* process arguments */
 #endif
-		getarg(&argv);
+		getarg(mm, &argv);
 	args[acnt] = '\0';
 	if (tflag) {		/* clear screen */
 		noech.c_oflag &= ~(ONLCR | OXTABS);
@@ -240,14 +243,14 @@ main(int argc __unused, char **argv)
 	for (;;) {		/* begin game! */
 		/* initial roll if needed */
 		if ((!rflag) || raflag)
-			roll();
+			roll(mm);
 
 		/* perform ritual of first roll */
 		if (!rflag) {
 			if (tflag)
 				curmove(17, 0);
 			while (mm->D0 == mm->D1)	/* no doubles */
-				roll();
+				roll(mm);
 
 			/* print rolls */
 			writel(rollr);
@@ -291,14 +294,14 @@ main(int argc __unused, char **argv)
 		/* do first move (special case) */
 		if (!(rflag && raflag)) {
 			if (cturn == pnum)	/* computer's move */
-				move(0);
+				move(mm, 0);
 			else {	/* player's move */
-				mm->mvlim = movallow();
+				mm->mvlim = movallow(mm);
 				/* reprint roll */
 				if (tflag)
 					curmove(cturn == -1 ? 18 : 19, 0);
-				proll();
-				getmove();	/* get player's move */
+				proll(mm);
+				getmove(mm);	/* get player's move */
 			}
 		}
 		if (tflag) {
@@ -323,7 +326,7 @@ main(int argc __unused, char **argv)
 
 			/* do computer's move */
 			if (cturn == pnum) {
-				move(1);
+				move(mm, 1);
 
 				/* see if double refused */
 				if (cturn == -2 || cturn == 2)
@@ -363,12 +366,12 @@ main(int argc __unused, char **argv)
 					/* save game */
 				case 'S':
 					raflag = 1;
-					save(1);
+					save(mm, 1);
 					break;
 
 					/* quit */
 				case 'Q':
-					quit();
+					quit(mm);
 					break;
 
 					/* double */
@@ -379,7 +382,7 @@ main(int argc __unused, char **argv)
 					/* roll */
 				case ' ':
 				case '\n':
-					roll();
+					roll(mm);
 					writel(" rolls ");
 					writec(mm->D0 + '0');
 					writec(' ');
@@ -387,7 +390,7 @@ main(int argc __unused, char **argv)
 					writel(".  ");
 
 					/* see if he can move */
-					if ((mm->mvlim = movallow()) == 0) {
+					if ((mm->mvlim = movallow(mm)) == 0) {
 
 						/* can't move */
 						writel(toobad1);
@@ -403,7 +406,7 @@ main(int argc __unused, char **argv)
 						break;
 					}
 					/* get move */
-					getmove();
+					getmove(mm);
 
 					/* okay to clean screen */
 					hflag = 1;
@@ -430,13 +433,13 @@ main(int argc __unused, char **argv)
 			} else {/* couldn't double */
 
 				/* print roll */
-				roll();
+				roll(mm);
 				if (tflag)
 					curmove(cturn == -1 ? 18 : 19, 0);
-				proll();
+				proll(mm);
 
 				/* can he move? */
-				if ((mm->mvlim = movallow()) == 0) {
+				if ((mm->mvlim = movallow(mm)) == 0) {
 
 					/* he can't */
 					writel(toobad2);
@@ -448,7 +451,7 @@ main(int argc __unused, char **argv)
 					continue;
 				}
 				/* get move */
-				getmove();
+				getmove(mm);
 			}
 		}
 
@@ -508,7 +511,7 @@ main(int argc __unused, char **argv)
 		if (i == 2) {
 			writel("  Save.\n");
 			cturn = 0;
-			save(0);
+			save(mm, 0);
 		}
 		/* yes, reset game */
 		wrboard();
@@ -521,7 +524,7 @@ main(int argc __unused, char **argv)
 			/* re-initialize for recovery */
 			init();
 			cturn = 0;
-			save(0);
+			save(mm, 0);
 		}
 	}
 	/* leave peacefully */

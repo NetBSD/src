@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.15 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.16 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.15 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.16 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,12 +56,11 @@ static const char cantrec[] = "Can't recover file:  ";
 static void norec(const char *) __dead;
 
 void
-save(int n)
+save(struct move *mm, int n)
 {
 	int     fdesc;
 	char   *fs;
 	char    fname[50];
-	struct move *mm = &gm;
 
 	if (n) {
 		if (tflag) {
@@ -146,10 +145,9 @@ save(int n)
 }
 
 void
-recover(const char *s)
+recover(struct move *mm, const char *s)
 {
 	int     fdesc;
-	struct move *mm = &gm;
 
 	if ((fdesc = open(s, O_RDONLY)) == -1)
 		norec(s);

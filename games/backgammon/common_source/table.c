@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.12 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.13 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.12 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.13 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,15 +79,14 @@ static const struct state atmata[] = {
 	{'\n', 0, -1},	{'.', 0, 0}
 };
 
-static int dotable(int, int);
-static int rsetbrd(void);
+static int dotable(struct move *, int, int);
+static int rsetbrd(struct move *);
 
 int
-checkmove(int ist)
+checkmove(struct move *mm, int ist)
 {
 	int     j, n;
 	char    c;
-	struct move *mm = &gm;
 
 domove:
 	if (ist == 0) {
@@ -106,13 +105,13 @@ dochar:
 
 	if (c == 'S') {
 		raflag = 0;
-		save(1);
+		save(mm, 1);
 		if (tflag) {
 			curmove(cturn == -1 ? 18 : 19, 39);
 			ist = -1;
 			goto domove;
 		} else {
-			proll();
+			proll(mm);
 			ist = 0;
 			goto domove;
 		}
@@ -127,7 +126,7 @@ dochar:
 				writec(cin[ncin - 1]);
 		}
 		ncin--;
-		n = rsetbrd();
+		n = rsetbrd(mm);
 		if (n == 0) {
 			n = -1;
 			if (tflag)
@@ -152,12 +151,12 @@ dochar:
 			} else {
 				writec('\\');
 				writec('\n');
-				proll();
+				proll(mm);
 				ist = 0;
 				goto domove;
 			}
 	}
-	n = dotable(c, ist);
+	n = dotable(mm, c, ist);
 	if (n >= 0) {
 		cin[ncin++] = c;
 		if (n > 2)
@@ -176,22 +175,22 @@ dochar:
 
 	if (n == -6) {
 		if (!tflag) {
-			if (movokay(mvl + 1)) {
+			if (movokay(mm, mvl + 1)) {
 				wrboard();
-				movback(mvl + 1);
+				movback(mm, mvl + 1);
 			}
-			proll();
+			proll(mm);
 			writel("\t\tMove:  ");
 			for (j = 0; j < ncin;)
 				writec(cin[j++]);
 		} else {
-			if (movokay(mvl + 1)) {
+			if (movokay(mm, mvl + 1)) {
 				refresh();
-				movback(mvl + 1);
+				movback(mm, mvl + 1);
 			} else
 				curmove(cturn == -1 ? 18 : 19, ncin + 39);
 		}
-		ist = n = rsetbrd();
+		ist = n = rsetbrd(mm);
 		goto dochar;
 	}
 	if (n != -5)
@@ -201,11 +200,10 @@ dochar:
 }
 
 static int
-dotable(int c, int i)
+dotable(struct move *mm, int c, int i)
 {
 	int     a;
 	int     test;
-	struct move *mm = &gm;
 
 	test = (c == 'R');
 
@@ -217,10 +215,10 @@ dotable(int c, int i)
 				wrboard();
 				if (tflag) {
 					curmove(cturn == -1 ? 18 : 19, 0);
-					proll();
+					proll(mm);
 					writel("\t\t");
 				} else
-					proll();
+					proll(mm);
 				break;
 
 			case 2:
@@ -271,7 +269,7 @@ dotable(int c, int i)
 					curmove(cturn == -1 ? 18 : 19, 39);
 				} else {
 					writec('\n');
-					proll();
+					proll(mm);
 					writel("\t\tMove:  ");
 				}
 				break;
@@ -296,17 +294,16 @@ dotable(int c, int i)
 }
 
 static int
-rsetbrd(void)
+rsetbrd(struct move *mm)
 {
 	int     i, j, n;
-	struct move *mm = &gm;
 
 	n = 0;
 	mvl = 0;
 	for (i = 0; i < 4; i++)
 		mm->p[i] = mm->g[i] = -1;
 	for (j = 0; j < ncin; j++)
-		if ((n = dotable(cin[j], n)) < 0)
+		if ((n = dotable(mm, cin[j], n)) < 0)
 			return n;
 	return (n);
 }

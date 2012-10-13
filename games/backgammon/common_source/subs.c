@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.18 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: subs.c,v 1.19 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.18 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: subs.c,v 1.19 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,10 +153,8 @@ writel(const char *l)
 }
 
 void
-proll(void)
+proll(struct move *mm)
 {
-	struct move *mm = &gm;
-
 	if (mm->d0)
 		mswap(mm);
 	if (cturn == 1)
@@ -229,7 +227,7 @@ gwrite(void)
 }
 
 int
-quit(void)
+quit(struct move *mm)
 {
 
 	if (tflag) {
@@ -242,7 +240,7 @@ quit(void)
 		if (rfl) {
 			writel("Would you like to save this game?");
 			if (yorn(0))
-				save(0);
+				save(mm, 0);
 		}
 		cturn = 0;
 		return (1);
@@ -307,7 +305,7 @@ nexturn(void)
 }
 
 void
-getarg(char ***arg)
+getarg(struct move *mm, char ***arg)
 {
 	char  **s;
 
@@ -383,13 +381,13 @@ getarg(char ***arg)
 				writel("No save file named\n");
 				getout(0);
 			} else
-				recover(s[0]);
+				recover(mm, s[0]);
 			break;
 		}
 		s++;
 	}
 	if (s[0] != 0)
-		recover(s[0]);
+		recover(mm, s[0]);
 }
 
 void
@@ -450,12 +448,11 @@ getout(int dummy __unused)
 }
 
 void
-roll(void)
+roll(struct move *mm)
 {
 	char    c;
 	int     row;
 	int     col;
-	struct move *mm = &gm;
 
 	row = col = 0;
 	if (iroll) {
