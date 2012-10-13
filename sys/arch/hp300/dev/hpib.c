@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.38 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: hpib.c,v 1.39 2012/10/13 06:12:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.38 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.39 2012/10/13 06:12:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ hpibreset(int unit)
 }
 
 int
-hpibreq(struct device *pdev, struct hpibqueue *hq)
+hpibreq(device_t pdev, struct hpibqueue *hq)
 {
 	struct hpibbus_softc *sc = device_private(pdev);
 	int s;
@@ -283,7 +283,7 @@ hpibreq(struct device *pdev, struct hpibqueue *hq)
 }
 
 void
-hpibfree(struct device *pdev, struct hpibqueue *hq)
+hpibfree(device_t pdev, struct hpibqueue *hq)
 {
 	struct hpibbus_softc *sc = device_private(pdev);
 	int s;
