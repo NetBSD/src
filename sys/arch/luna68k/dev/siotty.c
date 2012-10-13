@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.33 2011/11/26 04:40:50 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.34 2012/10/13 06:16:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.33 2011/11/26 04:40:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.34 2012/10/13 06:16:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -118,7 +118,7 @@ siotty_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void 
-siotty_attach(struct device *parent, struct device *self, void *aux)
+siotty_attach(device_t parent, device_t self, void *aux)
 {
 	struct sio_softc *scp = device_private(parent);
 	struct siotty_softc *sc = device_private(self);
