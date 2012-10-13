@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2011/10/26 00:56:59 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 2012/10/13 06:28:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.20 2011/10/26 00:56:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21 2012/10/13 06:28:54 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -170,7 +170,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
-		struct device *child;
+		device_t child;
 
 		zsc_args.channel = channel;
 		zsc_args.hwflags = 0;
