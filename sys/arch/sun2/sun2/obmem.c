@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.17 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: obmem.c,v 1.18 2012/10/13 06:28:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.17 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.18 2012/10/13 06:28:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static struct sun68k_bus_space_tag obmem_space_tag = {
 }; 
 
 static int 
-obmem_match(struct device *parent, struct cfdata *cf, void *aux)
+obmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
