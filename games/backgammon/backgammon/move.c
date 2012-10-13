@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.12 2012/10/13 19:19:38 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.13 2012/10/13 19:39:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.12 2012/10/13 19:19:38 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.13 2012/10/13 19:39:57 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,6 +167,14 @@ move(struct move *mm, int okay)
 		writec('-');
 		wrint(mm->g[i] = cg[i]);
 		makmove(mm, i);
+
+		/*
+		 * This assertion persuades gcc 4.5 that the loop
+		 * doesn't result in signed overflow of i. mvlim
+		 * isn't, or at least shouldn't be, changed by makmove
+		 * at all.
+		 */
+		assert(mm->mvlim >= 0 && mm->mvlim <= 5);
 	}
 	writec('.');
 
