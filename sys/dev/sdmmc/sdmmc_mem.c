@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.23 2012/07/26 18:36:55 matt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.24 2012/10/13 07:31:25 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.23 2012/07/26 18:36:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.24 2012/10/13 07:31:25 kiyohara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -429,7 +429,7 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 	printf("mmcver = %d\n", csd->mmcver);
 	printf("capacity = 0x%08x\n", csd->capacity);
 	printf("read_bl_len = %d\n", csd->read_bl_len);
-	printf("write_cl_len = %d\n", csd->write_bl_len);
+	printf("write_bl_len = %d\n", csd->write_bl_len);
 	printf("r2w_factor = %d\n", csd->r2w_factor);
 	printf("tran_speed = %d\n", csd->tran_speed);
 	printf("ccc = 0x%x\n", csd->ccc);
