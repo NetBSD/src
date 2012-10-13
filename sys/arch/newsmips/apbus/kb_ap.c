@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.9 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.10 2012/10/13 06:25:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.9 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.10 2012/10/13 06:25:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ struct kbreg {
 struct kb_ap_softc {
 	device_t sc_dev;
 	struct kbreg *sc_reg;
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 };
 
 int kb_ap_match(device_t, cfdata_t, void *);
