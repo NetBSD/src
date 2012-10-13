@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.53 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: pckbc.c,v 1.54 2012/10/13 17:51:28 jdc Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.53 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.54 2012/10/13 17:51:28 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,20 @@ pckbc_attach(struct pckbc_softc *sc)
 	t->t_haveaux = 1;
 	bus_space_write_1(iot, ioh_d, 0, 0x5a); /* a random value */
 	res = pckbc_poll_data1(t, PCKBC_AUX_SLOT);
+
+	/*
+	 * The following is needed to find the aux port on the Tadpole
+	 * SPARCle.
+	 */
+	if (res == -1 && ISSET(t->t_flags, PCKBC_NEED_AUXWRITE)) {
+		/* Read of aux echo timed out, try again */
+		if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXWRITE))
+			goto nomouse;
+		if (!pckbc_wait_output(iot, ioh_c))
+			goto nomouse;
+		bus_space_write_1(iot, ioh_d, 0, 0x5a);
+		res = pckbc_poll_data1(t, PCKBC_AUX_SLOT);
+	}
 	if (res != -1) {
 		/*
 		 * In most cases, the 0x5a gets echoed.
@@ -365,6 +379,7 @@ pckbc_attach(struct pckbc_softc *sc)
 		if (pckbc_attach_slot(sc, PCKBC_AUX_SLOT))
 			cmdbits |= KC8_MENABLE;
 	} else {
+
 #ifdef PCKBCDEBUG
 		printf("pckbc: aux echo test failed\n");
 #endif
@@ -394,6 +409,9 @@ pckbc_xt_translation(void *self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = self;
 	int ison;
+
+	if (ISSET(t->t_flags, PCKBC_CANT_TRANSLATE))
+		return (-1);
 
 	if (slot != PCKBC_KBD_SLOT) {
 		/* translation only for kbd slot */
@@ -602,7 +620,7 @@ pckbcintr(void *vsc)
 
 int
 pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr,
-	bus_size_t cmd_offset, pckbc_slot_t slot)
+	bus_size_t cmd_offset, pckbc_slot_t slot, int flags)
 {
 	bus_space_handle_t ioh_d, ioh_c;
 #ifdef PCKBC_CNATTACH_SELFTEST
@@ -622,6 +640,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr,
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
+	pckbc_consdata.t_flags = flags;
 	callout_init(&pckbc_consdata.t_cleanup, 0);
 
 	/* flush */
