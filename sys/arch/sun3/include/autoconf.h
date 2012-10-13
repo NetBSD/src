@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.26 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.27 2012/10/13 06:37:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ extern struct sun68k_bus_space_tag mainbus_space_tag;
 #define cf_intpri	cf_loc[1]
 #define cf_intvec	cf_loc[2]
 
-int bus_scan(struct device *, struct cfdata *, const int *, void *);
+int bus_scan(device_t, cfdata_t, const int *, void *);
 int bus_print(void *, const char *);
 int bus_peek(int, int, int);
 void *bus_mapin(int, int, int);
