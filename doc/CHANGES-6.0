@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.217 2012/10/12 22:11:10 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.218 2012/10/13 06:18:33 riz Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8840,6 +8840,12 @@ distrib/notes/common/main			1.490
 distrib/notes/common/main			patched by hand
 
 	Update the release notes.
+
+sys/arch/algor/conf/P5064			1.74
+sys/arch/evbmips/conf/MALTA64			1.6
+
+	Bump SYMTAB_SPACE so these kernels build again.
+	[riz, ticket #607]
 
 sys/sys/param.h					patched by hand
 
