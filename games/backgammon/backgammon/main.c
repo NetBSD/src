@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2012/10/13 19:19:38 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2012/10/13 19:25:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2012/10/13 19:19:38 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2012/10/13 19:25:22 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -121,11 +121,7 @@ main(int argc __unused, char **argv)
 	/* need this now beceause getarg() may try to load a game */
 	mm = &mmstore;
 	move_init(mm);
-#ifdef V7
 	while (*++argv != 0)	/* process arguments */
-#else
-	while (*++argv != -1)	/* process arguments */
-#endif
 		getarg(mm, &argv);
 	args[acnt] = '\0';
 	if (tflag) {		/* clear screen */
