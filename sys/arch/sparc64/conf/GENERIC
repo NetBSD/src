@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2012/09/01 18:17:51 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.153 2012/10/13 18:00:03 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152 $"
+#ident 		"GENERIC-$Revision: 1.153 $"
 
 maxusers	64
 
@@ -296,6 +296,14 @@ sabtty*	at sab? channel ?
 com*	at ebus?				# `com' driver for `su'
 kbd0	at com?					# keyboard
 ms0	at com?					# mouse
+
+## Tadpole SPARCle PS/2 keyboard and mouse
+pckbc* 		at ebus?                # PC keyboard controller
+pckbd* 		at pckbc?               # PC keyboard
+pms* 		at pckbc?               # PS/2 mouse for wsmouse
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+wskbd* 		at pckbd? console ?
+wsmouse* 	at pms? mux 0
 
 ## Magma Serial/Parallel driver (not tested)
 #magma*	at sbus? slot ? offset ?
