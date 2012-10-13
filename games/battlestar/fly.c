@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.14 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: fly.c,v 1.15 2012/10/13 19:58:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.14 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: fly.c,v 1.15 2012/10/13 19:58:53 dholland Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 #undef UP
 #include <curses.h>
+#include <assert.h>
 
 #define MIDR  (LINES/2 - 1)
 #define MIDC  (COLS/2 - 1)
@@ -150,8 +151,8 @@ visual(void)
 			if (torps) {
 				torps -= 2;
 				blast();
-				if (row == MIDR && column - MIDC < 2 && 
-				    MIDC - column < 2) {
+				if (row == MIDR && column < MIDC + 2 && 
+				    column > MIDC - 2) {
 					destroyed = 1;
 					alarm(0);
 				}
