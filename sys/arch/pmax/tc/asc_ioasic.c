@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.24 2011/07/09 17:32:31 matt Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.25 2012/10/13 06:49:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.24 2011/07/09 17:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.25 2012/10/13 06:49:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -218,7 +218,7 @@ asc_ioasic_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	size_t size;
 	vaddr_t cp;
 
-	NCR_DMA(("%s: start %d@%p,%s\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %d@%p,%s\n", device_xname(sc->sc_dev),
 	    *asc->sc_dmalen, *asc->sc_dmaaddr, ispullup ? "IN" : "OUT"));
 
 	/* upto two 4KB pages */
