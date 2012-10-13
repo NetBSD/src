@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.33 2010/04/05 07:19:31 joerg Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.34 2012/10/13 06:24:15 tsutsui Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.33 2010/04/05 07:19:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34 2012/10/13 06:24:15 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -204,7 +204,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 
 #ifdef SNDEBUG
 	aprint_debug_dev(sc->sc_dev, "buffers: rra=%p cda=%p rda=%p tda=%p\n",
-	    sc->sc_dev.dv_xname, sc->p_rra[0], sc->p_cda,
+	    device_xname(sc->sc_dev), sc->p_rra[0], sc->p_cda,
 	    sc->p_rda, sc->mtda[0].mtd_txp);
 #endif
 
