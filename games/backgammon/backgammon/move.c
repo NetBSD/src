@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.11 2012/10/13 18:44:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.10 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.11 2012/10/13 18:44:14 dholland Exp $");
 #endif
 #endif /* not lint */
+
+#include <assert.h>
 
 #include "back.h"
 #include "backlocal.h"
@@ -84,15 +86,15 @@ static int race;		/* game reduced to a race */
 
 
 static int bcomp(struct BOARD *, struct BOARD *);
-static struct BOARD *bsave(void);
-static void binsert(struct BOARD *);
-static void boardcopy(struct BOARD *);
+static struct BOARD *bsave(struct move *);
+static void binsert(struct move *, struct BOARD *);
+static void boardcopy(struct move *, struct BOARD *);
 static void makefree(struct BOARD *);
-static void mvcheck(struct BOARD *, struct BOARD *);
+static void mvcheck(struct move *, struct BOARD *, struct BOARD *);
 static struct BOARD *nextfree(void);
-static void trymove(int, int);
-static void pickmove(void);
-static void movcmp(void);
+static void trymove(struct move *, int, int);
+static void pickmove(struct move *);
+static void movcmp(struct move *);
 static int movegood(void);
 
 
@@ -102,6 +104,7 @@ move(int okay)
 {
 	int     i;		/* index */
 	int     l;		/* last man */
+	struct move *mm = &gm;
 
 	l = 0;
 	if (okay) {
@@ -132,17 +135,17 @@ move(int okay)
 		curmove(cturn == -1 ? 18 : 19, 0);
 	writel(*Colorptr);
 	writel(" rolls ");
-	writec(D0 + '0');
+	writec(mm->D0 + '0');
 	writec(' ');
-	writec(D1 + '0');
+	writec(mm->D1 + '0');
 	/* make tty interruptable while thinking */
 	if (tflag)
 		cline();
 	fixtty(&noech);
 
 	/* find out how many moves */
-	mvlim = movallow();
-	if (mvlim == 0) {
+	mm->mvlim = movallow();
+	if (mm->mvlim == 0) {
 		writel(" but cannot use it.\n");
 		nexturn();
 		fixtty(&raw);
@@ -153,17 +156,17 @@ move(int okay)
 		cp[i] = cg[i] = 0;
 
 	/* strategize */
-	trymove(0, 0);
-	pickmove();
+	trymove(mm, 0, 0);
+	pickmove(mm);
 
 	/* print move */
 	writel(" and moves ");
-	for (i = 0; i < mvlim; i++) {
+	for (i = 0; i < mm->mvlim; i++) {
 		if (i > 0)
 			writec(',');
-		wrint(p[i] = cp[i]);
+		wrint(mm->p[i] = cp[i]);
 		writec('-');
-		wrint(g[i] = cg[i]);
+		wrint(mm->g[i] = cg[i]);
 		makmove(i);
 	}
 	writec('.');
@@ -173,9 +176,9 @@ move(int okay)
 		curmove(20, 0);
 	else
 		writec('\n');
-	for (i = 0; i < mvlim; i++)
-		if (h[i])
-			wrhit(g[i]);
+	for (i = 0; i < mm->mvlim; i++)
+		if (mm->h[i])
+			wrhit(mm->g[i]);
 	/* get ready for next move */
 	nexturn();
 	if (!okay) {
@@ -188,27 +191,27 @@ move(int okay)
 /* 	mvnum   == number of move (rel zero) */
 /* 	swapped == see if swapped also tested */
 static void
-trymove(int mvnum, int swapped)
+trymove(struct move *mm, int mvnum, int swapped)
 {
 	int     pos;		/* position on board */
 	int     rval;		/* value of roll */
 
 	/* if recursed through all dice values, compare move */
-	if (mvnum == mvlim) {
-		binsert(bsave());
+	if (mvnum == mm->mvlim) {
+		binsert(mm, bsave(mm));
 		return;
 	}
 	/* make sure dice in always same order */
-	if (d0 == swapped)
-		swap;
+	if (mm->d0 == swapped)
+		mswap(mm);
 	/* choose value for this move */
-	rval = dice[mvnum != 0];
+	rval = mm->dice[mvnum != 0];
 
 	/* find all legitimate moves */
 	for (pos = bar; pos != home; pos += cturn) {
 		/* fix order of dice */
-		if (d0 == swapped)
-			swap;
+		if (mm->d0 == swapped)
+			mswap(mm);
 		/* break if stuck on bar */
 		if (board[bar] != 0 && pos != bar)
 			break;
@@ -216,29 +219,29 @@ trymove(int mvnum, int swapped)
 		if (board[pos] * cturn <= 0)
 			continue;
 		/* set up arrays for move */
-		p[mvnum] = pos;
-		g[mvnum] = pos + rval * cturn;
-		if (g[mvnum] * cturn >= home) {
+		mm->p[mvnum] = pos;
+		mm->g[mvnum] = pos + rval * cturn;
+		if (mm->g[mvnum] * cturn >= home) {
 			if (*offptr < 0)
 				break;
-			g[mvnum] = home;
+			mm->g[mvnum] = home;
 		}
 		/* try to move */
 		if (makmove(mvnum))
 			continue;
 		else
-			trymove(mvnum + 1, 2);
+			trymove(mm, mvnum + 1, 2);
 		/* undo move to try another */
 		backone(mvnum);
 	}
 
 	/* swap dice and try again */
-	if ((!swapped) && D0 != D1)
-		trymove(0, 1);
+	if ((!swapped) && mm->D0 != mm->D1)
+		trymove(mm, 0, 1);
 }
 
 static struct BOARD *
-bsave(void)
+bsave(struct move *mm)
 {
 	int     i;		/* index */
 	struct BOARD *now;	/* current position */
@@ -252,16 +255,16 @@ bsave(void)
 	now->b_in[1] = in[1];
 	now->b_off[0] = off[0];
 	now->b_off[1] = off[1];
-	for (i = 0; i < mvlim; i++) {
-		now->b_st[i] = p[i];
-		now->b_fn[i] = g[i];
+	for (i = 0; i < mm->mvlim; i++) {
+		now->b_st[i] = mm->p[i];
+		now->b_fn[i] = mm->g[i];
 	}
 	return (now);
 }
 
 /* new == item to insert */
 static void
-binsert(struct BOARD *new)
+binsert(struct move *mm, struct BOARD *new)
 {
 	struct BOARD *qp = checkq;	/* queue pointer */
 	int     result;		/* comparison result */
@@ -278,7 +281,7 @@ binsert(struct BOARD *new)
 		return;
 	}
 	if (result == 0) {	/* duplicate entry */
-		mvcheck(qp, new);
+		mvcheck(mm, qp, new);
 		makefree(new);
 		return;
 	}
@@ -290,7 +293,7 @@ binsert(struct BOARD *new)
 			return;
 		}
 		if (result == 0) {	/* duplicate entry */
-			mvcheck(qp->b_next, new);
+			mvcheck(mm, qp->b_next, new);
 			makefree(new);
 			return;
 		}
@@ -318,21 +321,21 @@ bcomp(struct BOARD *a, struct BOARD *b)
 }
 
 static void
-mvcheck(struct BOARD *incumbent, struct BOARD *candidate)
+mvcheck(struct move *mm, struct BOARD *incumbent, struct BOARD *candidate)
 {
 	int     i;
 	int     result;
 
-	for (i = 0; i < mvlim; i++) {
+	for (i = 0; i < mm->mvlim; i++) {
 		result = cturn * (candidate->b_st[i] - incumbent->b_st[i]);
 		if (result > 0)
 			return;
 		if (result < 0)
 			break;
 	}
-	if (i == mvlim)
+	if (i == mm->mvlim)
 		return;
-	for (i = 0; i < mvlim; i++) {
+	for (i = 0; i < mm->mvlim; i++) {
 		incumbent->b_st[i] = candidate->b_st[i];
 		incumbent->b_fn[i] = candidate->b_fn[i];
 	}
@@ -366,10 +369,10 @@ nextfree(void)
 }
 
 static void
-pickmove(void)
+pickmove(struct move *mm)
 {
 	/* current game position */
-	struct BOARD *now = bsave();
+	struct BOARD *now = bsave(mm);
 	struct BOARD *next;	/* next move */
 
 #ifdef DEBUG
@@ -379,18 +382,18 @@ pickmove(void)
 	fflush(trace);
 #endif
 	do {			/* compare moves */
-		boardcopy(checkq);
+		boardcopy(mm, checkq);
 		next = checkq->b_next;
 		makefree(checkq);
 		checkq = next;
-		movcmp();
+		movcmp(mm);
 	} while (checkq != 0);
 
-	boardcopy(now);
+	boardcopy(mm, now);
 }
 
 static void
-boardcopy(struct BOARD *s)
+boardcopy(struct move *mm, struct BOARD *s)
 {
 	int     i;		/* index */
 
@@ -400,14 +403,14 @@ boardcopy(struct BOARD *s)
 		in[i] = s->b_in[i];
 		off[i] = s->b_off[i];
 	}
-	for (i = 0; i < mvlim; i++) {
-		p[i] = s->b_st[i];
-		g[i] = s->b_fn[i];
+	for (i = 0; i < mm->mvlim; i++) {
+		mm->p[i] = s->b_st[i];
+		mm->g[i] = s->b_fn[i];
 	}
 }
 
 static void
-movcmp(void)
+movcmp(struct move *mm)
 {
 	int     i;
 
@@ -456,9 +459,9 @@ movcmp(void)
 		fprintf(trace, "\t[%s] ... wins.\n", tests);
 		fflush(trace);
 #endif
-		for (i = 0; i < mvlim; i++) {
-			cp[i] = p[i];
-			cg[i] = g[i];
+		for (i = 0; i < mm->mvlim; i++) {
+			cp[i] = mm->p[i];
+			cg[i] = mm->g[i];
 		}
 		if (!race) {
 			chance = ch;

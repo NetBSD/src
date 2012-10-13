@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.15 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.15 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ save(int n)
 	int     fdesc;
 	char   *fs;
 	char    fname[50];
+	struct move *mm = &gm;
 
 	if (n) {
 		if (tflag) {
@@ -123,7 +124,7 @@ save(int n)
 	write(fdesc, board, sizeof board);
 	write(fdesc, off, sizeof off);
 	write(fdesc, in, sizeof in);
-	write(fdesc, dice, sizeof dice);
+	write(fdesc, mm->dice, sizeof mm->dice);
 	write(fdesc, &cturn, sizeof cturn);
 	write(fdesc, &dlast, sizeof dlast);
 	write(fdesc, &pnum, sizeof pnum);
@@ -148,13 +149,14 @@ void
 recover(const char *s)
 {
 	int     fdesc;
+	struct move *mm = &gm;
 
 	if ((fdesc = open(s, O_RDONLY)) == -1)
 		norec(s);
 	read(fdesc, board, sizeof board);
 	read(fdesc, off, sizeof off);
 	read(fdesc, in, sizeof in);
-	read(fdesc, dice, sizeof dice);
+	read(fdesc, mm->dice, sizeof mm->dice);
 	read(fdesc, &cturn, sizeof cturn);
 	read(fdesc, &dlast, sizeof dlast);
 	read(fdesc, &pnum, sizeof pnum);
