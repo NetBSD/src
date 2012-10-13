@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.46 2011/07/09 17:32:30 matt Exp $ */
+/* $NetBSD: dec_5100.c,v 1.47 2012/10/13 06:51:23 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.46 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.47 2012/10/13 06:51:23 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -63,7 +63,7 @@ void		dec_5100_init(void);		/* XXX */
 static void	dec_5100_bus_reset(void);
 static void	dec_5100_cons_init(void);
 static void	dec_5100_intr(uint32_t, vaddr_t, uint32_t);
-static void	dec_5100_intr_establish(struct device *, void *,
+static void	dec_5100_intr_establish(device_t, void *,
 		    int, int (*)(void *), void *);
 static void	dec_5100_memintr(void);
 
@@ -135,7 +135,7 @@ dec_5100_cons_init(void)
 }
 
 static void
-dec_5100_intr_establish(struct device *dev, void *cookie, int level,
+dec_5100_intr_establish(device_t dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 
