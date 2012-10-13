@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2011/07/16 20:25:28 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.73 2012/10/13 06:37:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2011/07/16 20:25:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73 2012/10/13 06:37:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -396,7 +396,7 @@ fdconf(struct fdc_softc *fdc)
 }
 
 void 
-fdcattach(struct device *parent, struct device *self, void *aux)
+fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct fdc_softc *fdc = device_private(self);
