@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox_subr.c,v 1.2 2012/10/13 07:57:50 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox_subr.c,v 1.3 2012/10/13 08:42:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.2 2012/10/13 07:57:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.3 2012/10/13 08:42:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +44,19 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_subr.c,v 1.2 2012/10/13 07:57:50 skrll 
 #include <arm/broadcom/bcm2835_mboxreg.h>
 #include <arm/broadcom/bcm2835reg.h>
 
+
+#define	BCM2835_MBOX_CHAN(chan) ((chan) & 0xf)
+#define	BCM2835_MBOX_DATA(data) ((data) & ~0xf)
+
+#define	BCM2835_MBOX_MSG(chan, data) (((chan) & 0xf) | ((data) & ~0xf))
+
 void
 bcm2835_mbox_read(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t chan,
     uint32_t *data)
 {
 	uint32_t mbox;
+
+	KASSERT((chan & 0xf) == chan);
 
 	for (;;) {
 		uint8_t rchan;
@@ -79,6 +87,8 @@ bcm2835_mbox_write(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t chan,
 {
 	uint32_t rdata;
 
+	KASSERT((chan & 0xf) == chan);
+	KASSERT((data & 0xf) == 0);
 	for (;;) {
 
 		bus_space_barrier(iot, ioh, 0, BCM2835_MBOX_SIZE,
