@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.78 2012/10/04 21:23:45 dsl Exp $
+#	$NetBSD: files.amd64,v 1.79 2012/10/13 19:42:02 alnsn Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -47,6 +47,12 @@ file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers
