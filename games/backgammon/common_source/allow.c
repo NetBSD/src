@@ -1,4 +1,4 @@
-/*	$NetBSD: allow.c,v 1.7 2012/10/13 18:44:14 dholland Exp $	*/
+/*	$NetBSD: allow.c,v 1.8 2012/10/13 19:19:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,18 +34,17 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: allow.c,v 1.7 2012/10/13 18:44:14 dholland Exp $");
+__RCSID("$NetBSD: allow.c,v 1.8 2012/10/13 19:19:38 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 int
-movallow(void)
+movallow(struct move *mm)
 {
 	int     i, m, iold;
 	int     r;
-	struct move *mm = &gm;
 
 	if (mm->d0)
 		mswap(mm);
@@ -62,11 +61,11 @@ movallow(void)
 				mm->g[i] = bar + cturn * mm->D1;
 			else
 				mm->g[i] = bar + cturn * mm->D0;
-			if ((r = makmove(i)) != 0) {
+			if ((r = makmove(mm, i)) != 0) {
 				if (mm->d0 || m == 4)
 					break;
 				mswap(mm);
-				movback(i);
+				movback(mm, i);
 				if (i > iold)
 					iold = i;
 				for (i = 0; i < 4; i++)
@@ -80,7 +79,7 @@ movallow(void)
 			if (i > iold)
 				iold = i;
 			if (m == 2 && i) {
-				movback(i);
+				movback(mm, i);
 				mm->p[i--] = bar;
 				if (mm->p[i] != bar)
 					continue;
@@ -90,7 +89,7 @@ movallow(void)
 			if (mm->d0 || m == 4)
 				break;
 			mswap(mm);
-			movback(i);
+			movback(mm, i);
 			for (i = 0; i < 4; i++)
 				mm->p[i] = bar;
 			i = 0;
@@ -106,9 +105,9 @@ movallow(void)
 			else
 				continue;
 		}
-		if (board[mm->p[i]] * cturn > 0 && (r = makmove(i)) == 0)
+		if (board[mm->p[i]] * cturn > 0 && (r = makmove(mm, i)) == 0)
 			i++;
 	}
-	movback(i);
+	movback(mm, i);
 	return (iold > i ? iold : i);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.19 2012/10/13 18:44:14 dholland Exp $	*/
+/*	$NetBSD: back.h,v 1.20 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,8 +46,7 @@
 #define rnum(r)	(random()%r)
 #define D0	dice[0]
 #define D1	dice[1]
-#define mswap(m)	{(m)->D0 ^= (m)->D1; (m)->D1 ^= (m)->D0; (m)->D0 ^= (m)->D1; (m)->d0 = 1-(m)->d0;}
-#define swap	suck it
+#define mswap(m) {(m)->D0 ^= (m)->D1; (m)->D1 ^= (m)->D0; (m)->D0 ^= (m)->D1; (m)->d0 = 1-(m)->d0;}
 
 struct move {
 	int	dice[2];	/* value of dice */
@@ -58,8 +57,6 @@ struct move {
 	int	d0;		/* flag if dice have been reversed from
 				   original position */
 };
-
-extern struct move gm;
 
 /*
  *
@@ -135,10 +132,10 @@ extern	int	begscr;		/* 'beginning' of screen
 				   (not including board) */
 
 int	addbuf(int);
-void	backone(int);
+void	backone(struct move *, int);
 void	buflush(void);
 int	canhit(int, int);
-int	checkmove(int);
+int	checkmove(struct move *, int);
 void	clear(void);
 void	clend(void);
 void	cline(void);
@@ -148,28 +145,28 @@ void	errexit(const char *) __dead;
 void	fancyc(int);
 void	fboard(void);
 void	fixtty(struct termios *);
-void	getarg(char ***);
+void	getarg(struct move *, char ***);
 int	getcaps(const char *);
-void	getmove(void);
+void	getmove(struct move *);
 void	getout(int) __dead;
 void	gwrite(void);
 void	init(void);
 int	main(int, char *[]);
-int	makmove(int);
-int	movallow(void);
-void	movback(int);
-void	moverr(int);
-int	movokay(int);
+int	makmove(struct move *, int);
+int	movallow(struct move *);
+void	movback(struct move *, int);
+void	moverr(struct move *, int);
+int	movokay(struct move *, int);
 void	newpos(void);
 void	nexturn(void);
 void	odds(int, int, int);
-void	proll(void);
-int	quit(void);
+void	proll(struct move *);
+int	quit(struct move *);
 int	readc(void);
-void	recover(const char *);
+void	recover(struct move *, const char *);
 void	refresh(void);
-void	roll(void);
-void	save(int);
+void	roll(struct move *);
+void	save(struct move *, int);
 int	wrtext(const char *const *);
 void	wrboard(void);
 void	wrhit(int);
@@ -178,3 +175,5 @@ void	writec(int);
 void	writel(const char *);
 void	wrscore(void);
 int	yorn(int);
+
+void move_init(struct move *);
