@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.19 2012/02/02 19:43:03 tls Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.20 2012/10/13 18:14:09 jdc Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -62,6 +62,9 @@ struct pckbc_internal {
 	bus_space_handle_t t_ioh_d, t_ioh_c; /* data port, cmd port */
 	bus_addr_t t_addr;
 	u_char t_cmdbyte; /* shadow */
+	int t_flags;
+#define	PCKBC_CANT_TRANSLATE	0x0001	/* can't translate to XT scancodes */
+#define	PCKBC_NEED_AUXWRITE	0x0002	/* need auxwrite command to find aux */
 
 	int t_haveaux; /* controller has an aux port */
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];
@@ -102,7 +105,7 @@ int pckbc_poll_data1(void *, pckbc_slot_t);
 
 /* More normal calls from attach routines */
 void pckbc_attach(struct pckbc_softc *);
-int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t, pckbc_slot_t);
+int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t, pckbc_slot_t, int);
 int pckbc_is_console(bus_space_tag_t, bus_addr_t);
 int pckbcintr(void *);
 int pckbcintr_hard(void *);
