@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.92 2012/02/02 19:42:59 tls Exp $	*/
+/*	$NetBSD: rd.c,v 1.93 2012/10/13 06:12:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.93 2012/10/13 06:12:23 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -245,7 +245,7 @@ static const struct rdidentinfo rdidentinfo[] = {
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
 
-static int	rdident(struct device *, struct rd_softc *,
+static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
 static void	rdustart(struct rd_softc *);
