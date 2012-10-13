@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: check.c,v 1.7 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: check.c,v 1.7 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ void
 getmove(void)
 {
 	int     i, c;
+	struct move *mm = &gm;
 
 	c = 0;
 	for (;;) {
@@ -51,14 +52,14 @@ getmove(void)
 
 		switch (i) {
 		case -1:
-			if (movokay(mvlim)) {
+			if (movokay(mm->mvlim)) {
 				if (tflag)
 					curmove(20, 0);
 				else
 					writec('\n');
-				for (i = 0; i < mvlim; i++)
-					if (h[i])
-						wrhit(g[i]);
+				for (i = 0; i < mm->mvlim; i++)
+					if (mm->h[i])
+						wrhit(mm->g[i]);
 				nexturn();
 				if (*offopp == 15)
 					cturn *= -2;
@@ -81,9 +82,9 @@ getmove(void)
 				writel(" must make ");
 			else
 				writel(" can only make ");
-			writec(mvlim + '0');
+			writec(mm->mvlim + '0');
 			writel(" move");
-			if (mvlim > 1)
+			if (mm->mvlim > 1)
 				writec('s');
 			writec('.');
 			writec('\n');
@@ -108,24 +109,25 @@ int
 movokay(int mv)
 {
 	int     i, m;
+	struct move *mm = &gm;
 
-	if (d0)
-		swap;
+	if (mm->d0)
+		mswap(mm);
 
 	for (i = 0; i < mv; i++) {
-		if (p[i] == g[i]) {
+		if (mm->p[i] == mm->g[i]) {
 			moverr(i);
 			curmove(20, 0);
 			writel("Attempt to move to same location.\n");
 			return (0);
 		}
-		if (cturn * (g[i] - p[i]) < 0) {
+		if (cturn * (mm->g[i] - mm->p[i]) < 0) {
 			moverr(i);
 			curmove(20, 0);
 			writel("Backwards move.\n");
 			return (0);
 		}
-		if (abs(board[bar]) && p[i] != bar) {
+		if (abs(board[bar]) && mm->p[i] != bar) {
 			moverr(i);
 			curmove(20, 0);
 			writel("Men still on bar.\n");
