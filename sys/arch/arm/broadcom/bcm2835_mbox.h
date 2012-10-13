@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.h,v 1.2 2012/08/22 13:19:47 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_mbox.h,v 1.3 2012/10/13 08:42:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,11 +33,6 @@
 #define	_BCM2835_MBOX_H_
 
 #include <sys/bus.h>
-
-#define	BCM2835_MBOX_CHAN(mbox) ((mbox) & 0xf)
-#define	BCM2835_MBOX_DATA(mbox) (((mbox) & ~0xf) >> 4)
-
-#define	BCM2835_MBOX_MSG(chan, data) (((chan) & 0xf) | ((data) << 4))
 
 void bcm2835_mbox_read(bus_space_tag_t, bus_space_handle_t, uint8_t,
     uint32_t *);
