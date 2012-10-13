@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.9 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.9 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -124,7 +124,7 @@ struct ewskbd_devconfig {
 #define EWSKBD_KANA	0x04
 
 	/* wscons glue */
-	struct device *wskbddev;
+	device_t wskbddev;
 	int enabled;
 };
 
@@ -195,7 +195,7 @@ ewskbd_zsc_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-ewskbd_zsc_attach(struct device *parent, struct device *self, void *aux)
+ewskbd_zsc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ewskbd_softc *sc;
 	struct zsc_softc *zsc;
