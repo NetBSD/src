@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.22 2011/07/22 23:22:38 christos Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.23 2012/10/13 17:51:51 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.22 2011/07/22 23:22:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.23 2012/10/13 17:51:51 jdc Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -128,6 +128,17 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(87), 			KS_f11,
     KC(88), 			KS_f12,
     KC(127),			KS_Pause, /* Break */
+    KC(136),			KS_Help,
+    KC(137),			KS_Stop,
+    KC(138),			KS_Again,
+    KC(139),			KS_Props,
+    KC(140),			KS_Undo,
+    KC(141),			KS_Front,
+    KC(142),			KS_Copy,
+    KC(143),			KS_Open,
+    KC(144),			KS_Paste,
+    KC(145),			KS_Find,
+    KC(146),			KS_Cut,
     KC(156),			KS_KP_Enter,
     KC(157),			KS_Control_R,
     KC(160),			KS_Cmd_VolumeToggle,
