@@ -87,6 +87,7 @@
 #ifdef _KERNEL
 #include <sys/cdefs.h>
 #include <sys/malloc.h>
+#include <sys/param.h>
 #endif
 
 /* --------------------------------------------------------------------- */
