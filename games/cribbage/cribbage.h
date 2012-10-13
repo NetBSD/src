@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.16 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.17 2012/10/13 20:36:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -77,10 +77,10 @@ void	 makeknown(const CARD [], int);
 void	 msg(const char *, ...) __printflike(1, 2);
 int	 msgcard(CARD, BOOLEAN);
 int	 number(int, int, const char *);
-int	 pegscore(CARD, const CARD [], int, int);
+int	 pegscore(CARD, const CARD [], unsigned, int);
 int	 plyrhand(const CARD [], const char *);
 void	 prcard(WINDOW *, int, int, CARD, BOOLEAN);
-void	 prhand(const CARD [], int, WINDOW *, BOOLEAN);
+void	 prhand(const CARD [], unsigned, WINDOW *, BOOLEAN);
 void	 receive_intr(int) __dead;
 int	 scorehand(const CARD [], CARD, int, BOOLEAN, BOOLEAN);
 void	 shuffle(CARD []);
