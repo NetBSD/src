@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.9 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.9 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.10 2012/10/13 06:08:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ struct kbms_reg {
 enum { MOUSE_PACKET_LEN = 5 };
 struct kbms_softc {
 	device_t sc_dev;
-	struct device *sc_wskbd;
-	struct device *sc_wsmouse;
+	device_t sc_wskbd;
+	device_t sc_wsmouse;
 	struct kbms_reg sc_reg;
 	int sc_leds;
 	int sc_flags;
