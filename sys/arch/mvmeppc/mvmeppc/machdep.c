@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2012/10/13 17:58:54 jdc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2012/10/13 17:58:54 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -208,7 +208,7 @@ consinit(void)
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&mvmeppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}
@@ -228,7 +228,7 @@ consinit(void)
 dokbd:
 #if (NPCKBC > 0)
 		pckbc_cnattach(&mvmeppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}

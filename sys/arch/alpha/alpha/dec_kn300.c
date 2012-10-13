@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.39 2012/02/06 02:14:11 matt Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.40 2012/10/13 17:58:54 jdc Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.39 2012/02/06 02:14:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.40 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ dec_kn300_cons_init(void)
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.18 2008/03/18 05:05:35 dogcow Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.19 2012/10/13 17:58:54 jdc Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.18 2008/03/18 05:05:35 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.19 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 	if (isconsole) {
 		int status;
 
-		status = pckbc_cnattach(iot, ioaddr, KBCMDP, PCKBC_KBD_SLOT);
+		status = pckbc_cnattach(iot, ioaddr, KBCMDP, PCKBC_KBD_SLOT, 0);
 		if (status == 0)
 			aprint_normal(": cnattach ok");
 		else

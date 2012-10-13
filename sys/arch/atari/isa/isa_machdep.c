@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.39 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.40 2012/10/13 17:58:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.40 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ isabusattach(device_t parent, device_t self, void *aux)
 	isa_bus_init();
 	if (self == NULL) { /* Early init */
 #if (NPCKBC > 0)
-		pckbc_cnattach(iba.iba_iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		pckbc_cnattach(iba.iba_iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}
