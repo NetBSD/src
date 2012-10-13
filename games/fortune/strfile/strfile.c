@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.34 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: strfile.c,v 1.35 2012/10/13 20:42:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.34 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.35 2012/10/13 20:42:56 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -162,11 +162,12 @@ main(int ac, char **av)
 {
 	char		*sp, dc;
 	FILE		*inf, *outf;
-	off_t		last_off, length, pos, *p;
-	int		first, cnt;
+	off_t		last_off, length, pos;
+	int		first;
 	char		*nsp;
 	STR		*fp;
 	static char	string[257];
+	long		i;
 
 	/* sanity test */
 	if (sizeof(uint32_t) != 4)
@@ -256,8 +257,8 @@ main(int ac, char **av)
 	Tbl.str_flags = h2nl(Tbl.str_flags);
 	(void) fwrite((char *) &Tbl, sizeof Tbl, 1, outf);
 	if (STORING_PTRS) {
-		for (p = Seekpts, cnt = Num_pts; cnt--; ++p)
-			fwrite_be_offt(*p, outf);
+		for (i = 0; i < Num_pts; i++)
+			fwrite_be_offt(Seekpts[i], outf);
 	}
 	fflush(outf);
 	if (ferror(outf))
