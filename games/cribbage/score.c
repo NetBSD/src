@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.15 2009/08/12 05:48:04 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.16 2012/10/13 20:36:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.15 2009/08/12 05:48:04 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.16 2012/10/13 20:36:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,11 +289,12 @@ pairuns(const CARD h[], int n)
  * the n cards in tbl during pegging
  */
 int
-pegscore(CARD crd, const CARD tbl[], int n, int sum)
+pegscore(CARD crd, const CARD tbl[], unsigned n, int sum)
 {
 	BOOLEAN got[RANKS];
 	int i, j, scr;
 	int k, lo, hi;
+	unsigned ju;
 
 	sum += VAL(crd.rank);
 	if (sum > 31)
@@ -304,11 +305,11 @@ pegscore(CARD crd, const CARD tbl[], int n, int sum)
 		scr = 0;
 	if (!n)
 		return (scr);
-	j = 1;
-	while ((crd.rank == tbl[n - j].rank) && (n - j >= 0))
-		++j;
-	if (j > 1)
-		return (scr + ichoose2[j]);
+	ju = 1;
+	while (ju <= n && crd.rank == tbl[n - ju].rank)
+		++ju;
+	if (ju > 1)
+		return (scr + ichoose2[ju]);
 	if (n < 2)
 		return (scr);
 	lo = hi = crd.rank;
