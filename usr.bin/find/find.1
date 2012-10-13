@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.78 2012/08/26 14:26:07 wiz Exp $
+.\"	$NetBSD: find.1,v 1.79 2012/10/13 14:18:17 njoly Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -698,13 +698,11 @@ The operators are listed in order of decreasing precedence.
 .It Cm \&( Ar expression Cm \&)
 This evaluates to true if the parenthesized expression evaluates to
 true.
-.Pp
 .It Cm \&! Ar expression
 This is the unary
 .Tn NOT
 operator.
 It evaluates to true if the expression is false.
-.Pp
 .It Ar expression Cm -and Ar expression
 .It Ar expression expression
 The
@@ -716,7 +714,6 @@ As it is implied by the juxtaposition of two expressions it does not
 have to be specified.
 The expression evaluates to true if both expressions are true.
 The second expression is not evaluated if the first expression is false.
-.Pp
 .It Ar expression Cm -or Ar expression
 The
 .Cm -or
