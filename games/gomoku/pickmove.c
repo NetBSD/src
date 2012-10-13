@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.20 2010/03/29 05:16:08 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.21 2012/10/13 20:57:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.20 2010/03/29 05:16:08 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.21 2012/10/13 20:57:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ pickmove(int us)
 {
 	struct spotstr *sp, *sp1, *sp2;
 	union comboval *Ocp, *Tcp;
+	unsigned pos;
 	int m;
 
 	/* first move is easy */
@@ -90,7 +91,8 @@ pickmove(int us)
 		return (PT(K,10));
 
 	/* initialize all the board values */
-	for (sp = &board[PT(T,20)]; --sp >= &board[PT(A,1)]; ) {
+	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+		sp = &board[pos];
 		sp->s_combo[BLACK].s = MAXCOMBO + 1;
 		sp->s_combo[WHITE].s = MAXCOMBO + 1;
 		sp->s_level[BLACK] = 255;
@@ -108,7 +110,10 @@ pickmove(int us)
 	scanframes(WHITE);
 
 	/* find the spot with the highest value */
-	for (sp = sp1 = sp2 = &board[PT(T,19)]; --sp >= &board[PT(A,1)]; ) {
+	pos = PT(T,19);
+	sp1 = sp2 = &board[pos];
+	for ( ; pos-- > PT(A,1); ) {
+		sp = &board[pos];
 		if (sp->s_occ != EMPTY)
 			continue;
 		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
@@ -237,6 +242,7 @@ scanframes(int color)
 	struct elist *ep, *nep;
 	int i, r, d, n;
 	union comboval cb;
+	unsigned pos;
 
 	curcolor = color;
 
@@ -345,7 +351,8 @@ scanframes(int color)
 	}
 
 	/* scan for combos at empty spots */
-	for (sp = &board[PT(T,20)]; --sp >= &board[PT(A,1)]; ) {
+	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[color].s) {
@@ -548,12 +555,14 @@ addframes(int level)
 	int i, r, d;
 	struct combostr **cbpp, *pcbp;
 	union comboval fcb, cb;
+	unsigned pos;
 
 	curlevel = level;
 
 	/* scan for combos at empty spots */
 	i = curcolor;
-	for (sp = &board[PT(T,20)]; --sp >= &board[PT(A,1)]; ) {
+	for (pos = PT(T,20); pos-- > PT(A,1); ) {
+		sp = &board[pos];
 		for (ep = sp->s_empty; ep; ep = nep) {
 			cbp = ep->e_combo;
 			if (cbp->c_combo.s <= sp->s_combo[i].s) {
