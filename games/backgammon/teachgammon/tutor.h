@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.h,v 1.10 2011/08/26 06:18:16 dholland Exp $	*/
+/*	$NetBSD: tutor.h,v 1.11 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)tutor.h	8.1 (Berkeley) 5/31/93
  */
+
+struct move; /* in back.h */
 
 struct situatn {
 	int	brd[26];
@@ -63,4 +65,4 @@ extern	const struct situatn	test[];
 
 
 void	leave(void) __dead;
-void	tutor(void) __dead;
+void	tutor(struct move *) __dead;
