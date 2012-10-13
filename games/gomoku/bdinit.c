@@ -1,4 +1,4 @@
-/*	$NetBSD: bdinit.c,v 1.8 2009/08/12 06:19:17 dholland Exp $	*/
+/*	$NetBSD: bdinit.c,v 1.9 2012/10/13 20:57:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)bdinit.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdinit.c,v 1.8 2009/08/12 06:19:17 dholland Exp $");
+__RCSID("$NetBSD: bdinit.c,v 1.9 2012/10/13 20:57:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ init_overlap(void)
 {
 	struct spotstr *sp1, *sp2;
 	struct combostr *cbp;
+	unsigned frameix;
 	int i, f, r, n, d1, d2;
 	int mask, bmask, vertex, s;
 	u_char *str;
@@ -186,7 +187,8 @@ init_overlap(void)
 	memset(intersect, 0, sizeof(intersect));
 	str = &overlap[FAREA * FAREA];
 	ip = &intersect[FAREA * FAREA];
-	for (cbp = frames + FAREA; --cbp >= frames; ) {		/* each frame */
+	for (frameix = FAREA; frameix-- > 0; ) {	/* each frame */
+	    cbp = &frames[frameix];
 	    str -= FAREA;
 	    ip -= FAREA;
 	    sp1 = &board[vertex = cbp->c_vertex];
