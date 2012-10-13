@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.29 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: api_up1000.c,v 1.30 2012/10/13 17:58:54 jdc Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.29 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.30 2012/10/13 17:58:54 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ api_up1000_cons_init(void)
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&icp->ic_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
