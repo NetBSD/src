@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.10 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.9 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,3 +93,15 @@ int	rscore;
 int	table[6][6];
 int	wscore;
 struct termios	old, noech, raw;
+
+void
+move_init(struct move *mm)
+{
+	mm->D0 = 0;
+	mm->D1 = 0;
+	mm->mvlim = 0;
+	mm->p[0] = mm->p[1] = mm->p[2] = mm->p[3] = mm->p[4] = 0;
+	mm->g[0] = mm->g[1] = mm->g[2] = mm->g[3] = mm->g[4] = 0;
+	mm->h[0] = mm->h[1] = mm->h[2] = mm->h[3] = 0;
+	mm->d0 = 0;
+}

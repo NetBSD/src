@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.7 2012/10/13 18:44:15 dholland Exp $	*/
+/*	$NetBSD: check.c,v 1.8 2012/10/13 19:19:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,25 +34,24 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: check.c,v 1.7 2012/10/13 18:44:15 dholland Exp $");
+__RCSID("$NetBSD: check.c,v 1.8 2012/10/13 19:19:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 void
-getmove(void)
+getmove(struct move *mm)
 {
 	int     i, c;
-	struct move *mm = &gm;
 
 	c = 0;
 	for (;;) {
-		i = checkmove(c);
+		i = checkmove(mm, c);
 
 		switch (i) {
 		case -1:
-			if (movokay(mm->mvlim)) {
+			if (movokay(mm, mm->mvlim)) {
 				if (tflag)
 					curmove(20, 0);
 				else
@@ -91,12 +90,12 @@ getmove(void)
 			break;
 
 		case -3:
-			if (quit())
+			if (quit(mm))
 				return;
 		}
 
 		if (!tflag)
-			proll();
+			proll(mm);
 		else {
 			curmove(cturn == -1 ? 18 : 19, 39);
 			cline();
@@ -106,35 +105,34 @@ getmove(void)
 }
 
 int
-movokay(int mv)
+movokay(struct move *mm, int mv)
 {
 	int     i, m;
-	struct move *mm = &gm;
 
 	if (mm->d0)
 		mswap(mm);
 
 	for (i = 0; i < mv; i++) {
 		if (mm->p[i] == mm->g[i]) {
-			moverr(i);
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Attempt to move to same location.\n");
 			return (0);
 		}
 		if (cturn * (mm->g[i] - mm->p[i]) < 0) {
-			moverr(i);
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Backwards move.\n");
 			return (0);
 		}
 		if (abs(board[bar]) && mm->p[i] != bar) {
-			moverr(i);
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Men still on bar.\n");
 			return (0);
 		}
-		if ((m = makmove(i))) {
-			moverr(i);
+		if ((m = makmove(mm, i))) {
+			moverr(mm, i);
 			switch (m) {
 
 			case 1:
