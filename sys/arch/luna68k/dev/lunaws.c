@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.24 2012/07/16 11:31:13 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.25 2012/10/13 06:16:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24 2012/07/16 11:31:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.25 2012/10/13 06:16:18 tsutsui Exp $");
 
 #include "wsmouse.h"
 
@@ -64,9 +64,9 @@ struct ws_softc {
 	device_t	sc_dev;
 	struct sioreg	*sc_ctl;
 	uint8_t		sc_wr[6];
-	struct device	*sc_wskbddev;
+	device_t	sc_wskbddev;
 #if NWSMOUSE > 0
-	struct device	*sc_wsmousedev;
+	device_t	sc_wsmousedev;
 	int		sc_msreport;
 	int		buttons, dx, dy;
 #endif
