@@ -53,7 +53,7 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.19 2012/03/13 19:25:40 njoly Exp $
+.\" $NetBSD: lmc.4,v 1.20 2012/10/13 15:28:34 njoly Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
@@ -229,7 +229,6 @@ as well as
 .Ic ifconfig -m lmc0
 .Ed
 lists the available media options.
-.Pp
 .Bd -unfilled -offset indent
 .Ic ifconfig lmc0 mediaopt loopback
 .Ed
@@ -237,7 +236,6 @@ loops the interface transmitter to the receiver for testing.
 This loopback uses a path present in every card type.
 .Ic lmcconfig
 can select card-specific loopbacks, such as outbound payload loopback.
-.Pp
 .Bd -unfilled -offset indent
 .Ic ifconfig lmc0 debug
 .Ed
@@ -295,7 +293,6 @@ Configure the card with
 .Bd -unfilled -offset indent -compact
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.1
 .Ed
-.Pp
 .Bl -tag -width "T1/E1" -offset indent
 .It Sy HSSI
 Loopback plugs can be ordered from SBE (and others).
@@ -347,7 +344,6 @@ Configure the two cards with
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ic ifconfig lmc1 10.0.0.2 10.0.0.1
 .Ed
-.Pp
 .Bl -tag -width "T3/HSSI" -offset indent
 .It Sy T3/HSSI
 If you have a T3 modem with an HSSI interface
@@ -374,7 +370,6 @@ Configure the two cards with
 .Ic ifconfig lmc0 10.0.0.1 10.0.0.2
 .Ic ifconfig lmc1 10.0.0.2 10.0.0.1
 .Ed
-.Pp
 .Bl -tag -width "T1/E1" -offset indent
 .It Sy HSSI
 Three-meter HSSI null-modem cables can be ordered from SBE.
@@ -418,7 +413,6 @@ puts the card in DCE mode to source a transmit clock.
 .Dq Fl f Li 10000000
 sets the internal clock source to 10 Mb/s.
 .Ed
-.Pp
 .It Sy T1/E1
 A T1 null modem cable has two twisted pairs that connect
 pins 1 and 2 on one plug to pins 4 and 5 on the other plug.
