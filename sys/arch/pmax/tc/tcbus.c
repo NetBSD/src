@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.28 2011/07/09 17:32:31 matt Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.29 2012/10/13 06:51:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.28 2011/07/09 17:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29 2012/10/13 06:51:23 tsutsui Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.28 2011/07/09 17:32:31 matt Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-static const struct evcnt *tc_ds_intr_evcnt(struct device *, void *);
-static void	tc_ds_intr_establish(struct device *, void *,
+static const struct evcnt *tc_ds_intr_evcnt(device_t, void *);
+static void	tc_ds_intr_establish(device_t, void *,
 				int, int (*)(void *), void *);
-static void	tc_ds_intr_disestablish(struct device *, void *);
+static void	tc_ds_intr_disestablish(device_t, void *);
 static bus_dma_tag_t tc_ds_get_dma_tag(int);
 
 extern struct tcbus_attach_args kn02_tc_desc[];	/* XXX */
