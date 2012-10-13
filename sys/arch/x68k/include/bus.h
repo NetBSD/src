@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24 2011/03/24 15:05:55 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.25 2012/10/13 06:44:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct x68k_bus_space {
 				int);			/* flags */
 #endif
 
-	struct device *x68k_bus_device;
+	device_t x68k_bus_device;
 };
 
 int x68k_bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
