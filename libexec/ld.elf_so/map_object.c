@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.44 2012/07/25 22:51:04 martin Exp $	 */
+/*	$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.44 2012/07/25 22:51:04 martin Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.45 2012/10/13 21:13:07 dholland Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -105,7 +105,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #endif
 
 	if (sb != NULL && sb->st_size < (off_t)sizeof (Elf_Ehdr)) {
-		_rtld_error("%s: unrecognized file format1", path);
+		_rtld_error("%s: not ELF file (too short)", path);
 		return NULL;
 	}
 
@@ -125,9 +125,12 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		goto bad;
 	}
 	/* Make sure the file is valid */
-	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
-	    ehdr->e_ident[EI_CLASS] != ELFCLASS) {
-		_rtld_error("%s: unrecognized file format2 [%x != %x]", path,
+	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0) {
+		_rtld_error("%s: not ELF file (magic number bad)", path);
+		goto bad;
+	}
+	if (ehdr->e_ident[EI_CLASS] != ELFCLASS) {
+		_rtld_error("%s: invalid ELF class %x; expected %x", path,
 		    ehdr->e_ident[EI_CLASS], ELFCLASS);
 		goto bad;
 	}
