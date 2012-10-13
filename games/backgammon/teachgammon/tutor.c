@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.c,v 1.9 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: tutor.c,v 1.10 2012/10/13 18:44:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tutor.c,v 1.9 2010/03/22 05:10:19 mrg Exp $");
+__RCSID("$NetBSD: tutor.c,v 1.10 2012/10/13 18:44:15 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,6 +51,7 @@ void
 tutor(void)
 {
 	int     i, j;
+	struct move *mm = &gm;
 
 	i = 0;
 	begscr = 18;
@@ -72,7 +73,7 @@ tutor(void)
 				curmove(18, 0);
 			writel(better);
 			nexturn();
-			movback(mvlim);
+			movback(mm->mvlim);
 			if (tflag) {
 				refresh();
 				clrest();
@@ -94,30 +95,30 @@ tutor(void)
 			writec('\n');
 		if (i == maxmoves)
 			break;
-		D0 = test[i].roll1;
-		D1 = test[i].roll2;
-		d0 = 0;
-		mvlim = 0;
+		mm->D0 = test[i].roll1;
+		mm->D1 = test[i].roll2;
+		mm->d0 = 0;
+		mm->mvlim = 0;
 		for (j = 0; j < 4; j++) {
 			if (test[i].mp[j] == test[i].mg[j])
 				break;
-			p[j] = test[i].mp[j];
-			g[j] = test[i].mg[j];
-			mvlim++;
+			mm->p[j] = test[i].mp[j];
+			mm->g[j] = test[i].mg[j];
+			mm->mvlim++;
 		}
-		if (mvlim)
-			for (j = 0; j < mvlim; j++)
+		if (mm->mvlim)
+			for (j = 0; j < mm->mvlim; j++)
 				if (makmove(j))
 					writel("AARGH!!!\n");
 		if (tflag)
 			refresh();
 		nexturn();
-		D0 = test[i].new1;
-		D1 = test[i].new2;
-		d0 = 0;
+		mm->D0 = test[i].new1;
+		mm->D1 = test[i].new2;
+		mm->d0 = 0;
 		i++;
-		mvlim = movallow();
-		if (mvlim) {
+		mm->mvlim = movallow();
+		if (mm->mvlim) {
 			if (tflag)
 				clrest();
 			proll();
