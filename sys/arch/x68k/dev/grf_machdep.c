@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.30 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.31 2012/10/13 06:43:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.30 2011/02/08 20:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.31 2012/10/13 06:43:00 tsutsui Exp $");
 
 #include "locators.h"
 
@@ -79,32 +79,32 @@ CFATTACH_DECL_NEW(grf, sizeof(struct grf_softc),
 extern struct cfdriver grfbus_cd;
 
 int
-grfbusmatch(device_t pdp, cfdata_t cfp, void *auxp)
+grfbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	if (strcmp(auxp, grfbus_cd.cd_name))
+	if (strcmp(aux, grfbus_cd.cd_name))
 		return (0);
 
 	return (1);
 }
 
 void
-grfbusattach(device_t pdp, device_t dp, void *auxp)
+grfbusattach(device_t parent, device_t self, void *aux)
 {
 
 	aprint_normal("\n");
-	config_search_ia(grfbussearch, dp, "grfb", NULL);
+	config_search_ia(grfbussearch, self, "grfb", NULL);
 }
 
 int
-grfbussearch(device_t dp, cfdata_t match, const int *ldesc, void *aux)
+grfbussearch(device_t self, cfdata_t match, const int *ldesc, void *aux)
 {
 
-	config_found(dp, &match->cf_loc[GRFBCF_ADDR], grfbusprint);
+	config_found(self, &match->cf_loc[GRFBCF_ADDR], grfbusprint);
 	return (0);
 }
 
 int
-grfbusprint(void *auxp, const char *name)
+grfbusprint(void *aux, const char *name)
 {
 
 	if (name == NULL)
@@ -130,17 +130,17 @@ grfmatch(device_t parent, cfdata_t cfp, void *aux)
 struct grf_softc congrf;
 
 void
-grfattach(device_t parent, device_t dp, void *aux)
+grfattach(device_t parent, device_t self, void *aux)
 {
 	struct grf_softc *gp;
 	struct cfdata *cf;
 	int addr;
 
-	cf = device_cfdata(dp);
+	cf = device_cfdata(self);
 	addr = cf->cf_loc[GRFBCF_ADDR];
 
-	gp = device_private(dp);
-	gp->g_device = dp;
+	gp = device_private(self);
+	gp->g_device = self;
 	gp->g_cfaddr = addr;
 	grfinit(gp, addr);
 
@@ -155,11 +155,11 @@ grfattach(device_t parent, device_t dp, void *aux)
 	/*
 	 * try and attach an ite
 	 */
-	config_found(dp, gp, grfprint);
+	config_found(self, gp, grfprint);
 }
 
 int
-grfprint(void *auxp, const char *pnp)
+grfprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
