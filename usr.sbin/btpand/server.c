@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7 2011/02/08 21:59:50 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.8 2012/10/14 08:31:35 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.7 2011/02/08 21:59:50 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.8 2012/10/14 08:31:35 plunky Exp $");
 
 #include <sys/ioctl.h>
 
@@ -134,7 +134,7 @@ server_read(int s, short ev, void *arg)
 	struct sockaddr_bt ra, la;
 	channel_t *chan;
 	socklen_t len;
-	int fd, n, bufsize;
+	int fd, n;
 	uint16_t mru, mtu;
 
 	assert(server_count < server_limit);
@@ -163,18 +163,16 @@ server_read(int s, short ev, void *arg)
 		return;
 	}
 
-	len = sizeof(bufsize);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, &len) == -1) {
+	len = sizeof(n);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &n, &len) == -1) {
 		log_err("Could not read SO_RCVBUF");
 		close(fd);
 		return;
 	}
-	if (bufsize < 10 * mru) {
-		bufsize = 10 * mru;
-		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize,
-		    sizeof(bufsize)) == -1)
-			log_info("Could not increase SO_RCVBUF (from %d)",
-			    bufsize);
+	if (n < 10 * mru) {
+		n = 10 * mru;
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
+			log_info("Could not increase SO_RCVBUF (to %d)", n);
 	}
 
 	len = sizeof(mtu);
@@ -195,7 +193,6 @@ server_read(int s, short ev, void *arg)
 		close(fd);
 		return;
 	}
-
 	if (n < (mtu * 2)) {
 		n = mtu * 2;
 		if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &n, sizeof(n)) == -1) {
@@ -204,7 +201,6 @@ server_read(int s, short ev, void *arg)
 			return;
 		}
 	}
-
 	n = mtu;
 	if (setsockopt(fd, SOL_SOCKET, SO_SNDLOWAT, &n, sizeof(n)) == -1) {
 		log_err("Could not set socket low water mark (%d): %m", n);
