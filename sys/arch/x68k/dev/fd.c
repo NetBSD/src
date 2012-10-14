@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.104 2012/10/14 18:38:32 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.105 2012/10/14 19:06:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.104 2012/10/14 18:38:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105 2012/10/14 19:06:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -713,7 +713,7 @@ fdstrategy(struct buf *bp)
 
 	DPRINTF(("fdstrategy: %s b_blkno %" PRId64 " b_bcount %d cylin %d\n",
 	    bp->b_flags & B_READ ? "read" : "write",
-		 bp->b_blkno, bp->b_bcount, bp->b_cylinder));
+	    bp->b_blkno, bp->b_bcount, bp->b_cylinder));
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	bufq_put(fd->sc_q, bp);
@@ -818,7 +818,7 @@ void
 fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
- 	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int s;
 
 	DPRINTF(("fd_motor_off:\n"));
@@ -975,8 +975,10 @@ fdcstart(struct fdc_softc *fdc)
 {
 
 #ifdef DIAGNOSTIC
-	/* only got here if controller's drive queue was inactive; should
-	   be in idle state */
+	/*
+	 * only got here if controller's drive queue was inactive; should
+	 * be in idle state
+	 */
 	if (fdc->sc_state != DEVIDLE) {
 		printf("fdcstart: not idle\n");
 		return;
