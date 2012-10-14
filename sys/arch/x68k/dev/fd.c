@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.102 2012/10/14 17:20:18 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.103 2012/10/14 17:25:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.102 2012/10/14 17:20:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.103 2012/10/14 17:25:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -291,6 +291,7 @@ void fd_mountroot_hook(device_t);
 
 /* DMA transfer routines */
 inline static void fdc_dmastart(struct fdc_softc *, int, void *, vsize_t);
+inline static void fdc_dmaabort(struct fdc_softc *);
 static int fdcdmaintr(void *);
 static int fdcdmaerrintr(void *);
 
@@ -331,6 +332,14 @@ fdc_dmastart(struct fdc_softc *fdc, int read, void *addr, vsize_t count)
 
 	fdc->sc_read = read;
 	dmac_start_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
+}
+
+inline static void
+fdc_dmaabort(struct fdc_softc *fdc)
+{
+
+	dmac_abort_xfer(fdc->sc_dmachan->ch_softc, fdc->sc_xfer);
+	bus_dmamap_unload(fdc->sc_dmat, fdc->sc_dmamap);
 }
 
 static int
@@ -1346,9 +1355,7 @@ fdcintr(void *arg)
 		goto doio;
 
 	case IOTIMEDOUT:
-#if 0
-		isa_dmaabort(fdc->sc_drq);
-#endif
+		fdc_dmaabort(fdc);
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1359,9 +1366,7 @@ fdcintr(void *arg)
 		callout_stop(&fdc->sc_timo_ch);
 		DPRINTF(("fdcintr: in IOCOMPLETE\n"));
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
-#if 0
-			isa_dmaabort(fdc->sc_drq);
-#endif
+			fdc_dmaabort(fdc);
 			fdcstatus(fd->sc_dev, tmp, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %" PRId64 " nblks %d\n",
@@ -1369,10 +1374,6 @@ fdcintr(void *arg)
 			fdcretry(fdc);
 			goto loop;
 		}
-#if 0
-		isa_dmadone(bp->b_flags & B_READ, bp->b_data + fd->sc_skip,
-		    nblks * FDC_BSIZE, fdc->sc_drq);
-#endif
 	iocomplete2:
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
@@ -1398,9 +1399,7 @@ fdcintr(void *arg)
 		callout_stop(&fdc->sc_timo_ch);
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
 			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
-#if 0
-			isa_dmaabort(fdc->sc_drq);
-#endif
+			fdc_dmaabort(fdc);
 			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %" PRId64 " nblks %d\n",
