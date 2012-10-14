@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.23 2012/10/12 10:38:06 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.24 2012/10/14 19:17:08 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.23 2012/10/12 10:38:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.24 2012/10/14 19:17:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -206,6 +206,7 @@ struct mvgbe_softc {
 	struct mvgbe_ring_data *sc_rdata;
 	bus_dmamap_t sc_ring_map;
 	int sc_if_flags;
+	int sc_ipg_rx;
 	int sc_wdogsoft;
 
 	LIST_HEAD(__mvgbe_jfreehead, mvgbe_jpool_entry) sc_jfree_listhead;
@@ -263,6 +264,7 @@ static void mvgbe_filter_setup(struct mvgbe_softc *);
 #ifdef MVGBE_DEBUG
 static void mvgbe_dump_txdesc(struct mvgbe_tx_desc *, int);
 #endif
+static uint32_t mvgbe_ipg_rx(struct mvgbec_softc *, struct mvgbe_softc *);
 
 CFATTACH_DECL_NEW(mvgbec_gt, sizeof(struct mvgbec_softc),
     mvgbec_match, mvgbec_attach, NULL, NULL);
@@ -282,6 +284,8 @@ struct mvgbe_port {
 	int flags;
 #define FLAGS_FIX_TQTB	(1 << 0)
 #define FLAGS_FIX_MTU	(1 << 1)
+#define	FLAGS_IPG1	(1 << 2)
+#define	FLAGS_IPG2	(1 << 3)
 } mvgbe_ports[] = {
 	{ MARVELL_DISCOVERY_II,		0, 3, { 32, 33, 34 }, 0 },
 	{ MARVELL_DISCOVERY_III,	0, 3, { 32, 33, 34 }, 0 },
@@ -292,26 +296,26 @@ struct mvgbe_port {
 #endif
 	{ MARVELL_ORION_1_88F5082,	0, 1, { 21 }, FLAGS_FIX_MTU },
 	{ MARVELL_ORION_1_88F5180N,	0, 1, { 21 }, FLAGS_FIX_MTU },
-	{ MARVELL_ORION_1_88F5181,	0, 1, { 21 }, FLAGS_FIX_MTU },
-	{ MARVELL_ORION_1_88F5182,	0, 1, { 21 }, FLAGS_FIX_MTU },
-	{ MARVELL_ORION_2_88F5281,	0, 1, { 21 }, FLAGS_FIX_MTU },
+	{ MARVELL_ORION_1_88F5181,	0, 1, { 21 }, FLAGS_FIX_MTU | FLAGS_IPG1 },
+	{ MARVELL_ORION_1_88F5182,	0, 1, { 21 }, FLAGS_FIX_MTU | FLAGS_IPG1 },
+	{ MARVELL_ORION_2_88F5281,	0, 1, { 21 }, FLAGS_FIX_MTU | FLAGS_IPG1 },
 	{ MARVELL_ORION_1_88F6082,	0, 1, { 21 }, FLAGS_FIX_MTU },
 	{ MARVELL_ORION_1_88W8660,	0, 1, { 21 }, FLAGS_FIX_MTU },
 
-	{ MARVELL_KIRKWOOD_88F6180,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 15 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 15 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6282,	0, 1, { 11 }, FLAGS_FIX_TQTB },
-	{ MARVELL_KIRKWOOD_88F6282,	1, 1, { 15 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6180,	0, 1, { 11 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 15 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 15 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6282,	0, 1, { 11 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_KIRKWOOD_88F6282,	1, 1, { 15 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 
-	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB },
-	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB },
-	{ MARVELL_MV78XX0_MV78200,	0, 1, { 40 }, FLAGS_FIX_TQTB },
-	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB },
-	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB },
-	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_MV78XX0_MV78200,	0, 1, { 40 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 };
 
 
@@ -801,6 +805,18 @@ fail1:
 	return;
 }
 
+static uint32_t
+mvgbe_ipg_rx(struct mvgbec_softc *csc, struct mvgbe_softc *sc)
+{
+
+	if (csc->sc_flags & FLAGS_IPG2)
+		return (((sc->sc_ipg_rx & 0x8000) << 10) |
+			((sc->sc_ipg_rx & 0x7fff) << 7));
+	else if (csc->sc_flags & FLAGS_IPG1)
+		return ((sc->sc_ipg_rx & 0x3fff) << 8);
+	else
+		return 0;
+}
 
 static int
 mvgbe_intr(void *arg)
@@ -974,6 +990,8 @@ mvgbe_init(struct ifnet *ifp)
 		return ENOBUFS;
 	}
 
+	if ((csc->sc_flags & FLAGS_IPG1) || (csc->sc_flags & FLAGS_IPG2))
+		sc->sc_ipg_rx = 768;
 	if (csc->sc_flags & FLAGS_FIX_MTU)
 		MVGBE_WRITE(sc, MVGBE_MTU, 0);	/* hw reset value is wrong */
 	MVGBE_WRITE(sc, MVGBE_PSC,
@@ -1013,6 +1031,7 @@ mvgbe_init(struct ifnet *ifp)
 	MVGBE_WRITE(sc, MVGBE_PXC, MVGBE_PXC_RXCS);
 	MVGBE_WRITE(sc, MVGBE_PXCX, 0);
 	MVGBE_WRITE(sc, MVGBE_SDC,
+	    mvgbe_ipg_rx(csc, sc) |
 	    MVGBE_SDC_RXBSZ_16_64BITWORDS |
 #if BYTE_ORDER == LITTLE_ENDIAN
 	    MVGBE_SDC_BLMR |	/* Big/Little Endian Receive Mode: No swap */
