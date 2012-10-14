@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.104 2012/04/29 22:54:01 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.104.2.1 2012/10/14 14:33:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104 2012/04/29 22:54:01 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.1 2012/10/14 14:33:32 tls Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -414,13 +414,22 @@ WRITE(void *v)
 		 */
 
 #ifndef LFS_READWRITE
-		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(vp->v_interlock);
-			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
-			    (uio->uio_offset >> 16) << 16,
-			    PGO_CLEANIT | PGO_JOURNALLOCKED | PGO_LAZY);
-			if (error)
-				break;
+		{
+			int maximum = vp->v_mount->mnt_maxphys;
+			off_t oldchunk, newchunk;
+
+			oldchunk = (oldoff / maximum) * maximum;
+			newchunk = (uio->uio_offset / maximum) * maximum;
+
+			if (!async && oldchunk != newchunk) {
+				mutex_enter(vp->v_interlock);
+				error = VOP_PUTPAGES(vp, oldchunk, newchunk,
+						     PGO_CLEANIT |
+						     PGO_JOURNALLOCKED |
+						     PGO_LAZY);
+				if (error)
+					break;
+			}
 		}
 #endif
 	}
