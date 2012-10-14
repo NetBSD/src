@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390reg.h,v 1.8 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.9 2012/10/14 13:38:13 phx Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -539,21 +539,6 @@ struct dp8390_ring	{
 	u_int8_t	rsr;		/* receiver status */
 	u_int8_t	next_packet;	/* pointer to next packet */
 	u_int16_t	count;		/* bytes in packet (length + 4) */
-};
-
-/*
- * XXX For compatibility only!  This needs to die when all drivers have
- * been converted to be front ends to the MI driver.
- */
-struct ed_ring	{
-#if BYTE_ORDER == BIG_ENDIAN
-	u_char	next_packet;		/* pointer to next packet */
-	u_char	rsr;			/* receiver status */
-#else
-	u_char	rsr;			/* receiver status */
-	u_char	next_packet;		/* pointer to next packet */
-#endif
-	u_short	count;			/* bytes in packet (length + 4) */
 };
 
 /*
