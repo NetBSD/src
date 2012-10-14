@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.33 2010/06/06 04:50:08 mrg Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.34 2012/10/14 16:36:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.33 2010/06/06 04:50:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.34 2012/10/14 16:36:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,10 +530,18 @@ dmac_error(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
 	struct dmac_softc *sc = chan->ch_softc;
+	uint8_t csr, cer;
 
-	printf("DMAC transfer error CSR=%02x, CER=%02x\n",
-		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
-		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER));
+	csr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR);
+	cer = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER);
+
+#ifndef DMAC_DEBUG
+	/* Software abort (CER=0x11) could happen on normal xfer termination */
+	if (cer != 0x11)
+#endif
+	{
+		printf("DMAC transfer error CSR=%02x, CER=%02x\n", csr, cer);
+	}
 	DDUMPREGS(3, ("registers were:\n"));
 
 	/* Clear the status bits */
@@ -552,7 +560,7 @@ dmac_abort_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CCR,
-			  DMAC_CCR_INT | DMAC_CCR_HLT);
+			  DMAC_CCR_INT | DMAC_CCR_SAB);
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	xf->dx_nextoff = xf->dx_nextsize = -1;
 
