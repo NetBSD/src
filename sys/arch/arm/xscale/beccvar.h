@@ -1,4 +1,4 @@
-/*	$NetBSD: beccvar.h,v 1.3 2003/03/25 19:47:30 thorpej Exp $	*/
+/*	$NetBSD: beccvar.h,v 1.4 2012/10/14 14:20:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ struct intrq {
 };
 
 struct becc_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 
 	/*
 	 * We expect the board-specific front-end to have already mapped
