@@ -1,4 +1,4 @@
-# $NetBSD: ad.armeb,v 1.7 2012/08/15 20:38:50 matt Exp $
+# $NetBSD: ad.armeb,v 1.8 2012/10/14 12:36:58 msaitoh Exp $
 #
 # The armeb MACHINE_ARCH never existed in NetBSD as a.out, so we
 #	skip the old a.out compatibility tools.
@@ -32,6 +32,7 @@
 ./usr/include/arm/byte_swap.h			comp-c-include
 ./usr/include/arm/cdefs.h			comp-c-include
 ./usr/include/arm/cpu.h				comp-c-include
+./usr/include/arm/cpuconf.h			comp-c-include
 ./usr/include/arm/db_machdep.h			comp-obsolete		obsolete
 ./usr/include/arm/disklabel.h			comp-c-include
 ./usr/include/arm/disklabel_acorn.h		comp-obsolete		obsolete
