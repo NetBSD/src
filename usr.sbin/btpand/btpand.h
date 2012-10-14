@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.h,v 1.3 2009/05/12 21:50:38 plunky Exp $	*/
+/*	$NetBSD: btpand.h,v 1.4 2012/10/14 08:35:45 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -56,7 +56,7 @@ enum channel_state {
 	CHANNEL_CLOSED,
 	CHANNEL_WAIT_CONNECT_REQ,
 	CHANNEL_WAIT_CONNECT_RSP,
-	CHANNEL_OPEN,
+	CHANNEL_OPEN
 };
 
 #define CHANNEL_MAXQLEN		128
