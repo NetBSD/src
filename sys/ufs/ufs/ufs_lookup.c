@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.117 2012/07/22 00:53:22 rmind Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.118 2012/10/14 23:57:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.117 2012/07/22 00:53:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.118 2012/10/14 23:57:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1115,6 +1115,13 @@ out:
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(ITOV(ip), NULL, NULL, 0);
 	}
+	/*
+	 * XXX did it ever occur to anyone that it might be a good
+	 * idea to restore ip->i_nlink if this fails? Or something?
+	 * Currently on error return from this function the state of
+	 * ip->i_nlink depends on what happened, and callers
+	 * definitely do not take this into account.
+	 */
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
