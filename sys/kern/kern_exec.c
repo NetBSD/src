@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.356 2012/10/13 15:35:55 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.357 2012/10/14 20:56:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.356 2012/10/13 15:35:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.357 2012/10/14 20:56:55 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.356 2012/10/13 15:35:55 christos Exp
 #include <sys/spawn.h>
 #include <sys/prot.h>
 #include <sys/cprng.h>
-#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1618,30 +1617,6 @@ exec_remove(struct execsw *esp, int count)
 	return 0;
 }
 
-static int
-sysctl_kern_usrstack(SYSCTLFN_ARGS)
-{  
-	u_long ptr;
-	struct sysctlnode node = *rnode;
-	node.sysctl_data = &ptr;
-	ptr = l->l_proc->p_stackbase;
-	return sysctl_lookup(SYSCTLFN_CALL(&node));
-}
-
-static void
-sysctl_kern_usrstack_setup(void)
-{
-	struct sysctllog *kern_usrstack_sysctllog;
-
-	kern_usrstack_sysctllog = NULL;
-	sysctl_createv(&kern_usrstack_sysctllog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-	    CTLTYPE_LONG, "usrstack", 
-	    SYSCTL_DESCR("User process stack base"),
-	    sysctl_kern_usrstack, 0, NULL, 0,
-	    CTL_KERN, KERN_USRSTACK, CTL_EOL);
-}
-
 /*
  * Initialize exec structures. If init_boot is true, also does necessary
  * one-time initialization (it's called from main() that way).
@@ -1665,7 +1640,6 @@ exec_init(int init_boot)
 		pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
 		    "execargs", &exec_palloc, IPL_NONE);
 		pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
-		sysctl_kern_usrstack_setup();
 	} else {
 		KASSERT(rw_write_held(&exec_lock));
 	}
