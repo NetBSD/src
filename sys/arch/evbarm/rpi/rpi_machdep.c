@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.12 2012/10/13 14:22:12 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.13 2012/10/14 16:16:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.12 2012/10/13 14:22:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.13 2012/10/14 16:16:52 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -49,8 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.12 2012/10/13 14:22:12 skrll Exp $
 #include <machine/bootconfig.h>
 #include <machine/pmap.h>
 
+#include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_pmvar.h>
+#include <arm/broadcom/bcm2835_mbox.h>
+
+#include <evbarm/rpi/vcio.h>
+#include <evbarm/rpi/vcprop.h>
 
 #include <evbarm/rpi/rpi.h>
 
@@ -66,11 +71,16 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
+void rpi_bootparams(void);
+
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#define KERNEL_BASE_PHYS (paddr_t)0
+#define	KERNEL_BASE_PHYS (paddr_t)0
+
+#define KERN_VTOPHYS(va) \
+	((paddr_t)((vaddr_t)va - KERNEL_BASE + KERNEL_BASE_PHYS))
 #define KERN_PHYSTOV(pa) \
 	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE))
 
@@ -103,7 +113,137 @@ int plcomcnmode = PLCONMODE;
 #endif
 
 /* Smallest amount of RAM start.elf could give us. */
-#define RPI_MINIMUM_ARM_RAM_SPLIT (128U * 1024 * 1024)
+#define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
+
+static struct {
+	struct vcprop_buffer_hdr	vb_hdr;
+	struct vcprop_tag_fwrev		vbt_fwrev;
+	struct vcprop_tag_boardmodel	vbt_boardmodel;
+	struct vcprop_tag_boardrev	vbt_boardrev;
+	struct vcprop_tag_macaddr	vbt_macaddr;
+	struct vcprop_tag_memory	vbt_memory;
+	struct vcprop_tag_boardserial	vbt_serial;
+	struct vcprop_tag_cmdline	vbt_cmdline;
+	struct vcprop_tag end;
+} vb __packed __aligned(16) =
+{
+	.vb_hdr = {
+		.vpb_len = sizeof(vb),
+		.vpb_rcode = VCPROP_PROCESS_REQUEST,
+	},
+	.vbt_fwrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_FIRMWAREREV,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_fwrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_boardmodel = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDMODEL,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_boardmodel),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_boardrev = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_boardrev),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_macaddr = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_MACADDRESS,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_macaddr),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_memory = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_ARMMEMORY,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_memory),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_serial = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_BOARDSERIAL,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_serial),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_cmdline = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CMDLINE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_cmdline),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.end = {
+		.vpt_tag = VCPROPTAG_NULL
+	}
+};
+
+void
+rpi_bootparams(void)
+{
+	bus_space_tag_t iot = &bcm2835_bs_tag;
+	bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_ARMMBOX_BASE);
+	uint32_t res;
+
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb));
+
+	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
+
+	/*
+	 * No need to invalid the cache as the memory has never been referenced
+	 * by the ARM.
+	 * 
+	 * cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
+	 * 
+	 */
+
+	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
+		bootconfig.dramblocks = 1;
+		bootconfig.dram[0].address = 0x0;
+		bootconfig.dram[0].pages = atop(RPI_MINIMUM_SPLIT);
+		return;
+	} 
+
+	struct vcprop_tag_memory *vptp_mem = &vb.vbt_memory;
+	
+	if (vcprop_tag_success_p(&vptp_mem->tag)) {
+		size_t n = vcprop_tag_resplen(&vptp_mem->tag) /
+		    sizeof(struct vcprop_memory);
+
+		for (int i = 0; i < n && i < DRAM_BLOCKS; i++) {
+			bootconfig.dram[i].address = vptp_mem->mem[i].base;
+			bootconfig.dram[i].pages = atop(vptp_mem->mem[i].size);
+		}
+	}
+
+#ifdef VERBOSE_INIT_ARM
+	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
+		printf("%s: firmware rev %x\n", __func__,
+		    vb.vbt_fwrev.rev);
+	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
+		printf("%s: mac-address  %llx\n", __func__,
+		    vb.vbt_macaddr.addr);
+	if (vcprop_tag_success_p(&vb.vbt_boardmodel.tag))
+		printf("%s: board model  %x\n", __func__,
+		    vb.vbt_boardmodel.model);
+	if (vcprop_tag_success_p(&vb.vbt_boardrev.tag))
+		printf("%s: board rev    %x\n", __func__,
+		    vb.vbt_boardrev.rev);
+	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
+		printf("%s: board serial %llx\n", __func__,
+		    vb.vbt_serial.sn);
+	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
+		printf("%s: cmdline      %s\n", __func__,
+		    vb.vbt_cmdline.cmdline);
+#endif
+}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -136,63 +276,6 @@ static const struct pmap_devmap rpi_devmap[] = {
 
 #undef  _A
 #undef  _S
-
-#define LINUX_ARM_MACHTYPE_BCM2708 3138
-
-#define LINUX_ATAG_NONE		0x00000000
-struct linux_atag_header {
-	uint32_t size;
-	uint32_t tag;
-} __packed __aligned(4); 
-
-#define LINUX_ATAG_MEM		0x54410002
-struct linux_atag_mem {
-	uint32_t size;
-	uint32_t start;
-} __packed __aligned(4);
-
-#define LINUX_ATAG_CMDLINE	0x54410009
-struct linux_atag_cmdline {
-	char cmdline[1];
-} __packed __aligned(4);
-
-struct linux_atag {
-	struct linux_atag_header	hdr;
-	union {
-		struct linux_atag_mem		mem;
-		struct linux_atag_cmdline	cmdline;
-	} u;
-} __packed __aligned(4);
-
-static void
-parse_linux_atags(void *atag_base)
-{
-	struct linux_atag *atp;
-
-	for (atp = atag_base;
-	    atp->hdr.size >= sizeof(struct linux_atag_header)/sizeof(uint32_t);
-	    atp = (void *)((uintptr_t)atp + sizeof(uint32_t) * atp->hdr.size)) {
-		printf("atag: size %08x tag %08x\n", atp->hdr.size, atp->hdr.tag);
-		if (atp->hdr.tag == LINUX_ATAG_MEM) {
-			if (bootconfig.dramblocks > 1) {
-				printf("Ignoring RAM block 0x%08x-0x%08x\n",
-				    atp->u.mem.start, atp->u.mem.start +
-				    atp->u.mem.size - 1);
-				continue;
-			}
-			KASSERT(atp->u.mem.start == 0);
-			bootconfig.dram[bootconfig.dramblocks].address = 0x0;
-			bootconfig.dram[bootconfig.dramblocks].pages =
-			    atp->u.mem.size / PAGE_SIZE;
-			++bootconfig.dramblocks;
-		}
-
-		if (atp->hdr.tag == LINUX_ATAG_CMDLINE) {
-			strncpy(bootargs, atp->u.cmdline.cmdline,
-			    sizeof(bootargs));
-		}
-	}
-}
 
 /*
  * u_int initarm(...)
@@ -229,25 +312,14 @@ initarm(void *arg)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
-	bootargs[0] = '\0';
+	rpi_bootparams();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
-
-	extern const uint32_t rpi_boot_regs[4];
-	if (rpi_boot_regs[0] == 0 &&
-	    rpi_boot_regs[1] == LINUX_ARM_MACHTYPE_BCM2708) {
-		parse_linux_atags((void *)KERN_PHYSTOV(rpi_boot_regs[2]));
-	} else {
-		bootconfig.dramblocks = 1;
-
-		bootconfig.dram[0].address = 0x0;
-		bootconfig.dram[0].pages = 
-		    RPI_MINIMUM_ARM_RAM_SPLIT / PAGE_SIZE;
-	}
 	arm32_bootmem_init(bootconfig.dram[0].address,
 	    bootconfig.dram[0].pages * PAGE_SIZE, bootconfig.dram[0].address);
+
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
 	    false);
 
