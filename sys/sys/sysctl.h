@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.202 2012/10/13 15:35:56 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.203 2012/10/14 20:56:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -273,8 +273,7 @@ struct ctlname {
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
 #define	KERN_EVCNT		84	/* struct: evcnts */
-#define	KERN_USRSTACK		85	/* long: user stack base */
-#define	KERN_MAXID		86	/* number of valid kern ids */
+#define	KERN_MAXID		85	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -363,7 +362,6 @@ struct ctlname {
 	{ "sysvipc", CTLTYPE_STRUCT }, \
 	{ "boottime", CTLTYPE_STRUCT }, \
 	{ "evcnt", CTLTYPE_STRUCT }, \
-	{ "usrstack", CTLTYPE_LONG }, \
 }
 
 /*
