@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.12 2012/09/07 02:11:32 matt Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.13 2012/10/14 14:20:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.12 2012/09/07 02:11:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.13 2012/10/14 14:20:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.12 2012/09/07 02:11:32 matt Exp $");
 #include "opt_pci.h"
 #include "pci.h"
 
-void		becc_pci_attach_hook(struct device *, struct device *,
+void		becc_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		becc_pci_bus_maxdevs(void *, int);
 pcitag_t	becc_pci_make_tag(void *, int, int, int);
@@ -132,7 +132,7 @@ becc_pci_init(pci_chipset_tag_t pc, void *cookie)
 	    sc->sc_owin_xlate[0] + BECC_PCI_MEM1_SIZE - 1,
 	    NULL, 0, EX_NOWAIT);
 
-	aprint_normal("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal("%s: configuring PCI bus\n", device_xname(sc->sc_dev));
 	pci_configure_bus(pc, ioext, memext, NULL, 0, arm_dcache_align);
 
 	extent_destroy(ioext);
@@ -146,7 +146,7 @@ becc_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 }
 
 void
-becc_pci_attach_hook(struct device *parent, struct device *self,
+becc_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 

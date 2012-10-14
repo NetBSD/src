@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -30,7 +30,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,12 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.15 2011/07/01 20:32:51 dyoung Exp $");
 struct	ixp425_softc *ixp425_softc;
 
 void
-ixp425_attach(struct ixp425_softc *sc)
+ixp425_attach(device_t self)
 {
+	struct ixp425_softc *sc = device_private(self);
 #if NPCI > 0
 	struct pcibus_attach_args pba;
 #endif
 
+	sc->sc_dev = self;
 	sc->sc_iot = &ixp425_bs_tag;
 
 	ixp425_softc = sc;
@@ -62,12 +64,12 @@ ixp425_attach(struct ixp425_softc *sc)
 	 */
 	if (bus_space_map(sc->sc_iot, IXP425_GPIO_HWBASE, IXP425_GPIO_SIZE,
 			  0, &sc->sc_gpio_ioh))
-		panic("%s: unable to map GPIO registers", sc->sc_dev.dv_xname);
+		panic("%s: unable to map GPIO registers", device_xname(self));
 
 	if (bus_space_map(sc->sc_iot, IXP425_EXP_HWBASE, IXP425_EXP_SIZE,
 			  0, &sc->sc_exp_ioh))
 		panic("%s: unable to map Expansion Bus registers",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 
 #if NPCI > 0
 	/*
@@ -75,7 +77,7 @@ ixp425_attach(struct ixp425_softc *sc)
 	 */
 	if (bus_space_map(sc->sc_iot, IXP425_PCI_HWBASE, IXP425_PCI_SIZE,
 			  0, &sc->sc_pci_ioh))
-		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname);
+		panic("%s: unable to map PCI registers", device_xname(self));
 
 	/*
 	 * Invoke the board-specific PCI initialization code
@@ -106,6 +108,6 @@ ixp425_attach(struct ixp425_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_MRL_OKAY   | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.8 2012/09/28 20:08:13 ryo Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.9 2012/10/14 14:20:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.8 2012/09/28 20:08:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.9 2012/10/14 14:20:58 msaitoh Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.
@@ -48,23 +48,22 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.8 2012/09/28 20:08:13 ryo Exp 
 
 #include "locators.h"
 
-static int	ixp425_mainbus_match(struct device *, struct cfdata *, void *);
-static void	ixp425_mainbus_attach(struct device *, struct device *, void *);
+static int	ixp425_mainbus_match(device_t, cfdata_t, void *);
+static void	ixp425_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ixpio_mainbus, sizeof(struct ixp425_softc),
+CFATTACH_DECL_NEW(ixpio_mainbus, sizeof(struct ixp425_softc),
     ixp425_mainbus_match, ixp425_mainbus_attach, NULL, NULL);
 
 int
-ixp425_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+ixp425_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-ixp425_mainbus_attach(struct device *parent, struct device *self, void *aux)
+ixp425_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ixp425_softc *sc = (void *) self;
 
 	ixp425_intr_evcnt_attach();
-	ixp425_attach(sc);
+	ixp425_attach(self);
 }
