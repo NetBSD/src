@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.13 2012/09/07 03:05:12 matt Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.14 2012/10/14 14:20:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13 2012/09/07 03:05:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.14 2012/10/14 14:20:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13 2012/09/07 03:05:12 matt Exp $")
 #include "opt_i80321.h"
 #include "pci.h"
 
-void		i80321_pci_attach_hook(struct device *, struct device *,
+void		i80321_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		i80321_pci_bus_maxdevs(void *, int);
 pcitag_t	i80321_pci_make_tag(void *, int, int, int);
@@ -138,7 +138,7 @@ i80321_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 }
 
 void
-i80321_pci_attach_hook(struct device *parent, struct device *self,
+i80321_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 

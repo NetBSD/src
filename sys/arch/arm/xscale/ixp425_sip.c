@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.12 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.13 2012/10/14 14:20:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.12 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.13 2012/10/14 14:20:58 msaitoh Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -46,27 +46,26 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.12 2011/07/01 20:32:51 dyoung Exp $
 
 #include "locators.h"
 
-static int	ixpsip_match(struct device *, struct cfdata *, void *);
-static void	ixpsip_attach(struct device *, struct device *, void *);
-static int	ixpsip_search(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	ixpsip_match(device_t, cfdata_t, void *);
+static void	ixpsip_attach(device_t, device_t, void *);
+static int	ixpsip_search(device_t, cfdata_t, const int *, void *);
 static int	ixpsip_print(void *, const char *);
 
-CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
+CFATTACH_DECL_NEW(ixpsip, sizeof(struct ixpsip_softc),
 		ixpsip_match, ixpsip_attach, NULL, NULL);
 
 struct ixpsip_softc *ixpsip_softc;
 
 int
-ixpsip_match(struct device *parent, struct cfdata *cf, void *aux)
+ixpsip_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-ixpsip_attach(struct device *parent, struct device *self, void *aux)
+ixpsip_attach(device_t parent, device_t self, void *aux)
 {
-	struct ixpsip_softc *sc = (void *) self;
+	struct ixpsip_softc *sc = device_private(self);
 	sc->sc_iot = &ixp425_bs_tag;
 
 	ixpsip_softc = sc;
@@ -76,7 +75,7 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, IXP425_EXP_HWBASE, IXP425_EXP_SIZE,
 	    0, &sc->sc_ioh)) {
 		printf("%s: Can't map expansion bus control registers!\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		return;
 	}
 
@@ -87,10 +86,9 @@ ixpsip_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ixpsip_search(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+ixpsip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct ixpsip_softc *sc = (struct ixpsip_softc *)parent;
+	struct ixpsip_softc *sc = device_private(parent);
 	struct ixpsip_attach_args sa;
 
 	sa.sa_iot = sc->sc_iot;
@@ -108,7 +106,7 @@ ixpsip_search(struct device *parent, struct cfdata *cf,
 static int
 ixpsip_print(void *aux, const char *name)
 {
-	struct ixpsip_attach_args *sa = (struct ixpsip_attach_args*)aux;
+	struct ixpsip_attach_args *sa = aux;
 
 	if (sa->sa_size)
 		aprint_normal(" addr 0x%lx", sa->sa_addr);

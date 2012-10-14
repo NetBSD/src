@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.16 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.17 2012/10/14 14:20:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.16 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.17 2012/10/14 14:20:58 msaitoh Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.16 2011/07/01 20:32:51 dyoung Exp
 #include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>
 
-static int	ixpclk_match(struct device *, struct cfdata *, void *);
-static void	ixpclk_attach(struct device *, struct device *, void *);
+static int	ixpclk_match(device_t, cfdata_t, void *);
+static void	ixpclk_attach(device_t, device_t, void *);
 static u_int	ixpclk_get_timecount(struct timecounter *);
 
 static uint32_t counts_per_hz;
@@ -65,7 +65,6 @@ static void *clock_ih;
 int	ixpclk_intr(void *);
 
 struct ixpclk_softc {
-	struct device		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t      sc_ioh;
@@ -93,7 +92,7 @@ static struct timecounter ixpclk_timecounter = {
 
 static volatile uint32_t ixpclk_base;
 
-CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
+CFATTACH_DECL_NEW(ixpclk, sizeof(struct ixpclk_softc),
 		ixpclk_match, ixpclk_attach, NULL, NULL);
 
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
@@ -104,15 +103,15 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 				  (IXP425_TIMER_VBASE + IXP425_OST_TS))
 
 static int
-ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
+ixpclk_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 2;
 }
 
 static void
-ixpclk_attach(struct device *parent, struct device *self, void *aux)
+ixpclk_attach(device_t parent, device_t self, void *aux)
 {
-	struct ixpclk_softc		*sc = (struct ixpclk_softc*) self;
+	struct ixpclk_softc		*sc = device_private(self);
 	struct ixpsip_attach_args	*sa = aux;
 
 	printf("\n");
@@ -124,9 +123,9 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
-	aprint_normal("%s: IXP425 Interval Timer\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "IXP425 Interval Timer\n");
 }
 
 /*
@@ -137,7 +136,7 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 void
 cpu_initclocks(void)
 {
-	struct ixpclk_softc* sc = ixpclk_sc;
+	struct ixpclk_softc *sc = ixpclk_sc;
 	u_int oldirqstate;
 #if defined(PERFCTRS)
 	void *pmu_ih;
@@ -271,7 +270,7 @@ delay(u_int n)
 int
 ixpclk_intr(void *arg)
 {
-	struct ixpclk_softc* sc = ixpclk_sc;
+	struct ixpclk_softc *sc = ixpclk_sc;
 	struct clockframe *frame = arg;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_OST_STATUS,

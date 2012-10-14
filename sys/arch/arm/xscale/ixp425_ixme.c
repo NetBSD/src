@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.4 2012/09/18 05:47:28 matt Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.5 2012/10/14 14:20:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.4 2012/09/18 05:47:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5 2012/10/14 14:20:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,33 +46,31 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.4 2012/09/18 05:47:28 matt Exp $")
 
 #include "locators.h"
 
-static int	ixme_match(struct device *, struct cfdata *, void *);
-static void	ixme_attach(struct device *, struct device *, void *);
-static int	ixme_search(struct device *, struct cfdata *, const int *,
-		    void *);
+static int	ixme_match(device_t, cfdata_t, void *);
+static void	ixme_attach(device_t, device_t, void *);
+static int	ixme_search(device_t, cfdata_t, const int *, void *);
 static int	ixme_print(void *, const char *);
 
 struct ixme_softc {
-	struct device sc_dev;
 	struct arm32_dma_range sc_dr;
 	struct arm32_bus_dma_tag sc_dt;
 	void *sc_qmgr;
 };
 
-CFATTACH_DECL(ixme, sizeof(struct ixme_softc),
+CFATTACH_DECL_NEW(ixme, sizeof(struct ixme_softc),
     ixme_match, ixme_attach, NULL, NULL);
 
 static int
-ixme_match(struct device *parent, struct cfdata *self, void *arg)
+ixme_match(device_t parent, cfdata_t self, void *arg)
 {
 
 	return (1);
 }
 
 static void
-ixme_attach(struct device *parent, struct device *self, void *arg)
+ixme_attach(device_t parent, device_t self, void *arg)
 {
-	struct ixme_softc *sc = (void *)self;
+	struct ixme_softc *sc = device_private(self);
 	extern paddr_t physical_start, physical_end;
 
 	aprint_naive("\n");
@@ -81,7 +79,7 @@ ixme_attach(struct device *parent, struct device *self, void *arg)
 	sc->sc_qmgr = ixpqmgr_init(&ixp425_bs_tag);
 	if (sc->sc_qmgr == NULL) {
 		panic("%s: ixme_attach: Failed to init Queue Manager",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 	}
 
 	sc->sc_dr.dr_sysbase = physical_start;
@@ -113,10 +111,9 @@ ixme_attach(struct device *parent, struct device *self, void *arg)
 }
 
 static int
-ixme_search(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *arg)
+ixme_search(device_t parent, cfdata_t cf, const int *ldesc, void *arg)
 {
-	struct ixme_softc *sc = (void *)parent;
+	struct ixme_softc *sc = device_private(parent);
 	struct ixme_attach_args ixa;
 
 	if (cf->cf_loc[IXMECF_NPE] < 0 || cf->cf_loc[IXMECF_NPE] > 2)
