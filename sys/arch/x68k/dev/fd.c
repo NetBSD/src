@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.101 2012/05/15 12:17:33 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.102 2012/10/14 17:20:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.101 2012/05/15 12:17:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.102 2012/10/14 17:20:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -516,6 +516,11 @@ fdprobe(device_t parent, cfdata_t cf, void *aux)
 
 	type = &fd_types[0];	/* XXX 1.2MB */
 
+	/* toss any interrupt status */
+	for (n = 0; n < 4; n++) {
+		out_fdc(iot, ioh, NE7CMD_SENSEI);
+		(void)fdcresult(fdc);
+	}
 	intio_disable_intr(SICILIAN_INTR_FDC);
 
 	/* select drive and turn on motor */
