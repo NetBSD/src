@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.6 2011/08/29 20:38:55 joerg Exp $	*/
+/*	$NetBSD: client.c,v 1.7 2012/10/14 08:31:35 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.6 2011/08/29 20:38:55 joerg Exp $");
+__RCSID("$NetBSD: client.c,v 1.7 2012/10/14 08:31:35 plunky Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -45,7 +45,7 @@ client_init(void)
 	struct sockaddr_bt sa;
 	channel_t *chan;
 	socklen_t len;
-	int fd, bufsize;
+	int fd, n;
 	uint16_t mru, mtu;
 
 	if (bdaddr_any(&remote_bdaddr))
@@ -102,17 +102,15 @@ client_init(void)
 		exit(EXIT_FAILURE);
 	}
 
-	len = sizeof(bufsize);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize, &len) == -1) {
+	len = sizeof(n);
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &n, &len) == -1) {
 		log_err("Could not read SO_RCVBUF");
 		exit(EXIT_FAILURE);
 	}
-	if (bufsize < 10 * mru) {
-		bufsize = 10 * mru;
-		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bufsize,
-		    sizeof(bufsize)) == -1)
-			log_info("Could not increase SO_RCVBUF (from %d)",
-			    bufsize);
+	if (n < 10 * mru) {
+		n = 10 * mru;
+		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
+			log_info("Could not increase SO_RCVBUF (to %d)", n);
 	}
 
 	len = sizeof(mtu);
@@ -123,6 +121,27 @@ client_init(void)
 	if (mtu < BNEP_MTU_MIN) {
 		log_err("L2CAP OMTU too small (%d)", mtu);
 		exit(EXIT_FAILURE);
+	}
+
+	len = sizeof(n);
+	if (getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &n, &len) == -1) {
+		log_err("Could not get socket send buffer size: %m");
+		close(fd);
+		return;
+	}
+	if (n < (mtu * 2)) {
+		n = mtu * 2;
+		if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &n, sizeof(n)) == -1) {
+			log_err("Could not set socket send buffer size (%d): %m", n);
+			close(fd);
+			return;
+		}
+	}
+	n = mtu;
+	if (setsockopt(fd, SOL_SOCKET, SO_SNDLOWAT, &n, sizeof(n)) == -1) {
+		log_err("Could not set socket low water mark (%d): %m", n);
+		close(fd);
+		return;
 	}
 
 	chan = channel_alloc();
