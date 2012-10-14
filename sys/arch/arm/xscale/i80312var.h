@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.10 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.11 2012/10/14 14:20:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <dev/pci/pcivar.h>
 
 struct i80312_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 
 	int sc_is_host;			/* indicates if we're a host or
 					   plugged into another host */

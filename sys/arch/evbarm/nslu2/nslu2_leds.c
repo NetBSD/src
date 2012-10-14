@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.8 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.9 2012/10/14 14:20:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.8 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.9 2012/10/14 14:20:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.8 2008/04/28 20:23:17 martin Exp $"
 #define	LEDBITS_STATUS		(1u << GPIO_LED_STATUS)
 
 struct slugled_softc {
-	struct device sc_dev;
 	void *sc_tmr_ih;
 	struct callout sc_usb0;
 	void *sc_usb0_ih;
@@ -190,9 +189,9 @@ slugled_shutdown(void *arg)
 }
 
 static void
-slugled_defer(struct device *self)
+slugled_defer(device_t self)
 {
-	struct slugled_softc *sc = (struct slugled_softc *) self;
+	struct slugled_softc *sc = device_private(self);
 	struct ixp425_softc *ixsc = ixp425_softc;
 	uint32_t reg;
 	int s;
@@ -214,8 +213,7 @@ slugled_defer(struct device *self)
 	splx(s);
 
 	if (shutdownhook_establish(slugled_shutdown, sc) == NULL)
-		aprint_error("%s: WARNING - Failed to register shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "WARNING - Failed to register shutdown hook\n");
 
 	callout_init(&sc->sc_usb0, 0);
 	callout_setfunc(&sc->sc_usb0, slugled_callout,
@@ -245,14 +243,14 @@ slugled_defer(struct device *self)
 }
 
 static int
-slugled_match(struct device *parent, struct cfdata *match, void *aux)
+slugled_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (slugled_attached == 0);
 }
 
 static void
-slugled_attach(struct device *parent, struct device *self, void *aux)
+slugled_attach(device_t parent, device_t self, void *aux)
 {
 
 	aprint_normal(": LED support\n");
@@ -262,5 +260,5 @@ slugled_attach(struct device *parent, struct device *self, void *aux)
 	config_interrupts(self, slugled_defer);
 }
 
-CFATTACH_DECL(slugled, sizeof(struct slugled_softc),
+CFATTACH_DECL_NEW(slugled, sizeof(struct slugled_softc),
     slugled_match, slugled_attach, NULL, NULL);

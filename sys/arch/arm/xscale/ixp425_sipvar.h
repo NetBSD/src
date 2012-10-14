@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sipvar.h,v 1.6 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425_sipvar.h,v 1.7 2012/10/14 14:20:58 msaitoh Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,6 @@
 #include <sys/bus.h>
 
 struct ixpsip_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
