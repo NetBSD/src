@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.6 2012/10/15 11:24:15 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.7 2012/10/15 12:26:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.6 2012/10/15 11:24:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.7 2012/10/15 12:26:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -566,7 +566,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		pmap_link_l2pt(l1pt_va, kernel_base + idx * L2_S_SEGSIZE,
 		    &kernel_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (kernel)\n",
 		    __func__, kernel_l2pt[idx].pv_va, kernel_l2pt[idx].pv_pa,
 		    kernel_base + idx * L2_S_SEGSIZE);
 #endif
@@ -576,7 +576,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		pmap_link_l2pt(l1pt_va, kernel_vm_base + idx * L2_S_SEGSIZE,
 		    &vmdata_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (vm)\n",
 		    __func__, vmdata_l2pt[idx].pv_va, vmdata_l2pt[idx].pv_pa,
 		    kernel_vm_base + idx * L2_S_SEGSIZE);
 #endif
@@ -584,7 +584,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	if (iovbase) {
 		pmap_link_l2pt(l1pt_va, iovbase & -L2_S_SEGSIZE, &bmi->bmi_io_l2pt);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (io)\n",
 		    __func__, bmi->bmi_io_l2pt.pv_va, bmi->bmi_io_l2pt.pv_pa,
 		    iovbase & -L2_S_SEGSIZE);
 #endif
@@ -806,6 +806,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernel_l1pt.pv_pa, kernel_l1pt.pv_pa + L1_TABLE_SIZE - 1,
 	    kernel_l1pt.pv_va, kernel_l1pt.pv_va + L1_TABLE_SIZE - 1,
 	    L1_TABLE_SIZE / PAGE_SIZE);
+	printf(mem_fmt, "ABT stack (CPU 0)",
+	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
+	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
+	    ABT_STACK_SIZE);
 	printf(mem_fmt, "FIQ stack (CPU 0)",
 	    fiqstack.pv_pa, fiqstack.pv_pa + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    fiqstack.pv_va, fiqstack.pv_va + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
@@ -814,10 +818,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    irqstack.pv_pa, irqstack.pv_pa + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    irqstack.pv_va, irqstack.pv_va + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    IRQ_STACK_SIZE);
-	printf(mem_fmt, "ABT stack (CPU 0)",
-	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    ABT_STACK_SIZE);
 	printf(mem_fmt, "UND stack (CPU 0)",
 	    undstack.pv_pa, undstack.pv_pa + (UND_STACK_SIZE * PAGE_SIZE) - 1,
 	    undstack.pv_va, undstack.pv_va + (UND_STACK_SIZE * PAGE_SIZE) - 1,
