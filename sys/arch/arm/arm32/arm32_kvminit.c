@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.4 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.5 2012/10/15 10:19:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.4 2012/09/22 00:33:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.5 2012/10/15 10:19:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -806,10 +806,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernel_l1pt.pv_pa, kernel_l1pt.pv_pa + L1_TABLE_SIZE - 1,
 	    kernel_l1pt.pv_va, kernel_l1pt.pv_va + L1_TABLE_SIZE - 1,
 	    L1_TABLE_SIZE / PAGE_SIZE);
-	printf(mem_fmt, "Exception Vectors",
-	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
-	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
-	    1);
 	printf(mem_fmt, "FIQ stack (CPU 0)",
 	    fiqstack.pv_pa, fiqstack.pv_pa + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    fiqstack.pv_va, fiqstack.pv_va + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
@@ -836,6 +832,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    UPAGES);
 	printf(mem_fmt_nov, "Message Buffer",
 	    msgbufphys, msgbufphys + msgbuf_pgs * PAGE_SIZE - 1, msgbuf_pgs);
+	printf(mem_fmt, "Exception Vectors",
+	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
+	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
+	    1);
 	for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
 		pv = &bmi->bmi_freeblocks[i];
 
