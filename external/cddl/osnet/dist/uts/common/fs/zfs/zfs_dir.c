@@ -103,11 +103,10 @@ zfs_match_find(zfsvfs_t *zfsvfs, znode_t *dzp, char *name, boolean_t exact,
  */
 
 static int
-zfs_dirlock_hold(zfs_dirlock_t *dl, znode_t *dzp)
+zfs_dirlock_hold(zfs_dirlock_t *dl)
 {
 
-	(void)dzp;		/* ignore */
-	KASSERT(mutex_owned(&dzp->z_lock));
+	KASSERT(mutex_owned(&dl->dl_dzp->z_lock));
 
 	if (dl->dl_refcnt >= ULONG_MAX) /* XXX Name this constant.  */
 		return (ENFILE);	/* XXX What to do?  */
@@ -117,11 +116,10 @@ zfs_dirlock_hold(zfs_dirlock_t *dl, znode_t *dzp)
 }
 
 static void
-zfs_dirlock_rele(zfs_dirlock_t *dl, znode_t *dzp)
+zfs_dirlock_rele(zfs_dirlock_t *dl)
 {
 
-	(void)dzp;		/* ignore */
-	KASSERT(mutex_owned(&dzp->z_lock));
+	KASSERT(mutex_owned(&dl->dl_dzp->z_lock));
 	KASSERT(dl->dl_refcnt > 0);
 
 	if (--dl->dl_refcnt == 0) {
@@ -291,7 +289,7 @@ zfs_dirent_lock(zfs_dirlock_t **dlpp, znode_t *dzp, char *name, znode_t **zpp,
 		}
 		if ((flag & ZSHARED) && dl->dl_sharecnt != 0)
 			break;
-		error = zfs_dirlock_hold(dl, dzp);
+		error = zfs_dirlock_hold(dl);
 		if (error) {
 			mutex_exit(&dzp->z_lock);
 			if (!(flag & ZHAVELOCK))
@@ -299,7 +297,7 @@ zfs_dirent_lock(zfs_dirlock_t **dlpp, znode_t *dzp, char *name, znode_t **zpp,
 			return (error);
 		}
 		cv_wait(&dl->dl_cv, &dzp->z_lock);
-		zfs_dirlock_rele(dl, dzp);
+		zfs_dirlock_rele(dl);
 	}
 
 	/*
@@ -401,7 +399,7 @@ zfs_dirent_unlock(zfs_dirlock_t *dl)
 		prev_dl = &cur_dl->dl_next;
 	*prev_dl = dl->dl_next;
 	cv_broadcast(&dl->dl_cv);
-	zfs_dirlock_rele(dl, dzp);
+	zfs_dirlock_rele(dl);
 	mutex_exit(&dzp->z_lock);
 }
 
@@ -796,7 +794,11 @@ zfs_link_destroy(zfs_dirlock_t *dl, znode_t *zp, dmu_tx_t *tx, int flag,
 		if (zp_is_dir && !zfs_dirempty(zp)) {	/* dir not empty */
 			mutex_exit(&zp->z_lock);
 			vn_vfsunlock(vp);
+#ifdef __NetBSD__		/* XXX Make our dumb tests happier...  */
+			return (ENOTEMPTY);
+#else
 			return (EEXIST);
+#endif
 		}
 		if (zp->z_phys->zp_links <= zp_is_dir) {
 			zfs_panic_recover("zfs: link count on vnode %p is %u, "
