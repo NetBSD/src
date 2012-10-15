@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.9 2012/08/31 01:45:21 matt Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.10 2012/10/15 13:38:52 jakllsch Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef	_SDHCREG_H_
-#define	_SDHCREG_H_
+#ifndef _SDHCREG_H_
+#define _SDHCREG_H_
 
 /* Host standard register set */
 #define SDHC_DMA_ADDR			0x00
@@ -155,30 +155,25 @@
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
-#define	SDHC_WATERMARK_LEVEL		0x44	/* ESDHC */
-#define	 SDHC_WATERMARK_WRITE_SHIFT	16
-#define	 SDHC_WATERMARK_WRITE_MASK	0xff
-#define	 SDHC_WATERMARK_READ_SHIFT	0
-#define	 SDHC_WATERMARK_READ_MASK	0xff
+#define SDHC_WATERMARK_LEVEL		0x44	/* ESDHC */
+#define  SDHC_WATERMARK_WRITE_SHIFT	16
+#define  SDHC_WATERMARK_WRITE_MASK	0xff
+#define  SDHC_WATERMARK_READ_SHIFT	0
+#define  SDHC_WATERMARK_READ_MASK	0xff
 #define SDHC_MAX_CAPABILITIES		0x48
-#define	SDHC_HOST_VER			0xFC
-#define  SDHC_VVN_MASK			0x0f
-#define  SDHC_VVN_SHIFT			0x04
-#define  SDHC_SVN_MASK			0x0f
-#define  SDHC_SVN_SHIFT			0x00
 #define SDHC_SLOT_INTR_STATUS		0xfc
 #define SDHC_HOST_CTL_VERSION		0xfe
 #define  SDHC_SPEC_VERS_SHIFT		0
 #define  SDHC_SPEC_VERS_MASK		0xff
 #define  SDHC_VENDOR_VERS_SHIFT		8
 #define  SDHC_VENDOR_VERS_MASK		0xff
-#define	SDHC_DMA_CTL			0x40c	/* eSDHC */
-#define	 SDHC_DMA_SNOOP			0x40
+#define SDHC_DMA_CTL			0x40c	/* eSDHC */
+#define  SDHC_DMA_SNOOP			0x40
 
 /* SDHC_SPEC_VERS */
-#define	SDHC_SPEC_VERS_100		0x00
-#define	SDHC_SPEC_VERS_200		0x01
-#define	SDHC_SPEC_VERS_300		0x02
+#define SDHC_SPEC_VERS_100		0x00
+#define SDHC_SPEC_VERS_200		0x01
+#define SDHC_SPEC_VERS_300		0x02
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_V3_FREQ_KHZ(cap)					\
@@ -209,4 +204,4 @@
 #define SDHC_CAPABILITIES_BITS						\
 	"\20\33Vdd1.8V\32Vdd3.0V\31Vdd3.3V\30SUSPEND\27DMA\26HIGHSPEED"
 
-#endif	/* _SDHCREG_H_ */
+#endif /* _SDHCREG_H_ */
