@@ -436,9 +436,16 @@ zfs_dirlook(znode_t *dzp, char *name, vnode_t **vpp, int flags,
 			return (error);
 		}
 		rw_enter(&dzp->z_parent_lock, RW_READER);
-		error = zfs_zget(zfsvfs, dzp->z_phys->zp_parent, &zp);
-		if (error == 0)
-			*vpp = ZTOV(zp);
+		mutex_enter(&dzp->z_lock);
+		if (dzp->z_phys->zp_links == 0) {
+			/* Directory has been rmdir'd.  */
+			error = ENOENT;
+		} else {
+			error = zfs_zget(zfsvfs, dzp->z_phys->zp_parent, &zp);
+			if (error == 0)
+				*vpp = ZTOV(zp);
+		}
+		mutex_exit(&dzp->z_lock);
 		rw_exit(&dzp->z_parent_lock);
 	} else if (zfs_has_ctldir(dzp) && strcmp(name, ZFS_CTLDIR_NAME) == 0) {
 		*vpp = zfsctl_root(dzp);
