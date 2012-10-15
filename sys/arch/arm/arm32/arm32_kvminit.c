@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.5 2012/10/15 10:19:52 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.6 2012/10/15 11:24:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.5 2012/10/15 10:19:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.6 2012/10/15 11:24:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,7 +303,7 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	static bool l1pt_found;
 
 	/*
-	 * If we haven't allcoated the kernel L1 page table and we are aligned
+	 * If we haven't allocated the kernel L1 page table and we are aligned
 	 * at a L1 table boundary, alloc the memory for it.
 	 */
 	if (!l1pt_found
