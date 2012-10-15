@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.491 2012/10/10 17:55:16 riz Exp $
+.\"	$NetBSD: main,v 1.492 2012/10/15 18:15:28 palle Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1272,6 +1272,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
 .It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
 .It Ta Federico Lupi Ta Mt federico@NetBSD.org
+.It Ta Palle Lyckegaard Ta Mt palle@NetBSD.org
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
