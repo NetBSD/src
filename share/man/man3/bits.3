@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.13 2012/10/16 17:39:35 msaitoh Exp $
+.\"	$NetBSD: bits.3,v 1.14 2012/10/16 19:40:59 msaitoh Exp $
 .\"
 .\" Copyright (c) 2006, 2010 David Young.  All rights reserved.
 .\"
@@ -38,9 +38,9 @@
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/cdefs.h
-.Ft uint64_t
+.Ft uintmax_t
 .Fn __BIT "n"
-.Ft uint64_t
+.Ft uintmax_t
 .Fn __BITS "m" "n"
 .Fn __SHIFTIN "v" "mask"
 .Fn __SHIFTOUT "v" "mask"
