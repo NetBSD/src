@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.99 2012/09/12 10:35:10 martin Exp $	*/
+/*      $NetBSD: hijack.c,v 1.100 2012/10/16 12:56:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include "rumpuser_port.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.99 2012/09/12 10:35:10 martin Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.100 2012/10/16 12:56:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1769,7 +1769,8 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	int i, j;
 	int rv, incr;
 
-	DPRINTF(("select\n"));
+	DPRINTF(("select %d %p %p %p %p\n", nfds,
+	    readfds, writefds, exceptfds, timeout));
 
 	/*
 	 * Well, first we must scan the fds to figure out how many
@@ -1949,7 +1950,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	nfds_t i;
 	int rv;
 
-	DPRINTF(("poll\n"));
+	DPRINTF(("poll %p %d %p %p\n", fds, (int)nfds, ts, sigmask));
 	checkpoll(fds, nfds, &hostcall, &rumpcall);
 
 	if (hostcall && rumpcall) {
@@ -2287,6 +2288,11 @@ FDCALL(ssize_t, REALREAD, DUALCALL_READ,				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
 
+#ifdef __linux__
+ssize_t __read_chk(int, void *, size_t)
+    __attribute__((alias("read")));
+#endif
+
 FDCALL(ssize_t, readv, DUALCALL_READV, 					\
 	(int fd, const struct iovec *iov, int iovcnt),			\
 	(int, const struct iovec *, int),				\
@@ -2438,10 +2444,31 @@ PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
 	(const char *, const char *),					\
 	(target, path))
 
-PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
-	(const char *path, char *buf, size_t bufsiz),			\
-	(const char *, char *, size_t),					\
-	(path, buf, bufsiz))
+/*
+ * readlink() can be called from malloc which can be called
+ * from dlsym() during init
+ */
+ssize_t
+readlink(const char *path, char *buf, size_t bufsiz)
+{
+	int (*op_readlink)(const char *, char *, size_t);
+	enum pathtype pt;
+
+	if ((pt = path_isrump(path)) != PATH_HOST) {
+		op_readlink = GETSYSCALL(rump, READLINK);
+		if (pt == PATH_RUMP)
+			path = path_host2rump(path);
+	} else {
+		op_readlink = GETSYSCALL(host, READLINK);
+	}
+
+	if (__predict_false(op_readlink == NULL)) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	return op_readlink(path, buf, bufsiz);
+}
 
 PATHCALL(int, mkdir, DUALCALL_MKDIR,					\
 	(const char *path, mode_t mode),				\
