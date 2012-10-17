@@ -1,7 +1,8 @@
-	--- 9.7.3-P4 released ---
+	--- 9.7.6-P4 released ---
 
-3331.	[security]	dns_rdataslab_fromrdataset could produce bad
-			rdataslabs. [RT #29644]
+3383.	[security]	A certain combination of records in the RBT could
+                        cause named to hang while populating the additional
+                        section of a response. [RT #31090]
 
 	--- 9.7.6-P3 released ---
 
