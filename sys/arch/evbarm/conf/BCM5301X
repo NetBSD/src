@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.8 2012/10/17 14:48:11 apb Exp $
+#	$NetBSD: BCM5301X,v 1.9 2012/10/17 20:22:23 matt Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -186,7 +186,7 @@ cpu0		at mainbus?
 # The MPCore interrupt controller and global timer
 armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0		at armperiph?		# ARM Generic Interrupt Controller
-arml2cc0	at armperiph? flags 1	# ARM PL310 L2CC
+arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
 a9tmr0		at armperiph?		# A9 Global Timer
 a9wdt0		at armperiph? flags 1	# A9 Watchdog Timer
 
@@ -198,7 +198,7 @@ com*		at bcmcca? channel 1
 
 # ChipCommonB Peripherals
 bcmccb0		at mainbus?		# ChipCommonB
-bcmpax*		at bcmccb? port ?
+bcmpax*		at bcmccb? port ? flags 1
 pci*		at bcmpax?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
