@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.17 2012/09/11 19:43:10 msaitoh Exp $
+#	$NetBSD: OVERO,v 1.18 2012/10/17 14:48:11 apb Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

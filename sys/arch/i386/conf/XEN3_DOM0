@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.70 2012/09/24 23:13:36 khorben Exp $
+#	$NetBSD: XEN3_DOM0,v 1.71 2012/10/17 14:48:13 apb Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -89,6 +89,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

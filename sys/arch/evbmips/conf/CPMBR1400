@@ -68,6 +68,7 @@ options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
