@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.10 2012/10/12 23:25:15 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.11 2012/10/17 20:18:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -210,13 +210,6 @@ static void bcmeth_worker(struct work *, void *);
 static int bcmeth_mediachange(struct ifnet *);
 static void bcmeth_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static struct arm32_dma_range bcmeth_dma_ranges[2];
-static struct arm32_bus_dma_tag bcmeth_dma_tag = {
-	_BUS_DMAMAP_FUNCS,
-	_BUS_DMAMEM_FUNCS,
-	_BUS_DMATAG_FUNCS,
-};
-
 static inline uint32_t
 bcmeth_read_4(struct bcmeth_softc *sc, bus_size_t o)
 {
@@ -267,23 +260,9 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	/*
-	 * Initialize a bus_dma_tag to prefer memory over 256MB.
+	 * We need to use the coherent dma tag for the GMAC.
 	 */
-	if (bcmeth_dma_tag._nranges != sc->sc_dmat->_nranges) {
-		KASSERT(sc->sc_dmat->_nranges == 2);
-		bcmeth_dma_ranges[0] = sc->sc_dmat->_ranges[1];
-		bcmeth_dma_ranges[1] = sc->sc_dmat->_ranges[0];
-		bcmeth_dma_tag._ranges = bcmeth_dma_ranges;
-		bcmeth_dma_tag._nranges = sc->sc_dmat->_nranges;
-	}
-
-	/*
-	 * If we initialized our dma tag, then use it.
-	 */
-	if (bcmeth_dma_tag._nranges > 0) {
-		sc->sc_dmat = &bcmeth_dma_tag;
-		KASSERT(sc->sc_dmat->_ranges[0].dr_busbase - sc->sc_dmat->_ranges[1].dr_busbase == 0x10000000);
-	}
+	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
 
 	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
         if (eaprop == NULL) {
@@ -861,6 +840,7 @@ bcmeth_rx_buf_alloc(
 		bcmeth_mapcache_put(sc, sc->sc_rx_mapcache, map);
 		return NULL;
 	}
+	KASSERT(map->_dm_flags & _BUS_DMAMAP_COHERENT);
 	KASSERT(map->dm_mapsize == MCLBYTES);
 	*mtod(m, uint32_t *) = BCMETH_RCVMAGIC;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),

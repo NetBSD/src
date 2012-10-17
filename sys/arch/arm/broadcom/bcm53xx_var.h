@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_var.h,v 1.3 2012/10/07 19:16:39 matt Exp $	*/
+/*	$NetBSD: bcm53xx_var.h,v 1.4 2012/10/17 20:18:55 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@ uint32_t	bcm53xx_srab_read_4(u_int);
 uint64_t	bcm53xx_srab_read_8(u_int);
 void	bcm53xx_srab_write_4(u_int, uint32_t);
 void	bcm53xx_srab_write_8(u_int, uint64_t);
-extern struct arm32_bus_dma_tag bcm53xx_dma_tag;
+extern struct arm32_bus_dma_tag bcm53xx_dma_tag, bcm53xx_coherent_dma_tag;
 extern struct bus_space bcmgen_bs_tag;
 extern bus_space_tag_t bcm53xx_ioreg_bst;
 extern bus_space_handle_t bcm53xx_ioreg_bsh;

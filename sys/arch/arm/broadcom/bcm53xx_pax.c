@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.6 2012/10/12 17:18:02 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.7 2012/10/17 20:18:55 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -201,7 +201,8 @@ bcmpax_ccb_attach(device_t parent, device_t self, void *aux)
 	const char * const xname = device_xname(self);
 
 	sc->sc_dev = self;
-	sc->sc_dmat = ccbaa->ccbaa_dmat;
+	//sc->sc_dmat = ccbaa->ccbaa_dmat;
+	sc->sc_dmat = &bcm53xx_coherent_dma_tag;
 
 	for (u_int i = 0; i < 4; i++) {
 		snprintf(sc->sc_intrstring[i], sizeof(sc->sc_intrstring[i]),
