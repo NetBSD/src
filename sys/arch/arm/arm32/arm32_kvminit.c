@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.7 2012/10/15 12:26:06 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.8 2012/10/17 20:44:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.7 2012/10/15 12:26:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.8 2012/10/17 20:44:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -452,7 +452,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
 #endif
-	for (size_t idx = 0; idx <= KERNEL_L2PT_KERNEL_NUM; ++idx) {
+	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
 		valloc_pages(bmi, &kernel_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 		add_pages(bmi, &kernel_l2pt[idx]);
@@ -460,7 +460,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 	printf(" vm");
 #endif
-	for (size_t idx = 0; idx <= KERNEL_L2PT_VMDATA_NUM; ++idx) {
+	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; ++idx) {
 		valloc_pages(bmi, &vmdata_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 		add_pages(bmi, &vmdata_l2pt[idx]);
