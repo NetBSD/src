@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.298 2012/08/09 23:53:25 buhrow Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.298.2.1 2012/10/17 01:36:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298 2012/08/09 23:53:25 buhrow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298.2.1 2012/10/17 01:36:13 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -216,7 +216,9 @@ const struct cdevsw raid_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
+static void	raidminphys(struct buf *);
+
+static struct dkdriver rf_dkdriver = { raidstrategy, raidminphys };
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that...
@@ -925,7 +927,7 @@ raidread(dev_t dev, struct uio *uio, int flags)
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(raidstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(raidstrategy, NULL, dev, B_READ, raidminphys, uio));
 
 }
 /* ARGSUSED */
@@ -942,7 +944,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (ENXIO);
 
-	return (physio(raidstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(raidstrategy, NULL, dev, B_WRITE, raidminphys, uio));
 
 }
 
@@ -3962,4 +3964,25 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 		}
 	}
 	return error;
+}
+
+static void
+raidminphys(struct buf *bp)
+{
+	dev_t dev;
+	int unit;
+	struct raid_softc *rs;
+	RF_Raid_t *raidPtr;
+	long xmax;
+
+	dev = bp->b_dev;
+	unit = raidunit(dev);
+	rs = &raid_softc[unit];
+	raidPtr = raidPtrs[unit];
+
+	xmax = raidPtr->Layout.numDataCol * MAXPHYS;
+
+	if (bp->b_bcount > xmax) {
+		bp->b_bcount = xmax;
+	}
 }
