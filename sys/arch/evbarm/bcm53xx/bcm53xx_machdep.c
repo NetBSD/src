@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.4 2012/10/07 19:17:24 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.5 2012/10/17 20:20:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.4 2012/10/07 19:17:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.5 2012/10/17 20:20:54 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -172,6 +172,13 @@ static const struct pmap_devmap devmap[] = {
 	{ 0, 0, 0, 0, 0 }
 };
 
+static const struct boot_physmem bp_first256 = {
+	.bp_start = 0x80000000 / NBPG,
+	.bp_pages = 0x10000000 / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0,
+};
+
 /*
  * u_int initarm(...)
  *
@@ -238,6 +245,7 @@ initarm(void *arg)
 
 	psize_t memsize = bcm53xx_memprobe();
 	//memsize = 512*1024*1024;
+	const bool bigmem_p = (memsize >> 20) > 256; 
 
 	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), memsize,
 	    (paddr_t)KERNEL_BASE_phys);
@@ -259,8 +267,19 @@ initarm(void *arg)
 	cpu_reset_address = bcm53xx_system_reset;
 	/* we've a specific device_register routine */
 	evbarm_device_register = bcm53xx_device_register;
+	if (bigmem_p) {
+		/*
+		 * If we have more than 256MB
+		 */
+		arm_poolpage_vmfreelist = bp_first256.bp_freelist;
+	}
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	/*
+	 * If we have more than 256MB of RAM, set aside the first 256MB for
+	 * non-default VM allocations.
+	 */
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+	    (bigmem_p ? &bp_first256 : NULL), (bigmem_p ? 1 : 0));
 }
 
 void
