@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.83 2012/09/30 18:13:27 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.84 2012/10/17 20:57:15 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5119,4 +5119,17 @@ share/zoneinfo/australasia			1.27 via patch
 	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
 	      January 20 this year.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #1798]
+
+dist/bind/CHANGES                               patch
+dist/bind/version                               patch
+dist/bind/bin/named/query.c                     patch
+
+	fix CVE-2012-5166: Specially crafted DNS data can cause a
+	lockup in named.
+	[spz, ticket #1801]
+
+usr.bin/calendar/calendars/calendar.netbsd	1.22
+
+	note NetBSD 6.0 release
+	[jnemeth, ticket #1802]
 
