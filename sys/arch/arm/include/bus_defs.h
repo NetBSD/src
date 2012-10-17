@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2012/09/18 05:47:27 matt Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2012/10/17 20:17:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -330,6 +330,7 @@ struct arm32_bus_dma_segment {
 	 */
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	uint32_t	_ds_flags;	/* _BUS_DMAMAP_COHERENT */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
@@ -342,6 +343,7 @@ struct arm32_dma_range {
 	bus_addr_t	dr_sysbase;	/* system base address */
 	bus_addr_t	dr_busbase;	/* appears here on bus */
 	bus_size_t	dr_len;		/* length of range */
+	uint32_t	dr_flags;	/* flags for range */
 };
 
 /*
