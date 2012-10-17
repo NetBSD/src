@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.25 2012/10/16 19:49:41 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.26 2012/10/17 18:12:59 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.25 2012/10/16 19:49:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.26 2012/10/17 18:12:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -885,6 +885,9 @@ mvgbe_intr(void *arg)
 
 		claimed = 1;
 
+		if (!(ifp->if_flags & IFF_RUNNING))
+			break;
+
 		if (ice & MVGBE_ICE_LINKCHG) {
 			if (MVGBE_READ(sc, MVGBE_PS) & MVGBE_PS_LINKUP) {
 				/* Enable port RX and TX. */
@@ -1127,6 +1130,7 @@ static void
 mvgbe_stop(struct ifnet *ifp, int disable)
 {
 	struct mvgbe_softc *sc = ifp->if_softc;
+	struct mvgbec_softc *csc = device_private(device_parent(sc->sc_dev));
 	struct mvgbe_chain_data *cdata = &sc->sc_cdata;
 	uint32_t reg;
 	int i, cnt;
@@ -1199,7 +1203,16 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 	reg = MVGBE_READ(sc, MVGBE_PSC);
 	MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_PORTEN);
 
-	/* Disable interrupts */
+	/*
+	 * Disable and clear interrupts
+	 * 0) controller interrupt
+	 * 1) port interrupt cause
+	 * 2) port interrupt mask
+	 */
+	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
+	MVGBE_WRITE(sc, MVGBE_IC, 0);
+	MVGBE_WRITE(sc, MVGBE_ICE, 0);
 	MVGBE_WRITE(sc, MVGBE_PIM, 0);
 	MVGBE_WRITE(sc, MVGBE_PEIM, 0);
 
