@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.113 2012/10/17 18:52:15 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.114 2012/10/17 20:15:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -887,8 +887,13 @@ extern void (*pmap_zero_page_func)(paddr_t);
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
-#define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+extern paddr_t physical_start;
 struct vm_page *arm_pmap_alloc_poolpage(int);
+#define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+#define	PMAP_MAP_POOLPAGE(pa) \
+        ((vaddr_t)((paddr_t)(pa) - physical_start + KERNEL_BASE))
+#define PMAP_UNMAP_POOLPAGE(va) \
+        ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
 #endif
 
 #ifndef _LOCORE
