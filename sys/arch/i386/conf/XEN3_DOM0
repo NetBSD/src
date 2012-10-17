@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.60.2.5 2012/08/15 15:33:00 sborrill Exp $
+#	$NetBSD: XEN3_DOM0,v 1.60.2.6 2012/10/17 21:33:16 riz Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -512,6 +512,7 @@ pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
