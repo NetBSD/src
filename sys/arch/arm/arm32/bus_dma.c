@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.60 2012/10/06 02:58:39 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.61 2012/10/17 20:17:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.60 2012/10/06 02:58:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61 2012/10/17 20:17:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ _bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
  */
 static int
 _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_addr_t paddr, bus_size_t size)
+    bus_addr_t paddr, bus_size_t size, bool coherent)
 {
 	bus_dma_segment_t * const segs = map->dm_segs;
 	int nseg = map->dm_nsegs;
@@ -147,6 +147,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_addr_t bmask = ~(map->_dm_boundary - 1);
 	bus_addr_t curaddr;
 	bus_size_t sgsize;
+	uint32_t _ds_flags = coherent ? _BUS_DMAMAP_COHERENT : 0;
 
 	if (nseg > 0)
 		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
@@ -163,7 +164,16 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
 		if (dr == NULL)
 			return (EINVAL);
-		
+
+		/*
+		 * If this region is coherent, mark the segment as coherent.
+		 */
+		_ds_flags |= dr->dr_flags & _BUS_DMAMAP_COHERENT;
+#if 0
+		printf("%p: %#lx: range %#lx/%#lx/%#lx/%#x: %#x\n",
+		    t, paddr, dr->dr_sysbase, dr->dr_busbase,
+		    dr->dr_len, dr->dr_flags, _ds_flags);
+#endif
 		/*
 		 * In a valid DMA range.  Translate the physical
 		 * memory address to an address in the DMA window.
@@ -189,6 +199,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	 */
 	if (nseg > 0 && curaddr == lastaddr &&
 	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
+	    ((segs[nseg-1]._ds_flags ^ _ds_flags) & _BUS_DMAMAP_COHERENT) == 0 &&
 	    (map->_dm_boundary == 0 ||
 	     (segs[nseg-1].ds_addr & bmask) == (curaddr & bmask))) {
 	     	/* coalesce */
@@ -199,6 +210,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* new segment */
 		segs[nseg].ds_addr = curaddr;
 		segs[nseg].ds_len = sgsize;
+		segs[nseg]._ds_flags = _ds_flags;
 		nseg++;
 	}
 
@@ -208,7 +220,8 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	size -= sgsize;
 	if (size > 0)
 		goto again;
-	
+
+	map->_dm_flags &= (_ds_flags & _BUS_DMAMAP_COHERENT);
 	map->dm_nsegs = nseg;
 	return (0);
 }
@@ -511,11 +524,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	/*
-	 * Mbuf chains should almost never have coherent (i.e.
-	 * un-cached) mappings, so clear that flag now.
-	 */
-	map->_dm_flags &= ~_BUS_DMAMAP_COHERENT;
+	/* _bus_dmamap_load_paddr() clears this if we're not... */
+	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
@@ -541,7 +551,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size,
+			    false);
 			break;
 		
 		case M_EXT|M_EXT_PAGES:
@@ -570,7 +581,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 				paddr = VM_PAGE_TO_PHYS(pg) + offset;
 
 				error = _bus_dmamap_load_paddr(t, map,
-				    paddr, size);
+				    paddr, size, false);
 				if (error)
 					break;
 				offset = 0;
@@ -582,7 +593,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			paddr = m->m_paddr + M_BUFOFFSET(m) +
 			    (m->m_data - M_BUFADDR(m));
 			size = m->m_len;
-			error = _bus_dmamap_load_paddr(t, map, paddr, size);
+			error = _bus_dmamap_load_paddr(t, map, paddr, size,
+			    false);
 			break;
 
 		default:
@@ -766,7 +778,9 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
 		size_t seglen = min(len, ds->ds_len - offset);
 
-		_bus_dmamap_sync_segment(va + offset, pa, seglen, ops, false);
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops,
+			     false);
 
 		offset += seglen;
 		len -= seglen;
@@ -819,7 +833,9 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		 * cache), this will have to be revisited.
 		 */
 
-		_bus_dmamap_sync_segment(va, pa, seglen, ops, M_ROMAP(m));
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops,
+			    M_ROMAP(m));
 		voff += seglen;
 		ds_off += seglen;
 		len -= seglen;
@@ -857,7 +873,8 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
-		_bus_dmamap_sync_segment(va, pa, seglen, ops, false);
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+			_bus_dmamap_sync_segment(va, pa, seglen, ops, false);
 
 		voff += seglen;
 		ds_off += seglen;
@@ -924,8 +941,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 
 	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (!bouncing && pre_ops == 0)
+	if (!bouncing && pre_ops == 0) {
 		return;
+	}
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (bouncing && (ops & BUS_DMASYNC_PREWRITE)) {
@@ -1283,11 +1301,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
-	pd_entry_t *pde;
-	pt_entry_t pte;
 	int error;
 	pmap_t pmap;
-	pt_entry_t *ptep;
 
 #ifdef DEBUG_DMA
 	printf("_bus_dmamem_load_buffer(buf=%p, len=%lx, flags=%d)\n",
@@ -1303,7 +1318,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * XXX Doesn't support checking for coherent mappings
 		 * XXX in user address space.
 		 */
+		bool coherent;
 		if (__predict_true(pmap == pmap_kernel())) {
+			pd_entry_t *pde;
+			pt_entry_t *ptep;
 			(void) pmap_get_pde_pte(pmap, vaddr, &pde, &ptep);
 			if (__predict_false(pmap_pde_section(pde))) {
 				paddr_t s_frame = L1_S_FRAME;
@@ -1315,32 +1333,24 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 				}
 #endif
 				curaddr = (*pde & s_frame) | (vaddr & s_offset);
-				if (*pde & L1_S_CACHE_MASK) {
-					map->_dm_flags &= ~_BUS_DMAMAP_COHERENT;
-				}
+				coherent = (*pde & L1_S_CACHE_MASK) != 0;
 			} else {
-				pte = *ptep;
+				pt_entry_t pte = *ptep;
 				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
 				if (__predict_false((pte & L2_TYPE_MASK)
 						    == L2_TYPE_L)) {
 					curaddr = (pte & L2_L_FRAME) |
 					    (vaddr & L2_L_OFFSET);
-					if (pte & L2_L_CACHE_MASK) {
-						map->_dm_flags &=
-						    ~_BUS_DMAMAP_COHERENT;
-					}
+					coherent = (pte & L2_L_CACHE_MASK) != 0;
 				} else {
 					curaddr = (pte & L2_S_FRAME) |
 					    (vaddr & L2_S_OFFSET);
-					if (pte & L2_S_CACHE_MASK) {
-						map->_dm_flags &=
-						    ~_BUS_DMAMAP_COHERENT;
-					}
+					coherent = (pte & L2_S_CACHE_MASK) != 0;
 				}
 			}
 		} else {
 			(void) pmap_extract(pmap, vaddr, &curaddr);
-			map->_dm_flags &= ~_BUS_DMAMAP_COHERENT;
+			coherent = false;
 		}
 
 		/*
@@ -1350,7 +1360,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize);
+		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
+		    coherent);
 		if (error)
 			return (error);
 
