@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2012/06/05 08:44:07 abs Exp $
+# $NetBSD: GENERIC,v 1.132 2012/10/17 14:48:09 apb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.132 $"
 
 maxusers	32
 
@@ -67,6 +67,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# 4.3BSD
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
