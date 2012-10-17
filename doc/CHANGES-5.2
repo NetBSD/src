@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.186 2012/09/30 18:19:34 bouyer Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.187 2012/10/17 20:57:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8649,4 +8649,27 @@ gnu/dist/binutils/binutils/arsup.c		patch
 
 	Fix buffer overflow in ar(1), from toolchain/46827
 	[christos, ticket #1793]
+
+bin/pax/ftree.c					1.42
+
+	deal properly with empty lines in spec file
+	[msaitoh, ticket #1799]
+
+sys/dev/pci/if_wm.c				1.231 via patch
+
+	Add workaround for QEMU and the variants that fail on EEPROM access.
+	[msaitoh, ticket #1800]
+
+dist/bind/CHANGES                               patch
+dist/bind/version                               patch
+dist/bind/bin/named/query.c                     patch
+
+	fix CVE-2012-5166: Specially crafted DNS data can cause a
+	lockup in named.
+	[spz, ticket #1801]
+
+usr.bin/calendar/calendars/calendar.netbsd	1.22
+
+	note NetBSD 6.0 release
+	[jnemeth, ticket #1802]
 
