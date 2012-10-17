@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.2 2012/10/17 21:51:14 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.3 2012/10/17 22:06:43 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -112,4 +112,23 @@ bin/pax/ftree.c					1.42
 
 	Deal properly with empty lines in spec file.
 	[msaitoh, ticket #586]
+
+sys/arch/evbarm/iq80310/i80312_mainbus.c	1.15
+sys/arch/evbarm/iq80310/iq80310_intr.c		1.32
+sys/arch/evbarm/iq80310/iq80310var.h		1.8
+
+	Defer evcnt attachment correctly.
+	[chs, ticket #591]
+
+sbin/route/route.c				1.139
+
+	Fix a regression in route.c that affected adding
+	certain classful networks without explicit prefix length.
+	[uwe, ticket #592]
+
+tools/gdb/Makefile				1.22
+
+	On some Linux distributions (and possibly other platforms),
+	gmake is needed to build the cross-gdb.
+	[bouyer, ticket #596]
 
