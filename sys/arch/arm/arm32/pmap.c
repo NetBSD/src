@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.238 2012/09/26 18:18:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.239 2012/10/17 16:16:23 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.238 2012/09/26 18:18:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.239 2012/10/17 16:16:23 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4009,6 +4009,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	 */
 	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1
 	    && pmap_needs_pte_sync == 0) {
+		PTE_SYNC(ptep);
 		pmap_needs_pte_sync = 1;
 		rv = 1;
 	}
