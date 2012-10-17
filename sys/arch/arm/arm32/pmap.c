@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.240 2012/10/17 18:29:10 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.241 2012/10/17 18:52:15 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.240 2012/10/17 18:29:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.241 2012/10/17 18:52:15 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -257,6 +257,9 @@ int pmapdebug = 0;
  */
 static struct pmap	kernel_pmap_store;
 struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+int			arm_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+#endif
 
 /*
  * Which pmap is currently 'live' in the cache
@@ -6853,3 +6856,19 @@ SYSCTL_SETUP(sysctl_machdep_pmap_setup, "sysctl machdep.kmpages setup")
 			NULL, 0, &pmap_kmpages, 0,
 			CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+struct vm_page *
+arm_pmap_alloc_poolpage(int flags)
+{
+	/*
+	 * On some systems, only some pages may be "coherent" for dma and we
+	 * want to use those for pool pages (think mbufs).
+	 */
+	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
+		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
+		    UVM_PGA_STRAT_ONLY, arm_poolpage_vmfreelist);
+
+	return uvm_pagealloc(NULL, 0, NULL, flags);
+}
+#endif
