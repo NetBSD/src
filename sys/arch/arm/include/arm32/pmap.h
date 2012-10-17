@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.112 2012/09/22 00:33:38 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.113 2012/10/17 18:52:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -269,6 +269,7 @@ extern pv_addr_t kernel_l1pt;
  * Commonly referenced structures
  */
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
+extern int		arm_poolpage_vmfreelist;
 
 /*
  * Macros that we need to export
@@ -885,6 +886,10 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+#define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+struct vm_page *arm_pmap_alloc_poolpage(int);
+#endif
 
 #ifndef _LOCORE
 
