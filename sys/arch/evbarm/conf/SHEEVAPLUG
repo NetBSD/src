@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.24 2012/10/09 08:57:36 msaitoh Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.25 2012/10/17 14:48:10 apb Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -114,6 +114,7 @@ options 	NFS_BOOT_DHCP
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
