@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.3 2012/10/17 22:06:43 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.4 2012/10/17 22:41:41 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -131,4 +131,39 @@ tools/gdb/Makefile				1.22
 	On some Linux distributions (and possibly other platforms),
 	gmake is needed to build the cross-gdb.
 	[bouyer, ticket #596]
+
+sys/arch/arm/xscale/ixp425_intr.c		1.24
+sys/arch/arm/xscale/ixp425var.h			1.14
+sys/arch/evbarm/ixdp425/ixdp425_mainbus.c	1.8
+sys/arch/evbarm/nslu2/nslu2_mainbus.c		1.3
+
+	Prevent an early crash with DIAGNOSTIC on some boards.
+	[tsutsui, ticket #600]
+
+sys/arch/x68k/dev/mha.c				1.53
+
+	Prevent panic for users of mha(4).
+	[tsutsui, ticket #601]
+
+sys/arch/sparc/dev/fd.c				1.151
+sys/arch/sparc/sparc/memecc.c			1.15
+
+	Prevent a potential crash with QUEUEDEBUG enabled.
+	[tsutsui, ticket #602]
+
+sys/arch/amd64/amd64/db_machdep.c		1.4
+
+	Read kernel memory correctly so we don't crash crash(8).
+	[riastradh, ticket #604]
+
+libexec/ld.elf_so/rtld.c			1.159
+
+	Make the dl* functions store errors in dlerror() as they should.
+	PR#41760.
+	[riastradh, ticket #605]
+
+sys/arch/x86/include/lock.h			1.26
+
+	Work around a possible gcc bug.  Fixes PR#45673.
+	[apb, ticket #606]
 
