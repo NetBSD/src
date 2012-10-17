@@ -25,10 +25,52 @@
  * SUCH DAMAGE.
  */
 
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#ifndef IPV6_H
+#define IPV6_H
 
-char *hardware_platform(void);
-int check_ipv6(const char *);
+#include <sys/queue.h>
+
+#include <netinet/in.h>
+
+#include "ipv6rs.h"
+
+#define ALLROUTERS "ff02::2"
+#define HOPLIMIT 255
+
+#define ROUNDUP8(a) (1 + (((a) - 1) | 7))
+
+struct ipv6_addr {
+	TAILQ_ENTRY(ipv6_addr) next;
+	struct in6_addr prefix;
+	int prefix_len;
+	uint32_t prefix_vltime;
+	uint32_t prefix_pltime;
+	struct in6_addr addr;
+	int new;
+	char saddr[INET6_ADDRSTRLEN];
+};
+
+struct rt6 {
+	TAILQ_ENTRY(rt6) next;
+	struct in6_addr dest;
+	struct in6_addr net;
+	struct in6_addr gate;
+	const struct interface *iface;
+	struct ra *ra;
+	int metric;
+	unsigned int mtu;
+};
+TAILQ_HEAD(rt6head, rt6);
+
+extern int socket_afnet6;
+
+int ipv6_open(void);
+struct in6_addr *ipv6_linklocal(const char *);
+int ipv6_makeaddr(struct in6_addr *, const char *, const struct in6_addr *, int);
+int ipv6_mask(struct in6_addr *, int);
+int ipv6_prefixlen(const struct in6_addr *);
+int ipv6_remove_subnet(struct ra *, struct ipv6_addr *);
+void ipv6_build_routes(void);
+void ipv6_drop(struct interface *);
 
 #endif
