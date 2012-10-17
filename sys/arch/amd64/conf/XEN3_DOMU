@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.40 2012/10/04 21:23:45 dsl Exp $
+# $NetBSD: XEN3_DOMU,v 1.41 2012/10/17 14:48:08 apb Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -61,7 +61,8 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
