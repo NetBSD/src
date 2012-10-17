@@ -1,5 +1,5 @@
 #
-# $NetBSD: SMALL030,v 1.15 2011/12/18 05:49:24 dholland Exp $
+# $NetBSD: SMALL030,v 1.16 2012/10/17 14:48:09 apb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -24,6 +24,7 @@ options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
 options COMPAT_40 # NetBSD 4.0 compatibility.
 options COMPAT_50 # NetBSD 5.0 compatibility.
+options COMPAT_60 # NetBSD 6.0 compatibility.
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
