@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.111 2012/09/18 05:09:47 matt Exp $
+#	$NetBSD: files.arm,v 1.112 2012/10/17 18:52:16 matt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -61,7 +61,7 @@ defflag				PMAP_DEBUG
 
 # New PMAP options
 defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT PMAPCOUNTERS
-				PMAP_STEAL_MEMORY
+				PMAP_STEAL_MEMORY PMAP_NEED_ALLOC_POOLPAGE
 
 # MI console support
 file	dev/cons.c
