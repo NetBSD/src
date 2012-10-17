@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2011 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -186,7 +186,8 @@ int get_option_uint8(uint8_t *, const struct dhcp_message *, uint8_t);
 #define is_bootp(m) (m &&						\
 	    !IN_LINKLOCAL(htonl((m)->yiaddr)) &&			\
 	    get_option_uint8(NULL, m, DHO_MESSAGETYPE) == -1)
-struct rt *get_option_routes(const struct dhcp_message *, const char *, int *);
+struct rt *get_option_routes(const struct dhcp_message *, const char *,
+    unsigned long long *);
 ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
 ssize_t configure_env(char **, const char *, const struct dhcp_message *,
     const struct if_options *);

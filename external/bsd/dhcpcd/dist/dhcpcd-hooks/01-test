@@ -2,5 +2,5 @@
 
 if [ "$reason" = "TEST" ]; then
 	set | grep "^\(interface\|metric\|pid\|reason\|skip_hooks\)=" | sort
-	set | grep "^\(new_\|old_\)" | sort
+	set | grep "^\(new_\|old_\|ra_count=\|ra[0-9]*_\)" | sort
 fi
