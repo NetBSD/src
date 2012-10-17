@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.1 2012/10/17 20:54:06 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.2 2012/10/17 21:51:14 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -6,4 +6,110 @@ gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h					patched by hand
 
 	Welcome to 6.0_STABLE!
+
+usr.sbin/tcpdump/Makefile			delete
+
+	Remove long-unused usr.sbin/tcpdump. PR#44860.
+	[msaitoh, ticket #541]
+
+sys/dev/sysmon/sysmon_envsys.c			1.119 via patch
+sys/dev/sysmon/sysmon_envsys_events.c		1.99 via patch
+sys/dev/sysmon/sysmon_envsysvar.h		1.42 via patch
+
+	When unregistering a sensor device, make sure we unregister and delete
+	all the associated events.
+	[pgoyette, ticket #544]
+
+share/man/man4/swsensor.4			1.11-1.12
+sys/dev/sysmon/swsensor.c			1.13
+
+	Add hw.swsensor.state variable for additional control capability.
+	[pgoyette, ticket #546]
+
+etc/powerd/scripts/sensor_indicator		1.5
+sys/dev/sysmon/sysmon_envsys_events.c		1.104
+sys/dev/sysmon/sysmon_envsys_tables.c		1.11
+sys/dev/sysmon/sysmon_envsysvar.h		1.43
+sys/sys/envsys.h				1.32
+
+	Correct the operation of INDICATOR sensors.
+	[pgoyette, ticket #545]
+
+sys/kern/kern_rndq.c				1.4-1.5
+sys/kern/subr_cprng.c				1.10-1.11
+sys/sys/rnd.h					1.33
+
+	Improve boot-time entropy situation. Fix PR#46911.
+	[tls, ticket #558]
+
+external/gpl3/gcc/dist/gcc/config/i386/i386.c	1.2
+external/gpl3/gcc/dist/gcc/config/i386/i386.h	1.2
+external/gpl3/gcc/dist/gcc/config/i386/netbsd-elf.h 1.3
+external/gpl3/gcc/dist/gcc/config/i386/netbsd64.h 1.2
+
+	Fix GCC to correctly implement the i386 psABI on NetBSD.
+	Also, fix PR#46978: ICE on spilling MMX registers.
+	[joerg, ticket #560]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.88
+sys/arch/i386/conf/XEN3_DOM0			1.70
+
+	Enable support for Synaptics touchpads when running Xen as
+	domain 0; helps usability on laptops. PR#44055.
+	[khorben, ticket #572]
+
+tests/usr.bin/nbperf/h_nbperf.sh		1.1-1.2
+tests/usr.bin/nbperf/hash_driver.c		1.1-1.2
+tests/usr.bin/nbperf/t_nbperf.sh		1.1-1.2
+usr.bin/nbperf/nbperf-bdz.c			1.5
+usr.bin/nbperf/nbperf.1				1.5
+
+	Simplify the BDZ compression function, and add regression tests.
+	[joerg, ticket #574]
+
+lib/libc/cdb/cdbr.c				1.4
+
+	Don't refuse the open databases without entries or keys.
+	[joerg, ticket #577]
+
+external/bsd/dhcpcd/dist/bind.c				patch
+external/bsd/dhcpcd/dist/common.h			patch
+external/bsd/dhcpcd/dist/configure.c			patch
+external/bsd/dhcpcd/dist/defs.h				patch
+external/bsd/dhcpcd/dist/dhcp.c				patch
+external/bsd/dhcpcd/dist/dhcp.h				patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in		patch
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in		patch
+external/bsd/dhcpcd/dist/dhcpcd.8.in			patch
+external/bsd/dhcpcd/dist/dhcpcd.c			patch
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in		patch
+external/bsd/dhcpcd/dist/dhcpcd.h			patch
+external/bsd/dhcpcd/dist/if-bsd.c			patch
+external/bsd/dhcpcd/dist/if-options.c			patch
+external/bsd/dhcpcd/dist/if-options.h			patch
+external/bsd/dhcpcd/dist/ipv6.c				patch
+external/bsd/dhcpcd/dist/ipv6.h				patch
+external/bsd/dhcpcd/dist/ipv6ns.c			patch
+external/bsd/dhcpcd/dist/ipv6ns.h			patch
+external/bsd/dhcpcd/dist/ipv6rs.c			patch
+external/bsd/dhcpcd/dist/ipv6rs.h			patch
+external/bsd/dhcpcd/dist/net.c				patch
+external/bsd/dhcpcd/dist/net.h				patch
+external/bsd/dhcpcd/dist/platform-bsd.c			patch
+external/bsd/dhcpcd/dist/platform.h			patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/01-test		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu		patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf	patch
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ypbind		patch
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile		patch
+
+	Update dhcpcd to version 5.6.2.
+	[roy, ticket #585]
+
+bin/pax/ftree.c					1.42
+
+	Deal properly with empty lines in spec file.
+	[msaitoh, ticket #586]
 
