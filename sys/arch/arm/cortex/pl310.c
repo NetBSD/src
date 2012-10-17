@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.6 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.7 2012/10/17 20:45:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.6 2012/09/22 00:33:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7 2012/10/17 20:45:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -289,8 +289,10 @@ arml2cc_cache_range_op(paddr_t pa, psize_t len, bus_size_t cache_op)
 		psize_t seglen = min(len, PAGE_SIZE - off);
 
 		mutex_spin_enter(&sc->sc_lock);
-		if (!sc->sc_enabled)
+		if (!sc->sc_enabled) {
+			mutex_spin_exit(&sc->sc_lock);
 			return;
+		}
 		for (paddr_t segend = pa + seglen; pa < segend; pa += line_size) {
 			arml2cc_cache_op(sc, cache_op, pa);
 		}
