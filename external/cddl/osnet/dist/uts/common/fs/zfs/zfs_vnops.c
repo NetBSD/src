@@ -1422,7 +1422,8 @@ top:
 		 * Create a new file object and update the directory
 		 * to reference it.
 		 */
-		if (error = zfs_zaccess(dzp, ACE_ADD_FILE, 0, B_FALSE, cr)) {
+		error = zfs_zaccess(dzp, ACE_ADD_FILE, 0, B_FALSE, cr);
+		if (error) {
 			goto out;
 		}
 
@@ -4779,22 +4780,34 @@ zfs_netbsd_write(void *v)
 static int
 zfs_netbsd_access(void *v)
 {
-	struct vop_access_args *ap = v;
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int mode = ap->a_mode;
+	mode_t zfs_mode = 0;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 	/*
-	 * ZFS itself only knowns about VREAD, VWRITE and VEXEC, the rest
-	 * we have to handle by calling vaccess().
+	 * XXX This is really random, especially the left shift by six,
+	 * and it exists only because of randomness in zfs_unix_to_v4
+	 * and zfs_zaccess_rwx in zfs_acl.c.
 	 */
-	if ((ap->a_mode & ~(VREAD|VWRITE|VEXEC)) != 0) {
-		vnode_t *vp = ap->a_vp;
-		znode_t *zp = VTOZ(vp);
-		znode_phys_t *zphys = zp->z_phys;
+	if (mode & VREAD)
+		zfs_mode |= S_IROTH;
+	if (mode & VWRITE)
+		zfs_mode |= S_IWOTH;
+	if (mode & VEXEC)
+		zfs_mode |= S_IXOTH;
+	zfs_mode <<= 6;
 
-		return (vaccess(vp->v_type, zphys->zp_mode, zphys->zp_uid,
-		    zphys->zp_gid, ap->a_mode, ap->a_cred));
-	}
+	KASSERT(VOP_ISLOCKED(vp));
+	error = zfs_access(vp, zfs_mode, 0, cred, NULL);
 
-	return (zfs_access(ap->a_vp, ap->a_mode, 0, ap->a_cred, NULL));
+	return (error);
 }
 
 static int
@@ -4849,13 +4862,19 @@ zfs_netbsd_lookup(void *v)
 	    NULL, NULL);
 
 	/*
-	 * Translate errors to match our namei insanity.
+	 * Translate errors to match our namei insanity.  Also, if the
+	 * caller wants to create an entry here, it's apparently our
+	 * responsibility as lookup to make sure that's permissible.
+	 * Go figure.
 	 */
 	if (cnp->cn_flags & ISLASTCN) {
 		switch (cnp->cn_nameiop) {
 		case CREATE:
 		case RENAME:
 			if (error == ENOENT) {
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+				if (error)
+					break;
 				error = EJUSTRETURN;
 				break;
 			}
