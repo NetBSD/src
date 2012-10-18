@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.6 2012/10/17 20:18:55 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.7 2012/10/18 02:36:37 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.6 2012/10/17 20:18:55 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.7 2012/10/18 02:36:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -513,19 +513,17 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		bcm53xx_dma_tag._ranges = bcm53xx_dma_ranges;
 		bcm53xx_dma_tag._nranges = __arraycount(bcm53xx_dma_ranges);
 		bcm53xx_coherent_dma_ranges[0] = bcm53xx_dma_ranges[0];
-		bcm53xx_coherent_dma_ranges[0].dr_flags = _BUS_DMAMAP_COHERENT;
 		bcm53xx_coherent_dma_ranges[1] = bcm53xx_dma_ranges[1];
-		bcm53xx_coherent_dma_tag._ranges = bcm53xx_coherent_dma_ranges;
 		bcm53xx_coherent_dma_tag._nranges =
 		    __arraycount(bcm53xx_coherent_dma_ranges);
 	} else {
 		bcm53xx_coherent_dma_ranges[0].dr_sysbase = 0x80000000;
 		bcm53xx_coherent_dma_ranges[0].dr_busbase = 0x80000000;
 		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
-		bcm53xx_coherent_dma_ranges[0].dr_flags = _BUS_DMAMAP_COHERENT;
-		bcm53xx_coherent_dma_tag._ranges = bcm53xx_coherent_dma_ranges;
 		bcm53xx_coherent_dma_tag._nranges = 1;
 	}
+	bcm53xx_coherent_dma_ranges[0].dr_flags = _BUS_DMAMAP_COHERENT;
+	bcm53xx_coherent_dma_tag._ranges = bcm53xx_coherent_dma_ranges;
 }
 
 #ifdef MULTIPROCESSOR
