@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.256 2012/09/29 04:02:42 tsutsui Exp $
+#	$NetBSD: build.sh,v 1.257 2012/10/18 16:15:29 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1413,10 +1413,23 @@ rebuildmake()
 # Perform some late sanity checks, after rebuildmake,
 # but before createmakewrapper or any real work.
 #
-# Also create the top-level obj directory.
+# Creates the top-level obj directory, because that
+# is needed by some of the sanity checks.
+#
+# Prints status messages reporting the values of several variables.
 #
 validatemakeparams()
 {
+	# MAKECONF (which defaults to /etc/mk.conf in share/mk/bsd.own.mk)
+	# can affect many things, so mention it in an early status message.
+	#
+	MAKECONF=$(getmakevar MAKECONF)
+	if [ -e "${MAKECONF}" ]; then
+		statusmsg2 "MAKECONF file:" "${MAKECONF}"
+	else
+		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
+	fi
+
 	if [ "${runcmd}" = "echo" ]; then
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
@@ -1668,7 +1681,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.256 2012/09/29 04:02:42 tsutsui Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.257 2012/10/18 16:15:29 apb Exp $
 # with these arguments: ${_args}
 #
 
