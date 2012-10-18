@@ -801,11 +801,7 @@ zfs_link_destroy(zfs_dirlock_t *dl, znode_t *zp, dmu_tx_t *tx, int flag,
 		if (zp_is_dir && !zfs_dirempty(zp)) {	/* dir not empty */
 			mutex_exit(&zp->z_lock);
 			vn_vfsunlock(vp);
-#ifdef __NetBSD__		/* XXX Make our dumb tests happier...  */
-			return (ENOTEMPTY);
-#else
 			return (EEXIST);
-#endif
 		}
 		if (zp->z_phys->zp_links <= zp_is_dir) {
 			zfs_panic_recover("zfs: link count on vnode %p is %u, "
