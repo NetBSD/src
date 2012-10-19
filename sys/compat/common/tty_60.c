@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.2 2012/10/19 17:32:20 apb Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.3 2012/10/19 19:44:06 apb Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.2 2012/10/19 17:32:20 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.3 2012/10/19 19:44:06 apb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ ptmget_to_ptmget60(struct ptmget *pg, struct compat_60_ptmget *pg60)
 {
 	memset(pg60, 0, sizeof(*pg60));
 	pg60->cfd = pg->cfd;
+	pg60->sfd = pg->sfd;
 	strlcpy(pg60->cn, pg->cn, sizeof(pg60->cn));
 	strlcpy(pg60->sn, pg->sn, sizeof(pg60->sn));
 	if (strlen(pg->cn) >= sizeof(pg60->cn)
