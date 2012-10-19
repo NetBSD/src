@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.400 2012/07/31 15:50:34 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.401 2012/10/19 17:09:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.400 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.401 2012/10/19 17:09:07 drochner Exp $");
 
 #include "opt_ata.h"
 
@@ -178,6 +178,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
+int   wd_trim(struct wd_softc *, int, struct disk_discard_range *);
 bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
@@ -1526,6 +1527,20 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return 0;
 	    }
 
+	case DIOCGDISCARDPARAMS: {
+		struct disk_discard_params * tp;
+
+		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA8)
+		    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM))
+			return ENOTTY;
+		tp = (struct disk_discard_params *)addr;
+		tp->maxsize = 0xffff; /*wd->sc_params.max_dsm_blocks*/
+		printf("wd: maxtrimsize %ld\n", tp->maxsize);
+		return 0;
+	}
+	case DIOCDISCARD:
+		return wd_trim(wd, WDPART(dev), (struct disk_discard_range *)addr);
+
 	default:
 		return ENOTTY;
 	}
@@ -1928,6 +1943,57 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		char sbuf[sizeof(at_errbits) + 64];
 		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
+		    sbuf);
+		return EIO;
+	}
+	return 0;
+}
+
+int
+wd_trim(struct wd_softc *wd, int part, struct disk_discard_range *tr)
+{
+	struct ata_command ata_c;
+	unsigned char *req;
+	daddr_t bno = tr->bno;
+
+	if (part != RAW_PART)
+		bno += wd->sc_dk.dk_label->d_partitions[part].p_offset;;
+
+	req = kmem_zalloc(512, KM_SLEEP);
+	req[0] = bno & 0xff;
+	req[1] = (bno >> 8) & 0xff;
+	req[2] = (bno >> 16) & 0xff;
+	req[3] = (bno >> 24) & 0xff;
+	req[4] = (bno >> 32) & 0xff;
+	req[5] = (bno >> 40) & 0xff;
+	req[6] = tr->size & 0xff;
+	req[7] = (tr->size >> 8) & 0xff;
+
+	memset(&ata_c, 0, sizeof(struct ata_command));
+	ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
+	ata_c.r_count = 1;
+	ata_c.r_features = ATA_SUPPORT_DSM_TRIM;
+	ata_c.r_st_bmask = WDCS_DRDY;
+	ata_c.r_st_pmask = WDCS_DRDY;
+	ata_c.timeout = 30000; /* 30s timeout */
+	ata_c.data = req;
+	ata_c.bcount = 512;
+	ata_c.flags |= AT_WRITE | AT_WAIT;
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
+		aprint_error_dev(wd->sc_dev,
+		    "trim command didn't complete\n");
+		kmem_free(req, 512);
+		return EIO;
+	}
+	kmem_free(req, 512);
+	if (ata_c.flags & AT_ERROR) {
+		if (ata_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+	}
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
+		aprint_error_dev(wd->sc_dev, "wd_trim: status=%s\n",
 		    sbuf);
 		return EIO;
 	}
