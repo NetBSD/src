@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.5 2012/10/19 19:58:33 riastradh Exp $	*/
+/*	$NetBSD: policy.c,v 1.6 2012/10/19 22:19:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ secpolicy_vnode_create_gid(kauth_cred_t cred)
 	return kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL);
 }
 
-static int
+int
 secpolicy_vnode_utime_modify(kauth_cred_t cred)
 {
 
