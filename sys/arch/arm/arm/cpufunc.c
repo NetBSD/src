@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.117 2012/10/19 13:47:03 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.117 2012/10/19 13:47:03 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1311,7 +1311,7 @@ struct cpu_functions cortex_cpufuncs = {
 	/* Other functions */
 
 	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= arm11_drain_writebuf,
+	.cf_drain_writebuf	= armv7_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
