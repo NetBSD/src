@@ -474,7 +474,8 @@ void	armv7_icache_sync_all(void);
 void	armv7_cpu_sleep(int);
 void	armv7_context_switch(u_int);
 void	armv7_tlb_flushID_SE(u_int);
-void	armv7_setup		(char *string);
+void	armv7_drain_writebuf(void);
+void	armv7_setup(char *string);
 #endif
 
 
