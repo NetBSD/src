@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.1 2012/10/19 16:55:22 apb Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.2 2012/10/19 17:16:55 apb Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 /*
  * The cn and sn fields in struct ptmget changed size from
- * char[16] to char[PATH_MAX] in NetBSD-6.99.12.
+ * char[16] to char[PATH_MAX] in NetBSD-6.99.14.
  */
 struct compat_60_ptmget {
 	int	cfd;
