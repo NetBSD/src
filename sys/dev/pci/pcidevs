@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1139 2012/09/29 10:26:14 gsutre Exp $
+$NetBSD: pcidevs,v 1.1140 2012/10/19 16:57:47 prlw1 Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2517,6 +2517,8 @@ product INTEL 82426EX		0x0486	82426EX PCI-ISA Bridge
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL GDT_RAID1		0x0600	GDT RAID
 product INTEL GDT_RAID2		0x061f	GDT RAID
+product INTEL WIFI_LINK_2230_1	0x0887	Centrino Wireless-N 2230
+product INTEL WIFI_LINK_2230_2	0x0888	Centrino Wireless-N 2230
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82542 Gigabit Ethernet
