@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.97 2012/09/26 23:01:04 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.98 2012/10/19 02:11:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.97 2012/09/26 23:01:04 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.98 2012/10/19 02:11:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1000,12 +1000,10 @@ socktrans(struct socket *sock, int i)
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
 			char shoconn[4], *cp;
+			void *pcb[2];
+			size_t p = 0;
 
-			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
-			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
-				dprintf("can't read unpcb at %p", so.so_pcb);
-				goto bad;
-			}
+			pcb[0] = so.so_pcb;
 
 			cp = shoconn;
 			if (!(so.so_state & SS_CANTRCVMORE))
@@ -1014,6 +1012,13 @@ socktrans(struct socket *sock, int i)
 			if (!(so.so_state & SS_CANTSENDMORE))
 				*cp++ = '>';
 			*cp = '\0';
+again:
+			if (kvm_read(kd, (u_long)pcb[p], (char *)&unpcb,
+			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
+				dprintf("can't read unpcb at %p", so.so_pcb);
+				goto bad;
+			}
+
 			if (unpcb.unp_addr) {
 				struct sockaddr_un *sun = 
 					malloc(unpcb.unp_addrlen);
@@ -1027,15 +1032,22 @@ socktrans(struct socket *sock, int i)
 					    unpcb.unp_addr);
 					free(sun);
 				} else {
-					snprintf(fbuf, sizeof(fbuf), " %s %s",
-					    shoconn, sun->sun_path);
+					snprintf(fbuf, sizeof(fbuf), " %s %s %s",
+					    shoconn, sun->sun_path,
+					    p == 0 ? "[creat]" : "[using]");
 					free(sun);
 					break;
 				}
 			}
-			if (unpcb.unp_conn)
-				snprintf(fbuf, sizeof(fbuf), " %s %lx", shoconn,
-				    (long)unpcb.unp_conn);
+			if (unpcb.unp_conn) {
+				if (p == 0) {
+					pcb[++p] = unpcb.unp_conn;
+					goto again;
+				} else
+					snprintf(fbuf, sizeof(fbuf),
+					    " %p %s %p", pcb[0], shoconn,
+					    pcb[1]);
+			}
 		}
 		break;
 	case AF_APPLETALK:
