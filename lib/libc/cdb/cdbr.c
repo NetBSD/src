@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.2.8.1 2012/06/23 22:54:58 riz Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.2.8.1.4.1 2012/10/19 17:31:28 riz Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.2.8.1 2012/06/23 22:54:58 riz Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.2.8.1.4.1 2012/10/19 17:31:28 riz Exp $");
 
 #include "namespace.h"
 
@@ -152,17 +152,21 @@ cdbr_open(const char *path, int flags)
 	    cdbr->data_base < cdbr->mmap_base ||
 	    cdbr->data_base + cdbr->data_size < cdbr->mmap_base ||
 	    cdbr->data_base + cdbr->data_size >
-	    cdbr->mmap_base + cdbr->mmap_size ||
-	    cdbr->entries == 0 || cdbr->entries_index == 0) {
+	    cdbr->mmap_base + cdbr->mmap_size) {
 		errno = EINVAL;
 		cdbr_close(cdbr);
 		return NULL;
 	}
 
-	fast_divide32_prepare(cdbr->entries, &cdbr->entries_m,
-	    &cdbr->entries_s1, &cdbr->entries_s2);
-	fast_divide32_prepare(cdbr->entries_index, &cdbr->entries_index_m,
-	    &cdbr->entries_index_s1, &cdbr->entries_index_s2);
+	if (cdbr->entries) {
+		fast_divide32_prepare(cdbr->entries, &cdbr->entries_m,
+		    &cdbr->entries_s1, &cdbr->entries_s2);
+	}
+	if (cdbr->entries_index) {
+		fast_divide32_prepare(cdbr->entries_index,
+		    &cdbr->entries_index_m,
+		    &cdbr->entries_index_s1, &cdbr->entries_index_s2);
+	}
 
 	return cdbr;
 }
