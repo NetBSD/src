@@ -74,7 +74,7 @@ ENTRY(armv7_tlb_flushID_SE)
 END(armv7_tlb_flushID_SE)
 
 
-ENTRY(armv7_setttb)
+ENTRY_NP(armv7_setttb)
 	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
 	cmp	r2, #0
 	orrlt	r0, #0x5b		@ MP, cachable (Normal WB)
@@ -90,6 +90,13 @@ ENTRY(armv7_setttb)
 	isb
 	bx	lr
 END(armv7_setttb)
+
+/* Other functions. */
+
+ENTRY_NP(armv7_drain_writebuf)
+	dsb				@ data synchronization barrier
+	RET
+END(armv7_drain_writebuf)
 
 /* Cache operations. */
 
