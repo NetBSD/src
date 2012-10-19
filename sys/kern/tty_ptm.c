@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.27 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.28 2012/10/19 16:55:22 apb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.27 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.28 2012/10/19 16:55:22 apb Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
 
 /* pty multiplexor driver /dev/ptm{,x} */
@@ -52,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.27 2010/06/24 13:03:11 hannken Exp $")
 #include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#ifdef COMPAT_60
+#include <compat/sys/ttycom.h>
+#endif /* COMPAT_60 */
 
 #ifdef DEBUG_PTM
 #define DPRINTF(a)	printf a
@@ -369,6 +374,11 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* now, put the indices and names into struct ptmget */
 		return pty_fill_ptmget(l, newdev, cfd, sfd, data);
 	default:
+#ifdef COMPAT_60
+		error = compat_60_ptmioctl(dev, cmd, data, flag, l);
+		if (error != EPASSTHROUGH)
+			return error;
+#endif /* COMPAT_60 */
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;
 	}
