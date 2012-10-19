@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.9 2012/10/19 09:06:42 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.10 2012/10/19 09:50:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.9 2012/10/19 09:06:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.10 2012/10/19 09:50:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -409,7 +409,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * We are going to allocate our bootstrap pages from the beginning of
 	 * the free space that we just calculated.  We allocate one page
 	 * directory and a number of page tables and store the physical
-	 * addresses in the kernel_l2pt_table array.
+	 * addresses in the bmi_l2pts array in bootmem_info.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
 	 * tables must be on 4K boundaries.  What we do is allocate the
@@ -435,6 +435,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	kernel_l1pt.pv_va = 0;
 
 	/*
+	 * Allocate the L2 pages, but if we get to a page that is aligned for
+	 * an L1 page table, we will allocate the pages for it first and then
+	 * allocate the L2 page.
+	 */
+
+	/*
 	 * First allocate L2 page for the vectors.
 	 */
 #ifdef VERBOSE_INIT_ARM
@@ -445,9 +451,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	add_pages(bmi, &bmi->bmi_vector_l2pt);
 
 	/*
-	 * Allocate the L2 pages, but if we get to a page that aligned for a
-	 * L1 page table, we will allocate pages for it first and allocate
-	 * L2 page.
+	 * Now allocate L2 pages for the kernel
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
@@ -457,6 +461,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 		add_pages(bmi, &kernel_l2pt[idx]);
 	}
+
+	/*
+	 * Now allocate L2 pages for the initial kernel VA space.
+	 */
 #ifdef VERBOSE_INIT_ARM
 	printf(" vm");
 #endif
@@ -482,7 +490,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf("%s: allocating stacks\n", __func__);
 #endif
 
-	/* Allocate stacks for all modes */
+	/* Allocate stacks for all modes and CPUs */
 	valloc_pages(bmi, &abtstack, ABT_STACK_SIZE * cpu_num,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	add_pages(bmi, &abtstack);
