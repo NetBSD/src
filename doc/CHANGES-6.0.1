@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.1 2012/10/17 22:44:47 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.2 2012/10/19 17:34:55 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -8,4 +8,14 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 6.0.0_PATCH.
 	[riz]
+
+lib/libc/cdb/cdbr.c				1.4
+
+	Don't refuse to open databases without entries or keys.
+	[joerg, ticket #577]
+
+sys/arch/x86/include/lock.h			1.26
+
+	Work around a possible gcc bug.  Fixes PR#45673.
+	[apb, ticket #606]
 
