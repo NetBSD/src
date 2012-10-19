@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.117.8.1 2012/10/17 21:06:56 riz Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.117.8.2 2012/10/19 17:28:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.8.1 2012/10/17 21:06:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.8.2 2012/10/19 17:28:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
