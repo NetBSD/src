@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_write.c,v 1.4 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: chfs_write.c,v 1.5 2012/10/19 12:44:39 ttoth Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -33,18 +33,14 @@
  * SUCH DAMAGE.
  */
 
-/*
- * chfs_write.c
- *
- *  Created on: 2010.02.17.
- *      Author: dtengeri
- */
 
 #include <sys/param.h>
 #include <sys/buf.h>
 
 #include "chfs.h"
 
+
+/* chfs_write_flash_vnode - writes out a vnode information to flash */
 int
 chfs_write_flash_vnode(struct chfs_mount *chmp,
     struct chfs_inode *ip, int prio)
@@ -58,6 +54,7 @@ chfs_write_flash_vnode(struct chfs_mount *chmp,
 	size_t size, retlen;
 	int err = 0, retries = 0;
 
+	/* root vnode is in-memory only */
 	if (ip->ino == CHFS_ROOTINO)
 		return 0;
 
@@ -67,9 +64,8 @@ chfs_write_flash_vnode(struct chfs_mount *chmp,
 
 	chvc = ip->chvc;
 
-	/* setting up flash_vnode members */
+	/* setting up flash_vnode's fields */
 	size = sizeof(*fvnode);
-	//dbg("size: %zu | PADDED: %zu\n", size, CHFS_PAD(size));
 	fvnode->magic = htole16(CHFS_FS_MAGIC_BITMASK);
 	fvnode->type = htole16(CHFS_NODETYPE_VNODE);
 	fvnode->length = htole32(CHFS_PAD(size));
@@ -86,10 +82,10 @@ chfs_write_flash_vnode(struct chfs_mount *chmp,
 	fvnode->uid = htole32(ip->uid);
 	fvnode->node_crc = htole32(crc32(0, (uint8_t *)fvnode, size - 4));
 
-	/* write out flash_vnode */
 retry:
+	/* setting up the next eraseblock where we will write */
 	if (prio == ALLOC_GC) {
-		/* the GC calls this function */
+		/* GC called this function */
 		err = chfs_reserve_space_gc(chmp, CHFS_PAD(size));
 		if (err)
 			goto out;
@@ -105,6 +101,7 @@ retry:
 			goto out;
 	}
 
+	/* allocating a new node reference */
 	nref = chfs_alloc_node_ref(chmp->chm_nextblock);
 	if (!nref) {
 		err = ENOMEM;
@@ -113,12 +110,16 @@ retry:
 
 	mutex_enter(&chmp->chm_lock_sizes);
 
+	/* caculating offset and sizes  */
 	nref->nref_offset = chmp->chm_ebh->eb_size - chmp->chm_nextblock->free_size;
 	chfs_change_size_free(chmp, chmp->chm_nextblock, -CHFS_PAD(size));
 	vec.iov_base = fvnode;
 	vec.iov_len = CHFS_PAD(size);
+
+	/* write it into the writebuffer */
 	err = chfs_write_wbuf(chmp, &vec, 1, nref->nref_offset, &retlen);
 	if (err || retlen != CHFS_PAD(size)) {
+		/* there was an error during write */
 		chfs_err("error while writing out flash vnode to the media\n");
 		chfs_err("err: %d | size: %zu | retlen : %zu\n",
 		    err, CHFS_PAD(size), retlen);
@@ -130,15 +131,18 @@ retry:
 			goto out;
 		}
 
+		/* try again */
 		retries++;
 		mutex_exit(&chmp->chm_lock_sizes);
 		goto retry;
 	}
-	//Everything went well
+
+	/* everything went well */
 	chfs_change_size_used(chmp,
 	    &chmp->chm_blocks[nref->nref_lnr], CHFS_PAD(size));
 	mutex_exit(&chmp->chm_lock_sizes);
 	
+	/* add the new nref to vnode cache */
 	mutex_enter(&chmp->chm_lock_vnocache);
 	chfs_add_vnode_ref_to_vc(chmp, chvc, nref);
 	mutex_exit(&chmp->chm_lock_vnocache);
@@ -148,6 +152,7 @@ out:
 	return err;
 }
 
+/* chfs_write_flash_dirent - writes out a directory entry to flash */
 int
 chfs_write_flash_dirent(struct chfs_mount *chmp, struct chfs_inode *pdir,
     struct chfs_inode *ip, struct chfs_dirent *fd,
@@ -165,6 +170,7 @@ chfs_write_flash_dirent(struct chfs_mount *chmp, struct chfs_inode *pdir,
 
 	KASSERT(fd->vno != CHFS_ROOTINO);
 
+	/* setting up flash_dirent's fields */
 	fdirent = chfs_alloc_flash_dirent();
 	if (!fdirent)
 		return ENOMEM;
@@ -174,10 +180,7 @@ chfs_write_flash_dirent(struct chfs_mount *chmp, struct chfs_inode *pdir,
 
 	name = kmem_zalloc(namelen, KM_SLEEP);
 	memcpy(name, fd->name, fd->nsize);
-	//dbg("namelen: %zu | nsize: %hhu\n", namelen, fd->nsize);
 
-
-	//dbg("size: %zu | PADDED: %zu\n", size, CHFS_PAD(size));
 	fdirent->magic = htole16(CHFS_FS_MAGIC_BITMASK);
 	fdirent->type = htole16(CHFS_NODETYPE_DIRENT);
 	fdirent->length = htole32(CHFS_PAD(size));
@@ -192,12 +195,14 @@ chfs_write_flash_dirent(struct chfs_mount *chmp, struct chfs_inode *pdir,
 	fdirent->name_crc = crc32(0, (uint8_t *)&(fd->name), fd->nsize);
 	fdirent->node_crc = crc32(0, (uint8_t *)fdirent, sizeof(*fdirent) - 4);
 
+	/* directory's name is written out right after the dirent */
 	vec[0].iov_base = fdirent;
 	vec[0].iov_len  = sizeof(*fdirent);
 	vec[1].iov_base = name;
 	vec[1].iov_len  = namelen;
 	
 retry:
+	/* setting up the next eraseblock where we will write */
 	if (prio == ALLOC_GC) {
 		/* the GC calls this function */
 		err = chfs_reserve_space_gc(chmp, CHFS_PAD(size));
@@ -215,6 +220,7 @@ retry:
 			goto out;
 	}
 
+	/* allocating a new node reference */
 	nref = chfs_alloc_node_ref(chmp->chm_nextblock);
 	if (!nref) {
 		err = ENOMEM;
@@ -226,8 +232,10 @@ retry:
 	nref->nref_offset = chmp->chm_ebh->eb_size - chmp->chm_nextblock->free_size;
 	chfs_change_size_free(chmp, chmp->chm_nextblock, -CHFS_PAD(size));
 
+	/* write it into the writebuffer */
 	err = chfs_write_wbuf(chmp, vec, 2, nref->nref_offset, &retlen);
 	if (err || retlen != CHFS_PAD(size)) {
+		/* there was an error during write */
 		chfs_err("error while writing out flash dirent node to the media\n");
 		chfs_err("err: %d | size: %zu | retlen : %zu\n",
 		    err, CHFS_PAD(size), retlen);
@@ -239,18 +247,20 @@ retry:
 			goto out;
 		}
 
+		/* try again */
 		retries++;
 		mutex_exit(&chmp->chm_lock_sizes);
 		goto retry;
 	}
 
 
-	// Everything went well
+	/* everything went well */
 	chfs_change_size_used(chmp,
 	    &chmp->chm_blocks[nref->nref_lnr], CHFS_PAD(size));
 	mutex_exit(&chmp->chm_lock_sizes);
 	KASSERT(chmp->chm_blocks[nref->nref_lnr].used_size <= chmp->chm_ebh->eb_size);
 
+	/* add the new nref to the directory chain of vnode cache */
 	fd->nref = nref;
 	if (prio != ALLOC_DELETION) {
 		mutex_enter(&chmp->chm_lock_vnocache);
@@ -263,12 +273,7 @@ out:
 	return err;
 }
 
-/**
- * chfs_write_flash_dnode - write out a data node to flash
- * @chmp: chfs mount structure
- * @vp: vnode where the data belongs to
- * @bp: buffer contains data
- */
+/* chfs_write_flash_dnode - writes out a data node to flash */
 int
 chfs_write_flash_dnode(struct chfs_mount *chmp, struct vnode *vp,
     struct buf *bp, struct chfs_full_dnode *fd)
@@ -293,11 +298,6 @@ chfs_write_flash_dnode(struct chfs_mount *chmp, struct vnode *vp,
 
 	/* initialize flash data node */
 	ofs = bp->b_blkno * PAGE_SIZE;
-	//dbg("vp->v_size: %ju, bp->b_blkno: %ju, bp-b_data: %p,"
-	//    " bp->b_resid: %ju\n",
-	//    (uintmax_t )vp->v_size, (uintmax_t )bp->b_blkno,
-	//    bp->b_data, (uintmax_t )bp->b_resid);
-	//dbg("[XXX]vp->v_size - ofs: %llu\n", (vp->v_size - ofs));
 	len = MIN((vp->v_size - ofs), bp->b_resid);
 	size = sizeof(*dnode) + len;
 
@@ -317,13 +317,15 @@ chfs_write_flash_dnode(struct chfs_mount *chmp, struct vnode *vp,
 	dbg("dnode @%llu %ub v%llu\n", (unsigned long long)dnode->offset,
 		dnode->data_length, (unsigned long long)dnode->version);
 
+	/* pad data if needed */
 	if (CHFS_PAD(size) - sizeof(*dnode)) {
 		tmpbuf = kmem_zalloc(CHFS_PAD(size)
 		    - sizeof(*dnode), KM_SLEEP);
 		memcpy(tmpbuf, bp->b_data, len);
 	}
 
-	/* creating iovecs for wbuf */
+	/* creating iovecs for writebuffer 
+	 * data is written out right after the data node */
 	vec[0].iov_base = dnode;
 	vec[0].iov_len = sizeof(*dnode);
 	vec[1].iov_base = tmpbuf;
@@ -333,17 +335,16 @@ chfs_write_flash_dnode(struct chfs_mount *chmp, struct vnode *vp,
 	fd->size = len;
 
 retry:
-
 	/* Reserve space for data node. This will set up the next eraseblock
 	 * where to we will write.
 	 */
-
 	chfs_gc_trigger(chmp);
 	err = chfs_reserve_space_normal(chmp,
 	    CHFS_PAD(size), ALLOC_NORMAL);
 	if (err)
 		goto out;
 
+	/* allocating a new node reference */
 	nref = chfs_alloc_node_ref(chmp->chm_nextblock);
 	if (!nref) {
 		err = ENOMEM;
@@ -360,11 +361,10 @@ retry:
 	chfs_change_size_free(chmp,
 	    chmp->chm_nextblock, -CHFS_PAD(size));
 
-	//dbg("vno: %llu nref lnr: %u offset: %u\n",
-	//    dnode->vno, nref->nref_lnr, nref->nref_offset);
-
+	/* write it into the writebuffer */
 	err = chfs_write_wbuf(chmp, vec, 2, nref->nref_offset, &retlen);
 	if (err || retlen != CHFS_PAD(size)) {
+		/* there was an error during write */
 		chfs_err("error while writing out flash data node to the media\n");
 		chfs_err("err: %d | size: %zu | retlen : %zu\n",
 		    err, size, retlen);
@@ -376,11 +376,12 @@ retry:
 			goto out;
 		}
 
+		/* try again */
 		retries++;
 		mutex_exit(&chmp->chm_lock_sizes);
 		goto retry;
 	}
-	/* Everything went well */
+	/* everything went well */
 	ip->write_size += fd->size;
 	chfs_change_size_used(chmp,
 	    &chmp->chm_blocks[nref->nref_lnr], CHFS_PAD(size));
@@ -392,6 +393,7 @@ retry:
 		chfs_remove_and_obsolete(chmp, ip->chvc, fd->nref, &ip->chvc->dnode);
 	}
 
+	/* add the new nref to the data node chain of vnode cache */
 	KASSERT(chmp->chm_blocks[nref->nref_lnr].used_size <= chmp->chm_ebh->eb_size);
 	fd->nref = nref;
 	chfs_add_node_to_list(chmp, ip->chvc, nref, &ip->chvc->dnode);
@@ -405,13 +407,8 @@ out:
 	return err;
 }
 
-/**
+/*
  * chfs_do_link - makes a copy from a node
- * @old: old node
- * @oldfd: dirent of old node
- * @parent: parent of new node
- * @name: name of new node
- * @namelen: length of name
  * This function writes the dirent of the new node to the media.
  */
 int
@@ -422,10 +419,8 @@ chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name,
 	struct ufsmount *ump = VFSTOUFS(vp->v_mount);
 	struct chfs_mount *chmp = ump->um_chfs;
 	struct chfs_dirent *newfd = NULL;
-//	struct chfs_dirent *fd = NULL;
 
-	//dbg("link vno: %llu\n", ip->ino);
-
+	/* setting up the new directory entry */
 	newfd = chfs_alloc_dirent(namelen + 1);
 
 	newfd->vno = ip->ino;
@@ -433,7 +428,6 @@ chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name,
 	newfd->nsize = namelen;
 	memcpy(newfd->name, name, namelen);
 	newfd->name[newfd->nsize] = 0;
-//	newfd->next = NULL;
 
 	ip->chvc->nlink++;
 	parent->chvc->nlink++;
@@ -442,10 +436,12 @@ chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name,
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 
+	/* update vnode information */
 	error = chfs_write_flash_vnode(chmp, ip, ALLOC_NORMAL);
 	if (error)
 		return error;
 
+	/* write out the new dirent */
 	error = chfs_write_flash_dirent(chmp,
 	    parent, ip, newfd, ip->ino, ALLOC_NORMAL);
 	/* TODO: what should we do if error isn't zero? */
@@ -454,28 +450,15 @@ chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name,
 
 	/* add fd to the fd list */
 	TAILQ_INSERT_TAIL(&parent->dents, newfd, fds);
-#if 0
-	fd = parent->dents;
-	if (!fd) {
-		parent->dents = newfd;
-	} else {
-		while (fd->next)
-			fd = fd->next;
-		fd->next = newfd;
-	}
-#endif
 
 	return error;
 }
 
 
-/**
+/*
  * chfs_do_unlink - delete a node
- * @ip: node what we'd like to delete
- * @parent: parent of the node
- * @name: name of the node
- * @namelen: length of name
- * This function set the nlink and vno of the node zero and write its dirent to the media.
+ * This function set the nlink and vno of the node to zero and
+ * write its dirent to the media.
  */
 int
 chfs_do_unlink(struct chfs_inode *ip,
@@ -488,8 +471,6 @@ chfs_do_unlink(struct chfs_inode *ip,
 	struct chfs_mount *chmp = ump->um_chfs;
 	struct chfs_node_ref *nref;
 
-	//dbg("unlink vno: %llu\n", ip->ino);
-
 	vflushbuf(vp, 0);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
@@ -500,8 +481,10 @@ chfs_do_unlink(struct chfs_inode *ip,
 		    fd->nsize == namelen &&
 		    !memcmp(fd->name, name, fd->nsize)) {
 
+			/* remove every fragment of the file */
 			chfs_kill_fragtree(chmp, &ip->fragtree);
 
+			/* decrease number of links to the file */
 			if (fd->type == CHT_DIR && ip->chvc->nlink == 2)
 				ip->chvc->nlink = 0;
 			else
@@ -509,6 +492,7 @@ chfs_do_unlink(struct chfs_inode *ip,
 
 			fd->type = CHT_BLANK;
 
+			/* remove from parent's directory entries */
 			TAILQ_REMOVE(&parent->dents, fd, fds);
 
 			mutex_enter(&chmp->chm_lock_vnocache);
@@ -523,26 +507,27 @@ chfs_do_unlink(struct chfs_inode *ip,
 
 			dbg("FD->NREF vno: %llu, lnr: %u, ofs: %u\n",
 			    fd->vno, fd->nref->nref_lnr, fd->nref->nref_offset);
-			// set nref_next field
+			/* set nref_next field */
 			chfs_add_node_to_list(chmp, parent->chvc, fd->nref,
 				&parent->chvc->dirents);
-			// remove from the list
+			/* remove from the list */
 			chfs_remove_and_obsolete(chmp, parent->chvc, fd->nref,
 				&parent->chvc->dirents);
 
-			// clean dnode list
+			/* clean dnode list */
 			while (ip->chvc->dnode != (struct chfs_node_ref *)ip->chvc) {
 				nref = ip->chvc->dnode;
 				chfs_remove_frags_of_node(chmp, &ip->fragtree, nref);
 				chfs_remove_and_obsolete(chmp, ip->chvc, nref, &ip->chvc->dnode);
 			}
 
-			// clean v list
+			/* clean vnode information (list) */
 			while (ip->chvc->v != (struct chfs_node_ref *)ip->chvc) {
 				nref = ip->chvc->v;
 				chfs_remove_and_obsolete(chmp, ip->chvc, nref, &ip->chvc->v);
 			}
 
+			/* decrease number of links to parent */
 			parent->chvc->nlink--;
 
 			mutex_exit(&chmp->chm_lock_vnocache);
