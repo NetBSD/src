@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.38 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -124,6 +124,8 @@ struct ufsmount {
 	void	*um_snapinfo;			/* snapshot private data */
 
 	const struct ufs_ops *um_ops;
+
+	void *um_discarddata;
 };
 
 struct ufs_ops {
