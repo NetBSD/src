@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.40.8.2 2012/10/17 21:21:43 riz Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.40.8.3 2012/10/19 17:28:02 riz Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
