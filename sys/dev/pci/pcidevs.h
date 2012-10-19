@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1132 2012/09/29 10:27:23 gsutre Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1133 2012/10/19 17:01:56 prlw1 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2524,6 +2524,8 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_GDT_RAID1	0x0600		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_1	0x0887		/* Centrino Wireless-N 2230 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
