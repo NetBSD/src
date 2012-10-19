@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.11 2012/10/19 09:56:32 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.12 2012/10/19 12:36:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.11 2012/10/19 09:56:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.12 2012/10/19 12:36:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -324,6 +324,12 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 		}
 	}
 
+	/*
+	 * As we allocate the memory, make sure that we don't walk over
+	 * our current first level translation table.
+	 */
+	KASSERT((armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1)) != free_pv->pv_pa);
+
 	pv->pv_pa = free_pv->pv_pa;
 	pv->pv_va = free_pv->pv_va;
 	pv->pv_size = nbytes;
@@ -427,11 +433,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	for (size_t i = 0; i < __arraycount(chunks); i++) {
 		SLIST_INSERT_HEAD(&bmi->bmi_freechunks, &chunks[i], pv_list);
 	}
-
-	/*
-	 * As we allocate the memory, make sure that we don't walk over
-	 * our temporary first level translation table.
-	 */
 
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
