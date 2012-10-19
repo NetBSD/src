@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.458 2012/10/12 02:37:20 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.459 2012/10/19 02:07:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.458 2012/10/12 02:37:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.459 2012/10/19 02:07:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4041,11 +4041,9 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	 * Take the vfs rename lock to avoid cross-directory screw cases.
 	 * Nothing is locked currently, so taking this lock is safe.
 	 */
-	if (fdvp != tdvp) {
-		error = VFS_RENAMELOCK_ENTER(mp);
-		if (error)
-			goto abort1;
-	}
+	error = VFS_RENAMELOCK_ENTER(mp);
+	if (error)
+		goto abort1;
 
 	/*
 	 * Now fdvp, fvp, tdvp, and (if nonnull) tvp are referenced,
@@ -4186,15 +4184,13 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	 * So all we have left to do is to drop the rename lock and
 	 * destroy the pathbufs.
 	 */
-	if (fdvp != tdvp)
-		VFS_RENAMELOCK_EXIT(mp);
+	VFS_RENAMELOCK_EXIT(mp);
 	goto out2;
 
 abort3:	if ((tvp != NULL) && (tvp != tdvp))
 		VOP_UNLOCK(tvp);
 abort2:	VOP_UNLOCK(tdvp);
-	if (fdvp != tdvp)
-		VFS_RENAMELOCK_EXIT(mp);
+	VFS_RENAMELOCK_EXIT(mp);
 abort1:	VOP_ABORTOP(tdvp, &tnd.ni_cnd);
 	vrele(tdvp);
 	if (tvp != NULL)
