@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.13 2012/10/14 16:16:52 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.14 2012/10/19 11:31:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.13 2012/10/14 16:16:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.14 2012/10/19 11:31:50 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -300,7 +300,7 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	/* map some peripheral registers */
-	pmap_devmap_bootstrap((vaddr_t)armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1),
+	pmap_devmap_bootstrap((vaddr_t)armreg_ttbr_read() & -L1_TABLE_SIZE,
 	    rpi_devmap);
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
