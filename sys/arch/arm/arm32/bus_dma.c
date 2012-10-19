@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.62 2012/10/19 11:57:58 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.63 2012/10/19 13:46:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.62 2012/10/19 11:57:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.63 2012/10/19 13:46:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->_dm_buftype = buftype;
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
+	map->_dm_flags |= _BUS_DMAMAP_IS_BOUNCING;
 	cookie->id_flags |= _BUS_DMA_IS_BOUNCING;
 	return 0;
 }
@@ -436,6 +437,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
 				STAT_INCR(bounced_unloads);
 				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+				map->_dm_flags &= ~_BUS_DMAMAP_IS_BOUNCING;
 			}
 		} else
 #endif
@@ -502,6 +504,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
 				STAT_INCR(bounced_unloads);
 				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+				map->_dm_flags &= ~_BUS_DMAMAP_IS_BOUNCING;
 			}
 		} else
 #endif
@@ -760,14 +763,11 @@ static inline void
 _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-#ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
-	bool bouncing = (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING));
-#endif
 	bus_dma_segment_t *ds = map->dm_segs;
 	vaddr_t va = (vaddr_t) map->_dm_origbuf;
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-	if (bouncing) {
+	if (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING) {
+		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
 		va = (vaddr_t) cookie->id_bouncebuf;
 	}
 #endif
@@ -902,8 +902,6 @@ void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	bool bouncing = false;
-
 #ifdef DEBUG_DMA
 	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
 	    t, map, offset, len, ops);
@@ -940,8 +938,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	POSTWRITE -- Nothing.
 	 */
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
-	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
-	bouncing = (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING));
+	const bool bouncing = (map->_dm_flags & _BUS_DMA_IS_BOUNCING);
+#else
+	const bool bouncing = false;
 #endif
 
 	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -951,6 +950,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
 	if (bouncing && (ops & BUS_DMASYNC_PREWRITE)) {
+		struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
 		STAT_INCR(write_bounces);
 		char * const dataptr = (char *)cookie->id_bouncebuf + offset;
 		/*
@@ -1045,10 +1045,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
   bounce_it:
 	if ((ops & BUS_DMASYNC_POSTREAD) == 0
-	    || cookie == NULL
-	    || (cookie->id_flags & _BUS_DMA_IS_BOUNCING) == 0)
+	    || (map->_dm_flags & _BUS_DMAMAP_IS_BOUNCING) == 0)
 		return;
 
+	struct arm32_bus_dma_cookie * const cookie = map->_dm_cookie;
 	char * const dataptr = (char *)cookie->id_bouncebuf + offset;
 	STAT_INCR(read_bounces);
 	/*
