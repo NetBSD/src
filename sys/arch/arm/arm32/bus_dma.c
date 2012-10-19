@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.61 2012/10/17 20:17:18 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.62 2012/10/19 11:57:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.61 2012/10/17 20:17:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.62 2012/10/19 11:57:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,6 +706,10 @@ static void
 _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool readonly_p)
 {
 	KASSERT((va & PAGE_MASK) == (pa & PAGE_MASK));
+#if 0
+	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
+	    va, pa, len, ops, readonly_p);
+#endif
 
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
@@ -1178,6 +1182,39 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	    segs, nsegs, (unsigned long)size, flags);
 #endif	/* DEBUG_DMA */
 
+#ifdef PMAP_MAP_POOLPAGE
+	/*
+	 * If all of memory is mapped, and we are mapping a single physically
+	 * contiguous area then this area is already mapped.  Let's see if we
+	 * avoid having a separate mapping for it.
+	 */
+	if (nsegs == 1) {
+		paddr_t paddr = segs[0].ds_addr;
+		/*
+		 * If this is a non-COHERENT mapping, then the existing kernel
+		 * mapping is already compatible with it.
+		 */
+		if ((flags & _BUS_DMAMAP_COHERENT) == 0) {
+			*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
+			return 0;
+		}
+		/*
+		 * This is a COHERENT mapping, which unless this address is in
+		 * a COHERENT dma range, will not be compatible.
+		 */
+		if (t->_ranges != NULL) {
+			const struct arm32_dma_range * const dr =
+			    _bus_dma_paddr_inrange(t->_ranges, t->_nranges,
+				paddr);
+			if (dr != NULL
+			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT) != 0) {
+				*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
+				return 0;
+			}
+		}
+	}
+#endif
+
 	size = round_page(size);
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
@@ -1207,7 +1244,22 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * contain the virtal addresses we are making
 			 * uncacheable.
 			 */
-			if (flags & BUS_DMA_COHERENT) {
+
+			bool uncached = (flags & BUS_DMA_COHERENT);
+			if (uncached) {
+				const struct arm32_dma_range * const dr =
+				    _bus_dma_paddr_inrange(t->_ranges,
+					t->_nranges, pa);
+				/*
+				 * If this dma region is coherent then there is
+				 * no need for an uncached mapping.
+				 */
+				if (dr != NULL
+				    && (dr->dr_flags & _BUS_DMAMAP_COHERENT)) {
+					uncached = false;
+				}
+			}
+			if (uncached) {
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 				cpu_sdcache_wbinv_range(va, pa, PAGE_SIZE);
 				cpu_drain_writebuf();
