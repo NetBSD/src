@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.6 2012/10/18 14:22:58 riastradh Exp $	*/
+/*	$NetBSD: policy.h,v 1.7 2012/10/19 19:58:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -60,6 +60,7 @@ int	secpolicy_vnode_setattr(kauth_cred_t cred, struct vnode *vp,
 	    struct vattr *vap, const struct vattr *ovap, int flags,
 	    int unlocked_access(void *, int, kauth_cred_t), void *node);
 int	secpolicy_vnode_create_gid(kauth_cred_t cred);
+int	secpolicy_vnode_utime_modify(kauth_cred_t cred);
 int	secpolicy_vnode_setids_setgids(kauth_cred_t cred, gid_t gid);
 int	secpolicy_vnode_setid_retain(kauth_cred_t cred, boolean_t issuidroot);
 void	secpolicy_setid_clear(struct vattr *vap, kauth_cred_t cred);
