@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.14 2012/10/19 11:31:50 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.15 2012/10/19 12:33:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.14 2012/10/19 11:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.15 2012/10/19 12:33:27 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -67,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.14 2012/10/19 11:31:50 skrll Exp $
 
 #include "ksyms.h"
 
+extern int KERNEL_BASE_phys[];
+extern int KERNEL_BASE_virt[];
+
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
@@ -77,12 +80,10 @@ void rpi_bootparams(void);
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#define	KERNEL_BASE_PHYS (paddr_t)0
 
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE))
+#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
+#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
+#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
 
 #define	PLCONADDR 0x20201000
 
@@ -318,7 +319,7 @@ initarm(void *arg)
 	printf("initarm: Configuring system ...\n");
 #endif
 	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, bootconfig.dram[0].address);
+	    bootconfig.dram[0].pages * PAGE_SIZE, (uintptr_t)KERNEL_BASE_phys);
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
 	    false);
