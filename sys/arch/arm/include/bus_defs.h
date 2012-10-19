@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2012/10/17 20:17:18 matt Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4 2012/10/19 13:46:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -300,6 +300,7 @@ struct bus_space {
  * Private flags stored in the DMA map.
  */
 #define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
+#define	_BUS_DMAMAP_IS_BOUNCING	0x20000	/* is bouncing current xfer */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
