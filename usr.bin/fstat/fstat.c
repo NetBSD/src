@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.98 2012/10/19 02:11:25 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.99 2012/10/19 02:49:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.98 2012/10/19 02:11:25 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.99 2012/10/19 02:49:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ static const char   *vfilestat(struct vnode *, struct filestat *);
 static void	vtrans(struct vnode *, int, int);
 static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
+static void	kdriver_init(void);
 
 int
 main(int argc, char **argv)
@@ -233,6 +234,8 @@ main(int argc, char **argv)
 		default:
 			usage();
 		}
+
+	kdriver_init();
 
 	if (*(argv += optind)) {
 		for (; *argv; ++argv) {
@@ -313,6 +316,89 @@ pid_t	Pid;
 		(void)printf(" %4d", i); \
 		break; \
 	}
+
+static struct kinfo_drivers *kdriver;
+static size_t kdriverlen;
+
+static int
+kdriver_comp(const void *a, const void *b)
+{
+	const struct kinfo_drivers *ka = a;
+	const struct kinfo_drivers *kb = b;
+	int kac = ka->d_cmajor == -1 ? 0 : ka->d_cmajor;
+	int kbc = kb->d_cmajor == -1 ? 0 : kb->d_cmajor;
+	int kab = ka->d_bmajor == -1 ? 0 : ka->d_bmajor;
+	int kbb = kb->d_bmajor == -1 ? 0 : kb->d_bmajor;
+	int c = kac - kbc;
+	if (c == 0)
+		return kab - kbb;
+	else
+		return c;
+}
+
+static const char *
+kdriver_search(int type, dev_t num)
+{
+	struct kinfo_drivers k, *kp;
+	static char buf[64];
+
+	if (nflg)
+		goto out;
+
+	if (type == VBLK) {
+		k.d_bmajor = num;
+		k.d_cmajor = -1;
+	} else {
+		k.d_bmajor = -1;
+		k.d_cmajor = num;
+	}
+	kp = bsearch(&k, kdriver, kdriverlen, sizeof(*kdriver), kdriver_comp);
+	if (kp)
+		return kp->d_name;
+out:	
+	snprintf(buf, sizeof(buf), "%llu", (unsigned long long)num);
+	return buf;
+}
+
+
+static void
+kdriver_init(void)
+{
+	size_t sz;
+	int error;
+	static const int name[2] = { CTL_KERN, KERN_DRIVERS };
+
+	error = sysctl(name, __arraycount(name), NULL, &sz, NULL, 0);
+	if (error == -1) {
+		warn("sysctl kern.drivers");
+		return;
+	}
+
+	if (sz % sizeof(*kdriver)) {
+		warnx("bad size %zu for kern.drivers", sz);
+		return;
+	}
+
+	kdriver = malloc(sz);
+	if (kdriver == NULL) {
+		warn("malloc");
+		return;
+	}
+
+	error = sysctl(name, __arraycount(name), kdriver, &sz, NULL, 0);
+	if (error == -1) {
+		warn("sysctl kern.drivers");
+		return;
+	}
+
+	kdriverlen = sz / sizeof(*kdriver);
+	qsort(kdriver, kdriverlen, sizeof(*kdriver), kdriver_comp);
+#ifdef DEBUG
+	for (size_t i = 0; i < kdriverlen; i++)
+		printf("%d %d %s\n", kdriver[i].d_cmajor, kdriver[i].d_bmajor,
+		    kdriver[i].d_name);
+#endif
+}
 
 /*
  * print open files attributed to this process
@@ -559,8 +645,8 @@ vtrans(struct vnode *vp, int i, int flag)
 
 		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
 		    S_IFCHR : S_IFBLK)) == NULL))
-			(void)printf("  %2llu,%-2llu",
-			    (unsigned long long)major(fst.rdev),
+			(void)printf("  %s,%-2llu",
+			    kdriver_search(vn.v_type, major(fst.rdev)),
 			    (unsigned long long)minor(fst.rdev));
 		else
 			(void)printf(" %6s", name);
