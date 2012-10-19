@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.8 2012/10/17 20:44:48 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.9 2012/10/19 09:06:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.8 2012/10/17 20:44:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.9 2012/10/19 09:06:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -555,7 +555,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	pmap_link_l2pt(l1pt_va, systempage.pv_va & -L2_S_SEGSIZE,
 	    &bmi->bmi_vector_l2pt);
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+	printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n (vectors)",
 	    __func__, bmi->bmi_vector_l2pt.pv_va, bmi->bmi_vector_l2pt.pv_pa,
 	    systempage.pv_va);
 #endif
@@ -830,8 +830,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernelstack.pv_pa, kernelstack.pv_pa + (UPAGES * PAGE_SIZE) - 1,
 	    kernelstack.pv_va, kernelstack.pv_va + (UPAGES * PAGE_SIZE) - 1,
 	    UPAGES);
-	printf(mem_fmt_nov, "Message Buffer",
-	    msgbufphys, msgbufphys + msgbuf_pgs * PAGE_SIZE - 1, msgbuf_pgs);
+	printf(mem_fmt, "Message Buffer",
+	    msgbuf.pv_pa, msgbuf.pv_pa + (msgbuf_pgs * PAGE_SIZE) - 1,
+	    msgbuf.pv_va, msgbuf.pv_va + (msgbuf_pgs * PAGE_SIZE) - 1,
+	    (int)msgbuf_pgs);
 	printf(mem_fmt, "Exception Vectors",
 	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
 	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
@@ -871,6 +873,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 #ifdef VERBOSE_INIT_ARM
-	printf("TTBR0=%#x OK", armreg_ttbr_read());
+	printf("TTBR0=%#x OK\n", armreg_ttbr_read());
 #endif
 }
