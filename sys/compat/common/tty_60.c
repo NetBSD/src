@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.1 2012/10/19 16:55:22 apb Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.2 2012/10/19 17:32:20 apb Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.1 2012/10/19 16:55:22 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.2 2012/10/19 17:32:20 apb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.1 2012/10/19 16:55:22 apb Exp $");
 
 #include <sys/tty.h>
 #include <compat/sys/ttycom.h>
+
+#ifdef COMPAT_60
 
 /* convert struct ptmget to struct compat_60_ptmget */
 static int
@@ -112,3 +114,5 @@ compat_60_ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return EPASSTHROUGH;
 	}
 }
+
+#endif /* COMPAT_60 */
