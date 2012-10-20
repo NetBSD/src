@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1141 2012/10/20 06:14:06 matt Exp $
+$NetBSD: pcidevs,v 1.1142 2012/10/20 19:53:28 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1229,6 +1229,7 @@ product ATI SB600_AZALIA	0x4383	SB600 Azalia
 product ATI SB600_PPB_4384	0x4384	SB600 PCI to PCI Bridge
 product ATI SB600_SMB		0x4385	SB600/SB700/SB800 SMBus Controller
 product ATI SB600_USB_EHCI	0x4386	SB600 USB EHCI Controller
+product ATI SB600_USB_OHCI0	0x4387	SB600 USB OHCI0 Controller
 product ATI SB600_USB_OHCI1	0x4388	SB600 USB OHCI1 Controller
 product ATI SB600_USB_OHCI2	0x4389	SB600 USB OHCI2 Controller
 product ATI SB600_USB_OHCI3	0x438a	SB600 USB OHCI3 Controller
