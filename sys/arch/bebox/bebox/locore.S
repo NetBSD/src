@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.27 2012/10/20 12:45:22 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.28 2012/10/20 14:53:37 kiyohara Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -177,6 +177,23 @@ __start_cpu0:
 	bl	_C_LABEL(main)
 
 loop:	b	loop			/* XXX not reached */
+
+
+	.globl	_C_LABEL(cache_flush_invalidate_all)
+_C_LABEL(cache_flush_invalidate_all):
+	mtctr	3
+	li	4,0x0
+loop1:	lwz	5,0(4)
+	addi	4,4,32
+	bdnz	loop1
+
+	mtctr	3
+	li	4,0x0
+loop2:	dcbf	0,4
+	addi	4,4,32
+	bdnz	loop2
+
+	blr
 
 	.globl	_C_LABEL(debug_led)
 _C_LABEL(debug_led):
