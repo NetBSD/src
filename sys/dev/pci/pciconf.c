@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.34 2012/01/27 18:53:08 para Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.35 2012/10/20 05:33:00 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.34 2012/01/27 18:53:08 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.35 2012/10/20 05:33:00 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -367,7 +367,8 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->io_total > 0) {
 		if (parent->niowin >= MAX_CONF_IO) {
-			printf("pciconf: too many I/O windows\n");
+			printf("pciconf: too many (%d) I/O windows\n",
+			    parent->niowin);
 			goto err;
 		}
 		pb->io_total |= 0xfff;	/* Round up */
@@ -383,7 +384,8 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->mem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
-			printf("pciconf: too many MEM windows\n");
+			printf("pciconf: too many (%d) MEM windows\n",
+			     parent->nmemwin);
 			goto err;
 		}
 		pb->mem_total |= 0xfffff;	/* Round up */
