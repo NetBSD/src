@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.93 2012/09/23 01:10:10 chs Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.94 2012/10/20 05:32:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.93 2012/09/23 01:10:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.94 2012/10/20 05:32:25 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -90,6 +90,7 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,	NULL,	},
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,	NULL,	},
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
+	{ "NVM",		PCI_SUBCLASS_MASS_STORAGE_NVM,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
