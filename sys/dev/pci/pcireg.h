@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.74 2012/09/02 06:29:56 matt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.75 2012/10/20 00:33:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -179,6 +179,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
 #define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
+#define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
