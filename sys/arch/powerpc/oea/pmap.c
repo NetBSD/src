@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2012/07/28 23:11:00 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2012/10/20 14:42:15 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2012/07/28 23:11:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2012/10/20 14:42:15 kiyohara Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -490,7 +490,11 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 /* XXXSL: this needs to be moved to assembler */
 #define	TLBIEL(va)	__asm __volatile("tlbie %0" :: "r"(va))
 
+#ifdef MD_TLBSYNC
+#define TLBSYNC()	MD_TLBSYNC()
+#else
 #define	TLBSYNC()	__asm volatile("tlbsync")
+#endif
 #define	SYNC()		__asm volatile("sync")
 #define	EIEIO()		__asm volatile("eieio")
 #define	DCBST(va)	__asm __volatile("dcbst 0,%0" :: "r"(va))
@@ -1939,6 +1943,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				break;
 			}
 		}
+#ifdef MULTIPROCESSOR
+		if (((mfpvr() >> 16) & 0xffff) == MPC603e)
+			pte_lo = PTE_M;
+#endif
 	} else {
 		pte_lo |= PTE_I;
 	}
@@ -2032,6 +2040,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				break;
 			}
 		}
+#ifdef MULTIPROCESSOR
+		if (((mfpvr() >> 16) & 0xffff) == MPC603e)
+			pte_lo = PTE_M;
+#endif
 	}
 
 	if (prot & VM_PROT_WRITE)
