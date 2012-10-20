@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.9 2012/10/20 12:37:49 kiyohara Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.10 2012/10/20 14:56:31 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.9 2012/10/20 12:37:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.10 2012/10/20 14:56:31 kiyohara Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,6 +70,11 @@ setup_bebox_intr(void)
 	pic->pic_establish_irq = dummy_pic_establish_intr;
 	strcpy(pic->pic_name, "bebox");
 	pic_add(pic);
+
+#ifdef MULTIPROCESSOR
+	setup_bebox_ipi();
+#endif
+
 	return(pic);
 }
 
