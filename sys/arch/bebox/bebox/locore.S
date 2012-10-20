@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25 2011/08/07 15:44:59 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.26 2012/10/20 12:13:46 kiyohara Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -156,20 +156,6 @@ __start_cpu0:
 	bl	_C_LABEL(main)
 
 loop:	b	loop			/* XXX not reached */
-
-	.globl	_C_LABEL(enable_intr)
-_C_LABEL(enable_intr):
-	mfmsr	3
-	ori	3,3,PSL_EE@l
-	mtmsr	3
-	blr
-
-	.globl	_C_LABEL(disable_intr)
-_C_LABEL(disable_intr):
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l
-	mtmsr	3
-	blr
 
 	.globl	_C_LABEL(debug_led)
 _C_LABEL(debug_led):

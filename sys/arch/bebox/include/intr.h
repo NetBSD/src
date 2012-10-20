@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2011/08/07 15:13:07 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.32 2012/10/20 12:13:46 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,10 +36,6 @@
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
-
-void enable_intr(void);
-void disable_intr(void);
-
 
 #define ICU_LEN			32
 #define IRQ_SLAVE		2
