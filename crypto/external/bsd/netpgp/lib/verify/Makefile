@@ -1,13 +1,17 @@
-# $NetBSD: Makefile,v 1.1.2.1 2012/05/06 18:07:02 agc Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2012/10/20 04:59:54 agc Exp $
 
 LIB=netpgpverify
-SRCS= verify.c
-CPPFLAGS+=-I${EXTDIST}/src/libbn -I${EXTDIST}/src/librsa
+SRCS=libverify.c b64.c pgpsum.c
+SRCS+=digest.c tiger.c
+SRCS+=bignum.c misc.c
+SRCS+=rsa.c
+CPPFLAGS+=-I${EXTDIST}/src/libbn
+CPPFLAGS+=-I${EXTDIST}/src/librsa
 MAN=libnetpgpverify.3
-WARNS=4
+WARNS=5
 
-EXTDIST=	${.CURDIR}/../../dist
-.PATH:		${EXTDIST}/src/libverify
+EXTDIST=${.CURDIR}/../../dist
+.PATH: ${EXTDIST}/src/libverify ${EXTDIST}/src/libdigest ${EXTDIST}/src/libbn ${EXTDIST}/src/librsa
 
 INCS=verify.h
 INCSDIR=/usr/include/netpgp

@@ -29,6 +29,8 @@
 #ifndef NETPGP_H_
 #define NETPGP_H_
 
+#include <unistd.h>
+
 #ifndef __BEGIN_DECLS
 #  if defined(__cplusplus)
 #  define __BEGIN_DECLS           extern "C" {
