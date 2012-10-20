@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.73 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.74 2012/10/20 13:10:44 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.74 2012/10/20 13:10:44 kiyohara Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -266,13 +266,13 @@ cpu_model_init(void)
 	vers = pvr >> 16;
 
 	oeacpufeat = 0;
-	
+
 	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
 		vers == IBMCELL || vers == IBMPOWER6P5) {
 		oeacpufeat |= OEACPU_64;
 		oeacpufeat |= OEACPU_64_BRIDGE;
 		oeacpufeat |= OEACPU_NOBAT;
-	
+
 	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
@@ -656,7 +656,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	/*
 	 * Attach MPC750 temperature sensor to the envsys subsystem.
 	 * XXX the 74xx series also has this sensor, but it is not
-	 * XXX supported by Motorola and may return values that are off by 
+	 * XXX supported by Motorola and may return values that are off by
 	 * XXX 35-55 degrees C.
 	 */
 	if (vers == MPC750 || vers == IBM750FX || vers == IBM750GX)
@@ -799,7 +799,7 @@ cpu_enable_l2cr(register_t l2cr)
 	uint16_t vers;
 
 	vers = mfpvr() >> 16;
-	
+
 	/* Disable interrupts and set the cache config bits. */
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
@@ -838,7 +838,7 @@ cpu_enable_l3cr(register_t l3cr)
 	register_t x;
 
 	/* By The Book (numbered steps from section 3.7.1.3 of MPC7450UM) */
-				
+
 	/*
 	 * 1: Set all L3CR bits for final config except L3E, L3I, L3PE, and
 	 *    L3CLKEN.  (also mask off reserved bits in case they were included
@@ -862,7 +862,7 @@ cpu_enable_l3cr(register_t l3cr)
 	do {
 		x = mfspr(SPR_L3CR);
 	} while (x & L3CR_L3I);
-	
+
 	/* 6: Clear L3CLKEN to 0 */
 	l3cr &= ~L3CR_L3CLKEN;
 	mtspr(SPR_L3CR, l3cr);
@@ -964,7 +964,7 @@ cpu_config_l3cr(int vers)
 		cpu_enable_l2cr(l2cr_config);
 		l2cr = mfspr(SPR_L2CR);
 	}
-	
+
 	aprint_normal(",");
 	switch (vers) {
 	case MPC7447A:
@@ -997,7 +997,7 @@ cpu_config_l3cr(int vers)
 		cpu_enable_l3cr(l3cr_config);
 		l3cr = mfspr(SPR_L3CR);
 	}
-	
+
 	if (l3cr & L3CR_L3E) {
 		aprint_normal(",");
 		cpu_fmttab_print(cpu_7450_l3cr_formats, l3cr);
@@ -1123,8 +1123,8 @@ cpu_tau_setup(struct cpu_info *ci)
 	 */
 
 	therm_delay = ci->ci_khz / 40;		/* 25us just to be safe */
-	
-        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE); 
+
+        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE);
 
 	sme = sysmon_envsys_create();
 
@@ -1136,7 +1136,7 @@ cpu_tau_setup(struct cpu_info *ci)
 		return;
 	}
 
-	sme->sme_name = device_xname(ci->ci_dev);	
+	sme->sme_name = device_xname(ci->ci_dev);
 	sme->sme_cookie = ci;
 	sme->sme_refresh = cpu_tau_refresh;
 
@@ -1161,24 +1161,23 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	 * Unit in the MPC750 Microprocessor".
 	 */
 	for (i = 5; i >= 0 ; i--) {
-		mtspr(SPR_THRM1, 
+		mtspr(SPR_THRM1,
 		    SPR_THRM_THRESHOLD(threshold) | SPR_THRM_VALID);
 		count = 0;
-		while ((count < 100000) && 
+		while ((count < 100000) &&
 		    ((mfspr(SPR_THRM1) & SPR_THRM_TIV) == 0)) {
 			count++;
 			delay(1);
 		}
 		if (mfspr(SPR_THRM1) & SPR_THRM_TIN) {
-			/* The interrupt bit was set, meaning the 
-			 * temperature was above the threshold 
+			/* The interrupt bit was set, meaning the
+			 * temperature was above the threshold
 			 */
 			threshold += 1 << i;
 		} else {
 			/* Temperature was below the threshold */
 			threshold -= 1 << i;
 		}
-		
 	}
 	threshold += 2;
 
@@ -1231,7 +1230,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	/* copy special registers */
 
 	h->hatch_hid0 = mfspr(SPR_HID0);
-	
+
 	__asm volatile ("mfsdr1 %0" : "=r"(h->hatch_sdr1));
 	for (i = 0; i < 16; i++) {
 		__asm ("mfsrin %0,%1" : "=r"(h->hatch_sr[i]) :
@@ -1277,7 +1276,6 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 }
 
 static volatile int start_secondary_cpu;
-extern void tlbia(void);
 
 register_t
 cpu_hatch(void)
@@ -1300,7 +1298,7 @@ cpu_hatch(void)
 	msr = mfspr(SPR_PIR);
 	if (msr != h->hatch_pir)
 		mtspr(SPR_PIR, h->hatch_pir);
-	
+
 	__asm volatile ("mtsprg0 %0" :: "r"(ci));
 	curlwp = ci->ci_curlwp;
 	cpu_spinstart_ack = 0;
