@@ -122,8 +122,8 @@
 
 /* signature mpi indices in bignumber array */
 #define RSA_SIG				0
-#define DSA_SIG_R			0
-#define DSA_SIG_S			1
+#define DSA_R				0
+#define DSA_S				1
 #define ELGAMAL_SIG_R			0
 #define ELGAMAL_SIG_S			1
 
@@ -391,6 +391,8 @@ fmt_mpi(char *s, size_t size, pgpv_bignum_t *bn, const char *name, int pbits)
 #define ALG_IS_RSA(alg)	(((alg) == PUBKEY_RSA_ENCRYPT_OR_SIGN) ||	\
 			 ((alg) == PUBKEY_RSA_ENCRYPT) ||		\
 			 ((alg) == PUBKEY_RSA_SIGN))
+
+#define ALG_IS_DSA(alg)	((alg) == PUBKEY_DSA)
 
 /* format key mpis into memory */
 static unsigned
@@ -678,8 +680,8 @@ read_signature_mpis(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 	case PUBKEY_DSA:
 	case PUBKEY_ECDSA:
 	case PUBKEY_ELGAMAL_ENCRYPT_OR_SIGN: /* deprecated */
-		if (!get_mpi(&sigpkt->sig.bn[DSA_SIG_R], p, pktlen, &off) ||
-		    !get_mpi(&sigpkt->sig.bn[DSA_SIG_S], &p[off], pktlen, &off)) {
+		if (!get_mpi(&sigpkt->sig.bn[DSA_R], p, pktlen, &off) ||
+		    !get_mpi(&sigpkt->sig.bn[DSA_S], &p[off], pktlen, &off)) {
 			printf("sigpkt->version %d, dsa/elgamal sig weird\n", sigpkt->sig.version);
 			return 0;
 		}
@@ -1449,6 +1451,74 @@ rsa_verify(uint8_t *calculated, unsigned calclen, uint8_t hashalg, pgpv_bignum_t
 	return memcmp(&decrypted[i + prefixlen], calculated, calclen) == 0;
 }
 
+#ifndef DSA_MAX_MODULUS_BITS
+#define DSA_MAX_MODULUS_BITS      10000
+#endif
+
+/* verify DSA signature */
+static int
+verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_pubkey_t *pubkey)
+{
+	unsigned	  qbits;
+	BIGNUM		 *M;
+	BIGNUM		 *W;
+	BIGNUM		 *t1;
+	int		  ret;
+
+	if (sig[DSA_P].bn == NULL || sig[DSA_Q].bn == NULL || sig[DSA_G].bn == NULL) {
+		return 0;
+	}
+	M = W = t1 = NULL;
+	qbits = pubkey->bn[DSA_Q].bits;
+	switch(qbits) {
+	case 160:
+	case 224:
+	case 256:
+		break;
+	default:
+		printf("dsa: bad # of Q bits\n");
+		return 0;
+	}
+	if (pubkey->bn[DSA_Q].bits > DSA_MAX_MODULUS_BITS) {
+		printf("dsa: p too large\n");
+		return 0;
+	}
+	/* no love for SHA512? */
+	if (calclen > SHA256_DIGEST_LENGTH) {
+		printf("dsa: digest too long\n");
+		return 0;
+	}
+	ret = 0;
+	if ((M = BN_new()) == NULL || (W = BN_new()) == NULL || (t1 = BN_new()) == NULL ||
+	    BN_is_zero(sig[DSA_R].bn) || BN_is_negative(sig[DSA_R].bn) || BN_cmp(sig[DSA_R].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
+	    BN_is_zero(sig[DSA_S].bn) || BN_is_negative(sig[DSA_S].bn) || BN_cmp(sig[DSA_S].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
+	    BN_mod_inverse(W, sig[DSA_S].bn, pubkey->bn[DSA_Q].bn, NULL) != MP_OKAY) {
+		goto err;
+	}
+	if (calclen > qbits / 8) {
+		calclen = qbits / 8;
+	}
+	if (BN_bin2bn(calculated, (int)calclen, M) == NULL ||
+	    !BN_mod_mul(M, M, W, pubkey->bn[DSA_Q].bn, NULL) ||
+	    !BN_mod_mul(W, sig[DSA_R].bn, W, pubkey->bn[DSA_Q].bn, NULL) ||
+	    !BN_mod_exp(pubkey->bn[DSA_P].bn, t1, pubkey->bn[DSA_G].bn, M, NULL) ||
+	    !BN_div(NULL, M, t1, pubkey->bn[DSA_Q].bn, NULL)) {
+		goto err;
+	}
+	ret = (BN_cmp(M, sig[DSA_R].bn) == 0);
+err:
+	if (M) {
+		BN_free(M);
+	}
+	if (W) {
+		BN_free(W);
+	}
+	if (t1) {
+		BN_free(t1);
+	}
+	return ret;
+}
+
 #define TIME_SNPRINTF(_cc, _buf, _size, _fmt, _val)	do {		\
 	time_t	 _t;							\
 	char	*_s;							\
@@ -2017,18 +2087,24 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 			snprintf(cursor->why, sizeof(cursor->why), "Signature on data did not match");
 			return 0;
 		}
-		if (valid_dates(signature, pubkey, cursor->why, sizeof(cursor->why)) > 0) {
+	} else if (ALG_IS_DSA(signature->keyalg)) {
+		if (!verify_dsa_verify(calculated, calclen, signature->bn, pubkey)) {
+			snprintf(cursor->why, sizeof(cursor->why), "Signature on data did not match");
 			return 0;
 		}
-		if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
-			return 0;
-		}
-		ARRAY_APPEND(cursor->datacookies, pkt);
-		ARRAY_APPEND(cursor->found, primary);
-		return 1;
+	} else {
+		snprintf(cursor->why, sizeof(cursor->why), "Signature type %u not recognised", signature->keyalg);
+		return 0;
 	}
-	snprintf(cursor->why, sizeof(cursor->why), "Signature not RSA");
-	return 0;
+	if (valid_dates(signature, pubkey, cursor->why, sizeof(cursor->why)) > 0) {
+		return 0;
+	}
+	if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
+		return 0;
+	}
+	ARRAY_APPEND(cursor->datacookies, (unsigned)pkt);
+	ARRAY_APPEND(cursor->found, primary);
+	return 1;
 }
 
 /* set up the pubkey keyring */
