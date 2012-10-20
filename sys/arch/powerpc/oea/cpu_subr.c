@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.74 2012/10/20 13:10:44 kiyohara Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.75 2012/10/20 13:18:45 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.74 2012/10/20 13:10:44 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.75 2012/10/20 13:18:45 kiyohara Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -236,6 +236,7 @@ struct cpu_info cpu_info[CPU_MAXNUM] = {
 };
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
+#define HATCH_STACK_SIZE 0x1000
 extern int ticks_per_intr;
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>
@@ -1203,7 +1204,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	KASSERT(ci != curcpu());
 
 	/* Now allocate a hatch stack */
-	error = uvm_pglistalloc(0x1000, 0x10000, 0x10000000, 16, 0,
+	error = uvm_pglistalloc(HATCH_STACK_SIZE, 0x10000, 0x10000000, 16, 0,
 	    &mlist, 1, 1);
 	if (error) {
 		aprint_error(": unable to allocate hatch stack\n");
@@ -1211,7 +1212,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	}
 
 	hp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(hp, 0, 0x1000);
+	memset(hp, 0, HATCH_STACK_SIZE);
 
 	/* Initialize secondary cpu's initial lwp to its idlelwp. */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
@@ -1224,7 +1225,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	h->hatch_ci = ci;
 	h->hatch_pir = ci->ci_cpuid;
 
-	cpu_hatch_stack = (uint32_t)hp;
+	cpu_hatch_stack = (uint32_t)hp + HATCH_STACK_SIZE - CALLFRAMELEN;
 	ci->ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
