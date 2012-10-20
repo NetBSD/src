@@ -87,14 +87,18 @@ getstdin(ssize_t *cc, size_t *size)
 
 /* verify memory or file */
 static int
-verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, size_t cc)
+verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, size_t cc, unsigned n)
 {
 	pgpv_cursor_t	 cursor;
+	size_t		 size;
+	char		*data;
 
 	memset(&cursor, 0x0, sizeof(cursor));
 	if (strcasecmp(cmd, "cat") == 0) {
 		if (pgpv_verify(&cursor, pgp, in, cc)) {
-			pgpv_verify_print(&cursor);
+			if ((size = pgpv_get_verified(&cursor, ARRAY_ELEMENT(cursor.datacookies, n), &data)) > 0) {
+				printf("%.*s", (int)size, data);
+			}
 			return 1;
 		}
 	} else if (strcasecmp(cmd, "verify") == 0) {
@@ -147,10 +151,10 @@ main(int argc, char **argv)
 	}
 	if (optind == argc) {
 		in = getstdin(&cc, &size);
-		ok = verify_data(&pgp, cmd, "[stdin]", in, cc);
+		ok = verify_data(&pgp, cmd, "[stdin]", in, cc, 0);
 	} else {
 		for (ok = 1, i = optind ; i < argc ; i++) {
-			if (!verify_data(&pgp, cmd, argv[i], argv[i], -1)) {
+			if (!verify_data(&pgp, cmd, argv[i], argv[i], -1, i)) {
 				ok = 0;
 			}
 		}
