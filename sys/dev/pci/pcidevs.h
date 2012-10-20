@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1133 2012/10/19 17:01:56 prlw1 Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1134 2012/10/20 06:14:55 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1139 2012/09/29 10:26:14 gsutre Exp
+ *	NetBSD: pcidevs,v 1.1141 2012/10/20 06:14:06 matt Exp
  */
 
 /*
@@ -628,7 +628,8 @@
 #define	PCI_VENDOR_RDC	0x17F3		/* RDC Semiconductor */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
-#define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
+#define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (Broadcom) */
+#define	PCI_VENDOR_NETLOGIC	0x184e		/* Netlogic Microsystems (Broadcom) */
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
 #define	PCI_VENDOR_XGI	0x18ca		/* XGI Technology */
 #define	PCI_VENDOR_RENESAS	0x1912		/* Renesas Technologies */
@@ -1577,6 +1578,7 @@
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
 /* RMI products */
+#define	PCI_PRODUCT_RMI_XLR_PCIX	0x000b		/* XLR PCI-X bridge */
 #define	PCI_PRODUCT_RMI_XLS_PCIE	0xabcd		/* XLS PCIe-PCIe bridge */
 
 /* B & B Electronics Products */
@@ -3699,11 +3701,40 @@
 /* Netoctave */
 #define	PCI_PRODUCT_NETOCTAVE_NSP2K	0x0100		/* NSP2K */
 
-/* NetVin products - XXX better descriptions */
-#define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */
-
 /* NetBoost (now Intel) products */
 #define	PCI_PRODUCT_NETBOOST_POLICY	0x0000		/* Policy Accelerator */
+
+/* NetLogic (now Broadcom?) products */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SBC	0x1001		/* XLP System Bridge controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_ICI	0x1002		/* XLP Inter-Chip interconnect */
+#define	PCI_PRODUCT_NETLOGIC_XLP_PIC	0x1003		/* XLP Programmable Interrupt controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_PCIROOT	0x1004		/* XLP PCI-Express RootComplex/Endpoint port */
+#define	PCI_PRODUCT_NETLOGIC_XLP_INTERLAKEN	0x1005		/* XLP Interlaken LA interface */
+#define	PCI_PRODUCT_NETLOGIC_XLP_DEVUSB	0x1006		/* XLP Device USB controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_EHCIUSB	0x1007		/* XLP EHCI USB controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_OHCIUSB	0x1008		/* XLP OHCI USB controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_NAE	0x1009		/* XLP Network Acceleration engine */
+#define	PCI_PRODUCT_NETLOGIC_XLP_POE	0x100A		/* XLP Packet Ordering engine */
+#define	PCI_PRODUCT_NETLOGIC_XLP_FMN	0x100B		/* XLP Fast Messaging Network */
+#define	PCI_PRODUCT_NETLOGIC_XLP_DMA	0x100C		/* XLP Data Transfer and RAID engine */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SAE	0x100D		/* XLP Security accelerator */
+#define	PCI_PRODUCT_NETLOGIC_XLP_PKE	0x100E		/* XLP RSA/ECC accelerator */
+#define	PCI_PRODUCT_NETLOGIC_XLP_CDE	0x100F		/* XLP Compress/Decompression engine */
+#define	PCI_PRODUCT_NETLOGIC_XLP_UART	0x1010		/* XLP UART controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_I2C	0x1011		/* XLP I2C controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_GPIO	0x1012		/* XLP GPIO controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SYSTEM	0x1013		/* XLP System controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_JTAG	0x1014		/* XLP JTAG interface */
+#define	PCI_PRODUCT_NETLOGIC_XLP_NOR	0x1015		/* XLP NOR flash controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_NAND	0x1016		/* XLP NAND flash controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SPI	0x1017		/* XLP SPI controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SDHC	0x1018		/* XLP eMMC/SD/SDIO controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_RXE	0x1019		/* XLP Regular Expression accelerator */
+#define	PCI_PRODUCT_NETLOGIC_XLP_AHCISATA	0x101a		/* XLP AHCI SATA controller */
+#define	PCI_PRODUCT_NETLOGIC_XLP_SRIO	0x101b		/* XLP SRIO (Serial Rapid IO) controller */
+
+/* NetVin products - XXX better descriptions */
+#define	PCI_PRODUCT_NETVIN_5000	0x5000		/* 5000 Ethernet */
 
 /* Newbridge / Tundra products */
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME Bridge */
