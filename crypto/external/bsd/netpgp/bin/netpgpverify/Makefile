@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.1.2.2 2012/10/20 04:59:52 agc Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2012/10/20 12:22:00 agc Exp $
 
 .include <bsd.own.mk>
 
 PROG=netpgpverify
 SRCS+=main.c
+BINDIR=/usr/bin
+
 WARNS=5
 MAN=netpgpverify.1
 LDADD+=-lz
