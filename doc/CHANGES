@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.11 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1670.2.12 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1286,5 +1286,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wm(4): Add support for Intel I350 Ethernet. [msaitoh 20120525]
 	postfix(1): Import version 2.8.11 [tron 20120609]
 	evbarm: Add initial support for the RaspberryPi. [skrll 20120726]
-	OpenSSH: Imported 1.0.1c [christos 20120726]
+	OpenSSL: Imported 1.0.1c [christos 20120726]
 	postfix(1): Import version 2.8.12 [tron 20120810]
