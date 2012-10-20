@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.13.6.1 2012/05/06 18:07:01 agc Exp $
+#	$NetBSD: Makefile,v 1.13.6.2 2012/10/20 04:59:53 agc Exp $
 
 SUBDIR+=	bn mj .WAIT
-SUBDIR+=	cipher rsa
+SUBDIR+=	cipher rsa digest
 SUBDIR+=	netpgp verify
 #SUBDIR+=	libpaa
 

@@ -1,10 +1,7 @@
-.\" $NetBSD: netpgpverify.1,v 1.5 2010/11/15 21:29:21 wiz Exp $
+.\" $NetBSD: netpgpverify.1,v 1.5.10.1 2012/10/20 04:59:53 agc Exp $
 .\"
-.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
-.\"
-.\" This manual page is derived from software contributed to
-.\" The NetBSD Foundation by Alistair Crooks (agc@NetBSD.org).
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -15,19 +12,18 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-.\" POSSIBILITY OF SUCH DAMAGE.
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 2010
+.Dd September 28, 2012
 .Dt NETPGPVERIFY 1
 .Os
 .Sh NAME
@@ -35,24 +31,16 @@
 .Nd standalone program for digital signature verification
 .Sh SYNOPSIS
 .Nm
-.Fl Fl verify
-.Op Fl Fl output Ns = Ns Ar filename
-.Op options
-.Ar file ...
-.Pp
-where the options for all commands are:
-.Pp
-.Op Fl Fl coredumps
-.br
-.Op Fl Fl homedir Ns = Ns Ar home-directory
-.br
-.Op Fl Fl keyring Ns = Ns Ar keyring
-.br
-.Op Fl Fl userid Ns = Ns Ar userid
-.br
-.Op Fl Fl verbose
+.Op Fl c Ar command
+.Op Fl k Ar keyring
+.Op Ar
 .Sh DESCRIPTION
 The
+.Nm
+program is an extremely small, stand-alone utility for metching
+and verifying digital signatures.
+It has been rewritten from scratch from RFC 4880 to be small
+and lightweight, and to only verify signatures on a file or on memory.
 .Nm
 complements the
 .Xr netpgp 1
@@ -63,42 +51,29 @@ of digital signatures
 is such a common operation that a single, much smaller,
 standalone program can be used.
 .Pp
+The
+.Nm
+command uses the
+.Xr libnetpgpverify 3
+library to do the signature verification.
 The following commands are used to verify signatures:
 .Bl -tag -width Ar
-.It Fl Fl coredumps
-In normal processing,
-if an error occurs, the contents of memory are saved to disk, and can
-be read using tools to analyse behaviour.
-Unfortunately this can disclose information to people viewing
-the core dump, such as secret keys, and passphrases protecting
-those keys.
-In normal operation,
-.Nm
-will turn off the ability to save core dumps on persistent storage,
-but selecting this option will allow core dumps to be written to disk.
-This option should be used wisely, and any core dumps should
-be deleted in a secure manner when no longer needed.
-.It Fl Fl homedir Ar home-directory
-Keyrings are normally located, for historical reasons, within
-the user's home directory in a subdirectory called
-.Dq Pa .gnupg
-and this option specifies an alternative location in which to
-find that sub-directory.
-.It Fl Fl keyring Ar keyring
-This option specifies an alternative keyring to be used.
-All keyring operations will be relative to this alternative keyring.
-.It Fl Fl output
-specifies a filename to which verified output from a signed file
-may be redirected.
-The default is to send the verified output to stdout,
-and this may also be specified using the
-.Dq \-
-value.
-.It Fl Fl verbose
-This option can be used to view information during
-the process of the
-.Nm
-requests.
+.It Fl c Ar command
+This argument takes a single word as an option, and performs the matching according
+to the command.
+The usual behavior is to match, and to print success or failure of that verification.
+The
+.Dv cat
+command can be used to do the signature verification,
+and, if successful,
+to print the signed contents to
+.Dv stdout.
+.It Fl k Ar keyring
+is used to specify a keyring, holding the public keys of the people who may
+sign data.
+.Pp
+Multiple files may be specified on the command line, and they
+will all have their signatures verified at the same time.
 .El
 .Sh SIGNING AND VERIFICATION
 Verification of a file's signature is best viewed using the following example:
@@ -150,15 +125,12 @@ In both cases, the exit value from the utility was a successful one.
 .Sh EXIT STATUS
 The
 .Nm
-utility will return 0 for success,
-1 if the file's signature does not match what was expected,
-or 2 if any other error occurs.
+utility will return 0 for a successful signature verification,
+or 1 if the file's signature does not match what was expected.
 .Sh SEE ALSO
 .Xr netpgp 1 ,
 .\" .Xr libbz2 3 ,
-.Xr libnetpgp 3 ,
-.Xr ssl 3 ,
-.Xr zlib 3
+.Xr libnetpgpverify 3
 .Sh STANDARDS
 The
 .Nm
@@ -168,11 +140,8 @@ The
 .Nm
 command first appeared in
 .Nx 6.0 .
+This version was written and first appeared in this form in
+.Nx 7.0 .
 .Sh AUTHORS
 .An -nosplit
-.An Ben Laurie ,
-.An Rachel Willmer ,
-and was overhauled and rewritten by
 .An Alistair Crooks Aq agc@NetBSD.org .
-This manual page was written by
-.An Alistair Crooks .
