@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.30 2012/07/17 03:13:31 jmmv Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.31 2012/10/20 14:42:15 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.30 2012/07/17 03:13:31 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.31 2012/10/20 14:42:15 kiyohara Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -130,7 +130,7 @@ static void restore_ofmap(struct ofw_translations *, int);
 static void set_timebase(void);
 
 extern void cpu_spinstart(u_int);
-volatile u_int cpu_spinstart_ack, cpu_spinstart_cpunum;
+extern volatile u_int cpu_spinstart_ack;
 
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
