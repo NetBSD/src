@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2012/10/17 14:48:09 apb Exp $
+# $NetBSD: GENERIC,v 1.133 2012/10/20 11:58:45 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	32
 
@@ -205,8 +205,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 mcclock0 at isa? port 0x70		# time-of-day clock
 attimer0 at isa?
-pcppi0	at isa?
-spkr0	at pcppi?
+#pcppi0	at isa?
+#spkr0	at pcppi?
 
 wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 
@@ -214,7 +214,7 @@ wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 audio*	at audiobus?
 
 # MIDI support
-midi*	at pcppi?			# MIDI interface to the PC speaker
+#midi*	at pcppi?			# MIDI interface to the PC speaker
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 joy0	at isa? port 0x201
@@ -230,7 +230,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
 fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
@@ -272,11 +271,11 @@ pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
-pseudo-device	bio			# RAID control device driver
+#pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	cgd		4	# cryptographic disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
-options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	raid		8	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
