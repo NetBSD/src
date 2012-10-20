@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.5 2012/10/19 17:30:38 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.6 2012/10/20 23:16:24 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -166,4 +166,20 @@ sys/arch/x86/include/lock.h			1.26
 
 	Work around a possible gcc bug.  Fixes PR#45673.
 	[apb, ticket #606]
+
+doc/CHANGES					patch
+
+	Typo fix: OpenSSL, not OpenSSH.
+	[khorben, ticket #608]
+
+sys/arch/arm/marvell/kirkwood.c			1.5
+
+	Fix a bit check in the Kirkwood IRQ code so that the correct bit
+	is checked.
+	[msaitoh, ticket #609]
+
+usr.bin/calendar/calendars/calendar.netbsd	1.22
+
+	Note the date of the NetBSD 6.0 release.
+	[jnemeth, ticket #611]
 
