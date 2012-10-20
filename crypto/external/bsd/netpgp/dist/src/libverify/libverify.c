@@ -1897,8 +1897,6 @@ read_binary_memory(pgpv_t *pgp, const char *op, const void *memory, size_t size)
 	return read_all_packets(pgp, mem, op);
 }
 
-#include "dump.c"
-
 /* fixup the detached signature packets */
 static int
 fixup_detached(pgpv_cursor_t *cursor, const char *f)
