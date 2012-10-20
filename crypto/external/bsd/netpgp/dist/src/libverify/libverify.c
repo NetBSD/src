@@ -2023,6 +2023,7 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 		if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
 			return 0;
 		}
+		ARRAY_APPEND(cursor->datacookies, pkt);
 		ARRAY_APPEND(cursor->found, primary);
 		return 1;
 	}
@@ -2040,29 +2041,28 @@ pgpv_read_pubring(pgpv_t *pgp, const char *keyring)
 	return read_binary_file(pgp, "pubring", "%s/%s", getenv("HOME"), ".gnupg/pubring.gpg");
 }
 
-/* print verified data to stdout */
-int
-pgpv_verify_print(pgpv_cursor_t *cursor)
+/* get verified data as a string, return its size */
+size_t
+pgpv_get_verified(pgpv_cursor_t *cursor, unsigned ent, char **ret)
 {
 	pgpv_litdata_t		*litdata;
 	uint8_t			*data;
-	ssize_t			 wc;
 	size_t			 size;
 	size_t			 pkt;
-	size_t			 cc;
 
-	/* datastart was setup at the start of pgpv_verify */
-	if ((pkt = find_onepass(cursor, ARRAY_LAST(cursor->pgp->datastarts))) == 0) {
+	*ret = NULL;
+	if (cursor == NULL || ent >= ARRAY_COUNT(cursor->datacookies)) {
 		return 0;
 	}
-	pkt -= 1;
-	litdata = &ARRAY_ELEMENT(cursor->pgp->pkts, pkt + 1).u.litdata;
-	data = get_literal_data(cursor, litdata, &size);
-	for (cc = 0 ; cc < size ; cc += (size_t)wc) {
-		if ((wc = write(STDOUT_FILENO, &data[cc], size - cc)) < 0) {
-			printf("short write\n");
-			return 0;
-		}
+	pkt = ARRAY_ELEMENT(cursor->datacookies, ent);
+	if ((pkt = find_onepass(cursor, pkt)) == 0) {
+		return 0;
 	}
-	return 1;
+	litdata = &ARRAY_ELEMENT(cursor->pgp->pkts, pkt).u.litdata;
+	data = get_literal_data(cursor, litdata, &size);
+	if ((*ret = calloc(1, size)) == NULL) {
+		return 0;
+	}
+	memcpy(*ret, data, size);
+	return size;
 }
