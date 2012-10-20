@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.38 2012/09/21 01:07:44 macallan Exp $
+#	$NetBSD: files.sbus,v 1.39 2012/10/20 13:52:11 macallan Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -144,7 +144,7 @@ file	dev/sbus/genfb_sbus.c	genfb_sbus
 
 # Fujitsu AG-10e
 defflag	opt_agten.h	AGTEN_DEBUG
-device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
+device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons, glyphcache
 attach	agten at sbus
 file	dev/sbus/agten.c		agten needs-flag
 file	dev/ic/i128.c			agten
