@@ -140,6 +140,7 @@ RSA *RSA_generate_key(int /*num*/, unsigned long /*e*/, void (*callback)(int,int
 int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, int padding);
 int RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, int padding);
 int RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, int padding);
+int RSA_public_decrypt(int flen, const uint8_t *from, uint8_t *to, RSA *rsa, int padding);
 
 DSA *DSA_new(void);
 int DSA_size(const DSA */*rsa*/);

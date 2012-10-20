@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.44 2012/03/05 02:20:18 christos Exp $");
+__RCSID("$NetBSD: validate.c,v 1.44.2.1 2012/10/20 04:59:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -548,7 +548,7 @@ validate_data_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 					&data->result->invalid_sigs,
 					&data->result->invalidc)) {
 				PGP_ERROR_1(errors, PGP_E_V_BAD_SIGNATURE, "%s",
-					"Can't add good sig to list");
+					"Can't add bad sig to list");
 			}
 		}
 		break;

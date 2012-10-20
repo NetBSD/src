@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2012/05/06 17:57:11 agc Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2012/10/20 04:59:52 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,10 @@ DPADD+=		${LIBNETCIPHERDIR}/libnetpgpcipher.a
 LIBNETRSADIR!=	cd ${.CURDIR}/../../lib/rsa && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNETRSADIR} -lnetpgprsa
 DPADD+=		${LIBNETRSADIR}/libnetpgprsa.a
+
+LIBNETDIGESTDIR!=	cd ${.CURDIR}/../../lib/digest && ${PRINTOBJDIR}
+LDADD+=		-L${LIBNETDIGESTDIR} -lnetpgpdigest
+DPADD+=		${LIBNETDIGESTDIR}/libnetpgpdigest.a
 
 LIBNETBNDIR!=	cd ${.CURDIR}/../../lib/bn && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNETBNDIR} -lnetpgpbn
