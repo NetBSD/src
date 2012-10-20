@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.49 2012/01/29 11:31:38 drochner Exp $	*/
+/*	$NetBSD: ppb.c,v 1.50 2012/10/20 05:57:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.49 2012/01/29 11:31:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.50 2012/10/20 05:57:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,10 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 
 	pcireg_t sc_pciconfext[48];
+};
+
+static const char pcie_linkspeed_strings[4][5] = {
+	"1.25", "2.5", "5.0", "8.0",
 };
 
 static bool		ppb_resume(device_t, const pmf_qual_t *);
@@ -81,6 +85,13 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 		    && PCI_HDRTYPE(bhlc) == PCI_HDRTYPE_RC)
 		return 1;
 	}
+#endif
+
+#ifdef _MIPS_PADDR_T_64BIT
+	/* The LDT HB acts just like a PPB.  */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIBYTE
+	    && PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIBYTE_BCM1250_LDTHB)
+		return 1;
 #endif
 
 	return 0;
@@ -139,7 +150,42 @@ ppb_fix_pcie(device_t self)
 		    __SHIFTOUT(reg, PCI_PCIE_XCAP_TYPE_MASK));
 		break;
 	}
-	aprint_normal(">\n");
+
+	switch (reg & PCI_PCIE_XCAP_TYPE_MASK) {
+	case PCI_PCIE_XCAP_TYPE_ROOT:
+	case PCI_PCIE_XCAP_TYPE_DOWN:
+	case PCI_PCIE_XCAP_TYPE_PCI2PCIE:
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x0c);
+		u_int mlw = (reg >> 4) & 0x1f;
+		u_int mls = (reg >> 0) & 0x0f;
+		if (mls < __arraycount(pcie_linkspeed_strings)) {
+			aprint_normal("> x%d @ %sGb/s\n",
+			    mlw, pcie_linkspeed_strings[mls]);
+		} else {
+			aprint_normal("> x%d @ %d.%dGb/s\n",
+			    mlw, (mls * 25) / 10, (mls * 25) % 10);
+		}
+
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x10);
+		if (reg & __BIT(29)) {	/* DLLA */
+			u_int lw = (reg >> 20) & 0x1f;
+			u_int ls = (reg >> 16) & 0x0f;
+			if (lw != mlw || ls != mls) {
+				if (ls < __arraycount(pcie_linkspeed_strings)) {
+					aprint_normal("> x%d @ %sGb/s\n",
+					    lw, pcie_linkspeed_strings[ls]);
+				} else {
+					aprint_normal_dev(self,
+					    "link is x%d @ %d.%dGb/s\n",
+					    lw, (ls * 25) / 10, (ls * 25) % 10);
+				}
+			}
+		}
+		break;
+	default:
+		aprint_normal(">\n");
+		break;
+	}
 
 	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCI_PCIE_SLCSR);
 	if (reg & PCI_PCIE_SLCSR_NOTIFY_MASK) {
