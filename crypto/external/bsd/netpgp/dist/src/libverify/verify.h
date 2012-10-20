@@ -49,7 +49,7 @@ typedef struct pgpv_bignum_t {
 
 #define PGPV_MAX_HASH_LEN	20
 
-typedef struct fingerprint_t {
+typedef struct pgpv_fingerprint_t {
 	uint8_t			hashalg;
 	uint8_t			v[PGPV_MAX_HASH_LEN];
 	uint32_t		len;
