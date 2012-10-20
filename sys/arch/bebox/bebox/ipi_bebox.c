@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.h,v 1.33 2012/10/20 14:53:37 kiyohara Exp $	*/
+/* $NetBSD: ipi_bebox.c,v 1.1 2012/10/20 14:53:37 kiyohara Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,20 +29,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipi_bebox.c,v 1.1 2012/10/20 14:53:37 kiyohara Exp $");
 
-#ifndef _BEBOX_INTR_H_
-#define _BEBOX_INTR_H_
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
-#include <powerpc/intr.h>
+#include <powerpc/pic/picvar.h>
+#include <powerpc/pic/ipivar.h>
 
-#ifndef _LOCORE
 
-#define ICU_LEN			32
-#define IRQ_SLAVE		2
-#define LEGAL_HWIRQ_P(x)	((u_int)(x) < ICU_LEN && (x) != IRQ_SLAVE)
+static void bebox_send_ipi(cpuid_t, uint32_t);
+static void bebox_establish_ipi(int, int, void *);
 
-void setup_bebox_ipi(void);
+void
+setup_bebox_ipi(void)
+{
 
-#endif /* !_LOCORE */
+	ipiops.ppc_send_ipi = bebox_send_ipi;
+	ipiops.ppc_establish_ipi = bebox_establish_ipi;
+	ipiops.ppc_ipi_vector = IPI_VECTOR;
+}
 
-#endif /* !_BEBOX_INTR_H_ */
+static void
+bebox_send_ipi(cpuid_t target, uint32_t mesg)
+{
+	struct cpu_info * const ci = curcpu();
+	int i;
+
+	switch (target) {
+	case IPI_DST_ALL:
+	case IPI_DST_NOTME:
+		for (i = 0; i < ncpu; i++) {
+			struct cpu_info * const dst_ci = cpu_lookup(i);
+
+			if (target == IPI_DST_ALL || dst_ci != ci) {
+				atomic_or_32(&dst_ci->ci_pending_ipis, mesg);
+			}
+		}
+		break;
+
+	default:
+	    {
+		struct cpu_info * const dst_ci = cpu_lookup(target);
+
+		atomic_or_32(&dst_ci->ci_pending_ipis, mesg);
+		break;
+	    }
+	}
+}
+
+static void
+bebox_establish_ipi(int type, int level, void *ih_args)
+{
+	/* XXXXX: nothing? */
+}
