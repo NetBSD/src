@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.75 2012/10/20 13:18:45 kiyohara Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.76 2012/10/20 14:42:15 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.75 2012/10/20 13:18:45 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.76 2012/10/20 14:42:15 kiyohara Exp $");
 
 #include "opt_ppcparam.h"
+#include "opt_ppccache.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 #include "sysmon_envsys.h"
@@ -580,6 +581,13 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		hid0 |= HID0_EIEC;
 		break;
 	}
+
+#ifdef MULTIPROCESSOR
+	switch (vers) {
+	case MPC603e:
+		hid0 |= HID0_ABE;
+	}
+#endif
 
 	if (hid0 != hid0_save) {
 		mtspr(SPR_HID0, hid0);
@@ -1189,7 +1197,7 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 #endif /* NSYSMON_ENVSYS > 0 */
 
 #ifdef MULTIPROCESSOR
-extern volatile u_int cpu_spinstart_ack;
+volatile u_int cpu_spinstart_ack, cpu_spinstart_cpunum;
 
 int
 cpu_spinup(device_t self, struct cpu_info *ci)
@@ -1243,14 +1251,22 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 		h->hatch_asr = 0;
 
 	/* copy the bat regs */
-	__asm volatile ("mfibatu %0,0" : "=r"(h->hatch_batu[0]));
-	__asm volatile ("mfibatl %0,0" : "=r"(h->hatch_batl[0]));
-	__asm volatile ("mfibatu %0,1" : "=r"(h->hatch_batu[1]));
-	__asm volatile ("mfibatl %0,1" : "=r"(h->hatch_batl[1]));
-	__asm volatile ("mfibatu %0,2" : "=r"(h->hatch_batu[2]));
-	__asm volatile ("mfibatl %0,2" : "=r"(h->hatch_batl[2]));
-	__asm volatile ("mfibatu %0,3" : "=r"(h->hatch_batu[3]));
-	__asm volatile ("mfibatl %0,3" : "=r"(h->hatch_batl[3]));
+	__asm volatile ("mfibatu %0,0" : "=r"(h->hatch_ibatu[0]));
+	__asm volatile ("mfibatl %0,0" : "=r"(h->hatch_ibatl[0]));
+	__asm volatile ("mfibatu %0,1" : "=r"(h->hatch_ibatu[1]));
+	__asm volatile ("mfibatl %0,1" : "=r"(h->hatch_ibatl[1]));
+	__asm volatile ("mfibatu %0,2" : "=r"(h->hatch_ibatu[2]));
+	__asm volatile ("mfibatl %0,2" : "=r"(h->hatch_ibatl[2]));
+	__asm volatile ("mfibatu %0,3" : "=r"(h->hatch_ibatu[3]));
+	__asm volatile ("mfibatl %0,3" : "=r"(h->hatch_ibatl[3]));
+	__asm volatile ("mfdbatu %0,0" : "=r"(h->hatch_dbatu[0]));
+	__asm volatile ("mfdbatl %0,0" : "=r"(h->hatch_dbatl[0]));
+	__asm volatile ("mfdbatu %0,1" : "=r"(h->hatch_dbatu[1]));
+	__asm volatile ("mfdbatl %0,1" : "=r"(h->hatch_dbatl[1]));
+	__asm volatile ("mfdbatu %0,2" : "=r"(h->hatch_dbatu[2]));
+	__asm volatile ("mfdbatl %0,2" : "=r"(h->hatch_dbatl[2]));
+	__asm volatile ("mfdbatu %0,3" : "=r"(h->hatch_dbatu[3]));
+	__asm volatile ("mfdbatl %0,3" : "=r"(h->hatch_dbatl[3]));
 	__asm volatile ("sync; isync");
 
 	if (md_setup_trampoline(h, ci) == -1)
@@ -1262,7 +1278,19 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 
 	delay(200000);
 
+#ifdef CACHE_PROTO_MEI
+	__asm volatile ("dcbi 0,%0"::"r"(&h->hatch_running):"memory");
+	__asm volatile ("sync; isync");
+	__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
+	__asm volatile ("sync; isync");
+#endif
 	if (h->hatch_running < 1) {
+#ifdef CACHE_PROTO_MEI
+		__asm volatile ("dcbi 0,%0"::"r"(&cpu_spinstart_ack):"memory");
+		__asm volatile ("sync; isync");
+		__asm volatile ("dcbst 0,%0"::"r"(&cpu_spinstart_ack):"memory");
+		__asm volatile ("sync; isync");
+#endif
 		aprint_error("%d:CPU %d didn't start %d\n", cpu_spinstart_ack,
 		    ci->ci_cpuid, cpu_spinstart_ack);
 		Debugger();
@@ -1305,14 +1333,22 @@ cpu_hatch(void)
 	cpu_spinstart_ack = 0;
 
 	/* Initialize MMU. */
-	__asm ("mtibatu 0,%0" :: "r"(h->hatch_batu[0]));
-	__asm ("mtibatl 0,%0" :: "r"(h->hatch_batl[0]));
-	__asm ("mtibatu 1,%0" :: "r"(h->hatch_batu[1]));
-	__asm ("mtibatl 1,%0" :: "r"(h->hatch_batl[1]));
-	__asm ("mtibatu 2,%0" :: "r"(h->hatch_batu[2]));
-	__asm ("mtibatl 2,%0" :: "r"(h->hatch_batl[2]));
-	__asm ("mtibatu 3,%0" :: "r"(h->hatch_batu[3]));
-	__asm ("mtibatl 3,%0" :: "r"(h->hatch_batl[3]));
+	__asm ("mtibatu 0,%0" :: "r"(h->hatch_ibatu[0]));
+	__asm ("mtibatl 0,%0" :: "r"(h->hatch_ibatl[0]));
+	__asm ("mtibatu 1,%0" :: "r"(h->hatch_ibatu[1]));
+	__asm ("mtibatl 1,%0" :: "r"(h->hatch_ibatl[1]));
+	__asm ("mtibatu 2,%0" :: "r"(h->hatch_ibatu[2]));
+	__asm ("mtibatl 2,%0" :: "r"(h->hatch_ibatl[2]));
+	__asm ("mtibatu 3,%0" :: "r"(h->hatch_ibatu[3]));
+	__asm ("mtibatl 3,%0" :: "r"(h->hatch_ibatl[3]));
+	__asm ("mtdbatu 0,%0" :: "r"(h->hatch_dbatu[0]));
+	__asm ("mtdbatl 0,%0" :: "r"(h->hatch_dbatl[0]));
+	__asm ("mtdbatu 1,%0" :: "r"(h->hatch_dbatu[1]));
+	__asm ("mtdbatl 1,%0" :: "r"(h->hatch_dbatl[1]));
+	__asm ("mtdbatu 2,%0" :: "r"(h->hatch_dbatu[2]));
+	__asm ("mtdbatl 2,%0" :: "r"(h->hatch_dbatl[2]));
+	__asm ("mtdbatu 3,%0" :: "r"(h->hatch_dbatu[3]));
+	__asm ("mtdbatl 3,%0" :: "r"(h->hatch_dbatl[3]));
 
 	mtspr(SPR_HID0, h->hatch_hid0);
 
