@@ -1,4 +1,4 @@
-/*	$NetBSD: i128var.h,v 1.2 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: i128var.h,v 1.3 2012/10/20 13:31:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i128var.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i128var.h,v 1.3 2012/10/20 13:31:09 macallan Exp $");
 
 /* 
  * register definition for Number Nine Imagine 128 graphics controllers
@@ -44,5 +44,8 @@ void i128_bitblt(bus_space_tag_t, bus_space_handle_t, int, int, int, int, int,
     int, int);
 void i128_rectfill(bus_space_tag_t, bus_space_handle_t, int, int, int, int,
     uint32_t);
+void i128_ready(bus_space_tag_t, bus_space_handle_t);
+void i128_sync(bus_space_tag_t, bus_space_handle_t);
+
 
 #endif /* I128VAR_H */
