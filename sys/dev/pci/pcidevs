@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1142 2012/10/20 19:53:28 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1143 2012/10/21 23:06:59 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1149,7 +1149,10 @@ product ARECA ARC1681		0x1681	ARC-1681
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 
 /* ASMedia products */
-product ASMEDIA ASM1061		0x0612	ASM1061 AHCI SATA III Controller
+product ASMEDIA ASM1061_01	0x0601	ASM1061 AHCI SATA III Controller
+product ASMEDIA ASM1061_02	0x0602	ASM1061 AHCI SATA III Controller
+product ASMEDIA ASM1061_11	0x0611	ASM1061 AHCI SATA III Controller
+product ASMEDIA ASM1061_12	0x0612	ASM1061 AHCI SATA III Controller
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
