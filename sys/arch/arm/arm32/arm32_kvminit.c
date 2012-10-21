@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.12 2012/10/19 12:36:24 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.13 2012/10/21 22:04:05 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.12 2012/10/19 12:36:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.13 2012/10/21 22:04:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -663,7 +663,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv = *pv;
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
-		cur_pv.pv_va = kernel_base;
+		cur_pv.pv_va = KERNEL_BASE;
 		cur_pv.pv_pa = bmi->bmi_start;
 		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
