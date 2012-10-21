@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.4 2012/10/21 22:57:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <err.h>
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
@@ -91,7 +92,7 @@ struct	flags	tcpfl[] = {
 	{ 0, '\0' }
 };
 
-char *reasons[] = {
+const char *reasons[] = {
 	"filter-rule",
 	"log-or-block_1",
 	"pps-rate",
@@ -125,41 +126,40 @@ static	char	*pidfile = "/etc/ipmon.pid";
 
 static	char	line[2048];
 static	int	donehup = 0;
-static	void	usage __P((char *));
-static	void	handlehup __P((int));
-static	void	flushlogs __P((char *, FILE *));
-static	void	print_log __P((config_t *, logsource_t *, char *, int));
-static	void	print_ipflog __P((config_t *, char *, int));
-static	void	print_natlog __P((config_t *, char *, int));
-static	void	print_statelog __P((config_t *, char *, int));
-static	int	read_log __P((int, int *, char *, int));
-static	void	write_pid __P((char *));
-static	char	*icmpname __P((u_int, u_int));
-static	char	*icmpname6 __P((u_int, u_int));
-static	icmp_type_t *find_icmptype __P((int, icmp_type_t *, size_t));
-static	icmp_subtype_t *find_icmpsubtype __P((int, icmp_subtype_t *, size_t));
+static	void	usage(const char *);
+static	void	handlehup(int);
+static	void	flushlogs(const char *, FILE *);
+static	void	print_log(config_t *, logsource_t *, const void *, size_t);
+static	void	print_ipflog(config_t *, const void *, size_t);
+static	void	print_natlog(config_t *, const void *, size_t);
+static	void	print_statelog(config_t *, const void *, size_t);
+static	int	read_log(int, size_t *, void *, size_t);
+static	void	write_pid(const char *);
+static	char	*icmpname(u_int, u_int);
+static	char	*icmpname6(u_int, u_int);
+static	icmp_type_t *find_icmptype(int, icmp_type_t *, size_t);
+static	icmp_subtype_t *find_icmpsubtype(int, icmp_subtype_t *, size_t);
 #ifdef __hpux
-static	struct	tm	*get_tm __P((u_32_t));
+static	struct	tm	*get_tm(u_32_t);
 #else
-static	struct	tm	*get_tm __P((time_t));
+static	struct	tm	*get_tm(time_t);
 #endif
 
-char	*portlocalname __P((int, char *, u_int));
-int	main __P((int, char *[]));
+char	*portlocalname(int, char *, u_int);
 
-static	void	logopts __P((int, char *));
-static	void	init_tabs __P((void));
-static	char	*getlocalproto __P((u_int));
-static	void	openlogs __P((config_t *conf));
-static	int	read_loginfo __P((config_t *conf));
-static	void	initconfig __P((config_t *conf));
+static	void	logopts(int, const char *);
+static	void	init_tabs(void);
+static	char	*getlocalproto(u_int);
+static	void	openlogs(config_t *);
+static	int	read_loginfo(config_t *);
+static	void	initconfig(config_t *);
 
 static	char	**protocols = NULL;
 static	char	**udp_ports = NULL;
 static	char	**tcp_ports = NULL;
 
 
-#define	HOSTNAMEV4(b)	hostname(AF_INET, (u_32_t *)&(b))
+#define	HOSTNAMEV4(b)	hostname(AF_INET, (const void *)&(b))
 
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
@@ -313,10 +313,8 @@ static icmp_type_t icmptypes6[] = {
 	{ -2,			NULL,	0,		NULL }
 };
 
-static icmp_subtype_t *find_icmpsubtype(type, table, tablesz)
-	int type;
-	icmp_subtype_t *table;
-	size_t tablesz;
+static icmp_subtype_t *
+find_icmpsubtype(int type, icmp_subtype_t *table, size_t tablesz)
 {
 	icmp_subtype_t *ist;
 	int i;
@@ -338,10 +336,8 @@ static icmp_subtype_t *find_icmpsubtype(type, table, tablesz)
 }
 
 
-static icmp_type_t *find_icmptype(type, table, tablesz)
-	int type;
-	icmp_type_t *table;
-	size_t tablesz;
+static icmp_type_t *
+find_icmptype(int type, icmp_type_t *table, size_t tablesz)
 {
 	icmp_type_t *it;
 	int i;
@@ -363,15 +359,16 @@ static icmp_type_t *find_icmptype(type, table, tablesz)
 }
 
 
-static void handlehup(sig)
-	int sig;
+static void
+handlehup(int sig)
 {
 	signal(SIGHUP, handlehup);
 	donehup = 1;
 }
 
 
-static void init_tabs()
+static void
+init_tabs(void)
 {
 	struct	protoent	*p;
 	struct	servent	*s;
@@ -456,8 +453,8 @@ static void init_tabs()
 }
 
 
-static char *getlocalproto(p)
-	u_int p;
+static char *
+getlocalproto(u_int p)
 {
 	static char pnum[4];
 	char *s;
@@ -472,11 +469,10 @@ static char *getlocalproto(p)
 }
 
 
-static int read_log(fd, lenp, buf, bufsize)
-	int fd, bufsize, *lenp;
-	char *buf;
+static int
+read_log(int fd, size_t *lenp, void *buf, size_t bufsize)
 {
-	int	nr;
+	ssize_t	nr;
 
 	if (bufsize > IPFILTER_LOGSIZE)
 		bufsize = IPFILTER_LOGSIZE;
@@ -491,10 +487,8 @@ static int read_log(fd, lenp, buf, bufsize)
 }
 
 
-char *portlocalname(res, proto, port)
-	int res;
-	char *proto;
-	u_int port;
+char *
+portlocalname(int res, char *proto, u_int port)
 {
 	static char pname[8];
 	char *s;
@@ -515,9 +509,8 @@ char *portlocalname(res, proto, port)
 }
 
 
-static char *icmpname(type, code)
-	u_int type;
-	u_int code;
+static char *
+icmpname(u_int type, u_int code)
 {
 	static char name[80];
 	icmp_subtype_t *ist;
@@ -546,9 +539,8 @@ static char *icmpname(type, code)
 	return name;
 }
 
-static char *icmpname6(type, code)
-	u_int type;
-	u_int code;
+static char *
+icmpname6(u_int type, u_int code)
 {
 	static char name[80];
 	icmp_subtype_t *ist;
@@ -578,11 +570,8 @@ static char *icmpname6(type, code)
 }
 
 
-void dumphex(log, dopts, buf, len)
-	FILE *log;
-	int dopts;
-	char *buf;
-	int len;
+void
+dumphex(FILE *log, int dopts, const void *buf, size_t len)
 {
 	char	hline[80];
 	int	i, j, k;
@@ -642,12 +631,14 @@ void dumphex(log, dopts, buf, len)
 }
 
 
-static struct tm *get_tm(sec)
+static struct tm *
+get_tm(
 #ifdef __hpux
-	u_32_t sec;
+	u_32_t sec
 #else
-	time_t sec;
+	time_t sec
 #endif
+)
 {
 	struct tm *tm;
 	time_t t;
@@ -657,23 +648,21 @@ static struct tm *get_tm(sec)
 	return tm;
 }
 
-static void print_natlog(conf, buf, blen)
-	config_t *conf;
-	char *buf;
-	int blen;
+static void
+print_natlog(config_t *conf, const void *buf, size_t blen)
 {
 	static u_32_t seqnum = 0;
 	int res, i, len, family;
-	struct natlog *nl;
+	const struct natlog *nl;
 	struct tm *tm;
-	iplog_t	*ipl;
+	const iplog_t *ipl;
 	char *proto;
 	int simple;
 	char *t;
 
 	t = line;
 	simple = 0;
-	ipl = (iplog_t *)buf;
+	ipl = (const iplog_t *)buf;
 	if (ipl->ipl_seqnum != seqnum) {
 		if ((ipmonopts & IPMON_SYSLOG) != 0) {
 			syslog(LOG_WARNING,
@@ -689,7 +678,7 @@ static void print_natlog(conf, buf, blen)
 	}
 	seqnum = ipl->ipl_seqnum + ipl->ipl_count;
 
-	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
+	nl = (const struct natlog *)((const char *)ipl + sizeof(*ipl));
 	res = (ipmonopts & IPMON_RESOLVE) ? 1 : 0;
 	tm = get_tm(ipl->ipl_sec);
 	len = sizeof(line);
@@ -847,20 +836,18 @@ static void print_natlog(conf, buf, blen)
 }
 
 
-static void print_statelog(conf, buf, blen)
-	config_t *conf;
-	char *buf;
-	int blen;
+static void
+print_statelog(config_t *conf, const void *buf, size_t blen)
 {
 	static u_32_t seqnum = 0;
 	int res, i, len, family;
-	struct ipslog *sl;
+	const struct ipslog *sl;
 	char *t, *proto;
 	struct tm *tm;
-	iplog_t *ipl;
+	const iplog_t *ipl;
 
 	t = line;
-	ipl = (iplog_t *)buf;
+	ipl = (const iplog_t *)buf;
 	if (ipl->ipl_seqnum != seqnum) {
 		if ((ipmonopts & IPMON_SYSLOG) != 0) {
 			syslog(LOG_WARNING,
@@ -876,7 +863,7 @@ static void print_statelog(conf, buf, blen)
 	}
 	seqnum = ipl->ipl_seqnum + ipl->ipl_count;
 
-	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
+	sl = (const struct ipslog *)((const char *)ipl + sizeof(*ipl));
 	res = (ipmonopts & IPMON_RESOLVE) ? 1 : 0;
 	tm = get_tm(ipl->ipl_sec);
 	len = sizeof(line);
@@ -1003,34 +990,29 @@ static void print_statelog(conf, buf, blen)
 }
 
 
-static void print_log(conf, log, buf, blen)
-	config_t *conf;
-	logsource_t *log;
-	char *buf;
-	int blen;
+static void
+print_log(config_t *conf, logsource_t *log, const void *buf, size_t blen)
 {
-	char *bp, *bpo;
-	iplog_t	*ipl;
+	void *bp;
+	size_t bsize;
+	const iplog_t *ipl;
 	int psize;
 
 	bp = NULL;
-	bpo = NULL;
+	bsize = 0;
 
 	while (blen > 0) {
-		ipl = (iplog_t *)buf;
-		if ((u_long)ipl & (sizeof(long)-1)) {
-			if (bp)
-				bpo = bp;
-			bp = (char *)malloc(blen);
-			bcopy((char *)ipl, bp, blen);
-			if (bpo) {
-				free(bpo);
-				bpo = NULL;
+		if ((uintptr_t)buf & (__alignof(iplog_t) - 1)) {
+			if (bsize < blen) { 
+				bp = realloc(bp, blen);
+				if (bp == NULL)
+					err(1, "realloc");
+				bsize = blen;
 			}
+			memcpy(bp, buf, blen);
 			buf = bp;
-			continue;
 		}
-
+		ipl = (const iplog_t *)buf;
 		psize = ipl->ipl_dsize;
 		if (psize > blen)
 			break;
@@ -1054,7 +1036,7 @@ static void print_log(conf, log, buf, blen)
 		}
 
 		blen -= psize;
-		buf += psize;
+		buf = (const char *)buf + psize;
 	}
 	if (bp)
 		free(bp);
@@ -1062,22 +1044,20 @@ static void print_log(conf, log, buf, blen)
 }
 
 
-static void print_ipflog(conf, buf, blen)
-	config_t *conf;
-	char *buf;
-	int blen;
+static void
+print_ipflog(config_t *conf, const  void *buf, size_t blen)
 {
 	static u_32_t seqnum = 0;
 	int i, f, lvl, res, len, off, plen, ipoff, defaction;
 	struct icmp *icmp;
 	struct icmp *ic;
 	char *t, *proto;
-	ip_t *ipc, *ip;
+	const ip_t *ipc, *ip;
 	struct tm *tm;
 	u_32_t *s, *d;
 	u_short hl, p;
-	ipflog_t *ipf;
-	iplog_t *ipl;
+	const ipflog_t *ipf;
+	const iplog_t *ipl;
 	tcphdr_t *tp;
 #ifdef	USE_INET6
 	struct ip6_ext *ehp;
@@ -1086,7 +1066,7 @@ static void print_ipflog(conf, buf, blen)
 	int go;
 #endif
 
-	ipl = (iplog_t *)buf;
+	ipl = (const iplog_t *)buf;
 	if (ipl->ipl_seqnum != seqnum) {
 		if ((ipmonopts & IPMON_SYSLOG) != 0) {
 			syslog(LOG_WARNING,
@@ -1102,8 +1082,8 @@ static void print_ipflog(conf, buf, blen)
 	}
 	seqnum = ipl->ipl_seqnum + ipl->ipl_count;
 
-	ipf = (ipflog_t *)((char *)buf + sizeof(*ipl));
-	ip = (ip_t *)((char *)ipf + sizeof(*ipf));
+	ipf = (const ipflog_t *)((const char *)buf + sizeof(*ipl));
+	ip = (const ip_t *)((const char *)ipf + sizeof(*ipf));
 	f = ipf->fl_family;
 	res = (ipmonopts & IPMON_RESOLVE) ? 1 : 0;
 	t = line;
@@ -1478,16 +1458,16 @@ printipflog:
 }
 
 
-static void usage(prog)
-	char *prog;
+static void
+usage(const char *prog)
 {
 	fprintf(stderr, "%s: [-NFhstvxX] [-f <logfile>]\n", prog);
 	exit(1);
 }
 
 
-static void write_pid(file)
-	char *file;
+static void
+write_pid(const char *file)
 {
 	FILE *fp = NULL;
 	int fd;
@@ -1506,9 +1486,8 @@ static void write_pid(file)
 }
 
 
-static void flushlogs(file, log)
-	char *file;
-	FILE *log;
+static void
+flushlogs(const char *file, FILE *log)
 {
 	int	fd, flushed = 0;
 
@@ -1537,12 +1516,11 @@ static void flushlogs(file, log)
 }
 
 
-static void logopts(turnon, options)
-	int turnon;
-	char *options;
+static void
+logopts(int turnon, const char *options)
 {
 	int flags = 0;
-	char *s;
+	const char *s;
 
 	for (s = options; *s; s++)
 	{
@@ -1569,7 +1547,8 @@ static void logopts(turnon, options)
 		ipmonopts &= ~(flags);
 }
 
-static void initconfig(config_t *conf)
+static void
+initconfig(config_t *conf)
 {
 	int i;
 
@@ -1597,9 +1576,8 @@ static void initconfig(config_t *conf)
 }
 
 
-int main(argc, argv)
-	int argc;
-	char *argv[];
+int
+main(int argc, char *argv[])
 {
 	int	doread, c, make_daemon = 0;
 	char	*prog;
@@ -1781,7 +1759,8 @@ int main(argc, argv)
 }
 
 
-static void openlogs(config_t *conf)
+static void
+openlogs(config_t *conf)
 {
 	logsource_t *l;
 	struct stat sb;
@@ -1821,19 +1800,21 @@ static void openlogs(config_t *conf)
 }
 
 
-static int read_loginfo(config_t *conf)
+static int
+read_loginfo(config_t *conf)
 {
 	iplog_t buf[DEFAULT_IPFLOGSIZE/sizeof(iplog_t)+1];
-	int n, tr, nr, i;
+	size_t n, tr, nr, i;
+	int nf;
 	logsource_t *l;
 	fd_set fdr;
 
 	fdr = conf->fdmr;
 
-	n = select(conf->maxfd + 1, &fdr, NULL, NULL, NULL);
-	if (n == 0)
+	nf = select(conf->maxfd + 1, &fdr, NULL, NULL, NULL);
+	if (nf == 0)
 		return 1;
-	if (n == -1) {
+	if (nf == -1) {
 		if (errno == EINTR)
 			return 1;
 		return -1;
