@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.12 2012/08/29 07:06:27 matt Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.13 2012/10/21 09:25:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -131,3 +131,33 @@ ASENTRY_NP(irq_entry)
 LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
+
+	.p2align	5
+ASENTRY_NP(irq_idle_entry)
+	PUSHIDLEFRAME
+
+	/*
+	 * Increment the interrupt nesting depth and call the interrupt
+	 * dispatch routine.  We've pushed a frame, so we can safely use
+	 * callee-saved regs here.  We use the following registers, which
+	 * we expect to persist:
+	 *
+	 *	r4	address of current cpu_info
+	 *	r6	old value of `ci_intr_depth'
+	 */
+	GET_CURCPU(r4)
+	ldr	r6, [r4, #CI_INTR_DEPTH]
+	add	r1, r6, #1
+	str	r1, [r4, #CI_INTR_DEPTH]
+
+	mov	r0, sp			/* arg for dispatcher */
+	bl	ARM_IRQ_HANDLER
+
+	/*
+	 * Restore the old interrupt depth value (which should be the
+	 * same as decrementing it at this point).
+	 */
+	str	r6, [r4, #CI_INTR_DEPTH]
+
+	PULLIDLEFRAME
+	RET
