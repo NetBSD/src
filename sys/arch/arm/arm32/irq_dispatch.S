@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.13 2012/10/21 09:25:16 matt Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.14 2012/10/21 10:29:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -159,5 +159,15 @@ ASENTRY_NP(irq_idle_entry)
 	 */
 	str	r6, [r4, #CI_INTR_DEPTH]
 
-	PULLIDLEFRAME
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+        ldr	r2, [r4, #CI_CPL]	/* Get current priority level */
+	ldr	r3, [r4, #CI_SOFTINTS]	/* Get pending softint mask */
+#endif
+
+	PULLIDLEFRAME			/* restore r4, r6, sp, lr */
+
+#if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+        lsrs	r3, r3, r2		/* shift mask by cpl */
+	bne	_C_LABEL(dosoftints)	/* dosoftints(void) */
+#endif
 	RET
