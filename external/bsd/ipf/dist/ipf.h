@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
+/*	$NetBSD: ipf.h,v 1.3 2012/10/21 22:57:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -373,7 +373,7 @@ extern u_char secbit __P((int));
 extern u_char seclevel __P((char *));
 extern void printfraginfo __P((char *, struct ipfr *));
 extern void printifname __P((char *, char *, void *));
-extern char *hostname __P((int, void *));
+extern char *hostname __P((int, const void *));
 extern struct ipstate *printstate __P((struct ipstate *, int, u_long));
 extern void printsbuf __P((char *));
 extern void printnat __P((struct ipnat *, int));
