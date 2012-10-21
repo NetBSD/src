@@ -34,9 +34,8 @@
 	.arch	armv7a
 
 ENTRY(armv7_cpu_sleep)
-	tst	r0, #0x00000000 	@ shouldn't sleep 0
-	wfene				@ this can cheaper when doing MP
-	bx	lr
+	wfi				@ wait for an interrupt
+	b	irq_idle_entry		@ assume we got an interrupt
 END(armv7_cpu_sleep)
 
 ENTRY(armv7_wait)
