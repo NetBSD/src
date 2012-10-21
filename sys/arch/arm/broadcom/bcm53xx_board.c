@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.7 2012/10/18 02:36:37 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.8 2012/10/21 10:29:23 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.7 2012/10/18 02:36:37 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.8 2012/10/21 10:29:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,17 +67,40 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 static struct cpu_softc cpu_softc;
 static struct bcm53xx_clock_info clk_info;
 
-struct arm32_dma_range bcm53xx_dma_ranges[2];
+struct arm32_dma_range bcm53xx_dma_ranges[2] = {
+	[0] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+		.dr_len = 0x10000000,
+	}, [1] = {
+		.dr_sysbase = 0x90000000,
+		.dr_busbase = 0x90000000,
+	},
+};
 
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
+	._ranges = bcm53xx_dma_ranges,
+	._nranges = __arraycount(bcm53xx_dma_ranges),
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
 };
 
-struct arm32_dma_range bcm53xx_coherent_dma_ranges[2];
+struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
+	[0] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+		.dr_len = 0x10000000,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	}, [1] = {
+		.dr_sysbase = 0x90000000,
+		.dr_busbase = 0x90000000,
+	},
+};
 
 struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
+	._ranges = bcm53xx_coherent_dma_ranges,
+	._nranges = __arraycount(bcm53xx_coherent_dma_ranges),
 	_BUS_DMAMAP_FUNCS,
 	_BUS_DMAMEM_FUNCS,
 	_BUS_DMATAG_FUNCS,
@@ -504,26 +527,16 @@ bcm53xx_dma_bootstrap(psize_t memsize)
 		 * try to allocate from range 0 first resulting in allocations
 		 * below 256MB which for PCI and GMAC are coherent.
 		 */
-		bcm53xx_dma_ranges[0].dr_sysbase = 0x80000000;
-		bcm53xx_dma_ranges[0].dr_busbase = 0x80000000;
-		bcm53xx_dma_ranges[0].dr_len = 0x10000000;
-		bcm53xx_dma_ranges[1].dr_sysbase = 0x90000000;
-		bcm53xx_dma_ranges[1].dr_busbase = 0x90000000;
 		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
-		bcm53xx_dma_tag._ranges = bcm53xx_dma_ranges;
-		bcm53xx_dma_tag._nranges = __arraycount(bcm53xx_dma_ranges);
-		bcm53xx_coherent_dma_ranges[0] = bcm53xx_dma_ranges[0];
-		bcm53xx_coherent_dma_ranges[1] = bcm53xx_dma_ranges[1];
-		bcm53xx_coherent_dma_tag._nranges =
-		    __arraycount(bcm53xx_coherent_dma_ranges);
+		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
 	} else {
-		bcm53xx_coherent_dma_ranges[0].dr_sysbase = 0x80000000;
-		bcm53xx_coherent_dma_ranges[0].dr_busbase = 0x80000000;
+		bcm53xx_dma_ranges[0].dr_len = memsize;
 		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
+		bcm53xx_dma_tag._nranges = 1;
 		bcm53xx_coherent_dma_tag._nranges = 1;
 	}
-	bcm53xx_coherent_dma_ranges[0].dr_flags = _BUS_DMAMAP_COHERENT;
-	bcm53xx_coherent_dma_tag._ranges = bcm53xx_coherent_dma_ranges;
+	KASSERT(bcm53xx_dma_tag._ranges[0].dr_flags == 0);
+	KASSERT(bcm53xx_coherent_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
 }
 
 #ifdef MULTIPROCESSOR
