@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.63 2012/10/19 13:46:07 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.64 2012/10/21 10:22:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.63 2012/10/19 13:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.64 2012/10/21 10:22:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,7 +1194,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		 * If this is a non-COHERENT mapping, then the existing kernel
 		 * mapping is already compatible with it.
 		 */
-		if ((flags & _BUS_DMAMAP_COHERENT) == 0) {
+		if ((flags & BUS_DMA_COHERENT) == 0) {
+#ifdef DEBUG_DMA
+			printf("dmamem_map: =%p\n", *kvap);
+#endif	/* DEBUG_DMA */
 			*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
 			return 0;
 		}
@@ -1209,6 +1212,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			if (dr != NULL
 			    && (dr->dr_flags & _BUS_DMAMAP_COHERENT) != 0) {
 				*kvap = (void *)PMAP_MAP_POOLPAGE(paddr);
+#ifdef DEBUG_DMA
+				printf("dmamem_map: =%p\n", *kvap);
+#endif	/* DEBUG_DMA */
 				return 0;
 			}
 		}
