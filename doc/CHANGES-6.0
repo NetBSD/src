@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.218 2012/10/13 06:18:33 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.219 2012/10/21 13:30:20 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -5643,7 +5643,6 @@ sys/dev/usb/usbdevs				1.617
 share/man/man4/Makefile				1.586
 share/man/man4/urtw.4				1.1
 distrib/sets/lists/man/mi			1.1393
-sys/dev/usb/usbdevs				1.617
 sys/arch/i386/conf/GENERIC			1.357
 sys/arch/amd64/conf/GENERIC			1.1075 via patch
 
