@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.100 2012/08/24 05:47:51 dholland Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.101 2012/10/21 22:35:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -496,6 +496,11 @@
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
 #define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
+
+/*
+ * Return the natural alignment in bytes for the given type
+ */
+#define	__alignof(__t)  (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
 
 /*
  * Return the number of elements in a statically-allocated array,
