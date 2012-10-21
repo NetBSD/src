@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.9 2009/04/11 14:22:32 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.10 2012/10/21 22:18:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.9 2009/04/11 14:22:32 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.10 2012/10/21 22:18:16 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -1002,7 +1002,7 @@ thread_on_reference(struct message *mp)
 		 */
 		for (j = 0; j < mcount; j++) {
 			/* message_id will be NULL on mbox files */
-			if (marray[i].message_id == NULL)
+			if (marray[j].message_id == NULL)
 				continue;
 
 			if (equal(marray[j].message_id, parent_id)) {
