@@ -1465,7 +1465,7 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 	BIGNUM		 *t1;
 	int		  ret;
 
-	if (sig[DSA_P].bn == NULL || sig[DSA_Q].bn == NULL || sig[DSA_G].bn == NULL) {
+	if (pubkey[DSA_P].bn == NULL || pubkey[DSA_Q].bn == NULL || pubkey[DSA_G].bn == NULL) {
 		return 0;
 	}
 	M = W = t1 = NULL;
@@ -1479,11 +1479,10 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 		printf("dsa: bad # of Q bits\n");
 		return 0;
 	}
-	if (pubkey->bn[DSA_Q].bits > DSA_MAX_MODULUS_BITS) {
+	if (pubkey->bn[DSA_P].bits > DSA_MAX_MODULUS_BITS) {
 		printf("dsa: p too large\n");
 		return 0;
 	}
-	/* no love for SHA512? */
 	if (calclen > SHA256_DIGEST_LENGTH) {
 		printf("dsa: digest too long\n");
 		return 0;
@@ -1492,8 +1491,8 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 	if ((M = BN_new()) == NULL || (W = BN_new()) == NULL || (t1 = BN_new()) == NULL ||
 	    BN_is_zero(sig[DSA_R].bn) || BN_is_negative(sig[DSA_R].bn) || BN_cmp(sig[DSA_R].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
 	    BN_is_zero(sig[DSA_S].bn) || BN_is_negative(sig[DSA_S].bn) || BN_cmp(sig[DSA_S].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
-	    BN_mod_inverse(W, sig[DSA_S].bn, pubkey->bn[DSA_Q].bn, NULL) != MP_OKAY) {
-		goto err;
+	    BN_mod_inverse(W, sig[DSA_S].bn, pubkey->bn[DSA_Q].bn, NULL) == NULL) {
+		goto done;
 	}
 	if (calclen > qbits / 8) {
 		calclen = qbits / 8;
@@ -1501,12 +1500,14 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 	if (BN_bin2bn(calculated, (int)calclen, M) == NULL ||
 	    !BN_mod_mul(M, M, W, pubkey->bn[DSA_Q].bn, NULL) ||
 	    !BN_mod_mul(W, sig[DSA_R].bn, W, pubkey->bn[DSA_Q].bn, NULL) ||
-	    !BN_mod_exp(pubkey->bn[DSA_P].bn, t1, pubkey->bn[DSA_G].bn, M, NULL) ||
-	    !BN_div(NULL, M, t1, pubkey->bn[DSA_Q].bn, NULL)) {
-		goto err;
+	    !BN_mod_exp(t1, pubkey->bn[DSA_G].bn, M, pubkey->bn[DSA_P].bn, NULL) ||
+	    !BN_mod_exp(W, pubkey->bn[DSA_Y].bn, W, pubkey->bn[DSA_P].bn, NULL) ||
+	    !BN_mod_mul(t1, t1, W, pubkey->bn[DSA_P].bn, NULL) ||
+	    !BN_div(NULL, t1, t1, pubkey->bn[DSA_Q].bn, NULL)) {
+		goto done;
 	}
-	ret = (BN_cmp(M, sig[DSA_R].bn) == 0);
-err:
+	ret = (BN_cmp(t1, sig[DSA_R].bn) == 0);
+done:
 	if (M) {
 		BN_free(M);
 	}
