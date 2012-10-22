@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.37 2012/10/22 17:47:06 christos Exp $ */
+/* $NetBSD: chmod.c,v 1.38 2012/10/22 18:00:46 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.37 2012/10/22 17:47:06 christos Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.38 2012/10/22 18:00:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 done:	argv += optind;
 	argc -= optind;
 
-	if (argc < 2 && (argc < 1 && reference == NULL))
+	if (argc == 0 || (argc == 1 && reference == NULL))
 		usage();
 
 	fts_options = FTS_PHYSICAL;
