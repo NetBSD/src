@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.4 2012/10/21 22:57:48 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.5 2012/10/22 04:35:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -993,54 +993,42 @@ print_statelog(config_t *conf, const void *buf, size_t blen)
 static void
 print_log(config_t *conf, logsource_t *log, const void *buf, size_t blen)
 {
-	void *bp;
-	size_t bsize;
-	const iplog_t *ipl;
+	iplog_t ipl;
 	int psize;
 
-	bp = NULL;
-	bsize = 0;
-
 	while (blen > 0) {
-		if ((uintptr_t)buf & (__alignof(iplog_t) - 1)) {
-			if (bsize < blen) { 
-				bp = realloc(bp, blen);
-				if (bp == NULL)
-					err(1, "realloc");
-				bsize = blen;
-			}
-			memcpy(bp, buf, blen);
-			buf = bp;
-		}
-		ipl = (const iplog_t *)buf;
-		psize = ipl->ipl_dsize;
+		if (sizeof(ipl) > blen)
+			return;
+
+		memcpy(&ipl, buf, sizeof(ipl));
+		psize = ipl.ipl_dsize;
 		if (psize > blen)
-			break;
+			return;
 
 		if (conf->blog != NULL) {
 			fwrite(buf, psize, 1, conf->blog);
 			fflush(conf->blog);
 		}
 
-		if (log->logtype == IPL_LOGIPF) {
-			if (ipl->ipl_magic == IPL_MAGIC)
+		switch (log->logtype) {
+		case IPL_LOGIPF:
+			if (ipl.ipl_magic == IPL_MAGIC)
 				print_ipflog(conf, buf, psize);
-
-		} else if (log->logtype == IPL_LOGNAT) {
-			if (ipl->ipl_magic == IPL_MAGIC_NAT)
+			break;
+		case IPL_LOGNAT:
+			if (ipl.ipl_magic == IPL_MAGIC_NAT)
 				print_natlog(conf, buf, psize);
+			break;
 
-		} else if (log->logtype == IPL_LOGSTATE) {
-			if (ipl->ipl_magic == IPL_MAGIC_STATE)
+		case IPL_LOGSTATE:
+			if (ipl.ipl_magic == IPL_MAGIC_STATE)
 				print_statelog(conf, buf, psize);
+			break;
 		}
 
 		blen -= psize;
 		buf = (const char *)buf + psize;
 	}
-	if (bp)
-		free(bp);
-	return;
 }
 
 
