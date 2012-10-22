@@ -1,4 +1,4 @@
-/*	$NetBSD: hostname.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: hostname.c,v 1.3 2012/10/22 01:21:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -10,9 +10,8 @@
 
 #include "ipf.h"
 
-char *hostname(family, ip)
-	int family;
-	void *ip;
+char *
+hostname(int family, const void *ip)
 {
 	static char hostbuf[MAXHOSTNAMELEN+1];
 	struct hostent *hp;
@@ -22,7 +21,7 @@ char *hostname(family, ip)
 	memset(&ipa, 0, sizeof(ipa));	/* XXX gcc */
 
 	if (family == AF_INET) {
-		ipa.s_addr = *(u_32_t *)ip;
+		ipa.s_addr = *(const u_32_t *)ip;
 		if (ipa.s_addr == htonl(0xfedcba98))
 			return "test.host.dots";
 	}
