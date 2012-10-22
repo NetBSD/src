@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.6 2012/10/20 23:16:24 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.7 2012/10/22 19:46:36 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -182,4 +182,20 @@ usr.bin/calendar/calendars/calendar.netbsd	1.22
 
 	Note the date of the NetBSD 6.0 release.
 	[jnemeth, ticket #611]
+
+external/gpl3/gcc/lib/libgcc/Makefile.inc	1.15
+
+	Fix "Wrong number of words (1) in .for substitution list with
+	2 vars" problem while mknative-ing.
+	[msaitoh, ticket #612]
+
+lib/libl/Makefile				delete
+
+	lib/libl was unused, remove it.
+	[msaitoh, ticket #613]
+
+sbin/ping6/ping6.c				1.81
+
+	Allow ping6 to send 0-length packets.
+	[msaitoh, ticket #614]
 
