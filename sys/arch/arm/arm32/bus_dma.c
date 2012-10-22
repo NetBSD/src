@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.64 2012/10/21 10:22:40 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.65 2012/10/22 15:01:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.64 2012/10/21 10:22:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.65 2012/10/22 15:01:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,8 +741,10 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 		}
 		misalignment = len & line_mask;
 		len -= misalignment;
-		cpu_dcache_inv_range(va, len);
-		cpu_sdcache_inv_range(va, pa, len);
+		if (len > 0) {
+			cpu_dcache_inv_range(va, len);
+			cpu_sdcache_inv_range(va, pa, len);
+		}
 		if (misalignment) {
 			va += len;
 			pa += len;
@@ -1173,9 +1175,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vaddr_t va;
 	paddr_t pa;
 	int curseg;
-	pt_entry_t *ptep/*, pte*/;
-	const uvm_flag_t kmflags =
-	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	pt_entry_t *ptep;
+	const uvm_flag_t kmflags = UVM_KMF_VAONLY
+	    | ((flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0);
+	vsize_t align = 0;
 
 #ifdef DEBUG_DMA
 	printf("dmamem_map: t=%p segs=%p nsegs=%x size=%lx flags=%x\n", t,
@@ -1222,7 +1225,23 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif
 
 	size = round_page(size);
-	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
+	if (__predict_true(size > L2_L_SIZE)) {
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+		if (size >= L1_SS_SIZE)
+			align = L1_SS_SIZE;
+		else
+#endif
+		if (size >= L1_S_SIZE)
+			align = L1_S_SIZE;
+		else
+			align = L2_S_SIZE;
+	}
+
+	va = uvm_km_alloc(kernel_map, size, align, kmflags);
+	if (__predict_false(va == 0 && align > 0)) {
+		align = 0;
+		va = uvm_km_alloc(kernel_map, size, 0, kmflags);
+	}
 
 	if (va == 0)
 		return (ENOMEM);
@@ -1238,9 +1257,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #endif	/* DEBUG_DMA */
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, pa,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			pmap_kenter_pa(va, pa,
+			    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 
 			/*
 			 * If the memory must remain coherent with the
@@ -1296,8 +1314,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DEBUG_DMA
-	printf("dmamem_unmap: t=%p kva=%p size=%lx\n", t, kva,
-	    (unsigned long)size);
+	printf("dmamem_unmap: t=%p kva=%p size=%zx\n", t, kva, size);
 #endif	/* DEBUG_DMA */
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -1305,7 +1322,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 #endif	/* DIAGNOSTIC */
 
 	size = round_page(size);
-	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_kremove((vaddr_t)kva, size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
@@ -1394,7 +1411,9 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 				coherent = (*pde & L1_S_CACHE_MASK) != 0;
 			} else {
 				pt_entry_t pte = *ptep;
-				KDASSERT((pte & L2_TYPE_MASK) != L2_TYPE_INV);
+				KDASSERTMSG((pte & L2_TYPE_MASK) != L2_TYPE_INV,
+				    "va=%#"PRIxVADDR" pde=%#x ptep=%p pte=%#x",
+				    vaddr, *pde, ptep, pte);
 				if (__predict_false((pte & L2_TYPE_MASK)
 						    == L2_TYPE_L)) {
 					curaddr = (pte & L2_L_FRAME) |
