@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.101 2012/10/21 22:35:52 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.102 2012/10/22 14:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -500,7 +500,11 @@
 /*
  * Return the natural alignment in bytes for the given type
  */
-#define	__alignof(__t)  (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
+#ifdef __alignof__
+#define	__alignof(__t)  __alignof__(__t)
+#else
+#define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
+#endif
 
 /*
  * Return the number of elements in a statically-allocated array,
