@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.21 2012/07/27 18:34:35 wiz Exp $
+.\"	$NetBSD: touch.1,v 1.22 2012/10/22 21:51:58 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd July 24, 2012
+.Dd October 22, 2012
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -66,6 +66,7 @@ The
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
 .It Fl d Ar human-datetime
+.It Fl Fl date Ar human-datetime
 Parse
 .Ar human-datetime
 using the human datetime parser
@@ -84,6 +85,7 @@ The access time of the file is not changed unless the
 .Fl a
 flag is also specified.
 .It Fl r Ar file
+.It Fl Fl reference Ar file
 Use the access and modifications times from
 .Ar file
 instead of the current time of day.
