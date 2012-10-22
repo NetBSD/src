@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.18 2012/09/07 04:40:13 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.19 2012/10/22 15:43:32 matt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.18 2012/09/07 04:40:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.19 2012/10/22 15:43:32 matt Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -369,7 +369,7 @@ initarm(void *arg)
 	}
 
 	arm32_bootmem_init(0, physical_end, (uintptr_t) KERNEL_BASE_phys);
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0,
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    marvell_devmap, false);
 
 	/* we've a specific device_register routine */
