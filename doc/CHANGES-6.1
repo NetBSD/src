@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.9 2012/10/23 20:12:07 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.10 2012/10/23 20:20:15 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -261,4 +261,16 @@ share/man/man4/uftdi.4				1.17
 
 	Note some additional devices.
 	[msaitoh, ticket #626]
+
+doc/3RDPARTY				patch
+share/zoneinfo/asia			patch
+share/zoneinfo/australasia		patch
+
+	Update timezone definitions to tzdata2012g from
+	ftp://ftp.iana.org/tz/releases/tzdata2012g.tar.gz
+	Changes from tzdata2012f to tzdata2012g:
+	Samoa fall 2012 and later.  (Thanks to Nicholas Pereira
+	and Robert Elz.)
+	Palestine fall 2012.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #627]
 
