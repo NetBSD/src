@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.252 2012/10/23 23:38:54 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.253 2012/10/23 23:43:31 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4773,4 +4773,16 @@ bin/pax/ftree.c					1.42
 
 	Deal properly with empty lines in spec file.
 	[msaitoh, ticket #1459]
+
+doc/3RDPARTY                            patch
+share/zoneinfo/asia                     patch
+share/zoneinfo/australasia              patch
+
+        Update timezone definitions to tzdata2012g from
+        ftp://ftp.iana.org/tz/releases/tzdata2012g.tar.gz
+        Changes from tzdata2012f to tzdata2012g:
+        Samoa fall 2012 and later.  (Thanks to Nicholas Pereira
+        and Robert Elz.)
+        Palestine fall 2012.  (Thanks to Steffen Thorsen.)
+        [apb, ticket #1461]
 
