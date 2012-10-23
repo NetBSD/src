@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.24 2012/01/04 17:01:52 macallan Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.25 2012/10/23 15:12:59 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.24 2012/01/04 17:01:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.25 2012/10/23 15:12:59 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -166,6 +166,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *dp, *rp, *hp, *hrp;
+	uint8_t *rrp;
 	u_char *fr;
 	int x, y, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0;
@@ -185,7 +186,8 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	if (!CHAR_IN_FONT(uc, font))
 		return;
 
-	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	rp = (int32_t *)rrp;
 	if (ri->ri_hwbits)
 		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
@@ -223,7 +225,7 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 		b1 =  clr[1] & 0xff;
 
 		for (y = 0; y < height; y++) {
-			dp = rp + ri->ri_width * y;
+			dp = (uint32_t *)(rrp + ri->ri_stride * y);
 			for (x = 0; x < width; x++) {
 				aval = *fr;
 				if (aval == 0) {
