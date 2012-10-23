@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.11 2012/10/23 01:59:18 christos Exp $ */
+/*	$NetBSD: map_parse.y,v 1.12 2012/10/23 15:30:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,7 +152,8 @@ keysym_cmd	: /* empty */
 			cur_mp->group1[0] = $2;
 		} 
 		| T_CMD T_KEYSYM_VAR {
-			yyerror("Not a command keysym");
+			cur_mp->command = KS_Cmd;
+			cur_mp->group1[0] = $2;
 		}
 		;
 
