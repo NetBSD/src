@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.3,v 1.1.2.25 2012/10/17 20:57:02 bouyer Exp $
+# $NetBSD: CHANGES-5.1.3,v 1.1.2.26 2012/10/23 23:21:23 riz Exp $
 
 A complete list of changes from the NetBSD 5.1.2 release to the NetBSD 5.1.3
 release:
@@ -2219,4 +2219,16 @@ usr.bin/calendar/calendars/calendar.netbsd	1.22
 
 	note NetBSD 6.0 release
 	[jnemeth, ticket #1802]
+
+doc/3RDPARTY				patch
+share/zoneinfo/asia			patch
+share/zoneinfo/australasia		patch
+
+	Update timezone definitions to tzdata2012g from
+	ftp://ftp.iana.org/tz/releases/tzdata2012g.tar.gz
+	Changes from tzdata2012f to tzdata2012g:
+	Samoa fall 2012 and later.  (Thanks to Nicholas Pereira
+	and Robert Elz.)
+	Palestine fall 2012.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1803]
 
