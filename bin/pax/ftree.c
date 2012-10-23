@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.34 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: ftree.c,v 1.34.4.1 2012/10/23 23:31:13 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.34 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.34.4.1 2012/10/23 23:31:13 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,7 +361,7 @@ ftree_arg(void)
 			 * the user didn't supply any args, get the file trees
 			 * to process from stdin;
 			 */
-			for (i = 0; i < PAXPATHLEN + 2; i++) {
+			for (i = 0; i < PAXPATHLEN + 2;) {
 				c = getchar();
 				if (c == EOF)
 					break;
@@ -369,7 +369,7 @@ ftree_arg(void)
 					if (i != 0)
 						break;
 				} else
-					farray[0][i] = c;
+					farray[0][i++] = c;
 			}
 			if (i == 0)
 				return -1;
