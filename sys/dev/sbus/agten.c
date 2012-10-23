@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.29 2012/10/20 13:52:11 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.30 2012/10/23 11:53:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.29 2012/10/20 13:52:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.30 2012/10/23 11:53:18 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -136,6 +136,7 @@ static int 	agten_getcmap(struct agten_softc *, struct wsdisplay_cmap *);
 static int 	agten_putpalreg(struct agten_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 static void	agten_init(struct agten_softc *);
+static void	agten_init_cmap(struct agten_softc *, struct rasops_info *);
 static void	agten_gfx(struct agten_softc *);
 static void	agten_set_video(struct agten_softc *, int);
 static int	agten_get_video(struct agten_softc *);
@@ -360,6 +361,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	}
 
 	/* Initialize the default color map. */
+	agten_init_cmap(sc, ri);
 
 	aa.console = console;
 	aa.scrdata = &sc->sc_screenlist;
@@ -434,6 +436,8 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 						agten_init(sc);
+						agten_init_cmap(sc,
+						    &ms->scr_ri);
 						vcons_redraw_screen(ms);
 					} else {
 						agten_gfx(sc);
@@ -501,7 +505,7 @@ agten_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
 
@@ -610,18 +614,9 @@ agten_putpalreg(struct agten_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 static void
 agten_init(struct agten_softc *sc)
 {
-	int i, j;
+	int i;
 	uint32_t src, srcw;
 	volatile uint32_t junk;
-
-	/* first we set up the colour map */
-	j = 0;
-	for (i = 0; i < 256; i++) {
-
-		agten_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
-		    rasops_cmap[j + 2]);
-		j += 3;
-	}
 
 	/* then we set up a linear LUT for 24bit colour */
 	agten_write_idx(sc, IBM561_CMAP_TABLE + 256);
@@ -692,6 +687,21 @@ agten_init(struct agten_softc *sc)
 	
 	/* initialize the Imagine 128 */
 	i128_init(sc->sc_bustag, sc->sc_i128_regh, sc->sc_stride, 8);
+}
+
+static void
+agten_init_cmap(struct agten_softc *sc, struct rasops_info *ri)
+{
+	int i, j;
+	uint8_t cmap[768];
+
+	rasops_get_cmap(ri, cmap, 768);
+	j = 0;
+	for (i = 0; i < 256; i++) {
+
+		agten_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
+	}
 }
 
 static void
