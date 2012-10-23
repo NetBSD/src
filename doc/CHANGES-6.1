@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.7 2012/10/22 19:46:36 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.8 2012/10/23 16:28:06 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -198,4 +198,32 @@ sbin/ping6/ping6.c				1.81
 
 	Allow ping6 to send 0-length packets.
 	[msaitoh, ticket #614]
+
+external/gpl3/gcc/dist/gcc/ChangeLog		1.4
+external/gpl3/gcc/dist/gcc/config/arm/arm.md	1.2
+
+	Fix gcc bugid 51408 for arm. PR#46972.
+	[msaitoh, ticket #615]
+
+sys/net/if_arcsubr.c				1.64
+sys/netinet/if_atm.c				1.33
+sys/netinet/ip_mroute.c				1.126
+
+	Fix output by adding some newlines.
+	[msaitoh, ticket #616]
+
+sys/arch/arm/arm/disksubr_mbr.c			1.14
+
+	Make armeb get the MBR partition and offset correct. PR#47081.
+	[msaitoh, ticket #617]
+
+distrib/notes/common/main			patch
+
+	Remove duplicate lines in install notes.
+	[enami, ticket #618]
+
+sys/arch/arm/marvell/kirkwood.c			1.7
+
+	Fix incorrect counts for 'vmstat -e' on Kirkwood.
+	[msaitoh, ticket #620]
 
