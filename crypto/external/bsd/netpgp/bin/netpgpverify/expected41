@@ -1,0 +1,6 @@
+#	$NetBSD: expected41,v 1.1.2.1 2012/10/23 15:00:57 agc Exp $
+
+SUBDIR+=	lib .WAIT
+SUBDIR+=	bin
+
+.include <bsd.subdir.mk>

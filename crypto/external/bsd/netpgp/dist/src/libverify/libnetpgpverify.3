@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgpverify.3,v 1.1.2.3 2012/10/20 06:01:57 agc Exp $
+.\" $NetBSD: libnetpgpverify.3,v 1.1.2.4 2012/10/23 15:00:56 agc Exp $
 .\"
 .\" Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2012
+.Dd October 21, 2012
 .Dt LIBNETPGPVERIFY 3
 .Os
 .Sh NAME
@@ -37,13 +37,13 @@
 .Fo pgpv_read_pubring
 .Fa "pgpv_t *pgp" "const char *keyring"
 .Fc
-.Ft int
+.Ft size_t
 .Fo pgpv_verify
 .Fa "pgpv_cursor_t *cursor" "pgpv_t *pgp" "const void *ptr" "ssize_t size"
 .Fc
 .Ft size_t
 .Fo pgpv_get_verified
-.Fa "pgpv_cursor_t *cursor" "unsigned entry" "char **ret"
+.Fa "pgpv_cursor_t *cursor" "size_t cookie " "char **ret"
 .Fc
 .Ft size_t
 .Fo pgpv_get_entry
@@ -79,9 +79,13 @@ argument should be set to
 .Dv -1
 whilst a positive size signals that the pointer value should be that
 of signed memory.
+.Fn pgpv_verify
+returns a cookie if the ignature was verified, or 0 if it did not.
+This cookie can subsequently be used to retrieve the data which
+was verified.
 .Pp
 If the signature does match, then the file or memory can be considered as being
-verified as being unmodified.
+verified as being unmodified and unchanged, integrally sound.
 .Pp
 Signatures have validity dates on them, and it is possible for a signature to
 have expired when it is being checked.
@@ -99,7 +103,8 @@ To do this, the
 function is used.
 Arguments to
 .Fn pgpv_get_verified
-are the entry number of the verification, and the returned data and its size.
+are the cookie returned from the verification, and a buffer
+allocated for the returned data and its size.
 If an error occurs, or the signature is not verified, a zero value is returned
 for the size.
 .Nm

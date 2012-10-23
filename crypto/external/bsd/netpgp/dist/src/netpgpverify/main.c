@@ -87,16 +87,17 @@ getstdin(ssize_t *cc, size_t *size)
 
 /* verify memory or file */
 static int
-verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, size_t cc, unsigned n)
+verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, ssize_t cc)
 {
 	pgpv_cursor_t	 cursor;
 	size_t		 size;
+	size_t		 cookie;
 	char		*data;
 
 	memset(&cursor, 0x0, sizeof(cursor));
 	if (strcasecmp(cmd, "cat") == 0) {
-		if (pgpv_verify(&cursor, pgp, in, cc)) {
-			if ((size = pgpv_get_verified(&cursor, ARRAY_ELEMENT(cursor.datacookies, n), &data)) > 0) {
+		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
+			if ((size = pgpv_get_verified(&cursor, cookie, &data)) > 0) {
 				printf("%.*s", (int)size, data);
 			}
 			return 1;
@@ -131,7 +132,7 @@ main(int argc, char **argv)
 	cmd = NULL;
 	keyring = NULL;
 	ok = 1;
-	while ((i = getopt(argc, argv, "c:k")) != -1) {
+	while ((i = getopt(argc, argv, "c:k:")) != -1) {
 		switch(i) {
 		case 'c':
 			cmd = optarg;
@@ -151,10 +152,10 @@ main(int argc, char **argv)
 	}
 	if (optind == argc) {
 		in = getstdin(&cc, &size);
-		ok = verify_data(&pgp, cmd, "[stdin]", in, cc, 0);
+		ok = verify_data(&pgp, cmd, "[stdin]", in, cc);
 	} else {
 		for (ok = 1, i = optind ; i < argc ; i++) {
-			if (!verify_data(&pgp, cmd, argv[i], argv[i], -1, i)) {
+			if (!verify_data(&pgp, cmd, argv[i], argv[i], -1)) {
 				ok = 0;
 			}
 		}
