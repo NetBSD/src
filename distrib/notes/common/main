@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4 2012/10/12 22:06:59 riz Exp $
+.\"	$NetBSD: main,v 1.484.2.5 2012/10/23 16:25:21 riz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -556,9 +556,6 @@ pseudodevice from the bitstream generation code
 .Xr cprng 9
 and entropy-pool code
 .Xr rnd 9 .
-.It
-.Xr kmem_alloc 9 :
-add more extensive runtime debugging facilities.
 .It
 Kernel support for
 .Xr posix_spawn 3 .
