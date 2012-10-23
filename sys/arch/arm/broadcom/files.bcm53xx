@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm53xx,v 1.1 2012/09/01 00:04:44 matt Exp $
+#	$NetBSD: files.bcm53xx,v 1.2 2012/10/23 23:13:20 matt Exp $
 #
 # Configuration info for Broadcom BCM5301X ARM Peripherals
 #
@@ -18,6 +18,7 @@ file	arch/arm/broadcom/bcmgen_space.c
 defparam opt_broadcom.h				CONADDR
 defparam opt_broadcom.h				CONSPEED
 defparam opt_broadcom.h				CONMODE
+defparam opt_broadcom.h				MEMSIZE
 defflag opt_broadcom.h				BCM53XX_CONSOLE_EARLY
 
 # ChipCommonA attach point
