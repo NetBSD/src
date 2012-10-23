@@ -1105,7 +1105,7 @@ read_pkt(pgpv_t *pgp, pgpv_mem_t *mem)
 	pkt.mement = (uint8_t)(mem - ARRAY_ARRAY(pgp->areas));
 	pkt.s.data = &mem->mem[mem->cc];
 	if (strchr(mem->allowed, pkt.tag) == NULL) {
-		printf("packet %d not allowed\n", pkt.tag);
+		printf("packet %d not allowed for operation %s\n", pkt.tag, pgp->op);
 		return 0;
 	}
 	size = pkt.s.size;
@@ -2010,7 +2010,7 @@ pgpv_find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid)
 }
 
 /* verify the signed packets we have */
-int
+size_t
 pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 {
 	pgpv_signature_t	*signature;
@@ -2101,9 +2101,9 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
 		return 0;
 	}
-	ARRAY_APPEND(cursor->datacookies, (unsigned)pkt);
+	ARRAY_APPEND(cursor->datacookies, pkt);
 	ARRAY_APPEND(cursor->found, primary);
-	return 1;
+	return pkt + 1;
 }
 
 /* set up the pubkey keyring */
@@ -2118,7 +2118,7 @@ pgpv_read_pubring(pgpv_t *pgp, const char *keyring)
 
 /* get verified data as a string, return its size */
 size_t
-pgpv_get_verified(pgpv_cursor_t *cursor, unsigned ent, char **ret)
+pgpv_get_verified(pgpv_cursor_t *cursor, size_t cookie, char **ret)
 {
 	pgpv_litdata_t		*litdata;
 	uint8_t			*data;
@@ -2126,11 +2126,10 @@ pgpv_get_verified(pgpv_cursor_t *cursor, unsigned ent, char **ret)
 	size_t			 pkt;
 
 	*ret = NULL;
-	if (cursor == NULL || ent >= ARRAY_COUNT(cursor->datacookies)) {
+	if (cursor == NULL || cookie == 0) {
 		return 0;
 	}
-	pkt = ARRAY_ELEMENT(cursor->datacookies, ent);
-	if ((pkt = find_onepass(cursor, pkt)) == 0) {
+	if ((pkt = find_onepass(cursor, cookie - 1)) == 0) {
 		return 0;
 	}
 	litdata = &ARRAY_ELEMENT(cursor->pgp->pkts, pkt).u.litdata;

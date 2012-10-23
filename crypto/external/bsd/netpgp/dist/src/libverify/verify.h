@@ -247,7 +247,7 @@ typedef struct pgpv_cursor_t {
 	char			*value;			/* value we're searching for */
 	void			*ptr;			/* for regexps etc */
 	PGPV_ARRAY(uint32_t,	 found);		/* array of matched subscripts */
-	PGPV_ARRAY(uint32_t,	 datacookies);		/* cookies to retrieve matched data */
+	PGPV_ARRAY(size_t,	 datacookies);		/* cookies to retrieve matched data */
 	int64_t			 sigtime;		/* time of signature */
 	char			 why[128];		/* reason for bad signature */
 } pgpv_cursor_t;
@@ -266,8 +266,8 @@ __BEGIN_DECLS
 
 int pgpv_read_pubring(pgpv_t */*pgp*/, const char */*keyring*/);
 
-int pgpv_verify(pgpv_cursor_t */*cursor*/, pgpv_t */*pgp*/, const void */*mem/file*/, ssize_t /*size*/);
-size_t pgpv_get_verified(pgpv_cursor_t */*cursor*/, unsigned /*ent*/, char **/*ret*/);
+size_t pgpv_verify(pgpv_cursor_t */*cursor*/, pgpv_t */*pgp*/, const void */*mem/file*/, ssize_t /*size*/);
+size_t pgpv_get_verified(pgpv_cursor_t */*cursor*/, size_t /*cookie*/, char **/*ret*/);
 
 size_t pgpv_get_entry(pgpv_t */*pgp*/, unsigned /*ent*/, char **/*ret*/);
 
