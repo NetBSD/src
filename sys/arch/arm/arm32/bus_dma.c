@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.65 2012/10/22 15:01:18 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.66 2012/10/23 12:23:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.65 2012/10/22 15:01:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.66 2012/10/23 12:23:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1408,7 +1408,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 				}
 #endif
 				curaddr = (*pde & s_frame) | (vaddr & s_offset);
-				coherent = (*pde & L1_S_CACHE_MASK) != 0;
+				coherent = (*pde & L1_S_CACHE_MASK) == 0;
 			} else {
 				pt_entry_t pte = *ptep;
 				KDASSERTMSG((pte & L2_TYPE_MASK) != L2_TYPE_INV,
@@ -1418,11 +1418,11 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 						    == L2_TYPE_L)) {
 					curaddr = (pte & L2_L_FRAME) |
 					    (vaddr & L2_L_OFFSET);
-					coherent = (pte & L2_L_CACHE_MASK) != 0;
+					coherent = (pte & L2_L_CACHE_MASK) == 0;
 				} else {
 					curaddr = (pte & L2_S_FRAME) |
 					    (vaddr & L2_S_OFFSET);
-					coherent = (pte & L2_S_CACHE_MASK) != 0;
+					coherent = (pte & L2_S_CACHE_MASK) == 0;
 				}
 			}
 		} else {
