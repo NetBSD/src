@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909.2.14 2012/09/30 18:26:24 bouyer Exp $
+#	$NetBSD: 3RDPARTY,v 1.909.2.14.2.1 2012/10/23 20:20:39 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1143,10 +1143,9 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2011i / tzdata2012f
-Current Vers:	tzcode2012f / tzdata2012f
-Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
-Maintainer:	Robert Elz <kre@munnari.oz.au>
+Version:	tzcode2011i / tzdata2012g
+Current Vers:	tzcode2012g / tzdata2012g
+Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Home Page:	http://www.iana.org/time-zones
