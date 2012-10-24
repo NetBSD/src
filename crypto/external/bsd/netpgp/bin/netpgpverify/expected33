@@ -1,0 +1,40 @@
+PROG=p
+SRCS=parse.c
+WARNS=5
+MKMAN=no
+CPPFLAGS+=-g -O0
+LDFLAGS+=-g -O0
+
+.include <bsd.prog.mk>
+
+t: ${PROG}
+	./${PROG} gpgsigned-a.gpg
+1. tag & 0x3f
+2. len
+
+one pass (tag 4)
+========
+b version:3
+b sig type
+b hash alg
+b pubkey alg
+8b keyid
+
+literal data (tag 11)
+=============
+b binary/text
+b length
+c string
+L mtime
+text
+PROG=p
+SRCS=parse.c
+WARNS=5
+MKMAN=no
+CPPFLAGS+=-g -O0
+LDFLAGS+=-g -O0
+
+.include <bsd.prog.mk>
+
+t: ${PROG}
+	./${PROG} gpgsigned-a.gpg

@@ -1,0 +1,18 @@
+1. tag & 0x3f
+2. len
+
+one pass (tag 4)
+========
+b version:3
+b sig type
+b hash alg
+b pubkey alg
+8b keyid
+
+literal data (tag 11)
+=============
+b binary/text
+b length
+c string
+L mtime
+text
