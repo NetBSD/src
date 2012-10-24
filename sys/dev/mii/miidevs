@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp $
+$NetBSD: miidevs,v 1.105.4.1 2012/10/24 03:41:51 riz Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ $NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp $
  * mapping; the bit positions are defined in IEEE 802-1990, figure 5.2.
  * (There is a formal 802.3 interpretation, number 1-07/98 of July 09 1998,
  * about this.)
- * The MII_OUI() macro in "mii.h" reflects this.
+ * The MII_OUI() macro in "miivar.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
  */
@@ -56,6 +56,7 @@ oui ATHEROS			0x001374	Atheros
 oui ATTANSIC			0x00c82e	Attansic Technology
 oui BROADCOM			0x001018	Broadcom Corporation
 oui BROADCOM2			0x000af7	Broadcom Corporation
+oui BROADCOM3			0x001be9	Broadcom Corporation
 oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
@@ -122,6 +123,7 @@ model ATHEROS F2		0x0002 F2 10/100 PHY
 model ATTANSIC L1		0x0001 L1 10/100/1000 PHY
 model ATTANSIC L2		0x0002 L2 10/100 PHY
 model ATTANSIC AR8021		0x0004 Atheros AR8021 10/100/1000 PHY
+model ATTANSIC AR8035		0x0007 Atheros AR8035 10/100/1000 PHY
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -178,6 +180,7 @@ model BROADCOM2 BCM5784		0x003a BCM5784 10/100/1000baseT PHY
 model BROADCOM2 BCM5709C	0x003c BCM5709 10/100/1000baseT PHY
 model BROADCOM2 BCM5761		0x003d BCM5761 10/100/1000baseT PHY
 model BROADCOM2 BCM5709S	0x003f BCM5709S 1000/2500baseSX PHY
+model BROADCOM3 BCM57765	0x0024 BCM57765 1000BASE-T media interface
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
@@ -186,6 +189,7 @@ model CICADA CS8204		0x0004 Cicada CS8204 10/100/1000TX PHY
 model CICADA VSC8211		0x000b Cicada VSC8211 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
+model xxCICADA VSC8221		0x0015 Vitesse VSC8221 10/100/1000BASE-T PHY
 model xxCICADA VSC8244		0x002c Vitesse VSC8244 Quad 10/100/1000BASE-T PHY
 model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
