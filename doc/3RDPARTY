@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.975 2012/10/18 08:59:00 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.976 2012/10/24 00:12:08 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1189,7 +1189,7 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2012f / tzdata2012g
+Version:	tzcode2012g / tzdata2012g
 Current Vers:	tzcode2012g / tzdata2012g
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
@@ -1202,7 +1202,7 @@ License:	Public domain
 Location:	lib/libc/time,share/zoneinfo
 Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
-The tzcode2011i -> 2012e patch was applied by hand, since we have too
+The tzcode2012f -> 2012g patch was applied by hand, since we have too
 many diffs (re-entrant tzcode) to apply. The diffs have been submitted
 upstream but there is too much inertia to apply them. Check for .gitignore
 files.
