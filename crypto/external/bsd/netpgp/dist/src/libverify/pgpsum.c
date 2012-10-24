@@ -39,16 +39,22 @@
 
 /* add the ascii armor line endings (except for last line) */
 static size_t
-don_armor(digest_t *hash, uint8_t *in, size_t insize)
+don_armor(digest_t *hash, uint8_t *in, size_t insize, int doarmor)
 {
 	uint8_t	*from;
+	uint8_t	*newp;
 	uint8_t	*p;
 	uint8_t	 dos_line_end[2];
 
 	dos_line_end[0] = '\r';
 	dos_line_end[1] = '\n';
 	for (from = in ; (p = memchr(from, '\n', insize - (size_t)(from - in))) != NULL ; from = p + 1) {
-		digest_update(hash, from, (size_t)(p - from));
+		for (newp = p ; doarmor == 'w' && newp > from ; --newp) {
+			if (*(newp - 1) != ' ' && *(newp - 1) != '\t') {
+				break;
+			}
+		}
+		digest_update(hash, from, (size_t)(newp - from));
 		digest_update(hash, dos_line_end, sizeof(dos_line_end));
 	}
 	digest_update(hash, from, insize - (size_t)(from - in));
@@ -118,9 +124,9 @@ calcsum(uint8_t *out, size_t size, const char *name, uint8_t *mem, size_t cc, co
 	writefile(mem, cc);
 #endif
 	digest_init(&hash, hashalg);
-	if (doarmor && !already_armored(mem, cc)) {
+	if (strchr("tw", doarmor) != NULL && !already_armored(mem, cc)) {
 		/* this took me ages to find - something causes gpg to truncate its input */
-		don_armor(&hash, mem, cc - 1);
+		don_armor(&hash, mem, cc - 1, doarmor);
 	} else {
 		digest_update(&hash, mem, cc);
 	}
