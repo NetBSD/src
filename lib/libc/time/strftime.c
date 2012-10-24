@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.22 2012/03/20 16:39:08 matt Exp $	*/
+/*	$NetBSD: strftime.c,v 1.23 2012/10/24 00:10:03 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.22 2012/03/20 16:39:08 matt Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.23 2012/10/24 00:10:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,8 +99,8 @@ extern char *	tzname[];
 #define IN_ALL	3
 
 size_t
-strftime_z(const timezone_t sp, char * const s, const size_t maxsize,
-    const char * const format, const struct tm * const	t)
+strftime_z(const timezone_t sp, char *const s, const size_t maxsize,
+    const char *const format, const struct tm *const t)
 {
 	char *	p;
 	int	warn;
@@ -131,7 +131,7 @@ strftime_z(const timezone_t sp, char * const s, const size_t maxsize,
 }
 
 static char *
-_fmt(const timezone_t sp, const char *format, const struct tm * const t,
+_fmt(const timezone_t sp, const char *format, const struct tm *const t,
 	char *pt, const char *const ptlim, int *warnp)
 {
 	for ( ; *format; ++format) {
@@ -585,8 +585,8 @@ strftime(char * const s, const size_t maxsize,
 }
 
 static char *
-_conv(const int	n, const char * const format, char * const pt,
-    const char * const ptlim)
+_conv(const int	n, const char *const format, char *const pt,
+    const char *const ptlim)
 {
 	char	buf[INT_STRLEN_MAXIMUM(int) + 1];
 
@@ -595,7 +595,7 @@ _conv(const int	n, const char * const format, char * const pt,
 }
 
 static char *
-_add(const char *str, char *pt, const char * const ptlim)
+_add(const char *str, char *pt, const char *const ptlim)
 {
 	while (pt < ptlim && (*pt = *str++) != '\0')
 		++pt;
@@ -612,7 +612,7 @@ _add(const char *str, char *pt, const char * const ptlim)
 
 static char *
 _yconv(const int a, const int b, const int convert_top, const int convert_yy,
-    char *pt, const char * const ptlim)
+    char *pt, const char *const ptlim)
 {
 	register int	lead;
 	register int	trail;
@@ -663,7 +663,7 @@ _loc(void)
 	*/
 	if (localebuf.mon[0])
 		return &localebuf;
-	name = setlocale(LC_TIME, (char *) NULL);
+	name = setlocale(LC_TIME, NULL);
 	if (name == NULL || *name == '\0')
 		goto no_locale;
 	/*
