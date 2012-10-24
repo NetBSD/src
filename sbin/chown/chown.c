@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.7 2012/10/23 17:55:46 christos Exp $	*/
+/*	$NetBSD: chown.c,v 1.8 2012/10/24 01:12:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.7 2012/10/23 17:55:46 christos Exp $");
+__RCSID("$NetBSD: chown.c,v 1.8 2012/10/24 01:12:51 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,9 +181,9 @@ main(int argc, char **argv)
 
 		if (stat(reference, &st) == -1)
 			err(EXIT_FAILURE, "Cannot stat `%s'", reference);
-		uid = st.st_uid;
 		if (ischown)
-			gid = st.st_gid;
+			uid = st.st_uid;
+		gid = st.st_gid;
 	}
 
 	if ((ftsp = fts_open(argv, fts_options, NULL)) == NULL)
