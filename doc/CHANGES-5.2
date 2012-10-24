@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.188 2012/10/23 23:27:49 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.189 2012/10/24 03:08:51 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8684,4 +8684,15 @@ share/zoneinfo/australasia		patch
 	and Robert Elz.)
 	Palestine fall 2012.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #1803]
+
+sys/dev/raidframe/rf_netbsdkintf.c		patch
+
+	Implement DIOCGSTRATEGY and DIOCSSTRATEGY for raidframe devices.
+	(The default strategy is not changed)
+	[buhrow, ticket #1788]
+
+share/misc/bsd-family-tree			1.45 via patch
+
+	Update the family tree for NetBSD 6.
+	[jnemeth, ticket #1804]
 
