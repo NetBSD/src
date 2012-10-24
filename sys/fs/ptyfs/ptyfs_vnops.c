@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.39 2012/03/13 18:40:49 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.40 2012/10/24 23:36:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.39 2012/03/13 18:40:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.40 2012/10/24 23:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ptyfs_setattr(void *v)
 			ptyfs->ptyfs_flags &= SF_SETTABLE;
 			ptyfs->ptyfs_flags |= (vap->va_flags & UF_SETTABLE);
 		}
-		ptyfs->ptyfs_flag |= PTYFS_CHANGE;
+		ptyfs->ptyfs_status |= PTYFS_CHANGE;
 	}
 
 	/*
@@ -434,15 +434,15 @@ ptyfs_setattr(void *v)
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
-				ptyfs->ptyfs_flag |= PTYFS_ACCESS;
+				ptyfs->ptyfs_status |= PTYFS_ACCESS;
 		if (vap->va_mtime.tv_sec != VNOVAL) {
-			ptyfs->ptyfs_flag |= PTYFS_CHANGE | PTYFS_MODIFY;
+			ptyfs->ptyfs_status |= PTYFS_CHANGE | PTYFS_MODIFY;
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
-				ptyfs->ptyfs_flag |= PTYFS_ACCESS;
+				ptyfs->ptyfs_status |= PTYFS_ACCESS;
 		}
 		if (vap->va_birthtime.tv_sec != VNOVAL)
 			ptyfs->ptyfs_birthtime = vap->va_birthtime;
-		ptyfs->ptyfs_flag |= PTYFS_CHANGE;
+		ptyfs->ptyfs_status |= PTYFS_CHANGE;
 		error = ptyfs_update(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
 			return error;
@@ -786,7 +786,7 @@ ptyfs_read(void *v)
 	if (vp->v_type == VDIR)
 		return EISDIR;
 
-	ptyfs->ptyfs_flag |= PTYFS_ACCESS;
+	ptyfs->ptyfs_status |= PTYFS_ACCESS;
 	/* hardclock() resolution is good enough for ptyfs */
 	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
@@ -817,7 +817,7 @@ ptyfs_write(void *v)
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 	int error;
 
-	ptyfs->ptyfs_flag |= PTYFS_MODIFY;
+	ptyfs->ptyfs_status |= PTYFS_MODIFY;
 	getnanotime(&ts);
 	(void)ptyfs_update(vp, &ts, &ts, 0);
 
@@ -913,25 +913,25 @@ ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
 {
 	struct timespec now;
  
-	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
+	KASSERT(ptyfs->ptyfs_status & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
 
 	getnanotime(&now);
-	if (ptyfs->ptyfs_flag & PTYFS_ACCESS) {
+	if (ptyfs->ptyfs_status & PTYFS_ACCESS) {
 		if (acc == NULL)
 			acc = &now;
 		ptyfs->ptyfs_atime = *acc;
 	}
-	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
+	if (ptyfs->ptyfs_status & PTYFS_MODIFY) {
 		if (mod == NULL)
 			mod = &now;
 		ptyfs->ptyfs_mtime = *mod;
 	}
-	if (ptyfs->ptyfs_flag & PTYFS_CHANGE) {
+	if (ptyfs->ptyfs_status & PTYFS_CHANGE) {
 		if (cre == NULL)
 			cre = &now;
 		ptyfs->ptyfs_ctime = *cre;
 	}
-	ptyfs->ptyfs_flag &= ~(PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY);
+	ptyfs->ptyfs_status &= ~(PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY);
 }
 
 /*
