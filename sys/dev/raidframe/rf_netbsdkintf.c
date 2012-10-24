@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.12 2012/06/13 14:00:49 sborrill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.13 2012/10/24 03:03:53 riz Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.12 2012/06/13 14:00:49 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.13 2012/10/24 03:03:53 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -973,7 +973,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
-	int     part, pmask;
+	int     part, pmask, s;
 	struct cfdata *cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
@@ -1026,6 +1026,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCWLABEL:
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
+	case DIOCSSTRATEGY:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 	}
@@ -1078,6 +1079,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
+	case DIOCGSTRATEGY:
+	case DIOCSSTRATEGY:
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -1840,6 +1843,45 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    (struct dkwedge_list *)data, l);
 	case DIOCCACHESYNC:
 		return rf_sync_component_caches(raidPtr);
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(rs->buf_queue),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+	
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+		struct bufq_state *new;
+		struct bufq_state *old;
+
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = rs->buf_queue;
+		bufq_move(new, old);
+		rs->buf_queue = new;
+		splx(s);
+		bufq_free(old);
+
+		return 0;
+	    }
+
 	default:
 		retcode = ENOTTY;
 	}
