@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.67 2012/03/20 16:39:08 matt Exp $	*/
+/*	$NetBSD: localtime.c,v 1.68 2012/10/24 00:10:03 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.67 2012/03/20 16:39:08 matt Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.68 2012/10/24 00:10:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -155,8 +155,8 @@ typedef struct tm *(*subfun_t)(const timezone_t sp, const time_t *timep,
 static long		detzcode(const char * codep);
 static time_t		detzcode64(const char * codep);
 static int		differ_by_repeat(time_t t1, time_t t0);
-static const char *	getzname(const char * strp);
-static const char *	getqzname(const char * strp, const int delim);
+static const char *	getzname(const char * strp) __pure;
+static const char *	getqzname(const char * strp, const int delim) __pure;
 static const char *	getnum(const char * strp, int * nump, int min,
 				int max);
 static const char *	getsecs(const char * strp, long * secsp);
@@ -168,7 +168,7 @@ static struct tm *	gmtsub(const timezone_t sp, const time_t *timep,
 static struct tm *	localsub(const timezone_t sp, const time_t *timep,
 				long offset, struct tm *tmp);
 static int		increment_overflow(int * number, int delta);
-static int		leaps_thru_end_of(int y);
+static int		leaps_thru_end_of(int y) __pure;
 static int		long_increment_overflow(long * number, int delta);
 static int		long_normalize_overflow(long * tensptr,
 				int * unitsptr, int base);
@@ -176,7 +176,7 @@ static int		normalize_overflow(int * tensptr, int * unitsptr,
 				int base);
 static void		settzname(void);
 static time_t		time1(const timezone_t sp, struct tm * const tmp,
-				subfun_t funcp, long offset);
+				subfun_t funcp, const long offset);
 static time_t		time2(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp,
 				const long offset, int *const okayp);
@@ -188,7 +188,7 @@ static struct tm *	timesub(const timezone_t sp, const time_t * timep,
 static int		tmcomp(const struct tm * atmp,
 				const struct tm * btmp);
 static time_t		transtime(time_t janfirst, int year,
-				const struct rule * rulep, long offset);
+				const struct rule * rulep, long offset) __pure;
 static int		typesequiv(const timezone_t sp, int a, int b);
 static int		tzload(timezone_t sp, const char * name,
 				int doextend);
@@ -696,7 +696,7 @@ getqzname(const char *strp, const int delim)
 */
 
 static const char *
-getnum(const char *strp, int * const nump, const int min, const int max)
+getnum(const char *strp, int *const nump, const int min, const int max)
 {
 	char	c;
 	int	num;
@@ -1430,7 +1430,7 @@ localtime_rz(const timezone_t sp, const time_t * __restrict timep, struct tm *tm
 */
 
 static struct tm *
-gmtsub(const timezone_t sp, const time_t * const timep, const long offset,
+gmtsub(const timezone_t sp, const time_t *const timep, const long offset,
     struct tm *const tmp)
 {
 	struct tm *	result;
@@ -1712,7 +1712,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 */
 
 static int
-increment_overflow(int *ip, int j)
+increment_overflow(int *const ip, int j)
 {
 	int	i = *ip;
 
@@ -1729,7 +1729,7 @@ increment_overflow(int *ip, int j)
 }
 
 static int
-long_increment_overflow(long *lp, int m)
+long_increment_overflow(long *const lp, int m)
 {
 	long l = *lp;
 
@@ -2009,7 +2009,7 @@ time2(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 
 static time_t
 time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
-    long offset)
+    const long offset)
 {
 	time_t			t;
 	int			samei, otheri;
@@ -2082,7 +2082,7 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 }
 
 time_t
-mktime_z(const timezone_t sp, struct tm *tmp)
+mktime_z(const timezone_t sp, struct tm *const tmp)
 {
 	time_t t;
 	if (sp == NULL)
@@ -2093,7 +2093,7 @@ mktime_z(const timezone_t sp, struct tm *tmp)
 }
 
 time_t
-mktime(struct tm * const	tmp)
+mktime(struct tm *const tmp)
 {
 	time_t result;
 
@@ -2107,7 +2107,7 @@ mktime(struct tm * const	tmp)
 #ifdef STD_INSPIRED
 
 time_t
-timelocal_z(const timezone_t sp, struct tm *tmp)
+timelocal_z(const timezone_t sp, struct tm *const tmp)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */
