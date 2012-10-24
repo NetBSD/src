@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.11 2012/10/24 03:27:02 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.12 2012/10/24 03:47:46 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -303,4 +303,33 @@ share/misc/bsd-family-tree			1.45 via patch
 
 	Update the family tree to include the latest releases.
 	[jnemeth, ticket #630]
+
+sys/dev/pci/pcidevs		1.1103,1.1105,1.1109-1.1112,1.1114,
+				1.1119-1.1124, 1.1126-1.1128,1.1130-1.1136,
+				1.1138-1.1142
+sys/dev/pci/pcidevs.h		regen
+sys/dev/pci/pcidevs_data.h	regen
+
+	Synchronize pcidevs for all devices that don't rename an ID.
+	[msaitoh, ticket #631]
+
+usr.bin/netstat/if.c				1.75
+
+	Line up total numbers again (for -b case and -X case).
+	[msaitoh, ticket #632]
+
+sys/dev/mii/miidevs				1.106-1.109
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Bring miidevs up-to-date.
+	[msaitoh, ticket #633]
+
+sys/dev/usb/usbdevs				1.609,1.611-1.616,1.619,
+						1.623-1.625,1.628-1.630
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Bring usbdevs up-to-date.
+	[msaitoh, ticket #634]
 
