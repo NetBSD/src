@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.12.16.3 2012/09/03 19:13:35 riz Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.12.16.4 2012/10/24 03:19:20 riz Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12.16.3 2012/09/03 19:13:35 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.12.16.4 2012/10/24 03:19:20 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,11 +87,33 @@ static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
 	{ PCI_VENDOR_SYMBIOS,	0x9261,		"SAS 9260-8i" },
 	{ PCI_VENDOR_SYMBIOS,	0x9263,		"SAS 9261-8i" },
 	{ PCI_VENDOR_IBM,	0x03c7,		"IBM ServeRAID M5014 SAS/SATA" },
+	{ PCI_VENDOR_DELL,	0x1f15,		"Dell PERC H800 Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f16,		"Dell PERC H700 Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f17,		"Dell PERC H700 Integrated" },
+	{ PCI_VENDOR_DELL,	0x1f18,		"Dell PERC H700 Modular" },
+	{ PCI_VENDOR_DELL,	0x1f19,		"Dell PERC H700" },
+	{ PCI_VENDOR_DELL,	0x1f1a,		"Dell PERC H800 Proto Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f1b,		"Dell PERC H800" },
 	{ 0x0,			0,		"" }
 };
 
 static const struct mfi_pci_subtype mfi_skinny_subtypes[] = {
 	{ PCI_VENDOR_IBM,	0x03b1,		"IBM ServeRAID M1015 SAS/SATA" },
+	{ 0x0,			0,		"" }
+};
+
+static const struct mfi_pci_subtype mfi_tbolt_subtypes[] = {
+	{ PCI_VENDOR_SYMBIOS,	0x9265,		"SAS 9265-8i" },
+	{ PCI_VENDOR_DELL,	0x1f2d,		"Dell PERC H810 Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f30,		"Dell PERC H710 Embedded" },
+	{ PCI_VENDOR_DELL,	0x1f31,		"Dell PERC H710P Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f33,		"Dell PERC H710P Mini (blades)" },
+	{ PCI_VENDOR_DELL,	0x1f34,		"Dell PERC H710P Mini (blades)" },
+	{ PCI_VENDOR_DELL,	0x1f35,		"Dell PERC H710 Adapter" },
+	{ PCI_VENDOR_DELL,	0x1f37,		"Dell PERC H710 Mini (blades)" },
+	{ PCI_VENDOR_DELL,	0x1f38,		"Dell PERC H710 Mini (monolithics)" },
+	{ PCI_VENDOR_INTEL,	0x9265,		"Intel (R) RAID Controller RS25DB080" },
+	{ PCI_VENDOR_INTEL,	0x9285,		"Intel (R) RAID Controller RS25NB008" },
 	{ 0x0,			0,		"" }
 };
 
@@ -120,6 +142,8 @@ struct mfi_pci_device {
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2008_1,
 	  MFI_IOP_SKINNY,	mfi_skinny_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_2208,
+	  MFI_IOP_TBOLT,	mfi_tbolt_subtypes },
 };
 
 const struct mfi_pci_device *
@@ -185,9 +209,8 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_flags = mpd->mpd_iop;
-
-	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY)
+	if (mpd->mpd_iop == MFI_IOP_GEN2 || mpd->mpd_iop == MFI_IOP_SKINNY ||
+	    mpd->mpd_iop == MFI_IOP_TBOLT)
 		regbar = MFI_BAR_GEN2;
 	else
 		regbar = MFI_BAR;
@@ -201,6 +224,13 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+	if (mpd->mpd_iop == MFI_IOP_TBOLT && pci_dma64_available(pa)) {
+		sc->sc_datadmat = pa->pa_dmat64;
+		sc->sc_64bit_dma = 1;
+	} else {
+		sc->sc_datadmat = pa->pa_dmat;
+		sc->sc_64bit_dma = 0;
+	}
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": can't map interrupt\n");
@@ -208,7 +238,13 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc);
+	if (mpd->mpd_iop == MFI_IOP_TBOLT) {
+		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+		    mfi_tbolt_intrh, sc);
+	} else {
+		sc->sc_ih =
+		    pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mfi_intr, sc);
+	}
 	if (!sc->sc_ih) {
 		aprint_error(": can't establish interrupt");
 		if (intrstr)
@@ -229,8 +265,12 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 			}
 			st++;
 		}
-		if (subtype)
+		if (subtype) {
 			aprint_normal(": %s\n", subtype);
+		} else {
+			aprint_normal(": vendor 0x%x product 0x%x\n",
+			    PCI_VENDOR(subsysid), PCI_PRODUCT(subsysid));
+		}
 	}
 
 	aprint_normal("%s: interrupting at %s\n", DEVNAME(sc), intrstr);
