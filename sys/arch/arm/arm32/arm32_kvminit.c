@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.13 2012/10/21 22:04:05 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.14 2012/10/24 21:31:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.13 2012/10/21 22:04:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.14 2012/10/24 21:31:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -248,7 +248,7 @@ static void
 add_pages(struct bootmem_info *bmi, pv_addr_t *pv)
 {
 	pv_addr_t **pvp = &SLIST_FIRST(&bmi->bmi_chunks);
-	while ((*pvp) != 0 && (*pvp)->pv_va <= pv->pv_va) {
+	while ((*pvp) != NULL && (*pvp)->pv_va <= pv->pv_va) {
 		pv_addr_t * const pv0 = (*pvp);
 		KASSERT(SLIST_NEXT(pv0, pv_list) == NULL || pv0->pv_pa < SLIST_NEXT(pv0, pv_list)->pv_pa);
 		if (concat_pvaddr(pv0, pv)) {
