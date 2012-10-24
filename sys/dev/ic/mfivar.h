@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.14.16.2 2012/10/24 03:19:19 riz Exp $ */
+/* $NetBSD: mfivar.h,v 1.14.16.3 2012/10/24 03:23:44 riz Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -210,6 +210,9 @@ struct mfi_softc {
 	bool			sc_running;
 
 	device_t		sc_child;
+
+	/* for ioctl interface */
+	bool			sc_opened;
 };
 
 int	mfi_rescan(device_t, const char *, const int *);
