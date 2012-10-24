@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.31 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.32 2012/10/24 00:30:52 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.31 2012/10/24 00:10:03 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.32 2012/10/24 00:30:52 christos Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -2023,9 +2023,6 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 		if (zp->z_nrules == 0) {
 			stdoff = zp->z_stdoff;
 			doabbr(startbuf, max_abbr_len + 1, zp->z_format,
-/*###2025 [cc] error: passing argument 4 of 'doabbr' makes integer from pointer without a cast%%%*/
-/*###2025 [cc] error: passing argument 2 of 'doabbr' makes pointer from integer without a cast%%%*/
-/*###2025 [cc] error: too many arguments to function 'doabbr'%%%*/
 			        NULL, stdoff != 0, FALSE);
 			type = addtype(oadd(zp->z_gmtoff, stdoff),
 				startbuf, stdoff != 0, startttisstd,
@@ -2114,9 +2111,6 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 							zp->z_format,
 							rp->r_abbrvar,
 							rp->r_stdoff != 0,
-/*###2113 [cc] error: too many arguments to function 'doabbr'%%%*/
-/*###2113 [cc] error: passing argument 4 of 'doabbr' makes integer from pointer without a cast%%%*/
-/*###2113 [cc] error: passing argument 2 of 'doabbr' makes pointer from integer without a cast%%%*/
 							FALSE);
 						continue;
 					}
@@ -2129,18 +2123,12 @@ outzone(const struct zone *const zpfirst, const int zonecount)
 								rp->r_abbrvar,
 								rp->r_stdoff !=
 								0,
-/*###2125 [cc] error: passing argument 4 of 'doabbr' makes integer from pointer without a cast%%%*/
-/*###2125 [cc] error: too many arguments to function 'doabbr'%%%*/
-/*###2125 [cc] error: passing argument 2 of 'doabbr' makes pointer from integer without a cast%%%*/
 								FALSE);
 					}
 				}
 				eats(zp->z_filename, zp->z_linenum,
 					rp->r_filename, rp->r_linenum);
 				doabbr(ab, max_abbr_len+1, zp->z_format, rp->r_abbrvar,
-/*###2131 [cc] error: too many arguments to function 'doabbr'%%%*/
-/*###2131 [cc] error: passing argument 2 of 'doabbr' makes pointer from integer without a cast%%%*/
-/*###2131 [cc] error: passing argument 4 of 'doabbr' makes integer from pointer without a cast%%%*/
 					rp->r_stdoff != 0, FALSE);
 				offset = oadd(zp->z_gmtoff, rp->r_stdoff);
 				type = addtype(offset, ab, rp->r_stdoff != 0,
