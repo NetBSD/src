@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.607.2.5 2012/10/23 20:01:14 riz Exp $
+$NetBSD: usbdevs,v 1.607.2.6 2012/10/24 03:45:59 riz Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -184,6 +184,7 @@ vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
 vendor AVM		0x057c	AVM
+vendor NINTENDO		0x057e	Nintendo
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
@@ -514,6 +515,7 @@ vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor QUANTA		0x1a32	Quanta
+vendor TERMINUS		0x1a40	Terminus Technology
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor MPMAN		0x1cae	MPMan
 vendor 4GSYSTEMS	0x1c9e	4G Systems
@@ -549,6 +551,7 @@ vendor SWEEX		0x5173	Sweex
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
 vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
+vendor SPRINGERDESIGN	0x6400	Springer Design, Inc.
 vendor ARKMICROCHIPS	0x6547	ArkMicroChips
 vendor 3COM2		0x6891	3Com
 vendor EDIMAX		0x7392	EDIMAX
@@ -692,6 +695,7 @@ product ADMTEK PEGASUSII_3	0x8515	ADM8515 USB 2.0 Ethernet
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
 product ADS UBS10BTX		0x0009	UBS-10BT Ethernet
+product ADS RDX155		0xa155	InstantFM Music
 
 /* AEI products */
 product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
@@ -800,12 +804,15 @@ product APPLE MAGICMOUSE	0x030d	Magic Mouse
 product APPLE BLUETOOTH_HIDMODE	0x1000	Bluetooth HCI (HID-proxy mode)
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
+product APPLE SHUFFLE2	0x1301	iPod Shuffle (2nd generation)
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
+product APPLE IPOD_TOUCH_4G	0x129e	iPod Touch 4G
 product APPLE IPHONE_3G		0x1292	iPhone 3G
 product APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE IPAD		0x129a	Apple iPad
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
+product APPLE BLUETOOTH_HOST_C	0x821f	Bluetooth USB Host Controller
 
 /* ArkMicroChips products */
 product ARKMICROCHIPS USBSERIAL 0x0232	USB-UART Controller
@@ -1358,8 +1365,10 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
+product FTDI SERIAL_232RL   	0x6006	FT232RL Serial converter
 product FTDI SERIAL_2232C	0x6010	2232C USB dual FAST SERIAL ADAPTER
 product FTDI SERIAL_4232H	0x6011	2232H USB quad FAST SERIAL ADAPTER
+product FTDI SERIAL_232H        0x6014	C232HM USB Multipurpose UART
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI OPENRD_JTAGKEY	0x9e90	OpenRD JTAGKey FT2232D B
@@ -1561,6 +1570,7 @@ product HTC ANDROID		0x0ffe	Android
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
+product HUAWEI EM770W	  	0x1404	Huawei EM770W
 product HUAWEI E1750	  	0x140c	Huawei E1750
 product HUAWEI E1750INIT  	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765  		0x1465	Huawei K3765
@@ -1888,6 +1898,7 @@ product MELCO WLIUCG300N	0x00e8	WLI-UC-G300N
 product MELCO WLIUCAG300N	0x012e	WLI-UC-AG300N
 product MELCO WLIUCG		0x0137	WLI-UC-G
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
+product MELCO WLIUCGNM2T	0x01ee	WLI-UC-GNM2T
 
 /* Merlin products */
 product MERLIN V620             0x1110  Merlin V620
@@ -2100,6 +2111,13 @@ product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
 product NIKON E885		0x0105	Digital Camera E885
 
+/* Nintendo products */
+product NINTENDO BCM2045A	0x0305	Broadcom BCM2045A Bluetooth Radio
+product NINTENDO RVLCNT01	0x0306	Wii Remote RVL-CNT-01 (BT-HID)
+/* product NINTENDO WIIMIC1	0x0308	Wii Party-Mic */
+/* product NINTENDO WIIMIC2	0x0309	USB Microphone for Wii */
+product NINTENDO RVLCNT01TR	0x0330	Wii Remote Plus RVL-CNT-01-TR (BT-HID)
+
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
 
@@ -2294,6 +2312,7 @@ product PLANEX2 GWUS300MINIS	0xab24	GW-US300MiniS
 product PLANEX2	RT3070		0xab25	RT3070
 product PLANEX2 GWUS300MINIX	0xed06	GW-US300Mini-X/MiniW
 product PLANEX2 RTL8188CU_2	0xed17	RTL8188CU
+product PLANEX2 GWUSH300N	0xed18	GW-USH300N
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -2361,6 +2380,8 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
+product QUALCOMM NTT_DOCOMO_L02C_MODEM	0x618f	NTT DOCOMO L-02C
+product QUALCOMM NTT_DOCOMO_L02C_STORAGE	0x61dd	NTT DOCOMO L-02C
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
@@ -2545,6 +2566,7 @@ product SHARP C750		0x9031	C750
 product SHARP RUITZ1016YCZZ	0x90fd	WS003SH WLAN
 product SHARP WS007SH		0x9123	WS007SH
 product SHARP WS011SH		0x91ac	WS011SH
+product SHARP NWKBD		0x92E7	NetWalker Keyboard
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
@@ -2580,6 +2602,7 @@ product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 product SIERRA AC595U		0x0120	Sierra Wireless AirCard 595U
 product SIERRA MC5720		0x0218	MC5720 Wireless Modem
 product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product SIERRA 250U		0x0301	Sieral Wireless 250U 3G
 product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
 product SIERRA MC8755_2		0x6802	MC8755
 product SIERRA MC8765		0x6803	MC8765
@@ -2596,6 +2619,7 @@ product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
 product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
 product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
 product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
+product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 
 /* Sigmatel products */
@@ -2748,6 +2772,9 @@ product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SPARKLAN RT2573		0x0004	RT2573
 product SPARKLAN RT2870_1	0x0006	RT2870
 product SPARKLAN RT3070		0x0010	RT3070
+
+/*Springer Design Systems Inc.*/
+product	SPRINGERDESIGN	TTSMP3PLAYER	0x1111	Springer Design TTSMP3Player
 
 /* Sphairon Access Systems GmbH products */
 product SPHAIRON UB801R		0x0110	UB801R
