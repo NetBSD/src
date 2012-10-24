@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.108 2011/11/25 23:29:28 jakllsch Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.108.4.1 2012/10/24 03:42:25 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.105 2011/11/25 23:28:14 jakllsch Exp
+ *	NetBSD: miidevs,v 1.105.4.1 2012/10/24 03:41:51 riz Exp
  */
 
 /*-
@@ -47,7 +47,7 @@
  * mapping; the bit positions are defined in IEEE 802-1990, figure 5.2.
  * (There is a formal 802.3 interpretation, number 1-07/98 of July 09 1998,
  * about this.)
- * The MII_OUI() macro in "mii.h" reflects this.
+ * The MII_OUI() macro in "miivar.h" reflects this.
  * If a vendor uses a different mapping, an "xx" prefixed OUI is defined here
  * which is mangled accordingly to compensate.
  */
@@ -63,6 +63,7 @@
 #define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
 #define	MII_OUI_BROADCOM2	0x000af7	/* Broadcom Corporation */
+#define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
@@ -135,6 +136,8 @@
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
 #define	MII_MODEL_ATTANSIC_AR8021	0x0004
 #define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
+#define	MII_MODEL_ATTANSIC_AR8035	0x0007
+#define	MII_STR_ATTANSIC_AR8035	"Atheros AR8035 10/100/1000 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -238,6 +241,8 @@
 #define	MII_STR_BROADCOM2_BCM5761	"BCM5761 10/100/1000baseT PHY"
 #define	MII_MODEL_BROADCOM2_BCM5709S	0x003f
 #define	MII_STR_BROADCOM2_BCM5709S	"BCM5709S 1000/2500baseSX PHY"
+#define	MII_MODEL_BROADCOM3_BCM57765	0x0024
+#define	MII_STR_BROADCOM3_BCM57765	"BCM57765 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
@@ -252,6 +257,8 @@
 #define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8221	0x0015
+#define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_VSC8244	0x002c
 #define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 #define	MII_MODEL_xxCICADA_CS8201B	0x0021
