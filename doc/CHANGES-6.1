@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.10 2012/10/23 20:20:15 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.11 2012/10/24 03:27:02 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -273,4 +273,34 @@ share/zoneinfo/australasia		patch
 	and Robert Elz.)
 	Palestine fall 2012.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #627]
+
+sys/dev/ic/mfi.c				1.39-1.46
+sys/dev/ic/mfireg.h				1.6-1.7
+sys/dev/ic/mfivar.h				1.16-1.19
+sys/dev/pci/mfi_pci.c				1.15-1.16
+sys/dev/pci/pcidevs				1.1128
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for LSI Thunderbolt (SAS2208) controllers.
+	[bouyer, ticket #628]
+
+etc/MAKEDEV.tmpl				1.159
+etc/etc.amd64/MAKEDEV.conf			1.19
+etc/etc.i386/MAKEDEV.conf			1.24
+sys/compat/linux/common/linux_ioctl.c		1.57
+sys/conf/majors					1.62
+sys/dev/ic/mfi.c				1.47
+sys/dev/ic/mfiio.h				1.1
+sys/dev/ic/mfireg.h				1.8
+sys/dev/ic/mfivar.h				1.20
+
+	Add support for running the MegaCLI linux binary for mfi(4)
+	controllers under NetBSD.
+	[bouyer, ticket #629]
+
+share/misc/bsd-family-tree			1.45 via patch
+
+	Update the family tree to include the latest releases.
+	[jnemeth, ticket #630]
 
