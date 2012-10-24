@@ -713,10 +713,10 @@ static int
 read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 {
 	pgpv_sigsubpkt_t	 subpkt;
-	const int	 is_subpkt = 0;
-	unsigned	 lenlen;
-	unsigned	 i;
-	uint8_t		*start;
+	const int		 is_subpkt = 0;
+	unsigned		 lenlen;
+	unsigned		 i;
+	uint8_t			*start;
 
 	start = p;
 	for (i = 0 ; (unsigned)(p - start) < sigpkt->subslen ; i++) {
@@ -784,6 +784,7 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 			sigpkt->sig.features = (char *)(void *)p;
 			break;
 		case SUBPKT_REVOCATION_REASON:
+			sigpkt->sig.revoked = *p++ + 1;
 			sigpkt->sig.why_revoked = (char *)(void *)p;
 			break;
 		default:
@@ -1326,16 +1327,7 @@ numkeybits(const pgpv_pubkey_t *pubkey)
 		return pubkey->bn[RSA_N].bits;
 	case PUBKEY_DSA:
 	case PUBKEY_ECDSA:
-		switch(BITS_TO_BYTES(pubkey->bn[DSA_Q].bits)) {
-		case 20:
-			return 1024;
-		case 28:
-			return 2048;
-		case 32:
-			return 3072;
-		default:
-			return 0;
-		}
+		return BITS_TO_BYTES(pubkey->bn[DSA_Q].bits) * 64;
 	case PUBKEY_ELGAMAL_ENCRYPT:
 	case PUBKEY_ELGAMAL_ENCRYPT_OR_SIGN:
 		return pubkey->bn[ELGAMAL_P].bits;
@@ -1356,6 +1348,7 @@ fmt_pubkey(char *s, size_t size, pgpv_pubkey_t *pubkey, const char *leader)
 	if (pubkey->expiry) {
 		cc += fmt_time(&s[cc], size - cc, " [Expiry ", pubkey->birth + pubkey->expiry, "]", 0);
 	}
+	/* XXX - revoked? */
 	cc += snprintf(&s[cc], size - cc, "\n");
 	cc += fmt_fingerprint(&s[cc], size - cc, &pubkey->fingerprint, "fingerprint: ");
 	return cc;
@@ -1451,18 +1444,23 @@ rsa_verify(uint8_t *calculated, unsigned calclen, uint8_t hashalg, pgpv_bignum_t
 	return memcmp(&decrypted[i + prefixlen], calculated, calclen) == 0;
 }
 
+#define BAD_BIGNUM(s, k)	\
+	(BN_is_zero((s)->bn) || BN_is_negative((s)->bn) || BN_cmp((s)->bn, (k)->bn) >= 0)
+
 #ifndef DSA_MAX_MODULUS_BITS
 #define DSA_MAX_MODULUS_BITS      10000
 #endif
 
 /* verify DSA signature */
 static int
-verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_pubkey_t *pubkey)
+verify_dsa_sig(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_pubkey_t *pubkey)
 {
 	unsigned	  qbits;
 	BIGNUM		 *M;
 	BIGNUM		 *W;
 	BIGNUM		 *t1;
+	uint8_t		  calcnum[128];
+	uint8_t		  signum[128];
 	int		  ret;
 
 	if (pubkey[DSA_P].bn == NULL || pubkey[DSA_Q].bn == NULL || pubkey[DSA_G].bn == NULL) {
@@ -1489,8 +1487,8 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 	}
 	ret = 0;
 	if ((M = BN_new()) == NULL || (W = BN_new()) == NULL || (t1 = BN_new()) == NULL ||
-	    BN_is_zero(sig[DSA_R].bn) || BN_is_negative(sig[DSA_R].bn) || BN_cmp(sig[DSA_R].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
-	    BN_is_zero(sig[DSA_S].bn) || BN_is_negative(sig[DSA_S].bn) || BN_cmp(sig[DSA_S].bn, pubkey->bn[DSA_Q].bn) >= 0 ||
+	    BAD_BIGNUM(&sig[DSA_R], &pubkey->bn[DSA_Q]) ||
+	    BAD_BIGNUM(&sig[DSA_S], &pubkey->bn[DSA_Q]) ||
 	    BN_mod_inverse(W, sig[DSA_S].bn, pubkey->bn[DSA_Q].bn, NULL) == NULL) {
 		goto done;
 	}
@@ -1506,7 +1504,10 @@ verify_dsa_verify(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgp
 	    !BN_div(NULL, t1, t1, pubkey->bn[DSA_Q].bn, NULL)) {
 		goto done;
 	}
-	ret = (BN_cmp(t1, sig[DSA_R].bn) == 0);
+	/* only compare the first q bits */
+	BN_bn2bin(t1, calcnum);
+	BN_bn2bin(sig[DSA_R].bn, signum);
+	ret = memcmp(calcnum, signum, BITS_TO_BYTES(qbits)) == 0;
 done:
 	if (M) {
 		BN_free(M);
@@ -1946,6 +1947,54 @@ fixup_detached(pgpv_cursor_t *cursor, const char *f)
 	return 1;
 }
 
+/* match the calculated signature against the oen in the signature packet */
+static int
+match_sig(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_pubkey_t *pubkey, uint8_t *data, size_t size)
+{
+	unsigned	calclen;
+	uint8_t		calculated[64];
+	int		match;
+
+	calclen = pgpv_digest_memory(calculated, sizeof(calculated),
+		data, size,
+		get_ref(&signature->hashstart), signature->hashlen,
+		(signature->type == SIGTYPE_TEXT) ? 't' : 'b');
+	if (ALG_IS_RSA(signature->keyalg)) {
+		match = rsa_verify(calculated, calclen, signature->hashalg, signature->bn, pubkey);
+	} else if (ALG_IS_DSA(signature->keyalg)) {
+		match = verify_dsa_sig(calculated, calclen, signature->bn, pubkey);
+	} else {
+		snprintf(cursor->why, sizeof(cursor->why), "Signature type %u not recognised", signature->keyalg);
+		return 0;
+	}
+	if (!match && signature->type == SIGTYPE_TEXT) {
+		/* second try for cleartext data, ignoring trailing whitespace */
+		calclen = pgpv_digest_memory(calculated, sizeof(calculated),
+			data, size,
+			get_ref(&signature->hashstart), signature->hashlen, 'w');
+		if (ALG_IS_RSA(signature->keyalg)) {
+			match = rsa_verify(calculated, calclen, signature->hashalg, signature->bn, pubkey);
+		} else if (ALG_IS_DSA(signature->keyalg)) {
+			match = verify_dsa_sig(calculated, calclen, signature->bn, pubkey);
+		}
+	}
+	if (!match) {
+		snprintf(cursor->why, sizeof(cursor->why), "Signature on data did not match");
+		return 0;
+	}
+	if (valid_dates(signature, pubkey, cursor->why, sizeof(cursor->why)) > 0) {
+		return 0;
+	}
+	if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
+		return 0;
+	}
+	if (signature->revoked) {
+		snprintf(cursor->why, sizeof(cursor->why), "Signature was revoked");
+		return 0;
+	}
+	return 1;
+}
+
 /************************************************************************/
 /* start of exported functions */
 /************************************************************************/
@@ -2018,8 +2067,6 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	pgpv_litdata_t		*litdata;
 	pgpv_pubkey_t		*pubkey;
 	unsigned		 primary;
-	unsigned		 calclen;
-	uint8_t			 calculated[64];
 	uint8_t			*data;
 	size_t			 pkt;
 	size_t			 insize;
@@ -2077,28 +2124,7 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	cursor->sigtime = signature->birth;
 	/* calc hash on data packet */
 	data = get_literal_data(cursor, litdata, &insize);
-	calclen = pgpv_digest_memory(calculated, sizeof(calculated),
-		data, insize,
-		get_ref(&signature->hashstart), signature->hashlen,
-		(signature->type == SIGTYPE_TEXT));
-	if (ALG_IS_RSA(signature->keyalg)) {
-		if (!rsa_verify(calculated, calclen, signature->hashalg, signature->bn, pubkey)) {
-			snprintf(cursor->why, sizeof(cursor->why), "Signature on data did not match");
-			return 0;
-		}
-	} else if (ALG_IS_DSA(signature->keyalg)) {
-		if (!verify_dsa_verify(calculated, calclen, signature->bn, pubkey)) {
-			snprintf(cursor->why, sizeof(cursor->why), "Signature on data did not match");
-			return 0;
-		}
-	} else {
-		snprintf(cursor->why, sizeof(cursor->why), "Signature type %u not recognised", signature->keyalg);
-		return 0;
-	}
-	if (valid_dates(signature, pubkey, cursor->why, sizeof(cursor->why)) > 0) {
-		return 0;
-	}
-	if (key_expired(pubkey, cursor->why, sizeof(cursor->why))) {
+	if (!match_sig(cursor, signature, pubkey, data, insize)) {
 		return 0;
 	}
 	ARRAY_APPEND(cursor->datacookies, pkt);

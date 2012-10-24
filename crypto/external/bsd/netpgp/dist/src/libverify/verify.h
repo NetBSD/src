@@ -133,6 +133,7 @@ typedef struct pgpv_signature_t {
 	uint8_t		 pref_compress_alg;
 	uint8_t		 notation;
 	uint8_t		 type_key;
+	uint8_t		 revoked;		/* subtract 1 to get real reason, 0 == not revoked */
 } pgpv_signature_t;
 
 /* a signature packet */
