@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.14 2012/07/25 07:26:18 skrll Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.15 2012/10/24 21:45:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.14 2012/07/25 07:26:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.15 2012/10/24 21:45:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ plcom_ifpga_attach(device_t parent, device_t self, void *aux)
 
 static void plcom_ifpga_set_mcr(void *aux, int unit, u_int mcr)
 {
-	struct plcom_ifpga_softc *isc = (struct plcom_ifpga_softc *)aux;
+	struct plcom_ifpga_softc *isc = aux;
 	u_int set, clr;
 
 	set = clr = 0;
