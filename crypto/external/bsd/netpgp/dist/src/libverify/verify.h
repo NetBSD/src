@@ -240,6 +240,8 @@ typedef struct pgpv_t {
 	const char			*op;		/* the operation we're doing */
 } pgpv_t;
 
+#define PGPV_REASON_LEN			128
+
 /* when searching, we define a cursor, and fill in an array of subscripts */
 typedef struct pgpv_cursor_t {
 	pgpv_t			*pgp;			/* pointer to pgp tree */
@@ -250,7 +252,7 @@ typedef struct pgpv_cursor_t {
 	PGPV_ARRAY(uint32_t,	 found);		/* array of matched subscripts */
 	PGPV_ARRAY(size_t,	 datacookies);		/* cookies to retrieve matched data */
 	int64_t			 sigtime;		/* time of signature */
-	char			 why[128];		/* reason for bad signature */
+	char			 why[PGPV_REASON_LEN];	/* reason for bad signature */
 } pgpv_cursor_t;
 
 #ifndef __BEGIN_DECLS
@@ -265,7 +267,7 @@ typedef struct pgpv_cursor_t {
 
 __BEGIN_DECLS
 
-int pgpv_read_pubring(pgpv_t */*pgp*/, const char */*keyring*/);
+int pgpv_read_pubring(pgpv_t */*pgp*/, const void */*keyringfile/mem*/, ssize_t /*size*/);
 
 size_t pgpv_verify(pgpv_cursor_t */*cursor*/, pgpv_t */*pgp*/, const void */*mem/file*/, ssize_t /*size*/);
 size_t pgpv_get_verified(pgpv_cursor_t */*cursor*/, size_t /*cookie*/, char **/*ret*/);
