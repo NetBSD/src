@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.32 2012/10/24 00:30:52 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.33 2012/10/25 13:14:32 martin Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.32 2012/10/24 00:30:52 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.33 2012/10/25 13:14:32 martin Exp $");
 #endif /* !defined lint */
 
 #include "version.h"
@@ -1128,11 +1128,11 @@ inleap(char **const fields, const int nfields)
 		error(_("time before zero"));
 		return;
 	}
-	if (dayoff < min_time / SECSPERDAY) {
+	if (dayoff < (long)(min_time / SECSPERDAY)) {
 		error(_("time too small"));
 		return;
 	}
-	if (dayoff > max_time / SECSPERDAY) {
+	if (dayoff > (long)(max_time / SECSPERDAY)) {
 		error(_("time too large"));
 		return;
 	}
@@ -2522,9 +2522,9 @@ rpytime(const struct rule *const rp, const int wantedy)
 will not work with pre-2004 versions of zic"));
 		}
 	}
-	if (dayoff < min_time / SECSPERDAY)
+	if (dayoff < (long)(min_time / SECSPERDAY))
 		return min_time;
-	if (dayoff > max_time / SECSPERDAY)
+	if (dayoff > (long)(max_time / SECSPERDAY))
 		return max_time;
 	t = (zic_t) dayoff * SECSPERDAY;
 	return tadd(t, rp->r_tod);
