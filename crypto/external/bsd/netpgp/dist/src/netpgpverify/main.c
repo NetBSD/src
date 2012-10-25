@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	if (cmd == NULL) {
 		cmd = "verify";
 	}
-	if (!pgpv_read_pubring(&pgp, keyring)) {
+	if (!pgpv_read_pubring(&pgp, keyring, -1)) {
 		errx(EXIT_FAILURE, "can't read keyring");
 	}
 	if (optind == argc) {
