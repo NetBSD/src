@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.52.2.1 2012/07/05 17:43:49 riz Exp $	*/
+/*	$NetBSD: frag6.c,v 1.52.2.2 2012/10/25 17:23:33 riz Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.52.2.1 2012/07/05 17:43:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.52.2.2 2012/10/25 17:23:33 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,20 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
+	/*
+	 * draft-gont-6man-ipv6-atomic-fragments-00:  A host that receives an
+	 * IPv6 packet which includes a Fragment Header with the "Fragment
+	 * Offset" equal to 0 and the "M" bit equal to 0 MUST process such
+	 * packet in isolation from any other packets/fragments.
+	 */
+	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
+	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
+		IP6_STATINC(IP6_STAT_REASSEMBLED);
+		in6_ifstat_inc(dstifp, ifs6_reass_ok);
+		*offp = offset;
+		return ip6f->ip6f_nxt;		
+	}
+
 	mutex_enter(&frag6_lock);
 
 	/*
@@ -233,7 +247,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * If it's the 1st fragment, record the length of the
 	 * unfragmentable part and the next header of the fragment header.
 	 */
-	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
+
 	if (fragoff == 0) {
 		q6->ip6q_unfrglen = offset - sizeof(struct ip6_hdr) -
 		    sizeof(struct ip6_frag);
