@@ -2134,10 +2134,12 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 
 /* set up the pubkey keyring */
 int
-pgpv_read_pubring(pgpv_t *pgp, const char *keyring)
+pgpv_read_pubring(pgpv_t *pgp, const void *keyring, ssize_t size)
 {
 	if (keyring) {
-		return read_binary_file(pgp, "pubring", "%s", keyring);
+		return (size > 0) ?
+			read_binary_memory(pgp, "pubring", keyring, (size_t)size) :
+			read_binary_file(pgp, "pubring", "%s", keyring);
 	}
 	return read_binary_file(pgp, "pubring", "%s/%s", getenv("HOME"), ".gnupg/pubring.gpg");
 }
