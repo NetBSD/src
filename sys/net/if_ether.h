@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.59 2012/09/30 05:08:08 dholland Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.60 2012/10/25 11:53:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,6 +198,7 @@ int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
 int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
+void    ether_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 
 /*
