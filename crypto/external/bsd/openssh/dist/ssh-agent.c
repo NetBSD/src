@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.10 2012/09/18 15:18:01 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.11 2012/10/26 12:42:10 christos Exp $	*/
 /* $OpenBSD: ssh-agent.c,v 1.172 2011/06/03 01:37:40 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.10 2012/09/18 15:18:01 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.11 2012/10/26 12:42:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1322,6 +1322,7 @@ main(int ac, char **av)
 			cleanup_exit(1);
 		}
 		close(sock);
+		sock = STDERR_FILENO + 1;
 	}
 #if defined(F_CLOSEM)
 	if (fcntl(sock + 1, F_CLOSEM, 0) == -1) {
