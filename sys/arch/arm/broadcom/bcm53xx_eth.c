@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.12 2012/10/18 02:34:34 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.13 2012/10/26 05:11:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1582,7 +1582,7 @@ bcmeth_intr(void *arg)
 		if (intstatus & RCVINT) {
 			struct bcmeth_rxqueue * const rxq = &sc->sc_rxq;
 			intstatus &= ~RCVINT;
-			sc->sc_intmask &= ~RCVINT;
+			atomic_and_32(&sc->sc_intmask, (uint32_t)~RCVINT);
 
 			uint32_t rcvsts0 = bcmeth_read_4(sc, rxq->rxq_reg_rcvsts0);
 			uint32_t descs = __SHIFTOUT(rcvsts0, RCV_CURRDSCR);
@@ -1611,13 +1611,13 @@ bcmeth_intr(void *arg)
 
 		if (intstatus & XMTINT_0) {
 			intstatus &= ~XMTINT_0;
-			sc->sc_intmask &= ~XMTINT_0;
+			atomic_and_32(&sc->sc_intmask, (uint32_t)~XMTINT_0);
 			soft_flags |= SOFT_TXINTR;
 		}
 
 		if (intstatus & RCVDESCUF) {
 			intstatus &= ~RCVDESCUF;
-			sc->sc_intmask &= ~RCVDESCUF;
+			atomic_and_32(&sc->sc_intmask, (uint32_t)~RCVDESCUF);
 			work_flags |= WORK_RXUNDERFLOW;
 		}
 
@@ -1639,7 +1639,7 @@ bcmeth_intr(void *arg)
 			    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtsts0),
 			    bcmeth_read_4(sc, sc->sc_txq.txq_reg_xmtsts1));
 			Debugger();
-			sc->sc_intmask &= ~intstatus;
+			atomic_and_32(&sc->sc_intmask, ~intstatus);
 			work_flags |= WORK_REINIT;
 			break;
 		}
@@ -1695,7 +1695,7 @@ bcmeth_soft_intr(void *arg)
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
 		}
-		sc->sc_intmask |= XMTINT_0;
+		atomic_or_32(&sc->sc_intmask, XMTINT_0);
 	}
 
 	if (soft_flags & SOFT_RXINTR) {
@@ -1703,7 +1703,7 @@ bcmeth_soft_intr(void *arg)
 		 * Let's consume 
 		 */
 		bcmeth_rxq_consume(sc, &sc->sc_rxq);
-		sc->sc_intmask |= RCVINT;
+		atomic_or_32(&sc->sc_intmask, RCVINT);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -1739,7 +1739,7 @@ bcmeth_worker(struct work *wk, void *arg)
 		if (threshold >= rxq->rxq_last - rxq->rxq_first) {
 			threshold = rxq->rxq_last - rxq->rxq_first - 1;
 		} else {
-			sc->sc_intmask |= RCVDESCUF;
+			atomic_or_32(&sc->sc_intmask, RCVDESCUF);
 		}
 		aprint_normal_dev(sc->sc_dev,
 		    "increasing receive buffers from %zu to %zu\n",
@@ -1752,7 +1752,7 @@ bcmeth_worker(struct work *wk, void *arg)
 		 * Let's consume 
 		 */
 		bcmeth_rxq_consume(sc, &sc->sc_rxq);
-		sc->sc_intmask |= RCVINT;
+		atomic_or_32(&sc->sc_intmask, RCVINT);
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
