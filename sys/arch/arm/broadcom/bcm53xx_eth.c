@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.13 2012/10/26 05:11:34 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.14 2012/10/26 05:28:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -138,7 +138,7 @@ struct bcmeth_softc {
 
 	uint32_t sc_maxfrm;
 	uint32_t sc_cmdcfg;
-	uint32_t sc_intmask;
+	volatile uint32_t sc_intmask;
 	uint32_t sc_rcvlazy;
 	volatile uint32_t sc_soft_flags;
 #define	SOFT_RXINTR		0x01
@@ -1708,7 +1708,9 @@ bcmeth_soft_intr(void *arg)
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		mutex_spin_enter(sc->sc_hwlock);
 		bcmeth_write_4(sc, GMAC_INTMASK, sc->sc_intmask);
+		mutex_spin_exit(sc->sc_hwlock);
 	}
 
 	mutex_exit(sc->sc_lock);
@@ -1757,7 +1759,9 @@ bcmeth_worker(struct work *wk, void *arg)
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		bcmeth_rxq_produce(sc, &sc->sc_rxq);
+		mutex_spin_enter(sc->sc_hwlock);
 		bcmeth_write_4(sc, GMAC_INTMASK, sc->sc_intmask);
+		mutex_spin_exit(sc->sc_hwlock);
 	}
 
 	mutex_exit(sc->sc_lock);
