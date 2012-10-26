@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_idm.c,v 1.2 2012/10/26 04:46:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,15 +64,28 @@ bcmeth_unreset(bus_space_tag_t bst, bus_space_handle_t bsh,
 	 * To enable any GMAC, we must enable all off them.
 	 */
 	static const bus_size_t regoff[] = {
-		IDM_BASE + IDM_AMAC0_BASE + IDM_RESET_CONTROL,
-		IDM_BASE + IDM_AMAC1_BASE + IDM_RESET_CONTROL,
-		IDM_BASE + IDM_AMAC2_BASE + IDM_RESET_CONTROL,
-		IDM_BASE + IDM_AMAC3_BASE + IDM_RESET_CONTROL,
+		IDM_BASE + IDM_AMAC0_BASE,
+		IDM_BASE + IDM_AMAC1_BASE,
+		IDM_BASE + IDM_AMAC2_BASE,
+		IDM_BASE + IDM_AMAC3_BASE,
 	};
 	static bool bcmeth_init_done;
 	if (!bcmeth_init_done) {
 		for (size_t idx = 0; idx < __arraycount(regoff); idx++) {
-			bus_space_write_4(bst, bsh, regoff[idx], 0);
+			const bus_size_t off = regoff[idx];
+			bus_space_write_4(bst, bsh, off + IDM_RESET_CONTROL, 0);
+			uint32_t v = bus_space_read_4(bst, bsh,
+			    off + IDM_IO_CONTROL_DIRECT);
+			/*
+			 * Clear read-allocate and write-allocate bits from
+			 * ACP cache access so we don't pollute the caches.
+			 */
+			v &= ~IO_CONTROL_DIRECT_ARCACHE;
+			v &= ~IO_CONTROL_DIRECT_AWCACHE;
+			v |= __SHIFTIN(AXCACHE_C|AXCACHE_B, IO_CONTROL_DIRECT_ARCACHE);
+			v |= __SHIFTIN(AXCACHE_C|AXCACHE_B, IO_CONTROL_DIRECT_AWCACHE);
+			bus_space_write_4(bst, bsh, off + IDM_IO_CONTROL_DIRECT,
+			    v);
 		}
 		bcmeth_init_done = true;
 	}
