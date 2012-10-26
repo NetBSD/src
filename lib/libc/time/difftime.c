@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.11 2012/03/20 16:39:08 matt Exp $	*/
+/*	$NetBSD: difftime.c,v 1.12 2012/10/26 18:30:11 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.11 2012/03/20 16:39:08 matt Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.12 2012/10/26 18:30:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -26,17 +26,17 @@ difftime(const time_t time1, const time_t time0)
 	** (assuming that the larger type has more precision).
 	** This is the common real-world case circa 2004.
 	*/
-/* LINTED constant */
+	/* CONSTCOND */
 	if (sizeof (double) > sizeof (time_t))
 		return (double) time1 - (double) time0;
-/* LINTED constant */
+	/* CONSTCOND */
 	if (!TYPE_INTEGRAL(time_t)) {
 		/*
 		** time_t is floating.
 		*/
 		return time1 - time0;
 	}
-/* LINTED constant */
+	/* CONSTCOND */
 	if (!TYPE_SIGNED(time_t)) {
 		/*
 		** time_t is integral and unsigned.
@@ -58,7 +58,7 @@ difftime(const time_t time1, const time_t time0)
 	** time1 and time0 have opposite signs.
 	** Punt if unsigned long is too narrow.
 	*/
-/* CONSTCOND */
+	/* CONSTCOND */
 	if (sizeof (unsigned long) < sizeof (time_t))
 		return (double) time1 - (double) time0;
 	/*
