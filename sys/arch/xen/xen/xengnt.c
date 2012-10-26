@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.10.4.1 2010/01/30 19:14:20 snj Exp $      */
+/*      $NetBSD: xengnt.c,v 1.10.4.2 2012/10/26 11:31:50 sborrill Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10.4.1 2010/01/30 19:14:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10.4.2 2012/10/26 11:31:50 sborrill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10.4.1 2010/01/30 19:14:20 snj Exp $");
 #endif
 
 #define NR_GRANT_ENTRIES_PER_PAGE (PAGE_SIZE / sizeof(grant_entry_t))
+
+/* External tools reserve first few grant table entries. */
+#define NR_RESERVED_ENTRIES 8
 
 int gnt_nr_grant_frames;
 int gnt_max_grant_frames;
@@ -127,7 +130,7 @@ xengnt_more_entries()
 	gnttab_setup_table_t setup;
 	u_long *pages;
 	int nframes_new = gnt_nr_grant_frames + 1;
-	int i;
+	int i, start_gnt;
 
 	if (gnt_nr_grant_frames == gnt_max_grant_frames)
 		return ENOMEM;
@@ -167,9 +170,14 @@ xengnt_more_entries()
 
 	/*
 	 * add the grant entries associated to the last grant table frame
-	 * and mark them as free
+	 * and mark them as free. Prevent using the first grants (from 0 to 8)
+	 * since they are used by the tools.
 	 */
-	for (i = gnt_nr_grant_frames * NR_GRANT_ENTRIES_PER_PAGE;
+	start_gnt = (gnt_nr_grant_frames * NR_GRANT_ENTRIES_PER_PAGE) <
+	            (NR_RESERVED_ENTRIES + 1) ?
+	            (NR_RESERVED_ENTRIES + 1) :
+	            (gnt_nr_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
+	for (i = start_gnt;
 	    i < nframes_new * NR_GRANT_ENTRIES_PER_PAGE;
 	    i++) {
 		KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
@@ -206,7 +214,7 @@ xengnt_get_entry()
 	entry = gnt_entries[last_gnt_entry];
 	gnt_entries[last_gnt_entry] = XENGNT_NO_ENTRY;
 	splx(s);
-	KASSERT(entry != XENGNT_NO_ENTRY);
+	KASSERT(entry != XENGNT_NO_ENTRY && entry > NR_RESERVED_ENTRIES);
 	KASSERT(last_gnt_entry >= 0 && last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
 	return entry;
 }
@@ -218,6 +226,7 @@ static void
 xengnt_free_entry(grant_ref_t entry)
 {
 	int s = splvm();
+	KASSERT(entry > NR_RESERVED_ENTRIES);
 	KASSERT(gnt_entries[last_gnt_entry] == XENGNT_NO_ENTRY);
 	KASSERT(last_gnt_entry >= 0 && last_gnt_entry <= gnt_max_grant_frames * NR_GRANT_ENTRIES_PER_PAGE);
 	gnt_entries[last_gnt_entry] = entry;
