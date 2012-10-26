@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.26 2012/10/17 18:12:59 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.27 2012/10/26 21:03:26 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,13 +25,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.26 2012/10/17 18:12:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.27 2012/10/26 21:03:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/sockio.h>
@@ -198,12 +200,14 @@ struct mvgbe_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_dafh;		/* dest address filter handle */
+	bus_space_handle_t sc_dafh;	/* dest address filter handle */
 	bus_dma_tag_t sc_dmat;
 
 	struct ethercom sc_ethercom;
 	struct mii_data sc_mii;
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* station addr */
+
+	callout_t sc_tick_ch;		/* tick callout */
 
 	struct mvgbe_chain_data sc_cdata;
 	struct mvgbe_ring_data *sc_rdata;
@@ -242,6 +246,7 @@ static void mvgbec_wininit(struct mvgbec_softc *);
 static int mvgbe_match(device_t, struct cfdata *, void *);
 static void mvgbe_attach(device_t, device_t, void *);
 
+static void mvgbe_tick(void *);
 static int mvgbe_intr(void *);
 
 static void mvgbe_start(struct ifnet *);
@@ -646,6 +651,8 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_port = mva->mva_unit;
 	sc->sc_iot = mva->mva_iot;
+	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, mvgbe_tick, sc);
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
 	    MVGBE_PORTR_BASE + mva->mva_unit * MVGBE_PORTR_SIZE,
 	    MVGBE_PORTR_SIZE, &sc->sc_ioh)) {
@@ -860,6 +867,21 @@ mvgbe_ipgintrx(struct mvgbec_softc *csc, struct mvgbe_softc *sc,
 	MVGBE_WRITE(sc, MVGBE_SDC, reg);
 
 	return 0;
+}
+
+static void
+mvgbe_tick(void *arg)
+{
+	struct mvgbe_softc *sc = arg;
+	struct mii_data *mii = &sc->sc_mii;
+	int s;
+
+	s = splnet();
+	mii_tick(mii);
+	/* Need more work */
+	splx(s);
+
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 static int
@@ -1119,6 +1141,8 @@ mvgbe_init(struct ifnet *ifp)
 	    MVGBE_ICE_TXERR |
 	    MVGBE_ICE_LINKCHG);
 
+	callout_schedule(&sc->sc_tick_ch, hz);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1136,6 +1160,8 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 	int i, cnt;
 
 	DPRINTFN(2, ("mvgbe_stop\n"));
+
+	callout_stop(&sc->sc_tick_ch);
 
 	/* Stop Rx port activity. Check port Rx activity. */
 	reg = MVGBE_READ(sc, MVGBE_RQC);
