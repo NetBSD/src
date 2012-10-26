@@ -1,4 +1,4 @@
-/*	$NetBSD: ialloc.c,v 1.8 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: ialloc.c,v 1.9 2012/10/26 18:29:34 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -13,7 +13,7 @@
 #if 0
 static char	elsieid[] = "@(#)ialloc.c	8.30";
 #else
-__RCSID("$NetBSD: ialloc.c,v 1.8 2012/10/24 00:10:03 christos Exp $");
+__RCSID("$NetBSD: ialloc.c,v 1.9 2012/10/26 18:29:34 christos Exp $");
 #endif
 
 #include "private.h"
@@ -21,8 +21,8 @@ __RCSID("$NetBSD: ialloc.c,v 1.8 2012/10/24 00:10:03 christos Exp $");
 char *
 icatalloc(char *const old, const char *const new)
 {
-	register char *	result;
-	register int	oldsize, newsize;
+	char *	result;
+	int	oldsize, newsize;
 
 	newsize = (new == NULL) ? 0 : strlen(new);
 	if (old == NULL)
