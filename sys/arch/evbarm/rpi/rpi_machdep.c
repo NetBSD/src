@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.15 2012/10/19 12:33:27 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.16 2012/10/26 10:03:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.15 2012/10/19 12:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16 2012/10/26 10:03:13 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -218,9 +218,12 @@ rpi_bootparams(void)
 		size_t n = vcprop_tag_resplen(&vptp_mem->tag) /
 		    sizeof(struct vcprop_memory);
 
+    		bootconfig.dramblocks = 0;
+
 		for (int i = 0; i < n && i < DRAM_BLOCKS; i++) {
 			bootconfig.dram[i].address = vptp_mem->mem[i].base;
 			bootconfig.dram[i].pages = atop(vptp_mem->mem[i].size);
+			bootconfig.dramblocks++;
 		}
 	}
 
