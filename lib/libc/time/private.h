@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.27 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.28 2012/10/26 23:23:23 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -203,7 +203,7 @@ const char *	scheck(const char * string, const char * format);
 #endif /* !defined TYPE_BIT */
 
 #ifndef TYPE_SIGNED
-#define TYPE_SIGNED(type) (((type) -1) < 0)
+#define TYPE_SIGNED(type) (/*CONSTCOND*/((type) -1) < 0)
 #endif /* !defined TYPE_SIGNED */
 
 /*
@@ -212,7 +212,7 @@ const char *	scheck(const char * string, const char * format);
 */
 
 #ifndef TYPE_INTEGRAL
-#define TYPE_INTEGRAL(type) (((type) 0.5) != 0.5)
+#define TYPE_INTEGRAL(type) (/*CONSTCOND*/((type) 0.5) != 0.5)
 #endif /* !defined TYPE_INTEGRAL */
 
 #ifndef INT_STRLEN_MAXIMUM

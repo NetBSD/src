@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.69 2012/10/26 18:31:14 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.70 2012/10/26 23:23:23 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.69 2012/10/26 18:31:14 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.70 2012/10/26 23:23:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -356,7 +356,6 @@ settzname(void)
 static int
 differ_by_repeat(const time_t t1, const time_t t0)
 {
-/* CONSTCOND */
 	if (TYPE_INTEGRAL(time_t) &&
 		TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
 			return 0;
@@ -527,7 +526,6 @@ tzload(timezone_t sp, const char *name, const int doextend)
 		for (i = 0; i < sp->timecnt - 2; ++i)
 			if (sp->ats[i] > sp->ats[i + 1]) {
 				++i;
-/* CONSTCOND */
 				if (TYPE_SIGNED(time_t)) {
 					/*
 					** Ignore the end (easy).
@@ -1867,11 +1865,11 @@ again:
 	/*
 	** Do a binary search (this works whatever time_t's type is).
 	*/
-	/* CONSTCOND */
+	/* LINTED const not */
 	if (!TYPE_SIGNED(time_t)) {
 		lo = 0;
 		hi = lo - 1;
-	/* CONSTCOND */
+	/* LINTED const not */
 	} else if (!TYPE_INTEGRAL(time_t)) {
 		/* CONSTCOND */
 		if (sizeof(time_t) > sizeof(float))
