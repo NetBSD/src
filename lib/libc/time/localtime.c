@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.68 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.69 2012/10/26 18:31:14 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.68 2012/10/24 00:10:03 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.69 2012/10/26 18:31:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,8 +128,8 @@ struct __state {
 	time_t		ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
-				(2 * (MY_TZNAME_MAX + 1)))];
+	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1,
+				sizeof gmt), (2 * (MY_TZNAME_MAX + 1)))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 };
 
@@ -180,7 +180,7 @@ static time_t		time1(const timezone_t sp, struct tm * const tmp,
 static time_t		time2(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp,
 				const long offset, int *const okayp);
-static time_t		time2sub(const timezone_t sp, struct tm * consttmp,
+static time_t		time2sub(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp, const long offset,
 				int *const okayp, const int do_norm_secs);
 static struct tm *	timesub(const timezone_t sp, const time_t * timep,
@@ -1074,7 +1074,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			if (*name != '\0')
 				return -1;
 			/*
-			** Initial values of theirstdoffset
+			** Initial values of theirstdoffset and theirdstoffset.
 			*/
 			theirstdoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i) {
@@ -1138,6 +1138,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			}
 			/*
 			** Finally, fill in ttis.
+			** ttisstd and ttisgmt need not be handled
 			*/
 			memset(sp->ttis, 0, sizeof(sp->ttis));
 			sp->ttis[0].tt_gmtoff = -stdoffset;
@@ -1247,11 +1248,8 @@ void
 tzset_unlocked(void)
 {
 	const char *	name;
-	int saveerrno;
 
-	saveerrno = errno;
 	name = getenv("TZ");
-	errno = saveerrno;
 	if (name == NULL) {
 		tzsetwall_unlocked();
 		return;
@@ -1264,7 +1262,7 @@ tzset_unlocked(void)
 		(void)strlcpy(lcl_TZname, name, sizeof(lcl_TZname));
 
 	if (lclptr == NULL) {
-		saveerrno = errno;
+		int saveerrno = errno;
 		lclptr = calloc(1, sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
@@ -1869,17 +1867,17 @@ again:
 	/*
 	** Do a binary search (this works whatever time_t's type is).
 	*/
-/* LINTED constant */
+	/* CONSTCOND */
 	if (!TYPE_SIGNED(time_t)) {
 		lo = 0;
 		hi = lo - 1;
-/* LINTED constant */
+	/* CONSTCOND */
 	} else if (!TYPE_INTEGRAL(time_t)) {
-/* CONSTCOND */
+		/* CONSTCOND */
 		if (sizeof(time_t) > sizeof(float))
-/* LINTED assumed double */
+			/* LINTED assumed double */
 			hi = (time_t) DBL_MAX;
-/* LINTED assumed float */
+			/* LINTED assumed float */
 		else	hi = (time_t) FLT_MAX;
 		lo = -hi;
 	} else {
