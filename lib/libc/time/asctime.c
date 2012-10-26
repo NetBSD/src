@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.16 2012/10/24 00:10:03 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.17 2012/10/26 18:29:49 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.16 2012/10/24 00:10:03 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.17 2012/10/26 18:29:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,15 +83,6 @@ static char	buf_asctime[MAX_ASCTIME_BUF_SIZE];
 /*
 ** A la ISO/IEC 9945-1, ANSI/IEEE Std 1003.1, 2004 Edition.
 */
-
-/*
-** Big enough for something such as
-** ??? ???-2147483648 -2147483648:-2147483648:-2147483648 -2147483648\n
-** (two three-character abbreviations, five strings denoting integers,
-** three explicit spaces, two explicit colons, a newline,
-** and a trailing ASCII nul).
-*/
-#define	ASCTIME_BUFLEN	(3 * 2 + 5 * INT_STRLEN_MAXIMUM(int) + 3 + 2 + 1 + 1)
 
 char *
 asctime_r(const struct tm *timeptr, char *buf)
