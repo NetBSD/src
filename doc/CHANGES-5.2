@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.191 2012/10/26 07:42:55 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.192 2012/10/26 11:34:05 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8707,4 +8707,11 @@ share/man/man3/bits.3				1.13-1.14 via patch
 
 	Document the correct return value of __BIT() and __BITS().
 	[msaitoh, ticket #1808]
+
+sys/arch/xen/xen/xengnt.c			1.25 via patch
+
+	Prevents a memory corruption issue that freezes a Xen DomU
+	and can also cause fs corruption. Addresses PR port-xen/47057
+	and port-xen/47056.
+	[royger, ticket #1805]
 
