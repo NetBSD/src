@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.14 2012/10/25 17:30:14 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.15 2012/10/26 09:33:39 sborrill Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -345,7 +345,7 @@ usr.bin/netstat/netstat.1			1.64-1.65
 	Document the -t and -l options.  PR#47085.
 	[msaitoh, ticket #635]
 
-share/man/man3/bits.3			1.13-1.14
+share/man/man3/bits.3				1.13-1.14
 
 	Document the correct return value of __BIT() and __BITS().
 	[msaitoh, ticket #636]
@@ -354,4 +354,9 @@ sys/netinet6/frag6.c				1.54
 
 	Fix "atomic fragments" for IPv6.
 	[christos, ticket #637]
+
+sbin/gpt/gpt.c					1.16-1.17
+
+	Endianness fixes.
+	[riz, ticket #619]
 
