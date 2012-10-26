@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.44 2012/09/27 00:39:47 matt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.45 2012/10/26 09:59:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.44 2012/09/27 00:39:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.45 2012/10/26 09:59:11 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -721,7 +721,10 @@ again:
 		if ((((sig & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 		    & WDCS_BSY) == 0)
 			break;
-		tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		if (flags & AT_WAIT)
+			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
+		else
+			delay(10000);
 	}
 	if (i == AHCI_RST_WAIT) {
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
@@ -740,7 +743,10 @@ again:
 	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))), DEBUG_PROBE);
 end:
 	ahci_channel_stop(sc, chp, flags);
-	tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
+	if (flags & AT_WAIT)
+		tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
+	else
+		delay(500000);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	ahci_channel_start(sc, chp, AT_WAIT,
