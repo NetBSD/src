@@ -122,15 +122,19 @@ typedef struct pgpv_signature_t {
 	uint8_t		 trustamount;
 	pgpv_bignum_t	 bn[PGPV_MAX_SIG_BN];
 	char		*regexp;
-	char		*key_server_prefs;
+	char		*pref_key_server;
 	char		*policy;
 	char		*features;
 	char		*why_revoked;
+	uint8_t		*revoke_fingerprint;
+	uint8_t		 revoke_alg;
+	uint8_t		 revoke_sensitive;
 	uint8_t		 trustsig;
 	uint8_t		 revocable;
 	uint8_t		 pref_symm_alg;
 	uint8_t		 pref_hash_alg;
 	uint8_t		 pref_compress_alg;
+	uint8_t		 key_server_modify;
 	uint8_t		 notation;
 	uint8_t		 type_key;
 	uint8_t		 revoked;		/* subtract 1 to get real reason, 0 == not revoked */
