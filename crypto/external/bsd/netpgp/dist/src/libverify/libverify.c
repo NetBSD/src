@@ -51,23 +51,16 @@
 #define BITS_TO_BYTES(b)		(((b) + (CHAR_BIT - 1)) / CHAR_BIT)
 
 /* packet types */
-#define PUBKEY_ENC_SESSKEY_PKT		1
-#define SIGNATURE_PKT			2	/* done */
-#define SYMMKEY_ENC_SESSKEY_PKT		3
-#define ONEPASS_SIGNATURE_PKT		4	/* done */
-#define SECKEY_PKT			5
-#define PUBKEY_PKT			6	/* done */
-#define SEC_SUBKEY_PKT			7
-#define COMPRESSED_DATA_PKT		8	/* done */
-#define SYMMKEY_ENC_DATA_PKT		9
+#define SIGNATURE_PKT			2
+#define ONEPASS_SIGNATURE_PKT		4
+#define PUBKEY_PKT			6
+#define COMPRESSED_DATA_PKT		8
 #define MARKER_PKT			10
-#define LITDATA_PKT			11	/* done */
-#define TRUST_PKT			12	/* done */
-#define USERID_PKT			13	/* done */
-#define PUB_SUBKEY_PKT			14	/* done */
-#define USER_ATTRIBUTE_PKT		17	/* done */
-#define SYMM_ENC_INTEG_PROT_PKT		18
-#define MODIFY_DETECTION_PKT		19
+#define LITDATA_PKT			11
+#define TRUST_PKT			12
+#define USERID_PKT			13
+#define PUB_SUBKEY_PKT			14
+#define USER_ATTRIBUTE_PKT		17
 
 /* only allow certain packets at certain times */
 #define PUBRING_ALLOWED			"\002\006\014\015\016\021"
@@ -759,6 +752,11 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 		case SUBPKT_PREF_SYMMETRIC_ALG:
 			sigpkt->sig.pref_symm_alg = *p;
 			break;
+		case SUBPKT_REVOCATION_KEY:
+			sigpkt->sig.revoke_sensitive = (*p & 0x40);
+			sigpkt->sig.revoke_alg = p[1];
+			sigpkt->sig.revoke_fingerprint = &p[2];
+			break;
 		case SUBPKT_NOTATION:
 			sigpkt->sig.notation = *p;
 			break;
@@ -768,8 +766,11 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 		case SUBPKT_PREF_COMPRESS_ALG:
 			sigpkt->sig.pref_compress_alg = *p;
 			break;
+		case SUBPKT_PREF_KEY_SERVER:
+			sigpkt->sig.pref_key_server = (char *)(void *)p;
+			break;
 		case SUBPKT_KEY_SERVER_PREFS:
-			sigpkt->sig.key_server_prefs = (char *)(void *)p;
+			sigpkt->sig.key_server_modify = *p;
 			break;
 		case SUBPKT_KEY_FLAGS:
 			sigpkt->sig.type_key = *p;
@@ -788,7 +789,7 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 			sigpkt->sig.why_revoked = (char *)(void *)p;
 			break;
 		default:
-			printf("hi, need to implement sigpkt %d\n", subpkt.tag);
+			printf("Ignoring unusual/reserved signature subpacket %d\n", subpkt.tag);
 			break;
 		}
 		subpkt.s.data = p;
@@ -1274,9 +1275,8 @@ recog_subkey(pgpv_t *pgp, pgpv_signed_subkey_t *subkey)
 		subkey->revoc_self_sig = signature;
 	}
 	do {
-		if (!pkt_sigtype_is(pgp, SIGTYPE_SUBKEY_BINDING) &&
-		    !pkt_sigtype_is(pgp, SIGTYPE_SUBKEY_REVOCATION)) {
-			printf("recog_subkey: not SIGNATURE_PKT/SUBKEY_BINDING at %zu\n", pgp->pkt);
+		if (!pkt_is(pgp, SIGNATURE_PKT)) {
+			printf("recog_subkey: not signature packet at %zu\n", pgp->pkt);
 			return 0;
 		}
 		if (!recog_signature(pgp, &signature)) {
@@ -1995,6 +1995,15 @@ match_sig(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_pubkey_t *pub
 	return 1;
 }
 
+/* check return value from getenv */
+static const char *
+nonnull_getenv(const char *key)
+{
+	char	*value;
+
+	return ((value = getenv(key)) == NULL) ? "" : value;
+}
+
 /************************************************************************/
 /* start of exported functions */
 /************************************************************************/
@@ -2141,7 +2150,7 @@ pgpv_read_pubring(pgpv_t *pgp, const void *keyring, ssize_t size)
 			read_binary_memory(pgp, "pubring", keyring, (size_t)size) :
 			read_binary_file(pgp, "pubring", "%s", keyring);
 	}
-	return read_binary_file(pgp, "pubring", "%s/%s", getenv("HOME"), ".gnupg/pubring.gpg");
+	return read_binary_file(pgp, "pubring", "%s/%s", nonnull_getenv("HOME"), ".gnupg/pubring.gpg");
 }
 
 /* get verified data as a string, return its size */
