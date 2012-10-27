@@ -1,4 +1,4 @@
-/*	$NetBSD: smscvar.h,v 1.4 2008/04/28 20:23:52 martin Exp $ */
+/*	$NetBSD: smscvar.h,v 1.5 2012/10/27 17:18:25 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@
 #define SMSC_MAX_SENSORS	8	/* 4 temp sensors, 4 fan sensors */
 
 struct smsc_softc {
-	struct device 		sc_dev;
-
 	bus_space_tag_t 	sc_iot;
 	bus_space_handle_t 	sc_ioh;
 

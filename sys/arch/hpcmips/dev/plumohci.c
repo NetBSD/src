@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.13 2010/07/20 15:06:43 tsutsui Exp $ */
+/*	$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.13 2010/07/20 15:06:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.13 2010/07/20 15:06:43 tsutsui Exp $"
 #include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumohcireg.h>
 
-int plumohci_match(struct device *, struct cfdata *, void *);
-void plumohci_attach(struct device *, struct device *, void *);
+int plumohci_match(device_t, cfdata_t, void *);
+void plumohci_attach(device_t, device_t, void *);
 int plumohci_intr(void *);
 
 void __plumohci_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
@@ -120,7 +120,7 @@ CFATTACH_DECL_NEW(plumohci, sizeof(struct plumohci_softc),
     plumohci_match, plumohci_attach, NULL, NULL);
 
 int
-plumohci_match(struct device *parent, struct cfdata *match, void *aux)
+plumohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* PLUM2 builtin OHCI module */
 
@@ -128,7 +128,7 @@ plumohci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-plumohci_attach(struct device *parent, struct device *self, void *aux)
+plumohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct plumohci_softc *sc = device_private(self);
 	struct plum_attach_args *pa = aux;

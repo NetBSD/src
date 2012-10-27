@@ -1,4 +1,4 @@
-/* $NetBSD: admwdog.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $ */
+/* $NetBSD: admwdog.c,v 1.4 2012/10/27 17:18:01 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: admwdog.c,v 1.3 2011/07/01 18:38:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admwdog.c,v 1.4 2012/10/27 17:18:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ admwdog_attach(struct admsw_softc *sc)
 	/* deactivate watchdog */
 	admwdog_write(sc, 0);
 
-	smw->smw_name = device_xname(&sc->sc_dev);
+	smw->smw_name = device_xname(sc->sc_dev);
 	smw->smw_cookie = sc;
 	smw->smw_setmode = admwdog_setmode;
 	smw->smw_tickle = admwdog_tickle;

@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.24 2009/03/18 10:22:43 cegger Exp $
+ *	$Id: i4b_tel.c,v 1.25 2012/10/27 17:18:40 chs Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.24 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.25 2012/10/27 17:18:40 chs Exp $");
 
 #include "isdntel.h"
 
@@ -274,7 +274,7 @@ SYSINIT(i4bteldev, SI_SUB_DRIVERS,
 #ifdef __bsdi__
 
 int i4btelsel(dev_t dev, int rw, struct lwp *l);
-int i4btelmatch(struct device *parent, struct cfdata *cf, void *aux);
+int i4btelmatch(device_t parent, cfdata_t cf, void *aux);
 void dummy_i4btelattach(struct device*, struct device *, void *);
 
 #define CDEV_MAJOR 62
@@ -290,14 +290,14 @@ struct devsw i4btelsw =
 };
 
 int
-i4btelmatch(struct device *parent, struct cfdata *cf, void *aux)
+i4btelmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	NDBGL4(L4_TELDBG, "aux=0x%x", aux);
 	return 1;
 }
 
 void
-dummy_i4btelattach(struct device *parent, struct device *self, void *aux)
+dummy_i4btelattach(device_t parent, device_t self, void *aux)
 {
 	NDBGL4(L4_TELDBG, "aux=0x%x", aux);
 }

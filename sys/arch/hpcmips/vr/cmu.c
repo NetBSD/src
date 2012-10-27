@@ -1,4 +1,4 @@
-/*	$NetBSD: cmu.c,v 1.13 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: cmu.c,v 1.14 2012/10/27 17:17:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.13 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.14 2012/10/27 17:17:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: cmu.c,v 1.13 2005/12/11 12:17:34 christos Exp $");
 #include <machine/config_hook.h>
 
 struct vrcmu_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	config_hook_tag sc_hardpower;
@@ -66,26 +65,26 @@ struct vrcmu_softc {
 	struct vrcmu_chipset_tag sc_chipset;
 };
 
-int	vrcmu_match(struct device *, struct cfdata *, void *);
-void	vrcmu_attach(struct device *, struct device *, void *);
+int	vrcmu_match(device_t, cfdata_t, void *);
+void	vrcmu_attach(device_t, device_t, void *);
 int	vrcmu_supply(vrcmu_chipset_tag_t, u_int16_t, int);
 int	vrcmu_hardpower(void *, int, long, void *);
 
-CFATTACH_DECL(vrcmu, sizeof(struct vrcmu_softc),
+CFATTACH_DECL_NEW(vrcmu, sizeof(struct vrcmu_softc),
     vrcmu_match, vrcmu_attach, NULL, NULL);
 
 int
-vrcmu_match(struct device *parent, struct cfdata *cf, void *aux)
+vrcmu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (2);		/* 1st attach group of vrip */
 }
 
 void
-vrcmu_attach(struct device *parent, struct device *self, void *aux)
+vrcmu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrcmu_softc *sc = (void *)self;
+	struct vrcmu_softc *sc = device_private(self);
 
 	sc->sc_iot = va->va_iot;
 	sc->sc_chipset.cc_sc = sc;

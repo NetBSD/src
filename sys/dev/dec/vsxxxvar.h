@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxxvar.h,v 1.5 2009/05/12 14:18:16 cegger Exp $ */
+/* $NetBSD: vsxxxvar.h,v 1.6 2012/10/27 17:18:15 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
  */
 
 struct vsxxx_softc {
-	struct device sc_dev;
 	device_t sc_wsmousedev;
 	unsigned sc_nbyte;
 	union {

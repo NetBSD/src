@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.10 2011/02/08 20:20:08 rmind Exp $ */
+/* $NetBSD: timer.c,v 1.11 2012/10/27 17:17:35 chs Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.10 2011/02/08 20:20:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.11 2012/10/27 17:17:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.10 2011/02/08 20:20:08 rmind Exp $");
 
 #include <arc/arc/timervar.h>
 
-struct device *timerdev;
+device_t timerdev;
 const struct timerfns *timerfns;
 int timerinitted;
 uint32_t last_cp0_count;
@@ -73,7 +73,7 @@ static u_int statcountperusec;	/* number of ticks per usec at current stathz */
 #endif
 
 void
-timerattach(struct device *dev, const struct timerfns *fns)
+timerattach(device_t dev, const struct timerfns *fns)
 {
 
 	/*

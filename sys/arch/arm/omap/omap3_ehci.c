@@ -1,7 +1,7 @@
-/*	$Id: omap3_ehci.c,v 1.3 2012/09/05 00:19:59 matt Exp $	*/
+/*	$Id: omap3_ehci.c,v 1.4 2012/10/27 17:17:40 chs Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap3_ehci.c,v 1.3 2012/09/05 00:19:59 matt Exp $	*/
+/*	$NetBSD: omap3_ehci.c,v 1.4 2012/10/27 17:17:40 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_ehci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3 2012/09/05 00:19:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.4 2012/10/27 17:17:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ struct obioehci_softc {
 	bus_size_t	sc_size;
 };
 
-static int	obioehci_match(struct device *, struct cfdata *, void *);
-static void	obioehci_attach(struct device *, struct device *, void *);
-static int	obioehci_detach(struct device *, int);
+static int	obioehci_match(device_t, cfdata_t, void *);
+static void	obioehci_attach(device_t, device_t, void *);
+static int	obioehci_detach(device_t, int);
 
 CFATTACH_DECL_NEW(obioehci, sizeof(struct obioehci_softc),
     obioehci_match, obioehci_attach, obioehci_detach, ehci_activate);

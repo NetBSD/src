@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.94 2012/06/02 21:36:44 dsl Exp $ */
+/*      $NetBSD: ac97.c,v 1.95 2012/10/27 17:18:18 chs Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.94 2012/06/02 21:36:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.95 2012/10/27 17:18:18 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -994,14 +994,14 @@ ac97_setup_defaults(struct ac97_softc *as)
 }
 
 static void
-ac97_restore_shadow(struct ac97_codec_if *self)
+ac97_restore_shadow(struct ac97_codec_if *codec_if)
 {
 	struct ac97_softc *as;
 	const struct ac97_source_info *si;
 	int idx;
 	uint16_t val;
 
-	as = (struct ac97_softc *) self;
+	as = (struct ac97_softc *)codec_if;
 
 	KASSERT(mutex_owned(as->lock));
 

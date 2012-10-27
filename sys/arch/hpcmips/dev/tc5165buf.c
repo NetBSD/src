@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.16 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.17 2012/10/27 17:17:53 chs Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.16 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.17 2012/10/27 17:17:53 chs Exp $");
 
 #include "opt_use_poll.h"
 
@@ -74,14 +74,13 @@ struct tc5165buf_chip {
 };
 
 struct tc5165buf_softc {
-	struct device		sc_dev;
 	struct tc5165buf_chip	*sc_chip;
 	tx_chipset_tag_t	sc_tc;
 	void			*sc_ih;
 };
 
-int	tc5165buf_match(struct device *, struct cfdata *, void *);
-void	tc5165buf_attach(struct device *, struct device *, void *);
+int	tc5165buf_match(device_t, cfdata_t, void *);
+void	tc5165buf_attach(device_t, device_t, void *);
 int	tc5165buf_intr(void *);
 int	tc5165buf_poll(void *);
 void	tc5165buf_soft(void *);
@@ -91,21 +90,21 @@ int	tc5165buf_input_establish(void *, struct hpckbd_if *);
 
 struct tc5165buf_chip tc5165buf_chip;
 
-CFATTACH_DECL(tc5165buf, sizeof(struct tc5165buf_softc),
+CFATTACH_DECL_NEW(tc5165buf, sizeof(struct tc5165buf_softc),
     tc5165buf_match, tc5165buf_attach, NULL, NULL);
 
 int
-tc5165buf_match(struct device *parent, struct cfdata *cf, void *aux)
+tc5165buf_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 void
-tc5165buf_attach(struct device *parent, struct device *self, void *aux)
+tc5165buf_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
-	struct tc5165buf_softc *sc = (void*)self;
+	struct tc5165buf_softc *sc = device_private(self);
 	struct hpckbd_attach_args haa;
 
 	printf(": ");

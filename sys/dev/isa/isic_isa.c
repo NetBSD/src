@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.35 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.36 2012/10/27 17:18:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,11 +83,11 @@ static int setup_io_map(int flags, bus_space_tag_t iot,
 	int *msize);
 static void args_unmap(int *num_mappings, struct isic_io_map *maps);
 
-CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
+CFATTACH_DECL_NEW(isic_isa, sizeof(struct isic_softc),
     isic_isa_probe, isic_isa_attach, NULL, NULL);
 
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	device_xname(&sc->sc_dev)
+#define	ISIC_PARM	device_xname(sc->sc_dev)
 #define	TERMFMT	"\n"
 
 /*
@@ -363,7 +363,7 @@ isicattach(int flags, struct isic_softc *sc)
 
 #elif defined(__bsdi__)
 
-	struct isic_softc *sc = (struct isic_softc *)self;
+	struct isic_softc *sc = device_private(self);
 #define	PARM	parent, self, ia
 #define	PARM2	parent, self, ia
 #define	FLAGS	sc->sc_flags
@@ -536,7 +536,7 @@ isicattach(int flags, struct isic_softc *sc)
 				break;
 
 			default:
-				aprint_error_dev(&sc->sc_dev, "Error, IPAC version %d unknown!\n", ret);
+				aprint_error_dev(sc->sc_dev, "Error, IPAC version %d unknown!\n", ret);
 				return(0);
 				break;
 		}
@@ -777,9 +777,9 @@ isicattach(int flags, struct isic_softc *sc)
 static void
 isic_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct isic_softc *sc = (void *)self;
+	struct isic_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	int flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	int flags = device_cfdata(self)->cf_flags;
 	int ret = 0, iobase, iosize, maddr, msize;
 	struct isic_attach_args args;
 
@@ -799,6 +799,7 @@ isic_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Setup parameters */
+	sc->sc_dev = self;
 	sc->sc_irq = ia->ia_irq[0].ir_irq;
 	sc->sc_maddr = maddr;
 	sc->sc_num_mappings = 0;

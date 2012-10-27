@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.46 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.47 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.46 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.47 2012/10/27 17:17:28 chs Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -115,9 +115,9 @@ static void	RegWakeup(volatile void *);
 static void	RegOnpass(volatile void *);
 static void	RegOffpass(volatile void *);
 
-void	grfclattach(struct device *, struct device *, void *);
+void	grfclattach(device_t, device_t, void *);
 int	grfclprint(void *, const char *);
-int	grfclmatch(struct device *, struct cfdata *, void *);
+int	grfclmatch(device_t, cfdata_t, void *);
 void	cl_memset(unsigned char *, unsigned char, int);
 
 /* Graphics display definitions.
@@ -189,20 +189,20 @@ static unsigned char cl_imageptr[8 * 64], cl_maskptr[8 * 64];
 static unsigned char cl_sprred[2], cl_sprgreen[2], cl_sprblue[2];
 
 /* standard driver stuff */
-CFATTACH_DECL(grfcl, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfcl, sizeof(struct grf_softc),
     grfclmatch, grfclattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 
 int
-grfclmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfclmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 	static int regprod, fbprod, fbprod2;
 	int error;
 
 	fbprod2 = 0;
-	zap = auxp;
+	zap = aux;
 
 #ifndef CL5426CONSOLE
 	if (amiga_realconfig == 0)
@@ -326,7 +326,7 @@ grfclmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 #ifdef CL5426CONSOLE
 		if (amiga_realconfig == 0) {
-			cfdata = cfp;
+			cfdata = cf;
 		}
 #endif
 
@@ -334,14 +334,15 @@ grfclmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-grfclattach(struct device *pdp, struct device *dp, void *auxp)
+grfclattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
+	struct device temp;
 	static char attachflag = 0;
 
-	zap = auxp;
+	zap = aux;
 
 	printf("\n");
 
@@ -350,12 +351,16 @@ grfclattach(struct device *pdp, struct device *dp, void *auxp)
 		return;
 
 	/* do all that messy console/grf stuff */
-	if (dp == NULL)
+	if (self == NULL) {
 		gp = &congrf;
-	else
-		gp = (struct grf_softc *) dp;
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gp = device_private(self);
+		gp->g_device = self;
+	}
 
-	if (dp != NULL && congrf.g_regkva != 0) {
+	if (self != NULL && congrf.g_regkva != 0) {
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
@@ -386,7 +391,7 @@ grfclattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach grf (once)
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfclprint)) {
+	if (amiga_config_found(cfdata, self, gp, grfclprint)) {
 		attachflag = 1;
 		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {
@@ -449,7 +454,7 @@ grfclattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 int
-grfclprint(void *auxp, const char *pnp)
+grfclprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("ite at %s: ", pnp);

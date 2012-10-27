@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnervar.h,v 1.13 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: rrunnervar.h,v 1.14 2012/10/27 17:18:22 chs Exp $	*/
 
 /* Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -135,7 +135,7 @@ struct esh_fp_ring_ctl {
 
 
 struct esh_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ifnet		sc_if;
 	struct ifmedia		sc_media;
 

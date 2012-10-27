@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_lpchc.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: obio_lpchc.c,v 1.4 2012/10/27 17:17:38 chs Exp $	*/
 
 /*
  * obio attachment for GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.4 2012/10/27 17:17:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -24,8 +24,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $"
 #include <arm/gemini/gemini_lpchcvar.h>
 #include <arm/gemini/gemini_reg.h>
 
-static int  gemini_lpchc_match(struct device *, struct cfdata *, void *);
-static void gemini_lpchc_attach(struct device *, struct device *, void *);
+static int  gemini_lpchc_match(device_t, cfdata_t, void *);
+static void gemini_lpchc_attach(device_t, device_t, void *);
 static int  gemini_lpchc_print(void *, const char *);
 
 CFATTACH_DECL_NEW(obio_lpchc, sizeof(struct gemini_lpchc_softc),
@@ -33,7 +33,7 @@ CFATTACH_DECL_NEW(obio_lpchc, sizeof(struct gemini_lpchc_softc),
 
 
 static int
-gemini_lpchc_match(struct device *parent, struct cfdata *cf, void *aux)
+gemini_lpchc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
@@ -47,7 +47,7 @@ gemini_lpchc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gemini_lpchc_attach(struct device *parent, struct device *self, void *aux)
+gemini_lpchc_attach(device_t parent, device_t self, void *aux)
 {
 	gemini_lpchc_softc_t *sc = device_private(self);
 	struct obio_attach_args *obio = aux;

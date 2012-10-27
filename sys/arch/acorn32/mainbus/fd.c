@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 2011/07/19 15:59:53 dyoung Exp $	*/
+/*	$NetBSD: fd.c,v 1.52 2012/10/27 17:17:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2011/07/19 15:59:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2012/10/27 17:17:23 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,7 +152,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct device sc_dev;		/* boilerplate */
+	device_t sc_dev;		/* boilerplate */
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
@@ -178,7 +178,7 @@ int fdcprobe(device_t, cfdata_t, void *);
 int fdprint(void *, const char *);
 void fdcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcprobe, fdcattach, NULL, NULL);
 
 /*
@@ -216,7 +216,7 @@ struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
@@ -255,7 +255,7 @@ void fdattach(device_t, device_t, void *);
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
@@ -376,6 +376,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(iot, pa->pa_iobase + pa->pa_offset, FDC_NPORT, 0, &ioh))
 		panic("fdcattach: couldn't map I/O ports");
 
+	fdc->sc_dev = self;
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
 
@@ -398,7 +399,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
 	 */
-	if (device_unit(&fdc->sc_dev) == 0)
+	if (device_unit(fdc->sc_dev) == 0)
 		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
 		type = -1;
@@ -408,7 +409,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		if (type >= 0 && fa.fa_drive < 2)
-			fa.fa_deftype = fd_nvtotype(device_xname(&fdc->sc_dev),
+			fa.fa_deftype = fd_nvtotype(device_xname(fdc->sc_dev),
 			    type, fa.fa_drive);
 		else
 			fa.fa_deftype = NULL;		/* unknown */
@@ -480,6 +481,8 @@ fdattach(device_t parent, device_t self, void *aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
+	fd->sc_dev = self;
+
 	callout_init(&fd->sc_motoron_ch, 0);
 	callout_init(&fd->sc_motoroff_ch, 0);
 
@@ -500,7 +503,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&fd->sc_dk, device_xname(&fd->sc_dev), &fddkdriver);
+	disk_init(&fd->sc_dk, device_xname(fd->sc_dev), &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/* Needed to power off if the motor is on when we halt. */
@@ -596,7 +599,7 @@ fdstrategy(struct buf *bp)
 #ifdef DIAGNOSTIC
 	else {
 		struct fdc_softc *fdc =
-		    device_private(device_parent(&fd->sc_dev));
+		    device_private(device_parent(fd->sc_dev));
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -615,7 +618,7 @@ done:
 void
 fdstart(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -630,7 +633,7 @@ fdstart(struct fd_softc *fd)
 void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -697,7 +700,7 @@ fd_motor_off(void *arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *) device_parent(&fd->sc_dev), 0);
+	fd_set_motor(device_private(device_parent(fd->sc_dev)), 0);
 	splx(s);
 }
 
@@ -705,7 +708,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int s;
 
 	s = splbio();
@@ -842,7 +845,7 @@ fdcpstatus(int n, struct fdc_softc *fdc)
 void
 fdcstatus(device_t dv, int n, const char *s)
 {
-	struct fdc_softc *fdc = (void *) device_parent(dv);
+	struct fdc_softc *fdc = device_private(device_parent(dv));
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
@@ -865,7 +868,7 @@ fdctimeout(void *arg)
 #ifdef DEBUG
 	log(LOG_ERR,"fdctimeout: state %d\n", fdc->sc_state);
 #endif
-	fdcstatus(&fd->sc_dev, 0, "timeout");
+	fdcstatus(fd->sc_dev, 0, "timeout");
 
 	if (bufq_peek(fd->sc_q) != NULL)
 		fdc->sc_state++;
@@ -1029,7 +1032,7 @@ loop:
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
 			panic("%s: Cannot claim FIQ vector",
-			    device_xname(&fdc->sc_dev));
+			    device_xname(fdc->sc_dev));
 		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -1089,7 +1092,7 @@ loop:
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylinder * fd->sc_type->step) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "seek failed");
+			fdcstatus(fd->sc_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1116,7 +1119,7 @@ loop:
 			fiq_release(&fdc->sc_fh);
 			IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
+			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %d nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
@@ -1182,7 +1185,7 @@ loop:
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
+			fdcstatus(fd->sc_dev, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1196,7 +1199,7 @@ loop:
 		goto doseek;
 
 	default:
-		fdcstatus(&fd->sc_dev, 0, "stray interrupt");
+		fdcstatus(fd->sc_dev, 0, "stray interrupt");
 		return 1;
 	}
 #ifdef DIAGNOSTIC

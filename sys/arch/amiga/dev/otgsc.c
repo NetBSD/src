@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.31 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: otgsc.c,v 1.32 2012/10/27 17:17:30 chs Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.31 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.32 2012/10/27 17:17:30 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: otgsc.c,v 1.31 2005/12/11 12:16:28 christos Exp $");
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void otgscattach(struct device *, struct device *, void *);
-int otgscmatch(struct device *, struct cfdata *, void *);
+void otgscattach(device_t, device_t, void *);
+int otgscmatch(device_t, cfdata_t, void *);
 
 int otgsc_dma_xfer_in(struct sci_softc *dev, int len,
     register u_char *buf, int phase);
@@ -92,18 +92,18 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-CFATTACH_DECL(otgsc, sizeof(struct sci_softc),
+CFATTACH_DECL_NEW(otgsc, sizeof(struct sci_softc),
     otgscmatch, otgscattach, NULL, NULL);
 
 /*
  * if we are my Hacker's SCSI board we are here.
  */
 int
-otgscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+otgscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * Check manufacturer and product id.
@@ -115,19 +115,20 @@ otgscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-otgscattach(struct device *pdp, struct device *dp, void *auxp)
+otgscattach(device_t parent, device_t self, void *aux)
 {
 	volatile u_char *rp;
-	struct sci_softc *sc = (struct sci_softc *)dp;
+	struct sci_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
+	sc->sc_dev = self;
+
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
-	sc = (struct sci_softc *)dp;
 	rp = (u_char *)zap->va + 0x2000;
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
@@ -157,7 +158,7 @@ otgscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -178,7 +179,7 @@ otgscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

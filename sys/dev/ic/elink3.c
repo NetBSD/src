@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.133 2012/07/22 14:32:56 matt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.134 2012/10/27 17:18:20 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.133 2012/07/22 14:32:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.134 2012/10/27 17:18:20 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -1379,7 +1379,7 @@ epintr(void *arg)
 			if ((status & INTR_LATCH) == 0) {
 #if 0
 				printf("%s: intr latch cleared\n",
-				       device_xname(&sc->sc_dev));
+				       device_xname(sc->sc_dev));
 #endif
 				break;
 			}
@@ -1399,7 +1399,7 @@ epintr(void *arg)
 #if 0
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		printf("%s: intr%s%s%s%s\n", device_xname(&sc->sc_dev),
+		printf("%s: intr%s%s%s%s\n", device_xname(sc->sc_dev),
 		       (status & RX_COMPLETE)?" RX_COMPLETE":"",
 		       (status & TX_COMPLETE)?" TX_COMPLETE":"",
 		       (status & TX_AVAIL)?" TX_AVAIL":"",

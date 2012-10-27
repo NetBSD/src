@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.6 2012/10/27 17:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.6 2012/10/27 17:17:42 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ struct pxartc_softc {
 #define	FLAG_WRISTWATCH	(1 << 0)
 };
 
-static int  pxartc_match(struct device *, struct cfdata *, void *);
-static void pxartc_attach(struct device *, struct device *, void *);
+static int  pxartc_match(device_t, cfdata_t, void *);
+static void pxartc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pxartc, sizeof(struct pxartc_softc),
     pxartc_match, pxartc_attach, NULL, NULL);
@@ -68,7 +68,7 @@ static int pxartc_wristwatch_read(struct pxartc_softc *,struct clock_ymdhms *);
 static int pxartc_wristwatch_write(struct pxartc_softc *,struct clock_ymdhms *);
 
 static int
-pxartc_match(struct device *parent, struct cfdata *cf, void *aux)
+pxartc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 
@@ -83,7 +83,7 @@ pxartc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pxartc_attach(struct device *parent, struct device *self, void *aux)
+pxartc_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxartc_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;

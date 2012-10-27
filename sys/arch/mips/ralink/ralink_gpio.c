@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.3 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.4 2012/10/27 17:18:02 chs Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.3 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.4 2012/10/27 17:18:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -529,7 +529,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
 			"%s: unable to establish interrupt\n",
-			sc->sc_dev->dv_xname);
+			device_xname(sc->sc_dev));
 		goto fail_2;
 	}
 
@@ -539,7 +539,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 		ra_intr_disestablish(sc->sc_ih);
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
 			"%s: unable to establish soft interrupt\n",
-			sc->sc_dev->dv_xname);
+			device_xname(sc->sc_dev));
 		goto fail_3;
 	}
 

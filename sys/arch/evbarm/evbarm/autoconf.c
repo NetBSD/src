@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:41 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2012/10/27 17:17:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2012/10/27 17:17:46 chs Exp $");
 
 #include "opt_md.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2012/07/29 18:05:41 mlelstv Exp $"
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
-void	(*evbarm_device_register)(struct device *, void *);
+void	(*evbarm_device_register)(device_t, void *);
 
 /*
  * Set up the root device from the boot args
@@ -55,7 +55,7 @@ void
 cpu_rootconf(void)
 {
 	aprint_normal("boot device: %s\n",
-	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 	rootconf();
 }
 
@@ -83,7 +83,7 @@ cpu_configure(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 
 	if (evbarm_device_register != NULL)

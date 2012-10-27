@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.74 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: bha.c,v 1.75 2012/10/27 17:18:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.74 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.75 2012/10/27 17:18:19 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -155,7 +155,7 @@ bha_attach(struct bha_softc *sc)
 
 	initial_ccbs = bha_info(sc);
 	if (initial_ccbs == 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to get adapter info\n");
+		aprint_error_dev(sc->sc_dev, "unable to get adapter info\n");
 		return;
 	}
 
@@ -163,7 +163,7 @@ bha_attach(struct bha_softc *sc)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	/* adapt_openings initialized below */
 	adapt->adapt_max_periph = sc->sc_mbox_count;
@@ -191,7 +191,7 @@ bha_attach(struct bha_softc *sc)
 
 	bha_create_ccbs(sc, initial_ccbs);
 	if (sc->sc_cur_ccbs < 2) {
-		aprint_error_dev(&sc->sc_dev, "not enough CCBs to run\n");
+		aprint_error_dev(sc->sc_dev, "not enough CCBs to run\n");
 		return;
 	}
 
@@ -200,7 +200,7 @@ bha_attach(struct bha_softc *sc)
 	if (bha_init(sc) != 0)
 		return;
 
-	(void) config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	(void) config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -217,7 +217,7 @@ bha_intr(void *arg)
 	u_char sts;
 
 #ifdef BHADEBUG
-	printf("%s: bha_intr ", device_xname(&sc->sc_dev));
+	printf("%s: bha_intr ", device_xname(sc->sc_dev));
 #endif /* BHADEBUG */
 
 	/*
@@ -240,7 +240,7 @@ bha_intr(void *arg)
 
 		toggle.cmd.opcode = BHA_MBO_INTR_EN;
 		toggle.cmd.enable = 0;
-		bha_cmd(iot, ioh, device_xname(&sc->sc_dev),
+		bha_cmd(iot, ioh, device_xname(sc->sc_dev),
 		    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 		    0, (u_char *)0);
 		bha_start_ccbs(sc);
@@ -267,7 +267,7 @@ bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
-	struct bha_softc *sc = (void *)adapt->adapt_dev;
+	struct bha_softc *sc = device_private(adapt->adapt_dev);
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
 	bus_dma_tag_t dmat = sc->sc_dmat;
@@ -309,7 +309,7 @@ bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* can't use S/G if zero length */
 			if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
 				printf("%s: cmdlen %d too large for CCB\n",
-				    device_xname(&sc->sc_dev), xs->cmdlen);
+				    device_xname(sc->sc_dev), xs->cmdlen);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto out_bad;
 			}
@@ -354,7 +354,7 @@ bha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n", error);
+				aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n", error);
  out_bad:
 				bha_free_ccb(sc, ccb);
 				scsipi_done(xs);
@@ -493,7 +493,7 @@ bha_get_xfer_mode(struct bha_softc *sc, struct scsipi_xfer_mode *xm)
 	    ((sc->sc_flags & BHAF_WIDE) ? sizeof(hwsetup.reply_w) : 0);
 	hwsetup.cmd.opcode = BHA_INQUIRE_SETUP;
 	hwsetup.cmd.len = rlen;
-	bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(&sc->sc_dev),
+	bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(sc->sc_dev),
 	    sizeof(hwsetup.cmd), (u_char *)&hwsetup.cmd,
 	    rlen, (u_char *)&hwsetup.reply);
 
@@ -546,7 +546,7 @@ bha_get_xfer_mode(struct bha_softc *sc, struct scsipi_xfer_mode *xm)
 			      sizeof(hwperiod.reply_w) : 0);
 			hwperiod.cmd.opcode = BHA_INQUIRE_PERIOD;
 			hwperiod.cmd.len = rlen;
-			bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(&sc->sc_dev),
+			bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(sc->sc_dev),
 			    sizeof(hwperiod.cmd), (u_char *)&hwperiod.cmd,
 			    rlen, (u_char *)&hwperiod.reply);
 
@@ -591,13 +591,13 @@ bha_done(struct bha_softc *sc, struct bha_ccb *ccb)
 #ifdef BHADIAG
 	if (ccb->flags & CCB_SENDING) {
 		printf("%s: exiting ccb still in transit!\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		aprint_error_dev(&sc->sc_dev, "exiting ccb not allocated!\n");
+		aprint_error_dev(sc->sc_dev, "exiting ccb not allocated!\n");
 		Debugger();
 		return;
 	}
@@ -622,7 +622,7 @@ bha_done(struct bha_softc *sc, struct bha_ccb *ccb)
 				break;
 			default:	/* Other scsi protocol messes */
 				printf("%s: host_stat %x\n",
-				    device_xname(&sc->sc_dev), ccb->host_stat);
+				    device_xname(sc->sc_dev), ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -639,7 +639,7 @@ bha_done(struct bha_softc *sc, struct bha_ccb *ccb)
 				break;
 			default:
 				printf("%s: target_stat %x\n",
-				    device_xname(&sc->sc_dev), ccb->target_stat);
+				    device_xname(sc->sc_dev), ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -691,7 +691,7 @@ bha_timeout(void *arg)
 	struct scsipi_xfer *xs = ccb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct bha_softc *sc =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s;
 
 	scsipi_printaddr(periph);
@@ -705,7 +705,7 @@ bha_timeout(void *arg)
 	 */
 	bha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING) {
-		aprint_error_dev(&sc->sc_dev, "not taking commands!\n");
+		aprint_error_dev(sc->sc_dev, "not taking commands!\n");
 		Debugger();
 	}
 #endif
@@ -1057,7 +1057,7 @@ bha_disable_isacompat(struct bha_softc *sc)
 
 	isa_disable.cmd.opcode = BHA_MODIFY_IOPORT;
 	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
-	bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(&sc->sc_dev),
+	bha_cmd(sc->sc_iot, sc->sc_ioh, device_xname(sc->sc_dev),
 	    sizeof(isa_disable.cmd), (u_char*)&isa_disable.cmd,
 	    0, (u_char *)0);
 	return (0);
@@ -1082,7 +1082,7 @@ bha_info(struct bha_softc *sc)
 	struct bha_revision revision;
 	struct bha_digit digit;
 	int i, j, initial_ccbs, rlen;
-	const char *name = device_xname(&sc->sc_dev);
+	const char *name = device_xname(sc->sc_dev);
 	char *p;
 
 	/*
@@ -1273,10 +1273,10 @@ bha_info(struct bha_softc *sc)
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    rlen, (u_char *)&setup.reply);
 
-	aprint_normal_dev(&sc->sc_dev, "model BT-%s, firmware %s\n",
+	aprint_normal_dev(sc->sc_dev, "model BT-%s, firmware %s\n",
 	    sc->sc_model, sc->sc_firmware);
 
-	aprint_normal_dev(&sc->sc_dev, "%d H/W CCBs", sc->sc_max_ccbs);
+	aprint_normal_dev(sc->sc_dev, "%d H/W CCBs", sc->sc_max_ccbs);
 	if (setup.reply.sync_neg)
 		aprint_normal(", sync");
 	if (setup.reply.parity)
@@ -1347,7 +1347,7 @@ bha_info(struct bha_softc *sc)
 static int
 bha_init(struct bha_softc *sc)
 {
-	const char *name = device_xname(&sc->sc_dev);
+	const char *name = device_xname(sc->sc_dev);
 	struct bha_toggle toggle;
 	struct bha_mailbox mailbox;
 	struct bha_mbx_out *mbo;
@@ -1451,7 +1451,7 @@ bha_start_ccbs(struct bha_softc *sc)
 
 				toggle.cmd.opcode = BHA_MBO_INTR_EN;
 				toggle.cmd.enable = 1;
-				bha_cmd(iot, ioh, device_xname(&sc->sc_dev),
+				bha_cmd(iot, ioh, device_xname(sc->sc_dev),
 				    sizeof(toggle.cmd), (u_char *)&toggle.cmd,
 				    0, (u_char *)0);
 				break;
@@ -1516,7 +1516,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 				 * we use all mailbox slots.
 				 */
 				printf("%s: mbi not in round-robin order\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 #endif
 				goto again;
 			}
@@ -1526,7 +1526,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 		}
 #ifdef BHADIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #endif
 		return;
 	}
@@ -1535,7 +1535,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 	do {
 		ccb = bha_ccb_phys_kv(sc, phystol(mbi->ccb_addr));
 		if (ccb == NULL) {
-			aprint_error_dev(&sc->sc_dev, "bad mbi ccb pointer 0x%08x; skipping\n",
+			aprint_error_dev(sc->sc_dev, "bad mbi ccb pointer 0x%08x; skipping\n",
 			    phystol(mbi->ccb_addr));
 			goto next;
 		}
@@ -1579,7 +1579,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 			break;
 
 		default:
-			aprint_error_dev(&sc->sc_dev, "bad mbi comp_stat %02x; skipping\n",
+			aprint_error_dev(sc->sc_dev, "bad mbi comp_stat %02x; skipping\n",
 			    mbi->comp_stat);
 			goto next;
 		}
@@ -1628,7 +1628,7 @@ bha_create_mailbox(struct bha_softc *sc)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
 	    1, &rseg, sc->sc_dmaflags);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate mailboxes, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to allocate mailboxes, error = %d\n",
 		    error);
 		goto bad_0;
 	}
@@ -1636,7 +1636,7 @@ bha_create_mailbox(struct bha_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (void **)&sc->sc_mbo, sc->sc_dmaflags | BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to map mailboxes, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map mailboxes, error = %d\n",
 		    error);
 		goto bad_1;
 	}
@@ -1646,7 +1646,7 @@ bha_create_mailbox(struct bha_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    sc->sc_dmaflags, &sc->sc_dmamap_mbox);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to create mailbox DMA map, error = %d\n",
 		    error);
 		goto bad_2;
@@ -1655,7 +1655,7 @@ bha_create_mailbox(struct bha_softc *sc)
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox,
 	    sc->sc_mbo, size, NULL, 0);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to load mailbox DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load mailbox DMA map, error = %d\n",
 		    error);
 		goto bad_3;
 	}
@@ -1765,7 +1765,7 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, sc->sc_dmaflags | BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate CCB group, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to allocate CCB group, error = %d\n",
 		    error);
 		goto bad_0;
 	}
@@ -1774,7 +1774,7 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	    (void *)&bcg,
 	    sc->sc_dmaflags | BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to map CCB group, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map CCB group, error = %d\n",
 		    error);
 		goto bad_1;
 	}
@@ -1784,7 +1784,7 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE,
 	    1, PAGE_SIZE, 0, sc->sc_dmaflags | BUS_DMA_NOWAIT, &ccbmap);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to create CCB group DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to create CCB group DMA map, error = %d\n",
 		    error);
 		goto bad_2;
 	}
@@ -1792,7 +1792,7 @@ bha_create_ccbs(struct bha_softc *sc, int count)
 	error = bus_dmamap_load(sc->sc_dmat, ccbmap, bcg, PAGE_SIZE, NULL,
 	    sc->sc_dmaflags | BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to load CCB group DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load CCB group DMA map, error = %d\n",
 		    error);
 		goto bad_3;
 	}
@@ -1869,7 +1869,7 @@ bha_init_ccb(struct bha_softc *sc, struct bha_ccb *ccb)
 	    BHA_MAXXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &ccb->dmamap_xfer);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to create CCB DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to create CCB DMA map, error = %d\n",
 		    error);
 		return (error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.19 2011/07/19 15:59:54 dyoung Exp $	*/
+/*	$NetBSD: amps.c,v 1.20 2012/10/27 17:17:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.19 2011/07/19 15:59:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.20 2012/10/27 17:17:23 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.19 2011/07/19 15:59:54 dyoung Exp $");
  */
 
 struct amps_softc {
-	struct device		sc_dev;			/* device node */
+	device_t		sc_dev;			/* device node */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	bus_space_tag_t		sc_iot;			/* Bus tag */
@@ -88,7 +88,7 @@ struct amps_softc {
 int	amps_probe(device_t, cfdata_t, void *);
 void	amps_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(amps, sizeof(struct amps_softc),
+CFATTACH_DECL_NEW(amps, sizeof(struct amps_softc),
     amps_probe, amps_attach, NULL, NULL);
 
 int	amps_print(void *, const char *);
@@ -156,6 +156,7 @@ amps_attach(device_t parent, device_t self, void *aux)
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
 
+	sc->sc_dev = self;
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
@@ -164,7 +165,7 @@ amps_attach(device_t parent, device_t self, void *aux)
 
 	/* Install a clean up handler to make sure IRQ's are disabled */
 /*	if (shutdownhook_establish(amps_shutdown, (void *)sc) == NULL)
-		panic("%s: Cannot install shutdown handler", self->dv_xname);*/
+		panic("%s: Cannot install shutdown handler", device_xname(self));*/
 
 	/* Set the interrupt info for this podule */
 

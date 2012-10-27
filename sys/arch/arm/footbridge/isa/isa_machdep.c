@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.18 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19 2012/10/27 17:17:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2012/10/27 17:17:37 chs Exp $");
 
 #include "opt_irqstats.h"
 
@@ -481,7 +481,7 @@ isa_footbridge_init(u_int iobase, u_int membase)
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
 	/*
 	 * Since we can only have one ISA bus, we just use a single
