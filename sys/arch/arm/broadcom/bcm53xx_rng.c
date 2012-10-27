@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.2 2012/10/26 04:45:03 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.3 2012/10/27 17:24:37 matt Exp $");
 
 #include <sys/bus.h>
 #include <sys/callout.h>
@@ -135,7 +135,7 @@ bcmrng_ccb_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_rnd_callout, CALLOUT_MPSAFE);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_RNG,
-	    0 /* RND_FLAG_NO_ESTIMATE */);
+	    RND_FLAG_NO_ESTIMATE);
 
 #ifdef RNG_USE_INTR
 	sc->sc_ih = intr_establish(loc->loc_intrs[0], IPL_VM, IST_LEVEL,
