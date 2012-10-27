@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed_zbus.c,v 1.1 2012/10/14 13:36:07 phx Exp $ */
+/*	$NetBSD: if_ed_zbus.c,v 1.2 2012/10/27 21:13:03 phx Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed_zbus.c,v 1.1 2012/10/14 13:36:07 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed_zbus.c,v 1.2 2012/10/27 21:13:03 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -208,9 +208,10 @@ ed_zbus_test_mem(struct dp8390_softc *sc)
 	bus_space_handle_t bufh = sc->sc_bufh;
 	int i;
 
-	bus_space_set_region_2(buft, bufh, sc->mem_start, 0, sc->mem_size >> 1);
+	bus_space_set_region_2(buft, bufh, sc->mem_start, 0,
+	    sc->mem_size >> 1);
 
-	for (i = 0; i < sc->mem_size >> 1; i += 2) {
+	for (i = 0; i < sc->mem_size; i += 2) {
 		if (bus_space_read_2(sc->sc_buft, sc->sc_bufh, i)) {
 			printf(": failed to clear NIC buffer at offset %x - "
 			    "check configuration\n", (sc->mem_start + i));
@@ -225,16 +226,16 @@ ed_zbus_read_hdr(struct dp8390_softc *sc, int src, struct dp8390_ring *hdrp)
 {
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
-	uint16_t wrd;
+	uint16_t wrd[2];
 
 	/*
 	 * Read the 4-byte header as two 16-bit words in little-endian
 	 * format. Convert into big-endian and put them into hdrp.
 	 */
-	wrd = bus_space_read_2(buft, bufh, src);
-	hdrp->rsr = wrd & 0xff;
-	hdrp->next_packet = wrd >> 8;
-	hdrp->count = bswap16(bus_space_read_2(buft, bufh, src + 2));
+	bus_space_read_region_stream_2(buft, bufh, src, wrd, 2);
+	hdrp->rsr = wrd[0] & 0xff;
+	hdrp->next_packet = wrd[0] >> 8;
+	hdrp->count = bswap16(wrd[1]);
 }
 
 /*
@@ -248,19 +249,30 @@ ed_zbus_ring_copy(struct dp8390_softc *sc, int src, void *dst, u_short amount)
 	bus_space_tag_t buft = sc->sc_buft;
 	bus_space_handle_t bufh = sc->sc_bufh;
 	u_short tmp_amount;
+	u_char readbyte[2];
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
 		tmp_amount = sc->mem_end - src;
 
-		/* Copy amount up to end of NIC memory. */
-		bus_space_read_region_2(buft, bufh, src, dst, tmp_amount >> 1);
+		/* copy amount up to end of NIC memory */
+		bus_space_read_region_stream_2(buft, bufh, src, dst,
+		    tmp_amount >> 1);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
-		dst = (char *)dst + tmp_amount;
+		dst = (u_char *)dst + tmp_amount;
 	}
-	bus_space_read_region_2(buft, bufh, src, dst, amount >> 1);
+
+	bus_space_read_region_stream_2(buft, bufh, src, dst, amount >> 1);
+
+	/* handle odd length packet */
+	if (amount & 1) {
+		bus_space_read_region_stream_2(buft, bufh, src + amount - 1,
+		    (u_int16_t *)readbyte, 1);
+		*((u_char *)dst + amount - 1) = readbyte[0];
+		amount++;
+	}
 
 	return src + amount;
 }
@@ -287,8 +299,9 @@ ed_zbus_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				bus_space_write_region_2(sc->sc_buft,
-				    sc->sc_bufh, buf, (u_int16_t *)savebyte, 1);
+				bus_space_write_region_stream_2(sc->sc_buft,
+				    sc->sc_bufh, buf,
+				    (u_int16_t *)savebyte, 1);
 				buf += 2;
 				data++;
 				len--;
@@ -296,9 +309,9 @@ ed_zbus_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 			}
 			/* Output contiguous words. */
 			if (len > 1) {
-				bus_space_write_region_2(
-				    sc->sc_buft, sc->sc_bufh,
-				    buf, (u_int16_t *)data, len >> 1);
+				bus_space_write_region_stream_2(sc->sc_buft,
+				    sc->sc_bufh, buf,
+				    (u_int16_t *)data, len >> 1);
 				buf += len & ~1;
 				data += len & ~1;
 				len &= 1;
@@ -314,7 +327,7 @@ ed_zbus_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 	len = ETHER_PAD_LEN - totlen;
 	if (wantbyte) {
 		savebyte[1] = 0;
-		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
+		bus_space_write_region_stream_2(sc->sc_buft, sc->sc_bufh,
 		    buf, (u_int16_t *)savebyte, 1);
 		buf += 2;
 		totlen++;
