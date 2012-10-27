@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.6 2012/10/26 23:05:14 christos Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.7 2012/10/27 20:07:12 nakayama Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -844,7 +844,6 @@ print_statelog(config_t *conf, const iplog_t *ipl, const void *buf, size_t blen)
 	struct tm *tm;
 
 	t = line;
-	ipl = (const iplog_t *)buf;
 	if (ipl->ipl_seqnum != seqnum) {
 		if ((ipmonopts & IPMON_SYSLOG) != 0) {
 			syslog(LOG_WARNING,
