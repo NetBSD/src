@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.5 2012/09/05 18:57:34 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.6 2012/10/27 01:29:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.5 2012/09/05 18:57:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.6 2012/10/27 01:29:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -640,6 +640,11 @@ void
 rnd_add_data(krndsource_t *rs, const void *const data, uint32_t len,
 	     uint32_t entropy)
 {
+	/*
+	 * This interface is meant for feeding data which is,
+	 * itself, random.  Don't estimate entropy based on
+	 * timestamp, just directly add the data.
+	 */
 	rnd_add_data_ts(rs, data, len, entropy, rnd_counter());
 }
 
@@ -835,8 +840,6 @@ rnd_process_events(void *arg)
 		SIMPLEQ_REMOVE_HEAD(&dq_samples, next);
 		source = sample->source;
 		entropy = sample->entropy;
-		if (source->flags & RND_FLAG_NO_ESTIMATE)
-			entropy = 0;
 
 		/*
 		 * Hardware generators are great but sometimes they
