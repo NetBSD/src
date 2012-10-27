@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2011/09/10 18:34:40 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.8 2011/09/10 18:34:40 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -118,6 +118,8 @@ p_bpf(struct file *f)
 		(void)printf(", immed");
 	if (bpf.bd_seesent)
 		(void)printf(", seesent");
+	if (bpf.bd_jitcode != NULL)
+		(void)printf(", jit");
 	if (bpf.bd_async)
 		(void)printf(", asyncgrp=%lu", (unsigned long)bpf.bd_pgid);
 	if (bpf.bd_state == BPF_IDLE)
