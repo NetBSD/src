@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1059 2012/10/17 20:16:59 drochner Exp $
+#	$NetBSD: files,v 1.1060 2012/10/27 22:36:13 alnsn Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -185,6 +185,10 @@ include "dev/sysmon/files.sysmon"
 #
 define	bpf_filter
 defparam opt_bpf.h	BPF_BUFSIZE
+
+defflag	opt_bpfjit.h	BPFJIT
+
+file	net/bpfjit.c	sljit & bpfjit
 
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.35 2012/09/27 18:28:56 alnsn Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.36 2012/10/27 22:36:14 alnsn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/callout.h>
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <net/if.h>			/* for IFNAMSIZ */
+#include <net/bpfjit.h>			/* for bpfjit_function_t */
 
 /*
  * Descriptor associated with each open bpf file.
@@ -100,7 +101,7 @@ struct bpf_d {
 #ifdef _LP64
 	int		bd_compat32;	/* 32-bit stream on LP64 system */
 #endif
-	void		*bd_dummy;	/* to be replaced shortly with bd_jitcode */
+	bpfjit_function_t	bd_jitcode;
 };
 
 
