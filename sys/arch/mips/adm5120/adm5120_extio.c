@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extio.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $ */
+/* $NetBSD: adm5120_extio.c,v 1.6 2012/10/27 17:18:01 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.5 2011/07/01 18:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.6 2012/10/27 17:18:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,13 +94,12 @@ do {						\
 #define	EXTIO_DPRINTF(__fmt, ...)	do { } while (/*CONSTCOND*/0)
 #endif /* EXTIO_DEBUG */
 
-static int	extio_match(struct device *, struct cfdata *, void *);
-static void	extio_attach(struct device *, struct device *, void *);
-static int	extio_submatch(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	extio_match(device_t, cfdata_t, void *);
+static void	extio_attach(device_t, device_t, void *);
+static int	extio_submatch(device_t, cfdata_t, const int *, void *);
 static int	extio_print(void *, const char *);
 
-CFATTACH_DECL(extio, sizeof(struct extio_softc),
+CFATTACH_DECL_NEW(extio, sizeof(struct extio_softc),
     extio_match, extio_attach, NULL, NULL);
 
 /* There can be only one. */
@@ -120,7 +119,7 @@ struct extiodev extiodevs[] = {
 };
 
 static int
-extio_match(struct device *parent, struct cfdata *match, void *aux)
+extio_match(device_t parent, cfdata_t match, void *aux)
 {
 	return !extio_found;
 }
@@ -174,7 +173,7 @@ extio_mpmc_init(struct extio_softc *sc)
 	/* Map MultiPort Memory Controller */
 	if (bus_space_map(sc->sc_obiot, ADM5120_BASE_MPMC, 0x280, 0,
 	                  &sc->sc_mpmch) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map MPMC\n");
+		aprint_error_dev(sc->sc_dev, "unable to map MPMC\n");
 		return;
 	}
 
@@ -201,12 +200,12 @@ extio_mpmc_init(struct extio_softc *sc)
 	}
 
 	if (i == 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for MPMC idle\n");
 		splx(s);
 		return;
 	} else
-		EXTIO_DPRINTF("%s: MPMC idle\n", device_xname(&sc->sc_dev));
+		EXTIO_DPRINTF("%s: MPMC idle\n", device_xname(sc->sc_dev));
 
 #if 0
 	control = bus_space_read_4(sc->sc_obiot, sc->sc_mpmch,
@@ -283,9 +282,9 @@ extio_mpmc_init(struct extio_softc *sc)
 }
 
 static void
-extio_attach(struct device *parent, struct device *self, void *aux)
+extio_attach(device_t parent, device_t self, void *aux)
 {
-	struct extio_softc *sc = (struct extio_softc *)self;
+	struct extio_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = (struct mainbus_attach_args *)aux;
 	struct extio_attach_args ea;
 	struct extiodev *ed;
@@ -294,6 +293,7 @@ extio_attach(struct device *parent, struct device *self, void *aux)
 	extio_found = 1;
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_gpio = ma->ma_gpio;
 	sc->sc_obiot = ma->ma_obiot;
 	sc->sc_gpioh = ma->ma_gpioh;
@@ -318,7 +318,7 @@ extio_attach(struct device *parent, struct device *self, void *aux)
 	 * Use GPIO[4] for interrupts.  (Not yet.)
 	 */
 	if (gpio_pin_map(sc->sc_gpio, 0, __BITS(0, 4), &sc->sc_pm) != 0) {
-		aprint_error_dev(&sc->sc_dev, "failed to map GPIO[1:2]\n");
+		aprint_error_dev(sc->sc_dev, "failed to map GPIO[1:2]\n");
 	}
 	EXTIO_DPRINTF("%s: %d\n", __func__, __LINE__);
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_pm, 0, GPIO_PIN_INPUT);
@@ -333,11 +333,11 @@ extio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (gpio_pin_read(sc->sc_gpio, &sc->sc_pm, 0) == GPIO_PIN_HIGH) {
 		EXTIO_DPRINTF("%s: WAIT# inactive\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		bus_space_write_4(sc->sc_obiot, sc->sc_gpioh, ADM5120_GPIO2,
 		    ADM5120_GPIO2_EW | ADM5120_GPIO2_CSX0 | ADM5120_GPIO2_CSX1);
 	} else {
-		aprint_error_dev(&sc->sc_dev, "WAIT# active; may be stuck\n");
+		aprint_error_dev(sc->sc_dev, "WAIT# active; may be stuck\n");
 		bus_space_write_4(sc->sc_obiot, sc->sc_gpioh, ADM5120_GPIO2,
 		    ADM5120_GPIO2_CSX0 | ADM5120_GPIO2_CSX1);
 	}
@@ -346,7 +346,7 @@ extio_attach(struct device *parent, struct device *self, void *aux)
 	/* Map MultiPort Memory Controller */
 	if (bus_space_map(sc->sc_obiot, ADM5120_BASE_MPMC, 0x280, 0,
 	                  &sc->sc_mpmch) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map MPMC\n");
+		aprint_error_dev(sc->sc_dev, "unable to map MPMC\n");
 		return;
 	}
 
@@ -374,8 +374,7 @@ extio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-extio_submatch(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+extio_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct extio_attach_args *ea = aux;
 

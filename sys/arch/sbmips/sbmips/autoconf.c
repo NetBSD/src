@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.8 2012/07/29 18:05:46 mlelstv Exp $ */
+/* $NetBSD: autoconf.c,v 1.9 2012/10/27 17:18:09 chs Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2012/07/29 18:05:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2012/10/27 17:18:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 
 	/* XXXCGD */

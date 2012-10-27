@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.12 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.13 2012/10/27 17:18:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -96,8 +96,7 @@ struct tcic_handle {
 #define	TCIC_NSLOTS	2
 
 struct tcic_softc {
-	struct device dev;
-
+	device_t sc_dev;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_space_tag_t iot;

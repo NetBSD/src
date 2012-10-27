@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.37 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.38 2012/10/27 17:18:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.37 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.38 2012/10/27 17:18:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ bha_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	const char *model, *intrstr;
 
+	sc->sc_dev = self;
+
 	aprint_naive(": SCSI controller\n");
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC)
@@ -109,7 +111,7 @@ bha_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
 	    NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -126,24 +128,24 @@ bha_pci_attach(device_t parent, device_t self, void *aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	bha_attach(sc);
 
 	bha_disable_isacompat(sc);
 }
 
-CFATTACH_DECL(bha_pci, sizeof(struct bha_softc),
+CFATTACH_DECL_NEW(bha_pci, sizeof(struct bha_softc),
     bha_pci_match, bha_pci_attach, NULL, NULL);

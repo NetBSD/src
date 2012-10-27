@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_mainbus.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $	*/
+/*	$NetBSD: becc_mainbus.c,v 1.5 2012/10/27 17:17:46 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_mainbus.c,v 1.4 2011/07/01 20:38:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_mainbus.c,v 1.5 2012/10/27 17:17:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,17 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: becc_mainbus.c,v 1.4 2011/07/01 20:38:16 dyoung Exp 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-int	becc_mainbus_match(struct device *, struct cfdata *, void *);
-void	becc_mainbus_attach(struct device *, struct device *, void *);
+int	becc_mainbus_match(device_t, cfdata_t, void *);
+void	becc_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(becc_mainbus, sizeof(struct becc_softc),
+CFATTACH_DECL_NEW(becc_mainbus, sizeof(struct becc_softc),
     becc_mainbus_match, becc_mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	becc_mainbus_found;
 
 int
-becc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+becc_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 #if 0
 	struct mainbus_attach_args *ma = aux;
@@ -91,11 +91,13 @@ becc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-becc_mainbus_attach(struct device *parent, struct device *self, void *aux)
+becc_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	extern paddr_t physical_start;
 
-	struct becc_softc *sc = (void *) self;
+	struct becc_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	becc_mainbus_found = 1;
 

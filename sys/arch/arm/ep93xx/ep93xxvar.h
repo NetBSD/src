@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxvar.h,v 1.4 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$NetBSD: ep93xxvar.h,v 1.5 2012/10/27 17:17:36 chs Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -34,11 +34,6 @@
 
 #include <sys/bus.h>
 
-struct ep93xx_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-};
-
 struct intrhand {
 	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
 	int (*ih_func)(void *);		/* interrupt handler */
@@ -71,7 +66,6 @@ struct pmap_ent {
 extern struct bus_space	ep93xx_bs_tag;
 extern struct arm32_bus_dma_tag ep93xx_bus_dma;
 
-void	ep93xx_attach(struct ep93xx_softc *);
 void	ep93xx_intr_init(void);
 void	*ep93xx_intr_establish(int irq, int ipl, int (*)(void *), void *);
 void	ep93xx_intr_disestablish(void *);

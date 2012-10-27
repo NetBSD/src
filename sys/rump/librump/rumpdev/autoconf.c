@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2010/03/08 10:24:37 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2012/10/27 17:18:40 chs Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2010/03/08 10:24:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2012/10/27 17:18:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 
-static int	mainbus_match(struct device *, struct cfdata *, void *);
-static void	mainbus_attach(struct device *, struct device *, void *);
-static int	mainbus_search(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	mainbus_match(device_t, cfdata_t, void *);
+static void	mainbus_attach(device_t, device_t, void *);
+static int	mainbus_search(device_t, cfdata_t, const int *, void *);
 
 struct mainbus_softc {
 	int mb_nada;
@@ -104,14 +103,14 @@ rump_pdev_finalize()
 }
 
 int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 
 	aprint_normal("\n");
@@ -119,8 +118,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args maa;
 

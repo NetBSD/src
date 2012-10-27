@@ -1,4 +1,4 @@
-/*      $NetBSD: a1k2cp.c,v 1.2 2012/06/28 18:55:03 rkujawa Exp $ */
+/*      $NetBSD: a1k2cp.c,v 1.3 2012/10/27 17:17:26 chs Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 
 #define A1K2CP_BASE		0xD80001
 
-static int	a1k2cp_match(struct device *pdp, struct cfdata *cfp, void *aux);
-static void	a1k2cp_attach(device_t parent, device_t self, void *aux);
+static int	a1k2cp_match(device_t, cfdata_t, void *);
+static void	a1k2cp_attach(device_t, device_t, void *);
 
 struct a1k2cp_softc {
 	device_t	sc_dev;
@@ -63,7 +63,7 @@ CFATTACH_DECL_NEW(a1k2cp, sizeof(struct a1k2cp_softc),
     a1k2cp_match, a1k2cp_attach, NULL, NULL);
 
 static int
-a1k2cp_match(struct device *pdp, struct cfdata *cfp, void *aux)
+a1k2cp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	static int a1k2cp_matched = 0;
@@ -106,4 +106,3 @@ a1k2cp_attach(device_t parent, device_t self, void *aux)
 
 	config_found(sc->sc_dev, &a1k2cp_aa, 0);
 }
-

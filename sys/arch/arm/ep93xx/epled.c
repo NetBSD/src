@@ -1,4 +1,4 @@
-/*	$NetBSD: epled.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: epled.c,v 1.4 2012/10/27 17:17:37 chs Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.4 2012/10/27 17:17:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,31 +37,30 @@ __KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.3 2011/07/01 19:31:17 dyoung Exp $");
 #include <arm/ep93xx/epledvar.h> 
 
 struct epled_softc {
-	struct device		sc_dev;
 	int			sc_port;
 	int			sc_green;
 	int			sc_red;
 	struct epgpio_softc	*sc_gpio;
 };
 
-static int epled_match(struct device *, struct cfdata *, void *);
-static void epled_attach(struct device *, struct device *, void *);
+static int epled_match(device_t, cfdata_t, void *);
+static void epled_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(epled, sizeof(struct epled_softc),
+CFATTACH_DECL_NEW(epled, sizeof(struct epled_softc),
 	      epled_match, epled_attach, NULL, NULL);
 
 static struct epled_softc *the_epled_sc = 0;
 
 int
-epled_match(struct device *parent, struct cfdata *cf, void *aux)
+epled_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 void
-epled_attach(struct device *parent, struct device *self, void *aux)
+epled_attach(device_t parent, device_t self, void *aux)
 {       
-	struct epled_softc *sc = (struct epled_softc *)self;
+	struct epled_softc *sc = device_private(self);
 	struct epgpio_attach_args *ga = aux;
 
 	sc->sc_port = ga->ga_port;
@@ -74,7 +73,7 @@ epled_attach(struct device *parent, struct device *self, void *aux)
 		the_epled_sc = sc;
 #ifdef DIAGNOSTIC
 	else
-		printf("%s is already configured\n", sc->sc_dev.dv_xname);
+		printf("%s is already configured\n", device_xname(self));
 #endif
 
 	epgpio_out(sc->sc_gpio, sc->sc_port, sc->sc_green);

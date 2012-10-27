@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.8 2011/09/08 15:36:42 jakllsch Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.9 2012/10/27 17:18:11 chs Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.8 2011/09/08 15:36:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.9 2012/10/27 17:18:11 chs Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port
@@ -74,8 +74,8 @@ CFATTACH_DECL_NEW(ms_pckbport, sizeof(struct ms_pckbport_softc),
     ms_pckbport_match, ms_pckbport_attach, NULL, NULL);
 
 
-static int	ms_pckbport_iopen(struct device *, int);
-static int	ms_pckbport_iclose(struct device *, int);
+static int	ms_pckbport_iopen(device_t, int);
+static int	ms_pckbport_iclose(device_t, int);
 static void	ms_pckbport_input(void *, int);
 
 
@@ -135,7 +135,7 @@ ms_pckbport_attach(device_t parent, device_t self, void *aux)
 
 
 static int
-ms_pckbport_iopen(struct device *self, int flags)
+ms_pckbport_iopen(device_t self, int flags)
 {
 	struct ms_pckbport_softc *sc = device_private(self);
 	struct ms_softc *ms = &sc->sc_ms;
@@ -162,7 +162,7 @@ ms_pckbport_iopen(struct device *self, int flags)
 
 
 static int
-ms_pckbport_iclose(struct device *self, int flags)
+ms_pckbport_iclose(device_t self, int flags)
 {
 	struct ms_pckbport_softc *sc = device_private(self);
 	u_char cmd[1];

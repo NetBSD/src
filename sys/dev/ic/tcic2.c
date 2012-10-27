@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.37 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.38 2012/10/27 17:18:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.37 2012/08/24 09:01:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.38 2012/10/27 17:18:22 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ tcic_attach(struct tcic_softc *sc)
 
 	if ((sc->handle[0].flags & TCIC_FLAG_SOCKETP) ||
 	    (sc->handle[1].flags & TCIC_FLAG_SOCKETP)) {
-		printf("%s: %s has ", device_xname(&sc->dev),
+		printf("%s: %s has ", device_xname(sc->sc_dev),
 		       tcic_chipid_to_string(sc->chipid));
 
 		if ((sc->handle[0].flags & TCIC_FLAG_SOCKETP) &&
@@ -416,7 +416,7 @@ tcic_attach_socket(struct tcic_handle *h)
 	locs[PCMCIABUSCF_CONTROLLER] = 0;
 	locs[PCMCIABUSCF_SOCKET] = h->sock;
 
-	h->pcmcia = config_found_sm_loc(&h->sc->dev, "pcmciabus", locs, &paa,
+	h->pcmcia = config_found_sm_loc(h->sc->sc_dev, "pcmciabus", locs, &paa,
 					tcic_print, config_stdsubmatch);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
@@ -443,8 +443,8 @@ tcic_create_event_thread(void *arg)
 	}
 
 	if (kthread_create(PRI_NONE, 0, NULL, tcic_event_thread, h,
-	    &h->event_thread, "%s,%s", device_xname(&h->sc->dev), cs)) {
-		aprint_error_dev(&h->sc->dev, "unable to create event thread for sock 0x%02x\n", h->sock);
+	    &h->event_thread, "%s,%s", device_xname(h->sc->sc_dev), cs)) {
+		aprint_error_dev(h->sc->sc_dev, "unable to create event thread for sock 0x%02x\n", h->sock);
 		panic("tcic_create_event_thread");
 	}
 }
@@ -468,12 +468,12 @@ tcic_event_thread(void *arg)
 
 		switch (pe->pe_type) {
 		case TCIC_EVENT_INSERTION:
-			DPRINTF(("%s: insertion event\n", device_xname(&h->sc->dev)));
+			DPRINTF(("%s: insertion event\n", device_xname(h->sc->sc_dev)));
 			tcic_attach_card(h);
 			break;
 
 		case TCIC_EVENT_REMOVAL:
-			DPRINTF(("%s: removal event\n", device_xname(&h->sc->dev)));
+			DPRINTF(("%s: removal event\n", device_xname(h->sc->sc_dev)));
 			tcic_detach_card(h, DETACH_FORCE);
 			break;
 
@@ -536,7 +536,7 @@ tcic_intr(void *arg)
 	struct tcic_softc *sc = arg;
 	int i, ret = 0;
 
-	DPRINTF(("%s: intr\n", device_xname(&sc->dev)));
+	DPRINTF(("%s: intr\n", device_xname(sc->sc_dev)));
 
 	for (i = 0; i < TCIC_NSLOTS; i++)
 		if (sc->handle[i].flags & TCIC_FLAG_SOCKETP)
@@ -554,19 +554,19 @@ tcic_intr_socket(struct tcic_handle *h)
 	tcic_sel_sock(h);
 	icsr = tcic_read_1(h, TCIC_R_ICSR);
 
-	DPRINTF(("%s: %d icsr: 0x%02x \n", device_xname(&h->sc->dev), h->sock, icsr));
+	DPRINTF(("%s: %d icsr: 0x%02x \n", device_xname(h->sc->sc_dev), h->sock, icsr));
 
 	/* XXX or should the next three be handled in tcic_intr? -chb */
 	if (icsr & TCIC_ICSR_PROGTIME) {
-		DPRINTF(("%s: %02x PROGTIME\n", device_xname(&h->sc->dev), h->sock));
+		DPRINTF(("%s: %02x PROGTIME\n", device_xname(h->sc->sc_dev), h->sock));
 		rv = 1;
 	}
 	if (icsr & TCIC_ICSR_ILOCK) {
-		DPRINTF(("%s: %02x ILOCK\n", device_xname(&h->sc->dev), h->sock));
+		DPRINTF(("%s: %02x ILOCK\n", device_xname(h->sc->sc_dev), h->sock));
 		rv = 1;
 	}
 	if (icsr & TCIC_ICSR_ERR) {
-		DPRINTF(("%s: %02x ERR\n", device_xname(&h->sc->dev), h->sock));
+		DPRINTF(("%s: %02x ERR\n", device_xname(h->sc->sc_dev), h->sock));
 		rv = 1;
 	}
 	if (icsr & TCIC_ICSR_CDCHG) {
@@ -581,7 +581,7 @@ tcic_intr_socket(struct tcic_handle *h)
 		if (delta)
 			rv = 1;
 
-		DPRINTF(("%s: %02x CDCHG %x\n", device_xname(&h->sc->dev), h->sock,
+		DPRINTF(("%s: %02x CDCHG %x\n", device_xname(h->sc->sc_dev), h->sock,
 		    delta));
 
 		/*
@@ -593,34 +593,34 @@ tcic_intr_socket(struct tcic_handle *h)
 			if (sstat & TCIC_SSTAT_CD) {
 				if (!(h->flags & TCIC_FLAG_CARDP)) {
 					DPRINTF(("%s: enqueing INSERTION event\n",
-					    device_xname(&h->sc->dev)));
+					    device_xname(h->sc->sc_dev)));
 					tcic_queue_event(h, TCIC_EVENT_INSERTION);
 				}
 			} else {
 				if (h->flags & TCIC_FLAG_CARDP) {
 					/* Deactivate the card now. */
 					DPRINTF(("%s: deactivating card\n",
-					    device_xname(&h->sc->dev)));
+					    device_xname(h->sc->sc_dev)));
 					tcic_deactivate_card(h);
 
 					DPRINTF(("%s: enqueing REMOVAL event\n",
-					    device_xname(&h->sc->dev)));
+					    device_xname(h->sc->sc_dev)));
 					tcic_queue_event(h, TCIC_EVENT_REMOVAL);
 				}
 			}
 		}
 		if (delta & TCIC_SSTAT_RDY) {
-			DPRINTF(("%s: %02x READY\n", device_xname(&h->sc->dev), h->sock));
+			DPRINTF(("%s: %02x READY\n", device_xname(h->sc->sc_dev), h->sock));
 			/* shouldn't happen */
 		}
 		if (delta & TCIC_SSTAT_LBAT1) {
-			DPRINTF(("%s: %02x LBAT1\n", device_xname(&h->sc->dev), h->sock));
+			DPRINTF(("%s: %02x LBAT1\n", device_xname(h->sc->sc_dev), h->sock));
 		}
 		if (delta & TCIC_SSTAT_LBAT2) {
-			DPRINTF(("%s: %02x LBAT2\n", device_xname(&h->sc->dev), h->sock));
+			DPRINTF(("%s: %02x LBAT2\n", device_xname(h->sc->sc_dev), h->sock));
 		}
 		if (delta & TCIC_SSTAT_WP) {
-			DPRINTF(("%s: %02x WP\n", device_xname(&h->sc->dev), h->sock));
+			DPRINTF(("%s: %02x WP\n", device_xname(h->sc->sc_dev), h->sock));
 		}
 	}
 	return rv;
@@ -1108,7 +1108,7 @@ tcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_
 
 	/* XXX wtf is this doing here? */
 
-	printf("%s: port 0x%lx", device_xname(&h->sc->dev), (u_long) ioaddr);
+	printf("%s: port 0x%lx", device_xname(h->sc->sc_dev), (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
 	printf("\n");
@@ -1231,7 +1231,7 @@ tcic_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 	tcic_write_ind_2(h, TCIC_IR_SCF1_N(h->sock), reg);
 
 	DPRINTF(("%s: tcic_chip_socket_enable %d cardtype %s 0x%02x\n",
-	    device_xname(&h->sc->dev), h->sock,
+	    device_xname(h->sc->sc_dev), h->sock,
 	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
 }
 

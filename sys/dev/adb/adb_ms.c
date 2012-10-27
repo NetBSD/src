@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.13 2012/06/02 21:36:43 dsl Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.14 2012/10/27 17:18:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.13 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.14 2012/10/27 17:18:14 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ struct adbms_softc {
 	char		sc_devid[5];	/* device indentifier */
 	uint8_t		sc_us;		/* cmd to watch for */
 	int		sc_mb;		/* current button state */
-	struct device	*sc_wsmousedev;
+	device_t	sc_wsmousedev;
 	/* helpers for trackpads */
 	int		sc_down;
 	/*

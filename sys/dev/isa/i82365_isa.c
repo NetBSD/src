@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.33 2009/09/17 18:14:41 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.34 2012/10/27 17:18:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.33 2009/09/17 18:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.34 2012/10/27 17:18:24 chs Exp $");
 
 #define	PCICISADEBUG
 
@@ -64,7 +64,7 @@ int	pcicisa_debug = 0;
 int	pcic_isa_probe(device_t, cfdata_t, void *);
 void	pcic_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcic_isa, sizeof(struct pcic_isa_softc),
+CFATTACH_DECL_NEW(pcic_isa, sizeof(struct pcic_isa_softc),
     pcic_isa_probe, pcic_isa_attach, NULL, NULL);
 
 static const struct pcmcia_chip_functions pcic_isa_functions = {
@@ -192,6 +192,8 @@ pcic_isa_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
+
+	sc->dev = self;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, PCIC_IOSIZE, 0, &ioh)) {

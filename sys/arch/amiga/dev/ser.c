@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.79 2011/04/24 16:26:52 rmind Exp $ */
+/*	$NetBSD: ser.c,v 1.80 2012/10/27 17:17:31 chs Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.79 2011/04/24 16:26:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.80 2012/10/27 17:17:31 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,15 +67,14 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.79 2011/04/24 16:26:52 rmind Exp $");
 #include "ser.h"
 #if NSER > 0
 
-void serattach(struct device *, struct device *, void *);
-int sermatch(struct device *, struct cfdata *, void *);
+void serattach(device_t, device_t, void *);
+int sermatch(device_t, cfdata_t, void *);
 
 struct ser_softc {
-	struct device dev;
 	struct tty *ser_tty;
 };
 
-CFATTACH_DECL(ser, sizeof(struct ser_softc),
+CFATTACH_DECL_NEW(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
 
 extern struct cfdriver ser_cd;
@@ -189,13 +188,13 @@ long	sermintcount[16];
 void	sermint(register int unit);
 
 int
-sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+sermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int ser_matched = 0;
 	static int ser_matched_real = 0;
 
 	/* Allow only once instance. */
-	if (matchname("ser", (char *)auxp) == 0)
+	if (matchname("ser", (char *)aux) == 0)
 		return(0);
 
 	if (amiga_realconfig) {
@@ -216,13 +215,13 @@ sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 
 void
-serattach(struct device *pdp, struct device *dp, void *auxp)
+serattach(device_t parent, device_t self, void *aux)
 {
 	struct ser_softc *sc;
 	struct tty *tp;
 	u_short ir;
 
-	sc = device_private(dp);
+	sc = device_private(self);
 
 	ir = custom.intenar;
 	if (serconsole == 0)
@@ -263,7 +262,7 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 	tty_attach(tp);
 	sc->ser_tty = ser_tty = tp;
 
-	if (dp)
+	if (self)
 		printf(": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 		    SEROBUF_SIZE);
 }

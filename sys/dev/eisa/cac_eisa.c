@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.21 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.22 2012/10/27 17:18:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.21 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.22 2012/10/27 17:18:16 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 static int	cac_eisa_l0_intr_pending(struct cac_softc *);
 static void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
-CFATTACH_DECL(cac_eisa, sizeof(struct cac_softc),
+CFATTACH_DECL_NEW(cac_eisa, sizeof(struct cac_softc),
     cac_eisa_match, cac_eisa_attach, NULL, NULL);
 
 static const struct cac_linkage cac_eisa_l0 = {
@@ -151,6 +151,7 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ea->ea_dmat;

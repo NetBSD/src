@@ -1,4 +1,4 @@
-/*	$NetBSD: epsocvar.h,v 1.4 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$NetBSD: epsocvar.h,v 1.5 2012/10/27 17:17:37 chs Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -48,7 +48,6 @@ struct epsoc_attach_args {
 };
 
 struct epsoc_softc {
-	struct device		sc_dev;
 	u_int32_t		sc_fclk;
 	u_int32_t		sc_hclk;
 	u_int32_t		sc_pclk;

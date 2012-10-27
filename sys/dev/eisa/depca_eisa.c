@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.13 2010/01/19 22:06:23 pooka Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.14 2012/10/27 17:18:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.13 2010/01/19 22:06:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.14 2012/10/27 17:18:16 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -150,15 +150,15 @@ depca_eisa_attach(device_t parent, device_t self, void *aux)
 }
 
 static void *
-depca_eisa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
+depca_eisa_intr_establish(struct depca_softc *sc, struct lance_softc *child)
 {
-	struct depca_eisa_softc *esc = (struct depca_eisa_softc *)parent;
+	struct depca_eisa_softc *esc = (struct depca_eisa_softc *)sc;
 	eisa_intr_handle_t ih;
 	const char *intrstr;
 	void *rv;
 
 	if (eisa_intr_map(esc->sc_ec, esc->sc_irq, &ih)) {
-		aprint_error_dev(parent->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to map interrupt (%d)\n", esc->sc_irq);
 		return (NULL);
 	}
@@ -166,7 +166,7 @@ depca_eisa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
 	rv = eisa_intr_establish(esc->sc_ec, ih, esc->sc_ist, IPL_NET,
 	    (esc->sc_ist == IST_LEVEL) ? am7990_intr : depca_intredge, child);
 	if (rv == NULL) {
-		aprint_error_dev(parent->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
@@ -174,7 +174,7 @@ depca_eisa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
 		return (NULL);
 	}
 	if (intrstr != NULL)
-		aprint_normal_dev(parent->sc_dev, "interrupting at %s\n",
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
 		    intrstr);
 
 	return (rv);

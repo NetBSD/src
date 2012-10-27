@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.46 2011/07/17 20:54:43 joerg Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.47 2012/10/27 17:17:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.46 2011/07/17 20:54:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.47 2012/10/27 17:17:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ static void	do_ncr5380_drq_intr(void *);
 
 static void	scsi_clr_ipend(void);
 static void	scsi_mach_init(struct ncr_softc *);
-static int	machine_match(struct device *, struct cfdata *, void *,
+static int	machine_match(device_t, cfdata_t, void *,
 			      struct cfdriver *);
 static int	pdma_ready(void);
 static int	transfer_pdma(u_char *, u_char *, u_long *);
@@ -181,7 +181,7 @@ scsi_mach_init(struct ncr_softc *sc)
 }
 
 static int
-machine_match(struct device *parent, struct cfdata *cf, void *aux,
+machine_match(device_t parent, cfdata_t cf, void *aux,
 	      struct cfdriver *cd)
 {
 	if (!mac68k_machine.scsi80)

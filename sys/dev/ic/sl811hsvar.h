@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.8 2011/06/21 15:13:34 kiyohara Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.9 2012/10/27 17:18:22 chs Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -69,7 +69,7 @@ struct slhci_softc {
 
 	PowerFunc		sc_enable_power;
 
-	struct device		*sc_child;
+	device_t		sc_child;
 
 	struct timeval		sc_reserved_warn_rate;
 	struct timeval		sc_overflow_warn_rate;

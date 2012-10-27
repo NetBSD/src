@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.48 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: neo.c,v 1.49 2012/10/27 17:18:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.48 2012/08/24 09:01:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.49 2012/10/27 17:18:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.48 2012/08/24 09:01:23 msaitoh Exp $");
 
 /* device private data */
 struct neo_softc {
-	struct device	dev;
+	device_t	dev;
 	kmutex_t	lock;
 	kmutex_t	intr_lock;
 
@@ -206,7 +206,7 @@ static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
 static void	neo_get_locks(void *, kmutex_t **, kmutex_t **);
 
-CFATTACH_DECL(neo, sizeof(struct neo_softc),
+CFATTACH_DECL_NEW(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
 
 static struct audio_device neo_device = {
@@ -404,7 +404,7 @@ neo_intr(void *p)
 		nm_ackint(sc, sc->misc1int);
 		x = nm_rd_1(sc, 0x400);
 		nm_wr_1(sc, 0x400, x | 2);
-		printf("%s: misc int 1\n", device_xname(&sc->dev));
+		printf("%s: misc int 1\n", device_xname(sc->dev));
 		rv = 1;
 	}
 	if (status & sc->misc2int) {
@@ -412,13 +412,13 @@ neo_intr(void *p)
 		nm_ackint(sc, sc->misc2int);
 		x = nm_rd_1(sc, 0x400);
 		nm_wr_1(sc, 0x400, x & ~2);
-		printf("%s: misc int 2\n", device_xname(&sc->dev));
+		printf("%s: misc int 2\n", device_xname(sc->dev));
 		rv = 1;
 	}
 	if (status) {
 		status &= ~sc->misc2int;
 		nm_ackint(sc, sc->misc2int);
-		printf("%s: unknown int\n", device_xname(&sc->dev));
+		printf("%s: unknown int\n", device_xname(sc->dev));
 		rv = 1;
 	}
 
@@ -578,7 +578,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc = device_private(self);
-	pa = (struct pci_attach_args *)aux;
+	pa = aux;
 	pc = pa->pa_pc;
 
 	sc->type = PCI_PRODUCT(pa->pa_id);
@@ -589,19 +589,19 @@ neo_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->bufiot, &sc->bufioh, &sc->buf_pciaddr, NULL)) {
-		aprint_error_dev(&sc->dev, "can't map buffer\n");
+		aprint_error_dev(self, "can't map buffer\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 4, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->regiot, &sc->regioh, NULL, NULL)) {
-		aprint_error_dev(&sc->dev, "can't map registers\n");
+		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -612,7 +612,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
 
 	if (sc->ih == NULL) {
-		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -620,7 +620,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->intr_lock);
 		return;
 	}
-	aprint_normal_dev(&sc->dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	mutex_spin_enter(&sc->intr_lock);
 	error = nm_init(sc);
@@ -652,7 +652,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, neo_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
+	audio_attach_mi(&neo_hw_if, sc, self);
 }
 
 static int

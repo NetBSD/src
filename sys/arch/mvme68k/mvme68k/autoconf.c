@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.46 2012/07/29 18:05:44 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47 2012/10/27 17:18:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.46 2012/07/29 18:05:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2012/10/27 17:18:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ cpu_rootconf(void)
 {
 
 	printf("boot device: %s",
-		(booted_device) ? booted_device->dv_xname : "<unknown>");
+		(booted_device) ? device_xname(booted_device) : "<unknown>");
 
 	if (bootpart)
 		printf(" (partition %d)\n", bootpart);
@@ -107,11 +107,11 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	static struct device *controller;
+	static device_t controller;
 	static int foundboot;
-	struct device *parent = device_parent(dev);
+	device_t parent = device_parent(dev);
 
 	if (foundboot)
 		return;

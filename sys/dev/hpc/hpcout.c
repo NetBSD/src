@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcout.c,v 1.15 2009/05/12 14:22:39 cegger Exp $	*/
+/*	$NetBSD: hpcout.c,v 1.16 2012/10/27 17:18:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.15 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcout.c,v 1.16 2012/10/27 17:18:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ void	hpcout_attach(device_t, device_t, void *);
 int	hpcout_hook(void *, int, long, void *);
 
 struct hpcout_softc {
-	struct device sc_dev;
 	struct hpcioman_attach_args sc_hma;
 };
 
@@ -62,7 +61,7 @@ struct hpcout_softc {
 #define sc_on		sc_hma.hma_on
 #define sc_off		sc_hma.hma_off
 
-CFATTACH_DECL(hpcout, sizeof(struct hpcout_softc),
+CFATTACH_DECL_NEW(hpcout, sizeof(struct hpcout_softc),
     hpcout_match, hpcout_attach, NULL, NULL);
 
 int

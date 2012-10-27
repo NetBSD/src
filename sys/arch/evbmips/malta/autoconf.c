@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2012/07/29 18:05:41 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2012/10/27 17:17:51 chs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2012/07/29 18:05:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2012/10/27 17:17:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+		booted_device ? device_xname(booted_device) : "<unknown>");
 
 	rootconf();
 }
@@ -108,7 +108,7 @@ findroot(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	if ((booted_device == NULL) && (netboot == 1))
 		if (device_class(dev) == DV_IFNET)

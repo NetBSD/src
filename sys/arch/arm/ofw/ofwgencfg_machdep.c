@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.18 2011/06/06 16:29:14 matt Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.19 2012/10/27 17:17:40 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.18 2011/06/06 16:29:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.19 2012/10/27 17:17:40 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.18 2011/06/06 16:29:14 matt 
 #include <sys/kernel.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -80,7 +81,6 @@ extern pv_addr_t abtstack;
 extern pv_addr_t kernelstack;
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 /*
  *  Imported routines

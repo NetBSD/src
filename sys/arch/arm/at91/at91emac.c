@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.11 2012/07/22 14:32:49 matt Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.11 2012/07/22 14:32:49 matt Exp $	*/
+/*	$Id: at91emac.c,v 1.12 2012/10/27 17:17:36 chs Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.12 2012/10/27 17:17:36 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.11 2012/07/22 14:32:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.12 2012/10/27 17:17:36 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -360,8 +360,8 @@ emac_init(struct emac_softc *sc)
 	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_CTL, ETH_CTL_MPE);
 #if 0
-	if (device_cfdata(&sc->sc_dev)->cf_flags)
-		mdcdiv = device_cfdata(&sc->sc_dev)->cf_flags;
+	if (device_cfdata(sc->sc_dev)->cf_flags)
+		mdcdiv = device_cfdata(sc->sc_dev)->cf_flags;
 #endif
 	/* set ethernet address */
 	EMAC_WRITE(ETH_SA1L, (sc->sc_enaddr[3] << 24)

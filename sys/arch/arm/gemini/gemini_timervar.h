@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timervar.h,v 1.2 2008/11/09 08:56:47 cliff Exp $	*/
+/*	$NetBSD: gemini_timervar.h,v 1.3 2012/10/27 17:17:38 chs Exp $	*/
 
 
 /*
@@ -51,7 +51,6 @@ typedef struct timer_factors {
 } timer_factors_t;
 
 typedef struct geminitmr_softc {
-	struct device		sc_dev;
 	uint			sc_timerno;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

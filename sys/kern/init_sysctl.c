@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.192 2012/10/08 19:20:45 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.193 2012/10/27 17:18:39 chs Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.192 2012/10/08 19:20:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.193 2012/10/27 17:18:39 chs Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1849,7 +1849,7 @@ sysctl_root_device(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = root_device->dv_xname;
+	node.sysctl_data = __UNCONST(device_xname(root_device));
 	node.sysctl_size = strlen(device_xname(root_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
