@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.11 2012/09/19 20:34:57 jdc Exp $ */
+/*	$NetBSD: mkclock.c,v 1.12 2012/10/27 17:18:12 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.11 2012/09/19 20:34:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2012/10/27 17:18:12 chs Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -192,7 +192,7 @@ mkclock_sbus_attach(device_t parent, device_t self, void *aux)
 
 /* ARGSUSED */
 static void
-mkclock_ebus_attach(struct device *parent, struct device *self, void *aux)
+mkclock_ebus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mk48txx_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
@@ -221,7 +221,7 @@ mkclock_ebus_attach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static void
-mkclock_fhc_attach(struct device *parent, struct device *self, void *aux)
+mkclock_fhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mk48txx_softc *sc = device_private(self);
 	struct fhc_attach_args *fa = aux;

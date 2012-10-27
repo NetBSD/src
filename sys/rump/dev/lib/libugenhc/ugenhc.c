@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.11 2012/09/14 16:29:21 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.12 2012/10/27 17:18:40 chs Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.11 2012/09/14 16:29:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.12 2012/10/27 17:18:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,8 @@ struct ugenhc_softc {
 	usbd_xfer_handle sc_intrxfer;
 };
 
-static int	ugenhc_probe(struct device *, struct cfdata *, void *);
-static void	ugenhc_attach(struct device *, struct device *, void *);
+static int	ugenhc_probe(device_t, cfdata_t, void *);
+static void	ugenhc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ugenhc, sizeof(struct ugenhc_softc),
 	ugenhc_probe, ugenhc_attach, NULL, NULL);
@@ -1054,7 +1054,7 @@ static const struct usbd_bus_methods ugenhc_bus_methods = {
 };
 
 static int
-ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
+ugenhc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
 	int error;
@@ -1067,7 +1067,7 @@ ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ugenhc_attach(struct device *parent, struct device *self, void *aux)
+ugenhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 	struct ugenhc_softc *sc = device_private(self);

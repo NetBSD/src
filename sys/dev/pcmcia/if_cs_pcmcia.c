@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.19 2012/02/02 19:43:06 tls Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.20 2012/10/27 17:18:36 chs Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.19 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.20 2012/10/27 17:18:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct cs_pcmcia_softc {
 #define	CS_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
+CFATTACH_DECL_NEW(cs_pcmcia, sizeof(struct cs_pcmcia_softc),
     cs_pcmcia_match, cs_pcmcia_attach, cs_pcmcia_detach, cs_activate);
 
 static int
@@ -98,13 +98,14 @@ cs_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 static void
 cs_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct cs_pcmcia_softc *psc = (void *)self;
-	struct cs_softc *sc = (void *)&psc->sc_cs;
+	struct cs_pcmcia_softc *psc = device_private(self);
+	struct cs_softc *sc = &psc->sc_cs;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf;
 	int error;
 
+	sc->sc_dev = self;
 	pf = psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, cs_pcmcia_validate_config);
@@ -151,7 +152,7 @@ fail:
 static int
 cs_pcmcia_detach(device_t self, int flags)
 {
-	struct cs_pcmcia_softc *psc = (void *)self;
+	struct cs_pcmcia_softc *psc = device_private(self);
 	struct cs_softc *sc = &psc->sc_cs;
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.15 2010/01/19 22:06:59 pooka Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.16 2012/10/27 17:18:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.15 2010/01/19 22:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.16 2012/10/27 17:18:24 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -223,16 +223,16 @@ depca_isa_attach(device_t parent, device_t self, void *aux)
 }
 
 void *
-depca_isa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
+depca_isa_intr_establish(struct depca_softc *sc, struct lance_softc *child)
 {
-	struct depca_isa_softc *isc = (struct depca_isa_softc *)parent;
+	struct depca_isa_softc *isc = (struct depca_isa_softc *)sc;
 	void *rv;
 
 	rv = isa_intr_establish(isc->sc_ic, isc->sc_irq, IST_EDGE,
 	    IPL_NET, depca_intredge, child);
 	if (rv == NULL)
 		printf("%s: unable to establish interrupt\n",
-		    device_xname(parent->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: awivar.h,v 1.26 2009/11/12 19:32:14 dyoung Exp $	*/
+/*	$NetBSD: awivar.h,v 1.27 2012/10/27 17:18:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct awi_chanset {
 };
 
 struct awi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct am79c930_softc 	sc_chip;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: pstwo.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $ */
+/* 	$NetBSD: pstwo.c,v 1.5 2012/10/27 17:17:51 chs Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.4 2011/07/01 19:03:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.5 2012/10/27 17:17:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ static void
 pstwo_printreg(struct pstwo_softc *sc)
 {
 #define PRINTREG(name, reg) \
-	printf("%s: [0x%08x] %s -> 0x%08x\n", device_xname(&sc->sc_dev), \
+	printf("%s: [0x%08x] %s -> 0x%08x\n", device_xname(sc->sc_dev), \
 	    reg, name, bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg))
 
 	PRINTREG("status   ", PSTWO_STAT);

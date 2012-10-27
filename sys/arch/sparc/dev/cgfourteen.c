@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.67 2012/01/11 15:54:44 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.68 2012/10/27 17:18:11 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -254,7 +254,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 	memcpy(sc->sc_physadr, sa->sa_reg,
@@ -277,7 +277,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 			 sa->sa_size,
 			 0 /*BUS_SPACE_MAP_LINEAR*/,
 			 &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		printf("%s: cannot map control registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_regh = bh;

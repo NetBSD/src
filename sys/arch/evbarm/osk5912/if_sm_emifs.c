@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_emifs.c,v 1.4 2011/07/01 20:44:21 dyoung Exp $	*/
+/*	$NetBSD: if_sm_emifs.c,v 1.5 2012/10/27 17:17:49 chs Exp $	*/
 
 /*
  * OSK5912 SMC91Cxx wrapper, based on sys/arch/evbarm/viper/if_sm_pxaip.c
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.4 2011/07/01 20:44:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.5 2012/10/27 17:17:49 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,19 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.4 2011/07/01 20:44:21 dyoung Exp $
 #include <arch/arm/omap/omap_emifs.h>
 #include <arch/arm/omap/omap_gpio.h>
 
-static int	sm_emifs_match(struct device *, struct cfdata *, void *);
-static void	sm_emifs_attach(struct device *, struct device *, void *);
+static int	sm_emifs_match(device_t, cfdata_t, void *);
+static void	sm_emifs_attach(device_t, device_t, void *);
 
 struct sm_emifs_softc {
 	struct smc91cxx_softc sc_sm;
 	void *ih;
 };
 
-CFATTACH_DECL(sm_emifs, sizeof(struct sm_emifs_softc), sm_emifs_match,
+CFATTACH_DECL_NEW(sm_emifs, sizeof(struct sm_emifs_softc), sm_emifs_match,
     sm_emifs_attach, NULL, NULL);
 
 static int
-sm_emifs_match(struct device *parent, struct cfdata *match, void *aux)
+sm_emifs_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct emifs_attach_args *emifs = aux;
 
@@ -77,14 +77,15 @@ sm_emifs_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sm_emifs_attach(struct device *parent, struct device *self, void *aux)
+sm_emifs_attach(device_t parent, device_t self, void *aux)
 {
-	struct sm_emifs_softc *emifssc = (struct sm_emifs_softc *)self;
+	struct sm_emifs_softc *emifssc = device_private(self);
 	struct smc91cxx_softc *sc = &emifssc->sc_sm;
 	struct emifs_attach_args *emifs = aux;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
+	sc->sc_dev = self;
 	bst = emifs->emifs_iot;
 
 	/* map i/o space */
@@ -96,13 +97,14 @@ sm_emifs_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	/* fill in master sc */
+	sc->sc_dev = self;
 	sc->sc_bst = bst;
 	sc->sc_bsh = bsh;
 
 	/* register the interrupt handler */
 	emifssc->ih = 
 	    omap_gpio_intr_establish(emifs->emifs_intr, IST_EDGE_RISING,
-				     IPL_NET, sc->sc_dev.dv_xname,
+				     IPL_NET, device_xname(self),
 				     smc91cxx_intr, sc);
 
 	if (emifssc->ih == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:39 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2012/07/29 18:05:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ cpu_rootconf(void)
 
 /*ARGSUSED*/
 int
-simple_devprint(void *auxp, const char *pnp)
+simple_devprint(void *aux, const char *pnp)
 {
 
 	return QUIET;
@@ -122,33 +122,33 @@ matchname(const char *fp, const char *sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
+amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
-		return config_found(pdp, auxp, pfn) != NULL;
+		return config_found(parent, aux, pfn) != NULL;
 
-	if (pdp == NULL) {
+	if (parent == NULL) {
 		memset(&temp, 0, sizeof temp);
-		pdp = &temp;
+		parent = &temp;
 	}
 
-	pdp->dv_cfdata = pcfp;
-	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
-	pdp->dv_unit = pcfp->cf_unit;
+	parent->dv_cfdata = pcfp;
+	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
+	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
+	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
-			(*ca->ca_attach)(pdp, NULL, auxp);
-			pdp->dv_cfdata = NULL;
+			(*ca->ca_attach)(parent, NULL, aux);
+			parent->dv_cfdata = NULL;
 			return 1;
 		}
 	}
-	pdp->dv_cfdata = NULL;
+	parent->dv_cfdata = NULL;
 	return 0;
 }
 
@@ -261,8 +261,8 @@ findroot(void)
 			 * Find the disk corresponding to the current
 			 * device.
 			 */
-			devs = (device_t*)sd_cd.cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+			devs = sd_cd.cd_devs;
+			if ((dkp = disk_find(device_xname(devs[unit]))) == NULL)
 				continue;
 
 			if (dkp->dk_driver == NULL ||
@@ -310,8 +310,8 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (device_t*)genericconf[i]->cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+			devs = genericconf[i]->cd_devs;
+			if ((dkp = disk_find(device_xname(devs[unit]))) == NULL)
 				continue;
 
 			if (dkp->dk_driver == NULL ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.18 2012/09/07 03:05:12 matt Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.19 2012/10/27 17:17:40 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18 2012/09/07 03:05:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.19 2012/10/27 17:17:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18 2012/09/07 03:05:12 matt Exp $"
 #define BUS0_DEV_MIN	1
 #define BUS0_DEV_MAX	21
 
-void	s3c2800_pci_attach_hook(struct device *, struct device *,
-			        struct pcibus_attach_args *);
+void	s3c2800_pci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
 int	s3c2800_pci_bus_maxdevs(void *, int);
 pcitag_t s3c2800_pci_make_tag(void *, int, int, int);
 void	s3c2800_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -164,7 +163,7 @@ struct sspci_irq_handler {
 };
 
 struct sspci_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_reg_ioh;
@@ -180,8 +179,8 @@ struct sspci_softc {
 	void *sc_softinterrupt;
 };
 
-static int sspci_match(struct device *, struct cfdata *, void *aux);
-static void sspci_attach(struct device *, struct device *, void *);
+static int sspci_match(device_t, cfdata_t, void *aux);
+static void sspci_attach(device_t, device_t, void *);
 
 static int sspci_bs_map(void *, bus_addr_t, bus_size_t, int, 
 			     bus_space_handle_t *);
@@ -190,7 +189,7 @@ static int sspci_intr(void *);
 static void sspci_softintr(void *);
 
 /* attach structures */
-CFATTACH_DECL(sspci, sizeof(struct sspci_softc), sspci_match, sspci_attach,
+CFATTACH_DECL_NEW(sspci, sizeof(struct sspci_softc), sspci_match, sspci_attach,
     NULL, NULL);
 
 
@@ -222,15 +221,15 @@ struct arm32_pci_chipset sspci_chipset = {
 struct bus_space sspci_io_tag, sspci_mem_tag;
 
 static int
-sspci_match(struct device *parent, struct cfdata *match, void *aux)
+sspci_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-sspci_attach(struct device *parent, struct device *self, void *aux)
+sspci_attach(device_t parent, device_t self, void *aux)
 {
-	struct sspci_softc *sc = (struct sspci_softc *) self;
+	struct sspci_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *aa = aux;
 	bus_space_tag_t iot;
 	bus_dma_tag_t pci_dma_tag;
@@ -243,6 +242,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 #define FAIL(which)  do { \
 	error_on=(which); goto abort; }while(/*CONSTCOND*/0)
 
+	sc->sc_dev = self;
 	iot = sc->sc_iot = aa->sa_iot;
 	if (bus_space_map(iot, S3C2800_PCICTL_BASE,
 		S3C2800_PCICTL_SIZE, 0, &sc->sc_reg_ioh))
@@ -271,7 +271,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	if (sspci_init_controller(sc)) {
-		printf("%s: failed to initialize controller\n", self->dv_xname);
+		printf("%s: failed to initialize controller\n", device_xname(self));
 		return;
 	}
 #endif
@@ -293,7 +293,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_reg_ioh, PCI_CLASS_REG);
 
 		pci_devinfo(id_reg, class_reg, 1, buf, sizeof(buf));
-		printf("%s: %s\n", self->dv_xname, buf);
+		printf("%s: %s\n", device_xname(self), buf);
 	}
 
 #if defined(PCI_NETBSD_CONFIGURE)
@@ -341,7 +341,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 #undef FAIL
 abort:
 	panic("%s: map failed (%s)",
-	    self->dv_xname, error_on);
+	    device_xname(self), error_on);
 }
 
 
@@ -401,7 +401,7 @@ s3c2800_pci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *i
 }
 
 void
-s3c2800_pci_attach_hook(struct device * parent, struct device * self,
+s3c2800_pci_attach_hook(device_t parent, device_t self,
 			struct pcibus_attach_args * pba)
 {
 
@@ -715,7 +715,7 @@ sspci_intr(void *arg)
 			if ((errors & (1 << i)) == 0)
 				continue;
 
-			printf("%s: %s\n", sc->sc_dev.dv_xname,
+			printf("%s: %s\n", device_xname(sc->sc_dev),
 			    pci_abnormal_error_name[i > 4 ? 5 : i]);
 
 			errors &= ~(1 << i);

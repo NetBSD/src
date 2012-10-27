@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.11 2009/03/14 15:36:10 dsl Exp $	*/
+/*	$NetBSD: i82072.c,v 1.12 2012/10/27 17:18:03 chs Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.11 2009/03/14 15:36:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82072.c,v 1.12 2012/10/27 17:18:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,32 +62,32 @@ const struct cdevsw fd_cdevsw = {
 #define	I82072_TC	0x800003
 
 struct	fd_softc {
-        struct  device dev; 
+        device_t dev; 
         struct  evcnt  fd_intrcnt;
 	bus_space_tag_t	fd_bst;
 	bus_space_handle_t fd_bsh;
         int     unit;
 };
 
-static int	fd_match (struct device *, struct cfdata *, void *);
-static void	fd_attach (struct device *, struct device *, void *);
+static int	fd_match (device_t, cfdata_t, void *);
+static void	fd_attach (device_t, device_t, void *);
 static void     fd_reset (struct fd_softc *);
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fd_match, fd_attach, NULL, NULL);
 
 static int	fd_intr (void *);
 
 int
-fd_match(struct device *parent, struct cfdata *cf, void *aux)
+fd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 void
-fd_attach(struct device *parent, struct device *self, void *aux)
+fd_attach(device_t parent, device_t self, void *aux)
 {
-        struct fd_softc *sc = (void *)self;
+        struct fd_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 
 	sc->fd_bst = ca->ca_bustag;
@@ -95,11 +95,11 @@ fd_attach(struct device *parent, struct device *self, void *aux)
 			  0x1000000,	
 			  BUS_SPACE_MAP_LINEAR,
 			  &sc->fd_bsh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map registers\n", device_xname(self));
 		return;
 	}
 	evcnt_attach_dynamic(&sc->fd_intrcnt, EVCNT_TYPE_INTR, NULL,
-			     self->dv_xname, "intr");
+			     device_xname(self), "intr");
 
 	bus_intr_establish(sc->fd_bst, SYS_INTR_FDC, 0, 0, fd_intr, sc);
 

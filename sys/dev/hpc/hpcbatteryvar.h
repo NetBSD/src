@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatteryvar.h,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: hpcbatteryvar.h,v 1.4 2012/10/27 17:18:17 chs Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -64,7 +64,6 @@ typedef	enum {
 } hpcbattery_batt_state;
 
 struct hpcbattery_softc {
-	struct device sc_device;
 	/* current status */
 	hpcbattery_ac_state sc_ac_status;
 	hpcbattery_batt_state sc_batt_status;

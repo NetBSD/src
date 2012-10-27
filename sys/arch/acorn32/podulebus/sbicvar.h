@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.5 2012/07/29 00:07:10 matt Exp $ */
+/* $NetBSD: sbicvar.h,v 1.6 2012/10/27 17:17:24 chs Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@ struct sbic_tinfo {
 };
 
 struct	sbic_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 /*	struct	isr sc_isr;*/
 	struct  callout sc_timo_ch;
 	struct	target_sync {

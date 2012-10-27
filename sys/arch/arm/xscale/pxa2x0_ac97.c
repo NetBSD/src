@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.11 2011/11/24 03:35:56 mrg Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.12 2012/10/27 17:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -108,7 +108,7 @@ struct acu_softc {
 	struct ac97_host_if sc_host_if;
 
 	/* Child audio(4) device */
-	struct device *sc_audiodev;
+	device_t sc_audiodev;
 
 	/* auconv encodings */
 	struct audio_encoding_set *sc_encodings;

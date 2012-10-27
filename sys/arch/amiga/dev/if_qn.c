@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.38 2010/04/05 07:19:29 joerg Exp $ */
+/*	$NetBSD: if_qn.c,v 1.39 2012/10/27 17:17:29 chs Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.38 2010/04/05 07:19:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.39 2012/10/27 17:17:29 chs Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.38 2010/04/05 07:19:29 joerg Exp $");
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	qn_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	isr sc_isr;
 	struct	ethercom sc_ethercom;	/* Common ethernet structures */
 	u_char	volatile *sc_base;
@@ -152,8 +152,8 @@ struct	qn_softc {
 #include <net/bpfdesc.h>
 
 
-int	qnmatch(struct device *, struct cfdata *, void *);
-void	qnattach(struct device *, struct device *, void *);
+int	qnmatch(device_t, cfdata_t, void *);
+void	qnattach(device_t, device_t, void *);
 int	qnintr(void *);
 int	qnioctl(struct ifnet *, u_long, void *);
 void	qnstart(struct ifnet *);
@@ -172,11 +172,11 @@ static	void qn_get_packet(struct qn_softc *, u_short);
 static	void qn_dump(struct qn_softc *);
 #endif
 
-CFATTACH_DECL(qn, sizeof(struct qn_softc),
+CFATTACH_DECL_NEW(qn, sizeof(struct qn_softc),
     qnmatch, qnattach, NULL, NULL);
 
 int
-qnmatch(struct device *parent, struct cfdata *cfp, void *aux)
+qnmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
@@ -195,10 +195,10 @@ qnmatch(struct device *parent, struct cfdata *cfp, void *aux)
  * to accept packets.
  */
 void
-qnattach(struct device *parent, struct device *self, void *aux)
+qnattach(device_t parent, device_t self, void *aux)
 {
 	struct zbus_args *zap;
-	struct qn_softc *sc = (struct qn_softc *)self;
+	struct qn_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
@@ -231,7 +231,7 @@ qnattach(struct device *parent, struct device *self, void *aux)
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;
@@ -683,7 +683,7 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 		    len < ETHER_HDR_LEN) {
 			log(LOG_WARNING,
 			    "%s: received a %s packet? (%u bytes)\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(sc->sc_dev),
 			    len < ETHER_HDR_LEN ? "partial" : "big", len);
 			++sc->sc_ethercom.ec_if.if_ierrors;
 			continue;
@@ -693,7 +693,7 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
-			    sc->sc_dev.dv_xname, len);
+			    device_xname(sc->sc_dev), len);
 #endif
 
 		/* Read the packet. */

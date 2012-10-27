@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.33 2012/10/27 17:18:09 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.33 2012/10/27 17:18:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,9 @@ int	wdsc_scsiintr(void *);
  * Match for SCSI devices on the onboard and GIO32 adapter WD33C93 chips
  */
 int
-wdsc_match(device_t parent, cfdata_t cf, void *auxp)
+wdsc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct hpc_attach_args *haa = auxp;
+	struct hpc_attach_args *haa = aux;
 
 	if (strcmp(haa->ha_name, cf->cf_name) == 0) {
 		vaddr_t reset, asr, reg;

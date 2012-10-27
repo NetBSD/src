@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.18 2008/07/09 13:19:33 joerg Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.19 2012/10/27 17:18:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct stic_screen {
 #define	SS_CURENB		0x04
 
 struct stic_info {
-	struct device	*si_dv;
+	device_t	si_dv;
 
 	u_int32_t	*si_stamp;
 	u_int32_t	*si_buf;

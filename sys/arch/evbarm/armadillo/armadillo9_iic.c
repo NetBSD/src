@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.6 2008/06/10 13:53:28 hamajima Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.7 2012/10/27 17:17:46 chs Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.6 2008/06/10 13:53:28 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.7 2012/10/27 17:17:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.6 2008/06/10 13:53:28 hamajima 
 #endif
 
 struct armadillo9iic_softc {
-	struct device		sc_dev;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_buslock;
 	int			sc_port;
@@ -56,8 +55,8 @@ struct armadillo9iic_softc {
 	struct epgpio_softc	*sc_gpio;
 };
 
-static int armadillo9iic_match(struct device *, struct cfdata *, void *);
-static void armadillo9iic_attach(struct device *, struct device *, void *);
+static int armadillo9iic_match(device_t, cfdata_t, void *);
+static void armadillo9iic_attach(device_t, device_t, void *);
 
 static int armadillo9iic_acquire_bus(void *, int);
 static void armadillo9iic_release_bus(void *, int);
@@ -71,7 +70,7 @@ static void armadillo9iic_bb_set_bits(void *, uint32_t);
 static void armadillo9iic_bb_set_dir(void *, uint32_t);
 static uint32_t armadillo9iic_bb_read_bits(void *);
 
-CFATTACH_DECL(armadillo9iic, sizeof(struct armadillo9iic_softc),
+CFATTACH_DECL_NEW(armadillo9iic, sizeof(struct armadillo9iic_softc),
 	      armadillo9iic_match, armadillo9iic_attach, NULL, NULL);
 
 static struct i2c_bitbang_ops armadillo9iic_bbops = {
@@ -82,15 +81,15 @@ static struct i2c_bitbang_ops armadillo9iic_bbops = {
 };
 
 int
-armadillo9iic_match(struct device *parent, struct cfdata *cf, void *aux)
+armadillo9iic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 2;
 }
 
 void
-armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
+armadillo9iic_attach(device_t parent, device_t self, void *aux)
 {
-	struct armadillo9iic_softc *sc = (struct armadillo9iic_softc*)self;
+	struct armadillo9iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 #if NSEEPROM > 0
 	struct epgpio_attach_args *ga = aux;
@@ -124,7 +123,7 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 
 #if NSEEPROM > 0
 	/* read mac address */
@@ -132,7 +131,7 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x00, 128,
 				   armadillo9_ethaddr, ETHER_ADDR_LEN) != 0) {
 		printf("%s: WARNING: unable to read MAC address from SEEPROM\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 	}
 #endif
 }

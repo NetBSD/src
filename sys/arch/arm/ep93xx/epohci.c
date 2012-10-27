@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$NetBSD: epohci.c,v 1.6 2012/10/27 17:17:37 chs Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.6 2012/10/27 17:17:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
 #include <arm/ep93xx/ep93xxvar.h>
 #include <arm/ep93xx/epsocvar.h>
 
-int epohci_match(struct device *, struct cfdata *, void *);
-void epohci_attach(struct device *, struct device *, void *);
-void epohci_callback(struct device *);
+int epohci_match(device_t, cfdata_t, void *);
+void epohci_attach(device_t, device_t, void *);
+void epohci_callback(device_t);
 
 struct epohci_softc {
 	struct ohci_softc sc;
@@ -75,7 +75,7 @@ CFATTACH_DECL_NEW(epohci, sizeof(struct epohci_softc),
     epohci_match, epohci_attach, NULL, NULL);
 
 int
-epohci_match(struct device *parent, struct cfdata *match, void *aux)
+epohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* EP93xx builtin OHCI module */
 
@@ -83,7 +83,7 @@ epohci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-epohci_attach(struct device *parent, struct device *self, void *aux)
+epohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct epohci_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
@@ -132,7 +132,7 @@ epohci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-epohci_callback(struct device *self)
+epohci_callback(device_t self)
 {
 	struct epohci_softc *sc = device_private(self);
 	usbd_status r;

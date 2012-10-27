@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.3 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.4 2012/10/27 17:17:47 chs Exp $	*/
 
 /*-
  * Copyright (C) 2005, 2006 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.3 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.4 2012/10/27 17:17:47 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.3 2012/01/21 19:44:29 nonaka Exp $");
 #include <evbarm/hdl_g/obiovar.h>
 
 struct btn_obio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih;
@@ -60,17 +60,17 @@ struct btn_obio_softc {
 	int			sc_mask;
 };
 
-static int btn_obio_match(struct device *, struct cfdata *, void *);
-static void btn_obio_attach(struct device *, struct device *, void *);
+static int btn_obio_match(device_t, cfdata_t, void *);
+static void btn_obio_attach(device_t, device_t, void *);
 
 static int btn_intr(void *aux);
 static void btn_sysmon_pressed_event(void *arg);
 
-CFATTACH_DECL(btn_obio, sizeof(struct btn_obio_softc),
+CFATTACH_DECL_NEW(btn_obio, sizeof(struct btn_obio_softc),
     btn_obio_match, btn_obio_attach, NULL, NULL);
 
 static int
-btn_obio_match(struct device *parent, struct cfdata *cfp, void *aux)
+btn_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* We take it on faith that the device is there. */
@@ -78,12 +78,13 @@ btn_obio_match(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 static void
-btn_obio_attach(struct device *parent, struct device *self, void *aux)
+btn_obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *oba = aux;
-	struct btn_obio_softc *sc = (void *)self;
+	struct btn_obio_softc *sc = device_private(self);
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_iot = oba->oba_st;
 	error = bus_space_map(sc->sc_iot, oba->oba_addr, 1, 0, &sc->sc_ioh);
 	if (error) {
@@ -95,7 +96,7 @@ btn_obio_attach(struct device *parent, struct device *self, void *aux)
 	sysmon_task_queue_init();
 
 	/* power switch */
-	sc->sc_smpsw[0].smpsw_name = device_xname(&sc->sc_dev);
+	sc->sc_smpsw[0].smpsw_name = device_xname(self);
 	sc->sc_smpsw[0].smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(&sc->sc_smpsw[0]) != 0) {
 		aprint_error(": unable to register power button with sysmon\n");
@@ -105,7 +106,7 @@ btn_obio_attach(struct device *parent, struct device *self, void *aux)
 	hdlg_enable_pldintr(INTEN_PWRSW);
 
 	/* reset button */
-	sc->sc_smpsw[1].smpsw_name = device_xname(&sc->sc_dev);
+	sc->sc_smpsw[1].smpsw_name = device_xname(self);
 	sc->sc_smpsw[1].smpsw_type = PSWITCH_TYPE_RESET;
 	if (sysmon_pswitch_register(&sc->sc_smpsw[1]) != 0) {
 		aprint_error(": unable to register reset button with sysmon\n");
@@ -146,7 +147,7 @@ btn_intr(void *arg)
 			    &sc->sc_smpsw[0]);
 		} else {
 			aprint_error("%s: power button pressed\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		}
 		rv = 1;
 	} else if (status & BTNSTAT_RESET) {
@@ -158,7 +159,7 @@ btn_intr(void *arg)
 			    &sc->sc_smpsw[1]);
 		} else {
 			aprint_error("%s: reset button pressed\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		}
 		rv = 1;
 	}

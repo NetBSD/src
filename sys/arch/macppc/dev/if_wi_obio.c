@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.23 2011/07/01 18:41:52 dyoung Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.24 2012/10/27 17:18:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.23 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.24 2012/10/27 17:18:00 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -107,7 +107,7 @@ wi_obio_attach(device_t parent, device_t self, void *aux)
 	wisc->sc_enable = wi_obio_enable;
 
 	if (wi_attach(wisc, 0)) {
-		printf("%s: failed to attach controller\n", self->dv_xname);
+		printf("%s: failed to attach controller\n", device_xname(self));
 		return;
 	}
 

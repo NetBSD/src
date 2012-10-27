@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.14 2009/03/14 15:36:07 dsl Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.15 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.14 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.15 2012/10/27 17:17:54 chs Exp $");
 
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biu_debug.h"
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.14 2009/03/14 15:36:07 dsl Exp $");
 #define ISSETPRINT(r, s, m) dbg_bitmask_print((u_int32_t)(r),		\
 	TX39_MEMCONFIG ## s ## _ ##m, #m)
 
-int	tx39biu_match(struct device *, struct cfdata *, void *);
-void	tx39biu_attach(struct device *, struct device *, void *);
-void	tx39biu_callback(struct device *);
+int	tx39biu_match(device_t, cfdata_t, void *);
+void	tx39biu_attach(device_t, device_t, void *);
+void	tx39biu_callback(device_t);
 int	tx39biu_print(void *, const char *);
 int	tx39biu_intr(void *);
 
@@ -66,24 +66,23 @@ void	tx39biu_dump(tx_chipset_tag_t);
 #endif
 
 struct tx39biu_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 };
 
-CFATTACH_DECL(tx39biu, sizeof(struct tx39biu_softc),
+CFATTACH_DECL_NEW(tx39biu, sizeof(struct tx39biu_softc),
     tx39biu_match, tx39biu_attach, NULL, NULL);
 
 int
-tx39biu_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39biu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (ATTACH_NORMAL);
 }
 
 void
-tx39biu_attach(struct device *parent, struct device *self, void *aux)
+tx39biu_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39biu_softc *sc = (void*)self;
+	struct tx39biu_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 #ifdef TX39_WATCHDOGTIMER
 	txreg_t reg;
@@ -124,9 +123,9 @@ tx39biu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-tx39biu_callback(struct device *self)
+tx39biu_callback(device_t self)
 {
-	struct tx39biu_softc *sc = (void*)self;
+	struct tx39biu_softc *sc = device_private(self);
 	struct csbus_attach_args cba;
 
 	cba.cba_busname = "txcsbus";

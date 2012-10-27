@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.34 2012/09/23 01:10:59 chs Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.35 2012/10/27 17:18:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.34 2012/09/23 01:10:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.35 2012/10/27 17:18:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,6 +505,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 	pcisc = device_private(self);
 	pcisc->sc_pc = pc;
 	sc = &pcisc->sc_aac;
+	sc->sc_dv = self;
 	state = 0;
 
 	aprint_naive(": RAID controller\n");
@@ -560,7 +561,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 	m = aac_find_ident(pa);
 	aprint_normal("%s\n", m->prodstr);
 	if (intrstr != NULL)
-		aprint_normal_dev(&sc->sc_dv, "interrupting at %s\n",
+		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr);
 
 	sc->sc_hwif = m->hwif;
@@ -597,7 +598,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
-CFATTACH_DECL(aac_pci, sizeof(struct aac_pci_softc),
+CFATTACH_DECL_NEW(aac_pci, sizeof(struct aac_pci_softc),
     aac_pci_match, aac_pci_attach, NULL, NULL);
 
 /*

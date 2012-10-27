@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.3 2012/10/27 17:18:02 chs Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.3 2012/10/27 17:18:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,8 +74,8 @@ typedef struct ra_i2c_softc {
 } ra_i2c_softc_t;
 
 
-static int  ra_i2c_match(struct device *, cfdata_t, void *);
-static void ra_i2c_attach(struct device *, struct device *, void *);
+static int  ra_i2c_match(device_t, cfdata_t, void *);
+static void ra_i2c_attach(device_t, device_t, void *);
 
 /* RT3052 I2C functions */
 static int  i2c_write(ra_i2c_softc_t *, u_long, const u_char *, u_long);

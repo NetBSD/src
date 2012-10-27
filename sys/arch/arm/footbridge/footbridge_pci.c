@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.23 2012/09/18 05:47:27 matt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.24 2012/10/27 17:17:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.23 2012/09/18 05:47:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.24 2012/10/27 17:17:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.23 2012/09/18 05:47:27 matt Exp
 #include <dev/isa/isavar.h>
 #endif
 
-void		footbridge_pci_attach_hook(struct device *,
-		    struct device *, struct pcibus_attach_args *);
+void		footbridge_pci_attach_hook(device_t, device_t,
+		    struct pcibus_attach_args *);
 int		footbridge_pci_bus_maxdevs(void *, int);
 pcitag_t	footbridge_pci_make_tag(void *, int, int, int);
 void		footbridge_pci_decompose_tag(void *, pcitag_t, int *,
@@ -125,7 +125,7 @@ pci_intr(void *arg)
 
 
 void
-footbridge_pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+footbridge_pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_attach_hook()\n");

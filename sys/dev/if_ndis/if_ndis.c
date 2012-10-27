@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.33 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.34 2012/10/27 17:18:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.33 2012/07/28 00:43:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.34 2012/10/27 17:18:23 chs Exp $");
 #endif
 
 
@@ -531,8 +531,7 @@ ndis_attach(dev)
 		pdrv = windrv_lookup(0, "PCCARD Bus");
 	else
 		pdrv = windrv_lookup(0, "USB Bus");
-	/* here dev is actuially just a pointer to the softc */
-	pdo = windrv_find_pdo(pdrv, sc->ndis_dev->dv_parent);
+	pdo = windrv_find_pdo(pdrv, device_parent(sc->ndis_dev));
 
 
 	/*

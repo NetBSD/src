@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazzio.c,v 1.10 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: timer_jazzio.c,v 1.11 2012/10/27 17:17:35 chs Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.10 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_jazzio.c,v 1.11 2012/10/27 17:17:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,7 +150,7 @@ timer_jazzio_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-timer_jazzio_init(struct device *sc)
+timer_jazzio_init(device_t sc)
 {
 
 	(*timer_jazzio_conf->tjc_init)(1000 / hz);
