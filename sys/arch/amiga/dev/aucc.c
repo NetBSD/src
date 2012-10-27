@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.41 2011/11/23 23:07:28 jmcneill Exp $ */
+/*	$NetBSD: aucc.c,v 1.42 2012/10/27 17:17:27 chs Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.41 2011/11/23 23:07:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.42 2012/10/27 17:17:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,6 @@ extern struct audio_channel channel[4];
  * Software state.
  */
 struct aucc_softc {
-	struct	device sc_dev;		/* base device */
-
 	int	sc_open;		/* single use device */
 	aucc_data_t sc_channel[4];	/* per channel freq, ... */
 	u_int	sc_encoding;		/* encoding AUDIO_ENCODING_.*/
@@ -130,10 +128,10 @@ static u_int freqtoper(u_int);
 static u_int pertofreq(u_int);
 
 /* autoconfiguration driver */
-void	auccattach(struct device *, struct device *, void *);
-int	auccmatch(struct device *, struct cfdata *, void *);
+void	auccattach(device_t, device_t, void *);
+int	auccmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(aucc, sizeof(struct aucc_softc),
+CFATTACH_DECL_NEW(aucc, sizeof(struct aucc_softc),
     auccmatch, auccattach, NULL, NULL);
 
 struct audio_device aucc_device = {
@@ -266,7 +264,7 @@ const struct audio_hw_if sa_hw_if = {
 /* autoconfig routines */
 
 int
-auccmatch(struct device *pdp, struct cfdata *cfp, void *aux)
+auccmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int aucc_matched = 0;
 
@@ -285,12 +283,12 @@ auccmatch(struct device *pdp, struct cfdata *cfp, void *aux)
  * Audio chip found.
  */
 void
-auccattach(struct device *parent, struct device *self, void *args)
+auccattach(device_t parent, device_t self, void *args)
 {
 	struct aucc_softc *sc;
 	int i;
 
-	sc = (struct aucc_softc *)self;
+	sc = device_private(self);
 	printf("\n");
 
 	if ((i=init_aucc(sc))) {
@@ -298,7 +296,7 @@ auccattach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
-	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, self);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.13 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.14 2012/10/27 17:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 /*
- * Structure passed as 'auxp' during autoconf.
+ * Structure passed as 'aux' during autoconf.
  */
 typedef struct {
 	cfprint_t	busprint;	/* grfbusprint function		*/

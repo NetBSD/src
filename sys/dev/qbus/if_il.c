@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.25 2010/02/02 14:58:46 wiz Exp $	*/
+/*	$NetBSD: if_il.c,v 1.26 2012/10/27 17:18:37 chs Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.25 2010/02/02 14:58:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.26 2012/10/27 17:18:37 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.25 2010/02/02 14:58:46 wiz Exp $");
  */
 
 struct	il_softc {
-	struct	device sc_dev;		/* Configuration common part */
+	device_t sc_dev;		/* Configuration common part */
 	struct	ethercom sc_ec;		/* Ethernet common part */
 #define	sc_if	sc_ec.ec_if		/* network-visible interface */
 	struct	evcnt sc_cintrcnt;	/* Command interrupts */
@@ -123,7 +123,7 @@ static	void ilwatch(struct ifnet *);
 static	void iltotal(struct il_softc *);
 static	void ilstop(struct ifnet *, int);
 
-CFATTACH_DECL(il, sizeof(struct il_softc),
+CFATTACH_DECL_NEW(il, sizeof(struct il_softc),
     ilmatch, ilattach, NULL, NULL);
 
 #define IL_WCSR(csr, val) \
@@ -160,6 +160,7 @@ ilattach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_if;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
@@ -170,12 +171,12 @@ ilattach(device_t parent, device_t self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, ilcint,
 	    sc, &sc->sc_cintrcnt);
 	evcnt_attach_dynamic(&sc->sc_cintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-	    device_xname(&sc->sc_dev), "intr");
+	    device_xname(sc->sc_dev), "intr");
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec-4, ilrint,
 	    sc, &sc->sc_rintrcnt);
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-	    device_xname(&sc->sc_dev), "intr");
-	uba_reset_establish(ilreset, &sc->sc_dev);
+	    device_xname(sc->sc_dev), "intr");
+	uba_reset_establish(ilreset, sc->sc_dev);
 
 	/*
 	 * Reset the board and map the statistics
@@ -185,20 +186,20 @@ ilattach(device_t parent, device_t self, void *aux)
 	(void)ilwait(sc, "reset");
 	sc->sc_ui.ui_size = sizeof(struct il_stats);
 	sc->sc_ui.ui_vaddr = (void *)&sc->sc_stats;
-	if ((error = uballoc((struct uba_softc *)parent, &sc->sc_ui, 0)))
+	if ((error = uballoc(device_private(parent), &sc->sc_ui, 0)))
 		return printf(": failed uballoc, error = %d\n", error);
 
 	IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 	IL_WCSR(IL_BCR, sizeof(struct il_stats));
 	IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
 	(void)ilwait(sc, "status");
-	ubfree((struct uba_softc *)parent, &sc->sc_ui);
-	printf("%s: module=%s firmware=%s\n", device_xname(&sc->sc_dev),
+	ubfree(device_private(parent), &sc->sc_ui);
+	printf("%s: module=%s firmware=%s\n", device_xname(sc->sc_dev),
 		sc->sc_stats.ils_module, sc->sc_stats.ils_firmware);
-	printf("%s: hardware address %s\n", device_xname(&sc->sc_dev),
+	printf("%s: hardware address %s\n", device_xname(sc->sc_dev),
 		ether_sprintf(sc->sc_stats.ils_addr));
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST;
 	ifp->if_init = ilinit;
@@ -231,7 +232,7 @@ ilwait(struct il_softc *sc, char *op)
 		char bits[64];
 
 		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
-		aprint_error_dev(&sc->sc_dev, "%s failed, csr=%s\n", op, bits);
+		aprint_error_dev(sc->sc_dev, "%s failed, csr=%s\n", op, bits);
 		return (-1);
 	}
 	return (0);
@@ -246,7 +247,7 @@ ilreset(device_t dev)
 {
 	struct il_softc *sc = (void *)dev;
 
-	printf(" %s", device_xname(&sc->sc_dev));
+	printf(" %s", device_xname(sc->sc_dev));
 	sc->sc_if.if_flags &= ~IFF_RUNNING;
 	sc->sc_flags &= ~ILF_RUNNING;
 	ilinit(&sc->sc_if);
@@ -267,15 +268,15 @@ ilinit(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		if (if_ubainit(&sc->sc_ifuba,
-		    (void *)device_parent(&sc->sc_dev),
+		    device_private(device_parent(sc->sc_dev)),
 		    ETHER_MAX_LEN)) {
-			aprint_error_dev(&sc->sc_dev, "can't initialize\n");
+			aprint_error_dev(sc->sc_dev, "can't initialize\n");
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return 0;
 		}
 		sc->sc_ui.ui_size = sizeof(sc->sc_isu);
 		sc->sc_ui.ui_vaddr = (void *)&sc->sc_isu;
-		uballoc((void *)device_parent(&sc->sc_dev), &sc->sc_ui, 0);
+		uballoc(device_private(device_parent(sc->sc_dev)), &sc->sc_ui, 0);
 	}
 	sc->sc_scaninterval = ILWATCHINTERVAL;
 	ifp->if_timer = sc->sc_scaninterval;
@@ -317,7 +318,7 @@ ilinit(struct ifnet *ifp)
 			return 0;
 		if (memcmp(sc->sc_stats.ils_addr,
 		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
-			aprint_error_dev(&sc->sc_dev, "setaddr didn't work\n");
+			aprint_error_dev(sc->sc_dev, "setaddr didn't work\n");
 			return 0;
 		}
 	}
@@ -444,7 +445,7 @@ ilcint(void *arg)
 		char bits[64];
 
 		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 				 "stray xmit interrupt, csr=%s\n", bits);
 		return;
 	}
@@ -591,7 +592,7 @@ iltotal(struct il_softc *sc)
 	if ((sc->sc_flags & ILF_SETADDR) &&
 	    (memcmp(sc->sc_stats.ils_addr, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) != 0)) {
-		log(LOG_ERR, "%s: physaddr reverted\n", device_xname(&sc->sc_dev));
+		log(LOG_ERR, "%s: physaddr reverted\n", device_xname(sc->sc_dev));
 		sc->sc_flags &= ~ILF_RUNNING;
 		ilinit(&sc->sc_if);
 	}

@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$Id: at91pio.c,v 1.5 2012/10/27 17:17:36 chs Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.5 2012/10/27 17:17:36 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.5 2012/10/27 17:17:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ struct intr_req {
 #define	PIO_WRITE(_sc, _reg, _val)	bus_space_write_4((_sc)->sc_iot, (_sc)->sc_ioh, (_reg), (_val))
 
 struct at91pio_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_pid;
@@ -98,7 +97,7 @@ static int at91pio_print(void *, const char *);
 
 static int at91pio_intr(void* arg);
 
-CFATTACH_DECL(at91pio, sizeof(struct at91pio_softc),
+CFATTACH_DECL_NEW(at91pio, sizeof(struct at91pio_softc),
 	      at91pio_match, at91pio_attach, NULL, NULL);
 
 static struct at91pio_softc *at91pio_softc[AT91_PIO_COUNT];
@@ -122,7 +121,7 @@ at91pio_match(device_t parent, cfdata_t match, void *aux)
 static void
 at91pio_attach(device_t parent, device_t self, void *aux)
 {
-	struct at91pio_softc *sc = (struct at91pio_softc*)self;
+	struct at91pio_softc *sc = device_private(self);
 	struct at91bus_attach_args *sa = aux;
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
@@ -135,7 +134,7 @@ at91pio_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr,
 			  sa->sa_size, 0, &sc->sc_ioh)){
-		printf("%s: Cannot map registers", self->dv_xname);
+		printf("%s: Cannot map registers", device_xname(self));
 		return;
 	}
 
@@ -209,10 +208,9 @@ at91piobus_print(void *aux, const char *name)
 
 
 static int
-at91pio_search(device_t parent, cfdata_t cf,
-	      const int *ldesc, void *aux)
+at91pio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct at91pio_softc *sc = (struct at91pio_softc*)parent;
+	struct at91pio_softc *sc = device_private(parent);
 	struct at91pio_attach_args paa;
 
 	paa.paa_sc = sc;
@@ -229,8 +227,7 @@ at91pio_search(device_t parent, cfdata_t cf,
 static int
 at91pio_print(void *aux, const char *name)
 {
-	struct at91pio_attach_args *paa = (struct at91pio_attach_args*)aux;
-//	struct at91pio_softc *sc = (struct at91pio_softc*)paa->paa_sc;
+	struct at91pio_attach_args *paa = aux;
 
 	aprint_normal(":");
 	if (paa->paa_pid > -1)

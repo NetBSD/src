@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom_ts.c,v 1.6 2012/02/12 16:34:08 matt Exp $ */
+/*	$NetBSD: epcom_ts.c,v 1.7 2012/10/27 17:17:49 chs Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.6 2012/02/12 16:34:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.7 2012/10/27 17:17:49 chs Exp $");
 
 /* Front-end of epcom */
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.6 2012/02/12 16:34:08 matt Exp $");
 static int	epcom_ts_match(device_t, cfdata_t, void *);
 static void	epcom_ts_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(epcom_ts, sizeof(struct epcom_ts_softc),
+CFATTACH_DECL_NEW(epcom_ts, sizeof(struct epcom_ts_softc),
     epcom_ts_match, epcom_ts_attach, NULL, NULL);
 
 static int
@@ -73,6 +73,7 @@ epcom_ts_attach(device_t parent, device_t self, void *aux)
 	u_int32_t pwrcnt;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	esc->sc_iot = sa->sa_iot;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_hwbase = sa->sa_addr;

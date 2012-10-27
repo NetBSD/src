@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.224 2012/10/27 17:18:39 chs Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223 2012/08/30 02:24:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.224 2012/10/27 17:18:39 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -146,7 +146,7 @@ static struct cftable initcftable;
 
 struct matchinfo {
 	cfsubmatch_t fn;
-	struct	device *parent;
+	device_t parent;
 	const int *locs;
 	void	*aux;
 	struct	cfdata *match;
@@ -856,7 +856,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
  * found through any attachment in the config data table.
  */
 static int
-dev_in_cfdata(const struct device *d, const struct cfdata *cf)
+dev_in_cfdata(device_t d, cfdata_t cf)
 {
 	const struct cfdata *cf1;
 

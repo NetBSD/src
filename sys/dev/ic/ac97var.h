@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.22 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.23 2012/10/27 17:18:18 chs Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ struct ac97_codec_if {
 	struct ac97_codec_if_vtbl *vtbl;
 };
 
-struct device;
 int ac97_attach_type(struct ac97_host_if *, device_t, int, kmutex_t *);
 int ac97_attach(struct ac97_host_if *, device_t, kmutex_t *);
 

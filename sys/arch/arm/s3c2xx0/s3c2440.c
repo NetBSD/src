@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440.c,v 1.2 2012/10/27 17:17:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2440.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $")
 #include "opt_cpuoptions.h"
 
 /* prototypes */
-static int	s3c2440_match(struct device *, struct cfdata *, void *);
-static void	s3c2440_attach(struct device *, struct device *, void *);
-static int	s3c2440_search(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	s3c2440_match(device_t, cfdata_t, void *);
+static void	s3c2440_attach(device_t, device_t, void *);
+static int	s3c2440_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(ssio, sizeof(struct s3c24x0_softc), s3c2440_match, s3c2440_attach,
@@ -114,13 +113,13 @@ s3c2440_print(void *aux, const char *name)
 }
 
 int
-s3c2440_match(struct device *parent, struct cfdata *match, void *aux)
+s3c2440_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 void
-s3c2440_attach(struct device *parent, struct device *self, void *aux)
+s3c2440_attach(device_t parent, device_t self, void *aux)
 {
 	struct s3c24x0_softc *sc = device_private(self);
 	bus_space_tag_t iot;
@@ -202,14 +201,13 @@ s3c2440_attach(struct device *parent, struct device *self, void *aux)
 
 abort:
 	panic("%s: unable to map %s registers",
-	    self->dv_xname, which_registers);
+	    device_xname(self), which_registers);
 
 #undef FAIL
 }
 
 int
-s3c2440_search(struct device * parent, struct cfdata * cf,
-	       const int *ldesc, void *aux)
+s3c2440_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct s3c24x0_softc *sc = device_private(parent);
 	struct s3c2xx0_attach_args aa;

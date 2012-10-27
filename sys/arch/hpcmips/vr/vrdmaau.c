@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdmaau.c,v 1.5 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdmaau.c,v 1.6 2012/10/27 17:17:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,16 +43,16 @@ int vrdmaau_debug = VRDMAAU_DEBUG;
 #endif
 
 struct vrdmaau_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct vrdmaau_chipset_tag	sc_chipset;
 };
 
-int vrdmaau_match(struct device *, struct cfdata *, void *);
-void vrdmaau_attach(struct device *, struct device *, void *);
+int vrdmaau_match(device_t, cfdata_t, void *);
+void vrdmaau_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(vrdmaau, sizeof(struct vrdmaau_softc),
+CFATTACH_DECL_NEW(vrdmaau, sizeof(struct vrdmaau_softc),
     vrdmaau_match, vrdmaau_attach, NULL, NULL);
 
 int vrdmaau_set_aiuin(vrdmaau_chipset_tag_t, void *);
@@ -61,17 +61,18 @@ int vrdmaau_set_fir(vrdmaau_chipset_tag_t, void *);
 static int vrdmaau_phy_addr(struct vrdmaau_softc *, void *, u_int32_t *);
 
 int
-vrdmaau_match(struct device *parent, struct cfdata *cf, void *aux)
+vrdmaau_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 2; /* 1st attach group of vrip */
 }
 
 void
-vrdmaau_attach(struct device *parent, struct device *self, void *aux)
+vrdmaau_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrdmaau_softc *sc = (void*)self;
+	struct vrdmaau_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = va->va_iot;
 	sc->sc_chipset.ac_sc = sc;
 	sc->sc_chipset.ac_set_aiuin = vrdmaau_set_aiuin;
@@ -158,7 +159,7 @@ vrdmaau_phy_addr(struct vrdmaau_softc *sc, void *addr, u_int32_t *phy)
 	if ((*phy & (VRDMAAU_ALIGNMENT - 1)) ||
 	    *phy >= VRDMAAU_BOUNCE_THRESHOLD ) {
 		printf("%s: vrdmaau_phy_addr: invalid address %p\n",
-		       sc->sc_dev.dv_xname, addr);
+		       device_xname(sc->sc_dev), addr);
 		return EINVAL;
 	}
 #endif

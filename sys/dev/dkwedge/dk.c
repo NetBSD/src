@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.64 2012/06/10 17:05:19 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.65 2012/10/27 17:18:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64 2012/06/10 17:05:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.65 2012/10/27 17:18:15 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -68,7 +68,7 @@ typedef enum {
 } dkwedge_state_t;
 
 struct dkwedge_softc {
-	struct device	*sc_dev;	/* pointer to our pseudo-device */
+	device_t	sc_dev;	/* pointer to our pseudo-device */
 	struct cfdata	sc_cfdata;	/* our cfdata structure */
 	uint8_t		sc_wname[128];	/* wedge name (Unicode, UTF-8) */
 
@@ -400,8 +400,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	/*
 	 * Now that we know the unit #, attach a pseudo-device for
 	 * this wedge instance.  This will provide us with the
-	 * "struct device" necessary for glue to other parts of the
-	 * system.
+	 * device_t necessary for glue to other parts of the system.
 	 *
 	 * This should never fail, unless we're almost totally out of
 	 * memory.

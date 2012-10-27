@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.17 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: cosc.c,v 1.18 2012/10/27 17:17:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.18 2012/10/27 17:17:23 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
 void coscattach(device_t, device_t, void *);
 int coscmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(cosc, sizeof(struct cosc_softc),
+CFATTACH_DECL_NEW(cosc, sizeof(struct cosc_softc),
     coscmatch, coscattach, NULL, NULL);
 
 int cosc_intr(void *);
@@ -236,7 +236,8 @@ coscattach(device_t parent, device_t self, void *aux)
 
 	escinitialize(&sc->sc_softc);
 
-	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
+	sc->sc_softc.sc_dev = self;
+	sc->sc_softc.sc_adapter.adapt_dev = sc->sc_softc.sc_dev;
 	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
 	sc->sc_softc.sc_adapter.adapt_openings = 7;
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;

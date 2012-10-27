@@ -1,4 +1,4 @@
-/*	$NetBSD: optpoint.c,v 1.6 2007/03/04 05:59:52 christos Exp $ */
+/*	$NetBSD: optpoint.c,v 1.7 2012/10/27 17:17:52 chs Exp $ */
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.6 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.7 2012/10/27 17:17:52 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.6 2007/03/04 05:59:52 christos Exp $"
 #endif
 
 struct optpoint_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	tx_chipset_tag_t sc_tc;
 	struct tx39spi_softc *sc_spi;
 	struct hpcio_chip *sc_hc;
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 	void *sc_powerhook;	/* power management hook */
 	char packet[4];
 	int index;	/* number of bytes received for this packet */
@@ -66,8 +66,8 @@ struct optpoint_softc {
 	int enabled;
 };
 
-static int optpoint_match(struct device *, struct cfdata *, void *);
-static void optpoint_attach(struct device *, struct device *, void *);
+static int optpoint_match(device_t, cfdata_t, void *);
+static void optpoint_attach(device_t, device_t, void *);
 static int optpoint_intr(void *);
 static int optpoint_enable(void *);
 static void optpoint_disable(void *);
@@ -88,7 +88,7 @@ static int optpoint_power(void *, int, long, void *);
 #define TELIOS_MFIO_OPTP_C_REQ		TX39_IO_MFIO_CARDIOWR
 #define TELIOS_MFIO_OPTP_S_ENB_N	TX39_IO_MFIO_CARDIORD
 
-CFATTACH_DECL(optpoint, sizeof(struct optpoint_softc),
+CFATTACH_DECL_NEW(optpoint, sizeof(struct optpoint_softc),
     optpoint_match, optpoint_attach, NULL, NULL);
 
 const struct wsmouse_accessops optpoint_accessops = {
@@ -98,20 +98,21 @@ const struct wsmouse_accessops optpoint_accessops = {
 };
 
 int
-optpoint_match(struct device *parent, struct cfdata *cf, void *aux)
+optpoint_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (ATTACH_NORMAL);
 }
 
 void
-optpoint_attach(struct device *parent, struct device *self, void *aux)
+optpoint_attach(device_t parent, device_t self, void *aux)
 {
 	struct txspi_attach_args *ta = aux;
-	struct optpoint_softc *sc = (void*)self;
-	struct tx39spi_softc *spi = sc->sc_spi = (void*)parent;
+	struct optpoint_softc *sc = device_private(self);
+	struct tx39spi_softc *spi = sc->sc_spi = device_private(parent);
 	tx_chipset_tag_t tc = sc->sc_tc = ta->sa_tc;
 	struct wsmousedev_attach_args wsmaa;
 
+	sc->sc_dev = self;
 	sc->sc_hc = tc->tc_iochip[MFIO];
 	sc->enabled = 0;
 
@@ -139,27 +140,27 @@ optpoint_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC
 	if (sc->sc_powerhook == 0)
 		printf("%s: unable to establish hard power hook",
-		       sc->sc_dev.dv_xname);
+		       device_xname(sc->sc_dev));
 #endif
 }
 
 int
-optpoint_intr(void *self)
+optpoint_intr(void *arg)
 {
-	struct optpoint_softc *sc = (void*)self;
+	struct optpoint_softc *sc = arg;
 	tx_chipset_tag_t tc = sc->sc_tc;
 	char data = optpoint_recv(sc) & 0xff;
 
 #ifdef DIAGNOSTIC
 	if (sc->index >= 3){
-		printf("%s: Receive buffer overflow\n", sc->sc_dev.dv_xname);
+		printf("%s: Receive buffer overflow\n", device_xname(sc->sc_dev));
 		sc->index = 0;
 		memset(sc->packet, 0, 3);
 	}
 #endif
 	if ((sc->index == 1) && (data & 0xcc) != 0x08){
 		DPRINTF(("%s: Bad second byte (0x%02x)\n",
-			 sc->sc_dev.dv_xname, data));
+			 device_xname(sc->sc_dev), data));
 		tx_conf_write(tc, TX39_INTRCLEAR4_REG,
 				  TX39_INTRSTATUS4_OPTPOINTINT);
 		return 0;
@@ -175,7 +176,7 @@ optpoint_intr(void *self)
 
 		if (dx || dy || changed){
 			DPRINTF(("%s: buttons=0x%x, dx=%d, dy=%d\n",
-				 sc->sc_dev.dv_xname, newbuttons, dx, dy));
+				 device_xname(sc->sc_dev), newbuttons, dx, dy));
 			wsmouse_input(sc->sc_wsmousedev,
 					newbuttons,
 					dx, dy, 0, 0,
@@ -191,16 +192,16 @@ optpoint_intr(void *self)
 }
 
 int
-optpoint_enable(void *self)
+optpoint_enable(void *arg)
 {
-	struct optpoint_softc *sc = (void*)self;
+	struct optpoint_softc *sc = arg;
 
 	if (!sc->enabled){
 		tx_chipset_tag_t tc = sc->sc_tc;
 		struct hpcio_chip *hc = sc->sc_hc;
 		int s = spltty();
 
-		DPRINTF(("%s: enable\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: enable\n", device_xname(sc->sc_dev)));
 
 		sc->enabled = 1;
 		sc->index = 0;
@@ -222,16 +223,16 @@ optpoint_enable(void *self)
 }
 
 void
-optpoint_disable(void *self)
+optpoint_disable(void *arg)
 {
-	struct optpoint_softc *sc = (void*)self;
+	struct optpoint_softc *sc = arg;
 
 	if (sc->enabled){
 		tx_chipset_tag_t tc = sc->sc_tc;
 		struct hpcio_chip *hc = sc->sc_hc;
 		int s = spltty();
 
-		DPRINTF(("%s: disable\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: disable\n", device_xname(sc->sc_dev)));
 
 		sc->enabled = 0;
 		(*hc->hc_portwrite)(hc, TELIOS_MFIO_OPTP_C_REQ, 0);
@@ -244,7 +245,7 @@ optpoint_disable(void *self)
 }
 
 int
-optpoint_ioctl(void *self, u_long cmd, void *data, int flag, struct lwp *l)
+optpoint_ioctl(void *cookie, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
@@ -258,9 +259,9 @@ optpoint_ioctl(void *self, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 int
-optpoint_initialize(void *self)
+optpoint_initialize(void *arg)
 {
-	struct optpoint_softc *sc = (void*)self;
+	struct optpoint_softc *sc = arg;
 	struct hpcio_chip *hc = sc->sc_hc;
 	tx_chipset_tag_t tc = sc->sc_tc;
 
@@ -306,9 +307,9 @@ optpoint_recv(struct optpoint_softc *sc)
 }
 
 int
-optpoint_power(void *self, int type, long id, void *msg)
+optpoint_power(void *arg, int type, long id, void *msg)
 {
-	struct optpoint_softc *sc = (void *)self;
+	struct optpoint_softc *sc = arg;
 	int why = (int)msg;
 
 	switch (why) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.9 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.10 2012/10/27 17:18:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.9 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.10 2012/10/27 17:18:04 chs Exp $");
 
 #include "vmetwo.h"
 
@@ -65,16 +65,16 @@ static struct evcnt *vmetwoisrevcnt(void *, int);
 
 #if NVMETWO > 0
 
-int vmetwo_match(struct device *, struct cfdata *, void *);
-void vmetwo_attach(struct device *, struct device *, void *);
+int vmetwo_match(device_t, cfdata_t, void *);
+void vmetwo_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(vmetwo, sizeof(struct vmetwo_softc),
+CFATTACH_DECL_NEW(vmetwo, sizeof(struct vmetwo_softc),
     vmetwo_match, vmetwo_attach, NULL, NULL);
 
 
 /* ARGSUSED */
 int
-vmetwo_match(struct device *parent, struct cfdata *cf, void *aux)
+vmetwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	static int matched = 0;
@@ -96,12 +96,13 @@ vmetwo_match(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 void
-vmetwo_attach(struct device *parent, struct device *self, void *aux)
+vmetwo_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	struct vmetwo_softc *sc;
 
-	sc = (struct vmetwo_softc *) self;
+	sc = device_private(self);
+	sc->sc_mvmebus.sc_dev = self;
 	ma = aux;
 
 	/*

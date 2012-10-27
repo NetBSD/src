@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.21 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.22 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.21 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.22 2012/10/27 17:17:54 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,28 +92,26 @@ const struct csmap {
 			   TX39_SYSADDR_KUCS_SIZE},
 };
 
-int	txcsbus_match(struct device *, struct cfdata *, void *);
-void	txcsbus_attach(struct device *, struct device *, void *);
+int	txcsbus_match(device_t, cfdata_t, void *);
+void	txcsbus_attach(device_t, device_t, void *);
 int	txcsbus_print(void *, const char *);
-int	txcsbus_search(struct device *, struct cfdata *,
-		       const int *, void *);
+int	txcsbus_search(device_t, cfdata_t, const int *, void *);
 
 struct txcsbus_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	/* chip select space tag */
 	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
 	int sc_pri;
 };
 
-CFATTACH_DECL(txcsbus, sizeof(struct txcsbus_softc),
+CFATTACH_DECL_NEW(txcsbus, sizeof(struct txcsbus_softc),
     txcsbus_match, txcsbus_attach, NULL, NULL);
 
 static bus_space_tag_t __txcsbus_alloc_cstag(struct txcsbus_softc *, 
     struct cs_handle *);
 
 int
-txcsbus_match(struct device *parent, struct cfdata *cf, void *aux)
+txcsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct csbus_attach_args *cba = aux;
 	platid_mask_t mask;
@@ -132,10 +130,10 @@ txcsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-txcsbus_attach(struct device *parent, struct device *self, void *aux)
+txcsbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct csbus_attach_args *cba = aux;
-	struct txcsbus_softc *sc = (void*)self;
+	struct txcsbus_softc *sc = device_private(self);
 
 	sc->sc_tc = cba->cba_tc;
 	printf("\n");
@@ -197,10 +195,9 @@ txcsbus_print(void *aux, const char *pnp)
 }
 
 int
-txcsbus_search(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+txcsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct txcsbus_softc *sc = (void*)parent;
+	struct txcsbus_softc *sc = device_private(parent);
 	struct cs_attach_args ca;
 	
 	ca.ca_tc		= sc->sc_tc;

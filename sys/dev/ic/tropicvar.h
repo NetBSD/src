@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.13 2009/05/12 14:25:18 cegger Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.14 2012/10/27 17:18:23 chs Exp $	*/
 
 /*
  * Mach Operating System
@@ -51,7 +51,7 @@ struct rbcb {
  *	Token-Ring software status per adapter
  */
 struct	tr_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void 	*sc_ih;
 	struct ethercom sc_ethercom;
 	struct ifmedia	sc_media;

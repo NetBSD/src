@@ -1,4 +1,4 @@
-/*      $NetBSD: p5bus.c,v 1.3 2012/02/12 16:34:07 matt Exp $ */
+/*      $NetBSD: p5bus.c,v 1.4 2012/10/27 17:17:30 chs Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@
 #define P5_ROM_OFF		0xF00010
 #define P5_SN_LEN		7
 
-static int	p5bus_match(struct device *pdp, struct cfdata *cfp, void *auxp);
-static void	p5bus_attach(device_t parent, device_t self, void *aux);
+static int	p5bus_match(device_t, cfdata_t, void *);
+static void	p5bus_attach(device_t, device_t, void *);
 static char*	p5bus_cardsn(void);
 static int	p5bus_print(void *aux, const char *str);
 static void	p5bus_callback(device_t self);
@@ -70,11 +70,11 @@ CFATTACH_DECL_NEW(p5bus, sizeof(struct p5bus_softc),
     p5bus_match, p5bus_attach, NULL, NULL);
 
 static int
-p5bus_match(struct device *pdp, struct cfdata *cfp, void *auxp)
+p5bus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (zap->manid != ZORRO_MANID_P5) 
 		return 0;
@@ -199,4 +199,3 @@ p5bus_print(void *aux, const char *str)
 
 	return 0;
 }
-

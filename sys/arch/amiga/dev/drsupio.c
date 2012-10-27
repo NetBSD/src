@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.20 2011/07/19 15:55:26 dyoung Exp $ */
+/*	$NetBSD: drsupio.c,v 1.21 2012/10/27 17:17:28 chs Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.20 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.21 2012/10/27 17:17:28 chs Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -52,25 +52,24 @@ __KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.20 2011/07/19 15:55:26 dyoung Exp $");
 #include <amiga/dev/supio.h>
 
 struct drsupio_softc {
-	struct device sc_dev;
 	struct bus_space_tag sc_bst;
 };
 
-int drsupiomatch(struct device *, struct cfdata *, void *);
-void drsupioattach(struct device *, struct device *, void *);
-int drsupprint(void *auxp, const char *);
+int drsupiomatch(device_t, cfdata_t, void *);
+void drsupioattach(device_t, device_t, void *);
+int drsupprint(void *, const char *);
 void drlptintack(void *);
 
-CFATTACH_DECL(drsupio, sizeof(struct drsupio_softc),
+CFATTACH_DECL_NEW(drsupio, sizeof(struct drsupio_softc),
     drsupiomatch, drsupioattach, NULL, NULL);
 
 int
-drsupiomatch(struct device *parent, struct cfdata *cfp, void *auxp)
+drsupiomatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int drsupio_matched = 0;
 
 	/* Exactly one of us lives on the DraCo */
-	if (!is_draco() || !matchname(auxp, "drsupio") || drsupio_matched)
+	if (!is_draco() || !matchname(aux, "drsupio") || drsupio_matched)
 		return 0;
 
 	drsupio_matched = 1;
@@ -91,14 +90,14 @@ struct drsupio_devs {
 };
 
 void
-drsupioattach(struct device *parent, struct device *self, void *auxp)
+drsupioattach(device_t parent, device_t self, void *aux)
 {
 	struct drsupio_softc *drsc;
 	struct drsupio_devs  *drsd;
 	struct drioct *ioct;
 	struct supio_attach_args supa;
 
-	drsc = (struct drsupio_softc *)self;
+	drsc = device_private(self);
 	drsd = drsupiodevs;
 
 	if (parent)
@@ -135,10 +134,11 @@ drlptintack(void *p)
 }
 
 int
-drsupprint(void *auxp, const char *pnp)
+drsupprint(void *aux, const char *pnp)
 {
 	struct supio_attach_args *supa;
-	supa = auxp;
+
+	supa = aux;
 
 	if (pnp == NULL)
 		return(QUIET);

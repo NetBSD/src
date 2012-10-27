@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.14 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.15 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.14 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.15 2012/10/27 17:17:54 chs Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -46,32 +46,30 @@ __KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.14 2008/04/28 20:23:22 martin Exp $")
 
 #include "locators.h"
 
-int	tx39uart_match(struct device *, struct cfdata *, void *);
-void	tx39uart_attach(struct device *, struct device *, void *);
+int	tx39uart_match(device_t, cfdata_t, void *);
+void	tx39uart_attach(device_t, device_t, void *);
 int	tx39uart_print(void *, const char *);
-int	tx39uart_search(struct device *, struct cfdata *,
-			const int *, void *);
+int	tx39uart_search(device_t, cfdata_t, const int *, void *);
 
 struct tx39uart_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	int sc_enabled;
 };
 
-CFATTACH_DECL(tx39uart, sizeof(struct tx39uart_softc),
+CFATTACH_DECL_NEW(tx39uart, sizeof(struct tx39uart_softc),
     tx39uart_match, tx39uart_attach, NULL, NULL);
 
 int
-tx39uart_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return ATTACH_LAST;
 }
 
 void
-tx39uart_attach(struct device *parent, struct device *self, void *aux)
+tx39uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39uart_softc *sc = (void *)self;
+	struct tx39uart_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 
 	printf("\n");
@@ -81,10 +79,9 @@ tx39uart_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-tx39uart_search(struct device *parent, struct cfdata *cf,
-		const int *ldesc, void *aux)
+tx39uart_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct tx39uart_softc *sc = (void *)parent;
+	struct tx39uart_softc *sc = device_private(parent);
 	struct tx39uart_attach_args ua;
 	
 	ua.ua_tc	= sc->sc_tc;

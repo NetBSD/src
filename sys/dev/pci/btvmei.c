@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.28 2012/01/30 19:41:18 drochner Exp $ */
+/* $NetBSD: btvmei.c,v 1.29 2012/10/27 17:18:28 chs Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.28 2012/01/30 19:41:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.29 2012/10/27 17:18:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct b3_617_vmeresc {
 	int firstpage, maplen;
 };
 
-CFATTACH_DECL(btvmei, sizeof(struct b3_617_softc),
+CFATTACH_DECL_NEW(btvmei, sizeof(struct b3_617_softc),
     b3_617_match, b3_617_attach, NULL, NULL);
 
 static int
@@ -94,6 +94,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct vmebus_attach_args vaa;
 
+	sc->sc_dev = self;
 	sc->sc_pc = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -131,7 +132,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -141,13 +142,13 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, b3_617_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (b3_617_init(sc))
 		return;
@@ -261,7 +262,7 @@ b3_617_reset(struct b3_617_softc *sc)
 	/* reset sequence, ch 5.2 */
 	status = read_csr_byte(sc, LOC_STATUS);
 	if (status & LSR_NO_CONNECT) {
-		printf("%s: not connected\n", device_xname(&sc->sc_dev));
+		printf("%s: not connected\n", device_xname(sc->sc_dev));
 		return (-1);
 	}
 	status = read_csr_byte(sc, REM_STATUS); /* discard */
@@ -271,7 +272,7 @@ b3_617_reset(struct b3_617_softc *sc)
 		char sbuf[sizeof(BIT3_LSR_BITS) + 64];
 
 		snprintb(sbuf, sizeof(sbuf), BIT3_LSR_BITS, status);
-		printf("%s: interface error, lsr=%s\n", device_xname(&sc->sc_dev),
+		printf("%s: interface error, lsr=%s\n", device_xname(sc->sc_dev),
 		       sbuf);
 		return (-1);
 	}
@@ -531,7 +532,7 @@ b3_617_map_vmeint(void *vsc, int level, int vector, vme_intr_handle_t *handlep)
 {
 	if (!sc->sc_ih) {
 		printf("%s: b3_617_map_vmeint: no IRQ\n",
-		       device_xname(&sc->sc_dev));
+		       device_xname(sc->sc_dev));
 		return (ENXIO);
 	}
 	/*

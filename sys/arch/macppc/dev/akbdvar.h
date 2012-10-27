@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.13 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.14 2012/10/27 17:18:00 chs Exp $	*/
 
 /*	$OpenBSD: akbdvar.h,v 1.3 2002/03/27 21:48:12 drahn Exp $	*/
 
@@ -43,15 +43,13 @@
  * State info, per keyboard instance.
  */
 struct akbd_softc {
-	struct	device	sc_dev;
-
 	/* ADB info */
 	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
 	int		adbaddr;	/* current ADB address */
 	int		handler_id;	/* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
-	struct device	*sc_wskbddev;
+	device_t	sc_wskbddev;
 
 	int sc_polling;
 	int sc_npolledkeys;

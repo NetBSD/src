@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcicvar.h,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: eppcicvar.h,v 1.2 2012/10/27 17:17:37 chs Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -51,7 +51,7 @@ typedef struct eppcic_chipset_tag *eppcic_chipset_tag_t;
 struct eppcic_handle;
 
 struct eppcic_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct eppcic_handle	*sc_ph[EP93XX_PCMCIA_NSOCKET];
@@ -61,7 +61,7 @@ struct eppcic_softc {
 	struct epgpio_softc	*sc_gpio;
 };
 
-void eppcic_attach_common(struct device *, struct device *, void *,
+void eppcic_attach_common(device_t, device_t, void *,
 			  eppcic_chipset_tag_t);
 
 #endif	/* _EPPCICVAR_H_ */

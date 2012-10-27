@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.10 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.11 2012/10/27 17:18:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@ struct pcc_attach_args {
 
 
 struct pcc_softc {
-        struct device sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
 	struct evcnt sc_evcnt;

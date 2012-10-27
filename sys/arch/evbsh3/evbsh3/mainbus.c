@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2010/04/06 15:54:30 nonaka Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2012/10/27 17:17:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2010/04/06 15:54:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2012/10/27 17:17:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,10 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2010/04/06 15:54:30 nonaka Exp $");
 
 #include <machine/autoconf.h>
 
-static int mainbus_match(struct device *, struct cfdata *, void *);
-static void mainbus_attach(struct device *, struct device *, void *);
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int mainbus_search(device_t, cfdata_t, const int *, void *);
