@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.8 2012/02/14 15:08:07 pgoyette Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.9 2012/10/27 17:18:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/mutex.h>
 
 struct amdpm_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;

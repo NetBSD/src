@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.189 2012/07/31 13:35:48 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.190 2012/10/27 17:18:12 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.189 2012/07/31 13:35:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.190 2012/10/27 17:18:12 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -758,7 +758,7 @@ romgetcursoraddr(int **rowp, int **colp)
 }
 
 /*
- * Match a struct device against the bootpath, by
+ * Match a device_t against the bootpath, by
  * comparing it's firmware package handle. If they match
  * exactly, we found the boot device.
  */
@@ -774,7 +774,7 @@ dev_path_exact_match(device_t dev, int ofnode)
 }
 
 /*
- * Match a struct device against the bootpath, by
+ * Match a device_t against the bootpath, by
  * comparing it's firmware package handle and calculating
  * the target/lun suffix and comparing that against
  * the bootpath remainder.
@@ -827,7 +827,7 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 }
 
 /*
- * Get the firmware package handle from a struct device.
+ * Get the firmware package handle from a device_t.
  * Assuming we have previously stored it in the device properties
  * dictionary.
  */
@@ -851,7 +851,7 @@ device_ofnode(device_t dev)
 
 /*
  * Save the firmware package handle inside the properties dictionary
- * of a struct device.
+ * of a device_t.
  */
 static void
 device_setofnode(device_t dev, int node)

@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.12 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: m38813c.c,v 1.13 2012/10/27 17:17:52 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.12 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.13 2012/10/27 17:17:52 chs Exp $");
 
 #include "opt_use_poll.h"
 
@@ -64,14 +64,13 @@ struct m38813c_chip {
 };
 
 struct m38813c_softc {
-	struct	device		sc_dev;
 	struct m38813c_chip	*sc_chip;
 	tx_chipset_tag_t	sc_tc;
 	void			*sc_ih;
 };
 
-int	m38813c_match(struct device *, struct cfdata *, void *);
-void	m38813c_attach(struct device *, struct device *, void *);
+int	m38813c_match(device_t, cfdata_t, void *);
+void	m38813c_attach(device_t, device_t, void *);
 int	m38813c_intr(void *);
 int	m38813c_poll(void *);
 void	m38813c_ifsetup(struct m38813c_chip *);
@@ -79,21 +78,21 @@ int	m38813c_input_establish(void *, struct hpckbd_if *);
 
 struct m38813c_chip m38813c_chip;
 
-CFATTACH_DECL(m38813c, sizeof(struct m38813c_softc),
+CFATTACH_DECL_NEW(m38813c, sizeof(struct m38813c_softc),
     m38813c_match, m38813c_attach, NULL, NULL);
 
 int
-m38813c_match(struct device *parent, struct cfdata *cf, void *aux)
+m38813c_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 void
-m38813c_attach(struct device *parent, struct device *self, void *aux)
+m38813c_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
-	struct m38813c_softc *sc = (void*)self;
+	struct m38813c_softc *sc = device_private(self);
 	struct hpckbd_attach_args haa;
 
 	sc->sc_tc = ca->ca_tc;

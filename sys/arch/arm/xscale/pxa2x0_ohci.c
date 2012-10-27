@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.8 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.9 2012/10/27 17:17:42 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -125,11 +125,10 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if 0
-	sc->sc.sc_powerhook = powerhook_establish(sc->sc.sc_bus.bdev.dv_xname,
+	sc->sc.sc_powerhook = powerhook_establish(device_xname(sc->sc.sc_bus.bdev),
 	    pxaohci_power, sc);
 	if (sc->sc.sc_powerhook == NULL) {
-		aprint_error("%s: cannot establish powerhook\n",
-		    sc->sc.sc_dev->sc_bus.bdev.dv_xname);
+		aprint_error_dev(sc->sc.sc_dev->sc_bus.bdev, "cannot establish powerhook\n");
 	}
 #endif
 
@@ -264,5 +263,3 @@ pxaohci_disable(struct pxaohci_softc *sc)
 CFATTACH_DECL2_NEW(pxaohci, sizeof(struct pxaohci_softc),
     pxaohci_match, pxaohci_attach, pxaohci_detach, ohci_activate, NULL,
     ohci_childdet);
-
-

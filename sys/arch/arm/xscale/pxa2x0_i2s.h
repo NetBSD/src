@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.3 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.4 2012/10/27 17:17:42 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -26,7 +26,6 @@ struct pxa2x0_i2s_dma;
 struct audio_params;
 
 struct pxa2x0_i2s_softc {
-	struct device sc_dev;
 	kmutex_t *sc_intr_lock;
 
 	bus_space_tag_t sc_iot;

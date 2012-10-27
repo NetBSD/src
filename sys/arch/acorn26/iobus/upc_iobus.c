@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.9 2009/01/06 23:51:34 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.10 2012/10/27 17:17:22 chs Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.9 2009/01/06 23:51:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.10 2012/10/27 17:17:22 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ struct upc_iobus_softc {
 	struct evcnt		sc_intrcntp;
 };
 
-CFATTACH_DECL(upc_iobus, sizeof(struct upc_iobus_softc),
+CFATTACH_DECL_NEW(upc_iobus, sizeof(struct upc_iobus_softc),
     upc_iobus_match, upc_iobus_attach, NULL, NULL);
 
 static device_t the_upc_iobus;
@@ -88,6 +88,7 @@ upc_iobus_attach(device_t parent, device_t self, void *aux)
 	struct upc_iobus_softc *sc = device_private(self);
 	struct upc_softc *upc = &sc->sc_upc;
 
+	upc->sc_dev = self;
 	upc->sc_iot = ioa->ioa_tag;
 	bus_space_map(ioa->ioa_tag, ioa->ioa_base, UPC_BUS_SIZE, 0,
 		      &upc->sc_ioh);

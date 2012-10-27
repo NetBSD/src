@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.17 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: scivar.h,v 1.18 2012/10/27 17:17:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 struct sci_softc;
 
 struct	sci_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	isr sc_isr;
 	struct	scsipi_adapter sc_adapter;
 	struct	scsipi_channel sc_channel;

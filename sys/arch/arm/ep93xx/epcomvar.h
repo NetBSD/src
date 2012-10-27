@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.6 2012/02/02 19:42:58 tls Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.7 2012/10/27 17:17:37 chs Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *
@@ -43,7 +43,7 @@
 #define EPCOM_RING_SIZE	2048
 
 struct epcom_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_addr_t		sc_hwbase;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t 	sc_ioh;

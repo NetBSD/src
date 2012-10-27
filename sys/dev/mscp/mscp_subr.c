@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.43 2012/07/10 22:30:23 abs Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.44 2012/10/27 17:18:27 chs Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.43 2012/07/10 22:30:23 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.44 2012/10/27 17:18:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,12 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.43 2012/07/10 22:30:23 abs Exp $");
 
 int	mscp_match(device_t, cfdata_t, void *);
 void	mscp_attach(device_t, device_t, void *);
-void	mscp_start(struct	mscp_softc *);
-int	mscp_init(struct  mscp_softc *);
+void	mscp_start(struct mscp_softc *);
+int	mscp_init(struct mscp_softc *);
 void	mscp_initds(struct mscp_softc *);
 int	mscp_waitstep(struct mscp_softc *, int, int);
 
-CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
+CFATTACH_DECL_NEW(mscpbus, sizeof(struct mscp_softc),
     mscp_match, mscp_attach, NULL, NULL);
 
 #define	READ_SA		(bus_space_read_2(mi->mi_iot, mi->mi_sah, 0))
@@ -181,6 +181,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	volatile int i;
 	int	timeout, error, unit;
 
+	mi->mi_dev = self;
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
 	mi->mi_type = ma->ma_type;
@@ -202,7 +203,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	error = workqueue_create(&mi->mi_wq, "mscp_wq", mscp_worker, NULL,
 	    PRI_NONE, IPL_VM, 0);
 	if (error != 0) {
-		aprint_error_dev(&mi->mi_dev, "could not create workqueue");
+		aprint_error_dev(mi->mi_dev, "could not create workqueue");
 		return;
 	}
 
@@ -212,7 +213,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 
 		if ((mw = kmem_zalloc(sizeof(*mw), KM_SLEEP)) == NULL) {
 			mscp_free_workitems(mi);
-			aprint_error_dev(&mi->mi_dev,
+			aprint_error_dev(mi->mi_dev,
 			    "failed to allocate memory for work items");
 			return;
 		}
@@ -233,7 +234,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	bufq_alloc(&mi->mi_resq, "fcfs", 0);
 
 	if (mscp_init(mi)) {
-		aprint_error_dev(&mi->mi_dev, "can't init, controller hung\n");
+		aprint_error_dev(mi->mi_dev, "can't init, controller hung\n");
 		return;
 	}
 	for (i = 0; i < NCMD; i++) {
@@ -282,7 +283,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 		while (!mp->mscp_opcode) {
 			if ( --timeout == 0) {
 				printf("%s: no Get Unit Status response\n",
-				    device_xname(&mi->mi_dev));
+				    device_xname(mi->mi_dev));
 				return;
 			}
 			DELAY(10000);
@@ -345,7 +346,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 				 * In service, or something else unusable.
 				 */
 				printf("%s: unit %d off line: ",
-				    device_xname(&mi->mi_dev), mp->mscp_unit);
+				    device_xname(mi->mi_dev), mp->mscp_unit);
 				mp2 = __UNVOLATILE(mp);
 				mscp_printevent(mp2);
 				break;
@@ -353,7 +354,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 			break;
 
 		default:
-			aprint_error_dev(&mi->mi_dev,
+			aprint_error_dev(mi->mi_dev,
 			    "unable to get unit status: ");
 			mscp_printevent(__UNVOLATILE(mp));
 			return;
@@ -391,7 +392,7 @@ mscp_init(struct mscp_softc *mi)
 	if (status == 0)
 		return 1; /* Init failed */
 	if (READ_SA & MP_ERR) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -400,7 +401,7 @@ mscp_init(struct mscp_softc *mi)
 	    MP_IE | (mi->mi_ivec >> 2));
 	status = mscp_waitstep(mi, STEP1MASK, STEP1GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -410,7 +411,7 @@ mscp_init(struct mscp_softc *mi)
 	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -418,7 +419,7 @@ mscp_init(struct mscp_softc *mi)
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 	i = READ_SA & 0377;
@@ -428,7 +429,7 @@ mscp_init(struct mscp_softc *mi)
 	if (mi->mi_type & MSCPBUS_UDA) {
 		WRITE_SW(MP_GO | (BURST - 1) << 2);
 		printf("%s: DMA burst size set to %d\n",
-		    device_xname(&mi->mi_dev), BURST);
+		    device_xname(mi->mi_dev), BURST);
 	}
 	WRITE_SW(MP_GO);
 
@@ -463,7 +464,7 @@ mscp_init(struct mscp_softc *mi)
 	}
 	if (count == DELAYTEN) {
 out:
-		aprint_error_dev(&mi->mi_dev, "couldn't set ctlr characteristics, sa=%x\n", j);
+		aprint_error_dev(mi->mi_dev, "couldn't set ctlr characteristics, sa=%x\n", j);
 		return 1;
 	}
 	return 0;
@@ -573,7 +574,7 @@ mscp_kickaway(struct mscp_softc *mi)
 		if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 			if (mi->mi_credits > MSCP_MINCREDITS)
 				printf("%s: command ring too small\n",
-				    device_xname(device_parent(&mi->mi_dev)));
+				    device_xname(device_parent(mi->mi_dev)));
 			/*
 			 * By some (strange) reason we didn't get a MSCP packet.
 			 * Just return and wait for free packets.
@@ -597,7 +598,7 @@ mscp_kickaway(struct mscp_softc *mi)
 		mi->mi_xi[next].mxi_inuse = 1;
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
-		(*mi->mi_mc->mc_go)(device_parent(&mi->mi_dev),
+		(*mi->mi_mc->mc_go)(device_parent(mi->mi_dev),
 		    &mi->mi_xi[next]);
 		(void)bufq_get(mi->mi_resq);
 	}

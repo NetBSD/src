@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.5 2012/10/27 17:17:56 chs Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.5 2012/10/27 17:17:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -180,7 +180,7 @@ psh3pwr_intr_plug_out(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr | PSH3PWR_PLUG_OUT);
 
-	DPRINTF(("%s: plug out\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: plug out\n", device_xname(sc->sc_dev)));
 
 	return 1;
 }
@@ -201,7 +201,7 @@ psh3pwr_intr_plug_in(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr & ~PSH3PWR_PLUG_OUT);
 
-	DPRINTF(("%s: plug in\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: plug in\n", device_xname(sc->sc_dev)));
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.57 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.58 2012/10/27 17:18:32 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.57 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.58 2012/10/27 17:18:32 chs Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -343,6 +343,7 @@ pdq_pci_attach(device_t parent, device_t self, void *aux)
     struct ifnet *ifp = &sc->sc_if;
     int i;
 
+    sc->sc_dev = self;
     sc->sc_if.if_unit = sc->sc_dev.dv_unit;
     sc->sc_if.if_name = "fpa";
     sc->sc_if.if_flags = 0;
@@ -415,7 +416,7 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CFLT, data);
     }
 
-    strlcpy(sc->sc_if.if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+    strlcpy(sc->sc_if.if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
@@ -459,7 +460,7 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
-	aprint_error_dev(&sc->sc_dev, "initialization failed\n");
+	aprint_error_dev(sc->sc_dev, "initialization failed\n");
 	return;
     }
 
@@ -486,7 +487,7 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 }
 
-CFATTACH_DECL(fpa, sizeof(pdq_softc_t),
+CFATTACH_DECL_NEW(fpa, sizeof(pdq_softc_t),
     pdq_pci_match, pdq_pci_attach, NULL, NULL);
 
 #endif /* __NetBSD__ */

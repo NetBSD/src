@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.46 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.47 2012/10/27 17:18:26 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.46 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.47 2012/10/27 17:18:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.46 2012/02/02 19:43:04 tls Exp $");
 #define EDC_MAX_CMD_RES_LEN	8
 
 struct edc_mca_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -115,7 +115,7 @@ struct edc_mca_softc {
 int	edc_mca_probe(device_t, cfdata_t, void *);
 void	edc_mca_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(edc_mca, sizeof(struct edc_mca_softc),
+CFATTACH_DECL_NEW(edc_mca, sizeof(struct edc_mca_softc),
     edc_mca_probe, edc_mca_attach, NULL, NULL);
 
 static int	edc_intr(void *);
@@ -126,8 +126,7 @@ static void	edc_cmd_wait(struct edc_mca_softc *, int, int);
 static void	edcworker(void *);
 
 int
-edc_mca_probe(device_t parent, cfdata_t match,
-    void *aux)
+edc_mca_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -151,6 +150,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	const char *typestr;
 	int devno, error;
 	int locs[EDCCF_NLOCS];
+
+	sc->sc_dev = self;
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
@@ -208,13 +209,13 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	 * utility uses only valid addresses.
 	 */
 	if (drq == 2 || drq >= 8) {
-		aprint_error_dev(&sc->sc_dev, "invalid DMA Arbitration Level %d\n", drq);
+		aprint_error_dev(sc->sc_dev, "invalid DMA Arbitration Level %d\n", drq);
 		return;
 	}
 #endif
 
 	printf("%s: Fairness %s, Release %s, ",
-		device_xname(&sc->sc_dev),
+		device_xname(sc->sc_dev),
 		(pos2 & FAIRNESS_ENABLE) ? "On" : "Off",
 		(pos4 & RELEASE_1) ? "6ms"
 				: ((pos4 & RELEASE_2) ? "3ms" : "Immediate")
@@ -231,13 +232,13 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, iobase,
 	    ESDIC_REG_NPORTS, 0, &sc->sc_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map registers\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map registers\n");
 		return;
 	}
 
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, edc_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 
@@ -246,7 +247,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	if ((error = mca_dmamap_create(sc->sc_dmat, MAXPHYS,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_16BIT,
 	    &sc->sc_dmamap_xfer, drq)) != 0){
-		aprint_error_dev(&sc->sc_dev, "couldn't create DMA map - error %d\n", error);
+		aprint_error_dev(sc->sc_dev, "couldn't create DMA map - error %d\n", error);
 		return;
 	}
 
@@ -268,7 +269,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
 		/* hard reset */
 		printf("%s: controller busy, performing hardware reset ...\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
 			BCR_INT_ENABLE|BCR_RESET);
 	} else {
@@ -295,9 +296,10 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	for (devno = 0; devno < sc->sc_maxdevs; devno++) {
 		eda.edc_drive = devno;
 		locs[EDCCF_DRIVE] = devno;
-		sc->sc_ed[devno] =
-			(void *) config_found_sm_loc(self, "edc", locs, &eda,
-						     NULL, config_stdsubmatch);
+
+		sc->sc_ed[devno] = device_private(
+		    config_found_sm_loc(self, "edc", locs, &eda, NULL,
+		    config_stdsubmatch));
 
 		/* If initialization did not succeed, NULL the pointer. */
 		if (sc->sc_ed[devno]
@@ -319,7 +321,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 
 	if (devno == sc->sc_maxdevs) {
 		printf("%s: disabling controller (no drives attached)\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 		mca_intr_disestablish(ma->ma_mc, sc->sc_ih);
 		return;
 	}
@@ -329,8 +331,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	 */
 	config_pending_incr();
 	if ((error = kthread_create(PRI_NONE, 0, NULL, edcworker, sc, NULL,
-	    "%s", device_xname(&sc->sc_dev)))) {
-		aprint_error_dev(&sc->sc_dev, "cannot spawn worker thread: errno=%d\n", error);
+	    "%s", device_xname(sc->sc_dev)))) {
+		aprint_error_dev(sc->sc_dev, "cannot spawn worker thread: errno=%d\n", error);
 		panic("edc_mca_attach");
 	}
 }
@@ -365,7 +367,7 @@ edc_intr(void *arg)
 
 #ifdef EDC_DEBUG
 	if (intr_id == 0 || intr_id == 2 || intr_id == 4) {
-		aprint_error_dev(&sc->sc_dev, "bogus interrupt id %d\n",
+		aprint_error_dev(sc->sc_dev, "bogus interrupt id %d\n",
 			(int) intr_id);
 		return (0);
 	}
@@ -389,7 +391,7 @@ edc_intr(void *arg)
 #ifdef DEBUG
 		if (len > EDC_MAX_CMD_RES_LEN)
 			panic("%s: maximum Status Length exceeded: %d > %d",
-				device_xname(&sc->sc_dev),
+				device_xname(sc->sc_dev),
 				len, EDC_MAX_CMD_RES_LEN);
 #endif
 
@@ -451,7 +453,7 @@ edc_intr(void *arg)
 		 * No status block available, so no further info.
 		 */
 		panic("%s: dev %d: attention error",
-			device_xname(&sc->sc_dev),
+			device_xname(sc->sc_dev),
 			devno);
 		/* NOTREACHED */
 		break;
@@ -504,7 +506,7 @@ edc_do_attn(struct edc_mca_softc *sc, int attn_type, int devno, int intr_id)
 		if (attn_type == ATN_CMD_REQ
 		    && (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
 			    & BSR_INT_PENDING))
-			panic("%s: edc int pending", device_xname(&sc->sc_dev));
+			panic("%s: edc int pending", device_xname(sc->sc_dev));
 #endif
 
 		for(tries=1; tries < EDC_ATTN_MAXTRIES; tries++) {
@@ -515,7 +517,7 @@ edc_do_attn(struct edc_mca_softc *sc, int attn_type, int devno, int intr_id)
 
 		if (tries == EDC_ATTN_MAXTRIES) {
 			printf("%s: edc_do_attn: timeout waiting for attachment to become available\n",
-					device_xname(&sc->sc_ed[devno]->sc_dev));
+					device_xname(sc->sc_ed[devno]->sc_dev));
 			return (EIO);
 		}
 	}
@@ -617,7 +619,7 @@ edc_run_cmd(struct edc_mca_softc *sc, int cmd, int devno,
 		if (tries == 10000
 		    && bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
 		       & BSR_CIFR_FULL) {
-			aprint_error_dev(&sc->sc_dev, "device too slow to accept command %d\n", cmd);
+			aprint_error_dev(sc->sc_dev, "device too slow to accept command %d\n", cmd);
 			return (EIO);
 		}
 	}
@@ -733,30 +735,30 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 {
 #ifdef EDC_DEBUG
 	printf("%s: Command: %s, Status: %s (intr %d)\n",
-		device_xname(&sc->sc_dev),
+		device_xname(sc->sc_dev),
 		edc_commands[status_block[0] & 0x1f],
 		edc_cmd_status[SB_GET_CMD_STATUS(status_block)],
 		intr_id
 		);
 #else
 	printf("%s: Command: %d, Status: %d (intr %d)\n",
-		device_xname(&sc->sc_dev),
+		device_xname(sc->sc_dev),
 		status_block[0] & 0x1f,
 		SB_GET_CMD_STATUS(status_block),
 		intr_id
 		);
 #endif
 	printf("%s: # left blocks: %u, last processed RBA: %u\n",
-		device_xname(&sc->sc_dev),
+		device_xname(sc->sc_dev),
 		status_block[SB_RESBLKCNT_IDX],
 		(status_block[5] << 16) | status_block[4]);
 
 	if (intr_id == ISR_COMPLETED_WARNING) {
 #ifdef EDC_DEBUG
-		aprint_error_dev(&sc->sc_dev, "Command Error Code: %s\n",
+		aprint_error_dev(sc->sc_dev, "Command Error Code: %s\n",
 			edc_cmd_error[status_block[1] & 0xff]);
 #else
-		aprint_error_dev(&sc->sc_dev, "Command Error Code: %d\n",
+		aprint_error_dev(sc->sc_dev, "Command Error Code: %d\n",
 			status_block[1] & 0xff);
 #endif
 	}
@@ -766,7 +768,7 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 		char buf[100];
 
 		printf("%s: Device Error Code: %s\n",
-			device_xname(&sc->sc_dev),
+			device_xname(sc->sc_dev),
 			edc_dev_errors[status_block[2] & 0xff]);
 		snprintb(buf, sizeof(buf),
 			"\20"
@@ -780,10 +782,10 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 			"\010Reserved0", (status_block[2] & 0xff00) >> 8);
 
 		printf("%s: Device Status: %s\n",
-			device_xname(&sc->sc_dev), buf);
+			device_xname(sc->sc_dev), buf);
 #else
 		printf("%s: Device Error Code: %d, Device Status: %d\n",
-			device_xname(&sc->sc_dev),
+			device_xname(sc->sc_dev),
 			status_block[2] & 0xff,
 			(status_block[2] & 0xff00) >> 8);
 #endif
@@ -863,7 +865,7 @@ edc_bio(struct edc_mca_softc *sc, struct ed_softc *ed, void *data,
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_xfer, data,
 	    bcount, NULL, BUS_DMA_STREAMING|fl))) {
 		printf("%s: ed_bio: unable to load DMA buffer - error %d\n",
-			device_xname(&ed->sc_dev), error);
+			device_xname(ed->sc_dev), error);
 		goto out;
 	}
 

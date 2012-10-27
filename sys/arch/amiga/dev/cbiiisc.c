@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.20 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.21 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.20 2012/01/10 20:29:50 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.21 2012/10/27 17:17:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.20 2012/01/10 20:29:50 rkujawa Exp $")
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/p5busvar.h>
 
-void cbiiiscattach(struct device *, struct device *, void *);
-int  cbiiiscmatch(struct device *, struct cfdata *, void *);
+void cbiiiscattach(device_t, device_t, void *);
+int  cbiiiscmatch(device_t, cfdata_t, void *);
 int  cbiiisc_dmaintr(void *);
 #ifdef DEBUG
 void cbiiisc_dump(void);
@@ -91,18 +91,18 @@ void cbiiisc_dump(void);
 #ifdef DEBUG
 #endif
 
-CFATTACH_DECL(cbiiisc, sizeof(struct siop_softc),
+CFATTACH_DECL_NEW(cbiiisc, sizeof(struct siop_softc),
     cbiiiscmatch, cbiiiscattach, NULL, NULL);
 
 /*
  * if we are a CyberStorm MK III SCSI
  */
 int
-cbiiiscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+cbiiiscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct p5bus_attach_args *p5baa;
 
-	p5baa = (struct p5bus_attach_args *) auxp;
+	p5baa = aux;
 
 	if (strcmp(p5baa->p5baa_name, "cbiiisc") == 0)
 		return 1;
@@ -111,15 +111,16 @@ cbiiiscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
+cbiiiscattach(device_t parent, device_t self, void *aux)
 {
-	struct siop_softc *sc = (struct siop_softc *)dp;
+	struct siop_softc *sc = device_private(self);
 	siop_regmap_p rp;
         struct scsipi_adapter *adapt = &sc->sc_adapter;
         struct scsipi_channel *chan = &sc->sc_channel;
 
 	aprint_normal(": CyberStorm PPC/Mk-III SCSI host adapter\n");
 
+	sc->sc_dev = self;
 	sc->sc_siopp = rp = ztwomap(0xf40000);
 	/* siopng_dump_registers(sc); */
 
@@ -134,7 +135,7 @@ cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
          * Fill in the scsipi_adapter.
          */
         memset(adapt, 0, sizeof(*adapt));
-        adapt->adapt_dev = &sc->sc_dev;
+        adapt->adapt_dev = self;
         adapt->adapt_nchannels = 1;
         adapt->adapt_openings = 7;
         adapt->adapt_max_periph = 1;
@@ -165,7 +166,7 @@ cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

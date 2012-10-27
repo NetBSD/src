@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.39 2009/12/06 23:05:39 dyoung Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.40 2012/10/27 17:18:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.39 2009/12/06 23:05:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.40 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ void	pcmcom_attach(device_t, device_t, void *);
 int	pcmcom_detach(device_t, int);
 void	pcmcom_childdet(device_t, device_t);
 
-CFATTACH_DECL(pcmcom, sizeof(struct pcmcom_softc),
+CFATTACH_DECL_NEW(pcmcom, sizeof(struct pcmcom_softc),
     pcmcom_match, pcmcom_attach, pcmcom_detach, NULL);
 
 const struct pcmcia_product pcmcom_products[] = {
@@ -298,7 +298,7 @@ int	com_pcmcom_match(device_t, cfdata_t , void *);
 void	com_pcmcom_attach(device_t, device_t, void *);
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
-CFATTACH_DECL(com_pcmcom, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(com_pcmcom, sizeof(struct com_softc),
     com_pcmcom_match, com_pcmcom_attach, com_detach, NULL);
 
 int	com_pcmcom_enable(struct com_softc *);

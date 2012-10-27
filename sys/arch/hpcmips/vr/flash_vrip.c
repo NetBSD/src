@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.7 2008/06/11 23:53:15 cegger Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.8 2012/10/27 17:17:55 chs Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.7 2008/06/11 23:53:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.8 2012/10/27 17:17:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,8 +58,8 @@ int	flash_debug = 0;
 #define DPRINTF(x)
 #endif
 
-static int flash_probe(struct device *, struct cfdata *, void *);
-static void flash_attach(struct device *, struct device *, void *);
+static int flash_probe(device_t, cfdata_t, void *);
+static void flash_attach(device_t, device_t, void *);
 
 const static struct flashops * find_command_set(u_int8_t cmdset0,
 						u_int8_t cmdset1);
@@ -75,7 +75,7 @@ static int amd_write(struct flash_softc *, bus_size_t);
 
 extern struct cfdriver flash_cd;
 
-CFATTACH_DECL(flash_vrip, sizeof(struct flash_softc),
+CFATTACH_DECL_NEW(flash_vrip, sizeof(struct flash_softc),
 	      flash_probe, flash_attach, NULL, NULL);
 
 dev_type_open(flashopen);
@@ -170,7 +170,7 @@ probe_cfi(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 static int
-flash_probe(struct device *parent, struct cfdata *match, void *aux)
+flash_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct vrip_attach_args	*va = aux;
 	bus_space_handle_t	ioh;
@@ -197,9 +197,9 @@ detect:
 }
 
 static void
-flash_attach(struct device *parent, struct device *self, void *aux)
+flash_attach(device_t parent, device_t self, void *aux)
 {
-	struct flash_softc	*sc = (void *) self;
+	struct flash_softc	*sc = device_private(self);
 	struct vrip_attach_args	*va = aux;
 	int			i;
 	int			fence;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.13 2012/09/07 03:05:11 matt Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.14 2012/10/27 17:17:38 chs Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.13 2012/09/07 03:05:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.14 2012/10/27 17:17:38 chs Exp $");
 
 #include <sys/cdefs.h>
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.13 2012/09/07 03:05:11 matt Exp $")
 #include "opt_pci.h"
 #include "pci.h"
 
-void		gemini_pci_attach_hook(struct device *, struct device *,
+void		gemini_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		gemini_pci_bus_maxdevs(void *, int);
 pcitag_t	gemini_pci_make_tag(void *, int, int, int);
@@ -249,7 +249,7 @@ gemini_pci_conf_hook(void *v, int bus, int device, int function, pcireg_t id)
 }
 
 void
-gemini_pci_attach_hook(struct device *parent, struct device *self,
+gemini_pci_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	/* Nothing to do. */
@@ -448,4 +448,3 @@ gemini_pci_intr_handler(void *v)
 
 	return rv;
 }
-

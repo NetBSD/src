@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.9 2012/03/18 05:26:58 mrg Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.10 2012/10/27 17:18:12 chs Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.9 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.10 2012/10/27 17:18:12 chs Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -73,7 +73,7 @@ static void ebus_mainbus_intr_ack(struct intrhand *);
 #endif
 
 int
-ebus_mainbus_match(struct device *parent, cfdata_t cf, void *aux)
+ebus_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -83,7 +83,7 @@ ebus_mainbus_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 void
-ebus_mainbus_attach(struct device *parent, struct device *self, void *aux)
+ebus_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ebus_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;

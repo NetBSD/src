@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.10 2010/07/27 19:40:16 jakllsch Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.11 2012/10/27 17:18:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -137,7 +137,7 @@ struct sca_port {
  * softc structure for the chip itself
  */
 struct sca_softc {
-	struct device	*sc_parent;	/* our parent device, or NULL */
+	device_t	sc_parent;	/* our parent device, or NULL */
 	int		sc_numports;	/* number of ports present */
 	u_int32_t	sc_baseclock;	/* the base operating clock */
 

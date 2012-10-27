@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.13 2008/01/05 00:31:56 ad Exp $ */
+/* $NetBSD: nextkbd.c,v 1.14 2012/10/27 17:18:07 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.13 2008/01/05 00:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.14 2012/10/27 17:18:07 chs Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -79,12 +79,12 @@ struct mon_regs {
 
 static int attached = 0;
 
-int nextkbd_match(struct device *, struct cfdata *, void *);
-void nextkbd_attach(struct device *, struct device *, void *);
+int nextkbd_match(device_t, cfdata_t, void *);
+void nextkbd_attach(device_t, device_t, void *);
 
 int nextkbc_cnattach(bus_space_tag_t);
 
-CFATTACH_DECL(nextkbd, sizeof(struct nextkbd_softc),
+CFATTACH_DECL_NEW(nextkbd, sizeof(struct nextkbd_softc),
     nextkbd_match, nextkbd_attach, NULL, NULL);
 
 int	nextkbd_enable(void *, int);
@@ -125,7 +125,7 @@ nextkbd_is_console(bus_space_tag_t bst)
 }
 
 int
-nextkbd_match(struct device *parent, struct cfdata *match, void *aux)
+nextkbd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
@@ -138,9 +138,9 @@ nextkbd_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-nextkbd_attach(struct device *parent, struct device *self, void *aux)
+nextkbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct nextkbd_softc *sc = (struct nextkbd_softc *)self;
+	struct nextkbd_softc *sc = device_private(self);
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 	int isconsole;
 	struct wskbddev_attach_args a;
@@ -161,7 +161,7 @@ nextkbd_attach(struct device *parent, struct device *self, void *aux)
 				sizeof(struct mon_regs),
 				0, &sc->id->ioh)) {
 			printf("%s: can't map mon status control register\n",
-					sc->sc_dev.dv_xname);
+					device_xname(self));
 			return;
 		}
 	}

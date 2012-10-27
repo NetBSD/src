@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.22 2012/02/02 19:42:57 tls Exp $ */
+/*	$NetBSD: epcom.c,v 1.23 2012/10/27 17:17:36 chs Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.22 2012/02/02 19:42:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.23 2012/10/27 17:17:36 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -182,7 +182,7 @@ struct consdev epcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			device_is_active(&(sc)->sc_dev))
+			device_is_active((sc)->sc_dev))
 
 void
 epcom_attach_subr(struct epcom_softc *sc)
@@ -212,7 +212,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 	sc->sc_rbavail = EPCOM_RING_SIZE;
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (EPCOM_RING_SIZE << 1);
@@ -230,15 +230,15 @@ epcom_attach_subr(struct epcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&epcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		cn_tab->cn_dev = makedev(maj, device_unit(sc->sc_dev));
 
-		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: console\n", device_xname(sc->sc_dev));
 	}
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, epcomsoft, sc);
 
 #ifdef RND_COM
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -441,7 +441,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -474,7 +474,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 				splx(s2);
 				splx(s);
 				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(sc->sc_dev));
 				return (EIO);
 			}
 			sc->enabled = 1;
@@ -763,7 +763,7 @@ epcom_iflush(struct epcom_softc *sc)
 			bus_space_read_4(iot, ioh, EPCOM_Data);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
+		printf("%s: com_iflush timeout %02x\n", device_xname(sc->sc_dev),
 		       reg);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.15 2012/10/27 17:17:29 chs Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.14 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.15 2012/10/27 17:17:29 chs Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the
@@ -74,15 +74,15 @@ struct bah_zbus_softc {
 	struct	isr		sc_isr;
 };
 
-int	bah_zbus_match(struct device *, struct cfdata *, void *);
-void	bah_zbus_attach(struct device *, struct device *, void *);
+int	bah_zbus_match(device_t, cfdata_t, void *);
+void	bah_zbus_attach(device_t, device_t, void *);
 void	bah_zbus_reset(struct bah_softc *, int);
 
-CFATTACH_DECL(bah_zbus, sizeof(struct bah_zbus_softc),
+CFATTACH_DECL_NEW(bah_zbus, sizeof(struct bah_zbus_softc),
     bah_zbus_match, bah_zbus_attach, NULL, NULL);
 
 int
-bah_zbus_match(struct device *parent, struct cfdata *cfp, void *aux)
+bah_zbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap = aux;
 
@@ -93,15 +93,16 @@ bah_zbus_match(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 void
-bah_zbus_attach(struct device *parent, struct device *self, void *aux)
+bah_zbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct bah_zbus_softc *bsc = (void *)self;
+	struct bah_zbus_softc *bsc = device_private(self);
 	struct bah_softc *sc = &bsc->sc_bah;
 	struct zbus_args *zap = aux;
 
+	sc->sc_dev = self;
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
 	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
-	    sc->sc_dev.dv_xname, parent, self, aux);
+	    device_xname(self), parent, self, aux);
 #endif
 	bsc->sc_bst.base = (bus_addr_t)zap->va;
 	bsc->sc_bst.absm = &amiga_bus_stride_2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.23 2011/02/08 20:20:27 rmind Exp $ */
+/*	$NetBSD: ct.c,v 1.24 2012/10/27 17:18:16 chs Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.23 2011/02/08 20:20:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.24 2012/10/27 17:18:16 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ int ctdebug = 0xff;
 #endif
 
 struct	ct_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	gpib_chipset_tag_t sc_ic;
 	gpib_handle_t sc_hdl;
@@ -155,7 +155,7 @@ struct	ct_softc {
 int	ctmatch(device_t, cfdata_t, void *);
 void	ctattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ct, sizeof(struct ct_softc),
+CFATTACH_DECL_NEW(ct, sizeof(struct ct_softc),
 	ctmatch, ctattach, NULL, NULL);
 
 int	ctident(device_t, struct ct_softc *,
@@ -252,13 +252,13 @@ ctattach(device_t parent, device_t self, void *aux)
 
 	if (cs80reset(parent, sc->sc_slave, sc->sc_punit)) {
 		aprint_normal("\n");
-		aprint_error_dev(&sc->sc_dev, "can't reset device\n");
+		aprint_error_dev(sc->sc_dev, "can't reset device\n");
 		return;
 	}
 
 	if (cs80describe(parent, sc->sc_slave, sc->sc_punit, &csd)) {
 		aprint_normal("\n");
-		aprint_error_dev(&sc->sc_dev, "didn't respond to describe command\n");
+		aprint_error_dev(sc->sc_dev, "didn't respond to describe command\n");
 		return;
 	}
 	memset(name, 0, sizeof(name));
@@ -270,7 +270,7 @@ ctattach(device_t parent, device_t self, void *aux)
 #ifdef DEBUG
 	if (ctdebug & CDB_IDENT) {
 		printf("\n%s: name: ('%s')\n",
-		    device_xname(&sc->sc_dev),name);
+		    device_xname(sc->sc_dev),name);
 		printf("  iuw %x, maxxfr %d, ctype %d\n",
 		    csd.d_iuw, csd.d_cmaxxfr, csd.d_ctype);
 		printf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
@@ -282,7 +282,7 @@ ctattach(device_t parent, device_t self, void *aux)
 		printf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
 		    csd.d_maxcylhead >> 8 , csd.d_maxcylhead & 0xff,
 		    csd.d_maxsect, csd.d_maxvsectl, csd.d_interleave);
-		printf("%s", device_xname(&sc->sc_dev));
+		printf("%s", device_xname(sc->sc_dev));
 	}
 #endif
 
@@ -316,7 +316,7 @@ ctattach(device_t parent, device_t self, void *aux)
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, ctcallback, sc,
 	    &sc->sc_hdl)) {
-		aprint_error_dev(&sc->sc_dev, "can't register callback\n");
+		aprint_error_dev(sc->sc_dev, "can't register callback\n");
 		return;
 	}
 
@@ -342,7 +342,7 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	else
 		opt = C_SPAR;
 
-	if (cs80setoptions(device_parent(&sc->sc_dev), sc->sc_slave,
+	if (cs80setoptions(device_parent(sc->sc_dev), sc->sc_slave,
 	    sc->sc_punit, opt))
 		return (EBUSY);
 
@@ -371,7 +371,7 @@ ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		else
 			sc->sc_eofp--;
 		DPRINTF(CDB_BSF, ("%s: ctclose backup eofs prt %d blk %d\n",
-		    device_xname(&sc->sc_dev), sc->sc_eofp,
+		    device_xname(sc->sc_dev), sc->sc_eofp,
 		    sc->sc_eofs[sc->sc_eofp]));
 	}
 
@@ -428,7 +428,7 @@ ctcommand(dev_t dev, int cmd, int cnt)
 			sc->sc_blkno = sc->sc_eofs[sc->sc_eofp];
 			sc->sc_eofp--;
 			DPRINTF(CDB_BSF, ("%s: backup eof pos %d blk %d\n",
-			    device_xname(&sc->sc_dev), sc->sc_eofp,
+			    device_xname(sc->sc_dev), sc->sc_eofp,
 			    sc->sc_eofs[sc->sc_eofp]));
 		}
 		ctstrategy(bp);
@@ -499,7 +499,7 @@ ctstart(struct ct_softc *sc)
 			sc->sc_blkno = 0;
 			ul.unit = CS80CMD_SUNIT(punit);
 			ul.cmd = CS80CMD_UNLOAD;
-			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			(void) cs80send(device_parent(sc->sc_dev), slave,
 			    punit, CS80CMD_SCMD, &ul, sizeof(ul));
 			break;
 
@@ -508,7 +508,7 @@ ctstart(struct ct_softc *sc)
 			sc->sc_flags |= CTF_WRT;
 			wfm.unit = CS80CMD_SUNIT(sc->sc_punit);
 			wfm.cmd = CS80CMD_WFM;
-			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			(void) cs80send(device_parent(sc->sc_dev), slave,
 			    punit, CS80CMD_SCMD, &wfm, sizeof(wfm));
 			ctaddeof(sc);
 			break;
@@ -524,7 +524,7 @@ ctstart(struct ct_softc *sc)
 		case MTREW:
 			sc->sc_blkno = 0;
 			DPRINTF(CDB_BSF, ("%s: clearing eofs\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			for (i=0; i<EOFS; i++)
 				sc->sc_eofs[i] = 0;
 			sc->sc_eofp = 0;
@@ -539,7 +539,7 @@ gotaddr:
 			sc->sc_ioc.len = htobe32(0);
 			sc->sc_ioc.nop3 = CS80CMD_NOP;
 			sc->sc_ioc.cmd = CS80CMD_READ;
-			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			(void) cs80send(device_parent(sc->sc_dev), slave,
 			    punit, CS80CMD_SCMD, &sc->sc_ioc,
 			    sizeof(sc->sc_ioc));
 			break;
@@ -575,7 +575,7 @@ mustio:
 			sc->sc_ioc.cmd = CS80CMD_WRITE;
 			sc->sc_flags |= (CTF_WRT | CTF_WRTTN);
 		}
-		(void) cs80send(device_parent(&sc->sc_dev), slave, punit,
+		(void) cs80send(device_parent(sc->sc_dev), slave, punit,
 		    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
 	}
 	gpibawait(sc->sc_ic);
@@ -684,7 +684,7 @@ ctintr(struct ct_softc *sc)
 
 	bp = bufq_peek(sc->sc_tab);
 	if (bp == NULL) {
-		aprint_error_dev(&sc->sc_dev, "bp == NULL\n");
+		aprint_error_dev(sc->sc_dev, "bp == NULL\n");
 		return;
 	}
 	if (sc->sc_flags & CTF_IO) {
@@ -734,18 +734,18 @@ ctintr(struct ct_softc *sc)
 				if (sc->sc_stat.c_aef & 0x4000)
 					tprintf(sc->sc_tpr,
 					    "%s: uninitialized media\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 				if (sc->sc_stat.c_aef & 0x1000)
 					tprintf(sc->sc_tpr,
 					    "%s: not ready\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 				if (sc->sc_stat.c_aef & 0x0800)
 					tprintf(sc->sc_tpr,
 					    "%s: write protect\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 			} else {
 				printf("%s err: v%d u%d ru%d bn%d, ",
-				    device_xname(&sc->sc_dev),
+				    device_xname(sc->sc_dev),
 				    (sc->sc_stat.c_vu>>4)&0xF,
 				    sc->sc_stat.c_vu&0xF,
 				    sc->sc_stat.c_pend,
@@ -757,7 +757,7 @@ ctintr(struct ct_softc *sc)
 				    sc->sc_stat.c_ief);
 			}
 		} else
-			aprint_error_dev(&sc->sc_dev, "request status failed\n");
+			aprint_error_dev(sc->sc_dev, "request status failed\n");
 		bp->b_error = EIO;
 		goto done;
 	} else
@@ -887,6 +887,6 @@ ctaddeof(struct ct_softc *sc)
 			sc->sc_eofs[sc->sc_eofp] = sc->sc_blkno - 1;
 	}
 	DPRINTF(CDB_BSF, ("%s: add eof pos %d blk %d\n",
-		       device_xname(&sc->sc_dev), sc->sc_eofp,
+		       device_xname(sc->sc_dev), sc->sc_eofp,
 		       sc->sc_eofs[sc->sc_eofp]));
 }

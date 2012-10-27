@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.113 2012/07/29 18:05:39 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.114 2012/10/27 17:17:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113 2012/07/29 18:05:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2012/10/27 17:17:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ cpu_rootconf(void)
 
 /*ARGSUSED*/
 int
-simple_devprint(void *auxp, const char *pnp)
+simple_devprint(void *aux, const char *pnp)
 {
 	return(QUIET);
 }
@@ -157,33 +157,33 @@ matchname(const char *fp, const char *sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
+amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
-		return(config_found(pdp, auxp, pfn) != NULL);
+		return(config_found(parent, aux, pfn) != NULL);
 
-	if (pdp == NULL) {
+	if (parent == NULL) {
 		memset(&temp, 0, sizeof temp);
-		pdp = &temp;
+		parent = &temp;
 	}
 
-	pdp->dv_cfdata = pcfp;
-	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
-	pdp->dv_unit = pcfp->cf_unit;
+	parent->dv_cfdata = pcfp;
+	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
+	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
+	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
-			(*ca->ca_attach)(pdp, NULL, auxp);
-			pdp->dv_cfdata = NULL;
+			(*ca->ca_attach)(parent, NULL, aux);
+			parent->dv_cfdata = NULL;
 			return(1);
 		}
 	}
-	pdp->dv_cfdata = NULL;
+	parent->dv_cfdata = NULL;
 	return(0);
 }
 
@@ -206,6 +206,7 @@ config_console(void)
 	if (cf == NULL) {
 		panic("no mainbus");
 	}
+
 	/*
 	 * delay clock calibration.
 	 */
@@ -233,7 +234,7 @@ CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 int
-mbmatch(device_t pdp, cfdata_t cfp, void *auxp)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #if 0	/*
 	 * XXX is this right? but we need to be found twice
@@ -254,59 +255,59 @@ mbmatch(device_t pdp, cfdata_t cfp, void *auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(device_t pdp, device_t dp, void *auxp)
+mbattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
-	config_found(dp, __UNCONST("clock"), simple_devprint);
+	config_found(self, __UNCONST("clock"), simple_devprint);
 	if (is_a3000() || is_a4000()) {
-		config_found(dp, __UNCONST("a34kbbc"), simple_devprint);
+		config_found(self, __UNCONST("a34kbbc"), simple_devprint);
 	} else
 #ifdef DRACO
 	if (!is_draco())
 #endif
 	{
-		config_found(dp, __UNCONST("a2kbbc"), simple_devprint);
+		config_found(self, __UNCONST("a2kbbc"), simple_devprint);
 	}
 #ifdef DRACO
 	if (is_draco()) {
-		config_found(dp, __UNCONST("drbbc"), simple_devprint);
-		config_found(dp, __UNCONST("kbd"), simple_devprint);
-		config_found(dp, __UNCONST("drsc"), simple_devprint);
-		config_found(dp, __UNCONST("drsupio"), simple_devprint);
+		config_found(self, __UNCONST("drbbc"), simple_devprint);
+		config_found(self, __UNCONST("kbd"), simple_devprint);
+		config_found(self, __UNCONST("drsc"), simple_devprint);
+		config_found(self, __UNCONST("drsupio"), simple_devprint);
 	} else
 #endif
 	{
-		config_found(dp, __UNCONST("ser"), simple_devprint);
-		config_found(dp, __UNCONST("par"), simple_devprint);
-		config_found(dp, __UNCONST("kbd"), simple_devprint);
-		config_found(dp, __UNCONST("ms"), simple_devprint);
-		config_found(dp, __UNCONST("grfcc"), simple_devprint);
-		config_found(dp, __UNCONST("amidisplaycc"), simple_devprint);
-		config_found(dp, __UNCONST("fdc"), simple_devprint);
+		config_found(self, __UNCONST("ser"), simple_devprint);
+		config_found(self, __UNCONST("par"), simple_devprint);
+		config_found(self, __UNCONST("kbd"), simple_devprint);
+		config_found(self, __UNCONST("ms"), simple_devprint);
+		config_found(self, __UNCONST("grfcc"), simple_devprint);
+		config_found(self, __UNCONST("amidisplaycc"), simple_devprint);
+		config_found(self, __UNCONST("fdc"), simple_devprint);
 	}
 	if (is_a4000() || is_a1200() || is_a600())
-		config_found(dp, __UNCONST("wdc"), simple_devprint);
+		config_found(self, __UNCONST("wdc"), simple_devprint);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
-		config_found(dp, __UNCONST("afsc"), simple_devprint);
+		config_found(self, __UNCONST("afsc"), simple_devprint);
 	if (is_a3000())
-		config_found(dp, __UNCONST("ahsc"), simple_devprint);
+		config_found(self, __UNCONST("ahsc"), simple_devprint);
 	if (is_a600() || is_a1200())
-		config_found(dp, __UNCONST("pccard"), simple_devprint);
+		config_found(self, __UNCONST("pccard"), simple_devprint);
 	if (is_a1200())
-		config_found(dp, __UNCONST("a1k2cp"), simple_devprint);
+		config_found(self, __UNCONST("a1k2cp"), simple_devprint);
 #ifdef DRACO
 	if (!is_draco())
 #endif
-		config_found(dp, __UNCONST("aucc"), simple_devprint);
+		config_found(self, __UNCONST("aucc"), simple_devprint);
 
-	config_found(dp, __UNCONST("zbus"), simple_devprint);
+	config_found(self, __UNCONST("zbus"), simple_devprint);
 }
 
 int
-mbprint(void *auxp, const char *pnp)
+mbprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("%s at %s", (char *)auxp, pnp);
+		aprint_normal("%s at %s", (char *)aux, pnp);
 	return(UNCONF);
 }
 
@@ -388,7 +389,7 @@ findroot(void)
 			 * Find the disk corresponding to the current
 			 * device.
 			 */
-			devs = (device_t *)sd_cd.cd_devs;
+			devs = sd_cd.cd_devs;
 			if ((dkp = disk_find(device_xname(device_lookup(&sd_cd, unit)))) == NULL)
 				continue;
 
@@ -589,4 +590,3 @@ device_register(device_t dev, void *aux)
 	p5pb_device_register(dev, aux);
 #endif /* P5PB_CONSOLE */
 }
-

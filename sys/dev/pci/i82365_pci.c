@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.32 2009/09/17 18:14:41 tsutsui Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.33 2012/10/27 17:18:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.32 2009/09/17 18:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.33 2012/10/27 17:18:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.32 2009/09/17 18:14:41 tsutsui Exp 
 int	pcic_pci_match(device_t, cfdata_t, void *);
 void	pcic_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcic_pci, sizeof(struct pcic_pci_softc),
+CFATTACH_DECL_NEW(pcic_pci, sizeof(struct pcic_pci_softc),
     pcic_pci_match, pcic_pci_attach, NULL, NULL);
 
 static const struct pcmcia_chip_functions pcic_pci_functions = {
@@ -117,6 +117,8 @@ pcic_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_space_handle_t memh;
 	const char *model;
+
+	sc->dev = self;
 
 	aprint_naive(": PCMCIA controller\n");
 

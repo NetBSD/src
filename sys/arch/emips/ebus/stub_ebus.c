@@ -1,4 +1,4 @@
-/*	$NetBSD: stub_ebus.c,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: stub_ebus.c,v 1.2 2012/10/27 17:17:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,18 +53,17 @@
  * Device softc
  */
 struct stub_softc {
-	struct device sc_dev;
 	struct STUBSTRUCT *sc_dp;
 };
 
-static int	stub_ebus_match (struct device *, struct cfdata *, void *);
-static void	stub_ebus_attach (struct device *, struct device *, void *);
+static int	stub_ebus_match (device_t, cfdata_t, void *);
+static void	stub_ebus_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(stub_ebus, sizeof (struct stub_softc),
+CFATTACH_DECL_NEW(stub_ebus, sizeof (struct stub_softc),
     stub_ebus_match, stub_ebus_attach, NULL, NULL);
 
 static int
-stub_ebus_match(struct device *parent, struct cfdata *match, void *aux)
+stub_ebus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ebus_attach_args *ia = aux;
 	struct STUBSTRUCT *f = (struct STUBSTRUCT *)ia->ia_vaddr;
@@ -78,10 +77,10 @@ stub_ebus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-stub_ebus_attach(struct device *parent, struct device *self, void *aux)
+stub_ebus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ebus_attach_args *ia =aux;
-	struct stub_softc *sc = (struct stub_softc *)self;
+	struct stub_softc *sc = device_private(self);
 
 	sc->sc_dp = (struct STUBSTRUCT*)ia->ia_vaddr;
 

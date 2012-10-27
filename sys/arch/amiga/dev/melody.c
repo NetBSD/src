@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.17 2011/11/23 23:07:28 jmcneill Exp $ */
+/*	$NetBSD: melody.c,v 1.18 2012/10/27 17:17:30 chs Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.17 2011/11/23 23:07:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.18 2012/10/27 17:17:30 chs Exp $");
 
 /*
  * Melody audio driver.
@@ -59,15 +59,15 @@ struct melody_softc {
 	uint8_t *		sc_intack;
 };
 
-int melody_match(struct device *, struct cfdata *, void *);
-void melody_attach(struct device *, struct device *, void *);
+int melody_match(device_t, cfdata_t, void *);
+void melody_attach(device_t, device_t, void *);
 void melody_intack(struct tav_softc *);
 
-CFATTACH_DECL(melody, sizeof(struct melody_softc),
+CFATTACH_DECL_NEW(melody, sizeof(struct melody_softc),
     melody_match, melody_attach, NULL, NULL);
 
 int
-melody_match(struct device *parent, struct cfdata *cfp, void *aux)
+melody_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
@@ -82,14 +82,14 @@ melody_match(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 void
-melody_attach(struct device *parent, struct device *self, void *aux)
+melody_attach(device_t parent, device_t self, void *aux)
 {
 	struct melody_softc *sc;
 	struct zbus_args *zap;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	sc = (struct melody_softc *)self;
+	sc = device_private(self);
 	zap = aux;
 
 	sc->sc_bst_leftbyte.base = (u_long)zap->va + 0;
@@ -104,6 +104,7 @@ melody_attach(struct device *parent, struct device *self, void *aux)
 		panic("melody: cant bus_space_map");
 		/* NOTREACHED */
 	}
+	sc->sc_tav.sc_dev = self;
 	sc->sc_tav.sc_iot = iot;
 	sc->sc_tav.sc_ioh = ioh;
 	sc->sc_tav.sc_pcm_ord = 0;

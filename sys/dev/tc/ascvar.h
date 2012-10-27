@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.11 2007/03/04 06:02:46 christos Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.12 2012/10/27 17:18:38 chs Exp $	*/
 
 
 /*
@@ -41,8 +41,6 @@ typedef struct scsi_state {
  */
 
 struct asc_softc {
-	struct device sc_dev;			/* us as a device */
-
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_space_handle_t sc_scsi_bsh;
@@ -93,3 +91,7 @@ int	asc_intr(void *asc);
  */
 #define	ASCDMA_READ	1
 #define	ASCDMA_WRITE	2
+
+
+xxx this file is not used!
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.17 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.18 2012/10/27 17:17:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.18 2012/10/27 17:17:23 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
 int  ptscmatch(device_t, cfdata_t, void *);
 void ptscattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ptsc, sizeof(struct ptsc_softc),
+CFATTACH_DECL_NEW(ptsc, sizeof(struct ptsc_softc),
     ptscmatch, ptscattach, NULL, NULL);
 
 int ptsc_intr(void *);
@@ -176,6 +176,7 @@ ptscattach(device_t parent, device_t self, void *aux)
 	rp->FAS216.sfas_tc_high	= &fas[PTSC_FASOFFSET_TCH];
 	rp->FAS216.sfas_fifo_bot = &fas[PTSC_FASOFFSET_FIFOBOTTOM];
 
+	sc->sc_softc.sc_dev	= self;
 	sc->sc_softc.sc_fas	= (sfas_regmap_p)rp;
 	sc->sc_softc.sc_spec	= &sc->sc_specific;
 
@@ -195,7 +196,7 @@ ptscattach(device_t parent, device_t self, void *aux)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
-	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
+	sc->sc_softc.sc_adapter.adapt_dev = sc->sc_softc.sc_dev;
 	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
 	sc->sc_softc.sc_adapter.adapt_openings = 7;
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.58 2012/10/05 01:19:03 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.59 2012/10/27 17:18:37 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.58 2012/10/05 01:19:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.59 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	    0x8000,
 	    0, &sc->sc_ctl_memh) != 0) {
 		printf("%s: cannot map control registers\n",
-		    self->dv_xname);
+		    device_xname(self));
 		return;
 	}
 
@@ -357,7 +357,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 		    &sc->sc_fb_memh) != 0) {
 			printf("%s: cannot map framebuffer\n",
-			    self->dv_xname);
+			    device_xname(self));
 			return;
 		}
 		fb->fb_pixels = (char *)sc->sc_fb_memh;

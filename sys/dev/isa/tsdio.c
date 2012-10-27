@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.10 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.11 2012/10/27 17:18:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.10 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.11 2012/10/27 17:18:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ void	tsdio_attach(device_t, device_t, void *);
 int	tsdio_search(device_t, cfdata_t, const int *, void *);
 int	tsdio_print(void *, const char *);
 
-CFATTACH_DECL(tsdio, sizeof(struct tsdio_softc),
+CFATTACH_DECL_NEW(tsdio, sizeof(struct tsdio_softc),
     tsdio_probe, tsdio_attach, NULL, NULL);
 
 int
@@ -103,7 +103,7 @@ tsdio_probe(device_t parent, cfdata_t cf, void *aux)
 void
 tsdio_attach(device_t parent, device_t self, void *aux)
 {
-	struct tsdio_softc *sc = (struct tsdio_softc *) self;
+	struct tsdio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
@@ -115,7 +115,7 @@ tsdio_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, 8,
 	    0, &sc->sc_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
+		aprint_error_dev(self, "unable to map i/o space\n");
 		return;
 	}
 
@@ -128,7 +128,7 @@ tsdio_attach(device_t parent, device_t self, void *aux)
 int
 tsdio_search(device_t parent, cfdata_t cf, const int *l, void *aux)
 {
-	struct tsdio_softc *sc = (struct tsdio_softc *)parent;
+	struct tsdio_softc *sc = device_private(parent);
 	struct tsdio_attach_args sa;
 
 	sa.ta_iot = sc->sc_iot;

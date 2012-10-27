@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.24 2009/01/22 17:34:22 cegger Exp $	*/
+/*	$NetBSD: rf.c,v 1.25 2012/10/27 17:18:37 chs Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.24 2009/01/22 17:34:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.25 2012/10/27 17:18:37 chs Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -410,13 +410,13 @@ rfc_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (rfcprobedens(rfc_sc, 0) >= 0) {
 		rfc_aa.dnum = 0;
-		rfc_sc->sc_childs[0] = config_found(&rfc_sc->sc_dev, &rfc_aa,
+		rfc_sc->sc_childs[0] = config_found(rfc_sc->sc_dev, &rfc_aa,
 		    rf_print);
 	} else
 		rfc_sc->sc_childs[0] = NULL;
 	if (rfcprobedens(rfc_sc, 1) >= 0) {
 		rfc_aa.dnum = 1;
-		rfc_sc->sc_childs[1] = config_found(&rfc_sc->sc_dev, &rfc_aa,
+		rfc_sc->sc_childs[1] = config_found(rfc_sc->sc_dev, &rfc_aa,
 		    rf_print);
 	} else
 		rfc_sc->sc_childs[1] = NULL;
@@ -1144,5 +1144,3 @@ rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 
 	return(ENOTTY);
 }
-
-

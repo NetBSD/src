@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_cf.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
-/*	$NetBSD: mpcsa_cf.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
+/*	$Id: mpcsa_cf.c,v 1.3 2012/10/27 17:17:48 chs Exp $	*/
+/*	$NetBSD: mpcsa_cf.c,v 1.3 2012/10/27 17:17:48 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_cf.c,v 1.2 2008/07/03 01:15:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_cf.c,v 1.3 2012/10/27 17:17:48 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ struct mpcsa_cf_softc {
 	struct at91pio_softc	*sc_pioc;
 };
 
-static int mpcsa_cf_match(struct device *, struct cfdata *, void *);
-static void mpcsa_cf_attach(struct device *, struct device *, void *);
+static int mpcsa_cf_match(device_t, cfdata_t, void *);
+static void mpcsa_cf_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mpcsa_cf, sizeof(struct mpcsa_cf_softc),
 	      mpcsa_cf_match, mpcsa_cf_attach, NULL, NULL);
@@ -73,7 +73,7 @@ struct at91cf_chipset_tag mpcsa_cf_tag = {
 };
 
 static int
-mpcsa_cf_match(struct device *parent, struct cfdata *match, void *aux)
+mpcsa_cf_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "at91cf") == 0 && strcmp(match->cf_atname, "mpcsa_cf") == 0)
 		return 2;
@@ -81,7 +81,7 @@ mpcsa_cf_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mpcsa_cf_attach(struct device *parent, struct device *self, void *aux)
+mpcsa_cf_attach(device_t parent, device_t self, void *aux)
 {
 	struct mpcsa_cf_softc *sc = device_private(self);
 //	at91cf_chipset_tag_t cscf = sc->sc_dev.sc_cscf;

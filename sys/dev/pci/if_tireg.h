@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.19 2007/09/07 23:05:27 tnn Exp $ */
+/* $NetBSD: if_tireg.h,v 1.20 2012/10/27 17:18:34 chs Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1085,7 +1085,7 @@ struct txdmamap_pool_entry {
 };
 
 struct ti_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom		ethercom;	/* interface info */
 	bus_space_handle_t	ti_bhandle;
 	char			*ti_vhandle;

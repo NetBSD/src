@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcivar.h,v 1.3 2011/04/04 19:58:56 dyoung Exp $	*/
+/*	$NetBSD: ahcivar.h,v 1.4 2012/10/27 17:18:01 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -93,7 +93,7 @@ struct ahci_softc {
 
 	device_t		 sc_child;
 
-	struct device		*sc_parent;	/* parent device */
+	device_t		 sc_parent;	/* parent device */
 
 	u_int8_t		 sc_addr;	/* device address of root hub */
 	u_int8_t		 sc_conf;

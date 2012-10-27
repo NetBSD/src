@@ -1,4 +1,4 @@
-/*	$NetBSD: iwicvar.h,v 1.5 2007/10/19 12:00:51 ad Exp $	*/
+/*	$NetBSD: iwicvar.h,v 1.6 2012/10/27 17:18:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -99,7 +99,7 @@ struct iwic_dchan {
  *	state of one iwic unit
  *---------------------------------------------------------------------------*/
 struct iwic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	const char *sc_cardname;
 

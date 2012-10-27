@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.17 2009/05/12 14:37:59 cegger Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.18 2012/10/27 17:18:27 chs Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -206,7 +206,7 @@ struct mscp_work {
  * been handed out; b_actf is that place.
  */
 struct mscp_softc {
-	struct	device mi_dev;		/* Autoconf stuff */
+	device_t mi_dev;		/* Autoconf stuff */
 	struct	mscp_ri mi_cmd;		/* MSCP command ring info */
 	struct	mscp_ri mi_rsp;		/* MSCP response ring info */
 	bus_dma_tag_t	mi_dmat;
@@ -218,7 +218,7 @@ struct mscp_softc {
 	char	mi_wantcredits;		/* waiting for transfer credits */
 	struct	mscp_ctlr *mi_mc;	/* Pointer to parent's mscp_ctlr */
 	struct	mscp_device *mi_me;	/* Pointer to child's mscp_device */
-	struct	device **mi_dp;		/* array of backpointers */
+	device_t *mi_dp;		/* array of backpointers */
 	int	mi_driveno;		/* Max physical drive number found */
 	char	mi_ctlrnr;		/* Phys ctlr nr */
 	char	mi_adapnr;		/* Phys adapter nr */

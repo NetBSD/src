@@ -1,4 +1,4 @@
-/*	$NetBSD: oioc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: oioc.c,v 1.3 2012/10/27 17:18:10 chs Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.3 2012/10/27 17:18:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,19 +56,17 @@ __KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $");
 #include "locators.h"
 
 struct oioc_softc {
-	struct device   	sc_dev;
-
 	int			sc_burst_dma;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };
 
-static int      oioc_match(struct device *, struct cfdata *, void *);
-static void     oioc_attach(struct device *, struct device *, void *);
+static int      oioc_match(device_t, cfdata_t, void *);
+static void     oioc_attach(device_t, device_t, void *);
 static int	oioc_print(void *, const char *);
 
-CFATTACH_DECL(oioc, sizeof(struct oioc_softc),
+CFATTACH_DECL_NEW(oioc, sizeof(struct oioc_softc),
     oioc_match, oioc_attach, NULL, NULL);
 
 struct oioc_device {
@@ -81,7 +79,7 @@ struct oioc_device {
 };
 
 static int
-oioc_match(struct device * parent, struct cfdata * match, void *aux)
+oioc_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	switch(mach_type) {
@@ -94,9 +92,9 @@ oioc_match(struct device * parent, struct cfdata * match, void *aux)
 }
 
 static void
-oioc_attach(struct device * parent, struct device * self, void *aux)
+oioc_attach(device_t parent, device_t self, void *aux)
 {
-	struct oioc_softc *sc = (struct oioc_softc *)self;
+	struct oioc_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	uint32_t reg1, reg2;
 	int oiocrev, i;

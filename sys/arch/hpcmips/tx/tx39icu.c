@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.31 2011/03/18 15:31:38 tsutsui Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.32 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.31 2011/03/18 15:31:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.32 2012/10/27 17:17:54 chs Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -180,7 +180,6 @@ int	tx39_poll_intr(void *);
 #endif /* USE_POLL */
 
 struct tx39icu_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	/* IRQLOW */
 	txreg_t	sc_le_mask[TX39_INTRSET_MAX + 1];
@@ -198,8 +197,8 @@ struct tx39icu_softc {
 #endif /* USE_POLL */
 };
 
-int	tx39icu_match(struct device *, struct cfdata *, void *);
-void	tx39icu_attach(struct device *, struct device *, void *);
+int	tx39icu_match(device_t, cfdata_t, void *);
+void	tx39icu_attach(device_t, device_t, void *);
 
 void	tx39_intr_dump(struct tx39icu_softc *);
 void	tx39_intr_decode(int, int *, int *);
@@ -209,21 +208,21 @@ void	tx39_irqhigh_establish(tx_chipset_tag_t, int, int, int,
 void	tx39_irqhigh_intr(uint32_t, vaddr_t, uint32_t);
 int	tx39_irqhigh(int, int);
 
-CFATTACH_DECL(tx39icu, sizeof(struct tx39icu_softc),
+CFATTACH_DECL_NEW(tx39icu, sizeof(struct tx39icu_softc),
     tx39icu_match, tx39icu_attach, NULL, NULL);
 
 int
-tx39icu_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39icu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (ATTACH_FIRST);
 }
 
 void
-tx39icu_attach(struct device *parent, struct device *self, void *aux)
+tx39icu_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39icu_softc *sc = (void *)self;
+	struct tx39icu_softc *sc = device_private(self);
 	tx_chipset_tag_t tc = ta->ta_tc;
 	txreg_t reg, *regs;
 	int i;

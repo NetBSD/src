@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.23 2012/07/22 14:32:52 matt Exp $ */
+/* $Id: if_ae.c,v 1.24 2012/10/27 17:18:02 chs Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23 2012/07/22 14:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.24 2012/10/27 17:18:02 chs Exp $");
 
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ static void	ae_mii_writereg(device_t, int, int, int);
 static void	ae_print_stats(struct ae_softc *);
 #endif
 
-CFATTACH_DECL(ae, sizeof(struct ae_softc),
+CFATTACH_DECL_NEW(ae, sizeof(struct ae_softc),
     ae_match, ae_attach, ae_detach, ae_activate);
 
 /*
@@ -225,6 +225,8 @@ ae_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
 
+	sc->sc_dev = self;
+
 	callout_init(&sc->sc_tick_callout, 0);
 
 	printf(": Atheros AR531X 10/100 Ethernet\n");
@@ -232,10 +234,10 @@ ae_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Try to get MAC address.
 	 */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
+	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-address");
 	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
@@ -243,7 +245,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	enaddr = prop_data_data_nocopy(ea);
 
 	/* Announce ourselves. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
 	    ether_sprintf(enaddr));
 
 	sc->sc_cirq = aa->aa_cirq;
@@ -261,7 +263,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_space_map(sc->sc_st, aa->aa_addr, sc->sc_size, 0,
 	    &sc->sc_sh)) != 0) {
 		printf("%s: unable to map registers, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		goto fail_0;
 	}
 
@@ -273,7 +275,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct ae_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		goto fail_1;
 	}
 
@@ -281,7 +283,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct ae_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		goto fail_2;
 	}
 
@@ -289,7 +291,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct ae_control_data), 1,
 	    sizeof(struct ae_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
 		printf("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		    "error = %d\n", device_xname(sc->sc_dev), error);
 		goto fail_3;
 	}
 
@@ -297,7 +299,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	    sc->sc_control_data, sizeof(struct ae_control_data), NULL,
 	    0)) != 0) {
 		printf("%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		goto fail_4;
 	}
 
@@ -309,7 +311,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 		    AE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			    "error = %d\n", device_xname(sc->sc_dev), i, error);
 			goto fail_5;
 		}
 	}
@@ -321,7 +323,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			printf("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			    "error = %d\n", device_xname(sc->sc_dev), i, error);
 			goto fail_6;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -350,7 +352,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -361,7 +363,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tick = ae_mii_tick;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
@@ -384,7 +386,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 
 	/*
@@ -393,17 +395,17 @@ ae_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sdhook = shutdownhook_establish(ae_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    ae_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	return;
 
 	/*
@@ -550,7 +552,7 @@ ae_start(struct ifnet *ifp)
 	int error, firsttx, nexttx, lasttx = 1, ofree, seg;
 
 	DPRINTF(sc, ("%s: ae_start: sc_flags 0x%08x, if_flags 0x%08x\n",
-	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
+	    device_xname(sc->sc_dev), sc->sc_flags, ifp->if_flags));
 
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -564,7 +566,7 @@ ae_start(struct ifnet *ifp)
 	firsttx = sc->sc_txnext;
 
 	DPRINTF(sc, ("%s: ae_start: txfree %d, txnext %d\n",
-	    sc->sc_dev.dv_xname, ofree, firsttx));
+	    device_xname(sc->sc_dev), ofree, firsttx));
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -595,7 +597,7 @@ ae_start(struct ifnet *ifp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				break;
 			}
 			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
@@ -603,7 +605,7 @@ ae_start(struct ifnet *ifp)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
+					    "cluster\n", device_xname(sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -614,7 +616,7 @@ ae_start(struct ifnet *ifp)
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname,
+				    "error = %d\n", device_xname(sc->sc_dev),
 				    error);
 				break;
 			}
@@ -741,7 +743,7 @@ ae_start(struct ifnet *ifp)
 
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
-		    sc->sc_dev.dv_xname, lasttx, firsttx));
+		    device_xname(sc->sc_dev), lasttx, firsttx));
 		/*
 		 * Cause a transmit interrupt to happen on the
 		 * last packet we enqueued.
@@ -782,11 +784,11 @@ ae_watchdog(struct ifnet *ifp)
 	doing_transmit = (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq));
 
 	if (doing_transmit) {
-		printf("%s: transmit timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: transmit timeout\n", device_xname(sc->sc_dev));
 		ifp->if_oerrors++;
 	}
 	else
-		printf("%s: spurious watchdog timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: spurious watchdog timeout\n", device_xname(sc->sc_dev));
 
 	(void) ae_init(ifp);
 
@@ -859,11 +861,11 @@ ae_intr(void *arg)
 	u_int32_t status, rxstatus, txstatus;
 	int handled = 0, txthresh;
 
-	DPRINTF(sc, ("%s: ae_intr\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: ae_intr\n", device_xname(sc->sc_dev)));
 
 #ifdef DEBUG
 	if (AE_IS_ENABLED(sc) == 0)
-		panic("%s: ae_intr: not enabled", sc->sc_dev.dv_xname);
+		panic("%s: ae_intr: not enabled", device_xname(sc->sc_dev));
 #endif
 
 	/*
@@ -871,7 +873,7 @@ ae_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev)) {
+	    !device_is_active(sc->sc_dev)) {
 		printf("spurious?!?\n");
 		return (0);
 	}
@@ -897,7 +899,7 @@ ae_intr(void *arg)
 
 			if (rxstatus & STATUS_RU) {
 				printf("%s: receive ring overrun\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				/* Get the receive process going again. */
 				AE_WRITE(sc, CSR_RXPOLL, RXPOLL_RPD);
 				AE_BARRIER(sc);
@@ -911,7 +913,7 @@ ae_intr(void *arg)
 
 			if (txstatus & STATUS_TJT)
 				printf("%s: transmit jabber timeout\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 
 			if (txstatus & STATUS_UNF) {
 				/*
@@ -932,7 +934,7 @@ ae_intr(void *arg)
 					    ae_txthresh[txthresh].txth_opmode;
 					printf("%s: transmit underrun; new "
 					    "threshold: %s\n",
-					    sc->sc_dev.dv_xname,
+					    device_xname(sc->sc_dev),
 					    ae_txthresh[txthresh].txth_name);
 
 					/*
@@ -952,10 +954,10 @@ ae_intr(void *arg)
 		if (status & (STATUS_TPS|STATUS_RPS)) {
 			if (status & STATUS_TPS)
 				printf("%s: transmit process stopped\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			if (status & STATUS_RPS)
 				printf("%s: receive process stopped\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			(void) ae_init(ifp);
 			break;
 		}
@@ -971,7 +973,7 @@ ae_intr(void *arg)
 				str = "unknown error";
 
 			printf("%s: fatal system error: %s\n",
-			    sc->sc_dev.dv_xname, str);
+			    device_xname(sc->sc_dev), str);
 			(void) ae_init(ifp);
 			break;
 		}
@@ -1050,7 +1052,7 @@ ae_rxintr(struct ae_softc *sc)
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
-				    sc->sc_dev.dv_xname, str)
+				    device_xname(sc->sc_dev), str)
 			ifp->if_ierrors++;
 			PRINTERR(ADSTAT_Rx_DE, "descriptor error");
 			PRINTERR(ADSTAT_Rx_RF, "runt frame");
@@ -1161,7 +1163,7 @@ ae_txintr(struct ae_softc *sc)
 	u_int32_t txstat;
 
 	DPRINTF(sc, ("%s: ae_txintr: sc_flags 0x%08x\n",
-	    sc->sc_dev.dv_xname, sc->sc_flags));
+	    device_xname(sc->sc_dev), sc->sc_flags));
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1252,7 +1254,7 @@ ae_print_stats(struct ae_softc *sc)
 {
 
 	printf("%s: tx_uf %lu, tx_to %lu, tx_ec %lu, tx_lc %lu\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    sc->sc_stats.ts_tx_uf, sc->sc_stats.ts_tx_to,
 	    sc->sc_stats.ts_tx_ec, sc->sc_stats.ts_tx_lc);
 }
@@ -1290,7 +1292,7 @@ ae_reset(struct ae_softc *sc)
 	}
 
 	if (AE_ISSET(sc, CSR_BUSMODE, BUSMODE_SWR))
-		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
+		printf("%s: reset failed to complete\n", device_xname(sc->sc_dev));
 
 	delay(1000);
 }
@@ -1367,7 +1369,7 @@ ae_init(struct ifnet *ifp)
 			if ((error = ae_add_rxbuf(sc, i)) != 0) {
 				printf("%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
+				    device_xname(sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -1460,7 +1462,7 @@ ae_init(struct ifnet *ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
 	return (error);
 }
@@ -1479,7 +1481,7 @@ ae_enable(struct ae_softc *sc)
 		    ae_intr, sc);
 		if (sc->sc_ih == NULL) {
 			printf("%s: unable to establish interrupt\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return (EIO);
 		}
 		sc->sc_flags |= AE_ENABLED;
@@ -1652,7 +1654,7 @@ ae_add_rxbuf(struct ae_softc *sc, int idx)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
+		    device_xname(sc->sc_dev), idx, error);
 		panic("ae_add_rxbuf");	/* XXX */
 	}
 
@@ -1691,7 +1693,7 @@ ae_filter_setup(struct ae_softc *sc)
 	}
 
 	DPRINTF(sc, ("%s: ae_filter_setup: sc_flags 0x%08x\n",
-	    sc->sc_dev.dv_xname, sc->sc_flags));
+	    device_xname(sc->sc_dev), sc->sc_flags));
 
 	macctl = AE_READ(sc, CSR_MACCTL);
 	macctl &= ~(MACCTL_PR | MACCTL_PM);
@@ -1741,7 +1743,7 @@ ae_filter_setup(struct ae_softc *sc)
 	AE_BARRIER(sc);
 
 	DPRINTF(sc, ("%s: ae_filter_setup: returning %x\n",
-		    sc->sc_dev.dv_xname, macctl));
+		    device_xname(sc->sc_dev), macctl));
 }
 
 /*
@@ -1795,13 +1797,13 @@ ae_idle(struct ae_softc *sc, u_int32_t bits)
 		if ((bits & OPMODE_ST) != 0 && (csr & STATUS_TPS) == 0 &&
 		    (csr & STATUS_TS) != STATUS_TS_STOPPED) {
 			printf("%s: transmit process failed to idle: "
-			    "state %s\n", sc->sc_dev.dv_xname,
+			    "state %s\n", device_xname(sc->sc_dev),
 			    txstate_names[(csr & STATUS_TS) >> 20]);
 		}
 		if ((bits & OPMODE_SR) != 0 && (csr & STATUS_RPS) == 0 &&
 		    (csr & STATUS_RS) != STATUS_RS_STOPPED) {
 			printf("%s: receive process failed to idle: "
-			    "state %s\n", sc->sc_dev.dv_xname,
+			    "state %s\n", device_xname(sc->sc_dev),
 			    rxstate_names[(csr & STATUS_RS) >> 17]);
 		}
 	}
@@ -1822,7 +1824,7 @@ ae_mii_tick(void *arg)
 	struct ae_softc *sc = arg;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	s = splnet();

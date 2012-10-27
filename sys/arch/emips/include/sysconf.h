@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2 2011/02/22 08:20:20 matt Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.3 2012/10/27 17:17:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@ struct platform {
 	void	(*bus_reset) (void);
 	void	(*cons_init) (void);
 	void	(*iointr) (uint32_t, vaddr_t, uint32_t);
-	void	(*intr_establish) (struct device *, void *, int,
+	void	(*intr_establish) (device_t, void *, int,
 		    int (*)(void *, void *), void *);
 	int		(*memsize) (void *);
 };
@@ -91,7 +91,7 @@ void	platform_not_supported (void);
 
 /* defaults */
 void    noop(void);
-void    emips_intr_establish(struct device *, void *, int,
+void    emips_intr_establish(device_t, void *, int,
                              int (*)(void *, void *), void *);
 void    emips_aic_intr(uint32_t, vaddr_t, uint32_t);
 #endif /* _KERNEL */

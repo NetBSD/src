@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.5 2011/07/26 22:52:47 dyoung Exp $	*/
+/*	$Id: imx_pcic.c,v 1.6 2012/10/27 17:17:39 chs Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.5 2011/07/26 22:52:47 dyoung Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.6 2012/10/27 17:17:39 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.5 2011/07/26 22:52:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.6 2012/10/27 17:17:39 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,13 +369,13 @@ imx_pcic_attach_common(struct imx_pcic_softc *sc,
 	printf(": %d slot%s\n", sc->sc_nslots, sc->sc_nslots < 2 ? "" : "s");
 
 	if (sc->sc_nslots == 0) {
-		aprint_error("%s: can't attach\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't attach\n", device_xname(sc->sc_dev));
 		return;
 	}
 
 	if (bus_space_map(sc->sc_iot, IMX_MEMCTL_BASE, IMX_MEMCTL_SIZE,
 	    0, &sc->sc_memctl_ioh)) {
-		aprint_error("%s: failed to map MEMCTL\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: failed to map MEMCTL\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -408,7 +408,7 @@ imx_pcic_attach_common(struct imx_pcic_softc *sc,
 		paa.pch = (pcmcia_chipset_handle_t)so;
 printf("%s: sc_pa %lx\n", __func__, sc->sc_pa);
 
-		so->pcmcia = config_found_ia(&sc->sc_dev, "pcmciabus", &paa,
+		so->pcmcia = config_found_ia(sc->sc_dev, "pcmciabus", &paa,
 		    imx_pcic_print);
 
 #ifdef NOTYET
@@ -429,9 +429,9 @@ printf("%s: slot %d, irqpin %d\n",  __func__, s[i], sc->sc_irqpin[s[i]]);
 
 		if (kthread_create(PRI_NONE, 0, NULL,
 		    imx_pcic_event_thread, so, &so->event_thread,
-		    "%s,%d", sc->sc_dev.dv_xname, so->socket) != 0) {
+		    "%s,%d", device_xname(sc->sc_dev), so->socket) != 0) {
 			printf("%s: unable to create event thread for %d\n",
-				sc->sc_dev.dv_xname, so->socket);
+				device_xname(sc->sc_dev), so->socket);
 		}
 	}
 }

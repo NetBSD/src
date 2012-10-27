@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.5 2012/03/18 05:26:58 mrg Exp $	*/
+/*	$NetBSD: tda.c,v 1.6 2012/10/27 17:18:12 chs Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.5 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.6 2012/10/27 17:18:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ struct tda_softc {
 	callout_t		sc_timer;
 };
 
-int	tda_match(struct device *, struct cfdata *, void *);
-void	tda_attach(struct device *, struct device *, void *);
+int	tda_match(device_t, cfdata_t, void *);
+void	tda_attach(device_t, device_t, void *);
 
 void	tda_setspeed(struct tda_softc *);
 static void	tda_adjust(void *);
@@ -76,7 +76,7 @@ CFATTACH_DECL_NEW(tda, sizeof(struct tda_softc),
 	tda_match, tda_attach, NULL, NULL);
 
 int
-tda_match(struct device *parent, struct cfdata *match, void *aux)
+tda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	char name[32];
@@ -97,7 +97,7 @@ tda_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-tda_attach(struct device *parent, struct device *self, void *aux)
+tda_attach(device_t parent, device_t self, void *aux)
 {
 	struct tda_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;

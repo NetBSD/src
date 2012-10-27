@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.32 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.33 2012/10/27 17:18:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.32 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.33 2012/10/27 17:18:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ cac_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": RAID controller\n");
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	ct = cac_pci_findtype(pa);
@@ -218,7 +219,7 @@ cac_pci_attach(device_t parent, device_t self, void *aux)
 	cac_init(sc, intrstr, (ct->ct_flags & CT_STARTFW) != 0);
 }
 
-CFATTACH_DECL(cac_pci, sizeof(struct cac_softc),
+CFATTACH_DECL_NEW(cac_pci, sizeof(struct cac_softc),
     cac_pci_match, cac_pci_attach, NULL, NULL);
 
 static void
@@ -244,7 +245,7 @@ cac_pci_l0_completed(struct cac_softc *sc)
 
 	if ((off & 3) != 0)
 		printf("%s: failed command list returned: %lx\n",
-		    device_xname(&sc->sc_dv), (long)off);
+		    device_xname(sc->sc_dev), (long)off);
 
 	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)((char *)sc->sc_ccbs + off);

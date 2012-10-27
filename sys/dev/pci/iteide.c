@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.17 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: iteide.c,v 1.18 2012/10/27 17:18:34 chs Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.17 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.18 2012/10/27 17:18:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ ite_setup_channel(struct ata_channel *chp)
 			    (cfg & IT_CFG_CABLE(channel, drive)) == 0) {
 				ATADEBUG_PRINT(("(%s:%d:%d): "
 				    "80-wire cable not detected\n",
-				    device_xname(&sc->sc_wdcdev.sc_atac.atac_dev),
+				    device_xname(sc->sc_wdcdev.sc_atac.atac_dev),
 				    channel, drive), DEBUG_PROBE);
 				drvp->UDMA_mode = 2;
 			}

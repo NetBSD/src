@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2010/08/01 12:42:45 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2012/10/27 17:17:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -54,8 +54,8 @@ struct pci_attach_args;
  */
 struct dreamcast_pci_chipset {
         void            *pc_conf_v;
-        void            (*pc_attach_hook)(struct device *,
-                            struct device *, struct pcibus_attach_args *);
+        void            (*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
         int             (*pc_bus_maxdevs)(void *, int);
         pcitag_t        (*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,

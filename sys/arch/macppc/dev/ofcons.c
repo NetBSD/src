@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.26 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.27 2012/10/27 17:18:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.26 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.27 2012/10/27 17:18:00 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.26 2011/06/18 08:08:28 matt Exp $");
 #include "adb.h"
 
 struct ofcons_softc {
-	struct device of_dev;
 	struct tty *of_tty;
 };
 
@@ -66,7 +65,7 @@ static int stdin, stdout;
 static int ofcmatch(device_t, cfdata_t, void *);
 static void ofcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(macofcons, sizeof(struct ofcons_softc),
+CFATTACH_DECL_NEW(macofcons, sizeof(struct ofcons_softc),
     ofcmatch, ofcattach, NULL, NULL);
 
 extern struct cfdriver macofcons_cd;

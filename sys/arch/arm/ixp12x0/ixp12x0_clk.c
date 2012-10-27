@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.16 2012/10/27 17:17:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.15 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.16 2012/10/27 17:17:39 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.15 2011/07/01 20:27:50 dyoung Exp 
 #include <arm/ixp12x0/ixp12x0_clkreg.h> 
 #include <arm/ixp12x0/ixp12x0var.h>
 
-static int	ixpclk_match(struct device *, struct cfdata *, void *);
-static void	ixpclk_attach(struct device *, struct device *, void *);
+static int	ixpclk_match(device_t, cfdata_t, void *);
+static void	ixpclk_attach(device_t, device_t, void *);
 
 static u_int	ixpclk_get_timecount(struct timecounter *);
 
@@ -72,7 +72,6 @@ void		rtcinit(void);
 static int      ixpclk_intr(void* arg);
 
 struct ixpclk_softc {
-	struct device		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -139,7 +138,7 @@ static volatile uint32_t ixpclk_base;
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
-CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
+CFATTACH_DECL_NEW(ixpclk, sizeof(struct ixpclk_softc),
     ixpclk_match, ixpclk_attach, NULL, NULL);
 
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
@@ -148,14 +147,14 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 				 & IXPCL_CTV)
 
 static int
-ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
+ixpclk_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 2;
 }
 
 static void
-ixpclk_attach(struct device *parent, struct device *self, void *aux)
+ixpclk_attach(device_t parent, device_t self, void *aux)
 {
 	struct ixpclk_softc		*sc;
 	struct ixpsip_attach_args	*sa;
@@ -164,7 +163,7 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc = (struct ixpclk_softc*) self;
+	sc = device_private(self);
 	sa = aux;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
@@ -175,10 +174,10 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 	if (bus_space_map(sa->sa_iot, sa->sa_addr + IXPCLK_PLL_CFG_OFFSET,
 			  IXPCLK_PLL_CFG_SIZE, 0, &sc->sc_pll_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
@@ -205,7 +204,7 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s: IXP12x0 Interval Timer (core clock %d.%03dMHz)\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(self),
 	       sc->sc_coreclock_freq / 1000000,
 	       (sc->sc_coreclock_freq % 1000000) / 1000);
 }

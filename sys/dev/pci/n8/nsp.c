@@ -109,10 +109,10 @@ static int nsp_detach(device_t dev, int flags);
 
 
 #ifdef _MODULE
-CFATTACH_DECL(nsp2000, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
+CFATTACH_DECL_NEW(nsp2000, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
 
 int nsp2000_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
-CFDRIVER_DECL(nsp2000, DV_DULL, NULL);
+CFDRIVER_DEC(nsp2000, DV_DULL, NULL);
 extern struct cfdriver nsp2000_cd;
 extern struct cfattach nsp2000_ca;
 static int pciloc[] = { -1, -1 }; /* device, function */
@@ -147,7 +147,7 @@ nsp2000_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 
 }
 #else /* _MODULE */
-CFATTACH_DECL(nsp, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
+CFATTACH_DECL_NEW(nsp, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
 #endif
 
 static int nsp_intr(void *arg);
@@ -325,6 +325,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 	int ind;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_intrlock, MUTEX_DEFAULT, IPL_NET);
 
@@ -346,13 +347,13 @@ nsp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s, rev. %d\n", nspp->nsp_name,
 	    PCI_REVISION(pa->pa_class));
 
-	printf("NetOctave Encryption Processor - %s\n", device_xname(&sc->device));
+	printf("NetOctave Encryption Processor - %s\n", device_xname(self));
 
 	n8_sessionInit(sc);
 
 	NSPcount_g = 1;
 	if (n8_driverInit(N8_EA_POOL_SIZE, N8_PK_POOL_SIZE)) {
-	    DBG(("%s: Failed driver init\n", device_xname(&sc->device)));
+	    DBG(("%s: Failed driver init\n", device_xname(self)));
 	    NSPcount_g = 0;
 	    return;
 	}
@@ -383,7 +384,7 @@ nsp_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_mapreg_map(pa, NSP_BAR0, PCI_MAPREG_MEM_TYPE_64BIT, 0,
 		&sc->mem_tag, &sc->mem_handle, NULL, &sc->mem_size)) {
-		aprint_error_dev(&sc->device, "can't map mem space %d\n", 0);
+		aprint_error_dev(self, "can't map mem space %d\n", 0);
 		return;
 	}
 

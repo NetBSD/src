@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.19 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: oak.c,v 1.20 2012/10/27 17:18:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.19 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.20 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 
@@ -142,7 +142,7 @@ oak_attach(device_t parent, device_t self, void *aux)
 #ifndef NCR5380_USE_BUS_SPACE
 	uint8_t *iobase;
 #endif
-	char hi_option[sizeof(self->dv_xname) + 8];
+	char hi_option[sizeof(device_xname(self)) + 8];
 
 	ncr_sc->sc_dev = self;
 	ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;

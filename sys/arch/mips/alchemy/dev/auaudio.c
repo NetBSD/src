@@ -1,4 +1,4 @@
-/* $NetBSD: auaudio.c,v 1.8 2011/06/06 17:13:06 matt Exp $ */
+/* $NetBSD: auaudio.c,v 1.9 2012/10/27 17:18:01 chs Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.8 2011/06/06 17:13:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.9 2012/10/27 17:18:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: auaudio.c,v 1.8 2011/06/06 17:13:06 matt Exp $");
 static int	auaudio_match(device_t, cfdata_t, void *);
 static void	auaudio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(auaudio, sizeof (struct device),
+CFATTACH_DECL_NEW(auaudio, 0,
     auaudio_match, auaudio_attach, NULL, NULL);
 
 int

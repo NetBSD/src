@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.11 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.12 2012/10/27 17:17:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ enum vrdsiu_ps2_input_state {
 };
 
 struct vrdsiu_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	int sc_unit;
@@ -70,13 +69,13 @@ struct vrdsiu_softc {
 
 	enum vrdsiu_mouse_stat sc_mouse_stat;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 };
 
 static int asimOld = 0;
 
-static int vrdsiu_match(struct device *, struct cfdata *, void *);
-static void vrdsiu_attach(struct device *, struct device *, void *);
+static int vrdsiu_match(device_t, cfdata_t, void *);
+static void vrdsiu_attach(device_t, device_t, void *);
 
 static void vrdsiu_write(struct vrdsiu_softc *, int, unsigned short);
 static unsigned short vrdsiu_read(struct vrdsiu_softc *, int);
@@ -97,7 +96,7 @@ const struct wsmouse_accessops vrdsiu_accessops = {
 	vrdsiu_mouse_disable
 };
 
-CFATTACH_DECL(vrdsiu_mouse, sizeof(struct vrdsiu_softc),
+CFATTACH_DECL_NEW(vrdsiu_mouse, sizeof(struct vrdsiu_softc),
     vrdsiu_match, vrdsiu_attach, NULL, NULL);
 
 static inline void
@@ -113,15 +112,15 @@ vrdsiu_read(struct vrdsiu_softc *sc, int port)
 }
 
 static int
-vrdsiu_match(struct device *parent, struct cfdata *cf, void *aux)
+vrdsiu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-vrdsiu_attach(struct device *parent, struct device *self, void *aux)
+vrdsiu_attach(device_t parent, device_t self, void *aux)
 {
-	struct vrdsiu_softc *sc = (struct vrdsiu_softc *)self;
+	struct vrdsiu_softc *sc = device_private(self);
 	struct vrip_attach_args *va = aux;
 	struct wsmousedev_attach_args wsmaa;
         int res;

@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.8 2011/11/23 23:07:30 jmcneill Exp $ */
+/* $NetBSD: mavb.c,v 1.9 2012/10/27 17:18:10 chs Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -117,7 +117,7 @@ static const struct audio_format mavb_formats[MAVB_NFORMATS] = {
 };
 
 struct mavb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	bus_space_tag_t sc_st;
@@ -244,10 +244,10 @@ uint16_t ad1843_reg_read(struct mavb_softc *, ad1843_addr_t);
 uint16_t ad1843_reg_write(struct mavb_softc *, ad1843_addr_t, uint16_t);
 void ad1843_dump_regs(struct mavb_softc *);
 
-int mavb_match(struct device *, struct cfdata *, void *);
-void mavb_attach(struct device *, struct device *, void *);
+int mavb_match(device_t, cfdata_t, void *);
+void mavb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mavb, sizeof(struct mavb_softc),
+CFATTACH_DECL_NEW(mavb, sizeof(struct mavb_softc),
     mavb_match, mavb_attach, NULL, NULL);
     
 int mavb_open(void *, int);
@@ -386,7 +386,7 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 	int error;
 
 	DPRINTF(1, ("%s: mavb_set_params: sample=%u precision=%d "
-	    "channels=%d\n", sc->sc_dev.dv_xname, play->sample_rate,
+	    "channels=%d\n", device_xname(sc->sc_dev), play->sample_rate,
 	    play->precision, play->channels));
 
 	if (setmode & AUMODE_PLAY) {
@@ -437,7 +437,7 @@ mavb_halt_output(void *hdl)
 {
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
-	DPRINTF(1, ("%s: mavb_halt_output called\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, ("%s: mavb_halt_output called\n", device_xname(sc->sc_dev)));
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL, 0);
 	return 0;
@@ -466,7 +466,7 @@ mavb_set_port(void *hdl, struct mixer_ctrl *mc)
 	ad1843_addr_t reg;
 	uint16_t value;
 
-	DPRINTF(1, ("%s: mavb_set_port: dev=%d\n", sc->sc_dev.dv_xname,
+	DPRINTF(1, ("%s: mavb_set_port: dev=%d\n", device_xname(sc->sc_dev),
 	    mc->dev));
 
 	switch (mc->dev) {
@@ -589,7 +589,7 @@ mavb_get_port(void *hdl, struct mixer_ctrl *mc)
 	ad1843_addr_t reg;
 	uint16_t value;
 
-	DPRINTF(1, ("%s: mavb_get_port: dev=%d\n", sc->sc_dev.dv_xname,
+	DPRINTF(1, ("%s: mavb_get_port: dev=%d\n", device_xname(sc->sc_dev),
 	    mc->dev));
 
 	switch (mc->dev) {
@@ -896,7 +896,7 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
 	DPRINTF(1, ("%s: mavb_trigger_output: start=%p end=%p "
-	    "blksize=%d intr=%p(%p)\n", sc->sc_dev.dv_xname,
+	    "blksize=%d intr=%p(%p)\n", device_xname(sc->sc_dev),
 	    start, end, blksize, intr, intrarg));
 
 	sc->sc_blksize = blksize;
@@ -946,7 +946,7 @@ mavb_button_repeat(void *hdl)
 	uint64_t intmask, control;
 	uint16_t value, left, right;
 
-	DPRINTF(1, ("%s: mavb_repeat called\n", sc->sc_dev.dv_xname));
+	DPRINTF(1, ("%s: mavb_repeat called\n", device_xname(sc->sc_dev)));
 
 #define  MAVB_CONTROL_VOLUME_BUTTONS \
     (MAVB_CONTROL_VOLUME_BUTTON_UP | MAVB_CONTROL_VOLUME_BUTTON_DOWN)
@@ -999,7 +999,7 @@ mavb_intr(void *arg)
 
 	stat = bus_space_read_8(sc->sc_st, sc->sc_isash, MACE_ISA_INT_STATUS);
 	DPRINTF(MAVB_DEBUG_INTR, ("%s: mavb_intr: stat = 0x%llx\n",
-            sc->sc_dev.dv_xname, stat));
+            device_xname(sc->sc_dev), stat));
 
 	if (stat & MACE_ISA_INT_AUDIO_SC) {
 		/* Disable volume button interrupts.  */
@@ -1022,21 +1022,23 @@ mavb_intr(void *arg)
 }
 
 int
-mavb_match(struct device *parent, struct cfdata *match, void *aux)
+mavb_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 void
-mavb_attach(struct device *parent, struct device *self, void *aux)
+mavb_attach(device_t parent, device_t self, void *aux)
 {
-	struct mavb_softc *sc = (void *)self;
+	struct mavb_softc *sc = device_private(self);
 	struct mace_attach_args *maa = aux;
 	bus_dma_segment_t seg;
 	uint64_t control;
 	uint16_t value;
 	int rseg, err;
+
+	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
@@ -1163,7 +1165,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_volume_button_ch, 0);
 
-	audio_attach_mi(&mavb_sa_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&mavb_sa_hw_if, sc, self);
 
 	return;
 }

@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$Id: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.5 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.6 2012/10/27 17:17:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,7 +89,7 @@ at91twi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pid = sa->sa_pid;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	printf(": I2C controller\n");
 
@@ -115,7 +115,7 @@ found_ckdiv:
 	at91twi_writereg(sc, TWI_CR, TWI_CR_MSEN);
 
 //#ifdef AT91TWI_DEBUG
-	printf("%s: ckdiv=%d cxdiv=%d CWGR=0x%08X SR=0x%08X\n", self->dv_xname, ckdiv, cxdiv, at91twi_readreg(sc, TWI_CWGR), at91twi_readreg(sc, TWI_SR));
+	printf("%s: ckdiv=%d cxdiv=%d CWGR=0x%08X SR=0x%08X\n", device_xname(self), ckdiv, cxdiv, at91twi_readreg(sc, TWI_CWGR), at91twi_readreg(sc, TWI_SR));
 //#endif
 
 	/* initialize rest */

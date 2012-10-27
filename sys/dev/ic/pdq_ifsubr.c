@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.54 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.55 2012/10/27 17:18:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.54 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.55 2012/10/27 17:18:22 chs Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -730,12 +730,12 @@ pdq_os_databuf_alloc(
 
     MGETHDR(m, M_DONTWAIT, MT_DATA);
     if (m == NULL) {
-	aprint_error_dev(&sc->sc_dev, "can't alloc small buf\n");
+	aprint_error_dev(sc->sc_dev, "can't alloc small buf\n");
 	return NULL;
     }
     MCLGET(m, M_DONTWAIT);
     if ((m->m_flags & M_EXT) == 0) {
-	aprint_error_dev(&sc->sc_dev, "can't alloc cluster\n");
+	aprint_error_dev(sc->sc_dev, "can't alloc cluster\n");
         m_free(m);
 	return NULL;
     }
@@ -744,13 +744,13 @@ pdq_os_databuf_alloc(
 
     if (bus_dmamap_create(sc->sc_dmatag, PDQ_OS_DATABUF_SIZE,
 			   1, PDQ_OS_DATABUF_SIZE, 0, BUS_DMA_NOWAIT, &map)) {
-	aprint_error_dev(&sc->sc_dev, "can't create dmamap\n");
+	aprint_error_dev(sc->sc_dev, "can't create dmamap\n");
 	m_free(m);
 	return NULL;
     }
     if (bus_dmamap_load_mbuf(sc->sc_dmatag, map, m,
     			     BUS_DMA_READ|BUS_DMA_NOWAIT)) {
-	aprint_error_dev(&sc->sc_dev, "can't load dmamap\n");
+	aprint_error_dev(sc->sc_dev, "can't load dmamap\n");
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 	m_free(m);
 	return NULL;

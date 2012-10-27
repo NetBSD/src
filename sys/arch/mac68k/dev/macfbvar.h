@@ -1,4 +1,4 @@
-/* $NetBSD: macfbvar.h,v 1.4 2005/12/11 12:18:02 christos Exp $ */
+/* $NetBSD: macfbvar.h,v 1.5 2012/10/27 17:17:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -60,8 +60,6 @@ struct macfb_devconfig {
 };
 
 struct macfb_softc {
-	struct device sc_dev;
-				
 	int nscreens;
 	struct macfb_devconfig *sc_dc;
 };

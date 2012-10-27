@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.94 2012/10/20 05:32:25 matt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.95 2012/10/27 17:18:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.94 2012/10/20 05:32:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.95 2012/10/27 17:18:35 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -454,7 +454,7 @@ pci_aprint_devinfo_fancy(const struct pci_attach_args *pa, const char *naive,
  * in a device attach routine like this:
  *
  *	#ifdef MYDEV_DEBUG
- *		printf("%s: ", device_xname(&sc->sc_dev));
+ *		printf("%s: ", device_xname(sc->sc_dev));
  *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.13 2009/05/12 14:47:27 cegger Exp $ */
+/* $NetBSD: vmevar.h,v 1.14 2012/10/27 17:18:38 chs Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -167,8 +167,6 @@ struct vmebus_attach_args {
 struct extent;
 
 struct vmebus_softc {
-	struct device sc_dev;
-
 	vme_chipset_tag_t sc_vct;
 	bus_dma_tag_t sc_bdt;
 

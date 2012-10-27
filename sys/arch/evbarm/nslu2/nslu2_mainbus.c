@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_mainbus.c,v 1.4 2012/10/14 14:20:58 msaitoh Exp $	*/
+/*	$NetBSD: nslu2_mainbus.c,v 1.5 2012/10/27 17:17:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_mainbus.c,v 1.4 2012/10/14 14:20:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_mainbus.c,v 1.5 2012/10/27 17:17:48 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,14 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_mainbus.c,v 1.4 2012/10/14 14:20:58 msaitoh Ex
 #include <arm/xscale/ixp425var.h>
 
 static int
-ixp425_mainbus_match(device_t parent, struct cfdata *cf, void *arg)
+ixp425_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ixp425_mainbus_attach(device_t parent, struct device *self, void *arg)
+ixp425_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 
 	ixp425_intr_evcnt_attach();

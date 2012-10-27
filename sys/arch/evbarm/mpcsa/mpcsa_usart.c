@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_usart.c,v 1.3 2011/05/13 22:35:50 rmind Exp $	*/
-/*	$NetBSD: mpcsa_usart.c,v 1.3 2011/05/13 22:35:50 rmind Exp $	*/
+/*	$Id: mpcsa_usart.c,v 1.4 2012/10/27 17:17:48 chs Exp $	*/
+/*	$NetBSD: mpcsa_usart.c,v 1.4 2012/10/27 17:17:48 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_usart.c,v 1.3 2011/05/13 22:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_usart.c,v 1.4 2012/10/27 17:17:48 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,10 +60,10 @@ struct mpcsa_usart_softc {
 	int sc_tx_busy, sc_rx_busy;
 };
 
-static int mpcsa_usart_match(struct device *, struct cfdata *, void *);
-static void mpcsa_usart_attach(struct device *, struct device *, void *);
+static int mpcsa_usart_match(device_t, cfdata_t, void *);
+static void mpcsa_usart_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mpcsa_usart, sizeof(struct mpcsa_usart_softc),
+CFATTACH_DECL_NEW(mpcsa_usart, sizeof(struct mpcsa_usart_softc),
 	      mpcsa_usart_match, mpcsa_usart_attach, NULL, NULL);
 
 static int mpcsa_usart_enable(struct at91usart_softc *sc);
@@ -96,7 +96,7 @@ conn_led(struct mpcsa_usart_softc *mpsc, int count)
 }
 
 static int
-mpcsa_usart_match(struct device *parent, struct cfdata *match, void *aux)
+mpcsa_usart_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "at91usart") == 0 && strcmp(match->cf_atname, "mpcsa_usart") == 0)
 		return 2;
@@ -105,10 +105,12 @@ mpcsa_usart_match(struct device *parent, struct cfdata *match, void *aux)
 
 
 static void
-mpcsa_usart_attach(struct device *parent, struct device *self, void *aux)
+mpcsa_usart_attach(device_t parent, device_t self, void *aux)
 {
-	struct mpcsa_usart_softc *sc = (struct mpcsa_usart_softc *)self;
+	struct mpcsa_usart_softc *sc = device_private(self);
 	struct at91bus_attach_args *sa = aux;
+
+	sc->sc_dev.sc_dev = self;
 
 	// initialize softc
 	if ((sc->sc_pioa = at91pio_sc(AT91_PIOA)) == NULL) {

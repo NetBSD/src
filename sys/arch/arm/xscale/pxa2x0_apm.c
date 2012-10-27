@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.2 2009/12/05 22:34:43 pooka Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.3 2012/10/27 17:17:42 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -244,9 +244,9 @@ apm_power_print(struct pxa2x0_apm_softc *sc, struct apm_power_info *powerp)
 
 	if (powerp->battery_life != APM_BATT_LIFE_UNKNOWN)
 		printf("%s: battery life expectancy %d%%\n",
-		    sc->sc_dev.dv_xname, powerp->battery_life);
+		    device_xname(sc->sc_dev), powerp->battery_life);
 
-	printf("%s: AC ", sc->sc_dev.dv_xname);
+	printf("%s: AC ", device_xname(sc->sc_dev));
 	switch (powerp->ac_state) {
 	case APM_AC_OFF:
 		printf("off,");
@@ -414,10 +414,10 @@ apm_thread_create(void *v)
 	struct pxa2x0_apm_softc *sc = v;
 
 	if (kthread_create(apm_thread, sc, &sc->sc_thread,
-		"%s", sc->sc_dev.dv_xname)) {
+		"%s", device_xname(sc->sc_dev))) {
 		/* apm_disconnect(sc); */
 		printf("%s: failed to create kernel thread, disabled",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	}
 }
 
@@ -654,20 +654,20 @@ pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *sc)
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
 		0, &pxa2x0_clkman_ioh)) {
-		printf("%s: failed to map CLKMAN\n", sc->sc_dev.dv_xname);
+		printf("%s: failed to map CLKMAN\n", device_xname(sc->sc_dev));
 		return;
 	}
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE,
 		0, &pxa2x0_memctl_ioh)) {
-		printf("%s: failed to map MEMCTL\n", sc->sc_dev.dv_xname);
+		printf("%s: failed to map MEMCTL\n", device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_memctl_ioh = pxa2x0_memctl_ioh;
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_GPIO_BASE, PXA2X0_GPIO_SIZE,
 		0, &pxa2x0_gpio_ioh)) {
-		printf("%s: can't map GPIO\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map GPIO\n", device_xname(sc->sc_dev));
 		return;
 	}
 

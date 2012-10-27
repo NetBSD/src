@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.48 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: satalink.c,v 1.49 2012/10/27 17:18:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.48 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.49 2012/10/27 17:18:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -825,7 +825,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 
 	sstatus = BA5_READ_4(sc, chp->ch_channel, ba5_SStatus);
 #if 0
-	aprint_normal_dev(&sc->sc_wdcdev.sc_atac.atac_dev,
+	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 	    "port %d: SStatus=0x%08x, SControl=0x%08x\n",
 	    chp->ch_channel, sstatus,
 	    BA5_READ_4(sc, chp->ch_channel, ba5_SControl));
@@ -867,7 +867,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 				      wdr->cmd_iohs[wd_cyl_hi], 0);
 #if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    device_xname(&sc->sc_wdcdev.sc_atac.atac_dev), chp->ch_channel,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
 		if (atabus_alloc_drives(chp, 1) != 0)

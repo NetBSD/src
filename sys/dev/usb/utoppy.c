@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.20 2012/06/10 06:15:55 mrg Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.21 2012/10/27 17:18:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.20 2012/06/10 06:15:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.21 2012/10/27 17:18:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ utoppy_detach(device_t self, int flags)
 	maj = cdevsw_lookup_major(&utoppy_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,

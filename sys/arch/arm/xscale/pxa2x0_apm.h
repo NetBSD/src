@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.h,v 1.2 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: pxa2x0_apm.h,v 1.3 2012/10/27 17:17:42 chs Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.h,v 1.7 2005/04/13 05:40:07 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
 #include <machine/apmvar.h>
 
 struct pxa2x0_apm_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	proc *sc_thread;
 	kmutex_t sc_lock;
 	struct	klist sc_note;

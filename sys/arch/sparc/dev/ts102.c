@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.16 2011/07/26 22:52:49 dyoung Exp $ */
+/*	$NetBSD: ts102.c,v 1.17 2012/10/27 17:18:11 chs Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -319,14 +319,14 @@ tslot_attach(device_t parent, device_t self, void *args)
 			 sa->sa_offset,
 			 sa->sa_size,
 			 0, &sc->sc_regh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		printf("%s: cannot map registers\n", device_xname(self));
 		return;
 	}
 	regs = (uint8_t *)bus_space_vaddr(sa->sa_bustag, sc->sc_regh);
 
 	tag = bus_space_tag_alloc(sa->sa_bustag, sc);
 	if (tag == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
+		printf("%s: attach: out of memory\n", device_xname(self));
 		return;
 	}
 	tag->sparc_read_2 = ts102_read_2;
@@ -379,7 +379,7 @@ tslot_attach(device_t parent, device_t self, void *args)
 				 	TS102_ARBITRARY_MAP_SIZE,
 					0, &hrang) != 0) {
 				printf("%s: cannot map registers\n",
-				    self->dv_xname);
+				    device_xname(self));
 				return;
 			}
 			TSPRINTF("%08x: %08x ",(uint32_t)ranges[base + 3],
@@ -621,7 +621,7 @@ tslot_slot_disable(pcmcia_chipset_handle_t pch)
 	struct tslot_data *td = (struct tslot_data *)pch;
 #ifdef TSLOT_DEBUG
 	printf("%s: disable slot %d\n",
-	    td->td_parent->sc_dev.dv_xname, td->td_slot);
+	    device_xname(td->td_parent->sc_dev), td->td_slot);
 #endif
 
 	/*
@@ -645,7 +645,7 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 
 #ifdef TSLOT_DEBUG
 	printf("%s: enable slot %d\n",
-	    td->td_parent->sc_dev.dv_xname, td->td_slot);
+	    device_xname(td->td_parent->sc_dev), td->td_slot);
 #endif
 
 	/* Power down the socket to reset it */

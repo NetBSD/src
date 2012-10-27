@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.31 2012/10/13 06:43:00 tsutsui Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.32 2012/10/27 17:18:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.31 2012/10/13 06:43:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.32 2012/10/27 17:18:13 chs Exp $");
 
 #include "locators.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.31 2012/10/13 06:43:00 tsutsui Exp
 #include <x68k/x68k/iodevice.h>
 
 /* grfbus: is this necessary? */
-int grfbusprint(void *auxp, const char *);
+int grfbusprint(void *, const char *);
 int grfbusmatch(device_t, cfdata_t, void *);
 void grfbusattach(device_t, device_t, void *);
 int grfbussearch(device_t, cfdata_t, const int *, void *);

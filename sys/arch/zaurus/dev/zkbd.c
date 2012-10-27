@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.16 2012/01/29 10:12:42 tsutsui Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.17 2012/10/27 17:18:14 chs Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.16 2012/01/29 10:12:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.17 2012/10/27 17:18:14 chs Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
@@ -138,7 +138,7 @@ struct zkbd_softc {
 	int sc_pollkey;
 
 	/* wskbd bits */
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 	struct wskbd_mapdata *sc_keymapdata;
 	int sc_rawkbd;
 #ifdef WSDISPLAY_COMPAT_RAWKBD

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.45 2012/01/30 19:41:18 drochner Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.46 2012/10/27 17:18:28 chs Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.45 2012/01/30 19:41:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.46 2012/10/27 17:18:28 chs Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -109,7 +109,7 @@ static int cmpci_set_in_ports(struct cmpci_softc *);
 static int cmpci_match(device_t, cfdata_t, void *);
 static void cmpci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cmpci, sizeof (struct cmpci_softc),
+CFATTACH_DECL_NEW(cmpci, sizeof (struct cmpci_softc),
     cmpci_match, cmpci_attach, NULL, NULL);
 
 /* interrupt */
@@ -384,6 +384,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	int i, v;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 
 	sc->sc_id = pa->pa_id;
@@ -405,7 +406,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	/* map I/O space */
 	if (pci_mapreg_map(pa, CMPCI_PCI_IOBASEREG, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map I/O space\n");
+		aprint_error_dev(sc->sc_dev, "failed to map I/O space\n");
 		return;
 	}
 
@@ -414,14 +415,14 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "failed to map interrupt\n");
 		return;
 	}
 	strintr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");
+		aprint_error_dev(sc->sc_dev, "failed to establish interrupt");
 		if (strintr != NULL)
 			aprint_error(" at %s", strintr);
 		aprint_error("\n");
@@ -429,17 +430,17 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", strintr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", strintr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	audio_attach_mi(&cmpci_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&cmpci_hw_if, sc, sc->sc_dev);
 
 	/* attach OPL device */
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	(void)config_found(&sc->sc_dev, &aa, audioprint);
+	(void)config_found(sc->sc_dev, &aa, audioprint);
 
 	/* attach MPU-401 device */
 	aa.type = AUDIODEV_TYPE_MPU;
@@ -447,7 +448,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	aa.hdl = NULL;
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_MPU_BASE, CMPCI_REG_MPU_SIZE, &sc->sc_mpu_ioh) == 0)
-		sc->sc_mpudev = config_found(&sc->sc_dev, &aa, audioprint);
+		sc->sc_mpudev = config_found(sc->sc_dev, &aa, audioprint);
 
 	/* get initial value (this is 0 and may be omitted but just in case) */
 	sc->sc_reg_misc = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -673,7 +674,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		md_divide = cmpci_index_to_divider(md_index);
 		p->sample_rate = cmpci_index_to_rate(md_index);
 		DPRINTF(("%s: sample:%u, divider=%d\n",
-			 device_xname(&sc->sc_dev), p->sample_rate, md_divide));
+			 device_xname(sc->sc_dev), p->sample_rate, md_divide));
 
 		ind = auconv_set_converter(cmpci_formats, CMPCI_NFORMATS,
 					   mode, p, FALSE, fil);

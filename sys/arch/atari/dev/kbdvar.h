@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.9 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.10 2012/10/27 17:17:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -47,7 +47,7 @@ struct kbd_softc {
 	const uint8_t	*k_sendp;	/* Output pointer		*/
 	int		k_send_cnt;	/* Chars left for output	*/
 #if NWSKBD>0
-	struct device	*k_wskbddev;	/* pointer to wskbd for sending strokes */
+	device_t	k_wskbddev;	/* pointer to wskbd for sending strokes */
 	int		k_pollingmode;	/* polling mode on? whatever it isss... */
 #endif
 	void		*k_sicookie;	/* softint(9) cookie		*/

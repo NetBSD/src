@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.82 2012/07/22 14:32:58 matt Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.83 2012/10/27 17:18:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.82 2012/07/22 14:32:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.83 2012/10/27 17:18:22 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -254,7 +254,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	tmp = bus_space_read_2(bst, bsh, BANK_SELECT_REG_W);
 	/* check magic number */
 	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
-		aprint_error_dev(&sc->sc_dev, "failed to detect chip, bsr=%04x\n", tmp);
+		aprint_error_dev(sc->sc_dev, "failed to detect chip, bsr=%04x\n", tmp);
 		return;
 	}
 
@@ -266,7 +266,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	sc->sc_chipid = RR_ID(tmp);
 	idstr = smc91cxx_idstrs[sc->sc_chipid];
 
-	aprint_normal_dev(&sc->sc_dev, "");
+	aprint_normal_dev(sc->sc_dev, "");
 	if (idstr != NULL)
 		aprint_normal("%s, ", idstr);
 	else
@@ -301,11 +301,11 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 			myea[i] = tmp & 0xff;
 		}
 	}
-	aprint_normal_dev(&sc->sc_dev, "MAC address %s, ",
+	aprint_normal_dev(sc->sc_dev, "MAC address %s, ",
 	    ether_sprintf(myea));
 
 	/* Initialize the ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = smc91cxx_start;
 	ifp->if_ioctl = smc91cxx_ioctl;
@@ -349,7 +349,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 				sc->sc_internal_phy = !(tmp & CR_AUI_SELECT);
 			} else
 				aprint_normal("\n");
-			mii_attach(&sc->sc_dev, &sc->sc_mii, miicapabilities,
+			mii_attach(sc->sc_dev, &sc->sc_mii, miicapabilities,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 				ifmedia_add(&sc->sc_mii.mii_media,
@@ -381,7 +381,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		break;
 	}
 
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
 
 	callout_init(&sc->sc_mii_callout, 0);
@@ -661,7 +661,7 @@ smc91cxx_start(struct ifnet *ifp)
 	 * truncate them instead?
 	 */
 	if ((len + pad) > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
-		printf("%s: large packet discarded\n", device_xname(&sc->sc_dev));
+		printf("%s: large packet discarded\n", device_xname(sc->sc_dev));
 		ifp->if_oerrors++;
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);
@@ -918,7 +918,7 @@ smc91cxx_intr(void *arg)
 #endif
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	    !device_is_active(sc->sc_dev))
 		return (0);
 
 	SMC_SELECT_BANK(sc, 2);
@@ -976,7 +976,7 @@ smc91cxx_intr(void *arg)
 #if 1 /* DIAGNOSTIC */
 		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
 		if (packetno & FIFO_REMPTY) {
-			aprint_error_dev(&sc->sc_dev, "receive interrupt on empty fifo\n");
+			aprint_error_dev(sc->sc_dev, "receive interrupt on empty fifo\n");
 			goto out;
 		} else
 #endif
@@ -1039,7 +1039,7 @@ smc91cxx_intr(void *arg)
 			static int txsuc_count;
 			if (ppsratecheck(&txsuc_last, &txsuc_count, 1))
 				printf("%s: successful packet caused TX"
-				    " interrupt?!\n", device_xname(&sc->sc_dev));
+				    " interrupt?!\n", device_xname(sc->sc_dev));
 		} else
 			ifp->if_oerrors++;
 
@@ -1221,7 +1221,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		ifp->if_ierrors++;
-		aprint_error_dev(&sc->sc_dev, "can't allocate cluster for incoming packet\n");
+		aprint_error_dev(sc->sc_dev, "can't allocate cluster for incoming packet\n");
 		goto out;
 	}
 
@@ -1424,7 +1424,7 @@ smc91cxx_watchdog(struct ifnet *ifp)
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
 	smc91cxx_reset(sc);
 }
@@ -1466,7 +1466,7 @@ smc91cxx_enable(struct smc91cxx_softc *sc)
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
-			aprint_error_dev(&sc->sc_dev, "device enable failed\n");
+			aprint_error_dev(sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 	}
@@ -1606,7 +1606,7 @@ smc91cxx_tick(void *arg)
 		panic("smc91cxx_tick");
 #endif
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	s = splnet();

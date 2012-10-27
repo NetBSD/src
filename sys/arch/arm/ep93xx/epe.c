@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.27 2012/07/22 14:32:50 matt Exp $	*/
+/*	$NetBSD: epe.c,v 1.28 2012/10/27 17:17:37 chs Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.27 2012/07/22 14:32:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.28 2012/10/27 17:17:37 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,7 +115,7 @@ static int	epe_ifinit (struct ifnet *);
 static void	epe_ifstop (struct ifnet *, int);
 static void	epe_setaddr (struct ifnet *);
 
-CFATTACH_DECL(epe, sizeof(struct epe_softc),
+CFATTACH_DECL_NEW(epe, sizeof(struct epe_softc),
     epe_match, epe_attach, NULL, NULL);
 
 static int
@@ -140,7 +140,7 @@ epe_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
 	/* Fetch the Ethernet address from property if set. */
 	enaddr = prop_dictionary_get(device_properties(self), "mac-address");

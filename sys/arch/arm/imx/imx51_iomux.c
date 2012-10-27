@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_iomux.c,v 1.3 2012/04/15 09:51:31 bsh Exp $	*/
+/*	$NetBSD: imx51_iomux.c,v 1.4 2012/10/27 17:17:39 chs Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.3 2012/04/15 09:51:31 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.4 2012/10/27 17:17:39 chs Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx51_iomux.c,v 1.3 2012/04/15 09:51:31 bsh Exp $");
 #include <arm/imx/imx51var.h>
 
 struct iomux_softc {
-	struct device iomux_dev;
 	bus_space_tag_t iomux_memt;
 	bus_space_handle_t iomux_memh;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.9 2012/01/27 18:52:58 para Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.10 2012/10/27 17:18:02 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.9 2012/01/27 18:52:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.10 2012/10/27 17:18:02 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -164,7 +164,7 @@ static int	rmixl_pcie_match(device_t, cfdata_t, void *);
 static void	rmixl_pcie_attach(device_t, device_t, void *);
 static void	rmixl_pcie_init(struct rmixl_pcie_softc *);
 static void	rmixl_pcie_init_ecfg(struct rmixl_pcie_softc *);
-static void	rmixl_pcie_attach_hook(struct device *, struct device *,
+static void	rmixl_pcie_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static void	rmixl_pcie_lnkcfg_4xx(rmixl_pcie_lnktab_t *, uint32_t);
 static void	rmixl_pcie_lnkcfg_408Lite(rmixl_pcie_lnktab_t *, uint32_t);
@@ -818,7 +818,7 @@ rmixl_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 }
 
 void
-rmixl_pcie_attach_hook(struct device *parent, struct device *self,
+rmixl_pcie_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	DPRINTF(("%s: pba_bus %d, pba_bridgetag %p, pc_conf_v %p\n",

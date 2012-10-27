@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.45 2011/04/24 16:26:56 rmind Exp $ */
+/*	$NetBSD: txcom.c,v 1.46 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.45 2011/04/24 16:26:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.46 2012/10/27 17:17:54 chs Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -95,7 +95,6 @@ struct txcom_chip {
 };
 
 struct txcom_softc {
-	struct	device		sc_dev;
 	struct tty		*sc_tty;
 	struct txcom_chip	*sc_chip;
 
@@ -112,9 +111,9 @@ struct txcom_softc {
 
 extern struct cfdriver txcom_cd;
 
-int	txcom_match(struct device *, struct cfdata *, void *);
-void	txcom_attach(struct device *, struct device *, void *);
-int	txcom_print(void*, const char *);
+int	txcom_match(device_t, cfdata_t, void *);
+void	txcom_attach(device_t, device_t, void *);
+int	txcom_print(void *, const char *);
 
 int	txcom_txintr(void *);
 int	txcom_rxintr(void *);
@@ -165,7 +164,7 @@ struct consdev txcomcons = {
 /* Serial console */
 struct txcom_chip txcom_chip;
 
-CFATTACH_DECL(txcom, sizeof(struct txcom_softc),
+CFATTACH_DECL_NEW(txcom, sizeof(struct txcom_softc),
     txcom_match, txcom_attach, NULL, NULL);
 
 dev_type_open(txcomopen);
@@ -183,17 +182,17 @@ const struct cdevsw txcom_cdevsw = {
 };
 
 int
-txcom_match(struct device *parent, struct cfdata *cf, void *aux)
+txcom_match(device_t parent, cfdata_t cf, void *aux)
 {
 	/* if the autoconfiguration got this far, there's a slot here */
 	return 1;
 }
 
 void
-txcom_attach(struct device *parent, struct device *self, void *aux)
+txcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct tx39uart_attach_args *ua = aux;
-	struct txcom_softc *sc = (void*)self;
+	struct txcom_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 	struct tty *tp;
 	struct txcom_chip *chip;
@@ -242,7 +241,7 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&txcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		cn_tab->cn_dev = makedev(maj, device_unit(self));
 
 		printf(": console");
 	}
@@ -415,9 +414,9 @@ __txcom_txbufready(struct txcom_chip *chip, int retry)
 }
 
 void
-txcom_pulse_mode(struct device *dev)
+txcom_pulse_mode(device_t dev)
 {
-	struct txcom_softc *sc = (void*)dev;
+	struct txcom_softc *sc = device_private(dev);
 	struct txcom_chip *chip = sc->sc_chip;
 	tx_chipset_tag_t tc = chip->sc_tc;
 	int ofs;

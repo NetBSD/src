@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.14 2012/04/03 09:32:53 plunky Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.15 2012/10/27 17:18:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.14 2012/04/03 09:32:53 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.15 2012/10/27 17:18:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -332,18 +332,18 @@ btkbd_parse_desc(struct btkbd_softc *sc, int id, const void *desc, int dlen)
  */
 
 static int
-btkbd_enable(void *self, int on)
+btkbd_enable(void *cookie, int on)
 {
-	struct btkbd_softc *sc = self;
+	struct btkbd_softc *sc = cookie;
 
 	sc->sc_enabled = on;
 	return 0;
 }
 
 static void
-btkbd_set_leds(void *self, int leds)
+btkbd_set_leds(void *cookie, int leds)
 {
-	struct btkbd_softc *sc = self;
+	struct btkbd_softc *sc = cookie;
 	uint8_t report;
 
 	if (sc->sc_leds == leds)
@@ -371,10 +371,10 @@ btkbd_set_leds(void *self, int leds)
 }
 
 static int
-btkbd_ioctl(void *self, unsigned long cmd, void *data, int flag,
+btkbd_ioctl(void *cookie, unsigned long cmd, void *data, int flag,
     struct lwp *l)
 {
-	struct btkbd_softc *sc = self;
+	struct btkbd_softc *sc = cookie;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -463,9 +463,9 @@ static const u_int8_t btkbd_trtab[256] = {
 #define REP_DELAYN	100
 
 static void
-btkbd_input(struct bthidev *self, uint8_t *data, int len)
+btkbd_input(struct bthidev *hidev, uint8_t *data, int len)
 {
-	struct btkbd_softc *sc = (struct btkbd_softc *)self;
+	struct btkbd_softc *sc = (struct btkbd_softc *)hidev;
 	struct btkbd_data *ud = &sc->sc_ndata;
 	uint16_t ibuf[MAXKEYS];
 	uint32_t mod, omod;

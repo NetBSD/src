@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.40 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.41 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.40 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.41 2012/10/27 17:17:28 chs Exp $");
 
 #include "grfcc.h"
 #include "ite.h"
@@ -62,28 +62,28 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.40 2011/12/15 14:25:13 phx Exp $");
 
 #include "view.h"
 
-int grfccmatch(struct device *, struct cfdata *, void *);
+int grfccmatch(device_t, cfdata_t, void *);
 int grfccprint(void *, const char *);
-void grfccattach(struct device *, struct device *, void *);
+void grfccattach(device_t, device_t, void *);
 void grf_cc_on(struct grf_softc *);
 
-CFATTACH_DECL(grfcc, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfcc, sizeof(struct grf_softc),
     grfccmatch, grfccattach, NULL, NULL);
 
 /*
  * only used in console init
  */
-static struct cfdata *cfdata;
+static cfdata_t cfdata;
 
 /*
  * we make sure to only init things once.  this is somewhat
  * tricky regarding the console.
  */
 int
-grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfccmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int ccconunit = -1;
-	char *mainbus_name = auxp;
+	char *mainbus_name = aux;
 	extern const struct cdevsw view_cdevsw;
 
 	/*
@@ -93,7 +93,7 @@ grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 	if (matchname("grfcc", mainbus_name) == 0)
 		return(0);
-	if (amiga_realconfig == 0 || ccconunit != cfp->cf_unit) {
+	if (amiga_realconfig == 0 || ccconunit != cf->cf_unit) {
 		if (grfcc_probe() == 0)
 			return(0);
 		viewprobe();
@@ -103,8 +103,8 @@ grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		if ((*view_cdevsw.d_open)(0, 0, 0, NULL))
 			return(0);
 		if (amiga_realconfig == 0) {
-			ccconunit = cfp->cf_unit;
-			cfdata = cfp;
+			ccconunit = cf->cf_unit;
+			cfdata = cf;
 		}
 	}
 	return(1);
@@ -114,17 +114,22 @@ grfccmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * attach to the grfbus (mainbus)
  */
 void
-grfccattach(struct device *pdp, struct device *dp, void *auxp)
+grfccattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
+	struct device temp;
 	struct grf_softc *gp;
 
-	if (dp == NULL)
+	if (self == NULL) {
 		gp = &congrf;
-	else
-		gp = (struct grf_softc *)dp;
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gp = device_private(self);
+		gp->g_device = self;
+	}
 
-	if (dp != NULL && congrf.g_regkva != 0) {
+	if (self != NULL && congrf.g_regkva != 0) {
 		/*
 		 * we inited earlier just copy the info
 		 * take care not to copy the device struct though.
@@ -141,19 +146,19 @@ grfccattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 		grf_cc_on(gp);
 	}
-	if (dp != NULL)
+	if (self != NULL)
 		printf("\n");
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfccprint);
+	amiga_config_found(cfdata, gp->g_device, gp, grfccprint);
 }
 
 int
-grfccprint(void *auxp, const char *pnp)
+grfccprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)aux)->g_unit,
 			pnp);
 	return(UNCONF);
 }
@@ -228,4 +233,3 @@ grf_cc_on(struct grf_softc *gp)
 	(*view_cdevsw.d_ioctl)(0, VIOCDISPLAY, NULL, -1, NULL);
 }
 #endif
-

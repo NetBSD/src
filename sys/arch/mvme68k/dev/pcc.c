@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.31 2011/02/01 20:19:31 chuck Exp $	*/
+/*	$NetBSD: pcc.c,v 1.32 2012/10/27 17:18:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.31 2011/02/01 20:19:31 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.32 2012/10/27 17:18:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,11 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.31 2011/02/01 20:19:31 chuck Exp $");
  * Autoconfiguration stuff for the PCC chip on mvme147
  */
 
-void pccattach(struct device *, struct device *, void *);
-int pccmatch(struct device *, struct cfdata *, void *);
+void pccattach(device_t, device_t, void *);
+int pccmatch(device_t, cfdata_t, void *);
 int pccprint(void *, const char *);
 
-CFATTACH_DECL(pcc, sizeof(struct pcc_softc),
+CFATTACH_DECL_NEW(pcc, sizeof(struct pcc_softc),
     pccmatch, pccattach, NULL, NULL);
 
 static int pccintr(void *);
@@ -139,11 +139,11 @@ bus_addr_t pcc_slave_base_addr;
 
 /* ARGSUSED */
 int
-pccmatch(struct device *parent, struct cfdata *cf, void *args)
+pccmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma;
 
-	ma = args;
+	ma = aux;
 
 	/* Only attach one PCC. */
 	if (sys_pcc)
@@ -154,7 +154,7 @@ pccmatch(struct device *parent, struct cfdata *cf, void *args)
 
 /* ARGSUSED */
 void
-pccattach(struct device *parent, struct device *self, void *args)
+pccattach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	struct pcc_attach_args npa;
@@ -162,7 +162,7 @@ pccattach(struct device *parent, struct device *self, void *args)
 	uint8_t reg;
 	int i;
 
-	ma = args;
+	ma = aux;
 	sc = sys_pcc = (struct pcc_softc *)self;
 
 	/* Get a handle to the PCC's registers. */

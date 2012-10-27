@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.19 2012/10/27 17:17:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.19 2012/10/27 17:17:29 chs Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -54,25 +54,24 @@ __KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.18 2011/07/19 15:55:27 dyoung Exp 
 #include "opt_iobzclock.h"
 
 struct iobz_softc {
-	struct device sc_dev;
 	struct bus_space_tag sc_bst;
 };
 
-int iobzmatch(struct device *, struct cfdata *, void *);
-void iobzattach(struct device *, struct device *, void *);
-int iobzprint(void *auxp, const char *);
+int iobzmatch(device_t, cfdata_t, void *);
+void iobzattach(device_t, device_t, void *);
+int iobzprint(void *, const char *);
 void iobz_shutdown(void *);
 
-CFATTACH_DECL(iobl_zbus, sizeof(struct iobz_softc),
+CFATTACH_DECL_NEW(iobl_zbus, sizeof(struct iobz_softc),
     iobzmatch, iobzattach, NULL, NULL);
 
 int
-iobzmatch(struct device *parent, struct cfdata *cfp, void *auxp)
+iobzmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (zap->manid != 4711)
 		return (0);
@@ -103,7 +102,7 @@ struct iobz_devs {
 int iobzclock = IOBZCLOCK;		/* patchable! */
 
 void
-iobzattach(struct device *parent, struct device *self, void *auxp)
+iobzattach(device_t parent, device_t self, void *aux)
 {
 	struct iobz_softc *iobzsc;
 	struct iobz_devs  *iobzd;
@@ -113,8 +112,8 @@ iobzattach(struct device *parent, struct device *self, void *auxp)
 	volatile u_int8_t *p;
 
 
-	iobzsc = (struct iobz_softc *)self;
-	zap = auxp;
+	iobzsc = device_private(self);
+	zap = aux;
 
 	if (parent)
 		printf("\n");
@@ -141,10 +140,10 @@ iobzattach(struct device *parent, struct device *self, void *auxp)
 }
 
 int
-iobzprint(void *auxp, const char *pnp)
+iobzprint(void *aux, const char *pnp)
 {
 	struct supio_attach_args *supa;
-	supa = auxp;
+	supa = aux;
 
 	if (pnp == NULL)
 		return(QUIET);

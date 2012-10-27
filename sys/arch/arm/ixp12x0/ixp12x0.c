@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.18 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.19 2012/10/27 17:17:39 chs Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.18 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.19 2012/10/27 17:17:39 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,15 +59,15 @@ ixp12x0_attach(struct ixp12x0_softc *sc)
 	 */
 	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_HWBASE, IXP12X0_PCI_SIZE,
 			  0, &sc->sc_pci_ioh))
-		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname); 
+		panic("%s: unable to map PCI registers", device_xname(sc->sc_dev)); 
 	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE0_HWBASE,
 			  IXP12X0_PCI_TYPE0_SIZE, 0, &sc->sc_conf0_ioh))
 		panic("%s: unable to map PCI Configutation 0\n",
-		      sc->sc_dev.dv_xname);
+		      device_xname(sc->sc_dev));
 	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE1_HWBASE,
 			  IXP12X0_PCI_TYPE0_SIZE, 1, &sc->sc_conf1_ioh))
 		panic("%s: unable to map PCI Configutation 1\n",
-		      sc->sc_dev.dv_xname);
+		      device_xname(sc->sc_dev));
 
 	/*
 	 * PCI bus reset
@@ -176,7 +176,7 @@ ixp12x0_attach(struct ixp12x0_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 void

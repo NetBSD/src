@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.3 2011/04/24 16:26:57 rmind Exp $ */
+/*	$NetBSD: scn.c,v 1.4 2012/10/27 17:18:09 chs Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.3 2011/04/24 16:26:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.4 2012/10/27 17:18:09 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -140,7 +140,7 @@ void	scncnpollc(dev_t, int);
 int	scninit(dev_t, int);
 void	scncnreinit(void *);
 
-CFATTACH_DECL(scn, sizeof(struct scn_softc),
+CFATTACH_DECL_NEW(scn, sizeof(struct scn_softc),
     scn_match, scn_attach, NULL, NULL);
 
 extern struct cfdriver scn_cd;
@@ -194,7 +194,7 @@ SOFTC(int unit)
 {
 	if (unit < 0 || unit >= scn_cd.cd_ndevs)
 		return (NULL);
-	return ((struct scn_softc *)scn_cd.cd_devs[unit]);
+	return device_private(scn_cd.cd_devs[unit]);
 }
 
 static int	scnintr(void *);

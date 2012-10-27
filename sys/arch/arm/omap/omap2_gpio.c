@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.11 2012/08/29 17:48:17 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.12 2012/10/27 17:17:40 chs Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11 2012/08/29 17:48:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.12 2012/10/27 17:17:40 chs Exp $");
 
 #define _INTR_PRIVATE
 
@@ -407,7 +407,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT) {
 		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
-		strlcpy(gpio->gpio_pic.pic_name, self->dv_xname,
+		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 		pic_add(&gpio->gpio_pic, oa->obio_intrbase);

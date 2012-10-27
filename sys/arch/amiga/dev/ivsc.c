@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.35 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: ivsc.c,v 1.36 2012/10/27 17:17:29 chs Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.35 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.36 2012/10/27 17:17:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.35 2005/12/11 12:16:28 christos Exp $");
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void ivscattach(struct device *, struct device *, void *);
-int ivscmatch(struct device *, struct cfdata *, void *);
+void ivscattach(device_t, device_t, void *);
+int ivscmatch(device_t, cfdata_t, void *);
 
 int ivsc_intr(void *);
 int ivsc_dma_xfer_in(struct sci_softc *dev, int len,
@@ -95,18 +95,18 @@ extern int sci_data_wait;
 
 int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
-CFATTACH_DECL(ivsc, sizeof(struct sci_softc),
+CFATTACH_DECL_NEW(ivsc, sizeof(struct sci_softc),
     ivscmatch, ivscattach, NULL, NULL);
 
 /*
  * if this is an IVS board
  */
 int
-ivscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+ivscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * Check manufacturer and product id.
@@ -120,17 +120,19 @@ ivscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-ivscattach(struct device *pdp, struct device *dp, void *auxp)
+ivscattach(device_t parent, device_t self, void *aux)
 {
 	volatile u_char *rp;
-	struct sci_softc *sc = (struct sci_softc *)dp;
+	struct sci_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
+	sc->sc_dev = self;
+
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
 	rp = (u_char *)zap->va + 0x40;
 	sc->sci_data = rp;
@@ -163,7 +165,7 @@ ivscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -184,7 +186,7 @@ ivscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39irvar.h,v 1.3 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39irvar.h,v 1.4 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 struct txcom_attach_args {
 	tx_chipset_tag_t tca_tc;
-	struct device *tca_parent;
+	device_t tca_parent;
 };
 
-void	txcom_pulse_mode(struct device *);
+void	txcom_pulse_mode(device_t);

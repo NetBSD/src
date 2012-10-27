@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeivar.h,v 1.4 2005/12/11 12:22:48 christos Exp $ */
+/* $NetBSD: btvmeivar.h,v 1.5 2012/10/27 17:18:28 chs Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -37,7 +37,7 @@ struct b3_617_vmeintrhand {
 };
 
 struct b3_617_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	/* tags passed in from PCI */
 	pci_chipset_tag_t sc_pc;

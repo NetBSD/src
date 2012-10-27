@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.68 2012/01/19 00:14:08 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.69 2012/10/27 17:17:32 chs Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.68 2012/01/19 00:14:08 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.69 2012/10/27 17:17:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -284,13 +284,13 @@ static cfdata_t early_cfdata;
 
 /*ARGSUSED*/
 int
-zbusmatch(device_t pdp, cfdata_t cfp, void *auxp)
+zbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (matchname(auxp, "zbus") == 0)
+	if (matchname(aux, "zbus") == 0)
 		return(0);
 	if (amiga_realconfig == 0)
-		early_cfdata = cfp;
+		early_cfdata = cf;
 	return(1);
 }
 
@@ -300,7 +300,7 @@ zbusmatch(device_t pdp, cfdata_t cfp, void *auxp)
  * with that driver if matched else print a diag.
  */
 void
-zbusattach(device_t pdp, device_t dp, void *auxp)
+zbusattach(device_t parent, device_t self, void *aux)
 {
 	struct zbus_args za;
 	struct preconfdata *pcp, *epcp;
@@ -355,7 +355,7 @@ zbusattach(device_t pdp, device_t dp, void *auxp)
 			if (amiga_realconfig == 0)
 				pcp->vaddr = za.va;
 		}
-		amiga_config_found(early_cfdata, dp, &za, zbusprint);
+		amiga_config_found(early_cfdata, self, &za, zbusprint);
 	}
 }
 
@@ -363,13 +363,13 @@ zbusattach(device_t pdp, device_t dp, void *auxp)
  * print configuration info.
  */
 int
-zbusprint(void *auxp, const char *pnp)
+zbusprint(void *aux, const char *pnp)
 {
 	struct zbus_args *zap;
 	int rv;
 
 	rv = UNCONF;
-	zap = auxp;
+	zap = aux;
 
 	if (pnp) {
 		aprint_normal("%s at %s:",

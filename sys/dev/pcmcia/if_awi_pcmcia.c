@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.44 2009/09/15 18:37:02 dyoung Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.45 2012/10/27 17:18:36 chs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.44 2009/09/15 18:37:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.45 2012/10/27 17:18:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct awi_pcmcia_softc {
 #define	AWI_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(awi_pcmcia, sizeof(struct awi_pcmcia_softc),
+CFATTACH_DECL_NEW(awi_pcmcia, sizeof(struct awi_pcmcia_softc),
     awi_pcmcia_match, awi_pcmcia_attach, awi_pcmcia_detach, awi_activate);
 
 static const struct pcmcia_product awi_pcmcia_products[] = {
@@ -187,6 +187,7 @@ awi_pcmcia_attach(device_t parent, device_t self,
 	struct pcmcia_config_entry *cfe;
 	int error;
 
+	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, awi_pcmcia_validate_config);

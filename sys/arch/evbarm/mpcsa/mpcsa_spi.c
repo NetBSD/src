@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_spi.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
-/*	$NetBSD: mpcsa_spi.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
+/*	$Id: mpcsa_spi.c,v 1.3 2012/10/27 17:17:48 chs Exp $	*/
+/*	$NetBSD: mpcsa_spi.c,v 1.3 2012/10/27 17:17:48 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_spi.c,v 1.2 2008/07/03 01:15:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_spi.c,v 1.3 2012/10/27 17:17:48 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,14 +49,14 @@ int mpcsa_spi_debug = MPCSA_SPI_DEBUG;
 struct at91pio_softc;
 
 struct mpcsa_spi_softc {
-	struct at91spi_softc	sc_dev;
+	struct at91spi_softc	sc_at91spi;
 	struct at91pio_softc	*sc_pioa, *sc_piod;
 };
 
-static int mpcsa_spi_match(struct device *, struct cfdata *, void *);
-static void mpcsa_spi_attach(struct device *, struct device *, void *);
+static int mpcsa_spi_match(device_t, cfdata_t, void *);
+static void mpcsa_spi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mpcsa_spi, sizeof(struct mpcsa_spi_softc),
+CFATTACH_DECL_NEW(mpcsa_spi, sizeof(struct mpcsa_spi_softc),
 	      mpcsa_spi_match, mpcsa_spi_attach, NULL, NULL);
 
 static int mpcsa_spi_select(void *self, int sel);
@@ -66,7 +66,7 @@ struct at91spi_machdep mpcsa_spi_tag = {
 };
 
 static int
-mpcsa_spi_match(struct device *parent, struct cfdata *match, void *aux)
+mpcsa_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (strcmp(match->cf_name, "at91spi") == 0 && strcmp(match->cf_atname, "mpcsa_spi") == 0)
 		return 2;
@@ -79,9 +79,9 @@ mpcsa_spi_match(struct device *parent, struct cfdata *match, void *aux)
 
 
 static void
-mpcsa_spi_attach(struct device *parent, struct device *self, void *aux)
+mpcsa_spi_attach(device_t parent, device_t self, void *aux)
 {
-	struct mpcsa_spi_softc *sc = (struct mpcsa_spi_softc *)self;
+	struct mpcsa_spi_softc *sc = device_private(self);
 
 	// do some checks
 	if ((sc->sc_pioa = at91pio_sc(AT91_PIOA)) == NULL) {
@@ -94,7 +94,7 @@ mpcsa_spi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	// initialize softc
-	sc->sc_dev.sc_spi.sct_nslaves = 3;	// number of slaves
+	sc->sc_at91spi.sc_spi.sct_nslaves = 3;	// number of slaves
 
 	// configure GPIO
 	GPIO_SPICS0(at91pio_out); GPIO_SPICS0(at91pio_set);
@@ -107,7 +107,7 @@ mpcsa_spi_attach(struct device *parent, struct device *self, void *aux)
 
 static int mpcsa_spi_select(void *self, int sel)
 {
-	struct mpcsa_spi_softc *sc = (struct mpcsa_spi_softc *)self;
+	struct mpcsa_spi_softc *sc = device_private(self);
 
 	/* first deselect everything */
 	GPIO_SPICS0(at91pio_set);

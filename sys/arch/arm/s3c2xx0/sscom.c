@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.37 2012/02/07 09:06:05 nisimura Exp $ */
+/*	$NetBSD: sscom.c,v 1.38 2012/10/27 17:17:40 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.37 2012/02/07 09:06:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.38 2012/10/27 17:17:40 chs Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -335,7 +335,7 @@ sscomstatus(struct sscom_softc *sc, const char *str)
 	int umcon = bus_space_read_1(sc->sc_iot, sc->sc_iot, SSCOM_UMCON);
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev->dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    "+",			/* DCD */
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
@@ -343,7 +343,7 @@ sscomstatus(struct sscom_softc *sc, const char *str)
 	    sc->sc_tx_stopped ? "+" : "-");
 
 	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %xrx_flags\n",
-	    sc->sc_dev->dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(umstat, UMSTAT_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
@@ -462,7 +462,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 #ifdef KGDB
 	if (ISSET(sc->sc_hwflags, SSCOM_HW_KGDB)) {
 		sscom_kgdb_attached = 1;
-		printf("%s: kgdb\n", sc->sc_dev->dv_xname);
+		printf("%s: kgdb\n", device_xname(sc->sc_dev));
 		sscom_enable_debugport(sc);
 		return;
 	}
@@ -479,7 +479,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	sc->sc_rbavail = sscom_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev->dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (sscom_rbuf_size << 1);
@@ -501,7 +501,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, sscomsoft, sc);
 
 #ifdef RND_COM
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -1182,7 +1182,7 @@ sscom_iflush(struct sscom_softc *sc)
 		(void)sscom_getc(iot,ioh);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: sscom_iflush timeout\n", sc->sc_dev->dv_xname);
+		printf("%s: sscom_iflush timeout\n", device_xname(sc->sc_dev));
 #endif
 }
 
@@ -1354,7 +1354,7 @@ sscomdiag(void *arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev->dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }

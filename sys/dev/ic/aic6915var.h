@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915var.h,v 1.3 2009/09/27 10:00:11 tsutsui Exp $	*/
+/*	$NetBSD: aic6915var.h,v 1.4 2012/10/27 17:18:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ struct sf_descsoft {
  * Software state per device.
  */
 struct sf_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_space_handle_t sc_sh_func;	/* sub-handle for func regs */

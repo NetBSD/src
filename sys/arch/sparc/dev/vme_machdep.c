@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.67 2012/07/29 00:04:05 matt Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.68 2012/10/27 17:18:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.67 2012/07/29 00:04:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.68 2012/10/27 17:18:11 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -328,7 +328,7 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 
 /* sun4m vmebus */
 static void
-vmeattach_iommu(struct device *parent, struct device *self, void *aux)
+vmeattach_iommu(device_t parent, device_t self, void *aux)
 {
 #if defined(SUN4M)
 	struct sparcvme_softc *sc = device_private(self);

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.20 2012/10/27 17:18:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -65,22 +65,11 @@ static int daic_isa_probe(device_t, cfdata_t, void *);
 static void daic_isa_attach(device_t, device_t, void *);
 static int daic_isa_intr(void *);
 
-CFATTACH_DECL(daic_isa, sizeof(struct daic_isa_softc),
+CFATTACH_DECL_NEW(daic_isa, sizeof(struct daic_isa_softc),
     daic_isa_probe, daic_isa_attach, NULL, NULL);
 
 static int
-#ifdef __BROKEN_INDIRECT_CONFIG
-daic_isa_probe(parent, match, aux)
-#else
-daic_isa_probe(parent, cf, aux)
-#endif
-	device_t parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
-	cfdata_t cf;
-#endif
-	void *aux;
+daic_isa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt;
@@ -122,7 +111,7 @@ bad:
 static void
 daic_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct daic_isa_softc *sc = (void *)self;
+	struct daic_isa_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t memh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.85 2012/10/05 01:12:15 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.86 2012/10/27 17:18:34 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.85 2012/10/05 01:12:15 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.86 2012/10/27 17:18:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2047,7 +2047,7 @@ machfb_fbattach(struct mach64_softc *sc)
 	fb->fb_type.fb_size = sc->memsize;
 	
 	fb->fb_type.fb_type = FBTYPE_GENERIC_PCI;
-	fb->fb_flags = sc->sc_dev->dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = sc->bits_per_pixel;
 	fb->fb_type.fb_width = sc->virt_x;
 	fb->fb_type.fb_height = sc->virt_y;

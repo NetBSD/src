@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sibvar.h,v 1.4 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: tx39sibvar.h,v 1.5 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@ struct txsib_attach_args {
 	int sa_slot; /* subframe 0 or subframe 1 */
 };
 
-void	tx39sib_enable1(struct device *);
-void	tx39sib_enable2(struct device *);
-void	tx39sib_disable(struct device *);
-int	tx39sib_clock(struct device *);
+void	tx39sib_enable1(device_t);
+void	tx39sib_enable2(device_t);
+void	tx39sib_disable(device_t);
+int	tx39sib_clock(device_t);
 
 /* subframe0 access sync method */
 void		txsibsf0_reg_write(tx_chipset_tag_t, int, u_int16_t);

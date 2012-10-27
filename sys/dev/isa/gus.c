@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.108 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: gus.c,v 1.109 2012/10/27 17:18:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.108 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.109 2012/10/27 17:18:24 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ struct gus_voice {
  */
 
 struct gus_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	void *sc_ih;			/* interrupt vector */
@@ -437,7 +437,7 @@ void	stereo_dmaintr(void *);
 int	gusprobe(device_t, cfdata_t, void *);
 void	gusattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gus, sizeof(struct gus_softc),
+CFATTACH_DECL_NEW(gus, sizeof(struct gus_softc),
     gusprobe, gusattach, NULL, NULL);
 
 /*
@@ -817,7 +817,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	int d = -1;
 	const struct audio_hw_if *hwif;
 
-	sc = (void *) self;
+	sc = device_private(self);
 	ia = aux;
 	callout_init(&sc->sc_dmaout_ch, CALLOUT_MPSAFE);
 	ad1848_init_locks(&sc->sc_codec.sc_ad1848, IPL_AUDIO);
@@ -894,7 +894,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	}
 	if (d == -1)
 		printf("%s: WARNING: Cannot initialize drq\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire
@@ -937,14 +937,14 @@ gusattach(device_t parent, device_t self, void *aux)
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
-			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			aprint_error_dev(sc->sc_dev, "can't reserve drq %d\n",
 			    sc->sc_playdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			aprint_error_dev(sc->sc_dev, "can't create map for drq %d\n",
 			       sc->sc_playdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
@@ -954,14 +954,14 @@ gusattach(device_t parent, device_t self, void *aux)
 		sc->sc_req_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
-			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			aprint_error_dev(sc->sc_dev, "can't reserve drq %d\n",
 			    sc->sc_recdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_req_maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			aprint_error_dev(sc->sc_dev, "can't create map for drq %d\n",
 			       sc->sc_recdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
@@ -1015,7 +1015,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	snprintf(gus_device.version, sizeof(gus_device.version), "%d",
 	    sc->sc_revision);
 
-	printf("\n%s: Gravis UltraSound", device_xname(&sc->sc_dev));
+	printf("\n%s: Gravis UltraSound", device_xname(sc->sc_dev));
 	if (sc->sc_revision >= 10)
 		printf(" MAX");
 	else {
@@ -1029,7 +1029,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	/* A GUS MAX should always have a CODEC installed */
 	if ((sc->sc_revision >= 10) & !(HAS_CODEC(sc)))
 		printf("%s: WARNING: did not attach CODEC on MAX\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * Setup a default interrupt handler
@@ -1074,7 +1074,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	 */
 
 	audio_attach_mi(hwif,
-	    HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
+	    HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, sc->sc_dev);
 }
 
 int
@@ -1460,7 +1460,7 @@ gus_dmaout_timeout(void *arg)
 	sc = arg;
 	iot = sc->sc_iot;
 	ioh2 = sc->sc_ioh2;
-	printf("%s: dmaout timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: dmaout timeout\n", device_xname(sc->sc_dev));
 
 	/*
 	 * Stop any DMA.
@@ -1470,7 +1470,7 @@ gus_dmaout_timeout(void *arg)
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
 	/* XXX we will dmadone below? */
-	isa_dmaabort(device_parent(&sc->sc_dev), sc->sc_playdrq);
+	isa_dmaabort(device_parent(sc->sc_dev), sc->sc_playdrq);
 #endif
 
 	gus_dmaout_dointr(sc);
@@ -1579,7 +1579,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 	if (sc->sc_voc[GUS_VOICE_LEFT].voccntl &
 	    GUSMASK_VOICE_STOPPED) {
 		if (sc->sc_flags & GUS_PLAYING) {
-			printf("%s: playing yet stopped?\n", device_xname(&sc->sc_dev));
+			printf("%s: playing yet stopped?\n", device_xname(sc->sc_dev));
 		}
 		sc->sc_bufcnt++; /* another yet to be played */
 		gus_start_playing(sc, sc->sc_dmabuf);
@@ -1728,7 +1728,7 @@ gus_voice_intr(struct gus_softc *sc)
 			if (status & GUSMASK_VOICE_STOPPED) {
 				if (voice != GUS_VOICE_LEFT) {
 					DMAPRINTF(("%s: spurious voice %d stop?\n",
-						   device_xname(&sc->sc_dev), voice));
+						   device_xname(sc->sc_dev), voice));
 					gus_stop_voice(sc, voice, 0);
 					continue;
 				}
@@ -1744,14 +1744,14 @@ gus_voice_intr(struct gus_softc *sc)
 					 * in place.  Start the voice again.
 					 */
 					printf("%s: stopped voice not drained? (%x)\n",
-					       device_xname(&sc->sc_dev), sc->sc_bufcnt);
+					       device_xname(sc->sc_dev), sc->sc_bufcnt);
 					gus_falsestops++;
 
 					sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
 					gus_start_playing(sc, sc->sc_playbuf);
 				} else if (sc->sc_bufcnt < 0) {
 					panic("%s: negative bufcnt in stopped voice",
-					      device_xname(&sc->sc_dev));
+					      device_xname(sc->sc_dev));
 				} else {
 					sc->sc_playbuf = -1; /* none are active */
 					gus_stops++;
@@ -1933,7 +1933,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
 		DPRINTF(("gus: bufcnt 0 on continuing voice?\n"));
 	}
 	if (sc->sc_playbuf == sc->sc_dmabuf && (sc->sc_flags & GUS_LOCKED)) {
-		aprint_error_dev(&sc->sc_dev, "continue into active dmabuf?\n");
+		aprint_error_dev(sc->sc_dev, "continue into active dmabuf?\n");
 		return 1;
 	}
 

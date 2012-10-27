@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.86 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: fd.c,v 1.87 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2012/10/27 17:17:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,12 +325,12 @@ CFATTACH_DECL_NEW(fdc, 0,
 
 
 int
-fdcmatch(device_t pdp, cfdata_t cfp, void *auxp)
+fdcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int fdc_matched = 0;
 
 	/* Allow only once instance. */
-	if (matchname("fdc", auxp) == 0 || fdc_matched)
+	if (matchname("fdc", aux) == 0 || fdc_matched)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
 		printf("fdc: unable to allocate DMA buffer\n");
@@ -342,7 +342,7 @@ fdcmatch(device_t pdp, cfdata_t cfp, void *auxp)
 }
 
 void
-fdcattach(device_t pdp, device_t dp, void *auxp)
+fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct fdcargs args;
 
@@ -352,20 +352,20 @@ fdcattach(device_t pdp, device_t dp, void *auxp)
 	args.type = fdcgetfdtype(args.unit);
 
 	fdc_side = -1;
-	config_found(dp, &args, fdcprint);
+	config_found(self, &args, fdcprint);
 	for (args.unit++; args.unit < FDMAXUNITS; args.unit++) {
 		if ((args.type = fdcgetfdtype(args.unit)) == NULL)
 			continue;
-		config_found(dp, &args, fdcprint);
+		config_found(self, &args, fdcprint);
 	}
 }
 
 int
-fdcprint(void *auxp, const char *pnp)
+fdcprint(void *aux, const char *pnp)
 {
 	struct fdcargs *fcp;
 
-	fcp = auxp;
+	fcp = aux;
 	if (pnp)
 		aprint_normal("fd%d at %s unit %d:", fcp->unit, pnp,
 			fcp->type->driveid);
@@ -374,28 +374,28 @@ fdcprint(void *auxp, const char *pnp)
 
 /*ARGSUSED*/
 int
-fdmatch(device_t pdp, cfdata_t cfp, void *auxp)
+fdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdcargs *fdap;
 
-	fdap = auxp;
-	if (cfp->cf_loc[FDCCF_UNIT] == fdap->unit ||
-	    cfp->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT)
+	fdap = aux;
+	if (cf->cf_loc[FDCCF_UNIT] == fdap->unit ||
+	    cf->cf_loc[FDCCF_UNIT] == FDCCF_UNIT_DEFAULT)
 		return(1);
 
 	return(0);
 }
 
 void
-fdattach(device_t pdp, device_t dp, void *auxp)
+fdattach(device_t parent, device_t self, void *aux)
 {
 	struct fdcargs *ap;
 	struct fd_softc *sc;
 	int i;
 
-	ap = auxp;
-	sc = device_private(dp);
-	sc->sc_dev = dp;
+	ap = aux;
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	bufq_alloc(&sc->bufq, "disksort", BUFQ_SORT_CYLINDER);
 	callout_init(&sc->calibrate_ch, 0);

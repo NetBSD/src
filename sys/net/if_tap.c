@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.67 2012/06/02 21:36:47 dsl Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.68 2012/10/27 17:18:39 chs Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67 2012/06/02 21:36:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.68 2012/10/27 17:18:39 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -93,11 +93,10 @@ SYSCTL_SETUP_PROTO(sysctl_tap_setup);
 #endif
 
 /*
- * Since we're an Ethernet device, we need the 3 following
- * components: a leading struct device, a struct ethercom,
- * and also a struct ifmedia since we don't attach a PHY to
- * ourselves. We could emulate one, but there's no real
- * point.
+ * Since we're an Ethernet device, we need the 2 following
+ * components: a struct ethercom and a struct ifmedia
+ * since we don't attach a PHY to ourselves.
+ * We could emulate one, but there's no real point.
  */
 
 struct tap_softc {

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.53 2008/06/15 10:29:18 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.53 2008/06/15 10:29:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.54 2012/10/27 17:18:00 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -105,10 +105,10 @@ static void	asc_intr_enable(void);
 static void	asc_intr(void *);
 #endif
 
-static int	ascmatch(struct device *, struct cfdata *, void *);
-static void	ascattach(struct device *, struct device *, void *);
+static int	ascmatch(device_t, cfdata_t, void *);
+static void	ascattach(device_t, device_t, void *);
 
-CFATTACH_DECL(asc, sizeof(struct asc_softc),
+CFATTACH_DECL_NEW(asc, sizeof(struct asc_softc),
     ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
@@ -126,7 +126,7 @@ const struct cdevsw asc_cdevsw = {
 };
 
 static int
-ascmatch(struct device *parent, struct cfdata *cf, void *aux)
+ascmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_addr_t addr;
@@ -156,13 +156,14 @@ ascmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ascattach(struct device *parent, struct device *self, void *aux)
+ascattach(device_t parent, device_t self, void *aux)
 {
-	struct asc_softc *sc = (struct asc_softc *)self;
+	struct asc_softc *sc = device_private(self);
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_addr_t addr;
 	int i;
 
+	sc->sc_dev = self;
 	sc->sc_tag = oa->oa_tag;
 	if (oa->oa_addr != (-1))
 		addr = (bus_addr_t)oa->oa_addr;

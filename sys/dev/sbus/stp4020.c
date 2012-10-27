@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.66 2011/07/26 22:22:41 dyoung Exp $ */
+/*	$NetBSD: stp4020.c,v 1.67 2012/10/27 17:18:37 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.66 2011/07/26 22:22:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.67 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ struct stp4020_socket {
 	bus_space_tag_t	tag;		/* socket control io	*/
 	bus_space_handle_t	regs;	/*  space		*/
 	bus_space_tag_t	pcmciat;	/* io space for pcmcia  */
-	struct device	*pcmcia;	/* Associated PCMCIA device */
+	device_t	pcmcia;		/* Associated PCMCIA device */
 	int		(*intrhandler)	/* Card driver interrupt handler */
 			   (void *);
 	void		*intrarg;	/* Card interrupt handler argument */

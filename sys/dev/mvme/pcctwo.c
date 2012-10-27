@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.10 2012/02/12 16:34:12 matt Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.11 2012/10/27 17:18:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.10 2012/02/12 16:34:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.11 2012/10/27 17:18:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ pcctwo_init(struct pcctwo_softc *sc, const struct pcctwo_device *pd, int devoff)
 		pd++;
 
 		/* Attach the device if configured. */
-		(void) config_found(&sc->sc_dev, &npa, pcctwoprint);
+		(void) config_found(sc->sc_dev, &npa, pcctwoprint);
 	}
 }
 

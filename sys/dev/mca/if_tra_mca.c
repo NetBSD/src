@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.15 2012/02/03 01:20:45 tls Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.16 2012/10/27 17:18:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.15 2012/02/03 01:20:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.16 2012/10/27 17:18:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct tiara_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(tra_mca, sizeof(struct tiara_softc),
+CFATTACH_DECL_NEW(tra_mca, sizeof(struct tiara_softc),
     tiara_mca_match, tiara_mca_attach, NULL, NULL);
 
 static const struct tiara_mca_product {
@@ -98,8 +98,7 @@ tiara_mca_lookup(u_int32_t id)
 }
 
 int
-tiara_mca_match(device_t parent, cfdata_t match,
-    void *aux)
+tiara_mca_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mca_attach_args *ma = (struct mca_attach_args *) aux;
 
@@ -187,7 +186,7 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 		if ((pos2 & 0x80) != 0)
 			irq = smc_irq[((pos2 & 0x70) >> 4)];
 		else {
-			aprint_error_dev(&sc->sc_dev, "unsupported irq selected\n");
+			aprint_error_dev(self, "unsupported irq selected\n");
 			return;
 		}
 
@@ -205,7 +204,7 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 	tra_p = tiara_mca_lookup(ma->ma_id);
 	if (tra_p == NULL) {
 		aprint_normal("\n");
-		aprint_error_dev(&sc->sc_dev, "where did the card go?\n");
+		aprint_error_dev(self, "where did the card go?\n");
 		return;
 	}
 #endif
@@ -214,10 +213,11 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, iobase, TIARA_NPORTS, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
 
@@ -241,7 +241,7 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
 			mb86950_intr, sc);
 	if (isc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(self, "couldn't establish interrupt handler\n");
 		return;
 	}
 }

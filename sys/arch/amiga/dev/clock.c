@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: clock.c,v 1.54 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2012/10/27 17:17:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -107,9 +107,9 @@ CFATTACH_DECL_NEW(clock, 0,
     clockmatch, clockattach, NULL, NULL);
 
 int
-clockmatch(device_t pdp, cfdata_t cfp, void *auxp)
+clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	if (matchname("clock", auxp))
+	if (matchname("clock", aux))
 		return(1);
 	return(0);
 }
@@ -118,7 +118,7 @@ clockmatch(device_t pdp, cfdata_t cfp, void *auxp)
  * Start the real-time clock.
  */
 void
-clockattach(device_t pdp, device_t dp, void *auxp)
+clockattach(device_t parent, device_t self, void *aux)
 {
 	const char *clockchip;
 	unsigned short interval;
@@ -149,7 +149,7 @@ clockattach(device_t pdp, device_t dp, void *auxp)
 
 	amiga_clk_interval = chipfreq / hz;
 
-	if (dp != NULL) {	/* real autoconfig? */
+	if (self != NULL) {	/* real autoconfig? */
 		printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
 		    chipfreq);
 
@@ -168,7 +168,7 @@ clockattach(device_t pdp, device_t dp, void *auxp)
 		draco_ioct->io_timerlo = amiga_clk_interval & 0xff;
 		draco_ioct->io_timerhi = amiga_clk_interval >> 8;
 
-		calibrate_delay(dp);
+		calibrate_delay(self);
 
 		return;
 	}
@@ -196,7 +196,7 @@ clockattach(device_t pdp, device_t dp, void *auxp)
 	 */
 	clockcia->cra = (clockcia->cra & 0xc0) | 1;
 
-	calibrate_delay(dp);
+	calibrate_delay(self);
 }
 
 void
@@ -326,13 +326,13 @@ clk_getcounter(struct timecounter *tc)
  * off by 2.4%
  */
 static void
-calibrate_delay(device_t dp)
+calibrate_delay(device_t self)
 {
 	unsigned long t1, t2;
 	extern u_int32_t delaydivisor;
 		/* XXX this should be defined elsewhere */
 
-	if (dp)
+	if (self)
 		printf("Calibrating delay loop... ");
 
 	do {
@@ -343,7 +343,7 @@ calibrate_delay(device_t dp)
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DEBUG
-	if (dp)
+	if (self)
 		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
 		    delaydivisor);
 	do {
@@ -353,7 +353,7 @@ calibrate_delay(device_t dp)
 	} while (t2 <= t1);
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-	if (dp)
+	if (self)
 		printf("diff %ld us, new divisor %u/1024 us\n", t2,
 		    delaydivisor);
 #endif
@@ -365,10 +365,10 @@ calibrate_delay(device_t dp)
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DEBUG
-	if (dp)
+	if (self)
 		printf("diff %ld us, new divisor ", t2);
 #endif
-	if (dp)
+	if (self)
 		printf("%u/1024 us\n", delaydivisor);
 }
 

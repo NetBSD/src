@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.10 2012/10/27 17:17:48 chs Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nppb.c,v 1.10 2012/10/27 17:17:48 chs Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -72,7 +72,6 @@ CFATTACH_DECL_NEW(nppb, 0,
 	bus_space_write_4(sc->sc_st, sc->sc_sh, reg, val)
 
 struct nppb_softc {  /* XXX into i21555var.h */
-	struct device sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 
@@ -112,8 +111,8 @@ nppbmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 nppbattach(device_t parent, device_t self, void *aux)
 {
-	struct nppb_pci_softc *psc = (struct nppb_pci_softc *)self;
-	struct nppb_softc *sc = (struct nppb_softc *)self;
+	struct nppb_pci_softc *psc = device_private(self);
+	struct nppb_softc *sc = &psc->psc_nppb;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -160,20 +159,20 @@ nppbattach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish our interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", device_xname(self));
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nppb_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
 
 }
 

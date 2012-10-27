@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.9 2011/07/10 06:24:19 matt Exp $ */
+/* $NetBSD: arspi.c,v 1.10 2012/10/27 17:18:02 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.9 2011/07/10 06:24:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.10 2012/10/27 17:18:02 chs Exp $");
 
 #include "locators.h"
 
@@ -94,7 +94,6 @@ struct arspi_job {
 #define	JOB_WREN		0x10	/* WREN needed */
 
 struct arspi_softc {
-	struct device		sc_dev;
 	struct spi_controller	sc_spi;
 	void			*sc_ih;
 	bool			sc_interrupts;
@@ -109,9 +108,9 @@ struct arspi_softc {
 
 #define	STATIC
 
-STATIC int arspi_match(struct device *, struct cfdata *, void *);
-STATIC void arspi_attach(struct device *, struct device *, void *);
-STATIC void arspi_interrupts(struct device *);
+STATIC int arspi_match(device_t, cfdata_t, void *);
+STATIC void arspi_attach(device_t, device_t, void *);
+STATIC void arspi_interrupts(device_t);
 STATIC int arspi_intr(void *);
 /* SPI service routines */
 STATIC int arspi_configure(void *, int, int, int);
@@ -127,14 +126,14 @@ STATIC void arspi_update_job(struct spi_transfer *);
 STATIC void arspi_finish_job(struct spi_transfer *);
 
 
-CFATTACH_DECL(arspi, sizeof(struct arspi_softc),
+CFATTACH_DECL_NEW(arspi, sizeof(struct arspi_softc),
     arspi_match, arspi_attach, NULL, NULL);
 
 #define	GETREG(sc, o)		bus_space_read_4(sc->sc_st, sc->sc_sh, o)
 #define	PUTREG(sc, o, v)	bus_space_write_4(sc->sc_st, sc->sc_sh, o, v)
 
 int
-arspi_match(struct device *parent, struct cfdata *cf, void *aux)
+arspi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct arbus_attach_args *aa = aux;
 
@@ -144,7 +143,7 @@ arspi_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-arspi_attach(struct device *parent, struct device *self, void *aux)
+arspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct arspi_softc *sc = device_private(self);
 	struct spibus_attach_args sba;
@@ -193,11 +192,11 @@ arspi_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize and attach bus attach.
 	 */
 	sba.sba_controller = &sc->sc_spi;
-	(void) config_found_ia(&sc->sc_dev, "spibus", &sba, spibus_print);
+	(void) config_found_ia(self, "spibus", &sba, spibus_print);
 }
 
 void
-arspi_interrupts(struct device *self)
+arspi_interrupts(device_t self)
 {
 	/*
 	 * we never leave polling mode, because, apparently, we 

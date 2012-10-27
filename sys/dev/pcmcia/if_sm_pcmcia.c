@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.54 2009/05/12 14:42:18 cegger Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.55 2012/10/27 17:18:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.54 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.55 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct sm_pcmcia_softc {
 #define	SM_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
+CFATTACH_DECL_NEW(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
     sm_pcmcia_match, sm_pcmcia_attach, sm_pcmcia_detach, smc91cxx_activate);
 
 int	sm_pcmcia_enable(struct smc91cxx_softc *);
@@ -134,13 +134,14 @@ sm_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 void
 sm_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
+	struct sm_pcmcia_softc *psc = device_private(self);
 	struct smc91cxx_softc *sc = &psc->sc_smc;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int error;
 
+	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);
@@ -187,7 +188,7 @@ fail:
 int
 sm_pcmcia_detach(device_t self, int flags)
 {
-	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
+	struct sm_pcmcia_softc *psc = device_private(self);
 	int error;
 
 	if (psc->sc_state != SM_PCMCIA_ATTACHED)

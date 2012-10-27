@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.6 2012/01/29 15:32:52 para Exp $ */
+/*	$NetBSD: mppb.c,v 1.7 2012/10/27 17:17:34 chs Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -70,21 +70,20 @@ struct mppb_softc {
 	struct amiga_pci_chipset apc;	
 };
 
-static int	mppb_match(struct device *, struct cfdata *, void *);
-static void	mppb_attach(struct device *, struct device *, void *);
+static int	mppb_match(device_t, cfdata_t, void *);
+static void	mppb_attach(device_t, device_t, void *);
 pcireg_t	mppb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		mppb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		mppb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 
-void		mppb_pci_attach_hook (struct device *parent, 
-		    struct device *self, struct pcibus_attach_args *pba);
-pcitag_t	mppb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, 
-		    int function);
-void		mppb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, 
-		    int *bp, int *dp, int *fp);
-int		mppb_pci_intr_map(const struct pci_attach_args *pa, 
-		    pci_intr_handle_t *ihp);
-const struct evcnt * mppb_pci_intr_evcnt(pci_chipset_tag_t pc, 
-		    pci_intr_handle_t ih);
+int		mppb_pci_bus_maxdevs(pci_chipset_tag_t, int); 
+void		mppb_pci_attach_hook (device_t, device_t,
+		    struct pcibus_attach_args *pba);
+pcitag_t	mppb_pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		mppb_pci_decompose_tag(pci_chipset_tag_t, pcitag_t, 
+		    int *, int *, int *);
+int		mppb_pci_intr_map(const struct pci_attach_args *, 
+		    pci_intr_handle_t *);
+const struct evcnt * mppb_pci_intr_evcnt(pci_chipset_tag_t, 
+		    pci_intr_handle_t);
 
 CFATTACH_DECL_NEW(mppb, sizeof(struct mppb_softc),
     mppb_match, mppb_attach, NULL, NULL);
@@ -235,7 +234,7 @@ mppb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 void
-mppb_pci_attach_hook(struct device *parent, struct device *self,
+mppb_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }
@@ -255,4 +254,3 @@ mppb_pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	/* TODO: implement */
 	return NULL;
 }
-

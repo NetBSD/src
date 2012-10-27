@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.14 2011/04/04 20:37:46 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.15 2012/10/27 17:17:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -65,7 +65,7 @@ typedef struct	{
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook(struct device *, struct device *,
+void		pci_attach_hook(device_t, device_t,
 			struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);

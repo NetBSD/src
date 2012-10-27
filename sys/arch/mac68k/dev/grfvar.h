@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.30 2011/02/08 20:20:17 rmind Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.31 2012/10/27 17:17:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  * State info, per hardware instance.
  */
 struct grfbus_softc {
-	struct	device	sc_dev;
+	device_t	sc_dev;
 	nubus_slot	sc_slot;
 
 	bus_addr_t		sc_basepa;	/* base of video space */

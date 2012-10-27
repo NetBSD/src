@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.18 2012/07/29 18:05:41 mlelstv Exp $ */
+/* $NetBSD: autoconf.c,v 1.19 2012/10/27 17:17:50 chs Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2012/07/29 18:05:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2012/10/27 17:17:50 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ cpu_rootconf(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -121,7 +121,7 @@ device_register(struct device *dev, void *aux)
 			if (prop_dictionary_set(device_properties(dev),
 						"mac-address", pd) == false) {
 				printf("WARNING: unable to set mac-addr "
-				    "property for %s\n", dev->dv_xname);
+				    "property for %s\n", device_xname(dev));
 			}
 			prop_object_release(pd);
 		}

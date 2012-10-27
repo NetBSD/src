@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2011/07/01 20:38:17 dyoung Exp $ */
+/*	$NetBSD: obio.c,v 1.11 2012/10/27 17:17:47 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -195,7 +195,7 @@ obio_print(void *aux, const char *name)
 }
 
 int
-obio_match(struct device *parent, struct cfdata *match, void *aux)
+obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
@@ -204,7 +204,7 @@ void
 obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
-	struct sa11x0_attach_args *sa = (struct sa11x0_attach_args *)aux;
+	struct sa11x0_attach_args *sa = aux;
 	bus_space_tag_t iot = sa->sa_iot;
 	int i;
 	uint16_t reg;

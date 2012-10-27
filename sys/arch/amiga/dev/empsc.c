@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.26 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: empsc.c,v 1.27 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.26 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.27 2012/10/27 17:17:28 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.26 2005/12/11 12:16:28 christos Exp $");
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void empscattach(struct device *, struct device *, void *);
-int empscmatch(struct device *, struct cfdata *, void *);
+void empscattach(device_t, device_t, void *);
+int empscmatch(device_t, cfdata_t, void *);
 int empsc_intr(void *);
 
 #ifdef DEBUG
@@ -92,18 +92,18 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-CFATTACH_DECL(empsc, sizeof(struct sci_softc),
+CFATTACH_DECL_NEW(empsc, sizeof(struct sci_softc),
     empscmatch, empscattach, NULL, NULL);
 
 /*
  * if this is an EMPLANT board
  */
 int
-empscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+empscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * Check manufacturer and product id.
@@ -115,20 +115,21 @@ empscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-empscattach(struct device *pdp, struct device *dp, void *auxp)
+empscattach(device_t parent, device_t self, void *aux)
 {
 	volatile u_char *rp;
-	struct sci_softc *sc = (struct sci_softc *)dp;
+	struct sci_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
 	rp = (u_char *)zap->va + 0x5000;
 
+	sc->sc_dev = self;
 	sc->sci_data = rp;
 	sc->sci_odata = rp;
 	sc->sci_icmd = rp + 0x10;
@@ -153,7 +154,7 @@ empscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -174,7 +175,7 @@ empscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

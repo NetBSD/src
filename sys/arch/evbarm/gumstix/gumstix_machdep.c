@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.43 2012/09/22 00:33:38 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.44 2012/10/27 17:17:47 chs Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -1332,17 +1332,17 @@ gumstix_device_register(device_t dev, void *aux)
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port1", 1) == false) {
 			printf("WARNING: unable to set power-mask for port1"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port2", 1) == false) {
 			printf("WARNING: unable to set power-mask for port2"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port3", 1) == false) {
 			printf("WARNING: unable to set power-mask for port3"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: macekbc.c,v 1.6 2011/07/01 18:53:47 dyoung Exp $ */
+/* $NetBSD: macekbc.c,v 1.7 2012/10/27 17:18:10 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.6 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.7 2012/10/27 17:18:10 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: macekbc.c,v 1.6 2011/07/01 18:53:47 dyoung Exp $");
 #define		MACEKBC_STAT_RXFULL	(1 << 4)
 
 struct macekbc_softc {
-	struct device 		sc_dev;
 	struct macekbc_internal	*sc_id;
 
 	bus_space_tag_t		sc_iot;
@@ -89,10 +88,10 @@ static void 	macekbc_slot_enable(void *, pckbport_slot_t, int);
 static void 	macekbc_intr_establish(void *, pckbport_slot_t);
 static void 	macekbc_set_poll(void *, pckbport_slot_t, int);
 
-static int	macekbc_match(struct device *, struct cfdata *, void *);
-static void 	macekbc_attach(struct device *, struct device *, void *);
+static int	macekbc_match(device_t, cfdata_t, void *);
+static void 	macekbc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(macekbc, sizeof(struct macekbc_softc),
+CFATTACH_DECL_NEW(macekbc, sizeof(struct macekbc_softc),
     macekbc_match, macekbc_attach, NULL, NULL);
 
 static struct pckbport_accessops macekbc_ops = {
@@ -105,14 +104,14 @@ static struct pckbport_accessops macekbc_ops = {
 };
 
 static int
-macekbc_match(struct device *parent, struct cfdata *match, void *aux)
+macekbc_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 static void
-macekbc_attach(struct device *parent, struct device *self, void *aux)
+macekbc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mace_attach_args *maa;
 	struct macekbc_softc *sc;
@@ -164,9 +163,9 @@ macekbc_attach(struct device *parent, struct device *self, void *aux)
 		pckbport_cnattach(t, &macekbc_ops, PCKBPORT_KBD_SLOT);
 
 	t->t_pt = pckbport_attach(t, &macekbc_ops);
-	if (pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_KBD_SLOT))
+	if (pckbport_attach_slot(self, t->t_pt, PCKBPORT_KBD_SLOT))
 		t->t_present[PCKBPORT_KBD_SLOT] = 1;
-	if (pckbport_attach_slot(&sc->sc_dev, t->t_pt, PCKBPORT_AUX_SLOT))
+	if (pckbport_attach_slot(self, t->t_pt, PCKBPORT_AUX_SLOT))
 		t->t_present[PCKBPORT_AUX_SLOT] = 1;
 
 	return;

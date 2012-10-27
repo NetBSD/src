@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.15 2011/11/23 23:07:35 jmcneill Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.16 2012/10/27 17:18:31 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -72,7 +72,7 @@ enum cs428x_flags {
  * Software state
  */
 struct cs428x_softc {
-	struct device	      sc_dev;
+	device_t	      sc_dev;
 	kmutex_t              sc_lock;
 	kmutex_t              sc_intr_lock;
 

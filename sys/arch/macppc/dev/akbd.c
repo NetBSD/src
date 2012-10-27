@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.44 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: akbd.c,v 1.45 2012/10/27 17:18:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.44 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.45 2012/10/27 17:18:00 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,7 +74,7 @@ static void	blinkleds(struct akbd_softc *);
 #endif
 
 /* Driver definition. */
-CFATTACH_DECL(akbd, sizeof(struct akbd_softc),
+CFATTACH_DECL_NEW(akbd, sizeof(struct akbd_softc),
     akbdmatch, akbdattach, NULL, NULL);
 
 extern struct cfdriver akbd_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.15 2011/08/24 20:27:36 dyoung Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.16 2012/10/27 17:17:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.15 2011/08/24 20:27:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.16 2012/10/27 17:17:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.15 2011/08/24 20:27:36 dyoung Exp $
 #endif
 
 struct vrc4172pci_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -76,9 +76,9 @@ struct vrc4172pci_softc {
 #endif /* VRC4172PCI_MCR700_SUPPORT */
 };
 
-static int	vrc4172pci_match(struct device *, struct cfdata *, void *);
-static void	vrc4172pci_attach(struct device *, struct device *, void *);
-static void	vrc4172pci_attach_hook(struct device *, struct device *,
+static int	vrc4172pci_match(device_t, cfdata_t, void *);
+static void	vrc4172pci_attach(device_t, device_t, void *);
+static void	vrc4172pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static int	vrc4172pci_bus_maxdevs(pci_chipset_tag_t, int);
 static int	vrc4172pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
@@ -88,7 +88,7 @@ static void	vrc4172pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *,
 static pcireg_t	vrc4172pci_conf_read(pci_chipset_tag_t, pcitag_t, int); 
 static void	vrc4172pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t);
-static int	vrc4172pci_intr_map(struct pci_attach_args *,
+static int	vrc4172pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *vrc4172pci_intr_string(pci_chipset_tag_t,pci_intr_handle_t);
 static const struct evcnt *vrc4172pci_intr_evcnt(pci_chipset_tag_t,
@@ -102,7 +102,7 @@ static int	vrc4172pci_mcr700_intr(void *arg);
 #endif
 #endif
 
-CFATTACH_DECL(vrc4172pci, sizeof(struct vrc4172pci_softc),
+CFATTACH_DECL_NEW(vrc4172pci, sizeof(struct vrc4172pci_softc),
     vrc4172pci_match, vrc4172pci_attach, NULL, NULL);
 
 static inline void
@@ -125,22 +125,23 @@ vrc4172pci_read(struct vrc4172pci_softc *sc, int offset)
 }
 
 static int
-vrc4172pci_match(struct device *parent, struct cfdata *match, void *aux)
+vrc4172pci_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
+vrc4172pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct vrc4172pci_softc *sc = (struct vrc4172pci_softc *)self;
+	struct vrc4172pci_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct vrip_attach_args *va = aux;
 #if NPCI > 0
 	struct pcibus_attach_args pba;
 #endif
 
+	sc->sc_dev = self;
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size, 0,
 	    &sc->sc_ioh)) {
@@ -166,7 +167,7 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif /* VRC4172PCI_MCR700_SUPPORT */
 
-	pc->pc_dev = &sc->sc_dev;
+	pc->pc_dev = sc->sc_dev;
 	pc->pc_attach_hook = vrc4172pci_attach_hook;
 	pc->pc_bus_maxdevs = vrc4172pci_bus_maxdevs;
 	pc->pc_bus_devorder = vrc4172pci_bus_devorder;
@@ -186,7 +187,7 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 
 		for (i = 0; i < 2; i++)
 			printf("%s: ID_REG(0, 0, %d) = 0x%08x\n",
-			    sc->sc_dev.dv_xname, i,
+			    device_xname(self), i,
 			    pci_conf_read(pc, pci_make_tag(pc, 0, 0, i),
 				PCI_ID_REG));
 	}
@@ -209,7 +210,7 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-vrc4172pci_attach_hook(struct device *parent, struct device *self,
+vrc4172pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 
@@ -256,7 +257,7 @@ vrc4172pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp,
 pcireg_t
 vrc4172pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	struct vrc4172pci_softc *sc = (struct vrc4172pci_softc *)pc->pc_dev;
+	struct vrc4172pci_softc *sc = device_private(pc->pc_dev);
 	u_int32_t val;
 
 #ifdef VRC4172PCI_MCR700_SUPPORT
@@ -277,7 +278,7 @@ vrc4172pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
  out:
 #endif
 	DPRINTF(("%s: conf_read: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, val));
+	    device_xname(sc->sc_dev), (u_int32_t)tag, reg, val));
 
 	return (val);
 }
@@ -286,10 +287,10 @@ void
 vrc4172pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
-	struct vrc4172pci_softc *sc = (struct vrc4172pci_softc *)pc->pc_dev;
+	struct vrc4172pci_softc *sc = device_private(pc->pc_dev);
 
 	DPRINTF(("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, (u_int32_t)data));
+	    device_xname(sc->sc_dev), (u_int32_t)tag, reg, (u_int32_t)data));
 
 #ifdef VRC4172PCI_MCR700_SUPPORT
 	if (sc->sc_fake_baseaddr != 0 &&
@@ -307,14 +308,14 @@ vrc4172pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 }
 
 int
-vrc4172pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+vrc4172pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 	int bus, dev, func;
 
 	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
-	DPRINTF(("%s(%d, %d, %d): line = %d, pin = %d\n", pc->pc_dev->dv_xname,
+	DPRINTF(("%s(%d, %d, %d): line = %d, pin = %d\n", device_xname(pc->pc_dev),
 	    bus, dev, func, pa->pa_intrline, pa->pa_intrpin));
 
 	*ihp = CONFIG_HOOK_PCIINTR_ID(bus, dev, func);

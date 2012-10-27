@@ -1,4 +1,4 @@
-/*	$NetBSD: teliosio.c,v 1.3 2008/05/31 08:08:54 nakayama Exp $	*/
+/*	$NetBSD: teliosio.c,v 1.4 2012/10/27 17:17:53 chs Exp $	*/
 
 /*
  * Copyright (c) 2005 Takeshi Nakayama.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: teliosio.c,v 1.3 2008/05/31 08:08:54 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: teliosio.c,v 1.4 2012/10/27 17:17:53 chs Exp $");
 
 #include "apmdev.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: teliosio.c,v 1.3 2008/05/31 08:08:54 nakayama Exp $"
 #include <hpcmips/dev/teliosioreg.h>
 
 struct teliosio_softc {
-	struct device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	bus_space_tag_t sc_regt;
 	bus_space_handle_t sc_regh;
@@ -66,8 +65,8 @@ struct teliosio_softc {
 	((n) <= 0 ? 0 : ((n) <= MAX_BRIGHTNESS ? (n) : MAX_BRIGHTNESS) * 9 - 1)
 };
 
-static int teliosio_match(struct device *, struct cfdata *, void *);
-static void teliosio_attach(struct device *, struct device *, void *);
+static int teliosio_match(device_t, cfdata_t, void *);
+static void teliosio_attach(device_t, device_t, void *);
 static int teliosio_event(void *, int, long, void *);
 
 /* LCD backlight control */
@@ -82,21 +81,21 @@ static void teliosio_mbu_write(tx_chipset_tag_t, int);
 static int teliosio_mbu_read(tx_chipset_tag_t);
 #endif
 
-CFATTACH_DECL(teliosio, sizeof(struct teliosio_softc),
+CFATTACH_DECL_NEW(teliosio, sizeof(struct teliosio_softc),
 	      teliosio_match, teliosio_attach, NULL, NULL);
 
 static int
-teliosio_match(struct device *parent, struct cfdata *cf, void *aux)
+teliosio_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 2;	/* attach before plumvideo */
 }
 
 static void
-teliosio_attach(struct device *parent, struct device *self, void *aux)
+teliosio_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
-	struct teliosio_softc *sc = (void *)self;
+	struct teliosio_softc *sc = device_private(self);
 
 	sc->sc_tc = ca->ca_tc;
 	sc->sc_regt = ca->ca_csreg.cstag;

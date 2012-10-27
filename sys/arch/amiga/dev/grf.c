@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.58 2012/03/13 18:40:27 elad Exp $ */
+/*	$NetBSD: grf.c,v 1.59 2012/10/27 17:17:28 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58 2012/03/13 18:40:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.59 2012/10/27 17:17:28 chs Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -141,22 +141,24 @@ cons_decl(grf);
  * low level board driver.
  */
 int
-grfmatch(device_t pdp, cfdata_t cfp, void *auxp)
+grfmatch(device_t parent, cfdata_t cf, void *aux)
 {
+	struct grf_softc *psc;
 
-	if (cfp->cf_unit != ((struct grf_softc *)pdp)->g_unit)
+	psc = device_private(parent);
+	if (cf->cf_unit != psc->g_unit)
 		return(0);
-	cfdata = cfp;
+	cfdata = cf;
 	return(1);
 }
 
 /*
  * Attach.. plug pointer in and print some info.
  * Then try and attach a wsdisplay or ite to us.
- * Note: dp is NULL durring console init.
+ * Note: self is NULL durring console init.
  */
 void
-grfattach(device_t pdp, device_t dp, void *auxp)
+grfattach(device_t parent, device_t self, void *aux)
 {
 #if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args wa;
@@ -165,8 +167,9 @@ grfattach(device_t pdp, device_t dp, void *auxp)
 	struct grf_softc *gp;
 	int maj;
 
-	gp = (struct grf_softc *)pdp;
-	grfsp[gp->g_unit] = (struct grf_softc *)pdp;
+	gp = device_private(parent);
+	gp->g_device = self;
+	grfsp[gp->g_unit] = gp;
 
 	/*
 	 * find our major device number
@@ -174,7 +177,7 @@ grfattach(device_t pdp, device_t dp, void *auxp)
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
-	if (dp != NULL) {
+	if (self != NULL) {
 		printf(": width %d height %d", gp->g_display.gd_dwidth,
 		    gp->g_display.gd_dheight);
 		if (gp->g_display.gd_colors == 2)
@@ -200,7 +203,7 @@ grfattach(device_t pdp, device_t dp, void *auxp)
 		wa.scrdata = &gp->g_screenlist;
 		wa.accessops = gp->g_accessops;
 		wa.accesscookie = &gp->g_vd;
-		config_found(dp, &wa, wsemuldisplaydevprint);
+		config_found(self, &wa, wsemuldisplaydevprint);
 #endif  /* NWSDISPLAY > 0 */
 	}
 
@@ -208,12 +211,12 @@ grfattach(device_t pdp, device_t dp, void *auxp)
 	/*
 	 * try and attach an ite
 	 */
-	amiga_config_found(cfdata, dp, gp, grfprint);
+	amiga_config_found(cfdata, self, gp, grfprint);
 #endif
 }
 
 int
-grfprint(void *auxp, const char *pnp)
+grfprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("ite at %s", pnp);
@@ -543,7 +546,7 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: permission to mmap denied.\n",
-		    device_xname(&gp->g_device));
+		    device_xname(gp->g_device));
 		return -1;
 	}
 
