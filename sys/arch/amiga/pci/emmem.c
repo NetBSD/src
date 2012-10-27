@@ -1,4 +1,4 @@
-/*	$NetBSD: emmem.c,v 1.2 2012/05/31 21:29:02 rkujawa Exp $ */
+/*	$NetBSD: emmem.c,v 1.3 2012/10/27 17:17:34 chs Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 #include <amiga/pci/empbreg.h>
 #include <amiga/pci/emmemvar.h>
 
-static int	emmem_match(struct device *, struct cfdata *, void *);
-static void	emmem_attach(struct device *, struct device *, void *);
+static int	emmem_match(device_t, cfdata_t, void *);
+static void	emmem_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(emmem, sizeof(struct emmem_softc),
     emmem_match, emmem_attach, NULL, NULL);

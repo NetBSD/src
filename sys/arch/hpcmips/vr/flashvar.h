@@ -1,4 +1,4 @@
-/* $NetBSD: flashvar.h,v 1.2 2008/04/28 20:23:22 martin Exp $ */
+/* $NetBSD: flashvar.h,v 1.3 2012/10/27 17:17:55 chs Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #define FLASH_ST_BUSY	0x01
 
 struct flash_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	size_t			sc_size;

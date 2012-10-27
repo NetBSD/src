@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2012/07/29 18:05:40 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2012/10/27 17:17:43 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2012/07/29 18:05:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2012/10/27 17:17:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -68,13 +68,13 @@ cpu_rootconf(void)
 {
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? device_xname(booted_device) : "<unknown>");
 
 	rootconf();
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 
 	if (booted_device != NULL)

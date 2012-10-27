@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.14 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.15 2012/10/27 17:18:00 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -69,7 +69,6 @@ typedef struct {
 } ADBDataBlock;
 
 struct adb_softc {
-	struct device sc_dev;
 	char *sc_regbase;
 };
 

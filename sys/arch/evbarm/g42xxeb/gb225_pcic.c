@@ -85,8 +85,8 @@ struct opcic_softc {
 	bus_space_handle_t sc_memctl_ioh;
 };
 
-static int  	opcic_match(struct device *, struct cfdata *, void *);
-static void  	opcic_attach(struct device *, struct device *, void *);
+static int  	opcic_match(device_t, cfdata_t, void *);
+static void  	opcic_attach(device_t, device_t, void *);
 static int 	opcic_print(void *, const char *);
 
 static	int	opcic_read(struct sapcic_socket *, int);
@@ -100,7 +100,7 @@ static	void	opcic_intr_disestablish(struct sapcic_socket *, void *);
 static	int	opcic_card_detect(void *, int);
 #endif
 
-CFATTACH_DECL(opcic, sizeof(struct opcic_softc),
+CFATTACH_DECL_NEW(opcic, sizeof(struct opcic_softc),
     opcic_match, opcic_attach, NULL, NULL);
 
 static struct sapcic_tag opcic_tag = {
@@ -128,19 +128,19 @@ opcic_read_card_status(struct opcic_socket *so)
 }
 
 static int
-opcic_match(struct device *parent, struct cfdata *cf, void *aux)
+opcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return	1;
 }
 
 static void
-opcic_attach(struct device *parent, struct device *self, void *aux)
+opcic_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
 	struct pcmciabus_attach_args paa;
-	struct opcic_softc *sc = (struct opcic_softc *)self;
-	struct opio_softc *psc = (struct opio_softc *)parent;
-	struct obio_softc *bsd = (struct obio_softc *)device_parent(parent);
+	struct opcic_softc *sc = device_private(self);
+	struct opio_softc *psc = device_private(parent);
+	struct obio_softc *bsd = device_private(device_parent(parent));
 	bus_space_handle_t memctl_ioh = bsd->sc_memctl_ioh;
 	bus_space_tag_t iot =  psc->sc_iot;
 
@@ -369,7 +369,7 @@ opcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 	struct opio_softc *psc = 
 	    device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	    (struct obio_softc *) device_parent(psc->sc_dev);
+	    device_private(device_parent(psc->sc_dev));
 	int (* func)(void *) = ((struct obio_handler *)ih)->func;
 
 	int irq = so->socket ? PCMCIA_INT : CF_INT;

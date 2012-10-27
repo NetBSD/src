@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.4 2011/04/29 22:00:03 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.5 2012/10/27 17:18:02 chs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.4 2011/04/29 22:00:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.5 2012/10/27 17:18:02 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -77,9 +77,6 @@ static int	cpu_fmn_intr(void *, rmixl_fmn_rxmsg_t *);
 #ifdef MULTIPROCESSOR
 void		cpu_rmixl_hatch(struct cpu_info *);
 void		cpu_rmixl_run(struct cpu_info *);
-#if 0
-static void	cpu_setup_trampoline_ipi(struct device *, struct cpu_info *);
-#endif
 static int	cpu_setup_trampoline_common(struct cpu_info *, struct rmixl_cpu_trampoline_args *);
 static void	cpu_setup_trampoline_callback(struct cpu_info *);
 #endif	/* MULTIPROCESSOR */

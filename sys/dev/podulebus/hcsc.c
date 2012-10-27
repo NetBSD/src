@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.20 2009/10/18 18:14:00 snj Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.21 2012/10/27 17:18:37 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.20 2009/10/18 18:14:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.21 2012/10/27 17:18:37 chs Exp $");
 
 #include <sys/param.h>
 
@@ -147,7 +147,7 @@ hcsc_attach(device_t parent, device_t self, void *aux)
 #ifndef NCR5380_USE_BUS_SPACE
 	uint8_t *iobase;
 #endif
-	char hi_option[sizeof(self->dv_xname) + 8];
+	char hi_option[sizeof(device_xname(self)) + 8];
 
 	ncr_sc->sc_dev = self;
 	ncr_sc->sc_min_dma_len = 0;

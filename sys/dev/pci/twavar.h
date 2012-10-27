@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.11 2012/07/27 14:02:17 jakllsch Exp $ */
+/*	$NetBSD: twavar.h,v 1.12 2012/10/27 17:18:35 chs Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ struct twa_drive {
 	uint32_t	td_id;
 	uint64_t	td_size;
 	int		td_openings;
-	struct device	*td_dev;
+	device_t	td_dev;
 	const struct twa_callbacks *td_callbacks;
 };
 

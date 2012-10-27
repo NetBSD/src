@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.40 2009/09/05 14:44:59 tsutsui Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.41 2012/10/27 17:18:36 chs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.40 2009/09/05 14:44:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.41 2012/10/27 17:18:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,7 @@ static const size_t an_pcmcia_nproducts =
     sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
-an_pcmcia_match(device_t parent, cfdata_t match,
-    void *aux)
+an_pcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -118,8 +117,7 @@ an_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-an_pcmcia_attach(struct device  *parent, device_t self,
-    void *aux)
+an_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct an_pcmcia_softc *psc = device_private(self);
 	struct an_softc *sc = &psc->sc_an;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.19 2011/07/19 15:55:26 dyoung Exp $ */
+/*	$NetBSD: gvpio.c,v 1.20 2012/10/27 17:17:29 chs Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.19 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.20 2012/10/27 17:17:29 chs Exp $");
 
 /*
  * GVP I/O Extender
@@ -52,29 +52,28 @@ __KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.19 2011/07/19 15:55:26 dyoung Exp $");
 #include <amiga/dev/gvpbusvar.h>
 
 struct gvpio_softc {
-	struct device sc_dev;
 	struct bus_space_tag sc_bst;
 	void *sc_cntr;
 	LIST_HEAD(, gvpcom_int_hdl) sc_comhdls;
 	struct isr sc_comisr;
 };
 
-int gvpiomatch(struct device *, struct cfdata *, void *);
-void gvpioattach(struct device *, struct device *, void *);
-int gvpioprint(void *auxp, const char *);
+int gvpiomatch(device_t, cfdata_t, void *);
+void gvpioattach(device_t, device_t, void *);
+int gvpioprint(void *, const char *);
 int gvp_com_intr(void *);
-void gvp_com_intr_establish(struct device *, struct gvpcom_int_hdl *);
+void gvp_com_intr_establish(device_t, struct gvpcom_int_hdl *);
 
-CFATTACH_DECL(gvpio, sizeof(struct gvpio_softc),
+CFATTACH_DECL_NEW(gvpio, sizeof(struct gvpio_softc),
     gvpiomatch, gvpioattach, NULL, NULL);
 
 int
-gvpiomatch(struct device *parent, struct cfdata *cfp, void *auxp)
+gvpiomatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	struct gvpbus_args *gap;
 
-	gap = auxp;
+	gap = aux;
 
 	if (gap->flags & GVP_IO)
 		return (1);
@@ -95,7 +94,7 @@ struct gvpio_devs {
 };
 
 void
-gvpioattach(struct device *parent, struct device *self, void *auxp)
+gvpioattach(device_t parent, device_t self, void *aux)
 {
 	struct gvpio_softc *giosc;
 	struct gvpio_devs  *giosd;
@@ -106,8 +105,8 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 	u_int16_t needpsl;
 #endif
 
-	giosc = (struct gvpio_softc *)self;
-	gap = auxp;
+	giosc = device_private(self);
+	gap = aux;
 
 	if (parent)
 		printf("\n");
@@ -142,7 +141,7 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 		if (ipl2spl_table[IPL_SERIAL] < needpsl) {
 			printf("%s: raising ipl2spl_table[IPL_SERIAL] "
 			    "from 0x%x to 0x%x\n",
-			    giosc->sc_dev.dv_xname, ipl2spl_table[IPL_SERIAL],
+			    device_xname(self), ipl2spl_table[IPL_SERIAL],
 			    needpsl);
 			ipl2spl_table[IPL_SERIAL] = needpsl;
 		}
@@ -156,10 +155,11 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 }
 
 int
-gvpioprint(void *auxp, const char *pnp)
+gvpioprint(void *aux, const char *pnp)
 {
 	struct supio_attach_args *supa;
-	supa = auxp;
+
+	supa = aux;
 
 	if (pnp == NULL)
 		return(QUIET);
@@ -171,11 +171,11 @@ gvpioprint(void *auxp, const char *pnp)
 }
 
 void
-gvp_com_intr_establish(struct device *self, struct gvpcom_int_hdl *p)
+gvp_com_intr_establish(device_t self, struct gvpcom_int_hdl *p)
 {
 	struct gvpio_softc *sc;
 
-	sc = (struct gvpio_softc *)self;
+	sc = device_private(self);
 	LIST_INSERT_HEAD(&sc->sc_comhdls, p, next);
 
 }

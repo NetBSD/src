@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32var.h,v 1.6 2008/07/09 19:08:44 joerg Exp $	*/
+/*	$NetBSD: ninjascsi32var.h,v 1.7 2012/10/27 17:18:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ struct njsc32_softc {
 	int	sc_sync_max;
 
 	/* for scsipi layer */
-	struct device		*sc_scsi;
+	device_t		sc_scsi;
 	struct scsipi_adapter	sc_adapter;
 	struct scsipi_channel	sc_channel;
 

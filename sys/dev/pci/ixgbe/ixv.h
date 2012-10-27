@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.h,v 1.3 2011/01/07 23:39:41 jfv Exp $*/
-/*$NetBSD: ixv.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixv.h,v 1.2 2012/10/27 17:18:36 chs Exp $*/
 
 
 #ifndef _IXV_H_
@@ -297,7 +297,7 @@ struct adapter {
 	struct ixgbe_hw		hw;
 
 	struct ixgbe_osdep	osdep;
-	struct device		*dev;
+	device_t		dev;
 
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;

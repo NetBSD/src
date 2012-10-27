@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.36 2009/03/18 10:22:43 cegger Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.37 2012/10/27 17:18:40 chs Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.36 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.37 2012/10/27 17:18:40 chs Exp $");
 
 #include "isdn.h"
 
@@ -203,7 +203,7 @@ const struct cdevsw isdn_cdevsw = {
 
 #ifdef __bsdi__
 #include <sys/device.h>
-int i4bmatch(struct device *parent, struct cfdata *cf, void *aux);
+int i4bmatch(device_t parent, cfdata_t cf, void *aux);
 void dummy_i4battach(struct device*, struct device *, void *);
 
 #define CDEV_MAJOR 65
@@ -219,13 +219,13 @@ struct devsw i4bsw =
 };
 
 int
-i4bmatch(struct device *parent, struct cfdata *cf, void *aux)
+i4bmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	printf("i4bmatch: aux=0x%x\n", aux);
 	return 1;
 }
 void
-dummy_i4battach(struct device *parent, struct device *self, void *aux)
+dummy_i4battach(device_t parent, device_t self, void *aux)
 {
 	printf("dummy_i4battach: aux=0x%x\n", aux);
 }

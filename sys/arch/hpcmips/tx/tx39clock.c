@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.26 2011/08/08 17:45:13 matt Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.27 2012/10/27 17:17:54 chs Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.26 2011/08/08 17:45:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.27 2012/10/27 17:17:54 chs Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -72,7 +72,6 @@ struct txtime {
 };
 
 struct tx39clock_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 
 	int sc_alarm;
@@ -82,8 +81,8 @@ struct tx39clock_softc {
 	struct timecounter sc_tcounter;
 };
 
-int	tx39clock_match(struct device *, struct cfdata *, void *);
-void	tx39clock_attach(struct device *, struct device *, void *);
+int	tx39clock_match(device_t, cfdata_t, void *);
+void	tx39clock_attach(device_t, device_t, void *);
 #ifdef TX39CLOCK_DEBUG
 void	tx39clock_dump(tx_chipset_tag_t);
 #endif
@@ -96,18 +95,18 @@ void	__tx39timer_rtcget(struct txtime *);
 time_t __tx39timer_rtc2sec(struct txtime *);
 uint32_t tx39_timecount(struct timecounter *);
 
-CFATTACH_DECL(tx39clock, sizeof(struct tx39clock_softc),
+CFATTACH_DECL_NEW(tx39clock, sizeof(struct tx39clock_softc),
     tx39clock_match, tx39clock_attach, NULL, NULL);
 
 int
-tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39clock_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return ATTACH_FIRST;
 }
 
 void
-tx39clock_attach(struct device *parent, struct device *self, void *aux)
+tx39clock_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39clock_softc *sc = device_private(self);

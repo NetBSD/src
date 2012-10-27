@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.84 2012/09/16 22:09:33 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.85 2012/10/27 17:17:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.84 2012/09/16 22:09:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.85 2012/10/27 17:17:36 chs Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -284,8 +284,8 @@ sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 		return (EOPNOTSUPP);
 
 	node = *rnode;
-	node.sysctl_data = booted_device->dv_xname;
-	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	node.sysctl_data = __UNCONST(device_xname(booted_device));
+	node.sysctl_size = strlen(device_xname(booted_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 

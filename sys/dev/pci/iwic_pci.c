@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.17 2011/05/22 08:13:17 mrg Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.18 2012/10/27 17:18:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.17 2011/05/22 08:13:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.18 2012/10/27 17:18:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,7 @@ static int iwic_pci_probe(device_t  dev, cfdata_t  match, void *aux);
 static void iwic_pci_attach(device_t  parent, device_t  dev, void *aux);
 static int iwic_pci_activate(device_t  dev, enum devact);
 
-CFATTACH_DECL(iwic_pci, sizeof(struct iwic_softc),
+CFATTACH_DECL_NEW(iwic_pci, sizeof(struct iwic_softc),
     iwic_pci_probe, iwic_pci_attach, NULL, iwic_pci_activate);
 
 static int iwic_attach_bri(struct iwic_softc * sc);
@@ -235,6 +235,7 @@ iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 
+	sc->sc_dev = dev;
 	sc->sc_cardname = iwic_find_card(pa);
 
 	if (!sc->sc_cardname)
@@ -244,24 +245,24 @@ iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 
 	if (pci_mapreg_map(pa, IWIC_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_io_bt, &sc->sc_io_bh, &sc->sc_iobase, &sc->sc_iosize)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iwic_pci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
 	sc->sc_pc = pc;
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* disable interrupts */
 	IWIC_WRITE(sc, IWIC_IMASK, 0xff);
@@ -363,7 +364,7 @@ iwic_attach_bri(struct iwic_softc * sc)
 {
 	struct isdn_l3_driver *drv;
 
-	drv = isdn_attach_isdnif(device_xname(&sc->sc_dev), sc->sc_cardname,
+	drv = isdn_attach_isdnif(device_xname(sc->sc_dev), sc->sc_cardname,
 	    &sc->sc_l2, &iwic_l3_driver, NBCH_BRI);
 
 	sc->sc_l3token = drv;
