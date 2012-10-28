@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/09/23 17:22:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2012/10/28 17:07:45 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -11,6 +11,7 @@ INCS=	ammintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
 	emmintrin.h \
+	f16cintrin.h \
 	fmaintrin.h \
 	fma4intrin.h \
 	immintrin.h \
