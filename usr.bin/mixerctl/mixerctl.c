@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.24 2009/07/14 21:02:24 apb Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.25 2012/10/28 01:51:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.24 2009/07/14 21:02:24 apb Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.25 2012/10/28 01:51:20 isaki Exp $");
 #endif
 
 #include <stdio.h>
@@ -429,7 +429,7 @@ main(int argc, char **argv)
 	}
 
 	if (argc == 0 && aflag && !wflag) {
-		for(i = 0; fields[i].name; i++) {
+		for(i = 0; i < j; i++) {
 			prfield(&fields[i], sep, vflag);
 			fprintf(out, "\n");
 		}
