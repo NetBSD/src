@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/09/23 17:22:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2012/10/28 17:07:47 joerg Exp $
 
 LIB=	clangTooling
 
@@ -9,6 +9,7 @@ LIB=	clangTooling
 SRCS+=	ArgumentsAdjusters.cpp \
 	CommonOptionsParser.cpp \
 	CompilationDatabase.cpp \
+	FileMatchTrie.cpp \
 	JSONCompilationDatabase.cpp \
 	Refactoring.cpp \
 	RefactoringCallbacks.cpp \
