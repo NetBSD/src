@@ -68,7 +68,7 @@ static void	s3c2440_i2s_xfer_complete(dmac_xfer_t, void *);
 static int	s3c2440_i2s_match(device_t, cfdata_t, void *);
 static void	s3c2440_i2s_attach(device_t, device_t , void *);
 static int	s3c2440_i2s_search(device_t, cfdata_t, const int *, void *);
-static int	s3c2440_i2s_print(void *aux, const char *name);
+static int	s3c2440_i2s_print(void *, const char *);
 static int	s3c2440_i2s_init(struct s3c2440_i2s_softc*);
 
 CFATTACH_DECL_NEW(ssiis, sizeof(struct s3c2440_i2s_softc), s3c2440_i2s_match,
@@ -103,7 +103,7 @@ s3c2440_i2s_print(void *aux, const char *name)
 }
 
 static int
-s3c2440_i2s_search(device_tparent, cfdata_t cf, const int *ldesc, void *aux)
+s3c2440_i2s_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct s3c2440_i2s_attach_args ia;
 	DPRINTF(("%s\n", __func__));
