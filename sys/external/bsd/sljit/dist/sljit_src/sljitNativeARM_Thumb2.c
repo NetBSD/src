@@ -29,6 +29,9 @@ SLJIT_API_FUNC_ATTRIBUTE SLJIT_CONST char* sljit_get_platform_name(void)
 	return "ARM-Thumb2" SLJIT_CPUINFO;
 }
 
+/* Length of an instruction word. */
+typedef sljit_ui sljit_ins;
+
 /* Last register + 1. */
 #define TMP_REG1	(SLJIT_NO_REGISTERS + 1)
 #define TMP_REG2	(SLJIT_NO_REGISTERS + 2)
@@ -40,7 +43,7 @@ SLJIT_API_FUNC_ATTRIBUTE SLJIT_CONST char* sljit_get_platform_name(void)
 
 /* See sljit_emit_enter and sljit_emit_op0 if you want to change them. */
 static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 5] = {
-  0, 0, 1, 2, 12, 5, 6, 7, 8, 10, 11, 13, 3, 4, 14, 15
+	0, 0, 1, 2, 12, 5, 6, 7, 8, 10, 11, 13, 3, 4, 14, 15
 };
 
 #define COPY_BITS(src, from, to, bits) \
@@ -74,8 +77,6 @@ static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 5] = {
 	(COPY_BITS(imm, 2, 12, 3) | ((imm & 0x3) << 6))
 #define IMM12(imm) \
 	(COPY_BITS(imm, 11, 26, 1) | COPY_BITS(imm, 8, 12, 3) | (imm & 0xff))
-
-typedef sljit_ui sljit_ins;
 
 /* --------------------------------------------------------------------- */
 /*  Instrucion forms                                                     */
@@ -234,7 +235,7 @@ static SLJIT_INLINE int detect_jump_type(struct sljit_jump *jump, sljit_uh *code
 		diff = ((sljit_w)(code + jump->u.label->size) - (sljit_w)(code_ptr + 2)) >> 1;
 	}
 
-	if (jump->flags & IS_CONDITIONAL) {
+	if (jump->flags & IS_COND) {
 		SLJIT_ASSERT(!(jump->flags & IS_BL));
 		if (diff <= 127 && diff >= -128) {
 			jump->flags |= B_TYPE1;
@@ -303,24 +304,24 @@ static SLJIT_INLINE void set_jump_instruction(struct sljit_jump *jump)
 	switch (type) {
 	case 1:
 		/* Encoding T1 of 'B' instruction */
-		SLJIT_ASSERT(diff <= 127 && diff >= -128 && (jump->flags & IS_CONDITIONAL));
+		SLJIT_ASSERT(diff <= 127 && diff >= -128 && (jump->flags & IS_COND));
 		jump_inst[0] = 0xd000 | (jump->flags & 0xf00) | (diff & 0xff);
 		return;
 	case 2:
 		/* Encoding T3 of 'B' instruction */
-		SLJIT_ASSERT(diff <= 524287 && diff >= -524288 && (jump->flags & IS_CONDITIONAL));
+		SLJIT_ASSERT(diff <= 524287 && diff >= -524288 && (jump->flags & IS_COND));
 		jump_inst[0] = 0xf000 | COPY_BITS(jump->flags, 8, 6, 4) | COPY_BITS(diff, 11, 0, 6) | COPY_BITS(diff, 19, 10, 1);
 		jump_inst[1] = 0x8000 | COPY_BITS(diff, 17, 13, 1) | COPY_BITS(diff, 18, 11, 1) | (diff & 0x7ff);
 		return;
 	case 3:
-		SLJIT_ASSERT(jump->flags & IS_CONDITIONAL);
+		SLJIT_ASSERT(jump->flags & IS_COND);
 		*jump_inst++ = IT | ((jump->flags >> 4) & 0xf0) | 0x8;
 		diff--;
 		type = 5;
 		break;
 	case 4:
 		/* Encoding T2 of 'B' instruction */
-		SLJIT_ASSERT(diff <= 1023 && diff >= -1024 && !(jump->flags & IS_CONDITIONAL));
+		SLJIT_ASSERT(diff <= 1023 && diff >= -1024 && !(jump->flags & IS_COND));
 		jump_inst[0] = 0xe000 | (diff & 0x7ff);
 		return;
 	}
@@ -385,7 +386,7 @@ SLJIT_API_FUNC_ATTRIBUTE void* sljit_generate_code(struct sljit_compiler *compil
 				label = label->next;
 			}
 			if (jump && jump->addr == half_count) {
-					jump->addr = (sljit_uw)code_ptr - ((jump->flags & IS_CONDITIONAL) ? 10 : 8);
+					jump->addr = (sljit_uw)code_ptr - ((jump->flags & IS_COND) ? 10 : 8);
 					code_ptr -= detect_jump_type(jump, code_ptr, code);
 					jump = jump->next;
 			}
@@ -1121,6 +1122,10 @@ static SLJIT_INLINE int emit_op_mem(struct sljit_compiler *compiler, int flags, 
 	return getput_arg(compiler, flags, reg, arg, argw, 0, 0);
 }
 
+/* --------------------------------------------------------------------- */
+/*  Entry, exit                                                          */
+/* --------------------------------------------------------------------- */
+
 SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_enter(struct sljit_compiler *compiler, int args, int temporaries, int saveds, int local_size)
 {
 	int size;
@@ -1201,7 +1206,6 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_return(struct sljit_compiler *compiler, 
 
 	CHECK_ERROR();
 	check_sljit_emit_return(compiler, op, src, srcw);
-	ADJUST_LOCAL_OFFSET(src, srcw);
 
 	FAIL_IF(emit_mov_before_return(compiler, op, src, srcw));
 
@@ -1766,11 +1770,11 @@ static sljit_uw get_cc(int type)
 		return 0xd;
 
 	case SLJIT_C_OVERFLOW:
-	case SLJIT_C_FLOAT_NAN:
+	case SLJIT_C_FLOAT_UNORDERED:
 		return 0x6;
 
 	case SLJIT_C_NOT_OVERFLOW:
-	case SLJIT_C_FLOAT_NOT_NAN:
+	case SLJIT_C_FLOAT_ORDERED:
 		return 0x7;
 
 	default: /* SLJIT_JUMP */
@@ -1810,7 +1814,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_jump* sljit_emit_jump(struct sljit_compile
 	/* In ARM, we don't need to touch the arguments. */
 	PTR_FAIL_IF(emit_imm32_const(compiler, TMP_REG1, 0));
 	if (type < SLJIT_JUMP) {
-		jump->flags |= IS_CONDITIONAL;
+		jump->flags |= IS_COND;
 		cc = get_cc(type);
 		jump->flags |= cc << 8;
 		PTR_FAIL_IF(push_inst16(compiler, IT | (cc << 4) | 0x8));

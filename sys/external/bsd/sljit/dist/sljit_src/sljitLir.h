@@ -260,6 +260,12 @@ struct sljit_compiler {
 	sljit_w cache_argw;
 #endif
 
+#if (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
+	int delay_slot;
+	int cache_arg;
+	sljit_w cache_argw;
+#endif
+
 #if (defined SLJIT_VERBOSE && SLJIT_VERBOSE)
 	FILE* verbose;
 #endif
@@ -542,7 +548,9 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_op0(struct sljit_compiler *compiler, int
 /* Flags: I | E | O | K */
 #define SLJIT_NEG			21
 /* Count leading zeroes
-   Flags: I | E | K */
+   Flags: I | E | K
+   Important note! Sparc 32 does not support K flag, since
+   the required popc instruction is introduced only in sparc 64. */
 #define SLJIT_CLZ			22
 
 SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_op1(struct sljit_compiler *compiler, int op,
@@ -617,7 +625,7 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_op_custom(struct sljit_compiler *compile
 SLJIT_API_FUNC_ATTRIBUTE int sljit_is_fpu_available(void);
 
 /* Note: dst is the left and src is the right operand for SLJIT_FCMP.
-   Note: NaN check is always performed. If SLJIT_C_FLOAT_NAN is set,
+   Note: NaN check is always performed. If SLJIT_C_FLOAT_UNORDERED is set,
          the comparison result is unpredictable.
    Flags: E | S (see SLJIT_C_FLOAT_*) */
 #define SLJIT_FCMP			34
@@ -677,8 +685,8 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_label* sljit_emit_label(struct sljit_compi
 #define SLJIT_C_FLOAT_GREATER_EQUAL	17
 #define SLJIT_C_FLOAT_GREATER		18
 #define SLJIT_C_FLOAT_LESS_EQUAL	19
-#define SLJIT_C_FLOAT_NAN		20
-#define SLJIT_C_FLOAT_NOT_NAN		21
+#define SLJIT_C_FLOAT_UNORDERED		20
+#define SLJIT_C_FLOAT_ORDERED		21
 
 #define SLJIT_JUMP			22
 #define SLJIT_FAST_CALL			23
@@ -716,7 +724,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_jump* sljit_emit_cmp(struct sljit_compiler
    sljit_emit_jump. However some architectures (i.e: MIPS) may employ
    special optimizations here. It is suggested to use this comparison form
    when appropriate.
-    type must be between SLJIT_C_FLOAT_EQUAL and SLJIT_C_FLOAT_NOT_NAN
+    type must be between SLJIT_C_FLOAT_EQUAL and SLJIT_C_FLOAT_ORDERED
     type can be combined (or'ed) with SLJIT_REWRITABLE_JUMP
    Flags: destroy flags.
    Note: if either operand is NaN, the behaviour is undefined for
@@ -741,7 +749,7 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_ijump(struct sljit_compiler *compiler, i
 
 /* If op == SLJIT_MOV:
      Set dst to 1 if condition is fulfilled, 0 otherwise
-       type must be between SLJIT_C_EQUAL and SLJIT_C_FLOAT_NOT_NAN
+       type must be between SLJIT_C_EQUAL and SLJIT_C_FLOAT_ORDERED
      Flags: - (never set any flags)
    If op == SLJIT_OR
      Dst is used as src as well, and set its lowest bit to 1 if
