@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.13 2012/09/16 13:47:42 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.14 2012/10/28 16:27:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.13 2012/09/16 13:47:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.14 2012/10/28 16:27:20 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -213,13 +213,11 @@ void
 npf_config_destroy(nl_config_t *ncf)
 {
 
-	if (ncf->ncf_dict == NULL) {
+	if (!ncf->ncf_dict) {
 		prop_object_release(ncf->ncf_rules_list);
 		prop_object_release(ncf->ncf_rproc_list);
 		prop_object_release(ncf->ncf_table_list);
 		prop_object_release(ncf->ncf_nat_list);
-	} else {
-		prop_object_release(ncf->ncf_dict);
 	}
 	if (ncf->ncf_err) {
 		prop_object_release(ncf->ncf_err);
@@ -408,6 +406,9 @@ _npf_rule_foreach1(prop_array_t rules, unsigned nlevel, nl_rule_callback_t func)
 		(*func)(&nrl, nlevel);
 
 		subrules = prop_dictionary_get(rldict, "subrules");
+		if (!subrules) {
+			continue;
+		}
 		(void)_npf_rule_foreach1(subrules, nlevel + 1, func);
 		prop_object_release(subrules);
 	}
