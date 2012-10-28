@@ -868,7 +868,7 @@ static void test13(void)
 	/* Test fpu monadic functions. */
 	executable_code code;
 	struct sljit_compiler* compiler = sljit_create_compiler();
-	double buf[6];
+	double buf[7];
 	sljit_w buf2[6];
 
 	if (!sljit_is_fpu_available()) {
@@ -886,6 +886,7 @@ static void test13(void)
 	buf[3] = 0.0;
 	buf[4] = 0.0;
 	buf[5] = 0.0;
+	buf[6] = 0.0;
 
 	buf2[0] = 10;
 	buf2[1] = 10;
@@ -905,6 +906,7 @@ static void test13(void)
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_MEM0(), (sljit_w)&buf[4], SLJIT_FLOAT_REG4, 0);
 	sljit_emit_fop1(compiler, SLJIT_FABS, SLJIT_FLOAT_REG3, 0, SLJIT_FLOAT_REG2, 0);
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_MEM1(SLJIT_SAVED_REG1), 5 * sizeof(double), SLJIT_FLOAT_REG3, 0);
+	sljit_emit_fop1(compiler, SLJIT_FNEG, SLJIT_MEM1(SLJIT_SAVED_REG1), 6 * sizeof(double), SLJIT_FLOAT_REG3, 0);
 
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_FLOAT_REG2, 0, SLJIT_MEM1(SLJIT_SAVED_REG1), 0);
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_S, SLJIT_FLOAT_REG2, 0, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(double));
@@ -929,13 +931,14 @@ static void test13(void)
 	FAILED(buf[3] != 4.5, "test13 case 2 failed\n");
 	FAILED(buf[4] != -7.75, "test13 case 3 failed\n");
 	FAILED(buf[5] != 4.5, "test13 case 4 failed\n");
+	FAILED(buf[6] != -4.5, "test13 case 5 failed\n");
 
-	FAILED(buf2[0] != 1, "test13 case 5 failed\n");
-	FAILED(buf2[1] != 0, "test13 case 6 failed\n");
-	FAILED(buf2[2] != 1, "test13 case 7 failed\n");
-	FAILED(buf2[3] != 0, "test13 case 8 failed\n");
-	FAILED(buf2[4] != 0, "test13 case 9 failed\n");
-	FAILED(buf2[5] != 1, "test13 case 10 failed\n");
+	FAILED(buf2[0] != 1, "test13 case 6 failed\n");
+	FAILED(buf2[1] != 0, "test13 case 7 failed\n");
+	FAILED(buf2[2] != 1, "test13 case 8 failed\n");
+	FAILED(buf2[3] != 0, "test13 case 9 failed\n");
+	FAILED(buf2[4] != 0, "test13 case 10 failed\n");
+	FAILED(buf2[5] != 1, "test13 case 11 failed\n");
 
 	sljit_free_code(code.code);
 	printf("test13 ok\n");
@@ -2623,13 +2626,13 @@ static void test32(void)
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_FLOAT_REG1, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), 0);
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_E, SLJIT_MEM1(SLJIT_SAVED_REG2), 3 * sizeof(double), SLJIT_FLOAT_REG1, 0);
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_FLOAT_REG2, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), 2 * sizeof(double));
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 0, SLJIT_C_FLOAT_NAN);
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(sljit_w), SLJIT_C_FLOAT_NOT_NAN);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 0, SLJIT_C_FLOAT_UNORDERED);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(sljit_w), SLJIT_C_FLOAT_ORDERED);
 
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_FLOAT_REG3, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), 3 * sizeof(double));
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_E | SLJIT_SET_S, SLJIT_FLOAT_REG2, 0, SLJIT_FLOAT_REG3, 0);
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 2 * sizeof(sljit_w), SLJIT_C_FLOAT_NAN);
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 3 * sizeof(sljit_w), SLJIT_C_FLOAT_NOT_NAN);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 2 * sizeof(sljit_w), SLJIT_C_FLOAT_UNORDERED);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 3 * sizeof(sljit_w), SLJIT_C_FLOAT_ORDERED);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 4 * sizeof(sljit_w), SLJIT_C_FLOAT_LESS);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 5 * sizeof(sljit_w), SLJIT_C_FLOAT_GREATER_EQUAL);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 6 * sizeof(sljit_w), SLJIT_C_FLOAT_GREATER);
@@ -2639,15 +2642,15 @@ static void test32(void)
 
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_E, SLJIT_FLOAT_REG3, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), 3 * sizeof(double));
 	sljit_emit_fop2(compiler, SLJIT_FADD, SLJIT_FLOAT_REG4, 0, SLJIT_FLOAT_REG2, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), sizeof(double));
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 10 * sizeof(sljit_w), SLJIT_C_FLOAT_NAN);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 10 * sizeof(sljit_w), SLJIT_C_FLOAT_UNORDERED);
 	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 11 * sizeof(sljit_w), SLJIT_C_FLOAT_EQUAL);
 
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_S, SLJIT_MEM1(SLJIT_SAVED_REG2), sizeof(double), SLJIT_FLOAT_REG1, 0);
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 12 * sizeof(sljit_w), SLJIT_C_FLOAT_NOT_NAN);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 12 * sizeof(sljit_w), SLJIT_C_FLOAT_ORDERED);
 
 	sljit_emit_fop1(compiler, SLJIT_FCMP | SLJIT_SET_S, SLJIT_FLOAT_REG4, 0, SLJIT_FLOAT_REG3, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV_UB, SLJIT_TEMPORARY_REG1, 0, SLJIT_MEM1(SLJIT_SAVED_REG2), 0);
-	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 13 * sizeof(sljit_w), SLJIT_C_FLOAT_NAN);
+	cond_set(compiler, SLJIT_MEM1(SLJIT_SAVED_REG1), 13 * sizeof(sljit_w), SLJIT_C_FLOAT_UNORDERED);
 
 	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
 
@@ -2853,7 +2856,7 @@ static void test34(void)
 	sljit_free_compiler(compiler);
 
 	FAILED(codeF.func1((sljit_w)&buf) != 40, "test34 case 1 failed\n");
-	FAILED(buf[0] != addr, "test34 case 2 failed\n");
+	FAILED(buf[0] != addr - SLJIT_RETURN_ADDRESS_OFFSET, "test34 case 2 failed\n");
 
 	sljit_free_code(codeA.code);
 	sljit_free_code(codeB.code);
@@ -2894,7 +2897,7 @@ static void test35(void)
 
 	codeA.code = sljit_generate_code(compiler);
 	CHECK(compiler);
-	return_addr = sljit_get_label_addr(label);
+	return_addr = sljit_get_label_addr(label) - SLJIT_RETURN_ADDRESS_OFFSET;
 	jump_addr = sljit_get_jump_addr(jump);
 	sljit_free_compiler(compiler);
 
@@ -2928,7 +2931,7 @@ static void test35(void)
 	sljit_free_compiler(compiler);
 
 	FAILED(codeC.func0() != 12, "test35 case 1 failed\n");
-	FAILED(buf[0] != return_addr, "test35 case 2 failed\n");
+	FAILED(buf[0] != return_addr - SLJIT_RETURN_ADDRESS_OFFSET, "test35 case 2 failed\n");
 
 	sljit_free_code(codeA.code);
 	sljit_free_code(codeB.code);
@@ -3164,7 +3167,9 @@ static void test37(void)
 	FAILED(ibuf[0] != 32, "test37 case 7 failed\n");
 	FAILED(buf[6] != 1, "test37 case 8 failed\n");
 	FAILED(buf[7] != RESN(13), "test37 case 9 failed\n");
+#if !(defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
 	FAILED(buf[8] != 0, "test37 case 10 failed\n");
+#endif
 	FAILED(buf[9] != RESN(58), "test37 case 11 failed\n");
 	FAILED(buf[10] != 0, "test37 case 12 failed\n");
 #if (defined SLJIT_64BIT_ARCHITECTURE && SLJIT_64BIT_ARCHITECTURE)
@@ -3369,22 +3374,23 @@ static void test40(void)
 	sljit_emit_cond_value(compiler, SLJIT_OR | SLJIT_SET_E, SLJIT_TEMPORARY_REG1, 0, SLJIT_C_NOT_EQUAL);
 	sljit_emit_cond_value(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_SAVED_REG1), sizeof(sljit_w) * 8, SLJIT_C_NOT_EQUAL);
 
-	sljit_emit_return(compiler, SLJIT_UNUSED, 0, 0);
+	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_LOCALS_REG), 0, SLJIT_IMM, 0xbaddead);
+	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_LOCALS_REG), 0);
 
 	code.code = sljit_generate_code(compiler);
 	CHECK(compiler);
 	sljit_free_compiler(compiler);
 
-	code.func1((sljit_w)&buf);
-	FAILED(buf[0] != 0x123457, "test40 case 1 failed\n");
-	FAILED(buf[1] != 1, "test40 case 2 failed\n");
-	FAILED(buf[2] != 0, "test40 case 3 failed\n");
-	FAILED(buf[3] != -7, "test40 case 4 failed\n");
-	FAILED(buf[4] != 0, "test40 case 5 failed\n");
-	FAILED(buf[5] != 0x89, "test40 case 6 failed\n");
-	FAILED(buf[6] != 0, "test40 case 7 failed\n");
-	FAILED(buf[7] != 1, "test40 case 8 failed\n");
-	FAILED(buf[8] != 1, "test40 case 9 failed\n");
+	FAILED(code.func1((sljit_w)&buf) != 0xbaddead, "test40 case 1 failed\n");
+	FAILED(buf[0] != 0x123457, "test40 case 2 failed\n");
+	FAILED(buf[1] != 1, "test40 case 3 failed\n");
+	FAILED(buf[2] != 0, "test40 case 4 failed\n");
+	FAILED(buf[3] != -7, "test40 case 5 failed\n");
+	FAILED(buf[4] != 0, "test40 case 6 failed\n");
+	FAILED(buf[5] != 0x89, "test40 case 7 failed\n");
+	FAILED(buf[6] != 0, "test40 case 8 failed\n");
+	FAILED(buf[7] != 1, "test40 case 9 failed\n");
+	FAILED(buf[8] != 1, "test40 case 10 failed\n");
 
 	printf("test40 ok\n");
 	successful_tests++;
@@ -3469,6 +3475,12 @@ static void test41(void)
 	inst = 33 | (sljit_get_register_index(SLJIT_RETURN_REG) << 11)
 		| (sljit_get_register_index(SLJIT_SAVED_REG1) << 21)
 		| (sljit_get_register_index(SLJIT_SAVED_REG2) << 16);
+	sljit_emit_op_custom(compiler, &inst, sizeof(sljit_ui));
+#elif (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
+	/* add rd, rs1, rs2 */
+	inst = (0x2 << 30) | (sljit_get_register_index(SLJIT_RETURN_REG) << 25)
+		| (sljit_get_register_index(SLJIT_SAVED_REG1) << 14)
+		| sljit_get_register_index(SLJIT_SAVED_REG2);
 	sljit_emit_op_custom(compiler, &inst, sizeof(sljit_ui));
 #else
 	inst = 0;
@@ -3685,7 +3697,7 @@ static void test43(void)
 	sljit_set_label(jump, sljit_emit_label(compiler));
 	sljit_emit_fop1(compiler, SLJIT_FMOV, SLJIT_FLOAT_REG2, 0, SLJIT_MEM1(SLJIT_SAVED_REG1), 0);
 	/* dbuf[0] and dbuf[1] is not NaN -> 5 */
-	jump = sljit_emit_fcmp(compiler, SLJIT_C_FLOAT_NAN, SLJIT_MEM0(), (sljit_w)&dbuf[1], SLJIT_FLOAT_REG2, 0);
+	jump = sljit_emit_fcmp(compiler, SLJIT_C_FLOAT_UNORDERED, SLJIT_MEM0(), (sljit_w)&dbuf[1], SLJIT_FLOAT_REG2, 0);
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_IMM, 5);
 
 	sljit_set_label(jump, sljit_emit_label(compiler));
