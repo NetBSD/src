@@ -122,7 +122,7 @@
 #endif
 
 #if (defined SLJIT_CONFIG_ARM_THUMB2 && SLJIT_CONFIG_ARM_THUMB2)
-	#define IS_CONDITIONAL	0x04
+	#define IS_COND		0x04
 	#define IS_BL		0x08
 	/* cannot be encoded as branch */
 	#define B_TYPE0		0x00
@@ -159,11 +159,33 @@
 	#define PATCH_J		0x80
 
 	/* instruction types */
-	#define UNMOVABLE_INS	0
+	#define MOVABLE_INS	0
 	/* 1 - 31 last destination register */
-	#define FCSR_FCC	32
 	/* no destination (i.e: store) */
-	#define MOVABLE_INS	33
+	#define UNMOVABLE_INS	32
+	/* FPU status register */
+	#define FCSR_FCC	33
+#endif
+
+#if (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
+	#define IS_MOVABLE	0x04
+	#define IS_COND		0x08
+	#define IS_CALL		0x10
+
+	#define PATCH_B		0x20
+	#define PATCH_CALL	0x40
+
+	/* instruction types */
+	#define MOVABLE_INS	0
+	/* 1 - 31 last destination register */
+	/* no destination (i.e: store) */
+	#define UNMOVABLE_INS	32
+
+	#define DST_INS_MASK	0xff
+
+	/* ICC_SET is the same as SET_FLAGS. */
+	#define ICC_IS_SET	(1 << 23)
+	#define FCC_IS_SET	(1 << 24)
 #endif
 
 #if (defined SLJIT_CONFIG_X86_32 && SLJIT_CONFIG_X86_32)
@@ -179,11 +201,6 @@
 #endif
 #endif
 
-#if (defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
-#define SLJIT_HAS_FIXED_LOCALS_OFFSET 1
-#define FIXED_LOCALS_OFFSET (4 * sizeof(sljit_w))
-#endif
-
 #if (defined SLJIT_CONFIG_PPC_32 && SLJIT_CONFIG_PPC_32)
 #define SLJIT_HAS_FIXED_LOCALS_OFFSET 1
 #if (defined SLJIT_INDIRECT_CALL && SLJIT_INDIRECT_CALL)
@@ -196,6 +213,16 @@
 #if (defined SLJIT_CONFIG_PPC_64 && SLJIT_CONFIG_PPC_64)
 #define SLJIT_HAS_FIXED_LOCALS_OFFSET 1
 #define FIXED_LOCALS_OFFSET ((6 + 8) * sizeof(sljit_w))
+#endif
+
+#if (defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
+#define SLJIT_HAS_FIXED_LOCALS_OFFSET 1
+#define FIXED_LOCALS_OFFSET (4 * sizeof(sljit_w))
+#endif
+
+#if (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
+#define SLJIT_HAS_FIXED_LOCALS_OFFSET 1
+#define FIXED_LOCALS_OFFSET (23 * sizeof(sljit_w))
 #endif
 
 #if (defined SLJIT_HAS_VARIABLE_LOCALS_OFFSET && SLJIT_HAS_VARIABLE_LOCALS_OFFSET)
@@ -296,6 +323,10 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_compiler* sljit_create_compiler(void)
 #endif
 
 #if (defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
+	compiler->delay_slot = UNMOVABLE_INS;
+#endif
+
+#if (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
 	compiler->delay_slot = UNMOVABLE_INS;
 #endif
 
@@ -1092,7 +1123,7 @@ static SLJIT_INLINE void check_sljit_emit_fcmp(struct sljit_compiler *compiler, 
 
 	SLJIT_ASSERT(sljit_is_fpu_available());
 	SLJIT_ASSERT(!(type & ~(0xff | SLJIT_REWRITABLE_JUMP)));
-	SLJIT_ASSERT((type & 0xff) >= SLJIT_C_FLOAT_EQUAL && (type & 0xff) <= SLJIT_C_FLOAT_NOT_NAN);
+	SLJIT_ASSERT((type & 0xff) >= SLJIT_C_FLOAT_EQUAL && (type & 0xff) <= SLJIT_C_FLOAT_ORDERED);
 #if (defined SLJIT_DEBUG && SLJIT_DEBUG)
 	FUNCTION_FCHECK(src1, src1w);
 	FUNCTION_FCHECK(src2, src2w);
@@ -1255,6 +1286,8 @@ static SLJIT_INLINE int emit_mov_before_return(struct sljit_compiler *compiler, 
 	#include "sljitNativePPC_common.c"
 #elif (defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
 	#include "sljitNativeMIPS_common.c"
+#elif (defined SLJIT_CONFIG_SPARC_32 && SLJIT_CONFIG_SPARC_32)
+	#include "sljitNativeSPARC_common.c"
 #endif
 
 #if !(defined SLJIT_CONFIG_MIPS_32 && SLJIT_CONFIG_MIPS_32)
