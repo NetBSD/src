@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.70 2012/10/26 23:23:23 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.71 2012/10/28 17:11:33 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.70 2012/10/26 23:23:23 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.71 2012/10/28 17:11:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __weak_alias(tzname,_tzname)
 
 static const char	wildabbr[] = WILDABBR;
 
-static char		gmt[] = "GMT";
+static const char	gmt[] = "GMT";
 
 /*
 ** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
@@ -268,7 +268,7 @@ detzcode64(const char *const codep)
 	time_t	result;
 	int	i;
 
-	result = (codep[0] & 0x80) ? -1 : 0;
+	result = (codep[0] & 0x80) ? (~(int_fast64_t) 0) : 0;
 	for (i = 0; i < 8; ++i)
 		result = result * 256 + (codep[i] & 0xff);
 	return result;
@@ -346,7 +346,7 @@ settzname(void)
 			timezone = -(ttisp->tt_gmtoff);
 #endif /* defined USG_COMPAT */
 #ifdef ALTZONE
-		if (i == 0 || ttisp->tt_isdst)
+		if (ttisp->tt_isdst)
 			altzone = -(ttisp->tt_gmtoff);
 #endif /* defined ALTZONE */
 	}
