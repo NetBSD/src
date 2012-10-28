@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2012/09/23 17:22:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2012/10/28 17:07:47 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -29,12 +29,14 @@ SRCS+=	AnalyzerStatsChecker.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
 	DereferenceChecker.cpp \
+	DirectIvarAssignment.cpp \
 	DivZeroChecker.cpp \
 	DynamicTypePropagation.cpp \
 	ExprInspectionChecker.cpp \
 	FixedAddressChecker.cpp \
 	GenericTaintChecker.cpp \
 	IdempotentOperationChecker.cpp \
+	IvarInvalidationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	MacOSKeychainAPIChecker.cpp \
 	MacOSXAPIChecker.cpp \
@@ -44,7 +46,6 @@ SRCS+=	AnalyzerStatsChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NoReturnFunctionChecker.cpp \
-	OSAtomicChecker.cpp \
 	ObjCAtSyncChecker.cpp \
 	ObjCContainersASTChecker.cpp \
 	ObjCContainersChecker.cpp \
