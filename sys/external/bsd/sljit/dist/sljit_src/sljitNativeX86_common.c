@@ -67,7 +67,7 @@ SLJIT_API_FUNC_ATTRIBUTE SLJIT_CONST char* sljit_get_platform_name(void)
 #define TMP_REGISTER	(SLJIT_NO_REGISTERS + 1)
 
 static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 2] = {
-  0, 0, 2, 1, 0, 0, 3, 6, 7, 0, 0, 4, 5
+	0, 0, 2, 1, 0, 0, 3, 6, 7, 0, 0, 4, 5
 };
 
 #define CHECK_EXTRA_REGS(p, w, do) \
@@ -95,20 +95,20 @@ static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 2] = {
 #ifndef _WIN64
 /* 1st passed in rdi, 2nd argument passed in rsi, 3rd in rdx. */
 static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 4] = {
-  0, 0, 6, 1, 8, 11, 3, 15, 14, 13, 12, 4, 2, 7, 9
+	0, 0, 6, 1, 8, 11, 3, 15, 14, 13, 12, 4, 2, 7, 9
 };
 /* low-map. reg_map & 0x7. */
 static SLJIT_CONST sljit_ub reg_lmap[SLJIT_NO_REGISTERS + 4] = {
-  0, 0, 6, 1, 0, 3,  3, 7,  6,  5,  4,  4, 2, 7, 1
+	0, 0, 6, 1, 0, 3,  3, 7,  6,  5,  4,  4, 2, 7, 1
 };
 #else
 /* 1st passed in rcx, 2nd argument passed in rdx, 3rd in r8. */
 static SLJIT_CONST sljit_ub reg_map[SLJIT_NO_REGISTERS + 4] = {
-  0, 0, 2, 1, 11, 13, 3, 6, 7, 14, 15, 4, 10, 8, 9
+	0, 0, 2, 1, 11, 13, 3, 6, 7, 14, 15, 4, 10, 8, 9
 };
 /* low-map. reg_map & 0x7. */
 static SLJIT_CONST sljit_ub reg_lmap[SLJIT_NO_REGISTERS + 4] = {
-  0, 0, 2, 1, 3,  5,  3, 6, 7,  6,  7, 4, 2,  0, 1
+	0, 0, 2, 1, 3,  5,  3, 6, 7,  6,  7, 4, 2,  0, 1
 };
 #endif
 
@@ -203,10 +203,10 @@ static sljit_ub get_jump_code(int type)
 	case SLJIT_C_MUL_NOT_OVERFLOW:
 		return 0x81;
 
-	case SLJIT_C_FLOAT_NAN:
+	case SLJIT_C_FLOAT_UNORDERED:
 		return 0x8a;
 
-	case SLJIT_C_FLOAT_NOT_NAN:
+	case SLJIT_C_FLOAT_ORDERED:
 		return 0x8b;
 	}
 	return 0;
@@ -2477,11 +2477,11 @@ SLJIT_API_FUNC_ATTRIBUTE int sljit_emit_cond_value(struct sljit_compiler *compil
 		cond_set = 0x91;
 		break;
 
-	case SLJIT_C_FLOAT_NAN:
+	case SLJIT_C_FLOAT_UNORDERED:
 		cond_set = 0x9a;
 		break;
 
-	case SLJIT_C_FLOAT_NOT_NAN:
+	case SLJIT_C_FLOAT_ORDERED:
 		cond_set = 0x9b;
 		break;
 	}
