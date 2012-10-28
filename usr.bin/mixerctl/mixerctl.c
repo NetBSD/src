@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.25 2012/10/28 01:51:20 isaki Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.26 2012/10/28 02:01:15 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.25 2012/10/28 01:51:20 isaki Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.26 2012/10/28 02:01:15 isaki Exp $");
 #endif
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ static struct field *
 findfield(char *name)
 {
 	int i;
-	for(i = 0; fields[i].name; i++)
+	for (i = 0; fields[i].name; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
 	return 0;
@@ -93,26 +93,26 @@ prfield(struct field *p, const char *sep, int prvalset)
 	m = p->valp;
 	switch(m->type) {
 	case AUDIO_MIXER_ENUM:
-		for(i = 0; i < p->infp->un.e.num_mem; i++)
+		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (p->infp->un.e.member[i].ord == m->un.ord)
 				fprintf(out, "%s",
-					p->infp->un.e.member[i].label.name);
+				    p->infp->un.e.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  [ ");
-			for(i = 0; i < p->infp->un.e.num_mem; i++)
+			for (i = 0; i < p->infp->un.e.num_mem; i++)
 				fprintf(out, "%s ",
 				    p->infp->un.e.member[i].label.name);
 			fprintf(out, "]");
 		}
 		break;
 	case AUDIO_MIXER_SET:
-		for(n = i = 0; i < p->infp->un.s.num_mem; i++)
+		for (n = i = 0; i < p->infp->un.s.num_mem; i++)
 			if (m->un.mask & p->infp->un.s.member[i].mask)
 				fprintf(out, "%s%s", n++ ? "," : "",
-					p->infp->un.s.member[i].label.name);
+				    p->infp->un.s.member[i].label.name);
 		if (prvalset) {
 			fprintf(out, "  { ");
-			for(i = 0; i < p->infp->un.s.num_mem; i++)
+			for (i = 0; i < p->infp->un.s.num_mem; i++)
 				fprintf(out, "%s ",
 				    p->infp->un.s.member[i].label.name);
 			fprintf(out, "}");
@@ -123,7 +123,7 @@ prfield(struct field *p, const char *sep, int prvalset)
 			fprintf(out, "%d", m->un.value.level[0]);
 		else
 			fprintf(out, "%d,%d", m->un.value.level[0], 
-			       m->un.value.level[1]);
+			    m->un.value.level[1]);
 		if (prvalset) {
 			fprintf(out, " %s", p->infp->un.v.units.name);
 			if (p->infp->un.v.delta)
@@ -147,7 +147,7 @@ rdfield(struct field *p, char *q)
 	m = p->valp;
 	switch(m->type) {
 	case AUDIO_MIXER_ENUM:
-		for(i = 0; i < p->infp->un.e.num_mem; i++)
+		for (i = 0; i < p->infp->un.e.num_mem; i++)
 			if (strcmp(p->infp->un.e.member[i].label.name, q) == 0)
 				break;
 		if (i < p->infp->un.e.num_mem)
@@ -159,13 +159,13 @@ rdfield(struct field *p, char *q)
 		break;
 	case AUDIO_MIXER_SET:
 		mask = 0;
-		for(v = 0; q && *q; q = s) {
+		for (v = 0; q && *q; q = s) {
 			s = strchr(q, ',');
 			if (s)
 				*s++ = 0;
-			for(i = 0; i < p->infp->un.s.num_mem; i++)
+			for (i = 0; i < p->infp->un.s.num_mem; i++)
 				if (strcmp(p->infp->un.s.member[i].label.name,
-					   q) == 0)
+				    q) == 0)
 					break;
 			if (i < p->infp->un.s.num_mem) {
 				mask |= p->infp->un.s.member[i].mask;
@@ -214,7 +214,7 @@ incfield(struct field *p, int inc)
 	case AUDIO_MIXER_ENUM:
 		m->un.ord += inc;
 		if (m->un.ord < 0)
-			m->un.ord = p->infp->un.e.num_mem-1;
+			m->un.ord = p->infp->un.e.num_mem - 1;
 		if (m->un.ord >= p->infp->un.e.num_mem)
 			m->un.ord = 0;
 		break;
@@ -276,7 +276,7 @@ wrarg(int fd, char *arg, const char *sep)
 			incdec *= -1;
 		*(q-1) = 0;
 		q = NULL;
-	} else		
+	} else
 		*q++ = 0;
 
 	p = findfield(arg);
@@ -353,26 +353,26 @@ main(int argc, char **argv)
 		case '?':
 		default:
 		usage:
-		fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
-		fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
-		fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
-		exit(0);
+			fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
+			fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
+			fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
+			exit(0);
 		}
 	}
 	argc -= optind;
 	argv += optind;
-    
+
 	fd = open(file, O_RDWR);
-        /* Try with mixer0. */
-        if (fd < 0 && strcmp(file, _PATH_MIXER) == 0) {
-        	file = _PATH_MIXER0;
-                fd = open(file, O_RDWR);
-        }
+	/* Try with mixer0. */
+	if (fd < 0 && strcmp(file, _PATH_MIXER) == 0) {
+		file = _PATH_MIXER0;
+		fd = open(file, O_RDWR);
+	}
 
 	if (fd < 0)
 		err(1, "%s", file);
 
-	for(ndev = 0; ; ndev++) {
+	for (ndev = 0; ; ndev++) {
 		dinfo.index = ndev;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
 			break;
@@ -382,18 +382,18 @@ main(int argc, char **argv)
 	infos = calloc(ndev, sizeof *infos);
 	values = calloc(ndev, sizeof *values);
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		infos[i].index = i;
 		ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]);
 	}
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		rfields[i].name = infos[i].label.name;
 		rfields[i].valp = &values[i];
 		rfields[i].infp = &infos[i];
 	}
 
-	for(i = 0; i < ndev; i++) {
+	for (i = 0; i < ndev; i++) {
 		values[i].dev = i;
 		values[i].type = infos[i].type;
 		if (infos[i].type != AUDIO_MIXER_CLASS) {
@@ -406,35 +406,35 @@ main(int argc, char **argv)
 		}
 	}
 
-	for(j = i = 0; i < ndev; i++) {
+	for (j = i = 0; i < ndev; i++) {
 		if (infos[i].type != AUDIO_MIXER_CLASS &&
 		    infos[i].type != -1) {
 			fields[j++] = rfields[i];
-			for(pos = infos[i].next; pos != AUDIO_MIXER_LAST;
+			for (pos = infos[i].next; pos != AUDIO_MIXER_LAST;
 			    pos = infos[pos].next) {
 				fields[j] = rfields[pos];
-				fields[j].name = catstr(rfields[i].name, 
-							infos[pos].label.name);
+				fields[j].name = catstr(rfields[i].name,
+				    infos[pos].label.name);
 				infos[pos].type = -1;
 				j++;
 			}
 		}
 	}
 
-	for(i = 0; i < j; i++) {
+	for (i = 0; i < j; i++) {
 		int cls = fields[i].infp->mixer_class;
 		if (cls >= 0 && cls < ndev)
 			fields[i].name = catstr(infos[cls].label.name, 
-						fields[i].name);
+			    fields[i].name);
 	}
 
 	if (argc == 0 && aflag && !wflag) {
-		for(i = 0; i < j; i++) {
+		for (i = 0; i < j; i++) {
 			prfield(&fields[i], sep, vflag);
 			fprintf(out, "\n");
 		}
 	} else if (argc > 0 && !aflag) {
-		while(argc--) {
+		while (argc--) {
 			if (wflag)
 				wrarg(fd, *argv, sep);
 			else
