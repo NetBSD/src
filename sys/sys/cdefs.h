@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.102 2012/10/22 14:00:07 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.103 2012/10/28 17:06:40 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -500,7 +500,7 @@
 /*
  * Return the natural alignment in bytes for the given type
  */
-#ifdef __alignof__
+#if __GNUC_PREREQ__(4, 1)
 #define	__alignof(__t)  __alignof__(__t)
 #else
 #define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
