@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113 2012/10/27 22:36:13 alnsn Exp $
+#	$NetBSD: Makefile,v 1.114 2012/10/28 16:25:03 alnsn Exp $
 
 .include <bsd.own.mk>
 
@@ -121,7 +121,8 @@ SUBDIR+=	tprof_amdpmi
 SUBDIR+=	vmt
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	bpfjit
 SUBDIR+=	sljit
 .endif
