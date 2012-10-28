@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.177 2012/09/16 18:59:25 tls Exp $
+# $NetBSD: md.amd64,v 1.178 2012/10/28 17:07:44 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -92,6 +92,7 @@
 ./usr/include/clang-3.2/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/bmiintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fmaintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/immintrin.h		comp-c-include		llvm
