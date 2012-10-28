@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.367 2012/10/03 18:58:31 dsl Exp $
+#	$NetBSD: files.i386,v 1.368 2012/10/28 16:25:03 alnsn Exp $
 #
 # new style config file for i386 architecture
 #
@@ -91,6 +91,12 @@ file	crypto/des/arch/i386/des_cbc.S		des
 
 file	crypto/blowfish/arch/i386/bf_enc.S	blowfish
 file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish & !i386_cpu
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers
