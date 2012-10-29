@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.1 2012/09/11 20:51:25 matt Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.2 2012/10/29 14:09:38 chs Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,4 +66,4 @@ ENTRY_NP(_atomic_cas_64)
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */
