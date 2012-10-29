@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.18 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.19 2012/10/29 02:27:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.18 2012/09/16 13:47:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.19 2012/10/29 02:27:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -710,24 +710,33 @@ fail:
 int
 npfctl_table(void *data)
 {
-	npf_ioctl_table_t *nct = data;
+	const npf_ioctl_table_t *nct = data;
 	npf_tableset_t *tblset;
 	int error;
 
 	npf_core_enter(); /* XXXSMP */
 	tblset = npf_core_tableset();
 	switch (nct->nct_action) {
+	case NPF_IOCTL_TBLENT_LOOKUP:
+		error = npf_table_lookup(tblset, nct->nct_tid,
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr);
 	case NPF_IOCTL_TBLENT_ADD:
 		error = npf_table_insert(tblset, nct->nct_tid,
-		    nct->nct_alen, &nct->nct_addr, nct->nct_mask);
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
+		    nct->nct_data.ent.mask);
 		break;
 	case NPF_IOCTL_TBLENT_REM:
 		error = npf_table_remove(tblset, nct->nct_tid,
-		    nct->nct_alen, &nct->nct_addr, nct->nct_mask);
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
+		    nct->nct_data.ent.mask);
+		break;
+	case NPF_IOCTL_TBLENT_LIST:
+		error = npf_table_list(tblset, nct->nct_tid,
+		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
 		break;
 	default:
-		error = npf_table_lookup(tblset, nct->nct_tid,
-		    nct->nct_alen, &nct->nct_addr);
+		error = EINVAL;
+		break;
 	}
 	npf_core_exit(); /* XXXSMP */
 	return error;
