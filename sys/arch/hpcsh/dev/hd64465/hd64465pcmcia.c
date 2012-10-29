@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.31 2012/10/29 13:40:56 chs Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.32 2012/10/29 13:46:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.31 2012/10/29 13:40:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.32 2012/10/29 13:46:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,6 +214,7 @@ hd64465pcmcia_attach(device_t parent, device_t self, void *aux)
 	struct hd64465pcmcia_softc *sc = device_private(self);
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_module_id = ha->ha_module_id;
 
 	printf("\n");
