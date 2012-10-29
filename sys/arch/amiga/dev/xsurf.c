@@ -1,4 +1,4 @@
-/*	$NetBSD: xsurf.c,v 1.1 2012/05/15 17:35:44 rkujawa Exp $ */
+/*	$NetBSD: xsurf.c,v 1.2 2012/10/29 23:45:34 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.1 2012/05/15 17:35:44 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.2 2012/10/29 23:45:34 rkujawa Exp $");
 
 /*
  * X-Surf driver, split from ne_zbus. 
@@ -124,7 +124,7 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Individual Computers X-Surf\n");
 
 	/* Add clockport. */
-	xaa_gencp1.xaa_base = (bus_addr_t)zap->va + XSURF_CP1_BASE;
+	xaa_gencp1.xaa_base = (bus_addr_t)zap->va + XSURF_CP2_BASE;
 	strcpy(xaa_gencp1.xaa_name, "gencp_xsurf");
 	config_found_ia(sc->sc_dev, "xsurfbus", &xaa_gencp1, xsurf_print);
 
@@ -135,7 +135,7 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Otherwise add one more clockport and continue... */
-	xaa_gencp2.xaa_base = (bus_addr_t)zap->va + XSURF_CP2_BASE;
+	xaa_gencp2.xaa_base = (bus_addr_t)zap->va + XSURF_CP1_BASE;
 	strcpy(xaa_gencp2.xaa_name, "gencp_xsurf");
 	config_found_ia(sc->sc_dev, "xsurfbus", &xaa_gencp2, xsurf_print);
 		
