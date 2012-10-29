@@ -493,13 +493,13 @@ err:
 int
 RSA_size(const RSA *rsa)
 {
-	return BN_num_bits(rsa->n);
+	return (rsa == NULL) ? 0 : BN_num_bits(rsa->n);
 }
 
 int
-DSA_size(const DSA *rsa)
+DSA_size(const DSA *dsa)
 {
-	return BN_num_bits(rsa->p);
+	return (dsa == NULL) ? 0 : BN_num_bits(dsa->p);
 }
 
 unsigned 
@@ -510,6 +510,9 @@ dsa_verify(const signature_t *signature, const dsa_pubkey_t *pubdsa, const uint8
 	unsigned	qlen;
 	int             ret;
 
+	if (signature == NULL || pubdsa == NULL || calculated == NULL) {
+		return -1;
+	}
 	(void) memset(&osig, 0x0, sizeof(osig));
 	(void) memset(&odsa, 0x0, sizeof(odsa));
 	BN_copy(osig.r, signature->dsa.r);
@@ -558,7 +561,7 @@ RSA_check_key(RSA *rsa)
 
 	ret = 0;
 	if (rsa == NULL || rsa->p == NULL || rsa->q == NULL || rsa->n == NULL) {
-		return 0;
+		return -1;
 	}
 	/* check that p and q are coprime, and that n = p*q. */
 	if (!BN_is_prime(rsa->p, 1, NULL, NULL, NULL) ||
@@ -594,6 +597,9 @@ int
 RSA_public_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa, int padding)
 {
 	USE_ARG(padding);
+	if (plain == NULL || encbuf == NULL || rsa == NULL) {
+		return -1;
+	}
 	return lowlevel_rsa_public_encrypt(plainc, plain, encbuf, rsa);
 }
 
@@ -602,6 +608,9 @@ int
 RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to, RSA *rsa, int padding)
 {
 	USE_ARG(padding);
+	if (from == NULL || to == NULL || rsa == NULL) {
+		return -1;
+	}
 	return lowlevel_rsa_private_decrypt(flen, from, to, rsa);
 }
 
@@ -610,6 +619,9 @@ int
 RSA_private_encrypt(int plainc, const unsigned char *plain, unsigned char *encbuf, RSA *rsa, int padding)
 {
 	USE_ARG(padding);
+	if (plain == NULL || encbuf == NULL || rsa == NULL) {
+		return -1;
+	}
 	return lowlevel_rsa_private_encrypt(plainc, plain, encbuf, rsa);
 }
 
@@ -677,5 +689,8 @@ DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 int
 DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 {
+	if (dgst == NULL || dgst_len == 0 || sig == NULL || dsa == NULL) {
+		return -1;
+	}
 	return dsa_do_verify(dgst, dgst_len, sig, dsa);
 }

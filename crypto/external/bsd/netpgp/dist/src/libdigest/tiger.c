@@ -753,13 +753,17 @@ setversion(TIGER_CTX *ctx, int version)
 void
 TIGER_Init(TIGER_CTX *ctx)
 {
-	initcontext(ctx, 0x01);
+	if (ctx) {
+		initcontext(ctx, 0x01);
+	}
 }
 
 void
 TIGER2_Init(TIGER_CTX *ctx)
 {
-	initcontext(ctx, 0x80);
+	if (ctx) {
+		initcontext(ctx, 0x80);
+	}
 }
 
 void
@@ -774,6 +778,9 @@ TIGER_Update(TIGER_CTX *ctx, const void *data, size_t length)
 	} u;
 	int              indian = 1;
 
+	if (ctx == NULL || data == NULL) {
+		return;
+	}
 	for(i = length; i >= 64; i -= 64) {
 		if (IS_BIG_ENDIAN(indian)) {
 			for (j = 0; j < 64; j++) {
@@ -823,6 +830,9 @@ TIGER_Final(uint8_t *digest, TIGER_CTX *ctx)
 	int		indian = 1;
 	int		i;
 
+	if (digest == NULL || ctx == NULL) {
+		return;
+	}
 	if (!ctx->init) {
 		TIGER_Init(ctx);
 		TIGER_Update(ctx, NULL, 0);
@@ -842,6 +852,9 @@ TIGER_End(TIGER_CTX *ctx, char *buf)
 {   
 	int	i;
 
+	if (ctx == NULL) {
+		return NULL;
+	}
 	if (buf == NULL && (buf = calloc(1, 49)) == NULL) {
 		return NULL;
 	}
@@ -865,7 +878,7 @@ TIGER_File(char *filename, char *buf, int version)
 	int		fd;
 	int		oerrno;
 
-	if (!setversion(&ctx, version)) {
+	if (filename == NULL || buf == NULL || !setversion(&ctx, version)) {
 		return NULL;
 	}
 	if ((fd = open(filename, O_RDONLY)) < 0) {
@@ -885,7 +898,7 @@ TIGER_Data(const uint8_t *data, size_t len, char *buf, int version)
 {   
 	TIGER_CTX	ctx;
 
-	if (!setversion(&ctx, version)) {
+	if (data == NULL || buf == NULL || !setversion(&ctx, version)) {
 		return NULL;
 	}
 	TIGER_Update(&ctx, data, len);
