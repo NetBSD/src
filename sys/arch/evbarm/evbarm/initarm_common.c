@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.11 2012/07/29 00:07:07 matt Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.12 2012/10/29 14:01:33 chs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.11 2012/07/29 00:07:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.12 2012/10/29 14:01:33 chs Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -402,7 +402,7 @@ initarm_common(const struct initarm_config *ic)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
