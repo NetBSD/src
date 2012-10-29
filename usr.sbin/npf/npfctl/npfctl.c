@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.20 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.21 2012/10/29 02:27:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.20 2012/09/16 13:47:41 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.21 2012/10/29 02:27:12 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: npfctl.c,v 1.20 2012/09/16 13:47:41 rmind Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include <util.h>
 
 #include "npfctl.h"
 
@@ -142,10 +144,10 @@ usage(void)
 	    "\t%s ( sess-save | sess-load )\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s table <tid> [ flush ]\n",
+	    "\t%s table <tid> { add | rem | test } <address/mask>\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s table <tid> { add | rem | test } <address/mask>\n",
+	    "\t%s table <tid> { list | flush }\n",
 	    progname);
 
 	exit(EXIT_FAILURE);
@@ -255,62 +257,136 @@ npfctl_print_error(const nl_error_t *ne)
 	}
 }
 
+char *
+npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
+{
+	struct sockaddr_storage ss;
+	char *buf = zalloc(64);
+	int len;
+
+	switch (alen) {
+	case 4: {
+		struct sockaddr_in *sin = (void *)&ss;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_port = 0;
+		memcpy(&sin->sin_addr, addr, sizeof(sin->sin_addr));
+		break;
+	}
+	case 16: {
+		struct sockaddr_in6 *sin6 = (void *)&ss;
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_port = 0;
+		memcpy(&sin6->sin6_addr, addr, sizeof(sin6->sin6_addr));
+		break;
+	}
+	default:
+		assert(false);
+	}
+	len = sockaddr_snprintf(buf, 64, "%a", (struct sockaddr *)&ss);
+	if (mask) {
+		snprintf(&buf[len], 64 - len, "/%u", mask);
+	}
+	return buf;
+}
+
 __dead static void
-npfctl_table(int fd, char **argv)
+npfctl_table(int fd, int argc, char **argv)
 {
 	static const struct tblops_s {
 		const char *	cmd;
 		int		action;
 	} tblops[] = {
-		{ "add",	NPF_IOCTL_TBLENT_ADD },
-		{ "rem",	NPF_IOCTL_TBLENT_REM },
-		{ "test",	0 },
-		{ NULL,		0 }
+		{ "add",	NPF_IOCTL_TBLENT_ADD		},
+		{ "rem",	NPF_IOCTL_TBLENT_REM		},
+		{ "test",	NPF_IOCTL_TBLENT_LOOKUP		},
+		{ "list",	NPF_IOCTL_TBLENT_LIST		},
+		{ NULL,		0				}
 	};
 	npf_ioctl_table_t nct;
 	fam_addr_mask_t fam;
-	char *cmd = argv[3];
-	char *arg = argv[3];
+	size_t buflen = 512;
+	char *cmd, *arg;
 	int n, alen;
 
+	/* Default action is list. */
 	memset(&nct, 0, sizeof(npf_ioctl_table_t));
-	nct.nct_tid = atoi(argv[2]);
+	nct.nct_tid = atoi(argv[0]);
+	cmd = argv[1];
 
 	for (n = 0; tblops[n].cmd != NULL; n++) {
-		if (strcmp(cmd, tblops[n].cmd) == 0) {
-			nct.nct_action = tblops[n].action;
-			arg = argv[4];
-			break;
+		if (strcmp(cmd, tblops[n].cmd) != 0) {
+			continue;
 		}
+		nct.nct_action = tblops[n].action;
+		break;
 	}
-	if (!npfctl_parse_cidr(arg, &fam, &alen)) {
-		errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
+	if (tblops[n].cmd == NULL) {
+		errx(EXIT_FAILURE, "invalid command '%s'", cmd);
 	}
-	memcpy(&nct.nct_addr, &fam.fam_addr, sizeof(npf_addr_t));
-	nct.nct_mask = fam.fam_mask;
-	nct.nct_alen = alen;
+	if (nct.nct_action != NPF_IOCTL_TBLENT_LIST) {
+		if (argc < 3) {
+			usage();
+		}
+		arg = argv[2];
+	}
+again:
+	if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
+		nct.nct_data.buf.buf = zalloc(buflen);
+		nct.nct_data.buf.len = buflen;
+	} else {
+		if (!npfctl_parse_cidr(arg, &fam, &alen)) {
+			errx(EXIT_FAILURE, "invalid CIDR '%s'", arg);
+		}
+		nct.nct_data.ent.alen = alen;
+		memcpy(&nct.nct_data.ent.addr, &fam.fam_addr, sizeof(npf_addr_t));
+		nct.nct_data.ent.mask = fam.fam_mask;
+	}
 
 	if (ioctl(fd, IOC_NPF_TABLE, &nct) != -1) {
 		errno = 0;
 	}
 	switch (errno) {
-	case EEXIST:
-		warnx("entry already exists or is conflicting");
-		break;
-	case ENOENT:
-		warnx("no matching entry was not found");
-		break;
-	case EINVAL:
-		warnx("invalid address, mask or table ID");
-		break;
 	case 0:
-		printf("%s: %s\n", getprogname(), nct.nct_action == 0 ?
-		    "matching entry found" : "success");
 		break;
+	case EEXIST:
+		errx(EXIT_FAILURE, "entry already exists or is conflicting");
+	case ENOENT:
+		errx(EXIT_FAILURE, "no matching entry was not found");
+	case EINVAL:
+		errx(EXIT_FAILURE, "invalid address, mask or table ID");
+	case ENOMEM:
+		if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
+			/* XXX */
+			free(nct.nct_data.buf.buf);
+			buflen <<= 1;
+			goto again;
+		}
+		/* FALLTHROUGH */
 	default:
-		warn("error");
+		err(EXIT_FAILURE, "ioctl");
 	}
-	exit(errno ? EXIT_FAILURE : EXIT_SUCCESS);
+
+	if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
+		npf_ioctl_ent_t *ent = nct.nct_data.buf.buf;
+		char *buf;
+
+		while (nct.nct_data.buf.len--) {
+			if (!ent->alen)
+				break;
+			buf = npfctl_print_addrmask(ent->alen,
+			    &ent->addr, ent->mask);
+			puts(buf);
+			ent++;
+		}
+		free(nct.nct_data.buf.buf);
+	} else {
+		printf("%s: %s\n", getprogname(),
+		    nct.nct_action == NPF_IOCTL_TBLENT_LOOKUP ?
+		    "matching entry found" : "success");
+	}
+	exit(EXIT_SUCCESS);
 }
 
 static void
@@ -355,10 +431,11 @@ npfctl(int action, int argc, char **argv)
 		ret = npf_config_flush(fd);
 		break;
 	case NPFCTL_TABLE:
-		if (argc < 5) {
+		if ((argc -= 2) < 2) {
 			usage();
 		}
-		npfctl_table(fd, argv);
+		argv += 2;
+		npfctl_table(fd, argc, argv);
 		break;
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
