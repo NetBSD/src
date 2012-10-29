@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.15 2012/10/29 14:01:33 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.15 2012/10/29 14:01:33 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -448,7 +448,7 @@ at91bus_setup(BootConfig *mem)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
