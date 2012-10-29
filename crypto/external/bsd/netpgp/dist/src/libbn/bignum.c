@@ -5270,13 +5270,15 @@ BN_dup(const BIGNUM *a)
 void
 BN_swap(BIGNUM *a, BIGNUM *b)
 {
-  	mp_exch(a, b);
+	if (a && b) {
+		mp_exch(a, b);
+	}
 }
 
 int
 BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 {
-	if (a == NULL || n < 0) {
+	if (r == NULL || a == NULL || n < 0) {
 		return 0;
 	}
 	BN_copy(r, a);
@@ -5286,7 +5288,7 @@ BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 int
 BN_lshift1(BIGNUM *r, BIGNUM *a)
 {
-	if (a == NULL) {
+	if (r == NULL || a == NULL) {
 		return 0;
 	}
 	BN_copy(r, a);
@@ -5296,7 +5298,7 @@ BN_lshift1(BIGNUM *r, BIGNUM *a)
 int
 BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 {
-	if (a == NULL || n < 0) {
+	if (r == NULL || a == NULL || n < 0) {
 		return MP_VAL;
 	}
 	BN_copy(r, a);
@@ -5306,7 +5308,7 @@ BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 int
 BN_rshift1(BIGNUM *r, BIGNUM *a)
 {
-	if (a == NULL) {
+	if (r == NULL || a == NULL) {
 		return 0;
 	}
 	BN_copy(r, a);
@@ -5316,6 +5318,9 @@ BN_rshift1(BIGNUM *r, BIGNUM *a)
 int
 BN_set_word(BIGNUM *a, BN_ULONG w)
 {
+	if (a == NULL) {
+		return 0;
+	}
 	mp_set(a, w);
 	return 1;
 }
@@ -5509,13 +5514,13 @@ BN_CTX_end(BN_CTX *ctx)
 char *
 BN_bn2hex(const BIGNUM *a)
 {
-	return formatbn(a, 16);
+	return (a == NULL) ? NULL : formatbn(a, 16);
 }
 
 char *
 BN_bn2dec(const BIGNUM *a)
 {
-	return formatbn(a, 10);
+	return (a == NULL) ? NULL : formatbn(a, 10);
 }
 
 #ifndef _KERNEL
@@ -5542,6 +5547,9 @@ BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 	int		digits;
 	int		i;
 
+	if (rnd == NULL) {
+		return 0;
+	}
 	mp_init_size(rnd, digits = howmany(bits, DIGIT_BIT));
 	for (i = 0 ; i < digits ; i++) {
 		r = (uint64_t)arc4random();

@@ -246,6 +246,9 @@ b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int lin
 	int              blocksout;
 	int              wordlen;
 
+	if (in == NULL || vp == NULL) {
+		return 0;
+	}
 	wordlen = 0;
 	for (blocksout = 0, inp = in, outp = out; (size_t)(inp - in) < insize && (size_t)(outp - out) < outsize;) {
 		for (wordlen = 0, i = 0; i < sizeof(wordin); i++) {
@@ -307,6 +310,9 @@ b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 	char		*out = vp;
 	char		*outp;
 
+	if (in == NULL || vp == NULL) {
+		return 0;
+	}
 	for (inp = in, outp = out ; (size_t)(inp - in) < insize && (size_t)(outp - out) < outsize ; ) {
 		for (wordlen = 0, i = 0 ; i < sizeof(wordin) && (size_t)(inp - in) < insize ; i++) {
 			/* get a single character */
