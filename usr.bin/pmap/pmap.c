@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2012/10/29 16:00:05 para Exp $ */
+/*	$NetBSD: pmap.c,v 1.51 2012/10/29 16:25:25 para Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.50 2012/10/29 16:00:05 para Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.51 2012/10/29 16:25:25 para Exp $");
 #endif
 
 #include <string.h>
@@ -301,7 +301,7 @@ dump_vm_map_entry(kvm_t *kd, struct kinfo_proc2 *proc, struct kbit *vmspace,
 		printf("%*s    aref = { ar_pageoff = %x, ar_amap = %p },",
 		       indent(2), "", vme->aref.ar_pageoff, vme->aref.ar_amap);
 		printf(" advice = %d,\n", vme->advice);
-		printf("%*s    flags = %x <%s%s%s%s > }\n", indent(2), "",
+		printf("%*s    flags = %x <%s%s%s > }\n", indent(2), "",
 		       vme->flags,
 		       vme->flags & UVM_MAP_KERNEL ? " KERNEL" : "",
 		       vme->flags & UVM_MAP_STATIC ? " STATIC" : "",
