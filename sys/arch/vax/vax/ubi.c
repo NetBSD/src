@@ -1,4 +1,4 @@
-/*	$NetBSD: ubi.c,v 1.4 2011/06/05 16:59:21 matt Exp $ */
+/*	$NetBSD: ubi.c,v 1.5 2012/10/29 12:55:41 chs Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.4 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.5 2012/10/29 12:55:41 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ ubi_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-        sa.sa_base = NEX730;
+        sa.sa_base = (bus_addr_t)NEX730;
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 
