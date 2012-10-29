@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.51 2012/10/27 17:18:33 chs Exp $ */
+/* $NetBSD: if_lmc.c,v 1.52 2012/10/29 12:51:39 chs Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.51 2012/10/27 17:18:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.52 2012/10/29 12:51:39 chs Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -5406,7 +5406,7 @@ nbsd_match(device_t parent, cfdata_t match, void *aux)
 static void
 nbsd_attach(device_t parent, device_t self, void *aux)
   {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  softc_t *sc = device_private(self);
   struct pci_attach_args *pa = aux;
   const char *intrstr;
   bus_addr_t csr_addr;
