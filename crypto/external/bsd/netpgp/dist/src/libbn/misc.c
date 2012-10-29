@@ -73,9 +73,11 @@ logmessage(const int level, const char *fmt, ...)
 	va_list	args;
 
 	USE_ARG(level);
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
+	if (fmt != NULL) {
+		va_start(args, fmt);
+		vfprintf(stderr, fmt, args);
+		va_end(args);
+	}
 }
 #endif
 
@@ -91,6 +93,12 @@ hexdump(FILE *fp, const char *header, const uint8_t *src, size_t length)
 	size_t	i;
 	char	line[LINELEN + 1];
 
+	if (src == NULL) {
+		return;
+	}
+	if (fp == NULL) {
+		fp = stdout;
+	}
 	(void) fprintf(fp, "%s%s", (header) ? header : "", (header) ? "\n" : "");
 	(void) fprintf(fp, "[%" PRIsize "u char%s]\n", length, (length == 1) ? "" : "s");
 	for (i = 0 ; i < length ; i++) {

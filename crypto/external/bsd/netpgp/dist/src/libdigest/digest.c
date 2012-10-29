@@ -89,55 +89,73 @@ static uint8_t prefix_sha512[] = {
 void                                                                                                                 
 MD5_Init(MD5_CTX *context)
 {
-	MD5Init(context);
+	if (context) {
+		MD5Init(context);
+	}
 }
 
 void                                                                                                                 
 MD5_Update(MD5_CTX *context, const unsigned char *data, unsigned int len)
 {
-	MD5Update(context, data, len);
+	if (context && data) {
+		MD5Update(context, data, len);
+	}
 }
 
 void                                                                                                                 
 MD5_Final(unsigned char digest[16], MD5_CTX *context)
 {
-	MD5Final(digest, context);
+	if (digest && context) {
+		MD5Final(digest, context);
+	}
 }
 
 void                                                                                                                 
 SHA1_Init(SHA1_CTX *context)
 {
-	SHA1Init(context);
+	if (context) {
+		SHA1Init(context);
+	}
 }
 
 void                                                                                                                 
 SHA1_Update(SHA1_CTX *context, const unsigned char *data, unsigned int len)
 {
-	SHA1Update(context, data, len);
+	if (context && data) {
+		SHA1Update(context, data, len);
+	}
 }
 
 void                                                                                                                 
 SHA1_Final(unsigned char digest[20], SHA1_CTX *context)
 {
-	SHA1Final(digest, context);
+	if (digest && context) {
+		SHA1Final(digest, context);
+	}
 }
 
 void                                                                                                                 
 RMD160_Init(RMD160_CTX *context)
 {
-	RMD160Init(context);
+	if (context) {
+		RMD160Init(context);
+	}
 }
 
 void                                                                                                                 
 RMD160_Update(RMD160_CTX *context, const unsigned char *data, unsigned int len)
 {
-	RMD160Update(context, data, len);
+	if (context && data) {
+		RMD160Update(context, data, len);
+	}
 }
 
 void                                                                                                                 
 RMD160_Final(unsigned char digest[20], RMD160_CTX *context)
 {
-	RMD160Final(digest, context);
+	if (context && digest) {
+		RMD160Final(digest, context);
+	}
 }
 
 
@@ -169,6 +187,9 @@ digest_alg_size(unsigned alg)
 int 
 digest_init(digest_t *hash, const uint32_t hashalg)
 {
+	if (hash == NULL) {
+		return 0;
+	}
 	switch(hash->alg = hashalg) {
 	case MD5_HASH_ALG:
 		MD5Init(&hash->u.md5ctx);
@@ -247,7 +268,7 @@ digest_get_alg(const char *hashalg)
 {
 	rec_t	*r;
 
-	for (r = hashalgs ; r->s ; r++) {
+	for (r = hashalgs ; hashalg && r->s ; r++) {
 		if (strcasecmp(r->s, hashalg) == 0) {
 			return r->alg;
 		}
@@ -258,6 +279,9 @@ digest_get_alg(const char *hashalg)
 int 
 digest_update(digest_t *hash, const uint8_t *data, size_t length)
 {
+	if (hash == NULL || data == NULL) {
+		return 0;
+	}
 	switch(hash->alg) {
 	case MD5_HASH_ALG:
 		MD5Update(hash->ctx, data, (unsigned)length);
@@ -287,6 +311,9 @@ digest_update(digest_t *hash, const uint8_t *data, size_t length)
 unsigned 
 digest_final(uint8_t *out, digest_t *hash)
 {
+	if (hash == NULL || out == NULL) {
+		return 0;
+	}
 	switch(hash->alg) {
 	case MD5_HASH_ALG:
 		MD5Final(out, hash->ctx);
@@ -319,6 +346,9 @@ digest_length(digest_t *hash, unsigned hashedlen)
 {
 	uint8_t		 trailer[6];
 
+	if (hash == NULL) {
+		return 0;
+	}
 	trailer[0] = V4_SIGNATURE;
 	trailer[1] = 0xFF;
 	trailer[2] = (uint8_t)((hashedlen >> 24) & 0xff);
@@ -332,6 +362,9 @@ digest_length(digest_t *hash, unsigned hashedlen)
 unsigned
 digest_get_prefix(unsigned hashalg, uint8_t *prefix, size_t size)
 {
+	if (prefix == NULL) {
+		return 0;
+	}
 	switch (hashalg) {
 	case MD5_HASH_ALG:
 		memcpy(prefix, prefix_md5, sizeof(prefix_md5));
