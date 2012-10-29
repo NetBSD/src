@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.29 2012/10/27 17:17:56 chs Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.30 2012/10/29 12:51:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.29 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.30 2012/10/29 12:51:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ hd64465pcmcia_print(void *arg, const char *pnp)
 }
 
 int
-hd64465pcmcia_submatch(device_t parent, cfdata_tcf, const int *ldesc, void *aux)
+hd64465pcmcia_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct hd64465pcmcia_channel *ch =

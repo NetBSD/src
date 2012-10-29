@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.32 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: pcc.c,v 1.33 2012/10/29 12:51:38 chs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.32 2012/10/27 17:18:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.33 2012/10/29 12:51:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ pccattach(device_t parent, device_t self, void *aux)
 	int i;
 
 	ma = aux;
-	sc = sys_pcc = (struct pcc_softc *)self;
+	sc = sys_pcc = device_private(self);
 
 	/* Get a handle to the PCC's registers. */
 	sc->sc_bust = ma->ma_bust;

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.55 2012/10/27 17:18:10 chs Exp $ */
+/* $NetBSD: sci.c,v 1.56 2012/10/29 12:51:38 chs Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.55 2012/10/27 17:18:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.56 2012/10/29 12:51:38 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -358,7 +358,7 @@ sci_getc(void)
 }
 
 static int
-sci_match(device_t parent, cfdata_t *cf, void *aux)
+sci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(cf->cf_name, "sci") || sci_attached)
