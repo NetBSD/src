@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.18 2012/07/31 06:54:16 matt Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.19 2012/10/29 14:09:38 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -51,7 +51,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.18 2012/07/31 06:54:16 matt Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.19 2012/10/29 14:09:38 chs Exp $")	
 
 	.text
 	.align	0
@@ -65,7 +65,7 @@ RCSID("$NetBSD: bcopyinout.S,v 1.18 2012/07/31 06:54:16 matt Exp $")
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
 #endif
 		
-#if defined(__XSCALE__) || defined(_ARCH_ARM_6)
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 #define HELLOCPP #
 #define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
 #else
