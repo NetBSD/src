@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.21 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.22 2012/10/29 02:27:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		6
+#define	NPF_VERSION		7
 
 /*
  * Public declarations and definitions.
@@ -211,15 +211,29 @@ bool		npf_autounload_p(void);
  * IOCTL structures.
  */
 
+#define	NPF_IOCTL_TBLENT_LOOKUP		0
 #define	NPF_IOCTL_TBLENT_ADD		1
 #define	NPF_IOCTL_TBLENT_REM		2
+#define	NPF_IOCTL_TBLENT_LIST		3
+
+typedef struct npf_ioctl_ent {
+	int			alen;
+	npf_addr_t		addr;
+	npf_netmask_t		mask;
+} npf_ioctl_ent_t;
+
+typedef struct npf_ioctl_buf {
+	void *			buf;
+	size_t			len;
+} npf_ioctl_buf_t;
 
 typedef struct npf_ioctl_table {
 	int			nct_action;
 	u_int			nct_tid;
-	int			nct_alen;
-	npf_addr_t		nct_addr;
-	npf_netmask_t		nct_mask;
+	union {
+		npf_ioctl_ent_t	ent;
+		npf_ioctl_buf_t	buf;
+	} nct_data;
 } npf_ioctl_table_t;
 
 typedef enum {
