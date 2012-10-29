@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2012/10/20 14:53:37 kiyohara Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2012/10/29 14:13:22 rkujawa Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -36,16 +36,17 @@
 #if defined(_KERNEL) && !defined(_MODULE)
 #define	CPU_MAXNUM	2
 extern char bootpath[];
-#endif
 
 #ifdef MULTIPROCESSOR
 #define MD_TLBSYNC()	bebox_tlbisync()
 #endif
 
 #include <machine/bebox.h>
+#endif
 
 #include <powerpc/cpu.h>
 
+#if defined(_KERNEL) && !defined(_MODULE)
 static __inline void
 bebox_tlbisync(void)
 {
@@ -57,5 +58,6 @@ bebox_tlbisync(void)
 	/* Deassert #TLBISYNC */
 	SET_BEBOX_REG(CPU_CONTROL, TLBISYNC_FROM(cpuid));
 }
+#endif
 
 #endif	/* _BEBOX_CPU_H_ */
