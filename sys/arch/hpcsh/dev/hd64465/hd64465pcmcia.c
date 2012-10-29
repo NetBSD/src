@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.30 2012/10/29 12:51:38 chs Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.31 2012/10/29 13:40:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.30 2012/10/29 12:51:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.31 2012/10/29 13:40:56 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ struct hd64465pcmcia_event {
 };
 
 struct hd64465pcmcia_softc {
+	device_t sc_dev;
 	enum hd64465_module_id sc_module_id;
 	int sc_shutdown;
 
