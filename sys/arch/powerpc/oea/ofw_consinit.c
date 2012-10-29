@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.14 2012/10/13 17:58:55 jdc Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.15 2012/10/29 12:52:43 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.14 2012/10/13 17:58:55 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.15 2012/10/29 12:52:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -150,6 +150,7 @@ cninit(void)
 
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
+		extern struct consdev failsafe_cons;
 		cp = &failsafe_cons;
 		cn_tab = cp;
 		(*cp->cn_probe)(cp);
