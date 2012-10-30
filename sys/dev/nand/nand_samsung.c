@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.1 2012/10/30 22:03:00 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.2 2012/10/30 22:43:36 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.1 2012/10/30 22:03:00 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.2 2012/10/30 22:43:36 riz Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -47,9 +47,9 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 {
 	uint8_t mfgrid;
 	uint8_t devid;
-	uint8_t dontcare1;
-	uint8_t dontcare2;
+	uint8_t params1;
 	uint8_t params2;
+	uint8_t params3;
 
 	/* Only for Samsung devices, obviously */
 	if (chip->nc_manf_id != NAND_MFR_SAMSUNG) {
@@ -94,13 +94,13 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x0:
 			chip->nc_block_size = 64 * 1024;
 			break;
-		case 0x0:
+		case 0x1:
 			chip->nc_block_size = 128 * 1024;
 			break;
-		case 0x0:
+		case 0x2:
 			chip->nc_block_size = 256 * 1024;
 			break;
-		case 0x0:
+		case 0x3:
 			chip->nc_block_size = 512 * 1024;
 			break;
 		}
