@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.5.2.2 2012/05/23 10:07:42 yamt Exp $
+#	$NetBSD: NETWALKER,v 1.5.2.3 2012/10/30 17:19:20 yamt Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -38,8 +38,8 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system	TMPFS		# memory file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -81,6 +81,7 @@ options 	INET6		# IPV6
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -145,7 +146,8 @@ options 	DDB_VERBOSE_HELP
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-makeoptions	DEBUG="-g -O2"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	COPTS="-O2"
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES 	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -271,7 +273,7 @@ options 	WS_DEFAULT_BG=WSCOL_BLACK
 options		WS_KERNEL_FG=WSCOL_GREEN
 options		WS_KERNEL_BG=WSCOL_BLACK
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 
@@ -289,6 +291,8 @@ pseudo-device	swcrypto		# software crypto implementation
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter

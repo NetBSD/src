@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.1.2.1 2012/10/30 17:21:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -163,6 +163,8 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	int i, pad;
 	connection_t *conn = pdu->connection;
 
+	DEBOUT(("read_pdu_data: data segment length = %d\n",
+		ntoh3(pdu->pdu.DataSegmentLength)));
 	if (!(len = ntoh3(pdu->pdu.DataSegmentLength))) {
 		return 0;
 	}
@@ -324,8 +326,11 @@ check_StatSN(connection_t *conn, uint32_t nw_sn, bool ack)
 		ack_sernum(&conn->StatSN_buf, sn);
 
 	if (rc != 1) {
-		if (!rc)
+		if (rc == 0) {
+			DEBOUT(("Duplicate PDU, ExpSN %d, Recvd: %d\n",
+				conn->StatSN_buf.ExpSN, sn));
 			return -1;
+		}
 
 		if (rc < 0) {
 			DEBOUT(("Excessive outstanding Status PDUs, ExpSN %d, Recvd: %d\n",
@@ -410,25 +415,14 @@ receive_login_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
 	int rc;
 
-	DEBC(conn, 9, ("Received Login Response PDU, op=%x, flags=%x\n",
-			pdu->pdu.Opcode, pdu->pdu.Flags));
+	DEBC(conn, 9, ("Received Login Response PDU, op=%x, flags=%x, sn=%u\n",
+			pdu->pdu.Opcode, pdu->pdu.Flags,
+			ntohl(pdu->pdu.p.login_rsp.StatSN)));
 
 	if (req_ccb == NULL) {
 		/* Duplicate?? */
 		DEBOUT(("Received duplicate login response (no associated CCB)\n"));
 		return -1;
-	}
-
-	if (!conn->StatSN_buf.next_sn)
-		conn->StatSN_buf.next_sn = conn->StatSN_buf.ExpSN =
-			ntohl(pdu->pdu.p.login_rsp.StatSN) + 1;
-	else if (check_StatSN(conn, pdu->pdu.p.login_rsp.StatSN, TRUE))
-		return -1;
-
-	if (pdu->temp_data_len) {
-		if ((rc = collect_text_data(pdu, req_ccb)) != 0) {
-			return max(rc, 0);
-		}
 	}
 
 	if (pdu->pdu.p.login_rsp.StatusClass) {
@@ -437,13 +431,25 @@ receive_login_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 				pdu->pdu.p.login_rsp.StatusDetail));
 
 		req_ccb->status = ISCSI_STATUS_LOGIN_FAILED;
-	} else {
-		negotiate_login(conn, pdu, req_ccb);
-		/* negotiate_login will decide whether login is complete or not */
+		/* XXX */
+		wake_ccb(req_ccb);
 		return 0;
 	}
 
-	wake_ccb(req_ccb);
+	if (!conn->StatSN_buf.next_sn) {
+		conn->StatSN_buf.next_sn = conn->StatSN_buf.ExpSN =
+			ntohl(pdu->pdu.p.login_rsp.StatSN) + 1;
+	} else if (check_StatSN(conn, pdu->pdu.p.login_rsp.StatSN, TRUE))
+		return -1;
+
+	if (pdu->temp_data_len) {
+		if ((rc = collect_text_data(pdu, req_ccb)) != 0)
+			return max(rc, 0);
+	}
+
+	negotiate_login(conn, pdu, req_ccb);
+
+	/* negotiate_login will decide whether login is complete or not */
 	return 0;
 }
 
@@ -1138,8 +1144,8 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		DEBC(conn, 1, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
 
 		CS_BEGIN;
-		waiting = sess->ccbs_throttled;
-		TAILQ_INIT(&sess->ccbs_throttled);
+		TAILQ_INIT(&waiting);
+		TAILQ_CONCAT(&waiting, &sess->ccbs_throttled, chain);
 		CS_END;
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);

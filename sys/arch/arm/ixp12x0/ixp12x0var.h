@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.9 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.9.2.1 2012/10/30 17:19:06 yamt Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -38,7 +38,7 @@
 #include <dev/pci/pcivar.h>
 
 struct ixp12x0_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 
 	/* Handles for the PCI */

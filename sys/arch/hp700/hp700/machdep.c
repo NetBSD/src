@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100.2.2 2012/05/23 10:07:43 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.2.3 2012/10/30 17:19:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.2 2012/05/23 10:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.3 2012/10/30 17:19:38 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.2 2012/05/23 10:07:43 yamt Exp $
 #include <ddb/db_extern.h>
 #endif
 
-#include <hp700/hp700/intr.h>
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
 #include <hp700/dev/cpudevs.h>
@@ -229,7 +228,7 @@ int	cpu_modelno;
 int	cpu_revision;
 
 #if NLCD > 0
-int	lcd_blink_p;
+bool	lcd_blink_p;
 #endif
 
 /*
@@ -241,7 +240,6 @@ int (*cpu_ibtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 int (*cpu_dbtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 
 dev_t	bootdev;
-int	physmem;		/* # pages supported by pmap */
 int	totalphysmem;		/* # pages in system */
 int	availphysmem;		/* # pages available to kernel */
 int	esym;
@@ -476,8 +474,7 @@ hppa_init(paddr_t start, void *bi)
 	delay_init();
 
 	/* fetch the monarch/"default" cpu hpa */
-	
-	error =  pdcproc_hpa_processor(&hppa_mcpuhpa);
+	error = pdcproc_hpa_processor(&hppa_mcpuhpa);
 	if (error < 0)
 		panic("%s: PDC_HPA failed", __func__);
 	
@@ -589,7 +586,7 @@ do {									\
 
 	DPRINTF(("%s: intr bootstrap\n", __func__));
 	/* Bootstrap interrupt masking and dispatching. */
-	hp700_intr_bootstrap();
+	hp700_intr_initialise(ci);
 
 	/*
 	 * Initialize any debugger.
@@ -1928,7 +1925,8 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 static int
 sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
 {
-	int oldval, error;
+	int error;
+	bool oldval;
 	struct sysctlnode node = *rnode;
 	
 	oldval = lcd_blink_p;
@@ -1940,7 +1938,7 @@ sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return (error);
 
-	if (!oldval && lcd_blink_p > oldval)
+	if (!oldval && lcd_blink_p)
 		blink_lcd_timeout(NULL);
 
 	return 0;

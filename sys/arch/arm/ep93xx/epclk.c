@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.18 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: epclk.c,v 1.18.2.1 2012/10/30 17:19:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18.2.1 2012/10/30 17:19:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.18 2011/07/01 19:31:17 dyoung Exp $");
 
 #define	TIMER_FREQ	983040
 
-static int	epclk_match(struct device *, struct cfdata *, void *);
-static void	epclk_attach(struct device *, struct device *, void *);
+static int	epclk_match(device_t, cfdata_t, void *);
+static void	epclk_attach(device_t, device_t, void *);
 static u_int	epclk_get_timecount(struct timecounter *);
 
 void		rtcinit(void);
@@ -75,7 +75,6 @@ void		rtcinit(void);
 static int      epclk_intr(void* arg);
 
 struct epclk_softc {
-	struct device		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -98,7 +97,7 @@ static struct timecounter epclk_timecounter = {
 
 static struct epclk_softc *epclk_sc = NULL;
 
-CFATTACH_DECL(epclk, sizeof(struct epclk_softc),
+CFATTACH_DECL_NEW(epclk, sizeof(struct epclk_softc),
     epclk_match, epclk_attach, NULL, NULL);
 
 /* This is a quick ARM way to multiply by 983040/1000000 (w/o overflow) */
@@ -116,14 +115,14 @@ CFATTACH_DECL(epclk, sizeof(struct epclk_softc),
 	EP93XX_APB_TIMERS + EP93XX_TIMERS_Timer4ValueLow))
 
 static int
-epclk_match(struct device *parent, struct cfdata *match, void *aux)
+epclk_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 2;
 }
 
 static void
-epclk_attach(struct device *parent, struct device *self, void *aux)
+epclk_attach(device_t parent, device_t self, void *aux)
 {
 	struct epclk_softc		*sc;
 	struct epsoc_attach_args	*sa;
@@ -131,7 +130,7 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc = (struct epclk_softc*) self;
+	sc = device_private(self);
 	sa = aux;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
@@ -144,11 +143,11 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 #if defined(HZ) && (HZ == 64)
 	if (bus_space_map(sa->sa_iot, EP93XX_APB_HWBASE + EP93XX_APB_SYSCON + 
 		EP93XX_SYSCON_TEOI, 4, 0, &sc->sc_teoi_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 #endif
 
 	/* clear and start the debug timer (Timer4) */

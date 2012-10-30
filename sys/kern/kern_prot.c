@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.113.4.1 2012/04/17 00:08:25 yamt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.113.4.2 2012/10/30 17:22:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.113.4.1 2012/04/17 00:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.113.4.2 2012/10/30 17:22:30 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -346,6 +346,12 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		/* Update count of processes for this user */
 		(void)chgproccnt(kauth_cred_getuid(ncred), -1);
 		(void)chgproccnt(r, 1);
+
+		/* The first lwp of a process is not counted */
+		int nlwps = p->p_nlwps - 1;
+		(void)chglwpcnt(kauth_cred_getuid(ncred), -nlwps);
+		(void)chglwpcnt(r, nlwps);
+
 		kauth_cred_setuid(ncred, r);
 	}
 	if (sv != -1)

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.17.2.1 2012/04/17 00:05:53 yamt Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.17.2.2 2012/10/30 17:18:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.17.2.1 2012/04/17 00:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.17.2.2 2012/10/30 17:18:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ dec_2000_300_cons_init(void)
 		/* display console... */
 		/* XXX */
 		(void) pckbc_cnattach(&jcp->jc_internal_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		isa_display_console(&jcp->jc_eisa_iot, &jcp->jc_eisa_memt);
 #else

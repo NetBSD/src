@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.68.2.1 2012/04/17 00:05:52 yamt Exp $
+#	$NetBSD: P5064,v 1.68.2.2 2012/10/30 17:18:38 yamt Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.68.2.1 $"
+#ident 		"P5064-$Revision: 1.68.2.2 $"
 
 maxusers 32
 
@@ -25,7 +25,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
-options 	SYMTAB_SPACE=475000
+options 	SYMTAB_SPACE=485000
 
 # File systems
 file-system	FFS		# Fast file system
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs

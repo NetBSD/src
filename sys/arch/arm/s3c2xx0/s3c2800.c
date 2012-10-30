@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800.c,v 1.12.2.1 2012/04/17 00:06:07 yamt Exp $ */
+/*	$NetBSD: s3c2800.c,v 1.12.2.2 2012/10/30 17:19:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12.2.1 2012/04/17 00:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12.2.2 2012/10/30 17:19:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800.c,v 1.12.2.1 2012/04/17 00:06:07 yamt Exp $"
 #include "opt_cpuoptions.h"
 
 /* prototypes */
-static int	s3c2800_match(struct device *, struct cfdata *, void *);
-static void	s3c2800_attach(struct device *, struct device *, void *);
-static int	s3c2800_search(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	s3c2800_match(device_t, cfdata_t, void *);
+static void	s3c2800_attach(device_t, device_t, void *);
+static int	s3c2800_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(ssio, sizeof(struct s3c2800_softc), s3c2800_match, s3c2800_attach,
@@ -84,13 +83,13 @@ s3c2800_print(void *aux, const char *name)
 }
 
 int
-s3c2800_match(struct device *parent, struct cfdata *match, void *aux)
+s3c2800_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 void
-s3c2800_attach(struct device *parent, struct device *self, void *aux)
+s3c2800_attach(device_t parent, device_t self, void *aux)
 {
 	struct s3c2800_softc *sc = device_private(self);
 	bus_space_tag_t iot;
@@ -160,14 +159,13 @@ s3c2800_attach(struct device *parent, struct device *self, void *aux)
 
 abort:
 	panic("%s: unable to map %s registers",
-	    self->dv_xname, which_registers);
+	    device_xname(self), which_registers);
 
 #undef FAIL
 }
 
 int
-s3c2800_search(struct device * parent, struct cfdata * cf,
-	       const int *ldesc, void *aux)
+s3c2800_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct s3c2800_softc *sc = device_private(parent);
 	struct s3c2xx0_attach_args aa;

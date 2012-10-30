@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.28 2011/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.28.2.1 2012/10/30 17:19:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.28 2011/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.28.2.1 2012/10/30 17:19:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct hd64465pcmcia_window_cookie {
 
 struct hd64465pcmcia_channel {
 	struct hd64465pcmcia_softc *ch_parent;
-	struct device *ch_pcmcia;
+	device_t ch_pcmcia;
 	int ch_channel;
 
 	/* memory space */
@@ -119,7 +119,7 @@ struct hd64465pcmcia_event {
 };
 
 struct hd64465pcmcia_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	enum hd64465_module_id sc_module_id;
 	int sc_shutdown;
 
@@ -173,13 +173,12 @@ STATIC struct pcmcia_chip_functions hd64465pcmcia_functions = {
 	hd64465pcmcia_chip_socket_settype,
 };
 
-STATIC int hd64465pcmcia_match(struct device *, struct cfdata *, void *);
-STATIC void hd64465pcmcia_attach(struct device *, struct device *, void *);
+STATIC int hd64465pcmcia_match(device_t, cfdata_t, void *);
+STATIC void hd64465pcmcia_attach(device_t, device_t, void *);
 STATIC int hd64465pcmcia_print(void *, const char *);
-STATIC int hd64465pcmcia_submatch(struct device *, struct cfdata *,
-				  const int *, void *);
+STATIC int hd64465pcmcia_submatch(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(hd64465pcmcia, sizeof(struct hd64465pcmcia_softc),
+CFATTACH_DECL_NEW(hd64465pcmcia, sizeof(struct hd64465pcmcia_softc),
     hd64465pcmcia_match, hd64465pcmcia_attach, NULL, NULL);
 
 STATIC void hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *, int);
@@ -201,7 +200,7 @@ STATIC vaddr_t __sh_hd64465_map_2page(paddr_t);
 #define	DELAY_MS(x)	delay((x) * 1000)
 
 int
-hd64465pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64465pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64465_attach_args *ha = aux;
 
@@ -209,12 +208,13 @@ hd64465pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
+hd64465pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64465_attach_args *ha = aux;
-	struct hd64465pcmcia_softc *sc = (struct hd64465pcmcia_softc *)self;
+	struct hd64465pcmcia_softc *sc = device_private(self);
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_module_id = ha->ha_module_id;
 
 	printf("\n");
@@ -223,7 +223,7 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_area6 = __sh_hd64465_map_2page(0x18000000); /* area 6 */
 
 	if (sc->sc_area5 == 0 || sc->sc_area6 == 0) {
-		printf("%s: can't map memory.\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map memory.\n", device_xname(self));
 		if (sc->sc_area5)
 			uvm_km_free(kernel_map, sc->sc_area5, 0x03000000,
 			    UVM_KMF_VAONLY);
@@ -238,7 +238,7 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT (&sc->sc_event_head);
 
 	error = kthread_create(PRI_NONE, 0, NULL, hd64465pcmcia_event_thread,
-		sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
+		sc, &sc->sc_event_thread, "%s", device_xname(self));
 	KASSERT(error == 0);
 
 	hd64465pcmcia_attach_channel(sc, 0);
@@ -291,8 +291,7 @@ hd64465pcmcia_print(void *arg, const char *pnp)
 }
 
 int
-hd64465pcmcia_submatch(struct device *parent, struct cfdata *cf,
-		       const int *ldesc, void *aux)
+hd64465pcmcia_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
 	struct hd64465pcmcia_channel *ch =
@@ -317,7 +316,7 @@ hd64465pcmcia_submatch(struct device *parent, struct cfdata *cf,
 void
 hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 {
-	struct device *parent = (struct device *)sc;
+	device_t parent = sc->sc_dev;
 	struct hd64465pcmcia_channel *ch = &sc->sc_ch[channel];
 	struct pcmciabus_attach_args paa;
 	bus_addr_t baseaddr;

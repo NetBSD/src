@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.3 2005/12/11 12:17:34 christos Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.3.112.1 2012/10/30 17:19:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.3 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.3.112.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,7 +58,6 @@ struct vr4181giu_intr_entry {
 };
 
 struct vr4181giu_softc {
-	struct device			sc_dev;
 	bus_space_tag_t			sc_iot;
 	bus_space_handle_t		sc_ioh;
 	vrip_chipset_tag_t		sc_vc;
@@ -70,24 +69,22 @@ struct vr4181giu_softc {
 	struct hpcio_attach_args	sc_haa;
 };
 
-static int vr4181giu_match(struct device *, struct cfdata *, void *);
-static void vr4181giu_attach(struct device *, struct device *, void *);
+static int vr4181giu_match(device_t, cfdata_t, void *);
+static void vr4181giu_attach(device_t, device_t, void *);
 
-static void vr4181giu_callback(struct device *self);
-static int vr4181giu_print(void *aux, const char *pnp);
-static int vr4181giu_port_read(hpcio_chip_t hc, int port);
-static void vr4181giu_port_write(hpcio_chip_t hc, int port, int onoff);
-static void vr4181giu_update(hpcio_chip_t hc);
-static void vr4181giu_dump(hpcio_chip_t hc);
-static hpcio_chip_t vr4181giu_getchip(void* scx, int chipid);
+static void vr4181giu_callback(device_t);
+static int vr4181giu_print(void *, const char *);
+static int vr4181giu_port_read(hpcio_chip_t, int);
+static void vr4181giu_port_write(hpcio_chip_t, int, int);
+static void vr4181giu_update(hpcio_chip_t);
+static void vr4181giu_dump(hpcio_chip_t);
+static hpcio_chip_t vr4181giu_getchip(void *, int);
 static void *vr4181giu_intr_establish(hpcio_chip_t, int, int,
 				      int (*)(void *),void *);
-static void vr4181giu_intr_disestablish(hpcio_chip_t hc, void *arg);
-static void vr4181giu_intr_clear(hpcio_chip_t hc, void *arg);
-static void vr4181giu_register_iochip(hpcio_chip_t hc, hpcio_chip_t iochip);
-static int vr4181giu_intr(void *arg);
-
-
+static void vr4181giu_intr_disestablish(hpcio_chip_t, void *);
+static void vr4181giu_intr_clear(hpcio_chip_t, void *);
+static void vr4181giu_register_iochip(hpcio_chip_t, hpcio_chip_t);
+static int vr4181giu_intr(void *);
 
 static struct hpcio_chip vr4181giu_iochip = {
 	.hc_portread =		vr4181giu_port_read,
@@ -100,19 +97,19 @@ static struct hpcio_chip vr4181giu_iochip = {
 	.hc_dump =		vr4181giu_dump,
 };
 
-CFATTACH_DECL(vr4181giu, sizeof(struct vr4181giu_softc),
+CFATTACH_DECL_NEW(vr4181giu, sizeof(struct vr4181giu_softc),
 	      vr4181giu_match, vr4181giu_attach, NULL, NULL);
 
 static int
-vr4181giu_match(struct device *parent, struct cfdata *match, void *aux)
+vr4181giu_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (2); /* 1st attach group of vrip */
 }
 
 static void
-vr4181giu_attach(struct device *parent, struct device *self, void *aux)
+vr4181giu_attach(device_t parent, device_t self, void *aux)
 {
-	struct vr4181giu_softc	*sc = (struct vr4181giu_softc*) self;
+	struct vr4181giu_softc	*sc = device_private(self);
 	struct vrip_attach_args	*va = aux;
 	int			i;
 
@@ -131,7 +128,7 @@ vr4181giu_attach(struct device *parent, struct device *self, void *aux)
 	if (!(sc->sc_ih
 	      = vrip_intr_establish(va->va_vc, va->va_unit, 0,
 				    IPL_BIO, vr4181giu_intr, sc))) {
-		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: can't establish interrupt\n", device_xname(self));
 		return;
 	}
 
@@ -140,7 +137,7 @@ vr4181giu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_iochip = vr4181giu_iochip; /* structure copy */
 	sc->sc_iochip.hc_chipid = VRIP_IOCHIP_VR4181GIU;
-	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
+	sc->sc_iochip.hc_name = device_xname(self);
 	sc->sc_iochip.hc_sc = sc;
 	/* Register functions to upper interface */
 	vrip_register_gpio(va->va_vc, &sc->sc_iochip);
@@ -167,7 +164,7 @@ vr4181giu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-vr4181giu_callback(struct device *self)
+vr4181giu_callback(device_t self)
 {
 	struct vr4181giu_softc		*sc = (void *) self;
 

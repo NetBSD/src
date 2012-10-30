@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.5 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.5.38.1 2012/10/30 17:21:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -565,7 +565,7 @@ struct txp_rx_ring {
 };
 
 struct txp_softc {
-	struct device		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	struct ethercom		sc_arpcom;	/* ethernet common */
 	struct txp_hostvar	*sc_hostvar;
 	struct txp_boot_record	*sc_boot;
@@ -596,7 +596,7 @@ struct txp_softc {
 #define TXP_FIBER		0x4
 };
 
-#define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : device_xname(&(sc)->sc_dev))
+#define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : device_xname((sc)->sc_dev))
 
 struct txp_fw_file_header {
 	u_int8_t	magicid[8];	/* TYPHOON\0 */

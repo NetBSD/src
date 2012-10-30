@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.4 2010/01/22 08:56:05 martin Exp $ */
+/* $NetBSD: autoconf.c,v 1.4.12.1 2012/10/30 17:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2010/01/22 08:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.12.1 2012/10/30 17:19:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,11 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	prop_object_t po;
 	prop_dictionary_t properties = adm5120_configuration.properties;
@@ -108,7 +108,7 @@ device_register(struct device *dev, void *aux)
 		if (prop_dictionary_set(device_properties(dev),
 					"initial-gpio", po) == FALSE) {
 			printf("WARNING: unable to set initial-gpio "
-			    "property for %s\n", dev->dv_xname);
+			    "property for %s\n", device_xname(dev));
 		}
 		prop_object_release(po);
 	}
@@ -118,7 +118,7 @@ device_register(struct device *dev, void *aux)
 		if (prop_dictionary_set(device_properties(dev),
 					"mac-address", po) == FALSE) {
 			printf("WARNING: unable to set mac-addr "
-			    "property for %s\n", dev->dv_xname);
+			    "property for %s\n", device_xname(dev));
 		}
 		prop_object_release(po);
 	}

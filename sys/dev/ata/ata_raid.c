@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.34 2010/07/06 18:03:21 bsh Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.34.8.1 2012/10/30 17:20:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.34 2010/07/06 18:03:21 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.34.8.1 2012/10/30 17:20:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -177,8 +177,7 @@ ata_raid_finalize(device_t self)
  *	Autoconfiguration glue: match routine.
  */
 static int
-ataraid_match(device_t parent, cfdata_t cf,
-    void *aux)
+ataraid_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* pseudo-device; always present */
@@ -191,8 +190,7 @@ ataraid_match(device_t parent, cfdata_t cf,
  *	Autoconfiguration glue: attach routine.  We attach the children.
  */
 static void
-ataraid_attach(device_t parent, device_t self,
-    void *aux)
+ataraid_attach(device_t parent, device_t self, void *aux)
 {
 	struct ataraid_array_info *aai;
 	int locs[ATARAIDCF_NLOCS];

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.71.8.1 2012/04/17 00:07:59 yamt Exp $ */
+/*	$NetBSD: if_xi.c,v 1.71.8.2 2012/10/30 17:21:57 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.71.8.1 2012/04/17 00:07:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.71.8.2 2012/10/30 17:21:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -153,7 +153,7 @@ STATIC u_int16_t xi_get(struct xi_softc *);
 STATIC void xi_reset(struct xi_softc *);
 STATIC void xi_set_address(struct xi_softc *);
 STATIC void xi_start(struct ifnet *);
-STATIC void xi_statchg(device_t);
+STATIC void xi_statchg(struct ifnet *);
 STATIC void xi_stop(struct xi_softc *);
 STATIC void xi_watchdog(struct ifnet *);
 
@@ -612,7 +612,7 @@ xi_mdi_write(device_t self, int phy, int reg, int value)
 }
 
 STATIC void
-xi_statchg(device_t self)
+xi_statchg(struct ifnet *ifp)
 {
 	/* XXX Update ifp->if_baudrate */
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.24.8.1 2012/04/17 00:06:03 yamt Exp $
+#	$NetBSD: files.amigappc,v 1.24.8.2 2012/10/30 17:18:52 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -229,8 +229,8 @@ file	arch/amiga/dev/if_ne_zbus.c	ne_zbus needs-flag
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
-attach	ed at zbus with ed_zbus
-file	arch/amiga/dev/if_ed.c		ed_zbus needs-flag
+attach	ed at zbus with ed_zbus: dp8390nic
+file	arch/amiga/dev/if_ed_zbus.c	ed_zbus needs-flag
 
 # C=/Ameristar A2060 / 560
 attach	bah at zbus with bah_zbus

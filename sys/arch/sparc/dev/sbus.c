@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.75.2.1 2012/04/17 00:06:54 yamt Exp $ */
+/*	$NetBSD: sbus.c,v 1.75.2.2 2012/10/30 17:20:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75.2.1 2012/04/17 00:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.75.2.2 2012/10/30 17:20:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,8 +113,10 @@ void	sbus_attach_mainbus(device_t, device_t, void *);
 void	sbus_attach_iommu(device_t, device_t, void *);
 void	sbus_attach_xbox(device_t, device_t, void *);
 
+#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
 static	int sbus_error(void);
-int	(*sbuserr_handler)(void);
+extern	int (*sbuserr_handler)(void);
+#endif
 
 CFATTACH_DECL_NEW(sbus_mainbus, sizeof(struct sbus_softc),
     sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL);
@@ -311,7 +313,9 @@ sbus_attach_iommu(device_t parent, device_t self, void *aux)
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbus_sc = sc;
+#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
 	sbuserr_handler = sbus_error;
+#endif
 	sbus_attach_common(sc, "sbus", node, NULL);
 }
 
@@ -594,6 +598,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	return (ih);
 }
 
+#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
 static int
 sbus_error(void)
 {
@@ -625,3 +630,4 @@ static	int straytime, nstray;
 
 	return (0);
 }
+#endif

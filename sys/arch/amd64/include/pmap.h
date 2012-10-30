@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26.2.2 2012/04/17 00:06:00 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26.2.3 2012/10/30 17:18:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -188,7 +188,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	10
+#define NKL2_KIMG_ENTRIES	16
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -258,6 +258,7 @@ pmap_pte2pa(pt_entry_t pte)
 {
 	return xpmap_mtop_masked(pte & PG_FRAME);
 }
+
 static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {

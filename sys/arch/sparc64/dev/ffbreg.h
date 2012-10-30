@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.9.2.1 2012/04/17 00:06:55 yamt Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.9.2.2 2012/10/30 17:20:23 yamt Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -284,6 +284,7 @@
 
 #define	FBC_ROP_NEW		0x83
 #define	FBC_ROP_OLD		0x85
+#define	FBC_ROP_INVERT		0x8a
 
 #define	FBC_UCSR_FIFO_MASK	0x00000fff
 #define	FBC_UCSR_FB_BUSY	0x01000000

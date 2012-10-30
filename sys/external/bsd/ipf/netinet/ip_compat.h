@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.2.4.2 2012/04/17 00:08:15 yamt Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.227.2.15 2012/01/30 15:07:25 darrenr Exp
+ * Id: ip_compat.h,v 1.1.1.2 2012/07/22 13:45:09 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -27,7 +27,11 @@
 #endif
 
 #ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 #if (defined(SOLARIS2) && (SOLARIS2 >= 8))
 # ifndef	USE_INET6
@@ -128,30 +132,55 @@ struct file;
 # endif
 #endif
 
-#define	NETBSD_GE_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ >= (x)))
-#define	NETBSD_GT_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ > (x)))
-#define	NETBSD_LT_REV(x)	(defined(__NetBSD_Version__) && \
-				 (__NetBSD_Version__ < (x)))
-#define	FREEBSD_GE_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version >= (x)))
-#define	FREEBSD_GT_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version > (x)))
-#define	FREEBSD_LT_REV(x)	(defined(__FreeBSD_version) && \
-				 (__FreeBSD_version < (x)))
-#define	BSDOS_GE_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION >= (x)))
-#define	BSDOS_GT_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION > (x)))
-#define	BSDOS_LT_REV(x)		(defined(_BSDI_VERSION) && \
-				 (_BSDI_VERSION < (x)))
-#define	OPENBSD_GE_REV(x)	(defined(OpenBSD) && (OpenBSD >= (x)))
-#define	OPENBSD_GT_REV(x)	(defined(OpenBSD) && (OpenBSD > (x)))
-#define	OPENBSD_LT_REV(x)	(defined(OpenBSD) && (OpenBSD < (x)))
-#define	BSD_GE_YEAR(x)		(defined(BSD) && (BSD >= (x)))
-#define	BSD_GT_YEAR(x)		(defined(BSD) && (BSD > (x)))
-#define	BSD_LT_YEAR(x)		(defined(BSD) && (BSD < (x)))
+#if defined(__NetBSD_Version__)
+# define NETBSD_GE_REV(x)	(__NetBSD_Version__ >= (x))
+# define NETBSD_GT_REV(x)	(__NetBSD_Version__ > (x))
+# define NETBSD_LT_REV(x)	(__NetBSD_Version__ < (x))
+#else
+# define NETBSD_GE_REV(x)	0
+# define NETBSD_GT_REV(x)	0
+# define NETBSD_LT_REV(x)	0
+#endif
+
+#if defined(__FreeBSD_version)
+# define FREEBSD_GE_REV(x)	(__FreeBSD_version >= (x))
+# define FREEBSD_GT_REV(x)	(__FreeBSD_version > (x))
+# define FREEBSD_LT_REV(x)	(__FreeBSD_version < (x))
+#else
+# define FREEBSD_GE_REV(x)	0
+# define FREEBSD_GT_REV(x)	0
+# define FREEBSD_LT_REV(x)	0
+#endif
+
+#if defined(_BSDI_VERSION)
+# define BSDOS_GE_REV(x)	(_BSDI_VERSION >= (x))
+# define BSDOS_GT_REV(x)	(_BSDI_VERSION > (x))
+# define BSDOS_LT_REV(x)	(_BSDI_VERSION < (x))
+#else
+# define BSDOS_GE_REV(x)	0
+# define BSDOS_GT_REV(x)	0
+# define BSDOS_LT_REV(x)	0
+#endif
+
+#if defined(OpenBSD)
+# define OPENBSD_GE_REV(x)	(OpenBSD >= (x))
+# define OPENBSD_GT_REV(x)	(OpenBSD > (x))
+# define OPENBSD_LT_REV(x)	(OpenBSD < (x))
+#else
+# define OPENBSD_GE_REV(x)	0
+# define OPENBSD_GT_REV(x)	0
+# define OPENBSD_LT_REV(x)	0
+#endif
+
+#if defined(BSD)
+# define BSD_GE_YEAR(x)		(BSD >= (x))
+# define BSD_GT_YEAR(x)		(BSD > (x))
+# define BSD_LT_YEAR(x)		(BSD < (x))
+#else
+# define BSD_GE_YEAR(x)		0
+# define BSD_GT_YEAR(x)		0
+# define BSD_LT_YEAR(x)		0
+#endif
 
 
 /* ----------------------------------------------------------------------- */
@@ -311,7 +340,8 @@ typedef struct	qpktinfo	{
 	int		qpi_flags;	/* COPIED */
 } qpktinfo_t;
 
-#define	QF_GROUP	0x0001
+#define	QF_MULTICAST	0x0001
+#define	QF_BROADCAST	0x0002
 
 typedef struct qifpkt {
 	struct qifpkt	*qp_next;
@@ -347,8 +377,8 @@ typedef struct qifpkt {
 					       LIFNAMSIZ)
 #  endif
 #  define	GETKTIME(x)	uniqtime((struct timeval *)x)
-#  define	MSGDSIZE(x)	msgdsize(x)
-#  define	M_LEN(x)	((x)->b_wptr - (x)->b_rptr)
+#  define	MSGDSIZE(m)	msgdsize(m)
+#  define	M_LEN(m)	((m)->b_wptr - (m)->b_rptr)
 #  define	M_ADJ(m,x)	adjmsg(m, x)
 #  define	M_COPY(x)	dupmsg((x))
 #  define	MTOD(m,t)	((t)((m)->b_rptr))
@@ -360,6 +390,8 @@ typedef struct qifpkt {
 #  define	m_next		b_cont
 #  define	IPF_PANIC(x,y)	if (x) { printf y; cmn_err(CE_PANIC, "ipf_panic"); }
 typedef mblk_t mb_t;
+extern	void	mb_copydata __P((mblk_t *, size_t, size_t, char *));
+extern	void	mb_copyback __P((mblk_t *, size_t, size_t, char *));
 # endif /* _KERNEL */
 
 # if (SOLARIS2 >= 7)
@@ -528,10 +560,10 @@ extern	void	*get_unit(char *, int);
 #  define	KMALLOCS(a, b, c) (a) = (b)malloc((c), M_IOSYS, M_NOWAIT)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
 #  define	KFREES(x,s)	kmem_free((char *)(x), (s))
-#  define	MSGDSIZE(x)	msgdsize(x)
+#  define	MSGDSIZE(m)	msgdsize(m)
 #  define	M_ADJ(m,x)	adjmsg(m, x)
-#  define	M_LEN(x)	((x)->b_wptr - (x)->b_rptr)
-#  define	M_COPY(x)	copymsg((x))
+#  define	M_LEN(m)	((m)->b_wptr - (m)->b_rptr)
+#  define	M_COPY(m)	copymsg((m))
 #  define	M_DUP(m)	dupmsg(m)
 #  define	MTOD(m,t)	((t)((m)->b_rptr))
 #  define	MTYPE(m)	((m)->b_datap->db_type)
@@ -676,10 +708,9 @@ typedef struct {
 #  define	SPL_X(x)	(void) splx(x)
 extern	void	m_copydata(struct mbuf *, int, int, void *);
 extern	void	m_copyback(struct mbuf *, int, int, void *);
-#  define	MSGDSIZE(x)	mbufchainlen(x)
 #  define	M_ADJ(m,x)	m_adj(m, x)
 #  define	M_LEN(x)	(x)->m_len
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IFNAME(x)	((struct ifnet *)x)->if_name
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
@@ -751,11 +782,11 @@ typedef struct mbuf mb_t;
 					    ((c) > 4096) ? M_WAITOK : M_NOWAIT)
 #  define	KFREE(x)	FREE((x), M_PFILT)
 #  define	KFREES(x,s)	FREE((x), M_PFILT)
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
-#  define	M_DUP(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
+#  define	M_DUP(m)	m_copy((m), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IFNAME(x)	((struct ifnet *)x)->if_name
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
@@ -880,8 +911,8 @@ typedef unsigned int    u_32_t;
 #  else
 #   define	PROC_T  struct proc
 #  endif
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
 #  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
@@ -973,6 +1004,8 @@ typedef	u_int32_t	u_32_t;
 # if (__FreeBSD_version >= 500043)
 #  include <sys/mutex.h>
 #  if (__FreeBSD_version >= 700014)
+#   define	KRWLOCK_FILL_SZ		36
+#   define	KMUTEX_FILL_SZ		24
 #   include <sys/rwlock.h>
 #   ifdef _KERNEL
 #    define	KMUTEX_T		struct mtx
@@ -1089,8 +1122,8 @@ extern	int	in_cksum(struct mbuf *, int);
 #  if (__FreeBSD_version >= 500024)
 #   define	GET_MINOR		dev2unit
 #  endif
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
 #  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
 #  define	M_DUP(m)	m_dup(m, M_NOWAIT)
@@ -1147,10 +1180,10 @@ typedef	u_int32_t	u_32_t;
 #  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
 #  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
 typedef struct mbuf mb_t;
 # endif /* _KERNEL */
@@ -1183,10 +1216,10 @@ typedef	u_int32_t	u_32_t;
 
 # ifdef _KERNEL
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
 #  define	IFNAME(x)	((struct ifnet *)x)->if_name
 typedef struct mbuf mb_t;
 # endif /* _KERNEL */
@@ -1209,10 +1242,10 @@ typedef	u_int32_t	u_32_t;
 # ifdef _KERNEL
 #  include	<sys/kmem_alloc.h>
 #  define	GETKTIME(x)	uniqtime((struct timeval *)x)
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
 #  define	IFNAME(x)	((struct ifnet *)x)->if_name
 #  define	GETIFP(n, v)	ifunit(n, IFNAMSIZ)
 #  define	GETIFMTU_4(x)	((struct ifnet *)x)->if_mtu
@@ -1513,10 +1546,10 @@ extern void* getifp(char *, int);
 					    ((c) > 4096) ? M_WAITOK : M_NOWAIT)
 #  define	KFREE(x)	FREE((x), M_TEMP)
 #  define	KFREES(x,s)	FREE((x), M_TEMP)
-#  define	MSGDSIZE(x)	mbufchainlen(x)
-#  define	M_LEN(x)	(x)->m_len
+#  define	MSGDSIZE(m)	mbufchainlen(m)
+#  define	M_LEN(m)	(m)->m_len
 #  define	M_ADJ(m,x)	m_adj(m, x)
-#  define	M_COPY(x)	m_copy((x), 0, M_COPYALL)
+#  define	M_COPY(m)	m_copy((m), 0, M_COPYALL)
 #  define	GETKTIME(x)
 #  define	IPF_PANIC(x,y)
 typedef struct mbuf mb_t;
@@ -1577,15 +1610,19 @@ typedef unsigned int    u_32_t;
 /*
  * Userland locking primitives
  */
+#if !defined(KMUTEX_FILL_SZ)
+# define	KMUTEX_FILL_SZ	1
+#endif
+#if !defined(KRWLOCK_FILL_SZ)
+# define	KRWLOCK_FILL_SZ	1
+#endif
+
 typedef	struct	{
 	char	*eMm_owner;
 	char	*eMm_heldin;
 	u_int	eMm_magic;
 	int	eMm_held;
 	int	eMm_heldat;
-#if defined(__hpux) || defined(__linux)
-	char	eMm_fill[8];
-#endif
 } eMmutex_t;
 
 typedef	struct	{
@@ -1595,12 +1632,10 @@ typedef	struct	{
 	short	eMrw_read;
 	short	eMrw_write;
 	int	eMrw_heldat;
-#ifdef __hpux
-	char	eMm_fill[24];
-#endif
 } eMrwlock_t;
 
 typedef union {
+	char	_fill[KMUTEX_FILL_SZ];
 #ifdef KMUTEX_T
 	struct	{
 		KMUTEX_T	ipf_slk;
@@ -1611,6 +1646,7 @@ typedef union {
 } ipfmutex_t;
 
 typedef union {
+	char	_fill[KRWLOCK_FILL_SZ];
 #ifdef KRWLOCK_T
 	struct	{
 		KRWLOCK_T	ipf_slk;
@@ -1682,14 +1718,14 @@ typedef	struct	mb_s	{
 # define	M_BCAST		0x02
 # undef		M_MBCAST
 # define	M_MBCAST	0x04
-# define	MSGDSIZE(x)	msgdsize(x)
-# define	M_LEN(x)	(x)->mb_len
-# define	M_ADJ(m,x)	(x)->mb_len += x
-# define	M_COPY(x)	dupmbt(x)
-# define	M_DUP(x)	dupmbt(x)
+# define	MSGDSIZE(m)	msgdsize(m)
+# define	M_LEN(m)	(m)->mb_len
+# define	M_ADJ(m,x)	(m)->mb_len += x
+# define	M_COPY(m)	dupmbt(m)
+# define	M_DUP(m)	dupmbt(m)
 # define	GETKTIME(x)	gettimeofday((struct timeval *)(x), NULL)
 # define	MTOD(m, t)	((t)(m)->mb_data)
-# define	FREE_MB_T(x)	freembt(x)
+# define	FREE_MB_T(m)	freembt(m)
 # define	ALLOC_MB_T(m,l)	(m) = allocmbt(l)
 # define	PREP_MB_T(f, m)	do { \
 						(m)->mb_next = *(f)->fin_mp; \
@@ -1977,9 +2013,7 @@ extern	char	*ipf_getifname(struct ifnet *, char *);
  */
 #define	ISALNUM(x)	isalnum((u_char)(x))
 #define	ISALPHA(x)	isalpha((u_char)(x))
-#define	ISASCII(x)	isascii((u_char)(x))
 #define	ISDIGIT(x)	isdigit((u_char)(x))
-#define	ISPRINT(x)	isprint((u_char)(x))
 #define	ISSPACE(x)	isspace((u_char)(x))
 #define	ISUPPER(x)	isupper((u_char)(x))
 #define	ISXDIGIT(x)	isxdigit((u_char)(x))

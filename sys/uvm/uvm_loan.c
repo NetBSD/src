@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.81.2.17 2012/06/12 17:12:01 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.81.2.18 2012/10/30 17:23:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.17 2012/06/12 17:12:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.18 2012/10/30 17:23:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.81.2.17 2012/06/12 17:12:01 yamt Exp 
 #include <uvm/uvm.h>
 
 int vm_loan_read_thresh = -1;
+
+#ifdef UVMHIST
+UVMHIST_DEFINE(loanhist);
+#endif
 
 /*
  * "loaned" pages are pages which are (read-only, copy-on-write) loaned

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.52.2.1 2012/04/17 00:08:22 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.52.2.2 2012/10/30 17:22:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,9 +56,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.52.2.1 2012/04/17 00:08:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.52.2.2 2012/10/30 17:22:28 yamt Exp $");
 
 #include "opt_cpu_ucode.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +146,12 @@ mi_cpu_attach(struct cpu_info *ci)
 	ci->ci_index = ncpu;
 	kcpuset_set(kcpuset_attached, cpu_index(ci));
 
+	/*
+	 * Create a convenience cpuset of just ourselves.
+	 */
+	kcpuset_create(&ci->ci_data.cpu_kcpuset, true);
+	kcpuset_set(ci->ci_data.cpu_kcpuset, cpu_index(ci));
+
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
@@ -207,8 +214,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
 	case IOC_CPU_SETSTATE:
-		if (error == 0)
-			cs = data;
+		cs = data;
 		error = kauth_authorize_system(l->l_cred,
 		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_SETSTATE, cs, NULL,
 		    NULL);
@@ -219,13 +225,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = ESRCH;
 			break;
 		}
-		error = cpu_setintr(ci, cs->cs_intr);
+		cpu_setintr(ci, cs->cs_intr);
 		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
 	case IOC_CPU_GETSTATE:
-		if (error == 0)
-			cs = data;
+		cs = data;
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
@@ -267,8 +272,14 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 
 #ifdef CPU_UCODE
 	case IOC_CPU_UCODE_GET_VERSION:
-		error = cpu_ucode_get_version(data);
+		error = cpu_ucode_get_version((struct cpu_ucode_version *)data);
 		break;
+
+#ifdef COMPAT_60
+	case OIOC_CPU_UCODE_GET_VERSION:
+		error = compat6_cpu_ucode_get_version((struct compat6_cpu_ucode *)data);
+		break;
+#endif
 
 	case IOC_CPU_UCODE_APPLY:
 		error = kauth_authorize_machdep(l->l_cred,
@@ -276,8 +287,19 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		    NULL, NULL, NULL, NULL);
 		if (error != 0)
 			break;
-		error = cpu_ucode_apply(data);
+		error = cpu_ucode_apply((const struct cpu_ucode *)data);
 		break;
+
+#ifdef COMPAT_60
+	case OIOC_CPU_UCODE_APPLY:
+		error = kauth_authorize_machdep(l->l_cred,
+		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
+		    NULL, NULL, NULL, NULL);
+		if (error != 0)
+			break;
+		error = compat6_cpu_ucode_apply((const struct compat6_cpu_ucode *)data);
+		break;
+#endif
 #endif
 
 	default:
@@ -556,7 +578,7 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 		sc->sc_blobsize = 0;
 	}
 
-	error = cpu_ucode_md_open(&fwh, fwname);
+	error = cpu_ucode_md_open(&fwh, sc->loader_version, fwname);
 	if (error != 0) {
 		aprint_error("ucode: firmware_open failed: %i\n", error);
 		goto err0;

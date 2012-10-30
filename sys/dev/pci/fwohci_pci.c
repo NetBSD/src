@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.39.8.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.39.8.2 2012/10/30 17:21:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.39.8.1 2012/04/17 00:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.39.8.2 2012/10/30 17:21:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,6 +102,8 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "IEEE 1394 Controller");
 
+	fwohci_init(&psc->psc_sc);
+
 	psc->psc_sc.fc.dev = self;
 	psc->psc_sc.fc.dmat = pa->pa_dmat;
 	psc->psc_pc = pa->pa_pc;
@@ -149,14 +151,11 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
+	if (fwohci_attach(&psc->psc_sc) != 0)
+		goto fail;
+
 	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	if (fwohci_init(&psc->psc_sc) != 0) {
-		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
-		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
-		    psc->psc_sc.bssize);
-	}
 
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.2.4.2 2012/04/17 00:08:15 yamt Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.2.4.3 2012/10/30 17:22:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -129,12 +129,11 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2.4.2 2012/04/17 00:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2.4.3 2012/10/30 17:22:18 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.117.2.7 2012/01/29 05:30:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 1.1.1.2 2012/07/22 13:45:08 darrenr Exp";
 #endif
 #endif
-
 
 
 typedef	struct ipf_auth_softc_s {
@@ -615,10 +614,7 @@ ipf_auth_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 			error = ipf_auth_geniter(softc, token, &iter, &obj);
 		else {
 			WRITE_ENTER(&softc->ipf_tokens);
-			if (token->ipt_data == NULL)
-				ipf_token_free(softc, token);
-			else
-				ipf_token_deref(softc, token);
+			ipf_token_deref(softc, token);
 			RWLOCK_EXIT(&softc->ipf_tokens);
 			IPFERROR(10001);
 			error = ESRCH;

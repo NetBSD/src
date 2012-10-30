@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.180.4.2 2012/10/30 17:22:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.4.2 2012/10/30 17:22:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/ras.h>
 #include <sys/filedesc.h>
-#include "sys/syscall_stats.h"
+#include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/atomic.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.180.4.1 2012/04/17 00:08:25 yamt Exp
 #include <sys/exec.h>
 #include <sys/cpu.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm_extern.h>
 
 #ifdef COMPAT_NETBSD32
@@ -459,6 +458,9 @@ proc0_init(void)
 	rlim[RLIMIT_RSS].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_max = lim;
 	rlim[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+
+	rlim[RLIMIT_NTHR].rlim_max = maxlwp;
+	rlim[RLIMIT_NTHR].rlim_cur = maxlwp < maxuprc ? maxlwp : maxuprc;
 
 	/* Note that default core name has zero length. */
 	limit0.pl_corename = defcorename;
@@ -2279,7 +2281,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_tsize = vm->vm_tsize;
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
-		ki->p_vm_vsize = vm->vm_map.size;
+		ki->p_vm_vsize = atop(vm->vm_map.size);
 		/*
 		 * Since the stack is initially mapped mostly with
 		 * PROT_NONE and grown as needed, adjust the "mapped size"

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.22.2.1 2012/04/17 00:06:07 yamt Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.22.2.2 2012/10/30 17:19:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.22.2.1 2012/04/17 00:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.22.2.2 2012/10/30 17:19:10 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -434,7 +434,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 				 * triggered interrupt will just keep
 				 * coming back.
 				 */
-				frame->cf_if.if_spsr |= I32_bit;
+				frame->cf_tf.tf_spsr |= I32_bit;
 			}
 #endif
 			i80321_ipending |= ibit;
@@ -469,7 +469,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 			 * Here's hoping the handler really did clear
 			 * down the source...
 			 */
-			frame->cf_if.if_spsr &= ~I32_bit;
+			frame->cf_tf.tf_spsr &= ~I32_bit;
 		}
 #endif
 		ci->ci_cpl = ppl;

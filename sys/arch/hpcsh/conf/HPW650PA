@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.29.8.1 2012/04/17 00:06:25 yamt Exp $
+#	$NetBSD: HPW650PA,v 1.29.8.2 2012/10/30 17:19:46 yamt Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -57,6 +57,7 @@ config		netbsd	root on ? type ?
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x10
 options 	WS_KERNEL_FG=WSCOL_BROWN
 options 	WS_KERNEL_BG=WSCOL_BLUE

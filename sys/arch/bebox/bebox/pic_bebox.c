@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.8 2011/08/07 15:13:07 kiyohara Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.8.2.1 2012/10/30 17:19:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.8 2011/08/07 15:13:07 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.8.2.1 2012/10/30 17:19:14 yamt Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -43,9 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.8 2011/08/07 15:13:07 kiyohara Exp $
 
 #include <arch/powerpc/pic/picvar.h>
 
-#define BEBOX_INTR_MASK		0x0ffffffc
-#define BEBOX_SET_MASK		0x80000000
-#define BEBOX_INTR(x)		(0x80000000 >> x)
 
 static void bebox_enable_irq(struct pic_ops *, int, int);
 static void bebox_disable_irq(struct pic_ops *, int);
@@ -71,6 +70,11 @@ setup_bebox_intr(void)
 	pic->pic_establish_irq = dummy_pic_establish_intr;
 	strcpy(pic->pic_name, "bebox");
 	pic_add(pic);
+
+#ifdef MULTIPROCESSOR
+	setup_bebox_ipi();
+#endif
+
 	return(pic);
 }
 
@@ -78,16 +82,14 @@ static void
 bebox_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 
-	*(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK) =
-	    BEBOX_SET_MASK | (1 << (31 - irq));
+	SET_BEBOX_REG(CPU0_INT_MASK, 1 << (31 - irq));
 }
 
 static void
 bebox_disable_irq(struct pic_ops *pic, int irq)
 {
 
-	*(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK) =
-	    (1 << (31 - irq));
+	CLEAR_BEBOX_REG(CPU0_INT_MASK, 1 << (31 - irq));
 }
 
 static int
@@ -95,9 +97,9 @@ bebox_get_irq(struct pic_ops *pic, int mode)
 {
 	unsigned int state;
 
-	state = *(volatile unsigned int *)(BEBOX_REG + INT_SOURCE);
+	state = READ_BEBOX_REG(INT_SOURCE);
 	state &= BEBOX_INTR_MASK;
-	state &= *(volatile unsigned int *)(BEBOX_REG + CPU0_INT_MASK);
+	state &= READ_BEBOX_REG(CPU0_INT_MASK);
 	if (state == 0)
 		return 255;
 	return __builtin_clz(state);

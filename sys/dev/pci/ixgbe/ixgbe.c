@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.1.2.1 2012/04/17 00:07:59 yamt Exp $*/
+/*$NetBSD: ixgbe.c,v 1.1.2.2 2012/10/30 17:21:56 yamt Exp $*/
 
 #include "opt_inet.h"
 
@@ -426,13 +426,13 @@ ixgbe_sysctl_attach(struct adapter *adapter)
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "flow_control", SYSCTL_DESCR("Flow Control"),
-	    ixgbe_set_flowcntl, 0, adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+	    ixgbe_set_flowcntl, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "advertise_gig", SYSCTL_DESCR("1G Link"),
-	    ixgbe_set_advertise, 0, adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+	    ixgbe_set_advertise, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	/* XXX This is an *instance* sysctl controlling a *global* variable.
@@ -5461,21 +5461,21 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "interrupt_rate", SYSCTL_DESCR("Interrupt Rate"),
-		    ixgbe_sysctl_interrupt_rate_handler, 0, &adapter->queues[i],
-		    0, CTL_CREATE, CTL_EOL) != 0)
+		    ixgbe_sysctl_interrupt_rate_handler, 0,
+		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
-		    ixgbe_sysctl_tdh_handler, 0, txr,
+		    ixgbe_sysctl_tdh_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_tail", SYSCTL_DESCR("Transmit Descriptor Tail"),
-		    ixgbe_sysctl_tdt_handler, 0, txr,
+		    ixgbe_sysctl_tdt_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -5494,7 +5494,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
-		    ixgbe_sysctl_rdh_handler, 0, rxr, 0,
+		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -5502,7 +5502,7 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
-		    ixgbe_sysctl_rdt_handler, 0, rxr, 0,
+		    ixgbe_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 

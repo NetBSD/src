@@ -1,5 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.48.8.1 2012/04/17 00:08:08 yamt Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.48.8.2 2012/10/30 17:22:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,6 +131,10 @@ typedef struct uhci_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
+	kcondvar_t sc_softwake_cv;
 
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;

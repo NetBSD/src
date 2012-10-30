@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18.8.2 2012/05/23 10:07:39 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.8.3 2012/10/30 17:18:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.8.2 2012/05/23 10:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.8.3 2012/10/30 17:18:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	struct fxsave64 *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDL_USEDFPU) {
 		fpusave_lwp(l, true);
 	} else {
 		uint16_t cw;
@@ -127,7 +127,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 		frame->fx_ftw = 0x00;	/* abridged tag; all empty */
 		frame->fx_mxcsr = mxcsr;
 		frame->fx_mxcsr_mask = mxcsr_mask;
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	memcpy(&regs->fxstate, frame, sizeof(*regs));
@@ -162,10 +162,10 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
 	struct fxsave64 *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDP_USEDFPU) {
+	if (l->l_md.md_flags & MDL_USEDFPU) {
 		fpusave_lwp(l, false);
 	} else {
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 	}
 
 	memcpy(frame, &regs->fxstate, sizeof(*regs));

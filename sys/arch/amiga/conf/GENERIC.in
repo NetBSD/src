@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.86.2.2 2012/05/23 10:07:40 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.86.2.3 2012/10/30 17:18:46 yamt Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.86.2.2 $"
+#ident 		"GENERIC-$Revision: 1.86.2.3 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -195,6 +195,7 @@ options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -323,6 +324,7 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
 ')m4_dnl
@@ -566,7 +568,7 @@ m4_ifdef(`AMIGA_CONFIGURATION', `m4_dnl
 # PCI bus support
 options		PCIVERBOSE              # verbose PCI device autoconfig messages
 #options	PCI_CONFIG_DUMP
-options		PCI_NETBSD_CONFIGURE	# supported by mppb(4) and p5pb(4)
+options		PCI_NETBSD_CONFIGURE	# supported by mppb(4), p5pb(4), empb(4)
 
 p5pb0		at p5bus0		# Phase5 PCI bridge (CVPPC/BVPPC/G-REX)
 p5membar*	at zbus0		# Phase5 PCI bridge autoconfiguring BARs
@@ -577,6 +579,10 @@ pci*		at p5pb0
 mppb*           at zbus0		# Matay Prometheus Zorro-PCI bridge
 pci*            at mppb?
 
+empb0		at zbus0		# ELBOX Mediator PCI 1200
+emmem0		at zbus0		# ELBOX Mediator PCI memory space
+pci*		at empb0
+
 #cv3dpb*	at zbus0		# CyberVision 64/3D PCI bridge
 
 #genfb*		at pci?			# generic fb, CVPPC/BVPPC only
@@ -584,6 +590,7 @@ pci*            at mppb?
 #radeonfb*	at pci?			# untested
 
 ne*             at pci?			# NE2000 Ethernet
+satalink* at pci? dev ? function ? flags 0x0002	# SiI SATALink 3112 
 
 # Bluetooth Controller and Device support
 # tested only with btuart on an A1200
@@ -602,16 +609,16 @@ bthub*  at btuart?
 bthidev* at bthub?
 
 # Bluetooth Mouse
-btms*   at bthidev? reportid ?
-wsmouse* at btms? mux 0
+#btms*   at bthidev? reportid ?
+#wsmouse* at btms? mux 0
 
 # Bluetooth Keyboard
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Apple Magic Mouse
-btmagic* at bthub?
-wsmouse* at btmagic? mux 0
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?

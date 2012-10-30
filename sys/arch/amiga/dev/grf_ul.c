@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.46.12.1 2012/04/17 00:06:02 yamt Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.46.12.2 2012/10/30 17:18:48 yamt Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.46.12.1 2012/04/17 00:06:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.46.12.2 2012/10/30 17:18:48 yamt Exp $");
 
 #include "grful.h"
 #include "ite.h"
@@ -430,11 +430,11 @@ ul_load_mon(struct grf_softc *gp, struct grfvideo_mode *md)
 
 int ul_mode(struct grf_softc *, u_long, void *, u_long, int);
 
-void grfulattach(struct device *, struct device *, void *);
+void grfulattach(device_t, device_t, void *);
 int grfulprint(void *, const char *);
-int grfulmatch(struct device *, struct cfdata *, void *);
+int grfulmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(grful, sizeof(struct grf_ul_softc),
+CFATTACH_DECL_NEW(grful, sizeof(struct grf_ul_softc),
     grfulmatch, grfulattach, NULL, NULL);
 
 /*
@@ -447,14 +447,14 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int
-grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfulmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #ifdef ULOWELLCONSOLE
 	static int ulconunit = -1;
 #endif
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * allow only one ulowell console
@@ -469,7 +469,7 @@ grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 
 #ifdef ULOWELLCONSOLE
-	if (amiga_realconfig == 0 || ulconunit != cfp->cf_unit) {
+	if (amiga_realconfig == 0 || ulconunit != cf->cf_unit) {
 #endif
 		if ((unsigned)ulowell_default_mon > ulowell_mon_max)
 			ulowell_default_mon = 1;
@@ -479,8 +479,8 @@ grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 			return(0);
 #ifdef ULOWELLCONSOLE
 		if (amiga_realconfig == 0) {
-			ulconunit = cfp->cf_unit;
-			cfdata = cfp;
+			ulconunit = cf->cf_unit;
+			cfdata = cf;
 		}
 	}
 #endif
@@ -491,23 +491,28 @@ grfulmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * attach to the grfbus (zbus)
  */
 void
-grfulattach(struct device *pdp, struct device *dp, void *auxp)
+grfulattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_ul_softc congrf;
+	struct device temp;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 	struct grf_ul_softc *gup;
 
-	zap = auxp;
+	zap = aux;
 
-	if (dp == NULL)
+	if (self == NULL) {
 		gup = &congrf;
-	else
-		gup = (struct grf_ul_softc *)dp;
+		gp = &gup->gus_sc;
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gup = device_private(self);
+		gp = &gup->gus_sc;
+		gp->g_device = self;
+	}
 
-	gp = &gup->gus_sc;
-
-	if (dp != NULL && congrf.gus_sc.g_regkva != 0) {
+	if (self != NULL && congrf.gus_sc.g_regkva != 0) {
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
@@ -546,19 +551,19 @@ grfulattach(struct device *pdp, struct device *dp, void *auxp)
 		grful_iteinit(gp);
 #endif
 	}
-	if (dp != NULL)
+	if (self != NULL)
 		printf("\n");
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfulprint);
+	amiga_config_found(cfdata, self, gp, grfulprint);
 }
 
 int
-grfulprint(void *auxp, const char *pnp)
+grfulprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)aux)->g_unit,
 			pnp);
 	return(UNCONF);
 }

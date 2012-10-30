@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.41 2011/06/04 13:24:33 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.41.2.1 2012/10/30 17:22:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -44,6 +44,7 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/rnd.h>
 
 struct lwp;
 struct proc;
@@ -81,11 +82,13 @@ struct envsys_data {
 	uint32_t	rpms;		/* for fans, nominal RPMs */
 	int32_t		rfact;		/* for volts, factor x 10^4 */
 	int32_t		value_cur;	/* current value */
+	int32_t		value_prev;	/* previous value */
 	int32_t		value_max;	/* max value */
 	int32_t		value_min;	/* min value */
 	int32_t		private;	/* private data for drivers */
 	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
 	int		upropset;	/* userland property set? */
+	krndsource_t	rnd_src;	/* source element for rnd(4) */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
 };
 
@@ -106,6 +109,8 @@ typedef struct envsys_data envsys_data_t;
 	(ENVSYS_FMONCRITICAL | ENVSYS_FMONLIMITS | ENVSYS_FMONSTCHANGED)
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
+#define ENVSYS_FHAS_ENTROPY	0x00002000	/* sensor provides entropy
+						   for rnd(4) */
 
 /*
  * Properties that can be set in upropset (and in the event_limit's
@@ -207,6 +212,8 @@ uint32_t	sysmon_envsys_get_max_value(bool (*)(const envsys_data_t*), bool);
 
 void	sysmon_envsys_sensor_event(struct sysmon_envsys *, envsys_data_t *,
 				   int);
+
+void	sysmon_envsys_refresh_sensor(struct sysmon_envsys *, envsys_data_t *);
 
 typedef	bool (*sysmon_envsys_callback_t)(const struct sysmon_envsys *,
 					 const envsys_data_t *, void*);

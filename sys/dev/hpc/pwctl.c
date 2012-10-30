@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.19 2009/05/12 14:22:39 cegger Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.19.12.1 2012/10/30 17:20:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.19 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.19.12.1 2012/10/30 17:20:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pwctl.h"
@@ -70,7 +70,6 @@ int	pwctl_debug = PWCTLDEBUG_CONF;
 #endif
 
 struct pwctl_softc {
-	struct device sc_dev;
 	hpcio_chip_t sc_hc;
 	int sc_port;
 	long sc_id;
@@ -88,7 +87,7 @@ static int	pwctl_hook(void *, int, long, void *);
 static int	pwctl_ghook(void *, int, long, void *);
 int	pwctl_hardpower(void *, int, long, void *);
 
-CFATTACH_DECL(pwctl, sizeof(struct pwctl_softc),
+CFATTACH_DECL_NEW(pwctl, sizeof(struct pwctl_softc),
     pwctl_match, pwctl_attach, NULL, NULL);
 
 int
@@ -114,7 +113,7 @@ pwctl_attach(device_t parent, device_t self, void *aux)
 	int *loc;
 	struct pwctl_softc *sc = device_private(self);
 
-	loc = device_cfdata(&sc->sc_dev)->cf_loc;
+	loc = device_cfdata(self)->cf_loc;
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
 	sc->sc_id = loc[HPCIOIFCF_ID];

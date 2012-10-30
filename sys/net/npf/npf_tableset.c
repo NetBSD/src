@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.5.6.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.5.6.3 2012/10/30 17:22:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -32,14 +32,16 @@
 /*
  * NPF tableset module.
  *
- * TODO:
- * - Currently, code is modeled to handle IPv4 CIDR blocks.
- * - Dynamic hash growing/shrinking (i.e. re-hash functionality), maybe?
- * - Dynamic array resize.
+ * Notes
+ *
+ *	The tableset is an array of tables.  After the creation, the array
+ *	is immutable.  The caller is responsible to synchronise the access
+ *	to the tableset.  The table can either be a hash or a tree.  Its
+ *	entries are protected by a read-write lock.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.5.6.2 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.5.6.3 2012/10/30 17:22:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,36 +57,41 @@ __KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.5.6.2 2012/04/17 00:08:39 yamt Ex
 
 #include "npf_impl.h"
 
-/* Table entry structure. */
-struct npf_tblent {
-	/* Hash/tree entry. */
+/*
+ * Table structures.
+ */
+
+typedef struct npf_tblent {
 	union {
-		LIST_ENTRY(npf_tblent)	hashq;
-		rb_node_t		rbnode;
+		LIST_ENTRY(npf_tblent) hashq;
+		pt_node_t	node;
 	} te_entry;
-	/* IPv4 CIDR block. */
-	npf_addr_t			te_addr;
-	npf_netmask_t			te_mask;
-};
+	int			te_alen;
+	npf_addr_t		te_addr;
+} npf_tblent_t;
 
 LIST_HEAD(npf_hashl, npf_tblent);
 
-/* Table structure. */
 struct npf_table {
-	char				t_name[16];
+	char			t_name[16];
 	/* Lock and reference count. */
-	krwlock_t			t_lock;
-	u_int				t_refcnt;
+	krwlock_t		t_lock;
+	u_int			t_refcnt;
+	/* Total number of items. */
+	u_int			t_nitems;
 	/* Table ID. */
-	u_int				t_id;
-	/* The storage type can be: 1. Hash 2. RB-tree. */
-	int				t_type;
-	struct npf_hashl *		t_hashl;
-	u_long				t_hashmask;
-	rb_tree_t			t_rbtree;
+	u_int			t_id;
+	/* The storage type can be: a) hash b) tree. */
+	int			t_type;
+	struct npf_hashl *	t_hashl;
+	u_long			t_hashmask;
+	/* Separate trees for IPv4 and IPv6. */
+	pt_tree_t		t_tree[2];
 };
 
-static pool_cache_t			tblent_cache	__read_mostly;
+#define	NPF_ADDRLEN2TREE(alen)	((alen) >> 4)
+
+static pool_cache_t		tblent_cache	__read_mostly;
 
 /*
  * npf_table_sysinit: initialise tableset structures.
@@ -94,7 +101,7 @@ npf_tableset_sysinit(void)
 {
 
 	tblent_cache = pool_cache_init(sizeof(npf_tblent_t), coherency_unit,
-	    0, 0, "npftenpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    0, 0, "npftblpl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 void
@@ -125,7 +132,7 @@ npf_tableset_destroy(npf_tableset_t *tblset)
 	 */
 	for (tid = 0; tid < NPF_TABLE_SLOTS; tid++) {
 		t = tblset[tid];
-		if (t != NULL) {
+		if (t && --t->t_refcnt == 0) {
 			npf_table_destroy(t);
 		}
 	}
@@ -135,7 +142,7 @@ npf_tableset_destroy(npf_tableset_t *tblset)
 /*
  * npf_tableset_insert: insert the table into the specified tableset.
  *
- * => Returns 0 on success, fails and returns errno if ID is already used.
+ * => Returns 0 on success.  Fails and returns error if ID is already used.
  */
 int
 npf_tableset_insert(npf_tableset_t *tblset, npf_table_t *t)
@@ -147,6 +154,7 @@ npf_tableset_insert(npf_tableset_t *tblset, npf_table_t *t)
 
 	if (tblset[tid] == NULL) {
 		tblset[tid] = t;
+		t->t_refcnt++;
 		error = 0;
 	} else {
 		error = EEXIST;
@@ -155,45 +163,66 @@ npf_tableset_insert(npf_tableset_t *tblset, npf_table_t *t)
 }
 
 /*
- * Red-black tree storage.
+ * npf_tableset_reload: iterate all tables and if the new table is of the
+ * same type and has no items, then we preserve the old one and its entries.
+ *
+ * => The caller is responsible for providing synchronisation.
  */
-
-static signed int
-table_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
+void
+npf_tableset_reload(npf_tableset_t *ntset, npf_tableset_t *otset)
 {
-	const npf_tblent_t * const te1 = n1;
-	const npf_tblent_t * const te2 = n2;
+	for (int i = 0; i < NPF_TABLE_SLOTS; i++) {
+		npf_table_t *t = ntset[i], *ot = otset[i];
 
-	return npf_compare_cidr(&te1->te_addr, te1->te_mask,
-	    &te2->te_addr, te2->te_mask);
+		if (t == NULL || ot == NULL) {
+			continue;
+		}
+		if (t->t_nitems || t->t_type != ot->t_type) {
+			continue;
+		}
+		ntset[i] = ot;
+		ot->t_refcnt++;
+		npf_table_destroy(t);
+	}
 }
-
-static signed int
-table_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
-{
-	const npf_tblent_t * const te = n1;
-	const npf_addr_t *t2 = key;
-
-	return npf_compare_cidr(&te->te_addr, te->te_mask, t2, NPF_NO_NETMASK);
-}
-
-static const rb_tree_ops_t table_rbtree_ops = {
-	.rbto_compare_nodes = table_rbtree_cmp_nodes,
-	.rbto_compare_key = table_rbtree_cmp_key,
-	.rbto_node_offset = offsetof(npf_tblent_t, te_entry.rbnode),
-	.rbto_context = NULL
-};
 
 /*
- * Hash helper routine.
+ * Few helper routines.
  */
 
-static inline struct npf_hashl *
-table_hash_bucket(npf_table_t *t, const void *buf, size_t sz)
+static npf_tblent_t *
+table_hash_lookup(const npf_table_t *t, const npf_addr_t *addr,
+    const int alen, struct npf_hashl **rhtbl)
 {
-	const uint32_t hidx = hash32_buf(buf, sz, HASH32_BUF_INIT);
+	const uint32_t hidx = hash32_buf(addr, alen, HASH32_BUF_INIT);
+	struct npf_hashl *htbl = &t->t_hashl[hidx & t->t_hashmask];
+	npf_tblent_t *ent;
 
-	return &t->t_hashl[hidx & t->t_hashmask];
+	/*
+	 * Lookup the hash table and check for duplicates.
+	 * Note: mask is ignored for the hash storage.
+	 */
+	LIST_FOREACH(ent, htbl, te_entry.hashq) {
+		if (ent->te_alen != alen) {
+			continue;
+		}
+		if (memcmp(&ent->te_addr, addr, alen) == 0) {
+			break;
+		}
+	}
+	*rhtbl = htbl;
+	return ent;
+}
+
+static void
+table_tree_destroy(pt_tree_t *tree)
+{
+	npf_tblent_t *ent;
+
+	while ((ent = ptree_iterate(tree, NULL, PT_ASCENDING)) != NULL) {
+		ptree_remove_node(tree, ent);
+		pool_cache_put(tblent_cache, ent);
+	}
 }
 
 /*
@@ -209,7 +238,14 @@ npf_table_create(u_int tid, int type, size_t hsize)
 	t = kmem_zalloc(sizeof(npf_table_t), KM_SLEEP);
 	switch (type) {
 	case NPF_TABLE_TREE:
-		rb_tree_init(&t->t_rbtree, &table_rbtree_ops);
+		ptree_init(&t->t_tree[0], &npf_table_ptree_ops,
+		    (void *)(sizeof(struct in_addr) / sizeof(uint32_t)),
+		    offsetof(npf_tblent_t, te_entry.node),
+		    offsetof(npf_tblent_t, te_addr));
+		ptree_init(&t->t_tree[1], &npf_table_ptree_ops,
+		    (void *)(sizeof(struct in6_addr) / sizeof(uint32_t)),
+		    offsetof(npf_tblent_t, te_entry.node),
+		    offsetof(npf_tblent_t, te_addr));
 		break;
 	case NPF_TABLE_HASH:
 		t->t_hashl = hashinit(hsize, HASH_LIST, true, &t->t_hashmask);
@@ -223,8 +259,8 @@ npf_table_create(u_int tid, int type, size_t hsize)
 	}
 	rw_init(&t->t_lock);
 	t->t_type = type;
-	t->t_refcnt = 1;
 	t->t_id = tid;
+
 	return t;
 }
 
@@ -234,25 +270,22 @@ npf_table_create(u_int tid, int type, size_t hsize)
 void
 npf_table_destroy(npf_table_t *t)
 {
-	npf_tblent_t *e;
-	u_int n;
 
 	switch (t->t_type) {
 	case NPF_TABLE_HASH:
-		for (n = 0; n <= t->t_hashmask; n++) {
-			while ((e = LIST_FIRST(&t->t_hashl[n])) != NULL) {
-				LIST_REMOVE(e, te_entry.hashq);
-				pool_cache_put(tblent_cache, e);
+		for (unsigned n = 0; n <= t->t_hashmask; n++) {
+			npf_tblent_t *ent;
+
+			while ((ent = LIST_FIRST(&t->t_hashl[n])) != NULL) {
+				LIST_REMOVE(ent, te_entry.hashq);
+				pool_cache_put(tblent_cache, ent);
 			}
 		}
 		hashdone(t->t_hashl, HASH_LIST, t->t_hashmask);
 		break;
 	case NPF_TABLE_TREE:
-		while ((e = rb_tree_iterate(&t->t_rbtree, NULL,
-		    RB_DIR_LEFT)) != NULL) {
-			rb_tree_remove_node(&t->t_rbtree, e);
-			pool_cache_put(tblent_cache, e);
-		}
+		table_tree_destroy(&t->t_tree[0]);
+		table_tree_destroy(&t->t_tree[1]);
 		break;
 	default:
 		KASSERT(false);
@@ -262,67 +295,10 @@ npf_table_destroy(npf_table_t *t)
 }
 
 /*
- * npf_table_ref: holds the reference on table.
- *
- * => Table must be locked.
- */
-void
-npf_table_ref(npf_table_t *t)
-{
-
-	KASSERT(rw_lock_held(&t->t_lock));
-	atomic_inc_uint(&t->t_refcnt);
-}
-
-/*
- * npf_table_unref: drop reference from the table and destroy the table if
- * it is the last reference.
- */
-void
-npf_table_unref(npf_table_t *t)
-{
-
-	if (atomic_dec_uint_nv(&t->t_refcnt) != 0) {
-		return;
-	}
-	npf_table_destroy(t);
-}
-
-/*
- * npf_table_get: find the table according to ID and "get it" by locking it.
- */
-npf_table_t *
-npf_table_get(npf_tableset_t *tset, u_int tid)
-{
-	npf_table_t *t;
-
-	KASSERT(tset != NULL);
-
-	if ((u_int)tid >= NPF_TABLE_SLOTS) {
-		return NULL;
-	}
-	t = tset[tid];
-	if (t != NULL) {
-		rw_enter(&t->t_lock, RW_READER);
-	}
-	return t;
-}
-
-/*
- * npf_table_put: "put table back" by unlocking it.
- */
-void
-npf_table_put(npf_table_t *t)
-{
-
-	rw_exit(&t->t_lock);
-}
-
-/*
  * npf_table_check: validate ID and type.
- * */
+ */
 int
-npf_table_check(npf_tableset_t *tset, u_int tid, int type)
+npf_table_check(const npf_tableset_t *tset, u_int tid, int type)
 {
 
 	if ((u_int)tid >= NPF_TABLE_SLOTS) {
@@ -337,169 +313,274 @@ npf_table_check(npf_tableset_t *tset, u_int tid, int type)
 	return 0;
 }
 
+static int
+table_cidr_check(const u_int aidx, const npf_addr_t *addr,
+    const npf_netmask_t mask)
+{
+
+	if (mask > NPF_MAX_NETMASK && mask != NPF_NO_NETMASK) {
+		return EINVAL;
+	}
+	if (aidx > 1) {
+		return EINVAL;
+	}
+
+	/*
+	 * For IPv4 (aidx = 0) - 32 and for IPv6 (aidx = 1) - 128.
+	 * If it is a host - shall use NPF_NO_NETMASK.
+	 */
+	if (mask >= (aidx ? 128 : 32) && mask != NPF_NO_NETMASK) {
+		return EINVAL;
+	}
+	return 0;
+}
+
 /*
- * npf_table_add_cidr: add an IPv4 or IPv6 CIDR into the table.
+ * npf_table_insert: add an IP CIDR entry into the table.
  */
 int
-npf_table_add_cidr(npf_tableset_t *tset, u_int tid,
+npf_table_insert(npf_tableset_t *tset, u_int tid, const int alen,
     const npf_addr_t *addr, const npf_netmask_t mask)
 {
-	struct npf_hashl *htbl;
-	npf_tblent_t *e, *it;
+	const u_int aidx = NPF_ADDRLEN2TREE(alen);
+	npf_tblent_t *ent;
 	npf_table_t *t;
-	npf_addr_t val;
-	int error = 0;
+	int error;
 
-	if (mask > NPF_MAX_NETMASK) {
+	if ((u_int)tid >= NPF_TABLE_SLOTS || (t = tset[tid]) == NULL) {
 		return EINVAL;
 	}
-	e = pool_cache_get(tblent_cache, PR_WAITOK);
-	memcpy(&e->te_addr, addr, sizeof(npf_addr_t));
-	e->te_mask = mask;
 
-	/* Get the table (acquire the lock). */
-	t = npf_table_get(tset, tid);
-	if (t == NULL) {
-		pool_cache_put(tblent_cache, e);
-		return EINVAL;
+	error = table_cidr_check(aidx, addr, mask);
+	if (error) {
+		return error;
 	}
+	ent = pool_cache_get(tblent_cache, PR_WAITOK);
+	memcpy(&ent->te_addr, addr, alen);
+	ent->te_alen = alen;
+
+	/*
+	 * Insert the entry.  Return an error on duplicate.
+	 */
+	rw_enter(&t->t_lock, RW_WRITER);
 	switch (t->t_type) {
-	case NPF_TABLE_HASH:
-		/* Generate hash value from: address & mask. */
-		npf_calculate_masked_addr(&val, addr, mask);
-		htbl = table_hash_bucket(t, &val, sizeof(npf_addr_t));
-		/* Lookup to check for duplicates. */
-		LIST_FOREACH(it, htbl, te_entry.hashq) {
-			if (it->te_mask != mask) {
-				continue;
-			}
-			if (!memcmp(&it->te_addr, addr, sizeof(npf_addr_t))) {
-				break;
-			}
+	case NPF_TABLE_HASH: {
+		struct npf_hashl *htbl;
+
+		/*
+		 * Hash tables by the concept support only IPs.
+		 */
+		if (mask != NPF_NO_NETMASK) {
+			error = EINVAL;
+			break;
 		}
-		/* If no duplicate - insert entry. */
-		if (__predict_true(it == NULL)) {
-			LIST_INSERT_HEAD(htbl, e, te_entry.hashq);
+		if (!table_hash_lookup(t, addr, alen, &htbl)) {
+			LIST_INSERT_HEAD(htbl, ent, te_entry.hashq);
+			t->t_nitems++;
 		} else {
 			error = EEXIST;
 		}
 		break;
-	case NPF_TABLE_TREE:
-		/* Insert entry.  Returns false, if duplicate. */
-		if (rb_tree_insert_node(&t->t_rbtree, e) != e) {
+	}
+	case NPF_TABLE_TREE: {
+		pt_tree_t *tree = &t->t_tree[aidx];
+		bool ok;
+
+		/*
+		 * If no mask specified, use maximum mask.
+		 */
+		ok = (mask != NPF_NO_NETMASK) ?
+		    ptree_insert_mask_node(tree, ent, mask) :
+		    ptree_insert_node(tree, ent);
+		if (ok) {
+			t->t_nitems++;
+			error = 0;
+		} else {
 			error = EEXIST;
 		}
 		break;
+	}
 	default:
 		KASSERT(false);
 	}
-	npf_table_put(t);
+	rw_exit(&t->t_lock);
 
 	if (error) {
-		pool_cache_put(tblent_cache, e);
+		pool_cache_put(tblent_cache, ent);
 	}
 	return error;
 }
 
 /*
- * npf_table_rem_v4cidr: remove an IPv4 CIDR from the table.
+ * npf_table_remove: remove the IP CIDR entry from the table.
  */
 int
-npf_table_rem_cidr(npf_tableset_t *tset, u_int tid,
+npf_table_remove(npf_tableset_t *tset, u_int tid, const int alen,
     const npf_addr_t *addr, const npf_netmask_t mask)
 {
-	struct npf_hashl *htbl;
-	npf_tblent_t *e;
+	const u_int aidx = NPF_ADDRLEN2TREE(alen);
+	npf_tblent_t *ent;
 	npf_table_t *t;
-	npf_addr_t val;
 	int error;
 
-	if (mask > NPF_MAX_NETMASK) {
+	error = table_cidr_check(aidx, addr, mask);
+	if (error) {
+		return error;
+	}
+
+	if ((u_int)tid >= NPF_TABLE_SLOTS || (t = tset[tid]) == NULL) {
 		return EINVAL;
 	}
 
-	/* Get the table (acquire the lock). */
-	t = npf_table_get(tset, tid);
-	if (__predict_false(t == NULL)) {
-		return EINVAL;
-	}
-	e = NULL;
-
+	rw_enter(&t->t_lock, RW_WRITER);
 	switch (t->t_type) {
-	case NPF_TABLE_HASH:
-		/* Generate hash value from: (address & mask). */
-		npf_calculate_masked_addr(&val, addr, mask);
-		htbl = table_hash_bucket(t, &val, sizeof(npf_addr_t));
-		LIST_FOREACH(e, htbl, te_entry.hashq) {
-			if (e->te_mask != mask) {
-				continue;
-			}
-			if (!memcmp(&e->te_addr, addr, sizeof(npf_addr_t))) {
-				break;
-			}
-		}
-		if (__predict_true(e != NULL)) {
-			LIST_REMOVE(e, te_entry.hashq);
-		} else {
-			error = ESRCH;
+	case NPF_TABLE_HASH: {
+		struct npf_hashl *htbl;
+
+		ent = table_hash_lookup(t, addr, alen, &htbl);
+		if (__predict_true(ent != NULL)) {
+			LIST_REMOVE(ent, te_entry.hashq);
+			t->t_nitems--;
 		}
 		break;
-	case NPF_TABLE_TREE:
-		/* Key: (address & mask). */
-		npf_calculate_masked_addr(&val, addr, mask);
-		e = rb_tree_find_node(&t->t_rbtree, &val);
-		if (__predict_true(e != NULL)) {
-			rb_tree_remove_node(&t->t_rbtree, e);
-		} else {
-			error = ESRCH;
+	}
+	case NPF_TABLE_TREE: {
+		pt_tree_t *tree = &t->t_tree[aidx];
+
+		ent = ptree_find_node(tree, addr);
+		if (__predict_true(ent != NULL)) {
+			ptree_remove_node(tree, ent);
+			t->t_nitems--;
 		}
 		break;
+	}
 	default:
 		KASSERT(false);
+		ent = NULL;
 	}
-	npf_table_put(t);
+	rw_exit(&t->t_lock);
 
-	if (e == NULL) {
+	if (ent == NULL) {
 		return ENOENT;
 	}
-	pool_cache_put(tblent_cache, e);
+	pool_cache_put(tblent_cache, ent);
 	return 0;
 }
 
 /*
- * npf_table_match_addr: find the table according to ID, lookup and
- * match the contents with specified IPv4 address.
+ * npf_table_lookup: find the table according to ID, lookup and match
+ * the contents with the specified IP address.
  */
 int
-npf_table_match_addr(npf_tableset_t *tset, u_int tid, const npf_addr_t *addr)
+npf_table_lookup(npf_tableset_t *tset, u_int tid,
+    const int alen, const npf_addr_t *addr)
 {
-	struct npf_hashl *htbl;
-	npf_tblent_t *e = NULL;
+	const u_int aidx = NPF_ADDRLEN2TREE(alen);
+	npf_tblent_t *ent;
 	npf_table_t *t;
 
-	/* Get the table (acquire the lock). */
-	t = npf_table_get(tset, tid);
-	if (__predict_false(t == NULL)) {
+	if (__predict_false(aidx > 1)) {
 		return EINVAL;
 	}
+
+	if ((u_int)tid >= NPF_TABLE_SLOTS || (t = tset[tid]) == NULL) {
+		return EINVAL;
+	}
+
+	rw_enter(&t->t_lock, RW_READER);
+	switch (t->t_type) {
+	case NPF_TABLE_HASH: {
+		struct npf_hashl *htbl;
+		ent = table_hash_lookup(t, addr, alen, &htbl);
+		break;
+	}
+	case NPF_TABLE_TREE: {
+		ent = ptree_find_node(&t->t_tree[aidx], addr);
+		break;
+	}
+	default:
+		KASSERT(false);
+		ent = NULL;
+	}
+	rw_exit(&t->t_lock);
+
+	return ent ? 0 : ENOENT;
+}
+
+static int
+table_ent_copyout(npf_tblent_t *ent, npf_netmask_t mask,
+    void *ubuf, size_t len, size_t *off)
+{
+	void *ubufp = (uint8_t *)ubuf + *off;
+	npf_ioctl_ent_t uent;
+
+	if ((*off += sizeof(npf_ioctl_ent_t)) > len) {
+		return ENOMEM;
+	}
+	uent.alen = ent->te_alen;
+	memcpy(&uent.addr, &ent->te_addr, sizeof(npf_addr_t));
+	uent.mask = mask;
+
+	return copyout(&uent, ubufp, sizeof(npf_ioctl_ent_t));
+}
+
+static int
+table_tree_list(pt_tree_t *tree, npf_netmask_t maxmask, void *ubuf,
+    size_t len, size_t *off)
+{
+	npf_tblent_t *ent = NULL;
+	int error = 0;
+
+	while ((ent = ptree_iterate(tree, ent, PT_ASCENDING)) != NULL) {
+		pt_bitlen_t blen;
+
+		if (!ptree_mask_node_p(tree, ent, &blen)) {
+			blen = maxmask;
+		}
+		error = table_ent_copyout(ent, blen, ubuf, len, off);
+		if (error)
+			break;
+	}
+	return error;
+}
+
+/*
+ * npf_table_list: copy a list of all table entries into a userspace buffer.
+ */
+int
+npf_table_list(npf_tableset_t *tset, u_int tid, void *ubuf, size_t len)
+{
+	npf_table_t *t;
+	size_t off = 0;
+	int error = 0;
+
+	if ((u_int)tid >= NPF_TABLE_SLOTS || (t = tset[tid]) == NULL) {
+		return EINVAL;
+	}
+
+	rw_enter(&t->t_lock, RW_READER);
 	switch (t->t_type) {
 	case NPF_TABLE_HASH:
-		htbl = table_hash_bucket(t, addr, sizeof(npf_addr_t));
-		LIST_FOREACH(e, htbl, te_entry.hashq) {
-			if (npf_compare_cidr(addr, e->te_mask, &e->te_addr,
-			    NPF_NO_NETMASK) == 0)
-				break;
+		for (unsigned n = 0; n <= t->t_hashmask; n++) {
+			npf_tblent_t *ent;
+
+			LIST_FOREACH(ent, &t->t_hashl[n], te_entry.hashq)
+				if ((error = table_ent_copyout(ent, 0, ubuf,
+				    len, &off)) != 0)
+					break;
 		}
 		break;
 	case NPF_TABLE_TREE:
-		e = rb_tree_find_node(&t->t_rbtree, addr);
-		KASSERT(e && npf_compare_cidr(addr, e->te_mask, &e->te_addr,
-		    NPF_NO_NETMASK) == 0);
-		break;
+		error = table_tree_list(&t->t_tree[0], 32, ubuf, len, &off);
+		if (error)
+			break;
+		error = table_tree_list(&t->t_tree[1], 128, ubuf, len, &off);
+		if (error)
+			break;
 	default:
 		KASSERT(false);
 	}
-	npf_table_put(t);
+	rw_exit(&t->t_lock);
 
-	return e ? 0 : ENOENT;
+	return error;
 }

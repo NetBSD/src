@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26.4.1 2012/04/17 00:06:41 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.4.2 2012/10/30 17:20:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.4.1 2012/04/17 00:06:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.4.2 2012/10/30 17:20:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.4.1 2012/04/17 00:06:41 yamt Exp $"
 #define _MIPSCO_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <common/bus_dma/bus_dmamem_common.h>
+#include <dev/bus_dma/bus_dmamem_common.h>
 
 #include <mips/cache.h>
 

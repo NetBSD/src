@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.32.36.2 2012/05/23 10:07:41 yamt Exp $
+#	$NetBSD: Makefile.arm,v 1.32.36.3 2012/10/30 17:19:00 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -34,6 +34,7 @@ GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 ##
 # CPPFLAGS set by platform-specific Makefile fragment.
 AFLAGS+=	-x assembler-with-cpp
+COPTS.arm32_kvminit.c+=		-fno-stack-protector
 
 ##
 ## (3) libkern and compat

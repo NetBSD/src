@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.11 2010/06/26 03:49:52 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.11.8.1 2012/10/30 17:20:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 int zs_print(void *, const char *);
 int zshard(void *);
 int zs_get_speed(struct zs_chanstate *);
-void (*zs_delay)(void);
+extern void (*zs_delay)(void);
 
 #define splzs()		splserial()
 #define	IPL_ZS		IPL_SERIAL

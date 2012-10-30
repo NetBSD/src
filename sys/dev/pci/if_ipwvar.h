@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.15 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.15.12.1 2012/10/30 17:21:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -81,7 +81,7 @@ struct ipw_tx_radiotap_header {
 	((1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct ipw_softc {
-	struct device			sc_dev;
+	device_t			sc_dev;
 
 	struct ethercom			sc_ec;
 	struct ieee80211com		sc_ic;

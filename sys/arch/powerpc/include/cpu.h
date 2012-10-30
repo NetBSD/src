@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88.2.1 2012/04/17 00:06:47 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88.2.2 2012/10/30 17:20:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -114,7 +114,7 @@ struct cpu_info {
 	register_t ci_savearea[CPUSAVE_SIZE];
 #if defined(PPC_BOOKE) || defined(MODULAR) || defined(_MODULE)
 	uint32_t ci_pmap_asid_cur;
-	struct pmap_segtab *ci_pmap_segtabs[2];
+	union pmap_segtab *ci_pmap_segtabs[2];
 #define	ci_pmap_kern_segtab	ci_pmap_segtabs[0]
 #define	ci_pmap_user_segtab	ci_pmap_segtabs[1]
 	struct pmap_tlb_info *ci_tlb_info;
@@ -165,7 +165,8 @@ struct cpu_hatch_data {
 	uintptr_t hatch_asr;
 	uintptr_t hatch_sdr1;
 	uint32_t hatch_sr[16];
-	uintptr_t hatch_batu[8], hatch_batl[8];
+	uintptr_t hatch_ibatu[8], hatch_ibatl[8];
+	uintptr_t hatch_dbatu[8], hatch_dbatl[8];
 #endif
 #if defined(PPC_BOOKE)
 	vaddr_t hatch_sp;
@@ -335,6 +336,7 @@ extern const char __CPU_MAXNUM;
 #endif /* _MODULE */
 
 #if !defined(_MODULE)
+extern char *booted_kernel;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.12 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.12.2.1 2012/10/30 17:20:12 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -62,6 +62,8 @@ struct cpu_softc {
 	struct evcnt cpu_ev_late_clock;
 	u_long cpu_ticks_per_clock_intr;
 	struct evcnt cpu_ev_exec_trap_sync;
+
+	uint64_t cpu_spl_tb[NIPL][NIPL];
 };
 
 struct cpunode_locators {
@@ -107,7 +109,7 @@ struct generic_attach_args {
 typedef __BSD_PT_ENTRY_T	pt_entry_t;
 #endif
 
-#include <common/pmap/tlb/tlb.h>
+#include <uvm/pmap/tlb.h>
 
 struct tlb_md_io_ops {
 	/*
@@ -157,7 +159,7 @@ struct trapframe;
 void	booke_sstep(struct trapframe *);
 
 void	booke_cpu_startup(const char *);	/* model name */
-struct powerpc_bus_dma_tag booke_bus_dma_tag;
+extern struct powerpc_bus_dma_tag booke_bus_dma_tag;
 
 extern struct cpu_info cpu_info[];
 #ifdef MULTIPROCESSOR
@@ -170,6 +172,7 @@ uint8_t	cpu_read_1(bus_size_t);
 void	cpu_write_4(bus_size_t, uint32_t);
 void	cpu_write_1(bus_size_t, uint8_t);
 
+void	dump_splhist(struct cpu_info *, void (*)(const char *, ...));
 void	calc_delayconst(void);
 
 struct intrsw;
@@ -194,6 +197,10 @@ void	*board_info_get_object(const char *);
 const void *
 	board_info_get_data(const char *, size_t *);
 
+/* trap.c */
+void	dump_trapframe(const struct trapframe *, void (*)(const char *, ...));
+
+extern char root_string[];
 extern paddr_t msgbuf_paddr;
 extern prop_dictionary_t board_properties;
 extern psize_t pmemsize;

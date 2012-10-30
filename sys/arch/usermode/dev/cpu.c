@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.46.2.1 2012/04/17 00:06:59 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.46.2.2 2012/10/30 17:20:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46.2.1 2012/04/17 00:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46.2.2 2012/10/30 17:20:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -286,6 +286,16 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 }
 
 int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
+{
+	/*
+	 * can we check here? or should that be done in the target
+	 * specific places?
+	 */
+	return 0;
+}
+
+int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct pcb *pcb = lwp_getpcb(l);
@@ -441,7 +451,8 @@ cpu_rootconf(void)
 
 	aprint_normal("boot device: %s\n",
 	    rdev ? device_xname(rdev) : "<unknown>");
-	setroot(rdev, 0);
+	booted_device = rdev;
+	rootconf();
 }
 
 bool

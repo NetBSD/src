@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20.2.1 2012/04/17 00:06:05 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.20.2.2 2012/10/30 17:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ typedef unsigned long	vsize_t;
 #define	PRIuVSIZE	"lu"
 #endif
 
-typedef int		register_t;
+typedef int		register_t, register32_t;
 #define	PRIxREGISTER	"x"
 
 typedef unsigned long	pmc_evid_t;
@@ -88,6 +88,11 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_TLS_VARIANT_I
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#define	PCU_FPU			0
+#define	PCU_UNIT_COUNT		1
+#endif
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

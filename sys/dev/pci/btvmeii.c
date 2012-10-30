@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.21 2011/06/30 20:09:40 wiz Exp $ */
+/* $NetBSD: btvmeii.c,v 1.21.2.1 2012/10/30 17:21:23 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.21 2011/06/30 20:09:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.21.2.1 2012/10/30 17:21:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ struct b3_2706_vmeintrhand {
 };
 
 struct b3_2706_softc {
-	struct device sc_dev;
 	struct univ_pci_data univdata;
 	bus_space_tag_t swapt, vmet;
 	bus_space_handle_t swaph;
@@ -121,7 +120,7 @@ struct b3_2706_softc {
 	int strayintrs;
 };
 
-CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
+CFATTACH_DECL_NEW(btvmeii, sizeof(struct b3_2706_softc),
     b3_2706_match, b3_2706_attach, NULL, NULL);
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.12 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumpower.c,v 1.12.34.1 2012/10/30 17:19:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.12 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpower.c,v 1.12.34.1 2012/10/30 17:19:42 yamt Exp $");
 
 #undef PLUMPOWERDEBUG
 
@@ -56,17 +56,16 @@ int	plumpower_debug = 1;
 #define DPRINTFN(n, arg)
 #endif
 
-int	plumpower_match(struct device *, struct cfdata *, void *);
-void	plumpower_attach(struct device *, struct device *, void *);
+int	plumpower_match(device_t, cfdata_t, void *);
+void	plumpower_attach(device_t, device_t, void *);
 
 struct plumpower_softc {
-	struct	device		sc_dev;
 	plum_chipset_tag_t	sc_pc;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
 };
 
-CFATTACH_DECL(plumpower, sizeof(struct plumpower_softc),
+CFATTACH_DECL_NEW(plumpower, sizeof(struct plumpower_softc),
     plumpower_match, plumpower_attach, NULL, NULL);
 
 #ifdef PLUMPOWERDEBUG
@@ -74,16 +73,16 @@ static void	plumpower_dump(struct plumpower_softc *);
 #endif
 
 int
-plumpower_match(struct device *parent, struct cfdata *cf, void *aux)
+plumpower_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 2; /* 1st attach group */
 }
 
 void
-plumpower_attach(struct device *parent, struct device *self, void *aux)
+plumpower_attach(device_t parent, device_t self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
-	struct plumpower_softc *sc = (void*)self;
+	struct plumpower_softc *sc = device_private(self);
 
 	printf("\n");
 	sc->sc_pc	= pa->pa_pc;

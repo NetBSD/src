@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.10.2.2 2012/10/30 17:20:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.2.2 2012/10/30 17:20:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.10.2.1 2012/04/17 00:06:45 yamt Exp
 #define	PMAP_SIZE	sizeof(struct pmap)
 #endif
 
-CTASSERT(sizeof(struct pmap_segtab) == NBPG);
+CTASSERT(sizeof(pmap_segtab_t) == NBPG);
 
-struct pmap_segtab pmap_kernel_segtab;
+pmap_segtab_t pmap_kernel_segtab;
 
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
@@ -124,7 +124,7 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 
 #ifdef PMAP_MINIMALTLB
 static pt_entry_t *
-kvtopte(const struct pmap_segtab *stp, vaddr_t va)
+kvtopte(const pmap_segtab_t *stp, vaddr_t va)
 {
 	pt_entry_t * const ptep = stp->seg_tab[va >> SEGSHIFT];
 	if (ptep == NULL)
@@ -135,7 +135,7 @@ kvtopte(const struct pmap_segtab *stp, vaddr_t va)
 vaddr_t
 pmap_kvptefill(vaddr_t sva, vaddr_t eva, pt_entry_t pt_entry)
 {
-	const struct pmap_segtab * const stp = pmap_kernel()->pm_segtab;
+	const pmap_segtab_t * const stp = pmap_kernel()->pm_segtab;
 	KASSERT(sva == trunc_page(sva));
 	pt_entry_t *ptep = kvtopte(stp, sva);
 	for (; sva < eva; sva += NBPG) {
@@ -153,7 +153,7 @@ vaddr_t
 pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	phys_ram_seg_t *avail, size_t cnt)
 {
-	struct pmap_segtab * const stp = &pmap_kernel_segtab;
+	pmap_segtab_t * const stp = &pmap_kernel_segtab;
 
 	/*
 	 * Initialize the kernel segment table.
@@ -364,12 +364,16 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		for (u_int i = 0;
 		     i < line_size;
 		     src_va += 32, dst_va += 32, i += 32) {
-			__asm(
-				"lmw	24,0(%0)" "\n\t"
-				"stmw	24,0(%1)"
-			    :: "b"(src_va), "b"(dst_va)
+			register_t tmp;
+			__asm __volatile(
+				"mr	%[tmp],31"	"\n\t"
+				"lmw	24,0(%[src])"	"\n\t"
+				"stmw	24,0(%[dst])"	"\n\t"
+				"mr	31,%[tmp]"	"\n\t"
+			    : [tmp] "=&r"(tmp)
+			    : [src] "b"(src_va), [dst] "b"(dst_va)
 			    : "r24", "r25", "r26", "r27",
-			      "r28", "r29", "r30", "r31");
+			      "r28", "r29", "r30", "memory");
 		}
 	}
 	pmap_md_unmap_poolpage(src_va, NBPG);

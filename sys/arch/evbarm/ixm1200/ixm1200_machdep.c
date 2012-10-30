@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.49 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.49.2.1 2012/10/30 17:19:24 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.49 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.49.2.1 2012/10/30 17:19:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -133,8 +133,6 @@ void ixp12x0_reset(void) __attribute__((noreturn));
  * on where the ROM appears when you turn the MMU off.
  */
 
-u_int cpu_reset_address = (u_int) ixp12x0_reset;
-
 /*
  * Define the default console speed for the board.
  */
@@ -147,11 +145,6 @@ u_int cpu_reset_address = (u_int) ixp12x0_reset;
 #ifndef CONADDR
 #define CONADDR IXPCOM_UART_BASE
 #endif
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE  1
-#define ABT_STACK_SIZE  1
-#define UND_STACK_SIZE  1
 
 BootConfig bootconfig;          /* Boot config storage */
 char *boot_args = NULL;
@@ -168,17 +161,8 @@ u_int free_pages;
 int max_processes = 64;                 /* Default number */
 #endif  /* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern int end;
 
 #ifdef PMAP_DEBUG
@@ -352,6 +336,8 @@ initarm(void *arg)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
         Elf_Shdr *sh;
 #endif
+
+	cpu_reset_address = ixp12x0_reset;
 
         /*
          * Since we map v0xf0000000 == p0x90000000, it's possible for
@@ -612,7 +598,7 @@ initarm(void *arg)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

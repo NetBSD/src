@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.33 2011/08/30 14:22:22 bouyer Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.33.2.1 2012/10/30 17:22:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/callout.h>
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <net/if.h>			/* for IFNAMSIZ */
+#include <net/bpfjit.h>			/* for bpfjit_function_t */
 
 /*
  * Descriptor associated with each open bpf file.
@@ -100,6 +101,7 @@ struct bpf_d {
 #ifdef _LP64
 	int		bd_compat32;	/* 32-bit stream on LP64 system */
 #endif
+	bpfjit_function_t	bd_jitcode; /* compiled filter program */
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.57.12.2 2012/05/23 10:07:57 yamt Exp $	*/
+/*	$NetBSD: eso.c,v 1.57.12.3 2012/10/30 17:21:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.12.2 2012/05/23 10:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.57.12.3 2012/10/30 17:21:24 yamt Exp $");
 
 #include "mpu.h"
 
@@ -127,7 +127,7 @@ static void eso_attach(device_t, device_t, void *);
 static void eso_defer(device_t);
 static int eso_print(void *, const char *);
 
-CFATTACH_DECL(eso, sizeof (struct eso_softc),
+CFATTACH_DECL_NEW(eso, sizeof (struct eso_softc),
     eso_match, eso_attach, NULL, NULL);
 
 /* PCI interface */
@@ -260,12 +260,16 @@ eso_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	bus_addr_t vcbase;
 	const char *intrstring;
-	int idx;
+	int idx, error;
 	uint8_t a2mode, mvctl;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = aux;
 	aprint_naive(": Audio controller\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": ESS Solo-1 PCI AudioDrive ");
@@ -278,29 +282,29 @@ eso_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map I/O space\n");
+		aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_SB, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map SB I/O space\n");
+		aprint_error_dev(sc->sc_dev, "can't map SB I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_VC, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_dmac_iot, &sc->sc_dmac_ioh, &vcbase, &sc->sc_vcsize)) {
-		aprint_error_dev(&sc->sc_dev, "can't map VC I/O space\n");
+		aprint_error_dev(sc->sc_dev, "can't map VC I/O space\n");
 		/* Don't bail out yet: we can map it later, see below. */
 		vcbase = 0;
 		sc->sc_vcsize = 0x10; /* From the data sheet. */
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map MPU I/O space\n");
+		aprint_error_dev(sc->sc_dev, "can't map MPU I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_GAME, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_game_iot, &sc->sc_game_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map Game I/O space\n");
+		aprint_error_dev(sc->sc_dev, "can't map Game I/O space\n");
 		return;
 	}
 
@@ -314,8 +318,11 @@ eso_attach(device_t parent, device_t self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Reset the device; bail out upon failure. */
-	if (eso_reset(sc) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't reset\n");
+	mutex_spin_enter(&sc->sc_intr_lock);
+	error = eso_reset(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "can't reset\n");
 		return;
 	}
 
@@ -328,6 +335,8 @@ eso_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL,
 	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ | ESO_IO_IRQCTL_HVIRQ |
 	    ESO_IO_IRQCTL_MPUIRQ);
+
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* Set up A1's sample rate generator for new-style parameters. */
 	a2mode = eso_read_mixreg(sc, ESO_MIXREG_A2MODE);
@@ -373,21 +382,21 @@ eso_attach(device_t parent, device_t self, void *aux)
 		sc->sc_gain[idx][ESO_LEFT] = sc->sc_gain[idx][ESO_RIGHT] = v;
 		eso_set_gain(sc, idx);
 	}
+
 	eso_set_recsrc(sc, ESO_MIXREG_ERS_MIC);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)
 			aprint_error(" at %s", intrstring);
 		aprint_error("\n");
@@ -395,7 +404,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n",
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
 	    intrstring);
 
 	cv_init(&sc->sc_pcv, "esoho");
@@ -422,27 +431,27 @@ eso_attach(device_t parent, device_t self, void *aux)
 		    vcbase | ESO_PCI_DDMAC_DE);
 		sc->sc_dmac_configured = 1;
 
-		aprint_normal_dev(&sc->sc_dev,
+		aprint_normal_dev(sc->sc_dev,
 		    "mapping Audio 1 DMA using VC I/O space at 0x%lx\n",
 		    (unsigned long)vcbase);
 	} else {
 		DPRINTF(("%s: VC I/O space at 0x%lx not suitable, deferring\n",
-		    device_xname(&sc->sc_dev), (unsigned long)vcbase));
+		    device_xname(sc->sc_dev), (unsigned long)vcbase));
 		sc->sc_pa = *pa;
 		config_defer(self, eso_defer);
 	}
 
-	audio_attach_mi(&eso_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&eso_hw_if, sc, sc->sc_dev);
 
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	(void)config_found(&sc->sc_dev, &aa, audioprint);
+	(void)config_found(sc->sc_dev, &aa, audioprint);
 
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	sc->sc_mpudev = config_found(&sc->sc_dev, &aa, audioprint);
+	sc->sc_mpudev = config_found(sc->sc_dev, &aa, audioprint);
 	if (sc->sc_mpudev != NULL) {
 		/* Unmask the MPU irq. */
 		mutex_spin_enter(&sc->sc_intr_lock);
@@ -455,7 +464,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 	aa.type = AUDIODEV_TYPE_AUX;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	(void)config_found(&sc->sc_dev, &aa, eso_print);
+	(void)config_found(sc->sc_dev, &aa, eso_print);
 }
 
 static void
@@ -467,7 +476,7 @@ eso_defer(device_t self)
 
 	sc = device_private(self);
 	pa = &sc->sc_pa;
-	aprint_normal_dev(&sc->sc_dev, "");
+	aprint_normal_dev(sc->sc_dev, "");
 
 	/*
 	 * This is outright ugly, but since we must not make assumptions
@@ -529,7 +538,7 @@ eso_write_cmd(struct eso_softc *sc, uint8_t cmd)
 		}
 	}
 
-	printf("%s: WDR timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: WDR timeout\n", device_xname(sc->sc_dev));
 	return;
 }
 
@@ -560,7 +569,7 @@ eso_read_rdr(struct eso_softc *sc)
 		}
 	}
 
-	printf("%s: RDR timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: RDR timeout\n", device_xname(sc->sc_dev));
 	return (-1);
 }
 
@@ -696,7 +705,7 @@ eso_reset(struct eso_softc *sc)
 		}
 	}
 
-	printf("%s: reset timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: reset timeout\n", device_xname(sc->sc_dev));
 	return -1;
 }
 
@@ -848,7 +857,7 @@ eso_halt_output(void *hdl)
 	int error;
 
 	sc = hdl;
-	DPRINTF(("%s: halt_output\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: halt_output\n", device_xname(sc->sc_dev)));
 
 	/*
 	 * Disable auto-initialize DMA, allowing the FIFO to drain and then
@@ -889,7 +898,7 @@ eso_halt_input(void *hdl)
 	int error;
 
 	sc = hdl;
-	DPRINTF(("%s: halt_input\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: halt_input\n", device_xname(sc->sc_dev)));
 
 	/* Just like eso_halt_output(), but for Audio 1. */
 	eso_write_ctlreg(sc, ESO_CTLREG_A1C2,
@@ -1625,7 +1634,7 @@ eso_kva2dma(const struct eso_softc *sc, const void *kva)
 			return p;
 	}
 
-	panic("%s: kva2dma: bad kva: %p", sc->sc_dev.dv_xname, kva);
+	panic("%s: kva2dma: bad kva: %p", device_xname(sc->sc_dev), kva);
 	/* NOTREACHED */
 }
 
@@ -1756,15 +1765,15 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 	sc = hdl;
 	DPRINTF((
 	    "%s: trigger_output: start %p, end %p, blksize %d, intr %p(%p)\n",
-	    device_xname(&sc->sc_dev), start, end, blksize, intr, arg));
+	    device_xname(sc->sc_dev), start, end, blksize, intr, arg));
 	DPRINTF(("%s: param: rate %u, encoding %u, precision %u, channels %u\n",
-	    device_xname(&sc->sc_dev), param->sample_rate, param->encoding,
+	    device_xname(sc->sc_dev), param->sample_rate, param->encoding,
 	    param->precision, param->channels));
 
 	/* Find DMA buffer. */
 	ed = eso_kva2dma(sc, start);
 	DPRINTF(("%s: dmaaddr %lx\n",
-	    device_xname(&sc->sc_dev), (unsigned long)DMAADDR(ed)));
+	    device_xname(sc->sc_dev), (unsigned long)DMAADDR(ed)));
 
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
@@ -1827,9 +1836,9 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 	sc = hdl;
 	DPRINTF((
 	    "%s: trigger_input: start %p, end %p, blksize %d, intr %p(%p)\n",
-	    device_xname(&sc->sc_dev), start, end, blksize, intr, arg));
+	    device_xname(sc->sc_dev), start, end, blksize, intr, arg));
 	DPRINTF(("%s: param: rate %u, encoding %u, precision %u, channels %u\n",
-	    device_xname(&sc->sc_dev), param->sample_rate, param->encoding,
+	    device_xname(sc->sc_dev), param->sample_rate, param->encoding,
 	    param->precision, param->channels));
 
 	/*
@@ -1842,7 +1851,7 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 	/* Find DMA buffer. */
 	ed = eso_kva2dma(sc, start);
 	DPRINTF(("%s: dmaaddr %lx\n",
-	    device_xname(&sc->sc_dev), (unsigned long)DMAADDR(ed)));
+	    device_xname(sc->sc_dev), (unsigned long)DMAADDR(ed)));
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;

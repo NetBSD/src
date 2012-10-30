@@ -1,4 +1,4 @@
-/*	$NetBSD: quota1.h,v 1.3.8.1 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: quota1.h,v 1.3.8.2 2012/10/30 17:23:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,14 +45,6 @@
  * is deprecated. the newer implementation is defined in quota2.h
  * and friends
  */
-
-/*
- * Definitions for the default names of the quotas files/quota types.
- */
-#define INITQFNAMES { \
-	"user",		/* USRQUOTA */ \
-	"group",	/* GRPQUOTA */ \
-}
 
 /*
  * Definitions for disk quotas imposed on the average user

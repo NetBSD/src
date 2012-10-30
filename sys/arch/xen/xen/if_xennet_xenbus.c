@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.53.2.1 2012/04/17 00:07:12 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.53.2.2 2012/10/30 17:20:36 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.53.2.1 2012/04/17 00:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.53.2.2 2012/10/30 17:20:36 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -686,7 +686,6 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	struct xennet_rxreq *req;
 	struct xen_memory_reservation reservation;
 	int s, otherend_id, notify;
-	paddr_t pfn;
 
 	otherend_id = sc->sc_xbusd->xbusd_otherend_id;
 
@@ -731,9 +730,9 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 			 * Remove this page from pseudo phys map before
 			 * passing back to Xen.
 			 */
-			pfn = (req->rxreq_pa - XPMAP_OFFSET) >> PAGE_SHIFT;
-			xennet_pages[i] = xpmap_phys_to_machine_mapping[pfn];
-			xpmap_phys_to_machine_mapping[pfn] = INVALID_P2M_ENTRY;
+			xennet_pages[i] =
+			    xpmap_ptom(req->rxreq_pa) >> PAGE_SHIFT;
+			xpmap_ptom_unmap(req->rxreq_pa);
 		}
 	}
 
@@ -755,7 +754,7 @@ out_loop:
 		xpq_flush_queue();
 		splx(s);
 		/* now decrease reservation */
-		xenguest_handle(reservation.extent_start) = xennet_pages;
+		set_xen_guest_handle(reservation.extent_start, xennet_pages);
 		reservation.nr_extents = i;
 		reservation.extent_order = 0;
 		reservation.address_bits = 0;
@@ -821,7 +820,8 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 					 * transfer not complete, we lost the page.
 					 * Get one from hypervisor
 					 */
-					xenguest_handle(xenres.extent_start) = &pfn;
+					set_xen_guest_handle(
+					    xenres.extent_start, &pfn);
 					xenres.nr_extents = 1;
 					xenres.extent_order = 0;
 					xenres.address_bits = 31;
@@ -838,12 +838,11 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				va = rxreq->rxreq_va;
 				/* remap the page */
 				mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
-				mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
+				mmu[0].val = pa >> PAGE_SHIFT;
 				MULTI_update_va_mapping(&mcl[0], va, 
 				    (ma << PAGE_SHIFT) | PG_V | PG_KW,
 				    UVMF_TLB_FLUSH|UVMF_ALL);
-				xpmap_phys_to_machine_mapping[
-				    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
+				xpmap_ptom_map(pa, ptoa(ma));
 				mcl[1].op = __HYPERVISOR_mmu_update;
 				mcl[1].args[0] = (unsigned long)mmu;
 				mcl[1].args[1] = 1;
@@ -1036,11 +1035,10 @@ again:
 		if (sc->sc_rx_feature == FEATURE_RX_FLIP) {
 			/* remap the page */
 			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
-			mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
+			mmu[0].val = pa >> PAGE_SHIFT;
 			MULTI_update_va_mapping(&mcl[0], va, 
 			    (ma << PAGE_SHIFT) | PG_V | PG_KW, UVMF_TLB_FLUSH|UVMF_ALL);
-			xpmap_phys_to_machine_mapping[
-			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
+			xpmap_ptom_map(pa, ptoa(ma));
 			mcl[1].op = __HYPERVISOR_mmu_update;
 			mcl[1].args[0] = (unsigned long)mmu;
 			mcl[1].args[1] = 1;

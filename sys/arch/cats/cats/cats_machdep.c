@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.71.2.1 2012/04/17 00:06:10 yamt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.71.2.2 2012/10/30 17:19:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71.2.1 2012/04/17 00:06:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71.2.2 2012/10/30 17:19:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -108,14 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.71.2.1 2012/04/17 00:06:10 yamt E
  * on where the ROM appears when you turn the MMU off.
  */
 
-u_int cpu_reset_address = DC21285_ROM_BASE;
-
 u_int dc21285_fclk = FCLK;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 struct ebsaboot ebsabootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -130,18 +123,7 @@ vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -728,7 +710,7 @@ initarm(void *arm_bootargs)
 	fcomcndetach();
 #endif
 	
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*
@@ -872,6 +854,8 @@ initarm(void *arm_bootargs)
 	printf("pmap ");
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
+	cpu_reset_address_paddr = DC21285_ROM_BASE;
+
 	/* Setup the IRQ system */
 	printf("irq ");
 	footbridge_intr_init();
@@ -961,7 +945,8 @@ consinit(void)
 		vga_cnattach(&footbridge_pci_io_bs_tag,
 		    &footbridge_pci_mem_bs_tag, - 1, 0);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT,
+		    0);
 #endif	/* NPCKBC */
 	}
 #endif	/* NVGA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.389.2.1 2012/04/17 00:07:28 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.389.2.2 2012/10/30 17:20:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389.2.1 2012/04/17 00:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.389.2.2 2012/10/30 17:20:53 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -178,6 +178,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
+int   wd_trim(struct wd_softc *, int, struct disk_discard_range *);
 bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
@@ -283,7 +284,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_done = wddone;
-	wd->drvp->drv_softc = wd->sc_dev;
+	wd->drvp->drv_softc = wd->sc_dev; /* done in atabusconfig_thread()
+					     but too late */
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -291,7 +293,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	/* read our drive info */
 	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
 		aprint_error_dev(self, "IDENTIFY failed\n");
-		return;
+		goto out;
 	}
 
 	for (blank = 0, p = wd->sc_params.atap_model, q = tbuf, i = 0;
@@ -380,6 +382,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    device_xname(self), wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
+out:
 	/*
 	 * Initialize and attach the disk structure.
 	 */
@@ -461,7 +464,8 @@ wddetach(device_t self, int flags)
 
 	callout_destroy(&sc->sc_restart_ch);
 
-	sc->drvp->drive_flags = 0; /* no drive any more here */
+	sc->drvp->drive_type = ATA_DRIVET_NONE; /* no drive any more here */
+	sc->drvp->drive_flags = 0;
 
 	return (0);
 }
@@ -772,7 +776,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD, NULL);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
@@ -818,6 +822,14 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	case ERR_NODEV:
 		bp->b_error = EIO;
 		break;
+	}
+	if (__predict_false(bp->b_error != 0) && bp->b_resid == 0) {
+		/*
+		 * the disk or controller sometimes report a complete
+		 * xfer, when there has been an error. This is wrong,
+		 * assume nothing got transfered in this case
+		 */
+		bp->b_resid = bp->b_bcount;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
@@ -888,6 +900,9 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (! device_is_active(wd->sc_dev))
 		return (ENODEV);
 
+	if (wd->sc_capacity == 0)
+		return (ENODEV);
+
 	part = WDPART(dev);
 
 	mutex_enter(&wd->sc_dk.dk_openlock);
@@ -920,11 +935,15 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
-			wd->sc_flags |= WDF_LOADED;
 
 			/* Load the physical device parameters. */
-			wd_get_params(wd, AT_WAIT, &wd->sc_params);
-
+			if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
+				aprint_error_dev(wd->sc_dev,
+				"IDENTIFY failed\n");
+				error = EIO;
+				goto bad2;
+			}
+			wd->sc_flags |= WDF_LOADED;
 			/* Load the partition info if not already loaded. */
 			wdgetdisklabel(wd);
 		}
@@ -1069,7 +1088,7 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	if (wd->drvp->state > RESET) {
 		s = splbio();
-		wd->drvp->drive_flags |= DRIVE_RESET;
+		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 		splx(s);
 	}
 	errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
@@ -1084,7 +1103,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		 */
 		if (wd->drvp->state > RESET) {
 			s = splbio();
-			wd->drvp->drive_flags |= DRIVE_RESET;
+			wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 			splx(s);
 		}
 		errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
@@ -1097,7 +1116,7 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	if (wd->drvp->state > RESET) {
 		s = splbio();
-		wd->drvp->drive_flags |= DRIVE_RESET;
+		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 		splx(s);
 	}
 #ifdef HAS_BAD144_HANDLING
@@ -1285,7 +1304,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		if (error == 0) {
 			if (wd->drvp->state > RESET) {
 				s = splbio();
-				wd->drvp->drive_flags |= DRIVE_RESET;
+				wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 				splx(s);
 			}
 			if (xfer == DIOCWDINFO
@@ -1508,6 +1527,20 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return 0;
 	    }
 
+	case DIOCGDISCARDPARAMS: {
+		struct disk_discard_params * tp;
+
+		if (!(wd->sc_params.atap_ata_major & WDC_VER_ATA8)
+		    || !(wd->sc_params.support_dsm & ATA_SUPPORT_DSM_TRIM))
+			return ENOTTY;
+		tp = (struct disk_discard_params *)addr;
+		tp->maxsize = 0xffff; /*wd->sc_params.max_dsm_blocks*/
+		printf("wd: maxtrimsize %ld\n", tp->maxsize);
+		return 0;
+	}
+	case DIOCDISCARD:
+		return wd_trim(wd, WDPART(dev), (struct disk_discard_range *)addr);
+
 	default:
 		return ENOTTY;
 	}
@@ -1599,7 +1632,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (wddumprecalibrated == 0) {
 		wddumprecalibrated = 1;
 		(*wd->atabus->ata_reset_drive)(wd->drvp,
-					       AT_POLL | AT_RST_EMERG);
+					       AT_POLL | AT_RST_EMERG, NULL);
 		wd->drvp->state = RESET;
 	}
 
@@ -1754,6 +1787,8 @@ wd_get_params(struct wd_softc *wd, u_int8_t flags, struct ataparams *params)
 	case CMD_AGAIN:
 		return 1;
 	case CMD_ERR:
+		if (wd->drvp->drive_type != ATA_DRIVET_OLD)
+			return 1;
 		/*
 		 * We `know' there's a drive here; just assume it's old.
 		 * This geometry is only used to read the MBR and print a
@@ -1886,14 +1921,15 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		return ENODEV;
 	memset(&ata_c, 0, sizeof(struct ata_command));
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
-	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0)
+	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0) {
 		ata_c.r_command = WDCC_FLUSHCACHE_EXT;
-	else
+		flags |= AT_LBA48;
+	} else
 		ata_c.r_command = WDCC_FLUSHCACHE;
 	ata_c.r_st_bmask = WDCS_DRDY;
 	ata_c.r_st_pmask = WDCS_DRDY;
-	ata_c.flags = flags;
-	ata_c.timeout = 30000; /* 30s timeout */
+	ata_c.flags = flags | AT_READREG;
+	ata_c.timeout = 300000; /* 5m timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "flush cache command didn't complete\n");
@@ -1907,6 +1943,57 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		char sbuf[sizeof(at_errbits) + 64];
 		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
+		    sbuf);
+		return EIO;
+	}
+	return 0;
+}
+
+int
+wd_trim(struct wd_softc *wd, int part, struct disk_discard_range *tr)
+{
+	struct ata_command ata_c;
+	unsigned char *req;
+	daddr_t bno = tr->bno;
+
+	if (part != RAW_PART)
+		bno += wd->sc_dk.dk_label->d_partitions[part].p_offset;;
+
+	req = kmem_zalloc(512, KM_SLEEP);
+	req[0] = bno & 0xff;
+	req[1] = (bno >> 8) & 0xff;
+	req[2] = (bno >> 16) & 0xff;
+	req[3] = (bno >> 24) & 0xff;
+	req[4] = (bno >> 32) & 0xff;
+	req[5] = (bno >> 40) & 0xff;
+	req[6] = tr->size & 0xff;
+	req[7] = (tr->size >> 8) & 0xff;
+
+	memset(&ata_c, 0, sizeof(struct ata_command));
+	ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
+	ata_c.r_count = 1;
+	ata_c.r_features = ATA_SUPPORT_DSM_TRIM;
+	ata_c.r_st_bmask = WDCS_DRDY;
+	ata_c.r_st_pmask = WDCS_DRDY;
+	ata_c.timeout = 30000; /* 30s timeout */
+	ata_c.data = req;
+	ata_c.bcount = 512;
+	ata_c.flags |= AT_WRITE | AT_WAIT;
+	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
+		aprint_error_dev(wd->sc_dev,
+		    "trim command didn't complete\n");
+		kmem_free(req, 512);
+		return EIO;
+	}
+	kmem_free(req, 512);
+	if (ata_c.flags & AT_ERROR) {
+		if (ata_c.r_error == WDCE_ABRT) /* command not supported */
+			return ENODEV;
+	}
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		char sbuf[sizeof(at_errbits) + 64];
+		snprintb(sbuf, sizeof(sbuf), at_errbits, ata_c.flags);
+		aprint_error_dev(wd->sc_dev, "wd_trim: status=%s\n",
 		    sbuf);
 		return EIO;
 	}

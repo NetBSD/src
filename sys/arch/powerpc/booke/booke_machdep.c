@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.14.2.1 2012/10/30 17:20:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.14 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.14.2.1 2012/10/30 17:20:09 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -85,7 +85,11 @@ struct powerpc_bus_dma_tag booke_bus_dma_tag = {
 	._dmamap_load_uio = _bus_dmamap_load_uio,
 	._dmamap_load_raw = _bus_dmamap_load_raw,
 	._dmamap_unload = _bus_dmamap_unload,
-	._dmamap_sync = _bus_dmamap_sync,
+	/*
+	 * The caches on BookE are coherent so we don't need to do any special
+	 * cache synchronization.
+	 */
+	//._dmamap_sync = _bus_dmamap_sync,
 	._dmamem_alloc = _bus_dmamem_alloc,
 	._dmamem_free = _bus_dmamem_free,
 	._dmamem_map = _bus_dmamem_map,
@@ -329,12 +333,44 @@ mapiodev(paddr_t pa, psize_t len, bool prefetchable)
 		panic("mapiodev: no TLB entry reserved for %llx+%llx",
 		    (long long)pa, (long long)len);
 
+	const paddr_t orig_pa = pa;
+	const psize_t orig_len = len;
+	vsize_t align = 0;
 	pa = trunc_page(pa);
 	len = round_page(off + len);
-	vaddr_t va = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY);
+	/*
+	 * If we are allocating a large amount (>= 1MB) try to get an
+	 * aligned VA region for it so try to do a large mapping for it.
+	 */
+	if ((len & (len - 1)) == 0 && len >= 0x100000)
+		align = len;
 
+	vaddr_t va = uvm_km_alloc(kernel_map, len, align, UVM_KMF_VAONLY);
+
+	if (va == 0 && align > 0) {
+		/*
+		 * Large aligned request failed.  Let's just get anything.
+		 */
+		align = 0;
+		va = uvm_km_alloc(kernel_map, len, align, UVM_KMF_VAONLY);
+	}
 	if (va == 0)
 		return NULL;
+
+	if (align) {
+		/*
+		 * Now try to map that via one big TLB entry.
+		 */
+		pt_entry_t pte = pte_make_kenter_pa(pa, NULL,
+		    VM_PROT_READ|VM_PROT_WRITE,
+		    prefetchable ? 0 : PMAP_NOCACHE);
+		if (!tlb_ioreserve(va, len, pte)) {
+			void * const p0 = tlb_mapiodev(orig_pa, orig_len,
+			    prefetchable);
+			KASSERT(p0 != NULL);
+			return p0;
+		}
+	}
 
 	for (va += len, pa += len; len > 0; len -= PAGE_SIZE) {
 		va -= PAGE_SIZE;
@@ -537,4 +573,103 @@ booke_sstep(struct trapframe *tf)
 	mtspr(SPR_IAC1, tf->tf_srr0 + 4);
 	mtspr(SPR_DBCR1, dbcr1);
 	mtspr(SPR_DBCR0, dbcr0);
+}
+
+#ifdef DIAGNOSTIC
+static inline void
+swap_data(uint64_t *data, size_t a, size_t b)
+{
+	uint64_t swap = data[a];
+	data[a] = data[b];
+	data[b] = swap;
+}
+
+static void
+sort_data(uint64_t *data, size_t count)
+{
+#if 0
+	/*
+	 * Mostly classic bubble sort
+	 */
+	do {
+		size_t new_count = 0;
+		for (size_t i = 1; i < count; i++) {
+			if (tbs[i - 1] > tbs[i]) {
+				swap_tbs(tbs, i - 1, i);
+				new_count = i;
+			}
+		}
+		count = new_count;
+	} while (count > 0);
+#else
+	/*
+	 * Comb sort
+	 */
+	size_t gap = count;
+	bool swapped = false;
+	while (gap > 1 || swapped) {
+		if (gap > 1) {
+			/*
+			 * phi = (1 + sqrt(5)) / 2 [golden ratio]
+			 * N = 1 / (1 - e^-phi)) = 1.247330950103979
+			 *
+			 * We want to but can't use floating point to calculate
+			 *	gap = (size_t)((double)gap / N)
+			 *
+			 * So we will use the multicative inverse of N
+			 * (module 65536) to achieve the division.
+			 *
+			 * iN = 2^16 / 1.24733... = 52540
+			 * x / N == (x * iN) / 65536 
+			 */
+			gap = (gap * 52540) / 65536;
+		}
+
+		swapped = false;
+
+		for (size_t i = 0; gap + i < count; i++) {
+			if (data[i] > data[i + gap]) {
+				swap_data(data, i, i + gap);
+				swapped = true;
+			}
+		}
+	}
+#endif
+}
+#endif
+
+void
+dump_splhist(struct cpu_info *ci, void (*pr)(const char *, ...))
+{
+#ifdef DIAGNOSTIC
+	struct cpu_softc * const cpu = ci->ci_softc;
+	uint64_t tbs[NIPL*NIPL];
+	size_t ntbs = 0;
+	for (size_t to = 0; to < NIPL; to++) {
+		for (size_t from = 0; from < NIPL; from++) {
+			uint64_t tb = cpu->cpu_spl_tb[to][from];
+			if (tb == 0)
+				continue;
+			tbs[ntbs++] = (tb << 8) | (to << 4) | from;
+		}
+	}
+	sort_data(tbs, ntbs);
+
+	if (pr == NULL)
+		pr = printf;
+	uint64_t last_tb = 0;
+	for (size_t i = 0; i < ntbs; i++) {
+		uint64_t tb = tbs[i];
+		size_t from = tb & 15;
+		size_t to = (tb >> 4) & 15;
+		tb >>= 8;
+		(*pr)("%s(%zu) from %zu at %"PRId64"",
+		     from < to ? "splraise" : "splx",
+		     to, from, tb);
+		if (last_tb && from != IPL_NONE)
+			(*pr)(" (+%"PRId64")", tb - last_tb);
+		(*pr)("\n");
+		last_tb = tb;
+	}
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fujhk_acpi.c,v 1.1 2011/02/20 08:31:46 jruoho Exp $ */
+/*	$NetBSD: fujhk_acpi.c,v 1.1.10.1 2012/10/30 17:20:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujhk_acpi.c,v 1.1 2011/02/20 08:31:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujhk_acpi.c,v 1.1.10.1 2012/10/30 17:20:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -300,7 +300,7 @@ fujitsu_hk_sysctl_setup(struct fujitsu_hk_softc *sc)
 		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
 		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "backlight",
 		    SYSCTL_DESCR("Internal DFP backlight switch state"),
-		    fujitsu_hk_sysctl_backlight, 0, sc, 0,
+		    fujitsu_hk_sysctl_backlight, 0, (void *)sc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.20 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.20.34.1 2012/10/30 17:19:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -206,8 +206,8 @@ void	hpibawait(int);
 int	hpibswait(int, int);
 int	hpibid(int, int);
 
-int	hpibreq(struct device *, struct hpibqueue *);
-void	hpibfree(struct device *, struct hpibqueue *);
+int	hpibreq(device_t, struct hpibqueue *);
+void	hpibfree(device_t, struct hpibqueue *);
 
 int	hpibintr(void *);
 int	hpibdevprint(void *, const char *);

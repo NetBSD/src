@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.8.6.2 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: npf.h,v 1.8.6.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		4
+#define	NPF_VERSION		7
 
 /*
  * Public declarations and definitions.
@@ -60,11 +60,11 @@ typedef uint8_t			npf_netmask_t;
 
 #if defined(_KERNEL)
 
-/* Network buffer. */
-typedef void			nbuf_t;
+#define	NPF_DECISION_BLOCK	0
+#define	NPF_DECISION_PASS	1
 
-struct npf_rproc;
-typedef struct npf_rproc	npf_rproc_t;
+#define	NPF_EXT_MODULE(name, req)	\
+    MODULE(MODULE_CLASS_MISC, name, "npf," req)
 
 /*
  * Packet information cache.
@@ -74,6 +74,7 @@ typedef struct npf_rproc	npf_rproc_t;
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 
 #define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
 #define	NPC_IP6		0x02	/* Indicates IPv6 header. */
@@ -94,7 +95,7 @@ typedef struct {
 	npf_addr_t *		npc_srcip;
 	npf_addr_t *		npc_dstip;
 	/* Size (v4 or v6) of IP addresses. */
-	int			npc_ipsz;
+	int			npc_alen;
 	u_int			npc_hlen;
 	int			npc_next_proto;
 	/* IPv4, IPv6. */
@@ -104,77 +105,12 @@ typedef struct {
 	} npc_ip;
 	/* TCP, UDP, ICMP. */
 	union {
-		struct tcphdr	tcp;
-		struct udphdr	udp;
-		struct icmp	icmp;
+		struct tcphdr		tcp;
+		struct udphdr		udp;
+		struct icmp		icmp;
+		struct icmp6_hdr	icmp6;
 	} npc_l4;
 } npf_cache_t;
-
-static inline void
-npf_generate_mask(npf_addr_t *dst, const npf_netmask_t omask)
-{
-	uint_fast8_t length = omask;
-
-	/* Note: maximum length is 32 for IPv4 and 128 for IPv6. */
-	KASSERT(length <= NPF_MAX_NETMASK);
-
-	for (int i = 0; i < 4; i++) {
-		if (length >= 32) {
-			dst->s6_addr32[i] = htonl(0xffffffff);
-			length -= 32;
-		} else {
-			dst->s6_addr32[i] = htonl(0xffffffff << (32 - length));
-			length = 0;
-		}
-	}
-}
-
-static inline void
-npf_calculate_masked_addr(npf_addr_t *dst, const npf_addr_t *src,
-    const npf_netmask_t omask)
-{
-	npf_addr_t mask;
-
-	npf_generate_mask(&mask, omask);
-	for (int i = 0; i < 4; i++) {
-		dst->s6_addr32[i] = src->s6_addr32[i] & mask.s6_addr32[i];
-	}
-}
-
-/*
- * npf_compare_cidr: compare two addresses, either IPv4 or IPv6.
- *
- * => If the mask is NULL, ignore it.
- */
-static inline int
-npf_compare_cidr(const npf_addr_t *addr1, const npf_netmask_t mask1,
-    const npf_addr_t *addr2, const npf_netmask_t mask2)
-{
-	npf_addr_t realmask1, realmask2;
-
-	if (mask1 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask1, mask1);
-	}
-	if (mask2 != NPF_NO_NETMASK) {
-		npf_generate_mask(&realmask2, mask2);
-	}
-	for (int i = 0; i < 4; i++) {
-		const uint32_t x = mask1 != NPF_NO_NETMASK ?
-		    addr1->s6_addr32[i] & realmask1.s6_addr32[i] :
-		    addr1->s6_addr32[i];
-		const uint32_t y = mask2 != NPF_NO_NETMASK ?
-		    addr2->s6_addr32[i] & realmask2.s6_addr32[i] :
-		    addr2->s6_addr32[i];
-		if (x < y) {
-			return -1;
-		}
-		if (x > y) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
 
 static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
@@ -197,7 +133,12 @@ npf_cache_hlen(const npf_cache_t *npc)
 	return npc->npc_hlen;
 }
 
-/* Network buffer interface. */
+/*
+ * Network buffer interface.
+ */
+
+typedef void	nbuf_t;
+
 void *		nbuf_dataptr(void *);
 void *		nbuf_advance(nbuf_t **, void *, u_int);
 int		nbuf_advfetch(nbuf_t **, void **, u_int, size_t, void *);
@@ -208,23 +149,45 @@ int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
+/*
+ * NPF extensions and rule procedure interface.
+ */
+
+struct npf_rproc;
+typedef struct npf_rproc	npf_rproc_t;
+
+void		npf_rproc_assign(npf_rproc_t *, void *);
+
+typedef struct {
+	unsigned int	version;
+	void *		ctx;
+	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
+	void		(*dtor)(npf_rproc_t *, void *);
+	void		(*proc)(npf_cache_t *, nbuf_t *, void *, int *);
+} npf_ext_ops_t;
+
+void *		npf_ext_register(const char *, const npf_ext_ops_t *);
+int		npf_ext_unregister(void *);
+
+/*
+ * Misc.
+ */
+
+bool		npf_autounload_p(void);
+
 #endif	/* _KERNEL */
 
 /* Rule attributes. */
 #define	NPF_RULE_PASS			0x0001
 #define	NPF_RULE_DEFAULT		0x0002
 #define	NPF_RULE_FINAL			0x0004
-#define	NPF_RULE_KEEPSTATE		0x0008
+#define	NPF_RULE_STATEFUL		0x0008
 #define	NPF_RULE_RETRST			0x0010
 #define	NPF_RULE_RETICMP		0x0020
 
 #define	NPF_RULE_IN			0x10000000
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
-
-/* Rule procedure flags. */
-#define	NPF_RPROC_LOG			0x0001
-#define	NPF_RPROC_NORMALIZE		0x0002
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1
@@ -248,14 +211,29 @@ int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
  * IOCTL structures.
  */
 
+#define	NPF_IOCTL_TBLENT_LOOKUP		0
 #define	NPF_IOCTL_TBLENT_ADD		1
 #define	NPF_IOCTL_TBLENT_REM		2
+#define	NPF_IOCTL_TBLENT_LIST		3
+
+typedef struct npf_ioctl_ent {
+	int			alen;
+	npf_addr_t		addr;
+	npf_netmask_t		mask;
+} npf_ioctl_ent_t;
+
+typedef struct npf_ioctl_buf {
+	void *			buf;
+	size_t			len;
+} npf_ioctl_buf_t;
 
 typedef struct npf_ioctl_table {
 	int			nct_action;
 	u_int			nct_tid;
-	npf_addr_t		nct_addr;
-	npf_netmask_t		nct_mask;
+	union {
+		npf_ioctl_ent_t	ent;
+		npf_ioctl_buf_t	buf;
+	} nct_data;
 } npf_ioctl_table_t;
 
 typedef enum {
@@ -279,9 +257,10 @@ typedef enum {
 	/* Raced packets. */
 	NPF_STAT_RACE_SESSION,
 	NPF_STAT_RACE_NAT,
-	/* Rule procedure cases. */
-	NPF_STAT_RPROC_LOG,
-	NPF_STAT_RPROC_NORM,
+	/* Fragments. */
+	NPF_STAT_FRAGMENTS,
+	NPF_STAT_REASSEMBLY,
+	NPF_STAT_REASSFAIL,
 	/* Other errors. */
 	NPF_STAT_ERROR,
 	/* Count (last). */

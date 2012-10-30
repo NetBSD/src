@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.18 2010/11/15 06:07:41 uebayasi Exp $ */
+/* $NetBSD: start.c,v 1.18.8.1 2012/10/30 17:18:35 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18 2010/11/15 06:07:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18.8.1 2012/10/30 17:18:35 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18 2010/11/15 06:07:41 uebayasi Exp $");
 #include <machine/boot.h>
 #include <machine/machdep.h>
 #include <machine/memcreg.h>
+#include <machine/pcb.h>
 
 #include <dev/cons.h>
 

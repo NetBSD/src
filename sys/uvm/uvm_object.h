@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.31.2.4 2012/08/01 22:34:14 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.31.2.5 2012/10/30 17:23:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -48,6 +48,9 @@
  * is the case for tmpfs and layered file systems.  In such case, vnode's
  * UVM object and the underlying UVM object shares the lock (note that the
  * vnode_t::v_interlock points to uvm_object::vmobjlock).
+ *
+ * The reference count is managed atomically for the anonymous UVM objects.
+ * For other objects, it is arbitrary (may use the lock or atomics).
  */
 
 struct uvm_object {

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumreg.h,v 1.3 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumreg.h,v 1.3.34.1 2012/10/30 17:19:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define	PLUM2_2				0x0102
 
 /*
- * Bus contorller
+ * Bus controller
  */
 #define PLUM_BUS_REGBASE	0x0000
 #define PLUM_BUS_REGSIZE	0x1000

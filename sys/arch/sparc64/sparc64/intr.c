@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.66 2011/08/12 06:34:56 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.66.2.1 2012/10/30 17:20:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.66 2011/08/12 06:34:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.66.2.1 2012/10/30 17:20:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -224,6 +224,7 @@ intr_establish(int level, bool mpsafe, struct intrhand *ih)
 	}
 #endif
 
+	/* XXXSMP */
 	s = splhigh();
 	/*
 	 * Store in fast lookup table

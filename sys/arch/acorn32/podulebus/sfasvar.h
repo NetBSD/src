@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.6 2009/03/14 14:45:52 dsl Exp $ */
+/* $NetBSD: sfasvar.h,v 1.6.12.1 2012/10/30 17:18:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -150,7 +150,7 @@ struct nexus {
 #define SFAS_NF_DEBUG		0x8000	/* As it says: DEBUG */
 
 struct	sfas_softc {
-	struct	device		 sc_dev;	/* System required struct */
+	device_t		 sc_dev;	/* System required struct */
 	struct	scsipi_channel	 sc_channel;
 	struct	scsipi_adapter	 sc_adapter;
 	void		 	 *sc_ih;

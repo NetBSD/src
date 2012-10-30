@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.21 2010/04/05 07:19:30 joerg Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.21.8.1 2012/10/30 17:19:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.21 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.21.8.1 2012/10/30 17:19:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,8 +128,8 @@ typedef struct netdock_softc {
 
 /***********************/
 
-static int	netdock_nubus_match(struct device *, struct cfdata *, void *);
-static void	netdock_nubus_attach(struct device *, struct device *, void *);
+static int	netdock_nubus_match(device_t, cfdata_t, void *);
+static void	netdock_nubus_attach(device_t, device_t, void *);
 static int	netdock_nb_get_enaddr(bus_space_tag_t, bus_space_handle_t,
 			struct nubus_attach_args *, u_int8_t *);
 #ifdef NETDOCK_DEBUG_DRIVER
@@ -184,13 +184,13 @@ static struct mbuf *netdock_get(struct netdock_softc *, int);
 
 /***********************/
 
-CFATTACH_DECL(netdock_nubus, sizeof(struct netdock_softc),
+CFATTACH_DECL_NEW(netdock_nubus, sizeof(struct netdock_softc),
     netdock_nubus_match, netdock_nubus_attach, NULL, NULL);
 
 /***********************/
 
 static int
-netdock_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
+netdock_nubus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -222,9 +222,9 @@ netdock_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-netdock_nubus_attach(struct device *parent, struct device *self, void *aux)
+netdock_nubus_attach(device_t parent, device_t self, void *aux)
 {
-	struct netdock_softc *sc = (struct netdock_softc *)self;
+	struct netdock_softc *sc = device_private(self);
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
@@ -238,6 +238,7 @@ netdock_nubus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_regt = bst;
+	sc->sc_dev = self;
 	cardtype = nubus_get_card_name(bst, bsh, na->fmt);
 
 #ifdef NETDOCK_DEBUG_DRIVER
@@ -354,7 +355,7 @@ netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 
 	memcpy(sc->sc_enaddr, lladdr, ETHER_ADDR_LEN);
 	printf("%s: Ethernet address %s\n",
-	    sc->sc_dev->dv_xname, ether_sprintf(lladdr));
+	    device_xname(sc->sc_dev), ether_sprintf(lladdr));
 
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;

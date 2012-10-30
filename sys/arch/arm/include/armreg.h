@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.48.2.1 2012/05/23 10:07:41 yamt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.48.2.2 2012/10/30 17:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -75,7 +75,9 @@
 #define PSR_FIQ32_MODE	0x00000011
 #define PSR_IRQ32_MODE	0x00000012
 #define PSR_SVC32_MODE	0x00000013
+#define PSR_MON32_MODE	0x00000016
 #define PSR_ABT32_MODE	0x00000017
+#define PSR_HYP32_MODE	0x0000001a
 #define PSR_UND32_MODE	0x0000001b
 #define PSR_SYS32_MODE	0x0000001f
 #define PSR_32_MODE	0x00000010
@@ -201,10 +203,19 @@
 #define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_ARM1156T2S	0x4107b560 /* MPU only */
 #define CPU_ID_ARM1176JZS	0x410fb760
+#define CPU_ID_ARM11_P(n)	((n & 0xff07f000) == 0x4107b000)
+#define CPU_ID_CORTEXA5R0	0x410fc050
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
 #define CPU_ID_CORTEXA8R3	0x413fc080
-#define CPU_ID_CORTEXA9R1	0x411fc090
+#define CPU_ID_CORTEXA9R2	0x411fc090
+#define CPU_ID_CORTEXA9R3	0x412fc090
+#define CPU_ID_CORTEXA9R4	0x413fc090
+#define CPU_ID_CORTEXA15R2	0x412fc0f0
+#define CPU_ID_CORTEXA15R3	0x413fc0f0
+#define CPU_ID_CORTEX_P(n)	((n & 0xff0ff000) == 0x410fc000)
+#define CPU_ID_CORTEX_A8_P(n)	((n & 0xff0ff0f0) == 0x410fc080)
+#define CPU_ID_CORTEX_A9_P(n)	((n & 0xff0ff0f0) == 0x410fc090)
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -293,6 +304,7 @@
 #define CPU_CONTROL_SYST_ENABLE 0x00000100 /* S: System protection bit */
 #define CPU_CONTROL_ROM_ENABLE	0x00000200 /* R: ROM protection bit */
 #define CPU_CONTROL_CPCLK	0x00000400 /* F: Implementation defined */
+#define CPU_CONTROL_SWP_ENABLE	0x00000400 /* SW: SWP{B} perform normally. */
 #define CPU_CONTROL_BPRD_ENABLE 0x00000800 /* Z: Branch prediction enable */
 #define CPU_CONTROL_IC_ENABLE   0x00001000 /* I: IC enable */
 #define CPU_CONTROL_VECRELOC	0x00002000 /* V: Vector relocation */
@@ -310,15 +322,49 @@
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
-/* ARM11r0 Auxillary Control Register (CP15 register 1, opcode2 1) */
-#define ARM11R0_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
+/* ARMv6/ARMv7 Co-Processor Access Control Register (CP15, 0, c1, c0, 2) */
+#define	CPACR_V7_ASEDIS		0x80000000 /* Disable Advanced SIMD Ext. */
+#define	CPACR_V7_D32DIS		0x40000000 /* Disable VFP regs 15-31 */
+#define	CPACR_CPn(n)		(3 << (2*n))
+#define	CPACR_NOACCESS		0 /* reset value */
+#define	CPACR_PRIVED		1 /* Privileged mode access */
+#define	CPACR_RESERVED		2
+#define	CPACR_ALL		3 /* Privileged and User mode access */
+
+/* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
+#define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
+#define	ARM11X6_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
+#define	ARM11X6_AUXCTL_SB	0x00000004 /* static branch prediction */
+#define	ARM11X6_AUXCTL_TR	0x00000008 /* MicroTLB replacement strat. */
+#define	ARM11X6_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
+#define	ARM11X6_AUXCTL_RA	0x00000020 /* clean entire cache disable */
+#define	ARM11X6_AUXCTL_RV	0x00000040 /* block transfer cache disable */
+#define	ARM11X6_AUXCTL_CZ	0x00000080 /* restrict cache size */
+
+/* ARM1136 Auxiliary Control Register (CP15 register 1, opcode2 1) */
+#define ARM1136_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
 					   /* This is an undocumented flag
 					    * used to work around a cache bug
 					    * in r0 steppings. See errata
 					    * 364296.
 					    */
+/* ARM1176 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+#define	ARM1176_AUXCTL_PHD	0x10000000 /* inst. prefetch halting disable */
+#define	ARM1176_AUXCTL_BFD	0x20000000 /* branch folding disable */
+#define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
+#define	ARM1176_AUXCTL_FIO	0x80000000 /* low intr latency override */
 
-/* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
+/* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
+#define	CORTEXA9_AUXCTL_PARITY	0x00000200 /* Enable parity */
+#define	CORTEXA9_AUXCTL_1WAY	0x00000100 /* Alloc in one way only */
+#define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache */
+#define	CORTEXA9_AUXCTL_SMP	0x00000040 /* CPU is in SMP mode */
+#define	CORTEXA9_AUXCTL_WRZERO	0x00000008 /* Write full line of zeroes */
+#define	CORTEXA9_AUXCTL_L1PLD	0x00000004 /* L1 Dside prefetch */
+#define	CORTEXA9_AUXCTL_L2PLD	0x00000002 /* L2 Dside prefetch */
+#define	CORTEXA9_AUXCTL_FW	0x00000001 /* Forward Cache/TLB ops */
+
+/* XScale Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
 #define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
 #define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
@@ -326,13 +372,23 @@
 #define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
 #define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
-/* ARM11 MPCore Auxillary Control Register (CP15 register 1, opcode2 1) */
+/* ARM11 MPCore Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	MPCORE_AUXCTL_RS	0x00000001 /* return stack */
 #define	MPCORE_AUXCTL_DB	0x00000002 /* dynamic branch prediction */
 #define	MPCORE_AUXCTL_SB	0x00000004 /* static branch prediction */
 #define	MPCORE_AUXCTL_F 	0x00000008 /* instruction folding enable */
 #define	MPCORE_AUXCTL_EX	0x00000010 /* exclusive L1/L2 cache */
 #define	MPCORE_AUXCTL_SA	0x00000020 /* SMP/AMP */
+
+/* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
+#define	CORTEXA9_AUXCTL_L2_PLD	0x00000002 /* Prefetch hint enable */
+#define	CORTEXA9_AUXCTL_L1_PLD	0x00000004 /* Data prefetch hint enable */
+#define	CORTEXA9_AUXCTL_WR_ZERO	0x00000008 /* Ena. write full line of 0s mode */
+#define	CORTEXA9_AUXCTL_SMP	0x00000040 /* Coherency is active */
+#define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache bit */
+#define	CORTEXA9_AUXCTL_ONEWAY	0x00000100 /* Allocate in on cache way only */
+#define	CORTEXA9_AUXCTL_PARITY	0x00000200 /* Support parity checking */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
@@ -370,7 +426,11 @@
 #define	CPU_CT4_ILINE(x)	((x) & 0xf)		/* I$ line size */
 #define	CPU_CT4_DLINE(x)	(((x) >> 16) & 0xf)	/* D$ line size */
 #define	CPU_CT4_L1IPOLICY(x)	(((x) >> 14) & 0x3)	/* I$ policy */
+#define	CPU_CT4_L1_AIVIVT	1			/* ASID tagged VIVT */
 #define	CPU_CT4_L1_VIPT		2			/* VIPT */
+#define	CPU_CT4_L1_PIPT		3			/* PIPT */
+#define	CPU_CT4_ERG(x)		(((x) >> 20) & 0xf)	/* Cache WriteBack Granule */
+#define	CPU_CT4_CWG(x)		(((x) >> 24) & 0xf)	/* Exclusive Resv. Granule */
 
 /* Cache size identifaction register definitions 1, Rd, c0, c0, 0 */
 #define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */ 
@@ -379,7 +439,7 @@
 #define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
 #define	CPU_CSID_NUMSETS(x)	(((x) >> 13) & 0x7fff)
 #define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
-#define	CPU_CSID_LEN(x)		((x) & 0x03)
+#define	CPU_CSID_LEN(x)		((x) & 0x07)
 
 /* Cache size selection register definitions 2, Rd, c0, c0, 0 */
 #define	CPU_CSSR_L2		0x00000002
@@ -483,5 +543,107 @@
 #define CORTEX_CNTENS_C __BIT(31)	/* Enables the cycle counter */
 #define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
 #define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
+
+#if !defined(__ASSEMBLER__)
+#define	ARMREG_READ_INLINE(name, __insnstring)			\
+static inline uint32_t armreg_##name##_read(void)		\
+{								\
+	uint32_t __rv;						\
+	__asm __volatile("mrc " __insnstring : "=r"(__rv));	\
+	return __rv;						\
+}
+
+#define	ARMREG_WRITE_INLINE(name, __insnstring)			\
+static inline void armreg_##name##_write(uint32_t __val)	\
+{								\
+	__asm __volatile("mcr " __insnstring :: "r"(__val));	\
+}
+
+/* c0 registers */
+ARMREG_READ_INLINE(midr, "p15,0,%0,c0,c0,0") /* Main ID Register */
+ARMREG_READ_INLINE(ctr, "p15,0,%0,c0,c0,1") /* Cache Type Register */
+ARMREG_READ_INLINE(mpidr, "p15,0,%0,c0,c0,5") /* Multiprocess Affinity Register */
+ARMREG_READ_INLINE(pfr0, "p15,0,%0,c0,c1,0") /* Processor Feature Register 0 */
+ARMREG_READ_INLINE(pfr1, "p15,0,%0,c0,c1,1") /* Processor Feature Register 1 */
+ARMREG_READ_INLINE(mmfr0, "p15,0,%0,c0,c1,4") /* Memory Model Feature Register 0 */
+ARMREG_READ_INLINE(mmfr1, "p15,0,%0,c0,c1,5") /* Memory Model Feature Register 1 */
+ARMREG_READ_INLINE(mmfr2, "p15,0,%0,c0,c1,6") /* Memory Model Feature Register 2 */
+ARMREG_READ_INLINE(mmfr3, "p15,0,%0,c0,c1,7") /* Memory Model Feature Register 3 */
+ARMREG_READ_INLINE(isar0, "p15,0,%0,c0,c2,0") /* Instruction Set Attribute Register 0 */
+ARMREG_READ_INLINE(isar1, "p15,0,%0,c0,c2,1") /* Instruction Set Attribute Register 1 */
+ARMREG_READ_INLINE(isar2, "p15,0,%0,c0,c2,2") /* Instruction Set Attribute Register 2 */
+ARMREG_READ_INLINE(isar3, "p15,0,%0,c0,c2,3") /* Instruction Set Attribute Register 3 */
+ARMREG_READ_INLINE(isar4, "p15,0,%0,c0,c2,4") /* Instruction Set Attribute Register 4 */
+ARMREG_READ_INLINE(isar5, "p15,0,%0,c0,c2,5") /* Instruction Set Attribute Register 5 */
+ARMREG_READ_INLINE(ccsidr, "p15,1,%0,c0,c0,0") /* Cache Size ID Register */
+ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
+ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
+ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
+/* c1 registers */
+ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+/* c2 registers */
+ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
+ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
+ARMREG_READ_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
+ARMREG_WRITE_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
+ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+/* c5 registers */
+ARMREG_READ_INLINE(dfsr, "p15,0,%0,c5,c0,0") /* Data Fault Status Register */
+ARMREG_READ_INLINE(ifsr, "p15,0,%0,c5,c0,1") /* Instruction Fault Status Register */
+/* c6 registers */
+ARMREG_READ_INLINE(dfar, "p15,0,%0,c6,c0,0") /* Data Fault Address Register */
+ARMREG_READ_INLINE(ifar, "p15,0,%0,c6,c0,2") /* Instruction Fault Address Register */
+/* c7 registers */
+ARMREG_WRITE_INLINE(icialluis, "p15,0,%0,c7,c1,0") /* Instruction Inv All (IS) */
+ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Invalidate All (IS) */
+ARMREG_READ_INLINE(par, "p15,0,%0,c7,c4,0") /* Physical Address Register */
+ARMREG_WRITE_INLINE(iciallu, "p15,0,%0,c7,c5,0") /* Instruction Invalidate All */
+ARMREG_WRITE_INLINE(icimvau, "p15,0,%0,c7,c5,1") /* Instruction Invalidate MVA */
+ARMREG_WRITE_INLINE(isb, "p15,0,%0,c7,c5,4") /* Instruction Synchronization Barrier */
+ARMREG_WRITE_INLINE(bpiall, "p15,0,%0,c5,c1,6") /* Breakpoint Invalidate All */
+ARMREG_WRITE_INLINE(dcimvac, "p15,0,%0,c7,c6,1") /* Data Invalidate MVA to PoC */
+ARMREG_WRITE_INLINE(dcisw, "p15,0,%0,c7,c6,2") /* Data Invalidate Set/Way */
+ARMREG_WRITE_INLINE(ats1cpr, "p15,0,%0,c7,c8,0") /* AddrTrans CurState PL1 Read */
+ARMREG_WRITE_INLINE(dccmvac, "p15,0,%0,c7,c10,1") /* Data Clean MVA to PoC */
+ARMREG_WRITE_INLINE(dccsw, "p15,0,%0,c7,c10,2") /* Data Clean Set/Way */
+ARMREG_WRITE_INLINE(dsb, "p15,0,%0,c7,c10,4") /* Data Synchronization Barrier */
+ARMREG_WRITE_INLINE(dmb, "p15,0,%0,c7,c10,5") /* Data Memory Barrier */
+ARMREG_WRITE_INLINE(dccmvau, "p15,0,%0,c7,c14,1") /* Data Clean MVA to PoU */
+ARMREG_WRITE_INLINE(dccimvac, "p15,0,%0,c7,c14,1") /* Data Clean&Inv MVA to PoC */
+ARMREG_WRITE_INLINE(dccisw, "p15,0,%0,c7,c14,2") /* Data Clean&Inv Set/Way */
+/* c9 registers */
+ARMREG_READ_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
+ARMREG_WRITE_INLINE(pmcr, "p15,0,%0,c9,c12,0") /* PMC Control Register */
+ARMREG_READ_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
+ARMREG_WRITE_INLINE(pmcntenset, "p15,0,%0,c9,c12,1") /* PMC Count Enable Set */
+ARMREG_READ_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
+ARMREG_WRITE_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
+ARMREG_READ_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_WRITE_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+/* c13 registers */
+ARMREG_READ_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
+ARMREG_WRITE_INLINE(tpidrprw, "p15,0,%0,c13,c0,4") /* PL1 only Thread ID Register */
+ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
+/* c13 registers */
+ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
+ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
+ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
+ARMREG_WRITE_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
+
+#endif /* !__ASSEMBLER__ */
+
+
+#define	MPIDR_31		0x80000000
+#define	MPIDR_U			0x40000000	// 1 = Uniprocessor
+#define	MPIDR_MT		0x01000000	// AFF0 for SMT
+#define	MPIDR_AFF2		0x00ff0000
+#define	MPIDR_AFF1		0x0000ff00
+#define	MPIDR_AFF0		0x000000ff
 
 #endif	/* _ARM_ARMREG_H */

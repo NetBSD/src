@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.2.4.1 2012/04/17 00:07:46 yamt Exp $	*/
+/*	$NetBSD: if_et.c,v 1.2.4.2 2012/10/30 17:21:28 yamt Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.1 2012/04/17 00:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.2 2012/10/30 17:21:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -70,9 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.2.4.1 2012/04/17 00:07:46 yamt Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
  
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -101,7 +99,7 @@ int	et_shutdown(device_t);
 
 int	et_miibus_readreg(device_t, int, int);
 void	et_miibus_writereg(device_t, int, int, int);
-void	et_miibus_statchg(device_t);
+void	et_miibus_statchg(struct ifnet *);
 
 int	et_init(struct ifnet *ifp);
 int	et_ioctl(struct ifnet *, u_long, void *);
@@ -451,9 +449,9 @@ et_miibus_writereg(device_t dev, int phy, int reg, int val0)
 }
 
 void
-et_miibus_statchg(device_t dev)
+et_miibus_statchg(struct ifnet *ifp)
 {
-	struct et_softc *sc = device_private(dev);
+	struct et_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
 	uint32_t cfg2, ctrl;
 
@@ -1121,10 +1119,7 @@ et_start(struct ifnet *ifp)
 
 		trans = 1;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_mtap(ifp, m);
 	}
 
 	if (trans) {
@@ -1779,10 +1774,7 @@ et_rxeof(struct et_softc *sc)
 				    ETHER_CRC_LEN;
 				m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
-				if (ifp->if_bpf != NULL)
-					bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				(*ifp->if_input)(ifp, m);

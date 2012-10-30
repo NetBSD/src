@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.48.2.1 2012/04/17 00:07:41 yamt Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.48.2.2 2012/10/30 17:21:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.1 2012/04/17 00:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.2 2012/10/30 17:21:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.48.2.1 2012/04/17 00:07:41 yamt Exp $")
 static int     ed_mca_probe  (device_t, cfdata_t, void *);
 static void    ed_mca_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(ed_mca, sizeof(struct ed_softc),
+CFATTACH_DECL_NEW(ed_mca, sizeof(struct ed_softc),
     ed_mca_probe, ed_mca_attach, NULL, NULL);
 
 extern struct cfdriver ed_cd;
@@ -111,12 +111,11 @@ static struct dkdriver eddkdriver = { edmcastrategy, minphys };
  * Just check if it's possible to identify the disk.
  */
 static int
-ed_mca_probe(device_t parent, cfdata_t cf,
-    void *aux)
+ed_mca_probe(device_t parent, cfdata_t cf, void *aux)
 {
+	struct edc_mca_softc *sc = device_private(parent);
+	struct ed_attach_args *eda = aux;
 	u_int16_t cmd_args[2];
-	struct edc_mca_softc *sc = (void *) parent;
-	struct ed_attach_args *eda = (struct ed_attach_args *) aux;
 	int found = 1;
 
 	/*
@@ -135,10 +134,11 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct ed_softc *ed = device_private(self);
 	struct edc_mca_softc *sc = device_private(parent);
-	struct ed_attach_args *eda = (struct ed_attach_args *) aux;
+	struct ed_attach_args *eda = aux;
 	char pbuf[8];
 	int drv_flags;
 
+	ed->sc_dev = self;
 	ed->edc_softc = sc;
 	ed->sc_devno  = eda->edc_drive;
 	edc_add_disk(sc, ed);
@@ -159,7 +159,7 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 		ed->sc_capacity);
 
 	printf("%s: %u spares/cyl, %s, %s, %s, %s, %s\n",
-		device_xname(&ed->sc_dev), ed->spares,
+		device_xname(ed->sc_dev), ed->spares,
 		(drv_flags & (1 << 0)) ? "NoRetries" : "Retries",
 		(drv_flags & (1 << 1)) ? "Removable" : "Fixed",
 		(drv_flags & (1 << 2)) ? "SkewedFormat" : "NoSkew",
@@ -170,9 +170,9 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&ed->sc_dk, device_xname(&ed->sc_dev), &eddkdriver);
+	disk_init(&ed->sc_dk, device_xname(ed->sc_dev), &eddkdriver);
 	disk_attach(&ed->sc_dk);
-	rnd_attach_source(&ed->rnd_source, device_xname(&ed->sc_dev),
+	rnd_attach_source(&ed->rnd_source, device_xname(ed->sc_dev),
 			  RND_TYPE_DISK, 0);
 
 	ed->sc_flags |= EDF_INIT;
@@ -198,7 +198,7 @@ edmcastrategy(struct buf *bp)
 	ed = device_lookup_private(&ed_cd, DISKUNIT(bp->b_dev));
 	lp = ed->sc_dk.dk_label;
 
-	ATADEBUG_PRINT(("edmcastrategy (%s)\n", device_xname(&ed->sc_dev)),
+	ATADEBUG_PRINT(("edmcastrategy (%s)\n", device_xname(ed->sc_dev)),
 	    DEBUG_XFERS);
 
 	/* Valid request?  */
@@ -440,13 +440,13 @@ edgetdisklabel(dev_t dev, struct ed_softc *ed)
 		 */
 #if 0
 		if (wd->drvp->state > RECAL)
-			wd->drvp->drive_flags |= DRIVE_RESET;
+			wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 #endif
 		errstring = readdisklabel(EDLABELDEV(dev),
 			edmcastrategy, lp, ed->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
-		printf("%s: %s\n", device_xname(&ed->sc_dev), errstring);
+		printf("%s: %s\n", device_xname(ed->sc_dev), errstring);
 		return;
 	}
 }
@@ -492,7 +492,7 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		if (error == 0) {
 #if 0
 			if (wd->drvp->state > RECAL)
-				wd->drvp->drive_flags |= DRIVE_RESET;
+				wd->drvp->drive_flags |= ATA_DRIVE_RESET;
 #endif
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(EDLABELDEV(dev),
@@ -561,7 +561,7 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&ed->sc_dev),
+		strlcpy(dkw->dkw_parent, device_xname(ed->sc_dev),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
@@ -574,7 +574,7 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(&ed->sc_dev),
+		strlcpy(dkw->dkw_parent, device_xname(ed->sc_dev),
 			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }

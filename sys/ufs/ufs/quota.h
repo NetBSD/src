@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.28.4.1 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: quota.h,v 1.28.4.2 2012/10/30 17:23:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -53,6 +53,14 @@
 #define	USRQUOTA	0	/* element used for user quotas */
 #define	GRPQUOTA	1	/* element used for group quotas */
 
+/*
+ * Initializer for the strings corresponding to the quota ID types.
+ * (in quota1 these are also the default names of the quota files)
+ */
+#define INITQFNAMES { \
+	"user",		/* USRQUOTA */ \
+	"group",	/* GRPQUOTA */ \
+}
 
 #if !defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/quota.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.31 2010/02/28 20:04:04 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.31.10.1 2012/10/30 17:22:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -103,6 +103,12 @@ enum envsys_battery_capacity_states {
 	ENVSYS_BATTERY_CAPACITY_HIGH,		/* high cap in battery */
 	ENVSYS_BATTERY_CAPACITY_MAX,		/* maximum cap in battery */
 	ENVSYS_BATTERY_CAPACITY_LOW		/* low cap in battery */
+};
+
+/* sensor indicator states */
+enum envsys_indicator_states {
+	ENVSYS_INDICATOR_FALSE		= 0,
+	ENVSYS_INDICATOR_TRUE		= 1
 };
 
 /*

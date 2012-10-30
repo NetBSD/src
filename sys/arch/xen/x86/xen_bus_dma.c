@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.23 2011/07/01 18:37:08 dyoung Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.23.2.1 2012/10/30 17:20:36 yamt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.23 2011/07/01 18:37:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.23.2.1 2012/10/30 17:20:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,9 +90,8 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.queue.tqe_next) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
-		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = INVALID_P2M_ENTRY;
-		xenguest_handle(res.extent_start) = &mfn;
+		xpmap_ptom_unmap(pa);
+		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 0;
@@ -104,15 +103,14 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 			    "failed: err %d (pa %#" PRIxPADDR " mfn %#lx)\n",
 			    error, pa, mfn);
 #endif
-			xpmap_phys_to_machine_mapping[
-			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
+			xpmap_ptom_map(pa, ptoa(mfn));
 
 			error = ENOMEM;
 			goto failed;
 		}
 	}
 	/* Get the new contiguous memory extent */
-	xenguest_handle(res.extent_start) = &mfn;
+	set_xen_guest_handle(res.extent_start, &mfn);
 	res.nr_extents = 1;
 	res.extent_order = order;
 	res.address_bits = get_order(high) + PAGE_SHIFT;
@@ -133,8 +131,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
 		pgnext = pg->pageq.queue.tqe_next;
 		pa = VM_PAGE_TO_PHYS(pg);
-		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn+i;
+		xpmap_ptom_map(pa, ptoa(mfn+i));
 		xpq_queue_machphys_update(((paddr_t)(mfn+i)) << PAGE_SHIFT, pa);
 		/* while here, give extra pages back to UVM */
 		if (i >= npagesreq) {
@@ -166,7 +163,7 @@ failed:
 	s = splvm();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
 		pgnext = pg->pageq.queue.tqe_next;
-		xenguest_handle(res.extent_start) = &mfn;
+		set_xen_guest_handle(res.extent_start, &mfn);
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.address_bits = 32;
@@ -178,8 +175,7 @@ failed:
 			break;
 		}
 		pa = VM_PAGE_TO_PHYS(pg);
-		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
+		xpmap_ptom_map(pa, ptoa(mfn));
 		xpq_queue_machphys_update(((paddr_t)mfn) << PAGE_SHIFT, pa);
 		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);

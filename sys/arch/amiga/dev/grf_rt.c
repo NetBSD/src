@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.54.12.1 2012/04/17 00:06:02 yamt Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.54.12.2 2012/10/30 17:18:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.54.12.1 2012/04/17 00:06:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.54.12.2 2012/10/30 17:18:48 yamt Exp $");
 
 #include "grfrt.h"
 #include "ite.h"
@@ -762,9 +762,9 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 	return(1);
 }
 
-void grfrtattach(struct device *, struct device *, void *);
+void grfrtattach(device_t, device_t, void *);
 int grfrtprint(void *, const char *);
-int grfrtmatch(struct device *, struct cfdata *, void *);
+int grfrtmatch(device_t, cfdata_t, void *);
 
 int rt_mode(struct grf_softc *, u_long, void *, u_long, int);
 static int rt_getvmode(struct grf_softc *, struct grfvideo_mode *);
@@ -779,7 +779,7 @@ int rt_putcmap(struct grf_softc *, struct grf_colormap *);
 int rt_bitblt(struct grf_softc *, struct grf_bitblt *);
 int rt_blank(struct grf_softc *, int *);
 
-CFATTACH_DECL(grfrt, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfrt, sizeof(struct grf_softc),
     grfrtmatch, grfrtattach, NULL, NULL);
 
 /*
@@ -792,14 +792,14 @@ static struct cfdata *cfdata;
  * tricky regarding the console.
  */
 int
-grfrtmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfrtmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #ifdef RETINACONSOLE
 	static int rtconunit = -1;
 #endif
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * allow only one retina console
@@ -816,7 +816,7 @@ grfrtmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		return(0);
 
 #ifdef RETINACONSOLE
-	if (amiga_realconfig == 0 || rtconunit != cfp->cf_unit) {
+	if (amiga_realconfig == 0 || rtconunit != cf->cf_unit) {
 #endif
 		if ((unsigned)retina_default_mon >= retina_mon_max ||
 		    monitor_defs[retina_default_mon].DEP == 8)
@@ -827,8 +827,8 @@ grfrtmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 			return(0);
 #ifdef RETINACONSOLE
 		if (amiga_realconfig == 0) {
-			rtconunit = cfp->cf_unit;
-			cfdata = cfp;
+			rtconunit = cf->cf_unit;
+			cfdata = cf;
 		}
 	}
 #endif
@@ -839,20 +839,25 @@ grfrtmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * attach to the grfbus (zbus)
  */
 void
-grfrtattach(struct device *pdp, struct device *dp, void *auxp)
+grfrtattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
+	struct device temp;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 
-	zap = auxp;
+	zap = aux;
 
-	if (dp == NULL)
+	if (self == NULL) {
 		gp = &congrf;
-	else
-		gp = (struct grf_softc *)dp;
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gp = device_private(self);
+		gp->g_device = self;
+	}
 
-	if (dp != NULL && congrf.g_regkva != 0) {
+	if (self != NULL && congrf.g_regkva != 0) {
 		/*
 		 * we inited earlier just copy the info
 		 * take care not to copy the device struct though.
@@ -871,19 +876,19 @@ grfrtattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 		(void)rt_load_mon(gp, current_mon);
 	}
-	if (dp != NULL)
+	if (self != NULL)
 		printf("\n");
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfrtprint);
+	amiga_config_found(cfdata, self, gp, grfrtprint);
 }
 
 int
-grfrtprint(void *auxp, const char *pnp)
+grfrtprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)aux)->g_unit,
 			pnp);
 	return(UNCONF);
 }

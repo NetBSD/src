@@ -1,7 +1,7 @@
-/*	$NetBSD: radix_ipf.h,v 1.2.4.2 2012/04/17 00:08:17 yamt Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.2.4.3 2012/10/30 17:22:20 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -69,7 +69,6 @@ typedef struct ipf_rdx_head {
 typedef struct radix_softc {
 	u_char			*zeros;
 	u_char			*ones;
-	int			last_zeroed;
 } radix_softc_t;
 
 #undef	RADIX_NODE_HEAD_LOCK

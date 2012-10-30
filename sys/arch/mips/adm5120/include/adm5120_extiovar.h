@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extiovar.h,v 1.3 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: adm5120_extiovar.h,v 1.3.12.1 2012/10/30 17:19:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -47,7 +47,7 @@ struct extio_attach_args {
 };
 
 struct extio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_obiot;
 	bus_space_handle_t	sc_gpioh;
 	bus_space_handle_t	sc_mpmch;

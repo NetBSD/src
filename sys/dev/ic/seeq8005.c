@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.45.8.2 2012/05/23 10:07:56 yamt Exp $ */
+/* $NetBSD: seeq8005.c,v 1.45.8.3 2012/10/30 17:21:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.45.8.2 2012/05/23 10:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.45.8.3 2012/10/30 17:21:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,12 @@ int seeq8005_debug = 0;
 #define DPRINTF(f, x)
 #endif
 
-#define	SEEQ_TX_BUFFER_SIZE		0x800		/* (> ETHER_MAX_LEN) */
+#ifndef EA_TX_BUFFER_SIZE
+#define EA_TX_BUFFER_SIZE		0x800		/* (> ETHER_MAX_LEN) */
+#endif
+#ifndef EA_TX_BUFFER_COUNT
+#define EA_TX_BUFFER_COUNT		1		/* (> 0) */
+#endif
 
 #define SEEQ_READ16(sc, iot, ioh, reg)					\
 	((sc)->sc_flags & SF_8BIT ?					\
@@ -145,7 +150,7 @@ static void ea_read(struct seeq8005_softc *, int, int);
 static struct mbuf *ea_get(struct seeq8005_softc *, int, int, struct ifnet *);
 static void ea_txint(struct seeq8005_softc *);
 static void ea_rxint(struct seeq8005_softc *);
-static void eatxpacket(struct seeq8005_softc *);
+static void ea_txpacket(struct seeq8005_softc *);
 static int ea_writembuf(struct seeq8005_softc *, struct mbuf *, int);
 static void ea_mc_reset(struct seeq8005_softc *);
 static void ea_mc_reset_8004(struct seeq8005_softc *);
@@ -184,7 +189,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR) != 0x1234) {
 			aprint_normal("\n");
-			aprint_error_dev(&sc->sc_dev, "Cannot determine data bus width\n");
+			aprint_error_dev(sc->sc_dev, "Cannot determine data bus width\n");
 			return;
 		}
 	}
@@ -225,12 +230,11 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	/*
 	 * Set up tx and rx buffers.
 	 *
-	 * We use approximately a quarter of the packet memory for TX
+	 * We set aside EA_TX_BUFFER_SIZE * EA_TX_BUFFER_COUNT for TX
 	 * buffers and the rest for RX buffers
 	 */
-	/* sc->sc_tx_bufs = sc->sc_buffersize / SEEQ_TX_BUFFER_SIZE / 4; */
-	sc->sc_tx_bufs = 1;
-	sc->sc_tx_bufsize = sc->sc_tx_bufs * SEEQ_TX_BUFFER_SIZE;
+	sc->sc_tx_bufs = EA_TX_BUFFER_COUNT;
+	sc->sc_tx_bufsize = sc->sc_tx_bufs * EA_TX_BUFFER_SIZE;
 	sc->sc_rx_bufsize = sc->sc_buffersize - sc->sc_tx_bufsize;
 	sc->sc_enabled = 0;
 
@@ -238,21 +242,21 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	ea_ramtest(sc);
 
 	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
-	    device_xname(&sc->sc_dev), sc->sc_buffersize >> 10,
+	    device_xname(sc->sc_dev), sc->sc_buffersize >> 10,
 	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10);
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
 		    M_ZERO | M_NOWAIT);
 		if (padbuf == NULL) {
-			aprint_error_dev(&sc->sc_dev, "can't allocate pad buffer\n");
+			aprint_error_dev(sc->sc_dev, "can't allocate pad buffer\n");
 			return;
 		}
 	}
 
 	/* Initialise ifnet structure. */
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;
@@ -288,7 +292,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	printf("\n");
 
 	/* After \n because it can print a line of its own. */
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 }
 
@@ -369,7 +373,7 @@ do {									\
 	/* Report */
 
 	if (sum > 0)
-		aprint_error_dev(&sc->sc_dev, "buffer RAM failed self test, %d faults\n", sum);
+		aprint_error_dev(sc->sc_dev, "buffer RAM failed self test, %d faults\n", sum);
 }
 
 
@@ -406,7 +410,7 @@ ea_stoptx(struct seeq8005_softc *sc)
 	} while ((status & SEEQ_STATUS_TX_ON) && --timeout > 0);
  	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for tx termination\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	/* Clear any pending tx interrupt */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
@@ -443,10 +447,11 @@ ea_stoprx(struct seeq8005_softc *sc)
 	timeout = 20000;
 	do {
 		status = SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS);
+		delay(1);
 	} while ((status & SEEQ_STATUS_RX_ON) && --timeout > 0);
 	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for rx termination\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	/* Clear any pending rx interrupt */
 
@@ -476,7 +481,7 @@ ea_stop(struct ifnet *ifp, int disable)
 	ea_stoprx(sc);
 
 	/* Disable rx and tx interrupts */
-	sc->sc_command &= (SEEQ_CMD_RX_INTEN | SEEQ_CMD_TX_INTEN);
+	sc->sc_command &= ~(SEEQ_CMD_RX_INTEN | SEEQ_CMD_TX_INTEN);
 
 	/* Clear any pending interrupts */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
@@ -492,7 +497,7 @@ ea_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Cancel any watchdog timer */
-       	sc->sc_ethercom.ec_if.if_timer = 0;
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 
@@ -551,7 +556,7 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 		    SEEQ_STATUS_FIFO_EMPTY)
 			return;
-	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", device_xname(sc->sc_dev));
 }
 
 /*
@@ -569,7 +574,7 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 		    SEEQ_STATUS_FIFO_FULL)
 			return;
-	log(LOG_ERR, "%s: DMA FIFO failed to fill\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: DMA FIFO failed to fill\n", device_xname(sc->sc_dev));
 }
 
 /*
@@ -593,9 +598,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
-		panic("%s: unaligned writebuf", device_xname(&sc->sc_dev));
+		panic("%s: unaligned writebuf", device_xname(sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
-		panic("%s: writebuf out of range", device_xname(&sc->sc_dev));
+		panic("%s: writebuf out of range", device_xname(sc->sc_dev));
 #endif
 
 	if (addr != -1) {
@@ -604,6 +609,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 		ea_select_buffer(sc, SEEQ_BUFCODE_LOCAL_MEM);
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
 		    sc->sc_command | SEEQ_CMD_FIFO_WRITE);
+
+		ea_await_fifo_empty(sc);
+
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_DMA_ADDR, addr);
 	}
 
@@ -646,9 +654,9 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
-		panic("%s: unaligned readbuf", device_xname(&sc->sc_dev));
+		panic("%s: unaligned readbuf", device_xname(sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
-		panic("%s: readbuf out of range", device_xname(&sc->sc_dev));
+		panic("%s: readbuf out of range", device_xname(sc->sc_dev));
 #endif
 
 	if (addr != -1) {
@@ -864,7 +872,7 @@ ea_start(struct ifnet *ifp)
 
 	/*
 	 * Don't do anything if output is active.  seeq8005intr() will call
-	 * us (actually eatxpacket()) back when the card's ready for more
+	 * us (actually ea_txpacket()) back when the card's ready for more
 	 * frames.
 	 */
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -876,7 +884,7 @@ ea_start(struct ifnet *ifp)
 
 	/* tx packets */
 
-	eatxpacket(sc);
+	ea_txpacket(sc);
 	splx(s);
 }
 
@@ -887,8 +895,8 @@ ea_start(struct ifnet *ifp)
  * Called at splnet()
  */
 
-void
-eatxpacket(struct seeq8005_softc *sc)
+static void
+ea_txpacket(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -901,7 +909,7 @@ eatxpacket(struct seeq8005_softc *sc)
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 	/* If there's nothing to send, return. */
-	if (!m0) {
+	if (m0 == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_CONFIG2, sc->sc_config2);
@@ -968,20 +976,18 @@ ea_writembuf(struct seeq8005_softc *sc, struct mbuf *m0, int bufstart)
 	/* Follow it with a NULL packet header */
 	memset(hdr, 0, 4);
 	ea_writebuf(sc, hdr, bufstart + 4 + len, 4);
-	SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
-	SEEQ_WRITE16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_BUFWIN, 0x0000);
 
 	/* Ok we now have a packet len bytes long in our packet buffer */
 	DPRINTF(SEEQ_DEBUG_TX, ("ea_writembuf: length=%d\n", len));
 
 	/* Write the packet header */
-	nextpacket = len + 4;
+	nextpacket = bufstart + len + 4;
 	hdr[0] = (nextpacket >> 8) & 0xff;
 	hdr[1] = nextpacket & 0xff;
 	hdr[2] = SEEQ_PKTCMD_TX | SEEQ_PKTCMD_DATA_FOLLOWS |
 		SEEQ_TXCMD_XMIT_SUCCESS_INT | SEEQ_TXCMD_COLLISION_INT;
-	hdr[3] = 0; /* Status byte -- will be update by hardware. */
-	ea_writebuf(sc, hdr, 0x0000, 4);
+	hdr[3] = 0; /* Status byte -- will be updated by hardware. */
+	ea_writebuf(sc, hdr, bufstart, 4);
 
 	return len;
 }
@@ -1107,11 +1113,11 @@ ea_txint(struct seeq8005_softc *sc)
 
 		/* Tx next packet */
 
-		eatxpacket(sc);
+		ea_txpacket(sc);
 	}
 }
 
-void
+static void
 ea_rxint(struct seeq8005_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1154,13 +1160,13 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_ERR,
 			    "%s: Rx chain corrupt at %04x (ptr = %04x)\n",
-			    device_xname(&sc->sc_dev), addr, ptr);
+			    device_xname(sc->sc_dev), addr, ptr);
 			ea_init(ifp);
 			return;
 		}
 
 		/* Get packet length */
-       		len = (ptr - addr) - 4;
+		len = (ptr - addr) - 4;
 
 		if (len < 0)
 			len += sc->sc_rx_bufsize;
@@ -1180,7 +1186,7 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_WARNING,
 			    "%s: rx packet error at %04x (err=%02x)\n",
-			    device_xname(&sc->sc_dev), addr, status & 0x0f);
+			    device_xname(sc->sc_dev), addr, status & 0x0f);
 			/* XXX shouldn't need to reset if it's genuine. */
 			ea_init(ifp);
 			return;
@@ -1194,10 +1200,7 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_ERR,
 			    "%s: rx packet size error at %04x (len=%d)\n",
-			    device_xname(&sc->sc_dev), addr, len);
-			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
-			SEEQ_WRITE16(sc, iot, ioh, SEEQ_CONFIG2,
-					  sc->sc_config2);
+			    device_xname(sc->sc_dev), addr, len);
 			ea_init(ifp);
 			return;
 		}
@@ -1238,7 +1241,7 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 
 	/* Pull packet off interface. */
 	m = ea_get(sc, addr, len, ifp);
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 	/*
@@ -1267,20 +1270,20 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
         epkt = cp + totlen;
 
         MGETHDR(m, M_DONTWAIT, MT_DATA);
-        if (m == 0)
-                return 0;
+        if (m == NULL)
+                return NULL;
         m->m_pkthdr.rcvif = ifp;
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
-        top = 0;
+        top = NULL;
         mp = &top;
 
         while (totlen > 0) {
                 if (top) {
                         MGET(m, M_DONTWAIT, MT_DATA);
-                        if (m == 0) {
+                        if (m == NULL) {
                                 m_freem(top);
-                                return 0;
+                                return NULL;
                         }
                         m->m_len = MLEN;
                 }
@@ -1296,13 +1299,13 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
                          * Place initial small packet/header at end of mbuf.
                          */
                         if (len < m->m_len) {
-                                if (top == 0 && len + max_linkhdr <= m->m_len)
+                                if (top == NULL && len + max_linkhdr <= m->m_len)
                                         m->m_data += max_linkhdr;
                                 m->m_len = len;
                         } else
                                 len = m->m_len;
                 }
-		if (top == 0) {
+		if (top == NULL) {
 			/* Make sure the payload is aligned */
 			char *newdata = (char *)
 			    ALIGN((char*)m->m_data + 
@@ -1474,7 +1477,7 @@ ea_watchdog(struct ifnet *ifp)
 	struct seeq8005_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: lost Tx interrupt (status = 0x%04x)\n",
-	    device_xname(&sc->sc_dev),
+	    device_xname(sc->sc_dev),
 	    SEEQ_READ16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_STATUS));
 	ifp->if_oerrors++;
 
@@ -1485,4 +1488,4 @@ ea_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 }
 
-/* End of if_ea.c */
+/* End of seeq8005.c */

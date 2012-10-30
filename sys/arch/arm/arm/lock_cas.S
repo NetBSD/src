@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.7 2010/07/07 01:17:26 chs Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.7.8.1 2012/10/30 17:18:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,15 +30,15 @@
  */
 
 #include "opt_multiprocessor.h"
-#if defined(MULTIPROCESSOR)
-#error need to write MP support for ucas_* functions
-#endif
-
 #include "opt_arm_debug.h"
 
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
+
+#if defined(MULTIPROCESSOR) && !defined(_ARM_ARCH_6)
+#error need to write MP support for ucas_* functions
+#endif
 
 	.text
 	.align	0
@@ -50,6 +50,7 @@
 	.word	_C_LABEL(_lock_cas_fail)
 #endif /* ARM_LOCK_CAS_DEBUG */
 
+#ifndef _ARM_ARCH_6
 /*
  * _lock_cas:
  *
@@ -66,15 +67,6 @@
  */
 	.globl	_C_LABEL(_lock_cas_end)
 ENTRY_NP(_lock_cas)
-#ifdef _ARCH_ARM_6
-        mov	ip, r0
-1:      ldrex	r0, [ip]		/* eventual return value */
-        cmp	r1, r0
-	RETc(ne)
-        strex	r3, r2, [ip]
-        cmp	r3, #0
-        bne	1b
-#else
 	ldr	r3, [r0]
 	teq	r3, r1
 	streq	r2, [r0]
@@ -93,7 +85,6 @@ _C_LABEL(_lock_cas_end):
 #endif /* __ARMEB__ */
 	stmia	r3, {r1-r2}		/* store ev_count */
 #endif /* ARM_LOCK_CAS_DEBUG */
-#endif
 	RET
 END(_lock_cas)
 
@@ -114,10 +105,11 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
 STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
 STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
+#endif /* !_ARM_ARCH_6 */
 
 #ifdef __PROG32
-#define SAVE_REGS	stmfd	sp!, {r4-r6}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#define SAVE_REGS	stmfd	sp!, {r4-r5}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r5}
 #else
 /* Need to save R14_svc because it'll get trampled if we take a page fault. */
 #define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
@@ -135,9 +127,19 @@ ENTRY(ucas_32)
 
 	.globl	_C_LABEL(ucas_32_ras_start)
 _C_LABEL(ucas_32_ras_start):
+#ifdef MULTIPROCESSOR
+1:	ldrex	r5, [r0]		/* we should have access */
+	cmp	r1, r5
+	bne	2f
+	strex	ip, r2, [r0]
+	cmp	ip, #0
+	bne	1b
+2:
+#else
 	ldrt	r5, [r0]
 	cmp	r1, r5
 	streqt	r2, [r0]
+#endif
 	.globl _C_LABEL(ucas_32_ras_end)
 _C_LABEL(ucas_32_ras_end):
 

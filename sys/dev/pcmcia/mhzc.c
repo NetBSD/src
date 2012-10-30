@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.49 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.49.12.1 2012/10/30 17:21:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.49 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.49.12.1 2012/10/30 17:21:57 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -666,7 +666,7 @@ int	sm_mhzc_match(device_t, cfdata_t, void *);
 void	sm_mhzc_attach(device_t, device_t, void *);
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
-CFATTACH_DECL(sm_mhzc, sizeof(struct smc91cxx_softc),
+CFATTACH_DECL_NEW(sm_mhzc, sizeof(struct smc91cxx_softc),
     sm_mhzc_match, sm_mhzc_attach, smc91cxx_detach, smc91cxx_activate);
 
 int	sm_mhzc_enable(struct smc91cxx_softc *);
@@ -694,6 +694,7 @@ sm_mhzc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_bst = msc->sc_ethernet_pcioh.iot;
 	sc->sc_bsh = msc->sc_ethernet_pcioh.ioh;
 
@@ -710,7 +711,7 @@ sm_mhzc_attach(device_t parent, device_t self, void *aux)
 int
 sm_mhzc_enable(struct smc91cxx_softc *sc)
 {
-	struct mhzc_softc *xsc = device_private(device_parent(&sc->sc_dev));
+	struct mhzc_softc *xsc = device_private(device_parent(sc->sc_dev));
 
 	return mhzc_enable(xsc, MHZC_ETHERNET_ENABLED);
 }
@@ -718,7 +719,7 @@ sm_mhzc_enable(struct smc91cxx_softc *sc)
 void
 sm_mhzc_disable(struct smc91cxx_softc *sc)
 {
-	struct mhzc_softc *xsc = device_private(device_parent(&sc->sc_dev));
+	struct mhzc_softc *xsc = device_private(device_parent(sc->sc_dev));
 
 	mhzc_disable(xsc, MHZC_ETHERNET_ENABLED);
 }

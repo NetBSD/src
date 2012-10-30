@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.60.2.2 2012/05/23 10:07:48 yamt Exp $
+# $NetBSD: GENERIC,v 1.60.2.3 2012/10/30 17:20:15 yamt Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.60.2.2 $"
+#ident 		"GENERIC-$Revision: 1.60.2.3 $"
 
 maxusers	32
 
@@ -75,6 +75,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX	# binary compatibility with Linux

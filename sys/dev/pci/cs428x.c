@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.15.38.1 2012/04/17 00:07:44 yamt Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.15.38.2 2012/10/30 17:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.15.38.1 2012/04/17 00:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.15.38.2 2012/10/30 17:21:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ cs428x_read_codec(void *addr, uint8_t ac97_addr, uint16_t *ac97_data)
 
 	if (cs428x_src_wait(sc) < 0) {
 		printf("%s: AC97 read prob. (DCV!=0) for add=0x%0x\n",
-		       device_xname(&sc->sc_dev), ac97_addr);
+		       device_xname(sc->sc_dev), ac97_addr);
 		return 1;
 	}
 
@@ -254,7 +254,7 @@ cs428x_read_codec(void *addr, uint8_t ac97_addr, uint16_t *ac97_data)
 		delay(1);
 		while (++n > 1000) {
 			printf("%s: AC97 read fail (VSTS==0) for add=0x%0x\n",
-			       device_xname(&sc->sc_dev), ac97_addr);
+			       device_xname(sc->sc_dev), ac97_addr);
 			return 1;
 		}
 	}
@@ -282,7 +282,7 @@ cs428x_write_codec(void *addr, uint8_t ac97_addr, uint16_t ac97_data)
 
 	if (cs428x_src_wait(sc) < 0) {
 		printf("%s: AC97 write fail (DCV!=0) for add=0x%02x data="
-		       "0x%04x\n", device_xname(&sc->sc_dev), ac97_addr, ac97_data);
+		       "0x%04x\n", device_xname(sc->sc_dev), ac97_addr, ac97_data);
 		return 1;
 	}
 	return 0;
@@ -306,7 +306,7 @@ cs428x_allocmem(struct cs428x_softc *sc, size_t size, struct cs428x_dma *p)
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
 				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate DMA. error=%d\n",
+		aprint_error_dev(sc->sc_dev, "unable to allocate DMA. error=%d\n",
 		       error);
 		goto allfree;
 	}
@@ -314,7 +314,7 @@ cs428x_allocmem(struct cs428x_softc *sc, size_t size, struct cs428x_dma *p)
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
 			       &p->addr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to map DMA, error=%d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map DMA, error=%d\n",
 		       error);
 		goto free;
 	}
@@ -322,7 +322,7 @@ cs428x_allocmem(struct cs428x_softc *sc, size_t size, struct cs428x_dma *p)
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
 				  0, BUS_DMA_WAITOK, &p->map);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to create DMA map, error=%d\n",
+		aprint_error_dev(sc->sc_dev, "unable to create DMA map, error=%d\n",
 		       error);
 		goto unmap;
 	}
@@ -330,7 +330,7 @@ cs428x_allocmem(struct cs428x_softc *sc, size_t size, struct cs428x_dma *p)
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
 				BUS_DMA_WAITOK);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "unable to load DMA map, error=%d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load DMA map, error=%d\n",
 		       error);
 		goto destroy;
 	}

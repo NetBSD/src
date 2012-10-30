@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.34 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: sci.c,v 1.34.8.1 2012/10/30 17:18:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.34 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.34.8.1 2012/10/30 17:18:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ sci_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct sci_softc *dev = (void *)chan->chan_adapter->adapt_dev;
+	struct sci_softc *dev = device_private(chan->chan_adapter->adapt_dev);
 	int flags, s;
 
 	switch (req) {
@@ -263,7 +263,7 @@ void
 sciabort(struct sci_softc *dev, const char *where)
 {
 	printf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
-	  dev->sc_dev.dv_xname, where, *dev->sci_csr, *dev->sci_bus_csr);
+	  device_xname(dev->sc_dev), where, *dev->sci_csr, *dev->sci_bus_csr);
 
 	if (dev->sc_flags & SCI_SELECTED) {
 
@@ -312,7 +312,7 @@ scireset(struct sci_softc *dev)
 	if (dev->sc_flags & SCI_ALIVE)
 		sciabort(dev, "reset");
 
-	printf("%s: ", dev->sc_dev.dv_xname);
+	printf("%s: ", device_xname(dev->sc_dev));
 
 	s = splbio();
 	/* preserve our ID for now */
@@ -355,7 +355,7 @@ scierror(struct sci_softc *dev, u_char csr)
 	if (xs->xs_control & XS_CTL_SILENT)
 		return;
 
-	printf("%s: ", dev->sc_dev.dv_xname);
+	printf("%s: ", device_xname(dev->sc_dev));
 	printf("csr == 0x%02i\n", csr);	/* XXX */
 }
 

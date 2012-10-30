@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.30 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: mlhsc.c,v 1.30.112.1 2012/10/30 17:18:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.30 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.30.112.1 2012/10/30 17:18:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.30 2005/12/11 12:16:28 christos Exp $");
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-void mlhscattach(struct device *, struct device *, void *);
-int mlhscmatch(struct device *, struct cfdata *, void *);
+void mlhscattach(device_t, device_t, void *);
+int mlhscmatch(device_t, cfdata_t, void *);
 
 int mlhsc_dma_xfer_in(struct sci_softc *dev, int len,
     register u_char *buf, int phase);
@@ -90,18 +90,18 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-CFATTACH_DECL(mlhsc, sizeof(struct sci_softc),
+CFATTACH_DECL_NEW(mlhsc, sizeof(struct sci_softc),
     mlhscmatch, mlhscattach, NULL, NULL);
 
 /*
  * if we are my Hacker's SCSI board we are here.
  */
 int
-mlhscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mlhscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	/*
 	 * Check manufacturer and product id.
@@ -113,19 +113,20 @@ mlhscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-mlhscattach(struct device *pdp, struct device *dp, void *auxp)
+mlhscattach(device_t parent, device_t self, void *aux)
 {
 	volatile u_char *rp;
-	struct sci_softc *sc = (struct sci_softc *)dp;
+	struct sci_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
+	sc->sc_dev = self;
+
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
-	sc = (struct sci_softc *)dp;
 	rp = zap->va;
 	sc->sci_data = rp + 1;
 	sc->sci_odata = rp + 1;
@@ -150,7 +151,7 @@ mlhscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -171,7 +172,7 @@ mlhscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.34.2.3 2012/05/23 10:07:52 yamt Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.34.2.4 2012/10/30 17:20:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.34.2.3 2012/05/23 10:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.34.2.4 2012/10/30 17:20:36 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -117,6 +117,19 @@ void xen_failsafe_handler(void);
 
 #define HYPERVISOR_mmu_update_self(req, count, success_count) \
 	HYPERVISOR_mmu_update((req), (count), (success_count), DOMID_SELF)
+
+/*
+ * kcpuset internally uses an array of uint32_t while xen uses an array of
+ * u_long. As we're little-endian we can cast one to the other.
+ */
+typedef union {
+#ifdef _LP64
+	uint32_t xcpum_km[2];
+#else
+	uint32_t xcpum_km[1];
+#endif	
+	u_long   xcpum_xm;
+} xcpumask_t;
 
 void
 xen_failsafe_handler(void)
@@ -235,7 +248,7 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 	    "\n", (int64_t)ma, (int64_t)pa));
 
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
-	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+	xpq_queue[xpq_idx].val = pa >> PAGE_SHIFT;
 	xpq_increment_idx();
 #ifdef XENDEBUG_SYNC
 	xpq_flush_queue();
@@ -361,38 +374,20 @@ xpq_queue_invlpg(vaddr_t va)
 		panic("xpq_queue_invlpg");
 }
 
-#if defined(_LP64) &&  MAXCPUS > 64
-#error "XEN/amd64 uses 64 bit masks"
-#elsif !defined(_LP64) && MAXCPUS > 32
-#error "XEN/i386 uses 32 bit masks"
-#else
-/* XXX: Inefficient. */
-static u_long
-xen_kcpuset2bits(kcpuset_t *kc)
-{
-	u_long bits = 0;
-
-	for (cpuid_t i = 0; i < ncpu; i++) {
-		if (kcpuset_isset(kc, i)) {
-			bits |= 1 << i;
-		}
-	}
-	return bits;
-}
-#endif
-
 void
 xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 {
-	u_long xcpumask = xen_kcpuset2bits(kc);
+	xcpumask_t xcpumask;
 	mmuext_op_t op;
+
+	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_INVLPG_MULTI;
 	op.arg1.linear_addr = va;
-	op.arg2.vcpumask = &xcpumask;
+	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");
@@ -423,14 +418,16 @@ xen_bcast_invlpg(vaddr_t va)
 void
 xen_mcast_tlbflush(kcpuset_t *kc)
 {
-	u_long xcpumask = xen_kcpuset2bits(kc);
+	xcpumask_t xcpumask;
 	mmuext_op_t op;
+
+	kcpuset_export_u32(kc, &xcpumask.xcpum_km[0], sizeof(xcpumask));
 
 	/* Flush pending page updates */
 	xpq_flush_queue();
 
 	op.cmd = MMUEXT_TLB_FLUSH_MULTI;
-	op.arg2.vcpumask = &xcpumask;
+	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
 		panic("xpq_queue_invlpg_all");
@@ -1108,7 +1105,7 @@ xen_set_user_pgd(paddr_t page)
 
 	xpq_flush_queue();
 	op.cmd = MMUEXT_NEW_USER_BASEPTR;
-	op.arg1.mfn = pfn_to_mfn(page >> PAGE_SHIFT);
+	op.arg1.mfn = xpmap_ptom_masked(page) >> PAGE_SHIFT;
         if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic("xen_set_user_pgd: failed to install new user page"
 			" directory %#" PRIxPADDR, page);

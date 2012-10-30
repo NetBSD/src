@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.54 2011/06/06 16:52:18 matt Exp $	*/
+/*	$NetBSD: adb.c,v 1.54.2.1 2012/10/30 17:19:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.54 2011/06/06 16:52:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.54.2.1 2012/10/30 17:19:55 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -112,7 +112,7 @@ adb_config_interrupts(device_t self)
 	int totaladbs;
 	int adbindex, adbaddr;
 
-	printf("%s", self->dv_xname);
+	printf("%s", device_xname(self));
 	adb_polling = 1;
 
 #ifdef MRG_ADB

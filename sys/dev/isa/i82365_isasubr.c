@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.47 2010/05/23 23:50:37 jym Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.47.8.1 2012/10/30 17:21:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.47 2010/05/23 23:50:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.47.8.1 2012/10/30 17:21:14 yamt Exp $");
 
 #define	PCICISADEBUG
 
@@ -183,7 +183,7 @@ pcic_isa_probe_interrupts(struct pcic_isa_softc *isc, struct pcic_handle *h)
 	ic = isc->sc_ic;
 
 	printf("%s: controller %d detecting irqs with mask 0x%04x:",
-	    device_xname(&sc->dev), h->chip, sc->intr_mask[h->chip]);
+	    device_xname(sc->dev), h->chip, sc->intr_mask[h->chip]);
 	DPRINTF(("\n"));
 
 	/* clear any current interrupt */
@@ -384,7 +384,7 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, base + 0x400, length, 0, &ioh_high)) {
-		aprint_error_dev(&sc->dev, "can't map high i/o space\n");
+		aprint_error_dev(sc->dev, "can't map high i/o space\n");
 		return;
 	}
 
@@ -429,7 +429,7 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 	}
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
-	    device_xname(&sc->dev), (long) sc->iobase,
+	    device_xname(sc->dev), (long) sc->iobase,
 	    (long)(sc->iobase + sc->iosize)));
 
 	if (pcic_isa_alloc_iobase && pcic_isa_alloc_iosize) {
@@ -437,7 +437,7 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 		sc->iosize = pcic_isa_alloc_iosize;
 
 		DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx "
-		    "(config override)\n", device_xname(&sc->dev),
+		    "(config override)\n", device_xname(sc->dev),
 		    (long) sc->iobase, (long)(sc->iobase + sc->iosize)));
 	}
 }

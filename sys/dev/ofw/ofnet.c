@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.52 2011/07/26 08:59:38 mrg Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.52.2.1 2012/10/30 17:21:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52 2011/07/26 08:59:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52.2.1 2012/10/30 17:21:22 yamt Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52 2011/07/26 08:59:38 mrg Exp $");
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>
 
-CFATTACH_DECL(ipkdb_ofn, 0,
+CFATTACH_DECL_NEW(ipkdb_ofn, 0,
     ipkdb_probe, ipkdb_attach, NULL, NULL);
 
 static struct ipkdb_if *kifp;

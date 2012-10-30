@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.160.2.1 2012/04/17 00:08:41 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.160.2.2 2012/10/30 17:22:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160.2.1 2012/04/17 00:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.160.2.2 2012/10/30 17:22:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1758,7 +1758,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "available",
 		       SYSCTL_DESCR("Available Congestion Control Mechanisms"),
-		       NULL, 0, &tcp_congctl_avail, 0, CTL_CREATE, CTL_EOL);
+		       NULL, 0, tcp_congctl_avail, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &congctl_node, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "selected",

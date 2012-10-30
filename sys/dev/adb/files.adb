@@ -1,5 +1,5 @@
 # 
-#	$NetBSD: files.adb,v 1.5 2007/04/16 23:34:43 macallan Exp $
+#	$NetBSD: files.adb,v 1.5.68.1 2012/10/30 17:20:52 yamt Exp $
 #
 # Apple Desktop Bus protocol and drivers
 
@@ -18,6 +18,8 @@ file dev/adb/adb_bus.c		nadb needs-flag
 device adbkbd : wskbddev, wsmousedev, sysmon_power, sysmon_taskq
 attach adbkbd at nadb
 file dev/adb/adb_kbd.c		adbkbd needs-flag
+file dev/adb/adb_usb_map.c	adbkbd
+defflag	opt_adbkbd.h	ADBKBD_EMUL_USB
 
 device adbbt : wskbddev
 attach adbbt at nadb

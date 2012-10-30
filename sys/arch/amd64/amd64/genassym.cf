@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.2.2 2012/05/23 10:07:39 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.48.2.3 2012/10/30 17:18:43 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -162,7 +162,8 @@ define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	PAGE_SIZE		PAGE_SIZE
 
-define	MDP_IRET		MDP_IRET
+define	MDL_IRET		MDL_IRET
+define	MDL_COMPAT32		MDL_COMPAT32
 
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
@@ -372,3 +373,5 @@ define	PGSHIFT			PGSHIFT
 define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
 
 define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
+
+define	SEL_RPL_MASK		SEL_RPL

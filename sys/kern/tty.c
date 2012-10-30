@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.249.2.1 2012/04/17 00:08:30 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.249.2.2 2012/10/30 17:22:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.2.1 2012/04/17 00:08:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.2.2 2012/10/30 17:22:36 yamt Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.249.2.1 2012/04/17 00:08:30 yamt Exp $");
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
 #include <sys/bitops.h>
+
+#ifdef COMPAT_60
+#include <compat/sys/ttycom.h>
+#endif /* COMPAT_60 */
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
@@ -224,7 +230,7 @@ tty_get_qsize(int *qsize, int newsize)
 	return 0;
 }
 
-static void
+static int
 tty_set_qsize(struct tty *tp, int newsize)
 {
 	struct clist rawq, canq, outq;
@@ -235,6 +241,14 @@ tty_set_qsize(struct tty *tp, int newsize)
 	clalloc(&outq, newsize, 0);
 
 	mutex_spin_enter(&tty_lock);
+
+	if (tp->t_outq.c_cc != 0) {
+		mutex_spin_exit(&tty_lock);
+		clfree(&rawq);
+		clfree(&canq);
+		clfree(&outq);
+		return EBUSY;
+	}
 
 	orawq = tp->t_rawq;
 	ocanq = tp->t_canq;
@@ -252,6 +266,8 @@ tty_set_qsize(struct tty *tp, int newsize)
 	clfree(&orawq);
 	clfree(&ocanq);
 	clfree(&ooutq);
+
+	return 0;
 }
 
 static int
@@ -1350,9 +1366,14 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	case TIOCSQSIZE:
 		if ((error = tty_get_qsize(&s, *(int *)data)) == 0 &&
 		    s != tp->t_qsize)
-			tty_set_qsize(tp, s);
+			error = tty_set_qsize(tp, s);
 		return error;
 	default:
+#ifdef COMPAT_60
+		error = compat_60_ttioctl(tp, cmd, data, flag, l);
+		if (error != EPASSTHROUGH)
+			return error;
+#endif /* COMPAT_60 */
 		/* We may have to load the compat module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
@@ -1918,7 +1939,6 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		goto loop;
 	}
  read:
-	mutex_spin_exit(&tty_lock);
 
 	/*
 	 * Input present, check for input mapping and processing.
@@ -1930,16 +1950,14 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		 */
 		if (CCEQ(cc[VDSUSP], c) &&
 		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
-			mutex_spin_enter(&tty_lock);
 			ttysig(tp, TTYSIG_PG1, SIGTSTP);
 			if (first) {
 				error = ttypause(tp, hz);
-				mutex_spin_exit(&tty_lock);
 				if (error)
 					break;
-				goto loop;
-			} else
 				mutex_spin_exit(&tty_lock);
+				goto loop;
+			}
 			break;
 		}
 		/*
@@ -1950,7 +1968,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		/*
 		 * Give user character.
 		 */
+		mutex_spin_exit(&tty_lock);
  		error = ureadc(c, uio);
+		mutex_spin_enter(&tty_lock);
 		if (error)
 			break;
  		if (uio->uio_resid == 0)
@@ -1963,11 +1983,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			break;
 		first = 0;
 	}
+
 	/*
 	 * Look to unblock output now that (presumably)
 	 * the input queue has gone down.
 	 */
-	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG / 5) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    cc[VSTART] != _POSIX_VDISABLE &&

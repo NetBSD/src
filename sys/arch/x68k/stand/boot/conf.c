@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8.112.1 2012/04/17 00:07:03 yamt Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.112.2 2012/10/30 17:20:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -45,10 +45,10 @@ struct devsw devsw[] = {
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
 const struct devspec devspec[] = {
-	{ "sd", 0, 7 },
-	{ "cd", 1, 7 },
-	{ "fd", 2, 3 },
-	{ 0, 0, 0 }
+	{ "sd", 0, 7, 0 },
+	{ "cd", 1, 7, 0 },
+	{ "fd", 2, 3, 0 },
+	{ NULL, 0, 0, 0 }
 };
 
 struct fs_ops file_system[] = {

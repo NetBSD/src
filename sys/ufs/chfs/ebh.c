@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.2.6.2 2012/04/17 00:08:55 yamt Exp $	*/
+/*	$NetBSD: ebh.c,v 1.2.6.3 2012/10/30 17:22:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1730,6 +1730,7 @@ ebh_read_leb(struct chfs_ebh *ebh, int lnr, char *buf, uint32_t offset,
 	err = leb_read_lock(ebh, lnr);
 	if (err)
 		return err;
+
 	pebnr = ebh->lmap[lnr];
 	/* If PEB is not mapped the buffer is filled with 0xFF */
 	if (EBH_LEB_UNMAPPED == pebnr) {
@@ -1746,9 +1747,6 @@ ebh_read_leb(struct chfs_ebh *ebh, int lnr, char *buf, uint32_t offset,
 		goto out_free;
 
 	KASSERT(len == *retlen);
-
-	leb_read_unlock(ebh, lnr);
-	return err;
 
 out_free:
 	leb_read_unlock(ebh, lnr);

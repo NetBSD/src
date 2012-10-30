@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.270.2.2 2012/05/23 10:07:55 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.270.2.3 2012/10/30 17:20:49 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -13,6 +13,8 @@ a2kbbc			amiga
 a2kbbc			amigappc
 a34kbbc			amiga
 a34kbbc			amigappc
+a9tmr			arm
+a9wdt			arm
 aac			MI
 abtn			macppc
 abus			vax
@@ -93,6 +95,9 @@ arcmsr			MI
 arcpp			acorn26
 arcvideo		acorn26
 aria			MI
+armgic			arm
+arml2cc			arm
+armperiph		arm
 arp			MI		Attribute
 artsata			MI
 asc			acorn32
@@ -170,6 +175,16 @@ bioscall		i386		Attribute
 bivideo			hpcmips
 bktr			MI
 bm			macppc
+bcmcca			arm
+bcmccb			arm
+bcmeth			arm
+bcmi2c			arm
+bcmmdio			arm
+bcmnand			arm
+bcmpax			arm
+bcmrng			arm
+bcmsw			arm
+bcmusb			arm
 bmd			x68k
 bmtphy			MI
 boca			MI
@@ -353,6 +368,7 @@ drsupio			amigappc
 dsrtc			cats
 dsrtc			evbppc
 dtide			MI
+dtimer			arm
 duart			powerpc
 dvbox			hp300
 dwlpx			alpha
@@ -466,6 +482,7 @@ fdc			sun3
 fdc			x68k
 fddi			MI		Attribute
 fea			MI
+fec			arm
 ffb			sparc64
 fhpib			hp300
 finsio			MI
@@ -499,6 +516,7 @@ gem			MI
 gentbi			MI
 geodeide		MI
 gfe			MI
+gic			arm
 gio			sgimips
 giobus			sgimips		Attribute
 glxtphy			MI
@@ -829,11 +847,13 @@ mcbus			alpha
 mcclock			algor
 mcclock			alpha
 mcclock			evbmips
+mcclock			evbppc
 mcclock			pmax
 mcclock			prep
 mcd			MI
 mcmem			alpha
 mcpcia			alpha
+mdio			evbppc
 mec			sgimips
 mediabay		macppc
 melody			amiga
@@ -1114,6 +1134,7 @@ qsphy			MI
 qt			MI
 qv			vax
 ra			MI
+racd			MI
 radio			MI
 radio			MI		Attribute
 rambo			mipsco
@@ -1150,6 +1171,8 @@ rtfps			MI
 rtii			MI
 rtk			MI
 rtl80x9			MI		Attribute
+rum			MI
+run			MI
 rx			MI
 ry			vax
 rz			pmax
@@ -1282,6 +1305,7 @@ tcom			MI
 tctrl			sparc
 tcx			sparc
 tcx			sparc64
+tdvfb			MI
 te			vax
 tea5757			MI
 tfb			MI
@@ -1393,10 +1417,13 @@ up			vax
 upc			MI
 upl			MI
 uplcom			MI
+ural			MI
 urio			MI
 url			MI
 urlphy			MI
 urndis			MI
+urtw			MI
+urtwn			MI
 usb			MI
 usbus			MI		Attribute
 uscanner		MI
@@ -1494,6 +1521,7 @@ xencons			xen
 xenevt			xen
 xennet			xen
 xge			MI
+xhci			MI
 xi			MI
 xmi			MI
 xsii			pmax

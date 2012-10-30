@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.154 2011/10/25 22:26:18 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.154.2.1 2012/10/30 17:22:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -851,8 +851,6 @@ extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
 extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
-
-void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 

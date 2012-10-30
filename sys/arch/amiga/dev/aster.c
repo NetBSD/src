@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.22 2011/07/19 15:55:26 dyoung Exp $ */
+/*	$NetBSD: aster.c,v 1.22.2.1 2012/10/30 17:18:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.22 2011/07/19 15:55:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.22.2.1 2012/10/30 17:18:47 yamt Exp $");
 
 /*
  * zbus ISDN Blaster, ISDN Master driver.
@@ -54,24 +54,23 @@ __KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.22 2011/07/19 15:55:26 dyoung Exp $");
 
 
 struct aster_softc {
-	struct device sc_dev;
 	struct bus_space_tag sc_bst;
 };
 
-int astermatch(struct device *, struct cfdata *, void *);
-void asterattach(struct device *, struct device *, void *);
-int asterprint(void *auxp, const char *);
+int astermatch(device_t, cfdata_t, void *);
+void asterattach(device_t, device_t, void *);
+int asterprint(void *, const char *);
 
-CFATTACH_DECL(aster, sizeof(struct aster_softc),
+CFATTACH_DECL_NEW(aster, sizeof(struct aster_softc),
     astermatch, asterattach, NULL, NULL);
 
 int
-astermatch(struct device *parent, struct cfdata *cfp, void *auxp)
+astermatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (zap->manid == 5001 && zap->prodid == 1)	/* VMC ISDN Blaster */
 		return (1);
@@ -93,14 +92,14 @@ astermatch(struct device *parent, struct cfdata *cfp, void *auxp)
 }
 
 void
-asterattach(struct device *parent, struct device *self, void *auxp)
+asterattach(device_t parent, device_t self, void *aux)
 {
 	struct aster_softc *astrsc;
 	struct zbus_args *zap;
 	struct supio_attach_args supa;
 
-	astrsc = (struct aster_softc *)self;
-	zap = auxp;
+	astrsc = device_private(self);
+	zap = aux;
 
 	astrsc->sc_bst.base = (u_long)zap->va + 0;
 	astrsc->sc_bst.absm = &amiga_bus_stride_2;
@@ -145,10 +144,11 @@ asterattach(struct device *parent, struct device *self, void *auxp)
 }
 
 int
-asterprint(void *auxp, const char *pnp)
+asterprint(void *aux, const char *pnp)
 {
 	struct supio_attach_args *supa;
-	supa = auxp;
+
+	supa = aux;
 
 	if (pnp == NULL)
 		return(QUIET);

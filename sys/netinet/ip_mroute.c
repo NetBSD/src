@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.121.2.2 2012/05/23 10:08:15 yamt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.121.2.3 2012/10/30 17:22:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.121.2.2 2012/05/23 10:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.121.2.3 2012/10/30 17:22:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3023,7 +3023,7 @@ pim_register_send(struct ip *ip, struct vif *vifp,
     struct mbuf *mb_copy, *mm;
 
     if (mrtdebug & DEBUG_PIM)
-        log(LOG_DEBUG, "pim_register_send: ");
+        log(LOG_DEBUG, "pim_register_send: \n");
 
     mb_copy = pim_register_prepare(ip, m);
     if (mb_copy == NULL)
@@ -3143,7 +3143,7 @@ pim_register_send_upcall(struct ip *ip, struct vif *vifp,
     if (socket_send(ip_mrouter, mb_first, &k_igmpsrc) < 0) {
 	if (mrtdebug & DEBUG_PIM)
 	    log(LOG_WARNING,
-		"mcast: pim_register_send_upcall: ip_mrouter socket queue full");
+		"mcast: pim_register_send_upcall: ip_mrouter socket queue full\n");
 	++mrtstat.mrts_upq_sockfull;
 	return ENOBUFS;
     }
@@ -3311,7 +3311,7 @@ pim_input(struct mbuf *m, ...)
     } else if (in_cksum(m, datalen)) {
 	pimstat.pims_rcv_badsum++;
 	if (mrtdebug & DEBUG_PIM)
-	    log(LOG_DEBUG, "pim_input: invalid checksum");
+	    log(LOG_DEBUG, "pim_input: invalid checksum\n");
 	m_freem(m);
 	return;
     }

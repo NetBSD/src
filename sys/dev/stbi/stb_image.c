@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.1.10.1 2012/04/17 00:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.1.10.2 2012/10/30 17:22:02 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -446,7 +446,8 @@ __KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.1.10.1 2012/04/17 00:08:04 yamt Exp 
 #ifdef _KERNEL
 #define	MALLOC(size)		malloc((size), M_TEMP, M_WAITOK)
 #define	REALLOC(ptr, size)	realloc((ptr), (size), M_TEMP, M_WAITOK)
-#define	FREE(ptr)		free((ptr), M_TEMP)
+#define	FREE(ptr) \
+    do { if (ptr) free((ptr), M_TEMP); } while (/*CONSTCOND*/0)
 #else
 #define	MALLOC(size)		malloc((size))
 #define	REALLOC(ptr, size)	realloc((ptr), (size))
@@ -3050,7 +3051,6 @@ static unsigned char *do_png(png *p, int *x, int *y, int *n, int req_comp)
       *y = p->s.img_y;
       if (n) *n = p->s.img_n;
    }
-   FREE(p->out);      p->out      = NULL;
    FREE(p->expanded); p->expanded = NULL;
    FREE(p->idata);    p->idata    = NULL;
 

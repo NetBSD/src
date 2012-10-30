@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.33 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.33.12.1 2012/10/30 17:20:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.33 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.33.12.1 2012/10/30 17:20:56 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.33 2009/12/04 11:13:04 njoly Exp $");
 static int	uha_eisa_match(device_t, cfdata_t, void *);
 static void	uha_eisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(uha_eisa, sizeof(struct uha_softc),
+CFATTACH_DECL_NEW(uha_eisa, sizeof(struct uha_softc),
     uha_eisa_match, uha_eisa_attach, NULL, NULL);
 
 #ifndef	DDB
@@ -128,6 +128,7 @@ uha_eisa_attach(device_t parent, device_t self, void *aux)
 	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))
 		panic("uha_eisa_attach: could not map I/O addresses");
 
+	sc->sc_dev = self;
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = dmat;
@@ -137,7 +138,7 @@ uha_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, upd.sc_irq, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%d)\n",
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt (%d)\n",
 		    upd.sc_irq);
 		return;
 	}
@@ -145,13 +146,13 @@ uha_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    u24_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* Save function pointers for later use. */
 	sc->start_mbox = u24_start_mbox;
@@ -231,7 +232,7 @@ u24_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 		delay(100);
 	}
 	if (!spincount) {
-		aprint_error_dev(&sc->sc_dev, "uha_start_mbox, board not responding\n");
+		aprint_error_dev(sc->sc_dev, "uha_start_mbox, board not responding\n");
 		Debugger();
 	}
 
@@ -280,7 +281,7 @@ u24_intr(void *arg)
 	u_long mboxval;
 
 #ifdef	UHADEBUG
-	printf("%s: uhaintr ", device_xname(&sc->sc_dev));
+	printf("%s: uhaintr ", device_xname(sc->sc_dev));
 #endif /*UHADEBUG */
 
 	if ((bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) == 0)
@@ -306,7 +307,7 @@ u24_intr(void *arg)
 		mscp = uha_mscp_phys_kv(sc, mboxval);
 		if (!mscp) {
 			printf("%s: BAD MSCP RETURNED!\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			continue;	/* whatever it was, it'll timeout */
 		}
 		callout_stop(&mscp->xs->xs_callout);

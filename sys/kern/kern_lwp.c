@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.164.2.1 2012/04/17 00:08:24 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.164.2.2 2012/10/30 17:22:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.2.1 2012/04/17 00:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.2.2 2012/10/30 17:22:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -239,6 +239,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.164.2.1 2012/04/17 00:08:24 yamt Exp 
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
 #include <sys/xcall.h>
+#include <sys/uidinfo.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -286,6 +288,47 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 
+static int sysctl_kern_maxlwp(SYSCTLFN_PROTO);
+
+/*
+ * sysctl helper routine for kern.maxlwp. Ensures that the new
+ * values are not too low or too high.
+ */
+static int
+sysctl_kern_maxlwp(SYSCTLFN_ARGS)
+{
+	int error, nmaxlwp;
+	struct sysctlnode node;
+
+	nmaxlwp = maxlwp;
+	node = *rnode;
+	node.sysctl_data = &nmaxlwp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (nmaxlwp < 0 || nmaxlwp >= 65536)
+		return EINVAL;
+	if (nmaxlwp > cpu_maxlwp())
+		return EINVAL;
+	maxlwp = nmaxlwp;
+
+	return 0;
+}
+
+static void
+sysctl_kern_lwp_setup(void)
+{
+	struct sysctllog *clog = NULL;
+
+	sysctl_createv(&clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxlwp",
+		       SYSCTL_DESCR("Maximum number of simultaneous threads"),
+		       sysctl_kern_maxlwp, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+}
+
 void
 lwpinit(void)
 {
@@ -295,6 +338,9 @@ lwpinit(void)
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
+
+	maxlwp = cpu_maxlwp();
+	sysctl_kern_lwp_setup();
 }
 
 void
@@ -310,6 +356,7 @@ lwp0_init(void)
 	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
 	cv_init(&l->l_sigcv, "sigwait");
+	cv_init(&l->l_waitcv, "vfork");
 
 	kauth_cred_hold(proc0.p_cred);
 	l->l_cred = proc0.p_cred;
@@ -486,22 +533,21 @@ lwp_unstop(struct lwp *l)
  * Must be called with p->p_lock held.
  */
 int
-lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
+lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 {
-	struct proc *p = l->l_proc;
-	struct lwp *l2;
-	int nfound, error;
-	lwpid_t curlid;
-	bool exiting;
+	const lwpid_t curlid = l->l_lid;
+	proc_t *p = l->l_proc;
+	lwp_t *l2;
+	int error;
 
 	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nlwpwait++;
 	l->l_waitingfor = lid;
-	curlid = l->l_lid;
-	exiting = ((flags & LWPWAIT_EXITCONTROL) != 0);
 
 	for (;;) {
+		int nfound;
+
 		/*
 		 * Avoid a race between exit1() and sigexit(): if the
 		 * process is dumping core, then we need to bail out: call
@@ -511,10 +557,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		if ((p->p_sflag & PS_WCORE) != 0) {
 			mutex_exit(p->p_lock);
 			lwp_userret(l);
-#ifdef DIAGNOSTIC
-			panic("lwp_wait1");
-#endif
-			/* NOTREACHED */
+			KASSERT(false);
 		}
 
 		/*
@@ -604,13 +647,14 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		}
 
 		/*
-		 * The kernel is careful to ensure that it can not deadlock
-		 * when exiting - just keep waiting.
+		 * Note: since the lock will be dropped, need to restart on
+		 * wakeup to run all LWPs again, e.g. there may be new LWPs.
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
 			cv_wait(&p->p_lwpcv, p->p_lock);
-			continue;
+			error = EAGAIN;
+			break;
 		}
 
 		/*
@@ -675,6 +719,25 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	lwpid_t lid;
 
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
+
+	/*
+	 * Enforce limits, excluding the first lwp and kthreads.
+	 */
+	if (p2->p_nlwps != 0 && p2 != &proc0) {
+		uid_t uid = kauth_cred_getuid(l1->l_cred);
+		int count = chglwpcnt(uid, 1);
+		if (__predict_false(count >
+		    p2->p_rlimit[RLIMIT_NTHR].rlim_cur)) {
+			if (kauth_authorize_process(l1->l_cred,
+			    KAUTH_PROCESS_RLIMIT, p2,
+			    KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_BYPASS),
+			    &p2->p_rlimit[RLIMIT_NTHR], KAUTH_ARG(RLIMIT_NTHR))
+			    != 0) {
+				(void)chglwpcnt(uid, -1);
+				return EAGAIN;
+			}
+		}
+	}
 
 	/*
 	 * First off, reap any detached LWP waiting to be collected.
@@ -759,6 +822,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
 	cv_init(&l2->l_sigcv, "sigwait");
+	cv_init(&l2->l_waitcv, "vfork");
 	l2->l_syncobj = &sched_syncobj;
 
 	if (rnewlwpp != NULL)
@@ -852,6 +916,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
+	KASSERTMSG(new == curlwp, "l %p curlwp %p prevlwp %p", new, curlwp, prev);
 
 	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
 
@@ -916,6 +981,7 @@ lwp_exit(struct lwp *l)
 	mutex_enter(p->p_lock);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
+		KASSERT(p != &proc0);
 		/* XXXSMP kernel_lock not held */
 		exit1(l, 0);
 		/* NOTREACHED */
@@ -1041,6 +1107,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(l != curlwp);
 	KASSERT(last || mutex_owned(p->p_lock));
 
+	if (p != &proc0 && p->p_nlwps != 1)
+		(void)chglwpcnt(kauth_cred_getuid(l->l_cred), -1);
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.
@@ -1095,6 +1163,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
+	cv_destroy(&l->l_waitcv);
 
 	/*
 	 * Free lwpctl structure and affinity.

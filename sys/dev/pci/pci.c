@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.142.2.1 2012/10/30 17:21:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142 2011/08/29 14:47:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142.2.1 2012/10/30 17:21:37 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -580,7 +580,24 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		else
 			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
+#ifdef __PCI_DEV_FUNCORDER
+		char funcs[8];
+		int j;
+		for (j = 0; j < nfunctions; j++) {
+			funcs[j] = j;
+		}
+		if (j < __arraycount(funcs))
+			funcs[j] = -1;
+		if (nfunctions > 1) {
+			pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device,
+			    nfunctions, funcs);
+		}
+		for (j = 0;
+		     j < 8 && (function = funcs[j]) < 8 && function >= 0;
+		     j++) {
+#else
 		for (function = 0; function < nfunctions; function++) {
+#endif
 			if ((locators[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT)
 			    && (locators[PCICF_FUNCTION] != function))
 				continue;

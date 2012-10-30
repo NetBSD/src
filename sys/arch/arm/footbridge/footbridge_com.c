@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.34 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.34.2.1 2012/10/30 17:19:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.34 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.34.2.1 2012/10/30 17:19:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -154,7 +154,7 @@ extern int comcnspeed;
 extern struct bus_space fcomcons_bs_tag;
 
 /*
- * int fcom_probe(struct device *parent, struct cfdata *cf, void *aux)
+ * int fcom_probe(device_t parent, cfdata_t cf, void *aux)
  *
  * Make sure we are trying to attach a com device and then
  * probe for one.

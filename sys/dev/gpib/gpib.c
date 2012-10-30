@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.19 2009/09/12 18:41:05 tsutsui Exp $	*/
+/*	$NetBSD: gpib.c,v 1.19.12.1 2012/10/30 17:20:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.19 2009/09/12 18:41:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.19.12.1 2012/10/30 17:20:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,11 @@ int gpibdebug = 0xff;
 int	gpibmatch(device_t, cfdata_t, void *);
 void	gpibattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gpib, sizeof(struct gpib_softc),
+CFATTACH_DECL_NEW(gpib, sizeof(struct gpib_softc),
 	gpibmatch, gpibattach, NULL, NULL);
 
-static int	gpibsubmatch1(device_t, cfdata_t,
-			      const int *, void *);
-static int	gpibsubmatch2(device_t, cfdata_t,
-			      const int *, void *);
+static int	gpibsubmatch1(device_t, cfdata_t, const int *, void *);
+static int	gpibsubmatch2(device_t, cfdata_t, const int *, void *);
 static int	gpibprint(void *, const char *);
 
 dev_type_open(gpibopen);
@@ -101,11 +99,12 @@ void
 gpibattach(device_t parent, device_t self, void *aux)
 {
 	struct gpib_softc *sc = device_private(self);
-	cfdata_t cf = device_cfdata(&sc->sc_dev);
+	cfdata_t cf = device_cfdata(self);
 	struct gpibdev_attach_args *gda = aux;
 	struct gpib_attach_args ga;
 	int address;
 
+	sc->sc_dev = self;
 	sc->sc_ic = gda->ga_ic;
 
 	/*
@@ -131,18 +130,18 @@ gpibattach(device_t parent, device_t self, void *aux)
 	for (address=0; address<GPIB_NDEVS; address++) {
 		ga.ga_ic = sc->sc_ic;
 		ga.ga_address = address;
-		(void) config_search_ia(gpibsubmatch1, &sc->sc_dev, "gpib", &ga);
+		(void) config_search_ia(gpibsubmatch1, sc->sc_dev, "gpib", &ga);
 	}
 
 	/* attach the wild-carded devices - probably protocol busses */
 	ga.ga_ic = sc->sc_ic;
-	(void) config_search_ia(gpibsubmatch2,  &sc->sc_dev, "gpib", &ga);
+	(void) config_search_ia(gpibsubmatch2, sc->sc_dev, "gpib", &ga);
 }
 
 int
 gpibsubmatch1(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct gpib_softc *sc = (struct gpib_softc *)parent;
+	struct gpib_softc *sc = device_private(parent);
 	struct gpib_attach_args *ga = aux;
 
 	if (cf->cf_loc[GPIBCF_ADDRESS] != ga->ga_address)
@@ -290,7 +289,7 @@ _gpibswait(struct gpib_softc *sc, int slave)
 	pptest = sc->sc_ic->pptest;
 	while ((*pptest)(sc->sc_ic->cookie, slave) == 0) {
 		if (--timo == 0) {
-			aprint_error_dev(&sc->sc_dev, "swait timeout\n");
+			aprint_error_dev(sc->sc_dev, "swait timeout\n");
 			return(-1);
 		}
 	}
@@ -405,7 +404,7 @@ senderror:
 	(*sc->sc_ic->ifc)(sc->sc_ic->cookie);
 	DPRINTF(DBG_FAIL,
 	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n",
-	    device_xname(&sc->sc_dev), slave, sec, cnt, origcnt));
+	    device_xname(sc->sc_dev), slave, sec, cnt, origcnt));
 	return (cnt);
 }
 

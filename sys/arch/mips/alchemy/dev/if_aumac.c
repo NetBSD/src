@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.31.2.2 2012/05/23 10:07:45 yamt Exp $ */
+/* $NetBSD: if_aumac.c,v 1.31.2.3 2012/10/30 17:19:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.31.2.2 2012/05/23 10:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.31.2.3 2012/10/30 17:19:59 yamt Exp $");
 
 
 
@@ -190,7 +190,7 @@ static int	aumac_rxintr(struct aumac_softc *);
 
 static int	aumac_mii_readreg(device_t, int, int);
 static void	aumac_mii_writereg(device_t, int, int, int);
-static void	aumac_mii_statchg(device_t);
+static void	aumac_mii_statchg(struct ifnet *);
 static int	aumac_mii_wait(struct aumac_softc *, const char *);
 
 static int	aumac_match(device_t, struct cfdata *, void *);
@@ -497,6 +497,7 @@ aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 		if (ifp->if_flags & IFF_RUNNING)
 			aumac_set_filter(sc);
+		error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1037,9 +1038,9 @@ aumac_mii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-aumac_mii_statchg(device_t self)
+aumac_mii_statchg(struct ifnet *ifp)
 {
-	struct aumac_softc *sc = device_private(self);
+	struct aumac_softc *sc = ifp->if_softc;
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		sc->sc_control |= CONTROL_F;

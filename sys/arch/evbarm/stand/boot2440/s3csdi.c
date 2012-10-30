@@ -32,6 +32,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include <machine/int_mwgwtypes.h>
 #include <machine/limits.h>
 
 #include <dev/sdmmc/sdmmcreg.h>
@@ -413,7 +414,7 @@ sssdi_perform_pio_write(struct sdmmc_command *cmd)
 			/* Acknowledge the timeout*/
 			bus_space_write_4(sc->iot, sc->ioh, SDI_DAT_STA,
 					  SDIDATSTA_DATA_TIMEOUT);
-			printf("%s: Data timeout\n", device_xname(&sc->dev));
+			printf("%s: Data timeout\n", device_xname(sc->dev));
 			break;
 		}
 

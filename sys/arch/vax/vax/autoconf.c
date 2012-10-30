@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92.8.1 2012/04/17 00:07:01 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.92.8.2 2012/10/30 17:20:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92.8.1 2012/04/17 00:07:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92.8.2 2012/10/30 17:20:29 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -102,7 +102,7 @@ cpu_rootconf(void)
 	printf("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 static int	mainbus_print(void *, const char *);
@@ -419,7 +419,7 @@ int
 booted_ra(device_t dev, void *aux)
 {
 	struct drive_attach_args *da = aux;
-	struct mscp_softc *pdev = (void *)device_parent(dev);
+	struct mscp_softc *pdev = device_private(device_parent(dev));
 	paddr_t ioaddr;
 
 	if (jmfr("ra", dev, BDEV_UDA))

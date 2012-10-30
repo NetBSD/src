@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.117.2.1 2012/04/17 00:08:04 yamt Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.117.2.2 2012/10/30 17:22:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.1 2012/04/17 00:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.2 2012/10/30 17:22:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.117.2.1 2012/04/17 00:08:04 yamt
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
+#include <sys/rnd.h>
 
-/* #define ENVSYS_DEBUG */
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
@@ -357,10 +357,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (tred->sensor < sme->sme_nsensors) {
-			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0 &&
-			    (sme->sme_flags & SME_POLL_ONLY) == 0) {
+			if ((sme->sme_flags & SME_POLL_ONLY) == 0) {
 				mutex_enter(&sme->sme_mtx);
-				(*sme->sme_refresh)(sme, edata);
+				sysmon_envsys_refresh_sensor(sme, edata);
 				mutex_exit(&sme->sme_mtx);
 			}
 
@@ -516,7 +515,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 /*
  * sysmon_envsys_sensor_attach:
  *
- * 	+ Attachs a sensor into a sysmon_envsys device checking that units
+ * 	+ Attaches a sensor into a sysmon_envsys device checking that units
  * 	  is set to a valid type and description is unique and not empty.
  */
 int
@@ -555,7 +554,7 @@ sysmon_envsys_sensor_attach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	TAILQ_INSERT_TAIL(&sme->sme_sensors_list, edata, sensors_head);
 
 	/*
-	 * Give the sensor a index position.
+	 * Give the sensor an index position.
 	 */
 	edata->sensor = sme->sme_nsensors;
 	sme->sme_nsensors++;
@@ -602,8 +601,9 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	/*
-	 * remove it and decrement the sensors count.
+	 * remove it, unhook from rnd(4), and decrement the sensors count.
 	 */
+	sme_event_unregister_sensor(sme, edata);
 	TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	sme->sme_nsensors--;
 	sysmon_envsys_release(sme, true);
@@ -635,6 +635,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	sme_event_drv_t *this_evdrv;
 	int nevent;
 	int error = 0;
+	char rnd_name[sizeof(edata->rnd_src.name)];
 
 	KASSERT(sme != NULL);
 	KASSERT(sme->sme_name != NULL);
@@ -771,6 +772,17 @@ out:
 			sysmon_task_queue_sched(0,
 			    sme_event_drvadd, evdv->evdrv);
 			nevent++;
+		}
+		/*
+		 * Hook the sensor into rnd(4) entropy pool if requested
+		 */
+		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+			if (edata->flags & ENVSYS_FHAS_ENTROPY) {
+				snprintf(rnd_name, sizeof(rnd_name), "%s-%s",
+				    sme->sme_name, edata->desc);
+				rnd_attach_source(&edata->rnd_src, rnd_name,
+				    RND_TYPE_ENV, 0);
+			}
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d nevent=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors, nevent));
@@ -1001,8 +1013,7 @@ sme_initial_refresh(void *arg)
 	mutex_enter(&sme->sme_mtx);
 	sysmon_envsys_acquire(sme, true);
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head)
-		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
-			(*sme->sme_refresh)(sme, edata);
+		sysmon_envsys_refresh_sensor(sme, edata);
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
 }
@@ -1050,6 +1061,7 @@ sme_remove_userprops(void)
 	prop_dictionary_t sdict;
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
+	char rnd_name[sizeof(edata->rnd_src.name)];
 	sysmon_envsys_lim_t lims;
 	const struct sme_descr_entry *sdt_units;
 	uint32_t props;
@@ -1156,20 +1168,28 @@ sme_remove_userprops(void)
 			sme_event_unregister(sme, edata->desc,
 			    PENVSYS_EVENT_LIMITS);
 
+			/*
+			 * Find the correct units for this sensor.
+			 */
+			sdt_units = sme_find_table_entry(SME_DESC_UNITS,
+			    edata->units);
+
 			if (props & PROP_LIMITS) {
 				DPRINTF(("%s: install limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
 
-
-				/*
-				 * Find the correct units for this sensor.
-				 */
-				sdt_units = sme_find_table_entry(SME_DESC_UNITS,
-				    edata->units);
-
 				sme_event_register(sdict, edata, sme,
 				    &lims, props, PENVSYS_EVENT_LIMITS,
 				    sdt_units->crittype);
+			}
+			if (edata->flags & ENVSYS_FHAS_ENTROPY) {
+				sme_event_register(sdict, edata, sme,
+				    &lims, props, PENVSYS_EVENT_NULL,
+				    sdt_units->crittype);
+				snprintf(rnd_name, sizeof(rnd_name), "%s-%s",
+				    sme->sme_name, edata->desc);
+				rnd_attach_source(&edata->rnd_src, rnd_name,
+				    RND_TYPE_ENV, 0);
 			}
 		}
 
@@ -1269,6 +1289,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	int error;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	char indexstr[ENVSYS_DESCLEN];
+	bool mon_supported, allow_rfact;
 
 	/*
 	 * Add the index sensor string.
@@ -1307,13 +1328,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE) ||
 	    (edata->units == ENVSYS_BATTERY_CAPACITY) ||
-	    (edata->units == ENVSYS_BATTERY_CHARGE)) {
-		if (sme_sensor_upbool(dict, "monitoring-supported", false))
-			goto out;
-	} else {
-		if (sme_sensor_upbool(dict, "monitoring-supported", true))
-			goto out;
-	}
+	    (edata->units == ENVSYS_BATTERY_CHARGE))
+		mon_supported = false;
+	else
+		mon_supported = true;
+	if (sme_sensor_upbool(dict, "monitoring-supported", mon_supported))
+		goto out;
 
 	/*
 	 * Add the allow-rfact boolean object, true if
@@ -1326,13 +1346,12 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 */
 	if (edata->units == ENVSYS_SVOLTS_DC ||
 	    edata->units == ENVSYS_SVOLTS_AC) {
-		if (edata->flags & ENVSYS_FCHANGERFACT) {
-			if (sme_sensor_upbool(dict, "allow-rfact", true))
-				goto out;
-		} else {
-			if (sme_sensor_upbool(dict, "allow-rfact", false))
-				goto out;
-		}
+		if (edata->flags & ENVSYS_FCHANGERFACT)
+			allow_rfact = true;
+		else
+			allow_rfact = false;
+		if (sme_sensor_upbool(dict, "allow-rfact", allow_rfact))
+			goto out;
 	}
 
 	error = sme_update_sensor_dictionary(dict, edata,
@@ -1355,9 +1374,10 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	}
 
 	/*
-	 * Register new event(s) if any monitoring flag was set.
+	 * Register new event(s) if any monitoring flag was set or if
+	 * the sensor provides entropy for rnd(4).
 	 */
-	if (edata->flags & ENVSYS_FMONANY) {
+	if (edata->flags & (ENVSYS_FMONANY | ENVSYS_FHAS_ENTROPY)) {
 		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_SLEEP);
 		sme_evdrv_t->sed_sdict = dict;
 		sme_evdrv_t->sed_edata = edata;
@@ -1421,14 +1441,11 @@ sme_get_max_value(struct sysmon_envsys *sme,
 			continue;
 
 		/* 
-		 * refresh sensor data via sme_refresh only if the
-		 * flag is not set.
+		 * refresh sensor data
 		 */
-		if (refresh && (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-			mutex_enter(&sme->sme_mtx);
-			(*sme->sme_refresh)(sme, edata);
-			mutex_exit(&sme->sme_mtx);
-		}
+		mutex_enter(&sme->sme_mtx);
+		sysmon_envsys_refresh_sensor(sme, edata);
+		mutex_exit(&sme->sme_mtx);
 
 		v = edata->value_cur;
 		if (v > maxv)
@@ -1498,14 +1515,11 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 */
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 		/* 
-		 * refresh sensor data via sme_refresh only if the
-		 * flag is not set.
+		 * refresh sensor data via sme_envsys_refresh_sensor
 		 */
-		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-			mutex_enter(&sme->sme_mtx);
-			(*sme->sme_refresh)(sme, edata);
-			mutex_exit(&sme->sme_mtx);
-		}
+		mutex_enter(&sme->sme_mtx);
+		sysmon_envsys_refresh_sensor(sme, edata);
+		mutex_exit(&sme->sme_mtx);
 
 		/* 
 		 * retrieve sensor's dictionary.
@@ -1881,11 +1895,11 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			props |= PROP_WARNMIN;
 		}
 
-		if (props) {
-			if (edata->flags & ENVSYS_FMONNOTSUPP) {
-				error = ENOTSUP;
-				goto out;
-			}
+		if (props && (edata->flags & ENVSYS_FMONNOTSUPP) != 0) {
+			error = ENOTSUP;
+			goto out;
+		}
+		if (props || (edata->flags & ENVSYS_FHAS_ENTROPY) != 0) {
 			error = sme_event_register(dict, edata, sme, &lims,
 					props,
 					(edata->flags & ENVSYS_FPERCENT)?
@@ -1933,10 +1947,9 @@ sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
 
 		sysmon_envsys_acquire(sme, false);
 		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
-			if (refresh &&
-			    (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+			if (refresh) {
 				mutex_enter(&sme->sme_mtx);
-				(*sme->sme_refresh)(sme, sensor);
+				sysmon_envsys_refresh_sensor(sme, sensor);
 				mutex_exit(&sme->sme_mtx);
 			}
 			if (!(*func)(sme, sensor, arg))
@@ -1945,4 +1958,21 @@ sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
 		sysmon_envsys_release(sme, false);
 	}
 	mutex_exit(&sme_global_mtx);
+}
+
+/*
+ * Call the sensor's refresh function, and collect/stir entropy
+ */
+void
+sysmon_envsys_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+
+	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
+		(*sme->sme_refresh)(sme, edata);
+
+	if (edata->flags & ENVSYS_FHAS_ENTROPY &&
+	    edata->state != ENVSYS_SINVALID &&
+	    edata->value_prev != edata->value_cur)
+		rnd_add_uint32(&edata->rnd_src, edata->value_cur);
+	edata->value_prev = edata->value_cur;
 }

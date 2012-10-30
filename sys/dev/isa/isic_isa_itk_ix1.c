@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.17 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.17.34.1 2012/10/30 17:21:15 yamt Exp $");
 
 #include "opt_isicisa.h"
 
@@ -310,11 +310,11 @@ int isic_attach_itkix1(struct isic_softc *sc)
 	if((hv1 != 0x05 && hv1 != 0x04) || (hv2 != 0x05 && hv2 != 0x04))
 	{
 		printf("%s: HSCX VSTR test failed for ITK ix1 micro\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 		printf("%s: HSC0: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(0, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(0, H_VSTR));
 		printf("%s: HSC1: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(1, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(1, H_VSTR));
 		return 0;
 	}
 

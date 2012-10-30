@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.11.2.1 2011/11/10 14:31:39 yamt Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.11.2.2 2012/10/30 17:18:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,11 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.11.2.1 2011/11/10 14:31:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.11.2.2 2012/10/30 17:18:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
+
+/* Define various stack sizes in pages */
+#define IRQ_STACK_SIZE	8
+#define ABT_STACK_SIZE	8
+#ifdef IPKDB
+#define UND_STACK_SIZE	16
+#else
+#define UND_STACK_SIZE	8
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,15 +100,6 @@ int cnmode = CONMODE;
 
 
 
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	8
-#define ABT_STACK_SIZE	8
-#ifdef IPKDB
-#define UND_STACK_SIZE	16
-#else
-#define UND_STACK_SIZE	8
-#endif
-
 /* boot configuration: */
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -108,19 +108,9 @@ vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
 //static struct arm32_dma_range dma_ranges[4];
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -458,7 +448,7 @@ at91bus_setup(BootConfig *mem)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

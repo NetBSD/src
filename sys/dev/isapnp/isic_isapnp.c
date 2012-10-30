@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.31 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.31.12.1 2012/10/30 17:21:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -76,7 +76,7 @@ extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 static int isic_isapnp_probe(device_t, cfdata_t, void *);
 static void isic_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(isic_isapnp, sizeof(struct isic_softc),
+CFATTACH_DECL_NEW(isic_isapnp, sizeof(struct isic_softc),
     isic_isapnp_probe, isic_isapnp_attach, NULL, NULL);
 
 typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct isic_softc *sc);
@@ -180,13 +180,12 @@ isic_isapnp_probe(device_t parent,
 #define	TERMFMT	" "
 #else
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	device_xname(&sc->sc_dev)
+#define	ISIC_PARM	device_xname(sc->sc_dev)
 #define	TERMFMT	"\n"
 #endif
 
 static void
-isic_isapnp_attach(device_t parent,
-	device_t self, void *aux)
+isic_isapnp_attach(device_t parent, device_t self, void *aux)
 {
   	static const char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
@@ -211,8 +210,9 @@ isic_isapnp_attach(device_t parent,
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
 
+	sc->sc_dev = self;
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
+		aprint_error_dev(sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -233,7 +233,7 @@ isic_isapnp_attach(device_t parent,
 	/* establish interrupt handler */
 	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, ipa->ipa_irq[0].type,
 		IPL_NET, isicintr, sc) == NULL)
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt handler\n");
 
 	/* init card */
 	desc->attach(sc);

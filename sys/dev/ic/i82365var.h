@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.31 2009/09/17 18:14:41 tsutsui Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.31.12.1 2012/10/30 17:21:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -117,7 +117,7 @@ struct pcic_handle {
 #define	PCIC_NSLOTS	4
 
 struct pcic_softc {
-	struct device dev;
+	device_t dev;
 
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;

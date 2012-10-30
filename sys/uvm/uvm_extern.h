@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.176.2.9 2012/04/17 00:08:58 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.176.2.10 2012/10/30 17:23:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -644,7 +644,7 @@ bool			uvm_kernacc(void *, size_t, vm_prot_t);
 __dead void		uvm_scheduler(void);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(vaddr_t);
-vaddr_t			uvm_uarea_system_alloc(void);
+vaddr_t			uvm_uarea_system_alloc(struct cpu_info *);
 void			uvm_uarea_system_free(vaddr_t);
 vaddr_t			uvm_lwp_getuarea(lwp_t *);
 void			uvm_lwp_setuarea(lwp_t *, vaddr_t);

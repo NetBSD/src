@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.2.4.2 2012/04/17 00:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.2.4.3 2012/10/30 17:19:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -208,18 +208,6 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.2.4.2 2012/04/17 00:06:15 yam
  */
 #define KERNEL_VM_SIZE		0x0C000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = (u_int)0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
 /* Declared extern elsewhere in the kernel */
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -237,24 +225,13 @@ vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
 vm_offset_t pagetables_start;
-int physmem = 0;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;		/* Default number */
 #endif				/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -324,7 +301,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
 
-	cpu_reset_address = vtophys((u_int)s3c2440_softreset);
+	cpu_reset_address_paddr = vtophys((uintptr_t)s3c2440_softreset);
 
 	/*
 	 * If we are still cold then hit the air brakes
@@ -843,7 +820,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

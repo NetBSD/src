@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.38.8.1 2012/05/23 10:07:56 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.38.8.2 2012/10/30 17:21:11 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.38.8.1 2012/05/23 10:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.38.8.2 2012/10/30 17:21:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -255,11 +255,15 @@ firewireattach(device_t parent, device_t self, void *aux)
 
 	callout_schedule(&fc->timeout_callout, hz);
 
+	/* Tell config we will have started a thread to scan the bus.  */
+	config_pending_incr();
+
 	/* create thread */
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
-	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev)))
+	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev))) {
 		aprint_error_dev(self, "kthread_create failed\n");
-	config_pending_incr();
+		config_pending_decr();
+	}
 
 	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
 	if (devlist == NULL) {
@@ -677,6 +681,15 @@ fw_init(struct firewire_comm *fc)
 #endif
 
 	fc->crom_src_buf = NULL;
+}
+
+void
+fw_destroy(struct firewire_comm *fc)
+{
+	mutex_destroy(&fc->arq->q_mtx);
+	mutex_destroy(&fc->ars->q_mtx);
+	mutex_destroy(&fc->atq->q_mtx);
+	mutex_destroy(&fc->ats->q_mtx);
 }
 
 #define BIND_CMP(addr, fwb) \
@@ -1935,6 +1948,20 @@ fw_bus_probe_thread(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
 
+	/*
+	 * Tell config we've scanned the bus.
+	 *
+	 * XXX This is not right -- we haven't actually scanned it.  We
+	 * probably ought to call this after the first bus exploration.
+	 *
+	 * bool once = false;
+	 * ...
+	 * 	fw_attach_dev(fc);
+	 * 	if (!once) {
+	 * 		config_pending_decr();
+	 * 		once = true;
+	 * 	}
+	 */
 	config_pending_decr();
 
 	mutex_enter(&fc->wait_lock);

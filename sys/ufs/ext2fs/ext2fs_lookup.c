@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.66.2.1 2012/04/17 00:08:55 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.66.2.2 2012/10/30 17:22:59 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66.2.1 2012/04/17 00:08:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.66.2.2 2012/10/30 17:22:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,9 +538,10 @@ searchloop:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE) {
 		cache_enter(vdp, *vpp, cnp);
-	return (ENOENT);
+	}
+	return ENOENT;
 
 found:
 	if (numdirpasses == 2)
@@ -698,9 +699,8 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
-	return (0);
+	cache_enter(vdp, *vpp, cnp);
+	return 0;
 }
 
 /*

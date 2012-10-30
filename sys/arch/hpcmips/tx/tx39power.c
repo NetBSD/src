@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.19.34.1 2012/04/17 00:06:25 yamt Exp $ */
+/*	$NetBSD: tx39power.c,v 1.19.34.2 2012/10/30 17:19:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.19.34.1 2012/04/17 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.19.34.2 2012/10/30 17:19:45 yamt Exp $");
 
 #include "opt_tx39power_debug.h"
 
@@ -60,18 +60,18 @@ __KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.19.34.1 2012/04/17 00:06:25 yamt Exp
 
 #define ISSETPRINT(r, m)	dbg_bitmask_print(r, TX39_POWERCTRL_##m, #m)
 
-int	tx39power_match(struct device *, struct cfdata *, void *);
-void	tx39power_attach(struct device *, struct device *, void *);
+int	tx39power_match(device_t, cfdata_t, void *);
+void	tx39power_attach(device_t, device_t, void *);
 
 struct tx39power_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	tx_chipset_tag_t sc_tc;
 
 	/* save interrupt status for resume */
 	txreg_t sc_icu_state[TX39_INTRSET_MAX + 1];
 };
 
-CFATTACH_DECL(tx39power, sizeof(struct tx39power_softc),
+CFATTACH_DECL_NEW(tx39power, sizeof(struct tx39power_softc),
     tx39power_match, tx39power_attach, NULL, NULL);
 
 void tx39power_suspend_cpu(void); /* automatic hardware resume */
@@ -87,19 +87,20 @@ static void __tx39power_dump(struct tx39power_softc *);
 #endif
 
 int
-tx39power_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39power_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (ATTACH_FIRST);
 }
 
 void
-tx39power_attach(struct device *parent, struct device *self, void *aux)
+tx39power_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39power_softc *sc = (void*)self;
+	struct tx39power_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 	txreg_t reg;
 	
+	sc->sc_dev = self;
 	tc = sc->sc_tc = ta->ta_tc;
 	tx_conf_register_power(tc, self);
 
@@ -151,7 +152,7 @@ tx39power_suspend_cpu(void) /* I assume already splhigh */
 	struct tx39power_softc *sc = tc->tc_powert;
 	txreg_t reg, *iregs = sc->sc_icu_state;
 
-	printf ("%s: CPU sleep\n", sc->sc_dev.dv_xname);
+	printf ("%s: CPU sleep\n", device_xname(sc->sc_dev));
 	__asm volatile(".set noreorder");
 	reg = tx_conf_read(tc, TX39_POWERCTRL_REG);
 	reg |= TX39_POWERCTRL_STOPCPU;
@@ -208,7 +209,7 @@ tx39power_suspend_cpu(void) /* I assume already splhigh */
 #endif
 	__asm volatile(".set reorder");
 
-	printf ("%s: CPU wakeup\n", sc->sc_dev.dv_xname);
+	printf ("%s: CPU wakeup\n", device_xname(sc->sc_dev));
 }
 
 static int

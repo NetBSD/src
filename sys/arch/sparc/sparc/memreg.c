@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.44 2011/07/17 23:32:37 mrg Exp $ */
+/*	$NetBSD: memreg.c,v 1.44.2.1 2012/10/30 17:20:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.44 2011/07/17 23:32:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.44.2.1 2012/10/30 17:20:22 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.44 2011/07/17 23:32:37 mrg Exp $");
 #include <machine/pte.h>
 #include <machine/reg.h>	/* for trapframe */
 #include <machine/trap.h>	/* for trap types */
+
+volatile u_int *par_err_reg;
 
 static int	memregmatch_mainbus(device_t, cfdata_t, void *);
 static int	memregmatch_obio(device_t, cfdata_t, void *);

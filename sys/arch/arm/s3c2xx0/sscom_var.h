@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.8.2.1 2012/04/17 00:06:07 yamt Exp $ */
+/* $NetBSD: sscom_var.h,v 1.8.2.2 2012/10/30 17:19:09 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -276,10 +276,10 @@ struct sscom_uart_info {
 int	sscomspeed(long, long);
 void	sscom_attach_subr(struct sscom_softc *);
 
-int	sscom_detach(struct device *, int);
-int	sscom_activate(struct device *, enum devact);
+int	sscom_detach(device_t, int);
+int	sscom_activate(device_t, enum devact);
 void	sscom_shutdown(struct sscom_softc *);
-void	sscomdiag		(void *);
+void	sscomdiag(void *);
 void	sscomstart(struct tty *);
 int	sscomparam(struct tty *, struct termios *);
 int	sscomread(dev_t, struct uio *, int);

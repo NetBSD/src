@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_frag.h,v 1.2.4.2 2012/04/17 00:08:15 yamt Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.34.2.2 2012/01/26 05:29:11 darrenr Exp
+ * Id: ip_frag.h,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_

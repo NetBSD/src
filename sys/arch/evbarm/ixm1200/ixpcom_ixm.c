@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.9.2.1 2012/04/17 00:06:14 yamt Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.9.2.2 2012/10/30 17:19:24 yamt Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9.2.1 2012/04/17 00:06:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9.2.2 2012/10/30 17:19:24 yamt Exp $");
 
 /* Front-end of ixpcom */
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixpcom_ixm.c,v 1.9.2.1 2012/04/17 00:06:14 yamt Exp 
 static int	ixpcom_ixm_match(device_t, cfdata_t, void *);
 static void	ixpcom_ixm_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ixpcom_ixm, sizeof(struct ixpcom_softc),
+CFATTACH_DECL_NEW(ixpcom_ixm, sizeof(struct ixpcom_softc),
     ixpcom_ixm_match, ixpcom_ixm_attach, NULL, NULL);
 
 static int
@@ -71,6 +71,7 @@ ixpcom_ixm_attach(device_t parent, device_t self, void *aux)
 	struct ixpcom_softc *sc = &isc->sc_ixpcom;
 	struct ixpsip_attach_args *sa = aux;
 
+	sc->sc_dev = self;
 	isc->sc_iot = sa->sa_iot;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;

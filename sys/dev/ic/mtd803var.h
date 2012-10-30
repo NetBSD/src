@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.6.34.1 2012/04/17 00:07:35 yamt Exp $ */
+/* $NetBSD: mtd803var.h,v 1.6.34.2 2012/10/30 17:21:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct mtd_desc {
 
 /* Softc struct */
 struct mtd_softc {
-	struct device		dev;
+	device_t		dev;
 	struct mii_data		mii;
 	struct ethercom		ethercom;
 	bus_space_tag_t		bus_tag;

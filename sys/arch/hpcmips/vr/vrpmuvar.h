@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmuvar.h,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
+/*	$NetBSD: vrpmuvar.h,v 1.1.1.1.176.1 2012/10/30 17:19:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -27,7 +27,6 @@
  */
 
 struct vrpmu_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_handler;

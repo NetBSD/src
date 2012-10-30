@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.161.2.2 2012/05/23 10:08:18 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.161.2.3 2012/10/30 17:22:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.161.2.2 2012/05/23 10:08:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.161.2.3 2012/10/30 17:22:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1228,38 +1228,45 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 static int
 ext2fs_checksb(struct ext2fs *fs, int ronly)
 {
+	uint32_t u32;
 
 	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
 		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
 #ifdef DIAGNOSTIC
-		printf("Ext2 fs: unsupported revision number: %x\n",
+		printf("ext2fs: unsupported revision number: %x\n",
 		    fs2h32(fs->e2fs_rev));
 #endif
 		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
-		printf("Ext2 fs: bad block size: %d "
+		printf("ext2fs: bad block size: %d "
 		    "(expected <= 2 for ext2 fs)\n",
 		    fs2h32(fs->e2fs_log_bsize));
 #endif
 		return (EINVAL);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
+		char buf[256];
 		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
-			printf("Ext2 fs: unsupported first inode position\n");
+			printf("ext2fs: unsupported first inode position\n");
 			return (EINVAL);      /* XXX needs translation */
 		}
-		if (fs2h32(fs->e2fs_features_incompat) &
-		    ~EXT2F_INCOMPAT_SUPP) {
-			printf("Ext2 fs: unsupported optional feature\n");
-			return (EINVAL);      /* XXX needs translation */
+		u32 = fs2h32(fs->e2fs_features_incompat) & ~EXT2F_INCOMPAT_SUPP;
+		if (u32) {
+			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported incompat features: %s\n",
+			    buf);
+			return EINVAL;	/* XXX needs translation */
 		}
-		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
-		    ~EXT2F_ROCOMPAT_SUPP) {
-			return (EROFS);      /* XXX needs translation */
+		u32 = fs2h32(fs->e2fs_features_rocompat) & ~EXT2F_ROCOMPAT_SUPP;
+		if (!ronly && u32) {
+			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported ro-incompat features: %s\n",
+			    buf);
+			return EROFS;	/* XXX needs translation */
 		}
 	}
 	return (0);

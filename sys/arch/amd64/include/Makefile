@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2011/07/17 20:54:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2012/10/30 17:18:45 yamt Exp $
 
 INCSDIR= /usr/include/amd64
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bootinfo.h bswap.h byte_swap.h \
-	cdefs.h cpu.h cpufunc.h \
+	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fpu.h frame.h frame_regs.h \

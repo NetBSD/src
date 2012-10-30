@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.15.8.1 2012/04/17 00:07:50 yamt Exp $ */
+/*      $NetBSD: if_xge.c,v 1.15.8.2 2012/10/30 17:21:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.15.8.1 2012/04/17 00:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.15.8.2 2012/10/30 17:21:35 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ static uint64_t fix_mac[] = {
 
 
 struct xge_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ethercom;
 #define sc_if sc_ethercom.ec_if
 	bus_dma_tag_t sc_dmat;
@@ -244,10 +244,10 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 }
 
 
-CFATTACH_DECL(xge, sizeof(struct xge_softc),
+CFATTACH_DECL_NEW(xge, sizeof(struct xge_softc),
     xge_match, xge_attach, NULL, NULL);
 
-#define XNAME device_xname(&sc->sc_dev)
+#define XNAME device_xname(sc->sc_dev)
 
 #define XGE_RXSYNC(desc, what) \
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap, \
@@ -289,7 +289,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc = device_private(self);
-
+	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Get BAR0 address */
@@ -517,7 +517,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_baudrate = 10000000000LL;
 	ifp->if_init = xge_init;
 	ifp->if_stop = xge_stop;
@@ -548,13 +548,13 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 * Setup interrupt vector before initializing.
 	 */
 	if (pci_intr_map(pa, &ih))
-		return aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+		return aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 	intrstr = pci_intr_string(pc, ih);
 	if ((sc->sc_ih =
 	    pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL)
-		return aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %s\n",
+		return aprint_error_dev(sc->sc_dev, "unable to establish interrupt at %s\n",
 		    intrstr ? intrstr : "<unknown>");
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 #ifdef XGE_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_intr, EVCNT_TYPE_MISC,

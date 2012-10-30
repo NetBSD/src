@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.59 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: mlx.c,v 1.59.8.1 2012/10/30 17:21:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.59 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.59.8.1 2012/10/30 17:21:06 yamt Exp $");
 
 #include "ld.h"
 
@@ -262,7 +262,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	TAILQ_INIT(&mlx->mlx_ccb_worklist);
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&mlx->mlx_dv),
+		printf("%s: interrupting at %s\n", device_xname(mlx->mlx_dv),
 		    intrstr);
 
 	/*
@@ -272,26 +272,26 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	if ((rv = bus_dmamem_alloc(mlx->mlx_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "unable to allocate sglists, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv, "unable to allocate sglists, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamem_map(mlx->mlx_dmat, &seg, rseg, size,
 	    (void **)&mlx->mlx_sgls,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "unable to map sglists, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv, "unable to map sglists, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &mlx->mlx_dmamap)) != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "unable to create sglist DMA map, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv, "unable to create sglist DMA map, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_load(mlx->mlx_dmat, mlx->mlx_dmamap,
 	    mlx->mlx_sgls, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "unable to load sglist DMA map, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv, "unable to load sglist DMA map, rv = %d\n", rv);
 		return;
 	}
 
@@ -316,7 +316,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		mlx_ccb_free(mlx, mc);
 	}
 	if (mlx->mlx_nccbs != MLX_MAX_QUEUECNT)
-		printf("%s: %d/%d CCBs usable\n", device_xname(&mlx->mlx_dv),
+		printf("%s: %d/%d CCBs usable\n", device_xname(mlx->mlx_dv),
 		    mlx->mlx_nccbs, MLX_MAX_QUEUECNT);
 
 	/* Disable interrupts before we start talking to the controller */
@@ -324,9 +324,9 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* If we've got a reset routine, then reset the controller now. */
 	if (mlx->mlx_reset != NULL) {
-		printf("%s: resetting controller...\n", device_xname(&mlx->mlx_dv));
+		printf("%s: resetting controller...\n", device_xname(mlx->mlx_dv));
 		if ((*mlx->mlx_reset)(mlx) != 0) {
-			aprint_error_dev(&mlx->mlx_dv, "reset failed\n");
+			aprint_error_dev(mlx->mlx_dv, "reset failed\n");
 			return;
 		}
 	}
@@ -344,14 +344,14 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		if (hscode == 0) {
 			if (hsmsg != 0)
 				printf("%s: initialization complete\n",
-				    device_xname(&mlx->mlx_dv));
+				    device_xname(mlx->mlx_dv));
 			break;
 		}
 
 		/* Report first time around... */
 		if (hsmsg == 0) {
 			printf("%s: initializing (may take some time)...\n",
-			    device_xname(&mlx->mlx_dv));
+			    device_xname(mlx->mlx_dv));
 			hsmsg = 1;
 		}
 
@@ -374,7 +374,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		me2 = mlx_enquire(mlx, MLX_CMD_ENQUIRY2,
 		    sizeof(struct mlx_enquiry2), NULL, 0);
 		if (me2 == NULL) {
-			aprint_error_dev(&mlx->mlx_dv, "ENQUIRY2 failed\n");
+			aprint_error_dev(mlx->mlx_dv, "ENQUIRY2 failed\n");
 			return;
 		}
 
@@ -399,7 +399,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
 		    sizeof(struct mlx_enquiry_old), NULL, 0);
 		if (meo == NULL) {
-			aprint_error_dev(&mlx->mlx_dv, "ENQUIRY_OLD failed\n");
+			aprint_error_dev(mlx->mlx_dv, "ENQUIRY_OLD failed\n");
 			return;
 		}
 		ci->ci_firmware_id[0] = meo->me_fwmajor;
@@ -450,9 +450,9 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	if (wantfwstr != NULL) {
 		printf("%s: WARNING: this f/w revision is not recommended\n",
-		    device_xname(&mlx->mlx_dv));
+		    device_xname(mlx->mlx_dv));
 		printf("%s: WARNING: use revision %s or later\n",
-		    device_xname(&mlx->mlx_dv), wantfwstr);
+		    device_xname(mlx->mlx_dv), wantfwstr);
 	}
 
 	/* We don't (yet) know where the event log is up to. */
@@ -469,9 +469,9 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 #ifdef DIAGNOSTIC
 	if (mlx->mlx_max_queuecnt < MLX_NCCBS_CONTROL + MLX_MAX_DRIVES)
 		printf("%s: WARNING: few CCBs available\n",
-		    device_xname(&mlx->mlx_dv));
+		    device_xname(mlx->mlx_dv));
 	if (ci->ci_max_sg < MLX_MAX_SEGS) {
-		aprint_error_dev(&mlx->mlx_dv, "oops, not enough S/G segments\n");
+		aprint_error_dev(mlx->mlx_dv, "oops, not enough S/G segments\n");
 		return;
 	}
 #endif
@@ -522,7 +522,7 @@ mlx_describe(struct mlx_softc *mlx)
 	}
 
 	printf("%s: DAC%s, %d channel%s, firmware %d.%02d-%c-%02d",
-	    device_xname(&mlx->mlx_dv), model, ci->ci_nchan,
+	    device_xname(mlx->mlx_dv), model, ci->ci_nchan,
 	    ci->ci_nchan > 1 ? "s" : "",
 	    ci->ci_firmware_id[0], ci->ci_firmware_id[1],
 	    ci->ci_firmware_id[3], ci->ci_firmware_id[2]);
@@ -552,7 +552,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
 		    sizeof(struct mlx_enquiry_old), NULL, waitok);
 		if (meo == NULL) {
-			aprint_error_dev(&mlx->mlx_dv, "ENQUIRY_OLD failed\n");
+			aprint_error_dev(mlx->mlx_dv, "ENQUIRY_OLD failed\n");
 			goto out;
 		}
 		mlx->mlx_numsysdrives = meo->me_num_sys_drvs;
@@ -561,7 +561,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		me = mlx_enquire(mlx, MLX_CMD_ENQUIRY,
 		    sizeof(struct mlx_enquiry), NULL, waitok);
 		if (me == NULL) {
-			aprint_error_dev(&mlx->mlx_dv, "ENQUIRY failed\n");
+			aprint_error_dev(mlx->mlx_dv, "ENQUIRY failed\n");
 			goto out;
 		}
 		mlx->mlx_numsysdrives = me->me_num_sys_drvs;
@@ -571,7 +571,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 	mes = mlx_enquire(mlx, MLX_CMD_ENQSYSDRIVE,
 	    sizeof(*mes) * MLX_MAX_DRIVES, NULL, waitok);
 	if (mes == NULL) {
-		aprint_error_dev(&mlx->mlx_dv, "error fetching drive status\n");
+		aprint_error_dev(mlx->mlx_dv, "error fetching drive status\n");
 		goto out;
 	}
 
@@ -609,7 +609,7 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 
 		locs[MLXCF_UNIT] = i;
 
-		ms->ms_dv = config_found_sm_loc(&mlx->mlx_dv, "mlx", locs,
+		ms->ms_dv = config_found_sm_loc(mlx->mlx_dv, "mlx", locs,
 				&mlxa, mlx_print, config_stdsubmatch);
 		nunits += (ms->ms_dv != NULL);
 	}
@@ -667,7 +667,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
 	for (i = 0; i < ld_cd.cd_ndevs; i++) {
 		if ((ld = device_lookup_private(&ld_cd, i)) == NULL)
 			continue;
-		if (device_parent(ld->sc_dv) != &mlx->mlx_dv)
+		if (device_parent(ld->sc_dv) != mlx->mlx_dv)
 			continue;
 		ldadjqparam(ld, mpu + (slop-- > 0));
 	}
@@ -1052,14 +1052,14 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 	int i, j;
 	u_int lsn;
 
-	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx = device_private(mc->mc_mx.mx_dv);
 	mlx_ccb_unmap(mlx, mc);
 
 	/*
 	 * Command completed OK?
 	 */
 	if (mc->mc_status != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "periodic enquiry failed - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "periodic enquiry failed - %s\n",
 		    mlx_ccb_diagnose(mc));
 		goto out;
 	}
@@ -1169,7 +1169,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 					break;
 				}
 
-				printf("%s: unit %d %s\n", device_xname(&mlx->mlx_dv),
+				printf("%s: unit %d %s\n", device_xname(mlx->mlx_dv),
 				    i, statestr);
 
 				/* Save new state. */
@@ -1181,7 +1181,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 #ifdef DIAGNOSTIC
 	default:
 		printf("%s: mlx_periodic_enquiry: eh?\n",
-		    device_xname(&mlx->mlx_dv));
+		    device_xname(mlx->mlx_dv));
 		break;
 #endif
 	}
@@ -1229,7 +1229,7 @@ mlx_periodic_eventlog_poll(struct mlx_softc *mlx)
 	    mlx->mlx_lastevent, 0, 0, mc->mc_xfer_phys, 0);
 
 	mc->mc_mx.mx_handler = mlx_periodic_eventlog_respond;
-	mc->mc_mx.mx_dv = &mlx->mlx_dv;
+	mc->mc_mx.mx_dv = mlx->mlx_dv;
 	mc->mc_mx.mx_context = result;
 
 	/* Start the command. */
@@ -1257,7 +1257,7 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 	const char *reason;
 	u_int8_t sensekey, chan, targ;
 
-	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx = device_private(mc->mc_mx.mx_dv);
 	el = mc->mc_mx.mx_context;
 	mlx_ccb_unmap(mlx, mc);
 
@@ -1288,7 +1288,7 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 					reason = "for unknown reason";
 
 				printf("%s: physical drive %d:%d killed %s\n",
-				    device_xname(&mlx->mlx_dv), chan, targ, reason);
+				    device_xname(mlx->mlx_dv), chan, targ, reason);
 			}
 
 			/*
@@ -1296,7 +1296,7 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			 */
 			if (sensekey == 6 && el->el_asc == 0x29)
 				printf("%s: physical drive %d:%d reset\n",
-				    device_xname(&mlx->mlx_dv), chan, targ);
+				    device_xname(mlx->mlx_dv), chan, targ);
 
 			/*
 			 * SCSI drive error?
@@ -1307,11 +1307,11 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			    (el->el_asq == 0x01 || el->el_asq == 0x02)))) {
 				printf("%s: physical drive %d:%d error log: "
 				    "sense = %d asc = %x asq = %x\n",
-				    device_xname(&mlx->mlx_dv), chan, targ, sensekey,
+				    device_xname(mlx->mlx_dv), chan, targ, sensekey,
 				    el->el_asc, el->el_asq);
 				printf("%s:   info = %d:%d:%d:%d "
 				    " csi = %d:%d:%d:%d\n",
-				    device_xname(&mlx->mlx_dv),
+				    device_xname(mlx->mlx_dv),
 				    el->el_information[0],
 				    el->el_information[1],
 				    el->el_information[2],
@@ -1323,12 +1323,12 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			break;
 
 		default:
-			aprint_error_dev(&mlx->mlx_dv, "unknown log message type 0x%x\n",
+			aprint_error_dev(mlx->mlx_dv, "unknown log message type 0x%x\n",
 			    el->el_type);
 			break;
 		}
 	} else {
-		aprint_error_dev(&mlx->mlx_dv, "error reading message log - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "error reading message log - %s\n",
 		    mlx_ccb_diagnose(mc));
 
 		/*
@@ -1360,7 +1360,7 @@ mlx_periodic_rebuild(struct mlx_ccb *mc)
 	const char *opstr;
 	struct mlx_rebuild_status *mr;
 
-	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx = device_private(mc->mc_mx.mx_dv);
 	mr = mc->mc_mx.mx_context;
 	mlx_ccb_unmap(mlx, mc);
 
@@ -1375,7 +1375,7 @@ mlx_periodic_rebuild(struct mlx_ccb *mc)
 		if (mlx->mlx_bg == 0) {
 			mlx->mlx_bg = MLX_BG_SPONTANEOUS;
 			printf("%s: background check/rebuild started\n",
-			    device_xname(&mlx->mlx_dv));
+			    device_xname(mlx->mlx_dv));
 		}
 		break;
 
@@ -1408,7 +1408,7 @@ mlx_periodic_rebuild(struct mlx_ccb *mc)
 		}
 
 		if (opstr != NULL)
-			printf("%s: %s completed\n", device_xname(&mlx->mlx_dv),
+			printf("%s: %s completed\n", device_xname(mlx->mlx_dv),
 			    opstr);
 
 		mlx->mlx_bg = 0;
@@ -1456,7 +1456,7 @@ mlx_pause_action(struct mlx_softc *mlx)
 	for (i = 0; i < mlx->mlx_ci.ci_nchan; i++) {
 		if ((1 << i) & mlx->mlx_pause.mp_which) {
 			if (mlx_ccb_alloc(mlx, &mc, 1) != 0) {
-				aprint_error_dev(&mlx->mlx_dv, "%s failed for channel %d\n",
+				aprint_error_dev(mlx->mlx_dv, "%s failed for channel %d\n",
 				    cmd == MLX_CMD_STOPCHANNEL ?
 				    "pause" : "resume", i);
 				continue;
@@ -1466,7 +1466,7 @@ mlx_pause_action(struct mlx_softc *mlx)
 			mlx_make_type2(mc, cmd, (failsafe << 4) | i, 0, 0,
 			    0, 0, 0, 0, 0);
 			mc->mc_mx.mx_handler = mlx_pause_done;
-			mc->mc_mx.mx_dv = &mlx->mlx_dv;
+			mc->mc_mx.mx_dv = mlx->mlx_dv;
 
 			mlx_ccb_enqueue(mlx, mc);
 		}
@@ -1479,20 +1479,20 @@ mlx_pause_done(struct mlx_ccb *mc)
 	struct mlx_softc *mlx;
 	int command, channel;
 
-	mlx = (struct mlx_softc *)mc->mc_mx.mx_dv;
+	mlx = device_private(mc->mc_mx.mx_dv);
 	command = mc->mc_mbox[0];
 	channel = mc->mc_mbox[2] & 0xf;
 
 	if (mc->mc_status != 0)
-		aprint_error_dev(&mlx->mlx_dv, "%s command failed - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "%s command failed - %s\n",
 		    command == MLX_CMD_STOPCHANNEL ? "pause" : "resume",
 		    mlx_ccb_diagnose(mc));
 	else if (command == MLX_CMD_STOPCHANNEL)
 		printf("%s: channel %d pausing for %ld seconds\n",
-		    device_xname(&mlx->mlx_dv), channel,
+		    device_xname(mlx->mlx_dv), channel,
 		    (long)(mlx->mlx_pause.mp_howlong - time_second));
 	else
-		printf("%s: channel %d resuming\n", device_xname(&mlx->mlx_dv),
+		printf("%s: channel %d resuming\n", device_xname(mlx->mlx_dv),
 		    channel);
 
 	mlx_ccb_free(mlx, mc);
@@ -1538,7 +1538,7 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 	/* Do we want a completion callback? */
 	if (handler != NULL) {
 		mc->mc_mx.mx_context = result;
-		mc->mc_mx.mx_dv = &mlx->mlx_dv;
+		mc->mc_mx.mx_dv = mlx->mlx_dv;
 		mc->mc_mx.mx_handler = handler;
 		mlx_ccb_enqueue(mlx, mc);
 	} else {
@@ -1595,7 +1595,7 @@ mlx_flush(struct mlx_softc *mlx, int async)
 
 	/* Command completed OK? */
 	if (mc->mc_status != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "FLUSH failed - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "FLUSH failed - %s\n",
 		    mlx_ccb_diagnose(mc));
 		rv = EIO;
 	}
@@ -1631,7 +1631,7 @@ mlx_check(struct mlx_softc *mlx, int drive)
 
 	/* Command completed OK? */
 	if (mc->mc_status != 0)
-		aprint_error_dev(&mlx->mlx_dv, "CHECK ASYNC failed - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "CHECK ASYNC failed - %s\n",
 		    mlx_ccb_diagnose(mc));
 	else
 		printf("%s: consistency check started",
@@ -1670,7 +1670,7 @@ mlx_rebuild(struct mlx_softc *mlx, int channel, int target)
 		goto out;
 
 	/* Command completed OK? */
-	aprint_normal_dev(&mlx->mlx_dv, "");
+	aprint_normal_dev(mlx->mlx_dv, "");
 	if (mc->mc_status != 0)
 		printf("REBUILD ASYNC failed - %s\n", mlx_ccb_diagnose(mc));
 	else
@@ -1978,13 +1978,13 @@ mlx_ccb_poll(struct mlx_softc *mlx, struct mlx_ccb *mc, int timo)
 
 	if (timo != 0) {
 		if (mc->mc_status != 0) {
-			aprint_error_dev(&mlx->mlx_dv, "command failed - %s\n",
+			aprint_error_dev(mlx->mlx_dv, "command failed - %s\n",
 			    mlx_ccb_diagnose(mc));
 			rv = EIO;
 		} else
 			rv = 0;
 	} else {
-		printf("%s: command timed out\n", device_xname(&mlx->mlx_dv));
+		printf("%s: command timed out\n", device_xname(mlx->mlx_dv));
 		rv = EIO;
 	}
 
@@ -2009,7 +2009,7 @@ mlx_ccb_wait(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	splx(s);
 
 	if (mc->mc_status != 0) {
-		aprint_error_dev(&mlx->mlx_dv, "command failed - %s\n",
+		aprint_error_dev(mlx->mlx_dv, "command failed - %s\n",
 		    mlx_ccb_diagnose(mc));
 		return (EIO);
 	}
@@ -2094,14 +2094,14 @@ mlx_intr(void *cookie)
 		ident--;
 
 		if (ident >= MLX_MAX_QUEUECNT) {
-			aprint_error_dev(&mlx->mlx_dv, "bad completion returned\n");
+			aprint_error_dev(mlx->mlx_dv, "bad completion returned\n");
 			continue;
 		}
 
 		mc = mlx->mlx_ccbs + ident;
 
 		if (mc->mc_status != MLX_STATUS_BUSY) {
-			aprint_error_dev(&mlx->mlx_dv, "bad completion returned\n");
+			aprint_error_dev(mlx->mlx_dv, "bad completion returned\n");
 			continue;
 		}
 
@@ -2147,7 +2147,7 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 		 */
 		if ((mlx->mlx_flags & MLXF_SPINUP_REPORTED) == 0) {
 			printf("%s: spinning up drives...\n",
-			    device_xname(&mlx->mlx_dv));
+			    device_xname(mlx->mlx_dv));
 			mlx->mlx_flags |= MLXF_SPINUP_REPORTED;
 		}
 		return (0);
@@ -2181,16 +2181,16 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 		break;
 
 	case 0xf0:
-		aprint_error_dev(&mlx->mlx_dv, "FATAL MEMORY PARITY ERROR\n");
+		aprint_error_dev(mlx->mlx_dv, "FATAL MEMORY PARITY ERROR\n");
 		return (1);
 
 	default:
-		aprint_error_dev(&mlx->mlx_dv, "unknown firmware init error %02x:%02x:%02x\n",
+		aprint_error_dev(mlx->mlx_dv, "unknown firmware init error %02x:%02x:%02x\n",
 		    error, param1, param2);
 		return (0);
 	}
 
-	aprint_normal_dev(&mlx->mlx_dv, "");
+	aprint_normal_dev(mlx->mlx_dv, "");
 	aprint_normal(fmt, param2, param1);
 	aprint_normal("\n");
 

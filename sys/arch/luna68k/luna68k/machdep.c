@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84.2.1 2012/04/17 00:06:35 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.84.2.2 2012/10/30 17:19:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.1 2012/04/17 00:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.2 2012/10/30 17:19:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,12 +103,6 @@ struct cpu_info cpu_info_store;
 struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
-int	physmem;		/* set by locore */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 
@@ -160,6 +154,13 @@ luna68k_init(void)
 
 	extern paddr_t avail_start, avail_end;
 
+	/* initialize cn_tab for early console */
+#if 1
+	cn_tab = &syscons;
+#else
+	cn_tab = &romcons;
+#endif
+
 	/*
 	 * Tell the VM system about available physical memory.  The
 	 * luna68k only has one segment.
@@ -188,15 +189,17 @@ luna68k_init(void)
 	boothowto = 0;
 	i = 0;
 	/*
-	 * 'bootarg' has;
+	 * 'bootarg' on LUNA has:
 	 *   "<args of x command> ENADDR=<addr> HOST=<host> SERVER=<name>"
 	 * where <addr> is MAC address of which network loader used (not
 	 * necessarily same as one at 0x4101.FFE0), <host> and <name>
-	 * are the values of HOST and SERVER environment variables,
+	 * are the values of HOST and SERVER environment variables.
+	 *
+	 * 'bootarg' on LUNA-II has "<args of x command>" only.
 	 *
 	 * NetBSD/luna68k cares only the first argment; any of "sda".
 	 */
-	for (cp = bootarg; *cp != ' '; cp++) {
+	for (cp = bootarg; *cp != ' ' && *cp != 0; cp++) {
 		BOOT_FLAG(*cp, boothowto);
 		if (i++ >= sizeof(bootarg))
 			break;
@@ -776,12 +779,7 @@ module_init_md(void)
 }
 #endif
 
-#if 1
-
-struct consdev *cn_tab = &syscons;
-
-#else
-
+#ifdef notyet
 /*
  * romcons is useful until m68k TC register is initialized.
  */
@@ -797,7 +795,6 @@ struct consdev romcons = {
 	makedev(7, 0), /* XXX */
 	CN_DEAD,
 };
-struct consdev *cn_tab = &romcons;
 
 #define __		((int **)0x41000000)
 #define GETC()		(*(int (*)())__[6])()

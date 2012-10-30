@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.21.34.2 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: rnd.h,v 1.21.34.3 2012/10/30 17:22:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ rnd_add_uint32(krndsource_t *kr, uint32_t val)
 
 extern int	rnd_full;
 extern int	rnd_filled;
+extern int	rnd_initial_entropy;
 
 #endif /* _KERNEL */
 

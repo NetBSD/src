@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.8 2005/12/11 12:17:35 christos Exp $	*/
+/*	$NetBSD: vrled.c,v 1.8.112.1 2012/10/30 17:19:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrled.c,v 1.8 2005/12/11 12:17:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrled.c,v 1.8.112.1 2012/10/30 17:19:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ int vrleddebug = VRLEDDEBUG_CONF;
 #define VPRINTF(arg) if (bootverbose) printf arg;
 #endif /* VRLEDDEBUG */
 
-static int vrledmatch(struct device *, struct cfdata *, void *);
-static void vrledattach(struct device *, struct device *, void *);
+static int vrledmatch(device_t, cfdata_t, void *);
+static void vrledattach(device_t, device_t, void *);
 
 static void vrled_write(struct vrled_softc *, int, unsigned short);
 static unsigned short vrled_read(struct vrled_softc *, int);
@@ -68,7 +68,7 @@ static int vrled_event(void *, int, long, void *);
 
 int vrled_intr(void *);
 
-CFATTACH_DECL(vrled, sizeof(struct vrled_softc),
+CFATTACH_DECL_NEW(vrled, sizeof(struct vrled_softc),
     vrledmatch, vrledattach, NULL, NULL);
 
 struct vrled_softc *this_led;
@@ -88,16 +88,16 @@ vrled_read(struct vrled_softc *sc, int port)
 }
 
 static int
-vrledmatch(struct device *parent, struct cfdata *cf, void *aux)
+vrledmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-vrledattach(struct device *parent, struct device *self, void *aux)
+vrledattach(device_t parent, device_t self, void *aux)
 {
-	struct vrled_softc *sc = (struct vrled_softc *)self;
+	struct vrled_softc *sc = device_private(self);
 	struct vrip_attach_args *va = aux;
 
 	bus_space_tag_t iot = va->va_iot;

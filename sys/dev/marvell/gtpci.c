@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.28.4.1 2012/04/17 00:07:40 yamt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.28.4.2 2012/10/30 17:21:18 yamt Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.28.4.1 2012/04/17 00:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.28.4.2 2012/10/30 17:21:18 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -589,7 +589,7 @@ gtpci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 /* ARGSUSED */
 int
-gtpci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
+gtpci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 	/* Oops, We have two PCI buses. */
 	if (dev == 0 &&

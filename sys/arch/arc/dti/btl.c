@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.24 2009/12/27 08:31:10 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.24.12.1 2012/10/30 17:18:53 yamt Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.24 2009/12/27 08:31:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.24.12.1 2012/10/30 17:18:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -352,7 +352,7 @@ btattach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	if (bt_find(ia, sc) != 0)
-		panic("btattach: bt_find of %s failed", self->dv_xname);
+		panic("btattach: bt_find of %s failed", device_xname(self));
 	sc->sc_iobase = ia->ia_iobase;
 
 	/*

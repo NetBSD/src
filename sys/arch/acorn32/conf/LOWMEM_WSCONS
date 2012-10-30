@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.56.4.1 2012/04/17 00:05:52 yamt Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.56.4.2 2012/10/30 17:18:37 yamt Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -161,6 +161,7 @@ vidc0		at mainbus?
 options 	WSEMUL_VT100
 
 #options 	WSDISPLAY_COMPAT_RAWKBD
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 #options 	FONT_BOLD8x16
 #options 	FONT_GALLANT12x22	# Very nice font

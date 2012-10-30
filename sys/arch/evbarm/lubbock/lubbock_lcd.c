@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.12.2.1 2012/10/30 17:19:24 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.12 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.12.2.1 2012/10/30 17:19:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 int
 lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *) v;
+	struct pxa2x0_lcd_softc *sc = v;
 	struct obio_softc *osc = device_private(device_parent(sc->dev));
 	uint16_t reg;
 
@@ -249,7 +249,7 @@ int
 lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *) v;
+	struct pxa2x0_lcd_softc *sc = v;
 	struct obio_softc *osc = device_private(device_parent(sc->dev));
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);

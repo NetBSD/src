@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.56.2.2 2012/05/23 10:07:43 yamt Exp $
+#	$NetBSD: XEN3_DOM0,v 1.56.2.3 2012/10/30 17:19:48 yamt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -89,6 +89,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -194,7 +195,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	WSDISPLAY_SCROLLSUPPORT
@@ -511,6 +512,7 @@ pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -599,7 +601,7 @@ urndis*	at uhub? port ?		# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
@@ -788,6 +790,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter

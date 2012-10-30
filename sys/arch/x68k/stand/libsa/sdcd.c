@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.11.2.1 2012/04/17 00:07:03 yamt Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.11.2.2 2012/10/30 17:20:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -362,6 +362,7 @@ cdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
 	struct sdcd_softc *sc = arg;
 
 	/* cast dblk to avoid divdi3; 32bit is enough even for BD-ROMs.  */
-	return sdstrategy(arg, rw, (unsigned int) dblk / sc->sc_blocksize,
+	return sdstrategy(arg, rw,
+			  (unsigned int) dblk / (sc->sc_blocksize/DEV_BSIZE),
 	                  size, buf, rsize);
 }

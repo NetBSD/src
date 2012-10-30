@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.10.2.1 2012/04/17 00:06:18 yamt Exp $
+#	$NetBSD: P2020RDB,v 1.10.2.2 2012/10/30 17:19:30 yamt Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.10.2.1 $"
+ident 		"P2020RBD-$Revision: 1.10.2.2 $"
 
 maxusers	32
 
@@ -20,6 +20,8 @@ makeoptions	NEED_UBOOTIMAGE="yes"
 options 	P2020
 options 	SYS_CLK=100000000
 #options 	HZ=1000
+
+#options 	SDHC_DEBUG
 
 #options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
@@ -57,10 +59,15 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -130,6 +137,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 #options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
@@ -165,20 +173,19 @@ duart*		at cpunode?
 com*		at duart? port ?
 options		CONSADDR="DUART1_BASE"
 
-tsec0		at cpunode? flags 0x021	# Enhanced 3-Speed Ethernet Controller
-tsec1		at cpunode? flags 0x101	# Enhanced 3-Speed Ethernet Controller
-tsec2		at cpunode? flags 0x102	# Enhanced 3-Speed Ethernet Controller
+tsec0		at cpunode? phy 32 # Enhanced 3-Speed Ethernet Controller
+mdio0		at tsec0
+tsec1		at cpunode? mdio 0 phy 0 # Enhanced 3-Speed Ethernet Controller
+tsec2		at cpunode? mdio 0 phy 1 # Enhanced 3-Speed Ethernet Controller
 ukphy*		at mii?
 #options 	ETSEC_EVENT_COUNTERS
 
 diic*		at cpunode?		# i2c bus
 iic*		at diic?
-dsrtc*		at iic1 addr 0x68	# RTC
+dsrtc*		at iic0 addr 0x68 flags 1339	# RTC DS1339
 
 pq3pcie*	at cpunode?		# PCI-Express controller
-pq3pci* 	at cpunode?		# PCI(X)
 pci*		at pq3pcie?
-pci*		at pq3pci?
 
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb?
@@ -187,16 +194,18 @@ ahcisata*	at pci? dev ? function ?
 atabus*		at ahcisata? channel ?
 wd*		at atabus? drive ?
 
+sdhc*		at pci? dev ? function ?
+
+sdhc*		at cpunode?		# sdmmc
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+
 ehci*		at cpunode?		# usb
 usb*		at ehci?
 uhub*		at usb?
 umass*		at uhub? port ?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
-
-#sdhc*		at cpunode?		# sdmmc
-#sdmmc*		at sdhc?		# SD/MMC bus
-#ld*		at sdmmc?
 
 #siisata*	at pci? dev ? function ?
 #atabus* 	at siisata? channel ?
@@ -218,6 +227,7 @@ sd*		at scsibus? target ? lun ?
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of disk subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp

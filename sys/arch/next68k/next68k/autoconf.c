@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2011/05/10 14:45:28 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.4.1 2012/10/30 17:20:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2011/05/10 14:45:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.4.1 2012/10/30 17:20:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2011/05/10 14:45:28 tsutsui Exp $"
 volatile u_long *intrstat;
 volatile u_long *intrmask;
 
-static struct device *getdevunit(const char *, int);
+static device_t getdevunit(const char *, int);
 static int devidentparse(const char *, int *, int *, int *);
 static int atoi(const char *);
 
@@ -142,15 +142,15 @@ cpu_rootconf(void)
 	booted_device = getdevunit (rom_boot_dev, count);
 	
 	printf("boot device: %s\n",
-		(booted_device) ? booted_device->dv_xname : "<unknown>");
+		(booted_device) ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, part);
+	rootconf();
 }
 
 /*
  * find a device matching "name" and unit number
  */
-static struct device *
+static device_t
 getdevunit(const char *name, int unit)
 {
 	int i;

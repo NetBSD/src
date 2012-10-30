@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39.4.2 2012/05/23 10:07:43 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39.4.3 2012/10/30 17:19:37 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.4.2 2012/05/23 10:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39.4.3 2012/10/30 17:19:37 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -164,7 +164,6 @@ static void hppa_pdc_system_map_scan(void);
 void
 cpu_configure(void)
 {
-
 	/*
 	 * Consider stopping for a debugger before
 	 * autoconfiguration.
@@ -183,10 +182,8 @@ cpu_configure(void)
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
-	/* in spl*() we trust */
-	hp700_intr_init();
-	hppa_enable_irq();
-	curcpu()->ci_psw |= PSW_I;
+	/* Allow interrupts - we're trusting spl* here */
+	hp700_intr_enable();
 	spl0();
 
 	if (cold_hook)
@@ -477,14 +474,10 @@ cpu_rootconf(void)
 #endif /* DEBUG */
 
 	if (boot_device != NULL)
-		printf("boot device: %s\n", boot_device->dv_xname );
-	setroot(boot_device, 0);
+		printf("boot device: %s\n", device_xname(boot_device));
+	booted_device = boot_device;
+	rootconf();
 }
-
-
-#ifdef RAMDISK_HOOKS
-/*static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };*/
-#endif
 
 void
 hppa_walkbus(struct confargs *ca)

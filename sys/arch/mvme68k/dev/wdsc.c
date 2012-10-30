@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.31 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.31.34.1 2012/10/30 17:20:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.31 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.31.34.1 2012/10/30 17:20:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.31 2008/04/28 20:23:29 martin Exp $");
 
 #include "ioconf.h"
 
-void    wdsc_pcc_attach(struct device *, struct device *, void *);
-int     wdsc_pcc_match(struct device *, struct cfdata *, void *);
+void    wdsc_pcc_attach(device_t, device_t, void *);
+int     wdsc_pcc_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(wdsc_pcc, sizeof(struct sbic_softc),
+CFATTACH_DECL_NEW(wdsc_pcc, sizeof(struct sbic_softc),
     wdsc_pcc_match, wdsc_pcc_attach, NULL, NULL);
 
 void    wdsc_enintr(struct sbic_softc *);
@@ -102,9 +102,9 @@ int     wdsc_scsiintr(void *);
  * Match for SCSI devices on the onboard WD33C93 chip
  */
 int
-wdsc_pcc_match(struct device *pdp, struct cfdata *cf, void *auxp)
+wdsc_pcc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct pcc_attach_args *pa = auxp;
+	struct pcc_attach_args *pa = aux;
 
 	if (strcmp(pa->pa_name, wdsc_cd.cd_name))
 		return 0;
@@ -117,15 +117,15 @@ wdsc_pcc_match(struct device *pdp, struct cfdata *cf, void *auxp)
  * Attach the wdsc driver
  */
 void
-wdsc_pcc_attach(struct device *pdp, struct device *dp, void *auxp)
+wdsc_pcc_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbic_softc *sc;
 	struct pcc_attach_args *pa;
 	bus_space_handle_t bush;
 	static struct evcnt evcnt;	/* XXXSCW: Temporary hack */
 
-	sc = (struct sbic_softc *)dp;
-	pa = auxp;
+	sc = device_private(self);
+	pa = aux;
 
 	bus_space_map(pa->pa_bust, pa->pa_offset, 0x20, 0, &bush);
 
@@ -141,7 +141,7 @@ wdsc_pcc_attach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_dmastop = wdsc_dmastop;
 	sc->sc_dmacmd  = 0;
 
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = self;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7; 
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -184,13 +184,13 @@ wdsc_pcc_attach(struct device *pdp, struct device *dp, void *auxp)
 	pcc_reg_write(sys_pcc, PCCREG_DMA_CONTROL, 0);
 
 	evcnt_attach_dynamic(&evcnt, EVCNT_TYPE_INTR, pccintr_evcnt(sc->sc_ipl),
-	    "disk", sc->sc_dev.dv_xname);
+	    "disk", device_xname(self));
 	pccintr_establish(PCCV_DMA, wdsc_dmaintr,  sc->sc_ipl, sc, &evcnt);
 	pccintr_establish(PCCV_SCSI, wdsc_scsiintr, sc->sc_ipl, sc, &evcnt);
 	pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
             sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
-	(void)config_found(dp, &sc->sc_channel, scsiprint);
+	(void)config_found(self, &sc->sc_channel, scsiprint);
 }
 
 /*
