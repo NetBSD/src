@@ -1,6 +1,6 @@
-/*	$NetBSD: logmacro.h,v 1.3 2011/02/16 03:46:56 christos Exp $	*/
+/*	$NetBSD: logmacro.h,v 1.3.4.1 2012/10/30 18:51:55 yamt Exp $	*/
 
-/* Id: logmacro.h,v 1.1.1.1 2003-06-04 00:25:38 marka Exp */
+/* Id: logmacro.h,v 1.1 2003/06/04 00:25:38 marka Exp  */
 /*
  * Copyright (c) 2000 Japan Network Information Center.  All rights reserved.
  *  

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: start.sh,v 1.42 2007-06-18 23:47:27 tbox Exp
+# Id: start.sh,v 1.42 2007/06/18 23:47:27 tbox Exp 
 
 . ./conf.sh
 $PERL start.pl "$@"

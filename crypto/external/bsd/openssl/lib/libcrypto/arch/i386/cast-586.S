@@ -1,4 +1,4 @@
-.file	"cast-586.s"
+#include <machine/asm.h>
 .text
 .globl	CAST_encrypt
 .type	CAST_encrypt,@function
@@ -805,7 +805,6 @@ CAST_cbc_encrypt:
 	xorl	%edx,%edx
 	jmp	*%ebp
 .L008ej7:
-	xorl	%edx,%edx
 	movb	6(%esi),%dh
 	shll	$8,%edx
 .L009ej6:
@@ -817,7 +816,6 @@ CAST_cbc_encrypt:
 	jmp	.L012ejend
 .L013ej3:
 	movb	2(%esi),%ch
-	xorl	%ecx,%ecx
 	shll	$8,%ecx
 .L014ej2:
 	movb	1(%esi),%ch

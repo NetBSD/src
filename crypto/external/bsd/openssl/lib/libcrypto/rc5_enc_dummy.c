@@ -74,19 +74,19 @@ __weak_alias(RC5_32_decrypt,_RC5_32_decrypt)
 #endif
 
 __warn_references(RC5_32_cbc_encrypt,
-    "RC5 is a patented algorithm; link against libcrypto_rc5.a")
+    "RC5 is a patented algorithm; link against libcrypto_rc5")
 __warn_references(RC5_32_encrypt,
-    "RC5 is a patented algorithm; link against libcrypto_rc5.a")
+    "RC5 is a patented algorithm; link against libcrypto_rc5")
 __warn_references(RC5_32_decrypt,
-    "RC5 is a patented algorithm; link against libcrypto_rc5.a")
+    "RC5 is a patented algorithm; link against libcrypto_rc5")
 
 void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	long length, RC5_32_KEY *ks, unsigned char *iv, int encrypt)
 {
 
 	fprintf(stderr,
-	    "RC5 is a patented algorithm; link against libcrypto_rc5.a. "
-	    "Aborting...\n");
+	    "RC5 is a patented algorithm; link against libcrypto_rc5. "
+	    "Exiting...\n");
 	exit(1);
 }
 
@@ -94,8 +94,8 @@ void RC5_32_encrypt(RC5_32_INT *d, RC5_32_KEY *key)
 {
 
 	fprintf(stderr,
-	    "RC5 is a patented algorithm; link against libcrypto_rc5.a. "
-	    "Aborting...\n");
+	    "RC5 is a patented algorithm; link against libcrypto_rc5. "
+	    "Exiting...\n");
 	exit(1);
 }
 
@@ -103,7 +103,7 @@ void RC5_32_decrypt(RC5_32_INT *d, RC5_32_KEY *key)
 {
 
 	fprintf(stderr,
-	    "RC5 is a patented algorithm; link against libcrypto_rc5.a. "
-	    "Aborting...\n");
+	    "RC5 is a patented algorithm; link against libcrypto_rc5. "
+	    "Exiting...\n");
 	exit(1);
 }

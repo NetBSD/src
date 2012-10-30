@@ -47,14 +47,19 @@
 #include "net.h"
 #include "platform.h"
 
+unsigned long long options = 0;
+
 /* These options only make sense in the config file, so don't use any
    valid short options for them */
-#define O_BASE		MAX('z', 'Z') + 1
-#define O_ARPING	O_BASE + 1
-#define O_FALLBACK	O_BASE + 2
-#define O_DESTINATION	O_BASE + 3
-#define O_NOIPV6RS	O_BASE + 4
-#define O_IPV6_RA_FORK	O_BASE + 5
+#define O_BASE			MAX('z', 'Z') + 1
+#define O_ARPING		O_BASE + 1
+#define O_FALLBACK		O_BASE + 2
+#define O_DESTINATION		O_BASE + 3
+#define O_IPV6RS		O_BASE + 4
+#define O_NOIPV6RS		O_BASE + 5 
+#define O_IPV6RA_FORK		O_BASE + 6 
+#define O_IPV6RA_OWN		O_BASE + 7
+#define O_IPV6RA_OWN_D		O_BASE + 8
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -105,8 +110,11 @@ const struct option cf_options[] = {
 	{"arping",          required_argument, NULL, O_ARPING},
 	{"destination",     required_argument, NULL, O_DESTINATION},
 	{"fallback",        required_argument, NULL, O_FALLBACK},
+	{"ipv6rs",          no_argument,       NULL, O_IPV6RS},
 	{"noipv6rs",        no_argument,       NULL, O_NOIPV6RS},
-	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6_RA_FORK},
+	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
+	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
+	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -744,11 +752,20 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		free(ifo->fallback);
 		ifo->fallback = xstrdup(arg);
 		break;
+	case O_IPV6RS:
+		ifo->options |= DHCPCD_IPV6RS;
+		break;
 	case O_NOIPV6RS:
 		ifo->options &= ~DHCPCD_IPV6RS;
 		break;
-	case O_IPV6_RA_FORK:
+	case O_IPV6RA_FORK:
 		ifo->options &= ~DHCPCD_IPV6RA_REQRDNSS;
+		break;
+	case O_IPV6RA_OWN:
+		ifo->options |= DHCPCD_IPV6RA_OWN;
+		break;
+	case O_IPV6RA_OWN_D:
+		ifo->options |= DHCPCD_IPV6RA_OWN_DEFAULT;
 		break;
 	default:
 		return 0;

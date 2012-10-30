@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:37 yamt Exp $
-LIVEIMGBASE=	pmaxlive			# gives ${IMGBASE}.img
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:37 yamt Exp $
+
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-pmax-live-sd0root	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 

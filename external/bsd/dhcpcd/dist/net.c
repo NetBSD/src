@@ -70,24 +70,9 @@
 #include "net.h"
 #include "signals.h"
 
-static char hwaddr_buffer[(HWADDR_LEN * 3) + 1];
+static char hwaddr_buffer[(HWADDR_LEN * 3) + 1 + 1024];
 
 int socket_afnet = -1;
-
-#if defined(__FreeBSD__) && defined(DEBUG_MEMORY)
-/* FreeBSD does not zero the struct, causing valgrind errors */
-unsigned int
-if_nametoindex(const char *ifname)
-{
-	struct ifreq ifr;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(socket_afnet, SIOCGIFINDEX, &ifr) != -1)
-		return ifr.ifr_index;
-	return 0;
-}
-#endif
 
 int
 inet_ntocidr(struct in_addr address)
@@ -148,7 +133,7 @@ hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen)
 	char *p = hwaddr_buffer;
 	size_t i;
 
-	for (i = 0; i < hwlen && i < HWADDR_LEN; i++) {
+	for (i = 0; i < hwlen; i++) {
 		if (i > 0)
 			*p ++= ':';
 		p += snprintf(p, 3, "%.2x", hwaddr[i]);
@@ -195,53 +180,6 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 		len++;
 	}
 	return len;
-}
-
-struct interface *
-init_interface(const char *ifname)
-{
-	struct ifreq ifr;
-	struct interface *iface = NULL;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(socket_afnet, SIOCGIFFLAGS, &ifr) == -1)
-		goto eexit;
-
-	iface = xzalloc(sizeof(*iface));
-	strlcpy(iface->name, ifname, sizeof(iface->name));
-	iface->flags = ifr.ifr_flags;
-	/* We reserve the 100 range for virtual interfaces, if and when
-	 * we can work them out. */
-	iface->metric = 200 + if_nametoindex(iface->name);
-	if (getifssid(ifname, iface->ssid) != -1) {
-		iface->wireless = 1;
-		iface->metric += 100;
-	}
-
-	if (ioctl(socket_afnet, SIOCGIFMTU, &ifr) == -1)
-		goto eexit;
-	/* Ensure that the MTU is big enough for DHCP */
-	if (ifr.ifr_mtu < MTU_MIN) {
-		ifr.ifr_mtu = MTU_MIN;
-		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-		if (ioctl(socket_afnet, SIOCSIFMTU, &ifr) == -1)
-			goto eexit;
-	}
-
-	snprintf(iface->leasefile, sizeof(iface->leasefile),
-	    LEASEFILE, ifname);
-	/* 0 is a valid fd, so init to -1 */
-	iface->raw_fd = -1;
-	iface->udp_fd = -1;
-	iface->arp_fd = -1;
-	goto exit;
-
-eexit:
-	free(iface);
-	iface = NULL;
-exit:
-	return iface;
 }
 
 void
@@ -411,8 +349,10 @@ discover_interfaces(int argc, char * const *argv)
 				continue;
 			p = ifa->ifa_name;
 		}
-		if ((ifp = init_interface(p)) == NULL)
-			continue;
+
+		ifp = xzalloc(sizeof(*ifp));
+		strlcpy(ifp->name, p, sizeof(ifp->name));
+		ifp->flags = ifa->ifa_flags;
 
 		/* Bring the interface up if not already */
 		if (!(ifp->flags & IFF_UP)
@@ -454,6 +394,7 @@ discover_interfaces(int argc, char * const *argv)
 			}
 #endif
 
+			ifp->index = sdl->sdl_index;
 			sdl_type = sdl->sdl_type;
 			switch(sdl->sdl_type) {
 			case IFT_BRIDGE: /* FALLTHROUGH */
@@ -478,6 +419,7 @@ discover_interfaces(int argc, char * const *argv)
 			memcpy(ifp->hwaddr, CLLADDR(sdl), ifp->hwlen);
 #elif AF_PACKET
 			sll = (const struct sockaddr_ll *)(void *)ifa->ifa_addr;
+			ifp->index = sll->sll_ifindex;
 			ifp->family = sdl_type = sll->sll_hatype;
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
@@ -514,6 +456,27 @@ discover_interfaces(int argc, char * const *argv)
 			free_interface(ifp);
 			continue;
 		}
+
+		/* Ensure that the MTU is big enough for DHCP */
+		if (get_mtu(ifp->name) < MTU_MIN &&
+		    set_mtu(ifp->name, MTU_MIN) == -1)
+		{
+			syslog(LOG_ERR, "%s: set_mtu: %m", p);
+			free_interface(ifp);
+			continue;
+		}
+
+		/* We reserve the 100 range for virtual interfaces, if and when
+		 * we can work them out. */
+		ifp->metric = 200 + ifp->index;
+		if (getifssid(ifp->name, ifp->ssid) != -1) {
+			ifp->wireless = 1;
+			ifp->metric += 100;
+		}
+		snprintf(ifp->leasefile, sizeof(ifp->leasefile),
+		    LEASEFILE, ifp->name);
+		/* 0 is a valid fd, so init to -1 */
+		ifp->raw_fd = ifp->udp_fd = ifp->arp_fd = -1;
 
 		if (ifl)
 			ifl->next = ifp; 

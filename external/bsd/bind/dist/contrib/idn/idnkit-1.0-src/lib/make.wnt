@@ -1,4 +1,4 @@
-# Id: make.wnt,v 1.1.1.1 2003-06-04 00:25:54 marka Exp
+# Id: make.wnt,v 1.1 2003/06/04 00:25:54 marka Exp 
 # Makefile for MDN library, manually configured for WIN-NT (VC5.0)
 #
 # Copyright (c) 2000,2002 Japan Network Information Center.  All rights reserved.

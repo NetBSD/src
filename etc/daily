@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.77.6.1 2012/04/17 00:02:56 yamt Exp $
+#	$NetBSD: daily,v 1.77.6.2 2012/10/30 18:48:58 yamt Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -89,7 +89,16 @@ if checkyesno find_core; then
 	ignfstypes="$(echo $find_core_ignore_fstypes | \
 		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
 		    -e's/^-o //')"
+	# Turn "foo bar" into "( -path foo -o -path bar ) -prune -o"
+	# Set ignpaths empty if no find_core_ignore_paths given
+	if [ -n "$find_core_ignore_paths" ]; then
+		ignpaths="$(printf " -o -path %s" $find_core_ignore_paths)"
+		ignpaths="( ${ignpaths# -o } ) -prune -o"
+	else
+		ignpaths=""
+	fi
 	find / \( $ignfstypes \) -prune -o \
+		${ignpaths} \
 		-name 'lost+found' -prune -o \
 		\( -name '*.core' -o -name 'core' \) -type f -print > $TMP
 #		\( -name '[#,]*' -o -name '.#*' -o -name a.out \
@@ -237,8 +246,8 @@ if checkyesno run_fsck; then
 	fsck -n -f ${run_fsck_flags} | grep -v '^\*\* Phase'
 fi
 
-echo ""
 if checkyesno run_rdist && [ -f /etc/Distfile ]; then
+	echo ""
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
 		logf="$(date +%Y.%b.%d)"
@@ -249,14 +258,15 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 fi
 
 if pkg_info ${_compat_K_flag} -q -E '*'; then
-	echo ""
-	echo "Fetching package vulnerabilities database:"
-	if checkyesno fetch_pkg_vulnerabilities; then
+	if [ -z "fetch_pkg_vulnerabilities" ]; then
+		echo "fetch_pkg_vulnerabilities is not set in daily.conf(5)."
+		echo "You should set it to YES to enable vulnerability checks"
+		echo "or set it to NO to get rid of this warning."
+	elif checkyesno fetch_pkg_vulnerabilities; then
+		echo ""
+		echo "Fetching package vulnerabilities database:"
 		( umask 022 && pkg_admin ${_compat_K_flag} \
 		    fetch-pkg-vulnerabilities -u )
-	else
-		echo "fetch_pkg_vulnerabilities is set to NO in daily.conf(5)."
-		echo "You should set it to YES to enable vulnerability checks."
 	fi
 fi
 
@@ -294,7 +304,7 @@ if checkyesno run_makemandb; then
 	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
 		echo ""
 		echo "Updating man page index:"
-		(umask 022; nice -n 5 /usr/sbin/makemandb)
+		(umask 022; nice -n 5 /usr/sbin/makemandb -Q)
 	fi
 fi
 

@@ -1,8 +1,8 @@
-GETHOSTBYNAME(3)         BSD Library Functions Manual         GETHOSTBYNAME(3)
+GETHOSTBYNAME(3)       FreeBSD Library Functions Manual       GETHOSTBYNAME(3)
 
 NNAAMMEE
      ggeetthhoossttbbyynnaammee, ggeetthhoossttbbyyaaddddrr, ggeetthhoosstteenntt, sseetthhoosstteenntt, eennddhhoosstteenntt, hheerrrroorr
-     - get network host entry
+     -- get network host entry
 
 SSYYNNOOPPSSIISS
      ##iinncclluuddee <<nneettddbb..hh>>
@@ -58,12 +58,12 @@ DDEESSCCRRIIPPTTIIOONN
      h_addr_list  A zero-terminated array of network addresses for the host.
                   Host addresses are returned in network byte order.
 
-     h_addr       The first address in h_addr_list; this is for backward com‐
+     h_addr       The first address in h_addr_list; this is for backward com-
                   patibility.
 
      When using the nameserver, ggeetthhoossttbbyynnaammee() will search for the named host
-     in each parent domain given in the “search” directive of resolv.conf(5)
-     unless the name contains a dot (“.”).  If the name contains no dot, and
+     in each parent domain given in the ``search'' directive of resolv.conf(5)
+     unless the name contains a dot (``.'').  If the name contains no dot, and
      if the environment variable HOSTALIASES contains the name of an alias
      file, the alias file will first be searched for an alias matching the
      input name.  See hostname(7) for the domain search procedure and the
@@ -143,7 +143,7 @@ CCAAVVEEAATT
 
 BBUUGGSS
      All information is contained in a static area so it must be copied if it
-     is to be saved.  Only the Internet address format is currently under‐
+     is to be saved.  Only the Internet address format is currently under-
      stood.
 
 4th Berkeley Distribution        June 23, 1990       4th Berkeley Distribution

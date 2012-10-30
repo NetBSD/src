@@ -1,5 +1,3 @@
-.\" Id: hesiod.man3,v 1.2 2009/01/21 00:12:34 each Exp
-.\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -27,6 +25,8 @@
 .\" M.I.T. makes no representations about the suitability of
 .\" this software for any purpose.  It is provided "as is"
 .\" without express or implied warranty.
+.\"
+.\" Id: hesiod.man3,v 1.3 2009/03/09 02:37:17 marka Exp 
 .\"
 .TH HESIOD 3 "30 November 1996"
 .SH NAME

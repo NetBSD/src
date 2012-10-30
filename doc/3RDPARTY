@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.884.2.3 2012/05/23 10:07:21 yamt Exp $
+#	$NetBSD: 3RDPARTY,v 1.884.2.4 2012/10/30 18:48:57 yamt Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -23,10 +23,25 @@
 #     should be repeated on each line, except:
 # 5.) The Notes: field tag should appear on a line by itself; all
 #     remaining lines until the end of the record are notes.
+#
+# Package:	name or brief description (required, must be first)
+# Version:	version that is included with NetBSD (required)
+# Current Vers:	version that is available upstream (required)
+# Maintainer:	name and/or email address of upstream maintainer (required)
+# Archive Site:	URL to archive of upstream releases
+# Home Page:	URL to web page for upstream project
+# Mailing List:	email address or URL related to upstream mailing list
+# License:	description of license
+# Responsible:	comma-separated list of NetBSD developers
+# Location:	comma-separated list of subdirectories in the NetBSD src tree
+# Notes:
+# Multiple lines of free-form text,
+# Must be last.
+#
 
 Package:	acpica
 Version:	20110623
-Current Vers:	20120215
+Current Vers:	20120620
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/unix2_source_code.php
 Home Page:	http://www.acpica.org/
@@ -53,8 +68,8 @@ Fix symbolic links before import.
 Check external/bsd/am-utils/include/config.h is correct after import.
 
 Package:	Automated Testing Framework (ATF)
-Version:	0.15
-Current Vers:	0.15
+Version:	0.16
+Current Vers:	0.16
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
 Home page:	http://code.google.com/p/kyua/wiki/ATF
@@ -77,7 +92,7 @@ Archive Site:	none
 Home Page:	none
 Mailing List:	none
 Responsible:	sam, alc
-License:	BSD-like (2 clause), ISC
+License:	BSD-like (2-clause), ISC
 Location:	sys/external/isc/atheros_hal/dist
 Notes:
 
@@ -95,12 +110,13 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.9.0a1
-Current Vers:	9.8.1
+Version:	9.9.1-P2
+Current Vers:	9.9.1-P2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
-Home Page:	http://www.isc.org/sw/bind/
-Mailing List:
+Home Page:	http://www.isc.org/software/bind/
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/bind/dist
@@ -113,11 +129,11 @@ The libc and include parts of the resolver are now part of libbind.
 
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
-Current Vers:	libbind-6.0-rc1
+Current Vers:	libbind-6.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/libbind/
-Home Page:	http://www.isc.org/sw/bind/
-Mailing List:
+Home Page:	http://www.isc.org/software/libbind/
+Mailing List:	https://lists.isc.org/mailman/listinfo/bind-workers
 Responsible:	vixie, christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/libbind/dist
@@ -162,14 +178,14 @@ Notes:
 Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
-Version:	1.116
-Current Vers:	1.116
-Maintainer:	n/a
-Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
-Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
+Version:	1.151
+Current Vers:	1.156
+Maintainer:	The FreeBSD Project
+Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
+Home Page:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
 Responsible:
-License:	See URL above.
+License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
 Location:	share/misc/bsd-family-tree
 Notes:
 
@@ -268,7 +284,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.3
-Current Vers:	4.1-ESV-R4/4.2.3-P2
+Current Vers:	4.1-ESV-R6/4.2.4-P1
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/software/dhcp/
@@ -284,8 +300,8 @@ No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
 
 Package:	dhcpcd
-Version:	5.5.6
-Current Vers:	5.5.6
+Version:	5.6.2
+Current Vers:	5.6.2
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -328,7 +344,7 @@ Version:	5.11
 Current Vers:	5.11
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
-Home Page:
+Home Page:	http://www.darwinsys.com/file/
 Mailing List:	file@mx.gw.com
 Responsible:	christos, pooka
 License:	BSD (2-clause)
@@ -350,8 +366,8 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	4.1.3-20080831/4.5.3
-Current Vers:	4.6.0
+Version:	4.1.3-20080831/4.5.4
+Current Vers:	4.7.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
@@ -376,7 +392,7 @@ for GCC 4.5:
 
 Package:	gdb
 Version:	6.5/7.3.1
-Current Vers:	7.4
+Current Vers:	7.5
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -434,7 +450,7 @@ Notes:
 
 Package:	grep
 Version:	2.5.1
-Current Vers:	2.10
+Current Vers:	2.14
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
@@ -555,13 +571,13 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less-444
-Current Vers:	less-444
+Current Vers:	less-451
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
 Mailing List:	less-announce-request@greenwoodsoftware.com
 Responsible:	mrg
-License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less418)
+License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less-418)
 Location:	external/bsd/less/dist
 Notes:
 Many changes to make less act as more when invoked as more.  Beware.
@@ -636,7 +652,7 @@ tree.
 
 Package:	libwrap
 Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
-Current Vers:	tcp_wrappers 7.6-ipv6.1
+Current Vers:	tcp_wrappers 7.6-ipv6.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
@@ -651,7 +667,7 @@ into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
 Version:	Lua 5.1.4
-Current Vers:	Lua 5.1.4
+Current Vers:	Lua 5.2.1
 Maintainer:	PUC Rio
 Home Page:	http://www.lua.org/
 Mailing List:
@@ -665,9 +681,9 @@ working directory '.' to avoid potential security problems.
 Package:	m4
 Version:	20091026
 Current Vers:	20091026
-Maintainer:	OpenBSD
+Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
-Home Page:	http://openbsd.org
+Home Page:	http://www.openbsd.org/
 Mailing List:	
 License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
@@ -782,7 +798,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.23
-Current Vers:	2.4.30
+Current Vers:	2.4.32
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
@@ -794,7 +810,7 @@ Notes:
 
 Package:	OpenPAM
 Version:	20111218 (Lycopsida)
-Current Vers:	20111218 (Hydrangea)
+Current Vers:	20120526 (Micrampelis)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
@@ -832,7 +848,7 @@ Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	6.0
-Current Vers:	6.0 / portable 6.0p1
+Current Vers:	6.1 / portable 6.1p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -872,8 +888,8 @@ markus is very cooperative about it):
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
 
 Package:	OpenSSL
-Version:	1.0.1-stable-SNAP-20110605
-Current Vers:	1.0.1 [snapshot-20110605] with AES-NI patch
+Version:	1.0.1c
+Current Vers:	1.0.1c with AES-NI patch
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
@@ -885,6 +901,8 @@ Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - run make in /usr/src/crypto/external/bsd/openssl/lib/libcrypto/man
   to regen man pages.
+- run make in  /usr/src/crypto/external/bsd/openssl/lib/libcrypto/arch/*
+  to regen assembly files
 
 Package:	pcc
 Version:	1.1.0.DEVEL 20120325
@@ -972,8 +990,8 @@ formatting in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	Postfix
-Version:	2.8.8
-Current Vers:	2.8.8/2.9.1
+Version:	2.8.12
+Current Vers:	2.8.12/2.9.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -1011,13 +1029,13 @@ using the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
-Current Vers:	5.8
+Current Vers:	5.8.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/rcs/
 Mailing List:	bug-gnu-utils@gnu.org
 Home Page:	http://www.gnu.org/software/rcs/
 Responsible:	agc
-License:	GPLv2 (5.7), GPLv3+ (5.8)
+License:	GPLv2+ (5.7), GPLv3+ (5.8 and later)
 Location:	gnu/usr.bin/rcs
 Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
@@ -1081,7 +1099,7 @@ original.
 
 Package:	sqlite
 Version:	pre-3.6.9 snapshot
-Current Vers:	3.7.12
+Current Vers:	3.7.13
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1133,7 +1151,7 @@ for the import.
 
 Package:	tmux
 Version:	1.5
-Current Vers:	1.6
+Current Vers:	1.7
 Maintainer:	Nicholas Marriott <nicm@users.sourceforge.net>
 Archive site:	http://downloads.sourceforge.net/tmux/
 Home page:	http://tmux.sourceforge.net/
@@ -1171,12 +1189,12 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2012b / tzdata2012b
-Current Vers:	tzcode2011i / tzdata2012b
-Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
-Maintainer:	Robert Elz <kre@munnari.oz.au>
-Archive Site:	ftp://elsie.nci.nih.gov/pub/
+Version:	tzcode2012h / tzdata2012h
+Current Vers:	tzcode2012h / tzdata2012h
+Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
+Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
+Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, apb
@@ -1184,13 +1202,14 @@ License:	Public domain
 Location:	lib/libc/time,share/zoneinfo
 Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
-The tzcode2009k -> 2011i patch was applied by hand, since we have too
+The tzcode2012f -> 2012g patch was applied by hand, since we have too
 many diffs (re-entrant tzcode) to apply. The diffs have been submitted
-upstream but there is too much inertia to apply them.
+upstream but there is too much inertia to apply them. Check for .gitignore
+files.
 
 Package:	wpa_supplicant/hostapd
-Version:	0.7.3
-Current Vers:	0.7.3
+Version:	1.0
+Current Vers:	1.0
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/
@@ -1232,10 +1251,10 @@ Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
 
 Package:	services, protocols
-Version:	2010-10-04 (services), 2010-05-27 (protocols)
-Current Vers:	2012-01-04 (services), 2011-11-01 (protocols)
+Version:	2012-08-24 (services), 2012-08-21 (protocols)
+Current Vers:	2012-08-24 (services), 2012-08-21 (protocols)
 Maintainer:	IANA
-Archive Site:	http://www.iana.org/assignments/port-numbers (services)
+Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
 Home Page:	http://www.iana.org/
 Mailing List:
@@ -1243,17 +1262,18 @@ Responsible:	christos
 License:	None
 Location:	etc
 Notes:
-1. Download the latest converter from:
-	http://www.sethwklein.net/iana-etc.html
-2. Unpack it and edit the Makefile to reflect the latest location of the files
-3. Run
-	gmake get
-	gmake
-4. Add NetBSD rcsid to the generated protocols and services.
-5. Append the local services from the current services file.
-6. Run:
+1. Build package net/iana-etc
+2. Add NetBSD rcsid to the generated protocols and services in the package
+   work area.
+3. Append the local services from the current services file.
+4. Run:
 	services_mkdb -u services > /usr/src/etc/services
 	cp protocols /usr/src/etc/protocols
+5. Fix protocols
+   - fix manet alias to MANET; giving an alias with the same name is a no/op
+   - protocol 84 is defined for as ttp and iptm, merge the two entries since
+     libc getprotoent() does not read the whole file and merge in the "files"
+     implementation.
 
 Package:	pigz
 Version:	2.1.6
@@ -1269,7 +1289,7 @@ Notes:
 
 Package:	xz
 Version:	5.0.0
-Current Vers:	5.0.2
+Current Vers:	5.0.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
@@ -1323,9 +1343,9 @@ Current Vers:	0.8.0
 Maintainer:	http://laurikari.net/tre
 Archive Site:	http://laurikari.net/tre
 Home Page:	http://laurikari.net/tre
-Mailing List:	http://laurikari.net/mailman/listinfo/tre-general
+Mailing List:
 Responsible:	agc, christos
-License:	BSD
+License:	BSD (2-clause)
 Location:	external/bsd/tre/dist
 Notes:
 		Need to feed back local changes

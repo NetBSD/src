@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.106 2011/10/05 13:15:30 christos Exp $
+.\"	$NetBSD: sh.1,v 1.106.2.1 2012/10/30 18:46:08 yamt Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 4, 2011
+.Dd August 26, 2012
 .Dt SH 1
 .Os
 .Sh NAME
@@ -233,7 +233,7 @@ explicitly tested if the command is used to control an
 .Ic elif ,
 .Ic while ,
 or
-.Ic until ;
+.Ic until ,
 or if the command is the left hand operand of an
 .Dq \*[Am]\*[Am]
 or
@@ -345,7 +345,7 @@ is treated as a line continuation.
 .Ss Single Quotes
 Enclosing characters in single quotes preserves the literal meaning of all
 the characters (except single quotes, making it impossible to put
-single-quotes in a single-quoted string).
+single quotes in a single-quoted string).
 .Ss Double Quotes
 Enclosing characters within double quotes preserves the literal
 meaning of all characters except dollar sign
@@ -416,9 +416,9 @@ are stripped off and assigned to the environment of the simple command.
 Redirection operators and their arguments (as described below) are
 stripped off and saved for processing.
 .It
-The remaining words are expanded as described in
-the section called
-.Dq Expansions ,
+The remaining words are expanded as described in the
+.Sx Word Expansions
+section below,
 and the first remaining word is considered the command name and the
 command is located.
 The remaining words are considered the arguments of the command.
@@ -484,10 +484,11 @@ All the text on successive lines up to the delimiter is saved away and
 made available to the command on standard input, or file descriptor n if
 it is specified.
 If the delimiter as specified on the initial line is
-quoted, then the here-doc-text is treated literally, otherwise the text is
+quoted, then the here-doc-text is treated literally; otherwise, the text is
 subjected to parameter expansion, command substitution, and arithmetic
-expansion (as described in the section on
-.Dq Expansions ) .
+expansion as described in the
+.Sx Word Expansions
+section below.
 If the operator is
 .Dq \*[Lt]\*[Lt]-
 instead of
@@ -755,7 +756,6 @@ Built-in commands grouped into a (list) will not affect the current shell.
 The second form does not fork another shell so is slightly more efficient.
 Grouping commands together this way allows you to redirect
 their output as though they were one program:
-.Pp
 .Bd -literal -offset indent
 { echo -n \*q hello \*q ; echo \*q world" ; } \*[Gt] greeting
 .Ed
@@ -849,7 +849,7 @@ if
 is unset.
 .It @
 Expands to the positional parameters, starting from one.
-When the expansion occurs within double-quotes, each positional
+When the expansion occurs within double quotes, each positional
 parameter expands as a separate argument.
 If there are no positional parameters, the
 expansion of @ generates zero arguments, even when @ is
@@ -887,7 +887,7 @@ For a pipeline, the process ID is that of the last command in the pipeline.
 Expands to the name of the shell or shell script.
 .El
 .Ss Word Expansions
-This clause describes the various expansions that are performed on words.
+This section describes the various expansions that are performed on words.
 Not all expansions are performed on every word, as explained later.
 .Pp
 Tilde expansions, parameter expansions, command substitutions, arithmetic
@@ -896,7 +896,7 @@ single field.
 It is only field splitting or pathname expansion that can
 create multiple fields from a single word.
 The single exception to this
-rule is the expansion of the special parameter @ within double-quotes, as
+rule is the expansion of the special parameter @ within double quotes, as
 was described above.
 .Pp
 The order of word expansion is:
@@ -954,7 +954,7 @@ The parameter name or symbol can be enclosed in braces, which are
 optional except for positional parameters with more than one digit or
 when parameter is followed by a character that could be interpreted as
 part of the name.
-If a parameter expansion occurs inside double-quotes:
+If a parameter expansion occurs inside double quotes:
 .Bl -enum
 .It
 Pathname expansion is not performed on the results of the expansion.
@@ -992,9 +992,6 @@ An interactive shell need not exit.
 Use Alternative Value.
 If parameter is unset or null, null is
 substituted; otherwise, the expansion of word is substituted.
-.El
-.Pp
-.Bl -tag -width aaparameterwordaaaaa
 .It ${#parameter}
 String Length.
 The length in characters of the value of parameter.
@@ -1006,7 +1003,7 @@ In each case, pattern matching notation (see
 .Sx Shell Patterns ) ,
 rather than regular expression notation, is used to evaluate the patterns.
 If parameter is * or @, the result of the expansion is unspecified.
-Enclosing the full parameter expansion string in double-quotes does not
+Enclosing the full parameter expansion string in double quotes does not
 cause the following four varieties of pattern characters to be quoted,
 whereas quoting characters within the braces has this effect.
 .Bl -tag -width aaparameterwordaaaaa
@@ -1067,8 +1064,8 @@ The format for arithmetic expansion is as follows:
 .Pp
 .Dl $((expression))
 .Pp
-The expression is treated as if it were in double-quotes, except
-that a double-quote inside the expression is not treated specially.
+The expression is treated as if it were in double quotes, except
+that a double quote inside the expression is not treated specially.
 The shell expands all tokens in the expression for parameter expansion,
 command substitution, and quote removal.
 .Pp
@@ -1090,7 +1087,7 @@ sign.
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
-expansions and substitutions that did not occur in double-quotes for
+expansions and substitutions that did not occur in double quotes for
 field splitting and multiple fields can result.
 .Pp
 The shell treats each character of the
@@ -1136,7 +1133,7 @@ and
 .Dq \&[ .
 These characters lose their special meanings if they are quoted.
 When command or variable substitution is performed
-and the dollar sign or back quotes are not double quoted,
+and the dollar sign or backquotes are not double-quoted,
 the value of the variable or the output of
 the command is scanned for these characters and they are turned into
 meta-characters.
@@ -1144,13 +1141,15 @@ meta-characters.
 An asterisk
 .Pq Dq *
 matches any string of characters.
-A question mark matches any single character.
+A question mark
+.Pq Dq \&?
+matches any single character.
 A left bracket
 .Pq Dq \&[
 introduces a character class.
-The end of the character class is indicated by a
+The end of the character class is indicated by a right bracket
 .Pq Dq \&] ;
-if the
+if this
 .Dq \&]
 is missing then the
 .Dq \&[
@@ -1158,16 +1157,21 @@ matches a
 .Dq \&[
 rather than introducing a character class.
 A character class matches any of the characters between the square brackets.
-A range of characters may be specified using a minus sign.
+A range of characters may be specified using a minus sign
+.Pq Dq - .
 The character class may be complemented
-by making an exclamation point the first character of the character class.
+by making an exclamation mark
+.Pq Dq \&!
+the first character of the character class.
 .Pp
 To include a
 .Dq \&]
 in a character class, make it the first character listed (after the
 .Dq \&! ,
 if any).
-To include a minus sign, make it the first or last character listed.
+To include a
+.Dq - ,
+make it the first or last character listed.
 .Ss Built-ins
 This section lists the built-in commands which are built-in because they
 need to perform some operation that can't be performed by a separate
@@ -1481,7 +1485,6 @@ and
 and the option
 .Op c ,
 which requires an argument.
-.Pp
 .Bd -literal -offset indent
 while getopts abc: f
 do
@@ -1495,7 +1498,6 @@ shift $(expr $OPTIND - 1)
 .Ed
 .Pp
 This code will accept any of the following as equivalent:
-.Pp
 .Bd -literal -offset indent
 cmd \-acarg file file
 cmd \-a \-c arg file file
@@ -1584,8 +1586,9 @@ The prompt is printed if the
 option is specified and the standard input is a terminal.
 Then a line is read from the standard input.
 The trailing newline is deleted from the
-line and the line is split as described in the section on word splitting
-above, and the pieces are assigned to the variables in order.
+line and the line is split as described in the
+.Sx Word Expansions
+section above, and the pieces are assigned to the variables in order.
 If there are more pieces than variables, the remaining pieces
 (along with the characters in
 .Ev IFS
@@ -1628,8 +1631,9 @@ command performs three different functions.
 With no arguments, it lists the values of all shell variables.
 .Pp
 If options are given, it sets the specified option
-flags, or clears them as described in the section called
-.Sx Argument List Processing .
+flags, or clears them as described in the
+.Sx Argument List Processing
+section.
 .Pp
 The third use of the set command is to set the values of the shell's
 positional parameters to the specified arguments.
@@ -1731,7 +1735,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
-.It ulimit Oo Fl H \*(Ba Fl S Oc Oo Fl a \*(Ba Fl tfdscmlpnv Oo Ar value Oc Oc
+.It ulimit Oo Fl H \*(Ba Fl S Oc Oo Fl a \*(Ba Fl btfdscmlrpnv Oo Ar value Oc Oc
 Inquire about or set the hard or soft limits on processes or set new
 limits.
 The choice between hard limit (which no process is allowed to
@@ -1777,6 +1781,9 @@ in use by a process (in kilobytes)
 show or set the limit on how much memory a process can lock with
 .Xr mlock 2
 (in kilobytes)
+.It Fl r
+show or set the limit on the number of threads this user can
+have at one time
 .It Fl p
 show or set the limit on the number of processes this user can
 have at one time
@@ -1823,8 +1830,9 @@ When
 is being used interactively from a terminal, the current command
 and the command history (see
 .Ic fc
-in
-.Sx Built-ins )
+in the
+.Sx Built-ins
+section)
 can be edited using emacs-mode or vi-mode command-line editing.
 The command
 .Ql set -o emacs
@@ -1881,8 +1889,9 @@ This environment variable also functions as the default argument for the
 built-in.
 .It Ev PATH
 The default search path for executables.
-See the above section
-.Sx Path Search .
+See the
+.Sx Path Search
+section above.
 .It Ev CDPATH
 The search path used with the
 .Ic cd
@@ -1942,7 +1951,7 @@ children of the shell, and is used in the history editing modes.
 The number of lines in the history buffer for the shell.
 .El
 .Sh FILES
-.Bl -item -width HOMEprofilexxxx
+.Bl -item
 .It
 .Pa $HOME/.profile
 .It

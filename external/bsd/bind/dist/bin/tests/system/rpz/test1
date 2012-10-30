@@ -12,19 +12,69 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test1,v 1.5 2011-06-09 03:10:17 marka Exp
+; Id: test1,v 1.8 2012/01/07 00:19:59 each Exp 
 
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
 
 server 10.53.0.3 5300
 
+; QNAME tests
+
 ; NXDOMAIN
 update add  a0-1.tld2.bl.	300 CNAME .
-
+update add  a0-1.signed-tld2.bl.	300 CNAME .
+;
 ; NODATA
-update add  a1-1.tld2.bl.	300 CNAME *.
-;	and no assert-botch
-update add  a1-2.tld2.bl.	300 DNAME example.com.
+update add  a3-1.tld2.bl.	300 CNAME *.
+; and no assert-botch
+;	5
+update add  a3-2.tld2.bl.	300 DNAME example.com.
+;
+; NXDOMAIN for a4-2-cname.tld2 via its target a4-2.tld2.
+;	6 and 7
+update add  a4-2.tld2.bl	300 CNAME .
+;	8
+; NODATA for a4-3-cname.tld2 via its target a4-3.tld2.
+update add  a4-3.tld2.bl	300 CNAME *.
+;
+; replace the A for a4-1.sub1.tld2 with 12.12.12.12
+;	9
+update add  a4-1.sub1.tld2.bl.	300 A 12.12.12.12
+;
+; replace the A for *.sub2.tld2 with 12.12.12.12
+;	10
+update add  a4-1.sub2.tld2.bl.	300 A 12.12.12.12
+;
+; replace NXDOMAIN for {nxc1,nxc2}.sub1.tld2 with 12.12.12.12 using CNAMEs
+;	11
+update add nxc1.sub1.tld2.bl.	300 CNAME a12.tld2.
+;	12
+update add nxc2.sub1.tld2.bl.	300 CNAME a12-cname.tld2.
+;
+; prefer the first conflicting zone
+;	13
+update add a4-4.tld2.bl.	300 A	127.0.0.1
+send
+update add a4-4.tld2.bl-2.	300 A	127.0.0.2
+send
+;
+; wildcard CNAME
+;	14
+update add  a3-6.tld2.bl.	300 CNAME *.tld4.
+;	15
+update add  *.sub1.tld2.bl.	300 CNAME *.tld4.
+; CNAME chains
+;	16
+update add  a4-5.tld2.bl.	300 A	127.0.0.16
+;	17
+update add  a4-6.tld2.bl.	300 CNAME .
+update add  a4-6-cname.tld2.bl.	300 A	127.0.0.17
 
-update add  *.sub1.tld2.bl.	300 A 12.12.12.12
+;	18
+update	add c1.crash2.tld3.bl.	300 CNAME .
 
 send

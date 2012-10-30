@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2012/04/17 00:03:31 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2012/10/30 18:55:51 yamt Exp $
 
 LIB=	LLVMMC
 
@@ -35,6 +35,7 @@ SRCS+=	ELFObjectWriter.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectWriter.cpp \
 	MCPureStreamer.cpp \
+	MCRegisterInfo.cpp \
 	MCSection.cpp \
 	MCSectionCOFF.cpp \
 	MCSectionELF.cpp \

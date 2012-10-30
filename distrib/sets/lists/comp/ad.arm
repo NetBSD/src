@@ -1,8 +1,9 @@
-# $NetBSD: ad.arm,v 1.38.2.1 2012/04/17 00:02:39 yamt Exp $
+# $NetBSD: ad.arm,v 1.38.2.2 2012/10/30 18:48:40 yamt Exp $
 ./usr/include/gcc-4.5/arm_neon.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/mmintrin.h		comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/arm				comp-c-include
+./usr/include/arm/aeabi.h			comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
 ./usr/include/arm/arm26				comp-c-include
@@ -70,6 +71,7 @@
 ./usr/include/arm/sysarch.h			comp-c-include
 ./usr/include/arm/trap.h			comp-c-include
 ./usr/include/arm/types.h			comp-c-include
+./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/varargs.h			comp-obsolete		obsolete
 ./usr/include/arm/wchar_limits.h		comp-c-include
 ./usr/include/arm32/bootconfig.h		comp-obsolete		obsolete

@@ -1,7 +1,7 @@
-/*	$NetBSD: printdstlistnode.c,v 1.1.1.1.2.2 2012/04/17 00:03:19 yamt Exp $	*/
+/*	$NetBSD: printdstlistnode.c,v 1.1.1.1.2.3 2012/10/30 18:55:09 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -41,7 +41,7 @@ printdstlistnode(inp, copyfunc, opts, fields)
 		printf("\n");
 	} else if ((opts & OPT_DEBUG) == 0) {
 		putchar(' ');
-		if (np->ipfd_dest.fd_name != 0)
+		if (np->ipfd_dest.fd_name >= 0)
 			PRINTF("%s:", np->ipfd_names);
 		if (np->ipfd_dest.fd_addr.adf_family == AF_INET) {
 			printip(AF_INET, (u_32_t *)&np->ipfd_dest.fd_ip);
@@ -53,6 +53,7 @@ printdstlistnode(inp, copyfunc, opts, fields)
 				PRINTF("%s", str);
 #endif
 		}
+		putchar(';');
 	} else {
 		PRINTF("Interface: [%s]/%d\n", np->ipfd_names,
 		       np->ipfd_dest.fd_name);

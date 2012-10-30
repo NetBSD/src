@@ -16,4 +16,4 @@ Beware BIND clock uses unsigned integer, in 22 seconds isc_time_now()
 overflows and breaks assertions. Note 22 real seconds is 136 virtual
 years...
 
-Id: README,v 1.2 2010-06-17 05:38:04 marka Exp
+Id: README,v 1.2 2010/06/17 05:38:04 marka Exp 

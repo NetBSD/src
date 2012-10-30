@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.22 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.22.42.1 2012/10/30 18:46:07 yamt Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: getoldopt.c,v 1.22 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: getoldopt.c,v 1.22.42.1 2012/10/30 18:46:07 yamt Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: getoldopt.c,v 1.22 2006/02/11 10:43:18 dsl Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include "pax.h"
 #include "extern.h"

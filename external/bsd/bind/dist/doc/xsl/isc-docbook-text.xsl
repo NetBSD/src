@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-docbook-text.xsl,v 1.3 2007-06-19 23:47:13 tbox Exp -->
+<!-- Id: isc-docbook-text.xsl,v 1.3 2007/06/19 23:47:13 tbox Exp  -->
 
 <!-- Tweaks to Docbook-XSL HTML for producing flat ASCII text. --> 
 

@@ -35,7 +35,7 @@
 
 set -e
 
-Prog_Name=${0##*/}
+Prog_Name=`echo "${0}" | sed 's;.*/;;'`
 
 MTN=
 ROOT=
@@ -90,7 +90,7 @@ BEGIN {
 #    rev_date: The date of the revision.
 #
 get_rev_info_into_vars() {
-    rev_base_id=$(call_mtn automate get_base_revision_id)
+    rev_base_id=`call_mtn automate get_base_revision_id`
 
     if call_mtn status | grep "no changes" >/dev/null; then
         rev_modified=false
@@ -99,7 +99,7 @@ get_rev_info_into_vars() {
     fi
 
     # The following defines several rev_* variables.
-    eval $(extract_certs ${rev_base_id})
+    eval `extract_certs ${rev_base_id}`
 }
 
 #

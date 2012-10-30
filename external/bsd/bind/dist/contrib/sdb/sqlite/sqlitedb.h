@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlitedb.h,v 1.2 2011/02/16 03:47:01 christos Exp $	*/
+/*	$NetBSD: sqlitedb.h,v 1.2.4.1 2012/10/30 18:52:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 2000-2002  Internet Software Consortium.
@@ -17,7 +17,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sqlitedb.h,v 1.1 2007-03-05 05:30:22 marka Exp */
+/* Id: sqlitedb.h,v 1.1 2007/03/05 05:30:22 marka Exp  */
 
 #include <isc/types.h>
 

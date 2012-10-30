@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.4 2011-03-22 16:51:50 smann Exp
+# Id: clean.sh,v 1.4 2011/03/22 16:51:50 smann Exp 
 
 #
 # Clean up after log file tests

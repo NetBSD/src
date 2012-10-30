@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.7 2010/02/11 09:06:49 roy Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.7.6.1 2012/10/30 18:48:36 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,10 @@ DBG=		-Os -fno-asynchronous-unwind-tables
 CRUNCHGEN_FLAGS= -d "${DBG}"
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list ${OFPPCCOMMON}/list.ramdisk
+
+# Use ${.CURDIR}/list only if LISTS was not already defined by the caller.
+LISTS?=		${.CURDIR}/list
+LISTS+=		${OFPPCCOMMON}/list.ramdisk
 MTREECONF=	${DISTRIBDIR}/common/mtree.common ${.CURDIR}/../common/mtree.ramdisk
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \

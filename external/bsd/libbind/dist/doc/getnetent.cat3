@@ -1,7 +1,7 @@
-GETNETENT(3)             BSD Library Functions Manual             GETNETENT(3)
+GETNETENT(3)           FreeBSD Library Functions Manual           GETNETENT(3)
 
 NNAAMMEE
-     ggeettnneetteenntt, ggeettnneettbbyyaaddddrr, ggeettnneettbbyynnaammee, sseettnneetteenntt, eennddnneetteenntt - get net‐
+     ggeettnneetteenntt, ggeettnneettbbyyaaddddrr, ggeettnneettbbyynnaammee, sseettnneetteenntt, eennddnneetteenntt -- get net-
      works entry
 
 SSYYNNOOPPSSIISS
@@ -46,14 +46,14 @@ DDEESSCCRRIIPPTTIIOONN
                  byte order.
 
      If the _s_t_a_y_o_p_e_n flag on a sseettnneetteenntt() subroutine is NULL, the _n_e_t_w_o_r_k_s
-     database is opened.  Otherwise, the sseettnneetteenntt() has the effect of rewind‐
+     database is opened.  Otherwise, the sseettnneetteenntt() has the effect of rewind-
      ing the _n_e_t_w_o_r_k_s database.  The eennddnneetteenntt() subroutine may be called to
      close the _n_e_t_w_o_r_k_s database when processing is complete.
 
      The ggeettnneetteenntt() subroutine simply reads the next line while
      ggeettnneettbbyynnaammee() and ggeettnneettbbyyaaddddrr() search until a matching _n_a_m_e or _n_e_t
      number is found (or until EOF is encountered).  The _t_y_p_e _m_u_s_t _b_e AF_INET.
-     The ggeettnneetteenntt() subroutine keeps a pointer in the database, allowing suc‐
+     The ggeettnneetteenntt() subroutine keeps a pointer in the database, allowing suc-
      cessive calls to be used to search the entire file.
 
      Before a wwhhiillee loop using ggeettnneetteenntt(), a call to sseettnneetteenntt() must be made
@@ -76,9 +76,9 @@ HHIISSTTOORRYY
 
 BBUUGGSS
      The data space used by these functions is static; if future use requires
-     the data, it should be copied before any subsequent calls to these func‐
-     tions overwrite it.  Only Internet network numbers are currently under‐
-     stood.  Expecting network numbers to fit in no more than 32 bits is prob‐
+     the data, it should be copied before any subsequent calls to these func-
+     tions overwrite it.  Only Internet network numbers are currently under-
+     stood.  Expecting network numbers to fit in no more than 32 bits is prob-
      ably naive.
 
 4th Berkeley Distribution        May 20, 1996        4th Berkeley Distribution

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2010-12-17 00:57:38 marka Exp
+# Id: setup.sh,v 1.3 2010/12/17 00:57:38 marka Exp 
 
 sed 's/SERVER_CONFIG_PLACEHOLDER/server-names { "ns.example.net"; };/' ns2/named.conf.in > ns2/named.conf
 

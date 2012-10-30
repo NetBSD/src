@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.93.2.1 2012/04/17 00:02:58 yamt Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.93.2.2 2012/10/30 18:49:09 yamt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -67,11 +67,12 @@
 ./libdata/firmware/if_iwi
 ./libdata/firmware/if_iwn
 ./libdata/firmware/if_otus
+./libdata/firmware/if_urtwn
 ./libdata/firmware/if_wpi
 ./libdata/firmware/ral
 ./libdata/firmware/rum
+./libdata/firmware/run
 ./libdata/firmware/upgt
-./libdata/firmware/urtwn
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
@@ -93,7 +94,7 @@
 ./usr/include/arpa
 ./usr/include/atf-c
 ./usr/include/atf-c++
-./usr/include/clang-3.0
+./usr/include/clang-3.2
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -101,6 +102,7 @@
 ./usr/include/dev/dec
 ./usr/include/dev/dmover
 ./usr/include/dev/dtv
+./usr/include/dev/filemon
 ./usr/include/dev/hpc
 ./usr/include/dev/i2c
 ./usr/include/dev/i2o
@@ -193,6 +195,7 @@
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.1
+./usr/lib/npf
 ./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
@@ -205,6 +208,7 @@
 ./usr/libdata/debug/usr/games
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
+./usr/libdata/debug/usr/lib/npf
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
 ./usr/libdata/debug/usr/libexec/lpr
@@ -342,6 +346,7 @@
 ./usr/share/examples/libsaslc/mech
 ./usr/share/examples/lua
 ./usr/share/examples/mount_portal
+./usr/share/examples/npf
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
 ./usr/share/examples/pppd

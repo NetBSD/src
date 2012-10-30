@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.2 2011/02/16 03:47:15 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.2.4.1 2012/10/30 18:54:12 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.c,v 1.45 2008-12-01 03:51:47 marka Exp */
+/* Id: interfaceiter.c,v 1.45 2008/12/01 03:51:47 marka Exp  */
 
 /*! \file */
 

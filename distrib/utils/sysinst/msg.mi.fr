@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.115.4.2 2012/05/23 10:07:20 yamt Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.115.4.3 2012/10/30 18:48:54 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -35,7 +35,7 @@
 /* MI Message catalog -- french, machine independent */
 
 message usage
-{utilisation : sysinst [-r version] [-f fichier de définition]
+{utilisation: sysinst [-D] [-f fichier_de_définition] [-r version]
 }
 
 /*
@@ -993,6 +993,7 @@ message Upgrade_NetBSD_on_a_hard_disk {Mise à jour de NetBSD sur disque dur}
 message Re_install_sets_or_install_additional_sets {Réinstaller ou installer de nouveaux composants}
 message Reboot_the_computer {Redémarrer l'ordinateur}
 message Utility_menu {Utilitaires}
+message Config_menu {Configuration}
 message exit_utility_menu {Quitter}
 message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
@@ -1013,7 +1014,11 @@ message Select_medium {Sélection du média d'installation}
 message ftp {FTP}
 message http {HTTP}
 message nfs {NFS}
+.if HAVE_INSTALL_IMAGE
+message cdrom {CD-ROM / DVD / install image media}	/* XXX translation */
+.else
 message cdrom {CD-ROM / DVD}
+.endif
 message floppy {Disquette}
 message local_fs {Système de fichiers non-monté}
 message local_dir {Répertoire local monté}

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: prereq.sh,v 1.2 2010-06-22 03:58:36 marka Exp
+# Id: prereq.sh,v 1.2 2010/06/22 03:58:36 marka Exp 
 
 if ./filter-aaaa
 then

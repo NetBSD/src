@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:54 yamt Exp $
-LIVEIMGBASE=	vaxlive			# gives ${IMGBASE}.img
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:56 yamt Exp $
+
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-vax-live-ra0root	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 

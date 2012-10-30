@@ -46,33 +46,37 @@
 
 static
 void
-build_check_c_o_aux(const char *path, const char *failmsg)
+build_check_c_o_aux(const char *path, const char *failmsg,
+                    const bool expect_pass)
 {
     bool success;
     atf_dynstr_t iflag;
-    const char *optargs[2];
+    const char *optargs[4];
 
     RE(atf_dynstr_init_fmt(&iflag, "-I%s", atf_config_get("atf_includedir")));
 
     optargs[0] = atf_dynstr_cstring(&iflag);
-    optargs[1] = NULL;
+    optargs[1] = "-Wall";
+    optargs[2] = "-Werror";
+    optargs[3] = NULL;
 
     RE(atf_check_build_c_o(path, "test.o", optargs, &success));
 
     atf_dynstr_fini(&iflag);
 
-    if (!success)
+    if ((expect_pass && !success) || (!expect_pass && success))
         atf_tc_fail("%s", failmsg);
 }
 
 void
-build_check_c_o(const atf_tc_t *tc, const char *sfile, const char *failmsg)
+build_check_c_o(const atf_tc_t *tc, const char *sfile, const char *failmsg,
+                const bool expect_pass)
 {
     atf_fs_path_t path;
 
     RE(atf_fs_path_init_fmt(&path, "%s/%s",
                             atf_tc_get_config_var(tc, "srcdir"), sfile));
-    build_check_c_o_aux(atf_fs_path_cstring(&path), failmsg);
+    build_check_c_o_aux(atf_fs_path_cstring(&path), failmsg, expect_pass);
     atf_fs_path_fini(&path);
 }
 
@@ -90,7 +94,7 @@ header_check(const char *hdrname)
     snprintf(failmsg, sizeof(failmsg),
              "Header check failed; %s is not self-contained", hdrname);
 
-    build_check_c_o_aux("test.c", failmsg);
+    build_check_c_o_aux("test.c", failmsg, true);
 }
 
 void

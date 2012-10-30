@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: install-sh,v 1.1.1.1 2011/09/11 17:20:21 christos Exp $
+# NetBSD: install-sh.in,v 1.4 2007/07/12 18:32:50 jlam Exp 
 # This script now also installs multiple files, but might choke on installing
 # multiple files with spaces in the file names.
 #

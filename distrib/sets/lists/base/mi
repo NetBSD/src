@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.969.2.3 2012/05/23 10:07:10 yamt Exp $
+# $NetBSD: mi,v 1.969.2.4 2012/10/30 18:48:38 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -50,7 +50,7 @@
 ./bin/rm					base-util-root
 ./bin/rmail					base-obsolete		obsolete
 ./bin/rmdir					base-util-root
-./bin/rump.dd					base-util-root
+./bin/rump.dd					base-util-root		rump
 ./bin/sh					base-util-root
 ./bin/sleep					base-util-root
 ./bin/stty					base-util-root
@@ -166,6 +166,10 @@
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
 ./libdata/firmware/if_otus/otus-license		base-firmware-root
 ./libdata/firmware/if_otus/otus-main		base-firmware-root
+./libdata/firmware/if_urtwn			base-firmware-root
+./libdata/firmware/if_urtwn/Realtek-Firmware-License.txt	base-firmware-root
+./libdata/firmware/if_urtwn/rtl8192cfw.bin	base-firmware-root
+./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
@@ -181,8 +185,14 @@
 ./libdata/firmware/rum				base-firmware-root
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
+./libdata/firmware/rum/run-rt2870		base-obsolete	obsolete
+./libdata/firmware/rum/run-rt3071		base-obsolete	obsolete
+./libdata/firmware/run				base-firmware-root
+./libdata/firmware/run/run-license		base-firmware-root
+./libdata/firmware/run/run-rt2870		base-firmware-root
+./libdata/firmware/run/run-rt3071		base-firmware-root
 ./libdata/firmware/upgt				base-firmware-root
-./libdata/firmware/urtwn			base-firmware-root
+./libdata/firmware/urtwn			base-firmware-root obsolete
 ./libdata/firmware/zyd				base-firmware-root
 ./libdata/firmware/zyd/zd1211-licence		base-obsolete			obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
@@ -334,15 +344,15 @@
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
 ./sbin/rtsol					base-netutil-root	use_inet6
-./sbin/rump.cgdconfig				base-sysutil-root	crypto
-./sbin/rump.ifconfig					base-netutil-root
-./sbin/rump.modload					base-sysutil-root
-./sbin/rump.modstat					base-sysutil-root
-./sbin/rump.modunload				base-sysutil-root
-./sbin/rump.ping					base-netutil-root
-./sbin/rump.raidctl					base-sysutil-root
-./sbin/rump.route					base-netutil-root
-./sbin/rump.sysctl					base-sysutil-root
+./sbin/rump.cgdconfig				base-sysutil-root	crypto,rump
+./sbin/rump.ifconfig				base-netutil-root	rump
+./sbin/rump.modload				base-sysutil-root	rump
+./sbin/rump.modstat				base-sysutil-root	rump
+./sbin/rump.modunload				base-sysutil-root	rump
+./sbin/rump.ping				base-netutil-root	rump
+./sbin/rump.raidctl				base-sysutil-root	rump
+./sbin/rump.route				base-netutil-root	rump
+./sbin/rump.sysctl				base-sysutil-root	rump
 ./sbin/savecore					base-sysutil-root
 ./sbin/scan_ffs					base-sysutil-root
 ./sbin/scan_lfs					base-sysutil-root
@@ -538,6 +548,8 @@
 ./usr/bin/lsextattr				base-util-bin
 ./usr/bin/lua					base-util-bin
 ./usr/bin/lzcat					base-util-bin
+./usr/bin/lzf					base-util-bin
+./usr/bin/lzfcat				base-util-bin
 ./usr/bin/lzma					base-util-bin
 ./usr/bin/lzmainfo				base-util-bin
 ./usr/bin/m4					base-util-bin
@@ -631,12 +643,12 @@
 ./usr/bin/rpcinfo				base-rpcutil-bin
 ./usr/bin/rs					base-util-bin
 ./usr/bin/rsh					base-netutil-bin
-./usr/bin/rump.dhcpclient			base-util-bin
-./usr/bin/rump.halt			base-util-bin
-./usr/bin/rump.netstat				base-netutil-bin
-./usr/bin/rump.sockstat				base-util-bin
-./usr/bin/rump_allserver			base-util-bin
-./usr/bin/rump_server			base-util-bin
+./usr/bin/rump.dhcpclient			base-util-bin		rump
+./usr/bin/rump.halt				base-util-bin		rump
+./usr/bin/rump.netstat				base-netutil-bin	rump
+./usr/bin/rump.sockstat				base-util-bin		rump
+./usr/bin/rump_allserver			base-util-bin		rump
+./usr/bin/rump_server				base-util-bin		rump
 ./usr/bin/rup					base-netutil-bin
 ./usr/bin/ruptime				base-netutil-bin
 ./usr/bin/rusers				base-netutil-bin
@@ -705,6 +717,7 @@
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
+./usr/bin/unlzf					base-util-bin
 ./usr/bin/unlzma				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
@@ -772,7 +785,8 @@
 ./usr/include/altq				base-c-usr
 ./usr/include/arpa				base-c-usr
 ./usr/include/cdk				base-obsolete		obsolete
-./usr/include/clang-3.0				base-c-usr
+./usr/include/clang-3.0				base-obsolete		obsolete
+./usr/include/clang-3.2				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
@@ -782,6 +796,7 @@
 ./usr/include/dev/dm	                        base-c-usr
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/dtv				base-c-usr
+./usr/include/dev/filemon			base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
 ./usr/include/dev/hpc				base-c-usr
 ./usr/include/dev/i2c				base-c-usr
@@ -838,6 +853,7 @@
 ./usr/include/g++/std				base-obsolete		obsolete
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
+./usr/include/gcc-4.1				base-obsolete		!gcc,obsolete
 ./usr/include/gcc-4.1				base-c-usr		gcc=4
 ./usr/include/gcc-4.1				base-obsolete		gcc=45,obsolete
 ./usr/include/gcc-4.5				base-c-usr
@@ -919,6 +935,7 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-sys-usr
+./usr/lib/npf					base-sys-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -959,6 +976,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root
+./usr/libdata/debug/usr/lib/npf			base-sys-usr
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
@@ -1311,10 +1329,10 @@
 ./usr/sbin/mopd					base-bootserver-bin
 ./usr/sbin/mopprobe				base-bootserver-bin
 ./usr/sbin/moptrace				base-bootserver-bin
-./usr/sbin/mount_9p				base-puffs-bin
-./usr/sbin/mount_psshfs				base-puffs-bin
+./usr/sbin/mount_9p				base-puffs-bin		rump
+./usr/sbin/mount_psshfs				base-puffs-bin		rump
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
-./usr/sbin/mount_sysctlfs			base-puffs-bin
+./usr/sbin/mount_sysctlfs			base-puffs-bin		rump
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
@@ -1339,6 +1357,7 @@
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
 ./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/npftest				base-npf-bin		npf,rump,pic
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
@@ -1420,24 +1439,24 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
-./usr/sbin/rump.envstat				base-sysutil-bin
-./usr/sbin/rump.powerd				base-sysutil-bin
-./usr/sbin/rump.traceroute				base-netutil-bin
-./usr/sbin/rump_cd9660				base-puffs-bin
-./usr/sbin/rump_efs				base-puffs-bin
-./usr/sbin/rump_ext2fs				base-puffs-bin
-./usr/sbin/rump_ffs				base-puffs-bin
-./usr/sbin/rump_hfs				base-puffs-bin
-./usr/sbin/rump_lfs				base-puffs-bin
-./usr/sbin/rump_msdos				base-puffs-bin
-./usr/sbin/rump_nfs				base-puffs-bin
-./usr/sbin/rump_ntfs				base-puffs-bin
-./usr/sbin/rump_smbfs				base-puffs-bin		crypto
-./usr/sbin/rump_syspuffs			base-puffs-bin
-./usr/sbin/rump_sysvbfs				base-puffs-bin
-./usr/sbin/rump_tmpfs				base-puffs-bin
-./usr/sbin/rump_udf				base-puffs-bin
-./usr/sbin/rump_v7fs				base-puffs-bin
+./usr/sbin/rump.envstat				base-sysutil-bin	rump
+./usr/sbin/rump.powerd				base-sysutil-bin	rump
+./usr/sbin/rump.traceroute			base-netutil-bin	rump
+./usr/sbin/rump_cd9660				base-puffs-bin	rump
+./usr/sbin/rump_efs				base-puffs-bin	rump
+./usr/sbin/rump_ext2fs				base-puffs-bin	rump
+./usr/sbin/rump_ffs				base-puffs-bin	rump
+./usr/sbin/rump_hfs				base-puffs-bin	rump
+./usr/sbin/rump_lfs				base-puffs-bin	rump
+./usr/sbin/rump_msdos				base-puffs-bin	rump
+./usr/sbin/rump_nfs				base-puffs-bin	rump
+./usr/sbin/rump_ntfs				base-puffs-bin	rump
+./usr/sbin/rump_smbfs				base-puffs-bin	crypto,rump
+./usr/sbin/rump_syspuffs			base-puffs-bin	rump
+./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
+./usr/sbin/rump_tmpfs				base-puffs-bin	rump
+./usr/sbin/rump_udf				base-puffs-bin	rump
+./usr/sbin/rump_v7fs				base-puffs-bin	rump
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/schedctl				base-sysutil-bin
@@ -1495,7 +1514,8 @@
 ./usr/sbin/veriexecgen				base-sysutil-bin
 ./usr/sbin/vipw					base-sysutil-bin
 ./usr/sbin/vnconfig				base-sysutil-bin
-./usr/sbin/wake					base-netutil-bin
+./usr/sbin/wake					base-obsolete		obsolete
+./usr/sbin/wakeonlan				base-netutil-bin
 ./usr/sbin/wiconfig				base-sysutil-bin
 ./usr/sbin/wire-test				base-netutil-bin
 ./usr/sbin/wlanctl				base-sysutil-bin
@@ -1655,6 +1675,11 @@
 ./usr/share/examples/lua/sqlite.lua		base-sys-examples	share
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
+./usr/share/examples/npf			base-netutil-examples
+./usr/share/examples/npf/host-npf.conf		base-netutil-examples
+./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
+./usr/share/examples/npf/hashtablefile		base-netutil-examples
+./usr/share/examples/npf/treetablefile		base-netutil-examples
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
 ./usr/share/examples/postfix			base-postfix-examples
@@ -3766,7 +3791,7 @@
 ./usr/share/misc/more.help			base-obsolete		obsolete
 ./usr/share/misc/nslookup.help			base-obsolete		obsolete
 ./usr/share/misc/terminfo			base-terminfo-share	share
-./usr/share/misc/terminfo.db			base-terminfo-share	share
+./usr/share/misc/terminfo.cdb			base-terminfo-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
 ./usr/share/misc/usb_hid_usages			base-reference-share	share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share

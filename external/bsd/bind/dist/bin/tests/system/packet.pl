@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: packet.pl,v 1.2 2011-04-15 01:02:08 each Exp
+# Id: packet.pl,v 1.2 2011/04/15 01:02:08 each Exp 
 
 # This is a tool for sending an arbitrary packet via UDP or TCP to an
 # arbitrary address and port.  The packet is specified in a file or on

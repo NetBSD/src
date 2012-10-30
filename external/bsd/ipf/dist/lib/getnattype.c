@@ -1,7 +1,7 @@
-/*	$NetBSD: getnattype.c,v 1.1.1.1.2.2 2012/04/17 00:03:16 yamt Exp $	*/
+/*	$NetBSD: getnattype.c,v 1.1.1.1.2.3 2012/10/30 18:55:04 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
@@ -11,7 +11,7 @@
 #include "kmem.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: getnattype.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $";
 #endif
 
 

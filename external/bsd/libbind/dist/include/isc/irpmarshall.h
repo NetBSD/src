@@ -1,4 +1,4 @@
-/*	$NetBSD: irpmarshall.h,v 1.1.1.1 2009/04/12 15:33:33 christos Exp $	*/
+/*	$NetBSD: irpmarshall.h,v 1.1.1.1.14.1 2012/10/30 18:55:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: irpmarshall.h,v 1.4 2005/04/27 04:56:17 sra Exp
+ * Id: irpmarshall.h,v 1.4 2005/04/27 04:56:17 sra Exp 
  */
 
 #ifndef _IRPMARSHALL_H_INCLUDED

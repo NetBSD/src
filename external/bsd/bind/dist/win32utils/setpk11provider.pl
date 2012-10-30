@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setpk11provider.pl,v 1.2 2009-10-12 16:41:13 each Exp
+# Id
 
 # setpk11provider.pl
 # This script sets the PKCS#11 provider name in the build scripts.

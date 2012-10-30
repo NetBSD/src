@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/06 05:59:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2012/10/30 18:48:07 yamt Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,7 +16,7 @@
 #	sjg@quick.com.au
 #
 
-NOPIC=		# defined
+#NOPIC=		# defined
 #NOPROFILE=	# defined
 #NOLINT=	# defined
 

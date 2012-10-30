@@ -57,7 +57,7 @@ sub do_shlib_rule
 	local($ret,$_,$Name);
 
 	$target =~ s/\//$o/g if $o ne '/';
-	($Name=$name) =~ tr/a-z/A-Z/;
+	(Name=name) =~ tr/a-z/A-Z/;
 
 	$ret.="$target: \$(${Name}OBJ)\n";
 	$ret.="\t\$(RM) target\n";

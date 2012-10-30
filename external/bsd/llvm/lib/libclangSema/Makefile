@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2012/05/23 10:07:27 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2012/10/30 18:55:54 yamt Exp $
 
 LIB=	clangSema
 
@@ -13,7 +13,9 @@ SRCS+=	AnalysisBasedWarnings.cpp \
 	DelayedDiagnostic.cpp \
 	IdentifierResolver.cpp \
 	JumpDiagnostics.cpp \
+	MultiplexExternalSemaSource.cpp \
 	Scope.cpp \
+	ScopeInfo.cpp \
 	Sema.cpp \
 	SemaAccess.cpp \
 	SemaAttr.cpp \
@@ -39,6 +41,7 @@ SRCS+=	AnalysisBasedWarnings.cpp \
 	SemaOverload.cpp \
 	SemaPseudoObject.cpp \
 	SemaStmt.cpp \
+	SemaStmtAsm.cpp \
 	SemaStmtAttr.cpp \
 	SemaTemplate.cpp \
 	SemaTemplateDeduction.cpp \

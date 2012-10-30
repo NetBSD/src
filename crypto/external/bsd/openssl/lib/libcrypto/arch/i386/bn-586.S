@@ -1,4 +1,4 @@
-.file	"bn-586.s"
+#include <machine/asm.h>
 .text
 .globl	bn_mul_add_words
 .type	bn_mul_add_words,@function

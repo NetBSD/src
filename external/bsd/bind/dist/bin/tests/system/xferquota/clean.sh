@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.14 2007-09-26 03:22:44 marka Exp
+# Id: clean.sh,v 1.14 2007/09/26 03:22:44 marka Exp 
 
 #
 # Clean up after zone transfer quota tests.

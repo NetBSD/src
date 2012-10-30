@@ -1,4 +1,4 @@
-/*	$NetBSD: larp.c,v 1.1.1.1.2.2 2012/04/17 00:03:15 yamt Exp $	*/
+/*	$NetBSD: larp.c,v 1.1.1.1.2.3 2012/10/30 18:55:02 yamt Exp $	*/
 
 /*
  * larp.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)larp.c	1.1 8/19/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: larp.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr Exp $";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

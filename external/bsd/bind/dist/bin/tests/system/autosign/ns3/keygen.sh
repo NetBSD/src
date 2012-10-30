@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.13 2011-07-08 01:43:26 each Exp
+# Id
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -285,3 +285,12 @@ zsk=`$KEYGEN -q -3 -r $RANDFILE $zone`
 $SIGNER -S -P -s now-1mo -e now-1mi -o $zone -f $zonefile ${zonefile}.in > /dev/null 2>&1
 echo $zsk > ../inactivezsk.key
 $SETTIME -I now $zsk > /dev/null
+
+#
+# A zone that is set to 'auto-dnssec maintain' during a recofnig
+#
+zone=reconf.example
+zonefile="${zone}.db"
+cp secure.example.db.in $zonefile
+$KEYGEN -q -3 -r $RANDFILE -fk $zone > /dev/null
+$KEYGEN -q -3 -r $RANDFILE $zone > /dev/null

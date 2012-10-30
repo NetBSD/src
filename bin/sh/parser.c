@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.80.2.1 2012/04/17 00:01:38 yamt Exp $	*/
+/*	$NetBSD: parser.c,v 1.80.2.2 2012/10/30 18:46:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.80.2.1 2012/04/17 00:01:38 yamt Exp $");
+__RCSID("$NetBSD: parser.c,v 1.80.2.2 2012/10/30 18:46:08 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1362,9 +1362,9 @@ parsebackq: {
 	struct nodelist **nlpp;
 	int savepbq;
 	union node *n;
-	char *volatile str;
+	char *volatile str = NULL;
 	struct jmploc jmploc;
-	struct jmploc *volatile savehandler;
+	struct jmploc *volatile savehandler = NULL;
 	int savelen;
 	int saveprompt;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: irs.h,v 1.1.1.1 2009/04/12 15:33:32 christos Exp $	*/
+/*	$NetBSD: irs.h,v 1.1.1.1.14.1 2012/10/30 18:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: irs.h,v 1.5 2005/04/27 04:56:15 sra Exp
+ * Id: irs.h,v 1.5 2005/04/27 04:56:15 sra Exp 
  */
 
 #ifndef _IRS_H_INCLUDED

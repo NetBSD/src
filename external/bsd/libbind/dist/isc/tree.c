@@ -1,7 +1,7 @@
-/*	$NetBSD: tree.c,v 1.1.1.1 2009/04/12 15:33:45 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.1.1.1.14.1 2012/10/30 18:55:33 yamt Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: tree.c,v 1.4 2005/04/27 04:56:39 sra Exp";
+static const char rcsid[] = "Id: tree.c,v 1.4 2005/04/27 04:56:39 sra Exp ";
 #endif
 
 /*%

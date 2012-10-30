@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2011/02/20 20:18:57 jmmv Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2012/10/30 18:49:16 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${SRCDIR}
 
 WARNS?=		2
+
+CWARNFLAGS.clang+=	-Wno-error=unused-private-field
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.c,v 1.2 2009/03/15 22:31:12 cegger Exp $	*/
+/*	$NetBSD: muldi3.c,v 1.2.6.1 2012/10/30 18:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)muldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: muldi3.c,v 1.2 2009/03/15 22:31:12 cegger Exp $");
+__RCSID("$NetBSD: muldi3.c,v 1.2.6.1 2012/10/30 18:46:14 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
+
+ARM_EABI_ALIAS(__aeabi_lmul, __muldi3)	/* no semicolon */
 
 /*
  * Multiply two quads.

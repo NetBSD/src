@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.154.2.2 2012/04/17 00:02:49 yamt Exp $	*/
+/*	$NetBSD: defs.h,v 1.154.2.3 2012/10/30 18:48:52 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,10 +171,8 @@ enum {
 #define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
 		       (p)->pi_fstype == FS_BSDFFS)
 
-/* non-standard cd0 driver */
-#ifndef CD_NAME
-#define CD_NAME "cd0a"
-#endif
+/* standard cd0 device */
+#define CD_NAMES "cd0a"
 
 /* Types */
 typedef struct distinfo {
@@ -379,6 +377,7 @@ int	md_update(void);
 void	toplevel(void);
 
 /* from disks.c */
+const char *get_default_cdrom(void);
 int	find_disks(const char *);
 struct menudesc;
 void	fmt_fspart(struct menudesc *, int, void *);
