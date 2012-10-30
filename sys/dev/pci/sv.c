@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.44.12.1 2012/04/17 00:07:57 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.44.12.2 2012/10/30 17:21:53 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.44.12.1 2012/04/17 00:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.44.12.2 2012/10/30 17:21:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ struct sv_dma {
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
 
-CFATTACH_DECL(sv, sizeof(struct sv_softc),
+CFATTACH_DECL_NEW(sv, sizeof(struct sv_softc),
     sv_match, sv_attach, NULL, NULL);
 
 static struct audio_device sv_device = {
@@ -358,19 +358,19 @@ sv_attach(device_t parent, device_t self, void *aux)
 	if (pci_mapreg_map(pa, SV_ENHANCED_PORTBASE_SLOT,
 			   PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map enhanced i/o space\n");
+		aprint_error_dev(self, "can't map enhanced i/o space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, SV_FM_PORTBASE_SLOT,
 			   PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_opliot, &sc->sc_oplioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map FM i/o space\n");
+		aprint_error_dev(self, "can't map FM i/o space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, SV_MIDI_PORTBASE_SLOT,
 			   PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_midiiot, &sc->sc_midiioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map MIDI i/o space\n");
+		aprint_error_dev(self, "can't map MIDI i/o space\n");
 		return;
 	}
 	DPRINTF(("sv: IO ports: enhanced=0x%x, OPL=0x%x, MIDI=0x%x\n",
@@ -422,7 +422,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -432,7 +432,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, sv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -440,8 +440,8 @@ sv_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
-	printf("%s: rev %d", device_xname(&sc->sc_dev),
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
+	printf("%s: rev %d", device_xname(self),
 	       sv_read_indirect(sc, SV_REVISION_LEVEL));
 	if (sv_read(sc, SV_CODEC_CONTROL) & SV_CTL_MD1)
 		printf(", reverb SRAM present");
@@ -458,12 +458,12 @@ sv_attach(device_t parent, device_t self, void *aux)
 
 	sv_init_mixer(sc);
 
-	audio_attach_mi(&sv_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&sv_hw_if, sc, self);
 
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;
 	arg.hdl = 0;
-	(void)config_found(&sc->sc_dev, &arg, audioprint);
+	(void)config_found(self, &arg, audioprint);
 
 	sc->sc_pa = *pa;	/* for deferred setup */
 	config_defer(self, sv_defer);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.20.112.1 2012/04/17 00:06:25 yamt Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.20.112.2 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.20.112.1 2012/04/17 00:06:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pwm.c,v 1.20.112.2 2012/10/30 17:19:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ int vrc4172pwmdebug = VRC2PWMDEBUG_CONF;
 #define VDUMPREG(arg) if (bootverbose) vrc4172pwm_dumpreg(arg);
 #endif /* VRC2PWMDEBUG */
 
-static int vrc4172pwmprobe(struct device *, struct cfdata *, void *);
-static void vrc4172pwmattach(struct device *, struct device *, void *);
+static int vrc4172pwmprobe(device_t, cfdata_t, void *);
+static void vrc4172pwmattach(device_t, device_t, void *);
 
 static void vrc4172pwm_write(struct vrc4172pwm_softc *, int, unsigned short);
 static unsigned short vrc4172pwm_read(struct vrc4172pwm_softc *, int);
@@ -79,7 +79,7 @@ int vrc4172pwm_brightness2rawduty(struct vrc4172pwm_softc *);
 struct vrc4172pwm_param * vrc4172pwm_getparam(void);
 void vrc4172pwm_dumpreg(struct vrc4172pwm_softc *);
 
-CFATTACH_DECL(vrc4172pwm, sizeof(struct vrc4172pwm_softc),
+CFATTACH_DECL_NEW(vrc4172pwm, sizeof(struct vrc4172pwm_softc),
     vrc4172pwmprobe, vrc4172pwmattach, NULL, NULL);
 
 /*
@@ -142,7 +142,7 @@ vrc4172pwm_read(struct vrc4172pwm_softc *sc, int port)
 }
 
 static int
-vrc4172pwmprobe(struct device *parent, struct cfdata *cf, void *aux)
+vrc4172pwmprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	platid_mask_t mask;
 	struct vrip_attach_args *va = aux;
@@ -198,9 +198,9 @@ vrc4172pwmprobe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-vrc4172pwmattach(struct device *parent, struct device *self, void *aux)
+vrc4172pwmattach(device_t parent, device_t self, void *aux)
 {
-	struct vrc4172pwm_softc *sc = (struct vrc4172pwm_softc *)self;
+	struct vrc4172pwm_softc *sc = device_private(self);
 	struct vrip_attach_args *va = aux;
 
 	bus_space_tag_t iot = va->va_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.1 2012/04/17 00:06:12 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.2 2012/10/30 17:19:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.2.1 2012/04/17 00:06:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.2.2 2012/10/30 17:19:18 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -86,9 +86,6 @@ extern vsize_t iospace_size;
 
 #include "ksyms.h"
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /*
  * Extent map to manage I/O register space.  We allocate storage for
  * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
@@ -105,7 +102,6 @@ struct vm_map *phys_map = NULL;
 int		systype;		    /* mother board type */
 char   *bootinfo = NULL;	/* pointer to bootinfo structure */
 int		cpuspeed = 30;		/* approx # instr per usec. */
-int		physmem;		    /* max supported memory, changes to actual */
 intptr_t	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int		mem_cluster_cnt;
 phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
@@ -116,7 +112,7 @@ void	mach_init (int, char *[], int, intptr_t, u_int, char *); /* XXX */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
-static void	unimpl_intr_establish(struct device *, void *, int,
+static void	unimpl_intr_establish(device_t, void *, int,
 		    int (*)(void *, void *), void *);
 static int	unimpl_memsize(void *);
 
@@ -720,7 +716,7 @@ unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 }
 
 static void
-unimpl_intr_establish(struct device *dev, void *cookie, int level,
+unimpl_intr_establish(device_t dev, void *cookie, int level,
                       int (*handler) (void *,void *), void *arg)
 {
 

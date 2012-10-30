@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.13 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.13.34.1 2012/10/30 17:19:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.13 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.13.34.1 2012/10/30 17:19:42 yamt Exp $");
 
 #define PLUMIOBUSDEBUG
 
@@ -60,11 +60,10 @@ int	plumiobus_debug = 0;
 #define DPRINTFN(n, arg)
 #endif
 
-int plumiobus_match(struct device *, struct cfdata *, void *);
-void plumiobus_attach(struct device *, struct device *, void *);
+int plumiobus_match(device_t, cfdata_t, void *);
+void plumiobus_attach(device_t, device_t, void *);
 int plumiobus_print(void *, const char *);
-int plumiobus_search(struct device *, struct cfdata *,
-		     const int *, void *);
+int plumiobus_search(device_t, cfdata_t , const int *, void *);
 
 struct plumisa_resource {
 	int		pr_irq;
@@ -73,7 +72,6 @@ struct plumisa_resource {
 };
 
 struct plumiobus_softc {
-	struct	device		sc_dev;
 	plum_chipset_tag_t	sc_pc;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
@@ -82,7 +80,7 @@ struct plumiobus_softc {
 	struct plumisa_resource	sc_isa[PLUM_IOBUS_IO5CSMAX];
 };
 
-CFATTACH_DECL(plumiobus, sizeof(struct plumiobus_softc),
+CFATTACH_DECL_NEW(plumiobus, sizeof(struct plumiobus_softc),
     plumiobus_match, plumiobus_attach, NULL, NULL);
 
 bus_space_tag_t __plumiobus_subregion(bus_space_tag_t, bus_addr_t,
@@ -92,17 +90,17 @@ void plumiobus_dump(struct plumiobus_softc *);
 #endif 
 
 int
-plumiobus_match(struct device *parent, struct cfdata *cf, void *aux)
+plumiobus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 void
-plumiobus_attach(struct device *parent, struct device *self, void *aux)
+plumiobus_attach(device_t parent, device_t self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
-	struct plumiobus_softc *sc = (void*)self;
+	struct plumiobus_softc *sc = device_private(self);
 	struct plumisa_resource *pr;
 
 	sc->sc_pc	= pa->pa_pc;
@@ -186,10 +184,9 @@ __plumiobus_subregion(bus_space_tag_t t, bus_addr_t ofs, bus_size_t size)
 }
 
 int
-plumiobus_search(struct device *parent, struct cfdata *cf,
-		 const int *ldesc, void *aux)
+plumiobus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct plumiobus_softc *sc = (void*)parent;
+	struct plumiobus_softc *sc = device_private(parent);
 	struct plumiobus_attach_args pba;
 	int slot;
 	

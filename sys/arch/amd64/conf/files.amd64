@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.73.2.2 2012/05/23 10:07:39 yamt Exp $
+#	$NetBSD: files.amd64,v 1.73.2.3 2012/10/30 17:18:45 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -25,7 +25,6 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 #
 
 defflag			USER_LDT
-defflag			VM86
 defflag eisa.h EISA
 
 file	arch/amd64/amd64/amd64func.S
@@ -48,6 +47,12 @@ file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers

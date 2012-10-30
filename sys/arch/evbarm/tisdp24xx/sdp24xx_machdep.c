@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.12 2011/07/01 20:45:45 dyoung Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.12.2.1 2012/10/30 17:19:27 yamt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.12 2011/07/01 20:45:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.12.2.1 2012/10/30 17:19:27 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -176,24 +176,6 @@ __KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.12 2011/07/01 20:45:45 dyoung 
 
 #include "omapwdt32k.h"
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define FIQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
-
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
@@ -207,19 +189,9 @@ paddr_t physical_end;
 static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;	/* stack for SVC mode */
-
 /* Physical address of the message buffer. */
 paddr_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];
 extern char _end[];
@@ -961,7 +933,7 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(l1_pa);
+	cpu_setttb(l1_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

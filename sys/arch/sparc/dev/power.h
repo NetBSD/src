@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.5 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: power.h,v 1.5.112.1 2012/10/30 17:20:21 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,7 +51,7 @@
 #define	POWER_BITS	"\20\1POWEROFF"
 
 #ifndef _LOCORE
-volatile uint8_t *power_reg;
+extern volatile uint8_t *power_reg;
 #endif
 
 extern void powerdown(void);	/* power off function */

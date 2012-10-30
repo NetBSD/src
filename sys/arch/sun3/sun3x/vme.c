@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.15 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: vme.c,v 1.15.30.1 2012/10/30 17:20:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.15 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.15.30.1 2012/10/30 17:20:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ static const struct {
 	{ BUS_VME32D32, "A32/D32", PMAP_VME32, VME32_BASE, VME32_MASK },
 };
 
-static int  vme_match(struct device *, struct cfdata *, void *);
-static void vme_attach(struct device *, struct device *, void *);
+static int  vme_match(device_t, cfdata_t, void *);
+static void vme_attach(device_t, device_t, void *);
 
 struct vme_softc {
 	device_t	sc_dev;

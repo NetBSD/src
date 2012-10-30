@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.205.2.2 2012/05/23 10:08:20 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.205.2.3 2012/10/30 17:23:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205.2.2 2012/05/23 10:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.205.2.3 2012/10/30 17:23:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1173,10 +1173,6 @@ ufs_rmdir(void *v)
 	 * directory and thus be non-empty.)
 	 */
 	error = 0;
-	if (ip->i_flag & IN_RENAME) {
-		error = EINVAL;
-		goto out;
-	}
 	if (ip->i_nlink != 2 ||
 	    !ufs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;

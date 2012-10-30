@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.10 2009/12/26 16:01:23 uebayasi Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.10.12.1 2012/10/30 17:19:21 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.10 2009/12/26 16:01:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.10.12.1 2012/10/30 17:19:21 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -95,12 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.10 2009/12/26 16:01:23 uebayasi
 vm_offset_t msgbufphys;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
-pv_addr_t systempage;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
-
 
 vaddr_t
 initarm_common(const struct initarm_config *ic)
@@ -408,7 +402,7 @@ initarm_common(const struct initarm_config *ic)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

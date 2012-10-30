@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.22 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.22.2.1 2012/10/30 17:18:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.22 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.22.2.1 2012/10/30 17:18:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,12 +67,12 @@ int a34kusettod(todr_chip_handle_t, struct clock_ymdhms *);
 static struct todr_chip_handle a34ktodr;
 
 int
-a34kbbc_match(device_t pdp, cfdata_t cfp, void *auxp)
+a34kbbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct clock_ymdhms dt;
 	static int a34kbbc_matched = 0;
 
-	if (!matchname("a34kbbc", auxp))
+	if (!matchname("a34kbbc", aux))
 		return(0);
 
 	/* Allow only one instance. */
@@ -94,7 +94,7 @@ a34kbbc_match(device_t pdp, cfdata_t cfp, void *auxp)
  * Attach us to the rtc function pointers.
  */
 void
-a34kbbc_attach(device_t pdp, device_t dp, void *auxp)
+a34kbbc_attach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
 	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_nobyteacc_io.S,v 1.1 2007/01/06 00:29:52 christos Exp $ */
+/*	$NetBSD: omap_nobyteacc_io.S,v 1.1.90.1 2012/10/30 17:19:08 yamt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -45,5 +45,5 @@ ENTRY(nobyteacc_bs_w_1)
 	orrne	r0, r0, r3, lsl #8	/* odd: or data shifted to hi byte */
 	strh	r0, [r1]		/* store back halfword */
 	msr	cpsr, r2		/* restore interrupts */
-	mov	pc, lr
-
+	RET
+END(nobyteacc_bs_w_1)

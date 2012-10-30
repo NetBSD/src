@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.21 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.21.34.1 2012/10/30 17:21:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.21 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.21.34.1 2012/10/30 17:21:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ struct nca_isa_softc {
 };
 
 struct nca_isa_probe_data {
-	struct device sc_dev;
 	int sc_reg_offset;
 	int sc_host_type;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.4.2.1 2012/04/17 00:06:06 yamt Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.4.2.2 2012/10/30 17:19:06 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.4.2.1 2012/04/17 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.4.2.2 2012/10/30 17:19:06 yamt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -48,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.4.2.1 2012/04/17 00:06:06 yamt Exp $");
 
 #include "locators.h"
 
+#ifdef MVSOC_CONSOLE_EARLY
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
+#include <dev/cons.h>
+#endif
 
 static int mvsoc_match(device_t, struct cfdata *, void *);
 static void mvsoc_attach(device_t, device_t, void *);
@@ -61,6 +66,53 @@ static vaddr_t regbase = 0xffffffff, dsc_base, pex_base;
 vaddr_t mlmb_base;
 
 void (*mvsoc_intr_init)(void);
+
+
+#ifdef MVSOC_CONSOLE_EARLY
+static vaddr_t com_base;
+
+static inline uint32_t
+uart_read(bus_size_t o)
+{
+	return *(volatile uint32_t *)(com_base + (o << 2));
+}
+
+static inline void
+uart_write(bus_size_t o, uint32_t v)
+{
+	*(volatile uint32_t *)(com_base + (o << 2)) = v;
+}
+
+static int
+mvsoc_cngetc(dev_t dv)
+{
+        if ((uart_read(com_lsr) & LSR_RXRDY) == 0)
+		return -1;
+
+	return uart_read(com_data) & 0xff;
+}
+
+static void
+mvsoc_cnputc(dev_t dv, int c)
+{
+	int timo = 150000;
+
+        while ((uart_read(com_lsr) & LSR_TXRDY) == 0 && --timo > 0)
+		;
+
+	uart_write(com_data, c);
+
+	timo = 150000;
+        while ((uart_read(com_lsr) & LSR_TSRE) == 0 && --timo > 0)
+		;
+}
+
+static struct consdev mvsoc_earlycons = {
+	.cn_putc = mvsoc_cnputc,
+	.cn_getc = mvsoc_cngetc,
+	.cn_pollc = nullcnpollc,
+};
+#endif
 
 
 /* attributes */
@@ -90,9 +142,9 @@ static struct {
 	{ ORION_TAG_FLASH_CS,
 	  ORION_ATTR_FLASH_CS,		MVSOC_UNITID_DEVBUS },
 	{ ORION_TAG_PEX0_MEM,
-	  ORION_ATTR_PEX_MEM,		ORION_UNITID_PEX },
+	  ORION_ATTR_PEX_MEM,		MVSOC_UNITID_PEX },
 	{ ORION_TAG_PEX0_IO,
-	  ORION_ATTR_PEX_IO,		ORION_UNITID_PEX },
+	  ORION_ATTR_PEX_IO,		MVSOC_UNITID_PEX },
 	{ ORION_TAG_PEX1_MEM,
 	  ORION_ATTR_PEX_MEM,		ORION_UNITID_PEX1 },
 	{ ORION_TAG_PEX1_IO,
@@ -113,9 +165,13 @@ static struct {
 	{ KIRKWOOD_TAG_BOOTROM,
 	  KIRKWOOD_ATTR_BOOTROM,	MVSOC_UNITID_DEVBUS },
 	{ KIRKWOOD_TAG_PEX_MEM,
-	  KIRKWOOD_ATTR_PEX_MEM,	KIRKWOOD_UNITID_PEX },
+	  KIRKWOOD_ATTR_PEX_MEM,	MVSOC_UNITID_PEX },
 	{ KIRKWOOD_TAG_PEX_IO,
-	  KIRKWOOD_ATTR_PEX_IO,		KIRKWOOD_UNITID_PEX },
+	  KIRKWOOD_ATTR_PEX_IO,		MVSOC_UNITID_PEX },
+	{ KIRKWOOD_TAG_PEX1_MEM,
+	  KIRKWOOD_ATTR_PEX1_MEM,	MVSOC_UNITID_PEX },
+	{ KIRKWOOD_TAG_PEX1_IO,
+	  KIRKWOOD_ATTR_PEX1_IO,	MVSOC_UNITID_PEX },
 	{ KIRKWOOD_TAG_CRYPT,
 	  KIRKWOOD_ATTR_CRYPT,		KIRKWOOD_UNITID_CRYPT },
 #endif
@@ -170,12 +226,15 @@ static struct {
 
 #if defined(KIRKWOOD)
 	{ KIRKWOOD(88F6180),	2, "88F6180",	"A0",	"Kirkwood" },
+	{ KIRKWOOD(88F6180),	3, "88F6180",	"A1",	"Kirkwood" },
 	{ KIRKWOOD(88F6192),	0, "88F619x",	"Z0",	"Kirkwood" },
 	{ KIRKWOOD(88F6192),	2, "88F619x",	"A0",	"Kirkwood" },
 	{ KIRKWOOD(88F6192),	3, "88F619x",	"A1",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	0, "88F6281",	"Z0",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	2, "88F6281",	"A0",	"Kirkwood" },
 	{ KIRKWOOD(88F6281),	3, "88F6281",	"A1",	"Kirkwood" },
+	{ KIRKWOOD(88F6282),	0, "88F6282",	"A0",	"Kirkwood" },
+	{ KIRKWOOD(88F6282),	1, "88F6282",	"A1",	"Kirkwood" },
 #endif
 
 #if defined(MV78XX0)
@@ -193,6 +252,7 @@ static const struct mvsoc_periph {
 	int unit;
 	bus_size_t offset;
 	int irq;
+	uint32_t clkpwr_bit;
 } mvsoc_periphs[] = {
 #if defined(ORION)
     { ORION_1(88F1181),	"mvsoctmr",0, MVSOC_TMR_BASE,	IRQ_DEFAULT },
@@ -209,7 +269,7 @@ static const struct mvsoc_periph {
     { ORION_1(88F5082),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88F5082),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
     { ORION_1(88F5082),	"ehci",    1, ORION_USB1_BASE,	ORION_IRQ_USBCNT1 },
-//  { ORION_1(88F5082),	"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_1(88F5082),	"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_1(88F5082),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88F5082),	"mvcesa",  0, ORION_CESA_BASE,	ORION_IRQ_SECURITYINTR},
     { ORION_1(88F5082),	"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
@@ -221,7 +281,7 @@ static const struct mvsoc_periph {
     { ORION_1(88F5180N),"com",     0, MVSOC_COM0_BASE,	ORION_IRQ_UART0 },
     { ORION_1(88F5180N),"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88F5180N),"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
-//  { ORION_1(88F5180N),"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_1(88F5180N),"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_1(88F5180N),"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_1(88F5180N),"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88F5180N),"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
@@ -232,7 +292,7 @@ static const struct mvsoc_periph {
     { ORION_1(88F5181),	"com",     0, MVSOC_COM0_BASE,	ORION_IRQ_UART0 },
     { ORION_1(88F5181),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88F5181),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
-//  { ORION_1(88F5181),	"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_1(88F5181),	"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_1(88F5181),	"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_1(88F5181),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88F5181),	"mvcesa",  0, ORION_CESA_BASE,	ORION_IRQ_SECURITYINTR},
@@ -245,7 +305,7 @@ static const struct mvsoc_periph {
     { ORION_1(88F5182),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88F5182),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
     { ORION_1(88F5182),	"ehci",    1, ORION_USB1_BASE,	ORION_IRQ_USBCNT1 },
-    { ORION_1(88F5182),	"gtidmac", 0, ORION_IDMAC_BASE,	ORION_IRQ_IDMA0 },
+    { ORION_1(88F5182),	"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_1(88F5182),	"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_1(88F5182),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88F5182),	"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
@@ -273,7 +333,7 @@ static const struct mvsoc_periph {
     { ORION_1(88W8660),	"com",     0, MVSOC_COM0_BASE,	ORION_IRQ_UART0 },
     { ORION_1(88W8660),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_1(88W8660),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
-//  { ORION_1(88W8660),	"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_1(88W8660),	"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_1(88W8660),	"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_1(88W8660),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_1(88W8660),	"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
@@ -292,7 +352,7 @@ static const struct mvsoc_periph {
     { ORION_2(88F5281),	"com",     0, MVSOC_COM0_BASE,	ORION_IRQ_UART0 },
     { ORION_2(88F5281),	"com",     1, MVSOC_COM1_BASE,	ORION_IRQ_UART1 },
     { ORION_2(88F5281),	"ehci",    0, ORION_USB0_BASE,	ORION_IRQ_USBCNT0 },
-//  { ORION_2(88F5281),	"gtidmac", 0, ORION_IDMAC_BASE,	0 },
+    { ORION_2(88F5281),	"gtidmac", 0, ORION_IDMAC_BASE,	IRQ_DEFAULT },
     { ORION_2(88F5281),	"gtpci",   0, ORION_PCI_BASE,	ORION_IRQ_PEX0INT },
     { ORION_2(88F5281),	"gttwsi",  0, MVSOC_TWSI_BASE,	ORION_IRQ_TWSI },
     { ORION_2(88F5281),	"mvgbec",  0, ORION_GBE_BASE,	IRQ_DEFAULT },
@@ -306,7 +366,7 @@ static const struct mvsoc_periph {
     { KIRKWOOD(88F6180),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6180),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
     { KIRKWOOD(88F6180),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
-//  { KIRKWOOD(88F6180),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,? },
+    { KIRKWOOD(88F6180),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6180),"gttwsi",  0, MVSOC_TWSI_BASE,	KIRKWOOD_IRQ_TWSI },
     { KIRKWOOD(88F6180),"mvcesa",  0, KIRKWOOD_CESA_BASE,KIRKWOOD_IRQ_SECURITYINT},
     { KIRKWOOD(88F6180),"mvgbec",  0, KIRKWOOD_GBE0_BASE,IRQ_DEFAULT },
@@ -319,7 +379,7 @@ static const struct mvsoc_periph {
     { KIRKWOOD(88F6192),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6192),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
     { KIRKWOOD(88F6192),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
-//  { KIRKWOOD(88F6192),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,? },
+    { KIRKWOOD(88F6192),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6192),"gttwsi",  0, MVSOC_TWSI_BASE,	KIRKWOOD_IRQ_TWSI },
     { KIRKWOOD(88F6192),"mvcesa",  0, KIRKWOOD_CESA_BASE,KIRKWOOD_IRQ_SECURITYINT},
     { KIRKWOOD(88F6192),"mvgbec",  0, KIRKWOOD_GBE0_BASE,IRQ_DEFAULT },
@@ -333,15 +393,41 @@ static const struct mvsoc_periph {
     { KIRKWOOD(88F6281),"mvsocrtc",0, KIRKWOOD_RTC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6281),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
     { KIRKWOOD(88F6281),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
-    { KIRKWOOD(88F6281),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
-//  { KIRKWOOD(88F6281),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,? },
+    { KIRKWOOD(88F6281),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT,
+					MVSOC_MLMB_CLKGATING_BIT(3) },
+    { KIRKWOOD(88F6281),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,IRQ_DEFAULT },
     { KIRKWOOD(88F6281),"gttwsi",  0, MVSOC_TWSI_BASE,	KIRKWOOD_IRQ_TWSI },
-    { KIRKWOOD(88F6281),"mvcesa",  0, KIRKWOOD_CESA_BASE,KIRKWOOD_IRQ_SECURITYINT},
-    { KIRKWOOD(88F6281),"mvgbec",  0, KIRKWOOD_GBE0_BASE,IRQ_DEFAULT },
-    { KIRKWOOD(88F6281),"mvgbec",  1, KIRKWOOD_GBE1_BASE,IRQ_DEFAULT },
-    { KIRKWOOD(88F6281),"mvpex",   0, MVSOC_PEX_BASE,	KIRKWOOD_IRQ_PEX0INT },
-    { KIRKWOOD(88F6281),"mvsata",  0, KIRKWOOD_SATAHC_BASE,KIRKWOOD_IRQ_SATA },
-    { KIRKWOOD(88F6281),"mvsdio",  0, KIRKWOOD_SDIO_BASE,KIRKWOOD_IRQ_SDIOINT },
+    { KIRKWOOD(88F6281),"mvcesa",  0, KIRKWOOD_CESA_BASE,KIRKWOOD_IRQ_SECURITYINT,
+					MVSOC_MLMB_CLKGATING_BIT(17) },
+    { KIRKWOOD(88F6281),"mvgbec",  0, KIRKWOOD_GBE0_BASE,IRQ_DEFAULT,
+					MVSOC_MLMB_CLKGATING_BIT(0) },
+    { KIRKWOOD(88F6281),"mvgbec",  1, KIRKWOOD_GBE1_BASE,IRQ_DEFAULT,
+					MVSOC_MLMB_CLKGATING_BIT(19) },
+    { KIRKWOOD(88F6281),"mvpex",   0, MVSOC_PEX_BASE,	KIRKWOOD_IRQ_PEX0INT,
+					MVSOC_MLMB_CLKGATING_BIT(2) },
+    { KIRKWOOD(88F6281),"mvsata",  0, KIRKWOOD_SATAHC_BASE,KIRKWOOD_IRQ_SATA,
+					MVSOC_MLMB_CLKGATING_BIT(14) |
+					MVSOC_MLMB_CLKGATING_BIT(15) },
+    { KIRKWOOD(88F6281),"mvsdio",  0, KIRKWOOD_SDIO_BASE,KIRKWOOD_IRQ_SDIOINT,
+					MVSOC_MLMB_CLKGATING_BIT(4) },
+
+    { KIRKWOOD(88F6282),"mvsoctmr",0, MVSOC_TMR_BASE,	IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"mvsocgpp",0, MVSOC_GPP_BASE,	KIRKWOOD_IRQ_GPIOLO7_0},
+    { KIRKWOOD(88F6282),"mvsocrtc",0, KIRKWOOD_RTC_BASE,IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"mvsocts", 0, KIRKWOOD_TS_BASE,	IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"com",     0, MVSOC_COM0_BASE,	KIRKWOOD_IRQ_UART0INT },
+    { KIRKWOOD(88F6282),"com",     1, MVSOC_COM1_BASE,	KIRKWOOD_IRQ_UART1INT },
+    { KIRKWOOD(88F6282),"ehci",    0, KIRKWOOD_USB_BASE,KIRKWOOD_IRQ_USB0CNT },
+    { KIRKWOOD(88F6282),"gtidmac", 0, KIRKWOOD_IDMAC_BASE,IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"gttwsi",  0, MVSOC_TWSI_BASE,	KIRKWOOD_IRQ_TWSI },
+    { KIRKWOOD(88F6282),"gttwsi",  1, KIRKWOOD_TWSI1_BASE,KIRKWOOD_IRQ_TWSI1 },
+    { KIRKWOOD(88F6282),"mvcesa",  0, KIRKWOOD_CESA_BASE,KIRKWOOD_IRQ_SECURITYINT},
+    { KIRKWOOD(88F6282),"mvgbec",  0, KIRKWOOD_GBE0_BASE,IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"mvgbec",  1, KIRKWOOD_GBE1_BASE,IRQ_DEFAULT },
+    { KIRKWOOD(88F6282),"mvpex",   0, MVSOC_PEX_BASE,	KIRKWOOD_IRQ_PEX0INT },
+    { KIRKWOOD(88F6282),"mvpex",   1, KIRKWOOD_PEX1_BASE,KIRKWOOD_IRQ_PEX1INT },
+    { KIRKWOOD(88F6282),"mvsata",  0, KIRKWOOD_SATAHC_BASE,KIRKWOOD_IRQ_SATA },
+    { KIRKWOOD(88F6282),"mvsdio",  0, KIRKWOOD_SDIO_BASE,KIRKWOOD_IRQ_SDIOINT },
 #endif
 
 #if defined(MV78XX0)
@@ -381,6 +467,7 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 	struct marvell_attach_args mva;
 	uint16_t model;
 	uint8_t rev;
+	uint32_t clkpwr, clkpwrbit;
 	int i;
 
 	sc->sc_dev = self;
@@ -419,6 +506,20 @@ mvsoc_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < __arraycount(mvsoc_periphs); i++) {
 		if (mvsoc_periphs[i].model != model)
 			continue;
+
+		/* Skip clock disabled devices */
+		clkpwrbit = mvsoc_periphs[i].clkpwr_bit;
+		if (clkpwrbit != 0) {
+			clkpwr = read_mlmbreg(MVSOC_MLMB_CLKGATING);
+
+			if ((clkpwr & clkpwrbit) == 0) {
+				aprint_normal("%s: %s%d clock disabled\n",
+				    device_xname(self),
+				    mvsoc_periphs[i].name,
+				    mvsoc_periphs[i].unit);
+				continue;
+			}
+		}
 
 		mva.mva_name = mvsoc_periphs[i].name;
 		mva.mva_model = model;
@@ -497,6 +598,11 @@ mvsoc_bootstrap(bus_addr_t iobase)
 	dsc_base = iobase + MVSOC_DSC_BASE;
 	mlmb_base = iobase + MVSOC_MLMB_BASE;
 	pex_base = iobase + MVSOC_PEX_BASE;
+#ifdef MVSOC_CONSOLE_EARLY
+	com_base = iobase + MVSOC_COM0_BASE;
+	cn_tab = &mvsoc_earlycons;
+	printf("Hello\n");
+#endif
 }
 
 /*

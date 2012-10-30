@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25 2010/06/19 19:44:57 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.8.1 2012/10/30 17:18:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.25 2010/06/19 19:44:57 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.25.8.1 2012/10/30 17:18:57 yamt Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -55,13 +55,18 @@
 ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
-	adr	r1, .Lstart
-	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
-	sub	r2, r2, r1		/* get zero init data */
+	mrs	r1, cpsr		/* fetch CPSR value */
+	msr	spsr_sx, r1		/* set SPSR[23:8] to known value */
 
-#ifdef PROCESS_ID_IS_CURCPU
-	ldr	r3, .Lcpu_info_store
-	mcr	p15, 0, r3, c13, c0, 4
+	adr	r1, .Lstart
+	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
+	sub	r2, r2, r1		/* get zero init data and cpu_info_store */
+
+#if defined(TPIDRPRW_IS_CURCPU) || defined(TPIDRPRW_IS_CURLWP)
+	mcr	p15, 0, r8, c13, c0, 4
+#endif
+#if defined(TPIDRPRW_IS_CURLWP)
+	ldr	r8, [r8, #L_CPU]	/* r8 needs curcpu in it */
 #endif
 
 	mov	r3, #0
@@ -69,6 +74,9 @@ ASENTRY_NP(start)
 	str	r3, [r1], #0x0004	/* Zero the bss */
 	subs	r2, r2, #4
 	bgt	.L1
+
+	mrc	p15, 0, r3, c0, c0, 0	/* get our cpuid and save it early */
+	str	r3, [r8, #CI_ARM_CPUID]
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
@@ -87,14 +95,14 @@ ASENTRY_NP(start)
 	b	_C_LABEL(panic)
 	/* NOTREACHED */
 
-#ifdef PROCESS_ID_IS_CURCPU
-.Lcpu_info_store:	
-	.word	_C_LABEL(cpu_info_store)
-#endif
-
 .Lstart:
 	.word	_edata
 	.word	_end
+#if defined(TPIDRPRW_IS_CURLWP)
+	.word	_C_LABEL(lwp0)
+#else
+	.word	_C_LABEL(cpu_info_store)
+#endif
 	.word	svcstk + INIT_ARM_STACK_SIZE
 
 .Lmainreturned:
@@ -115,55 +123,54 @@ svcstk:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
+#ifdef _ARM_ARCH_6
+	cpsid	if, #PSR_SVC32_MODE
+#else
 	mrs     r2, cpsr
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(IF32_bits)
 	msr     cpsr_c, r2
-
-	ldr	r4, .Lcpu_reset_address
-	ldr	r4, [r4]
+#endif
 
 	ldr	r0, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 	/*
-	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
-	 * necessary.
+	 * Load the virutal address of the MD reset function first.
 	 */
+	ldr	r4, .Lcpu_reset_address
+	ldr	r4, [r4]
+	cmp	r4, #0
 
-	ldr	r1, .Lcpu_reset_needs_v4_MMU_disable
-	ldr	r1, [r1]
-	cmp	r1, #0
-	mov	r2, #0
+	/*
+	 * If virtual address is NULL, we must be using the physical address
+	 */
+	ldreq	r4, .Lcpu_reset_address_paddr
+	ldreq	r4, [r4]
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
-	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     15, 0, r0, c1, c0, 0
-	mcrne   15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
+	mrc	p15, 0, r0, c1, c0, 0
+	bic	r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
+	bic	r0, #(CPU_CONTROL_IC_ENABLE)
+	orr	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
+	mcr	p15, 0, r0, c1, c0, 0
+	mcreq	p15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
-	 * _cpu_reset_address contains the address to branch to, to complete
+	 * cpu_reset_address contains the address to branch to, to complete
 	 * the CPU reset after turning the MMU off
 	 * This variable is provided by the hardware specific code
 	 */
 .Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
-
-	/*
-	 * cpu_reset_needs_v4_MMU_disable contains a flag that signals if the
-	 * v4 MMU disable instruction needs executing... it is an illegal instruction
-	 * on f.e. ARM6/7 that locks up the computer in an endless illegal
-	 * instruction / data-abort / reset loop.
-	 */
-.Lcpu_reset_needs_v4_MMU_disable:
-	.word	_C_LABEL(cpu_reset_needs_v4_MMU_disable)
-
+.Lcpu_reset_address_paddr:
+	.word	_C_LABEL(cpu_reset_address_paddr)
 #endif	/* OFW */
 
 /*

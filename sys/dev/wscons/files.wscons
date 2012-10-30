@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.45.2.1 2012/04/17 00:08:11 yamt Exp $
+# $NetBSD: files.wscons,v 1.45.2.2 2012/10/30 17:22:12 yamt Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -81,3 +81,4 @@ defflag	opt_vcons.h		VCONS_DRAW_INTR VCONS_INTR_DEBUG
 # generic support code for caching rendered glyphs in video memory
 define	glyphcache
 file	dev/wscons/wsdisplay_glyphcache.c	glyphcache
+defflag	opt_glyphcache.h GLYPHCACHE_DEBUG

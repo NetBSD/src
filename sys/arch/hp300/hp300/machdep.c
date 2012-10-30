@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.1 2012/04/17 00:06:20 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.2 2012/10/30 17:19:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.1 2012/04/17 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.2 2012/10/30 17:19:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -129,12 +129,6 @@ paddr_t	bootinfo_pa;
 vaddr_t	bootinfo_va;
 
 int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
 extern	short exframesize[];

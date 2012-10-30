@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.19.2.1 2012/04/17 00:08:39 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.19.2.2 2012/10/30 17:22:45 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19.2.1 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.19.2.2 2012/10/30 17:22:45 yamt Exp $");
 #endif
 
 /*
@@ -189,7 +189,7 @@ ieee80211_sysctl_attach(struct ieee80211com *ic)
 	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_STRING,
 	    "parent", SYSCTL_DESCR("parent device"),
-	    ieee80211_sysctl_parent, 0, ic, IFNAMSIZ, CTL_CREATE,
+	    ieee80211_sysctl_parent, 0, (void *)ic, IFNAMSIZ, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 

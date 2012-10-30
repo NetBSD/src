@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.19 2011/05/13 22:28:40 rmind Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.19.4.1 2012/10/30 17:21:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.19 2011/05/13 22:28:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.19.4.1 2012/10/30 17:21:59 yamt Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -235,19 +235,19 @@ ppbus_detach(device_t self, int flag)
 
 /* Search for children device and add to list */
 static int
-ppbus_search_children(device_t parent, cfdata_t cf,
-		      const int *ldesc, void *aux)
+ppbus_search_children(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct ppbus_softc *ppbus = device_private(parent);
 	struct ppbus_device_softc *child;
+	device_t dev;
 	int rval = 0;
 
 	if (config_match(parent, cf, aux) > 0) {
-		child = (struct ppbus_device_softc *) config_attach(parent,
-			cf, aux, NULL);
-		if (child) {
-			SLIST_INSERT_HEAD(&(ppbus->sc_childlist_head), child,
-				entries);
+		dev = config_attach(parent, cf, aux, NULL);
+		if (dev) {
+			child = device_private(dev);
+			SLIST_INSERT_HEAD(&(ppbus->sc_childlist_head),
+				child, entries);
 			rval = 1;
 		}
 	}

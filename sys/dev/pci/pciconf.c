@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.33.2.1 2012/04/17 00:07:52 yamt Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.33.2.2 2012/10/30 17:21:37 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.33.2.1 2012/04/17 00:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.33.2.2 2012/10/30 17:21:37 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -131,6 +131,9 @@ typedef struct _s_pciconf_bus_t {
 	int		swiz;
 	int		io_32bit;
 	int		pmem_64bit;
+	int		io_align;
+	int		mem_align;
+	int		pmem_align;
 
 	int		ndevs;
 	pciconf_dev_t	device[MAX_CONF_DEV];
@@ -324,6 +327,10 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	pb->parent_bus = parent;
 	alloc_busno(parent, pb);
 
+	pb->mem_align = 0x100000;	/* 1M alignment */
+	pb->pmem_align = 0x100000;	/* 1M alignment */
+	pb->io_align = 0x1000;		/* 4K alignment */
+
 	set_busreg(parent->pc, pd->tag, parent->busno, pb->busno, 0xff);
 
 	pb->swiz = parent->swiz + dev;
@@ -367,15 +374,18 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->io_total > 0) {
 		if (parent->niowin >= MAX_CONF_IO) {
-			printf("pciconf: too many I/O windows\n");
+			printf("pciconf: too many (%d) I/O windows\n",
+			    parent->niowin);
 			goto err;
 		}
-		pb->io_total |= 0xfff;	/* Round up */
+		pb->io_total |= pb->io_align - 1; /* Round up */
 		pi = get_io_desc(parent, pb->io_total);
 		pi->dev = pd;
 		pi->reg = 0;
 		pi->size = pb->io_total;
-		pi->align = 0x1000;	/* 4K alignment */
+		pi->align = pb->io_align;	/* 4K min alignment */
+		if (parent->io_align < pb->io_align)
+			parent->io_align = pb->io_align;
 		pi->prefetch = 0;
 		parent->niowin++;
 		parent->io_total += pb->io_total;
@@ -383,15 +393,18 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	if (pb->mem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
-			printf("pciconf: too many MEM windows\n");
+			printf("pciconf: too many (%d) MEM windows\n",
+			     parent->nmemwin);
 			goto err;
 		}
-		pb->mem_total |= 0xfffff;	/* Round up */
+		pb->mem_total |= pb->mem_align-1; /* Round up */
 		pm = get_mem_desc(parent, pb->mem_total);
 		pm->dev = pd;
 		pm->reg = 0;
 		pm->size = pb->mem_total;
-		pm->align = 0x100000;	/* 1M alignment */
+		pm->align = pb->mem_align;	/* 1M min alignment */
+		if (parent->mem_align < pb->mem_align)
+			parent->mem_align = pb->mem_align;
 		pm->prefetch = 0;
 		parent->nmemwin++;
 		parent->mem_total += pb->mem_total;
@@ -402,12 +415,14 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
-		pb->pmem_total |= 0xfffff;	/* Round up */
+		pb->pmem_total |= pb->pmem_align-1; /* Round up */
 		pm = get_mem_desc(parent, pb->pmem_total);
 		pm->dev = pd;
 		pm->reg = 0;
 		pm->size = pb->pmem_total;
-		pm->align = 0x100000;		/* 1M alignment */
+		pm->align = pb->pmem_align;	/* 1M alignment */
+		if (parent->pmem_align < pb->pmem_align)
+			parent->pmem_align = pb->pmem_align;
 		pm->prefetch = 1;
 		parent->nmemwin++;
 		parent->pmem_total += pb->pmem_total;
@@ -548,6 +563,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pi->reg = br;
 			pi->size = (u_int64_t) size;
 			pi->align = 4;
+			if (pb->io_align < pi->size)
+				pb->io_align = pi->size;
 			pi->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -591,7 +608,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			} else {
 				if (pci_conf_debug) {
 					print_tag(pb->pc, tag);
-					printf("MEM%d BAR 0x%x has size %lx\n",
+					printf("MEM%d BAR 0x%x has size %#lx\n",
 					    PCI_MAPREG_MEM_TYPE(mask) ==
 						PCI_MAPREG_MEM_TYPE_64BIT ?
 						64 : 32, br, (unsigned long)size);
@@ -617,8 +634,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 			pb->nmemwin++;
 			if (pm->prefetch) {
 				pb->pmem_total += size;
+				if (pb->pmem_align < pm->size)
+					pb->pmem_align = pm->size;
 			} else {
 				pb->mem_total += size;
+				if (pb->mem_align < pm->size)
+					pb->mem_align = pm->size;
 			}
 		}
 	}
@@ -679,12 +700,12 @@ pci_allocate_range(struct extent *ex, u_int64_t amt, int align)
 
 	r = extent_alloc(ex, amt, align, 0, EX_NOWAIT, &addr);
 	if (r) {
-		addr = (u_long) -1;
-		printf("extent_alloc(%p, %" PRIu64 ", %d) returned %d\n",
+		printf("extent_alloc(%p, %#" PRIx64 ", %#x) returned %d\n",
 		    ex, amt, align, r);
 		extent_print(ex);
+		return ~0ULL;
 	}
-	return (pcireg_t) addr;
+	return addr;
 }
 
 static int
@@ -700,7 +721,7 @@ setup_iowins(pciconf_bus_t *pb)
 		pd = pi->dev;
 		pi->address = pci_allocate_range(pb->ioext, pi->size,
 		    pi->align);
-		if (pi->address == -1) {
+		if (~pi->address == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf("Failed to allocate PCI I/O space (%"
 			    PRIu64 " req)\n", pi->size);
@@ -750,7 +771,7 @@ setup_memwins(pciconf_bus_t *pb)
 		pd = pm->dev;
 		ex = (pm->prefetch) ? pb->pmemext : pb->memext;
 		pm->address = pci_allocate_range(ex, pm->size, pm->align);
-		if (pm->address == -1) {
+		if (~pm->address == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf(
 			   "Failed to allocate PCI memory space (%" PRIu64
@@ -992,8 +1013,8 @@ configure_bus(pciconf_bus_t *pb)
 	 * of free memory ranges from the m.d. system.
 	 */
 	if (setup_iowins(pb) || setup_memwins(pb)) {
-		printf("PCI bus configuration failed: ");
-		printf("unable to assign all I/O and memory ranges.");
+		printf("PCI bus configuration failed: "
+		"unable to assign all I/O and memory ranges.\n");
 		return -1;
 	}
 

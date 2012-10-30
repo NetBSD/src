@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.3 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.3.34.1 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct mvmebus_dmamap {
 
 
 struct mvmebus_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bust;
 	bus_dma_tag_t		sc_dmat;
 	short			sc_irqref[8];

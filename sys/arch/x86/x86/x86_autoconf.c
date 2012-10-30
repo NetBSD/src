@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.62 2011/10/18 23:43:36 dyoung Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.62.2.1 2012/10/30 17:20:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62 2011/10/18 23:43:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62.2.1 2012/10/30 17:20:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,15 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.62 2011/10/18 23:43:36 dyoung Exp
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
-
-static void
-handle_wedges(device_t dv, int par)
-{
-	if (config_handle_wedges(dv, par) == 0)
-		return;
-	booted_device = dv;
-	booted_partition = par;
-}
 
 static int
 is_valid_disk(device_t dv)
@@ -344,7 +335,9 @@ findroot(void)
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == device_unit(dv)) {
-				handle_wedges(dv, biv->devname[len + 1] - 'a');
+				booted_device = dv;
+				booted_partition = biv->devname[len + 1] - 'a';
+				booted_nblks = 0;
 				break;
 			}
 		}
@@ -388,11 +381,14 @@ findroot(void)
 				    device_xname(dv));
 				continue;
 			}
-			dkwedge_set_bootwedge(dv, biw->startblk, biw->nblks);
+			booted_device = dv;
+			booted_partition = 0;
+			booted_nblks = biw->nblks;
+			booted_startblk = biw->startblk;
 		}
 		deviter_release(&di);
 
-		if (booted_wedge)
+		if (booted_nblks)
 			return;
 	}
 
@@ -445,7 +441,9 @@ findroot(void)
 				    device_xname(dv));
 				continue;
 			}
-			handle_wedges(dv, bid->partition);
+			booted_device = dv;
+			booted_partition = bid->partition;
+			booted_nblks = 0;
 		}
 		deviter_release(&di);
 
@@ -456,14 +454,20 @@ findroot(void)
 		 * No booted device found; check CD-ROM boot at last.
 		 *
 		 * Our bootloader assumes CD-ROM boot if biosdev is larger
-		 * than the number of hard drives recognized by the BIOS.
-		 * The number of drives can be found in BTINFO_BIOSGEOM here.
+		 * or equal than the number of hard drives recognized by the
+		 * BIOS. The number of drives can be found in BTINFO_BIOSGEOM
+		 * here. For example, if we have wd0, wd1, and cd0:
+		 *
+		 *	big->num = 2 (for wd0 and wd1)
+		 *	bid->biosdev = 0x80 (wd0)
+		 *	bid->biosdev = 0x81 (wd1)
+		 *	bid->biosdev = 0x82 (cd0)
 		 *
 		 * See src/sys/arch/i386/stand/boot/devopen.c and
 		 * src/sys/arch/i386/stand/lib/bootinfo_biosgeom.c .
 		 */
 		if ((big = lookup_bootinfo(BTINFO_BIOSGEOM)) != NULL &&
-		    bid->biosdev > 0x80 + big->num) {
+		    bid->biosdev >= 0x80 + big->num) {
 			/*
 			 * XXX
 			 * There is no proper way to detect which unit is
@@ -477,6 +481,7 @@ findroot(void)
 				    device_is_a(dv, "cd")) {
 					booted_device = dv;
 					booted_partition = 0;
+					booted_nblks = 0;
 					break;
 				}
 			}
@@ -492,16 +497,9 @@ cpu_rootconf(void)
 	findroot();
 	matchbiosdisks();
 
-	if (booted_wedge) {
-		KASSERT(booted_device != NULL);
-		aprint_normal("boot device: %s (%s)\n",
-		    device_xname(booted_wedge), device_xname(booted_device));
-		setroot(booted_wedge, 0);
-	} else {
-		aprint_normal("boot device: %s\n",
-		    booted_device ? device_xname(booted_device) : "<unknown>");
-		setroot(booted_device, booted_partition);
-	}
+	aprint_normal("boot device: %s\n",
+	    booted_device ? device_xname(booted_device) : "<unknown>");
+	rootconf();
 }
 
 void

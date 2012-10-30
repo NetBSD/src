@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.11 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: gpio.c,v 1.11.2.1 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11.2.1 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,14 +56,13 @@ static int gpio_gpio_match (device_t, cfdata_t, void *);
 static int gpio_intr (void *);
 
 struct gpio_softc {
-	struct device sc_dev;
 	u_int8_t *sc_port;
 };
 
-CFATTACH_DECL(gpio_obio, sizeof(struct gpio_softc),
+CFATTACH_DECL_NEW(gpio_obio, sizeof(struct gpio_softc),
     gpio_obio_match, gpio_obio_attach, NULL, NULL);
 
-CFATTACH_DECL(gpio_gpio, sizeof(struct gpio_softc),
+CFATTACH_DECL_NEW(gpio_gpio, sizeof(struct gpio_softc),
     gpio_gpio_match, gpio_gpio_attach, NULL, NULL);
 
 extern struct cfdriver gpio_cd;

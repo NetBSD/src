@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.82.2.1 2012/05/23 10:07:37 yamt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.82.2.2 2012/10/30 17:18:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.82.2.1 2012/05/23 10:07:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.82.2.2 2012/10/30 17:18:36 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.82.2.1 2012/05/23 10:07:37 yamt Ex
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
+#include <arm/arm32/pmap.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 
@@ -114,19 +115,6 @@ static i2c_tag_t acorn32_i2c_tag;
  */
 #define	KERNEL_VM_SIZE		0x05000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
-
 struct bootconfig bootconfig;	/* Boot config storage */
 videomemory_t videomemory;	/* Video memory descriptor */
 
@@ -154,18 +142,7 @@ int max_processes = 64;		/* Default number */
 
 u_int videodram_size = 0;	/* Amount of DRAM to reserve for video */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 paddr_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -821,7 +798,7 @@ initarm(void *cookie)
 	printf("switching to new L1 page table\n");
 #endif
 
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 
 	/*
 	 * We must now clean the cache again....

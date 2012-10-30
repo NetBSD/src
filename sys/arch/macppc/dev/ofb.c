@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.67.2.1 2012/04/17 00:06:37 yamt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.67.2.2 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.67.2.1 2012/04/17 00:06:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.67.2.2 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.67.2.1 2012/04/17 00:06:37 yamt Exp $");
 #include <powerpc/oea/ofw_rasconsvar.h>
 
 struct ofb_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
@@ -85,7 +85,7 @@ struct ofb_softc {
 static int	ofbmatch(device_t, cfdata_t, void *);
 static void	ofbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ofb, sizeof(struct ofb_softc),
+CFATTACH_DECL_NEW(ofb, sizeof(struct ofb_softc),
     ofbmatch, ofbattach, NULL, NULL);
 
 const struct wsscreen_descr *_ofb_scrlist[] = {
@@ -150,6 +150,8 @@ ofbattach(device_t parent, device_t self, void *aux)
 	int console, node, sub;
 	char devinfo[256];
 
+	sc->sc_dev = self;
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
 
@@ -187,7 +189,7 @@ ofbattach(device_t parent, device_t self, void *aux)
 	vcons_init_screen(&sc->vd, &rascons_console_screen, 1, &defattr);
 	rascons_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	
-	printf("%s: %d x %d, %dbpp\n", self->dv_xname,
+	printf("%s: %d x %d, %dbpp\n", device_xname(self),
 	       ri->ri_width, ri->ri_height, ri->ri_depth);
 	
 	sc->sc_fbaddr = 0;
@@ -195,7 +197,7 @@ ofbattach(device_t parent, device_t self, void *aux)
 		OF_interpret("frame-buffer-adr", 0, 1, &sc->sc_fbaddr);
 	if (sc->sc_fbaddr == 0) {
 		printf("%s: Unable to find the framebuffer address.\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_fbsize = round_page(ri->ri_stride * ri->ri_height);
@@ -320,7 +322,7 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	int i;
 
 	if (vd->active == NULL) {
-		printf("%s: no active screen.\n", sc->sc_dev.dv_xname);
+		printf("%s: no active screen.\n", device_xname(sc->sc_dev));
 		return -1;
 	}
 	
@@ -337,7 +339,7 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 */
 	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
-		printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+		printf("%s: mmap() rejected.\n", device_xname(sc->sc_dev));
 		return -1;
 	}
 

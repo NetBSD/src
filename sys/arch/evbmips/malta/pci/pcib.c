@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15 2011/07/01 18:46:35 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15.2.1 2012/10/30 17:19:29 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2011/07/01 18:46:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15.2.1 2012/10/30 17:19:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,10 @@ struct pcib_softc {
 static struct pcib_softc *my_sc;
 struct mips_isa_chipset *pcib_ic;
 
-static int	pcib_match(struct device *, struct cfdata *, void *);
-static void	pcib_attach(struct device *, struct device *, void *);
+static int	pcib_match(device_t, cfdata_t, void *);
+static void	pcib_attach(device_t, device_t, void *);
 static int	pcib_intr(void *v);
-static void	pcib_bridge_callback(struct device *);
+static void	pcib_bridge_callback(device_t);
 static void	pcib_set_icus(struct pcib_softc *sc);
 static void	pcib_cleanup(void *arg);
 
@@ -133,7 +133,7 @@ static const struct evcnt *
 static void	*pcib_isa_intr_establish(void *, int, int, int,
 		    int (*)(void *), void *);
 static void	pcib_isa_intr_disestablish(void *, void *);
-static void	pcib_isa_attach_hook(struct device *, struct device *,
+static void	pcib_isa_attach_hook(device_t, device_t,
 		    struct isabus_attach_args *);
 static void	pcib_isa_detach_hook(isa_chipset_tag_t, device_t);
 static int	pcib_isa_intr_alloc(void *, int, int, int *);
@@ -154,7 +154,7 @@ malta_isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
 }
 
 static int
-pcib_match(struct device *parent, struct cfdata *match, void *aux)
+pcib_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -166,7 +166,7 @@ pcib_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pcib_attach(struct device *parent, struct device *self, void *aux)
+pcib_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args * const pa = aux;
 	struct pcib_softc * const sc = device_private(self);
@@ -352,11 +352,11 @@ pcib_bridge_callback(device_t self)
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 	iba.iba_ic->ic_detach_hook = pcib_isa_detach_hook;
 
-	config_found_ia(sc->sc_dev, "isabus", &iba, isabusprint);
+	config_found_ia(self, "isabus", &iba, isabusprint);
 }
 
 static void
-pcib_isa_attach_hook(struct device *parent, struct device *self,
+pcib_isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kcpuset.h,v 1.3.2.2 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: kcpuset.h,v 1.3.2.3 2012/10/30 17:22:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2011 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ int		kcpuset_countset(kcpuset_t *);
 
 void		kcpuset_atomic_set(kcpuset_t *, cpuid_t);
 void		kcpuset_atomic_clear(kcpuset_t *, cpuid_t);
+
+void		kcpuset_export_u32(const kcpuset_t *, uint32_t *, size_t);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.6 2002/07/11 21:14:28 augustss Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.6.146.1 2012/10/30 17:22:08 yamt Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -184,7 +184,7 @@ enum {
  *   BmRequestType:  0100 0000b
  *   bRequest:       FTDI_SIO_SET_FLOW_CTRL
  *   wValue:         Xoff/Xon
- *   wIndex:         Protocol/Port - hIndex is protocl / lIndex is port
+ *   wIndex:         Protocol/Port - hIndex is protocol / lIndex is port
  *   wLength:        0
  *   Data:           None
  *

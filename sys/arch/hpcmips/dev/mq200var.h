@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.7 2001/09/16 05:32:18 uch Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.7.160.1 2012/10/30 17:19:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -39,7 +39,7 @@
 #include <dev/hpc/hpcfbio.h>
 
 struct mq200_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

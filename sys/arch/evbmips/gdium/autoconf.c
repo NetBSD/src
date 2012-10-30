@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.2.1 2012/10/30 17:19:29 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2011/07/22 20:41:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4.2.1 2012/10/30 17:19:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,9 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+		booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 extern char	bootstring[];
@@ -108,7 +108,7 @@ findroot(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict;
 

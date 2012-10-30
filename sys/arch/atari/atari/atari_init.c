@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.95.8.1 2012/04/17 00:06:08 yamt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.95.8.2 2012/10/30 17:19:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.95.8.1 2012/04/17 00:06:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.95.8.2 2012/10/30 17:19:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -140,6 +140,13 @@ vaddr_t	page_zero;
 
 u_long	st_pool_size = ST_POOL_SIZE * PAGE_SIZE; /* Patchable	*/
 u_long	st_pool_virt, st_pool_phys;
+
+/* I/O address space variables */
+vaddr_t	stio_addr;		/* Where the st io-area is mapped	*/
+vaddr_t	pci_conf_addr;		/* KVA base of PCI config space		*/
+vaddr_t	pci_io_addr;		/* KVA base of PCI io-space		*/
+vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
+vaddr_t	pci_mem_uncached;	/* KVA base of an uncached PCI mem-page	*/
 
 /*
  * Are we relocating the kernel to TT-Ram if possible? It is faster, but

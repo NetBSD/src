@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.2 2011/02/08 20:20:11 rmind Exp $ */
+/* $NetBSD: clock.c,v 1.2.8.1 2012/10/30 17:19:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,14 +39,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2011/02/08 20:20:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2.8.1 2012/10/30 17:19:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
 /* Maybe someday will need more flexibility */
-extern void eclock_init(struct device *dev);
+extern void eclock_init(device_t dev);
 
 
 /* Start the real-time and statistics clocks. Leave stathz 0 since there

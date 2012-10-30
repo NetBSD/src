@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.139.2.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.139.2.2 2012/10/30 17:22:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139.2.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139.2.2 2012/10/30 17:22:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.139.2.1 2012/04/17 00:08:40 yamt Exp $"
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -205,7 +205,7 @@ in_pcballoc(struct socket *so, void *v)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
-	inp->inp_rfc6056algo = RFC6056_ALGO_DEFAULT;
+	inp->inp_portalgo = PORTALGO_DEFAULT;
 	inp->inp_bindportonsend = false;
 #if defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
@@ -260,7 +260,7 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
        /*
         * Use RFC6056 randomized port selection
         */
-	error = rfc6056_randport(&lport, &inp->inp_head, cred);
+	error = portalgo_randport(&lport, &inp->inp_head, cred);
 	if (error)
 		return error;
 
@@ -806,8 +806,9 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 {
 	struct inpcbhead *head;
 	struct inpcb_hdr *inph;
-	struct inpcb *inp, *match = 0;
-	int matchwild = 3, wildcard;
+	struct inpcb *match = NULL;
+	int matchwild = 3;
+	int wildcard;
 	u_int16_t lport = lport_arg;
 
 	if (vp)
@@ -815,12 +816,23 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 
 	head = INPCBHASH_PORT(table, lport);
 	LIST_FOREACH(inph, head, inph_lhash) {
-		inp = (struct inpcb *)inph;
+		struct inpcb * const inp = (struct inpcb *)inph;
+
 		if (inp->inp_af != AF_INET)
 			continue;
-
 		if (inp->inp_lport != lport)
 			continue;
+		/*
+		 * check if inp's faddr and laddr match with ours.
+		 * our faddr is considered null.
+		 * count the number of wildcard matches. (0 - 2)
+		 *
+		 *	null	null	match
+		 *	A	null	wildcard match
+		 *	null	B	wildcard match
+		 *	A	B	non match
+		 *	A	A	match
+		 */
 		wildcard = 0;
 		if (!in_nullhost(inp->inp_faddr))
 			wildcard++;
@@ -837,6 +849,9 @@ in_pcblookup_port(struct inpcbtable *table, struct in_addr laddr,
 		}
 		if (wildcard && !lookup_wildcard)
 			continue;
+		/*
+		 * prefer an address with less wildcards.
+		 */
 		if (wildcard < matchwild) {
 			match = inp;
 			matchwild = wildcard;

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.87 2010/04/05 07:19:33 joerg Exp $	*/
+/*	$NetBSD: awi.c,v 1.87.8.1 2012/10/30 17:21:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.87 2010/04/05 07:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.87.8.1 2012/10/30 17:21:00 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -199,13 +199,13 @@ awi_attach(struct awi_softc *sc)
 	sc->sc_attached = 0;
 	sc->sc_substate = AWI_ST_NONE;
 	if ((error = awi_hw_init(sc)) != 0) {
-		config_deactivate(&sc->sc_dev);
+		config_deactivate(sc->sc_dev);
 		splx(s);
 		return error;
 	}
 	error = awi_init_mibs(sc);
 	if (error != 0) {
-		config_deactivate(&sc->sc_dev);
+		config_deactivate(sc->sc_dev);
 		splx(s);
 		return error;
 	}
@@ -221,7 +221,7 @@ awi_attach(struct awi_softc *sc)
 	ifp->if_init = awi_init;
 	ifp->if_stop = awi_stop;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ic->ic_ifp = ifp;
 	ic->ic_caps = IEEE80211_C_WEP | IEEE80211_C_IBSS | IEEE80211_C_HOSTAP;
@@ -387,11 +387,11 @@ awi_intr(void *arg)
 #endif
 
 	if (!sc->sc_enabled || !sc->sc_enab_intr ||
-	    !device_is_active(&sc->sc_dev)) {
+	    !device_is_active(sc->sc_dev)) {
 		DPRINTF(("awi_intr: stray interrupt: "
 		    "enabled %d enab_intr %d invalid %d\n",
 		    sc->sc_enabled, sc->sc_enab_intr,
-		    !device_is_active(&sc->sc_dev)));
+		    !device_is_active(sc->sc_dev)));
 		return 0;
 	}
 
@@ -610,7 +610,7 @@ awi_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(&sc->sc_ic, IEEE80211_S_INIT, -1);
 
-	if (device_is_active(&sc->sc_dev)) {
+	if (device_is_active(sc->sc_dev)) {
 		if (sc->sc_cmd_inprog)
 			(void)awi_cmd_wait(sc);
 		(void)awi_cmd(sc, AWI_CMD_KILL_RX, AWI_WAIT);
@@ -632,7 +632,7 @@ awi_stop(struct ifnet *ifp, int disable)
 	IFQ_PURGE(&ifp->if_snd);
 
 	if (disable) {
-		if (device_is_active(&sc->sc_dev))
+		if (device_is_active(sc->sc_dev))
 			am79c930_gcr_setbits(&sc->sc_chip,
 			    AM79C930_GCR_CORESET);
 		if (sc->sc_disable)
@@ -654,7 +654,7 @@ awi_start(struct ifnet *ifp)
 	u_int32_t txd, frame, ntxd;
 	u_int8_t rate;
 
-	if (!sc->sc_enabled || !device_is_active(&sc->sc_dev))
+	if (!sc->sc_enabled || !device_is_active(sc->sc_dev))
 		return;
 
 	for (;;) {
@@ -782,7 +782,7 @@ awi_watchdog(struct ifnet *ifp)
 	int ocansleep;
 
 	ifp->if_timer = 0;
-	if (!sc->sc_enabled || !device_is_active(&sc->sc_dev))
+	if (!sc->sc_enabled || !device_is_active(sc->sc_dev))
 		return;
 
 	ocansleep = sc->sc_cansleep;
@@ -1256,7 +1256,7 @@ awi_hw_init(struct awi_softc *sc)
 
 	/* wait for selftest completion */
 	for (i = 0; ; i++) {
-		if (!device_is_active(&sc->sc_dev))
+		if (!device_is_active(sc->sc_dev))
 			return ENXIO;
 		if (i >= AWI_SELFTEST_TIMEOUT*hz/1000) {
 			printf("%s: failed to complete selftest (timeout)\n",
@@ -1549,12 +1549,12 @@ awi_cmd_wait(struct awi_softc *sc)
 
 	i = 0;
 	while (sc->sc_cmd_inprog) {
-		if (!device_is_active(&sc->sc_dev))
+		if (!device_is_active(sc->sc_dev))
 			return ENXIO;
 		if (awi_read_1(sc, AWI_CMD) != sc->sc_cmd_inprog) {
 			printf("%s: failed to access hardware\n",
 			    sc->sc_if.if_xname);
-			config_deactivate(&sc->sc_dev);
+			config_deactivate(sc->sc_dev);
 			return ENXIO;
 		}
 		if (sc->sc_cansleep) {
@@ -1656,7 +1656,7 @@ awi_lock(struct awi_softc *sc)
 		 * ioctl requests in progress.
 		 */
 		if (sc->sc_busy) {
-			if (!device_is_active(&sc->sc_dev))
+			if (!device_is_active(sc->sc_dev))
 				return ENXIO;
 			return EWOULDBLOCK;
 		}
@@ -1665,7 +1665,7 @@ awi_lock(struct awi_softc *sc)
 		return 0;
 	}
 	while (sc->sc_busy) {
-		if (!device_is_active(&sc->sc_dev))
+		if (!device_is_active(sc->sc_dev))
 			return ENXIO;
 		sc->sc_sleep_cnt++;
 		error = tsleep(sc, PWAIT | PCATCH, "awilck", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.21.2.1 2012/04/17 00:06:05 yamt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.21.2.2 2012/10/30 17:19:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21.2.1 2012/04/17 00:06:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21.2.2 2012/10/30 17:19:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.21.2.1 2012/04/17 00:06:05 yamt
 #include <dev/isa/isavar.h>
 #endif
 
-void		footbridge_pci_attach_hook(struct device *,
-		    struct device *, struct pcibus_attach_args *);
+void		footbridge_pci_attach_hook(device_t, device_t,
+		    struct pcibus_attach_args *);
 int		footbridge_pci_bus_maxdevs(void *, int);
 pcitag_t	footbridge_pci_make_tag(void *, int, int, int);
 void		footbridge_pci_decompose_tag(void *, pcitag_t, int *,
@@ -102,23 +102,11 @@ struct arm32_dma_range footbridge_dma_ranges[1];
  * of these functions.
  */
 struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag = {
-	footbridge_dma_ranges,
-	1,
-	NULL,
-	_bus_dmamap_create, 
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,	/* pre */
-	NULL,			/* post */
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
+	._ranges = footbridge_dma_ranges,
+	._nranges = 1,
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
 };
 
 /*
@@ -137,7 +125,7 @@ pci_intr(void *arg)
 
 
 void
-footbridge_pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+footbridge_pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_attach_hook()\n");

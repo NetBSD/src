@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.60.8.1 2012/04/17 00:08:09 yamt Exp $	*/
+/*	$NetBSD: umodem.c,v 1.60.8.2 2012/10/30 17:22:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.60.8.1 2012/04/17 00:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.60.8.2 2012/10/30 17:22:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ umodem_match(device_t parent, cfdata_t match, void *aux)
 
 	if (uaa->class != UICLASS_CDC ||
 	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
-	    uaa->proto != UIPROTO_CDC_AT)
+	    !(uaa->proto == UIPROTO_CDC_NOCLASS || uaa->proto == UIPROTO_CDC_AT))
 		return (UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uaa->iface);
@@ -121,6 +121,9 @@ umodem_attach(device_t parent, device_t self, void *aux)
 	uca.methods = &umodem_methods;
 	uca.info = NULL;
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler");
+
 	if (umodem_common_attach(self, sc, uaa, &uca))
 		return;
 	return;
@@ -138,6 +141,8 @@ int
 umodem_detach(device_t self, int flags)
 {
 	struct umodem_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
 
 	return umodem_common_detach(sc, flags);
 }

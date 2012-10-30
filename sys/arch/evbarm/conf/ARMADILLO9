@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.30.2.1 2012/04/17 00:06:12 yamt Exp $
+#	$NetBSD: ARMADILLO9,v 1.30.2.2 2012/10/30 17:19:19 yamt Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -33,6 +33,7 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
@@ -80,6 +81,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options		COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
@@ -125,7 +127,7 @@ options 	DDB		# in-kernel debugger
 #options	DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=450000
+options 	SYMTAB_SPACE=600000
 
 #options 	PMAP_INCLUDE_PTE_SYNC
 #options 	LOCKDEBUG
@@ -263,6 +265,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -317,7 +320,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # compatibility to other console drivers
 #options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-#options 	WSDISPLAY_COMPAT_USL		# VT handling
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"

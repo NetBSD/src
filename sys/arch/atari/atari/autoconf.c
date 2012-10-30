@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61.2.1 2012/10/30 17:19:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61.2.1 2012/10/30 17:19:12 yamt Exp $");
+
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2011/06/05 17:09:18 matt Exp $");
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/malloc.h>
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <atari/atari/device.h>
+
+#if defined(MEMORY_DISK_HOOKS)
+#include <dev/md.h>
+#endif
+
+#include "ioconf.h"
 
 static void findroot(void);
 int mbmatch(device_t, cfdata_t, void *);
@@ -75,12 +84,47 @@ cpu_rootconf(void)
 {
 
 	findroot();
-	setroot(booted_device, booted_partition);
+#if defined(MEMORY_DISK_HOOKS)
+	/*
+	 * XXX
+	 * quick hacks for atari's traditional "auto-load from floppy on open"
+	 * installation md(4) ramdisk.
+	 * See sys/arch/atari/dev/md_root.c for details.
+	 */
+#define RAMD_NDEV	3	/* XXX */
+
+	if ((boothowto & RB_ASKNAME) != 0) {
+		int md_major, i;
+		dev_t md_dev;
+		cfdata_t cf;
+		struct md_softc *sc;
+
+		md_major = devsw_name2blk("md", NULL, 0);
+		if (md_major >= 0) {
+			for (i = 0; i < RAMD_NDEV; i++) {
+				md_dev = MAKEDISKDEV(md_major, i, RAW_PART);
+				cf = malloc(sizeof(*cf), M_DEVBUF,
+				    M_ZERO|M_WAITOK);
+				if (cf == NULL)
+					break;	/* XXX */
+				cf->cf_name = md_cd.cd_name;
+				cf->cf_atname = md_cd.cd_name;
+				cf->cf_unit = i;
+				cf->cf_fstate = FSTATE_STAR;
+				/* XXX mutex */
+				sc = device_private(config_attach_pseudo(cf));
+				if (sc == NULL)
+					break;	/* XXX */
+			}
+		}
+	}
+#endif
+	rootconf();
 }
 
 /*ARGSUSED*/
 int
-simple_devprint(void *auxp, const char *pnp)
+simple_devprint(void *aux, const char *pnp)
 {
 
 	return QUIET;
@@ -93,32 +137,32 @@ simple_devprint(void *auxp, const char *pnp)
  * by checking for NULL.
  */
 int
-atari_config_found(cfdata_t pcfp, device_t pdp, void *auxp, cfprint_t pfn)
+atari_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
 
 	if (atari_realconfig)
-		return config_found(pdp, auxp, pfn) != NULL;
+		return config_found(parent, aux, pfn) != NULL;
 
 	memset(&temp, 0, sizeof(temp));
-	if (pdp == NULL)
-		pdp = &temp;
+	if (parent == NULL)
+		parent = &temp;
 
-	pdp->dv_cfdata = pcfp;
-	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
-	pdp->dv_unit = pcfp->cf_unit;
+	parent->dv_cfdata = pcfp;
+	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
+	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, pdp, NULL, auxp)) != NULL) {
+	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
-			(*ca->ca_attach)(pdp, NULL, auxp);
-			pdp->dv_cfdata = NULL;
+			(*ca->ca_attach)(parent, NULL, aux);
+			parent->dv_cfdata = NULL;
 			return 1;
 		}
 	}
-	pdp->dv_cfdata = NULL;
+	parent->dv_cfdata = NULL;
 	return 0;
 }
 
@@ -203,8 +247,8 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (device_t *)genericconf[i]->cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+			devs = genericconf[i]->cd_devs;
+			if ((dkp = disk_find(device_xname(devs[unit]))) == NULL)
 				continue;
 
 			if (dkp->dk_driver == NULL ||

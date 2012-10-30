@@ -1,4 +1,4 @@
-/*	$NetBSD: memcvar.h,v 1.2 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: memcvar.h,v 1.2.34.1 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_MVME_MEMCVAR_H
 
 struct memc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_bush;
 	struct evcnt		sc_evcnt;

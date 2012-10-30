@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.5.2.1 2012/04/17 00:06:15 yamt Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.5.2.2 2012/10/30 17:19:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.5.2.1 2012/04/17 00:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.5.2.2 2012/10/30 17:19:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -166,25 +166,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.5.2.1 2012/04/17 00:06:15 ya
  */
 #define KERNEL_VM_SIZE		0x0C000000
 
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define FIQ_STACK_SIZE	1
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
-
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
@@ -201,18 +182,8 @@ vm_offset_t pagetables_start;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char KERNEL_BASE_virt[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];
@@ -765,7 +736,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -916,9 +887,7 @@ process_kernel_args(char *args)
 static void
 init_clocks(void)
 {
-	extern void cortexa8_pmc_ccnt_init(void);
-
-	cortexa8_pmc_ccnt_init();
+	cortex_pmc_ccnt_init();
 }
 
 struct iomux_setup {

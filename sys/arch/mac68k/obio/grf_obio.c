@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.57 2007/10/17 19:55:16 garbled Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.57.54.1 2012/10/30 17:19:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.57 2007/10/17 19:55:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.57.54.1 2012/10/30 17:19:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.57 2007/10/17 19:55:16 garbled Exp $"
 #include <mac68k/dev/grfvar.h>
 
 static int	grfiv_mode(struct grf_softc *, int, void *);
-static int	grfiv_match(struct device *, struct cfdata *, void *);
-static void	grfiv_attach(struct device *, struct device *, void *);
+static int	grfiv_match(device_t, cfdata_t, void *);
+static void	grfiv_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(intvid, sizeof(struct grfbus_softc),
+CFATTACH_DECL_NEW(intvid, sizeof(struct grfbus_softc),
     grfiv_match, grfiv_attach, NULL, NULL);
 
 #define	DAFB_BASE		0xf9000000
@@ -97,7 +97,7 @@ CFATTACH_DECL(intvid, sizeof(struct grfbus_softc),
 #define VALKYRIE_CONTROL_BASE	0x50f2a000
 
 static int
-grfiv_match(struct device *parent, struct cfdata *cf, void *aux)
+grfiv_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -192,7 +192,7 @@ grfiv_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-grfiv_attach(struct device *parent, struct device *self, void *aux)
+grfiv_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct grfbus_softc *sc;
@@ -200,7 +200,8 @@ grfiv_attach(struct device *parent, struct device *self, void *aux)
 	u_long base, length;
 	u_int32_t vbase1, vbase2;
 
-	sc = (struct grfbus_softc *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	sc->card_id = 0;
 
@@ -324,7 +325,7 @@ grfiv_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_tag, sc->sc_basepa, length, 0,
 	    &sc->sc_handle)) {
-		printf("%s: failed to map video RAM\n", sc->sc_dev.dv_xname);
+		printf("%s: failed to map video RAM\n", device_xname(sc->sc_dev));
 		return;
 	}
 

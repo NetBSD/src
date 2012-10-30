@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108.2.1 2012/04/17 00:06:42 yamt Exp $
+# $NetBSD: GENERIC,v 1.108.2.2 2012/10/30 17:20:04 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,6 +120,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -249,7 +250,7 @@ options 	WS_KERNEL_COLATTR=WSATTR_HILIT
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 options 	FONT_GALLANT12x22		# Sun PROM font look-alike

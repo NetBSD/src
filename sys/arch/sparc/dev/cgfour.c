@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.46 2011/07/18 00:05:35 mrg Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.46.2.1 2012/10/30 17:20:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.46 2011/07/18 00:05:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.46.2.1 2012/10/30 17:20:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ static int	cgfourmatch(device_t, cfdata_t, void *);
 static void	cgfourattach(device_t, device_t, void *);
 
 #if defined(SUN4)
-static void	cgfourunblank(struct device *);
+static void	cgfourunblank(device_t);
 #endif
 
 static int	cg4_pfour_probe(void *, void *);
@@ -451,7 +451,7 @@ cgfourmmap(dev_t dev, off_t off, int prot)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgfourunblank(struct device *dev)
+cgfourunblank(device_t dev)
 {
 
 	cgfour_set_video(device_private(dev), 1);

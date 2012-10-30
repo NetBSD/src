@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.33.8.1 2012/04/17 00:07:38 yamt Exp $	*/
+/*	$NetBSD: aria.c,v 1.33.8.2 2012/10/30 17:21:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33.8.1 2012/04/17 00:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.33.8.2 2012/10/30 17:21:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ struct aria_mixmaster {
 };
 
 struct aria_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	void	*sc_ih;			/* interrupt vectoring */
@@ -179,7 +179,7 @@ int	aria_mixer_set_port(void *, mixer_ctrl_t *);
 int	aria_mixer_get_port(void *, mixer_ctrl_t *);
 int	aria_mixer_query_devinfo(void *, mixer_devinfo_t *);
 
-CFATTACH_DECL(aria, sizeof(struct aria_softc),
+CFATTACH_DECL_NEW(aria, sizeof(struct aria_softc),
     ariaprobe, ariaattach, NULL, NULL);
 
 /* XXX temporary test for 1.3 */
@@ -403,7 +403,8 @@ ariaattach(device_t parent, device_t self, void *aux)
 	struct isa_attach_args *ia;
 	u_short i;
 
-	sc = (void *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 	ia = aux;
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, ARIADSP_NPORT,
 	    0, &ioh))
@@ -472,7 +473,7 @@ ariaattach(device_t parent, device_t self, void *aux)
 	snprintf(aria_device.version, sizeof(aria_device.version), "%s",
 		ARIA_MODEL & sc->sc_hardware ? "SC18026" : "SC18025");
 
-	audio_attach_mi(&aria_hw_if, (void *)sc, &sc->sc_dev);
+	audio_attach_mi(&aria_hw_if, (void *)sc, sc->sc_dev);
 }
 
 /*

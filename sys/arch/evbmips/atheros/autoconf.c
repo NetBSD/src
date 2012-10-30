@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.10 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: autoconf.c,v 1.10.2.1 2012/10/30 17:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.2.1 2012/10/30 17:19:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,7 +67,7 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

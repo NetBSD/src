@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.7.12.1 2012/04/17 00:05:51 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.7.12.2 2012/10/30 17:18:35 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.1 2012/04/17 00:05:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.12.2 2012/10/30 17:18:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,8 +57,7 @@ void
 cpu_rootconf(void)
 {
 
-	/* XXX This could actually do something */
-	setroot(NULL, 0);
+	rootconf();
 }
 
 void

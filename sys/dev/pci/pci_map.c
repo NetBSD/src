@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.29 2011/05/17 17:34:54 dyoung Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.29.4.1 2012/10/30 17:21:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29 2011/05/17 17:34:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.29.4.1 2012/10/30 17:21:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,8 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	 *
 	 * 2) A device which wants 2^n bytes of memory will hardwire the bottom
 	 * n bits of the address to 0.  As recommended, we write all 1s and see
-	 * what we get back.
+	 * what we get back.  Only probe the upper BAR of a mem64 BAR if bit 31
+	 * is readonly.
 	 */
 	s = splhigh();
 	address = pci_conf_read(pc, tag, reg);
@@ -144,9 +145,11 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	pci_conf_write(pc, tag, reg, address);
 	if (is64bit) {
 		address1 = pci_conf_read(pc, tag, reg + 4);
-		pci_conf_write(pc, tag, reg + 4, 0xffffffff);
-		mask1 = pci_conf_read(pc, tag, reg + 4);
-		pci_conf_write(pc, tag, reg + 4, address1);
+		if ((mask & 0x80000000) == 0) {
+			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
+			mask1 = pci_conf_read(pc, tag, reg + 4);
+			pci_conf_write(pc, tag, reg + 4, address1);
+		}
 	}
 	splx(s);
 

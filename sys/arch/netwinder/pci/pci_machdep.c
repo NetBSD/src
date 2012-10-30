@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6.112.1 2012/10/30 17:20:04 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6.112.1 2012/10/30 17:20:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -11,8 +11,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.6 2005/12/11 12:18:20 christos Exp
 #include <arm/footbridge/dc21285reg.h>
 
 void
-netwinder_pci_attach_hook (struct device *parent,
-	struct device *self, struct pcibus_attach_args *pba)
+netwinder_pci_attach_hook(device_t parent, device_t self,
+    struct pcibus_attach_args *pba)
 {
 	pcireg_t regval;
 	pcireg_t intreg;

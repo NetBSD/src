@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.35.2.1 2012/05/23 10:07:55 yamt Exp $ */
+/*	$NetBSD: dbcool.c,v 1.35.2.2 2012/10/30 17:20:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.35.2.1 2012/05/23 10:07:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.35.2.2 2012/10/30 17:20:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,7 +1115,11 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 SYSCTL_SETUP(sysctl_dbcoolsetup, "sysctl dBCool subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
+#ifdef _MODULE
+		       0,
+#else
 		       CTLFLAG_PERMANENT,
+#endif
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
@@ -1545,7 +1549,7 @@ dbcool_setup(device_t self)
 			(void *)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_select", NULL,
 			sysctl_dbcool_reg_select,
-			0, sc, sizeof(int),
+			0, (void *)sc, sizeof(int),
 			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 		if (node != NULL)
 			node->sysctl_data = sc;
@@ -1554,7 +1558,7 @@ dbcool_setup(device_t self)
 			(void *)&node,
 			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_access", NULL,
 			sysctl_dbcool_reg_access,
-			0, sc, sizeof(int),
+			0, (void *)sc, sizeof(int),
 			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 		if (node != NULL)
 			node->sysctl_data = sc;
@@ -1737,7 +1741,7 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 			     CTLTYPE_INT, name,
 			     SYSCTL_DESCR(dbc_sysctl_table[sysctl_index].desc),
 			     dbc_sysctl_table[sysctl_index].helper,
-			     0, sc, sizeof(int),
+			     0, (void *)sc, sizeof(int),
 			     CTL_HW, sc->sc_root_sysctl_num,
 				sc->sc_sysctl_num[j],
 				DBC_PWM_SYSCTL(idx, sysctl_reg), CTL_EOL);
@@ -1775,7 +1779,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 				rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
 			else
 				rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
-			ret = sysctl_createv(&sc->sc_sysctl_log, 0, NULL,
+			ret = (sysctl_createv)(&sc->sc_sysctl_log, 0, NULL,
 				&node, rw_flag,
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
@@ -2178,18 +2182,23 @@ static int
 dbcool_modcmd(modcmd_t cmd, void *opaque)
 {
 	int error = 0;
+#ifdef _MODULE
+	static struct sysctllog *dbcool_sysctl_clog;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
 		error = config_init_component(cfdriver_ioconf_dbcool,
 		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+		sysctl_dbcoolsetup(&dbcool_sysctl_clog);
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_dbcool,
 		    cfattach_ioconf_dbcool, cfdata_ioconf_dbcool);
+		sysctl_teardown(&dbcool_sysctl_clog);
 #endif
 		return error;
 	default:

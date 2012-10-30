@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.5.4.2 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: npf.c,v 1.5.4.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5.4.2 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5.4.3 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.5.4.2 2012/04/17 00:08:38 yamt Exp $");
 #include <sys/percpu.h>
 #include <sys/rwlock.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 #include <sys/uio.h>
 
 #include "npf_impl.h"
@@ -80,6 +81,7 @@ static int	npfctl_stats(void *);
 static krwlock_t		npf_lock		__cacheline_aligned;
 static npf_core_t *		npf_core		__cacheline_aligned;
 static percpu_t *		npf_stats_percpu	__read_mostly;
+static struct sysctllog *	npf_sysctl		__read_mostly;
 
 const struct cdevsw npf_cdevsw = {
 	npf_dev_open, npf_dev_close, npf_dev_read, nowrite, npf_dev_ioctl,
@@ -99,11 +101,13 @@ npf_init(void)
 
 	rw_init(&npf_lock);
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
+	npf_sysctl = NULL;
+
 	npf_tableset_sysinit();
 	npf_session_sysinit();
 	npf_nat_sysinit();
 	npf_alg_sysinit();
-	npflogattach(1);
+	npf_ext_sysinit();
 
 	/* Load empty configuration. */
 	dict = prop_dictionary_create();
@@ -132,7 +136,6 @@ npf_fini(void)
 #ifdef _MODULE
 	devsw_detach(NULL, &npf_cdevsw);
 #endif
-	npflogdetach();
 	npf_pfil_unregister();
 
 	/* Flush all sessions, destroy configuration (ruleset, etc). */
@@ -140,10 +143,15 @@ npf_fini(void)
 	npf_core_destroy(npf_core);
 
 	/* Finally, safe to destroy the subsystems. */
+	npf_ext_sysfini();
 	npf_alg_sysfini();
 	npf_nat_sysfini();
 	npf_session_sysfini();
 	npf_tableset_sysfini();
+
+	if (npf_sysctl) {
+		sysctl_teardown(&npf_sysctl);
+	}
 	percpu_free(npf_stats_percpu, NPF_STATS_SIZE);
 	rw_destroy(&npf_lock);
 
@@ -162,6 +170,11 @@ npf_modcmd(modcmd_t cmd, void *arg)
 		return npf_init();
 	case MODULE_CMD_FINI:
 		return npf_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		if (npf_autounload_p()) {
+			return EBUSY;
+		}
+		break;
 	default:
 		return ENOTTY;
 	}
@@ -292,7 +305,9 @@ npf_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	rw_enter(&npf_lock, RW_WRITER);
 	onc = atomic_swap_ptr(&npf_core, nc);
 	if (onc) {
-		/* Reload only necessary NAT policies. */
+		/* Reload only the static tables. */
+		npf_tableset_reload(tset, onc->n_tables);
+		/* Reload only the necessary NAT policies. */
 		npf_ruleset_natreload(nset, onc->n_nat_rules);
 	}
 	/* Unlock.  Everything goes "live" now. */
@@ -355,6 +370,12 @@ npf_default_pass(void)
 {
 	KASSERT(rw_lock_held(&npf_lock));
 	return npf_core->n_default_pass;
+}
+
+bool
+npf_autounload_p(void)
+{
+	return !npf_pfil_registered_p() && npf_default_pass();
 }
 
 /*

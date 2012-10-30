@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.35.2.2 2012/05/23 10:08:19 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.35.2.3 2012/10/30 17:23:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35.2.2 2012/05/23 10:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.35.2.3 2012/10/30 17:23:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -307,12 +307,6 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
 		return NULL;
 	}
-
-	/*
-	 * ufs_extattr_enable_with_open increases the vnode reference
-	 * count. Not sure why, but do the same here.
-	 */
-	vref(vp);
 
 	/*
 	 * Now enable attribute. 

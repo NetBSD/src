@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.54.4.1 2012/04/17 00:05:52 yamt Exp $
+#	$NetBSD: NC,v 1.54.4.2 2012/10/30 17:18:37 yamt Exp $
 #
 #	NC - with wscons
 #
@@ -154,6 +154,8 @@ vidc0		at mainbus?
 #options 	WSEMUL_NODUMB
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
+
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 #options 	FONT_BOLD8x16
 #options 	FONT_GALLANT12x22	# Very nice font

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.3.6.1 2012/04/17 00:07:49 yamt Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.3.6.2 2012/10/30 17:21:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3.6.1 2012/04/17 00:07:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.3.6.2 2012/10/30 17:21:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static int	vte_intr(void *);
 static int	vte_ifioctl(struct ifnet *, u_long, void *);
 static void	vte_mac_config(struct vte_softc *);
 static int	vte_miibus_readreg(device_t, int, int);
-static void	vte_miibus_statchg(device_t);
+static void	vte_miibus_statchg(struct ifnet *);
 static void	vte_miibus_writereg(device_t, int, int, int);
 static int	vte_mediachange(struct ifnet *);
 static int	vte_newbuf(struct vte_softc *, struct vte_rxdesc *);
@@ -290,7 +290,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_rxct",
 	    SYSCTL_DESCR("vte RX interrupt moderation packet counter"),
-	    vte_sysctl_intrxct, 0, sc,
+	    vte_sysctl_intrxct, 0, (void *)sc,
 	    0, CTL_HW, vte_root_num, vte_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->vte_dev,
@@ -300,7 +300,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_txct",
 	    SYSCTL_DESCR("vte TX interrupt moderation packet counter"),
-	    vte_sysctl_inttxct, 0, sc,
+	    vte_sysctl_inttxct, 0, (void *)sc,
 	    0, CTL_HW, vte_root_num, vte_nodenum, CTL_CREATE,
 	    CTL_EOL) != 0) {
 		aprint_normal_dev(sc->vte_dev,
@@ -376,13 +376,10 @@ vte_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 static void
-vte_miibus_statchg(device_t dev)
+vte_miibus_statchg(struct ifnet *ifp)
 {
-	struct vte_softc *sc = device_private(dev);
-	struct ifnet *ifp;
+	struct vte_softc *sc = ifp->if_softc;
 	uint16_t val;
-
-	ifp = &sc->vte_if;
 
 	DPRINTF(("vte_miibus_statchg 0x%x 0x%x\n",
 	    sc->vte_mii.mii_media_status, sc->vte_mii.mii_media_active));
@@ -1698,7 +1695,7 @@ vte_sysctl_intrxct(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	sc->vte_int_rx_mod = t;
-	vte_miibus_statchg(sc->vte_dev);
+	vte_miibus_statchg(&sc->vte_if);
 	return 0;
 }
 
@@ -1720,6 +1717,6 @@ vte_sysctl_inttxct(SYSCTLFN_ARGS)
 	if (t < VTE_IM_BUNDLE_MIN || t > VTE_IM_BUNDLE_MAX)
 		return EINVAL;
 	sc->vte_int_tx_mod = t;
-	vte_miibus_statchg(sc->vte_dev);
+	vte_miibus_statchg(&sc->vte_if);
 	return 0;
 }

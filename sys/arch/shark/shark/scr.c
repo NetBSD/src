@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.26.2.1 2012/04/17 00:06:53 yamt Exp $	*/
+/*	$NetBSD: scr.c,v 1.26.2.2 2012/10/30 17:20:20 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.26.2.1 2012/04/17 00:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.26.2.2 2012/10/30 17:20:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -746,7 +746,7 @@ scrprobe(device_t parent, cfdata_t match, void *aux)
 void
 scrattach(device_t parent, device_t self, void *aux)
 {
-    struct scr_softc       *sc = (void *)self;
+    struct scr_softc       *sc = device_private(self);
 
     printf("\n");
     if (device_is_a(parent, "ofisascr"))
@@ -4016,6 +4016,3 @@ char * getText(int x)
 }
 
 #endif /*  SCR_DEBUG */
-
-
-

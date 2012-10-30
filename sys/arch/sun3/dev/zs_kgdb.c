@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.25 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.25.34.1 2012/10/30 17:20:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.25 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.25.34.1 2012/10/30 17:20:27 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -143,7 +143,7 @@ zs_kgdb_init(void)
 	zsc_unit = (kgdb_dev & 2) ? 0 : 1;
 	channel  =  kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
-		   'a' + (kgdb_dev & 3), kgdb_rate);
+		   'a' + ((int)kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
 	memset((void *)&cs, 0, sizeof(cs));

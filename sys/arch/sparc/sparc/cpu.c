@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.234.2.1 2012/04/17 00:06:54 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.234.2.2 2012/10/30 17:20:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234.2.1 2012/04/17 00:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.234.2.2 2012/10/30 17:20:22 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -245,14 +245,14 @@ cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 		 *	 cache congruency!
 		 */
 		if (rrp[0].oa_space == 0)
-			printf("%s: mailbox in mem space\n", self->dv_xname);
+			printf("%s: mailbox in mem space\n", device_xname(self));
 
 		if (bus_space_map(ma->ma_bustag,
 				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
 				rrp[0].oa_size,
 				BUS_SPACE_MAP_LINEAR,
 				&cpi->mailbox) != 0)
-			panic("%s: can't map CPU mailbox", self->dv_xname);
+			panic("%s: can't map CPU mailbox", device_xname(self));
 		free(rrp, M_DEVBUF);
 	}
 
@@ -275,7 +275,7 @@ cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 			rrp[0].oa_size,
 			BUS_SPACE_MAP_LINEAR,
 			&cpi->ci_mbusport) != 0) {
-		panic("%s: can't map CPU regs", self->dv_xname);
+		panic("%s: can't map CPU regs", device_xname(self));
 	}
 	/* register set #1: MCXX control */
 	if (bus_space_map(ma->ma_bustag,
@@ -283,7 +283,7 @@ cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 			rrp[1].oa_size,
 			BUS_SPACE_MAP_LINEAR,
 			&cpi->ci_mxccregs) != 0) {
-		panic("%s: can't map CPU regs", self->dv_xname);
+		panic("%s: can't map CPU regs", device_xname(self));
 	}
 	/* register sets #3 and #4 are E$ cache data and tags */
 
@@ -1058,8 +1058,10 @@ int hypersparc_getmid(void);
 #define cypress_getmid	hypersparc_getmid
 int viking_getmid(void);
 
-int	(*moduleerr_handler)(void);
+#if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
+extern int (*moduleerr_handler)(void);
 int viking_module_error(void);
+#endif
 
 struct module_info module_unknown = {
 	CPUTYP_UNKNOWN,
@@ -1756,7 +1758,9 @@ static	int mxcc = -1;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		sc->zero_page = pmap_zero_page_viking_mxcc;
 		sc->copy_page = pmap_copy_page_viking_mxcc;
+#if !defined(MSIIEP)
 		moduleerr_handler = viking_module_error;
+#endif
 
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
@@ -1814,6 +1818,7 @@ viking_getmid(void)
 	return (0);
 }
 
+#if !defined(MSIIEP)
 int
 viking_module_error(void)
 {
@@ -1843,6 +1848,7 @@ viking_module_error(void)
 	}
 	return (fatal);
 }
+#endif /* MSIIEP */
 #endif /* SUN4M || SUN4D */
 
 #if defined(SUN4D)

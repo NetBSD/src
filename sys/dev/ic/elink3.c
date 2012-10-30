@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.131.8.1 2012/04/17 00:07:33 yamt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.131.8.2 2012/10/30 17:21:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.131.8.1 2012/04/17 00:07:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.131.8.2 2012/10/30 17:21:02 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -202,7 +202,7 @@ void	ep_media_status(struct ifnet *ifp, struct ifmediareq *req);
 /* MII callbacks */
 int	ep_mii_readreg(device_t, int, int);
 void	ep_mii_writereg(device_t, int, int, int);
-void	ep_statchg(device_t);
+void	ep_statchg(struct ifnet *);
 
 void	ep_tick(void *);
 
@@ -1379,7 +1379,7 @@ epintr(void *arg)
 			if ((status & INTR_LATCH) == 0) {
 #if 0
 				printf("%s: intr latch cleared\n",
-				       device_xname(&sc->sc_dev));
+				       device_xname(sc->sc_dev));
 #endif
 				break;
 			}
@@ -1399,7 +1399,7 @@ epintr(void *arg)
 #if 0
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		printf("%s: intr%s%s%s%s\n", device_xname(&sc->sc_dev),
+		printf("%s: intr%s%s%s%s\n", device_xname(sc->sc_dev),
 		       (status & RX_COMPLETE)?" RX_COMPLETE":"",
 		       (status & TX_COMPLETE)?" TX_COMPLETE":"",
 		       (status & TX_AVAIL)?" TX_AVAIL":"",
@@ -2081,9 +2081,9 @@ ep_mii_writereg(device_t self, int phy, int reg, int val)
 }
 
 void
-ep_statchg(device_t self)
+ep_statchg(struct ifnet *ifp)
 {
-	struct ep_softc *sc = device_private(self);
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;

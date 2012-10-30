@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.c,v 1.39.2.1 2012/04/17 00:07:00 yamt Exp $ */
+/* $NetBSD: thunk.c,v 1.39.2.2 2012/10/30 17:20:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,11 +28,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: thunk.c,v 1.39.2.1 2012/04/17 00:07:00 yamt Exp $");
+__RCSID("$NetBSD: thunk.c,v 1.39.2.2 2012/10/30 17:20:28 yamt Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <stdarg.h>
 #include <sys/reboot.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>

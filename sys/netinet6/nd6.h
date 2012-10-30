@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.54.4.1 2012/04/17 00:08:45 yamt Exp $	*/
+/*	$NetBSD: nd6.h,v 1.54.4.2 2012/10/30 17:22:49 yamt Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ struct	llinfo_nd6 {
 	struct callout ln_timer_ch;
 };
 
+#define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2
 /*
  * We don't need the WAITDELETE state any more, but we keep the definition
@@ -302,6 +303,8 @@ struct nd_prefix {
 	u_char	ndpr_plen;
 	int	ndpr_refcnt;	/* reference couter from addresses */
 };
+
+#define ndpr_next		ndpr_entry.le_next
 
 #define ndpr_raf		ndpr_flags
 #define ndpr_raf_onlink		ndpr_flags.onlink

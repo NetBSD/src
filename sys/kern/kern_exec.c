@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.329.2.1 2012/04/17 00:08:23 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.329.2.2 2012/10/30 17:22:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329.2.1 2012/04/17 00:08:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.329.2.2 2012/10/30 17:22:28 yamt Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1079,7 +1079,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 #endif
 	else {
 #ifdef notyet
-		printf("Cannot get path for pid %d [%s] (error %d)",
+		printf("Cannot get path for pid %d [%s] (error %d)\n",
 		    (int)p->p_pid, p->p_comm, error);
 #endif
 		data->ed_pack.ep_path = NULL;
@@ -1180,11 +1180,26 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
+#if 0
+		lwp_t *lp;
+
+		mutex_enter(proc_lock);
+		lp = p->p_vforklwp;
+		p->p_vforklwp = NULL;
+
+		l->l_lwpctl = NULL; /* was on loan from blocked parent */
+		p->p_lflag &= ~PL_PPWAIT;
+
+		lp->l_pflag &= ~LP_VFORKWAIT; /* XXX */
+		cv_broadcast(&lp->l_waitcv);
+		mutex_exit(proc_lock);
+#else
 		mutex_enter(proc_lock);
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(proc_lock);
+#endif
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.139.4.1 2012/04/17 00:08:51 yamt Exp $ */
+/* $NetBSD: device.h,v 1.139.4.2 2012/10/30 17:22:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -321,19 +321,6 @@ struct cfattach {
 };
 LIST_HEAD(cfattachlist, cfattach);
 
-#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn) \
-struct cfattach __CONCAT(name,_ca) = {					\
-	.ca_name		= ___STRING(name),			\
-	.ca_devsize		= ddsize,				\
-	.ca_flags		= 0,					\
-	.ca_match 		= matfn,				\
-	.ca_attach		= attfn,				\
-	.ca_detach		= detfn,				\
-	.ca_activate		= actfn,				\
-	.ca_rescan		= NULL,					\
-	.ca_childdetached	= NULL,					\
-}
-
 #define	CFATTACH_DECL3_NEW(name, ddsize, matfn, attfn, detfn, actfn, \
 	rescanfn, chdetfn, __flags) \
 struct cfattach __CONCAT(name,_ca) = {					\
@@ -423,14 +410,14 @@ struct pdevinit {
 extern struct cfdriverlist allcfdrivers;/* list of all cfdrivers */
 extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
-extern device_t booted_wedge;		/* the wedge on that device */
-extern int booted_partition;		/* or the partition on that device */
+extern int booted_partition;		/* the partition on that device */
+extern daddr_t booted_startblk;		/* or the start of a wedge */
+extern uint64_t booted_nblks;		/* and the size of that wedge */
 
-struct vnode *opendisk(struct device *);
-int getdisksize(struct vnode *, uint64_t *, unsigned *);
+struct vnode *opendisk(device_t);
+int getdisksize(struct vnode *, uint64_t *, unsigned int *);
 struct dkwedge_info;
 int getdiskinfo(struct vnode *, struct dkwedge_info *);
-int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
 int	config_init_component(struct cfdriver *const*,

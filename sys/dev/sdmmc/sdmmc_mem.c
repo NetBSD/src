@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.17.4.1 2012/04/17 00:08:04 yamt Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.17.4.2 2012/10/30 17:22:02 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17.4.1 2012/04/17 00:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.17.4.2 2012/10/30 17:22:02 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -429,7 +429,7 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 	printf("mmcver = %d\n", csd->mmcver);
 	printf("capacity = 0x%08x\n", csd->capacity);
 	printf("read_bl_len = %d\n", csd->read_bl_len);
-	printf("write_cl_len = %d\n", csd->write_bl_len);
+	printf("write_bl_len = %d\n", csd->write_bl_len);
 	printf("r2w_factor = %d\n", csd->r2w_factor);
 	printf("tran_speed = %d\n", csd->tran_speed);
 	printf("ccc = 0x%x\n", csd->ccc);
@@ -658,8 +658,8 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.tran_speed =
 			    switch_group0_functions[best_func].freq;
 
-			/* Wait 400KHz x 8 clock */
-			delay(1);
+			/* Wait 400KHz x 8 clock (2.5us * 8 + slop) */
+			delay(25);
 		}
 	}
 
@@ -934,8 +934,6 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	resp[1] = be32toh(sf->raw_scr[0]);		// MSW
 	resp[0] |= (resp[1] & 0xff) << 24;
 	resp[1] >>= 8;
-	resp[0] = htole32(resp[0]);
-	resp[1] = htole32(resp[1]);
 
 	ver = SCR_STRUCTURE(resp);
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);

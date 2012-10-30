@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.98 2011/06/08 16:14:57 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.98.2.1 2012/10/30 17:22:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98 2011/06/08 16:14:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98.2.1 2012/10/30 17:22:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,9 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.98 2011/06/08 16:14:57 pg
 #include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/callout.h>
-
-/* #define ENVSYS_DEBUG */
-/* #define ENVSYS_OBJECTS_DEBUG */
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -76,6 +73,8 @@ static bool sme_event_check_low_power(void);
 static bool sme_battery_check(void);
 static bool sme_battery_critical(envsys_data_t *);
 static bool sme_acadapter_check(void);
+
+static void sme_remove_event(sme_event_t *, struct sysmon_envsys *);
 
 /*
  * sme_event_register:
@@ -141,7 +140,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	LIST_FOREACH(osee, &sme->sme_events_list, see_list) {
 		if (strcmp(edata->desc, osee->see_pes.pes_sensname) != 0)
 			continue;
-		if (crittype != osee->see_type)
+		if (crittype != osee->see_type &&
+		    osee->see_type != PENVSYS_EVENT_NULL)
 			continue;
 
 		/*
@@ -182,8 +182,16 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 				props &= ~(PROP_CRITMIN | PROP_BATTCAP);
 			}
 		}
+		if (props && see->see_type == PENVSYS_EVENT_NULL)
+			see->see_type = crittype;
+
 		break;
 	}
+	if (crittype == PENVSYS_EVENT_NULL && see != NULL) {
+		mutex_exit(&sme->sme_mtx);
+		return EEXIST;
+	}
+
 	if (see == NULL) {
 		/*
 		 * New event requested - allocate a sysmon_envsys event.
@@ -204,26 +212,28 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		see->see_pes.pes_type = powertype;
 
 		switch (crittype) {
-		case PENVSYS_EVENT_LIMITS:
-			see->see_evsent = ENVSYS_SVALID;
-			break;
 		case PENVSYS_EVENT_CAPACITY:
-			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			see->see_evstate = ENVSYS_BATTERY_CAPACITY_NORMAL;
 			break;
 		case PENVSYS_EVENT_STATE_CHANGED:
 			if (edata->units == ENVSYS_BATTERY_CAPACITY)
-				see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+				see->see_evstate = 
+				    ENVSYS_BATTERY_CAPACITY_NORMAL;
 			else if (edata->units == ENVSYS_DRIVE)
-				see->see_evsent = ENVSYS_DRIVE_EMPTY;
+				see->see_evstate = ENVSYS_DRIVE_EMPTY;
+			else if (edata->units == ENVSYS_INDICATOR)
+				see->see_evstate = ENVSYS_SVALID;
 			else
 				panic("%s: bad units for "
 				      "PENVSYS_EVENT_STATE_CHANGED", __func__);
 			break;
 		case PENVSYS_EVENT_CRITICAL:
+		case PENVSYS_EVENT_LIMITS:
 		default:
-			see->see_evsent = 0;
+			see->see_evstate = ENVSYS_SVALID;
 			break;
 		}
+		see->see_evvalue = 0;
 
 		(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
 		    sizeof(see->see_pes.pes_dvname));
@@ -334,11 +344,11 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 			break;
 
 		if (strcmp(see->see_pes.pes_dvname, sme->sme_name) == 0) {
-			LIST_REMOVE(see, see_list);
 			DPRINTF(("%s: event %s %d removed (%s)\n", __func__,
 			    see->see_pes.pes_sensname, see->see_type,
 			    sme->sme_name));
-			kmem_free(see, sizeof(*see));
+			sme_remove_event(see, sme);
+
 			evcounter--;
 		}
 	}
@@ -386,6 +396,58 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 
 	DPRINTF(("%s: removed dev=%s sensor=%s type=%d\n",
 	    __func__, see->see_pes.pes_dvname, sensor, type));
+
+	sme_remove_event(see, sme);
+
+	mutex_exit(&sme->sme_mtx);
+	return 0;
+}
+
+/*
+ * sme_event_unregister_sensor:
+ *
+ *	+ Unregisters any event associated with a specific sensor
+ *	  The caller must already own the sme_mtx.
+ */
+int
+sme_event_unregister_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	sme_event_t *see;
+	bool found = false;
+
+	KASSERT(mutex_owned(&sme->sme_mtx));
+	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
+		if (see->see_edata == edata) {
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		return EINVAL;
+
+	/*
+	 * Wait for the event to finish its work, remove from the list
+	 * and release resouces.
+	 */
+	while (see->see_flags & SEE_EVENT_WORKING)
+		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
+
+	DPRINTF(("%s: removed dev=%s sensor=%s\n",
+	    __func__, see->see_pes.pes_dvname, edata->desc));
+
+	sme_remove_event(see, sme);
+
+	return 0;
+}
+
+static void
+sme_remove_event(sme_event_t *see, struct sysmon_envsys *sme)
+{
+
+	KASSERT(mutex_owned(&sme->sme_mtx));
+
+	if (see->see_edata->flags & ENVSYS_FHAS_ENTROPY)
+		rnd_detach_source(&see->see_edata->rnd_src);
 	LIST_REMOVE(see, see_list);
 	/*
 	 * So the events list is empty, we'll do the following:
@@ -395,10 +457,8 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	 */
 	if (LIST_EMPTY(&sme->sme_events_list))
 		sme_events_destroy(sme);
-	mutex_exit(&sme->sme_mtx);
 
 	kmem_free(see, sizeof(*see));
-	return 0;
 }
 
 /*
@@ -473,6 +533,10 @@ do {									\
 	SEE_REGEVENT(ENVSYS_FMONLIMITS,
 		     PENVSYS_EVENT_LIMITS,
 		     "hw-range-limits");
+
+	SEE_REGEVENT(ENVSYS_FHAS_ENTROPY,
+		     PENVSYS_EVENT_NULL,
+		     "refresh-event");
 
 	/* 
 	 * we are done, free memory now.
@@ -675,14 +739,13 @@ sme_events_worker(struct work *wk, void *arg)
 	see->see_flags |= SEE_EVENT_WORKING;
 	/* 
 	 * sme_events_check marks the sensors to make us refresh them here.
-	 * Don't refresh if the driver uses its own method for refreshing.
+	 * sme_envsys_refresh_sensor will not call the driver if the driver
+	 * does its own setting of the sensor value.
 	 */
-	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-		if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
-			/* refresh sensor in device */
-			(*sme->sme_refresh)(sme, edata);
-			edata->flags &= ~ENVSYS_FNEED_REFRESH;
-		}
+	if ((edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
+		/* refresh sensor in device */
+		sysmon_envsys_refresh_sensor(sme, edata);
+		edata->flags &= ~ENVSYS_FNEED_REFRESH;
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
@@ -782,7 +845,7 @@ sme_deliver_event(sme_event_t *see)
 		/*
 		 * Send event if state has changed
 		 */
-		if (edata->state == see->see_evsent)
+		if (edata->state == see->see_evstate)
 			break;
 
 		for (i = 0; sse[i].state != -1; i++)
@@ -798,7 +861,7 @@ sme_deliver_event(sme_event_t *see)
 		else
 			sysmon_penvsys_event(&see->see_pes, sse[i].event);
 
-		see->see_evsent = edata->state;
+		see->see_evstate = edata->state;
 		DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d send_ev=%d\n",
 		    __func__, see->see_sme->sme_name, edata->desc,
 		    edata->sensor, edata->state,
@@ -814,17 +877,24 @@ sme_deliver_event(sme_event_t *see)
 	 *	State has returned from CRITICAL to non-CRITICAL
 	 */
 	case PENVSYS_EVENT_CRITICAL:
+		DPRINTF(("%s: CRITICAL: old/new state %d/%d, old/new value "
+		    "%d/%d\n", __func__, see->see_evstate, edata->state,
+		    see->see_evvalue, edata->value_cur));
 		if (edata->state == ENVSYS_SVALID &&
-		    see->see_evsent != 0) {
+		    see->see_evstate != ENVSYS_SVALID) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_NORMAL);
-			see->see_evsent = 0;
-		} else if (edata->state == ENVSYS_SCRITICAL &&
-		    see->see_evsent != edata->value_cur) {
+			see->see_evstate = ENVSYS_SVALID;
+			break;
+		} else if (edata->state != ENVSYS_SCRITICAL)
+			break;
+		if (see->see_evstate != ENVSYS_SCRITICAL ||
+		    see->see_evvalue != edata->value_cur) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_CRITICAL);
-			see->see_evsent = edata->value_cur;
+			see->see_evstate = ENVSYS_SCRITICAL;
 		}
+		see->see_evvalue = edata->value_cur;
 		break;
 
 	/*
@@ -835,7 +905,7 @@ sme_deliver_event(sme_event_t *see)
 		/* 
 		 * the state has not been changed, just ignore the event.
 		 */
-		if (edata->value_cur == see->see_evsent)
+		if (edata->value_cur == see->see_evvalue)
 			break;
 
 		switch (edata->units) {
@@ -848,6 +918,11 @@ sme_deliver_event(sme_event_t *see)
 			sdt = sme_find_table_entry(SME_DESC_BATTERY_CAPACITY,
 			    edata->value_cur);
 			state = ENVSYS_BATTERY_CAPACITY_NORMAL;
+			break;
+		case ENVSYS_INDICATOR:
+			sdt = sme_find_table_entry(SME_DESC_INDICATOR,
+			    edata->value_cur);
+			state = see->see_evvalue;	/* force state change */
 			break;
 		default:
 			panic("%s: bad units for PENVSYS_EVENT_STATE_CHANGED",
@@ -875,7 +950,7 @@ sme_deliver_event(sme_event_t *see)
 			 */
 			sysmon_penvsys_event(&see->see_pes, see->see_type);
 
-		see->see_evsent = edata->value_cur;
+		see->see_evvalue = edata->value_cur;
 
 		/* 
 		 * There's no need to continue if it's a drive sensor.
@@ -899,6 +974,8 @@ sme_deliver_event(sme_event_t *see)
 			pes.pes_type = PENVSYS_TYPE_BATTERY;
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
 		}
+		break;
+	case PENVSYS_EVENT_NULL:
 		break;
 	default:
 		panic("%s: invalid event type %d", __func__, see->see_type);
@@ -949,8 +1026,7 @@ sme_acadapter_check(void)
 		if (edata->units == ENVSYS_INDICATOR) {
 			sensor = true;
 			/* refresh current sensor */
-			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
-				(*sme->sme_refresh)(sme, edata);
+			sysmon_envsys_refresh_sensor(sme, edata);
 			if (edata->value_cur)
 				return false;
 		}

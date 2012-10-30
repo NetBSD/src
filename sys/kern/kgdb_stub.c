@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.24 2011/04/03 22:29:28 dyoung Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.24.4.1 2012/10/30 17:22:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,8 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.24 2011/04/03 22:29:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.24.4.1 2012/10/30 17:22:32 yamt Exp $");
 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -92,7 +93,11 @@ static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
  * cases such as disabling hardware watchdogs while in kgdb.  Name
  * is shared with DDB.
  */
+#ifdef DDB
+extern void (*db_trap_callback)(int);
+#else
 void (*db_trap_callback)(int);
+#endif
 
 void kgdb_voidop(void);
 

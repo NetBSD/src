@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2011/02/20 07:58:14 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114.4.1 2012/10/30 17:19:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.4.1 2012/10/30 17:19:44 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -153,7 +153,6 @@ static int __bicons_enable;
 /* the following is used externally (sysctl_hw) */
 char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
-struct cpu_info cpu_info_store;		/* only one CPU */
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
 /* CPU core switch table */
@@ -181,7 +180,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 struct vm_map *phys_map;
 
 /* physical memory */
-int	physmem;		/* max supported memory, changes to actual */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 

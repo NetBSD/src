@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.296.2.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.296.2.2 2012/10/30 17:22:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296.2.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296.2.2 2012/10/30 17:22:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.296.2.1 2012/04/17 00:08:40 yamt Exp 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
+#include <netinet/portalgo.h>
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -1795,7 +1796,7 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisctimeout",
 		       SYSCTL_DESCR("Lifetime of a Path MTU Discovered route"),
-		       sysctl_net_inet_ip_pmtudto, 0, &ip_mtudisc_timeout, 0,
+		       sysctl_net_inet_ip_pmtudto, 0, (void *)&ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
 #ifdef GATEWAY
@@ -1886,6 +1887,27 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       sysctl_net_inet_ip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
 		       CTL_EOL);
+
+	/* anonportalgo RFC6056 subtree */
+	const struct sysctlnode *portalgo_node;
+	sysctl_createv(clog, 0, NULL, &portalgo_node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "anonportalgo",
+		       SYSCTL_DESCR("Anonymous Port Algorithm Selection (RFC 6056)"),
+	    	       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "available",
+		       SYSCTL_DESCR("available algorithms"),
+		       sysctl_portalgo_available, 0, NULL, PORTALGO_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "selected",
+		       SYSCTL_DESCR("selected algorithm"),
+		       sysctl_portalgo_selected, 0, NULL, PORTALGO_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
 }
 
 void

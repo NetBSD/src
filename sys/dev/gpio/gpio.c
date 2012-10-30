@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.46.2.1 2012/04/17 00:07:30 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.46.2.2 2012/10/30 17:20:57 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.46.2.1 2012/04/17 00:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.46.2.2 2012/10/30 17:20:57 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -198,7 +198,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pins = gba->gba_pins;
 	sc->sc_npins = gba->gba_npins;
 
-	printf(": %d pins\n", sc->sc_npins);
+	aprint_normal(": %d pins\n", sc->sc_npins);
 
 	if (!pmf_device_register(self, NULL, gpio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.4.2.1 2011/11/10 14:31:39 yamt Exp $ */
+/*	$NetBSD: efa.c,v 1.4.2.2 2012/10/30 17:18:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ efa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	if (sc->sc_32bit_io)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
@@ -206,7 +207,6 @@ efa_attach_channel(struct efa_softc *sc, int chnum)
 	sc->sc_ports[chnum].chan.ch_channel = chnum;
 	sc->sc_ports[chnum].chan.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_ports[chnum].chan.ch_queue = &sc->sc_ports[chnum].queue;
-	sc->sc_ports[chnum].chan.ch_ndrive = 2;
 
 	if (!sc->sc_32bit_io)
 		efa_select_regset(sc, chnum, 0); /* Start in PIO0. */
@@ -485,10 +485,10 @@ efa_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue; /* nothing to see here */
 
-		if (drvp->PIO_cap < mode);
+		if (drvp->PIO_cap < mode)
 			mode = drvp->PIO_cap;
 
 		/* TODO: check if sc_ports->mode_ok */

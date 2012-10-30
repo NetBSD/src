@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.8.2.2 2012/10/30 17:20:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8.2.2 2012/10/30 17:20:37 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.8.2.1 2012/04/17 00:07:12 yamt Exp
 
 u_int	tsc_get_timecount(struct timecounter *);
 
-uint64_t tsc_freq;	/* XXX */
+bool xen_suspend_allow;
+
+extern uint64_t tsc_freq;	/* XXX */
 
 static int sysctl_xen_suspend(SYSCTLFN_ARGS);
 static void xen_suspend_domain(void);
@@ -247,7 +249,7 @@ sysctl_xen_suspend_setup(void)
 	    CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(NULL, 0, &node, &node,
-	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE | CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "suspend",
 	    SYSCTL_DESCR("Suspend/save current Xen domain"),
 	    sysctl_xen_suspend, 0, NULL, 0,
@@ -257,11 +259,10 @@ sysctl_xen_suspend_setup(void)
 static int
 sysctl_xen_suspend(SYSCTLFN_ARGS)
 {
-	int error, t;
+	int error;
 	struct sysctlnode node;
 
 	node = *rnode;
-	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
 	if (error || newp == NULL)
@@ -283,6 +284,7 @@ sysctl_xen_suspend(SYSCTLFN_ARGS)
 static void
 xen_prepare_suspend(void)
 {
+
 	kpreempt_disable();
 
 	pmap_xen_suspend();
@@ -292,8 +294,10 @@ xen_prepare_suspend(void)
 	 * save/restore code does not translate these MFNs to their
 	 * associated PFNs, so we must do it
 	 */
-	xen_start_info.store_mfn = mfn_to_pfn(xen_start_info.store_mfn);
-	xen_start_info.console_mfn = mfn_to_pfn(xen_start_info.console_mfn);
+	xen_start_info.store_mfn =
+	    atop(xpmap_mtop(ptoa(xen_start_info.store_mfn)));
+	xen_start_info.console_mfn =
+	    atop(xpmap_mtop(ptoa(xen_start_info.console_mfn)));
 
 	DPRINTK(("suspending domain\n"));
 	aprint_verbose("suspending domain\n");

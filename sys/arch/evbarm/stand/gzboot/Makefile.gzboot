@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.17 2011/01/22 19:19:17 joerg Exp $
+#	$NetBSD: Makefile.gzboot,v 1.17.4.1 2012/10/30 17:19:26 yamt Exp $
 
 NOMAN=  # defined
 
@@ -49,6 +49,7 @@ CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
 
 COPTS+=	-ffreestanding
+COPTS+=	-fno-stack-protector
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
@@ -90,7 +91,7 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
-LDFLAGS= -M -T ${LDSCRIPT}
+LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
@@ -116,5 +117,6 @@ FILES=	${PROGSYM}
 .include <bsd.prog.mk>
 
 ${PROGSYM}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -o ${.TARGET} ${LDFLAGS} ${STARTFILE} \
 	    ${OBJS} ${LIBLIST} > ${BASE}.list

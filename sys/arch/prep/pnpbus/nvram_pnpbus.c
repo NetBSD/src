@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.15.2.1 2012/04/17 00:06:49 yamt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.15.2.2 2012/10/30 17:20:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.15.2.1 2012/04/17 00:06:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.15.2.2 2012/10/30 17:20:15 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ void		prep_nvram_write_val(int, uint8_t);
 uint8_t		mkclock_pnpbus_nvrd(struct mk48txx_softc *, int);
 void		mkclock_pnpbus_nvwr(struct mk48txx_softc *, int, uint8_t);
 
-CFATTACH_DECL(nvram_pnpbus, sizeof(struct nvram_pnpbus_softc),
+CFATTACH_DECL_NEW(nvram_pnpbus, sizeof(struct nvram_pnpbus_softc),
     nvram_pnpbus_probe, nvram_pnpbus_attach, NULL, NULL);
 
 dev_type_open(prep_nvramopen);

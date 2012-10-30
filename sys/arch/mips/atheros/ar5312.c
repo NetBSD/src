@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.8 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: ar5312.c,v 1.8.2.1 2012/10/30 17:19:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -174,8 +174,7 @@ ar5312_get_freqs(struct arfreqs *freqs)
 
 
 static void
-addprop_data(struct device *dev, const char *name, const uint8_t *data,
-    int len)
+addprop_data(device_t dev, const char *name, const uint8_t *data, int len)
 {
 	prop_data_t	pd;
 	pd = prop_data_create_data(data, len);
@@ -188,7 +187,7 @@ addprop_data(struct device *dev, const char *name, const uint8_t *data,
 }
 
 static void
-addprop_integer(struct device *dev, const char *name, uint32_t val)
+addprop_integer(device_t dev, const char *name, uint32_t val)
 {
 	prop_number_t	pn;
 	pn = prop_number_create_integer(val);

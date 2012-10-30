@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.2.1 2012/10/30 17:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/07/09 16:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.2.1 2012/10/30 17:18:38 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -77,7 +77,7 @@ void
 cpu_rootconf(void)
 {
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 #if defined(ALGOR_P4032)
@@ -94,9 +94,9 @@ cpu_rootconf(void)
 #endif
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *pdev;
+	device_t pdev;
 
 	/*
 	 * We don't ever know the boot device.  But that's because the
@@ -117,7 +117,7 @@ device_register(struct device *dev, void *aux)
 			if (prop_dictionary_set(device_properties(dev),
 						"mac-address", pd) == false) {
 				printf("WARNING: unable to set mac-addr "
-				    "property for %s\n", dev->dv_xname);
+				    "property for %s\n", device_xname(dev));
 			}
 			prop_object_release(pd);
 #if defined(ALGOR_P4032)

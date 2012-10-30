@@ -1,4 +1,4 @@
-/*	$NetBSD: fujbp_acpi.c,v 1.1.10.1 2012/04/17 00:07:27 yamt Exp $ */
+/*	$NetBSD: fujbp_acpi.c,v 1.1.10.2 2012/10/30 17:20:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1.10.1 2012/04/17 00:07:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujbp_acpi.c,v 1.1.10.2 2012/10/30 17:20:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -401,7 +401,7 @@ fujitsu_bp_sysctl_setup(struct fujitsu_bp_softc *sc)
 		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
 		    access, CTLTYPE_INT, "brightness",
 		    SYSCTL_DESCR("Internal DFP brightness level"),
-		    fujitsu_bp_sysctl_brightness, 0, sc, 0,
+		    fujitsu_bp_sysctl_brightness, 0, (void *)sc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -414,7 +414,7 @@ fujitsu_bp_sysctl_setup(struct fujitsu_bp_softc *sc)
 		(void)sysctl_createv(&sc->sc_log, 0, &rnode, NULL,
 		    access, CTLTYPE_BOOL, "pointer",
 		    SYSCTL_DESCR("Internal pointer switch state"),
-		    fujitsu_bp_sysctl_pointer, 0, sc, 0,
+		    fujitsu_bp_sysctl_pointer, 0, (void *)sc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 

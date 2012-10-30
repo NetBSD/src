@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.7 2011/07/01 20:52:02 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7.2.1 2012/10/30 17:20:15 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2011/07/01 20:52:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7.2.1 2012/10/30 17:20:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ consinit(void)
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}
@@ -124,7 +124,7 @@ consinit(void)
 dokbd:
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}

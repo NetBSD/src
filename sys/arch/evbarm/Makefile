@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.4.1 2012/04/17 00:06:12 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.4.2 2012/10/30 17:19:18 yamt Exp $
 
 # Makefile for evbarm tags file and boot blocks
 
@@ -33,6 +33,7 @@ SEVBARM+=	${SYSDIR}/arch/evbarm/mpcsa/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/netwalker/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/npwr_fc/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/nslu2/*.[ch]
+SEVBARM+=	${SYSDIR}/arch/evbarm/rpi/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/osk5912/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/smdk2xx0/*.[ch]
 SEVBARM+=	${SYSDIR}/arch/evbarm/tisdp24xx/*.[ch]
@@ -56,6 +57,7 @@ AEVBARM+=	${SYSDIR}/arch/evbarm/mini2440/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/mpcsa/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/netwalker/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/nslu2/*.S
+AEVBARM+=	${SYSDIR}/arch/evbarm/rpi/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/smdk2xx0/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/tisdp24xx/*.S
 AEVBARM+=	${SYSDIR}/arch/evbarm/tsarm/*.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.180 2011/06/09 19:08:33 matt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.180.2.1 2012/10/30 17:22:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180 2011/06/09 19:08:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.180.2.1 2012/10/30 17:22:10 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
+#include "opt_usb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,20 +297,33 @@ usbd_devinfo_free(char *devinfop)
 
 /* Delay for a certain number of ms */
 void
-usb_delay_ms(usbd_bus_handle bus, u_int ms)
+usb_delay_ms_locked(usbd_bus_handle bus, u_int ms, kmutex_t *lock)
 {
 	/* Wait at least two clock ticks so we know the time has passed. */
 	if (bus->use_polling || cold)
 		delay((ms+1) * 1000);
 	else
-		tsleep(&ms, PRIBIO, "usbdly", (ms*hz+999)/1000 + 1);
+		kpause("usbdly", false, (ms*hz+999)/1000 + 1, lock);
+}
+
+void
+usb_delay_ms(usbd_bus_handle bus, u_int ms)
+{
+	usb_delay_ms_locked(bus, ms, NULL);
+}
+
+/* Delay given a device handle. */
+void
+usbd_delay_ms_locked(usbd_device_handle dev, u_int ms, kmutex_t *lock)
+{
+	usb_delay_ms_locked(dev->bus, ms, lock);
 }
 
 /* Delay given a device handle. */
 void
 usbd_delay_ms(usbd_device_handle dev, u_int ms)
 {
-	usb_delay_ms(dev->bus, ms);
+	usb_delay_ms_locked(dev->bus, ms, NULL);
 }
 
 usbd_status
@@ -751,6 +765,7 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 		free(p, M_USB);
 		return (err);
 	}
+	usb_init_task(&p->async_task, usbd_clear_endpoint_stall_async_cb, p);
 	*pipe = p;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -759,8 +774,13 @@ usbd_setup_pipe(usbd_device_handle dev, usbd_interface_handle iface,
 void
 usbd_kill_pipe(usbd_pipe_handle pipe)
 {
+	int s;
+
 	usbd_abort_pipe(pipe);
+	usbd_lock_pipe(pipe);
 	pipe->methods->close(pipe);
+	usbd_unlock_pipe(pipe);
+	usb_rem_task(pipe->device, &pipe->async_task);
 	pipe->endpoint->refcnt--;
 	free(pipe, M_USB);
 }
@@ -1280,6 +1300,7 @@ usbd_reload_device_desc(usbd_device_handle dev)
 void
 usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
 {
+
 	DPRINTF(("usbd_remove_device: %p\n", dev));
 
 	if (dev->default_pipe != NULL)

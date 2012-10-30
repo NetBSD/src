@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145.2.1 2012/04/17 00:06:48 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.145.2.2 2012/10/30 17:20:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.2.1 2012/04/17 00:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.2.2 2012/10/30 17:20:14 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -245,7 +245,9 @@ trap(struct trapframe *tf)
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
-		if (cpu_printfataltraps) {
+		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGSEGV)) {
 			printf("trap: pid %d.%d (%s): user %s DSI trap @ %#lx "
 			    "by %#lx (DSISR %#x, err=%d)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
@@ -306,7 +308,9 @@ trap(struct trapframe *tf)
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
-		if (cpu_printfataltraps) {
+		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGSEGV)) {
 			printf("trap: pid %d.%d (%s): user ISI trap @ %#lx "
 			    "(SRR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
 			    tf->tf_srr0, tf->tf_srr1);
@@ -332,7 +336,9 @@ trap(struct trapframe *tf)
 		ci->ci_ev_ali.ev_count++;
 		if (fix_unaligned(l, tf) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
-			if (cpu_printfataltraps) {
+			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
+			    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGBUS)) {
 				printf("trap: pid %d.%d (%s): user ALI trap @ "
 				    "%#lx by %#lx (DSISR %#x)\n",
 				    p->p_pid, l->l_lid, p->p_comm,
@@ -356,7 +362,9 @@ trap(struct trapframe *tf)
 		vec_load();
 		break;
 #else
-		if (cpu_printfataltraps) {
+		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGILL)) {
 			printf("trap: pid %d.%d (%s): user VEC trap @ %#lx "
 			    "(SRR1=%#lx)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
@@ -372,7 +380,9 @@ trap(struct trapframe *tf)
 #endif
 	case EXC_MCHK|EXC_USER:
 		ci->ci_ev_umchk.ev_count++;
-		if (cpu_printfataltraps) {
+		if (cpu_printfataltraps
+		    && (p->p_slflag & PSL_TRACED) == 0
+		    && !sigismember(&p->p_sigctx.ps_sigcatch, SIGBUS)) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#lx "
 			    "(SRR1=%#lx)\n",
 			    p->p_pid, p->p_comm, tf->tf_srr0, tf->tf_srr1);
@@ -416,10 +426,14 @@ trap(struct trapframe *tf)
 				ksi.ksi_code = ILL_PRVOPC;
 			} else
 				ksi.ksi_code = ILL_ILLOPC;
-			if (cpu_printfataltraps)
+			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
+			    && !sigismember(&p->p_sigctx.ps_sigcatch,
+				    ksi.ksi_signo)) {
 				printf("trap: pid %d.%d (%s): user PGM trap @"
 				    " %#lx (SRR1=%#lx)\n", p->p_pid, l->l_lid,
 				    p->p_comm, tf->tf_srr0, tf->tf_srr1);
+			}
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		break;

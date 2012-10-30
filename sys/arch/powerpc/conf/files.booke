@@ -1,8 +1,8 @@
-#	$NetBSD: files.booke,v 1.6 2011/08/02 00:27:42 matt Exp $
+#	$NetBSD: files.booke,v 1.6.2.1 2012/10/30 17:20:10 yamt Exp $
 #
 # PPC BookE specific configuration info
 
-#include "arch/powerpc/fpu/files.fpu"
+include "arch/powerpc/fpu/files.fpu"
 
 # Board Properties
 file	arch/powerpc/booke/board_prop.c
@@ -12,7 +12,7 @@ attach	mainbus at root
 
 # Processor Local Bus
 #device	cpunode {[device = -1], [core = -1]}: gpiobus
-device	cpunode {[instance = -1]}: gpiobus
+device	cpunode {[instance = -1], [mdio = -1], [phy = -1]}: gpiobus
 attach	cpunode at mainbus
 file	arch/powerpc/booke/dev/cpunode.c	cpunode
 file	arch/powerpc/booke/dev/pq3gpio.c	cpunode & gpio
@@ -36,9 +36,14 @@ attach	diic at cpunode with pq3diic
 file	arch/powerpc/booke/dev/pq3diic.c	pq3diic
 
 # On-chip ethernet device(s)
-device	tsec: ether, ifnet, arp, mii
+device	tsec { }: ether, ifnet, arp
 attach	tsec at cpunode with pq3etsec
-file	arch/powerpc/booke/dev/pq3etsec.c	pq3etsec
+
+device	mdio: mii
+attach	mdio at tsec with pq3mdio_tsec
+attach	mdio at cpunode with pq3mdio_cpunode
+
+file	arch/powerpc/booke/dev/pq3etsec.c	pq3etsec | mdio
 
 # On-chip EHCI device(s)
 attach	ehci at cpunode with pq3ehci

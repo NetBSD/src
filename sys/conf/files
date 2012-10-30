@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1030.2.2 2012/05/23 10:07:54 yamt Exp $
+#	$NetBSD: files,v 1.1030.2.3 2012/10/30 17:20:48 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -119,7 +119,8 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 # compatibility options
 #
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_60: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_60, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30, COMPAT_NETBSD
@@ -184,6 +185,10 @@ include "dev/sysmon/files.sysmon"
 #
 define	bpf_filter
 defparam opt_bpf.h	BPF_BUFSIZE
+
+defflag	opt_bpfjit.h	BPFJIT
+
+file	net/bpfjit.c	sljit & bpfjit
 
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
@@ -290,6 +295,7 @@ define	videobus	{ }
 define	ata	        {[channel = -1]}
 define	sata
 define	sata_fis
+define	sata_pmp
 define	scsi_core
 define	scsi		{[channel = -1]}: scsi_core
 define	ata_hl		{[drive = -1]}
@@ -649,6 +655,10 @@ device	ral: arp, ether, ifnet, wlan, firmload
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
 
+# Marvell Libertas Open
+device  malo: arp, ether, ifnet, wlan, firmload
+file    dev/ic/malo.c           malo
+
 # 3Com Etherlink-III Ethernet controller
 #
 device	ep: arp, ether, ifnet, mii, mii_bitbang
@@ -974,12 +984,12 @@ file	dev/ic/lpt_upc.c		lpt_upc
 # AHCI-compatible SATA controllers
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
-device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, ahcisata_core
+device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, ahcisata_core
 
 # Silicon Image SteelVine SATA-II controllers
 define	siisata
 file	dev/ic/siisata.c		siisata
-device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
+device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, siisata
 
 # Marvell Serial-ATA Host Controller
 define mvsata
@@ -1178,10 +1188,15 @@ file	dev/usb/uhci.c			uhci			needs-flag
 device	ohci: usbus, usbroothub, usb_dma
 file	dev/usb/ohci.c			ohci			needs-flag
 
-# EHCI USB controller
+# EHCI USB2 controller
 #
 device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
+
+# XHCI USB3 controller
+#
+device	xhci: usbus, usbroothub, usb_dma
+file	dev/usb/xhci.c			xhci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
@@ -1412,7 +1427,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
-file	compat/common/compat_mod.c	compat_netbsd
+file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.35.12.1 2012/04/17 00:07:42 yamt Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.35.12.2 2012/10/30 17:21:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.35.12.1 2012/04/17 00:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.35.12.2 2012/10/30 17:21:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ nsphyter_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {

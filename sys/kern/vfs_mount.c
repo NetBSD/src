@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.11.2.2 2012/05/23 10:08:12 yamt Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.11.2.3 2012/10/30 17:22:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11.2.2 2012/05/23 10:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11.2.3 2012/10/30 17:22:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.11.2.2 2012/05/23 10:08:12 yamt Exp 
 
 /* Root filesystem and device. */
 vnode_t *			rootvnode;
-struct device *			root_device;
+device_t			root_device;
 
 /* Mounted filesystem list. */
 struct mntlist			mountlist;

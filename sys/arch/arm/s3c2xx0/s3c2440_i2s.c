@@ -65,25 +65,24 @@ struct s3c2440_i2s_softc {
 
 static void	s3c2440_i2s_xfer_complete(dmac_xfer_t, void *);
 
-static int	s3c2440_i2s_match(struct device *, struct cfdata *, void*);
-static void	s3c2440_i2s_attach(struct device *, struct device *, void*);
-static int	s3c2440_i2s_search(struct device *, struct cfdata *, const int *, void *);
-static int	s3c2440_i2s_print(void *aux, const char *name);
+static int	s3c2440_i2s_match(device_t, cfdata_t, void *);
+static void	s3c2440_i2s_attach(device_t, device_t , void *);
+static int	s3c2440_i2s_search(device_t, cfdata_t, const int *, void *);
+static int	s3c2440_i2s_print(void *, const char *);
 static int	s3c2440_i2s_init(struct s3c2440_i2s_softc*);
 
 CFATTACH_DECL_NEW(ssiis, sizeof(struct s3c2440_i2s_softc), s3c2440_i2s_match,
 	      s3c2440_i2s_attach, NULL, NULL);
 
 int
-s3c2440_i2s_match(struct device *parent, struct cfdata *match, void*aux)
+s3c2440_i2s_match(device_t parent, cfdata_t match, void *aux)
 {
-	/*struct s3c2xx0_attach_args *sa = aux;*/
 
 	return 1;
 }
 
 void
-s3c2440_i2s_attach(struct device *parent, struct device *self, void *aux)
+s3c2440_i2s_attach(device_t parent, device_t self, void *aux)
 {
 	struct s3c2440_i2s_softc *sc = device_private(self);
 	DPRINTF(("%s\n", __func__));
@@ -104,8 +103,7 @@ s3c2440_i2s_print(void *aux, const char *name)
 }
 
 static int
-s3c2440_i2s_search(struct device *parent, struct cfdata *cf, const int *ldesc,
-		   void *aux)
+s3c2440_i2s_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct s3c2440_i2s_attach_args ia;
 	DPRINTF(("%s\n", __func__));

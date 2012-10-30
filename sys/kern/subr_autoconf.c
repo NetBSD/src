@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.220.2.1 2012/04/17 00:08:27 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.220.2.2 2012/10/30 17:22:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.220.2.1 2012/04/17 00:08:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.220.2.2 2012/10/30 17:22:33 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -146,7 +146,7 @@ static struct cftable initcftable;
 
 struct matchinfo {
 	cfsubmatch_t fn;
-	struct	device *parent;
+	device_t parent;
 	const int *locs;
 	void	*aux;
 	struct	cfdata *match;
@@ -447,7 +447,7 @@ config_create_interruptthreads(void)
 
 	for (i = 0; i < interrupt_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
-		    config_interrupts_thread, NULL, NULL, "config");
+		    config_interrupts_thread, NULL, NULL, "configintr");
 	}
 }
 
@@ -474,7 +474,7 @@ config_create_mountrootthreads(void)
 
 	for (i = 0; i < mountroot_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
-		    config_mountroot_thread, NULL, NULL, "config");
+		    config_mountroot_thread, NULL, NULL, "configroot");
 	}
 }
 
@@ -856,7 +856,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
  * found through any attachment in the config data table.
  */
 static int
-dev_in_cfdata(const struct device *d, const struct cfdata *cf)
+dev_in_cfdata(device_t d, cfdata_t cf)
 {
 	const struct cfdata *cf1;
 

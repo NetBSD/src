@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2011/07/01 18:51:51 dyoung Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.16.2.1 2012/10/30 17:20:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2011/07/01 18:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.2.1 2012/10/30 17:20:22 yamt Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -146,7 +146,7 @@ static int wiring_map_size;
 
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
+pci_attach_hook(device_t parent, device_t self,
 		struct pcibus_attach_args *pba)
 {
 	struct mspcic_known_model *p;

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.34.10.1 2012/04/17 00:07:43 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.34.10.2 2012/10/30 17:21:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.34.10.1 2012/04/17 00:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.34.10.2 2012/10/30 17:21:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -238,7 +238,7 @@ static const struct audio_hw_if auixp_hw_if = {
 };
 
 
-CFATTACH_DECL(auixp, sizeof(struct auixp_softc), auixp_match, auixp_attach,
+CFATTACH_DECL_NEW(auixp, sizeof(struct auixp_softc), auixp_match, auixp_attach,
     auixp_detach, NULL);
 
 
@@ -477,7 +477,7 @@ auixp_malloc(void *hdl, int direction, size_t size)
 	error = auixp_allocmem(sc, size, 16, dma);
 	if (error) {
 		kmem_free(dma, sizeof(*dma));
-		aprint_error_dev(&sc->sc_dev, "auixp_malloc: not enough memory\n");
+		aprint_error_dev(sc->sc_dev, "auixp_malloc: not enough memory\n");
 
 		return NULL;
 	}
@@ -651,7 +651,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	error = auixp_allocmem(sc, DMA_DESC_CHAIN * sizeof(atiixp_dma_desc_t),
 	    16, dma);
 	if (error) {
-		aprint_error_dev(&sc->sc_dev, "can't malloc dma descriptor chain\n");
+		aprint_error_dev(sc->sc_dev, "can't malloc dma descriptor chain\n");
 		kmem_free(dma, sizeof(*dma));
 		return ENOMEM;
 	}
@@ -699,9 +699,9 @@ auixp_dma_update(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	/* be very paranoid */
 	if (!dma)
-		panic("%s: update: dma = NULL", device_xname(&sc->sc_dev));
+		panic("%s: update: dma = NULL", device_xname(sc->sc_dev));
 	if (!dma->intr)
-		panic("%s: update: dma->intr = NULL", device_xname(&sc->sc_dev));
+		panic("%s: update: dma->intr = NULL", device_xname(sc->sc_dev));
 
 	/* request more input from upper layer */
 	(*dma->intr)(dma->intrarg);
@@ -776,7 +776,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 	/* not ours ? then bail out */
 	if (!sound_dma) {
 		printf("%s: auixp_trigger_output: bad sound addr %p\n",
-		    device_xname(&sc->sc_dev), start);
+		    device_xname(sc->sc_dev), start);
 		return EINVAL;
 	}
 
@@ -851,7 +851,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 	/* not ours ? then bail out */
 	if (!sound_dma) {
 		printf("%s: auixp_trigger_input: bad sound addr %p\n",
-		    device_xname(&sc->sc_dev), start);
+		    device_xname(sc->sc_dev), start);
 		return EINVAL;
 	}
 
@@ -921,7 +921,7 @@ auixp_intr(void *softc)
 		return 0;
 	}
 
-	DPRINTF(("%s: (status = %x)\n", device_xname(&sc->sc_dev), status));
+	DPRINTF(("%s: (status = %x)\n", device_xname(sc->sc_dev), status));
 
 	/* check DMA UPDATE flags for input & output */
 	if (status & ATI_REG_ISR_IN_STATUS) {
@@ -1103,6 +1103,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
@@ -1130,7 +1131,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	/* map memory; its not sized -> what is the size? max PCI slot size? */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios)) {
-		aprint_error_dev(&sc->sc_dev, "can't map memory space\n");
+		aprint_error_dev(sc->sc_dev, "can't map memory space\n");
 		return;
 	}
 
@@ -1156,7 +1157,7 @@ auixp_attach(device_t parent, device_t self, void *aux)
 
 	/* map interrupt on the pci bus */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "can't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "can't map interrupt\n");
 		return;
 	}
 
@@ -1169,25 +1170,25 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	/* establish interrupt routine hookup at IPL_AUDIO level */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auixp_intr, self);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
+		aprint_error_dev(sc->sc_dev, "cannot activate %d\n",
 		    error);
 		return;
 	}
 
 	/* init chip */
 	if (auixp_init(sc) == -1) {
-		aprint_error_dev(&sc->sc_dev, "auixp_attach: unable to initialize the card\n");
+		aprint_error_dev(sc->sc_dev, "auixp_attach: unable to initialize the card\n");
 		return;
 	}
 
@@ -1262,12 +1263,12 @@ auixp_post_config(device_t self)
 	    &sc->sc_encodings);
 	if (res) {
 		printf("%s: auconv_create_encodings failed; "
-		    "no attachments\n", device_xname(&sc->sc_dev));
+		    "no attachments\n", device_xname(sc->sc_dev));
 		return;
 	}
 
 	if (sc->has_spdif) {
-		aprint_normal_dev(&sc->sc_dev, "codec spdif support detected but disabled "
+		aprint_normal_dev(sc->sc_dev, "codec spdif support detected but disabled "
 		    "for now\n");
 		sc->has_spdif = 0;
 	}
@@ -1291,7 +1292,7 @@ auixp_post_config(device_t self)
 	for (codec_nr = 0; codec_nr < ATI_IXP_CODECS; codec_nr++) {
 		codec = &sc->sc_codec[codec_nr];
 		if (codec->present)
-			audio_attach_mi(&auixp_hw_if, codec, &sc->sc_dev);
+			audio_attach_mi(&auixp_hw_if, codec, sc->sc_dev);
 	}
 
 	/* done! now enable all interrupts we can service */
@@ -1367,7 +1368,7 @@ auixp_detach(device_t self, int flags)
 	auixp_disable_interrupts(sc);
 
 	/* tear down .... */
-	config_detach(&sc->sc_dev, flags);	/* XXX OK? XXX */
+	config_detach(sc->sc_dev, flags);	/* XXX OK? XXX */
 	pmf_device_deregister(self);
 
 	if (sc->sc_ih != NULL)
@@ -1449,7 +1450,7 @@ auixp_read_codec(void *aux, uint8_t reg, uint16_t *result)
 
 	if (reg < 0x7c)
 		printf("%s: codec read timeout! (reg %x)\n",
-		    device_xname(&sc->sc_dev), reg);
+		    device_xname(sc->sc_dev), reg);
 
 	return 0xffff;
 }
@@ -1524,7 +1525,7 @@ auixp_wait_for_codecs(struct auixp_softc *sc, const char *func)
 		timeout--;
 	} while (timeout > 0);
 
-	printf("%s: %s: timed out\n", func, device_xname(&sc->sc_dev));
+	printf("%s: %s: timed out\n", func, device_xname(sc->sc_dev));
 	return -1;
 }
 
@@ -1560,7 +1561,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (timeout == 0)
 		printf("%s: WARNING: timeout during codec detection; "
 			"codecs might be present but haven't interrupted\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 
 	/* disable all interrupts for now */
 	auixp_disable_interrupts(sc);
@@ -1585,7 +1586,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC0_NOT_READY)) {
 		/* codec 0 present */
 		DPRINTF(("auixp : YAY! codec 0 present!\n"));
-		if (ac97_attach(&sc->sc_codec[0].host_if, &sc->sc_dev,
+		if (ac97_attach(&sc->sc_codec[0].host_if, sc->sc_dev,
 		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
@@ -1593,7 +1594,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC1_NOT_READY)) {
 		/* codec 1 present */
 		DPRINTF(("auixp : YAY! codec 1 present!\n"));
-		if (ac97_attach(&sc->sc_codec[1].host_if, &sc->sc_dev,
+		if (ac97_attach(&sc->sc_codec[1].host_if, sc->sc_dev,
 		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
@@ -1601,7 +1602,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC2_NOT_READY)) {
 		/* codec 2 present */
 		DPRINTF(("auixp : YAY! codec 2 present!\n"));
-		if (ac97_attach(&sc->sc_codec[2].host_if, &sc->sc_dev,
+		if (ac97_attach(&sc->sc_codec[2].host_if, sc->sc_dev,
 		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
@@ -1609,7 +1610,7 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (sc->sc_num_codecs == 0) {
 		printf("%s: no codecs detected or "
 				"no codecs managed to initialise\n",
-				device_xname(&sc->sc_dev));
+				device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -1668,7 +1669,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 	/* if power is down, power it up */
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	if (value & ATI_REG_CMD_POWERDOWN) {
-		printf("%s: powering up\n", device_xname(&sc->sc_dev));
+		printf("%s: powering up\n", device_xname(sc->sc_dev));
 
 		/* explicitly enable power */
 		value &= ~ATI_REG_CMD_POWERDOWN;
@@ -1678,7 +1679,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 		DELAY(20);
 	};
 
-	printf("%s: soft resetting aclink\n", device_xname(&sc->sc_dev));
+	printf("%s: soft resetting aclink\n", device_xname(sc->sc_dev));
 
 	/* perform a soft reset */
 	value  = bus_space_read_4(iot, ioh, ATI_REG_CMD);
@@ -1699,7 +1700,7 @@ auixp_reset_aclink(struct auixp_softc *sc)
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	while (!(value & ATI_REG_CMD_ACLINK_ACTIVE)) {
 		printf("%s: not up; resetting aclink hardware\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 
 		/* dip aclink reset but keep the acsync */
 		value &= ~ATI_REG_CMD_AC_RESET;
@@ -1723,11 +1724,11 @@ auixp_reset_aclink(struct auixp_softc *sc)
 	};
 
 	if (timeout == 0) {
-		printf("%s: giving up aclink reset\n", device_xname(&sc->sc_dev));
+		printf("%s: giving up aclink reset\n", device_xname(sc->sc_dev));
 	};
 	if (timeout != 10) {
 		printf("%s: aclink hardware reset successful\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 	};
 
 	/* assert reset and sync for safety */
@@ -1797,7 +1798,7 @@ auixp_dumpreg(void)
 	sc  = static_sc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	printf("%s register dump:\n", device_xname(&sc->sc_dev));
+	printf("%s register dump:\n", device_xname(sc->sc_dev));
 	for (i = 0; i < 256; i+=4) {
 		printf("\t0x%02x: 0x%08x\n", i, bus_space_read_4(iot, ioh, i));
 	}

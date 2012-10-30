@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.5.2.2 2012/04/17 00:06:17 yamt Exp $
+# $NetBSD: LOONGSON,v 1.5.2.3 2012/10/30 17:19:29 yamt Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.5.2.2 $"
+#ident 		"LOONGSON-$Revision: 1.5.2.3 $"
 
 maxusers	16
 
@@ -57,6 +57,11 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 options 	NTP			# network time protocol
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
@@ -129,6 +134,7 @@ options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 
@@ -143,6 +149,7 @@ config		netbsd		root on ? type ?
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options		WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	FONT_GALLANT12x22
@@ -284,6 +291,9 @@ ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
+
+# Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
+urtw*	at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

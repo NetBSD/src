@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbdvar.h,v 1.4 2005/12/11 12:18:25 christos Exp $ */
+/* $NetBSD: nextkbdvar.h,v 1.4.112.1 2012/10/30 17:20:07 yamt Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -32,10 +32,9 @@
 int nextkbd_cnattach(bus_space_tag_t);
 
 struct nextkbd_softc {
-	struct device sc_dev;
 	struct nextkbd_internal *id;
 
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 
 	int enabled; /* XXX ? */
 	int sc_leds;

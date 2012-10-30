@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.13 2008/04/08 20:09:27 cegger Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.13.38.1 2012/10/30 17:21:17 yamt Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.13 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.13.38.1 2012/10/30 17:21:17 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_SEDLBAUER
@@ -366,11 +366,11 @@ isic_attach_sws(struct isic_softc *sc)
             ((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) )
 	{
 		printf("%s: HSCX VSTR test failed for SWS PnP\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 		printf("%s: HSC0: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(0, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(0, H_VSTR));
 		printf("%s: HSC1: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(1, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(1, H_VSTR));
 		return;
 	}
 

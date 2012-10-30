@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.87.4.1 2012/04/17 00:08:07 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.87.4.2 2012/10/30 17:22:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.87.4.1 2012/04/17 00:08:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.87.4.2 2012/10/30 17:22:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1002,7 +1002,10 @@ ucomstart(struct tty *tp)
 		goto out;
 
 	ub = SIMPLEQ_FIRST(&sc->sc_obuff_free);
-	KASSERT(ub != NULL);
+	if (ub == NULL) {
+		SET(tp->t_state, TS_BUSY);
+		goto out;
+	}
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_obuff_free, ub_link);
 
 	if (SIMPLEQ_FIRST(&sc->sc_obuff_free) == NULL)
@@ -1070,11 +1073,13 @@ ucom_write_status(struct ucom_softc *sc, struct ucom_buffer *ub,
 		SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
 		cc -= sc->sc_opkthdrlen;
 
+		mutex_spin_enter(&tty_lock);
 		CLR(tp->t_state, TS_BUSY);
 		if (ISSET(tp->t_state, TS_FLUSH))
 			CLR(tp->t_state, TS_FLUSH);
 		else
 			ndflush(&tp->t_outq, cc);
+		mutex_spin_exit(&tty_lock);
 
 		if (err != USBD_CANCELLED && err != USBD_IOERROR &&
 		    !sc->sc_dying) {

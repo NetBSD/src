@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.10.2.1 2012/10/30 17:19:22 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.10 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.10.2.1 2012/10/30 17:19:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ struct sm_gxio_softc {
 	void	*sc_ih;
 };
 
-CFATTACH_DECL(sm_gxio, sizeof(struct sm_gxio_softc),
+CFATTACH_DECL_NEW(sm_gxio, sizeof(struct sm_gxio_softc),
     sm_gxio_match, sm_gxio_attach, NULL, NULL);
 
 
@@ -182,6 +182,7 @@ sm_gxio_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(gxa->gxa_iot, gxa->gxa_addr, SMC_IOSIZE, 0, &ioh))
 		panic("sm_gxio_attach: can't map i/o space");
 
+	sc->sc_dev = self;
 	sc->sc_bst = gxa->gxa_iot;
 	sc->sc_bsh = ioh;
 

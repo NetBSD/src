@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181var.h,v 1.6 2001/09/16 05:32:18 uch Exp $	*/
+/*	$NetBSD: ite8181var.h,v 1.6.160.1 2012/10/30 17:19:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -37,7 +37,7 @@
 #include <dev/hpc/hpcfbio.h>
 
 struct ite8181_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

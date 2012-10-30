@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.4.1 2012/04/17 00:06:34 yamt Exp $
+# $NetBSD: GENERIC,v 1.28.4.2 2012/10/30 17:19:53 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.28.4.1 $"
+#ident          "GENERIC-$Revision: 1.28.4.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -84,6 +84,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -338,7 +339,7 @@ cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
-ral*	at uhub? port ?		#
+ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11b adapters

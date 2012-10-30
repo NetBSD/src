@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.20.2.2 2012/04/17 00:08:07 yamt Exp $	*/
+/*	$NetBSD: u3g.c,v 1.20.2.3 2012/10/30 17:22:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.20.2.2 2012/04/17 00:08:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.20.2.3 2012/10/30 17:22:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1750 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1820 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_EM770W },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	/* OEM: Merlin */
@@ -216,6 +217,7 @@ static const struct usb_devno u3g_devs[] = {
 	/* OEM: Qualcomm, Inc. */
 	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_CDMA_MSM },
 	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_ZTE_MF626 },
+	{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM },
 
 	/* OEM: Sierra Wireless: */
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AC595U },
@@ -503,6 +505,11 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 
 	case USB_VENDOR_QUALCOMMINC:
 		if (uaa->product == USB_PRODUCT_QUALCOMMINC_ZTE_STOR)
+			return u3g_novatel_reinit(uaa->device);
+		break;
+
+	case USB_VENDOR_QUALCOMM:
+		if (uaa->product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
 			return u3g_novatel_reinit(uaa->device);
 		break;
 

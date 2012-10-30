@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.15.2.1 2012/04/17 00:07:13 yamt Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.15.2.2 2012/10/30 17:20:38 yamt Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include "opt_zaudio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.2.1 2012/04/17 00:07:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.15.2.2 2012/10/30 17:20:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ struct zaudio_volume {
 };
 
 struct zaudio_softc {
-	device_t		sc_dev;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
 
@@ -342,7 +341,6 @@ zaudio_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int error;
 
-	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);

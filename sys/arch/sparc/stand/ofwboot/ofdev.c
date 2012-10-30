@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.32 2011/06/01 11:42:18 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.32.4.1 2012/10/30 17:20:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -536,7 +536,7 @@ open_again:
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;
 			memcpy(&file_system[0], &file_system_tftp, sizeof file_system[0]);
-			if (net_tftp_bootp(of->f_devdata)) {
+			if (net_tftp_bootp((int **)&of->f_devdata)) {
 				net_close(&ofdev);
 				goto bad;
 			}

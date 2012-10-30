@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2011/04/06 01:32:06 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.4.1 2012/10/30 17:19:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@ struct pci_attach_args;
 /*
  * Functions provided to machine-independent PCI code.
  */
-void landisk_pci_attach_hook(struct device *, struct device *,
+void landisk_pci_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 int landisk_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 const char *landisk_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);

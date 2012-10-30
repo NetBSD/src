@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.45.2.1 2012/04/17 00:05:53 yamt Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.45.2.2 2012/10/30 17:18:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.45.2.1 2012/04/17 00:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.45.2.2 2012/10/30 17:18:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ dec_3000_500_device_register(device_t dev, void *aux)
 	    device_is_a(dev, "asc")) {
 		struct tcdsdev_attach_args *ta = aux;
 
-		if (parent != (device_t)tcdsdev)
+		if (parent != tcdsdev)
 			return;
 
 		if (ta->tcdsda_chip != b->channel)

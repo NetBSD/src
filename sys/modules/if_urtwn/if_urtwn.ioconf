@@ -1,10 +1,10 @@
-# $NetBSD: if_urtwn.ioconf,v 1.1.2.2 2012/04/17 00:08:36 yamt Exp $
+# $NetBSD: if_urtwn.ioconf,v 1.1.2.3 2012/10/30 17:22:41 yamt Exp $
 
 ioconf urtwn
 
 include "conf/files"
 include "dev/usb/files.usb"
 
-pseudo-root uhub*
+pseudo-root usbdevif*
 
-urtwn* at uhub?
+urtwn* at usbdevif?

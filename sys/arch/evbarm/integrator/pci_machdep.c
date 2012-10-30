@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2008/04/27 18:58:46 matt Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.4.34.1 2012/10/30 17:19:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.34.1 2012/10/30 17:19:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,13 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2008/04/27 18:58:46 matt Exp $")
 #include <dev/pci/pciconf.h>
 
 #include <evbarm/ifpga/ifpgareg.h>
+#include <evbarm/ifpga/ifpga_pcivar.h>
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
-		   int swiz, int *iline)
+ifpga_pci_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 {
-	printf("pci_conf_interrupt(pc(%lx), bus(%d), dev(%d), func(%d), swiz(%d), *iline(%p)\n", (unsigned long)pc, bus, dev, func, swiz, iline);
+	printf("pci_conf_interrupt(v(%p), bus(%d), dev(%d), ipin(%d), swiz(%d), *iline(%p)\n", v, bus, dev, ipin, swiz, iline);
         if (dev >= 9)
 		*iline = IFPGA_INTRNUM_PCIINT0
-		    + (((dev - 9) + (func - 1)) & 3);
+		    + (((dev - 9) + (ipin - 1)) & 3);
 }

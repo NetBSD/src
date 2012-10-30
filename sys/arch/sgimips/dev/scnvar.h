@@ -1,4 +1,4 @@
-/*	$NetBSD: scnvar.h,v 1.1 2009/02/10 06:04:56 rumble Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.1.18.1 2012/10/30 17:20:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -113,7 +113,6 @@ struct duart {
 
 /* scn channel state */
 struct scn_softc {
-	struct device sc_dev;
 	struct tty *sc_tty;
 	int     sc_unit;		/* unit number of this line (base 0) */
 	int	sc_channel;

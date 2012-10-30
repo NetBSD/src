@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2011/04/04 20:37:45 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.4.1 2012/10/30 17:19:04 yamt Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -55,8 +55,8 @@ struct pci_attach_args;
  */
 struct arm32_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
@@ -74,9 +74,9 @@ struct arm32_pci_chipset {
 	void		(*pc_intr_disestablish)(void *, void *);
 
 #ifdef __HAVE_PCI_CONF_HOOK
-	int		(*pc_conf_hook)(pci_chipset_tag_t, int, int, int,
-			    pcireg_t);
+	int		(*pc_conf_hook)(void *, int, int, int, pcireg_t);
 #endif
+	void		(*pc_conf_interrupt)(void *, int, int, int, int, int *);
 
 	uint32_t	pc_cfg_cmd;
 };
@@ -108,7 +108,9 @@ struct arm32_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #ifdef __HAVE_PCI_CONF_HOOK
 #define	pci_conf_hook(c, b, d, f, id)					\
-    (*(c)->pc_conf_hook)((c), (b), (d), (f), (id))
+    (*(c)->pc_conf_hook)((c)->pc_conf_v, (b), (d), (f), (id))
 #endif
+#define	pci_conf_interrupt(c, b, d, i, s, p)				\
+    (*(c)->pc_conf_interrupt)((c)->pc_conf_v, (b), (d), (i), (s), (p))
 
 #endif	/* _ARM_PCI_MACHDEP_H_ */

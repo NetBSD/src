@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.77.8.1 2012/04/17 00:08:20 yamt Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.77.8.2 2012/10/30 17:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77.8.1 2012/04/17 00:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77.8.2 2012/10/30 17:22:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,16 +596,12 @@ smbfs_create(void *v)
 	if (error)
 		goto out;
 
-	/* No error */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(dvp, *ap->a_vpp, cnp);
+	cache_enter(dvp, *ap->a_vpp, cnp);
 
   out:
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
-
-
 }
 
 int
@@ -1300,7 +1296,7 @@ smbfs_lookup(void *v)
 		/*
 		 * Insert name into cache (as non-existent) if appropriate.
 		 */
-		if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+		if (nameiop != CREATE)
 			cache_enter(dvp, *vpp, cnp);
 
 		return (ENOENT);
@@ -1353,17 +1349,15 @@ smbfs_lookup(void *v)
 			return error;
 	}
 
-	if ((cnp->cn_flags & MAKEENTRY)) {
-		KASSERT(error == 0);
-		if (cnp->cn_nameiop != DELETE || !islastcn) {
-			VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
-			cache_enter(dvp, *vpp, cnp);
+	KASSERT(error == 0);
+	if (cnp->cn_nameiop != DELETE || !islastcn) {
+		VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
+		cache_enter(dvp, *vpp, cnp);
 #ifdef notdef
-		} else if (error == ENOENT && cnp->cn_nameiop != CREATE) {
-			VTOSMB(*vpp)->n_nctime = VTOSMB(*vpp)->n_mtime.tv_sec;
-			cache_enter(dvp, *vpp, cnp);
+	} else if (error == ENOENT && cnp->cn_nameiop != CREATE) {
+		VTOSMB(*vpp)->n_nctime = VTOSMB(*vpp)->n_mtime.tv_sec;
+		cache_enter(dvp, *vpp, cnp);
 #endif
-		}
 	}
 
 	return (0);

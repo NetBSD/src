@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.13.2.1 2012/04/17 00:06:52 yamt Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.13.2.2 2012/10/30 17:20:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13.2.1 2012/04/17 00:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13.2.2 2012/10/30 17:20:18 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -66,13 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.13.2.1 2012/04/17 00:06:52 yamt Exp $
 #include <sgimips/mace/pcireg_mace.h>
 
 struct macepci_softc {
-	struct device sc_dev;
-
 	struct sgimips_pci_chipset sc_pc;
 };
 
-static int	macepci_match(struct device *, struct cfdata *, void *);
-static void	macepci_attach(struct device *, struct device *, void *);
+static int	macepci_match(device_t, cfdata_t, void *);
+static void	macepci_attach(device_t, device_t, void *);
 static int	macepci_bus_maxdevs(pci_chipset_tag_t, int);
 static pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
@@ -82,20 +80,20 @@ static const char *
 		macepci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static int	macepci_intr(void *);
 
-CFATTACH_DECL(macepci, sizeof(struct macepci_softc),
+CFATTACH_DECL_NEW(macepci, sizeof(struct macepci_softc),
     macepci_match, macepci_attach, NULL, NULL);
 
 static int
-macepci_match(struct device *parent, struct cfdata *match, void *aux)
+macepci_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-macepci_attach(struct device *parent, struct device *self, void *aux)
+macepci_attach(device_t parent, device_t self, void *aux)
 {
-	struct macepci_softc *sc = (struct macepci_softc *)self;
+	struct macepci_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct mace_attach_args *maa = aux;
 	struct pcibus_attach_args pba;

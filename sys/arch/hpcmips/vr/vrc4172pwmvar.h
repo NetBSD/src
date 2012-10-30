@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwmvar.h,v 1.8 2001/04/13 08:09:08 itojun Exp $	*/
+/*	$NetBSD: vrc4172pwmvar.h,v 1.8.164.1 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 SATO Kazumi.  All rights reserved.
@@ -40,7 +40,6 @@ struct vrc4172pwm_param {
 };
 
 struct vrc4172pwm_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	config_hook_tag sc_lcdhook;

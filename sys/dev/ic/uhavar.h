@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.15 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.15.34.1 2012/10/30 17:21:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define MSCP_HASH(x)	((((long)(x))>>MSCP_HASH_SHIFT) & (MSCP_HASH_SIZE - 1))
 
 struct uha_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

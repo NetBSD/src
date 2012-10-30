@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.13.8.2 2012/05/23 10:08:09 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.13.8.3 2012/10/30 17:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.13.8.2 2012/05/23 10:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.13.8.3 2012/10/30 17:22:25 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -629,7 +629,7 @@ bfs_inode_set_attr(const struct bfs *bfs, struct bfs_inode *inode,
 	if (from != NULL) {
 		if (from->uid != (uid_t)-1)
 			to->uid = from->uid;
-		if (from->gid != (uid_t)-1)
+		if (from->gid != (gid_t)-1)
 			to->gid = from->gid;
 		if (from->mode != (mode_t)-1)
 			to->mode = from->mode;

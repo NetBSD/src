@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.15 2011/08/07 13:39:24 rmind Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.15.2.1 2012/10/30 17:21:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -64,7 +64,7 @@ struct dpt_ccb {
 };
 
 struct dpt_softc {
-	struct device	sc_dv;		/* generic device data */
+	device_t	sc_dev;		/* generic device data */
 	kmutex_t	sc_lock;
 	struct scsipi_adapter sc_adapt;	/* scsipi adapter */
 	struct scsipi_channel sc_chans[3]; /* each channel */

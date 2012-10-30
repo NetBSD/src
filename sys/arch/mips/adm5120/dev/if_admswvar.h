@@ -1,4 +1,4 @@
-/* $NetBSD: if_admswvar.h,v 1.4 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: if_admswvar.h,v 1.4.2.1 2012/10/30 17:19:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -34,7 +34,7 @@
 #define	_IF_ADMSWVAR_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.4 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.4.2.1 2012/10/30 17:19:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,7 +117,7 @@ struct admsw_descsoft {
  * Software state per device.
  */
 struct admsw_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	bus_space_tag_t sc_st;		/* bus space tag */

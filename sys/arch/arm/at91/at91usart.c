@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.5.2.1 2012/04/17 00:06:04 yamt Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.5.2.1 2012/04/17 00:06:04 yamt Exp $ */
+/*	$Id: at91usart.c,v 1.5.2.2 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.5.2.2 2012/10/30 17:18:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.5.2.1 2012/04/17 00:06:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.5.2.2 2012/10/30 17:18:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -161,7 +161,7 @@ inline static void	at91usart_rxsoft(struct at91usart_softc *, struct tty *, unsi
 
 #define	PDC_BLOCK_SIZE	64
 
-//CFATTACH_DECL(at91usart, sizeof(struct at91usart_softc),
+//CFATTACH_DECL_NEW(at91usart, sizeof(struct at91usart_softc),
 //	      at91usart_match, at91usart_attach, NULL, NULL);
 
 //#define	USART_DEBUG	10

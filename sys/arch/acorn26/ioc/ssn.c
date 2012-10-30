@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.10.2.1 2012/05/23 10:07:37 yamt Exp $	*/
+/*	$NetBSD: ssn.c,v 1.10.2.2 2012/10/30 17:18:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.10.2.1 2012/05/23 10:07:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.10.2.2 2012/10/30 17:18:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ssn.c,v 1.10.2.1 2012/05/23 10:07:37 yamt Exp $");
 #include <dev/ic/ds.h>
 
 struct ssn_softc {
-	struct device sc_dev;
 	struct ds_handle sc_dsh;
 	device_t sc_ioc;
 	int sc_timebase;
@@ -50,7 +49,7 @@ struct ssn_softc {
 static int ssn_match(device_t, cfdata_t, void *);
 static void ssn_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ssn, sizeof(struct ssn_softc),
+CFATTACH_DECL_NEW(ssn, sizeof(struct ssn_softc),
     ssn_match, ssn_attach, NULL, NULL);
 
 static int ds_ioc_read_bit(void *);

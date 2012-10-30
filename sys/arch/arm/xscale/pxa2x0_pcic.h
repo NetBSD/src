@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.h,v 1.4 2009/01/29 12:28:15 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.h,v 1.4.14.1 2012/10/30 17:19:11 yamt Exp $	*/
 /*	$OpenBSD: pxapcicvar.h,v 1.7 2005/12/14 15:08:51 uwe Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 struct pxapcic_socket {
 	struct pxapcic_softc *sc;
 	int socket;		/* socket number */
-	struct device *pcmcia;
+	device_t pcmcia;
 	struct lwp *event_thread;
 
 	int flags;

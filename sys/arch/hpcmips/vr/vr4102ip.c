@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4102ip.c,v 1.8 2008/01/04 22:13:57 ad Exp $	*/
+/*	$NetBSD: vr4102ip.c,v 1.8.44.1 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.8 2008/01/04 22:13:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.8.44.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: vr4102ip.c,v 1.8 2008/01/04 22:13:57 ad Exp $");
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/cmureg.h>
 
-void	vr4102ipattach(struct device *, struct device *, void *);
+void	vr4102ipattach(device_t, device_t, void *);
 
-CFATTACH_DECL(vr4102ip, sizeof(struct vrip_softc),
+CFATTACH_DECL_NEW(vr4102ip, sizeof(struct vrip_softc),
     vripmatch, vr4102ipattach, NULL, NULL);
 
 static const struct vrip_unit vr4102ip_units[] = {
@@ -92,9 +92,9 @@ static const struct vrip_unit vr4102ip_units[] = {
 };
 
 void
-vr4102ipattach(struct device *parent, struct device *self, void *aux)
+vr4102ipattach(device_t parent, device_t self, void *aux)
 {
-	struct vrip_softc *sc = (struct vrip_softc*)self;
+	struct vrip_softc *sc = device_private(self);
 
 	printf("\n");
 

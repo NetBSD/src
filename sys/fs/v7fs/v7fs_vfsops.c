@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.4.2.1 2012/04/17 00:08:21 yamt Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.4.2.2 2012/10/30 17:22:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4.2.1 2012/04/17 00:08:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.4.2.2 2012/10/30 17:22:26 yamt Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -85,7 +85,7 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct v7fs_args *args = data;
 	struct v7fs_mount *v7fsmount = (void *)mp->mnt_data;
 	struct vnode *devvp = NULL;
-	int error;
+	int error = 0;
 	bool update = mp->mnt_flag & MNT_UPDATE;
 
 	DPRINTF("mnt_flag=%x %s\n", mp->mnt_flag, update ? "update" : "");

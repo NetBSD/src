@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.156.2.2 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.156.2.3 2012/10/30 17:22:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -53,9 +53,9 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 
 /*
- * Lightweight process.  Field markings and the corresponding locks: 
+ * Lightweight process.  Field markings and the corresponding locks:
  *
- * a:	proclist_lock
+ * a:	proc_lock
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_lock
@@ -124,6 +124,7 @@ struct lwp {
 	u_int		l_slptime;	/* l: time since last blocked */
 	callout_t	l_timeout_ch;	/* !: callout for tsleep */
 	u_int		l_emap_gen;	/* !: emap generation number */
+	kcondvar_t	l_waitcv;	/* a: vfork() wait */
 
 #if PCU_UNIT_COUNT > 0
 	struct cpu_info	* volatile l_pcu_cpu[PCU_UNIT_COUNT];
@@ -210,6 +211,13 @@ LIST_HEAD(lwplist, lwp);		/* A list of LWPs. */
 #ifdef _KERNEL
 extern struct lwplist	alllwp;		/* List of all LWPs. */
 extern lwp_t		lwp0;		/* LWP for proc0. */
+extern int		maxlwp __read_mostly;	/* max number of lwps */
+#ifndef MAXLWP
+#define	MAXLWP		2048
+#endif
+#ifndef	__HAVE_CPU_MAXLWP
+#define	cpu_maxlwp()	MAXLWP
+#endif
 #endif
 
 /* These flags are kept in l_flag. */
@@ -238,6 +246,7 @@ extern lwp_t		lwp0;		/* LWP for proc0. */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
+#define	LP_VFORKWAIT	0x00000200 /* Waiting at vfork() for a child */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
@@ -306,9 +315,7 @@ void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
-/* Flags for _lwp_wait1 */
-#define LWPWAIT_EXITCONTROL	0x00000001
-int	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
+int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
 void	lwp_unstop(lwp_t *);
@@ -404,7 +411,7 @@ lwp_eprio(lwp_t *l)
 	pri_t pri;
 
 	pri = l->l_priority;
-	if (l->l_kpriority && pri < PRI_KERNEL)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }

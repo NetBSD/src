@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.17.12.1 2012/04/17 00:07:42 yamt Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.17.12.2 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.17.12.1 2012/04/17 00:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.17.12.2 2012/10/30 17:21:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,7 +137,7 @@ mvmebus_offboard_ram(struct mvmebus_softc *sc)
 		svr->vr_am = MVMEBUS_AM_DISABLED;
 #ifdef DEBUG
 		printf("%s: No VMEbus master mapping for offboard RAM!\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #endif
 		return;
 	}
@@ -170,11 +170,11 @@ mvmebus_attach(struct mvmebus_softc *sc)
 		struct mvmebus_range *vr = &sc->sc_masters[i];
 		if (vr->vr_am == MVMEBUS_AM_DISABLED) {
 			printf("%s: Master#%d: disabled\n",
-			    device_xname(&sc->sc_dev), i);
+			    device_xname(sc->sc_dev), i);
 			continue;
 		}
 		printf("%s: Master#%d: 0x%08lx -> %s\n",
-		    device_xname(&sc->sc_dev), i,
+		    device_xname(sc->sc_dev), i,
 		    vr->vr_locstart + (vr->vr_vmestart & vr->vr_mask),
 		    mvmebus_mod_string(vr->vr_vmestart,
 			(vr->vr_vmeend - vr->vr_vmestart) + 1,
@@ -185,11 +185,11 @@ mvmebus_attach(struct mvmebus_softc *sc)
 		struct mvmebus_range *vr = &sc->sc_slaves[i];
 		if (vr->vr_am == MVMEBUS_AM_DISABLED) {
 			printf("%s:  Slave#%d: disabled\n",
-			    device_xname(&sc->sc_dev), i);
+			    device_xname(sc->sc_dev), i);
 			continue;
 		}
 		printf("%s:  Slave#%d: 0x%08lx -> %s\n",
-		    device_xname(&sc->sc_dev), i, vr->vr_locstart,
+		    device_xname(sc->sc_dev), i, vr->vr_locstart,
 		    mvmebus_mod_string(vr->vr_vmestart,
 			(vr->vr_vmeend - vr->vr_vmestart) + 1,
 			vr->vr_am, vr->vr_datasize));
@@ -236,7 +236,7 @@ mvmebus_attach(struct mvmebus_softc *sc)
 	vaa.va_bdt = &sc->sc_mvmedmat;
 	vaa.va_slaveconfig = NULL;
 
-	config_found(&sc->sc_dev, &vaa, 0);
+	config_found(sc->sc_dev, &vaa, 0);
 }
 
 int
@@ -385,12 +385,12 @@ mvmebus_intr_establish(void *vsc, vme_intr_handle_t handle, int prior, int (*fun
 #ifdef DIAGNOSTIC
 	if (vector < 0 || vector > 0xff) {
 		printf("%s: Illegal vector offset: 0x%x\n",
-		    device_xname(&sc->sc_dev), vector);
+		    device_xname(sc->sc_dev), vector);
 		panic("mvmebus_intr_establish");
 	}
 	if (level < 1 || level > 7) {
 		printf("%s: Illegal interrupt level: %d\n",
-		    device_xname(&sc->sc_dev), level);
+		    device_xname(sc->sc_dev), level);
 		panic("mvmebus_intr_establish");
 	}
 #endif
@@ -418,17 +418,17 @@ mvmebus_intr_disestablish(void *vsc, vme_intr_handle_t handle)
 #ifdef DIAGNOSTIC
 	if (vector < 0 || vector > 0xff) {
 		printf("%s: Illegal vector offset: 0x%x\n",
-		    device_xname(&sc->sc_dev), vector);
+		    device_xname(sc->sc_dev), vector);
 		panic("mvmebus_intr_disestablish");
 	}
 	if (level < 1 || level > 7) {
 		printf("%s: Illegal interrupt level: %d\n",
-		    device_xname(&sc->sc_dev), level);
+		    device_xname(sc->sc_dev), level);
 		panic("mvmebus_intr_disestablish");
 	}
 	if (sc->sc_irqref[level] == 0) {
 		printf("%s: VMEirq#%d: Reference count already zero!\n",
-		    device_xname(&sc->sc_dev), level);
+		    device_xname(sc->sc_dev), level);
 		panic("mvmebus_intr_disestablish");
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.28.2.1 2012/04/17 00:08:52 yamt Exp $	*/
+/*	$NetBSD: module.h,v 1.28.2.2 2012/10/30 17:22:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ typedef struct module {
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
 	void 			*mod_ctf;
-	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
+	u_int			mod_fbtentries;	/* DTrace FBT entry count */
 	int			mod_flags;
 #define MODFLG_MUST_FORCE	0x01
 #define MODFLG_AUTO_LOADED	0x02
@@ -179,7 +179,8 @@ typedef struct modctl_load {
 typedef enum modctl {
 	MODCTL_LOAD,		/* modctl_load_t *ml */
 	MODCTL_UNLOAD,		/* char *name */
-	MODCTL_STAT		/* struct iovec *buffer */
+	MODCTL_STAT,		/* struct iovec *buffer */
+	MODCTL_EXISTS		/* enum: 0: load, 1: autoload */
 } modctl_t;
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: MALTA64,v 1.4.4.1 2012/04/17 00:06:17 yamt Exp $
+# $NetBSD: MALTA64,v 1.4.4.2 2012/10/30 17:19:29 yamt Exp $
 #
 include "arch/evbmips/conf/MALTA"
 
@@ -9,7 +9,7 @@ options 	NOFPU			# No FPU
 options 	EXEC_ELF64
 options 	COMPAT_NETBSD32
 no options 	SYMTAB_SPACE
-options 	SYMTAB_SPACE=480000	# size for embedded symbol table
+options 	SYMTAB_SPACE=490000	# size for embedded symbol table
 
 #options 	UVMHIST, UVMHIST_PRINT
 

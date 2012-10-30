@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.69 2011/06/05 06:33:42 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.69.2.1 2012/10/30 17:19:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.69 2011/06/05 06:33:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.69.2.1 2012/10/30 17:19:13 yamt Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -171,8 +171,8 @@ finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-void	ncr_attach(struct device *, struct device *, void *);
-int	ncr_match(struct device *, struct cfdata *, void *);
+void	ncr_attach(device_t, device_t, void *);
+int	ncr_match(device_t, cfdata_t, void *);
 
 /*
  * Tricks to make driver-name configurable

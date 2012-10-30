@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.116.2.1 2012/04/17 00:08:43 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.116.2.2 2012/10/30 17:22:48 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.2.1 2012/04/17 00:08:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.2.2 2012/10/30 17:22:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.116.2.1 2012/04/17 00:08:43 yamt Exp $
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
-#include <netinet/rfc6056.h>
+#include <netinet/portalgo.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/scope6_var.h>
@@ -172,7 +172,7 @@ in6_pcballoc(struct socket *so, void *v)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
-	in6p->in6p_rfc6056algo = RFC6056_ALGO_DEFAULT;
+	in6p->in6p_portalgo = PORTALGO_DEFAULT;
 	in6p->in6p_bindportonsend = false;
 #if defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
@@ -1049,7 +1049,6 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 	}
 	return (match);
 }
-#undef continue
 
 /*
  * WARNING: return value (rtentry) could be IPv4 one if in6pcb is connected to

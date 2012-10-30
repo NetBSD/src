@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.54.4.1 2012/04/17 00:07:47 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.54.4.2 2012/10/30 17:21:31 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.54.4.1 2012/04/17 00:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.54.4.2 2012/10/30 17:21:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -77,7 +77,7 @@ int	nfe_match(device_t, cfdata_t, void *);
 void	nfe_attach(device_t, device_t, void *);
 int	nfe_detach(device_t, int);
 void	nfe_power(int, void *);
-void	nfe_miibus_statchg(device_t);
+void	nfe_miibus_statchg(struct ifnet *);
 int	nfe_miibus_readreg(device_t, int, int);
 void	nfe_miibus_writereg(device_t, int, int, int);
 int	nfe_intr(void *);
@@ -255,8 +255,6 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	sc->sc_dmat = pa->pa_dmat;
-
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	csr |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
@@ -323,6 +321,11 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		    NFE_HW_VLAN | NFE_PWR_MGMT;
 		break;
 	}
+
+	if (pci_dma64_available(pa) && (sc->sc_flags & NFE_40BIT_ADDR) != 0)
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	nfe_poweron(self);
 
@@ -476,9 +479,9 @@ nfe_detach(device_t self, int flags)
 }
 
 void
-nfe_miibus_statchg(device_t dev)
+nfe_miibus_statchg(struct ifnet *ifp)
 {
-	struct nfe_softc *sc = device_private(dev);
+	struct nfe_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t phy, seed, misc = NFE_MISC1_MAGIC, link = NFE_MEDIA_SET;
 

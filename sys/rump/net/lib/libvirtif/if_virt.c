@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.25.2.1 2012/04/17 00:08:50 yamt Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.25.2.2 2012/10/30 17:22:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25.2.1 2012/04/17 00:08:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.25.2.2 2012/10/30 17:22:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -97,7 +97,7 @@ rump_virtif_create(int num)
 		return E2BIG;
 
 	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
-	fd = rumpuser_open(tapdev, O_RDWR, &error);
+	fd = rumpuser_open(tapdev, RUMPUSER_OPEN_RDWR, &error);
 	if (fd == -1) {
 		printf("virtif_create: can't open /dev/tap%d: %d\n",
 		    num, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.37.2.1 2012/04/17 00:06:03 yamt Exp $	*/
+/*	$NetBSD: necpb.c,v 1.37.2.2 2012/10/30 17:18:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.37.2.1 2012/04/17 00:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.37.2.2 2012/10/30 17:18:54 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -99,10 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.37.2.1 2012/04/17 00:06:03 yamt Exp $");
 
 #include "ioconf.h"
 
-static int	necpbmatch(struct device *, struct cfdata *, void *);
-static void	necpbattach(struct device *, struct device *, void *);
+static int	necpbmatch(device_t, cfdata_t, void *);
+static void	necpbattach(device_t, device_t, void *);
 
-static void	necpb_attach_hook(struct device *, struct device *,
+static void	necpb_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static int	necpb_bus_maxdevs(pci_chipset_tag_t, int);
 static pcitag_t	necpb_make_tag(pci_chipset_tag_t, int, int, int);
@@ -270,7 +270,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 }
 
 static void
-necpb_attach_hook(struct device *parent, struct device *self,
+necpb_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98.4.1 2012/04/17 00:06:20 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.98.4.2 2012/10/30 17:19:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.4.1 2012/04/17 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.4.2 2012/10/30 17:19:34 yamt Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -209,7 +209,7 @@ int extio_ex_malloc_safe;
 struct dev_data {
 	LIST_ENTRY(dev_data)	dd_list;  /* dev_data_list */
 	LIST_ENTRY(dev_data)	dd_clist; /* ctlr list */
-	struct device		*dd_dev;  /* device described by this entry */
+	device_t		dd_dev;  /* device described by this entry */
 	int			dd_scode; /* select code of device */
 	int			dd_slave; /* ...or slave */
 	int			dd_punit; /* and punit... */
@@ -223,7 +223,7 @@ static void	findbootdev(void);
 static void	findbootdev_slave(ddlist_t *, int, int, int);
 static void	setbootdev(void);
 
-static struct dev_data *dev_data_lookup(struct device *);
+static struct dev_data *dev_data_lookup(device_t);
 static void	dev_data_insert(struct dev_data *, ddlist_t *);
 
 static int	mainbusmatch(device_t, cfdata_t, void *);
@@ -300,7 +300,7 @@ void
 cpu_rootconf(void)
 {
 	struct dev_data *dd;
-	struct device *dv;
+	device_t dv;
 	struct vfsops *vops;
 
 	/*
@@ -320,11 +320,9 @@ cpu_rootconf(void)
 			    B_PARTITION(bootdev));
 			bootdev = 0;		/* invalidate bootdev */
 		} else {
-			printf("boot device: %s\n", booted_device->dv_xname);
+			printf("boot device: %s\n", device_xname(booted_device));
 		}
 	}
-
-	dv = booted_device;
 
 	/*
 	 * If wild carded root device and wired down NFS root file system,
@@ -338,7 +336,7 @@ cpu_rootconf(void)
 			    dd != NULL; dd = LIST_NEXT(dd, dd_list)) {
 				if (device_class(dd->dd_dev) == DV_IFNET) {
 					/* Got it! */
-					dv = dd->dd_dev;
+					booted_device = dd->dd_dev;
 					break;
 				}
 			}
@@ -363,7 +361,7 @@ cpu_rootconf(void)
 	if (booted_device != NULL && device_class(booted_device) == DV_TAPE)
 		boothowto |= RB_ASKNAME;
 
-	setroot(dv, booted_partition);
+	rootconf();
 
 	/*
 	 * Set bootdev based on what we found as the root.
@@ -378,7 +376,7 @@ cpu_rootconf(void)
  * used to attach it.  This is used to find the boot device.
  */
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	struct dev_data *dd;
 	static int seen_netdevice = 0;
@@ -519,7 +517,7 @@ findbootdev(void)
 		    (type == 2 && !device_is_a(booted_device, "rd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
-			    booted_device->dv_xname, type);
+			    device_xname(booted_device), type);
 			booted_device = NULL;
 		}
 		goto out;
@@ -540,7 +538,7 @@ findbootdev(void)
 		if ((type == 4 && !device_is_a(booted_device, "sd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
-			    booted_device->dv_xname, type);
+			    device_xname(booted_device), type);
 			booted_device = NULL;
 		}
 		goto out;
@@ -685,7 +683,7 @@ setbootdev(void)
  * Return the dev_data corresponding to the given device.
  */
 static struct dev_data *
-dev_data_lookup(struct device *dev)
+dev_data_lookup(device_t dev)
 {
 	struct dev_data *dd;
 
@@ -707,7 +705,7 @@ dev_data_insert(struct dev_data *dd, ddlist_t *ddlist)
 
 #ifdef DIAGNOSTIC
 	if (dd->dd_scode < 0 || dd->dd_scode > 255) {
-		printf("bogus select code for %s\n", dd->dd_dev->dv_xname);
+		printf("bogus select code for %s\n", device_xname(dd->dd_dev));
 		panic("dev_data_insert");
 	}
 #endif

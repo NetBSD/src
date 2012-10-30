@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.2 2009/05/06 08:20:49 cegger Exp $	*/
+/*	$NetBSD: sbt.c,v 1.2.18.1 2012/10/30 17:22:01 yamt Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.2 2009/05/06 08:20:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.2.18.1 2012/10/30 17:22:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -208,7 +208,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 static int
 sbt_detach(device_t self, int flags)
 {
-	struct sbt_softc *sc = (struct sbt_softc *)self;
+	struct sbt_softc *sc = device_private(self);
 
 	sc->sc_dying = 1;
 

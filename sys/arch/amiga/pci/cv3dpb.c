@@ -1,4 +1,4 @@
-/*	$NetBSD: cv3dpb.c,v 1.1.6.2 2012/04/17 00:06:02 yamt Exp $ */
+/*	$NetBSD: cv3dpb.c,v 1.1.6.3 2012/10/30 17:18:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
 #define ZORRO_MANID_P5		8512
 #define ZORRO_PRODID_CV643D_Z3	67		/* CV64/3D on Z3 bus */
 
-static int	cv3dpb_match(struct device *, struct cfdata *, void *);
-static void	cv3dpb_attach(struct device *, struct device *, void *);
+static int	cv3dpb_match(device_t, cfdata_t, void *);
+static void	cv3dpb_attach(device_t, device_t, void *);
 pcireg_t	cv3dpb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		cv3dpb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		cv3dpb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 

@@ -33,7 +33,7 @@
  *	isdn4bsd layer1 driver for Dynalink IS64PH isdn TA
  *	==================================================
  *
- *	$Id: isic_isapnp_dynalink.c,v 1.13 2009/05/12 10:16:35 cegger Exp $
+ *	$Id: isic_isapnp_dynalink.c,v 1.13.12.1 2012/10/30 17:21:17 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -75,7 +75,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.13 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_dynalink.c,v 1.13.12.1 2012/10/30 17:21:17 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DYNALINK
@@ -393,7 +393,7 @@ int
 isic_attach_Dyn(device_t parent, device_t self,
 		struct isa_attach_args *ia)
 {
-	struct isic_softc *sc = (struct isic_softc *)self;
+	struct isic_softc *sc = device_private(self);
 	int unit = sc->sc_dev.dv_unit;
 
 	/* Commit the probed attachment values */
@@ -431,11 +431,11 @@ void isic_attach_Dyn(struct isic_softc *sc)
 	if( ((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) || ((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) )
 	{
 		printf("%s: HSCX VSTR test failed for Dynalink PnP\n",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 		printf("%s: HSC0: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(0, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(0, H_VSTR));
 		printf("%s: HSC1: VSTR: %#x\n",
-			device_xname(&sc->sc_dev), HSCX_READ(1, H_VSTR));
+			device_xname(sc->sc_dev), HSCX_READ(1, H_VSTR));
 		return;
 	}
 

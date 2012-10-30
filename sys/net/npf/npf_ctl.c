@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.6.6.2 2012/04/17 00:08:38 yamt Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.6.6.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.6.6.2 2012/04/17 00:08:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.6.6.3 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -135,12 +135,15 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		while ((ent = prop_object_iterator_next(eit)) != NULL) {
 			const npf_addr_t *addr;
 			npf_netmask_t mask;
+			int alen;
 
 			/* Get address and mask.  Add a table entry. */
-			addr = (const npf_addr_t *)prop_data_data_nocopy(
-			    prop_dictionary_get(ent, "addr"));
+			prop_object_t obj = prop_dictionary_get(ent, "addr");
+			addr = (const npf_addr_t *)prop_data_data_nocopy(obj);
 			prop_dictionary_get_uint8(ent, "mask", &mask);
-			error = npf_table_add_cidr(tblset, tid, addr, mask);
+			alen = prop_data_size(obj);
+
+			error = npf_table_insert(tblset, tid, alen, addr, mask);
 			if (error)
 				break;
 		}
@@ -159,26 +162,51 @@ static npf_rproc_t *
 npf_mk_rproc(prop_array_t rprocs, const char *rpname)
 {
 	prop_object_iterator_t it;
-	prop_dictionary_t rpdict;
+	prop_dictionary_t rpdict, extdict;
+	prop_array_t extlist;
 	npf_rproc_t *rp;
+	const char *name;
+	uint64_t rpval;
 
 	it = prop_array_iterator(rprocs);
 	while ((rpdict = prop_object_iterator_next(it)) != NULL) {
-		const char *iname;
-		prop_dictionary_get_cstring_nocopy(rpdict, "name", &iname);
-		KASSERT(iname != NULL);
-		if (strcmp(rpname, iname) == 0)
+		prop_dictionary_get_cstring_nocopy(rpdict, "name", &name);
+		KASSERT(name != NULL);
+		if (strcmp(rpname, name) == 0)
 			break;
 	}
 	prop_object_iterator_release(it);
-	if (rpdict == NULL) {
+	if (!rpdict) {
 		return NULL;
 	}
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
-	if (!prop_dictionary_get_uint64(rpdict, "rproc-ptr", (uint64_t *)&rp)) {
-		rp = npf_rproc_create(rpdict);
-		prop_dictionary_set_uint64(rpdict, "rproc-ptr",
-		    (uint64_t)(uintptr_t)rp);
+	if (prop_dictionary_get_uint64(rpdict, "rproc-ptr", &rpval)) {
+		return (npf_rproc_t *)(uintptr_t)rpval;
+	}
+
+	extlist = prop_dictionary_get(rpdict, "extcalls");
+	if (prop_object_type(extlist) != PROP_TYPE_ARRAY) {
+		return NULL;
+	}
+
+	rp = npf_rproc_create(rpdict);
+	if (!rp) {
+		return NULL;
+	}
+	it = prop_array_iterator(extlist);
+	while ((extdict = prop_object_iterator_next(it)) != NULL) {
+		if (!prop_dictionary_get_cstring_nocopy(extdict,
+		    "name", &name) || npf_ext_construct(name, rp, extdict)) {
+			npf_rproc_release(rp);
+			rp = NULL;
+			break;
+		}
+	}
+	prop_object_iterator_release(it);
+
+	if (rp) {
+		rpval = (uint64_t)(uintptr_t)rp;
+		prop_dictionary_set_uint64(rpdict, "rproc-ptr", rpval);
 	}
 	return rp;
 }
@@ -236,6 +264,18 @@ npf_mk_singlerule(prop_dictionary_t rldict, prop_array_t rps, npf_rule_t **rl,
 		return EINVAL;
 	}
 
+	/* Make the rule procedure, if any. */
+	if (rps && prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rnm)) {
+		rp = npf_mk_rproc(rps, rnm);
+		if (rp == NULL) {
+			NPF_ERR_DEBUG(errdict);
+			error = EINVAL;
+			goto err;
+		}
+	} else {
+		rp = NULL;
+	}
+
 	error = 0;
 	obj = prop_dictionary_get(rldict, "ncode");
 	if (obj) {
@@ -250,26 +290,14 @@ npf_mk_singlerule(prop_dictionary_t rldict, prop_array_t rps, npf_rule_t **rl,
 		nc_size = 0;
 	}
 
-	/* Check for rule procedure. */
-	if (rps && prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rnm)) {
-		rp = npf_mk_rproc(rps, rnm);
-		if (rp == NULL) {
-			if (nc) {
-				npf_ncode_free(nc, nc_size);	/* XXX */
-			}
-			NPF_ERR_DEBUG(errdict);
-			error = EINVAL;
-			goto err;
-		}
-	} else {
-		rp = NULL;
-	}
-
 	/* Finally, allocate and return the rule. */
 	*rl = npf_rule_alloc(rldict, rp, nc, nc_size);
 	KASSERT(*rl != NULL);
 	return 0;
 err:
+	if (rp) {
+		npf_rproc_release(rp);
+	}
 	prop_dictionary_get_int32(rldict, "priority", &p); /* XXX */
 	prop_dictionary_set_int32(errdict, "id", p);
 	return error;
@@ -434,15 +462,14 @@ npfctl_reload(u_long cmd, void *data)
 	int error;
 
 	/* Retrieve the dictionary. */
-#ifdef _KERNEL
+#ifndef _NPF_TESTING
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &npf_dict);
 	if (error)
 		return error;
 #else
-	npf_dict = prop_dictionary_internalize_from_file(data);
-	if (npf_dict == NULL)
-		return EINVAL;
+	npf_dict = (prop_dictionary_t)pref;
 #endif
+
 	/* Dictionary for error reporting. */
 	errdict = prop_dictionary_create();
 
@@ -506,12 +533,13 @@ fail:
 	}
 
 	/* Error report. */
+#ifndef _NPF_TESTING
 	prop_dictionary_set_int32(errdict, "errno", error);
-#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
-#endif
 	prop_object_release(errdict);
-	return 0;
+	error = 0;
+#endif
+	return error;
 }
 
 int
@@ -544,17 +572,11 @@ npfctl_update_rule(u_long cmd, void *data)
 	const char *name;
 	int error;
 
-#ifdef _KERNEL
 	/* Retrieve and construct the rule. */
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &dict);
 	if (error) {
 		return error;
 	}
-#else
-	dict = prop_dictionary_internalize_from_file(data);
-	if (dict == NULL)
-		return EINVAL;
-#endif
 
 	/* Dictionary for error reporting. */
 	errdict = prop_dictionary_create();
@@ -580,9 +602,7 @@ out:		/* Error path. */
 
 	/* Error report. */
 	prop_dictionary_set_int32(errdict, "errno", error);
-#ifdef _KERNEL
 	prop_dictionary_copyout_ioctl(pref, cmd, errdict);
-#endif
 	prop_object_release(errdict);
 	return error;
 }
@@ -612,11 +632,7 @@ npfctl_sessions_save(u_long cmd, void *data)
 	/* Set the session list, NAT policy list and export the dictionary. */
 	prop_dictionary_set(sesdict, "session-list", selist);
 	prop_dictionary_set(sesdict, "nat-policy-list", nplist);
-#ifdef _KERNEL
 	error = prop_dictionary_copyout_ioctl(pref, cmd, sesdict);
-#else
-	error = prop_dictionary_externalize_to_file(sesdict, data) ? 0 : errno;
-#endif
 fail:
 	prop_object_release(sesdict);
 	return error;
@@ -636,15 +652,10 @@ npfctl_sessions_load(u_long cmd, void *data)
 	int error;
 
 	/* Retrieve the dictionary containing session and NAT policy lists. */
-#ifdef _KERNEL
 	error = prop_dictionary_copyin_ioctl(pref, cmd, &sesdict);
 	if (error)
 		return error;
-#else
-	sesdict = prop_dictionary_internalize_from_file(data);
-	if (sesdict == NULL)
-		return EINVAL;
-#endif
+
 	/*
 	 * Note: session objects contain the references to the NAT policy
 	 * entries.  Therefore, no need to directly access it.
@@ -699,24 +710,33 @@ fail:
 int
 npfctl_table(void *data)
 {
-	npf_ioctl_table_t *nct = data;
+	const npf_ioctl_table_t *nct = data;
 	npf_tableset_t *tblset;
 	int error;
 
 	npf_core_enter(); /* XXXSMP */
 	tblset = npf_core_tableset();
 	switch (nct->nct_action) {
+	case NPF_IOCTL_TBLENT_LOOKUP:
+		error = npf_table_lookup(tblset, nct->nct_tid,
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr);
 	case NPF_IOCTL_TBLENT_ADD:
-		error = npf_table_add_cidr(tblset, nct->nct_tid,
-		    &nct->nct_addr, nct->nct_mask);
+		error = npf_table_insert(tblset, nct->nct_tid,
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
+		    nct->nct_data.ent.mask);
 		break;
 	case NPF_IOCTL_TBLENT_REM:
-		error = npf_table_rem_cidr(tblset, nct->nct_tid,
-		    &nct->nct_addr, nct->nct_mask);
+		error = npf_table_remove(tblset, nct->nct_tid,
+		    nct->nct_data.ent.alen, &nct->nct_data.ent.addr,
+		    nct->nct_data.ent.mask);
+		break;
+	case NPF_IOCTL_TBLENT_LIST:
+		error = npf_table_list(tblset, nct->nct_tid,
+		    nct->nct_data.buf.buf, nct->nct_data.buf.len);
 		break;
 	default:
-		error = npf_table_match_addr(tblset, nct->nct_tid,
-		    &nct->nct_addr);
+		error = EINVAL;
+		break;
 	}
 	npf_core_exit(); /* XXXSMP */
 	return error;

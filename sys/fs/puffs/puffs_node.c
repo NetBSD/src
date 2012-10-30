@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.22.2.1 2012/04/17 00:08:19 yamt Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.22.2.2 2012/10/30 17:22:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.2.1 2012/04/17 00:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.22.2.2 2012/10/30 17:22:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -246,7 +246,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_USE_NAMECACHE(pmp))
+	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
 	return 0;

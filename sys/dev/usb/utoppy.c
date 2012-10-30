@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.15.8.1 2012/04/17 00:08:10 yamt Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.15.8.2 2012/10/30 17:22:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.15.8.1 2012/04/17 00:08:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.15.8.2 2012/10/30 17:22:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ utoppy_detach(device_t self, int flags)
 	maj = cdevsw_lookup_major(&utoppy_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
@@ -521,7 +521,10 @@ utoppy_bulk_transfer_cb(usbd_xfer_handle xfer,
     usbd_status status)
 {
 
-	wakeup(xfer);
+	if (xfer->pipe->device->bus->lock)
+		cv_broadcast(&xfer->cv);
+	else
+		wakeup(xfer);
 }
 
 static usbd_status
@@ -534,14 +537,17 @@ utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 
 	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
 	    utoppy_bulk_transfer_cb);
-	s = splusb();
+	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
 	err = usbd_transfer(xfer);
 	if (err != USBD_IN_PROGRESS) {
-		splx(s);
+		usbd_unlock_pipe(pipe);
 		return (err);
 	}
-	error = tsleep((void *)xfer, PZERO, lbl, 0);
-	splx(s);
+	if (pipe->device->bus->lock)
+		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
+	else
+		error = tsleep((void *)xfer, PZERO, lbl, 0);
+	usbd_unlock_pipe(pipe);
 	if (error) {
 		usbd_abort_pipe(pipe);
 		return (USBD_INTERRUPTED);

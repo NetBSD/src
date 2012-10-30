@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.4.4.2 2012/04/17 00:08:55 yamt Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.4.4.3 2012/10/30 17:22:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -45,15 +45,14 @@
 #define PAGE_DIV(x) ( rounddown((x), chmp->chm_wbuf_pagesize) )
 #define PAGE_MOD(x) ( (x) % (chmp->chm_wbuf_pagesize) )
 
+/* writebuffer options */
 enum {
 	WBUF_NOPAD,
 	WBUF_SETPAD
 };
 
-/**
+/*
  * chfs_flush_wbuf - write wbuf to the flash
- * @chmp: super block info
- * @pad: padding (WBUF_NOPAD / WBUF_SETPAD)
  * Returns zero in case of success.
  */
 static int
@@ -69,11 +68,13 @@ chfs_flush_wbuf(struct chfs_mount *chmp, int pad)
 	KASSERT(rw_write_held(&chmp->chm_lock_wbuf));
 	KASSERT(pad == WBUF_SETPAD || pad == WBUF_NOPAD);
 
+	/* check padding option */
 	if (pad == WBUF_SETPAD) {
 		chmp->chm_wbuf_len = PAD(chmp->chm_wbuf_len);
 		memset(chmp->chm_wbuf + chmp->chm_wbuf_len, 0,
 		    chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len);
 
+		/* add a padding node */
 		padnode = (void *)(chmp->chm_wbuf + chmp->chm_wbuf_len);
 		padnode->magic = htole16(CHFS_FS_MAGIC_BITMASK);
 		padnode->type = htole16(CHFS_NODETYPE_PADDING);
@@ -88,18 +89,21 @@ chfs_flush_wbuf(struct chfs_mount *chmp, int pad)
 		    CHFS_OBSOLETE_NODE_MASK;
 		chmp->chm_wbuf_len = chmp->chm_wbuf_pagesize;
 
+		/* change sizes after padding node */
 		chfs_change_size_free(chmp, chmp->chm_nextblock,
 		    -padnode->length);
 		chfs_change_size_wasted(chmp, chmp->chm_nextblock,
 		    padnode->length);
 	}
 
+	/* write out the buffer */
 	ret = chfs_write_leb(chmp, chmp->chm_nextblock->lnr, chmp->chm_wbuf,
 	    chmp->chm_wbuf_ofs, chmp->chm_wbuf_len, &retlen);
 	if (ret) {
 		return ret;
 	}
 
+	/* reset the buffer */
 	memset(chmp->chm_wbuf, 0xff, chmp->chm_wbuf_pagesize);
 	chmp->chm_wbuf_ofs += chmp->chm_wbuf_pagesize;
 	chmp->chm_wbuf_len = 0;
@@ -108,35 +112,31 @@ chfs_flush_wbuf(struct chfs_mount *chmp, int pad)
 }
 
 
-/**
- * chfs_fill_wbuf - write to wbuf
- * @chmp: super block info
- * @buf: buffer
- * @len: buffer length
+/*
+ * chfs_fill_wbuf - write data to wbuf
  * Return the len of the buf what we didn't write to the wbuf.
  */
 static size_t
 chfs_fill_wbuf(struct chfs_mount *chmp, const u_char *buf, size_t len)
 {
+	/* check available space */
 	if (len && !chmp->chm_wbuf_len && (len >= chmp->chm_wbuf_pagesize)) {
 		return 0;
 	}
+	/* check buffer's length */
 	if (len > (chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len)) {
 		len = chmp->chm_wbuf_pagesize - chmp->chm_wbuf_len;
 	}
+	/* write into the wbuf */
 	memcpy(chmp->chm_wbuf + chmp->chm_wbuf_len, buf, len);
 
+	/* update the actual length of writebuffer */
 	chmp->chm_wbuf_len += (int) len;
 	return len;
 }
 
-/**
+/*
  * chfs_write_wbuf - write to wbuf and then the flash
- * @chmp: super block info
- * @invecs: io vectors
- * @count: num of vectors
- * @to: offset of target
- * @retlen: writed bytes
  * Returns zero in case of success.
  */
 int
@@ -155,15 +155,11 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 
 	rw_enter(&chmp->chm_lock_wbuf, RW_WRITER);
 
-	//dbg("1. wbuf ofs: %zu, len: %zu\n", chmp->chm_wbuf_ofs, chmp->chm_wbuf_len);
-
 	if (chmp->chm_wbuf_ofs == 0xffffffff) {
 		chmp->chm_wbuf_ofs = PAGE_DIV(to);
 		chmp->chm_wbuf_len = PAGE_MOD(to);
 		memset(chmp->chm_wbuf, 0xff, chmp->chm_wbuf_pagesize);
 	}
-
-	//dbg("2. wbuf ofs: %zu, len: %zu\n", chmp->chm_wbuf_ofs, chmp->chm_wbuf_len);
 
 	if (EB_ADDRESS(to) != EB_ADDRESS(chmp->chm_wbuf_ofs)) {
 		if (chmp->chm_wbuf_len) {
@@ -175,8 +171,6 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		chmp->chm_wbuf_len = PAGE_MOD(to);
 	}
 
-	//dbg("3. wbuf ofs: %zu, len: %zu\n", chmp->chm_wbuf_ofs, chmp->chm_wbuf_len);
-
 	if (to != PAD(chmp->chm_wbuf_ofs + chmp->chm_wbuf_len)) {
 		dbg("to: %llu != %zu\n", (unsigned long long)to,
 			PAD(chmp->chm_wbuf_ofs + chmp->chm_wbuf_len));
@@ -187,7 +181,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 	/* adjust alignment offset */
 	if (chmp->chm_wbuf_len != PAGE_MOD(to)) {
 		chmp->chm_wbuf_len = PAGE_MOD(to);
-		/* take care of alignement to next page*/
+		/* take care of alignement to next page */
 		if (!chmp->chm_wbuf_len) {
 			chmp->chm_wbuf_len += chmp->chm_wbuf_pagesize;
 			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
@@ -200,8 +194,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		int vlen = invecs[invec].iov_len;
 		u_char* v = invecs[invec].iov_base;
 
-		//dbg("invec:%d len:%d\n", invec, vlen);
-
+		/* fill the whole wbuf */
 		wbuf_retlen = chfs_fill_wbuf(chmp, v, vlen);
 		if (chmp->chm_wbuf_len == chmp->chm_wbuf_pagesize) {
 			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
@@ -209,19 +202,24 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 				goto outerr;
 			}
 		}
+
 		vlen -= wbuf_retlen;
 		outvec_to += wbuf_retlen;
 		v += wbuf_retlen;
 		donelen += wbuf_retlen;
+
+		/* if there is more residual data than the length of the wbuf
+		 * write it out directly until it's fit in the wbuf */
 		if (vlen >= chmp->chm_wbuf_pagesize) {
 			ret = chfs_write_leb(chmp, lnr, v, outvec_to, PAGE_DIV(vlen), &wbuf_retlen);
-			//dbg("fd->write: %zu\n", wbuf_retlen);
 			vlen -= wbuf_retlen;
 			outvec_to += wbuf_retlen;
 			chmp->chm_wbuf_ofs = outvec_to;
 			v += wbuf_retlen;
 			donelen += wbuf_retlen;
 		}
+
+		/* write the residual data to the wbuf */
 		wbuf_retlen = chfs_fill_wbuf(chmp, v, vlen);
 		if (chmp->chm_wbuf_len == chmp->chm_wbuf_pagesize) {
 			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);
@@ -229,12 +227,6 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 				goto outerr;
 		}
 
-		// if we write the last vector, we flush with padding
-		/*if (invec == count-1) {
-		  ret = chfs_flush_wbuf(chmp, WBUF_SETPAD);
-		  if (ret)
-		  goto outerr;
-		  }*/
 		outvec_to += wbuf_retlen;
 		donelen += wbuf_retlen;
 	}
@@ -247,9 +239,13 @@ outerr:
 	return ret;
 }
 
+/*
+ * chfs_flush_peding_wbuf - write wbuf to the flash
+ * Used when we must flush wbuf right now.
+ * If wbuf has free space, pad it to the size of wbuf and write out.
+ */
 int chfs_flush_pending_wbuf(struct chfs_mount *chmp)
 {
-	//dbg("flush pending wbuf\n");
 	int err;
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 	mutex_enter(&chmp->chm_lock_sizes);

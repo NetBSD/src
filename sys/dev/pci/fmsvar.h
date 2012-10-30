@@ -1,4 +1,4 @@
-/*	$NetBSD: fmsvar.h,v 1.5.12.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: fmsvar.h,v 1.5.12.2 2012/10/30 17:21:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _DEV_PCI_FMSVAR_H_
 
 struct fms_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;

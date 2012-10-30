@@ -1,0 +1,12 @@
+#	$NetBSD: files.bcm53xx,v 1.1.4.2 2012/10/30 17:19:21 yamt Exp $
+#
+# BCM5301X evaluation board configuration info
+#
+
+file	arch/evbarm/bcm53xx/bcm53xx_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/broadcom/files.bcm53xx"

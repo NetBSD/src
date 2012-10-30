@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.15 2011/07/01 18:53:46 dyoung Exp $	 */
+/*	$NetBSD: pic.c,v 1.15.2.1 2012/10/30 17:20:16 yamt Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15.2.1 2012/10/30 17:20:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,15 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.15 2011/07/01 18:53:46 dyoung Exp $");
 #include "locators.h"
 
 struct pic_softc {
-	struct device   	sc_dev;
-
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
-
 };
 
-static int      pic_match(struct device *, struct cfdata *, void *);
-static void     pic_attach(struct device *, struct device *, void *);
+static int      pic_match(device_t, cfdata_t, void *);
+static void     pic_attach(device_t, device_t, void *);
 static int      pic_print(void *, const char *);
 static void	pic_bus_reset(void);
 static void	pic_bus_error(vaddr_t, uint32_t, uint32_t);
@@ -64,7 +61,7 @@ static void	pic_watchdog_enable(void);
 static void	pic_watchdog_disable(void);
 static void	pic_watchdog_tickle(void);
 
-CFATTACH_DECL(pic, sizeof(struct pic_softc),
+CFATTACH_DECL_NEW(pic, 0,
     pic_match, pic_attach, NULL, NULL);
 
 struct pic_attach_args {
@@ -79,7 +76,7 @@ int pic_gio32_arb_config(int, uint32_t);
 static struct pic_softc psc;
 
 static int
-pic_match(struct device * parent, struct cfdata * match, void *aux)
+pic_match(device_t parent, cfdata_t match, void *aux)
 {
 	/*
 	 * PIC exists on IP12 systems. It appears to be the immediate
@@ -92,7 +89,7 @@ pic_match(struct device * parent, struct cfdata * match, void *aux)
 }
 
 static void
-pic_attach(struct device * parent, struct device * self, void *aux)
+pic_attach(device_t parent, device_t self, void *aux)
 {
 	uint32_t reg;
 	struct pic_attach_args iaa;

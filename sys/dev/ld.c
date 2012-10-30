@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.68.8.1 2012/04/17 00:07:25 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.68.8.2 2012/10/30 17:20:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.68.8.1 2012/04/17 00:07:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.68.8.2 2012/10/30 17:20:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ ldenddetach(struct ld_softc *sc)
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
 		if ((*sc->sc_flush)(sc, 0) != 0)
-			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
+			aprint_error_dev(sc->sc_dv, "unable to flush cache\n");
 #endif
 	mutex_destroy(&sc->sc_mutex);
 }

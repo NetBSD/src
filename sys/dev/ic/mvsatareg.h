@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatareg.h,v 1.1 2009/07/27 12:34:14 kiyohara Exp $	*/
+/*	$NetBSD: mvsatareg.h,v 1.1.14.1 2012/10/30 17:21:06 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -191,30 +191,30 @@
 #define SATA_BISTDW1		0x338	/* BIST DW1 */
 #define SATA_BISTDW2		0x33c	/* BIST DW2 */
 #define SATA_SATAICFG		0x050	/* Serial-ATA Interface Configuration */
-#define SATA_SATAICFG_REFCLKCNF_20MHZ	(0 < 0)
-#define SATA_SATAICFG_REFCLKCNF_25MHZ	(1 < 0)
-#define SATA_SATAICFG_REFCLKCNF_30MHZ	(2 < 0)
-#define SATA_SATAICFG_REFCLKCNF_40MHZ	(3 < 0)
-#define SATA_SATAICFG_REFCLKCNF_MASK	(3 < 0)
-#define SATA_SATAICFG_REFCLKDIV_1	(0 < 2)
-#define SATA_SATAICFG_REFCLKDIV_2	(1 < 2)	/* Used 20 or 25MHz */
-#define SATA_SATAICFG_REFCLKDIV_4	(2 < 2)	/* Used 40MHz */
-#define SATA_SATAICFG_REFCLKDIV_3	(3 < 2)	/* Used 30MHz */
-#define SATA_SATAICFG_REFCLKDIV_MASK	(3 < 2)
-#define SATA_SATAICFG_REFCLKFEEDDIV_50	(0 < 4)	/* or 100, when Gen2En is 1 */
-#define SATA_SATAICFG_REFCLKFEEDDIV_60	(1 < 4)	/* or 120. Used 25MHz */
-#define SATA_SATAICFG_REFCLKFEEDDIV_75	(2 < 4)	/* or 150. Used 20MHz */
-#define SATA_SATAICFG_REFCLKFEEDDIV_90	(3 < 4)	/* or 180 */
-#define SATA_SATAICFG_REFCLKFEEDDIV_MASK (3 < 4)
-#define SATA_SATAICFG_PHYSSCEN		(1 < 6)
-#define SATA_SATAICFG_GEN2EN		(1 < 7)
-#define SATA_SATAICFG_COMMEN		(1 < 8)
-#define SATA_SATAICFG_PHYSHUTDOWN	(1 < 9)
-#define SATA_SATAICFG_TARGETMODE	(1 < 10)	/* 1 = Initiator */
-#define SATA_SATAICFG_COMCHANNEL	(1 < 11)
-#define SATA_SATAICFG_IGNOREBSY		(1 < 24)
-#define SATA_SATAICFG_LINKRSTEN		(1 < 25)
-#define SATA_SATAICFG_CMDRETXDS		(1 < 26)
+#define SATA_SATAICFG_REFCLKCNF_20MHZ	(0 << 0)
+#define SATA_SATAICFG_REFCLKCNF_25MHZ	(1 << 0)
+#define SATA_SATAICFG_REFCLKCNF_30MHZ	(2 << 0)
+#define SATA_SATAICFG_REFCLKCNF_40MHZ	(3 << 0)
+#define SATA_SATAICFG_REFCLKCNF_MASK	(3 << 0)
+#define SATA_SATAICFG_REFCLKDIV_1	(0 << 2)
+#define SATA_SATAICFG_REFCLKDIV_2	(1 << 2)	/* Used 20 or 25MHz */
+#define SATA_SATAICFG_REFCLKDIV_4	(2 << 2)	/* Used 40MHz */
+#define SATA_SATAICFG_REFCLKDIV_3	(3 << 2)	/* Used 30MHz */
+#define SATA_SATAICFG_REFCLKDIV_MASK	(3 << 2)
+#define SATA_SATAICFG_REFCLKFEEDDIV_50	(0 << 4)	/* or 100, when Gen2En is 1 */
+#define SATA_SATAICFG_REFCLKFEEDDIV_60	(1 << 4)	/* or 120. Used 25MHz */
+#define SATA_SATAICFG_REFCLKFEEDDIV_75	(2 << 4)	/* or 150. Used 20MHz */
+#define SATA_SATAICFG_REFCLKFEEDDIV_90	(3 << 4)	/* or 180 */
+#define SATA_SATAICFG_REFCLKFEEDDIV_MASK (3 << 4)
+#define SATA_SATAICFG_PHYSSCEN		(1 << 6)
+#define SATA_SATAICFG_GEN2EN		(1 << 7)
+#define SATA_SATAICFG_COMMEN		(1 << 8)
+#define SATA_SATAICFG_PHYSHUTDOWN	(1 << 9)
+#define SATA_SATAICFG_TARGETMODE	(1 << 10)	/* 1 = Initiator */
+#define SATA_SATAICFG_COMCHANNEL	(1 << 11)
+#define SATA_SATAICFG_IGNOREBSY		(1 << 24)
+#define SATA_SATAICFG_LINKRSTEN		(1 << 25)
+#define SATA_SATAICFG_CMDRETXDS		(1 << 26)
 #define SATA_SATAICTL		0x344	/* Serial-ATA Interface Control */
 #define SATA_SATAITC		0x348	/* Serial-ATA Interface Test Control */
 #define SATA_SATAIS		0x34c	/* Serial-ATA Interface Status */
@@ -254,7 +254,7 @@ struct crqb {
 	uint32_t cprdbh;	/* cPRD Desriptor Table Base High Address */
 	uint16_t ctrlflg;	/* Control Flags */
 	uint16_t atacommand[11];
-} __packed;
+} __packed __aligned(8);
 
 struct crqb_gen2e {
 	uint32_t cprdbl;	/* cPRD Desriptor Table Base Low Address */
@@ -262,7 +262,7 @@ struct crqb_gen2e {
 	uint32_t ctrlflg;	/* Control Flags */
 	uint32_t drbc;		/* Data Region Byte Count */
 	uint32_t atacommand[4];
-} __packed;
+} __packed __aligned(8);
 
 
 #define CRQB_CRQBL_EPRD_MASK	0xfffffff0
@@ -301,7 +301,7 @@ struct eprd {
 	uint16_t eot;		/* End Of Table */
 	uint32_t prdbah;	/* address bits[63:32] */
 	uint32_t resv;
-} __packed;
+} __packed __aligned(8);
 
 #define EPRD_PRDBAL_MASK	0xfffffffe	/* phy memory region mask */
 
@@ -314,7 +314,7 @@ struct crpb {
 	uint16_t id;		/* CRPB ID */
 	uint16_t rspflg;	/* CPRB Response Flags */
 	uint32_t ts;		/* CPRB Time Stamp */
-} __packed;
+} __packed __aligned(8);
 
 /* ID */
 #define CRPB_CHOSTQUETAG(x)	(((x) >> 0) & 0x7f)	/* CRPB Host Q Tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.41.12.1 2012/04/17 00:08:10 yamt Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.41.12.2 2012/10/30 17:22:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -84,6 +84,12 @@ usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
 
 void usb_detach_waitold(device_t);
 void usb_detach_wakeupold(device_t);
+
+/*
+ * MPSAFE versions - mutex must be at IPL_USB.
+ */
+void usb_detach_wait(device_t dv, kcondvar_t *, kmutex_t *);
+void usb_detach_broadcast(device_t, kcondvar_t *);
 
 
 typedef struct {

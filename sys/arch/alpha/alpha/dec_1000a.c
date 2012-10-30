@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.31.2.1 2012/04/17 00:05:53 yamt Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.31.2.2 2012/10/30 17:18:39 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.31.2.1 2012/04/17 00:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.31.2.2 2012/10/30 17:18:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ dec_1000a_cons_init(void)
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(iot, IO_KBD, KBCMDP, PCKBC_KBD_SLOT, 0);
 
 		/*
 		 * AlphaServer 1000s have a firmware bug whereby the

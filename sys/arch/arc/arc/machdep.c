@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124.2.1 2012/10/30 17:18:52 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124.2.1 2012/10/30 17:18:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -121,14 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2011/07/01 19:28:00 dyoung Exp $")
 #endif
 #endif /* NCOM */
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
 /* maps for VM objects */
 struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
 int	cpuspeed = 150;		/* approx CPU clock [MHz] */
 vsize_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.5.4.1 2012/04/17 00:07:41 yamt Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.5.4.2 2012/10/30 17:21:18 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.5.4.1 2012/04/17 00:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.5.4.2 2012/10/30 17:21:18 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -586,7 +586,7 @@ mvpex_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 /* ARGSUSED */
 int
-mvpex_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
+mvpex_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
 
 	if (bus == 0 && dev == 0)	/* don't configure GT */

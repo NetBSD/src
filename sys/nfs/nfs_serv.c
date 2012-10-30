@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.161.2.1 2012/04/17 00:08:47 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.161.2.2 2012/10/30 17:22:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.161.2.1 2012/04/17 00:08:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.161.2.2 2012/10/30 17:22:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ nfsserver_modcmd(modcmd_t cmd, void *arg)
 
 		/* Server uses server cache, so kill cache last. */
 		nfsrv_finicache();
+		nfs_fini();
 		return 0;
 	default:
 		return ENOTTY;
@@ -1931,6 +1932,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			VOP_UNLOCK(fdirp);
 	}
 	if (error) {
+		fromnd.ni_cnd.cn_nameiop = 0;
 		nfsm_reply(2 * NFSX_WCCDATA(v3));
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);

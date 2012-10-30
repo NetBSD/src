@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_pci.c,v 1.20 2011/07/26 20:51:24 dyoung Exp $ */
+/* $NetBSD: if_rtw_pci.c,v 1.20.2.1 2012/10/30 17:21:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.20 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.20.2.1 2012/10/30 17:21:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,14 +136,23 @@ static const struct rtw_pci_product {
 	u_int32_t	rpp_product;	/* PCI product ID */
 	const char	*rpp_product_name;
 } rtw_pci_products[] = {
-	  {PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
-	   "Realtek RTL8180 802.11 MAC/BBP"}
-	, {PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001, "Belkin F5D6001"}
-	, {PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
-	   "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)"}
-	, {PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610,
-	   "DWL-610 D-Link Air 802.11b (RTL8180 MAC/BBP)"}
-	, {0, 0, NULL}
+	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180,
+	  "Realtek RTL8180 802.11 MAC/BBP" },
+#ifdef RTW_DEBUG
+#if 0   /* These came from openbsd, netbsd doesn't have the definitions. */
+	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8185,
+	  "Realtek RTL8185 802.11 MAC/BBP" },
+	{ PCI_VENDOR_BELKIN2,		PCI_PRODUCT_BELKIN2_F5D7010,
+	  "Belkin F5D7010" },
+#endif
+#endif
+	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6001,
+	  "Belkin F5D6001" },
+	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6020V3,
+	  "Belkin F5D6020v3" },
+	{PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610,
+	  "DWL-610 D-Link Air 802.11b (RTL8180 MAC/BBP)"},
+	{ 0,				0,				NULL },
 };
 
 static const struct rtw_pci_product *

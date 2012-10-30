@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubusvar.h,v 1.2.40.1 2012/04/17 00:06:37 yamt Exp $	*/
+/*	$NetBSD: cpi_nubusvar.h,v 1.2.40.2 2012/10/30 17:19:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -76,8 +76,6 @@ enum cpi_cf_flags {
 #define CPI_OPTIONS_MASK	(CPI_CTC12_IS_TIMECOUNTER)
 
 struct cpi_softc {
-        struct device  		sc_dev;
-
 	nubus_slot		sc_slot;	/* Nubus slot number */
 	char			sc_cardname[CPI_CARD_NAME_LEN];
 

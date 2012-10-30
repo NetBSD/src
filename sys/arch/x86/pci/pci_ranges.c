@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.3 2011/10/18 23:30:54 dyoung Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.3.2.1 2012/10/30 17:20:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.3 2011/10/18 23:30:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.3.2.1 2012/10/30 17:20:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -999,7 +999,7 @@ device_pci_props_register(device_t dev, void *aux)
 #if 0
 	aprint_normal_dev(dev, "is%s a pci, parent %p, cf %p, ifattr %s\n",
 	    device_is_a(dev, "pci") ? "" : " not",
-	    (const void *)device_parent(dev),
+	    device_parent(dev),
 	    cf,
 	    cf != NULL ? cfdata_ifattr(cf) : "");
 #endif

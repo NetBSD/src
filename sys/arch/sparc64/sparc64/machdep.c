@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.2 2012/05/23 10:07:49 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.262.2.3 2012/10/30 17:20:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.2 2012/05/23 10:07:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262.2.3 2012/10/30 17:20:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -157,8 +157,6 @@ static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 #endif
 
-int	physmem;
-
 extern	void *msgbufaddr;
 
 /*
@@ -168,12 +166,6 @@ extern	void *msgbufaddr;
 #ifndef MAX_DMA_SEGS
 #define MAX_DMA_SEGS	20
 #endif
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int   safepri = 0;
 
 void	dumpsys(void);
 void	stackdump(void);
@@ -2500,7 +2492,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		gr[_REG_nPC] = ras_pc + 4;
 	}
 
-	*flags |= _UC_CPU;
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 	mcp->__gwins = NULL;
 
@@ -2589,7 +2581,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_global[4] = (uint64_t)gr[_REG_G4];
 		tf->tf_global[5] = (uint64_t)gr[_REG_G5];
 		tf->tf_global[6] = (uint64_t)gr[_REG_G6];
-		tf->tf_global[7] = (uint64_t)gr[_REG_G7];
+		/* done in lwp_setprivate */
+		/* tf->tf_global[7] = (uint64_t)gr[_REG_G7]; */
 		tf->tf_out[0]    = (uint64_t)gr[_REG_O0];
 		tf->tf_out[1]    = (uint64_t)gr[_REG_O1];
 		tf->tf_out[2]    = (uint64_t)gr[_REG_O2];
@@ -2601,6 +2594,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		/* %asi restored above; %fprs not yet supported. */
 
 		/* XXX mcp->__gwins */
+
+		if (flags & _UC_TLSBASE)
+			lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_G7]);
 	}
 
 	/* Restore FP register context, if any. */
