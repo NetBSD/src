@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.17 2012/10/30 20:02:15 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.18 2012/10/30 20:14:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.17 2012/10/30 20:02:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.18 2012/10/30 20:14:22 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -39,12 +39,15 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.17 2012/10/30 20:02:15 skrll Exp $
 #include <sys/termios.h>
 #include <sys/bus.h>
 
+#include <prop/proplib.h>
+
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <arm/arm32/machdep.h>
 
+#include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/bootconfig.h>
 #include <machine/pmap.h>
@@ -75,6 +78,7 @@ static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
 static void rpi_bootparams(void);
+static void rpi_device_register(device_t, void *);
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -125,6 +129,7 @@ static struct {
 	struct vcprop_tag_memory	vbt_memory;
 	struct vcprop_tag_boardserial	vbt_serial;
 	struct vcprop_tag_cmdline	vbt_cmdline;
+	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag end;
 } vb __packed __aligned(16) =
 {
@@ -180,6 +185,14 @@ static struct {
 			.vpt_len = VCPROPTAG_LEN(vb.vbt_cmdline),
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
+	},
+	.vbt_emmcclockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_emmcclockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_EMMC
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -344,6 +357,9 @@ initarm(void *arg)
 	boothowto |= BOOTHOWTO;
 #endif
 
+	/* we've a specific device_register routine */
+	evbarm_device_register = rpi_device_register;
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
 
@@ -377,3 +393,15 @@ consinit(void)
 #endif
 }
 
+
+static void
+rpi_device_register(device_t dev, void *aux)
+{
+	prop_dictionary_t dict = device_properties(dev);
+
+	if (device_is_a(dev, "sdhc") &&
+	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag)) {
+		prop_dictionary_set_uint32(dict,
+		    "frequency", vb.vbt_emmcclockrate.rate);
+	}
+}
