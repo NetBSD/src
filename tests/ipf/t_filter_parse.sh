@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_parse.sh,v 1.2.6.1 2012/04/17 00:09:04 yamt Exp $
+# $NetBSD: t_filter_parse.sh,v 1.2.6.2 2012/10/30 18:59:54 yamt Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,6 +104,8 @@ test_case i18 itest text ipf
 test_case i19 itest_i19 text ipf
 test_case i20 itest text ipf
 test_case i21 itest text ipf
+test_case i22 itest text ipf
+test_case i23 itest text ipf
 
 atf_init_test_cases()
 {
@@ -128,4 +130,6 @@ atf_init_test_cases()
 	atf_add_test_case i19
 	atf_add_test_case i20
 	atf_add_test_case i21
+	atf_add_test_case i22
+	atf_add_test_case i23
 }

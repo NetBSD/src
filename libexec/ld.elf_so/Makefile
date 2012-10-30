@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110.2.1 2012/04/17 00:05:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.110.2.2 2012/10/30 18:59:22 yamt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -43,7 +43,7 @@ LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
 
-CFLAGS+=	-fvisibility=hidden
+COPTS+=		-fvisibility=hidden
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
@@ -92,10 +92,10 @@ CPPFLAGS+=	-DCOMBRELOC
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
 #DBG=		-g
-DBG=		-O3 -fomit-frame-pointer
+COPTS=		-O3 -fomit-frame-pointer
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-DBG+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
+COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3
 .endif
 
 

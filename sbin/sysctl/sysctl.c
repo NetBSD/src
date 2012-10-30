@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.138.2.1 2012/04/17 00:05:43 yamt Exp $ */
+/*	$NetBSD: sysctl.c,v 1.138.2.2 2012/10/30 18:59:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.138.2.1 2012/04/17 00:05:43 yamt Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.138.2.2 2012/10/30 18:59:32 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1177,6 +1177,9 @@ parse_create(char *l)
 				case 'p':
 					flags |= CTLFLAG_PRIVATE;
 					break;
+				case 'u':
+					flags |= CTLFLAG_UNSIGNED;
+					break;
 				case 'x':
 					flags |= CTLFLAG_HEX;
 					break;
@@ -1887,6 +1890,8 @@ display_number(const struct sysctlnode *node, const char *name,
 			printf("0x%0*x", (int)sz * 2, i);
 		else if (node->sysctl_flags & CTLFLAG_HEX)
 			printf("%#x", i);
+		else if (node->sysctl_flags & CTLFLAG_UNSIGNED)
+			printf("%u", i);
 		else
 			printf("%d", i);
 		break;
@@ -1905,6 +1910,8 @@ display_number(const struct sysctlnode *node, const char *name,
 			printf("0x%0*" PRIx64, (int)sz * 2, q);
 		else if (node->sysctl_flags & CTLFLAG_HEX)
 			printf("%#" PRIx64, q);
+		else if (node->sysctl_flags & CTLFLAG_UNSIGNED)
+			printf("%" PRIu64, q);
 		else
 			printf("%" PRIu64, q);
 		break;

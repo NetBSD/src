@@ -1,6 +1,6 @@
-/*	$NetBSD: crtbegin.S,v 1.1.4.2 2012/04/17 00:05:11 yamt Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.1.4.3 2012/10/30 18:58:37 yamt Exp $	*/
 /*-
- * Copyright (c) 2010 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2012 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1.4.2 2012/04/17 00:05:11 yamt Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.1.4.3 2012/10/30 18:58:37 yamt Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2

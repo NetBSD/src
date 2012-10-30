@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hash,v 1.4.2.2 2011/11/10 14:31:37 yamt Exp $
+#	$NetBSD: Makefile.hash,v 1.4.2.3 2012/10/30 18:59:18 yamt Exp $
 
 SCRIPT_ENV=	\
 	TOOL_AWK=${TOOL_AWK:Q} \
@@ -21,6 +21,10 @@ termcap_hash.c: genthash termcap_map.c
 compiled_terms.c: genterms term.h ${NETBSDSRCDIR}/share/terminfo/terminfo
 		@echo "Generating compiled terminfo descriptions"
 		${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} > ${.TARGET}
+
+.if ${USETOOLS} == "yes"
+compiled_terms.c: ${TOOL_TIC}
+.endif
 
 DPSRCS+=	hash.c termcap_hash.c compiled_terms.c
 

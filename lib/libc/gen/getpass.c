@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.16.28.2 2012/05/23 10:07:30 yamt Exp $	*/
+/*	$NetBSD: getpass.c,v 1.16.28.3 2012/10/30 18:58:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.16.28.2 2012/05/23 10:07:30 yamt Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.16.28.3 2012/10/30 18:58:46 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -319,7 +319,7 @@ out:
 char *
 getpass_r(const char *prompt, char *buf, size_t len)
 {
-	return getpassfd(prompt, buf, len, NULL, 0, 0);
+	return getpassfd(prompt, buf, len, NULL, GETPASS_ECHO_NL, 0);
 }
 
 char *

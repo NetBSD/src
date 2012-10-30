@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.34.6.1 2012/05/23 10:08:25 yamt Exp $	*/
+/*	$NetBSD: fio.c,v 1.34.6.2 2012/10/30 19:00:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.34.6.1 2012/05/23 10:08:25 yamt Exp $");
+__RCSID("$NetBSD: fio.c,v 1.34.6.2 2012/10/30 19:00:20 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -440,7 +440,7 @@ expand(const char *name)
 		if (name[1] != 0)
 			break;
 		if (prevfile[0] == 0) {
-			(void)printf("No previous file\n");
+			warnx("No previous file");
 			return NULL;
 		}
 		return savestr(prevfile);

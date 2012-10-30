@@ -1,4 +1,4 @@
-/*	$NetBSD: confstr.c,v 1.12 2006/12/03 00:39:19 christos Exp $	*/
+/*	$NetBSD: confstr.c,v 1.12.36.1 2012/10/30 18:58:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)confstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: confstr.c,v 1.12 2006/12/03 00:39:19 christos Exp $");
+__RCSID("$NetBSD: confstr.c,v 1.12.36.1 2012/10/30 18:58:45 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,7 @@ __weak_alias(confstr,_confstr)
 #endif
 
 size_t
-confstr(name, buf, len)
-	int name;
-	char *buf;
-	size_t len;
+confstr(int name, char *buf, size_t len)
 {
 	size_t tlen;
 	int mib[2], sverrno;

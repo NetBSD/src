@@ -1,4 +1,4 @@
-/*	$NetBSD: valloc.c,v 1.10 2003/08/07 16:42:59 agc Exp $	*/
+/*	$NetBSD: valloc.c,v 1.10.56.1 2012/10/30 18:58:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)valloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: valloc.c,v 1.10 2003/08/07 16:42:59 agc Exp $");
+__RCSID("$NetBSD: valloc.c,v 1.10.56.1 2012/10/30 18:58:49 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,8 +47,7 @@ __weak_alias(valloc,_valloc)
 #endif
 
 void *
-valloc(i)
-	size_t i;
+valloc(size_t i)
 {
 	long valsiz = getpagesize(), j;
 	void *cp = malloc((size_t)(i + (valsiz-1)));

@@ -1,4 +1,4 @@
-/* $NetBSD: crtn.S,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: crtn.S,v 1.1.6.1 2012/10/30 18:58:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,10 +35,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crtn.S,v 1.1 2010/08/07 18:01:33 joerg Exp $")
+RCSID("$NetBSD: crtn.S,v 1.1.6.1 2012/10/30 18:58:35 yamt Exp $")
 
-	.section ".init", "ax", @progbits
+	.section ".init", "ax", %progbits
 	ldmea	fp, {fp, sp, pc}
 
-	.section ".fini", "ax", @progbits
+	.section ".fini", "ax", %progbits
 	ldmea	fp, {fp, sp, pc}

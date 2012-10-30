@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.15.4.1 2012/04/17 00:05:33 yamt Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.15.4.2 2012/10/30 18:59:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -25,30 +25,24 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "rumpuser_port.h"
+
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.15.4.1 2012/04/17 00:05:33 yamt Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.15.4.2 2012/10/30 18:59:17 yamt Exp $");
 #endif /* !lint */
 
-/* thank the maker for this */
-#ifdef __linux__
-#define _XOPEN_SOURCE 500
-#define _BSD_SOURCE
-#define _FILE_OFFSET_BITS 64
-#include <features.h>
-#endif
-
-#include <sys/param.h>
-#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
 #ifdef __NetBSD__
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/sysctl.h>
+#include <sys/event.h>
 #endif
 
 #include <assert.h>
@@ -70,7 +64,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.15.4.1 2012/04/17 00:05:33 yamt Exp $");
 #include "rumpuser_int.h"
 
 int
-rumpuser_getversion()
+rumpuser_getversion(void)
 {
 
 	return RUMPUSER_VERSION;
@@ -256,10 +250,16 @@ rumpuser_anonmmap(void *prefaddr, size_t size, int alignbit,
 	void *rv;
 	int prot;
 
+#ifndef MAP_ALIGNED
+#define MAP_ALIGNED(a) 0
+	if (alignbit)
+		fprintf(stderr, "rumpuser_anonmmap: warning, requested "
+		    "alignment not supported by hypervisor\n");
+#endif
+
 	prot = PROT_READ|PROT_WRITE;
 	if (exec)
 		prot |= PROT_EXEC;
-	/* XXX: MAP_ALIGNED() is not portable */
 	rv = mmap(prefaddr, size, prot,
 	    MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
 	if (rv == MAP_FAILED) {
@@ -317,10 +317,32 @@ rumpuser_memsync(void *addr, size_t len, int *error)
 }
 
 int
-rumpuser_open(const char *path, int flags, int *error)
+rumpuser_open(const char *path, int ruflags, int *error)
 {
+	int flags;
 
-	DOCALL(int, (open(path, flags, 0644)));
+	switch (ruflags & RUMPUSER_OPEN_ACCMODE) {
+	case RUMPUSER_OPEN_RDONLY:
+		flags = O_RDONLY;
+		break;
+	case RUMPUSER_OPEN_WRONLY:
+		flags = O_WRONLY;
+		break;
+	case RUMPUSER_OPEN_RDWR:
+		flags = O_RDWR;
+		break;
+	default:
+		*error = EINVAL;
+		return -1;
+	}
+
+#define TESTSET(_ru_, _h_) if (ruflags & _ru_) flags |= _h_;
+	TESTSET(RUMPUSER_OPEN_CREATE, O_CREAT);
+	TESTSET(RUMPUSER_OPEN_EXCL, O_EXCL);
+	TESTSET(RUMPUSER_OPEN_DIRECT, O_DIRECT);
+#undef TESTSET
+
+	DOCALL_KLOCK(int, (open(path, flags, 0644)));
 }
 
 int
@@ -550,6 +572,13 @@ rumpuser_seterrno(int error)
 	errno = error;
 }
 
+/*
+ * On NetBSD we use kqueue, on Linux we use inotify.  The underlying
+ * interface requirements aren't quite the same, but we have a very
+ * good chance of doing the fd->path mapping on Linux thanks to dcache,
+ * so just keep the existing interfaces for now.
+ */
+#if defined(__NetBSD__)
 int
 rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
 {
@@ -593,6 +622,63 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	return rv;
 }
 
+#elif defined(__linux__)
+#include <sys/inotify.h>
+
+int
+rumpuser_writewatchfile_setup(int inotify, int fd, intptr_t notused, int *error)
+{
+	char procbuf[PATH_MAX], linkbuf[PATH_MAX];
+	ssize_t nn;
+
+	if (inotify == -1) {
+		inotify = inotify_init();
+		if (inotify == -1) {
+			seterror(errno);
+			return -1;
+		}
+	}
+
+	/* ok, need to map fd into path for inotify */
+	snprintf(procbuf, sizeof(procbuf), "/proc/self/fd/%d", fd);
+	nn = readlink(procbuf, linkbuf, sizeof(linkbuf));
+	if (nn >= (ssize_t)sizeof(linkbuf)) {
+		nn = -1;
+		errno = E2BIG; /* pick something */
+	}
+	if (nn == -1) {
+		seterror(errno);
+		close(inotify);
+		return -1;
+	}
+
+	if (inotify_add_watch(inotify, linkbuf, IN_MODIFY) == -1) {
+		seterror(errno);
+		close(inotify);
+		return -1;
+	}
+
+	return inotify;
+}
+
+int
+rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
+{
+	struct inotify_event iev;
+	ssize_t nn;
+
+	do {
+		KLOCK_WRAP(nn = read(kq, &iev, sizeof(iev)));
+	} while (errno == EINTR);
+
+	if (nn == -1) {
+		seterror(errno);
+		return -1;
+	}
+	return (nn/sizeof(iev));
+}
+#endif
+
 /*
  * This is meant for safe debugging prints from the kernel.
  */
@@ -629,20 +715,39 @@ rumpuser_kill(int64_t pid, int sig, int *error)
 int
 rumpuser_getnhostcpu(void)
 {
-	int ncpu;
-	size_t sz = sizeof(ncpu);
+	int ncpu = 1;
 
 #ifdef __NetBSD__
-	if (sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0) == -1)
-		return 1;
-	return ncpu;
-#else
-	return 1;
+	size_t sz = sizeof(ncpu);
+
+	sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0);
+#elif __linux__
+	FILE *fp;
+	char *line = NULL;
+	size_t n = 0;
+
+	/* If anyone knows a better way, I'm all ears */
+	if ((fp = fopen("/proc/cpuinfo", "r")) != NULL) {
+		ncpu = 0;
+		while (getline(&line, &n, fp) != -1) {
+			if (strncmp(line,
+			    "processor", sizeof("processor")-1) == 0)
+			    	ncpu++;
+		}
+		if (ncpu == 0)
+			ncpu = 1;
+		free(line);
+		fclose(fp);
+	}
 #endif
+	
+	return ncpu;
 }
 
+/* XXX: this hypercall needs a better name */
 uint32_t
 rumpuser_arc4random(void)
 {
+
 	return arc4random();
 }

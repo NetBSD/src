@@ -1,4 +1,4 @@
-/*	$NetBSD: llabs.c,v 1.3 2003/08/07 16:43:41 agc Exp $	*/
+/*	$NetBSD: llabs.c,v 1.3.56.1 2012/10/30 18:58:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)labs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: llabs.c,v 1.3 2003/08/07 16:43:41 agc Exp $");
+__RCSID("$NetBSD: llabs.c,v 1.3.56.1 2012/10/30 18:58:59 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,8 +47,7 @@ __weak_alias(llabs, _llabs)
 
 /* LONGLONG */
 long long int
-llabs(j)
-	long long int j;
+llabs(long long int j)
 {
 	return (j < 0 ? -j : j);
 }

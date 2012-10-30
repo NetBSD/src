@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.90.4.2 2012/05/23 10:07:33 yamt Exp $	*/
+/*      $NetBSD: hijack.c,v 1.90.4.3 2012/10/30 18:59:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -28,22 +28,29 @@
 /* Disable namespace mangling, Fortification is useless here anyway. */
 #undef _FORTIFY_SOURCE
 
+#include "rumpuser_port.h"
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hijack.c,v 1.90.4.2 2012/05/23 10:07:33 yamt Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.90.4.3 2012/10/30 18:59:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/quotactl.h>
+#include <sys/time.h>
 
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
+#ifdef PLATFORM_HAS_KQUEUE
+#include <sys/event.h>
+#endif
+
+#ifdef PLATFORM_HAS_NBQUOTA
+#include <sys/quotactl.h>
+#endif
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -55,14 +62,23 @@ __RCSID("$NetBSD: hijack.c,v 1.90.4.2 2012/05/23 10:07:33 yamt Exp $");
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <rump/rumpclient.h>
+#include <rump/rump_syscalls.h>
+
 #include "hijack.h"
 
+/*
+ * XXX: Consider autogenerating this, syscnames[] and syscalls[] with
+ * a DSL where the tool also checks the symbols exported by this library
+ * to make sure all relevant calls are accounted for.
+ */
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
@@ -76,30 +92,66 @@ enum dualcall {
 	DUALCALL_DUP2,
 	DUALCALL_CLOSE,
 	DUALCALL_POLLTS,
-	DUALCALL_KEVENT,
+
+#ifndef __linux__
 	DUALCALL_STAT, DUALCALL_LSTAT, DUALCALL_FSTAT,
+#endif
+
 	DUALCALL_CHMOD, DUALCALL_LCHMOD, DUALCALL_FCHMOD,
 	DUALCALL_CHOWN, DUALCALL_LCHOWN, DUALCALL_FCHOWN,
 	DUALCALL_OPEN,
-	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1,
 	DUALCALL_CHDIR, DUALCALL_FCHDIR,
 	DUALCALL_LSEEK,
-	DUALCALL_GETDENTS,
 	DUALCALL_UNLINK, DUALCALL_SYMLINK, DUALCALL_READLINK,
-	DUALCALL_RENAME,
+	DUALCALL_LINK, DUALCALL_RENAME,
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
-	DUALCALL_FSYNC, DUALCALL_FSYNC_RANGE,
-	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
-	DUALCALL___GETCWD,
-	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
+	DUALCALL_FSYNC,
 	DUALCALL_ACCESS,
+
+#ifndef __linux__
+	DUALCALL___GETCWD,
+	DUALCALL_GETDENTS,
+#endif
+
+#ifndef __linux__
 	DUALCALL_MKNOD,
-	DUALCALL___SYSCTL,
-	DUALCALL_GETVFSSTAT, DUALCALL_NFSSVC,
+#endif
+
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
-#if __NetBSD_Prereq__(5,99,48)
+#endif
+
+#ifdef PLATFORM_HAS_KQUEUE
+	DUALCALL_KEVENT,
+#endif
+
+#ifdef PLATFORM_HAS_NBSYSCTL
+	DUALCALL___SYSCTL,
+#endif
+
+#ifdef PLATFORM_HAS_NFSSVC
+	DUALCALL_NFSSVC,
+#endif
+
+#ifdef PLATFORM_HAS_NBVFSSTAT
+	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1, DUALCALL_GETVFSSTAT, 
+#endif
+
+#ifdef PLATFORM_HAS_NBMOUNT
+	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
+#endif
+
+#ifdef PLATFORM_HAS_FSYNC_RANGE
+	DUALCALL_FSYNC_RANGE,
+#endif
+
+#ifdef PLATFORM_HAS_CHFLAGS
+	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
+#endif
+
+#ifdef PLATFORM_HAS_NBQUOTA
 	DUALCALL_QUOTACTL,
 #endif
 	DUALCALL__NUM
@@ -110,8 +162,11 @@ enum dualcall {
 
 /*
  * Would be nice to get this automatically in sync with libc.
- * Also, this does not work for compat-using binaries!
+ * Also, this does not work for compat-using binaries (we should
+ * provide all previous interfaces, not just the current ones)
  */
+#if defined(__NetBSD__)
+
 #if !__NetBSD_Prereq__(5,99,7)
 #define REALSELECT select
 #define REALPOLLTS pollts
@@ -124,7 +179,7 @@ enum dualcall {
 #define REALFUTIMES futimes
 #define REALMKNOD mknod
 #define REALFHSTAT __fhstat40
-#else
+#else /* >= 5.99.7 */
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #define REALKEVENT _sys___kevent50
@@ -136,7 +191,8 @@ enum dualcall {
 #define REALFUTIMES __futimes50
 #define REALMKNOD __mknod50
 #define REALFHSTAT __fhstat50
-#endif
+#endif /* < 5.99.7 */
+
 #define REALREAD _sys_read
 #define REALPREAD _sys_pread
 #define REALPWRITE _sys_pwrite
@@ -146,6 +202,37 @@ enum dualcall {
 #define REALFHOPEN __fhopen40
 #define REALFHSTATVFS1 __fhstatvfs140
 #define OLDREALQUOTACTL __quotactl50	/* 5.99.48-62 only */
+#define REALSOCKET __socket30
+
+#define LSEEK_ALIAS _lseek
+#define VFORK __vfork14
+
+int REALSTAT(const char *, struct stat *);
+int REALLSTAT(const char *, struct stat *);
+int REALFSTAT(int, struct stat *);
+int REALMKNOD(const char *, mode_t, dev_t);
+int REALGETDENTS(int, char *, size_t);
+
+int __getcwd(char *, size_t);
+
+#elif defined(__linux__) /* glibc, really */
+
+#define REALREAD read
+#define REALPREAD pread
+#define REALPWRITE pwrite
+#define REALSELECT select
+#define REALPOLLTS ppoll
+#define REALUTIMES utimes
+#define REALLUTIMES lutimes
+#define REALFUTIMES futimes
+#define REALFHSTAT fhstat
+#define REALSOCKET socket
+
+#else /* !NetBSD && !linux */
+
+#error platform not supported
+
+#endif /* platform */
 
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
@@ -155,21 +242,19 @@ int REALKEVENT(int, const struct kevent *, size_t, struct kevent *, size_t,
 ssize_t REALREAD(int, void *, size_t);
 ssize_t REALPREAD(int, void *, size_t, off_t);
 ssize_t REALPWRITE(int, const void *, size_t, off_t);
-int REALSTAT(const char *, struct stat *);
-int REALLSTAT(const char *, struct stat *);
-int REALFSTAT(int, struct stat *);
-int REALGETDENTS(int, char *, size_t);
 int REALUTIMES(const char *, const struct timeval [2]);
 int REALLUTIMES(const char *, const struct timeval [2]);
 int REALFUTIMES(int, const struct timeval [2]);
 int REALMOUNT(const char *, const char *, int, void *, size_t);
-int __getcwd(char *, size_t);
-int REALMKNOD(const char *, mode_t, dev_t);
 int REALGETFH(const char *, void *, size_t *);
 int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
+int REALSOCKET(int, int, int);
+
+#ifdef PLATFORM_HAS_NBQUOTA
 int OLDREALQUOTACTL(const char *, struct plistref *);
+#endif
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -177,7 +262,7 @@ struct sysnames {
 	const char *scm_hostname;
 	const char *scm_rumpname;
 } syscnames[] = {
-	{ DUALCALL_SOCKET,	"__socket30",	RSYS_NAME(SOCKET)	},
+	{ DUALCALL_SOCKET,	S(REALSOCKET),	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
 	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
@@ -204,10 +289,11 @@ struct sysnames {
 	{ DUALCALL_DUP2,	"dup2",		RSYS_NAME(DUP2)		},
 	{ DUALCALL_CLOSE,	"close",	RSYS_NAME(CLOSE)	},
 	{ DUALCALL_POLLTS,	S(REALPOLLTS),	RSYS_NAME(POLLTS)	},
-	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+#ifndef __linux__
 	{ DUALCALL_STAT,	S(REALSTAT),	RSYS_NAME(STAT)		},
 	{ DUALCALL_LSTAT,	S(REALLSTAT),	RSYS_NAME(LSTAT)	},
 	{ DUALCALL_FSTAT,	S(REALFSTAT),	RSYS_NAME(FSTAT)	},
+#endif
 	{ DUALCALL_CHOWN,	"chown",	RSYS_NAME(CHOWN)	},
 	{ DUALCALL_LCHOWN,	"lchown",	RSYS_NAME(LCHOWN)	},
 	{ DUALCALL_FCHOWN,	"fchown",	RSYS_NAME(FCHOWN)	},
@@ -218,42 +304,78 @@ struct sysnames {
 	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
 	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
 	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
-	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
-	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
 	{ DUALCALL_LSEEK,	"lseek",	RSYS_NAME(LSEEK)	},
-	{ DUALCALL_GETDENTS,	"__getdents30",	RSYS_NAME(GETDENTS)	},
 	{ DUALCALL_UNLINK,	"unlink",	RSYS_NAME(UNLINK)	},
 	{ DUALCALL_SYMLINK,	"symlink",	RSYS_NAME(SYMLINK)	},
 	{ DUALCALL_READLINK,	"readlink",	RSYS_NAME(READLINK)	},
+	{ DUALCALL_LINK,	"link",		RSYS_NAME(LINK)		},
 	{ DUALCALL_RENAME,	"rename",	RSYS_NAME(RENAME)	},
 	{ DUALCALL_MKDIR,	"mkdir",	RSYS_NAME(MKDIR)	},
 	{ DUALCALL_RMDIR,	"rmdir",	RSYS_NAME(RMDIR)	},
 	{ DUALCALL_TRUNCATE,	"truncate",	RSYS_NAME(TRUNCATE)	},
 	{ DUALCALL_FTRUNCATE,	"ftruncate",	RSYS_NAME(FTRUNCATE)	},
 	{ DUALCALL_FSYNC,	"fsync",	RSYS_NAME(FSYNC)	},
-	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
+	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
+
+#ifndef __linux__
+	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+	{ DUALCALL_GETDENTS,	S(REALGETDENTS),RSYS_NAME(GETDENTS)	},
+#endif
+
+#ifndef __linux__
+	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBFILEHANDLE
+	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
+	{ DUALCALL_FHOPEN,	S(REALFHOPEN),	RSYS_NAME(FHOPEN)	},
+	{ DUALCALL_FHSTAT,	S(REALFHSTAT),	RSYS_NAME(FHSTAT)	},
+	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
+#endif
+
+#ifdef PLATFORM_HAS_KQUEUE
+	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBSYSCTL
+	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
+#endif
+
+#ifdef PLATFORM_HAS_NFSSVC
+	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBVFSSTAT
+	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
+	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
+	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
+#endif
+
+#ifdef PLATFORM_HAS_NBMOUNT
 	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
 	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
-	{ DUALCALL___GETCWD,	"__getcwd",	RSYS_NAME(__GETCWD)	},
+#endif
+
+#ifdef PLATFORM_HAS_FSYNC_RANGE
+	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
+#endif
+
+#ifdef PLATFORM_HAS_CHFLAGS
 	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
 	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
 	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
-	{ DUALCALL_ACCESS,	"access",	RSYS_NAME(ACCESS)	},
-	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
-	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
-	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
-	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
-	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
-	{ DUALCALL_FHOPEN,	S(REALFHOPEN),RSYS_NAME(FHOPEN)		},
-	{ DUALCALL_FHSTAT,	S(REALFHSTAT),RSYS_NAME(FHSTAT)		},
-	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
+#endif /* PLATFORM_HAS_CHFLAGS */
+
+#ifdef PLATFORM_HAS_NBQUOTA
 #if __NetBSD_Prereq__(5,99,63)
 	{ DUALCALL_QUOTACTL,	"__quotactl",	RSYS_NAME(__QUOTACTL)	},
 #elif __NetBSD_Prereq__(5,99,48)
 	{ DUALCALL_QUOTACTL,	S(OLDREALQUOTACTL),RSYS_NAME(QUOTACTL)	},
 #endif
+#endif /* PLATFORM_HAS_NBQUOTA */
+
 };
 #undef S
 
@@ -468,7 +590,9 @@ static struct {
 } socketmap[] = {
 	{ PF_LOCAL, "local" },
 	{ PF_INET, "inet" },
+#ifdef PF_LINK
 	{ PF_LINK, "link" },
+#endif
 #ifdef PF_OROUTE
 	{ PF_OROUTE, "oroute" },
 #endif
@@ -483,7 +607,7 @@ static struct {
 static void
 sockparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	bool value;
 	int i;
 
@@ -544,7 +668,7 @@ static int nblanket;
 static void
 blanketparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	int i;
 
 	for (nblanket = 0, p = buf; p; p = strchr(p+1, ':'), nblanket++)
@@ -586,7 +710,7 @@ static struct {
 static void
 vfsparser(char *buf)
 {
-	char *p, *l;
+	char *p, *l = NULL;
 	bool turnon;
 	unsigned int fullmask;
 	int i;
@@ -1030,6 +1154,7 @@ fchdir(int fd)
 	return rv;
 }
 
+#ifndef __linux__
 int
 __getcwd(char *bufp, size_t len)
 {
@@ -1079,11 +1204,14 @@ __getcwd(char *bufp, size_t len)
 
 	return rv;
 }
+#endif
 
-int
-rename(const char *from, const char *to)
+static int
+moveish(const char *from, const char *to,
+    int (*rump_op)(const char *, const char *),
+    int (*host_op)(const char *, const char *))
 {
-	int (*op_rename)(const char *, const char *);
+	int (*op)(const char *, const char *);
 	enum pathtype ptf, ptt;
 
 	if ((ptf = path_isrump(from)) != PATH_HOST) {
@@ -1096,22 +1224,35 @@ rename(const char *from, const char *to)
 			from = path_host2rump(from);
 		if (ptt == PATH_RUMP)
 			to = path_host2rump(to);
-		op_rename = GETSYSCALL(rump, RENAME);
+		op = rump_op;
 	} else {
 		if (path_isrump(to) != PATH_HOST) {
 			errno = EXDEV;
 			return -1;
 		}
 
-		op_rename = GETSYSCALL(host, RENAME);
+		op = host_op;
 	}
 
-	return op_rename(from, to);
+	return op(from, to);
 }
 
-int __socket30(int, int, int);
 int
-__socket30(int domain, int type, int protocol)
+link(const char *from, const char *to)
+{
+	return moveish(from, to,
+	    GETSYSCALL(rump, LINK), GETSYSCALL(host, LINK));
+}
+
+int
+rename(const char *from, const char *to)
+{
+	return moveish(from, to,
+	    GETSYSCALL(rump, RENAME), GETSYSCALL(host, RENAME));
+}
+
+int
+REALSOCKET(int domain, int type, int protocol)
 {
 	int (*op_socket)(int, int, int);
 	int fd;
@@ -1190,7 +1331,7 @@ fcntl(int fd, int cmd, ...)
 {
 	int (*op_fcntl)(int, int, ...);
 	va_list ap;
-	int rv, minfd, i, maxdup2;
+	int rv, minfd;
 
 	DPRINTF(("fcntl -> %d (cmd %d)\n", fd, cmd));
 
@@ -1201,7 +1342,10 @@ fcntl(int fd, int cmd, ...)
 		va_end(ap);
 		return dodup(fd, minfd);
 
-	case F_CLOSEM:
+#ifdef F_CLOSEM
+	case F_CLOSEM: {
+		int maxdup2, i;
+
 		/*
 		 * So, if fd < HIJACKOFF, we want to do a host closem.
 		 */
@@ -1240,7 +1384,10 @@ fcntl(int fd, int cmd, ...)
 
 		/* hmm, maybe we should close rump fd's not within dup2mask? */
 		return rump_sys_fcntl(fd, F_CLOSEM);
+	}
+#endif /* F_CLOSEM */
 
+#ifdef F_MAXFD
 	case F_MAXFD:
 		/*
 		 * For maxfd, if there's a rump kernel fd, return
@@ -1264,6 +1411,7 @@ fcntl(int fd, int cmd, ...)
 			return op_fcntl(fd, F_MAXFD);
 		}
 		/*NOTREACHED*/
+#endif /* F_MAXFD */
 
 	default:
 		if (fd_isrump(fd)) {
@@ -1335,6 +1483,136 @@ write(int fd, const void *buf, size_t blen)
 }
 
 /*
+ * file descriptor passing
+ *
+ * we intercept sendmsg and recvmsg to convert file descriptors in
+ * control messages.  an attempt to send a descriptor from a different kernel
+ * is rejected.  (ENOTSUP)
+ */
+
+static int
+msg_convert(struct msghdr *msg, int (*func)(int))
+{
+	struct cmsghdr *cmsg;
+
+	for (cmsg = CMSG_FIRSTHDR(msg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(msg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+		    cmsg->cmsg_type == SCM_RIGHTS) {
+			int *fdp = (void *)CMSG_DATA(cmsg);
+			const size_t size =
+			    cmsg->cmsg_len - __CMSG_ALIGN(sizeof(*cmsg));
+			const int nfds = (int)(size / sizeof(int));
+			const int * const efdp = fdp + nfds;
+
+			while (fdp < efdp) {
+				const int newval = func(*fdp);
+
+				if (newval < 0) {
+					return ENOTSUP;
+				}
+				*fdp = newval;
+				fdp++;
+			}
+		}
+	}
+	return 0;
+}
+
+ssize_t
+recvmsg(int fd, struct msghdr *msg, int flags)
+{
+	ssize_t (*op_recvmsg)(int, struct msghdr *, int);
+	ssize_t ret;
+	const bool isrump = fd_isrump(fd);
+
+	if (isrump) {
+		fd = fd_host2rump(fd);
+		op_recvmsg = GETSYSCALL(rump, RECVMSG);
+	} else {
+		op_recvmsg = GETSYSCALL(host, RECVMSG);
+	}
+	ret = op_recvmsg(fd, msg, flags);
+	if (ret == -1) {
+		return ret;
+	}
+	/*
+	 * convert descriptors in the message.
+	 */
+	if (isrump) {
+		msg_convert(msg, fd_rump2host);
+	} else {
+		msg_convert(msg, fd_host2host);
+	}
+	return ret;
+}
+
+ssize_t
+recv(int fd, void *buf, size_t len, int flags)
+{
+
+	return recvfrom(fd, buf, len, flags, NULL, NULL);
+}
+
+ssize_t
+send(int fd, const void *buf, size_t len, int flags)
+{
+
+	return sendto(fd, buf, len, flags, NULL, 0);
+}
+
+static int
+fd_check_rump(int fd)
+{
+
+	return fd_isrump(fd) ? 0 : -1;
+}
+
+static int
+fd_check_host(int fd)
+{
+
+	return !fd_isrump(fd) ? 0 : -1;
+}
+
+ssize_t
+sendmsg(int fd, const struct msghdr *msg, int flags)
+{
+	ssize_t (*op_sendmsg)(int, const struct msghdr *, int);
+	const bool isrump = fd_isrump(fd);
+	int error;
+
+	/*
+	 * reject descriptors from a different kernel.
+	 */
+	error = msg_convert(__UNCONST(msg),
+	    isrump ? fd_check_rump: fd_check_host);
+	if (error != 0) {
+		errno = error;
+		return -1;
+	}
+	/*
+	 * convert descriptors in the message to raw values.
+	 */
+	if (isrump) {
+		fd = fd_host2rump(fd);
+		/*
+		 * XXX we directly modify the given message assuming:
+		 * - cmsg is writable (typically on caller's stack)
+		 * - caller don't care cmsg's contents after calling sendmsg.
+		 *   (thus no need to restore values)
+		 *
+		 * it's safer to copy and modify instead.
+		 */
+		msg_convert(__UNCONST(msg), fd_host2rump);
+		op_sendmsg = GETSYSCALL(rump, SENDMSG);
+	} else {
+		op_sendmsg = GETSYSCALL(host, SENDMSG);
+	}
+	return op_sendmsg(fd, msg, flags);
+}
+
+/*
  * dup2 is special.  we allow dup2 of a rump kernel fd to 0-2 since
  * many programs do that.  dup2 of a rump kernel fd to another value
  * not >= fdoff is an error.
@@ -1390,7 +1668,7 @@ dup(int oldd)
 }
 
 pid_t
-fork()
+fork(void)
 {
 	pid_t rv;
 
@@ -1401,8 +1679,10 @@ fork()
 	DPRINTF(("fork returns %d\n", rv));
 	return rv;
 }
+#ifdef VFORK
 /* we do not have the luxury of not requiring a stackframe */
-__strong_alias(__vfork14,fork);
+__strong_alias(VFORK,fork);
+#endif
 
 int
 daemon(int nochdir, int noclose)
@@ -1489,7 +1769,8 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	int i, j;
 	int rv, incr;
 
-	DPRINTF(("select\n"));
+	DPRINTF(("select %d %p %p %p %p\n", nfds,
+	    readfds, writefds, exceptfds, timeout));
 
 	/*
 	 * Well, first we must scan the fds to figure out how many
@@ -1669,7 +1950,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 	nfds_t i;
 	int rv;
 
-	DPRINTF(("poll\n"));
+	DPRINTF(("poll %p %d %p %p\n", fds, (int)nfds, ts, sigmask));
 	checkpoll(fds, nfds, &hostcall, &rumpcall);
 
 	if (hostcall && rumpcall) {
@@ -1677,7 +1958,7 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		int rpipe[2] = {-1,-1}, hpipe[2] = {-1,-1};
 		struct pollarg parg;
 		void *trv_val;
-		int sverrno = 0, lrv, trv;
+		int sverrno = 0, rv_rump, rv_host, errno_rump, errno_host;
 
 		/*
 		 * ok, this is where it gets tricky.  We must support
@@ -1767,30 +2048,63 @@ REALPOLLTS(struct pollfd *fds, nfds_t nfds, const struct timespec *ts,
 		pthread_create(&pt, NULL, hostpoll, &parg);
 
 		op_pollts = GETSYSCALL(rump, POLLTS);
-		lrv = op_pollts(pfd_rump, nfds+1, ts, NULL);
-		sverrno = errno;
+		rv_rump = op_pollts(pfd_rump, nfds+1, ts, NULL);
+		errno_rump = errno;
 		write(hpipe[1], &rv, sizeof(rv));
 		pthread_join(pt, &trv_val);
-		trv = (int)(intptr_t)trv_val;
+		rv_host = (int)(intptr_t)trv_val;
+		errno_host = parg.errnum;
 
-		/* check who "won" and merge results */
-		if (lrv != 0 && pfd_host[nfds].revents & POLLIN) {
-			rv = trv;
+		/* strip cross-thread notification from real results */
+		if (pfd_host[nfds].revents & POLLIN) {
+			assert((pfd_rump[nfds].revents & POLLIN) == 0);
+			assert(rv_host > 0);
+			rv_host--;
+		}
+		if (pfd_rump[nfds].revents & POLLIN) {
+			assert((pfd_host[nfds].revents & POLLIN) == 0);
+			assert(rv_rump > 0);
+			rv_rump--;
+		}
 
-			for (i = 0; i < nfds; i++) {
-				if (pfd_rump[i].fd != -1)
-					fds[i].revents = pfd_rump[i].revents;
+		/* then merge the results into what's reported to the caller */
+		if (rv_rump > 0 || rv_host > 0) {
+			/* SUCCESS */
+
+			rv = 0;
+			if (rv_rump > 0) {
+				for (i = 0; i < nfds; i++) {
+					if (pfd_rump[i].fd != -1)
+						fds[i].revents
+						    = pfd_rump[i].revents;
+				}
+				rv += rv_rump;
 			}
-			sverrno = parg.errnum;
-		} else if (trv != 0 && pfd_rump[nfds].revents & POLLIN) {
-			rv = trv;
+			if (rv_host > 0) {
+				for (i = 0; i < nfds; i++) {
+					if (pfd_host[i].fd != -1)
+						fds[i].revents
+						    = pfd_host[i].revents;
+				}
+				rv += rv_host;
+			}
+			assert(rv > 0);
+			sverrno = 0;
+		} else if (rv_rump == -1 || rv_host == -1) {
+			/* ERROR */
 
-			for (i = 0; i < nfds; i++) {
-				if (pfd_host[i].fd != -1)
-					fds[i].revents = pfd_host[i].revents;
+			/* just pick one kernel at "random" */
+			rv = -1;
+			if (rv_host == -1) {
+				sverrno = errno_host;
+			} else if (rv_rump == -1) {
+				sverrno = errno_rump;
 			}
 		} else {
+			/* TIMEOUT */
+
 			rv = 0;
+			assert(rv_rump == 0 && rv_host == 0);
 		}
 
  out:
@@ -1838,6 +2152,7 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	return REALPOLLTS(fds, nfds, tsp, NULL);
 }
 
+#ifdef PLATFORM_HAS_KQUEUE
 int
 REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	struct kevent *eventlist, size_t nevents,
@@ -1868,6 +2183,7 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
+#endif /* PLATFORM_HAS_KQUEUE */
 
 /*
  * mmapping from a rump kernel is not supported, so disallow it.
@@ -1883,6 +2199,7 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 	return host_mmap(addr, len, prot, flags, fd, offset);
 }
 
+#ifdef PLATFORM_HAS_NBSYSCTL
 /*
  * these go to one or the other on a per-process configuration
  */
@@ -1906,6 +2223,7 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
 
 	return op___sysctl(name, namelen, old, oldlenp, new, newlen);
 }
+#endif
 
 /*
  * Rest are std type calls.
@@ -1949,16 +2267,6 @@ FDCALL(ssize_t, sendto, DUALCALL_SENDTO, 				\
 	    const struct sockaddr *, socklen_t),			\
 	(fd, buf, len, flags, to, tolen))
 
-FDCALL(ssize_t, recvmsg, DUALCALL_RECVMSG, 				\
-	(int fd, struct msghdr *msg, int flags),			\
-	(int, struct msghdr *, int),					\
-	(fd, msg, flags))
-
-FDCALL(ssize_t, sendmsg, DUALCALL_SENDMSG, 				\
-	(int fd, const struct msghdr *msg, int flags),			\
-	(int, const struct msghdr *, int),				\
-	(fd, msg, flags))
-
 FDCALL(int, getsockopt, DUALCALL_GETSOCKOPT, 				\
 	(int fd, int level, int optn, void *optval, socklen_t *optlen),	\
 	(int, int, int, void *, socklen_t *),				\
@@ -1979,6 +2287,11 @@ FDCALL(ssize_t, REALREAD, DUALCALL_READ,				\
 	(int fd, void *buf, size_t buflen),				\
 	(int, void *, size_t),						\
 	(fd, buf, buflen))
+
+#ifdef __linux__
+ssize_t __read_chk(int, void *, size_t)
+    __attribute__((alias("read")));
+#endif
 
 FDCALL(ssize_t, readv, DUALCALL_READV, 					\
 	(int fd, const struct iovec *iov, int iovcnt),			\
@@ -2010,26 +2323,34 @@ FDCALL(ssize_t, pwritev, DUALCALL_PWRITEV, 				\
 	(int, const struct iovec *, int, off_t),			\
 	(fd, iov, iovcnt, offset))
 
+#ifndef __linux__
 FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 	(int fd, struct stat *sb),					\
 	(int, struct stat *),						\
 	(fd, sb))
+#endif
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
 	(int fd, struct statvfs *buf, int flags),			\
 	(int, struct statvfs *, int),					\
 	(fd, buf, flags))
+#endif
 
 FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
 	(int fd, off_t offset, int whence),				\
 	(int, off_t, int),						\
 	(fd, offset, whence))
-__strong_alias(_lseek,lseek);
+#ifdef LSEEK_ALIAS
+__strong_alias(LSEEK_ALIAS,lseek);
+#endif
 
+#ifndef __linux__
 FDCALL(int, REALGETDENTS, DUALCALL_GETDENTS,				\
 	(int fd, char *buf, size_t nbytes),				\
 	(int, char *, size_t),						\
 	(fd, buf, nbytes))
+#endif
 
 FDCALL(int, fchown, DUALCALL_FCHOWN,					\
 	(int fd, uid_t owner, gid_t group),				\
@@ -2051,25 +2372,30 @@ FDCALL(int, fsync, DUALCALL_FSYNC,					\
 	(int),								\
 	(fd))
 
+#ifdef PLATFORM_HAS_FSYNC_RANGE
 FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
 	(int fd, int how, off_t start, off_t length),			\
 	(int, int, off_t, off_t),					\
 	(fd, how, start, length))
+#endif
 
 FDCALL(int, futimes, DUALCALL_FUTIMES,					\
 	(int fd, const struct timeval *tv),				\
 	(int, const struct timeval *),					\
 	(fd, tv))
 
+#ifdef PLATFORM_HAS_CHFLAGS
 FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
 	(int fd, u_long flags),						\
 	(int, u_long),							\
 	(fd, flags))
+#endif
 
 /*
  * path-based selectors
  */
 
+#ifndef __linux__
 PATHCALL(int, REALSTAT, DUALCALL_STAT,					\
 	(const char *path, struct stat *sb),				\
 	(const char *, struct stat *),					\
@@ -2079,6 +2405,7 @@ PATHCALL(int, REALLSTAT, DUALCALL_LSTAT,				\
 	(const char *path, struct stat *sb),				\
 	(const char *, struct stat *),					\
 	(path, sb))
+#endif
 
 PATHCALL(int, chown, DUALCALL_CHOWN,					\
 	(const char *path, uid_t owner, gid_t group),			\
@@ -2100,10 +2427,12 @@ PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
 	(const char *, mode_t),						\
 	(path, mode))
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
 	(const char *path, struct statvfs *buf, int flags),		\
 	(const char *, struct statvfs *, int),				\
 	(path, buf, flags))
+#endif
 
 PATHCALL(int, unlink, DUALCALL_UNLINK,					\
 	(const char *path),						\
@@ -2115,10 +2444,31 @@ PATHCALL(int, symlink, DUALCALL_SYMLINK,				\
 	(const char *, const char *),					\
 	(target, path))
 
-PATHCALL(ssize_t, readlink, DUALCALL_READLINK,				\
-	(const char *path, char *buf, size_t bufsiz),			\
-	(const char *, char *, size_t),					\
-	(path, buf, bufsiz))
+/*
+ * readlink() can be called from malloc which can be called
+ * from dlsym() during init
+ */
+ssize_t
+readlink(const char *path, char *buf, size_t bufsiz)
+{
+	int (*op_readlink)(const char *, char *, size_t);
+	enum pathtype pt;
+
+	if ((pt = path_isrump(path)) != PATH_HOST) {
+		op_readlink = GETSYSCALL(rump, READLINK);
+		if (pt == PATH_RUMP)
+			path = path_host2rump(path);
+	} else {
+		op_readlink = GETSYSCALL(host, READLINK);
+	}
+
+	if (__predict_false(op_readlink == NULL)) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	return op_readlink(path, buf, bufsiz);
+}
 
 PATHCALL(int, mkdir, DUALCALL_MKDIR,					\
 	(const char *path, mode_t mode),				\
@@ -2140,6 +2490,7 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *, const struct timeval *),				\
 	(path, tv))
 
+#ifdef PLATFORM_HAS_CHFLAGS
 PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
@@ -2149,6 +2500,7 @@ PATHCALL(int, lchflags, DUALCALL_LCHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
 	(path, flags))
+#endif /* PLATFORM_HAS_CHFLAGS */
 
 PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
@@ -2160,10 +2512,12 @@ PATHCALL(int, access, DUALCALL_ACCESS,					\
 	(const char *, int),						\
 	(path, mode))
 
+#ifndef __linux__
 PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
 	(const char *path, mode_t mode, dev_t dev),			\
 	(const char *, mode_t, dev_t),					\
 	(path, mode, dev))
+#endif
 
 /*
  * Note: with mount the decisive parameter is the mount
@@ -2171,6 +2525,7 @@ PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
  * about the "source" directory in a generic call (and besides,
  * it might not even exist, cf. nfs).
  */
+#ifdef PLATFORM_HAS_NBMOUNT
 PATHCALL(int, REALMOUNT, DUALCALL_MOUNT,				\
 	(const char *type, const char *path, int flags,			\
 	    void *data, size_t dlen),					\
@@ -2181,7 +2536,9 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *path, int flags),					\
 	(const char *, int),						\
 	(path, flags))
+#endif /* PLATFORM_HAS_NBMOUNT */
 
+#ifdef PLATFORM_HAS_NBQUOTA
 #if __NetBSD_Prereq__(5,99,63)
 PATHCALL(int, __quotactl, DUALCALL_QUOTACTL,				\
 	(const char *path, struct quotactl_args *args),			\
@@ -2193,21 +2550,27 @@ PATHCALL(int, OLDREALQUOTACTL, DUALCALL_QUOTACTL,			\
 	(const char *, struct plistref *),				\
 	(path, p))
 #endif
+#endif /* PLATFORM_HAS_NBQUOTA */
 
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
 	(const char *path, void *fhp, size_t *fh_size),			\
 	(const char *, void *, size_t *),				\
 	(path, fhp, fh_size))
+#endif
 
 /*
  * These act different on a per-process vfs configuration
  */
 
+#ifdef PLATFORM_HAS_NBVFSSTAT
 VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
 	(struct statvfs *buf, size_t buflen, int flags),		\
 	(struct statvfs *, size_t, int),				\
 	(buf, buflen, flags))
+#endif
 
+#ifdef PLATFORM_HAS_NBFILEHANDLE
 VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
 	(const void *fhp, size_t fh_size, int flags),			\
 	(const char *, size_t, int),					\
@@ -2222,9 +2585,12 @@ VFSCALL(VFSBIT_FHCALLS, int, REALFHSTATVFS1, DUALCALL_FHSTATVFS1,	\
 	(const void *fhp, size_t fh_size, struct statvfs *sb, int flgs),\
 	(const char *, size_t, struct statvfs *, int),			\
 	(fhp, fh_size, sb, flgs))
+#endif
+
+
+#ifdef PLATFORM_HAS_NFSSVC
 
 /* finally, put nfssvc here.  "keep the namespace clean" */
-
 #include <nfs/rpcv2.h>
 #include <nfs/nfs.h>
 
@@ -2247,3 +2613,4 @@ nfssvc(int flags, void *argstructp)
 
 	return op_nfssvc(flags, argstructp);
 }
+#endif /* PLATFORM_HAS_NFSSVC */

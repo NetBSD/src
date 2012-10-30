@@ -1,4 +1,4 @@
-.\" $NetBSD: kcpuset.9,v 1.2 2011/10/06 08:59:01 wiz Exp $ */
+.\" $NetBSD: kcpuset.9,v 1.2.2.1 2012/10/30 18:59:44 yamt Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2011
+.Dd September 16, 2012
 .Dt KCPUSET 9
 .Os
 .Sh NAME
@@ -42,11 +42,14 @@
 .Nm kcpuset_set ,
 .Nm kcpuset_clear ,
 .Nm kcpuset_isset ,
+.Nm kcpuset_isotherset ,
 .Nm kcpuset_iszero ,
 .Nm kcpuset_match ,
 .Nm kcpuset_merge ,
+.Nm kcpuset_countset ,
 .Nm kcpuset_atomic_set ,
 .Nm kcpuset_atomic_clear
+.Nm kcpuset_export_32
 .Nd dynamic kernel CPU sets
 .Sh SYNOPSIS
 .In sys/kcpuset.h
@@ -72,18 +75,24 @@
 .Fn kcpuset_set "kcpuset_t *kcp" "cpuid_t cpu"
 .Ft void
 .Fn kcpuset_clear "kcpuset_t *kcp" "cpuid_t cpu"
-.Ft int
+.Ft bool
 .Fn kcpuset_isset "kcpuset_t * kcp" "cpuid_t cpu"
+.Ft bool
+.Fn kcpuset_isotherset "kcpuset_t * kcp" "cpuid_t cpu"
 .Ft bool
 .Fn kcpuset_iszero "kcpuset_t *kcp"
 .Ft bool
 .Fn kcpuset_match "const kcpuset_t *kcp1" "const kcpuset_t *kcp2"
 .Ft void
 .Fn kcpuset_merge "kcpuset_t *kcp1" "kcpuset_t *kcp2"
+.Ft int
+.Fn kcpuset_countset "kcpuset_t *kcp1"
 .Ft void
 .Fn kcpuset_atomic_set "kcpuset_t *kcp" "cpuid_t cpu"
 .Ft void
 .Fn kcpuset_atomic_clear "kcpuset_t *kcp" "cpuid_t cpu"
+.Ft void
+.Fn kcpuset_export_u32 "const kcpuset_t *kcp" "uint32_t *bitfield" "size_t len"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
@@ -177,9 +186,17 @@ Removes
 from the set
 .Fa kcp .
 .It Fn kcpuset_isset "kcp" "cpu"
-Returns 1 if
+Returns true if
 .Fa cpu
 is part of the
+.Tn CPU
+set
+.Fa kcp .
+.It Fn kcpuset_isotherset "kcp" "cpu"
+Returns true if there any CPUs
+other than
+.Fa cpu
+in the
 .Tn CPU
 set
 .Fa kcp .
@@ -198,6 +215,9 @@ Merges the set
 .Fa kcp2
 to the set
 .Fa kcp1 .
+.It Fn kcpuset_countset "kcp"
+Counts how many CPUs are in the set
+.Fa kcp .
 .It Fn kcpuset_atomic_set "kcp" "cpu"
 The
 .Fn kcpuset_atomic_set
@@ -214,6 +234,16 @@ from the
 set
 .Fa kcp
 atomically.
+.Fn kcpuset_export_u32 "kcp" "bitfield" "len"
+Exports the CPU set
+.Fa kcp
+into a format of 32-bit integer array,
+specified by
+.Fa bitfield
+and length in bytes by
+.Fa len .
+An integers is in the host byte-order and represents a bit field.
+The first bit at index zero represents CPU number 0, and so on.
 .El
 .Sh CODE REFERENCES
 The

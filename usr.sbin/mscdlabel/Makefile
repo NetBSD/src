@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2011/06/20 07:44:03 mrg Exp $
+# $NetBSD: Makefile,v 1.8.2.1 2012/10/30 19:00:40 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,6 @@ DISKLABEL_SRC=	${NETBSDSRCDIR}/sbin/disklabel
 .PATH:	${DISKLABEL_SRC}
 CPPFLAGS+=	-I${DISKLABEL_SRC}
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.iso9660.c+=	-Wno-pointer-sign
-.endif
 
 .include <bsd.prog.mk>

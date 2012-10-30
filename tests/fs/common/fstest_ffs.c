@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_ffs.c,v 1.5 2011/06/26 13:06:00 christos Exp $	*/
+/*	$NetBSD: fstest_ffs.c,v 1.5.2.1 2012/10/30 18:59:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -104,8 +104,10 @@ ffs_fstest_delfs(const atf_tc_t *tc, void *buf)
 	struct ffstestargs *args = buf;
 
 	res = rump_pub_etfs_remove(args->ta_devpath);
-	if (res != 0)
-		return res;
+	if (res != 0) {
+		errno = res;
+		return -1;
+	}
 
 	res = unlink(args->ta_imgpath);
 	if (res != 0)

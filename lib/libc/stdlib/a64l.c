@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: a64l.c,v 1.9 2003/07/26 19:24:53 salo Exp $");
+__RCSID("$NetBSD: a64l.c,v 1.9.56.1 2012/10/30 18:58:58 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -18,8 +18,7 @@ __weak_alias(a64l,_a64l)
 #endif
 
 long
-a64l(s)
-	const char *s;
+a64l(const char *s)
 {
 	long value, digit, shift;
 	int i;

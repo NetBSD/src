@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/10/29 17:14:12 christos Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2012/10/30 18:57:36 yamt Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -27,7 +27,7 @@ G_LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 			${GNUHOSTDIST}/gcc/config/floatunsisf.c
 .endif
 
-SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
+SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${LIB2_EHASM} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${G_LIB2ADD_HACK:T:S/.asm/.S/} \
 		${LIB1ASMFUNCS}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.2.6.2 2012/04/17 00:05:29 yamt Exp $	*/
+/*	$NetBSD: npf.c,v 1.2.6.3 2012/10/30 18:59:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.2 2012/04/17 00:05:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.2.6.3 2012/10/30 18:59:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <prop/proplib.h>
 
 #include <stdlib.h>
@@ -56,6 +57,8 @@ struct nl_config {
 	/* Priority counters. */
 	pri_t			ncf_rule_pri;
 	pri_t			ncf_nat_pri;
+	/* Debug information. */
+	prop_dictionary_t	ncf_debug;
 	/* Error report. */
 	prop_dictionary_t	ncf_err;
 	/* Custom file to externalise property-list. */
@@ -73,6 +76,11 @@ struct nl_rproc {
 
 struct nl_table {
 	prop_dictionary_t	ntl_dict;
+};
+
+struct nl_ext {
+	const char *		nxt_name;
+	prop_dictionary_t	nxt_dict;
 };
 
 /*
@@ -112,6 +120,9 @@ npf_config_submit(nl_config_t *ncf, int fd)
 	npf_dict = prop_dictionary_create();
 	if (npf_dict == NULL) {
 		return ENOMEM;
+	}
+	if (ncf->ncf_debug) {
+		prop_dictionary_set(npf_dict, "debug", ncf->ncf_debug);
 	}
 	prop_dictionary_set(npf_dict, "rules", ncf->ncf_rules_list);
 	prop_dictionary_set(npf_dict, "rprocs", ncf->ncf_rproc_list);
@@ -202,16 +213,17 @@ void
 npf_config_destroy(nl_config_t *ncf)
 {
 
-	if (ncf->ncf_dict == NULL) {
+	if (!ncf->ncf_dict) {
 		prop_object_release(ncf->ncf_rules_list);
 		prop_object_release(ncf->ncf_rproc_list);
 		prop_object_release(ncf->ncf_table_list);
 		prop_object_release(ncf->ncf_nat_list);
-	} else {
-		prop_object_release(ncf->ncf_dict);
 	}
 	if (ncf->ncf_err) {
 		prop_object_release(ncf->ncf_err);
+	}
+	if (ncf->ncf_debug) {
+		prop_object_release(ncf->ncf_debug);
 	}
 	free(ncf);
 }
@@ -238,6 +250,43 @@ _npf_prop_array_lookup(prop_array_t array, const char *key, const char *name)
 	}
 	prop_object_iterator_release(it);
 	return dict ? true : false;
+}
+
+/*
+ * NPF EXTENSION INTERFACE.
+ */
+
+nl_ext_t *
+npf_ext_construct(const char *name)
+{
+	nl_ext_t *ext;
+
+	ext = malloc(sizeof(*ext));
+	if (ext == NULL) {
+		return NULL;
+	}
+	ext->nxt_name = strdup(name);
+	if (ext->nxt_name == NULL) {
+		free(ext);
+		return NULL;
+	}
+	ext->nxt_dict = prop_dictionary_create();
+
+	return ext;
+}
+
+void
+npf_ext_param_u32(nl_ext_t *ext, const char *key, uint32_t val)
+{
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_dictionary_set_uint32(extdict, key, val);
+}
+
+void
+npf_ext_param_bool(nl_ext_t *ext, const char *key, bool val)
+{
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_dictionary_set_bool(extdict, key, val);
 }
 
 /*
@@ -357,7 +406,11 @@ _npf_rule_foreach1(prop_array_t rules, unsigned nlevel, nl_rule_callback_t func)
 		(*func)(&nrl, nlevel);
 
 		subrules = prop_dictionary_get(rldict, "subrules");
+		if (!subrules) {
+			continue;
+		}
 		(void)_npf_rule_foreach1(subrules, nlevel + 1, func);
+		prop_object_release(subrules);
 	}
 	prop_object_iterator_release(it);
 	return 0;
@@ -419,6 +472,7 @@ nl_rproc_t *
 npf_rproc_create(const char *name)
 {
 	prop_dictionary_t rpdict;
+	prop_array_t extcalls;
 	nl_rproc_t *nrp;
 
 	nrp = malloc(sizeof(nl_rproc_t));
@@ -431,8 +485,34 @@ npf_rproc_create(const char *name)
 		return NULL;
 	}
 	prop_dictionary_set_cstring(rpdict, "name", name);
+
+	extcalls = prop_array_create();
+	if (extcalls == NULL) {
+		prop_object_release(rpdict);
+		free(nrp);
+		return NULL;
+	}
+	prop_dictionary_set(rpdict, "extcalls", extcalls);
+	prop_object_release(extcalls);
+
 	nrp->nrp_dict = rpdict;
 	return nrp;
+}
+
+int
+npf_rproc_extcall(nl_rproc_t *rp, nl_ext_t *ext)
+{
+	prop_dictionary_t rpdict = rp->nrp_dict;
+	prop_dictionary_t extdict = ext->nxt_dict;
+	prop_array_t extcalls;
+
+	extcalls = prop_dictionary_get(rpdict, "extcalls");
+	if (_npf_prop_array_lookup(extcalls, "name", ext->nxt_name)) {
+		return EEXIST;
+	}
+	prop_dictionary_set_cstring(extdict, "name", ext->nxt_name);
+	prop_array_add(extcalls, extdict);
+	return 0;
 }
 
 bool
@@ -440,36 +520,6 @@ npf_rproc_exists_p(nl_config_t *ncf, const char *name)
 {
 
 	return _npf_prop_array_lookup(ncf->ncf_rproc_list, "name", name);
-}
-
-int
-_npf_rproc_setnorm(nl_rproc_t *rp, bool rnd, bool no_df, u_int minttl,
-    u_int maxmss)
-{
-	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl;
-
-	prop_dictionary_set_bool(rpdict, "randomize-id", rnd);
-	prop_dictionary_set_bool(rpdict, "no-df", no_df);
-	prop_dictionary_set_uint32(rpdict, "min-ttl", minttl);
-	prop_dictionary_set_uint32(rpdict, "max-mss", maxmss);
-
-	prop_dictionary_get_uint32(rpdict, "flags", &fl);
-	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_NORMALIZE);
-	return 0;
-}
-
-int
-_npf_rproc_setlog(nl_rproc_t *rp, u_int if_idx)
-{
-	prop_dictionary_t rpdict = rp->nrp_dict;
-	uint32_t fl;
-
-	prop_dictionary_set_uint32(rpdict, "log-interface", if_idx);
-
-	prop_dictionary_get_uint32(rpdict, "flags", &fl);
-	prop_dictionary_set_uint32(rpdict, "flags", fl | NPF_RPROC_LOG);
-	return 0;
 }
 
 int
@@ -554,6 +604,29 @@ npf_nat_insert(nl_config_t *ncf, nl_nat_t *nt, pri_t pri)
 	return 0;
 }
 
+int
+_npf_nat_foreach(nl_config_t *ncf, nl_rule_callback_t func)
+{
+
+	return _npf_rule_foreach1(ncf->ncf_nat_list, 0, func);
+}
+
+void
+_npf_nat_getinfo(nl_nat_t *nt, int *type, u_int *flags, npf_addr_t *addr,
+    size_t *alen, in_port_t *port)
+{
+	prop_dictionary_t rldict = nt->nrl_dict;
+
+	prop_dictionary_get_int32(rldict, "type", type);
+	prop_dictionary_get_uint32(rldict, "flags", flags);
+
+	prop_object_t obj = prop_dictionary_get(rldict, "translation-ip");
+	*alen = prop_data_size(obj);
+	memcpy(addr, prop_data_data_nocopy(obj), *alen);
+
+	prop_dictionary_get_uint16(rldict, "translation-port", port);
+}
+
 /*
  * TABLE INTERFACE.
  */
@@ -591,7 +664,8 @@ npf_table_create(u_int id, int type)
 }
 
 int
-npf_table_add_entry(nl_table_t *tl, npf_addr_t *addr, npf_netmask_t mask)
+npf_table_add_entry(nl_table_t *tl, const int alen,
+    const npf_addr_t *addr, const npf_netmask_t mask)
 {
 	prop_dictionary_t tldict = tl->ntl_dict, entdict;
 	prop_array_t tblents;
@@ -599,10 +673,10 @@ npf_table_add_entry(nl_table_t *tl, npf_addr_t *addr, npf_netmask_t mask)
 
 	/* Create the table entry. */
 	entdict = prop_dictionary_create();
-	if (entdict) {
+	if (entdict == NULL) {
 		return ENOMEM;
 	}
-	addrdata = prop_data_create_data(addr, sizeof(npf_addr_t));
+	addrdata = prop_data_create_data(addr, alen);
 	prop_dictionary_set(entdict, "addr", addrdata);
 	prop_dictionary_set_uint8(entdict, "mask", mask);
 	prop_object_release(addrdata);
@@ -652,6 +726,24 @@ npf_table_destroy(nl_table_t *tl)
 
 	prop_object_release(tl->ntl_dict);
 	free(tl);
+}
+
+void
+_npf_table_foreach(nl_config_t *ncf, nl_table_callback_t func)
+{
+	prop_dictionary_t tldict;
+	prop_object_iterator_t it;
+
+	it = prop_array_iterator(ncf->ncf_table_list);
+	while ((tldict = prop_object_iterator_next(it)) != NULL) {
+		u_int id;
+		int type;
+
+		prop_dictionary_get_uint32(tldict, "id", &id);
+		prop_dictionary_get_int32(tldict, "type", &type);
+		(*func)(id, type);
+	}
+	prop_object_iterator_release(it);
 }
 
 /*
@@ -710,4 +802,64 @@ npf_sessions_send(int fd, const char *fpath)
 	error = prop_dictionary_send_ioctl(sdict, fd, IOC_NPF_SESSIONS_LOAD);
 	prop_object_release(sdict);
 	return error;
+}
+
+static prop_dictionary_t
+_npf_debug_initonce(nl_config_t *ncf)
+{
+	if (!ncf->ncf_debug) {
+		prop_array_t iflist = prop_array_create();
+		ncf->ncf_debug = prop_dictionary_create();
+		prop_dictionary_set(ncf->ncf_debug, "interfaces", iflist);
+		prop_object_release(iflist);
+	}
+	return ncf->ncf_debug;
+}
+
+void
+_npf_debug_addif(nl_config_t *ncf, struct ifaddrs *ifa, u_int if_idx)
+{
+	prop_dictionary_t ifdict, dbg = _npf_debug_initonce(ncf);
+	prop_array_t iflist = prop_dictionary_get(dbg, "interfaces");
+
+	if (_npf_prop_array_lookup(iflist, "name", ifa->ifa_name)) {
+		return;
+	}
+
+	ifdict = prop_dictionary_create();
+	prop_dictionary_set_cstring(ifdict, "name", ifa->ifa_name);
+	prop_dictionary_set_uint32(ifdict, "flags", ifa->ifa_flags);
+	if (!if_idx) {
+		if_idx = if_nametoindex(ifa->ifa_name);
+	}
+	prop_dictionary_set_uint32(ifdict, "idx", if_idx);
+
+	const struct sockaddr *sa = ifa->ifa_addr;
+	npf_addr_t addr;
+	size_t alen = 0;
+
+	switch (sa ? sa->sa_family : -1) {
+	case AF_INET: {
+		const struct sockaddr_in *sin = (const void *)sa;
+		alen = sizeof(sin->sin_addr);
+		memcpy(&addr, &sin->sin_addr, alen);
+		break;
+	}
+	case AF_INET6: {
+		const struct sockaddr_in6 *sin6 = (const void *)sa;
+		alen = sizeof(sin6->sin6_addr);
+		memcpy(&addr, &sin6->sin6_addr, alen);
+		break;
+	}
+	default:
+		break;
+	}
+
+	if (alen) {
+		prop_data_t addrdata = prop_data_create_data(&addr, alen);
+		prop_dictionary_set(ifdict, "addr", addrdata);
+		prop_object_release(addrdata);
+	}
+	prop_array_add(iflist, ifdict);
+	prop_object_release(ifdict);
 }

@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.1.4.1 2012/04/17 00:09:03 yamt Exp $ 
+# $NetBSD: t_rquotad.sh,v 1.1.4.2 2012/10/30 18:59:53 yamt Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -102,7 +102,7 @@ get_nfs_quota()
 
 	# and nfs
 	export RUMPHIJACK='blanket=/var/run,socket=all,vfs=all'
-	atf_check -s exit:0 nfsd -tu
+	atf_check -s exit:0 nfsd
 
 	#finally, rpc.rquotad
 	export RUMPHIJACK='blanket=/var/run:/export,vfs=getvfsstat,socket=all'

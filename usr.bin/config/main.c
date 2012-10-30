@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43.2.1 2012/04/17 00:09:30 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.43.2.2 2012/10/30 19:00:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,9 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/mman.h>
+#if !HAVE_NBTOOL_CONFIG_H
+#include <sys/sysctl.h>
+#endif
 #include <paths.h>
 #include <ctype.h>
 #include <err.h>
@@ -230,12 +233,20 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "-L can only be used with -s and -v");
 
 	if (xflag) {
-#ifdef __NetBSD__
-		conffile = (argc == 1) ? argv[0] : _PATH_UNIX;
+		if (argc == 0) {
+#if !HAVE_NBTOOL_CONFIG_H
+			char path_unix[MAXPATHLEN];
+			size_t len = sizeof(path_unix) - 1;
+			path_unix[0] = '/';
+
+			conffile = sysctlbyname("machdep.booted_kernel",
+			    &path_unix[1], &len, NULL, 0) == -1 ? _PATH_UNIX :
+			    path_unix;
 #else
-		if (argc == 0)
 			errx(EXIT_FAILURE, "no kernel supplied");
 #endif
+		} else
+			conffile = argv[0];
 		if (!is_elf(conffile))
 			errx(EXIT_FAILURE, "%s: not a binary kernel",
 			    conffile);

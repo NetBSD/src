@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ffs_server.c,v 1.1.4.2 2012/04/17 00:09:03 yamt Exp $	*/
+/*	$NetBSD: h_ffs_server.c,v 1.1.4.3 2012/10/30 18:59:52 yamt Exp $	*/
 
 /*
  * rump server for advanced quota tests
@@ -18,8 +18,6 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-
-#include "../../h_macros.h"
 
 int background = 0;
 
@@ -91,7 +89,7 @@ main(int argc, char **argv)
 		die("rump init failed", error);
 
 	if (rump_sys_mkdir(FSTEST_MNTNAME, 0777) == -1)
-		atf_tc_fail_errno("mount point create");
+		die("mount point create", errno);
 	rump_pub_etfs_register("/diskdev", filename, RUMP_ETFS_BLK);
 	uargs.fspec = __UNCONST("/diskdev");
 	if (rump_sys_mount(MOUNT_FFS, FSTEST_MNTNAME, (log) ? MNT_LOG : 0,

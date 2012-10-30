@@ -1,4 +1,4 @@
-# $NetBSD: t_protoent.sh,v 1.1 2011/01/12 17:32:27 pgoyette Exp $
+# $NetBSD: t_protoent.sh,v 1.1.6.1 2012/10/30 19:00:00 yamt Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,29 +39,28 @@ protoent_body()
 	#  (3) prune duplicates
 	#
 	tr '\t' ' ' </etc/protocols | awk '
-		function add(key, name,      i, n, ar) {
+	function add(key, name, i, n, ar) {
 		n = split(names[key], ar);
-		for (i=1; i<=n; i++) {
+		for (i = 1; i <= n; i++) {
 			if (name == ar[i]) {
-			return;
+				return;
 			}
 		}
 		delete ar;
 		names[key] = names[key] " " name;
-		}
-
-		{
+	}
+	{
 		sub("#.*", "", $0);
 		gsub("  *", " ", $0);
-		if (NF==0) {
+		if (NF == 0) {
 			next;
 		}
 		add($2, $1, 0);
-		for (i=3; i<=NF; i++) {
+		for (i = 3; i <= NF; i++) {
 			add($2, $i, 1);
 		}
-		}
-		END {
+	}
+	END {
 		for (key in names) {
 			proto = key;
 

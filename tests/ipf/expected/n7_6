@@ -8,7 +8,7 @@
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1237 > 10:1:1:0:0:0:0:4,80
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1238 > 10:1:1:0:0:0:0:4,80
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::1/128 port 23-79 -> 10::2:2:1/128 port 10023 tcp
+rdr zx0 inet6 10:1:1::1/128 port 23-79 -> 10::2:2:1/128 port 10023 tcp
 
 List of active sessions:
 RDR 10::2:2:1 10079 <- -> 10:1:1::1 79    [10::2:3:1 1233]
@@ -40,7 +40,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1237 > 10:1:1:0:0:0:0:4,80
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1238 > 10:1:1:0:0:0:0:4,80
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::1/128 port 23-79 -> 10::2:2:1/128 port = 10023 tcp
+rdr zx0 inet6 10:1:1::1/128 port 23-79 -> 10::2:2:1/128 port = 10023 tcp
 
 List of active sessions:
 RDR 10::2:2:1 10023 <- -> 10:1:1::1 79    [10::2:3:1 1233]
@@ -72,7 +72,7 @@ Accounting rules configured (set 1, out)
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1237 > 1:0:0:0:0:2:2:129,3128
 < zx0 ip6/0 20 0 6 10:0:0:0:0:2:3:1,1238 > 10:0:0:0:0:2:2:1,3128
 List of active MAP/Redirect filters:
-rdr zx0 10:1:1::/112 port 80 -> 10::2:2:1,1::2:2:129 port 3128 tcp
+rdr zx0 inet6 10:1:1::/112 port 80 -> 10::2:2:1,1::2:2:129 port 3128 tcp
 
 List of active sessions:
 RDR 10::2:2:1 3128  <- -> 10:1:1::4 80    [10::2:3:1 1238]

@@ -1,4 +1,4 @@
-/*	$NetBSD: endgame.c,v 1.5 2003/08/07 09:37:20 agc Exp $	*/
+/*	$NetBSD: endgame.c,v 1.5.54.1 2012/10/30 18:58:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)endgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: endgame.c,v 1.5 2003/08/07 09:37:20 agc Exp $");
+__RCSID("$NetBSD: endgame.c,v 1.5.54.1 2012/10/30 18:58:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: endgame.c,v 1.5 2003/08/07 09:37:20 agc Exp $");
  *	Do what's necessary at the end of the game
  */
 void
-endgame()
+endgame(void)
 {
 	char ch;
 

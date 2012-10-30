@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.h,v 1.6 2009/12/15 04:06:43 mrg Exp $	*/
+/*	$NetBSD: ldd.h,v 1.6.6.1 2012/10/30 19:00:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Matthew R. Green
@@ -42,9 +42,6 @@ int elf64_ldd(int, char *, const char *, const char *);
 #else
 #define elf_ldd elf32_ldd
 #endif
-
-void fmtprint(const char *, Obj_Entry *, const char *, const char *);
-void print_needed(Obj_Entry *, const char *, const char *);
 
 extern char *main_local;
 extern char *main_progname;

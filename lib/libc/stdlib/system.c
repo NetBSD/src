@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.23 2010/11/14 18:11:43 tron Exp $	*/
+/*	$NetBSD: system.c,v 1.23.6.1 2012/10/30 18:59:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.23 2010/11/14 18:11:43 tron Exp $");
+__RCSID("$NetBSD: system.c,v 1.23.6.1 2012/10/30 18:59:00 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,7 @@ __RCSID("$NetBSD: system.c,v 1.23 2010/11/14 18:11:43 tron Exp $");
 #include "reentrant.h"
 
 int
-system(command)
-	const char *command;
+system(const char *command)
 {
 	pid_t pid;
 	struct sigaction intsa, quitsa, sa;

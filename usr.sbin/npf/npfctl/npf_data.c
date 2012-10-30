@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.7.4.2 2012/04/17 00:09:50 yamt Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.7.4.3 2012/10/30 19:00:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.7.4.2 2012/04/17 00:09:50 yamt Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.7.4.3 2012/10/30 19:00:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: npf_data.c,v 1.7.4.2 2012/04/17 00:09:50 yamt Exp $");
 #include <netinet/ip.h>
 #define ICMP_STRINGS
 #include <netinet/ip_icmp.h>
+#define ICMP6_STRINGS
+#include <netinet/icmp6.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
 
@@ -58,12 +60,22 @@ static struct ifaddrs *		ifs_list = NULL;
 unsigned long
 npfctl_find_ifindex(const char *ifname)
 {
-	return if_nametoindex(ifname);
+	unsigned long if_idx = if_nametoindex(ifname);
+
+	if (!if_idx) {
+		if ((if_idx = npfctl_debug_addif(ifname)) != 0) {
+			return if_idx;
+		}
+		yyerror("unknown interface '%s'", ifname);
+	}
+	return if_idx;
 }
 
 static bool
 npfctl_copy_address(sa_family_t fam, npf_addr_t *addr, const void *ptr)
 {
+	memset(addr, 0, sizeof(npf_addr_t));
+
 	switch (fam) {
 	case AF_INET: {
 		const struct sockaddr_in *sin = ptr;
@@ -122,21 +134,12 @@ npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 			return false;
 	}
 
-	switch (fam) {
-	case AF_INET:
-		*mask = 32;
-		break;
-	case AF_INET6:
-		*mask = 128;
-		break;
-	default:
-		yyerror("unknown address family %u", fam);
-		return false;
-	}
-
+	assert(fam == AF_INET || fam == AF_INET6);
+	*mask = NPF_NO_NETMASK;
 	if (ep == NULL) {
 		return true;
 	}
+
 	ap = addr.s6_addr + (*mask / 8) - 1;
 	while (ap >= addr.s6_addr) {
 		for (int j = 8; j > 0; j--) {
@@ -211,7 +214,7 @@ out:
 
 /*
  * npfctl_parse_port_range: create a port-range variable.  Note that the
- * passed port numbers are in network byte order.
+ * passed port numbers should be in host byte order.
  */
 npfvar_t *
 npfctl_parse_port_range(in_port_t s, in_port_t e)
@@ -219,8 +222,8 @@ npfctl_parse_port_range(in_port_t s, in_port_t e)
 	npfvar_t *vp = npfvar_create(".port_range");
 	port_range_t pr;
 
-	pr.pr_start = s;
-	pr.pr_end = e;
+	pr.pr_start = htons(s);
+	pr.pr_end = htons(e);
 
 	if (!npfvar_add_element(vp, NPFVAR_PORT_RANGE, &pr, sizeof(pr)))
 		goto out;
@@ -235,14 +238,15 @@ npfvar_t *
 npfctl_parse_port_range_variable(const char *v)
 {
 	npfvar_t *vp = npfvar_lookup(v);
-	in_port_t p;
-	port_range_t *pr;
 	size_t count = npfvar_get_count(vp);
 	npfvar_t *pvp = npfvar_create(".port_range");
+	port_range_t *pr;
+	in_port_t p;
 
 	for (size_t i = 0; i < count; i++) {
 		int type = npfvar_get_type(vp, i);
 		void *data = npfvar_get_data(vp, type, i);
+
 		switch (type) {
 		case NPFVAR_IDENTIFIER:
 		case NPFVAR_STRING:
@@ -261,13 +265,11 @@ npfctl_parse_port_range_variable(const char *v)
 		default:
 			yyerror("wrong variable '%s' type '%s' for port range",
 			    v, npfvar_type(type));
-			goto out;
+			npfvar_destroy(pvp);
+			return NULL;
 		}
 	}
 	return pvp;
-out:
-	npfvar_destroy(pvp);
-	return NULL;
 }
 
 npfvar_t *
@@ -314,6 +316,7 @@ npfctl_parse_iface(const char *ifname)
 
 		if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
 			goto out;
+
 	}
 	if (!gotif) {
 		yyerror("interface '%s' not found", ifname);
@@ -330,27 +333,57 @@ out:
 	return NULL;
 }
 
-fam_addr_mask_t *
-npfctl_parse_cidr(char *cidr)
+bool
+npfctl_parse_cidr(char *cidr, fam_addr_mask_t *fam, int *alen)
 {
-	npfvar_t *vp;
-	char *p;
+	char *mask, *p;
 
-	p = strchr(cidr, '/');
+	p = strchr(cidr, '\n');
 	if (p) {
-		*p++ = '\0';
+		*p = '\0';
 	}
-	vp = npfctl_parse_fam_addr_mask(cidr, p, NULL);
-	if (vp == NULL) {
-		return NULL;
+	mask = strchr(cidr, '/');
+	if (mask) {
+		*mask++ = '\0';
 	}
-	return npfvar_get_data(vp, NPFVAR_FAM, 0);
+
+	memset(fam, 0, sizeof(*fam));
+	if (!npfctl_parse_fam_addr(cidr, &fam->fam_family, &fam->fam_addr)) {
+		return false;
+	}
+	if (!npfctl_parse_mask(mask, fam->fam_family, &fam->fam_mask)) {
+		return false;
+	}
+	switch (fam->fam_family) {
+	case AF_INET:
+		*alen = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		*alen = sizeof(struct in6_addr);
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
+
+int
+npfctl_protono(const char *proto)
+{
+	struct protoent *pe;
+
+	pe = getprotobyname(proto);
+	if (pe == NULL) {
+		yyerror("unknown protocol '%s'", proto);
+		return -1;
+	}
+	return pe->p_proto;
 }
 
 /*
  * npfctl_portno: convert port identifier (string) to a number.
  *
- * => Returns port number in network byte order.
+ * => Returns port number in host byte order.
  */
 in_port_t
 npfctl_portno(const char *port)
@@ -361,7 +394,7 @@ npfctl_portno(const char *port)
 
 	e = getaddrinfo(NULL, port, NULL, &rai);
 	if (e != 0) {
-		yyerror("invalid port name: '%s' (%s)", port, gai_strerror(e));
+		yyerror("invalid port name '%s' (%s)", port, gai_strerror(e));
 		return 0;
 	}
 
@@ -383,7 +416,7 @@ npfctl_portno(const char *port)
 	}
 out:
 	freeaddrinfo(rai);
-	return p;
+	return ntohs(p);
 }
 
 npfvar_t *
@@ -418,71 +451,142 @@ npfctl_parse_tcpflag(const char *s)
 }
 
 uint8_t
-npfctl_icmptype(const char *type)
+npfctl_icmptype(int proto, const char *type)
 {
-	for (uint8_t ul = 0; icmp_type[ul]; ul++)
-		if (strcmp(icmp_type[ul], type) == 0)
-			return ul;
+	uint8_t ul;
+
+	switch (proto) {
+	case IPPROTO_ICMP:
+		for (ul = 0; icmp_type[ul]; ul++)
+			if (strcmp(icmp_type[ul], type) == 0)
+				return ul;
+		break;
+	case IPPROTO_ICMPV6:
+		for (ul = 0; icmp6_type_err[ul]; ul++)
+			if (strcmp(icmp6_type_err[ul], type) == 0)
+				return ul;
+		for (ul = 0; icmp6_type_info[ul]; ul++)
+			if (strcmp(icmp6_type_info[ul], type) == 0)
+				return (ul+128);
+		break;
+	default:
+		assert(false);
+	}
+
+	yyerror("unknown icmp-type %s", type);
 	return ~0;
 }
 
 uint8_t
-npfctl_icmpcode(uint8_t type, const char *code)
+npfctl_icmpcode(int proto, uint8_t type, const char *code)
 {
-	const char **arr;
+	const char * const *arr;
 
-	switch (type) {
-	case ICMP_ECHOREPLY:
-	case ICMP_SOURCEQUENCH:
-	case ICMP_ALTHOSTADDR:
-	case ICMP_ECHO:
-	case ICMP_ROUTERSOLICIT:
-	case ICMP_TSTAMP:
-	case ICMP_TSTAMPREPLY:
-	case ICMP_IREQ:
-	case ICMP_IREQREPLY:
-	case ICMP_MASKREQ:
-	case ICMP_MASKREPLY:
-		arr = icmp_code_none;
+	switch (proto) {
+	case IPPROTO_ICMP:
+		switch (type) {
+		case ICMP_ECHOREPLY:
+		case ICMP_SOURCEQUENCH:
+		case ICMP_ALTHOSTADDR:
+		case ICMP_ECHO:
+		case ICMP_ROUTERSOLICIT:
+		case ICMP_TSTAMP:
+		case ICMP_TSTAMPREPLY:
+		case ICMP_IREQ:
+		case ICMP_IREQREPLY:
+		case ICMP_MASKREQ:
+		case ICMP_MASKREPLY:
+			arr = icmp_code_none;
+			break;
+		case ICMP_ROUTERADVERT:
+			arr = icmp_code_routeradvert;
+			break;
+		case ICMP_UNREACH:
+			arr = icmp_code_unreach;
+			break;
+		case ICMP_REDIRECT:
+			arr = icmp_code_redirect;
+			break;
+		case ICMP_TIMXCEED:
+			arr = icmp_code_timxceed;
+			break;
+		case ICMP_PARAMPROB:
+			arr = icmp_code_paramprob;
+			break;
+		case ICMP_PHOTURIS:
+			arr = icmp_code_photuris;
+			break;
+		default:
+			yyerror("unknown icmp-type %d while parsing code %s",
+				type, code);
+			return ~0;
+		}
 		break;
-	case ICMP_ROUTERADVERT:
-		arr = icmp_code_routeradvert;
-		break;
-	case ICMP_UNREACH:
-		arr = icmp_code_unreach;
-		break;
-	case ICMP_REDIRECT:
-		arr = icmp_code_redirect;
-		break;
-	case ICMP_TIMXCEED:
-		arr = icmp_code_timxceed;
-		break;
-	case ICMP_PARAMPROB:
-		arr = icmp_code_paramprob;
-		break;
-	case ICMP_PHOTURIS:
-		arr = icmp_code_photuris;
+	case IPPROTO_ICMPV6:
+		switch (type) {
+		case ICMP6_DST_UNREACH:
+			arr = icmp6_code_unreach;
+			break;
+		case ICMP6_TIME_EXCEEDED:
+			arr = icmp6_code_timxceed;
+			break;
+		case ICMP6_PARAM_PROB:
+			arr = icmp6_code_paramprob;
+			break;
+		case ICMP6_PACKET_TOO_BIG:
+		/* code-less info ICMPs */
+		case ICMP6_ECHO_REQUEST:
+		case ICMP6_ECHO_REPLY:
+		case MLD_LISTENER_QUERY:
+		case MLD_LISTENER_REPORT:
+		case MLD_LISTENER_DONE:
+		case ND_ROUTER_SOLICIT:
+		case ND_ROUTER_ADVERT:
+		case ND_NEIGHBOR_SOLICIT:
+		case ND_NEIGHBOR_ADVERT:
+		case ND_REDIRECT:
+			arr = icmp6_code_none;
+			break;
+		/* XXX TODO: info ICMPs with code values */
+		default:
+			yyerror("unknown icmp-type %d while parsing code %s",
+				type, code);
+			return ~0;
+		}
 		break;
 	default:
-		return ~0;
+		assert(false);
 	}
 
 	for (uint8_t ul = 0; arr[ul]; ul++) {
 		if (strcmp(arr[ul], code) == 0)
 			return ul;
 	}
+	yyerror("unknown code %s for icmp-type %d", code, type);
 	return ~0;
 }
 
 npfvar_t *
-npfctl_parse_icmp(uint8_t type, uint8_t code)
+npfctl_parse_icmp(int proto, int type, int code)
 {
 	npfvar_t *vp = npfvar_create(".icmp");
+	int varnum;
 
-	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
+	switch (proto) {
+	case IPPROTO_ICMP:
+		varnum = NPFVAR_ICMP;
+		break;
+	case IPPROTO_ICMPV6:
+		varnum = NPFVAR_ICMP6;
+		break;
+	default:
+		assert(false);
+	}
+
+	if (!npfvar_add_element(vp, varnum, &type, sizeof(type)))
 		goto out;
 
-	if (!npfvar_add_element(vp, NPFVAR_ICMP, &code, sizeof(code)))
+	if (!npfvar_add_element(vp, varnum, &code, sizeof(code)))
 		goto out;
 
 	return vp;

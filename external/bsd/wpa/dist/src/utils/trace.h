@@ -29,7 +29,7 @@ struct wpa_trace_ref {
 	const void *addr;
 	WPA_TRACE_INFO
 };
-#define WPA_TRACE_REF(name) struct wpa_trace_ref wpa_trace_ref_##name
+#define WPA_TRACE_REF(name) struct wpa_trace_ref wpa_trace_ref_##name;
 
 #define wpa_trace_dump(title, ptr) \
 	wpa_trace_dump_func((title), (ptr)->btrace, (ptr)->btrace_num)

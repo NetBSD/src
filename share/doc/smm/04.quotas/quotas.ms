@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotas.ms,v 1.4.54.1 2012/05/23 10:07:34 yamt Exp $
+.\"	$NetBSD: quotas.ms,v 1.4.54.2 2012/10/30 18:59:34 yamt Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,11 @@ exceed their allotted limit, but allow some
 extra space for current work.
 Remaining over quota for long periods of time
 will eventually cause a fatal over-quota condition.
+.PP
+File system independent access to quotas is provided via a library,
+\fIlibquota\fP\|(3),
+shared by the quota tools and available to third-party software.
+Dump and restore tools are provided for backing up quota information.
 .AE
 .NH 1
 Users' view of disk quotas
@@ -229,7 +234,8 @@ files.
 These appear by default in the root directory of the volume they apply
 to, but may be placed anywhere, including sometimes on another file
 system.
-While file-system-level support is required, much of the work involved
+While file-system-level support is required, and enforcement is done in
+the file system, much of the work involved
 in maintaining the quota system is external to the file system.
 The program
 \fIquotacheck\fP\|(8)
@@ -319,7 +325,7 @@ options to
 \fInewfs\fP\|(8)
 as desired.
 This will create and initialize the on-disk data structures for
-quotas.
+user and/or group quotas respectively.
 These can also be created using
 \fItunefs\fP\|(8).
 .PP

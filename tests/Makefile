@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33.2.1 2012/04/17 00:09:01 yamt Exp $
+# $NetBSD: Makefile,v 1.33.2.2 2012/10/30 18:59:50 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,11 +7,15 @@
 TESTSDIR=	${TESTSBASE}
 ATFFILE=	yes
 
-SUBDIR=		bin dev examples fs games include kernel lib libexec net
-SUBDIR+=	rump sbin sys usr.bin usr.sbin
+SUBDIR=		bin dev examples games include kernel lib libexec net
+SUBDIR+=	sbin sys usr.bin usr.sbin
+
+. if (${MKRUMP} != "no")
+SUBDIR+= fs rump
 
 . if ${MKKMOD} != "no"
 SUBDIR+= modules
+. endif
 . endif
 
 . if ${MKCRYPTO} != "no"
@@ -20,6 +24,10 @@ SUBDIR+=	crypto
 
 . if ${MKIPFILTER} != "no"
 SUBDIR+=	ipf
+. endif
+
+. if ${MKSHARE} != "no"
+SUBDIR+=	share
 . endif
 
 .include <bsd.test.mk>

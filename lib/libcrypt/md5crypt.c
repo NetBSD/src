@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.9.34.1 2012/04/17 00:05:27 yamt Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.9.34.2 2012/10/30 18:59:07 yamt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.9.34.1 2012/04/17 00:05:27 yamt Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.9.34.2 2012/10/30 18:59:07 yamt Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -143,6 +143,6 @@ __md5crypt(const char *pw, const char *salt)
 	*p = '\0';
 
 	/* Don't leave anything around in vm they could use. */
-	memset(final, 0, sizeof(final));
+	__explicit_bzero(final, sizeof(final));
 	return (passwd);
 }

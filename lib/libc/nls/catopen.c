@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.28.6.1 2012/04/17 00:05:22 yamt Exp $	*/
+/*	$NetBSD: catopen.c,v 1.28.6.2 2012/10/30 18:58:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.28.6.1 2012/04/17 00:05:22 yamt Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.28.6.2 2012/10/30 18:58:54 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -87,10 +87,13 @@ _catopen(const char *name, int oflag)
 
 	if (issetugid() || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
+	/*
+	 * histrical note:
+	 * http://www.hauN.org/ml/b-l-j/a/800/828.html (in japanese)
+	 */
 	if (oflag == NL_CAT_LOCALE) {
 		lang = setlocale(LC_MESSAGES, NULL);
-	}
-	else {
+	} else {
 		lang = getenv("LANG");
 	}
 	if (lang == NULL || strchr(lang, '/'))

@@ -1,21 +1,21 @@
-#	$NetBSD: Makefile,v 1.179.2.2 2012/04/17 00:05:11 yamt Exp $
+#	$NetBSD: Makefile,v 1.179.2.3 2012/10/30 18:58:34 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
-SUBDIR=		csu
+SUBDIR=		csu .WAIT
 
 .if (${MKGCC} != "no")
 . if ${HAVE_GCC} == 4
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../gnu/lib/crtstuff4
+SUBDIR+=	../gnu/lib/crtstuff4 .WAIT
 .  endif
-SUBDIR+=	../gnu/lib/libgcc4
+SUBDIR+=	../gnu/lib/libgcc4 .WAIT
 . else
 .  if (${USE_COMPILERCRTSTUFF} == "yes")
-SUBDIR+=	../external/gpl3/gcc/lib/crtstuff
+SUBDIR+=	../external/gpl3/gcc/lib/crtstuff .WAIT
 .  endif
-SUBDIR+=	../external/gpl3/gcc/lib/libgcc
+SUBDIR+=	../external/gpl3/gcc/lib/libgcc .WAIT
 . endif
 .endif
 
@@ -36,9 +36,12 @@ SUBDIR+=	libarch \
 		libintl libipsec libisns libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
 		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
-		librumpclient libtelnet libterminfo \
+		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
+.if (${MKRUMP} != "no")
+SUBDIR+=	librumpclient
+.endif
 .if (${MKSKEY} != "no")
 SUBDIR+=	libskey
 .endif
@@ -52,10 +55,6 @@ SUBDIR+=	../external/apache2/mDNSResponder/lib
 .endif
 
 SUBDIR+=	../external/bsd/am-utils/lib
-
-.if (${MKATF} != "no")
-SUBDIR+=	../external/bsd/atf/lib
-.endif
 
 SUBDIR+=	../external/bsd/flex/lib
 SUBDIR+=	../external/bsd/tre/lib
@@ -99,15 +98,19 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libcurses	# depends on libterminfo
 SUBDIR+=	libdm		# depends on libprop
 SUBDIR+=	libedit		# depends on libterminfo
+SUBDIR+=	libexecinfo 	# depends on libelf
 SUBDIR+=	libppath	# depends on libprop
 SUBDIR+=	libperfuse	# depends on libpuffs
 SUBDIR+=	libquota	# depends on libprop and librpcsvc
 SUBDIR+=	librefuse	# depends on libpuffs
+.if (${MKRUMP} != "no")
 SUBDIR+=	librumpuser	# depends on libpthread
 SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
+.endif
 
 .if (${MKNPF} != "no")
 SUBDIR+=	libnpf		# depends on libprop
+SUBDIR+=	npf
 .endif
 
 .if (${MKCRYPTO} != "no")
@@ -143,10 +146,16 @@ SUBDIR+=	../external/gpl3/gcc/lib/libsupc++
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKATF} != "no")
+SUBDIR+=	../external/bsd/atf/lib		# depends on libstdc++
+.endif
+
 SUBDIR+=	libform		# depends on libcurses
 SUBDIR+=	libmenu		# depends on libcurses
 SUBDIR+=	libradius	# depends on libcrypto if (${MKCRYPTO} != "no")
+.if (${MKRUMP} != "no")
 SUBDIR+=	librump		# depends on librumpuser
+.endif
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
@@ -168,9 +177,11 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if (${MKRUMP} != "no")
 SUBDIR+=	librumpdev	# depends on librump
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
+.endif
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on heimdal
@@ -182,6 +193,7 @@ SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 
 SUBDIR+=	../external/bsd/mdocml/lib
 
+.if (${MKRUMP} != "no")
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -192,7 +204,41 @@ SUBDIR+=	.WAIT
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
+.if !defined(BSD_MK_COMPAT_FILE)
+SUBDIR+=	../sys/rump/dev/lib
+SUBDIR+=	../sys/rump/fs/lib
+SUBDIR+=	../sys/rump/kern/lib
+SUBDIR+=	../sys/rump/net/lib
+.endif
+.endif
+
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
+
+#
+# build_install logic for src/Makefile.
+# Compute a list of subdirectories delimited by .WAIT.
+# Run "make dependall && make install" for all subdirectories in a group
+# concurrently, but wait after each group.
+#
+SUBDIR_GROUPS=	1
+CUR_GROUP:=	1
+.for dir in ${SUBDIR}
+.  if ${dir} == ".WAIT"
+CUR_GROUP:=	${CUR_GROUP}1
+SUBDIR_GROUPS:=	${SUBDIR_GROUPS} ${CUR_GROUP}
+.  else
+SUBDIR_GROUP.${CUR_GROUP}+=	${dir}
+.endif
+
+.endfor
+
+build_install:
+.for group in ${SUBDIR_GROUPS}
+.  if !empty(SUBDIR_GROUP.${group})
+	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/dependall-/}
+	${MAKEDIRTARGET} . ${SUBDIR_GROUP.${group}:C/^/install-/}
+.  endif
+.endfor
 
 .include <bsd.subdir.mk>

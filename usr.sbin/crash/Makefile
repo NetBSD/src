@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2012/04/17 00:09:46 yamt Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2012/10/30 19:00:31 yamt Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -59,7 +59,7 @@ MACHINE_FAMILY = ${MACHINE}
 
 .if ${MACHINE_ARCH} == "arm"
 .PATH:	${S}/arch/arm/arm32
-SRCS+=disassem.c setstack.S cpufunc_asm.S
+SRCS+=disassem.c cpufunc_asm.S
 .endif
 
 .PATH:	${S}/arch/${MACHINE_FAMILY}/${MACHINE_FAMILY}
