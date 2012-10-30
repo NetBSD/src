@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.24 2011/09/16 16:05:59 joerg Exp $	*/
+/*	$NetBSD: zdump.c,v 1.24.2.1 2012/10/30 18:59:05 yamt Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,13 +6,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#ifndef NOID
-__RCSID("$NetBSD: zdump.c,v 1.24 2011/09/16 16:05:59 joerg Exp $");
-#endif /* !defined NOID */
+__RCSID("$NetBSD: zdump.c,v 1.24.2.1 2012/10/30 18:59:05 yamt Exp $");
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zdump.c	8.10";
-
+#include "version.h"
 /*
 ** This code has been made independent of the rest of the time
 ** conversion package to increase confidence in the verification it provides.
@@ -120,6 +117,14 @@ static char	elsieid[] = "@(#)zdump.c	8.10";
 #endif /* !defined lint */
 #endif /* !defined GNUC_or_lint */
 
+#ifndef __pure
+#if 2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)
+# define __pure __attribute__ ((__pure__))
+#else
+# define __pure /* empty */
+#endif
+#endif
+
 #ifndef INITIALIZE
 #ifdef GNUC_or_lint
 #define INITIALIZE(x)	((x) = 0)
@@ -160,28 +165,27 @@ static int	warned;
 
 static const char *	abbr(struct tm * tmp);
 static void	abbrok(const char * abbrp, const char * zone);
-static long	delta(struct tm * newp, struct tm * oldp);
+static long	delta(struct tm * newp, struct tm * oldp) __pure;
 static void	dumptime(const struct tm * tmp);
 static time_t	hunt(char * name, time_t lot, time_t	hit);
 int		main(int, char **);
 static void	setabsolutes(void);
 static void	show(char * zone, time_t t, int v);
 static const char *	tformat(void);
-static time_t	yeartot(long y);
+static time_t	yeartot(long y) __pure;
 
 #ifndef TYPECHECK
 #define my_localtime	localtime
 #else /* !defined TYPECHECK */
 static struct tm *
-my_localtime(tp)
-time_t *	tp;
+my_localtime(time_t *tp)
 {
-	register struct tm *	tmp;
+	struct tm *tmp;
 
 	tmp = localtime(tp);
 	if (tp != NULL && tmp != NULL) {
 		struct tm	tm;
-		register time_t	t;
+		time_t	t;
 
 		tm = *tmp;
 		t = mktime(&tm);
@@ -207,12 +211,10 @@ time_t *	tp;
 #endif /* !defined TYPECHECK */
 
 static void
-abbrok(abbrp, zone)
-const char * const	abbrp;
-const char * const	zone;
+abbrok(const char *const abbrp, const char *const zone)
 {
-	register const char *	cp;
-	register const char *	wp;
+	const char *cp;
+	const char *wp;
 
 	if (warned)
 		return;
@@ -245,7 +247,7 @@ const char * const	zone;
 }
 
 __dead static void
-usage(FILE *stream, int status)
+usage(FILE *const stream, const int status)
 {
 	(void) fprintf(stream,
 _("%s: usage is %s [ --version ] [ --help ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n\
@@ -256,26 +258,24 @@ Report bugs to tz@elsie.nci.nih.gov.\n"),
 }
 
 int
-main(argc, argv)
-int	argc;
-char *	argv[];
+main(int argc, char *argv[])
 {
-	register int		i;
-	register int		c;
-	register int		vflag;
-	register char *		cutarg;
-	register long		cutloyear = ZDUMP_LO_YEAR;
-	register long		cuthiyear = ZDUMP_HI_YEAR;
-	register time_t		cutlotime;
-	register time_t		cuthitime;
-	register char **	fakeenv;
-	time_t			now;
-	time_t			t;
-	time_t			newt;
-	struct tm		tm;
-	struct tm		newtm;
-	register struct tm *	tmp;
-	register struct tm *	newtmp;
+	int		i;
+	int		c;
+	int		vflag;
+	char *		cutarg;
+	long		cutloyear = ZDUMP_LO_YEAR;
+	long		cuthiyear = ZDUMP_HI_YEAR;
+	time_t		cutlotime;
+	time_t		cuthitime;
+	char **		fakeenv;
+	time_t		now;
+	time_t		t;
+	time_t		newt;
+	struct tm	tm;
+	struct tm	newtm;
+	struct tm *	tmp;
+	struct tm *	newtmp;
 
 	INITIALIZE(cutlotime);
 	INITIALIZE(cuthitime);
@@ -289,7 +289,7 @@ char *	argv[];
 	progname = argv[0];
 	for (i = 1; i < argc; ++i)
 		if (strcmp(argv[i], "--version") == 0) {
-			(void) printf("%s\n", elsieid);
+			(void) printf("%s\n", TZVERSION);
 			exit(EXIT_SUCCESS);
 		} else if (strcmp(argv[i], "--help") == 0) {
 			usage(stdout, EXIT_SUCCESS);
@@ -332,15 +332,14 @@ char *	argv[];
 		if (strlen(argv[i]) > longest)
 			longest = strlen(argv[i]);
 	{
-		register int	from;
-		register int	to;
+		int	from;
+		int	to;
 
 		for (i = 0; environ[i] != NULL; ++i)
 			continue;
-		fakeenv = (char **) malloc((size_t) ((i + 2) *
-			sizeof *fakeenv));
+		fakeenv = malloc((i + 2) * sizeof *fakeenv);
 		if (fakeenv == NULL ||
-			(fakeenv[0] = (char *) malloc(longest + 4)) == NULL) {
+			(fakeenv[0] = malloc(longest + 4)) == NULL) {
 			err(EXIT_FAILURE, "Can't allocated %zu bytes",
 			    longest + 4);
 		}
@@ -463,12 +462,11 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 }
 
 static time_t
-yeartot(y)
-const long	y;
+yeartot(const long y)
 {
-	register long	myy;
-	register long	seconds;
-	register time_t	t;
+	long	myy;
+	long	seconds;
+	time_t	t;
 
 	myy = EPOCH_YEAR;
 	t = 0;
@@ -500,9 +498,9 @@ hunt(char *name, time_t lot, time_t hit)
 	time_t			t;
 	long			diff;
 	struct tm		lotm;
-	register struct tm *	lotmp;
+	struct tm *	lotmp;
 	struct tm		tm;
-	register struct tm *	tmp;
+	struct tm *	tmp;
 	char			loab[MAX_STRING_LENGTH];
 
 	lotmp = my_localtime(&lot);
@@ -542,12 +540,10 @@ hunt(char *name, time_t lot, time_t hit)
 */
 
 static long
-delta(newp, oldp)
-struct tm *	newp;
-struct tm *	oldp;
+delta(struct tm *newp, struct tm *oldp)
 {
-	register long	result;
-	register int	tmy;
+	long	result;
+	int	tmy;
 
 	if (newp->tm_year < oldp->tm_year)
 		return -delta(oldp, newp);
@@ -567,7 +563,7 @@ struct tm *	oldp;
 static void
 show(char *zone, time_t t, int v)
 {
-	register struct tm *	tmp;
+	struct tm *	tmp;
 
 	(void) printf("%-*s  ", (int) longest, zone);
 	if (v) {
@@ -598,10 +594,9 @@ show(char *zone, time_t t, int v)
 }
 
 static const char *
-abbr(tmp)
-struct tm *	tmp;
+abbr(struct tm *tmp)
 {
-	register const char *	result;
+	const char *	result;
 	static const char	nada;
 
 	if (tmp->tm_isdst != 0 && tmp->tm_isdst != 1)
@@ -638,8 +633,7 @@ tformat(void)
 }
 
 static void
-dumptime(timeptr)
-register const struct tm *	timeptr;
+dumptime(const struct tm *timeptr)
 {
 	static const char	wday_name[][3] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -648,10 +642,10 @@ register const struct tm *	timeptr;
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-	register const char *	wn;
-	register const char *	mn;
-	register int		lead;
-	register int		trail;
+	const char *	wn;
+	const char *	mn;
+	int		lead;
+	int		trail;
 
 	if (timeptr == NULL) {
 		(void) printf("NULL");

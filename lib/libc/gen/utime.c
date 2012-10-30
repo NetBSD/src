@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.c,v 1.13 2010/03/23 20:28:59 drochner Exp $	*/
+/*	$NetBSD: utime.c,v 1.13.6.1 2012/10/30 18:58:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utime.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utime.c,v 1.13 2010/03/23 20:28:59 drochner Exp $");
+__RCSID("$NetBSD: utime.c,v 1.13.6.1 2012/10/30 18:58:49 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,9 +47,7 @@ __RCSID("$NetBSD: utime.c,v 1.13 2010/03/23 20:28:59 drochner Exp $");
 #include <utime.h>
 
 int
-utime(path, times)
-	const char *path;
-	const struct utimbuf *times;
+utime(const char *path, const struct utimbuf *times)
 {
 	struct timeval tv[2], *tvp;
 

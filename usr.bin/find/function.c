@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.67.2.2 2012/05/23 10:08:24 yamt Exp $	*/
+/*	$NetBSD: function.c,v 1.67.2.3 2012/10/30 19:00:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.67.2.2 2012/05/23 10:08:24 yamt Exp $");
+__RCSID("$NetBSD: function.c,v 1.67.2.3 2012/10/30 19:00:16 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -355,7 +355,7 @@ c_ctime(char ***argvp, int isok)
 /*
  * -delete functions --
  *
- *	True always.  Makes its best shot and continues on regardless.
+ *	Always true.  Makes its best shot and continues on regardless.
  */
 int
 f_delete(PLAN *plan __unused, FTSENT *entry)

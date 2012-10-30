@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.7 2005/11/29 03:12:01 christos Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.7.44.1 2012/10/30 18:59:06 yamt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yperr_string.c,v 1.7 2005/11/29 03:12:01 christos Exp $");
+__RCSID("$NetBSD: yperr_string.c,v 1.7.44.1 2012/10/30 18:59:06 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,8 +42,7 @@ __weak_alias(yperr_string,_yperr_string)
 #endif
 
 char *
-yperr_string(incode)
-	int             incode;
+yperr_string(int incode)
 {
 	static char     err[80];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.4.6.2 2012/04/17 00:09:50 yamt Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.4.6.3 2012/10/30 19:00:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.2 2012/04/17 00:09:50 yamt Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.4.6.3 2012/10/30 19:00:44 yamt Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
 #include <inttypes.h>
-#include <assert.h>
 #include <err.h>
 
 #include "npfctl.h"
@@ -333,8 +332,28 @@ npfctl_gennc_icmp(nc_ctx_t *ctx, int type, int code)
 
 	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_ICMP4;
-	*nc++ = (type == -1 ? 0 : (1 << 31) & (type & 0xff << 8)) |
-		(code == -1 ? 0 : (1 << 31) & (code & 0xff));
+	*nc++ = (type == -1 ? 0 : (1 << 31) | ((type & 0xff) << 8)) |
+		(code == -1 ? 0 : (1 << 30) | (code & 0xff));
+
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
+
+	/* + 4 words. */
+	npfctl_ncgen_putptr(ctx, nc);
+}
+
+/*
+ * npfctl_gennc_icmp6: fragment to match ICMPV6 type and code.
+ */
+void
+npfctl_gennc_icmp6(nc_ctx_t *ctx, int type, int code)
+{
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
+
+	/* OP, code, type (2 words) */
+	*nc++ = NPF_OPCODE_ICMP6;
+	*nc++ = (type == -1 ? 0 : (1 << 31) | ((type & 0xff) << 8)) |
+		(code == -1 ? 0 : (1 << 30) | (code & 0xff));
 
 	/* Comparison block (2 words). */
 	npfctl_ncgen_addjmp(ctx, &nc);
@@ -385,6 +404,25 @@ npfctl_gennc_tcpfl(nc_ctx_t *ctx, uint8_t tf, uint8_t tf_mask)
 	npfctl_ncgen_putptr(ctx, nc);
 }
 
+/*
+ * npfctl_gennc_proto: fragment to match the protocol.
+ */
+void
+npfctl_gennc_proto(nc_ctx_t *ctx, uint8_t addrlen, uint8_t proto)
+{
+	uint32_t *nc = npfctl_ncgen_getptr(ctx, 4 /* words */);
+
+	/* OP, code, type (2 words) */
+	*nc++ = NPF_OPCODE_PROTO;
+	*nc++ = ((addrlen & 0xff) << 8) | (proto & 0xff);
+
+	/* Comparison block (2 words). */
+	npfctl_ncgen_addjmp(ctx, &nc);
+
+	/* + 4 words. */
+	npfctl_ncgen_putptr(ctx, nc);
+}
+
 void
 npfctl_ncgen_print(const void *code, size_t len)
 {
@@ -396,6 +434,8 @@ npfctl_ncgen_print(const void *code, size_t len)
 		len -= sizeof(*op);
 	}
 #else
-	npfctl_ncode_disassemble(stdout, code, len);
+	nc_inf_t *ni = npfctl_ncode_disinf(stdout);
+	npfctl_ncode_disassemble(ni, code, len);
+	free(ni);
 #endif
 }

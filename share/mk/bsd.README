@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.289.2.2 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.README,v 1.289.2.3 2012/10/30 18:59:46 yamt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -131,7 +131,7 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: no
 
 MKCOMPAT  	If "no", don't build or install the src/compat.
-		Default: yes on amd64/sparc64, no elsewhere.
+		Default: yes on amd64/mips64/sparc64, no elsewhere.
 
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
@@ -140,13 +140,7 @@ MKCRYPTO	If "no", no cryptography support will be built into the system,
 		and also acts as "MKKERBEROS=no".
 		Default: yes
 
-MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
-		Default: no
-
-MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
-		Default: no
-
-MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
+MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5
 		Default: no
 
 MKCVS		If "no", don't build or install cvs(1).
@@ -162,6 +156,11 @@ MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
 
 MKDOC		If "no", don't build or install the documentation.
 		Default: yes
+
+MKDTRACE	If "no", do not build and install the kernel modules,
+		utilities and libraries used to implement the dtrace(1)
+		facility.
+		Default: no
 
 MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		don't install certain libraries in /lib, and don't
@@ -222,6 +221,9 @@ MKISCSI		If "no", don't build or install iSCSI library or applications
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
+		Default: yes
+
+MKKMOD		If "no", disables building of kernel modules.
 		Default: yes
 
 MKLDAP		If "no", disables building of LDAP infrastructure
@@ -289,7 +291,7 @@ MKPF		If "no", don't build or install the pf programs and LKM.
 
 MKPIC		If "no", don't build or install shared libraries, and
 		also acts as "MKPICLIB=no"
-		Default: yes (for MACHINE_ARCHs that support it) 
+		Default: yes (for MACHINE_ARCHs that support it)
 
 MKPICINSTALL	If "no", don't install the *_pic.a libraries.
 		Default: yes
@@ -312,6 +314,11 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
+
+MKREPRO         If "yes", create reproducable builds. This enables
+		different switches to make two builds from the same source tree
+		result in the same build results.
+		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
@@ -358,10 +365,14 @@ MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKZFS		If "no", do not build and install utilities and libraries 
-		used to manage ZFS file system. Do not build zfs and solaris 
+MKZFS		If "no", do not build and install utilities and libraries
+		used to manage ZFS file system. Do not build zfs and solaris
 		compatibility kernel modules.
 		Default: yes on i386/amd64, no elsewhere.
+
+MKRUMP		If "no", do not build and install rump related headers,
+		libraries, and programs.
+		Default: yes
 
 USE_HESIOD	If "no", disables building Hesiod support into
 		various system utilities/libraries that support it.
@@ -406,7 +417,7 @@ USE_SSP		If "no", disables GCC stack protection code, which
 USE_FORT 	If "yes" turns on substitute wrappers for commonly used
 		functions that do not do bounds checking regularly, but
 		they could in some cases by using the gcc
-		__builtin_object_size() function to determine the buffer 
+		__builtin_object_size() function to determine the buffer
 		size where it is known and detect buffer overflows.
 		These substitute functions are in /usr/include/ssp.
 		Default: depends on the part of the source tree
@@ -638,7 +649,7 @@ TOOLCHAIN_MISSING
 		If not "no", this indicates that the platform being built
 		does not have a working in-tree toolchain.  If the
 		${MACHINE_ARCH} in question falls into this category,
-		TOOLCHAIN_MISSING is conditionally assigned the value "yes". 
+		TOOLCHAIN_MISSING is conditionally assigned the value "yes".
 		Otherwise, the variable is unconditionally assigned the
 		value "no".
 		If not "no", ${MKBINUTILS}, ${MKGCC}, and ${MKGDB} are
@@ -932,7 +943,7 @@ BUILDSYMLINKS	List of two word items:
 
 UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		tree. Each one will be decoded with ${TOOL_UUDECODE}.
-		The source files have a `.uue' suffix, the generated files do 
+		The source files have a `.uue' suffix, the generated files do
 		not.
 
 UUDECODE_FILES_RENAME_<fn>
@@ -1129,7 +1140,7 @@ LIBDPLIBS	A list of the tuples:
 				    ${LIBDO.libname}/liblibname.a   added.
 
 		This variable may be used for individual libraries, as
-		well as in parent directories to cache common libraries 
+		well as in parent directories to cache common libraries
 		as a build-time optimization.
 
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
@@ -1271,7 +1282,7 @@ BUILDID		If set, the contents of this variable are appended
 
 The include file <bsd.prog.mk> handles building programs from one or
 more source files, along with their manual pages.  It has a limited number
-of suffixes, consistent with the current needs of the BSD tree. 
+of suffixes, consistent with the current needs of the BSD tree.
 <bsd.prog.mk> includes <bsd.shlib.mk> to get shared library parameters.
 
 It has eight targets:
@@ -1765,11 +1776,12 @@ NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
 NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
 		passed to it.
 
-WARNS		Crank up GCC warning options; the distinct levels are:
+WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=1
 			WARNS=2
 			WARNS=3
 			WARNS=4
+			WARNS=5
 
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 

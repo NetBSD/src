@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.210.2.1 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.210.2.2 2012/10/30 18:59:47 yamt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -8,6 +8,7 @@ _BSD_SYS_MK_=1
 .if ${MKREPRO:Uno} == "yes"
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
+CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 .endif
 
 # Enable c99 mode by default.
@@ -40,7 +41,7 @@ CFLAGS+=	-Wa,--fatal-warnings
 .if (!defined(MKPIC) || ${MKPIC} != "no") && \
     (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 # XXX there are some strange problems not yet resolved
-. if !defined(HAVE_GCC) || ${HAVE_GCC} != 45
+. if !defined(HAVE_GCC) || defined(HAVE_LLVM)
 LDFLAGS+=	-Wl,--fatal-warnings
 . endif
 .endif
@@ -108,7 +109,7 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .if (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .if ${HAS_SSP} == "yes"
 COPTS+=	-fstack-protector -Wstack-protector 
-COPTS+=	${${ACTIVE_CC} == "clang":? -mllvm -stack-protector-buffer-size=1 :}
+COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 .endif

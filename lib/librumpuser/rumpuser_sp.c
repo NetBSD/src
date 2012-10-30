@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.45.4.1 2012/04/17 00:05:33 yamt Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.45.4.2 2012/10/30 18:59:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -34,11 +34,13 @@
  * work correctly from one hardware architecture to another.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.45.4.1 2012/04/17 00:05:33 yamt Exp $");
+#include "rumpuser_port.h"
+
+#if !defined(lint)
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.45.4.2 2012/10/30 18:59:17 yamt Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
-#include <sys/atomic.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 
@@ -59,6 +61,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.45.4.1 2012/04/17 00:05:33 yamt Exp $");
 
 #include <rump/rump.h> /* XXX: for rfork flags */
 #include <rump/rumpuser.h>
+
 #include "rumpuser_int.h"
 
 #include "sp_common.c"
@@ -85,7 +88,43 @@ static struct rumpuser_sp_ops spops;
 static char banner[MAXBANNER];
 
 #define PROTOMAJOR 0
-#define PROTOMINOR 3
+#define PROTOMINOR 4
+
+
+/* how to use atomic ops on Linux? */
+#ifdef __linux__
+static pthread_mutex_t discomtx = PTHREAD_MUTEX_INITIALIZER;
+
+static void
+signaldisco(void)
+{
+
+	pthread_mutex_lock(&discomtx);
+	disco++;
+	pthread_mutex_unlock(&discomtx);
+}
+
+static unsigned int
+getdisco(void)
+{
+	unsigned int discocnt;
+
+	pthread_mutex_lock(&discomtx);
+	discocnt = disco;
+	disco = 0;
+	pthread_mutex_unlock(&discomtx);
+
+	return discocnt;
+}
+
+#else /* NetBSD */
+
+#include <sys/atomic.h>
+#define signaldisco() atomic_inc_uint(&disco)
+#define getdisco() atomic_swap_uint(&disco, 0)
+
+#endif
+
 
 struct prefork {
 	uint32_t pf_auth[AUTHLEN];
@@ -244,7 +283,7 @@ nextreq(struct spclient *spc)
  */
 
 static void
-send_error_resp(struct spclient *spc, uint64_t reqno, int error)
+send_error_resp(struct spclient *spc, uint64_t reqno, enum rumpsp_err error)
 {
 	struct rsp_hdr rhdr;
 	struct iovec iov[1];
@@ -505,7 +544,7 @@ spcrelease(struct spclient *spc)
 	spc->spc_fd = -1;
 	spc->spc_state = SPCSTATE_NEW;
 
-	atomic_inc_uint(&disco);
+	signaldisco();
 }
 
 static void
@@ -852,7 +891,7 @@ schedulework(struct spclient *spc, enum sbatype sba_type)
 	reqno = spc->spc_hdr.rsp_reqno;
 	while ((sba = malloc(sizeof(*sba))) == NULL) {
 		if (nworker == 0 || retries > 10) {
-			send_error_resp(spc, reqno, EAGAIN);
+			send_error_resp(spc, reqno, RUMPSP_ERR_TRYAGAIN);
 			spcfreebuf(spc);
 			return;
 		}
@@ -908,7 +947,7 @@ handlereq(struct spclient *spc)
 	reqno = spc->spc_hdr.rsp_reqno;
 	if (__predict_false(spc->spc_state == SPCSTATE_NEW)) {
 		if (spc->spc_hdr.rsp_type != RUMPSP_HANDSHAKE) {
-			send_error_resp(spc, reqno, EAUTH);
+			send_error_resp(spc, reqno, RUMPSP_ERR_AUTH);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -941,7 +980,8 @@ handlereq(struct spclient *spc)
 			int cancel;
 
 			if (spc->spc_off-HDRSZ != sizeof(*rfp)) {
-				send_error_resp(spc, reqno, EINVAL);
+				send_error_resp(spc, reqno,
+				    RUMPSP_ERR_MALFORMED_REQUEST);
 				shutdown(spc->spc_fd, SHUT_RDWR);
 				spcfreebuf(spc);
 				return;
@@ -964,7 +1004,8 @@ handlereq(struct spclient *spc)
 			spcfreebuf(spc);
 
 			if (!pf) {
-				send_error_resp(spc, reqno, ESRCH);
+				send_error_resp(spc, reqno,
+				    RUMPSP_ERR_INVALID_PREFORK);
 				shutdown(spc->spc_fd, SHUT_RDWR);
 				return;
 			}
@@ -987,7 +1028,8 @@ handlereq(struct spclient *spc)
 			 * interfaces some day if anyone cares)
 			 */
 			if ((error = lwproc_rfork(spc, 0, NULL)) != 0) {
-				send_error_resp(spc, reqno, error);
+				send_error_resp(spc, reqno,
+				    RUMPSP_ERR_RFORK_FAILED);
 				shutdown(spc->spc_fd, SHUT_RDWR);
 				lwproc_release();
 				return;
@@ -999,7 +1041,7 @@ handlereq(struct spclient *spc)
 
 			send_handshake_resp(spc, reqno, 0);
 		} else {
-			send_error_resp(spc, reqno, EAUTH);
+			send_error_resp(spc, reqno, RUMPSP_ERR_AUTH);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -1027,14 +1069,14 @@ handlereq(struct spclient *spc)
 		inexec = spc->spc_inexec;
 		pthread_mutex_unlock(&spc->spc_mtx);
 		if (inexec) {
-			send_error_resp(spc, reqno, EBUSY);
+			send_error_resp(spc, reqno, RUMPSP_ERR_INEXEC);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			return;
 		}
 
 		pf = malloc(sizeof(*pf));
 		if (pf == NULL) {
-			send_error_resp(spc, reqno, ENOMEM);
+			send_error_resp(spc, reqno, RUMPSP_ERR_NOMEM);
 			return;
 		}
 
@@ -1046,7 +1088,7 @@ handlereq(struct spclient *spc)
 		lwproc_switch(spc->spc_mainlwp);
 		if ((error = lwproc_rfork(spc, RUMP_RFFDG, NULL)) != 0) {
 			DPRINTF(("rump_sp: fork failed: %d (%p)\n",error, spc));
-			send_error_resp(spc, reqno, error);
+			send_error_resp(spc, reqno, RUMPSP_ERR_RFORK_FAILED);
 			lwproc_switch(NULL);
 			free(pf);
 			return;
@@ -1074,7 +1116,8 @@ handlereq(struct spclient *spc)
 		int inexec;
 
 		if (spc->spc_hdr.rsp_handshake != HANDSHAKE_EXEC) {
-			send_error_resp(spc, reqno, EINVAL);
+			send_error_resp(spc, reqno,
+			    RUMPSP_ERR_MALFORMED_REQUEST);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -1084,7 +1127,7 @@ handlereq(struct spclient *spc)
 		inexec = spc->spc_inexec;
 		pthread_mutex_unlock(&spc->spc_mtx);
 		if (inexec) {
-			send_error_resp(spc, reqno, EBUSY);
+			send_error_resp(spc, reqno, RUMPSP_ERR_INEXEC);
 			shutdown(spc->spc_fd, SHUT_RDWR);
 			spcfreebuf(spc);
 			return;
@@ -1111,7 +1154,7 @@ handlereq(struct spclient *spc)
 	}
 
 	if (__predict_false(spc->spc_hdr.rsp_type != RUMPSP_SYSCALL)) {
-		send_error_resp(spc, reqno, EINVAL);
+		send_error_resp(spc, reqno, RUMPSP_ERR_MALFORMED_REQUEST);
 		spcfreebuf(spc);
 		return;
 	}
@@ -1158,7 +1201,7 @@ spserver(void *arg)
 		int discoed;
 
 		/* g/c hangarounds (eventually) */
-		discoed = atomic_swap_uint(&disco, 0);
+		discoed = getdisco();
 		while (discoed--) {
 			nfds--;
 			idx = maxidx;
@@ -1212,8 +1255,8 @@ spserver(void *arg)
 						break;
 					default:
 						send_error_resp(spc,
-						    spc->spc_hdr.rsp_reqno,
-						    ENOENT);
+						  spc->spc_hdr.rsp_reqno,
+						  RUMPSP_ERR_MALFORMED_REQUEST);
 						spcfreebuf(spc);
 						break;
 					}
@@ -1288,7 +1331,7 @@ rumpuser_sp_init(const char *url, const struct rumpuser_sp_ops *spopsp,
 	/* sloppy error recovery */
 
 	/*LINTED*/
-	if (bind(s, sap, sap->sa_len) == -1) {
+	if (bind(s, sap, parsetab[idx].slen) == -1) {
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		return errno;
 	}

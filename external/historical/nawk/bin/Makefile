@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2011/08/16 10:45:37 christos Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2012/10/30 18:57:59 yamt Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-self-assign
@@ -17,9 +17,7 @@ LDADD+=	-lm
 DPADD+=	${LIBM}
 .endif
 YHEADER=	yes
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
-.endif
 COPTS.run.c += -Wno-format-nonliteral
 COPTS.tran.c += -Wno-format-nonliteral
 

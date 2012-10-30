@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.125.2.2 2012/05/23 10:07:32 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.125.2.2 2012/05/23 10:07:32 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.125.2.3 2012/10/30 18:59:14 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 #include <sys/mman.h>
-#include <sys/sysctl.h>
+#include <sys/lwp.h>
 #include <sys/lwpctl.h>
 #include <sys/tls.h>
 
@@ -153,21 +153,11 @@ pthread__init(void)
 {
 	pthread_t first;
 	char *p;
-	int i, mib[2];
-	size_t len;
+	int i;
 	extern int __isthreaded;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
-
-	mib[0] = CTL_HW;
-	mib[1] = HW_NCPU; 
-
-	len = sizeof(pthread__concurrency);
-	if (sysctl(mib, 2, &pthread__concurrency, &len, NULL, 0) == -1)
-		err(1, "sysctl(hw.ncpu");
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSREV; 
+	pthread__concurrency = sysconf(_SC_NPROCESSORS_CONF);
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
@@ -508,6 +498,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		flag |= LWP_SUSPENDED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
+		ret = errno;
 		pthread_mutex_lock(&newthread->pt_lock);
 		/* Will unlock and free name. */
 		pthread__reap(newthread);

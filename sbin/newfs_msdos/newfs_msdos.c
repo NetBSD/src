@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.36 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.36.2.1 2012/10/30 18:59:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.36 2011/08/29 14:35:03 joerg Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.36.2.1 2012/10/30 18:59:31 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,11 @@ __RCSID("$NetBSD: newfs_msdos.c,v 1.36 2011/08/29 14:35:03 joerg Exp $");
 #define DEFRDE	  512		/* default root directory entries */
 #define RESFTE	  2		/* reserved FAT entries */
 #define MINCLS12  1		/* minimum FAT12 clusters */
-#define MINCLS16  0x1000	/* minimum FAT16 clusters */
-#define MINCLS32  2		/* minimum FAT32 clusters */
-#define MAXCLS12  0xfed 	/* maximum FAT12 clusters */
-#define MAXCLS16  0xfff5	/* maximum FAT16 clusters */
-#define MAXCLS32  0xffffff5	/* maximum FAT32 clusters */
+#define MINCLS16  0xff5		/* minimum FAT16 clusters */
+#define MINCLS32  0xfff5	/* minimum FAT32 clusters */
+#define MAXCLS12  0xff4 	/* maximum FAT12 clusters */
+#define MAXCLS16  0xfff4	/* maximum FAT16 clusters */
+#define MAXCLS32  0xffffff4	/* maximum FAT32 clusters */
 
 #define mincls(fat)  ((fat) == 12 ? MINCLS12 :	\
 		      (fat) == 16 ? MINCLS16 :	\
@@ -246,7 +246,7 @@ static void infohandler(int sig);
 int
 main(int argc, char *argv[])
 {
-    static char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:u:";
+    static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:u:";
     static const char *opt_B, *opt_L, *opt_O, *opt_f;
     static u_int opt_F, opt_I, opt_S, opt_a, opt_b, opt_c, opt_e;
     static u_int opt_h, opt_i, opt_k, opt_m, opt_n, opt_o, opt_r;

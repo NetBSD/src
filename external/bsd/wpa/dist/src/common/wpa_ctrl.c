@@ -20,6 +20,12 @@
 #include <sys/un.h>
 #endif /* CONFIG_CTRL_IFACE_UNIX */
 
+#ifdef ANDROID
+#include <dirent.h>
+#include <cutils/sockets.h>
+#include "private/android_filesystem_config.h"
+#endif /* ANDROID */
+
 #include "wpa_ctrl.h"
 #include "common.h"
 
@@ -58,6 +64,14 @@ struct wpa_ctrl {
 
 #ifdef CONFIG_CTRL_IFACE_UNIX
 
+#ifndef CONFIG_CTRL_IFACE_CLIENT_DIR
+#define CONFIG_CTRL_IFACE_CLIENT_DIR "/tmp"
+#endif /* CONFIG_CTRL_IFACE_CLIENT_DIR */
+#ifndef CONFIG_CTRL_IFACE_CLIENT_PREFIX
+#define CONFIG_CTRL_IFACE_CLIENT_PREFIX "wpa_ctrl_"
+#endif /* CONFIG_CTRL_IFACE_CLIENT_PREFIX */
+
+
 struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 {
 	struct wpa_ctrl *ctrl;
@@ -81,7 +95,9 @@ struct wpa_ctrl * wpa_ctrl_open(const char *ctrl_path)
 	counter++;
 try_again:
 	ret = os_snprintf(ctrl->local.sun_path, sizeof(ctrl->local.sun_path),
-			  "/tmp/wpa_ctrl_%d-%d", getpid(), counter);
+			  CONFIG_CTRL_IFACE_CLIENT_DIR "/"
+			  CONFIG_CTRL_IFACE_CLIENT_PREFIX "%d-%d",
+			  (int) getpid(), counter);
 	if (ret < 0 || (size_t) ret >= sizeof(ctrl->local.sun_path)) {
 		close(ctrl->s);
 		os_free(ctrl);
@@ -105,6 +121,31 @@ try_again:
 		return NULL;
 	}
 
+#ifdef ANDROID
+	chmod(ctrl->local.sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+	chown(ctrl->local.sun_path, AID_SYSTEM, AID_WIFI);
+	/*
+	 * If the ctrl_path isn't an absolute pathname, assume that
+	 * it's the name of a socket in the Android reserved namespace.
+	 * Otherwise, it's a normal UNIX domain socket appearing in the
+	 * filesystem.
+	 */
+	if (ctrl_path != NULL && *ctrl_path != '/') {
+		char buf[21];
+		os_snprintf(buf, sizeof(buf), "wpa_%s", ctrl_path);
+		if (socket_local_client_connect(
+			    ctrl->s, buf,
+			    ANDROID_SOCKET_NAMESPACE_RESERVED,
+			    SOCK_DGRAM) < 0) {
+			close(ctrl->s);
+			unlink(ctrl->local.sun_path);
+			os_free(ctrl);
+			return NULL;
+		}
+		return ctrl;
+	}
+#endif /* ANDROID */
+
 	ctrl->dest.sun_family = AF_UNIX;
 	res = os_strlcpy(ctrl->dest.sun_path, ctrl_path,
 			 sizeof(ctrl->dest.sun_path));
@@ -127,10 +168,63 @@ try_again:
 
 void wpa_ctrl_close(struct wpa_ctrl *ctrl)
 {
+	if (ctrl == NULL)
+		return;
 	unlink(ctrl->local.sun_path);
-	close(ctrl->s);
+	if (ctrl->s >= 0)
+		close(ctrl->s);
 	os_free(ctrl);
 }
+
+
+#ifdef ANDROID
+/**
+ * wpa_ctrl_cleanup() - Delete any local UNIX domain socket files that
+ * may be left over from clients that were previously connected to
+ * wpa_supplicant. This keeps these files from being orphaned in the
+ * event of crashes that prevented them from being removed as part
+ * of the normal orderly shutdown.
+ */
+void wpa_ctrl_cleanup(void)
+{
+	DIR *dir;
+	struct dirent entry;
+	struct dirent *result;
+	size_t dirnamelen;
+	int prefixlen = os_strlen(CONFIG_CTRL_IFACE_CLIENT_PREFIX);
+	size_t maxcopy;
+	char pathname[PATH_MAX];
+	char *namep;
+
+	if ((dir = opendir(CONFIG_CTRL_IFACE_CLIENT_DIR)) == NULL)
+		return;
+
+	dirnamelen = (size_t) os_snprintf(pathname, sizeof(pathname), "%s/",
+					  CONFIG_CTRL_IFACE_CLIENT_DIR);
+	if (dirnamelen >= sizeof(pathname)) {
+		closedir(dir);
+		return;
+	}
+	namep = pathname + dirnamelen;
+	maxcopy = PATH_MAX - dirnamelen;
+	while (readdir_r(dir, &entry, &result) == 0 && result != NULL) {
+		if (os_strncmp(entry.d_name, CONFIG_CTRL_IFACE_CLIENT_PREFIX,
+			       prefixlen) == 0) {
+			if (os_strlcpy(namep, entry.d_name, maxcopy) < maxcopy)
+				unlink(pathname);
+		}
+	}
+	closedir(dir);
+}
+#endif /* ANDROID */
+
+#else /* CONFIG_CTRL_IFACE_UNIX */
+
+#ifdef ANDROID
+void wpa_ctrl_cleanup(void)
+{
+}
+#endif /* ANDROID */
 
 #endif /* CONFIG_CTRL_IFACE_UNIX */
 
@@ -234,11 +328,13 @@ int wpa_ctrl_request(struct wpa_ctrl *ctrl, const char *cmd, size_t cmd_len,
 	os_free(cmd_buf);
 
 	for (;;) {
-		tv.tv_sec = 2;
+		tv.tv_sec = 10;
 		tv.tv_usec = 0;
 		FD_ZERO(&rfds);
 		FD_SET(ctrl->s, &rfds);
 		res = select(ctrl->s + 1, &rfds, NULL, NULL, &tv);
+		if (res < 0)
+			return res;
 		if (FD_ISSET(ctrl->s, &rfds)) {
 			res = recv(ctrl->s, reply, *reply_len, 0);
 			if (res < 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.107.2.1 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: sys.mk,v 1.107.2.2 2012/10/30 18:59:47 yamt Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -26,8 +26,8 @@ DBG?=	-Os -freorder-blocks
 .elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
 # see src/doc/HACKS for details
 DBG?=	-Os
-#.elif ${MACHINE_ARCH} == "vax"
-#DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
+.elif ${MACHINE_ARCH} == "vax"
+DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .else
 DBG?=	-O2
 .endif
@@ -53,7 +53,7 @@ CFLAGS		+=	-g
 .endif
 
 CXX?=		c++
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99:N-Wold-style-definition:N-Wno-format-zero-length}
 
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
 __ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}

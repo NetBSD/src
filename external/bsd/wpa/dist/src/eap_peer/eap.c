@@ -37,6 +37,7 @@
 #define STATE_MACHINE_DEBUG_PREFIX "EAP"
 
 #define EAP_MAX_AUTH_ROUNDS 50
+#define EAP_CLIENT_TIMEOUT_DEFAULT 60
 
 
 static Boolean eap_sm_allowMethod(struct eap_sm *sm, int vendor,
@@ -146,6 +147,7 @@ SM_STATE(EAP, INITIALIZE)
 	sm->methodState = METHOD_NONE;
 	sm->allowNotifications = TRUE;
 	sm->decision = DECISION_FAIL;
+	sm->ClientTimeout = EAP_CLIENT_TIMEOUT_DEFAULT;
 	eapol_set_int(sm, EAPOL_idleWhile, sm->ClientTimeout);
 	eapol_set_bool(sm, EAPOL_eapSuccess, FALSE);
 	eapol_set_bool(sm, EAPOL_eapFail, FALSE);
@@ -267,6 +269,8 @@ SM_STATE(EAP, GET_METHOD)
 			   sm->reqVendor, method);
 		goto nak;
 	}
+
+	sm->ClientTimeout = EAP_CLIENT_TIMEOUT_DEFAULT;
 
 	wpa_printf(MSG_DEBUG, "EAP: Initialize selected EAP method: "
 		   "vendor %u method %u (%s)",
@@ -891,6 +895,11 @@ static int eap_sm_imsi_identity(struct eap_sm *sm,
 
 	wpa_hexdump_ascii(MSG_DEBUG, "IMSI", (u8 *) imsi, imsi_len);
 
+	if (imsi_len < 7) {
+		wpa_printf(MSG_WARNING, "Too short IMSI for SIM identity");
+		return -1;
+	}
+
 	for (i = 0; m && (m[i].vendor != EAP_VENDOR_IETF ||
 			  m[i].method != EAP_TYPE_NONE); i++) {
 		if (m[i].vendor == EAP_VENDOR_IETF &&
@@ -1165,7 +1174,6 @@ static void eap_peer_sm_tls_event(void *ctx, enum tls_event ev,
 {
 	struct eap_sm *sm = ctx;
 	char *hash_hex = NULL;
-	char *cert_hex = NULL;
 
 	switch (ev) {
 	case TLS_CERT_CHAIN_FAILURE:
@@ -1177,6 +1185,9 @@ static void eap_peer_sm_tls_event(void *ctx, enum tls_event ev,
 			data->cert_fail.reason_txt);
 		break;
 	case TLS_PEER_CERTIFICATE:
+		if (!sm->eapol_cb->notify_cert)
+			break;
+
 		if (data->peer_cert.hash) {
 			size_t len = data->peer_cert.hash_len * 2 + 1;
 			hash_hex = os_malloc(len);
@@ -1186,31 +1197,15 @@ static void eap_peer_sm_tls_event(void *ctx, enum tls_event ev,
 						 data->peer_cert.hash_len);
 			}
 		}
-		wpa_msg(sm->msg_ctx, MSG_INFO, WPA_EVENT_EAP_PEER_CERT
-			"depth=%d subject='%s'%s%s",
-			data->peer_cert.depth, data->peer_cert.subject,
-			hash_hex ? " hash=" : "", hash_hex ? hash_hex : "");
 
-		if (data->peer_cert.cert) {
-			size_t len = wpabuf_len(data->peer_cert.cert) * 2 + 1;
-			cert_hex = os_malloc(len);
-			if (cert_hex == NULL)
-				break;
-			wpa_snprintf_hex(cert_hex, len,
-					 wpabuf_head(data->peer_cert.cert),
-					 wpabuf_len(data->peer_cert.cert));
-			wpa_msg_ctrl(sm->msg_ctx, MSG_INFO,
-				     WPA_EVENT_EAP_PEER_CERT
-				     "depth=%d subject='%s' cert=%s",
-				     data->peer_cert.depth,
-				     data->peer_cert.subject,
-				     cert_hex);
-		}
+		sm->eapol_cb->notify_cert(sm->eapol_ctx,
+					  data->peer_cert.depth,
+					  data->peer_cert.subject,
+					  hash_hex, data->peer_cert.cert);
 		break;
 	}
 
 	os_free(hash_hex);
-	os_free(cert_hex);
 }
 
 
@@ -1241,7 +1236,7 @@ struct eap_sm * eap_peer_sm_init(void *eapol_ctx,
 	sm->eapol_ctx = eapol_ctx;
 	sm->eapol_cb = eapol_cb;
 	sm->msg_ctx = msg_ctx;
-	sm->ClientTimeout = 60;
+	sm->ClientTimeout = EAP_CLIENT_TIMEOUT_DEFAULT;
 	sm->wps = conf->wps;
 
 	os_memset(&tlsconf, 0, sizeof(tlsconf));
@@ -1253,6 +1248,7 @@ struct eap_sm * eap_peer_sm_init(void *eapol_ctx,
 #endif /* CONFIG_FIPS */
 	tlsconf.event_cb = eap_peer_sm_tls_event;
 	tlsconf.cb_ctx = sm;
+	tlsconf.cert_in_cb = conf->cert_in_cb;
 	sm->ssl_ctx = tls_init(&tlsconf);
 	if (sm->ssl_ctx == NULL) {
 		wpa_printf(MSG_WARNING, "SSL: Failed to initialize TLS "
@@ -1477,16 +1473,11 @@ int eap_sm_get_status(struct eap_sm *sm, char *buf, size_t buflen, int verbose)
 
 
 #if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
-typedef enum {
-	TYPE_IDENTITY, TYPE_PASSWORD, TYPE_OTP, TYPE_PIN, TYPE_NEW_PASSWORD,
-	TYPE_PASSPHRASE
-} eap_ctrl_req_type;
-
-static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
+static void eap_sm_request(struct eap_sm *sm, enum wpa_ctrl_req_type field,
 			   const char *msg, size_t msglen)
 {
 	struct eap_peer_config *config;
-	char *field, *txt, *tmp;
+	char *txt = NULL, *tmp;
 
 	if (sm == NULL)
 		return;
@@ -1494,29 +1485,20 @@ static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
 	if (config == NULL)
 		return;
 
-	switch (type) {
-	case TYPE_IDENTITY:
-		field = "IDENTITY";
-		txt = "Identity";
+	switch (field) {
+	case WPA_CTRL_REQ_EAP_IDENTITY:
 		config->pending_req_identity++;
 		break;
-	case TYPE_PASSWORD:
-		field = "PASSWORD";
-		txt = "Password";
+	case WPA_CTRL_REQ_EAP_PASSWORD:
 		config->pending_req_password++;
 		break;
-	case TYPE_NEW_PASSWORD:
-		field = "NEW_PASSWORD";
-		txt = "New Password";
+	case WPA_CTRL_REQ_EAP_NEW_PASSWORD:
 		config->pending_req_new_password++;
 		break;
-	case TYPE_PIN:
-		field = "PIN";
-		txt = "PIN";
+	case WPA_CTRL_REQ_EAP_PIN:
 		config->pending_req_pin++;
 		break;
-	case TYPE_OTP:
-		field = "OTP";
+	case WPA_CTRL_REQ_EAP_OTP:
 		if (msg) {
 			tmp = os_malloc(msglen + 3);
 			if (tmp == NULL)
@@ -1535,9 +1517,7 @@ static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
 			txt = config->pending_req_otp;
 		}
 		break;
-	case TYPE_PASSPHRASE:
-		field = "PASSPHRASE";
-		txt = "Private key passphrase";
+	case WPA_CTRL_REQ_EAP_PASSPHRASE:
 		config->pending_req_passphrase++;
 		break;
 	default:
@@ -1551,6 +1531,13 @@ static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
 #define eap_sm_request(sm, type, msg, msglen) do { } while (0)
 #endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
 
+const char * eap_sm_get_method_name(struct eap_sm *sm)
+{
+	if (sm->m == NULL)
+		return "UNKNOWN";
+	return sm->m->name;
+}
+
 
 /**
  * eap_sm_request_identity - Request identity from user (ctrl_iface)
@@ -1563,7 +1550,7 @@ static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
  */
 void eap_sm_request_identity(struct eap_sm *sm)
 {
-	eap_sm_request(sm, TYPE_IDENTITY, NULL, 0);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_IDENTITY, NULL, 0);
 }
 
 
@@ -1578,7 +1565,7 @@ void eap_sm_request_identity(struct eap_sm *sm)
  */
 void eap_sm_request_password(struct eap_sm *sm)
 {
-	eap_sm_request(sm, TYPE_PASSWORD, NULL, 0);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_PASSWORD, NULL, 0);
 }
 
 
@@ -1593,7 +1580,7 @@ void eap_sm_request_password(struct eap_sm *sm)
  */
 void eap_sm_request_new_password(struct eap_sm *sm)
 {
-	eap_sm_request(sm, TYPE_NEW_PASSWORD, NULL, 0);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_NEW_PASSWORD, NULL, 0);
 }
 
 
@@ -1608,7 +1595,7 @@ void eap_sm_request_new_password(struct eap_sm *sm)
  */
 void eap_sm_request_pin(struct eap_sm *sm)
 {
-	eap_sm_request(sm, TYPE_PIN, NULL, 0);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_PIN, NULL, 0);
 }
 
 
@@ -1624,7 +1611,7 @@ void eap_sm_request_pin(struct eap_sm *sm)
  */
 void eap_sm_request_otp(struct eap_sm *sm, const char *msg, size_t msg_len)
 {
-	eap_sm_request(sm, TYPE_OTP, msg, msg_len);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_OTP, msg, msg_len);
 }
 
 
@@ -1639,7 +1626,7 @@ void eap_sm_request_otp(struct eap_sm *sm, const char *msg, size_t msg_len)
  */
 void eap_sm_request_passphrase(struct eap_sm *sm)
 {
-	eap_sm_request(sm, TYPE_PASSPHRASE, NULL, 0);
+	eap_sm_request(sm, WPA_CTRL_REQ_EAP_PASSPHRASE, NULL, 0);
 }
 
 
@@ -1920,6 +1907,15 @@ const char * eap_get_config_phase2(struct eap_sm *sm)
 	if (config == NULL)
 		return NULL;
 	return config->phase2;
+}
+
+
+int eap_get_config_fragment_size(struct eap_sm *sm)
+{
+	struct eap_peer_config *config = eap_get_config(sm);
+	if (config == NULL)
+		return -1;
+	return config->fragment_size;
 }
 
 

@@ -582,8 +582,6 @@ supported_response (char *name)
 static inline bool
 isProxyServer (void)
 {
-    assert (current_parsed_root);
-
     /***
      *** The following is done as a series of if/return combinations an an
      *** optimization.
@@ -595,7 +593,7 @@ isProxyServer (void)
     if (!config || !config->PrimaryServer) return false;
 
     /* The directory must not match for all methods.  */
-    if (!isSamePath (config->PrimaryServer->directory,
+    if (current_parsed_root && !isSamePath (config->PrimaryServer->directory,
 		     current_parsed_root->directory))
 	return true;
 

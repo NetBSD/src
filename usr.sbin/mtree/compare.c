@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.52.8.1 2012/10/30 19:00:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.52 2008/12/28 19:36:30 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.52.8.1 2012/10/30 19:00:40 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -395,14 +396,14 @@ typeerr:		LABEL;
 	if (s->flags & F_MD5) {
 		if ((digestbuf = MD5File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%smd5: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, MD5KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->md5digest, digestbuf)) {
 				LABEL;
-				printf("%smd5 (0x%s, 0x%s)\n",
-				    tab, s->md5digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, MD5KEY, s->md5digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -413,14 +414,14 @@ typeerr:		LABEL;
 	if (s->flags & F_RMD160) {
 		if ((digestbuf = RMD160File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%srmd160: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, RMD160KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->rmd160digest, digestbuf)) {
 				LABEL;
-				printf("%srmd160 (0x%s, 0x%s)\n",
-				    tab, s->rmd160digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, RMD160KEY, s->rmd160digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -431,14 +432,14 @@ typeerr:		LABEL;
 	if (s->flags & F_SHA1) {
 		if ((digestbuf = SHA1File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha1: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA1KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha1digest, digestbuf)) {
 				LABEL;
-				printf("%ssha1 (0x%s, 0x%s)\n",
-				    tab, s->sha1digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA1KEY, s->sha1digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
@@ -449,46 +450,48 @@ typeerr:		LABEL;
 	if (s->flags & F_SHA256) {
 		if ((digestbuf = SHA256_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha256: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA256KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha256digest, digestbuf)) {
 				LABEL;
-				printf("%ssha256 (0x%s, 0x%s)\n",
-				    tab, s->sha256digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA256KEY, s->sha256digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
 		}
 	}
+#ifdef SHA384_BLOCK_LENGTH
 	if (s->flags & F_SHA384) {
 		if ((digestbuf = SHA384_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha384: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA384KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha384digest, digestbuf)) {
 				LABEL;
-				printf("%ssha384 (0x%s, 0x%s)\n",
-				    tab, s->sha384digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA384KEY, s->sha384digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);
 		}
 	}
+#endif
 	if (s->flags & F_SHA512) {
 		if ((digestbuf = SHA512_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
-			printf("%ssha512: %s: %s\n",
-			    tab, p->fts_accpath, strerror(errno));
+			printf("%s%s: %s: %s\n",
+			    tab, SHA512KEY, p->fts_accpath, strerror(errno));
 			tab = "\t";
 		} else {
 			if (strcmp(s->sha512digest, digestbuf)) {
 				LABEL;
-				printf("%ssha512 (0x%s, 0x%s)\n",
-				    tab, s->sha512digest, digestbuf);
+				printf("%s%s (0x%s, 0x%s)\n",
+				    tab, SHA512KEY, s->sha512digest, digestbuf);
 			}
 			tab = "\t";
 			free(digestbuf);

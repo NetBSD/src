@@ -1,4 +1,4 @@
-/* $NetBSD: compat_fsetpos.c,v 1.1.4.2 2012/04/17 00:05:17 yamt Exp $ */
+/* $NetBSD: compat_fsetpos.c,v 1.1.4.3 2012/10/30 18:58:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_fsetpos.c,v 1.1.4.2 2012/04/17 00:05:17 yamt Exp $");
+__RCSID("$NetBSD: compat_fsetpos.c,v 1.1.4.3 2012/10/30 18:58:43 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: compat_fsetpos.c,v 1.1.4.2 2012/04/17 00:05:17 yamt Exp $");
   
 #ifdef __warn_references
 __warn_references(fsetpos,
-    "warning: reference to compatibility fsetpos(); include <stdio.h> for correc t reference")
+    "warning: reference to compatibility fsetpos(); include <stdio.h> for correct reference")
 #endif
 
 

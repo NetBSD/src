@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.17 2010/10/06 07:59:18 wiz Exp $	*/
+/*	$NetBSD: uniq.c,v 1.17.6.1 2012/10/30 19:00:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.17 2010/10/06 07:59:18 wiz Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.17.6.1 2012/10/30 19:00:29 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -251,7 +251,7 @@ obsolete(char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-cdu] [-f fields] [-s chars] "
-	    "[input [output]]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-cdu] [-f fields] [-s chars] "
+	    "[input_file [output_file]]\n", getprogname());
 	exit(1);
 }

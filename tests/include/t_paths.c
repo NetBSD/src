@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.9.2.1 2011/11/10 14:31:51 yamt Exp $ */
+/*	$NetBSD: t_paths.c,v 1.9.2.2 2012/10/30 18:59:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.9.2.1 2011/11/10 14:31:51 yamt Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.9.2.2 2012/10/30 18:59:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -64,6 +64,7 @@ static const struct {
 	{ _PATH_CPUCTL,		PATH_DEV		},
 	{ _PATH_CSMAPPER,	PATH_DIR		},
 	{ _PATH_DEFTAPE,	PATH_DEV | PATH_ROOT	},
+	{ _PATH_DEVCDB,		PATH_FILE		},
 	{ _PATH_DEVDB,		PATH_FILE		},
 	{ _PATH_DEVNULL,	PATH_DEV		},
 	{ _PATH_DRUM,		PATH_DEV | PATH_ROOT	},

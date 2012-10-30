@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.81.2.2 2012/05/23 10:07:32 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.81.2.3 2012/10/30 18:59:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -298,6 +298,9 @@ int	pthread__checkpri(int) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
+#endif
+#ifndef pthread__smt_wake
+#define	pthread__smt_wake()	/* nothing */
 #endif
 
 /*

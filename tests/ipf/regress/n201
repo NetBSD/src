@@ -1,1 +1,0 @@
-encap out on bge0 proto tcp from any to any port = 23 -> src 1.1.1.1 dst 192.168.168.1;

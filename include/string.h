@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.39.8.1 2012/05/23 10:07:30 yamt Exp $	*/
+/*	$NetBSD: string.h,v 1.39.8.2 2012/10/30 18:58:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -109,6 +109,8 @@ char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strndup(const char *, size_t);
 void	*memrchr(const void *, int, size_t);
+void	__explicit_bzero(void *, size_t);
+int	__consttime_bcmp(const void *, const void *, size_t);
 __END_DECLS
 #endif
 

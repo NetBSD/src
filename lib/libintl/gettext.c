@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.25.28.1 2012/04/17 00:05:28 yamt Exp $	*/
+/*	$NetBSD: gettext.c,v 1.25.28.2 2012/10/30 18:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.25.28.1 2012/04/17 00:05:28 yamt Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.25.28.2 2012/10/30 18:59:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -214,6 +214,10 @@ lookup_mofile(char *buf, size_t len, const char *dir, const char *lpath,
 	struct stat st;
 	char *p, *q;
 	char lpath_tmp[BUFSIZ];
+
+	/*
+	 * LANGUAGE is a colon separated list of locale names.
+	 */
 
 	strlcpy(lpath_tmp, lpath, sizeof(lpath_tmp));
 	q = lpath_tmp;
@@ -808,12 +812,21 @@ get_lang_env(const char *category_name)
 {
 	const char *lang;
 
-	/* 1. see LANGUAGE variable first. */
+	/*
+	 * 1. see LANGUAGE variable first.
+	 *
+	 * LANGUAGE is a GNU extension.
+	 * It's a colon separated list of locale names.
+	 */
 	lang = getenv("LANGUAGE");
 	if (lang)
 		return lang;
 
-	/* 2. if LANGUAGE isn't set, see LC_ALL, LC_xxx, LANG. */
+	/*
+	 * 2. if LANGUAGE isn't set, see LC_ALL, LC_xxx, LANG.
+	 *
+	 * It's essentially setlocale(LC_xxx, NULL).
+	 */
 	lang = getenv("LC_ALL");
 	if (!lang)
 		lang = getenv(category_name);

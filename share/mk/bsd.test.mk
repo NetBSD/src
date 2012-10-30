@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.19 2011/09/10 16:57:35 apb Exp $
+# $NetBSD: bsd.test.mk,v 1.19.2.1 2012/10/30 18:59:47 yamt Exp $
 #
 
 .include <bsd.init.mk>
@@ -15,10 +15,10 @@ _TESTS:=	${TESTS_SUBDIRS:N.WAIT}
 .if defined(TESTS_C)
 _TESTS+=	${TESTS_C}
 PROGS+=		${TESTS_C}
-LDADD+=		-latf-c
-DPADD+=		${LIBATF_C}
 .  for _T in ${TESTS_C}
 BINDIR.${_T}=	${TESTSDIR}
+LDADD.${_T}+=	-latf-c
+DPADD.${_T}+=	${LIBATF_C}
 MAN.${_T}?=	# empty
 .  endfor
 .endif
@@ -26,10 +26,10 @@ MAN.${_T}?=	# empty
 .if defined(TESTS_CXX)
 _TESTS+=	${TESTS_CXX}
 PROGS_CXX+=	${TESTS_CXX}
-LDADD+=		-latf-c++ -latf-c
-DPADD+=		${LIBATF_CXX} ${LIBATF_C}
 .  for _T in ${TESTS_CXX}
 BINDIR.${_T}=	${TESTSDIR}
+LDADD.${_T}+=	-latf-c++ -latf-c
+DPADD.${_T}+=	${LIBATF_CXX} ${LIBATF_C}
 MAN.${_T}?=	# empty
 .  endfor
 .endif
@@ -139,8 +139,8 @@ test:
 	mkfifo ${_TESTS_FIFO}; \
 	cat ${_TESTS_FIFO} | tee ${_TESTS_LOG} | \
 	    ${TESTS_ENV} ${DESTDIR}/usr/bin/atf-report & \
-	${TESTS_ENV} ${DESTDIR}/usr/bin/atf-run >>${_TESTS_FIFO}; \
-	result=$${?}; \
+	result=0; \
+	${TESTS_ENV} ${DESTDIR}/usr/bin/atf-run >>${_TESTS_FIFO} || result=1; \
 	wait; \
 	rm -f ${_TESTS_FIFO}; \
 	echo; \

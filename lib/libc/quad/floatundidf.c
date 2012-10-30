@@ -1,4 +1,4 @@
-/*	$NetBSD: floatundidf.c,v 1.1.2.1 2012/04/17 00:05:22 yamt Exp $	*/
+/*	$NetBSD: floatundidf.c,v 1.1.2.2 2012/10/30 18:58:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,9 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)floatunsdidf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: floatundidf.c,v 1.1.2.1 2012/04/17 00:05:22 yamt Exp $");
+__RCSID("$NetBSD: floatundidf.c,v 1.1.2.2 2012/10/30 18:58:54 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef SOFTFLOAT
+#include "softfloat/softfloat-for-gcc.h"
+#endif
 
 #include "quad.h"
 

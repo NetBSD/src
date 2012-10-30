@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2002/12/08 20:19:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2.54.1 2012/10/30 19:00:11 yamt Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}cap_mkdb
 HOST_SRCDIR=	usr.bin/cap_mkdb
-HOST_SRCS=	getcap.c
 
 .include "${.CURDIR}/../Makefile.host"
-
-.PATH: ${.CURDIR}/../../lib/libc/gen

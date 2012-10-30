@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.8.6.1 2012/04/17 00:05:20 yamt Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.8.6.2 2012/10/30 18:58:52 yamt Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -45,9 +45,7 @@ WA(MDNAME(Data),CONCAT(_,MDNAME(Data)))
 
 
 char *
-MDNAME(End)(ctx, buf)
-	MDNAME(_CTX) *ctx;
-	char *buf;
+MDNAME(End)(MDNAME(_CTX) *ctx, char *buf)
 {
 	int i;
 	unsigned char digest[16];
@@ -72,9 +70,7 @@ MDNAME(End)(ctx, buf)
 }
 
 char *
-MDNAME(File)(filename, buf)
-	const char *filename;
-	char *buf;
+MDNAME(File)(const char *filename, char *buf)
 {
 	unsigned char buffer[BUFSIZ];
 	MDNAME(_CTX) ctx;
@@ -103,10 +99,7 @@ MDNAME(File)(filename, buf)
 }
 
 char *
-MDNAME(Data)(data, len, buf)
-	const unsigned char *data;
-	unsigned int len;
-	char *buf;
+MDNAME(Data)(const unsigned char *data, unsigned int len, char *buf)
 {
 	MDNAME(_CTX) ctx;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.93.2.1 2012/04/17 00:05:40 yamt Exp $	*/
+/*	$NetBSD: mount.c,v 1.93.2.2 2012/10/30 18:59:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.93.2.1 2012/04/17 00:05:40 yamt Exp $");
+__RCSID("$NetBSD: mount.c,v 1.93.2.2 2012/10/30 18:59:29 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ main(int argc, char *argv[])
 				mntfromname = getfsspecname(buf, sizeof(buf),
 				    mntfromname);
 				if (mntfromname == NULL)
-					err(EXIT_FAILURE, "%s", mntfromname);
+					err(EXIT_FAILURE, "%s", buf);
 				if (mountfs(fs->fs_vfstype, mntfromname,
 				    fs->fs_file, init_flags, options,
 				    fs->fs_mntops, !forceall, NULL, 0))

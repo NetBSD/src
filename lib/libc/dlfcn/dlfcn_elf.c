@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.10.2.1 2012/04/17 00:05:18 yamt Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.10.2.2 2012/10/30 18:58:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.10.2.1 2012/04/17 00:05:18 yamt Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.10.2.2 2012/10/30 18:58:44 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -123,7 +123,7 @@ dlvsym(void *handle, const char *name, const char *version)
 
 /*ARGSUSED*/
 __aconst char *
-dlerror()
+dlerror(void)
 {
 
 	return dlfcn_error;

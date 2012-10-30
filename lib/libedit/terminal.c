@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.10.2.1 2012/04/17 00:05:27 yamt Exp $	*/
+/*	$NetBSD: terminal.c,v 1.10.2.2 2012/10/30 18:59:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.10.2.1 2012/04/17 00:05:27 yamt Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.10.2.2 2012/10/30 18:59:09 yamt Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: terminal.c,v 1.10.2.1 2012/04/17 00:05:27 yamt Exp $");
 #endif
 
 /* Solaris's term.h does horrid things. */
-#if defined(HAVE_TERM_H) && !defined(__sun)
+#if defined(HAVE_TERM_H) && !defined(__sun) && !defined(HAVE_TERMCAP_H)
 #include <term.h>
 #endif
  

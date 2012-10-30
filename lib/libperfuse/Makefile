@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8.2.1 2012/04/17 00:05:30 yamt Exp $
+# $NetBSD: Makefile,v 1.8.2.2 2012/10/30 18:59:14 yamt Exp $
 
 LIB=            perfuse
 LIBDPLIBS+=     puffs	${.CURDIR}/../libpuffs
@@ -7,7 +7,7 @@ PERFUSE_OPT_DEBUG_FLAGS=   -g -DPERFUSE_DEBUG
 
 CWARNFLAGS.clang+=	-Wno-format-security
 
-CFLAGS+=        ${PERFUSE_OPT_DEBUG_FLAGS}
+#CFLAGS+=        ${PERFUSE_OPT_DEBUG_FLAGS}
 CPPFLAGS+=	-I${.CURDIR} 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libpuffs 
 SRCS=           perfuse.c ops.c subr.c debug.c

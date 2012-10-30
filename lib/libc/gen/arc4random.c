@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.10.4.1 2012/04/17 00:05:18 yamt Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.10.4.2 2012/10/30 18:58:44 yamt Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.10.4.1 2012/04/17 00:05:18 yamt Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.10.4.2 2012/10/30 18:58:44 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,60 +42,87 @@ __RCSID("$NetBSD: arc4random.c,v 1.10.4.1 2012/04/17 00:05:18 yamt Exp $");
 
 #ifdef __weak_alias
 __weak_alias(arc4random,_arc4random)
+__weak_alias(arc4random_addrandom,_arc4random_addrandom)
+__weak_alias(arc4random_buf,_arc4random_buf)
+__weak_alias(arc4random_stir,_arc4random_stir)
+__weak_alias(arc4random_uniform,_arc4random_uniform)
 #endif
 
-#define RSIZE 256
 struct arc4_stream {
-	mutex_t mtx;
-	int initialized;
+	uint8_t stirred;
+	uint8_t pad;
 	uint8_t i;
 	uint8_t j;
-	uint8_t s[RSIZE];
+	uint8_t s[(uint8_t)~0u + 1u];	/* 256 to you and me */
+	mutex_t mtx;
 };
 
-/* XXX lint explodes with an internal error if only mtx is initialized! */
-static struct arc4_stream rs = { .i = 0, .mtx = MUTEX_INITIALIZER };
+#ifdef _REENTRANT
+#define LOCK(rs) { \
+		int isthreaded = __isthreaded; \
+		if (isthreaded)        \
+			mutex_lock(&(rs)->mtx);
+#define UNLOCK(rs) \
+		if (isthreaded)        \
+			mutex_unlock(&(rs)->mtx);      \
+	}
+#else
+#define LOCK(rs) 
+#define UNLOCK(rs)
+#endif
 
-static inline void arc4_init(struct arc4_stream *);
+#define S(n) (n)
+#define S4(n) S(n), S(n + 1), S(n + 2), S(n + 3)
+#define S16(n) S4(n), S4(n + 4), S4(n + 8), S4(n + 12)
+#define S64(n) S16(n), S16(n + 16), S16(n + 32), S16(n + 48)
+#define S256 S64(0), S64(64), S64(128), S64(192)
+
+static struct arc4_stream rs = { .i = 0xff, .j = 0, .s = { S256 },
+		.stirred = 0, .mtx = MUTEX_INITIALIZER };
+
+#undef S
+#undef S4
+#undef S16
+#undef S64
+#undef S256
+
 static inline void arc4_addrandom(struct arc4_stream *, u_char *, int);
-static void arc4_stir(struct arc4_stream *);
+static __noinline void arc4_stir(struct arc4_stream *);
 static inline uint8_t arc4_getbyte(struct arc4_stream *);
 static inline uint32_t arc4_getword(struct arc4_stream *);
 
-static inline void
-arc4_init(struct arc4_stream *as)
+static inline int
+arc4_check_init(struct arc4_stream *as)
 {
-	for (int n = 0; n < RSIZE; n++)
-		as->s[n] = n;
-	as->i = 0;
-	as->j = 0;
+	if (__predict_true(rs.stirred))
+		return 0;
 
-	as->initialized = 1;
 	arc4_stir(as);
+	return 1;
 }
 
 static inline void
 arc4_addrandom(struct arc4_stream *as, u_char *dat, int datlen)
 {
 	uint8_t si;
+	size_t n;
 
-	as->i--;
-	for (int n = 0; n < RSIZE; n++) {
+	for (n = 0; n < __arraycount(as->s); n++) {
 		as->i = (as->i + 1);
 		si = as->s[as->i];
 		as->j = (as->j + si + dat[n % datlen]);
 		as->s[as->i] = as->s[as->j];
 		as->s[as->j] = si;
 	}
-	as->j = as->i;
 }
 
-static void
+static __noinline void
 arc4_stir(struct arc4_stream *as)
 {
 	int rdat[32];
-	static const int mib[] = { CTL_KERN, KERN_URND };
+	int mib[] = { CTL_KERN, KERN_URND };
 	size_t len;
+	size_t i, j;
 
 	/*
 	 * This code once opened and read /dev/urandom on each
@@ -106,7 +133,7 @@ arc4_stir(struct arc4_stream *as)
 	 * for us but much friendlier to other entropy consumers.
 	 */
 
-	for (size_t i = 0; i < __arraycount(rdat); i++) {
+	for (i = 0; i < __arraycount(rdat); i++) {
 		len = sizeof(rdat[i]);
 		if (sysctl(mib, 2, &rdat[i], &len, NULL, 0) == -1)
 			abort();
@@ -119,22 +146,30 @@ arc4_stir(struct arc4_stream *as)
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (size_t j = 0; j < RSIZE * 4; j++)
+	for (j = 0; j < __arraycount(as->s) * 4; j++)
 		arc4_getbyte(as);
+
+	as->stirred = 1;
+}
+
+static __always_inline uint8_t
+arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
+{
+	uint8_t si, sj;
+
+	*i = *i + 1;
+	si = as->s[*i];
+	*j = *j + si;
+	sj = as->s[*j];
+	as->s[*i] = sj;
+	as->s[*j] = si;
+	return (as->s[(si + sj) & 0xff]);
 }
 
 static inline uint8_t
 arc4_getbyte(struct arc4_stream *as)
 {
-	uint8_t si, sj;
-
-	as->i = (as->i + 1);
-	si = as->s[as->i];
-	as->j = (as->j + si);
-	sj = as->s[as->j];
-	as->s[as->i] = sj;
-	as->s[as->j] = si;
-	return (as->s[(si + sj) & 0xff]);
+	return arc4_getbyte_ij(as, &as->i, &as->j);
 }
 
 static inline uint32_t
@@ -148,108 +183,55 @@ arc4_getword(struct arc4_stream *as)
 	return val;
 }
 
-static inline void
-_arc4random_stir_unlocked(void)
-{
-	if (__predict_false(!rs.initialized)) {
-		arc4_init(&rs);				/* stirs */
-	} else {
-		arc4_stir(&rs);
-	}
-}
-
 void
 arc4random_stir(void)
 {
-#ifdef _REENTRANT
-	if (__isthreaded) {
-		mutex_lock(&rs.mtx);
-                _arc4random_stir_unlocked();
-		mutex_unlock(&rs.mtx);
-		return;
-        }
-#endif
-	_arc4random_stir_unlocked();
-}
-
-static inline void
-_arc4random_addrandom_unlocked(u_char *dat, int datlen)
-{
-	if (__predict_false(rs.initialized)) {
-		arc4_init(&rs);
-	}
-	arc4_addrandom(&rs, dat, datlen);
+	LOCK(&rs);
+	arc4_stir(&rs);
+	UNLOCK(&rs);
 }
 
 void
 arc4random_addrandom(u_char *dat, int datlen)
 {
-#ifdef _REENTRANT
-	if (__isthreaded) {
-		mutex_lock(&rs.mtx);
-		_arc4random_addrandom_unlocked(dat, datlen);
-		mutex_unlock(&rs.mtx);
-		return;
-	}
-#endif
-	_arc4random_addrandom_unlocked(dat, datlen);
-}
-
-static inline uint32_t
-_arc4random_unlocked(void)
-{
-	if (__predict_false(!rs.initialized)) {
-		arc4_init(&rs);
-	}
-	return arc4_getword(&rs);
+	LOCK(&rs);
+	arc4_check_init(&rs);
+	arc4_addrandom(&rs, dat, datlen);
+	UNLOCK(&rs);
 }
 
 uint32_t
 arc4random(void)
 {
 	uint32_t v;
-#ifdef _REENTRANT
-	if (__isthreaded) {
-		mutex_lock(&rs.mtx);
-		v = _arc4random_unlocked();
-		mutex_unlock(&rs.mtx);
-		return v;
-	}
-#endif
-	v = _arc4random_unlocked();
+
+	LOCK(&rs);
+	arc4_check_init(&rs);
+	v = arc4_getword(&rs);
+	UNLOCK(&rs);
 	return v;
-}
-
-static void
-_arc4random_buf_unlocked(void *buf, size_t len)
-{
-	uint8_t *bp = buf;
-	uint8_t *ep = bp + len;
-
-	if (__predict_false(!rs.initialized)) {
-		arc4_init(&rs);
-	}
-
-	bp[0] = arc4_getbyte(&rs) % 3;
-	while (bp[0]--)
-		(void)arc4_getbyte(&rs);
-
-	while (bp < ep)
-		*bp++ = arc4_getbyte(&rs);
 }
 
 void
 arc4random_buf(void *buf, size_t len)
 {
-#ifdef _REENTRANT
-	if (__isthreaded) {
-		mutex_lock(&rs.mtx);
-		_arc4random_buf_unlocked(buf, len);
-		mutex_unlock(&rs.mtx);
-		return;
-	} else
-#endif
-	_arc4random_buf_unlocked(buf, len);
+	uint8_t *bp = buf;
+	uint8_t *ep = bp + len;
+	uint8_t i, j;
+
+	LOCK(&rs);
+	arc4_check_init(&rs);
+
+	/* cache i and j - compiler can't know 'buf' doesn't alias them */
+	i = rs.i;
+	j = rs.j;
+
+	while (bp < ep)
+		*bp++ = arc4_getbyte_ij(&rs, &i, &j);
+	rs.i = i;
+	rs.j = j;
+
+	UNLOCK(&rs);
 }
 
 /*-
@@ -268,25 +250,20 @@ arc4random_buf(void *buf, size_t len)
  * [2^32 % upper_bound, 2^32[ which maps back to
  * [0, upper_bound[ after reduction modulo upper_bound.
  */
-static uint32_t
-_arc4random_uniform_unlocked(uint32_t upper_bound)
+uint32_t
+arc4random_uniform(uint32_t upper_bound)
 {
 	uint32_t r, min;
 
 	if (upper_bound < 2)
 		return 0;
 
-#if defined(ULONG_MAX) && (ULONG_MAX > 0xFFFFFFFFUL)
-	min = (uint32_t)(0x100000000U % upper_bound);
-#else
 	/* calculate (2^32 % upper_bound) avoiding 64-bit math */
-	if (upper_bound > 0x80000000U)
-		/* 2^32 - upper_bound (only one "value area") */
-		min = 1 + ~upper_bound;
-	else
-		/* ((2^32 - x) % x) == (2^32 % x) when x <= 2^31 */
-		min = (0xFFFFFFFFU - upper_bound + 1) % upper_bound;
-#endif
+	/* ((2^32 - x) % x) == (2^32 % x) when x <= 2^31 */
+	min = (0xFFFFFFFFU - upper_bound + 1) % upper_bound;
+
+	LOCK(&rs);
+	arc4_check_init(&rs);
 
 	/*
 	 * This could theoretically loop forever but each retry has
@@ -294,30 +271,10 @@ _arc4random_uniform_unlocked(uint32_t upper_bound)
 	 * number inside the range we need, so it should rarely need
 	 * to re-roll (at all).
 	 */
-	if (__predict_false(!rs.initialized)) {
-		arc4_init(&rs);
-	}
-	if (arc4_getbyte(&rs) & 1)
-		(void)arc4_getbyte(&rs);
 	do
 		r = arc4_getword(&rs);
 	while (r < min);
+	UNLOCK(&rs);
 
 	return r % upper_bound;
-}
-
-uint32_t
-arc4random_uniform(uint32_t upper_bound)
-{
-	uint32_t v;
-#ifdef _REENTRANT
-	if (__isthreaded) {
-		mutex_lock(&rs.mtx);
-		v = _arc4random_uniform_unlocked(upper_bound);
-		mutex_unlock(&rs.mtx);
-		return v;
-	}
-#endif
-	v = _arc4random_uniform_unlocked(upper_bound);
-	return v;
 }

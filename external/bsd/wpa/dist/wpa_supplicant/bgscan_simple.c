@@ -28,6 +28,7 @@ struct bgscan_simple_data {
 	const struct wpa_ssid *ssid;
 	int scan_interval;
 	int signal_threshold;
+	int short_scan_count; /* counter for scans using short scan interval */
 	int short_interval; /* use if signal < threshold */
 	int long_interval; /* use if signal > threshold */
 	struct os_time last_bgscan;
@@ -57,8 +58,23 @@ static void bgscan_simple_timeout(void *eloop_ctx, void *timeout_ctx)
 		wpa_printf(MSG_DEBUG, "bgscan simple: Failed to trigger scan");
 		eloop_register_timeout(data->scan_interval, 0,
 				       bgscan_simple_timeout, data, NULL);
-	} else
+	} else {
+		if (data->scan_interval == data->short_interval) {
+			data->short_scan_count++;
+			/*
+			 * Spend at most the duration of a long scan interval
+			 * scanning at the short scan interval. After that,
+			 * revert to the long scan interval.
+			 */
+			if (data->short_scan_count >
+			    data->long_interval / data->short_interval + 1) {
+				data->scan_interval = data->long_interval;
+				wpa_printf(MSG_DEBUG, "bgscan simple: Backing "
+					   "off to long scan interval");
+			}
+		}
 		os_get_time(&data->last_bgscan);
+	}
 }
 
 
@@ -122,6 +138,15 @@ static void * bgscan_simple_init(struct wpa_supplicant *wpa_s,
 	}
 
 	data->scan_interval = data->short_interval;
+	if (data->signal_threshold) {
+		/* Poll for signal info to set initial scan interval */
+		struct wpa_signal_info siginfo;
+		if (wpa_drv_signal_poll(wpa_s, &siginfo) == 0 &&
+		    siginfo.current_signal >= data->signal_threshold)
+			data->scan_interval = data->long_interval;
+	}
+	wpa_printf(MSG_DEBUG, "bgscan simple: Init scan interval: %d",
+		   data->scan_interval);
 	eloop_register_timeout(data->scan_interval, 0, bgscan_simple_timeout,
 			       data, NULL);
 
@@ -147,7 +172,8 @@ static void bgscan_simple_deinit(void *priv)
 }
 
 
-static int bgscan_simple_notify_scan(void *priv)
+static int bgscan_simple_notify_scan(void *priv,
+				     struct wpa_scan_results *scan_res)
 {
 	struct bgscan_simple_data *data = priv;
 
@@ -175,7 +201,10 @@ static void bgscan_simple_notify_beacon_loss(void *priv)
 }
 
 
-static void bgscan_simple_notify_signal_change(void *priv, int above)
+static void bgscan_simple_notify_signal_change(void *priv, int above,
+					       int current_signal,
+					       int current_noise,
+					       int current_txrate)
 {
 	struct bgscan_simple_data *data = priv;
 	int scan = 0;
@@ -186,14 +215,29 @@ static void bgscan_simple_notify_signal_change(void *priv, int above)
 		return;
 
 	wpa_printf(MSG_DEBUG, "bgscan simple: signal level changed "
-		   "(above=%d)", above);
+		   "(above=%d current_signal=%d current_noise=%d "
+		   "current_txrate=%d))", above, current_signal,
+		   current_noise, current_txrate);
 	if (data->scan_interval == data->long_interval && !above) {
 		wpa_printf(MSG_DEBUG, "bgscan simple: Start using short "
 			   "bgscan interval");
 		data->scan_interval = data->short_interval;
+		data->short_scan_count = 0;
 		os_get_time(&now);
 		if (now.sec > data->last_bgscan.sec + 1)
 			scan = 1;
+		else if (data->last_bgscan.sec + data->long_interval >
+			 now.sec + data->scan_interval) {
+			/*
+			 * Restart scan interval timer if currently scheduled
+			 * scan is too far in the future.
+			 */
+			eloop_cancel_timeout(bgscan_simple_timeout, data,
+					     NULL);
+			eloop_register_timeout(data->scan_interval, 0,
+					       bgscan_simple_timeout, data,
+					       NULL);
+		}
 	} else if (data->scan_interval == data->short_interval && above) {
 		wpa_printf(MSG_DEBUG, "bgscan simple: Start using long bgscan "
 			   "interval");

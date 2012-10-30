@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_flt_rounds.c,v 1.2 2000/06/14 06:49:05 cgd Exp $ */
+/* $NetBSD: Lint_flt_rounds.c,v 1.2.62.1 2012/10/30 18:58:44 yamt Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -7,7 +7,7 @@
 
 /*ARGSUSED*/
 int
-__flt_rounds()
+__flt_rounds(void)
 {
 	return (0);
 }

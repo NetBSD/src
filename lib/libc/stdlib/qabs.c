@@ -1,4 +1,4 @@
-/*	$NetBSD: qabs.c,v 1.6 2003/08/07 16:43:42 agc Exp $	*/
+/*	$NetBSD: qabs.c,v 1.6.56.1 2012/10/30 18:58:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char *sccsid = "from: @(#)labs.c	5.2 (Berkeley) 5/17/90";
 #else
-__RCSID("$NetBSD: qabs.c,v 1.6 2003/08/07 16:43:42 agc Exp $");
+__RCSID("$NetBSD: qabs.c,v 1.6.56.1 2012/10/30 18:58:59 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,8 +46,7 @@ __weak_alias(qabs,_qabs)
 #endif
 
 quad_t
-qabs(j)
-	quad_t j;
+qabs(quad_t j)
 {
 	return(j < 0 ? -j : j);
 }

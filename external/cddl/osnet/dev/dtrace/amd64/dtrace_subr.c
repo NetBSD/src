@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.5 2011/08/31 21:57:16 christos Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.5.2.1 2012/10/30 18:56:36 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -129,11 +129,11 @@ xcall_func(void *arg0, void *arg1)
 }
 
 void
-dtrace_xcall(processorid_t xcpu, dtrace_xcall_t func, void *arg)
+dtrace_xcall(processorid_t cpu, dtrace_xcall_t func, void *arg)
 {
 	uint64_t where;
 
-	if (xcpu == DTRACE_CPUALL) {
+	if (cpu == DTRACE_CPUALL) {
 		where = xc_broadcast(0, xcall_func, func, arg);
 	} else {
 		struct cpu_info *cinfo = cpu_lookup(cpu);
@@ -372,6 +372,18 @@ dtrace_safe_defer_signal(void)
 
 	return (1);
 }
+#endif
+
+#ifdef __NetBSD__
+static __inline uint64_t
+dtrace_rdtsc(void)
+{
+	uint32_t hi, lo;
+
+	__asm volatile("rdtsc" : "=d" (hi), "=a" (lo));
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
+}
+#define rdtsc dtrace_rdtsc
 #endif
 
 #ifdef notyet

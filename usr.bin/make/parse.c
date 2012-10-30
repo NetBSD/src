@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.179.2.3 2012/05/23 10:08:26 yamt Exp $	*/
+/*	$NetBSD: parse.c,v 1.179.2.4 2012/10/30 19:00:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.179.2.3 2012/05/23 10:08:26 yamt Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.179.2.4 2012/10/30 19:00:22 yamt Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.179.2.3 2012/05/23 10:08:26 yamt Exp $");
+__RCSID("$NetBSD: parse.c,v 1.179.2.4 2012/10/30 19:00:22 yamt Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -344,9 +344,9 @@ static const struct {
 
 static int ParseIsEscaped(const char *, const char *);
 static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
-     __attribute__((__format__(__printf__, 4, 5)));
+    MAKE_ATTR_PRINTFLIKE(4,5);
 static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
-     __attribute__((__format__(__printf__, 5, 0)));
+    MAKE_ATTR_PRINTFLIKE(5, 0);
 static int ParseFindKeyword(const char *);
 static int ParseLinkSrc(void *, void *);
 static int ParseDoOp(void *, void *);

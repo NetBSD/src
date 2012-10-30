@@ -144,11 +144,13 @@ ALL_EMULATION_SOURCES = \
 	earmelf_linux.c \
 	earmelf_linux_eabi.c \
 	earmelf_nbsd.c \
+	earmelf_nbsd_eabi.c \
 	earmelf_vxworks.c \
 	earmelfb.c \
 	earmelfb_linux.c \
 	earmelfb_linux_eabi.c \
 	earmelfb_nbsd.c \
+	earmelfb_nbsd_eabi.c \
 	earmnbsd.c \
 	earmnto.c \
 	earmpe.c \
@@ -684,6 +686,11 @@ earmelf_nbsd.c: $(srcdir)/emulparams/armelf_nbsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armelf_nbsd "$(tdir_armelf_nbsd)"
+earmelf_nbsd_abi.c: $(srcdir)/emulparams/armelf_nbsd_abi.sh \
+  $(srcdir)/emulparams/armelf.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} armelf_nbsd_abi "$(tdir_armelf_nbsd_abi)"
 earmelf_vxworks.c: $(srcdir)/emulparams/armelf_vxworks.sh \
   $(srcdir)/emulparams/vxworks.sh $(srcdir)/emulparams/armelf.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/vxworks.em \
@@ -711,6 +718,12 @@ earmelfb_nbsd.c: $(srcdir)/emulparams/armelfb_nbsd.sh \
   $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
   $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armelfb_nbsd "$(tdir_armelfb_nbsd)"
+earmelfb_nbsd_abi.c: $(srcdir)/emulparams/armelfb_nbsd_abi.sh \
+  $(srcdir)/emulparams/armelf_nbsd_abi.sh \
+  $(srcdir)/emulparams/armelf.sh \
+  $(ELF_DEPS) $(srcdir)/emultempl/armelf.em \
+  $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} armelfb_nbsd_abi "$(tdir_armelfb_nbsd_abi)"
 earmnbsd.c:	$(srcdir)/emulparams/armnbsd.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/aout.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} armnbsd "$(tdir_armnbsd)"

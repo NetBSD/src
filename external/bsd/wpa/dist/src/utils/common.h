@@ -320,6 +320,9 @@ static inline unsigned int wpa_swap_32(unsigned int v)
 #ifndef ETH_P_ALL
 #define ETH_P_ALL 0x0003
 #endif
+#ifndef ETH_P_80211_ENCAP
+#define ETH_P_80211_ENCAP 0x890d /* TDLS comes under this category */
+#endif
 #ifndef ETH_P_PAE
 #define ETH_P_PAE 0x888E /* Port Access Entity (IEEE 802.1X) */
 #endif /* ETH_P_PAE */
@@ -402,6 +405,12 @@ void perror(const char *s);
 #ifndef MAC2STR
 #define MAC2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 #define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
+
+/*
+ * Compact form for string representation of MAC address
+ * To be used, e.g., for constructing dbus paths for P2P Devices
+ */
+#define COMPACT_MACSTR "%02x%02x%02x%02x%02x%02x"
 #endif
 
 #ifndef BIT
@@ -436,7 +445,9 @@ typedef u64 __bitwise le64;
 #endif /* __must_check */
 
 int hwaddr_aton(const char *txt, u8 *addr);
+int hwaddr_compact_aton(const char *txt, u8 *addr);
 int hwaddr_aton2(const char *txt, u8 *addr);
+int hex2byte(const char *hex);
 int hexstr2bin(const char *hex, u8 *buf, size_t len);
 void inc_byte_array(u8 *counter, size_t len);
 void wpa_get_ntp_timestamp(u8 *buf);
@@ -459,6 +470,13 @@ static inline int is_zero_ether_addr(const u8 *a)
 	return !(a[0] | a[1] | a[2] | a[3] | a[4] | a[5]);
 }
 
+static inline int is_broadcast_ether_addr(const u8 *a)
+{
+	return (a[0] & a[1] & a[2] & a[3] & a[4] & a[5]) == 0xff;
+}
+
+#define broadcast_ether_addr (const u8 *) "\xff\xff\xff\xff\xff\xff"
+
 #include "wpa_debug.h"
 
 
@@ -473,5 +491,12 @@ static inline int is_zero_ether_addr(const u8 *a)
  */
 void * __hide_aliasing_typecast(void *foo);
 #define aliasing_hide_typecast(a,t) (t *) __hide_aliasing_typecast((a))
+
+#ifdef CONFIG_VALGRIND
+#include <valgrind/memcheck.h>
+#define WPA_MEM_DEFINED(ptr, len) VALGRIND_MAKE_MEM_DEFINED((ptr), (len))
+#else /* CONFIG_VALGRIND */
+#define WPA_MEM_DEFINED(ptr, len) do { } while (0)
+#endif /* CONFIG_VALGRIND */
 
 #endif /* COMMON_H */

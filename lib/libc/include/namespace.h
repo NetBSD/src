@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.149.2.1 2012/04/17 00:05:20 yamt Exp $	*/
+/*	$NetBSD: namespace.h,v 1.149.2.2 2012/10/30 18:58:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #define catopen		_catopen
 #define daylight	_daylight
 #define difftime	_difftime
+#define devname_r	_devname_r
 #define err		_err
 #define errx		_errx
 #ifdef _REENTRANT
@@ -154,6 +155,10 @@
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define arc4random		_arc4random
+#define arc4random_addrandom	_arc4random_addrandom
+#define arc4random_buf		_arc4random_buf
+#define arc4random_stir		_arc4random_stir
+#define arc4random_uniform	_arc4random_uniform
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define atoll			_atoll
@@ -457,6 +462,7 @@
 #define mq_timedreceive		_mq_timedreceive
 #define mq_timedsend		_mq_timedsend
 #define mrand48			_mrand48
+#define murmurhash2		_murmurhash2
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror
 #define nanosleep		_nanosleep

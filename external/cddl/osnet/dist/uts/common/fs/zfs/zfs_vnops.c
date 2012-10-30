@@ -1197,13 +1197,12 @@ specvp_check(vnode_t **vpp, cred_t *cr)
  */
 /* ARGSUSED */
 static int
-zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
-    int nameiop, cred_t *cr, int flags)
+zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct pathname *pnp,
+    int flags, vnode_t *rdir, cred_t *cr,  caller_context_t *ct,
+    int *direntflags, pathname_t *realpnp)
 {
 	znode_t *zdp = VTOZ(dvp);
 	zfsvfs_t *zfsvfs = zdp->z_zfsvfs;
-	int *direntflags = NULL;
-	void *realpnp = NULL;
 	int	error = 0;
 
 	/* fast path */
@@ -1249,7 +1248,7 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
 	ZFS_VERIFY_ZP(zdp);
 
 	*vpp = NULL;
-	dprintf("zfs_lookup called %s\n", nm);
+
 	if (flags & LOOKUP_XATTR) {
 #ifdef TODO
 		/*
@@ -1301,17 +1300,6 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
 		return (error);
 	}
 
-	/*
-	 * Before tediously performing a linear scan of the directory,
-	 * check the name cache to see if the directory/name pair
-	 * we are looking for is known already.
-	 */
-
-	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
-		ZFS_EXIT(zfsvfs);
-		return (error);
-	}
-
 	if (zfsvfs->z_utf8 && u8_validate(nm, strlen(nm),
 	    NULL, U8_VALIDATE_ENTIRE, &error) < 0) {
 		ZFS_EXIT(zfsvfs);
@@ -1323,56 +1311,6 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
 		error = specvp_check(vpp, cr);
 
 	ZFS_EXIT(zfsvfs);
-	
-	/* Translate errors and add SAVENAME when needed. */
-	if (cnp->cn_flags & ISLASTCN) {
-		switch (nameiop) {
-		case CREATE:
-		case RENAME:
-			if (error == ENOENT) {
-				error = EJUSTRETURN;
-				break;
-			}
-			/* FALLTHROUGH */
-		case DELETE:
-			break;
-		}
-	}
-
-	if (error == 0 && (nm[0] != '.' || nm[1] != '\0')) {
-		int ltype = 0;
-
-		if (cnp->cn_flags & ISDOTDOT) {
-			ltype = VOP_ISLOCKED(dvp);
-			VOP_UNLOCK(dvp);
-		}
-		error = vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-		if (cnp->cn_flags & ISDOTDOT)
-			vn_lock(dvp, ltype | LK_RETRY);
-		if (error != 0) {
-			VN_RELE(*vpp);
-			*vpp = NULL;
-			return (error);
-		}
-	}
-
-	/*
-	 * Insert name into cache if appropriate.
-	 */
-	if ((cnp->cn_flags & MAKEENTRY) == 0){
-		return (error);
-	}
-	switch (error) {
-	case 0:
-		cache_enter(dvp, *vpp, cnp);
-		break;
-	case ENOENT:
-		if (nameiop != CREATE)
-			cache_enter(dvp, *vpp, cnp);
-		break;
-	default:
-		break;
-	}
 	return (error);
 }
 
@@ -1484,7 +1422,8 @@ top:
 		 * Create a new file object and update the directory
 		 * to reference it.
 		 */
-		if (error = zfs_zaccess(dzp, ACE_ADD_FILE, 0, B_FALSE, cr)) {
+		error = zfs_zaccess(dzp, ACE_ADD_FILE, 0, B_FALSE, cr);
+		if (error) {
 			goto out;
 		}
 
@@ -2031,6 +1970,12 @@ top:
 	}
 
 	vnevent_rmdir(vp, dvp, name, ct);
+
+	/*
+	 * Grab a lock on the directory to make sure that noone is
+	 * trying to add (or lookup) entries while we are removing it.
+	 */
+	rw_enter(&zp->z_name_lock, RW_WRITER);
 
 	/*
 	 * Grab a lock on the parent pointer to make sure we play well
@@ -3571,10 +3516,20 @@ top:
 		 * entries refer to the same file object, rename
 		 * must do nothing and exit without error.
 		 */
+#ifndef __NetBSD__
+		/*
+		 * But on NetBSD we have a different system call to do
+		 * this, posix_rename, which sorta kinda handles this
+		 * case (modulo races), and our tests expect BSD
+		 * semantics for rename, so we'll do that until we can
+		 * push the choice between BSD and POSIX semantics into
+		 * the VOP_RENAME protocol as a flag.
+		 */
 		if (szp->z_id == tzp->z_id) {
 			error = 0;
 			goto out;
 		}
+#endif
 	}
 
 	vnevent_rename_src(ZTOV(szp), sdvp, snm, ct);
@@ -3623,15 +3578,20 @@ top:
 		return (error);
 	}
 
-	if (tzp)	/* Attempt to remove the existing target */
+	if (tzp && (tzp->z_id != szp->z_id))
+		/* Attempt to remove the existing target */
 		error = zfs_link_destroy(tdl, tzp, tx, zflg, NULL);
 
 	if (error == 0) {
-		error = zfs_link_create(tdl, szp, tx, ZRENAMING);
+		if (!tzp || (tzp->z_id != szp->z_id))
+			error = zfs_link_create(tdl, szp, tx, ZRENAMING);
 		if (error == 0) {
 			szp->z_phys->zp_flags |= ZFS_AV_MODIFIED;
 
-			error = zfs_link_destroy(sdl, szp, tx, ZRENAMING, NULL);
+			error = zfs_link_destroy(sdl, szp, tx,
+			    /* Kludge for BSD rename semantics.  */
+			    ((tzp && (tzp->z_id == szp->z_id)) ?
+				zflg : ZRENAMING), NULL);
 			ASSERT(error == 0);
 
 			zfs_log_rename(zilog, tx,
@@ -4779,13 +4739,8 @@ static int
 zfs_netbsd_open(void *v)
 {
 	struct vop_open_args *ap = v;
-	vnode_t	*vp = ap->a_vp;
-	znode_t *zp = VTOZ(vp);
-	int error;
 
-	error = zfs_open(&vp, ap->a_mode, ap->a_cred, NULL);
-
-	return (error);
+	return (zfs_open(&ap->a_vp, ap->a_mode, ap->a_cred, NULL));
 }
 
 static int
@@ -4825,84 +4780,385 @@ zfs_netbsd_write(void *v)
 static int
 zfs_netbsd_access(void *v)
 {
-	struct vop_access_args *ap = v;
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int mode = ap->a_mode;
+	mode_t zfs_mode = 0;
+	kauth_cred_t cred = ap->a_cred;
+	int error;
 
 	/*
-	 * ZFS itself only knowns about VREAD, VWRITE and VEXEC, the rest
-	 * we have to handle by calling vaccess().
+	 * XXX This is really random, especially the left shift by six,
+	 * and it exists only because of randomness in zfs_unix_to_v4
+	 * and zfs_zaccess_rwx in zfs_acl.c.
 	 */
-	if ((ap->a_mode & ~(VREAD|VWRITE|VEXEC)) != 0) {
-		vnode_t *vp = ap->a_vp;
-		znode_t *zp = VTOZ(vp);
-		znode_phys_t *zphys = zp->z_phys;
+	if (mode & VREAD)
+		zfs_mode |= S_IROTH;
+	if (mode & VWRITE)
+		zfs_mode |= S_IWOTH;
+	if (mode & VEXEC)
+		zfs_mode |= S_IXOTH;
+	zfs_mode <<= 6;
 
-		return (vaccess(vp->v_type, zphys->zp_mode, zphys->zp_uid,
-		    zphys->zp_gid, ap->a_mode, ap->a_cred));
-	}
+	KASSERT(VOP_ISLOCKED(vp));
+	error = zfs_access(vp, zfs_mode, 0, cred, NULL);
 
-	return (zfs_access(ap->a_vp, ap->a_mode, 0, ap->a_cred, NULL));
+	return (error);
 }
 
 static int
 zfs_netbsd_lookup(void *v)
 {
-	struct vop_lookup_args *ap = v;
+	struct vop_lookup_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	char nm[NAME_MAX + 1];
-	int err;
-	
-	ASSERT(cnp->cn_namelen < sizeof(nm));
-	strlcpy(nm, cnp->cn_nameptr, MIN(cnp->cn_namelen + 1, sizeof(nm)));
+	int error;
 
-	err = zfs_lookup(ap->a_dvp, nm, ap->a_vpp, cnp, cnp->cn_nameiop,
-	    cnp->cn_cred, 0);
-	
-	return err;
+	KASSERT(dvp != NULL);
+	KASSERT(vpp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(cnp->cn_namelen < sizeof nm);
+
+#if 0				/* Namecache too scary to contemplate.  */
+	*vpp = NULL;
+
+	/*
+	 * Do an access check before the cache lookup.  zfs_lookup does
+	 * an access check too, but it's too scary to contemplate
+	 * injecting our namecache stuff into zfs internals.
+	 *
+	 * XXX Is this the correct access check?
+	 */
+	if ((error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred)) != 0)
+		goto out;
+
+	/*
+	 * Check the namecache before entering zfs_lookup.
+	 * cache_lookup does the locking dance for us.
+	 */
+	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0)
+		goto out;
+#endif
+
+	/*
+	 * zfs_lookup wants a null-terminated component name, but namei
+	 * gives us a pointer into the full pathname.
+	 */
+	(void)strlcpy(nm, cnp->cn_nameptr, cnp->cn_namelen + 1);
+
+	error = zfs_lookup(dvp, nm, vpp, NULL, 0, NULL, cnp->cn_cred, NULL,
+	    NULL, NULL);
+
+	/*
+	 * Translate errors to match our namei insanity.  Also, if the
+	 * caller wants to create an entry here, it's apparently our
+	 * responsibility as lookup to make sure that's permissible.
+	 * Go figure.
+	 */
+	if (cnp->cn_flags & ISLASTCN) {
+		switch (cnp->cn_nameiop) {
+		case CREATE:
+		case RENAME:
+			if (error == ENOENT) {
+				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
+				if (error)
+					break;
+				error = EJUSTRETURN;
+				break;
+			}
+			/* FALLTHROUGH */
+		case DELETE:
+			break;
+		}
+	}
+
+	if (error) {
+		KASSERT(*vpp == NULL);
+		goto out;
+	}
+	KASSERT(*vpp != NULL);	/* XXX Correct?  */
+
+	/*
+	 * Do a locking dance in conformance to the VOP_LOOKUP protocol.
+	 */
+	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
+		KASSERT(!(cnp->cn_flags & ISDOTDOT));
+		KASSERT(dvp == *vpp);
+	} else if ((cnp->cn_namelen == 2) &&
+	    (cnp->cn_nameptr[0] == '.') &&
+	    (cnp->cn_nameptr[1] == '.')) {
+		KASSERT(cnp->cn_flags & ISDOTDOT);
+		VOP_UNLOCK(dvp);
+		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+	} else {
+		KASSERT(!(cnp->cn_flags & ISDOTDOT));
+		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	}
+
+out:
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
+
+#if 0				/* Namecache too scary to contemplate.  */
+	/*
+	 * Insert name into cache if appropriate.
+	 *
+	 * XXX This seems like a lot of code.  Is it all necessary?
+	 * Can we just do a single cache_enter call?
+	 */
+#if 0
+	cache_enter(dvp, *vpp, cnp);
+#endif
+
+	if ((cnp->cn_flags & MAKEENTRY) == 0)
+		return (error);
+
+	switch (error) {
+	case 0:
+		cache_enter(dvp, *vpp, cnp);
+		break;
+	case ENOENT:
+		KASSERT(*vpp == NULL);
+		if (cnp->cn_nameiop != CREATE)
+			cache_enter(dvp, NULL, cnp);
+		break;
+	default:
+		break;
+	}
+#endif
+
+	return (error);
 }
 
 static int
 zfs_netbsd_create(void *v)
 {
-	struct vop_create_args *ap = v;
+	struct vop_create_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	vattr_t *vap = ap->a_vap;
+	struct vattr *vap = ap->a_vap;
 	int mode;
+	int error;
+
+	KASSERT(dvp != NULL);
+	KASSERT(vpp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(vap != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
 
 	vattr_init_mask(vap);
 	mode = vap->va_mode & ALLPERMS;
 
-	return (zfs_create(ap->a_dvp, (char *)cnp->cn_nameptr, vap, !EXCL, mode,
-		ap->a_vpp, cnp->cn_cred));
+	/* XXX !EXCL is wrong here...  */
+	error = zfs_create(dvp, __UNCONST(cnp->cn_nameptr), vap, !EXCL, mode,
+	    vpp, cnp->cn_cred);
+	if (error) {
+		KASSERT(*vpp == NULL);
+		goto out;
+	}
+	KASSERT(*vpp != NULL);
+
+	/*
+	 * Lock *vpp in conformance to the VOP_CREATE protocol.
+	 */
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+
+out:
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
+
+	/*
+	 * Unlock and release dvp because the VOP_CREATE protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+
+	return (error);
 }
 
 static int
 zfs_netbsd_remove(void *v)
 {
-	struct vop_remove_args *ap = v;
+	struct vop_remove_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;
+	int error;
 
-	return (zfs_remove(ap->a_dvp, (char *)ap->a_cnp->cn_nameptr,
-	    ap->a_cnp->cn_cred, NULL, 0));
+	KASSERT(dvp != NULL);
+	KASSERT(vp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
+
+	/*
+	 * zfs_remove will look up the entry again itself, so discard vp.
+	 */
+	VOP_UNLOCK(vp);
+	VN_RELE(vp);
+
+	error = zfs_remove(dvp, __UNCONST(cnp->cn_nameptr), cnp->cn_cred, NULL,
+	    0);
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+	/*
+	 * Unlock and release dvp because the VOP_REMOVE protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+
+	return (error);
 }
 
 static int
 zfs_netbsd_mkdir(void *v)
 {
-	struct vop_mkdir_args *ap = v;
-	vattr_t *vap = ap->a_vap;
+	struct vop_mkdir_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct vattr *vap = ap->a_vap;
+	int error;
+
+	KASSERT(dvp != NULL);
+	KASSERT(vpp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(vap != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
 
 	vattr_init_mask(vap);
 
-	return (zfs_mkdir(ap->a_dvp, (char *)ap->a_cnp->cn_nameptr, vap, ap->a_vpp,
-	    ap->a_cnp->cn_cred, NULL, 0, NULL));
+	error = zfs_mkdir(dvp, __UNCONST(cnp->cn_nameptr), vap, vpp,
+	    cnp->cn_cred, NULL, 0, NULL);
+	if (error) {
+		KASSERT(*vpp == NULL);
+		goto out;
+	}
+	KASSERT(*vpp != NULL);
+
+	/*
+	 * Lock *vpp in conformance to the VOP_MKDIR protocol.
+	 */
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+
+out:
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
+
+	/*
+	 * Unlock and release dvp because the VOP_MKDIR protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+
+	return (error);
 }
 
 static int
 zfs_netbsd_rmdir(void *v)
 {
-	struct vop_rmdir_args *ap = v;
+	struct vop_rmdir_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	int error;
 
-	return (zfs_rmdir(ap->a_dvp, (char *)cnp->cn_nameptr, NULL, cnp->cn_cred, NULL, 0));
+	KASSERT(dvp != NULL);
+	KASSERT(vp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
+
+	/*
+	 * zfs_rmdir will look up the entry again itself, so discard vp.
+	 */
+	VOP_UNLOCK(vp);
+	VN_RELE(vp);
+
+	error = zfs_rmdir(dvp, __UNCONST(cnp->cn_nameptr), NULL, cnp->cn_cred,
+	    NULL, 0);
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+	/*
+	 * Unlock and release dvp because the VOP_RMDIR protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+	return error;
 }
 
 static int
@@ -5053,21 +5309,63 @@ zfs_netbsd_rename(void *v)
 	} */ *ap = v;
 	vnode_t *fdvp = ap->a_fdvp;
 	vnode_t *fvp = ap->a_fvp;
+	struct componentname *fcnp = ap->a_fcnp;
 	vnode_t *tdvp = ap->a_tdvp;
 	vnode_t *tvp = ap->a_tvp;
+	struct componentname *tcnp = ap->a_tcnp;
+	kauth_cred_t cred;
 	int error;
 
-	error = zfs_rename(fdvp, (char *)ap->a_fcnp->cn_nameptr, tdvp,
-	    (char *)ap->a_tcnp->cn_nameptr, ap->a_fcnp->cn_cred, NULL, 0);
+	KASSERT(fdvp != NULL);
+	KASSERT(fvp != NULL);
+	KASSERT(fcnp != NULL);
+	KASSERT(fcnp->cn_nameptr != NULL);
+	KASSERT(tdvp != NULL);
+	KASSERT(tcnp != NULL);
+	KASSERT(fcnp->cn_nameptr != NULL);
+	/* KASSERT(VOP_ISLOCKED(fdvp) != LK_EXCLUSIVE); */
+	/* KASSERT(VOP_ISLOCKED(fvp) != LK_EXCLUSIVE); */
+	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
+	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
+	KASSERT(fdvp->v_type == VDIR);
+	KASSERT(tdvp->v_type == VDIR);
 
-	if (tdvp == tvp)
-		VN_RELE(tdvp);
-	else
-		VN_URELE(tdvp);
-	if (tvp)
-		VN_URELE(tvp);
-	VN_RELE(fdvp);
+	cred = fcnp->cn_cred;
+
+	/*
+	 * XXX Want a better equality test.  `tcnp->cn_cred == cred'
+	 * hoses p2k because puffs transmits the creds separately and
+	 * allocates distinct but equivalent structures for them.
+	 */
+	KASSERT(kauth_cred_uidmatch(cred, tcnp->cn_cred));
+
+	/*
+	 * Drop the insane locks.
+	 */
+	VOP_UNLOCK(tdvp);
+	if ((tvp != NULL) && (tvp != tdvp))
+		VOP_UNLOCK(tvp);
+
+	/*
+	 * Release the source and target nodes; zfs_rename will look
+	 * them up again once the locking situation is sane.
+	 */
 	VN_RELE(fvp);
+	if (tvp != NULL)
+		VN_RELE(tvp);
+
+	/*
+	 * Do the rename ZFSly.
+	 */
+	error = zfs_rename(fdvp, __UNCONST(fcnp->cn_nameptr), tdvp,
+	    __UNCONST(tcnp->cn_nameptr), cred, NULL, 0);
+
+	/*
+	 * Release the directories now too, because the VOP_RENAME
+	 * protocol is insane.
+	 */
+	VN_RELE(fdvp);
+	VN_RELE(tdvp);
 
 	return (error);
 }
@@ -5075,15 +5373,65 @@ zfs_netbsd_rename(void *v)
 static int
 zfs_netbsd_symlink(void *v)
 {
-	struct vop_symlink_args *ap = v;
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	vattr_t *vap = ap->a_vap;
+	struct vattr *vap = ap->a_vap;
+	char *target = ap->a_target;
+	int error;
+
+	KASSERT(dvp != NULL);
+	KASSERT(vpp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(vap != NULL);
+	KASSERT(target != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
 
 	vap->va_type = VLNK;	/* Netbsd: Syscall only sets va_mode. */
 	vattr_init_mask(vap);
 
-	return (zfs_symlink(ap->a_dvp, ap->a_vpp, (char *)cnp->cn_nameptr, vap,
-		ap->a_target, cnp->cn_cred, 0));
+	error = zfs_symlink(dvp, vpp, __UNCONST(cnp->cn_nameptr), vap, target,
+	    cnp->cn_cred, 0);
+	if (error) {
+		KASSERT(*vpp == NULL);
+		goto out;
+	}
+	KASSERT(*vpp != NULL);
+
+
+	/*
+	 * Lock *vpp in conformance to the VOP_SYMLINK protocol.
+	 */
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+
+out:
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT((*vpp == NULL) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
+
+	/*
+	 * Unlock and release dvp because the VOP_SYMLINK protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+
+	return (error);
 }
 
 #ifdef PORT_SOLARIS
@@ -5263,10 +5611,41 @@ zfs_netbsd_readlink(void *v)
 static int
 zfs_netbsd_link(void *v)
 {
-	struct vop_link_args *ap = v;
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
+	int error;
 
-	return (zfs_link(ap->a_dvp, ap->a_vp, (char *)cnp->cn_nameptr, cnp->cn_cred, NULL, 0));
+	KASSERT(dvp != NULL);
+	KASSERT(vp != NULL);
+	KASSERT(cnp != NULL);
+	KASSERT(cnp->cn_nameptr != NULL);
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
+#if 0
+	/*
+	 * ZFS doesn't require dvp to be BSD-locked, and the caller
+	 * expects us to drop this lock anyway, so we might as well
+	 * drop it early to encourage concurrency.
+	 */
+	VOP_UNLOCK(dvp);
+#endif
+
+	error = zfs_link(dvp, vp, __UNCONST(cnp->cn_nameptr), cnp->cn_cred,
+	    NULL, 0);
+
+	/*
+	 * Unlock and release dvp because the VOP_LINK protocol is insane.
+	 */
+	VOP_UNLOCK(dvp);
+	VN_RELE(dvp);
+
+	return (error);
 }
 
 static int
@@ -5286,91 +5665,67 @@ zfs_netbsd_inactive(void *v)
 	return (0);
 }
 
-/*
- * Destroy znode from taskq thread without ZFS_OBJ_MUTEX held.
- */
-static void
-zfs_reclaim_deferred(void *arg)
-{
-	znode_t *zp = arg;
-	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-	uint64_t z_id = zp->z_id;
-
-	/*
-	 * Don't allow a zfs_zget() while were trying to release this znode
-	 */
-	ZFS_OBJ_HOLD_ENTER(zfsvfs, z_id);
-
-	/* Don't need to call ZFS_OBJ_HOLD_EXIT zfs_inactive did thatfor us. */
-	zfs_zinactive(zp);
-	
-}
-
 static int
 zfs_netbsd_reclaim(void *v)
 {
-	struct vop_reclaim_args *ap = v;
-	vnode_t	*vp = ap->a_vp;
-	znode_t	*zp = VTOZ(vp);
+	struct vop_reclaim_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	znode_t	*zp;
 	zfsvfs_t *zfsvfs;
-	int locked;
+	int error;
 
-	locked = 0;
-	
-	ASSERT(zp != NULL);
+	KASSERT(vp != NULL);
+	zp = VTOZ(vp);
+	KASSERT(zp != NULL);
+	zfsvfs = zp->z_zfsvfs;
+	KASSERT(zfsvfs != NULL);
+
+	/* Not until we get uvm and zfs talking to one another.  */
 	KASSERT(!vn_has_cached_data(vp));
 
-	zfsvfs = zp->z_zfsvfs;
-	
-	mutex_enter(&zp->z_lock);
-	ASSERT(zp->z_phys);
-
-//	dprintf("destroying znode %p -- vnode %p -- zp->z_buf = %p\n", zp, ZTOV(zp), zp->z_dbuf);
-//	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
-	genfs_node_destroy(vp);
-	cache_purge(vp);
-
+	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
 	if (zp->z_dbuf == NULL) {
 		/*
 		 * The fs has been unmounted, or we did a
 		 * suspend/resume and this file no longer exists.
 		 */
+		if (vn_has_cached_data(vp))
+			/* zfs and uvm are hosed.  Should not happen.  */
+			panic("zfs vnode has cached data (0): %p", vp);
 		rw_exit(&zfsvfs->z_teardown_inactive_lock);
-		mutex_exit(&zp->z_lock);
 		zfs_znode_free(zp);
 		return (0);
 	}
-	mutex_exit(&zp->z_lock);
 
-	mutex_enter(&zp->z_lock);
-	if (!zp->z_unlinked) {
-		/*
-		 * XXX Hack because ZFS_OBJ_MUTEX is held we can't call zfs_zinactive
-		 * now. I need to defer zfs_zinactive to another thread which doesn't hold this mutex.
-		 */
-		locked = MUTEX_HELD(ZFS_OBJ_MUTEX(zfsvfs, zp->z_id)) ? 2 :
-		    ZFS_OBJ_HOLD_TRYENTER(zfsvfs, zp->z_id);
-		if (locked == 0) {
-			/*
-			 * Lock can't be obtained due to deadlock possibility,
-			 * so defer znode destruction.
-			 */
-			taskq_dispatch(system_taskq, zfs_reclaim_deferred, zp, 0);
+	/*
+	 * Attempt to push any data in the page cache.  If this fails
+	 * we will get kicked out later in zfs_zinactive().
+	 */
+	if (vn_has_cached_data(vp))
+		/* zfs and uvm are hosed.  Should not happen.  */
+		panic("zfs vnode has cached data (1): %p", vp);
+
+	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
+		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
+
+		dmu_tx_hold_bonus(tx, zp->z_id);
+		error = dmu_tx_assign(tx, TXG_WAIT);
+		if (error) {
+			dmu_tx_abort(tx);
 		} else {
-			zfs_znode_dmu_fini(zp);
-			/* Our LWP is holding ZFS_OBJ_HELD mutex but it was locked before
-			   zfs_zinactive was called therefore we can't release it. */
-			if (locked == 1)
-				ZFS_OBJ_HOLD_EXIT(zfsvfs, zp->z_id);
-			zfs_znode_free(zp);
+			dmu_buf_will_dirty(zp->z_dbuf, tx);
+			mutex_enter(&zp->z_lock);
+			zp->z_atime_dirty = 0;
+			mutex_exit(&zp->z_lock);
+			dmu_tx_commit(tx);
 		}
-	} else
-		mutex_exit(&zp->z_lock);
+	}
 
-	ZTOV(zp) = NULL;
-	vp->v_data = NULL; /* v_data must be NULL for a cleaned vnode. */
-	
-	return (0);
+	zfs_zinactive(zp);
+	rw_exit(&zfsvfs->z_teardown_inactive_lock);
+	return 0;
 }
 
 static int
@@ -5414,6 +5769,9 @@ zfs_netbsd_pathconf(void *v)
 		case _PC_CHOWN_RESTRICTED:
 			*ap->a_retval = 1;
 			return (0);
+		case _PC_NO_TRUNC:
+			*ap->a_retval = 1;
+			return (0);
 		case _PC_VDISABLE:
 			*ap->a_retval = _POSIX_VDISABLE;
 			return (0);
@@ -5421,10 +5779,15 @@ zfs_netbsd_pathconf(void *v)
 			return (EINVAL);
 		}
 		/* NOTREACHED */
-	}	
+	}
 	return (error);
 }
 
+#if 1
+#  define	zfs_netbsd_lock		genfs_lock
+#  define	zfs_netbsd_unlock	genfs_unlock
+#  define	zfs_netbsd_islocked	genfs_islocked
+#else
 int
 zfs_netbsd_lock(void *v)
 {
@@ -5439,6 +5802,15 @@ zfs_netbsd_unlock(void *v)
 
 	return 0;
 }
+
+static int
+zfs_netbsd_islocked(void *v)
+{
+
+	return LK_EXCLUSIVE;
+}
+#endif
+
 /*
 int
 zfs_netbsd_getpages(void *v)
@@ -5485,7 +5857,6 @@ zfs_netbsd_putpages(void *v)
 #define zfs_netbsd_mmap genfs_mmap
 #define zfs_netbsd_getpages genfs_compat_getpages
 //#define zfs_netbsd_putpages genfs_putpages
-#define zfs_netbsd_islocked genfs_islocked
 
 int (**zfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {

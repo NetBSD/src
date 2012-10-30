@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.67.2.2 2012/04/17 00:05:47 yamt Exp $
+.\"	$NetBSD: sysctl.7,v 1.67.2.3 2012/10/30 18:59:42 yamt Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2011
+.Dd June 22, 2012
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -306,6 +306,7 @@ privilege may change the value.
 .It kern.logsigexit	integer	yes
 .It kern.mapped_files	integer	no
 .It kern.maxfiles	integer	yes
+.It kern.maxlwp	integer	yes
 .It kern.maxpartitions	integer	no
 .It kern.maxphys	integer	no
 .It kern.maxproc	integer	yes
@@ -668,6 +669,9 @@ otherwise\ 0.
 The maximum number of open files that may be open in the system.
 .It Li kern.maxpartitions ( KERN_MAXPARTITIONS )
 The maximum number of partitions allowed per disk.
+.It Li kern.maxlwp
+The maximum number of Lightweight Processes (threads) the system allows
+per uid.
 .It Li kern.maxphys ( KERN_MAXPHYS )
 Maximum raw I/O transfer size.
 .It Li kern.maxproc ( KERN_MAXPROC )
@@ -1068,6 +1072,26 @@ Is converted to a power of two and its range is between
 and
 .Dv 65536 .
 .El
+.It Li kern.uidinfo
+Resource usage for the current user.
+.Bl -column "kern.uidinfo.proccnt" "integer" "Changeable" -offset indent
+.It Sy Third level name	Type	Changeable
+.It kern.uidinfo.proccnt	integer	no
+.It kern.uidinfo.lwpcnt	integer	no
+.It kern.uidinfo.lockcnt	integer	no
+.It kern.uidinfo.sbsize	integer	no
+.El
+.Bl -tag -width "123456"
+.It Li kern.uidinfo.proccnt
+Returns the number of active processes for the current user.
+.It Li kern.uidinfo.lwpcnt
+Returns the number of active threads for the current user; the first thread
+of each process is not counted.
+.It Li kern.uidinfo.lockcnt
+Number of locks held by the current user.
+.It Li kern.uidinfo.sbsize
+Number of bytes in socket buffers allocated to the current user.
+.El
 .It Li kern.urandom ( KERN_URND )
 Random integer value.
 .It Li kern.usercrypto
@@ -1199,6 +1223,8 @@ The currently defined protocols and names are:
 .It icmp	redirtimeout	integer	yes
 .It icmp	bmcastecho	integer	yes
 .It ip	allowsrcrt	integer	yes
+.It ip 	anonportalgo.selected	string	yes
+.It ip 	anonportalgo.available	string	yes
 .It ip	anonportmax	integer	yes
 .It ip	anonportmin	integer	yes
 .It ip	checkinterface	integer	yes
@@ -1258,8 +1284,6 @@ The currently defined protocols and names are:
 .It udp	checksum	integer	yes
 .It udp	do_loopback_cksum	integer	yes
 .It udp	recvspace	integer	yes
-.It udp	rfc6056.selected	string	yes
-.It udp	rfc6056.available	string	yes
 .It udp	sendspace	integer	yes
 .El
 .Pp
@@ -1303,6 +1327,10 @@ believes it can send advertisements more frequently than the current master.
 Disabled by default.
 .It Li ip.allowsrcrt
 If set to 1, the host accepts source routed packets.
+.It Li ip.anonportalgo.available
+The available RFC 6056 port randomization algorithms.
+.It Li ip.anonportalgo.selected
+The currently selected RFC 6056 port randomization algorithm.
 .It Li ip.anonportmax
 The highest port number to use for TCP and UDP ephemeral port allocation.
 This cannot be set to less than 1024 or greater than 65535, and must
@@ -1541,10 +1569,6 @@ Received non-zero UDP checksums are always checked.
 Disabling UDP checksums is strongly discouraged.
 .It Li udp.recvspace
 The default UDP receive buffer size.
-.It Li udp.rfc6056.available
-The available RFC 6056 port randomization algorithms.
-.It Li udp.rfc6056.selected
-The currently selected RFC 6056 port randomization algorithm.
 .It Li udp.sendspace
 The default UDP send buffer size.
 .El
@@ -1573,6 +1597,8 @@ The currently defined protocols and names are:
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It ip6	accept_rtadv	integer	yes
+.It ip6	anonportalgo.selected	string	yes
+.It ip6	anonportalgo.available	string	yes
 .It ip6	anonportmax	integer	yes
 .It ip6	anonportmin	integer	yes
 .It ip6	auto_flowlabel	integer	yes
@@ -1588,17 +1614,19 @@ The currently defined protocols and names are:
 .It ip6	log_interval	integer	yes
 .It ip6	lowportmax	integer	yes
 .It ip6	lowportmin	integer	yes
+.It ip6	maxdynroutes	integer	yes
+.It ip6	maxifprefixes	integer	yes
+.It ip6	maxifdefrouters	integer	yes
 .It ip6	maxflows	integer	yes
 .It ip6	maxfragpackets	integer	yes
 .It ip6	maxfrags	integer	yes
+.It ip6	neighborgcthresh	integer	yes
 .It ip6	redirect	integer	yes
 .It ip6	rr_prune	integer	yes
 .It ip6	use_deprecated	integer	yes
 .It ip6	v6only	integer	yes
 .It udp6	do_loopback_cksum	integer	yes
 .It udp6	recvspace	integer	yes
-.It udp6	rfc6056.selected	string	yes
-.It udp6	rfc6056.available	string	yes
 .It udp6	sendspace	integer	yes
 .El
 .Pp
@@ -1610,6 +1638,10 @@ and autoconfigures address prefixes and default routers.
 The node must be a host
 .Pq not a router
 for the option to be meaningful.
+.It Li ip6.anonportalgo.available
+The available RFC 6056 port randomization algorithms.
+.It Li ip6.anonportalgo.selected
+The currently selected RFC 6056 port randomization algorithm.
 .It Li ip6.anonportmax
 The highest port number to use for TCP and UDP ephemeral port allocation.
 This cannot be set to less than 1024 or greater than 65535, and must
@@ -1687,6 +1719,18 @@ The lowest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
 be smaller than
 .Li ip6.lowportmax .
+.It Li ip6.maxdynroutes
+Maximum number of routes created by redirect.
+Set it to negative to disable.
+The default value is 4096.
+.It Li ip6.maxifprefixes
+Maximum number of prefixes created by route advertisements per interface.
+Set it to negative to disable.
+The default value is 16.
+.It Li ip6.maxifdefrouters 16
+Maximum number of default routers created by route advertisements per interface.
+Set it to negative to disable.
+The default value is 16.
 .It Li ip6.maxflows
 IPv6 Fast Forwarding is enabled by default.
 If set to 0, IPv6 Fast Forwarding is disabled.
@@ -1703,6 +1747,10 @@ The maximum number of fragments the node will accept.
 0 means that the node will not accept any fragments.
 \-1 means that the node will accept as many fragments as it receives.
 The flag is provided basically for avoiding possible DoS attacks.
+.It Li ip6.neighborgcthresh
+Maximum number of entries in neighbor cache.
+Set to negative to disable.
+The default value is 2048.
 .It Li ip6.redirect
 If set to 1, ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,
@@ -1806,10 +1854,6 @@ ICMPv6 redirect.
 Perform UDP checksum on loopback.
 .It Li udp6.recvspace
 Default UDP receive buffer size.
-.It Li udp6.rfc6056.available
-The available RFC 6056 port randomization algorithms for IPv6.
-.It Li udp6.rfc6056.selected
-The currently selected RFC 6056 port randomization algorithm for IPv6.
 .It Li udp6.sendspace
 Default UDP send buffer size.
 .El

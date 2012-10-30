@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.78.2.1 2012/04/17 00:05:42 yamt Exp $	*/
+/*	$NetBSD: ping6.c,v 1.78.2.2 2012/10/30 18:59:31 yamt Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.78.2.1 2012/04/17 00:05:42 yamt Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.78.2.2 2012/10/30 18:59:31 yamt Exp $");
 #endif
 #endif
 
@@ -504,7 +504,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, &e, 10);
-			if (datalen <= 0 || *optarg == '\0' || *e != '\0')
+			if (datalen < 0 || *optarg == '\0' || *e != '\0')
 				errx(1, "illegal datalen value -- %s", optarg);
 			if (datalen > MAXDATALEN) {
 				errx(1,

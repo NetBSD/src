@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_discover.c,v 1.2.2.1 2012/04/17 00:05:40 yamt Exp $	*/
+/*	$NetBSD: iscsid_discover.c,v 1.2.2.2 2012/10/30 18:59:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -522,7 +522,7 @@ iscsi_isns_serverconn(isns_t * isns)
 			return (uint32_t)-1;
 		}
 
-		if (connect(sock, addr->ai_addr, addr->ai_addrlen) == -1)
+		if (connect(sock, addr->ai_addr, addr->ai_addrlen) != -1)
 			break;
 
 		DEB(1, ("%s: connect call FAILED!\n", __func__));

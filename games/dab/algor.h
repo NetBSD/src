@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.h,v 1.4 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: algor.h,v 1.4.4.1 2012/10/30 18:58:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,10 +71,6 @@ class ALGOR : public PLAYER {
 #ifdef notyet
     size_t find_single(void);
 #endif
-
-    size_t _edge1;
-    size_t _edge2;
-    size_t _maxedge;
 };
 
 #endif

@@ -1,0 +1,8 @@
+# $NetBSD: hashtablefile,v 1.1.6.2 2012/10/30 18:59:34 yamt Exp $
+#
+# hash tables can only have single IP addresses
+#
+# entry comment 1 (optional)
+192.0.2.7
+# entry comment 2 (optional)
+198.51.100.48
