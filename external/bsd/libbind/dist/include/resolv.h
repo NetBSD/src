@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.1.1.1 2009/04/12 15:33:33 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.1.1.1.14.1 2012/10/30 18:55:23 yamt Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
 
 /*%
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 1.30 2009/03/03 01:52:48 each Exp
+ *	Id: resolv.h,v 1.30 2009/03/03 01:52:48 each Exp 
  */
 
 #ifndef _RESOLV_H_

@@ -45,23 +45,27 @@ extern "C" {
 #include "test_helpers.hpp"
 
 void
-build_check_cxx_o_aux(const atf::fs::path& sfile, const char* failmsg)
+build_check_cxx_o_aux(const atf::fs::path& sfile, const char* failmsg,
+                      const bool expect_pass)
 {
     std::vector< std::string > optargs;
     optargs.push_back("-I" + atf::config::get("atf_includedir"));
+    optargs.push_back("-Wall");
+    optargs.push_back("-Werror");
 
-    if (!atf::check::build_cxx_o(sfile.str(), "test.o",
-                                 atf::process::argv_array(optargs)))
+    const bool result = atf::check::build_cxx_o(
+        sfile.str(), "test.o", atf::process::argv_array(optargs));
+    if ((expect_pass && !result) || (!expect_pass && result))
         ATF_FAIL(failmsg);
 }
 
 void
 build_check_cxx_o(const atf::tests::tc& tc, const char* sfile,
-                  const char* failmsg)
+                  const char* failmsg, const bool expect_pass)
 {
     const atf::fs::path sfilepath =
         atf::fs::path(tc.get_config_var("srcdir")) / sfile;
-    build_check_cxx_o_aux(sfilepath, failmsg);
+    build_check_cxx_o_aux(sfilepath, failmsg, expect_pass);
 }
 
 void
@@ -74,7 +78,7 @@ header_check(const char *hdrname)
 
     const std::string failmsg = std::string("Header check failed; ") +
         hdrname + " is not self-contained";
-    build_check_cxx_o_aux(atf::fs::path("test.c"), failmsg.c_str());
+    build_check_cxx_o_aux(atf::fs::path("test.c"), failmsg.c_str(), true);
 }
 
 atf::fs::path

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run.sh,v 1.45 2010-12-20 21:35:45 each Exp
+# Id: run.sh,v 1.45 2010/12/20 21:35:45 each Exp 
 
 #
 # Run a system test.

@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.5 2007-06-19 23:47:01 tbox Exp
+# Id: setup.sh,v 1.5 2007/06/19 23:47:01 tbox Exp 
 
 cp ns1/ignore.example.db.in ns1/ignore.example.db
 cp ns1/warn.example.db.in ns1/warn.example.db

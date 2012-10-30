@@ -12,11 +12,26 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: test4,v 1.4 2011-01-13 19:30:41 each Exp
+; Id: test4,v 1.5 2011/10/13 01:32:33 vjs Exp 
 
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+; NSIP tests
 
 server 10.53.0.3 5300
 
+; NXDOMAIN for all of tld2 based on its server IP address
 update add  32.2.0.53.10.rpz-nsip.bl.	300 CNAME .
-
+;
+; exempt a3-2.tld2 and anything in 192.168.0.0/24
+;   also checks that IP policies are preferred over NSIP policies
+update add  a3-2.tld2.bl		300 CNAME a3-2.tld2.
+update add  24.0.0.168.192.rpz-ip.bl	300 CNAME 24.0.0.168.192.
+;
+; prefer NSIP policy to NSDNAME policy
+update add  ns.tld2.rpz-nsdname.bl.	300 CNAME 10.0.0.1
 send

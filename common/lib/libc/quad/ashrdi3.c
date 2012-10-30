@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.2.6.1 2012/04/17 00:01:40 yamt Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.2.6.2 2012/10/30 18:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashrdi3.c,v 1.2.6.1 2012/04/17 00:01:40 yamt Exp $");
+__RCSID("$NetBSD: ashrdi3.c,v 1.2.6.2 2012/10/30 18:46:14 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
+
+ARM_EABI_ALIAS(__aeabi_lasr, __ashrdi3)	/* no semicolon */
 
 /*
  * Shift a (signed) quad value right (arithmetic shift right).

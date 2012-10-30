@@ -1,4 +1,4 @@
-/*	$NetBSD: res.h,v 1.1.1.1 2009/04/12 15:33:59 christos Exp $	*/
+/*	$NetBSD: res.h,v 1.1.1.1.14.1 2012/10/30 18:55:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
 
 /*
  *	@(#)res.h	5.10 (Berkeley) 6/1/90
- *	Id: res.h,v 1.3 2009/03/03 23:49:07 tbox Exp
+ *	Id: res.h,v 1.3 2009/03/03 23:49:07 tbox Exp 
  */
 
 /*

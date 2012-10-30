@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_p.h,v 1.1.1.1 2009/04/12 15:33:40 christos Exp $	*/
+/*	$NetBSD: irp_p.h,v 1.1.1.1.14.1 2012/10/30 18:55:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: irp_p.h,v 1.5 2005/04/27 04:56:28 sra Exp
+ * Id: irp_p.h,v 1.5 2005/04/27 04:56:28 sra Exp 
  */
 
 #ifndef _IRP_P_H_INCLUDED

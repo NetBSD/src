@@ -1,15 +1,23 @@
-#	$NetBSD: Makefile.inc,v 1.23.2.3 2012/05/23 10:07:25 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.23.2.4 2012/10/30 18:55:47 yamt Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
 
 .include <bsd.own.mk>
 
-LLVM_REVISION=	155677
-CLANG_REVISION=	155677
+SVN_ROOT=		http://llvm.org/svn/llvm-project
+
+COMMON_REVISION=	166772
+LLVM_REVISION=		${COMMON_REVISION}
+CLANG_REVISION=		${COMMON_REVISION}
+COMPILER_RT_REVISION=	${COMMON_REVISION}
+
+LLVM_VERSION=		3.2
+CLANG_VERSION=		3.2
 
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
+COMPILER_RT_SRCDIR:=	${.PARSEDIR}/dist/compiler-rt
 LLVM_TOPLEVEL:=	${.PARSEDIR}
 
 CPPFLAGS+=	-I. -I${LLVM_SRCDIR}/include -I${CLANG_SRCDIR}/include \
@@ -22,19 +30,23 @@ CLANG_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/tools/clang/include
 LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
-HOST_CXXFLAGS+=	-O2 -g
+HOST_CXXFLAGS+=	-O2 -g -fno-rtti -fno-exceptions
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 CLANG_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
 LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
-CPPFLAGS+= -DLLVM_DEFAULT_TARGET_TRIPLE="\"${MACHINE_GNU_PLATFORM}\""
+
+CXXFLAGS+=	-fno-rtti -fno-exceptions
 .endif
 CPPFLAGS+=	-I${LLVM_INCLUDE_OBJDIR} -I${LLVM_INCLUDE_CONFIG} \
 		-I${CLANG_INCLUDE_CONFIG}
 
-# ./configure --enable-targets=x86,powerpc,sparc,arm,mips \
-#    --with-c-include-dirs=/usr/include/clang-3.0:/usr/include \
-#    --disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
-#    --disable-threads
+LLVM_CONFIGURE_ARGS=	\
+	--enable-targets=x86,powerpc,sparc,arm,mips \
+	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
+	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
+	--with-clang-srcdir=${CLANG_SRCDIR} \
+	--host=${MACHINE_GNU_PLATFORM} \
+	llvm_cv_gnu_make_command=${MAKE}
 
 .endif

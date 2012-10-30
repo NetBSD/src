@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/12/13 09:27:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2012/10/30 18:46:16 yamt Exp $
 
 # Build multi-abi libaries
 
@@ -13,5 +13,7 @@ SUBDIR=	dirshack .WAIT ${ARCHDIR_SUBDIR}
 
 .endif
 .endif
+
+TARGETS+=	build_install
 
 .include <bsd.subdir.mk>

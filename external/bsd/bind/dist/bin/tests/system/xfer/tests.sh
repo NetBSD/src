@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.34 2011-03-11 00:43:53 marka Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -201,6 +201,14 @@ test -f ns7/slave.bk.jnl || tmp=1
 if test $tmp != 0 ; then echo "I:failed"; fi
 status=`expr $status + $tmp`
 
+echo "I:check that a multi-message uncompressable zone transfers"
+$DIG axfr . -p 5300 @10.53.0.4 | grep SOA > axfr.out
+if test `wc -l < axfr.out` != 2
+then
+	 echo "I:failed"
+	 status=`expr $status + 1`
+fi
+
 # now we test transfers with assorted TSIG glitches
 DIGCMD="$DIG $DIGOPTS @10.53.0.4 -p 5300"
 SENDCMD="$PERL ../send.pl 10.53.0.5 5301"
@@ -226,7 +234,13 @@ EOF
 
 $RNDCCMD reload | sed 's/^/I:ns4 /'
 
-sleep 2
+
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	$DIGCMD nil. SOA > dig.out.ns4
+	grep SOA dig.out.ns4 > /dev/null && break
+	sleep 1
+done
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
     echo "I:failed"

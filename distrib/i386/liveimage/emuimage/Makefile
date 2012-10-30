@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:34 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:32 yamt Exp $
 
-LIVEIMGBASE=	i386emu			# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-i386-live-wd0root	# gives ${IMGBASE}.img
 
 BOOTDISK=	wd0			# for QEMU etc.
 

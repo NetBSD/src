@@ -271,7 +271,7 @@ parse_status_check_arg(const std::string& arg)
         else
             value = parse_signal(value_str);
     } else
-        throw atf::application::usage_error("Invalid output checker");
+        throw atf::application::usage_error("Invalid status checker");
 
     return status_check(type, negated, value);
 }

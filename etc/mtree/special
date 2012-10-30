@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.138.4.1 2012/04/17 00:02:59 yamt Exp $
+#	$NetBSD: special,v 1.138.4.2 2012/10/30 18:49:09 yamt Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -220,6 +220,7 @@
 ./etc/rc.d/isibootd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555
+./etc/rc.d/ldpd			type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
 ./etc/rc.d/lvm			type=file mode=0555

@@ -1,4 +1,4 @@
-/*	$NetBSD: memcluster.c,v 1.1.1.1 2009/04/12 15:33:47 christos Exp $	*/
+/*	$NetBSD: memcluster.c,v 1.1.1.1.14.1 2012/10/30 18:55:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: memcluster.c,v 1.11 2006/08/30 23:34:38 marka Exp";
+static const char rcsid[] = "Id: memcluster.c,v 1.11 2006/08/30 23:34:38 marka Exp ";
 #endif /* not lint */
 
 #include "port_before.h"

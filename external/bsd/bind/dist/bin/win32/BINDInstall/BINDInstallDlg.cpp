@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.48 2010-01-07 23:48:54 tbox Exp */
+/* Id: BINDInstallDlg.cpp,v 1.48 2010/01/07 23:48:54 tbox Exp  */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation

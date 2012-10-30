@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.1.1.1 2009/04/12 15:33:35 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.1.1.1.14.1 2012/10/30 18:55:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nsap_addr.c,v 1.5 2005/07/28 06:51:48 marka Exp";
+static const char rcsid[] = "Id: nsap_addr.c,v 1.5 2005/07/28 06:51:48 marka Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

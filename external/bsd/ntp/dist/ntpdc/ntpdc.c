@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.3.2.1 2012/04/17 00:03:49 yamt Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.3.2.2 2012/10/30 18:55:57 yamt Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -1932,7 +1932,7 @@ vwarning(const char *fmt, va_list ap)
 	int serrno = errno;
 	(void) fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, fmt, ap);
-	(void) fprintf(stderr, ": %s", strerror(serrno));
+	(void) fprintf(stderr, ": %s\n", strerror(serrno));
 }
 
 /*

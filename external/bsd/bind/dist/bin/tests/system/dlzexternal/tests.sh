@@ -52,4 +52,22 @@ status=`expr $status + $ret`
 test_update deny.example.nil. TXT "86400 TXT helloworld" "helloworld" should_fail && ret=1
 status=`expr $status + $ret`
 
+echo "I:testing passing client info into DLZ driver"
+ret=0
+out=`$DIG $DIGOPTS +short -t txt -q source-addr.example.nil`
+addr=`eval echo $out | cut -f1 -d'#'`
+[ "$addr" = "10.53.0.1" ] || ret=1
+[ "$ret" -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
+echo "I:testing DLZ driver is cleaned up on reload"
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 reload 2>&1 | sed 's/^/I:ns1 /'
+for i in 0 1 2 3 4 5 6 7 8 9; do
+    ret=0
+    grep 'dlz_example: shutting down zone example.nil' ns1/named.run > /dev/null 2>&1 || ret=1
+    [ "$ret" -eq 0 ] && break
+done
+[ "$ret" -eq 0 ] || echo "I:failed"
+status=`expr $status + $ret`
+
 exit $status

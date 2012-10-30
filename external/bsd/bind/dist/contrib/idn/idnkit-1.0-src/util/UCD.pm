@@ -1,4 +1,4 @@
-# Id: UCD.pm,v 1.1.1.1 2003-06-04 00:27:53 marka Exp
+# Id: UCD.pm,v 1.1 2003/06/04 00:27:53 marka Exp 
 #
 # Copyright (c) 2000,2001 Japan Network Information Center.
 # All rights reserved.

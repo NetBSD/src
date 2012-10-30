@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2010-12-17 00:57:38 marka Exp
+# Id: clean.sh,v 1.3 2010/12/17 00:57:38 marka Exp 
 
 rm -rf */*.signed
 rm -rf */K*

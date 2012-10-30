@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.1 2009/04/12 15:33:47 christos Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.1.14.1 2012/10/30 18:55:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
  * \brief private interfaces for eventlib
  * \author vix 09sep95 [initial]
  *
- * Id: eventlib_p.h,v 1.9 2006/03/09 23:57:56 marka Exp
+ * Id: eventlib_p.h,v 1.9 2006/03/09 23:57:56 marka Exp 
  */
 
 #ifndef _EVENTLIB_P_H

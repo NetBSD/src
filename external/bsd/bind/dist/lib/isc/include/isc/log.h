@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2011/02/16 03:47:12 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.2.4.1 2012/10/30 18:53:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.h,v 1.59 2009-02-16 02:01:16 marka Exp */
+/* Id: log.h,v 1.59 2009/02/16 02:01:16 marka Exp  */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1

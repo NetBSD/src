@@ -1,4 +1,4 @@
-/*	$NetBSD: printpoolnode.c,v 1.1.1.1.2.2 2012/04/17 00:03:20 yamt Exp $	*/
+/*	$NetBSD: printpoolnode.c,v 1.1.1.1.2.3 2012/10/30 18:55:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -28,20 +28,8 @@ printpoolnode(np, opts, fields)
 		putchar(' ');
 		if (np->ipn_info == 1)
 			PRINTF("! ");
-		if (np->ipn_addr.adf_family == AF_INET) {
-			printip(np->ipn_addr.adf_family,
-				(u_32_t *)&np->ipn_addr.adf_addr.in4);
-		} else {
-#ifdef USE_INET6
-			char buf[INET6_ADDRSTRLEN+1];
-			const char *str;
-
-			str = inet_ntop(AF_INET6, &np->ipn_addr.adf_addr,
-					buf, sizeof(buf) - 1);
-			if (str != NULL)
-				PRINTF("%s", str);
-#endif
-		}
+		printip(np->ipn_addr.adf_family,
+			(u_32_t *)&np->ipn_addr.adf_addr.in4);
 		printmask(np->ipn_addr.adf_family,
 			  (u_32_t *)&np->ipn_mask.adf_addr);
 	} else {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.3 2012/05/23 10:07:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.4 2012/10/30 18:55:50 yamt Exp $
 
 LIB=	LLVMCodeGen
 
@@ -18,6 +18,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
 	DwarfEHPrepare.cpp \
+	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
@@ -38,6 +39,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LiveIntervalAnalysis.cpp \
 	LiveIntervalUnion.cpp \
 	LiveRangeCalc.cpp \
+	LiveRegMatrix.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LiveRangeEdit.cpp \
@@ -62,10 +64,12 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
+	MachinePostDominators.cpp \
 	MachineRegisterInfo.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \
 	MachineSink.cpp \
+	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
 	OcamlGC.cpp \
 	OptimizePHIs.cpp \
@@ -87,7 +91,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegisterCoalescer.cpp \
 	RegisterPressure.cpp \
 	RegisterScavenging.cpp \
-	RenderMachineFunction.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
@@ -98,6 +101,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	Spiller.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
+	StackColoring.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
 	StrongPHIElimination.cpp \
@@ -106,6 +110,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetInstrInfoImpl.cpp \
 	TargetLoweringObjectFileImpl.cpp \
 	TargetOptionsImpl.cpp \
+	TargetSchedule.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp

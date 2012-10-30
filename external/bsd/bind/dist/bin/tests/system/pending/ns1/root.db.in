@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: root.db.in,v 1.6 2010-01-07 23:48:53 tbox Exp
+; Id: root.db.in,v 1.6 2010/01/07 23:48:53 tbox Exp 
 
 $TTL 30
 . 			IN SOA	marka.isc.org. a.root.servers.nil. (

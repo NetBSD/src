@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.2 2011/02/16 03:46:44 christos Exp $	*/
+/*	$NetBSD: keygen.c,v 1.2.4.1 2012/10/30 18:49:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keygen.c,v 1.4 2009-11-12 14:02:38 marka Exp */
+/* Id: keygen.c,v 1.4 2009/11/12 14:02:38 marka Exp  */
 
 /*! \file */
 

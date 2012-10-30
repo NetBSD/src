@@ -1,7 +1,7 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.1.2.2 2012/04/17 00:03:26 yamt Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.1.1.1.2.3 2012/10/30 18:55:14 yamt Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -44,7 +44,7 @@
 #include "netinet/ipl.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipfs.c,v 1.1.1.2 2012/07/22 13:44:53 darrenr Exp $";
 #endif
 
 #ifndef	IPF_SAVEDIR

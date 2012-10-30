@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.h,v 1.1.1.1 2009/04/12 15:33:32 christos Exp $	*/
+/*	$NetBSD: hesiod.h,v 1.1.1.1.14.1 2012/10/30 18:55:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
  */
 
 /*
- * Id: hesiod.h,v 1.4 2005/04/27 04:56:14 sra Exp
+ * Id: hesiod.h,v 1.4 2005/04/27 04:56:14 sra Exp 
  */
 
 #ifndef _HESIOD_H_INCLUDED

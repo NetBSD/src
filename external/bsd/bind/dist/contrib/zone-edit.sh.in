@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: zone-edit.sh.in,v 1.2 2010-12-21 23:47:08 tbox Exp
+# Id: zone-edit.sh.in,v 1.2 2010/12/21 23:47:08 tbox Exp 
 
 dir=/tmp/zone-edit.$$
 mkdir ${dir} || exit 1

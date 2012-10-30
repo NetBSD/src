@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.h,v 1.1.1.1 2009/04/12 15:33:34 christos Exp $	*/
+/*	$NetBSD: ctl.h,v 1.1.1.1.14.1 2012/10/30 18:55:23 yamt Exp $	*/
 
 #ifndef ISC_CTL_H
 #define ISC_CTL_H
@@ -21,7 +21,7 @@
  */
 
 /*
- * Id: ctl.h,v 1.5 2005/04/27 04:56:17 sra Exp
+ * Id: ctl.h,v 1.5 2005/04/27 04:56:17 sra Exp 
  */
 
 /*! \file */

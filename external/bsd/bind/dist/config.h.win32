@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.27 2011-03-10 04:36:13 each Exp */
+/* Id: config.h.win32,v 1.28 2011/10/30 23:39:39 marka Exp  */
 
 /*
  * win32 configuration file
@@ -49,11 +49,9 @@
 #define _USE_32BIT_TIME_T 1
 
 /*
- * Windows NT and 2K only
+ * Minimum version is Windows XP
  */
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
-#endif
+#define _WIN32_WINNT 0x0501
 
 /* Define if you have the ANSI C header files.  */
 #define STDC_HEADERS 1
@@ -170,7 +168,9 @@
  */
 
 #define snprintf _snprintf
+#if _MSC_VER <= 1400
 #define vsnprintf _vsnprintf
+#endif
 #define strcasecmp  _stricmp
 #define strncasecmp _strnicmp
 #define strdup _strdup

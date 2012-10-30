@@ -1,18 +1,26 @@
-# $NetBSD: Makefile,v 1.10.6.1 2012/04/17 00:03:06 yamt Exp $
+# $NetBSD: Makefile,v 1.10.6.2 2012/10/30 18:54:57 yamt Exp $
 #
 
 PROG=		dhcpcd
 SRCS=		arp.c bind.c common.c control.c configure.c dhcp.c dhcpcd.c \
-		duid.c eloop.c if-options.c if-pref.c ipv4ll.c ipv6rs.c net.c \
-		signals.c
+		duid.c eloop.c if-options.c if-pref.c \
+		ipv4ll.c ipv6.c ipv6ns.c ipv6rs.c \
+		net.c signals.c
 SRCS+=		bpf.c if-bsd.c platform-bsd.c
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
-.PATH: ${DIST}
-
 CPPFLAGS+=	-I${DIST}
+
+# Workaround libc not exporting in6addr_any when MKINET6=no
+.if defined(MKINET6) && empty(MKINET6:M[yY][eE][sS])
+LIBC_NET=	${NETBSDSRCDIR}/lib/libc/net
+SRCS+=		vars6.c
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include
+.endif
+
+.PATH: ${DIST} ${LIBC_NET}
 
 SCRIPTS=			dhcpcd-run-hooks
 SCRIPTSDIR_dhcpcd-run-hooks=	/libexec

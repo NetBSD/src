@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2012 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: Bv9ARM.ch03.html,v 1.87 2011-08-04 01:14:42 tbox Exp -->
+<!-- Id -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -47,14 +47,14 @@
 <dl>
 <dt><span class="sect1"><a href="Bv9ARM.ch03.html#sample_configuration">Sample Configurations</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2567767">A Caching-only Name Server</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2567988">An Authoritative-only Name Server</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2567771">A Caching-only Name Server</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2567992">An Authoritative-only Name Server</a></span></dt>
 </dl></dd>
-<dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568010">Load Balancing</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568364">Name Server Operations</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568014">Load Balancing</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch03.html#id2568369">Name Server Operations</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2568370">Tools for Use With the Name Server Daemon</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570370">Signals</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2568374">Tools for Use With the Name Server Daemon</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch03.html#id2570632">Signals</a></span></dt>
 </dl></dd>
 </dl>
 </div>
@@ -68,7 +68,7 @@
 <a name="sample_configuration"></a>Sample Configurations</h2></div></div></div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2567767"></a>A Caching-only Name Server</h3></div></div></div>
+<a name="id2567771"></a>A Caching-only Name Server</h3></div></div></div>
 <p>
           The following sample configuration is appropriate for a caching-only
           name server for use by clients internal to a corporation.  All
@@ -98,7 +98,7 @@ zone "0.0.127.in-addr.arpa" {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2567988"></a>An Authoritative-only Name Server</h3></div></div></div>
+<a name="id2567992"></a>An Authoritative-only Name Server</h3></div></div></div>
 <p>
           This sample configuration is for an authoritative-only server
           that is the master server for "<code class="filename">example.com</code>"
@@ -146,7 +146,7 @@ zone "eng.example.com" {
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2568010"></a>Load Balancing</h2></div></div></div>
+<a name="id2568014"></a>Load Balancing</h2></div></div></div>
 <p>
         A primitive form of load balancing can be achieved in
         the <acronym class="acronym">DNS</acronym> by using multiple records
@@ -289,10 +289,10 @@ zone "eng.example.com" {
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2568364"></a>Name Server Operations</h2></div></div></div>
+<a name="id2568369"></a>Name Server Operations</h2></div></div></div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2568370"></a>Tools for Use With the Name Server Daemon</h3></div></div></div>
+<a name="id2568374"></a>Tools for Use With the Name Server Daemon</h3></div></div></div>
 <p>
           This section describes several indispensable diagnostic,
           administrative and monitoring tools available to the system
@@ -588,9 +588,17 @@ zone "eng.example.com" {
 <dd><p>
                         Write server statistics to the statistics file.
                       </p></dd>
-<dt><span class="term"><strong class="userinput"><code>querylog</code></strong></span></dt>
-<dd><p>
-                        Toggle query logging. Query logging can also be enabled
+<dt><span class="term"><strong class="userinput"><code>querylog</code></strong>
+                          [<span class="optional">on|off</span>]
+                    </span></dt>
+<dd>
+<p>
+                        Enable or disable query logging.  (For backward
+                        compatibility, this command can also be used without
+                        an argument to toggle query logging on and off.)
+                      </p>
+<p>
+                        Query logging can also be enabled
                         by explicitly directing the <span><strong class="command">queries</strong></span>
                         <span><strong class="command">category</strong></span> to a
                         <span><strong class="command">channel</strong></span> in the
@@ -599,7 +607,8 @@ zone "eng.example.com" {
                         <span><strong class="command">querylog yes;</strong></span> in the
                         <span><strong class="command">options</strong></span> section of
                         <code class="filename">named.conf</code>.
-                      </p></dd>
+                      </p>
+</dd>
 <dt><span class="term"><strong class="userinput"><code>dumpdb
                         [<span class="optional">-all|-cache|-zone</span>]
                         [<span class="optional"><em class="replaceable"><code>view ...</code></em></span>]</code></strong></span></dt>
@@ -695,6 +704,21 @@ zone "eng.example.com" {
                         set to <strong class="userinput"><code>yes</code></strong> to be effective.
                         It defaults to enabled.
                       </p></dd>
+<dt><span class="term"><strong class="userinput"><code>tsig-list</code></strong></span></dt>
+<dd><p>
+                        List the names of all TSIG keys currently configured
+                        for use by <span><strong class="command">named</strong></span> in each view.  The
+                        list both statically configured keys and dynamic
+                        TKEY-negotiated keys.
+                      </p></dd>
+<dt><span class="term"><strong class="userinput"><code>tsig-delete</code></strong>
+                     <em class="replaceable"><code>keyname</code></em>
+                     [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span></dt>
+<dd><p>
+                        Delete a given TKEY-negotated key from the server.
+                        (This does not apply to statically configured TSIG
+                        keys.)
+                      </p></dd>
 <dt><span class="term"><strong class="userinput"><code>addzone
                         <em class="replaceable"><code>zone</code></em>
                         [<span class="optional"><em class="replaceable"><code>class</code></em>
@@ -746,6 +770,52 @@ zone "eng.example.com" {
                         <span><strong class="command">rndc addzone</strong></span> can be deleted
                         in this matter.
                       </p></dd>
+<dt><span class="term"><strong class="userinput"><code>signing
+                        [<span class="optional">( -list | -clear <em class="replaceable"><code>keyid/algorithm</code></em> | -clear <code class="literal">all</code> | -nsec3param ( <em class="replaceable"><code>parameters</code></em> | <code class="literal">none</code> ) ) </span>]
+                        <em class="replaceable"><code>zone</code></em>
+                        [<span class="optional"><em class="replaceable"><code>class</code></em>
+                        [<span class="optional"><em class="replaceable"><code>view</code></em></span>]</span>]
+                    </code></strong></span></dt>
+<dd>
+<p>
+                        List, edit, or remove the DNSSEC signing state for 
+                        the specified zone.  The status of ongoing DNSSEC
+                        operations (such as signing or generating
+                        NSEC3 chains) is stored in the zone in the form
+                        of DNS resource records of type
+                        <span><strong class="command">sig-signing-type</strong></span>. 
+                        <span><strong class="command">rndc signing -list</strong></span> converts
+                        these records into a human-readable form,
+                        indicating which keys are currently signing
+                        or have finished signing the zone, and which NSEC3
+                        NSEC3 chains are being created or removed.
+                      </p>
+<p>
+                        <span><strong class="command">rndc signing -clear</strong></span> can remove
+                        a single key (specified in the same format that
+                        <span><strong class="command">rndc signing -list</strong></span> uses to
+                        display it), or all keys.  In either case, only
+                        completed keys are removed; any record indicating
+                        that a key has not yet finished signing the zone
+                        will be retained.
+                      </p>
+<p>
+                        <span><strong class="command">rndc signing -nsec3param</strong></span> sets
+                        the NSEC3 parameters for a zone.  This is the
+                        only supported mechanism for using NSEC3 with
+                        <span><strong class="command">inline-signing</strong></span> zones.
+                        Parameters are specified in the same format as
+                        an NSEC3PARAM resource record: hash algorithm,
+                        flags, iterations, salt.  For example, to set an
+                        NSEC3 chain using the SHA-1 hash algorithm,
+                        no opt-out flag, 10 iterations, and a salt value
+                        of "FFFF", use:
+                        <span><strong class="command">rndc signing -nsec3param 1 0 10 FFFF</strong></span>.
+                        <span><strong class="command">rndc signing -nsec3param none</strong></span>
+                        removes an existing NSEC3 chain and replaces it
+                        with NSEC.
+                      </p>
+</dd>
 </dl></div>
 <p>
                   A configuration file is required, since all
@@ -898,7 +968,7 @@ controls {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2570370"></a>Signals</h3></div></div></div>
+<a name="id2570632"></a>Signals</h3></div></div></div>
 <p>
           Certain UNIX signals cause the name server to take specific
           actions, as described in the following table.  These signals can

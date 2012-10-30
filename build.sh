@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.251.2.1 2012/04/17 00:01:35 yamt Exp $
+#	$NetBSD: build.sh,v 1.251.2.2 2012/10/30 18:46:04 yamt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -554,6 +554,14 @@ getarch()
 	#
 	case "${MACHINE}" in
 
+	evbearm-e[bl])
+		makewrappermachine=${MACHINE}
+		# MACHINE_ARCH is "arm" or "armeb", not "armel"
+		MACHINE_ARCH=earm${MACHINE##*-}
+		MACHINE_ARCH=${MACHINE_ARCH%el}
+		MACHINE=evbarm
+		;;
+
 	evbarm-e[bl])
 		makewrappermachine=${MACHINE}
 		# MACHINE_ARCH is "arm" or "armeb", not "armel"
@@ -671,7 +679,7 @@ validatearch()
 	#
 	case "${MACHINE_ARCH}" in
 
-	alpha|arm|armeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
+	alpha|arm|armeb|earm|earmeb|hppa|i386|m68000|m68k|mipse[bl]|mips64e[bl]|powerpc|powerpc64|sh3e[bl]|sparc|sparc64|vax|x86_64|ia64)
 		;;
 
 	"")
@@ -689,7 +697,11 @@ validatearch()
 	case "${MACHINE}" in
 
 	evbarm)
-		arches="arm armeb"
+		arches="arm armeb earm earmeb"
+		;;
+
+	cats|iyonix|netwinder|shark|zaurus)
+		arches="arm earm"
 		;;
 
 	algor|arc|cobalt|pmax)
@@ -1401,10 +1413,23 @@ rebuildmake()
 # Perform some late sanity checks, after rebuildmake,
 # but before createmakewrapper or any real work.
 #
-# Also create the top-level obj directory.
+# Creates the top-level obj directory, because that
+# is needed by some of the sanity checks.
+#
+# Prints status messages reporting the values of several variables.
 #
 validatemakeparams()
 {
+	# MAKECONF (which defaults to /etc/mk.conf in share/mk/bsd.own.mk)
+	# can affect many things, so mention it in an early status message.
+	#
+	MAKECONF=$(getmakevar MAKECONF)
+	if [ -e "${MAKECONF}" ]; then
+		statusmsg2 "MAKECONF file:" "${MAKECONF}"
+	else
+		statusmsg2 "MAKECONF file:" "${MAKECONF} (File not found)"
+	fi
+
 	if [ "${runcmd}" = "echo" ]; then
 		TOOLCHAIN_MISSING=no
 		EXTERNAL_TOOLCHAIN=""
@@ -1656,7 +1681,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.251.2.1 2012/04/17 00:01:35 yamt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.251.2.2 2012/10/30 18:46:04 yamt Exp $
 # with these arguments: ${_args}
 #
 
@@ -1807,14 +1832,13 @@ buildmodules()
 
 	statusmsg "Building kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 	if [ "${MKOBJDIRS}" != "no" ]; then
-		make_in_dir sys/modules obj ||
-		    bomb "Failed to make obj in sys/modules"
+		make_in_dir sys/modules obj
 	fi
 	if [ "${MKUPDATE}" = "no" ]; then
 		make_in_dir sys/modules cleandir
 	fi
-	${runcmd} "${makewrapper}" ${parallel} do-sys-modules ||
-	    bomb "Failed to make do-sys-modules"
+	make_in_dir sys/modules dependall
+	make_in_dir sys/modules install
 
 	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 }

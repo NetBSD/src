@@ -1,4 +1,4 @@
-/*	$NetBSD: lwaddr.c,v 1.2 2011/02/16 03:46:46 christos Exp $	*/
+/*	$NetBSD: lwaddr.c,v 1.2.4.1 2012/10/30 18:49:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwaddr.c,v 1.10 2008-01-11 23:46:56 tbox Exp */
+/* Id: lwaddr.c,v 1.10 2008/01/11 23:46:56 tbox Exp  */
 
 /*! \file */
 

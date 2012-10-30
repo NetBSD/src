@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hashnode.c,v 1.1.1.1.2.2 2012/04/17 00:03:18 yamt Exp $	*/
+/*	$NetBSD: load_hashnode.c,v 1.1.1.1.2.3 2012/10/30 18:55:07 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: load_hashnode.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -25,6 +25,7 @@ load_hashnode(unit, name, node, ttl, iocfunc)
 {
 	iplookupop_t op;
 	iphtent_t ipe;
+	char *what;
 	int err;
 
 	if (pool_open() == -1)
@@ -47,15 +48,20 @@ load_hashnode(unit, name, node, ttl, iocfunc)
 	bcopy((char *)&node->ipe_group, (char *)&ipe.ipe_group,
 	      sizeof(ipe.ipe_group));
 
-	if ((opts & OPT_REMOVE) == 0)
+	if ((opts & OPT_REMOVE) == 0) {
+		what = "add";
 		err = pool_ioctl(iocfunc, SIOCLOOKUPADDNODE, &op);
-	else
+	} else {
+		what = "delete";
 		err = pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op);
+	}
 
 	if (err != 0)
 		if (!(opts & OPT_DONOTHING)) {
-			perror("load_hash:SIOCLOOKUP*NODE");
-			return -1;
+			char msg[80];
+
+			sprintf(msg, "%s node from lookup hash table", what);
+			return ipf_perror_fd(pool_fd(), iocfunc, msg);
 		}
 	return 0;
 }

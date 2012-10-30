@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.5 2011-02-03 07:35:55 marka Exp
+# Id: tests.sh,v 1.5 2011/02/03 07:35:55 marka Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -1262,6 +1262,23 @@ do
 	n=`expr $n + 1`
 	if [ $ret != 0 ]; then echo "I:failed"; fi
 	status=`expr $status + $ret`
+done
+
+rev=`$ARPANAME 2001:aaaa::10.0.0.1`
+regex='..\(.*.IP6.ARPA\)'
+rev=`expr "${rev}" : "${regex}"`
+fin=`expr "${rev}" : "............${regex}"`
+while test "${rev}" != "${fin}"
+do
+	ret=0
+	echo "I: checking $rev ($n)"
+	$DIG $DIGOPTS $rev ptr @10.53.0.2 > dig.out.ns2.test$n || ret=1
+	grep -i "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
+	grep -i "ANSWER: 0," dig.out.ns2.test$n > /dev/null || ret=1
+	n=`expr $n + 1`
+	if [ $ret != 0 ]; then echo "I:failed"; fi
+	status=`expr $status + $ret`
+	rev=`expr "${rev}" : "${regex}"`
 done
 
 echo "I: checking dns64-server and dns64-contact ($n)"

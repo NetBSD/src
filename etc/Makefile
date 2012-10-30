@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.392.2.2 2012/04/17 00:02:56 yamt Exp $
+#	$NetBSD: Makefile,v 1.392.2.3 2012/10/30 18:48:58 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -188,7 +188,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
 		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
 		MKBFD MKBINUTILS MKCATPAGES \
-		MKCRYPTO MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKCVS \
+		MKCRYPTO MKCRYPTO_RC5 MKCVS \
 		MKDEBUG MKDEBUGLIB MKDOC MKDTRACE MKDYNAMICROOT \
 		MKGCC MKGCCCMDS MKGDB \
 		MKHESIOD MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
@@ -481,7 +481,7 @@ iso-image-md-post: .PHONY check_DESTDIR check_RELEASEDIR iso-image-mi
 #	LIVEIMG_RELEASEDIR specifies where to install live images and
 #	it can be set in MD etc.${MACHINE}/Makefile.inc.
 #
-LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/liveimage
+LIVEIMG_RELEASEDIR?= ${RELEASEDIR}/images
 
 live-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib live_image \
@@ -495,7 +495,7 @@ live-image: .PHONY check_DESTDIR check_RELEASEDIR
 #	INSTIMG_RELEASEDIR specifies where to install live images and
 #	it can be set in MD etc.${MACHINE}/Makefile.inc.
 #
-INSTIMG_RELEASEDIR?= ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/installimage
+INSTIMG_RELEASEDIR?= ${RELEASEDIR}/images
 
 install-image: .PHONY check_DESTDIR check_RELEASEDIR
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib install_image \

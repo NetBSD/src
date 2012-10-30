@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/04/17 00:03:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2012/10/30 18:55:50 yamt Exp $
 
 LIB=	LLVMAnalysis
 
@@ -20,8 +20,7 @@ SRCS+=	AliasAnalysis.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	DbgInfoPrinter.cpp \
-	DebugInfo.cpp \
-	DIBuilder.cpp \
+	DependenceAnalysis.cpp \
 	DomPrinter.cpp \
 	DominanceFrontier.cpp \
 	IVUsers.cpp \
@@ -48,6 +47,8 @@ SRCS+=	AliasAnalysis.cpp \
 	PathProfileVerifier.cpp \
 	PHITransAddr.cpp \
 	PostDominators.cpp \
+	ProfileDataLoaderPass.cpp \
+	ProfileDataLoader.cpp \
 	ProfileEstimatorPass.cpp \
 	ProfileInfo.cpp \
 	ProfileInfoLoader.cpp \

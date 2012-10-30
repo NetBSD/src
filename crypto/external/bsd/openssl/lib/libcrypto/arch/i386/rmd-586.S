@@ -1,4 +1,4 @@
-.file	"rmd-586.s"
+#include <machine/asm.h>
 .text
 .globl	ripemd160_block_asm_data_order
 .type	ripemd160_block_asm_data_order,@function

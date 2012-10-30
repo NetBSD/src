@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:32 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:28 yamt Exp $
 
-LIVEIMGBASE=	amd64live		# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-amd64-live-sd0root	# gives ${IMGBASE}.img
 
 BOOTDISK=	sd0			# for USB flash etc.
 IMAGEMB=	1536            	# 2GB USB flash memories aren't 2GiB
