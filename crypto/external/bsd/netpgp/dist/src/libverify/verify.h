@@ -43,8 +43,8 @@
 #define PGPV_STR_KEYID_LEN	(PGPV_KEYID_LEN + PGPV_KEYID_LEN + 1)
 
 typedef struct pgpv_bignum_t {
-	BIGNUM		*bn;
-	uint16_t	 bits;
+	BIGNUM			*bn;
+	uint16_t		 bits;
 } pgpv_bignum_t;
 
 #define PGPV_MAX_HASH_LEN	20
@@ -60,7 +60,6 @@ typedef struct pgpv_fingerprint_t {
 typedef struct pgpv_pubkey_t {
 	pgpv_fingerprint_t	 fingerprint;
 	uint8_t			 keyid[PGPV_KEYID_LEN];
-	uint64_t	 	 primary_id;
 	int64_t		 	 birth;
 	int64_t			 expiry;
 	pgpv_bignum_t		 bn[PGPV_MAX_PUBKEY_BN];
@@ -72,118 +71,118 @@ typedef struct pgpv_pubkey_t {
 #define PGPV_MAX_SESSKEY_BN	2
 
 typedef struct pgpv_string_t {
-	size_t		 size;
-	uint8_t		*data;
+	size_t			 size;
+	uint8_t			*data;
 } pgpv_string_t;
 
 typedef struct pgpv_ref_t {
-	void		*vp;
-	size_t		 offset;
-	unsigned	 mem;
+	void			*vp;
+	size_t			 offset;
+	unsigned		 mem;
 } pgpv_ref_t;
 
 #define PGPV_MAX_SECKEY_BN	4
 
 typedef struct pgpv_compress_t {
-	pgpv_string_t	 s;
-	uint8_t		 compalg;
+	pgpv_string_t		 s;
+	uint8_t			 compalg;
 } pgpv_compress_t;
 
 /* a packet dealing with trust */
 typedef struct pgpv_trust_t {
-	uint8_t		level;
-	uint8_t		amount;
+	uint8_t			level;
+	uint8_t			amount;
 } pgpv_trust_t;
 
 /* a signature sub packet */
 typedef struct pgpv_sigsubpkt_t {
-	pgpv_string_t	 s;
-	uint8_t		 tag;
-	uint8_t		 critical;
+	pgpv_string_t		 s;
+	uint8_t			 tag;
+	uint8_t			 critical;
 } pgpv_sigsubpkt_t;
 
 #define PGPV_MAX_SIG_BN		2
 
 typedef struct pgpv_signature_t {
-	uint8_t		*signer;		/* key id of signer */
-	uint8_t		*userid;
-	pgpv_ref_t	 hashstart;
-	uint8_t		*hash2;
-	uint8_t		*mpi;
-	int64_t		 birth;
-	int64_t		 keyexpiry;
-	int64_t		 expiry;
-	uint32_t	 hashlen;
-	uint8_t		 version;
-	uint8_t		 type;
-	uint8_t		 keyalg;
-	uint8_t		 hashalg;
-	uint8_t		 trustlevel;
-	uint8_t		 trustamount;
-	pgpv_bignum_t	 bn[PGPV_MAX_SIG_BN];
-	char		*regexp;
-	char		*pref_key_server;
-	char		*policy;
-	char		*features;
-	char		*why_revoked;
-	uint8_t		*revoke_fingerprint;
-	uint8_t		 revoke_alg;
-	uint8_t		 revoke_sensitive;
-	uint8_t		 trustsig;
-	uint8_t		 revocable;
-	uint8_t		 pref_symm_alg;
-	uint8_t		 pref_hash_alg;
-	uint8_t		 pref_compress_alg;
-	uint8_t		 key_server_modify;
-	uint8_t		 notation;
-	uint8_t		 type_key;
-	uint8_t		 revoked;		/* subtract 1 to get real reason, 0 == not revoked */
+	uint8_t			*signer;		/* key id of signer */
+	pgpv_ref_t		 hashstart;
+	uint8_t			*hash2;
+	uint8_t			*mpi;
+	int64_t			 birth;
+	int64_t			 keyexpiry;
+	int64_t			 expiry;
+	uint32_t		 hashlen;
+	uint8_t			 version;
+	uint8_t			 type;
+	uint8_t			 keyalg;
+	uint8_t			 hashalg;
+	uint8_t			 trustlevel;
+	uint8_t			 trustamount;
+	pgpv_bignum_t		 bn[PGPV_MAX_SIG_BN];
+	char			*regexp;
+	char			*pref_key_server;
+	char			*policy;
+	char			*features;
+	char			*why_revoked;
+	uint8_t			*revoke_fingerprint;
+	uint8_t			 revoke_alg;
+	uint8_t			 revoke_sensitive;
+	uint8_t			 trustsig;
+	uint8_t			 revocable;
+	uint8_t			 pref_symm_alg;
+	uint8_t			 pref_hash_alg;
+	uint8_t			 pref_compress_alg;
+	uint8_t			 key_server_modify;
+	uint8_t			 notation;
+	uint8_t			 type_key;
+	uint8_t			 primary_userid;
+	uint8_t			 revoked;	/* subtract 1 to get real reason, 0 == not revoked */
 } pgpv_signature_t;
 
 /* a signature packet */
 typedef struct pgpv_sigpkt_t {
-	pgpv_signature_t sig;
-	uint16_t	 subslen;
-	uint16_t	 unhashlen;
+	pgpv_signature_t	 sig;
+	uint16_t		 subslen;
+	uint16_t		 unhashlen;
 	PGPV_ARRAY(pgpv_sigsubpkt_t, subpkts);
 } pgpv_sigpkt_t;
 
 /* a one-pass signature packet */
 typedef struct pgpv_onepass_t {
-	uint8_t		 keyid[PGPV_KEYID_LEN];
-	uint8_t		 version;
-	uint8_t		 type;
-	uint8_t		 hashalg;
-	uint8_t		 keyalg;
-	uint8_t		 nested;
+	uint8_t			 keyid[PGPV_KEYID_LEN];
+	uint8_t			 version;
+	uint8_t			 type;
+	uint8_t			 hashalg;
+	uint8_t			 keyalg;
+	uint8_t			 nested;
 } pgpv_onepass_t;
 
 /* a literal data packet */
 typedef struct pgpv_litdata_t {
-	uint8_t		*filename;
-	pgpv_string_t	 s;
-	uint32_t	 secs;
-	uint8_t		 namelen;
-	char		 format;
-	unsigned	 mem;
-	size_t		 offset;
-	size_t		 len;
+	uint8_t			*filename;
+	pgpv_string_t		 s;
+	uint32_t		 secs;
+	uint8_t			 namelen;
+	char			 format;
+	unsigned		 mem;
+	size_t			 offset;
+	size_t			 len;
 } pgpv_litdata_t;
 
 /* user attributes - images */
 typedef struct pgpv_userattr_t {
-	size_t	 			len;
-	PGPV_ARRAY(pgpv_string_t,	subattrs);
+	size_t 			 len;
+	PGPV_ARRAY(pgpv_string_t, subattrs);
 } pgpv_userattr_t;
 
 /* a general PGP packet */
 typedef struct pgpv_pkt_t {
-	uint8_t		 tag;
-	uint8_t		 newfmt;
-	uint8_t		 allocated;
-	uint8_t		 mement;
-	size_t		 offset;
-	pgpv_string_t	 s;
+	uint8_t			 tag;
+	uint8_t			 newfmt;
+	uint8_t			 allocated;
+	uint8_t			 mement;
+	size_t			 offset;
+	pgpv_string_t		 s;
 	union {
 		pgpv_sigpkt_t	sigpkt;
 		pgpv_onepass_t	onepass;
@@ -198,53 +197,55 @@ typedef struct pgpv_pkt_t {
 
 /* a memory structure */
 typedef struct pgpv_mem_t {
-	size_t		 size;
-	size_t		 cc;
-	uint8_t		*mem;
-	FILE		*fp;
-	uint8_t		 dealloc;
-	const char	*allowed;	/* the types of packet that are allowed */
+	size_t			 size;
+	size_t			 cc;
+	uint8_t			*mem;
+	FILE			*fp;
+	uint8_t			 dealloc;
+	const char		*allowed;	/* the types of packet that are allowed */
 } pgpv_mem_t;
 
 /* packet parser */
 
 typedef struct pgpv_signed_userid_t {
-	pgpv_string_t		 	 userid;
-	PGPV_ARRAY(pgpv_signature_t,	 sigs);
+	pgpv_string_t	 	 userid;
+	PGPV_ARRAY(pgpv_signature_t, sigs);
+	uint8_t			 primary_userid;
 } pgpv_signed_userid_t;
 
 typedef struct pgpv_signed_userattr_t {
-	pgpv_userattr_t	 	 	 userattr;
-	PGPV_ARRAY(pgpv_signature_t,	 sigs);
+	pgpv_userattr_t	 	 userattr;
+	PGPV_ARRAY(pgpv_signature_t, sigs);
 } pgpv_signed_userattr_t;
 
 typedef struct pgpv_signed_subkey_t {
-	pgpv_pubkey_t		 	 subkey;
-	pgpv_signature_t 	 	 revoc_self_sig;
-	PGPV_ARRAY(pgpv_signature_t,	 sigs);
+	pgpv_pubkey_t	 	 subkey;
+	pgpv_signature_t 	 revoc_self_sig;
+	PGPV_ARRAY(pgpv_signature_t, sigs);
 } pgpv_signed_subkey_t;
 
 typedef struct pgpv_primarykey_t {
-	pgpv_pubkey_t		 		 primary;
-	pgpv_signature_t		 	 revoc_self_sig;
-	PGPV_ARRAY(pgpv_signature_t,	 	 direct_sigs);
-	PGPV_ARRAY(pgpv_signed_userid_t,	 signed_userids);
-	PGPV_ARRAY(pgpv_signed_userattr_t,	 signed_userattrs);
-	PGPV_ARRAY(pgpv_signed_subkey_t,	 signed_subkeys);
-	size_t					 fmtsize;
+	pgpv_pubkey_t 		 primary;
+	pgpv_signature_t 	 revoc_self_sig;
+	PGPV_ARRAY(pgpv_signature_t, direct_sigs);
+	PGPV_ARRAY(pgpv_signed_userid_t, signed_userids);
+	PGPV_ARRAY(pgpv_signed_userattr_t, signed_userattrs);
+	PGPV_ARRAY(pgpv_signed_subkey_t, signed_subkeys);
+	size_t			 fmtsize;
+	uint8_t			 primary_userid;
 } pgpv_primarykey_t;
 
 /* everything stems from this structure */
 typedef struct pgpv_t {
-	PGPV_ARRAY(pgpv_pkt_t,	 	 pkts);		/* packet array */
+	PGPV_ARRAY(pgpv_pkt_t, 	 pkts);		/* packet array */
 	PGPV_ARRAY(pgpv_primarykey_t,	 primaries);	/* array of primary keys */
-	PGPV_ARRAY(pgpv_mem_t,		 areas);	/* areas we read packets from */
-	PGPV_ARRAY(size_t,		 datastarts);	/* starts of data packets */
-	size_t			 	 pkt;		/* when parsing, current pkt number */
-	const char			*op;		/* the operation we're doing */
+	PGPV_ARRAY(pgpv_mem_t,	 areas);	/* areas we read packets from */
+	PGPV_ARRAY(size_t,	 datastarts);	/* starts of data packets */
+	size_t		 	 pkt;		/* when parsing, current pkt number */
+	const char		*op;		/* the operation we're doing */
 } pgpv_t;
 
-#define PGPV_REASON_LEN			128
+#define PGPV_REASON_LEN		128
 
 /* when searching, we define a cursor, and fill in an array of subscripts */
 typedef struct pgpv_cursor_t {

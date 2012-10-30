@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.5 2012/10/24 02:18:56 agc Exp $
+# $NetBSD: Makefile,v 1.1.2.6 2012/10/30 02:10:42 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -114,3 +114,6 @@ t: ${PROG}
 	env LD_LIBRARY_PATH=${LIBNETPGPVERIFYDIR} ./${PROG} -k dsa-pubring.gpg in2.asc > output45
 	diff expected45 output45
 	rm -f output45
+	env LD_LIBRARY_PATH=${LIBNETPGPVERIFYDIR} ./${PROG} -k problem-pubring.gpg NetBSD-6.0_hashes.asc > output46
+	diff expected46 output46
+	rm -f output46

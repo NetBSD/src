@@ -1,9 +1,9 @@
 Good signature for det.sig made Thu Oct 18 02:12:33 2012
 signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
 fingerprint:  d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid              Alistair Crooks <agc@alistaircrooks.com>
 uid              Alistair Crooks <agc@pkgsrc.org>
 uid              Alistair Crooks <agc@netbsd.org>
-uid              Alistair Crooks <agc@alistaircrooks.com>
 uid              Alistair Crooks <agc@netflix.com>
 encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
 fingerprint:  57c0 c1e6 bf71 8845 416b 9522 79de b61e 488e ee74 

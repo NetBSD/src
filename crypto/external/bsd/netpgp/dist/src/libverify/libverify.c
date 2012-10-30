@@ -48,6 +48,10 @@
 #include "rsa.h"
 #include "verify.h"
 
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
+
 #define BITS_TO_BYTES(b)		(((b) + (CHAR_BIT - 1)) / CHAR_BIT)
 
 /* packet types */
@@ -510,10 +514,10 @@ str_to_keyid(const char *s, uint8_t *keyid)
 	memcpy(keyid, &u64, PGPV_KEYID_LEN);
 }
 
-#define PKT_ALWAYS_ON		0x80
-#define PKT_NEWFMT_MASK		0x40
-#define PKT_NEWFMT_TAG_MASK	0x3f
-#define PKT_OLDFMT_TAG_MASK	0x3c
+#define PKT_ALWAYS_ON			0x80
+#define PKT_NEWFMT_MASK			0x40
+#define PKT_NEWFMT_TAG_MASK		0x3f
+#define PKT_OLDFMT_TAG_MASK		0x3c
 
 #define SUBPKT_CRITICAL_MASK		0x80
 #define SUBPKT_TAG_MASK			0x7f
@@ -776,7 +780,7 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 			sigpkt->sig.type_key = *p;
 			break;
 		case SUBPKT_PRIMARY_USER_ID:
-			sigpkt->sig.userid = p;
+			sigpkt->sig.primary_userid = *p;
 			break;
 		case SUBPKT_POLICY_URI:
 			sigpkt->sig.policy = (char *)(void *)p;
@@ -1213,7 +1217,7 @@ static int
 recog_userid(pgpv_t *pgp, pgpv_signed_userid_t *userid)
 {
 	pgpv_signature_t	 signature;
-	pgpv_pkt_t	*pkt;
+	pgpv_pkt_t		*pkt;
 
 	memset(userid, 0x0, sizeof(*userid));
 	if (!pkt_is(pgp, USERID_PKT)) {
@@ -1230,6 +1234,9 @@ recog_userid(pgpv_t *pgp, pgpv_signed_userid_t *userid)
 			return 0;
 		}
 		ARRAY_APPEND(userid->sigs, signature);
+		if (signature.primary_userid) {
+			userid->primary_userid = signature.primary_userid;
+		}
 	}
 	return 1;
 }
@@ -1262,7 +1269,7 @@ static int
 recog_subkey(pgpv_t *pgp, pgpv_signed_subkey_t *subkey)
 {
 	pgpv_signature_t	 signature;
-	pgpv_pkt_t	*pkt;
+	pgpv_pkt_t		*pkt;
 
 	pkt = &ARRAY_ELEMENT(pgp->pkts, pgp->pkt);
 	memset(subkey, 0x0, sizeof(*subkey));
@@ -1354,25 +1361,140 @@ fmt_pubkey(char *s, size_t size, pgpv_pubkey_t *pubkey, const char *leader)
 	return cc;
 }
 
+/* format a userid - used to order the userids when formatting */
+static size_t
+fmt_userid(char *s, size_t size, pgpv_primarykey_t *primary, uint8_t u)
+{
+	pgpv_signed_userid_t	*userid;
+
+	userid = &ARRAY_ELEMENT(primary->signed_userids, u);
+	return snprintf(s, size, "uid              %.*s\n",
+			(int)userid->userid.size, userid->userid.data);
+}
+
 /* print a primary key, per RFC 4880 */
 static size_t
 fmt_primary(char *s, size_t size, pgpv_primarykey_t *primary)
 {
-	pgpv_signed_userid_t	*userid;
-	unsigned		 i;
-	size_t			 cc;
+	unsigned	 i;
+	size_t		 cc;
 
 	cc = fmt_pubkey(s, size, &primary->primary, "signature ");
+	cc += fmt_userid(&s[cc], size - cc, primary, primary->primary_userid);
 	for (i = 0 ; i < ARRAY_COUNT(primary->signed_userids) ; i++) {
-		userid = &ARRAY_ELEMENT(primary->signed_userids, i);
-		cc += snprintf(&s[cc], size - cc, "uid              %.*s\n",
-			(int)userid->userid.size, userid->userid.data);
+		if (i != primary->primary_userid) {
+			cc += fmt_userid(&s[cc], size - cc, primary, i);
+		}
 	}
 	for (i = 0 ; i < ARRAY_COUNT(primary->signed_subkeys) ; i++) {
 		cc += fmt_pubkey(&s[cc], size - cc, &ARRAY_ELEMENT(primary->signed_subkeys, i).subkey, "encryption");
 	}
 	cc += snprintf(&s[cc], size - cc, "\n");
 	return cc;
+}
+
+
+/* check the padding on the signature */
+static int
+rsa_padding_check_none(uint8_t *to, int tlen, const uint8_t *from, int flen, int num)
+{
+	USE_ARG(num);
+	if (flen > tlen) {
+		printf("from length larger than to length\n");
+		return -1;
+	}
+	(void) memset(to, 0x0, tlen - flen);
+	(void) memcpy(to + tlen - flen, from, flen);
+	return tlen;
+}
+
+#define RSA_MAX_MODULUS_BITS	16384
+#define RSA_SMALL_MODULUS_BITS	3072
+#define RSA_MAX_PUBEXP_BITS	64 /* exponent limit enforced for "large" modulus only */
+
+/* check against the exponent/moudulo operation */
+static int
+lowlevel_rsa_public_check(const uint8_t *encbuf, int enclen, uint8_t *dec, const rsa_pubkey_t *rsa)
+{
+	uint8_t		*decbuf;
+	BIGNUM		*decbn;
+	BIGNUM		*encbn;
+	int		 decbytes;
+	int		 nbytes;
+	int		 r;
+
+	nbytes = 0;
+	r = -1;
+	decbuf = NULL;
+	decbn = encbn = NULL;
+	if (BN_num_bits(rsa->n) > RSA_MAX_MODULUS_BITS) {
+		printf("rsa r modulus too large\n");
+		goto err;
+	}
+	if (BN_cmp(rsa->n, rsa->e) <= 0) {
+		printf("rsa r bad n value\n");
+		goto err;
+	}
+	if (BN_num_bits(rsa->n) > RSA_SMALL_MODULUS_BITS &&
+	    BN_num_bits(rsa->e) > RSA_MAX_PUBEXP_BITS) {
+		printf("rsa r bad exponent limit\n");
+		goto err;
+	}
+	if ((encbn = BN_new()) == NULL ||
+	    (decbn = BN_new()) == NULL ||
+	    (decbuf = calloc(1, nbytes = BN_num_bytes(rsa->n))) == NULL) {
+		printf("allocation failure\n");
+		goto err;
+	}
+	if (enclen > nbytes) {
+		printf("rsa r > mod len\n");
+		goto err;
+	}
+	if (BN_bin2bn(encbuf, enclen, encbn) == NULL) {
+		printf("null encrypted BN\n");
+		goto err;
+	}
+	if (BN_cmp(encbn, rsa->n) >= 0) {
+		printf("rsa r data too large for modulus\n");
+		goto err;
+	}
+	if (BN_mod_exp(decbn, encbn, rsa->e, rsa->n, NULL) < 0) {
+		printf("BN_mod_exp < 0\n");
+		goto err;
+	}
+	decbytes = BN_num_bytes(decbn);
+	(void) BN_bn2bin(decbn, decbuf);
+	if ((r = rsa_padding_check_none(dec, nbytes, decbuf, decbytes, 0)) < 0) {
+		printf("rsa r padding check failed\n");
+	}
+err:
+	BN_free(encbn);
+	BN_free(decbn);
+	if (decbuf != NULL) {
+		(void) memset(decbuf, 0x0, nbytes);
+		free(decbuf);
+	}
+	return r;
+}
+
+/* verify */
+static int
+rsa_public_decrypt(int enclen, const unsigned char *enc, unsigned char *dec, RSA *rsa, int padding)
+{
+	rsa_pubkey_t	pub;
+	int		ret;
+
+	if (enc == NULL || dec == NULL || rsa == NULL) {
+		return 0;
+	}
+	USE_ARG(padding);
+	(void) memset(&pub, 0x0, sizeof(pub));
+	pub.n = BN_dup(rsa->n);
+	pub.e = BN_dup(rsa->e);
+	ret = lowlevel_rsa_public_check(enc, enclen, dec, &pub);
+	BN_free(pub.n);
+	BN_free(pub.e);
+	return ret;
 }
 
 #define SUBKEY_LEN(x)	(80 + 80)
@@ -1398,12 +1520,14 @@ pgpv_rsa_public_decrypt(uint8_t *out, const uint8_t *in, size_t length, const pg
 	RSA            *orsa;
 	int             n;
 
-	orsa = RSA_new();
+	if ((orsa = calloc(1, sizeof(*orsa))) == NULL) {
+		return 0;
+	}
 	orsa->n = pubkey->bn[RSA_N].bn;
 	orsa->e = pubkey->bn[RSA_E].bn;
-	n = RSA_public_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
+	n = rsa_public_decrypt((int)length, in, out, orsa, RSA_NO_PADDING);
 	orsa->n = orsa->e = NULL;
-	RSA_free(orsa);
+	free(orsa);
 	return n;
 }
 
@@ -1804,12 +1928,18 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 			return 0;
 		}
 		ARRAY_APPEND(primary->signed_userids, userid);
+		if (userid.primary_userid) {
+			primary->primary_userid = ARRAY_COUNT(primary->signed_userids) - 1;
+		}
 		while (pkt_is(pgp, USERID_PKT)) {
 			if (!recog_userid(pgp, &userid)) {
 				printf("recog_primary_key: not signed secondary userid\n");
 				return 0;
 			}
 			ARRAY_APPEND(primary->signed_userids, userid);
+			if (userid.primary_userid) {
+				primary->primary_userid = ARRAY_COUNT(primary->signed_userids) - 1;
+			}
 		}
 		while (pkt_is(pgp, USER_ATTRIBUTE_PKT)) {
 			if (!recog_userattr(pgp, &userattr)) {
@@ -2014,6 +2144,9 @@ pgpv_close(pgpv_t *pgp)
 {
 	unsigned	i;
 
+	if (pgp == NULL) {
+		return 0;
+	}
 	for (i = 0 ; i < ARRAY_COUNT(pgp->areas) ; i++) {
 		if (ARRAY_ELEMENT(pgp->areas, i).size > 0) {
 			closemem(&ARRAY_ELEMENT(pgp->areas, i));
@@ -2028,10 +2161,10 @@ pgpv_get_entry(pgpv_t *pgp, unsigned ent, char **ret)
 {
 	size_t	cc;
 
-	*ret = NULL;
-	if (pgp == NULL || ent >= ARRAY_COUNT(pgp->primaries)) {
+	if (ret == NULL || pgp == NULL || ent >= ARRAY_COUNT(pgp->primaries)) {
 		return 0;
 	}
+	*ret = NULL;
 	cc = ARRAY_ELEMENT(pgp->primaries, ent).fmtsize;
 	if ((*ret = calloc(1, cc)) == NULL) {
 		return 0;
@@ -2082,6 +2215,9 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	char			 strkeyid[PGPV_STR_KEYID_LEN];
 	int			 j;
 
+	if (cursor == NULL || pgp == NULL || p == NULL) {
+		return 0;
+	}
 	if (!setup_data(cursor, pgp, p, size)) {
 		snprintf(cursor->why, sizeof(cursor->why), "No input data");
 		return 0;
@@ -2145,6 +2281,9 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 int
 pgpv_read_pubring(pgpv_t *pgp, const void *keyring, ssize_t size)
 {
+	if (pgp == NULL) {
+		return 0;
+	}
 	if (keyring) {
 		return (size > 0) ?
 			read_binary_memory(pgp, "pubring", keyring, (size_t)size) :
@@ -2162,10 +2301,10 @@ pgpv_get_verified(pgpv_cursor_t *cursor, size_t cookie, char **ret)
 	size_t			 size;
 	size_t			 pkt;
 
-	*ret = NULL;
-	if (cursor == NULL || cookie == 0) {
+	if (ret == NULL || cursor == NULL || cookie == 0) {
 		return 0;
 	}
+	*ret = NULL;
 	if ((pkt = find_onepass(cursor, cookie - 1)) == 0) {
 		return 0;
 	}
