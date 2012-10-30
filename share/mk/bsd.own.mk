@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.691.2.1 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.own.mk,v 1.691.2.2 2012/10/30 18:59:46 yamt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:S/powerpc64/powerpc/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:S/earm/arm/:S/earmeb/arm/:S/powerpc64/powerpc/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -47,12 +47,22 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 #
-# Everyone uses GCC4.5
+# Platforms still using GCC 4.1
+#
+.if ${MKGCC:Uyes} != "no"
+.if ${MACHINE_CPU}  == "vax"
+HAVE_GCC?=    4
+.else
+# Otherwise, default to GCC4.5
 HAVE_GCC?=    45
+.endif
+.endif
 
 .if \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "x86_64"
 USE_COMPILERCRTSTUFF?=	no
 .endif
@@ -453,6 +463,7 @@ OBJCOPY_ELF2AOUT_FLAGS?=	\
 	-O a.out-arm-netbsd	\
 	-R .ident		\
 	-R .ARM.attributes	\
+	-R .ARM.exidx		\
 	-R .arm.atpcs		\
 	-R .comment		\
 	-R .debug_abbrev	\
@@ -647,6 +658,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 #
 GNU_ARCH.coldfire=m68k
+GNU_ARCH.earm=arm
+GNU_ARCH.earmeb=armeb
 GNU_ARCH.i386=i486
 GCC_CONFIG_ARCH.i386=i486
 GCC_CONFIG_TUNE.i386=nocona
@@ -661,7 +674,9 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if (${MACHINE_GNU_ARCH} == "arm" || \
+.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmeb"
+MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-eabi
+.elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_CPU} == "m68k" || \
@@ -814,6 +829,7 @@ _MKVARS.yes= \
 	MKOBJ \
 	MKPAM MKPERFUSE \
 	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+	MKRUMP \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKX11FONTS \
 	MKYP
@@ -834,7 +850,7 @@ ${var}?=	yes
 #
 _MKVARS.no= \
 	MKBSDGREP MKBSDTAR \
-	MKCATPAGES MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG \
+	MKCATPAGES MKCRYPTO_RC5 MKDEBUG \
 	MKDEBUGLIB MKDTRACE MKEXTSRC \
 	MKMANZ MKOBJDIRS \
 	MKLLVM MKPCC \
@@ -1085,7 +1101,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	r128 radeonhd rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
-	tdfx tga trident tseng vesa vga via vmware wsfb
+	tdfx tga trident tseng vesa vga via vmware wsfb xgi
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 

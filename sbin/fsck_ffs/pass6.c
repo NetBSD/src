@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.3 2011/06/07 14:56:12 bouyer Exp $ */
+/* $NetBSD: pass6.c,v 1.3.2.1 2012/10/30 18:59:26 yamt Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <err.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <ufs/ufs/quota2.h>
 
 #include "fsutil.h"

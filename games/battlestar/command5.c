@@ -1,4 +1,4 @@
-/*	$NetBSD: command5.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: command5.c,v 1.3.42.1 2012/10/30 18:58:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command5.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: command5.c,v 1.3.42.1 2012/10/30 18:58:18 yamt Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
 void
-kiss()
+kiss(void)
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
 		continue;

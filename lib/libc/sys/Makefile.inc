@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.209.2.1 2012/04/17 00:05:25 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.209.2.2 2012/10/30 18:59:02 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -75,8 +75,8 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
-	chdir.S chflags.S chmod.S chown.S chroot.S __clock_getres50.S \
-		__clock_gettime50.S \
+	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
+		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
@@ -117,11 +117,11 @@ ASM=	access.S acct.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
-	rasctl.S readlinkat.S reboot.S recvfrom.S recvmsg.S rename.S \
+	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S rename.S \
 		renameat.S revoke.S rmdir.S \
 	semconfig.S semget.S semop.S \
-		sendmsg.S sendto.S setegid.S setcontext.S seteuid.S setgid.S \
-		setgroups.S __setitimer50.S __setlogin.S setpgid.S \
+		sendmmsg.S sendmsg.S sendto.S setegid.S seteuid.S \
+		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
 		setuid.S __shmctl50.S shmdt.S shmget.S shutdown.S \
@@ -156,7 +156,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
-	__select50.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	__wait450.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
@@ -305,9 +305,9 @@ MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
-MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
+MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2 recv.2 recvmmsg.2
 MLINKS+=select.2 pselect.2
-MLINKS+=send.2 sendmsg.2 send.2 sendto.2
+MLINKS+=send.2 sendmsg.2 send.2 sendto.2 send.2 sendmmsg.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
@@ -327,3 +327,4 @@ MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
 MLINKS+=accept.2 paccept.2
+MLINKS+=nanosleep.2 clock_nanosleep.2

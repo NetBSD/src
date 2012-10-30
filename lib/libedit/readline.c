@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.99.2.2 2012/05/23 10:07:31 yamt Exp $	*/
+/*	$NetBSD: readline.c,v 1.99.2.3 2012/10/30 18:59:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.99.2.2 2012/05/23 10:07:31 yamt Exp $");
+__RCSID("$NetBSD: readline.c,v 1.99.2.3 2012/10/30 18:59:09 yamt Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1372,6 +1372,9 @@ add_history(const char *line)
 {
 	HistEvent ev;
 
+	if (line == NULL)
+		return 0;
+
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
@@ -1924,7 +1927,7 @@ rl_add_defun(const char *name, Function *fun, int c)
 	map[(unsigned char)c] = fun;
 	el_set(e, EL_ADDFN, name, name, rl_bind_wrapper);
 	vis(dest, c, VIS_WHITE|VIS_NOSLASH, 0);
-	el_set(e, EL_BIND, dest, name);
+	el_set(e, EL_BIND, dest, name, NULL);
 	return 0;
 }
 
@@ -2032,7 +2035,7 @@ rl_variable_bind(const char *var, const char *value)
 	 * The proper return value is undocument, but this is what the
 	 * readline source seems to do.
 	 */
-	return el_set(e, EL_BIND, "", var, value) == -1 ? 1 : 0;
+	return el_set(e, EL_BIND, "", var, value, NULL) == -1 ? 1 : 0;
 }
 
 void
@@ -2101,9 +2104,9 @@ void
 rl_get_screen_size(int *rows, int *cols)
 {
 	if (rows)
-		el_get(e, EL_GETTC, "li", rows);
+		el_get(e, EL_GETTC, "li", rows, NULL);
 	if (cols)
-		el_get(e, EL_GETTC, "co", cols);
+		el_get(e, EL_GETTC, "co", cols, NULL);
 }
 
 void
@@ -2111,9 +2114,9 @@ rl_set_screen_size(int rows, int cols)
 {
 	char buf[64];
 	(void)snprintf(buf, sizeof(buf), "%d", rows);
-	el_set(e, EL_SETTC, "li", buf);
+	el_set(e, EL_SETTC, "li", buf, NULL);
 	(void)snprintf(buf, sizeof(buf), "%d", cols);
-	el_set(e, EL_SETTC, "co", buf);
+	el_set(e, EL_SETTC, "co", buf, NULL);
 }
 
 char **
@@ -2263,4 +2266,9 @@ int
 rl_on_new_line(void)
 {
 	return 0;
+}
+
+void
+rl_free_line_state(void)
+{
 }

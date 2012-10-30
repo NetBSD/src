@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.81.2.2 2012/04/17 00:09:27 yamt Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.81.2.3 2012/10/30 19:00:11 yamt Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -71,6 +71,11 @@
 #undef __UNCONST
 #endif
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
+
+#undef __predict_false
+#define __predict_false(x) (x)
+#undef __predict_true
+#define __predict_true(x) (x)
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;
@@ -1189,8 +1194,8 @@ __GEN_ENDIAN_DEC(64, le)
 
 /* Has quad_t but these prototypes don't get pulled into scope. w/o we lose */
 #ifdef __NetBSD__
-quad_t   strtoq __P((const char *, char **, int)); 
-u_quad_t strtouq __P((const char *, char **, int)); 
+quad_t   strtoq(const char *, char **, int);
+u_quad_t strtouq(const char *, char **, int);
 #endif
 
 #endif	/* !__NETBSD_COMPAT_DEFS_H__ */

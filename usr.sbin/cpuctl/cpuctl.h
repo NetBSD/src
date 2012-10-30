@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.h,v 1.2.8.1 2012/04/17 00:09:45 yamt Exp $	*/
+/*	$NetBSD: cpuctl.h,v 1.2.8.2 2012/10/30 19:00:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,4 +33,5 @@ int	aprint_normal_dev(const char *, const char *, ...) __printflike(2, 3);
 int	aprint_verbose_dev(const char *, const char *, ...) __printflike(2, 3);
 int	aprint_error_dev(const char *, const char *, ...) __printflike(2, 3);
 
-void	identifycpu(const char *);
+void	identifycpu(int, const char *);
+int	ucodeupdate_check(int, struct cpu_ucode *);

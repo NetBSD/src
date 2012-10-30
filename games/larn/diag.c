@@ -1,9 +1,9 @@
-/*	$NetBSD: diag.c,v 1.12 2008/02/03 19:20:41 dholland Exp $	*/
+/*	$NetBSD: diag.c,v 1.12.26.1 2012/10/30 18:58:23 yamt Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: diag.c,v 1.12 2008/02/03 19:20:41 dholland Exp $");
+__RCSID("$NetBSD: diag.c,v 1.12.26.1 2012/10/30 18:58:23 yamt Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -176,8 +176,7 @@ diagdrawscreen()
  */
 static time_t   zzz = 0;
 int
-savegame(fname)
-	char *fname;
+savegame(char *fname)
 {
 	int    i, k;
 	struct sphere *sp;
@@ -242,8 +241,7 @@ savegame(fname)
 }
 
 void
-restoregame(fname)
-	char           *fname;
+restoregame(char *fname)
 {
 	int    i, k;
 	struct sphere *sp, *sp2;

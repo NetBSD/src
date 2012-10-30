@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.4 2011/01/13 22:28:36 haad Exp $
+.\"	$NetBSD: chown.8,v 1.4.6.1 2012/10/30 18:59:25 yamt Exp $
 .\"
-.Dd December 9, 2005
+.Dd October 22, 2012
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Oc
 .Op Fl fhv
 .Ar owner Ns Op Ar :group
-.Ar file ...
+.Ar
 .Nm
 .Oo
 .Fl R
@@ -50,7 +50,15 @@
 .Oc
 .Op Fl fhv
 .Ar :group
-.Ar file ...
+.Ar
+.Nm
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fhv
+.Fl Fl reference=rfile
+.Ar
 .Sh DESCRIPTION
 .Nm
 sets the user ID and/or the group ID of the specified files.
@@ -107,7 +115,12 @@ The
 .Ar owner
 and
 .Ar group
-operands are both optional, however, one must be specified.
+operands are both optional, however, one must be specified; alternatively,
+both the owner and group may be specified using a reference
+.Ar rfile
+specified using the
+.Fl Fl reference
+argument.
 If the
 .Ar group
 operand is specified, it must be preceded by a colon (``:'') character.

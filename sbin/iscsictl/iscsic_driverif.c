@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_driverif.c,v 1.2 2011/10/30 18:40:06 christos Exp $	*/
+/*	$NetBSD: iscsic_driverif.c,v 1.2.2.1 2012/10/30 18:59:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -298,16 +298,23 @@ dump_data(const char *title, const void *buffer, size_t len)
 		printf("  ");
 
 		for (i = 0; i < nelem; i++) {
-			printf("%02x ", bp[i]);
+			if (i >= len)
+				printf("   ");
+			else
+				printf("%02x ", bp[i]);
 		}
 		for (i = nelem; i < 16; i++) {
 			printf("   ");
 		}
 		printf(" '");
 		for (i = 0; i < nelem; i++) {
+			if (i >= len)
+				break;
 			printf("%c", isprint(bp[i]) ? bp[i] : ' ');
 		}
 		printf("'\n");
+		if (len < 16)
+			break;
 		len -= 16;
 		bp += 16;
 	}
@@ -583,7 +590,6 @@ report_luns(int argc, char **argv)
 	int rc;
 	size_t llen;
 	uint32_t n;
-	uint16_t n2;
 	uint64_t *lp;
 
 	(void) memset(&io, 0x0, sizeof(io));
@@ -602,8 +608,8 @@ report_luns(int argc, char **argv)
 	if ((rc = do_ioctl(&io, TRUE)) != 0) {
 		return rc;
 	}
-	(void) memcpy(&n2, buf, sizeof(n2));
-	llen = ntohs(n2);
+	(void) memcpy(&n, buf, sizeof(n));
+	llen = ntohl(n);
 	if (!llen) {
 		printf("No LUNs!\n");
 		return 1;

@@ -20,7 +20,35 @@
 /* Debugging function - conditional printf and hex dump. Driver wrappers can
  * use these for debugging purposes. */
 
-enum { MSG_MSGDUMP, MSG_DEBUG, MSG_INFO, MSG_WARNING, MSG_ERROR };
+enum {
+	MSG_EXCESSIVE, MSG_MSGDUMP, MSG_DEBUG, MSG_INFO, MSG_WARNING, MSG_ERROR
+};
+
+#ifdef CONFIG_ANDROID_LOG
+
+#define wpa_debug_print_timestamp() do {} while (0)
+#define wpa_hexdump(...)            do {} while (0)
+#define wpa_hexdump_key(...)        do {} while (0)
+#define wpa_hexdump_buf(l,t,b)      do {} while (0)
+#define wpa_hexdump_buf_key(l,t,b)  do {} while (0)
+#define wpa_hexdump_ascii(...)      do {} while (0)
+#define wpa_hexdump_ascii_key(...)  do {} while (0)
+#define wpa_debug_open_file(...)    do {} while (0)
+#define wpa_debug_close_file()      do {} while (0)
+#define wpa_dbg(...)                do {} while (0)
+
+static inline int wpa_debug_reopen_file(void)
+{
+	return 0;
+}
+
+
+void android_printf(int level, char *format, ...)
+PRINTF_FORMAT(2, 3);
+
+#define wpa_printf android_printf
+
+#else /* CONFIG_ANDROID_LOG */
 
 #ifdef CONFIG_NO_STDOUT_DEBUG
 
@@ -34,10 +62,17 @@ enum { MSG_MSGDUMP, MSG_DEBUG, MSG_INFO, MSG_WARNING, MSG_ERROR };
 #define wpa_hexdump_ascii_key(l,t,b,le) do { } while (0)
 #define wpa_debug_open_file(p) do { } while (0)
 #define wpa_debug_close_file() do { } while (0)
+#define wpa_dbg(args...) do { } while (0)
+
+static inline int wpa_debug_reopen_file(void)
+{
+	return 0;
+}
 
 #else /* CONFIG_NO_STDOUT_DEBUG */
 
 int wpa_debug_open_file(const char *path);
+int wpa_debug_reopen_file(void);
 void wpa_debug_close_file(void);
 
 /**
@@ -79,7 +114,8 @@ void wpa_hexdump(int level, const char *title, const u8 *buf, size_t len);
 static inline void wpa_hexdump_buf(int level, const char *title,
 				   const struct wpabuf *buf)
 {
-	wpa_hexdump(level, title, wpabuf_head(buf), wpabuf_len(buf));
+	wpa_hexdump(level, title, buf ? wpabuf_head(buf) : NULL,
+		    buf ? wpabuf_len(buf) : 0);
 }
 
 /**
@@ -100,7 +136,8 @@ void wpa_hexdump_key(int level, const char *title, const u8 *buf, size_t len);
 static inline void wpa_hexdump_buf_key(int level, const char *title,
 				       const struct wpabuf *buf)
 {
-	wpa_hexdump_key(level, title, wpabuf_head(buf), wpabuf_len(buf));
+	wpa_hexdump_key(level, title, buf ? wpabuf_head(buf) : 0,
+			buf ? wpabuf_len(buf) : 0);
 }
 
 /**
@@ -136,13 +173,24 @@ void wpa_hexdump_ascii(int level, const char *title, const u8 *buf,
 void wpa_hexdump_ascii_key(int level, const char *title, const u8 *buf,
 			   size_t len);
 
+/*
+ * wpa_dbg() behaves like wpa_msg(), but it can be removed from build to reduce
+ * binary size. As such, it should be used with debugging messages that are not
+ * needed in the control interface while wpa_msg() has to be used for anything
+ * that needs to shown to control interface monitors.
+ */
+#define wpa_dbg(args...) wpa_msg(args)
+
 #endif /* CONFIG_NO_STDOUT_DEBUG */
+
+#endif /* CONFIG_ANDROID_LOG */
 
 
 #ifdef CONFIG_NO_WPA_MSG
 #define wpa_msg(args...) do { } while (0)
 #define wpa_msg_ctrl(args...) do { } while (0)
 #define wpa_msg_register_cb(f) do { } while (0)
+#define wpa_msg_register_ifname_cb(f) do { } while (0)
 #else /* CONFIG_NO_WPA_MSG */
 /**
  * wpa_msg - Conditional printf for default target and ctrl_iface monitors
@@ -183,8 +231,11 @@ typedef void (*wpa_msg_cb_func)(void *ctx, int level, const char *txt,
  * @func: Callback function (%NULL to unregister)
  */
 void wpa_msg_register_cb(wpa_msg_cb_func func);
-#endif /* CONFIG_NO_WPA_MSG */
 
+typedef const char * (*wpa_msg_get_ifname_func)(void *ctx);
+void wpa_msg_register_ifname_cb(wpa_msg_get_ifname_func func);
+
+#endif /* CONFIG_NO_WPA_MSG */
 
 #ifdef CONFIG_NO_HOSTAPD_LOGGER
 #define hostapd_logger(args...) do { } while (0)

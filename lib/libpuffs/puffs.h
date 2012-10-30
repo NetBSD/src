@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.119.2.2 2012/05/23 10:07:33 yamt Exp $	*/
+/*	$NetBSD: puffs.h,v 1.119.2.3 2012/10/30 18:59:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,7 @@ struct puffs_kcache {
 struct puffs_node {
 	off_t			pn_size;
 	int			pn_flags;
+	int			pn_nlookup;
 	struct vattr		pn_va;
 
 	void			*pn_data;	/* private data		*/
@@ -110,6 +111,12 @@ struct puffs_usermount;
 
 #define PUFFS_FSYNC_DATAONLY 0x0002
 #define PUFFS_FSYNC_CACHE    0x0100
+
+/*
+ * xflags for setattr_ttl and write2
+ */
+#define PUFFS_SETATTR_FAF    0x1
+#define PUFFS_WRITE_FAF      0x1
 
 #define PUFFS_EXTATTR_LIST_LENPREFIX 1
 /*
@@ -238,9 +245,13 @@ struct puffs_ops {
 	    struct timespec *);
 	int (*puffs_node_setattr_ttl)(struct puffs_usermount *,
 	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,
-	    struct timespec *);
+	    struct timespec *, int);
+	int (*puffs_node_write2)(struct puffs_usermount *, puffs_cookie_t,
+	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int, int);
+	int (*puffs_node_reclaim2)(struct puffs_usermount *,
+	    puffs_cookie_t, int);
 
-	void *puffs_ops_spare[30];
+	void *puffs_ops_spare[28];
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -274,7 +285,8 @@ enum {
 #define PUFFS_FLAG_BUILDPATH	0x80000000	/* node paths in pnode */
 #define PUFFS_FLAG_OPDUMP	0x40000000	/* dump all operations */
 #define PUFFS_FLAG_HASHPATH	0x20000000	/* speedup: hash paths */
-#define PUFFS_FLAG_MASK		0xe0000000
+#define PUFFS_FLAG_PNCOOKIE	0x10000000	/* cookies are pnodes */
+#define PUFFS_FLAG_MASK		0xf0000000
 
 #define PUFFS_FLAG_KERN(a)	((a) & PUFFS_KFLAG_MASK)
 #define PUFFS_FLAG_LIB(a)	((a) & PUFFS_FLAG_MASK)
@@ -393,7 +405,12 @@ enum {
 	    struct timespec *);						\
 	int fsname##_node_setattr_ttl(struct puffs_usermount *,		\
 	    puffs_cookie_t, struct vattr *, const struct puffs_cred *,	\
-	    struct timespec *);
+	    struct timespec *, int);					\
+	int fsname##_node_write2(struct puffs_usermount *,		\
+	    puffs_cookie_t, uint8_t *, off_t, size_t *,			\
+	    const struct puffs_cred *, int, int);			\
+	int fsname##_node_reclaim2(struct puffs_usermount *,		\
+	    puffs_cookie_t, int);
 
 
 #define PUFFSOP_INIT(ops)						\

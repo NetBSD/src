@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.50.2.1 2012/04/17 00:05:18 yamt Exp $	*/
+/*	$NetBSD: getcap.c,v 1.50.2.2 2012/10/30 18:58:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.50.2.1 2012/04/17 00:05:18 yamt Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.50.2.2 2012/10/30 18:58:45 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,10 +160,7 @@ cgetset(const char *ent)
  * return NULL.
  */
 char *
-cgetcap(buf, cap, type)
-	char *buf;
-	const char *cap;
-	int type;
+cgetcap(char *buf, const char *cap, int type)
 {
 	char *bp;
 	const char *cp;

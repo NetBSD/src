@@ -618,8 +618,8 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 	int error;
 
 	zp = kmem_cache_alloc(znode_cache, KM_SLEEP);
-	for (;;) {
 
+	for (;;) {
 		error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
 		    zfs_vnodeop_p, NULL, &zp->z_vnode);
 		if (__predict_true(error == 0))
@@ -628,7 +628,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 		    "error=%d\n", error);
 		(void)kpause("zfsnewvn", false, hz, NULL);
 	}
-	
+
 	ASSERT(zp->z_dirlocks == NULL);
 	ASSERT(zp->z_dbuf == NULL);
 	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
@@ -656,6 +656,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 	vp->v_vfsp = zfsvfs->z_parent->z_vfs;
 	vp->v_type = IFTOVT((mode_t)zp->z_phys->zp_mode);
 	vp->v_data = zp;
+	genfs_node_init(vp, &zfs_genfsops);
 	switch (vp->v_type) {
 	case VDIR:
 		zp->z_zn_prefetch = B_TRUE; /* z_prefetch default is enabled */
@@ -686,6 +687,7 @@ zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
 	zp->z_zfsvfs = zfsvfs;
 	mutex_exit(&zfsvfs->z_znodes_lock);
 
+	VFS_HOLD(zfsvfs->z_vfs);
 	return (zp);
 }
 
@@ -998,11 +1000,6 @@ again:
 	if (((znode_phys_t *)db->db_data)->zp_gen != 0) {
 		zp = zfs_znode_alloc(zfsvfs, db, doi.doi_data_block_size);
 		*zpp = zp;
-
-		vp = ZTOV(zp);
-		genfs_node_init(vp, &zfs_genfsops);
-		VOP_UNLOCK(vp);
-
 		err = 0;
 	} else {
 		dmu_buf_rele(db, NULL);
@@ -1076,17 +1073,13 @@ zfs_znode_delete(znode_t *zp, dmu_tx_t *tx)
 	zfs_znode_free(zp);
 }
 
-/*
- * zfs_zinactive must be called with ZFS_OBJ_HOLD_ENTER held. And this lock
- * will be released in zfs_zinactive.
- */
 void
 zfs_zinactive(znode_t *zp)
 {
 	vnode_t	*vp = ZTOV(zp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	uint64_t z_id = zp->z_id;
-	
+
 	ASSERT(zp->z_dbuf && zp->z_phys);
 
 	/*
@@ -1107,7 +1100,7 @@ zfs_zinactive(znode_t *zp)
 	}
 
 	mutex_exit(&zp->z_lock);
-	/* XXX why disabled zfs_znode_dmu_fini(zp); */
+	zfs_znode_dmu_fini(zp);
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, z_id);
 	zfs_znode_free(zp);
 }
@@ -1116,7 +1109,14 @@ void
 zfs_znode_free(znode_t *zp)
 {
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-	ASSERT(ZTOV(zp) == NULL);
+	struct vnode *vp = ZTOV(zp);
+
+	/* XXX Not all callers are from VOP_RECLAIM.  What to do?  */
+	KASSERT(vp != NULL);
+	mutex_enter(vp->v_interlock); /* XXX Necessary?  */
+	genfs_node_destroy(vp);
+	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
 
 	dprintf("destroying znode %p\n", zp);
 	//cpu_Debugger();
@@ -1402,6 +1402,8 @@ top:
 	zp->z_phys->zp_size = end;
 
 	dmu_tx_commit(tx);
+
+	zfs_range_unlock(rl);
 
 	/*
 	 * Clear any mapped pages in the truncated region.  This has to

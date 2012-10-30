@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)lsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lsearch.c,v 1.5.4.1 2012/04/17 00:05:25 yamt Exp $");
+__RCSID("$NetBSD: lsearch.c,v 1.5.4.2 2012/10/30 18:58:59 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,11 +51,8 @@ static void *linear_base(const void *, void *, size_t *, size_t,
 			     cmp_fn_t, int);
 
 void *
-lsearch(key, base, nelp, width, compar)
-	const void *key;
-	void *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
+lsearch(const void *key, void *base, size_t *nelp, size_t width,
+    cmp_fn_t compar)
 {
 
 	_DIAGASSERT(key != NULL);
@@ -66,10 +63,8 @@ lsearch(key, base, nelp, width, compar)
 }
 
 void *
-lfind(key, base, nelp, width, compar)
-	const void *key, *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
+lfind(const void *key, const void *base, size_t *nelp, size_t width,
+    cmp_fn_t compar)
 {
 
 	_DIAGASSERT(key != NULL);

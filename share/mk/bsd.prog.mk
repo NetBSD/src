@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.269.2.2 2012/04/17 00:05:50 yamt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.269.2.3 2012/10/30 18:59:47 yamt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -310,24 +310,34 @@ _CCLINK=	${CXX} ${_CCLINKFLAGS}
 
 .if defined(RUMPPRG)
 PROG=			${RUMPPRG}
-.ifndef CRUNCHEDPROG
+. ifndef CRUNCHEDPROG
+.  if (${MKRUMP} != "no")
 PROGS=			${RUMPPRG} rump.${RUMPPRG}
-. if defined(SRCS)
+.  else
+PROGS=			${RUMPPRG}
+.  endif
+.  if defined(SRCS)
+.   if (${MKRUMP} != "no")
 SRCS.rump.${PROG}:=	${SRCS} ${PROG}_rumpops.c ${RUMPSRCS}
+.   endif
 SRCS+=			${PROG}_hostops.c
-. else
+.  else
 SRCS=			${PROG}.c ${PROG}_hostops.c
+.   if (${MKRUMP} != "no")
 SRCS.rump.${PROG}=	${PROG}.c ${PROG}_rumpops.c ${RUMPSRCS}
-. endif
+.   endif
+.  endif
+.   if (${MKRUMP} != "no")
 DPSRCS+=		${PROG}_rumpops.c ${RUMPSRCS}
 LDADD.rump.${PROG}+=	-lrumpclient
 DPADD.rump.${PROG}+=	${LIBRUMPCLIENT}
 MAN.rump.${PROG}=	# defined but feeling empty
 _RUMPINSTALL.rump.${PROG}=# defined
-.else # CRUNCHEDPROG
+.   endif
+. else # CRUNCHEDPROG
 PROGS=			${PROG}
 CPPFLAGS+=		-DCRUNCHOPS
-.endif
+. endif
 .endif
 
 .if defined(PROG)
@@ -395,6 +405,7 @@ PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
 
 ##### PROG specific flags.
 
+_DPADD.${_P}=		${DPADD}    ${DPADD.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
@@ -435,7 +446,7 @@ NODPSRCS+=	${f}
 .endif
 .endfor
 
-${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${_P}: .gdbinit ${LIBCRT0} ${XOBJS.${_P}} ${SRCS.${_P}} ${DPSRCS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
 	${_CCLINK.${_P}} -Wl,-nostdlib \
@@ -468,7 +479,7 @@ CLEANFILES+=	${_P}.d
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
@@ -487,7 +498,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 .endif	# !commands(${_P})
 .endif	# USE_COMBINE
 
-${_P}.ro: ${OBJS.${_P}} ${DPADD}
+${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.1 2009/06/23 10:08:51 tron Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.1.10.1 2012/10/30 18:58:04 yamt Exp $	*/
 
 /*++
 /* NAME
@@ -208,7 +208,6 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
-    tag = 0;
 
     /*
      * Parse switches.

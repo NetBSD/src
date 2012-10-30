@@ -1,4 +1,4 @@
-/*	$NetBSD: getguess.c,v 1.8 2003/08/07 09:37:21 agc Exp $	*/
+/*	$NetBSD: getguess.c,v 1.8.54.1 2012/10/30 18:58:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getguess.c,v 1.8 2003/08/07 09:37:21 agc Exp $");
+__RCSID("$NetBSD: getguess.c,v 1.8.54.1 2012/10/30 18:58:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: getguess.c,v 1.8 2003/08/07 09:37:21 agc Exp $");
  *	Get another guess
  */
 void
-getguess()
+getguess(void)
 {
 	int i;
 	int ch;
@@ -76,12 +76,12 @@ getguess()
 	move(MESGY, MESGX);
 	clrtoeol();
 
-	Guessed[ch - 'a'] = TRUE;
-	correct = FALSE;
+	Guessed[ch - 'a'] = true;
+	correct = false;
 	for (i = 0; Word[i] != '\0'; i++)
 		if (Word[i] == ch) {
 			Known[i] = ch;
-			correct = TRUE;
+			correct = true;
 		}
 	if (!correct)
 		Errors++;
@@ -91,7 +91,7 @@ getguess()
  *	Read a character from the input
  */
 int
-readch()
+readch(void)
 {
 	int cnt;
 	char ch;

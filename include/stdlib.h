@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.97.4.1 2012/05/23 10:07:30 yamt Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.97.4.2 2012/10/30 18:58:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -192,7 +192,7 @@ char	*mktemp(char *)
 
 int	 setkey(const char *);
 
-char	*realpath(const char *, char *);
+char	*realpath(const char * __restrict, char * __restrict);
 
 int	 ttyslot(void);
 
@@ -269,6 +269,7 @@ int	 cgetustr(char *, const char *, char **);
 void	 csetexpandtc(int);
 
 int	 daemon(int, int);
+int	 devname_r(dev_t, mode_t, char *, size_t);
 #ifndef __LIBC12_SOURCE__
 __aconst char *devname(dev_t, mode_t) __RENAME(__devname50);
 #endif

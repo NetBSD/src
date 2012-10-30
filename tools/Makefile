@@ -1,33 +1,45 @@
-#	$NetBSD: Makefile,v 1.151.2.1 2011/11/10 14:31:53 yamt Exp $
+#	$NetBSD: Makefile,v 1.151.2.2 2012/10/30 19:00:10 yamt Exp $
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) || defined(HAVE_PCC)
 TOOLCHAIN_BITS= gmake .WAIT
+.endif
+
 .if ${TOOLCHAIN_MISSING} == "no"
+.if defined(HAVE_GCC)
 .if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
 TOOLCHAIN_BITS+= mpfr .WAIT
 TOOLCHAIN_BITS+= mpc .WAIT
 .endif
+.endif
+.endif
+
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= binutils .WAIT
+.endif
+
+.if defined(HAVE_GCC)
+.if ${TOOLCHAIN_MISSING} == "no"
 TOOLCHAIN_BITS+= gcc
 .  if ${MKCROSSGDB:Uno} != "no"
 TOOLCHAIN_BITS+= gdb
 .  endif
-TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
-# XXX Eventually, we want to be able to build dbsym and mdsetimage
-# XXX if EXTERNAL_TOOLCHAIN is set.
+TOOLCHAIN_BITS+= .WAIT
 .endif
 .endif
 
 .if defined(HAVE_PCC)
-TOOLCHAIN_BITS= gmake .WAIT
 .if ${TOOLCHAIN_MISSING} == "no"
-TOOLCHAIN_BITS+= binutils .WAIT
 TOOLCHAIN_BITS+= pcc
 .endif
-TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
+.endif
+
+.if ${TOOLCHAIN_MISSING} == "no"
+# XXX Eventually, we want to be able to build dbsym and mdsetimage
+# XXX if EXTERNAL_TOOLCHAIN is set.
+TOOLCHAIN_BITS+= dbsym mdsetimage
 .endif
 
 DTRACE_BITS=

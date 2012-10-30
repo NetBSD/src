@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/06/20 07:44:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2012/10/30 19:00:36 yamt Exp $
 
 PROG	=	isdnd
 SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
@@ -32,8 +32,6 @@ CPPFLAGS+=	-DI4B_NOTCPIP_MONITOR
 .endif
 .endif
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.alias.c+=		-Wno-pointer-sign
 COPTS.holiday.c+=	-Wno-pointer-sign
 COPTS.monitor.c+=	-Wno-pointer-sign
-.endif

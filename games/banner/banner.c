@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.19.2.1 2012/04/17 00:05:06 yamt Exp $	*/
+/*	$NetBSD: banner.c,v 1.19.2.2 2012/10/30 18:58:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.19.2.1 2012/04/17 00:05:06 yamt Exp $");
+__RCSID("$NetBSD: banner.c,v 1.19.2.2 2012/10/30 18:58:18 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1022,7 +1022,7 @@ static const unsigned char data_table[NBYTES] = {
 static char line[DWIDTH];
 static char message[MAXMSG];
 static char print[DWIDTH];
-static int debug, i, j, linen, max, nchars, pc, term, trace, x, y;
+static int debug, linen, max, nchars, pc, term, trace;
 static int width = DWIDTH;	/* -w option: scrunch letters to 80 columns */
 
 __dead static void
@@ -1035,6 +1035,9 @@ int
 main(int argc, char *argv[])
 { 
 	int ch;
+	int i, j, x, y;
+
+	x = y = 0;
 
 	while ((ch = getopt(argc, argv, "w:td")) != -1)
 		switch (ch) {

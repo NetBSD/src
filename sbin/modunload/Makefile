@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 2010/12/13 20:48:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.14.6.1 2012/10/30 18:59:29 yamt Exp $
+
+WARNS=	5
 
 RUMPPRG=modunload
 SRCS=	main.c

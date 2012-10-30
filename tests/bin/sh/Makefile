@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.2 2012/04/17 00:09:02 yamt Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2012/10/30 18:59:51 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ TESTS_SH+=	t_evaltested
 TESTS_SH+=	t_fsplit
 TESTS_SH+=	t_here
 TESTS_SH+=	t_set_e
+TESTS_SH+=	t_ulimit
 TESTS_SH+=	t_varquote
 TESTS_SH+=	t_wait
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.36.2.2 2012/05/23 10:07:33 yamt Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.36.2.3 2012/10/30 18:59:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.36.2.2 2012/05/23 10:07:33 yamt Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.36.2.3 2012/10/30 18:59:16 yamt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -125,7 +125,7 @@ dispatch(struct puffs_cc *pcc)
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf; /* help with typecasting */
 	puffs_cookie_t opcookie;
-	int error = 0, buildpath;
+	int error = 0, buildpath, pncookie;
 
 	/* XXX: smaller hammer, please */
 	if ((PUFFSOP_OPCLASS(preq->preq_opclass == PUFFSOP_VFS &&
@@ -145,6 +145,9 @@ dispatch(struct puffs_cc *pcc)
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH;
+	pncookie = pu->pu_flags & PUFFS_FLAG_PNCOOKIE;
+	assert(!buildpath || pncookie);
+
 	preq->preq_setbacks = 0;
 
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
@@ -301,6 +304,12 @@ dispatch(struct puffs_cc *pcc)
 						    &pcn.pcn_po_full);
 				}
 			}
+
+			if (pncookie && !error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -309,6 +318,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_create *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_create == NULL) {
 				error = 0;
@@ -337,13 +347,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (pncookie && !error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -352,6 +365,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mknod *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mknod == NULL) {
 				error = 0;
@@ -380,13 +394,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (pncookie && !error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -467,14 +484,19 @@ dispatch(struct puffs_cc *pcc)
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
 			if (PUFFS_USE_FS_TTL(pu)) {
+				int xflag = 0;
+
 				if (pops->puffs_node_setattr_ttl == NULL) {
 					error = EOPNOTSUPP;
 					break;
 				}
 
+				if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+					xflag |= PUFFS_SETATTR_FAF;
+
 				error = pops->puffs_node_setattr_ttl(pu,
 				    opcookie, &auxt->pvnr_va, pcr,
-				    &auxt->pvnr_va_ttl);
+				    &auxt->pvnr_va_ttl, xflag);
 			} else {
 				if (pops->puffs_node_setattr == NULL) {
 					error = EOPNOTSUPP;
@@ -648,6 +670,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_mkdir *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_mkdir == NULL) {
 				error = 0;
@@ -676,13 +699,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (pncookie && !error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -708,6 +734,7 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_symlink *auxt = auxbuf;
 			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+			struct puffs_node *pn = NULL;
 
 			if (pops->puffs_node_symlink == NULL) {
 				error = 0;
@@ -737,13 +764,16 @@ dispatch(struct puffs_cc *pcc)
 				if (error) {
 					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
-					struct puffs_node *pn;
-
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
+			if (pncookie && !error) {
+				if (pn == NULL)
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+				pn->pn_nlookup++;
+			}
 			break;
 		}
 
@@ -805,10 +835,34 @@ dispatch(struct puffs_cc *pcc)
 
 		case PUFFS_VN_RECLAIM:
 		{
+			struct puffs_vnmsg_reclaim *auxt = auxbuf;
+			struct puffs_node *pn;
+		
+			if (pops->puffs_node_reclaim2 != NULL) {
+				error = pops->puffs_node_reclaim2(pu, opcookie,
+					     auxt->pvnr_nlookup);
+				break;
+			}
 
 			if (pops->puffs_node_reclaim == NULL) {
 				error = 0;
 				break;
+			}
+
+			/*
+			 * This fixes a race condition, 
+			 * where a node in reclaimed by kernel 
+			 * after a lookup request is sent, 
+			 * but before the reply, leaving the kernel
+			 * with a invalid vnode/cookie reference.
+			 */
+			if (pncookie) {
+				pn = PU_CMAP(pu, opcookie);
+				pn->pn_nlookup -= auxt->pvnr_nlookup;
+				if (pn->pn_nlookup >= 1) {
+					error = 0;
+					break;
+				}
 			}
 
 			error = pops->puffs_node_reclaim(pu, opcookie);
@@ -913,15 +967,27 @@ dispatch(struct puffs_cc *pcc)
 			struct puffs_vnmsg_write *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
 
-			if (pops->puffs_node_write == NULL) {
+			if (pops->puffs_node_write2 != NULL) {
+				int xflag = 0;
+
+				if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+					xflag |= PUFFS_SETATTR_FAF;
+
+				error = pops->puffs_node_write2(pu,
+				    opcookie, auxt->pvnr_data,
+				    auxt->pvnr_offset, &auxt->pvnr_resid,
+				    pcr, auxt->pvnr_ioflag, xflag);
+
+			} else if (pops->puffs_node_write != NULL) {
+				error = pops->puffs_node_write(pu,
+				    opcookie, auxt->pvnr_data,
+				    auxt->pvnr_offset, &auxt->pvnr_resid,
+				    pcr, auxt->pvnr_ioflag);
+			} else {
 				error = EIO;
 				break;
 			}
 
-			error = pops->puffs_node_write(pu,
-			    opcookie, auxt->pvnr_data,
-			    auxt->pvnr_offset, &auxt->pvnr_resid,
-			    pcr, auxt->pvnr_ioflag);
 
 			/* don't need to move data back to the kernel */
 			preq->preq_buflen = sizeof(struct puffs_vnmsg_write);

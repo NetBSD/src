@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.4 2004/08/21 11:21:00 rearnsha Exp $	*/
+/*	$NetBSD: fpgetsticky.S,v 1.4.50.1 2012/10/30 18:58:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,6 +45,10 @@ ENTRY(_fpgetsticky)
 #else
 ENTRY(fpgetsticky)
 #endif
+#ifdef __VFP_FP__
+#error _fpgetsticky VFP support missing
+#else
 	rfs	r0
 	and	r0, r0, #0x1f
 	RET
+#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48.2.1 2012/04/17 00:09:40 yamt Exp $
+#	$NetBSD: Makefile,v 1.48.2.2 2012/10/30 19:00:27 yamt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -80,10 +80,8 @@ LDADD+= -lpam ${PAM_STATIC_LDADD}
 DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for f in commands telnet terminal utilities
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
-.endif
 
 .include <bsd.prog.mk>

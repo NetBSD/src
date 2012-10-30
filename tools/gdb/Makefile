@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.1 2012/04/17 00:09:28 yamt Exp $
+#	$NetBSD: Makefile,v 1.20.2.2 2012/10/30 19:00:12 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 ALL_TARGET=	all-gdb
 INSTALL_TARGET=	install-gdb
 
-.include "${.CURDIR}/../Makefile.gnuhost"
+.include "${.CURDIR}/../Makefile.gmakehost"
 
 CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
 

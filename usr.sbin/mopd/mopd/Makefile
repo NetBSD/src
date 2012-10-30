@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2011/06/20 07:44:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2012/10/30 19:00:39 yamt Exp $
 
 PROG=	mopd
 SRCS=	mopd.c process.c
@@ -9,6 +9,4 @@ DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.process.c+=	-Wno-pointer-sign
-.endif

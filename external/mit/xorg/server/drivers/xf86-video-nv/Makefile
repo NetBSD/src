@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/03 14:47:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2012/10/30 18:58:13 yamt Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
@@ -10,5 +10,9 @@ SRCS+=		riva_setup.c riva_shadow.c riva_xaa.c g80_cursor.c
 SRCS+=		g80_dac.c g80_display.c g80_dma.c g80_driver.c g80_exa.c
 SRCS+=		g80_output.c g80_sor.c g80_xaa.c
 MAN=		nv.4
+
+.if ${MACHINE} == "macppc"
+CPPFLAGS+= -DAVOID_VGAHW
+.endif
 
 .include "../Makefile.xf86-driver"

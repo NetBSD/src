@@ -1,0 +1,5 @@
+# $NetBSD: Makefile.inc,v 1.1.4.2 2012/10/30 18:58:35 yamt Exp $
+
+CPPFLAGS+=	-DELFSIZE=32
+CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
+

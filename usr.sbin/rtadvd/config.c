@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.25.42.1 2012/04/17 00:09:53 yamt Exp $	*/
+/*	$NetBSD: config.c,v 1.25.42.2 2012/10/30 19:00:52 yamt Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ getconfig(const char *intface)
 	MAYHAVE(val, "clockskew", 0);
 	tmp->clockskew = val;
 
-	tmp->pfxs++;
+	tmp->pfxs = 0;
 	TAILQ_INIT(&tmp->prefix);
 	for (i = -1; i < MAXPREFIX; i++) {
 		struct prefix *pfx;
@@ -763,6 +763,7 @@ get_prefix(struct rainfo *rai)
 
 		/* link into chain */
 		TAILQ_INSERT_TAIL(&rai->prefix, pp, next);
+		rai->pfxs++;
 	}
 
 	freeifaddrs(ifap);

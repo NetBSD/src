@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/01/25 15:55:36 pooka Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2012/10/30 19:00:50 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,6 +15,6 @@ CPPFLAGS+=	-DUSE_RUMP -DLFS_CLEANER_AS_LIB
 
 .include "../../../libexec/lfs_cleanerd/Makefile.inc"
 
-DBG=-g
+#DBG=-g
 
 .include <bsd.prog.mk>

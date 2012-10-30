@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.5.6.2 2012/05/23 10:08:22 yamt Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.5.6.3 2012/10/30 19:00:05 yamt Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5.6.2 2012/05/23 10:08:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5.6.3 2012/10/30 19:00:05 yamt Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5.6.2 2012/05/23 10:08:22 yamt Exp $"
 
 enum presence_check { both_checks, stat_check, sysctl_check };
 
-static bool	skip_nonmodular(void);
+static void	check_permission(void);
 static bool	get_modstat_info(const char *, modstat_t *);
 static bool	get_sysctl(const char *, void *buf, const size_t);
 static bool	k_helper_is_present_stat(void);
@@ -61,12 +61,22 @@ static void	unload_cleanup(const char *);
 /* --------------------------------------------------------------------- */
 
 /*
- * A function that is called if the kernel is detected to be non-MODULAR.
+ * A function checking wether we are allowed to load modules currently
+ * (either the kernel is not modular, or securelevel may prevent it)
  */
-static bool
-skip_nonmodular(void)
+static void
+check_permission(void)
 {
-	atf_tc_skip("Kernel does not have 'options MODULAR'.");
+	int err;
+
+	err = modctl(MODCTL_EXISTS, 0);
+	if (err == 0) return;
+	if (errno == ENOSYS)
+		atf_tc_skip("Kernel does not have 'options MODULAR'.");
+	else if (errno == EPERM)
+		atf_tc_skip("Module loading administratively forbidden");
+	ATF_REQUIRE_EQ_MSG(errno, 0, "unexpected error %d from "
+	    "modctl(MODCTL_EXISTS, 0)", errno);
 }
 
 static bool
@@ -77,6 +87,7 @@ get_modstat_info(const char *name, modstat_t *msdest)
 	struct iovec iov;
 	modstat_t *ms;
 
+	check_permission();
 	for (len = 4096; ;) {
 		iov.iov_base = malloc(len);
 		iov.iov_len = len;
@@ -84,10 +95,6 @@ get_modstat_info(const char *name, modstat_t *msdest)
 		errno = 0;
 
 		if (modctl(MODCTL_STAT, &iov) != 0) {
-
-			if (errno == ENOSYS)
-				skip_nonmodular();
-
 			int err = errno;
 			fprintf(stderr, "modctl(MODCTL_STAT) failed: %s\n",
 			    strerror(err));
@@ -203,6 +210,7 @@ load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
 	char filename[MAXPATHLEN], *propsstr;
 	modctl_load_t ml;
 
+	check_permission();
 	if (props == NULL) {
 		props = prop_dictionary_create();
 		propsstr = prop_dictionary_externalize(props);
@@ -226,10 +234,6 @@ load(prop_dictionary_t props, bool fatal, const char *fmt, ...)
 	errno = err = 0;
 
 	if (modctl(MODCTL_LOAD, &ml) == -1) {
-
-		if (errno == ENOSYS)
-			skip_nonmodular();
-
 		err = errno;
 		fprintf(stderr, "modctl(MODCTL_LOAD, %s), failed: %s\n",
 		    filename, strerror(err));
@@ -251,14 +255,11 @@ unload(const char *name, bool fatal)
 {
 	int err;
 
+	check_permission();
 	printf("Unloading module %s\n", name);
 	errno = err = 0;
 
 	if (modctl(MODCTL_UNLOAD, __UNCONST(name)) == -1) {
-
-		if (errno == ENOSYS)
-			skip_nonmodular();
-
 		err = errno;
 		fprintf(stderr, "modctl(MODCTL_UNLOAD, %s) failed: %s\n",
 		    name, strerror(err));

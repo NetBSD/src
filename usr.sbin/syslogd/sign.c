@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.3.8.1 2012/04/17 00:09:53 yamt Exp $	*/
+/*	$NetBSD: sign.c,v 1.3.8.2 2012/10/30 19:00:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.3.8.1 2012/04/17 00:09:53 yamt Exp $");
+__RCSID("$NetBSD: sign.c,v 1.3.8.2 2012/10/30 19:00:52 yamt Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -154,7 +154,7 @@ sign_global_init(struct filed *Files)
  * GlobalSign.privkey, and GlobalSign.pubkey
  */
 bool
-sign_get_keys()
+sign_get_keys(void)
 {
 	EVP_PKEY *pubkey = NULL, *privkey = NULL;
 	unsigned char *der_pubkey = NULL, *ptr_der_pubkey = NULL;
@@ -447,7 +447,7 @@ sign_sg_init(struct filed *Files)
  * free all SGs for a given algorithm
  */
 void
-sign_global_free()
+sign_global_free(void)
 {
 	struct signature_group_t *sg, *tmp_sg;
 	struct filed_queue *fq, *tmp_fq;
@@ -894,7 +894,7 @@ sign_string_sign(char *line, char **signature)
 }
 
 void
-sign_new_reboot_session()
+sign_new_reboot_session(void)
 {
 	struct signature_group_t *sg;
 
@@ -930,7 +930,7 @@ sign_assign_msg_num(struct signature_group_t *sg)
 
 /* increment gbc, check overflow */
 void
-sign_inc_gbc()
+sign_inc_gbc(void)
 {
 	if (++GlobalSign.gbc > SIGN_MAX_COUNT)
 		sign_new_reboot_session();

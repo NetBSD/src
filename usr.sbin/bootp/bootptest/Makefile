@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2011/06/20 07:44:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2012/10/30 19:00:30 yamt Exp $
 
 PROG=	bootptest
 SRCS=	bootptest.c print-bootp.c getether.c
 MAN=	bootptest.8
 
-.include <bsd.prog.mk>
-
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 COPTS.print-bootp.c+=	-Wno-pointer-sign
-.endif
+
+.include <bsd.prog.mk>

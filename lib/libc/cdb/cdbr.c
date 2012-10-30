@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.2.6.1 2012/10/30 18:58:42 yamt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +36,17 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.2.6.1 2012/10/30 18:58:42 yamt Exp $");
 
 #include "namespace.h"
 
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/bitops.h>
+#endif
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
+#endif
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <cdbr.h>
@@ -57,6 +62,11 @@ __weak_alias(cdbr_close,_cdbr_close)
 __weak_alias(cdbr_find,_cdbr_find)
 __weak_alias(cdbr_get,_cdbr_get)
 __weak_alias(cdbr_open,_cdbr_open)
+#endif
+
+#if HAVE_NBTOOL_CONFIG_H
+#define	fast_divide32_prepare(d,m,s1,s2)	(void)0
+#define	fast_remainder32(v,d,m,s1,s2)		(v%d)
 #endif
 
 struct cdbr {
@@ -142,17 +152,21 @@ cdbr_open(const char *path, int flags)
 	    cdbr->data_base < cdbr->mmap_base ||
 	    cdbr->data_base + cdbr->data_size < cdbr->mmap_base ||
 	    cdbr->data_base + cdbr->data_size >
-	    cdbr->mmap_base + cdbr->mmap_size ||
-	    cdbr->entries == 0 || cdbr->entries_index == 0) {
+	    cdbr->mmap_base + cdbr->mmap_size) {
 		errno = EINVAL;
 		cdbr_close(cdbr);
 		return NULL;
 	}
 
-	fast_divide32_prepare(cdbr->entries, &cdbr->entries_m,
-	    &cdbr->entries_s1, &cdbr->entries_s2);
-	fast_divide32_prepare(cdbr->entries_index, &cdbr->entries_index_m,
-	    &cdbr->entries_index_s1, &cdbr->entries_index_s2);
+	if (cdbr->entries) {
+		fast_divide32_prepare(cdbr->entries, &cdbr->entries_m,
+		    &cdbr->entries_s1, &cdbr->entries_s2);
+	}
+	if (cdbr->entries_index) {
+		fast_divide32_prepare(cdbr->entries_index,
+		    &cdbr->entries_index_m,
+		    &cdbr->entries_index_s1, &cdbr->entries_index_s2);
+	}
 
 	return cdbr;
 }

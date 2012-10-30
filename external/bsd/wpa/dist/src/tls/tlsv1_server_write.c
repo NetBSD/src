@@ -1,6 +1,6 @@
 /*
- * TLSv1 server - write handshake message
- * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
+ * TLS v1.0 (RFC 2246) and v1.1 (RFC 4346) server - write handshake message
+ * Copyright (c) 2006-2011, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -18,6 +18,7 @@
 #include "crypto/md5.h"
 #include "crypto/sha1.h"
 #include "crypto/tls.h"
+#include "crypto/random.h"
 #include "x509v3.h"
 #include "tlsv1_common.h"
 #include "tlsv1_record.h"
@@ -58,7 +59,7 @@ static int tls_write_server_hello(struct tlsv1_server *conn,
 
 	os_get_time(&now);
 	WPA_PUT_BE32(conn->server_random, now.sec);
-	if (os_get_random(conn->server_random + 4, TLS_RANDOM_LEN - 4)) {
+	if (random_get_bytes(conn->server_random + 4, TLS_RANDOM_LEN - 4)) {
 		wpa_printf(MSG_ERROR, "TLSv1: Could not generate "
 			   "server_random");
 		return -1;
@@ -67,7 +68,7 @@ static int tls_write_server_hello(struct tlsv1_server *conn,
 		    conn->server_random, TLS_RANDOM_LEN);
 
 	conn->session_id_len = TLS_SESSION_ID_MAX_LEN;
-	if (os_get_random(conn->session_id, conn->session_id_len)) {
+	if (random_get_bytes(conn->session_id, conn->session_id_len)) {
 		wpa_printf(MSG_ERROR, "TLSv1: Could not generate "
 			   "session_id");
 		return -1;
@@ -86,7 +87,7 @@ static int tls_write_server_hello(struct tlsv1_server *conn,
 	pos += 3;
 	/* body - ServerHello */
 	/* ProtocolVersion server_version */
-	WPA_PUT_BE16(pos, TLS_VERSION);
+	WPA_PUT_BE16(pos, conn->rl.tls_version);
 	pos += 2;
 	/* Random random: uint32 gmt_unix_time, opaque random_bytes */
 	os_memcpy(pos, conn->server_random, TLS_RANDOM_LEN);
@@ -142,7 +143,8 @@ static int tls_write_server_hello(struct tlsv1_server *conn,
 	tls_verify_hash_add(&conn->verify, hs_start, pos - hs_start);
 
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      rhdr, end - rhdr, hs_start, pos - hs_start,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to create TLS record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
@@ -226,7 +228,8 @@ static int tls_write_server_certificate(struct tlsv1_server *conn,
 	WPA_PUT_BE24(hs_length, pos - hs_length - 3);
 
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      rhdr, end - rhdr, hs_start, pos - hs_start,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to generate a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
@@ -287,7 +290,7 @@ static int tls_write_server_key_exchange(struct tlsv1_server *conn,
 				   TLS_ALERT_INTERNAL_ERROR);
 		return -1;
 	}
-	if (os_get_random(conn->dh_secret, conn->dh_secret_len)) {
+	if (random_get_bytes(conn->dh_secret, conn->dh_secret_len)) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to get random "
 			   "data for Diffie-Hellman");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
@@ -417,7 +420,8 @@ static int tls_write_server_key_exchange(struct tlsv1_server *conn,
 	WPA_PUT_BE24(hs_length, pos - hs_length - 3);
 
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      rhdr, end - rhdr, hs_start, pos - hs_start,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to generate a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
@@ -482,7 +486,8 @@ static int tls_write_server_certificate_request(struct tlsv1_server *conn,
 	WPA_PUT_BE24(hs_length, pos - hs_length - 3);
 
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      rhdr, end - rhdr, hs_start, pos - hs_start,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to generate a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
@@ -501,40 +506,35 @@ static int tls_write_server_certificate_request(struct tlsv1_server *conn,
 static int tls_write_server_hello_done(struct tlsv1_server *conn,
 				       u8 **msgpos, u8 *end)
 {
-	u8 *pos, *rhdr, *hs_start, *hs_length;
+	u8 *pos;
 	size_t rlen;
-
-	pos = *msgpos;
+	u8 payload[4];
 
 	wpa_printf(MSG_DEBUG, "TLSv1: Send ServerHelloDone");
-	rhdr = pos;
-	pos += TLS_RECORD_HEADER_LEN;
 
 	/* opaque fragment[TLSPlaintext.length] */
 
 	/* Handshake */
-	hs_start = pos;
+	pos = payload;
 	/* HandshakeType msg_type */
 	*pos++ = TLS_HANDSHAKE_TYPE_SERVER_HELLO_DONE;
-	/* uint24 length (to be filled) */
-	hs_length = pos;
+	/* uint24 length */
+	WPA_PUT_BE24(pos, 0);
 	pos += 3;
 	/* body - ServerHelloDone (empty) */
 
-	WPA_PUT_BE24(hs_length, pos - hs_length - 3);
-
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      *msgpos, end - *msgpos, payload, pos - payload,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to generate a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
 		return -1;
 	}
-	pos = rhdr + rlen;
 
-	tls_verify_hash_add(&conn->verify, hs_start, pos - hs_start);
+	tls_verify_hash_add(&conn->verify, payload, pos - payload);
 
-	*msgpos = pos;
+	*msgpos += rlen;
 
 	return 0;
 }
@@ -543,17 +543,16 @@ static int tls_write_server_hello_done(struct tlsv1_server *conn,
 static int tls_write_server_change_cipher_spec(struct tlsv1_server *conn,
 					       u8 **msgpos, u8 *end)
 {
-	u8 *pos, *rhdr;
 	size_t rlen;
-
-	pos = *msgpos;
+	u8 payload[1];
 
 	wpa_printf(MSG_DEBUG, "TLSv1: Send ChangeCipherSpec");
-	rhdr = pos;
-	pos += TLS_RECORD_HEADER_LEN;
-	*pos = TLS_CHANGE_CIPHER_SPEC;
+
+	payload[0] = TLS_CHANGE_CIPHER_SPEC;
+
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_CHANGE_CIPHER_SPEC,
-			      rhdr, end - rhdr, 1, &rlen) < 0) {
+			      *msgpos, end - *msgpos, payload, sizeof(payload),
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to create a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
@@ -568,7 +567,7 @@ static int tls_write_server_change_cipher_spec(struct tlsv1_server *conn,
 		return -1;
 	}
 
-	*msgpos = rhdr + rlen;
+	*msgpos += rlen;
 
 	return 0;
 }
@@ -577,9 +576,9 @@ static int tls_write_server_change_cipher_spec(struct tlsv1_server *conn,
 static int tls_write_server_finished(struct tlsv1_server *conn,
 				     u8 **msgpos, u8 *end)
 {
-	u8 *pos, *rhdr, *hs_start, *hs_length;
+	u8 *pos, *hs_start;
 	size_t rlen, hlen;
-	u8 verify_data[TLS_VERIFY_DATA_LEN];
+	u8 verify_data[1 + 3 + TLS_VERIFY_DATA_LEN];
 	u8 hash[MD5_MAC_LEN + SHA1_MAC_LEN];
 
 	pos = *msgpos;
@@ -612,40 +611,35 @@ static int tls_write_server_finished(struct tlsv1_server *conn,
 
 	if (tls_prf(conn->master_secret, TLS_MASTER_SECRET_LEN,
 		    "server finished", hash, MD5_MAC_LEN + SHA1_MAC_LEN,
-		    verify_data, TLS_VERIFY_DATA_LEN)) {
+		    verify_data + 1 + 3, TLS_VERIFY_DATA_LEN)) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to generate verify_data");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
 		return -1;
 	}
 	wpa_hexdump_key(MSG_DEBUG, "TLSv1: verify_data (server)",
-			verify_data, TLS_VERIFY_DATA_LEN);
+			verify_data + 1 + 3, TLS_VERIFY_DATA_LEN);
 
-	rhdr = pos;
-	pos += TLS_RECORD_HEADER_LEN;
 	/* Handshake */
-	hs_start = pos;
+	pos = hs_start = verify_data;
 	/* HandshakeType msg_type */
 	*pos++ = TLS_HANDSHAKE_TYPE_FINISHED;
-	/* uint24 length (to be filled) */
-	hs_length = pos;
+	/* uint24 length */
+	WPA_PUT_BE24(pos, TLS_VERIFY_DATA_LEN);
 	pos += 3;
-	os_memcpy(pos, verify_data, TLS_VERIFY_DATA_LEN);
 	pos += TLS_VERIFY_DATA_LEN;
-	WPA_PUT_BE24(hs_length, pos - hs_length - 3);
 	tls_verify_hash_add(&conn->verify, hs_start, pos - hs_start);
 
 	if (tlsv1_record_send(&conn->rl, TLS_CONTENT_TYPE_HANDSHAKE,
-			      rhdr, end - rhdr, pos - hs_start, &rlen) < 0) {
+			      *msgpos, end - *msgpos, hs_start, pos - hs_start,
+			      &rlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to create a record");
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_INTERNAL_ERROR);
 		return -1;
 	}
 
-	pos = rhdr + rlen;
-
-	*msgpos = pos;
+	*msgpos += rlen;
 
 	return 0;
 }
@@ -770,7 +764,8 @@ u8 * tlsv1_server_send_alert(struct tlsv1_server *conn, u8 level,
 	/* ContentType type */
 	*pos++ = TLS_CONTENT_TYPE_ALERT;
 	/* ProtocolVersion version */
-	WPA_PUT_BE16(pos, TLS_VERSION);
+	WPA_PUT_BE16(pos, conn->rl.tls_version ? conn->rl.tls_version :
+		     TLS_VERSION);
 	pos += 2;
 	/* uint16 length (to be filled) */
 	length = pos;

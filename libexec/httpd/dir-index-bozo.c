@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.12.4.1 2012/04/17 00:05:35 yamt Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.12.4.2 2012/10/30 18:59:22 yamt Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -127,6 +127,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 	    j--; de++) {
 		int nostat = 0;
 		char *name = (*de)->d_name;
+		char *urlname;
 
 		if (strcmp(name, ".") == 0 ||
 		    (strcmp(name, "..") != 0 &&
@@ -139,18 +140,19 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 
 		l = 0;
 
+		urlname = escape_rfc3986(httpd, name);
 		if (strcmp(name, "..") == 0) {
 			bozo_printf(httpd, "<a href=\"../\">");
 			l += bozo_printf(httpd, "Parent Directory");
 		} else if (S_ISDIR(sb.st_mode)) {
-			bozo_printf(httpd, "<a href=\"%s/\">", name);
+			bozo_printf(httpd, "<a href=\"%s/\">", urlname);
 			l += bozo_printf(httpd, "%s/", name);
 		} else if (strchr(name, ':') != NULL) {
 			/* RFC 3986 4.2 */
-			bozo_printf(httpd, "<a href=\"./%s\">", name);
+			bozo_printf(httpd, "<a href=\"./%s\">", urlname);
 			l += bozo_printf(httpd, "%s", name);
 		} else {
-			bozo_printf(httpd, "<a href=\"%s\">", name);
+			bozo_printf(httpd, "<a href=\"%s\">", urlname);
 			l += bozo_printf(httpd, "%s", name);
 		}
 		bozo_printf(httpd, "</a>");

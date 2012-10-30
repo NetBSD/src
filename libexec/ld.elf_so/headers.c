@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $	 */
+/*	$NetBSD: headers.c,v 1.41.2.1 2012/10/30 18:59:22 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.41 2011/06/25 05:45:12 nonaka Exp $");
+__RCSID("$NetBSD: headers.c,v 1.41.2.1 2012/10/30 18:59:22 yamt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -227,9 +227,31 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			init = dynp->d_un.d_ptr;
 			break;
 
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_INIT_ARRAY:
+			obj->init_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_INIT_ARRAYSZ:
+			obj->init_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			break;
+#endif
+
 		case DT_FINI:
 			fini = dynp->d_un.d_ptr;
 			break;
+
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_FINI_ARRAY:
+			obj->fini_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			break;
+
+		case DT_FINI_ARRAYSZ:
+			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t); 
+			break;
+#endif
 
 		/*
 		 * Don't process DT_DEBUG on MIPS as the dynamic section
@@ -356,7 +378,6 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		    obj->phsize, (long)obj->relocbase));
 		break;
 	}
-	assert(obj->phdr == phdr);
 	
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = (Elf_Addr)(uintptr_t)(obj->relocbase + ph->p_vaddr);

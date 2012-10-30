@@ -1,4 +1,4 @@
-/*	$NetBSD: getextattr.c,v 1.9 2011/09/16 15:39:25 joerg Exp $	*/
+/*	$NetBSD: getextattr.c,v 1.9.2.1 2012/10/30 19:00:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Networks Associates Technology, Inc.
@@ -143,14 +143,14 @@ hexdump(const char *addr, size_t len)
 	for (i = 0; i < len; i += 16) {
 		printf("   %03x   ", i);
 		for (j = 0; j < 16; j++) {
-			if (i + j > len)
+			if (i + j >= len)
 				printf("   ");
 			else
 				printf("%02x ", addr[i + j] & 0xff);
 		}
 		printf("   ");
 		for (j = 0; j < 16; j++) {
-			if (i + j > len)
+			if (i + j >= len)
 				printf(" ");
 			else
 				printf("%c", HEXDUMP_PRINT(addr[i + j]));

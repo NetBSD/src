@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.4 2011/01/13 22:28:36 haad Exp $
+.\"	$NetBSD: chgrp.1,v 1.4.6.1 2012/10/30 18:59:25 yamt Exp $
 .\"
-.Dd September 25, 2003
+.Dd October 22, 2012
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -45,7 +45,15 @@
 .Oc
 .Op Fl fhv
 .Ar group
-.Ar file ...
+.Ar
+.Nm
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fhv
+.Fl Fl reference=rfile
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,7 +61,12 @@ utility sets the group ID of the file named by each
 .Ar file
 operand to the
 .Ar group
-ID specified by the group operand.
+ID specified by the group operand,
+or to the group of the given
+.Ar rfile ,
+specified by the
+.Fl Fl reference
+argument.
 .Pp
 Options:
 .Bl -tag -width Ds

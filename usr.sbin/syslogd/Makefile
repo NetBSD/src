@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.23 2010/06/09 21:55:42 riz Exp $
+#	$NetBSD: Makefile,v 1.23.6.1 2012/10/30 19:00:52 yamt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
+WARNS?=4
 USE_FORT?= yes	# network server
 
 LINTFLAGS+=-X 132,247,135,259,117,298

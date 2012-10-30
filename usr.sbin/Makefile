@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.258.2.1 2012/04/17 00:09:44 yamt Exp $
+#	$NetBSD: Makefile,v 1.258.2.2 2012/10/30 19:00:30 yamt Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	ndbootd ndiscvt netgroup_mkdb nfsd \
 	ofctl \
 	paxctl pcictl perfused pppd psrset pstat pwd_mkdb postinstall \
-	powerd puffs \
+	powerd \
 	quot quotacheck quotaon quotarestore \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
@@ -29,7 +29,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
-	wake wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
+	wakeonlan wiconfig wlanctl wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
 
 .if ${MKMAKEMANDB} != "no"
@@ -38,6 +38,10 @@ SUBDIR+= makemandb
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
+.endif
+
+.if (${MKRUMP} != "no")
+SUBDIR+= puffs
 .endif
 
 .if ${TOOLCHAIN_MISSING} != "no"

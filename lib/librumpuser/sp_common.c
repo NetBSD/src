@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.31 2011/03/08 15:34:37 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.31.4.1 2012/10/30 18:59:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -29,14 +29,13 @@
  * Common client/server sysproxy routines.  #included.
  */
 
-#include <sys/cdefs.h>
+#include "rumpuser_port.h"
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/syslimits.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -46,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <poll.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -54,6 +54,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/*
+ * XXX: NetBSD's __unused collides with Linux headers, so we cannot
+ * define it before we've included everything.
+ */
+#if !defined(__unused) && defined(__GNUC__)
+#define __unused __attribute__((__unused__))
+#endif
 
 //#define DEBUG
 #ifdef DEBUG
@@ -96,6 +104,39 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_RAISE };
 
 enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK, HANDSHAKE_EXEC };
+
+/*
+ * error types used for RUMPSP_ERROR
+ */
+enum rumpsp_err { RUMPSP_ERR_NONE = 0, RUMPSP_ERR_TRYAGAIN, RUMPSP_ERR_AUTH,
+	RUMPSP_ERR_INVALID_PREFORK, RUMPSP_ERR_RFORK_FAILED,
+	RUMPSP_ERR_INEXEC, RUMPSP_ERR_NOMEM, RUMPSP_ERR_MALFORMED_REQUEST };
+
+/*
+ * The mapping of the above types to errno.  They are almost never exposed
+ * to the client after handshake (except for a server resource shortage
+ * and the client trying to be funny).  This is a function instead of
+ * an array to catch missing values.  Theoretically, the compiled code
+ * should be the same.
+ */
+static int
+errmap(enum rumpsp_err error)
+{
+
+	switch (error) {
+	/* XXX: no EAUTH on Linux */
+	case RUMPSP_ERR_NONE:			return 0;
+	case RUMPSP_ERR_AUTH:			return EPERM;
+	case RUMPSP_ERR_TRYAGAIN:		return EAGAIN;
+	case RUMPSP_ERR_INVALID_PREFORK:	return ESRCH;
+	case RUMPSP_ERR_RFORK_FAILED:		return EIO; /* got a light? */
+	case RUMPSP_ERR_INEXEC:			return EBUSY;
+	case RUMPSP_ERR_NOMEM:			return ENOMEM;
+	case RUMPSP_ERR_MALFORMED_REQUEST:	return EINVAL;
+	}
+
+	return -1;
+}
 
 #define AUTHLEN 4 /* 128bit fork auth */
 
@@ -394,7 +435,7 @@ kickwaiter(struct spclient *spc)
 	rw->rw_done = 1;
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
-		error = rw->rw_error = spc->spc_hdr.rsp_error;
+		error = rw->rw_error = errmap(spc->spc_hdr.rsp_error);
 	}
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
@@ -502,7 +543,7 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
+	SA_SETLEN(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');
@@ -593,7 +634,7 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	size_t slen;
 	int savepath = 0;
 
-	if (strlen(addr) > sizeof(sun.sun_path))
+	if (strlen(addr) >= sizeof(sun.sun_path))
 		return ENAMETOOLONG;
 
 	/*
@@ -612,16 +653,20 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 			fprintf(stderr, "warning: cannot determine cwd, "
 			    "omitting socket cleanup\n");
 		} else {
-			if (strlen(addr) + strlen(mywd) > sizeof(sun.sun_path))
+			if (strlen(addr)+strlen(mywd)+1 >= sizeof(sun.sun_path))
 				return ENAMETOOLONG;
-			strlcpy(sun.sun_path, mywd, sizeof(sun.sun_path));
-			strlcat(sun.sun_path, "/", sizeof(sun.sun_path));
+			strcpy(sun.sun_path, mywd);
+			strcat(sun.sun_path, "/");
 			savepath = 1;
 		}
 	}
-	strlcat(sun.sun_path, addr, sizeof(sun.sun_path));
+	strcat(sun.sun_path, addr);
+#ifdef __linux__
+	slen = sizeof(sun);
+#else
 	sun.sun_len = SUN_LEN(&sun);
 	slen = sun.sun_len+1; /* get the 0 too */
+#endif
 
 	if (savepath && *parsedurl == '\0') {
 		snprintf(parsedurl, sizeof(parsedurl),
@@ -668,14 +713,18 @@ success(void)
 struct {
 	const char *id;
 	int domain;
+	socklen_t slen;
 	addrparse_fn ap;
 	connecthook_fn connhook;
 	cleanup_fn cleanup;
 } parsetab[] = {
-	{ "tcp", PF_INET, tcp_parse, tcp_connecthook, (cleanup_fn)success },
-	{ "unix", PF_LOCAL, unix_parse, (connecthook_fn)success, unix_cleanup },
-	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success,
-			    (cleanup_fn)success },
+	{ "tcp", PF_INET, sizeof(struct sockaddr_in),
+	    tcp_parse, tcp_connecthook, (cleanup_fn)success },
+	{ "unix", PF_LOCAL, sizeof(struct sockaddr_un),
+	    unix_parse, (connecthook_fn)success, unix_cleanup },
+	{ "tcp6", PF_INET6, sizeof(struct sockaddr_in6),
+	    (addrparse_fn)notsupp, (connecthook_fn)success,
+	    (cleanup_fn)success },
 };
 #define NPARSE (sizeof(parsetab)/sizeof(parsetab[0]))
 

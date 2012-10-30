@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.72.2.1 2012/04/17 00:09:37 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.72.2.2 2012/10/30 19:00:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.72.2.1 2012/04/17 00:09:37 yamt Exp $");
+__RCSID("$NetBSD: if.c,v 1.72.2.2 2012/10/30 19:00:24 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,11 +601,11 @@ static void
 iftot_print(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
-		printf("%10" PRIu64 "%8.8s %10" PRIu64 "%5.5s",
+		printf("%10" PRIu64 " %8.8s %10" PRIu64 " %5.5s",
 		    cur->ift_ib - old->ift_ib, " ",
 		    cur->ift_ob - old->ift_ob, " ");
 	else
-		printf("%8" PRIu64 "%5" PRIu64 "%8" PRIu64 "%5" PRIu64 "%5" PRIu64,
+		printf("%8" PRIu64 " %5" PRIu64 " %8" PRIu64 " %5" PRIu64 " %5" PRIu64,
 		    cur->ift_ip - old->ift_ip,
 		    cur->ift_ie - old->ift_ie,
 		    cur->ift_op - old->ift_op,
@@ -621,11 +621,11 @@ static void
 iftot_print_sum(struct iftot *cur, struct iftot *old)
 {
 	if (bflag)
-		printf("  %10" PRIu64 "%8.8s %10" PRIu64 "%5.5s",
+		printf("  %10" PRIu64 " %8.8s %10" PRIu64 " %5.5s",
 		    cur->ift_ib - old->ift_ib, " ",
 		    cur->ift_ob - old->ift_ob, " ");
 	else
-		printf("  %8" PRIu64 "%5" PRIu64 "%8" PRIu64 "%5" PRIu64 "%5" PRIu64,
+		printf("  %8" PRIu64 " %5" PRIu64 " %8" PRIu64 " %5" PRIu64 " %5" PRIu64,
 		    cur->ift_ip - old->ift_ip,
 		    cur->ift_ie - old->ift_ie,
 		    cur->ift_op - old->ift_op,

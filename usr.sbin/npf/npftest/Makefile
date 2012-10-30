@@ -1,19 +1,20 @@
-# $NetBSD: Makefile,v 1.1.2.2 2012/04/17 00:09:50 yamt Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2012/10/30 19:00:45 yamt Exp $
 #
 # Public Domain
 #
 
 PROG=		npftest
 
-SRCS=		npftest.c
+SRCS=		npftest.c npfstream.c
 CPPFLAGS+=	-I${.CURDIR}
 
 LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrump -lrumpnet_net
-LDADD+=		-lrumpnet_virtif -lrumpdev_npf -lpthread
+LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_npf
+
+LDADD+=		-lpcap -lprop -lpthread
 
 WARNS=		4
 NOMAN=		# no man page

@@ -1,23 +1,20 @@
-# $NetBSD: Makefile,v 1.4.2.1 2011/11/10 14:31:52 yamt Exp $
+# $NetBSD: Makefile,v 1.4.2.2 2012/10/30 19:00:00 yamt Exp $
 
 MKMAN=	no
 
 .include <bsd.own.mk>
 
 TESTSDIR?=	${TESTSBASE}/lib/libc/regex
-IMPLEMENTATION?=	-DREGEX_SPENCER
-SKIPASSOC?=	left
+IMPLEMENTATION?=	-DREGEX_SPENCER -DSKIP_LEFTASSOC
 
 BINDIR=		${TESTSDIR}
 PROGS?=		h_regex
-PROGS+=		h_regex_att
-SRCS.h_regex_att=	att.c
 SRCS.h_regex=	main.c split.c debug.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/regex ${IMPLEMENTATION}
 
 TESTS_SH?=	t_regex
-TESTS_SH+=	t_regex_att
-TESTS_C=	t_exhaust
+TESTS_C=	t_regex_att
+TESTS_C+=	t_exhaust
 
 FILESDIR=	${TESTSDIR}/data
 FILES+=		README
@@ -48,13 +45,5 @@ FILES+=		data/att/leftassoc.dat
 FILES+=		data/att/nullsubexpr.dat
 FILES+=		data/att/repetition.dat
 FILES+=		data/att/rightassoc.dat
-
-t_regex.sh: t_regex.awk t_regex.in
-	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
-
-t_regex_att.sh: t_regex.awk t_regex_att.in
-	${TOOL_AWK} -v skipassoc=${SKIPASSOC} -f ${.ALLSRC} > ${.TARGET}
-
-CLEANFILES+= t_regex.sh t_regex_att.sh
 
 .include <bsd.test.mk>

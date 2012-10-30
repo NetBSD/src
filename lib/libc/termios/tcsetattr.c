@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetattr.c,v 1.8 2003/08/07 16:44:14 agc Exp $	*/
+/*	$NetBSD: tcsetattr.c,v 1.8.56.1 2012/10/30 18:59:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsetattr.c,v 1.8 2003/08/07 16:44:14 agc Exp $");
+__RCSID("$NetBSD: tcsetattr.c,v 1.8.56.1 2012/10/30 18:59:04 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,9 +51,7 @@ __weak_alias(tcsetattr,_tcsetattr)
 #endif
 
 int
-tcsetattr(fd, opt, t)
-	int fd, opt;
-	const struct termios *t;
+tcsetattr(int fd, int opt, const struct termios *t)
 {
 	struct termios localterm;
 

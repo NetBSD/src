@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.150.4.1 2012/04/17 00:05:47 yamt Exp $
+.\"	$NetBSD: rc.conf.5,v 1.150.4.2 2012/10/30 18:59:41 yamt Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2011
+.Dd October 2, 2012
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -282,7 +282,7 @@ which may be required to get the network operational.
 The default is
 .Dq "OPTIONAL:/var" ,
 where the
-.Dq OPTIONAL:
+.Dq "OPTIONAL:"
 prefix means that it's not an error if the file system is not
 present in
 .Xr fstab 5 .
@@ -295,7 +295,7 @@ that must be available early in the system boot for general services to use.
 The default is
 .Dq "OPTIONAL:/usr" ,
 where the
-.Dq OPTIONAL:
+.Dq "OPTIONAL:"
 prefix means that it is not an error if the file system is not
 present in
 .Xr fstab 5 .
@@ -325,15 +325,8 @@ Boolean value.
 Remove block-type swap devices at shutdown time.
 Useful if swapping onto RAIDframe devices.
 .El
-.Ss One-time actions to perform or programs to run on boot-up
+.Ss Block device subsystems
 .Bl -tag -width net_interfaces
-.It Sy accounting
-Boolean value.
-Enables process accounting with
-.Xr accton 8 .
-Requires
-.Pa /var/account/acct
-to exist.
 .It Sy ccd
 Boolean value.
 Configures concatenated disk devices according to
@@ -346,6 +339,30 @@ Requires
 See
 .Xr cgdconfig 8
 for additional details.
+.It Sy lvm
+Boolean value.
+Configures the logical volume manager.
+See
+.Xr lvm 8
+for additional details.
+.It Sy raidframe
+Boolean value.
+Configures
+.Xr raid 4 ,
+RAIDframe disk devices.
+See
+.Xr raidctl 8
+for additional details.
+.El
+.Ss One-time actions to perform or programs to run on boot-up
+.Bl -tag -width net_interfaces
+.It Sy accounting
+Boolean value.
+Enables process accounting with
+.Xr accton 8 .
+Requires
+.Pa /var/account/acct
+to exist.
 .It Sy clear_tmp
 Boolean value.
 Clear
@@ -415,14 +432,6 @@ Checks and enables quotas by running
 .Xr quotacheck 8
 and
 .Xr quotaon 8 .
-.It Sy raidframe
-Boolean value.
-Configures
-.Xr raid 4 ,
-RAIDframe disk devices.
-See
-.Xr raidctl 8
-for additional details.
 .It Sy rndctl
 Boolean value.
 Runs the
@@ -493,10 +502,10 @@ The default setting is
 .It Sy sysdb
 Boolean value.
 Builds various system databases, including
-.Pa /var/run/dev.db ,
+.Pa /var/run/dev.cdb ,
 .Pa /etc/spwd.db ,
 .Pa /var/db/netgroup.db ,
-.Pa /var/db/services.db ,
+.Pa /var/db/services.cdb ,
 and entries for
 .Xr utmp 5 .
 .It Sy tpctl
@@ -515,12 +524,6 @@ version string in the
 file to reflect the version of the running kernel.
 See
 .Xr motd 5 .
-.It Sy veriexec
-Boolean value.
-Load Veriexec fingerprints during startup.
-Read
-.Xr veriexecctl 8
-for more information.
 .It Sy virecover
 Boolean value.
 Send notification mail to users if any recoverable files exist in
@@ -537,7 +540,7 @@ Refer to
 .Xr wdogctl 8
 for information on how to configure a timer.
 .El
-.Ss System security setting
+.Ss System security settings
 .Bl -tag -width net_interfaces
 .It Sy securelevel
 A number.
@@ -559,8 +562,15 @@ will raise the level when
 .Xr rc 8
 completes.
 .It Sy permit_nonalpha
+Boolean value.
 Allow passwords to include non-alpha characters, usually to allow
 NIS/YP netgroups.
+.It Sy veriexec
+Boolean value.
+Load Veriexec fingerprints during startup.
+Read
+.Xr veriexecctl 8
+for more information.
 .It Sy veriexec_strict
 A number.
 Controls the strict level of Veriexec.
@@ -642,13 +652,30 @@ then you should specify an alternate location for the DHCP client's lease
 file in the
 .Sy dhclient_flags
 variable - for example, "-lf /tmp/dhclient.leases".
-.It Sy dhcpcd_flags
-Additional arguments to pass to
-.Xr dhcpcd 8
-when requesting configuration via
-.Sy ifconfig_xxN
+.It Sy dhcpcd
+Boolean value.
+Set true to configure some or all network interfaces using dhcpcd.
+If you set
+.Sy dhcpcd
+true, then
+.Pa /var
+must be in
+.Sy critical_filesystems_local ,
 or
-.Pa /etc/ifconfig.xxN .
+.Pa /var
+must be on the root file system.
+If you need to restrict dhcpcd to one or a number of interfaces,
+or need a separate configuration per interface,
+then this should be done in the configuration file - see
+.Xr dhcpcd.conf 5
+for details.
+.It Sy dhcpcd_flags
+Passes
+.Sy dhcpcd_flags
+to dhcpcd.
+See
+.Xr dhcpcd 8
+for complete documentation.
 .It Sy flushroutes
 Boolean value.
 Flushes the route table on networking startup.
@@ -816,12 +843,7 @@ variable contains a single line with embedded semicolons,
 then the value is split into multiple lines prior to further parsing,
 treating the semicolon as a line separator.
 .Pp
-One common case is to set
-.Sy ifconfig_xxN Ns Li \&= Ns Qq dhcp ,
-which will cause
-.Xr dhcpcd 8
-to be started for the interface.
-Another common case it to set the
+One common case it to set the
 .Sy ifconfig_xxN
 variable to a set of arguments to be passed to an
 .Xr ifconfig 8
@@ -953,6 +975,7 @@ Boolean value.
 Run
 .Xr cron 8 .
 .It Sy ftpd
+Boolean value.
 Runs the
 .Xr ftpd 8
 daemon and passes

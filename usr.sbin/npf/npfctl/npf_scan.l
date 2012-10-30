@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.1.4.2 2012/04/17 00:09:50 yamt Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.1.4.3 2012/10/30 19:00:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 
 #include "npfctl.h"
@@ -53,14 +54,16 @@ table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
-nat			return NAT;
-binat			return BINAT;
-"->"			return ARROW;
+map			return MAP;
+"<->"			return ARROWBOTH;
+"<-"			return ARROWLEFT;
+"->"			return ARROWRIGHT;
 "-"			return MINUS;
-rdr			return RDR;
 procedure		return PROCEDURE;
+\\\n			yylineno++; yycolumn = 0;
 \n			yylineno++; yycolumn = 0; return SEPLINE;
 ;			return SEPLINE;
 name			return NAME;
@@ -72,10 +75,10 @@ interface		return INTERFACE;
 all			return ALL;
 block			return BLOCK;
 pass			return PASS;
-keep			return KEEP;
-state			return STATE;
+stateful		return STATEFUL;
 apply			return APPLY;
-quick			return QUICK;
+final			return FINAL;
+quick			return FINAL;
 on			return ON;
 inet6			return INET6;
 inet4			return INET;
@@ -83,8 +86,9 @@ inet			return INET;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
-icmp			return ICMP;
-udp			return UDP;
+icmp			{ yylval.num = IPPROTO_ICMP; return ICMP; }
+ipv6-icmp		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
+\"ipv6-icmp\"		{ yylval.num = IPPROTO_ICMPV6; return ICMP6; }
 return-rst		return RETURNRST;
 return-icmp		return RETURNICMP;
 return			return RETURN;
@@ -110,6 +114,13 @@ any			return ANY;
 			yylval.num = strtoul(buf+2, &endp, 16);
 			free(buf);
 			return HEX;
+		}
+
+{NUMBER}"."{NUMBER} {
+			char *endp, *buf = xstrndup(yytext, yyleng);
+			yylval.fpnum = strtod(buf, &endp);
+			free(buf);
+			return FPNUM;
 		}
 
 [0-9a-fA-F]+":"[0-9a-fA-F:]* {

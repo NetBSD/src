@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $ */
+/* $NetBSD: fenv.c,v 1.3.6.1 2012/10/30 18:59:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3.6.1 2012/10/30 18:59:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -472,7 +472,7 @@ feenableexcept(int mask)
 		__ldmxcsr(mxcsr);
 	}
 
-	return (~omask);
+	return (FE_ALL_EXCEPT & ~omask);
 }
 
 int
@@ -496,7 +496,7 @@ fedisableexcept(int mask)
 		__ldmxcsr(mxcsr);
 	}
 
-	return (~omask);
+	return (FE_ALL_EXCEPT & ~omask);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.24 2009/08/12 05:48:04 dholland Exp $	*/
+/*	$NetBSD: crib.c,v 1.24.6.1 2012/10/30 18:58:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.24 2009/08/12 05:48:04 dholland Exp $");
+__RCSID("$NetBSD: crib.c,v 1.24.6.1 2012/10/30 18:58:19 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -460,7 +460,7 @@ prcrib(BOOLEAN mycrib, BOOLEAN blank)
  *	Handle all the pegging...
  */
 static CARD Table[14];
-static int Tcnt;
+static unsigned Tcnt;
 
 static int
 peg(BOOLEAN mycrib)

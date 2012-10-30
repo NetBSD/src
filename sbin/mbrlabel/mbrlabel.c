@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.27 2011/08/27 17:45:30 joerg Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.27.2.1 2012/10/30 18:59:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.27 2011/08/27 17:45:30 joerg Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.27.2.1 2012/10/30 18:59:28 yamt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -239,7 +239,7 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-fqrw] [-s sector] rawdisk\n",
+	fprintf(stderr, "usage: %s [-fqrw] [-s sector] device\n",
 	    getprogname());
 	exit(1);
 }

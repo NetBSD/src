@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.101.2.1 2012/04/17 00:05:42 yamt Exp $	*/
+/*	$NetBSD: ping.c,v 1.101.2.2 2012/10/30 18:59:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.101.2.1 2012/04/17 00:05:42 yamt Exp $");
+__RCSID("$NetBSD: ping.c,v 1.101.2.2 2012/10/30 18:59:31 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -116,10 +116,10 @@ __RCSID("$NetBSD: ping.c,v 1.101.2.1 2012/04/17 00:05:42 yamt Exp $");
 #define F_TIMING64	0x10000		/* 64 bit time, nanoseconds */
 #ifdef IPSEC
 #ifdef IPSEC_POLICY_IPSEC
-#define F_POLICY	0x10000
+#define F_POLICY	0x20000
 #else
-#define	F_AUTHHDR	0x10000
-#define	F_ENCRYPT	0x20000
+#define	F_AUTHHDR	0x20000
+#define	F_ENCRYPT	0x40000
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif /*IPSEC*/
 

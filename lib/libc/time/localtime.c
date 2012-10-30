@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.62.2.2 2012/04/17 00:05:26 yamt Exp $	*/
+/*	$NetBSD: localtime.c,v 1.62.2.3 2012/10/30 18:59:04 yamt Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.62.2.2 2012/04/17 00:05:26 yamt Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.62.2.3 2012/10/30 18:59:04 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __weak_alias(tzname,_tzname)
 
 static const char	wildabbr[] = WILDABBR;
 
-static char		gmt[] = "GMT";
+static const char	gmt[] = "GMT";
 
 /*
 ** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
@@ -128,8 +128,8 @@ struct __state {
 	time_t		ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
-	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
-				(2 * (MY_TZNAME_MAX + 1)))];
+	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1,
+				sizeof gmt), (2 * (MY_TZNAME_MAX + 1)))];
 	struct lsinfo	lsis[TZ_MAX_LEAPS];
 };
 
@@ -155,8 +155,8 @@ typedef struct tm *(*subfun_t)(const timezone_t sp, const time_t *timep,
 static long		detzcode(const char * codep);
 static time_t		detzcode64(const char * codep);
 static int		differ_by_repeat(time_t t1, time_t t0);
-static const char *	getzname(const char * strp);
-static const char *	getqzname(const char * strp, const int delim);
+static const char *	getzname(const char * strp) __pure;
+static const char *	getqzname(const char * strp, const int delim) __pure;
 static const char *	getnum(const char * strp, int * nump, int min,
 				int max);
 static const char *	getsecs(const char * strp, long * secsp);
@@ -168,7 +168,7 @@ static struct tm *	gmtsub(const timezone_t sp, const time_t *timep,
 static struct tm *	localsub(const timezone_t sp, const time_t *timep,
 				long offset, struct tm *tmp);
 static int		increment_overflow(int * number, int delta);
-static int		leaps_thru_end_of(int y);
+static int		leaps_thru_end_of(int y) __pure;
 static int		long_increment_overflow(long * number, int delta);
 static int		long_normalize_overflow(long * tensptr,
 				int * unitsptr, int base);
@@ -176,11 +176,11 @@ static int		normalize_overflow(int * tensptr, int * unitsptr,
 				int base);
 static void		settzname(void);
 static time_t		time1(const timezone_t sp, struct tm * const tmp,
-				subfun_t funcp, long offset);
+				subfun_t funcp, const long offset);
 static time_t		time2(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp,
 				const long offset, int *const okayp);
-static time_t		time2sub(const timezone_t sp, struct tm * consttmp,
+static time_t		time2sub(const timezone_t sp, struct tm * const tmp,
 				subfun_t funcp, const long offset,
 				int *const okayp, const int do_norm_secs);
 static struct tm *	timesub(const timezone_t sp, const time_t * timep,
@@ -188,7 +188,7 @@ static struct tm *	timesub(const timezone_t sp, const time_t * timep,
 static int		tmcomp(const struct tm * atmp,
 				const struct tm * btmp);
 static time_t		transtime(time_t janfirst, int year,
-				const struct rule * rulep, long offset);
+				const struct rule * rulep, long offset) __pure;
 static int		typesequiv(const timezone_t sp, int a, int b);
 static int		tzload(timezone_t sp, const char * name,
 				int doextend);
@@ -268,7 +268,7 @@ detzcode64(const char *const codep)
 	time_t	result;
 	int	i;
 
-	result = (codep[0] & 0x80) ? -1 : 0;
+	result = (time_t)((codep[0] & 0x80) ? (~(int_fast64_t) 0) : 0);
 	for (i = 0; i < 8; ++i)
 		result = result * 256 + (codep[i] & 0xff);
 	return result;
@@ -346,7 +346,7 @@ settzname(void)
 			timezone = -(ttisp->tt_gmtoff);
 #endif /* defined USG_COMPAT */
 #ifdef ALTZONE
-		if (i == 0 || ttisp->tt_isdst)
+		if (ttisp->tt_isdst)
 			altzone = -(ttisp->tt_gmtoff);
 #endif /* defined ALTZONE */
 	}
@@ -356,7 +356,6 @@ settzname(void)
 static int
 differ_by_repeat(const time_t t1, const time_t t0)
 {
-/* CONSTCOND */
 	if (TYPE_INTEGRAL(time_t) &&
 		TYPE_BIT(time_t) - TYPE_SIGNED(time_t) < SECSPERREPEAT_BITS)
 			return 0;
@@ -527,7 +526,6 @@ tzload(timezone_t sp, const char *name, const int doextend)
 		for (i = 0; i < sp->timecnt - 2; ++i)
 			if (sp->ats[i] > sp->ats[i + 1]) {
 				++i;
-/* CONSTCOND */
 				if (TYPE_SIGNED(time_t)) {
 					/*
 					** Ignore the end (easy).
@@ -696,7 +694,7 @@ getqzname(const char *strp, const int delim)
 */
 
 static const char *
-getnum(const char *strp, int * const nump, const int min, const int max)
+getnum(const char *strp, int *const nump, const int min, const int max)
 {
 	char	c;
 	int	num;
@@ -1074,7 +1072,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			if (*name != '\0')
 				return -1;
 			/*
-			** Initial values of theirstdoffset
+			** Initial values of theirstdoffset and theirdstoffset.
 			*/
 			theirstdoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i) {
@@ -1138,6 +1136,7 @@ tzparse(timezone_t sp, const char *name, const int lastditch)
 			}
 			/*
 			** Finally, fill in ttis.
+			** ttisstd and ttisgmt need not be handled
 			*/
 			memset(sp->ttis, 0, sizeof(sp->ttis));
 			sp->ttis[0].tt_gmtoff = -stdoffset;
@@ -1247,11 +1246,8 @@ void
 tzset_unlocked(void)
 {
 	const char *	name;
-	int saveerrno;
 
-	saveerrno = errno;
 	name = getenv("TZ");
-	errno = saveerrno;
 	if (name == NULL) {
 		tzsetwall_unlocked();
 		return;
@@ -1264,7 +1260,7 @@ tzset_unlocked(void)
 		(void)strlcpy(lcl_TZname, name, sizeof(lcl_TZname));
 
 	if (lclptr == NULL) {
-		saveerrno = errno;
+		int saveerrno = errno;
 		lclptr = calloc(1, sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
@@ -1430,7 +1426,7 @@ localtime_rz(const timezone_t sp, const time_t * __restrict timep, struct tm *tm
 */
 
 static struct tm *
-gmtsub(const timezone_t sp, const time_t * const timep, const long offset,
+gmtsub(const timezone_t sp, const time_t *const timep, const long offset,
     struct tm *const tmp)
 {
 	struct tm *	result;
@@ -1712,7 +1708,7 @@ ctime_rz(const timezone_t sp, const time_t * timep, char *buf)
 */
 
 static int
-increment_overflow(int *ip, int j)
+increment_overflow(int *const ip, int j)
 {
 	int	i = *ip;
 
@@ -1729,7 +1725,7 @@ increment_overflow(int *ip, int j)
 }
 
 static int
-long_increment_overflow(long *lp, int m)
+long_increment_overflow(long *const lp, int m)
 {
 	long l = *lp;
 
@@ -1869,17 +1865,17 @@ again:
 	/*
 	** Do a binary search (this works whatever time_t's type is).
 	*/
-/* LINTED constant */
+	/* LINTED const not */
 	if (!TYPE_SIGNED(time_t)) {
 		lo = 0;
 		hi = lo - 1;
-/* LINTED constant */
+	/* LINTED const not */
 	} else if (!TYPE_INTEGRAL(time_t)) {
-/* CONSTCOND */
+		/* CONSTCOND */
 		if (sizeof(time_t) > sizeof(float))
-/* LINTED assumed double */
+			/* LINTED assumed double */
 			hi = (time_t) DBL_MAX;
-/* LINTED assumed float */
+			/* LINTED assumed float */
 		else	hi = (time_t) FLT_MAX;
 		lo = -hi;
 	} else {
@@ -2009,7 +2005,7 @@ time2(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 
 static time_t
 time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
-    long offset)
+    const long offset)
 {
 	time_t			t;
 	int			samei, otheri;
@@ -2082,7 +2078,7 @@ time1(const timezone_t sp, struct tm *const tmp, subfun_t funcp,
 }
 
 time_t
-mktime_z(const timezone_t sp, struct tm *tmp)
+mktime_z(const timezone_t sp, struct tm *const tmp)
 {
 	time_t t;
 	if (sp == NULL)
@@ -2093,7 +2089,7 @@ mktime_z(const timezone_t sp, struct tm *tmp)
 }
 
 time_t
-mktime(struct tm * const	tmp)
+mktime(struct tm *const tmp)
 {
 	time_t result;
 
@@ -2107,7 +2103,7 @@ mktime(struct tm * const	tmp)
 #ifdef STD_INSPIRED
 
 time_t
-timelocal_z(const timezone_t sp, struct tm *tmp)
+timelocal_z(const timezone_t sp, struct tm *const tmp)
 {
 	if (tmp != NULL)
 		tmp->tm_isdst = -1;	/* in case it wasn't initialized */

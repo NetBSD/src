@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.134.2.2 2012/05/23 10:07:34 yamt Exp $ */
+/*	$NetBSD: fdisk.c,v 1.134.2.3 2012/10/30 18:59:25 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.134.2.2 2012/05/23 10:07:34 yamt Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.134.2.3 2012/10/30 18:59:25 yamt Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -86,7 +86,9 @@ __RCSID("$NetBSD: fdisk.c,v 1.134.2.2 2012/05/23 10:07:34 yamt Exp $");
 #endif
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
+#ifndef	DEFAULT_BOOTDIR
 #define	DEFAULT_BOOTDIR		"/usr/mdec"
+#endif
 
 #define	LE_MBR_MAGIC		htole16(MBR_MAGIC)
 #define	LE_MBR_BS_MAGIC		htole16(MBR_BS_MAGIC)

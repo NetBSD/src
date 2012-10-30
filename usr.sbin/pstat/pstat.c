@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.118 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.118.2.1 2012/10/30 19:00:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.118 2011/08/31 13:32:39 joerg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.118.2.1 2012/10/30 19:00:50 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,7 +453,6 @@ const struct flagbit_desc ufs_flags[] = {
 	{ IN_UPDATE,	'U' },
 	{ IN_MODIFIED,	'M' },
 	{ IN_ACCESSED,	'a' },
-	{ IN_RENAME,	'R' },
 	{ IN_SHLOCK,	'S' },
 	{ IN_EXLOCK,	'E' },
 	{ IN_CLEANING,	'c' },

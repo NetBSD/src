@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.66 2011/10/31 15:26:11 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.66.2.1 2012/10/30 18:59:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.66 2011/10/31 15:26:11 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.66.2.1 2012/10/30 18:59:24 yamt Exp $");
 #endif
 
 
@@ -177,6 +177,7 @@ static const struct bitinfo ata_vers[] = {
 	{ WDC_VER_ATA5,	"ATA-5" },
 	{ WDC_VER_ATA6,	"ATA-6" },
 	{ WDC_VER_ATA7,	"ATA-7" },
+	{ WDC_VER_ATA8, "ATA-8" },
 	{ 0, NULL },
 };
 
@@ -1040,6 +1041,10 @@ device_identify(int argc, char *argv[])
 			print_bitinfo("\t", "\n",
 			    inqbuf->atap_sata_features_supp, ata_sata_feat);
 	}
+
+	if ((inqbuf->atap_ata_major & WDC_VER_ATA8) &&
+	    (inqbuf->support_dsm & ATA_SUPPORT_DSM_TRIM))
+		printf("TRIM supported\n");
 
 	return;
 }

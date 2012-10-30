@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $	*/
+/*	$NetBSD: cut.c,v 1.25.2.2 2012/10/30 19:00:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.25.2.1 2012/04/17 00:09:30 yamt Exp $");
+__RCSID("$NetBSD: cut.c,v 1.25.2.2 2012/10/30 19:00:15 yamt Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 
 	dchar = '\t';			/* default delimiter is \t */
 
-	/* Since we don't support multi-byte characters, the -c and -b 
+	/* Since we don't support multi-byte characters, the -c and -b
 	   options are equivalent, and the -n option is meaningless. */
 	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
@@ -166,7 +166,7 @@ get_list(char *list)
 	 * This parser is less restrictive than the Draft 9 POSIX spec.
 	 * POSIX doesn't allow lists that aren't in increasing order or
 	 * overlapping lists.  We also handle "-3-5" although there's no
-	 * real reason too.
+	 * real reason to.
 	 */
 	for (; (p = strtok(list, ", \t")) != NULL; list = NULL) {
 		setautostart = start = stop = 0;
@@ -189,9 +189,9 @@ get_list(char *list)
 			}
 		}
 		if (*p)
-			errx(1, "[-cf] list: illegal list value");
+			errx(1, "[-bcf] list: illegal list value");
 		if (!stop || !start)
-			errx(1, "[-cf] list: values may not include zero");
+			errx(1, "[-bcf] list: values may not include zero");
 		if (stop + 1 > numpositions) {
 			size_t newsize;
 			newsize = roundup(stop + 1, ALLOC_CHUNK);
@@ -287,12 +287,12 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage:\tcut -b list [-n] [file ...]\n"
 	    "\tcut -c list [file ...]\n"
-	    "\tcut -f list [-d delim] [-s] [file ...]\n");
+	    "\tcut -f list [-d string] [-s] [file ...]\n");
 	exit(1);
 }
 
 /* make b_put(): */
-#define CUT_BYTE 1 
+#define CUT_BYTE 1
 #include "x_cut.c"
 #undef CUT_BYTE
 

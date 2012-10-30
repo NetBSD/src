@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.79.2.1 2012/04/17 00:09:54 yamt Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.79.2.2 2012/10/30 19:00:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997, 1998, 1999, 2000
@@ -30,7 +30,7 @@ static const char rcsid[] =
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997,\
  1998, 1999, 2000\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.79.2.1 2012/04/17 00:09:54 yamt Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.79.2.2 2012/10/30 19:00:53 yamt Exp $");
 #endif
 #endif
 
@@ -984,6 +984,7 @@ again:
 					continue;
 				if (!gotlastaddr ||
 				    from->sin_addr.s_addr != lastaddr) {
+					if (gotlastaddr) printf("\n   ");
 					print(packet, cc, from);
 					lastaddr = from->sin_addr.s_addr;
 					++gotlastaddr;

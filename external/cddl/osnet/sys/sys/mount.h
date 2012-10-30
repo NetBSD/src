@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: mount.h,v 1.4.6.1 2012/10/30 18:56:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -37,7 +37,7 @@
 #define	MS_FORCE	MNT_FORCE
 #define	MS_REMOUNT	MNT_UPDATE
 #define	MS_OPTIONSTR	__MNT_UNUSED1
-#define	MS_NOMNTTAB	__MNT_UNUSED2
+#define	MS_NOMNTTAB	0       /* We don't have any mnttab anyway.  */
 
 typedef	struct fid		fid_t;
 

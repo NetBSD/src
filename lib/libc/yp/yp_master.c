@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.13.56.1 2012/04/17 00:05:26 yamt Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.13.56.2 2012/10/30 18:59:06 yamt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.13.56.1 2012/04/17 00:05:26 yamt Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.13.56.2 2012/10/30 18:59:06 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -48,10 +48,7 @@ __weak_alias(yp_master,_yp_master)
 #endif
 
 int
-yp_master(indomain, inmap, outname)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outname;
+yp_master(const char *indomain, const char *inmap, char **outname)
 {
 	struct dom_binding *ysd;
 	struct ypresp_master yprm;

@@ -1,4 +1,4 @@
-/*	$NetBSD: abs.c,v 1.7 2003/08/07 16:43:37 agc Exp $	*/
+/*	$NetBSD: abs.c,v 1.7.56.1 2012/10/30 18:58:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)abs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: abs.c,v 1.7 2003/08/07 16:43:37 agc Exp $");
+__RCSID("$NetBSD: abs.c,v 1.7.56.1 2012/10/30 18:58:58 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 
 int
-abs(j)
-	int j;
+abs(int j)
 {
 	return(j < 0 ? -j : j);
 }

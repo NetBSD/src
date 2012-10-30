@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.21.6.1 2012/04/17 00:05:07 yamt Exp $	*/
+/*	$NetBSD: misc.c,v 1.21.6.2 2012/10/30 18:58:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.21.6.1 2012/04/17 00:05:07 yamt Exp $");
+__RCSID("$NetBSD: misc.c,v 1.21.6.2 2012/10/30 18:58:25 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,7 @@ static void is_monop(MON *, int);
  * "yes or "no" answer is gotten.
  */
 int
-getyn(prompt)
-	const char *prompt;
+getyn(const char *prompt)
 {
 	int com;
 
@@ -68,7 +67,7 @@ getyn(prompt)
  *	This routine tells the player if he's out of money.
  */
 void
-notify()
+notify(void)
 {
 	if (cur_p->money < 0)
 		printf("That leaves you $%d in debt\n", -cur_p->money);
@@ -84,7 +83,7 @@ notify()
  *	This routine switches to the next player
  */
 void
-next_play()
+next_play(void)
 {
 	player = (player + 1) % num_play;
 	cur_p = &play[player];
@@ -96,8 +95,7 @@ next_play()
  * given prompt.
  */
 int
-get_int(prompt)
-	const char *prompt;
+get_int(const char *prompt)
 {
 	long num;
 	char *sp;
@@ -126,8 +124,7 @@ get_int(prompt)
  *	This routine sets the monopoly flag from the list given.
  */
 void
-set_ownlist(pl)
-	int pl;
+set_ownlist(int pl)
 {
 	int num;		/* general counter		*/
 	MON *orig;		/* remember starting monop ptr	*/
@@ -238,9 +235,7 @@ set_ownlist(pl)
  *	This routine sets things up as if it is a new monopoly
  */
 static void
-is_monop(mp, pl)
-	MON *mp;
-	int pl;
+is_monop(MON *mp, int pl)
 {
 	int i;
 
@@ -255,8 +250,7 @@ is_monop(mp, pl)
  *	This routine sets things up as if it is no longer a monopoly
  */
 void
-is_not_monop(mp)
-	MON *mp;
+is_not_monop(MON *mp)
 {
 	int i;
 
@@ -270,7 +264,7 @@ is_not_monop(mp)
  *	This routine gives a list of the current player's routine
  */
 void
-list()
+list(void)
 {
 	printhold(player);
 }
@@ -279,7 +273,7 @@ list()
  *	This routine gives a list of a given players holdings
  */
 void
-list_all()
+list_all(void)
 {
 	int pl;
 
@@ -292,7 +286,7 @@ list_all()
  *	This routine gives the players a chance before it exits.
  */
 void
-quit()
+quit(void)
 {
 	putchar('\n');
 

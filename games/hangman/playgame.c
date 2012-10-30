@@ -1,4 +1,4 @@
-/*	$NetBSD: playgame.c,v 1.5 2003/08/07 09:37:22 agc Exp $	*/
+/*	$NetBSD: playgame.c,v 1.5.54.1 2012/10/30 18:58:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)playgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: playgame.c,v 1.5 2003/08/07 09:37:22 agc Exp $");
+__RCSID("$NetBSD: playgame.c,v 1.5.54.1 2012/10/30 18:58:23 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,15 +45,15 @@ __RCSID("$NetBSD: playgame.c,v 1.5 2003/08/07 09:37:22 agc Exp $");
  *	play a game
  */
 void
-playgame()
+playgame(void)
 {
-	bool *bp;
+	int i;
 
 	getword();
 	Errors = 0;
-	bp = Guessed;
-	while (bp < &Guessed[26])
-		*bp++ = FALSE;
+	for (i=0; i<26; i++) {
+		Guessed[i] = false;
+	}
 	while (Errors < MAXERRS && strchr(Known, '-') != NULL) {
 		prword();
 		prdata();

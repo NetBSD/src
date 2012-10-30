@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2010/06/19 23:11:10 riz Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2012/10/30 19:00:11 yamt Exp $
 
 HOSTPROGNAME=	nbdisklabel-${MAKEWRAPPERMACHINE}
 HOST_SRCDIR=	sbin/disklabel
-HOST_SRCS=	getcap.c disklabel.c bswap.c
+HOST_SRCS=	disklabel.c bswap.c
 
 NOMAN=	# defined
 

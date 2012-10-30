@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nslexer.l,v 1.11.6.1 2012/04/17 00:05:21 yamt Exp $	*/
+/*	$NetBSD: nslexer.l,v 1.11.6.2 2012/10/30 18:58:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nslexer.l,v 1.11.6.1 2012/04/17 00:05:21 yamt Exp $");
+__RCSID("$NetBSD: nslexer.l,v 1.11.6.2 2012/10/30 18:58:53 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -100,8 +100,7 @@ _nsyywrap(void)
 } /* _nsyywrap */
 
 void
-_nsyyerror(msg)
-	const char *msg;
+_nsyyerror(const char *msg)
 {
 
 	 syslog(LOG_WARNING, "libc nsdispatch: %s line %d: %s at '%s'",

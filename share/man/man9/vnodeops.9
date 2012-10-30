@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.83.2.1 2012/04/17 00:05:49 yamt Exp $
+.\"     $NetBSD: vnodeops.9,v 1.83.2.2 2012/10/30 18:59:44 yamt Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2012
+.Dd June 6, 2012
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -239,7 +239,7 @@ The following table gives a summary of the operations.
 .It VOP_FCNTL	Perform file control
 .It VOP_POLL	Test if poll event has occurred
 .It VOP_KQFILTER	Register a knote
-.It VOP_REVOKE	Eliminate vode activity
+.It VOP_REVOKE	Eliminate vnode activity
 .It VOP_MMAP	Map file into user address space
 .It VOP_FSYNC	Flush pending data to disk
 .It VOP_SEEK	Test if file is seekable
@@ -1179,7 +1179,9 @@ return 1 if appropriate privileges are required for the
 .Xr chown 2
 system call, otherwise zero
 .It _PC_NO_TRUNC
-return if file names longer than KERN_NAME_MAX are truncated
+return 0 if file names longer than
+.Brq Dv NAME_MAX
+are silently truncated
 .El
 .Pp
 If

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.127.2.2 2012/04/17 00:05:11 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.127.2.3 2012/10/30 18:58:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -385,6 +385,7 @@ int	 undelete(const char *);
 int	 rcmd_af(char **, int, const char *,
 	    const char *, const char *, int *, int);
 int	 rresvport_af(int *, int);
+int	 rresvport_af_addr(int *, int, void *);
 int	 iruserok_sa(const void *, int, int, const char *, const char *);
 #endif
 

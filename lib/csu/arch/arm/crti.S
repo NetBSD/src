@@ -1,4 +1,4 @@
-/* $NetBSD: crti.S,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: crti.S,v 1.1.6.1 2012/10/30 18:58:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,21 +35,23 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crti.S,v 1.1 2010/08/07 18:01:33 joerg Exp $")
+RCSID("$NetBSD: crti.S,v 1.1.6.1 2012/10/30 18:58:35 yamt Exp $")
 
 #include "sysident.S"
 
-	.section ".init", "ax", @progbits
+	.section ".init", "ax", %progbits
 	.align 0
 	.globl _init
+	.type _init,%function
 _init:
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 
-	.section ".fini", "ax", @progbits
+	.section ".fini", "ax", %progbits
 	.align 0
 	.globl _fini
+	.type _fini,%function
 _fini:
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}

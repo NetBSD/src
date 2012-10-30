@@ -1,7 +1,7 @@
 < le0 ip6/0 20 0 6 9:9:9:0:0:0:0:9,10011 > 3:0:3:0:0:0:3:3,80
-18
+16
 List of active MAP/Redirect filters:
-rdr le0 any port 80 -> 3:0:3::3:3/128 port 80 tcp
+rdr le0 inet6 any port 80 -> 3:0:3::3:3/128 port 80 tcp
 
 List of active sessions:
 RDR 3:0:3::3:3 80    <- -> 5:5::5:5 80    [9:9:9::9 10011]
@@ -24,7 +24,7 @@ Accounting rules configured (set 1, out)
 < le0 ip6/0 20 0 6 9:9:9:0:0:0:0:9,10011 > 3:0:3:0:0:0:3:3,80
 < le0 ip6/0 20 0 6 9:9:9:0:0:0:0:9,10011 > 3:0:3:0:0:0:3:3,81
 List of active MAP/Redirect filters:
-rdr le0 any port 80 -> 3:0:3::3:3/128 port 80-88 tcp
+rdr le0 inet6 any port 80 -> 3:0:3::3:3/128 port 80-88 tcp
 
 List of active sessions:
 RDR 3:0:3::3:3 81    <- -> 2::2:2:2 80    [9:9:9::9 10011]

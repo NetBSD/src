@@ -3301,7 +3301,7 @@ md_assemble (char *instruction_string)
 			  if (flag_want_pic && operandP->vop_mode == 8
 				&& this_add_symbol != NULL)
 			    {
-			      as_warn (_("Symbol %s used as immediate operand in PIC mode."),
+			      as_warn (_("Symbol '%s' used as immediate operand in PIC mode."),
 				       S_GET_NAME (this_add_symbol));
 			    }
 #endif
@@ -3377,7 +3377,15 @@ md_assemble (char *instruction_string)
 			      length = 4;
 			    }
 			}
+#ifdef OBJ_ELF
+		      if (flag_want_pic && this_add_symbol != NULL)
+		        {
+			  as_warn (_("Symbol '%s' used as displacement in PIC mode."),
+			       S_GET_NAME (this_add_symbol));
+		        }
+#endif
 		      p = frag_more (1 + length);
+		      know (operandP->vop_reg != 0xf);
 		      know (operandP->vop_reg >= 0);
 		      p[0] = operandP->vop_reg
 			| ((at | "?\12\14?\16"[length]) << 4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.23.2.2 2012/05/23 10:08:28 yamt Exp $	*/
+/*	$NetBSD: makefs.h,v 1.23.2.3 2012/10/30 19:00:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -136,6 +136,7 @@ typedef struct {
 	int	freeblockpc;	/* free block % */
 	int	needswap;	/* non-zero if byte swapping needed */
 	int	sectorsize;	/* sector size */
+	int	sparse;		/* sparse image, don't fill it with zeros */
 
 	void	*fs_specific;	/* File system specific additions. */
 } fsinfo_t;

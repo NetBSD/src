@@ -279,16 +279,26 @@ access_allowed (const char *file, const char *repos, const char *tag,
 			    if (debug) fprintf(stderr, "perm %d\n", perm);
 			    if (valid_perm (part_perms, perm))
 			    {
+				if (debug) fprintf(stderr, "signlevel=%d "
+				    " x=%d, aclconfig_default_used=%d\n",
+				    signlevel, x, aclconfig_default_used);
 				if (signlevel == x)
 				{
 				    if (strcmp(part_tag, "ALL") != 0 &&
-					!aclconfig_default_used)
+					!aclconfig_default_used) {
 					retval = 1;
+					if (debug) fprintf(stderr,
+					    "%s, %d: %d\n", __FILE__, __LINE__,
+					    retval);
+				    }
 				}
 				else if (!aclconfig_default_used)
 				{
 				    signlevel = x;
 				    retval = 1;
+				    if (debug) fprintf(stderr,
+					"%s, %d: %d\n", __FILE__, __LINE__,
+					retval);
 				}
 				else {
 				    /* nothing... */
@@ -299,13 +309,20 @@ access_allowed (const char *file, const char *repos, const char *tag,
 				if (signlevel == x)
 				{
 				    if (strcmp(part_tag, "ALL") != 0 &&
-					!aclconfig_default_used)
+					!aclconfig_default_used) {
 					retval = 0;
+					if (debug) fprintf(stderr,
+					    "%s, %d: %d\n", __FILE__, __LINE__,
+					    retval);
+				    }
 				}
 				else if (!aclconfig_default_used)
 				{
 				    signlevel = x;
 				    retval = 0;
+				    if (debug) fprintf(stderr,
+					"%s, %d: %d\n", __FILE__, __LINE__,
+					retval);
 
 				    if (strncmp (part_type, "f", 1) == 0)
 					founddeniedfile = 1;
@@ -334,11 +351,18 @@ access_allowed (const char *file, const char *repos, const char *tag,
 			if (valid_perm (part_perms, perm))
 			{
 			    retval = 1;
+			    if (debug) fprintf(stderr,
+				"%s, %d: %d\n", __FILE__, __LINE__,
+				retval);
 			    if (perm == 8)
 				dadmin = 1;
 			}
-			else
+			else {
 			    retval = 0;
+			    if (debug) fprintf(stderr,
+				"%s, %d: %d\n", __FILE__, __LINE__,
+				retval);
+			}
 		    }
 		}
 
@@ -353,10 +377,17 @@ access_allowed (const char *file, const char *repos, const char *tag,
     {
 	if (debug) fprintf(stderr, "not found line\n");
 	/* DEFAULT */
-	if (valid_perm (NULL, perm))
+	if (valid_perm (NULL, perm)) {
 	    retval = 1;
-	else
+	    if (debug) fprintf(stderr,
+		"%s, %d: %d\n", __FILE__, __LINE__,
+		retval);
+	} else {
 	    retval = 0;
+	    if (debug) fprintf(stderr,
+		"%s, %d: %d\n", __FILE__, __LINE__,
+		retval);
+	}
     }
 
     /* acl admin rigths 'p' */
@@ -491,7 +522,7 @@ get_perms (const char *part_perms)
 	    aclconfig_default_used = 1;
 	    if (debug) fprintf (stderr, "default %s\n",
 			        cvs_acl_default_permissions);
-	    return (cvs_acl_default_permissions);
+	    return xstrdup(cvs_acl_default_permissions);
 	}
 	else {
 	    if (debug) fprintf (stderr, "early %s\n", xperms);

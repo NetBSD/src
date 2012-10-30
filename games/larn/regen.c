@@ -1,9 +1,9 @@
-/*	$NetBSD: regen.c,v 1.5 1997/10/18 20:03:43 christos Exp $	*/
+/*	$NetBSD: regen.c,v 1.5.68.1 2012/10/30 18:58:24 yamt Exp $	*/
 
 /* regen.c 			Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regen.c,v 1.5 1997/10/18 20:03:43 christos Exp $");
+__RCSID("$NetBSD: regen.c,v 1.5.68.1 2012/10/30 18:58:24 yamt Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -17,7 +17,7 @@ __RCSID("$NetBSD: regen.c,v 1.5 1997/10/18 20:03:43 christos Exp $");
 	subroutine to regenerate player hp and spells
  */
 void
-regen()
+regen(void)
 {
 	int    i, flag;
 	long  *d;

@@ -1,13 +1,13 @@
 table role=ipf type=tree number=1
 	{; };
 table role=ipf type=tree number=100
-	{ 2.2.2.0/24; ! 2.2.0.0/16; 1.2.3.4/32; };
-table role=ipf type=tree number=110
-	{ 2.2.2.0/24; ! 2.2.0.0/16; 1.2.3.4/32; };
-table role=ipf type=tree number=120
-	{ 2.2.2.0/24; ! 2.2.0.0/16; 1.2.3.4/32; };
-table role=ipf type=tree number=130
-	{ 2.2.2.0/24; ! 2.2.0.0/16; 1.2.3.4/32; };
+	{ 1.2.3.4/32; ! 2.2.0.0/16; 2.2.2.0/24; };
+table role=nat type=tree number=110
+	{ 1.2.3.4/32; ! 2.2.0.0/16; 2.2.2.0/24; };
+table role=auth type=tree number=120
+	{ 1.2.3.4/32; ! 2.2.0.0/16; 2.2.2.0/24; };
+table role=count type=tree number=130
+	{ 1.2.3.4/32; ! 2.2.0.0/16; 2.2.2.0/24; };
 table role=ipf type=hash number=2 size=1
 	{; };
 table role=ipf type=hash number=200 size=5

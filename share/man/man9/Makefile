@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.357.2.2 2012/05/23 10:07:36 yamt Exp $
+#       $NetBSD: Makefile,v 1.357.2.3 2012/10/30 18:59:43 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -251,7 +251,8 @@ MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
 MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 proc_trampoline.9
-MLINKS+=cpu_rootconf.9 setroot.9
+MLINKS+=cpu_rootconf.9 setroot.9 \
+        cpu_rootconf.9 rootconf.9
 MLINKS+=cpufreq.9 cpufreq_register.9 \
 	cpufreq.9 cpufreq_deregister.9 \
 	cpufreq.9 cpufreq_suspend.9 \
@@ -807,7 +808,9 @@ MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
 	uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
 	uvm.9 uvn_findpages.9 \
-	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9
+	uvm.9 uvm_loan.9 uvm.9 uvm_unloan.9 \
+	uvm.9 atop.9 uvm.9 ptoa.9 \
+	uvm.9 round_page.9 uvm.9 trunc_page.9
 MLINKS+=uvm_km.9 uvm_km_alloc.9 uvm_km.9 uvm_km_free.9 \
 	uvm_km.9 uvm_km_suballoc.9
 MLINKS+=uvm_map.9 uvm_unmap.9 uvm_map.9 uvm_map_pageable.9 \

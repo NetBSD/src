@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shknam.c,v 1.7 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.shknam.c,v 1.7.6.1 2012/10/30 18:58:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shknam.c,v 1.7 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.shknam.c,v 1.7.6.1 2012/10/30 18:58:23 yamt Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -206,13 +206,16 @@ static const struct shk_nx {
 };
 
 void
-findname(nampt, let)
-	char           *nampt;
-	char            let;
+findname(char *nampt, int let_i)
 {
 	const struct shk_nx  *p = shk_nx;
 	const char          *const *q;
 	int             i;
+	char let;
+
+	/* truncate to "char" width */
+	let = let_i;
+
 	while (p->x && p->x != let)
 		p++;
 	q = p->xn;

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.7 2011/11/02 02:34:56 christos Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.7.2.1 2012/10/30 18:59:12 yamt Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -135,8 +135,7 @@ static int endian;
 #endif
 
 double
-gamma(x)
-	double x;
+gamma(double x)
 {
 	double b;
 	struct Double u;

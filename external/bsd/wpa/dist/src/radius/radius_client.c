@@ -684,7 +684,7 @@ int radius_client_send(struct radius_client_data *radius,
 	radius_client_list_add(radius, msg, msg_type, shared_secret,
 			       shared_secret_len, addr);
 
-	return res;
+	return 0;
 }
 
 
@@ -1488,4 +1488,12 @@ int radius_client_get_mib(struct radius_client_data *radius, char *buf,
 	}
 
 	return count;
+}
+
+
+void radius_client_reconfig(struct radius_client_data *radius,
+			    struct hostapd_radius_servers *conf)
+{
+	if (radius)
+		radius->conf = conf;
 }

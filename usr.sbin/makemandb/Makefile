@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.2.2.2 2012/04/17 00:09:49 yamt Exp $
+# $NetBSD: Makefile,v 1.2.2.3 2012/10/30 19:00:37 yamt Exp $
 
 .include <bsd.own.mk>
 
 MDIST=	${NETBSDSRCDIR}/external/bsd/mdocml/dist
 MDOCDIR=${NETBSDSRCDIR}/external/bsd/mdocml
+MANCONFDIR=${NETBSDSRCDIR}/usr.bin/man
 
 PROGS=			makemandb apropos whatis
-SRCS.makemandb=		makemandb.c apropos-utils.c
-SRCS.apropos=	apropos.c apropos-utils.c
-SRCS.whatis=	whatis.c apropos-utils.c
+SRCS.makemandb=		makemandb.c apropos-utils.c manconf.c
+SRCS.apropos=	apropos.c apropos-utils.c manconf.c
+SRCS.whatis=	whatis.c apropos-utils.c manconf.c
 MAN.makemandb=	makemandb.8
 MAN.apropos=	apropos.1
 MAN.whatis=	whatis.1
@@ -17,7 +18,9 @@ BINDIR.apropos=		/usr/bin
 BINDIR.makemandb=	/usr/sbin
 BINDIR.whatis=		/usr/bin
 
-CPPFLAGS+=-I${MDIST} -I${.OBJDIR}
+.PATH: ${MANCONFDIR}
+
+CPPFLAGS+=-I${MDIST} -I${MANCONFDIR} -I${.OBJDIR}
 
 MDOCMLOBJDIR!=	cd ${MDOCDIR}/lib/libmandoc && ${PRINTOBJDIR}
 MDOCMLLIB=	${MDOCMLOBJDIR}/libmandoc.a

@@ -1,5 +1,5 @@
 This is doc/gcc.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.5.3/gcc-4.5.3/gcc/doc/gcc.texi.
+/space/rguenther/gcc-4.5.4/gcc-4.5.4/gcc/doc/gcc.texi.
 
 Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Free
@@ -61,7 +61,7 @@ Introduction
 
 This manual documents how to use the GNU compilers, as well as their
 features and incompatibilities, and how to report bugs.  It corresponds
-to the compilers (GCC) version 4.5.3.  The internals of the GNU
+to the compilers (GCC) version 4.5.4.  The internals of the GNU
 compilers, including how to port them to new targets and some
 information about how to write front ends for new languages, are
 documented in a separate manual.  *Note Introduction: (gccint)Top.
