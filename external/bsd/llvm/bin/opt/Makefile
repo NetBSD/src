@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.1 2012/04/17 00:03:29 yamt Exp $
+#	$NetBSD: Makefile,v 1.2.4.2 2012/10/30 18:55:48 yamt Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -13,17 +13,40 @@ SRCS=	AnalysisWrappers.cpp \
 	opt.cpp
 
 LLVM_LIBS+= \
+	ipo \
 	AsmParser \
 	BitReader \
 	BitWriter \
+	ARMCodeGen \
+	ARMTargetInfo \
+	ARMMCTargetDesc \
+	ARMAsmPrinter \
+	MipsCodeGen \
+	MipsTargetInfo \
+	MipsMCTargetDesc \
+	MipsAsmPrinter \
+	PowerPCCodeGen \
+	PowerPCTargetInfo \
+	PowerPCMCTargetDesc \
+	PowerPCAsmPrinter \
+	SparcCodeGen \
+	SparcTargetInfo \
+	SparcMCTargetDesc \
+	X86CodeGen \
+	X86MCTargetDesc \
+	X86TargetInfo \
+	X86Utils \
+	X86AsmPrinter \
+	SelectionDAG \
+	CodeGen \
+	Vectorize \
+	Target \
 	InstCombine \
 	Instrumentation \
-	ipo \
-	Vectorize \
 	ScalarOpts \
-	TransformsUtils \
 	Analysis \
-	Target \
+	MC \
+	TransformsUtils \
 	ipa \
 	Core \
 	Support

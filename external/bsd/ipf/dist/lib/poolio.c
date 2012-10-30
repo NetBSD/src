@@ -1,11 +1,11 @@
-/*	$NetBSD: poolio.c,v 1.1.1.1.2.2 2012/04/17 00:03:19 yamt Exp $	*/
+/*	$NetBSD: poolio.c,v 1.1.1.1.2.3 2012/10/30 18:55:08 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: poolio.c,v 1.1.2.1 2012/01/26 05:44:26 darren_r Exp 
+ * Id: poolio.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -46,4 +46,10 @@ pool_close()
 		close(poolfd);
 		poolfd = -1;
 	}
+}
+
+int
+pool_fd()
+{
+	return poolfd;
 }

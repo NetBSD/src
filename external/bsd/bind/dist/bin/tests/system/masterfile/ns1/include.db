@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: include.db,v 1.5 2007-06-19 23:47:04 tbox Exp
+; Id: include.db,v 1.5 2007/06/19 23:47:04 tbox Exp 
 
 ; Test $INCLUDE current domain name and origin semantics
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ipmon_y.y,v 1.1.1.1.2.2 2012/04/17 00:03:26 yamt Exp $	*/
+/*	$NetBSD: ipmon_y.y,v 1.1.1.1.2.3 2012/10/30 18:55:14 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
@@ -431,7 +431,7 @@ build_action(olist, todo)
 
 int
 check_action(buf, log, opts, lvl)
-	char *buf, *log;
+	const char *buf, *log;
 	int opts, lvl;
 {
 	ipmon_action_t *a;
@@ -454,7 +454,7 @@ check_action(buf, log, opts, lvl)
 	msg.imm_data = ipl;
 	msg.imm_dsize = ipl->ipl_dsize;
 	msg.imm_when = ipl->ipl_time.tv_sec;
-	msg.imm_msg = log;
+	msg.imm_msg = (char *)log;
 	msg.imm_msglen = strlen(log);
 	msg.imm_loglevel = lvl;
 
@@ -1011,28 +1011,28 @@ install_saver(name, path)
 		goto loaderror;
 
 	snprintf(nbuf, sizeof(nbuf), "%sdup", name);
-	is->ims_dup = dlsym(isi->imsi_handle, nbuf);
+	is->ims_dup = (ims_dup_func_t)dlsym(isi->imsi_handle, nbuf);
 
 	snprintf(nbuf, sizeof(nbuf), "%sdestroy", name);
-	is->ims_destroy = dlsym(isi->imsi_handle, nbuf);
+	is->ims_destroy = (ims_destroy_func_t)dlsym(isi->imsi_handle, nbuf);
 	if (is->ims_destroy == NULL)
 		goto loaderror;
 
 	snprintf(nbuf, sizeof(nbuf), "%smatch", name);
-	is->ims_match = dlsym(isi->imsi_handle, nbuf);
+	is->ims_match = (ims_match_func_t)dlsym(isi->imsi_handle, nbuf);
 
 	snprintf(nbuf, sizeof(nbuf), "%sparse", name);
-	is->ims_parse = dlsym(isi->imsi_handle, nbuf);
+	is->ims_parse = (ims_parse_func_t)dlsym(isi->imsi_handle, nbuf);
 	if (is->ims_parse == NULL)
 		goto loaderror;
 
 	snprintf(nbuf, sizeof(nbuf), "%sprint", name);
-	is->ims_print = dlsym(isi->imsi_handle, nbuf);
+	is->ims_print = (ims_print_func_t)dlsym(isi->imsi_handle, nbuf);
 	if (is->ims_print == NULL)
 		goto loaderror;
 
 	snprintf(nbuf, sizeof(nbuf), "%sstore", name);
-	is->ims_store = dlsym(isi->imsi_handle, nbuf);
+	is->ims_store = (ims_store_func_t)dlsym(isi->imsi_handle, nbuf);
 	if (is->ims_store == NULL)
 		goto loaderror;
 

@@ -28,7 +28,7 @@
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
 .\"	@(#)resolver.5	5.9 (Berkeley) 12/14/89
-.\"	Id: resolver.man5,v 1.2 2009/01/21 00:12:34 each Exp
+.\"	Id: resolver.man5,v 1.2 2009/01/21 00:12:34 each Exp 
 .\"
 .Dd November 11, 1993
 .Dt RESOLVER 5 

@@ -1,7 +1,7 @@
-/*	$NetBSD: printhash.c,v 1.1.1.1.2.2 2012/04/17 00:03:19 yamt Exp $	*/
+/*	$NetBSD: printhash.c,v 1.1.1.1.2.3 2012/10/30 18:55:09 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */

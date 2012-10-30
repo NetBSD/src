@@ -665,10 +665,14 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	if (	(sess == NULL) ||
 		(s->enc_write_ctx == NULL) ||
 		(EVP_MD_CTX_md(s->write_hash) == NULL))
+		{
+#if 1
+		clear=s->enc_write_ctx?0:1;	/* must be AEAD cipher */
+#else
 		clear=1;
-
-	if (clear)
+#endif
 		mac_size=0;
+		}
 	else
 		{
 		mac_size=EVP_MD_CTX_size(s->write_hash);
@@ -737,17 +741,32 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	wr->type=type;
 
 	*(p++)=(s->version>>8);
-	*(p++)=s->version&0xff;
+	/* Some servers hang if iniatial client hello is larger than 256
+	 * bytes and record version number > TLS 1.0
+	 */
+	if (s->state == SSL3_ST_CW_CLNT_HELLO_B
+				&& TLS1_get_version(s) > TLS1_VERSION)
+		*(p++) = 0x1;
+	else
+		*(p++)=s->version&0xff;
 
 	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
 	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
-	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION
-		&& EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CBC_MODE)
+	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
 		{
-		eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
-		if (eivlen <= 1)
+		int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
+		if (mode == EVP_CIPH_CBC_MODE)
+			{
+			eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+			if (eivlen <= 1)
+				eivlen = 0;
+			}
+		/* Need explicit part of IV for GCM mode */
+		else if (mode == EVP_CIPH_GCM_MODE)
+			eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
+		else
 			eivlen = 0;
 		}
 	else 
@@ -1063,6 +1082,19 @@ start:
 			dest = s->s3->alert_fragment;
 			dest_len = &s->s3->alert_fragment_len;
 			}
+#ifndef OPENSSL_NO_HEARTBEATS
+		else if (rr->type == TLS1_RT_HEARTBEAT)
+			{
+			tls1_process_heartbeat(s);
+
+			/* Exit and notify application to read again */
+			rr->length = 0;
+			s->rwstate=SSL_READING;
+			BIO_clear_retry_flags(SSL_get_rbio(s));
+			BIO_set_retry_read(SSL_get_rbio(s));
+			return(-1);
+			}
+#endif
 
 		if (dest_maxlen > 0)
 			{

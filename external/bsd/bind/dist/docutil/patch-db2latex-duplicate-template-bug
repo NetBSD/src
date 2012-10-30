@@ -1,4 +1,4 @@
-;; Id: patch-db2latex-duplicate-template-bug,v 1.2 2007-01-12 22:24:20 sra Exp
+;; Id: patch-db2latex-duplicate-template-bug,v 1.2 2007/01/12 22:24:20 sra Exp 
 ;; 
 ;; This is a patch to work around a known bug in db2latex.  Apparently
 ;; xsltproc's error checking got a lot better since the authors of

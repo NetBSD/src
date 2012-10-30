@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.2 2012/05/23 10:07:27 yamt Exp $
+#	$NetBSD: Makefile,v 1.6.2.3 2012/10/30 18:55:51 yamt Exp $
 
 LIB=	LLVMSupport
 
@@ -25,6 +25,7 @@ SRCS+=	APFloat.cpp \
 	DAGDeltaAlgorithm.cpp \
 	Dwarf.cpp \
 	ErrorHandling.cpp \
+	FileOutputBuffer.cpp \
 	FileUtilities.cpp \
 	FoldingSet.cpp \
 	FormattedStream.cpp \

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:49 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:51 yamt Exp $
 
-LIVEIMGBASE=	sun3emu			# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sun3-live-sd0root	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 

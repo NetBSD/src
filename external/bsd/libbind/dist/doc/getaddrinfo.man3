@@ -44,7 +44,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     Id: getaddrinfo.man3,v 1.2 2009/01/21 00:12:34 each Exp
+.\"     Id: getaddrinfo.man3,v 1.2 2009/01/21 00:12:34 each Exp 
 .\"
 .Dd May 25, 1995
 .Dt GETADDRINFO 3

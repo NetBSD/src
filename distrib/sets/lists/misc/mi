@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174.4.1 2012/04/17 00:02:44 yamt Exp $
+# $NetBSD: mi,v 1.174.4.2 2012/10/30 18:48:46 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -731,7 +731,7 @@
 ./usr/share/examples/ipf/firewall		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/ftp-proxy		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/ftppxy			misc-ipf-examples	ipfilter,share
-./usr/share/examples/ipf/mediaone		misc-ipf-examples	ipfilter,share
+./usr/share/examples/ipf/mediaone		misc-obsolete		obsolete
 ./usr/share/examples/ipf/mkfilters		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/nat-setup		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/nat.eg			misc-ipf-examples	ipfilter,share

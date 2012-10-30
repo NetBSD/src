@@ -58,4 +58,4 @@ The tests can be run individually like this:
 
 To run all the tests, just type "make test".
 
-Id: README,v 1.16 2011-01-13 04:59:24 tbox Exp
+Id: README,v 1.16 2011/01/13 04:59:24 tbox Exp 

@@ -67,6 +67,8 @@ const char copyright[] = "Copyright (c) 2006-2012 Roy Marples";
 #include "if-options.h"
 #include "if-pref.h"
 #include "ipv4ll.h"
+#include "ipv6.h"
+#include "ipv6ns.h"
 #include "ipv6rs.h"
 #include "net.h"
 #include "platform.h"
@@ -80,7 +82,6 @@ const char copyright[] = "Copyright (c) 2006-2012 Roy Marples";
 #define RELEASE_DELAY_S		0
 #define RELEASE_DELAY_NS	10000000
 
-unsigned long long options = 0;
 int pidfd = -1;
 struct interface *ifaces = NULL;
 int ifac = 0;
@@ -95,7 +96,7 @@ static char **ifv;
 static int ifc;
 static char *cffile;
 static char *pidfile;
-static int linkfd = -1, ipv6rsfd = -1;
+static int linkfd = -1, ipv6rsfd = -1, ipv6nsfd = -1;
 
 struct dhcp_op {
 	uint8_t value;
@@ -162,7 +163,7 @@ printf("usage: "PACKAGE"\t[-ABbDdEGgHJKkLnpqTVw]\n"
 	"\t\t[-z, --allowinterfaces pattern] [interface] [...]\n"
 	"       "PACKAGE"\t-k, --release [interface]\n"
 	"       "PACKAGE"\t-U, --dumplease interface\n"
-	"       "PACKAGE"\t-v, --version\n"
+	"       "PACKAGE"\t--version\n"
 	"       "PACKAGE"\t-x, --exit [interface]\n");
 }
 
@@ -254,15 +255,8 @@ stop_interface(struct interface *iface)
 	struct interface *ifp, *ifl = NULL;
 
 	syslog(LOG_INFO, "%s: removing interface", iface->name);
-	if (iface->ras) {
-		ipv6rs_free(iface);
-		iface->ras = NULL;
-		run_script_reason(iface, "ROUTERADVERT");
-	}
-	if (strcmp(iface->state->reason, "RELEASE") != 0)
-		drop_dhcp(iface, "STOP");
-	close_sockets(iface);
-	delete_timeout(NULL, iface);
+
+	// Remove the interface from our list
 	for (ifp = ifaces; ifp; ifp = ifp->next) {
 		if (ifp == iface)
 			break;
@@ -272,6 +266,12 @@ stop_interface(struct interface *iface)
 		ifl->next = ifp->next;
 	else
 		ifaces = ifp->next;
+
+	ipv6rs_drop(iface);
+	if (strcmp(iface->state->reason, "RELEASE") != 0)
+		drop_dhcp(iface, "STOP");
+	close_sockets(iface);
+	delete_timeout(NULL, iface);
 	free_interface(ifp);
 	if (!(options & (DHCPCD_MASTER | DHCPCD_TEST)))
 		exit(EXIT_FAILURE);
@@ -326,7 +326,11 @@ send_message(struct interface *iface, int type,
 	}
 
 	/* Ensure sockets are open. */
-	open_sockets(iface);
+	if (open_sockets(iface) == -1) {
+		if (!(options & DHCPCD_TEST))
+			drop_dhcp(iface, "FAIL");
+		return;
+	}
 
 	/* If we couldn't open a UDP port for our IP address
 	 * then we cannot renew.
@@ -785,6 +789,12 @@ configure_interface1(struct interface *iface)
 	if (ifo->metric != -1)
 		iface->metric = ifo->metric;
 
+	/* We want to disable kernel interface RA as early as possible. */
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS) {
+		if (check_ipv6(iface->name) != 1)
+			ifo->options &= ~DHCPCD_IPV6RS;
+	}
+
 	/* If we haven't specified a ClientID and our hardware address
 	 * length is greater than DHCP_CHADDR_LEN then we enforce a ClientID
 	 * of the hardware address family and the hardware address. */
@@ -822,7 +832,7 @@ configure_interface1(struct interface *iface)
 					memset(iface->clientid + 2 + ifl,
 					    0, 4 - ifl);
 			} else {
-				ifl = htonl(if_nametoindex(iface->name));
+				ifl = htonl(iface->index);
 				memcpy(iface->clientid + 2, &ifl, 4);
 			}
 		} else if (len == 0) {
@@ -922,11 +932,7 @@ handle_carrier(int action, int flags, const char *ifname)
 			syslog(LOG_INFO, "%s: carrier lost", iface->name);
 			close_sockets(iface);
 			delete_timeouts(iface, start_expire, NULL);
-			if (iface->ras) {
-				ipv6rs_free(iface);
-				iface->ras = NULL;
-				run_script_reason(iface, "ROUTERADVERT");
-			}
+			ipv6rs_drop(iface);
 			drop_dhcp(iface, "NOCARRIER");
 		}
 	} else if (carrier == 1 && !(~iface->flags & IFF_UP)) {
@@ -1171,12 +1177,8 @@ start_interface(void *arg)
 	free(iface->state->offer);
 	iface->state->offer = NULL;
 
-	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS) {
-		if (check_ipv6(iface->name) == 1)
-			ipv6rs_start(iface);
-		else
-			ifo->options &= ~DHCPCD_IPV6RS;
-	}
+	if (options & DHCPCD_IPV6RS && ifo->options & DHCPCD_IPV6RS)
+		ipv6rs_start(iface);
 
 	if (iface->state->arping_index < ifo->arping_len) {
 		start_arping(iface);
@@ -1499,12 +1501,12 @@ reconf_reboot(int action, int argc, char **argv, int oi)
 static void
 handle_signal(_unused void *arg)
 {
-	struct interface *ifp, *ifl;
+	struct interface *ifp;
 	struct if_options *ifo;
 	int sig = signal_read();
-	int do_release, do_rebind, i;
+	int do_release, i;
 
-	do_rebind = do_release = 0;
+	do_release = 0;
 	switch (sig) {
 	case SIGINT:
 		syslog(LOG_INFO, "received SIGINT, stopping");
@@ -1561,11 +1563,9 @@ handle_signal(_unused void *arg)
 	/* As drop_dhcp could re-arrange the order, we do it like this. */
 	for (;;) {
 		/* Be sane and drop the last config first */
-		ifl = NULL;
 		for (ifp = ifaces; ifp; ifp = ifp->next) {
 			if (ifp->next == NULL)
 				break;
-			ifl = ifp;
 		}
 		if (ifp == NULL)
 			break;
@@ -1582,7 +1582,7 @@ int
 handle_args(struct fd_list *fd, int argc, char **argv)
 {
 	struct interface *ifp;
-	int do_exit = 0, do_release = 0, do_reboot = 0, do_reconf = 0;
+	int do_exit = 0, do_release = 0, do_reboot = 0;
 	int opt, oi = 0;
 	ssize_t len;
 	size_t l;
@@ -1618,7 +1618,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 			if (argc == 1) {
 				for (ifp = ifaces; ifp; ifp = ifp->next) {
 					len++;
-					if (ifp->ras)
+					if (ipv6rs_has_ra(ifp))
 						len++;
 				}
 				len = write(fd->fd, &len, sizeof(len));
@@ -1633,7 +1633,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 				for (ifp = ifaces; ifp; ifp = ifp->next)
 					if (strcmp(argv[opt], ifp->name) == 0) {
 						len++;
-						if (ifp->ras)
+						if (ipv6rs_has_ra(ifp))
 							len++;
 					}
 			}
@@ -1673,7 +1673,7 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 	{
 		switch (opt) {
 		case 'g':
-			do_reconf = 1;
+			/* Assumed if below not set */
 			break;
 		case 'k':
 			do_release = 1;
@@ -1714,11 +1714,13 @@ handle_args(struct fd_list *fd, int argc, char **argv)
 	return 0;
 }
 
-void
+int
 open_sockets(struct interface *iface)
 {
+	int r = 0;
+
 	if (iface->raw_fd == -1) {
-		if (open_socket(iface, ETHERTYPE_IP) == -1)
+		if ((r = open_socket(iface, ETHERTYPE_IP)) == -1)
 			syslog(LOG_ERR, "%s: open_socket: %m", iface->name);
 		else
 			add_event(iface->raw_fd, handle_dhcp_packet, iface);
@@ -1729,9 +1731,12 @@ open_sockets(struct interface *iface)
 	    (iface->state->new->cookie == htonl(MAGIC_COOKIE) ||
 	    iface->state->options->options & DHCPCD_INFORM))
 	{
-		if (open_udp_socket(iface) == -1 && errno != EADDRINUSE)
+		if (open_udp_socket(iface) == -1 && errno != EADDRINUSE) {
 			syslog(LOG_ERR, "%s: open_udp_socket: %m", iface->name);
+			r = -1;
+		}
 	}
+	return r;
 }
 
 void
@@ -1916,7 +1921,7 @@ main(int argc, char **argv)
 			syslog(LOG_INFO, "sending signal %d to pid %d",
 			    sig, pid);
 		if (pid == 0 || kill(pid, sig) != 0) {
-			if (sig != SIGALRM)
+			if (sig != SIGALRM && errno != EPERM)
 				syslog(LOG_ERR, ""PACKAGE" not running");
 			if (pid != 0 && errno != ESRCH) {
 				syslog(LOG_ERR, "kill: %m");
@@ -2008,6 +2013,10 @@ main(int argc, char **argv)
 
 	if (options & DHCPCD_IPV6RS && !check_ipv6(NULL))
 		options &= ~DHCPCD_IPV6RS;
+	if (options & DHCPCD_IPV6RS && ipv6_open() == -1) {
+		options &= ~DHCPCD_IPV6RS;
+		syslog(LOG_ERR, "ipv6_open: %m");
+	}
 	if (options & DHCPCD_IPV6RS) {
 		ipv6rsfd = ipv6rs_open();
 		if (ipv6rsfd == -1) {
@@ -2016,6 +2025,15 @@ main(int argc, char **argv)
 		} else {
 			add_event(ipv6rsfd, ipv6rs_handledata, NULL);
 //			atexit(restore_rtadv);
+		}
+		if (options & DHCPCD_IPV6RA_OWN ||
+		    options & DHCPCD_IPV6RA_OWN_DEFAULT)
+		{
+			ipv6nsfd = ipv6ns_open();
+			if (ipv6nsfd == -1)
+				syslog(LOG_ERR, "ipv6nd: %m");
+			else
+				add_event(ipv6nsfd, ipv6ns_handledata, NULL);
 		}
 	}
 

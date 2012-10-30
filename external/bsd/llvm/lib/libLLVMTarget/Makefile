@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2012/04/17 00:03:33 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2012/10/30 18:55:52 yamt Exp $
 
 LIB=	LLVMTarget
 
@@ -8,7 +8,6 @@ LIB=	LLVMTarget
 
 SRCS+=	Mangler.cpp \
 	Target.cpp \
-	TargetData.cpp \
 	TargetELFWriterInfo.cpp \
 	TargetInstrInfo.cpp \
 	TargetIntrinsicInfo.cpp \
@@ -18,7 +17,8 @@ SRCS+=	Mangler.cpp \
 	TargetMachine.cpp \
 	TargetMachineC.cpp \
 	TargetRegisterInfo.cpp \
-	TargetSubtargetInfo.cpp
+	TargetSubtargetInfo.cpp \
+	TargetTransformImpl.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

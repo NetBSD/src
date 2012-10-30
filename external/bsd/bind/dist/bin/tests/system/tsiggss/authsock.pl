@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: authsock.pl,v 1.3 2011-01-07 23:47:07 tbox Exp
+# Id: authsock.pl,v 1.3 2011/01/07 23:47:07 tbox Exp 
 
 # test the update-policy external protocol
 

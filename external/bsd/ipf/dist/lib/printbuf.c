@@ -1,11 +1,11 @@
-/*	$NetBSD: printbuf.c,v 1.1.1.1.2.2 2012/04/17 00:03:19 yamt Exp $	*/
+/*	$NetBSD: printbuf.c,v 1.1.1.1.2.3 2012/10/30 18:55:08 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: printbuf.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $
  */
 
 #include <ctype.h>
@@ -18,12 +18,13 @@ printbuf(buf, len, zend)
 	char *buf;
 	int len, zend;
 {
-	char *s, c;
+	char *s;
+	int c;
 	int i;
 
 	for (s = buf, i = len; i; i--) {
 		c = *s++;
-		if (ISPRINT(c))
+		if (isprint(c))
 			putchar(c);
 		else
 			PRINTF("\\%03o", c);

@@ -1,4 +1,4 @@
-.file	"des-586.s"
+#include <machine/asm.h>
 .text
 .globl	DES_SPtrans
 .type	_x86_DES_encrypt,@function

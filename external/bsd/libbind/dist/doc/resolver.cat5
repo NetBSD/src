@@ -1,14 +1,14 @@
-RESOLVER(5)                 BSD File Formats Manual                RESOLVER(5)
+RESOLVER(5)               FreeBSD File Formats Manual              RESOLVER(5)
 
 NNAAMMEE
-     rreessoollvveerr - resolver configuration file
+     rreessoollvveerr -- resolver configuration file
 
 SSYYNNOOPPSSIISS
      _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f
 
 DDEESSCCRRIIPPTTIIOONN
-     The rreessoollvveerr is a set of routines in the C library (resolve(3)) that pro‐
-     vide access to the Internet Domain Name System.  The rreessoollvveerr configura‐
+     The rreessoollvveerr is a set of routines in the C library (resolve(3)) that pro-
+     vide access to the Internet Domain Name System.  The rreessoollvveerr configura-
      tion file contains information that is read by the rreessoollvveerr routines the
      first time they are invoked by a process.  The file is designed to be
      human readable and contains a list of keywords with values that provide
@@ -16,7 +16,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      On a normally configured system, this file should not be necessary.  The
      only name server to be queried will be on the local machine, the domain
-     name is determined from the host name, and the domain search path is con‐
+     name is determined from the host name, and the domain search path is con-
      structed from the domain name.
 
      The different configuration directives are:
@@ -36,7 +36,7 @@ DDEESSCCRRIIPPTTIIOONN
               can use short names relative to the local domain.  If no domain
               entry is present, the domain is determined from the local host
               name returned by gethostname; the domain part is taken to be
-              everything after the first ‘.’.  Finally, if the host name does
+              everything after the first `.'.  Finally, if the host name does
               not contain a domain part, the root domain is assumed.
 
      search   Search list for host-name lookup.  The search list is normally
@@ -72,20 +72,20 @@ DDEESSCCRRIIPPTTIIOONN
               ndots:_n   sets a threshold for the number of dots which must
                         appear in a name given to rreess__qquueerryy() (see
                         resolver(3)) before an _i_n_i_t_i_a_l _a_b_s_o_l_u_t_e _q_u_e_r_y will be
-                        made.  The default for _n is “1”, meaning that if there
-                        are _a_n_y dots in a name, the name will be tried first
-                        as an absolute name before any _s_e_a_r_c_h _l_i_s_t elements
-                        are appended to it.
+                        made.  The default for _n is ``1'', meaning that if
+                        there are _a_n_y dots in a name, the name will be tried
+                        first as an absolute name before any _s_e_a_r_c_h _l_i_s_t ele-
+                        ments are appended to it.
 
               timeout:_n
                         sets the amount of time the resolver will wait for a
                         response from a remote name server before retrying the
-                        query via a different name server.  Measured in sec‐
+                        query via a different name server.  Measured in sec-
                         onds, the default is RES_TIMEOUT (see _<_r_e_s_o_l_v_._h_>).
 
               attempts:_n
                         sets the number of times the resolver will send a
-                        query to its name servers before giving up and return‐
+                        query to its name servers before giving up and return-
                         ing an error to the calling application.  The default
                         is RES_DFLRETRY (see _<_r_e_s_o_l_v_._h_>).
 
@@ -104,7 +104,7 @@ DDEESSCCRRIIPPTTIIOONN
               inet6     sets RES_USE_INET6 in ___r_e_s_._o_p_t_i_o_n_s.  This has the
                         effect of trying a AAAA query before an A query inside
                         the _g_e_t_h_o_s_t_b_y_n_a_m_e function, and of mapping IPv4
-                        responses in IPv6 ‘‘tunnelled form’’ if no AAAA
+                        responses in IPv6 ``tunnelled form'' if no AAAA
                         records are found but an A record set exists.
 
               no-tld-query
@@ -120,13 +120,13 @@ DDEESSCCRRIIPPTTIIOONN
      The domain and search keywords are mutually exclusive.  If more than one
      instance of these keywords is present, the last instance wins.
 
-     The search keyword of a system’s _r_e_s_o_l_v_._c_o_n_f file can be overridden on a
-     per-process basis by setting the environment variable “LOCALDOMAIN” to a
-     space-separated list of search domains.
+     The search keyword of a system's _r_e_s_o_l_v_._c_o_n_f file can be overridden on a
+     per-process basis by setting the environment variable ``LOCALDOMAIN'' to
+     a space-separated list of search domains.
 
-     The options keyword of a system’s _r_e_s_o_l_v_._c_o_n_f file can be amended on a
-     per-process basis by setting the environment variable “RES_OPTIONS to a
-     space-separated list of” rreessoollvveerr options as explained above under
+     The options keyword of a system's _r_e_s_o_l_v_._c_o_n_f file can be amended on a
+     per-process basis by setting the environment variable ``RES_OPTIONS to a
+     space-separated list of'' rreessoollvveerr options as explained above under
      options.
 
      The keyword and value must appear on a single line, and the keyword
@@ -137,7 +137,7 @@ FFIILLEESS
      _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f _<_r_e_s_o_l_v_._h_>
 
 SSEEEE AALLSSOO
-     gethostbyname(3), hostname(7), resolver(3), resolver(5).  “Name Server
-     Operations Guide for BBIINNDD”
+     gethostbyname(3), hostname(7), resolver(3), resolver(5).  ``Name Server
+     Operations Guide for BBIINNDD''
 
 4th Berkeley Distribution      November 11, 1993     4th Berkeley Distribution

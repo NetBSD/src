@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.16.2.3 2012/05/23 10:07:26 yamt Exp $
-
-.include <bsd.own.mk>
+# $NetBSD: Makefile,v 1.16.2.4 2012/10/30 18:55:49 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +43,7 @@ SUBDIR+= \
 SUBDIR+= \
 	libLLVMMipsAsmParser \
 	libLLVMMipsAsmPrinter \
+	libLLVMMipsDisassembler \
 	libLLVMMipsMCTargetDesc \
 	libLLVMMipsTargetInfo
 
@@ -92,7 +91,8 @@ SUBDIR+= \
 	libclangFrontendTool \
 	libclangLex \
 	libclangParse \
-	libclangRewrite \
+	libclangRewriteFrontend \
+	libclangRewriteCore \
 	libclangSema \
 	libclangSerialization \
 	libclangStaticAnalyzerCheckers \
@@ -102,7 +102,8 @@ SUBDIR+= \
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
-	libclangTooling
+	libclangTooling \
+	libclangASTMatchers
 .endif
 
 .include <bsd.subdir.mk>

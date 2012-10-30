@@ -1,18 +1,22 @@
-/*	$NetBSD: opts.h,v 1.1.1.1.2.2 2012/04/17 00:03:13 yamt Exp $	*/
+/*	$NetBSD: opts.h,v 1.1.1.1.2.3 2012/10/30 18:55:00 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: opts.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
  */
 
 #ifndef	__OPTS_H__
 #define	__OPTS_H__
 
 #ifndef	SOLARIS
-#define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+# if (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#  define SOLARIS	1
+# else
+#  define SOLARIS	0
+# endif
 #endif
 #define	OPT_REMOVE	0x000001
 #define	OPT_DEBUG	0x000002
@@ -43,6 +47,7 @@
 #define	OPT_ASCII	0x4000000
 #define	OPT_NORESOLVE	0x8000000
 #define	OPT_DONTOPEN	0x10000000
+#define	OPT_PURGE	0x20000000
 
 #define	OPT_STAT	OPT_FRSTATES
 #define	OPT_LIST	OPT_SHOWLIST

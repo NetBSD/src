@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.1.1.1 2009/04/12 15:33:35 christos Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.1.1.1.14.1 2012/10/30 18:55:25 yamt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_net_pton.c,v 1.10 2008/11/14 02:36:51 marka Exp";
+static const char rcsid[] = "Id: inet_net_pton.c,v 1.10 2008/11/14 02:36:51 marka Exp ";
 #endif
 
 #include "port_before.h"

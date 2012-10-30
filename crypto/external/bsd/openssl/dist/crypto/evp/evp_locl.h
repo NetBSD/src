@@ -344,7 +344,22 @@ struct evp_pkey_method_st
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
+int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+			     ASN1_TYPE *param,
+			     const EVP_CIPHER *c, const EVP_MD *md, int en_de);
+
 #ifdef OPENSSL_FIPS
+
+#ifdef OPENSSL_DOING_MAKEDEPEND
+#undef SHA1_Init
+#undef SHA1_Update
+#undef SHA224_Init
+#undef SHA256_Init
+#undef SHA384_Init
+#undef SHA512_Init
+#undef DES_set_key_unchecked
+#endif
+
 #define RIPEMD160_Init	private_RIPEMD160_Init
 #define WHIRLPOOL_Init	private_WHIRLPOOL_Init
 #define MD5_Init	private_MD5_Init
@@ -363,6 +378,8 @@ void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 #define idea_set_encrypt_key	private_idea_set_encrypt_key
 #define SEED_set_key	private_SEED_set_key
 #define RC2_set_key	private_RC2_set_key
+#define RC4_set_key	private_RC4_set_key
 #define DES_set_key_unchecked	private_DES_set_key_unchecked
+#define Camellia_set_key	private_Camellia_set_key
 
 #endif

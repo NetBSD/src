@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.92 2011-07-08 01:43:26 each Exp
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -57,13 +57,37 @@ checkprivate () {
     return $ret
 }
 
+# check that a zone file is raw format, version 0
+israw0 () {
+    cat $1 | perl -e 'binmode STDIN;
+		      read(STDIN, $input, 8);
+                      ($style, $version) = unpack("NN", $input);
+                      exit 1 if ($style != 2 || $version != 0);'
+    return $?
+}
+
+# check that a zone file is raw format, version 1
+israw1 () {
+    cat $1 | perl -e 'binmode STDIN;
+		      read(STDIN, $input, 8);
+                      ($style, $version) = unpack("NN", $input);
+                      exit 1 if ($style != 2 || $version != 1);'
+    return $?
+}
+
 # Check the example. domain
 
 echo "I:checking that zone transfer worked ($n)"
-ret=0
-$DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
-$DIG $DIGOPTS a.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
-$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n || ret=1
+for i in 1 2 3 4 5 6 7 8 9
+do
+	ret=0
+	$DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+	$DIG $DIGOPTS a.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+	$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n > /dev/null || ret=1
+	[ $ret = 0 ] && break
+	sleep 1
+done
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -80,6 +104,17 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+# test AD bit:
+#  - dig +noadflag 
+echo "I:checking that AD is not set without +adflag or +dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +noauth +noadd +nodnssec +noadflag a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth +noadd +nodnssec +noadflag a.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 echo "I:checking for AD in authoritative answer ($n)"
 ret=0
 $DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
@@ -129,6 +164,24 @@ $DIG $DIGOPTS a.wild.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking positive wildcard answer NSEC3 ($n)"
+ret=0
+$DIG $DIGOPTS a.wild.nsec3.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+grep "AUTHORITY: 4," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking positive wildcard answer NSEC3 ($n)"
+ret=0
+$DIG $DIGOPTS a.wild.nsec3.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+grep "AUTHORITY: 4," dig.out.ns3.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns3.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -982,11 +1035,13 @@ cd signer
 cat example.db.in $key1.key $key2.key > example.db
 $SIGNER -3 - -H 10 -o example -f example.db example.db > /dev/null 2>&1
 awk '/^IQF9LQTLK/ {
-		printf("%s ", $0);
-		getline;
-		printf ("%s ", $0); 
-		getline;
-		print;
+		printf("%s", $0);
+		while (!index($0, ")")) {
+			if (getline <= 0)
+				break;
+			printf (" %s", $0); 
+		}
+		printf("\n");
 	}' example.db | sed 's/[ 	][ 	]*/ /g' > nsec3param.out
 
 grep "IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG.example. 0 IN NSEC3 1 0 10 - ( IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG A NS SOA RRSIG DNSKEY NSEC3PARAM )" nsec3param.out > /dev/null 
@@ -1048,6 +1103,44 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking dnssec-signzone retains unexpired signatures ($n)"
+ret=0
+(
+cd signer
+$SIGNER -Sxt -o example example.db > signer.out.1 2>&1
+$SIGNER -Sxt -o example -f example.db.signed example.db.signed > signer.out.2 2>&1
+) || ret=1
+gen1=`awk '/generated/ {print $3}' signer/signer.out.1`
+retain1=`awk '/retained/ {print $3}' signer/signer.out.1`
+drop1=`awk '/dropped/ {print $3}' signer/signer.out.1`
+gen2=`awk '/generated/ {print $3}' signer/signer.out.2`
+retain2=`awk '/retained/ {print $3}' signer/signer.out.2`
+drop2=`awk '/dropped/ {print $3}' signer/signer.out.2`
+[ "$retain2" -eq `expr "$gen1" + "$retain1"` ] || ret=1
+[ "$gen2" -eq 0 ] || ret=1
+[ "$drop2" -eq 0 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking dnssec-signzone output format ($n)"
+ret=0
+(
+cd signer
+$SIGNER -O full -f - -Sxt -o example example.db > signer.out.3 2> /dev/null
+$SIGNER -O text -f - -Sxt -o example example.db > signer.out.4 2> /dev/null
+$SIGNER -O raw -f signer.out.5 -Sxt -o example example.db > /dev/null 2>&1
+$SIGNER -O raw=0 -f signer.out.6 -Sxt -o example example.db > /dev/null 2>&1
+$SIGNER -O raw -f - -Sxt -o example example.db > signer.out.7 2> /dev/null
+) || ret=1
+awk '/IN *SOA/ {if (NF != 11) exit(1)}' signer/signer.out.3 || ret=1
+awk '/IN *SOA/ {if (NF != 7) exit(1)}' signer/signer.out.4 || ret=1
+israw1 signer/signer.out.5 || ret=1
+israw0 signer/signer.out.6 || ret=1
+israw1 signer/signer.out.7 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking validated data are not cached longer than originalttl ($n)"
 ret=0
 $DIG $DIGOPTS +ttl +noauth a.ttlpatch.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
@@ -1082,6 +1175,9 @@ $DIG $DIGOPTS normalthenrrsig.secure.example. @10.53.0.4 a > /dev/null || ret=1
 ans=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.4 rrsig` || ret=1
 expect=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.3 rrsig | grep '^A' ` || ret=1
 test "$ans" = "$expect" || ret=1
+# also check that RA is set
+$DIG $DIGOPTS normalthenrrsig.secure.example. @10.53.0.4 rrsig > dig.out.ns4.test$n || ret=1
+grep "flags:.*ra.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -1092,6 +1188,9 @@ echo "I:checking RRSIG query not in cache ($n)"
 ret=0
 ans=`$DIG $DIGOPTS +short rrsigonly.secure.example. @10.53.0.4 rrsig` || ret=1
 test -z "$ans" || ret=1
+# also check that RA is cleared
+$DIG $DIGOPTS rrsigonly.secure.example. @10.53.0.4 rrsig > dig.out.ns4.test$n || ret=1
+grep "flags:.*ra.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -1156,12 +1255,26 @@ else
     echo "I:The DNSSEC update test requires the Net::DNS library." >&2
 fi
 
+echo "I:checking managed key maintenance has not started yet ($n)"
+ret=0
+[ -f "ns4/managed-keys.bind.jnl" ] && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Reconfigure caching server to use "dnssec-validation auto", and repeat
 # some of the DNSSEC validation tests to ensure that it works correctly.
 echo "I:switching to automatic root key configuration"
 cp ns4/named2.conf ns4/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
 sleep 5
+
+echo "I:checking managed key maintenance timer has now started ($n)"
+ret=0
+[ -f "ns4/managed-keys.bind.jnl" ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:checking positive validation NSEC ($n)"
 ret=0
@@ -1208,10 +1321,31 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that root DS queries validate ($n)"
+ret=0
+$DIG $DIGOPTS +noauth . @10.53.0.1 ds > dig.out.ns1.test$n || ret=1
+$DIG $DIGOPTS +noauth . @10.53.0.4 ds > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns1.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking expired signatures remain with "'"allow-update { none; };"'" and no keys available ($n)"
 ret=0
-$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns2.test$n || ret=1
-grep "RRSIG.SOA" dig.out.ns2.test$n > /dev/null || ret=1
+$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns3.test$n || ret=1
+grep "RRSIG.SOA" dig.out.ns3.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+
+status=`expr $status + $ret`
+echo "I:checking expired signatures do not validate ($n)"
+ret=0
+$DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.4 soa > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
+grep "expired.example .*: RRSIG has expired" ns4/named.run > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -1263,6 +1397,113 @@ checkprivate update-nsec3.example 10.53.0.3 || ret=1
 checkprivate auto-nsec3.example 10.53.0.3 || ret=1
 checkprivate expiring.example 10.53.0.3 || ret=1
 checkprivate auto-nsec.example 10.53.0.3 || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing' without arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -list' without zone is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -list > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -clear' without additional arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -clear > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -clear all' without zone is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -clear all > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param' without additional arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param none' without zone is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param none > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param 1' without additional arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param 1 0' without additional arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param 1 0 0' without additional arguments is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 0 > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param 1 0 0 -' without zone is handled ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 0 - > /dev/null 2>&1 && ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check rndc signing -list output ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -list dynamic.example 2>&1 > signing.out
+grep "No signing records found" signing.out > /dev/null 2>&1 || {
+        ret=1
+        sed 's/^/I:ns3 /' signing.out
+}
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -list update-nsec3.example 2>&1 > signing.out
+grep "Done signing with key .*/NSEC3RSASHA1" signing.out > /dev/null 2>&1 || {
+        ret=1
+        sed 's/^/I:ns3 /' signing.out
+}
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:clear signing records ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -clear all update-nsec3.example > /dev/null || ret=1
+sleep 1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -list update-nsec3.example 2>&1 > signing.out
+grep "No signing records found" signing.out > /dev/null 2>&1 || {
+        ret=1
+        sed 's/^/I:ns3 /' signing.out
+}
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

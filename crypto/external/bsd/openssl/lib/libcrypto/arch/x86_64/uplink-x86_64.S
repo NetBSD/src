@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 .text	
 
 .globl	OPENSSL_UplinkTable

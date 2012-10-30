@@ -1,13 +1,13 @@
-/*	$NetBSD: ipsyncs.c,v 1.1.1.1.2.2 2012/04/17 00:03:26 yamt Exp $	*/
+/*	$NetBSD: ipsyncs.c,v 1.1.1.1.2.3 2012/10/30 18:55:15 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipsyncs.c,v 1.1.1.2 2012/07/22 13:44:58 darrenr Exp $";
 #endif
 #include <sys/types.h>
 #include <sys/time.h>

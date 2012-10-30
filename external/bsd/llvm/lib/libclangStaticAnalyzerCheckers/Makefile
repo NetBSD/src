@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2012/04/17 00:03:35 yamt Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2012/10/30 18:55:55 yamt Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
@@ -6,8 +6,7 @@ LIB=	clangStaticAnalyzerCheckers
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers
 
-SRCS+=	AdjustedReturnValueChecker.cpp \
-	AnalyzerStatsChecker.cpp \
+SRCS+=	AnalyzerStatsChecker.cpp \
 	ArrayBoundChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
 	AttrNonNullChecker.cpp \
@@ -30,11 +29,14 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
 	DereferenceChecker.cpp \
+	DirectIvarAssignment.cpp \
 	DivZeroChecker.cpp \
+	DynamicTypePropagation.cpp \
+	ExprInspectionChecker.cpp \
 	FixedAddressChecker.cpp \
 	GenericTaintChecker.cpp \
 	IdempotentOperationChecker.cpp \
-	IteratorsChecker.cpp \
+	IvarInvalidationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	MacOSKeychainAPIChecker.cpp \
 	MacOSXAPIChecker.cpp \
@@ -44,7 +46,6 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NoReturnFunctionChecker.cpp \
-	OSAtomicChecker.cpp \
 	ObjCAtSyncChecker.cpp \
 	ObjCContainersASTChecker.cpp \
 	ObjCContainersChecker.cpp \
@@ -59,6 +60,7 @@ SRCS+=	AdjustedReturnValueChecker.cpp \
 	StackAddrEscapeChecker.cpp \
 	StreamChecker.cpp \
 	TaintTesterChecker.cpp \
+	TraversalChecker.cpp \
 	UndefBranchChecker.cpp \
 	UndefCapturedBlockVarChecker.cpp \
 	UndefResultChecker.cpp \

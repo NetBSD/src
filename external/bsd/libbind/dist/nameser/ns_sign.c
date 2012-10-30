@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.1.1.1 2009/04/12 15:33:51 christos Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.1.1.1.14.1 2012/10/30 18:55:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_sign.c,v 1.6 2006/03/09 23:57:56 marka Exp";
+static const char rcsid[] = "Id: ns_sign.c,v 1.6 2006/03/09 23:57:56 marka Exp ";
 #endif
 
 /* Import. */

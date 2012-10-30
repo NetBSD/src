@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: t_api.pl,v 1.10 2007-06-19 23:46:59 tbox Exp
+# Id: t_api.pl,v 1.10 2007/06/19 23:46:59 tbox Exp 
 
 require "getopts.pl";
 

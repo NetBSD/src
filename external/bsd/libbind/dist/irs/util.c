@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2009/04/12 15:33:38 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.1.14.1 2012/10/30 18:55:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: util.c,v 1.3 2005/04/27 04:56:34 sra Exp";
+static const char rcsid[] = "Id: util.c,v 1.3 2005/04/27 04:56:34 sra Exp ";
 #endif
 
 #include "port_before.h"

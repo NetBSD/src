@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsd.c,v 1.1.1.1.2.2 2012/04/17 00:03:14 yamt Exp $	*/
+/*	$NetBSD: ipsd.c,v 1.1.1.1.2.3 2012/10/30 18:55:01 yamt Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed.
@@ -34,7 +34,7 @@
 
 #ifndef	lint
 static const char sccsid[] = "@(#)ipsd.c	1.3 12/3/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id";
+static const char rcsid[] = "@(#)Id: ipsd.c,v 1.1.1.2 2012/07/22 13:44:34 darrenr Exp $";
 #endif
 
 extern	char	*optarg;

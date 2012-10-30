@@ -1,4 +1,4 @@
-/*	$NetBSD: printactivenat.c,v 1.2.2.2 2012/04/17 00:03:19 yamt Exp $	*/
+/*	$NetBSD: printactivenat.c,v 1.2.2.3 2012/10/30 18:55:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printactivenat.c,v 1.20.2.4 2012/01/26 05:29:16 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printactivenat.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr";
 #endif
 
 

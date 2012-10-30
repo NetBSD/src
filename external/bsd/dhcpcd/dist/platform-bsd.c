@@ -31,8 +31,10 @@
 #include <sys/utsname.h>
 #include <netinet/in.h>
 
+#include <stdlib.h>
 #include <syslog.h>
 
+#include "if-options.h"
 #include "platform.h"
 
 #ifndef SYS_NMLN	/* OSX */
@@ -53,37 +55,64 @@ hardware_platform(void)
 	return march;
 }
 
+#define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
+#define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
 static int
-inet6_sysctl(int code)
+inet6_sysctl(int code, int val, int action)
 {
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, 0 };
-	int val;
 	size_t size;
 
 	mib[3] = code;
 	size = sizeof(val);
+	if (action) {
+		if (sysctl(mib, sizeof(mib)/sizeof(mib[0]),
+		    NULL, 0, &val, size) == -1)
+			return -1;
+		return 0;
+	}
 	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &val, &size, NULL, 0) == -1)
 		return -1;
 	return val;
 }
 
+static void
+restore_kernel_ra(void)
+{
+
+	if (options & DHCPCD_FORKED)
+		return;
+	syslog(LOG_INFO, "restoring Kernel IPv6 RA support");
+	if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 1) == -1)
+		syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
+}
+
 int
 check_ipv6(const char *ifname)
 {
+	int val;
 
-	/* BSD doesn't support these values per iface, so just reutrn 1 */
+	/* BSD doesn't support these values per iface, so just return 1 */
 	if (ifname)
 		return 1;
 
-	if (inet6_sysctl(IPV6CTL_ACCEPT_RTADV) != 1) {
-		syslog(LOG_WARNING,
-		    "Kernel is not configured to accept IPv6 RAs");
-		return 0;
+	val = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
+	if (val == 0)
+		options |= DHCPCD_IPV6RA_OWN;
+	else if (options & DHCPCD_IPV6RA_OWN) {
+		syslog(LOG_INFO, "disabling Kernel IPv6 RA support");
+		if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1) {
+			syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
+			return 0;
+		}
+		atexit(restore_kernel_ra);
 	}
-	if (inet6_sysctl(IPV6CTL_FORWARDING) != 0) {
+return 1;
+	if (get_inet6_sysctl(IPV6CTL_FORWARDING) != 0) {
 		syslog(LOG_WARNING,
 		    "Kernel is configured as a router, not a host");
 		return 0;
 	}
+
 	return 1;
 }

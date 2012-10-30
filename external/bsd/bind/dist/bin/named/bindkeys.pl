@@ -14,12 +14,12 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: bindkeys.pl,v 1.7 2011-01-04 23:47:13 tbox Exp
+# Id: bindkeys.pl,v 1.7 2011/01/04 23:47:13 tbox Exp 
 
 use strict;
 use warnings;
 
-my $rev = 'Id: bindkeys.pl,v 1.7 2011-01-04 23:47:13 tbox Exp';
+my $rev = 'Id: bindkeys.pl,v 1.7 2011/01/04 23:47:13 tbox Exp ';
 $rev =~ s/\$//g;
 $rev =~ s/,v//g;
 $rev =~ s/Id: //;

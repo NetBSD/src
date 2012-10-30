@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.42 2011-05-23 20:10:02 each Exp
+# Id: sign.sh,v 1.43 2011/11/04 05:36:28 each Exp 
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -271,7 +271,7 @@ zonefile=expired.example.db
 kskname=`$KEYGEN -q -r $RANDFILE -fk $zone`
 zskname=`$KEYGEN -q -r $RANDFILE $zone`
 cat $infile $kskname.key $zskname.key >$zonefile
-$SIGNER -P -r $RANDFILE -o $zone -s -3h -e +1h $zonefile > /dev/null 2>&1
+$SIGNER -P -r $RANDFILE -o $zone -s -1d -e +1h $zonefile > /dev/null 2>&1
 rm -f $kskname.* $zskname.*
 
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:03:33 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2012/10/30 18:55:53 yamt Exp $
 
 LIB=	clangAST
 
@@ -13,6 +13,13 @@ SRCS+=	APValue.cpp \
 	ASTImporter.cpp \
 	AttrImpl.cpp \
 	CXXInheritance.cpp \
+	Comment.cpp \
+	CommentBriefParser.cpp \
+	CommentCommandTraits.cpp \
+	CommentDumper.cpp \
+	CommentLexer.cpp \
+	CommentParser.cpp \
+	CommentSema.cpp \
 	Decl.cpp \
 	DeclarationName.cpp \
 	DeclBase.cpp \
@@ -38,6 +45,7 @@ SRCS+=	APValue.cpp \
 	NSAPI.cpp \
 	NestedNameSpecifier.cpp \
 	ParentMap.cpp \
+	RawCommentList.cpp \
 	RecordLayout.cpp \
 	RecordLayoutBuilder.cpp \
 	SelectorLocationsKind.cpp \

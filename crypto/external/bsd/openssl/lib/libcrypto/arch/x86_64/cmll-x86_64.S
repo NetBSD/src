@@ -1,3 +1,4 @@
+#include <machine/asm.h>
 .text	
 
 

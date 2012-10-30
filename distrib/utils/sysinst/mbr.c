@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.88.2.1 2012/04/17 00:02:49 yamt Exp $ */
+/*	$NetBSD: mbr.c,v 1.88.2.2 2012/10/30 18:48:52 yamt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1271,6 +1271,7 @@ edit_mbr(mbr_info_t *mbri)
 	/* Ask full/part */
 
 	part = &mbrs->mbr_parts[0];
+	get_ptn_alignment(part);	/* update ptn_alignment */
 	msg_display(MSG_fullpart, diskdev);
 	process_menu(MENU_fullpart, &usefull);
 
@@ -1477,7 +1478,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 
 		mbrp = &mbrs->mbr_parts[0];
 		if (ext_base == 0) {
-			get_ptn_alignment(mbrp);
+			get_ptn_alignment(mbrp);	/* get ptn_0_offset */
 		} else {
 			/* sanity check extended chain */
 			if (MBR_IS_EXTENDED(mbrp[0].mbrp_type))

@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.6 2010-01-18 23:48:40 tbox Exp
+# Id: keygen.sh,v 1.8 2011/10/20 23:46:51 tbox Exp 
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -72,4 +72,4 @@ echo $zskinact > ../inact.key
 echo $zskunpub > ../unpub.key
 echo $zsknopriv > ../nopriv.key
 echo $zsksby > ../standby.key
-echo $kskrev > ../rev.key
+$REVOKE -R $kskrev > ../rev.key

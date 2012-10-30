@@ -1,11 +1,11 @@
-/*	$NetBSD: load_http.c,v 1.2.2.2 2012/04/17 00:03:18 yamt Exp $	*/
+/*	$NetBSD: load_http.c,v 1.2.2.3 2012/10/30 18:55:07 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_http.c,v 1.5.2.3 2012/01/26 05:29:16 darrenr Exp
+ * Id: load_http.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr
  */
 
 #include "ipf.h"

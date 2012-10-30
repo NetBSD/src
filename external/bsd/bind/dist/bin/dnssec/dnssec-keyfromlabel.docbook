@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keyfromlabel.docbook,v 1.21 2011-03-17 01:40:34 each Exp -->
+<!-- Id: dnssec-keyfromlabel.docbook,v 1.21 2011/03/17 01:40:34 each Exp  -->
 <refentry id="man.dnssec-keyfromlabel">
   <refentryinfo>
     <date>February 8, 2008</date>

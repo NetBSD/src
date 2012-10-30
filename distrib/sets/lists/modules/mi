@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34.2.3 2012/05/23 10:07:19 yamt Exp $
+# $NetBSD: mi,v 1.34.2.4 2012/10/30 18:48:46 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -115,6 +115,10 @@
 ./@MODULEDIR@/npf/npf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_alg_icmp			base-kernel-modules	kmod
 ./@MODULEDIR@/npf_alg_icmp/npf_alg_icmp.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_log			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalise			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod
@@ -171,6 +175,8 @@
 ./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/tprof				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/uatp				base-kernel-modules	kmod
+./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/umap				base-kernel-modules	kmod

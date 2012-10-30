@@ -2,6 +2,41 @@ Major changes between releases                  Automated Testing Framework
 ===========================================================================
 
 
+Changes in version 0.16
+***********************
+
+Experimental version released on July 10th, 2012.
+
+* Added a --enable-tools flag to configure to request the build of the
+  deprecated ATF tools, whose build is now disabled by default.  In order
+  to continue running tests, you should migrate to Kyua instead of enabling
+  the build of the deprecated tools.  The kyua-atf-compat package provides
+  transitional compatibility versions of atf-run and atf-report built on
+  top of Kyua.
+
+* Tweaked the ATF_TEST_CASE macro of atf-c++ so that the compiler can
+  detect defined but unused test cases.
+
+* PR bin/45859: Fixed some XSLT bugs that resulted in the tc-time and
+  tp-time XML tags leaking into the generated HTML file.  Also improved
+  the CSS file slightly to correct alignment and color issues with the
+  timestamps column.
+
+* Optimized atf-c++/macros.hpp so that GNU G++ consumes less memory during
+  compilation with GNU G++.
+
+* Flipped the default to building shared libraries for atf-c and atf-c++,
+  and started versioning them.  As a side-effect, this removes the
+  --enable-unstable-shared flag from configure that appears to not work any
+  more (under NetBSD).  Additionally, some distributions require the use of
+  shared libraries for proper dependency tracking (e.g. Fedora), so it is
+  better if we do the right versioning upstream.
+
+* Project hosting moved from an adhoc solution (custom web site and
+  Monotone repository) to Google Code (standard wiki and Git).  ATF now
+  lives in a subcomponent of the Kyua project.
+
+
 Changes in version 0.15
 ***********************
 

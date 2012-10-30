@@ -1,12 +1,12 @@
-/*	$NetBSD: ip_scan.h,v 1.1.1.1.2.2 2012/04/17 00:03:12 yamt Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.1.1.1.2.3 2012/10/30 18:55:00 yamt Exp $	*/
 
 /*
- * Copyright (C) 2008 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id
+ * Id: ip_scan.h,v 1.1.1.2 2012/07/22 13:44:24 darrenr Exp $
  */
 
 #ifndef __IP_SCAN_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.1.1.1 2009/04/12 15:33:58 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.1.1.1.14.1 2012/10/30 18:55:44 yamt Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp";
+static const char rcsid[] = "Id: res_mkquery.c,v 1.10 2008/12/11 09:59:00 marka Exp ";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

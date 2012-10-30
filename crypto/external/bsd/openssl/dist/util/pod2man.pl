@@ -435,9 +435,9 @@ if ($name ne 'something') {
 
 print <<"END";
 .rn '' }`
-''' \$RCSfile\$\$Revision\$\$Date\$
+''' \RCSfile\$\$Revision\\Date\
 '''
-''' \$Log\$
+''' \Log\
 '''
 .de Sh
 .br

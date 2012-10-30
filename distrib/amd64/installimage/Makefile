@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:31 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:28 yamt Exp $
 
 .include <bsd.own.mk>
 
-INSTIMGBASE=	amd64inst		# gives ${IMGBASE}.img
+INSTIMGBASE=	NetBSD-${DISTRIBVER}-amd64-install	# gives ${IMGBASE}.img
 
 BOOTDISK=	sd0			# for USB flash etc.
 IMAGEMB=	550			# for all installation binaries

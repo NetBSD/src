@@ -238,7 +238,9 @@ bn_sqr_comba4:
 	stw	9,24(3)
 	stw	10,28(3)
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0
 
 
 
@@ -663,8 +665,9 @@ bn_sqr_comba8:
 
 
 	blr	
-
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0
 
 
 
@@ -798,7 +801,7 @@ bn_mul_comba4:
 	addze	11,0
 
 	lwz	6,12(4)
-	lwz	7,8(4)
+	lwz	7,8(5)
 	mullw	8,6,7
 	mulhwu	9,6,7
 	addc	12,8,12
@@ -815,7 +818,9 @@ bn_mul_comba4:
 	stw	10,24(3)
 	stw	11,28(3)
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
 
 
 
@@ -1351,7 +1356,9 @@ bn_mul_comba8:
 	stw	12,56(3)
 	stw	10,60(3)
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
 
 
 
@@ -1399,8 +1406,9 @@ bn_sub_words:
 	subfze	3,0
 	andi.	3,3,1
 	blr	
-.long	0x00000000
-
+.long	0
+.byte	0,12,0x14,0,0,0,4,0
+.long	0
 
 
 
@@ -1443,7 +1451,9 @@ bn_add_words:
 .Lppcasm_add_adios:
 	addze	3,0
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,4,0
+.long	0
 
 
 
@@ -1556,7 +1566,9 @@ bn_div_words:
 .Lppcasm_div9:
 	or	3,8,0
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
 
 
 
@@ -1595,8 +1607,9 @@ bn_sqr_words:
 	bdnz+	.Lppcasm_sqr_mainloop
 .Lppcasm_sqr_adios:
 	blr	
-.long	0x00000000
-
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
 
 
 
@@ -1699,7 +1712,9 @@ bn_mul_words:
 .Lppcasm_mw_OVER:
 	addi	3,12,0
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,4,0
+.long	0
 
 
 
@@ -1822,5 +1837,7 @@ bn_mul_add_words:
 .Lppcasm_maw_adios:
 	addi	3,12,0
 	blr	
-.long	0x00000000
+.long	0
+.byte	0,12,0x14,0,0,0,4,0
+.long	0
 .align	4

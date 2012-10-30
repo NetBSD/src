@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: wrap.sh,v 1.3 2010-06-18 23:46:43 tbox Exp
+# Id: wrap.sh,v 1.3 2010/06/18 23:46:43 tbox Exp 
 
 #
 # Wrapper for named

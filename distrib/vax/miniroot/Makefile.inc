@@ -1,12 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.20 2010/02/11 09:06:51 roy Exp $
+# $NetBSD: Makefile.inc,v 1.20.6.1 2012/10/30 18:48:56 yamt Exp $
 
 IMAGESIZE=	7m
-MAKEFS_FLAGS=	-o density=4k
+MAKEFS_FLAGS=	-o density=3k
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	all
+MAKEDEVTARGETS=	all ipty
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
-IMAGEDEPENDS+=	${ARCHDIR}/../install.md \
-		${ARCHDIR}/dot.profile \
+IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
 		${DESTDIR}/usr/mdec/boot \
 		${KERNOBJDIR}/GENERIC/netbsd
 

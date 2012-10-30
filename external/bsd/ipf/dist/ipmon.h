@@ -1,12 +1,12 @@
-/*	$NetBSD: ipmon.h,v 1.1.1.1.2.2 2012/04/17 00:03:13 yamt Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.1.1.1.2.3 2012/10/30 18:55:00 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id
+ * Id: ipmon.h,v 1.1.1.2 2012/07/22 13:44:25 darrenr Exp $
  */
 
 typedef struct ipmon_msg_s {
@@ -18,14 +18,21 @@ typedef struct ipmon_msg_s {
 	int	imm_loglevel;
 } ipmon_msg_t;
 
+typedef	void	(*ims_destroy_func_t)(void *);
+typedef	void	*(*ims_dup_func_t)(void *);
+typedef	int	(*ims_match_func_t)(void *, void *);
+typedef	void	*(*ims_parse_func_t)(char **);
+typedef	void	(*ims_print_func_t)(void *);
+typedef	int	(*ims_store_func_t)(void *, ipmon_msg_t *);
+
 typedef struct ipmon_saver_s {
-	char	*ims_name;
-	void	(*ims_destroy)(void *);
-	void	* (*ims_dup)(void *);
-	int	(*ims_match)(void *, void *);
-	void	* (* ims_parse)(char **);
-	void	(*ims_print)(void *);
-	int	(*ims_store)(void *, ipmon_msg_t *);
+	char			*ims_name;
+	ims_destroy_func_t	ims_destroy;
+	ims_dup_func_t		ims_dup;
+	ims_match_func_t	ims_match;
+	ims_parse_func_t	ims_parse;
+	ims_print_func_t	ims_print;
+	ims_store_func_t	ims_store;
 } ipmon_saver_t;
 
 typedef struct	ipmon_saver_int_s {
@@ -128,8 +135,8 @@ typedef	struct	ipmon_action {
 extern	void	dump_config __P((void));
 extern	int	load_config __P((char *));
 extern	void	unload_config __P((void));
-extern	void	dumphex __P((FILE *, int, char *, int));
-extern	int	check_action __P((char *, char *, int, int));
+extern	void	dumphex __P((FILE *, int, const void *, size_t));
+extern	int	check_action __P((const char *, const char *, int, int));
 extern	char	*getword __P((int));
 extern	void	*add_doing __P((ipmon_saver_t *));
 

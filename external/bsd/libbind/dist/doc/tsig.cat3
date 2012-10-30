@@ -2,34 +2,34 @@ TSIG                                 LOCAL                                TSIG
 
 NNAAMMEE
      nnss__ssiiggnn, nnss__ssiiggnn__ttccpp, nnss__ssiiggnn__ttccpp__iinniitt, nnss__vveerriiffyy, nnss__vveerriiffyy__ttccpp,
-     nnss__vveerriiffyy__ttccpp__iinniitt, nnss__ffiinndd__ttssiigg - TSIG system
+     nnss__vveerriiffyy__ttccpp__iinniitt, nnss__ffiinndd__ttssiigg -- TSIG system
 
 SSYYNNOOPPSSIISS
      _i_n_t
      nnss__ssiiggnn(_u___c_h_a_r _*_m_s_g, _i_n_t _*_m_s_g_l_e_n, _i_n_t _m_s_g_s_i_z_e, _i_n_t _e_r_r_o_r, _v_o_i_d _*_k,
-             _c_o_n_s_t _u___c_h_a_r _*_q_u_e_r_y_s_i_g, _i_n_t _q_u_e_r_y_s_i_g_l_e_n, _u___c_h_a_r _*_s_i_g,
-             _i_n_t _*_s_i_g_l_e_n, _t_i_m_e___t _i_n___t_i_m_e_s_i_g_n_e_d);
+         _c_o_n_s_t _u___c_h_a_r _*_q_u_e_r_y_s_i_g, _i_n_t _q_u_e_r_y_s_i_g_l_e_n, _u___c_h_a_r _*_s_i_g, _i_n_t _*_s_i_g_l_e_n,
+         _t_i_m_e___t _i_n___t_i_m_e_s_i_g_n_e_d);
 
      _i_n_t
      nnss__ssiiggnn__ttccpp(_u___c_h_a_r _*_m_s_g, _i_n_t _*_m_s_g_l_e_n, _i_n_t _m_s_g_s_i_z_e, _i_n_t _e_r_r_o_r,
-             _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e, _i_n_t _d_o_n_e);
+         _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e, _i_n_t _d_o_n_e);
 
      _i_n_t
      nnss__ssiiggnn__ttccpp__iinniitt(_v_o_i_d _*_k, _c_o_n_s_t _u___c_h_a_r _*_q_u_e_r_y_s_i_g, _i_n_t _q_u_e_r_y_s_i_g_l_e_n,
-             _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e);
+         _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e);
 
      _i_n_t
      nnss__vveerriiffyy(_u___c_h_a_r _*_m_s_g, _i_n_t _*_m_s_g_l_e_n, _v_o_i_d _*_k, _c_o_n_s_t _u___c_h_a_r _*_q_u_e_r_y_s_i_g,
-             _i_n_t _q_u_e_r_y_s_i_g_l_e_n, _u___c_h_a_r _*_s_i_g, _i_n_t _*_s_i_g_l_e_n, _t_i_m_e___t _i_n___t_i_m_e_s_i_g_n_e_d,
-             _i_n_t _n_o_s_t_r_i_p);
+         _i_n_t _q_u_e_r_y_s_i_g_l_e_n, _u___c_h_a_r _*_s_i_g, _i_n_t _*_s_i_g_l_e_n, _t_i_m_e___t _i_n___t_i_m_e_s_i_g_n_e_d,
+         _i_n_t _n_o_s_t_r_i_p);
 
      _i_n_t
      nnss__vveerriiffyy__ttccpp(_u___c_h_a_r _*_m_s_g, _i_n_t _*_m_s_g_l_e_n, _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e,
-             _i_n_t _r_e_q_u_i_r_e_d);
+         _i_n_t _r_e_q_u_i_r_e_d);
 
      _i_n_t
      nnss__vveerriiffyy__ttccpp__iinniitt(_v_o_i_d _*_k, _c_o_n_s_t _u___c_h_a_r _*_q_u_e_r_y_s_i_g, _i_n_t _q_u_e_r_y_s_i_g_l_e_n,
-             _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e);
+         _n_s___t_c_p___t_s_i_g___s_t_a_t_e _*_s_t_a_t_e);
 
      _u___c_h_a_r _*
      nnss__ffiinndd__ttssiigg(_u___c_h_a_r _*_m_s_g, _u___c_h_a_r _*_e_o_m);
@@ -106,7 +106,7 @@ RREETTUURRNN VVAALLUUEESS
      nnss__ffiinndd__ttssiigg() returns a pointer to the TSIG record if one is found, and
      NULL otherwise.
 
-     All other routines return 0 on success, modifying arguments when neces‐
+     All other routines return 0 on success, modifying arguments when neces-
      sary.
 
      nnss__ssiiggnn() and nnss__ssiiggnn__ttccpp() return the following errors:
@@ -122,10 +122,10 @@ RREETTUURRNN VVAALLUUEESS
                                    The TSIG original ID field does not match
                                    the message ID
            (-ns_r_badkey)          Verification failed due to an invalid key
-           (-ns_r_badsig)          Verification failed due to an invalid sig‐
+           (-ns_r_badsig)          Verification failed due to an invalid sig-
                                    nature
-           (-ns_r_badtime)         Verification failed due to an invalid
-                                   timestamp
+           (-ns_r_badtime)         Verification failed due to an invalid time-
+                                   stamp
            ns_r_badkey             Verification succeeded but the message had
                                    an error of BADKEY
            ns_r_badsig             Verification succeeded but the message had

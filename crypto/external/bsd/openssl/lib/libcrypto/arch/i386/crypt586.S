@@ -1,4 +1,4 @@
-.file	"crypt586.s"
+#include <machine/asm.h>
 .text
 .globl	fcrypt_body
 .type	fcrypt_body,@function

@@ -70,6 +70,8 @@
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
 
+#include <sys/types.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -89,7 +91,6 @@ void RC2_ecb_encrypt(const unsigned char *in,unsigned char *out,RC2_KEY *key,
 void RC2_encrypt(unsigned long *data,RC2_KEY *key);
 void RC2_decrypt(unsigned long *data,RC2_KEY *key);
 #else
-#include <sys/types.h>
 void RC2_encrypt(uint32_t *data,RC2_KEY *key);
 void RC2_decrypt(uint32_t *data,RC2_KEY *key);
 #endif

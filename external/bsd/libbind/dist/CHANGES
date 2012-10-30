@@ -1,10 +1,13 @@
+                        -- 6.0 released --
+
                         -- 6.0rc1 released --
 
 11.	[func]		Add tests subdirectory.  Includes dig8.c, to test 
 			linking against libbind. [RT #19425]
 
-10.	[func]		Add suppport for DS, SSHFP, RRSIG, NSEC, DNSKEY,
-			DHCID, NSEC3, NSEC3PARAM, HIP and DLV. [RT #19330]
+10.	[func]		Add suppport to query for and display DS, SSHFP, RRSIG,
+			NSEC, DNSKEY, DHCID, NSEC3, NSEC3PARAM, HIP and DLV.
+			[RT #19330]
 
                         -- 6.0b1 released --
 

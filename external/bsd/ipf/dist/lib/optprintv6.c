@@ -1,11 +1,11 @@
-/*	$NetBSD: optprintv6.c,v 1.1.1.1.2.2 2012/04/17 00:03:18 yamt Exp $	*/
+/*	$NetBSD: optprintv6.c,v 1.1.1.1.2.3 2012/10/30 18:55:08 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: optprintv6.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 #include "ipf.h"
 
@@ -20,7 +20,7 @@ void optprintv6(sec, optmsk, optbits)
 	struct ipopt_names *io;
 	char *s;
 
-	s = " v6hdrs ";
+	s = " v6hdr ";
 	for (io = v6ionames; io->on_name; io++)
 		if ((io->on_bit & optmsk) &&
 		    ((io->on_bit & optmsk) == (io->on_bit & optbits))) {

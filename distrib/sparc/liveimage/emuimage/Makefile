@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2012/04/17 00:02:47 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2012/10/30 18:48:50 yamt Exp $
 
-LIVEIMGBASE=	sparcemu		# gives ${IMGBASE}.img
+LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc-live-sd0root	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 

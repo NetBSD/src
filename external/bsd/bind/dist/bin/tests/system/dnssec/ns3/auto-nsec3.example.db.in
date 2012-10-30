@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: auto-nsec3.example.db.in,v 1.2 2011-02-15 22:02:36 marka Exp
+; Id: auto-nsec3.example.db.in,v 1.2 2011/02/15 22:02:36 marka Exp 
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (

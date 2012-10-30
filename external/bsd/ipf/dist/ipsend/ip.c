@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.2.2.2 2012/04/17 00:03:15 yamt Exp $	*/
+/*	$NetBSD: ip.c,v 1.2.2.3 2012/10/30 18:55:02 yamt Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.12 2008/08/10 05:51:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip.c,v 1.1.1.2 2012/07/22 13:44:36 darrenr";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

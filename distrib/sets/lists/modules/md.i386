@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.37.2.1 2012/04/17 00:02:44 yamt Exp $
+# $NetBSD: md.i386,v 1.37.2.2 2012/10/30 18:48:46 yamt Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -41,6 +41,8 @@
 ./@MODULEDIR@/auvitek/auvitek.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/bpfjit				base-kernel-modules	kmod
+./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ibcs2			base-kernel-modules	kmod
@@ -73,6 +75,10 @@
 ./@MODULEDIR@/fujbp/fujbp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk				base-kernel-modules	kmod
 ./@MODULEDIR@/fujhk/fujhk.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hdafg				base-kernel-modules	kmod
+./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
+./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
@@ -113,6 +119,8 @@
 ./@MODULEDIR@/powernow/powernow.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog				base-kernel-modules	kmod
 ./@MODULEDIR@/pwdog/pwdog.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/sljit				base-kernel-modules	kmod
+./@MODULEDIR@/sljit/sljit.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/r128drm				base-kernel-modules	kmod
 ./@MODULEDIR@/r128drm/r128drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
@@ -121,6 +129,8 @@
 ./@MODULEDIR@/savagedrm/savagedrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/sisdrm/sisdrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/syscallemu			base-kernel-modules	kmod
+./@MODULEDIR@/syscallemu/syscallemu.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm				base-kernel-modules	kmod
 ./@MODULEDIR@/tdfxdrm/tdfxdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod

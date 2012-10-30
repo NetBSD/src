@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: cleanpkcs11.sh,v 1.3 2010-06-08 23:50:24 tbox Exp
+# Id: cleanpkcs11.sh,v 1.3 2010/06/08 23:50:24 tbox Exp 
 
 if [ ! -x ../../pkcs11/pkcs11-destroy ]; then exit 1; fi
 

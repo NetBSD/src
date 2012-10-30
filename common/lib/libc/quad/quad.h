@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.4.2.1 2012/04/17 00:01:40 yamt Exp $	*/
+/*	$NetBSD: quad.h,v 1.4.2.2 2012/10/30 18:46:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,12 @@
 #include <limits.h>
 #else
 #include <machine/limits.h>
+#endif
+
+#if defined(__ARM_EABI__) && !defined(lint)
+#define	ARM_EABI_ALIAS(alias,sym)	__strong_alias(alias,sym);
+#else
+#define	ARM_EABI_ALIAS(alias,sym)	/* nothing */
 #endif
 
 /*

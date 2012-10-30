@@ -1,11 +1,11 @@
-/*	$NetBSD: load_poolnode.c,v 1.1.1.1.2.2 2012/04/17 00:03:18 yamt Exp $	*/
+/*	$NetBSD: load_poolnode.c,v 1.1.1.1.2.3 2012/10/30 18:55:07 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: load_poolnode.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -25,6 +25,7 @@ load_poolnode(role, name, node, ttl, iocfunc)
 {
 	ip_pool_node_t pn;
 	iplookupop_t op;
+	char *what;
 	int err;
 
 	if (pool_open() == -1)
@@ -46,19 +47,22 @@ load_poolnode(role, name, node, ttl, iocfunc)
 	pn.ipn_die = ttl;
 	strncpy(pn.ipn_name, node->ipn_name, sizeof(pn.ipn_name));
 
-	if ((opts & OPT_REMOVE) == 0)
+	if ((opts & OPT_REMOVE) == 0) {
+		what = "add";
 		err = pool_ioctl(iocfunc, SIOCLOOKUPADDNODE, &op);
-	else
+	} else {
+		what = "delete";
 		err = pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op);
+	}
 
 	if (err != 0) {
 		if ((opts & OPT_DONOTHING) == 0) {
-			fprintf(stderr, "load_loopnode(%s/",
+			char msg[80];
+
+			sprintf(msg, "%s pool node(%s/", what,
 				inet_ntoa(pn.ipn_addr.adf_addr.in4));
-			fprintf(stderr, "%s",
-				inet_ntoa(pn.ipn_mask.adf_addr.in4));
-			perror(":SIOCLOOKUP*NODE");
-			return -1;
+			strcat(msg, inet_ntoa(pn.ipn_mask.adf_addr.in4));
+			return ipf_perror_fd(pool_fd(), iocfunc, msg);
 		}
 	}
 

@@ -1,5 +1,5 @@
 ##
-## Id: aclocal.m4,v 1.1.1.1 2003-06-04 00:25:05 marka Exp
+## Id: aclocal.m4,v 1.1 2003/06/04 00:25:05 marka Exp 
 ##
 AC_DEFUN(AC_FIND_SYSTEM_SHOBJ,[
 AC_MSG_CHECKING(for $1 shared object)

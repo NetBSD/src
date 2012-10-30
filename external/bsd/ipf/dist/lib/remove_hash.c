@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_hash.c,v 1.1.1.1.2.2 2012/04/17 00:03:21 yamt Exp $	*/
+/*	$NetBSD: remove_hash.c,v 1.1.1.1.2.3 2012/10/30 18:55:11 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: remove_hash.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -40,11 +40,11 @@ remove_hash(iphp, iocfunc)
 	strncpy(iph.iph_name, iphp->iph_name, sizeof(iph.iph_name));
 	iph.iph_flags = iphp->iph_flags;
 
-	if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op))
+	if (pool_ioctl(iocfunc, SIOCLOOKUPDELTABLE, &op)) {
 		if ((opts & OPT_DONOTHING) == 0) {
-			perror("remove_hash:SIOCLOOKUPDELTABLE");
-			return -1;
+			return ipf_perror_fd(pool_fd(), iocfunc,
+					     "remove lookup hash table");
 		}
-
+	}
 	return 0;
 }

@@ -52,16 +52,6 @@
 
 #define DEFAULT_PATH	"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 
-/* Some systems have route metrics */
-#ifndef HAVE_ROUTE_METRIC
-# ifdef __linux__
-#  define HAVE_ROUTE_METRIC 1
-# endif
-# ifndef HAVE_ROUTE_METRIC
-#  define HAVE_ROUTE_METRIC 0
-# endif
-#endif
-
 static struct rt *routes;
 
 static int
@@ -172,7 +162,12 @@ make_env(const struct interface *iface, const char *reason, char ***argv)
 	int dhcp, ra;
 
 	dhcp = ra = 0;
-	if (strcmp(reason, "ROUTERADVERT") == 0)
+	if (strcmp(reason, "TEST") == 0) {
+		if (ipv6rs_has_ra(iface))
+			ra = 1;
+		else
+			dhcp = 1;
+	} else if (strcmp(reason, "ROUTERADVERT") == 0)
 		ra = 1;
 	else
 		dhcp = 1;
@@ -221,7 +216,10 @@ make_env(const struct interface *iface, const char *reason, char ***argv)
 		e--;
 	}
 	*--p = '\0';
-	if ((dhcp && iface->state->new) || (ra && iface->ras)) {
+	if (strcmp(reason, "TEST") == 0) {
+		env[8] = strdup("if_up=false");
+		env[9] = strdup("if_down=false");
+	} else if ((dhcp && iface->state->new) || (ra && ipv6rs_has_ra(iface))){
 		env[8] = strdup("if_up=true");
 		env[9] = strdup("if_down=false");
 	} else {
@@ -307,7 +305,6 @@ send_interface1(int fd, const struct interface *iface, const char *reason)
 	struct iovec iov[2];
 	int retval;
 
-	retval = 0;
 	make_env(iface, reason, &env);
 	elen = arraytostr((const char *const *)env, &s);
 	iov[0].iov_base = &elen;
@@ -329,7 +326,7 @@ send_interface(int fd, const struct interface *iface)
 	int retval = 0;
 	if (send_interface1(fd, iface, iface->state->reason) == -1)
 		retval = -1;
-	if (iface->ras) {
+	if (ipv6rs_has_ra(iface)) {
 		if (send_interface1(fd, iface, "ROUTERADVERT") == -1)
 			retval = -1;
 	}
@@ -698,8 +695,10 @@ build_routes(void)
 		dnr = get_routes(ifp);
 		dnr = massage_host_routes(dnr, ifp);
 		dnr = add_subnet_route(dnr, ifp);
-		dnr = add_router_host_route(dnr, ifp);
-		dnr = add_destination_route(dnr, ifp);
+		if (ifp->state->options->options & DHCPCD_GATEWAY) {
+			dnr = add_router_host_route(dnr, ifp);
+			dnr = add_destination_route(dnr, ifp);
+		}
 		for (rt = dnr; rt && (rtn = rt->next, 1); lrt = rt, rt = rtn) {
 			rt->iface = ifp;
 			rt->metric = ifp->metric;

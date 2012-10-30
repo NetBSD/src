@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.40 2011/10/11 15:27:11 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.40.2.1 2012/10/30 18:46:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.40 2011/10/11 15:27:11 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.40.2.1 2012/10/30 18:46:08 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,6 +330,9 @@ static const struct limits limits[] = {
 #ifdef RLIMIT_MEMLOCK
 	{ "locked memory","kbytes",	RLIMIT_MEMLOCK, 1024, 'l' },
 #endif
+#ifdef RLIMIT_NTHR
+	{ "thread",	"threads",	RLIMIT_NTHR,       1, 'r' },
+#endif
 #ifdef RLIMIT_NPROC
 	{ "process",	"processes",	RLIMIT_NPROC,      1, 'p' },
 #endif
@@ -361,7 +364,7 @@ ulimitcmd(int argc, char **argv)
 	struct rlimit	limit;
 
 	what = 'f';
-	while ((optc = nextopt("HSabtfdsmcnplv")) != '\0')
+	while ((optc = nextopt("HSabtfdscmlrpnv")) != '\0')
 		switch (optc) {
 		case 'H':
 			how = HARD;

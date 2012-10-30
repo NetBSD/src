@@ -1,4 +1,4 @@
-RESOLVER(3)              BSD Library Functions Manual              RESOLVER(3)
+RESOLVER(3)            FreeBSD Library Functions Manual            RESOLVER(3)
 
 NNAAMMEE
      rreess__nniinniitt, rreess__oouurrsseerrvveerr__pp, ffpp__rreessssttaatt, rreess__hhoossttaalliiaass, rreess__ppqquueerryy,
@@ -7,7 +7,7 @@ NNAAMMEE
      rreess__ggeettsseerrvveerrss, rreess__sseettsseerrvveerrss, rreess__nnddeessttrrooyy, ddnn__ccoommpp, ddnn__eexxppaanndd,
      hhssttrreerrrroorr, rreess__iinniitt, rreess__iissoouurrsseerrvveerr, ffpp__nnqquueerryy, pp__qquueerryy, hhoossttaalliiaass,
      rreess__qquueerryy, rreess__sseeaarrcchh, rreess__qquueerryyddoommaaiinn, rreess__mmkkqquueerryy, rreess__sseenndd,
-     rreess__uuppddaattee, rreess__cclloossee, hheerrrroorr - resolver routines
+     rreess__uuppddaattee, rreess__cclloossee, hheerrrroorr -- resolver routines
 
 SSYYNNOOPPSSIISS
      ##iinncclluuddee <<ssyyss//ttyyppeess..hh>>
@@ -29,69 +29,69 @@ SSYYNNOOPPSSIISS
 
      _c_o_n_s_t _c_h_a_r _*
      rreess__hhoossttaalliiaass(_c_o_n_s_t _r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _c_h_a_r _*_n_a_m_e, _c_h_a_r _*_b_u_f,
-             _s_i_z_e___t _b_u_f_l_e_n);
+         _s_i_z_e___t _b_u_f_l_e_n);
 
      _i_n_t
      rreess__ppqquueerryy(_c_o_n_s_t _r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _u___c_h_a_r _*_m_s_g, _i_n_t _m_s_g_l_e_n,
-             _F_I_L_E _*_f_p);
+         _F_I_L_E _*_f_p);
 
      _i_n_t
      rreess__nnqquueerryy(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e,
-             _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
+         _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__nnsseeaarrcchh(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e,
-             _u___c_h_a_r _* _a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
+         _u___c_h_a_r _* _a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__nnqquueerryyddoommaaiinn(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _c_h_a_r _*_n_a_m_e, _c_o_n_s_t _c_h_a_r _*_d_o_m_a_i_n,
-             _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
+         _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__nnmmkkqquueerryy(_r_e_s___s_t_a_t_e _s_t_a_t_p, _i_n_t _o_p, _c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s,
-             _i_n_t _t_y_p_e, _c_o_n_s_t _u___c_h_a_r _*_d_a_t_a, _i_n_t _d_a_t_a_l_e_n, _c_o_n_s_t _u___c_h_a_r _*_n_e_w_r_r,
-             _u___c_h_a_r _*_b_u_f, _i_n_t _b_u_f_l_e_n);
+         _i_n_t _t_y_p_e, _c_o_n_s_t _u___c_h_a_r _*_d_a_t_a, _i_n_t _d_a_t_a_l_e_n, _c_o_n_s_t _u___c_h_a_r _*_n_e_w_r_r,
+         _u___c_h_a_r _*_b_u_f, _i_n_t _b_u_f_l_e_n);
 
      _i_n_t
      rreess__nnsseenndd(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _u___c_h_a_r _*_m_s_g, _i_n_t _m_s_g_l_e_n, _u___c_h_a_r _*_a_n_s_w_e_r,
-             _i_n_t _a_n_s_l_e_n);
+         _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__nnuuppddaattee(_r_e_s___s_t_a_t_e _s_t_a_t_p, _n_s___u_p_d_r_e_c _*_r_r_e_c_p___i_n);
 
      _i_n_t
      rreess__nnmmkkuuppddaattee(_r_e_s___s_t_a_t_e _s_t_a_t_p, _n_s___u_p_d_r_e_c _*_r_r_e_c_p___i_n, _u___c_h_a_r _*_b_u_f,
-             _i_n_t _b_u_f_l_e_n);
+         _i_n_t _b_u_f_l_e_n);
 
      _v_o_i_d
      rreess__nncclloossee(_r_e_s___s_t_a_t_e _s_t_a_t_p);
 
      _i_n_t
      rreess__nnsseennddssiiggnneedd(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _u___c_h_a_r _*_m_s_g, _i_n_t _m_s_g_l_e_n,
-             _n_s___t_s_i_g___k_e_y _*_k_e_y, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
+         _n_s___t_s_i_g___k_e_y _*_k_e_y, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__ffiinnddzzoonneeccuutt(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _n_s___c_l_a_s_s _c_l_a_s_s,
-             _i_n_t _o_p_t_i_o_n_s, _c_h_a_r _*_z_n_a_m_e, _s_i_z_e___t _z_s_i_z_e, _s_t_r_u_c_t _i_n___a_d_d_r _*_a_d_d_r_s,
-             _i_n_t _n_a_d_d_r_s);
+         _i_n_t _o_p_t_i_o_n_s, _c_h_a_r _*_z_n_a_m_e, _s_i_z_e___t _z_s_i_z_e, _s_t_r_u_c_t _i_n___a_d_d_r _*_a_d_d_r_s,
+         _i_n_t _n_a_d_d_r_s);
 
      _i_n_t
      rreess__ggeettsseerrvveerrss(_r_e_s___s_t_a_t_e _s_t_a_t_p, _u_n_i_o_n _r_e_s___s_o_c_k_a_d_d_r___u_n_i_o_n _*_s_e_t, _i_n_t _c_n_t);
 
      _v_o_i_d
      rreess__sseettsseerrvveerrss(_r_e_s___s_t_a_t_e _s_t_a_t_p, _c_o_n_s_t _u_n_i_o_n _r_e_s___s_o_c_k_a_d_d_r___u_n_i_o_n _*_s_e_t,
-             _i_n_t _c_n_t);
+         _i_n_t _c_n_t);
 
      _v_o_i_d
      rreess__nnddeessttrrooyy(_r_e_s___s_t_a_t_e _s_t_a_t_p);
 
      _i_n_t
      ddnn__ccoommpp(_c_o_n_s_t _c_h_a_r _*_e_x_p___d_n, _u___c_h_a_r _*_c_o_m_p___d_n, _i_n_t _l_e_n_g_t_h, _u___c_h_a_r _*_*_d_n_p_t_r_s,
-             _u___c_h_a_r _*_*_l_a_s_t_d_n_p_t_r);
+         _u___c_h_a_r _*_*_l_a_s_t_d_n_p_t_r);
 
      _i_n_t
      ddnn__eexxppaanndd(_c_o_n_s_t _u___c_h_a_r _*_m_s_g, _c_o_n_s_t _u___c_h_a_r _*_e_o_m_o_r_i_g,
-             _c_o_n_s_t _u___c_h_a_r _*_c_o_m_p___d_n, _c_h_a_r _*_e_x_p___d_n, _i_n_t _l_e_n_g_t_h);
+         _c_o_n_s_t _u___c_h_a_r _*_c_o_m_p___d_n, _c_h_a_r _*_e_x_p___d_n, _i_n_t _l_e_n_g_t_h);
 
      _c_o_n_s_t _c_h_a_r _*
      hhssttrreerrrroorr(_i_n_t _e_r_r);
@@ -120,20 +120,20 @@ SSYYNNOOPPSSIISS
 
      _i_n_t
      rreess__qquueerryy(_c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r,
-             _i_n_t _a_n_s_l_e_n);
+         _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__sseeaarrcchh(_c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r,
-             _i_n_t _a_n_s_l_e_n);
+         _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__qquueerryyddoommaaiinn(_c_o_n_s_t _c_h_a_r _*_n_a_m_e, _c_o_n_s_t _c_h_a_r _*_d_o_m_a_i_n, _i_n_t _c_l_a_s_s,
-             _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
+         _i_n_t _t_y_p_e, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
 
      _i_n_t
      rreess__mmkkqquueerryy(_i_n_t _o_p, _c_o_n_s_t _c_h_a_r _*_d_n_a_m_e, _i_n_t _c_l_a_s_s, _i_n_t _t_y_p_e,
-             _c_o_n_s_t _c_h_a_r _*_d_a_t_a, _i_n_t _d_a_t_a_l_e_n, _s_t_r_u_c_t _r_r_e_c _*_n_e_w_r_r, _u___c_h_a_r _*_b_u_f,
-             _i_n_t _b_u_f_l_e_n);
+         _c_o_n_s_t _c_h_a_r _*_d_a_t_a, _i_n_t _d_a_t_a_l_e_n, _s_t_r_u_c_t _r_r_e_c _*_n_e_w_r_r, _u___c_h_a_r _*_b_u_f,
+         _i_n_t _b_u_f_l_e_n);
 
      _i_n_t
      rreess__sseenndd(_c_o_n_s_t _u___c_h_a_r _*_m_s_g, _i_n_t _m_s_g_l_e_n, _u___c_h_a_r _*_a_n_s_w_e_r, _i_n_t _a_n_s_l_e_n);
@@ -158,7 +158,7 @@ DDEESSCCRRIIPPTTIIOONN
      The functions rreess__iinniitt(), rreess__iissoouurrsseerrvveerr(), ffpp__nnqquueerryy(), pp__qquueerryy(),
      hhoossttaalliiaass(), rreess__qquueerryy(), rreess__sseeaarrcchh(), rreess__qquueerryyddoommaaiinn(), rreess__mmkkqquueerryy(),
      rreess__sseenndd(), rreess__uuppddaattee(), rreess__cclloossee() and hheerrrroorr() are deprecated and are
-     supplied for compatability with old source code.  They use global config‐
+     supplied for compatability with old source code.  They use global config-
      uration and state information that is kept in the structure ___r_e_s rather
      than that referenced through _s_t_a_t_p.
 
@@ -166,7 +166,7 @@ DDEESSCCRRIIPPTTIIOONN
      rreess__nniinniitt() / rreess__iinniitt() to reasonable defaults and can be ignored.
      Options stored in _s_t_a_t_p_-_>_o_p_t_i_o_n_s / ___r_e_s_._o_p_t_i_o_n_s are defined in _r_e_s_o_l_v_._h
      and are as follows.  Options are stored as a simple bit mask containing
-     the bitwise “OR” of the options enabled.
+     the bitwise ``OR'' of the options enabled.
 
      RES_INIT
               True if the initial name server address and default domain name
@@ -190,7 +190,7 @@ DDEESSCCRRIIPPTTIIOONN
               queries.  UDP should be the normal mode used.
 
      RES_IGNTC
-              Ignore truncation errors, i.e., don’t retry with TCP.
+              Ignore truncation errors, i.e., don't retry with TCP.
 
      RES_RECURSE
               Set the recursion-desired bit in queries.  This is the default.
@@ -236,17 +236,17 @@ DDEESSCCRRIIPPTTIIOONN
 
      The rreess__nniinniitt() / rreess__iinniitt() routine reads the configuration file (if
      any; see resolver(5)) to get the default domain name, search list and the
-     Internet address of the local name server(s).  If no server is config‐
+     Internet address of the local name server(s).  If no server is config-
      ured, the host running the resolver is tried.  The current domain name is
      defined by the hostname if not specified in the configuration file; it
-     can be overridden by the environment variable LOCALDOMAIN.  This environ‐
+     can be overridden by the environment variable LOCALDOMAIN.  This environ-
      ment variable may contain several blank-separated tokens if you wish to
-     override the “search list” on a per-process basis.  This is similar to
-     the sseeaarrcchh command in the configuration file.  Another environment vari‐
-     able (“RES_OPTIONS”) can be set to override certain internal resolver
+     override the ``search list'' on a per-process basis.  This is similar to
+     the sseeaarrcchh command in the configuration file.  Another environment vari-
+     able (``RES_OPTIONS'') can be set to override certain internal resolver
      options which are otherwise set by changing fields in the _s_t_a_t_p / ___r_e_s
-     structure or are inherited from the configuration file’s ooppttiioonnss command.
-     The syntax of the “RES_OPTIONS” environment variable is explained in
+     structure or are inherited from the configuration file's ooppttiioonnss command.
+     The syntax of the ``RES_OPTIONS'' environment variable is explained in
      resolver(5).  Initialization normally occurs on the first call to one of
      the other resolver routines.
 
@@ -321,7 +321,7 @@ DDEESSCCRRIIPPTTIIOONN
      TSIG authenticated dynamic update operations if the key is not NULL.
 
      The function rreess__ffiinnddzzoonneeccuutt() discovers the closest enclosing zone cut
-     for a specified domain name, and finds the IP addresses of the zone’s
+     for a specified domain name, and finds the IP addresses of the zone's
      master servers.
 
      The functions rreess__nnmmkkuuppddaattee() / rreess__mmkkuuppddaattee() take a linked list of
@@ -350,10 +350,10 @@ DDEESSCCRRIIPPTTIIOONN
      _c_o_m_p___d_n.  The size of the compressed name is returned or -1 if there were
      errors.  The size of the array pointed to by _c_o_m_p___d_n is given by _l_e_n_g_t_h.
      The compression uses an array of pointers _d_n_p_t_r_s to previously-compressed
-     names in the current message.  The first pointer points to to the begin‐
+     names in the current message.  The first pointer points to to the begin-
      ning of the message and the list ends with NULL.  The limit to the array
      is specified by _l_a_s_t_d_n_p_t_r.  A side effect of ddnn__ccoommpp() is to update the
-     list of pointers for labels inserted into the message as the name is com‐
+     list of pointers for labels inserted into the message as the name is com-
      pressed.  If _d_n_p_t_r is NULL, names are not compressed.  If _l_a_s_t_d_n_p_t_r is
      NULL, the list of labels is not updated.
 
@@ -375,11 +375,11 @@ DDEESSCCRRIIPPTTIIOONN
      #define NO_RECOVERY    3   /* Non-Recoverable: FORMERR, REFUSED, NOTIMP */
      #define NO_DATA        4   /* Valid name, no data for requested type */
 
-     The hheerrrroorr() function writes a message to the diagnostic output consist‐
+     The hheerrrroorr() function writes a message to the diagnostic output consist-
      ing of the string parameter _s, the constant string ": ", and a message
      corresponding to the value of _h___e_r_r_n_o.
 
-     The hhssttrreerrrroorr() function returns a string which is the message text cor‐
+     The hhssttrreerrrroorr() function returns a string which is the message text cor-
      responding to the value of the _e_r_r parameter.
 
 FFIILLEESS
@@ -387,6 +387,6 @@ FFIILLEESS
 
 SSEEEE AALLSSOO
      gethostbyname(3), hostname(7), resolver(5); RFC1032, RFC1033, RFC1034,
-     RFC1035, RFC974; SMM:11, “Name Server Operations Guide for BIND”
+     RFC1035, RFC974; SMM:11, ``Name Server Operations Guide for BIND''
 
 4th Berkeley Distribution        July 4, 2000        4th Berkeley Distribution

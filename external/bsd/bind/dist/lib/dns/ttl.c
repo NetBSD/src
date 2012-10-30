@@ -1,7 +1,7 @@
-/*	$NetBSD: ttl.c,v 1.3 2011/09/11 18:55:37 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.3.2.1 2012/10/30 18:52:56 yamt Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ttl.c,v 1.31 2011-03-12 04:59:48 tbox Exp */
+/* Id */
 
 /*! \file */
 

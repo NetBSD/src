@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.2 2008/08/16 07:12:39 matt Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.2.4.1 2012/10/30 18:46:10 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,15 +44,28 @@ ENTRY_NP(_atomic_cas_32)
 	strex	ip, r2, [r3]		/* store new value */
 	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
-	RET				/*    yes, return. */
+#ifdef _ARM_ARCH_7
+	dsb
+#else
+	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
+#endif
+	RET				/* return. */
 	END(_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */

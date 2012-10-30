@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.52 2011-05-06 21:23:50 each Exp -->
+<!-- Id: named.conf.docbook,v 1.55 2011/11/07 00:25:53 each Exp  -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -285,8 +285,7 @@ options {
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
-	dnssec-lookaside <replaceable>string</replaceable> trust-anchor <replaceable>string</replaceable>;
-	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
+	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
 
@@ -474,7 +473,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	disable-algorithms <replaceable>string</replaceable> { <replaceable>string</replaceable>; ... };
 	dnssec-enable <replaceable>boolean</replaceable>;
 	dnssec-validation <replaceable>boolean</replaceable>;
-	dnssec-lookaside <replaceable>string</replaceable> trust-anchor <replaceable>string</replaceable>;
+	dnssec-lookaside ( <replaceable>auto</replaceable> | <replaceable>no</replaceable> | <replaceable>domain</replaceable> trust-anchor <replaceable>domain</replaceable> );
 	dnssec-must-be-secure <replaceable>string</replaceable> <replaceable>boolean</replaceable>;
 	dnssec-accept-expired <replaceable>boolean</replaceable>;
 
@@ -630,6 +629,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	max-refresh-time <replaceable>integer</replaceable>;
 	min-refresh-time <replaceable>integer</replaceable>;
 	multi-master <replaceable>boolean</replaceable>;
+	request-ixfr <replaceable>boolean</replaceable>;
 	sig-validity-interval <replaceable>integer</replaceable>;
 
 	transfer-source ( <replaceable>ipv4_address</replaceable> | * )

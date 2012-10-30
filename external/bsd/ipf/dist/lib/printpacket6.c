@@ -1,11 +1,11 @@
-/*	$NetBSD: printpacket6.c,v 1.1.1.1.2.2 2012/04/17 00:03:20 yamt Exp $	*/
+/*	$NetBSD: printpacket6.c,v 1.1.1.1.2.3 2012/10/30 18:55:10 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: printpacket6.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include "ipf.h"

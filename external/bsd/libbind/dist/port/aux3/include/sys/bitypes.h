@@ -1,7 +1,7 @@
-/*	$NetBSD: bitypes.h,v 1.1.1.1 2009/04/12 15:33:55 christos Exp $	*/
+/*	$NetBSD: bitypes.h,v 1.1.1.1.14.1 2012/10/30 18:55:35 yamt Exp $	*/
 
 /*
- * Id: bitypes.h,v 1.1 2001/05/17 06:25:46 marka Exp
+ * Id: bitypes.h,v 1.1 2001/05/17 06:25:46 marka Exp 
  */
 
 /*

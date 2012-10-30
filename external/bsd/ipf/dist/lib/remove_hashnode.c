@@ -1,11 +1,11 @@
-/*	$NetBSD: remove_hashnode.c,v 1.1.1.1.2.2 2012/04/17 00:03:21 yamt Exp $	*/
+/*	$NetBSD: remove_hashnode.c,v 1.1.1.1.2.3 2012/10/30 18:55:11 yamt Exp $	*/
 
 /*
- * Copyright (C) 2009 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id
+ * Id: remove_hashnode.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $
  */
 
 #include <fcntl.h>
@@ -46,10 +46,11 @@ remove_hashnode(unit, name, node, iocfunc)
 		printf("%s\n", inet_ntoa(ipe.ipe_mask.in4));
 	}
 
-	if (pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op))
+	if (pool_ioctl(iocfunc, SIOCLOOKUPDELNODE, &op)) {
 		if (!(opts & OPT_DONOTHING)) {
-			perror("remove_hash:SIOCLOOKUPDELNODE");
-			return -1;
+			return ipf_perror_fd(pool_fd(), iocfunc,
+					     "remove lookup hash node");
 		}
+	}
 	return 0;
 }

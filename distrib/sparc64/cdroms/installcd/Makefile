@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2012/04/17 00:02:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2012/10/30 18:48:51 yamt Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -56,7 +56,7 @@ CDRUNTIME+=	./usr/sbin/chroot
 CDRUNTIME+=	./usr/sbin/installboot
 CDRUNTIME+=	./usr/sbin/pppd
 CDRUNTIME+=	./usr/sbin/wiconfig
-CDRUNTIME+=	./usr/share/misc/terminfo.db
+CDRUNTIME+=	./usr/share/misc/terminfo.cdb
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:

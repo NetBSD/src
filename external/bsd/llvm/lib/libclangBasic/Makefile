@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2012/04/17 00:03:34 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2012/10/30 18:55:54 yamt Exp $
 
 LIB=	clangBasic
 
@@ -8,6 +8,7 @@ LIB=	clangBasic
 
 SRCS+=	Builtins.cpp \
 	ConvertUTF.c \
+	ConvertUTFWrapper.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	FileManager.cpp \
@@ -15,6 +16,7 @@ SRCS+=	Builtins.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
 	Module.cpp \
+	ObjCRuntime.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
 	TargetInfo.cpp \
@@ -23,7 +25,8 @@ SRCS+=	Builtins.cpp \
 	Version.cpp \
 	VersionTuple.cpp
 
-CPPFLAGS.version.cpp=	-DSVN_REVISON=\"${CLANG_REVISION}\"
+CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
+			-DLLVM_REVISION=\"${LLVM_REVISION}\"
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
