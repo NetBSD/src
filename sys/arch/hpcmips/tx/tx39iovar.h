@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39iovar.h,v 1.4 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39iovar.h,v 1.4.34.1 2012/10/30 17:19:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct tx39io_port_status {
 };
 
 struct tx39io_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	tx_chipset_tag_t sc_tc;
 	
 	u_int32_t sc_stat_io_mask, sc_stat_mfio_mask;

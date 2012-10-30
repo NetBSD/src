@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.49 2011/04/24 16:26:57 rmind Exp $	*/
+/*	$NetBSD: kd.c,v 1.49.4.1 2012/10/30 17:20:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.49 2011/04/24 16:26:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.49.4.1 2012/10/30 17:20:20 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.49 2011/04/24 16:26:57 rmind Exp $");
 #define PUT_WSIZE	64
 
 struct kd_softc {
-	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;
 	int rows, cols;
 
@@ -533,8 +532,11 @@ struct consdev consdev_prom = {
 /*
  * The console table pointer is statically initialized
  * to point to the PROM table, so that early calls to printf will work.
+ * this has been moved to cpu_startup()
  */
+#if 0
 struct consdev *cn_tab = &consdev_prom;
+#endif
 
 static void
 prom_cnprobe(struct consdev *cn)

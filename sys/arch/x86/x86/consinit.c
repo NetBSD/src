@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.22.2.1 2012/04/17 00:07:06 yamt Exp $	*/
+/*	$NetBSD: consinit.c,v 1.22.2.2 2012/10/30 17:20:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22.2.1 2012/04/17 00:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.22.2.2 2012/10/30 17:20:33 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -188,7 +188,7 @@ dokbd:
 		error = ENODEV;
 #if (NPCKBC > 0)
 		error = pckbc_cnattach(x86_bus_space_io, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 #if (NUKBD > 0)
 		if (error)

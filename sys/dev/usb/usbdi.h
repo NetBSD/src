@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.79.12.2 2012/05/23 10:08:08 yamt Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.79.12.3 2012/10/30 17:22:11 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -80,6 +80,8 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */
+#define USBD_SYNCHRONOUS_SIG	0x10	/* if waiting for completion,
+					 * also take signals */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -111,12 +113,12 @@ usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 usbd_status usbd_abort_pipe(usbd_pipe_handle);
 usbd_status usbd_abort_default_pipe(usbd_device_handle);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle);
-usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle);
+void usbd_clear_endpoint_stall_async(usbd_pipe_handle);
 void usbd_clear_endpoint_toggle(usbd_pipe_handle);
 usbd_status usbd_endpoint_count(usbd_interface_handle, u_int8_t *);
 usbd_status usbd_interface_count(usbd_device_handle, u_int8_t *);
 void usbd_interface2device_handle(usbd_interface_handle,
-					 usbd_device_handle *);
+				  usbd_device_handle *);
 usbd_status usbd_device2interface_handle(usbd_device_handle,
 			      u_int8_t, usbd_interface_handle *);
 
@@ -125,6 +127,7 @@ void *usbd_alloc_buffer(usbd_xfer_handle, u_int32_t);
 void usbd_free_buffer(usbd_xfer_handle);
 void *usbd_get_buffer(usbd_xfer_handle);
 usbd_status usbd_sync_transfer(usbd_xfer_handle);
+usbd_status usbd_sync_transfer_sig(usbd_xfer_handle);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle, u_int8_t,
 				u_int8_t, usbd_pipe_handle *,
 				usbd_private_handle, void *,
@@ -184,6 +187,9 @@ typedef struct {
 } usbd_desc_iter_t;
 void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
+
+/* Used to clear endpoint stalls from the softint */
+void usbd_clear_endpoint_stall_async_cb(void *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event

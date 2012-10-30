@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.262.2.1 2012/04/17 00:06:29 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.262.2.2 2012/10/30 17:19:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,14 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262.2.1 2012/04/17 00:06:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262.2.2 2012/10/30 17:19:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
-#include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
@@ -131,13 +130,6 @@ static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
-
-#ifdef KVM86
-#include <machine/kvm86.h>
-#define KVM86MODE (kvm86_incall)
-#else
-#define KVM86MODE (0)
-#endif
 
 const char * const trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
@@ -262,16 +254,24 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
 }
 
 static void
-trap_print(int type, struct trapframe *frame)
+trap_print(const struct trapframe *frame, const lwp_t *l)
 {
-	if (frame->tf_trapno < trap_types)
-		printf("fatal %s", trap_type[frame->tf_trapno]);
-	else
-		printf("unknown trap %d", frame->tf_trapno);
+	const int type = frame->tf_trapno;
+
+	if (frame->tf_trapno < trap_types) {
+		printf("fatal %s", trap_type[type]);
+	} else {
+		printf("unknown trap %d", type);
+	}
 	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-	    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-	    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
+
+	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx "
+	    "ilevel %x esp %x\n",
+	    type, frame->tf_err, frame->tf_eip, frame->tf_cs, frame->tf_eflags,
+	    (long)rcr2(), curcpu()->ci_ilevel, frame->tf_esp);
+
+	printf("curlwp %p pid %d lid %d lowest kstack %p\n",
+	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
 static void
@@ -329,15 +329,10 @@ trap(struct trapframe *frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %lx cpl %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), curcpu()->ci_ilevel);
-		printf("curlwp %p%s", curlwp, curlwp ? " " : "\n");
-		if (curlwp)
-			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
+		trap_print(frame, l);
 	}
 #endif
-	if (type != T_NMI && !KVM86MODE &&
+	if (type != T_NMI &&
 	    !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
@@ -369,9 +364,6 @@ trap(struct trapframe *frame)
 	switch (type) {
 
 	case T_ASTFLT:
-		if (KVM86MODE) {
-			break;
-		}
 		/*FALLTHROUGH*/
 
 	default:
@@ -379,7 +371,8 @@ trap(struct trapframe *frame)
 		if (type == T_TRCTRAP)
 			check_dr0();
 		else
-			trap_print(type, frame);
+			trap_print(frame, l);
+
 		if (kdb_trap(type, 0, frame))
 			return;
 		if (kgdb_trap(type, frame))
@@ -395,12 +388,6 @@ trap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
-#ifdef KVM86
-		if (KVM86MODE) {
-			kvm86_gpfault(frame);
-			return;
-		}
-#endif
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:

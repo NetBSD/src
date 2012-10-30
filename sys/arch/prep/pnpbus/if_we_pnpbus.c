@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.8 2011/07/01 16:55:42 dyoung Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.8.2.1 2012/10/30 17:20:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.8 2011/07/01 16:55:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.8.2.1 2012/10/30 17:20:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.8 2011/07/01 16:55:42 dyoung Exp 
 int	we_pnpbus_probe(device_t, cfdata_t, void *);
 void	we_pnpbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(we_pnpbus, sizeof(struct we_softc),
+CFATTACH_DECL_NEW(we_pnpbus, sizeof(struct we_softc),
     we_pnpbus_probe, we_pnpbus_attach, NULL, NULL);
 
 extern struct cfdriver we_cd;
@@ -153,6 +153,8 @@ we_pnpbus_attach(device_t parent, device_t self, void *aux)
 	bus_size_t memsize = 0x4000;
 	const char *typestr;
 	int memfound = 0, i, irqnum;
+
+	sc->sc_dev = self;
 
 	nict = asict = pna->pna_iot;
 	memt = pna->pna_memt;

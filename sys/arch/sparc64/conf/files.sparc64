@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.136.2.1 2012/04/17 00:06:55 yamt Exp $
+#	$NetBSD: files.sparc64,v 1.136.2.2 2012/10/30 17:20:23 yamt Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -152,6 +152,11 @@ file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 # "com" attachments for the kbd/mouse of the U5/U10/...
 attach com at ebus with com_ebus
 file	arch/sparc64/dev/com_ebus.c		com_ebus
+
+# ebus PS/2 keyboard attachment for Tadpole SPARCle, etc.
+include "dev/pckbport/files.pckbport"
+attach pckbc at ebus with pckbc_ebus
+file	arch/sparc64/dev/pckbc_ebus.c		pckbc_ebus
 
 device zstty {}: tty
 attach zstty at zs

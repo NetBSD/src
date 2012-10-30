@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $	*/
-/*	$NetBSD: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $	*/
+/*	$Id: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $	*/
+/*	$NetBSD: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.3.8.1 2012/10/30 17:19:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ typedef struct led_state {
 } led_state_t;
 
 struct mpcsa_leds_softc {
-	struct device		sc_dev;
 	struct spi_handle	*sc_sh;
 
 #if NGPIO > 0
@@ -111,7 +110,7 @@ static int mpcsa_leds_search(device_t , cfdata_t , const int *, void *);
 static int mpcsa_leds_print(void *, const char *);
 #endif
 
-CFATTACH_DECL(mpcsa_leds, sizeof(struct mpcsa_leds_softc),
+CFATTACH_DECL_NEW(mpcsa_leds, sizeof(struct mpcsa_leds_softc),
 	      mpcsa_leds_match, mpcsa_leds_attach, NULL, NULL);
 
 static struct mpcsa_leds_softc *mpcsa_leds_sc;

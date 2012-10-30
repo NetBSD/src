@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.55.8.1 2012/04/17 00:07:46 yamt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.55.8.2 2012/10/30 17:21:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -487,7 +487,7 @@ struct _tulip_softc_t {
 #endif /* _BSDI_VERSION < 199401 */
 #endif /* __bsdi__ */
 #if defined(__NetBSD__)
-    struct device tulip_dev;		/* base device */
+    device_t tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
     struct callout tulip_to_ch;		/* tulip_timeout_callback() */
@@ -968,7 +968,7 @@ typedef u_long ioctl_cmd_t;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *)device_lookup_private(&de_cd,unit))
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))
-#define	tulip_unit			tulip_dev.dv_unit
+#define	tulip_unit(sc)			device_unit((sc)->tulip_dev)
 #define	tulip_xname			tulip_if.if_xname
 #define	TULIP_RAISESPL()		splnet()
 #define	TULIP_RAISESOFTSPL()		splsoftnet()
@@ -1005,7 +1005,7 @@ extern struct cfdriver de_cd;
 #define	tulip_if	tulip_ac.ac_if
 #endif
 #ifndef tulip_unit
-#define	tulip_unit	tulip_if.if_unit
+#define	tulip_unit(sc)	(sc)->tulip_if.if_unit
 #endif
 #define	tulip_name	tulip_if.if_name
 #ifndef tulip_enaddr

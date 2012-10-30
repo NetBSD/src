@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.10 2009/05/12 09:10:16 cegger Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.10.12.1 2012/10/30 17:21:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.10 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.10.12.1 2012/10/30 17:21:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.10 2009/05/12 09:10:16 cegger Exp $
 #include <dev/isa/tsdioreg.h>
 
 struct toasterlcd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct hd44780_chip sc_hlcd;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
@@ -72,7 +72,7 @@ extern const struct wsdisplay_emulops hlcd_emulops;
 extern const struct wsdisplay_accessops hlcd_accessops;
 extern struct cfdriver toasterlcd_cd;
 
-CFATTACH_DECL(toasterlcd, sizeof(struct toasterlcd_softc),
+CFATTACH_DECL_NEW(toasterlcd, sizeof(struct toasterlcd_softc),
     toasterlcd_match, toasterlcd_attach, NULL, NULL);
 
 static const struct wsscreen_descr toasterlcd_stdscreen = {
@@ -112,7 +112,7 @@ toasterlcd_match(device_t parent, cfdata_t match, void *aux)
 static void
 toasterlcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct toasterlcd_softc *sc = (void *)self;
+	struct toasterlcd_softc *sc = device_private(self);
 	struct tsdio_attach_args *taa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 
@@ -133,8 +133,8 @@ toasterlcd_attach(device_t parent, device_t self, void *aux)
 	TSDIO_CLEARBITS(PBDR, 0xd);	/* De-assert EN, De-assert RS */
 
 	aprint_normal(": 4x40 text-mode hd44780 LCD\n");
-	aprint_normal_dev(&sc->sc_dev, "using port C, bits 0-7 as DB0-DB7\n");
-	aprint_normal_dev(&sc->sc_dev, "using port B, bits 0-3 as RS, WR, EN1, EN2\n");
+	aprint_normal_dev(sc->sc_dev, "using port C, bits 0-7 as DB0-DB7\n");
+	aprint_normal_dev(sc->sc_dev, "using port B, bits 0-3 as RS, WR, EN1, EN2\n");
 
 	hd44780_attach_subr(&sc->sc_hlcd);
 
@@ -148,7 +148,7 @@ toasterlcd_attach(device_t parent, device_t self, void *aux)
 static void
 toasterlcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
 {
-	struct toasterlcd_softc *sc = (struct toasterlcd_softc *)hd->sc_dev;
+	struct toasterlcd_softc *sc = device_private(hd->sc_dev);
 	u_int8_t ctrl;
 
 	if (hd->sc_dev_ok == 0)
@@ -196,7 +196,7 @@ toasterlcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_
 static u_int8_t
 toasterlcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
 {
-	struct toasterlcd_softc *sc = (struct toasterlcd_softc *)hd->sc_dev;
+	struct toasterlcd_softc *sc = device_private(hd->sc_dev);
 	u_int8_t ret, ctrl;
 
 	if (hd->sc_dev_ok == 0)

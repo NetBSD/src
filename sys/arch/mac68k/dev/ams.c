@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.20 2010/12/10 00:17:08 macallan Exp $	*/
+/*	$NetBSD: ams.c,v 1.20.8.1 2012/10/30 17:19:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20 2010/12/10 00:17:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20.8.1 2012/10/30 17:19:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20 2010/12/10 00:17:08 macallan Exp $");
 /*
  * Function declarations.
  */
-static int	amsmatch(struct device *, struct cfdata *, void *);
-static void	amsattach(struct device *, struct device *, void *);
+static int	amsmatch(device_t, cfdata_t, void *);
+static void	amsattach(device_t, device_t, void *);
 static void	ems_init(struct ams_softc *);
 static void	ms_processevent(adb_event_t *, struct ams_softc *);
 
@@ -74,7 +74,7 @@ extern int	kbd_polling; /* Are we polling (Debugger mode)? from kbd.c */
  */
 
 /* Driver definition. */
-CFATTACH_DECL(ams, sizeof(struct ams_softc),
+CFATTACH_DECL_NEW(ams, sizeof(struct ams_softc),
     amsmatch, amsattach, NULL, NULL);
 
 extern struct cfdriver ams_cd;
@@ -90,7 +90,7 @@ const struct wsmouse_accessops ams_accessops = {
 };
 
 static int
-amsmatch(struct device *parent, struct cfdata *cf, void *aux)
+amsmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
 
@@ -101,10 +101,10 @@ amsmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-amsattach(struct device *parent, struct device *self, void *aux)
+amsattach(device_t parent, device_t self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
-	struct ams_softc *sc = (struct ams_softc *)self;
+	struct ams_softc *sc = device_private(self);
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
 	int error;
 #if NWSMOUSE > 0

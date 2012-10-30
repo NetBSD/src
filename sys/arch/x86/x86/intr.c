@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.72 2011/08/01 10:42:24 drochner Exp $	*/
+/*	$NetBSD: intr.c,v 1.72.2.1 2012/10/30 17:20:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72 2011/08/01 10:42:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.72.2.1 2012/10/30 17:20:34 yamt Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -359,25 +359,25 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 #endif
 
 #if NIOAPIC > 0 || NACPICA > 0
+/*
+ * 'pin' argument pci bus_pin encoding of a device/pin combination.
+ */
 int
 intr_find_mpmapping(int bus, int pin, int *handle)
 {
-#if NPCI > 0
-	int dev, func;
-	pcitag_t pci_bridge_tag;
-	pci_chipset_tag_t pc;
-#endif
 
 #if NPCI > 0
 	while (intr_scan_bus(bus, pin, handle) != 0) {
-		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pc) != 0)
+		int dev, func;
+		pcitag_t pci_bridge_tag;
+		pci_chipset_tag_t pc;
+
+		if (intr_find_pcibridge(bus, &pci_bridge_tag, &pc) != 0)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
 		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pc, pci_bridge_tag, &bus,
-		    &dev, &func);
+		pci_decompose_tag(pc, pci_bridge_tag, &bus, &dev, &func);
 		pin |= (dev << 2);
 	}
 	return 0;

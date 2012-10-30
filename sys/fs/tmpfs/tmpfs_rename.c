@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.2.2.2 2012/05/23 10:08:09 yamt Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.2.2.3 2012/10/30 17:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.2.2.2 2012/05/23 10:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.2.2.3 2012/10/30 17:22:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -375,9 +375,7 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	VN_KNOTE(fvp, NOTE_RENAME);
 
-#if 0				/* XXX */
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
-#endif
 
 	return 0;
 }
@@ -551,6 +549,17 @@ tmpfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		error = tmpfs_vnode_get(mp, dnode, &vp);
 		if (error)
 			return error;
+
+		/*
+		 * tmpfs_vnode_get only guarantees that dnode will not
+		 * be freed while we get a vnode for it.  It does not
+		 * preserve any other invariants, so we must check
+		 * whether the parent has been removed in the meantime.
+		 */
+		if (tmpfs_rmdired_p(vp)) {
+			vput(vp);
+			return ENOENT;
+		}
 	}
 }
 

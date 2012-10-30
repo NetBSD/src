@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.17 2011/06/03 07:35:37 matt Exp $	*/
+/*	$NetBSD: csc.c,v 1.17.2.1 2012/10/30 17:18:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.17.2.1 2012/10/30 17:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.17 2011/06/03 07:35:37 matt Exp $");
 int  cscmatch(device_t, cfdata_t, void *);
 void cscattach(device_t, device_t, void *);
 
-CFATTACH_DECL(csc, sizeof(struct csc_softc),
+CFATTACH_DECL_NEW(csc, sizeof(struct csc_softc),
     cscmatch, cscattach, NULL, NULL);
 
 int csc_intr(void *);
@@ -77,9 +77,9 @@ void csc_set_dma_mode(struct sfas_softc *, int);
  * if we are a Cumana SCSI-2 card
  */
 int
-cscmatch(device_t pdp, cfdata_t cf, void *auxp)
+cscmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
+	struct podule_attach_args *pa = aux;
 
 	/* Look for the card */
 	if (pa->pa_product == PODULE_CUMANA_SCSI2)
@@ -95,15 +95,15 @@ cscmatch(device_t pdp, cfdata_t cf, void *auxp)
 }
 
 void
-cscattach(device_t pdp, device_t dp, void *auxp)
+cscattach(device_t parent, device_t self, void *aux)
 {
-	struct csc_softc *sc = (struct csc_softc *)dp;
+	struct csc_softc *sc = device_private(self);
 	struct podule_attach_args  *pa;
 	csc_regmap_p	   rp = &sc->sc_regmap;
 	vu_char		  *fas;
 	int loop;
 
-	pa = (struct podule_attach_args *)auxp;
+	pa = aux;
 
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
@@ -134,6 +134,7 @@ cscattach(device_t pdp, device_t dp, void *auxp)
 	rp->FAS216.sfas_tc_high	= &fas[CSC_FAS_OFFSET_TCH];
 	rp->FAS216.sfas_fifo_bot = &fas[CSC_FAS_OFFSET_FIFOBOT];
 
+	sc->sc_softc.sc_dev	= self;
 	sc->sc_softc.sc_fas	= (sfas_regmap_p)rp;
 	sc->sc_softc.sc_spec	= &sc->sc_specific;
 
@@ -153,7 +154,7 @@ cscattach(device_t pdp, device_t dp, void *auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
-	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
+	sc->sc_softc.sc_adapter.adapt_dev = self;
 	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
 	sc->sc_softc.sc_adapter.adapt_openings = 7;
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
@@ -184,11 +185,11 @@ cscattach(device_t pdp, device_t dp, void *auxp)
 
 #if CSC_POLL == 0
 	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(dp), "intr");
+	    device_xname(self), "intr");
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", device_xname(self));
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
@@ -196,7 +197,7 @@ cscattach(device_t pdp, device_t dp, void *auxp)
 	printf("\n");
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_channel, scsiprint);
+	config_found(self, &sc->sc_softc.sc_channel, scsiprint);
 }
 
 

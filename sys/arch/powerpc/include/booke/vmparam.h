@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2011/06/20 20:24:28 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.2.1 2012/10/30 17:20:12 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #define	VM_MIN_ADDRESS		((vaddr_t) 0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) /* -32768 */ 0x7fff8000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) /* -32768 */ 0xffff8000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) 0xe4000000)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xfefff000)
@@ -106,6 +106,6 @@
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 #endif
 
-#include <common/pmap/tlb/vmpagemd.h>
+#include <uvm/pmap/vmpagemd.h>
 
 #endif /* _POWERPC_BOOKE_VMPARAM_H_ */

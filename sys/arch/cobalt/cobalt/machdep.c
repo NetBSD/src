@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2011/07/09 16:09:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.2.1 2012/10/30 17:19:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2011/07/09 16:09:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.2.1 2012/10/30 17:19:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,13 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2011/07/09 16:09:01 matt Exp $");
 #include <sys/exec_elf.h>
 #endif
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
-int	physmem;		/* Total physical memory */
 void	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 char	bootstring[512];	/* Boot command */

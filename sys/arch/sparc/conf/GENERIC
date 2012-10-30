@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.227.2.1 2012/04/17 00:06:53 yamt Exp $
+# $NetBSD: GENERIC,v 1.227.2.2 2012/10/30 17:20:20 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.227.2.1 $"
+#ident 		"GENERIC-$Revision: 1.227.2.2 $"
 
 maxusers	32
 
@@ -51,8 +51,8 @@ options 	SUN4_MMU3L	# sun4/400 3-level MMU
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 # wscons stuff
-options 	WSEMUL_SUN
-#options 	WSEMUL_VT100
+#options 	WSEMUL_SUN
+options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_CUSTOM_OUTPUT
 options 	WS_DEFAULT_FG=WSCOL_BLACK
@@ -61,7 +61,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_COMPAT_PCVT
 options 	WSDISPLAY_COMPAT_SYSCONS
-options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 options 	WSDISPLAY_SCROLLSUPPORT
 
@@ -181,6 +181,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

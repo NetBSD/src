@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.40 2010/04/19 18:24:26 dyoung Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.40.8.1 2012/10/30 17:21:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.40 2010/04/19 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.40.8.1 2012/10/30 17:21:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ struct pcdisplay_config {
 };
 
 struct pcdisplay_softc {
-	struct device sc_dev;
 	struct pcdisplay_config *sc_dc;
 	int nscreens;
 #if NPCWEASEL > 0
@@ -82,7 +81,7 @@ static void pcdisplay_init(struct pcdisplay_config *,
 			     int);
 static int pcdisplay_allocattr(void *, int, int, int, long *);
 
-CFATTACH_DECL(pcdisplay, sizeof(struct pcdisplay_softc),
+CFATTACH_DECL_NEW(pcdisplay, sizeof(struct pcdisplay_softc),
     pcdisplay_match, pcdisplay_attach, NULL, NULL);
 
 const struct wsdisplay_emulops pcdisplay_emulops = {
@@ -282,7 +281,7 @@ void
 pcdisplay_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct pcdisplay_softc *sc = (struct pcdisplay_softc *)self;
+	struct pcdisplay_softc *sc = device_private(self);
 	int console;
 	struct pcdisplay_config *dc;
 	struct wsemuldisplaydev_attach_args aa;
@@ -319,7 +318,7 @@ pcdisplay_attach(device_t parent, device_t self, void *aux)
 	if (dc->mono) {
 		sc->sc_weasel.wh_st = dc->dc_ph.ph_memt;
 		sc->sc_weasel.wh_sh = dc->dc_ph.ph_memh;
-		sc->sc_weasel.wh_parent = &sc->sc_dev;
+		sc->sc_weasel.wh_parent = self;
 		weasel_isa_init(&sc->sc_weasel);
 	}
 #endif /* NPCWEASEL > 0 */

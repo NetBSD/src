@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2011/07/09 16:09:02 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.2.1 2012/10/30 17:19:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2011/07/09 16:09:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32.2.1 2012/10/30 17:19:16 yamt Exp $");
 
 #define _COBALT_BUS_DMA_PRIVATE
 
@@ -68,8 +68,7 @@ struct cobalt_bus_dma_tag pci_bus_dma_tag = {
 };
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 	/* XXX */
 

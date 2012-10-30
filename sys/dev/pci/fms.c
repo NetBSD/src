@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.38.8.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: fms.c,v 1.38.8.2 2012/10/30 17:21:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.38.8.1 2012/04/17 00:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.38.8.2 2012/10/30 17:21:25 yamt Exp $");
 
 #include "mpu.h"
 
@@ -99,7 +99,7 @@ static int	fms_trigger_input(void *, void *, void *, int,
 				  const audio_params_t *);
 static void	fms_get_locks(void *, kmutex_t **, kmutex_t **);
 
-CFATTACH_DECL(fms, sizeof (struct fms_softc),
+CFATTACH_DECL_NEW(fms, sizeof (struct fms_softc),
     fms_match, fms_attach, NULL, NULL);
 
 static struct audio_device fms_device = {
@@ -235,6 +235,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 
 	pa = aux;
 	sc = device_private(self);
+	sc->sc_dev = self;
 	intrstr = NULL;
 	pc = pa->pa_pc;
 	pt = pa->pa_tag;
@@ -243,7 +244,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
 			   &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2,
@@ -254,7 +255,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 		panic("fms_attach: can't get opl subregion handle");
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -264,7 +265,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -275,7 +276,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* Disable legacy audio (SBPro compatibility) */
 	pci_conf_write(pc, pt, 0x40, 0);
@@ -314,17 +315,17 @@ fms_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	audio_attach_mi(&fms_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&fms_hw_if, sc, sc->sc_dev);
 
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	config_found(&sc->sc_dev, &aa, audioprint);
+	config_found(sc->sc_dev, &aa, audioprint);
 
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	sc->sc_mpu_dev = config_found(&sc->sc_dev, &aa, audioprint);
+	sc->sc_mpu_dev = config_found(sc->sc_dev, &aa, audioprint);
 }
 
 /*
@@ -690,27 +691,27 @@ fms_malloc(void *addr, int direction, size_t size)
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_WAITOK)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate DMA, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev, "unable to allocate DMA, error = %d\n", error);
 		goto fail_alloc;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
 				    BUS_DMA_WAITOK | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map DMA, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map DMA, error = %d\n",
 		       error);
 		goto fail_map;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 				       BUS_DMA_WAITOK, &p->map)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to create DMA map, error = %d\n",
 		       error);
 		goto fail_create;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
 				     BUS_DMA_WAITOK)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to load DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load DMA map, error = %d\n",
 		       error);
 		goto fail_load;
 	}

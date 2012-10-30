@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.64.2.1 2012/05/23 10:07:54 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.64.2.2 2012/10/30 17:20:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64.2.1 2012/05/23 10:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.64.2.2 2012/10/30 17:20:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,6 +264,17 @@ netbsd32_to_wsdisplay_addscreendata(struct netbsd32_wsdisplay_addscreendata *asd
 	asd->screentype = (char *)NETBSD32PTR64(asd32->screentype);
 	asd->emul = (char *)NETBSD32PTR64(asd32->emul);
 	asd->idx = asd32->idx;
+}
+
+static inline void
+netbsd32_to_ieee80211req(struct netbsd32_ieee80211req *ireq32,
+			 struct ieee80211req *ireq, u_long cmd)
+{
+	strncpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
+	ireq->i_type = ireq32->i_type;
+	ireq->i_val = ireq32->i_val;
+	ireq->i_len = ireq32->i_len;
+	ireq->i_data = NETBSD32PTR64(ireq32->i_data);
 }
 
 static inline void
@@ -547,6 +558,17 @@ netbsd32_from_wsdisplay_cursor(struct wsdisplay_cursor *c,
 }
 
 static inline void
+netbsd32_from_ieee80211req(struct ieee80211req *ireq,
+			   struct netbsd32_ieee80211req *ireq32, u_long cmd)
+{
+	strncpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
+	ireq32->i_type = ireq->i_type;
+	ireq32->i_val = ireq->i_val;
+	ireq32->i_len = ireq->i_len;
+	NETBSD32PTR32(ireq32->i_data, ireq->i_data);
+}
+
+static inline void
 netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 				struct netbsd32_ieee80211_nwkey *nwk32,
 				u_long cmd)
@@ -657,8 +679,8 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	fdfile_t *ff;
 	int tmp;
 #define STK_PARAMS	128
-	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
-	u_long stkbuf32[STK_PARAMS/sizeof(u_long)];
+	uint64_t stkbuf[STK_PARAMS/sizeof(uint64_t)];
+	uint64_t stkbuf32[STK_PARAMS/sizeof(uint64_t)];
 
 	/*
 	 * we need to translate some commands (_IOW) before calling sys_ioctl,
@@ -951,6 +973,10 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case WSDISPLAYIO_SCURSOR32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
 
+	case SIOCS8021132:
+		IOCTL_STRUCT_CONV_TO(SIOCS80211, ieee80211req);
+	case SIOCG8021132:
+		IOCTL_STRUCT_CONV_TO(SIOCG80211, ieee80211req);
 	case SIOCS80211NWKEY32:
 		IOCTL_STRUCT_CONV_TO(SIOCS80211NWKEY, ieee80211_nwkey);
 	case SIOCG80211NWKEY32:

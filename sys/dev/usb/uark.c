@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.3 2010/11/04 01:58:07 dyoung Exp $	*/
+/*	$NetBSD: uark.c,v 1.3.8.1 2012/10/30 17:22:07 yamt Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -60,15 +60,15 @@ int	uarkebug = 0;
 #define UARK_REQUEST		0xfe
 
 struct uark_softc {
-	struct device		*sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
-	struct device 		*sc_subdev;
+	device_t		sc_dev;
+	usbd_device_handle	sc_udev;
+	usbd_interface_handle	sc_iface;
+	device_t		sc_subdev;
 
-	u_char			 sc_msr;
-	u_char			 sc_lsr;
+	u_char			sc_msr;
+	u_char			sc_lsr;
 
-	u_char			 sc_dying;
+	u_char			sc_dying;
 };
 
 void	uark_get_status(void *, int portno, u_char *lsr, u_char *msr);
@@ -193,7 +193,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-uark_detach(struct device *self, int flags)
+uark_detach(device_t self, int flags)
 {
 	struct uark_softc *sc = device_private(self);
 	int rv = 0;
@@ -211,7 +211,7 @@ uark_detach(struct device *self, int flags)
 }
 
 int
-uark_activate(struct device* self, enum devact act)
+uark_activate(device_t self, enum devact act)
 {
 	struct uark_softc *sc = device_private(self);
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.17 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.17.2.1 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.17 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.17.2.1 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,13 +56,12 @@ static void nvram_attach(device_t, device_t, void *);
 static int nvram_match(device_t, cfdata_t, void *);
 
 struct nvram_softc {
-	struct device sc_dev;
 	int nv_type;
 	char *nv_port;
 	char *nv_data;
 };
 
-CFATTACH_DECL(nvram, sizeof(struct nvram_softc),
+CFATTACH_DECL_NEW(nvram, sizeof(struct nvram_softc),
     nvram_match, nvram_attach, NULL, NULL);
 
 extern struct cfdriver nvram_cd;

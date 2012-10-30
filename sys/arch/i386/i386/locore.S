@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95.4.2 2012/05/23 10:07:44 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.4.3 2012/10/30 17:19:49 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.4.2 2012/05/23 10:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.4.3 2012/10/30 17:19:49 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -169,18 +169,11 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.4.2 2012/05/23 10:07:44 yamt Exp $")
  */
 .section __xen_guest
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
-#if defined(DOM0OPS) || !defined(XEN_COMPAT_030001)
 	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
 	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
-#else
-	.ascii  ",VIRT_BASE=0xc0100000" /* KERNTEXTOFF */
-	.ascii  ",ELF_PADDR_OFFSET=0xc0100000" /* KERNTEXTOFF */
-#endif
 	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-#if !defined(XEN_COMPAT_030001)
 	.ascii  ",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#endif
 #ifdef PAE
 	.ascii  ",PAE=yes[extended-cr3]"
 #endif
@@ -196,7 +189,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.4.2 2012/05/23 10:07:44 yamt Exp $")
  */
 	.data
 
-	.globl	_C_LABEL(cpu)
+	.globl	_C_LABEL(cputype)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
@@ -229,7 +222,7 @@ _C_LABEL(lapic_tpr):
 	.long 0
 #endif
 
-_C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
+_C_LABEL(cputype):	.long	0	# are we 80486, Pentium, or..
 _C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(lwp0uarea):	.long	0
@@ -240,10 +233,10 @@ _C_LABEL(tablesize):	.long	0
 tmpstk:
 #ifdef XEN
 	.align 		PAGE_SIZE, 0x0	# Align on page boundary
+	.globl tmpgdt
 _C_LABEL(tmpgdt):
 	.space 		PAGE_SIZE	# Xen expects a page
 #endif /* XEN */
-	.globl tmpgdt
 #ifndef XEN
 #define	_RELOC(x)	((x) - KERNBASE)
 #else
@@ -346,11 +339,11 @@ isnx586:
 	 * Don't try cpuid, as Nx586s reportedly don't support the
 	 * PSL_ID bit.
 	 */
-	movl	$CPU_NX586,RELOC(cpu)
+	movl	$CPU_NX586,RELOC(cputype)
 	jmp	2f
 
 is386:
-	movl	$CPU_386,RELOC(cpu)
+	movl	$CPU_386,RELOC(cputype)
 	jmp	2f
 
 try486:	/* Try to toggle identification flag; does not exist on early 486s. */
@@ -369,7 +362,7 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 
 	testl	%eax,%eax
 	jnz	try586
-is486:	movl	$CPU_486,RELOC(cpu)
+is486:	movl	$CPU_486,RELOC(cputype)
 	/*
 	 * Check Cyrix CPU
 	 * Cyrix CPUs do not change the undefined flags following
@@ -387,7 +380,7 @@ is486:	movl	$CPU_486,RELOC(cpu)
 	popfl
 	jmp 2f
 trycyrix486:
-	movl	$CPU_6x86,RELOC(cpu) 	# set CPU type
+	movl	$CPU_6x86,RELOC(cputype)	# set CPU type
 	/*
 	 * Check for Cyrix 486 CPU by seeing if the flags change during a
 	 * divide. This is documented in the Cx486SLC/e SMM Programmer's
@@ -405,7 +398,7 @@ trycyrix486:
 	xorl	%ecx,%eax		# are the flags different?
 	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
 	jne	2f			# yes; must be Cyrix 6x86 CPU
-	movl	$CPU_486DLC,RELOC(cpu) 	# set CPU type
+	movl	$CPU_486DLC,RELOC(cputype) 	# set CPU type
 
 #ifndef CYRIX_CACHE_WORKS
 	/* Disable caching of the ISA hole only. */
@@ -824,13 +817,13 @@ start:
 	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
 
-#if defined(XEN) && !defined(XEN_COMPAT_030001)
+#if defined(XEN)
 /* space for the hypercall call page */
 #define HYPERCALL_PAGE_OFFSET 0x1000
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN) && !defined(XEN_COMPAT_030001) */
+#endif /* defined(XEN) */
 
 /*
  * void lgdt_finish(void);
@@ -1137,7 +1130,7 @@ IDTVEC(osyscall)
 #endif
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
-	orl	$PSL_I,(%esp)	# re-enable ints on return to user
+	orl	$PSL_I,8(%esp)	# re-enable ints on return to user
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 IDTVEC_END(osyscall)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.103.4.2 2012/05/23 10:07:40 yamt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.103.4.3 2012/10/30 17:18:55 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.2 2012/05/23 10:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.103.4.3 2012/10/30 17:18:55 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -92,23 +92,14 @@ struct arm_pmc_funcs *arm_pmc;
 #endif
 
 /* PRIMARY CACHE VARIABLES */
-int	arm_picache_size;
-int	arm_picache_line_size;
-int	arm_picache_ways;
-
-int	arm_pdcache_size;	/* and unified */
-int	arm_pdcache_line_size;
-int	arm_pdcache_ways;
 #if (ARM_MMU_V6 + ARM_MMU_V7) != 0
-int	arm_cache_prefer_mask;
+u_int	arm_cache_prefer_mask;
 #endif
+struct	arm_cache_info arm_pcache;
+struct	arm_cache_info arm_scache;
 
-
-int	arm_pcache_type;
-int	arm_pcache_unified;
-
-int	arm_dcache_align;
-int	arm_dcache_align_mask;
+u_int	arm_dcache_align;
+u_int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
@@ -142,6 +133,10 @@ struct cpu_functions arm2_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)cpufunc_nullop,
 	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= cpufunc_nullop,
 	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
@@ -195,6 +190,10 @@ struct cpu_functions arm250_cpufuncs = {
 	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= cpufunc_nullop,
 	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
 
@@ -246,6 +245,10 @@ struct cpu_functions arm3_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm3_cache_flush,
 	.cf_dcache_inv_range	= (void *)arm3_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm3_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm3_cache_flush,
@@ -302,6 +305,10 @@ struct cpu_functions arm6_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_inv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm67_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm67_cache_flush,
@@ -365,6 +372,10 @@ struct cpu_functions arm7_cpufuncs = {
 	.cf_dcache_inv_range	= (void *)arm67_cache_flush,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= arm67_cache_flush,
 	.cf_idcache_wbinv_range	= (void *)arm67_cache_flush,
 
@@ -422,6 +433,10 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	.cf_dcache_wbinv_range	= (void *)arm7tdmi_cache_flushID,
 	.cf_dcache_inv_range	= (void *)arm7tdmi_cache_flushID,
 	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm7tdmi_cache_flushID,
 	.cf_idcache_wbinv_range	= (void *)arm7tdmi_cache_flushID,
@@ -481,6 +496,10 @@ struct cpu_functions arm8_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= (void *)arm8_cache_purgeID,
 	.cf_dcache_wb_range	= (void *)arm8_cache_cleanID,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= arm8_cache_purgeID,
 	.cf_idcache_wbinv_range = (void *)arm8_cache_purgeID,
 
@@ -537,6 +556,10 @@ struct cpu_functions arm9_cpufuncs = {
 	.cf_dcache_wbinv_range	= arm9_dcache_wbinv_range,
 /*XXX*/	.cf_dcache_inv_range	= arm9_dcache_wbinv_range,
 	.cf_dcache_wb_range	= arm9_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= arm9_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = arm9_idcache_wbinv_range,
@@ -596,6 +619,10 @@ struct cpu_functions armv5_ec_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= armv5_ec_dcache_wbinv_range,
 	.cf_dcache_wb_range	= armv5_ec_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv5_ec_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_ec_idcache_wbinv_range,
 
@@ -653,6 +680,10 @@ struct cpu_functions arm10_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv5_dcache_wbinv_range,
 /*XXX*/	.cf_dcache_inv_range	= armv5_dcache_wbinv_range,
 	.cf_dcache_wb_range	= armv5_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= armv5_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_idcache_wbinv_range,
@@ -712,6 +743,10 @@ struct cpu_functions arm11_cpufuncs = {
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv6_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv6_idcache_wbinv_range,
 
@@ -747,7 +782,7 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	.cf_control		= cpufunc_control,
 	.cf_domains		= cpufunc_domains,
-	.cf_setttb		= arm1136_setttb,
+	.cf_setttb		= arm11x6_setttb,
 	.cf_faultstatus		= cpufunc_faultstatus,
 	.cf_faultaddress	= cpufunc_faultaddress,
 
@@ -762,25 +797,29 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	/* Cache operations */
 
-	.cf_icache_sync_all	= arm1136_icache_sync_all,	/* 411920 */
-	.cf_icache_sync_range	= arm1136_icache_sync_range,	/* 371025 */
+	.cf_icache_sync_all	= arm11x6_icache_sync_all,	/* 411920 */
+	.cf_icache_sync_range	= arm11x6_icache_sync_range,	/* 371025 */
 
-	.cf_dcache_wbinv_all	= arm1136_dcache_wbinv_all,	/* 411920 */
+	.cf_dcache_wbinv_all	= arm11x6_dcache_wbinv_all,	/* 411920 */
 	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv6_dcache_inv_range,
 	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
-	.cf_idcache_wbinv_all	= arm1136_idcache_wbinv_all,	/* 411920 */
-	.cf_idcache_wbinv_range = arm1136_idcache_wbinv_range,	/* 371025 */
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 411920 */
+	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371025 */
 
 	/* Other functions */
 
-	.cf_flush_prefetchbuf	= arm1136_flush_prefetchbuf,
+	.cf_flush_prefetchbuf	= arm11x6_flush_prefetchbuf,
 	.cf_drain_writebuf	= arm11_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= arm11_sleep,
+	.cf_sleep		= arm11_sleep,	/* arm1136_sleep_rev0 */
 
 	/* Soft functions */
 
@@ -789,10 +828,73 @@ struct cpu_functions arm1136_cpufuncs = {
 
 	.cf_context_switch	= arm11_context_switch,
 
-	.cf_setup		= arm1136_setup
+	.cf_setup		= arm11x6_setup
 
 };
 #endif /* CPU_ARM1136 */
+
+#ifdef CPU_ARM1176
+struct cpu_functions arm1176_cpufuncs = {
+	/* CPU functions */
+
+	.cf_id			= cpufunc_id,
+	.cf_cpwait		= cpufunc_nullop,
+
+	/* MMU functions */
+
+	.cf_control		= cpufunc_control,
+	.cf_domains		= cpufunc_domains,
+	.cf_setttb		= arm11x6_setttb,
+	.cf_faultstatus		= cpufunc_faultstatus,
+	.cf_faultaddress	= cpufunc_faultaddress,
+
+	/* TLB functions */
+
+	.cf_tlb_flushID		= arm11_tlb_flushID,
+	.cf_tlb_flushID_SE	= arm11_tlb_flushID_SE,
+	.cf_tlb_flushI		= arm11_tlb_flushI,
+	.cf_tlb_flushI_SE	= arm11_tlb_flushI_SE,
+	.cf_tlb_flushD		= arm11_tlb_flushD,
+	.cf_tlb_flushD_SE	= arm11_tlb_flushD_SE,
+
+	/* Cache operations */
+
+	.cf_icache_sync_all	= arm11x6_icache_sync_all,	/* 415045 */
+	.cf_icache_sync_range	= arm11x6_icache_sync_range,	/* 371367 */
+
+	.cf_dcache_wbinv_all	= arm11x6_dcache_wbinv_all,	/* 415045 */
+	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
+	.cf_dcache_inv_range	= armv6_dcache_inv_range,
+	.cf_dcache_wb_range	= armv6_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
+	.cf_idcache_wbinv_all	= arm11x6_idcache_wbinv_all,	/* 415045 */
+	.cf_idcache_wbinv_range = arm11x6_idcache_wbinv_range,	/* 371367 */
+
+	/* Other functions */
+
+	.cf_flush_prefetchbuf	= arm11x6_flush_prefetchbuf,
+	.cf_drain_writebuf	= arm11_drain_writebuf,
+	.cf_flush_brnchtgt_C	= cpufunc_nullop,
+	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
+
+	.cf_sleep		= arm11x6_sleep,		/* no ref. */
+
+	/* Soft functions */
+
+	.cf_dataabt_fixup	= cpufunc_null_fixup,
+	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
+
+	.cf_context_switch	= arm11_context_switch,
+
+	.cf_setup		= arm11x6_setup
+
+};
+#endif /* CPU_ARM1176 */
+
 
 #ifdef CPU_ARM11MPCORE
 struct cpu_functions arm11mpcore_cpufuncs = {
@@ -827,6 +929,10 @@ struct cpu_functions arm11mpcore_cpufuncs = {
 	.cf_dcache_wbinv_range	= armv5_dcache_wbinv_range,
 	.cf_dcache_inv_range	= armv5_dcache_inv_range,
 	.cf_dcache_wb_range	= armv5_dcache_wb_range,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= armv6_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = armv5_idcache_wbinv_range,
@@ -886,6 +992,10 @@ struct cpu_functions sa110_cpufuncs = {
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
 
@@ -942,6 +1052,10 @@ struct cpu_functions sa11x0_cpufuncs = {
 	.cf_dcache_wbinv_range	= sa1_cache_purgeD_rng,
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
@@ -1000,6 +1114,10 @@ struct cpu_functions fa526_cpufuncs = {
 	.cf_dcache_inv_range	= fa526_dcache_inv_range,
 	.cf_dcache_wb_range	= fa526_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= fa526_idcache_wbinv_all,
 	.cf_idcache_wbinv_range	= fa526_idcache_wbinv_range,
 
@@ -1056,6 +1174,10 @@ struct cpu_functions ixp12x0_cpufuncs = {
 	.cf_dcache_wbinv_range	= sa1_cache_purgeD_rng,
 /*XXX*/	.cf_dcache_inv_range	= sa1_cache_purgeD_rng,
 	.cf_dcache_wb_range	= sa1_cache_cleanD_rng,
+
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
 
 	.cf_idcache_wbinv_all	= sa1_cache_purgeID,
 	.cf_idcache_wbinv_range	= sa1_cache_purgeID_rng,
@@ -1115,6 +1237,10 @@ struct cpu_functions xscale_cpufuncs = {
 	.cf_dcache_inv_range	= xscale_cache_flushD_rng,
 	.cf_dcache_wb_range	= xscale_cache_cleanD_rng,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= xscale_cache_purgeID,
 	.cf_idcache_wbinv_range = xscale_cache_purgeID_rng,
 
@@ -1172,6 +1298,10 @@ struct cpu_functions cortex_cpufuncs = {
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
 	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_icache_sync_range	= armv7_icache_sync_range,
 	.cf_idcache_wbinv_range = armv7_idcache_wbinv_range,
 
@@ -1181,7 +1311,7 @@ struct cpu_functions cortex_cpufuncs = {
 	/* Other functions */
 
 	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= arm11_drain_writebuf,
+	.cf_drain_writebuf	= armv7_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
@@ -1233,6 +1363,10 @@ struct cpu_functions sheeva_cpufuncs = {
 	.cf_dcache_inv_range	= sheeva_dcache_inv_range,
 	.cf_dcache_wb_range	= sheeva_dcache_wb_range,
 
+	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
+	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
+
 	.cf_idcache_wbinv_all	= armv5_ec_idcache_wbinv_all,
 	.cf_idcache_wbinv_range = sheeva_idcache_wbinv_range,
 
@@ -1243,7 +1377,7 @@ struct cpu_functions sheeva_cpufuncs = {
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= (void *)cpufunc_nullop,
+	.cf_sleep		= (void *)sheeva_cpu_sleep,
 
 	/* Soft functions */
 
@@ -1263,7 +1397,6 @@ struct cpu_functions sheeva_cpufuncs = {
 
 struct cpu_functions cpufuncs;
 u_int cputype;
-u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
     defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_ARM11) || \
@@ -1275,9 +1408,9 @@ static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
    above numbers.  */
-static int	arm_dcache_l2_nsets;
-static int	arm_dcache_l2_assoc;
-static int	arm_dcache_l2_linesize;
+static int	arm_dcache_log2_nsets;
+static int	arm_dcache_log2_assoc;
+static int	arm_dcache_log2_linesize;
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 static inline u_int
@@ -1296,6 +1429,43 @@ get_cachesize_cp15(int cssr)
 	return csid;
 }
 #endif
+
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
+static void
+get_cacheinfo_clidr(struct arm_cache_info *info, u_int level, u_int clidr)
+{
+	u_int csid;
+	u_int nsets;
+
+	if (clidr & 6) {
+		csid = get_cachesize_cp15(level << 1); /* select L1 dcache values */
+		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->dcache_ways = CPU_CSID_ASSOC(csid) + 1;
+		info->dcache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
+		info->dcache_size = info->dcache_line_size * info->dcache_ways * nsets;
+
+		if (level == 0) {
+			arm_dcache_log2_assoc = CPU_CSID_ASSOC(csid) + 1;
+			arm_dcache_log2_linesize = CPU_CSID_LEN(csid) + 4;
+			arm_dcache_log2_nsets = 31 - __builtin_clz(nsets);
+		}
+	}
+
+	info->cache_unified = (clidr == 4);
+
+	if (clidr & 1) {
+		csid = get_cachesize_cp15((level << 1)|CPU_CSSR_InD); /* select L1 icache values */
+		nsets = CPU_CSID_NUMSETS(csid) + 1;
+		info->icache_ways = CPU_CSID_ASSOC(csid) + 1;
+		info->icache_line_size = 1U << (CPU_CSID_LEN(csid) + 4);
+		info->icache_size = info->icache_line_size * info->icache_ways * nsets;
+	} else {
+		info->icache_ways = info->dcache_ways;
+		info->icache_line_size = info->dcache_line_size;
+		info->icache_size = info->dcache_size;
+	}
+}
+#endif /* (ARM_MMU_V6 + ARM_MMU_V7) > 0 */
 
 static void
 get_cachetype_cp15(void)
@@ -1318,58 +1488,43 @@ get_cachetype_cp15(void)
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 	if (CPU_CT_FORMAT(ctype) == 4) {
-		u_int csid0, csid1, csid2;
+		u_int clidr = armreg_clidr_read();
 
-		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
-		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
-
-		csid0 = get_cachesize_cp15(CPU_CSSR_L1); /* select L1 dcache values */
-		arm_pdcache_ways = CPU_CSID_ASSOC(csid0) + 1;
-		arm_pdcache_line_size = dsize;
-		arm_pdcache_size = arm_pdcache_line_size * arm_pdcache_ways;
-		arm_pdcache_size *= (CPU_CSID_NUMSETS(csid0) + 1);
 		arm_cache_prefer_mask = PAGE_SIZE;
+		arm_pcache.cache_type = CPU_CT_CTYPE_WB14;
 
-		arm_dcache_align = arm_pdcache_line_size;
-
-		csid1 = get_cachesize_cp15(CPU_CSSR_L1|CPU_CSSR_InD); /* select L1 icache values */
-		arm_picache_ways = CPU_CSID_ASSOC(csid1) + 1;
-		arm_picache_line_size = isize;
-		arm_picache_size = arm_picache_line_size * arm_picache_ways;
-		arm_picache_size *= (CPU_CSID_NUMSETS(csid1) + 1);
-		arm_cache_prefer_mask = PAGE_SIZE;
-
-		arm_dcache_align = arm_pdcache_line_size;
-
-		csid2 = get_cachesize_cp15(CPU_CSSR_L2); /* select L2 cache values */
-		arm_dcache_l2_assoc = CPU_CSID_ASSOC(csid2) + 1;
-		arm_dcache_l2_linesize = 1 << (CPU_CSID_LEN(csid2) + 2);
-		arm_dcache_l2_nsets = CPU_CSID_NUMSETS(csid2) + 1;
-		arm_pcache_type = CPU_CT_CTYPE_WB14;
+		get_cacheinfo_clidr(&arm_pcache, 0, clidr & 7);
+		arm_dcache_align = arm_pcache.dcache_line_size;
+		clidr >>= 3;
+		if (clidr & 7) {
+			get_cacheinfo_clidr(&arm_scache, 1, clidr & 7);
+			if (arm_scache.dcache_line_size < arm_dcache_align)
+				arm_dcache_align = arm_scache.dcache_line_size;
+		}
 		goto out;
 	}
 #endif /* ARM_MMU_V6 + ARM_MMU_V7 > 0 */
 
 	if ((ctype & CPU_CT_S) == 0)
-		arm_pcache_unified = 1;
+		arm_pcache.cache_unified = 1;
 
 	/*
 	 * If you want to know how this code works, go read the ARM ARM.
 	 */
 
-	arm_pcache_type = CPU_CT_CTYPE(ctype);
+	arm_pcache.cache_type = CPU_CT_CTYPE(ctype);
 
-	if (arm_pcache_unified == 0) {
+	if (arm_pcache.cache_unified == 0) {
 		isize = CPU_CT_ISIZE(ctype);
 		multiplier = (isize & CPU_CT_xSIZE_M) ? 3 : 2;
-		arm_picache_line_size = 1U << (CPU_CT_xSIZE_LEN(isize) + 3);
+		arm_pcache.icache_line_size = 1U << (CPU_CT_xSIZE_LEN(isize) + 3);
 		if (CPU_CT_xSIZE_ASSOC(isize) == 0) {
 			if (isize & CPU_CT_xSIZE_M)
-				arm_picache_line_size = 0; /* not present */
+				arm_pcache.icache_line_size = 0; /* not present */
 			else
-				arm_picache_ways = 1;
+				arm_pcache.icache_ways = 1;
 		} else {
-			arm_picache_ways = multiplier <<
+			arm_pcache.icache_ways = multiplier <<
 			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 			if (CPU_CT_xSIZE_P & isize)
@@ -1379,19 +1534,19 @@ get_cachetype_cp15(void)
 				    - PAGE_SIZE;
 #endif
 		}
-		arm_picache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
+		arm_pcache.icache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
 	}
 
 	dsize = CPU_CT_DSIZE(ctype);
 	multiplier = (dsize & CPU_CT_xSIZE_M) ? 3 : 2;
-	arm_pdcache_line_size = 1U << (CPU_CT_xSIZE_LEN(dsize) + 3);
+	arm_pcache.dcache_line_size = 1U << (CPU_CT_xSIZE_LEN(dsize) + 3);
 	if (CPU_CT_xSIZE_ASSOC(dsize) == 0) {
 		if (dsize & CPU_CT_xSIZE_M)
-			arm_pdcache_line_size = 0; /* not present */
+			arm_pcache.dcache_line_size = 0; /* not present */
 		else
-			arm_pdcache_ways = 1;
+			arm_pcache.dcache_ways = 1;
 	} else {
-		arm_pdcache_ways = multiplier <<
+		arm_pcache.dcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 		if (CPU_CT_xSIZE_P & dsize)
@@ -1400,13 +1555,13 @@ get_cachetype_cp15(void)
 				  - CPU_CT_xSIZE_ASSOC(dsize)) - PAGE_SIZE;
 #endif
 	}
-	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
+	arm_pcache.dcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
 
-	arm_dcache_align = arm_pdcache_line_size;
+	arm_dcache_align = arm_pcache.dcache_line_size;
 
-	arm_dcache_l2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
-	arm_dcache_l2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
-	arm_dcache_l2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
+	arm_dcache_log2_assoc = CPU_CT_xSIZE_ASSOC(dsize) + multiplier - 2;
+	arm_dcache_log2_linesize = CPU_CT_xSIZE_LEN(dsize) + 3;
+	arm_dcache_log2_nsets = 6 + CPU_CT_xSIZE_SIZE(dsize) -
 	    CPU_CT_xSIZE_ASSOC(dsize) - CPU_CT_xSIZE_LEN(dsize);
 
  out:
@@ -1458,20 +1613,20 @@ get_cachetype_table(void)
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
-			arm_pcache_type = cachetab[i].ct_pcache_type;
-			arm_pcache_unified = cachetab[i].ct_pcache_unified;
-			arm_pdcache_size = cachetab[i].ct_pdcache_size;
-			arm_pdcache_line_size =
+			arm_pcache.cache_type = cachetab[i].ct_pcache_type;
+			arm_pcache.cache_unified = cachetab[i].ct_pcache_unified;
+			arm_pcache.dcache_size = cachetab[i].ct_pdcache_size;
+			arm_pcache.dcache_line_size =
 			    cachetab[i].ct_pdcache_line_size;
-			arm_pdcache_ways = cachetab[i].ct_pdcache_ways;
-			arm_picache_size = cachetab[i].ct_picache_size;
-			arm_picache_line_size =
+			arm_pcache.dcache_ways = cachetab[i].ct_pdcache_ways;
+			arm_pcache.icache_size = cachetab[i].ct_picache_size;
+			arm_pcache.icache_line_size =
 			    cachetab[i].ct_picache_line_size;
-			arm_picache_ways = cachetab[i].ct_picache_ways;
+			arm_pcache.icache_ways = cachetab[i].ct_picache_ways;
 		}
 	}
-	arm_dcache_align = arm_pdcache_line_size;
 
+	arm_dcache_align = arm_pcache.dcache_line_size;
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 
@@ -1496,7 +1651,6 @@ set_cpufuncs(void)
 #ifdef CPU_ARM2
 	if (cputype == CPU_ID_ARM2) {
 		cpufuncs = arm2_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1504,7 +1658,6 @@ set_cpufuncs(void)
 #ifdef CPU_ARM250
 	if (cputype == CPU_ID_ARM250) {
 		cpufuncs = arm250_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1513,7 +1666,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000300) {
 		cpufuncs = arm3_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		return 0;
 	}
@@ -1522,7 +1674,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		pmap_pte_init_generic();
 		return 0;
@@ -1533,7 +1684,6 @@ set_cpufuncs(void)
 	    CPU_ID_IS7(cputype) &&
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
 		pmap_pte_init_generic();
 		return 0;
@@ -1544,7 +1694,6 @@ set_cpufuncs(void)
 	    CPU_ID_IS7(cputype) &&
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V4T) {
 		cpufuncs = arm7tdmi_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		return 0;
@@ -1554,7 +1703,6 @@ set_cpufuncs(void)
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		get_cachetype_cp15();
 		pmap_pte_init_arm8();
 		return 0;
@@ -1565,13 +1713,12 @@ set_cpufuncs(void)
 	     (cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_TI) &&
 	    (cputype & 0x0000f000) == 0x00009000) {
 		cpufuncs = arm9_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
-		arm9_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		arm9_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
 		arm9_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    (1U << (arm_dcache_log2_linesize + arm_dcache_log2_nsets)) -
 		    arm9_dcache_sets_inc;
-		arm9_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		arm9_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		arm9_dcache_index_max = 0U - arm9_dcache_index_inc;
 #ifdef	ARM9_CACHE_WRITE_THROUGH
 		pmap_pte_init_arm9();
@@ -1585,7 +1732,6 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_ARM926EJS ||
 	    cputype == CPU_ID_ARM1026EJS) {
 		cpufuncs = armv5_ec_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 		return 0;
@@ -1595,9 +1741,9 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_MV88SV131 ||
 	    cputype == CPU_ID_MV88FR571_VD) {
 		cpufuncs = sheeva_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
+		cpu_do_powersave = 1;			/* Enable powersave */
 		return 0;
 	}
 #endif /* CPU_SHEEVA */
@@ -1609,13 +1755,12 @@ set_cpufuncs(void)
 		 * option on ARM1020T).
 		 */
 		cpufuncs = arm10_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
+		armv5_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
 		armv5_dcache_sets_max =
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
+		    (1U << (arm_dcache_log2_linesize + arm_dcache_log2_nsets)) -
 		    armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		armv5_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		pmap_pte_init_generic();
 		return 0;
@@ -1627,12 +1772,11 @@ set_cpufuncs(void)
 	if (cputype == CPU_ID_ARM11MPCORE) {
 		cpufuncs = arm11mpcore_cpufuncs;
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv5_dcache_sets_max = (1U << (arm_dcache_l2_linesize +
-			arm_dcache_l2_nsets)) - armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
+		armv5_dcache_sets_inc = 1U << arm_dcache_log2_linesize;
+		armv5_dcache_sets_max = (1U << (arm_dcache_log2_linesize +
+			arm_dcache_log2_nsets)) - armv5_dcache_sets_inc;
+		armv5_dcache_index_inc = 1U << (32 - arm_dcache_log2_assoc);
 		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		pmap_pte_init_arm11mpcore();
 		if (arm_cache_prefer_mask)
@@ -1649,13 +1793,18 @@ set_cpufuncs(void)
 	    cputype == CPU_ID_ARM1176JZS) {
 		cpufuncs = arm11_cpufuncs;
 #if defined(CPU_ARM1136)
-		if (cputype != CPU_ID_ARM1176JZS) {
+		if (cputype == CPU_ID_ARM1136JS &&
+		    cputype == CPU_ID_ARM1136JSR1) {
 			cpufuncs = arm1136_cpufuncs;
 			if (cputype == CPU_ID_ARM1136JS)
 				cpufuncs.cf_sleep = arm1136_sleep_rev0;
 		}
 #endif
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
+#if defined(CPU_ARM1176)
+		if (cputype == CPU_ID_ARM1176JZS) {
+			cpufuncs = arm1176_cpufuncs;
+		}
+#endif
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
 #ifdef ARM11_CACHE_WRITE_THROUGH
@@ -1666,13 +1815,16 @@ set_cpufuncs(void)
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
 
+		/*
+		 * Start and reset the PMC Cycle Counter.
+		 */
+		armreg_pmcrv6_write(ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C);
 		return 0;
 	}
 #endif /* CPU_ARM11 */
 #ifdef CPU_SA110
 	if (cputype == CPU_ID_SA110) {
 		cpufuncs = sa110_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 		return 0;
@@ -1681,7 +1833,6 @@ set_cpufuncs(void)
 #ifdef CPU_SA1100
 	if (cputype == CPU_ID_SA1100) {
 		cpufuncs = sa11x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 
@@ -1694,7 +1845,6 @@ set_cpufuncs(void)
 #ifdef CPU_SA1110
 	if (cputype == CPU_ID_SA1110) {
 		cpufuncs = sa11x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 
@@ -1707,7 +1857,6 @@ set_cpufuncs(void)
 #ifdef CPU_FA526
 	if (cputype == CPU_ID_FA526) {
 		cpufuncs = fa526_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it	*/
 		get_cachetype_cp15();
 		pmap_pte_init_generic();
 
@@ -1720,7 +1869,6 @@ set_cpufuncs(void)
 #ifdef CPU_IXP12X0
 	if (cputype == CPU_ID_IXP1200) {
 		cpufuncs = ixp12x0_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;
 		get_cachetype_table();
 		pmap_pte_init_sa1();
 		return 0;
@@ -1777,7 +1925,6 @@ set_cpufuncs(void)
 		if (rev == 0 || rev == 1)
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 		return 0;
@@ -1806,7 +1953,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 		return 0;
@@ -1823,7 +1969,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 
@@ -1843,7 +1988,6 @@ set_cpufuncs(void)
 		xscale_pmu_init();
 #endif
 
-		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
 
@@ -1851,18 +1995,18 @@ set_cpufuncs(void)
 	}
 #endif /* CPU_XSCALE_IXP425 */
 #if defined(CPU_CORTEX)
-	if (cputype == CPU_ID_CORTEXA8R1 ||
-	    cputype == CPU_ID_CORTEXA8R2 ||
-	    cputype == CPU_ID_CORTEXA8R3 ||
-	    cputype == CPU_ID_CORTEXA9R1) {
+	if (CPU_ID_CORTEX_P(cputype)) {
 		cpufuncs = cortex_cpufuncs;
-		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
 		pmap_pte_init_armv7();
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
-
+		/*
+		 * Start and reset the PMC Cycle Counter.
+		 */
+		armreg_pmcr_write(ARM11_PMCCTL_E | ARM11_PMCCTL_P | ARM11_PMCCTL_C);
+		armreg_pmcntenset_write(CORTEX_CNTENS_C);
 		return 0;
 	}
 #endif /* CPU_CORTEX */
@@ -2251,7 +2395,7 @@ late_abort_fixup(void *arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136) || \
+	defined(CPU_ARM10) || defined(CPU_ARM11) || \
 	defined(CPU_FA526) || defined(CPU_CORTEX) || defined(CPU_SHEEVA)
 
 #define IGN	0
@@ -2658,14 +2802,6 @@ arm11_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
-
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    /* | CPU_CONTROL_BPRD_ENABLE */;
@@ -2712,14 +2848,6 @@ void
 arm11mpcore_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
-
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
 
 	cpuctrl = CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE
@@ -2776,14 +2904,6 @@ armv7_setup(char *args)
 {
 	int cpuctrl, cpuctrlmask;
 
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
-
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
 	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE ;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -2812,74 +2932,18 @@ armv7_setup(char *args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
-
-/* Clean the data cache to the level of coherency. Slow. */
-void
-armv7_dcache_wbinv_all(void)
-{
-	u_int clidr, loc, level;
-
-	/* Cache Level ID Register */
-	__asm volatile("mrc\tp15, 1, %0, c0, c0, 1" : "=r" (clidr));
-
-	loc = (clidr >> 24) & 7; /* Level of Coherency */
-
-	for (level = 0; level <= loc; level++) {
-		u_int ctype, csid;
-		int line_size, ways, nsets, wayshift, setshift;
-
-		ctype = (clidr >> (level * 3)) & 7;
-		/* We're supposed to stop when ctype == 0, but we
-		 * trust that loc isn't larger than necesssary. */
-		if (ctype < 2) continue; /* no cache / only icache */
-
-		csid = get_cachesize_cp15(level << 1);
-		line_size = CPU_CSID_LEN(csid);
-		ways = CPU_CSID_ASSOC(csid);
-		nsets = (csid >> 13) & 0x7fff;
-
-		wayshift = __builtin_clz(ways); /* leading zeros */
-		setshift = line_size + 4;
-
-		for (; nsets >= 0; nsets--) {
-			int way;
-
-			for (way = ways; way >= 0; way--) {
-				/* Clean by set/way */
-				const u_int sw = (way << wayshift)
-				    | (nsets << setshift)
-				    | (level << 1);
-
-				__asm volatile("mcr\tp15, 0, %0, c7, c10, 2"
-				    :: "r"(sw));
-			}
-		}
-	}
-
-	__asm volatile("dsb");
-	__asm volatile("isb");
-}
 #endif /* CPU_CORTEX */
 
 
-
-#if defined(CPU_ARM1136)
+#if defined(CPU_ARM1136) || defined(CPU_ARM1176) 
 void
-arm1136_setup(char *args)
+arm11x6_setup(char *args)
 {
 	int cpuctrl, cpuctrl_wax;
 	uint32_t auxctrl, auxctrl_wax;
 	uint32_t tmp, tmp2;
 	uint32_t sbz=0;
 	uint32_t cpuid;
-
-#if defined(PROCESS_ID_IS_CURCPU)
-	/* set curcpu() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
-#elif defined(PROCESS_ID_IS_CURLWP)
-	/* set curlwp() */
-	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
-#endif
 
 	cpuid = cpu_id();
 
@@ -2920,7 +2984,8 @@ arm1136_setup(char *args)
 
 	auxctrl = 0;
 	auxctrl_wax = ~0;
-	/* This options enables the workaround for the 364296 ARM1136
+	/*
+	 * This options enables the workaround for the 364296 ARM1136
 	 * r0pX errata (possible cache data corruption with
 	 * hit-under-miss enabled). It sets the undocumented bit 31 in
 	 * the auxiliary control register and the FI bit in the control
@@ -2930,8 +2995,16 @@ arm1136_setup(char *args)
 	 */
 	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1136JS) { /* ARM1136JSr0pX */
 		cpuctrl |= CPU_CONTROL_FI_ENABLE;
-		auxctrl = ARM11R0_AUXCTL_PFI;
-		auxctrl_wax = ~ARM11R0_AUXCTL_PFI;
+		auxctrl = ARM1136_AUXCTL_PFI;
+		auxctrl_wax = ~ARM1136_AUXCTL_PFI;
+	}
+
+	/*
+	 * Enable an errata workaround
+	 */
+	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1176JZS) { /* ARM1176JZSr0 */
+		auxctrl = ARM1176_AUXCTL_PHD;
+		auxctrl_wax = ~ARM1176_AUXCTL_PHD;
 	}
 
 	/* Clear out the cache */
@@ -2948,17 +3021,17 @@ arm1136_setup(char *args)
 	cpu_control(~cpuctrl_wax, cpuctrl);
 
 	__asm volatile ("mrc	p15, 0, %0, c1, c0, 1\n\t"
-			"bic	%1, %0, %2\n\t"
-			"eor	%1, %0, %3\n\t"
+			"and	%1, %0, %2\n\t"
+			"orr	%1, %1, %3\n\t"
 			"teq	%0, %1\n\t"
 			"mcrne	p15, 0, %1, c1, c0, 1\n\t"
 			: "=r"(tmp), "=r"(tmp2) :
-			  "r"(~auxctrl_wax), "r"(auxctrl));
+			  "r"(auxctrl_wax), "r"(auxctrl));
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
 }
-#endif	/* CPU_ARM1136 */
+#endif	/* CPU_ARM1136 || CPU_ARM1176 */
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {

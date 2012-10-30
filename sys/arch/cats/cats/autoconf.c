@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2009/03/18 10:22:27 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.12.1 2012/10/30 17:19:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2009/03/18 10:22:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.12.1 2012/10/30 17:19:14 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -120,8 +120,8 @@ cpu_rootconf(void)
 {
 	set_root_device();
 	printf("boot device: %s\n",
-	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
-	setroot(booted_device, booted_partition);
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
+	rootconf();
 }
 
 
@@ -162,9 +162,10 @@ cpu_configure(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *pdev;
+	device_t pdev;
+
         if ((pdev = device_parent(dev)) != NULL &&
     	    device_is_a(pdev, "pci")) {
 		/*
@@ -179,7 +180,7 @@ device_register(struct device *dev, void *aux)
 						true) == false) {
 				printf("WARNING: unable to set "
 					"ali1543-ide-force-compat-mode "
-					"property for %s\n", dev->dv_xname);
+					"property for %s\n", device_xname(dev));
 			}
 		}
 	}

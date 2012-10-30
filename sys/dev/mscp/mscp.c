@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.34 2009/05/12 14:37:59 cegger Exp $	*/
+/*	$NetBSD: mscp.c,v 1.34.12.1 2012/10/30 17:21:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.34 2009/05/12 14:37:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.34.12.1 2012/10/30 17:21:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -173,7 +173,8 @@ mscp_dorsp(struct mscp_softc *mi)
 	struct mscp_xi *mxi;
 	int nextrsp;
 	int st, error;
-	extern struct mscp slavereply;
+	extern struct mscp mscp_cold_reply;
+	extern int mscp_cold_unit;
 
 	nextrsp = mi->mi_rsp.mri_next;
 loop:
@@ -202,7 +203,7 @@ loop:
 			mi->mi_flags |= MSC_READY;
 		} else {
 			printf("%s: SETCTLRC failed: %d ",
-			    device_xname(&mi->mi_dev), mp->mscp_status);
+			    device_xname(mi->mi_dev), mp->mscp_status);
 			mscp_printevent(mp);
 		}
 		goto done;
@@ -242,7 +243,7 @@ loop:
 	case MSCPT_MAINTENANCE:
 	default:
 		printf("%s: unit %d: unknown message type 0x%x ignored\n",
-			device_xname(&mi->mi_dev), mp->mscp_unit,
+			device_xname(mi->mi_dev), mp->mscp_unit,
 			MSCP_MSGTYPE(mp->mscp_msgtc));
 		goto done;
 	}
@@ -287,8 +288,12 @@ loop:
 		 * to set it up, otherwise it's just a "normal" unit
 		 * status.
 		 */
-		if (cold)
-			memcpy(&slavereply, mp, sizeof(struct mscp));
+		if (cold) {
+			memcpy(&mscp_cold_reply, mp, sizeof(struct mscp));
+			/* Detect that we've reached the end of all units */
+			if (mp->mscp_unit < mscp_cold_unit)
+				break;
+		}
 
 		if (mp->mscp_status == (M_ST_OFFLINE|M_OFFLINE_UNKNOWN))
 			break;
@@ -300,7 +305,7 @@ loop:
 
 			mw = SLIST_FIRST(&mi->mi_freelist);
 			if (mw == NULL) {
-				aprint_error_dev(&mi->mi_dev,
+				aprint_error_dev(mi->mi_dev,
 				    "couldn't attach drive (no free items)\n");
 				mutex_spin_exit(&mi->mi_mtx);
 			} else {
@@ -414,7 +419,7 @@ rwend:
 		bp->b_resid = bp->b_bcount - mp->mscp_seq.seq_bytecount;
 		bus_dmamap_unload(mi->mi_dmat, mxi->mxi_dmam);
 
-		(*mc->mc_ctlrdone)(device_parent(&mi->mi_dev));
+		(*mc->mc_ctlrdone)(device_parent(mi->mi_dev));
 		(*me->me_iodone)(drive, bp);
 out:
 		mxi->mxi_inuse = 0;
@@ -491,7 +496,7 @@ mscp_worker(struct work *wk, void *dummy)
 	da.da_mp = &mw->mw_mp;
 	da.da_typ = mi->mi_type;
 
-	config_found(&mi->mi_dev, (void *)&da, mscp_print);
+	config_found(mi->mi_dev, (void *)&da, mscp_print);
 
 	mutex_spin_enter(&mi->mi_mtx);
 	SLIST_INSERT_HEAD(&mw->mw_mi->mi_freelist, mw, mw_list);

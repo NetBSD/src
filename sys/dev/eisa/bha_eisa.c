@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.34 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.34.12.1 2012/10/30 17:20:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.34 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.34.12.1 2012/10/30 17:20:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ static int	bha_eisa_address(bus_space_tag_t, bus_space_handle_t, int *);
 static int	bha_eisa_match(device_t, cfdata_t, void *);
 static void	bha_eisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bha_eisa, sizeof(struct bha_softc),
+CFATTACH_DECL_NEW(bha_eisa, sizeof(struct bha_softc),
     bha_eisa_match, bha_eisa_attach, NULL, NULL);
 
 static int
@@ -99,8 +99,7 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
  * the actual probe routine to check it out.
  */
 static int
-bha_eisa_match(device_t parent, cfdata_t match,
-    void *aux)
+bha_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -148,6 +147,8 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
 
+	sc->sc_dev = self;
+
 	if (!strcmp(ea->ea_idstring, "BUS4201"))
 		model = EISA_PRODUCT_BUS4201;
 	else if (!strcmp(ea->ea_idstring, "BUS4202"))
@@ -174,7 +175,7 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, bpd.sc_irq, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%d)\n",
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt (%d)\n",
 		    bpd.sc_irq);
 		return;
 	}
@@ -182,13 +183,13 @@ bha_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	bha_attach(sc);
 }

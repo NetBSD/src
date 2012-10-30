@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.24.8.1 2012/04/17 00:07:34 yamt Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.24.8.2 2012/10/30 17:21:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.24.8.1 2012/04/17 00:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.24.8.2 2012/10/30 17:21:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ ld_icp_intr(struct icp_ccb *ic)
 	struct icp_softc *icp;
 
 	bp = ic->ic_context;
-	sc = (struct ld_icp_softc *)device_private(ic->ic_dv);
+	sc = device_private(ic->ic_dv);
 	icp = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if (ic->ic_status != ICP_S_OK) {
@@ -302,7 +302,7 @@ ld_icp_intr(struct icp_ccb *ic)
 		bp->b_resid = bp->b_bcount;
 
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.sync);
-		icp->icp_evt.eu.sync.ionode = device_unit(&icp->icp_dv);
+		icp->icp_evt.eu.sync.ionode = device_unit(icp->icp_dv);
 		icp->icp_evt.eu.sync.service = icp->icp_service;
 		icp->icp_evt.eu.sync.status = icp->icp_status;
 		icp->icp_evt.eu.sync.info = icp->icp_info;

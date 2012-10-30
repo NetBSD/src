@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.39.2.1 2012/04/17 00:05:53 yamt Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.39.2.2 2012/10/30 17:18:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.39.2.1 2012/04/17 00:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.39.2.2 2012/10/30 17:18:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ dec_eb64plus_cons_init(void)
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&acp->ac_iot, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)

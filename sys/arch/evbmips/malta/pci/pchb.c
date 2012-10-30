@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 2011/06/06 17:13:05 matt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.10.2.1 2012/10/30 17:19:29 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2011/06/06 17:13:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10.2.1 2012/10/30 17:19:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,6 +105,6 @@ pchb_attach(device_t parent, device_t self, void *aux)
 		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo,
 		    sizeof(devinfo));
 	}
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	printf("%s: %s (rev. 0x%02x)\n", device_xname(self), devinfo,
 	    PCI_REVISION(pa->pa_class));
 }

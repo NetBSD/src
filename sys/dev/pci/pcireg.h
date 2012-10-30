@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.73 2011/08/17 00:59:47 dyoung Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.73.2.1 2012/10/30 17:21:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -179,6 +179,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
 #define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
+#define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -656,6 +657,17 @@ struct pci_msix_table_entry {
 #define PCI_PCIE_LCSR		0x10	/* Link Control & Status Register */
 #define PCI_PCIE_LCSR_ASPM_L0S	__BIT(0)
 #define PCI_PCIE_LCSR_ASPM_L1	__BIT(1)
+#define PCI_PCIE_LCSR_RCB	__BIT(3)
+#define PCI_PCIE_LCSR_LINK_DIS	__BIT(4)
+#define PCI_PCIE_LCSR_RETRAIN	__BIT(5)
+#define PCI_PCIE_LCSR_COMCLKCFG	__BIT(6)
+#define PCI_PCIE_LCSR_EXTNDSYNC	__BIT(7)
+#define PCI_PCIE_LCSR_ENCLKPM	__BIT(8)
+#define	PCI_PCIE_LCSR_LINKSPEED	__BITS(19,16)
+#define	PCI_PCIE_LCSR_NLW	__BITS(25,20)
+#define	PCI_PCIE_LCSR_LINKTRAIN	__BIT(27)
+#define	PCI_PCIE_LCSR_SLOTCLKCFG __BIT(28)
+#define	PCI_PCIE_LCSR_DLACTIVE	__BIT(29)
 #define PCI_PCIE_SLCAP		0x14	/* Slot Capabilities Register */
 #define PCI_PCIE_SLCAP_ABP	__BIT(0)	/* Attention Button Present */
 #define PCI_PCIE_SLCAP_PCP	__BIT(1)	/* Power Controller Present */

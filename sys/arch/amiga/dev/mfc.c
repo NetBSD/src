@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.54 2011/04/24 16:26:52 rmind Exp $ */
+/*	$NetBSD: mfc.c,v 1.54.4.1 2012/10/30 17:18:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.54 2011/04/24 16:26:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.54.4.1 2012/10/30 17:18:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ struct duart_regs {
 };
 
 struct mfc_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	isr sc_isr;
 	struct	mfc_regs *sc_regs;
 	u_long	clk_frq;
@@ -172,7 +172,7 @@ struct mfc_softc {
 
 #if NMFCS > 0
 struct mfcs_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	tty *sc_tty;
 	struct	duart_regs *sc_duart;
 	struct	mfc_regs *sc_regs;
@@ -200,13 +200,13 @@ struct mfc_args {
 	char	unit;
 };
 
-int	mfcprint(void *auxp, const char *);
-void	mfcattach(struct device *, struct device *, void *);
-int	mfcmatch(struct device *, struct cfdata *, void *);
+int	mfcprint(void *, const char *);
+void	mfcattach(device_t, device_t, void *);
+int	mfcmatch(device_t, cfdata_t, void *);
 
 #if NMFCS > 0
-int	mfcsmatch(struct device *, struct cfdata *, void *);
-void	mfcsattach(struct device *, struct device *, void *);
+int	mfcsmatch(device_t, cfdata_t, void *);
+void	mfcsattach(device_t, device_t, void *);
 int	mfcsparam( struct tty *, struct termios *);
 int	mfcshwiflow(struct tty *, int);
 void	mfcsstart(struct tty *);
@@ -218,23 +218,23 @@ void	mfcs_intr_soft(void *);
 #endif
 
 #if NMFCP > 0
-void mfcpattach(struct device *, struct device *, void *);
-int mfcpmatch(struct device *, struct cfdata *, void *);
+void mfcpattach(device_t, device_t, void *);
+int mfcpmatch(device_t, cfdata_t, void *);
 #endif
 int mfcintr(void *);
 
-CFATTACH_DECL(mfc, sizeof(struct mfc_softc),
+CFATTACH_DECL_NEW(mfc, sizeof(struct mfc_softc),
     mfcmatch, mfcattach, NULL, NULL);
 
 #if NMFCS > 0
-CFATTACH_DECL(mfcs, sizeof(struct mfcs_softc),
+CFATTACH_DECL_NEW(mfcs, sizeof(struct mfcs_softc),
     mfcsmatch, mfcsattach, NULL, NULL);
 
 extern struct cfdriver mfcs_cd;
 #endif
 
 #if NMFCP > 0
-CFATTACH_DECL(mfcp, sizeof(struct mfcp_softc),
+CFATTACH_DECL_NEW(mfcp, sizeof(struct mfcp_softc),
     mfcpmatch, mfcpattach, NULL, NULL);
 #endif
 
@@ -342,11 +342,11 @@ const struct speedtab mfcs2speedtab2[] = {
  * if we are an bsc/Alf Data MultFaceCard (I, II, and III)
  */
 int
-mfcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mfcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 	if (zap->manid == 2092 &&
 	    (zap->prodid == 16 || zap->prodid == 17 || zap->prodid == 18))
 
@@ -355,7 +355,7 @@ mfcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-mfcattach(struct device *pdp, struct device *dp, void *auxp)
+mfcattach(device_t parent, device_t self, void *aux)
 {
 	struct mfc_softc *scc;
 	struct zbus_args *zap;
@@ -363,12 +363,13 @@ mfcattach(struct device *pdp, struct device *dp, void *auxp)
 	int unit;
 	struct mfc_regs *rp;
 
-	zap = auxp;
+	zap = aux;
 
 	printf ("\n");
 
-	scc = (struct mfc_softc *)dp;
-	unit = device_unit(&scc->sc_dev);
+	scc = device_private(self);
+	scc->sc_dev = self;
+	unit = device_unit(self);
 	scc->sc_regs = rp = zap->va;
 	if (zap->prodid == 18)
 		scc->mfc_iii = 3;
@@ -407,30 +408,30 @@ mfcattach(struct device *pdp, struct device *dp, void *auxp)
 	memcpy(&ma.zargs, zap, sizeof(struct zbus_args));
 	ma.subdev = "mfcs";
 	ma.unit = unit * 2;
-	config_found(dp, &ma, mfcprint);
+	config_found(self, &ma, mfcprint);
 	ma.unit = unit * 2 + 1;
-	config_found(dp, &ma, mfcprint);
+	config_found(self, &ma, mfcprint);
 	ma.subdev = "mfcp";
 	ma.unit = unit;
-	config_found(dp, &ma, mfcprint);
+	config_found(self, &ma, mfcprint);
 }
 
 /*
  *
  */
 int
-mfcsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mfcsmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mfc_args *ma;
 
-	ma = auxp;
+	ma = aux;
 	if (strcmp(ma->subdev, "mfcs") == 0)
 		return (1);
 	return (0);
 }
 
 void
-mfcsattach(struct device *pdp, struct device *dp, void *auxp)
+mfcsattach(device_t parent, device_t self, void *aux)
 {
 	int unit;
 	struct mfcs_softc *sc;
@@ -438,9 +439,10 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 	struct mfc_args *ma;
 	struct mfc_regs *rp;
 
-	sc = device_private(dp);
-	scc = device_private(pdp);
-	ma = auxp;
+	sc = device_private(self);
+	sc->sc_dev = self;
+	scc = device_private(parent);
+	ma = aux;
 
 	printf (": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 	    SEROBUF_SIZE);
@@ -465,7 +467,7 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
  * print diag if pnp is NULL else just extra
  */
 int
-mfcprint(void *auxp, const char *pnp)
+mfcprint(void *aux, const char *pnp)
 {
 	if (pnp == NULL)
 		return(UNCONF);
@@ -950,7 +952,7 @@ mfcintr(void *arg)
 	istat = regs->du_isr & scc->imask;
 	if (istat == 0)
 		return (0);
-	unit = device_unit(&scc->sc_dev) * 2;
+	unit = device_unit(scc->sc_dev) * 2;
 	if (istat & 0x02) {		/* channel A receive interrupt */
 		sc = device_lookup_private(&mfcs_cd, unit);
 		while (1) {
@@ -1019,7 +1021,7 @@ mfcintr(void *arg)
 	}
 	if (istat & 0x80) {		/* input port change interrupt */
 		c = regs->du_ipcr;
-		printf ("%s: ipcr %02x", scc->sc_dev.dv_xname, c);
+		printf ("%s: ipcr %02x", device_xname(scc->sc_dev), c);
 	}
 	return(1);
 }
@@ -1060,7 +1062,7 @@ mfcsxintr(int unit)
 		splx(s2);
 		if (ovfl != 0)
 			log(LOG_WARNING, "%s: %d buffer overflow!\n",
-			    sc->sc_dev.dv_xname, ovfl);
+			    device_xname(sc->sc_dev), ovfl);
 	}
 	if (sc->incnt == 0 && (tp->t_state & TS_TBLOCK) == 0) {
 		sc->sc_regs->du_btst = 1 << unit;	/* XXXX */

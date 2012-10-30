@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.37 2010/02/05 12:13:36 phx Exp $ */
+/*	$NetBSD: ahsc.c,v 1.37.12.1 2012/10/30 17:18:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.37 2010/02/05 12:13:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.37.12.1 2012/10/30 17:18:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.37 2010/02/05 12:13:36 phx Exp $");
 
 #include <machine/cpu.h>
 
-void ahscattach(struct device *, struct device *, void *);
-int ahscmatch(struct device *, struct cfdata *, void *);
+void ahscattach(device_t, device_t, void *);
+int ahscmatch(device_t, cfdata_t, void *);
 
 void ahsc_enintr(struct sbic_softc *);
 void ahsc_dmastop(struct sbic_softc *);
@@ -105,31 +105,31 @@ void ahsc_dump(void);
 int	ahsc_dmadebug = 0;
 #endif
 
-CFATTACH_DECL(ahsc, sizeof(struct sbic_softc),
+CFATTACH_DECL_NEW(ahsc, sizeof(struct sbic_softc),
     ahscmatch, ahscattach, NULL, NULL);
 
 /*
  * if we are an A3000 we are here.
  */
 int
-ahscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+ahscmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	char *mbusstr;
 
-	mbusstr = auxp;
-	if (is_a3000() && matchname(auxp, "ahsc"))
+	if (is_a3000() && matchname(aux, "ahsc"))
 		return(1);
 	return(0);
 }
 
 void
-ahscattach(struct device *pdp, struct device *dp, void *auxp)
+ahscattach(device_t parent, device_t self, void *aux)
 {
 	volatile struct sdmac *rp;
-	struct sbic_softc *sc = (struct sbic_softc *)dp;
+	struct sbic_softc *sc = device_private(self);
 	struct cfdev *cdp, *ecdp;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
+
+	sc->sc_dev = self;
 
 	ecdp = &cfdev[ncfdev];
 
@@ -174,7 +174,7 @@ ahscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -202,7 +202,7 @@ ahscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 void
@@ -300,7 +300,7 @@ ahsc_dmaintr(void *arg)
 
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
-		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
+		printf("%s: dmaintr 0x%x\n", device_xname(dev->sc_dev), stat);
 #endif
 
 	/*

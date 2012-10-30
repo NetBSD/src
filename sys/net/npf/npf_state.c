@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_state.c,v 1.4.4.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.4.4.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.2 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.3 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.4.4.2 2012/04/17 00:08:39 yamt Exp $
 #define	NPF_ANY_SESSION_ESTABLISHED	2
 #define	NPF_ANY_SESSION_NSTATES		3
 
-static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] __read_mostly = {
+static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] = {
 	[NPF_ANY_SESSION_CLOSED] = {
 		[NPF_FLOW_FORW]		= NPF_ANY_SESSION_NEW,
 	},
@@ -68,12 +68,29 @@ static const int npf_generic_fsm[NPF_ANY_SESSION_NSTATES][2] __read_mostly = {
 	},
 };
 
-static const u_int npf_generic_timeout[] __read_mostly = {
+static u_int npf_generic_timeout[] __read_mostly = {
 	[NPF_ANY_SESSION_CLOSED]	= 0,
 	[NPF_ANY_SESSION_NEW]		= 30,
 	[NPF_ANY_SESSION_ESTABLISHED]	= 60,
 };
 
+/*
+ * State sampler for debugging.
+ */
+#if defined(_NPF_TESTING)
+static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
+#define	NPF_STATE_SAMPLE(n, r) if (npf_state_sample) (*npf_state_sample)(n, r);
+#else
+#define	NPF_STATE_SAMPLE(n, r)
+#endif
+
+/*
+ * npf_state_init: initialise the state structure.
+ *
+ * Should normally be called on a first packet, which also determines the
+ * direction in a case of connection-orientated protocol.  Returns true on
+ * success and false otherwise (e.g. if protocol is not supported).
+ */
 bool
 npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 {
@@ -100,6 +117,7 @@ npf_state_init(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst)
 	default:
 		ret = false;
 	}
+	NPF_STATE_SAMPLE(nst, ret);
 	return ret;
 }
 
@@ -111,6 +129,12 @@ npf_state_destroy(npf_state_t *nst)
 	mutex_destroy(&nst->nst_lock);
 }
 
+/*
+ * npf_state_inspect: inspect the packet according to the protocol state.
+ *
+ * Return true if packet is considered to match the state (e.g. for TCP,
+ * the packet belongs to the tracked connection) and false otherwise.
+ */
 bool
 npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
     npf_state_t *nst, const bool forw)
@@ -134,11 +158,9 @@ npf_state_inspect(const npf_cache_t *npc, nbuf_t *nbuf,
 	default:
 		ret = false;
 	}
+	NPF_STATE_SAMPLE(nst, ret);
 	mutex_exit(&nst->nst_lock);
 
-	if (__predict_false(!ret)) {
-		npf_stats_inc(NPF_STAT_INVALID_STATE);
-	}
 	return ret;
 }
 
@@ -168,10 +190,11 @@ npf_state_etime(const npf_state_t *nst, const int proto)
 }
 
 void
-npf_state_dump(npf_state_t *nst)
+npf_state_dump(const npf_state_t *nst)
 {
 #if defined(DDB) || defined(_NPF_TESTING)
-	npf_tcpstate_t *fst = &nst->nst_tcpst[0], *tst = &nst->nst_tcpst[1];
+	const npf_tcpstate_t *fst = &nst->nst_tcpst[0];
+	const npf_tcpstate_t *tst = &nst->nst_tcpst[1];
 
 	printf("\tstate (%p) %d:\n\t\t"
 	    "F { end %u maxend %u mwin %u wscale %u }\n\t\t"
@@ -182,3 +205,11 @@ npf_state_dump(npf_state_t *nst)
 	);
 #endif
 }
+
+#if defined(_NPF_TESTING)
+void
+npf_state_setsampler(void (*func)(npf_state_t *, bool))
+{
+	npf_state_sample = func;
+}
+#endif

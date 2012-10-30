@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.25.2.1 2012/05/23 10:07:52 yamt Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.25.2.2 2012/10/30 17:20:38 yamt Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25.2.1 2012/05/23 10:07:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25.2.2 2012/10/30 17:20:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.25.2.1 2012/05/23 10:07:52 yamt Exp 
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -97,6 +98,8 @@ int coda_vfsop_print_entry = 0;
     (coda_f2i(fid) & (CODA_CACHESIZE-1))
 #define IS_DIR(cnode)        (cnode.opaque[2] & 0x1)
 #endif
+
+struct vnode *coda_ctlvp;
 
 /*
  * Allocate a cnode.
@@ -548,6 +551,24 @@ void coda_debugoff(void)
     coda_vnop_print_entry = 0;
     coda_psdev_print_entry = 0;
     coda_vfsop_print_entry = 0;
+}
+
+/* How to print a ucred */
+void
+coda_print_cred(kauth_cred_t cred)
+{
+
+	uint16_t ngroups;
+	int i;
+
+	myprintf(("ref %d\tuid %d\n", kauth_cred_getrefcnt(cred),
+		 kauth_cred_geteuid(cred)));
+
+	ngroups = kauth_cred_ngroups(cred);
+	for (i=0; i < ngroups; i++)
+		myprintf(("\tgroup %d: (%d)\n", i, kauth_cred_group(cred, i)));
+	myprintf(("\n"));
+
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.59.2.1 2012/04/17 00:06:55 yamt Exp $	*/
+/*	$NetBSD: ebus.c,v 1.59.2.2 2012/10/30 17:20:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.59.2.1 2012/04/17 00:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.59.2.2 2012/10/30 17:20:23 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -122,6 +122,12 @@ ebus_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA) {
 		return (1);
 	}
+
+	/* Or the Altera bridge on SPARCle */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTERA &&
+	    PCI_PRODUCT(pa->pa_id) == 0 &&
+		strcmp(name, "ebus") == 0)
+		return (1);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.6 2011/07/26 22:52:47 dyoung Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.6.2.1 2012/10/30 17:19:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.6 2011/07/26 22:52:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.6.2.1 2012/10/30 17:19:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ int eppcic_debug = EPPCIC_DEBUG;
 struct eppcic_handle {
 	int			ph_socket;	/* socket number */
 	struct eppcic_softc	*ph_sc;
-	struct device		*ph_card;
+	device_t		ph_card;
 	int			(*ph_ih_func)(void *);
 	void			*ph_ih_arg;
 	lwp_t			*ph_event_thread;
@@ -144,19 +144,20 @@ static struct pcmcia_chip_functions eppcic_functions = {
 };
 
 void
-eppcic_attach_common(struct device *parent, struct device *self, void *aux,
+eppcic_attach_common(device_t parent, device_t self, void *aux,
 		     eppcic_chipset_tag_t pcic)
 {
-	struct eppcic_softc *sc = (struct eppcic_softc *)self;
+	struct eppcic_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
 	struct eppcic_handle *ph;
 	int reg;
 	int i;
 
 	if (!sa->sa_gpio) {
-		printf("%s: epgpio requires\n", self->dv_xname);
+		printf("%s: epgpio requires\n", device_xname(self));
 		return;
 	}
+	sc->sc_dev = self;
 	sc->sc_gpio = sa->sa_gpio;
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_hclk = sa->sa_hclk;
@@ -164,7 +165,7 @@ eppcic_attach_common(struct device *parent, struct device *self, void *aux,
 	sc->sc_enable = 0;
 	if (bus_space_map(sa->sa_iot, sa->sa_addr,
 			  sa->sa_size, 0, &sc->sc_ioh)){
-		printf("%s: Cannot map registers\n", self->dv_xname);
+		printf("%s: Cannot map registers\n", device_xname(self));
 		return;
 	}
 	printf("\n");
@@ -175,7 +176,7 @@ eppcic_attach_common(struct device *parent, struct device *self, void *aux,
 #endif
 	/* socket 0 */
 	if (!(ph = malloc(sizeof(struct eppcic_handle), M_DEVBUF, M_NOWAIT))) {
-		printf("%s: Cannot allocate memory\n", self->dv_xname);
+		printf("%s: Cannot allocate memory\n", device_xname(self));
 		return; /* ENOMEM */
 	}
 	sc->sc_ph[0] = ph;
@@ -264,7 +265,7 @@ eppcic_config_socket(struct eppcic_handle *ph)
 
 	ph->ph_run = 1;
 	kthread_create(PRI_NONE, 0, NULL, eppcic_event_thread, ph,
-	    &ph->ph_event_thread, "%s,%d", sc->sc_dev.dv_xname,
+	    &ph->ph_event_thread, "%s,%d", device_xname(sc->sc_dev),
 	    ph->ph_socket);
 }
 
@@ -580,13 +581,13 @@ eppcic_get_voltage(struct eppcic_handle *ph)
 			vcc = 5;
 		else
 			printf("%s: unsupported Vcc 5 Volts",
-			       sc->sc_dev.dv_xname);
+			       device_xname(sc->sc_dev));
 	} else {
 		if (cap | VCC_3V)
 			vcc = 3;
 		else
 			printf("%s: unsupported Vcc 3.3 Volts",
-			       sc->sc_dev.dv_xname);
+			       device_xname(sc->sc_dev));
 	}
 	DPRINTFN(1, ("eppcic_get_voltage: vs1=%d, vs2=%d (%dV)\n",epgpio_read_bit(sc->sc_gpio, ph->ph_port, ph->ph_vs[0]),epgpio_read_bit(sc->sc_gpio, ph->ph_port, ph->ph_vs[1]),vcc));
 	return vcc;

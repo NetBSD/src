@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.22 2011/02/07 03:54:45 chs Exp $	*/
+/*	$NetBSD: segments.h,v 1.22.4.1 2012/10/30 17:18:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -256,8 +256,6 @@ void idt_vec_free(int);
 #endif
 
 struct lwp;
-int memseg_baseaddr(struct lwp *, uint64_t, char *, int, uint64_t *);
-int valid_user_selector(struct lwp *, uint64_t, char *, int);
 void cpu_fsgs_zero(struct lwp *);
 void cpu_fsgs_reload(struct lwp *, int, int);
 

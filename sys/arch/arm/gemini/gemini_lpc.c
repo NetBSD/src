@@ -1,10 +1,10 @@
-/*	$NetBSD: gemini_lpc.c,v 1.3 2008/11/15 05:48:34 cliff Exp $	*/
+/*	$NetBSD: gemini_lpc.c,v 1.3.22.1 2012/10/30 17:19:02 yamt Exp $	*/
 
 #include "opt_gemini.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.3 2008/11/15 05:48:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.3.22.1 2012/10/30 17:19:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -27,8 +27,8 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.3 2008/11/15 05:48:34 cliff Exp $")
 #define IT8712_ADDR		0x2e
 #define IT8712_DATA		0x2f
 
-static int  gemini_lpc_match(struct device *, struct cfdata *, void *);
-static void gemini_lpc_attach(struct device *, struct device *, void *);
+static int  gemini_lpc_match(device_t, cfdata_t, void *);
+static void gemini_lpc_attach(device_t, device_t, void *);
 static int  gemini_lpc_search(device_t, cfdata_t, const int *, void *);
 static int  gemini_lpc_busprint(void *, const char *);
 
@@ -53,7 +53,7 @@ gemini_lpc_bus_ops_t gemini_lpc_bus_ops = {
 
 
 static int
-gemini_lpc_match(struct device *parent, struct cfdata *cf, void *aux)
+gemini_lpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gemini_lpc_attach_args *lpc = aux;
 
@@ -64,7 +64,7 @@ gemini_lpc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gemini_lpc_attach(struct device *parent, struct device *self, void *aux)
+gemini_lpc_attach(device_t parent, device_t self, void *aux)
 {
 	gemini_lpc_softc_t *sc = device_private(self);
 	struct gemini_lpchc_attach_args *lpchc = aux;

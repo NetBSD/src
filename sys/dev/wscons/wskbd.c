@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.130.8.1 2012/04/17 00:08:11 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.130.8.2 2012/10/30 17:22:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.8.1 2012/04/17 00:08:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.8.2 2012/10/30 17:22:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,6 +207,10 @@ struct wskbd_softc {
 
 	wskbd_hotkey_plugin *sc_hotkey;
 	void *sc_hotkeycookie;
+
+	/* optional table to translate scancodes in event mode */
+	int		sc_evtrans_len;
+	keysym_t	*sc_evtrans;
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -418,6 +422,8 @@ wskbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_isconsole = ap->console;
 	sc->sc_hotkey = NULL;
 	sc->sc_hotkeycookie = NULL;
+	sc->sc_evtrans_len = 0;
+	sc->sc_evtrans = NULL;
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
 	sc->sc_base.me_ops = &wskbd_srcops;
@@ -744,7 +750,17 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 #endif
 
 	event.type = type;
-	event.value = value;
+	event.value = 0;
+	DPRINTF(("%d ->", value));
+	if (sc->sc_evtrans_len > 0) {
+		if (sc->sc_evtrans_len > value) {
+			DPRINTF(("%d", sc->sc_evtrans[value]));
+			event.value = sc->sc_evtrans[value];
+		}
+	} else {
+		event.value = value;
+	}
+	DPRINTF(("\n"));
 	if (wsevent_inject(evar, &event, 1) != 0)
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    device_xname(sc->sc_base.me_dv));
@@ -1878,3 +1894,13 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	id->t_symbols[0] = res;
 	return (1);
 }
+
+void
+wskbd_set_evtrans(device_t dev, keysym_t *tab, int len)
+{
+	struct wskbd_softc *sc = device_private(dev);
+
+	sc->sc_evtrans_len = len;
+	sc->sc_evtrans = tab;
+}
+

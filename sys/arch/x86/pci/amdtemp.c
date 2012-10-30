@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.12.2.1 2012/04/17 00:07:05 yamt Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.12.2.2 2012/10/30 17:20:33 yamt Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.12.2.1 2012/04/17 00:07:05 yamt Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.12.2.2 2012/10/30 17:20:33 yamt Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -425,6 +425,7 @@ amdtemp_k8_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 	for (i = 0; i < sc->sc_numsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
 		sc->sc_sensor[i].state = ENVSYS_SVALID;
+		sc->sc_sensor[i].flags = ENVSYS_FHAS_ENTROPY;
 
 		snprintf(sc->sc_sensor[i].desc, sizeof(sc->sc_sensor[i].desc),
 			"CPU%u Sensor%u", dv_unit + (i / 2), i % 2);
@@ -498,6 +499,7 @@ amdtemp_family10_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 	 */
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
+	sc->sc_sensor[0].flags = ENVSYS_FHAS_ENTROPY;
 
 	snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
 		"cpu%u temperature", dv_unit);

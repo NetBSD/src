@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.14 2009/08/19 15:11:22 dyoung Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.14.12.1 2012/10/30 17:20:19 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.14 2009/08/19 15:11:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.14.12.1 2012/10/30 17:20:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ isa_init(vaddr_t isa_io_addr, vaddr_t isa_mem_addr)
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
 
 	/*

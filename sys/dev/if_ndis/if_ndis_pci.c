@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.18 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.18.8.1 2012/10/30 17:21:13 yamt Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -109,7 +109,7 @@ extern unsigned char drv_data[];
 #endif
 
 
-CFATTACH_DECL(
+CFATTACH_DECL_NEW(
 #ifdef NDIS_DEVNAME
 	NDIS_DEVNAME,
 #else
@@ -187,7 +187,7 @@ ndis_probe_pci(device_t parent, cfdata_t match, void *aux)
 /*static*/ 
 void ndis_attach_pci(device_t parent, device_t self, void *aux)
 {
-	struct ndis_softc *sc = (struct ndis_softc*)self;
+	struct ndis_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 #ifdef NDIS_DBG       
 	char devinfo[256];

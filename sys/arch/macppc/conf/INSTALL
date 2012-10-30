@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.111.8.1 2012/04/17 00:06:37 yamt Exp $
+#	$NetBSD: INSTALL,v 1.111.8.2 2012/10/30 17:19:57 yamt Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -55,6 +55,8 @@ options 	INET6		# IPV6
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options 	WSDISPLAY_DEFAULTSCREENS=1
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_GALLANT12x22	# big, Sun-like font
 options 	FONT_QVSS8x15		# a smaller font for lower resolutions
 
@@ -191,6 +193,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
+umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 
 pseudo-device	md			# memory disk
 #pseudo-device	fss			# file system snapshot device

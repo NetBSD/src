@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.7 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.7.12.1 2012/10/30 17:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -48,10 +48,16 @@
 
 #define ARM_SYNC_ICACHE		0
 #define ARM_DRAIN_WRITEBUF	1
+#define ARM_VFP_FPSCR		2
 
 struct arm_sync_icache_args {
 	uintptr_t	addr;		/* Virtual start address */
 	size_t		len;		/* Region size */
+};
+
+struct arm_vfp_fpscr_args {
+	uint32_t	fpscr_clear;	/* bits to clear */
+	uint32_t	fpscr_set;	/* bits to set */
 };
 
 #ifndef _KERNEL

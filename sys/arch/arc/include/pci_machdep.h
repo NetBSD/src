@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2011/04/04 20:37:45 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.4.1 2012/10/30 17:18:54 yamt Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -50,8 +50,8 @@ typedef u_long pci_intr_handle_t;
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 struct arc_pci_chipset {
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
 	int		(*pc_bus_maxdevs)(pci_chipset_tag_t, int);
 	pcitag_t	(*pc_make_tag)(pci_chipset_tag_t, int, int, int);
 	void		(*pc_decompose_tag)(pci_chipset_tag_t, pcitag_t,

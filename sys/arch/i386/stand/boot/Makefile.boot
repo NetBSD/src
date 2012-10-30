@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.55.2.1 2012/04/17 00:06:30 yamt Exp $
+# $NetBSD: Makefile.boot,v 1.55.2.2 2012/10/30 17:19:51 yamt Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -39,7 +39,6 @@ CPPFLAGS+= -I ${.OBJDIR}
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
-.if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
@@ -48,7 +47,6 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
-.endif
 .endif
 
 CFLAGS+=   -mno-sse -mno-sse2 -mno-sse3
@@ -87,9 +85,7 @@ SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
-.endif
 
 # CPPFLAGS+= -DBOOTXX_RAID1_SUPPORT
 

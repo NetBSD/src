@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.14 2008/04/08 20:11:36 cegger Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.14.38.1 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.14 2008/04/08 20:11:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.14.38.1 2012/10/30 17:21:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,10 +155,10 @@ com_ofisa_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 
 #if 0
-	printf("%s: registers: ", device_xname(&sc->sc_dev));
+	printf("%s: registers: ", device_xname(sc->sc_dev));
 	ofisa_reg_print(&reg, 1);
 	printf("\n");
-	printf("%s: interrupts: ", device_xname(&sc->sc_dev));
+	printf("%s: interrupts: ", device_xname(sc->sc_dev));
 	ofisa_intr_print(&intr, 1);
 	printf("\n");
 #endif

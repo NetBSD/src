@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.58 2010/05/19 20:41:59 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.58.8.1 2012/10/30 17:22:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,10 @@
 #include "opt_mbuftrace.h"
 #endif
 #include <sys/mbuf.h>
+#endif
+
+#ifndef _STANDALONE
+#include <net/if.h>
 #endif
 
 /*
@@ -194,6 +198,7 @@ int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
 int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
+void    ether_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 
 /*

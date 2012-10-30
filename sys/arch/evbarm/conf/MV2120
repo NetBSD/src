@@ -1,11 +1,11 @@
-#	$NetBSD: MV2120,v 1.1.2.1 2012/04/17 00:06:13 yamt Exp $
+#	$NetBSD: MV2120,v 1.1.2.2 2012/10/30 17:19:20 yamt Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
 include 	"arch/evbarm/conf/std.mv2120"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-options 	SYMTAB_SPACE="(1024 * 912)"
+options 	SYMTAB_SPACE="(1024 * 1000)"
 
 makeoptions	DEBUG="-g"
 
@@ -114,6 +114,7 @@ options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -321,7 +322,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 pseudo-device	dm

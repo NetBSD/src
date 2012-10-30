@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.341.2.1 2012/04/17 00:05:55 yamt Exp $
+# $NetBSD: GENERIC,v 1.341.2.2 2012/10/30 17:18:41 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.341.2.1 $"
+ident		"GENERIC-$Revision: 1.341.2.2 $"
 
 maxusers 32
 
@@ -151,6 +151,7 @@ options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
@@ -199,6 +200,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # realtime clock compatible to OSF/1
 #options 	CLOCK_COMPAT_OSF1

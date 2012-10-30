@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.21 2010/03/07 07:53:37 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.21.10.1 2012/10/30 17:21:20 yamt Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.21 2010/03/07 07:53:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.21.10.1 2012/10/30 17:21:20 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -278,7 +278,7 @@ igphy_load_dspcode(struct mii_softc *sc)
 	for (i = 0; !((code[i].reg == 0) && (code[i].val == 0)); i++)
 		IGPHY_WRITE(sc, code[i].reg, code[i].val);
 
-	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT,0x0000);
+	PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, 0x0000);
 	PHY_WRITE(sc, 0x0000, 0x3300);
 
 	delay(20000);
@@ -491,7 +491,6 @@ igphy_smartspeed_workaround(struct mii_softc *sc)
 {
 	struct igphy_softc *igsc = (struct igphy_softc *) sc;
 	uint16_t reg, gtsr, gtcr;
-
 
 	/* This workaround is only for 82541 and 82547 */
 	switch (igsc->sc_mactype) {

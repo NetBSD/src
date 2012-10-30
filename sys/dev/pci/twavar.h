@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.10 2010/11/22 23:02:16 dholland Exp $ */
+/*	$NetBSD: twavar.h,v 1.10.8.1 2012/10/30 17:21:54 yamt Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -49,13 +49,13 @@ struct twa_drive {
 	uint32_t	td_id;
 	uint64_t	td_size;
 	int		td_openings;
-	struct device	*td_dev;
+	device_t	td_dev;
 	const struct twa_callbacks *td_callbacks;
 };
 
 /* Per-controller structure. */
 struct twa_softc {
-	struct device		twa_dv;
+	device_t		twa_dv;
 	bus_space_tag_t		twa_bus_iot;	/* bus space tag */
 	bus_space_handle_t	twa_bus_ioh;	/* bus space handle */
 	bus_dma_tag_t		twa_dma_tag;	/* data buffer DMA tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.7.6.3 2012/05/23 10:08:15 yamt Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.7.6.4 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.3 2012/05/23 10:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.4 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,14 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.7.6.3 2012/05/23 10:08:15 yamt Exp
 #include "npf_impl.h"
 
 /*
- * If npf_ph_if != NULL, pfil hooks are registers.  If NULL, not registered.
+ * If npf_ph_if != NULL, pfil hooks are registered.  If NULL, not registered.
  * Used to check the state.  Locked by: softnet_lock + KERNEL_LOCK (XXX).
  */
 static struct pfil_head *	npf_ph_if = NULL;
 static struct pfil_head *	npf_ph_inet = NULL;
 static struct pfil_head *	npf_ph_inet6 = NULL;
-
-int	npf_packet_handler(void *, struct mbuf **, ifnet_t *, int);
 
 /*
  * npf_ifhook: hook handling interface changes.
@@ -102,29 +100,32 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 
 	/* Cache everything.  Determine whether it is an IP fragment. */
 	if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
-		int ret = -1;
+		/*
+		 * Pass to IPv4 or IPv6 reassembly mechanism.
+		 */
+		error = EINVAL;
 
-		/* Pass to IPv4 or IPv6 reassembly mechanism. */
 		if (npf_iscached(&npc, NPC_IP4)) {
 			struct ip *ip = nbuf_dataptr(*mp);
-			ret = ip_reass_packet(mp, ip);
+			error = ip_reass_packet(mp, ip);
 		} else if (npf_iscached(&npc, NPC_IP6)) {
 #ifdef INET6
 			/*
-			 * Note: frag6_input() offset is the start of the
-			 * fragment header.
+			 * Note: ip6_reass_packet() offset is the start of
+			 * the fragment header.
 			 */
 			const u_int hlen = npf_cache_hlen(&npc);
-			ret = ip6_reass_packet(mp, hlen);
+			error = ip6_reass_packet(mp, hlen);
 #endif
 		}
-		if (ret) {
-			error = EINVAL;
+		if (error) {
+			npf_stats_inc(NPF_STAT_REASSFAIL);
 			se = NULL;
 			goto out;
 		}
 		if (*mp == NULL) {
 			/* More fragments should come; return. */
+			npf_stats_inc(NPF_STAT_FRAGMENTS);
 			return 0;
 		}
 
@@ -135,12 +136,15 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
 
-		ret = npf_cache_all(&npc, nbuf);
-		KASSERT((ret & NPC_IPFRAG) == 0);
+		if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
+			se = NULL;
+			goto out;
+		}
+		npf_stats_inc(NPF_STAT_REASSEMBLY);
 	}
 
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, di, &error);
+	se = npf_session_inspect(&npc, nbuf, ifp, di, &error);
 
 	/* If "passing" session found - skip the ruleset inspection. */
 	if (se && npf_session_pass(se, &rp)) {
@@ -190,8 +194,8 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 	 * Note: the reference on the rule procedure is transfered to the
 	 * session.  It will be released on session destruction.
 	 */
-	if ((retfl & NPF_RULE_KEEPSTATE) != 0 && !se) {
-		se = npf_session_establish(&npc, nbuf, di);
+	if ((retfl & NPF_RULE_STATEFUL) != 0 && !se) {
+		se = npf_session_establish(&npc, nbuf, ifp, di);
 		if (se) {
 			npf_session_setpass(se, rp);
 		}
@@ -205,10 +209,11 @@ pass:
 	error = npf_do_nat(&npc, se, nbuf, ifp, di);
 block:
 	/*
-	 * Execute rule procedure, if any.
+	 * Execute the rule procedure, if any is associated.
+	 * It may reverse the decision from pass to block.
 	 */
 	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp, error);
+		npf_rproc_run(&npc, nbuf, rp, &decision);
 	}
 out:
 	/*
@@ -240,9 +245,7 @@ out:
 		*mp = NULL;
 	}
 
-	if (error) {
-		npf_stats_inc(NPF_STAT_ERROR);
-	} else {
+	if (!error) {
 		error = ENETUNREACH;
 	}
 

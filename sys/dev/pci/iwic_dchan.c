@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.6 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.6.38.1 2012/10/30 17:21:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.6 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.6.38.1 2012/10/30 17:21:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -342,11 +342,11 @@ dchan_receive(struct iwic_softc *sc, int ista)
 		if (status & (D_RSTA_RDOV | D_RSTA_CRCE | D_RSTA_RMB))
 		{
 			if (status & D_RSTA_RDOV)
-				NDBGL1(L1_I_ERR, "%s: D-channel Receive Data Overflow", device_xname(&sc->sc_dev));
+				NDBGL1(L1_I_ERR, "%s: D-channel Receive Data Overflow", device_xname(sc->sc_dev));
 			if (status & D_RSTA_CRCE)
-				NDBGL1(L1_I_ERR, "%s: D-channel CRC Error", device_xname(&sc->sc_dev));
+				NDBGL1(L1_I_ERR, "%s: D-channel CRC Error", device_xname(sc->sc_dev));
 			if (status & D_RSTA_RMB)
-				NDBGL1(L1_I_ERR, "%s: D-channel Receive Message Aborted", device_xname(&sc->sc_dev));
+				NDBGL1(L1_I_ERR, "%s: D-channel Receive Message Aborted", device_xname(sc->sc_dev));
 			command |= D_CMDR_RRST;
 		}
 		else

@@ -1,4 +1,4 @@
-/* $NetBSD: vrecu.c,v 1.9 2009/09/14 13:41:15 tsutsui Exp $ */
+/* $NetBSD: vrecu.c,v 1.9.12.1 2012/10/30 17:19:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.9 2009/09/14 13:41:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.9.12.1 2012/10/30 17:19:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: vrecu.c,v 1.9 2009/09/14 13:41:15 tsutsui Exp $");
 #include <dev/ic/i82365var.h>
 #include <dev/isa/i82365_isavar.h>
 
-static int pcic_vrip_match(struct device *, struct cfdata *, void *);
-static void pcic_vrip_attach(struct device *, struct device *, void *);
+static int pcic_vrip_match(device_t, cfdata_t, void *);
+static void pcic_vrip_attach(device_t, device_t, void *);
 static void *pcic_vrip_chip_intr_establish(pcmcia_chipset_handle_t,
 					   struct pcmcia_function *, int,
 					   int (*)(void *), void *);
@@ -73,7 +73,7 @@ struct pcic_vrip_softc {
 	} 			sc_intrhand[ECU_MAX_INTR];
 };
 
-CFATTACH_DECL(pcic_vrip, sizeof(struct pcic_vrip_softc),
+CFATTACH_DECL_NEW(pcic_vrip, sizeof(struct pcic_vrip_softc),
 	      pcic_vrip_match, pcic_vrip_attach, NULL, NULL);
 
 static struct pcmcia_chip_functions pcic_vrip_functions = {
@@ -97,13 +97,13 @@ static struct pcmcia_chip_functions pcic_vrip_functions = {
 
 
 static int
-pcic_vrip_match(struct device *parent, struct cfdata *match, void *aux)
+pcic_vrip_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-pcic_vrip_attach(struct device *parent, struct device *self, void *aux)
+pcic_vrip_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcic_vrip_softc	*vsc = device_private(self);
 	struct pcic_softc	*sc = &vsc->sc_pcic;
@@ -112,6 +112,7 @@ pcic_vrip_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t	memh;
 	int			i;
 
+	sc->dev = self;
 	vsc->sc_intr_valid = PCIC_INTR_IRQ_VALIDMASK;
 	vsc->sc_intr_mask = 0xffff;
 	for (i = 0; i < ECU_MAX_INTR; i++)

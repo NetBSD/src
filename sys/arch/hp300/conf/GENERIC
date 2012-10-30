@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.167.2.1 2012/04/17 00:06:20 yamt Exp $
+# $NetBSD: GENERIC,v 1.167.2.2 2012/10/30 17:19:34 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.167.2.1 $"
+#ident 		"GENERIC-$Revision: 1.167.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -87,6 +87,7 @@ options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# compatibility with NetBSD 3.0
 options 	COMPAT_40	# compatibility with NetBSD 4.0
 options 	COMPAT_50	# compatibility with NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
@@ -177,6 +178,7 @@ options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
 # workstation console options
 options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK

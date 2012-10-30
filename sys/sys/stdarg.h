@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.1 2011/07/17 20:54:54 joerg Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.1.2.1 2012/10/30 17:22:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,8 +43,9 @@
 #define	__builtin_va_arg(a, t)		((a) ? (t) 0 : (t) 0)
 #define	__builtin_va_end(a)		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
-#elif !__GNUC_PREREQ__(4, 5)
-#define	__builtin_va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+#elif !(__GNUC_PREREQ__(4, 5) || \
+    (__GNUC_PREREQ__(4, 4) && __GNUC_PATCHLEVEL__ > 2))
+#define __builtin_va_start(ap, last)    __builtin_stdarg_start((ap), (last))
 #endif
 
 #ifndef __VA_LIST_DECLARED

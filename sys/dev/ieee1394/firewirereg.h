@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.16.4.1 2012/05/23 10:07:56 yamt Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.16.4.2 2012/10/30 17:21:12 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -283,6 +283,7 @@ int fw_xferwait(struct fw_xfer *);
 void fw_drain_txq(struct firewire_comm *);
 void fw_busreset(struct firewire_comm *, uint32_t);
 void fw_init(struct firewire_comm *);
+void fw_destroy(struct firewire_comm *);
 struct fw_bind *fw_bindlookup(struct firewire_comm *, uint16_t, uint32_t);
 int fw_bindadd(struct firewire_comm *, struct fw_bind *);
 int fw_bindremove(struct firewire_comm *, struct fw_bind *);

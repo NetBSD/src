@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.6.12.1 2012/04/17 00:06:24 yamt Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.6.12.2 2012/10/30 17:19:40 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.6.12.1 2012/04/17 00:06:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.6.12.2 2012/10/30 17:19:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,7 +119,7 @@ struct wzero3tp_softc {
 	struct callout sc_tp_poll;
 	int sc_enabled;
 	int sc_buttons; /* button emulation ? */
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 	struct wzero3tp_pos sc_oldpos;
 	struct tpcalib_softc sc_tpcalib;
 };

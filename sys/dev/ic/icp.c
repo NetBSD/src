@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.30 2010/11/13 13:52:01 uebayasi Exp $	*/
+/*	$NetBSD: icp.c,v 1.30.8.1 2012/10/30 17:21:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.30 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.30.8.1 2012/10/30 17:21:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	state = 0;
 
 	if (intrstr != NULL)
-		aprint_normal_dev(&icp->icp_dv, "interrupting at %s\n",
+		aprint_normal_dev(icp->icp_dv, "interrupting at %s\n",
 		    intrstr);
 
 	SIMPLEQ_INIT(&icp->icp_ccb_queue);
@@ -149,28 +149,28 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	if (bus_dmamap_create(icp->icp_dmat, ICP_SCRATCH_SIZE, 1,
 	    ICP_SCRATCH_SIZE, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &icp->icp_scr_dmamap) != 0) {
-		aprint_error_dev(&icp->icp_dv, "cannot create scratch dmamap\n");
+		aprint_error_dev(icp->icp_dv, "cannot create scratch dmamap\n");
 		return (1);
 	}
 	state++;
 
 	if (bus_dmamem_alloc(icp->icp_dmat, ICP_SCRATCH_SIZE, PAGE_SIZE, 0,
 	    icp->icp_scr_seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		aprint_error_dev(&icp->icp_dv, "cannot alloc scratch dmamem\n");
+		aprint_error_dev(icp->icp_dv, "cannot alloc scratch dmamem\n");
 		goto bail_out;
 	}
 	state++;
 
 	if (bus_dmamem_map(icp->icp_dmat, icp->icp_scr_seg, nsegs,
 	    ICP_SCRATCH_SIZE, &icp->icp_scr, 0)) {
-		aprint_error_dev(&icp->icp_dv, "cannot map scratch dmamem\n");
+		aprint_error_dev(icp->icp_dv, "cannot map scratch dmamem\n");
 		goto bail_out;
 	}
 	state++;
 
 	if (bus_dmamap_load(icp->icp_dmat, icp->icp_scr_dmamap, icp->icp_scr,
 	    ICP_SCRATCH_SIZE, NULL, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(&icp->icp_dv, "cannot load scratch dmamap\n");
+		aprint_error_dev(icp->icp_dv, "cannot load scratch dmamap\n");
 		goto bail_out;
 	}
 	state++;
@@ -180,7 +180,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 */
 	ic = malloc(sizeof(*ic) * ICP_NCCBS, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if ((icp->icp_ccbs = ic) == NULL) {
-		aprint_error_dev(&icp->icp_dv, "malloc() failed\n");
+		aprint_error_dev(icp->icp_dv, "malloc() failed\n");
 		goto bail_out;
 	}
 	state++;
@@ -202,7 +202,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	}
 #ifdef DIAGNOSTIC
 	if (icp->icp_nccbs != ICP_NCCBS)
-		aprint_error_dev(&icp->icp_dv, "%d/%d CCBs usable\n",
+		aprint_error_dev(icp->icp_dv, "%d/%d CCBs usable\n",
 		    icp->icp_nccbs, ICP_NCCBS);
 #endif
 
@@ -210,13 +210,13 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 * Initalize the controller.
 	 */
 	if (!icp_cmd(icp, ICP_SCREENSERVICE, ICP_INIT, 0, 0, 0)) {
-		aprint_error_dev(&icp->icp_dv, "screen service init error %d\n",
+		aprint_error_dev(icp->icp_dv, "screen service init error %d\n",
 		    icp->icp_status);
 		goto bail_out;
 	}
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
-		aprint_error_dev(&icp->icp_dv, "cache service init error %d\n",
+		aprint_error_dev(icp->icp_dv, "cache service init error %d\n",
 		    icp->icp_status);
 		goto bail_out;
 	}
@@ -224,13 +224,13 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	icp_cmd(icp, ICP_CACHESERVICE, ICP_UNFREEZE_IO, 0, 0, 0);
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_MOUNT, 0xffff, 1, 0)) {
-		aprint_error_dev(&icp->icp_dv, "cache service mount error %d\n",
+		aprint_error_dev(icp->icp_dv, "cache service mount error %d\n",
 		    icp->icp_status);
 		goto bail_out;
 	}
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
-		aprint_error_dev(&icp->icp_dv, "cache service post-mount init error %d\n",
+		aprint_error_dev(icp->icp_dv, "cache service post-mount init error %d\n",
 		    icp->icp_status);
 		goto bail_out;
 	}
@@ -238,7 +238,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	icp->icp_fw_vers = icp->icp_service;
 
 	if (!icp_cmd(icp, ICP_SCSIRAWSERVICE, ICP_INIT, 0, 0, 0)) {
-		aprint_error_dev(&icp->icp_dv, "raw service init error %d\n",
+		aprint_error_dev(icp->icp_dv, "raw service init error %d\n",
 		    icp->icp_status);
 		goto bail_out;
 	}
@@ -254,7 +254,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if ((feat & ICP_SCATTER_GATHER) == 0) {
 #ifdef DIAGNOSTIC
-		aprint_normal_dev(&icp->icp_dv, 
+		aprint_normal_dev(icp->icp_dv, 
 		    "scatter/gather not supported (raw service)\n");
 #endif
 	} else
@@ -271,7 +271,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 
 	if ((feat & ICP_SCATTER_GATHER) == 0) {
 #ifdef DIAGNOSTIC
-		aprint_normal_dev(&icp->icp_dv, 
+		aprint_normal_dev(icp->icp_dv, 
 		    "scatter/gather not supported (cache service)\n");
 #endif
 	} else
@@ -282,12 +282,12 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 */
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL, ICP_BOARD_INFO,
 	    ICP_INVALID_CHANNEL, sizeof(struct icp_binfo))) {
-		aprint_error_dev(&icp->icp_dv, "unable to retrive board info\n");
+		aprint_error_dev(icp->icp_dv, "unable to retrive board info\n");
 		goto bail_out;
 	}
 	memcpy(&binfo, icp->icp_scr, sizeof(binfo));
 
-	aprint_normal_dev(&icp->icp_dv,
+	aprint_normal_dev(icp->icp_dv,
 	    "model <%s>, firmware <%s>, %d channel(s), %dMB memory\n",
 	    binfo.bi_type_string, binfo.bi_raid_string,
 	    binfo.bi_chan_count, le32toh(binfo.bi_memsize) >> 20);
@@ -351,7 +351,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 				    ICP_SCSI_CHAN_CNT | ICP_L_CTRL_PATTERN,
 				    ICP_IO_CHANNEL | ICP_INVALID_CHANNEL,
 				    sizeof(*gc))) {
-				    	aprint_error_dev(&icp->icp_dv,
+				    	aprint_error_dev(icp->icp_dv,
 					    "unable to get chan info");
 					goto bail_out;
 				}
@@ -368,7 +368,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 			locs[ICPCF_UNIT] = j + ICPA_UNIT_SCSI;
 
 			icp->icp_children[icpa.icpa_unit] =
-				config_found_sm_loc(&icp->icp_dv, "icp", locs,
+				config_found_sm_loc(icp->icp_dv, "icp", locs,
 					&icpa, icp_print, config_stdsubmatch);
 		}
 	}
@@ -386,7 +386,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 			locs[ICPCF_UNIT] = j;
 
 			icp->icp_children[icpa.icpa_unit] =
-			    config_found_sm_loc(&icp->icp_dv, "icp", locs,
+			    config_found_sm_loc(icp->icp_dv, "icp", locs,
 				&icpa, icp_print, config_stdsubmatch);
 		}
 	}
@@ -451,14 +451,14 @@ icp_rescan(struct icp_softc *icp, int unit)
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INFO, unit, 0, 0)) {
 #ifdef ICP_DEBUG
 		printf("%s: rescan: unit %d ICP_INFO failed -> 0x%04x\n",
-		    device_xname(&icp->icp_dv), unit, icp->icp_status);
+		    device_xname(icp->icp_dv), unit, icp->icp_status);
 #endif
 		goto gone;
 	}
 	if ((newsize = icp->icp_info) == 0) {
 #ifdef ICP_DEBUG
 		printf("%s: rescan: unit %d has zero size\n",
-		    device_xname(&icp->icp_dv), unit);
+		    device_xname(icp->icp_dv), unit);
 #endif
  gone:
 		/*
@@ -481,14 +481,14 @@ icp_rescan(struct icp_softc *icp, int unit)
 	else {
 #ifdef ICP_DEBUG
 		printf("%s: rescan: unit %d ICP_DEVTYPE failed\n",
-		    device_xname(&icp->icp_dv), unit);
+		    device_xname(icp->icp_dv), unit);
 #endif
 		newtype = 0;	/* XXX? */
 	}
 
 #ifdef ICP_DEBUG
 	printf("%s: rescan: unit %d old %u/%u, new %u/%u\n",
-	    device_xname(&icp->icp_dv), unit, icp->icp_cdr[unit].cd_size,
+	    device_xname(icp->icp_dv), unit, icp->icp_cdr[unit].cd_size,
 	    icp->icp_cdr[unit].cd_type, newsize, newtype);
 #endif
 
@@ -511,7 +511,7 @@ icp_rescan(struct icp_softc *icp, int unit)
 
 		locs[ICPCF_UNIT] = unit;
 
-		icp->icp_children[unit] = config_found_sm_loc(&icp->icp_dv,
+		icp->icp_children[unit] = config_found_sm_loc(icp->icp_dv,
 			"icp", locs, &icpa, icp_print, config_stdsubmatch);
 	}
 
@@ -530,7 +530,7 @@ icp_rescan_all(struct icp_softc *icp)
 	 */
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
 		printf("%s: unable to re-initialize cache service for rescan\n",
-		    device_xname(&icp->icp_dv));
+		    device_xname(icp->icp_dv));
 		return;
 	}
 	cdev_cnt = (u_int16_t) icp->icp_info;
@@ -544,7 +544,7 @@ icp_rescan_all(struct icp_softc *icp)
 		if (icp->icp_cdr[unit].cd_size != 0) {
 #ifdef ICP_DEBUG
 			printf("%s: rescan all: unit %d < new cdev_cnt (%d)\n",
-			    device_xname(&icp->icp_dv), unit, cdev_cnt);
+			    device_xname(icp->icp_dv), unit, cdev_cnt);
 #endif
 			icp->icp_ndevs--;
 			icp->icp_cdr[unit].cd_size = 0;
@@ -575,7 +575,7 @@ icp_recompute_openings(struct icp_softc *icp)
 
 #ifdef ICP_DEBUG
 	printf("%s: %d device%s, %d openings per device\n",
-	    device_xname(&icp->icp_dv), icp->icp_ndevs,
+	    device_xname(icp->icp_dv), icp->icp_ndevs,
 	    icp->icp_ndevs == 1 ? "" : "s", icp->icp_openings);
 #endif
 
@@ -636,18 +636,18 @@ icp_async_event(struct icp_softc *icp, int service)
 		if ((icp->icp_fw_vers & 0xff) >= 0x1a) {
 			icp->icp_evt.size = 0;
 			icp->icp_evt.eu.async.ionode =
-			    device_unit(&icp->icp_dv);
+			    device_unit(icp->icp_dv);
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			/*
 			 * Severity and event string are filled in by the
 			 * hardware interface interrupt handler.
 			 */
-			printf("%s: %s\n", device_xname(&icp->icp_dv),
+			printf("%s: %s\n", device_xname(icp->icp_dv),
 			    icp->icp_evt.event_string);
 		} else {
 			icp->icp_evt.size = sizeof(icp->icp_evt.eu.async);
 			icp->icp_evt.eu.async.ionode =
-			    device_unit(&icp->icp_dv);
+			    device_unit(icp->icp_dv);
 			icp->icp_evt.eu.async.service = service;
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			icp->icp_evt.eu.async.info = icp->icp_info;
@@ -689,10 +689,10 @@ icp_intr(void *cookie)
 		return (1);
 
 	case ICP_SPEZINDEX:
-		aprint_error_dev(&icp->icp_dv, "uninitialized or unknown service (%d/%d)\n",
+		aprint_error_dev(icp->icp_dv, "uninitialized or unknown service (%d/%d)\n",
 		    ctx.info, ctx.info2);
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.driver);
-		icp->icp_evt.eu.driver.ionode = device_unit(&icp->icp_dv);
+		icp->icp_evt.eu.driver.ionode = device_unit(icp->icp_dv);
 		icp_store_event(icp, GDT_ES_DRIVER, 4, &icp->icp_evt);
 		return (1);
 	}
@@ -722,7 +722,7 @@ icp_intr(void *cookie)
 	switch (icp->icp_status) {
 	case ICP_S_BSY:
 #ifdef ICP_DEBUG
-		printf("%s: ICP_S_BSY received\n", device_xname(&icp->icp_dv));
+		printf("%s: ICP_S_BSY received\n", device_xname(icp->icp_dv));
 #endif
 		if (__predict_false((ic->ic_flags & IC_UCMD) != 0))
 			SIMPLEQ_INSERT_HEAD(&icp->icp_ucmd_queue, ic, ic_chain);
@@ -755,7 +755,7 @@ struct icp_ucmd_ctx {
 void
 icp_ucmd_intr(struct icp_ccb *ic)
 {
-	struct icp_softc *icp = (void *) ic->ic_dv;
+	struct icp_softc *icp = device_private(ic->ic_dv);
 	struct icp_ucmd_ctx *iu = ic->ic_context;
 	gdt_ucmd_t *ucmd = iu->iu_ucmd;
 
@@ -860,7 +860,7 @@ icp_ucmd(struct icp_softc *icp, gdt_ucmd_t *ucmd)
 		if (ucmd->command.cmd_opcode == ICP_IOCTL) {
 			cnt = ucmd->command.cmd_packet.ic.ic_bufsize;
 			if (cnt > GDT_SCRATCH_SZ) {
-				aprint_error_dev(&icp->icp_dv, "scratch buffer too small (%d/%d)\n",
+				aprint_error_dev(icp->icp_dv, "scratch buffer too small (%d/%d)\n",
 				    GDT_SCRATCH_SZ, cnt);
 				return (EINVAL);
 			}
@@ -868,7 +868,7 @@ icp_ucmd(struct icp_softc *icp, gdt_ucmd_t *ucmd)
 			cnt = ucmd->command.cmd_packet.cc.cc_blockcnt *
 			    ICP_SECTOR_SIZE;
 			if (cnt > GDT_SCRATCH_SZ) {
-				aprint_error_dev(&icp->icp_dv, "scratch buffer too small (%d/%d)\n",
+				aprint_error_dev(icp->icp_dv, "scratch buffer too small (%d/%d)\n",
 				    GDT_SCRATCH_SZ, cnt);
 				return (EINVAL);
 			}
@@ -877,7 +877,7 @@ icp_ucmd(struct icp_softc *icp, gdt_ucmd_t *ucmd)
 		cnt = ucmd->command.cmd_packet.rc.rc_sdlen +
 		    ucmd->command.cmd_packet.rc.rc_sense_len;
 		if (cnt > GDT_SCRATCH_SZ) {
-			aprint_error_dev(&icp->icp_dv, "scratch buffer too small (%d/%d)\n",
+			aprint_error_dev(icp->icp_dv, "scratch buffer too small (%d/%d)\n",
 			    GDT_SCRATCH_SZ, cnt);
 			return (EINVAL);
 		}
@@ -952,7 +952,7 @@ icp_ucmd(struct icp_softc *icp, gdt_ucmd_t *ucmd)
 	 * XXX just pull a number out of thin air.
 	 */
 	if (__predict_false((error = icp_ccb_wait_user(icp, ic, 30000)) != 0))
-		aprint_error_dev(&icp->icp_dv, "error %d waiting for ucmd to complete\n",
+		aprint_error_dev(icp->icp_dv, "error %d waiting for ucmd to complete\n",
 		    error);
 
 	/* icp_ucmd_intr() has updated ucmd. */
@@ -1138,7 +1138,7 @@ icp_ccb_poll(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 		DELAY(10);
 	}
 	if (timo == 0) {
-		printf("%s: submit: busy\n", device_xname(&icp->icp_dv));
+		printf("%s: submit: busy\n", device_xname(icp->icp_dv));
 		return (EAGAIN);
 	}
 
@@ -1166,13 +1166,13 @@ icp_ccb_poll(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 		if (ic->ic_status != ICP_S_OK) {
 #ifdef ICP_DEBUG
 			printf("%s: request failed; status=0x%04x\n",
-			    device_xname(&icp->icp_dv), ic->ic_status);
+			    device_xname(icp->icp_dv), ic->ic_status);
 #endif
 			rv = EIO;
 		} else
 			rv = 0;
 	} else {
-		aprint_error_dev(&icp->icp_dv, "command timed out\n");
+		aprint_error_dev(icp->icp_dv, "command timed out\n");
 		rv = EIO;
 	}
 
@@ -1202,7 +1202,7 @@ icp_ccb_wait(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 	splx(s);
 
 	if (ic->ic_status != ICP_S_OK) {
-		aprint_error_dev(&icp->icp_dv, "command failed; status=%x\n",
+		aprint_error_dev(icp->icp_dv, "command failed; status=%x\n",
 		    ic->ic_status);
 		return (EIO);
 	}
@@ -1215,7 +1215,7 @@ icp_ccb_wait_user(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 {
 	int s, rv;
 
-	ic->ic_dv = &icp->icp_dv;
+	ic->ic_dv = icp->icp_dv;
 	ic->ic_intr = icp_ucmd_intr;
 	ic->ic_flags |= IC_UCMD;
 

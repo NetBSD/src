@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_instr.c,v 1.5.8.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.5.8.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5.8.2 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.5.8.3 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -90,13 +90,37 @@ again:
 }
 
 /*
- * npf_match_ip4table: match IPv4 address against NPF table.
+ * npf_match_proto: match IP address length and/or layer 4 protocol.
+ */
+int
+npf_match_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t ap)
+{
+	const int alen = (ap >> 8) & 0xff;
+	const int proto = ap & 0xff;
+
+	if (!npf_iscached(npc, NPC_IP46)) {
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
+			return -1;
+		}
+		KASSERT(npf_iscached(npc, NPC_IP46));
+	}
+
+	if (alen && npc->npc_alen != alen) {
+		return -1;
+	}
+	return (proto != 0xff && npf_cache_ipproto(npc) != proto) ? -1 : 0;
+}
+
+/*
+ * npf_match_table: match IP address against NPF table.
  */
 int
 npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const u_int tid)
 {
+	npf_tableset_t *tblset;
 	npf_addr_t *addr;
+	int alen;
 
 	KASSERT(npf_core_locked());
 
@@ -107,9 +131,11 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
 	addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	tblset = npf_core_tableset();
+	alen = npc->npc_alen;
 
 	/* Match address against NPF table. */
-	return npf_table_match_addr(npf_core_tableset(), tid, addr) ? -1 : 0;
+	return npf_table_lookup(tblset, tid, alen, addr) ? -1 : 0;
 }
 
 /*
@@ -117,9 +143,10 @@ npf_match_table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  */
 int
 npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int sd, const npf_addr_t *netaddr, npf_netmask_t mask)
+    const int szsd, const npf_addr_t *maddr, npf_netmask_t mask)
 {
-	npf_addr_t *addr, cmpaddr;
+	const int alen = szsd >> 1;
+	npf_addr_t *addr;
 
 	if (!npf_iscached(npc, NPC_IP46)) {
 		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
@@ -127,12 +154,11 @@ npf_match_ipmask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	addr = sd ? npc->npc_srcip : npc->npc_dstip;
-	if (mask != NPF_NO_NETMASK) {
-		npf_calculate_masked_addr(&cmpaddr, addr, mask);
-		addr = &cmpaddr;
+	if (npc->npc_alen != alen) {
+		return -1;
 	}
-	return memcmp(netaddr, addr, npc->npc_ipsz) ? -1 : 0;
+	addr = (szsd & 0x1) ? npc->npc_srcip : npc->npc_dstip;
+	return npf_addr_cmp(maddr, NPF_NO_NETMASK, addr, mask, alen) ? -1 : 0;
 }
 
 /*
@@ -204,6 +230,37 @@ npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
 	if ((1 << 30) & tc) {
 		const uint8_t code = tc & 0xff;
 		if (code != ic->icmp_code) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * npf_match_icmp6: match ICMPv6 packet.
+ */
+int
+npf_match_icmp6(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
+{
+	struct icmp6_hdr *ic6 = &npc->npc_l4.icmp6;
+
+	if (!npf_iscached(npc, NPC_ICMP)) {
+		if (!npf_fetch_icmp(npc, nbuf, n_ptr)) {
+			return -1;
+		}
+		KASSERT(npf_iscached(npc, NPC_ICMP));
+	}
+
+	/* Match code/type, if required. */
+	if ((1 << 31) & tc) {
+		const uint8_t type = (tc >> 8) & 0xff;
+		if (type != ic6->icmp6_type) {
+			return -1;
+		}
+	}
+	if ((1 << 30) & tc) {
+		const uint8_t code = tc & 0xff;
+		if (code != ic6->icmp6_code) {
 			return -1;
 		}
 	}

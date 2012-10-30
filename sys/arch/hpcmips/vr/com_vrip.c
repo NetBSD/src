@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.21 2008/08/29 12:08:30 tsutsui Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.21.28.1 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.21 2008/08/29 12:08:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.21.28.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -172,7 +172,7 @@ com_vrip_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
-	vsc->sc_pwctl = device_cfdata(sc->sc_dev)->cf_loc[VRIPIFCF_PWCTL];
+	vsc->sc_pwctl = device_cfdata(self)->cf_loc[VRIPIFCF_PWCTL];
 
 	DPRINTF(("==com_vrip_attach"));
 

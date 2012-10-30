@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.90.2.1 2012/04/17 00:08:08 yamt Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.90.2.2 2012/10/30 17:22:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90.2.1 2012/04/17 00:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.90.2.2 2012/10/30 17:22:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -333,15 +333,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
-	},
-
-	/* Devices with bad residue. */
-	{ { USB_VENDOR_SUPERTOP, USB_PRODUCT_SUPERTOP_IDEBRIDGE },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  UMASS_QUIRK_IGNORE_RESIDUE,
-	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},

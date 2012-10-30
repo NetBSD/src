@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.42.8.1 2012/10/30 17:21:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.42.8.1 2012/10/30 17:21:32 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -117,7 +117,7 @@ struct ste_descsoft {
  * Software state per device.
  */
 struct ste_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -217,14 +217,14 @@ static void	ste_rxintr(struct ste_softc *);
 
 static int	ste_mii_readreg(device_t, int, int);
 static void	ste_mii_writereg(device_t, int, int, int);
-static void	ste_mii_statchg(device_t);
+static void	ste_mii_statchg(struct ifnet *);
 
 static int	ste_match(device_t, cfdata_t, void *);
 static void	ste_attach(device_t, device_t, void *);
 
 int	ste_copy_small = 0;
 
-CFATTACH_DECL(ste, sizeof(struct ste_softc),
+CFATTACH_DECL_NEW(ste, sizeof(struct ste_softc),
     ste_match, ste_attach, NULL, NULL);
 
 static uint32_t ste_mii_bitbang_read(device_t);
@@ -305,6 +305,8 @@ ste_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint16_t myea[ETHER_ADDR_LEN / 2];
 
+	sc->sc_dev = self;
+
 	callout_init(&sc->sc_tick_ch, 0);
 
 	sp = ste_lookup(pa);
@@ -332,7 +334,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -346,7 +348,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
+		aprint_error_dev(sc->sc_dev, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -355,19 +357,19 @@ ste_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ste_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -376,7 +378,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct ste_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n",
 		    error);
 		goto fail_0;
 	}
@@ -384,7 +386,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct ste_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
 		    error);
 		goto fail_1;
 	}
@@ -392,7 +394,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct ste_control_data), 1,
 	    sizeof(struct ste_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_2;
 	}
@@ -400,7 +402,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct ste_control_data), NULL,
 	    0)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to load control data DMA map, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -412,7 +414,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    STE_NTXFRAGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to create tx DMA map %d, "
+			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
 			    "error = %d\n", i, error);
 			goto fail_4;
 		}
@@ -424,7 +426,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < STE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].ds_dmamap)) != 0) {
-			aprint_error_dev(&sc->sc_dev, "unable to create rx DMA map %d, "
+			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
 			    "error = %d\n", i, error);
 			goto fail_5;
 		}
@@ -446,7 +448,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	}
 	memcpy(enaddr, myea, sizeof(enaddr));
 
-	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
 	    ether_sprintf(enaddr));
 
 	/*
@@ -459,7 +461,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -468,7 +470,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ste_ioctl;
@@ -568,7 +570,7 @@ ste_dmahalt_wait(struct ste_softc *sc)
 	}
 
 	if (i == STE_TIMEOUT)
-		printf("%s: DMA halt timed out\n", device_xname(&sc->sc_dev));
+		printf("%s: DMA halt timed out\n", device_xname(sc->sc_dev));
 }
 
 /*
@@ -630,14 +632,14 @@ ste_start(struct ifnet *ifp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", device_xname(&sc->sc_dev));
+					    "cluster\n", device_xname(sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -648,7 +650,7 @@ ste_start(struct ifnet *ifp)
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(&sc->sc_dev), error);
+				    "error = %d\n", device_xname(sc->sc_dev), error);
 				break;
 			}
 		}
@@ -768,7 +770,7 @@ ste_watchdog(struct ifnet *ifp)
 {
 	struct ste_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
 
 	ste_txintr(sc);
@@ -858,7 +860,7 @@ ste_intr(void *arg)
 						sc->sc_txthresh = 0x1ffc;
 					printf("%s: transmit underrun, new "
 					    "threshold: %d bytes\n",
-					    device_xname(&sc->sc_dev),
+					    device_xname(sc->sc_dev),
 					    sc->sc_txthresh);
 					ste_reset(sc, AC_TxReset | AC_DMA |
 					    AC_FIFO | AC_Network);
@@ -871,17 +873,17 @@ ste_intr(void *arg)
 				}
 				if (txstat & TS_TxReleaseError) {
 					printf("%s: Tx FIFO release error\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 					wantinit = 1;
 				}
 				if (txstat & TS_MaxCollisions) {
 					printf("%s: excessive collisions\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 					wantinit = 1;
 				}
 				if (txstat & TS_TxStatusOverflow) {
 					printf("%s: status overflow\n",
-					    device_xname(&sc->sc_dev));
+					    device_xname(sc->sc_dev));
 					wantinit = 1;
 				}
 				bus_space_write_2(sc->sc_st, sc->sc_sh,
@@ -892,7 +894,7 @@ ste_intr(void *arg)
 		/* Host interface errors. */
 		if (isr & IE_HostError) {
 			printf("%s: Host interface error\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			wantinit = 1;
 		}
 	}
@@ -1142,7 +1144,7 @@ ste_reset(struct ste_softc *sc, u_int32_t rstbits)
 	}
 
 	if (i == STE_TIMEOUT)
-		printf("%s: reset failed to complete\n", device_xname(&sc->sc_dev));
+		printf("%s: reset failed to complete\n", device_xname(sc->sc_dev));
 
 	delay(1000);
 }
@@ -1230,7 +1232,7 @@ ste_init(struct ifnet *ifp)
 			if ((error = ste_add_rxbuf(sc, i)) != 0) {
 				printf("%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				    device_xname(&sc->sc_dev), i, error);
+				    device_xname(sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -1332,7 +1334,7 @@ ste_init(struct ifnet *ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", device_xname(&sc->sc_dev));
+		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	return (error);
 }
 
@@ -1442,13 +1444,13 @@ ste_read_eeprom(struct ste_softc *sc, int offset, uint16_t *data)
 
 	if (ste_eeprom_wait(sc))
 		printf("%s: EEPROM failed to come ready\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 
 	bus_space_write_2(sc->sc_st, sc->sc_sh, STE_EepromCtrl,
 	    EC_EepromAddress(offset) | EC_EepromOpcode(EC_OP_R));
 	if (ste_eeprom_wait(sc))
 		printf("%s: EEPROM read timed out\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	*data = bus_space_read_2(sc->sc_st, sc->sc_sh, STE_EepromData);
 }
 
@@ -1484,7 +1486,7 @@ ste_add_rxbuf(struct ste_softc *sc, int idx)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    device_xname(&sc->sc_dev), idx, error);
+		    device_xname(sc->sc_dev), idx, error);
 		panic("ste_add_rxbuf");		/* XXX */
 	}
 
@@ -1616,9 +1618,9 @@ ste_mii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-ste_mii_statchg(device_t self)
+ste_mii_statchg(struct ifnet *ifp)
 {
-	struct ste_softc *sc = device_private(self);
+	struct ste_softc *sc = ifp->if_softc;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_MacCtrl0 |= MC0_FullDuplexEnable;

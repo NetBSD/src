@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2009/03/18 10:22:36 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.12.1 2012/10/30 17:20:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2009/03/18 10:22:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.12.1 2012/10/30 17:20:20 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -53,11 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2009/03/18 10:22:36 cegger Exp $")
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <arm/arm32/machdep.h>
+
 #include <machine/bootconfig.h>
-#include <machine/intr.h>
 #include <machine/irqhandler.h>
 
 #include "isa.h"
@@ -65,13 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2009/03/18 10:22:36 cegger Exp $")
 #ifdef SHARK
 #include <shark/shark/sequoia.h>
 extern void	ofrootfound(void);
-extern void	ofw_device_register(struct device *, void *aux);
+extern void	ofw_device_register(device_t, void *);
 extern void	startrtclock(void);
 #endif
 
 #if defined(OFWGENCFG) || defined(SHARK)
 /* Temporary for SHARK! */
-extern void ofw_device_register(struct device *dev, void *aux);
+extern void ofw_device_register(device_t, void *);
 #include <machine/ofw.h>
 #endif
 
@@ -146,9 +150,9 @@ cpu_rootconf(void)
 	set_root_device();
 
 	printf("boot device: %s\n",
-	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 #endif
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 
@@ -199,7 +203,7 @@ cpu_configure(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 #if defined(OFWGENCFG) || defined(SHARK)
 	/* Temporary for SHARK! */

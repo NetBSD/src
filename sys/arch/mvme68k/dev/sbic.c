@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.32 2008/01/12 09:54:26 tsutsui Exp $	*/
+/*	$NetBSD: sbic.c,v 1.32.44.1 2012/10/30 17:20:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.32 2008/01/12 09:54:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.32.44.1 2012/10/30 17:20:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -395,7 +395,7 @@ sbic_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct sbic_softc *dev = (void *)chan->chan_adapter->adapt_dev;
+	struct sbic_softc *dev = device_private(chan->chan_adapter->adapt_dev);
 	struct sbic_acb *acb;
 	int flags, s;
 
@@ -594,7 +594,7 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	struct scsipi_xfer *xs  = acb->xs;
 	struct scsipi_periph  *periph = xs->xs_periph;
 	struct sbic_softc *dev =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int dosched = 0;
 
 #ifdef DIAGNOSTIC
@@ -669,7 +669,7 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 			TAILQ_REMOVE(&dev->ready_list, acb, chain);
 		} else {
 			printf("%s: can't find matching acb\n",
-			    dev->sc_dev.dv_xname);
+			    device_xname(dev->sc_dev));
 #ifdef DDB
 			Debugger();
 #endif
@@ -754,7 +754,7 @@ sbicabort(struct sbic_softc *dev, const char *where)
 	GET_SBIC_csr(regs, csr);
 
 	printf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n",
-	    dev->sc_dev.dv_xname, where, csr, asr);
+	    device_xname(dev->sc_dev), where, csr, asr);
 
 	/*
 	 * Clean up chip itself
@@ -768,7 +768,7 @@ sbicabort(struct sbic_softc *dev, const char *where)
 			 */
 			GET_SBIC_data(regs, asr);
 			printf("%s: abort %s: clearing data buffer 0x%02x\n",
-			   dev->sc_dev.dv_xname, where, asr);
+			   device_xname(dev->sc_dev), where, asr);
 			GET_SBIC_asr(regs, asr);
 			if (asr & SBIC_ASR_DBR)
 				/* Not the read direction, then */
@@ -779,7 +779,7 @@ sbicabort(struct sbic_softc *dev, const char *where)
 		WAIT_CIP(regs);
 
 		printf("%s: sbicabort - sending ABORT command\n",
-		    dev->sc_dev.dv_xname);
+		    device_xname(dev->sc_dev));
 		SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
 		WAIT_CIP(regs);
 
@@ -790,14 +790,14 @@ sbicabort(struct sbic_softc *dev, const char *where)
 			 * ok, get more drastic..
 			 */
 			printf("%s: sbicabort - asr %x, trying to reset\n",
-			    dev->sc_dev.dv_xname, asr);
+			    device_xname(dev->sc_dev), asr);
 			sbicreset(dev);
 			dev->sc_flags &= ~SBICF_SELECTED;
 			return SBIC_STATE_ERROR;
 		}
 
 		printf("%s: sbicabort - sending DISC command\n",
-		    dev->sc_dev.dv_xname);
+		    device_xname(dev->sc_dev));
 		SET_SBIC_cmd(regs, SBIC_CMD_DISC);
 
 		do {
@@ -938,7 +938,7 @@ sbicerror(struct sbic_softc *dev, u_char csr)
 	if ( xs->xs_control & XS_CTL_SILENT )
 		return;
 
-	printf("%s: csr == 0x%02x\n", dev->sc_dev.dv_xname, csr);
+	printf("%s: csr == 0x%02x\n", device_xname(dev->sc_dev), csr);
 }
 
 /*
@@ -2039,7 +2039,7 @@ sbicmsgin(struct sbic_softc *dev)
 
 			printf("%s: target %d now synchronous, "
 			    "period=%dns, offset=%d.\n",
-			    dev->sc_dev.dv_xname, dev->target,
+			    device_xname(dev->sc_dev), dev->target,
 			    msgaddr[3] * 4, msgaddr[4]);
 
 		} else {
@@ -2370,7 +2370,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			 */
 			if ((asr & SBIC_ASR_INT) == 0) {
 				printf("%s: Reselect without identify?"
-				    " asr %x\n", dev->sc_dev.dv_xname, asr);
+				    " asr %x\n", device_xname(dev->sc_dev), asr);
 				newlun = 0;	/* XXXX */
 			} else {
 				/*
@@ -2424,7 +2424,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 #ifdef DEBUG
 			if (reselect_debug > 1) {
 				printf("%s: reselect %s with active command\n",
-				    dev->sc_dev.dv_xname,
+				    device_xname(dev->sc_dev),
 				csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY");
 			}
 #endif
@@ -2474,7 +2474,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 
 		if (acb == NULL) {
 			printf("%s: reselect %s targ %d not in nexus_list %p\n",
-			    dev->sc_dev.dv_xname,
+			    device_xname(dev->sc_dev),
 			    csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget,
 			    &dev->nexus_list.tqh_first);
 			panic("bad reselect in sbic");
@@ -2627,7 +2627,7 @@ sbictimeout(struct sbic_softc *dev)
 
 		if (dev->sc_dmatimo > 1) {
 
-			printf("%s: DMA timeout #%d\n", dev->sc_dev.dv_xname,
+			printf("%s: DMA timeout #%d\n", device_xname(dev->sc_dev),
                             dev->sc_dmatimo - 1);
 
 			GET_SBIC_asr(dev->sc_sbicp, asr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcmcia.c,v 1.2.2.1 2012/04/17 00:06:19 yamt Exp $	*/
+/*	$NetBSD: shpcmcia.c,v 1.2.2.2 2012/10/30 17:19:32 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.2.2.1 2012/04/17 00:06:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.2.2.2 2012/10/30 17:19:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,7 @@ struct shpcmcia_handle {
 #define	SHPCMCIA_IO_WINS		2
 	} io[SHPCMCIA_IO_WINS];
 
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int	shutdown;
 	lwp_t	*event_thread;

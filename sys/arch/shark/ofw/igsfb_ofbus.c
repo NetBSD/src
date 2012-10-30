@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.13 2011/07/26 08:56:26 mrg Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.13.2.1 2012/10/30 17:20:19 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.13 2011/07/26 08:56:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.13.2.1 2012/10/30 17:20:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ igsfb_ofbus_match(device_t parent, cfdata_t match, void *aux)
 static void
 igsfb_ofbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct igsfb_softc *sc = (struct igsfb_softc *)self;
+	struct igsfb_softc *sc = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	uint32_t regs[16];
 	int isconsole, ret;

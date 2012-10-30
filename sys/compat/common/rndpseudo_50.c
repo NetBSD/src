@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.1.6.2 2012/04/17 00:07:14 yamt Exp $	*/
+/*	$NetBSD: rndpseudo_50.c,v 1.1.6.3 2012/10/30 17:20:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.1.6.2 2012/04/17 00:07:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.1.6.3 2012/10/30 17:20:39 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -57,7 +57,7 @@ rndsource_to_rndsource50(rndsource_t *r, rndsource50_t *r50)
 	r50->flags = r->flags;
 }
 
-#ifdef COMPAT_NETBSD32
+#if defined(COMPAT_NETBSD32) && defined(_LP64)
 /*
  * Convert from rndsource_t to rndsource50_32_t, for the results from
  * RNDGETNUM50_32 and RNDGETNAME50_32.
@@ -110,7 +110,7 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 	}
 
-#ifdef COMPAT_NETBSD32
+#if defined(COMPAT_NETBSD32) && defined(_LP64)
 	case RNDGETSRCNUM50_32:
 	{
 		rndstat_t rstbuf = {.start = 0};
@@ -154,7 +154,7 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 	}
 
-#ifdef COMPAT_NETBSD32
+#if defined(COMPAT_NETBSD32) && defined(_LP64)
 	case RNDGETSRCNAME50_32:
 	{
 		rndstat_name_t rstnmbuf = {.name[0] = 0};

@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_68k.c,v 1.7 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.7.34.1 2012/10/30 17:20:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.7 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.7.34.1 2012/10/30 17:20:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,16 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.7 2008/04/28 20:23:29 martin Exp $");
 
 #include "ioconf.h"
 
-int memc_match(struct device *, struct cfdata *, void *);
-void memc_attach(struct device *, struct device *, void *);
+int memc_match(device_t, cfdata_t, void *);
+void memc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(memc, sizeof(struct memc_softc),
+CFATTACH_DECL_NEW(memc, sizeof(struct memc_softc),
     memc_match, memc_attach, NULL, NULL);
 
 
 /* ARGSUSED */
 int
-memc_match(struct device *parent, struct cfdata *cf, void *aux)
+memc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -97,11 +97,12 @@ memc_match(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 void
-memc_attach(struct device *parent, struct device *self, void *aux)
+memc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct memc_softc *sc = (struct memc_softc *)self;
+	struct memc_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_bust = ma->ma_bust;
 
 	/* Map the memory controller's registers */

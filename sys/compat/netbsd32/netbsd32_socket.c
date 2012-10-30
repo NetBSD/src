@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.37.8.1 2012/04/17 00:07:21 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.37.8.2 2012/10/30 17:20:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.37.8.1 2012/04/17 00:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.37.8.2 2012/10/30 17:20:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,15 +138,13 @@ copyout32_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 
 	q = (char *)mp->msg_control;
 
-	for (m = control; m != NULL; m = m->m_next) {
+	for (m = control; len > 0 && m != NULL; m = m->m_next) {
 		error = copyout32_msg_control_mbuf(l, mp, &len, m, &q, &truncated);
 		if (truncated) {
 			m = control;
 			break;
 		}
 		if (error)
-			break;
-		if (len <= 0)
 			break;
 	}
 
@@ -298,7 +296,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 
 		resid -= CMSG32_ALIGN(cmsg32.cmsg_len);
 		cidx += cmsg->cmsg_len;
-	} while ((cc = CMSG32_NXTHDR(mp, cc)) && resid > 0);
+	} while (resid > 0 && (cc = CMSG32_NXTHDR(mp, &cmsg32)));
 
 	/* If we allocated a buffer, attach to mbuf */
 	if (cidx > MLEN) {

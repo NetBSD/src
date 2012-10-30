@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.65.2.1 2012/04/17 00:06:54 yamt Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.65.2.2 2012/10/30 17:20:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.65.2.1 2012/04/17 00:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.65.2.2 2012/10/30 17:20:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -168,7 +168,7 @@ CFATTACH_DECL_NEW(vme_iommu, sizeof(struct sparcvme_softc),
 
 static int vme_attached;
 
-int	(*vmeerr_handler)(void);
+extern int (*vmeerr_handler)(void);
 
 #define VMEMOD_D32 0x40 /* ??? */
 
@@ -328,7 +328,7 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 
 /* sun4m vmebus */
 static void
-vmeattach_iommu(struct device *parent, struct device *self, void *aux)
+vmeattach_iommu(device_t parent, device_t self, void *aux)
 {
 #if defined(SUN4M)
 	struct sparcvme_softc *sc = device_private(self);

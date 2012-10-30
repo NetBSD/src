@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.5 2011/07/01 20:27:50 dyoung Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.5.2.1 2012/10/30 17:19:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.5 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.5.2.1 2012/10/30 17:19:03 yamt Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.5 2011/07/01 20:27:50 dyoung Exp $");
 #include <arm/imx/imx31var.h>
 
 struct ahb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
@@ -137,7 +137,7 @@ static void	ahb_attach_critical(struct ahb_softc *);
 static int	ahbbus_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(ahb, sizeof(struct ahb_softc),
+CFATTACH_DECL_NEW(ahb, sizeof(struct ahb_softc),
     ahb_match, ahb_attach, NULL, NULL);
 
 static struct ahb_softc *ahb_sc;
@@ -151,10 +151,11 @@ ahb_match(device_t parent, cfdata_t match, void *aux)
 static void
 ahb_attach(device_t parent, device_t self, void *aux)
 {
-	struct ahb_softc *sc = (struct ahb_softc *)self;
+	struct ahb_softc *sc = device_private(self);
 	struct ahb_attach_args ahba;
 
 	ahb_sc = sc;
+	sc->sc_dev = self;
 	sc->sc_memt = &imx_bs_tag;
 #if NBUS_DMA_GENERIC > 0
 	sc->sc_dmat = &imx_bus_dma_tag;
@@ -259,7 +260,7 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_intr = AHBCF_INTR_DEFAULT;
 		ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
 
-		cf = config_search_ia(ahb_find, &sc->sc_dev, "ahb", &ahba);
+		cf = config_search_ia(ahb_find, sc->sc_dev, "ahb", &ahba);
 		if (cf == NULL && critical_devs[i].required)
 			panic("ahb_attach_critical: failed to find %s!",
 			    critical_devs[i].name);
@@ -268,14 +269,14 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_size = cf->cf_loc[AHBCF_SIZE];
 		ahba.ahba_intr = cf->cf_loc[AHBCF_INTR];
 		ahba.ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
-		config_attach(&sc->sc_dev, cf, &ahba, ahbbus_print);
+		config_attach(sc->sc_dev, cf, &ahba, ahbbus_print);
 	}
 }
 
 static int
 ahbbus_print(void *aux, const char *name)
 {
-	struct ahb_attach_args *ahba = (struct ahb_attach_args*)aux;
+	struct ahb_attach_args *ahba = aux;
 
 	if (ahba->ahba_addr != AHBCF_ADDR_DEFAULT) {
 		aprint_normal(" addr 0x%lx", ahba->ahba_addr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.21 2009/04/05 21:19:37 dholland Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.21.12.1 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.21 2009/04/05 21:19:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.21.12.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.21 2009/04/05 21:19:37 dholland Exp
 #define	VRC4173BCU_BADR		0x10
 #define USE_WINCE_CLKMASK	(~0)
 
-static int	vrc4173bcu_match(struct device *, struct cfdata *, void *);
-static void	vrc4173bcu_attach(struct device *, struct device *, void *);
+static int	vrc4173bcu_match(device_t, cfdata_t, void *);
+static void	vrc4173bcu_attach(device_t, device_t, void *);
 static int	vrc4173bcu_intr(void *);
 static int	vrc4173bcu_print(void *, const char *);
-static int	vrc4173bcu_search(struct device *, struct cfdata *cf,
-				  const int *, void *);
+static int	vrc4173bcu_search(device_t, cfdata_t, const int *, void *);
 static int	vrc4173bcu_pci_intr(void *);
 #ifdef VRC4173BCU_DEBUG
 static void	vrc4173bcu_dump_level2mask(vrip_chipset_tag_t,
@@ -132,7 +131,7 @@ struct vrc4173bcu_unit {
 };
 
 struct vrc4173bcu_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct vrip_chipset_tag sc_chipset;
 	struct vrcmu_chipset_tag sc_cmuchip;
 
@@ -214,7 +213,7 @@ static struct vrc4173bcu_unit vrc4173bcu_units[] = {
 	},
 };
 
-CFATTACH_DECL(vrc4173bcu, sizeof(struct vrc4173bcu_softc),
+CFATTACH_DECL_NEW(vrc4173bcu, sizeof(struct vrc4173bcu_softc),
     vrc4173bcu_match, vrc4173bcu_attach, NULL, NULL);
 
 static const struct vrip_chipset_tag vrc4173bcu_chipset_methods = {
@@ -231,7 +230,7 @@ static const struct vrip_chipset_tag vrc4173bcu_chipset_methods = {
 };
 
 int
-vrc4173bcu_match(struct device *parent, struct cfdata *match, void *aux)
+vrc4173bcu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -243,10 +242,10 @@ vrc4173bcu_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
+vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 {
-	struct vrc4173bcu_softc *sc = (struct vrc4173bcu_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct vrc4173bcu_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t csr;
@@ -259,11 +258,13 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	char buf[80];
 #endif
 
+	sc->sc_dev = self;
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 #if 0
-	printf("%s: ", sc->sc_dev.dv_xname);
+	printf("%s: ", device_xname(self));
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
 
@@ -282,22 +283,22 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, VRC4173BCU_BADR, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_size)) {
-		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map mem space\n", device_xname(self));
 		return;
 	}
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	DPRINTF(("%s: csr = 0x%08x", sc->sc_dev.dv_xname, csr));
+	DPRINTF(("%s: csr = 0x%08x", device_xname(self), csr));
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	DPRINTF((" -> 0x%08x\n", csr));
 
 	csr = pci_conf_read(pc, tag, VRC4173BCU_BADR);
-	DPRINTF(("%s: base addr = %x@0x%08x\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: base addr = %x@0x%08x\n", device_xname(self),
 	    (int)sc->sc_size, csr));
-	DPRINTF(("%s: iot = 0x%08x, ioh = 0x%08x\n", sc->sc_dev.dv_xname,
+	DPRINTF(("%s: iot = 0x%08x, ioh = 0x%08x\n", device_xname(self),
 	    (int)sc->sc_iot, (int)sc->sc_ioh));
 
 	/*
@@ -324,7 +325,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 		reg = bus_space_read_2(sc->sc_iot, sc->sc_cmuh,
 		    VRC4173CMU_CLKMSK);
 		printf("%s: default clock mask is %04x\n",
-		    sc->sc_dev.dv_xname, reg);
+		    device_xname(self), reg);
 	} else {
 		/* assert all reset bits */
 		bus_space_write_2(sc->sc_iot, sc->sc_cmuh, VRC4173CMU_SRST,
@@ -342,19 +343,19 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: SYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
+	printf("%s: SYSINT1 = 0x%s\n", device_xname(self), buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MKIUINT);
 	snprintb(buf, sizeof(buf),
 	    "\20\1SCANINT\2KDATRDY\3KDATLOST\4B3\5B4\6B5\7B6\10B7"
 	    "\11B8\12B9\13B10\14B11\15B12\16B13\17B14\20B15", reg);
-	printf("%s: MKIUINT = 0x%s\n", sc->sc_dev.dv_xname, buf);
+	printf("%s: MKIUINT = 0x%s\n", device_xname(self), buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1);
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: MSYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
+	printf("%s: MSYSINT1 = 0x%s\n", device_xname(self), buf);
 
 #if 1
 	reg = VRC4173ICU_USBINTR | VRC4173ICU_PIUINTR | VRC4173ICU_KIUINTR |
@@ -365,7 +366,7 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: MSYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
+	printf("%s: MSYSINT1 = 0x%s\n", device_xname(self), buf);
 #endif
 #endif
 
@@ -380,20 +381,20 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	 * install interrupt handler
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", device_xname(self));
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vrc4173bcu_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
 
 	/*
 	 * install pci intr hooks
@@ -447,10 +448,9 @@ vrc4173bcu_print(void *aux, const char *hoge)
 }
 
 int
-vrc4173bcu_search(struct device *parent, struct cfdata *cf,
-		  const int *ldesc, void *aux)
+vrc4173bcu_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct vrc4173bcu_softc *sc = (struct vrc4173bcu_softc *)parent;
+	struct vrc4173bcu_softc *sc = device_private(parent);
 	struct vrip_attach_args va;
 
 	memset(&va, 0, sizeof(va));
@@ -491,7 +491,7 @@ vrc4173bcu_intr(void *arg)
 	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
 	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
-	printf("%s: %s\n", sc->sc_dev.dv_xname, buf);
+	printf("%s: %s\n", device_xname(sc->sc_dev), buf);
     }
 #endif
 	for (ih = sc->sc_intrhands, i = 0; i < VRC4173BCU_NINTRS; i++, ih++)

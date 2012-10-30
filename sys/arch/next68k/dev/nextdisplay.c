@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.20 2007/03/04 06:00:27 christos Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.20.78.1 2012/10/30 17:20:07 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.20 2007/03/04 06:00:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.20.78.1 2012/10/30 17:20:07 yamt Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.20 2007/03/04 06:00:27 christos Ex
 
 extern int turbo;
 
-int nextdisplay_match(struct device *, struct cfdata *, void *);
-void nextdisplay_attach(struct device *, struct device *, void *);
+int nextdisplay_match(device_t, cfdata_t, void *);
+void nextdisplay_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(nextdisplay, sizeof(struct nextdisplay_softc),
+CFATTACH_DECL_NEW(nextdisplay, sizeof(struct nextdisplay_softc),
     nextdisplay_match, nextdisplay_attach, NULL, NULL);
 
 const struct wsdisplay_emulops nextdisplay_mono_emulops = {
@@ -141,7 +141,7 @@ nextdisplay_is_console(vaddr_t addr)
 }
 
 int
-nextdisplay_match(struct device *parent, struct cfdata *match, void *aux)
+nextdisplay_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (rom_machine_type == NeXT_WARP9 ||
 	    rom_machine_type == NeXT_X15 ||
@@ -226,9 +226,9 @@ nextdisplay_init(struct nextdisplay_config *dc, int color)
 }
 
 void
-nextdisplay_attach(struct device *parent, struct device *self, void *aux)
+nextdisplay_attach(device_t parent, device_t self, void *aux)
 {
-	struct nextdisplay_softc *sc = (void *)self;
+	struct nextdisplay_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args waa;
 	int isconsole;
 	int iscolor;
@@ -262,7 +262,7 @@ nextdisplay_attach(struct device *parent, struct device *self, void *aux)
 		uint8_t x;
 
 		x = *(volatile uint8_t *)IIOV(NEXT_P_C16_CMD_REG);
-		printf("%s: cmd=%02x\n", sc->sc_dev.dv_xname, x);
+		aprint_debug_dev(sc->sc_dev, "cmd=%02x\n", x);
 #endif
 		*(volatile uint8_t *)IIOV(NEXT_P_C16_CMD_REG) = 0x05;
 		isrlink_autovec(nextdisplay_intr, sc, NEXT_I_IPL(NEXT_I_C16_VIDEO), 1, NULL);

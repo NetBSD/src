@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.27 2009/05/12 14:47:04 cegger Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.27.12.1 2012/10/30 17:22:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.27 2009/05/12 14:47:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.27.12.1 2012/10/30 17:22:03 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -64,12 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.27 2009/05/12 14:47:04 cegger Exp $");
 #include <dev/ic/pdqreg.h>
 
 static int
-pdq_tc_match(
-    device_t parent,
-    cfdata_t match,
-    void *aux)
+pdq_tc_match(device_t parent, cfdata_t match, void *aux)
 {
-    struct tc_attach_args *ta = (struct tc_attach_args *) aux;
+    struct tc_attach_args *ta = aux;
 
     if (strncmp("PMAF-F", ta->ta_modname, 6) == 0)
 	return 1;
@@ -78,28 +75,26 @@ pdq_tc_match(
 }
 
 static void
-pdq_tc_attach(
-    device_t  const parent,
-    device_t  const self,
-    void *const aux)
+pdq_tc_attach(device_t parent, device_t self, void *aux)
 {
     pdq_softc_t * const sc = device_private(self);
-    struct tc_attach_args * const ta = (struct tc_attach_args *) aux;
+    struct tc_attach_args * const ta = aux;
 
     /*
      * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
      * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
      */
+    sc->sc_dev = self;
     sc->sc_dmatag = ta->ta_dmat;
     sc->sc_csrtag = ta->ta_memt;
-    memcpy(sc->sc_if.if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+    memcpy(sc->sc_if.if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
     if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
 		      PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
 	aprint_normal("\n");
-	aprint_error_dev(&sc->sc_dev, "can't map card memory!\n");
+	aprint_error_dev(sc->sc_dev, "can't map card memory!\n");
 	return;
     }
 
@@ -107,7 +102,7 @@ pdq_tc_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFTA);
     if (sc->sc_pdq == NULL) {
-	aprint_error_dev(&sc->sc_dev, "initialization failed\n");
+	aprint_error_dev(sc->sc_dev, "initialization failed\n");
 	return;
     }
 
@@ -121,5 +116,5 @@ pdq_tc_attach(
 	aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
 }
 
-CFATTACH_DECL(fta, sizeof(pdq_softc_t),
+CFATTACH_DECL_NEW(fta, sizeof(pdq_softc_t),
     pdq_tc_match, pdq_tc_attach, NULL, NULL);

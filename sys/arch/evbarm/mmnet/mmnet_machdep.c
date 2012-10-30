@@ -1,5 +1,5 @@
-/*	$Id: mmnet_machdep.c,v 1.1.2.2 2011/11/10 14:31:40 yamt Exp $	*/
-/*	$NetBSD: mmnet_machdep.c,v 1.1.2.2 2011/11/10 14:31:40 yamt Exp $	*/
+/*	$Id: mmnet_machdep.c,v 1.1.2.3 2012/10/30 17:19:25 yamt Exp $	*/
+/*	$NetBSD: mmnet_machdep.c,v 1.1.2.3 2012/10/30 17:19:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -78,7 +78,7 @@
 /* Adaptation for Propox MMnet by Aymeric Vincent is in the public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.1.2.2 2011/11/10 14:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.1.2.3 2012/10/30 17:19:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,15 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.1.2.2 2011/11/10 14:31:40 yamt E
 #include <arm/at91/at91dbgureg.h>
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91streg.h>
-
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependant as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0x00000000;
-
 
 /* boot configuration: */
 BootConfig bootconfig;		/* Boot config storage */

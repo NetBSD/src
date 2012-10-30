@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.29.2.1 2012/10/30 17:19:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.29 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.29.2.1 2012/10/30 17:19:23 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -92,7 +92,7 @@ static const int si_to_ipl[SI_NQUEUES] = {
 };
 #endif
 
-void	iq80310_intr_dispatch(struct irqframe *frame);
+void	iq80310_intr_dispatch(struct trapframe *frame);
 
 static inline uint32_t
 iq80310_intstat_read(void)
@@ -338,8 +338,6 @@ iq80310_intr_init(void)
 		TAILQ_INIT(&iq->iq_list);
 
 		sprintf(iq->iq_name, "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-		    NULL, "iq80310", iq->iq_name);
 	}
 
 	iq80310_intr_calculate_masks();
@@ -350,6 +348,19 @@ iq80310_intr_init(void)
 
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
+}
+
+void
+iq80310_intr_evcnt_attach(void)
+{
+	struct intrq *iq;
+	int i;
+
+	for (i = 0; i < NIRQ; i++) {
+		iq = &intrq[i];
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+		    NULL, "iq80310", iq->iq_name);
+	}
 }
 
 void *
@@ -404,7 +415,7 @@ iq80310_intr_disestablish(void *cookie)
 }
 
 void
-iq80310_intr_dispatch(struct irqframe *frame)
+iq80310_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;

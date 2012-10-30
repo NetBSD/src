@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcvar.h,v 1.4 2007/03/04 06:01:56 christos Exp $	*/
+/*	$NetBSD: iavcvar.h,v 1.4.76.1 2012/10/30 17:21:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -40,7 +40,7 @@
 #define IAVC_DMA_SIZE (128 + 2048)
 
 typedef struct iavc_softc {
-    struct device	sc_dev;
+    device_t	sc_dev;
     capi_softc_t	sc_capi;
 
     bus_space_handle_t	sc_mem_bh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.2.1 2012/04/17 00:06:18 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.2.2 2012/10/30 17:19:31 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <sys/bitops.h>
 #include <sys/bus.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
+#include <sys/reboot.h>
 #include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
@@ -114,12 +114,14 @@ struct uboot_bdinfo {
 /*4e*/	uint16_t bd_pad;
 };
 
+char root_string[16];
+
 /*
  * booke kernels need to set module_machine to this for modules to work.
  */
 char module_machine_booke[] = "powerpc-booke";
 
-void	initppc(vaddr_t, vaddr_t, void *, void *, void *, void *);
+void	initppc(vaddr_t, vaddr_t, void *, void *, char *, char *);
 
 #define	MEMREGIONS	4
 phys_ram_seg_t physmemr[MEMREGIONS];		/* All memory */
@@ -205,12 +207,15 @@ static struct consdev e500_earlycons = {
  */
 static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 	{ "cpu", 0, 0, 0, 0, { 0 }, 0,	/* not a real device */
-		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
-#if defined(MPC8572) || defined(P2020)
+		{ 0xffff, SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
+#if defined(MPC8572) || defined(P2020) || defined(P1025)
 	{ "cpu", 0, 0, 1, 0, { 0 }, 0,	/* not a real device */
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
 	{ "cpu", 0, 0, 2, 0, { 0 }, 0,	/* not a real device */
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
 #endif
 	{ "wdog" },	/* not a real device */
 	{ "duart", DUART1_BASE, 2*DUART_SIZE, 0,
@@ -218,13 +223,50 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_DUART) },
 	{ "tsec", ETSEC1_BASE, ETSEC_SIZE, 1,
 		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
-		1 + ilog2(DEVDISR_TSEC1) },
-#if defined(MPC8548) || defined(MPC8555) || defined(MPC8572) || defined(P2020)
+		1 + ilog2(DEVDISR_TSEC1),
+		{ 0xffff, SVR_P1025v1 >> 16 } },
+#if defined(P1025)
+	{ "mdio", ETSEC1_BASE, ETSEC_SIZE, 1,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
+	{ "tsec", ETSEC1_G0_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_TX, ISOURCE_ETSEC1_RX, ISOURCE_ETSEC1_ERR },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC1_G1_BASE, ETSEC_SIZE, 1,
+		3, { ISOURCE_ETSEC1_G1_TX, ISOURCE_ETSEC1_G1_RX,
+		     ISOURCE_ETSEC1_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC1),
+		{ SVR_P1025v1 >> 16 } },
+#endif
+#endif
+#if defined(MPC8548) || defined(MPC8555) || defined(MPC8572) \
+    || defined(P2020)
 	{ "tsec", ETSEC2_BASE, ETSEC_SIZE, 2,
 		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
 		1 + ilog2(DEVDISR_TSEC2),
 		{ SVR_MPC8548v1 >> 16, SVR_MPC8555v1 >> 16,
-		  SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		  SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
+#endif
+#if defined(P1025)
+	{ "mdio", ETSEC2_BASE, ETSEC_SIZE, 2,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
+	{ "tsec", ETSEC2_G0_BASE, ETSEC_SIZE, 2,
+		3, { ISOURCE_ETSEC2_TX, ISOURCE_ETSEC2_RX, ISOURCE_ETSEC2_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC2_G1_BASE, ETSEC_SIZE, 5,
+		3, { ISOURCE_ETSEC2_G1_TX, ISOURCE_ETSEC2_G1_RX,
+		     ISOURCE_ETSEC2_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC2),
+		{ SVR_P1025v1 >> 16 } },
+#endif
 #endif
 #if defined(MPC8544) || defined(MPC8536)
 	{ "tsec", ETSEC3_BASE, ETSEC_SIZE, 2,
@@ -238,6 +280,23 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_TSEC3),
 		{ SVR_MPC8548v1 >> 16, SVR_MPC8572v1 >> 16,
 		  SVR_P2020v2 >> 16 } },
+#endif
+#if defined(P1025)
+	{ "mdio", ETSEC3_BASE, ETSEC_SIZE, 3,
+		0, { },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
+	{ "tsec", ETSEC3_G0_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_TX, ISOURCE_ETSEC3_RX, ISOURCE_ETSEC3_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
+#if 0
+	{ "tsec", ETSEC3_G1_BASE, ETSEC_SIZE, 3,
+		3, { ISOURCE_ETSEC3_G1_TX, ISOURCE_ETSEC3_G1_RX,
+		     ISOURCE_ETSEC3_G1_ERR },
+		1 + ilog2(DEVDISR_TSEC3),
+		{ SVR_P1025v1 >> 16 } },
+#endif
 #endif
 #if defined(MPC8548) || defined(MPC8572)
 	{ "tsec", ETSEC4_BASE, ETSEC_SIZE, 4,
@@ -308,25 +367,30 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_PCI2),
 		{ SVR_MPC8548v1 >> 16 }, },
 #endif
-#if defined(MPC8572) || defined(P2020)
+#if defined(MPC8572) || defined(P1025) || defined(P2020)
 	{ "pcie", PCIE1_BASE, PCI_SIZE, 1,
 		1, { ISOURCE_PCIEX },
 		1 + ilog2(DEVDISR_PCIE),
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
 	{ "pcie", PCIE2_MPC8572_BASE, PCI_SIZE, 2,
 		1, { ISOURCE_PCIEX2 },
 		1 + ilog2(DEVDISR_PCIE2),
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
+#endif
+#if defined(MPC8572) || defined(P2020)
 	{ "pcie", PCIE3_MPC8572_BASE, PCI_SIZE, 3,
 		1, { ISOURCE_PCIEX3_MPC8572 },
 		1 + ilog2(DEVDISR_PCIE3),
-		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8572v1 >> 16, SVR_P2020v2 >> 16, } },
 #endif
-#if defined(MPC8536) || defined(P2020)
+#if defined(MPC8536) || defined(P1025) || defined(P2020)
 	{ "ehci", USB1_BASE, USB_SIZE, 1,
 		1, { ISOURCE_USB1 },
 		1 + ilog2(DEVDISR_USB1),
-		{ SVR_MPC8536v1 >> 16, SVR_P2020v2 >> 16 } },
+		{ SVR_MPC8536v1 >> 16, SVR_P2020v2 >> 16,
+		  SVR_P1025v1 >> 16 } },
 #endif
 #ifdef MPC8536
 	{ "ehci", USB2_BASE, USB_SIZE, 2,
@@ -354,15 +418,15 @@ static const struct cpunode_locators mpc8548_cpunode_locs[] = {
 		1 + ilog2(DEVDISR_ESDHC_12),
 		{ SVR_MPC8536v1 >> 16 }, },
 #endif
-#if defined(P2020)
+#if defined(P1025) || defined(P2020)
 	{ "spi", SPI_BASE, SPI_SIZE, 0,
 		1, { ISOURCE_SPI },
 		1 + ilog2(DEVDISR_SPI_28),
-		{ SVR_P2020v2 >> 16 }, },
+		{ SVR_P2020v2 >> 16, SVR_P1025v1 >> 16 }, },
 	{ "sdhc", ESDHC_BASE, ESDHC_SIZE, 0,
 		1, { ISOURCE_ESDHC },
 		1 + ilog2(DEVDISR_ESDHC_10),
-		{ SVR_P2020v2 >> 16 }, },
+		{ SVR_P2020v2 >> 16, SVR_P1025v1 >> 16 }, },
 #endif
 	//{ "sec", RNG_BASE, RNG_SIZE, 0, 0, },
 	{ NULL }
@@ -611,6 +675,7 @@ getsvr(void)
 	case SVR_MPC8543v1 >> 16:	return SVR_MPC8548v1 >> 16;
 	case SVR_MPC8541v1 >> 16:	return SVR_MPC8555v1 >> 16;
 	case SVR_P2010v2 >> 16:		return SVR_P2020v2 >> 16;
+	case SVR_P1016v1 >> 16:		return SVR_P1025v1 >> 16;
 	default:			return svr;
 	}
 }
@@ -634,6 +699,8 @@ socname(uint32_t svr)
 	case SVR_MPC8572v1 >> 8: return "MPC8572";
 	case SVR_P2020v2 >> 8: return "P2020";
 	case SVR_P2010v2 >> 8: return "P2010";
+	case SVR_P1016v1 >> 8: return "P1016";
+	case SVR_P1025v1 >> 8: return "P1025";
 	default:
 		panic("%s: unknown SVR %#x", __func__, svr);
 	}
@@ -980,9 +1047,45 @@ calltozero(void)
 	panic("call to 0 from %p", __builtin_return_address(0));
 }
 
+static void
+parse_cmdline(char *cp)
+{
+	int ourhowto = 0;
+	char c;
+	bool opt = false;
+	for (; (c = *cp) != '\0'; cp++) {
+		if (c == '-') {	
+			opt = true;
+			continue;
+		}
+		if (c == ' ') {
+			opt = false;
+			continue;
+		}
+		if (opt) {
+			switch (c) {
+			case 'a': ourhowto |= RB_ASKNAME; break;
+			case 'd': ourhowto |= AB_DEBUG; break;
+			case 'q': ourhowto |= AB_QUIET; break;
+			case 's': ourhowto |= RB_SINGLE; break;
+			case 'v': ourhowto |= AB_VERBOSE; break;
+			}
+			continue;
+		}
+		strlcpy(root_string, cp, sizeof(root_string));
+		break;
+	}
+	if (ourhowto) {
+		boothowto |= ourhowto;
+		printf(" boothowto=%#x(%#x)", boothowto, ourhowto);
+	}
+	if (root_string[0])
+		printf(" root=%s", root_string);
+}
+
 void
 initppc(vaddr_t startkernel, vaddr_t endkernel,
-	void *a0, void *a1, void *a2, void *a3)
+	void *a0, void *a1, char *a2, char *a3)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
@@ -990,6 +1093,13 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	cn_tab = &e500_earlycons;
 	printf(" initppc(%#"PRIxVADDR", %#"PRIxVADDR", %p, %p, %p, %p)<enter>",
 	    startkernel, endkernel, a0, a1, a2, a3);
+
+	if (a2[0] != '\0')
+		printf(" consdev=<%s>", a2);
+	if (a3[0] != '\0') {
+		printf(" cmdline=<%s>", a3);
+		parse_cmdline(a3);
+	}
 
 	/*
 	 * Make sure we don't enter NAP or SLEEP if PSL_POW (MSR[WE]) is set.
@@ -1152,7 +1262,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	cpu_md_ops.md_cpunode_attach = pq3gpio_attach;
 #endif
 
-		printf(" initppc done!\n");
+	printf(" initppc done!\n");
 
 	/*
 	 * Look for the Book-E modules in the right place.
@@ -1364,18 +1474,22 @@ cpu_startup(void)
 		    IST_LEVEL, 0, 1, 2, 3);
 		break;
 #endif
-#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536) || defined(P2020)
+#if defined(MPC8544) || defined(MPC8572) || defined(MPC8536) \
+    || defined(P1025) || defined(P2020)
 	case SVR_MPC8536v1 >> 16:
 	case SVR_MPC8544v1 >> 16:
 	case SVR_MPC8572v1 >> 16:
+	case SVR_P1016v1 >> 16:
 	case SVR_P2010v2 >> 16:
 	case SVR_P2020v2 >> 16:
-		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
-		    0, 1, 2, 3);
-		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
-		    4, 5, 6, 7);
 		mpc85xx_pci_setup("pcie3-interrupt-map", 0x001800, IST_LEVEL,
 		    8, 9, 10, 11);
+		/* FALLTHROUGH */
+	case SVR_P1025v1 >> 16:
+		mpc85xx_pci_setup("pcie2-interrupt-map", 0x001800, IST_LEVEL,
+		    4, 5, 6, 7);
+		mpc85xx_pci_setup("pcie1-interrupt-map", 0x001800, IST_LEVEL,
+		    0, 1, 2, 3);
 		break;
 #endif
 	}

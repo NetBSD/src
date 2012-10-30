@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.16.2.2 2012/10/30 17:21:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.16.2.1 2012/04/17 00:07:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.16.2.2 2012/10/30 17:21:06 yamt Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -125,7 +125,13 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	/* Fill in the scsipi_channel. */
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
-	chan->chan_bustype = &scsi_bustype;
+	if (mpt->is_sas) {
+		chan->chan_bustype = &scsi_sas_bustype;
+	} else if (mpt->is_fc) {
+		chan->chan_bustype = &scsi_fc_bustype;
+	} else {
+		chan->chan_bustype = &scsi_bustype;
+	}
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
 	chan->chan_nluns = 8;

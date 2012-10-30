@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.46.2.1 2012/04/17 00:08:40 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.46.2.2 2012/10/30 17:22:46 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46.2.1 2012/04/17 00:08:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.46.2.2 2012/10/30 17:22:46 yamt Exp $");
 
 /*
  * TODO:
@@ -1552,6 +1552,14 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (ncif != NULL)
 			ifp->if_carp = (void *)ncif;
 		sc->sc_carpdev = ifp;
+		sc->sc_if.if_capabilities = ifp->if_capabilities &
+		             (IFCAP_TSOv4 | IFCAP_TSOv6 |
+                             IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
+                             IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
+                             IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx|
+                             IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_TCPv6_Rx|
+                             IFCAP_CSUM_UDPv6_Tx|IFCAP_CSUM_UDPv6_Rx);
+
 		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_FOREACH(vr, &cif->vhif_vrs, sc_list) {
 			if (vr == sc)
@@ -2008,6 +2016,11 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCDELMULTI:
 		error = carp_ether_delmulti(sc, ifr);
+		break;
+
+	case SIOCSIFCAP:
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	default:

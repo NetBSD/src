@@ -316,6 +316,22 @@ int drm_addmap_ioctl(struct drm_device *dev, void *data,
 	return 0;
 }
 
+static void
+drm_rmmap_user(void *addr, size_t size)
+{
+	vaddr_t va, eva;
+	paddr_t pa;
+	struct vm_page *pg;
+
+	va = (vaddr_t)addr;
+	eva = va + size;
+	for (; va < eva; va += PAGE_SIZE) {
+		pmap_extract(pmap_kernel(), va, &pa);
+		pg = PHYS_TO_VM_PAGE(pa);
+		pmap_page_protect(pg, VM_PROT_NONE);
+	}
+}
+
 void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 {
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
@@ -338,6 +354,11 @@ void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 		}
 		break;
 	case _DRM_SHM:
+
+		/*
+		 * Remove any user mappings before we free the kernel memory.
+		 */
+		drm_rmmap_user(map->handle, map->size);
 		free(map->handle, DRM_MEM_MAPS);
 		break;
 	case _DRM_AGP:

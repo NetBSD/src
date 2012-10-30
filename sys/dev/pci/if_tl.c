@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.96.8.1 2012/04/17 00:07:48 yamt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.96.8.2 2012/10/30 17:21:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96.8.1 2012/04/17 00:07:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.96.8.2 2012/10/30 17:21:32 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -142,7 +142,7 @@ static void ether_printheader(struct ether_header *);
 int tl_mii_read(device_t, int, int);
 void tl_mii_write(device_t, int, int, int);
 
-void tl_statchg(device_t);
+void tl_statchg(struct ifnet *);
 
 	/* I2C glue */
 static int tl_i2c_acquire_bus(void *, int);
@@ -891,9 +891,9 @@ tl_mii_write(device_t self, int phy, int reg, int val)
 }
 
 void
-tl_statchg(device_t self)
+tl_statchg(struct ifnet *ifp)
 {
-	tl_softc_t *sc = device_private(self);
+	tl_softc_t *sc = ifp->if_softc;
 	uint32_t reg;
 
 #ifdef TLDEBUG

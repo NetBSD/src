@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.37.4.2 2012/04/17 00:06:35 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.37.4.3 2012/10/30 17:19:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,13 +136,6 @@ ASENTRY_NOPROFILE(start)
 	RELOC(hwplanemask,%a0)
 	movl	%d5,%a0@		| save hwplanemask
 
-	movl	#0x41000000,%a0		| argument of 'x' command on boot
-	movl	%a0@(212),%a0		| (char *)base[53]
-	RELOC(bootarg,%a1)
-	movl	#63,%d0
-1:	movb	%a0@+,%a1@+		| copy to bootarg
-	dbra	%d0,1b			| upto 63 characters
-
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
@@ -167,6 +160,23 @@ Lstart0:
 	movl	%d1,%a0@
 	RELOC(fputype,%a0)
 	movl	%d2,%a0@
+
+	/*
+	 * save argument of 'x' command on boot per machine type
+	 * XXX: assume CPU_68040 is LUNA-II
+	 */
+	movl	#0x41000000,%a0
+	cmpl	#CPU_68040,%d0		| 68040?
+	jne	1f			| no, assume 68030 LUNA
+	movl	%a0@(8),%a0		| arg at (char *)base[2] on LUNA-II
+	jra	Lstart1
+1:
+	movl	%a0@(212),%a0		| arg at (char *)base[53] on LUNA
+Lstart1:
+	RELOC(bootarg,%a1)
+	movl	#63,%d0
+1:	movb	%a0@+,%a1@+		| copy to bootarg
+	dbra	%d0,1b			| upto 63 characters
 
 	/*
 	 * Now that we know what CPU we have, initialize the address error
@@ -1062,7 +1072,9 @@ GLOBAL(doadump)
  * and return to monitor.
  */
 ENTRY_NOPROFILE(doboot)
-        movw	#PSL_HIGHIPL,%sr	| no interrupts
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+	movl	_C_LABEL(boothowto),%d7	| load howto
+	movl	%sp@(4),%d2		| arg
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache5		| yes, skip
@@ -1085,18 +1097,9 @@ Lnocache5:
 	.long	0x4e7b0807		| movc %d0,%srp
 #endif /* M68040 */
 Lbootcommon:
-	movl	_C_LABEL(boothowto),%d0	| load howto
-	movl	%sp@(4),%d2		| arg
 	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
 	movl	#0,%d3
 	movc	%d3,%vbr		| monitor %vbr
-#if 0
-	andl	#0,%d0			| mask off
-	tstl	%d0			| 
-	bne	Lsboot			| sboot?
-	tstl	%d2
-	beq	Ldoreset
-#endif
 
 	movl	#0x41000000,%a0		| base = (int **)0x4100.0000
 	movl	%a0@,%d0		| *((int *)base[0])

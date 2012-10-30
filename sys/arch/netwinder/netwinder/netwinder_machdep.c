@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.76.2.1 2012/10/30 17:20:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.76 2011/07/01 20:50:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.76.2.1 2012/10/30 17:20:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -110,20 +110,9 @@ bs_protos(generic);
 #define	ISA_GETBYTE(r)		generic_bs_r_1(0, isa_base, (r))
 #define	ISA_PUTBYTE(r,v)	generic_bs_w_1(0, isa_base, (r), (v))
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
 static void netwinder_reset(void);
-u_int cpu_reset_address;
 
 u_int dc21285_fclk = 63750000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
 
 struct nwbootinfo nwbootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -143,17 +132,7 @@ vm_offset_t pagetables_start;
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-extern pv_addr_t kernelstack;	/* in arm32_machdep.c */
-
 vm_offset_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -695,7 +674,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 	/*
@@ -837,7 +816,7 @@ initarm(void *arg)
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Now that pmap is inited, we can set cpu_reset_address */
-	cpu_reset_address = (u_int)vtophys((vaddr_t)netwinder_reset);
+	cpu_reset_address_paddr = vtophys((vaddr_t)netwinder_reset);
 
 	/* Setup the IRQ system */
 	printf("irq ");
@@ -940,7 +919,7 @@ consinit(void)
 				   0, 8, 0);
 #if NPCKBC > 0
 		res = pckbc_cnattach(&isa_io_bs_tag,
-				     IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+				     IO_KBD, KBCMDP, PCKBC_KBD_SLOT, 0);
 		if (res)
 			printf("pckbc_cnattach: %d!\n", res);
 #endif

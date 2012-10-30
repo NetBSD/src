@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.9 2010/03/22 12:05:45 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.9.10.1 2012/10/30 17:22:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.9 2010/03/22 12:05:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.9.10.1 2012/10/30 17:22:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,8 @@ struct ugenhc_softc {
 	usbd_xfer_handle sc_intrxfer;
 };
 
-static int	ugenhc_probe(struct device *, struct cfdata *, void *);
-static void	ugenhc_attach(struct device *, struct device *, void *);
+static int	ugenhc_probe(device_t, cfdata_t, void *);
+static void	ugenhc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ugenhc, sizeof(struct ugenhc_softc),
 	ugenhc_probe, ugenhc_attach, NULL, NULL);
@@ -312,6 +312,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 
 ret:
 	xfer->status = err;
+	/* XXX locking */
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
 }
@@ -601,7 +602,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, O_RDWR, &error);
+			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
 			if (fd != -1)
 				break;
 			kpause("ugwait", false, hz/4, NULL);
@@ -626,7 +627,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, O_RDWR, &error);
+			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
 			if (fd == -1)
 				break;
 
@@ -842,6 +843,7 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 		    SIMPLEQ_FIRST(&xfer->pipe->queue));
 	} else {
 		/* biglocked */
+		/* XXX locking */
 		err = usb_insert_transfer(xfer);
 		if (err)
 			return err;
@@ -969,6 +971,7 @@ ugenhc_open(struct usbd_pipe *pipe)
 			}
 
 			makeugendevstr(sc->sc_devnum, endpt, buf);
+			/* XXX: theoretically should convert oflags */
 			fd = rumpuser_open(buf, oflags, &error);
 			if (fd == -1) {
 				return USBD_INVAL; /* XXX: no mapping */
@@ -1051,7 +1054,7 @@ static const struct usbd_bus_methods ugenhc_bus_methods = {
 };
 
 static int
-ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
+ugenhc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
 	int error;
@@ -1064,7 +1067,7 @@ ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ugenhc_attach(struct device *parent, struct device *self, void *aux)
+ugenhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 	struct ugenhc_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Exp $	*/
+/*	$NetBSD: if_smsh_gpmc.c,v 1.1.14.1 2012/10/30 17:19:22 yamt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,17 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.1.14.1 2012/10/30 17:19:22 yamt Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/bus.h>
 #include <sys/systm.h>
-
-#include <arm/omap/omap2_gpmcvar.h>
-
-#include <evbarm/gumstix/gumstixvar.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -47,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_smsh_gpmc.c,v 1.1 2010/08/28 04:54:46 kiyohara Ex
 #include <dev/ic/lan9118var.h>
 #include <dev/ic/lan9118reg.h>
 
-#include "locators.h"
+#include <arm/omap/omap2_gpmcvar.h>
 
 
 static int smsh_gpmc_match(device_t, struct cfdata *, void *);
@@ -92,9 +90,22 @@ smsh_gpmc_attach(device_t parent, device_t self, void *aux)
 {
 	struct lan9118_softc *sc = device_private(self);
 	struct gpmc_attach_args *gpmc = aux;
+	prop_dictionary_t dict = device_properties(self);
 	void *ih;
 
 	sc->sc_dev = self;
+
+	/*
+	 * Prefer the Ethernet address in device properties.
+	 */
+	prop_data_t ea = prop_dictionary_get(dict, "mac-address");
+	if (ea != NULL) {
+		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+		memcpy(sc->sc_enaddr, prop_data_data_nocopy(ea),
+		    ETHER_ADDR_LEN);
+		sc->sc_flags |= LAN9118_FLAGS_NO_EEPROM;
+	}
 
 	/* Map i/o space. */
 	if (bus_space_map(gpmc->gpmc_iot, gpmc->gpmc_addr, LAN9118_IOSIZE, 0,

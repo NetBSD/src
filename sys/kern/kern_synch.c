@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.295.2.3 2012/05/23 10:08:11 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.295.2.4 2012/10/30 17:22:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.3 2012/05/23 10:08:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.295.2.4 2012/10/30 17:22:31 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -136,20 +136,6 @@ u_int			sched_pstats_ticks	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_crit	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_klock	__cacheline_aligned;
 static struct evcnt	kpreempt_ev_immed	__cacheline_aligned;
-
-/*
- * During autoconfiguration or after a panic, a sleep will simply lower the
- * priority briefly to allow interrupts, then return.  The priority to be
- * used (safepri) is machine-dependent, thus this value is initialized and
- * maintained in the machine-dependent layers.  This priority will typically
- * be 0, or the lowest priority that is safe for use on the interrupt stack;
- * it can be made higher to block network software interrupts after panics.
- */
-#ifdef IPL_SAFEPRI
-int	safepri = IPL_SAFEPRI;
-#else
-int	safepri;
-#endif
 
 void
 synch_init(void)
@@ -536,6 +522,7 @@ mi_switch(lwp_t *l)
 
 	binuptime(&bt);
 
+	KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
@@ -726,8 +713,17 @@ mi_switch(lwp_t *l)
 		}
 
 		/* Switch to the new LWP.. */
+#ifdef MULTIPROCESSOR
+		KASSERT(curlwp == ci->ci_curlwp);
+#endif
+		KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 		prevlwp = cpu_switchto(l, newl, returning);
 		ci = curcpu();
+#ifdef MULTIPROCESSOR
+		KASSERT(curlwp == ci->ci_curlwp);
+#endif
+		KASSERTMSG(l == curlwp, "l %p curlwp %p prevlwp %p",
+		    l, curlwp, prevlwp);
 
 		/*
 		 * Switched away - we have new curlwp.
@@ -1184,6 +1180,16 @@ sched_pstats(void)
 		/* Calculating p_pctcpu only for ps(1) */
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 
+		if (__predict_false(runtm < 0)) {
+			if (!backwards) {
+				backwards = true;
+				printf("WARNING: negative runtime; "
+				    "monotonic clock has gone backwards\n");
+			}
+			mutex_exit(p->p_lock);
+			continue;
+		}
+
 		/*
 		 * Check if the process exceeds its CPU resource allocation.
 		 * If over the hard limit, kill it with SIGKILL.
@@ -1207,13 +1213,7 @@ sched_pstats(void)
 			}
 		}
 		mutex_exit(p->p_lock);
-		if (__predict_false(runtm < 0)) {
-			if (!backwards) {
-				backwards = true;
-				printf("WARNING: negative runtime; "
-				    "monotonic clock has gone backwards\n");
-			}
-		} else if (__predict_false(sig)) {
+		if (__predict_false(sig)) {
 			KASSERT((p->p_flag & PK_SYSTEM) == 0);
 			psignal(p, sig);
 		}

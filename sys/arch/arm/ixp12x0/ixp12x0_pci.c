@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.10.12.1 2012/04/17 00:06:06 yamt Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.10.12.2 2012/10/30 17:19:05 yamt Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.1 2012/04/17 00:06:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.2 2012/10/30 17:19:05 yamt Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -53,13 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.10.12.1 2012/04/17 00:06:06 yamt E
 #include "opt_pci.h"
 #include "pci.h"
 
-void ixp12x0_pci_attach_hook(struct device *, struct device *,
+void ixp12x0_pci_attach_hook(device_t, device_t,
 	struct pcibus_attach_args *);
 int ixp12x0_pci_bus_maxdevs(void *, int);
 pcitag_t ixp12x0_pci_make_tag(void *, int, int, int);
 void ixp12x0_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t ixp12x0_pci_conf_read(void *, pcitag_t, int);
 void ixp12x0_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void ixp12x0_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 static vaddr_t ixp12x0_pci_conf_setup(void *, struct ixp12x0_softc *, pcitag_t, int);
 
@@ -92,6 +93,7 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 	pc->pc_decompose_tag = ixp12x0_pci_decompose_tag;
 	pc->pc_conf_read = ixp12x0_pci_conf_read;
 	pc->pc_conf_write = ixp12x0_pci_conf_write;
+	pc->pc_conf_interrupt = ixp12x0_pci_conf_interrupt;
 
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
 	ioext  = extent_create("pciio", 0, IXP12X0_PCI_IO_SIZE - 1,
@@ -101,7 +103,7 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 				IXP12X0_PCI_MEM_HWBASE +
 				IXP12X0_PCI_MEM_SIZE - 1,
 				NULL, 0, EX_NOWAIT);
-	printf("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);
 
@@ -111,13 +113,13 @@ ixp12x0_pci_init(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+ixp12x0_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 	/* Nothing */
 }
 
 void
-ixp12x0_pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+ixp12x0_pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 	/* Nothing to do. */
 }

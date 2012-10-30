@@ -1,3 +1,4 @@
+/*	$NetBSD: microcode.h,v 1.1.94.1 2012/10/30 17:21:19 yamt Exp $	*/
 /*	$OpenBSD: microcode.h,v 1.1 2006/08/17 08:32:30 damien Exp $	*/
 
 /*-

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.9 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.9.2.1 2012/10/30 17:20:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.9 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.9.2.1 2012/10/30 17:20:01 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -224,7 +224,7 @@ static int	rmixl_pcix_match(device_t, cfdata_t, void *);
 static void	rmixl_pcix_attach(device_t, device_t, void *);
 static void	rmixl_pcix_init(rmixl_pcix_softc_t *);
 static void	rmixl_pcix_init_errors(rmixl_pcix_softc_t *);
-static void	rmixl_pcix_attach_hook(struct device *, struct device *,
+static void	rmixl_pcix_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static void	rmixl_pcix_intcfg(rmixl_pcix_softc_t *);
 static void	rmixl_pcix_errata(rmixl_pcix_softc_t *);
@@ -596,7 +596,7 @@ rmixl_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline)
 }
 
 void
-rmixl_pcix_attach_hook(struct device *parent, struct device *self,
+rmixl_pcix_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	DPRINTF(("%s: pba_bus %d, pba_bridgetag %p, pc_conf_v %p\n",

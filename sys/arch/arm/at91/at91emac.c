@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$Id: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.10 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.10.2.1 2012/10/30 17:18:58 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,7 +109,7 @@ static int	emac_mediachange(struct ifnet *);
 static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
 int		emac_mii_readreg (device_t, int, int);
 void		emac_mii_writereg (device_t, int, int, int);
-void		emac_statchg (device_t );
+void		emac_statchg (struct ifnet *);
 void		emac_tick (void *);
 static int	emac_ifioctl (struct ifnet *, u_long, void *);
 static void	emac_ifstart (struct ifnet *);
@@ -118,7 +118,7 @@ static int	emac_ifinit (struct ifnet *);
 static void	emac_ifstop (struct ifnet *, int);
 static void	emac_setaddr (struct ifnet *);
 
-CFATTACH_DECL(at91emac, sizeof(struct emac_softc),
+CFATTACH_DECL_NEW(at91emac, sizeof(struct emac_softc),
     emac_match, emac_attach, NULL, NULL);
 
 #ifdef	EMAC_DEBUG
@@ -360,8 +360,8 @@ emac_init(struct emac_softc *sc)
 	EMAC_WRITE(ETH_CFG, ETH_CFG_CLK_32 | ETH_CFG_SPD | ETH_CFG_FD | ETH_CFG_BIG);
 	EMAC_WRITE(ETH_CTL, ETH_CTL_MPE);
 #if 0
-	if (device_cfdata(&sc->sc_dev)->cf_flags)
-		mdcdiv = device_cfdata(&sc->sc_dev)->cf_flags;
+	if (device_cfdata(sc->sc_dev)->cf_flags)
+		mdcdiv = device_cfdata(sc->sc_dev)->cf_flags;
 #endif
 	/* set ethernet address */
 	EMAC_WRITE(ETH_SA1L, (sc->sc_enaddr[3] << 24)
@@ -526,7 +526,8 @@ emac_mii_readreg(device_t self, int phy, int reg)
 {
 	struct emac_softc *sc;
 
-	sc = (struct emac_softc *)self;
+	sc = device_private(self);
+
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_RD
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
 			     | ((reg << ETH_MAN_REGA_SHIFT) & ETH_MAN_REGA)
@@ -539,7 +540,9 @@ void
 emac_mii_writereg(device_t self, int phy, int reg, int val)
 {
 	struct emac_softc *sc;
-	sc = (struct emac_softc *)self;
+
+	sc = device_private(self);
+
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_WR
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
 			     | ((reg << ETH_MAN_REGA_SHIFT) & ETH_MAN_REGA)
@@ -550,9 +553,9 @@ emac_mii_writereg(device_t self, int phy, int reg, int val)
 
 	
 void
-emac_statchg(device_t self)
+emac_statchg(struct ifnet *ifp)
 {
-        struct emac_softc *sc = (struct emac_softc *)self;
+        struct emac_softc *sc = ifp->if_softc;
         u_int32_t reg;
 
         /*

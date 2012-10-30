@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.26 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.26.12.1 2012/10/30 17:21:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.26 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.26.12.1 2012/10/30 17:21:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static void
 adv_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	ASC_SOFTC      *sc = (void *) self;
+	ASC_SOFTC      *sc = device_private(self);
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
@@ -119,6 +119,7 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": SCSI controller\n");
 
+	sc->sc_dev = self;
 	sc->sc_flags = 0x0;
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -190,7 +191,7 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
 			&iot, &ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -214,7 +215,7 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map Interrupt line
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -224,13 +225,13 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Attach all the sub-devices we can find
@@ -238,5 +239,5 @@ adv_pci_attach(device_t parent, device_t self, void *aux)
 	adv_attach(sc);
 }
 
-CFATTACH_DECL(adv_pci, sizeof(ASC_SOFTC),
+CFATTACH_DECL_NEW(adv_pci, sizeof(ASC_SOFTC),
     adv_pci_match, adv_pci_attach, NULL, NULL);

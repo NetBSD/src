@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 2011/03/10 07:47:15 bsh Exp $	*/
+/*	$NetBSD: pte.h,v 1.10.4.1 2012/10/30 17:19:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -107,6 +107,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_L_FRAME	(~L2_L_OFFSET)
 #define	L2_L_SHIFT	16
 
+#define	L2_S_SEGSIZE	(PAGE_SIZE * L2_S_SIZE / 4)
 #define	L2_S_SIZE	0x00001000	/* 4K */
 #define	L2_S_OFFSET	(L2_S_SIZE - 1)
 #define	L2_S_FRAME	(~L2_S_OFFSET)
@@ -166,6 +167,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_V6_APX	0x00008000	/* ARMv6 AP eXtension */
 #define	L1_S_V6_S	0x00010000	/* ARMv6 Shared */
 #define	L1_S_V6_nG	0x00020000	/* ARMv6 not-Global */
+#define	L1_S_V6_SS	0x00040000	/* ARMv6 SuperSection */
+#define	L1_S_V6_NS	0x00080000	/* ARMv6 Not Secure */
 
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
@@ -195,7 +198,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_TYPE_INV	0x00		/* Invalid (fault) */
 #define	L2_TYPE_L	0x01		/* Large Page */
 #define	L2_TYPE_S	0x02		/* Small Page */
-#define	L2_TYPE_T	0x03		/* Tiny Page */
+#define	L2_TYPE_T	0x03		/* Tiny Page (not armv7) */
 #define	L2_TYPE_MASK	0x03		/* mask of type bits */
 
 	/*
@@ -297,7 +300,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	TEX_XSCALE_X	0x01		/* X modifies C and B */
 
 /*
- * Type Extension bits for ARM V6 MMU
+ * Type Extension bits for ARM V6 and V7 MMU
  *
  * TEX C B                                    Shared
  * 000 0 0  Strong order                      yes

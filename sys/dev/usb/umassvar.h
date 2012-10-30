@@ -1,4 +1,5 @@
-/*	$NetBSD: umassvar.h,v 1.31.2.1 2012/04/17 00:08:08 yamt Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.31.2.2 2012/10/30 17:22:09 yamt Exp $	*/
+
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -161,6 +162,9 @@ struct umass_softc {
 
 	const struct umass_wire_methods *sc_methods;
 
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_detach_cv;
+
 	u_int8_t		sc_wire;	/* wire protocol */
 #define	UMASS_WPROTO_UNSPEC	0
 #define	UMASS_WPROTO_BBB	1
@@ -180,7 +184,6 @@ struct umass_softc {
 #define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
 #define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
 #define	UMASS_QUIRK_NOGETMAXLUN		0x00000008
-#define	UMASS_QUIRK_IGNORE_RESIDUE	0x00000010
 
 #define UMASS_QUIRK_USE_DEFAULTMATCH	-1
 

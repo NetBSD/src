@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.2.1 2012/04/17 00:06:42 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.2.2 2012/10/30 17:20:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.2.1 2012/04/17 00:06:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.2.2 2012/10/30 17:20:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -124,13 +124,6 @@ struct	mvmeprom_brdid  boardid;
 paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
-int	physmem;		/* size of physical memory */
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 /*
  * The driver for the ethernet chip appropriate to the

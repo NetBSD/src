@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.77.4.1 2012/04/17 00:08:52 yamt Exp $	*/
+/*	$NetBSD: namei.h,v 1.77.4.2 2012/10/30 17:22:57 yamt Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.25 2011/11/25 16:51:43 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.27 2012/10/13 17:46:50 dholland Exp 
  */
 
 /*
@@ -91,6 +91,7 @@ struct nameidata {
 	/*
 	 * Arguments to namei/lookup.
 	 */
+	struct vnode *ni_startdir;	/* starting dir, cwd if null */
 	struct pathbuf *ni_pathbuf;	/* pathname container */
 	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
 	/*
@@ -171,14 +172,23 @@ struct nameidata {
 #define	PARAMASK	0x0eee300	/* mask of parameter descriptors */
 
 /*
- * Initialization of an nameidata structure.
+ * Initialization of a nameidata structure.
  */
 #define NDINIT(ndp, op, flags, pathbuf) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
+	(ndp)->ni_startdir = NULL; \
 	(ndp)->ni_pathbuf = pathbuf; \
 	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
+
+/*
+ * Use this to set the start directory for openat()-type operations.
+ */
+#define NDAT(ndp, dir) {			\
+	(ndp)->ni_startdir = (dir);		\
+}
+
 #endif
 
 /*

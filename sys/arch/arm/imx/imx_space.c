@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
+/* $Id: imx_space.c,v 1.3.2.1 2012/10/30 17:19:03 yamt Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: imx_space.c,v 1.3.2.1 2012/10/30 17:19:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -162,16 +162,53 @@ struct bus_space imx_bs_tag = {
 	generic_armv4_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read (single) */
+	generic_bs_r_1,
+	generic_armv4_bs_r_2,
+	generic_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read multiple */
+	generic_bs_rm_1,
+	generic_armv4_bs_rm_2,
+	generic_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region */
+	generic_bs_rr_1,
+	generic_armv4_bs_rr_2,
+	generic_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write (single) */
+	generic_bs_w_1,
+	generic_armv4_bs_w_2,
+	generic_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write multiple */
+	generic_bs_wm_1,
+	generic_armv4_bs_wm_2,
+	generic_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region */
+	generic_bs_wr_1,
+	generic_armv4_bs_wr_2,
+	generic_bs_wr_4,
+	bs_notimpl_bs_wr_8,
+#endif
 };
 
 int
 imx_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	      int flag, bus_space_handle_t *bshp)
 {
-	u_long startpa, endpa, pa;
-	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap	*pd;
+	paddr_t startpa, endpa, pa;
+	vaddr_t va;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -192,15 +229,8 @@ imx_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE);
 	}
 	pmap_update(pmap_kernel());
 

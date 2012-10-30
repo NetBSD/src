@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_ipivar.h,v 1.1 2008/11/20 08:02:48 cliff Exp $	*/
+/*	$NetBSD: gemini_ipivar.h,v 1.1.22.1 2012/10/30 17:19:02 yamt Exp $	*/
 
 #ifndef _GEMINI_IPIVAR_H
 #define _GEMINI_IPIVAR_H
@@ -14,7 +14,7 @@ typedef struct gemini_ipi_intrq {
 } gemini_ipi_intrq_t;
 
 typedef struct gemini_ipi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
         bus_space_handle_t sc_ioh;
         bus_addr_t sc_addr;

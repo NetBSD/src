@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.14 2011/07/01 19:11:34 dyoung Exp $ */
+/* $NetBSD: tslcd.c,v 1.14.2.1 2012/10/30 17:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14.2.1 2012/10/30 17:19:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,14 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.14 2011/07/01 19:11:34 dyoung Exp $");
 #include <evbarm/tsarm/tsarmreg.h>
 
 struct tslcd_softc {
-	struct device sc_dev;
 	struct hd44780_chip sc_hlcd;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
 };
 
-static int	tslcd_match(struct device *, struct cfdata *, void *);
-static void	tslcd_attach(struct device *, struct device *, void *);
+static int	tslcd_match(device_t, cfdata_t, void *);
+static void	tslcd_attach(device_t, device_t, void *);
 
 static void	tslcd_writereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
 static u_int8_t	tslcd_readreg(struct hd44780_chip *, u_int32_t, u_int32_t);
@@ -86,7 +85,7 @@ extern const struct wsdisplay_emulops hlcd_emulops;
 extern const struct wsdisplay_accessops hlcd_accessops;
 extern struct cfdriver tslcd_cd;
 
-CFATTACH_DECL(tslcd, sizeof(struct tslcd_softc),
+CFATTACH_DECL_NEW(tslcd, sizeof(struct tslcd_softc),
     tslcd_match, tslcd_attach, NULL, NULL);
 
 static const struct wsscreen_descr tslcd_stdscreen = {
@@ -106,7 +105,7 @@ static const struct wsscreen_list tslcd_screenlist = {
 };
 
 static int
-tslcd_match(struct device *parent, struct cfdata *match, void *aux)
+tslcd_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
@@ -124,9 +123,9 @@ tslcd_match(struct device *parent, struct cfdata *match, void *aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-tslcd_attach(struct device *parent, struct device *self, void *aux)
+tslcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct tslcd_softc *sc = (void *)self;
+	struct tslcd_softc *sc = device_private(self);
 	struct tspld_attach_args *taa = aux;
 	struct wsemuldisplaydev_attach_args waa;
 
@@ -162,7 +161,7 @@ tslcd_attach(struct device *parent, struct device *self, void *aux)
 static void
 tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd)
 {
-	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
+	struct tslcd_softc *sc = device_private(hd->sc_dev);
 	u_int8_t ctrl;
 
 	if (hd->sc_dev_ok == 0)
@@ -208,7 +207,7 @@ tslcd_writereg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs, u_int8_t cmd
 static u_int8_t
 tslcd_readreg(struct hd44780_chip *hd, u_int32_t en, u_int32_t rs)
 {
-	struct tslcd_softc *sc = (struct tslcd_softc *)hd->sc_dev;
+	struct tslcd_softc *sc = device_private(hd->sc_dev);
 	u_int8_t ret, ctrl;
 
 	if (hd->sc_dev_ok == 0)

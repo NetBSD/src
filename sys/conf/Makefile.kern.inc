@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.149.2.1 2012/04/17 00:07:23 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.149.2.2 2012/10/30 17:20:48 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -70,7 +70,6 @@ CWARNFLAGS+=	-Wold-style-definition
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
-. if defined(HAVE_GCC) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
@@ -79,7 +78,6 @@ CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CWARNFLAGS+=	-Wold-style-definition
 .  endif
-. endif
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
@@ -96,8 +94,9 @@ CFLAGS+=	${DEBUG} ${COPTS}
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 # XXX
-.if defined(HAVE_GCC)
+.if defined(HAVE_GCC) || defined(HAVE_LLVM)
 CFLAGS+=	-fno-strict-aliasing
+CFLAGS+=	-fno-common
 .endif
 
 .if ${USE_SSP:Uno} == "yes"
@@ -565,11 +564,9 @@ VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
 .for __varstack in ${VARSTACK}
 COPTS.${__varstack:T} += -Wno-stack-protector
 .endfor
-.endif
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}

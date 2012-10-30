@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.13 2008/10/02 08:21:57 sborrill Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.13.28.1 2012/10/30 17:20:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ struct aac_ccb {
 	u_int			ac_flags;
 
 	void			(*ac_intr)(struct aac_ccb *);
-	struct device		*ac_device;
+	device_t		ac_device;
 	void			*ac_context;
 };
 #define AAC_CCB_MAPPED	 	0x01
@@ -292,7 +292,7 @@ struct aac_drive {
  * Per-controller structure.
  */
 struct aac_softc {
-	struct device		sc_dv;
+	device_t		sc_dv;
 	void			*sc_ih;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;

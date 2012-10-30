@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.46.2.1 2012/04/17 00:06:48 yamt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.46.2.2 2012/10/30 17:20:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -295,7 +295,17 @@ switchto_restore:
 #endif
 	ldreg	%r0,CFRAME_LR(%r1)
 	mtlr	%r0
+	blr				/* CPUINIT needs a raw blr */
+
 ENTRY_NOPROFILE(emptyidlespin)
+#ifdef DIAGNOSTIC
+	GET_CPUINFO(%r3)
+	lbz	%r4,CI_CPL(%r3)
+	twnei	%r4,IPL_NONE
+	mfmsr	%r5
+	andi.	%r5,%r5,PSL_EE@l
+	tweqi	%r5,PSL_EE@l
+#endif
 	blr				/* CPUINIT needs a raw blr */
 
 #ifdef __HAVE_FAST_SOFTINTS

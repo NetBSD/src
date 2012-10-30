@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.11 2002/12/15 09:24:26 takemura Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.11.146.1 2012/10/30 17:19:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 TAKEMURA Shin All rights reserved.
@@ -40,7 +40,7 @@ enum vrpiu_adstat {
 
 
 struct vrpiu_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_buf_ioh;
@@ -52,7 +52,7 @@ struct vrpiu_softc {
 	enum vrpiu_adstat sc_adstat;
 	u_int16_t sc_interval;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 
 	struct tpcalib_softc sc_tpcalib;
 

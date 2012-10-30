@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.13.34.1 2012/04/17 00:07:26 yamt Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.13.34.2 2012/10/30 17:20:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -74,8 +74,6 @@ struct midi_dev {
 };
 
 struct sequencer_softc {
-	struct	device dev;
-	struct	device *sc_dev;	/* Hardware device struct */
 	callout_t sc_callout;
 	kmutex_t lock;
 	kcondvar_t wchan;

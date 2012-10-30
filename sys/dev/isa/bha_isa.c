@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.34 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.34.12.1 2012/10/30 17:21:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.34 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.34.12.1 2012/10/30 17:21:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.34 2009/05/12 09:10:15 cegger Exp $");
 int	bha_isa_probe(device_t, cfdata_t, void *);
 void	bha_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bha_isa, sizeof(struct bha_softc),
+CFATTACH_DECL_NEW(bha_isa, sizeof(struct bha_softc),
     bha_isa_probe, bha_isa_attach, NULL, NULL);
 
 /*
@@ -120,7 +120,7 @@ void
 bha_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct bha_softc *sc = (void *)self;
+	struct bha_softc *sc = device_private(self);
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct bha_probe_data bpd;
@@ -129,8 +129,9 @@ bha_isa_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, BHA_ISA_IOSIZE, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -138,14 +139,14 @@ bha_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	if (!bha_probe_inquiry(iot, ioh, &bpd)) {
-		aprint_error_dev(&sc->sc_dev, "bha_isa_attach failed\n");
+		aprint_error_dev(sc->sc_dev, "bha_isa_attach failed\n");
 		return;
 	}
 
 	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, bpd.sc_drq)) != 0) {
-			aprint_error_dev(&sc->sc_dev, " unable to cascade DRQ, error = %d\n", error);
+			aprint_error_dev(sc->sc_dev, " unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	} else {
@@ -158,7 +159,7 @@ bha_isa_attach(device_t parent, device_t self, void *aux)
 		(void) bha_info(sc);
 		if (strcmp(sc->sc_firmware, "3.37") < 0)
 		    printf("%s: buggy VLB controller, disabling 32-bit DMA\n",
-		        device_xname(&sc->sc_dev));
+		        device_xname(sc->sc_dev));
 		else
 			sc->sc_dmaflags = ISABUS_DMA_32BIT;
 	}
@@ -166,7 +167,7 @@ bha_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ic, bpd.sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_text.c,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
+/*	$NetBSD: iscsi_text.c,v 1.1.2.2 2012/10/30 17:21:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 #include "base64.h"
 #include <sys/md5.h>
 #include <sys/cprng.h>
+
+/* define to send T_BIGNUM in hex format instead of base64 */
+/* #define ISCSI_HEXBIGNUMS */
 
 #define isdigit(x) ((x) >= '0' && (x) <= '9')
 #define toupper(x) ((x) & ~0x20)
@@ -555,6 +558,10 @@ get_parameter(uint8_t *buf, negotiation_parameter_t *par)
 		return skiptozero(bp);
 	}
 
+	DEB(10, ("get_par: key <%s>=%d, val=%d, ret %p\n",
+			buf, i, entries[i].val, bp));
+	DEB(10, ("get_par: value '%s'\n",bp));
+
 	switch (entries[i].val) {
 	case T_NUM:
 		bp = get_numval(bp, &par->val.nval[0]);
@@ -589,8 +596,6 @@ get_parameter(uint8_t *buf, negotiation_parameter_t *par)
 		bp = NULL;
 		break;
 	}
-	DEB(10, ("get_par: key <%s>=%d, val=%d, ret %p\n",
-			buf, i, entries[i].val, bp));
 	return bp;
 }
 
@@ -619,6 +624,38 @@ my_strcpy(uint8_t *dest, const uint8_t *src)
 	return cc;
 }
 
+/*
+ * put_bignumval:
+ *    Write a large numeric value.
+ *    NOTE: Overwrites source string.
+ *
+ *    Parameter:
+ *          buf      The buffer pointer
+ *          par      The parameter
+ *
+ *    Returns:    The pointer to the next parameter, NULL on error.
+ */
+
+STATIC unsigned
+put_bignumval(negotiation_parameter_t *par, uint8_t *buf)
+{
+#ifdef ISCSI_HEXBIGNUMS
+	int k, c;
+
+	my_strcpy(buf, "0x");
+	for (k=0; k<par->list_num; ++k) {
+		c = par->val.sval[k] >> 4;
+		buf[2+2*k] = c < 10 ? '0' + c : 'a' + (c-10);
+		c = par->val.sval[k] & 0xf;
+		buf[2+2*k+1] = c < 10 ? '0' + c : 'a' + (c-10);
+	}
+	buf[2+2*k] = '\0';
+
+	return 2+2*par->list_num;
+#else
+	return base64_encode(par->val.sval, par->list_num, buf);
+#endif
+}
 
 /*
  * put_parameter:
@@ -635,8 +672,11 @@ STATIC unsigned
 put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 {
 	int i;
-	unsigned	cc;
+	unsigned	cc, cl;
 	const uint8_t *sp;
+
+	DEB(10, ("put_par: key <%s>=%d, val=%d\n",
+		entries[par->key].name, par->key, entries[par->key].val));
 
 	if (par->key > MAX_KEY) {
 		return snprintf(buf, len, "%s=NotUnderstood", par->val.sval);
@@ -647,21 +687,21 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 	for (i = 0; i < par->list_num; i++) {
 		switch (entries[par->key].val) {
 		case T_NUM:
-			cc += snprintf(&buf[cc], len - cc, "%d", par->val.nval[i]);
+			cl = snprintf(&buf[cc], len - cc, "%d",
+			               par->val.nval[i]);
 			break;
 
 		case T_BIGNUM:
-			/* list_num holds value size */
-			cc += base64_encode(par->val.sval, par->list_num, &buf[cc]);
+			cl = put_bignumval(par, &buf[cc]);
 			i = par->list_num;
 			break;
 
 		case T_STRING:
-			cc += my_strcpy(&buf[cc], par->val.sval);
+			cl =  my_strcpy(&buf[cc], par->val.sval);
 			break;
 
 		case T_YESNO:
-			cc += my_strcpy(&buf[cc],
+			cl = my_strcpy(&buf[cc],
 				(par->val.nval[i]) ? "Yes" : "No");
 			break;
 
@@ -680,18 +720,19 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 				sp = "None";
 				break;
 			}
-			cc += my_strcpy(&buf[cc], sp);
+			cl = my_strcpy(&buf[cc], sp);
 			break;
 
 		case T_DIGEST:
-			cc += my_strcpy(&buf[cc], (par->val.nval[i]) ? "CRC32C" : "None");
+			cl = my_strcpy(&buf[cc],
+				(par->val.nval[i]) ? "CRC32C" : "None");
 			break;
 
 		case T_RANGE:
 			if ((i + 1) >= par->list_num) {
-				cc += my_strcpy(&buf[cc], "Reject");
+				cl = my_strcpy(&buf[cc], "Reject");
 			} else {
-				cc += snprintf(&buf[cc], len - cc,
+				cl = snprintf(&buf[cc], len - cc,
 						"%d~%d", par->val.nval[i],
 						par->val.nval[i + 1]);
 				i++;
@@ -699,26 +740,31 @@ put_parameter(uint8_t *buf, unsigned len, negotiation_parameter_t *par)
 			break;
 
 		case T_SENDT:
-			cc += my_strcpy(&buf[cc], par->val.sval);
+			cl = my_strcpy(&buf[cc], par->val.sval);
 			break;
 
 		case T_SESS:
-			cc += my_strcpy(&buf[cc],
+			cl = my_strcpy(&buf[cc],
 				(par->val.nval[i]) ? "Normal" : "Discovery");
 			break;
 
 		default:
+			cl = 0;
 			/* We should't be here... */
 			DEBOUT(("Invalid type %d in put_parameter!\n",
 					entries[par->key].val));
 			break;
 		}
+
+		DEB(10, ("put_par: value '%s'\n",&buf[cc]));
+
+		cc += cl;
 		if ((i + 1) < par->list_num) {
 			buf[cc++] = ',';
 		}
 	}
 
-	buf[cc] = 0x0;					/* make sure it's terminated */
+	buf[cc] = 0x0;				/* make sure it's terminated */
 	return cc + 1;				/* return next place in list */
 }
 
@@ -781,7 +827,11 @@ parameter_size(negotiation_parameter_t *par)
 
 		case T_BIGNUM:
 			/* list_num holds value size */
+#ifdef ISCSI_HEXBIGNUMS
+			size += 2 + 2*par->list_num;
+#else
 			size += base64_enclen(par->list_num);
+#endif
 			i = par->list_num;
 			break;
 
@@ -1226,14 +1276,14 @@ assemble_login_parameters(connection_t *conn, ccb_t *ccb, pdu_t *pdu)
 	}
 	ccb->temp_data = state;
 
-	if (!InitiatorName[0]) {
+	if (!iscsi_InitiatorName[0]) {
 		DEBOUT(("No InitiatorName\n"));
 		return ISCSI_STATUS_PARAMETER_MISSING;
 	}
-	set_key_s(state, K_InitiatorName, InitiatorName);
+	set_key_s(state, K_InitiatorName, iscsi_InitiatorName);
 
-	if (InitiatorAlias[0])
-		set_key_s(state, K_InitiatorAlias, InitiatorAlias);
+	if (iscsi_InitiatorAlias[0])
+		set_key_s(state, K_InitiatorAlias, iscsi_InitiatorAlias);
 
 	conn->Our_MaxRecvDataSegmentLength =
 		(par->is_present.MaxRecvDataSegmentLength)
@@ -1248,7 +1298,7 @@ assemble_login_parameters(connection_t *conn, ccb_t *ccb, pdu_t *pdu)
 	if (par->is_present.user_name)
 		copyinstr(par->user_name, state->user_name, MAX_STRING, &sz);
 	else
-		strlcpy(state->user_name, InitiatorName,
+		strlcpy(state->user_name, iscsi_InitiatorName,
 			sizeof(state->user_name));
 
 	next = TRUE;
@@ -1773,11 +1823,12 @@ set_negotiated_parameters(ccb_t *ccb)
 		state->FirstBurstLength, state->InitialR2T,
 		state->ImmediateData));
 
-	conn->max_transfer = min(sess->MaxBurstLength,
-					conn->MaxRecvDataSegmentLength);
+	conn->max_transfer = min(sess->MaxBurstLength, conn->MaxRecvDataSegmentLength);
 
 	conn->max_firstimmed = (!sess->ImmediateData) ? 0 :
 				min(sess->FirstBurstLength, conn->max_transfer);
 
-	conn->max_firstdata = (sess->InitialR2T) ? 0 : sess->FirstBurstLength;
+	conn->max_firstdata = (sess->InitialR2T || sess->FirstBurstLength < conn->max_firstimmed) ? 0 :
+				min(sess->FirstBurstLength - conn->max_firstimmed, conn->max_transfer);
+
 }

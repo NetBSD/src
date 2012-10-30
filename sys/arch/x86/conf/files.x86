@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.75.2.2 2012/05/23 10:07:51 yamt Exp $
+#	$NetBSD: files.x86,v 1.75.2.3 2012/10/30 17:20:32 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -96,6 +96,7 @@ file	arch/x86/x86/x86_machdep.c
 
 file	arch/x86/x86/cpu_ucode.c	cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_intel.c	cpu_ucode needs-flag
 
 define	lapic
 file	arch/x86/x86/lapic.c		lapic needs-flag

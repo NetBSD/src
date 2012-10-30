@@ -1,4 +1,4 @@
-#	$NetBSD: std.cats,v 1.8 2008/01/27 12:37:11 chris Exp $
+#	$NetBSD: std.cats,v 1.8.44.1 2012/10/30 17:19:15 yamt Exp $
 #
 # standard NetBSD/cats options
 
@@ -12,6 +12,7 @@ options 	EXEC_ELF32
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+options 	_ARM32_NEED_BUS_DMA_BOUNCE
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet supported
 

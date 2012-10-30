@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.9 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.9.12.1 2012/10/30 17:21:23 yamt Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9.12.1 2012/10/30 17:21:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9 2009/11/26 15:17:08 njoly Exp $");
 int	ciss_pci_match(device_t, cfdata_t, void *);
 void	ciss_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ciss_pci, sizeof(struct ciss_softc),
+CFATTACH_DECL_NEW(ciss_pci, sizeof(struct ciss_softc),
 	ciss_pci_match, ciss_pci_attach, NULL, NULL);
 
 const struct {
@@ -255,6 +255,8 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	int i;
 
+	sc->sc_dev = self;
+
 	for (i = 0; ciss_pci_devices[i].vendor; i++)
 	{
 		if ((PCI_VENDOR(pa->pa_id) == ciss_pci_devices[i].vendor &&
@@ -324,7 +326,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ciss_intr, sc);
 	if (!sc->sc_ih) {
-		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -333,8 +335,8 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 	}
 
-	printf("%s: interrupting at %s\n%s", device_xname(&sc->sc_dev), intrstr,
-	       device_xname(&sc->sc_dev));
+	printf("%s: interrupting at %s\n%s", device_xname(sc->sc_dev), intrstr,
+	       device_xname(sc->sc_dev));
 
 	if (ciss_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);

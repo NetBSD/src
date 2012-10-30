@@ -1,4 +1,4 @@
-/*      $NetBSD: epevar.h,v 1.5 2009/10/23 00:39:30 snj Exp $        */
+/*      $NetBSD: epevar.h,v 1.5.12.1 2012/10/30 17:19:01 yamt Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  * All rights reserved
@@ -38,7 +38,7 @@ struct epe_qmeta {
 };
 
 struct epe_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;

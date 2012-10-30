@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.71.8.1 2012/04/17 00:08:09 yamt Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.71.8.2 2012/10/30 17:22:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.71.8.1 2012/04/17 00:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.71.8.2 2012/10/30 17:22:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE,
 	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPOD_TOUCH,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPOD_TOUCH_4G,
 	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G,
 	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},

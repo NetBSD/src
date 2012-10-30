@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.123.2.2 2012/05/23 10:07:51 yamt Exp $
+#	$NetBSD: files.xen,v 1.123.2.3 2012/10/30 17:20:35 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -94,6 +94,7 @@ file	arch/xen/x86/xenfunc.c
 
 file	arch/xen/xen/xen_ucode.c	dom0ops | cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	dom0ops | cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_intel.c	dom0ops | cpu_ucode needs-flag
 
 file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
@@ -315,10 +316,6 @@ ifdef i386
 # VM86 mode
 file	arch/i386/i386/vm86.c			vm86
 
-# VM86 in kernel
-file	arch/i386/i386/kvm86.c			kvm86
-file	arch/i386/i386/kvm86call.S		kvm86
-
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
@@ -391,7 +388,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
+defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops

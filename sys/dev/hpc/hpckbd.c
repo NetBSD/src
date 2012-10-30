@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.29 2011/06/11 16:34:36 nonaka Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.29.2.1 2012/10/30 17:20:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.29 2011/06/11 16:34:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.29.2.1 2012/10/30 17:20:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ struct hpckbd_core {
 	struct hpckbd_eventq	*hc_head, *hc_tail;
 	int			hc_nevents;
 	int			hc_enabled;
-	struct device		*hc_wskbddev;
-	struct hpckbd_softc*	hc_sc;	/* back link */
+	device_t		hc_wskbddev;
+	struct hpckbd_softc	*hc_sc;	/* back link */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int			hc_rawkbd;
 #endif

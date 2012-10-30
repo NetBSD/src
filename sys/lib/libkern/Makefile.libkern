@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.14.2.2 2012/04/17 00:08:33 yamt Exp $
+#	$NetBSD: Makefile.libkern,v 1.14.2.3 2012/10/30 17:22:39 yamt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -91,6 +91,9 @@ SRCS+=	strcasecmp.c strncasecmp.c
 SRCS+=	xlat_mbr_fstype.c
 
 SRCS+=	heapsort.c ptree.c radixtree.c rb.c rpst.c
+
+# for crypto
+SRCS+=	explicit_bzero.c consttime_bcmp.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po

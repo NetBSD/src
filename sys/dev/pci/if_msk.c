@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.38.4.1 2012/04/17 00:07:47 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.38.4.2 2012/10/30 17:21:30 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38.4.1 2012/04/17 00:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.38.4.2 2012/10/30 17:21:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ void msk_update_int_mod(struct sk_softc *, int);
 
 int msk_miibus_readreg(device_t, int, int);
 void msk_miibus_writereg(device_t, int, int, int);
-void msk_miibus_statchg(device_t);
+void msk_miibus_statchg(struct ifnet *);
 
 void msk_setfilt(struct sk_if_softc *, void *, int);
 void msk_setmulti(struct sk_if_softc *);
@@ -275,9 +275,9 @@ msk_miibus_writereg(device_t dev, int phy, int reg, int val)
 }
 
 void
-msk_miibus_statchg(device_t dev)
+msk_miibus_statchg(struct ifnet *ifp)
 {
-	struct sk_if_softc *sc_if = device_private(dev);
+	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct mii_data *mii = &sc_if->sk_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int gpcr;
@@ -313,7 +313,7 @@ msk_miibus_statchg(device_t dev)
 	SK_YU_WRITE_2(sc_if, YUKON_GPCR, gpcr);
 
 	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
-		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
+		     SK_YU_READ_2(sc_if, YUKON_GPCR)));
 }
 
 #define HASH_BITS	6
@@ -1440,7 +1440,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "int_mod",
 	    SYSCTL_DESCR("msk interrupt moderation timer"),
-	    msk_sysctl_handler, 0, sc,
+	    msk_sysctl_handler, 0, (void *)sc,
 	    0, CTL_HW, msk_root_num, sk_nodenum, CTL_CREATE,
 	    CTL_EOL)) != 0) {
 		aprint_normal_dev(sc->sk_dev, "couldn't create int_mod sysctl node\n");
@@ -1703,8 +1703,10 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 	MSK_CDRXSYNC(sc_if, cur, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	cur_rx = &sc_if->sk_cdata.sk_rx_chain[cur];
-	dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
+	if (cur_rx->sk_mbuf == NULL)
+		return;
 
+	dmamap = sc_if->sk_cdata.sk_rx_jumbo_map;
 	bus_dmamap_sync(sc_if->sk_softc->sc_dmatag, dmamap, 0,
 	    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.67.2.1 2012/04/17 00:08:59 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.67.2.2 2012/10/30 17:23:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -150,7 +150,6 @@ struct vm_map_entry {
 	u_int8_t		flags;		/* flags */
 
 #define	UVM_MAP_KERNEL		0x01		/* kernel map entry */
-#define	UVM_MAP_KMAPENT		0x02		/* contains map entries */
 #define	UVM_MAP_STATIC		0x04		/* special static entries */
 #define	UVM_MAP_NOMERGE		0x08		/* this entry is not mergable */
 

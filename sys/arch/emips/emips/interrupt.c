@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2011/06/12 03:21:21 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4.2.1 2012/10/30 17:19:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2011/06/12 03:21:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.2.1 2012/10/30 17:19:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,7 @@ emips_aic_intr(uint32_t status, vaddr_t pc, uint32_t ipending)
 
 
 void
-emips_intr_establish(struct device *dev, void *cookie, int level,
+emips_intr_establish(device_t dev, void *cookie, int level,
 	int (*handler) (void *, void *), void *arg)
 {
 	int index = (int) cookie;

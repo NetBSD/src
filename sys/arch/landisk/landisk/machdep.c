@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2011/07/01 19:12:53 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.1 2012/10/30 17:19:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/07/01 19:12:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.1 2012/10/30 17:19:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2011/07/01 19:12:53 dyoung Exp $");
 
 #include <sys/bus.h>
 #include <machine/bootinfo.h>
+#include <machine/pcb.h>
 
 #include <landisk/landisk/landiskreg.h>
 

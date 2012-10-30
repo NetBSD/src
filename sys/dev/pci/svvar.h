@@ -1,4 +1,4 @@
-/*      $NetBSD: svvar.h,v 1.6.110.1 2012/04/17 00:07:57 yamt Exp $ */
+/*      $NetBSD: svvar.h,v 1.6.110.2 2012/10/30 17:21:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -32,7 +32,6 @@
  */
 
 struct sv_softc {
-	struct device sc_dev;		/* base device */
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	void *sc_ih;			/* interrupt vectoring */

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.10.2.1 2012/04/17 00:07:12 yamt Exp $
+# $NetBSD: INSTALL,v 1.10.2.2 2012/10/30 17:20:37 yamt Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -40,6 +40,7 @@ no options		COMPAT_20
 no options		COMPAT_30
 no options		COMPAT_40
 no options		COMPAT_50
+no options		COMPAT_60
 no options		COMPAT_43
 
 no options 		COMPAT_OSSAUDIO
@@ -51,8 +52,9 @@ no options 		SYSVSHM
 options 		PIPE_SOCKETPAIR
 
 no options 		WSDISPLAY_COMPAT_PCVT
-no options 		WSDISPLAY_COMPAT_USL
+no options 		WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 no options 		WSDISPLAY_COMPAT_RAWKBD
+options 		WSDISPLAY_DEFAULTSCREENS=1
 options 		RASOPS_SMALL
 
 no options 		DIAGNOSTIC

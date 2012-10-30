@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8 2009/08/19 15:09:56 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8.12.1 2012/10/30 17:20:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@
  * Types provided to machine-independent ISA code.
  */
 struct mipsco_isa_chipset {
-	struct device		sc_dev;
 	struct mipsco_intrhand	ic_intr; /* XXX */
         struct evcnt		ic_intrcnt; /* Interrupt counter */
 	bus_space_tag_t		ic_bst; /* bus_space tag */
@@ -97,13 +96,12 @@ struct mipsco_isa_chipset {
 
 typedef struct mipsco_isa_chipset *isa_chipset_tag_t;
 
-struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
 
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook(struct device *, struct device *,
+void	isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	isa_detach_hook(isa_chipset_tag_t, device_t);
 int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);

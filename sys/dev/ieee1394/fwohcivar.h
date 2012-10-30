@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.32.8.1 2012/05/23 10:07:56 yamt Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.32.8.2 2012/10/30 17:21:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -77,7 +77,8 @@ struct fwohci_softc {
 #define OWRITE(sc, r, x) bus_space_write_4((sc)->bst, (sc)->bsh, (r), (x))
 #define OREAD(sc, r)	bus_space_read_4((sc)->bst, (sc)->bsh, (r))
 
-int fwohci_init(struct fwohci_softc *);
+void fwohci_init(struct fwohci_softc *);
+int fwohci_attach(struct fwohci_softc *);
 int fwohci_detach(struct fwohci_softc *, int);
 int fwohci_intr(void *arg);
 int fwohci_resume(struct fwohci_softc *);

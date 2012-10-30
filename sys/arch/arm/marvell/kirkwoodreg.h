@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.1.14.1 2012/10/30 17:19:06 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -32,11 +32,14 @@
 #include <dev/marvell/mvgbereg.h>
 
 /*
- *                MHz TCLK  GbE SATA  TDMI Audio MTS GPIO
- * 6180:     600/800, 166,  x1,   -,    -,   o,   -,  30
- * 6190:         600, 166, *x2,  x1,    -,   -,   -,  36	* GbEx1+100BTx1
- * 6192:         800, 166,  x2,  x2,    o,   o,   o,  36
- * 6281: 1.0/1.2/1.5, 200,  x2,  x2,    o,   o,   o,  50
+ *                MHz TCLK  GbE SATA TDMI Audio MTS GPIO TSens TWSI
+ * 6180:     600/800, 166,  x1,   -,   -,    o,  -,  30,    -,  x1
+ * 6190:         600, 166, *x2,  x1,   -,    -,  -,  36,    -,  x1
+ * 6192:         800, 166,  x2,  x2,   o,    o,  o,  36,    -,  x1
+ * 6281: 1.0/1.2/1.5, 200,  x2,  x2,   o,    o,  o,  50,    -,  x1
+ * 6282:       ?-2.0, 200,  x2,  x2,   o,    o,  o,  50,    o,  x2
+ *
+ *  * GbE x1 + 100BT x1
  */
 
 #define KIRKWOOD_UNITID_DDR		MVSOC_UNITID_DDR
@@ -60,6 +63,8 @@
 #define KIRKWOOD_ATTR_BOOTROM		0x1d
 #define KIRKWOOD_ATTR_PEX_MEM		0xe8
 #define KIRKWOOD_ATTR_PEX_IO		0xe0
+#define KIRKWOOD_ATTR_PEX1_MEM		0xd8
+#define KIRKWOOD_ATTR_PEX1_IO		0xd0
 #define KIRKWOOD_ATTR_CRYPT		0x00
 
 #define KIRKWOOD_IRQ_HIGH		0	/* High interrupt */
@@ -71,6 +76,7 @@
 #define KIRKWOOD_IRQ_XOR1CHAN0		7	/* Xor 1 Channel0 */
 #define KIRKWOOD_IRQ_XOR1CHAN1		8	/* Xor 1 Channel1 */
 #define KIRKWOOD_IRQ_PEX0INT		9	/* PCI Express port0 INT A-D */
+#define KIRKWOOD_IRQ_PEX1INT		10	/* PCI Express port1 INT A-D */
 #define KIRKWOOD_IRQ_GBE0SUM		11	/* GbE0 summary */
 #define KIRKWOOD_IRQ_GBE0RX		12	/* GbE0 receive interrupt */
 #define KIRKWOOD_IRQ_GBE0TX		13	/* GbE0 transmit interrupt */
@@ -89,6 +95,7 @@
 #define KIRKWOOD_IRQ_TWSI		29	/* TWSI interrupt */
 #define KIRKWOOD_IRQ_AVBINT		30	/* AVB Interrupt */
 #define KIRKWOOD_IRQ_TDMINT		31	/* TDM Interrupt */
+#define KIRKWOOD_IRQ_TWSI1		32	/* TWSI1 interrupt */
 #define KIRKWOOD_IRQ_UART0INT		33	/* UART0 */
 #define KIRKWOOD_IRQ_UART1INT		34	/* UART1 */
 #define KIRKWOOD_IRQ_GPIOLO7_0		35	/* GPIO Low[7:0] */
@@ -101,6 +108,7 @@
 #define KIRKWOOD_IRQ_XOR0ERR		42	/* XOR0 error */
 #define KIRKWOOD_IRQ_XOR1ERR		43	/* XOR1 error */
 #define KIRKWOOD_IRQ_PEX0ERR		44	/* PCI Express0 error */
+#define KIRKWOOD_IRQ_PEX1ERR		45	/* PCI Express1 error */
 #define KIRKWOOD_IRQ_GBE0ERR		46	/* GbE port0 error */
 #define KIRKWOOD_IRQ_GBE1ERR		47	/* GbE port1 error */
 #define KIRKWOOD_IRQ_USBERR		48	/* USB error */
@@ -156,6 +164,21 @@
 #define KIRKWOOD_MLMB_MFIQIMHR		  0x218	/*Main FIQ Interrupt High Mask*/
 #define KIRKWOOD_MLMB_EIMHR		  0x21c	/*Endpoint Interrupt High Mask*/
 
+
+/*
+ * Kirkwood Thermal Sensor(6282 only)
+ */
+#define KIRKWOOD_TS_BASE	(MVSOC_DEVBUS_BASE + 0x0078)	/* XXXX: ??? */
+
+/*
+ * Two-Wire Serial Interface Registers
+ */
+#define KIRKWOOD_TWSI1_BASE	(MVSOC_TWSI_BASE + 0x0100)
+
+/*
+ * PCI-Express Interface Registers
+ */
+#define KIRKWOOD_PEX1_BASE	(MVSOC_PEX_BASE + 0x4000)
 
 /*
  * Cryptographic Engine and Security Accelerator Registers

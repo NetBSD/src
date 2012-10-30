@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.16 2009/05/12 09:10:15 cegger Exp $ */
+/* $NetBSD: aztech.c,v 1.16.12.1 2012/10/30 17:21:14 yamt Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.16 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.16.12.1 2012/10/30 17:21:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.16 2009/05/12 09:10:15 cegger Exp $");
 #define AZ_DATA_OFF	(0 << 7)
 
 int	az_probe(device_t, cfdata_t, void *);
-void	az_attach(device_t, device_t  self, void *);
+void	az_attach(device_t, device_t, void *);
 
 int	az_get_info(void *, struct radio_info *);
 int	az_set_info(void *, struct radio_info *);
@@ -92,8 +92,6 @@ const struct radio_hw_if az_hw_if = {
 };
 
 struct az_softc {
-	struct device	sc_dev;
-
 	int		mute;
 	u_int8_t	vol;
 	u_int32_t	freq;
@@ -103,7 +101,7 @@ struct az_softc {
 	struct lm700x_t	lm;
 };
 
-CFATTACH_DECL(az, sizeof(struct az_softc),
+CFATTACH_DECL_NEW(az, sizeof(struct az_softc),
     az_probe, az_attach, NULL, NULL);
 
 u_int	az_find(bus_space_tag_t, bus_space_handle_t);
@@ -163,7 +161,7 @@ az_probe(device_t parent, cfdata_t cf, void *aux)
 void
 az_attach(device_t parent, device_t self, void *aux)
 {
-	struct az_softc *sc = (void *)self;
+	struct az_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->lm.iot = ia->ia_iot;
@@ -176,7 +174,7 @@ az_attach(device_t parent, device_t self, void *aux)
 	/* remap I/O */
 	if (bus_space_map(sc->lm.iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->lm.ioh))
-		panic(": bus_space_map() of %s failed", device_xname(&sc->sc_dev));
+		panic(": bus_space_map() of %s failed", device_xname(self));
 
 	printf(": Aztech/PackardBell\n");
 
@@ -193,7 +191,7 @@ az_attach(device_t parent, device_t self, void *aux)
 
 	az_set_freq(sc, sc->freq);
 
-	radio_attach_mi(&az_hw_if, sc, &sc->sc_dev);
+	radio_attach_mi(&az_hw_if, sc, self);
 }
 
 /*

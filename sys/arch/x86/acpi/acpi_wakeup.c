@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.29.2.2 2012/05/23 10:07:50 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.29.2.3 2012/10/30 17:20:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.2.2 2012/05/23 10:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.2.3 2012/10/30 17:20:32 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.2.2 2012/05/23 10:07:50 yamt Ex
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.2.2 2012/05/23 10:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.29.2.3 2012/10/30 17:20:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ acpi_md_sleep(int state)
 	/* Save and suspend Application Processors. */
 	x86_broadcast_ipi(X86_IPI_ACPI_CPU_SLEEP);
 	cid = cpu_index(curcpu());
-	while (!kcpuset_isotherset(kcpuset_running, cid)) {
+	while (kcpuset_isotherset(kcpuset_running, cid)) {
 		delay(1);
 	}
 #endif

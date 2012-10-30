@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.183.2.1 2012/04/17 00:06:56 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.183.2.2 2012/10/30 17:20:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.1 2012/04/17 00:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.2 2012/10/30 17:20:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.183.2.1 2012/04/17 00:06:56 yamt Exp 
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/kauth.h>
+#include <sys/userconf.h>
 #include <prop/proplib.h>
 
 #include <net/if.h>
@@ -273,11 +274,13 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
+	struct btinfo_boothowto *bi_howto;
 
 	extern void *romtba;
 	extern void* get_romtba(void);
 	extern void  OF_val2sym32(void *);
 	extern void OF_sym2val32(void *);
+	extern struct consdev consdev_prom;
 
 	/* Save OpenFrimware entry point */
 	romp   = ofw;
@@ -288,6 +291,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	console_node = OF_instance_to_package(promops.po_stdout);
 
 	/* Initialize the PROM console so printf will not panic */
+	cn_tab = &consdev_prom;
 	(*cn_tab->cn_init)(cn_tab);
 
 	DPRINTF(ACDB_BOOTARGS,
@@ -347,6 +351,10 @@ die_old_boot_loader:
 		else if (strcmp(buf, "sun4v") == 0)
 			cputyp = CPU_SUN4V;
 	}
+
+	bi_howto = lookup_bootinfo(BTINFO_BOOTHOWTO);
+	if (bi_howto)
+		boothowto = bi_howto->boothowto;
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
 	kernel_tlb_slots = bi_count->count;
@@ -465,9 +473,18 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
+	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */
 	get_bootpath_from_prom();
+	if (((boothowto & RB_USERCONF) != 0) && !userconf)
+		/*
+		 * Old bootloaders do not pass boothowto, and MI code
+		 * has already handled userconfig before we get here
+		 * and finally fetch the right options. So if we missed
+		 * it, just do it here.
+ 		 */
+		userconf_prompt();
 
 	/* block clock interrupts and anything below */
 	splclock();
@@ -489,14 +506,9 @@ cpu_rootconf(void)
 	if (booted_device == NULL) {
 		printf("FATAL: boot device not found, check your firmware "
 		    "settings!\n");
-		setroot(NULL, 0);
-		return;
 	}
 
-	if (config_handle_wedges(booted_device, booted_partition) == 0)
-		setroot(booted_wedge, 0);
-	else
-		setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 char *
@@ -746,7 +758,7 @@ romgetcursoraddr(int **rowp, int **colp)
 }
 
 /*
- * Match a struct device against the bootpath, by
+ * Match a device_t against the bootpath, by
  * comparing it's firmware package handle. If they match
  * exactly, we found the boot device.
  */
@@ -762,7 +774,7 @@ dev_path_exact_match(device_t dev, int ofnode)
 }
 
 /*
- * Match a struct device against the bootpath, by
+ * Match a device_t against the bootpath, by
  * comparing it's firmware package handle and calculating
  * the target/lun suffix and comparing that against
  * the bootpath remainder.
@@ -815,7 +827,7 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 }
 
 /*
- * Get the firmware package handle from a struct device.
+ * Get the firmware package handle from a device_t.
  * Assuming we have previously stored it in the device properties
  * dictionary.
  */
@@ -839,7 +851,7 @@ device_ofnode(device_t dev)
 
 /*
  * Save the firmware package handle inside the properties dictionary
- * of a struct device.
+ * of a device_t.
  */
 static void
 device_setofnode(device_t dev, int node)

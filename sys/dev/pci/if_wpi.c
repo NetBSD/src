@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.49.4.2 2012/05/23 10:07:57 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.49.4.3 2012/10/30 17:21:34 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.49.4.2 2012/05/23 10:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.49.4.3 2012/10/30 17:21:34 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1148,7 +1148,7 @@ wpi_cache_firmware(struct wpi_softc *sc)
 	/* load firmware image from disk */
 	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
-		goto fail1;
+		goto fail0;
 	}
 
 	wpi_firmware_size = firmware_get_size(fw);
@@ -1192,8 +1192,9 @@ fail2:
 	firmware_free(wpi_firmware_image, wpi_firmware_size);
 fail1:
 	firmware_close(fw);
-	if (--wpi_firmware_users == 0)
-		firmware_free(wpi_firmware_image, wpi_firmware_size);
+fail0:
+	wpi_firmware_users--;
+	KASSERT(wpi_firmware_users == 0);
 	mutex_exit(&wpi_firmware_mutex);
 	return error;
 }
@@ -3252,7 +3253,7 @@ wpi_sysctlattach(struct wpi_softc *sc)
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
 	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
-	    wpi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    wpi_sysctl_radio, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef WPI_DEBUG

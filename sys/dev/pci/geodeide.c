@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.19.4.1 2012/10/30 17:21:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.19 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.19.4.1 2012/10/30 17:21:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ geodeide_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	/*
 	 * Soekris Engineering Issue #0003:
@@ -203,7 +204,7 @@ geodeide_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 
 		switch (sc->sc_pp->ide_product) {
@@ -222,18 +223,18 @@ geodeide_setup_channel(struct ata_channel *chp)
 		}
 
 		/* add timing values, setup DMA if needed */
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			/* Use Ultra-DMA */
 			dma_timing |= geode_udma[drvp->UDMA_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			/* use Multiword DMA */
 			dma_timing |= geode_dma[drvp->DMA_mode];
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
 			s = splbio();
-			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			drvp->drive_flags &= ~(ATA_DRIVE_UDMA | ATA_DRIVE_DMA);
 			splx(s);
 		}
 

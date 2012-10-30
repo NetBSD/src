@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.2.8.2 2012/04/17 00:07:30 yamt Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.2.8.3 2012/10/30 17:20:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -130,13 +130,13 @@ gpiopwm_attach(device_t parent, device_t self, void *aux)
             CTLFLAG_READWRITE,
             CTLTYPE_INT, "on",
             SYSCTL_DESCR("PWM 'on' period in ticks"),
-            gpiopwm_set_on, 0, sc, 0,
+            gpiopwm_set_on, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
         sysctl_createv(&sc->sc_log, 0, &node, NULL,
             CTLFLAG_READWRITE,
             CTLTYPE_INT, "off",
             SYSCTL_DESCR("PWM 'off' period in ticks"),
-            gpiopwm_set_off, 0, sc, 0,
+            gpiopwm_set_off, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	aprint_normal("\n");

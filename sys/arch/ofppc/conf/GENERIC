@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.137.2.1 2012/04/17 00:06:45 yamt Exp $
+# $NetBSD: GENERIC,v 1.137.2.2 2012/10/30 17:20:07 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.137.2.1 $"
+#ident 		"GENERIC-$Revision: 1.137.2.2 $"
 
 maxusers	32
 
@@ -72,6 +72,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
@@ -165,6 +166,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
@@ -386,7 +388,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
 # USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel at76c50x 802.11b
-#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers

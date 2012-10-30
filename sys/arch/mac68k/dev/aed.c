@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.29 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: aed.c,v 1.29.12.1 2012/10/30 17:19:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.29 2009/11/01 01:51:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.29.12.1 2012/10/30 17:19:55 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.29 2009/11/01 01:51:35 snj Exp $");
 /*
  * Function declarations.
  */
-static int	aedmatch(struct device *, struct cfdata *, void *);
-static void	aedattach(struct device *, struct device *, void *);
+static int	aedmatch(device_t, cfdata_t, void *);
+static void	aedattach(device_t, device_t, void *);
 static void	aed_emulate_mouse(adb_event_t *);
 static void	aed_kbdrpt(void *);
 static void	aed_dokeyupdown(adb_event_t *);
@@ -67,7 +67,7 @@ static struct aed_softc *aed_sc;
 static int aed_options = 0 | AED_MSEMUL;
 
 /* Driver definition */
-CFATTACH_DECL(aed, sizeof(struct aed_softc),
+CFATTACH_DECL_NEW(aed, sizeof(struct aed_softc),
     aedmatch, aedattach, NULL, NULL);
 
 extern struct cfdriver aed_cd;
@@ -85,7 +85,7 @@ const struct cdevsw aed_cdevsw = {
 };
 
 static int
-aedmatch(struct device *parent, struct cfdata *cf, void *aux)
+aedmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	static int aed_matched;
@@ -99,10 +99,10 @@ aedmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-aedattach(struct device *parent, struct device *self, void *aux)
+aedattach(device_t parent, device_t self, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
-	struct aed_softc *sc = (struct aed_softc *)self;
+	struct aed_softc *sc = device_private(self);
 
 	callout_init(&sc->sc_repeat_ch, 0);
 	selinit(&sc->sc_selinfo);
@@ -119,7 +119,7 @@ aedattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_repeating = -1;          /* not repeating */
 
 	/* Pull in the options flags. */ 
-	sc->sc_options = (device_cfdata(&sc->sc_dev)->cf_flags | aed_options);
+	sc->sc_options = (device_cfdata(self)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
 	

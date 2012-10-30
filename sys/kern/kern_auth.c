@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.65.12.1 2012/04/17 00:08:22 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.65.12.2 2012/10/30 17:22:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.12.1 2012/04/17 00:08:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65.12.2 2012/10/30 17:22:27 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,7 @@ struct kauth_cred {
 	 * Ensure that the first part of the credential resides in its own
 	 * cache line.  Due to sharing there aren't many kauth_creds in a
 	 * typical system, but the reference counts change very often.
-	 * Keeping it seperate from the rest of the data prevents false
+	 * Keeping it separate from the rest of the data prevents false
 	 * sharing between CPUs.
 	 */
 	u_int cr_refcnt;		/* reference count */
@@ -156,7 +156,7 @@ kauth_cred_hold(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-        atomic_inc_uint(&cred->cr_refcnt);
+	atomic_inc_uint(&cred->cr_refcnt);
 }
 
 /* Decrease reference count to cred. If reached zero, free it. */
@@ -258,6 +258,12 @@ kauth_proc_fork(struct proc *parent, struct proc *child)
 	/* XXX: relies on parent process stalling during fork() */
 	kauth_cred_hook(parent->p_cred, KAUTH_CRED_FORK, parent,
 	    child);
+}
+
+void
+kauth_proc_chroot(kauth_cred_t cred, struct cwdinfo *cwdi)
+{
+	kauth_cred_hook(cred, KAUTH_CRED_CHROOT, cwdi, NULL);
 }
 
 uid_t
@@ -924,7 +930,7 @@ kauth_authorize_action_internal(kauth_scope_t scope, kauth_cred_t cred,
 
 	/* Short-circuit requests coming from the kernel. */
 	if (cred == NOCRED || cred == FSCRED)
-		return (0);
+		return KAUTH_RESULT_ALLOW;
 
 	KASSERT(scope != NULL);
 

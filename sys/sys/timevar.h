@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.29.8.1 2012/04/17 00:08:53 yamt Exp $	*/
+/*	$NetBSD: timevar.h,v 1.29.8.2 2012/10/30 17:22:58 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -165,7 +165,8 @@ int	ppsratecheck(struct timeval *, int *, int);
 int	ratecheck(struct timeval *, const struct timeval *);
 void	realtimerexpire(void *);
 int	settime(struct proc *p, struct timespec *);
-int	nanosleep1(struct lwp *l, struct timespec *, struct timespec *);
+int	nanosleep1(struct lwp *, clockid_t, int, struct timespec *,
+	    struct timespec *);
 int	settimeofday1(const struct timeval *, bool,
 	    const void *, struct lwp *, bool);
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.18 2011/07/01 20:39:34 dyoung Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.18.2.1 2012/10/30 17:19:22 yamt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.18 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.18.2.1 2012/10/30 17:19:22 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -190,24 +190,6 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.18 2011/07/01 20:39:34 dyoung E
 # define GEMINI_PUTHEX(n)
 #endif	/* VERBOSE_INIT_ARM */
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define FIQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
-
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
@@ -221,19 +203,9 @@ paddr_t physical_end;
 static paddr_t physical_freestart, physical_freeend;
 static u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t fiqstack;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;	/* stack for SVC mode */
-
 /* Physical address of the message buffer. */
 paddr_t msgbufphys;
 
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 extern char KERNEL_BASE_phys[];
 extern char KERNEL_BASE_virt[];
 extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];
@@ -1240,7 +1212,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(l1_pa);
+	cpu_setttb(l1_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

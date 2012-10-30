@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.9.2.1 2012/04/17 00:06:55 yamt Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.9.2.2 2012/10/30 17:20:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pld_wdog.c,v 1.9.2.1 2012/04/17 00:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pld_wdog.c,v 1.9.2.2 2012/10/30 17:20:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,7 +85,7 @@ pldwdog_tickle(struct sysmon_wdog *smw)
 
 #ifdef PLD_WDOG_DEBUG
 	printf("%s: pldwdog_tickle: mode %x, period %d\n",
-	       device_xname(&sc->sc_dev), smw->smw_mode, smw->smw_period);
+	       device_xname(sc->sc_dev), smw->smw_mode, smw->smw_period);
 /*	pldwdog_regs(sc); */
 #endif
 

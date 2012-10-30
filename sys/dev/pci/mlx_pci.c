@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.23 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.23.12.1 2012/10/30 17:21:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.23.12.1 2012/10/30 17:21:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ static struct mlx_pci_ident {
 	},
 };
 
-CFATTACH_DECL(mlx_pci, sizeof(struct mlx_softc),
+CFATTACH_DECL_NEW(mlx_pci, sizeof(struct mlx_softc),
     mlx_pci_match, mlx_pci_attach, NULL, NULL);
 
 /*
@@ -206,6 +206,7 @@ mlx_pci_attach(device_t parent, device_t self, void *aux)
 	pc = pa->pa_pc;
 	mpi = mlx_pci_findmpi(aux);
 
+	mlx->mlx_dv = self;
 	mlx->mlx_dmat = pa->pa_dmat;
 	mlx->mlx_ci.ci_iftype = mpi->mpi_iftype;
 

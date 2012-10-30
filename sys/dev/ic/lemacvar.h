@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.9.110.1 2012/04/17 00:07:34 yamt Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.9.110.2 2012/10/30 17:21:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  * Ethernet status, per interface.
  */
 typedef struct {
-    struct device sc_dv;
+    device_t sc_dev;
     void *sc_ih;
     void *sc_ats;
     struct ethercom sc_ec;

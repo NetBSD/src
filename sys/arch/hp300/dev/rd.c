@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.91.2.1 2012/04/17 00:06:20 yamt Exp $	*/
+/*	$NetBSD: rd.c,v 1.91.2.2 2012/10/30 17:19:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91.2.1 2012/04/17 00:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.91.2.2 2012/10/30 17:19:34 yamt Exp $");
 
 #include "opt_useleds.h"
 
@@ -245,7 +245,7 @@ static const struct rdidentinfo rdidentinfo[] = {
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
 
-static int	rdident(struct device *, struct rd_softc *,
+static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
 static void	rdreset(struct rd_softc *);
 static void	rdustart(struct rd_softc *);

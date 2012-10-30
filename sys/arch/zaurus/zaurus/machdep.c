@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26.2.1 2012/04/17 00:07:13 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.2.2 2012/10/30 17:20:38 yamt Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2012/04/17 00:07:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.2 2012/10/30 17:20:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,6 +163,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2012/04/17 00:07:13 yamt Exp $"
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 
+#include <arm/sa11x0/sa11x0_ostvar.h>
+
 #include <arch/zaurus/zaurus/zaurus_reg.h>
 #include <arch/zaurus/zaurus/zaurus_var.h>
 
@@ -191,18 +193,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.2.1 2012/04/17 00:07:13 yamt Exp $"
  */
 #define KERNEL_VM_SIZE		0x0c000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-u_int cpu_reset_address = 0;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
 int zaurusmod;			/* Zaurus model */
 
 BootConfig bootconfig;		/* Boot config storage */
@@ -220,17 +210,9 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-extern pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
 paddr_t msgbufphys;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -465,11 +447,16 @@ zaurus_restart(void)
 
 		/* External reset circuit presumably asserts nRESET_GPIO. */
 		pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
-	} else if (ZAURUS_ISC860) {
-		/* XXX not yet */
-		printf("zaurus_restart() for C7x0 is not implemented yet.\n");
+	} else {
+		/* SL-C7x0/SL-C860 */
+		/* Clear all reset status */
+		ioreg_write(ZAURUS_POWMAN_VBASE + POWMAN_RCSR,
+		    POWMAN_HWR|POWMAN_WDR|POWMAN_SMR|POWMAN_GPR);
+
+		/* watchdog reset */
+		saost_reset();
 	}
-	delay(1 * 1000* 1000);	/* wait 1s */
+	delay(1 * 1000 * 1000);	/* wait 1s */
 }
 
 static inline pd_entry_t *
@@ -552,6 +539,12 @@ static const struct pmap_devmap zaurus_devmap[] = {
 	    ZAURUS_STUART_VBASE,
 	    _A(PXA2X0_STUART_BASE),
 	    _S(4 * COM_NPORTS),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+    },
+    {
+	    ZAURUS_POWMAN_VBASE,
+	    _A(PXA2X0_POWMAN_BASE),
+	    _S(PXA2X0_POWMAN_SIZE),
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
     },
 
@@ -1036,7 +1029,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

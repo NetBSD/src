@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 2009/01/29 20:54:52 nonaka Exp $	*/
+/*	$NetBSD: psl.h,v 1.18.14.1 2012/10/30 17:19:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -61,6 +61,8 @@
 #define splvm()		raisespl(IPL_VM)
 #define splsched()	raisespl(IPL_SCHED)
 #define splhigh()	raisespl(IPL_HIGH)
+
+#define	IPL_SAFEPRI	IPL_NONE		/* for kern_sleepq.c */
 
 #ifdef _KERNEL
 #ifndef _LOCORE

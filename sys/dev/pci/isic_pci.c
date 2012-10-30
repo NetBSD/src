@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.37.12.1 2012/04/17 00:07:50 yamt Exp $ */
+/* $NetBSD: isic_pci.c,v 1.37.12.2 2012/10/30 17:21:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.37.12.1 2012/04/17 00:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.37.12.2 2012/10/30 17:21:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -76,7 +76,7 @@ static void isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_a
 static int isic_pci_detach(device_t self, int flags);
 static int isic_pci_activate(device_t self, enum devact act);
 
-CFATTACH_DECL(isic_pci, sizeof(struct pci_isic_softc),
+CFATTACH_DECL_NEW(isic_pci, sizeof(struct pci_isic_softc),
     isic_pci_match, isic_pci_attach, isic_pci_detach, isic_pci_activate);
 
 static const struct isic_pci_product {
@@ -134,6 +134,8 @@ isic_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct isic_pci_product * prod;
 
+	sc->sc_dev = self;
+
 	/* Redo probe */
 	prod = find_matching_card(pa);
 	if (prod == NULL) return; /* oops - not found?!? */
@@ -148,7 +150,8 @@ isic_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	/* generic setup, if needed for this card */
-	if (prod->pciattach) prod->pciattach(psc, pa, prod->name);
+	if (prod->pciattach)
+		prod->pciattach(psc, pa, prod->name);
 }
 
 /*---------------------------------------------------------------------------*
@@ -190,16 +193,16 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 		switch(ret)
 		{
 			case 0x01:
-				printf("%s: IPAC PSB2115 Version 1.1\n", device_xname(&sc->sc_dev));
+				printf("%s: IPAC PSB2115 Version 1.1\n", device_xname(sc->sc_dev));
 				break;
 
 			case 0x02:
-				printf("%s: IPAC PSB2115 Version 1.2\n", device_xname(&sc->sc_dev));
+				printf("%s: IPAC PSB2115 Version 1.2\n", device_xname(sc->sc_dev));
 				break;
 
 			default:
 				printf("%s: Error, IPAC version %d unknown!\n",
-					device_xname(&sc->sc_dev), ret);
+					device_xname(sc->sc_dev), ret);
 				return;
 		}
 	}
@@ -214,14 +217,14 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 	                case ISAC_VB2:
 			case ISAC_VB3:
 				printf("%s: ISAC %s (IOM-%c)\n",
-					device_xname(&sc->sc_dev),
+					device_xname(sc->sc_dev),
 					ISACversion[sc->sc_isac_version],
 					sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
 				break;
 
 			default:
 				printf("%s: Error, ISAC version %d unknown!\n",
-					device_xname(&sc->sc_dev), sc->sc_isac_version);
+					device_xname(sc->sc_dev), sc->sc_isac_version);
 				return;
 		}
 
@@ -234,33 +237,33 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 			case HSCX_VA3:
 			case HSCX_V21:
 				printf("%s: HSCX %s\n",
-					device_xname(&sc->sc_dev),
+					device_xname(sc->sc_dev),
 					HSCXversion[sc->sc_hscx_version]);
 				break;
 
 			default:
 				printf("%s: Error, HSCX version %d unknown!\n",
-					device_xname(&sc->sc_dev), sc->sc_hscx_version);
+					device_xname(sc->sc_dev), sc->sc_hscx_version);
 				return;
 		}
 	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isic_intr_qs1p, psc);
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
 	psc->sc_pc = pc;
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	sc->sc_intr_valid = ISIC_INTR_DISABLED;
 

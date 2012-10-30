@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.79.4.1 2012/04/17 00:06:22 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79.4.2 2012/10/30 17:19:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.1 2012/04/17 00:06:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.2 2012/10/30 17:19:38 yamt Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.1 2012/04/17 00:06:22 yamt Exp $"
 #include <machine/autoconf.h>
 
 #include <hp700/hp700/machdep.h>
-#include <hp700/hp700/intr.h>
 #include <hp700/dev/cpudevs.h>
 
 #if NLCD > 0
@@ -1474,9 +1473,6 @@ mbprint(void *aux, const char *pnp)
 		}
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
-			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)
-				aprint_normal(" ipl %d",
-				    _hp700_intr_ipl_next());
 		}
 	}
 

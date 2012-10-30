@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.9.2.1 2012/04/17 00:07:12 yamt Exp $	*/
+/*	$NetBSD: scoop.c,v 1.9.2.2 2012/10/30 17:20:38 yamt Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.9.2.1 2012/04/17 00:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.9.2.2 2012/10/30 17:20:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static void
 scoopattach(device_t parent, device_t self, void *aux)
 {
 	struct scoop_softc *sc = device_private(self);
-	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
+	struct pxaip_attach_args *pxa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -97,7 +97,7 @@ scoopattach(device_t parent, device_t self, void *aux)
 
 	if (pxa->pxa_addr != -1)
 		addr = pxa->pxa_addr;
-	else if (sc->sc_dev->dv_unit == 0)
+	else if (device_unit(sc->sc_dev) == 0)
 		addr = C3000_SCOOP0_BASE;
 	else
 		addr = C3000_SCOOP1_BASE;
@@ -109,7 +109,7 @@ scoopattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (ZAURUS_ISC3000 && sc->sc_dev->dv_unit == 1) {
+	if (ZAURUS_ISC3000 && device_unit(sc->sc_dev) == 1) {
 		scoop_gpio_pin_ctl(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(sc, SCOOP1_AKIN_PULLUP, GPIO_PIN_LOW);
 		backlight_sc = sc;

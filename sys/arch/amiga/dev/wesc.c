@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.39 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: wesc.c,v 1.39.8.1 2012/10/30 17:18:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.39 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.39.8.1 2012/10/30 17:18:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.39 2010/12/20 00:25:26 matt Exp $");
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void wescattach(struct device *, struct device *, void *);
-int wescmatch(struct device *, struct cfdata *, void *);
+void wescattach(device_t, device_t, void *);
+int wescmatch(device_t, cfdata_t, void *);
 int wesc_dmaintr(void *);
 #ifdef DEBUG
 void wesc_dump(void);
@@ -87,36 +87,37 @@ void wesc_dump(void);
 #ifdef DEBUG
 #endif
 
-CFATTACH_DECL(wesc, sizeof(struct siop_softc),
+CFATTACH_DECL_NEW(wesc, sizeof(struct siop_softc),
     wescmatch, wescattach, NULL, NULL);
 
 /*
  * if we are an MacroSystemsUS Warp Engine
  */
 int
-wescmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+wescmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 	if (zap->manid == 2203 && zap->prodid == 19)
 		return(1);
 	return(0);
 }
 
 void
-wescattach(struct device *pdp, struct device *dp, void *auxp)
+wescattach(device_t parent, device_t self, void *aux)
 {
-	struct siop_softc *sc = (struct siop_softc *)dp;
+	struct siop_softc *sc = device_private(self);
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
+	sc->sc_dev = self;
 
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
 	sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va + 0x40000);
 
@@ -131,7 +132,7 @@ wescattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -159,7 +160,7 @@ wescattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

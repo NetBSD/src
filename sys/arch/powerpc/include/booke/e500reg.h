@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.10 2011/08/02 00:23:34 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.10.2.1 2012/10/30 17:20:12 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -333,10 +333,27 @@
 #define	ETSEC2_BASE	0x25000
 #define	ETSEC3_BASE	0x26000
 #define	ETSEC4_BASE	0x27000
+#define	ETSEC1_G0_BASE	0xB0000
+#define	ETSEC2_G0_BASE	0xB1000
+#define	ETSEC3_G0_BASE	0xB2000
+#define	ETSEC1_G1_BASE	0xB4000
+#define	ETSEC2_G1_BASE	0xB5000
+#define	ETSEC3_G1_BASE	0xB6000
 #define	ETSEC_SIZE	0x01000
 
 #define	ESDHC_BASE	0x2e000
 #define	ESDHC_SIZE	0x01000
+
+#ifdef ESDHC_PRIVATE
+
+#define	DCR		0x40c		/* DMA Control Register */
+
+#define	DCR_SNOOP	__PPCBIT(25)	/* DMA transactions are snooped */
+#define	DCR_RD_SAFE	__PPCBIT(29)	/* memory is read safe */
+#define	DCR_RD_PFE	__PPCBIT(30)	/* memory is prefetch safe */
+#define	DCR_RD_PF_SIZE	__PPCBIT(31)	/* prefetch size is 32-bytes */
+
+#endif
 
 #define	GLOBAL_BASE	0xe0000
 #define	GLOBAL_SIZE	0x01000
@@ -412,6 +429,10 @@
 #define	IOSEL_P20x0_PCIE1_X1_SRIO2500_1X	13
 #define	IOSEL_P20x0_PCIE12_X1_SGMII23	14
 #define	IOSEL_P20x0_PCIE1_X2_SGMII23	15
+#define	IOSEL_P1025_PCIE1_X1		0	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE1_X4		6	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE12_X1_SGMII23	14	/* same at P20x10 */
+#define	IOSEL_P1025_PCIE1_X2_SGMII23	15	/* same at P20x10 */
 #define	PORDEVSR_PCI2_ARB	__PPCBIT(13)
 #define	PORDEVSR_PCI1_ARB	__PPCBIT(14)
 #define	PORDEVSR_PCI32		__PPCBIT(15)
@@ -458,9 +479,20 @@
 #define	PMUXCR_USB1	__PPCBIT(5)
 #define	PMUXCR_TSEC3_TS __PPCBIT(5)
 #define	PMUXCR_USB2	__PPCBIT(6)
-#define	PMUXCR_USB	 __PPCBIT(6)
+#define	PMUXCR_USB_PCTL	__PPCBITS(6,5)
+#define	PMUXCR_USB	__PPCBIT(6)
+#define	PMUXCR_TSEC1	__PPCBIT(14)
 #define	PMUXCR_DMA0	__PPCBIT(14)
 #define	PMUXCR_DMA2	__PPCBIT(15)
+#define	PMUXCR_QE0	__PPCBIT(16)
+#define	PMUXCR_QE1	__PPCBIT(17)
+#define	PMUXCR_QE2	__PPCBIT(18)
+#define	PMUXCR_QE3	__PPCBIT(19)
+#define	PMUXCR_QE8	__PPCBIT(24)
+#define	PMUXCR_QE9	__PPCBIT(25)
+#define	PMUXCR_QE10	__PPCBIT(26)
+#define	PMUXCR_QE11	__PPCBIT(27)
+#define	PMUXCR_QE12	__PPCBIT(28)
 #define	PMUXCR_DMA1	__PPCBIT(30)
 #define	PMUXCR_DMA3	__PPCBIT(31)
 
@@ -517,6 +549,25 @@
 /* Version Registers */
 #define PVR		0x0A0 /* Processor version register */
 #define SVR		0x0A4 /* System version register */
+
+/* Control Pin Registers (GPIO) for P1025  */
+#define	CPBASE(n)	(0x100+0x20*(n))	/* Control Pin (GPIO) base */
+#define	CPODR		0x0000			/* Open Drain */
+#define	CPDAT		0x0004			/* Output Data */
+#define	CPDIR1		0x0008			/* Direction1 */
+#define	CPDIR2		0x000c			/* Direction2 */
+#define	CPPAR1		0x0010			/* Pin Assignment1 */
+#define	CPPAR2		0x0014			/* Pin Assignment2 */
+
+#define	CPDIR_DIS	0
+#define	CPDIR_OUT	1
+#define	CPDIR_IN	2
+#define	CPDIR_INOUT	3
+
+#define	CPPAR_FUNC0	0
+#define	CPPAR_FUNC1	1
+#define	CPPAR_FUNC2	2
+#define	CPPAR_FUNC3	3
 
 /* Status Registers */
 #define RSTCR		0x0B0 /* Reset control register */

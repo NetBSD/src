@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.25 2011/07/26 22:52:47 dyoung Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.25.2.1 2012/10/30 17:18:48 yamt Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.25 2011/07/26 22:52:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.25.2.1 2012/10/30 17:18:48 yamt Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -30,14 +30,13 @@ struct pccard_slot {
 	struct	pccard_softc *sc;	/* refer to `parent' */
 	int	(*intr_func)(void *);
 	void *	intr_arg;
-	struct	device *card;
+	device_t card;
 	int	flags;
 #define SLOT_OCCUPIED		0x01
 #define SLOT_NEW_CARD_EVENT	0x02
 };
 
 struct pccard_softc {
-	struct device sc_dev;
 	struct bus_space_tag io_space;
 	struct bus_space_tag attr_space;
 	struct bus_space_tag mem_space;
@@ -46,8 +45,8 @@ struct pccard_softc {
 	struct isr intr2;
 };
 
-static int	pccard_probe(struct device *, struct cfdata *, void *);
-static void	pccard_attach(struct device *, struct device *, void *);
+static int	pccard_probe(device_t, cfdata_t, void *);
+static void	pccard_attach(device_t, device_t, void *);
 static void	pccard_attach_slot(struct pccard_slot *);
 static int	pccard_intr6(void *);
 static int	pccard_intr2(void *);
@@ -81,7 +80,7 @@ static bswm(pcmio_bswr1, u_int8_t);
 static bssr(pcmio_bssr1, u_int8_t);
 static bscr(pcmio_bscr1, u_int8_t);
 
-CFATTACH_DECL(pccard, sizeof(struct pccard_softc),
+CFATTACH_DECL_NEW(pccard, sizeof(struct pccard_softc),
     pccard_probe, pccard_attach, NULL, NULL);
 
 static struct pcmcia_chip_functions chip_functions = {
@@ -99,16 +98,16 @@ static struct amiga_bus_space_methods pcmio_bs_methods;
 static u_int8_t *reset_card_reg;
 
 static int
-pccard_probe(struct device *dev, struct cfdata *cfd, void *aux)
+pccard_probe(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (is_a600() || is_a1200()) && matchname(aux, "pccard");
 }
 
 static void
-pccard_attach(struct device *parent, struct device *myself, void *aux)
+pccard_attach(device_t parent, device_t self, void *aux)
 {
-	struct pccard_softc *self = (struct pccard_softc *) myself;
+	struct pccard_softc *sc = device_private(self);
 	struct pcmciabus_attach_args paa;
 	vaddr_t pcmcia_base;
 	vaddr_t i;
@@ -145,26 +144,26 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	reset_card_reg = (u_int8_t *) pcmcia_base +
 	    (GAYLE_PCMCIA_RESET - GAYLE_PCMCIA_START);
 
-	self->io_space.base = (bus_addr_t) pcmcia_base +
+	sc->io_space.base = (bus_addr_t) pcmcia_base +
 	    (GAYLE_PCMCIA_IO_START - GAYLE_PCMCIA_START);
-	self->io_space.absm = &pcmio_bs_methods;
+	sc->io_space.absm = &pcmio_bs_methods;
 
-	self->attr_space.base = (bus_addr_t) pcmcia_base +
+	sc->attr_space.base = (bus_addr_t) pcmcia_base +
 	    (GAYLE_PCMCIA_ATTR_START - GAYLE_PCMCIA_START);
-	self->attr_space.absm = &amiga_bus_stride_1;
+	sc->attr_space.absm = &amiga_bus_stride_1;
 
 	/* XXX we should check if the 4M of common memory are actually
 	 *	RAM or PCMCIA usable.
 	 * For now, we just do as if the 4M were RAM and make common memory
 	 * point to attribute memory, which is OK for some I/O cards.
 	 */
-	self->mem_space.base = (bus_addr_t) pcmcia_base;
-	self->mem_space.absm = &amiga_bus_stride_1;
+	sc->mem_space.base = (bus_addr_t) pcmcia_base;
+	sc->mem_space.absm = &amiga_bus_stride_1;
 
-	self->devs[0].sc = self;
-	self->devs[0].intr_func = NULL;
-	self->devs[0].intr_arg = NULL;
-	self->devs[0].flags = 0;
+	sc->devs[0].sc = sc;
+	sc->devs[0].intr_func = NULL;
+	sc->devs[0].intr_arg = NULL;
+	sc->devs[0].flags = 0;
 
 	gayle.pcc_status = 0;
 	gayle.intreq = 0;
@@ -173,10 +172,9 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 
 	paa.paa_busname = "pcmcia";
 	paa.pct = &chip_functions;
-	paa.pch = &self->devs[0];
-	self->devs[0].card =
-		config_found(myself, &paa, simple_devprint);
-	if (self->devs[0].card == NULL) {
+	paa.pch = &sc->devs[0];
+	sc->devs[0].card = config_found(self, &paa, simple_devprint);
+	if (sc->devs[0].card == NULL) {
 		printf("attach failed, config_found() returned NULL\n");
 		pmap_remove(kernel_map->pmap, pcmcia_base,
 		    pcmcia_base + (GAYLE_PCMCIA_END - GAYLE_PCMCIA_START));
@@ -186,20 +184,20 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 		return;
 	}
 
-	self->intr6.isr_intr = pccard_intr6;
-	self->intr6.isr_arg = self;
-	self->intr6.isr_ipl = 6;
-	add_isr(&self->intr6);
+	sc->intr6.isr_intr = pccard_intr6;
+	sc->intr6.isr_arg = self;
+	sc->intr6.isr_ipl = 6;
+	add_isr(&sc->intr6);
 
-	self->intr2.isr_intr = pccard_intr2;
-	self->intr2.isr_arg = self;
-	self->intr2.isr_ipl = 2;
-	add_isr(&self->intr2);
+	sc->intr2.isr_intr = pccard_intr2;
+	sc->intr2.isr_arg = self;
+	sc->intr2.isr_ipl = 2;
+	add_isr(&sc->intr2);
 
-	if (kthread_create(PRI_NONE, 0, NULL, pccard_kthread, self,
+	if (kthread_create(PRI_NONE, 0, NULL, pccard_kthread, sc,
 	    NULL, "pccard")) {
 		printf("%s: can't create kernel thread\n",
-			self->sc_dev.dv_xname);
+		       device_xname(self));
 		panic("pccard kthread_create() failed");
 	}
 
@@ -214,18 +212,18 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 		gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
 	}
 
-	pccard_attach_slot(&self->devs[0]);
+	pccard_attach_slot(&sc->devs[0]);
 }
 
 static int
 pccard_intr6(void *arg)
 {
-	struct pccard_softc *self = arg;
+	struct pccard_softc *sc = arg;
 
 	if (gayle.intreq & GAYLE_INT_DETECT) {
 		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_STSCHG |
 		    GAYLE_INT_SPKR | GAYLE_INT_WP | GAYLE_INT_IREQ;
-		self->devs[0].flags |= SLOT_NEW_CARD_EVENT;
+		sc->devs[0].flags |= SLOT_NEW_CARD_EVENT;
 		return 1;
 	}
 	return 0;
@@ -234,8 +232,8 @@ pccard_intr6(void *arg)
 static int
 pccard_intr2(void *arg)
 {
-	struct pccard_softc *self = arg;
-	struct pccard_slot *slot = &self->devs[0];
+	struct pccard_softc *sc = arg;
+	struct pccard_slot *slot = &sc->devs[0];
 
 	if (slot->flags & SLOT_NEW_CARD_EVENT) {
 		slot->flags &= ~SLOT_NEW_CARD_EVENT;
@@ -244,7 +242,7 @@ pccard_intr2(void *arg)
 		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_DETECT;
 		gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
 		gayle.pcc_config = 0;
-		pccard_attach_slot(&self->devs[0]);
+		pccard_attach_slot(&sc->devs[0]);
 	} else {
 		int intreq = gayle.intreq &
 		    (GAYLE_INT_STSCHG | GAYLE_INT_WP | GAYLE_INT_IREQ);
@@ -262,8 +260,8 @@ pccard_intr2(void *arg)
 static void
 pccard_kthread(void *arg)
 {
-	struct pccard_softc *self = arg;
-	struct pccard_slot *slot = &self->devs[0];
+	struct pccard_softc *sc = arg;
+	struct pccard_slot *slot = &sc->devs[0];
 
 	for (;;) {
 		int s = spl2();
@@ -276,7 +274,7 @@ pccard_kthread(void *arg)
 			gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_DETECT;
 			gayle.pcc_status = GAYLE_CCMEM_WP | GAYLE_CCIO_SPKR;
 			gayle.pcc_config = 0;
-			pccard_attach_slot(&self->devs[0]);
+			pccard_attach_slot(&sc->devs[0]);
 		}
 		splx(s);
 

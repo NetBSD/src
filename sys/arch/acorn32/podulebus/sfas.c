@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.21 2010/12/09 05:14:48 uebayasi Exp $	*/
+/*	$NetBSD: sfas.c,v 1.21.8.1 2012/10/30 17:18:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21 2010/12/09 05:14:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21.8.1 2012/10/30 17:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ sfas_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 								void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct sfas_softc	*dev = (void *)chan->chan_adapter->adapt_dev;
+	struct sfas_softc	*dev = device_private(chan->chan_adapter->adapt_dev);
 	struct scsipi_periph	*periph;
 	struct sfas_pending	*pendp;
 	int			 flags, s, target;

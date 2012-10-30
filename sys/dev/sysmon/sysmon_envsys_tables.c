@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.10 2011/06/19 05:26:31 nonaka Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.10.2.1 2012/10/30 17:22:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.10 2011/06/19 05:26:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.10.2.1 2012/10/30 17:22:03 yamt Exp $");
 
 #include <sys/types.h>
 
@@ -100,6 +100,15 @@ static const struct sme_descr_entry sme_batterycap_description[] = {
 	{ -1,					-1, 	"UNKNOWN" }
 };
 
+/*
+ * Available indicator descriptions.
+ */
+static const struct sme_descr_entry sme_indicator_description[] = {
+	{ ENVSYS_INDICATOR_FALSE,		-1,	"FALSE" },
+	{ ENVSYS_INDICATOR_TRUE,		-1, 	"TRUE" },
+	{ -1,					-1, 	"UNKNOWN" }
+};
+
 static const struct sme_descr_entry *
 sme_find_table(enum sme_descr_type table_id)
 {
@@ -115,6 +124,9 @@ sme_find_table(enum sme_descr_type table_id)
 		break;
 	case SME_DESC_BATTERY_CAPACITY:
 		return sme_batterycap_description;
+		break;
+	case SME_DESC_INDICATOR:
+		return sme_indicator_description;
 		break;
 	default:
 		return NULL;

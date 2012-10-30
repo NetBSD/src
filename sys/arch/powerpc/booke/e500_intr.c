@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.16.2.1 2012/10/30 17:20:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16 2011/09/27 01:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.16.2.1 2012/10/30 17:20:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -319,6 +319,32 @@ const struct e500_intr_name mpc8572_onchip_intr_names[] = {
 
 INTR_INFO_DECL(mpc8572, MPC8572);
 #endif
+
+#ifdef P1025
+#define	p1025_external_intr_names	default_external_intr_names
+const struct e500_intr_name p1025_onchip_intr_names[] = {
+	{ ISOURCE_PCIEX3_MPC8572, "pcie3" },
+	{ ISOURCE_ETSEC1_G1_TX, "etsec1-g1-tx" },
+	{ ISOURCE_ETSEC1_G1_RX, "etsec1-g1-rx" },
+	{ ISOURCE_ETSEC1_G1_ERR, "etsec1-g1-error" },
+	{ ISOURCE_ETSEC2_G1_TX, "etsec2-g1-tx" },
+	{ ISOURCE_ETSEC2_G1_RX, "etsec2-g1-rx" },
+	{ ISOURCE_ETSEC2_G1_ERR, "etsec2-g1-error" },
+	{ ISOURCE_ETSEC3_G1_TX, "etsec3-g1-tx" },
+	{ ISOURCE_ETSEC3_G1_RX, "etsec3-g1-rx" },
+	{ ISOURCE_ETSEC3_G1_ERR, "etsec3-g1-error" },
+	{ ISOURCE_QEB_MUECC, "qeb-low" },
+	{ ISOURCE_QEB_HIGH, "qeb-crit" },
+	{ ISOURCE_DMA2_CHAN1, "dma2-chan1" },
+	{ ISOURCE_DMA2_CHAN2, "dma2-chan2" },
+	{ ISOURCE_DMA2_CHAN3, "dma2-chan3" },
+	{ ISOURCE_DMA2_CHAN4, "dma2-chan4" },
+	{ 0, "" },
+};
+
+INTR_INFO_DECL(p1025, P1025);
+#endif
+
 #ifdef P2020
 #define	p20x0_external_intr_names	default_external_intr_names
 const struct e500_intr_name p20x0_onchip_intr_names[] = {
@@ -393,6 +419,8 @@ const struct intrsw e500_intrsw = {
 #endif
 };
 
+static bool wdog_barked;
+
 static inline uint32_t 
 openpic_read(struct cpu_softc *cpu, bus_size_t offset)
 {
@@ -448,21 +476,14 @@ e500_splset(struct cpu_info *ci, int ipl)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 
-	//KASSERT(!cpu_intr_p() || ipl >= IPL_VM);
 	KASSERT((curlwp->l_pflag & LP_INTR) == 0 || ipl != IPL_NONE);
-#if 0
-	u_int ctpr = ipl;
-	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == ci->ci_cpl);
-#elif 0
-	u_int old_ctpr = (ci->ci_cpl >= IPL_VM ? 15 : ci->ci_cpl);
-	u_int ctpr = (ipl >= IPL_VM ? 15 : ipl);
-	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == old_ctpr);
-#else
 	const u_int ctpr = IPL2CTPR(ipl);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == IPL2CTPR(ci->ci_cpl));
-#endif
 	openpic_write(cpu, OPENPIC_CTPR, ctpr);
 	KASSERT(openpic_read(cpu, OPENPIC_CTPR) == ctpr);
+#ifdef DIAGNOSTIC
+	cpu->cpu_spl_tb[ipl][ci->ci_cpl] = mftb();
+#endif
 	ci->ci_cpl = ipl;
 }
 
@@ -476,8 +497,10 @@ e500_spl0(void)
 #ifdef __HAVE_FAST_SOFTINTS
 	if (__predict_false(ci->ci_data.cpu_softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
+		wrtee(PSL_EE);
 		powerpc_softint(ci, IPL_NONE,
 		    (vaddr_t)__builtin_return_address(0));
+		wrtee(0);
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, IPL_NONE);
@@ -491,7 +514,8 @@ e500_splx(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 	if (ipl == old_ipl)
 		return;
@@ -506,11 +530,13 @@ e500_splx(int ipl)
 	// const
 	register_t msr = wrtee(0);
 #ifdef __HAVE_FAST_SOFTINTS
-	const u_int softints = (ci->ci_data.cpu_softints << ipl) & IPL_SOFTMASK;
+	const u_int softints = ci->ci_data.cpu_softints & (IPL_SOFTMASK << ipl);
 	if (__predict_false(softints != 0)) {
 		e500_splset(ci, IPL_HIGH);
+		wrtee(msr);
 		powerpc_softint(ci, ipl,
 		    (vaddr_t)__builtin_return_address(0));
+		wrtee(0);
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
 	e500_splset(ci, ipl);
@@ -527,13 +553,14 @@ e500_splraise(int ipl)
 	struct cpu_info * const ci = curcpu();
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 	if (old_ipl < ipl) {
 		//const
 		register_t msr = wrtee(0);
 		e500_splset(ci, ipl);
-#if 1
+#if 0
 		if (old_ipl < IPL_VM && ipl >= IPL_VM)
 			msr = 0;
 #endif
@@ -802,9 +829,15 @@ e500_fitintr(struct trapframe *tf)
 static void
 e500_wdogintr(struct trapframe *tf)
 {
+	struct cpu_info * const ci = curcpu();
 	mtspr(SPR_TSR, TSR_ENW|TSR_WIS);
-	panic("%s: tf=%p tb=%"PRId64" srr0/srr1=%#lx/%#lx", __func__, tf,
-	    mftb(), tf->tf_srr0, tf->tf_srr1);
+	wdog_barked = true;
+	dump_splhist(ci, NULL);
+	dump_trapframe(tf, NULL);
+	panic("%s: tf=%p tb=%"PRId64" srr0/srr1=%#lx/%#lx"
+	    " cpl=%d idepth=%d, mtxcount=%d",
+	    __func__, tf, mftb(), tf->tf_srr0, tf->tf_srr1,
+	    ci->ci_cpl, ci->ci_idepth, ci->ci_mtx_count);
 }
 
 static void
@@ -814,7 +847,8 @@ e500_extintr(struct trapframe *tf)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	const int old_ipl = ci->ci_cpl;
 
-	KASSERT(mfmsr() & PSL_CE);
+	/* if we paniced because of watchdog, PSL_CE will be clear.  */
+	KASSERT(wdog_barked || (mfmsr() & PSL_CE));
 
 #if 0
 //	printf("%s(%p): idepth=%d enter\n", __func__, tf, ci->ci_idepth);
@@ -849,8 +883,8 @@ e500_extintr(struct trapframe *tf)
 		/*
 		 * Find out the pending interrupt.
 		 */
-	if (mfmsr() & PSL_EE)
-		panic("%s(%p): MSR[EE] turned on (%#lx)!", __func__, tf, mfmsr());
+		KASSERTMSG((mfmsr() & PSL_EE) == 0,
+		    "%s(%p): MSR[EE] left on (%#lx)!", __func__, tf, mfmsr());
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
 			    __func__, tf, __LINE__, old_ipl, 
@@ -879,7 +913,9 @@ e500_extintr(struct trapframe *tf)
 			 * Timer interrupts get their argument overriden with
 			 * the pointer to the trapframe.
 			 */
-			KASSERT(is->is_ipl == ipl);
+			KASSERTMSG(is->is_ipl == ipl,
+			    "iack %#x: is %p: irq %d ipl %d != iack ipl %d",
+			    iack, is, irq, is->is_ipl, ipl);
 			void *arg = (is->is_ist == IST_TIMER ? tf : is->is_arg);
 			if (is->is_ipl <= old_ipl)
 				panic("%s(%p): %s (%u): is->is_ipl (%u) <= old_ipl (%u)\n",
@@ -918,8 +954,8 @@ e500_extintr(struct trapframe *tf)
 		 * because the loop we interrupted will complete looking
 		 * for interrupts.
 		 */
-	if (mfmsr() & PSL_EE)
-		panic("%s(%p): MSR[EE] left on (%#lx)!", __func__, tf, mfmsr());
+		KASSERTMSG((mfmsr() & PSL_EE) == 0,
+		    "%s(%p): MSR[EE] left on (%#lx)!", __func__, tf, mfmsr());
 		if (IPL2CTPR(old_ipl) != openpic_read(cpu, OPENPIC_CTPR))
 			panic("%s(%p): %d: old_ipl(%u) + %u != OPENPIC_CTPR (%u)",
 			    __func__, tf, __LINE__, old_ipl, 
@@ -940,20 +976,18 @@ e500_extintr(struct trapframe *tf)
 	/*
 	 * Before exiting, deal with any softints that need to be dealt with.
 	 */
-	const u_int softints = (ci->ci_data.cpu_softints << old_ipl) & IPL_SOFTMASK;
+	const u_int softints = ci->ci_data.cpu_softints & (IPL_SOFTMASK << old_ipl);
 	if (__predict_false(softints != 0)) {
 		KASSERT(old_ipl < IPL_VM);
 		e500_splset(ci, IPL_HIGH);	/* pop to high */
+		wrtee(PSL_EE);			/* reenable interrupts */
 		powerpc_softint(ci, old_ipl,	/* deal with them */
 		    tf->tf_srr0);
+		wrtee(0);			/* disable interrupts */
 		e500_splset(ci, old_ipl);	/* and drop back */
 	}
 #endif /* __HAVE_FAST_SOFTINTS */
-#if 1
 	KASSERT(ci->ci_cpl == old_ipl);
-#else
-	e500_splset(ci, old_ipl);		/* and drop back */
-#endif
 
 	/*
 	 * If we interrupted while power-saving and we need to exit idle,
@@ -1008,6 +1042,12 @@ e500_intr_init(void)
 #ifdef MPC8572
 	case SVR_MPC8572v1 >> 16:
 		*ii = mpc8572_intr_info;
+		break;
+#endif
+#ifdef P1025
+	case SVR_P1016v1 >> 16:
+	case SVR_P1025v1 >> 16:
+		*ii = p1025_intr_info;
 		break;
 #endif
 #ifdef P2020

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.67.2.1 2012/04/17 00:06:33 yamt Exp $
+#	$NetBSD: GENERIC,v 1.67.2.2 2012/10/30 17:19:52 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67.2.1 $"
+#ident 		"GENERIC-$Revision: 1.67.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -108,6 +108,7 @@ options 	PERFCTRS	# performance counters
 #options 	COMPAT_30	# NetBSD 3.0
 #options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -230,6 +231,7 @@ wsdisplay0      at wsemuldisplaydev? console 1
 wsdisplay*      at wsemuldisplaydev?
 
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
@@ -595,7 +597,7 @@ uaudio*	at uhub? port ? configuration ?
 
 # USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
 #rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 

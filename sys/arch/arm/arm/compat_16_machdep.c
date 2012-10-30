@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.13.2.1 2012/04/17 00:06:03 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.13.2.2 2012/10/30 17:18:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.1 2012/04/17 00:06:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.2 2012/10/30 17:18:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.1 2012/04/17 00:06:03 y
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/pcb.h>
 #ifndef acorn26
 #include <arm/cpufunc.h>
 #endif
@@ -84,17 +83,15 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.13.2.1 2012/04/17 00:06:03 y
 void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	struct sigacts * const ps = p->p_sigacts;
+	struct trapframe * const tf = lwp_trapframe(l);
 	struct sigframe_sigcontext *fp, frame;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	tf = process_frame(l);
 
 	fp = getframe(l, sig, &onstack);
 
@@ -216,9 +213,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */
+	struct trapframe * const tf = lwp_trapframe(l);
+	struct proc * const p = l->l_proc;
 	struct sigcontext *scp, context;
-	struct trapframe *tf;
-	struct proc *p = l->l_proc;
 
 	/*
 	 * we do a rather scary test in userland
@@ -243,7 +240,6 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		return EINVAL;
 
 	/* Restore register context. */
-	tf = process_frame(l);
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;

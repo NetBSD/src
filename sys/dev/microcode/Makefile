@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2010/07/05 20:32:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.8.1 2012/10/30 17:21:19 yamt Exp $
 
-SUBDIR+=	ral rum zyd
+SUBDIR+=	ral rum run zyd
 SUBDIR+=	radeon
 
 .include <bsd.subdir.mk>

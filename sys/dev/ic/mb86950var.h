@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.5.12.1 2012/04/17 00:07:34 yamt Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.5.12.2 2012/10/30 17:21:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -38,7 +38,7 @@
  * EStar_softc: per line info and status
  */
 struct mb86950_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ec;		/* ethernet common */
 	struct ifmedia sc_media;	/* supported media information */
 

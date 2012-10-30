@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.4.10.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.4.10.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -112,11 +112,13 @@ int	npf_ncode_validate(const void *, size_t, int *);
  */
 
 #define	NPF_OPCODE_ETHER		0x80
+#define	NPF_OPCODE_PROTO		0x81
 
 #define	NPF_OPCODE_IP4MASK		0x90
 #define	NPF_OPCODE_TABLE		0x91
 #define	NPF_OPCODE_ICMP4		0x92
 #define	NPF_OPCODE_IP6MASK		0x93
+#define	NPF_OPCODE_ICMP6		0x94
 
 #define	NPF_OPCODE_TCP_PORTS		0xa0
 #define	NPF_OPCODE_UDP_PORTS		0xa1
@@ -138,14 +140,15 @@ int	npf_ncode_validate(const void *, size_t, int *);
 # define	NPF_OPERAND_SUBNET		9
 # define	NPF_OPERAND_LENGTH		10
 # define	NPF_OPERAND_TABLE_ID		11
-# define	NPF_OPERAND_ICMP4_TYPE_CODE	12
+# define	NPF_OPERAND_ICMP_TYPE_CODE	12
 # define	NPF_OPERAND_TCP_FLAGS_MASK	13
 # define	NPF_OPERAND_PORT_RANGE		14
+# define	NPF_OPERAND_PROTO		15
 
 static const struct npf_instruction {
-	const char *name;
-	uint8_t op[4];
-} npf_instructions[256] = {
+	const char *	name;
+	uint8_t		op[4];
+} npf_instructions[] = {
 	[NPF_OPCODE_RET] = {
 		.name = "ret",
 		.op = {
@@ -177,7 +180,7 @@ static const struct npf_instruction {
 	[NPF_OPCODE_MOVE] = {
 		.name = "move",
 		.op = {
-			[0] = NPF_OPERAND_VALUE, 
+			[0] = NPF_OPERAND_VALUE,
 			[1] = NPF_OPERAND_REGISTER,
 		},
 	},
@@ -247,7 +250,8 @@ static const struct npf_instruction {
 			[1] = NPF_OPERAND_REGISTER,
 		},
 	},
-	[NPF_OPCODE_DIV] = { .name = "div",
+	[NPF_OPCODE_DIV] = {
+		.name = "div",
 		.op = {
 			[0] = NPF_OPERAND_VALUE,
 			[1] = NPF_OPERAND_REGISTER,
@@ -303,6 +307,12 @@ static const struct npf_instruction {
 			[2] = NPF_OPERAND_ETHER_TYPE,
 		},
 	},
+	[NPF_OPCODE_PROTO] = {
+		.name = "proto",
+		.op = {
+			[0] = NPF_OPERAND_PROTO,
+		},
+	},
 	[NPF_OPCODE_IP4MASK] = {
 		.name = "ip4mask",
 		.op = {
@@ -321,7 +331,13 @@ static const struct npf_instruction {
 	[NPF_OPCODE_ICMP4] = {
 		.name = "icmp4",
 		.op = {
-			[0] = NPF_OPERAND_ICMP4_TYPE_CODE,
+			[0] = NPF_OPERAND_ICMP_TYPE_CODE,
+		},
+	},
+	[NPF_OPCODE_ICMP6] = {
+		.name = "icmp6",
+		.op = {
+			[0] = NPF_OPERAND_ICMP_TYPE_CODE,
 		},
 	},
 	[NPF_OPCODE_IP6MASK] = {

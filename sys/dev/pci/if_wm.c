@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.223.2.1 2012/04/17 00:07:49 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.223.2.2 2012/10/30 17:21:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223.2.1 2012/04/17 00:07:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.223.2.2 2012/10/30 17:21:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,10 @@ struct wm_control_data_82544 {
 	 * The transmit descriptors.  Put these at the end, because
 	 * we might use a smaller number of them.
 	 */
-	wiseman_txdesc_t wcd_txdescs[WM_NTXDESC_82544];
+	union {
+		wiseman_txdesc_t wcdu_txdescs[WM_NTXDESC_82544];
+		nq_txdesc_t      wcdu_nq_txdescs[WM_NTXDESC_82544];
+	} wdc_u;
 };
 
 struct wm_control_data_82542 {
@@ -203,7 +206,7 @@ struct wm_control_data_82542 {
 };
 
 #define	WM_CDOFF(x)	offsetof(struct wm_control_data_82544, x)
-#define	WM_CDTXOFF(x)	WM_CDOFF(wcd_txdescs[(x)])
+#define	WM_CDTXOFF(x)	WM_CDOFF(wdc_u.wcdu_txdescs[(x)])
 #define	WM_CDRXOFF(x)	WM_CDOFF(wcd_rxdescs[(x)])
 
 /*
@@ -294,7 +297,8 @@ struct wm_softc {
 	int sc_cd_rseg;			/* real number of control segment */
 	size_t sc_cd_size;		/* control data size */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
-#define	sc_txdescs	sc_control_data->wcd_txdescs
+#define	sc_txdescs	sc_control_data->wdc_u.wcdu_txdescs
+#define	sc_nq_txdescs	sc_control_data->wdc_u.wcdu_nq_txdescs
 #define	sc_rxdescs	sc_control_data->wcd_rxdescs
 
 #ifdef WM_EVENT_COUNTERS
@@ -490,6 +494,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 static void	wm_start(struct ifnet *);
+static void	wm_nq_start(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
@@ -540,7 +545,7 @@ static void	wm_gmii_hv_writereg(device_t, int, int, int);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 
-static void	wm_gmii_statchg(device_t);
+static void	wm_gmii_statchg(struct ifnet *);
 
 static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
@@ -603,6 +608,7 @@ static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
 #endif
 static void	wm_init_manageability(struct wm_softc *);
+static void	wm_set_eee_i350(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1001,6 +1007,20 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
 	  "82580 quad-1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_1000X },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
+	  "I350 Gigabit Network Connection",
+	  WM_T_I350,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_FIBER,
+	  "I350 Gigabit Fiber Network Connection",
+	  WM_T_I350,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SERDES,
+	  "I350 Gigabit Backplane Connection",
+	  WM_T_I350,		WMP_F_SERDES },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SGMII,
+	  "I350 Gigabit Connection",
+	  WM_T_I350,		WMP_F_1000T },
+#endif
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1151,7 +1171,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER))
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350))
 		sc->sc_flags |= WM_F_NEWQUEUE;
 
 	/* Set device properties (mactype) */
@@ -1264,7 +1285,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
 	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER))
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1551,6 +1573,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 		/* SPI */
 		wm_set_spiaddrbits(sc);
@@ -1696,11 +1719,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
 	case WM_T_PCH:
 	case WM_T_PCH2:
+		/* XXX The funcid should be checked on some devices */
 		apme_mask = WUC_APME;
 		eeprom_data = CSR_READ(sc, WMREG_WUC);
 		break;
@@ -1818,6 +1843,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_82576:
 		case WM_T_82580:
 		case WM_T_82580ER:
+		case WM_T_I350:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
 			case CTRL_EXT_LINK_MODE_SGMII:
@@ -1856,7 +1882,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wm_ioctl;
-	ifp->if_start = wm_start;
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+		ifp->if_start = wm_nq_start;
+	else
+		ifp->if_start = wm_start;
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
@@ -1878,6 +1907,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
@@ -1904,9 +1934,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
 	 */
-	if (sc->sc_type == WM_T_82575 || sc->sc_type == WM_T_82576)
-		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
-	else if (sc->sc_type >= WM_T_82543)
+	if (sc->sc_type >= WM_T_82543)
 		sc->sc_ethercom.ec_capabilities |=
 		    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
@@ -2665,10 +2693,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low %#" PRIxPADDR ", "
+				    ("%s: TX: desc %d: low %#" PRIx64 ", "
 				     "len %#04zx\n",
 				    device_xname(sc->sc_dev), nexttx,
-				    curaddr & 0xffffffffUL, curlen));
+				    (uint64_t)curaddr, curlen));
 			}
 		}
 
@@ -2739,6 +2767,483 @@ wm_start(struct ifnet *ifp)
 }
 
 /*
+ * wm_nq_tx_offload:
+ *
+ *	Set up TCP/IP checksumming parameters for the
+ *	specified packet, for NEWQUEUE devices
+ */
+static int
+wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
+    uint32_t *cmdlenp, uint32_t *fieldsp, bool *do_csum)
+{
+	struct mbuf *m0 = txs->txs_mbuf;
+	struct m_tag *mtag;
+	uint32_t vl_len, mssidx, cmdc;
+	struct ether_header *eh;
+	int offset, iphl;
+
+	/*
+	 * XXX It would be nice if the mbuf pkthdr had offset
+	 * fields for the protocol headers.
+	 */
+	*cmdlenp = 0;
+	*fieldsp = 0;
+
+	eh = mtod(m0, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
+		offset = ETHER_HDR_LEN;
+		break;
+
+	case ETHERTYPE_VLAN:
+		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		break;
+
+	default:
+		/*
+		 * Don't support this protocol or encapsulation.
+		 */
+		*do_csum = false;
+		return 0;
+	}
+	*do_csum = true;
+	*cmdlenp = NQTX_DTYP_D | NQTX_CMD_DEXT | NQTX_CMD_IFCS;
+	cmdc = NQTX_DTYP_C | NQTX_CMD_DEXT;
+
+	vl_len = (offset << NQTXC_VLLEN_MACLEN_SHIFT);
+	KASSERT((offset & ~NQTXC_VLLEN_MACLEN_MASK) == 0);
+
+	if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_IPv4)) != 0) {
+		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	} else {
+		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+	}
+	vl_len |= (iphl << NQTXC_VLLEN_IPLEN_SHIFT);
+	KASSERT((iphl & ~NQTXC_VLLEN_IPLEN_MASK) == 0);
+
+	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
+		vl_len |= ((VLAN_TAG_VALUE(mtag) & NQTXC_VLLEN_VLAN_MASK)
+		     << NQTXC_VLLEN_VLAN_SHIFT);
+		*cmdlenp |= NQTX_CMD_VLE;
+	}
+
+	mssidx = 0;
+
+	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
+		int hlen = offset + iphl;
+		int tcp_hlen;
+		bool v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
+		if (__predict_false(m0->m_len <
+				    (hlen + sizeof(struct tcphdr)))) {
+			/*
+			 * TCP/IP headers are not in the first mbuf; we need
+			 * to do this the slow and painful way.  Let's just
+			 * hope this doesn't happen very often.
+			 */
+			struct tcphdr th;
+
+			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
+
+			m_copydata(m0, hlen, sizeof(th), &th);
+			if (v4) {
+				struct ip ip;
+
+				m_copydata(m0, offset, sizeof(ip), &ip);
+				ip.ip_len = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip, ip_len),
+				    sizeof(ip.ip_len), &ip.ip_len);
+				th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+				    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr ip6;
+
+				m_copydata(m0, offset, sizeof(ip6), &ip6);
+				ip6.ip6_plen = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip6_hdr, ip6_plen),
+				    sizeof(ip6.ip6_plen), &ip6.ip6_plen);
+				th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
+				    &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
+			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
+
+			tcp_hlen = th.th_off << 2;
+		} else {
+			/*
+			 * TCP/IP headers are in the first mbuf; we can do
+			 * this the easy way.
+			 */
+			struct tcphdr *th;
+
+			if (v4) {
+				struct ip *ip =
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
+
+				ip->ip_len = 0;
+				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr *ip6 =
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
+
+				ip6->ip6_plen = 0;
+				th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
+				    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
+			tcp_hlen = th->th_off << 2;
+		}
+		hlen += tcp_hlen;
+		*cmdlenp |= NQTX_CMD_TSE;
+
+		if (v4) {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso);
+			*fieldsp |= NQTXD_FIELDS_IXSM | NQTXD_FIELDS_TUXSM;
+		} else {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso6);
+			*fieldsp |= NQTXD_FIELDS_TUXSM;
+		}
+		*fieldsp |= ((m0->m_pkthdr.len - hlen) << NQTXD_FIELDS_PAYLEN_SHIFT);
+		KASSERT(((m0->m_pkthdr.len - hlen) & ~NQTXD_FIELDS_PAYLEN_MASK) == 0);
+		mssidx |= (m0->m_pkthdr.segsz << NQTXC_MSSIDX_MSS_SHIFT);
+		KASSERT((m0->m_pkthdr.segsz & ~NQTXC_MSSIDX_MSS_MASK) == 0);
+		mssidx |= (tcp_hlen << NQTXC_MSSIDX_L4LEN_SHIFT);
+		KASSERT((tcp_hlen & ~NQTXC_MSSIDX_L4LEN_MASK) == 0);
+	} else {
+		*fieldsp |= (m0->m_pkthdr.len << NQTXD_FIELDS_PAYLEN_SHIFT);
+		KASSERT((m0->m_pkthdr.len & ~NQTXD_FIELDS_PAYLEN_MASK) == 0);
+	}
+
+	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		*fieldsp |= NQTXD_FIELDS_IXSM;
+		cmdc |= NQTXC_CMD_IP4;
+	}
+
+	if (m0->m_pkthdr.csum_flags &
+	    (M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
+			cmdc |= NQTXC_CMD_TCP;
+		} else {
+			cmdc |= NQTXC_CMD_UDP;
+		}
+		cmdc |= NQTXC_CMD_IP4;
+		*fieldsp |= NQTXD_FIELDS_TUXSM;
+	}
+	if (m0->m_pkthdr.csum_flags &
+	    (M_CSUM_UDPv6 | M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
+			cmdc |= NQTXC_CMD_TCP;
+		} else {
+			cmdc |= NQTXC_CMD_UDP;
+		}
+		cmdc |= NQTXC_CMD_IP6;
+		*fieldsp |= NQTXD_FIELDS_TUXSM;
+	}
+
+	/* Fill in the context descriptor. */
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_vl_len =
+	    htole32(vl_len);
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_sn = 0;
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_cmd = 
+	    htole32(cmdc);
+	sc->sc_nq_txdescs[sc->sc_txnext].nqrx_ctx.nqtxc_mssidx = 
+	    htole32(mssidx);
+	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
+	DPRINTF(WM_DEBUG_TX,
+	    ("%s: TX: context desc %d 0x%08x%08x\n", device_xname(sc->sc_dev),
+	    sc->sc_txnext, 0, vl_len));
+	DPRINTF(WM_DEBUG_TX, ("\t0x%08x%08x\n", mssidx, cmdc));
+	sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
+	txs->txs_ndesc++;
+	return 0;
+}
+
+/*
+ * wm_nq_start:		[ifnet interface function]
+ *
+ *	Start packet transmission on the interface for NEWQUEUE devices
+ */
+static void
+wm_nq_start(struct ifnet *ifp)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	struct mbuf *m0;
+	struct m_tag *mtag;
+	struct wm_txsoft *txs;
+	bus_dmamap_t dmamap;
+	int error, nexttx, lasttx = -1, seg, segs_needed;
+	bool do_csum, sent;
+
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
+	sent = false;
+
+	/*
+	 * Loop through the send queue, setting up transmit descriptors
+	 * until we drain the queue, or use up all available transmit
+	 * descriptors.
+	 */
+	for (;;) {
+		/* Grab a packet off the queue. */
+		IFQ_POLL(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: have packet to transmit: %p\n",
+		    device_xname(sc->sc_dev), m0));
+
+		/* Get a work queue entry. */
+		if (sc->sc_txsfree < WM_TXQUEUE_GC(sc)) {
+			wm_txintr(sc);
+			if (sc->sc_txsfree == 0) {
+				DPRINTF(WM_DEBUG_TX,
+				    ("%s: TX: no free job descriptors\n",
+					device_xname(sc->sc_dev)));
+				WM_EVCNT_INCR(&sc->sc_ev_txsstall);
+				break;
+			}
+		}
+
+		txs = &sc->sc_txsoft[sc->sc_txsnext];
+		dmamap = txs->txs_dmamap;
+
+		/*
+		 * Load the DMA map.  If this fails, the packet either
+		 * didn't fit in the allotted number of segments, or we
+		 * were short on resources.  For the too-many-segments
+		 * case, we simply report an error and drop the packet,
+		 * since we can't sanely copy a jumbo packet to a single
+		 * buffer.
+		 */
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
+		if (error) {
+			if (error == EFBIG) {
+				WM_EVCNT_INCR(&sc->sc_ev_txdrop);
+				log(LOG_ERR, "%s: Tx packet consumes too many "
+				    "DMA segments, dropping...\n",
+				    device_xname(sc->sc_dev));
+				IFQ_DEQUEUE(&ifp->if_snd, m0);
+				wm_dump_mbuf_chain(sc, m0);
+				m_freem(m0);
+				continue;
+			}
+			/*
+			 * Short on resources, just stop for now.
+			 */
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: dmamap load failed: %d\n",
+			    device_xname(sc->sc_dev), error));
+			break;
+		}
+
+		segs_needed = dmamap->dm_nsegs;
+
+		/*
+		 * Ensure we have enough descriptors free to describe
+		 * the packet.  Note, we always reserve one descriptor
+		 * at the end of the ring due to the semantics of the
+		 * TDT register, plus one more in the event we need
+		 * to load offload context.
+		 */
+		if (segs_needed > sc->sc_txfree - 2) {
+			/*
+			 * Not enough free descriptors to transmit this
+			 * packet.  We haven't committed anything yet,
+			 * so just unload the DMA map, put the packet
+			 * pack on the queue, and punt.  Notify the upper
+			 * layer that there are no more slots left.
+			 */
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: need %d (%d) descriptors, have %d\n",
+			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
+			    segs_needed, sc->sc_txfree - 1));
+			ifp->if_flags |= IFF_OACTIVE;
+			bus_dmamap_unload(sc->sc_dmat, dmamap);
+			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+
+		/*
+		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
+		 */
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: packet has %d (%d) DMA segments\n",
+		    device_xname(sc->sc_dev), dmamap->dm_nsegs, segs_needed));
+
+		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
+
+		/*
+		 * Store a pointer to the packet so that we can free it
+		 * later.
+		 *
+		 * Initially, we consider the number of descriptors the
+		 * packet uses the number of DMA segments.  This may be
+		 * incremented by 1 if we do checksum offload (a descriptor
+		 * is used to set the checksum context).
+		 */
+		txs->txs_mbuf = m0;
+		txs->txs_firstdesc = sc->sc_txnext;
+		txs->txs_ndesc = segs_needed;
+
+		/* Set up offload parameters for this packet. */
+		uint32_t cmdlen, fields, dcmdlen;
+		if (m0->m_pkthdr.csum_flags &
+		    (M_CSUM_TSOv4|M_CSUM_TSOv6|
+		    M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4|
+		    M_CSUM_TCPv6|M_CSUM_UDPv6)) {
+			if (wm_nq_tx_offload(sc, txs, &cmdlen, &fields,
+			    &do_csum) != 0) {
+				/* Error message already displayed. */
+				bus_dmamap_unload(sc->sc_dmat, dmamap);
+				continue;
+			}
+		} else {
+			do_csum = false;
+			cmdlen = 0;
+			fields = 0;
+		}
+
+		/* Sync the DMA map. */
+		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Initialize the first transmit descriptor.
+		 */
+		nexttx = sc->sc_txnext;
+		if (!do_csum) {
+			/* setup a legacy descriptor */
+			wm_set_dma_addr(
+			    &sc->sc_txdescs[nexttx].wtx_addr,
+			    dmamap->dm_segs[0].ds_addr);
+			sc->sc_txdescs[nexttx].wtx_cmdlen =
+			    htole32(WTX_CMD_IFCS | dmamap->dm_segs[0].ds_len);
+			sc->sc_txdescs[nexttx].wtx_fields.wtxu_status = 0;
+			sc->sc_txdescs[nexttx].wtx_fields.wtxu_options = 0;
+			if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) !=
+			    NULL) {
+				sc->sc_txdescs[nexttx].wtx_cmdlen |=
+				    htole32(WTX_CMD_VLE);
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan =
+				    htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
+			} else {
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
+			}
+			dcmdlen = 0;
+		} else {
+			/* setup an advanced data descriptor */
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_addr =
+			    htole64(dmamap->dm_segs[0].ds_addr);
+			KASSERT((dmamap->dm_segs[0].ds_len & cmdlen) == 0);
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_cmdlen =
+			    htole32(dmamap->dm_segs[0].ds_len | cmdlen );
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_fields =
+			    htole32(fields);
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: adv data desc %d 0x%" PRIx64 "\n",
+			    device_xname(sc->sc_dev), nexttx, 
+			    (uint64_t)dmamap->dm_segs[0].ds_addr));
+			DPRINTF(WM_DEBUG_TX,
+			    ("\t 0x%08x%08x\n", fields,
+			    (uint32_t)dmamap->dm_segs[0].ds_len | cmdlen));
+			dcmdlen = NQTX_DTYP_D | NQTX_CMD_DEXT;
+		}
+
+		lasttx = nexttx;
+		nexttx = WM_NEXTTX(sc, nexttx);
+		/*
+		 * fill in the next descriptors. legacy or adcanced format
+		 * is the same here
+		 */
+		for (seg = 1; seg < dmamap->dm_nsegs;
+		    seg++, nexttx = WM_NEXTTX(sc, nexttx)) {
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_addr =
+			    htole64(dmamap->dm_segs[seg].ds_addr);
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_cmdlen =
+			    htole32(dcmdlen | dmamap->dm_segs[seg].ds_len);
+			KASSERT((dcmdlen & dmamap->dm_segs[seg].ds_len) == 0);
+			sc->sc_nq_txdescs[nexttx].nqtx_data.nqtxd_fields = 0;
+			lasttx = nexttx;
+
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: desc %d: %#" PRIx64 ", "
+			     "len %#04zx\n",
+			    device_xname(sc->sc_dev), nexttx,
+			    (uint64_t)dmamap->dm_segs[seg].ds_addr,
+			    dmamap->dm_segs[seg].ds_len));
+		}
+
+		KASSERT(lasttx != -1);
+
+		/*
+		 * Set up the command byte on the last descriptor of
+		 * the packet.  If we're in the interrupt delay window,
+		 * delay the interrupt.
+		 */
+		KASSERT((WTX_CMD_EOP | WTX_CMD_RS) ==
+		    (NQTX_CMD_EOP | NQTX_CMD_RS));
+		sc->sc_txdescs[lasttx].wtx_cmdlen |=
+		    htole32(WTX_CMD_EOP | WTX_CMD_RS);
+
+		txs->txs_lastdesc = lasttx;
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: desc %d: cmdlen 0x%08x\n",
+		    device_xname(sc->sc_dev),
+		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
+
+		/* Sync the descriptors we're using. */
+		WM_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndesc,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/* Give the packet to the chip. */
+		CSR_WRITE(sc, sc->sc_tdt_reg, nexttx);
+		sent = true;
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: TDT -> %d\n", device_xname(sc->sc_dev), nexttx));
+
+		DPRINTF(WM_DEBUG_TX,
+		    ("%s: TX: finished transmitting packet, job %d\n",
+		    device_xname(sc->sc_dev), sc->sc_txsnext));
+
+		/* Advance the tx pointer. */
+		sc->sc_txfree -= txs->txs_ndesc;
+		sc->sc_txnext = nexttx;
+
+		sc->sc_txsfree--;
+		sc->sc_txsnext = WM_NEXTTXS(sc, sc->sc_txsnext);
+
+		/* Pass the packet to any BPF listeners. */
+		bpf_mtap(ifp, m0);
+	}
+
+	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
+		/* No more slots; notify upper layer. */
+		ifp->if_flags |= IFF_OACTIVE;
+	}
+
+	if (sent) {
+		/* Set a watchdog timer in case the chip flakes out. */
+		ifp->if_timer = 5;
+	}
+}
+
+/*
  * wm_watchdog:		[ifnet interface function]
  *
  *	Watchdog timer handler.
@@ -2755,18 +3260,39 @@ wm_watchdog(struct ifnet *ifp)
 	wm_txintr(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
+#ifdef WM_DEBUG
+		int i, j;
+		struct wm_txsoft *txs;
+#endif
 		log(LOG_ERR,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
 		ifp->if_oerrors++;
-
+#ifdef WM_DEBUG
+		for (i = sc->sc_txsdirty; i != sc->sc_txsnext ;
+		    i = WM_NEXTTXS(sc, i)) {
+		    txs = &sc->sc_txsoft[i];
+		    printf("txs %d tx %d -> %d\n",
+			i, txs->txs_firstdesc, txs->txs_lastdesc);
+		    for (j = txs->txs_firstdesc; ;
+			j = WM_NEXTTX(sc, j)) {
+			printf("\tdesc %d: 0x%" PRIx64 "\n", j,
+			    sc->sc_nq_txdescs[j].nqtx_data.nqtxd_addr);
+			printf("\t %#08x%08x\n",
+			    sc->sc_nq_txdescs[j].nqtx_data.nqtxd_fields,
+			    sc->sc_nq_txdescs[j].nqtx_data.nqtxd_cmdlen);
+			if (j == txs->txs_lastdesc)
+				break;
+			}
+		}
+#endif
 		/* Reset the interface. */
 		(void) wm_init(ifp);
 	}
 
 	/* Try to get more packets going. */
-	wm_start(ifp);
+	ifp->if_start(ifp);
 }
 
 static int
@@ -2855,7 +3381,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	/* Try to get more packets going. */
-	wm_start(ifp);
+	ifp->if_start(ifp);
 
 	splx(s);
 	return error;
@@ -2918,7 +3444,7 @@ wm_intr(void *arg)
 
 	if (handled) {
 		/* Try to get more packets going. */
-		wm_start(ifp);
+		ifp->if_start(ifp);
 	}
 
 	return handled;
@@ -3114,18 +3640,24 @@ wm_rxintr(struct wm_softc *sc)
 
 		/*
 		 * Okay, we have the entire packet now.  The chip is
-		 * configured to include the FCS (not all chips can
-		 * be configured to strip it), so we need to trim it.
+		 * configured to include the FCS except I350
+		 * (not all chips can be configured to strip it),
+		 * so we need to trim it.
 		 * May need to adjust length of previous mbuf in the
 		 * chain if the current mbuf is too short.
+		 * For an eratta, the RCTL_SECRC bit in RCTL register
+		 * is always set in I350, so we don't trim it.
 		 */
-		if (m->m_len < ETHER_CRC_LEN) {
-			sc->sc_rxtail->m_len -= (ETHER_CRC_LEN - m->m_len);
-			m->m_len = 0;
-		} else {
-			m->m_len -= ETHER_CRC_LEN;
-		}
-		len = sc->sc_rxlen - ETHER_CRC_LEN;
+		if (sc->sc_type != WM_T_I350) {
+			if (m->m_len < ETHER_CRC_LEN) {
+				sc->sc_rxtail->m_len
+				    -= (ETHER_CRC_LEN - m->m_len);
+				m->m_len = 0;
+			} else
+				m->m_len -= ETHER_CRC_LEN;
+			len = sc->sc_rxlen - ETHER_CRC_LEN;
+		} else
+			len = sc->sc_rxlen;
 
 		WM_RXCHAIN_LINK(sc, m);
 
@@ -3448,6 +3980,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82575:	/* XXX need special handing for jumbo frames */
+	case WM_T_I350:
 	case WM_T_80003:
 		sc->sc_pba = PBA_32K;
 		break;
@@ -3499,7 +4032,8 @@ wm_reset(struct wm_softc *sc)
 	}
 
 	/* Set the completion timeout for interface */
-	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type == WM_T_I350))
 		wm_set_pcie_completion_timeout(sc);
 
 	/* Clear interrupt */
@@ -3622,6 +4156,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 	case WM_T_82583:
+	case WM_T_I350:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
@@ -3681,6 +4216,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3704,6 +4240,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_82580ER:
 #endif
+	case WM_T_I350:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
@@ -3712,7 +4249,8 @@ wm_reset(struct wm_softc *sc)
 			if ((sc->sc_type == WM_T_82575)
 			    || (sc->sc_type == WM_T_82576)
 			    || (sc->sc_type == WM_T_82580)
-			    || (sc->sc_type == WM_T_82580ER))
+			    || (sc->sc_type == WM_T_82580ER)
+			    || (sc->sc_type == WM_T_I350))
 				wm_reset_init_script_82575(sc);
 		}
 		break;
@@ -3720,7 +4258,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350)) {
 		/* clear global device reset status bit */
 		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
 	}
@@ -3731,6 +4270,9 @@ wm_reset(struct wm_softc *sc)
 
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+
+	if (sc->sc_type == WM_T_I350)
+		wm_set_eee_i350(sc);
 
 	/* dummy read from WUC */
 	if (sc->sc_type == WM_T_PCH)
@@ -3772,7 +4314,7 @@ wm_init(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_rxsoft *rxs;
-	int i, error = 0;
+	int i, j, trynum, error = 0;
 	uint32_t reg;
 
 	/*
@@ -3951,8 +4493,13 @@ wm_init(struct ifnet *ifp)
 	 * Clear out the VLAN table -- we don't use it (yet).
 	 */
 	CSR_WRITE(sc, WMREG_VET, 0);
+	if (sc->sc_type == WM_T_I350)
+		trynum = 10; /* Due to hw errata */
+	else
+		trynum = 1;
 	for (i = 0; i < WM_VLAN_TABSIZE; i++)
-		CSR_WRITE(sc, WMREG_VFTA + (i << 2), 0);
+		for (j = 0; j < trynum; j++)
+			CSR_WRITE(sc, WMREG_VFTA + (i << 2), 0);
 
 	/*
 	 * Set up flow-control parameters.
@@ -4140,6 +4687,13 @@ wm_init(struct ifnet *ifp)
 	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_DPF
 	    | RCTL_MO(sc->sc_mchash_type);
 
+	/*
+	 * The I350 has a bug where it always strips the CRC whether
+	 * asked to or not. So ask for stripped CRC here and cope in rxeof
+	 */
+	if (sc->sc_type == WM_T_I350)
+		sc->sc_rctl |= RCTL_SECRC;
+
 	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
 	    && (ifp->if_mtu > ETHERMTU)) {
 		sc->sc_rctl |= RCTL_LPE;
@@ -4295,6 +4849,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4382,6 +4937,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 		if (sc->sc_type == WM_T_82571) {
 			/* Only 82571 shares port 0 */
 			mask = EEMNGCTL_CFGDONE_0;
@@ -4576,6 +5132,22 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
 		CSR_WRITE(sc, WMREG_EECD, reg);
 
+		/*
+		 * XXX: workaround for a bug in qemu-0.12.x and prior
+		 * and Xen.
+		 *
+		 * We use this workaround only for 82540 because qemu's
+		 * e1000 act as 82540.
+		 */
+		if (sc->sc_type == WM_T_82540) {
+			reg |= EECD_SK;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+			reg &= ~EECD_SK;
+			CSR_WRITE(sc, WMREG_EECD, reg);
+			delay(2);
+		}
+		/* XXX: end of workaround */
+		
 		/* Set CHIP SELECT. */
 		reg |= EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
@@ -4810,6 +5382,7 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	switch (sc->sc_type) {
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 		switch (sc->sc_funcid) {
 		case 0:
 			/* default value (== EEPROM_OFF_MACADDR) */
@@ -5369,7 +5942,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 			DPRINTF(WM_DEBUG_LINK, ("RXCFG storm! (%d)\n",
 				sc->sc_tbi_nrxcfg - sc->sc_tbi_lastnrxcfg));
 			wm_init(ifp);
-			wm_start(ifp);
+			ifp->if_start(ifp);
 		} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 			/* If the timer expired, retry autonegotiation */
 			if (++sc->sc_tbi_ticks >= sc->sc_tbi_anegticks) {
@@ -5420,6 +5993,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 		rv = wm_get_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
 		break;
@@ -5490,6 +6064,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_82583:
 	case WM_T_80003:
 		/* generic reset */
@@ -5537,6 +6112,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_80003:
 		wm_put_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
 		break;
@@ -5577,6 +6153,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 	case WM_T_82583:
 	case WM_T_80003:
 		/* null */
@@ -5718,7 +6295,8 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_I350)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
 			/* Attach only one port */
 			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
@@ -6407,9 +6985,9 @@ wm_sgmii_writereg(device_t self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-wm_gmii_statchg(device_t self)
+wm_gmii_statchg(struct ifnet *ifp)
 {
-	struct wm_softc *sc = device_private(self);
+	struct wm_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 
 	sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);
@@ -6436,11 +7014,11 @@ wm_gmii_statchg(device_t self)
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: FDX\n", device_xname(sc->sc_dev)));
+		    ("%s: LINK: statchg: FDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
 	} else {
 		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: statchg: HDX\n", device_xname(sc->sc_dev)));
+		    ("%s: LINK: statchg: HDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
 	}
 
@@ -7599,6 +8177,7 @@ wm_get_wakeup(struct wm_softc *sc)
 #if 0 /* XXX */
 	case WM_T_82580:
 	case WM_T_82580ER:
+	case WM_T_I350:
 #endif
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
@@ -7768,4 +8347,28 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 	wm_init_manageability(sc);
 
 	return true;
+}
+
+static void
+wm_set_eee_i350(struct wm_softc * sc)
+{
+	uint32_t ipcnfg, eeer;
+
+	ipcnfg = CSR_READ(sc, WMREG_IPCNFG);
+	eeer = CSR_READ(sc, WMREG_EEER);
+
+	if ((sc->sc_flags & WM_F_EEE) != 0) {
+		ipcnfg |= (IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN);
+		eeer |= (EEER_TX_LPI_EN | EEER_RX_LPI_EN
+		    | EEER_LPI_FC);
+	} else {
+		ipcnfg &= ~(IPCNFG_EEE_1G_AN | IPCNFG_EEE_100M_AN);
+		eeer &= ~(EEER_TX_LPI_EN | EEER_RX_LPI_EN
+		    | EEER_LPI_FC);
+	}
+
+	CSR_WRITE(sc, WMREG_IPCNFG, ipcnfg);
+	CSR_WRITE(sc, WMREG_EEER, eeer);
+	CSR_READ(sc, WMREG_IPCNFG); /* XXX flush? */
+	CSR_READ(sc, WMREG_EEER); /* XXX flush? */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.11 2011/11/02 16:54:50 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.11.2.1 2012/10/30 17:21:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -256,7 +256,7 @@ struct ahci_r_fis {
 #define		AHCI_P_SIG_LBAL_MASK	0x0000ff00
 #define		AHCI_P_SIG_LBAL_SHIFT	8
 #define		AHCI_P_SIG_SC_MASK	0x000000ff
-#define		AHCI_P_SIG_SC_SHIFT	8
+#define		AHCI_P_SIG_SC_SHIFT	0
 
 #define AHCI_P_SSTS(p)	(0x128 + AHCI_P_OFFSET(p)) /* Serial ATA status */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.66 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: siop.c,v 1.66.8.1 2012/10/30 17:18:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.66 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.66.8.1 2012/10/30 17:18:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
 	struct siop_acb *acb;
-	struct siop_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct siop_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	int flags, s;
 
 	switch (req) {
@@ -308,7 +308,7 @@ siop_poll(struct siop_softc *sc, struct siop_acb *acb)
 	to = xs->timeout / 1000;
 	if (sc->nexus_list.tqh_first)
 		printf("%s: siop_poll called with disconnected device\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	for (;;) {
 		/* use cmd_wait values? */
 		i = 50000;
@@ -337,7 +337,7 @@ siop_poll(struct siop_softc *sc, struct siop_acb *acb)
 		if (siop_checkintr(sc, istat, dstat, sstat0, &status)) {
 			if (acb != sc->sc_nexus)
 				printf("%s: siop_poll disconnected device completed\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			else if ((sc->sc_flags & SIOP_INTDEFER) == 0) {
 				sc->sc_flags &= ~SIOP_INTSOFF;
 				rp->siop_sien = sc->sc_sien;
@@ -365,7 +365,7 @@ siop_sched(struct siop_softc *sc)
 #ifdef DEBUG
 	if (sc->sc_nexus) {
 		printf("%s: siop_sched- nexus %p/%d ready %p/%d\n",
-		    sc->sc_dev.dv_xname, sc->sc_nexus,
+		    device_xname(sc->sc_dev), sc->sc_nexus,
 		    sc->sc_nexus->xs->xs_periph->periph_target,
 		    sc->ready_list.tqh_first,
 		    sc->ready_list.tqh_first->xs->xs_periph->periph_target);
@@ -390,7 +390,7 @@ siop_sched(struct siop_softc *sc)
 	if (acb == NULL) {
 #ifdef DEBUGXXX
 		printf("%s: siop_sched didn't find ready command\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 #endif
 		return;
 	}
@@ -426,7 +426,7 @@ siop_scsidone(struct siop_acb *acb, int stat)
 	callout_stop(&xs->xs_callout);
 
 	periph = xs->xs_periph;
-	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
 
 	xs->status = stat;
 	xs->resid = 0;		/* XXXX */
@@ -472,7 +472,7 @@ siop_scsidone(struct siop_acb *acb, int stat)
 			--sc->sc_active;
 		} else {
 			printf("%s: can't find matching acb\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 #ifdef DDB
 /*			Debugger(); */
 #endif
@@ -499,7 +499,7 @@ siopabort(register struct siop_softc *sc, siop_regmap_p rp, const char *where)
 #endif
 
 	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    where, rp->siop_dstat, rp->siop_sstat0, rp->siop_sbcl);
 
 	if (sc->sc_active > 0) {
@@ -593,7 +593,7 @@ siopinitialize(struct siop_softc *sc)
 #ifdef DEBUG
 		if (inhibit_sync)
 			printf("%s: Inhibiting synchronous transfer %02x\n",
-				sc->sc_dev.dv_xname, inhibit_sync);
+				device_xname(sc->sc_dev), inhibit_sync);
 #endif
 		for (i = 0; i < 8; ++i)
 			if (inhibit_sync & (1 << i))
@@ -638,7 +638,7 @@ siopreset(struct siop_softc *sc)
 	if (sc->sc_flags & SIOP_ALIVE)
 		siopabort(sc, rp, "reset");
 
-	printf("%s: ", sc->sc_dev.dv_xname);		/* XXXX */
+	printf("%s: ", device_xname(sc->sc_dev));		/* XXXX */
 
 	s = splbio();
 
@@ -874,7 +874,7 @@ siop_start(struct siop_softc *sc, int target, int lun, u_char *cbuf, int clen,
 		    mstohz(acb->xs->timeout) + 1, siop_timeout, acb);
 		if (rp->siop_istat & SIOP_ISTAT_CON)
 			printf("%s: siop_select while connected?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		rp->siop_temp = 0;
 		rp->siop_sbcl = sc->sc_sync[target].sbcl;
 		rp->siop_dsa = kvtop((void *)&acb->ds);
@@ -929,7 +929,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 	if (rp->siop_dsp && (rp->siop_dsp < sc->sc_scriptspa ||
 	    rp->siop_dsp >= sc->sc_scriptspa + sizeof(scripts))) {
 		printf ("%s: dsp not within script dsp %lx scripts %lx:%lx",
-		    sc->sc_dev.dv_xname, rp->siop_dsp, sc->sc_scriptspa,
+		    device_xname(sc->sc_dev), rp->siop_dsp, sc->sc_scriptspa,
 		    sc->sc_scriptspa + sizeof(scripts));
 		printf(" istat %x dstat %x sstat0 %x\n",
 		    istat, dstat, sstat0);
@@ -952,14 +952,14 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 		if (sc->sc_sync[target].state == NEG_WAITS) {
 			if (acb->msg[1] == 0xff)
 				printf ("%s: target %d ignored sync request\n",
-				    sc->sc_dev.dv_xname, target);
+				    device_xname(sc->sc_dev), target);
 			else if (acb->msg[1] == MSG_REJECT)
 				printf ("%s: target %d rejected sync request\n",
-				    sc->sc_dev.dv_xname, target);
+				    device_xname(sc->sc_dev), target);
 			else
 /* XXX - need to set sync transfer parameters */
 				printf("%s: target %d (sync) %02x %02x %02x\n",
-				    sc->sc_dev.dv_xname, target, acb->msg[1],
+				    device_xname(sc->sc_dev), target, acb->msg[1],
 				    acb->msg[2], acb->msg[3]);
 			sc->sc_sync[target].state = NEG_DONE;
 		}
@@ -975,7 +975,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 		}
 		if (acb->msg[0] != 0x00)
 			printf("%s: message was not COMMAND COMPLETE: %x\n",
-			    sc->sc_dev.dv_xname, acb->msg[0]);
+			    device_xname(sc->sc_dev), acb->msg[0]);
 #endif
 		if (sc->nexus_list.tqh_first)
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
@@ -1009,7 +1009,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				if (acb->msg[4] && acb->msg[4] < 100 / 4) {
 #ifdef DEBUG
 					printf ("%d: target %d wanted %dns period\n",
-					    sc->sc_dev.dv_xname, target,
+					    device_xname(sc->sc_dev), target,
 					    acb->msg[4] * 4);
 #endif
 					if (acb->msg[4] == 50 / 4)
@@ -1019,7 +1019,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 				}
 #endif /* MAXTOR_KLUDGE */
 				printf ("%s: target %d now synchronous, period=%dns, offset=%d\n",
-				    sc->sc_dev.dv_xname, target,
+				    device_xname(sc->sc_dev), target,
 				    acb->msg[4] * 4, acb->msg[5]);
 				scsi_period_to_siop (sc, target);
 			}
@@ -1041,7 +1041,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 		++siopphmm;
 		if (acb == NULL)
 			printf("%s: Phase mismatch with no active command?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 #endif
 		if (acb->iob_len) {
 			int adjust;
@@ -1105,7 +1105,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 		if (acb == NULL)
 			printf("%s: Select timeout with no active command?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		if (rp->siop_sbcl & SIOP_BSY) {
 			printf ("ACK! siop was busy at timeout: rp %p script %p dsa %p\n",
 			    rp, &scripts, &acb->ds);
@@ -1141,9 +1141,9 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 		if (acb == NULL)
 			printf("%s: Unexpected disconnect with no active command?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		printf ("%s: target %d disconnected unexpectedly\n",
-		   sc->sc_dev.dv_xname, target);
+		   device_xname(sc->sc_dev), target);
 #endif
 #if 0
 		siopabort (sc, rp, "siopchkintr");
@@ -1158,14 +1158,14 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 		if (siop_debug & 0x100)
 			printf ("%s: ID %02x disconnected TEMP %lx (+%lx) curbuf %lx curlen %lx buf %p len %lx dfifo %x dbc %x sstat1 %x starts %d acb %p\n",
-			    sc->sc_dev.dv_xname, 1 << target, rp->siop_temp,
+			    device_xname(sc->sc_dev), 1 << target, rp->siop_temp,
 			    rp->siop_temp ? rp->siop_temp - sc->sc_scriptspa : 0,
 			    acb->iob_curbuf, acb->iob_curlen,
 			    acb->ds.chain[0].databuf, acb->ds.chain[0].datalen, dfifo, dbc, sstat1, siopstarts, acb);
 #endif
 		if (acb == NULL) {
 			printf("%s: Disconnect with no active command?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			return (0);
 		}
 		/*
@@ -1181,7 +1181,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 
 			if (acb->iob_curlen && acb->iob_curlen != acb->ds.chain[0].datalen)
 				printf("%s: iob_curbuf/len already set? n %x iob %lx/%lx chain[0] %p/%lx\n",
-				    sc->sc_dev.dv_xname, n, acb->iob_curbuf, acb->iob_curlen,
+				    device_xname(sc->sc_dev), n, acb->iob_curbuf, acb->iob_curlen,
 				    acb->ds.chain[0].databuf, acb->ds.chain[0].datalen);
 			if (n < Ent_datain)
 				n = (n - Ent_dataout) / 16;
@@ -1195,7 +1195,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 			}
 #ifdef DEBUG
 			if (siop_debug & 0x100) {
-				printf("%s: TEMP offset %d", sc->sc_dev.dv_xname, n);
+				printf("%s: TEMP offset %d", device_xname(sc->sc_dev), n);
 				printf(" curbuf %lx curlen %lx\n", acb->iob_curbuf,
 				    acb->iob_curlen);
 			}
@@ -1214,10 +1214,10 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 			if (siop_debug & 0x100)
 				printf ("%s: adjusting DMA chain\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			if (rp->siop_dsps == 0xff02)
 				printf ("%s: ID %02x disconnected without Save Data Pointers\n",
-				    sc->sc_dev.dv_xname, 1 << target);
+				    device_xname(sc->sc_dev), 1 << target);
 #endif
 /* XXX is: 		if (rp->siop_dsps != 0xff02) { */
 				/* not disconnected without save data ptr */
@@ -1289,17 +1289,17 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 #ifdef DEBUG
 		if (siop_debug & 0x100)
 			printf ("%s: target ID %02x reselected dsps %lx\n",
-			     sc->sc_dev.dv_xname, reselid,
+			     device_xname(sc->sc_dev), reselid,
 			     rp->siop_dsps);
 		if ((rp->siop_sfbr & 0x80) == 0)
 			printf("%s: Reselect message in was not identify: %x\n",
-			    sc->sc_dev.dv_xname, rp->siop_sfbr);
+			    device_xname(sc->sc_dev), rp->siop_sfbr);
 #endif
 		if (sc->sc_nexus) {
 #ifdef DEBUG
 			if (siop_debug & 0x100)
 				printf ("%s: reselect ID %02x w/active\n",
-				    sc->sc_dev.dv_xname, reselid);
+				    device_xname(sc->sc_dev), reselid);
 #endif
 			TAILQ_INSERT_HEAD(&sc->ready_list, sc->sc_nexus, chain);
 			sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target].lubusy
@@ -1329,7 +1329,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 		}
 		if (acb == NULL) {
 			printf("%s: target ID %02x reselect nexus_list %p\n",
-			    sc->sc_dev.dv_xname, reselid,
+			    device_xname(sc->sc_dev), reselid,
 			    sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
 		}
@@ -1346,14 +1346,14 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 		if (siop_debug & 0x100 ||
 		    (ctest2 & SIOP_CTEST2_SIGP) == 0)
 			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x sfbr %x istat %x/%x\n",
-			    sc->sc_dev.dv_xname, rp->siop_scntl1,
+			    device_xname(sc->sc_dev), rp->siop_scntl1,
 			    ctest2, rp->siop_sfbr, istat, rp->siop_istat);
 #endif
 		/* XXX assumes it was not select */
 		if (sc->sc_nexus == NULL) {
 #ifdef DEBUG
 			printf("%s: reselect interrupted, sc_nexus == NULL\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 #if 0
 			siop_dump(sc);
 #ifdef DDB
@@ -1375,11 +1375,11 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff06) {
 		if (acb == NULL)
 			printf("%s: Bad message-in with no active command?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		/* Unrecognized message in byte */
 		dma_cachectl (&acb->msg[1],1);
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
-			sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
+			device_xname(sc->sc_dev), rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
 		rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
@@ -1388,7 +1388,7 @@ siop_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {
 		/* Status phase wasn't followed by message in phase? */
 		printf ("%s: Status phase not followed by message in phase? sbcl %x sbdl %x\n",
-			sc->sc_dev.dv_xname, rp->siop_sbcl, rp->siop_sbdl);
+			device_xname(sc->sc_dev), rp->siop_sbcl, rp->siop_sbdl);
 		if (rp->siop_sbcl == 0xa7) {
 			/* It is now, just continue the script? */
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
@@ -1446,7 +1446,7 @@ siop_select(struct siop_softc *sc)
 
 #ifdef DEBUG
 	if (siop_debug & 1)
-		printf ("%s: select ", sc->sc_dev.dv_xname);
+		printf ("%s: select ", device_xname(sc->sc_dev));
 #endif
 
 	rp = sc->sc_siopp;
@@ -1508,10 +1508,10 @@ siopintr(register struct siop_softc *sc)
 #ifdef DEBUG
 	if (siop_debug & 1)
 		printf ("%s: intr istat %x dstat %x sstat0 %x\n",
-		    sc->sc_dev.dv_xname, istat, dstat, sstat0);
+		    device_xname(sc->sc_dev), istat, dstat, sstat0);
 	if (!sc->sc_active) {
 		printf ("%s: spurious interrupt? istat %x dstat %x sstat0 %x nexus %p status %x\n",
-		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
+		    device_xname(sc->sc_dev), istat, dstat, sstat0,
 		    sc->sc_nexus, sc->sc_nexus ? sc->sc_nexus->stat[0] : 0);
 	}
 #endif
@@ -1520,7 +1520,7 @@ siopintr(register struct siop_softc *sc)
 	if (siop_debug & 5) {
 		DCIAS(kvtop(&sc->sc_nexus->stat[0]));
 		printf ("%s: intr istat %x dstat %x sstat0 %x dsps %lx sbcl %x sts %x msg %x\n",
-		    sc->sc_dev.dv_xname, istat, dstat, sstat0,
+		    device_xname(sc->sc_dev), istat, dstat, sstat0,
 		    rp->siop_dsps,  rp->siop_sbcl,
 		    sc->sc_nexus->stat[0], sc->sc_nexus->msg[0]);
 	}
@@ -1539,7 +1539,7 @@ siopintr(register struct siop_softc *sc)
 #if 0
 			if (rp->siop_sbcl & SIOP_BSY) {
 				printf ("%s: SCSI bus busy at completion",
-					sc->sc_dev.dv_xname);
+					device_xname(sc->sc_dev));
 				printf(" targ %d sbcl %02x sfbr %x lcrc %02x dsp +%x\n",
 				    sc->sc_nexus->xs->xs_periph->periph_target,
 				    rp->siop_sbcl, rp->siop_sfbr, rp->siop_lcrc,
@@ -1664,7 +1664,7 @@ siop_dump(struct siop_softc *sc)
 	siop_dump_trace();
 #endif
 	printf("%s@%p regs %p istat %x\n",
-	    sc->sc_dev.dv_xname, sc, rp, rp->siop_istat);
+	    device_xname(sc->sc_dev), sc, rp, rp->siop_istat);
 	if ((acb = sc->free_list.tqh_first) > 0) {
 		printf("Free list:\n");
 		while (acb) {

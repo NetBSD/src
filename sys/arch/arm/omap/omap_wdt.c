@@ -148,7 +148,13 @@ int
 omapwdt32k_enable(int enable)
 {
 	int s;
-	int prev_state = omapwdt32k_sc->sc_armed;
+	int prev_state;
+
+	/* Just return if ddb is entered before the watchdog driver starts. */
+	if (omapwdt32k_sc == NULL)
+		return (0);
+
+	prev_state = omapwdt32k_sc->sc_armed;
 
 	/* Normalize the int to a boolean so we can compare values directly.
 	 */
@@ -225,7 +231,10 @@ omapwdt32k_tickle(struct sysmon_wdog *smw)
 void
 omapwdt32k_reboot(void)
 {
-	int s = splhigh();
+	if (omapwdt32k_sc == NULL)
+		return;
+
+	const int s = splhigh();
 
 	omapwdt32k_set_timeout(0);
 	omapwdt32k_start();

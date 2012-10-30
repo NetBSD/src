@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.9.2.1 2012/04/17 00:06:13 yamt Exp $
+#	$NetBSD: OVERO,v 1.9.2.2 2012/10/30 17:19:20 yamt Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -17,7 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA8
 options 	OMAP_3530
 options 	PMAPCOUNTERS
-makeoptions	CPUFLAGS="-mcpu=arm1136jf-s"
+makeoptions	CPUFLAGS="-mcpu=cortex-a8"
 
 # Architecture options
 
@@ -46,8 +46,8 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -154,7 +155,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=600000
 
 config		netbsd		root on ? type ?
 
@@ -206,6 +207,13 @@ omapwdt32k*	at obio1 addr 0x48314000 size 0x0800	# WDT2
 
 # Power, Reset and Clock Management
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+
+# SDHC controllers
+sdhc0		at obio0 addr 0x4809c000 size 0x0400 intr 83
+#sdhc1		at obio0 addr 0x480b4000 size 0x0400 intr 86	# Wifi
+
+sdmmc*		at sdhc?			# SD/MMC bus
+ld*		at sdmmc?
 
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
@@ -298,7 +306,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 # data mover pseudo-devices
-#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	swdmover		# software dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # userland interface to drivers, including autoconf and properties retrieval

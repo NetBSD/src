@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.9.12.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: esovar.h,v 1.9.12.2 2012/10/30 17:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -85,7 +85,7 @@
  * Software state
  */
 struct eso_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
 

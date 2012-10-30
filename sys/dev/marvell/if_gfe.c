@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.39.8.1 2012/04/17 00:07:40 yamt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.39.8.2 2012/10/30 17:21:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39.8.1 2012/04/17 00:07:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39.8.2 2012/10/30 17:21:18 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -155,7 +155,7 @@ STATIC int gfec_search(device_t, cfdata_t, const int *, void *);
 STATIC int gfec_enet_phy(device_t, int);
 STATIC int gfec_mii_read(device_t, int, int);
 STATIC void gfec_mii_write(device_t, int, int, int);
-STATIC void gfec_mii_statchg(device_t);
+STATIC void gfec_mii_statchg(struct ifnet *);
 
 STATIC int gfe_match(device_t, cfdata_t, void *);
 STATIC void gfe_attach(device_t, device_t, void *);
@@ -379,9 +379,9 @@ gfec_mii_write (device_t dev, int phy, int reg, int value)
 }
 
 void
-gfec_mii_statchg(device_t dev)
+gfec_mii_statchg(struct ifnet *ifp)
 {
-	/* struct gfe_softc *sc = device_private(self); */
+	/* struct gfe_softc *sc = ifp->if_softc; */
 	/* do nothing? */
 }
 

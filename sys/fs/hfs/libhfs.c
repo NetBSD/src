@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.10 2011/02/24 23:49:26 christos Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.10.4.1 2012/10/30 17:22:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.10 2011/02/24 23:49:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.10.4.1 2012/10/30 17:22:23 yamt Exp $");
 
 #include "libhfs.h"
 
@@ -65,6 +65,15 @@ hfs_catalog_key_t* hfs_gPrivateObjectKeys[4] = {
 extern uint16_t be16tohp(void** inout_ptr);
 extern uint32_t be32tohp(void** inout_ptr);
 extern uint64_t be64tohp(void** inout_ptr);
+
+hfs_callbacks	hfs_gcb;	/* global callbacks */
+ 
+/*    
+ * global case folding table
+ * (lazily initialized; see comments at bottom of hfs_open_volume())     
+ */   
+unichar_t* hfs_gcft;
+
 
 int hfslib_create_casefolding_table(void);
 
@@ -1658,34 +1667,32 @@ hfslib_read_header_node(void** in_recs,
 {
 	void*	ptr;
 	int		i;
-	
+
+	KASSERT(out_hr != NULL);
+
 	if(in_recs==NULL || in_rec_sizes==NULL)
 		return 0;
 	
-	if(out_hr!=NULL)
-	{
-		ptr = in_recs[0];
-		
-		out_hr->tree_depth = be16tohp(&ptr);
-		out_hr->root_node = be32tohp(&ptr);
-		out_hr->leaf_recs = be32tohp(&ptr);
-		out_hr->first_leaf = be32tohp(&ptr);
-		out_hr->last_leaf = be32tohp(&ptr);
-		out_hr->node_size = be16tohp(&ptr);
-		out_hr->max_key_len = be16tohp(&ptr);
-		out_hr->total_nodes = be32tohp(&ptr);
-		out_hr->free_nodes = be32tohp(&ptr);
-		out_hr->reserved = be16tohp(&ptr);
-		out_hr->clump_size = be32tohp(&ptr);
-		out_hr->btree_type = *(((uint8_t*)ptr));
-		ptr = (uint8_t*)ptr + 1;
-		out_hr->keycomp_type = *(((uint8_t*)ptr));
-		ptr = (uint8_t*)ptr + 1;
-		out_hr->attributes = be32tohp(&ptr);
-		for(i=0;i<16;i++)
-			out_hr->reserved2[i] = be32tohp(&ptr);
-	}
-	
+	ptr = in_recs[0];
+	out_hr->tree_depth = be16tohp(&ptr);
+	out_hr->root_node = be32tohp(&ptr);
+	out_hr->leaf_recs = be32tohp(&ptr);
+	out_hr->first_leaf = be32tohp(&ptr);
+	out_hr->last_leaf = be32tohp(&ptr);
+	out_hr->node_size = be16tohp(&ptr);
+	out_hr->max_key_len = be16tohp(&ptr);
+	out_hr->total_nodes = be32tohp(&ptr);
+	out_hr->free_nodes = be32tohp(&ptr);
+	out_hr->reserved = be16tohp(&ptr);
+	out_hr->clump_size = be32tohp(&ptr);
+	out_hr->btree_type = *(((uint8_t*)ptr));
+	ptr = (uint8_t*)ptr + 1;
+	out_hr->keycomp_type = *(((uint8_t*)ptr));
+	ptr = (uint8_t*)ptr + 1;
+	out_hr->attributes = be32tohp(&ptr);
+	for(i=0;i<16;i++)
+		out_hr->reserved2[i] = be32tohp(&ptr);
+
 	if(out_userdata!=NULL)
 	{
 		memcpy(out_userdata, in_recs[1], in_rec_sizes[1]);

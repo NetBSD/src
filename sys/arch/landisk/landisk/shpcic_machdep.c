@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic_machdep.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $	*/
+/*	$NetBSD: shpcic_machdep.c,v 1.4.2.1 2012/10/30 17:19:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.4 2011/07/01 19:12:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic_machdep.c,v 1.4.2.1 2012/10/30 17:19:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ shpcic_get_bus_dma_tag(void)
 }
 
 void
-landisk_pci_attach_hook(struct device *parent, struct device *self,
+landisk_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.4.2.1 2012/10/30 17:19:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.4 2011/07/01 19:31:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.4.2.1 2012/10/30 17:19:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ struct intr_req {
 };
 
 struct epgpio_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct port_info	sc_port[EPGPIO_NPORTS];
@@ -89,8 +88,8 @@ struct epgpio_softc {
 	struct intr_req		sc_ireq_f[EPGPIO_NPINS];
 };
 
-static int epgpio_match(struct device *, struct cfdata *, void *);
-static void epgpio_attach(struct device *, struct device *, void *);
+static int epgpio_match(device_t, cfdata_t, void *);
+static void epgpio_attach(device_t, device_t, void *);
 
 #if NGPIO > 0
 static int epgpiobus_print(void *, const char *);
@@ -99,7 +98,7 @@ static void epgpio_pin_write(void *, int, int);
 static void epgpio_pin_ctl(void *, int, int);
 #endif
 
-static int epgpio_search(struct device *, struct cfdata *, const int *, void *);
+static int epgpio_search(device_t, cfdata_t, const int *, void *);
 static int epgpio_print(void *, const char *);
 
 static int epgpio_intr_combine(void* arg);
@@ -116,19 +115,19 @@ static int epgpio_intr_7(void* arg);
 static void epgpio_bit_set(struct epgpio_softc *, bus_size_t, int);
 static void epgpio_bit_clear(struct epgpio_softc *, bus_size_t, int);
 
-CFATTACH_DECL(epgpio, sizeof(struct epgpio_softc),
+CFATTACH_DECL_NEW(epgpio, sizeof(struct epgpio_softc),
 	      epgpio_match, epgpio_attach, NULL, NULL);
 
 static int
-epgpio_match(struct device *parent, struct cfdata *match, void *aux)
+epgpio_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 2;
 }
 
 static void
-epgpio_attach(struct device *parent, struct device *self, void *aux)
+epgpio_attach(device_t parent, device_t self, void *aux)
 {
-	struct epgpio_softc *sc = (struct epgpio_softc*)self;
+	struct epgpio_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
 	struct port_info *pi;
 #if NGPIO > 0
@@ -142,7 +141,7 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr,
 			  sa->sa_size, 0, &sc->sc_ioh)){
-		printf("%s: Cannot map registers", self->dv_xname);
+		printf("%s: Cannot map registers", device_xname(self));
 		return;
 	}
 
@@ -315,7 +314,6 @@ epgpio_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	/* attach device */
 	config_search_ia(epgpio_search, self, "epgpio", epgpio_print);
 }
 
@@ -335,10 +333,9 @@ epgpiobus_print(void *aux, const char *name)
 
 
 static int
-epgpio_search(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+epgpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct epgpio_softc *sc = (struct epgpio_softc*)parent;
+	struct epgpio_softc *sc = device_private(parent);
 	struct epgpio_attach_args ga;
 
 	ga.ga_gc = sc;
@@ -356,8 +353,8 @@ epgpio_search(struct device *parent, struct cfdata *cf,
 static int
 epgpio_print(void *aux, const char *name)
 {
-	struct epgpio_attach_args *ga = (struct epgpio_attach_args*)aux;
-	struct epgpio_softc *sc = (struct epgpio_softc*)ga->ga_gc;
+	struct epgpio_attach_args *ga = aux;
+	struct epgpio_softc *sc = ga->ga_gc;
 
 	aprint_normal(":");
 	if (ga->ga_port > -1)

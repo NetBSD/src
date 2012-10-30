@@ -110,7 +110,7 @@ UINT8       ACPI_INIT_GLOBAL (AcpiGbl_UseDefaultRegisterWidths, TRUE);
 /*
  * Optionally enable output from the AML Debug Object.
  */
-UINT8       ACPI_INIT_GLOBAL (AcpiGbl_EnableAmlDebugObject, FALSE);
+_Bool     ACPI_INIT_GLOBAL (AcpiGbl_EnableAmlDebugObject, FALSE);
 
 /*
  * Optionally copy the entire DSDT to local memory (instead of simply

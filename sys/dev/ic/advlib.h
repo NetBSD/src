@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.17 2005/12/11 12:21:25 christos Exp $        */
+/*      $NetBSD: advlib.h,v 1.17.110.1 2012/10/30 17:20:59 yamt Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -324,7 +324,7 @@ struct adv_ccb;
 
 
 /*
- * SCSI Iquiry structure
+ * SCSI Inquiry structure
  */
 
 typedef struct
@@ -837,9 +837,9 @@ typedef int (* ASC_CALLBACK) (int);
 
 typedef struct asc_softc
 {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
-	struct device		*sc_child;
+	device_t		sc_child;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

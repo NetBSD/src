@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa_machdep.c,v 1.7 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: com_ofisa_machdep.c,v 1.7.2.1 2012/10/30 17:20:19 yamt Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.7 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.7.2.1 2012/10/30 17:20:19 yamt Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_ofisa_machdep.c,v 1.7 2011/07/19 15:07:43 dyoung
 #ifdef COMPAT_OLD_OFW
 
 int
-com_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
+com_ofisa_md_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	char type[8];
@@ -74,7 +74,7 @@ com_ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 int
-com_ofisa_md_intr_fixup(struct device *parent, struct device *self, void *aux, struct ofisa_intr_desc *descp, int ndescs, int ndescsfilled)
+com_ofisa_md_intr_fixup(device_t parent, device_t self, void *aux, struct ofisa_intr_desc *descp, int ndescs, int ndescsfilled)
 {
 
 	if (1)			/* XXX old firmware compat enabled */

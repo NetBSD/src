@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.h,v 1.3 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_emu.h,v 1.3.112.1 2012/10/30 17:20:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,6 +143,7 @@ struct fpemu {
 	struct	fpn fe_f1;		/* operand 1 */
 	struct	fpn fe_f2;		/* operand 2, if required */
 	struct	fpn fe_f3;		/* available storage for result */
+	vaddr_t fe_addr;		/* last address accessed */
 };
 
 /*

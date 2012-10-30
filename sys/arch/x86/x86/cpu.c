@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.96.2.2 2012/05/23 10:07:51 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.96.2.3 2012/10/30 17:20:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.2 2012/05/23 10:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96.2.3 2012/10/30 17:20:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -589,12 +589,15 @@ void
 cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
+	kcpuset_t *cpus;
 	u_long i;
 
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
 
-	for (i=0; i < maxcpus; i++) {
+	kcpuset_create(&cpus, true);
+	kcpuset_set(cpus, cpu_index(curcpu()));
+	for (i = 0; i < maxcpus; i++) {
 		ci = cpu_lookup(i);
 		if (ci == NULL)
 			continue;
@@ -605,7 +608,11 @@ cpu_boot_secondary_processors(void)
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		cpu_boot_secondary(ci);
+		kcpuset_set(cpus, cpu_index(ci));
 	}
+	while (!kcpuset_match(cpus, kcpuset_running))
+		;
+	kcpuset_destroy(cpus);
 
 	x86_mp_online = true;
 
@@ -1228,16 +1235,20 @@ void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 #ifdef PAE
-	int i, s;
-	struct cpu_info *ci;
-
-	s = splvm(); /* just to be safe */
-	ci = curcpu();
+	struct cpu_info *ci = curcpu();
 	pd_entry_t *l3_pd = ci->ci_pae_l3_pdir;
+	int i;
+
+	/*
+	 * disable interrupts to block TLB shootdowns, which can reload cr3.
+	 * while this doesn't block NMIs, it's probably ok as NMIs unlikely
+	 * reload cr3.
+	 */
+	x86_disable_intr();
 	for (i = 0 ; i < PDP_SIZE; i++) {
 		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
 	}
-	splx(s);
+	x86_enable_intr();
 	tlbflush();
 #else /* PAE */
 	lcr3(pmap_pdirpa(pmap, 0));

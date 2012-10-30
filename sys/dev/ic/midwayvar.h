@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.18 2011/07/18 00:58:51 mrg Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.18.2.1 2012/10/30 17:21:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  *
  * we define the en_softc here so that bus specific modules can allocate
  * it as the first item in their softc.   note that BSD-required
- * "struct device" is in the mid_softc!
+ * device_t is in the mid_softc!
  *
  * author: Chuck Cranor <chuck@netbsd>
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.13 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.13.2.1 2012/10/30 17:19:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
 #define PCI_CONF_UNLOCK(s)	restore_interrupts((s))
 
 struct ixp425_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;		/* IRQ handle */
 
@@ -142,10 +142,11 @@ void	ixp425_mem_bs_init(bus_space_tag_t, void *);
 void	ixp425_pci_conf_reg_write(struct ixp425_softc *, uint32_t, uint32_t);
 uint32_t ixp425_pci_conf_reg_read(struct ixp425_softc *, uint32_t); 
 
-void	ixp425_attach(struct ixp425_softc *);
+void	ixp425_attach(device_t);
 void	ixp425_icu_init(void);
 void	ixp425_clk_bootstrap(bus_space_tag_t);
 void	ixp425_intr_init(void);
+void	ixp425_intr_evcnt_attach(void);
 void	*ixp425_intr_establish(int, int, int (*)(void *), void *);
 void    ixp425_intr_disestablish(void *);
 

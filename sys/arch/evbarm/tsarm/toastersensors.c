@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.9 2011/07/01 19:11:34 dyoung Exp $ */
+/* $NetBSD: toastersensors.c,v 1.9.2.1 2012/10/30 17:19:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9.2.1 2012/10/30 17:19:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.9 2011/07/01 19:11:34 dyoung Ex
 #include <evbarm/tsarm/tsarmreg.h>
 
 struct toastersensors_softc {
-	struct device sc_dev;
 	struct matrixkp_softc sc_mxkp;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
@@ -103,16 +102,16 @@ struct wskbd_mapdata mxkp_keymapdata = {
 	KB_US,
 };
 
-static int	toastersensors_match(struct device *, struct cfdata *, void *);
-static void	toastersensors_attach(struct device *, struct device *, void *);
+static int	toastersensors_match(device_t, cfdata_t, void *);
+static void	toastersensors_attach(device_t, device_t, void *);
 static void	toastersensors_scankeys(struct matrixkp_softc *, u_int32_t *);
 static void	toastersensors_poll(void *);
 
-CFATTACH_DECL(toastersensors, sizeof(struct toastersensors_softc),
+CFATTACH_DECL_NEW(toastersensors, sizeof(struct toastersensors_softc),
     toastersensors_match, toastersensors_attach, NULL, NULL);
 
 static int
-toastersensors_match(struct device *parent, struct cfdata *match, void *aux)
+toastersensors_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
@@ -149,9 +148,9 @@ toastersensors_poll(void *arg)
 }
 
 static void
-toastersensors_attach(struct device *parent, struct device *self, void *aux)
+toastersensors_attach(device_t parent, device_t self, void *aux)
 {
-	struct toastersensors_softc *sc = (void *)self;
+	struct toastersensors_softc *sc = device_private(self);
 	struct tspld_attach_args *taa = aux;
 	struct wskbddev_attach_args wa;
         const struct sysctlnode *node, *datnode;
@@ -176,25 +175,25 @@ toastersensors_attach(struct device *parent, struct device *self, void *aux)
 	GPIO_CLEARBITS(PBDDR, 0x3f);		/* tristate all lines */
 
 	aprint_normal(": internal toaster sensor inputs\n");
-	aprint_normal("%s: using signal DIO_0 for toast down sensor\n", sc->sc_dev.dv_xname);
-	aprint_normal("%s: using signals DIO_1-DIO_5 for panel buttons\n", sc->sc_dev.dv_xname);
-	aprint_normal("%s: using 12-bit MAX197-ADC channel 0 for burnlevel knob\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "using signal DIO_0 for toast down sensor\n");
+	aprint_normal_dev(self, "using signals DIO_1-DIO_5 for panel buttons\n");
+	aprint_normal_dev(self, "using 12-bit MAX197-ADC channel 0 for burnlevel knob\n");
 
 	if (sysctl_createv(NULL, 0, NULL, NULL,
 				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
 		printf("%s: could not create sysctl\n",
-			sc->sc_dev.dv_xname);
+			device_xname(self));
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, sc->sc_dev.dv_xname,
+        			0, CTLTYPE_NODE, device_xname(self),
         			NULL,
         			NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
                 printf("%s: could not create sysctl\n",
-			sc->sc_dev.dv_xname);
+			device_xname(self));
 		return;
 	}
 
@@ -209,7 +208,7 @@ toastersensors_attach(struct device *parent, struct device *self, void *aux)
 				CTL_CREATE, CTL_EOL))
 				!= 0) {
                 printf("%s: could not create sysctl\n",
-			sc->sc_dev.dv_xname);
+			device_xname(self));
 		return;
 	}
 
@@ -223,7 +222,7 @@ toastersensors_attach(struct device *parent, struct device *self, void *aux)
 				CTL_CREATE, CTL_EOL))				\
 				!= 0) {						\
                 printf("%s: could not create sysctl\n",				\
-			sc->sc_dev.dv_xname);					\
+			device_xname(self));					\
 		return;								\
 	}									\
 										\
@@ -237,7 +236,7 @@ toastersensors_attach(struct device *parent, struct device *self, void *aux)
 				CTL_CREATE, CTL_EOL))				\
 				!= 0) {						\
                 printf("%s: could not create sysctl\n",				\
-			sc->sc_dev.dv_xname);					\
+			device_xname(self));					\
 		return;								\
 	}									\
 
@@ -270,7 +269,7 @@ toastersensors_attach(struct device *parent, struct device *self, void *aux)
 static void
 toastersensors_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
 {
-	struct toastersensors_softc *sc = (void *)mxkp_sc->sc_dev;
+	struct toastersensors_softc *sc = device_private(mxkp_sc->sc_dev);
 	u_int32_t val = GPIO_GET(PBDR) & 0x3f;
 
 	/*

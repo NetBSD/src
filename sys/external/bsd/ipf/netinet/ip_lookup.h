@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_lookup.h,v 1.2.4.2 2012/04/17 00:08:16 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
 
 /*
- * Copyright (C) 2010 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_lookup.h,v 2.23.2.3 2012/01/26 05:29:12 darrenr Exp
+ * Id: ip_lookup.h,v 1.1.1.2 2012/07/22 13:45:21 darrenr Exp
  */
 #ifndef __IP_LOOKUP_H__
 #define __IP_LOOKUP_H__

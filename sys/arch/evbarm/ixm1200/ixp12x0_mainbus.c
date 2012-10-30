@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.9.2.1 2012/10/30 17:19:24 yamt Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.9 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.9.2.1 2012/10/30 17:19:24 yamt Exp $");
 
 /*
  * front-end for the ixp12x0 I/O Processor.
@@ -48,24 +48,26 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.9 2011/07/01 20:42:37 dyoung E
 
 #include "locators.h"
 
-static int	ixp12x0_mainbus_match(struct device *, struct cfdata *, void *);
-static void	ixp12x0_mainbus_attach(struct device *, struct device *, void *);
+static int	ixp12x0_mainbus_match(device_t, cfdata_t, void *);
+static void	ixp12x0_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ixpio_mainbus, sizeof(struct ixp12x0_softc),
+CFATTACH_DECL_NEW(ixpio_mainbus, sizeof(struct ixp12x0_softc),
     ixp12x0_mainbus_match, ixp12x0_mainbus_attach, NULL, NULL);
 
 extern struct bus_space ixp12x0_bs_tag;
 
 int
-ixp12x0_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+ixp12x0_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-ixp12x0_mainbus_attach(struct device *parent, struct device *self, void *aux)
+ixp12x0_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ixp12x0_softc *sc = (void *) self;
+	struct ixp12x0_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag

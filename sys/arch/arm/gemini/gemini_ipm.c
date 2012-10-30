@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.1 2008/12/06 05:22:39 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.1.22.1 2012/10/30 17:19:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ typedef struct gemini_ipm_softc {
 } gemini_ipm_softc_t;
 
 
-static int  gemini_ipm_match(struct device *, struct cfdata *, void *);
-static void gemini_ipm_attach(struct device *, struct device *, void *);
+static int  gemini_ipm_match(device_t, cfdata_t, void *);
+static void gemini_ipm_attach(device_t, device_t, void *);
 static int  gemini_ipm_intr(void *);
 static void gemini_ipm_count_txdone(gemini_ipm_softc_t *);
 
@@ -100,7 +100,7 @@ gemini_ipm_desc_write(ipm_desc_t *desc_dst, const ipm_desc_t *desc_src)
 
 
 static int
-gemini_ipm_match(struct device *parent, struct cfdata *cf, void *aux)
+gemini_ipm_match(device_t parent, cfdata_t cf, void *aux)
 {
         char *name = aux;
 
@@ -111,7 +111,7 @@ gemini_ipm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gemini_ipm_attach(struct device *parent, struct device *self, void *aux)
+gemini_ipm_attach(device_t parent, device_t self, void *aux)
 {
         gemini_ipm_softc_t *sc = device_private(self);
 	void *ih;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.2.6.2 2012/04/17 00:07:37 yamt Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.2.6.3 2012/10/30 17:21:10 yamt Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
  * Copyright (c) 2009, 2010 Hans-Jörg Höxer
@@ -18,7 +18,7 @@
  */
 
 struct tpm_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	int	(*sc_init)(struct tpm_softc *, int, const char *);

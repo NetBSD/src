@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.93.2.1 2012/04/17 00:08:09 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.93.2.2 2012/10/30 17:22:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ typedef u_int8_t uDWord[4];
 		     (w)[3] = (u_int8_t)((v) >> 24))
 #else
 /*
- * On little-endian machines that can handle unanliged accesses
+ * On little-endian machines that can handle unaligned accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
 #define UGETW(w) (*(u_int16_t *)(w))
@@ -481,6 +481,8 @@ typedef struct {
 #define	 UISUBCLASS_CAPI_CONTROLMODEL		5
 #define	 UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
 #define	 UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
+#define	  UIPROTO_CDC_NOCLASS			0 /* no class specific
+						     protocol required */
 #define   UIPROTO_CDC_AT			1
 
 #define UICLASS_HID		0x03

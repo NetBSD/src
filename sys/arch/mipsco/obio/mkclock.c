@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.10 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.10.12.1 2012/10/30 17:20:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10.12.1 2012/10/30 17:20:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,16 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2009/03/14 21:04:12 dsl Exp $");
 #include <mipsco/obio/clockreg.h>
 
 struct	mkclock_softc {
-        struct  device dev; 
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
 	struct todr_chip_handle sc_todr;
 };
 
-static int mkclock_match (struct device *, struct cfdata *, void *);
-static void mkclock_attach (struct device *, struct device *, void *);
+static int mkclock_match (device_t, cfdata_t, void *);
+static void mkclock_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(mkclock, sizeof(struct mkclock_softc),
+CFATTACH_DECL_NEW(mkclock, sizeof(struct mkclock_softc),
     mkclock_match, mkclock_attach, NULL, NULL);
 
 int mkclock_read (todr_chip_handle_t, struct clock_ymdhms *);
@@ -67,15 +66,15 @@ static int mk_read (struct mkclock_softc *, int);
 static void mk_write (struct mkclock_softc *, int, int);
 
 int
-mkclock_match(struct device *parent, struct cfdata *cf, void *aux)
+mkclock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 void
-mkclock_attach(struct device *parent, struct device *self, void *aux)
+mkclock_attach(device_t parent, device_t self, void *aux)
 {
-        struct mkclock_softc *sc = (void *)self;
+        struct mkclock_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 
 	sc->sc_bst = ca->ca_bustag;

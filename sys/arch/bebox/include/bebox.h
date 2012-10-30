@@ -1,4 +1,4 @@
-/*	$NetBSD: bebox.h,v 1.1 2011/08/07 15:04:45 kiyohara Exp $	*/
+/*	$NetBSD: bebox.h,v 1.1.2.1 2012/10/30 17:19:14 yamt Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -36,11 +36,11 @@
 #define BEBOX_SET_MASK		0x80000000
 #define BEBOX_CLEAR_MASK	0x00000000
 
-#define READ_BEBOX_REG(reg)	*(uint32_t *)(BEBOX_REG + (reg))
+#define READ_BEBOX_REG(reg)	*(volatile uint32_t *)(BEBOX_REG + (reg))
 #define SET_BEBOX_REG(reg, v)	\
-		*(uint32_t *)(BEBOX_REG + (reg)) = ((v) | BEBOX_SET_MASK)
+	*(volatile uint32_t *)(BEBOX_REG + (reg)) = ((v) | BEBOX_SET_MASK)
 #define CLEAR_BEBOX_REG(reg, v)	\
-		*(uint32_t *)(BEBOX_REG + (reg)) = ((v) | BEBOX_CLEAR_MASK)
+	*(volatile uint32_t *)(BEBOX_REG + (reg)) = ((v) | BEBOX_CLEAR_MASK)
 
 #define CPU0_INT_MASK	     0x0f0	/* Interrupt Mask for CPU0 */
 #define CPU1_INT_MASK	     0x1f0	/* Interrupt Mask for CPU1 */
@@ -48,6 +48,8 @@
 #define CPU_CONTROL	     0x3f0	/* Inter-CPU Interrupt */
 #define CPU_RESET	     0x4f0	/* Reset Control */
 #define INTR_VECTOR_REG	     0xff0
+
+#define BEBOX_INTR_MASK	0x0ffffffc
 
 /* Control */
 #define CPU0_SMI	(1 << 30)	/* SMI to CPU0 */

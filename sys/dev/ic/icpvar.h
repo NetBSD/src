@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.12 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.12.12.1 2012/10/30 17:21:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct icp_ccb {
 	u_int		ic_xfer_size;
 	bus_dmamap_t	ic_xfer_map;
 	struct icp_sg	*ic_sg;
-	struct device	*ic_dv;
+	device_t	ic_dv;
 	void		*ic_context;
 	void		(*ic_intr)(struct icp_ccb *);
 	struct icp_cmd	ic_cmd;
@@ -109,7 +109,7 @@ struct icp_servicecb {
  * Per-controller context.
  */
 struct icp_softc {
-	struct device		icp_dv;
+	device_t		icp_dv;
 	void			*icp_ih;
 	bus_dma_tag_t		icp_dmat;
 	bus_space_tag_t		icp_dpmemt;
@@ -126,7 +126,7 @@ struct icp_softc {
 	u_int8_t		icp_bus_id[ICP_MAXBUS];
 	struct icp_cachedrv	icp_cdr[ICP_MAX_HDRIVES];
 	const struct icp_servicecb *icp_servicecb[ICP_MAX_HDRIVES + ICP_MAXBUS];
-	struct device		*icp_children[ICP_MAX_HDRIVES + ICP_MAXBUS];
+	device_t		icp_children[ICP_MAX_HDRIVES + ICP_MAXBUS];
 	int			icp_ndevs;
 	int			icp_openings;
 	int			icp_features;

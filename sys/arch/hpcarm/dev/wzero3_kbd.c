@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.6.2.1 2012/04/17 00:06:24 yamt Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.6.2.2 2012/10/30 17:19:39 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.6.2.1 2012/04/17 00:06:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.6.2.2 2012/10/30 17:19:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ wzero3kbd_lookup(void)
 }
 
 static int
-wzero3kbd_match(struct device *parent, struct cfdata *cf, void *aux)
+wzero3kbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(cf->cf_name, "wzero3kbd") != 0)
@@ -257,7 +257,7 @@ wzero3kbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wzero3kbd_attach(struct device *parent, struct device *self, void *aux)
+wzero3kbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct wzero3kbd_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;

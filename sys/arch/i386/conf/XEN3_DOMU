@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.37.2.1 2012/04/17 00:06:28 yamt Exp $
+# $NetBSD: XEN3_DOMU,v 1.37.2.2 2012/10/30 17:19:48 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -75,6 +75,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -166,7 +167,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
 #options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
-options 	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 
 config		netbsd	root on ? type ?
@@ -232,6 +232,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter

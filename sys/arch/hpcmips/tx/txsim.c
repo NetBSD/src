@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.16 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: txsim.c,v 1.16.34.1 2012/10/30 17:19:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.16 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.16.34.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -50,22 +50,20 @@ __KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.16 2008/04/28 20:23:22 martin Exp $");
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/txsnd.h>
 
-int	txsim_match(struct device *, struct cfdata *, void *);
-void	txsim_attach(struct device *, struct device *, void *);
+int	txsim_match(device_t, cfdata_t, void *);
+void	txsim_attach(device_t, device_t, void *);
 int	txsim_print(void *, const char*);
-int	txsim_search(struct device *, struct cfdata *,
-		     const int *, void *);
+int	txsim_search(device_t, cfdata_t, const int *, void *);
 
 struct txsim_softc {
-	struct	device sc_dev;
 	int sc_pri; /* attaching device priority */
 };
 
-CFATTACH_DECL(txsim, sizeof(struct txsim_softc),
+CFATTACH_DECL_NEW(txsim, sizeof(struct txsim_softc),
     txsim_match, txsim_attach, NULL, NULL);
 
 int
-txsim_match(struct device *parent, struct cfdata *match, void *aux)
+txsim_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -80,9 +78,9 @@ txsim_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-txsim_attach(struct device *parent, struct device *self, void *aux)
+txsim_attach(device_t parent, device_t self, void *aux)
 {
-	struct txsim_softc *sc = (void*)self;
+	struct txsim_softc *sc = device_private(self);
 
 	printf("\n");
 
@@ -113,10 +111,9 @@ txsim_print(void *aux, const char *pnp)
 }
 
 int
-txsim_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+txsim_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct txsim_softc *sc = (void*)parent;
+	struct txsim_softc *sc = device_private(parent);
 	struct txsim_attach_args ta;
 	
 	ta.ta_tc = tx_conf_get_tag();

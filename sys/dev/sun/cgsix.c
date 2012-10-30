@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.50.8.1 2012/04/17 00:08:04 yamt Exp $ */
+/*	$NetBSD: cgsix.c,v 1.50.8.2 2012/10/30 17:22:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50.8.1 2012/04/17 00:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50.8.2 2012/10/30 17:22:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,12 @@ void 	cgsix_setup_mono(struct cgsix_softc *, int, int, int, int, uint32_t,
 		uint32_t);
 void 	cgsix_feed_line(struct cgsix_softc *, int, uint8_t *);
 void 	cgsix_rectfill(struct cgsix_softc *, int, int, int, int, uint32_t);
+void	cgsix_bitblt(void *, int, int, int, int, int, int, int);
 
 int	cgsix_putcmap(struct cgsix_softc *, struct wsdisplay_cmap *);
 int	cgsix_getcmap(struct cgsix_softc *, struct wsdisplay_cmap *);
 void	cgsix_putchar(void *, int, int, u_int, long);
+void	cgsix_putchar_aa(void *, int, int, u_int, long);
 void	cgsix_cursor(void *, int, int, int);
 
 struct wsdisplay_accessops cgsix_accessops = {
@@ -281,22 +283,14 @@ int cgsix_use_rasterconsole = 1;
 )
 
 /*
- * Wait for a blit to finish.
- * 0x8000000 bit: function unknown; 0x20000000 bit: GX_BLT_INPROGRESS
+ * Run a blitter command
  */
-#define CG6_BLIT_WAIT(fbc) do {						\
-	while (((fbc)->fbc_blit & 0xa0000000) == 0xa0000000)		\
-		/*EMPTY*/;						\
-} while (0)
+#define CG6_BLIT(f) { volatile uint32_t foo; foo = f->fbc_blit; }
 
 /*
- * Wait for a drawing operation to finish, or at least get queued.
- * 0x8000000 bit: function unknown; 0x20000000 bit: GX_FULL
+ * Run a drawing command
  */
-#define CG6_DRAW_WAIT(fbc) do {						\
-       	while (((fbc)->fbc_draw & 0xa0000000) == 0xa0000000)		\
-		/*EMPTY*/;						\
-} while (0)
+#define CG6_DRAW(f) { volatile uint32_t foo; foo = f->fbc_draw; }
 
 /*
  * Wait for the whole engine to go idle.  This may not matter in our case;
@@ -305,7 +299,20 @@ int cgsix_use_rasterconsole = 1;
  * 0x10000000 bit: GX_INPROGRESS
  */
 #define CG6_DRAIN(fbc) do {						\
-	while ((fbc)->fbc_s & 0x10000000)				\
+	while ((fbc)->fbc_s & GX_INPROGRESS)				\
+		/*EMPTY*/;						\
+} while (0)
+
+/*
+ * something is missing here
+ * Waiting for GX_FULL to clear should be enough to send another command
+ * but some CG6 ( LX onboard for example ) lock up if we do that while
+ * it works fine on others ( a 4MB TGX+ I've got here )
+ * So, until I figure out what's going on we wait for the blitter to go
+ * fully idle.
+ */
+#define CG6_WAIT_READY(fbc) do {					\
+       	while (((fbc)->fbc_s & GX_INPROGRESS/*GX_FULL*/) != 0)		\
 		/*EMPTY*/;						\
 } while (0)
 
@@ -318,6 +325,7 @@ static void cg6_ras_eraserows(void *, int, int, long int);
 #if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
 static void cg6_ras_do_cursor(struct rasops_info *);
 #endif
+
 static void
 cg6_ras_init(struct cgsix_softc *sc)
 {
@@ -326,6 +334,16 @@ cg6_ras_init(struct cgsix_softc *sc)
 	CG6_DRAIN(fbc);
 	fbc->fbc_mode &= ~CG6_MODE_MASK;
 	fbc->fbc_mode |= CG6_MODE;
+
+	/* set some common drawing engine parameters */
+	fbc->fbc_clip = 0;
+	fbc->fbc_s = 0;
+	fbc->fbc_offx = 0;
+	fbc->fbc_offy = 0;
+	fbc->fbc_clipminx = 0;
+	fbc->fbc_clipminy = 0;
+	fbc->fbc_clipmaxx = 0x3fff;
+	fbc->fbc_clipmaxy = 0x3fff;
 }
 
 static void
@@ -355,15 +373,12 @@ cg6_ras_copyrows(void *cookie, int src, int dst, int n)
 	n *= ri->ri_font->fontheight;
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
+	CG6_WAIT_READY(fbc);
+
 	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_x0 = ri->ri_xorigin;
 	fbc->fbc_y0 = ri->ri_yorigin + src;
 	fbc->fbc_x1 = ri->ri_xorigin + ri->ri_emuwidth - 1;
@@ -372,8 +387,7 @@ cg6_ras_copyrows(void *cookie, int src, int dst, int n)
 	fbc->fbc_y2 = ri->ri_yorigin + dst;
 	fbc->fbc_x3 = ri->ri_xorigin + ri->ri_emuwidth - 1;
 	fbc->fbc_y3 = ri->ri_yorigin + dst + n - 1;
-	CG6_BLIT_WAIT(fbc);
-	CG6_DRAIN(fbc);
+	CG6_BLIT(fbc);
 }
 
 static void
@@ -406,15 +420,12 @@ cg6_ras_copycols(void *cookie, int row, int src, int dst, int n)
 	src *= ri->ri_font->fontwidth;
 	dst *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
+	CG6_WAIT_READY(fbc);
+
 	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_x0 = ri->ri_xorigin + src;
 	fbc->fbc_y0 = ri->ri_yorigin + row;
 	fbc->fbc_x1 = ri->ri_xorigin + src + n - 1;
@@ -425,8 +436,7 @@ cg6_ras_copycols(void *cookie, int row, int src, int dst, int n)
 	fbc->fbc_x3 = ri->ri_xorigin + dst + n - 1;
 	fbc->fbc_y3 = ri->ri_yorigin + row + 
 	    ri->ri_font->fontheight - 1;
-	CG6_BLIT_WAIT(fbc);
-	CG6_DRAIN(fbc);
+	CG6_BLIT(fbc);
 }
 
 static void
@@ -450,23 +460,18 @@ cg6_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 	n *= ri->ri_font->fontwidth;
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
+	CG6_WAIT_READY(fbc);
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
 	fbc->fbc_arecty = ri->ri_yorigin + row;
 	fbc->fbc_arectx = ri->ri_xorigin + col;
 	fbc->fbc_arecty = ri->ri_yorigin + row + 
 	    ri->ri_font->fontheight - 1;
 	fbc->fbc_arectx = ri->ri_xorigin + col + n - 1;
-	CG6_DRAW_WAIT(fbc);
-	CG6_DRAIN(fbc);
+	CG6_DRAW(fbc);
 }
 
 static void
@@ -485,15 +490,11 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 		n = ri->ri_rows - row;
 	if (n <= 0)
 		return;
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+
+	CG6_WAIT_READY(fbc);
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = ri->ri_devcmap[(attr >> 16) & 0xff];
 	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
 		fbc->fbc_arecty = 0;
@@ -508,8 +509,7 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 		    (n * ri->ri_font->fontheight) - 1;
 		fbc->fbc_arectx = ri->ri_xorigin + ri->ri_emuwidth - 1;
 	}
-	CG6_DRAW_WAIT(fbc);
-	CG6_DRAIN(fbc);
+	CG6_DRAW(fbc);
 }
 
 #if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
@@ -552,7 +552,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = sc->sc_ramsize;
-	/*fb->fb_type.fb_height * fb->fb_linebytes;*/
+
 	printf(": %s, %d x %d", name,
 	       fb->fb_type.fb_width, fb->fb_type.fb_height);
 	if(sc->sc_fhc) {
@@ -609,12 +609,17 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	cg6_ras_init(sc);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_bg = WS_DEFAULT_BG;
+	sc->sc_fb_is_open = FALSE;
 	
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
 
 	cg6_setup_palette(sc);
 	cgsix_clearscreen(sc);
+
+	sc->sc_gc.gc_bitblt = cgsix_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = CG6_ALU_COPY;
 
 	if(isconsole) {
 		/* we mess with cg6_console_screen only once */
@@ -629,13 +634,34 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		SCREEN_VISIBLE(&cg6_console_screen);
 		sc->vd.active = &cg6_console_screen;
 		wsdisplay_cnattach(&cgsix_defaultscreen, ri, 0, 0, defattr);
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+				(sc->sc_ramsize / sc->sc_stride) - 
+				  sc->sc_height - 5,
+				sc->sc_width,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
+		
 		vcons_replay_msgbuf(&cg6_console_screen);
 	} else {
-		/* 
-		 * we're not the console so we just clear the screen and don't 
-		 * set up any sort of text display
+		/*
+		 * since we're not the console we can postpone the rest
+		 * until someone actually allocates a screen for us
 		 */
+		if (cg6_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
+			    &defattr);
+		}
+		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+				(sc->sc_ramsize / sc->sc_stride) - 
+				  sc->sc_height - 5,
+				sc->sc_width,
+				ri->ri_font->fontwidth,
+				ri->ri_font->fontheight,
+				defattr);
 	}
+	cg6_setup_palette(sc);
 	
 	aa.scrdata = &cgsix_screenlist;
 	aa.console = isconsole;
@@ -653,10 +679,13 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 int
 cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int unit = minor(dev);
+	device_t dv = device_lookup(&cgsix_cd, minor(dev));
+	struct cgsix_softc *sc = device_private(dv);
 
-	if (device_lookup(&cgsix_cd, unit) == NULL)
+	if (dv == NULL)
 		return ENXIO;
+	sc->sc_fb_is_open = TRUE;
+
 	return 0;
 }
 
@@ -667,9 +696,20 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 	struct cgsix_softc *sc = device_private(dv);
 
 	cg6_reset(sc);
+	sc->sc_fb_is_open = FALSE;
 
 #if NWSDISPLAY > 0
-	cg6_setup_palette(sc);
+	if (IS_IN_EMUL_MODE(sc)) {
+		struct vcons_screen *ms = sc->vd.active;
+
+		cg6_ras_init(sc);
+		cg6_setup_palette(sc);
+		glyphcache_wipe(&sc->sc_gc);
+
+		/* we don't know if the screen exists */
+		if (ms != NULL)
+			vcons_redraw_screen(ms);
+	}
 #else
 	/* (re-)initialize the default color map */
 	bt_initcmap(&sc->sc_cmap, 256);
@@ -689,7 +729,7 @@ cgsixioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	int v, error;
 
 #ifdef CGSIX_DEBUG
-	printf("cgsixioctl(%ld)\n",cmd);
+	printf("cgsixioctl(%lx)\n",cmd);
 #endif
 
 	switch (cmd) {
@@ -1066,7 +1106,7 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 			continue;
 		u = off - mo->mo_uaddr;
 		sz = mo->mo_size ? mo->mo_size : 
-		    sc->sc_ramsize/*sc_fb.fb_type.fb_size*/;
+		    sc->sc_ramsize;
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				sc->sc_paddr, u+mo->mo_physoff,
@@ -1091,6 +1131,8 @@ cg6_setup_palette(struct cgsix_softc *sc)
 {
 	int i, j;
 
+	rasops_get_cmap(&cg6_console_screen.scr_ri, sc->sc_default_cmap,
+	    sizeof(sc->sc_default_cmap));
 	j = 0;
 	for (i = 0; i < 256; i++) {
 		sc->sc_cmap.cm_map[i][0] = sc->sc_default_cmap[j];
@@ -1113,8 +1155,9 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_fbinfo *wdf;
 	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
+
 #ifdef CGSIX_DEBUG
-	printf("cgsix_ioctl(%ld)\n",cmd);
+	printf("cgsix_ioctl(%lx)\n",cmd);
 #endif
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
@@ -1142,14 +1185,14 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
-				if (new_mode != sc->sc_mode)
-				{
+
+				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
-					if(new_mode == WSDISPLAYIO_MODE_EMUL)
-					{
+					if (IS_IN_EMUL_MODE(sc)) {
 						cg6_reset(sc);
 						cg6_ras_init(sc);
 						cg6_setup_palette(sc);
+						glyphcache_wipe(&sc->sc_gc);
 						vcons_redraw_screen(ms);
 					}
 				}
@@ -1164,12 +1207,11 @@ cgsix_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct cgsix_softc *sc = vd->cookie;
 
-	if(offset<sc->sc_ramsize) {
+	if (offset < sc->sc_ramsize) {
 		return bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
-		    CGSIX_RAM_OFFSET+offset, prot, BUS_SPACE_MAP_LINEAR);
+		    CGSIX_RAM_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR);
 	}
-	/* I'm not at all sure this is the right thing to do */
-	return cgsixmmap(0, offset, prot); /* assume minor dev 0 for now */
+	return -1;
 }
 
 int
@@ -1177,7 +1219,8 @@ cgsix_putcmap(struct cgsix_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int error,i;
+	int error, i;
+
 	if (index >= 256 || count > 256 || index + count > 256)
 		return EINVAL;
 
@@ -1242,7 +1285,7 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
@@ -1262,7 +1305,10 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = cg6_ras_eraserows;
 	ri->ri_ops.erasecols = cg6_ras_erasecols;
 	ri->ri_ops.cursor = cgsix_cursor;
-	ri->ri_ops.putchar = cgsix_putchar;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = cgsix_putchar_aa;
+	} else
+		ri->ri_ops.putchar = cgsix_putchar;
 }
 
 void 
@@ -1270,23 +1316,40 @@ cgsix_rectfill(struct cgsix_softc *sc, int xs, int ys, int wi, int he,
     uint32_t col)
 {
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	
-	CG6_DRAIN(fbc);
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = sc->sc_width - 1;
-	fbc->fbc_clipmaxy = sc->sc_height - 1;
+
+	CG6_WAIT_READY(fbc);
+
 	fbc->fbc_alu = CG6_ALU_FILL;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 	fbc->fbc_fg = col;
 	fbc->fbc_arecty = ys;
 	fbc->fbc_arectx = xs;
 	fbc->fbc_arecty = ys + he - 1;
 	fbc->fbc_arectx = xs + wi - 1;
-	CG6_DRAW_WAIT(fbc);
+	CG6_DRAW(fbc);
+}
+
+void
+cgsix_bitblt(void *cookie, int xs, int ys, int xd, int yd,
+    int wi, int he, int rop)
+{
+	struct cgsix_softc *sc = cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
+	CG6_WAIT_READY(fbc);
+
+	fbc->fbc_alu = rop;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
+	fbc->fbc_x0 = xs;
+	fbc->fbc_y0 = ys;
+	fbc->fbc_x1 = xs + wi - 1;
+	fbc->fbc_y1 = ys + he - 1;
+	fbc->fbc_x2 = xd;
+	fbc->fbc_y2 = yd;
+	fbc->fbc_x3 = xd + wi - 1;
+	fbc->fbc_y3 = yd + he - 1;
+	CG6_BLIT(fbc);
 }
 
 void 
@@ -1294,16 +1357,18 @@ cgsix_setup_mono(struct cgsix_softc *sc, int x, int y, int wi, int he,
     uint32_t fg, uint32_t bg) 
 {
 	volatile struct cg6_fbc *fbc=sc->sc_fbc;
-	CG6_DRAIN(fbc);
+
+	CG6_WAIT_READY(fbc);
+
 	fbc->fbc_x0 = x;
-	fbc->fbc_x1  =x + wi - 1;
+	fbc->fbc_x1 = x + wi - 1;
 	fbc->fbc_y0 = y;
 	fbc->fbc_incx = 0;
 	fbc->fbc_incy = 1;
 	fbc->fbc_fg = fg;
 	fbc->fbc_bg = bg;
-	fbc->fbc_mode = 0x00140000;	/* nosrc, color1 */
-	fbc->fbc_alu = 0x0800fc30;	/* colour expansion, solid bg */
+	fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR1;
+	fbc->fbc_alu = GX_PATTERN_ONES | ROP_OSTP(GX_ROP_CLEAR, GX_ROP_SET);
 	sc->sc_mono_width = wi;
 	/* now feed the data into the chip */
 }
@@ -1384,12 +1449,111 @@ cgsix_putchar(void *cookie, int row, int col, u_int c, long attr)
 				}
 				/* put the chip back to normal */
 				fbc->fbc_incy = 0;
-				/* nosrc, color8 */
-				fbc->fbc_mode = 0x00120000;	
-				/*fbc->fbc_mode &= ~CG6_MODE_MASK;
-				fbc->fbc_mode |= CG6_MODE;*/
 			}
 		}
+	}
+}
+
+void
+cgsix_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct cgsix_softc *sc = scr->scr_cookie;
+	volatile struct cg6_fbc *fbc = sc->sc_fbc;
+
+	uint32_t bg, latch = 0, bg8, fg8, pixel;
+	int i, j, shift, x, y, wi, he, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint8_t *data8;
+	int rv;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		cgsix_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	CG6_WAIT_READY(sc->sc_fbc);
+	fbc->fbc_incx = 4;
+	fbc->fbc_incy = 0;
+	fbc->fbc_mode = GX_BLIT_NOSRC | GX_MODE_COLOR8;
+	fbc->fbc_alu = CG6_ALU_COPY;
+	fbc->fbc_clipmaxx = x + wi - 1;
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	for (i = 0; i < he; i++) {
+
+		CG6_WAIT_READY(fbc);
+		fbc->fbc_x0 = x;
+		fbc->fbc_x1 = x + 3;
+		fbc->fbc_y0 = y + i;
+
+		shift = 24;
+		for (j = 0; j < wi; j++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			data8++;
+
+			latch |= pixel << shift;
+			if (shift == 0) {
+				fbc->fbc_font = latch;
+				latch = 0;
+				shift = 24;
+			} else
+				shift -= 8;
+		}
+		if (shift != 24)
+			fbc->fbc_font = latch;
+	}
+	fbc->fbc_clipmaxx = 0x3fff;
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 }
 
@@ -1436,22 +1600,17 @@ cgsix_clearscreen(struct cgsix_softc *sc)
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		volatile struct cg6_fbc *fbc = sc->sc_fbc;
 		
-		CG6_DRAIN(fbc);
-		fbc->fbc_clip = 0;
-		fbc->fbc_s = 0;
-		fbc->fbc_offx = 0;
-		fbc->fbc_offy = 0;
-		fbc->fbc_clipminx = 0;
-		fbc->fbc_clipminy = 0;
-		fbc->fbc_clipmaxx = ri->ri_width - 1;
-		fbc->fbc_clipmaxy = ri->ri_height - 1;
+		CG6_WAIT_READY(fbc);
+
 		fbc->fbc_alu = CG6_ALU_FILL;
+		fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
+
 		fbc->fbc_fg = ri->ri_devcmap[sc->sc_bg];
 		fbc->fbc_arectx = 0;
 		fbc->fbc_arecty = 0;
 		fbc->fbc_arectx = ri->ri_width - 1;
 		fbc->fbc_arecty = ri->ri_height - 1;
-		CG6_DRAW_WAIT(fbc);
+		CG6_DRAW(fbc);
 	}
 }
 
@@ -1462,23 +1621,16 @@ void
 cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 {
 	volatile struct cg6_fbc *fbc = sc->sc_fbc;
-	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	
-	CG6_DRAIN(fbc);
-	fbc->fbc_clip = 0;
-	fbc->fbc_s = 0;
-	fbc->fbc_offx = 0;
-	fbc->fbc_offy = 0;
-	fbc->fbc_clipminx = 0;
-	fbc->fbc_clipminy = 0;
-	fbc->fbc_clipmaxx = ri->ri_width - 1;
-	fbc->fbc_clipmaxy = ri->ri_height - 1;
+	CG6_WAIT_READY(fbc);
+
 	fbc->fbc_alu = CG6_ALU_FLIP;
+	fbc->fbc_mode = GX_BLIT_SRC | GX_MODE_COLOR8;
 	fbc->fbc_arecty = y;
 	fbc->fbc_arectx = x;
 	fbc->fbc_arecty = y + he - 1;
 	fbc->fbc_arectx = x + wi - 1;
-	CG6_DRAW_WAIT(fbc);
+	CG6_DRAW(fbc);
 }
 
 #endif

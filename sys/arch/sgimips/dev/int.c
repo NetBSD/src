@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: int.c,v 1.24.2.1 2012/10/30 17:20:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24.2.1 2012/10/30 17:20:16 yamt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -61,13 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24 2011/07/01 18:53:46 dyoung Exp $");
 static bus_space_handle_t ioh;
 static bus_space_tag_t iot;
 
-struct int_softc {
-	struct device sc_dev;
-};
-
-
-static int	int_match(struct device *, struct cfdata *, void *);
-static void	int_attach(struct device *, struct device *, void *);
+static int	int_match(device_t, cfdata_t, void *);
+static void	int_attach(device_t, device_t, void *);
 static void    *int1_intr_establish(int, int, int (*)(void *), void *);
 static void    *int2_intr_establish(int, int, int (*)(void *), void *);
 static void 	int1_local_intr(vaddr_t, uint32_t, uint32_t);
@@ -80,7 +75,7 @@ static void	int_8254_intr0(vaddr_t, uint32_t, uint32_t);
 static void	int_8254_intr1(vaddr_t, uint32_t, uint32_t);
 
 #ifdef MIPS3
-static u_long	int2_cpu_freq(struct device *);
+static u_long	int2_cpu_freq(device_t);
 static u_long	int2_cal_timer(void);
 #endif
 
@@ -97,11 +92,11 @@ static struct timecounter int_8254_timecounter = {
 
 static u_long int_8254_tc_count;
 
-CFATTACH_DECL(int, sizeof(struct int_softc),
+CFATTACH_DECL_NEW(int, 0,
     int_match, int_attach, NULL, NULL);
 
 static int
-int_match(struct device *parent, struct cfdata *match, void *aux)
+int_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	switch (mach_type) {
@@ -116,7 +111,7 @@ int_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-int_attach(struct device *parent, struct device *self, void *aux)
+int_attach(device_t parent, device_t self, void *aux)
 {
 	uint32_t address;
 
@@ -450,7 +445,7 @@ int2_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 
 #ifdef MIPS3
 static u_long
-int2_cpu_freq(struct device *self)
+int2_cpu_freq(device_t self)
 {
 	int i;
 	unsigned long cps;
@@ -472,7 +467,7 @@ int2_cpu_freq(struct device *self)
 	cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
 	printf("%s: bus %luMHz, CPU %luMHz\n",
-	    self->dv_xname, cps / 10000, cps / 5000);
+	    device_xname(self), cps / 10000, cps / 5000);
 
 	/* R4k/R4400/R4600/R5k count at half CPU frequency */
 	return (2 * cps * hz);

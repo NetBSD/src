@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2011/02/20 07:56:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74.4.1 2012/10/30 17:20:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2011/02/20 07:56:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.4.1 2012/10/30 17:20:02 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -99,14 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2011/02/20 07:56:16 matt Exp $");
 #include "com.h"			/* XXX */
 #include "ksyms.h"
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* maps for VM objects */
 
 struct vm_map *phys_map = NULL;
 
-int	physmem;		/* max supported memory, changes to actual */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
@@ -153,7 +149,6 @@ struct platform platform = {
 	.clkinit = NULL,
 };
 
-struct consdev *cn_tab = NULL;
 extern struct consdev consdev_prom;
 extern struct consdev consdev_zs;
 

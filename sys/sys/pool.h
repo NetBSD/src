@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.70.8.2 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.70.8.3 2012/10/30 17:22:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -263,8 +263,7 @@ int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
-void		pool_drain_start(struct pool **, uint64_t *);
-bool		pool_drain_end(struct pool *, uint64_t);
+bool		pool_drain(struct pool **);
 
 /*
  * Debugging and diagnostic aides.

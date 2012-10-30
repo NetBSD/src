@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.2 2011/02/01 22:54:24 jakllsch Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.2.6.1 2012/10/30 17:19:06 yamt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -109,6 +109,9 @@
 #define MVSOC_MLMB_SSRR_SYSTEMSOFTRST           (1 << 0)
 #define MVSOC_MLMB_MLMBICR		  0x110	/*Mb-L to Mb Bridge Intr Cause*/
 #define MVSOC_MLMB_MLMBIMR		  0x114	/*Mb-L to Mb Bridge Intr Mask */
+
+#define MVSOC_MLMB_CLKGATING		  0x11c	/* Clock Gating Control */
+#define MVSOC_MLMB_CLKGATING_BIT(n)	  (1 << (n))
 
 #define MVSOC_MLMB_L2CFG		  0x128	/* L2 Cache Config */
 

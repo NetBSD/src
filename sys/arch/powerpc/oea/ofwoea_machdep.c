@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.26.2.2 2012/05/23 10:07:47 yamt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.2 2012/05/23 10:07:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.26.2.3 2012/10/30 17:20:13 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -130,7 +130,7 @@ static void restore_ofmap(struct ofw_translations *, int);
 static void set_timebase(void);
 
 extern void cpu_spinstart(u_int);
-volatile u_int cpu_spinstart_ack, cpu_spinstart_cpunum;
+extern volatile u_int cpu_spinstart_ack;
 
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
@@ -159,7 +159,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	/* get model name and perform model-specific actions */
 	memset(model_name, 0, sizeof(model_name));
 	node = OF_finddevice("/");
-	if (node >= 0) {
+	if (node != -1) {
 		l = OF_getprop(node, "model", model_name, sizeof(model_name));
 		if (l == -1)
 			OF_getprop(node, "name", model_name,

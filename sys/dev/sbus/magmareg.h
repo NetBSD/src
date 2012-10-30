@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.16 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.16.12.1 2012/10/30 17:22:00 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -97,7 +97,7 @@ struct cd1190 {
 
 /* software state for each card */
 struct magma_softc {
-	struct device	ms_dev;		/* required. must be first in softc */
+	device_t	ms_dev;		/* required. must be first in softc */
 	struct evcnt	ms_intrcnt;	/* statistics */
 
 	/* cd1400 chip info */
@@ -150,7 +150,7 @@ struct mtty_port {
 #define MTTYF_RING_OVERFLOW	(1<<5)
 
 struct mtty_softc {
-	struct device ms_dev;		/* device info */
+	device_t ms_dev;		/* device info */
 	int ms_nports;			/* tty ports */
 	struct mtty_port ms_port[MAGMA_MAX_TTY];
 };
@@ -182,7 +182,6 @@ struct mbpp_port {
 #define MBPPF_WAKEUP	(1<<4)
 
 struct mbpp_softc {
-	struct device ms_dev;		/* device info */
 	int ms_nports;			/* parallel ports */
 	struct mbpp_port ms_port[MAGMA_MAX_BPP];
 };

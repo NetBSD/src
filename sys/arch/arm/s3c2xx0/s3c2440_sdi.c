@@ -84,9 +84,8 @@ struct sssdi_softc {
 };
 
 /* Basic driver stuff */
-static int   sssdi_match(struct device *, struct cfdata *, void *);
-static void  sssdi_attach(struct device *, struct device *, void *);
-//static int   sssdi_search(struct device *, struct cfdata *, const int *, void *);
+static int   sssdi_match(device_t, cfdata_t, void *);
+static void  sssdi_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(sssdi, sizeof(struct sssdi_softc), sssdi_match, sssdi_attach,
 	      NULL, NULL);
@@ -163,7 +162,7 @@ struct sdmmc_chip_functions sssdi_functions = {
 };
 
 int
-sssdi_match(struct device *parent, struct cfdata *match, void *aux)
+sssdi_match(device_t parent, cfdata_t match, void *aux)
 {
 /*	struct s3c2xx0_attach_args *sa = aux;*/
 
@@ -172,7 +171,7 @@ sssdi_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-sssdi_attach(struct device *parent, struct device *self, void *aux)
+sssdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sssdi_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;

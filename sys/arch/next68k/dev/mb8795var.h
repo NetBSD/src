@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.11.8.1 2012/04/17 00:06:44 yamt Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.11.8.2 2012/10/30 17:20:07 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -49,7 +49,7 @@ struct mb8795_glue {
 };
 
 struct mb8795_softc {
-	struct device		sc_dev;		/* base device glue */
+	device_t		sc_dev;		/* base device glue */
 	struct ethercom		sc_ethercom;	/* Ethernet common part */
 
 	struct	mb8795_glue 	*sc_glue;	/* glue to MD code */

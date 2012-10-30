@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.36 2011/10/19 21:12:50 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.36.2.1 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.36 2011/10/19 21:12:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.36.2.1 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/* Enable internal modem (KeyLargo) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
 		aprint_normal("%s: enabling KeyLargo internal modem\n",
-		    self->dv_xname);
+		    device_xname(self));
 		bus_space_write_4(ca.ca_tag, bsh, 0x40, 
 		    bus_space_read_4(ca.ca_tag, bsh, 0x40) & ~(1<<25));
 	}
@@ -431,7 +431,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_INT, "target", "CPU speed", sysctl_cpuspeed_temp, 
-	    0, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    0, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		printf("couldn't create 'target' node\n");
@@ -440,7 +440,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "current", NULL, sysctl_cpuspeed_cur, 
-	    1, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    1, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		printf("couldn't create 'current' node\n");
@@ -449,7 +449,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	    &sysctl_node, 
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, "available", NULL, sysctl_cpuspeed_available, 
-	    2, sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
+	    2, (void *)sc, 0, CTL_MACHDEP, me->sysctl_num, freq->sysctl_num, 
 	    CTL_CREATE, CTL_EOL) == 0) {
 	} else
 		printf("couldn't create 'available' node\n");

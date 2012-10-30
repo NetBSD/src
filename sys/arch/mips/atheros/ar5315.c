@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.9 2011/07/10 06:24:18 matt Exp $ */
+/* $NetBSD: ar5315.c,v 1.9.2.1 2012/10/30 17:19:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.9 2011/07/10 06:24:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.9.2.1 2012/10/30 17:19:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -228,7 +228,7 @@ addprop_integer(device_t dev, const char *name, uint32_t val)
 }
 
 static void
-ar5315_device_register(struct device *dev, void *aux) 
+ar5315_device_register(device_t dev, void *aux) 
 {
 	const struct arbus_attach_args * const aa = aux;
 	const struct ar531x_boarddata * const info = atheros_get_board_info();

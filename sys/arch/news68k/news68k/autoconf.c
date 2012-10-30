@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2011/05/10 14:41:55 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20.4.1 2012/10/30 17:20:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2011/05/10 14:41:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20.4.1 2012/10/30 17:20:05 yamt Exp $");
 
 #include "scsibus.h"
 
@@ -110,9 +110,9 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-	       booted_device ? booted_device->dv_xname : "<unknown>");
+	       booted_device ? device_xname(booted_device) : "<unknown>");
 
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */

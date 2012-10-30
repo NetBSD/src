@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.38.4.2 2012/05/23 10:08:09 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.38.4.3 2012/10/30 17:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38.4.2 2012/05/23 10:08:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.38.4.3 2012/10/30 17:22:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -350,7 +350,7 @@ sysvbfs_setattr(void *arg)
 	if (vap->va_flags != VNOVAL)
 		return EOPNOTSUPP;
 
-	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (uid_t)VNOVAL) {
+	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		uid_t uid =
 		    (vap->va_uid != (uid_t)VNOVAL) ? vap->va_uid : attr->uid;
 		gid_t gid =

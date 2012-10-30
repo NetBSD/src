@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.16.12.1 2012/10/30 17:19:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.16 2009/11/21 20:32:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.16.12.1 2012/10/30 17:19:02 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -69,7 +69,7 @@ u_int arm_fpe_core_workspace;
  * Error messages for the various exceptions, numbered 0-5
  */
  
-static const char *exception_errors[] = {
+static const char * const exception_errors[] = {
 	"invalid operation",
 	"division by zero (0)",
 	"overflow",
@@ -92,10 +92,10 @@ initialise_arm_fpe(void)
 	int error;
 
 	printf("%s: FPE: %s\n",
-	    curcpu()->ci_dev->dv_xname, fpe_arm_header.core_identity_addr);
+	    device_xname(curcpu()->ci_dev), fpe_arm_header.core_identity_addr);
 	error = arm_fpe_boot();
 	if (error != 0) {
-		printf("%s: FPE boot failed\n", curcpu()->ci_dev->dv_xname);
+		printf("%s: FPE boot failed\n", device_xname(curcpu()->ci_dev));
 		return(1);
 	}
 	return(0);
@@ -137,10 +137,10 @@ arm_fpe_boot(void)
 	    (u_int)&fpe_nexthandler);
 
 	if (id == 0x81)
-		printf("%s: FPA11 found\n", curcpu()->ci_dev->dv_xname);
+		printf("%s: FPA11 found\n", device_xname(curcpu()->ci_dev));
 	else
 		printf("%s: no FP hardware found\n",
-		    curcpu()->ci_dev->dv_xname);
+		    device_xname(curcpu()->ci_dev));
 
 #ifdef DEBUG
 	printf("fpe id=%08x\n", id);
@@ -172,11 +172,11 @@ arm_fpe_boot(void)
 void
 arm_fpe_postproc(u_int fpframe, struct trapframe *frame)
 {
-	register int sig;
-	register struct proc *p;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	int sig;
 
-	p = curproc;
-	p->p_addr->u_pcb.pcb_tf = frame;
+	l->l_md.md_tf = frame;
 
 	/* take pending signals */
 

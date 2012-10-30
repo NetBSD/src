@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.28.8.1 2012/04/17 00:06:44 yamt Exp $
+# 	$NetBSD: DEJIKO,v 1.28.8.2 2012/10/30 17:20:05 yamt Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -50,6 +50,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # wscons options
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_GALLANT12x22
 
 config	netbsd root on ? type ?

@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.62.54.1 2012/04/17 00:06:01 yamt Exp $
+# $NetBSD: WSCONS,v 1.62.54.2 2012/10/30 17:18:46 yamt Exp $
 
 # GENERIC with wscons(4)
 #
@@ -9,6 +9,7 @@ include	"arch/amiga/conf/GENERIC"
 amidisplaycc0	at mainbus0		# wscons interface to custom chips
 wsdisplay0	at amidisplaycc0 console ?
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x10
 options 	FONT_VT220ISO8x16
 
@@ -55,7 +56,7 @@ voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
 
 # Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in 
 # G-REX.
-options		P5PB_CONSOLE
+#options		P5PB_CONSOLE
 
 wsdisplay*	at wsemuldisplaydev? console ?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.14 2006/03/08 23:46:22 lukem Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.14.102.1 2012/10/30 17:18:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -498,7 +498,7 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 #ifndef ARCH_720
 #define	SIOP_CTEST7_CDIS	0x80	/* Cache burst disable */
 #define	SIOP_CTEST7_SC1		0x40	/* Snoop control 1 */
-#define	SIOP_CTEST7_SC0		0x20	/* Snoop contorl 0 */
+#define	SIOP_CTEST7_SC0		0x20	/* Snoop control 0 */
 #define	SIOP_CTEST7_STD		0x10	/* Selection timeout disable */
 #define	SIOP_CTEST7_DFP		0x08	/* DMA FIFO parity bit */
 #define	SIOP_CTEST7_EVP		0x04	/* Even parity (to host bus) */

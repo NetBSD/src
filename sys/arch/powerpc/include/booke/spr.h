@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.7 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.7.2.1 2012/10/30 17:20:12 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,8 @@
 
 #define PVR_MPCe500		  0x8020
 #define PVR_MPCe500v2		  0x8021
+#define PVR_MPCe500mc		  0x8023
+#define PVR_MPCe5500		  0x8024	/* 64-bit */
 
 #define	SVR_MPC8548v1		  0x80310010
 #define	SVR_MPC8548v1plus	  0x80310011
@@ -68,11 +70,26 @@
 #define	SVR_P1011v2		  0x80e50020
 #define	SVR_P1012v2		  0x80e50120
 #define	SVR_P1013v2		  0x80e70020
+#define	SVR_P1015v1		  0x80e50210
+#define	SVR_P1016v1		  0x80e50310
 #define	SVR_P1020v2		  0x80e40020
 #define	SVR_P1021v2		  0x80e40120
 #define	SVR_P1022v2		  0x80e60020
+#define	SVR_P1024v2		  0x80e40210
+#define	SVR_P1025v1		  0x80e40310
 
 #define	SVR_SECURITY_P(svr)	  (((svr) & 0x00080000) != 0)
+
+#define	SVR_P2040v1		  0x82100010	/* e500mc */
+#define	SVR_P2041v1		  0x82100110	/* e500mc */
+
+#define	SVR_P3041v1		  0x82110310	/* e500mc */
+
+#define	SVR_P4080v1		  0x82000010	/* e500mc */
+#define	SVR_P4040v1		  0x82000110	/* e500mc */
+
+#define	SVR_P5010v1		  0x82210010	/* e5500 */
+#define	SVR_P5020v1		  0x82200010	/* e5500 */
 
 /*
  * Special Purpose Register declarations.
@@ -94,14 +111,14 @@
 #define	  ESR_ST		  0x00800000 /* 8: Store operation */
 #define	  ESR_DLK		  0x00200000 /* 10: dcache exception */
 #define	  ESR_ILK		  0x00100000 /* 11: icache exception */
-#define	  ESR_AP		  0x00100000 /* 12: Auxiliary Processor operation exception */
-#define	  ESR_PUO		  0x00100000 /* 13: Program Unimplemented Operation exception */
+#define	  ESR_AP		  0x00080000 /* 12: Auxiliary Processor operation exception */
+#define	  ESR_PUO		  0x00040000 /* 13: Program Unimplemented Operation exception */
 #define	  ESR_BO		  0x00020000 /* 14: Byte ordering exception */
 #define	  ESR_PIE		  0x00020000 /* 14: Program Imprecise Exception */
 #define	  ESR_SPV		  0x00000080 /* 24: SPE exception */
-#define	  ESR_VLEMI		  0x00000080 /* 26: VLE exception */
-#define	  ESR_MIF		  0x00000080 /* 30: VLE Misaligned Instruction Fetch */
-#define	  ESR_XTE		  0x00000080 /* 31: eXternal Transaction Error */
+#define	  ESR_VLEMI		  0x00000020 /* 26: VLE exception */
+#define	  ESR_MIF		  0x00000002 /* 30: VLE Misaligned Instruction Fetch */
+#define	  ESR_XTE		  0x00000001 /* 31: eXternal Transaction Error */
 #define	SPR_IVPR		63	/* E... Interrupt Vector Prefix Reg. */
 #define	SPR_USPRG0		256	/* E4.. User SPR General 0 */
 #define	SPR_USPRG3		259	/* E... User SPR General 3 */

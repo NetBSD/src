@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.1.4.2 2012/04/17 00:06:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.1.4.3 2012/10/30 17:19:24 yamt Exp $");
 
 /*
  * LCD driver for FriendlyARM MINI2440.
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.1.4.2 2012/04/17 00:06:15 yamt Ex
 
 #include "wsdisplay.h"
 
-int	lcd_match(struct device *, struct cfdata *, void *);
-void	lcd_attach(struct device *, struct device *, void *);
+int	lcd_match(device_t, cfdata_t, void *);
+void	lcd_attach(device_t, device_t, void *);
 
 #ifdef LCD_DEBUG
 void draw_test_pattern(struct s3c24x0_lcd_softc *,
@@ -197,7 +197,7 @@ CFATTACH_DECL_NEW(lcd_ssio, sizeof (struct s3c24x0_lcd_softc),  lcd_match,
     lcd_attach, NULL, NULL);
 
 int
-lcd_match(struct device *parent, struct cfdata *cf, void *aux)
+lcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = aux;
 
@@ -240,7 +240,7 @@ static const struct s3c24x0_lcd_panel_info nec_NL2432HC22 =
 };
 
 void
-lcd_attach(struct device *parent, struct device *self, void *aux)
+lcd_attach(device_t parent, device_t self, void *aux)
 {
 	struct s3c24x0_lcd_softc *sc = device_private(self);
 	bus_space_tag_t iot =  s3c2xx0_softc->sc_iot;

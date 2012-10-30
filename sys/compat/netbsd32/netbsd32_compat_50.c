@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.19.4.1 2012/04/17 00:07:20 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.19.4.2 2012/10/30 17:20:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.19.4.1 2012/04/17 00:07:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.19.4.2 2012/10/30 17:20:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -438,7 +438,8 @@ compat_50_netbsd32_nanosleep(struct lwp *l,
 		return (error);
 	netbsd32_to_timespec50(&ts32, &rqt);
 
-	error = nanosleep1(l, &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	error = nanosleep1(l, CLOCK_MONOTONIC, 0, &rqt,
+	    SCARG_P32(uap, rmtp) ? &rmt : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 

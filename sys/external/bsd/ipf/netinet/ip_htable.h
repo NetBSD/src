@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.h,v 1.2.4.2 2012/04/17 00:08:16 yamt Exp $	*/
+/*	$NetBSD: ip_htable.h,v 1.2.4.3 2012/10/30 17:22:19 yamt Exp $	*/
 
 #ifndef __IP_HTABLE_H__
 #define __IP_HTABLE_H__
@@ -42,6 +42,11 @@ typedef	struct	iphtable_s	{
 	struct	iphtable_s	*iph_next, **iph_pnext;
 	struct	iphtent_s	**iph_table;
 	struct	iphtent_s	*iph_list;
+	struct	iphtent_s	**iph_tail;
+#ifdef USE_INET6
+	ipf_v6_masktab_t	iph_v6_masks;
+#endif
+	ipf_v4_masktab_t	iph_v4_masks;
 	size_t	iph_size;		/* size of hash table */
 	u_long	iph_seed;		/* hashing seed */
 	u_32_t	iph_flags;

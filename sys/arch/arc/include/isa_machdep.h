@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.15 2011/03/06 14:58:43 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.15.4.1 2012/10/30 17:18:54 yamt Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -51,7 +51,7 @@ struct arc_isa_bus {
 
 	struct isa_dma_state ic_dmastate;
 
-        void    (*ic_attach_hook)(struct device *, struct device *,
+        void    (*ic_attach_hook)(device_t, device_t,
                     struct isabus_attach_args *);
 	const struct evcnt *(*ic_intr_evcnt)(isa_chipset_tag_t, int);
         void    *(*ic_intr_establish)(isa_chipset_tag_t, int, int, int,

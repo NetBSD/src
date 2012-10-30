@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.2.1 2012/04/17 00:06:57 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.2 2012/10/30 17:20:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2012/04/17 00:06:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.2 2012/10/30 17:20:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -234,18 +234,11 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
-int	physmem;
 int	fputype;
 void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 
 /* Soft copy of the enable register. */
 volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.7.2.1 2012/04/17 00:06:07 yamt Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.7.2.2 2012/10/30 17:19:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.7.2.1 2012/04/17 00:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.7.2.2 2012/10/30 17:19:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.7.2.1 2012/04/17 00:06:07 yamt Exp 
 #include "opt_pci.h"
 #include "pci.h"
 
-void	ixp425_pci_attach_hook(struct device *, struct device *,
+void	ixp425_pci_attach_hook(device_t, device_t,
 	    struct pcibus_attach_args *);
 int	ixp425_pci_bus_maxdevs(void *, int);
 void	ixp425_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 void	ixp425_pci_conf_setup(void *, struct ixp425_softc *, pcitag_t, int);
 void	ixp425_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+void	ixp425_pci_conf_interrupt(void *, int, int, int, int, int *);
 pcitag_t ixp425_pci_make_tag(void *, int, int, int);
 pcireg_t ixp425_pci_conf_read(void *, pcitag_t, int);
 
@@ -80,6 +81,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 	pc->pc_decompose_tag = ixp425_pci_decompose_tag;
 	pc->pc_conf_read = ixp425_pci_conf_read;
 	pc->pc_conf_write = ixp425_pci_conf_write;
+	pc->pc_conf_interrupt = ixp425_pci_conf_interrupt;
 
 	/*
 	 * Initialize the bus space tags.
@@ -95,7 +97,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 				IXP425_PCI_MEM_HWBASE +
 				IXP425_PCI_MEM_SIZE - 1,
 				NULL, 0, EX_NOWAIT);
-	printf("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);
 
@@ -105,12 +107,12 @@ ixp425_pci_init(struct ixp425_softc *sc)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int a, int b, int c, int d, int *p)
+ixp425_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 {
 }
 
 void
-ixp425_pci_attach_hook(struct device *parent, struct device *self,
+ixp425_pci_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	/* Nothing to do. */

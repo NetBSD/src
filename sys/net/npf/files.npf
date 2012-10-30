@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.4.10.1 2012/04/17 00:08:38 yamt Exp $
+# $NetBSD: files.npf,v 1.4.10.2 2012/10/30 17:22:44 yamt Exp $
 #
 # Public Domain.
 #
@@ -19,6 +19,7 @@ file	net/npf/npf_processor.c			npf
 file	net/npf/npf_ruleset.c			npf
 file	net/npf/npf_rproc.c			npf
 file	net/npf/npf_tableset.c			npf
+file	net/npf/npf_tableset_ptree.c		npf
 file	net/npf/npf_inet.c			npf
 file	net/npf/npf_session.c			npf
 file	net/npf/npf_state.c			npf
@@ -26,7 +27,10 @@ file	net/npf/npf_state_tcp.c			npf
 file	net/npf/npf_nat.c			npf
 file	net/npf/npf_alg.c			npf
 file	net/npf/npf_sendpkt.c			npf
-file	net/npf/npf_log.c			npf
+
+# Built-in extensions.
+file	net/npf/npf_ext_log.c			npf
+file	net/npf/npf_ext_normalise.c		npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf

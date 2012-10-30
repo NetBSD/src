@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39spi.c,v 1.4 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: tx39spi.c,v 1.4.112.1 2012/10/30 17:19:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.4 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.4.112.1 2012/10/30 17:19:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,34 +44,32 @@ __KERNEL_RCSID(0, "$NetBSD: tx39spi.c,v 1.4 2005/12/11 12:17:34 christos Exp $")
 #include "locators.h"
 
 struct tx39spi_softc {
-	struct device sc_dev;
 	tx_chipset_tag_t sc_tc;
 	int sc_attached;
 };
 
-static int tx39spi_match(struct device *, struct cfdata *, void *);
-static void tx39spi_attach(struct device *, struct device *, void *);
-static int tx39spi_search(struct device *, struct cfdata *,
-			  const int *, void *);
+static int tx39spi_match(device_t, cfdata_t, void *);
+static void tx39spi_attach(device_t, device_t, void *);
+static int tx39spi_search(device_t, cfdata_t, const int *, void *);
 static int tx39spi_print(void *, const char *);
 #ifndef USE_POLL
 static int tx39spi_intr(void *);
 #endif
 
-CFATTACH_DECL(tx39spi, sizeof(struct tx39spi_softc),
+CFATTACH_DECL_NEW(tx39spi, sizeof(struct tx39spi_softc),
     tx39spi_match, tx39spi_attach, NULL, NULL);
 
 int
-tx39spi_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39spi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (ATTACH_NORMAL);
 }
 
 void
-tx39spi_attach(struct device *parent, struct device *self, void *aux)
+tx39spi_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39spi_softc *sc = (void*)self;
+	struct tx39spi_softc *sc = device_private(self);
 	tx_chipset_tag_t tc = sc->sc_tc = ta->ta_tc;
 	txreg_t reg;
 
@@ -93,10 +91,9 @@ tx39spi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-tx39spi_search(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+tx39spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct tx39spi_softc *sc = (void*)parent;
+	struct tx39spi_softc *sc = device_private(parent);
 	struct txspi_attach_args sa;
 
 	sa.sa_tc = sc->sc_tc;

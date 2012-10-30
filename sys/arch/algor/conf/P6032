@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.60.2.1 2012/04/17 00:05:52 yamt Exp $
+#	$NetBSD: P6032,v 1.60.2.2 2012/10/30 17:18:38 yamt Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.60.2.1 $"
+#ident 		"P6032-$Revision: 1.60.2.2 $"
 
 maxusers 32
 
@@ -101,6 +101,7 @@ options 	NFS_BOOT_DHCP		# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0 type ffs

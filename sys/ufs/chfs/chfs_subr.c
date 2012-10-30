@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.4.2.2 2012/04/17 00:08:54 yamt Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.4.2.3 2012/10/30 17:22:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,10 +32,6 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Efficient memory file system supporting functions.
- */
-
 #include <sys/cdefs.h>
 
 #include <sys/param.h>
@@ -58,12 +54,10 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 #include "chfs.h"
-//#include <fs/chfs/chfs_vnops.h>
-//#include </root/xipffs/netbsd.chfs/chfs.h>
 
-/* --------------------------------------------------------------------- */
 
 /*
+ * chfs_mem_info -
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
@@ -97,9 +91,8 @@ chfs_mem_info(bool total)
 }
 
 
-/* --------------------------------------------------------------------- */
-
 /*
+ * chfs_dir_lookup -
  * Looks for a directory entry in the directory represented by node.
  * 'cnp' describes the name of the entry to look for.  Note that the .
  * and .. components are not allowed as they do not physically exist
@@ -117,37 +110,27 @@ chfs_dir_lookup(struct chfs_inode *ip, struct componentname *cnp)
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
 	KASSERT(IMPLIES(cnp->cn_namelen == 2, !(cnp->cn_nameptr[0] == '.' &&
 		    cnp->cn_nameptr[1] == '.')));
-	//CHFS_VALIDATE_DIR(node);
-
-	//node->chn_status |= CHFS_NODE_ACCESSED;
 
 	found = false;
-//	fd = ip->dents;
-//	while(fd) {
 	TAILQ_FOREACH(fd, &ip->dents, fds) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (fd->vno == 0)
 			continue;
-		/*dbg("dirent dump:\n");
-		  dbg(" ->vno:     %d\n", fd->vno);
-		  dbg(" ->version: %ld\n", fd->version);
-		  dbg(" ->nhash:   0x%x\n", fd->nhash);
-		  dbg(" ->nsize:   %d\n", fd->nsize);
-		  dbg(" ->name:    %s\n", fd->name);
-		  dbg(" ->type:    %d\n", fd->type);*/
 		if (fd->nsize == (uint16_t)cnp->cn_namelen &&
 		    memcmp(fd->name, cnp->cn_nameptr, fd->nsize) == 0) {
 			found = true;
 			break;
 		}
-//		fd = fd->next;
 	}
 
 	return found ? fd : NULL;
 }
 
-/* --------------------------------------------------------------------- */
-
+/*
+ * chfs_filldir - 
+ * Creates a (kernel) dirent and moves it to the given memory address.
+ * Used during readdir.
+ */
 int
 chfs_filldir(struct uio* uio, ino_t ino, const char *name,
     int namelen, enum chtype type)
@@ -203,11 +186,8 @@ chfs_filldir(struct uio* uio, ino_t ino, const char *name,
 	return error;
 }
 
-
-/* --------------------------------------------------------------------- */
-
 /*
- * Change size of the given vnode.
+ * chfs_chsize - change size of the given vnode
  * Caller should execute chfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
@@ -216,11 +196,6 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 {
 	struct chfs_mount *chmp;
 	struct chfs_inode *ip;
-	struct buf *bp;
-	int blknum, append;
-	int error = 0;
-	char *buf = NULL;
-	struct chfs_full_dnode *fd;
 
 	ip = VTOI(vp);
 	chmp = ip->chmp;
@@ -246,148 +221,32 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 	vflushbuf(vp, 0);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
-	chfs_flush_pending_wbuf(chmp);
 
-	/* handle truncate to zero as a special case */
-	if (size == 0) {
-		dbg("truncate to zero");
-		chfs_truncate_fragtree(ip->chmp,
-		    &ip->fragtree, size);
+	if (ip->size < size) {
+		uvm_vnp_setsize(vp, size);
 		chfs_set_vnode_size(vp, size);
+		ip->iflag |= IN_CHANGE | IN_UPDATE;
 
 		mutex_exit(&chmp->chm_lock_mountfields);
-
 		return 0;
 	}
 
-
-	/* allocate zeros for the new data */
-	buf = kmem_zalloc(size, KM_SLEEP);
-	bp = getiobuf(vp, true);
-
-	if (ip->size != 0) {
-		/* read the whole data */
-		bp->b_blkno = 0;
-		bp->b_bufsize = bp->b_resid = bp->b_bcount = ip->size;
-		bp->b_data = kmem_alloc(ip->size, KM_SLEEP);
-
-		error = chfs_read_data(chmp, vp, bp);
-		if (error) {
-			mutex_exit(&chmp->chm_lock_mountfields);
-			putiobuf(bp);
-
-			return error;
-		}
-
-		/* create the new data */
-		dbg("create new data vap%llu ip%llu\n",
-			(unsigned long long)size, (unsigned long long)ip->size);
-		append = size - ip->size;
-		if (append > 0) {
-			memcpy(buf, bp->b_data, ip->size);
-		} else {
-			memcpy(buf, bp->b_data, size);
-			chfs_truncate_fragtree(ip->chmp,
-				&ip->fragtree, size);
-		}
-
-		kmem_free(bp->b_data, ip->size);
-
-		struct chfs_node_frag *lastfrag = frag_last(&ip->fragtree);
-		fd = lastfrag->node;
-		chfs_mark_node_obsolete(chmp, fd->nref);
-
-		blknum = lastfrag->ofs / PAGE_SIZE;
-		lastfrag->size = append > PAGE_SIZE ? PAGE_SIZE : size % PAGE_SIZE;
-	} else {
-		fd = chfs_alloc_full_dnode();
-		blknum = 0;
+	if (size != 0) {
+		ubc_zerorange(&vp->v_uobj, size, ip->size - size, UBC_UNMAP_FLAG(vp));
 	}
+	
+	/* drop unused fragments */
+	chfs_truncate_fragtree(ip->chmp, &ip->fragtree, size);
 
+	uvm_vnp_setsize(vp, size);
 	chfs_set_vnode_size(vp, size);
-
-	// write the new data
-	for (bp->b_blkno = blknum; bp->b_blkno * PAGE_SIZE < size; bp->b_blkno++) {
-		uint64_t writesize = MIN(size - bp->b_blkno * PAGE_SIZE, PAGE_SIZE);
-
-		bp->b_bufsize = bp->b_resid = bp->b_bcount = writesize;
-		bp->b_data = kmem_alloc(writesize, KM_SLEEP);
-
-		memcpy(bp->b_data, buf + (bp->b_blkno * PAGE_SIZE), writesize);
-
-		if (bp->b_blkno != blknum) {
-			fd = chfs_alloc_full_dnode();
-		}
-
-		error = chfs_write_flash_dnode(chmp, vp, bp, fd);
-		if (error) {
-			mutex_exit(&chmp->chm_lock_mountfields);
-			kmem_free(bp->b_data, writesize);
-			putiobuf(bp);
-
-			return error;
-		}
-		if (bp->b_blkno != blknum) {
-			chfs_add_full_dnode_to_inode(chmp, ip, fd);
-		}
-		kmem_free(bp->b_data, writesize);
-	}
-
+	ip->iflag |= IN_CHANGE | IN_UPDATE;
 	mutex_exit(&chmp->chm_lock_mountfields);
-
-	kmem_free(buf, size);
-	putiobuf(bp);
-
 	return 0;
 }
-#if 0
-	int error;
-	struct chfs_node *node;
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	node = VP_TO_CHFS_NODE(vp);
-
-	// Decide whether this is a valid operation based on the file type.
-	error = 0;
-	switch (vp->v_type) {
-	case VDIR:
-		return EISDIR;
-
-	case VREG:
-		if (vp->v_mount->mnt_flag & MNT_RDONLY)
-			return EROFS;
-		break;
-
-	case VBLK:
-	case VCHR:
-	case VFIFO:
-		// Allow modifications of special files even if in the file
-		// system is mounted read-only (we are not modifying the
-		// files themselves, but the objects they represent).
-		return 0;
-
-	default:
-		return ENODEV;
-	}
-
-	// Immutable or append-only files cannot be modified, either.
-	if (node->chn_flags & (IMMUTABLE | APPEND))
-		return EPERM;
-
-	error = chfs_truncate(vp, size);
-	// chfs_truncate will raise the NOTE_EXTEND and NOTE_ATTRIB kevents
-	// for us, as will update dn_status; no need to do that here.
-
-	KASSERT(VOP_ISLOCKED(vp));
-
-	return error;
-#endif
-
-/* --------------------------------------------------------------------- */
 
 /*
- * Change flags of the given vnode.
+ * chfs_chflags - change flags of the given vnode
  * Caller should execute chfs_update on vp after a successful execution.
  * The vnode must be locked on entry and remain locked on exit.
  */
@@ -443,13 +302,12 @@ chfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred)
 	return error;
 }
 
-/* --------------------------------------------------------------------- */
 
+/* chfs_itimes - updates a vnode times to the given data */
 void
 chfs_itimes(struct chfs_inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	//dbg("itimes\n");
 	struct timespec now;
 
 	if (!(ip->iflag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {
@@ -466,7 +324,6 @@ chfs_itimes(struct chfs_inode *ip, const struct timespec *acc,
 		if (mod == NULL)
 			mod = &now;
 		ip->mtime = mod->tv_sec;
-		//ip->i_modrev++;
 	}
 	if (ip->iflag & (IN_CHANGE | IN_MODIFY)) {
 		if (cre == NULL)
@@ -480,61 +337,18 @@ chfs_itimes(struct chfs_inode *ip, const struct timespec *acc,
 	ip->iflag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);
 }
 
-/* --------------------------------------------------------------------- */
-
+/* chfs_update - updates a vnode times */
 int
 chfs_update(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod, int flags)
 {
-
 	struct chfs_inode *ip;
 
 	/* XXX ufs_reclaim calls this function unlocked! */
-//	KASSERT(VOP_ISLOCKED(vp));
-
-#if 0
-	if (flags & UPDATE_CLOSE)
-		; /* XXX Need to do anything special? */
-#endif
 
 	ip = VTOI(vp);
 	chfs_itimes(ip, acc, mod, NULL);
 
-//	KASSERT(VOP_ISLOCKED(vp));
 	return (0);
 }
-
-/* --------------------------------------------------------------------- */
-/*
-  int
-  chfs_truncate(struct vnode *vp, off_t length)
-  {
-  bool extended;
-  int error;
-  struct chfs_node *node;
-  printf("CHFS: truncate()\n");
-
-  node = VP_TO_CHFS_NODE(vp);
-  extended = length > node->chn_size;
-
-  if (length < 0) {
-  error = EINVAL;
-  goto out;
-  }
-
-  if (node->chn_size == length) {
-  error = 0;
-  goto out;
-  }
-
-  error = chfs_reg_resize(vp, length);
-  if (error == 0)
-  node->chn_status |= CHFS_NODE_CHANGED | CHFS_NODE_MODIFIED;
-
-  out:
-  chfs_update(vp, NULL, NULL, 0);
-
-  return error;
-  }*/
-
 

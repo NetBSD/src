@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.21 2011/07/01 20:38:16 dyoung Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.21.2.1 2012/10/30 17:19:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21 2011/07/01 20:38:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21.2.1 2012/10/30 17:19:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,6 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.21 2011/07/01 20:38:16 dyou
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/undefined.h>
+
+/* Define various stack sizes in pages */
+#define IRQ_STACK_SIZE	8
+#define ABT_STACK_SIZE	8
+#define UND_STACK_SIZE	8
 
 #include <arm/arm32/machdep.h>
 
@@ -194,18 +199,6 @@ static struct armadillo_model_t armadillo_model_table[] = {
  */
 #define KERNEL_VM_SIZE		0x0c000000
 
-/*
- * Address to call from cpu_reset() to reset the machine.
- * This is machine architecture dependent as it varies depending
- * on where the ROM appears when you turn the MMU off.
- */
-
-u_int cpu_reset_address = 0x80090000;
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	8
-#define ABT_STACK_SIZE	8
-#define UND_STACK_SIZE	8
 
 BootConfig bootconfig;	/* Boot config storage */
 char *boot_args = NULL;
@@ -218,13 +211,6 @@ vm_offset_t physical_freeend_low;
 vm_offset_t physical_end;
 u_int free_pages;
 
-/* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
-pv_addr_t irqstack;
-pv_addr_t undstack;
-pv_addr_t abtstack;
-pv_addr_t kernelstack;
-
 vm_offset_t msgbufphys;
 
 static struct arm32_dma_range armadillo9_dma_ranges[4];
@@ -232,10 +218,6 @@ static struct arm32_dma_range armadillo9_dma_ranges[4];
 #if NISA > 0
 extern void isa_armadillo9_init(u_int, u_int); 
 #endif
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -317,7 +299,7 @@ armadillo9_device_register(device_t dev, void *aux)
 		if (prop_dictionary_set(device_properties(dev),
 					"mac-address", pd) == false) {
 			printf("WARNING: unable to set mac-addr property "
-			    "for %s\n", dev->dv_xname);
+			    "for %s\n", device_xname(dev));
 		}
 		prop_object_release(pd);
 	}
@@ -766,7 +748,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

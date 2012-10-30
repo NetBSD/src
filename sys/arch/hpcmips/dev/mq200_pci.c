@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_pci.c,v 1.4 2002/10/02 05:26:46 thorpej Exp $	*/
+/*	$NetBSD: mq200_pci.c,v 1.4.146.1 2012/10/30 17:19:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.4 2002/10/02 05:26:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.4.146.1 2012/10/30 17:19:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,14 @@ struct mq200_pci_softc {
 	pcitag_t sc_pcitag;
 };
 
-int	mq200_pci_match(struct device *, struct cfdata *, void *);
-void	mq200_pci_attach(struct device *, struct device *, void *);
+int	mq200_pci_match(device_t, cfdata_t, void *);
+void	mq200_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mqvideo_pci, sizeof(struct mq200_pci_softc),
+CFATTACH_DECL_NEW(mqvideo_pci, sizeof(struct mq200_pci_softc),
     mq200_pci_match, mq200_pci_attach, NULL, NULL);
 
 int
-mq200_pci_match(struct device *parent, struct cfdata *match, void *aux)
+mq200_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -71,20 +71,21 @@ mq200_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mq200_pci_attach(struct device *parent, struct device *self, void *aux)
+mq200_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct mq200_pci_softc *psc = (void *) self;
+	struct mq200_pci_softc *psc = device_private(self);
 	struct mq200_softc *sc = &psc->sc_mq200;
 	struct pci_attach_args *pa = aux;
 	int res;
 
+	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
 	/* check whether it is disabled by firmware */
 	if (!(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) &
 	    PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: disabled\n", sc->sc_dev.dv_xname);
+		printf("%s: disabled\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -92,7 +93,7 @@ mq200_pci_attach(struct device *parent, struct device *self, void *aux)
 	res = pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM,
 	    0, &sc->sc_iot, &sc->sc_ioh, NULL, NULL);
 	if (res != 0) {
-		printf("%s: can't map registers\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map registers\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -100,7 +101,7 @@ mq200_pci_attach(struct device *parent, struct device *self, void *aux)
 	res = pci_mapreg_info(psc->sc_pc, psc->sc_pcitag, PCI_MAPREG_START+4,
 	    PCI_MAPREG_TYPE_MEM, &sc->sc_baseaddr, NULL, NULL);
 	if (res != 0) {
-		printf("%s: can't map frame buffer\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map frame buffer\n", device_xname(sc->sc_dev));
 		return;
 	}
 

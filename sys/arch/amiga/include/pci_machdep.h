@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3.2.2 2012/05/23 10:07:40 yamt Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.3.2.3 2012/10/30 17:18:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <machine/intr.h>
 
-/* #define __HAVE_PCI_CONF_HOOK */
+#define __HAVE_PCI_CONF_HOOK 
 
 /*
  * Forward declarations.
@@ -49,6 +49,8 @@ struct pci_attach_args;
 typedef struct	amiga_pci_chipset *pci_chipset_tag_t;
 typedef u_long	pcitag_t;
 typedef u_long	pci_intr_handle_t;
+
+extern struct m68k_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * amiga-specific PCI structure and type definitions.
@@ -86,6 +88,8 @@ struct amiga_pci_chipset {
 	/* PCI configuration data register */
 	bus_space_tag_t pci_conf_datat;
 	bus_space_handle_t pci_conf_datah;
+
+	void		*cookie; /* used in some implementations */
 };
 
 

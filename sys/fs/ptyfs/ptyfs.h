@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.8 2009/03/15 16:43:55 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.8.12.1 2012/10/30 17:22:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -93,7 +93,7 @@ struct ptyfsnode {
 	ptyfstype	ptyfs_type;	/* type of ptyfs node */
 	int		ptyfs_pty;	/* the pty index */
 	u_long		ptyfs_fileno;	/* unique file id */
-	int		ptyfs_flag;	/* status flag for times */
+	int		ptyfs_status;	/* status flag for times */
 #define	PTYFS_ACCESS	1
 #define	PTYFS_MODIFY	2
 #define	PTYFS_CHANGE	4
@@ -124,11 +124,6 @@ struct ptyfs_args {
 
 #define PTYFS_ARGSVERSION	2
 
-#define PTYFSMNT_CHROOT		0x01
-
-#define PTYFSMNT_BITS "\177\20" \
-    "b\00chroot\0"
-
 /*
  * Kernel stuff follows
  */
@@ -144,7 +139,7 @@ struct ptyfs_args {
     pty_makedev((ptyfs)->ptyfs_type == PTYFSpts ? 't' : 'p', (ptyfs)->ptyfs_pty)
 
 #define PTYFS_ITIMES(ptyfs, acc, mod, cre) \
-   while ((ptyfs)->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY)) \
+   while ((ptyfs)->ptyfs_status & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY)) \
 	ptyfs_itimes(ptyfs, acc, mod, cre)
 /*
  * Convert between ptyfsnode vnode

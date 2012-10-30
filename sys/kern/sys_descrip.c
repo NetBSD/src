@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.23.2.1 2012/04/17 00:08:28 yamt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.23.2.2 2012/10/30 17:22:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23.2.1 2012/04/17 00:08:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.23.2.2 2012/10/30 17:22:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,11 +479,22 @@ sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 	/* {
 		syscallarg(int)	fd;
 	} */
+	int error;
 
 	if (fd_getfile(SCARG(uap, fd)) == NULL) {
 		return EBADF;
 	}
-	return fd_close(SCARG(uap, fd));
+
+	error = fd_close(SCARG(uap, fd));
+	if (error == ERESTART) {
+#ifdef DIAGNOSTIC
+		printf("pid %d: close returned ERESTART\n",
+		    (int)l->l_proc->p_pid);
+#endif
+		error = EINTR;
+	}
+
+	return error;
 }
 
 /*

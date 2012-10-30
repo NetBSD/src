@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.74 2011/08/12 06:04:41 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.74.2.1 2012/10/30 17:20:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.74 2011/08/12 06:04:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.74.2.1 2012/10/30 17:20:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,8 +98,8 @@ ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
  */
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
-	struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self,
+    struct pcibus_attach_args *pba)
 {
 }
 

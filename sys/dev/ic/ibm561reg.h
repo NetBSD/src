@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561reg.h,v 1.5 2008/04/28 20:23:50 martin Exp $ */
+/* $NetBSD: ibm561reg.h,v 1.5.34.1 2012/10/30 17:21:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 #define IBM561_CURSOR_LUT		0x0a10
 	/*
 	 * four blocks of 4, transparent, 1, 2, 3 each 
-	 * cursor orimary, cursor blink, xhair primary, xhair blink 
+	 * cursor primary, cursor blink, xhair primary, xhair blink 
 	 */
 
 #define IBM561_CURSOR_BITMAP		0x2000

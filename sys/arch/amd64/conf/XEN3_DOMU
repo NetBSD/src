@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.31.2.1 2012/04/17 00:05:59 yamt Exp $
+# $NetBSD: XEN3_DOMU,v 1.31.2.2 2012/10/30 17:18:45 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -16,7 +16,6 @@ maxusers	32		# estimated number of users
 options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
 #options 	DOM0OPS
 
-#options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
@@ -62,7 +61,8 @@ options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
@@ -219,6 +219,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

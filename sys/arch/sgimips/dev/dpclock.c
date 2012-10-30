@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.3.2.1 2012/10/30 17:20:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -50,8 +50,6 @@
 #include <sgimips/sgimips/clockvar.h>
 
 struct dpclock_softc {
-	struct device sc_dev;
-
 	struct todr_chip_handle sc_todrch;
 
 	/* RTC registers */
@@ -59,16 +57,16 @@ struct dpclock_softc {
 	bus_space_handle_t	sc_rtch;
 };
 
-static int	dpclock_match(struct device *, struct cfdata *, void *);
-static void	dpclock_attach(struct device *, struct device *, void *);
+static int	dpclock_match(device_t, cfdata_t, void *);
+static void	dpclock_attach(device_t, device_t, void *);
 static int	dpclock_gettime(struct todr_chip_handle *, struct timeval *);
 static int	dpclock_settime(struct todr_chip_handle *, struct timeval *);
 
-CFATTACH_DECL(dpclock, sizeof(struct dpclock_softc),
+CFATTACH_DECL_NEW(dpclock, sizeof(struct dpclock_softc),
     dpclock_match, dpclock_attach, NULL, NULL);
 
 static int
-dpclock_match(struct device *parent, struct cfdata *cf, void *aux)
+dpclock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -89,9 +87,9 @@ dpclock_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dpclock_attach(struct device *parent, struct device *self, void *aux)
+dpclock_attach(device_t parent, device_t self, void *aux)
 {
-	struct dpclock_softc *sc = (void *)self;
+	struct dpclock_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int err;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.305.2.2 2012/04/17 00:08:59 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.305.2.3 2012/10/30 17:23:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.2 2012/04/17 00:08:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.3 2012/10/30 17:23:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -98,6 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.305.2.2 2012/04/17 00:08:59 yamt Exp $
 
 #if defined(DDB) || defined(DEBUGPRINT)
 #include <uvm/uvm_ddb.h>
+#endif
+
+#ifdef UVMHIST
+UVMHIST_DEFINE(maphist);
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
@@ -1441,9 +1445,8 @@ forwardmerge:
 		/*
 		 * drop our reference to uobj since we are extending a reference
 		 * that we already have (the ref count can not drop to zero).
-		 * (if merged, we've already detached)
 		 */
-		if (uobj && uobj->pgops->pgo_detach && !merged)
+		if (uobj && uobj->pgops->pgo_detach)
 			uobj->pgops->pgo_detach(uobj);
 
 		if (merged) {
@@ -2218,10 +2221,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 */
 			KASSERT(vm_map_pmap(map) == pmap_kernel());
 
-			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-				uvm_km_pgremove_intrsafe(map, entry->start,
-				    entry->end);
-			}
+			uvm_km_pgremove_intrsafe(map, entry->start, entry->end);
 		} else if (UVM_ET_ISOBJ(entry) &&
 			   UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
 			panic("%s: kernel object %p %p\n",
@@ -2239,26 +2239,23 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 
 #if defined(DEBUG)
-		if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
+		/*
+		 * check if there's remaining mapping,
+		 * which is a bug in caller.
+		 */
 
-			/*
-			 * check if there's remaining mapping,
-			 * which is a bug in caller.
-			 */
-
-			vaddr_t va;
-			for (va = entry->start; va < entry->end;
-			    va += PAGE_SIZE) {
-				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
-					panic("%s: %#"PRIxVADDR" has mapping",
-					    __func__, va);
-				}
+		vaddr_t va;
+		for (va = entry->start; va < entry->end;
+		    va += PAGE_SIZE) {
+			if (pmap_extract(vm_map_pmap(map), va, NULL)) {
+				panic("%s: %#"PRIxVADDR" has mapping",
+				    __func__, va);
 			}
+		}
 
-			if (VM_MAP_IS_KERNEL(map)) {
-				uvm_km_check_empty(map, entry->start,
-				    entry->end);
-			}
+		if (VM_MAP_IS_KERNEL(map)) {
+			uvm_km_check_empty(map, entry->start,
+			    entry->end);
 		}
 #endif /* defined(DEBUG) */
 

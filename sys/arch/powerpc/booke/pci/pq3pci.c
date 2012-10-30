@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.11.2.1 2012/04/17 00:06:46 yamt Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.11.2.2 2012/10/30 17:20:10 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11.2.1 2012/04/17 00:06:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11.2.2 2012/10/30 17:20:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,6 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.11.2.1 2012/04/17 00:06:46 yamt Exp $")
     TRUTH_ENCODE(SVR_P2020v2, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
     TRUTH_ENCODE(SVR_P2010v2, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
+#define	PORDEVSR_P1025_TRUTH_ENCODE(inst, field, value, result) \
+    TRUTH_ENCODE(SVR_P1025v1, inst, PORDEVSR_##field, \
+	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
+    TRUTH_ENCODE(SVR_P1016v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
@@ -157,6 +162,15 @@ const struct e500_truthtab pq3pci_pcie_lanes[] = {
     PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE12_X1_3_X2, 2),
     PORDEVSR_P20x0_TRUTH_ENCODE(3, IOSEL, PCIE13_X2, 2),
 #endif
+
+#ifdef P1025
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X1, 1),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_SGMII23, 1),
+    PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X2_SGMII23, 2),
+
+    PORDEVSR_P1025_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
+#endif
 };
 
 static const struct e500_truthtab pq3pci_pci_pcix[] = {
@@ -179,6 +193,10 @@ static const struct e500_truthtab pq3pci_pci_pci32[] = {
 
 struct pq3pci_bst {
 	struct powerpc_bus_space bs_tag;
+	uint8_t bs_numwin;
+	bus_addr_t bs_base[3];
+	bus_addr_t bs_offset[3];
+	bus_addr_t bs_limit[3];
 	char bs_name[16];
 	char bs_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)] __aligned(8);
 };
@@ -367,8 +385,8 @@ struct pq3pci_owin {
 	uint32_t powar;
 };
 
-static bool
-pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
+static void
+pq3pci_owin_record(struct pq3pci_softc *sc, u_int winnum,
 	const struct pq3pci_owin *owin)
 {
 	const bool io_win = (owin->powar & PEXOWAR_RTT) == PEXOWAR_RTT_IO;
@@ -377,12 +395,25 @@ pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
 	    | ((uint64_t)owin->potear << (32+12));
 	const uint64_t local_base = (uint64_t)owin->powbar << 12;
 	const u_int win_size_log2 = PEXIWAR_IWS_GET(owin->powar) + 1;
+	u_int slot;
 
 	bs->bs_tag.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN
 	    | (io_win ? _BUS_SPACE_IO_TYPE : _BUS_SPACE_MEM_TYPE);
-	bs->bs_tag.pbs_base = pci_base;
-	bs->bs_tag.pbs_offset = local_base - pci_base;
-	bs->bs_tag.pbs_limit = bs->bs_tag.pbs_base + (1ULL << win_size_log2);
+
+	for (slot = 0; slot < bs->bs_numwin; slot++) {
+		if (pci_base < bs->bs_base[slot]) {
+			for (size_t j = slot; j < bs->bs_numwin; j++) {
+				bs->bs_base[j+1] = bs->bs_base[j];
+				bs->bs_offset[j+1] = bs->bs_offset[j];
+				bs->bs_limit[j+1] = bs->bs_limit[j];
+			}
+			break;
+		}
+	}
+	bs->bs_base[slot] = pci_base;
+	bs->bs_offset[slot] = local_base - pci_base;
+	bs->bs_limit[slot] = pci_base + (1ULL << win_size_log2);
+	bs->bs_numwin++;
 
 #if 0
 	const char units[] = " KMGTP";
@@ -395,9 +426,20 @@ pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
 	    (owin->powar & PEXOWAR_RTT) == PEXOWAR_RTT_IO ? "I/O" : "memory",
 	    local_base, pci_base);
 #endif
+}
 
-	snprintf(bs->bs_name, sizeof(bs->bs_name), "%s-%s@%u",
-	    device_xname(sc->sc_dev), io_win ? "io" : "mem", winnum);
+static bool
+pq3pci_owin_init(struct pq3pci_softc *sc, struct pq3pci_bst *bs, bool io_win)
+{
+	if (bs->bs_numwin == 0)
+		return true;
+
+	bs->bs_tag.pbs_base = bs->bs_base[0];
+	bs->bs_tag.pbs_offset = bs->bs_offset[0];
+	bs->bs_tag.pbs_limit = bs->bs_limit[bs->bs_numwin - 1];
+
+	snprintf(bs->bs_name, sizeof(bs->bs_name), "%s-%s",
+	    device_xname(sc->sc_dev), io_win ? "io" : "mem");
 
 #if 0
 	printf("%s: %s: base=%#x offset=%#x limit=%#x\n", __func__, bs->bs_name,
@@ -410,6 +452,19 @@ pq3pci_owin_setup(struct pq3pci_softc *sc, u_int winnum,
 		aprint_error(": failed to create %s bus space: %d\n",
 		    bs->bs_name, error);
 		return false;
+	}
+	for (size_t slot = 1; slot < bs->bs_numwin; slot++) {
+		if (bs->bs_limit[slot - 1] < bs->bs_base[slot]) {
+			error = extent_alloc_region(bs->bs_tag.pbs_extent,
+			    bs->bs_limit[slot - 1],
+			    bs->bs_base[slot] - bs->bs_limit[slot - 1],
+			    EX_WAITOK);
+			if (error) {
+				aprint_error(": failed to hole in %s bus space: %d\n",
+				    bs->bs_name, error);
+				return false;
+			}
+		}
 	}
 	aprint_debug_dev(sc->sc_dev, "bus space %s created\n", bs->bs_name);
 	sc->sc_pba_flags |=
@@ -718,9 +773,12 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 #endif
 		if (owin.powar & PEXOWAR_EN) {
 			valid_owins++;
-			if (!pq3pci_owin_setup(sc, i, &owin))
-				return;
+			pq3pci_owin_record(sc, i, &owin);
 		}
+	}
+	if (!pq3pci_owin_init(sc, &sc->sc_pci_io_bst, true)
+	    || !pq3pci_owin_init(sc, &sc->sc_pci_mem_bst, false)) {
+		return;
 	}
 #ifndef PCI_NETBSD_CONFIGURE
 	if (valid_owins == 0) {
@@ -823,10 +881,8 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOTEAR1, owin1.potear);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWBAR1, owin1.powbar);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWAR1, owin1.powar);
-		if (!pq3pci_owin_setup(sc, 1, &owin1)) {
-			aprint_error(
-			    ": error creating bus space for %s\n",
-			    "PCI memory");
+		pq3pci_owin_record(sc, 1, &owin1);
+		if (!pq3pci_owin_init(sc, &sc->sc_pci_mem_bst, false)) {
 			return;
 		}
 
@@ -850,10 +906,8 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOTEAR2, owin2.potear);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWBAR2, owin2.powbar);
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, PEXOWAR2, owin2.powar);
-		if (!pq3pci_owin_setup(sc, 2, &owin2)) {
-			aprint_error(
-			    ": error creating bus space for %s\n",
-			    "PCI I/O space");
+		pq3pci_owin_record(sc, 2, &owin1);
+		if (!pq3pci_owin_init(sc, &sc->sc_pci_io_bst, true)) {
 			return;
 		}
 

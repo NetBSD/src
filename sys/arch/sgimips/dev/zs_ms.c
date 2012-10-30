@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.7 2008/03/29 19:15:35 tsutsui Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.7.38.1 2012/10/30 17:20:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.7 2008/03/29 19:15:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.7.38.1 2012/10/30 17:20:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct zsms_softc {
 
 	/* wsmouse bits */
 	int		enabled;
-	struct device  *wsmousedev;
+	device_t	wsmousedev;
 };
 
 static int	zsms_match(device_t, cfdata_t, void *);

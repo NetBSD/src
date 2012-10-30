@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.58 2010/08/04 10:02:12 jruoho Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.58.8.1 2012/10/30 17:20:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.58 2010/08/04 10:02:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.58.8.1 2012/10/30 17:20:34 yamt Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -221,7 +221,7 @@ mp_cpuprint(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("cpu at %s", pnp);
-	printf(" apid %d", caa->cpu_number);
+	aprint_normal(" apid %d", caa->cpu_number);
 	return (UNCONF);
 }
 
@@ -232,7 +232,7 @@ mp_ioapicprint(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("ioapic at %s", pnp);
-	printf(" apid %d", aaa->apic_id);
+	aprint_normal(" apid %d", aaa->apic_id);
 	return (UNCONF);
 }
 
@@ -506,13 +506,13 @@ mpbios_scan(device_t self, int *ncpup)
 
 	switch (mp_fps->spec_rev) {
 	case 1:
-		printf("(Version 1.1)");
+		aprint_normal("(Version 1.1)");
 		break;
 	case 4:
-		printf("(Version 1.4)");
+		aprint_normal("(Version 1.4)");
 		break;
 	default:
-		printf("(unrecognized rev %d)", mp_fps->spec_rev);
+		aprint_normal("(unrecognized rev %d)", mp_fps->spec_rev);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.88.2.3 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.88.2.4 2012/10/30 17:22:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -232,6 +232,12 @@
 #define	__noinline	/* nothing */
 #endif
 
+#if __GNUC_PREREQ__(3, 0)
+#define	__always_inline	__attribute__((__always_inline__))
+#else
+#define	__always_inline	/* nothing */
+#endif
+
 #if __GNUC_PREREQ__(4, 1)
 #define	__returns_twice	__attribute__((__returns_twice__))
 #else
@@ -368,12 +374,10 @@
 #if !defined(_STANDALONE) && !defined(_KERNEL)
 #if defined(__GNUC__) || defined(__PCC__)
 #define	__RENAME(x)	___RENAME(x)
-#else
-#ifdef __lint__
+#elif defined(__lint__)
 #define	__RENAME(x)	__symbolrename(x)
 #else
 #error "No function renaming possible"
-#endif /* __lint__ */
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
@@ -492,6 +496,15 @@
 	for (pvar = __link_set_start(set); pvar < __link_set_end(set); pvar++)
 
 #define	__link_set_entry(set, idx)	(__link_set_start(set)[idx])
+
+/*
+ * Return the natural alignment in bytes for the given type
+ */
+#if __GNUC_PREREQ__(4, 1)
+#define	__alignof(__t)  __alignof__(__t)
+#else
+#define __alignof(__t) (sizeof(struct { char __x; __t __y; }) - sizeof(__t))
+#endif
 
 /*
  * Return the number of elements in a statically-allocated array,

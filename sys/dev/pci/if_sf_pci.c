@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.18 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.18.12.1 2012/10/30 17:21:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.18 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.18.12.1 2012/10/30 17:21:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ struct sf_pci_softc {
 static int	sf_pci_match(device_t, cfdata_t, void *);
 static void	sf_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sf_pci, sizeof(struct sf_pci_softc),
+CFATTACH_DECL_NEW(sf_pci, sizeof(struct sf_pci_softc),
     sf_pci_match, sf_pci_attach, NULL, NULL);
 
 struct sf_pci_product {
@@ -177,6 +177,7 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	int error, ioh_valid, memh_valid;
 
+	sc->sc_dev = self;
 	spp = sf_pci_lookup(pa);
 	if (spp == NULL) {
 		printf("\n");
@@ -188,7 +189,7 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
 	    error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
+		aprint_error_dev(self, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -222,7 +223,7 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sh = ioh;
 		sc->sc_iomapped = 1;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -237,19 +238,19 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, sf_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Finish off the attach.

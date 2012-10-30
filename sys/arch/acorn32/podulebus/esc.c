@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.24 2010/12/09 05:14:48 uebayasi Exp $	*/
+/*	$NetBSD: esc.c,v 1.24.8.1 2012/10/30 17:18:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.24 2010/12/09 05:14:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.24.8.1 2012/10/30 17:18:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ esc_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
  								void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct esc_softc	*dev = (void *)chan->chan_adapter->adapt_dev;
+	struct esc_softc	*dev = device_private(chan->chan_adapter->adapt_dev);
 	struct scsipi_periph	*periph;
 	struct esc_pending	*pendp;
 	int			 flags, s, target;

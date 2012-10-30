@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.12 2011/03/16 13:23:41 tsutsui Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.12.4.1 2012/10/30 17:19:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -46,7 +46,6 @@ struct vrip_unit {
 };
 
 struct vrip_softc {
-	struct	device sc_dv;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	hpcio_chip_t sc_gpio_chips[VRIP_NIOCHIPS];
@@ -68,7 +67,7 @@ struct vrip_softc {
 
 void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
-int vripmatch(struct device *, struct cfdata *, void *);
-void vripattach_common(struct device *, struct device *, void *);
+int vripmatch(device_t, cfdata_t, void *);
+void vripattach_common(device_t, device_t, void *);
 void vrip_splpiu(void);
 #endif /* !_VRIPVAR_H_ */

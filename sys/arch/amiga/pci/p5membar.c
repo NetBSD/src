@@ -1,4 +1,4 @@
-/*	$NetBSD: p5membar.c,v 1.2.6.2 2012/04/17 00:06:02 yamt Exp $ */
+/*	$NetBSD: p5membar.c,v 1.2.6.3 2012/10/30 17:18:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
 #define ZORRO_MANID_P5		8512
 #define ZORRO_PRODID_P5PB	101		/* CVPPC/BVPPC/G-REX */
 
-static int	p5membar_match(struct device *, struct cfdata *, void *);
-static void	p5membar_attach(struct device *, struct device *, void *);
+static int	p5membar_match(device_t, cfdata_t, void *);
+static void	p5membar_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(p5membar, sizeof(struct p5membar_softc),
     p5membar_match, p5membar_attach, NULL, NULL);

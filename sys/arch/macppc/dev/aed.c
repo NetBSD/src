@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.26 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: aed.c,v 1.26.2.1 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.26 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.26.2.1 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,7 +71,7 @@ static struct aed_softc *aed_sc = NULL;
 static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
-CFATTACH_DECL(aed, sizeof(struct aed_softc),
+CFATTACH_DECL_NEW(aed, sizeof(struct aed_softc),
     aedmatch, aedattach, NULL, NULL);
 
 extern struct cfdriver aed_cd;
@@ -123,7 +123,7 @@ aedattach(device_t parent, device_t self, void *aux)
 	sc->sc_repeating = -1;          /* not repeating */
 
 	/* Pull in the options flags. */ 
-	sc->sc_options = (device_cfdata(&sc->sc_dev)->cf_flags | aed_options);
+	sc->sc_options = (device_cfdata(self)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
 	

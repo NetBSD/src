@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.111.2.2 2012/05/23 10:08:19 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.111.2.3 2012/10/30 17:23:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111.2.2 2012/05/23 10:08:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.111.2.3 2012/10/30 17:23:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -496,8 +496,9 @@ notfound:
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
-	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
+	if (nameiop != CREATE) {
 		cache_enter(vdp, *vpp, cnp);
+	}
 	error = ENOENT;
 	goto out;
 
@@ -660,8 +661,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	if (cnp->cn_flags & MAKEENTRY)
-		cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp);
 	error = 0;
 
 out:
@@ -816,13 +816,6 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
 
-#if 0
-	struct ufs_lookup_results *ulr;
-	/* XXX should handle this material another way */
-	ulr = &dp->i_crap;
-	UFS_CHECK_CRAPCOUNTER(dp);
-#endif
-
 	if (ulr->ulr_count == 0) {
 		/*
 		 * If ulr_count is 0, then namei could find no
@@ -873,7 +866,7 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 	/*
 	 * If ulr_count is non-zero, then namei found space for the new
-	 * entry in the range ulr_offset to url_offset + url_count
+	 * entry in the range ulr_offset to ulr_offset + ulr_count
 	 * in the directory. To use this space, we may have to compact
 	 * the entries located there, by copying them together towards the
 	 * beginning of the block, leaving the free space in one usable
@@ -907,8 +900,8 @@ ufs_direnter(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	/*
 	 * Find space for the new entry. In the simple case, the entry at
 	 * offset base will have the space. If it does not, then namei
-	 * arranged that compacting the region dp->i_offset to
-	 * dp->i_offset + dp->i_count would yield the space.
+	 * arranged that compacting the region ulr_offset to
+	 * ulr_offset + ulr_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
 	dsize = (ep->d_ino != 0) ? DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
@@ -1084,7 +1077,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 #ifdef UFS_DIRHASH
 	/*
 	 * Remove the dirhash entry. This is complicated by the fact
-	 * that `ep' is the previous entry when dp->i_count != 0.
+	 * that `ep' is the previous entry when ulr_count != 0.
 	 */
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_remove(dp, (ulr->ulr_count == 0) ? ep :
@@ -1122,6 +1115,13 @@ out:
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(ITOV(ip), NULL, NULL, 0);
 	}
+	/*
+	 * XXX did it ever occur to anyone that it might be a good
+	 * idea to restore ip->i_nlink if this fails? Or something?
+	 * Currently on error return from this function the state of
+	 * ip->i_nlink depends on what happened, and callers
+	 * definitely do not take this into account.
+	 */
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*

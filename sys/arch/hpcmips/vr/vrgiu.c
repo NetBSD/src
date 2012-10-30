@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.41 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.41.12.1 2012/10/30 17:19:46 yamt Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.41 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.41.12.1 2012/10/30 17:19:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ struct vrgiu_intr_entry {
 };
 
 struct vrgiu_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	/* Interrupt */
@@ -135,11 +135,11 @@ struct vrgiu_softc {
 /*
  * prototypes
  */
-int vrgiu_match(struct device*, struct cfdata*, void*);
-void vrgiu_attach(struct device*, struct device*, void*);
-int vrgiu_intr(void*);
-int vrgiu_print(void*, const char*);
-void vrgiu_callback(struct device*);
+int vrgiu_match(device_t, cfdata_t, void *);
+void vrgiu_attach(device_t, device_t, void *);
+int vrgiu_intr(void *);
+int vrgiu_print(void *, const char *);
+void vrgiu_callback(device_t);
 
 void	vrgiu_dump_regs(struct vrgiu_softc *);
 void	vrgiu_dump_io(struct vrgiu_softc *);
@@ -153,13 +153,13 @@ void	vrgiu_regwrite(struct vrgiu_softc *, bus_addr_t, u_int16_t);
 
 static int vrgiu_port_read(hpcio_chip_t, int);
 static void vrgiu_port_write(hpcio_chip_t, int, int);
-static void *vrgiu_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void*);
-static void vrgiu_intr_disestablish(hpcio_chip_t, void*);
-static void vrgiu_intr_clear(hpcio_chip_t, void*);
+static void *vrgiu_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void *);
+static void vrgiu_intr_disestablish(hpcio_chip_t, void *);
+static void vrgiu_intr_clear(hpcio_chip_t, void *);
 static void vrgiu_register_iochip(hpcio_chip_t, hpcio_chip_t);
 static void vrgiu_update(hpcio_chip_t);
 static void vrgiu_dump(hpcio_chip_t);
-static hpcio_chip_t vrgiu_getchip(void*, int);
+static hpcio_chip_t vrgiu_getchip(void *, int);
 
 /*
  * variables
@@ -175,7 +175,7 @@ static struct hpcio_chip vrgiu_iochip = {
 	.hc_dump =		vrgiu_dump,
 };
 
-CFATTACH_DECL(vrgiu, sizeof(struct vrgiu_softc),
+CFATTACH_DECL_NEW(vrgiu, sizeof(struct vrgiu_softc),
     vrgiu_match, vrgiu_attach, NULL, NULL);
 
 struct vrgiu_softc *this_giu;
@@ -184,19 +184,21 @@ struct vrgiu_softc *this_giu;
  * function bodies
  */
 int
-vrgiu_match(struct device *parent, struct cfdata *cf, void *aux)
+vrgiu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (2); /* 1st attach group of vrip */
 }
 
 void
-vrgiu_attach(struct device *parent, struct device *self, void *aux)
+vrgiu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrgiu_softc *sc = (void*)self;
+	struct vrgiu_softc *sc = device_private(self);
 	struct hpcio_attach_args haa;
 	int i;
+
+	sc->sc_dev = self;
 
 #ifndef SINGLE_VRIP_BASE
 	if (va->va_addr == VR4102_GIU_ADDR) {
@@ -208,7 +210,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_termupdn_reg = VR4122_GIUTERMUPDN_REG_W;
 	} else {
 		panic("%s: unknown base address 0x%lx",
-		    sc->sc_dev.dv_xname, va->va_addr);
+		    device_xname(sc->sc_dev), va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */
 
@@ -239,7 +241,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 		TAILQ_INIT(&sc->sc_intr_head[i]);
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
 	    IPL_BIO, vrgiu_intr, sc))) {
-		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: can't establish interrupt\n", device_xname(sc->sc_dev));
 		return;
 	}
 	/*
@@ -247,7 +249,7 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_iochip = vrgiu_iochip; /* structure copy */
 	sc->sc_iochip.hc_chipid = VRIP_IOCHIP_VRGIU;
-	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
+	sc->sc_iochip.hc_name = device_xname(sc->sc_dev);
 	sc->sc_iochip.hc_sc = sc;
 	/* Register functions to upper interface */
 	vrip_register_gpio(va->va_vc, &sc->sc_iochip);
@@ -278,9 +280,9 @@ vrgiu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-vrgiu_callback(struct device *self)
+vrgiu_callback(device_t self)
 {
-	struct vrgiu_softc *sc = (void*)self;
+	struct vrgiu_softc *sc = device_private(self);
 	struct hpcio_attach_args haa;
 
 	haa.haa_busname = "vrisab";
@@ -535,7 +537,7 @@ vrgiu_intr_establish(
 	if (!(ih = malloc(sizeof(struct vrgiu_intr_entry), M_DEVBUF, M_NOWAIT)))
 		panic ("vrgiu_intr_establish: no memory.");
 
-	DPRINTF(DEBUG_INTR, ("%s: port %d ", sc->sc_dev.dv_xname, port));
+	DPRINTF(DEBUG_INTR, ("%s: port %d ", device_xname(sc->sc_dev), port));
 	ih->ih_port = port;
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;

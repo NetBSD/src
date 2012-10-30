@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.32 2011/04/04 20:37:56 dyoung Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.32.4.1 2012/10/30 17:21:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.32 2011/04/04 20:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.32.4.1 2012/10/30 17:21:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,6 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
 		    return;
 	}
-	cp->ata_channel.ch_ndrive = 2;
 
 	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 	    "%s channel %s to %s mode\n", cp->name,
@@ -258,6 +257,7 @@ cmd_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
@@ -338,6 +338,7 @@ cmd0643_9_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd0643_9_setup_channel;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	ATADEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
@@ -378,15 +379,15 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		/* add timing values, setup DMA if needed */
 		tim = cmd0643_9_data_tim_pio[drvp->PIO_mode];
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
-			if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & (ATA_DRIVE_DMA | ATA_DRIVE_UDMA)) {
+			if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 				/* UltraDMA on a 646U2, 0648 or 0649 */
 				s = splbio();
-				drvp->drive_flags &= ~DRIVE_DMA;
+				drvp->drive_flags &= ~ATA_DRIVE_DMA;
 				splx(s);
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->ch_channel));
@@ -482,6 +483,7 @@ cmd680_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = cmd680_setup_channel;
+	sc->sc_wdcdev.wdc_maxdrives = 2;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x80, 0x00);
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, 0x84, 0x00);
@@ -527,7 +529,6 @@ cmd680_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
 		    return;
 	}
-	cp->ata_channel.ch_ndrive = 2;
 
 	/* XXX */
 	reg = 0xa2 + channel * 16;
@@ -572,12 +573,12 @@ cmd680_setup_channel(struct ata_channel *chp)
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0)
+		if (drvp->drive_type == ATA_DRIVET_NONE)
 			continue;
 		mode &= ~(0x03 << (drive * 4));
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if (drvp->drive_flags & ATA_DRIVE_UDMA) {
 			s = splbio();
-			drvp->drive_flags &= ~DRIVE_DMA;
+			drvp->drive_flags &= ~ATA_DRIVE_DMA;
 			splx(s);
 			off = 0xa0 + chp->ch_channel * 16;
 			if (drvp->UDMA_mode > 2 &&
@@ -599,7 +600,7 @@ cmd680_setup_channel(struct ata_channel *chp)
 				val |= udma_tbl[drvp->UDMA_mode];
 			pciide_pci_write(pc, pa, off, val);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
+		} else if (drvp->drive_flags & ATA_DRIVE_DMA) {
 			mode |= 0x02 << (drive * 4);
 			off = 0xa8 + chp->ch_channel * 16 + drive * 2;
 			val = dma_tbl[drvp->DMA_mode];

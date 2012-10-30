@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.17.2.1 2012/04/17 00:06:13 yamt Exp $
+#	$NetBSD: TISDP2420,v 1.17.2.2 2012/10/30 17:19:20 yamt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -37,6 +37,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	TMPFS		# memory file system
@@ -87,6 +88,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -238,6 +240,7 @@ sm0		at gpmc? addr 0x08000300 intr 188	# (intr is GPIO92)
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

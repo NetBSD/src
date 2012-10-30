@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.50.2.1 2012/04/17 00:08:06 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.50.2.2 2012/10/30 17:22:04 yamt Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -77,7 +77,7 @@
  *   to send any packets.
  *
  * Note that this device appears to only support loading the station
- * address via autload from the EEPROM (i.e. there's no way to manaully
+ * address via autoload from the EEPROM (i.e. there's no way to manaully
  * set it).
  *
  * (Adam Weinberger wanted me to name this driver if_gir.c.)
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.1 2012/04/17 00:08:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.50.2.2 2012/10/30 17:22:04 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -193,7 +193,7 @@ static void	axe_stop(struct ifnet *, int);
 static void	axe_watchdog(struct ifnet *);
 static int	axe_miibus_readreg(device_t, int, int);
 static void	axe_miibus_writereg(device_t, int, int, int);
-static void	axe_miibus_statchg(device_t);
+static void	axe_miibus_statchg(struct ifnet *);
 static int	axe_cmd(struct axe_softc *, int, int, int, void *);
 static void	axe_reset(struct axe_softc *sc);
 static int	axe_ifmedia_upd(struct ifnet *);
@@ -321,9 +321,9 @@ axe_miibus_writereg(device_t dev, int phy, int reg, int aval)
 }
 
 static void
-axe_miibus_statchg(device_t dev)
+axe_miibus_statchg(struct ifnet *ifp)
 {
-	struct axe_softc *sc = device_private(dev);
+	struct axe_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->axe_mii;
 	int val, err;
 
@@ -1449,7 +1449,7 @@ axe_stop(struct ifnet *ifp, int disable)
 	sc->axe_link = 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_axe, NULL);
+MODULE(MODULE_CLASS_DRIVER, if_axe, "bpf");
 
 #ifdef _MODULE
 #include "ioconf.c"

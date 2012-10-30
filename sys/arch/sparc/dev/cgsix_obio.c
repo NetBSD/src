@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.25 2011/07/18 00:31:13 mrg Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.25.2.1 2012/10/30 17:20:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.25 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.25.2.1 2012/10/30 17:20:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			  sizeof(*sc->sc_bt),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map brooktree registers\n", self->dv_xname);
+		printf("%s: cannot map brooktree registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_bt = (struct bt_regs *)bh;
@@ -151,7 +151,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			  sizeof(*sc->sc_fhc),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map FHC registers\n", self->dv_xname);
+		printf("%s: cannot map FHC registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_fhc = (int *)bh;
@@ -161,7 +161,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			  sizeof(*sc->sc_thc),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map THC registers\n", self->dv_xname);
+		printf("%s: cannot map THC registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_thc = (struct cg6_thc *)bh;
@@ -171,7 +171,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			  sizeof(*sc->sc_tec),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map TEC registers\n", self->dv_xname);
+		printf("%s: cannot map TEC registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_tec = (struct cg6_tec_xxx *)bh;
@@ -181,7 +181,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 			  sizeof(*sc->sc_fbc),
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map FBC registers\n", self->dv_xname);
+		printf("%s: cannot map FBC registers\n", device_xname(self));
 		return;
 	}
 	sc->sc_fbc = (struct cg6_fbc *)bh;
@@ -210,7 +210,7 @@ cgsixattach(device_t parent, device_t self, void *aux)
 				  sc->sc_ramsize,
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
+			printf("%s: cannot map pixels\n", device_xname(self));
 			return;
 		}
 		sc->sc_fb.fb_pixels = (void *)bh;

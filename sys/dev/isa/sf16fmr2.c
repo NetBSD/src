@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.15 2009/05/12 09:10:16 cegger Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.15.12.1 2012/10/30 17:21:16 yamt Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.15 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.15.12.1 2012/10/30 17:21:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,6 @@ const struct radio_hw_if sf2r_hw_if = {
 };
 
 struct sf2r_softc {
-	struct device	sc_dev;
-
 	u_int32_t	freq;
 	u_int32_t	stereo;
 	u_int32_t	lock;
@@ -108,7 +106,7 @@ struct sf2r_softc {
 	struct tea5757_t	tea;
 };
 
-CFATTACH_DECL(sf2r, sizeof(struct sf2r_softc),
+CFATTACH_DECL_NEW(sf2r, sizeof(struct sf2r_softc),
     sf2r_probe, sf2r_attach, NULL, NULL);
 
 void	sf2r_set_mute(struct sf2r_softc *);
@@ -166,7 +164,7 @@ sf2r_probe(device_t parent, cfdata_t cf, void *aux)
 void
 sf2r_attach(device_t parent, device_t self, void *aux)
 {
-	struct sf2r_softc *sc = (void *) self;
+	struct sf2r_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->tea.iot = ia->ia_iot;
@@ -193,7 +191,7 @@ sf2r_attach(device_t parent, device_t self, void *aux)
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	sf2r_set_mute(sc);
 
-	radio_attach_mi(&sf2r_hw_if, sc, &sc->sc_dev);
+	radio_attach_mi(&sf2r_hw_if, sc, self);
 }
 
 /*

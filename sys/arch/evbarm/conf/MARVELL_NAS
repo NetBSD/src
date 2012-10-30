@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.3.4.1 2012/04/17 00:06:13 yamt Exp $
+#	$NetBSD: MARVELL_NAS,v 1.3.4.2 2012/10/30 17:19:20 yamt Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -176,7 +176,7 @@ mvgbe*	at mvgbec? port ? irq ?
 ehci*	at mvsoc? offset ? irq ?
 
 # On-chip Cryptographic Engines and Security Accelerator
-#mvcesa* at mvsoc? offset ? irq ?
+mvcesa* at mvsoc? offset ? irq ?
 
 # On-chip Two-Wire Serial Interface (TWSI)
 gttwsi* at mvsoc? offset ? irq ?
@@ -303,7 +303,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # data mover pseudo-devices
-pseudo-device	swdmover		# softare dmover(9) back-end
+pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec

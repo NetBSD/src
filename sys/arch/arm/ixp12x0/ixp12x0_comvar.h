@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp12x0_comvar.h,v 1.6 2008/05/02 22:03:23 martin Exp $        */
+/*      $NetBSD: ixp12x0_comvar.h,v 1.6.34.1 2012/10/30 17:19:05 yamt Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -45,7 +45,7 @@
 #define IXPCOM_RING_SIZE	2048
 
 struct ixpcom_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_addr_t		sc_baseaddr;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t 	sc_ioh;

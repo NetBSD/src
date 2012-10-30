@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.2.2 2012/05/23 10:07:45 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.3 2012/10/30 17:20:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.2 2012/05/23 10:07:45 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.3 2012/10/30 17:20:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.2 2012/05/23 10:07:45 yamt Exp $");
 #include <powerpc/booke/spr.h>
 #include <powerpc/booke/cpuvar.h>
 
+#include <powerpc/fpu/fpu_extern.h>
+
 #include <powerpc/db_machdep.h>
 #include <ddb/db_interface.h>
 
@@ -69,7 +71,6 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.13.2.2 2012/05/23 10:07:45 yamt Exp $");
 #include <powerpc/booke/pte.h>
 
 void trap(enum ppc_booke_exceptions, struct trapframe *);
-static void dump_trapframe(const struct trapframe *);
 
 static const char trap_names[][8] = {
 	[T_CRITIAL_INPUT] = "CRIT",
@@ -138,17 +139,17 @@ get_faultmap(const struct trapframe * const tf, register_t psl_mask)
 }
 
 /*
- * We could use pmap_pte_lookip but this slightly faster since we already
+ * We could use pmap_pte_lookup but this slightly faster since we already
  * the segtab pointers in cpu_info.
  */
 static inline pt_entry_t *
 trap_pte_lookup(struct trapframe *tf, vaddr_t va, register_t psl_mask)
 {
-	struct pmap_segtab ** const stps = &curcpu()->ci_pmap_kern_segtab;
-	struct pmap_segtab * const stp = stps[(tf->tf_srr1 / psl_mask) & 1];
+	pmap_segtab_t ** const stps = &curcpu()->ci_pmap_kern_segtab;
+	pmap_segtab_t * const stp = stps[(tf->tf_srr1 / psl_mask) & 1];
 	if (__predict_false(stp == NULL))
 		return NULL;
-	pt_entry_t *ptep = stp->seg_tab[va >> SEGSHIFT];
+	pt_entry_t * const ptep = stp->seg_tab[va >> SEGSHIFT];
 	if (__predict_false(ptep == NULL))
 		return NULL;
 	return ptep + ((va & SEGOFSET) >> PAGE_SHIFT);
@@ -269,7 +270,7 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	pt_entry_t * const ptep = trap_pte_lookup(tf, trunc_page(faultva),
 	    PSL_IS);
 	if (ptep == NULL)
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 	KASSERT(ptep != NULL);
 	pt_entry_t pte = *ptep;
 
@@ -426,6 +427,18 @@ emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 		return true;
 	}
 
+	if (OPC_MFSPR_P(opcode, SPR_PIR)) {
+		__asm ("mfpir %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
+		return true;
+	}
+
+	if (OPC_MFSPR_P(opcode, SPR_SVR)) {
+		__asm ("mfspr %0,%1"
+		    :	"=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)])
+		    :	"n"(SPR_SVR));
+		return true;
+	}
+
 	/*
 	 * If we bothered to emulate FP, we would try to do so here.
 	 */
@@ -462,6 +475,21 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		if (emulate_opcode(tf, ksi)) {
 			tf->tf_srr0 += 4;
 			return 0;
+		}
+	}
+
+	if (tf->tf_esr & ESR_PIL) {
+		struct pcb * const pcb = lwp_getpcb(curlwp);
+		if (__predict_false(!(curlwp->l_md.md_flags & MDLWP_USEDFPU))) {
+			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+			curlwp->l_md.md_flags |= MDLWP_USEDFPU;
+		}
+		if (fpu_emulate(tf, &pcb->pcb_fpu, ksi)) {
+			if (ksi->ksi_signo == 0) {
+				ci->ci_ev_fpu.ev_count++;
+				return 0;
+			}
+			return EFAULT;
 		}
 	}
 
@@ -591,19 +619,22 @@ embedded_fp_round_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	return rv;
 }
 
-static void
-dump_trapframe(const struct trapframe *tf)
+void
+dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 {
-	printf("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
+	if (pr == NULL)
+		pr = printf;
+	(*pr)("trapframe %p (exc=%x srr0/1=%#lx/%#lx esr/dear=%#x/%#lx)\n",
 	    tf, tf->tf_exc, tf->tf_srr0, tf->tf_srr1, tf->tf_esr, tf->tf_dear);
-	printf("lr =%08lx ctr=%08lx cr =%08x xer=%08x\n",
+	(*pr)("lr =%08lx ctr=%08lx cr =%08x xer=%08x\n",
 	    tf->tf_lr, tf->tf_ctr, tf->tf_cr, tf->tf_xer);
 	for (u_int r = 0; r < 32; r += 4) {
-		printf("r%02u=%08lx r%02u=%08lx r%02u=%08lx r%02u=%08lx\n",
+		(*pr)("r%02u=%08lx r%02u=%08lx r%02u=%08lx r%02u=%08lx\n",
 		    r+0, tf->tf_fixreg[r+0], r+1, tf->tf_fixreg[r+1],
 		    r+2, tf->tf_fixreg[r+2], r+3, tf->tf_fixreg[r+3]);
 	}
 }
+
 static bool
 ddb_exception(struct trapframe *tf)
 {
@@ -631,7 +662,7 @@ ddb_exception(struct trapframe *tf)
 		}
 	}
 	printf(" %u\n", ci->ci_cpl);
-	dump_trapframe(tf);
+	dump_trapframe(tf, NULL);
 #endif
 	if (kdb_trap(tf->tf_exc, tf)) {
 		tf->tf_srr0 += 4;
@@ -686,7 +717,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 	    || (register_t)tf < (register_t)l->l_addr + PAGE_SIZE) {
 		printf("%s(entry): pid %d.%d (%s): invalid tf addr %p\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm, tf);
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 		Debugger();
 	}
 #endif
@@ -695,7 +726,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		printf("%s(entry): pid %d.%d (%s): %s: PSL_CE (%#lx) not set\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
 		    trap_names[trap_code], mfmsr());
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 	}
 #endif
 
@@ -704,7 +735,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx (sprg1=%#lx)\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
 		    trap_names[trap_code], tf->tf_fixreg[1], mfspr(SPR_SPRG1));
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 		Debugger();
 	}
 
@@ -712,7 +743,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		printf("%s(entry): pid %d.%d (%s): %s invalid PSL %#lx\n",
 		    __func__, p->p_pid, l->l_lid, p->p_comm,
 		    trap_names[trap_code], tf->tf_srr1);
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 		Debugger();
 	}
 
@@ -773,7 +804,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		break;
 	case T_EMBEDDED_PERF_MONITOR:
 		//db_stack_trace_print(tf->tf_fixreg[1], true, 40, "", printf);
-		dump_trapframe(tf);
+		dump_trapframe(tf, NULL);
 		rv = EPERM;
 		break;
 	case T_AST:
@@ -784,14 +815,14 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			printf("%s(ast-exit): pid %d.%d (%s): invalid sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    tf->tf_fixreg[1]);
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 			Debugger();
 		}
 		if ((tf->tf_srr1 & (PSL_DS|PSL_IS)) != (PSL_DS|PSL_IS)) {
 			printf("%s(entry): pid %d.%d (%s): %s invalid PSL %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], tf->tf_srr1);
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 			Debugger();
 		}
 #if 0
@@ -799,7 +830,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			printf("%s(exit): pid %d.%d (%s): %s: PSL_CE (%#lx) not set\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], mfmsr());
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 		}
 #endif
 		userret(l, tf);
@@ -809,7 +840,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 		if (rv != 0) {
 			if (!onfaulted(tf, rv)) {
 				db_stack_trace_print(tf->tf_fixreg[1], true, 40, "", printf);
-				dump_trapframe(tf);
+				dump_trapframe(tf, NULL);
 				panic("%s: pid %d.%d (%s): %s exception in kernel mode"
 				    " (tf=%p, dear=%#lx, esr=%#x,"
 				    " srr0/1=%#lx/%#lx)",
@@ -824,7 +855,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			printf("%s(exit): pid %d.%d (%s): invalid kern sp %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    tf->tf_fixreg[1]);
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 			Debugger();
 		}
 #endif
@@ -834,7 +865,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], mfmsr());
 			mtmsr(mfmsr()|PSL_CE);
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 		}
 #endif
 	} else {
@@ -846,13 +877,20 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			ksi.ksi_signo = SIGKILL;
 		}
 		if (rv != 0) {
-			if (cpu_printfataltraps) {
+			/*
+			 * Only print a fatal trap if the signal will be
+			 * uncaught.
+			 */
+			if (cpu_printfataltraps
+			    && (p->p_slflag & PSL_TRACED) == 0
+			    && !sigismember(&p->p_sigctx.ps_sigcatch,
+				    ksi.ksi_signo)) {
 				printf("%s: pid %d.%d (%s):"
 				    " %s exception in user mode\n",
 				    __func__, p->p_pid, l->l_lid, p->p_comm,
 				    trap_names[trap_code]);
 				if (cpu_printfataltraps > 1)
-					dump_trapframe(tf);
+					dump_trapframe(tf, NULL);
 			}
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
@@ -861,7 +899,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			printf("%s(exit): pid %d.%d (%s): %s invalid PSL %#lx\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], tf->tf_srr1);
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 			Debugger();
 		}
 #endif
@@ -870,7 +908,7 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 			printf("%s(exit): pid %d.%d (%s): %s: PSL_CE (%#lx) not set\n",
 			    __func__, p->p_pid, l->l_lid, p->p_comm,
 			    trap_names[trap_code], mfmsr());
-			dump_trapframe(tf);
+			dump_trapframe(tf, NULL);
 		}
 #endif
 		userret(l, tf);

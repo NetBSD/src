@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyvar.h,v 1.5 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mlyvar.h,v 1.5.34.1 2012/10/30 17:21:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ struct mly_ccb {
  */
 struct mly_softc {
 	/* Generic device info. */
-	struct device		mly_dv;
+	device_t		mly_dv;
 	bus_space_handle_t	mly_ioh;
 	bus_space_tag_t		mly_iot;
 	bus_dma_tag_t		mly_dmat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.117 2009/11/12 19:37:17 dyoung Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.117.12.1 2012/10/30 17:21:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.117 2009/11/12 19:37:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.117.12.1 2012/10/30 17:21:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -299,7 +299,7 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 	wdcp = pcmcia_product_lookup(pa, wdc_pcmcia_products,
 	    wdc_pcmcia_nproducts, sizeof(wdc_pcmcia_products[0]), NULL);
-	sc->ata_channel.ch_ndrive = wdcp ? wdcp->wdc_ndrive : 2;
+	sc->sc_wdcdev.wdc_maxdrives = wdcp ? wdcp->wdc_ndrive : 2;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
 	error = wdc_pcmcia_enable(self, 1);
@@ -404,7 +404,7 @@ wdc_pcmcia_datain_memory(struct ata_channel *chp, int flags, void *buf,
 		size_t n;
 
 		n = min(len, 1024);
-		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+		if ((flags & ATA_DRIVE_CAP32) && (n & 3) == 0)
 			bus_space_read_region_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, buf, n >> 2);
 		else
@@ -425,7 +425,7 @@ wdc_pcmcia_dataout_memory(struct ata_channel *chp, int flags, void *buf,
 		size_t n;
 
 		n = min(len, 1024);
-		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+		if ((flags & ATA_DRIVE_CAP32) && (n & 3) == 0)
 			bus_space_write_region_stream_4(wdr->data32iot,
 			    wdr->data32ioh, 0, buf, n >> 2);
 		else

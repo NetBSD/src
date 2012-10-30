@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.188.2.1 2012/05/23 10:08:15 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.188.2.2 2012/10/30 17:22:43 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188.2.1 2012/05/23 10:08:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.188.2.2 2012/10/30 17:22:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -915,7 +915,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 #ifdef GATEWAY  
-			if (ip6flow_fastforward(m))
+			if (ip6flow_fastforward(&m))
 				return;
 #endif
 			schednetisr(NETISR_IPV6);
@@ -1143,6 +1143,15 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 	int s;
+
+	/*
+	 * Prevent further calls to ioctl (for example turning off
+	 * promiscuous mode from the bridge code), which eventually can
+	 * call if_init() which can cause panics because the interface
+	 * is in the process of being detached. Return device not configured
+	 * instead.
+	 */
+	ifp->if_ioctl = (int (*)(struct ifnet *, u_long, void *))enxio;
 
 #if NBRIDGE > 0
 	if (ifp->if_bridge)
@@ -1493,21 +1502,21 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING)) {
+	    {
+		struct ifaddr *ifa = (struct ifaddr *)data;
+		if (ifa->ifa_addr->sa_family != AF_LINK
+		    && (ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		       (IFF_UP|IFF_RUNNING)) {
 			ifp->if_flags |= IFF_UP;
 			if ((error = (*ifp->if_init)(ifp)) != 0)
 				return error;
 		}
 #ifdef INET
-		{
-			struct ifaddr *ifa = (struct ifaddr *)data;
-
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit(ifp, ifa);
-		}
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(ifp, ifa);
 #endif /* INET */
 		return 0;
+	    }
 
 	case SIOCSIFMTU:
 	    {

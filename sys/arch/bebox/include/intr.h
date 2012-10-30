@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.31 2011/08/07 15:13:07 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.2.1 2012/10/30 17:19:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,11 @@
 
 #ifndef _LOCORE
 
-void enable_intr(void);
-void disable_intr(void);
-
-
 #define ICU_LEN			32
 #define IRQ_SLAVE		2
 #define LEGAL_HWIRQ_P(x)	((u_int)(x) < ICU_LEN && (x) != IRQ_SLAVE)
+
+void setup_bebox_ipi(void);
 
 #endif /* !_LOCORE */
 

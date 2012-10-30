@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.86.8.1 2012/04/17 00:07:33 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.86.8.2 2012/10/30 17:21:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.86.8.1 2012/04/17 00:07:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.86.8.2 2012/10/30 17:21:03 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -96,7 +96,7 @@ static void	hme_setladrf(struct hme_softc *);
 /* MII methods & callbacks */
 static int	hme_mii_readreg(device_t, int, int);
 static void	hme_mii_writereg(device_t, int, int, int);
-static void	hme_mii_statchg(device_t);
+static void	hme_mii_statchg(struct ifnet *);
 
 static int	hme_mediachange(struct ifnet *);
 
@@ -254,15 +254,8 @@ hme_config(struct hme_softc *sc)
 
 	hme_mifinit(sc);
 
-	/*
-	 * Some HME's have an MII connector, as well as RJ45.  Try attaching
-	 * the RJ45 (internal) PHY first, so that the MII PHY is always
-	 * instance 1.
-	 */
 	mii_attach(sc->sc_dev, mii, 0xffffffff,
-			HME_PHYAD_INTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
-	mii_attach(sc->sc_dev, mii, 0xffffffff,
-			HME_PHYAD_EXTERNAL, MII_OFFSET_ANY, MIIF_FORCEANEG);
+			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -1349,9 +1342,9 @@ out:
 }
 
 static void
-hme_mii_statchg(device_t dev)
+hme_mii_statchg(struct ifnet *ifp)
 {
-	struct hme_softc *sc = device_private(dev);
+	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	uint32_t v;

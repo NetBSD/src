@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $ */
+/*	$NetBSD: powernow.c,v 1.4.2.1 2012/10/30 17:20:34 yamt Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.4 2011/10/29 09:58:23 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.4.2.1 2012/10/30 17:20:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -279,7 +279,7 @@ powernow_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
-	    powernow_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    powernow_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
@@ -288,7 +288,7 @@ powernow_sysctl(device_t self)
 
 	rv = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
-	    powernow_sysctl_helper, 0, sc, 0, CTL_CREATE, CTL_EOL);
+	    powernow_sysctl_helper, 0, (void *)sc, 0, CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
@@ -378,7 +378,7 @@ powernow_k7_init(device_t self)
 	struct powernow_softc *sc = device_private(self);
 	uint32_t currentfid, maxfid, mhz, startvid;
 	uint64_t status;
-	int i, rv, len;
+	int i, rv;
 	char tmp[6];
 
 	sc->sc_state = kmem_alloc(sizeof(*sc->sc_state), KM_SLEEP);
@@ -428,7 +428,7 @@ powernow_k7_init(device_t self)
 			sc->sc_state->state_table[i].fid,
 			sc->sc_state->state_table[i].vid));
 
-		len += snprintf(tmp, sizeof(tmp), "%d%s",
+		snprintf(tmp, sizeof(tmp), "%d%s",
 		    sc->sc_state->state_table[i].freq,
 		    i < sc->sc_state->n_states - 1 ? " " : "");
 
@@ -667,7 +667,7 @@ powernow_k8_init(device_t self)
 	struct powernow_softc *sc = device_private(self);
 	uint32_t i, maxfid, maxvid;
 	uint64_t status;
-	int len, rv;
+	int rv;
 	char tmp[6];
 
 	sc->sc_state = kmem_alloc(sizeof(*sc->sc_state), KM_SLEEP);
@@ -706,7 +706,7 @@ powernow_k8_init(device_t self)
 			sc->sc_state->state_table[i].fid,
 			sc->sc_state->state_table[i].vid));
 
-		len += snprintf(tmp, sizeof(tmp), "%d%s",
+		snprintf(tmp, sizeof(tmp), "%d%s",
 		    sc->sc_state->state_table[i].freq,
 		    i < sc->sc_state->n_states - 1 ? " " : "");
 

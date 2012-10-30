@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.32.2.1 2012/04/17 00:06:37 yamt Exp $	*/
+/*	$NetBSD: adb.c,v 1.32.2.2 2012/10/30 17:19:57 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.32.2.1 2012/04/17 00:06:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.32.2.2 2012/10/30 17:19:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ int	adb_debug = 0;		/* Output debugging messages */
 /*
  * Driver definition.
  */
-CFATTACH_DECL(adb, sizeof(struct adb_softc),
+CFATTACH_DECL_NEW(adb, sizeof(struct adb_softc),
     adbmatch, adbattach, NULL, NULL);
 
 static int

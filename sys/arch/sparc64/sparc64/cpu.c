@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.101.2.1 2012/10/30 17:20:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.2.1 2012/10/30 17:20:24 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -109,8 +109,8 @@ static void cpu_reset_fpustate(void);
 volatile int sync_tick = 0;
 
 /* The CPU configuration driver. */
-void cpu_attach(struct device *, struct device *, void *);
-int cpu_match(struct device *, struct cfdata *, void *);
+void cpu_attach(device_t, device_t, void *);
+int cpu_match(device_t, cfdata_t, void *);
 
 CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
@@ -193,7 +193,7 @@ alloc_cpuinfo(u_int cpu_node)
 }
 
 int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -239,7 +239,7 @@ cpu_reset_fpustate(void)
  * (slightly funny place to do it, but this is where it is to be found).
  */
 void
-cpu_attach(struct device *parent, struct device *dev, void *aux)
+cpu_attach(device_t parent, device_t dev, void *aux)
 {
 	int node;
 	long clk;

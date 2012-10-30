@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.27.2.1 2012/04/17 00:06:56 yamt Exp $	*/
+/*	$NetBSD: schizo.c,v 1.27.2.2 2012/10/30 17:20:24 yamt Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.27.2.1 2012/04/17 00:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.27.2.2 2012/10/30 17:20:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,7 @@ static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	bus_size_t, int, bus_dmamap_t *);
 
 int
-schizo_match(struct device *parent, cfdata_t match, void *aux)
+schizo_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *str;
@@ -136,7 +136,7 @@ schizo_match(struct device *parent, cfdata_t match, void *aux)
 }
 
 void
-schizo_attach(struct device *parent, struct device *self, void *aux)
+schizo_attach(device_t parent, device_t self, void *aux)
 {
 	struct schizo_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;

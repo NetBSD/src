@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.15 2009/03/16 23:11:16 dsl Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.15.12.1 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.15 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.15.12.1 2012/10/30 17:21:21 yamt Exp $");
 
 #include "vmetwo.h"
 
@@ -300,7 +300,7 @@ vmetwo_intr_establish(void *csc, int prior, int lvl, int vec, int first, int (*h
 		if (evcnt)
 			evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR,
 			    (*sc->sc_isrevcnt)(sc->sc_isrcookie, prior),
-			    device_xname(&sc->sc_mvmebus.sc_dev),
+			    device_xname(sc->sc_mvmebus.sc_dev),
 			    mvmebus_irq_name[lvl]);
 #endif
 		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +

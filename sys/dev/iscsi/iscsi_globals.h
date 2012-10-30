@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.1.2.1 2012/04/17 00:07:40 yamt Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.1.2.2 2012/10/30 17:21:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -387,6 +387,7 @@ struct connection_s {
 					/* if closing down: status */
 	int				recover; /* recovery count */
 		/* (reset on first successful data transfer) */
+	int				usecount; /* number of active CCBs */
 
 	bool				destroy; /* conn will be destroyed */
 	bool				in_session;
@@ -538,21 +539,19 @@ typedef struct event_handler_list_s event_handler_list_t;
 
 /* In iscsi_main.c */
 
-struct cfattach iscsi_ca;		/* the device attach structure */
-struct cdevsw iscsi_cdevsw;		/* the character device descriptor */
+extern struct cfattach iscsi_ca;		/* the device attach structure */
 
-iscsi_softc_t *sc;			/* our device pointer */
-session_list_t sessions;		/* the list of sessions */
+extern session_list_t iscsi_sessions;		/* the list of sessions */
 
-connection_list_t cleanup_list;		/* connections to clean up */
-bool detaching;			/* signal to cleanup thread it should exit */
-struct lwp *cleanproc;			/* pointer to cleanup proc */
+extern connection_list_t iscsi_cleanup_list;	/* connections to clean up */
+extern bool iscsi_detaching;			/* signal to cleanup thread it should exit */
+extern struct lwp *iscsi_cleanproc;		/* pointer to cleanup proc */
 
-uint32_t num_send_threads;		/* the number of active send threads */
+extern uint32_t iscsi_num_send_threads;		/* the number of active send threads */
 
-uint8_t InitiatorName[ISCSI_STRING_LENGTH];
-uint8_t InitiatorAlias[ISCSI_STRING_LENGTH];
-login_isid_t InitiatorISID;
+extern uint8_t iscsi_InitiatorName[ISCSI_STRING_LENGTH];
+extern uint8_t iscsi_InitiatorAlias[ISCSI_STRING_LENGTH];
+extern login_isid_t iscsi_InitiatorISID;
 
 /* Debugging and profiling stuff */
 
@@ -564,12 +563,13 @@ login_isid_t InitiatorISID;
 
 #if defined(ISCSI_PERFTEST)
 
-int perf_level;				/* How much info to display */
+extern int iscsi_perf_level;				/* How much info to display */
 
 #define PDEBOUT(x) printf x
-#define PDEB(lev,x) { if (perf_level >= lev) printf x ;}
-#define PDEBC(conn,lev,x) { { if (perf_level >= lev) printf("S%dC%d: ", \
-				conn->session->id, conn->id); printf x ;}}
+#define PDEB(lev,x) { if (iscsi_perf_level >= lev) printf x ;}
+#define PDEBC(conn,lev,x) { if (iscsi_perf_level >= lev) { printf("S%dC%d: ", \
+				conn ? conn->session->id : -1, \
+				conn ? conn->id : -1); printf x ;}}
 #else
 #define PDEBOUT(x)
 #define PDEB(lev,x)
@@ -578,12 +578,13 @@ int perf_level;				/* How much info to display */
 
 #ifdef ISCSI_DEBUG
 
-int debug_level;	/* How much debug info to display */
+extern int iscsi_debug_level;	/* How much debug info to display */
 
 #define DEBOUT(x) printf x
-#define DEB(lev,x) { if (debug_level >= lev) printf x ;}
-#define DEBC(conn,lev,x) { if (debug_level >= lev) { printf("S%dC%d: ", \
-				conn->session->id, conn->id); printf x ;}}
+#define DEB(lev,x) { if (iscsi_debug_level >= lev) printf x ;}
+#define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
+				conn ? conn->session->id : -1, \
+				conn ? conn->id : -1); printf x ;}}
 void dump(void *buf, int len);
 
 #define STATIC static

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.93.2.1 2012/04/17 00:07:01 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.93.2.2 2012/10/30 17:20:29 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -215,7 +215,6 @@ extern char vax_mp_tramp;
 
 #define	LWP_PC(l)	cpu_lwp_pc(l)
 
-struct device;
 struct buf;
 struct pte;
 

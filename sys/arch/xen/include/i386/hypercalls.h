@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.12.2.1 2012/04/17 00:07:07 yamt Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.12.2.2 2012/10/30 17:20:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -59,7 +59,6 @@
 
 #include <machine/pte.h> /* pt_entry_t */
 
-#if !defined(XEN_COMPAT_030001)
 /* hypercall via the hypercall call page */
 #define __str(x) #x
 #define _str(x) __str(x)
@@ -69,15 +68,6 @@
 	    : output_const \
 	    : input_const \
 	    : "memory" )
-#else 
-/* traditionnal hypercall via int 0x82 */
-#define _hypercall(name, input_const, output_const) \
-	__asm volatile ( \
-	    TRAP_INSTR \
-	    : output_const \
-	    : "0" (name), input_const \
-	    : "memory" )
-#endif
 
 #define _harg(...) __VA_ARGS__
 	

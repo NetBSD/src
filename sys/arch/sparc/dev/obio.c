@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.72 2011/07/01 18:50:41 dyoung Exp $	*/
+/*	$NetBSD: obio.c,v 1.72.2.1 2012/10/30 17:20:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.72 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.72.2.1 2012/10/30 17:20:21 yamt Exp $");
 
 #include "locators.h"
 
@@ -63,15 +63,14 @@ struct obio4_softc {
 };
 
 union obio_softc {
-	struct	device sc_dev;		/* base device */
 	struct	obio4_softc sc_obio;	/* sun4 obio */
 	struct	sbus_softc sc_sbus;	/* sun4m obio is another sbus slot */
 };
 
 
 /* autoconfiguration driver */
-static	int obiomatch(device_t, struct cfdata *, void *);
-static	void obioattach(device_t, struct device *, void *);
+static	int obiomatch(device_t, cfdata_t, void *);
+static	void obioattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(obio, sizeof(union obio_softc),
     obiomatch, obioattach, NULL, NULL);
@@ -129,8 +128,8 @@ obioattach(device_t parent, device_t self, void *aux)
 
 	if (CPU_ISSUN4) {
 #if defined(SUN4)
-		struct obio4_softc *sc = 
-		    &((union obio_softc *)device_private(self))->sc_obio;
+		union obio_softc *usc = device_private(self);
+		struct obio4_softc *sc = &usc->sc_obio;
 		struct obio4_busattachargs oa;
 		const char *const *cpp;
 		static const char *const special4[] = {
@@ -168,8 +167,8 @@ obioattach(device_t parent, device_t self, void *aux)
 		 * Attach the on-board I/O bus at on a sun4m.
 		 * In this case we treat the obio bus as another sbus slot.
 		 */
-		struct sbus_softc *sc =
-		    &((union obio_softc *)device_private(self))->sc_sbus;
+		union obio_softc *usc = device_private(self);
+		struct sbus_softc *sc = &usc->sc_sbus;
 
 		static const char *const special4m[] = {
 			/* find these first */

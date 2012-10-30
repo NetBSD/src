@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.25 2009/05/12 14:22:39 cegger Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.25.12.1 2012/10/30 17:20:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.25 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.25.12.1 2012/10/30 17:20:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -74,7 +74,6 @@ int	btnmgr_debug = BTNMGRDEBUG_CONF;
 #endif
 
 struct btnmgr_softc {
-	struct device sc_dev;
 	config_hook_tag	sc_hook_tag;
 	int sc_enabled;
 	device_t sc_wskbddev;
@@ -91,7 +90,7 @@ static int btnmgr_hook(void *, int, long, void *);
 /*
  * global/static data
  */
-CFATTACH_DECL(btnmgr, sizeof(struct btnmgr_softc),
+CFATTACH_DECL_NEW(btnmgr, sizeof(struct btnmgr_softc),
     btnmgrmatch, btnmgrattach, NULL, NULL);
 
 #ifdef notyet

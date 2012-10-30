@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.13.34.1 2012/04/17 00:07:41 yamt Exp $	*/
+/*	$NetBSD: edvar.h,v 1.13.34.2 2012/10/30 17:21:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 struct edc_mca_softc;
 
 struct ed_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	/* General disk infos */
 	struct disk sc_dk;

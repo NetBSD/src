@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.4 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.4.12.1 2012/10/30 17:21:01 yamt Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
 
 /*
@@ -33,7 +33,7 @@ struct ciss_ld {
 
 struct ciss_softc {
 	/* Generic device info. */
-	struct device		sc_dev;
+	device_t		sc_dev;
 	kmutex_t		sc_mutex;
 	kmutex_t		sc_mutex_scratch;
 	bus_space_handle_t	sc_ioh;

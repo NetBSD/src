@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.22.2.1 2012/04/17 00:06:07 yamt Exp $	*/
+/*	$NetBSD: i80321.c,v 1.22.2.2 2012/10/30 17:19:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.22.2.1 2012/04/17 00:06:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.22.2.2 2012/10/30 17:19:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,6 +337,9 @@ i80321_pci_dma_init(struct i80321_softc *sc)
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+
+	dmat->_dmatag_subregion = _bus_dmatag_subregion;
+	dmat->_dmatag_destroy = _bus_dmatag_destroy;
 }
 
 /*

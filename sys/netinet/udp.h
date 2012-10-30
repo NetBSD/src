@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.14.2.1 2012/04/17 00:08:41 yamt Exp $	*/
+/*	$NetBSD: udp.h,v 1.14.2.2 2012/10/30 17:22:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -48,7 +48,6 @@ struct udphdr {
 
 /* socket options for UDP */
 #define	UDP_ENCAP	100
-#define	UDP_RFC6056ALGO	200
 
 /* Encapsulation types */
 #define UDP_ENCAP_ESPINUDP_NON_IKE 	1 /* draft-ietf-ipsec-nat-t-ike-00/01 */

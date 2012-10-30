@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.709.2.3 2012/05/23 10:07:44 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.709.2.4 2012/10/30 17:19:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709.2.3 2012/05/23 10:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709.2.4 2012/10/30 17:19:49 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -177,7 +177,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709.2.3 2012/05/23 10:07:44 yamt Exp $
 #endif
 
 #include "acpica.h"
-#include "apmbios.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
@@ -188,10 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.709.2.3 2012/05/23 10:07:44 yamt Exp $
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
-#endif
-
-#if NAPMBIOS > 0
-#include <machine/apmvar.h>
 #endif
 
 #include "isa.h"
@@ -232,8 +227,6 @@ int     cpureset_delay = 2000; /* default to 2s */
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
-
-int	physmem;
 
 int	cpu_class;
 int	use_pae;
@@ -696,7 +689,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL, 
 	    	       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
-		       NULL, 0, &cpu_brand_string, 0,
+		       NULL, 0, cpu_brand_string, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -895,21 +888,6 @@ haltsys:
 			splx(s);
 
 		acpi_enter_sleep_state(ACPI_STATE_S5);
-#endif
-#if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
-		/* turn off, if we can.  But try to turn disk off and
-		 * wait a bit first--some disk drives are slow to clean up
-		 * and users have reported disk corruption.
-		 */
-		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS),
-		    APM_SYS_OFF);
-		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
-		printf("WARNING: APM powerdown failed!\n");
-		/*
-		 * RB_POWERDOWN implies RB_HALT... fall into it...
-		 */
 #endif
 	}
 
@@ -1364,7 +1342,7 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ctob((paddr_t)xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = pmap_pa_start + ctob((paddr_t)xen_start_info.nr_pages);
 	mem_clusters[0].start = avail_start;
@@ -1464,7 +1442,7 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 
-	/* Needed early, for bioscall() and kvm86_call() */
+	/* Needed early, for bioscall() */
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 #endif /* !XEN */

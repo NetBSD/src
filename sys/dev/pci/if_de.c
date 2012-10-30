@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.138.8.1 2012/04/17 00:07:46 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.138.8.2 2012/10/30 17:21:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138.8.1 2012/04/17 00:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138.8.2 2012/10/30 17:21:27 yamt Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -2471,7 +2471,7 @@ tulip_identify_compex_nic(
 	 * copied from tulip_read_macaddr.
 	 */
 	sc->tulip_features |= TULIP_HAVE_SHAREDINTR;
-	for (root_unit = sc->tulip_unit - 1; root_unit >= 0; root_unit--) {
+	for (root_unit = tulip_unit(sc) - 1; root_unit >= 0; root_unit--) {
 	    root_sc = TULIP_UNIT_TO_SOFTC(root_unit);
 	    if (root_sc == NULL
 		|| !(root_sc->tulip_features & TULIP_HAVE_SLAVEDINTR))
@@ -2486,7 +2486,7 @@ tulip_identify_compex_nic(
 	    root_sc->tulip_slaves = sc;
 	} else if(sc->tulip_features & TULIP_HAVE_SLAVEDINTR) {
 	    printf("\nCannot find master device for de%d interrupts",
-		   sc->tulip_unit);
+		   tulip_unit(sc));
 	}
     } else {
 	strlcat(sc->tulip_boardid, "unknown ", sizeof(sc->tulip_boardid));
@@ -3011,7 +3011,7 @@ tulip_read_macaddr(
 	if (idx == sizeof(sc->tulip_rombuf)) {
 	    int root_unit;
 	    tulip_softc_t *root_sc = NULL;
-	    for (root_unit = sc->tulip_unit - 1; root_unit >= 0; root_unit--) {
+	    for (root_unit = tulip_unit(sc) - 1; root_unit >= 0; root_unit--) {
 		root_sc = TULIP_UNIT_TO_SOFTC(root_unit);
 		if (root_sc == NULL || (root_sc->tulip_features & (TULIP_HAVE_OKROM|TULIP_HAVE_SLAVEDROM)) == TULIP_HAVE_OKROM)
 		    break;
@@ -3032,7 +3032,7 @@ tulip_read_macaddr(
 		} else {
 		    memcpy(sc->tulip_enaddr, root_sc->tulip_enaddr,
 			ETHER_ADDR_LEN);
-		    sc->tulip_enaddr[5] += sc->tulip_unit - root_sc->tulip_unit;
+		    sc->tulip_enaddr[5] += tulip_unit(sc) - tulip_unit(root_sc);
 		}
 		/*
 		 * Now for a truly disgusting kludge: all 4 21040s on
@@ -3367,7 +3367,7 @@ tulip_reset(
     TULIP_CSR_WRITE(sc, csr_rxlist, TULIP_KVATOPHYS(sc, &sc->tulip_rxinfo.ri_first[0]));
 #endif
     TULIP_CSR_WRITE(sc, csr_busmode,
-		    (1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
+		    (1 << (TULIP_BURSTSIZE(tulip_unit(sc)) + 8))
 		    |TULIP_BUSMODE_CACHE_ALIGN8
 		    |TULIP_BUSMODE_READMULTIPLE
 		    |(BYTE_ORDER != LITTLE_ENDIAN ?
@@ -4152,7 +4152,7 @@ tulip_hardintr_handler(
     /*
      * mark it as needing a software interrupt
      */
-    tulip_softintr_mask |= (1U << sc->tulip_unit);
+    tulip_softintr_mask |= (1U << tulip_unit(sc));
 
 #if defined(__NetBSD__)
     /*
@@ -5142,7 +5142,7 @@ tulip_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-    rnd_attach_source(&sc->tulip_rndsource, device_xname(&sc->tulip_dev),
+    rnd_attach_source(&sc->tulip_rndsource, device_xname(sc->tulip_dev),
 		      RND_TYPE_NET, 0);
 #endif
 }
@@ -5550,15 +5550,15 @@ struct cfdriver decd = {
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void *const aux
+#define	TULIP_PCI_ATTACH_ARGS	device_t parent, device_t self, void *const aux
 #define	TULIP_SHUTDOWN_ARGS	void *arg
 static int
 tulip_pci_probe(
-    struct device *parent,
+    device_t parent,
     cfdata_t match,
     void *aux)
 {
-    struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+    struct pci_attach_args *pa = aux;
 
     /* Don't match lmc cards */
     if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -5577,7 +5577,7 @@ tulip_pci_probe(
 
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
-CFATTACH_DECL(de, sizeof(tulip_softc_t),
+CFATTACH_DECL_NEW(de, sizeof(tulip_softc_t),
     tulip_pci_probe, tulip_pci_attach, NULL, NULL);
 
 #endif /* __NetBSD__ */
@@ -5616,8 +5616,9 @@ tulip_pci_attach(
 #endif
 #if defined(__NetBSD__)
     tulip_softc_t * const sc = device_private(self);
+    sc->tulip_dev = self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
-    const int unit = sc->tulip_dev.dv_unit;
+    const int unit = device_unit(sc->tulip_dev);
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
@@ -5757,7 +5758,7 @@ tulip_pci_attach(
     sc->tulip_dmatag = pa->pa_dmat;
 #endif
 #else
-    sc->tulip_unit = unit;
+//    sc->tulip_unit = unit;
     sc->tulip_name = "de";
 #endif
     sc->tulip_revinfo = revinfo;
@@ -5871,20 +5872,20 @@ tulip_pci_attach(
 	    const char *intrstr;
 
 	    if (pci_intr_map(pa, &intrhandle)) {
-		aprint_error_dev(&sc->tulip_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->tulip_dev, "couldn't map interrupt\n");
 		return;
 	    }
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc);
 	    if (sc->tulip_ih == NULL) {
-		aprint_error_dev(&sc->tulip_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->tulip_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 		    aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	    }
-	    printf("%s: interrupting at %s\n", device_xname(&sc->tulip_dev), intrstr);
+	    printf("%s: interrupting at %s\n", device_xname(sc->tulip_dev), intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)
@@ -5917,8 +5918,8 @@ tulip_pci_attach(
 	atshutdown(&sc->tulip_ats, ATSH_ADD);
 #endif
 #if defined(TULIP_USE_SOFTINTR)
-	if (sc->tulip_unit > tulip_softintr_max_unit)
-	    tulip_softintr_max_unit = sc->tulip_unit;
+	if (tulip_unit(sc) > tulip_softintr_max_unit)
+	    tulip_softintr_max_unit = tulip_unit(sc);
 #endif
 
 	s = TULIP_RAISESPL();

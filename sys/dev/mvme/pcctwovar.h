@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.4 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.4.34.1 2012/10/30 17:21:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct pcctwo_device {
  * PCCChip2 driver's soft state structure
  */
 struct pcctwo_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bust;	/* PCCChip2's register tag */
 	bus_space_handle_t	sc_bush;	/* PCCChip2's register handle */
 	bus_dma_tag_t		sc_dmat;	/* PCCChip2's dma tag (unused)*/

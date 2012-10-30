@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.5.2.1 2012/04/17 00:07:00 yamt Exp $
+# $NetBSD: VAX780,v 1.5.2.2 2012/10/30 17:20:28 yamt Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -111,6 +111,7 @@ options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
 # WS console uses VT100 terminal emulation
 #options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_DEFAULTSCREENS=8
 #options 	FONT_QVSS8x15
 
@@ -255,6 +256,7 @@ mscpbus*	at mtc?
 #mscpbus*	at kdb?
 
 ra*		at mscpbus? drive?	# MSCP disk
+racd*		at mscpbus? drive?	# MSCP CD-ROM (RRD40)
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 

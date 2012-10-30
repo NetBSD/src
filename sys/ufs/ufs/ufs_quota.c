@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.70.4.1 2012/04/17 00:08:57 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.70.4.2 2012/10/30 17:23:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70.4.1 2012/04/17 00:08:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70.4.2 2012/10/30 17:23:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.70.4.1 2012/04/17 00:08:57 yamt Exp 
 
 kmutex_t dqlock;
 kcondvar_t dqcv;
-const char *quotatypes[MAXQUOTAS];
+const char *quotatypes[MAXQUOTAS] = INITQFNAMES;
 
 /*
  * Code pertaining to management of the in-core dquot data structures.
@@ -335,7 +335,7 @@ quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
 static int
 quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 	/* The user can always query about his own quota. */
-	if (id == kauth_cred_getuid(l->l_cred))
+	if (id == kauth_cred_geteuid(l->l_cred))
 		return 0;
 	return kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_clock.c,v 1.3.2.1 2012/05/23 10:07:41 yamt Exp $ */
+/*	$NetBSD: imx31_clock.c,v 1.3.2.2 2012/10/30 17:19:03 yamt Exp $ */
 /*
  * Copyright (c) 2009,2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -98,7 +98,7 @@ imxclock_attach(device_t parent, device_t self, void *aux)
 		epit2_sc = sc;
 		break;
 	default:
-		panic("%s: invalid address %p", self->dv_xname, (void *)aipsa->aipsa_addr);
+		panic("%s: invalid address %p", device_xname(self), (void *)aipsa->aipsa_addr);
 		break;
 	}
 

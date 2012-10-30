@@ -31,10 +31,11 @@
 
 #include <machine/cpu.h>
 #include <machine/asm.h>
-#include <arm/arm32/vmparam.h>
+
+#include "assym.h"
 
 .Lsheeva_cache_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 .Lsheeva_asm_page_mask:
 	.word	_C_LABEL(PAGE_MASK)
 
@@ -213,4 +214,12 @@ ENTRY(sheeva_idcache_wbinv_range)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	ldr	lr, [sp], #4
+	RET
+
+/*
+ * CPU sleep
+ */
+ENTRY_NP(sheeva_cpu_sleep)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
 	RET

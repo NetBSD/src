@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.9 2007/03/10 16:35:14 hauke Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.9.78.1 2012/10/30 17:19:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -39,15 +39,13 @@
  * State info, per keyboard instance.
  */
 struct akbd_softc {
-	struct  device  sc_dev;
-
 	/* ADB info */
 	int	        origaddr;       /* ADB device type (ADBADDR_KBD) */
 	int	        adbaddr;        /* current ADB address */
 	int	        handler_id;     /* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
-	struct device	*sc_wskbddev;
+	device_t	sc_wskbddev;
 };
 
 /* LED register bits, inverse of actual register value */

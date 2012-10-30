@@ -1,5 +1,5 @@
-/*	$Id: at91busvar.h,v 1.4 2011/07/01 19:31:16 dyoung Exp $	*/
-/*	$NetBSD: at91busvar.h,v 1.4 2011/07/01 19:31:16 dyoung Exp $ */
+/*	$Id: at91busvar.h,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $	*/
+/*	$NetBSD: at91busvar.h,v 1.4.2.1 2012/10/30 17:18:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -75,7 +75,7 @@ struct at91bus_softc {
 	bus_dma_tag_t		sc_dmat;
 };
 
-struct irqframe;
+struct trapframe;
 
 struct at91bus_machdep {
 	/* initialization: */
@@ -95,7 +95,7 @@ struct at91bus_machdep {
 	void *(*intr_establish)(int pid, int ipl, int type, int (*ih_func)(void *), void *arg);
 	void (*intr_disestablish)(void *cookie);
 	void (*intr_poll)(void *cookie, int flags);
-	void (*intr_dispatch)(struct irqframe *);
+	void (*intr_dispatch)(struct trapframe *);
 
 	/* configuration */
 	const char *(*peripheral_name)(int pid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.114.2.1 2012/04/17 00:08:08 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.114.2.2 2012/10/30 17:22:08 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.1 2012/04/17 00:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.114.2.2 2012/10/30 17:22:08 yamt Exp $");
 
 #include "opt_usb.h"
 
@@ -671,7 +671,7 @@ uhub_childdet(device_t self, device_t child)
 	nports = devhub->hub->hubdesc.bNbrPorts;
 	for (port = 0; port < nports; port++) {
 		dev = devhub->hub->ports[port].device;
-		if (!dev)
+		if (!dev || dev->subdevlen == 0)
 			continue;
 		for (i = 0; i < dev->subdevlen; i++) {
 			if (dev->subdevs[i] == child) {

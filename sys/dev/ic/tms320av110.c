@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.21.34.1 2012/04/17 00:07:37 yamt Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.21.34.2 2012/10/30 17:21:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.21.34.1 2012/04/17 00:07:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.21.34.2 2012/10/30 17:21:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ tms320av110_attach_mi(struct tav_softc *sc)
 	tav_write_byte(iot, ioh, TAV_SYNC_ECM, TAV_ECM_REPEAT);
 	tav_write_byte(iot, ioh, TAV_CRC_ECM, TAV_ECM_REPEAT);
 
-	audio_attach_mi(&tav_audio_if, sc, &sc->sc_dev);
+	audio_attach_mi(&tav_audio_if, sc, sc->sc_dev);
 }
 
 int
@@ -350,7 +350,7 @@ tav_getdev(void *hdl, struct audio_device *ret)
 	/* guaranteed to be <= 4 in length */
 	snprintf(ret->version, sizeof(ret->version), "%u",
 	    tav_read_byte(iot, ioh, TAV_VERSION));
-	strlcpy(ret->config, device_xname(&sc->sc_dev), sizeof(ret->config));
+	strlcpy(ret->config, device_xname(sc->sc_dev), sizeof(ret->config));
 
 	return 0;
 }

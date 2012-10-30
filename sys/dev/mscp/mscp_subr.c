@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.41.12.1 2012/10/30 17:21:21 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41.12.1 2012/10/30 17:21:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,12 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.41 2009/05/12 14:37:59 cegger Exp $"
 
 int	mscp_match(device_t, cfdata_t, void *);
 void	mscp_attach(device_t, device_t, void *);
-void	mscp_start(struct	mscp_softc *);
-int	mscp_init(struct  mscp_softc *);
+void	mscp_start(struct mscp_softc *);
+int	mscp_init(struct mscp_softc *);
 void	mscp_initds(struct mscp_softc *);
 int	mscp_waitstep(struct mscp_softc *, int, int);
 
-CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
+CFATTACH_DECL_NEW(mscpbus, sizeof(struct mscp_softc),
     mscp_match, mscp_attach, NULL, NULL);
 
 #define	READ_SA		(bus_space_read_2(mi->mi_iot, mi->mi_sah, 0))
@@ -112,7 +112,8 @@ CFATTACH_DECL(mscpbus, sizeof(struct mscp_softc),
 #define	WRITE_IP(x)	bus_space_write_2(mi->mi_iot, mi->mi_iph, 0, (x))
 #define	WRITE_SW(x)	bus_space_write_2(mi->mi_iot, mi->mi_swh, 0, (x))
 
-struct	mscp slavereply;
+struct	mscp mscp_cold_reply;
+int	     mscp_cold_unit;
 
 #define NITEMS		4
 
@@ -159,7 +160,7 @@ mscp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct	mscp_attach_args *ma = aux;
 
-#if NRA || NRX
+#if NRA || NRACD || NRX
 	if (ma->ma_type & MSCPBUS_DISK)
 		return 1;
 #endif
@@ -178,8 +179,9 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
-	int	timeout, error, next = 0;
+	int	timeout, error, unit;
 
+	mi->mi_dev = self;
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
 	mi->mi_type = ma->ma_type;
@@ -201,7 +203,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	error = workqueue_create(&mi->mi_wq, "mscp_wq", mscp_worker, NULL,
 	    PRI_NONE, IPL_VM, 0);
 	if (error != 0) {
-		aprint_error_dev(&mi->mi_dev, "could not create workqueue");
+		aprint_error_dev(mi->mi_dev, "could not create workqueue");
 		return;
 	}
 
@@ -211,7 +213,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 
 		if ((mw = kmem_zalloc(sizeof(*mw), KM_SLEEP)) == NULL) {
 			mscp_free_workitems(mi);
-			aprint_error_dev(&mi->mi_dev,
+			aprint_error_dev(mi->mi_dev,
 			    "failed to allocate memory for work items");
 			return;
 		}
@@ -232,7 +234,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	bufq_alloc(&mi->mi_resq, "fcfs", 0);
 
 	if (mscp_init(mi)) {
-		aprint_error_dev(&mi->mi_dev, "can't init, controller hung\n");
+		aprint_error_dev(mi->mi_dev, "can't init, controller hung\n");
 		return;
 	}
 	for (i = 0; i < NCMD; i++) {
@@ -245,7 +247,7 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	}
 
 
-#if NRA
+#if NRA || NRACD || NRX
 	if (ma->ma_type & MSCPBUS_DISK) {
 		extern	struct mscp_device ra_device;
 
@@ -263,96 +265,101 @@ mscp_attach(device_t parent, device_t self, void *aux)
 	 * Go out and search for sub-units on this MSCP bus,
 	 * and call config_found for each found.
 	 */
-findunit:
-	mp = mscp_getcp(mi, MSCP_DONTWAIT);
-	if (mp == NULL)
-		panic("mscpattach: no packets");
-	mp->mscp_opcode = M_OP_GETUNITST;
-	mp->mscp_unit = next;
-	mp->mscp_modifier = M_GUM_NEXTUNIT;
-	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
-	slavereply.mscp_opcode = 0;
+	for (unit = 0; unit <= MSCP_MAX_UNIT; ++unit) {
+		mp = mscp_getcp(mi, MSCP_DONTWAIT);
+		if (mp == NULL)
+			panic("mscpattach: no packets");
+		mp->mscp_opcode = M_OP_GETUNITST;
+		mp->mscp_unit = unit;
+		mp->mscp_modifier = M_GUM_NEXTUNIT;
+		*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
+		mscp_cold_reply.mscp_opcode = 0;
+		mscp_cold_unit = mp->mscp_unit;
 
-	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
-	mp = &slavereply;
-	timeout = 1000;
-	while (timeout-- > 0) {
-		DELAY(10000);
-		if (mp->mscp_opcode)
-			goto gotit;
-	}
-	printf("%s: no response to Get Unit Status request\n",
-	    device_xname(&mi->mi_dev));
-	return;
+		i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
+		mp = &mscp_cold_reply;
+		timeout = 1000;
 
-gotit:	/*
-	 * Got a slave response.  If the unit is there, use it.
-	 */
-	switch (mp->mscp_status & M_ST_MASK) {
+		while (!mp->mscp_opcode) {
+			if ( --timeout == 0) {
+				printf("%s: no Get Unit Status response\n",
+				    device_xname(mi->mi_dev));
+				return;
+			}
+			DELAY(10000);
+		}
 
-	case M_ST_SUCCESS:	/* worked */
-	case M_ST_AVAILABLE:	/* found another drive */
-		break;		/* use it */
-
-	case M_ST_OFFLINE:
 		/*
-		 * Figure out why it is off line.  It may be because
-		 * it is nonexistent, or because it is spun down, or
-		 * for some other reason.
+		 * Got a slave response.  If the unit is there, use it.
 		 */
-		switch (mp->mscp_status & ~M_ST_MASK) {
 
-		case M_OFFLINE_UNKNOWN:
-			/*
-			 * No such drive, and there are none with
-			 * higher unit numbers either, if we are
-			 * using M_GUM_NEXTUNIT.
-			 */
-			mi->mi_ierr = 3;
+		/*
+		 * If we get a lower number, we have circulated around all
+		 * devices and are finished, otherwise try to find next unit.
+		 */
+		if (mp->mscp_unit < unit)
 			return;
+		/*
+		 * If a higher number, use it to skip non-present devices
+		 */
+		if (mp->mscp_unit > unit)
+			unit = mp->mscp_unit;
 
-		case M_OFFLINE_UNMOUNTED:
+		switch (mp->mscp_status & M_ST_MASK) {
+
+		case M_ST_SUCCESS:	/* worked */
+		case M_ST_AVAILABLE:	/* found another drive */
+			break;		/* use it */
+
+		case M_ST_OFFLINE:
 			/*
-			 * The drive is not spun up.  Use it anyway.
-			 *
-			 * N.B.: this seems to be a common occurrance
-			 * after a power failure.  The first attempt
-			 * to bring it on line seems to spin it up
-			 * (and thus takes several minutes).  Perhaps
-			 * we should note here that the on-line may
-			 * take longer than usual.
+			 * Figure out why it is off line.  It may be because
+			 * it is nonexistent, or because it is spun down, or
+			 * for some other reason.
 			 */
+			switch (mp->mscp_status & ~M_ST_MASK) {
+
+			case M_OFFLINE_UNKNOWN:
+				/*
+				 * No such drive, and there are none with
+				 * higher unit numbers either, if we are
+				 * using M_GUM_NEXTUNIT.
+				 */
+				mi->mi_ierr = 3;
+				break; /* return */
+
+			case M_OFFLINE_UNMOUNTED:
+				/*
+				 * The drive is not spun up.  Use it anyway.
+				 *
+				 * N.B.: this seems to be a common occurrance
+				 * after a power failure.  The first attempt
+				 * to bring it on line seems to spin it up
+				 * (and thus takes several minutes).  Perhaps
+				 * we should note here that the on-line may
+				 * take longer than usual.
+				 */
+				break;
+
+			default:
+				/*
+				 * In service, or something else unusable.
+				 */
+				printf("%s: unit %d off line: ",
+				    device_xname(mi->mi_dev), mp->mscp_unit);
+				mp2 = __UNVOLATILE(mp);
+				mscp_printevent(mp2);
+				break;
+			}
 			break;
 
 		default:
-			/*
-			 * In service, or something else equally unusable.
-			 */
-			printf("%s: unit %d off line: ", device_xname(&mi->mi_dev),
-				mp->mscp_unit);
-			mp2 = __UNVOLATILE(mp);
-			mscp_printevent(mp2);
-			next++;
-			goto findunit;
+			aprint_error_dev(mi->mi_dev,
+			    "unable to get unit status: ");
+			mscp_printevent(__UNVOLATILE(mp));
+			return;
 		}
-		break;
-
-	default:
-		aprint_error_dev(&mi->mi_dev, "unable to get unit status: ");
-		mscp_printevent(__UNVOLATILE(mp));
-		return;
 	}
-
-	/*
-	 * If we get a lower number, we have circulated around all
-	 * devices and are finished, otherwise try to find next unit.
-	 * We shouldn't ever get this, it's a workaround.
-	 */
-	if (mp->mscp_unit < next)
-		return;
-
-	next = mp->mscp_unit + 1;
-	goto findunit;
 }
 
 
@@ -385,7 +392,7 @@ mscp_init(struct mscp_softc *mi)
 	if (status == 0)
 		return 1; /* Init failed */
 	if (READ_SA & MP_ERR) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -394,7 +401,7 @@ mscp_init(struct mscp_softc *mi)
 	    MP_IE | (mi->mi_ivec >> 2));
 	status = mscp_waitstep(mi, STEP1MASK, STEP1GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -404,7 +411,7 @@ mscp_init(struct mscp_softc *mi)
 	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -412,7 +419,7 @@ mscp_init(struct mscp_softc *mi)
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(mi->mi_dev), 0);
 		return 1;
 	}
 	i = READ_SA & 0377;
@@ -422,7 +429,7 @@ mscp_init(struct mscp_softc *mi)
 	if (mi->mi_type & MSCPBUS_UDA) {
 		WRITE_SW(MP_GO | (BURST - 1) << 2);
 		printf("%s: DMA burst size set to %d\n",
-		    device_xname(&mi->mi_dev), BURST);
+		    device_xname(mi->mi_dev), BURST);
 	}
 	WRITE_SW(MP_GO);
 
@@ -457,7 +464,7 @@ mscp_init(struct mscp_softc *mi)
 	}
 	if (count == DELAYTEN) {
 out:
-		aprint_error_dev(&mi->mi_dev, "couldn't set ctlr characteristics, sa=%x\n", j);
+		aprint_error_dev(mi->mi_dev, "couldn't set ctlr characteristics, sa=%x\n", j);
 		return 1;
 	}
 	return 0;
@@ -567,7 +574,7 @@ mscp_kickaway(struct mscp_softc *mi)
 		if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 			if (mi->mi_credits > MSCP_MINCREDITS)
 				printf("%s: command ring too small\n",
-				    device_xname(device_parent(&mi->mi_dev)));
+				    device_xname(device_parent(mi->mi_dev)));
 			/*
 			 * By some (strange) reason we didn't get a MSCP packet.
 			 * Just return and wait for free packets.
@@ -591,7 +598,7 @@ mscp_kickaway(struct mscp_softc *mi)
 		mi->mi_xi[next].mxi_inuse = 1;
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
-		(*mi->mi_mc->mc_go)(device_parent(&mi->mi_dev),
+		(*mi->mi_mc->mc_go)(device_parent(mi->mi_dev),
 		    &mi->mi_xi[next]);
 		(void)bufq_get(mi->mi_resq);
 	}

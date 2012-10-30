@@ -1,4 +1,4 @@
-/*	$NetBSD: ka730.c,v 1.3 2011/06/05 16:59:21 matt Exp $ */
+/*	$NetBSD: ka730.c,v 1.3.2.1 2012/10/30 17:20:29 yamt Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.3 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka730.c,v 1.3.2.1 2012/10/30 17:20:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ struct	cpu_dep ka730_calls = {
 };
 
 void
-ka730_conf()
+ka730_conf(void)
 {
 	/* Call ctuattach() here so it can setup its vectors. */
 	ctuattach();
@@ -154,7 +154,7 @@ ka730_memenable(device_t parent, device_t self, void *aux)
 
 /* log crd errors */
 void
-ka730_memerr()
+ka730_memerr(void)
 {
 }
 
@@ -186,7 +186,7 @@ ka730_mchk(void *cmcf)
 }
 
 void
-ka730_clrf()
+ka730_clrf(void)
 {
 	int s = splhigh();
 

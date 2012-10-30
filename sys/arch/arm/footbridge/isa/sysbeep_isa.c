@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_isa.c,v 1.10 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: sysbeep_isa.c,v 1.10.12.1 2012/10/30 17:19:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysbeep_isa.c,v 1.10 2009/07/21 07:35:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysbeep_isa.c,v 1.10.12.1 2012/10/30 17:19:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: sysbeep_isa.c,v 1.10 2009/07/21 07:35:55 skrll Exp $
 #include <dev/isa/pcppivar.h>
 
 /* Prototypes */
-int sysbeep_isa_match(device_t parent, cfdata_t cf, void *aux);
-void sysbeep_isa_attach(device_t parent, device_t self, void *aux);
-void sysbeep_isa(int pitch, int period);
+int sysbeep_isa_match(device_t, cfdata_t, void *);
+void sysbeep_isa_attach(device_t, device_t, void *);
+void sysbeep_isa(int, int);
 
 /* device attach structure */
-CFATTACH_DECL_NEW(sysbeep_isa, sizeof(struct device),
+CFATTACH_DECL_NEW(sysbeep_isa, 0,
     sysbeep_isa_match, sysbeep_isa_attach, NULL, NULL);
 
 static int ppi_attached;

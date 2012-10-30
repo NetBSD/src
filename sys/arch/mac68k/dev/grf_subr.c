@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.20 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.20.34.1 2012/10/30 17:19:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.20 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.20.34.1 2012/10/30 17:19:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ grf_establish(struct grfbus_softc *sc, nubus_slot *sp,
 	struct grfbus_attach_args ga;
 
 	/* Print hardware characteristics. */
-	printf("%s: %d x %d, ", sc->sc_dev.dv_xname, gm->width, gm->height);
+	printf("%s: %d x %d, ", device_xname(sc->sc_dev), gm->width, gm->height);
 	if (gm->psize == 1)
 		printf("monochrome\n");
 	else
@@ -64,7 +64,7 @@ grf_establish(struct grfbus_softc *sc, nubus_slot *sp,
 	ga.ga_handle = sc->sc_handle;
 	ga.ga_phys = sc->sc_basepa;
 	ga.ga_mode = g_mode;
-	(void)config_found(&sc->sc_dev, &ga, grfbusprint);
+	(void)config_found(sc->sc_dev, &ga, grfbusprint);
 }
 
 int

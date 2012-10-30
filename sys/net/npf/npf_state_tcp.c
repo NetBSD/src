@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.4.2.2 2012/04/17 00:08:39 yamt Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.4.2.3 2012/10/30 17:22:44 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.4.2.2 2012/04/17 00:08:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.4.2.3 2012/10/30 17:22:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,31 +50,25 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.4.2.2 2012/04/17 00:08:39 yamt E
 
 #include "npf_impl.h"
 
-#if defined(_NPF_TESTING)
-void	npf_state_sample(npf_state_t *);
-#define	NPF_TCP_STATE_SAMPLE(nst)	npf_state_sample(nst)
-#else
-#define	NPF_TCP_STATE_SAMPLE(nst)
-#endif
-
 /*
  * NPF TCP states.  Note: these states are different from the TCP FSM
  * states of RFC 793.  The packet filter is a man-in-the-middle.
  */
-#define NPF_TCPS_OK		(-1)
+#define	NPF_TCPS_OK		(-1)
 #define	NPF_TCPS_CLOSED		0
 #define	NPF_TCPS_SYN_SENT	1
 #define	NPF_TCPS_SIMSYN_SENT	2
 #define	NPF_TCPS_SYN_RECEIVED	3
 #define	NPF_TCPS_ESTABLISHED	4
-#define	NPF_TCPS_FIN_SEEN	5
-#define	NPF_TCPS_CLOSE_WAIT	6
-#define	NPF_TCPS_FIN_WAIT	7
-#define	NPF_TCPS_CLOSING	8
-#define	NPF_TCPS_LAST_ACK	9
-#define	NPF_TCPS_TIME_WAIT	10
+#define	NPF_TCPS_FIN_SENT	5
+#define	NPF_TCPS_FIN_RECEIVED	6
+#define	NPF_TCPS_CLOSE_WAIT	7
+#define	NPF_TCPS_FIN_WAIT	8
+#define	NPF_TCPS_CLOSING	9
+#define	NPF_TCPS_LAST_ACK	10
+#define	NPF_TCPS_TIME_WAIT	11
 
-#define	NPF_TCP_NSTATES		11
+#define	NPF_TCP_NSTATES		12
 
 /*
  * TCP connection timeout table (in seconds).
@@ -86,16 +80,21 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 	[NPF_TCPS_SYN_SENT]	= 30,
 	[NPF_TCPS_SIMSYN_SENT]	= 30,
 	[NPF_TCPS_SYN_RECEIVED]	= 60,
-	/* Established, timeout: 24 hours. */
+	/* Established: 24 hours. */
 	[NPF_TCPS_ESTABLISHED]	= 60 * 60 * 24,
-	/* Closure cases, timeout: 4 minutes (2 * MSL). */
-	[NPF_TCPS_FIN_SEEN]	= 60 * 2 * 2,
-	[NPF_TCPS_CLOSE_WAIT]	= 60 * 2 * 2,
-	[NPF_TCPS_FIN_WAIT]	= 60 * 2 * 2,
+	/* FIN seen: 4 minutes (2 * MSL). */
+	[NPF_TCPS_FIN_SENT]	= 60 * 2 * 2,
+	[NPF_TCPS_FIN_RECEIVED]	= 60 * 2 * 2,
+	/* Half-closed cases: 6 hours. */
+	[NPF_TCPS_CLOSE_WAIT]	= 60 * 60 * 6,
+	[NPF_TCPS_FIN_WAIT]	= 60 * 60 * 6,
+	/* Full close cases: 30 sec and 2 * MSL. */
 	[NPF_TCPS_CLOSING]	= 30,
 	[NPF_TCPS_LAST_ACK]	= 30,
 	[NPF_TCPS_TIME_WAIT]	= 60 * 2 * 2,
 };
+
+static bool npf_strict_order_rst __read_mostly = false;
 
 #define	NPF_TCP_MAXACKWIN	66000
 
@@ -182,8 +181,8 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			[TCPFC_SYN]	= NPF_TCPS_OK,
 			/* SYN-ACK response to original SYN. */
 			[TCPFC_SYNACK]	= NPF_TCPS_SYN_RECEIVED,
-			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			/* FIN may occur early. */
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
 	[NPF_TCPS_SYN_RECEIVED] = {
@@ -191,15 +190,15 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			/* Handshake (3): ACK is expected. */
 			[TCPFC_ACK]	= NPF_TCPS_ESTABLISHED,
 			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
 		},
 		[NPF_FLOW_BACK] = {
 			/* SYN-ACK may be retransmitted. */
 			[TCPFC_SYNACK]	= NPF_TCPS_OK,
 			/* XXX: ACK of late SYN in simultaneous case? */
 			[TCPFC_ACK]	= NPF_TCPS_OK,
-			/* FIN may be sent early. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			/* FIN may occur early. */
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
 	[NPF_TCPS_ESTABLISHED] = {
@@ -210,28 +209,38 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 		[NPF_FLOW_FORW] = {
 			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the sender. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
 		},
 		[NPF_FLOW_BACK] = {
 			[TCPFC_ACK]	= NPF_TCPS_OK,
 			/* FIN by the receiver. */
-			[TCPFC_FIN]	= NPF_TCPS_FIN_SEEN,
+			[TCPFC_FIN]	= NPF_TCPS_FIN_RECEIVED,
 		},
 	},
-	[NPF_TCPS_FIN_SEEN] = {
+	[NPF_TCPS_FIN_SENT] = {
+		[NPF_FLOW_FORW] = {
+			/* FIN may be re-transmitted.  Late ACK as well. */
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_OK,
+		},
+		[NPF_FLOW_BACK] = {
+			/* If ACK, connection is half-closed now. */
+			[TCPFC_ACK]	= NPF_TCPS_FIN_WAIT,
+			/* FIN or FIN-ACK race - immediate closing. */
+			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
+		},
+	},
+	[NPF_TCPS_FIN_RECEIVED] = {
 		/*
-		 * FIN was seen.  If ACK only, connection is half-closed now,
-		 * need to determine which end is closed (sender or receiver).
-		 * However, both FIN and FIN-ACK may race here - in which
-		 * case we are closing immediately.
+		 * FIN was received.  Equivalent scenario to sent FIN.
 		 */
 		[NPF_FLOW_FORW] = {
 			[TCPFC_ACK]	= NPF_TCPS_CLOSE_WAIT,
 			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
 		},
 		[NPF_FLOW_BACK] = {
-			[TCPFC_ACK]	= NPF_TCPS_FIN_WAIT,
-			[TCPFC_FIN]	= NPF_TCPS_CLOSING,
+			[TCPFC_ACK]	= NPF_TCPS_OK,
+			[TCPFC_FIN]	= NPF_TCPS_OK,
 		},
 	},
 	[NPF_TCPS_CLOSE_WAIT] = {
@@ -293,7 +302,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	const struct tcphdr * const th = &npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
 	npf_tcpstate_t *fstate, *tstate;
-	int tcpdlen, wscale, ackskew;
+	int tcpdlen, ackskew;
 	tcp_seq seq, ack, end;
 	uint32_t win;
 
@@ -337,8 +346,9 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 */
 	if (__predict_false(fstate->nst_maxwin == 0)) {
 		/*
-		 * Should be first SYN or re-transmission of SYN.  State of
-		 * other side will get set with a SYN-ACK reply (see below).
+		 * Normally, it should be the first SYN or a re-transmission
+		 * of SYN.  The state of the other side will get set with a
+		 * SYN-ACK reply (see below).
 		 */
 		fstate->nst_end = end;
 		fstate->nst_maxend = end;
@@ -351,11 +361,9 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		 * Handle TCP Window Scaling (RFC 1323).  Both sides may
 		 * send this option in their SYN packets.
 		 */
-		if (npf_fetch_tcpopts(npc, nbuf, NULL, &wscale)) {
-			fstate->nst_wscale = wscale;
-		} else {
-			fstate->nst_wscale = 0;
-		}
+		fstate->nst_wscale = 0;
+		(void)npf_fetch_tcpopts(npc, nbuf, NULL, &fstate->nst_wscale);
+
 		tstate->nst_wscale = 0;
 
 		/* Done. */
@@ -369,14 +377,15 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		fstate->nst_end = end;
 		fstate->nst_maxend = end + 1;
 		fstate->nst_maxwin = win;
+		fstate->nst_wscale = 0;
 
 		/* Handle TCP Window Scaling (must be ignored if no SYN). */
 		if (tcpfl & TH_SYN) {
-			fstate->nst_wscale =
-			    npf_fetch_tcpopts(npc, nbuf, NULL, &wscale) ?
-			    wscale : 0;
+			(void)npf_fetch_tcpopts(npc, nbuf, NULL,
+			    &fstate->nst_wscale);
 		}
 	}
+
 	if ((tcpfl & TH_ACK) == 0) {
 		/* Pretend that an ACK was sent. */
 		ack = tstate->nst_end;
@@ -384,19 +393,20 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 		/* Workaround for some TCP stacks. */
 		ack = tstate->nst_end;
 	}
-	if (seq == end) {
-		/* If packet contains no data - assume it is valid. */
-		end = fstate->nst_end;
-		seq = end;
+
+	if (__predict_false(tcpfl & TH_RST)) {
+		/* RST to the initial SYN may have zero SEQ - fix it up. */
+		if (seq == 0 && nst->nst_state == NPF_TCPS_SYN_SENT) {
+			end = fstate->nst_end;
+			seq = end;
+		}
+
+		/* Strict in-order sequence for RST packets. */
+		if (npf_strict_order_rst && (fstate->nst_end - seq) > 1) {
+			return false;
+		}
 	}
 
-	NPF_TCP_STATE_SAMPLE(nst);
-#if 0
-	/* Strict in-order sequence for RST packets. */
-	if (((tcpfl & TH_RST) != 0) && (fstate->nst_end - seq) > 1) {
-		return false;
-	}
-#endif
 	/*
 	 * Determine whether the data is within previously noted window,
 	 * that is, upper boundary for valid data (I).
@@ -413,7 +423,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	}
 
 	/*
-	 * Boundaries for valid acknowledgments (III, IV) - on predicted
+	 * Boundaries for valid acknowledgments (III, IV) - one predicted
 	 * window up or down, since packets may be fragmented.
 	 */
 	ackskew = tstate->nst_end - ack;
@@ -429,6 +439,7 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	 * Negative ackskew might be due to fragmented packets.  Since the
 	 * total length of the packet is unknown - bump the boundary.
 	 */
+
 	if (ackskew < 0) {
 		tstate->nst_end = ack;
 	}
@@ -446,12 +457,18 @@ npf_tcp_inwindow(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst,
 	return true;
 }
 
+/*
+ * npf_state_tcp: inspect TCP segment, determine whether it belongs to
+ * the connection and track its state.
+ */
 bool
 npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 {
 	const struct tcphdr * const th = &npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags, state = nst->nst_state;
 	int nstate;
+
+	KASSERT(nst->nst_state == 0 || mutex_owned(&nst->nst_lock));
 
 	/* Look for a transition to a new state. */
 	if (__predict_true((tcpfl & TH_RST) == 0)) {
@@ -463,6 +480,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	} else {
 		nstate = NPF_TCPS_CLOSED;
 	}
+
 	/* Determine whether TCP packet really belongs to this connection. */
 	if (!npf_tcp_inwindow(npc, nbuf, nst, di)) {
 		return false;
@@ -470,6 +488,7 @@ npf_state_tcp(const npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	if (__predict_true(nstate == NPF_TCPS_OK)) {
 		return true;
 	}
+
 	nst->nst_state = nstate;
 	return true;
 }

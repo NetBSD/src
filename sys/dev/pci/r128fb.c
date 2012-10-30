@@ -1,7 +1,7 @@
-/*	$NetBSD: r128fb.c,v 1.22.2.2 2012/05/23 10:08:04 yamt Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.22.2.3 2012/10/30 17:21:52 yamt Exp $	*/
 
 /*
- * Copyright (c) 2007 Michael Lorenz
+ * Copyright (c) 2007, 2012 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.2.2 2012/05/23 10:08:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.22.2.3 2012/10/30 17:21:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef GLYPHCACHE_DEBUG
 	/* leave some visible VRAM unused so we can see the glyph cache */
-	sc->sc_height -= 100;
+	sc->sc_height -= 200;
 #endif
 
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
@@ -307,7 +307,11 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+			    &defattr);
+		}
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
@@ -375,7 +379,8 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, sc->sc_pcitag, data);
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, 
+		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
 		if (ms == NULL)
@@ -545,8 +550,6 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = r128fb_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = r128fb_putchar_aa;
-		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
-		     0, &sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = r128fb_putchar;
 }

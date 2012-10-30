@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.37.2.1 2012/04/17 00:08:20 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.37.2.2 2012/10/30 17:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37.2.1 2012/04/17 00:08:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.37.2.2 2012/10/30 17:22:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct sysvbfs_args *args = data;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
-	int error;
+	int error = 0;
 	bool update;
 
 	DPRINTF("%s: mnt_flag=%x\n", __func__, mp->mnt_flag);
@@ -277,8 +277,8 @@ sysvbfs_statvfs(struct mount *mp, struct statvfs *f)
 	f->f_bfree = free_block;
 	f->f_bavail = f->f_bfree;
 	f->f_bresvd = 0;
-	f->f_files = bfs->n_inode;
-	f->f_ffree = bfs->max_inode - f->f_files;
+	f->f_files = bfs->max_inode;
+	f->f_ffree = bfs->max_inode - bfs->n_inode;
 	f->f_favail = f->f_ffree;
 	f->f_fresvd = 0;
 	copy_statvfs_info(f, mp);

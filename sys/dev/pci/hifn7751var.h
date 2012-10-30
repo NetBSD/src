@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.7.110.1 2012/04/17 00:07:45 yamt Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.7.110.2 2012/10/30 17:21:25 yamt Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ struct hifn_session {
  * Holds data specific to a single HIFN board.
  */
 struct hifn_softc {
-	struct device	sc_dv;		/* generic device */
+	device_t	sc_dv;		/* generic device */
 	void *		sc_ih;		/* interrupt handler cookie */
 	u_int32_t	sc_dmaier;
 	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */

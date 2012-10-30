@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25 2011/08/07 15:44:59 kiyohara Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.2.1 2012/10/30 17:19:14 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/hid.h>
 #include <powerpc/oea/spr.h>
 
 /*
@@ -123,6 +124,12 @@ __start:
 	nop
 
 __start_cpu1:
+	/* Disable data and instruction caches for spinup. */
+	li	8,0
+	mtspr	SPR_HID0,8
+	sync
+	isync
+
 #ifdef MULTIPROCESSOR
 	li	3, 0x1		/* CPU ID 1 */
 	ba	cpu_spinstart	/* cpu_spinstart(CPU ID) */
@@ -133,6 +140,20 @@ __start_cpu1:
 	nop
 
 __start_cpu0:
+	/* Enable data and instruction caches */
+	mfspr	8,SPR_HID0
+	andi.	8,8,(HID0_ICE|HID0_DCE)@l
+	andi.	0,8,HID0_DCE
+	ori	7,8,HID0_ICFI
+	bne	1f
+	ori	7,7,HID0_DCFI
+1:
+	sync
+	mtspr	SPR_HID0,7
+	sync
+	mtspr	SPR_HID0,8
+	sync
+	isync
 
 /* compute end of kernel memory */
 #if defined(DDB) || NKSYMS || defined(MODULAR)
@@ -157,18 +178,21 @@ __start_cpu0:
 
 loop:	b	loop			/* XXX not reached */
 
-	.globl	_C_LABEL(enable_intr)
-_C_LABEL(enable_intr):
-	mfmsr	3
-	ori	3,3,PSL_EE@l
-	mtmsr	3
-	blr
 
-	.globl	_C_LABEL(disable_intr)
-_C_LABEL(disable_intr):
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l
-	mtmsr	3
+	.globl	_C_LABEL(cache_flush_invalidate_all)
+_C_LABEL(cache_flush_invalidate_all):
+	mtctr	3
+	li	4,0x0
+loop1:	lwz	5,0(4)
+	addi	4,4,32
+	bdnz	loop1
+
+	mtctr	3
+	li	4,0x0
+loop2:	dcbf	0,4
+	addi	4,4,32
+	bdnz	loop2
+
 	blr
 
 	.globl	_C_LABEL(debug_led)

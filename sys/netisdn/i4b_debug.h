@@ -27,7 +27,7 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.8 2008/04/05 13:44:14 cegger Exp $
+ *	$Id: i4b_debug.h,v 1.8.38.1 2012/10/30 17:22:51 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -56,7 +56,7 @@ extern unsigned int i4b_l4_debug;
 
 #define NDBGL1(bits, fmt, args...)				 	\
 	if(bits & i4b_l1_debug)						\
-	{ printf("%s (L1): %s: " fmt "\n", device_xname(&sc->sc_dev), __func__ , ##args ); }
+	{ printf("%s (L1): %s: " fmt "\n", device_xname(sc->sc_dev), __func__ , ##args ); }
 
 #define NDBGL2(bits, fmt, args...)				 	\
 	if(bits & i4b_l2_debug)						\

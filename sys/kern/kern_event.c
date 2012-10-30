@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.72.2.1 2012/04/17 00:08:23 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.72.2.2 2012/10/30 17:22:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72.2.1 2012/04/17 00:08:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.72.2.2 2012/10/30 17:22:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1454,7 +1454,6 @@ static int
 kqueue_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct kqueue *kq;
-	filedesc_t *fdp;
 
 	kq = ((file_t *)kn->kn_obj)->f_data;
 
@@ -1464,7 +1463,6 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 		return 1;
 
 	kn->kn_fop = &kqread_filtops;
-	fdp = curlwp->l_fd;
 	mutex_enter(&kq->kq_lock);
 	SLIST_INSERT_HEAD(&kq->kq_sel.sel_klist, kn, kn_selnext);
 	mutex_exit(&kq->kq_lock);

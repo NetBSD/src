@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.2.6.1 2012/04/17 00:07:32 yamt Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.2.6.2 2012/10/30 17:21:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.6.1 2012/04/17 00:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.2.6.2 2012/10/30 17:21:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 	bool console = false;
 	int width, height, i, j;
 	uint32_t bg, fg, ul;
+	uint8_t cmap[768];
 
 	dict = device_properties(sc->sc_dev);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -254,10 +255,11 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 		chipsfb_defaultscreen.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&chipsfb_defaultscreen, ri, 0, 0, defattr);
 	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
+		if (chipsfb_console_screen.scr_ri.ri_rows == 0) {
+			/* do some minimal setup to avoid weirdnesses later */
+			vcons_init_screen(&sc->vd, &chipsfb_console_screen, 1,
+			    &defattr);
+		}
 	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -275,12 +277,12 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 #endif
 
 	j = 0;
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
 	for (i = 0; i < 256; i++) {
-		chipsfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
-		    rasops_cmap[j + 2]);
+		chipsfb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
 		j += 3;
 	}
-
+	
 	aa.console = console;
 	aa.scrdata = &chipsfb_screenlist;
 	aa.accessops = &chipsfb_accessops;
@@ -810,7 +812,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
 	ri->ri_stride = sc->width;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_8BIT_IS_RGB;
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
@@ -850,11 +852,6 @@ chipsfb_init(struct chipsfb_softc *sc)
 {
 
 	chipsfb_wait_idle(sc);
-
-	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_IO_CONTROL,
-	    ENABLE_CRTC_EXT | ENABLE_ATTR_EXT);
-	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_ADDR_MAPPING,
-	    ENABLE_LINEAR);
 
 	/* setup the blitter */
 }

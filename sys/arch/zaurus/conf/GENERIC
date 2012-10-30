@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45.2.1 2012/04/17 00:07:12 yamt Exp $
+#	$NetBSD: GENERIC,v 1.45.2.2 2012/10/30 17:20:37 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -97,6 +97,7 @@ options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -152,7 +153,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # Development and Debugging options

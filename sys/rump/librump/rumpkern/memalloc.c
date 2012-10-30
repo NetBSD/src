@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.11.8.2 2012/05/23 10:08:17 yamt Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.11.8.3 2012/10/30 17:22:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.8.2 2012/05/23 10:08:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11.8.3 2012/10/30 17:22:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -88,7 +88,7 @@ kern_free(void *ptr)
  * Kmem
  */
 
-#ifdef RUMP_USE_UNREAL_ALLOCATORS
+#ifdef RUMP_UNREAL_ALLOCATORS
 void
 kmem_init()
 {
@@ -121,6 +121,10 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
+
+__strong_alias(kmem_intr_alloc, kmem_alloc);
+__strong_alias(kmem_intr_zalloc, kmem_zalloc);
+__strong_alias(kmem_intr_free, kmem_free);
 
 /*
  * pool & pool_cache
@@ -285,15 +289,8 @@ pool_cache_set_drain_hook(pool_cache_t pc, void (*fn)(void *, int), void *arg)
 	pc->pc_pool.pr_drain_hook_arg = arg;
 }
 
-void
-pool_drain_start(struct pool **ppp, uint64_t *wp)
-{
-
-	/* nada */
-}
-
 bool
-pool_drain_end(struct pool *pp, uint64_t w)
+pool_drain(struct pool **ppp)
 {
 
 	/* can't reclaim anything in this model */
@@ -323,6 +320,12 @@ pool_page_free(struct pool *pp, void *item)
 
 	return pool_put(pp, item);
 }
+
+struct pool_allocator pool_allocator_kmem = {
+        .pa_alloc = pool_page_alloc,
+        .pa_free = pool_page_free,
+        .pa_pagesz = 0
+};
 
 void
 vmem_rehash_start()
@@ -388,4 +391,4 @@ percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
 
 	cb(pc, arg, rump_cpu);
 }
-#endif /* RUMP_USE_UNREAL_ALLOCATORS */
+#endif /* RUMP_UNREAL_ALLOCATORS */

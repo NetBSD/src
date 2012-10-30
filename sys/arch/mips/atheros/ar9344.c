@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.3 2011/07/10 23:13:22 matt Exp $ */
+/* $NetBSD: ar9344.c,v 1.3.2.1 2012/10/30 17:19:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.3 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.3.2.1 2012/10/30 17:19:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -192,7 +192,7 @@ ar9344_get_freqs(struct arfreqs *freqs)
 
 #if 0
 static void
-addprop_data(struct device *dev, const char *name, const uint8_t *data,
+addprop_data(device_t dev, const char *name, const uint8_t *data,
     int len)
 {
 	prop_data_t	pd;
@@ -207,7 +207,7 @@ addprop_data(struct device *dev, const char *name, const uint8_t *data,
 #endif
 
 static void
-addprop_integer(struct device *dev, const char *name, uint32_t val)
+addprop_integer(device_t dev, const char *name, uint32_t val)
 {
 	prop_number_t	pn;
 	pn = prop_number_create_integer(val);

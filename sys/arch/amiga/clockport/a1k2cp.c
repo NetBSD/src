@@ -1,4 +1,4 @@
-/*      $NetBSD: a1k2cp.c,v 1.1.2.2 2012/05/23 10:07:40 yamt Exp $ */
+/*      $NetBSD: a1k2cp.c,v 1.1.2.3 2012/10/30 17:18:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 
 #define A1K2CP_BASE		0xD80001
 
-static int	a1k2cp_match(struct device *pdp, struct cfdata *cfp, void *aux);
-static void	a1k2cp_attach(device_t parent, device_t self, void *aux);
+static int	a1k2cp_match(device_t, cfdata_t, void *);
+static void	a1k2cp_attach(device_t, device_t, void *);
 
 struct a1k2cp_softc {
 	device_t	sc_dev;
@@ -63,7 +63,7 @@ CFATTACH_DECL_NEW(a1k2cp, sizeof(struct a1k2cp_softc),
     a1k2cp_match, a1k2cp_attach, NULL, NULL);
 
 static int
-a1k2cp_match(struct device *pdp, struct cfdata *cfp, void *aux)
+a1k2cp_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	static int a1k2cp_matched = 0;
@@ -100,10 +100,9 @@ a1k2cp_attach(device_t parent, device_t self, void *aux)
 	a1k2cp_aa.cp_intr_establish = clockport_generic_intr_establish;
 
 #ifdef A1K2CP_DEBUG
-	aprint_normal_dev(sc->sc_dev, "pa %d va %p", 
+	aprint_normal_dev(sc->sc_dev, "pa %x va %p\n", 
 	    A1K2CP_BASE, (void*) a1k2cp_bst.base);
 #endif /* A1K2CP_DEBUG */
 
 	config_found(sc->sc_dev, &a1k2cp_aa, 0);
 }
-

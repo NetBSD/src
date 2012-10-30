@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.13 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: plum.c,v 1.13.34.1 2012/10/30 17:19:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.13 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.13.34.1 2012/10/30 17:19:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,13 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.13 2008/04/28 20:23:21 martin Exp $");
 #include <hpcmips/dev/plumvar.h>
 #include <hpcmips/dev/plumreg.h>
 
-int plum_match(struct device *, struct cfdata *, void *);
-void plum_attach(struct device *, struct device *, void *);
+int plum_match(device_t, cfdata_t, void *);
+void plum_attach(device_t, device_t, void *);
 int plum_print(void *, const char *);
-int plum_search(struct device *, struct cfdata *, const int *, void *);
+int plum_search(device_t, cfdata_t, const int *, void *);
 
 struct plum_softc {
-	struct	device		sc_dev;
 	plum_chipset_tag_t	sc_pc;
 	bus_space_tag_t		sc_csregt;
 	bus_space_tag_t		sc_csiot;
@@ -60,13 +59,13 @@ struct plum_softc {
 	int			sc_pri;
 };
 
-CFATTACH_DECL(plum, sizeof(struct plum_softc),
+CFATTACH_DECL_NEW(plum, sizeof(struct plum_softc),
     plum_match, plum_attach, NULL, NULL);
 
 plumreg_t plum_idcheck(bus_space_tag_t);
 
 int
-plum_match(struct device *parent, struct cfdata *cf, void *aux)
+plum_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cs_attach_args *ca = aux;
 
@@ -82,10 +81,10 @@ plum_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-plum_attach(struct device *parent, struct device *self, void *aux)
+plum_attach(device_t parent, device_t self, void *aux)
 {
 	struct cs_attach_args *ca = aux;
-	struct plum_softc *sc = (void*)self;
+	struct plum_softc *sc = device_private(self);
 	plumreg_t reg;
 
 	sc->sc_csregt	= ca->ca_csreg.cstag;
@@ -150,10 +149,9 @@ plum_print(void *aux, const char *pnp)
 }
 
 int
-plum_search(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+plum_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct plum_softc *sc = (void*)parent;
+	struct plum_softc *sc = device_private(parent);
 	struct plum_attach_args pa;
 	
 	pa.pa_pc	= sc->sc_pc;

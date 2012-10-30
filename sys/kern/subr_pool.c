@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.190.2.2 2012/05/23 10:08:11 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.190.2.3 2012/10/30 17:22:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.2 2012/05/23 10:08:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.190.2.3 2012/10/30 17:22:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -191,7 +191,7 @@ static bool	pool_cache_get_slow(pool_cache_cpu_t *, int,
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
 static void	pool_cache_invalidate_cpu(pool_cache_t, u_int);
-static void	pool_cache_xcall(pool_cache_t);
+static void	pool_cache_transfer(pool_cache_t);
 
 static int	pool_catchup(struct pool *);
 static void	pool_prime_page(struct pool *, void *,
@@ -462,6 +462,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	int off, slack;
 
 #ifdef DEBUG
+	if (__predict_true(!cold))
+		mutex_enter(&pool_head_lock);
 	/*
 	 * Check that the pool hasn't already been initialised and
 	 * added to the list of all pools.
@@ -471,6 +473,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			panic("pool_init: pool %s already initialised",
 			    wchan);
 	}
+	if (__predict_true(!cold))
+		mutex_exit(&pool_head_lock);
 #endif
 
 	if (palloc == NULL)
@@ -1300,7 +1304,7 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 /*
  * Release all complete pages that have not been used recently.
  *
- * Might be called from interrupt context.
+ * Must not be called from interrupt context.
  */
 int
 pool_reclaim(struct pool *pp)
@@ -1311,9 +1315,7 @@ pool_reclaim(struct pool *pp)
 	bool klock;
 	int rv;
 
-	if (cpu_intr_p() || cpu_softintr_p()) {
-		KASSERT(pp->pr_ipl != IPL_NONE);
-	}
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -1387,17 +1389,14 @@ pool_reclaim(struct pool *pp)
 }
 
 /*
- * Drain pools, one at a time.  This is a two stage process;
- * drain_start kicks off a cross call to drain CPU-level caches
- * if the pool has an associated pool_cache.  drain_end waits
- * for those cross calls to finish, and then drains the cache
- * (if any) and pool.
+ * Drain pools, one at a time. The drained pool is returned within ppp.
  *
  * Note, must never be called from interrupt context.
  */
-void
-pool_drain_start(struct pool **ppp, uint64_t *wp)
+bool
+pool_drain(struct pool **ppp)
 {
+	bool reclaimed;
 	struct pool *pp;
 
 	KASSERT(!TAILQ_EMPTY(&pool_head));
@@ -1422,28 +1421,6 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	pp->pr_refcnt++;
 	mutex_exit(&pool_head_lock);
 
-	/* If there is a pool_cache, drain CPU level caches. */
-	*ppp = pp;
-	if (pp->pr_cache != NULL) {
-		*wp = xc_broadcast(0, (xcfunc_t)pool_cache_xcall,
-		    pp->pr_cache, NULL);
-	}
-}
-
-bool
-pool_drain_end(struct pool *pp, uint64_t where)
-{
-	bool reclaimed;
-
-	if (pp == NULL)
-		return false;
-
-	KASSERT(pp->pr_refcnt > 0);
-
-	/* Wait for remote draining to complete. */
-	if (pp->pr_cache != NULL)
-		xc_wait(where);
-
 	/* Drain the cache (if any) and pool.. */
 	reclaimed = pool_reclaim(pp);
 
@@ -1452,6 +1429,9 @@ pool_drain_end(struct pool *pp, uint64_t where)
 	pp->pr_refcnt--;
 	cv_broadcast(&pool_busy);
 	mutex_exit(&pool_head_lock);
+
+	if (ppp != NULL)
+		*ppp = pp;
 
 	return reclaimed;
 }
@@ -2007,31 +1987,39 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
  *	Note: For pool caches that provide constructed objects, there
  *	is an assumption that another level of synchronization is occurring
  *	between the input to the constructor and the cache invalidation.
+ *
+ *	Invalidation is a costly process and should not be called from
+ *	interrupt context.
  */
 void
 pool_cache_invalidate(pool_cache_t pc)
 {
-	pcg_t *full, *empty, *part;
-#if 0
 	uint64_t where;
+	pcg_t *full, *empty, *part;
+
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if (ncpu < 2 || !mp_online) {
 		/*
 		 * We might be called early enough in the boot process
 		 * for the CPU data structures to not be fully initialized.
-		 * In this case, simply gather the local CPU's cache now
-		 * since it will be the only one running.
+		 * In this case, transfer the content of the local CPU's
+		 * cache back into global cache as only this CPU is currently
+		 * running.
 		 */
-		pool_cache_xcall(pc);
+		pool_cache_transfer(pc);
 	} else {
 		/*
-		 * Gather all of the CPU-specific caches into the
-		 * global cache.
+		 * Signal all CPUs that they must transfer their local
+		 * cache back to the global pool then wait for the xcall to
+		 * complete.
 		 */
-		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
+		where = xc_broadcast(0, (xcfunc_t)pool_cache_transfer,
+		    pc, NULL);
 		xc_wait(where);
 	}
-#endif
+
+	/* Empty pool caches, then invalidate objects */
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
@@ -2415,13 +2403,13 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 }
 
 /*
- * pool_cache_xcall:
+ * pool_cache_transfer:
  *
  *	Transfer objects from the per-CPU cache to the global cache.
  *	Run within a cross-call thread.
  */
 static void
-pool_cache_xcall(pool_cache_t pc)
+pool_cache_transfer(pool_cache_t pc)
 {
 	pool_cache_cpu_t *cc;
 	pcg_t *prev, *cur, **list;

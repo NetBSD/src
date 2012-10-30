@@ -1,9 +1,18 @@
-/*	$NetBSD: cdefs.h,v 1.3.54.1 2012/04/17 00:06:05 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.3.54.2 2012/10/30 17:19:04 yamt Exp $	*/
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
 
-#if defined (__ARM_ARCH_6__) || defined (__ARM_ARCH_6J__)
+#if defined (__ARM_ARCH_7__) || defined (__ARM_ARCH_7A__) || \
+    defined (__ARM_ARCH_7R__) || defined (__ARM_ARCH_7M__) || \
+    defined (__ARM_ARCH_7EM__) /* 7R, 7M, 7EM are for non MMU arms */
+#define _ARM_ARCH_7
+#endif
+
+#if defined (_ARM_ARCH_7) || defined (__ARM_ARCH_6__) || \
+    defined (__ARM_ARCH_6J__) || defined (__ARM_ARCH_6K__) || \
+    defined (__ARM_ARCH_6Z__) || defined (__ARM_ARCH_6ZK__) || \
+    defined (__ARM_ARCH_6T2__) || defined (__ARM_ARCH_6ZM__)
 #define _ARM_ARCH_6
 #endif
 
@@ -17,6 +26,15 @@
 #define _ARM_ARCH_4T
 #endif
 
+#if defined(_ARM_ARCH_6) || defined (__ARM_ARCH_5TE__) || \
+    defined (__ARM_ARCH_5TEJ__)
+#define	_ARM_ARCH_DWORD_OK
+#endif
+
+#ifdef __ARM_EABI__
+#define __ALIGNBYTES		(8 - 1)
+#else
 #define __ALIGNBYTES		(sizeof(int) - 1)
+#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */

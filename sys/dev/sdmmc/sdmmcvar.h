@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.11.4.1 2012/04/17 00:08:04 yamt Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.11.4.2 2012/10/30 17:22:02 yamt Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ struct sdmmc_function {
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
-	struct sdmmc_scr scr;		/* decoded CSR value */
+	struct sdmmc_scr scr;		/* decoded SCR value */
 
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
@@ -201,7 +201,7 @@ struct sdmmc_softc {
 	sdmmc_chipset_handle_t sc_sch;	/* host controller chipset handle */
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmap;
-#define	SDMMC_MAXNSEGS		17	/* (MAXPHYS / PAGE_SIZE) + 1 */
+#define	SDMMC_MAXNSEGS		((MAXPHYS / PAGE_SIZE) + 1)
 
 	struct kmutex sc_mtx;		/* lock around host controller */
 	int sc_dying;			/* bus driver is shutting down */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.350.2.2 2012/05/23 10:07:57 yamt Exp $
+#	$NetBSD: files.pci,v 1.350.2.3 2012/10/30 17:21:25 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -778,6 +778,10 @@ file	dev/pci/if_rtw_pci.c		rtw_pci
 attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
 
+# Marvel Libertas Open
+attach  malo at pci with malo_pci
+file    dev/pci/if_malo_pci.c       malo_pci
+
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
 file	dev/pci/if_wi_pci.c		wi_pci
@@ -826,7 +830,7 @@ file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
 defflag	opt_machfb.h	MACHFB_DEBUG
-device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm
+device	machfb: wsemuldisplaydev, rasops8, fb, vcons, videomode, edid, drm, glyphcache
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
 
@@ -1112,3 +1116,9 @@ file	dev/pci/if_vioif.c	vioif
 device	lynxfb: wsemuldisplaydev, rasops16
 attach	lynxfb at pci
 file	dev/pci/lynxfb.c	lynxfb needs-flag
+
+# 3Dfx Voodoo Graphics
+defflag	opt_tdvfb.h		TDVFB_CONSOLE
+device	tdvfb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	tdvfb at pci
+file	dev/pci/tdvfb.c		tdvfb	

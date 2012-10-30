@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.46.38.2 2012/05/23 10:07:42 yamt Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.46.38.3 2012/10/30 17:19:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.46.38.2 2012/05/23 10:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.46.38.3 2012/10/30 17:19:05 yamt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -253,11 +253,11 @@ vidcaudio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih.ih_func = vidcaudio_intr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_AUDIO;
-	sc->sc_ih.ih_name = self->dv_xname;
+	sc->sc_ih.ih_name = device_xname(self);
 
 	if (irq_claim(sc->sc_dma_intr, &sc->sc_ih) != 0) {
 		aprint_error("%s: couldn't claim IRQ %d\n",
-		    self->dv_xname, sc->sc_dma_intr);
+		    device_xname(self), sc->sc_dma_intr);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234.2.1 2012/04/17 00:06:00 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234.2.2 2012/10/30 17:18:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.1 2012/04/17 00:06:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234.2.2 2012/10/30 17:18:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,13 +136,8 @@ paddr_t msgbufpa;
 
 int	machineid;
 int	maxmem;			/* max memory per process */
-int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+extern int	physmem;	/* max supported memory, changes to actual */
 
-/*
- * safepri is a safe priority for sleep to set for a spin-wait
- * during autoconfiguration or after a panic.
- */
-int	safepri = PSL_LOWIPL;
 extern  int   freebufspace;
 extern	u_int lowram;
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_pool.h,v 1.2.4.2 2012/04/17 00:08:16 yamt Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.2.4.3 2012/10/30 17:22:20 yamt Exp $	*/
 
 /*
- * Copyright (C) 2011 by Darren Reed.
+ * Copyright (C) 2012 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_pool.h,v 2.40.2.3 2012/01/26 05:29:12 darrenr Exp
+ * Id: ip_pool.h,v 1.1.1.2 2012/07/22 13:45:31 darrenr Exp
  */
 
 #ifndef	__IP_POOL_H__
@@ -39,6 +39,7 @@ typedef	struct ip_pool_s {
 	struct ip_pool_s	**ipo_pnext;
 	ipf_rdx_head_t		*ipo_head;
 	ip_pool_node_t		*ipo_list;
+	ip_pool_node_t		**ipo_tail;
 	ip_pool_node_t		*ipo_nextaddr;
 	void			*ipo_radix;
 	u_long			ipo_hits;

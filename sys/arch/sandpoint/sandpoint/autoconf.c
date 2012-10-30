@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23.2.2 2012/05/23 10:07:48 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23.2.3 2012/10/30 17:20:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.2.2 2012/05/23 10:07:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23.2.3 2012/10/30 17:20:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,6 @@ cpu_configure(void)
 	genppc_cpu_configure();
 }
 
-char *booted_kernel; /* should be a genuine filename */
-
 void
 cpu_rootconf(void)
 {
@@ -103,7 +101,7 @@ cpu_rootconf(void)
 
 	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
-	setroot(booted_device, booted_partition);
+	rootconf();
 }
 
 void

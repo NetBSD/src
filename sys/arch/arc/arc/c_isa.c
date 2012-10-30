@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.10 2011/03/06 14:58:42 tsutsui Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.10.4.1 2012/10/30 17:18:52 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.10 2011/03/06 14:58:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.10.4.1 2012/10/30 17:18:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ c_isa_cons_init(void)
 		if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
 #if NPCKBC > 0
 			pckbc_cnattach(&arc_bus_io, IO_KBD, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 			return;
 #endif
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.140.4.1 2012/04/17 00:08:44 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.1 2012/04/17 00:08:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.2 2012/10/30 17:22:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.140.4.1 2012/04/17 00:08:44 yamt Ex
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
+#include <netinet/portalgo.h>
 #include <netinet6/in6_offload.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_private.h>
@@ -1146,6 +1147,10 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 
 /*
  * Insert fragment header and copy unfragmentable header portions.
+ * 
+ * *frghdrp will not be read, and it is guaranteed that either an
+ * error is returned or that *frghdrp will point to space allocated
+ * for the fragment header.
  */
 static int
 ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen, 
@@ -1633,6 +1638,14 @@ else 					\
 			}
 			break;
 
+		case IPV6_PORTALGO:
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			error = portalgo_algo_index_select(
+			    (struct inpcb_hdr *)in6p, optval);
+			break;
 
 #if defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
@@ -1816,6 +1829,11 @@ else 					\
 		case IPV6_JOIN_GROUP:
 		case IPV6_LEAVE_GROUP:
 			error = ip6_getmoptions(sopt, in6p->in6p_moptions);
+			break;
+
+		case IPV6_PORTALGO:
+			optval = ((struct inpcb_hdr *)in6p)->inph_portalgo;
+			error = sockopt_setint(sopt, optval);
 			break;
 
 #if defined(FAST_IPSEC)

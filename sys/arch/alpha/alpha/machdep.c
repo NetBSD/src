@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.335.2.2 2012/05/23 10:07:38 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.335.2.3 2012/10/30 17:18:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335.2.2 2012/05/23 10:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335.2.3 2012/10/30 17:18:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,6 @@ void *msgbufaddr;
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
-int	physmem;		/* physical memory used by NetBSD + some rsvd */
 int	resvmem;		/* amount of memory reserved for PROM */
 int	unusedmem;		/* amount of memory for OS that we don't use */
 int	unknownmem;		/* amount of memory with an unknown use */
@@ -1550,17 +1549,20 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_print", NULL,
+		       CTLTYPE_INT, "unaligned_print",
+		       SYSCTL_DESCR("Warn about unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_print, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_PRINT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_fix", NULL,
+		       CTLTYPE_INT, "unaligned_fix",
+		       SYSCTL_DESCR("Fix up unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_fix, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_FIX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "unaligned_sigbus", NULL,
+		       CTLTYPE_INT, "unaligned_sigbus",
+		       SYSCTL_DESCR("Do SIGBUS for fixed unaligned accesses"),
 		       NULL, 0, &alpha_unaligned_sigbus, 0,
 		       CTL_MACHDEP, CPU_UNALIGNED_SIGBUS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1791,7 +1793,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
-	*flags |= _UC_CPU | _UC_UNIQUE;
+	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any, and copy it. */
 	if (fpu_used_p(l)) {
@@ -1838,7 +1840,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
 		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
-	if (flags & _UC_UNIQUE)
+	if (flags & _UC_TLSBASE)
 		lwp_setprivate(l, (void *)(uintptr_t)gr[_REG_UNIQUE]);
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {

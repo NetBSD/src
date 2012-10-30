@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.29 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.29.2.1 2012/10/30 17:21:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.29 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.29.2.1 2012/10/30 17:21:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static u_int8_t	esh_pci_bist_read(struct esh_softc *);
 static void	esh_pci_bist_write(struct esh_softc *, u_int8_t);
 
 
-CFATTACH_DECL(esh_pci, sizeof(struct esh_softc),
+CFATTACH_DECL_NEW(esh_pci, sizeof(struct esh_softc),
     esh_pci_match, esh_pci_attach, NULL, NULL);
 
 static int
@@ -119,6 +119,7 @@ esh_pci_attach(device_t parent, device_t self, void *aux)
 	    return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -147,19 +148,19 @@ esh_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, eshintr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 }
 
 static u_int8_t

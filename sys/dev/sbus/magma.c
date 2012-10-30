@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.55 2011/04/24 16:27:01 rmind Exp $	*/
+/*	$NetBSD: magma.c,v 1.55.4.1 2012/10/30 17:22:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.55 2011/04/24 16:27:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.55.4.1 2012/10/30 17:22:00 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -169,13 +169,13 @@ static struct magma_board_info supported_cards[] = {
  *  Autoconfig Stuff
  */
 
-CFATTACH_DECL(magma, sizeof(struct magma_softc),
+CFATTACH_DECL_NEW(magma, sizeof(struct magma_softc),
     magma_match, magma_attach, NULL, NULL);
 
-CFATTACH_DECL(mtty, sizeof(struct mtty_softc),
+CFATTACH_DECL_NEW(mtty, sizeof(struct mtty_softc),
     mtty_match, mtty_attach, NULL, NULL);
 
-CFATTACH_DECL(mbpp, sizeof(struct mbpp_softc),
+CFATTACH_DECL_NEW(mbpp, sizeof(struct mbpp_softc),
     mbpp_match, mbpp_attach, NULL, NULL);
 
 dev_type_open(mttyopen);
@@ -339,6 +339,7 @@ magma_attach(device_t parent, device_t self, void *aux)
 	int cd_clock;
 	int node, chip;
 
+	sc->ms_dev = self;
 	node = sa->sa_node;
 
 	/*
@@ -413,7 +414,7 @@ magma_attach(device_t parent, device_t self, void *aux)
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 
 		dprintf(("%s attach CD1400 %d addr %p rev %x clock %dMHz\n",
-			device_xname(&sc->ms_dev), chip,
+			device_xname(sc->ms_dev), chip,
 			cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
 
 		/* clear GFRCR */
@@ -468,11 +469,11 @@ magma_attach(device_t parent, device_t self, void *aux)
 	sc->ms_sicookie = softint_establish(SOFTINT_SERIAL, magma_soft, sc);
 	if (sc->ms_sicookie == NULL) {
 		aprint_normal("\n");
-		aprint_error_dev(&sc->ms_dev, "cannot establish soft int handler\n");
+		aprint_error_dev(sc->ms_dev, "cannot establish soft int handler\n");
 		return;
 	}
 	evcnt_attach_dynamic(&sc->ms_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    device_xname(&sc->ms_dev), "intr");
+	    device_xname(sc->ms_dev), "intr");
 }
 
 /*
@@ -743,7 +744,7 @@ magma_soft(void *arg)
 
 			if( stat & CD1400_RDSR_OE )
 				log(LOG_WARNING, "%s%x: fifo overflow\n",
-				    device_xname(&mtty->ms_dev), port);
+				    device_xname(mtty->ms_dev), port);
 
 			(*tp->t_linesw->l_rint)(data, tp);
 		}
@@ -754,14 +755,14 @@ magma_soft(void *arg)
 		splx(s);	/* ok */
 
 		if( ISSET(flags, MTTYF_CARRIER_CHANGED) ) {
-			dprintf(("%s%x: cd %s\n", device_xname(&mtty->ms_dev),
+			dprintf(("%s%x: cd %s\n", device_xname(mtty->ms_dev),
 				port, mp->mp_carrier ? "on" : "off"));
 			(*tp->t_linesw->l_modem)(tp, mp->mp_carrier);
 		}
 
 		if( ISSET(flags, MTTYF_RING_OVERFLOW) ) {
 			log(LOG_WARNING, "%s%x: ring buffer overflow\n",
-			    device_xname(&mtty->ms_dev), port);
+			    device_xname(mtty->ms_dev), port);
 		}
 
 		if( ISSET(flags, MTTYF_DONE) ) {
@@ -824,12 +825,13 @@ mtty_match(device_t parent, cfdata_t cf, void *args)
 }
 
 void
-mtty_attach(device_t parent, device_t dev, void *args)
+mtty_attach(device_t parent, device_t self, void *args)
 {
 	struct magma_softc *sc = device_private(parent);
-	struct mtty_softc *ms = device_private(dev);
+	struct mtty_softc *ms = device_private(self);
 	int port, chip, chan;
 
+	sc->ms_dev = self;
 	sc->ms_mtty = ms;
 	dprintf((" addr %p", ms));
 
