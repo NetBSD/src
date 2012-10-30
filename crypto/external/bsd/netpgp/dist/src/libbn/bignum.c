@@ -5356,10 +5356,10 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 int
 BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *a, const BIGNUM *d, BN_CTX *ctx)
 {
-	USE_ARG(ctx);
 	if ((dv == NULL && rem == NULL) || a == NULL || d == NULL) {
 		return 0;
 	}
+	USE_ARG(ctx);
 	return mp_div(dv, rem, __UNCONST(a), __UNCONST(d)) == MP_OKAY;
 }
 
@@ -5585,6 +5585,9 @@ BN_is_prime(const BIGNUM *a, int checks, void (*callback)(int, int, void *), BN_
 {
 	int	primality;
 
+	if (a == NULL) {
+		return 0;
+	}
 	USE_ARG(ctx);
 	USE_ARG(cb_arg);
 	USE_ARG(callback);
