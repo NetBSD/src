@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.16 2012/10/26 10:03:13 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.17 2012/10/30 20:02:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.16 2012/10/26 10:03:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.17 2012/10/30 20:02:15 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 
@@ -74,7 +74,7 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 
-void rpi_bootparams(void);
+static void rpi_bootparams(void);
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -186,7 +186,7 @@ static struct {
 	}
 };
 
-void
+static void
 rpi_bootparams(void)
 {
 	bus_space_tag_t iot = &bcm2835_bs_tag;
