@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.192 2012/10/26 11:34:05 sborrill Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.193 2012/10/31 15:49:27 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8714,4 +8714,20 @@ sys/arch/xen/xen/xengnt.c			1.25 via patch
 	and can also cause fs corruption. Addresses PR port-xen/47057
 	and port-xen/47056.
 	[royger, ticket #1805]
+
+sys/dev/scsipi/sd.c				patch
+
+	Allow disk strategy to be queried and changed at runtime
+	for sd(4) disks.
+	[buhrow, ticket #1807]
+
+sys/arch/i386/i386/locore.S			1.103 via patch
+
+	Fix running BSDi and NetBSD <= 1.0 binaries.  PR#41342.
+	[chs, ticket #1810]
+
+sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	1.8 via patch
+
+	Avoid crashing when writing to certain DRM sysctls.
+	[chs, ticket #1811]
 
