@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95.10.2 2012/04/20 23:32:14 riz Exp $	*/
+/*	$NetBSD: locore.S,v 1.95.10.3 2012/10/31 17:19:49 riz Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.10.2 2012/04/20 23:32:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.95.10.3 2012/10/31 17:19:49 riz Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1123,7 +1123,7 @@ IDTVEC(osyscall)
 #endif
 	pushfl			# set eflags in trap frame
 	popl	8(%esp)
-	orl	$PSL_I,(%esp)	# re-enable ints on return to user
+	orl	$PSL_I,8(%esp)	# re-enable ints on return to user
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 IDTVEC_END(osyscall)
