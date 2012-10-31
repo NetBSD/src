@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.12 2012/09/18 04:36:25 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.13 2012/10/31 05:46:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.12 2012/09/18 04:36:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.13 2012/10/31 05:46:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ static void smartbat_attach(device_t, device_t, void *);
 static int smartbat_match(device_t, cfdata_t, void *);
 static void smartbat_setup_envsys(struct smartbat_softc *);
 static void smartbat_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void smartbat_get_limits(struct sysmon_envsys *, envsys_data_t *,
+    sysmon_envsys_lim_t *, uint32_t *);
 static void smartbat_refresh_ac(struct sysmon_envsys *, envsys_data_t *);
 static void smartbat_poll(void *);
 static int smartbat_update(struct smartbat_softc *, int);
@@ -212,8 +214,14 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 	sc->sc_bat_sensor[BAT_CHARGING].value_cur = TRUE;
 	sc->sc_bat_sensor[BAT_CHARGING].state = ENVSYS_SVALID;
 
-	for (i = 0; i < BAT_NSENSORS; i++) {
+	for (i = 0; i < BAT_NSENSORS; i++)
 		sc->sc_bat_sensor[i].flags = ENVSYS_FMONNOTSUPP;
+
+	sc->sc_bat_sensor[BAT_CHARGE].flags =
+	    ENVSYS_FMONLIMITS | ENVSYS_FPERCENT | ENVSYS_FVALID_MAX;
+	sc->sc_bat_sensor[BAT_CHARGE_STATE].flags = ENVSYS_FMONSTCHANGED;
+
+	for (i = 0; i < BAT_NSENSORS; i++) {
 		if (sysmon_envsys_sensor_attach(sc->sc_bat_sme,
 						&sc->sc_bat_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_bat_sme);
@@ -225,6 +233,8 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 	sc->sc_bat_sme->sme_cookie = sc;
 	sc->sc_bat_sme->sme_refresh = smartbat_refresh;
 	sc->sc_bat_sme->sme_class = SME_CLASS_BATTERY;
+	sc->sc_bat_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
+	sc->sc_bat_sme->sme_get_limits = smartbat_get_limits;
 
 	if (sysmon_envsys_register(sc->sc_bat_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
@@ -237,12 +247,14 @@ static void
 smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smartbat_softc *sc = sme->sme_cookie;
-	int which = edata->sensor, present;
+	int which = edata->sensor, present, ch;
 
 	smartbat_update(sc, 0);
 	present = (sc->sc_flags & PMU_PWR_BATT_PRESENT) != 0;
+	ch = sc->sc_charge * 100 / sc->sc_max_charge;
 
 	if (present) {
+		edata->state = ENVSYS_SVALID;
 		switch (which) {
 		case BAT_PRESENT:
 			edata->value_cur = present;
@@ -258,6 +270,14 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 		case BAT_CHARGE:
 			edata->value_cur = sc->sc_charge * 1000;
+			edata->value_max = sc->sc_max_charge * 1000;
+			if (ch < 6) {
+				edata->state = ENVSYS_SCRITICAL;
+			} else if (ch < 11) {
+				edata->state = ENVSYS_SCRITUNDER;
+			} else if (ch < 20) {
+				edata->state = ENVSYS_SWARNUNDER;
+			}
 			break;
 		case BAT_CHARGING:
 			if ((sc->sc_flags & PMU_PWR_BATT_CHARGING) &&
@@ -268,17 +288,15 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 		case BAT_CHARGE_STATE:
 			{
-				int ch = sc->sc_charge * 100 / 
-				    sc->sc_max_charge;
 				if (ch < 6) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_CRITICAL;
-				} else if (ch < 11) {
-					edata->value_cur = 
-					    ENVSYS_BATTERY_CAPACITY_WARNING;
-				} else if (ch < 20) {
+				} else if (ch < 10) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_LOW;
+				} else if (ch < 20) {
+					edata->value_cur = 
+					    ENVSYS_BATTERY_CAPACITY_WARNING;
 				} else {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_NORMAL;
@@ -289,7 +307,6 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
 			break;
 		}
-		edata->state = ENVSYS_SVALID;
 	} else {
 		/* battery isn't there */
 		switch (which) {
@@ -313,6 +330,21 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static void
+smartbat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+    sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	struct smartbat_softc *sc = sme->sme_cookie;
+
+	if (edata->sensor != BAT_CHARGE)
+		return;
+
+	limits->sel_critmin = sc->sc_max_charge * 1000 / 100 * 10; /* 20% */
+	limits->sel_warnmin = sc->sc_max_charge * 1000 / 100 * 20; /* 10% */
+
+	*props |= PROP_BATTCAP | PROP_BATTWARN | PROP_DRIVER_LIMITS;
+}
+
+static void
 smartbat_refresh_ac(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smartbat_softc *sc = sme->sme_cookie;
@@ -321,10 +353,12 @@ smartbat_refresh_ac(struct sysmon_envsys *sme, envsys_data_t *edata)
 	smartbat_update(sc, 0);
 	switch (which) {
 		case BAT_AC_PRESENT:
-			edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
+			edata->value_cur =
+			    ((sc->sc_flags & PMU_PWR_AC_PRESENT) != 0);
 			edata->state = ENVSYS_SVALID;
 			break;
 		default:
+			edata->value_cur = 0;
 			edata->state = ENVSYS_SINVALID;
 	}
 }
@@ -416,7 +450,7 @@ smartbat_poll(void *cookie)
 		return;
 
 	sc->sc_oflags = sc->sc_flags & PMU_PWR_AC_PRESENT;
-
+	sc->sc_ac_sensor[0].value_cur = sc->sc_oflags ? 1 : 0;
 	sysmon_pswitch_event(&sc->sc_sm_acpower, 
 	    sc->sc_oflags ? PSWITCH_EVENT_PRESSED :
 	    PSWITCH_EVENT_RELEASED);
