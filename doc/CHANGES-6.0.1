@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.8 2012/10/26 08:05:00 sborrill Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.9 2012/10/31 16:27:45 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -57,4 +57,24 @@ share/misc/bsd-family-tree			1.46-1.47
 	Add some missing NetBSD releases:  4.0.1, 5.0.1, 5.0.2 and
 	5.1.2.
 	[riz, ticket #641]
+
+sys/arch/xen/xen/xengnt.c			1.25
+
+	Prevent a memory corruption issue that locks up a Xen DomU,
+	and con potentially cause file system corruption.
+	PR#47056, PR#47057.
+	[royger, ticket #640]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012h from
+	ftp://ftp.iana.org/tz/releases/tzdata2012h.tar.gz
+	Changes from tzdata2012g to tzdata2012h:
+   	   Bahia no longer has DST.  (Thanks to Kelley Cook.)
+	   Tocantins has DST.  (Thanks to Rodrigo Severo.)
+	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
+	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #657]
 
