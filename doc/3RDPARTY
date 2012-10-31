@@ -1,4 +1,4 @@
-#      $NetBSD: 3RDPARTY,v 1.647.2.6.2.9 2012/10/23 23:25:18 riz Exp $
+#	$NetBSD: 3RDPARTY,v 1.647.2.6.2.10 2012/10/31 16:46:09 riz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -924,9 +924,10 @@ License:	BSD (4-clause)
 Notes:
 
 Package:	tz
-Version:       tzcode2004a / tzdata2012g
-Current Vers:  tzcode2012g / tzdata2012g
-Maintainer:    Paul Eggert <eggert@cs.ucla.edu>
+Version:	tzcode2004a / tzdata2012h
+Current Vers:	tzcode2012h / tzdata2012h
+Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
+Maintainer:	Robert Elz <kre@munnari.oz.au>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
