@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.3 2012/10/31 20:51:25 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.4 2012/10/31 21:30:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.3 2012/10/31 20:51:25 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.4 2012/10/31 21:30:27 riz Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -148,7 +148,7 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			break;
 		}
 
-		uint64_t planesize;
+		uint64_t planesize = 0;
 		switch ((params3 & NAND_SAMSUNG_PLANESIZEMASK) >> 4) {
 		case 0x0:
 			planesize = 64 * 1024 * 1024;
