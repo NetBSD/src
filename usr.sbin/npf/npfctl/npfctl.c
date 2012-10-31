@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.21 2012/10/29 02:27:12 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.22 2012/10/31 08:54:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.21 2012/10/29 02:27:12 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.22 2012/10/31 08:54:39 martin Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -307,7 +307,7 @@ npfctl_table(int fd, int argc, char **argv)
 	npf_ioctl_table_t nct;
 	fam_addr_mask_t fam;
 	size_t buflen = 512;
-	char *cmd, *arg;
+	char *cmd, *arg = NULL; /* XXX gcc */
 	int n, alen;
 
 	/* Default action is list. */
