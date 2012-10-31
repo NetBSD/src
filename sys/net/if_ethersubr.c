@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.192 2012/10/11 20:05:50 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.193 2012/10/31 10:17:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.192 2012/10/11 20:05:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.193 2012/10/31 10:17:34 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1494,6 +1494,7 @@ int
 ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ethercom *ec = (void *) ifp;
+	struct eccapreq *eccr;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *iflr = data;
 	const struct sockaddr_dl *sdl;
@@ -1570,6 +1571,11 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case 0:
 			break;
 		}
+		return 0;
+	case SIOCGETHERCAP:
+		eccr = (struct eccapreq *)data;
+		eccr->eccr_capabilities = ec->ec_capabilities;
+		eccr->eccr_capenable = ec->ec_capenable;
 		return 0;
 	case SIOCADDMULTI:
 		return ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
