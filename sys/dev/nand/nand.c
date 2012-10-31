@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.17 2012/07/12 03:05:01 matt Exp $	*/
+/*	$NetBSD: nand.c,v 1.18 2012/10/31 18:58:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.17 2012/07/12 03:05:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.18 2012/10/31 18:58:08 riz Exp $");
 
 #include "locators.h"
 
@@ -332,6 +332,8 @@ nand_fill_chip_structure_legacy(device_t self, struct nand_chip *chip)
 	switch (chip->nc_manf_id) {
 	case NAND_MFR_MICRON:
 		return nand_read_parameters_micron(self, chip);
+	case NAND_MFR_SAMSUNG:
+		return nand_read_parameters_samsung(self, chip);
 	default:
 		return 1;
 	}
