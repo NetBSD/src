@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.16 2012/10/31 16:28:20 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.17 2012/10/31 17:32:01 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -395,4 +395,24 @@ share/zoneinfo/southamerica			patch
 	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
 	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #657]
+
+sys/arch/i386/i386/locore.S			1.103 via patch
+
+	Fix running BSDi and NetBSD <= 1.0 binaries.  PR#41342.
+	[chs, ticket #642]
+
+sys/dev/pci/pucdata.c				1.77-1.82
+sys/dev/pci/pcidevs				1.1125, 1.1129 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+share/man/man4/puc.4				1.36-1.38
+
+	Additional device support for puc(4).
+	[msaitoh, ticket #643]
+
+sys/kern/subr_cprng.c				1.12
+sys/netinet/tcp_subr.c				1.248
+
+	Fix a bug that kmem_alloc() is called from the interrupt context.
+	[msaitoh, ticket #644]
 
