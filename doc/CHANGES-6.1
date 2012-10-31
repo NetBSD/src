@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.15 2012/10/26 09:33:39 sborrill Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.16 2012/10/31 16:28:20 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -359,4 +359,40 @@ sbin/gpt/gpt.c					1.16-1.17
 
 	Endianness fixes.
 	[riz, ticket #619]
+
+sys/net/if_atmsubr.c				1.50
+sys/net/if_ethersubr.c				1.192
+sys/net/if_fddisubr.c				1.82
+sys/net/if_ppp.c				1.137
+sys/netinet6/in6_var.h				1.66
+sys/netinet6/ip6_flow.c				1.20
+
+	If the IPv6 flow code modifies the mbuf, pass the change up to
+	the caller.  PR#47058.
+	[christos, ticket #638]
+
+sys/fs/ptyfs/ptyfs_subr.c			1.24
+
+	Fix bad directory times on ptyfs.
+	[christos, ticket #639]
+
+sys/arch/xen/xen/xengnt.c			1.25
+
+	Prevent a memory corruption issue that locks up a Xen DomU,
+	and con potentially cause file system corruption.
+	PR#47056, PR#47057.
+	[royger, ticket #640]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012h from
+	ftp://ftp.iana.org/tz/releases/tzdata2012h.tar.gz
+	Changes from tzdata2012g to tzdata2012h:
+   	   Bahia no longer has DST.  (Thanks to Kelley Cook.)
+	   Tocantins has DST.  (Thanks to Rodrigo Severo.)
+	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
+	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #657]
 
