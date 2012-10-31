@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.3,v 1.1.2.29 2012/10/31 15:49:59 riz Exp $
+# $NetBSD: CHANGES-5.1.3,v 1.1.2.30 2012/10/31 16:48:13 riz Exp $
 
 A complete list of changes from the NetBSD 5.1.2 release to the NetBSD 5.1.3
 release:
@@ -2248,4 +2248,17 @@ sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	1.8 via patch
 
 	Avoid crashing when writing to certain DRM sysctls.
 	[chs, ticket #1811]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012h from
+	ftp://ftp.iana.org/tz/releases/tzdata2012h.tar.gz
+	Changes from tzdata2012g to tzdata2012h:
+   	   Bahia no longer has DST.  (Thanks to Kelley Cook.)
+	   Tocantins has DST.  (Thanks to Rodrigo Severo.)
+	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
+	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1812]
 
