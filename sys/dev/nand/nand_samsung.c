@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.2 2012/10/30 22:43:36 riz Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.3 2012/10/31 20:51:25 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,10 +37,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.2 2012/10/30 22:43:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.3 2012/10/31 20:51:25 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
+
+enum {
+	NAND_SAMSUNG_PAGEMASK = 0x3,
+	NAND_SAMSUNG_BLOCKMASK = 0x3 << 4,
+	NAND_SAMSUNG_SPAREMASK = 0x1 << 2,
+	NAND_SAMSUNG_BITSMASK = 0x1 << 6
+};
+
+enum {
+	NAND_SAMSUNG_PLANENUMMASK = 0x3 << 2,
+	NAND_SAMSUNG_PLANESIZEMASK = 0x7 << 4
+};
 
 int
 nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
@@ -66,15 +78,12 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 	nand_read_1(self, &params3);
 	nand_select(self, false);
 
-	enum {
-		NAND_SAMSUNG_PAGEMASK = 0x3,
-		NAND_SAMSUNG_BLOCKMASK = 0x3 << 4,
-		NAND_SAMSUNG_SPAREMASK = 0x1 << 2,
-		NAND_SAMSUNG_BITSMASK = 0x1 << 6
-	};
-
 	/* K9XXG08UXA */
 	if (devid == 0xdc) {
+		/* From the documentation */
+		chip->nc_addr_cycles_column = 2;
+		chip->nc_addr_cycles_row = 3;
+
 		switch (params2 & NAND_SAMSUNG_PAGEMASK) {
 		case 0x0:
 			chip->nc_page_size = 1024;
@@ -124,12 +133,56 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			break;
 		}
 		
-		// TODO make this nice like the above
-		chip->nc_size = (((params3 >> 4) & 0x7) + 1) * 64 * 1024 * 1024;
+		switch ((params3 & NAND_SAMSUNG_PLANENUMMASK) >> 2) {
+		case 0x0:
+			chip->nc_num_luns = 1;
+			break;
+		case 0x1:
+			chip->nc_num_luns = 2;
+			break;
+		case 0x2:
+			chip->nc_num_luns = 4;
+			break;
+		case 0x3:
+			chip->nc_num_luns = 8;
+			break;
+		}
+
+		uint64_t planesize;
+		switch ((params3 & NAND_SAMSUNG_PLANESIZEMASK) >> 4) {
+		case 0x0:
+			planesize = 64 * 1024 * 1024;
+			break;
+		case 0x1:
+			planesize = 128 * 1024 * 1024;
+			break;
+		case 0x2:
+			planesize = 256 * 1024 * 1024;
+			break;
+		case 0x3:
+			planesize = 512 * 1024 * 1024;
+			break;
+		case 0x4:
+			planesize = 1024 * 1024 * 1024;
+			break;
+		case 0x5:
+			planesize = 2ul * 1024 * 1024 * 1024;
+			break;
+		case 0x6:
+			planesize = 4ul * 1024 * 1024 * 1024;
+			break;
+		case 0x7:
+			planesize = 8ul * 1024 * 1024 * 1024;
+			break;
+		}
+
+		chip->nc_lun_blocks = planesize / chip->nc_block_size;
+		chip->nc_size = planesize * chip->nc_num_luns;
+
+		aprint_normal_dev(self, "vendor: Samsung, model: K9XXG08UXA\n");
 	} else {
 		return 1;
 	}
        
 	return 0;
 }
-
