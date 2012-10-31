@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.113 2012/10/25 08:42:46 sborrill Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.114 2012/10/31 16:39:29 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1509,4 +1509,17 @@ share/misc/bsd-family-tree			1.46-1.47
 	Add some missing NetBSD releases:  4.0.1, 5.0.1, 5.0.2 and
 	5.1.2.
 	[riz, ticket #1463]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012h from
+	ftp://ftp.iana.org/tz/releases/tzdata2012h.tar.gz
+	Changes from tzdata2012g to tzdata2012h:
+   	   Bahia no longer has DST.  (Thanks to Kelley Cook.)
+	   Tocantins has DST.  (Thanks to Rodrigo Severo.)
+	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
+	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #1464]
 
