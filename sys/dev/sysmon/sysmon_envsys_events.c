@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.105 2012/09/06 12:21:40 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.106 2012/10/31 05:42:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.105 2012/09/06 12:21:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.106 2012/10/31 05:42:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1027,6 +1027,7 @@ sme_acadapter_check(void)
 			sensor = true;
 			/* refresh current sensor */
 			sysmon_envsys_refresh_sensor(sme, edata);
+
 			if (edata->value_cur)
 				return false;
 		}
@@ -1061,10 +1062,16 @@ sme_battery_check(void)
 			continue;
 
 		present = true;
+
+		/*
+		 * XXX
+		 * this assumes that the first valid ENVSYS_INDICATOR is the
+		 * presence indicator
+		 */
 		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
-			if (edata->units == ENVSYS_INDICATOR &&
-			    !edata->value_cur) {
-				present = false;
+			if ((edata->units == ENVSYS_INDICATOR) &&
+			    (edata->state == ENVSYS_SVALID)) {
+				present = edata->value_cur;
 				break;
 			}
 		}
@@ -1076,6 +1083,9 @@ sme_battery_check(void)
 		batteriesfound++;
 		batterycap = batterycharge = false;
 		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+			/* no need to even look at sensors that aren't valid */
+			if (edata->state != ENVSYS_SVALID)
+				continue;
 			if (edata->units == ENVSYS_BATTERY_CAPACITY) {
 				batterycap = true;
 				if (!sme_battery_critical(edata))
