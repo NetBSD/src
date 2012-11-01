@@ -1,5 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2012/10/12 20:15:53 tsutsui Exp $	*/
-/*	Id: boot.c,v 1.19 2011/10/04 12:45:16 isaki Exp 	*/
+/*	$NetBSD: boot.c,v 1.2 2012/11/01 14:46:26 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
