@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.210 2012/08/08 14:13:46 christos Exp $
+#	$NetBSD: Makefile,v 1.211 2012/11/01 23:30:19 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR= apply asa at audio audiocfg \
 	column comm compress config crunch csplit ctags cut \
 	deroff db dirname du \
 	eject elf2aout elf2ecoff env error expand extattr \
-	false fdformat fgen fincore find finger fmt fold fpr from \
+	false fdformat fgen fincore find finger flock fmt fold fpr from \
 	fsplit fstat ftp gcore genassym gencat getconf getent getopt gprof \
 	head hexdump iconv id indent infocmp innetgr ipcrm ipcs join jot \
 	kdump ktrace ktruss lam last lastcomm ldd leave \
