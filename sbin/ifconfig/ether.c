@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.1 2012/10/31 10:17:34 msaitoh Exp $	*/
+/*	$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ether.c,v 1.1 2012/10/31 10:17:34 msaitoh Exp $");
+__RCSID("$NetBSD: ether.c,v 1.2 2012/11/01 13:43:23 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -58,11 +58,14 @@ static void ether_constructor(void) __attribute__((constructor));
 
 static status_func_t status;
 
+#define MAX_PRINT_LEN 55
+
 void
 ether_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct eccapreq eccr;
 	char fbuf[BUFSIZ];
+	char *bp;
 
 	memset(&eccr, 0, sizeof(eccr));
 
@@ -70,12 +73,20 @@ ether_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		return;
 
 	if (eccr.eccr_capabilities != 0) {
-		(void)snprintb(fbuf, sizeof(fbuf), ECCAPBITS,
-		    eccr.eccr_capabilities);
-		printf("\tec_capabilities=%s\n", &fbuf[2]);
-		(void)snprintb(fbuf, sizeof(fbuf), ECCAPBITS,
-		    eccr.eccr_capenable);
-		printf("\tec_enabled=%s\n", &fbuf[2]);
+		(void)snprintb_m(fbuf, sizeof(fbuf), ECCAPBITS,
+		    eccr.eccr_capabilities, MAX_PRINT_LEN);
+		bp = fbuf;
+		while (*bp != '\0') {
+			printf("\tec_capabilities=%s\n", &bp[2]);
+			bp += strlen(bp) + 1;
+		}
+		(void)snprintb_m(fbuf, sizeof(fbuf), ECCAPBITS,
+		    eccr.eccr_capenable, MAX_PRINT_LEN);
+		bp = fbuf;
+		while (*bp != '\0') {
+			printf("\tec_enabled=%s\n", &bp[2]);
+			bp += strlen(bp) + 1;
+		}
 	}
 }
 
