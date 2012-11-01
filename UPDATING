@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.234.2.1 2012/02/16 19:56:43 riz Exp $
+$NetBSD: UPDATING,v 1.234.2.1.2.1 2012/11/01 16:44:44 matt Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,10 +16,17 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20120813:
+	The update of openssl requires cleaning both the openssl build
+	directory and DESTDIR. *Even non-update builds require cleaning
+	DESTDIR.* Builds done without taking these steps may fail, or in
+	some cases may succeed and install broken openssl libraries that
+	cause third-party software to link incorrectly and/or crash.
+
 20120216:
 	Default for MKCATPAGES changed to NO. Update builds will fail
 	unless DESTDIR is cleaned manually. If you built between 20120207
-	and 20120216, daily and weekly could have created an unreable
+	and 20120216, daily and weekly could have created an unreadable
 	/var/db/man.db index for apropos. Running makemandb -f or
 	the next run of weekly will fix it.
 

@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0,v 1.1.2.197 2012/08/21 05:36:23 riz Exp $
+# $NetBSD: CHANGES-6.0,v 1.1.2.197.2.1 2012/11/01 16:44:53 matt Exp $
 
 A complete list of changes from the initial NetBSD 6.0 branch on 15 Feb 2012
 until the 6.0 release:
@@ -8409,4 +8409,445 @@ sys/arch/evbmips/conf/ALCHEMY			1.44
 sys/sys/param.h					patched by hand
 
 	Welcome to NetBSD 6.0_RC1!
+
+external/bsd/ntp/dist/ntpd/ntp_io.c		1.10
+
+	Make ntpd broadcast transmission work again.
+	[kardel, ticket #522]
+
+sys/dev/scsipi/scsiconf.c			1.269
+
+	Don't send more than 256 commands per target, to avoid a panic.
+	[bouyer, ticket #523]
+
+sys/dev/ic/isp_netbsd.c				1.86
+
+	Avoid a DIAGNOSTIC panic in the isp(4) driver.
+	[bouyer, ticket #524]
+
+share/man/man3/rbtree.3				1.7 via patch
+
+	Add more function argument names to the man page.  PR#46814.
+	[dholland, ticket #526]
+
+doc/CHANGES					patch
+distrib/notes/common/main			patch
+
+	Mention switch to FAST_IPSEC in January.
+	[drochner, ticket #527]
+
+sys/arch/macppc/conf/GENERIC				patch
+
+	Disable radeonfb for the release, as it causes problems on
+	some (but not all) hardware.
+	[macallan, ticket #528]
+
+sys/arch/x86/acpi/acpi_wakeup.c			1.32
+
+	Fix inverted test, which unbreaks ACPI suspend on UP, and possibly
+	other bugs on MP.
+	[jakllsch, ticket #529]
+
+sys/nfs/nfs_serv.c				1.164
+
+	Fix panic that can happen when an NFS rename fails.
+	[chs, ticket #530]
+
+external/gpl3/binutils/dist/bfd/elf32-vax.c	1.7
+
+	Fix vax shared libraries, so the vax port works again.
+	[martin, ticket #531]
+
+sys/arch/vax/vax/machdep.c			1.189
+
+	Silence savecore warnings on vax - crash dumps are not
+	properly implemented on vax.
+	[martin, ticket #532]
+
+sys/arch/i386/i386/i386func.S			1.17
+
+	Fix support for 486.
+	[rmind, ticket #533]
+
+sys/dev/pci/if_wm.c				1.232-1.234
+sys/dev/pci/if_wmreg.h				1.48
+
+	Make VLANs and checksum offload work for WM_F_NEWQUEUE devices.
+	Tested on 82575{EB,GB}, 82576, 82580, I350 and ICH9.
+	[bouyer, ticket #534]
+
+sys/arch/powerpc/pic/intr.c			1.23
+
+	Fix interrupt problems on PPC.
+	[macallan, ticket #535]
+
+sys/dev/pci/mfi_pci.c				1.17
+
+	Add missing definition for Symbios SAS 9261-8i.  PR#46877.
+	[jnemeth, ticket #536]
+
+sys/nfs/nfs_serv.c				1.165
+
+	Clean up properly after unloading nfsserver module, to avoid
+	crashes.
+	[christos, ticket #537]
+
+sys/netipsec/key.c				patch
+sys/netipsec/key.h				patch
+
+	Prevent a panic with FAST_IPSEC.
+	[msaitoh, ticket #538]
+
+sys/arch/amd64/amd64/machdep.c			1.190 via patch
+
+	Fix X on NetBSD/amd64 Xen DOM0.  PR#46634.
+	[cherry, ticket #539]
+
+external/gpl3/gcc/dist/gcc/builtins.c		1.2
+
+	Fix gcc on STRICT_ALIGNMENT arches. PR#46865.
+	[martin, ticket #540]
+
+sys/uvm/uvm_km.c				1.129-1.135
+sys/uvm/uvm_map.c				1.320-1.322
+
+	Fix a pmap_growkernel issue which caused some systems to reset
+	very early in the boot sequence. PR#46885.
+	[para, ticket #547]
+
+doc/README.files				1.5
+share/man/man7/release.7			1.33, 1.34
+
+	Update documentation regarding bootable images.
+	[riz, ticket #548]
+
+UPDATING					1.238 via patch
+	Add note about cleaning required by last month's openssl update.
+	Closes PR 46816. 
+	[dholland, ticket #549]
+
+external/bsd/bind/dist/CHANGES			1.6
+external/bsd/bind/dist/lib/dns/include/dns/rdata.h 1.5
+external/bsd/bind/dist/lib/dns/master.c		1.7
+external/bsd/bind/dist/lib/dns/rdata.c		1.5
+external/bsd/bind/dist/lib/dns/rdataslab.c	1.6
+external/bsd/bind/dist/lib/dns/tests/Makefile.in 1.2
+external/bsd/bind/dist/lib/dns/tests/master_test.c 1.2
+external/bsd/bind/dist/lib/dns/tests/rdata_test.c 1.1
+external/bsd/bind/dist/lib/dns/tests/testdata/master/master15.data 1.1
+external/bsd/bind/dist/lib/dns/tests/testdata/master/master16.data 1.1
+external/bsd/bind/dist/version			1.3
+
+	apply fix for CVE-2012-4244 from upstream
+
+	upstream changelog:
+	          --- 9.9.1-P3 released ---
+	   3364.  [security]      Named could die on specially crafted record.
+                          [RT #30416]
+	[spz, ticket #559]
+
+
+lib/libp2k/p2k.c				1.57
+lib/libpuffs/dispatcher.c			1.44
+lib/libpuffs/pnode.c				1.13
+lib/libpuffs/puffs.3				1.56
+lib/libpuffs/puffs.h				1.124
+lib/libpuffs/puffs_ops.3			1.35
+
+	Fix a regression in libpuffs for third-party file systems which
+	do not map cookies to struct puffs_node.  We are not aware of
+	the existence of any such file systems.
+	[manu, ticket #525]
+
+sys/arch/arm/include/byte_swap.h		1.9,1.12
+
+	Disable arm32 __asm for _byte_swap_u16_variable since gcc4.5 produces
+	decent code for it.  Fixes PR/46898.
+	[martin, ticket #542]
+
+etc/MAKEDEV.tmpl				1.158
+
+	Make the "init" target create optys as well.  PR#46902.
+	[martin, ticket #543]
+
+sys/dev/sbus/isp_sbus.c				1.81
+
+	Fix isp(4) at sbus so it doesn't hang the machine.
+	[macallan, ticket #550]
+
+sys/ufs/ufs/ufs_quota.c				1.112
+
+	Fix quotactl authorization.
+	[manu, ticket #551]
+
+sbin/mount_ptyfs/mount_ptyfs.8			1.9-1.10
+
+	ptyfs(8) is not experimental.
+	[dholland, ticket #552]
+
+sys/ufs/ffs/ffs_vfsops.c			1.278
+
+	Fix unmount of file systems with extended attributes enabled.
+	[manu, ticket #553]
+
+lib/libperfuse/perfuse.c			1.31
+
+	Don't unmount FUSE file systems on a non-fatal error.
+	[manu, ticket #554]
+
+sys/net/npf/npf_alg_icmp.c			1.12
+
+	Fix a bug in NPF's icmp handling.
+	[rmind, ticket #555]
+
+sys/ufs/ufs/ufs_extattr.c			1.40
+
+	Fix unmount in the case where an attribute was autocreated.
+	[manu, ticket #556]
+
+sys/arch/evbmips/conf/MALTA			1.68
+
+	Bump SYMTAB_SPACE by 30k.
+	[cyber, ticket #564]
+
+distrib/sets/lists/base/ad.mips64eb		1.94-1.95 via patch
+distrib/sets/lists/base/ad.mips64el		1.93-1.94 via patch
+distrib/sets/lists/base/md.amd64		1.169-1.170 via patch
+distrib/sets/lists/base/md.sparc64		1.159-1.160 via patch
+distrib/sets/lists/base/shl.mi			1.629,1.630,1.632 via patch
+distrib/sets/lists/comp/ad.mips64eb		1.81-1.82 via patch
+distrib/sets/lists/comp/ad.mips64el		1.821.83 via patch
+distrib/sets/lists/comp/md.amd64		1.168-1.169 via patch
+distrib/sets/lists/comp/md.sparc64		1.150-1.151 via patch
+distrib/sets/lists/comp/mi			1.1769 via patch
+distrib/sets/lists/comp/shl.mi			1.226-1.227 via patch
+distrib/sets/lists/tests/mi			1.477 via patch
+distrib/sets/sets.subr				1.137 via patch
+etc/Makefile					1.397 via patch
+share/man/man5/mk.conf.5			1.60 via patch
+share/mk/bsd.README				1.297 via patch
+share/mk/bsd.own.mk				1.700 via patch
+tests/crypto/libcrypto/Makefile			patch
+tests/crypto/libcrypto/t_ciphers.sh		1.4 via patch
+tests/crypto/libcrypto/t_hashes.sh		1.2 via patch
+tests/crypto/libcrypto/idea/Makefile		patch
+tests/crypto/libcrypto/mdc2/Makefile		patch
+usr.sbin/racoon/Makefile			1.25 via patch
+
+	Clean up MKCRYPTO_IDEA and MKCRYPTO_MDC2 removal, so that
+	a tree with MKCRYPTO_RC5=yes actually builds.
+	[spz, ticket #557]
+
+sys/sys/param.h					patched by hand
+
+	Welcome to NetBSD 6.0_RC2!
+
+doc/3RDPARTY					1.970 via patch
+share/zoneinfo/australasia			1.27 via patch
+
+	Merge tzdata2012f from
+	http://www.iana.org/time-zones/repository/releases/tzdata2012f.tar.gz
+	Changes from tzdata2012e to tzdata2012f:
+	    * australasia (Pacific/Fiji): Fiji DST is October 21 through
+	      January 20 this year.  (Thanks to Steffen Thorsen.)
+	[apb, ticket #578]
+
+UPDATING					1.239
+
+	Fix typo, noticed by stu314 on freenode.
+	[dholland, ticket #561]
+
+doc/CHANGES				patch
+
+	Add forgotten CHANGES entries for rndctl entropy save/load and all the
+	kernel entropy changes.
+	[tls, ticket #562]
+
+distrib/utils/sysinst/msg.mi.es			1.47
+
+	Add Spanish translations for sysinst's new configuration menu,
+	plus adding a few that were left previously.
+	Translation provided by jmmv.
+	[martin, ticket #563]
+
+UPDATING					1.240
+
+	Strengthen the entry about the openssl update, to clarify and emphasize
+	that just doing a non-update build isn't enough; you really do have to
+	nuke $DESTDIR.
+	[dholland, ticket #565]
+
+distrib/utils/sysinst/menus.mi			1.47
+distrib/utils/sysinst/msg.mi.de			1.70
+distrib/utils/sysinst/msg.mi.en			1.175
+distrib/utils/sysinst/msg.mi.es			1.46
+distrib/utils/sysinst/msg.mi.fr			1.129
+distrib/utils/sysinst/msg.mi.pl			1.86
+
+	Add translations for "Config menu" (was hardcoded before)
+	Add translations for Polish config menu entries (provided by
+	Marcin Piotr Pawlowski).
+	Add Spanish translations for sysinst's new configuration menu,
+	plus adding a few that were left previously.  Translation provided
+	by jmmv.
+	[jdf, ticket #567]
+
+usr.sbin/postinstall/postinstall		1.147
+
+	Make sure that the "to fix, run: ..." instructions actually work
+	cut-and-paste.
+	[ast, ticket #568]
+
+sbin/mount_ptyfs/mount_ptyfs.8			1.11-1.12
+sbin/mount_ptyfs/mount_ptyfs.c			1.13-1.14
+sys/fs/ptyfs/ptyfs.h				1.9
+sys/fs/ptyfs/ptyfs_vfsops.c			1.43-1.44
+
+	Update ptyfs to allow multiple mounts, remove some always-on
+	options, and update the documentation.
+	[christos, ticket #566]
+
+sys/dev/pci/ehci_pci.c				1.57
+
+	Fix fatal hangup during EHCI probe on some HP boxes.  PR#46828.
+	[tstsui, ticket #569]
+
+distrib/utils/sysinst/net.c			1.133
+
+	Prevent sysinst from setting an FQDN in rc.conf when the user entered no
+	domain (i.e., sets only the hostname).  PR#46946.
+	[jdf, ticket #570]
+
+external/apache2/mDNSResponder/dist/mDNSShared/dnssd_clientstub.c 1.4
+
+	Fix setsockopt(2) error in 64bit environment.  Makes ntpd(8) stop
+	complaining at boot. PR#46693.
+	[taca, ticket #571]
+
+usr.sbin/traceroute/traceroute.c		1.81
+
+	Fix display of multipath routes.
+	[zafer, ticket #573]
+
+sys/arch/macppc/include/param.h			1.20
+sys/arch/powerpc/include/param.h		1.28
+
+	Increase powerpc NKMEMPAGES_MAX_DEFAULT to 256MB. Fixes
+	hangs on platforms (ofppc) which did not already have this overridden.
+	[mrg, ticket #575]
+
+lib/libc/arch/arm/gen/swapcontext.S		1.7
+
+	Fix up the stack pointer in the ucontext returned by getcontext.
+	[skrll, ticket #576]
+
+sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	1.8
+
+	Avoid crashing when writing to certain DRM sysctls.
+	[chs, ticket #579]
+
+sys/ufs/ufs/ufs_quota2.c			1.35
+tests/fs/ffs/h_quota2_tests.c			1.4
+tests/fs/ffs/t_miscquota.sh			1.7
+
+	Fix quota2 list corruption issue when defaultquotas are 0 (deny any file
+	and block allocation).
+	[bouyer, ticket #580]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.16-1.23
+usr.sbin/npf/npfctl/npfctl.c			1.19
+
+	Improve npf.conf(5) manpage, minor formatting fix for npfctl.
+	[rmind, ticket #582]
+
+distrib/sets/lists/base/mi			1.1003
+etc/mtree/NetBSD.dist.base			1.104
+share/examples/Makefile				1.21
+share/examples/npf/Makefile			1.1
+share/examples/npf/hashtablefile		1.1
+share/examples/npf/host-npf.conf		1.1-1.2
+share/examples/npf/soho_gw-npf.conf		1.1-1.2
+share/examples/npf/treetablefile		1.1
+
+	Update the NPF examples, and install them.
+	[rmind, ticket #584]
+
+sys/kern/kern_exit.c				1.242 via patch
+sys/kern/kern_lwp.c				1.173 via patch
+sys/kern/sys_lwp.c				1.55 via patch
+sys/sys/lwp.h					1.164 via patch
+
+	Fix a race condition in exit_lwps, lwp_rwait.  PR#46168, PR#46402.
+	[rmind, ticket #583]
+
+etc/rc.d/named					1.23
+
+	Handle "keys" directory and directory permissions better, so
+	that DNSSEC validation works out of the box. PR#47024.
+	[christos, ticket #587]
+
+share/man/man5/ifconfig.if.5			1.16
+share/man/man5/rc.conf.5			1.154 via patch
+
+	Discourage the use of ifconfig_bge0=dhcp and prefer setting dhcpcd=YES
+	in rc.conf(5) instead.
+	[roy, ticket #588]
+
+sys/arch/powerpc/powerpc/trap.c			patch
+
+	Silence trap printfs caused by OpenSSL.
+	[christos, ticket #589]
+
+usr.sbin/npf/npfctl/npf_parse.y			1.14
+
+	Print the correct line number in npfctl.
+	[rmind, ticket #590]
+
+sys/kern/uipc_usrreq.c				1.140 via patch
+
+	Avoid a NULL dereferencing crash.
+	[christos, ticket #593]
+
+sys/net/npf/npf_handler.c			1.23
+
+	npf_packet_handler: drop the packet if IPv6 reassembly did not work.
+	[rmind, ticket #594]
+
+distrib/notes/macppc/install			1.39
+
+	Add some text to "Common Problems" about Open Firmware 3.x not
+	setting up the console and how to work around the problem. PR#35348.
+	[jnemeth, ticket #595]
+
+external/bsd/wpa/dist/src/eap_server/eap_server_tls_common.c	patch
+
+	Fix overflow in hostapd.  PRE-SA-2012-07.
+	[christos, ticket #597]
+
+external/bsd/bind/dist/CHANGES			1.7
+external/bsd/bind/dist/bin/named/query.c	1.9
+external/bsd/bind/dist/version			1.4
+
+	Update to BIND 9.9.1-P4, to address CVE-2012-5166.
+	[christos, ticket #598]
+
+distrib/notes/common/main			1.490
+
+	Refer to the list of mirrors at http://www.NetBSD.org/mirrors
+	in "Quick install notes for the impatient".
+	[apb, ticket #599]
+
+distrib/notes/common/main			patched by hand
+
+	Update the release notes.
+
+sys/arch/algor/conf/P5064			1.74
+sys/arch/evbmips/conf/MALTA64			1.6
+
+	Bump SYMTAB_SPACE so these kernels build again.
+	[riz, ticket #607]
+
+sys/sys/param.h					patched by hand
+
+	Welcome to 6.0!
 
