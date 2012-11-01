@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.27 2012/10/26 21:03:26 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.28 2012/11/01 02:46:41 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.27 2012/10/26 21:03:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.28 2012/11/01 02:46:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,8 @@ CTASSERT(MVGBE_RX_RING_CNT > 1 && MVGBE_RX_RING_NEXT(MVGBE_RX_RING_CNT) ==
 	(MVGBE_RX_RING_CNT + 1) % MVGBE_RX_RING_CNT);
 
 #define MVGBE_JSLOTS		384	/* XXXX */
-#define MVGBE_JLEN		((MVGBE_MRU + MVGBE_RXBUF_ALIGN)&~MVGBE_RXBUF_MASK)
+#define MVGBE_JLEN \
+    ((MVGBE_MRU + MVGBE_RXBUF_ALIGN) & ~MVGBE_RXBUF_MASK)
 #define MVGBE_NTXSEG		30
 #define MVGBE_JPAGESZ		PAGE_SIZE
 #define MVGBE_RESID \
@@ -274,8 +275,10 @@ static void mvgbe_filter_setup(struct mvgbe_softc *);
 #ifdef MVGBE_DEBUG
 static void mvgbe_dump_txdesc(struct mvgbe_tx_desc *, int);
 #endif
-static int mvgbe_ipginttx(struct mvgbec_softc *, struct mvgbe_softc *, unsigned int);
-static int mvgbe_ipgintrx(struct mvgbec_softc *, struct mvgbe_softc *, unsigned int);
+static int mvgbe_ipginttx(struct mvgbec_softc *, struct mvgbe_softc *,
+    unsigned int);
+static int mvgbe_ipgintrx(struct mvgbec_softc *, struct mvgbe_softc *,
+    unsigned int);
 static void sysctl_mvgbe_init(struct mvgbe_softc *);
 static int mvgbe_sysctl_ipginttx(SYSCTLFN_PROTO);
 static int mvgbe_sysctl_ipgintrx(SYSCTLFN_PROTO);
@@ -358,7 +361,7 @@ mvgbec_match(device_t parent, cfdata_t match, void *aux)
 static void
 mvgbec_attach(device_t parent, device_t self, void *aux)
 {
-	struct mvgbec_softc *sc = device_private(self);
+	struct mvgbec_softc *csc = device_private(self);
 	struct marvell_attach_args *mva = aux, gbea;
 	struct mvgbe_softc *port;
 	struct mii_softc *mii;
@@ -369,10 +372,10 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Marvell Gigabit Ethernet Controller\n");
 
-	sc->sc_dev = self;
-	sc->sc_iot = mva->mva_iot;
+	csc->sc_dev = self;
+	csc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
-	    mva->mva_size, &sc->sc_ioh)) {
+	    mva->mva_size, &csc->sc_ioh)) {
 		aprint_error_dev(self, "Cannot map registers\n");
 		return;
 	}
@@ -381,15 +384,15 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		mvgbec0 = self;
 
 	phyaddr = 0;
-	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
+	MVGBE_WRITE(csc, MVGBE_PHYADDR, phyaddr);
 
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&csc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
 
 	/* Disable and clear Gigabit Ethernet Unit interrupts */
-	MVGBE_WRITE(sc, MVGBE_EUIM, 0);
-	MVGBE_WRITE(sc, MVGBE_EUIC, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
 
-	mvgbec_wininit(sc);
+	mvgbec_wininit(csc);
 
 	memset(&gbea, 0, sizeof(gbea));
 	for (i = 0; i < __arraycount(mvgbe_ports); i++) {
@@ -397,17 +400,17 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		    mvgbe_ports[i].unit != mva->mva_unit)
 			continue;
 
-		sc->sc_flags = mvgbe_ports[i].flags;
+		csc->sc_flags = mvgbe_ports[i].flags;
 
 		for (j = 0; j < mvgbe_ports[i].ports; j++) {
 			gbea.mva_name = "mvgbe";
 			gbea.mva_model = mva->mva_model;
-			gbea.mva_iot = sc->sc_iot;
-			gbea.mva_ioh = sc->sc_ioh;
+			gbea.mva_iot = csc->sc_iot;
+			gbea.mva_ioh = csc->sc_ioh;
 			gbea.mva_unit = j;
 			gbea.mva_dmat = mva->mva_dmat;
 			gbea.mva_irq = mvgbe_ports[i].irqs[j];
-			child = config_found_sm_loc(sc->sc_dev, "mvgbec", NULL,
+			child = config_found_sm_loc(csc->sc_dev, "mvgbec", NULL,
 			    &gbea, mvgbec_print, mvgbec_search);
 			if (child) {
 				port = device_private(child);
@@ -417,7 +420,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	}
-	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
+	MVGBE_WRITE(csc, MVGBE_PHYADDR, phyaddr);
 }
 
 static int
