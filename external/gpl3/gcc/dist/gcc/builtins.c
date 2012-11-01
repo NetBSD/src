@@ -347,7 +347,7 @@ bool
 can_trust_pointer_alignment (void)
 {
   /* We rely on TER to compute accurate alignment information.  */
-  return (optimize && flag_tree_ter);
+  return (!STRICT_ALIGNMENT && optimize && flag_tree_ter);
 }
 
 /* Return the alignment in bits of EXP, a pointer valued expression.
