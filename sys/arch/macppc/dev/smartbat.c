@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.13 2012/10/31 05:46:49 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.14 2012/11/01 15:54:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.13 2012/10/31 05:46:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.14 2012/11/01 15:54:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,8 @@ struct smartbat_softc {
 	int sc_voltage;
 	int sc_charge;
 	int sc_max_charge;
+	int sc_warn;
+	int sc_low;
 	int sc_draw;
 	int sc_time;
 	uint32_t sc_timestamp;
@@ -131,6 +133,8 @@ smartbat_attach(device_t parent, device_t self, void *aux)
 
 	printf(" addr %d: smart battery\n", sc->sc_num);
 
+	sc->sc_charge = 0;
+	sc->sc_max_charge = 0;
 	smartbat_update(sc, 1);
 	/* trigger a status update */
 	sc->sc_oflags = ~sc->sc_flags;
@@ -229,6 +233,10 @@ smartbat_setup_envsys(struct smartbat_softc *sc)
 		}
 	}
 
+	sc->sc_low  = sc->sc_max_charge * 1000 / 100 * 10; /* 10% */
+	sc->sc_warn = sc->sc_max_charge * 1000 / 100 * 20; /* 20% */
+
+
 	sc->sc_bat_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_bat_sme->sme_cookie = sc;
 	sc->sc_bat_sme->sme_refresh = smartbat_refresh;
@@ -273,9 +281,9 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->value_max = sc->sc_max_charge * 1000;
 			if (ch < 6) {
 				edata->state = ENVSYS_SCRITICAL;
-			} else if (ch < 11) {
+			} else if (edata->value_cur < sc->sc_low) {
 				edata->state = ENVSYS_SCRITUNDER;
-			} else if (ch < 20) {
+			} else if (edata->value_cur < sc->sc_warn) {
 				edata->state = ENVSYS_SWARNUNDER;
 			}
 			break;
@@ -288,13 +296,15 @@ smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			break;
 		case BAT_CHARGE_STATE:
 			{
+				int chr = sc->sc_charge * 1000;
+
 				if (ch < 6) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_CRITICAL;
-				} else if (ch < 10) {
+				} else if (chr < sc->sc_low) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_LOW;
-				} else if (ch < 20) {
+				} else if (chr < sc->sc_warn) {
 					edata->value_cur = 
 					    ENVSYS_BATTERY_CAPACITY_WARNING;
 				} else {
@@ -338,8 +348,8 @@ smartbat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	if (edata->sensor != BAT_CHARGE)
 		return;
 
-	limits->sel_critmin = sc->sc_max_charge * 1000 / 100 * 10; /* 20% */
-	limits->sel_warnmin = sc->sc_max_charge * 1000 / 100 * 20; /* 10% */
+	limits->sel_critmin = sc->sc_low;
+	limits->sel_warnmin = sc->sc_warn;
 
 	*props |= PROP_BATTCAP | PROP_BATTWARN | PROP_DRIVER_LIMITS;
 }
@@ -372,6 +382,7 @@ smartbat_update(struct smartbat_softc *sc, int out)
 {
 	int len;
 	uint8_t buf[16];
+	int8_t *sbuf = (int8_t *)buf;
 	uint8_t battery_number;
 
 	if (sc->sc_timestamp == time_second)
@@ -417,13 +428,13 @@ smartbat_update(struct smartbat_softc *sc, int out)
 	case 4:
 		sc->sc_charge = buf[3];
 		sc->sc_max_charge = buf[4];
-		sc->sc_draw = *((signed char *)&buf[5]);
+		sc->sc_draw = sbuf[5];
 		sc->sc_voltage = buf[6];
 		break;
 	case 5:
 		sc->sc_charge = ((buf[3] << 8) | (buf[4]));
 		sc->sc_max_charge = ((buf[5] << 8) | (buf[6]));
-		sc->sc_draw = *((signed short *)&buf[7]);
+		sc->sc_draw = sbuf[7];
 		sc->sc_voltage = ((buf[9] << 8) | (buf[8]));
 		break;
 	default:
