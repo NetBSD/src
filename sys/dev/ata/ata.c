@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.125 2012/08/04 21:21:09 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.126 2012/11/01 13:46:52 abs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.125 2012/08/04 21:21:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.126 2012/11/01 13:46:52 abs Exp $");
 
 #include "opt_ata.h"
 
@@ -70,7 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.125 2012/08/04 21:21:09 bouyer Exp $");
 #define DEBUG_DETACH 0x20
 #define	DEBUG_XFERS  0x40
 #ifdef ATADEBUG
-int atadebug_mask = 0;
+#ifndef ATADEBUG_MASK
+#define ATADEBUG_MASK 0
+#endif
+int atadebug_mask = ATADEBUG_MASK;
 #define ATADEBUG_PRINT(args, level) \
 	if (atadebug_mask & (level)) \
 		printf args
