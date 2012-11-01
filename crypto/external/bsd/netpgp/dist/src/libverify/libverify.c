@@ -1237,6 +1237,9 @@ recog_userid(pgpv_t *pgp, pgpv_signed_userid_t *userid)
 		if (signature.primary_userid) {
 			userid->primary_userid = signature.primary_userid;
 		}
+		if (signature.revoked) {
+			userid->revoked = signature.revoked;
+		}
 	}
 	return 1;
 }
@@ -1260,6 +1263,9 @@ recog_userattr(pgpv_t *pgp, pgpv_signed_userattr_t *userattr)
 			return 0;
 		}
 		ARRAY_APPEND(userattr->sigs, signature);
+		if (signature.revoked) {
+			userattr->revoked = signature.revoked;
+		}
 	}
 	return 1;
 }
@@ -1361,6 +1367,9 @@ fmt_pubkey(char *s, size_t size, pgpv_pubkey_t *pubkey, const char *leader)
 	return cc;
 }
 
+/* we add 1 to revocation value to denote compromised */
+#define COMPROMISED	(0x02 + 1)
+
 /* format a userid - used to order the userids when formatting */
 static size_t
 fmt_userid(char *s, size_t size, pgpv_primarykey_t *primary, uint8_t u)
@@ -1368,8 +1377,10 @@ fmt_userid(char *s, size_t size, pgpv_primarykey_t *primary, uint8_t u)
 	pgpv_signed_userid_t	*userid;
 
 	userid = &ARRAY_ELEMENT(primary->signed_userids, u);
-	return snprintf(s, size, "uid              %.*s\n",
-			(int)userid->userid.size, userid->userid.data);
+	return snprintf(s, size, "uid              %.*s%s\n",
+			(int)userid->userid.size, userid->userid.data,
+			(userid->revoked == COMPROMISED) ? " [COMPROMISED AND REVOKED]" :
+			(userid->revoked) ? " [REVOKED]" : "");
 }
 
 /* print a primary key, per RFC 4880 */
@@ -1919,6 +1930,7 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 			/* XXX - check it's a good key expiry */
 			primary->primary.expiry = signature.keyexpiry;
 		}
+if (signature.revoked) fprintf(stderr, "agc - revoked1\n");
 		ARRAY_APPEND(primary->direct_sigs, signature);
 	}
 	/* some keys out there have user ids where they shouldn't */
