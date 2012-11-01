@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.7 2012/10/17 20:45:49 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.8 2012/11/01 20:17:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.7 2012/10/17 20:45:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.8 2012/11/01 20:17:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,7 +237,7 @@ arml2cc_enable(struct arml2cc_softc *sc)
 
 	arml2cc_write_4(sc, L2C_CTL, 1);	// turn it on
 
-	//arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
+	arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
 	arml2cc_cache_sync(sc);
 
 	mutex_spin_exit(&sc->sc_lock);
