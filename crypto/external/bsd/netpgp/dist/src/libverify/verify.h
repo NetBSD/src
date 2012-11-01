@@ -211,11 +211,13 @@ typedef struct pgpv_signed_userid_t {
 	pgpv_string_t	 	 userid;
 	PGPV_ARRAY(pgpv_signature_t, sigs);
 	uint8_t			 primary_userid;
+	uint8_t			 revoked;
 } pgpv_signed_userid_t;
 
 typedef struct pgpv_signed_userattr_t {
 	pgpv_userattr_t	 	 userattr;
 	PGPV_ARRAY(pgpv_signature_t, sigs);
+	uint8_t			 revoked;
 } pgpv_signed_userattr_t;
 
 typedef struct pgpv_signed_subkey_t {
