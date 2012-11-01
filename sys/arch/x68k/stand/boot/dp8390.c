@@ -1,5 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.1 2012/10/12 20:15:52 tsutsui Exp $	*/
-/*	Id: dp8390.c,v 1.14 2011/10/05 13:16:20 isaki Exp 	*/
+/*	$NetBSD: dp8390.c,v 1.2 2012/11/01 14:46:26 isaki Exp $	*/
 
 /*
  * This file is derived from sys/arch/i386/stand/lib/netif/dp8390.c
