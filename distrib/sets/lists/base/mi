@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1010 2012/11/01 03:26:42 christos Exp $
+# $NetBSD: mi,v 1.1011 2012/11/01 23:33:10 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -463,6 +463,7 @@
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
+./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
