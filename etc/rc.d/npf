@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: npf,v 1.2 2011/03/07 23:21:13 jmcneill Exp $
+# $NetBSD: npf,v 1.3 2012/11/01 06:06:14 mrg Exp $
 #
 # Public Domain.
 #
@@ -35,22 +35,22 @@ npf_start()
 {
 	echo "Enabling NPF."
 	npf_cfg_check
-	/usr/sbin/npfctl reload
-	/usr/sbin/npfctl start
+	/sbin/npfctl reload
+	/sbin/npfctl start
 }
 
 npf_stop()
 {
 	echo "Disabling NPF."
-	/usr/sbin/npfctl stop
-	/usr/sbin/npfctl flush
+	/sbin/npfctl stop
+	/sbin/npfctl flush
 }
 
 npf_reload()
 {
 	echo "Reloading NPF ruleset."
 	npf_cfg_check
-	/usr/sbin/npfctl reload
+	/sbin/npfctl reload
 }
 
 npf_status()
