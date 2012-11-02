@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.8 2012/10/30 17:20:34 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.9 2012/11/02 08:22:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.8 2012/10/30 17:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.9 2012/11/02 08:22:33 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1969,7 +1969,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes,
 			 * radix_tree_insert_node, which is used by
 			 * uvm_pagealloc, can block.
 			 */
-			printf("%s: uvm_pagealloc blocked\n", __func__);
 			if (ptp != NULL) {
 				uvm_pagefree(ptp);
 			}
