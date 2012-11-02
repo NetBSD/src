@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.6 2012/11/02 21:17:26 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.7 2012/11/02 21:27:46 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.6 2012/11/02 21:17:26 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.7 2012/11/02 21:27:46 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -121,6 +121,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		default:
 			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
+
+		chip->nc_block_pages = chip->nc_block_size / chip->nc_page_size;
 
 		/* 8/16 bytes per 512 bytes! XXX do i get this right? */
 		switch ((params2 & NAND_SAMSUNG_SPAREMASK) >> 2) {
