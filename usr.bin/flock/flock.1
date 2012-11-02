@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.5 2012/11/02 02:07:19 wiz Exp $
+.\"	$NetBSD: flock.1,v 1.6 2012/11/02 12:47:57 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,6 @@ On error print an explanation of the failure.
 .It Fl w , Fl Fl wait , Fl Fl timeout Ar seconds
 Fail if the lock could not be obtained after
 .Ar seconds .
-Seconds are truncated to integer values.
 .It Fl x , Fl Fl exclusive
 Obtain an exclusive lock.
 .El
