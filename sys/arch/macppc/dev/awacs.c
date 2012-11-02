@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.42 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.42 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -288,7 +288,9 @@ static const char *detect_reversed[] = {"AAPL,3400/2400",
 					"AAPL,3500",
 					NULL};
 
-static const char *use_gpio4[] = {	"PowerMac3,3",
+static const char *use_gpio4[] = {	"PowerMac3,1",
+					"PowerMac3,2",
+					"PowerMac3,3",
 					NULL};
 
 /*
