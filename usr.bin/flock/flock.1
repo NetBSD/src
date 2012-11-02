@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.3 2012/11/02 01:30:46 christos Exp $
+.\"	$NetBSD: flock.1,v 1.4 2012/11/02 02:03:18 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,21 +29,20 @@
 .\"
 .\"
 .Dd November 1, 2012
-.Dt flock 1
+.Dt FLOCK 1
 .Os
 .Sh NAME
 .Nm flock
 .Nd Provide locking API for shell scripts
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnosxv
+.Op Fl dnosvx
 .Op Fl w Ar timeout
 .Ar lockfile|lockdir
-.Op Fl c Ar command
-|
+.Op Fl c
 .Op Ar command ...
 .Nm
-.Op Fl dnusxv
+.Op Fl dnsuvx
 .Op Fl w Ar timeout
 .Ar lockfd
 .Sh DESCRIPTION
@@ -57,44 +56,44 @@ If the file or directory does not exist, then a file is created.
 .Pp
 The second form can use an arbitrary file descriptor that is provided from a
 shell script for example:
-.nf
+.Bd -literal
 (
 	flock -s 100
 	# commands to be executed under the lock
 ) 100> /path/to/lockfile
-.if
+.Ed
 .Pp
 The following options are available:
 .Bl -tag -width "XXXXXXXXXXXXXXXXX"
 .It Fl c Ar command
 Pass a command to a the shell.
-.It Fl d Fl Fl debug
+.It Fl d , Fl Fl debug
 Provide debugging output.
-.It Fl s Fl Fl shared
+.It Fl n , Fl Fl nb , Fl Fl nonblock
+Don't block and fail immediately if the lock could not be obtained.
+.It Fl o , Fl Fl close
+Close the file before executing the command.
+This is useful if the child forks and should not be holding the lock.
+.It Fl s , Fl Fl shared
 Obtain a shared lock.
-.It Fl e Fl x Fl Fl exclusive
-Obtain an exclusive lock.
-.It Fl u Fl Fl unlock
+.It Fl u , Fl Fl unlock
 Unlock an existing lock.
 This is available only for a file descriptor.
-.It Fl n Fl Fl nb Fl Fl nonblock
-Don't block and fail immediately if the lock could not be obtained.
-.If Fl v Fl Fl verbose
+.It Fl v , Fl Fl verbose
 On error print an explanation of the failure.
-.It Fl w Fl Fl wait Fl Fl timeout Ar seconds
+.It Fl w , Fl Fl wait , Fl Fl timeout Ar seconds
 Fail if the lock could not be obtained after
 .Ar seconds .
 Seconds are truncated to integer values.
-.It Fl o Fl Fl close
-Close the file before executing the command.
-This is useful if the child forks and should not be holding the lock.
+.It Fl x , Fl Fl exclusive
+Obtain an exclusive lock.
 .El
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
 .Xr flock 2
 .Sh HISTORY
-A
+An
 .Nm
 utility appeared in
-.Nx 7
+.Nx 7.0 .
