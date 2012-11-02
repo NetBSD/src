@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.5 2012/11/02 20:55:01 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.6 2012/11/02 21:17:26 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.5 2012/11/02 20:55:01 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.6 2012/11/02 21:17:26 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -53,9 +53,6 @@ enum {
 	NAND_SAMSUNG_PLANENUMMASK = 0x3 << 2,
 	NAND_SAMSUNG_PLANESIZEMASK = 0x7 << 4
 };
-
-CTASSERT(NAND_SAMSUNG_PAGEMASK | NAND_SAMSUNG_SPAREMASK
-    | NAND_SAMSUNG_BLOCKMASK | NAND_SAMSUNG_BITSMASK == 0xff);
 
 int
 nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
@@ -104,6 +101,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x3:
 			chip->nc_page_size = 8192;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		switch ((params2 & NAND_SAMSUNG_BLOCKMASK) >> 4) {
@@ -119,6 +118,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x3:
 			chip->nc_block_size = 512 * 1024;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		/* 8/16 bytes per 512 bytes! XXX do i get this right? */
@@ -129,6 +130,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x1:
 			chip->nc_spare_size = 16 * chip->nc_page_size / 512;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		switch ((params2 & NAND_SAMSUNG_BITSMASK) >> 6) {
@@ -138,6 +141,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x1:
 			chip->nc_flags |= NC_BUSWIDTH_16;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		switch ((params3 & NAND_SAMSUNG_PLANENUMMASK) >> 2) {
@@ -153,6 +158,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x3:
 			chip->nc_num_luns = 8;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		uint64_t planesize = 0;
@@ -181,6 +188,8 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 		case 0x7:
 			planesize = 8ul * 1024 * 1024 * 1024;
 			break;
+		default:
+			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
 		chip->nc_lun_blocks = planesize / chip->nc_block_size;
