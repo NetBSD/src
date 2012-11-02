@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.4 2012/11/02 02:07:19 wiz Exp $	*/
+/*	$NetBSD: flock.c,v 1.5 2012/11/02 12:47:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.4 2012/11/02 02:07:19 wiz Exp $");
+__RCSID("$NetBSD: flock.c,v 1.5 2012/11/02 12:47:23 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: flock.c,v 1.4 2012/11/02 02:07:19 wiz Exp $");
 #include <errno.h>
 #include <getopt.h>
 #include <paths.h>
+#include <time.h>
 
 struct option flock_longopts[] = {
 	{ "debug",		no_argument,		0, 'd' },
@@ -65,9 +66,9 @@ static sig_atomic_t timeout_expired;
 
 static __dead void usage(void) 
 {
-	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir [-c command]| "
-	    "command ...\n\t%s [-dnsuvx] [-w timeout] lockfd\n", getprogname(),
-	    getprogname());
+	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir "
+	    "[-c command]|command ...\n\t%s [-dnsuvx] [-w timeout] lockfd\n",
+	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -105,6 +106,21 @@ lock2name(int l)
 	}
 }
 
+static char *
+cmdline(char **av)
+{
+	char *v = NULL;
+	while (*av)
+		if (v) {
+			if (asprintf(&v, "%s %s", v, *av++) < 0)
+				err(EXIT_FAILURE, "malloc");
+		} else {
+			if ((v = strdup(*av++)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+		}
+	return v;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -117,11 +133,12 @@ main(int argc, char *argv[])
 	char *mcargv[] = {
 	    __UNCONST(_PATH_BSHELL), __UNCONST("-c"), NULL, NULL
 	};
-	char **cmdargv = NULL;
+	char **cmdargv = NULL, *v;
+	timer_t tm;
 
 	setprogname(argv[0]);
 
-	while ((c = getopt_long(argc, argv, "+dnosuw:x", flock_longopts, NULL))
+	while ((c = getopt_long(argc, argv, "+dnosuvw:x", flock_longopts, NULL))
 	    != -1)
 		switch (c) {
 		case 'd':
@@ -182,17 +199,43 @@ main(int argc, char *argv[])
 			    (fd = open(argv[0], O_RDWR|O_CREAT, 0600)) == -1)
 				err(EXIT_FAILURE, "Cannot open `%s'", argv[0]);
 		}
-		if (debug)
+		if (debug) {
 			fprintf(stderr, "file %s lock %s command %s ...\n",
-			    argv[0], lock2name(lock), cmdargv[0]);
+			    argv[0], lock2name(lock), v = cmdline(cmdargv));
+			free(v);
+		}
 		break;
 	}
 
 	if (timeout) {
-		signal(SIGALRM, sigalrm);
-		alarm((int)timeout);	// XXX: User timer_create()
+		struct sigevent ev;
+		struct itimerspec it;
+		struct sigaction sa;
+
+		timespecclear(&it.it_interval);
+		it.it_value.tv_sec = timeout;
+		it.it_value.tv_nsec = (timeout - it.it_value.tv_sec) *
+			1000000000;
+
+		memset(&ev, 0, sizeof(ev));
+		ev.sigev_notify = SIGEV_SIGNAL;
+		ev.sigev_signo = SIGALRM;
+
+		if (timer_create(CLOCK_REALTIME, &ev, &tm) == -1)
+			err(EXIT_FAILURE, "timer_create");
+
+		if (timer_settime(tm, TIMER_RELTIME, &it, NULL) == -1)
+			err(EXIT_FAILURE, "timer_settime");
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = sigalrm;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		if (sigaction(SIGALRM, &sa, NULL) == -1)
+			err(EXIT_FAILURE, "sigaction");
+
 		if (debug)
-			fprintf(stderr, "alarm %d\n", (int)timeout);
+			fprintf(stderr, "alarm %g\n", timeout);
 	}
 
 	while (flock(fd, lock) == -1) {
@@ -205,14 +248,15 @@ main(int argc, char *argv[])
 	}
 
 	if (timeout)
-		alarm(0);
+		timer_delete(tm);
 
 	if (cls)
 		(void)close(fd);
 
 	if (cmdargv != NULL) {
 		execvp(cmdargv[0], cmdargv);
-		err(EXIT_FAILURE, "execvp '%s'", cmdargv[0]);
+		err(EXIT_FAILURE, "execvp '%s'", v = cmdline(cmdargv));
+		free(v);
 	}
 	return 0;
 }
