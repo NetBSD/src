@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.97.2.8 2012/10/30 17:23:03 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.97.2.9 2012/11/02 08:26:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.8 2012/10/30 17:23:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.97.2.9 2012/11/02 08:26:33 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -242,6 +242,13 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, unsigned int *npagesp,
 	return (found);
 }
 
+/*
+ * uvn_findpage: find a single page
+ *
+ * if a suitable page was found, put it in *pgp and return 1.
+ * otherwise return 0.
+ */
+
 static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
@@ -269,7 +276,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		 * uvn_findpages.  in that case, fillflags used by the caller
 		 * might not match strictly with ours.
 		 * in particular, the caller might have filled the array
-		 * without DIRTYONLY or DENSE but passed us UFP_DIRTYONLY.
+		 * without DENSE but passed us UFP_DIRTYONLY (thus DENSE).
 		 */
 		pg = uvm_page_array_fill_and_peek(a, uobj, offset, nleft,
 		    fillflags);
@@ -277,7 +284,15 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			KASSERT(
 			    ((fillflags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0)
 			    == (pg->offset < offset));
+			KASSERT(uvm_pagelookup(uobj, offset) == NULL
+			    || ((fillflags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0 &&
+			    radix_tree_get_tag(&uobj->uo_pages,
+			    offset >> PAGE_SHIFT, UVM_PAGE_DIRTY_TAG) == 0));
 			pg = NULL;
+			if ((fillflags & UVM_PAGE_ARRAY_FILL_DENSE) != 0) {
+				UVMHIST_LOG(ubchist, "dense", 0,0,0,0);
+				return 0;
+			}
 		}
 
 		/* nope?  allocate one now */
