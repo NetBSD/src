@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266 2012/02/19 21:06:28 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.267 2012/11/02 00:01:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4949,8 +4949,27 @@ Lnosaveoldlwp:
 	st	%o0, [%o4 + PMAP_CPUSET]
 #endif
 
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 */
+	ld	[%g3 + L_PROC], %o0	! now %o0 points to p
+	ld	[%o0 + P_RASLIST], %o1	! any RAS in p?
+	cmp	%o1, 0
+	be	Lsw_noras		! no, skip RAS check
+	 mov	%g1, %i0		! restore oldlwp (for return value)
+	ld	[%g3 + L_TF], %l3	! pointer to trap frame
+	call	_C_LABEL(ras_lookup)
+	 ld	[%l3 + TF_PC], %o1
+	cmp	%o0, -1
+	be	Lsw_noras
+	 add	%o0, 4, %o1
+	st	%o0, [%l3 + TF_PC]	! store rewound %pc
+	st	%o1, [%l3 + TF_NPC]	! and %npc
+
+Lsw_noras:
+
 	ret
-	 restore %g0, %g1, %o0		! return (lastproc)
+	 restore			! return (oldlwp)
 
 /*
  * Call the idlespin() function if it exists, otherwise just return.
