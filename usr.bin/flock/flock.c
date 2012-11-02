@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.5 2012/11/02 12:47:23 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.6 2012/11/02 17:03:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.5 2012/11/02 12:47:23 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.6 2012/11/02 17:03:16 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: flock.c,v 1.5 2012/11/02 12:47:23 christos Exp $");
 #include <paths.h>
 #include <time.h>
 
-struct option flock_longopts[] = {
+static struct option flock_longopts[] = {
 	{ "debug",		no_argument,		0, 'd' },
 	{ "help",		no_argument,		0, 'h' },
 	{ "nonblock",		no_argument,		0, 'n' },
@@ -61,18 +61,27 @@ struct option flock_longopts[] = {
 	{ NULL,			0,			0, 0   },
 };
 
-static int verbose = 0;
 static sig_atomic_t timeout_expired;
 
-static __dead void usage(void) 
+static __dead void
+usage(const char *fmt, ...) 
 {
+	if (fmt) {
+		va_list ap;
+		va_start(ap, fmt);
+		fprintf(stderr, "%s: ", getprogname());
+		vfprintf(stderr, fmt, ap);
+		fputc('\n', stderr);
+		va_end(ap);
+	}
+
 	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir "
 	    "[-c command]|command ...\n\t%s [-dnsuvx] [-w timeout] lockfd\n",
 	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
 }
 
-static __dead void
+static void
 sigalrm(int sig)
 {
 	timeout_expired++;
@@ -106,6 +115,21 @@ lock2name(int l)
 	}
 }
 
+static char
+lockchar(int l)
+{
+	switch (l & ~LOCK_NB) {
+	case LOCK_SH:
+		return 's';
+	case LOCK_EX:
+		return 'x';
+	case LOCK_UN:
+		return 'u';
+	default:
+		return '*';
+	}
+}
+
 static char *
 cmdline(char **av)
 {
@@ -130,6 +154,7 @@ main(int argc, char *argv[])
 	int cls = 0;
 	int fd = -1;
 	int debug = 0;
+	int verbose = 0;
 	char *mcargv[] = {
 	    __UNCONST(_PATH_BSHELL), __UNCONST("-c"), NULL, NULL
 	};
@@ -145,16 +170,22 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'x':
-			lock = LOCK_EX | (lock & ~LOCK_NB);
+			if (lock & ~LOCK_NB)
+				goto badlock;
+			lock |= LOCK_EX;
 			break;
 		case 'n':
 			lock |= LOCK_NB;
 			break;
 		case 's':
-			lock = LOCK_SH | (lock & ~LOCK_NB);
+			if (lock & ~LOCK_NB)
+				goto badlock;
+			lock |= LOCK_SH;
 			break;
 		case 'u':
-			lock = LOCK_UN | (lock & ~LOCK_NB);
+			if (lock & ~LOCK_NB)
+				goto badlock;
+			lock |= LOCK_UN;
 			break;
 		case 'w':
 			timeout = strtod(optarg, NULL);
@@ -166,7 +197,9 @@ main(int argc, char *argv[])
 			cls = 1;
 			break;
 		default:
-			usage();
+			usage("Invalid option '%c'", c);
+		badlock:
+			usage("-%c can't be used with -%c", c, lockchar(lock));
 		}
 
 	argc -= optind;
@@ -174,21 +207,22 @@ main(int argc, char *argv[])
 
 	switch (argc) {
 	case 0:
-		usage();
+		usage("Missing lock file argument");
 	case 1:
 		if (cls)
-			usage();
+			usage("Close is valid only for descriptors");
 		fd = strtol(argv[0], NULL, 0);	// XXX: error checking
 		if (debug)
 			fprintf(stderr, "descriptor %s lock %s\n",
 			    argv[0], lock2name(lock));
-		if (lock == LOCK_UN)
-			usage();
 	default:
+		if ((lock & LOCK_NB) == LOCK_UN)
+			usage("Unlock is only valid for descriptors");
 		if (strcmp(argv[1], "-c") == 0 ||
 		    strcmp(argv[1], "--command") == 0) {
 			if (argc == 2)
-				usage();
+				usage("Missing argument to %s", strcmp(argv[1],
+				    "-c") == 0 ? "-c" : "--command");
 			mcargv[2] = argv[2];
 			cmdargv = mcargv;
 		} else
