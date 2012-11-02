@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.53.2.16 2012/08/01 22:34:15 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.53.2.17 2012/11/02 08:30:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.16 2012/08/01 22:34:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.53.2.17 2012/11/02 08:30:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,7 +844,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool tryclean;		/* try to pull off from the syncer's list */
 	bool onworklst;
 	const bool integrity_sync =
-	    (origflags & (PGO_LAZY|PGO_SYNCIO)) == PGO_SYNCIO;
+	    (origflags & (PGO_LAZY|PGO_SYNCIO|PGO_CLEANIT)) ==
+	    (PGO_SYNCIO|PGO_CLEANIT);
 	const bool dirtyonly = (origflags & (PGO_DEACTIVATE|PGO_FREE)) == 0;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
@@ -943,8 +944,11 @@ retry:
 		bool protected;
 
 		/*
-		 * if we are asked to sync for integrity, we should wait on
-		 * pages being written back by another threads as well.
+		 * if !dirtyonly, iterate over all resident pages in the range.
+		 *
+		 * if dirtyonly, only possibly dirty pages are interested.
+		 * however, if we are asked to sync for integrity, we should
+		 * wait on pages being written back by another threads as well.
 		 */
 
 		pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff, 0,
@@ -1011,7 +1015,7 @@ retry:
 			 * don't bother to wait on other's activities
 			 * unless we are asked to sync for integrity.
 			 */
-			if (!integrity_sync) {
+			if (!integrity_sync && (flags & PGO_RECLAIM) == 0) {
 				wasclean = false;
 				nextoff = pg->offset + PAGE_SIZE;
 				uvm_page_array_advance(&a);
@@ -1152,6 +1156,11 @@ retry:
 			 *
 			 * pass our cached array of pages so that hopefully
 			 * uvn_findpages can find some good pages in it.
+			 * the array a was filled above with the one of
+			 * following sets of flags:
+			 *	0
+			 *	UVM_PAGE_ARRAY_FILL_DIRTY
+			 *	UVM_PAGE_ARRAY_FILL_DIRTY|WRITEBACK
 			 */
 
 			nforw = maxpages - nback - 1;
