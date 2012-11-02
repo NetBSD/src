@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.4 2012/11/02 13:31:26 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.5 2012/11/02 16:55:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.4 2012/11/02 13:31:26 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.5 2012/11/02 16:55:02 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -45,10 +45,13 @@ __RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.4 2012/11/02 13:31:26 pooka Exp $");
 
 #include "rumpuser_int.h"
 
+static struct lwp *curlwp;
+
 struct rumpuser_cv {};
 
 struct rumpuser_mtx {
 	int v;
+	struct lwp *o;
 };
 
 struct rumpuser_rw {
@@ -116,6 +119,7 @@ rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
 	mtx->v++;
+	mtx->o = curlwp;
 }
 
 int
@@ -130,7 +134,9 @@ void
 rumpuser_mutex_exit(struct rumpuser_mtx *mtx)
 {
 
-	mtx->v--;
+	assert(mtx->v > 0);
+	if (--mtx->v == 0)
+		mtx->o = NULL;
 }
 
 void
@@ -138,6 +144,13 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 {
 
 	free(mtx);
+}
+
+struct lwp *
+rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
+{
+
+	return mtx->o;
 }
 
 void
@@ -271,7 +284,6 @@ rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
  * curlwp
  */
 
-static struct lwp *curlwp;
 void
 rumpuser_set_curlwp(struct lwp *l)
 {
