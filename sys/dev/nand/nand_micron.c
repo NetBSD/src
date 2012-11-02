@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.7 2012/11/02 17:14:41 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.6 2011/07/15 19:19:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.7 2012/11/02 17:14:41 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -159,7 +159,7 @@ mt29fxgx_parameters(device_t self, struct nand_chip * const chip,
 	chip->nc_size = MT29FxG_PAGESIZE * MT29FxG_BLOCK_PAGES *
 		dp->lun_blocks * dp->num_luns;
 
-	aprint_normal_dev(self, "%s %s, size %zuMB\n",
+	aprint_normal_dev(self, "%s %s, size %" PRIu64 "MB\n",
 		vendor, dp->name, chip->nc_size >> 20);
 
 	return 0;

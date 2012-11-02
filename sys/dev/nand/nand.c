@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.18 2012/10/31 18:58:08 riz Exp $	*/
+/*	$NetBSD: nand.c,v 1.19 2012/11/02 17:14:41 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.18 2012/10/31 18:58:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.19 2012/11/02 17:14:41 ahoka Exp $");
 
 #include "locators.h"
 
@@ -402,13 +402,13 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 #endif
 
 	aprint_normal_dev(self,
-	    "page size: %zu bytes, spare size: %zu bytes, "
-	    "block size: %zu bytes\n",
+	    "page size: %" PRIu32 " bytes, spare size: %" PRIu32 " bytes, "
+	    "block size: %" PRIu32 " bytes\n",
 	    chip->nc_page_size, chip->nc_spare_size, chip->nc_block_size);
 
 	aprint_normal_dev(self,
 	    "LUN size: %" PRIu32 " blocks, LUNs: %" PRIu8
-	    ", total storage size: %zu MB\n",
+	    ", total storage size: %" PRIu64 " MB\n",
 	    chip->nc_lun_blocks, chip->nc_num_luns,
 	    chip->nc_size / 1024 / 1024);
 
@@ -441,7 +441,7 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 		ecc->necc_offset = 80;
 		break;
 	default:
-		panic("OOB size %zu is unexpected", chip->nc_spare_size);
+		panic("OOB size %" PRIu32 " is unexpected", chip->nc_spare_size);
 	}
 
 	ecc->necc_steps = chip->nc_page_size / ecc->necc_block_size;
@@ -597,7 +597,7 @@ nand_address_column(device_t self, size_t row, size_t column)
 	struct nand_chip *chip = &sc->sc_chip;
 	uint8_t i;
 
-	DPRINTF(("addressing row: 0x%jx column: %zu\n",
+	DPRINTF(("addressing row: 0x%jx column: %" PRIu32 "\n",
 		(uintmax_t )row, column));
 
 	/* XXX TODO */
@@ -727,18 +727,18 @@ nand_default_read_page(device_t self, size_t offset, uint8_t *data)
 		case NAND_ECC_CORRECTED:
 			aprint_error_dev(self,
 			    "data corrected with ECC at page offset 0x%jx "
-			    "block %zu\n", (uintmax_t)offset, b);
+			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
 			break;
 		case NAND_ECC_TWOBIT:
 			aprint_error_dev(self,
 			    "uncorrectable ECC error at page offset 0x%jx "
-			    "block %zu\n", (uintmax_t)offset, b);
+			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
 			return EIO;
 			break;
 		case NAND_ECC_INVALID:
 			aprint_error_dev(self,
 			    "invalid ECC in oob at page offset 0x%jx "
-			    "block %zu\n", (uintmax_t)offset, b);
+			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
 			return EIO;
 			break;
 		default:
@@ -1153,8 +1153,8 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 		} else {
 			/* XXX debug */
 			if (left > chip->nc_page_size) {
-				printf("left: %zu, i: %d, count: %zu\n",
-				    (size_t )left, i, count);
+				printf("left: %" PRIu32 ", i: %d, count: %" PRIu32 "\n",
+				    left, i, count);
 			}
 			KASSERT(left > chip->nc_page_size);
 
@@ -1232,7 +1232,7 @@ nand_flash_write(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 	}
 out:
 	mutex_exit(&sc->sc_device_lock);
-	DPRINTF(("page programming: retlen: %zu, len: %zu\n", *retlen, len));
+	DPRINTF(("page programming: retlen: %" PRIu32 ", len: %" PRIu32 "\n", *retlen, len));
 
 	return error;
 }
@@ -1324,11 +1324,11 @@ nand_flash_read(device_t self, flash_off_t offset, size_t len, size_t *retlen,
 
 	*retlen = 0;
 
-	DPRINTF(("nand_flash_read: off: 0x%jx, len: %zu\n",
+	DPRINTF(("nand_flash_read: off: 0x%jx, len: %" PRIu32 "\n",
 		(uintmax_t)offset, len));
 
 	if (__predict_false((offset + len) > chip->nc_size)) {
-		DPRINTF(("nand_flash_read: read (off: 0x%jx, len: %zu),"
+		DPRINTF(("nand_flash_read: read (off: 0x%jx, len: %" PRIu32 "),"
 			" is over device size (%ju)\n", (uintmax_t)offset,
 			len, (uintmax_t)chip->nc_size));
 		return EINVAL;
