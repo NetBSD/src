@@ -27,13 +27,9 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 
-#include <netpgp/bn.h>
-#include <netpgp/digest.h>
-
 #include <bzlib.h>
 #include <err.h>
 #include <inttypes.h>
-#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +39,9 @@
 #include <zlib.h>
 
 #include "array.h"
+#include "bn.h"
 #include "b64.h"
+#include "digest.h"
 #include "pgpsum.h"
 #include "rsa.h"
 #include "verify.h"
@@ -356,7 +354,7 @@ fmt_binary_mpi(pgpv_bignum_t *mpi, uint8_t *p, size_t size)
 
 	bytes = BITS_TO_BYTES(mpi->bits);
 	if ((size_t)bytes + 2 + 1 > size) {
-		fprintf(stderr, "truncated mpi\n");
+		warn("truncated mpi");
 		return 0;
 	}
 	if (mpi->bn == NULL || BN_is_zero(mpi->bn)) {
@@ -1361,7 +1359,6 @@ fmt_pubkey(char *s, size_t size, pgpv_pubkey_t *pubkey, const char *leader)
 	if (pubkey->expiry) {
 		cc += fmt_time(&s[cc], size - cc, " [Expiry ", pubkey->birth + pubkey->expiry, "]", 0);
 	}
-	/* XXX - revoked? */
 	cc += snprintf(&s[cc], size - cc, "\n");
 	cc += fmt_fingerprint(&s[cc], size - cc, &pubkey->fingerprint, "fingerprint: ");
 	return cc;
@@ -1549,8 +1546,8 @@ rsa_verify(uint8_t *calculated, unsigned calclen, uint8_t hashalg, pgpv_bignum_t
 	unsigned	 prefixlen;
 	unsigned	 decryptc;
 	unsigned	 i;
-	uint8_t		 decrypted[8192]; /* XXX */
-	uint8_t		 sigbn[8192]; /* XXX */
+	uint8_t		 decrypted[8192];
+	uint8_t		 sigbn[8192];
 	uint8_t		 prefix[64];
 	size_t		 keysize;
 
@@ -1901,6 +1898,37 @@ get_literal_data(pgpv_cursor_t *cursor, pgpv_litdata_t *litdata, size_t *size)
 	return litdata->s.data;
 }
 
+/*
+RFC 4880 describes the structure of v4 keys as:
+
+           Primary-Key
+              [Revocation Self Signature]
+              [Direct Key Signature...]
+               User ID [Signature ...]
+              [User ID [Signature ...] ...]
+              [User Attribute [Signature ...] ...]
+              [[Subkey [Binding-Signature-Revocation]
+                      Primary-Key-Binding-Signature] ...]
+
+and that's implemented below as a recursive descent parser.
+It has had to be modified, though: see the comment
+
+	some keys out there have user ids where they shouldn't
+
+to look like:
+
+           Primary-Key
+              [Revocation Self Signature]
+              [Direct Key Signature...]
+              [User ID [Signature ...]
+                 [User ID [Signature ...] ...]
+                 [User Attribute [Signature ...] ...]
+                 [Subkey [Binding-Signature-Revocation]
+                        Primary-Key-Binding-Signature] ...]
+
+to accommodate keyrings set up by gpg
+*/
+
 /* recognise a primary key */
 static int
 recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
@@ -1930,7 +1958,6 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 			/* XXX - check it's a good key expiry */
 			primary->primary.expiry = signature.keyexpiry;
 		}
-if (signature.revoked) fprintf(stderr, "agc - revoked1\n");
 		ARRAY_APPEND(primary->direct_sigs, signature);
 	}
 	/* some keys out there have user ids where they shouldn't */

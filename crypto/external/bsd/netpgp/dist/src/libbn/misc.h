@@ -46,7 +46,6 @@ void netpgp_deallocate(void */*ptr*/, size_t /*size*/);
 
 #ifndef _KERNEL
 void logmessage(const int /*level*/, const char */*fmt*/, ...);
-void hexdump(FILE */*fp*/, const char */*header*/, const uint8_t */*src*/, size_t /*length*/);
 #endif
 
 __END_DECLS

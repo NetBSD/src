@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.1.2.3 2012/10/30 02:10:42 agc Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2012/11/02 00:35:51 agc Exp $
 
 LIB=netpgpverify
 SRCS=libverify.c b64.c pgpsum.c
 SRCS+=digest.c tiger.c
 SRCS+=bignum.c misc.c
 CPPFLAGS+=-I${EXTDIST}/src/libbn
+CPPFLAGS+=-I${EXTDIST}/src/libdigest
 CPPFLAGS+=-I${EXTDIST}/src/librsa
 MAN=libnetpgpverify.3
 WARNS=5

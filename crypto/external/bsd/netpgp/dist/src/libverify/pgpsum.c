@@ -33,8 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <netpgp/digest.h>
-
+#include "digest.h"
 #include "pgpsum.h"
 
 /* add the ascii armor line endings (except for last line) */
