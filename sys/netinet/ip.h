@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.32 2011/07/24 18:06:08 christos Exp $	*/
+/*	$NetBSD: ip.h,v 1.33 2012/11/02 21:00:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,7 @@
 #ifndef _NETINET_IP_H_
 #define _NETINET_IP_H_
 
+#include <netinet/systm.h>	/* for n_time */
 /*
  * Definitions for internet protocol version 4.
  * Per RFC 791, September 1981.
