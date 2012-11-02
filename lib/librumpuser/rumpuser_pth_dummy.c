@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2 2011/05/23 20:49:08 joerg Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.3 2012/11/02 11:11:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -25,9 +25,11 @@
  * SUCH DAMAGE.
  */
 
+#include "rumpuser_port.h"
+
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2 2011/05/23 20:49:08 joerg Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.3 2012/11/02 11:11:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -58,20 +60,13 @@ struct rumpuser_cv rumpuser_aio_cv;
 int rumpuser_aio_head, rumpuser_aio_tail;
 struct rumpuser_aio rumpuser_aios[N_AIOS];
 
-void donada(int);
-/*ARGSUSED*/
-void donada(int arg) {}
-void dounnada(int, int *);
-/*ARGSUSED*/
-void dounnada(int arg, int *ap) {}
-kernel_lockfn   rumpuser__klock = donada;
-kernel_unlockfn rumpuser__kunlock = dounnada;
-
 /*ARGSUSED*/
 void
 rumpuser_thrinit(kernel_lockfn lockfn, kernel_unlockfn unlockfn, int threads)
 {
 
+	rumpuser__klock = lockfn;
+	rumpuser__kunlock = unlockfn;
 }
 
 /*ARGSUSED*/
@@ -85,7 +80,8 @@ rumpuser_biothread(void *arg)
 
 /*ARGSUSED*/
 int
-rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
+rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
+	int joinable, void **tptr)
 {
 
 	fprintf(stderr, "rumpuser: threads not available\n");
@@ -106,13 +102,6 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 {
 
 	*mtx = calloc(1, sizeof(struct rumpuser_mtx));
-}
-
-void
-rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
-{
-
-	rumpuser_mutex_init(mtx);
 }
 
 void
@@ -142,13 +131,6 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 {
 
 	free(mtx);
-}
-
-int
-rumpuser_mutex_held(struct rumpuser_mtx *mtx)
-{
-
-	return mtx->v;
 }
 
 void
