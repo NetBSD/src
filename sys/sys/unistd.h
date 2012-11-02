@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.53 2012/08/01 15:24:22 martin Exp $	*/
+/*	$NetBSD: unistd.h,v 1.54 2012/11/02 21:41:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -305,6 +305,9 @@
 
 /* This is implemented */
 #define	_SC_SPAWN			86
+
+/* Extensions found in Solaris and Linux. */
+#define	_SC_PHYS_PAGES		121
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
