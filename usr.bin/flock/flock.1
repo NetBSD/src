@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.2 2012/11/01 23:34:44 christos Exp $
+.\"	$NetBSD: flock.1,v 1.3 2012/11/02 01:30:46 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,8 +39,9 @@
 .Op Fl dnosxv
 .Op Fl w Ar timeout
 .Ar lockfile|lockdir
-.Op Fl c
-.Ar command
+.Op Fl c Ar command
+|
+.Op Ar command ...
 .Nm
 .Op Fl dnusxv
 .Op Fl w Ar timeout

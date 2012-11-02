@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.1 2012/11/01 23:30:19 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.2 2012/11/02 01:30:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.1 2012/11/01 23:30:19 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.2 2012/11/02 01:30:46 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -61,6 +61,7 @@ struct option flock_longopts[] = {
 };
 
 static int verbose = 0;
+static sig_atomic_t timeout_expired;
 
 static __dead void usage(void) 
 {
@@ -73,11 +74,7 @@ static __dead void usage(void)
 static __dead void
 sigalrm(int sig)
 {
-	if (verbose) {
-		errno = ETIMEDOUT;
-		errx(EXIT_FAILURE, "");
-	} else
-		exit(EXIT_FAILURE);
+	timeout_expired++;
 }
 
 static const char *
@@ -112,36 +109,36 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int lock = 0;
+	int lock = LOCK_EX;
 	double timeout = 0;
 	int cls = 0;
 	int fd = -1;
 	int debug = 0;
-	char *command = NULL;
+	char *mcargv[] = {
+	    __UNCONST(_PATH_BSHELL), __UNCONST("-c"), NULL, NULL
+	};
+	char **cmdargv = NULL;
 
 	setprogname(argv[0]);
 
-	while ((c = getopt_long(argc, argv, "c:dnosxuw:", flock_longopts, NULL))
+	while ((c = getopt_long(argc, argv, "+dnosxuw:", flock_longopts, NULL))
 	    != -1)
 		switch (c) {
-		case 'c':
-			command = optarg;
-			break;
 		case 'd':
 			debug++;
 			break;
 		case 'e':
 		case 'x':
-			lock |= LOCK_EX;
+			lock = LOCK_EX | (lock & ~LOCK_NB);
 			break;
 		case 'n':
 			lock |= LOCK_NB;
 			break;
 		case 's':
-			lock |= LOCK_SH;
+			lock = LOCK_SH | (lock & ~LOCK_NB);
 			break;
 		case 'u':
-			lock |= LOCK_UN;
+			lock = LOCK_UN | (lock & ~LOCK_NB);
 			break;
 		case 'w':
 			timeout = strtod(optarg, NULL);
@@ -159,26 +156,37 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (command) {
-		if (lock == LOCK_UN)
-			usage();
-		if ((fd = open(argv[0], O_RDONLY)) == -1) {
-			if (errno != ENOENT || 
-			    (fd = open(argv[0], O_RDWR|O_CREAT, 0600)) == -1)
-				err(EXIT_FAILURE, "Cannot open `%s'", argv[0]);
-		}
-		if (debug)
-			fprintf(stderr, "file %s lock %s command %s\n",
-			    argv[0], lock2name(lock), command);
-				
-			    
-	} else {
+	switch (argc) {
+	case 0:
+		usage();
+	case 1:
 		if (cls)
 			usage();
 		fd = strtol(argv[0], NULL, 0);	// XXX: error checking
 		if (debug)
 			fprintf(stderr, "descriptor %s lock %s\n",
 			    argv[0], lock2name(lock));
+		if (lock == LOCK_UN)
+			usage();
+	default:
+		if (strcmp(argv[1], "-c") == 0 ||
+		    strcmp(argv[1], "--command") == 0) {
+			if (argc == 2)
+				usage();
+			mcargv[2] = argv[2];
+			cmdargv = mcargv;
+		} else
+			cmdargv = argv + 1;
+			
+		if ((fd = open(argv[0], O_RDONLY)) == -1) {
+			if (errno != ENOENT || 
+			    (fd = open(argv[0], O_RDWR|O_CREAT, 0600)) == -1)
+				err(EXIT_FAILURE, "Cannot open `%s'", argv[0]);
+		}
+		if (debug)
+			fprintf(stderr, "file %s lock %s command %s ...\n",
+			    argv[0], lock2name(lock), cmdargv[0]);
+		break;
 	}
 
 	if (timeout) {
@@ -188,7 +196,9 @@ main(int argc, char *argv[])
 			fprintf(stderr, "alarm %d\n", (int)timeout);
 	}
 
-	if (flock(fd, lock) == -1) {
+	while (flock(fd, lock) == -1) {
+		if (errno == EINTR && timeout_expired == 0)
+			continue;
 		if (verbose)
 			err(EXIT_FAILURE, "flock(%d, %s)", fd, lock2name(lock));
 		else
@@ -201,11 +211,9 @@ main(int argc, char *argv[])
 	if (cls)
 		(void)close(fd);
 
-	if (command == NULL)
-		return 0;
-	if (debug)
-		fprintf(stderr, "execute %s -c '%s'\n", _PATH_BSHELL, command);
-	execlp(_PATH_BSHELL, "sh", "-c", command, NULL);
-	err(EXIT_FAILURE, "exec %s -c '%s'", _PATH_BSHELL, command);
+	if (cmdargv != NULL) {
+		execvp(cmdargv[0], cmdargv);
+		err(EXIT_FAILURE, "execvp '%s'", cmdargv[0]);
+	}
 	return 0;
 }
