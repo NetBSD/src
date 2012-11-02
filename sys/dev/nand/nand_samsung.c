@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.4 2012/10/31 21:30:27 riz Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.5 2012/11/02 20:55:01 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.4 2012/10/31 21:30:27 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.5 2012/11/02 20:55:01 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
 
 enum {
 	NAND_SAMSUNG_PAGEMASK = 0x3,
-	NAND_SAMSUNG_BLOCKMASK = 0x3 << 4,
 	NAND_SAMSUNG_SPAREMASK = 0x1 << 2,
+	NAND_SAMSUNG_BLOCKMASK = 0x3 << 4,
 	NAND_SAMSUNG_BITSMASK = 0x1 << 6
 };
 
@@ -53,6 +53,9 @@ enum {
 	NAND_SAMSUNG_PLANENUMMASK = 0x3 << 2,
 	NAND_SAMSUNG_PLANESIZEMASK = 0x7 << 4
 };
+
+CTASSERT(NAND_SAMSUNG_PAGEMASK | NAND_SAMSUNG_SPAREMASK
+    | NAND_SAMSUNG_BLOCKMASK | NAND_SAMSUNG_BITSMASK == 0xff);
 
 int
 nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
@@ -78,6 +81,10 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 	nand_read_1(self, &params3);
 	nand_select(self, false);
 
+	aprint_debug_dev(self,
+	    "ID Definition table: 0x%2.x 0x%2.x 0x%2.x 0x%2.x 0x%2.x\n",
+	    mfgrid, devid, params1, params2, params3);
+
 	/* K9XXG08UXA */
 	if (devid == 0xdc) {
 		/* From the documentation */
@@ -99,7 +106,7 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			break;
 		}
 
-		switch ((params2 & NAND_SAMSUNG_PAGEMASK) >> 4) {
+		switch ((params2 & NAND_SAMSUNG_BLOCKMASK) >> 4) {
 		case 0x0:
 			chip->nc_block_size = 64 * 1024;
 			break;
@@ -132,7 +139,7 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			chip->nc_flags |= NC_BUSWIDTH_16;
 			break;
 		}
-		
+
 		switch ((params3 & NAND_SAMSUNG_PLANENUMMASK) >> 2) {
 		case 0x0:
 			chip->nc_num_luns = 1;
@@ -183,6 +190,6 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 	} else {
 		return 1;
 	}
-       
+
 	return 0;
 }
