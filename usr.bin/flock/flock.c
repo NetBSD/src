@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.2 2012/11/02 01:30:46 christos Exp $	*/
+/*	$NetBSD: flock.c,v 1.3 2012/11/02 02:03:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.2 2012/11/02 01:30:46 christos Exp $");
+__RCSID("$NetBSD: flock.c,v 1.3 2012/11/02 02:03:18 wiz Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -65,8 +65,8 @@ static sig_atomic_t timeout_expired;
 
 static __dead void usage(void) 
 {
-	fprintf(stderr, "Usage: %s [-dnosxv] [-w <timeout>] file|directory [-c] "
-	    "<command>\n\t%s [-dnusxv] [-w <timeout>] fd\n", getprogname(),
+	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir [-c] "
+	    "command\n\t%s [-dnsuvx] [-w timeout] lockfd\n", getprogname(),
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -121,13 +121,12 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	while ((c = getopt_long(argc, argv, "+dnosxuw:", flock_longopts, NULL))
+	while ((c = getopt_long(argc, argv, "+dnosuw:x", flock_longopts, NULL))
 	    != -1)
 		switch (c) {
 		case 'd':
 			debug++;
 			break;
-		case 'e':
 		case 'x':
 			lock = LOCK_EX | (lock & ~LOCK_NB);
 			break;
