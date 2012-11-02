@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.120.2.6 2012/10/30 17:22:54 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.120.2.7 2012/11/02 08:19:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.2.6 2012/10/30 17:22:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.120.2.7 2012/11/02 08:19:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -223,18 +223,6 @@ uvm_pagezero(struct vm_page *pg)
 
 	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	memset((void *)pg->uanon, 0, PAGE_SIZE);
-}
-
-/*
- * uvm_page_locked_p: return true if object associated with page is
- * locked.  this is a weak check for runtime assertions only.
- */
-
-bool
-uvm_page_locked_p(struct vm_page *pg)
-{
-
-	return mutex_owned(pg->uobject->vmobjlock);
 }
 
 /*
