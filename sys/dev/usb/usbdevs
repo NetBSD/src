@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.630 2012/10/06 14:37:41 christos Exp $
+$NetBSD: usbdevs,v 1.631 2012/11/02 00:57:57 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1466,6 +1466,7 @@ product FTDI SERIAL_232H        0x6014	C232HM USB Multipurpose UART
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
 product FTDI OPENRD_JTAGKEY	0x9e90	OpenRD JTAGKey FT2232D B
+product FTDI MAXSTREAM_PKG_U	0xee18	MaxStream PKG-U
 product FTDI MHAM_KW		0xeee8	KW
 product FTDI MHAM_YS		0xeee9	YS
 product FTDI MHAM_Y6		0xeeea	Y6
