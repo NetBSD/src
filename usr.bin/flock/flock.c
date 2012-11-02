@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.3 2012/11/02 02:03:18 wiz Exp $	*/
+/*	$NetBSD: flock.c,v 1.4 2012/11/02 02:07:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.3 2012/11/02 02:03:18 wiz Exp $");
+__RCSID("$NetBSD: flock.c,v 1.4 2012/11/02 02:07:19 wiz Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -65,8 +65,8 @@ static sig_atomic_t timeout_expired;
 
 static __dead void usage(void) 
 {
-	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir [-c] "
-	    "command\n\t%s [-dnsuvx] [-w timeout] lockfd\n", getprogname(),
+	fprintf(stderr, "Usage: %s [-dnosvx] [-w timeout] lockfile|lockdir [-c command]| "
+	    "command ...\n\t%s [-dnsuvx] [-w timeout] lockfd\n", getprogname(),
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
