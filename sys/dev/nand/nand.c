@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.19 2012/11/02 17:14:41 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.20 2012/11/02 19:50:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.19 2012/11/02 17:14:41 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.20 2012/11/02 19:50:22 pgoyette Exp $");
 
 #include "locators.h"
 
@@ -727,18 +727,18 @@ nand_default_read_page(device_t self, size_t offset, uint8_t *data)
 		case NAND_ECC_CORRECTED:
 			aprint_error_dev(self,
 			    "data corrected with ECC at page offset 0x%jx "
-			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
+			    "block %zu\n", (uintmax_t)offset, b);
 			break;
 		case NAND_ECC_TWOBIT:
 			aprint_error_dev(self,
 			    "uncorrectable ECC error at page offset 0x%jx "
-			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
+			    "block %zu\n", (uintmax_t)offset, b);
 			return EIO;
 			break;
 		case NAND_ECC_INVALID:
 			aprint_error_dev(self,
 			    "invalid ECC in oob at page offset 0x%jx "
-			    "block %" PRIu32 "\n", (uintmax_t)offset, b);
+			    "block %zu\n", (uintmax_t)offset, b);
 			return EIO;
 			break;
 		default:
@@ -1153,7 +1153,7 @@ nand_flash_write_unaligned(device_t self, flash_off_t offset, size_t len,
 		} else {
 			/* XXX debug */
 			if (left > chip->nc_page_size) {
-				printf("left: %" PRIu32 ", i: %d, count: %" PRIu32 "\n",
+				printf("left: %zu, i: %d, count: %zu\n",
 				    left, i, count);
 			}
 			KASSERT(left > chip->nc_page_size);
