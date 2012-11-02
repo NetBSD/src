@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_samsung.c,v 1.7 2012/11/02 21:27:46 ahoka Exp $	*/
+/*	$NetBSD: nand_samsung.c,v 1.8 2012/11/02 21:38:29 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.7 2012/11/02 21:27:46 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_samsung.c,v 1.8 2012/11/02 21:38:29 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -164,31 +164,32 @@ nand_read_parameters_samsung(device_t self, struct nand_chip * const chip)
 			KASSERTMSG(false, "ID Data parsing bug detected!");
 		}
 
+		/* This one reads in megabit for some reason */
 		uint64_t planesize = 0;
 		switch ((params3 & NAND_SAMSUNG_PLANESIZEMASK) >> 4) {
 		case 0x0:
-			planesize = 64 * 1024 * 1024;
+			planesize = 64 * 1024 * 1024 / 8;
 			break;
 		case 0x1:
-			planesize = 128 * 1024 * 1024;
+			planesize = 128 * 1024 * 1024 / 8;
 			break;
 		case 0x2:
-			planesize = 256 * 1024 * 1024;
+			planesize = 256 * 1024 * 1024 / 8;
 			break;
 		case 0x3:
-			planesize = 512 * 1024 * 1024;
+			planesize = 512 * 1024 * 1024 / 8;
 			break;
 		case 0x4:
-			planesize = 1024 * 1024 * 1024;
+			planesize = 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x5:
-			planesize = 2ul * 1024 * 1024 * 1024;
+			planesize = 2ul * 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x6:
-			planesize = 4ul * 1024 * 1024 * 1024;
+			planesize = 4ul * 1024 * 1024 * 1024 / 8;
 			break;
 		case 0x7:
-			planesize = 8ul * 1024 * 1024 * 1024;
+			planesize = 8ul * 1024 * 1024 * 1024 / 8;
 			break;
 		default:
 			KASSERTMSG(false, "ID Data parsing bug detected!");
