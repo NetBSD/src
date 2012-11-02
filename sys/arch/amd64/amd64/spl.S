@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.24 2011/03/18 15:18:16 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.25 2012/11/02 08:31:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -186,7 +186,7 @@ ENTRY(splraise)
 /*
  * void spllower(int s);
  *
- * Must be the same size as i686_spllower().  This must use
+ * Must be the same size as cx8_spllower().  This must use
  * pushf/cli/popf as it is used early in boot where interrupts
  * are disabled via eflags/IE.
  */
