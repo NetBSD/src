@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2012/08/17 16:56:34 riz Exp $
+#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:32 tsutsui Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-amd64-install	# gives ${IMGBASE}.img
 
 BOOTDISK=	sd0			# for USB flash etc.
-IMAGEMB=	550			# for all installation binaries
+INSTIMAGEMB?=	550			# for all installation binaries
 
 PRIMARY_BOOT=		bootxx_ffsv1
 SECONDARY_BOOT=		boot
