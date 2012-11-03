@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.137 2012/08/15 13:28:32 drochner Exp $	*/
+/*	$NetBSD: pthread.c,v 1.138 2012/11/03 03:10:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.137 2012/08/15 13:28:32 drochner Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.138 2012/11/03 03:10:35 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -157,7 +157,7 @@ pthread__init(void)
 	extern int __isthreaded;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
-	pthread__concurrency = sysconf(_SC_NPROCESSORS_CONF);
+	pthread__concurrency = (int)sysconf(_SC_NPROCESSORS_CONF);
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
