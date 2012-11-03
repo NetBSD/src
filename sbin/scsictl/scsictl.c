@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.33 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.34 2012/11/03 19:14:53 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.33 2011/08/29 14:35:04 joerg Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.34 2012/11/03 19:14:53 jakllsch Exp $");
 #endif
 
 
@@ -72,7 +72,6 @@ int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
 char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
-const	char *argnames;			/* helpstring: expected arguments */
 struct	scsi_addr dvaddr;		/* SCSI device's address */
 
 void	device_defects(int, char *[]);
@@ -181,8 +180,6 @@ main(int argc, char *argv[])
 	if (commands[i].cmd_name == NULL)
 		errx(1, "unknown %s command: %s",
 		    commands == bus_commands ? "bus" : "device", cmdname);
-
-	argnames = commands[i].arg_names;
 
 	(*commands[i].cmd_func)(argc, argv);
 	exit(0);
