@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.21 2012/10/02 01:44:28 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.22 2012/11/03 23:22:22 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.21 2012/10/02 01:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.22 2012/11/03 23:22:22 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -840,28 +840,17 @@ compat_50_netbsd32_getrusage(struct lwp *l, const struct compat_50_netbsd32_getr
 		syscallarg(int) who;
 		syscallarg(netbsd32_rusage50p_t) rusage;
 	} */
+	int error;
 	struct proc *p = l->l_proc;
-	struct rusage *rup;
-	struct netbsd32_rusage50 ru;
+	struct rusage ru;
+	struct netbsd32_rusage50 ru32;
 
-	switch (SCARG(uap, who)) {
+	error = getrusage1(p, SCARG(uap, who), &ru);
+	if (error != 0)
+		return error;
 
-	case RUSAGE_SELF:
-		rup = &p->p_stats->p_ru;
-		mutex_enter(p->p_lock);
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
-		mutex_exit(p->p_lock);
-		break;
-
-	case RUSAGE_CHILDREN:
-		rup = &p->p_stats->p_cru;
-		break;
-
-	default:
-		return (EINVAL);
-	}
-	netbsd32_from_rusage50(rup, &ru);
-	return copyout(&ru, SCARG_P32(uap, rusage), sizeof(ru));
+	netbsd32_from_rusage50(&ru, &ru32);
+	return copyout(&ru32, SCARG_P32(uap, rusage), sizeof(ru32));
 }
 
 int
