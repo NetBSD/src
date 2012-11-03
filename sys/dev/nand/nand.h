@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.h,v 1.15 2012/11/02 17:14:41 ahoka Exp $	*/
+/*	$NetBSD: nand.h,v 1.16 2012/11/03 12:12:48 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -113,9 +113,7 @@ struct nand_chip {
 	uint8_t *nc_ecc_cache;		/* buffer for ecc */
 	uint64_t nc_size;		/* storage size in bytes */
 	uint32_t nc_page_size;		/* page size in bytes */
-	uint32_t nc_block_pages;	/* block size in pages */
 	uint32_t nc_block_size;		/* block size in bytes */
-	uint32_t nc_spare_size;		/* spare (oob) size in bytes */
 	uint32_t nc_lun_blocks;		/* LUN size in blocks */
 	uint32_t nc_flags;		/* bitfield flags */
 	uint32_t nc_quirks;		/* bitfield quirks */
@@ -123,6 +121,7 @@ struct nand_chip {
 	uint32_t nc_page_mask;		/* page mask for page alignment */
 	uint32_t nc_block_shift;	/* write shift */
 	uint32_t nc_block_mask;		/* write mask */
+	uint16_t nc_spare_size;		/* spare (oob) size in bytes */
 	uint8_t nc_num_luns;		/* number of LUNs */
 	uint8_t nc_manf_id;		/* manufacturer id */
 	uint8_t nc_dev_id;		/* device id  */

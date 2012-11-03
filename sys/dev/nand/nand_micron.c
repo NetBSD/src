@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_micron.c,v 1.7 2012/11/02 17:14:41 ahoka Exp $	*/
+/*	$NetBSD: nand_micron.c,v 1.8 2012/11/03 12:12:48 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.7 2012/11/02 17:14:41 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_micron.c,v 1.8 2012/11/03 12:12:48 ahoka Exp $");
 
 #include "nand.h"
 #include "onfi.h"
@@ -151,7 +151,6 @@ mt29fxgx_parameters(device_t self, struct nand_chip * const chip,
 	if (dp->width == 16)
 		chip->nc_flags |= NC_BUSWIDTH_16;
 	chip->nc_page_size = MT29FxG_PAGESIZE;
-	chip->nc_block_pages = MT29FxG_BLOCK_PAGES;
 	chip->nc_block_size = MT29FxG_BLOCK_PAGES * MT29FxG_PAGESIZE;
 	chip->nc_spare_size = MT29FxG_SPARESIZE;
 	chip->nc_lun_blocks = dp->lun_blocks;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.20 2012/11/02 19:50:22 pgoyette Exp $	*/
+/*	$NetBSD: nand.c,v 1.21 2012/11/03 12:12:48 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.20 2012/11/02 19:50:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.21 2012/11/03 12:12:48 ahoka Exp $");
 
 #include "locators.h"
 
@@ -412,11 +412,10 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 	    chip->nc_lun_blocks, chip->nc_num_luns,
 	    chip->nc_size / 1024 / 1024);
 
-#ifdef NAND_VERBOSE
 	aprint_normal_dev(self, "column cycles: %" PRIu8 ", row cycles: %"
-	    PRIu8 "\n",
-	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row);
-#endif
+	    PRIu8 ", width: %s\n",
+	    chip->nc_addr_cycles_column, chip->nc_addr_cycles_row,
+	    (chip->nc_flags & NC_BUSWIDTH_16) ? "x16" : "x8");
 
 	ecc = chip->nc_ecc = &sc->nand_if->ecc;
 
@@ -563,7 +562,6 @@ nand_fill_chip_structure(device_t self, struct nand_chip *chip)
 	    params.param_lunsize * params.param_numluns;
 
 	chip->nc_page_size = params.param_pagesize;
-	chip->nc_block_pages = params.param_blocksize;
 	chip->nc_block_size = params.param_blocksize * params.param_pagesize;
 	chip->nc_spare_size = params.param_sparesize;
 	chip->nc_lun_blocks = params.param_lunsize;
