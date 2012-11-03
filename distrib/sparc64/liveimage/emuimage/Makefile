@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/08/17 16:56:36 riz Exp $
+#	$NetBSD: Makefile,v 1.3 2012/11/03 14:25:33 tsutsui Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc64-live-sd0root # gives ${IMGBASE}.img
 
@@ -7,6 +7,9 @@ LIVEIMGBASE=	NetBSD-${DISTRIBVER}-sparc64-live-sd0root # gives ${IMGBASE}.img
 KERN_SET=		kern-GENERIC
 BOOTDISK=		sd0		# for QEMU
 #BOOTDISK=		wd0		# for Ultra5/10 image?
+.if defined(EMUIMAGEMB)
+LIVEIMAGEMB=		${EMUIMAGEMB}
+.endif
 PRIMARY_BOOT=		bootblk
 #SECONDARY_BOOT=	# nothing
 #SECONDARY_BOOT_ARG=	# unnecessary
