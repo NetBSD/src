@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.65 2012/11/03 02:25:13 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.65 2012/11/03 02:25:13 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.65 2012/11/03 02:25:13 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1237,7 +1237,7 @@ Cond_Eval(char *line)
 	SKIP_TO_ENDIF		/* nothing else to execute */
     };
     static enum if_states *cond_state = NULL;
-    static int max_if_depth = MAXIF;
+    static unsigned int max_if_depth = MAXIF;
 
     const struct If *ifp;
     Boolean 	    isElif;
