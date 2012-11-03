@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.34 2012/11/03 19:14:53 jakllsch Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.35 2012/11/03 19:26:52 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.34 2012/11/03 19:14:53 jakllsch Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.35 2012/11/03 19:26:52 jakllsch Exp $");
 #endif
 
 
@@ -68,31 +68,31 @@ struct command {
 
 __dead static void	usage(void);
 
-int	fd;				/* file descriptor for device */
-const	char *dvname;			/* device name */
-char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
-const	char *cmdname;			/* command user issued */
-struct	scsi_addr dvaddr;		/* SCSI device's address */
+static int	fd;				/* file descriptor for device */
+const  char	*dvname;			/* device name */
+static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
+static const	char *cmdname;			/* command user issued */
+static struct	scsi_addr dvaddr;		/* SCSI device's address */
 
-void	device_defects(int, char *[]);
-void	device_format(int, char *[]);
-void	device_identify(int, char *[]);
-void	device_reassign(int, char *[]);
-void	device_release(int, char *[]);
-void	device_reserve(int, char *[]);
-void	device_reset(int, char *[]);
-void	device_debug(int, char *[]);
-void	device_prevent(int, char *[]);
-void	device_allow(int, char *[]);
-void	device_start(int, char *[]);
-void	device_stop(int, char *[]);
-void	device_tur(int, char *[]);
-void	device_getcache(int, char *[]);
-void	device_setcache(int, char *[]);
-void	device_flushcache(int, char *[]);
-void	device_setspeed(int, char *[]);
+static void	device_defects(int, char *[]);
+static void	device_format(int, char *[]);
+static void	device_identify(int, char *[]);
+static void	device_reassign(int, char *[]);
+static void	device_release(int, char *[]);
+static void	device_reserve(int, char *[]);
+static void	device_reset(int, char *[]);
+static void	device_debug(int, char *[]);
+static void	device_prevent(int, char *[]);
+static void	device_allow(int, char *[]);
+static void	device_start(int, char *[]);
+static void	device_stop(int, char *[]);
+static void	device_tur(int, char *[]);
+static void	device_getcache(int, char *[]);
+static void	device_setcache(int, char *[]);
+static void	device_flushcache(int, char *[]);
+static void	device_setspeed(int, char *[]);
 
-struct command device_commands[] = {
+static struct command device_commands[] = {
 	{ "defects",	"[primary] [grown] [block|byte|physical]",
 						device_defects },
 	{ "format",	"[blocksize [immediate]]", 	device_format },
@@ -114,11 +114,11 @@ struct command device_commands[] = {
 	{ NULL,		NULL,			NULL },
 };
 
-void	bus_reset(int, char *[]);
-void	bus_scan(int, char *[]);
-void	bus_detach(int, char *[]);
+static void	bus_reset(int, char *[]);
+static void	bus_scan(int, char *[]);
+static void	bus_detach(int, char *[]);
 
-struct command bus_commands[] = {
+static struct command bus_commands[] = {
 	{ "reset",	"",			bus_reset },
 	{ "scan",	"target lun",		bus_scan },
 	{ "detach",	"target lun",		bus_detach },
@@ -220,11 +220,11 @@ usage(void)
  *	    byte READ DEFECT DATA command.
  */
 
-void	print_bf_dd(union scsi_defect_descriptor *);
-void	print_bfif_dd(union scsi_defect_descriptor *);
-void	print_psf_dd(union scsi_defect_descriptor *);
+static void	print_bf_dd(union scsi_defect_descriptor *);
+static void	print_bfif_dd(union scsi_defect_descriptor *);
+static void	print_psf_dd(union scsi_defect_descriptor *);
 
-void
+static void
 device_defects(int argc, char *argv[])
 {
 	struct scsi_read_defect_data cmd;
@@ -380,7 +380,7 @@ device_defects(int argc, char *argv[])
  *
  *	Print a block format defect descriptor.
  */
-void
+static void
 print_bf_dd(union scsi_defect_descriptor *dd)
 {
 	u_int32_t block;
@@ -397,7 +397,7 @@ print_bf_dd(union scsi_defect_descriptor *dd)
  *
  *	Print a bytes from index format defect descriptor.
  */
-void
+static void
 print_bfif_dd(union scsi_defect_descriptor *dd)
 {
 	u_int32_t cylinder;
@@ -421,7 +421,7 @@ print_bfif_dd(union scsi_defect_descriptor *dd)
  *
  *	Print a physical sector format defect descriptor.
  */
-void
+static void
 print_psf_dd(union scsi_defect_descriptor *dd)
 {
 	u_int32_t cylinder;
@@ -445,7 +445,7 @@ print_psf_dd(union scsi_defect_descriptor *dd)
  *
  *	Format a direct access device.
  */
-void
+static void
 device_format(int argc, char *argv[])
 {
 	u_int32_t blksize;
@@ -639,7 +639,7 @@ device_format(int argc, char *argv[])
  *	Display the identity of the device, including it's SCSI bus,
  *	target, lun, and it's vendor/product/revision information.
  */
-void
+static void
 device_identify(int argc, char *argv[])
 {
 	struct scsipi_inquiry_data inqbuf;
@@ -682,7 +682,7 @@ device_identify(int argc, char *argv[])
  *
  *	Reassign bad blocks on a direct access device.
  */
-void
+static void
 device_reassign(int argc, char *argv[])
 {
 	struct scsi_reassign_blocks cmd;
@@ -738,7 +738,7 @@ device_reassign(int argc, char *argv[])
 #ifndef	SCSI_RELEASE
 #define	SCSI_RELEASE	0x17
 #endif
-void
+static void
 device_release(int argc, char *argv[])
 {
 	struct scsi_test_unit_ready cmd;	/* close enough */
@@ -766,7 +766,7 @@ device_release(int argc, char *argv[])
 #ifndef	SCSI_RESERVE
 #define	SCSI_RESERVE	0x16
 #endif
-void
+static void
 device_reserve(int argc, char *argv[])
 {
 	struct scsi_test_unit_ready cmd;	/* close enough */
@@ -789,7 +789,7 @@ device_reserve(int argc, char *argv[])
  *
  *	Issue a reset to a SCSI device.
  */
-void
+static void
 device_reset(int argc, char *argv[])
 {
 
@@ -809,7 +809,7 @@ device_reset(int argc, char *argv[])
  *	Set debug level to a SCSI device.
  *	scsipi will print anything iff SCSIPI_DEBUG set in config.
  */
-void
+static void
 device_debug(int argc, char *argv[])
 {
 	int lvl;
@@ -830,7 +830,7 @@ device_debug(int argc, char *argv[])
  *
  *	Get the caching parameters for a SCSI disk.
  */
-void
+static void
 device_getcache(int argc, char *argv[])
 {
 	struct {
@@ -863,7 +863,7 @@ device_getcache(int argc, char *argv[])
  *
  *	Set cache enables for a SCSI disk.
  */
-void
+static void
 device_setcache(int argc, char *argv[])
 {
 	struct {
@@ -922,7 +922,7 @@ device_setcache(int argc, char *argv[])
 #ifndef	SCSI_FLUSHCACHE
 #define	SCSI_FLUSHCACHE	0x35
 #endif
-void
+static void
 device_flushcache(int argc, char *argv[])
 {
 	struct scsi_test_unit_ready cmd;	/* close enough */
@@ -945,7 +945,7 @@ device_flushcache(int argc, char *argv[])
  *
  *	Set rotation speed to a CD/DVD drive.
  */
-void
+static void
 device_setspeed(int argc, char *argv[])
 {
 	u_char cmd[11];
@@ -985,7 +985,7 @@ device_setspeed(int argc, char *argv[])
  *
  *      Issue a prevent to a SCSI device.
  */
-void
+static void
 device_prevent(int argc, char *argv[])
 {
 	struct scsi_prevent_allow_medium_removal cmd;
@@ -1009,7 +1009,7 @@ device_prevent(int argc, char *argv[])
  *
  *      Issue a stop to a SCSI device.
  */
-void
+static void
 device_allow(int argc, char *argv[])
 {
 	struct scsi_prevent_allow_medium_removal cmd;
@@ -1033,7 +1033,7 @@ device_allow(int argc, char *argv[])
  *
  *      Issue a start to a SCSI device.
  */
-void
+static void
 device_start(int argc, char *argv[])
 {
 	struct scsipi_start_stop cmd;
@@ -1057,7 +1057,7 @@ device_start(int argc, char *argv[])
  *
  *      Issue a stop to a SCSI device.
  */
-void
+static void
 device_stop(int argc, char *argv[])
 {
 	struct scsipi_start_stop cmd;
@@ -1081,7 +1081,7 @@ device_stop(int argc, char *argv[])
  *
  *	Issue a TEST UNIT READY to a SCSI device.
  */
-void
+static void
 device_tur(int argc, char *argv[])
 {
 	struct scsi_test_unit_ready cmd;
@@ -1108,7 +1108,7 @@ device_tur(int argc, char *argv[])
  *
  *	Issue a reset to a SCSI bus.
  */
-void
+static void
 bus_reset(int argc, char *argv[])
 {
 
@@ -1127,7 +1127,7 @@ bus_reset(int argc, char *argv[])
  *
  *	Rescan a SCSI bus for new devices.
  */
-void
+static void
 bus_scan(int argc, char *argv[])
 {
 	struct scbusioscan_args args;
@@ -1164,7 +1164,7 @@ bus_scan(int argc, char *argv[])
  *
  *	detach SCSI devices from a bus.
  */
-void
+static void
 bus_detach(int argc, char *argv[])
 {
 	struct scbusiodetach_args args;
