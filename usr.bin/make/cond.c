@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $	*/
+/*	$NetBSD: cond.c,v 1.67 2012/11/03 13:59:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.67 2012/11/03 13:59:27 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.66 2012/11/03 04:51:17 pgoyette Exp $");
+__RCSID("$NetBSD: cond.c,v 1.67 2012/11/03 13:59:27 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1227,8 +1227,8 @@ do_Cond_EvalExpression(Boolean *value)
 int
 Cond_Eval(char *line)
 {
-    #define	    MAXIF      128	/* maximum depth of .if'ing */
-    #define	    MAXIF_BUMP  32	/* how much to grow by */
+#define	    MAXIF      128	/* maximum depth of .if'ing */
+#define	    MAXIF_BUMP  32	/* how much to grow by */
     enum if_states {
 	IF_ACTIVE,		/* .if or .elif part active */
 	ELSE_ACTIVE,		/* .else part active */
@@ -1339,15 +1339,15 @@ Cond_Eval(char *line)
 	}
     } else {
 	/* Normal .if */
-	if (cond_depth >= max_if_depth) {
+	if (cond_depth + 1 >= max_if_depth) {
 	    /*
 	     * This is rare, but not impossible.
 	     * In meta mode, dirdeps.mk (only runs at level 0)
 	     * can need more than the default.
 	     */
 	    max_if_depth += MAXIF_BUMP;
-	    cond_state = bmake_realloc(cond_state,
-				max_if_depth * sizeof(*cond_state));
+	    cond_state = bmake_realloc(cond_state, max_if_depth *
+		sizeof(*cond_state));
 	}
 	state = cond_state[cond_depth];
 	cond_depth++;
