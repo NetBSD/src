@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.21 2012/11/03 12:12:48 ahoka Exp $	*/
+/*	$NetBSD: nand.c,v 1.22 2012/11/03 12:45:28 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.21 2012/11/03 12:12:48 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.22 2012/11/03 12:45:28 ahoka Exp $");
 
 #include "locators.h"
 
@@ -550,33 +550,29 @@ nand_fill_chip_structure(device_t self, struct nand_chip *chip)
 
 	aprint_normal_dev(self, "vendor: %s, model: %s\n", vendor, model);
 
-	/* XXX TODO multiple LUNs */
-	if (params.param_numluns != 1) {
-		aprint_error_dev(self,
-		    "more than one LUNs are not supported yet!\n");
-
-		return 1;
-	}
-
-	chip->nc_size = params.param_pagesize * params.param_blocksize *
-	    params.param_lunsize * params.param_numluns;
-
-	chip->nc_page_size = params.param_pagesize;
-	chip->nc_block_size = params.param_blocksize * params.param_pagesize;
-	chip->nc_spare_size = params.param_sparesize;
-	chip->nc_lun_blocks = params.param_lunsize;
+	chip->nc_page_size = le32toh(params.param_pagesize);
+	chip->nc_block_size =
+	    le32toh(params.param_blocksize) * chip->nc_page_size;
+	chip->nc_spare_size = le16toh(params.param_sparesize);
+	chip->nc_lun_blocks = le32toh(params.param_lunsize);
 	chip->nc_num_luns = params.param_numluns;
+
+	chip->nc_size =
+	    chip->nc_block_size * chip->nc_lun_blocks * chip->nc_num_luns;
 
 	/* the lower 4 bits contain the row address cycles */
 	chip->nc_addr_cycles_row = params.param_addr_cycles & 0x07;
 	/* the upper 4 bits contain the column address cycles */
 	chip->nc_addr_cycles_column = (params.param_addr_cycles & ~0x07) >> 4;
 
-	if (params.param_features & ONFI_FEATURE_16BIT)
+	uint16_t features = le16toh(params.param_features);
+	if (features & ONFI_FEATURE_16BIT) {
 		chip->nc_flags |= NC_BUSWIDTH_16;
+	}
 
-	if (params.param_features & ONFI_FEATURE_EXTENDED_PARAM)
+	if (features & ONFI_FEATURE_EXTENDED_PARAM) {
 		chip->nc_flags |= NC_EXTENDED_PARAM;
+	}
 
 	return 0;
 }
