@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2012/08/08 13:57:06 christos Exp $
+# $NetBSD: Makefile,v 1.27 2012/11/03 05:19:33 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ TESTSDIR=	${TESTSBASE}/kernel
 TESTS_SUBDIRS=	kqueue
 TESTS_C=	t_lock
 TESTS_C+=	t_pty
+TESTS_C+=	t_mqueue
 TESTS_C+=	t_subr_prf
 
 TESTS_SH=	t_umount
@@ -27,6 +28,7 @@ TESTS_C+=	t_filedesc
 TESTS_C+=	t_rnd
 LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
+LDADD.t_mqueue+= -lrt
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
 
 .endif
