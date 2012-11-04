@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.706 2012/08/16 05:30:55 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.707 2012/11/04 10:59:13 apb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -107,8 +107,11 @@ _SRC_TOP_!= cd "${.CURDIR}"; while :; do \
 .endif					# }
 
 #
-# If _SRC_TOP_ != "", we're within the NetBSD source tree, so set
-# defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# If _SRC_TOP_ != "", we're within the NetBSD source tree.
+# * Set defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
+# * Define _NETBSD_VERSION_DEPENDS.  Targets that depend on the
+#   NetBSD version, or on variables defined at build time, can
+#   declare a dependency on ${_NETBSD_VERSION_DEPENDS}.
 #
 .if (${_SRC_TOP_} != "")		# {
 
@@ -118,6 +121,12 @@ NETBSDSRCDIR?=	${_SRC_TOP_}
 _SRC_TOP_OBJ_!=		cd "${_SRC_TOP_}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
+
+_NETBSD_VERSION_DEPENDS=	${_SRC_TOP_OBJ_}/params
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/sys/param.h
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/newvers.sh
+_NETBSD_VERSION_DEPENDS+=	${NETBSDSRCDIR}/sys/conf/osrelease.sh
+${_SRC_TOP_OBJ_}/params: .NOTMAIN .OPTIONAL # created by top level "make build"
 
 .endif	# _SRC_TOP_ != ""		# }
 
