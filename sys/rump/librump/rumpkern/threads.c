@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.16 2012/11/04 14:40:18 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.17 2012/11/04 14:40:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.16 2012/11/04 14:40:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.17 2012/11/04 14:40:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -79,6 +79,7 @@ static struct {
 	bool t_ncmp;
 } nothreads[] = {
 	{ "vrele", false },
+	{ "vdrain", false },
 	{ "cachegc", false },
 	{ "nfssilly", false },
 	{ "unpgc", false },
