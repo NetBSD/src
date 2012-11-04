@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $	*/
+/*	$NetBSD: init.c,v 1.104 2012/11/04 22:20:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $");
+__RCSID("$NetBSD: init.c,v 1.104 2012/11/04 22:20:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,12 @@ __RCSID("$NetBSD: init.c,v 1.103 2012/03/20 18:50:31 matt Exp $");
 #include <util.h>
 #include <paths.h>
 #include <err.h>
+#ifdef SUPPORT_UTMP
+#include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #include <stdarg.h>
 
