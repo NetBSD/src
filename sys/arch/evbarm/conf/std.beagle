@@ -1,11 +1,11 @@
-#	$NetBSD: std.beagle,v 1.6 2012/09/22 19:49:34 matt Exp $
+#	$NetBSD: std.beagle,v 1.7 2012/11/04 23:30:39 khorben Exp $
 #
-# standard NetBSD/evbarm for BEAGLEBAORD options
+# standard NetBSD/evbarm for BEAGLEBOARD options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
 
-# Pull in BEAGLEBAORD config definitions.
+# Pull in BEAGLEBOARD config definitions.
 include "arch/evbarm/conf/files.beagle"
 
 options 	EXEC_ELF32
