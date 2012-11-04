@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.399 2012/11/04 11:04:10 apb Exp $
+#	$NetBSD: Makefile,v 1.400 2012/11/04 11:09:14 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -114,21 +114,8 @@ BIN1+=	etc.${MACHINE}/ttyaction
 .endif
 
 # -rw-rw-r--
-.if !empty(DISTRIBVER:M*.99.*)
-BIN2+=	motd.current
-FILESNAME_motd.current=	motd
-.elif !empty(DISTRIBVER:M*BETA*)
-BIN2+=	motd.beta
-FILESNAME_motd.beta=	motd
-.elif !empty(DISTRIBVER:M*RC*)
-BIN2+=	motd.rc
-FILESNAME_motd.rc=	motd
-.elif !empty(DISTRIBVER:M*STABLE*)
-BIN2+=	motd.stable
-FILESNAME_motd.stable=	motd
-.else
 BIN2+=	motd
-.endif
+FILESBUILD_motd=	YES
 
 # -rw-------
 BIN3+=	hosts.equiv
@@ -171,6 +158,24 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE
 
+
+# motd is copied from a different ${MOTD_SOURCE} depending on DISTRIBVER
+#
+.if !empty(DISTRIBVER:M*.99.*)
+MOTD_SOURCE=	motd.current
+.elif !empty(DISTRIBVER:M*BETA*)
+MOTD_SOURCE=	motd.beta
+.elif !empty(DISTRIBVER:M*RC*)
+MOTD_SOURCE=	motd.rc
+.elif !empty(DISTRIBVER:M*STABLE*)
+MOTD_SOURCE=	motd.stable
+.else
+MOTD_SOURCE=	motd.default
+.endif
+CLEANFILES+= motd
+motd: ${.CURDIR}/${MOTD_SOURCE} ${_NETBSD_VERSION_DEPENDS}
+	${_MKTARGET_CREATE}
+	${HOST_INSTALL_FILE} ${.CURDIR}/${MOTD_SOURCE} ${.TARGET}
 
 CLEANFILES+=	MAKEDEV
 MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
