@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.304 2012/10/02 04:53:11 jkoshy Exp $
+#	$NetBSD: bsd.README,v 1.305 2012/11/04 10:59:13 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -498,6 +498,28 @@ _SRC_TOP_	Top of the system source tree, as determined by <bsd.own.mk>
 		based on the presence of tools/ and build.sh.  This variable
 		is "internal" to <bsd.own.mk>, although its value is only
 		determined once and then propagated to all sub-makes.
+
+_NETBSD_VERSION_DEPENDS
+		A list of files which contain information about
+		the version of the NetBSD being built.  This is
+		defined only if the current directory appears
+		to be inside a NetBSD source tree.  The list of
+		files includes ${NETBSDSRCDIR}/sys/sys/param.h
+		(which contains the kernel version number),
+		${NETBSDSRCDIR}/sys/conf/newvers.sh and
+		${NETBSDSRCDIR}/sys/conf/osrelease.sh (which
+		interpret the information in sys/sys/param.h), and
+		${_SRC_TOP_OBJ_}/params (which is an optional file,
+		created by "make build" in ${_SRC_TOP_}/Makefile,
+		containing all the variables that may influence the
+		build).
+
+		Targets that depend on the NetBSD version, or on
+		variables defined at build time, can declare a
+		dependency on ${_NETBSD_VERSION_DEPENDS}, like this:
+
+			version.c: ${_NETBSD_VERSION_DEPENDS}
+				commands to create version.c
 
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly.  [/usr/src]
