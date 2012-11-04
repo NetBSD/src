@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.979 2012/11/04 18:02:56 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.980 2012/11/04 22:55:07 alnsn Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1336,6 +1336,19 @@ Responsible:	mrg
 License:	LGPL3
 Location:	external/lgpl3/gmp/dist
 Notes:
+
+Package:	sljit
+Version:	svn revision 186
+Current Vers:	svn revision 201
+Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
+Archive Site:	http://sourceforge.net/projects/sljit/
+Home Page:	http://sljit.sourceforge.net/
+Mailing List:	none
+Responsible:	alnsn
+License:	BSD (2-clause)
+Location:	sys/external/bsd/sljit/dist
+Notes:
+		Need to feed back local changes
 
 Package:	tre
 Version:	0.8.0
