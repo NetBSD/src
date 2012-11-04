@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.189 2012/09/16 13:47:41 rmind Exp $
+#	$NetBSD: Makefile,v 1.190 2012/11/04 16:28:11 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -198,6 +198,11 @@ SUBDIR+=	../external/bsd/mdocml/lib
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libukfs		# depends on librumpvfs, librump
+
+.if (${MKTPM} != "no")
+SUBDIR+=	../crypto/external/cpl/trousers/lib
+SUBDIR+=	../crypto/external/cpl/tpm_tools/lib
+.endif
 
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
