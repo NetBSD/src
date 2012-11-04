@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.637 2012/09/16 18:59:25 tls Exp $
+# $NetBSD: shl.mi,v 1.638 2012/11/04 16:26:53 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -681,6 +681,7 @@
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
 ./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx
+./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
@@ -690,9 +691,11 @@
 ./usr/lib/libtermlib.so				base-sys-shlib
 ./usr/lib/libtermlib.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
+./usr/lib/libtpm_unseal.so.1.0			base-tmp-shlib		tpm
 ./usr/lib/libtre.so				base-sys-shlib
 ./usr/lib/libtre.so.0				base-sys-shlib
 ./usr/lib/libtre.so.0.8				base-sys-shlib
+./usr/lib/libtspi.so.3.0			base-sys-shlib		tpm
 ./usr/lib/libukfs.so				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		rump
