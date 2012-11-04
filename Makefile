@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.300 2012/11/04 11:02:11 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -87,6 +87,8 @@
 #   do-top-obj:      creates the top level object directory.
 #   do-tools-obj:    creates object directories for the host toolchain.
 #   do-tools:        builds host toolchain.
+#   params:          record the values of variables that might affect the
+#                    build.
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
@@ -222,6 +224,7 @@ BUILDTARGETS+=	do-tools-obj
 .endif
 BUILDTARGETS+=	do-tools
 .endif # USETOOLS		# }
+BUILDTARGETS+=	params
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
@@ -250,6 +253,26 @@ BUILDTARGETS+=	do-obsolete
 .ORDER:		${BUILDTARGETS}
 includes-lib:	.PHONY includes-include includes-sys
 includes-gnu:	.PHONY includes-lib
+
+#
+# Record the values of variables that might affect the build.
+# If no values have changed, avoid updating the timestamp
+# of the params file.
+#
+# This is referenced by _NETBSD_VERSION_DEPENDS in <bsd.own.mk>.
+#
+
+CLEANDIRFILES+= params
+params: .EXEC
+	${_MKMSG_CREATE} params
+	@(${MAKEDIRTARGET:S/^@//} etc params) >${.TARGET}.new
+	@if cmp -s ${.TARGET}.new ${.TARGET} > /dev/null 2>&1; then \
+		: "params is unchanged" ; \
+		rm ${.TARGET}.new ; \
+	else \
+		: "params has changed or is new" ; \
+		mv ${.TARGET}.new ${.TARGET} ; \
+	fi
 
 #
 # Build the system and install into DESTDIR.
@@ -508,5 +531,5 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 #
 # Display current make(1) parameters
 #
-params: .PHONY .MAKE
+show-params: .PHONY .MAKE
 	${MAKEDIRTARGET} etc params
