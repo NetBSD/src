@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.98 2012/11/04 17:16:37 jakllsch Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.99 2012/11/04 17:18:56 jakllsch Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.98 2012/11/04 17:16:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.99 2012/11/04 17:18:56 jakllsch Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -763,7 +763,8 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * XXX
 	 */
 	if (pmp->pm_fsinfo) {
-		if (pmp->pm_nxtfree == 0xffffffffUL)
+		if ((pmp->pm_nxtfree == 0xffffffffUL) ||
+		    (pmp->pm_nxtfree > pmp->pm_maxcluster))
 			pmp->pm_fsinfo = 0;
 	}
 
