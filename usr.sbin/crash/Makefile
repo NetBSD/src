@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2012/08/31 11:52:39 skrll Exp $
+#	$NetBSD: Makefile,v 1.23 2012/11/04 11:12:32 apb Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -79,7 +79,7 @@ COPTS.db_output.c += -Wno-format-nonliteral
 
 # vers.c
 SRCS+=	vers.c
-vers.c:	${S}/conf/newvers.sh
+vers.c:	${S}/conf/newvers.sh ${_NETBSD_VERSION_DEPENDS}
 	${HOST_SH} ${S}/conf/newvers.sh -r -n
 CLEANFILES+=	vers.c version
 
