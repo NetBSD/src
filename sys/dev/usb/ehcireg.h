@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.33 2011/10/17 16:44:02 mbalmer Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34 2012/11/04 12:01:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -149,10 +149,10 @@
 #define  EHCI_CONF_CF		0x00000001 /* RW configure flag */
 
 #define EHCI_PORTSC(n)		(0x40+4*(n)) /* RO, RW, RWC Port Status reg */
-#define  EHCI_PS_PSPD		0x03000000 /* RO port speed (ETTF) */
+#define  EHCI_PS_PSPD		0x0C000000 /* RO port speed (ETTF) */
 #define  EHCI_PS_PSPD_FS	0x00000000 /* Full speed (ETTF) */
-#define  EHCI_PS_PSPD_LS	0x01000000 /* Low speed (ETTF) */
-#define  EHCI_PS_PSPD_HS	0x02000000 /* High speed (ETTF) */
+#define  EHCI_PS_PSPD_LS	0x04000000 /* Low speed (ETTF) */
+#define  EHCI_PS_PSPD_HS	0x08000000 /* High speed (ETTF) */
 #define  EHCI_PS_WKOC_E		0x00400000 /* RW wake on over current ena */
 #define  EHCI_PS_WKDSCNNT_E	0x00200000 /* RW wake on disconnect ena */
 #define  EHCI_PS_WKCNNT_E	0x00100000 /* RW wake on connect ena */
