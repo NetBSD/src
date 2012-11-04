@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.267 2012/11/02 00:01:19 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.268 2012/11/04 00:32:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4935,19 +4935,6 @@ Lnosaveoldlwp:
 	/*
 	 * Now running p.  
 	 */
-#if defined(MULTIPROCESSOR)
-	ld	[%g3 + L_PROC], %o2	! p = l->l_proc;
-	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
-	ld	[%o3 + VM_PMAP], %o4	! pm = vm->vm_map.vm_pmap;
-	/* Add this CPU to the pmap's CPU set */
-	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
-	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
-	mov	1, %o2
-	ld	[%o4 + PMAP_CPUSET], %o0
-	sll	%o2, %o1, %o2
-	or	%o0, %o2, %o0		! pm->pm_cpuset |= cpu_number();
-	st	%o0, [%o4 + PMAP_CPUSET]
-#endif
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
