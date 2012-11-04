@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1011 2012/11/01 23:33:10 christos Exp $
+# $NetBSD: mi,v 1.1012 2012/11/04 16:26:53 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -708,6 +708,9 @@
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpm_sealdata				base-tpm-bin		tpm
+./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
+./usr/bin/tpm_version				base-tpm-bin		tpm
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -1497,9 +1500,31 @@
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
+./usr/sbin/tcsd					base-tpm-bin		tpm
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/tprof				base-sysutil-bin
+./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
+./usr/sbin/tpm_clear				base-tpm-bin		tpm
+./usr/sbin/tpm_createek				base-tpm-bin		tpm
+./usr/sbin/tpm_getpubek				base-tpm-bin		tpm
+./usr/sbin/tpm_nvdefine				base-tpm-bin		tpm
+./usr/sbin/tpm_nvinfo				base-tpm-bin		tpm
+./usr/sbin/tpm_nvread				base-tpm-bin		tpm
+./usr/sbin/tpm_nvrelease			base-tpm-bin		tpm
+./usr/sbin/tpm_nvwrite				base-tpm-bin		tpm
+./usr/sbin/tpm_resetdalock			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictpubek			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictsrk			base-tpm-bin		tpm
+./usr/sbin/tpm_revokeek				base-tpm-bin		tpm
+./usr/sbin/tpm_selftest				base-tpm-bin		tpm
+./usr/sbin/tpm_setactive			base-tpm-bin		tpm
+./usr/sbin/tpm_setclearable			base-tpm-bin		tpm
+./usr/sbin/tpm_setenable			base-tpm-bin		tpm
+./usr/sbin/tpm_setoperatorauth			base-tpm-bin		tpm
+./usr/sbin/tpm_setownable			base-tpm-bin		tpm
+./usr/sbin/tpm_setpresence			base-tpm-bin		tpm
+./usr/sbin/tpm_takeownership			base-tpm-bin		tpm
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
