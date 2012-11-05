@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.129 2011/11/04 11:27:03 martin Exp $ */
+/*	$NetBSD: md.c,v 1.130 2012/11/05 01:25:25 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,7 @@
 #include <stddef.h>
 #include <util.h>
 #include <dirent.h>
+#include <termios.h>
 
 #include "defs.h"
 #include "md.h"
