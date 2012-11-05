@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.196 2012/10/13 17:46:50 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.197 2012/11/05 17:24:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.196 2012/10/13 17:46:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.197 2012/11/05 17:24:11 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -195,7 +195,7 @@ symlink_magic(struct proc *p, char *cp, size_t *len)
 ////////////////////////////////////////////////////////////
 
 /*
- * Determine the namei hash (for cn_hash) for name.
+ * Determine the namei hash (for the namecache) for name.
  * If *ep != NULL, hash from name to ep-1.
  * If *ep == NULL, hash from name until the first NUL or '/', and
  * return the location of this termination character in *ep.
@@ -220,6 +220,22 @@ namei_hash(const char *name, const char **ep)
 		*ep = name;
 	}
 	return (hash + (hash >> 5));
+}
+
+/*
+ * Find the end of the first path component in NAME and return its
+ * length.
+ */
+static size_t
+namei_getcomponent(const char *name)
+{
+	size_t pos;
+
+	pos = 0;
+	while (name[pos] != '\0' && name[pos] != '/') {
+		pos++;
+	}
+	return pos;
 }
 
 ////////////////////////////////////////////////////////////
@@ -806,7 +822,6 @@ lookup_parsepath(struct namei_state *state)
 	/*
 	 * Search a new directory.
 	 *
-	 * The cn_hash value is for use by vfs_cache.
 	 * The last component of the filename is left accessible via
 	 * cnp->cn_nameptr for callers that need the name. Callers needing
 	 * the name set the SAVENAME flag. When done, they assume
@@ -816,9 +831,8 @@ lookup_parsepath(struct namei_state *state)
 	 * is held and locked.
 	 */
 	cnp->cn_consume = 0;
-	cp = NULL;
-	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
-	cnp->cn_namelen = cp - cnp->cn_nameptr;
+	cnp->cn_namelen = namei_getcomponent(cnp->cn_nameptr);
+	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	if (cnp->cn_namelen > KERNEL_NAME_MAX) {
 		return ENAMETOOLONG;
 	}
@@ -1558,9 +1572,8 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 	ndp->ni_dvp = NULL;
 
 	cnp->cn_consume = 0;
-	cp = NULL;
-	cnp->cn_hash = namei_hash(cnp->cn_nameptr, &cp);
-	cnp->cn_namelen = cp - cnp->cn_nameptr;
+	cnp->cn_namelen = namei_getcomponent(cnp->cn_nameptr);
+	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	KASSERT(cnp->cn_namelen <= KERNEL_NAME_MAX);
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
@@ -1656,8 +1669,8 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 #ifdef DEBUG
-	uint32_t newhash;		/* DEBUG: check name hash */
-	const char *cp;			/* DEBUG: check name ptr/len */
+	size_t newlen;			/* DEBUG: check name len */
+	const char *cp;			/* DEBUG: check name ptr */
 #endif /* DEBUG */
 
 	(void)dummy;
@@ -1677,12 +1690,16 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	 * responsibility for freeing the pathname buffer.
 	 */
 #ifdef DEBUG
+#if 0
 	cp = NULL;
 	newhash = namei_hash(cnp->cn_nameptr, &cp);
 	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
-	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
+#endif
+	newlen = nami_getcomponent(cnp->cn_nameptr);
+	if (cnp->cn_namelen != newlen)
 		panic("relookup: bad len");
+	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	while (*cp == '/')
 		cp++;
 	if (*cp != 0)
