@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.71 2012/11/05 17:24:12 dholland Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.72 2012/11/05 17:27:40 dholland Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.71 2012/11/05 17:24:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.72 2012/11/05 17:27:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,8 @@ ext2fs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
 
@@ -540,7 +541,8 @@ searchloop:
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
 	if (nameiop != CREATE) {
-		cache_enter(vdp, *vpp, cnp);
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 	return ENOENT;
 
@@ -700,7 +702,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return 0;
 }
 
