@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.709 2012/11/05 00:57:41 alnsn Exp $
+#	$NetBSD: bsd.own.mk,v 1.710 2012/11/05 23:09:40 alnsn Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -803,7 +803,8 @@ SOFTFLOAT_BITS=	32
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" 
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc" 
 MKSLJIT?=	yes
 .else
 # Don't let this build where it really isn't supported.
