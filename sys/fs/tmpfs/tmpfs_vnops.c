@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.99 2012/11/05 17:24:11 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.99 2012/11/05 17:24:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -161,7 +161,9 @@ tmpfs_lookup(void *v)
 	 * Avoid doing a linear scan of the directory if the requested
 	 * directory/name couple is already in the cache.
 	 */
-	cachefound = cache_lookup(dvp, cnp, &iswhiteout, vpp);
+	cachefound = cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+				  cnp->cn_nameiop, cnp->cn_flags,
+				  &iswhiteout, vpp);
 	if (iswhiteout) {
 		cnp->cn_flags |= ISWHITEOUT;
 	}
@@ -286,7 +288,8 @@ done:
 	 * not improve the performance).
 	 */
 	if (cnp->cn_nameiop != CREATE) {
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 out:
 	KASSERT((*vpp && VOP_ISLOCKED(*vpp)) || error);
