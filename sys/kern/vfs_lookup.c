@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.197 2012/11/05 17:24:11 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.198 2012/11/05 19:06:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.197 2012/11/05 17:24:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.198 2012/11/05 19:06:26 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -564,8 +564,8 @@ namei_getstartdir(struct namei_state *state)
 	curdir = cwdi->cwdi_cdir;
 
 	if (ndp->ni_pnbuf[0] != '/') {
-		if (ndp->ni_startdir != NULL) {
-			startdir = ndp->ni_startdir;
+		if (ndp->ni_atdir != NULL) {
+			startdir = ndp->ni_atdir;
 		} else {
 			startdir = curdir;
 		}
@@ -601,14 +601,14 @@ namei_getstartdir(struct namei_state *state)
 static struct vnode *
 namei_getstartdir_for_nfsd(struct namei_state *state)
 {
-	KASSERT(state->ndp->ni_startdir != NULL);
+	KASSERT(state->ndp->ni_atdir != NULL);
 
 	/* always use the real root, and never set an emulation root */
 	state->ndp->ni_rootdir = rootvnode;
 	state->ndp->ni_erootdir = NULL;
 
-	vref(state->ndp->ni_startdir);
-	return state->ndp->ni_startdir;
+	vref(state->ndp->ni_atdir);
+	return state->ndp->ni_atdir;
 }
 
 
@@ -1518,8 +1518,8 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 	struct namei_state state;
 	int error;
 
-	KASSERT(ndp->ni_startdir == NULL);
-	ndp->ni_startdir = forcecwd;
+	KASSERT(ndp->ni_atdir == NULL);
+	ndp->ni_atdir = forcecwd;
 
 	namei_init(&state, ndp);
 	error = namei_tryemulroot(&state,
@@ -1564,7 +1564,7 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 
 	KASSERT(cnp == &ndp->ni_cnd);
 
-	startdir = state->ndp->ni_startdir;
+	startdir = state->ndp->ni_atdir;
 
 	cnp->cn_nameptr = ndp->ni_pnbuf;
 	state->docache = 1;
@@ -1631,8 +1631,8 @@ lookup_for_nfsd_index(struct nameidata *ndp, struct vnode *startdir)
 	struct namei_state state;
 	int error;
 
-	KASSERT(ndp->ni_startdir == NULL);
-	ndp->ni_startdir = startdir;
+	KASSERT(ndp->ni_atdir == NULL);
+	ndp->ni_atdir = startdir;
 
 	/*
 	 * Note: the name sent in here (is not|should not be) allowed
