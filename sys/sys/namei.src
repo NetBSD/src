@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.27 2012/10/13 17:46:50 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.28 2012/11/05 17:24:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -119,7 +119,6 @@ struct nameidata {
 		 */
 		const char 	*cn_nameptr;	/* pointer to looked up name */
 		size_t		cn_namelen;	/* length of looked up comp */
-		u_long		cn_hash;	/* hash val of looked up name */
 		size_t		cn_consume;	/* chars to consume in lookup */
 	} ni_cnd;
 };
@@ -264,9 +263,10 @@ void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, struct vnode **, struct componentname *);
-int	cache_lookup_raw(struct vnode *, struct vnode **,
-			 struct componentname *);
+int	cache_lookup(struct vnode *, const struct componentname *,
+			int *, struct vnode **);
+int	cache_lookup_raw(struct vnode *, const struct componentname *,
+			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *, struct componentname *);
 void	nchinit(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.80 2012/07/22 00:53:20 rmind Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.81 2012/11/05 17:24:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80 2012/07/22 00:53:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.81 2012/11/05 17:24:10 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1202,29 +1202,23 @@ smbfs_lookup(void *v)
 	 * the time the cache entry has been created. If it has,
 	 * the cache entry has to be ignored.
 	 */
-	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
+	if (cache_lookup(dvp, cnp, NULL, vpp)) {
 		struct vattr vattr;
 		struct vnode *newvp;
-		int err2;
 
-		if (error && error != ENOENT) {
-			*vpp = NULLVP;
-			return error;
-		}
-
-		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
-		if (err2 != 0) {
-			if (error == 0) {
+		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+		if (error != 0) {
+			if (*vpp != NULLVP) {
 				if (*vpp != dvp)
 					vput(*vpp);
 				else
 					vrele(*vpp);
 			}
 			*vpp = NULLVP;
-			return err2;
+			return error;
 		}
 
-		if (error == ENOENT) {
+		if (*vpp == NULLVP) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred)
 			    && vattr.va_mtime.tv_sec == VTOSMB(dvp)->n_nctime)
 				return ENOENT;
