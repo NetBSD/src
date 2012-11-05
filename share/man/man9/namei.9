@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.27 2010/12/02 12:54:13 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.28 2012/11/05 17:30:37 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,8 +85,9 @@ struct nameidata {
         /*
          * Arguments to namei/lookup.
          */
-        const char *ni_dirp;            /* pathname pointer */
-        enum    uio_seg ni_segflg;      /* location of pathname */
+        struct vnode *ni_startdir;      /* starting dir, cwd if null */
+        struct pathbuf *ni_pathbuf;     /* pathname container */
+        char *ni_pnbuf;                 /* extra pathname buffer ref (XXX) */
         /*
          * Arguments to lookup.
          */
@@ -100,9 +101,9 @@ struct nameidata {
         /*
          * Shared between namei and lookup/commit routines.
          */
-        size_t  ni_pathlen;             /* remaining chars in path */
+        size_t ni_pathlen;              /* remaining chars in path */
         const char *ni_next;            /* next location in pathname */
-        u_long  ni_loopcnt;             /* count of symlinks encountered */
+        unsigned int ni_loopcnt;        /* count of symlinks encountered */
         /*
          * Lookup parameters
          */
@@ -110,17 +111,15 @@ struct nameidata {
                 /*
                  * Arguments to lookup.
                  */
-                u_long  cn_nameiop;     /* namei operation */
-                u_long  cn_flags;       /* flags to namei */
+                uint32_t cn_nameiop;    /* namei operation */
+                uint32_t cn_flags;      /* flags to namei */
                 kauth_cred_t cn_cred;   /* credentials */
                 /*
                  * Shared between lookup and commit routines.
                  */
-                char    *cn_pnbuf;      /* pathname buffer */
                 const char *cn_nameptr; /* pointer to looked up name */
-                long    cn_namelen;     /* length of looked up component */
-                u_long  cn_hash;        /* hash value of looked up name */
-                long    cn_consume;     /* chars to consume in lookup() */
+                size_t cn_namelen;      /* length of looked up component */
+                size_t cn_consume;      /* chars to consume in lookup() */
         } ni_cnd;
 };
 .Ed
