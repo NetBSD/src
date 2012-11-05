@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.83 2012/11/05 17:24:39 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.84 2012/11/05 17:27:52 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.28 2012/11/05 17:24:09 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.29 2012/11/05 17:27:37 dholland Exp 
  */
 
 /*
@@ -267,16 +267,17 @@ uint32_t namei_hash(const char *, const char **);
 int	lookup_for_nfsd(struct nameidata *, struct vnode *, int neverfollow);
 int	lookup_for_nfsd_index(struct nameidata *, struct vnode *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *, int);
-void	cache_purge1(struct vnode *, const struct componentname *, int);
+void	cache_purge1(struct vnode *, const char *, size_t, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
-#define	cache_purge(vp)	cache_purge1((vp), NULL, PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, const struct componentname *,
+#define	cache_purge(vp)	cache_purge1((vp),NULL,0,PURGE_PARENTS|PURGE_CHILDREN)
+int	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
-int	cache_lookup_raw(struct vnode *, const struct componentname *,
+int	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
-void	cache_enter(struct vnode *, struct vnode *, struct componentname *);
+void	cache_enter(struct vnode *, struct vnode *,
+			const char *, size_t, uint32_t);
 void	nchinit(void);
 void	nchreinit(void);
 void	cache_cpu_init(struct cpu_info *);
