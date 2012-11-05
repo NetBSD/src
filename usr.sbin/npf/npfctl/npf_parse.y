@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.14 2012/10/02 23:38:52 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.15 2012/11/05 23:47:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ yyerror(const char *fmt, ...)
 	extern int yyleng;
 	extern char *yytext;
 
-	char *msg, *context = xstrndup(yytext, yyleng);
+	char *msg, *context = estrndup(yytext, yyleng);
 	bool eol = (*context == '\n');
 	va_list ap;
 
@@ -66,7 +66,7 @@ yyerror(const char *fmt, ...)
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
 		size_t len = strlen(context);
-		char *dst = zalloc(len * 4 + 1);
+		char *dst = emalloc(len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
 		fprintf(stderr, " near '%s'", dst);
@@ -315,7 +315,7 @@ proc_call
 	{
 		proc_call_t pc;
 
-		pc.pc_name = xstrdup($1);
+		pc.pc_name = estrdup($1);
 		pc.pc_opts = $3;
 		$$ = npfvar_create(".proc_call");
 		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
@@ -338,8 +338,8 @@ proc_param
 	{
 		proc_param_t pp;
 
-		pp.pp_param = xstrdup($1);
-		pp.pp_value = $2 ? xstrdup($2) : NULL;
+		pp.pp_param = estrdup($1);
+		pp.pp_value = $2 ? estrdup($2) : NULL;
 		$$ = npfvar_create(".proc_param");
 		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
