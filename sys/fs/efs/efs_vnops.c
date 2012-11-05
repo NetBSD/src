@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.27 2012/11/05 17:24:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.26 2012/07/22 00:53:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.27 2012/11/05 17:24:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +73,9 @@ efs_lookup(void *v)
 	if (err)
 		return (err);
 
-	err = cache_lookup(ap->a_dvp, ap->a_vpp, cnp);
-	if (err != -1)
-		return (err);
+	if (cache_lookup(ap->a_dvp, cnp, NULL, ap->a_vpp)) {
+		return *ap->a_vpp == NULLVP ? ENOENT : 0;
+	}
 
 	/*
 	 * Handle the three lookup types: '.', '..', and everything else.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.24 2012/07/22 00:53:19 rmind Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.25 2012/11/05 17:24:10 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.24 2012/07/22 00:53:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.25 2012/11/05 17:24:10 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,9 @@ msdosfs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT: 0;
+	}
 
 	/*
 	 * If they are going after the . or .. entry in the root directory,
