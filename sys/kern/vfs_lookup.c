@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.198 2012/11/05 19:06:26 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.199 2012/11/05 21:35:28 para Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.198 2012/11/05 19:06:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.199 2012/11/05 21:35:28 para Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1696,7 +1696,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
 #endif
-	newlen = nami_getcomponent(cnp->cn_nameptr);
+	newlen = namei_getcomponent(cnp->cn_nameptr);
 	if (cnp->cn_namelen != newlen)
 		panic("relookup: bad len");
 	cp = cnp->cn_nameptr + cnp->cn_namelen;
