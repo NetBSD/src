@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.16 2012/11/05 17:31:15 dholland Exp $
+.\"     $NetBSD: namecache.9,v 1.17 2012/11/05 22:49:14 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,8 +150,8 @@ some existing object, or a negative hit, where the name looked up is
 known to refer to
 .Em no
 existing object.
-.Pq The lookup cannot fail, in the sense of generating an error condition \
-that requires aborting the operation in progress.
+(The lookup cannot fail, in the sense of generating an error condition
+that requires aborting the operation in progress.)
 .Pp
 On a cache miss,
 .Fn cache_lookup
@@ -166,7 +166,8 @@ value is returned.
 On a negative hit,
 .Fa vpp
 is set to contain a null pointer and a nonzero value is returned.
-Usually a negative hit will prompt the caller to fail with ENOENT.
+Usually a negative hit will prompt the caller to fail with
+.Er ENOENT .
 .Pp
 The
 .Fa iswhiteout
@@ -202,7 +203,7 @@ If the lookup succeeds, the vnode is referenced.
 Returns 0 on success, -1 on cache miss, positive errno on failure.
 .It Fn cache_enter "dvp" "vp" "name" "namelen" "nameiflags"
 Add an entry to the cache.
-The 
+The
 .Fa name
 and
 .Fa namelen
