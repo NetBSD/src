@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.27 2012/11/05 17:24:09 dholland Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.28 2012/11/05 17:27:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.27 2012/11/05 17:24:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.28 2012/11/05 17:27:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ efs_lookup(void *v)
 	if (err)
 		return (err);
 
-	if (cache_lookup(ap->a_dvp, cnp, NULL, ap->a_vpp)) {
+	if (cache_lookup(ap->a_dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, ap->a_vpp)) {
 		return *ap->a_vpp == NULLVP ? ENOENT : 0;
 	}
 
@@ -103,7 +104,8 @@ efs_lookup(void *v)
 		    EFS_VTOI(ap->a_dvp), ap->a_cnp, &ino);
 		if (err) {
 			if (err == ENOENT && nameiop != CREATE)
-				cache_enter(ap->a_dvp, NULL, cnp);
+				cache_enter(ap->a_dvp, NULL, cnp->cn_nameptr,
+					    cnp->cn_namelen, cnp->cn_flags);
 			if (err == ENOENT && (nameiop == CREATE ||
 			    nameiop == RENAME)) {
 				err = VOP_ACCESS(ap->a_dvp, VWRITE,
@@ -120,7 +122,8 @@ efs_lookup(void *v)
 		*ap->a_vpp = vp;
 	}
 
-	cache_enter(ap->a_dvp, *ap->a_vpp, cnp);
+	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_flags);
 
 	return 0;
 }
