@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.295 2012/07/22 00:53:21 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.296 2012/11/05 17:24:11 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.295 2012/07/22 00:53:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.296 2012/11/05 17:24:11 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -780,6 +780,7 @@ nfs_lookup(void *v)
 	long len;
 	nfsfh_t *fhp;
 	struct nfsnode *np;
+	int cachefound;
 	int error = 0, attrflag, fhsize;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -817,30 +818,24 @@ nfs_lookup(void *v)
 	 * the time the cache entry has been created. If it has,
 	 * the cache entry has to be ignored.
 	 */
-	error = cache_lookup_raw(dvp, vpp, cnp);
+	cachefound = cache_lookup_raw(dvp, cnp, NULL, vpp);
 	KASSERT(dvp != *vpp);
 	KASSERT((cnp->cn_flags & ISWHITEOUT) == 0);
-	if (error >= 0) {
+	if (cachefound) {
 		struct vattr vattr;
-		int err2;
 
-		if (error && error != ENOENT) {
-			*vpp = NULLVP;
-			return error;
-		}
-
-		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
-		if (err2 != 0) {
-			if (error == 0)
+		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+		if (error != 0) {
+			if (*vpp != NULLVP)
 				vrele(*vpp);
 			*vpp = NULLVP;
-			return err2;
+			return error;
 		}
 
 		if (VOP_GETATTR(dvp, &vattr, cnp->cn_cred)
 		    || timespeccmp(&vattr.va_mtime,
 		    &VTONFS(dvp)->n_nctime, !=)) {
-			if (error == 0) {
+			if (*vpp != NULLVP) {
 				vrele(*vpp);
 				*vpp = NULLVP;
 			}
@@ -849,7 +844,8 @@ nfs_lookup(void *v)
 			goto dorpc;
 		}
 
-		if (error == ENOENT) {
+		if (*vpp == NULLVP) {
+			/* namecache gave us a negative result */
 			goto noentry;
 		}
 
@@ -2777,18 +2773,12 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 					newvp = NFSTOV(np);
 				}
 				if (!error) {
-				    const char *xcp;
-
 				    nfs_loadattrcache(&newvp, &fattr, 0, 0);
 				    if (bigenough) {
 					dp->d_type =
 					   IFTODT(VTTOIF(np->n_vattr->va_type));
 					if (cnp->cn_namelen <= NCHNAMLEN) {
 					    ndp->ni_vp = newvp;
-					    xcp = cnp->cn_nameptr +
-						cnp->cn_namelen;
-					    cnp->cn_hash =
-					       namei_hash(cnp->cn_nameptr, &xcp);
 					    nfs_cache_enter(ndp->ni_dvp,
 						ndp->ni_vp, cnp);
 					}

@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.18 2012/07/22 00:53:19 rmind Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.19 2012/11/05 17:24:10 dholland Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18 2012/07/22 00:53:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.19 2012/11/05 17:24:10 dholland Exp $");
 #endif /* not lint */
 
 
@@ -652,10 +652,10 @@ nilfs_lookup(void *v)
 
 	DPRINTF(LOOKUP, ("\tlooking up cnp->cn_nameptr '%s'\n",
 	    cnp->cn_nameptr));
-	/* look in the nami cache; returns 0 on success!! */
-	error = cache_lookup(dvp, vpp, cnp);
-	if (error >= 0)
-		return error;
+	/* look in the namecache */
+	if (cache_lookup(dvp, cnp, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	DPRINTF(LOOKUP, ("\tNOT found in cache\n"));
 

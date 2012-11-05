@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.14 2012/07/22 00:53:19 rmind Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.15 2012/11/05 17:24:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.14 2012/07/22 00:53:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.15 2012/11/05 17:24:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -169,8 +169,9 @@ filecore_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	name = cnp->cn_nameptr;
 	namelen = cnp->cn_namelen;

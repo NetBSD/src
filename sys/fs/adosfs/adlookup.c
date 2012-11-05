@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.16 2012/07/22 00:53:18 rmind Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.17 2012/11/05 17:24:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.16 2012/07/22 00:53:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.17 2012/11/05 17:24:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,9 @@ adosfs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	/*
 	 * fake a '.'
