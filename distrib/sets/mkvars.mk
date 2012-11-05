@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.6 2011/11/02 14:42:43 he Exp $
+# $NetBSD: mkvars.mk,v 1.7 2012/11/05 00:57:39 alnsn Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -16,6 +16,7 @@ MKEXTRAVARS= \
 	MKCOMPATMODULES \
 	MKDYNAMICROOT \
 	MKMANPAGES \
+	MKSLJIT \
 	MKXORG \
 	X11FLAVOR \
 	USE_INET6 \
