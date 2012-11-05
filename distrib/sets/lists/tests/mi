@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.497 2012/11/03 05:19:49 pgoyette Exp $
+# $NetBSD: mi,v 1.498 2012/11/05 00:57:40 alnsn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2753,6 +2753,10 @@
 ./usr/tests/lib/libskey				tests-lib-tests		atf
 ./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
 ./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
+./usr/tests/lib/libsljit			tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/Atffile		tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/h_sljit		tests-lib-tests		atf,sljit
+./usr/tests/lib/libsljit/t_sljit		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libtre				tests-lib-tests		atf
 ./usr/tests/lib/libtre/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libtre/h_regex_att		tests-obsolete		obsolete
