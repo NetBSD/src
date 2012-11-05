@@ -3727,6 +3727,7 @@ static void test43(void)
 	successful_tests++;
 }
 
+void sljit_test(void);
 void sljit_test(void)
 {
 #if !(defined SLJIT_CONFIG_UNSUPPORTED && SLJIT_CONFIG_UNSUPPORTED)
