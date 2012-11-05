@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2012/11/04 11:12:31 apb Exp $
+#	$NetBSD: Makefile,v 1.26 2012/11/05 16:53:25 apb Exp $
 
 NOMAN=	# defined
 
@@ -77,10 +77,10 @@ srt0.o: ${.CURDIR}/srt0.s
 	${CC} -m68040 -x assembler-with-cpp ${INCLUDES} ${DEFS} -c ${.CURDIR}/srt0.s
 
 .PHONY: build.c
-build.c: ${_NETBSD_VERSION_DEPENDS}
+build.c:
 	${HOST_SH} ${.CURDIR}/newvers.sh
 
-vers.c: version ${_NETBSD_VERSION_DEPENDS}
+vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "next68k"
 
 #installboot: ${.CURDIR}/installboot.sh
