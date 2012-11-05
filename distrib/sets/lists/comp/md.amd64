@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.178 2012/10/28 17:07:44 joerg Exp $
+# $NetBSD: md.amd64,v 1.179 2012/11/05 00:57:40 alnsn Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -57,6 +57,7 @@
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
+./usr/include/amd64/sljitarch.h			comp-c-include		sljit
 ./usr/include/amd64/specialreg.h		comp-c-include
 ./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
@@ -202,6 +203,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-c-include		sljit
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
