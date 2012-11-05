@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.19 2012/11/05 17:24:10 dholland Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.20 2012/11/05 17:27:37 dholland Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.19 2012/11/05 17:24:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.20 2012/11/05 17:27:37 dholland Exp $");
 #endif /* not lint */
 
 
@@ -653,7 +653,8 @@ nilfs_lookup(void *v)
 	DPRINTF(LOOKUP, ("\tlooking up cnp->cn_nameptr '%s'\n",
 	    cnp->cn_nameptr));
 	/* look in the namecache */
-	if (cache_lookup(dvp, cnp, NULL, vpp)) {
+	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
 
@@ -761,7 +762,8 @@ out:
 	 * might be seen as negative caching.
 	 */
 	if (nameiop != CREATE)
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 
 	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returing error %d\n", error));
 

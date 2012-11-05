@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.17 2012/11/05 17:24:09 dholland Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.18 2012/11/05 17:27:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.17 2012/11/05 17:24:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.18 2012/11/05 17:27:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,8 @@ adosfs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULLVP ? ENOENT : 0;
 	}
 
@@ -212,7 +213,8 @@ adosfs_lookup(void *v)
 		return(EJUSTRETURN);
 	}
 	if (nameiop != CREATE)
-		cache_enter(vdp, NULL, cnp);
+		cache_enter(vdp, NULL, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("ENOENT)");
 #endif
@@ -242,7 +244,8 @@ found:
 		vref(vdp);
 found_lockdone:
 	if (nocache == 0)
-		cache_enter(vdp, *vpp, cnp);
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("0)\n");

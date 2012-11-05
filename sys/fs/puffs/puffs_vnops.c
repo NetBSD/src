@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.175 2012/11/05 17:24:10 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.176 2012/11/05 17:27:38 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.175 2012/11/05 17:24:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.176 2012/11/05 17:27:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -528,7 +528,9 @@ puffs_vnop_lookup(void *v)
 	if (!isdot && PUFFS_USE_NAMECACHE(pmp)) {
 		int found, iswhiteout;
 
-		found = cache_lookup(dvp, cnp, &iswhiteout, ap->a_vpp);
+		found = cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+				     cnp->cn_nameiop, cnp->cn_flags,
+				     &iswhiteout, ap->a_vpp);
 		if (iswhiteout) {
 			cnp->cn_flags |= ISWHITEOUT;
 		}
@@ -620,7 +622,8 @@ puffs_vnop_lookup(void *v)
 			} else {
 				if (PUFFS_USE_NAMECACHE(pmp) &&
 				    !PUFFS_USE_FS_TTL(pmp))
-					cache_enter(dvp, NULL, cnp);
+					cache_enter(dvp, NULL, cnp->cn_nameptr,
+						cnp->cn_namelen, cnp->cn_flags);
 			}
 		}
 		goto out;
@@ -696,7 +699,8 @@ puffs_vnop_lookup(void *v)
 	*ap->a_vpp = vp;
 
 	if (PUFFS_USE_NAMECACHE(pmp))
-		cache_enter(dvp, vp, cnp);
+		cache_enter(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 
 	/* XXX */
 	if ((lookup_msg->pvnr_cn.pkcn_flags & REQUIREDIR) == 0)
