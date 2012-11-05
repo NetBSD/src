@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.119 2012/11/05 17:24:12 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.120 2012/11/05 17:27:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.119 2012/11/05 17:24:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.120 2012/11/05 17:27:40 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -187,7 +187,8 @@ ufs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if (cache_lookup(vdp, cnp, &iswhiteout, vpp)) {
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
 		if (iswhiteout) {
 			cnp->cn_flags |= ISWHITEOUT;
 		}
@@ -514,7 +515,8 @@ notfound:
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
 	if (nameiop != CREATE) {
-		cache_enter(vdp, *vpp, cnp);
+		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 	}
 	error = ENOENT;
 	goto out;
@@ -678,7 +680,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	cache_enter(vdp, *vpp, cnp);
+	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	error = 0;
 
 out:
