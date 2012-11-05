@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.70 2012/07/22 00:53:22 rmind Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.71 2012/11/05 17:24:12 dholland Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.70 2012/07/22 00:53:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.71 2012/11/05 17:24:12 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,8 +325,9 @@ ext2fs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
-		return (error);
+	if (cache_lookup(vdp, cnp, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
 	/*
 	 * Suppress search for slots unless creating

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.11 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.12 2012/11/05 17:24:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -86,8 +86,8 @@ chfs_lookup(void *v)
 
 	/* Avoid doing a linear scan of the directory if the requested
 	 * directory/name couple is already in the cache. */
-	error = cache_lookup(dvp, vpp, cnp);
-	if (error >= 0) {
+	if (cache_lookup(dvp, cnp, NULL, vpp)) {
+		error = *vpp == NULLVP ? ENOENT : 0;
 		goto out;
 	}
 
