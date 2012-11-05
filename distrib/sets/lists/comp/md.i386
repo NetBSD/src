@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.129 2012/11/05 00:57:40 alnsn Exp $
+# $NetBSD: md.i386,v 1.130 2012/11/05 20:01:38 alnsn Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -142,7 +142,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
-./usr/include/i386/sljitarch.h			comp-c-include		sljit
+./usr/include/i386/sljitarch.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
