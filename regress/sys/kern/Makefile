@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.30 2009/02/20 21:45:47 jmmv Exp $
+#	$NetBSD: Makefile,v 1.31 2012/11/05 04:11:44 pgoyette Exp $
 
 SUBDIR+= execve getcwd lockf lockf2 ras \
-	 sigtramp sleeping sysvmsg sysvsem sysvshm \
-	 unfdpass
+	 sigtramp sleeping unfdpass
 
 .include <bsd.subdir.mk>
