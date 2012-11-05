@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.13 2012/10/13 17:46:50 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.14 2012/11/05 19:06:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.13 2012/10/13 17:46:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.14 2012/11/05 19:06:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -241,7 +241,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 		path = cp;
 	}
 
-	ndp->ni_startdir = NULL;
+	ndp->ni_atdir = NULL;
 	ndp->ni_pathbuf = pathbuf_assimilate(path);
 	if (ndp->ni_pathbuf == NULL) {
 		error = ENOMEM;
