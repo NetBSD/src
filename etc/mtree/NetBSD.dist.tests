@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.84 2012/09/12 14:07:10 martin Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.85 2012/11/05 00:57:41 alnsn Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -233,6 +233,7 @@
 ./usr/tests/lib/librumpclient
 ./usr/tests/lib/librumphijack
 ./usr/tests/lib/libskey
+./usr/tests/lib/libsljit
 ./usr/tests/lib/libtre
 ./usr/tests/lib/libtre/data
 ./usr/tests/lib/libutil
