@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.22 2012/10/31 08:54:39 martin Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.23 2012/11/05 23:47:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.22 2012/10/31 08:54:39 martin Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.23 2012/11/05 23:47:12 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: npfctl.c,v 1.22 2012/10/31 08:54:39 martin Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include <util.h>
 
 #include "npfctl.h"
 
@@ -85,52 +83,6 @@ static const struct operations_s {
 	/* --- */
 	{	NULL,			0			}
 };
-
-void *
-zalloc(size_t sz)
-{
-	void *p = malloc(sz);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "zalloc");
-	}
-	memset(p, 0, sz);
-	return p;
-}
-
-void *
-xrealloc(void *ptr, size_t size)
-{
-	void *p = realloc(ptr, size);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xrealloc");
-	}
-	return p;
-}
-
-char *
-xstrdup(const char *s)
-{
-	char *p = strdup(s);
-
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xstrdup");
-	}
-	return p;
-}
-
-char *
-xstrndup(const char *s, size_t len)
-{
-	char *p;
-
-	p = strndup(s, len);
-	if (p == NULL) {
-		err(EXIT_FAILURE, "xstrndup");
-	}
-	return p;
-}
 
 __dead static void
 usage(void)
@@ -211,7 +163,7 @@ npfctl_print_stats(int fd)
 		{ -1, "Other"						},
 		{ NPF_STAT_ERROR,		"unexpected errors"	},
 	};
-	uint64_t *st = zalloc(NPF_STATS_SIZE);
+	uint64_t *st = emalloc(NPF_STATS_SIZE);
 
 	if (ioctl(fd, IOC_NPF_STATS, &st) != 0) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_STATS)");
@@ -261,7 +213,7 @@ char *
 npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 {
 	struct sockaddr_storage ss;
-	char *buf = zalloc(64);
+	char *buf = emalloc(64);
 	int len;
 
 	switch (alen) {
@@ -333,7 +285,7 @@ npfctl_table(int fd, int argc, char **argv)
 	}
 again:
 	if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
-		nct.nct_data.buf.buf = zalloc(buflen);
+		nct.nct_data.buf.buf = emalloc(buflen);
 		nct.nct_data.buf.len = buflen;
 	} else {
 		if (!npfctl_parse_cidr(arg, &fam, &alen)) {

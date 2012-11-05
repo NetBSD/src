@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.6 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.7 2012/11/05 23:47:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ any			return ANY;
 "="			return EQ;
 
 "0x"[0-9a-fA-F]+ {
-			char *endp, *buf = zalloc(yyleng + 1);
+			char *endp, *buf = emalloc(yyleng + 1);
 			buf[yyleng] = 0;
 			yylval.num = strtoul(buf+2, &endp, 16);
 			free(buf);
@@ -117,46 +117,46 @@ any			return ANY;
 		}
 
 {NUMBER}"."{NUMBER} {
-			char *endp, *buf = xstrndup(yytext, yyleng);
+			char *endp, *buf = estrndup(yytext, yyleng);
 			yylval.fpnum = strtod(buf, &endp);
 			free(buf);
 			return FPNUM;
 		}
 
 [0-9a-fA-F]+":"[0-9a-fA-F:]* {
-			yylval.str = xstrndup(yytext, yyleng);
+			yylval.str = estrndup(yytext, yyleng);
 			return IPV6ADDR;
 		}
 
 {NUMBER}"."[0-9][0-9.]* {
-			yylval.str = xstrndup(yytext, yyleng);
+			yylval.str = estrndup(yytext, yyleng);
 			return IPV4ADDR;
 		}
 
 {NUMBER}	{
-			char *endp, *buf = xstrndup(yytext, yyleng);
+			char *endp, *buf = estrndup(yytext, yyleng);
 			yylval.num = strtoul(buf, &endp, 10);
 			free(buf);
 			return NUM;
 		}
 
 "<"{NID}">"	{
-			yylval.str = xstrndup(yytext + 1, yyleng - 2);
+			yylval.str = estrndup(yytext + 1, yyleng - 2);
 			return TABLE_ID;
 		}
 
 "$"{NID}	{
-			yylval.str = xstrndup(yytext + 1, yyleng - 1);
+			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
 		}
 
 {ID}		{
-			yylval.str = xstrndup(yytext, yyleng);
+			yylval.str = estrndup(yytext, yyleng);
 			return IDENTIFIER;
 		}
 
 \"[^\"]*\"	{
-			yylval.str = xstrndup(yytext + 1, yyleng - 2);
+			yylval.str = estrndup(yytext + 1, yyleng - 2);
 			return STRING;
 		}
 
