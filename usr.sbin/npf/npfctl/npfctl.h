@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.21 2012/10/29 02:27:12 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.22 2012/11/05 23:47:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <util.h>
 
 #include <net/npf_ncode.h>
 #include <net/npf.h>
@@ -90,10 +91,6 @@ typedef struct proc_param {
 } proc_param_t;
 
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
-void *		zalloc(size_t);
-void *		xrealloc(void *, size_t);
-char *		xstrdup(const char *);
-char *		xstrndup(const char *, size_t);
 
 void		npfctl_print_error(const nl_error_t *);
 char *		npfctl_print_addrmask(int, npf_addr_t *, npf_netmask_t);
