@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.87 2012/10/01 20:49:30 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.88 2012/11/05 17:30:37 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -297,10 +297,8 @@ struct componentname {
         /*
          * Shared between lookup and commit routines.
          */
-        char    *cn_pnbuf;      /* pathname buffer */
         const char *cn_nameptr; /* pointer to looked up name */
         size_t  cn_namelen;     /* length of looked up component */
-        u_long  cn_hash;        /* hash value of looked up name */
         size_t  cn_consume;     /* chars to consume in lookup() */
 };
 .Ed
