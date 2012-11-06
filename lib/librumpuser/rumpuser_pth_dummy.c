@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.5 2012/11/02 16:55:02 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.6 2012/11/06 18:31:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.5 2012/11/02 16:55:02 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.6 2012/11/06 18:31:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -120,6 +120,13 @@ rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 
 	mtx->v++;
 	mtx->o = curlwp;
+}
+
+void
+rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *mtx)
+{
+
+	rumpuser_mutex_enter(mtx);
 }
 
 int
