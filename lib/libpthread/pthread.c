@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.139 2012/11/03 23:42:27 rmind Exp $	*/
+/*	$NetBSD: pthread.c,v 1.140 2012/11/06 09:03:03 apb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.139 2012/11/03 23:42:27 rmind Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.140 2012/11/06 09:03:03 apb Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1305,8 +1305,8 @@ pthread__initmain(pthread_t *newt)
 static signed int
 pthread__cmp(void *ctx, const void *n1, const void *n2)
 {
-	const uintptr_t const p1 = (const uintptr_t)n1;
-	const uintptr_t const p2 = (const uintptr_t)n2;
+	const uintptr_t p1 = (const uintptr_t)n1;
+	const uintptr_t p2 = (const uintptr_t)n2;
 
 	if (p1 < p2)
 		return -1;
