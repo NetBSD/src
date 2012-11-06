@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sysv.c,v 1.1 2012/11/05 04:09:14 pgoyette Exp $	*/
+/*	$NetBSD: t_sysv.c,v 1.2 2012/11/06 18:31:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -59,16 +59,15 @@ volatile int child_status, child_count;
 void	sigsys_handler(int);
 void	sigchld_handler(int);
 
+key_t	get_ftok(int);
+
 void	print_msqid_ds(struct msqid_ds *, mode_t);
-void	cleanup_msg(void);
 void	receiver(void);
 
 void	print_semid_ds(struct semid_ds *, mode_t);
-void	cleanup_sem(void);
 void	waiter(void);
 
 void	print_shmid_ds(struct shmid_ds *, mode_t);
-void	cleanup_shm(void);
 void	sharer(void);
 
 #define	MESSAGE_TEXT_LEN	256
@@ -93,8 +92,6 @@ int	sender_msqid = -1;
 int	sender_semid = -1;
 int	sender_shmid = -1;
 pid_t	child_pid;
-
-char	token_key[64];
 
 key_t	msgkey, semkey, shmkey;
 
@@ -131,7 +128,40 @@ sigchld_handler(int signo)
 	child_count--;
 }
 
-ATF_TC(msg);
+key_t get_ftok(int id)
+{
+	int fd;
+	char token_key[64], token_dir[64];
+	char *tmpdir;
+	key_t key;
+
+	strlcpy(token_key, "/tmp/t_sysv.XXXXXX", sizeof(token_key));
+	tmpdir = mkdtemp(token_key);
+	ATF_REQUIRE_MSG(tmpdir != NULL, "mkdtemp() failed: %d", errno);
+
+	strlcpy(token_dir, tmpdir, sizeof(token_dir));
+	strlcpy(token_key, tmpdir, sizeof(token_key));
+	strlcat(token_key, "/token_key", sizeof(token_key));
+
+	/* Create the file, since ftok() requires it to exist! */
+
+	fd = open(token_key, O_RDWR | O_CREAT | O_EXCL);
+	if (fd == -1) {
+		rmdir(tmpdir);
+		atf_tc_fail("open() of temp file failed: %d", errno);
+		return (key_t)-1;
+	} else
+		close(fd);
+
+	key = ftok(token_key, id);
+
+	ATF_REQUIRE_MSG(unlink(token_key) != -1, "unlink() failed: %d", errno);
+	ATF_REQUIRE_MSG(rmdir(token_dir) != -1, "rmdir() failed: %d", errno);
+
+	return key;
+}
+
+ATF_TC_WITH_CLEANUP(msg);
 ATF_TC_HEAD(msg, tc)
 {  
 
@@ -171,20 +201,8 @@ ATF_TC_BODY(msg, tc)
 	ATF_REQUIRE_MSG(sigaction(SIGCHLD, &sa, NULL) != -1,
 	    "sigaction SIGCHLD: %d", errno);
 
-	msgkey = ftok(token_key, 4160);
-	ATF_REQUIRE_MSG(msgkey != (key_t)-1, "ftok failed");
-
-	/*
-	 * Initialize child_pid to ourselves so that the cleanup function
-	 * works before we create the receiver.
-	 */
-	child_pid = getpid();
-
-	/*
-	 * Make sure that when the sender exits, the message queue is
-	 * removed.
-	 */
-	ATF_REQUIRE_MSG(atexit(cleanup_msg) != -1, "atexit:%d", errno);
+	msgkey = get_ftok(4160);
+	ATF_REQUIRE_MSG(msgkey != (key_t)-1, "get_ftok failed");
 
 	sender_msqid = msgget(msgkey, IPC_CREAT | 0640);
 	ATF_REQUIRE_MSG(sender_msqid != -1, "msgget: %d", errno);
@@ -284,17 +302,16 @@ ATF_TC_BODY(msg, tc)
 		atf_tc_fail("sender: received unexpected signal");
 }
 
-void
-cleanup_msg()
+ATF_TC_CLEANUP(msg, tc)
 {
 
 	/*
-	 * If we're the sender, and it exists, remove the message queue.
+	 * Remove the message queue if it exists.
 	 */
-	if (child_pid != 0 && sender_msqid != -1) {
-		if (msgctl(sender_msqid, IPC_RMID, NULL) == -1)
-			warn("msgctl IPC_RMID");
-	}
+	if (sender_msqid != -1)
+		ATF_REQUIRE_MSG(msgctl(sender_msqid, IPC_RMID, NULL) != -1,
+		    "msgctl IPC_RMID: %d", errno);
+	sender_msqid = -1;
 }
 
 void
@@ -380,7 +397,7 @@ receiver()
  * Test the SVID-compatible Semaphore facility.
  */
 
-ATF_TC(sem);
+ATF_TC_WITH_CLEANUP(sem);
 ATF_TC_HEAD(sem, tc)
 {  
 
@@ -420,20 +437,8 @@ ATF_TC_BODY(sem, tc)
 	ATF_REQUIRE_MSG(sigaction(SIGCHLD, &sa, NULL) != -1,
 	    "sigaction SIGCHLD: %d", errno);
 
-	semkey = ftok(token_key, 4160);
-	ATF_REQUIRE_MSG(semkey != (key_t)-1, "ftok failed");
-
-	/*
-	 * Initialize child_pid to ourselves to that the cleanup function
-	 * works before we create the receiver.
-	 */
-	child_pid = getpid();
-
-	/*
-	 * Make sure that when the sender exits, the message queue is
-	 * removed.
-	 */
-	ATF_REQUIRE_MSG(atexit(cleanup_sem) != -1, "atexit: %d", errno);
+	semkey = get_ftok(4160);
+	ATF_REQUIRE_MSG(semkey != (key_t)-1, "get_ftok failed");
 
 	sender_semid = semget(semkey, 1, IPC_CREAT | 0640);
 	ATF_REQUIRE_MSG(sender_semid != -1, "semget: %d", errno);
@@ -535,17 +540,16 @@ ATF_TC_BODY(sem, tc)
 	}
 }
 
-void
-cleanup_sem()
+ATF_TC_CLEANUP(sem, tc)
 {
 
 	/*
-	 * If we're the sender, and it exists, remove the message queue.
+	 * Remove the semaphore if it exists
 	 */
-	if (child_pid != 0 && sender_semid != -1) {
+	if (sender_semid != -1)
 		ATF_REQUIRE_MSG(semctl(sender_semid, 0, IPC_RMID) != -1,
 		    "semctl IPC_RMID: %d", errno);
-	}
+	sender_semid = -1;
 }
 
 void
@@ -619,7 +623,7 @@ waiter()
  * Test the SVID-compatible Shared Memory facility.
  */
 
-ATF_TC(shm);
+ATF_TC_WITH_CLEANUP(shm);
 ATF_TC_HEAD(shm, tc)
 {  
 
@@ -660,21 +664,8 @@ ATF_TC_BODY(shm, tc)
 
 	pgsize = sysconf(_SC_PAGESIZE);
 
-	shmkey = ftok(token_key, 4160);
-	ATF_REQUIRE_MSG(shmkey != (key_t)-1, "ftok failed");
-
-	/*
-	 * Initialize child_pid to ourselves to that the cleanup function
-	 * works before we create the receiver.
-	 */
-	child_pid = getpid();
-
-	/*
-	 * Make sure that when the sender exits, the message queue is
-	 * removed.
-	 */
-	ATF_REQUIRE_MSG(atexit(cleanup_shm) != -1,
-	    "atexit: %d", errno);
+	shmkey = get_ftok(4160);
+	ATF_REQUIRE_MSG(shmkey != (key_t)-1, "get_ftok failed");
 
 	ATF_REQUIRE_MSG((sender_shmid = shmget(shmkey, pgsize,
 					       IPC_CREAT | 0640)) != -1,
@@ -747,17 +738,16 @@ ATF_TC_BODY(shm, tc)
 		atf_tc_fail("sender: received unexpected signal");
 }
 
-void
-cleanup_shm()
+ATF_TC_CLEANUP(shm, tc)
 {
 
 	/*
-	 * If we're the sender, and it exists, remove the shared memory area.
+	 * Remove the shared memory area if it exists.
 	 */
-	if (child_pid != 0 && sender_shmid != -1) {
-		if (shmctl(sender_shmid, IPC_RMID, NULL) == -1)
-			warn("shmctl IPC_RMID");
-	}
+	if (sender_shmid != -1)
+		ATF_REQUIRE_MSG(shmctl(sender_shmid, IPC_RMID, NULL) != -1,
+		    "shmctl IPC_RMID: %d", errno);
+	sender_shmid = -1;
 }
 
 void
@@ -816,21 +806,6 @@ sharer()
 
 ATF_TP_ADD_TCS(tp)
 {
-	int fd;
-	char *tmpdir;
-	
-	strlcpy(token_key, "/tmp/t_sysv.XXXXXX", sizeof(token_key));
-	if ((tmpdir = mkdtemp(token_key)) == NULL)
-		errx(1,"Failed to get a temp dirname for use as a key!");
-	strlcpy(token_key, tmpdir, sizeof(token_key));
-	strlcat(token_key, "token_key", sizeof(token_key));
-
-	/* Create the file, since ftok() requires it to exist! */
-
-	if ((fd = open(token_key, O_RDWR | O_CREAT | O_EXCL)) == -1)
-		errx(1, "Failed to create ftok file: %s\n", strerror(errno));
-	else
-		close(fd);
 
 	ATF_TP_ADD_TC(tp, msg); 
 	ATF_TP_ADD_TC(tp, sem); 
