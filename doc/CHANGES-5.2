@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.193 2012/10/31 15:49:27 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.194 2012/11/06 20:26:14 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8730,4 +8730,31 @@ sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c	1.8 via patch
 
 	Avoid crashing when writing to certain DRM sysctls.
 	[chs, ticket #1811]
+
+sys/kern/vfs_lookup.c				1.195 via patch
+sys/miscfs/genfs/layer_vnops.c			1.51 via patch
+
+	Avoid a panic when renaming a mountpoint that has a layerfs
+	on it.  PR#47040.
+	[dholland, ticket #1814]
+
+sys/kern/sys_descrip.c				1.11
+
+	Make posix_fadvise() return correct status values.
+	[he, ticket #1815]
+
+sys/arch/macppc/dev/awacs.c			1.43 via patch
+
+	Fix detection of connected headphones on some Power Macs.
+	[phx, ticket #1816]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/northamerica			patch
+
+	Import tzdata2012i from
+	ftp://ftp.iana.org/tz/releases/tzdata2012i.tar.gz .
+	Changes from tzdata2012h to tzdata2012i:
+  	Cuba switches from DST on 4 Nov 2012 at 01:00.
+	[apb, ticket #1813]
 
