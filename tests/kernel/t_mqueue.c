@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mqueue.c,v 1.1 2012/11/03 05:19:33 pgoyette Exp $ */
+/*	$NetBSD: t_mqueue.c,v 1.2 2012/11/06 13:55:03 apb Exp $ */
 
 /*
  * Test for POSIX message queue priority handling.
@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <mqueue.h>
 
@@ -105,12 +106,15 @@ ATF_TC_HEAD(mqueue, tc)
 
 ATF_TC_BODY(mqueue, tc)
 {
-	char *mq_name;
+	int status;
+	char *tmpdir;
 	char template[32];
+	char mq_name[64];
 
 	strlcpy(template, "./t_mqueue.XXXXXX", sizeof(template));
-
-	mq_name = mktemp(template);
+	tmpdir = mkdtemp(template);
+	ATF_REQUIRE_MSG(tmpdir != NULL, "mkdtemp failed: %d", errno);
+	snprintf(mq_name, sizeof(mq_name), "%s/mq", tmpdir);
 
 	mqd_t mqfd;
 
@@ -121,7 +125,10 @@ ATF_TC_BODY(mqueue, tc)
 	send_msgs(mqfd);
 	receive_msgs(mqfd);
 
-	mq_close(mqfd);
+	status = mq_close(mqfd);
+	ATF_REQUIRE_MSG(status == 0, "mq_close failed: %d", errno);
+	status = rmdir(tmpdir);
+	ATF_REQUIRE_MSG(status == 0, "rmdir failed: %d", errno);
 }
 
 ATF_TP_ADD_TCS(tp)
