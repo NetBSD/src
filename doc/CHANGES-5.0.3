@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.88 2012/10/31 16:47:18 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.89 2012/11/06 20:26:54 riz Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5169,4 +5169,14 @@ share/zoneinfo/southamerica			patch
 	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
 	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #1812]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/northamerica			patch
+
+	Import tzdata2012i from
+	ftp://ftp.iana.org/tz/releases/tzdata2012i.tar.gz .
+	Changes from tzdata2012h to tzdata2012i:
+  	Cuba switches from DST on 4 Nov 2012 at 01:00.
+	[apb, ticket #1813]
 
