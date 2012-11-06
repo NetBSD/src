@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.7 2012/11/06 15:23:24 uwe Exp $
+.\"	$NetBSD: timer_settime.2,v 1.8 2012/11/06 15:26:37 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ argument of
 .Fn timer_settime
 or in the
 .Ar tim
-argment of
+argument of
 .Fn timer_gettime
 are subject to the above rounding effect and might not exactly match the
 requested values by the user.
@@ -169,3 +169,5 @@ structure specified a value less than zero or greater than or equal to 10e9.
 .Sh STANDARDS
 .St -p1003.1b-93 ,
 .St -p1003.1i-95
+
+\"  LocalWords:  gettime settime
