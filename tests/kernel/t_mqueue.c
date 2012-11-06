@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mqueue.c,v 1.2 2012/11/06 13:55:03 apb Exp $ */
+/*	$NetBSD: t_mqueue.c,v 1.3 2012/11/06 19:35:38 pgoyette Exp $ */
 
 /*
  * Test for POSIX message queue priority handling.
@@ -15,6 +15,8 @@
 #include <unistd.h>
 
 #include <mqueue.h>
+
+char *tmpdir;
 
 #define	MQ_PRIO_BASE	24
 
@@ -96,7 +98,7 @@ receive_msgs(mqd_t mqfd)
 	    "mq_receive 6 prio/data mismatch");
 }
 
-ATF_TC(mqueue);
+ATF_TC_WITH_CLEANUP(mqueue);
 ATF_TC_HEAD(mqueue, tc)
 {
 
@@ -107,7 +109,6 @@ ATF_TC_HEAD(mqueue, tc)
 ATF_TC_BODY(mqueue, tc)
 {
 	int status;
-	char *tmpdir;
 	char template[32];
 	char mq_name[64];
 
@@ -127,8 +128,16 @@ ATF_TC_BODY(mqueue, tc)
 
 	status = mq_close(mqfd);
 	ATF_REQUIRE_MSG(status == 0, "mq_close failed: %d", errno);
-	status = rmdir(tmpdir);
-	ATF_REQUIRE_MSG(status == 0, "rmdir failed: %d", errno);
+}
+
+ATF_TC_CLEANUP(mqueue, tc)
+{
+	int status;
+
+	if (tmpdir != NULL) {
+		status = rmdir(tmpdir);
+		ATF_REQUIRE_MSG(status == 0, "rmdir failed: %d", errno);
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
