@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2012/11/05 04:09:14 pgoyette Exp $
+# $NetBSD: Makefile,v 1.29 2012/11/07 05:13:45 nakayama Exp $
 
 NOMAN=		# defined
 
@@ -20,6 +20,8 @@ BINDIR=		${TESTSDIR}
 PROGS=		h_ps_strings1
 PROGS+=		h_ps_strings2
 
+LDADD.t_mqueue+= -lrt
+
 
 .if (${MKRUMP} != "no")
 TESTS_SUBDIRS+=	tty
@@ -29,7 +31,6 @@ TESTS_C+=	t_filedesc
 TESTS_C+=	t_rnd
 LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
-LDADD.t_mqueue+= -lrt
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
 
 .endif
