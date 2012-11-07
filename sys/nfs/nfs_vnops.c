@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.297 2012/11/05 17:27:39 dholland Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.298 2012/11/07 02:31:48 macallan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.297 2012/11/05 17:27:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.298 2012/11/07 02:31:48 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -847,6 +847,7 @@ nfs_lookup(void *v)
 
 		if (*vpp == NULLVP) {
 			/* namecache gave us a negative result */
+			error = ENOENT;
 			goto noentry;
 		}
 
