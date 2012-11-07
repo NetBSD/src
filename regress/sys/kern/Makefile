@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 2012/11/05 04:11:44 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.32 2012/11/07 14:04:28 pgoyette Exp $
 
-SUBDIR+= execve getcwd lockf lockf2 ras \
+SUBDIR+= execve getcwd ras \
 	 sigtramp sleeping unfdpass
 
 .include <bsd.subdir.mk>
