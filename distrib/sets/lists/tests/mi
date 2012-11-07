@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.500 2012/11/05 08:07:11 alnsn Exp $
+# $NetBSD: mi,v 1.501 2012/11/07 14:01:34 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -337,6 +337,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_lockf.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/kernel/t_mqueue.debug			tests-kernel-tests	debug,atf
@@ -2155,6 +2156,7 @@
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf,rump
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
+./usr/tests/kernel/t_lockf			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lwpctl			tests-obsolete			obsolete
 ./usr/tests/kernel/t_mkdir			tests-obsolete			obsolete
 ./usr/tests/kernel/t_mqueue			tests-kernel-tests		atf
