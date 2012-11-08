@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.57 2012/11/08 00:34:37 macallan Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.58 2012/11/08 16:30:12 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -409,32 +409,6 @@
 #define	IRDR_2L		0x68	/* unimplemented */
 #define	IRDR_3H		0x70	/* unimplemented */
 #define	IRDR_3L		0x78	/* unimplemented */
-
-/* SOFTINT ASRs */
-#define	SET_SOFTINT	%asr20	/* Sets these bits */
-#define	CLEAR_SOFTINT	%asr21	/* Clears these bits */
-#define	SOFTINT		%asr22	/* Reads the register */
-#define	TICK_CMPR	%asr23
-#define	STICK		%asr24
-#define	STICK_CMPR	%asr25
-
-#define	TICK_INT	0x01	/* level-14 clock tick */
-#define	SOFTINT1	(0x1<<1)
-#define	SOFTINT2	(0x1<<2)
-#define	SOFTINT3	(0x1<<3)
-#define	SOFTINT4	(0x1<<4)
-#define	SOFTINT5	(0x1<<5)
-#define	SOFTINT6	(0x1<<6)
-#define	SOFTINT7	(0x1<<7)
-#define	SOFTINT8	(0x1<<8)
-#define	SOFTINT9	(0x1<<9)
-#define	SOFTINT10	(0x1<<10)
-#define	SOFTINT11	(0x1<<11)
-#define	SOFTINT12	(0x1<<12)
-#define	SOFTINT13	(0x1<<13)
-#define	SOFTINT14	(0x1<<14)
-#define	SOFTINT15	(0x1<<15)
-#define	STICK_INTR	(0x1<<16)	/* system tick */
 
 /* Interrupt Dispatch -- usually reserved for cross-calls */
 #define	ASR_IDSR	0x48 /* Interrupt dispatch status reg */
