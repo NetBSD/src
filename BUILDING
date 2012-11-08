@@ -204,7 +204,7 @@ CONFIGURATION
      MKCATPAGES  Can be set to ``yes'' or ``no''.  Indicates whether prefor-
                  matted plaintext manual pages will be created during a build.
 
-                 Default: ``yes''
+                 Default: ``no''
 
      MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether crypto-
                  graphic code will be included in a build; provided for the
