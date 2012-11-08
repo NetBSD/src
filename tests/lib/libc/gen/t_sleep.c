@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.1 2012/11/08 03:13:47 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.2 2012/11/08 04:58:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -135,8 +135,6 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	ATF_REQUIRE_MSG(rtc != -1 || kerrno == EINTR, "kevent: %s",
 	    strerror(errno));
 
-printf("delay %ld.%09ld, tmo %d\n", delay->tv_sec, delay->tv_nsec, tmo);
-
 	if (rtc == 0)
 	    ATF_REQUIRE_MSG((delay->tv_sec * BILLION + delay->tv_nsec -
 			    tmo * MILLION) <= 0,
@@ -266,7 +264,7 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 *= round;
 
 		ATF_REQUIRE_MSG(delta3 <= FUZZ && delta3 >= -FUZZ,
-		    "Elapsed time %ld exceeds allowable fuzz %lld",
+		    "Elapsed time %"PRId64" exceeds allowable fuzz %lld",
 		    delta3, FUZZ);
 
 		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
