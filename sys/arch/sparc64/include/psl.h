@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.50 2012/11/08 00:34:37 macallan Exp $ */
+/*	$NetBSD: psl.h,v 1.51 2012/11/08 16:30:12 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,6 +263,20 @@
 #define WSTATE_USER	022
 
 #define CWP		0x01f
+
+/*
+ * UltraSPARC Ancillary State Registers
+ */
+#define SET_SOFTINT	%asr20	/* Set Software Interrupt register bits */
+#define CLEAR_SOFTINT	%asr21	/* Clear Software Interrupt register bits */
+#define SOFTINT		%asr22	/* Software Interrupt register */
+#define TICK_CMPR	%asr23	/* TICK Compare register */
+#define STICK		%asr24	/* STICK register */
+#define STICK_CMPR	%asr25	/* STICK Compare register */
+
+/* SOFTINT bit descriptions */
+#define TICK_INT	0x01		/* CPU clock timer interrupt */
+#define STICK_INT	(0x1<<16)	/* system clock timer interrupt */
 
 /* 64-byte alignment -- this seems the best place to put this. */
 #define SPARC64_BLOCK_SIZE	64
