@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.28 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.29 2012/11/08 18:04:56 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.28 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.29 2012/11/08 18:04:56 rkujawa Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -506,7 +506,7 @@ grfcv3dattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf
 	 */
-	if (amiga_config_found(cfdata, self, gp, grfcv3dprint)) {
+	if (amiga_config_found(cfdata, gp->g_device, gp, grfcv3dprint)) {
 		if (self != NULL)
 			printf("%s: CyberVision64/3D with %dMB being used\n",
 			    device_xname(self), cv3d_fbsize / 0x100000);
