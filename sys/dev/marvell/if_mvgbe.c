@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.28 2012/11/01 02:46:41 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.29 2012/11/08 14:32:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.28 2012/11/01 02:46:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.29 2012/11/08 14:32:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1823,7 +1823,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		m = cdata->mvgbe_rx_chain[idx].mvgbe_mbuf;
 		cdata->mvgbe_rx_chain[idx].mvgbe_mbuf = NULL;
-		total_len = cur_rx->bytecnt;
+		total_len = cur_rx->bytecnt - ETHER_CRC_LEN;
 		rxstat = cur_rx->cmdsts;
 		bufsize = cur_rx->bufsize;
 
@@ -1908,7 +1908,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 
