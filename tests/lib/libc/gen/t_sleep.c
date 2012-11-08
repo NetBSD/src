@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.2 2012/11/08 04:58:44 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.3 2012/11/08 16:33:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -135,10 +135,9 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	ATF_REQUIRE_MSG(rtc != -1 || kerrno == EINTR, "kevent: %s",
 	    strerror(errno));
 
-	if (rtc == 0)
-	    ATF_REQUIRE_MSG((delay->tv_sec * BILLION + delay->tv_nsec -
-			    tmo * MILLION) <= 0,
-			"kevent - none queued - timing error");
+	if (delay->tv_sec * BILLION + delay->tv_nsec > tmo * MILLION)
+		ATF_REQUIRE_MSG(rtc > 0,
+		    "kevent: ALARM did not cause EVFILT_TIMER event");
 
 	return 0;
 }
@@ -264,7 +263,7 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 *= round;
 
 		ATF_REQUIRE_MSG(delta3 <= FUZZ && delta3 >= -FUZZ,
-		    "Elapsed time %"PRId64" exceeds allowable fuzz %lld",
+		    "Reschedule latency %"PRId64" exceeds allowable fuzz %lld",
 		    delta3, FUZZ);
 
 		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
