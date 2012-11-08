@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.55 2012/10/27 17:17:29 chs Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.56 2012/11/08 18:04:56 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.55 2012/10/27 17:17:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.56 2012/11/08 18:04:56 rkujawa Exp $");
 
 #include "grfrh.h"
 #include "ite.h"
@@ -1617,7 +1617,7 @@ grfrhattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, self, gp, grfrhprint);
+	amiga_config_found(cfdata, gp->g_device, gp, grfrhprint);
 }
 
 int
