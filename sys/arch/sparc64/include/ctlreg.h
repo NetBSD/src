@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.58 2012/11/08 16:30:12 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.59 2012/11/08 16:36:53 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -411,7 +411,7 @@
 #define	IRDR_3L		0x78	/* unimplemented */
 
 /* Interrupt Dispatch -- usually reserved for cross-calls */
-#define	ASR_IDSR	0x48 /* Interrupt dispatch status reg */
+#define	ASI_IDSR	0x48 /* Interrupt dispatch status reg */
 #define	IDSR		0x00
 #define	IDSR_NACK	0x02
 #define	IDSR_BUSY	0x01
