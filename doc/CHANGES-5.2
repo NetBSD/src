@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.196 2012/11/08 19:14:52 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.197 2012/11/08 20:14:46 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8763,4 +8763,18 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.2_RC1!
 	[riz]
+
+distrib/sets/lists/base/mi			1.992
+distrib/sets/lists/comp/mi			1.1759 via patch
+distrib/sets/lists/man/mi			1.1391
+usr.sbin/Makefile				1.265 via patch
+usr.sbin/wake/Makefile				delete
+usr.sbin/wake/wake.8				delete
+usr.sbin/wake/wake.c				delete
+usr.sbin/wakeonlan/Makefile			1.1
+usr.sbin/wakeonlan/wakeonlan.8			1.1
+usr.sbin/wakeonlan/wakeonlan.c			1.1
+
+	Rename wake(8) to wakeonlan(8).  Approved by core@.
+	[uebayasi, ticket #1817]
 
