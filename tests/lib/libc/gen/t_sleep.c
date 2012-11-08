@@ -1,0 +1,296 @@
+/* $NetBSD: t_sleep.c,v 1.1 2012/11/08 03:13:47 pgoyette Exp $ */
+
+/*-
+ * Copyright (c) 2006 Frank Kardel
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <atf-c.h>
+#include <err.h>
+#include <errno.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <sys/cdefs.h>
+#include <sys/event.h>
+#include <sys/signal.h>
+
+#define ALARM		11		/* SIGALRM after this many seconds */
+#define KEVNT_TIMEOUT	13200		/* measured in milli-seconds */
+#define BILLION		1000000000LL	/* nano-seconds per second */
+#define MILLION		1000000LL	/* nano-seconds per milli-second */
+#define FUZZ		(50 * MILLION)	/* scheduling fuzz accepted - 50 ms */
+#define MAXSLEEP	(32 * BILLION)	/* 32 seconds */
+
+static volatile int sig, sigs;
+
+int sleeptest(int (*)(struct timespec *, struct timespec *), bool, bool);
+int do_nanosleep(struct timespec *, struct timespec *);
+int do_select(struct timespec *, struct timespec *);
+int do_poll(struct timespec *, struct timespec *);
+int do_sleep(struct timespec *, struct timespec *);
+int do_kevent(struct timespec *, struct timespec *);
+void sigalrm(int);
+
+void
+sigalrm(int s)
+{
+	sig++;
+}
+
+int
+do_nanosleep(struct timespec *delay, struct timespec *remain)
+{
+	int ret;
+
+	if (nanosleep(delay, remain) == -1)
+		ret = (errno == EINTR ? 0 : errno);
+	else
+		ret = 0;
+	return ret;
+}
+
+int
+do_select(struct timespec *delay, struct timespec *remain)
+{
+	int ret;
+	struct timeval tv;
+
+	TIMESPEC_TO_TIMEVAL(&tv, delay);
+	if (select(0, NULL, NULL, NULL, &tv) == -1)
+		ret = (errno == EINTR ? 0 : errno);
+	else
+		ret = 0;
+	return ret;
+}
+
+int
+do_poll(struct timespec *delay, struct timespec *remain)
+{
+	int ret;
+	struct timeval tv;
+
+	TIMESPEC_TO_TIMEVAL(&tv, delay);
+	if (pollts(NULL, 0, delay, NULL) == -1)
+		ret = (errno == EINTR ? 0 : errno);
+	else
+		ret = 0;
+	return ret;
+}
+
+int
+do_sleep(struct timespec *delay, struct timespec *remain)
+{
+	struct timeval tv;
+
+	TIMESPEC_TO_TIMEVAL(&tv, delay);
+	remain->tv_sec = sleep(delay->tv_sec);
+	remain->tv_nsec = 0;
+
+	return 0;
+}
+
+int
+do_kevent(struct timespec *delay, struct timespec *remain)
+{
+	struct kevent ktimer;
+	struct kevent kresult;
+	int rtc, kq, kerrno;
+	int tmo = KEVNT_TIMEOUT;
+
+	ATF_REQUIRE_MSG((kq = kqueue()) != -1, "kqueue: %s", strerror(errno));
+
+	EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, tmo, 0);
+
+	rtc = kevent(kq, &ktimer, 1, &kresult, 1, delay);
+	kerrno = errno;
+
+	(void)close(kq);
+
+	ATF_REQUIRE_MSG(rtc != -1 || kerrno == EINTR, "kevent: %s",
+	    strerror(errno));
+
+printf("delay %ld.%09ld, tmo %d\n", delay->tv_sec, delay->tv_nsec, tmo);
+
+	if (rtc == 0)
+	    ATF_REQUIRE_MSG((delay->tv_sec * BILLION + delay->tv_nsec -
+			    tmo * MILLION) <= 0,
+			"kevent - none queued - timing error");
+
+	return 0;
+}
+
+ATF_TC(nanosleep);
+ATF_TC_HEAD(nanosleep, tc) 
+{
+ 
+	atf_tc_set_md_var(tc, "descr", "Test nanosleep(2) timing");
+	atf_tc_set_md_var(tc, "timeout", "65");
+} 
+
+ATF_TC_BODY(nanosleep, tc)
+{
+
+	sleeptest(do_nanosleep, true, false);
+}
+
+ATF_TC(select);
+ATF_TC_HEAD(select, tc) 
+{
+ 
+	atf_tc_set_md_var(tc, "descr", "Test select(2) timing");
+	atf_tc_set_md_var(tc, "timeout", "65");
+} 
+
+ATF_TC_BODY(select, tc)
+{
+
+	sleeptest(do_select, true, true);
+}
+
+ATF_TC(poll);
+ATF_TC_HEAD(poll, tc) 
+{
+ 
+	atf_tc_set_md_var(tc, "descr", "Test poll(2) timing");
+	atf_tc_set_md_var(tc, "timeout", "65");
+} 
+
+ATF_TC_BODY(poll, tc)
+{
+
+	sleeptest(do_poll, true, true);
+}
+
+ATF_TC(sleep);
+ATF_TC_HEAD(sleep, tc) 
+{
+ 
+	atf_tc_set_md_var(tc, "descr", "Test sleep(3) timing");
+	atf_tc_set_md_var(tc, "timeout", "65");
+} 
+
+ATF_TC_BODY(sleep, tc)
+{
+
+	sleeptest(do_sleep, false, false);
+}
+
+ATF_TC(kevent);
+ATF_TC_HEAD(kevent, tc) 
+{
+ 
+	atf_tc_set_md_var(tc, "descr", "Test kevent(2) timing");
+	atf_tc_set_md_var(tc, "timeout", "65");
+} 
+
+ATF_TC_BODY(kevent, tc)
+{
+
+	sleeptest(do_kevent, true, true);
+}
+
+int
+sleeptest(int (*test)(struct timespec *, struct timespec *),
+	   bool subsec, bool sim_remain)
+{
+	struct timespec tsa, tsb, tslp, tremain;
+	int64_t delta1, delta2, delta3, round;
+
+	sig = 0;
+	signal(SIGALRM, sigalrm);
+
+	if (subsec) {
+		round = 1;
+		delta3 = FUZZ;
+	} else {
+		round = 1000000000;
+		delta3 = round;
+	}
+
+	tslp.tv_sec = delta3 / 1000000000;
+	tslp.tv_nsec = delta3 % 1000000000;
+
+	while (delta3 <= MAXSLEEP) {
+		/*
+		 * disturb sleep by signal on purpose
+		 */ 
+		if (delta3 > ALARM * BILLION && sig == 0)
+			alarm(ALARM);
+
+		clock_gettime(CLOCK_REALTIME, &tsa);
+		(*test)(&tslp, &tremain);
+		clock_gettime(CLOCK_REALTIME, &tsb);
+
+		if (sim_remain) {
+			timespecsub(&tsb, &tsa, &tremain);
+			timespecsub(&tslp, &tremain, &tremain);
+		}
+
+		delta1 = (int64_t)tsb.tv_sec - (int64_t)tsa.tv_sec;
+		delta1 *= BILLION;
+		delta1 += (int64_t)tsb.tv_nsec - (int64_t)tsa.tv_nsec;
+
+		delta2 = (int64_t)tremain.tv_sec * BILLION;
+		delta2 += (int64_t)tremain.tv_nsec;
+
+		delta3 = (int64_t)tslp.tv_sec * BILLION;
+		delta3 += (int64_t)tslp.tv_nsec - delta1 - delta2;
+
+		delta3 /= round;
+		delta3 *= round;
+
+		ATF_REQUIRE_MSG(delta3 <= FUZZ && delta3 >= -FUZZ,
+		    "Elapsed time %ld exceeds allowable fuzz %lld",
+		    delta3, FUZZ);
+
+		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
+		delta3 += (int64_t)tslp.tv_nsec * 2;
+
+		delta3 /= round;
+		delta3 *= round;
+		if (delta3 < FUZZ)
+			break;
+		tslp.tv_sec = delta3 / BILLION;
+		tslp.tv_nsec = delta3 % BILLION;
+	}
+	ATF_REQUIRE_MSG(sig == 1, "Alarm did not fire!");
+
+	atf_tc_pass();
+}
+
+ATF_TP_ADD_TCS(tp) 
+{
+	ATF_TP_ADD_TC(tp, nanosleep);
+	ATF_TP_ADD_TC(tp, select);
+	ATF_TP_ADD_TC(tp, poll); 
+	ATF_TP_ADD_TC(tp, sleep);
+	ATF_TP_ADD_TC(tp, kevent);
+ 
+	return atf_no_error();
+}
