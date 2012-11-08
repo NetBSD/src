@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.47 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.48 2012/11/08 18:04:56 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.47 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.48 2012/11/08 18:04:56 rkujawa Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -391,7 +391,7 @@ grfclattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf (once)
 	 */
-	if (amiga_config_found(cfdata, self, gp, grfclprint)) {
+	if (amiga_config_found(cfdata, gp->g_device, gp, grfclprint)) {
 		attachflag = 1;
 		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {
