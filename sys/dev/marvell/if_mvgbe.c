@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.29 2012/11/08 14:32:01 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.30 2012/11/08 14:37:47 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.29 2012/11/08 14:32:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.30 2012/11/08 14:37:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -922,6 +922,9 @@ mvgbe_intr(void *arg)
 				MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_DISQ(0));
 				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ);
 			}
+
+			/* Notify link change event to mii layer */
+			mii_pollstat(&sc->sc_mii);
 		}
 
 		if (ic & (MVGBE_IC_RXBUF | MVGBE_IC_RXERROR))
