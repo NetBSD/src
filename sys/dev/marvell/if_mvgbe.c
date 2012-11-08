@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.30 2012/11/08 14:37:47 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.31 2012/11/08 15:39:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.30 2012/11/08 14:37:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.31 2012/11/08 15:39:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,7 +93,8 @@ CTASSERT(MVGBE_RX_RING_CNT > 1 && MVGBE_RX_RING_NEXT(MVGBE_RX_RING_CNT) ==
 
 #define MVGBE_JSLOTS		384	/* XXXX */
 #define MVGBE_JLEN \
-    ((MVGBE_MRU + MVGBE_RXBUF_ALIGN) & ~MVGBE_RXBUF_MASK)
+    ((MVGBE_MRU + MVGBE_HWHEADER_SIZE + MVGBE_RXBUF_ALIGN - 1) & \
+    ~MVGBE_RXBUF_MASK)
 #define MVGBE_NTXSEG		30
 #define MVGBE_JPAGESZ		PAGE_SIZE
 #define MVGBE_RESID \
