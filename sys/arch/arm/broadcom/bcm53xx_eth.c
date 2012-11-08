@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.16 2012/11/08 00:59:12 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.17 2012/11/08 21:32:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -483,14 +483,14 @@ bcmeth_ifinit(struct ifnet *ifp)
 	    __SHIFTIN(BCMETH_RCVOFFSET, RCVCTL_RCVOFFSET)
 	    | RCVCTL_PARITY_DIS
 	    | RCVCTL_OFLOW_CONTINUE
-	    | __SHIFTIN(4, RCVCTL_BURSTLEN));
+	    | __SHIFTIN(3, RCVCTL_BURSTLEN));
 
 	/* 6. Load XMTADDR_LO with new pointer */
 	bcmeth_txq_reset(sc, &sc->sc_txq);
 
 	bcmeth_write_4(sc, sc->sc_txq.txq_reg_xmtctl, XMTCTL_DMA_ACT_INDEX
 	    | XMTCTL_PARITY_DIS
-	    | __SHIFTIN(4, XMTCTL_BURSTLEN));
+	    | __SHIFTIN(3, XMTCTL_BURSTLEN));
 
 	/* 7. Setup other UNIMAC registers */
 	bcmeth_write_4(sc, UNIMAC_FRAME_LEN, sc->sc_maxfrm);
