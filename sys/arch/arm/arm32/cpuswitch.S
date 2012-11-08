@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.72 2012/09/05 00:11:20 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.73 2012/11/08 08:22:56 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.72 2012/09/05 00:11:20 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.73 2012/11/08 08:22:56 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -322,7 +322,7 @@ ENTRY(cpu_switchto)
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
-ENTRY(lwp_trampoline)
+ENTRY_NP(lwp_trampoline)
 	/*
 	 * cpu_switchto gives us:
 	 *	arg0(r0) = old lwp
