@@ -415,16 +415,12 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_exec(void* ptr);
 /* Feel free to redefine these two macros. */
 #ifndef SLJIT_ASSERT
 
-#define SLJIT_HALT_PROCESS() \
-	*((int*)0) = 0
+#include <assert.h>
+#include <stdlib.h>
 
-#define SLJIT_ASSERT(x) \
-	do { \
-		if (SLJIT_UNLIKELY(!(x))) { \
-			printf("Assertion failed at " __FILE__ ":%d\n", __LINE__); \
-			SLJIT_HALT_PROCESS(); \
-		} \
-	} while (0)
+#define SLJIT_HALT_PROCESS() abort()
+
+#define SLJIT_ASSERT(x) assert(x)
 
 #endif /* !SLJIT_ASSERT */
 
