@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.41 2012/04/23 11:51:56 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.42 2012/11/09 11:28:40 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.41 2012/04/23 11:51:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.42 2012/11/09 11:28:40 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,11 @@ voodoofb_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) && 
 	    (PCI_PRODUCT(pa->pa_id)>=PCI_PRODUCT_3DFX_VOODOO3))
+		return 100;
+
+	/* XXX: Banshee has different MAX_CLOCK, but otherwise is almost same */
+	if ((PCI_VENDOR(pa->pa_id)==PCI_VENDOR_3DFX) && 
+	    (PCI_PRODUCT(pa->pa_id)>=PCI_PRODUCT_3DFX_BANSHEE))
 		return 100;
 	return 0;
 }
