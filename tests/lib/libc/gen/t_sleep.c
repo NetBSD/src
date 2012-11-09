@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.3 2012/11/08 16:33:26 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.4 2012/11/09 04:43:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -27,7 +27,6 @@
  */
 
 #include <atf-c.h>
-#include <err.h>
 #include <errno.h>
 #include <poll.h>
 #include <stdio.h>
@@ -40,14 +39,36 @@
 #include <sys/event.h>
 #include <sys/signal.h>
 
-#define ALARM		11		/* SIGALRM after this many seconds */
-#define KEVNT_TIMEOUT	13200		/* measured in milli-seconds */
 #define BILLION		1000000000LL	/* nano-seconds per second */
 #define MILLION		1000000LL	/* nano-seconds per milli-second */
-#define FUZZ		(50 * MILLION)	/* scheduling fuzz accepted - 50 ms */
-#define MAXSLEEP	(32 * BILLION)	/* 32 seconds */
 
-static volatile int sig, sigs;
+#define ALARM		12		/* SIGALRM after this many seconds */
+#define KEVNT_TIMEOUT	16300		/* measured in milli-seconds */
+#define FUZZ		(40 * MILLION)	/* scheduling fuzz accepted - 40 ms */
+#define MAXSLEEP	(22 * BILLION)	/* 22 seconds */
+
+/*
+ * Timer notes
+ *
+ * Most tests use FUZZ as their initial delay value, but 'sleep'
+ * starts at 1sec (since it cannot handle sub-second intervals).
+ * Subsequent passes double the previous interval, up to MAXSLEEP.
+ *
+ * The ALARM is only set if the current pass's delay is larger.
+ *
+ * The 'kevent' test expects the ALARM to be set on the same pass
+ * where the delay is larger than the KEVNT_TIMEOUT.  The ALARM
+ * needs to fire before the timeout.
+ *
+ * So, ALARM must be less than KEVNT_TIMEOUT, and both must be
+ * large enough to occur on the final pass; ie, delay < MAXSLEEP
+ * but 2*delay >= MAXSLEEP
+ *
+ * The above values should result in 5 passes for the 'sleep' test
+ * and 10 passes for the other tests.
+ */
+
+static volatile int sig;
 
 int sleeptest(int (*)(struct timespec *, struct timespec *), bool, bool);
 int do_nanosleep(struct timespec *, struct timespec *);
@@ -60,6 +81,7 @@ void sigalrm(int);
 void
 sigalrm(int s)
 {
+
 	sig++;
 }
 
@@ -121,10 +143,11 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	struct kevent ktimer;
 	struct kevent kresult;
 	int rtc, kq, kerrno;
-	int tmo = KEVNT_TIMEOUT;
+	int tmo;
 
 	ATF_REQUIRE_MSG((kq = kqueue()) != -1, "kqueue: %s", strerror(errno));
 
+	tmo = KEVNT_TIMEOUT;
 	EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, tmo, 0);
 
 	rtc = kevent(kq, &ktimer, 1, &kresult, 1, delay);
@@ -132,8 +155,10 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 
 	(void)close(kq);
 
-	ATF_REQUIRE_MSG(rtc != -1 || kerrno == EINTR, "kevent: %s",
-	    strerror(errno));
+	if (rtc == -1) {
+		ATF_REQUIRE_MSG(kerrno == EINTR, "kevent: %s", strerror(errno));
+		return 0;
+	}
 
 	if (delay->tv_sec * BILLION + delay->tv_nsec > tmo * MILLION)
 		ATF_REQUIRE_MSG(rtc > 0,
@@ -262,10 +287,15 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 		delta3 /= round;
 		delta3 *= round;
 
-		ATF_REQUIRE_MSG(delta3 <= FUZZ && delta3 >= -FUZZ,
-		    "Reschedule latency %"PRId64" exceeds allowable fuzz %lld",
-		    delta3, FUZZ);
+		if (delta3 > FUZZ || delta3 < -FUZZ) {
+			if (!sim_remain &&
+			    system("cpuctl identify 0 | grep -q QEMU") == 0) 
+				atf_tc_expect_fail("Long reschedule latency "
+				    "due to PR kern/43997");
 
+			atf_tc_fail("Reschedule latency %"PRId64" exceeds "
+			    "allowable fuzz %lld", delta3, FUZZ);
+		}
 		delta3 = (int64_t)tslp.tv_sec * 2 * BILLION;
 		delta3 += (int64_t)tslp.tv_nsec * 2;
 
