@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1787 2012/11/04 16:26:53 christos Exp $
+#	$NetBSD: mi,v 1.1788 2012/11/09 19:47:11 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4339,7 +4339,7 @@
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdrop.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/tcsd.debug		comp-tpm-debug		debug
+./usr/libdata/debug/usr/sbin/tcsd.debug		comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/tpm_changeownerauth.debug	comp-tpm-debug	tpm,debug
