@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.31 2012/11/08 15:39:29 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.32 2012/11/09 09:04:19 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.31 2012/11/08 15:39:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.32 2012/11/09 09:04:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.31 2012/11/08 15:39:29 msaitoh Exp $"
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#include <sys/evcnt.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
@@ -145,6 +146,14 @@ do {									\
 #define MVGBE_IPGINTTX_DEFAULT	768
 #define MVGBE_IPGINTRX_DEFAULT	768
 
+#ifdef MVGBE_EVENT_COUNTERS
+#define	MVGBE_EVCNT_INCR(ev)		(ev)->ev_count++
+#define	MVGBE_EVCNT_ADD(ev, val)	(ev)->ev_count += (val)
+#else
+#define	MVGBE_EVCNT_INCR(ev)		/* nothing */
+#define	MVGBE_EVCNT_ADD(ev, val)	/* nothing */
+#endif
+
 struct mvgbe_jpool_entry {
 	int slot;
 	LIST_ENTRY(mvgbe_jpool_entry) jpool_entries;
@@ -225,6 +234,10 @@ struct mvgbe_softc {
 
 	krndsource_t sc_rnd_source;
 	struct sysctllog *mvgbe_clog;
+#ifdef MVGBE_EVENT_COUNTERS
+	struct evcnt sc_ev_rxoverrun;
+	struct evcnt sc_ev_wdogsoft;
+#endif
 };
 
 
@@ -807,6 +820,13 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
 
 	sysctl_mvgbe_init(sc);
+#ifdef MVGBE_EVENT_COUNTERS
+	/* Attach event counters. */
+	evcnt_attach_dynamic(&sc->sc_ev_rxoverrun, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "rxoverrrun");
+	evcnt_attach_dynamic(&sc->sc_ev_wdogsoft, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "wdogsoft");
+#endif
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 
@@ -883,6 +903,7 @@ mvgbe_tick(void *arg)
 	s = splnet();
 	mii_tick(mii);
 	/* Need more work */
+	MVGBE_EVCNT_ADD(&sc->sc_ev_rxoverrun, MVGBE_READ(sc, MVGBE_POFC));
 	splx(s);
 
 	callout_schedule(&sc->sc_tick_ch, hz);
@@ -1286,6 +1307,7 @@ mvgbe_watchdog(struct ifnet *ifp)
 			MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
 			ifp->if_timer = 5;
 			sc->sc_wdogsoft = 0;
+			MVGBE_EVCNT_INCR(&sc->sc_ev_wdogsoft);
 		} else {
 			aprint_error_ifnet(ifp, "watchdog timeout\n");
 
