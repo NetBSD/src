@@ -1,4 +1,4 @@
-/* $NetBSD: t_sleep.c,v 1.4 2012/11/09 04:43:25 pgoyette Exp $ */
+/* $NetBSD: t_sleep.c,v 1.5 2012/11/09 20:13:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -42,10 +42,10 @@
 #define BILLION		1000000000LL	/* nano-seconds per second */
 #define MILLION		1000000LL	/* nano-seconds per milli-second */
 
-#define ALARM		12		/* SIGALRM after this many seconds */
-#define KEVNT_TIMEOUT	16300		/* measured in milli-seconds */
+#define ALARM		6		/* SIGALRM after this many seconds */
+#define MAXSLEEP	22		/* Maximum delay in seconds */
+#define KEVNT_TIMEOUT	10300		/* measured in milli-seconds */
 #define FUZZ		(40 * MILLION)	/* scheduling fuzz accepted - 40 ms */
-#define MAXSLEEP	(22 * BILLION)	/* 22 seconds */
 
 /*
  * Timer notes
@@ -54,18 +54,21 @@
  * starts at 1sec (since it cannot handle sub-second intervals).
  * Subsequent passes double the previous interval, up to MAXSLEEP.
  *
- * The ALARM is only set if the current pass's delay is larger.
+ * The current values result in 5 passes for the 'sleep' test (at 1,
+ * 2, 4, 8, and 16 seconds) and 10 passes for the other tests (at
+ * 0.04, 0.08, 0.16, 0.32, 0.64, 1.28, 2.56, 5.12, 10.24, and 20.48
+ * seconds).
  *
- * The 'kevent' test expects the ALARM to be set on the same pass
- * where the delay is larger than the KEVNT_TIMEOUT.  The ALARM
- * needs to fire before the timeout.
+ * The ALARM is only set if the current pass's delay is longer, and
+ * only if the ALARM has not already been triggered.
  *
- * So, ALARM must be less than KEVNT_TIMEOUT, and both must be
- * large enough to occur on the final pass; ie, delay < MAXSLEEP
- * but 2*delay >= MAXSLEEP
- *
- * The above values should result in 5 passes for the 'sleep' test
- * and 10 passes for the other tests.
+ * The 'kevent' test needs the ALARM to be set on a different pass
+ * from when the KEVNT_TIMEOUT fires.  So set ALARM to fire on the
+ * penultimate pass, and the KEVNT_TIMEOUT on the final pass.  We
+ * set KEVNT_TIMEOUT just barely long enough to put it into the
+ * last test pass, and set MAXSLEEP a couple seconds longer than
+ * necessary,in order to avoid a QEMU bug which nearly doubles
+ * some timers.
  */
 
 static volatile int sig;
@@ -148,6 +151,16 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 	ATF_REQUIRE_MSG((kq = kqueue()) != -1, "kqueue: %s", strerror(errno));
 
 	tmo = KEVNT_TIMEOUT;
+
+	/*
+	 * If we expect the KEVNT_TIMEOUT to fire, and we're running
+	 * under QEMU, make sure the delay is long enough to account
+	 * for the effects of PR kern/43997 !
+	 */
+	if (system("cpuctl identify 0 | grep -q QEMU") == 0 &&
+	    tmo/1000 < delay->tv_sec && tmo/500 > delay->tv_sec)
+		delay->tv_sec = MAXSLEEP;
+
 	EV_SET(&ktimer, 1, EVFILT_TIMER, EV_ADD, 0, tmo, 0);
 
 	rtc = kevent(kq, &ktimer, 1, &kresult, 1, delay);
@@ -162,7 +175,7 @@ do_kevent(struct timespec *delay, struct timespec *remain)
 
 	if (delay->tv_sec * BILLION + delay->tv_nsec > tmo * MILLION)
 		ATF_REQUIRE_MSG(rtc > 0,
-		    "kevent: ALARM did not cause EVFILT_TIMER event");
+		    "kevent: KEVNT_TIMEOUT did not cause EVFILT_TIMER event");
 
 	return 0;
 }
@@ -258,11 +271,11 @@ sleeptest(int (*test)(struct timespec *, struct timespec *),
 	tslp.tv_sec = delta3 / 1000000000;
 	tslp.tv_nsec = delta3 % 1000000000;
 
-	while (delta3 <= MAXSLEEP) {
+	while (tslp.tv_sec <= MAXSLEEP) {
 		/*
 		 * disturb sleep by signal on purpose
 		 */ 
-		if (delta3 > ALARM * BILLION && sig == 0)
+		if (tslp.tv_sec > ALARM && sig == 0)
 			alarm(ALARM);
 
 		clock_gettime(CLOCK_REALTIME, &tsa);
