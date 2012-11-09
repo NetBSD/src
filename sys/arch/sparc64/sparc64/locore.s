@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.342 2012/11/08 00:34:38 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.343 2012/11/09 10:06:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6060,20 +6060,6 @@ Ltick_ovflw:
 	retl
 	 wr	%o2, TICK_CMPR
 #endif
-
-/*
- * setstick(long)
- */
-ENTRY(setstick)
-	retl
-	 wr %o0, STICK
-
-/*
- * long getstick(void)
- */
-ENTRY(getstick)
-	retl
-	 rd STICK, %o0
 
 /*
  * next_stick(long increment)
