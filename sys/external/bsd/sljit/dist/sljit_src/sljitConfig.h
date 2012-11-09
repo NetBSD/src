@@ -74,11 +74,16 @@
 #endif
 
 #ifdef _KERNEL
+
 #ifdef DIAGNOSTIC
 #define SLJIT_DEBUG 1
 #else
 #define SLJIT_DEBUG 0
 #endif
+
+#define SLJIT_ASSERT(x) KASSERT(x)
+#define SLJIT_ASSERT_STOP() \
+	panic("Should never been reached " __FILE__ ":%d\n", __LINE__)
 #endif
 
 #ifdef _KERNEL
