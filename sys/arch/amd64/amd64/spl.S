@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.25 2012/11/02 08:31:28 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.26 2012/11/10 16:28:06 cherry Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -344,18 +344,3 @@ doreti_checkast:
 	call	_C_LABEL(do_pmap_load)
 	CLI(si)
 	jmp	doreti_checkast		/* recheck ASTs */
-
-#ifdef XEN
-NENTRY(call_evtchn_do_event)
-	incl	CPUVAR(IDEPTH)
-	call    _C_LABEL(evtchn_do_event)
-	decl	CPUVAR(IDEPTH)
-	ret
-#ifdef DOM0OPS
-NENTRY(call_xenevt_event)
-	incl	CPUVAR(IDEPTH)
-	call    _C_LABEL(xenevt_event)
-	decl	CPUVAR(IDEPTH)
-	ret
-#endif /* DOM0OPS */
-#endif /* XEN */
