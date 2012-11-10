@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.343 2012/11/09 10:06:00 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.344 2012/11/10 01:35:14 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3275,7 +3275,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	 * time.
 	 */
 	rd	SOFTINT, %g1
-	set	0x10001, %g5
+	set	TICK_INT|STICK_INT, %g5
 	andcc	%g5, %g1, %g5
 	bz,pt	%icc, 0f
 	 sethi	%hi(CPUINFO_VA+CI_TICK_IH), %g3
