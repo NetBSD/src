@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.344 2012/11/10 01:35:14 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.345 2012/11/10 01:47:25 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3206,9 +3206,9 @@ ret_from_intr_vector:
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
- * on a soft interrupt, is we should check which bits in ASR_SOFTINT(0x16)
+ * on a soft interrupt, is we should check which bits in SOFTINT(%asr22)
  * are set, handle those interrupts, then clear them by setting the
- * appropriate bits in ASR_CLEAR_SOFTINT(0x15).
+ * appropriate bits in CLEAR_SOFTINT(%asr21).
  *
  * We have an array of 8 interrupt vector slots for each of 15 interrupt
  * levels.  If a vectored interrupt can be dispatched, the dispatch
