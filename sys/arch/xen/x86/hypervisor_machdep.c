@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.21 2011/12/27 07:47:00 cherry Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.22 2012/11/10 16:28:06 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.21 2011/12/27 07:47:00 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.22 2012/11/10 16:28:06 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,15 +226,20 @@ evt_do_hypervisor_callback(struct cpu_info *ci, unsigned int port,
 	if (port == PORT_DEBUG)
 		printf("do_hypervisor_callback event %d\n", port);
 #endif
-	if (evtsource[port])
-		call_evtchn_do_event(port, regs);
+	if (evtsource[port]) {
+		ci->ci_idepth++;
+		evtchn_do_event(port, regs);
+		ci->ci_idepth--;
+	}
 #ifdef DOM0OPS
 	else  {
 		if (ci->ci_ilevel < IPL_HIGH) {
 			/* fast path */
 			int oipl = ci->ci_ilevel;
 			ci->ci_ilevel = IPL_HIGH;
-			call_xenevt_event(port);
+			ci->ci_idepth++;			
+			xenevt_event(port);
+			ci->ci_idepth--;
 			ci->ci_ilevel = oipl;
 		} else {
 			/* set pending event */
