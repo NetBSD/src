@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.85 2012/11/05 00:57:41 alnsn Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.86 2012/11/11 17:41:32 alnsn Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -218,6 +218,7 @@
 ./usr/tests/lib/libdes
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
+./usr/tests/lib/libbpfjit
 ./usr/tests/lib/libevent
 ./usr/tests/lib/libexecinfo
 ./usr/tests/lib/libm
