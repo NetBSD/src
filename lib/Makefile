@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.193 2012/11/05 00:57:41 alnsn Exp $
+#	$NetBSD: Makefile,v 1.194 2012/11/11 17:34:06 alnsn Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -193,6 +193,8 @@ SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 
 .if ${MKSLJIT} != "no"
 SUBDIR+=	../external/bsd/sljit/lib
+SUBDIR+=	.WAIT
+SUBDIR+=	libbpfjit
 .endif
 
 SUBDIR+=	../external/bsd/mdocml/lib
