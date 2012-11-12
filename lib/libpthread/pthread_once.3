@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_once.3,v 1.8 2012/11/12 23:11:05 uwe Exp $
+.\" $NetBSD: pthread_once.3,v 1.9 2012/11/12 23:28:11 uwe Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,18 +74,18 @@ The first call to
 by any thread in a process, with a given
 .Fa once_control ,
 will call the
-.Fn init_routine
+.Fa init_routine Ns ()
 with no arguments.
 Subsequent calls to
 .Fn pthread_once
 with the same
 .Fa once_control
 will not call the
-.Fn init_routine .
+.Fa init_routine Ns ().
 On return from
 .Fn pthread_once ,
 it is guaranteed that
-.Fn init_routine
+.Fa init_routine Ns ()
 has completed.
 The
 .Fa once_control
@@ -96,7 +96,7 @@ The function
 .Fn pthread_once
 is not a cancellation point.
 However, if
-.Fn init_routine
+.Fa init_routine Ns ()
 is a cancellation point and is cancelled, the effect on
 .Fa once_control
 is as if
