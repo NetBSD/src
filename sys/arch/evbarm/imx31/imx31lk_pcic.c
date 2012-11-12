@@ -1,5 +1,5 @@
-/*	$Id: imx31lk_pcic.c,v 1.5 2012/10/27 17:17:47 chs Exp $	*/
-/*	$NetBSD: imx31lk_pcic.c,v 1.5 2012/10/27 17:17:47 chs Exp $	*/
+/*	$Id: imx31lk_pcic.c,v 1.6 2012/11/12 18:00:39 skrll Exp $	*/
+/*	$NetBSD: imx31lk_pcic.c,v 1.6 2012/11/12 18:00:39 skrll Exp $	*/
 /*	$OpenBSD: pxapcic.c,v 1.1 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.5 2012/10/27 17:17:47 chs Exp $");
+__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.6 2012/11/12 18:00:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ imx31lk_pcic_set_power(struct imx_pcic_socket *so, int pwr)
 #ifdef NOTYET
 	bus_space_tag_t iot = so->sc->sc_iot;
 	bus_space_handle_t ioh = (bus_space_handle_t)so->pcictag_cookie;
-	u_int16_t reg;
+	uint16_t reg;
 	int s;
 
 	s = splhigh();

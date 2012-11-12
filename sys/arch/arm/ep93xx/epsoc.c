@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.12 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.13 2012/11/12 18:00:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.12 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.13 2012/11/12 18:00:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ static int
 epsoc_match(device_t parent, cfdata_t match, void *aux)
 {
 	bus_space_handle_t	ioh;
-	u_int32_t		id, ret = 0;
+	uint32_t		id, ret = 0;
 
 	bus_space_map(&ep93xx_bs_tag, EP93XX_APB_HWBASE + EP93XX_APB_SYSCON,
 		EP93XX_APB_SYSCON_SIZE, 0, &ioh);
@@ -76,8 +76,8 @@ static void
 epsoc_attach(device_t parent, device_t self, void *aux)
 {
 	struct epsoc_softc	*sc;
-	u_int64_t		fclk, pclk, hclk;
-	u_int32_t		id, clkset1;
+	uint64_t		fclk, pclk, hclk;
+	uint32_t		id, clkset1;
 	const char		*rev;
 	int			locs[EPSOCCF_NLOCS];
 	struct epsoc_attach_args sa;

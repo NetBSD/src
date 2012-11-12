@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.23 2012/10/27 17:17:36 chs Exp $ */
+/*	$NetBSD: epcom.c,v 1.24 2012/11/12 18:00:36 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.23 2012/10/27 17:17:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.24 2012/11/12 18:00:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1018,7 +1018,7 @@ epcomintr(void* arg)
 	u_int cc;
 	u_int flagr;
 	u_int intr;
-	u_int32_t c, csts;
+	uint32_t c, csts;
 
 	intr = bus_space_read_4(iot, ioh, EPCOM_IntIDIntClr);
 

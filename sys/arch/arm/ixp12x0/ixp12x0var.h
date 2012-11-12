@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.10 2012/10/27 17:17:39 chs Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.11 2012/11/12 18:00:37 skrll Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -69,9 +69,9 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	u_int32_t iq_mask;		/* IRQs to mask while handling */
-	u_int32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
-	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
+	uint32_t iq_mask;		/* IRQs to mask while handling */
+	uint32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
+	uint32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 	int iq_ist;			/* share type */
 };

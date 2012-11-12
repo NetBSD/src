@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.17 2012/10/14 14:20:58 msaitoh Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.18 2012/11/12 18:00:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.17 2012/10/14 14:20:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.18 2012/11/12 18:00:38 skrll Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -99,7 +99,7 @@ CFATTACH_DECL_NEW(ixpclk, sizeof(struct ixpclk_softc),
 						  (sc)->sc_ioh,		\
 						  IXP425_OST_TIM0))
 
-#define GET_TS_VALUE(sc)	(*(volatile u_int32_t *) \
+#define GET_TS_VALUE(sc)	(*(volatile uint32_t *) \
 				  (IXP425_TIMER_VBASE + IXP425_OST_TS))
 
 static int
@@ -235,7 +235,7 @@ ixpclk_get_timecount(struct timecounter *tc)
 void
 delay(u_int n)
 {
-	u_int32_t first, last;
+	uint32_t first, last;
 	int usecs;
 
 	if (n == 0)

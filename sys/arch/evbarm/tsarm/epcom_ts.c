@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom_ts.c,v 1.7 2012/10/27 17:17:49 chs Exp $ */
+/*	$NetBSD: epcom_ts.c,v 1.8 2012/11/12 18:00:40 skrll Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.7 2012/10/27 17:17:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom_ts.c,v 1.8 2012/11/12 18:00:40 skrll Exp $");
 
 /* Front-end of epcom */
 
@@ -70,7 +70,7 @@ epcom_ts_attach(device_t parent, device_t self, void *aux)
 	struct epcom_ts_softc *esc = device_private(self);
 	struct epcom_softc *sc = &esc->sc_epcom;
 	struct epsoc_attach_args *sa = aux;
-	u_int32_t pwrcnt;
+	uint32_t pwrcnt;
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;

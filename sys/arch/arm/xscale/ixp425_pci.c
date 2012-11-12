@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.10 2012/10/14 14:20:58 msaitoh Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.11 2012/11/12 18:00:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.10 2012/10/14 14:20:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.11 2012/11/12 18:00:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ pcireg_t
 ixp425_pci_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct ixp425_softc *sc = v;
-	u_int32_t data;
+	uint32_t data;
 	pcireg_t rv;
 	int s;
 #define PCI_NP_HAVE_BUG
@@ -223,7 +223,7 @@ void
 ixp425_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 {
 	struct ixp425_softc *sc = v;
-	u_int32_t data;
+	uint32_t data;
 	int s;
 
 	PCI_CONF_LOCK(s);

@@ -1,4 +1,4 @@
-/*$NetBSD: at91st.c,v 1.5 2012/10/27 17:17:36 chs Exp $*/
+/*$NetBSD: at91st.c,v 1.6 2012/11/12 18:00:36 skrll Exp $*/
 
 /*
  * AT91RM9200 clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.5 2012/10/27 17:17:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91st.c,v 1.6 2012/11/12 18:00:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,7 +336,7 @@ microtime(register struct timeval *tvp)
 extern int hardclock_ticks;
 static void tdelay(unsigned int ticks)
 {
-    u_int32_t   start, end, current;
+    uint32_t   start, end, current;
     
     current = hardclock_ticks;
     start = current;
@@ -351,7 +351,7 @@ static void tdelay(unsigned int ticks)
 static void udelay(unsigned int usec)
 {
 //    struct at91st_softc *sc = at91st_sc;
-    u_int32_t crtv, t, diff;
+    uint32_t crtv, t, diff;
 
     usec = (usec * 1000 + AT91_SCLK - 1) / AT91_SCLK + 1;
 

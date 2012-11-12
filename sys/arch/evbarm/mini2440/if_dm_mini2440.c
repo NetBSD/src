@@ -113,7 +113,7 @@ dme_ssextio_attach(device_t parent, device_t self, void *aux)
 	prop_data_t		ea;
 
 #ifdef MINI2440_ETHER_ADDR_FIXED
-	static u_int8_t enaddr_default[ETHER_ADDR_LEN] = {MINI2440_ETHER_ADDR_FIXED};
+	static uint8_t enaddr_default[ETHER_ADDR_LEN] = {MINI2440_ETHER_ADDR_FIXED};
 #endif
 
 	sc->sc_iot = sa->sa_iot;

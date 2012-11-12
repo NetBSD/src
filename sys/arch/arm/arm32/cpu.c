@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.87 2012/09/22 00:33:37 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.88 2012/11/12 18:00:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.87 2012/09/22 00:33:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2012/11/12 18:00:35 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -363,7 +363,7 @@ static const char * const ixp425_steppings[16] = {
 };
 
 struct cpuidtab {
-	u_int32_t	cpuid;
+	uint32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_classname;
 	const char * const *cpu_steppings;

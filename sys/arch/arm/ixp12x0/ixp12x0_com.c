@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.41 2012/10/27 17:17:39 chs Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.42 2012/11/12 18:00:37 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.41 2012/10/27 17:17:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.42 2012/11/12 18:00:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -122,8 +122,8 @@ inline static void	ixpcom_rxsoft(struct ixpcom_softc *, struct tty *);
 void            ixpcomcnprobe(struct consdev *);
 void            ixpcomcninit(struct consdev *);
 
-u_int32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
-u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
+uint32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
+uint32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
 
 static struct ixpcom_cons_softc {
@@ -257,7 +257,7 @@ ixpcomparam(struct tty *tp, struct termios *t)
 {
 	struct ixpcom_softc *sc
 		= device_lookup_private(&ixpcom_cd, COMUNIT(tp->t_dev));
-	u_int32_t cr;
+	uint32_t cr;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -1037,7 +1037,7 @@ ixpcomintr(void* arg)
 	u_int cc;
 	u_int cr;
 	u_int sr;
-	u_int32_t c;
+	uint32_t c;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
