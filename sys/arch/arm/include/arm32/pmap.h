@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.114 2012/10/17 20:15:41 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.115 2012/11/12 18:00:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -143,16 +143,16 @@ struct l2_dtable;
 union pmap_cache_state {
 	struct {
 		union {
-			u_int8_t csu_cache_b[2];
-			u_int16_t csu_cache;
+			uint8_t csu_cache_b[2];
+			uint16_t csu_cache;
 		} cs_cache_u;
 
 		union {
-			u_int8_t csu_tlb_b[2];
-			u_int16_t csu_tlb;
+			uint8_t csu_tlb_b[2];
+			uint16_t csu_tlb;
 		} cs_tlb_u;
 	} cs_s;
-	u_int32_t cs_all;
+	uint32_t cs_all;
 };
 #define	cs_cache_id	cs_s.cs_cache_u.csu_cache_b[0]
 #define	cs_cache_d	cs_s.cs_cache_u.csu_cache_b[1]
@@ -182,7 +182,7 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	u_int8_t		pm_domain;
+	uint8_t			pm_domain;
 	bool			pm_remove_all;
 	bool			pm_activated;
 	struct l1_ttable	*pm_l1;

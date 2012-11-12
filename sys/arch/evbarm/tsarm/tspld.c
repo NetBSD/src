@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.22 2012/10/27 17:17:49 chs Exp $	*/
+/*	$NetBSD: tspld.c,v 1.23 2012/11/12 18:00:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.22 2012/10/27 17:17:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.23 2012/11/12 18:00:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -125,7 +125,7 @@ void
 boardtemp_poll(void *arg)
 {
 	struct tspld_softc *sc = arg;
-	u_int16_t val;
+	uint16_t val;
 
 	/* Disable chip select */
 	GPIO_SET(PFDDR, 0x0);

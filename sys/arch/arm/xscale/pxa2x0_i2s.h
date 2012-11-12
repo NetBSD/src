@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.4 2012/10/27 17:17:42 chs Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.5 2012/11/12 18:00:38 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ int	pxa2x0_i2s_attach_sub(struct pxa2x0_i2s_softc *);
 int	pxa2x0_i2s_detach_sub(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_open(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_close(struct pxa2x0_i2s_softc *);
-void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, u_int32_t);
+void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, uint32_t);
 
 void	pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *, u_int *);
 
