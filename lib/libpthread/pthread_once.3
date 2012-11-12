@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_once.3,v 1.7 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_once.3,v 1.8 2012/11/12 23:11:05 uwe Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,7 @@
 .In pthread.h
 .Ft int
 .Fn pthread_once "pthread_once_t *once_control" "void (*init_routine)(void)"
-.Pp
-.Va pthread_once_t once_control = Dv PTHREAD_ONCE_INIT;
+.Vt pthread_once_t once_control No = Dv PTHREAD_ONCE_INIT;
 .Sh DESCRIPTION
 The first call to
 .Fn pthread_once
