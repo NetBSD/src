@@ -1,4 +1,4 @@
-/*	$NetBSD: at91dbgureg.h,v 1.4 2011/11/04 17:17:50 aymeric Exp $	*/
+/*	$NetBSD: at91dbgureg.h,v 1.5 2012/11/12 18:00:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -181,7 +181,7 @@
 #define	AT91SAM9261_CHIP_ID	DBGU_CIDR_AT91SAM9261
 #define	AT91SAM9263_CHIP_ID	DBGU_CIDR_AT91SAM9263
 
-#define	DBGUREG(reg)		*((volatile u_int32_t*)(AT91DBGU_BASE + (reg)))
+#define	DBGUREG(reg)		*((volatile uint32_t*)(AT91DBGU_BASE + (reg)))
 
 #define	DBGU_INIT(mstclk, speed) do {					\
   DBGUREG(DBGU_PDC + PDC_PTCR) = PDC_PTCR_TXTDIS | PDC_PTCR_RXTDIS;	\

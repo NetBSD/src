@@ -1,4 +1,4 @@
-/*	$NetBSD: epsocvar.h,v 1.5 2012/10/27 17:17:37 chs Exp $ */
+/*	$NetBSD: epsocvar.h,v 1.6 2012/11/12 18:00:36 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -42,15 +42,15 @@ struct epsoc_attach_args {
 	bus_addr_t		sa_addr;	/* i/o address  */
 	bus_size_t		sa_size;
 	int			sa_intr;
-	u_int32_t		sa_hclk;
-	u_int32_t		sa_pclk;
+	uint32_t		sa_hclk;
+	uint32_t		sa_pclk;
 	struct epgpio_softc	*sa_gpio;
 };
 
 struct epsoc_softc {
-	u_int32_t		sc_fclk;
-	u_int32_t		sc_hclk;
-	u_int32_t		sc_pclk;
+	uint32_t		sc_fclk;
+	uint32_t		sc_hclk;
+	uint32_t		sc_pclk;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
