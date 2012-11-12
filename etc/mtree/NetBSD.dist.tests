@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.86 2012/11/11 17:41:32 alnsn Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.87 2012/11/12 09:03:52 njoly Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -50,6 +50,7 @@
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
+./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
@@ -91,6 +92,7 @@
 ./usr/libdata/debug/usr/tests/lib/librumpclient
 ./usr/libdata/debug/usr/tests/lib/librumphijack
 ./usr/libdata/debug/usr/tests/lib/libskey
+./usr/libdata/debug/usr/tests/lib/libsljit
 ./usr/libdata/debug/usr/tests/lib/libtre
 ./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
