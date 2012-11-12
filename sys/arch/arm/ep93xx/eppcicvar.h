@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcicvar.h,v 1.2 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: eppcicvar.h,v 1.3 2012/11/12 18:00:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -56,7 +56,7 @@ struct eppcic_softc {
 	bus_space_handle_t	sc_ioh;
 	struct eppcic_handle	*sc_ph[EP93XX_PCMCIA_NSOCKET];
 	eppcic_chipset_tag_t	sc_pcic;
-	u_int32_t		sc_hclk;
+	uint32_t		sc_hclk;
 	int			sc_enable;
 	struct epgpio_softc	*sc_gpio;
 };

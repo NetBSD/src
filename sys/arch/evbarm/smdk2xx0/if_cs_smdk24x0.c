@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_smdk24x0.c,v 1.5 2012/02/02 19:42:59 tls Exp $ */
+/*	$NetBSD: if_cs_smdk24x0.c,v 1.6 2012/11/12 18:00:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.5 2012/02/02 19:42:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_smdk24x0.c,v 1.6 2012/11/12 18:00:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ cs_ssextio_attach(device_t parent, device_t self, void *aux)
 	struct s3c2xx0_attach_args *sa = aux;
 	vaddr_t ioaddr;
 #ifdef	SMDK24X0_ETHER_ADDR_FIXED
-	static u_int8_t enaddr[ETHER_ADDR_LEN] = {SMDK24X0_ETHER_ADDR_FIXED};
+	static uint8_t enaddr[ETHER_ADDR_LEN] = {SMDK24X0_ETHER_ADDR_FIXED};
 #else
 #define enaddr NULL
 #endif

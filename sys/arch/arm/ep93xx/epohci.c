@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.6 2012/10/27 17:17:37 chs Exp $ */
+/*	$NetBSD: epohci.c,v 1.7 2012/11/12 18:00:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.6 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7 2012/11/12 18:00:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ epohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct epohci_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
-	u_int32_t i;
+	uint32_t i;
 	bus_space_handle_t syscon_ioh;
 
 	sc->sc.sc_dev = self;

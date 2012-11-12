@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.241 2012/10/17 18:52:15 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.242 2012/11/12 18:00:35 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.241 2012/10/17 18:52:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2012/11/12 18:00:35 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -502,8 +502,8 @@ struct l1_ttable {
 	 * We avoid using ffs() and a bitmap to track domains since ffs()
 	 * is slow on ARM.
 	 */
-	u_int8_t l1_domain_first;
-	u_int8_t l1_domain_free[PMAP_DOMAINS];
+	uint8_t l1_domain_first;
+	uint8_t l1_domain_free[PMAP_DOMAINS];
 
 	/* Physical address of this L1 page table */
 	paddr_t l1_physaddr;
@@ -1123,7 +1123,7 @@ static void
 pmap_alloc_l1(pmap_t pm)
 {
 	struct l1_ttable *l1;
-	u_int8_t domain;
+	uint8_t domain;
 
 	/*
 	 * Remove the L1 at the head of the LRU list
