@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.15 2012/10/29 14:01:33 chs Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.16 2012/11/12 18:00:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.15 2012/10/29 14:01:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.16 2012/11/12 18:00:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -160,7 +160,7 @@ struct at91bus_softc *at91bus_sc = NULL;
 #endif
 
 static const struct {
-	u_int32_t	cidr;
+	uint32_t	cidr;
 	const char *	name;
 	const struct at91bus_machdep *machdep;
 } at91_types[] = {
@@ -196,7 +196,7 @@ static const struct {
 	}
 };
 
-u_int32_t at91_chip_id;
+uint32_t at91_chip_id;
 static int at91_chip_ndx = -1;
 struct at91bus_machdep at91bus_machdep = { 0 };
 at91bus_tag_t at91bus_tag = 0;
@@ -204,7 +204,7 @@ at91bus_tag_t at91bus_tag = 0;
 static int
 match_cid(void)
 {
-	u_int32_t		cidr;
+	uint32_t		cidr;
 	int			i;
 
 	/* get chip id */
