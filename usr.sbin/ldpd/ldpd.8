@@ -1,4 +1,4 @@
-.\" $NetBSD: ldpd.8,v 1.6 2012/11/12 18:39:00 kefren Exp $
+.\" $NetBSD: ldpd.8,v 1.7 2012/11/12 22:46:59 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 7, 2011
+.Dd November 12, 2012
 .Dt LDPD 8
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@ almost conforming to RFC5036.
 Right now some features requested by RFC5036 are not fully implemented.
 For more information please consult the
 .Sx BUGS
-section. As a security measure you SHOULD filter the LDP well-known (646)
+section.
+As a security measure you SHOULD filter the LDP well-known (646)
 TCP and UDP ports using your favourite packet filter before starting
 .Nm .
 This is the current way used to filter neighbours and to protect the
