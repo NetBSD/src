@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxvar.h,v 1.5 2012/10/27 17:17:36 chs Exp $ */
+/*	$NetBSD: ep93xxvar.h,v 1.6 2012/11/12 18:00:36 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -47,9 +47,9 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	u_int32_t iq_vic1_mask;		/* VIC1 IRQs to mask while handling */
-	u_int32_t iq_vic2_mask;		/* VIC2 IRQs to mask while handling */
-	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
+	uint32_t iq_vic1_mask;		/* VIC1 IRQs to mask while handling */
+	uint32_t iq_vic2_mask;		/* VIC2 IRQs to mask while handling */
+	uint32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 	int iq_ist;			/* share type */
 };
