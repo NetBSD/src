@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.63 2012/08/10 16:05:27 joerg Exp $
+#	$NetBSD: Makefile.rump,v 1.64 2012/11/13 19:12:42 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -53,7 +53,9 @@ CPPFLAGS+=	-DLOCKDEBUG
 #LDFLAGS+=	-nodefaultlibs
 
 # make sure __NetBSD__ gets defined (for builds on non-NetBSD)
+# aaand make sure cc doesn't source files any wild ideas
 CPPFLAGS+=	-D__NetBSD__
+CPPFLAGS+=	-Ulinux -U__linux -U__linux__ -U__gnu_linux__
 
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
