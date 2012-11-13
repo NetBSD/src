@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.14 2012/11/13 01:08:51 pgoyette Exp $ */
+/* $NetBSD: socketops.c,v 1.15 2012/11/13 06:58:58 kefren Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -467,6 +467,14 @@ send_hello(void)
 		if (if_sa6->sin6_family != AF_INET6)
 			continue;
 		if (IN6_IS_ADDR_LOOPBACK(&if_sa6->sin6_addr))
+			continue;
+		/*
+		 * draft-ietf-mpls-ldp-ipv6-07 Section 5.1:
+		 * Additionally, the link-local
+		 * IPv6 address MUST be used as the source IP address in IPv6
+		 * LDP Link Hellos.
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(&if_sa6->sin6_addr) == 0)
 			continue;
 
 		/* Send only once per interface, using primary address */
