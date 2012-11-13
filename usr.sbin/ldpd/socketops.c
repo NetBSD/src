@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.13 2012/11/12 22:51:42 christos Exp $ */
+/* $NetBSD: socketops.c,v 1.14 2012/11/13 01:08:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ send_hello(void)
 		if (sb < (ssize_t)(IPV6_HELLO_MSG_SIZE))
 		    fatalp("send6 on %s: %s", ifb->ifa_name, strerror(errno));
 		else
-		    debugp("Sent (IPv6) %lu bytes on %s"
+		    debugp("Sent (IPv6) %zd bytes on %s"
 			"(PDU: %d, Hello TLV: %d, CH: %d TR: %d)\n",
 			sb, ifb->ifa_name,
 			htons(spdu->length), htons(t->length),
