@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.306 2012/11/04 16:27:28 christos Exp $
+#	$NetBSD: bsd.README,v 1.307 2012/11/13 22:30:38 pooka Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1164,6 +1164,11 @@ LIBDPLIBS	A list of the tuples:
 		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
 		     *	DPADD gets  ${LIBDO.libname}/liblibname.so  or
 				    ${LIBDO.libname}/liblibname.a   added.
+
+		The special value "_external" for LIBDO.lib makes the
+		build system to assume the library comes from outside
+		of the NetBSD source tree and only causes -llibname
+		to be added to LDADD.
 
 		This variable may be used for individual libraries, as
 		well as in parent directories to cache common libraries
