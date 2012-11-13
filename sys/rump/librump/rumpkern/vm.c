@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.130 2012/07/27 09:06:01 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.131 2012/11/13 20:10:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130 2012/07/27 09:06:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.131 2012/11/13 20:10:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1004,7 +1004,6 @@ uvm_pageout(void *arg)
 	struct vm_page *pg;
 	struct pool *pp, *pp_first;
 	int cleaned, skip, skipped;
-	int waspaging;
 	bool succ;
 	bool lockrunning;
 
@@ -1021,7 +1020,6 @@ uvm_pageout(void *arg)
 
 		cv_wait(&pdaemoncv, &pdaemonmtx);
 		uvmexp.pdwoke++;
-		waspaging = uvmexp.paging;
 
 		/* tell the world that we are hungry */
 		kernel_map->flags |= VM_MAP_WANTVA;
