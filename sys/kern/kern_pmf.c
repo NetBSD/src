@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.35 2011/06/05 09:04:22 dsl Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.36 2012/11/13 14:08:07 chs Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.35 2011/06/05 09:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.36 2012/11/13 14:08:07 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -381,6 +381,10 @@ shutdown_all(int how)
 void
 pmf_system_shutdown(int how)
 {
+
+	if (panicstr != NULL)
+		return;
+
 	aprint_debug("Shutting down devices:");
 	shutdown_all(how);
 }
