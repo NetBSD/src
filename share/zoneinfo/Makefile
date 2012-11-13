@@ -2,8 +2,11 @@
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
+# Package name for the code distribution.
+PACKAGE=	tzcode
+
 # Version numbers of the code and data distributions.
-VERSION=	2012i
+VERSION=	2012j
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -229,9 +232,6 @@ CFLAGS=
 
 LDFLAGS=	$(LFLAGS)
 
-# If you want zic's -s option used when installing, uncomment the next line
-# ZFLAGS=	-s
-
 zic=		./zic
 ZIC=		$(zic) $(ZFLAGS)
 
@@ -343,8 +343,8 @@ INSTALL:	ALL install date.1
 		cp date.1 $(MANDIR)/man1/.
 
 version.h:
-		echo >$@ \
-		  'static char const TZVERSION[]="tz$(VERSION)";'
+		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
+		 echo 'static char const TZVERSION[]="$(VERSION)";') >$@
 
 zdump:		$(TZDOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(TZDOBJS) $(LDLIBS)
@@ -395,8 +395,9 @@ tzselect:	tzselect.ksh
 		sed \
 			-e 's|#!/bin/bash|#!$(KSHELL)|g' \
 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
+			-e 's|\(PKGVERSION\)=.*|\1='\''($(PACKAGE)) '\''|' \
 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
-			-e 's|\(TZVERSION\)=.*|\1=tz$(VERSION)|' \
+			-e 's|\(TZVERSION\)=.*|\1=$(VERSION)|' \
 			<$? >$@
 		chmod +x $@
 
@@ -411,11 +412,12 @@ check_web:	$(WEB_PAGES)
 clean:
 		rm -f core *.o *.out \
 		  date tzselect version.h zdump zic yearistype
+		rm -f -r tzpublic
 
 maintainer-clean: clean
 		@echo 'This command is intended for maintainers to use; it'
 		@echo 'deletes files that may need special tools to rebuild.'
-		rm -f *.[1-8].txt tzcode*.tar.gz tzdata*.tar.gz
+		rm -f *.[1-8].txt *.asc *.tar.gz
 
 names:
 		@echo $(ENCHILADA)
@@ -444,13 +446,12 @@ set-timestamps:
 check_public:	$(ENCHILADA)
 		make maintainer-clean
 		make "CFLAGS=$(GCC_DEBUG_FLAGS)"
-		mkdir -m go-rwx /tmp/,tzpublic
-		-for i in $(TDATA) ; do \
-		  zic -v -d /tmp/,tzpublic $$i 2>&1 | grep -v "starting year" ; \
+		mkdir tzpublic
+		for i in $(TDATA) ; do \
+		  $(zic) -v -d tzpublic $$i 2>&1 || exit; \
 		done
-		for i in $(TDATA) ; do zic -d /tmp/,tzpublic $$i || exit; done
-		zic -v -d /tmp/,tzpublic $(TDATA) || exit
-		rm -f -r /tmp/,tzpublic
+		$(zic) -v -d tzpublic $(TDATA)
+		rm -f -r tzpublic
 
 tarballs:	tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz
 
@@ -469,13 +470,13 @@ tzdata$(VERSION).tar.gz: $(COMMON) $(DATA)
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) | \
 		  gzip $(GZIPFLAGS) > $@
 
-signatures:	tzcode$(VERSION).tar.gz.sign tzdata$(VERSION).tar.gz.sign
+signatures:	tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc
 
-tzcode$(VERSION).tar.gz.sign: tzcode$(VERSION).tar.gz
-		gpg --armor --detach-sign -o $@ $?
+tzcode$(VERSION).tar.gz.asc: tzcode$(VERSION).tar.gz
+		gpg --armor --detach-sign $?
 
-tzdata$(VERSION).tar.gz.sign: tzdata$(VERSION).tar.gz
-		gpg --armor --detach-sign -o $@ $?
+tzdata$(VERSION).tar.gz.asc: tzdata$(VERSION).tar.gz
+		gpg --armor --detach-sign $?
 
 typecheck:
 		make clean
