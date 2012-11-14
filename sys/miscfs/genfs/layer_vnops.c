@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.28.2.2 2007/04/16 20:01:13 bouyer Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.28.2.3 2012/11/14 20:07:44 riz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.28.2.2 2007/04/16 20:01:13 bouyer Exp $
- *	$Id: layer_vnops.c,v 1.28.2.2 2007/04/16 20:01:13 bouyer Exp $
+ *	$Id: layer_vnops.c,v 1.28.2.3 2012/11/14 20:07:44 riz Exp $
+ *	$Id: layer_vnops.c,v 1.28.2.3 2012/11/14 20:07:44 riz Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.28.2.2 2007/04/16 20:01:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.28.2.3 2012/11/14 20:07:44 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,8 +436,10 @@ layer_lookup(v)
 	dvp = ap->a_dvp;
 
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+		*ap->a_vpp = NULL;
 		return (EROFS);
+	}
 
 	ldvp = LAYERVPTOLOWERVP(dvp);
 	ap->a_dvp = ldvp;
