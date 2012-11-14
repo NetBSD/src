@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.163 2012/10/27 11:54:21 phx Exp $
+#	$NetBSD: files.amiga,v 1.164 2012/11/14 01:55:25 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -76,7 +76,7 @@ attach	clock at mainbus
 file	arch/amiga/dev/clock.c
 
 # A2000 internal hwc
-device	a2kbbc
+device	a2kbbc: msm6242b
 attach	a2kbbc at mainbus
 file	arch/amiga/dev/a2kbbc.c		a2kbbc
 
