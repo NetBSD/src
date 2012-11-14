@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.17 2005/07/30 14:43:13 christos Exp $	*/
+/*	$NetBSD: tput.c,v 1.17.6.1 2012/11/14 20:25:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.17 2005/07/30 14:43:13 christos Exp $");
+__RCSID("$NetBSD: tput.c,v 1.17.6.1 2012/11/14 20:25:31 riz Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -105,7 +105,10 @@ main(int argc, char **argv)
 			break;
 		}
 		cptr = buf;
-		if (tgetstr(p, &cptr))
+               if (strlen(p) > 2)
+                       errx(2, "this program only supports termcap "
+                               "capabilities, not terminfo");
+               else if (tgetstr(p, &cptr))
 			argv = process(p, buf, argv);
 		else if ((n = tgetnum(p)) != -1)
 			(void)printf("%d\n", n);
