@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.140 2012/11/06 09:03:03 apb Exp $	*/
+/*	$NetBSD: pthread.c,v 1.141 2012/11/14 23:25:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.140 2012/11/06 09:03:03 apb Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.141 2012/11/14 23:25:05 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1303,6 +1303,7 @@ pthread__initmain(pthread_t *newt)
 }
 
 static signed int
+/*ARGSUSED*/
 pthread__cmp(void *ctx, const void *n1, const void *n2)
 {
 	const uintptr_t p1 = (const uintptr_t)n1;
