@@ -1,4 +1,4 @@
-.\"	$NetBSD: msm6242b.4,v 1.2 2012/11/14 07:49:34 wiz Exp $
+.\"	$NetBSD: msm6242b.4,v 1.3 2012/11/14 23:16:18 rkujawa Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,22 +28,22 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 14, 2012
-.Dt MSM6242 4
+.Dt MSM6242B 4
 .Os
 .Sh NAME
-.Nm msm6242
+.Nm msm6242b
 .Nd
-.Tn OKI MSM6242 time-of-day clock driver
+.Tn OKI MSM6242B time-of-day clock driver
 .Sh SYNOPSIS
-.In dev/ic/msm6242reg.h
-.In dev/ic/msm6242var.h
-.Cd "define msm6242"
-.Cd "file   dev/ic/msm6242.c    msm6242"
+.In dev/ic/msm6242breg.h
+.In dev/ic/msm6242bvar.h
+.Cd "define msm6242b"
+.Cd "file   dev/ic/msm6242b.c    msm6242b"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides access to the
-.Tn OKI MSM6242
+.Tn OKI MSM6242B
 time-of-day clock chip.
 Access methods to retrieve and set date and time
 are provided through the
