@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.63 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: piixide.c,v 1.64 2012/11/14 01:05:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.63 2012/07/31 15:50:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.64 2012/11/14 01:05:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 };
 
 CFATTACH_DECL_NEW(piixide, sizeof(struct pciide_softc),
-    piixide_match, piixide_attach, NULL, NULL);
+    piixide_match, piixide_attach, pciide_detach, NULL);
 
 static int
 piixide_match(device_t parent, cfdata_t match, void *aux)
