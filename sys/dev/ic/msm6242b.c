@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.1 2012/11/14 01:52:48 rkujawa Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.2 2012/11/14 17:15:25 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,6 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.2 2012/11/14 17:15:25 rkujawa Exp $");
+
+/* 
+ * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
+ * specifc a2kbbc driver (which was turned into frontend to this driver).
+ */
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,8 +82,7 @@ msm6242b_attach(struct msm6242b_softc *sc)
 #ifdef MSM6242B_DEBUG
 	aprint_normal_dev(sc->sc_dev, "the time is %d %d %d %d %d %d\n",
 	    dt.dt_year, dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
-#endif 
-/* MSM6242B_DEBUG */
+#endif /* MSM6242B_DEBUG */
 	todr_attach(handle);
 }
 
@@ -109,7 +114,7 @@ msm6242b_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 #ifdef MSM6242B_DEBUG
 	aprint_normal_dev(sc->sc_dev, "the time is %d %d %d %d %d %d\n",
 	    dt->dt_year, dt->dt_mon, dt->dt_day, dt->dt_hour, dt->dt_min, dt->dt_sec);
-#endif 
+#endif /* MSM6242B_DEBUG */
 
 	/* handle 12h mode */
 	if ((msm6242b_read(sc, MSM6242B_CONTROL_F) & 
@@ -147,12 +152,16 @@ msm6242b_hold(struct msm6242b_softc *sc)
 		msm6242b_set(sc, MSM6242B_CONTROL_D, MSM6242B_CONTROL_D_HOLD);
 		if (msm6242b_read(sc, MSM6242B_CONTROL_D) 
 		    & MSM6242B_CONTROL_D_BUSY) {
+#ifdef MSM6242B_DEBUG
 			aprint_normal_dev(sc->sc_dev, "gotta idle\n");
+#endif /* MSM6242B_DEBUG */
 			msm6242b_unset(sc, MSM6242B_CONTROL_D, 
 			    MSM6242B_CONTROL_D_HOLD);
 			delay(70);
 		} else {
+#ifdef MSM6242B_DEBUG
 			aprint_normal_dev(sc->sc_dev, "not busy\n");
+#endif /* MSM6242B_DEBUG */
 			break;
 		}
 	}		
