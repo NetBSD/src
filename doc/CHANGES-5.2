@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.197 2012/11/08 20:14:46 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.198 2012/11/14 20:01:16 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8777,4 +8777,20 @@ usr.sbin/wakeonlan/wakeonlan.c			1.1
 
 	Rename wake(8) to wakeonlan(8).  Approved by core@.
 	[uebayasi, ticket #1817]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/europe				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012j from
+	ftp://ftp.iana.org/tz/releases/tzdata2012j.tar.gz
+	Changes from tzdata2012i to tzdata2012j:
+	Libya moved to CET this weekend, but with DST planned next year.
+	(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
+	Various fixes to documentation and commentary.
+        [apb, ticket #1818]
 
