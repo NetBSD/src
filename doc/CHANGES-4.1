@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.256 2012/10/31 16:40:56 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.257 2012/11/14 20:26:26 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4810,4 +4810,50 @@ share/zoneinfo/southamerica			patch
 	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
 	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #1464]
+
+doc/3RDPARTY					patch
+share/zoneinfo/asia				patch
+share/zoneinfo/northamerica			patch
+
+        Import tzdata2012i from
+        ftp://ftp.iana.org/tz/releases/tzdata2012i.tar.gz .
+        Changes from tzdata2012h to tzdata2012i:
+        Cuba switches from DST on 4 Nov 2012 at 01:00.
+        [apb, ticket #1465]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/europe				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012j from
+	ftp://ftp.iana.org/tz/releases/tzdata2012j.tar.gz
+	Changes from tzdata2012i to tzdata2012j:
+	Libya moved to CET this weekend, but with DST planned next year.
+	(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
+	Various fixes to documentation and commentary.
+        [apb, ticket #1469]
+
+sys/kern/vfs_lookup.c				1.195 via patch
+sys/miscfs/genfs/layer_vnops.c			1.51 via patch
+
+	Don't panic when renaming a mount point with a layerfs on it.
+	PR#47040.
+	[dholland, ticket #1466]
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.155
+sys/dev/pcmcia/pcmciadevs			1.225
+sys/dev/pcmcia/pcmciadevs.h			regen
+sys/dev/pcmcia/pcmciadevs_data.h		regen
+
+	Added Corega LAPCCTXT FastEthernet.
+	[jnemeth, ticket #1467]
+
+usr.bin/tput/tput.c				patch
+
+	Fix tput support for setaf terminfo sequence. PR#39883.
+	[jnemeth, ticket #1468]
 
