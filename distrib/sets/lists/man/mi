@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1405 2012/11/04 16:26:56 christos Exp $
+# $NetBSD: mi,v 1.1406 2012/11/14 02:36:53 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1321,6 +1321,7 @@
 ./usr/share/man/cat4/mr.0			man-obsolete		obsolete
 ./usr/share/man/cat4/msk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mskc.0			man-sys-catman		.cat
+./usr/share/man/cat4/msm6242b.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mt2131.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
@@ -4197,6 +4198,7 @@
 ./usr/share/man/html4/mr.html			man-obsolete		obsolete
 ./usr/share/man/html4/msk.html			man-sys-htmlman		html
 ./usr/share/man/html4/mskc.html			man-sys-htmlman		html
+./usr/share/man/html4/msm6242b.html		man-sys-htmlman		html
 ./usr/share/man/html4/mt2131.html		man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtio.html			man-sys-htmlman		html
@@ -6921,6 +6923,7 @@
 ./usr/share/man/man4/mr.4			man-obsolete		obsolete
 ./usr/share/man/man4/msk.4			man-sys-man		.man
 ./usr/share/man/man4/mskc.4			man-sys-man		.man
+./usr/share/man/man4/msm6242b.4			man-sys-man		.man
 ./usr/share/man/man4/mt2131.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
