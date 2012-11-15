@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.23 2012/11/05 23:47:12 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.24 2012/11/15 22:20:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.23 2012/11/05 23:47:12 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.24 2012/11/15 22:20:27 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -163,7 +163,7 @@ npfctl_print_stats(int fd)
 		{ -1, "Other"						},
 		{ NPF_STAT_ERROR,		"unexpected errors"	},
 	};
-	uint64_t *st = emalloc(NPF_STATS_SIZE);
+	uint64_t *st = ecalloc(1, NPF_STATS_SIZE);
 
 	if (ioctl(fd, IOC_NPF_STATS, &st) != 0) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_STATS)");
@@ -213,7 +213,7 @@ char *
 npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 {
 	struct sockaddr_storage ss;
-	char *buf = emalloc(64);
+	char *buf = ecalloc(1, 64);
 	int len;
 
 	switch (alen) {
@@ -285,7 +285,7 @@ npfctl_table(int fd, int argc, char **argv)
 	}
 again:
 	if (nct.nct_action == NPF_IOCTL_TBLENT_LIST) {
-		nct.nct_data.buf.buf = emalloc(buflen);
+		nct.nct_data.buf.buf = ecalloc(1, buflen);
 		nct.nct_data.buf.len = buflen;
 	} else {
 		if (!npfctl_parse_cidr(arg, &fam, &alen)) {

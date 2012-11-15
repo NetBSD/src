@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.11 2012/11/05 23:47:12 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.12 2012/11/15 22:20:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.11 2012/11/05 23:47:12 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.12 2012/11/15 22:20:27 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -370,7 +370,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 nc_inf_t *
 npfctl_ncode_disinf(FILE *fp)
 {
-	nc_inf_t *ni = emalloc(sizeof(nc_inf_t));
+	nc_inf_t *ni = ecalloc(1, sizeof(nc_inf_t));
 
 	memset(ni, 0, sizeof(nc_inf_t));
 	ni->ni_fp = fp;
