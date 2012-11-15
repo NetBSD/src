@@ -1,0 +1,38 @@
+Link Date:	Wed Dec 15 10:06:16 2004
+Host OS:	GHS_WIN32
+Version:	ELXR 4.0 (c) 1998-2003 Green Hills Software    Build: Aug  3 2004
+
+
+Load Map Wed Dec 15 10:06:16 2004
+Image Summary
+
+  Section              Base      Size(hex)    Size(dec)  SecOffs
+  .text                70000000  00000100          256   00000a0
+  .rodata              70000100  00000020           32   00001a0
+  .NOR.data            70000120  00000000            0   00001c0
+  .data                00000040  00000000            0   00001c0
+  .bss                 00000040  00000000            0   00001c0
+  .nor.bss             0003d000  00000005            5   00001c0
+
+Load Map Wed Dec 15 10:06:16 2004
+Module Summary
+
+  Origin+Size    Section          Module
+70000000+000090  .text            main_NOR.o
+70000100+000020  .rodata          main_NOR.o
+0003d000+000005  .nor.bss         main_NOR.o
+70000090+000070  .text            tool_lib.a(sim_tools.o)
+
+Load Map Wed Dec 15 10:06:16 2004
+Global Symbols (sorted alphabetically)
+
+                  70002800 __ghs_norend
+                  70000000 __ghs_norstart
+                  0003cfc0 __ghs_ramend
+                  00000040 __ghs_ramstart
+ .text            70000000 _start
+ .nor.bss         0003d000 i
+ .text            70000090 sim_write
+ .nor.bss         0003d004 szHelloWorldString
+ .rodata          70000100 szNORHelloWorldString
+ .text            700000c0 test_exit

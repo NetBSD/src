@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1406 2012/11/14 02:36:53 rkujawa Exp $
+# $NetBSD: mi,v 1.1407 2012/11/15 19:49:11 jkunz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2305,6 +2305,9 @@
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/bootmini2440.0	man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/elftosb.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/sbkeygen.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/sbtool.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbmips/makedev.0		man-obsolete		obsolete
@@ -5067,6 +5070,9 @@
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbkeygen.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/sbtool.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-sysutil-htmlman	html
@@ -7901,6 +7907,9 @@
 ./usr/share/man/man8/emips/installboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/emips/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
+./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/sbkeygen.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/sbtool.8		man-sysutil-man		.man
 ./usr/share/man/man8/envstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/error.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man		.man
