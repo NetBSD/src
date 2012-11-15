@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.237 2012/11/07 08:17:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.238 2012/11/15 06:14:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.237 2012/11/07 08:17:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.238 2012/11/15 06:14:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4025,7 +4025,8 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 		while (timeout--) {
-			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA) == 0)
+			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA)
+			    == 0)
 				break;
 			delay(100);
 		}
@@ -4457,16 +4458,16 @@ wm_init(struct ifnet *ifp)
 		} else {
 			CSR_WRITE(sc, WMREG_RDH, 0);
 			CSR_WRITE(sc, WMREG_RDT, 0);
-			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD);	/* ITR/4 */
-			CSR_WRITE(sc, WMREG_RADV, 375);		/* MUST be same */
+			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
+			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
 		}
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = wm_add_rxbuf(sc, i)) != 0) {
-				log(LOG_ERR, "%s: unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
+				log(LOG_ERR, "%s: unable to allocate or map "
+				    "rx buffer %d, error = %d\n",
 				    device_xname(sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
@@ -6705,9 +6706,9 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
 		else
-			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			wm_gmii_i82544_writereg(self, phy,
+			    GG82563_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
-
 	}
 
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
@@ -6740,9 +6741,9 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
 		else
-			wm_gmii_i82544_writereg(self, phy, GG82563_PHY_PAGE_SELECT,
+			wm_gmii_i82544_writereg(self, phy,
+			    GG82563_PHY_PAGE_SELECT,
 			    reg >> GG82563_PAGE_SHIFT);
-
 	}
 
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
@@ -7315,7 +7316,10 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		return error;
 	}
 
-	/* Adjust offset appropriately if we're on bank 1 - adjust for word size */
+	/*
+	 * Adjust offset appropriately if we're on bank 1 - adjust for word
+	 * size
+	 */
 	bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
 	error = wm_get_swfwhw_semaphore(sc);
@@ -7330,8 +7334,8 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 		act_offset = bank_offset + ((offset + i) * 2);
 		error = wm_read_ich8_word(sc, act_offset, &word);
 		if (error) {
-			aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
-			    __func__);
+			aprint_error_dev(sc->sc_dev,
+			    "%s: failed to read NVM\n", __func__);
 			break;
 		}
 		data[i] = word;
