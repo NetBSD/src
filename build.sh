@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.258 2012/10/31 13:05:09 apb Exp $
+#	$NetBSD: build.sh,v 1.259 2012/11/15 23:51:53 joerg Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1718,7 +1718,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.258 2012/10/31 13:05:09 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.259 2012/11/15 23:51:53 joerg Exp $
 # with these arguments: ${_args}
 #
 
@@ -1767,8 +1767,7 @@ buildtools()
 	if [ "${MKUPDATE}" = "no" ]; then
 		make_in_dir tools cleandir
 	fi
-	make_in_dir tools dependall
-	make_in_dir tools install
+	make_in_dir tools build_install
 	statusmsg "Tools built to ${TOOLDIR}"
 }
 
