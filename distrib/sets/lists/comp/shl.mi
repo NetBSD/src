@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.237 2012/11/04 16:26:56 christos Exp $
+# $NetBSD: shl.mi,v 1.238 2012/11/15 18:51:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -355,7 +355,7 @@
 ./usr/libdata/debug/usr/lib/libquota.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libradius.so.4.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librefuse.so.2.0.debug	comp-refuse-debug	debug
-./usr/libdata/debug/usr/lib/libresolv.so.2.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libresolv.so.3.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libroken.so.19.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librt.so.1.1.debug		comp-sys-debug	debug
