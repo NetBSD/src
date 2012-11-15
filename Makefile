@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.300 2012/11/04 11:02:11 apb Exp $
+#	$NetBSD: Makefile,v 1.301 2012/11/15 23:51:53 joerg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -92,8 +92,6 @@
 #   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
-#   do-tools-compat: builds the "libnbcompat" library; needed for some
-#                    random host tool programs in the source tree.
 #   do-lib:          builds and installs prerequisites from lib
 #                    if ${MKCOMPAT} != "no".
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
@@ -455,12 +453,8 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat
-do-${dir:S/\//-/g}: .PHONY .MAKE
-.for targ in dependall install
-	${MAKEDIRTARGET} ${dir} ${targ}
-.endfor
-.endfor
+do-tools: .PHONY .MAKE
+	${MAKEDIRTARGET} tools build_install
 
 do-lib: .PHONY .MAKE
 	${MAKEDIRTARGET} lib build_install
