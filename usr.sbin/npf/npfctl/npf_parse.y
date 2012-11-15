@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.15 2012/11/05 23:47:12 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.16 2012/11/15 22:20:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ yyerror(const char *fmt, ...)
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
 		size_t len = strlen(context);
-		char *dst = emalloc(len * 4 + 1);
+		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
 		fprintf(stderr, " near '%s'", dst);
@@ -609,7 +609,6 @@ addr
 	: IPV4ADDR	{ $$ = $1; }
 	| IPV6ADDR	{ $$ = $1; }
 	;
-
 
 port_range
 	: PORT port		/* just port */
