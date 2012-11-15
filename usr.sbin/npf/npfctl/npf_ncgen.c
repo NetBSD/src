@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.14 2012/11/05 23:47:12 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.15 2012/11/15 22:20:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_ncgen.c,v 1.14 2012/11/05 23:47:12 rmind Exp $");
+__RCSID("$NetBSD: npf_ncgen.c,v 1.15 2012/11/15 22:20:27 rmind Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -145,7 +145,7 @@ npfctl_ncgen_addjmp(nc_ctx_t *ctx, uint32_t **nc_ptr)
 nc_ctx_t *
 npfctl_ncgen_create(void)
 {
-	return emalloc(sizeof(nc_ctx_t));
+	return ecalloc(1, sizeof(nc_ctx_t));
 }
 
 /*
