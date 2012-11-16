@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.2 2012/11/16 02:10:26 joerg Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3 2012/11/16 02:16:38 christos Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.2 2012/11/16 02:10:26 joerg Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.3 2012/11/16 02:16:38 christos Exp $");
 #endif
 
 
@@ -437,10 +437,11 @@ dst_s_write_private_key(const DST_KEY *key)
 	/* Do not overwrite an existing file */
 	if ((fp = dst_s_fopen(file, "w", 0600)) != NULL) {
 		ssize_t nn;
-		/*LINTED*/
-		if ((nn = fwrite(encoded_block, 1, len, fp)) != len) {
+		nn = fwrite(encoded_block, 1, len, fp);
+		if (nn != len) {
 			EREPORT(("%s: Write failure on %s %d != %zd"
 			    " errno=%d\n", __func__, file, len, nn, errno));
+
 			fclose(fp);
 			return (-5);
 		}
