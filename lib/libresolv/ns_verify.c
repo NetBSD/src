@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_verify.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: ns_verify.c,v 1.2 2012/11/16 02:16:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -461,7 +461,7 @@ ns_verify_tcp(u_char *msg, int *msglen, ns_tcp_tsig_state *state,
 			buf, (int)(cp2 - buf), NULL, 0);
 
 	n = dst_verify_data(SIG_MODE_FINAL, state->key, &state->ctx, NULL, 0,
-			    sigstart, sigfieldlen);
+			    sigstart, (int)sigfieldlen);
 	if (n < 0)
 		return (-ns_r_badsig);
 
