@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2012/11/14 03:47:30 msaitoh Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2012/11/16 12:38:09 he Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
@@ -24,8 +24,7 @@ SRCS+=		${SRCS.softfloat}
 .if (${MACHINE_CPU} == "arm")
 # See doc/HACKS for more information.
 COPTS.softfloat.c+=	-Wno-enum-compare -fno-tree-vrp
-.elif
-    (${MACHINE_CPU} == "mips" || \
+.elif (${MACHINE_CPU} == "mips" || \
      ${MACHINE_CPU} == "sh3")
 COPTS.softfloat.c+=	-Wno-enum-compare
 .endif
