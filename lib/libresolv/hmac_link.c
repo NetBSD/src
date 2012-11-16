@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.2 2012/11/16 02:16:38 christos Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/hmac_link.c,v 1.8 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: hmac_link.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
+__RCSID("$NetBSD: hmac_link.c,v 1.2 2012/11/16 02:16:38 christos Exp $");
 #endif
 
 /*%
@@ -103,7 +103,7 @@ dst_hmac_md5_sign(const int mode, DST_KEY *d_key, void **context,
 	}
 
 	if ((mode & SIG_MODE_UPDATE) && (data && len > 0))
-		MD5Update(ctx, data, len);
+		MD5Update(ctx, data, (unsigned int)len);
 
 	if (mode & SIG_MODE_FINAL) {
 		if (signature == NULL || sig_len < MD5_LEN)
