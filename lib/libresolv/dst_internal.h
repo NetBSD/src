@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.2 2012/11/16 02:11:05 joerg Exp $	*/
 
 #ifndef DST_INTERNAL_H
 #define DST_INTERNAL_H
@@ -83,7 +83,7 @@ typedef struct dst_key {
 #endif
 
 #ifndef SAFE_FREE
-#define SAFE_FREE(a) SAFE_FREE2((a), sizeof(a))
+#define SAFE_FREE(a) SAFE_FREE2((a), sizeof(*(a)))
 #endif
 
 typedef struct dst_func {
