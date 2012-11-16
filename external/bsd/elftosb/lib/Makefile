@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/11/16 02:54:55 christos Exp $
+# $NetBSD: Makefile,v 1.3 2012/11/16 05:39:25 christos Exp $
 
 .if (${MACHINE} == "evbarm")
 LIBISPRIVATE=	yes
@@ -38,7 +38,7 @@ SRCS=		AESKey.cpp \
 		stdafx.cpp
 .include <bsd.lib.mk>
 .else
-.include <bsd.files.mk>
+${.TARGETS}:
 .endif
 
 
