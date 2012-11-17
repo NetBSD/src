@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/20 13:01:33 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2012/11/17 17:51:09 tsutsui Exp $
 
 DEV=		xx
 DEVDRV=		xx
 FS=		ffsv1
 BOOTCPPFLAGS=	-DSDBOOT
 
-TOUCHPROG=	
+TOUCHPROG=	true
 
 .include "../Makefile.xxboot"
