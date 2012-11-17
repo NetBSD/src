@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.1 2012/03/20 13:01:32 minoura Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.2 2012/11/17 15:59:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -43,44 +43,43 @@
 #include "iocs.h"
 #include "exec_image.h"
 
-#define EXSCSI_BDID	((void*) 0x00ea0001)
+#define EXSCSI_BDID	((void *)0x00ea0001)
 
-/* boot_cd9660.S */
-extern int badbaddr __P((volatile void *adr));
+/* boot.S */
+extern int badbaddr(volatile void *);
 extern unsigned int ID;		/* target SCSI ID */
 extern unsigned int BOOT_INFO;	/* result of IOCS(__BOOTINF) */
 
 /* for debug */
 unsigned int startregs[16];
 
-static int get_scsi_host_adapter (char *);
-void bootmain (void) __attribute__ ((__noreturn__));
+static int get_scsi_host_adapter(char *);
+void bootmain(void) __attribute__ ((__noreturn__));
 
 /*
  * Check the type of SCSI interface
  */
 static int
-get_scsi_host_adapter(devstr)
-	char *devstr;
+get_scsi_host_adapter(char *devstr)
 {
-	char *bootrom;
+	uint8_t *bootrom;
 	int ha;
 
-	*(int *)devstr = '/' << 24 | 's' << 16 | 'p' << 8 | 'c';
-	*(int *)(devstr + 4) = '@' << 24 | '0' << 16 | '/' << 8 | 'c';
-	*(int *)(devstr + 8) = 'd' << 24 | '@' << 16 | '0' << 8 | ',';
-	*(int *)(devstr + 12) = '0' << 24 | ':' << 16 | 'a' << 8 | '\0';
+	*(uint32_t *)(devstr +  0) = '/' << 24 | 's' << 16 | 'p' << 8 | 'c';
+	*(uint32_t *)(devstr +  4) = '@' << 24 | '0' << 16 | '/' << 8 | 'c';
+	*(uint32_t *)(devstr +  8) = 'd' << 24 | '@' << 16 | '0' << 8 | ',';
+	*(uint32_t *)(devstr + 12) = '0' << 24 | ':' << 16 | 'a' << 8 | '\0';
 
-	bootrom = (char *) (BOOT_INFO & 0x00ffffe0);
+	bootrom = (uint8_t *)(BOOT_INFO & 0x00ffffe0);
 	/*
 	 * bootrom+0x24	"SCSIIN" ... Internal SCSI (spc@0)
 	 *		"SCSIEX" ... External SCSI (spc@1 or mha@0)
 	 */
-	if (*(u_short *)(bootrom + 0x24 + 4) == 0x494e) {	/* "IN" */
+	if (*(uint16_t *)(bootrom + 0x24 + 4) == 0x494e) {	/* "IN" */
 		ha = (X68K_BOOT_SCSIIF_SPC << 4) | 0;
 	} else if (badbaddr(EXSCSI_BDID)) {
 		ha = (X68K_BOOT_SCSIIF_MHA << 4) | 0;
-		*(int *)devstr = '/' << 24 | 'm' << 16 | 'h' << 8 | 'a';
+		*(uint32_t *)devstr = '/' << 24 | 'm' << 16 | 'h' << 8 | 'a';
 	} else {
 		ha = (X68K_BOOT_SCSIIF_SPC << 4) | 1;
 		devstr[5] = '1';
@@ -127,9 +126,9 @@ bootmain(void)
 	exit(0);
 }
 
-extern int xxboot(struct open_file *);
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
+
 	return xxopen(f);
 }
