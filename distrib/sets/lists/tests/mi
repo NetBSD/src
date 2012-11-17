@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.504 2012/11/12 09:03:52 njoly Exp $
+# $NetBSD: mi,v 1.505 2012/11/17 21:55:24 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -321,6 +321,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_ioctl.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc1.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc3.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
@@ -2141,6 +2142,7 @@
 ./usr/tests/kernel/kqueue/t_ioctl		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_proc1		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_proc2		tests-kernel-tests		atf
+./usr/tests/kernel/kqueue/t_proc3		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/t_sig			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write			tests-kernel-tests
 ./usr/tests/kernel/kqueue/write/Atffile		tests-kernel-tests		atf
