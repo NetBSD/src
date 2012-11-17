@@ -1,9 +1,9 @@
-/*	$NetBSD: component.c,v 1.2 2012/09/20 17:50:42 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.3 2012/11/17 16:38:22 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include "rump_private.h"
+#include <uvm/uvm_extern.h>
 
 extern struct sysent rump_linux_sysent[];
 
