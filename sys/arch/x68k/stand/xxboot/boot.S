@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.2 2012/11/17 15:50:13 tsutsui Exp $
+| $NetBSD: boot.S,v 1.3 2012/11/17 15:53:21 tsutsui Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -19,7 +19,7 @@
 
 #define BOOT_ERROR(s)	jbsr boot_error; .asciz s; .even
 
-	.globl	_C_LABEL(bootufs)
+	.globl	_C_LABEL(bootmain)
 	.text
 ASENTRY_NOPROFILE(start)
 ASENTRY_NOPROFILE(top)
