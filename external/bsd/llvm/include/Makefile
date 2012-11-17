@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.14 2012/10/28 17:07:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2012/11/17 04:57:27 joerg Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	ammintrin.h \
+INCS=	__wmmintrin_aes.h \
+	__wmmintrin_pclmul.h \
+	ammintrin.h \
 	avx2intrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
@@ -22,6 +24,7 @@ INCS=	ammintrin.h \
 	nmmintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
+	rtmintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
 	wmmintrin.h \
