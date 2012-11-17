@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/10/28 17:07:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/11/17 04:57:27 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -19,6 +19,7 @@ SRCS+=	AliasAnalysis.cpp \
 	CaptureTracking.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
+	CostModel.cpp \
 	DbgInfoPrinter.cpp \
 	DependenceAnalysis.cpp \
 	DomPrinter.cpp \
@@ -34,7 +35,6 @@ SRCS+=	AliasAnalysis.cpp \
 	LibCallSemantics.cpp \
 	Lint.cpp \
 	Loads.cpp \
-	LoopDependenceAnalysis.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
 	MemDepPrinter.cpp \
