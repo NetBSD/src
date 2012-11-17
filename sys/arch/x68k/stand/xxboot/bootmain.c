@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.2 2012/11/17 15:59:28 tsutsui Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.3 2012/11/17 16:16:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -130,5 +130,6 @@ int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 
+	*file = __UNCONST(fname);
 	return xxopen(f);
 }
