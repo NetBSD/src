@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.52 2012/04/29 22:55:11 chs Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.53 2012/11/17 10:10:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52 2012/04/29 22:55:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.53 2012/11/17 10:10:17 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1224,6 +1224,9 @@ wapbl_biodone(struct buf *bp)
 {
 	struct wapbl_entry *we = bp->b_private;
 	struct wapbl *wl = we->we_wapbl;
+#ifdef WAPBL_DEBUG_BUFBYTES
+	const int bufsize = bp->b_bufsize;
+#endif
 
 	/*
 	 * Handle possible flushing of buffers after log has been
@@ -1233,8 +1236,8 @@ wapbl_biodone(struct buf *bp)
 		KASSERT(we->we_bufcount > 0);
 		we->we_bufcount--;
 #ifdef WAPBL_DEBUG_BUFBYTES
-		KASSERT(we->we_unsynced_bufbytes >= bp->b_bufsize);
-		we->we_unsynced_bufbytes -= bp->b_bufsize;
+		KASSERT(we->we_unsynced_bufbytes >= bufsize);
+		we->we_unsynced_bufbytes -= bufsize;
 #endif
 
 		if (we->we_bufcount == 0) {
@@ -1300,15 +1303,22 @@ wapbl_biodone(struct buf *bp)
 #endif
 	}
 
+	/*
+	 * Release the buffer here. wapbl_flush() may wait for the
+	 * log to become empty and we better unbusy the buffer before
+	 * wapbl_flush() returns.
+	 */
+	brelse(bp, 0);
+
 	mutex_enter(&wl->wl_mtx);
 
 	KASSERT(we->we_bufcount > 0);
 	we->we_bufcount--;
 #ifdef WAPBL_DEBUG_BUFBYTES
-	KASSERT(we->we_unsynced_bufbytes >= bp->b_bufsize);
-	we->we_unsynced_bufbytes -= bp->b_bufsize;
-	KASSERT(wl->wl_unsynced_bufbytes >= bp->b_bufsize);
-	wl->wl_unsynced_bufbytes -= bp->b_bufsize;
+	KASSERT(we->we_unsynced_bufbytes >= bufsize);
+	we->we_unsynced_bufbytes -= bufsize;
+	KASSERT(wl->wl_unsynced_bufbytes >= bufsize);
+	wl->wl_unsynced_bufbytes -= bufsize;
 #endif
 
 	/*
@@ -1345,7 +1355,6 @@ wapbl_biodone(struct buf *bp)
 	}
 
 	mutex_exit(&wl->wl_mtx);
-	brelse(bp, 0);
 }
 
 /*
