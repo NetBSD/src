@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.3 2012/11/17 16:16:46 tsutsui Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.4 2012/11/17 19:10:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -44,11 +44,20 @@
 #include "exec_image.h"
 
 #define EXSCSI_BDID	((void *)0x00ea0001)
+#define BINF_ISFD(pbinf)	(*((uint8_t *)(pbinf) + 1) == 0)
 
 /* boot.S */
 extern int badbaddr(volatile void *);
 extern unsigned int ID;		/* target SCSI ID */
 extern unsigned int BOOT_INFO;	/* result of IOCS(__BOOTINF) */
+extern struct {
+	struct fdfmt{
+		uint8_t	N;	/* sector length 0: 128, ..., 3: 1K */
+		uint8_t	C;	/* cylinder # */
+		uint8_t	H;	/* head # */
+		uint8_t	R;	/* sector # */
+	} minsec, maxsec;
+} FDSECMINMAX;			/* FD format type of the first track */
 
 /* for debug */
 unsigned int startregs[16];
@@ -65,10 +74,16 @@ get_scsi_host_adapter(char *devstr)
 	uint8_t *bootrom;
 	int ha;
 
+#ifdef XXBOOT_DEBUG
 	*(uint32_t *)(devstr +  0) = '/' << 24 | 's' << 16 | 'p' << 8 | 'c';
+#if defined(CDBOOT)
 	*(uint32_t *)(devstr +  4) = '@' << 24 | '0' << 16 | '/' << 8 | 'c';
+#else
+	*(uint32_t *)(devstr +  4) = '@' << 24 | '0' << 16 | '/' << 8 | 's';
+#endif
 	*(uint32_t *)(devstr +  8) = 'd' << 24 | '@' << 16 | '0' << 8 | ',';
 	*(uint32_t *)(devstr + 12) = '0' << 24 | ':' << 16 | 'a' << 8 | '\0';
+#endif
 
 	bootrom = (uint8_t *)(BOOT_INFO & 0x00ffffe0);
 	/*
@@ -79,10 +94,14 @@ get_scsi_host_adapter(char *devstr)
 		ha = (X68K_BOOT_SCSIIF_SPC << 4) | 0;
 	} else if (badbaddr(EXSCSI_BDID)) {
 		ha = (X68K_BOOT_SCSIIF_MHA << 4) | 0;
+#ifdef XXBOOT_DEBUG
 		*(uint32_t *)devstr = '/' << 24 | 'm' << 16 | 'h' << 8 | 'a';
+#endif
 	} else {
 		ha = (X68K_BOOT_SCSIIF_SPC << 4) | 1;
+#ifdef XXBOOT_DEBUG
 		devstr[5] = '1';
+#endif
 	}
 
 	return ha;
@@ -97,18 +116,45 @@ bootmain(void)
 	char bootdevstr[16];
 	u_long marks[MARK_MAX];
 
-#ifdef DEBUG
-	printf("%s rev.%s\n", bootprog_name, bootprog_rev);
-#endif
+	IOCS_B_PRINT(bootprog_name);
+	IOCS_B_PRINT(" rev.");
+	IOCS_B_PRINT(bootprog_rev);
+	IOCS_B_PRINT("\r\n");
 
 	ha = get_scsi_host_adapter(bootdevstr);
+#ifdef XXBOOT_DEBUG
 	bootdevstr[10] = '0' + (ID & 7);
 	bootdevstr[14] = 'a';
+#endif
+
+#if defined(CDBOOT)
 	bootdev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_CD, ha >> 4, ha & 15,
 				       ID & 7, 0, 0);
-#ifdef DEBUG
-	printf(" boot device: %s\n", bootdevstr);
+#elif defined(FDBOOT) || defined(SDBOOT)
+	if (BINF_ISFD(&BOOT_INFO)) {
+		/* floppy */
+#ifdef XXBOOT_DEBUG
+		*(uint32_t *)bootdevstr =
+		    ('f' << 24 | 'd' << 16 | '@' << 8 | '0' + (BOOT_INFO & 3));
+		bootdevstr[4] = '\0';
 #endif
+		/* fdNa for 1024 bytes/sector, fdNc for 512 bytes/sector */
+		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, BOOT_INFO & 3,
+		    (FDSECMINMAX.minsec.N == 3) ? 0 : 2);
+	} else {
+		/* SCSI */
+		bootdev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD, ha >> 4, ha & 15,
+		    ID & 7, 0, 0 /* XXX: assume partition a */);
+	}
+#else
+	bootdev = 0;
+#endif
+
+#ifdef XXBOOT_DEBUG
+	IOCS_B_PRINT("boot device: ");
+	IOCS_B_PRINT(bootdevstr);
+#endif
+	IOCS_B_PRINT("\r\n");
 
 	marks[MARK_START] = BOOT_TEXTADDR;
 	fd = loadfile("x68k/boot", marks, LOAD_TEXT|LOAD_DATA|LOAD_BSS);
