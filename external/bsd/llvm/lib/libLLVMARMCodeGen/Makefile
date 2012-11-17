@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2012/01/11 23:24:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2012/11/17 04:57:27 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -12,7 +12,6 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMCodeEmitter.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
-	ARMELFWriterInfo.cpp \
 	ARMExpandPseudoInsts.cpp \
 	ARMFastISel.cpp \
 	ARMFrameLowering.cpp \
