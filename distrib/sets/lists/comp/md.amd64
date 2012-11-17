@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.181 2012/11/15 18:51:55 christos Exp $
+# $NetBSD: md.amd64,v 1.182 2012/11/17 04:57:25 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -87,6 +87,8 @@
 ./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
@@ -104,6 +106,7 @@
 ./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
