@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.10 2012/11/18 22:00:58 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.11 2012/11/18 22:05:38 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -86,4 +86,18 @@ distrib/utils/sysinst/arch/i386/msg.md.pl	1.37
 
 	Remove useless md_may_remove_boot_medium messages.  PR/47039
 	[tsutsui, ticket #648]
+
+distrib/utils/sysinst/arch/amd64/Makefile	1.8
+distrib/utils/sysinst/arch/i386/Makefile	1.18
+distrib/utils/sysinst/msg.mi.de			1.71
+distrib/utils/sysinst/msg.mi.en			1.176
+distrib/utils/sysinst/msg.mi.es			1.48
+distrib/utils/sysinst/msg.mi.fr			1.130
+distrib/utils/sysinst/msg.mi.pl			1.87
+distrib/utils/sysinst/util.c			1.180
+
+	Make default installation source use the sets in the default file
+	system if the root file system is not md(4) - for example,
+	on memstick images.
+	[tsutsui, ticket #649]
 
