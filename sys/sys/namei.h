@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.86 2012/11/18 17:41:54 manu Exp $	*/
+/*	$NetBSD: namei.h,v 1.87 2012/11/18 18:25:50 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.30 2012/11/05 19:06:26 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.31 2012/11/18 18:25:08 dholland Exp 
  */
 
 /*
