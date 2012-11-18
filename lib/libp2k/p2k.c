@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.58 2012/11/18 18:39:23 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.59 2012/11/18 19:04:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -726,7 +726,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	freecn(cn);
 
 	if (rv) {
-		if (rv == EJUSTRETURN) {
+		if (rv == RUMP_EJUSTRETURN) {
 			rv = ENOENT;
 		}
 		return rv;
