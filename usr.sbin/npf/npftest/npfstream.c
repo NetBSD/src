@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.1.2.4 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.1.2.5 2012/11/18 21:48:56 riz Exp $	*/
 
 /*
  * NPF stream processor.
@@ -73,7 +73,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 	len = ntohs(ip->ip_len);
 	error = rumpns_npf_test_handlepkt(ip, len, idx, forw, result);
 
-	fprintf(fp, "%s%2x %5d %3d %11u %11u %11u %11u %12lx",
+	fprintf(fp, "%s%2x %5d %3d %11u %11u %11u %11u %12" PRIxPTR,
 	    forw ? ">" : "<", (th->th_flags & (TH_SYN | TH_ACK | TH_FIN)),
 	    packetno, error, (u_int)seq, (u_int)ntohl(th->th_ack),
 	    tcpdlen, ntohs(th->th_win), (uintptr_t)result[0]);
