@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.9 2012/10/31 16:27:45 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.10 2012/11/18 22:00:58 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -77,4 +77,13 @@ share/zoneinfo/southamerica			patch
 	   Israel has new DST rules next year.  (Thanks to Ephraim Silverberg.)
 	   Jordan stays on DST this winter.  (Thanks to Steffen Thorsen.)
 	[apb, ticket #657]
+
+distrib/utils/sysinst/arch/i386/msg.md.de	1.24
+distrib/utils/sysinst/arch/i386/msg.md.en	1.64
+distrib/utils/sysinst/arch/i386/msg.md.es	1.15
+distrib/utils/sysinst/arch/i386/msg.md.fr	1.52
+distrib/utils/sysinst/arch/i386/msg.md.pl	1.37
+
+	Remove useless md_may_remove_boot_medium messages.  PR/47039
+	[tsutsui, ticket #648]
 
