@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.199 2012/11/05 21:35:28 para Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.200 2012/11/18 17:41:53 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.199 2012/11/05 21:35:28 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.200 2012/11/18 17:41:53 manu Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -676,6 +676,10 @@ namei_start(struct namei_state *state, int isnfsd,
 		startdir = namei_getstartdir(state);
 		namei_ktrace(state);
 	}
+
+	/* NDAT may feed us with a non directory namei_getstartdir */
+	if (startdir->v_type != VDIR)
+		return ENOTDIR;
 
 	vn_lock(startdir, LK_EXCLUSIVE | LK_RETRY);
 
@@ -1793,7 +1797,14 @@ namei_simple_convert_flags(namei_simple_flags_t sflags)
 
 int
 namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
-			struct vnode **vp_ret)
+	struct vnode **vp_ret)
+{
+	return nameiat_simple_kernel(NULL, path, sflags, vp_ret);
+}
+
+int
+nameiat_simple_kernel(struct vnode *dvp, const char *path, 
+	namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct nameidata nd;
 	struct pathbuf *pb;
@@ -1808,6 +1819,10 @@ namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
 		LOOKUP,
 		namei_simple_convert_flags(sflags),
 		pb);
+
+	if (dvp != NULL)
+		NDAT(&nd, dvp);
+
 	err = namei(&nd);
 	if (err != 0) {
 		pathbuf_destroy(pb);
@@ -1820,7 +1835,14 @@ namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
 
 int
 namei_simple_user(const char *path, namei_simple_flags_t sflags,
-			struct vnode **vp_ret)
+	struct vnode **vp_ret)
+{
+	return nameiat_simple_user(NULL, path, sflags, vp_ret);
+}
+
+int
+nameiat_simple_user(struct vnode *dvp, const char *path,
+	namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct pathbuf *pb;
 	struct nameidata nd;
@@ -1835,6 +1857,10 @@ namei_simple_user(const char *path, namei_simple_flags_t sflags,
 		LOOKUP,
 		namei_simple_convert_flags(sflags),
 		pb);
+
+	if (dvp != NULL)
+		NDAT(&nd, dvp);
+
 	err = namei(&nd);
 	if (err != 0) {
 		pathbuf_destroy(pb);

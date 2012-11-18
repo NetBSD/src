@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.85 2012/11/05 19:06:39 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.86 2012/11/18 17:41:54 manu Exp $	*/
 
 
 /*
@@ -233,7 +233,7 @@ extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
 
 /*
- * Typesafe flags for namei_simple.
+ * Typesafe flags for namei_simple/nameiat_simple.
  *
  * This encoding is not optimal but serves the important purpose of
  * not being type-compatible with the regular namei flags.
@@ -247,11 +247,13 @@ extern const namei_simple_flags_t
 	NSM_FOLLOW_TRYEMULROOT;
 
 /*
- * namei_simple_* - the simple cases of namei, with no struct
- *                  nameidata involved.
+ * namei(at)?_simple_* - the simple cases of namei, with no struct
+ *                       nameidata involved.
  *
  * namei_simple_kernel takes a kernel-space path as the first argument.
  * namei_simple_user takes a user-space path as the first argument.
+ * The nameiat_simple_* variants handle relative path using the given 
+ * directory vnode instead of current directory.
  *
  * A namei call can be converted to namei_simple_* if:
  *    - the second arg to NDINIT is LOOKUP;
@@ -261,6 +263,10 @@ extern const namei_simple_flags_t
  */
 int namei_simple_kernel(const char *, namei_simple_flags_t, struct vnode **);
 int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
+int nameiat_simple_kernel(struct vnode *, const char *, namei_simple_flags_t,
+    struct vnode **);
+int nameiat_simple_user(struct vnode *, const char *, namei_simple_flags_t, 
+    struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
