@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.19 2012/11/18 18:54:46 msaitoh Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.20 2012/11/18 19:08:34 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -472,3 +472,46 @@ libexec/ld.elf_so/arch/i386/mdreloc.c		1.35
 	Add support in ld.elf_so for relocation type R_386_TLS_TPOFF32.
 	Fixes PR 47061.
 	[apb, ticket #667]
+
+distrib/sets/lists/base/md.x68k			1.44-1.45
+sys/arch/x68k/include/loadfile_machdep.h	1.7
+sys/arch/x68k/stand/Makefile			1.10-1.13
+sys/arch/x68k/stand/boot/boot.ldscript		1.3
+sys/arch/x68k/stand/boot/conf.c			1.9-1.10
+sys/arch/x68k/stand/boot/dp8390.c		1.1
+sys/arch/x68k/stand/boot/dp8390.h		1.1
+sys/arch/x68k/stand/boot/if_ne.c		1.1
+sys/arch/x68k/stand/boot/ne.c			1.1
+sys/arch/x68k/stand/boot/ne.h			1.1
+sys/arch/x68k/stand/boot/version		1.5-1.6
+sys/arch/x68k/stand/installboot/installboot.c	1.6
+sys/arch/x68k/stand/libsa/Makefile		1.29
+sys/arch/x68k/stand/libsa/Makefile.inc		1.2
+sys/arch/x68k/stand/libsa/clock.c		1.1
+sys/arch/x68k/stand/libsa/consio.c		1.10
+sys/arch/x68k/stand/libsa/devopen.c		1.6
+sys/arch/x68k/stand/libsa/libx68k.h		1.6
+sys/arch/x68k/stand/libsa/sdcd.c		1.12-1.13
+sys/arch/x68k/stand/netboot/Makefile		1.1
+sys/arch/x68k/stand/netboot/boot.c		1.1
+sys/arch/x68k/stand/netboot/conf.c		1.1
+sys/arch/x68k/stand/netboot/version		1.1
+sys/arch/x68k/stand/newdisk/newdisk.c		1.10
+sys/arch/x68k/stand/xxboot/Makefile		1.15
+sys/arch/x68k/stand/xxboot/Makefile.xxboot	1.1
+sys/arch/x68k/stand/xxboot/boot.S		1.1
+sys/arch/x68k/stand/xxboot/bootmain.c		1.1
+sys/arch/x68k/stand/xxboot/cdboot_cd9660/Makefile 1.1
+sys/arch/x68k/stand/xxboot/conf.c		1.1
+sys/arch/x68k/stand/xxboot/consio1.c		1.1
+sys/arch/x68k/stand/xxboot/version		1.1
+sys/arch/x68k/stand/xxboot/xx.c			1.1
+sys/arch/x68k/stand/xxboot/xxboot.ldscript	1.1
+sys/arch/x68k/stand/xxboot/xxboot_ffsv1/Makefile 1.1
+sys/arch/x68k/stand/xxboot/xxboot_ffsv2/Makefile 1.1
+sys/arch/x68k/stand/xxboot/xxboot_lfsv1/Makefile 1.1
+sys/arch/x68k/stand/xxboot/xxboot_lfsv2/Makefile 1.1
+
+	Update x86k bootloader: cdboot, netboot support, and bugfixes.
+	[tsutsui, ticket #645]
+
