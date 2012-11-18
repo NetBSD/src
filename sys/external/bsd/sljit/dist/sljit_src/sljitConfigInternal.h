@@ -308,7 +308,8 @@ typedef long int sljit_w;
 #define SLJIT_X86_32_FASTCALL 1
 
 #else /* defined(_WIN32) */
-#define SLJIT_CALL __stdcall
+/* The cdecl attribute is the default. */
+#define SLJIT_CALL
 #endif
 
 #else /* Other architectures. */
