@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.17 2012/10/31 17:32:01 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.18 2012/11/18 18:16:37 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -416,3 +416,35 @@ sys/netinet/tcp_subr.c				1.248
 	Fix a bug that kmem_alloc() is called from the interrupt context.
 	[msaitoh, ticket #644]
 
+distrib/emips/miniroot/Makefile.inc		1.3
+distrib/hp300/miniroot/Makefile.inc		1.13
+distrib/hpcarm/miniroot/Makefile.inc		1.7
+distrib/hpcmips/miniroot/Makefile.inc		1.20
+distrib/hpcsh/miniroot/Makefile.inc		1.8
+distrib/mvme68k/miniroot/Makefile.inc		1.13
+distrib/pmax/miniroot/Makefile.inc		1.24
+distrib/vax/miniroot/Makefile.inc		1.23
+
+	Add "ipty" to MAKEDEVTARGETS in miniroot/Makefile.inc since
+	"MAKEDEV all" no longer creates /dev/pty* device nodes and miniroot
+	doesn't mount ptyfs. Fix PR install/47123.
+	[tsutsui, ticket #650]
+
+sys/dev/pci/pcidevs				1.1143
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+
+	Add more ASMEDIA 1061 variants.
+	[matt, ticket #658]
+
+sys/dev/pci/ahcisata_pci.c			1.31
+
+	Add FORCE quirks for ASMEDIA ASM1061
+	[matt, ticket #659]
+
+sys/arch/mips/mips/mips_emul.c			1.26
+
+	We need to jump out of two switches to emulate rdhwr rt,$29 correctly.
+	Only one would result in segv.
+	Fixes pthread apps on mips1. Tested using gxemul.
+	[skrll, ticket #661]
