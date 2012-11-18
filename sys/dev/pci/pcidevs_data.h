@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1096.2.9 2012/10/31 17:27:27 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1096.2.10 2012/11/18 17:54:01 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1461,7 +1461,13 @@ static const uint16_t pci_products[] = {
 	    8602, 0,
 	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A, 
 	    8611, 5554, 5452, 0,
-	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061, 
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_01, 
+	    8620, 8154, 8149, 8628, 6190, 0,
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_02, 
+	    8620, 8154, 8149, 8628, 6190, 0,
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_11, 
+	    8620, 8154, 8149, 8628, 6190, 0,
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_12, 
 	    8620, 8154, 8149, 8628, 6190, 0,
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI, 
 	    8632, 0,
@@ -9492,7 +9498,7 @@ static const char pci_words[] = { "."
 	    "Escalade\0" /* 2 refs @ 6172 */
 	    "ATA\0" /* 51 refs @ 6181 */
 	    "RAID\0" /* 40 refs @ 6185 */
-	    "Controller\0" /* 824 refs @ 6190 */
+	    "Controller\0" /* 827 refs @ 6190 */
 	    "7000/8000\0" /* 1 refs @ 6201 */
 	    "Series\0" /* 83 refs @ 6211 */
 	    "9000\0" /* 5 refs @ 6218 */
@@ -9758,8 +9764,8 @@ static const char pci_words[] = { "."
 	    "MC97\0" /* 1 refs @ 8132 */
 	    "756b\0" /* 1 refs @ 8137 */
 	    "Hudson\0" /* 12 refs @ 8142 */
-	    "SATA\0" /* 111 refs @ 8149 */
-	    "AHCI\0" /* 71 refs @ 8154 */
+	    "SATA\0" /* 114 refs @ 8149 */
+	    "AHCI\0" /* 74 refs @ 8154 */
 	    "SD\0" /* 5 refs @ 8159 */
 	    "HD\0" /* 10 refs @ 8162 */
 	    "xHCI\0" /* 2 refs @ 8165 */
@@ -9824,8 +9830,8 @@ static const char pci_words[] = { "."
 	    "ARC-1680\0" /* 1 refs @ 8593 */
 	    "ARC-1681\0" /* 1 refs @ 8602 */
 	    "AX88140A\0" /* 1 refs @ 8611 */
-	    "ASM1061\0" /* 1 refs @ 8620 */
-	    "III\0" /* 5 refs @ 8628 */
+	    "ASM1061\0" /* 4 refs @ 8620 */
+	    "III\0" /* 8 refs @ 8628 */
 	    "ISDN\0" /* 8 refs @ 8632 */
 	    "L1E\0" /* 1 refs @ 8637 */
 	    "L1\0" /* 1 refs @ 8641 */
