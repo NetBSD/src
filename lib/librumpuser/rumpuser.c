@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.22 2012/11/14 09:22:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.23 2012/11/18 19:29:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.22 2012/11/14 09:22:58 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.23 2012/11/18 19:29:40 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: rumpuser.c,v 1.22 2012/11/14 09:22:58 pooka Exp $");
 #endif
 
 #include <assert.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -291,6 +291,11 @@ rumpuser_filemmap(int fd, off_t offset, size_t len, int flags, int *error)
 		}
 	}
 
+/* it's implicit */
+#if defined(__sun__) && !defined(MAP_FILE)
+#define MAP_FILE 0
+#endif
+
 	mmflags = MAP_FILE;
 	if (flags & RUMPUSER_FILEMMAP_SHARED)
 		mmflags |= MAP_SHARED;
@@ -343,7 +348,14 @@ rumpuser_open(const char *path, int ruflags, int *error)
 #define TESTSET(_ru_, _h_) if (ruflags & _ru_) flags |= _h_;
 	TESTSET(RUMPUSER_OPEN_CREATE, O_CREAT);
 	TESTSET(RUMPUSER_OPEN_EXCL, O_EXCL);
+#ifdef O_DIRECT
 	TESTSET(RUMPUSER_OPEN_DIRECT, O_DIRECT);
+#else
+	if (ruflags & RUMPUSER_OPEN_DIRECT) {
+		*error = EOPNOTSUPP;
+		return -1;
+	}
+#endif
 #undef TESTSET
 
 	DOCALL_KLOCK(int, (open(path, flags, 0644)));
@@ -535,10 +547,10 @@ rumpuser_gethostname(char *name, size_t namelen, int *error)
 	char tmp[MAXHOSTNAMELEN];
 
 	if (gethostname(tmp, sizeof(tmp)) == -1) {
-		snprintf(name, namelen, "rump-%05d.rumpdomain", getpid());
+		snprintf(name, namelen, "rump-%05d.rumpdomain", (int)getpid());
 	} else {
 		snprintf(name, namelen, "rump-%05d.%s.rumpdomain",
-		    getpid(), tmp);
+		    (int)getpid(), tmp);
 	}
 
 	*error = 0;
@@ -743,6 +755,9 @@ rumpuser_getnhostcpu(void)
 		free(line);
 		fclose(fp);
 	}
+#elif __sun__
+	/* XXX: this is just a rough estimate ... */
+	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	
 	return ncpu;
