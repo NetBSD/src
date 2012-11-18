@@ -8,12 +8,16 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.10 2012/11/18 19:25:09 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.11 2012/11/18 21:19:52 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
 printf '#include <rump/rump_namei.h>\n'
-printf '#include <inttypes.h>\n'
+printf '#ifdef _KERNEL\n'
+printf '#include <sys/stdint.h>\n'
+printf '#else\n'
+printf '#include <stdint.h>\n'
+printf '#endif\n'
 
 fromvers () {
 	echo
