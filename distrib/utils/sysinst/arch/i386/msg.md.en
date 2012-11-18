@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.61.6.1 2012/05/17 18:57:14 sborrill Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.61.6.1.4.1 2012/11/18 22:00:41 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{If you booted from removable media such as a USB drive or floppy disk, you
-may now remove the device.
+{
 }
 
 message Keyboard_type {Keyboard type}

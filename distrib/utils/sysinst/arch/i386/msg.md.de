@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.20.6.1 2012/05/17 18:57:14 sborrill Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.20.6.1.4.1 2012/11/18 22:00:41 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{Wenn Sie von einer Diskette oder einem USB Laufwerk gebootet haben,
-können Sie diese(s) jetzt entfernen.
+{
 }
 
 message Keyboard_type {Tastaturschema}
