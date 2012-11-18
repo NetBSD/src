@@ -1,6 +1,4 @@
-/* /boot must be a.out, OMAGIC starting from 0x6000. */
-OUTPUT_FORMAT("a.out-m68k-netbsd", "a.out-m68k-netbsd",
-	      "a.out-m68k-netbsd")
+OUTPUT_FORMAT("binary", "binary", "binary")
 OUTPUT_ARCH(m68k)
 ENTRY(start)
 SEARCH_DIR(/usr/lib);
@@ -8,13 +6,12 @@ SEARCH_DIR(/usr/lib);
 PROVIDE (__stack = 0);
 SECTIONS
 {
-  . = 0x6000;
+  . = 0x000f0000;
   .text :
   {
     CREATE_OBJECT_SYMBOLS
     *(.text)
     *(.rodata)
-    *(.rodata.str1.1)
     /* The next six sections are for SunOS dynamic linking.  The order
        is important.  */
     *(.dynrel)
@@ -39,6 +36,7 @@ SECTIONS
     edata  =  .;
     _edata  =  .;
   }
+  . = 0x0f2000;
   .bss :
   {
     __bss_start = .;
@@ -47,5 +45,5 @@ SECTIONS
    end = ALIGN(4) ;
    _end = ALIGN(4) ;
   }
-  /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) *(.comment) }
+  /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) }
 }
