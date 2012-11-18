@@ -8,11 +8,12 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.7 2012/07/20 09:02:48 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.8 2012/11/18 18:39:23 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
 printf '#include <rump/rump_namei.h>\n'
+printf '#include <inttypes>\n'
 
 fromvers () {
 	echo
@@ -40,9 +41,7 @@ sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
     < ../../../sys/fcntl.h
 
 fromvers ../../../sys/vnode.h
-printf '#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n'
-sed -n '/enum vtype.*{/p' < ../../../sys/vnode.h
-printf '#endif /* __VTYPE_DEFINED */\n'
+sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp}' < ../../../sys/vnode.h
 sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
