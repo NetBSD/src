@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.22 2009/11/27 11:16:54 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.23 2012/11/18 18:20:56 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -100,11 +100,11 @@
 struct ext2fs_dinode {
 	uint16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
 	uint16_t	e2di_uid;	/*   2: Owner UID */
-	uint32_t	e2di_size;	/*	 4: Size (in bytes) */
-	uint32_t	e2di_atime;	/*	 8: Acces time */
-	uint32_t	e2di_ctime;	/*	12: Create time */
-	uint32_t	e2di_mtime;	/*	16: Modification time */
-	uint32_t	e2di_dtime;	/*	20: Deletion time */
+	uint32_t	e2di_size;	/*   4: Size (in bytes) */
+	uint32_t	e2di_atime;	/*   8: Access time */
+	uint32_t	e2di_ctime;	/*  12: Create time */
+	uint32_t	e2di_mtime;	/*  16: Modification time */
+	uint32_t	e2di_dtime;	/*  20: Deletion time */
 	uint16_t	e2di_gid;	/*  24: Owner GID */
 	uint16_t	e2di_nlink;	/*  26: File link count */
 	uint32_t	e2di_nblock;	/*  28: Blocks count */
