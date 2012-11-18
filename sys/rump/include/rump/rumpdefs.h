@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.11 2012/07/20 09:03:09 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.12 2012/11/18 18:40:05 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8,6 +8,7 @@
 #define _RUMP_RUMPDEFS_H_
 
 #include <rump/rump_namei.h>
+#include <inttypes>
 
 struct rump_sockaddr_in {
 	uint8_t		sin_len;
@@ -43,11 +44,8 @@ struct rump_sockaddr_in {
 #define	RUMP_O_SEARCH	0x00800000	/* skip search permission checks */
 #define	RUMP_O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 
-/*	NetBSD: vnode.h,v 1.236 2011/11/24 15:51:30 ahoka Exp 	*/
-#ifndef __VTYPE_DEFINED
-#define __VTYPE_DEFINED
-enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
-#endif /* __VTYPE_DEFINED */
+/*	NetBSD: vnode.h,v 1.237 2012/11/18 18:39:24 pooka Exp 	*/
+enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VLNK, RUMP_VSOCK, RUMP_VFIFO, RUMP_VBAD };
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
 #define	RUMP_LK_NOWAIT	0x00000010	
