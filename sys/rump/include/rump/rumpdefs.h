@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.13 2012/11/18 19:04:32 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.14 2012/11/18 19:25:25 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8,7 +8,7 @@
 #define _RUMP_RUMPDEFS_H_
 
 #include <rump/rump_namei.h>
-#include <inttypes>
+#include <inttypes.h>
 
 struct rump_sockaddr_in {
 	uint8_t		sin_len;
