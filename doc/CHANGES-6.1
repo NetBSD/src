@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.20 2012/11/18 19:08:34 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.21 2012/11/18 19:16:29 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -457,7 +457,7 @@ sys/miscfs/genfs/layer_vnops.c			1.51
 	namei. In relookup(), clear *vpp before calling VOP_LOOKUP, as is done
 	in lookup_once(), as an additional precautionary measure.
 	(in theory both of these fixes are not required together)
-	Should fix PR 47040.
+	Should fix PR#47040.
 	[dholland, ticket #664]
 
 sys/sys/mount.h					1.208
@@ -470,7 +470,7 @@ sys/sys/mount.h					1.208
 libexec/ld.elf_so/arch/i386/mdreloc.c		1.35
 
 	Add support in ld.elf_so for relocation type R_386_TLS_TPOFF32.
-	Fixes PR 47061.
+	Fixes PR#47061.
 	[apb, ticket #667]
 
 distrib/sets/lists/base/md.x68k			1.44-1.45
@@ -515,3 +515,14 @@ sys/arch/x68k/stand/xxboot/xxboot_lfsv2/Makefile 1.1
 	Update x86k bootloader: cdboot, netboot support, and bugfixes.
 	[tsutsui, ticket #645]
 
+sys/dev/ic/mfi.c				1.48
+
+	MFI_STATE_BOOT_MESSAGE_PENDING also needs to be handed for non-TBOLT
+	controllers, from FreeBSD. tested by Hugo Silva against a GEN2
+	controller.
+	[bouyer, ticket #674]
+
+etc/weekly					1.27
+
+	Remove duplicate -o. Fixes PR#46521 reported by Jim Bernard.
+	[christos, ticket #675]
