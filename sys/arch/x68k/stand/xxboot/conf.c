@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.8.118.1 2012/11/18 19:05:18 riz Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.6.2 2012/11/18 19:05:17 riz Exp $	*/
 
 /*
- * Copyright (c) 2001 Minoura Makoto
+ * Copyright (c) 2001,2010 Minoura Makoto
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,38 +28,5 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
-#include <lib/libsa/lfs.h>
-#include <lib/libsa/cd9660.h>
-#include <lib/libsa/ustarfs.h>
-
-#include "libx68k.h"
-
-struct devsw devsw[] = {
-	{ "sd",	sdstrategy, sdopen, sdclose, noioctl },
-	{ "cd",	cdstrategy, cdopen, cdclose, noioctl },
-	{ "fd",	fdstrategy, fdopen, fdclose, noioctl },
-	{ 0, 0, 0, 0, 0 }
-};
-
-int ndevs = sizeof(devsw) / sizeof(devsw[0]);
-
-const struct devspec devspec[] = {
-	{ "sd", 0, 7, 0 },
-	{ "cd", 1, 7, 0 },
-	{ "fd", 2, 3, 0 },
-	{ NULL, 0, 0, 0 }
-};
-
-struct fs_ops file_system[] = {
-	FS_OPS(ffsv1),
-	FS_OPS(ffsv2),
-	FS_OPS(lfsv1),
-	FS_OPS(lfsv2),
-	FS_OPS(cd9660),
-	FS_OPS(ustarfs),
-};
-
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 struct open_file files[SOPEN_MAX];
