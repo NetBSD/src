@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.2 2012/06/26 00:07:17 riz Exp $
+# $NetBSD: Makefile,v 1.2.2.3 2012/11/18 21:45:08 riz Exp $
 #
 # Public Domain
 #
@@ -12,7 +12,7 @@ LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpdev_npf
+LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_npf
 
 LDADD+=		-lpcap -lprop -lpthread
 

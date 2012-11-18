@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $	*/
+/*	$NetBSD: rump.c,v 1.240.2.1 2012/11/18 21:45:08 riz Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240.2.1 2012/11/18 21:45:08 riz Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $");
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
+#include <sys/kcpuset.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kprintf.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.240 2012/02/04 10:02:25 njoly Exp $");
 #include <sys/percpu.h>
 #include <sys/pipe.h>
 #include <sys/pool.h>
+#include <sys/pserialize.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/resourcevar.h>
@@ -296,6 +298,7 @@ rump__init(int rump_version)
 	uvm_init();
 	evcnt_init();
 
+	kcpuset_sysinit();
 	once_init();
 	kernconfig_lock_init();
 	prop_kern_init();
@@ -309,6 +312,7 @@ rump__init(int rump_version)
 	callout_startup();
 
 	kprintf_init();
+	pserialize_init();
 	loginit();
 
 	kauth_init();

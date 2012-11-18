@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state.c,v 1.6.4.5 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npf_state.c,v 1.6.4.6 2012/11/18 21:45:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6.4.5 2012/08/13 17:49:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.6.4.6 2012/11/18 21:45:08 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,16 @@ static u_int npf_generic_timeout[] __read_mostly = {
 	[NPF_ANY_SESSION_NEW]		= 30,
 	[NPF_ANY_SESSION_ESTABLISHED]	= 60,
 };
+
+/*
+ * State sampler for debugging.
+ */
+#if defined(_NPF_TESTING)
+static void (*npf_state_sample)(npf_state_t *, bool) = NULL;
+#define	NPF_STATE_SAMPLE(n, r) if (npf_state_sample) (*npf_state_sample)(n, r);
+#else
+#define	NPF_STATE_SAMPLE(n, r)
+#endif
 
 /*
  * npf_state_init: initialise the state structure.
@@ -195,3 +205,11 @@ npf_state_dump(const npf_state_t *nst)
 	);
 #endif
 }
+
+#if defined(_NPF_TESTING)
+void
+npf_state_setsampler(void (*func)(npf_state_t *, bool))
+{
+	npf_state_sample = func;
+}
+#endif
