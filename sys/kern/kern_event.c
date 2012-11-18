@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.77 2012/11/17 21:55:24 joerg Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.78 2012/11/18 18:36:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.77 2012/11/17 21:55:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.78 2012/11/18 18:36:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,11 +450,10 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p, *curp;
+	struct proc *p;
 	struct lwp *curl;
 
 	curl = curlwp;
-	curp = curl->l_proc;
 
 	mutex_enter(proc_lock);
 	if (kn->kn_flags & EV_FLAG1) {
