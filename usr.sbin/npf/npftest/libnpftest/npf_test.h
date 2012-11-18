@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.3.2.4 2012/08/13 17:49:53 riz Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.3.2.5 2012/11/18 21:45:09 riz Exp $	*/
 
 /*
  * Public Domain.
@@ -24,6 +24,7 @@
 #include <net/if_ether.h>
 #include <net/ethertypes.h>
 
+void		npf_test_init(void);
 int		npf_test_load(const void *);
 unsigned	npf_test_addif(const char *, unsigned, bool);
 unsigned	npf_test_getif(const char *);
