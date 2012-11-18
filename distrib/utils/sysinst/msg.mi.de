@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.61.2.3 2012/09/30 18:53:58 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.61.2.4 2012/11/18 22:04:43 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -976,7 +976,11 @@ message Select_medium {Medium auswählen}
 message ftp {FTP}
 message http {HTTP}
 message nfs {NFS}
+.if HAVE_INSTALL_IMAGE
+message cdrom {CD-ROM / DVD / install image media}	/* XXX translation */
+.else
 message cdrom {CD-ROM / DVD}
+.endif
 message floppy {Diskette}
 message local_fs {Ungemountetes Dateisysytem}
 message local_dir {Lokales Verzeichnis}

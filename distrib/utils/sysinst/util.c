@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.173.2.1 2012/05/17 18:57:11 sborrill Exp $	*/
+/*	$NetBSD: util.c,v 1.173.2.2 2012/11/18 22:04:43 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -520,19 +520,27 @@ boot_media_still_needed(void)
 
 /*
  * Get from a CDROM distribution.
+ * Also used on "installation using bootable install media"
+ * as the default option in the "distmedium" menu.
  */
 int
 get_via_cdrom(void)
 {
 	menu_ent cd_menu[MAX_CD_INFOS];
-	struct statvfs sb;
+	struct stat sb;
 	int num_cds, menu_cd, i, selected_cd = 0;
 	bool silent = false;
+	int mib[2];
+	char rootdev[SSTRSIZE] = "";
+	size_t varlen;
 
-	/* If root is a CD-ROM and we have sets, skip this step. */
-	if (statvfs(set_dir_bin, &sb) == 0 &&
-	    (strcmp(sb.f_fstypename, MOUNT_CD9660) == 0
-		    || strcmp(sb.f_fstypename, MOUNT_UDF) == 0)) {
+	/* If root is not md(4) and we have set dir, skip this step. */
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ROOT_DEVICE;
+	varlen = sizeof(rootdev);
+	(void)sysctl(mib, 2, rootdev, &varlen, NULL, 0);
+	if (stat(set_dir_bin, &sb) == 0 && S_ISDIR(sb.st_mode) &&
+	    strncmp("md", rootdev, 2) != 0) {
 	    	strlcpy(ext_dir_bin, set_dir_bin, sizeof ext_dir_bin);
 	    	strlcpy(ext_dir_src, set_dir_src, sizeof ext_dir_src);
 		return SET_OK;
