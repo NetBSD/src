@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.18 2012/11/18 18:16:37 msaitoh Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.19 2012/11/18 18:54:46 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -448,3 +448,27 @@ sys/arch/mips/mips/mips_emul.c			1.26
 	Only one would result in segv.
 	Fixes pthread apps on mips1. Tested using gxemul.
 	[skrll, ticket #661]
+
+sys/kern/vfs_lookup.c				1.195
+sys/miscfs/genfs/layer_vnops.c			1.51
+
+	In layer_lookup(), clear *vpp before returning EROFS, as otherwise a
+	stale value can be returned and this causes a diagnostic panic in
+	namei. In relookup(), clear *vpp before calling VOP_LOOKUP, as is done
+	in lookup_once(), as an additional precautionary measure.
+	(in theory both of these fixes are not required together)
+	Should fix PR 47040.
+	[dholland, ticket #664]
+
+sys/sys/mount.h					1.208
+
+	Fix the prototype of vfs_quotactl() implementations in VFS_PROTOS(),
+	since it's wrong there. This slipped by because the only
+	implementation is in ufs, which isn't under a VFS_PROTOS declaration.
+	[dholland, ticket #665]
+
+libexec/ld.elf_so/arch/i386/mdreloc.c		1.35
+
+	Add support in ld.elf_so for relocation type R_386_TLS_TPOFF32.
+	Fixes PR 47061.
+	[apb, ticket #667]
