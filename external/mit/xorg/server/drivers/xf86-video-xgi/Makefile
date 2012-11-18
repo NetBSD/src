@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/07/19 19:21:50 macallan Exp $
+#	$NetBSD: Makefile,v 1.2 2012/11/18 08:24:02 apb Exp $
 
 DRIVER=		xf86-video-xgi
 DRIVER_NAME=	xgi_drv
@@ -15,5 +15,20 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 # for now, I'd like to see this thing work first
 CPPFLAGS+=	-DHAVE_UNISTD_H -Wno-deprecated-declarations
+
+# vb_struct.h contains this declaration:
+#
+#	typedef struct _XGI_CRT1TableStruct
+#	{
+#	  UCHAR CR[15];
+#	} XGI_CRT1TableStruct;
+#
+# but code in init.c and vb_setmode.c reads elements beyond the end of
+# the array and writes the result into hardware registers.  It's not
+# clear how to fix this, so just disable the -Warray-bounds warning to
+# allow the build to complete.
+#
+COPTS.init.c=          -Wno-array-bounds
+COPTS.vb_setmode.c=    -Wno-array-bounds
 
 .include "../Makefile.xf86-driver"
