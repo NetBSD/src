@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.10.4.6 2012/08/13 17:49:52 riz Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.10.4.7 2012/11/18 21:48:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.6 2012/08/13 17:49:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.10.4.7 2012/11/18 21:48:56 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -194,7 +194,7 @@ static lwp_t *			sess_gc_lwp;
 
 static void	sess_tracking_stop(void);
 static void	npf_session_destroy(npf_session_t *);
-static void	npf_session_worker(void *);
+static void	npf_session_worker(void *) __dead;
 
 /*
  * npf_session_sys{init,fini}: initialise/destroy session handling structures.
