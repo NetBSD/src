@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.10.2.6 2012/10/01 20:05:57 riz Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.10.2.7 2012/11/18 22:38:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.10.2.6 2012/10/01 20:05:57 riz Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.10.2.7 2012/11/18 22:38:28 riz Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -200,10 +200,6 @@ npfctl_print_stats(int fd)
 		{ -1, "Packet race cases"				},
 		{ NPF_STAT_RACE_NAT,		"NAT association race"	},
 		{ NPF_STAT_RACE_SESSION,	"duplicate session race"},
-
-		{ -1, "Rule procedure cases"				},
-		{ NPF_STAT_RPROC_LOG,		"packets logged"	},
-		{ NPF_STAT_RPROC_NORM,		"packets normalised"	},
 
 		{ -1, "Fragmentation"					},
 		{ NPF_STAT_FRAGMENTS,		"fragments"		},

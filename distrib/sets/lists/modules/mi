@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2011/12/05 02:04:34 jym Exp $
+# $NetBSD: mi,v 1.39.2.1 2012/11/18 22:38:25 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -115,6 +115,10 @@
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_log			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_log/npf_ext_log.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalise			base-kernel-modules	kmod
+./@MODULEDIR@/npf_ext_normalise/npf_ext_normalise.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/onewire				base-kernel-modules	kmod
 ./@MODULEDIR@/onewire/onewire.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/overlay				base-kernel-modules	kmod

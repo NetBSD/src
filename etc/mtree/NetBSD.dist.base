@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.97.2.4 2012/10/01 20:15:36 riz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.97.2.5 2012/11/18 22:38:37 riz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -195,6 +195,7 @@
 ./usr/lib/lua/5.1
 ./usr/lib/pkgconfig
 ./usr/lib/security
+./usr/lib/npf
 ./usr/libdata
 ./usr/libdata/debug
 ./usr/libdata/debug/bin
@@ -207,6 +208,7 @@
 ./usr/libdata/debug/usr/lib/i18n
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
+./usr/libdata/debug/usr/lib/npf
 ./usr/libdata/debug/usr/libexec/lpr
 ./usr/libdata/debug/usr/libexec/postfix
 ./usr/libdata/debug/usr/mdec

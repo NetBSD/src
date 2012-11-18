@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181.2.1 2012/03/02 18:27:53 riz Exp $
+#	$NetBSD: Makefile,v 1.181.2.2 2012/11/18 22:38:32 riz Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -110,6 +110,7 @@ SUBDIR+=	librumphijack	# depends on librumpclient and libpthread
 SUBDIR+=	libnpf		# depends on libprop
 .endif
 
+SUBDIR+=	npf
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/openssl/lib # depends on libcrypt
 .endif
