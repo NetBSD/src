@@ -24,6 +24,7 @@
 #include <net/if_ether.h>
 #include <net/ethertypes.h>
 
+void		npf_test_init(void);
 int		npf_test_load(const void *);
 unsigned	npf_test_addif(const char *, unsigned, bool);
 unsigned	npf_test_getif(const char *);

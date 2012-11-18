@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+void		rumpns_npf_test_init(void);
 int		rumpns_npf_test_load(const void *);
 unsigned	rumpns_npf_test_addif(const char *, unsigned, bool);
 unsigned	rumpns_npf_test_getif(const char *);
