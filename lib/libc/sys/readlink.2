@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.26 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: readlink.2,v 1.27 2012/11/18 17:41:53 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,8 @@
 .Dt READLINK 2
 .Os
 .Sh NAME
-.Nm readlink
+.Nm readlink ,
+.Nm readlinkat
 .Nd read value of a symbolic link
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,9 @@
 .In unistd.h
 .Ft ssize_t
 .Fn readlink "const char * restrict path" "char * restrict buf" "size_t bufsiz"
+.Ft ssize_t
+.Fn readlinkat "int fd" "const char * restrict path" "char * restrict buf"\
+ "size_t bufsiz"
 .Sh DESCRIPTION
 .Fn readlink
 places the contents of the symbolic link
@@ -54,6 +58,24 @@ does not append a
 .Dv NUL
 character to
 .Fa buf .
+.Pp
+.Fn readlinkat
+works the same way as
+.Fn readlink
+except if
+.Fa path
+is relative. In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on
+.Fa fd
+except if that file descriptor was open with
+.Dv O_SEARCH
+option.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify current directory.
 .Sh RETURN VALUES
 The call returns the count of characters placed in the buffer
 if it succeeds, or a \-1 if an error occurs, placing the error
@@ -111,6 +133,9 @@ The
 .Fn readlink
 function conforms to
 .St -p1003.1-2001 .
+.Fn readlinkat
+conforms to
+.St -p1003.1-2008 . 
 .Sh HISTORY
 The
 .Fn readlink

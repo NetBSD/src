@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1788 2012/11/09 19:47:11 skrll Exp $
+#	$NetBSD: mi,v 1.1789 2012/11/18 17:41:51 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4785,10 +4785,13 @@
 ./usr/share/man/cat2/extattr_set_fd.0		comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_set_file.0		comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_set_link.0		comp-c-catman		.cat
+./usr/share/man/cat2/faccessat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fchdir.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchflags.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchmod.0			comp-c-catman		.cat
+./usr/share/man/cat2/fchmodat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchown.0			comp-c-catman		.cat
+./usr/share/man/cat2/fchownat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fchroot.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fcntl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fdatasync.0		comp-c-catman		.cat
@@ -4802,6 +4805,7 @@
 ./usr/share/man/cat2/fork.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fpathconf.0		comp-c-catman		.cat
 ./usr/share/man/cat2/fstat.0			comp-c-catman		.cat
+./usr/share/man/cat2/fstatat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fstatfs.0			comp-obsolete		obsolete
 ./usr/share/man/cat2/fstatvfs.0			comp-c-catman		.cat
 ./usr/share/man/cat2/fstatvfs1.0		comp-c-catman		.cat
@@ -4872,8 +4876,11 @@
 ./usr/share/man/cat2/mincore.0			comp-c-catman		.cat
 ./usr/share/man/cat2/minherit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mkdir.0			comp-c-catman		.cat
+./usr/share/man/cat2/mkdirat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mkfifo.0			comp-c-catman		.cat
+./usr/share/man/cat2/mkfifoat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mknod.0			comp-c-catman		.cat
+./usr/share/man/cat2/mknodat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mlock.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mlockall.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mmap.0			comp-c-catman		.cat
@@ -4894,6 +4901,7 @@
 ./usr/share/man/cat2/ntp_adjtime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/ntp_gettime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/open.0			comp-c-catman		.cat
+./usr/share/man/cat2/openat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/paccept.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pathconf.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pipe.0			comp-c-catman		.cat
@@ -4915,6 +4923,7 @@
 ./usr/share/man/cat2/rasctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/read.0			comp-c-catman		.cat
 ./usr/share/man/cat2/readlink.0			comp-c-catman		.cat
+./usr/share/man/cat2/readlinkat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/readv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/reboot.0			comp-c-catman		.cat
 ./usr/share/man/cat2/recv.0			comp-c-catman		.cat
@@ -4922,6 +4931,7 @@
 ./usr/share/man/cat2/recvmmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/recvmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat2/rename.0			comp-c-catman		.cat
+./usr/share/man/cat2/renameat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/revoke.0			comp-c-catman		.cat
 ./usr/share/man/cat2/rmdir.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sa_enable.0		comp-obsolete		obsolete
@@ -4983,6 +4993,7 @@
 ./usr/share/man/cat2/swapctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/swapon.0			comp-obsolete		obsolete
 ./usr/share/man/cat2/symlink.0			comp-c-catman		.cat
+./usr/share/man/cat2/symlinkat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sync.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sysarch.0			comp-c-catman		.cat
 ./usr/share/man/cat2/syscall.0			comp-c-catman		.cat
@@ -4996,6 +5007,7 @@
 ./usr/share/man/cat2/umask.0			comp-c-catman		.cat
 ./usr/share/man/cat2/undelete.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unlink.0			comp-c-catman		.cat
+./usr/share/man/cat2/unlinkat.0			comp-c-catman		.cat
 ./usr/share/man/cat2/unmount.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utimensat.0		comp-c-catman		.cat
 ./usr/share/man/cat2/utimes.0			comp-c-catman		.cat
@@ -11311,10 +11323,13 @@
 ./usr/share/man/html2/extattr_set_fd.html	comp-c-htmlman		html
 ./usr/share/man/html2/extattr_set_file.html	comp-c-htmlman		html
 ./usr/share/man/html2/extattr_set_link.html	comp-c-htmlman		html
+./usr/share/man/html2/faccessat.html		comp-c-htmlman		html
 ./usr/share/man/html2/fchdir.html		comp-c-htmlman		html
 ./usr/share/man/html2/fchflags.html		comp-c-htmlman		html
 ./usr/share/man/html2/fchmod.html		comp-c-htmlman		html
+./usr/share/man/html2/fchmodat.html		comp-c-htmlman		html
 ./usr/share/man/html2/fchown.html		comp-c-htmlman		html
+./usr/share/man/html2/fchownat.html		comp-c-htmlman		html
 ./usr/share/man/html2/fchroot.html		comp-c-htmlman		html
 ./usr/share/man/html2/fcntl.html		comp-c-htmlman		html
 ./usr/share/man/html2/fdatasync.html		comp-c-htmlman		html
@@ -11327,6 +11342,7 @@
 ./usr/share/man/html2/fork.html			comp-c-htmlman		html
 ./usr/share/man/html2/fpathconf.html		comp-c-htmlman		html
 ./usr/share/man/html2/fstat.html		comp-c-htmlman		html
+./usr/share/man/html2/fstatat.html		comp-c-htmlman		html
 ./usr/share/man/html2/fstatvfs.html		comp-c-htmlman		html
 ./usr/share/man/html2/fstatvfs1.html		comp-c-htmlman		html
 ./usr/share/man/html2/fsync.html		comp-c-htmlman		html
@@ -11392,8 +11408,11 @@
 ./usr/share/man/html2/mincore.html		comp-c-htmlman		html
 ./usr/share/man/html2/minherit.html		comp-c-htmlman		html
 ./usr/share/man/html2/mkdir.html		comp-c-htmlman		html
+./usr/share/man/html2/mkdirat.html		comp-c-htmlman		html
 ./usr/share/man/html2/mkfifo.html		comp-c-htmlman		html
+./usr/share/man/html2/mkfifoat.html		comp-c-htmlman		html
 ./usr/share/man/html2/mknod.html		comp-c-htmlman		html
+./usr/share/man/html2/mknodat.html		comp-c-htmlman		html
 ./usr/share/man/html2/mlock.html		comp-c-htmlman		html
 ./usr/share/man/html2/mlockall.html		comp-c-htmlman		html
 ./usr/share/man/html2/mmap.html			comp-c-htmlman		html
@@ -11414,6 +11433,7 @@
 ./usr/share/man/html2/ntp_adjtime.html		comp-c-htmlman		html
 ./usr/share/man/html2/ntp_gettime.html		comp-c-htmlman		html
 ./usr/share/man/html2/open.html			comp-c-htmlman		html
+./usr/share/man/html2/openat.html		comp-c-htmlman		html
 ./usr/share/man/html2/paccept.html		comp-c-htmlman		html
 ./usr/share/man/html2/pathconf.html		comp-c-htmlman		html
 ./usr/share/man/html2/pipe.html			comp-c-htmlman		html
@@ -11435,6 +11455,7 @@
 ./usr/share/man/html2/rasctl.html		comp-c-htmlman		html
 ./usr/share/man/html2/read.html			comp-c-htmlman		html
 ./usr/share/man/html2/readlink.html		comp-c-htmlman		html
+./usr/share/man/html2/readlinkat.html		comp-c-htmlman		html
 ./usr/share/man/html2/readv.html		comp-c-htmlman		html
 ./usr/share/man/html2/reboot.html		comp-c-htmlman		html
 ./usr/share/man/html2/recv.html			comp-c-htmlman		html
@@ -11442,6 +11463,7 @@
 ./usr/share/man/html2/recvmmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/recvmsg.html		comp-c-htmlman		html
 ./usr/share/man/html2/rename.html		comp-c-htmlman		html
+./usr/share/man/html2/renameat.html		comp-c-htmlman		html
 ./usr/share/man/html2/revoke.html		comp-c-htmlman		html
 ./usr/share/man/html2/rmdir.html		comp-c-htmlman		html
 ./usr/share/man/html2/sbrk.html			comp-c-htmlman		html
@@ -11495,6 +11517,7 @@
 ./usr/share/man/html2/statvfs1.html		comp-c-htmlman		html
 ./usr/share/man/html2/swapctl.html		comp-c-htmlman		html
 ./usr/share/man/html2/symlink.html		comp-c-htmlman		html
+./usr/share/man/html2/symlinkat.html		comp-c-htmlman		html
 ./usr/share/man/html2/sync.html			comp-c-htmlman		html
 ./usr/share/man/html2/sysarch.html		comp-c-htmlman		html
 ./usr/share/man/html2/syscall.html		comp-c-htmlman		html
@@ -11508,6 +11531,7 @@
 ./usr/share/man/html2/umask.html		comp-c-htmlman		html
 ./usr/share/man/html2/undelete.html		comp-c-htmlman		html
 ./usr/share/man/html2/unlink.html		comp-c-htmlman		html
+./usr/share/man/html2/unlinkat.html		comp-c-htmlman		html
 ./usr/share/man/html2/unmount.html		comp-c-htmlman		html
 ./usr/share/man/html2/utimensat.html		comp-c-htmlman		html
 ./usr/share/man/html2/utimes.html		comp-c-htmlman		html
@@ -17607,10 +17631,13 @@
 ./usr/share/man/man2/extattr_set_fd.2		comp-c-man		.man
 ./usr/share/man/man2/extattr_set_file.2		comp-c-man		.man
 ./usr/share/man/man2/extattr_set_link.2		comp-c-man		.man
+./usr/share/man/man2/faccessat.2		comp-c-man		.man
 ./usr/share/man/man2/fchdir.2			comp-c-man		.man
 ./usr/share/man/man2/fchflags.2			comp-c-man		.man
 ./usr/share/man/man2/fchmod.2			comp-c-man		.man
+./usr/share/man/man2/fchmodat.2			comp-c-man		.man
 ./usr/share/man/man2/fchown.2			comp-c-man		.man
+./usr/share/man/man2/fchownat.2			comp-c-man		.man
 ./usr/share/man/man2/fchroot.2			comp-c-man		.man
 ./usr/share/man/man2/fcntl.2			comp-c-man		.man
 ./usr/share/man/man2/fdatasync.2		comp-c-man		.man
@@ -17624,6 +17651,7 @@
 ./usr/share/man/man2/fork.2			comp-c-man		.man
 ./usr/share/man/man2/fpathconf.2		comp-c-man		.man
 ./usr/share/man/man2/fstat.2			comp-c-man		.man
+./usr/share/man/man2/fstatat.2			comp-c-man		.man
 ./usr/share/man/man2/fstatfs.2			comp-obsolete		obsolete
 ./usr/share/man/man2/fstatvfs.2			comp-c-man		.man
 ./usr/share/man/man2/fstatvfs1.2		comp-c-man		.man
@@ -17693,8 +17721,11 @@
 ./usr/share/man/man2/mincore.2			comp-c-man		.man
 ./usr/share/man/man2/minherit.2			comp-c-man		.man
 ./usr/share/man/man2/mkdir.2			comp-c-man		.man
+./usr/share/man/man2/mkdirat.2			comp-c-man		.man
 ./usr/share/man/man2/mkfifo.2			comp-c-man		.man
+./usr/share/man/man2/mkfifoat.2			comp-c-man		.man
 ./usr/share/man/man2/mknod.2			comp-c-man		.man
+./usr/share/man/man2/mknodat.2			comp-c-man		.man
 ./usr/share/man/man2/mlock.2			comp-c-man		.man
 ./usr/share/man/man2/mlockall.2			comp-c-man		.man
 ./usr/share/man/man2/mmap.2			comp-c-man		.man
@@ -17715,6 +17746,7 @@
 ./usr/share/man/man2/ntp_adjtime.2		comp-c-man		.man
 ./usr/share/man/man2/ntp_gettime.2		comp-c-man		.man
 ./usr/share/man/man2/open.2			comp-c-man		.man
+./usr/share/man/man2/openat.2			comp-c-man		.man
 ./usr/share/man/man2/paccept.2			comp-c-man		.man
 ./usr/share/man/man2/pathconf.2			comp-c-man		.man
 ./usr/share/man/man2/pipe.2			comp-c-man		.man
@@ -17736,6 +17768,7 @@
 ./usr/share/man/man2/rasctl.2			comp-c-man		.man
 ./usr/share/man/man2/read.2			comp-c-man		.man
 ./usr/share/man/man2/readlink.2			comp-c-man		.man
+./usr/share/man/man2/readlinkat.2		comp-c-man		.man
 ./usr/share/man/man2/readv.2			comp-c-man		.man
 ./usr/share/man/man2/reboot.2			comp-c-man		.man
 ./usr/share/man/man2/recv.2			comp-c-man		.man
@@ -17743,6 +17776,7 @@
 ./usr/share/man/man2/recvmmsg.2			comp-c-man		.man
 ./usr/share/man/man2/recvmsg.2			comp-c-man		.man
 ./usr/share/man/man2/rename.2			comp-c-man		.man
+./usr/share/man/man2/renameat.2			comp-c-man		.man
 ./usr/share/man/man2/revoke.2			comp-c-man		.man
 ./usr/share/man/man2/rmdir.2			comp-c-man		.man
 ./usr/share/man/man2/sa_enable.2		comp-obsolete		obsolete
@@ -17803,6 +17837,7 @@
 ./usr/share/man/man2/statvfs1.2			comp-c-man		.man
 ./usr/share/man/man2/swapctl.2			comp-c-man		.man
 ./usr/share/man/man2/symlink.2			comp-c-man		.man
+./usr/share/man/man2/symlinkat.2		comp-c-man		.man
 ./usr/share/man/man2/sync.2			comp-c-man		.man
 ./usr/share/man/man2/sysarch.2			comp-c-man		.man
 ./usr/share/man/man2/syscall.2			comp-c-man		.man
@@ -17816,6 +17851,7 @@
 ./usr/share/man/man2/umask.2			comp-c-man		.man
 ./usr/share/man/man2/undelete.2			comp-c-man		.man
 ./usr/share/man/man2/unlink.2			comp-c-man		.man
+./usr/share/man/man2/unlinkat.2			comp-c-man		.man
 ./usr/share/man/man2/unmount.2			comp-c-man		.man
 ./usr/share/man/man2/utimensat.2		comp-c-man		.man
 ./usr/share/man/man2/utimes.2			comp-c-man		.man

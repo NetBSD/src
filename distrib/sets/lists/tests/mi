@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.505 2012/11/17 21:55:24 joerg Exp $
+# $NetBSD: mi,v 1.506 2012/11/18 17:41:52 manu Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2203,6 +2203,24 @@
 ./usr/tests/lib/libbluetooth/t_sdp_set		tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/c063			tests-lib-tests
+./usr/tests/lib/libc/c063/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_faccessat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fchmodat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fchownat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fexecve		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_fstatat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_linkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mkdirat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mkfifoat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_mknodat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_o_search		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_openat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_readlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_renameat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_symlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_unlinkat		tests-lib-tests		atf
+./usr/tests/lib/libc/c063/t_utimensat		tests-lib-tests		atf
 ./usr/tests/lib/libc/db				tests-lib-tests
 ./usr/tests/lib/libc/db/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/db/README			tests-lib-tests		atf
