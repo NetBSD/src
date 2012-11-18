@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.57 2012/08/16 09:25:44 manu Exp $	*/
+/*	$NetBSD: p2k.c,v 1.58 2012/11/18 18:39:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -651,7 +651,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct mount *mp = p2m->p2m_mp;
 	struct p2k_node *p2n;
 	struct vnode *vp;
-	enum vtype vtype;
+	enum rump_vtype vtype;
 	voff_t vsize;
 	uint64_t rdev; /* XXX: allows running this on NetBSD 5.0 */
 	int rv;
@@ -714,7 +714,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct p2k_node *p2n_dir = opc, *p2n;
 	struct componentname *cn;
 	struct vnode *dvp = p2n_dir->p2n_vp, *vp;
-	enum vtype vtype;
+	enum rump_vtype vtype;
 	voff_t vsize;
 	uint64_t rdev; /* XXX: uint64_t because of stack overwrite in compat */
 	int rv;
