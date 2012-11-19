@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.1.2.3 2012/11/18 22:38:28 riz Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.1.2.4 2012/11/19 18:16:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -54,14 +54,14 @@
 static const char *npfvar_types[ ] = {
 	[NPFVAR_STRING]		= "string",
 	[NPFVAR_IDENTIFIER]	= "identifier",
-	[NPFVAR_VAR_ID]		= "var_id",
-	[NPFVAR_NUM]		= "num",
+	[NPFVAR_VAR_ID]		= "variable-id",
+	[NPFVAR_NUM]		= "number",
 	[NPFVAR_PORT_RANGE]	= "port-range",
 	[NPFVAR_TABLE]		= "table",
-	[NPFVAR_FAM]		= "fam",
-	[NPFVAR_PROC]		= "proc",
-	[NPFVAR_PROC_PARAM]	= "proc_param",
-	[NPFVAR_TCPFLAG]	= "tcpflag",
+	[NPFVAR_FAM]		= "family-address-mask",
+	[NPFVAR_PROC]		= "procedure",
+	[NPFVAR_PROC_PARAM]	= "procedure-parameter",
+	[NPFVAR_TCPFLAG]	= "tcp-flag",
 	[NPFVAR_ICMP]		= "icmp",
 	[NPFVAR_ICMP6]		= "icmp6"
 };
