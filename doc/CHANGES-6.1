@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.27 2012/11/19 19:19:41 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.28 2012/11/19 20:23:41 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -702,4 +702,19 @@ sys/arch/evbarm/rpi/vcprop.h			1.1-1.2 via patch
 	sdhc(4) controller are queried via the mailbox properties
 	channel.
 	[skrll, ticket #660]
+
+doc/CHANGES				patch
+
+	Note that sparc64 got pcie/pyro(4) support last november.
+	[mrg, ticket #662]
+
+sys/arch/macppc/dev/awacs.c			1.43
+
+	Use gpio4 to detect connected headphones on some Power Macs.
+	[phx, ticket #666]
+
+sys/net/if.c					1.261
+
+	Fix if_lastchange() handling.
+	[msaitoh, ticket #669]
 
