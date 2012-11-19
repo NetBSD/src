@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.11 2012/11/18 22:05:38 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.12 2012/11/19 18:06:33 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -100,4 +100,11 @@ distrib/utils/sysinst/util.c			1.180
 	system if the root file system is not md(4) - for example,
 	on memstick images.
 	[tsutsui, ticket #649]
+
+dist/ipf/ipmon.h				patch
+dist/ipf/tools/ipmon.c				patch
+dist/ipf/tools/ipmon_y.y			patch
+
+	Fix alignment issues in ipmon.  PR#47101.
+	[nakayama, ticket #651]
 
