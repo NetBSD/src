@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7.2.4 2012/11/18 22:38:26 riz Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.5 2012/11/19 09:44:42 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.4 2012/11/18 22:38:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.5 2012/11/19 09:44:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -368,14 +368,14 @@ npf_default_pass(void)
 	return npf_core->n_default_pass;
 }
 
-/*
- * NPF statistics interface.
 bool
 npf_autounload_p(void)
 {
 	return !npf_pfil_registered_p() && npf_default_pass();
 }
 
+/*
+ * NPF statistics interface.
  */
 
 void
