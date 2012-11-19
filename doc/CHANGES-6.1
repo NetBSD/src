@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.25 2012/11/19 18:17:20 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.26 2012/11/19 18:46:12 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -664,4 +664,26 @@ usr.sbin/npf/npfctl/npf_var.h			1.5
 
 	Fix for npfctl show.
 	[rmind, ticket #653]
+
+common/lib/libc/arch/arm/gen/divide.S		1.1
+common/lib/libc/arch/arm/gen/divsi3.S		1.3-1.4
+common/lib/libc/arch/arm/gen/modsi3.S		1.1
+common/lib/libc/arch/arm/gen/udivsi3.S		1.1
+common/lib/libc/arch/arm/gen/umodsi3.S		1.1
+lib/libc/arch/arm/gen/Makefile.inc		1.19-1.20
+sys/lib/libkern/arch/arm/Makefile.inc		1.11-1.12
+sys/lib/libkern/arch/arm/Makefile.inc		1.12
+
+	Fix static linking on ARM.  PR#47139.
+	[christos, ticket #654]
+
+sys/dev/pci/if_et.c				1.5
+
+	Fix et(4) so it can use bpf.
+	[msaitoh, ticket #655]
+
+sys/arch/arm/pic/pic.c				1.15
+
+	Properly block IRQs even if they are >= 32.  PR#45371.
+	[msaitoh, ticket #656]
 
