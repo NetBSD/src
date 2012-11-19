@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.50 2012/11/10 18:42:22 wiz Exp $	*/
+/* $NetBSD: cat.c,v 1.51 2012/11/19 19:34:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.50 2012/11/10 18:42:22 wiz Exp $");
+__RCSID("$NetBSD: cat.c,v 1.51 2012/11/19 19:34:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,8 +305,9 @@ raw_cat(int rfd)
 		if (bsize != 0)
 			buf = malloc(bsize);
 		if (buf == NULL) {
+			if (bsize != 0)
+				warnx("malloc, using %zu buffer", bsize);
 			bsize = sizeof(fb_buf);
-			warnx("malloc, using %zu buffer", bsize);
 			buf = fb_buf;
 		}
 	}
