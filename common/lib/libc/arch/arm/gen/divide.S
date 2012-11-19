@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1.52.1 2012/11/19 18:38:02 riz Exp $	*/
+/*	$NetBSD: divide.S,v 1.1.2.2 2012/11/19 18:38:02 riz Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -32,8 +32,8 @@
 #endif
 	RET
 
-ENTRY(__udivsi3)
-.L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
+	.globl	__udivide
+__udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 
 	eor     r0, r1, r0 
@@ -54,8 +54,8 @@ ENTRY(__udivsi3)
 	mov	r1, #0
 	RET
 
-ENTRY(__divsi3)
-.L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
+	.globl	__divide
+__divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 
 	eor     r0, r1, r0 
