@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.7 2012/11/19 15:14:27 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.8 2012/11/19 16:04:54 apb Exp $
 
 # <bsd.clean.mk>
 #
@@ -15,10 +15,16 @@
 #		the clean target.
 #
 # MKCLEANSRC	Whether or not to clean the source directory
-# 		in addition to the object directory.
+# 		in addition to the object directory.  Defaults to "yes".
 #
 # MKCLEANVERIFY	Whether or not to verify that the file deletion worked.
+#		Defaults to "yes".
 #
+# The files listed in CLEANFILES and CLEANDIRFILES must not be
+# directories, because the potential risk from running "rm -rf" commands
+# in bsd.clean.mk is considered too great.  If you want to recursively
+# delete a directory as part of "make clean" or "make cleandir" then you
+# need to provide your own target.
 
 .if !defined(_BSD_CLEAN_MK_)
 _BSD_CLEAN_MK_=1
@@ -62,7 +68,7 @@ __cleanuse: .USE
 		:? ${.OBJDIR} \
 		:  ${.OBJDIR} ${.CURDIR} }
 	${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?@true: \
-	    (cd ${_d} && rm -rf ${.ALLSRC:@v@${${v}}@} || true) }
+	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
 .if "${MKCLEANVERIFY}" == "yes"
 	@${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?true: \
 	    bad="\$(cd ${_d} && ls -1d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
