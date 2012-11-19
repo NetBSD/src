@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.30 2012/09/01 17:01:24 christos Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.31 2012/11/19 03:04:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -219,7 +219,7 @@ struct m_ext2fs {
 	"\20" \
 	"\03ROCOMPAT_BTREE_DIR" \
 	"\02ROCOMPAT_LARGEFILE" \
-	"\01ROCOMPAT_SPARSEBUFFER"
+	"\01ROCOMPAT_SPARSESUPER"
 
 #define EXT2F_INCOMPAT_COMP		0x0001
 #define EXT2F_INCOMPAT_FTYPE		0x0002
