@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.8 2011/03/11 03:16:14 bsh Exp $	*/
+/*	$NetBSD: pic.c,v 1.8.10.1 2012/11/19 18:45:04 riz Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8 2011/03/11 03:16:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8.10.1 2012/11/19 18:45:04 riz Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -520,7 +520,7 @@ pic_disestablish_source(struct intrsource *is)
 	struct pic_softc * const pic = is->is_pic;
 	const int irq = is->is_irq;
 
-	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~31, __BIT(irq));
+	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
 	pic->pic_sources[irq] = NULL;
 	pic__iplsources[pic_ipl_offset[is->is_ipl] + is->is_iplidx] = NULL;
 	evcnt_detach(&is->is_ev);
