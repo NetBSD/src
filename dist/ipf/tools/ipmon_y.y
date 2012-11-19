@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon_y.y,v 1.2 2012/02/15 17:55:11 riz Exp $	*/
+/*	$NetBSD: ipmon_y.y,v 1.2.2.1 2012/11/19 18:04:53 riz Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 by Darren Reed.
@@ -454,7 +454,7 @@ opt_t *olist;
 
 
 int check_action(buf, log, opts, lvl)
-char *buf, *log;
+const char *buf, *log;
 int opts, lvl;
 {
 	ipmon_action_t *a;
