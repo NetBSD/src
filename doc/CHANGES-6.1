@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.26 2012/11/19 18:46:12 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.27 2012/11/19 19:19:41 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -686,4 +686,20 @@ sys/arch/arm/pic/pic.c				1.15
 
 	Properly block IRQs even if they are >= 32.  PR#45371.
 	[msaitoh, ticket #656]
+
+sys/arch/arm/broadcom/bcm2835_emmc.c		patch
+sys/arch/arm/broadcom/bcm2835reg.h		patch
+sys/arch/arm/broadcom/bcm2835_mbox.h		1.1-1.3 via patch
+sys/arch/arm/broadcom/bcm2835_mbox_subr.c	1.1-1.3 via patch
+sys/arch/arm/broadcom/bcm2835_mboxreg.h		1.1 via patch
+sys/arch/arm/broadcom/files.bcm2835		patch
+sys/arch/evbarm/rpi/rpi_machdep.c		patch
+sys/arch/evbarm/rpi/rpi_start.S			patch
+sys/arch/evbarm/rpi/vcio.h			1.1 via patch
+sys/arch/evbarm/rpi/vcprop.h			1.1-1.2 via patch
+
+	Improve Raspberry PI support: memory layout and clock for the
+	sdhc(4) controller are queried via the mailbox properties
+	channel.
+	[skrll, ticket #660]
 
