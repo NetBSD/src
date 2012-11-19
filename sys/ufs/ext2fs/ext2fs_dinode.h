@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.23 2012/11/18 18:20:56 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.24 2012/11/19 00:36:21 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -109,15 +109,14 @@ struct ext2fs_dinode {
 	uint16_t	e2di_nlink;	/*  26: File link count */
 	uint32_t	e2di_nblock;	/*  28: Blocks count */
 	uint32_t	e2di_flags;	/*  32: Status flags (chflags) */
-	uint32_t	e2di_linux_reserved1; /* 36 */
+	uint32_t	e2di_version;	/*  36: was reserved1 */
 	uint32_t	e2di_blocks[NDADDR+NIADDR]; /* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
 	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) */
 	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
 	uint32_t	e2di_faddr;	/* 112: fragment address */
-	uint8_t		e2di_nfrag;	/* 116: fragment number */
-	uint8_t		e2di_fsize;	/* 117: fragment size */
-	uint16_t	e2di_linux_reserved2; /* 118 */
+	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 */
+	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 */
 	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
 	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
 	uint32_t	e2di_linux_reserved3; /* 124 */
