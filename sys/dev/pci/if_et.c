@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $	*/
+/*	$NetBSD: if_et.c,v 1.3.2.1 2012/11/19 18:41:59 riz Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.3.2.1 2012/11/19 18:41:59 riz Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -70,9 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.3 2012/01/30 19:41:20 drochner Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
  
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1121,10 +1119,7 @@ et_start(struct ifnet *ifp)
 
 		trans = 1;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_mtap(ifp, m);
 	}
 
 	if (trans) {
@@ -1779,10 +1774,7 @@ et_rxeof(struct et_softc *sc)
 				    ETHER_CRC_LEN;
 				m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
-				if (ifp->if_bpf != NULL)
-					bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				(*ifp->if_input)(ifp, m);
