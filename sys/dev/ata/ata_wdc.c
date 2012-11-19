@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.101 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.102 2012/11/19 22:22:56 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.101 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.102 2012/11/19 22:22:56 rkujawa Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -211,8 +211,9 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		 * disable interrupts, all commands here should be quick
 		 * enough to be able to poll, and we don't go here that often
 		 */
-		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
-		    WDCTL_4BIT | WDCTL_IDS);
+		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, 
+			    wd_aux_ctlr, WDCTL_4BIT | WDCTL_IDS);
 		if (wdc->select)
 			wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
@@ -289,8 +290,9 @@ ready:
 		/*
 		 * The drive is usable now
 		 */
-		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
-		    WDCTL_4BIT);
+		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, 
+			    wd_aux_ctlr, WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}
 
@@ -317,7 +319,10 @@ ctrlerror:
 ctrldone:
 	drvp->state = 0;
 	wdc_ata_bio_done(chp, xfer);
-	bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+
+	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, 
+		    WDCTL_4BIT);
 	return;
 }
 
