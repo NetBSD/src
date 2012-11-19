@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.460 2012/11/18 17:41:53 manu Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.461 2012/11/19 15:01:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.460 2012/11/18 17:41:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.461 2012/11/19 15:01:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3115,14 +3115,19 @@ sys_fstatat(struct lwp *l, const struct sys_fstatat_args *uap,
 		syscallarg(int) flag;
 	} */
 	unsigned int nd_flag;
+	struct stat sb;
+	int error;
 
 	if (SCARG(uap, flag) & AT_SYMLINK_NOFOLLOW)
 		nd_flag = NOFOLLOW;
 	else
 		nd_flag = FOLLOW;
 
-	return do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, 
-	    SCARG(uap, buf));
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, 
+	    &sb);
+	if (error)
+		return error;
+	return copyout(&sb, SCARG(uap, buf), sizeof(sb));
 }
 
 /*
