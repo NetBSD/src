@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.21 2012/02/15 17:55:11 riz Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.21.2.1 2012/11/19 18:04:53 riz Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -140,32 +140,31 @@ static	char	*logfile = NULL;
 static	FILE	*binarylog = NULL;
 static	char	*binarylogfile = NULL;
 static	int	donehup = 0;
-static	void	usage __P((char *));
-static	void	handlehup __P((int));
-static	void	flushlogs __P((char *, FILE *));
-static	void	print_log __P((int, FILE *, char *, int));
-static	void	print_ipflog __P((FILE *, char *, int));
-static	void	print_natlog __P((FILE *, char *, int));
-static	void	print_statelog __P((FILE *, char *, int));
-static	int	read_log __P((int, int *, char *, int));
-static	void	write_pid __P((char *));
-static	char	*icmpname __P((u_int, u_int));
-static	char	*icmpname6 __P((u_int, u_int));
-static	icmp_type_t *find_icmptype __P((int, icmp_type_t *, size_t));
-static	icmp_subtype_t *find_icmpsubtype __P((int, icmp_subtype_t *, size_t));
+static	void	usage(const char *);
+static	void	handlehup(int);
+static	void	flushlogs(const char *, FILE *);
+static	void	print_log(int, FILE *, const void *, size_t);
+static	void	print_ipflog(FILE *, const iplog_t *, const void *, size_t);
+static	void	print_natlog(FILE *, const iplog_t *, const void *, size_t);
+static	void	print_statelog(FILE *, const iplog_t *, const void *, size_t);
+static	int	read_log(int, size_t *, void *, size_t);
+static	void	write_pid(const char *);
+static	char	*icmpname(u_int, u_int);
+static	char	*icmpname6(u_int, u_int);
+static	icmp_type_t *find_icmptype(int, icmp_type_t *, size_t);
+static	icmp_subtype_t *find_icmpsubtype(int, icmp_subtype_t *, size_t);
 #ifdef __hpux
-static	struct	tm	*get_tm __P((u_32_t));
+static	struct	tm	*get_tm(u_32_t);
 #else
-static	struct	tm	*get_tm __P((time_t));
+static	struct	tm	*get_tm(time_t);
 #endif
 
-char	*hostname __P((int, int, u_32_t *));
-char	*portname __P((int, char *, u_int));
-int	main __P((int, char *[]));
+char	*hostname(int, int, const void *);
+char	*portname(int, char *, u_int);
 
-static	void	logopts __P((int, char *));
-static	void	init_tabs __P((void));
-static	char	*getproto __P((u_int));
+static	void	logopts(int, const char *);
+static	void	init_tabs(void);
+static	char	*getproto(u_int);
 
 static	char	**protocols = NULL;
 static	char	**udp_ports = NULL;
@@ -186,7 +185,7 @@ static	char	*conf_file = NULL;
 #define	OPT_LOGALL	(OPT_NAT|OPT_STATE|OPT_FILTER)
 #define	OPT_LOGBODY	0x800
 
-#define	HOSTNAME_V4(a,b)	hostname((a), 4, (u_32_t *)&(b))
+#define	HOSTNAME_V4(a,b)	hostname((a), 4, (const void *)&(b))
 
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
@@ -337,10 +336,8 @@ static icmp_type_t icmptypes6[] = {
 	{ -2,			NULL,	0,		NULL }
 };
 
-static icmp_subtype_t *find_icmpsubtype(type, table, tablesz)
-int type;
-icmp_subtype_t *table;
-size_t tablesz;
+static icmp_subtype_t *
+find_icmpsubtype(int type, icmp_subtype_t *table, size_t tablesz)
 {
 	icmp_subtype_t *ist;
 	int i;
@@ -362,10 +359,8 @@ size_t tablesz;
 }
 
 
-static icmp_type_t *find_icmptype(type, table, tablesz)
-int type;
-icmp_type_t *table;
-size_t tablesz;
+static icmp_type_t *
+find_icmptype(int type, icmp_type_t *table, size_t tablesz)
 {
 	icmp_type_t *it;
 	int i;
@@ -387,15 +382,16 @@ size_t tablesz;
 }
 
 
-static void handlehup(sig)
-int sig;
+static void
+handlehup(int sig)
 {
 	signal(SIGHUP, handlehup);
 	donehup = 1;
 }
 
 
-static void init_tabs()
+static void
+init_tabs(void)
 {
 	struct	protoent	*p;
 	struct	servent	*s;
@@ -480,8 +476,8 @@ static void init_tabs()
 }
 
 
-static char *getproto(p)
-u_int p;
+static char *
+getproto(u_int p)
 {
 	static char pnum[4];
 	char *s;
@@ -496,11 +492,10 @@ u_int p;
 }
 
 
-static int read_log(fd, lenp, buf, bufsize)
-int fd, bufsize, *lenp;
-char *buf;
+static int
+read_log(int fd, size_t *lenp, void *buf, size_t bufsize)
 {
-	int	nr;
+	ssize_t	nr;
 
 	nr = read(fd, buf, bufsize);
 	if (!nr)
@@ -512,9 +507,8 @@ char *buf;
 }
 
 
-char	*hostname(res, v, ip)
-int	res, v;
-u_32_t	*ip;
+char *
+hostname(int res, int v, const void *ip)
 {
 # define MAX_INETA	16
 	static char hname[MAXHOSTNAMELEN + MAX_INETA + 3];
@@ -525,10 +519,10 @@ u_32_t	*ip;
 	struct in_addr ipa;
 
 	if (v == 4) {
-		ipa.s_addr = *ip;
+		ipa.s_addr = *(const u_32_t *)ip;
 		if (!res)
 			return inet_ntoa(ipa);
-		hp = gethostbyaddr((char *)ip, sizeof(*ip), AF_INET);
+		hp = gethostbyaddr(ip, 4, AF_INET);
 		if (!hp)
 			return inet_ntoa(ipa);
 		sprintf(hname, "%.*s[%s]", MAXHOSTNAMELEN, hp->h_name,
@@ -545,10 +539,8 @@ u_32_t	*ip;
 }
 
 
-char	*portname(res, proto, port)
-int	res;
-char	*proto;
-u_int	port;
+char *
+portname(int res, char *proto, u_int port)
 {
 	static	char	pname[8];
 	char	*s;
@@ -569,9 +561,8 @@ u_int	port;
 }
 
 
-static	char	*icmpname(type, code)
-u_int	type;
-u_int	code;
+static char *
+icmpname(u_int type, u_int code)
 {
 	static char name[80];
 	icmp_subtype_t *ist;
@@ -600,9 +591,8 @@ u_int	code;
 	return name;
 }
 
-static	char	*icmpname6(type, code)
-u_int	type;
-u_int	code;
+static char *
+icmpname6(u_int type, u_int code)
 {
 	static char name[80];
 	icmp_subtype_t *ist;
@@ -632,11 +622,8 @@ u_int	code;
 }
 
 
-void	dumphex(log, dopts, buf, len)
-FILE	*log;
-int	dopts;
-char	*buf;
-int	len;
+void
+dumphex(FILE *log, int dopts, const void *buf, size_t len)
 {
 	char	hline[80];
 	int	i, j, k;
@@ -696,12 +683,14 @@ int	len;
 }
 
 
-static	struct	tm	*get_tm(sec)
+static struct tm *
+get_tm(
 #ifdef __hpux
-u_32_t	sec;
+u_32_t	sec
 #else
-time_t	sec;
+time_t	sec
 #endif
+)
 {
 	struct tm *tm;
 	time_t t;
@@ -711,19 +700,16 @@ time_t	sec;
 	return tm;
 }
 
-static	void	print_natlog(log, buf, blen)
-FILE	*log;
-char	*buf;
-int	blen;
+static void
+print_natlog(FILE *log, const iplog_t *ipl, const void *buf, size_t blen)
 {
-	struct	natlog	*nl;
-	iplog_t	*ipl = (iplog_t *)buf;
+	struct	natlog	nl;
 	char	*t = line;
 	struct	tm	*tm;
 	int	res, i, len;
 	char	*proto;
 
-	nl = (struct natlog *)((char *)ipl + sizeof(*ipl));
+	memcpy(&nl, (const char *)buf + sizeof(*ipl), sizeof(nl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = get_tm(ipl->ipl_sec);
 	len = sizeof(line);
@@ -736,52 +722,52 @@ int	blen;
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
 	(void) sprintf(t, ".%-.6ld @%hd ", (long)ipl->ipl_usec,
-	    nl->nl_rule + 1);
+	    nl.nl_rule + 1);
 	t += strlen(t);
 
-	if (nl->nl_type == NL_NEWMAP)
+	if (nl.nl_type == NL_NEWMAP)
 		strcpy(t, "NAT:MAP ");
-	else if (nl->nl_type == NL_NEWRDR)
+	else if (nl.nl_type == NL_NEWRDR)
 		strcpy(t, "NAT:RDR ");
-	else if (nl->nl_type == NL_FLUSH)
+	else if (nl.nl_type == NL_FLUSH)
 		strcpy(t, "NAT:FLUSH ");
-	else if (nl->nl_type == NL_EXPIRE)
+	else if (nl.nl_type == NL_EXPIRE)
 		strcpy(t, "NAT:EXPIRE ");
-	else if (nl->nl_type == NL_NEWBIMAP)
+	else if (nl.nl_type == NL_NEWBIMAP)
 		strcpy(t, "NAT:BIMAP ");
-	else if (nl->nl_type == NL_NEWBLOCK)
+	else if (nl.nl_type == NL_NEWBLOCK)
 		strcpy(t, "NAT:MAPBLOCK ");
-	else if (nl->nl_type == NL_CLONE)
+	else if (nl.nl_type == NL_CLONE)
 		strcpy(t, "NAT:CLONE ");
-	else if (nl->nl_type == NL_DESTROY)
+	else if (nl.nl_type == NL_DESTROY)
 		strcpy(t, "NAT:DESTROY ");
 	else
-		sprintf(t, "Type: %d ", nl->nl_type);
+		sprintf(t, "Type: %d ", nl.nl_type);
 	t += strlen(t);
 
-	proto = getproto(nl->nl_p);
+	proto = getproto(nl.nl_p);
 
-	(void) sprintf(t, "%s,%s <- -> ", HOSTNAME_V4(res, nl->nl_inip),
-		portname(res, proto, (u_int)nl->nl_inport));
+	(void) sprintf(t, "%s,%s <- -> ", HOSTNAME_V4(res, nl.nl_inip),
+		portname(res, proto, (u_int)nl.nl_inport));
 	t += strlen(t);
-	(void) sprintf(t, "%s,%s ", HOSTNAME_V4(res, nl->nl_outip),
-		portname(res, proto, (u_int)nl->nl_outport));
+	(void) sprintf(t, "%s,%s ", HOSTNAME_V4(res, nl.nl_outip),
+		portname(res, proto, (u_int)nl.nl_outport));
 	t += strlen(t);
-	(void) sprintf(t, "[%s,%s PR %s]", HOSTNAME_V4(res, nl->nl_origip),
-		portname(res, proto, (u_int)nl->nl_origport),
-		getproto(nl->nl_p));
+	(void) sprintf(t, "[%s,%s PR %s]", HOSTNAME_V4(res, nl.nl_origip),
+		portname(res, proto, (u_int)nl.nl_origport),
+		getproto(nl.nl_p));
 	t += strlen(t);
-	if (nl->nl_type == NL_EXPIRE) {
+	if (nl.nl_type == NL_EXPIRE) {
 #ifdef	USE_QUAD_T
 		(void) sprintf(t, " Pkts %qd/%qd Bytes %qd/%qd",
-				(long long)nl->nl_pkts[0],
-				(long long)nl->nl_pkts[1],
-				(long long)nl->nl_bytes[0],
-				(long long)nl->nl_bytes[1]);
+				(long long)nl.nl_pkts[0],
+				(long long)nl.nl_pkts[1],
+				(long long)nl.nl_bytes[0],
+				(long long)nl.nl_bytes[1]);
 #else
 		(void) sprintf(t, " Pkts %ld/%ld Bytes %ld/%ld",
-				nl->nl_pkts[0], nl->nl_pkts[1],
-				nl->nl_bytes[0], nl->nl_bytes[1]);
+				nl.nl_pkts[0], nl.nl_pkts[1],
+				nl.nl_bytes[0], nl.nl_bytes[1]);
 #endif
 		t += strlen(t);
 	}
@@ -795,18 +781,15 @@ int	blen;
 }
 
 
-static	void	print_statelog(log, buf, blen)
-FILE	*log;
-char	*buf;
-int	blen;
+static void
+print_statelog(FILE *log, const iplog_t *ipl, const void *buf, size_t blen)
 {
-	struct	ipslog *sl;
-	iplog_t	*ipl = (iplog_t *)buf;
+	struct	ipslog	sl;
 	char	*t = line, *proto;
 	struct	tm	*tm;
 	int	res, i, len;
 
-	sl = (struct ipslog *)((char *)ipl + sizeof(*ipl));
+	memcpy(&sl, (const char *)buf + sizeof(*ipl), sizeof(sl));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	tm = get_tm(ipl->ipl_sec);
 	len = sizeof(line);
@@ -821,7 +804,7 @@ int	blen;
 	(void) sprintf(t, ".%-.6ld ", (long)ipl->ipl_usec);
 	t += strlen(t);
 
-	switch (sl->isl_type)
+	switch (sl.isl_type)
 	{
 	case ISL_NEW :
 		strcpy(t, "STATE:NEW ");
@@ -832,9 +815,9 @@ int	blen;
 		break;
 
 	case ISL_EXPIRE :
-		if ((sl->isl_p == IPPROTO_TCP) &&
-		    (sl->isl_state[0] > IPF_TCPS_ESTABLISHED ||
-		     sl->isl_state[1] > IPF_TCPS_ESTABLISHED))
+		if ((sl.isl_p == IPPROTO_TCP) &&
+		    (sl.isl_state[0] > IPF_TCPS_ESTABLISHED ||
+		     sl.isl_state[1] > IPF_TCPS_ESTABLISHED))
 			strcpy(t, "STATE:CLOSE ");
 		else
 			strcpy(t, "STATE:EXPIRE ");
@@ -861,49 +844,49 @@ int	blen;
 		break;
 
 	default :
-		sprintf(t, "Type: %d ", sl->isl_type);
+		sprintf(t, "Type: %d ", sl.isl_type);
 		break;
 	}
 	t += strlen(t);
 
-	proto = getproto(sl->isl_p);
+	proto = getproto(sl.isl_p);
 
-	if (sl->isl_p == IPPROTO_TCP || sl->isl_p == IPPROTO_UDP) {
+	if (sl.isl_p == IPPROTO_TCP || sl.isl_p == IPPROTO_UDP) {
 		(void) sprintf(t, "%s,%s -> ",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_src),
-			portname(res, proto, (u_int)sl->isl_sport));
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_src),
+			portname(res, proto, (u_int)sl.isl_sport));
 		t += strlen(t);
 		(void) sprintf(t, "%s,%s PR %s",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_dst),
-			portname(res, proto, (u_int)sl->isl_dport), proto);
-	} else if (sl->isl_p == IPPROTO_ICMP) {
-		(void) sprintf(t, "%s -> ", hostname(res, sl->isl_v,
-						     (u_32_t *)&sl->isl_src));
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_dst),
+			portname(res, proto, (u_int)sl.isl_dport), proto);
+	} else if (sl.isl_p == IPPROTO_ICMP) {
+		(void) sprintf(t, "%s -> ", hostname(res, sl.isl_v,
+						     (u_32_t *)&sl.isl_src));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmp %d",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_dst),
-			sl->isl_itype);
-	} else if (sl->isl_p == IPPROTO_ICMPV6) {
-		(void) sprintf(t, "%s -> ", hostname(res, sl->isl_v,
-						     (u_32_t *)&sl->isl_src));
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_dst),
+			sl.isl_itype);
+	} else if (sl.isl_p == IPPROTO_ICMPV6) {
+		(void) sprintf(t, "%s -> ", hostname(res, sl.isl_v,
+						     (u_32_t *)&sl.isl_src));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmpv6 %d",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_dst),
-			sl->isl_itype);
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_dst),
+			sl.isl_itype);
 	} else {
 		(void) sprintf(t, "%s -> ",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_src));
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_src));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR %s",
-			hostname(res, sl->isl_v, (u_32_t *)&sl->isl_dst),
+			hostname(res, sl.isl_v, (u_32_t *)&sl.isl_dst),
 			proto);
 	}
 	t += strlen(t);
-	if (sl->isl_tag != FR_NOLOGTAG) {
-		(void) sprintf(t, " tag %u", sl->isl_tag);
+	if (sl.isl_tag != FR_NOLOGTAG) {
+		(void) sprintf(t, " tag %u", sl.isl_tag);
 		t += strlen(t);
 	}
-	if (sl->isl_type != ISL_NEW) {
+	if (sl.isl_type != ISL_NEW) {
 		static const char fmt[] =
 #ifdef	USE_QUAD_T
 #ifdef	PRId64
@@ -918,10 +901,10 @@ int	blen;
 			" Forward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld Backward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld";
 #endif
 		sprintf(t, fmt,
-			sl->isl_pkts[0], sl->isl_bytes[0],
-			sl->isl_pkts[1], sl->isl_bytes[1],
-			sl->isl_pkts[2], sl->isl_bytes[2],
-			sl->isl_pkts[3], sl->isl_bytes[3]);
+			sl.isl_pkts[0], sl.isl_bytes[0],
+			sl.isl_pkts[1], sl.isl_bytes[1],
+			sl.isl_pkts[2], sl.isl_bytes[2],
+			sl.isl_pkts[3], sl.isl_bytes[3]);
 
 		t += strlen(t);
 	}
@@ -935,88 +918,74 @@ int	blen;
 }
 
 
-static	void	print_log(logtype, log, buf, blen)
-FILE	*log;
-char	*buf;
-int	logtype, blen;
+static void
+print_log(int logtype, FILE *log, const void *buf, size_t blen)
 {
-	iplog_t	*ipl;
-	char *bp = NULL, *bpo = NULL;
+	iplog_t	ipl;
 	int psize;
 
 	while (blen > 0) {
-		ipl = (iplog_t *)buf;
-		if ((u_long)ipl & (sizeof(long)-1)) {
-			if (bp)
-				bpo = bp;
-			bp = (char *)malloc(blen);
-			bcopy((char *)ipl, bp, blen);
-			if (bpo) {
-				free(bpo);
-				bpo = NULL;
-			}
-			buf = bp;
-			continue;
-		}
+		if (sizeof(ipl) > blen)
+			return;
 
-		psize = ipl->ipl_dsize;
+		memcpy(&ipl, buf, sizeof(ipl));
+		psize = ipl.ipl_dsize;
 		if (psize > blen)
-			break;
+			return;
 
 		if (binarylog) {
 			fwrite(buf, psize, 1, binarylog);
 			fflush(binarylog);
 		}
 
-		if (logtype == IPL_LOGIPF) {
-			if (ipl->ipl_magic == IPL_MAGIC)
-				print_ipflog(log, buf, psize);
+		switch (logtype) {
+		case IPL_LOGIPF:
+			if (ipl.ipl_magic == IPL_MAGIC)
+				print_ipflog(log, &ipl, buf, psize);
+			break;
+		case IPL_LOGNAT:
+			if (ipl.ipl_magic == IPL_MAGIC_NAT)
+				print_natlog(log, &ipl, buf, psize);
+			break;
 
-		} else if (logtype == IPL_LOGNAT) {
-			if (ipl->ipl_magic == IPL_MAGIC_NAT)
-				print_natlog(log, buf, psize);
-
-		} else if (logtype == IPL_LOGSTATE) {
-			if (ipl->ipl_magic == IPL_MAGIC_STATE)
-				print_statelog(log, buf, psize);
+		case IPL_LOGSTATE:
+			if (ipl.ipl_magic == IPL_MAGIC_STATE)
+				print_statelog(log, &ipl, buf, psize);
+			break;
 		}
 
 		blen -= psize;
-		buf += psize;
+		buf = (const char *)buf + psize;
 	}
-	if (bp)
-		free(bp);
-	return;
 }
 
 
-static	void	print_ipflog(log, buf, blen)
-FILE	*log;
-char	*buf;
-int	blen;
+static void
+print_ipflog(FILE *log, const iplog_t *ipl, const void *buf, size_t blen)
 {
-	tcphdr_t	*tp;
-	struct	icmp	*ic;
-	struct	icmp	*icmp;
+	tcphdr_t	tp;
+	struct	icmp	ic;
+	struct	icmp	icmp;
 	struct	tm	*tm;
 	char	*t, *proto;
 	int	i, v, lvl, res, len, off, plen, ipoff, defaction;
-	ip_t	*ipc, *ip;
+	ip_t	ipc, ip;
 	u_32_t	*s, *d;
 	u_short	hl, p;
-	ipflog_t *ipf;
-	iplog_t	*ipl;
+	ipflog_t ipf;
+	const void *pac;
 #ifdef	USE_INET6
-	struct ip6_ext *ehp;
+	struct ip6_ext eh;
+	const void *ehp;
 	u_short ehl;
-	ip6_t *ip6;
+	ip6_t ip6;
 	int go;
 #endif
 
-	ipl = (iplog_t *)buf;
-	ipf = (ipflog_t *)((char *)buf + sizeof(*ipl));
-	ip = (ip_t *)((char *)ipf + sizeof(*ipf));
-	v = IP_V(ip);
+	memcpy(&ipf, (const char *)buf + sizeof(*ipl), sizeof(ipf));
+	pac = (const char *)buf + sizeof(*ipl) + sizeof(ipf);
+	memcpy(&ip, pac, sizeof(ip));
+	v = IP_V(&ip);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	t = line;
 	*t = '\0';
@@ -1042,10 +1011,10 @@ int	blen;
 	(defined(__FreeBSD__) && (__FreeBSD_version >= 501113)) || \
 	(defined(OpenBSD) && (OpenBSD >= 199603))) || defined(linux)
 	{
-	char	ifname[sizeof(ipf->fl_ifname) + 1];
+	char	ifname[sizeof(ipf.fl_ifname) + 1];
 
-	strncpy(ifname, ipf->fl_ifname, sizeof(ipf->fl_ifname));
-	ifname[sizeof(ipf->fl_ifname)] = '\0';
+	strncpy(ifname, ipf.fl_ifname, sizeof(ipf.fl_ifname));
+	ifname[sizeof(ipf.fl_ifname)] = '\0';
 	(void) sprintf(t, "%s", ifname);
 	t += strlen(t);
 # if defined(MENTAT) || defined(linux)
@@ -1056,62 +1025,62 @@ int	blen;
 	if (strcmp(ifname, "lo") != 0)
 #  endif
 		if (ISALPHA(*(t - 1))) {
-			sprintf(t, "%d", ipf->fl_unit);
+			sprintf(t, "%d", ipf.fl_unit);
 			t += strlen(t);
 		}
 # endif
 	}
 #else
 	for (len = 0; len < 3; len++)
-		if (ipf->fl_ifname[len] == '\0')
+		if (ipf.fl_ifname[len] == '\0')
 			break;
-	if (ipf->fl_ifname[len])
+	if (ipf.fl_ifname[len])
 		len++;
-	(void) sprintf(t, "%*.*s%u", len, len, ipf->fl_ifname, ipf->fl_unit);
+	(void) sprintf(t, "%*.*s%u", len, len, ipf.fl_ifname, ipf.fl_unit);
 	t += strlen(t);
 #endif
-	if ((ipf->fl_group[0] == (char)~0) && (ipf->fl_group[1] == '\0'))
+	if ((ipf.fl_group[0] == (char)~0) && (ipf.fl_group[1] == '\0'))
 		strcat(t, " @-1:");
-	else if (ipf->fl_group[0] == '\0')
+	else if (ipf.fl_group[0] == '\0')
 		(void) strcpy(t, " @0:");
 	else
-		(void) sprintf(t, " @%s:", ipf->fl_group);
+		(void) sprintf(t, " @%s:", ipf.fl_group);
 	t += strlen(t);
-	if (ipf->fl_rule == 0xffffffff)
+	if (ipf.fl_rule == 0xffffffff)
 		strcat(t, "-1 ");
 	else
-		(void) sprintf(t, "%u ", ipf->fl_rule + 1);
+		(void) sprintf(t, "%u ", ipf.fl_rule + 1);
 	t += strlen(t);
 
 	lvl = LOG_NOTICE;
 
- 	if (ipf->fl_lflags & FI_SHORT) {
+ 	if (ipf.fl_lflags & FI_SHORT) {
 		*t++ = 'S';
 		lvl = LOG_ERR;
 	}
 
-	if (FR_ISPASS(ipf->fl_flags)) {
-		if (ipf->fl_flags & FR_LOGP)
+	if (FR_ISPASS(ipf.fl_flags)) {
+		if (ipf.fl_flags & FR_LOGP)
 			*t++ = 'p';
 		else
 			*t++ = 'P';
-	} else if (FR_ISBLOCK(ipf->fl_flags)) {
-		if (ipf->fl_flags & FR_LOGB)
+	} else if (FR_ISBLOCK(ipf.fl_flags)) {
+		if (ipf.fl_flags & FR_LOGB)
 			*t++ = 'b';
 		else
 			*t++ = 'B';
 		lvl = LOG_WARNING;
-	} else if ((ipf->fl_flags & FR_LOGMASK) == FR_LOG) {
+	} else if ((ipf.fl_flags & FR_LOGMASK) == FR_LOG) {
 		*t++ = 'L';
 		lvl = LOG_INFO;
-	} else if (ipf->fl_flags & FF_LOGNOMATCH) {
+	} else if (ipf.fl_flags & FF_LOGNOMATCH) {
 		*t++ = 'n';
 	} else {
 		*t++ = '?';
 		lvl = LOG_EMERG;
 	}
-	if (ipf->fl_loglevel != 0xffff)
-		lvl = ipf->fl_loglevel;
+	if (ipf.fl_loglevel != 0xffff)
+		lvl = ipf.fl_loglevel;
 	*t++ = ' ';
 	*t = '\0';
 
@@ -1120,14 +1089,15 @@ int	blen;
 		off = 0;
 		ipoff = 0;
 		hl = sizeof(ip6_t);
-		ip6 = (ip6_t *)ip;
-		p = (u_short)ip6->ip6_nxt;
-		s = (u_32_t *)&ip6->ip6_src;
-		d = (u_32_t *)&ip6->ip6_dst;
-		plen = hl + ntohs(ip6->ip6_plen);
+		memcpy(&ip6, pac, sizeof(ip6));
+		p = (u_short)ip6.ip6_nxt;
+		s = (u_32_t *)&ip6.ip6_src;
+		d = (u_32_t *)&ip6.ip6_dst;
+		plen = hl + ntohs(ip6.ip6_plen);
+		ehp = (const char *)pac + hl;
 		go = 1;
-		ehp = (struct ip6_ext *)((char *)ip6 + hl);
 		while (go == 1) {
+			memcpy(&eh, ehp, sizeof(eh));
 			switch (p)
 			{
 			case IPPROTO_HOPOPTS :
@@ -1135,10 +1105,10 @@ int	blen;
 			case IPPROTO_DSTOPTS :
 			case IPPROTO_ROUTING :
 			case IPPROTO_AH :
-				p = ehp->ip6e_nxt;
-				ehl = 8 + (ehp->ip6e_len << 3);
+				p = eh.ip6e_nxt;
+				ehl = 8 + (eh.ip6e_len << 3);
 				hl += ehl;
-				ehp = (struct ip6_ext *)((char *)ehp + ehl);
+				ehp = (const char *)ehp + ehl;
 				break;
 			case IPPROTO_FRAGMENT :
 				hl += sizeof(struct ip6_frag);
@@ -1153,27 +1123,27 @@ int	blen;
 		goto printipflog;
 #endif
 	} else if (v == 4) {
-		hl = IP_HL(ip) << 2;
-		ipoff = ip->ip_off;
+		hl = IP_HL(&ip) << 2;
+		ipoff = ip.ip_off;
 		off = ipoff & IP_OFFMASK;
-		p = (u_short)ip->ip_p;
-		s = (u_32_t *)&ip->ip_src;
-		d = (u_32_t *)&ip->ip_dst;
-		plen = ip->ip_len;
+		p = (u_short)ip.ip_p;
+		s = (u_32_t *)&ip.ip_src;
+		d = (u_32_t *)&ip.ip_dst;
+		plen = ip.ip_len;
 	} else {
 		goto printipflog;
 	}
 	proto = getproto(p);
 
 	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) && !off) {
-		tp = (tcphdr_t *)((char *)ip + hl);
-		if (!(ipf->fl_lflags & FI_SHORT)) {
+		memcpy(&tp, (const char *)pac + hl, sizeof(tp));
+		if (!(ipf.fl_lflags & FI_SHORT)) {
 			(void) sprintf(t, "%s,%s -> ", hostname(res, v, s),
-				portname(res, proto, (u_int)tp->th_sport));
+				portname(res, proto, (u_int)tp.th_sport));
 			t += strlen(t);
 			(void) sprintf(t, "%s,%s PR %s len %hu %hu",
 				hostname(res, v, d),
-				portname(res, proto, (u_int)tp->th_dport),
+				portname(res, proto, (u_int)tp.th_dport),
 				proto, hl, plen);
 			t += strlen(t);
 
@@ -1181,13 +1151,13 @@ int	blen;
 				*t++ = ' ';
 				*t++ = '-';
 				for (i = 0; tcpfl[i].value; i++)
-					if (tp->th_flags & tcpfl[i].value)
+					if (tp.th_flags & tcpfl[i].value)
 						*t++ = tcpfl[i].flag;
 				if (opts & OPT_VERBOSE) {
 					(void) sprintf(t, " %lu %lu %hu",
-						(u_long)(ntohl(tp->th_seq)),
-						(u_long)(ntohl(tp->th_ack)),
-						ntohs(tp->th_win));
+						(u_long)(ntohl(tp.th_seq)),
+						(u_long)(ntohl(tp.th_ack)),
+						ntohs(tp.th_win));
 					t += strlen(t);
 				}
 			}
@@ -1199,77 +1169,78 @@ int	blen;
 				hostname(res, v, d), proto, hl, plen);
 		}
 	} else if ((p == IPPROTO_ICMPV6) && !off && (v == 6)) {
-		ic = (struct icmp *)((char *)ip + hl);
+		memcpy(&ic, (const char *)pac + hl, sizeof(ic));
 		(void) sprintf(t, "%s -> ", hostname(res, v, s));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmpv6 len %hu %hu icmpv6 %s",
 			hostname(res, v, d), hl, plen,
-			icmpname6(ic->icmp_type, ic->icmp_code));
+			icmpname6(ic.icmp_type, ic.icmp_code));
 	} else if ((p == IPPROTO_ICMP) && !off && (v == 4)) {
-		ic = (struct icmp *)((char *)ip + hl);
+		memcpy(&ic, (const char *)pac + hl, sizeof(ic));
 		(void) sprintf(t, "%s -> ", hostname(res, v, s));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmp len %hu %hu icmp %s",
 			hostname(res, v, d), hl, plen,
-			icmpname(ic->icmp_type, ic->icmp_code));
-		if (ic->icmp_type == ICMP_UNREACH ||
-		    ic->icmp_type == ICMP_SOURCEQUENCH ||
-		    ic->icmp_type == ICMP_PARAMPROB ||
-		    ic->icmp_type == ICMP_REDIRECT ||
-		    ic->icmp_type == ICMP_TIMXCEED) {
-			ipc = &ic->icmp_ip;
-			i = ntohs(ipc->ip_len);
+			icmpname(ic.icmp_type, ic.icmp_code));
+		if (ic.icmp_type == ICMP_UNREACH ||
+		    ic.icmp_type == ICMP_SOURCEQUENCH ||
+		    ic.icmp_type == ICMP_PARAMPROB ||
+		    ic.icmp_type == ICMP_REDIRECT ||
+		    ic.icmp_type == ICMP_TIMXCEED) {
+			const void *ipcp = (const char *)pac + 2 * hl + offsetof(struct icmp, icmp_ip);
+			memcpy(&ipc, &ic.icmp_ip, sizeof(ipc));
+			i = ntohs(ipc.ip_len);
 			/*
 			 * XXX - try to guess endian of ip_len in ICMP
 			 * returned data.
 			 */
 			if (i > 1500)
-				i = ipc->ip_len;
-			ipoff = ntohs(ipc->ip_off);
-			proto = getproto(ipc->ip_p);
+				i = ipc.ip_len;
+			ipoff = ntohs(ipc.ip_off);
+			proto = getproto(ipc.ip_p);
 
 			if (!(ipoff & IP_OFFMASK) &&
-			    ((ipc->ip_p == IPPROTO_TCP) ||
-			     (ipc->ip_p == IPPROTO_UDP))) {
-				tp = (tcphdr_t *)((char *)ipc + hl);
+			    ((ipc.ip_p == IPPROTO_TCP) ||
+			     (ipc.ip_p == IPPROTO_UDP))) {
+				memcpy(&tp, ipcp, sizeof(tp));
 				t += strlen(t);
 				(void) sprintf(t, " for %s,%s -",
-					HOSTNAME_V4(res, ipc->ip_src),
+					HOSTNAME_V4(res, ipc.ip_src),
 					portname(res, proto,
-						 (u_int)tp->th_sport));
+						 (u_int)tp.th_sport));
 				t += strlen(t);
 				(void) sprintf(t, " %s,%s PR %s len %hu %hu",
-					HOSTNAME_V4(res, ipc->ip_dst),
+					HOSTNAME_V4(res, ipc.ip_dst),
 					portname(res, proto,
-						 (u_int)tp->th_dport),
-					proto, IP_HL(ipc) << 2, i);
+						 (u_int)tp.th_dport),
+					proto, IP_HL(&ipc) << 2, i);
 			} else if (!(ipoff & IP_OFFMASK) &&
-				   (ipc->ip_p == IPPROTO_ICMP)) {
-				icmp = (icmphdr_t *)((char *)ipc + hl);
+				   (ipc.ip_p == IPPROTO_ICMP)) {
+				memcpy(&icmp, ipcp, sizeof(icmp));
 
 				t += strlen(t);
 				(void) sprintf(t, " for %s -",
-					HOSTNAME_V4(res, ipc->ip_src));
+					HOSTNAME_V4(res, ipc.ip_src));
 				t += strlen(t);
 				(void) sprintf(t,
 					" %s PR icmp len %hu %hu icmp %d/%d",
-					HOSTNAME_V4(res, ipc->ip_dst),
-					IP_HL(ipc) << 2, i,
-					icmp->icmp_type, icmp->icmp_code);
+					HOSTNAME_V4(res, ipc.ip_dst),
+					IP_HL(&ipc) << 2, i,
+					icmp.icmp_type, icmp.icmp_code);
 			} else {
 				t += strlen(t);
 				(void) sprintf(t, " for %s -",
-						HOSTNAME_V4(res, ipc->ip_src));
+						HOSTNAME_V4(res, ipc.ip_src));
 				t += strlen(t);
 				(void) sprintf(t, " %s PR %s len %hu (%hu)",
-					HOSTNAME_V4(res, ipc->ip_dst), proto,
-					IP_HL(ipc) << 2, i);
+					HOSTNAME_V4(res, ipc.ip_dst), proto,
+					IP_HL(&ipc) << 2, i);
 				t += strlen(t);
 				if (ipoff & IP_OFFMASK) {
 					(void) sprintf(t,
 						"(frag %d:%hu@%hu%s%s)",
-						ntohs(ipc->ip_id),
-						i - (IP_HL(ipc) << 2),
+						ntohs(ipc.ip_id),
+						i - (IP_HL(&ipc) << 2),
 						(ipoff & IP_OFFMASK) << 3,
 						ipoff & IP_MF ? "+" : "",
 						ipoff & IP_DF ? "-" : "");
@@ -1285,7 +1256,7 @@ int	blen;
 		t += strlen(t);
 		if (off & IP_OFFMASK)
 			(void) sprintf(t, " (frag %d:%hu@%hu%s%s)",
-				ntohs(ip->ip_id),
+				ntohs(ip.ip_id),
 				plen - hl, (off & IP_OFFMASK) << 3,
 				ipoff & IP_MF ? "+" : "",
 				ipoff & IP_DF ? "-" : "");
@@ -1293,64 +1264,64 @@ int	blen;
 	t += strlen(t);
 
 printipflog:
-	if (ipf->fl_flags & FR_KEEPSTATE) {
+	if (ipf.fl_flags & FR_KEEPSTATE) {
 		(void) strcpy(t, " K-S");
 		t += strlen(t);
 	}
 
-	if (ipf->fl_flags & FR_KEEPFRAG) {
+	if (ipf.fl_flags & FR_KEEPFRAG) {
 		(void) strcpy(t, " K-F");
 		t += strlen(t);
 	}
 
-	if (ipf->fl_dir == 0)
+	if (ipf.fl_dir == 0)
 		strcpy(t, " IN");
-	else if (ipf->fl_dir == 1)
+	else if (ipf.fl_dir == 1)
 		strcpy(t, " OUT");
 	t += strlen(t);
-	if (ipf->fl_logtag != 0) {
-		sprintf(t, " log-tag %d", ipf->fl_logtag);
+	if (ipf.fl_logtag != 0) {
+		sprintf(t, " log-tag %d", ipf.fl_logtag);
 		t += strlen(t);
 	}
-	if (ipf->fl_nattag.ipt_num[0] != 0) {
+	if (ipf.fl_nattag.ipt_num[0] != 0) {
 		strcpy(t, " nat-tag ");
 		t += strlen(t);
-		strncpy(t, ipf->fl_nattag.ipt_tag, sizeof(ipf->fl_nattag));
+		strncpy(t, ipf.fl_nattag.ipt_tag, sizeof(ipf.fl_nattag));
 		t += strlen(t);
 	}
-	if ((ipf->fl_lflags & FI_LOWTTL) != 0) {
+	if ((ipf.fl_lflags & FI_LOWTTL) != 0) {
 			strcpy(t, " low-ttl");
 			t += 8;
 	}
-	if ((ipf->fl_lflags & FI_OOW) != 0) {
+	if ((ipf.fl_lflags & FI_OOW) != 0) {
 			strcpy(t, " OOW");
 			t += 4;
 	}
-	if ((ipf->fl_lflags & FI_BAD) != 0) {
+	if ((ipf.fl_lflags & FI_BAD) != 0) {
 			strcpy(t, " bad");
 			t += 4;
 	}
-	if ((ipf->fl_lflags & FI_NATED) != 0) {
+	if ((ipf.fl_lflags & FI_NATED) != 0) {
 			strcpy(t, " NAT");
 			t += 4;
 	}
-	if ((ipf->fl_lflags & FI_BADNAT) != 0) {
+	if ((ipf.fl_lflags & FI_BADNAT) != 0) {
 			strcpy(t, " bad-NAT");
 			t += 8;
 	}
-	if ((ipf->fl_lflags & FI_BADSRC) != 0) {
+	if ((ipf.fl_lflags & FI_BADSRC) != 0) {
 			strcpy(t, " bad-src");
 			t += 8;
 	}
-	if ((ipf->fl_lflags & FI_MULTICAST) != 0) {
+	if ((ipf.fl_lflags & FI_MULTICAST) != 0) {
 			strcpy(t, " multicast");
 			t += 10;
 	}
-	if ((ipf->fl_lflags & FI_BROADCAST) != 0) {
+	if ((ipf.fl_lflags & FI_BROADCAST) != 0) {
 			strcpy(t, " broadcast");
 			t += 10;
 	}
-	if ((ipf->fl_lflags & (FI_MULTICAST|FI_BROADCAST|FI_MBCAST)) ==
+	if ((ipf.fl_lflags & (FI_MULTICAST|FI_BROADCAST|FI_MBCAST)) ==
 	    FI_MBCAST) {
 			strcpy(t, " mbcast");
 			t += 7;
@@ -1368,27 +1339,27 @@ printipflog:
 
 		if (opts & OPT_HEXHDR)
 			dumphex(log, opts, buf,
-				sizeof(iplog_t) + sizeof(*ipf));
+				sizeof(*ipl) + sizeof(ipf));
 		if (opts & OPT_HEXBODY)
-			dumphex(log, opts, (char *)ip,
-				ipf->fl_plen + ipf->fl_hlen);
-		else if ((opts & OPT_LOGBODY) && (ipf->fl_flags & FR_LOGBODY))
-			dumphex(log, opts, (char *)ip + ipf->fl_hlen,
-				ipf->fl_plen);
+			dumphex(log, opts, (char *)pac,
+				ipf.fl_plen + ipf.fl_hlen);
+		else if ((opts & OPT_LOGBODY) && (ipf.fl_flags & FR_LOGBODY))
+			dumphex(log, opts, (char *)pac + ipf.fl_hlen,
+				ipf.fl_plen);
 	}
 }
 
 
-static void usage(prog)
-char *prog;
+static void
+usage(const char *prog)
 {
 	fprintf(stderr, "%s: [-NFhstvxX] [-f <logfile>]\n", prog);
 	exit(1);
 }
 
 
-static void write_pid(file)
-char *file;
+static void
+write_pid(const char *file)
 {
 	FILE *fp = NULL;
 	int fd;
@@ -1407,9 +1378,8 @@ char *file;
 }
 
 
-static void flushlogs(file, log)
-char *file;
-FILE *log;
+static void
+flushlogs(const char *file, FILE *log)
 {
 	int	fd, flushed = 0;
 
@@ -1438,12 +1408,11 @@ FILE *log;
 }
 
 
-static void logopts(turnon, options)
-int turnon;
-char *options;
+static void
+logopts(int turnon, const char *options)
 {
 	int flags = 0;
-	char *s;
+	const char *s;
 
 	for (s = options; *s; s++)
 	{
@@ -1471,15 +1440,15 @@ char *options;
 }
 
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int
+main(int argc, char *argv[])
 {
 	struct	stat	sb;
 	FILE	*log = stdout;
 	FILE	*fp;
-	int	fd[3], doread, n, i;
-	int	tr, nr, regular[3], c;
+	int	fd[3], doread;
+	size_t	n, i, tr, nr;
+	int	regular[3], c;
 	int	fdt[3], devices = 0, make_daemon = 0;
 	char	buf[DEFAULT_IPFLOGSIZE], *iplfile[3], *prog;
 	extern	int	optind;
