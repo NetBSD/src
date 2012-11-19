@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.2 2012/11/19 13:45:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #if 0
 static const char rcsid[] = "Id: res_mkupdate.c,v 1.10 2008/12/11 09:59:00 marka Exp ";
 #else
-__RCSID("$NetBSD: res_mkupdate.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
+__RCSID("$NetBSD: res_mkupdate.c,v 1.2 2012/11/19 13:45:00 christos Exp $");
 #endif
 
 #include "port_before.h"
@@ -992,7 +992,7 @@ res_buildservicelist(void) {
 }
 
 void
-res_destroyservicelist() {
+res_destroyservicelist(void) {
 	struct valuelist *slp, *slp_next;
 
 	for (slp = servicelist; slp != NULL; slp = slp_next) {
