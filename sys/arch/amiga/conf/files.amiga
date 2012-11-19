@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.164 2012/11/14 01:55:25 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.165 2012/11/19 23:43:08 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -231,6 +231,9 @@ file	arch/amiga/dev/xsurf.c		xsurf needs-flag
 
 attach	ne at xsurfbus with ne_xsurf: rtl80x9
 file	arch/amiga/dev/if_ne_xsurf.c	ne_xsurf needs-flag
+
+attach	wdc at xsurfbus with wdc_xsurf
+file	arch/amiga/dev/wdc_xsurf.c	wdc_xsurf & xsurf
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
