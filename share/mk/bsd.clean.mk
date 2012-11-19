@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.6 2012/11/18 19:52:40 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.7 2012/11/19 15:14:27 apb Exp $
 
 # <bsd.clean.mk>
 #
@@ -62,7 +62,7 @@ __cleanuse: .USE
 		:? ${.OBJDIR} \
 		:  ${.OBJDIR} ${.CURDIR} }
 	${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?@true: \
-	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
+	    (cd ${_d} && rm -rf ${.ALLSRC:@v@${${v}}@} || true) }
 .if "${MKCLEANVERIFY}" == "yes"
 	@${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?true: \
 	    bad="\$(cd ${_d} && ls -1d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
