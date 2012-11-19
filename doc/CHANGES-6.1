@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.24 2012/11/18 22:41:27 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.25 2012/11/19 18:17:20 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -643,4 +643,25 @@ usr.sbin/npf/npfctl/npfctl.h			1.20
 	dynamically loaded module (.so) supplementing npfctl(8) and a kernel
 	module.
 	[rmind, ticket #693]
+
+dist/ipf/ipmon.h				patch
+dist/ipf/tools/ipmon.c				patch
+dist/ipf/tools/ipmon_y.y			patch
+
+	Fix alignment issues in ipmon.  PR#47101.
+	[nakayama, ticket #651]
+
+sys/dev/mii/brgphy.c				1.60
+sys/dev/pci/if_bge.c				1.202
+sys/dev/pci/if_bgereg.h				1.57
+
+	Add support for BCM57762 and BCM57765, found in Apple's Thunderbolt
+	to Gigabit Ethernet adapter.  PR kern/46961
+	[tsutsui, ticket #652]
+
+lib/libnpf/npf.c				1.14
+usr.sbin/npf/npfctl/npf_var.h			1.5
+
+	Fix for npfctl show.
+	[rmind, ticket #653]
 
