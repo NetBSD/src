@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.17 2012/11/18 17:59:56 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.18 2012/11/19 00:36:21 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.17 2012/11/18 17:59:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.18 2012/11/19 00:36:21 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -109,10 +109,13 @@ void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 	new->e2di_dtime		=	bswap32(old->e2di_dtime);
 	new->e2di_nblock	=	bswap32(old->e2di_nblock);
 	new->e2di_flags		=	bswap32(old->e2di_flags);
+	new->e2di_version	=	bswap32(old->e2di_version);
 	new->e2di_gen		=	bswap32(old->e2di_gen);
 	new->e2di_facl		=	bswap32(old->e2di_facl);
 	new->e2di_dacl		=	bswap32(old->e2di_dacl);
 	new->e2di_faddr		=	bswap32(old->e2di_faddr);
+	new->e2di_nblock_high	=	bswap16(old->e2di_nblock_high);
+	new->e2di_facl_high	=	bswap16(old->e2di_facl_high);
 	new->e2di_uid_high	=	bswap16(old->e2di_uid_high);
 	new->e2di_gid_high	=	bswap16(old->e2di_gid_high);
 	memcpy(&new->e2di_blocks[0], &old->e2di_blocks[0],
