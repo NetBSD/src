@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.2.2.2 2012/08/09 06:36:51 jdc Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.2.2.3 2012/11/19 19:13:01 riz Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -88,7 +88,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.2.2.2 2012/08/09 06:36:51 jdc Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.2.2.3 2012/11/19 19:13:01 riz Exp $")
 
 /*
  * Workaround Erratum 411920 
@@ -171,6 +171,7 @@ _C_LABEL(rpi_start):
 	bhi	2b
 
 3:	ldmia	itable!, {va,pa,n_sec,attr}
+	mov	n_sec, n_sec, lsr #L1_S_SHIFT
 	/* Convert va to l1 offset:	va = 4 * (va >> L1_S_SHIFT)	*/
 	mov	va, va, LSR #L1_S_SHIFT
 	mov	va, va, LSL #2
@@ -253,8 +254,8 @@ Ll1_s_frame:
 	.word	L1_S_FRAME
 
 Ltemp_l1_table:
-	/* Put the temporary L1 translation table at the end of SDRAM. */
-	.word	0x00000000 + MEMSIZE * 0x100000 - L1_TABLE_SIZE
+	/* Put the temporary L1 translation table just below the kernel. */
+	.word	0x4000
 	
 Lstart:
 	.word	start
@@ -305,16 +306,16 @@ Lctl_ID_dis:
 mmu_init_table:
 	/* Add 1MB of VA==PA at 0x00000000 so we can keep the kernel going */
 	MMU_INIT(0x00000000, 0x00000000,
-	    (MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE, 
+	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW)
 
 	MMU_INIT(KERNEL_BASE, 0x0,
-	    (MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW  | L1_S_B | L1_S_C)
 
 	/* Map the 16MB of peripherals */
 	MMU_INIT(RPI_KERNEL_IO_VBASE, RPI_KERNEL_IO_PBASE,
-	    (RPI_KERNEL_IO_VSIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    (RPI_KERNEL_IO_VSIZE + L1_S_SIZE - 1),
 	    L1_S_PROTO | L1_S_AP_KRW)
 
 	/* end of table */
