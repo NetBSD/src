@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.307 2012/11/13 22:30:38 pooka Exp $
+#	$NetBSD: bsd.README,v 1.308 2012/11/19 16:04:54 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -904,6 +904,11 @@ or CLEANDIRFILES variables.  For example:
 
 	    .include <bsd.clean.mk>
 
+The files listed in CLEANFILES and CLEANDIRFILES must not be
+directories, because the potential risk from running "rm -rf" commands
+in bsd.clean.mk is considered too great.  If you want to recursively
+delete a directory as part of "make clean" or "make cleandir" then you
+need to provide your own target.
 
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
