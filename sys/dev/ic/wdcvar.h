@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.95 2012/07/31 15:50:35 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.96 2012/11/19 22:22:56 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -81,7 +81,8 @@ struct wdc_softc {
 	int		cap;		/* controller capabilities */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
-#define WDC_CAPABILITY_WIDEREGS 0x0400  /* Ctrl has wide (16bit) registers  */
+#define WDC_CAPABILITY_WIDEREGS 0x0400  /* ctrl has wide (16bit) registers  */
+#define WDC_CAPABILITY_NO_AUXCTL 0x0800 /* ctrl has no aux control registers */
 
 #if NATA_DMA || NATA_PIOBM
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
