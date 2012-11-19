@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.h,v 1.2 2012/02/15 17:55:04 riz Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.2.8.1 2012/11/19 18:06:15 riz Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -84,14 +84,14 @@ typedef	struct	ipmon_action	{
 #define	OPT_PORTNUM	0x400
 #define	OPT_LOGALL	(OPT_NAT|OPT_STATE|OPT_FILTER)
 
-#define	HOSTNAME_V4(a,b)	hostname((a), 4, (u_32_t *)&(b))
+#define	HOSTNAME_V4(a,b)	hostname((a), 4, (const void *)&(b))
 
 #ifndef	LOGFAC
 #define	LOGFAC	LOG_LOCAL0
 #endif
 
 extern	int	load_config(char *);
-extern	void	dumphex(FILE *, int, char *, int);
-extern	int	check_action(char *, char *, int, int);
+extern	void	dumphex(FILE *, int, const void *, size_t);
+extern	int	check_action(const char *, const char *, int, int);
 extern	char	*getword(int);
 extern	int	fac_findname(char *);
