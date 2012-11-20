@@ -76,7 +76,7 @@
  */
 
 #define MP_PREC		32
-#define DIGIT_BIT	60
+#define DIGIT_BIT	28
 #define MP_MASK          ((((mp_digit)1)<<((mp_digit)DIGIT_BIT))-((mp_digit)1))
 
 #define MP_WARRAY	/*LINTED*/(1U << (((sizeof(mp_word) * CHAR_BIT) - (2 * DIGIT_BIT) + 1)))
