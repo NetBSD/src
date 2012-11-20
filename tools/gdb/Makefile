@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.21 2012/02/09 15:15:58 skrll Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 2012/11/20 18:54:42 matt Exp $
 
 .include <bsd.own.mk>
 
+.if ${HAVE_GDB} == "6"
+MODULE=		gdb6
+.else
 MODULE=		gdb
 GNUHOSTDIST=    ${.CURDIR}/../../external/gpl3/gdb/dist
+.endif
 
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
