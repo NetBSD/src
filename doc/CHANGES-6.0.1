@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.14 2012/11/20 21:33:14 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.15 2012/11/20 22:53:20 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -117,4 +117,12 @@ sys/kern/kern_exec.c				1.358
 
 	Fix posix_spawn()ed processes with attributes.
 	[christos, ticket #670]
+
+xsrc/external/mit/xorg-server/dist/exa/exa_priv.h	1.2
+xsrc/external/mit/xorg-server/dist/exa/exa_unaccel.c	1.2
+
+	Address graphics corruption using recent Cairo, manifested most
+	commonly by certain rendered text sections appearing as solid
+	rectangular blocks of colour.
+	[abs, ticket #673]
 
