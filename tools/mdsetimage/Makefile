@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2011/10/31 08:14:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.6.1 2012/11/20 18:54:42 matt Exp $
 
 NOMAN=	# defined
 
@@ -6,7 +6,11 @@ NOMAN=	# defined
 
 HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-mdsetimage
 
+.if $(HAVE_BINUTILS) == "219"
 HOST_SRCDIR=	external/gpl3/binutils/usr.sbin/mdsetimage
+.else
+HOST_SRCDIR=	gnu/usr.sbin/mdsetimage
+.endif
 
 TOOLCHAINOBJ!=	cd ${.CURDIR}/../binutils && ${PRINTOBJDIR}
 BFDDIR=		${TOOLCHAINOBJ}/build/bfd
