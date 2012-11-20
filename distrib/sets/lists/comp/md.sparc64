@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.159 2012/11/15 18:51:55 christos Exp $
+# $NetBSD: md.sparc64,v 1.160 2012/11/20 05:27:22 agc Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
@@ -618,6 +618,11 @@
 ./usr/lib/sparc/libnetpgp_g.a			-unknown-		compat,debuglib,crypto
 ./usr/lib/sparc/libnetpgp_p.a			comp-c-proflib		compat,profile,crypto
 ./usr/lib/sparc/libnetpgp_pic.a			comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/libnetpgpverify.a		comp-c-lib		compat,crypto
+./usr/lib/sparc/libnetpgpverify.so		comp-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libnetpgpverify_g.a		-unknown-		compat,debuglib,crypto
+./usr/lib/sparc/libnetpgpverify_p.a		comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libnetpgpverify_pic.a		comp-c-piclib		compat,pic,crypto
 ./usr/lib/sparc/libnpf.a			comp-c-lib		compat,npf
 ./usr/lib/sparc/libnpf.so			comp-sys-shlib		compat,pic,npf
 ./usr/lib/sparc/libnpf_g.a			-unknown-		compat,debuglib,npf
@@ -971,6 +976,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmj.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libnetpgpverify.so.4.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnpf.so.0.0.debug			comp-compat-shlib	compat,pic,debug,npf
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.5.0.debug		comp-compat-shlib	compat,pic,binutils,debug

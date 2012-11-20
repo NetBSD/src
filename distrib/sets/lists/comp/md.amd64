@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.182 2012/11/17 04:57:25 joerg Exp $
+# $NetBSD: md.amd64,v 1.183 2012/11/20 05:27:22 agc Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -804,6 +804,11 @@
 ./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libnetpgp_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libnetpgp_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libnetpgpverify.a		comp-c-lib		compat
+./usr/lib/i386/libnetpgpverify.so		comp-sys-shlib		compat,pic
+./usr/lib/i386/libnetpgpverify_g.a		comp-c-proflib		compat,debuglib
+./usr/lib/i386/libnetpgpverify_p.a		comp-c-proflib		compat,profile
+./usr/lib/i386/libnetpgpverify_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/libnpf.a				comp-c-lib		compat,npf
 ./usr/lib/i386/libnpf.so			comp-sys-shlib		compat,npf,pic
 ./usr/lib/i386/libnpf_g.a			comp-c-proflib		compat,npf,debuglib
@@ -1163,6 +1168,7 @@
 ./usr/libdata/debug/usr/lib/i386/libmpc.so.2.0.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libmpfr.so.4.1.debug	comp-compat-shlib	obsolete
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libnetpgpverify.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnpf.so.0.0.debug	comp-compat-shlib	compat,pic,npf,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.5.0.debug	comp-compat-shlib	compat,pic,binutils,debug
