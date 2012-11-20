@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.224 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.225 2012/11/20 21:16:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.224 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.225 2012/11/20 21:16:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -405,7 +405,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 			  OHCI_ED_ALIGN, &dma);
 		if (err)
 			return (0);
-		for(i = 0; i < OHCI_SED_CHUNK; i++) {
+		for (i = 0; i < OHCI_SED_CHUNK; i++) {
 			offs = i * OHCI_SED_SIZE;
 			sed = KERNADDR(&dma, offs);
 			sed->physaddr = DMAADDR(&dma, offs);
