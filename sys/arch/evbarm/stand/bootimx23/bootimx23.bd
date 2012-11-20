@@ -1,4 +1,4 @@
-/* $Id: bootimx23.bd,v 1.1 2012/11/20 19:08:46 jkunz Exp $ */
+/* $Id: bootimx23.bd,v 1.2 2012/11/20 21:36:35 jkunz Exp $ */
 
 /*
  * elftosb command file.
@@ -16,7 +16,7 @@ options {
 }
 
 sources {
-	boot_prep="./boot_prep.elf";
+	boot_prep="./bootimx23";
 	netbsd="./netbsd";
 }
 
