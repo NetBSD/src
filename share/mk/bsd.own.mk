@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.696.2.2.2.2 2012/11/20 18:55:09 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.696.2.2.2.3 2012/11/20 23:22:25 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -77,6 +77,11 @@ HAVE_GDB?=	7
 
 # default to binutils 2.21	 
 HAVE_BINUTILS?= 219
+
+# binutils 2.16 has no TLS support for ARM
+.if ${HAVE_BINUTILS} != "219" && ${MACHINE_CPU} == "arm"
+CPPFLAGS+=	-D__HAVE_NO___THREAD
+.endif
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
