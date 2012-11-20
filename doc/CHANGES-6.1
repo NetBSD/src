@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.30 2012/11/20 21:32:44 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.31 2012/11/20 23:31:09 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -723,4 +723,54 @@ sys/kern/kern_exec.c				1.358
 
 	Fix posix_spawn()ed processes with attributes.
 	[christos, ticket #670]
+
+sys/dev/marvell/if_mvgbe.c		1.19-1.23, 1.26-1.31
+sys/dev/marvell/mvgbereg.h		1.4-1.5, 1.7
+
+	Fix a number of mvgbe(4) issues.
+	[msaitoh, ticket #671]
+
+distrib/sets/lists/comp/mi			1.1772 via patch
+
+	Fix build with MKCATPAGES=yes.
+	[he, ticket #672]
+
+xsrc/external/mit/xorg-server/dist/exa/exa_priv.h	1.2
+xsrc/external/mit/xorg-server/dist/exa/exa_unaccel.c	1.2
+
+	Address graphics corruption using recent Cairo, manifested most
+	commonly by certain rendered text sections appearing as solid
+	rectangular blocks of colour.
+	[abs, ticket #673]
+
+etc/daily					1.87
+etc/rc.d/makemandb				1.4
+etc/weekly					1.29
+usr.sbin/makemandb/apropos.1			1.5
+usr.sbin/makemandb/apropos.c			1.7
+usr.sbin/makemandb/makemandb.8			1.3-1.5
+usr.sbin/makemandb/makemandb.c			1.10-1.14 via patch
+
+	Reduce the noise that automated runs of makemandb(8) create.
+	[tron, ticket #676]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/europe				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012j from
+	ftp://ftp.iana.org/tz/releases/tzdata2012j.tar.gz
+	Changes from tzdata2012h to tzdata2012i:
+        Changes from tzdata2012h to tzdata2012i:
+		Cuba switches from DST on 4 Nov 2012 at 01:00. (Thanks to Steffen
+		Thorsen.) 
+	Changes from tzdata2012i to tzdata2012j:
+		Libya moved to CET this weekend, but with DST planned next year.
+		(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
+   	Various fixes to documentation and commentary.
+	[apb, ticket #677]
 
