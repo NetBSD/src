@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181.2.1 2012/03/02 18:27:53 riz Exp $
+#	$NetBSD: Makefile,v 1.181.2.1.2.1 2012/11/20 23:24:55 matt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -127,7 +127,13 @@ SUBDIR+=	../external/gpl2/lvm2/lib	# depends on libprop
 .endif
 
 .if (${MKBINUTILS} != "no")
+. if (${HAVE_BINUTILS} == "219")
 SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
+. else
+SUBDIR+=	../gnu/lib/libopcodes		# libbfd depends on libz
+SUBDIR+=	../gnu/lib/libbfd		# libbfd depends on libz
+SUBDIR+=	../gnu/lib/libiberty		# libbfd depends on libz
+. endif
 .endif
 
 .if (${MKGCC} != "no" && ${MKCXX} != "no")
