@@ -23,6 +23,7 @@
 #include "ieee802_1x.h"
 #include "ap_config.h"
 #include "sta_info.h"
+#include "ap_drv_ops.h"
 #include "accounting.h"
 
 
@@ -186,7 +187,7 @@ static int accounting_sta_update_stats(struct hostapd_data *hapd,
 				       struct sta_info *sta,
 				       struct hostap_sta_driver_data *data)
 {
-	if (hapd->drv.read_sta_data(hapd, data, sta->addr))
+	if (hostapd_drv_read_sta_data(hapd, data, sta->addr))
 		return -1;
 
 	if (sta->last_rx_bytes > data->rx_bytes)
@@ -235,6 +236,7 @@ static void accounting_interim_update(void *eloop_ctx, void *timeout_ctx)
 void accounting_sta_start(struct hostapd_data *hapd, struct sta_info *sta)
 {
 	struct radius_msg *msg;
+	struct os_time t;
 	int interval;
 
 	if (sta->acct_session_started)
@@ -246,10 +248,11 @@ void accounting_sta_start(struct hostapd_data *hapd, struct sta_info *sta)
 		       "starting accounting session %08X-%08X",
 		       sta->acct_session_id_hi, sta->acct_session_id_lo);
 
-	time(&sta->acct_session_start);
+	os_get_time(&t);
+	sta->acct_session_start = t.sec;
 	sta->last_rx_bytes = sta->last_tx_bytes = 0;
 	sta->acct_input_gigawords = sta->acct_output_gigawords = 0;
-	hapd->drv.sta_clear_stats(hapd, sta->addr);
+	hostapd_drv_sta_clear_stats(hapd, sta->addr);
 
 	if (!hapd->conf->radius->acct_server)
 		return;
@@ -262,8 +265,9 @@ void accounting_sta_start(struct hostapd_data *hapd, struct sta_info *sta)
 			       hapd, sta);
 
 	msg = accounting_msg(hapd, sta, RADIUS_ACCT_STATUS_TYPE_START);
-	if (msg)
-		radius_client_send(hapd->radius, msg, RADIUS_ACCT, sta->addr);
+	if (msg &&
+	    radius_client_send(hapd->radius, msg, RADIUS_ACCT, sta->addr) < 0)
+		radius_msg_free(msg);
 
 	sta->acct_session_started = 1;
 }
@@ -275,6 +279,7 @@ static void accounting_sta_report(struct hostapd_data *hapd,
 	struct radius_msg *msg;
 	int cause = sta->acct_terminate_cause;
 	struct hostap_sta_driver_data data;
+	struct os_time now;
 	u32 gigawords;
 
 	if (!hapd->conf->radius->acct_server)
@@ -288,8 +293,9 @@ static void accounting_sta_report(struct hostapd_data *hapd,
 		return;
 	}
 
+	os_get_time(&now);
 	if (!radius_msg_add_attr_int32(msg, RADIUS_ATTR_ACCT_SESSION_TIME,
-				       time(NULL) - sta->acct_session_start)) {
+				       now.sec - sta->acct_session_start)) {
 		printf("Could not add Acct-Session-Time\n");
 		goto fail;
 	}
@@ -344,7 +350,7 @@ static void accounting_sta_report(struct hostapd_data *hapd,
 	}
 
 	if (!radius_msg_add_attr_int32(msg, RADIUS_ATTR_EVENT_TIMESTAMP,
-				       time(NULL))) {
+				       now.sec)) {
 		printf("Could not add Event-Timestamp\n");
 		goto fail;
 	}
@@ -359,9 +365,10 @@ static void accounting_sta_report(struct hostapd_data *hapd,
 		goto fail;
 	}
 
-	radius_client_send(hapd->radius, msg,
-			   stop ? RADIUS_ACCT : RADIUS_ACCT_INTERIM,
-			   sta->addr);
+	if (radius_client_send(hapd->radius, msg,
+			       stop ? RADIUS_ACCT : RADIUS_ACCT_INTERIM,
+			       sta->addr) < 0)
+		goto fail;
 	return;
 
  fail:
@@ -464,7 +471,8 @@ static void accounting_report_state(struct hostapd_data *hapd, int on)
 		return;
 	}
 
-	radius_client_send(hapd->radius, msg, RADIUS_ACCT, NULL);
+	if (radius_client_send(hapd->radius, msg, RADIUS_ACCT, NULL) < 0)
+		radius_msg_free(msg);
 }
 
 
@@ -475,9 +483,12 @@ static void accounting_report_state(struct hostapd_data *hapd, int on)
  */
 int accounting_init(struct hostapd_data *hapd)
 {
+	struct os_time now;
+
 	/* Acct-Session-Id should be unique over reboots. If reliable clock is
 	 * not available, this could be replaced with reboot counter, etc. */
-	hapd->acct_session_id_hi = time(NULL);
+	os_get_time(&now);
+	hapd->acct_session_id_hi = now.sec;
 
 	if (radius_client_register(hapd->radius, RADIUS_ACCT,
 				   accounting_receive, hapd))

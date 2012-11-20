@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.18 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: abtn.c,v 1.18.12.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.18 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.18.12.1 2012/11/20 03:01:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.18 2011/06/18 08:08:28 matt Exp $");
 #define BUTTON_DEPRESS	0x80
 
 struct abtn_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	int origaddr;		/* ADB device type */
 	int adbaddr;		/* current ADB address */
@@ -65,7 +65,7 @@ static int abtn_match(device_t, cfdata_t, void *);
 static void abtn_attach(device_t, device_t, void *);
 static void abtn_adbcomplete(uint8_t *, uint8_t *, int);
 
-CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
+CFATTACH_DECL_NEW(abtn, sizeof(struct abtn_softc),
     abtn_match, abtn_attach, NULL, NULL);
 
 int
@@ -87,6 +87,8 @@ abtn_attach(device_t parent, device_t self, void *aux)
 	struct adb_attach_args *aa = aux;
 	ADBSetInfoBlock adbinfo;
 	int bright;
+
+	sc->sc_dev = self;
 
 	printf("buttons\n");
 
@@ -173,15 +175,15 @@ abtn_adbcomplete(uint8_t *buffer, uint8_t *data, int adb_command)
 	case BUTTON_SOFTER:
 	case BUTTON_LOUDER:
 		printf("%s: volume setting not implemented\n",
-			sc->sc_dev.dv_xname);
+		       device_xname(sc->sc_dev));
 		break;
 	case BUTTON_DISPLAY:
 		printf("%s: display selection not implemented\n",
-			sc->sc_dev.dv_xname);
+		       device_xname(sc->sc_dev));
 		break;
 	case BUTTON_EJECT:
 		printf("%s: eject not implemented\n",
-			sc->sc_dev.dv_xname);
+		       device_xname(sc->sc_dev));
 		break;
 
 	/* The keyboard gets wacky when in keypad mode. */
@@ -190,6 +192,6 @@ abtn_adbcomplete(uint8_t *buffer, uint8_t *data, int adb_command)
 
 	default:
 		printf("%s: unknown button 0x%x\n",
-			sc->sc_dev.dv_xname, cmd);
+		       device_xname(sc->sc_dev));
 	}
 }

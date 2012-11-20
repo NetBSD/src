@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.1 2012/11/20 03:01:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.1 2012/11/20 03:01:12 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,7 +112,7 @@ void	mach_init (int, char *[], int, intptr_t, u_int, char *); /* XXX */
 static void	unimpl_bus_reset(void);
 static void	unimpl_cons_init(void);
 static void	unimpl_iointr(uint32_t, vaddr_t, uint32_t);
-static void	unimpl_intr_establish(struct device *, void *, int,
+static void	unimpl_intr_establish(device_t, void *, int,
 		    int (*)(void *, void *), void *);
 static int	unimpl_memsize(void *);
 
@@ -716,7 +716,7 @@ unimpl_iointr(uint32_t status, vaddr_t pc, uint32_t ipending)
 }
 
 static void
-unimpl_intr_establish(struct device *dev, void *cookie, int level,
+unimpl_intr_establish(device_t dev, void *cookie, int level,
                       int (*handler) (void *,void *), void *arg)
 {
 

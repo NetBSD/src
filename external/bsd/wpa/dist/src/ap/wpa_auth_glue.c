@@ -1,6 +1,6 @@
 /*
  * hostapd / WPA authenticator glue code
- * Copyright (c) 2002-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2011, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -31,15 +31,10 @@
 #include "wpa_auth.h"
 
 
-#ifdef CONFIG_IEEE80211R
-static void hostapd_rrb_receive(void *ctx, const u8 *src_addr, const u8 *buf,
-				size_t len);
-#endif /* CONFIG_IEEE80211R */
-
-
 static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
 				  struct wpa_auth_config *wconf)
 {
+	os_memset(wconf, 0, sizeof(*wconf));
 	wconf->wpa = conf->wpa;
 	wconf->wpa_key_mgmt = conf->wpa_key_mgmt;
 	wconf->wpa_pairwise = conf->wpa_pairwise;
@@ -54,6 +49,7 @@ static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
 	wconf->peerkey = conf->peerkey;
 	wconf->wmm_enabled = conf->wmm_enabled;
 	wconf->wmm_uapsd = conf->wmm_uapsd;
+	wconf->disable_pmksa_caching = conf->disable_pmksa_caching;
 	wconf->okc = conf->okc;
 #ifdef CONFIG_IEEE80211W
 	wconf->ieee80211w = conf->ieee80211w;
@@ -77,6 +73,7 @@ static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
 	wconf->r0kh_list = conf->r0kh_list;
 	wconf->r1kh_list = conf->r1kh_list;
 	wconf->pmk_r1_push = conf->pmk_r1_push;
+	wconf->ft_over_ds = conf->ft_over_ds;
 #endif /* CONFIG_IEEE80211R */
 }
 
@@ -230,8 +227,8 @@ static int hostapd_wpa_auth_set_key(void *ctx, int vlan_id, enum wpa_alg alg,
 			return -1;
 	}
 
-	return hapd->drv.set_key(ifname, hapd, alg, addr, idx, 1, NULL, 0,
-				 key, key_len);
+	return hostapd_drv_set_key(ifname, hapd, alg, addr, idx, 1, NULL, 0,
+				   key, key_len);
 }
 
 
@@ -248,7 +245,15 @@ static int hostapd_wpa_auth_send_eapol(void *ctx, const u8 *addr,
 				       int encrypt)
 {
 	struct hostapd_data *hapd = ctx;
-	return hapd->drv.send_eapol(hapd, addr, data, data_len, encrypt);
+	struct sta_info *sta;
+	u32 flags = 0;
+
+	sta = ap_get_sta(hapd, addr);
+	if (sta)
+		flags = hostapd_sta_flags_to_drv(sta->flags);
+
+	return hostapd_drv_hapd_send_eapol(hapd, addr, data, data_len,
+					   encrypt, flags);
 }
 
 
@@ -327,8 +332,9 @@ static int hostapd_wpa_auth_ft_iter(struct hostapd_iface *iface, void *ctx)
 				   MAC2STR(idata->src_hapd->own_addr),
 				   idata->src_hapd->conf->iface,
 				   MAC2STR(hapd->own_addr), hapd->conf->iface);
-			hostapd_rrb_receive(hapd, idata->src_hapd->own_addr,
-					    idata->data, idata->data_len);
+			wpa_ft_rrb_rx(hapd->wpa_auth,
+				      idata->src_hapd->own_addr,
+				      idata->data, idata->data_len);
 			return 1;
 		}
 	}
@@ -343,6 +349,8 @@ static int hostapd_wpa_auth_send_ether(void *ctx, const u8 *dst, u16 proto,
 				       const u8 *data, size_t data_len)
 {
 	struct hostapd_data *hapd = ctx;
+	struct l2_ethhdr *buf;
+	int ret;
 
 #ifdef CONFIG_IEEE80211R
 	if (proto == ETH_P_RRB && hapd->iface->for_each_interface) {
@@ -366,7 +374,18 @@ static int hostapd_wpa_auth_send_ether(void *ctx, const u8 *dst, u16 proto,
 						data, data_len);
 	if (hapd->l2 == NULL)
 		return -1;
-	return l2_packet_send(hapd->l2, dst, proto, data, data_len);
+
+	buf = os_malloc(sizeof(*buf) + data_len);
+	if (buf == NULL)
+		return -1;
+	os_memcpy(buf->h_dest, dst, ETH_ALEN);
+	os_memcpy(buf->h_source, hapd->own_addr, ETH_ALEN);
+	buf->h_proto = host_to_be16(proto);
+	os_memcpy(buf + 1, data, data_len);
+	ret = l2_packet_send(hapd->l2, dst, proto, (u8 *) buf,
+			     sizeof(*buf) + data_len);
+	os_free(buf);
+	return ret;
 }
 
 
@@ -396,7 +415,7 @@ static int hostapd_wpa_auth_send_ft_action(void *ctx, const u8 *dst,
 	os_memcpy(m->bssid, hapd->own_addr, ETH_ALEN);
 	os_memcpy(&m->u, data, data_len);
 
-	res = hapd->drv.send_mgmt_frame(hapd, (u8 *) m, mlen);
+	res = hostapd_drv_send_mlme(hapd, (u8 *) m, mlen);
 	os_free(m);
 	return res;
 }
@@ -431,7 +450,14 @@ static void hostapd_rrb_receive(void *ctx, const u8 *src_addr, const u8 *buf,
 				size_t len)
 {
 	struct hostapd_data *hapd = ctx;
-	wpa_ft_rrb_rx(hapd->wpa_auth, src_addr, buf, len);
+	struct l2_ethhdr *ethhdr;
+	if (len < sizeof(*ethhdr))
+		return;
+	ethhdr = (struct l2_ethhdr *) buf;
+	wpa_printf(MSG_DEBUG, "FT: RRB received packet " MACSTR " -> "
+		   MACSTR, MAC2STR(ethhdr->h_source), MAC2STR(ethhdr->h_dest));
+	wpa_ft_rrb_rx(hapd->wpa_auth, ethhdr->h_source, buf + sizeof(*ethhdr),
+		      len - sizeof(*ethhdr));
 }
 
 #endif /* CONFIG_IEEE80211R */
@@ -445,6 +471,8 @@ int hostapd_setup_wpa(struct hostapd_data *hapd)
 	size_t wpa_ie_len;
 
 	hostapd_wpa_auth_conf(hapd->conf, &_conf);
+	if (hapd->iface->drv_flags & WPA_DRIVER_FLAGS_EAPOL_TX_STATUS)
+		_conf.tx_status = 1;
 	os_memset(&cb, 0, sizeof(cb));
 	cb.ctx = hapd;
 	cb.logger = hostapd_wpa_auth_logger;
@@ -494,7 +522,7 @@ int hostapd_setup_wpa(struct hostapd_data *hapd)
 		hapd->l2 = l2_packet_init(hapd->conf->bridge[0] ?
 					  hapd->conf->bridge :
 					  hapd->conf->iface, NULL, ETH_P_RRB,
-					  hostapd_rrb_receive, hapd, 0);
+					  hostapd_rrb_receive, hapd, 1);
 		if (hapd->l2 == NULL &&
 		    (hapd->driver == NULL ||
 		     hapd->driver->send_ether == NULL)) {
@@ -520,6 +548,7 @@ void hostapd_reconfig_wpa(struct hostapd_data *hapd)
 
 void hostapd_deinit_wpa(struct hostapd_data *hapd)
 {
+	ieee80211_tkip_countermeasures_deinit(hapd);
 	rsn_preauth_iface_deinit(hapd);
 	if (hapd->wpa_auth) {
 		wpa_deinit(hapd->wpa_auth);

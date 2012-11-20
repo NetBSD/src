@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.44 2012/06/27 00:37:08 jym Exp $
+# $NetBSD: XEN3_DOMU,v 1.44.2.1 2012/11/20 03:01:26 tls Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -75,6 +75,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -231,6 +232,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter

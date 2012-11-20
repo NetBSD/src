@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.7 2012/09/11 19:43:10 msaitoh Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.7.2.1 2012/11/20 03:01:13 tls Exp $
 #
 #  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -110,6 +110,7 @@ options 	NFS_BOOT_DHCP
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

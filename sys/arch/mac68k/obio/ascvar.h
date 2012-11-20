@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.7.156.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.
@@ -31,7 +31,7 @@
 #define ASCUNIT(d)	((d) & 0x7)
 
 struct asc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_handle;
 	int			sc_open;

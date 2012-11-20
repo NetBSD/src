@@ -28,6 +28,7 @@
 #include "wps/wps_dev_attr.h"
 #include "hostapd.h"
 #include "ap_config.h"
+#include "ap_drv_ops.h"
 #include "beacon.h"
 #include "sta_info.h"
 #include "wps_hostapd.h"
@@ -40,9 +41,49 @@ static int hostapd_wps_upnp_init(struct hostapd_data *hapd,
 static void hostapd_wps_upnp_deinit(struct hostapd_data *hapd);
 #endif /* CONFIG_WPS_UPNP */
 
-static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr,
+static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr, const u8 *da,
+				    const u8 *bssid,
 				    const u8 *ie, size_t ie_len);
 static void hostapd_wps_ap_pin_timeout(void *eloop_data, void *user_ctx);
+
+
+struct wps_for_each_data {
+	int (*func)(struct hostapd_data *h, void *ctx);
+	void *ctx;
+};
+
+
+static int wps_for_each(struct hostapd_iface *iface, void *ctx)
+{
+	struct wps_for_each_data *data = ctx;
+	size_t j;
+
+	if (iface == NULL)
+		return 0;
+	for (j = 0; j < iface->num_bss; j++) {
+		struct hostapd_data *hapd = iface->bss[j];
+		int ret = data->func(hapd, data->ctx);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+
+static int hostapd_wps_for_each(struct hostapd_data *hapd,
+				int (*func)(struct hostapd_data *h, void *ctx),
+				void *ctx)
+{
+	struct hostapd_iface *iface = hapd->iface;
+	struct wps_for_each_data data;
+	data.func = func;
+	data.ctx = ctx;
+	if (iface->for_each_interface == NULL)
+		return wps_for_each(iface, &data);
+	return iface->for_each_interface(iface->interfaces, wps_for_each,
+					 &data);
+}
 
 
 static int hostapd_wps_new_psk_cb(void *ctx, const u8 *mac_addr, const u8 *psk,
@@ -100,8 +141,9 @@ static int hostapd_wps_set_ie_cb(void *ctx, struct wpabuf *beacon_ie,
 	hapd->wps_beacon_ie = beacon_ie;
 	wpabuf_free(hapd->wps_probe_resp_ie);
 	hapd->wps_probe_resp_ie = probe_resp_ie;
-	ieee802_11_set_beacon(hapd);
-	return hapd->drv.set_ap_wps_ie(hapd);
+	if (hapd->beacon_set_done)
+		ieee802_11_set_beacon(hapd);
+	return hostapd_set_ap_wps_ie(hapd);
 }
 
 
@@ -144,11 +186,26 @@ static void hostapd_wps_pin_needed_cb(void *ctx, const u8 *uuid_e,
 }
 
 
+struct wps_stop_reg_data {
+	struct hostapd_data *current_hapd;
+	const u8 *uuid_e;
+};
+
+static int wps_stop_registrar(struct hostapd_data *hapd, void *ctx)
+{
+	struct wps_stop_reg_data *data = ctx;
+	if (hapd != data->current_hapd && hapd->wps != NULL)
+		wps_registrar_complete(hapd->wps->registrar, data->uuid_e);
+	return 0;
+}
+
+
 static void hostapd_wps_reg_success_cb(void *ctx, const u8 *mac_addr,
 				       const u8 *uuid_e)
 {
 	struct hostapd_data *hapd = ctx;
 	char uuid[40];
+	struct wps_stop_reg_data data;
 	if (uuid_bin2str(uuid_e, uuid, sizeof(uuid)))
 		return;
 	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_REG_SUCCESS MACSTR " %s",
@@ -156,6 +213,9 @@ static void hostapd_wps_reg_success_cb(void *ctx, const u8 *mac_addr,
 	if (hapd->wps_reg_success_cb)
 		hapd->wps_reg_success_cb(hapd->wps_reg_success_cb_ctx,
 					 mac_addr, uuid_e);
+	data.current_hapd = hapd;
+	data.uuid_e = uuid_e;
+	hostapd_wps_for_each(hapd, wps_stop_registrar, &data);
 }
 
 
@@ -200,15 +260,32 @@ static void wps_reload_config(void *eloop_data, void *user_ctx)
 }
 
 
-static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
+static void hapd_new_ap_event(struct hostapd_data *hapd, const u8 *attr,
+			      size_t attr_len)
 {
-	struct hostapd_data *hapd = ctx;
+	size_t blen = attr_len * 2 + 1;
+	char *buf = os_malloc(blen);
+	if (buf) {
+		wpa_snprintf_hex(buf, blen, attr, attr_len);
+		wpa_msg(hapd->msg_ctx, MSG_INFO,
+			WPS_EVENT_NEW_AP_SETTINGS "%s", buf);
+		os_free(buf);
+	}
+}
+
+
+static int hapd_wps_cred_cb(struct hostapd_data *hapd, void *ctx)
+{
+	const struct wps_credential *cred = ctx;
 	FILE *oconf, *nconf;
 	size_t len, i;
 	char *tmp_fname;
 	char buf[1024];
 	int multi_bss;
 	int wpa;
+
+	if (hapd->wps == NULL)
+		return 0;
 
 	wpa_hexdump_key(MSG_DEBUG, "WPS: Received Credential attribute",
 			cred->cred_attr, cred->cred_attr_len);
@@ -226,15 +303,15 @@ static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
 
 	if ((hapd->conf->wps_cred_processing == 1 ||
 	     hapd->conf->wps_cred_processing == 2) && cred->cred_attr) {
-		size_t blen = cred->cred_attr_len * 2 + 1;
-		char *_buf = os_malloc(blen);
-		if (_buf) {
-			wpa_snprintf_hex(_buf, blen,
-					 cred->cred_attr, cred->cred_attr_len);
-			wpa_msg(hapd->msg_ctx, MSG_INFO, "%s%s",
-				WPS_EVENT_NEW_AP_SETTINGS, _buf);
-			os_free(_buf);
-		}
+		hapd_new_ap_event(hapd, cred->cred_attr, cred->cred_attr_len);
+	} else if (hapd->conf->wps_cred_processing == 1 ||
+		   hapd->conf->wps_cred_processing == 2) {
+		struct wpabuf *attr;
+		attr = wpabuf_alloc(200);
+		if (attr && wps_build_credential_wrap(attr, cred) == 0)
+			hapd_new_ap_event(hapd, wpabuf_head_u8(attr),
+					  wpabuf_len(attr));
+		wpabuf_free(attr);
 	} else
 		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_NEW_AP_SETTINGS);
 
@@ -384,6 +461,8 @@ static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
 		if (!multi_bss &&
 		    (str_starts(buf, "ssid=") ||
 		     str_starts(buf, "auth_algs=") ||
+		     str_starts(buf, "wep_default_key=") ||
+		     str_starts(buf, "wep_key") ||
 		     str_starts(buf, "wps_state=") ||
 		     str_starts(buf, "wpa=") ||
 		     str_starts(buf, "wpa_psk=") ||
@@ -414,11 +493,16 @@ static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
 	eloop_register_timeout(0, 100000, wps_reload_config, hapd->iface,
 			       NULL);
 
-	/* TODO: dualband AP may need to update multiple configuration files */
-
 	wpa_printf(MSG_DEBUG, "WPS: AP configuration updated");
 
 	return 0;
+}
+
+
+static int hostapd_wps_cred_cb(void *ctx, const struct wps_credential *cred)
+{
+	struct hostapd_data *hapd = ctx;
+	return hostapd_wps_for_each(hapd, hapd_wps_cred_cb, (void *) cred);
 }
 
 
@@ -428,6 +512,8 @@ static void hostapd_wps_reenable_ap_pin(void *eloop_data, void *user_ctx)
 
 	if (hapd->conf->ap_setup_locked)
 		return;
+	if (hapd->ap_pin_failures_consecutive >= 10)
+		return;
 
 	wpa_printf(MSG_DEBUG, "WPS: Re-enable AP PIN");
 	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_UNLOCKED);
@@ -436,11 +522,12 @@ static void hostapd_wps_reenable_ap_pin(void *eloop_data, void *user_ctx)
 }
 
 
-static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
-				  struct wps_event_pwd_auth_fail *data)
+static int wps_pwd_auth_fail(struct hostapd_data *hapd, void *ctx)
 {
-	if (!data->enrollee || hapd->conf->ap_pin == NULL)
-		return;
+	struct wps_event_pwd_auth_fail *data = ctx;
+
+	if (!data->enrollee || hapd->conf->ap_pin == NULL || hapd->wps == NULL)
+		return 0;
 
 	/*
 	 * Registrar failed to prove its knowledge of the AP PIN. Lock AP setup
@@ -448,17 +535,27 @@ static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
 	 * force attacks.
 	 */
 	hapd->ap_pin_failures++;
-	wpa_printf(MSG_DEBUG, "WPS: AP PIN authentication failure number %u",
-		   hapd->ap_pin_failures);
+	hapd->ap_pin_failures_consecutive++;
+	wpa_printf(MSG_DEBUG, "WPS: AP PIN authentication failure number %u "
+		   "(%u consecutive)",
+		   hapd->ap_pin_failures, hapd->ap_pin_failures_consecutive);
 	if (hapd->ap_pin_failures < 3)
-		return;
+		return 0;
 
 	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_LOCKED);
 	hapd->wps->ap_setup_locked = 1;
 
 	wps_registrar_update_ie(hapd->wps->registrar);
 
-	if (!hapd->conf->ap_setup_locked) {
+	if (!hapd->conf->ap_setup_locked &&
+	    hapd->ap_pin_failures_consecutive >= 10) {
+		/*
+		 * In indefinite lockdown - disable automatic AP PIN
+		 * reenablement.
+		 */
+		eloop_cancel_timeout(hostapd_wps_reenable_ap_pin, hapd, NULL);
+		wpa_printf(MSG_DEBUG, "WPS: AP PIN disabled indefinitely");
+	} else if (!hapd->conf->ap_setup_locked) {
 		if (hapd->ap_pin_lockout_time == 0)
 			hapd->ap_pin_lockout_time = 60;
 		else if (hapd->ap_pin_lockout_time < 365 * 24 * 60 * 60 &&
@@ -473,7 +570,60 @@ static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
 				       NULL);
 	}
 
-	/* TODO: dualband AP may need to update other interfaces */
+	return 0;
+}
+
+
+static void hostapd_pwd_auth_fail(struct hostapd_data *hapd,
+				  struct wps_event_pwd_auth_fail *data)
+{
+	hostapd_wps_for_each(hapd, wps_pwd_auth_fail, data);
+}
+
+
+static int wps_ap_pin_success(struct hostapd_data *hapd, void *ctx)
+{
+	if (hapd->conf->ap_pin == NULL || hapd->wps == NULL)
+		return 0;
+
+	if (hapd->ap_pin_failures_consecutive == 0)
+		return 0;
+
+	wpa_printf(MSG_DEBUG, "WPS: Clear consecutive AP PIN failure counter "
+		   "- total validation failures %u (%u consecutive)",
+		   hapd->ap_pin_failures, hapd->ap_pin_failures_consecutive);
+	hapd->ap_pin_failures_consecutive = 0;
+
+	return 0;
+}
+
+
+static void hostapd_wps_ap_pin_success(struct hostapd_data *hapd)
+{
+	hostapd_wps_for_each(hapd, wps_ap_pin_success, NULL);
+}
+
+
+static const char * wps_event_fail_reason[NUM_WPS_EI_VALUES] = {
+	"No Error", /* WPS_EI_NO_ERROR */
+	"TKIP Only Prohibited", /* WPS_EI_SECURITY_TKIP_ONLY_PROHIBITED */
+	"WEP Prohibited" /* WPS_EI_SECURITY_WEP_PROHIBITED */
+};
+
+static void hostapd_wps_event_fail(struct hostapd_data *hapd,
+				   struct wps_event_fail *fail)
+{
+	if (fail->error_indication > 0 &&
+	    fail->error_indication < NUM_WPS_EI_VALUES) {
+		wpa_msg(hapd->msg_ctx, MSG_INFO,
+			WPS_EVENT_FAIL "msg=%d config_error=%d reason=%d (%s)",
+			fail->msg, fail->config_error, fail->error_indication,
+			wps_event_fail_reason[fail->error_indication]);
+	} else {
+		wpa_msg(hapd->msg_ctx, MSG_INFO,
+			WPS_EVENT_FAIL "msg=%d config_error=%d",
+			fail->msg, fail->config_error);
+	}
 }
 
 
@@ -482,8 +632,43 @@ static void hostapd_wps_event_cb(void *ctx, enum wps_event event,
 {
 	struct hostapd_data *hapd = ctx;
 
-	if (event == WPS_EV_PWD_AUTH_FAIL)
+	switch (event) {
+	case WPS_EV_M2D:
+		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_M2D);
+		break;
+	case WPS_EV_FAIL:
+		hostapd_wps_event_fail(hapd, &data->fail);
+		break;
+	case WPS_EV_SUCCESS:
+		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_SUCCESS);
+		break;
+	case WPS_EV_PWD_AUTH_FAIL:
 		hostapd_pwd_auth_fail(hapd, &data->pwd_auth_fail);
+		break;
+	case WPS_EV_PBC_OVERLAP:
+		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_OVERLAP);
+		break;
+	case WPS_EV_PBC_TIMEOUT:
+		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_TIMEOUT);
+		break;
+	case WPS_EV_ER_AP_ADD:
+		break;
+	case WPS_EV_ER_AP_REMOVE:
+		break;
+	case WPS_EV_ER_ENROLLEE_ADD:
+		break;
+	case WPS_EV_ER_ENROLLEE_REMOVE:
+		break;
+	case WPS_EV_ER_AP_SETTINGS:
+		break;
+	case WPS_EV_ER_SET_SELECTED_REGISTRAR:
+		break;
+	case WPS_EV_AP_PIN_SUCCESS:
+		hostapd_wps_ap_pin_success(hapd);
+		break;
+	}
+	if (hapd->wps_event_cb)
+		hapd->wps_event_cb(hapd->wps_event_cb_ctx, event, data);
 }
 
 
@@ -495,7 +680,81 @@ static void hostapd_wps_clear_ies(struct hostapd_data *hapd)
 	wpabuf_free(hapd->wps_probe_resp_ie);
 	hapd->wps_probe_resp_ie = NULL;
 
-	hapd->drv.set_ap_wps_ie(hapd);
+	hostapd_set_ap_wps_ie(hapd);
+}
+
+
+static int get_uuid_cb(struct hostapd_iface *iface, void *ctx)
+{
+	const u8 **uuid = ctx;
+	size_t j;
+
+	if (iface == NULL)
+		return 0;
+	for (j = 0; j < iface->num_bss; j++) {
+		struct hostapd_data *hapd = iface->bss[j];
+		if (hapd->wps && !is_nil_uuid(hapd->wps->uuid)) {
+			*uuid = hapd->wps->uuid;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
+static const u8 * get_own_uuid(struct hostapd_iface *iface)
+{
+	const u8 *uuid;
+	if (iface->for_each_interface == NULL)
+		return NULL;
+	uuid = NULL;
+	iface->for_each_interface(iface->interfaces, get_uuid_cb, &uuid);
+	return uuid;
+}
+
+
+static int count_interface_cb(struct hostapd_iface *iface, void *ctx)
+{
+	int *count= ctx;
+	(*count)++;
+	return 0;
+}
+
+
+static int interface_count(struct hostapd_iface *iface)
+{
+	int count = 0;
+	if (iface->for_each_interface == NULL)
+		return 0;
+	iface->for_each_interface(iface->interfaces, count_interface_cb,
+				  &count);
+	return count;
+}
+
+
+static int hostapd_wps_set_vendor_ext(struct hostapd_data *hapd,
+				      struct wps_context *wps)
+{
+	int i;
+
+	for (i = 0; i < MAX_WPS_VENDOR_EXTENSIONS; i++) {
+		wpabuf_free(wps->dev.vendor_ext[i]);
+		wps->dev.vendor_ext[i] = NULL;
+
+		if (hapd->conf->wps_vendor_ext[i] == NULL)
+			continue;
+
+		wps->dev.vendor_ext[i] =
+			wpabuf_dup(hapd->conf->wps_vendor_ext[i]);
+		if (wps->dev.vendor_ext[i] == NULL) {
+			while (--i >= 0)
+				wpabuf_free(wps->dev.vendor_ext[i]);
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 
@@ -522,11 +781,22 @@ int hostapd_init_wps(struct hostapd_data *hapd,
 	wps->wps_state = hapd->conf->wps_state;
 	wps->ap_setup_locked = hapd->conf->ap_setup_locked;
 	if (is_nil_uuid(hapd->conf->uuid)) {
-		uuid_gen_mac_addr(hapd->own_addr, wps->uuid);
-		wpa_hexdump(MSG_DEBUG, "WPS: UUID based on MAC address",
-			    wps->uuid, UUID_LEN);
-	} else
+		const u8 *uuid;
+		uuid = get_own_uuid(hapd->iface);
+		if (uuid) {
+			os_memcpy(wps->uuid, uuid, UUID_LEN);
+			wpa_hexdump(MSG_DEBUG, "WPS: Clone UUID from another "
+				    "interface", wps->uuid, UUID_LEN);
+		} else {
+			uuid_gen_mac_addr(hapd->own_addr, wps->uuid);
+			wpa_hexdump(MSG_DEBUG, "WPS: UUID based on MAC "
+				    "address", wps->uuid, UUID_LEN);
+		}
+	} else {
 		os_memcpy(wps->uuid, hapd->conf->uuid, UUID_LEN);
+		wpa_hexdump(MSG_DEBUG, "WPS: Use configured UUID",
+			    wps->uuid, UUID_LEN);
+	}
 	wps->ssid_len = hapd->conf->ssid.ssid_len;
 	os_memcpy(wps->ssid, hapd->conf->ssid.ssid, wps->ssid_len);
 	wps->ap = 1;
@@ -543,13 +813,30 @@ int hostapd_init_wps(struct hostapd_data *hapd,
 		os_strdup(hapd->conf->serial_number) : NULL;
 	wps->config_methods =
 		wps_config_methods_str2bin(hapd->conf->config_methods);
-	if (hapd->conf->device_type &&
-	    wps_dev_type_str2bin(hapd->conf->device_type,
-				 wps->dev.pri_dev_type) < 0) {
-		wpa_printf(MSG_ERROR, "WPS: Invalid device_type");
+#ifdef CONFIG_WPS2
+	if ((wps->config_methods &
+	     (WPS_CONFIG_DISPLAY | WPS_CONFIG_VIRT_DISPLAY |
+	      WPS_CONFIG_PHY_DISPLAY)) == WPS_CONFIG_DISPLAY) {
+		wpa_printf(MSG_INFO, "WPS: Converting display to "
+			   "virtual_display for WPS 2.0 compliance");
+		wps->config_methods |= WPS_CONFIG_VIRT_DISPLAY;
+	}
+	if ((wps->config_methods &
+	     (WPS_CONFIG_PUSHBUTTON | WPS_CONFIG_VIRT_PUSHBUTTON |
+	      WPS_CONFIG_PHY_PUSHBUTTON)) == WPS_CONFIG_PUSHBUTTON) {
+		wpa_printf(MSG_INFO, "WPS: Converting push_button to "
+			   "virtual_push_button for WPS 2.0 compliance");
+		wps->config_methods |= WPS_CONFIG_VIRT_PUSHBUTTON;
+	}
+#endif /* CONFIG_WPS2 */
+	os_memcpy(wps->dev.pri_dev_type, hapd->conf->device_type,
+		  WPS_DEV_TYPE_LEN);
+
+	if (hostapd_wps_set_vendor_ext(hapd, wps) < 0) {
 		os_free(wps);
 		return -1;
 	}
+
 	wps->dev.os_version = WPA_GET_BE32(hapd->conf->os_version);
 	wps->dev.rf_bands = hapd->iconf->hw_mode == HOSTAPD_MODE_IEEE80211A ?
 		WPS_RF_50GHZ : WPS_RF_24GHZ; /* FIX: dualband AP */
@@ -647,10 +934,13 @@ int hostapd_init_wps(struct hostapd_data *hapd,
 		conf->skip_cred_build;
 	if (conf->ssid.security_policy == SECURITY_STATIC_WEP)
 		cfg.static_wep_only = 1;
+	cfg.dualband = interface_count(hapd->iface) > 1;
+	if (cfg.dualband)
+		wpa_printf(MSG_DEBUG, "WPS: Dualband AP");
 
 	wps->registrar = wps_registrar_init(wps, &cfg);
 	if (wps->registrar == NULL) {
-		printf("Failed to initialize WPS Registrar\n");
+		wpa_printf(MSG_ERROR, "Failed to initialize WPS Registrar");
 		os_free(wps->network_key);
 		os_free(wps);
 		return -1;
@@ -662,19 +952,33 @@ int hostapd_init_wps(struct hostapd_data *hapd,
 	wps->model_description = hapd->conf->model_description;
 	wps->model_url = hapd->conf->model_url;
 	wps->upc = hapd->conf->upc;
-
-	if (hostapd_wps_upnp_init(hapd, wps) < 0) {
-		wpa_printf(MSG_ERROR, "Failed to initialize WPS UPnP");
-		wps_registrar_deinit(wps->registrar);
-		os_free(wps->network_key);
-		os_free(wps);
-		return -1;
-	}
 #endif /* CONFIG_WPS_UPNP */
 
 	hostapd_register_probereq_cb(hapd, hostapd_wps_probe_req_rx, hapd);
 
 	hapd->wps = wps;
+
+	return 0;
+}
+
+
+int hostapd_init_wps_complete(struct hostapd_data *hapd)
+{
+	struct wps_context *wps = hapd->wps;
+
+	if (wps == NULL)
+		return 0;
+
+#ifdef CONFIG_WPS_UPNP
+	if (hostapd_wps_upnp_init(hapd, wps) < 0) {
+		wpa_printf(MSG_ERROR, "Failed to initialize WPS UPnP");
+		wps_registrar_deinit(wps->registrar);
+		os_free(wps->network_key);
+		os_free(wps);
+		hapd->wps = NULL;
+		return -1;
+	}
+#endif /* CONFIG_WPS_UPNP */
 
 	return 0;
 }
@@ -707,6 +1011,17 @@ void hostapd_update_wps(struct hostapd_data *hapd)
 {
 	if (hapd->wps == NULL)
 		return;
+
+#ifdef CONFIG_WPS_UPNP
+	hapd->wps->friendly_name = hapd->conf->friendly_name;
+	hapd->wps->manufacturer_url = hapd->conf->manufacturer_url;
+	hapd->wps->model_description = hapd->conf->model_description;
+	hapd->wps->model_url = hapd->conf->model_url;
+	hapd->wps->upc = hapd->conf->upc;
+#endif /* CONFIG_WPS_UPNP */
+
+	hostapd_wps_set_vendor_ext(hapd, hapd->wps);
+
 	if (hapd->conf->wps_state)
 		wps_registrar_update_ie(hapd->wps->registrar);
 	else
@@ -714,29 +1029,72 @@ void hostapd_update_wps(struct hostapd_data *hapd)
 }
 
 
-int hostapd_wps_add_pin(struct hostapd_data *hapd, const char *uuid,
-			const char *pin, int timeout)
+struct wps_add_pin_data {
+	const u8 *addr;
+	const u8 *uuid;
+	const u8 *pin;
+	size_t pin_len;
+	int timeout;
+	int added;
+};
+
+
+static int wps_add_pin(struct hostapd_data *hapd, void *ctx)
 {
-	u8 u[UUID_LEN];
-	int any = 0;
+	struct wps_add_pin_data *data = ctx;
+	int ret;
 
 	if (hapd->wps == NULL)
-		return -1;
-	if (os_strcmp(uuid, "any") == 0)
-		any = 1;
-	else if (uuid_str2bin(uuid, u))
-		return -1;
-	return wps_registrar_add_pin(hapd->wps->registrar, any ? NULL : u,
-				     (const u8 *) pin, os_strlen(pin),
-				     timeout);
+		return 0;
+	ret = wps_registrar_add_pin(hapd->wps->registrar, data->addr,
+				    data->uuid, data->pin, data->pin_len,
+				    data->timeout);
+	if (ret == 0)
+		data->added++;
+	return ret;
 }
 
 
-int hostapd_wps_button_pushed(struct hostapd_data *hapd)
+int hostapd_wps_add_pin(struct hostapd_data *hapd, const u8 *addr,
+			const char *uuid, const char *pin, int timeout)
 {
-	if (hapd->wps == NULL)
+	u8 u[UUID_LEN];
+	struct wps_add_pin_data data;
+
+	data.addr = addr;
+	data.uuid = u;
+	data.pin = (const u8 *) pin;
+	data.pin_len = os_strlen(pin);
+	data.timeout = timeout;
+	data.added = 0;
+
+	if (os_strcmp(uuid, "any") == 0)
+		data.uuid = NULL;
+	else {
+		if (uuid_str2bin(uuid, u))
+			return -1;
+		data.uuid = u;
+	}
+	if (hostapd_wps_for_each(hapd, wps_add_pin, &data) < 0)
 		return -1;
-	return wps_registrar_button_pushed(hapd->wps->registrar);
+	return data.added ? 0 : -1;
+}
+
+
+static int wps_button_pushed(struct hostapd_data *hapd, void *ctx)
+{
+	const u8 *p2p_dev_addr = ctx;
+	if (hapd->wps == NULL)
+		return 0;
+	return wps_registrar_button_pushed(hapd->wps->registrar, p2p_dev_addr);
+}
+
+
+int hostapd_wps_button_pushed(struct hostapd_data *hapd,
+			      const u8 *p2p_dev_addr)
+{
+	return hostapd_wps_for_each(hapd, wps_button_pushed,
+				    (void *) p2p_dev_addr);
 }
 
 
@@ -777,7 +1135,7 @@ int hostapd_wps_start_oob(struct hostapd_data *hapd, char *device_type,
 
 	if ((wps->oob_conf.oob_method == OOB_METHOD_DEV_PWD_E ||
 	     wps->oob_conf.oob_method == OOB_METHOD_DEV_PWD_R) &&
-	    hostapd_wps_add_pin(hapd, "any",
+	    hostapd_wps_add_pin(hapd, NULL, "any",
 				wpabuf_head(wps->oob_conf.dev_password), 0) <
 	    0)
 		goto error;
@@ -794,7 +1152,8 @@ error:
 #endif /* CONFIG_WPS_OOB */
 
 
-static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr,
+static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr, const u8 *da,
+				    const u8 *bssid,
 				    const u8 *ie, size_t ie_len)
 {
 	struct hostapd_data *hapd = ctx;
@@ -819,15 +1178,28 @@ static int hostapd_wps_probe_req_rx(void *ctx, const u8 *addr,
 	wps_ie = ieee802_11_vendor_ie_concat(ie, ie_len, WPS_DEV_OUI_WFA);
 	if (wps_ie == NULL)
 		return 0;
+	if (wps_validate_probe_req(wps_ie, addr) < 0) {
+		wpabuf_free(wps_ie);
+		return 0;
+	}
 
 	if (wpabuf_len(wps_ie) > 0) {
-		wps_registrar_probe_req_rx(hapd->wps->registrar, addr, wps_ie);
+		int p2p_wildcard = 0;
+#ifdef CONFIG_P2P
+		if (elems.ssid && elems.ssid_len == P2P_WILDCARD_SSID_LEN &&
+		    os_memcmp(elems.ssid, P2P_WILDCARD_SSID,
+			      P2P_WILDCARD_SSID_LEN) == 0)
+			p2p_wildcard = 1;
+#endif /* CONFIG_P2P */
+		wps_registrar_probe_req_rx(hapd->wps->registrar, addr, wps_ie,
+					   p2p_wildcard);
 #ifdef CONFIG_WPS_UPNP
 		/* FIX: what exactly should be included in the WLANEvent?
 		 * WPS attributes? Full ProbeReq frame? */
-		upnp_wps_device_send_wlan_event(hapd->wps_upnp, addr,
-						UPNP_WPS_WLANEVENT_TYPE_PROBE,
-						wps_ie);
+		if (!p2p_wildcard)
+			upnp_wps_device_send_wlan_event(
+				hapd->wps_upnp, addr,
+				UPNP_WPS_WLANEVENT_TYPE_PROBE, wps_ie);
 #endif /* CONFIG_WPS_UPNP */
 	}
 
@@ -864,6 +1236,7 @@ static int hostapd_rx_req_put_wlan_response(
 	 */
 
 	sta = ap_get_sta(hapd, mac_addr);
+#ifndef CONFIG_WPS_STRICT
 	if (!sta) {
 		/*
 		 * Workaround - Intel wsccmd uses bogus NewWLANEventMAC:
@@ -877,8 +1250,9 @@ static int hostapd_rx_req_put_wlan_response(
 				break;
 		}
 	}
+#endif /* CONFIG_WPS_STRICT */
 
-	if (!sta) {
+	if (!sta || !(sta->flags & WLAN_STA_WPS)) {
 		wpa_printf(MSG_DEBUG, "WPS UPnP: No matching STA found");
 		return 0;
 	}
@@ -911,18 +1285,11 @@ static int hostapd_wps_upnp_init(struct hostapd_data *hapd,
 	if (hapd->conf->ap_pin)
 		ctx->ap_pin = os_strdup(hapd->conf->ap_pin);
 
-	hapd->wps_upnp = upnp_wps_device_init(ctx, wps, hapd);
-	if (hapd->wps_upnp == NULL) {
-		os_free(ctx);
+	hapd->wps_upnp = upnp_wps_device_init(ctx, wps, hapd,
+					      hapd->conf->upnp_iface);
+	if (hapd->wps_upnp == NULL)
 		return -1;
-	}
 	wps->wps_upnp = hapd->wps_upnp;
-
-	if (upnp_wps_device_start(hapd->wps_upnp, hapd->conf->upnp_iface)) {
-		upnp_wps_device_deinit(hapd->wps_upnp);
-		hapd->wps_upnp = NULL;
-		return -1;
-	}
 
 	return 0;
 }
@@ -930,7 +1297,7 @@ static int hostapd_wps_upnp_init(struct hostapd_data *hapd,
 
 static void hostapd_wps_upnp_deinit(struct hostapd_data *hapd)
 {
-	upnp_wps_device_deinit(hapd->wps_upnp);
+	upnp_wps_device_deinit(hapd->wps_upnp, hapd);
 }
 
 #endif /* CONFIG_WPS_UPNP */
@@ -950,6 +1317,7 @@ static void hostapd_wps_ap_pin_timeout(void *eloop_data, void *user_ctx)
 	struct hostapd_data *hapd = eloop_data;
 	wpa_printf(MSG_DEBUG, "WPS: AP PIN timed out");
 	hostapd_wps_ap_pin_disable(hapd);
+	wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_PIN_DISABLED);
 }
 
 
@@ -957,6 +1325,7 @@ static void hostapd_wps_ap_pin_enable(struct hostapd_data *hapd, int timeout)
 {
 	wpa_printf(MSG_DEBUG, "WPS: Enabling AP PIN (timeout=%d)", timeout);
 	hapd->ap_pin_failures = 0;
+	hapd->ap_pin_failures_consecutive = 0;
 	hapd->conf->ap_setup_locked = 0;
 	if (hapd->wps->ap_setup_locked) {
 		wpa_msg(hapd->msg_ctx, MSG_INFO, WPS_EVENT_AP_SETUP_UNLOCKED);
@@ -970,31 +1339,53 @@ static void hostapd_wps_ap_pin_enable(struct hostapd_data *hapd, int timeout)
 }
 
 
-void hostapd_wps_ap_pin_disable(struct hostapd_data *hapd)
+static int wps_ap_pin_disable(struct hostapd_data *hapd, void *ctx)
 {
-	wpa_printf(MSG_DEBUG, "WPS: Disabling AP PIN");
 	os_free(hapd->conf->ap_pin);
 	hapd->conf->ap_pin = NULL;
 #ifdef CONFIG_WPS_UPNP
 	upnp_wps_set_ap_pin(hapd->wps_upnp, NULL);
 #endif /* CONFIG_WPS_UPNP */
 	eloop_cancel_timeout(hostapd_wps_ap_pin_timeout, hapd, NULL);
+	return 0;
+}
+
+
+void hostapd_wps_ap_pin_disable(struct hostapd_data *hapd)
+{
+	wpa_printf(MSG_DEBUG, "WPS: Disabling AP PIN");
+	hostapd_wps_for_each(hapd, wps_ap_pin_disable, NULL);
+}
+
+
+struct wps_ap_pin_data {
+	char pin_txt[9];
+	int timeout;
+};
+
+
+static int wps_ap_pin_set(struct hostapd_data *hapd, void *ctx)
+{
+	struct wps_ap_pin_data *data = ctx;
+	os_free(hapd->conf->ap_pin);
+	hapd->conf->ap_pin = os_strdup(data->pin_txt);
+#ifdef CONFIG_WPS_UPNP
+	upnp_wps_set_ap_pin(hapd->wps_upnp, data->pin_txt);
+#endif /* CONFIG_WPS_UPNP */
+	hostapd_wps_ap_pin_enable(hapd, data->timeout);
+	return 0;
 }
 
 
 const char * hostapd_wps_ap_pin_random(struct hostapd_data *hapd, int timeout)
 {
 	unsigned int pin;
-	char pin_txt[9];
+	struct wps_ap_pin_data data;
 
 	pin = wps_generate_pin();
-	os_snprintf(pin_txt, sizeof(pin_txt), "%u", pin);
-	os_free(hapd->conf->ap_pin);
-	hapd->conf->ap_pin = os_strdup(pin_txt);
-#ifdef CONFIG_WPS_UPNP
-	upnp_wps_set_ap_pin(hapd->wps_upnp, pin_txt);
-#endif /* CONFIG_WPS_UPNP */
-	hostapd_wps_ap_pin_enable(hapd, timeout);
+	os_snprintf(data.pin_txt, sizeof(data.pin_txt), "%08u", pin);
+	data.timeout = timeout;
+	hostapd_wps_for_each(hapd, wps_ap_pin_set, &data);
 	return hapd->conf->ap_pin;
 }
 
@@ -1008,13 +1399,75 @@ const char * hostapd_wps_ap_pin_get(struct hostapd_data *hapd)
 int hostapd_wps_ap_pin_set(struct hostapd_data *hapd, const char *pin,
 			   int timeout)
 {
-	os_free(hapd->conf->ap_pin);
-	hapd->conf->ap_pin = os_strdup(pin);
-	if (hapd->conf->ap_pin == NULL)
+	struct wps_ap_pin_data data;
+	int ret;
+
+	ret = os_snprintf(data.pin_txt, sizeof(data.pin_txt), "%s", pin);
+	if (ret < 0 || ret >= (int) sizeof(data.pin_txt))
 		return -1;
-#ifdef CONFIG_WPS_UPNP
-	upnp_wps_set_ap_pin(hapd->wps_upnp, hapd->conf->ap_pin);
-#endif /* CONFIG_WPS_UPNP */
-	hostapd_wps_ap_pin_enable(hapd, timeout);
+	data.timeout = timeout;
+	return hostapd_wps_for_each(hapd, wps_ap_pin_set, &data);
+}
+
+
+static int wps_update_ie(struct hostapd_data *hapd, void *ctx)
+{
+	if (hapd->wps)
+		wps_registrar_update_ie(hapd->wps->registrar);
 	return 0;
+}
+
+
+void hostapd_wps_update_ie(struct hostapd_data *hapd)
+{
+	hostapd_wps_for_each(hapd, wps_update_ie, NULL);
+}
+
+
+int hostapd_wps_config_ap(struct hostapd_data *hapd, const char *ssid,
+			  const char *auth, const char *encr, const char *key)
+{
+	struct wps_credential cred;
+	size_t len;
+
+	os_memset(&cred, 0, sizeof(cred));
+
+	len = os_strlen(ssid);
+	if ((len & 1) || len > 2 * sizeof(cred.ssid) ||
+	    hexstr2bin(ssid, cred.ssid, len / 2))
+		return -1;
+	cred.ssid_len = len / 2;
+
+	if (os_strncmp(auth, "OPEN", 4) == 0)
+		cred.auth_type = WPS_AUTH_OPEN;
+	else if (os_strncmp(auth, "WPAPSK", 6) == 0)
+		cred.auth_type = WPS_AUTH_WPAPSK;
+	else if (os_strncmp(auth, "WPA2PSK", 7) == 0)
+		cred.auth_type = WPS_AUTH_WPA2PSK;
+	else
+		return -1;
+
+	if (encr) {
+		if (os_strncmp(encr, "NONE", 4) == 0)
+			cred.encr_type = WPS_ENCR_NONE;
+		else if (os_strncmp(encr, "WEP", 3) == 0)
+			cred.encr_type = WPS_ENCR_WEP;
+		else if (os_strncmp(encr, "TKIP", 4) == 0)
+			cred.encr_type = WPS_ENCR_TKIP;
+		else if (os_strncmp(encr, "CCMP", 4) == 0)
+			cred.encr_type = WPS_ENCR_AES;
+		else
+			return -1;
+	} else
+		cred.encr_type = WPS_ENCR_NONE;
+
+	if (key) {
+		len = os_strlen(key);
+		if ((len & 1) || len > 2 * sizeof(cred.key) ||
+		    hexstr2bin(key, cred.key, len / 2))
+			return -1;
+		cred.key_len = len / 2;
+	}
+
+	return wps_registrar_config_ap(hapd->wps->registrar, &cred);
 }

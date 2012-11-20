@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.83.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.83.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -284,8 +284,8 @@ sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 		return (EOPNOTSUPP);
 
 	node = *rnode;
-	node.sysctl_data = booted_device->dv_xname;
-	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	node.sysctl_data = __UNCONST(device_xname(booted_device));
+	node.sysctl_size = strlen(device_xname(booted_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -528,7 +528,7 @@ void
 cpu_boot_secondary_processors(void)
 {
 	uint32_t mbox;
-	kcpuset_copybits(kcpuset_attached, &mbox, sizeof(mbox));
+	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
 	atomic_swap_32(&arm_cpu_mbox, mbox);
 	membar_producer();
 #ifdef _ARM_ARCH_7

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.419 2012/09/01 00:27:12 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.419.2.1 2012/11/20 03:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	699001100	/* NetBSD 6.99.11 */
+#define	__NetBSD_Version__	699001500	/* NetBSD 6.99.15 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -320,6 +320,16 @@
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
+
+/*
+ * Maximum bus transfer size.  Ports which allow this to be larger than
+ * the traditional 64K MAXPHYS should define an appropriate value in
+ * <machine/param.h>.
+ */
+
+#ifndef MACHINE_MAXPHYS
+#define MACHINE_MAXPHYS MAXPHYS
+#endif
 
 /*
  * File system parameters and macros.

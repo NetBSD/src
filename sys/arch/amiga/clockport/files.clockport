@@ -1,4 +1,4 @@
-#	$NetBSD: files.clockport,v 1.2 2012/05/15 17:35:43 rkujawa Exp $
+#	$NetBSD: files.clockport,v 1.2.4.1 2012/11/20 03:00:56 tls Exp $
 
 define	clockportbus {}
 
@@ -36,6 +36,10 @@ file	arch/amiga/clockport/clockport.c	clockport
 
 # Individual Computers SilverSurfer serial
 attach	com at clockport with com_ss
-file	arch/amiga/clockport/com_ss.c
+file	arch/amiga/clockport/com_ss.c		com_ss
 
+# Individual Computers / Petsoff - Delfina 1200 / Flipper
+device	flipper
+attach	flipper at clockport
+file	arch/amiga/clockport/flipper.c		flipper
 

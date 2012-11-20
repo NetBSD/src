@@ -17,7 +17,11 @@
 
 int wpa_supplicant_enabled_networks(struct wpa_config *conf);
 void wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec);
+int wpa_supplicant_delayed_sched_scan(struct wpa_supplicant *wpa_s,
+				      int sec, int usec);
+int wpa_supplicant_req_sched_scan(struct wpa_supplicant *wpa_s);
 void wpa_supplicant_cancel_scan(struct wpa_supplicant *wpa_s);
+void wpa_supplicant_cancel_sched_scan(struct wpa_supplicant *wpa_s);
 void wpa_supplicant_notify_scanning(struct wpa_supplicant *wpa_s,
 				    int scanning);
 struct wpa_driver_scan_params;
@@ -32,6 +36,7 @@ const u8 * wpa_scan_get_vendor_ie(const struct wpa_scan_res *res,
 				  u32 vendor_type);
 struct wpabuf * wpa_scan_get_vendor_ie_multi(const struct wpa_scan_res *res,
 					     u32 vendor_type);
-void wpa_scan_results_free(struct wpa_scan_results *res);
+struct wpabuf * wpa_scan_get_vendor_ie_multi_beacon(
+	const struct wpa_scan_res *res, u32 vendor_type);
 
 #endif /* SCAN_H */

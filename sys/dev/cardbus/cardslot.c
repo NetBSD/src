@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.53 2011/05/24 16:37:04 joerg Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.53.14.1 2012/11/20 03:01:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.53 2011/05/24 16:37:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.53.14.1 2012/11/20 03:01:59 tls Exp $");
 
 #include "opt_cardslot.h"
 
@@ -67,8 +67,7 @@ static void cardslot_event_thread(void *arg);
 
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
 static int cardslot_16_print(void *, const char *);
-static int cardslot_16_submatch(device_t, cfdata_t,
-				     const int *, void *);
+static int cardslot_16_submatch(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL3_NEW(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, cardslotdetach, NULL, NULL, cardslotchilddet,
@@ -103,8 +102,7 @@ cardslotchilddet(device_t self, device_t child)
 }
 
 STATIC void
-cardslotattach(device_t parent, device_t self,
-    void *aux)
+cardslotattach(device_t parent, device_t self, void *aux)
 {
 	struct cardslot_softc *sc = device_private(self);
 	struct cardslot_attach_args *caa = aux;

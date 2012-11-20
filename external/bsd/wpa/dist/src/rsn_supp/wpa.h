@@ -55,6 +55,19 @@ struct wpa_sm_ctx {
 	int (*send_ft_action)(void *ctx, u8 action, const u8 *target_ap,
 			      const u8 *ies, size_t ies_len);
 	int (*mark_authenticated)(void *ctx, const u8 *target_ap);
+#ifdef CONFIG_TDLS
+	int (*tdls_get_capa)(void *ctx, int *tdls_supported,
+			     int *tdls_ext_setup);
+	int (*send_tdls_mgmt)(void *ctx, const u8 *dst,
+			      u8 action_code, u8 dialog_token,
+			      u16 status_code, const u8 *buf, size_t len);
+	int (*tdls_oper)(void *ctx, int oper, const u8 *peer);
+	int (*tdls_peer_addset)(void *ctx, const u8 *addr, int add,
+				u16 capability, const u8 *supp_rates,
+				size_t supp_rates_len);
+#endif /* CONFIG_TDLS */
+	void (*set_rekey_offload)(void *ctx, const u8 *kek, const u8 *kck,
+				  const u8 *replay_ctr);
 };
 
 
@@ -125,6 +138,10 @@ int wpa_sm_parse_own_wpa_ie(struct wpa_sm *sm, struct wpa_ie_data *data);
 int wpa_sm_pmksa_cache_list(struct wpa_sm *sm, char *buf, size_t len);
 void wpa_sm_drop_sa(struct wpa_sm *sm);
 int wpa_sm_has_ptk(struct wpa_sm *sm);
+
+void wpa_sm_update_replay_ctr(struct wpa_sm *sm, const u8 *replay_ctr);
+
+void wpa_sm_pmksa_cache_flush(struct wpa_sm *sm, void *network_ctx);
 
 #else /* CONFIG_NO_WPA */
 
@@ -271,6 +288,16 @@ static inline int wpa_sm_has_ptk(struct wpa_sm *sm)
 	return 0;
 }
 
+static inline void wpa_sm_update_replay_ctr(struct wpa_sm *sm,
+					    const u8 *replay_ctr)
+{
+}
+
+static inline void wpa_sm_pmksa_cache_flush(struct wpa_sm *sm,
+					    void *network_ctx)
+{
+}
+
 #endif /* CONFIG_NO_WPA */
 
 #ifdef CONFIG_PEERKEY
@@ -329,5 +356,20 @@ wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 }
 
 #endif /* CONFIG_IEEE80211R */
+
+
+/* tdls.c */
+void wpa_tdls_ap_ies(struct wpa_sm *sm, const u8 *ies, size_t len);
+void wpa_tdls_assoc_resp_ies(struct wpa_sm *sm, const u8 *ies, size_t len);
+int wpa_tdls_start(struct wpa_sm *sm, const u8 *addr);
+int wpa_tdls_reneg(struct wpa_sm *sm, const u8 *addr);
+int wpa_tdls_send_teardown(struct wpa_sm *sm, const u8 *addr, u16 reason_code);
+int wpa_tdls_teardown_link(struct wpa_sm *sm, const u8 *addr, u16 reason_code);
+int wpa_tdls_send_discovery_request(struct wpa_sm *sm, const u8 *addr);
+int wpa_tdls_init(struct wpa_sm *sm);
+void wpa_tdls_deinit(struct wpa_sm *sm);
+void wpa_tdls_enable(struct wpa_sm *sm, int enabled);
+void wpa_tdls_disable_link(struct wpa_sm *sm, const u8 *addr);
+int wpa_tdls_is_external_setup(struct wpa_sm *sm);
 
 #endif /* WPA_H */

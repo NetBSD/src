@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.23 2011/12/15 14:25:13 phx Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.23.6.1 2012/11/20 03:00:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@ struct ite_softc;
  * uses it...
  */
 struct	grf_softc {
-	struct device	g_device;	/* config sets this up. */
+	device_t	g_device;	/* config sets this up. */
 	struct grfinfo	g_display;	/* hardware description (for ioctl) */
 	volatile void	*g_regkva;	/* KVA of registers */
 	volatile void	*g_fbkva;	/* KVA of framebuffer */

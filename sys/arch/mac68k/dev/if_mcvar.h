@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.15 2007/03/05 21:22:45 he Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.15.88.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -62,7 +62,7 @@ struct mc_rxframe {
 };
 
 struct mc_softc {
-	struct device	sc_dev;		/* base device glue */
+	device_t	sc_dev;		/* base device glue */
 	struct ethercom	sc_ethercom;	/* Ethernet common part */
 #define	sc_if		sc_ethercom.ec_if
 

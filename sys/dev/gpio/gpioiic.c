@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.5 2011/10/02 09:33:19 mbalmer Exp $ */
+/* $NetBSD: gpioiic.c,v 1.5.12.1 2012/11/20 03:02:00 tls Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.5 2011/10/02 09:33:19 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.5.12.1 2012/11/20 03:02:00 tls Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -110,7 +110,7 @@ gpioiic_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 void
-gpioiic_attach(struct device *parent, struct device *self, void *aux)
+gpioiic_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpioiic_softc *sc = device_private(self);
 	struct gpio_attach_args *ga = aux;
@@ -211,7 +211,7 @@ fail:
 }
 
 int
-gpioiic_detach(struct device *self, int flags)
+gpioiic_detach(device_t self, int flags)
 {
 	struct gpioiic_softc *sc = device_private(self);
 	int rv = 0;

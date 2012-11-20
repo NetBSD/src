@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.9 2009/03/14 14:46:01 dsl Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.9.22.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -37,7 +37,7 @@
  * State info, per mouse instance.
  */
 struct ams_softc {
-	struct	device	sc_dev;
+	device_t	sc_dev;
 
 	/* ADB info */
 	int		origaddr;	/* ADB device type (ADBADDR_MS) */
@@ -51,7 +51,7 @@ struct ams_softc {
 	char		sc_devid[5];	/* device indentifier */
 
 	int		sc_mb;		/* current button state */
-	struct device	*sc_wsmousedev;
+	device_t	sc_wsmousedev;
 	/* helpers for trackpads */
 	int		sc_down;
 	int		sc_tapping;	/* 1 - tapping causes button event */

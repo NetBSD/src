@@ -1,4 +1,4 @@
-/*	$NetBSD: aevar.h,v 1.5 2012/02/02 19:43:00 tls Exp $	*/
+/*	$NetBSD: aevar.h,v 1.5.6.1 2012/11/20 03:01:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct ae_stats {
  * Software state per device.
  */
 struct ae_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_size_t sc_size;		/* bus space size */

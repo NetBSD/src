@@ -75,7 +75,7 @@ static int ieee802_11_parse_vendor_specific(const u8 *pos, size_t elen,
 				elems->wmm_tspec_len = elen;
 				break;
 			default:
-				wpa_printf(MSG_MSGDUMP, "unknown WMM "
+				wpa_printf(MSG_EXCESSIVE, "unknown WMM "
 					   "information element ignored "
 					   "(subtype=%d len=%lu)",
 					   pos[4], (unsigned long) elen);
@@ -88,7 +88,23 @@ static int ieee802_11_parse_vendor_specific(const u8 *pos, size_t elen,
 			elems->wps_ie_len = elen;
 			break;
 		default:
-			wpa_printf(MSG_MSGDUMP, "Unknown Microsoft "
+			wpa_printf(MSG_EXCESSIVE, "Unknown Microsoft "
+				   "information element ignored "
+				   "(type=%d len=%lu)",
+				   pos[3], (unsigned long) elen);
+			return -1;
+		}
+		break;
+
+	case OUI_WFA:
+		switch (pos[3]) {
+		case P2P_OUI_TYPE:
+			/* Wi-Fi Alliance - P2P IE */
+			elems->p2p = pos;
+			elems->p2p_len = elen;
+			break;
+		default:
+			wpa_printf(MSG_MSGDUMP, "Unknown WFA "
 				   "information element ignored "
 				   "(type=%d len=%lu)\n",
 				   pos[3], (unsigned long) elen);
@@ -103,18 +119,18 @@ static int ieee802_11_parse_vendor_specific(const u8 *pos, size_t elen,
 			elems->vendor_ht_cap_len = elen;
 			break;
 		default:
-			wpa_printf(MSG_MSGDUMP, "Unknown Broadcom "
+			wpa_printf(MSG_EXCESSIVE, "Unknown Broadcom "
 				   "information element ignored "
-				   "(type=%d len=%lu)\n",
+				   "(type=%d len=%lu)",
 				   pos[3], (unsigned long) elen);
 			return -1;
 		}
 		break;
 
 	default:
-		wpa_printf(MSG_MSGDUMP, "unknown vendor specific information "
-			   "element ignored (vendor OUI %02x:%02x:%02x "
-			   "len=%lu)",
+		wpa_printf(MSG_EXCESSIVE, "unknown vendor specific "
+			   "information element ignored (vendor OUI "
+			   "%02x:%02x:%02x len=%lu)",
 			   pos[0], pos[1], pos[2], (unsigned long) elen);
 		return -1;
 	}
@@ -238,6 +254,15 @@ ParseRes ieee802_11_parse_elems(const u8 *start, size_t len,
 			elems->ht_operation = pos;
 			elems->ht_operation_len = elen;
 			break;
+		case WLAN_EID_LINK_ID:
+			if (elen < 18)
+				break;
+			elems->link_id = pos;
+			break;
+		case WLAN_EID_INTERWORKING:
+			elems->interworking = pos;
+			elems->interworking_len = elen;
+			break;
 		default:
 			unknown++;
 			if (!show_errors)
@@ -323,4 +348,44 @@ struct wpabuf * ieee802_11_vendor_ie_concat(const u8 *ies, size_t ies_len,
 	}
 
 	return buf;
+}
+
+
+const u8 * get_hdr_bssid(const struct ieee80211_hdr *hdr, size_t len)
+{
+	u16 fc, type, stype;
+
+	/*
+	 * PS-Poll frames are 16 bytes. All other frames are
+	 * 24 bytes or longer.
+	 */
+	if (len < 16)
+		return NULL;
+
+	fc = le_to_host16(hdr->frame_control);
+	type = WLAN_FC_GET_TYPE(fc);
+	stype = WLAN_FC_GET_STYPE(fc);
+
+	switch (type) {
+	case WLAN_FC_TYPE_DATA:
+		if (len < 24)
+			return NULL;
+		switch (fc & (WLAN_FC_FROMDS | WLAN_FC_TODS)) {
+		case WLAN_FC_FROMDS | WLAN_FC_TODS:
+		case WLAN_FC_TODS:
+			return hdr->addr1;
+		case WLAN_FC_FROMDS:
+			return hdr->addr2;
+		default:
+			return NULL;
+		}
+	case WLAN_FC_TYPE_CTRL:
+		if (stype != WLAN_FC_STYPE_PSPOLL)
+			return NULL;
+		return hdr->addr1;
+	case WLAN_FC_TYPE_MGMT:
+		return hdr->addr3;
+	default:
+		return NULL;
+	}
 }

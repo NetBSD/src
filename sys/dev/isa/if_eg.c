@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.84 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.84.6.1 2012/11/20 03:02:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84.6.1 2012/11/20 03:02:10 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.84 2012/02/02 19:43:04 tls Exp $");
  * Ethernet software status per interface.
  */
 struct eg_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
@@ -116,7 +116,7 @@ struct eg_softc {
 int egprobe(device_t, cfdata_t, void *);
 void egattach(device_t, device_t, void *);
 
-CFATTACH_DECL(eg, sizeof(struct eg_softc),
+CFATTACH_DECL_NEW(eg, sizeof(struct eg_softc),
     egprobe, egattach, NULL, NULL);
 
 int egintr(void *);
@@ -377,12 +377,14 @@ egprobe(device_t parent, cfdata_t match, void *aux)
 void
 egattach(device_t parent, device_t self, void *aux)
 {
-	struct eg_softc *sc = (void *)self;
+	struct eg_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+
+	sc->sc_dev = self;
 
 	printf("\n");
 
@@ -462,7 +464,7 @@ egattach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
@@ -477,7 +479,7 @@ egattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, egintr, sc);
 
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
 }
 
@@ -501,18 +503,18 @@ eginit(struct eg_softc *sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0)
-		aprint_error_dev(&sc->sc_dev, "can't send Configure 82586\n");
+		aprint_error_dev(sc->sc_dev, "can't send Configure 82586\n");
 
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't read Configure 82586 status\n");
+		aprint_error_dev(sc->sc_dev, "can't read Configure 82586 status\n");
 		egprintpcb(sc->eg_pcb);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		aprint_error_dev(&sc->sc_dev, "configure card command failed\n");
+		aprint_error_dev(sc->sc_dev, "configure card command failed\n");
 
 	if (sc->eg_inbuf == NULL) {
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_inbuf == NULL) {
-			aprint_error_dev(&sc->sc_dev, "can't allocate inbuf\n");
+			aprint_error_dev(sc->sc_dev, "can't allocate inbuf\n");
 			panic("eginit");
 		}
 	}
@@ -521,7 +523,7 @@ eginit(struct eg_softc *sc)
 	if (sc->eg_outbuf == NULL) {
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_outbuf == NULL) {
-			aprint_error_dev(&sc->sc_dev, "can't allocate outbuf\n");
+			aprint_error_dev(sc->sc_dev, "can't allocate outbuf\n");
 			panic("eginit");
 		}
 	}
@@ -585,7 +587,7 @@ loop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0) {
-		aprint_error_dev(&sc->sc_dev, "no header mbuf\n");
+		aprint_error_dev(sc->sc_dev, "no header mbuf\n");
 		panic("egstart");
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
@@ -601,7 +603,7 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't send Send Packet command\n");
+		aprint_error_dev(sc->sc_dev, "can't send Send Packet command\n");
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		m_freem(m0);
@@ -669,7 +671,7 @@ egintr(void *arg)
 		case EG_RSP_SENDPACKET:
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("%s: packet dropped\n",
-				    device_xname(&sc->sc_dev)));
+				    device_xname(sc->sc_dev)));
 				sc->sc_ethercom.ec_if.if_oerrors++;
 			} else
 				sc->sc_ethercom.ec_if.if_opackets++;
@@ -683,7 +685,7 @@ egintr(void *arg)
 		/* XXX byte-order and type-size bugs here... */
 		case EG_RSP_GETSTATS:
 			DPRINTF(("%s: Card Statistics\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			memcpy(&i, &sc->eg_pcb[2], sizeof(i));
 			DPRINTF(("Receive Packets %d\n", i));
 			memcpy(&i, &sc->eg_pcb[6], sizeof(i));
@@ -701,7 +703,7 @@ egintr(void *arg)
 
 		default:
 			printf("%s: egintr: Unknown response %x??\n",
-			    device_xname(&sc->sc_dev), sc->eg_pcb[0]);
+			    device_xname(sc->sc_dev), sc->eg_pcb[0]);
 			egprintpcb(sc->eg_pcb);
 			break;
 		}
@@ -723,7 +725,7 @@ egread(struct eg_softc *sc, void *buf, int len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		aprint_error_dev(&sc->sc_dev, "invalid packet size %d; dropping\n", len);
+		aprint_error_dev(sc->sc_dev, "invalid packet size %d; dropping\n", len);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -868,7 +870,7 @@ egreset(struct eg_softc *sc)
 {
 	int s;
 
-	DPRINTF(("%s: egreset()\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: egreset()\n", device_xname(sc->sc_dev)));
 	s = splnet();
 	egstop(sc);
 	eginit(sc);
@@ -880,7 +882,7 @@ egwatchdog(struct ifnet *ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	egreset(sc);

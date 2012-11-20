@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.17 2011/07/19 15:59:53 dyoung Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.17 2011/07/19 15:59:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.17 2011/07/19 15:59:53 dyoung Exp $");
  */
 
 struct pioc_softc {
-	struct device		sc_dev;			/* device node */
 	bus_space_tag_t		sc_iot;			/* bus tag */
 	bus_space_handle_t	sc_ioh;			/* bus handle */
 	bus_addr_t		sc_iobase;		/* IO base address */
@@ -104,7 +103,7 @@ static void piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh,
 
 /* device attach and driver structure */
 
-CFATTACH_DECL(pioc, sizeof(struct pioc_softc),
+CFATTACH_DECL_NEW(pioc, sizeof(struct pioc_softc),
     piocmatch, piocattach, NULL, NULL);
 
 /*
@@ -298,7 +297,7 @@ piocattach(device_t parent, device_t self, void *aux)
 	iot = sc->sc_iot = mb->mb_iot;
 
 	if (bus_space_map(iot, sc->sc_iobase, PIOC_SIZE, 0, &ioh))
-		panic("%s: couldn't map I/O space", self->dv_xname);
+		panic("%s: couldn't map I/O space", device_xname(self));
 	sc->sc_ioh = ioh;
 
 	piocgetid(iot, ioh, PIOC_CM_ENTER_665, &id, &rev);

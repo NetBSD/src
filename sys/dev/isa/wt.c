@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.82 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: wt.c,v 1.82.22.1 2012/11/20 03:02:11 tls Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.82 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.82.22.1 2012/11/20 03:02:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ static struct wtregs {
 };
 
 struct wt_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	bus_space_tag_t		sc_iot;
@@ -184,7 +184,7 @@ static int	wtintr(void *sc);
 int	wtprobe(device_t, cfdata_t, void *);
 void	wtattach(device_t, device_t, void *);
 
-CFATTACH_DECL(wt, sizeof(struct wt_softc),
+CFATTACH_DECL_NEW(wt, sizeof(struct wt_softc),
     wtprobe, wtattach, NULL, NULL);
 
 extern struct cfdriver wt_cd;
@@ -259,11 +259,13 @@ done:
 void
 wtattach(device_t parent, device_t self, void *aux)
 {
-	struct wt_softc *sc = (void *)self;
+	struct wt_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	bus_size_t maxsize;
+
+	sc->sc_dev = self;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AV_NPORT, 0, &ioh)) {
@@ -306,20 +308,20 @@ ok:
 	sc->chan = ia->ia_drq[0].ir_drq;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
-		aprint_error_dev(&sc->sc_dev, "max DMA size %lu is less than required %d\n",
+		aprint_error_dev(sc->sc_dev, "max DMA size %lu is less than required %d\n",
 		    (u_long)maxsize, MAXPHYS);
 		return;
 	}
 
 	if (isa_drq_alloc(sc->sc_ic, sc->chan) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+		aprint_error_dev(sc->sc_dev, "can't reserve drq %d\n",
 		    sc->chan);
 		return;
 	}
 
 	if (isa_dmamap_create(sc->sc_ic, sc->chan, MAXPHYS,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-		aprint_error_dev(&sc->sc_dev, "can't set up ISA DMA map\n");
+		aprint_error_dev(sc->sc_dev, "can't set up ISA DMA map\n");
 		return;
 	}
 
@@ -407,7 +409,7 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 				/* Check the status of the controller. */
 				if (sc->error & TP_ILL) {
-					aprint_error_dev(&sc->sc_dev, "invalid tape density\n");
+					aprint_error_dev(sc->sc_dev, "invalid tape density\n");
 					return ENODEV;
 				}
 			}
@@ -1085,7 +1087,7 @@ wtsense(struct wt_softc *sc, int verbose, int ignore)
 	else if (error & TP_ILL)
 		msg = "Illegal command";
 	if (msg)
-		printf("%s: %s\n", device_xname(&sc->sc_dev), msg);
+		printf("%s: %s\n", device_xname(sc->sc_dev), msg);
 	return 0;
 }
 

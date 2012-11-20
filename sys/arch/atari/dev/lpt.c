@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34 2010/04/13 09:51:07 tsutsui Exp $ */
+/*	$NetBSD: lpt.c,v 1.34.18.1 2012/11/20 03:01:09 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.34 2010/04/13 09:51:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.34.18.1 2012/11/20 03:01:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,12 @@ const struct cdevsw lp_cdevsw = {
 
 /*ARGSUSED*/
 static	int
-lpmatch(device_t pdp, cfdata_t cfp, void *auxp)
+lpmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int	lpt_matched = 0;
 
 	/* Match at most 1 lpt unit */
-	if (strcmp((char *)auxp, "lpt") || lpt_matched)
+	if (strcmp((char *)aux, "lpt") || lpt_matched)
 		return 0;
 	lpt_matched = 1;
 	return (1);
@@ -155,17 +155,17 @@ lpmatch(device_t pdp, cfdata_t cfp, void *auxp)
 
 /*ARGSUSED*/
 static void
-lpattach(device_t pdp, device_t dp, void *auxp)
+lpattach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = device_private(dp);
+	struct lpt_softc *sc = device_private(self);
 
-	sc->sc_dev = dp;
+	sc->sc_dev = self;
 	sc->sc_state = 0;
 
 	aprint_normal("\n");
 
 	if (intr_establish(0, USER_VEC, 0, (hw_ifun_t)lpthwintr, sc) == NULL)
-		aprint_error_dev(dp, "Can't establish interrupt\n");
+		aprint_error_dev(self, "Can't establish interrupt\n");
 	ym2149_strobe(1);
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, lptpseudointr, sc);
 

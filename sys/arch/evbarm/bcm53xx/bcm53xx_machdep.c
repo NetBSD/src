@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.2.2.1 2012/11/20 03:01:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2 2012/09/07 11:53:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2.2.1 2012/11/20 03:01:12 tls Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -82,6 +82,8 @@ extern int KERNEL_BASE_virt[];
 BootConfig bootconfig;
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;     
+
+u_int uboot_args[4] = { 0 };
 
 static void bcm53xx_system_reset(void);
 
@@ -170,6 +172,13 @@ static const struct pmap_devmap devmap[] = {
 	{ 0, 0, 0, 0, 0 }
 };
 
+static const struct boot_physmem bp_first256 = {
+	.bp_start = 0x80000000 / NBPG,
+	.bp_pages = 0x10000000 / NBPG,
+	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_flags = 0,
+};
+
 /*
  * u_int initarm(...)
  *
@@ -214,6 +223,9 @@ initarm(void *arg)
 	bcm53xx_rng_start(bcm53xx_ioreg_bst, bcm53xx_ioreg_bsh);
 #endif
 
+	printf("uboot arg = %#x, %#x, %#x, %#x\n",
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);      
+
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (" ___STRING(EVBARM_BOARDTYPE) ") booting ...\n");
 
@@ -226,11 +238,22 @@ initarm(void *arg)
 	    arm_cpu_max + 1, arm_cpu_max + 1 ? "s" : "",
 	    arm_cpu_hatched);
 #endif
+	printf(", CLIDR=%010o CTR=%#x",
+	    armreg_clidr_read(), armreg_ctr_read());
 	printf("\n");
 #endif
 
-	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), bcm53xx_memprobe(),
+	psize_t memsize = bcm53xx_memprobe();
+#ifdef MEMSIZE
+	if ((memsize >> 20) > MEMSIZE)
+		memsize = MEMSIZE*1024*1024;
+#endif
+	const bool bigmem_p = (memsize >> 20) > 256; 
+
+	arm32_bootmem_init(KERN_VTOPHYS(KERNEL_BASE), memsize,
 	    (paddr_t)KERNEL_BASE_phys);
+
+	bcm53xx_dma_bootstrap(memsize);
 
 	/*
 	 * This is going to do all the hard work of setting up the first and
@@ -247,8 +270,19 @@ initarm(void *arg)
 	cpu_reset_address = bcm53xx_system_reset;
 	/* we've a specific device_register routine */
 	evbarm_device_register = bcm53xx_device_register;
+	if (bigmem_p) {
+		/*
+		 * If we have more than 256MB
+		 */
+		arm_poolpage_vmfreelist = bp_first256.bp_freelist;
+	}
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	/*
+	 * If we have more than 256MB of RAM, set aside the first 256MB for
+	 * non-default VM allocations.
+	 */
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
+	    (bigmem_p ? &bp_first256 : NULL), (bigmem_p ? 1 : 0));
 }
 
 void

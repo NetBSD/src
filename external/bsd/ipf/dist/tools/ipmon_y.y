@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon_y.y,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp $	*/
+/*	$NetBSD: ipmon_y.y,v 1.1.1.2.2.1 2012/11/20 02:57:59 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -431,7 +431,7 @@ build_action(olist, todo)
 
 int
 check_action(buf, log, opts, lvl)
-	char *buf, *log;
+	const char *buf, *log;
 	int opts, lvl;
 {
 	ipmon_action_t *a;
@@ -454,7 +454,7 @@ check_action(buf, log, opts, lvl)
 	msg.imm_data = ipl;
 	msg.imm_dsize = ipl->ipl_dsize;
 	msg.imm_when = ipl->ipl_time.tv_sec;
-	msg.imm_msg = log;
+	msg.imm_msg = (char *)log;
 	msg.imm_msglen = strlen(log);
 	msg.imm_loglevel = lvl;
 

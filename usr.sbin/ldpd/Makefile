@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/12/30 11:29:21 kefren Exp $
+# $NetBSD: Makefile,v 1.3.12.1 2012/11/20 03:03:01 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -21,5 +21,9 @@ SRCS=   conffile.c \
 	tlv_stack.c
 
 LDADD+=	-lcrypt
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DINET6
+.endif
 
 .include <bsd.prog.mk>

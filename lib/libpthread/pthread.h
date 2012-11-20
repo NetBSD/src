@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.34 2010/08/06 05:25:02 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.34.12.1 2012/11/20 03:00:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,9 @@ int	pthread_cond_timedwait(pthread_cond_t * __restrict,
 int	pthread_cond_signal(pthread_cond_t *);
 int	pthread_cond_broadcast(pthread_cond_t *);
 int	pthread_condattr_init(pthread_condattr_t *);
+#if defined(_NETBSD_SOURCE)
+int     pthread_condattr_setclock(pthread_condattr_t *, clockid_t);
+#endif
 int	pthread_condattr_destroy(pthread_condattr_t *);
 
 int	pthread_once(pthread_once_t *, void (*)(void));

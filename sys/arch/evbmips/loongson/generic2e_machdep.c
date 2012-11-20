@@ -48,7 +48,7 @@
  * Generic Loongson 2E code and configuration data.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2 2012/02/14 21:41:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.1 2012/11/20 03:01:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2 2012/02/14 21:41:02 christ
 #include <dev/ic/comvar.h>
 #endif
 
-void	generic2e_device_register(struct device *, void *);
+void	generic2e_device_register(device_t, void *);
 void	generic2e_reset(void);
 
 void	generic2e_setup(void);
@@ -91,7 +91,7 @@ void	generic2e_pci_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 int	generic2e_intr_map(int, int, int, pci_intr_handle_t *);
 
-void	generic2e_isa_attach_hook(struct device *, struct device *,
+void	generic2e_isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	*generic2e_isa_intr_establish(void *, int, int, int,
 	     int (*)(void *), void *);
@@ -234,7 +234,7 @@ generic2e_intr_map(int dev, int fn, int pin, pci_intr_handle_t *ihp)
  */
 
 void
-generic2e_isa_attach_hook(struct device *parent, struct device *self,
+generic2e_isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 	loongson_set_isa_imr(loongson_isaimr);
@@ -383,12 +383,12 @@ generic2e_setup(void)
 }
 
 void
-generic2e_device_register(struct device *dev, void *aux)
+generic2e_device_register(device_t dev, void *aux)
 {
 	const char *name = device_xname(dev);
 
-	if (dev->dv_class != bootdev_class)
-		return;	
+	if (device_class(dev) != bootdev_class)
+		return;
 
 	/* 
 	 * The device numbering must match. There's no way

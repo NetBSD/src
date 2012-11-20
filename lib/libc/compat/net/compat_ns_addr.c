@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_ns_addr.c,v 1.2 2012/03/20 17:05:59 matt Exp $	*/
+/*	$NetBSD: compat_ns_addr.c,v 1.2.2.1 2012/11/20 03:00:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: compat_ns_addr.c,v 1.2 2012/03/20 17:05:59 matt Exp $");
+__RCSID("$NetBSD: compat_ns_addr.c,v 1.2.2.1 2012/11/20 03:00:41 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,7 +104,8 @@ static void
 Field(char *buf, uint8_t *out, int len)
 {
 	register char *bp = buf;
-	int i, ibase, base16 = 0, base10 = 0, clen = 0;
+	int i, ibase, base16 = 0, base10 = 0;
+	unsigned int clen = 0;
 	int hb[6], *hp;
 
 	_DIAGASSERT(buf != NULL);

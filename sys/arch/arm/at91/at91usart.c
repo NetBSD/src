@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.6 2012/02/02 19:42:57 tls Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.6 2012/02/02 19:42:57 tls Exp $ */
+/*	$Id: at91usart.c,v 1.6.6.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.6.6.1 2012/11/20 03:01:03 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.6 2012/02/02 19:42:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.6.6.1 2012/11/20 03:01:03 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,8 +148,8 @@ static struct at91usart_cons_softc {
 	tcflag_t		sc_cflag;
 	int			sc_attached;
 
-	u_int8_t		*sc_rx_ptr;
-	u_int8_t		sc_rx_fifo[64];
+	uint8_t			*sc_rx_ptr;
+	uint8_t			sc_rx_fifo[64];
 } usart_cn_sc;
 
 static struct cnm_state at91usart_cnm_state;
@@ -161,7 +161,7 @@ inline static void	at91usart_rxsoft(struct at91usart_softc *, struct tty *, unsi
 
 #define	PDC_BLOCK_SIZE	64
 
-//CFATTACH_DECL(at91usart, sizeof(struct at91usart_softc),
+//CFATTACH_DECL_NEW(at91usart, sizeof(struct at91usart_softc),
 //	      at91usart_match, at91usart_attach, NULL, NULL);
 
 //#define	USART_DEBUG	10
@@ -831,7 +831,7 @@ at91usart_stop(struct tty *tp, int flag)
 static u_int
 cflag2lcrhi(tcflag_t cflag)
 {
-	u_int32_t	mr;
+	uint32_t	mr;
 
 	switch (cflag & CSIZE) {
 	default:
@@ -861,7 +861,7 @@ at91usart_set(struct at91usart_softc *sc)
 #if	NOTYET
 int
 at91usart_cn_attach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t ioh,
-		    u_int32_t mstclk, int ospeed, tcflag_t cflag)
+		    uint32_t mstclk, int ospeed, tcflag_t cflag)
 {
 	cn_tab = &at91usart_cons;
 	cn_init_magic(&at91usart_cnm_state);

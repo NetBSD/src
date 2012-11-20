@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.4 2012/08/29 17:13:22 drochner Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.4.2.1 2012/11/20 03:01:51 tls Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.4 2012/08/29 17:13:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.4.2.1 2012/11/20 03:01:51 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -115,6 +116,7 @@ cpu_ucode_amd_get_version(struct cpu_ucode_version *ucode)
 	return copyout(&data, ucode->data, sizeof(data));
 }
 
+#ifdef COMPAT_60
 int
 compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *ucode)
 {
@@ -127,6 +129,7 @@ compat6_cpu_ucode_amd_get_version(struct compat6_cpu_ucode *ucode)
 	ucode->version = uclevel;
 	return 0;
 }
+#endif
 
 int
 cpu_ucode_amd_firmware_open(firmware_handle_t *fwh, const char *fwname)

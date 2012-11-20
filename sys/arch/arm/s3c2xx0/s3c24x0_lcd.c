@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.9 2012/01/30 03:28:33 nisimura Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.9.6.1 2012/11/20 03:01:07 tls Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9.6.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ s3c24x0_lcd_attach_sub(struct s3c24x0_lcd_softc *sc,
 	sc->ih = s3c24x0_intr_establish(sa->sa_intr, IPL_BIO, lcdintr, sc);
 	if (sc->ih == NULL)
 		printf("%s: unable to establish interrupt at irq %d",
-		    sc->dev.dv_xname, sa->sa_intr);
+		    device_xname(sc->dev), sa->sa_intr);
 #endif
 
 	/* mask LCD interrupts */
@@ -322,7 +322,7 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 #if 0 /* Does this make any sense? */
 #ifdef DIAGNOSTIC
 	if (size > 1 << 22) {
-		aprint_error("%s: too big screen size\n", sc->dev.dv_xname);
+		aprint_error_dev(sc->dev, "too big screen size\n");
 		return NULL;
 	}
 #endif

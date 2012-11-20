@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.44 2012/08/21 03:18:39 riz Exp $
+#	$NetBSD: ALCHEMY,v 1.44.2.1 2012/11/20 03:01:18 tls Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.44 $"
+#ident 		"ALCHEMY-$Revision: 1.44.2.1 $"
 
 maxusers	32
 
@@ -61,6 +61,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

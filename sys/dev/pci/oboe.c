@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.38 2010/11/13 13:52:07 uebayasi Exp $	*/
+/*	$NetBSD: oboe.c,v 1.38.18.1 2012/11/20 03:02:20 tls Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38.18.1 2012/11/20 03:02:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,7 @@ int oboedebug = 1;
 struct oboe_dma;
 
 struct oboe_softc {
-	struct device		sc_dev;
-	struct device		*sc_child;
+	device_t		sc_child;
 	struct pci_attach_args	sc_pa;
 	pci_intr_handle_t *	sc_ih;
 	unsigned int		sc_revision;	/* PCI Revision ID */
@@ -150,7 +149,7 @@ static void oboe_startchip(struct oboe_softc *);
 static void oboe_stopchip(struct oboe_softc *);
 static int oboe_setbaud(struct oboe_softc *, int);
 
-CFATTACH_DECL(oboe, sizeof(struct oboe_softc),
+CFATTACH_DECL_NEW(oboe, sizeof(struct oboe_softc),
     oboe_match, oboe_attach, oboe_detach, NULL);
 
 static struct irframe_methods oboe_methods = {
@@ -186,7 +185,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, IO_BAR, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map I/O space\n");
+		aprint_error_dev(self, "can't map I/O space\n");
 		return;
 	}
 
@@ -206,24 +205,24 @@ oboe_attach(device_t parent, device_t self, void *aux)
 
 	/* Reset the device; bail out upon failure. */
 	if (oboe_reset(sc) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't reset\n");
+		aprint_error_dev(self, "can't reset\n");
 		return;
 	}
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_IR, oboe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstring != NULL)
 			aprint_error(" at %s", intrstring);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstring);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstring);
 
 	selinit(&sc->sc_rsel);
 	selinit(&sc->sc_wsel);

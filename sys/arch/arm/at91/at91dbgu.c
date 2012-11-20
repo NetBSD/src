@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.8 2012/02/02 19:42:57 tls Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.8 2012/02/02 19:42:57 tls Exp $ */
+/*	$Id: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.8 2012/02/02 19:42:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -161,8 +161,8 @@ static struct at91dbgu_cons_softc {
 	tcflag_t		sc_cflag;
 	int			sc_attached;
 
-	u_int8_t		*sc_rx_ptr;
-	u_int8_t		sc_rx_fifo[64];
+	uint8_t			*sc_rx_ptr;
+	uint8_t			sc_rx_fifo[64];
 } dbgu_cn_sc;
 
 static struct cnm_state at91dbgu_cnm_state;
@@ -751,7 +751,7 @@ at91dbgu_stop(struct tty *tp, int flag)
 static u_int
 cflag2lcrhi(tcflag_t cflag)
 {
-	u_int32_t	mr;
+	uint32_t	mr;
 
 	switch (cflag & CSIZE) {
 	default:
@@ -1048,7 +1048,7 @@ dbgu_intr(void* arg)
 #endif
 	u_char *put, *end;
 	u_int cc;
-	u_int32_t imr, sr;
+	uint32_t imr, sr;
 	int c = 0;
 	imr = DBGUREG(DBGU_IMR);
 #if 0

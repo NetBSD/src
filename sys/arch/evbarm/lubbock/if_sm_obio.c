@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_obio.c,v 1.4 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: if_sm_obio.c,v 1.4.12.1 2012/11/20 03:01:15 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.4 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.4.12.1 2012/11/20 03:01:15 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.4 2011/07/01 20:42:37 dyoung Exp $"
 
 #include "opt_lubbock.h"	/* LUBBOCK_SMC91C96_16BIT */
 
-int	sm_obio_match(struct device *, struct cfdata *, void *);
-void	sm_obio_attach(struct device *, struct device *, void *);
+int	sm_obio_match(device_t, cfdata_t, void *);
+void	sm_obio_attach(device_t, device_t, void *);
 
 struct sm_obio_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -104,7 +104,7 @@ struct sm_obio_softc {
 	void	*sc_ih;				/* interrupt handler */
 };
 
-CFATTACH_DECL(sm_obio, sizeof(struct sm_obio_softc), sm_obio_match, 
+CFATTACH_DECL_NEW(sm_obio, sizeof(struct sm_obio_softc), sm_obio_match, 
     sm_obio_attach, NULL, NULL);
 
 extern struct bus_space  smobio8_bs_tag;
@@ -129,7 +129,7 @@ sm_obio_match(device_t parent, cfdata_t match, void *aux)
 	struct obio_attach_args *oba = aux;
 	bus_space_tag_t iot = &smobio8_bs_tag;
 	bus_space_handle_t ioh;
-	u_int16_t tmp;
+	uint16_t tmp;
 	int rv = 0;
 	extern const char *smc91cxx_idstrs[];
 
@@ -179,7 +179,7 @@ sm_obio_match(device_t parent, cfdata_t match, void *aux)
 void
 sm_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct sm_obio_softc *isc = (struct sm_obio_softc *)self;
+	struct sm_obio_softc *isc = device_private(self);
 	struct smc91cxx_softc *sc = &isc->sc_smc;
 	struct obio_attach_args *oba = aux;
 	bus_space_handle_t ioh;
@@ -218,6 +218,7 @@ sm_obio_attach(device_t parent, device_t self, void *aux)
 
 #endif /* LUBBOCK_SMC91C96_16BIT */
 
+	sc->sc_dev = self;
 	sc->sc_bst = iot;
 	sc->sc_bsh = ioh;
 

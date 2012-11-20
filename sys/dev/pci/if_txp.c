@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.38 2010/11/13 13:52:07 uebayasi Exp $ */
+/* $NetBSD: if_txp.c,v 1.38.18.1 2012/11/20 03:02:18 tls Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38 2010/11/13 13:52:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.18.1 2012/11/20 03:02:18 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -126,7 +126,7 @@ void txp_rxbuf_reclaim(struct txp_softc *);
 void txp_rx_reclaim(struct txp_softc *, struct txp_rx_ring *,
     struct txp_dma_alloc *);
 
-CFATTACH_DECL(txp, sizeof(struct txp_softc), txp_probe, txp_attach,
+CFATTACH_DECL_NEW(txp, sizeof(struct txp_softc), txp_probe, txp_attach,
 	      NULL, NULL);
 
 const struct txp_pci_match {
@@ -198,6 +198,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	int i, flags;
 	char devinfo[256];
 
+	sc->sc_dev = self;
 	sc->sc_cold = 1;
 
 	match = txp_pcilookup(pa->pa_id);
@@ -217,7 +218,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 #define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
   (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
-	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, device_xname(&sc->sc_dev));
+	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, device_xname(sc->sc_dev));
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -285,7 +286,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	enaddr[4] = ((u_int8_t *)&p2)[1];
 	enaddr[5] = ((u_int8_t *)&p2)[0];
 
-	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
 	       ether_sprintf(enaddr));
 	sc->sc_cold = 0;
 
@@ -328,7 +329,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = 0;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	txp_capabilities(sc);
 
@@ -457,7 +458,7 @@ txp_download_fw(struct txp_softc *sc)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf("%s: fw wait failed, initial\n", device_xname(&sc->sc_dev));
+		printf("%s: fw wait failed, initial\n", device_xname(sc->sc_dev));
 		return (-1);
 	}
 
@@ -586,7 +587,7 @@ txp_download_fw_section(struct txp_softc *sc, const struct txp_fw_section_header
 
 	if (txp_download_fw_wait(sc)) {
 		printf("%s: fw wait failed, section %d\n",
-		    device_xname(&sc->sc_dev), sectnum);
+		    device_xname(sc->sc_dev), sectnum);
 		err = -1;
 	}
 
@@ -673,7 +674,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		    BUS_DMASYNC_POSTREAD);
 
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
-			printf("%s: error 0x%x\n", device_xname(&sc->sc_dev),
+			printf("%s: error 0x%x\n", device_xname(sc->sc_dev),
 			    le32toh(rxd->rx_stat));
 			ifp->if_ierrors++;
 			goto next;

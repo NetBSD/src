@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.24.1 2012/11/20 03:02:11 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1.24.1 2012/11/20 03:02:11 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -42,16 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $");
 #include <dev/marvell/marvellvar.h>
 
 
-static int pchb_match(device_t, struct cfdata *, void *);
+static int pchb_match(device_t, cfdata_t, void *);
 static void pchb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(pchb, sizeof(struct device),
+CFATTACH_DECL_NEW(pchb, 0,
     pchb_match, pchb_attach, NULL, NULL);
 
 
 /* ARGSUSED */
 static int
-pchb_match(device_t parent, struct cfdata *match, void *aux)
+pchb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 

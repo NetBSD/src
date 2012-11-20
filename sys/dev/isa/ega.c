@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.29 2009/05/12 09:10:15 cegger Exp $ */
+/* $NetBSD: ega.c,v 1.29.22.1 2012/11/20 03:02:09 tls Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.29 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.29.22.1 2012/11/20 03:02:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ struct ega_config {
 };
 
 struct ega_softc {
-	struct device sc_dev;
 	struct ega_config *sc_dc;
 	int nscreens;
 };
@@ -114,7 +113,7 @@ static void ega_setfont(struct ega_config *, struct egascreen *);
 static int ega_allocattr(void *, int, int, int, long *);
 void ega_copyrows(void *, int, int, int);
 
-CFATTACH_DECL(ega, sizeof(struct ega_softc),
+CFATTACH_DECL_NEW(ega, sizeof(struct ega_softc),
     ega_match, ega_attach, NULL, NULL);
 
 const struct wsdisplay_emulops ega_emulops = {
@@ -487,7 +486,7 @@ void
 ega_attach(device_t parent, device_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct ega_softc *sc = (struct ega_softc *)self;
+	struct ega_softc *sc = device_private(self);
 	int console;
 	struct ega_config *dc;
 	struct wsemuldisplaydev_attach_args aa;

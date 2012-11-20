@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdcu.c,v 1.6 2011/02/20 07:58:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdcu.c,v 1.6.14.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,17 +47,16 @@ int vrdcu_debug = VRDCU_DEBUG;
 #endif
 
 struct vrdcu_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct vrdcu_chipset_tag	sc_chipset;
 	int			sc_status;	/* DMA status */
 };
 
-int vrdcu_match(struct device *, struct cfdata *, void *);
-void vrdcu_attach(struct device *, struct device *, void *);
+int vrdcu_match(device_t, cfdata_t, void *);
+void vrdcu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(vrdcu, sizeof(struct vrdcu_softc),
+CFATTACH_DECL_NEW(vrdcu, sizeof(struct vrdcu_softc),
     vrdcu_match, vrdcu_attach, NULL, NULL);
 
 int vrdcu_enable_aiuin(vrdcu_chipset_tag_t);
@@ -88,16 +87,16 @@ struct bus_dma_tag vrdcu_bus_dma_tag = {
 };
 
 int
-vrdcu_match(struct device *parent, struct cfdata *cf, void *aux)
+vrdcu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 2; /* 1st attach group of vrip */
 }
 
 void
-vrdcu_attach(struct device *parent, struct device *self, void *aux)
+vrdcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrdcu_softc *sc = (void*)self;
+	struct vrdcu_softc *sc = device_private(self);
 
 	sc->sc_iot = va->va_iot;
 	sc->sc_chipset.dc_sc = sc;
@@ -109,7 +108,7 @@ vrdcu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 			  0 /* no flags */, &sc->sc_ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map i/o space\n", device_xname(self));
 		return;
 	}
 	printf("\n");

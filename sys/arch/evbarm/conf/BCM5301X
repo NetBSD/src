@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.4 2012/09/11 19:43:09 msaitoh Exp $
+#	$NetBSD: BCM5301X,v 1.4.2.1 2012/11/20 03:01:13 tls Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -18,11 +18,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 #makeoptions	DEFCOPTS="-O0"
-#options 	UVMHIST,UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
+options 	UVMHIST
+#options 	UVMHIST_PRINT,A9WDT_PERIOD_DEFAULT=30
 options 	BCM53XX_CONSOLE_EARLY
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEXA9
-#options 	FPU_VFP
 options 	BCM5301
 options 	PMAPCOUNTERS
 
@@ -93,6 +93,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -130,6 +131,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
 #options 	PCI_CONFIG_DUMP	# Verbose PCI autoconfiguration messages
+options 	PCI_NETBSD_CONFIGURE # perform PCI configuration
 options 	RNDVERBOSE	# Verbose rnd messages
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfiguration messages
@@ -149,11 +151,11 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	DDB_COMMANDONENTER="t; show event"
+options 	DDB_COMMANDONENTER="show event"
 options 	DB_MAX_LINE=INT_MAX
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=530000
+options 	SYMTAB_SPACE=575000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -184,7 +186,7 @@ cpu0		at mainbus?
 # The MPCore interrupt controller and global timer
 armperiph0	at mainbus?		# A9 On-Chip Peripherals
 armgic0		at armperiph?		# ARM Generic Interrupt Controller
-arml2cc0	at armperiph?		# ARM PL310 L2CC
+arml2cc0	at armperiph? flags 0	# ARM PL310 L2CC
 a9tmr0		at armperiph?		# A9 Global Timer
 a9wdt0		at armperiph? flags 1	# A9 Watchdog Timer
 
@@ -196,10 +198,18 @@ com*		at bcmcca? channel 1
 
 # ChipCommonB Peripherals
 bcmccb0		at mainbus?		# ChipCommonB
-bcmpax*		at bcmccb? port ?
+bcmpax*		at bcmccb? port ? flags 1
 pci*		at bcmpax?
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
+
+ahcisata*	at pci? dev ? function ?
+atabus* 	at ahcisata? channel ?
+#options 	ATADEBUG
+wd*		at atabus? drive ?
+wm*		at pci? dev ? function ?
+makphy*		at mii?
+ukphy*		at mii?
 
 bcmmdio0	at bcmccb0
 bcmeth*		at bcmccb? port ?
@@ -246,7 +256,7 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-wd*		at umass?
+#wd*		at umass?
 
 axe*		at uhub? port ? configuration ? interface ?
 
@@ -264,6 +274,8 @@ axe*		at uhub? port ? configuration ? interface ?
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
+pseudo-device	vlan
+pseudo-device	bridge
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

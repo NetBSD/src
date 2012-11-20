@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndisvar.h,v 1.8 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: if_ndisvar.h,v 1.8.2.1 2012/11/20 03:02:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -112,14 +112,6 @@ extern int ndis_in_isr;
 
 struct ndis_softc {
 #ifdef __NetBSD__
-/* 
- * TODO: It seems like in the attach function the ndis "struct device" object
- * and the softc are the same thing, so I added a "struct device" to the 
- * front of the softc, to make sure the arpcom field wasn't getting
- * messed up.  However, I'm not sure if the arpcom field is supposed
- * to be first for some other reason.
- */
-        struct device           dev;
 	struct ethercom		arpcom;
 #endif
 	struct ieee80211com	ic;		/* interface info */

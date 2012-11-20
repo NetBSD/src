@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2012/04/29 07:17:11 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.161.2.1 2012/11/20 03:01:48 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.161.2.1 $"
 
 maxusers	8
 
@@ -92,7 +92,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -160,6 +160,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
@@ -524,7 +525,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss			# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # Veriexec
 #

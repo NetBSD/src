@@ -70,19 +70,27 @@
  *
  * The buffers must not be overlapping.
  *
- * If the option LZF_STATE_ARG is enabled, an extra argument must be
- * supplied which is not reflected in this header file. Refer to lzfP.h
- * and lzf_c.c.
+ * This function formerly had two API variants depending on a
+ * compile-time constant: one took a 64K state structure as an
+ * argument, the other allocated it internally on the stack (yuck).
+ *
+ * We define the stack-unfriendly version in terms of the stack-friendly
+ * one.
  *
  */
 unsigned int 
-lzf_compress (const void *const,  unsigned int,
-              void             *, unsigned int 
-#if LZF_STATE_ARG
-	      , LZF_STATE
-#endif
-	      );
-	 
+lzf_compress_r (const void *const,  unsigned int,
+                void *, unsigned int, LZF_STATE);
+
+static inline int
+lzf_compress (const void *const in, unsigned int in_len,
+	      void *out, unsigned int out_len)
+{
+  LZF_STATE htab;
+
+  return lzf_compress_r(in, in_len, out, out_len, htab);
+}
+
 /*
  * Decompress data compressed with some version of the lzf_compress
  * function and stored at location in_data and length in_len. The result

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.15 2009/05/12 09:10:15 cegger Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.15.22.1 2012/11/20 03:02:10 tls Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.15 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack2.c,v 1.15.22.1 2012/11/20 03:02:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,6 @@ const struct radio_hw_if rtii_hw_if = {
 };
 
 struct rtii_softc {
-	struct device	dev;
-
 	u_int32_t	freq;
 	u_int32_t	stereo;
 	u_int32_t	lock;
@@ -108,7 +106,7 @@ struct rtii_softc {
 	struct tea5757_t	tea;
 };
 
-CFATTACH_DECL(rtii, sizeof(struct rtii_softc),
+CFATTACH_DECL_NEW(rtii, sizeof(struct rtii_softc),
     rtii_probe, rtii_attach, NULL, NULL);
 
 void	rtii_set_mute(struct rtii_softc *);
@@ -166,7 +164,7 @@ rtii_probe(device_t parent, cfdata_t cf, void *aux)
 void
 rtii_attach(device_t parent, device_t self, void *aux)
 {
-	struct rtii_softc *sc = (void *) self;
+	struct rtii_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->tea.iot = ia->ia_iot;
@@ -193,7 +191,7 @@ rtii_attach(device_t parent, device_t self, void *aux)
 	tea5757_set_freq(&sc->tea, sc->stereo, sc->lock, sc->freq);
 	rtii_set_mute(sc);
 
-	radio_attach_mi(&rtii_hw_if, sc, &sc->dev);
+	radio_attach_mi(&rtii_hw_if, sc, self);
 }
 
 /*

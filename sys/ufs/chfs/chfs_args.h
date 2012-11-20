@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_args.h,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_args.h,v 1.1.10.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -35,19 +35,10 @@
 
 #define CHFS_ARGS_VERSION	1
 
-/**
- * struct chfs_args - arguments needed when mounting filesystem
- * @fl_index: index of the flash device in the flash layer
- */
+/* struct chfs_args - arguments needed when mounting filesystem */
 struct chfs_args {
-	//int	ca_version;
 	char *fspec;
-	int fl_index;
-
-	/* Root node attributes. */
-	/*uid_t			ca_root_uid;
-	  gid_t			ca_root_gid;
-	  mode_t			ca_root_mode;*/
+	int fl_index;	/* index of the flash device in the flash layer */
 };
 
 #endif /* _FS_CHFS_CHFS_ARGS_H_ */

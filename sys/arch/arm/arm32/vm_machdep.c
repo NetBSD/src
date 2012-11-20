@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2012/08/29 07:09:12 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60.2.1 2012/11/20 03:01:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2012/08/29 07:09:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.1 2012/11/20 03:01:03 tls Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -251,7 +251,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	taddr = uvm_km_alloc(phys_map, len, atop(faddr) & uvmexp.colormask,
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 	bp->b_data = (void *)(taddr + off);
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.19 2009/03/14 15:36:19 dsl Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.19.22.1 2012/11/20 03:02:19 tls Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.19 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.19.22.1 2012/11/20 03:02:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -218,14 +218,14 @@ isic_attach_Eqs1pp(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0
 	   && pci_mapreg_map(pa, ELSA_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't map card registers\n");
+		aprint_error_dev(sc->sc_dev, "can't map card registers\n");
 		return (0);
 	}
 
 	/* PLX9050 Errata #1 */
 	if (PCI_REVISION(pa->pa_class) == 1 && psc->sc_base & 0x00000080) {
 #ifdef DEBUG
-		printf("%s: no LCR access\n", device_xname(&sc->sc_dev));
+		printf("%s: no LCR access\n", device_xname(sc->sc_dev));
 #endif
 	} else
 		psc->flags |= PCIISIC_LCROK;
@@ -233,7 +233,7 @@ isic_attach_Eqs1pp(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 	sc->sc_maps[1].size = 0;
 	if (pci_mapreg_map(pa, ELSA_PORT1_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[1].t, &sc->sc_maps[1].h, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return (0);
 	}
 

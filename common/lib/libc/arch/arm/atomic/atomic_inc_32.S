@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32.S,v 1.3 2012/08/31 23:41:52 matt Exp $	*/
+/*	$NetBSD: atomic_inc_32.S,v 1.3.2.1 2012/11/20 02:57:29 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,4 +76,4 @@ STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_32_nv)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */

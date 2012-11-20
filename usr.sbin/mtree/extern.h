@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2011/08/29 20:37:43 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.32.8.1 2012/11/20 03:03:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,9 +67,10 @@ void	 parsetags(slist_t *, char *);
 u_int	 parsetype(const char *);
 void	 read_excludes_file(const char *);
 const char *rlink(const char *);
-int	 verify(void);
+int	 verify(FILE *);
 
-extern int	dflag, eflag, iflag, lflag, mflag, rflag, sflag, tflag, uflag;
+extern int	dflag, eflag, iflag, jflag, lflag, mflag,
+		nflag, qflag, rflag, sflag, tflag, uflag;
 extern int	mtree_Mflag, mtree_Sflag, mtree_Wflag;
 extern size_t	mtree_lineno;
 extern u_int32_t crc_total;

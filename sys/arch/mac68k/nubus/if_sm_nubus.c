@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.9 2012/02/12 16:34:09 matt Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.9.6.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.9 2012/02/12 16:34:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.9.6.1 2012/11/20 03:01:30 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.9 2012/02/12 16:34:09 matt Exp $")
 static int	sm_nubus_match(device_t, cfdata_t, void *);
 static void	sm_nubus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sm_nubus, sizeof(struct smc91cxx_softc),
+CFATTACH_DECL_NEW(sm_nubus, sizeof(struct smc91cxx_softc),
     sm_nubus_match, sm_nubus_attach, NULL, NULL);
 
 static int
@@ -114,6 +114,7 @@ sm_nubus_attach(device_t parent, device_t self, void *aux)
 
 	mac68k_bus_space_handle_swapped(bst, &bsh);
 
+	smc->sc_dev = self;
 	smc->sc_bst = bst;
 	smc->sc_bsh = bsh;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.15 2009/09/12 18:41:05 tsutsui Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.15.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.15 2009/09/12 18:41:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.15.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ int cs80busdebug = 0xff;
 int	cs80busmatch(device_t, cfdata_t, void *);
 void	cs80busattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cs80bus, sizeof(struct cs80bus_softc),
+CFATTACH_DECL_NEW(cs80bus, sizeof(struct cs80bus_softc),
 	cs80busmatch, cs80busattach, NULL, NULL);
 
 static int	cs80bus_alloc(struct cs80bus_softc *, int, int);
@@ -110,11 +110,12 @@ cs80busattach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_ic = ga->ga_ic;
 
 	for (slave = 0; slave < 8; slave++) {
 
-		if (gpib_isalloc((void *)device_parent(&sc->sc_dev), slave))
+		if (gpib_isalloc(device_private(device_parent(sc->sc_dev)), slave))
 			continue;
 
 		if (gpibrecv(sc->sc_ic, GPIB_BROADCAST_ADDR,
@@ -132,14 +133,14 @@ cs80busattach(device_t parent, device_t self, void *aux)
 		ca.ca_slave = slave;
 		ca.ca_id = id;
 
-		(void)config_search_ia(cs80bussearch, &sc->sc_dev, "cs80bus", &ca);
+		(void)config_search_ia(cs80bussearch, sc->sc_dev, "cs80bus", &ca);
 	}
 }
 
 int
 cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct cs80bus_softc *sc = (struct cs80bus_softc *)parent;
+	struct cs80bus_softc *sc = device_private(parent);
 	struct cs80bus_attach_args *ca = aux;
 
 	/*
@@ -208,7 +209,7 @@ cs80bus_alloc(struct cs80bus_softc *sc, int slave, int punit)
 	if (slave >= CS80BUS_NSLAVES || punit >= CS80BUS_NPUNITS)
 		panic("cs80bus_alloc: device address out of range");
 
-	gpib_alloc((void *)device_parent(&sc->sc_dev), slave);
+	gpib_alloc(device_private(device_parent(sc->sc_dev)), slave);
 
 	if (sc->sc_rmap[slave][punit] == 0) {
 		sc->sc_rmap[slave][punit] = 1;

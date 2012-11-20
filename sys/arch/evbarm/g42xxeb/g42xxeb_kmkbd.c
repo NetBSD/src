@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.13 2012/04/04 01:40:57 bsh Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.13.2.1 2012/11/20 03:01:14 tls Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.13 2012/04/04 01:40:57 bsh Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.13.2.1 2012/11/20 03:01:14 tls Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.13 2012/04/04 01:40:57 bsh Exp $
 struct kmkbd_softc {
 	device_t dev;
 
-	struct device *wskbddev;
+	device_t wskbddev;
 	void *ih;			/* interrupt handler */
 	struct callout callout;
 
@@ -184,7 +184,7 @@ kmkbd_is_console(void)
 }
 
 int
-kmkbd_match(struct device *parent, struct cfdata *cf, void *aux)
+kmkbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }

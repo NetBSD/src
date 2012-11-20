@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80busvar.h,v 1.5 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: cs80busvar.h,v 1.5.44.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ struct cs80bus_attach_args {
 };
 
 struct cs80bus_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 	gpib_chipset_tag_t sc_ic;
 	u_int8_t	sc_rmap[CS80BUS_NSLAVES][CS80BUS_NPUNITS];
 };

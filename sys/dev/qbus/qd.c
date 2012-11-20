@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.52 2011/04/24 16:27:00 rmind Exp $	*/
+/*	$NetBSD: qd.c,v 1.52.14.1 2012/11/20 03:02:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.52 2011/04/24 16:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.52.14.1 2012/11/20 03:02:31 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -114,7 +114,6 @@ struct qdflags {
  * Softc struct to keep track of all states in this driver.
  */
 struct	qd_softc {
-	struct	device sc_dev;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t	sc_dmat;
@@ -524,7 +523,7 @@ qdcninit(struct consdev *cndev)
 } /* qdcninit */
 
 /* see <sys/device.h> */
-CFATTACH_DECL(qd, sizeof(struct qd_softc),
+CFATTACH_DECL_NEW(qd, sizeof(struct qd_softc),
     qd_match, qd_attach, NULL, NULL);
 
 #define	QD_RCSR(reg) \
@@ -549,7 +548,7 @@ qd_match(device_t parent, cfdata_t match, void *aux)
 	struct qd_softc ssc;
 	struct qd_softc *sc = &ssc;
 	struct uba_attach_args *ua = aux;
-	struct uba_softc *uh = (void *)parent;
+	struct uba_softc *uh = device_private(parent);
 	int unit;
 	volatile struct dga *dga;	/* pointer to gate array structure */
 	int vector;
@@ -720,9 +719,8 @@ qd_match(device_t parent, cfdata_t match, void *aux)
 } /* qdprobe */
 
 
-void qd_attach(parent, self, aux)
-	   device_t parent, *self;
-	   void *aux;
+void
+qd_attach(device_t parent, device_t self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	int unit;	/* QDSS module # for this call */

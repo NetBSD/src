@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.10 2009/08/23 12:10:50 manu Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.10.22.1 2012/11/20 03:02:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.10 2009/08/23 12:10:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.10.22.1 2012/11/20 03:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,19 +114,19 @@ struct tftproot_handle {
 
 #define TRH_FINISHED	1
 
-int tftproot_dhcpboot(struct device *);
+int tftproot_dhcpboot(device_t);
 
 static int tftproot_getfile(struct tftproot_handle *, struct lwp *);
-static int tftproot_recv(struct mbuf*, void*);
+static int tftproot_recv(struct mbuf *, void *);
 
 int
-tftproot_dhcpboot(struct device *bootdv)
+tftproot_dhcpboot(device_t bootdv)
 {
 	struct nfs_diskless *nd = NULL;
 	struct ifnet *ifp = NULL;
 	struct lwp *l;
 	struct tftproot_handle trh;
-	struct device *dv;
+	device_t dv;
 	int error = -1;
 
 	if (rootspec != NULL) {
@@ -213,7 +213,6 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	const char octetstr[] = "octet";
 	size_t hdrlen = sizeof(*tftp) - sizeof(tftp->th_data);
 	char *cp;
-	/* struct device *dv; */
 	
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l, NULL)) != 0) {
 		DPRINTF(("%s():%d socreate returned %d\n", 

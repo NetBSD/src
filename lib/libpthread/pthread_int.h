@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.86 2012/08/16 04:49:47 matt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.86.2.1 2012/11/20 03:00:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
 
 #include <sys/atomic.h>
-#include <sys/tree.h>
+#include <sys/rbtree.h>
 
 #include <limits.h>
 #include <lwp.h>
@@ -126,7 +126,7 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	RB_ENTRY(__pthread_st) pt_alltree;
+	rb_node_t	pt_alltree;
 	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
 

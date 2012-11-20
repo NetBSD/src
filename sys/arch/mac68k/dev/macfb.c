@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.19 2007/10/17 19:55:14 garbled Exp $ */
+/* $NetBSD: macfb.c,v 1.19.64.1 2012/11/20 03:01:30 tls Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.19 2007/10/17 19:55:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.19.64.1 2012/11/20 03:01:30 tls Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.19 2007/10/17 19:55:14 garbled Exp $");
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-int macfb_match(struct device *, struct cfdata *, void *);
-void macfb_attach(struct device *, struct device *, void *);
+int macfb_match(device_t, cfdata_t, void *);
+void macfb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(macfb, sizeof(struct macfb_softc),
+CFATTACH_DECL_NEW(macfb, sizeof(struct macfb_softc),
     macfb_match, macfb_attach, NULL, NULL);
 
 const struct wsdisplay_emulops macfb_emulops = {
@@ -182,13 +182,13 @@ macfb_init(struct macfb_devconfig *dc)
 }
 
 int
-macfb_match(struct device *parent, struct cfdata *match, void *aux)
+macfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
 void
-macfb_attach(struct device *parent, struct device *self, void *aux)
+macfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;
@@ -196,7 +196,7 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	int isconsole;
 
-	sc = (struct macfb_softc *)self;
+	sc = device_private(self);
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.c,v 1.5 2012/05/30 21:30:07 rmind Exp $	*/
+/*	$NetBSD: npf_var.c,v 1.5.2.1 2012/11/20 03:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.5 2012/05/30 21:30:07 rmind Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.5.2.1 2012/11/20 03:03:03 tls Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -60,8 +60,8 @@ static size_t		var_num = 0;
 npfvar_t *
 npfvar_create(const char *name)
 {
-	npfvar_t *vp = zalloc(sizeof(*vp));
-	vp->v_key = xstrdup(name);
+	npfvar_t *vp = ecalloc(1, sizeof(*vp));
+	vp->v_key = estrdup(name);
 	var_num++;
 	return vp;
 }
@@ -104,8 +104,8 @@ npfvar_add_element(npfvar_t *vp, int type, const void *data, size_t len)
 		return NULL;
 	}
 	vp->v_count++;
-	el = zalloc(sizeof(*el));
-	el->e_data = zalloc(len);
+	el = ecalloc(1, sizeof(*el));
+	el->e_data = ecalloc(1, len);
 	el->e_type = type;
 	memcpy(el->e_data, data, len);
 

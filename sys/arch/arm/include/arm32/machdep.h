@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.16 2012/09/01 12:19:32 martin Exp $ */
+/* $NetBSD: machdep.h,v 1.16.2.1 2012/11/20 03:01:06 tls Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -43,7 +43,7 @@ struct bootmem_info {
 	 */
 	pv_addr_t bmi_vector_l2pt;
 	pv_addr_t bmi_io_l2pt;
-	pv_addr_t bmi_l2pts[16];
+	pv_addr_t bmi_l2pts[32];	// for large memory disks.
 	u_int bmi_freepages;
 	u_int bmi_nfreeblocks;
 };

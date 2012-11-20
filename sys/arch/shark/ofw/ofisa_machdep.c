@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.9 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.9.12.1 2012/11/20 03:01:42 tls Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.9 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.9.12.1 2012/11/20 03:01:42 tls Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -74,7 +74,7 @@ ofisa_ignore_child(int pphandle, int cphandle)
 #ifdef COMPAT_OLD_OFW
 
 int
-ofisa_md_match(struct device *parent, struct cfdata *cf, void *aux)
+ofisa_md_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];

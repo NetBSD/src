@@ -1,4 +1,4 @@
-/*      $NetBSD: gencp_xsurf.c,v 1.1 2012/05/15 17:35:43 rkujawa Exp $ */
+/*      $NetBSD: gencp_xsurf.c,v 1.1.4.1 2012/11/20 03:00:56 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -49,19 +49,19 @@
 
 #include <amiga/clockport/clockportvar.h>
 
-static int	gencp_xsurf_match(struct device *pdp, struct cfdata *cfp, void *aux);
-static void	gencp_xsurf_attach(device_t parent, device_t self, void *aux);
+static int	gencp_xsurf_match(device_t, cfdata_t, void *);
+static void	gencp_xsurf_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(gencp_xsurf, sizeof(struct gencp_softc),
     gencp_xsurf_match, gencp_xsurf_attach, NULL, NULL);
 
 static int
-gencp_xsurf_match(struct device *pdp, struct cfdata *cfp, void *aux)
+gencp_xsurf_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct xsurfbus_attach_args *xsb_aa;
 	static int attach_count = 0;
 
-	xsb_aa = (struct xsurfbus_attach_args *) aux;
+	xsb_aa = aux;
 
 	if (strcmp(xsb_aa->xaa_name, "gencp_xsurf") != 0) 
 		return 0;
@@ -83,7 +83,7 @@ gencp_xsurf_attach(device_t parent, device_t self, void *aux)
 	struct clockportbus_attach_args cpb_aa;
 	struct xsurfbus_attach_args *xsb_aa;
 
-	xsb_aa = (struct xsurfbus_attach_args *) aux;
+	xsb_aa = aux;
 	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->cpb_aa = &cpb_aa;
@@ -96,4 +96,3 @@ gencp_xsurf_attach(device_t parent, device_t self, void *aux)
 
 	gencp_attach(sc);
 }
-

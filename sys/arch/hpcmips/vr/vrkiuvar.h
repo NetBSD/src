@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiuvar.h,v 1.4 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrkiuvar.h,v 1.4.170.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -48,7 +48,6 @@ struct vrkiu_chip {
 };
 
 struct vrkiu_softc {
-	struct device sc_dev;
 	struct vrkiu_chip *sc_chip;
 	struct vrkiu_chip sc_chip_body;
 	void *sc_handler;

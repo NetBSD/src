@@ -1,4 +1,4 @@
-/*	$NetBSD: vrledvar.h,v 1.2 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrledvar.h,v 1.2.170.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -33,7 +33,6 @@ typedef enum {
 } vrled_status;
 
 struct vrled_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_handler;

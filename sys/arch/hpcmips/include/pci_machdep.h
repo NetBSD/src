@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2011/08/24 20:27:36 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.12.1 2012/11/20 03:01:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -47,9 +47,9 @@ struct pci_attach_args;
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 struct hpcmips_pci_chipset {
-	struct device *pc_dev;
+	device_t pc_dev;
 
-	void (*pc_attach_hook)(struct device *, struct device *,
+	void (*pc_attach_hook)(device_t, device_t,
 	    struct pcibus_attach_args *);
 	int (*pc_bus_maxdevs)(pci_chipset_tag_t, int);
 	int (*pc_bus_devorder)(pci_chipset_tag_t, int, uint8_t *, int);
@@ -58,7 +58,7 @@ struct hpcmips_pci_chipset {
 	    int *);
 	pcireg_t (*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void (*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-	int (*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
+	int (*pc_intr_map)(const struct pci_attach_args *, pci_intr_handle_t *);
 	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t);
 	const struct evcnt *(*pc_intr_evcnt)(pci_chipset_tag_t,
 	    pci_intr_handle_t);

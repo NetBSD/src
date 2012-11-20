@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.19 2011/09/24 00:05:39 christos Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.19.12.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -39,6 +39,7 @@
 #ifndef	_SYS_TTYCOM_H_
 #define	_SYS_TTYCOM_H_
 
+#include <sys/syslimits.h>
 #include <sys/ioccom.h>
 
 /*
@@ -57,12 +58,12 @@ struct winsize {
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
 
-/* ptmget, for /dev/ptm pty getting ioctl PTMGET */
+/* ptmget, for /dev/ptm pty getting ioctl TIOCPTMGET, and for TIOCPTSNAME */
 struct ptmget {
 	int	cfd;
 	int	sfd;
-	char	cn[16];
-	char	sn[16];
+	char	cn[PATH_MAX];
+	char	sn[PATH_MAX];
 };
 
 #define _PATH_PTMDEV	"/dev/ptm"

@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: gic.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.1 2012/09/01 00:03:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.1.2.1 2012/11/20 03:01:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -247,6 +247,7 @@ armgic_irq_handler(void *tf)
 
 		//const uint32_t cpuid = __SHIFTOUT(iar, GICC_IAR_CPUID_MASK);
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
+		KASSERT(is != &armgic_dummy_source);
 
 		/*
 		 * GIC has asserted IPL for us so we can just update ci_cpl.
@@ -436,7 +437,7 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 	}
 
 	uint32_t targets;
-	kcpuset_copybits(kcp, &targets, sizeof(targets));
+	kcpuset_export_u32(kcp, &targets, sizeof(targets));
 	uint32_t sgir = __SHIFTOUT(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
 	sgir |= __SHIFTOUT(targets, GICD_SGIR_TargetList);
 

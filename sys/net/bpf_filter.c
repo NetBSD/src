@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.53 2012/08/15 21:31:39 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.53.2.1 2012/11/20 03:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.53 2012/08/15 21:31:39 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.53.2.1 2012/11/20 03:02:46 tls Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -68,10 +68,11 @@ static const char rcsid[] =
 	}				\
 }
 
-static int m_xword (const struct mbuf *, uint32_t, int *);
-static int m_xhalf (const struct mbuf *, uint32_t, int *);
+uint32_t m_xword (const struct mbuf *, uint32_t, int *);
+uint32_t m_xhalf (const struct mbuf *, uint32_t, int *);
+uint32_t m_xbyte (const struct mbuf *, uint32_t, int *);
 
-static int
+uint32_t
 m_xword(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
@@ -86,10 +87,8 @@ m_xword(const struct mbuf *m, uint32_t k, int *err)
 		return EXTRACT_LONG(cp);
 	}
 	m0 = m->m_next;
-	if (m0 == 0 || m0->m_len + len - k < 4) {
-		*err = 1;
+	if (m0 == 0 || m0->m_len + len - k < 4)
 		return 0;
-	}
 	*err = 0;
 	np = mtod(m0, u_char *);
 
@@ -103,7 +102,7 @@ m_xword(const struct mbuf *m, uint32_t k, int *err)
 	}
 }
 
-static int
+uint32_t
 m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
@@ -118,16 +117,23 @@ m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 		return EXTRACT_SHORT(cp);
 	}
 	m0 = m->m_next;
-	if (m0 == 0) {
-		*err = 1;
+	if (m0 == 0)
 		return 0;
-	}
 	*err = 0;
 	return (cp[0] << 8) | mtod(m0, u_char *)[0];
 }
+
+uint32_t
+m_xbyte(const struct mbuf *m, uint32_t k, int *err)
+{
+	int len;
+
+	*err = 0;
+	MINDEX(len, m, k);
+	return mtod(m, u_char *)[k];
+}
 #else /* _KERNEL */
 #include <stdlib.h>
-#include <string.h>
 #endif /* !_KERNEL */
 
 #include <net/bpf.h>

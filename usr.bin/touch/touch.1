@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.21 2012/07/27 18:34:35 wiz Exp $
+.\"	$NetBSD: touch.1,v 1.21.2.1 2012/11/20 03:02:59 tls Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd July 24, 2012
+.Dd October 22, 2012
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -42,7 +42,9 @@
 .Nm
 .Op Fl acfhm
 .Op Fl d Ar human-datetime
+.Op Fl Fl date Ar human-datetime
 .Op Fl r Ar file
+.Op Fl Fl reference Ar file
 .Op Fl t Ar datetime
 .Ar file ...
 .Sh DESCRIPTION
@@ -66,6 +68,7 @@ The
 utility does not treat this as an error.
 No error messages are displayed and the exit value is not affected.
 .It Fl d Ar human-datetime
+.It Fl Fl date Ar human-datetime
 Parse
 .Ar human-datetime
 using the human datetime parser
@@ -84,6 +87,7 @@ The access time of the file is not changed unless the
 .Fl a
 flag is also specified.
 .It Fl r Ar file
+.It Fl Fl reference Ar file
 Use the access and modifications times from
 .Ar file
 instead of the current time of day.
@@ -134,6 +138,14 @@ If the
 .Dq SS
 letter pair is not specified, the value defaults to 0.
 .El
+.Pp
+The
+.Fl d ,
+.Fl r ,
+and
+.Fl t
+options are mutually exclusive.
+If more than one of these options is present, the last one is used.
 .Sh EXIT STATUS
 .Ex -std
 .Sh COMPATIBILITY
@@ -141,7 +153,8 @@ The obsolescent form of
 .Nm ,
 where a time format is specified as the first argument, is supported.
 When no
-.Fl r
+.Fl d ,
+.Fl r ,
 or
 .Fl t
 option is specified, there are at least two arguments, and the first

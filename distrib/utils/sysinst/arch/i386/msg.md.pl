@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.36 2012/03/03 02:41:25 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.36.2.1 2012/11/20 02:57:54 tls Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -41,7 +41,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
+{
 }
 
 message Keyboard_type {Keyboard type}

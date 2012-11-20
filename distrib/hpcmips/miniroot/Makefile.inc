@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.19 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.19.12.1 2012/11/20 02:57:42 tls Exp $
 
 DBG=		-Os
 
 IMAGESIZE=	4352k
 MAKEFS_FLAGS=	-o density=2k
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	all
+MAKEDEVTARGETS=	all ipty
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \

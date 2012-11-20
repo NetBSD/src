@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.489 2012/08/17 18:20:19 riz Exp $
+.\"	$NetBSD: main,v 1.489.2.1 2012/11/20 02:57:43 tls Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,11 @@ These can be found
 on an FTP site near you, usually located in the
 .Pa /pub/NetBSD/iso/
 directory.
-Check the NetBSD website for details.
+Check the list of
+.Nx
+mirrors at
+.Lk http://www.NetBSD.org/mirrors
+for details.
 .Pp
 Option 2: bootable CD-ROM images from
 .Pa \*M/installation/cdrom/ .
@@ -500,6 +504,15 @@ and
 .Xr groff 1
 can still be found in pkgsrc as
 .Pa textproc/groff .
+.It
+.Xr kame_ipsec 4
+has been replaced by
+.Xr fast_ipsec 4 .
+The option to use the old implementation (see
+.Xr options 4 )
+will be removed in the next
+.Nx
+release.
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -638,7 +651,7 @@ range of operating systems can check the integrity of the release files.
 .item)
 .Pp
 Other directories provide unpacked source trees e.g. for distribution via
-the the software update protocol (SUP) or the
+the software update protocol (SUP) or the
 concurrent version system (CVS). For more information see:
 .Lk http://www.NetBSD.org/mirrors/
 .\}
@@ -747,6 +760,12 @@ using either the
 .Xr sysctl 8
 command or through
 .Xr sysctl.conf 5 .
+.Pp
+The implementation of SHA2-HMAC in KAME_IPSEC as used in NetBSD-5
+and before did not comply to current standards.
+FAST_IPSEC does, with the result that old and new systems cannot
+communicate over IPSEC, if one of the affected authentication
+algorithms (hmac_sha256, hmac_sha384, hmac_sha512) is used.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 4.x releases
 .Pp
@@ -1253,6 +1272,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
 .It Ta Tomasz Luchowski Ta Mt zuntum@NetBSD.org
 .It Ta Federico Lupi Ta Mt federico@NetBSD.org
+.It Ta Palle Lyckegaard Ta Mt palle@NetBSD.org
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org

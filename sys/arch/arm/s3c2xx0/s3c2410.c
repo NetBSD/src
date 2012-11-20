@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.12.6.1 2012/11/20 03:01:07 tls Exp $ */
 
 /*
  * Copyright (c) 2003, 2005  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.12.6.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,13 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.12 2012/01/30 03:28:33 nisimura Exp $"
 #include "opt_cpuoptions.h"
 
 /* prototypes */
-static int	s3c2410_match(struct device *, struct cfdata *, void *);
-static void	s3c2410_attach(struct device *, struct device *, void *);
-static int	s3c2410_search(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	s3c2410_match(device_t, cfdata_t, void *);
+static void	s3c2410_attach(device_t, device_t, void *);
+static int	s3c2410_search(device_t, cfdata_t, const int *, void *);
 
 /* attach structures */
-CFATTACH_DECL(ssio, sizeof(struct s3c24x0_softc), s3c2410_match, s3c2410_attach,
+CFATTACH_DECL_NEW(ssio, sizeof(struct s3c24x0_softc), s3c2410_match, s3c2410_attach,
     NULL, NULL);
 
 extern struct bus_space s3c2xx0_bs_tag;
@@ -70,7 +69,7 @@ volatile uint8_t *portf;	/* for debug */
 static int
 s3c2410_print(void *aux, const char *name)
 {
-	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *) aux;
+	struct s3c2xx0_attach_args *sa = aux;
 
 	if (sa->sa_size)
 		aprint_normal(" addr 0x%lx", sa->sa_addr);
@@ -85,13 +84,13 @@ s3c2410_print(void *aux, const char *name)
 }
 
 int
-s3c2410_match(struct device *parent, struct cfdata *match, void *aux)
+s3c2410_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 void
-s3c2410_attach(struct device *parent, struct device *self, void *aux)
+s3c2410_attach(device_t parent, device_t self, void *aux)
 {
 	struct s3c24x0_softc *sc = device_private(self);
 	bus_space_tag_t iot;
@@ -170,14 +169,13 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 abort:
 	panic("%s: unable to map %s registers",
-	    self->dv_xname, which_registers);
+	    device_xname(self), which_registers);
 
 #undef FAIL
 }
 
 int
-s3c2410_search(struct device * parent, struct cfdata * cf,
-	       const int *ldesc, void *aux)
+s3c2410_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct s3c24x0_softc *sc = device_private(parent);
 	struct s3c2xx0_attach_args aa;

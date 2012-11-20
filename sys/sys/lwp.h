@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.163 2012/07/22 22:40:18 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.163.2.1 2012/11/20 03:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -315,9 +315,7 @@ void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
-/* Flags for _lwp_wait1 */
-#define LWPWAIT_EXITCONTROL	0x00000001
-int	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
+int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
 void	lwp_unstop(lwp_t *);
@@ -413,7 +411,7 @@ lwp_eprio(lwp_t *l)
 	pri_t pri;
 
 	pri = l->l_priority;
-	if (l->l_kpriority && pri < PRI_KERNEL)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }

@@ -9,6 +9,12 @@ cat << _EOF > $2
 
 #include <atf-c.h>
 
+/* Avoid SSP re-definitions */
+#undef snprintf
+#undef vsnprintf
+#undef sprintf
+#undef vsprintf
+
 #define KPRINTF_BUFSIZE 1024
 #undef putchar
 #define putchar xputchar

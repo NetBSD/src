@@ -126,6 +126,8 @@ void wpa_pmk_to_ptk(const u8 *pmk, size_t pmk_len, const char *label,
 
 	wpa_printf(MSG_DEBUG, "WPA: PTK derivation - A1=" MACSTR " A2=" MACSTR,
 		   MAC2STR(addr1), MAC2STR(addr2));
+	wpa_hexdump(MSG_DEBUG, "WPA: Nonce1", nonce1, WPA_NONCE_LEN);
+	wpa_hexdump(MSG_DEBUG, "WPA: Nonce2", nonce2, WPA_NONCE_LEN);
 	wpa_hexdump_key(MSG_DEBUG, "WPA: PMK", pmk, pmk_len);
 	wpa_hexdump_key(MSG_DEBUG, "WPA: PTK", ptk, ptk_len);
 }
@@ -183,6 +185,154 @@ int wpa_ft_mic(const u8 *kck, const u8 *sta_addr, const u8 *ap_addr,
 	}
 
 	os_free(buf);
+
+	return 0;
+}
+
+
+static int wpa_ft_parse_ftie(const u8 *ie, size_t ie_len,
+			     struct wpa_ft_ies *parse)
+{
+	const u8 *end, *pos;
+
+	parse->ftie = ie;
+	parse->ftie_len = ie_len;
+
+	pos = ie + sizeof(struct rsn_ftie);
+	end = ie + ie_len;
+
+	while (pos + 2 <= end && pos + 2 + pos[1] <= end) {
+		switch (pos[0]) {
+		case FTIE_SUBELEM_R1KH_ID:
+			if (pos[1] != FT_R1KH_ID_LEN) {
+				wpa_printf(MSG_DEBUG, "FT: Invalid R1KH-ID "
+					   "length in FTIE: %d", pos[1]);
+				return -1;
+			}
+			parse->r1kh_id = pos + 2;
+			break;
+		case FTIE_SUBELEM_GTK:
+			parse->gtk = pos + 2;
+			parse->gtk_len = pos[1];
+			break;
+		case FTIE_SUBELEM_R0KH_ID:
+			if (pos[1] < 1 || pos[1] > FT_R0KH_ID_MAX_LEN) {
+				wpa_printf(MSG_DEBUG, "FT: Invalid R0KH-ID "
+					   "length in FTIE: %d", pos[1]);
+				return -1;
+			}
+			parse->r0kh_id = pos + 2;
+			parse->r0kh_id_len = pos[1];
+			break;
+#ifdef CONFIG_IEEE80211W
+		case FTIE_SUBELEM_IGTK:
+			parse->igtk = pos + 2;
+			parse->igtk_len = pos[1];
+			break;
+#endif /* CONFIG_IEEE80211W */
+		}
+
+		pos += 2 + pos[1];
+	}
+
+	return 0;
+}
+
+
+int wpa_ft_parse_ies(const u8 *ies, size_t ies_len,
+		     struct wpa_ft_ies *parse)
+{
+	const u8 *end, *pos;
+	struct wpa_ie_data data;
+	int ret;
+	const struct rsn_ftie *ftie;
+	int prot_ie_count = 0;
+
+	os_memset(parse, 0, sizeof(*parse));
+	if (ies == NULL)
+		return 0;
+
+	pos = ies;
+	end = ies + ies_len;
+	while (pos + 2 <= end && pos + 2 + pos[1] <= end) {
+		switch (pos[0]) {
+		case WLAN_EID_RSN:
+			parse->rsn = pos + 2;
+			parse->rsn_len = pos[1];
+			ret = wpa_parse_wpa_ie_rsn(parse->rsn - 2,
+						   parse->rsn_len + 2,
+						   &data);
+			if (ret < 0) {
+				wpa_printf(MSG_DEBUG, "FT: Failed to parse "
+					   "RSN IE: %d", ret);
+				return -1;
+			}
+			if (data.num_pmkid == 1 && data.pmkid)
+				parse->rsn_pmkid = data.pmkid;
+			break;
+		case WLAN_EID_MOBILITY_DOMAIN:
+			parse->mdie = pos + 2;
+			parse->mdie_len = pos[1];
+			break;
+		case WLAN_EID_FAST_BSS_TRANSITION:
+			if (pos[1] < sizeof(*ftie))
+				return -1;
+			ftie = (const struct rsn_ftie *) (pos + 2);
+			prot_ie_count = ftie->mic_control[1];
+			if (wpa_ft_parse_ftie(pos + 2, pos[1], parse) < 0)
+				return -1;
+			break;
+		case WLAN_EID_TIMEOUT_INTERVAL:
+			parse->tie = pos + 2;
+			parse->tie_len = pos[1];
+			break;
+		case WLAN_EID_RIC_DATA:
+			if (parse->ric == NULL)
+				parse->ric = pos;
+			break;
+		}
+
+		pos += 2 + pos[1];
+	}
+
+	if (prot_ie_count == 0)
+		return 0; /* no MIC */
+
+	/*
+	 * Check that the protected IE count matches with IEs included in the
+	 * frame.
+	 */
+	if (parse->rsn)
+		prot_ie_count--;
+	if (parse->mdie)
+		prot_ie_count--;
+	if (parse->ftie)
+		prot_ie_count--;
+	if (prot_ie_count < 0) {
+		wpa_printf(MSG_DEBUG, "FT: Some required IEs not included in "
+			   "the protected IE count");
+		return -1;
+	}
+
+	if (prot_ie_count == 0 && parse->ric) {
+		wpa_printf(MSG_DEBUG, "FT: RIC IE(s) in the frame, but not "
+			   "included in protected IE count");
+		return -1;
+	}
+
+	/* Determine the end of the RIC IE(s) */
+	pos = parse->ric;
+	while (pos && pos + 2 <= end && pos + 2 + pos[1] <= end &&
+	       prot_ie_count) {
+		prot_ie_count--;
+		pos += 2 + pos[1];
+	}
+	parse->ric_len = pos - parse->ric;
+	if (prot_ie_count) {
+		wpa_printf(MSG_DEBUG, "FT: %d protected IEs missing from "
+			   "frame", (int) prot_ie_count);
+		return -1;
+	}
 
 	return 0;
 }
@@ -400,6 +550,144 @@ int wpa_parse_wpa_ie_rsn(const u8 *rsn_ie, size_t rsn_ie_len,
 #else /* CONFIG_NO_WPA2 */
 	return -1;
 #endif /* CONFIG_NO_WPA2 */
+}
+
+
+static int wpa_selector_to_bitfield(const u8 *s)
+{
+	if (RSN_SELECTOR_GET(s) == WPA_CIPHER_SUITE_NONE)
+		return WPA_CIPHER_NONE;
+	if (RSN_SELECTOR_GET(s) == WPA_CIPHER_SUITE_WEP40)
+		return WPA_CIPHER_WEP40;
+	if (RSN_SELECTOR_GET(s) == WPA_CIPHER_SUITE_TKIP)
+		return WPA_CIPHER_TKIP;
+	if (RSN_SELECTOR_GET(s) == WPA_CIPHER_SUITE_CCMP)
+		return WPA_CIPHER_CCMP;
+	if (RSN_SELECTOR_GET(s) == WPA_CIPHER_SUITE_WEP104)
+		return WPA_CIPHER_WEP104;
+	return 0;
+}
+
+
+static int wpa_key_mgmt_to_bitfield(const u8 *s)
+{
+	if (RSN_SELECTOR_GET(s) == WPA_AUTH_KEY_MGMT_UNSPEC_802_1X)
+		return WPA_KEY_MGMT_IEEE8021X;
+	if (RSN_SELECTOR_GET(s) == WPA_AUTH_KEY_MGMT_PSK_OVER_802_1X)
+		return WPA_KEY_MGMT_PSK;
+	if (RSN_SELECTOR_GET(s) == WPA_AUTH_KEY_MGMT_NONE)
+		return WPA_KEY_MGMT_WPA_NONE;
+	return 0;
+}
+
+
+int wpa_parse_wpa_ie_wpa(const u8 *wpa_ie, size_t wpa_ie_len,
+			 struct wpa_ie_data *data)
+{
+	const struct wpa_ie_hdr *hdr;
+	const u8 *pos;
+	int left;
+	int i, count;
+
+	os_memset(data, 0, sizeof(*data));
+	data->proto = WPA_PROTO_WPA;
+	data->pairwise_cipher = WPA_CIPHER_TKIP;
+	data->group_cipher = WPA_CIPHER_TKIP;
+	data->key_mgmt = WPA_KEY_MGMT_IEEE8021X;
+	data->capabilities = 0;
+	data->pmkid = NULL;
+	data->num_pmkid = 0;
+	data->mgmt_group_cipher = 0;
+
+	if (wpa_ie_len == 0) {
+		/* No WPA IE - fail silently */
+		return -1;
+	}
+
+	if (wpa_ie_len < sizeof(struct wpa_ie_hdr)) {
+		wpa_printf(MSG_DEBUG, "%s: ie len too short %lu",
+			   __func__, (unsigned long) wpa_ie_len);
+		return -1;
+	}
+
+	hdr = (const struct wpa_ie_hdr *) wpa_ie;
+
+	if (hdr->elem_id != WLAN_EID_VENDOR_SPECIFIC ||
+	    hdr->len != wpa_ie_len - 2 ||
+	    RSN_SELECTOR_GET(hdr->oui) != WPA_OUI_TYPE ||
+	    WPA_GET_LE16(hdr->version) != WPA_VERSION) {
+		wpa_printf(MSG_DEBUG, "%s: malformed ie or unknown version",
+			   __func__);
+		return -2;
+	}
+
+	pos = (const u8 *) (hdr + 1);
+	left = wpa_ie_len - sizeof(*hdr);
+
+	if (left >= WPA_SELECTOR_LEN) {
+		data->group_cipher = wpa_selector_to_bitfield(pos);
+		pos += WPA_SELECTOR_LEN;
+		left -= WPA_SELECTOR_LEN;
+	} else if (left > 0) {
+		wpa_printf(MSG_DEBUG, "%s: ie length mismatch, %u too much",
+			   __func__, left);
+		return -3;
+	}
+
+	if (left >= 2) {
+		data->pairwise_cipher = 0;
+		count = WPA_GET_LE16(pos);
+		pos += 2;
+		left -= 2;
+		if (count == 0 || left < count * WPA_SELECTOR_LEN) {
+			wpa_printf(MSG_DEBUG, "%s: ie count botch (pairwise), "
+				   "count %u left %u", __func__, count, left);
+			return -4;
+		}
+		for (i = 0; i < count; i++) {
+			data->pairwise_cipher |= wpa_selector_to_bitfield(pos);
+			pos += WPA_SELECTOR_LEN;
+			left -= WPA_SELECTOR_LEN;
+		}
+	} else if (left == 1) {
+		wpa_printf(MSG_DEBUG, "%s: ie too short (for key mgmt)",
+			   __func__);
+		return -5;
+	}
+
+	if (left >= 2) {
+		data->key_mgmt = 0;
+		count = WPA_GET_LE16(pos);
+		pos += 2;
+		left -= 2;
+		if (count == 0 || left < count * WPA_SELECTOR_LEN) {
+			wpa_printf(MSG_DEBUG, "%s: ie count botch (key mgmt), "
+				   "count %u left %u", __func__, count, left);
+			return -6;
+		}
+		for (i = 0; i < count; i++) {
+			data->key_mgmt |= wpa_key_mgmt_to_bitfield(pos);
+			pos += WPA_SELECTOR_LEN;
+			left -= WPA_SELECTOR_LEN;
+		}
+	} else if (left == 1) {
+		wpa_printf(MSG_DEBUG, "%s: ie too short (for capabilities)",
+			   __func__);
+		return -7;
+	}
+
+	if (left >= 2) {
+		data->capabilities = WPA_GET_LE16(pos);
+		pos += 2;
+		left -= 2;
+	}
+
+	if (left > 0) {
+		wpa_printf(MSG_DEBUG, "%s: ie has %u trailing bytes - ignored",
+			   __func__, left);
+	}
+
+	return 0;
 }
 
 

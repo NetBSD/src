@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $	*/
+/*	$NetBSD: ciss.c,v 1.27.12.1 2012/11/20 03:02:03 tls Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27 2011/06/20 22:02:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27.12.1 2012/11/20 03:02:03 tls Exp $");
 
 #include "bio.h"
 
@@ -335,7 +335,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	/* map LDs */
 	if (ciss_ldmap(sc)) {
-		aprint_error_dev(&sc->sc_dev, "adapter LD map failed\n");
+		aprint_error_dev(sc->sc_dev, "adapter LD map failed\n");
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
 		return -1;
@@ -371,14 +371,14 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_channel.chan_flags = 0;
 	sc->sc_channel.chan_id = sc->maxunits;
 
-	sc->sc_adapter.adapt_dev = (device_t) sc;
+	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_openings = sc->sc_channel.chan_openings;
 	sc->sc_adapter.adapt_max_periph = min(sc->sc_adapter.adapt_openings, 256);
 	sc->sc_adapter.adapt_request = ciss_scsi_cmd;
 	sc->sc_adapter.adapt_minphys = cissminphys;
 	sc->sc_adapter.adapt_ioctl = ciss_scsi_ioctl;
 	sc->sc_adapter.adapt_nchannels = 1;
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 
 #if 0
 	sc->sc_link_raw.adapter_softc = sc;
@@ -386,7 +386,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link_raw.adapter = &ciss_raw_switch;
 	sc->sc_link_raw.adapter_target = sc->ndrives;
 	sc->sc_link_raw.adapter_buswidth = sc->ndrives;
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 #endif
 
 #if NBIO > 0
@@ -398,12 +398,12 @@ ciss_attach(struct ciss_softc *sc)
 			return 0;
 		}
 
-	if (bio_register(&sc->sc_dev, ciss_ioctl) != 0)
-		aprint_error_dev(&sc->sc_dev, "controller registration failed");
+	if (bio_register(sc->sc_dev, ciss_ioctl) != 0)
+		aprint_error_dev(sc->sc_dev, "controller registration failed");
 	else
 		sc->sc_ioctl = ciss_ioctl;
 	if (ciss_create_sensors(sc) != 0)
-		aprint_error_dev(&sc->sc_dev, "unable to create sensors");
+		aprint_error_dev(sc->sc_dev, "unable to create sensors");
 #endif
 	sc->sc_waitflag = 0;			/* we can sleep now */
 
@@ -448,7 +448,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	int i, tohz, error = 0;
 
 	if (ccb->ccb_state != CISS_CCB_READY) {
-		printf("%s: ccb %d not ready state=0x%x\n", device_xname(&sc->sc_dev),
+		printf("%s: ccb %d not ready state=0x%x\n", device_xname(sc->sc_dev),
 		    cmd->id, ccb->ccb_state);
 		return (EINVAL);
 	}
@@ -589,7 +589,7 @@ ciss_done(struct ciss_ccb *ccb)
 
 	if (ccb->ccb_state != CISS_CCB_ONQ) {
 		printf("%s: unqueued ccb %p ready, state=0x%x\n",
-		    device_xname(&sc->sc_dev), ccb, ccb->ccb_state);
+		    device_xname(sc->sc_dev), ccb, ccb->ccb_state);
 		return 1;
 	}
 
@@ -646,7 +646,7 @@ ciss_error(struct ciss_ccb *ccb)
 		if (xs == NULL ||
 		    xs->cmd->opcode != SCSI_SYNCHRONIZE_CACHE_10)
 			printf("%s: invalid cmd 0x%x: 0x%x is not valid @ 0x%x[%d]\n",
-			    device_xname(&sc->sc_dev), ccb->ccb_cmd.id,
+			    device_xname(sc->sc_dev), ccb->ccb_cmd.id,
 			    err->err_info, err->err_type[3], err->err_type[2]);
 		if (xs) {
 			memset(&xs->sense, 0, sizeof(xs->sense));
@@ -688,7 +688,7 @@ ciss_error(struct ciss_ccb *ccb)
 			default:
 				CISS_DPRINTF(CISS_D_ERR, ("%s: "
 				    "cmd_stat=%x scsi_stat=0x%x resid=0x%x\n",
-				    device_xname(&sc->sc_dev), rv, err->scsi_stat,
+				    device_xname(sc->sc_dev), rv, err->scsi_stat,
 				    le32toh(err->resid)));
 				printf("ciss driver stuffup in %s:%d: %s()\n",
 				       __FILE__, __LINE__, __func__);
@@ -1174,7 +1174,7 @@ ciss_ioctl(device_t dev, u_long cmd, void *addr)
 	switch (cmd) {
 	case BIOCINQ:
 		bi = (struct bioc_inq *)addr;
-		strlcpy(bi->bi_dev, device_xname(&sc->sc_dev), sizeof(bi->bi_dev));
+		strlcpy(bi->bi_dev, device_xname(sc->sc_dev), sizeof(bi->bi_dev));
 		bi->bi_novol = sc->maxunits;
 		bi->bi_nodisk = sc->sc_lds[0]->ndrives;
 		break;
@@ -1411,11 +1411,15 @@ ciss_create_sensors(struct ciss_softc *sc)
 	int			i;
 	int nsensors = sc->maxunits;
 
+	if (nsensors == 0) {
+		return 0;
+	}
+
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
 		M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(&sc->sc_dev, "can't allocate envsys_data");
+		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data");
 		return(ENOMEM);
 	}
 
@@ -1428,18 +1432,18 @@ ciss_create_sensors(struct ciss_softc *sc)
 		/* logical drives */
 		snprintf(sc->sc_sensor[i].desc,
 		    sizeof(sc->sc_sensor[i].desc), "%s:%d",
-		    device_xname(&sc->sc_dev), i);
+		    device_xname(sc->sc_dev), i);
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 		    &sc->sc_sensor[i]))
 			goto out;
 	}
 
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = ciss_sensor_refresh;
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		printf("%s: unable to register with sysmon\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return(1);
 	}
 	return (0);

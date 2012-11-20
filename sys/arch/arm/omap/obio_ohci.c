@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.7.2.1 2012/11/20 03:01:06 tls Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.7.2.1 2012/11/20 03:01:06 tls Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7 2012/09/05 00:19:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7.2.1 2012/11/20 03:01:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ struct obioohci_softc {
 	bus_addr_t	sc_size;
 };
 
-static int	obioohci_match(struct device *, struct cfdata *, void *);
-static void	obioohci_attach(struct device *, struct device *, void *);
-static int	obioohci_detach(struct device *, int);
+static int	obioohci_match(device_t, cfdata_t, void *);
+static void	obioohci_attach(device_t, device_t, void *);
+static int	obioohci_detach(device_t, int);
 void *		obioohci_fake_intr_establish(int (*)(void *), void *);
 void		obioohci_fake_intr(void);
 

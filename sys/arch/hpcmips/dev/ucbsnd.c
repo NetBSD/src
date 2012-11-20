@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.20 2011/11/23 23:07:29 jmcneill Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.20.8.1 2012/11/20 03:01:23 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.20 2011/11/23 23:07:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.20.8.1 2012/11/20 03:01:23 tls Exp $");
 
 #include "opt_use_poll.h"
 
@@ -114,9 +114,9 @@ struct ring_buf {
 };
 
 struct ucbsnd_softc {
-	struct device		sc_dev;
-	struct device		*sc_sib; /* parent (TX39 SIB module) */
-	struct device		*sc_ucb; /* parent (UCB1200 module) */
+	device_t		sc_dev;
+	device_t		sc_sib; /* parent (TX39 SIB module) */
+	device_t		sc_ucb; /* parent (UCB1200 module) */
 	tx_chipset_tag_t	sc_tc;
 
 	struct	tx_sound_tag	sc_tag;
@@ -145,29 +145,29 @@ struct ucbsnd_softc {
 	struct ring_buf sc_rb;
 };
 
-int	ucbsnd_match(struct device*, struct cfdata*, void*);
-void	ucbsnd_attach(struct device*, struct device*, void*);
+int	ucbsnd_match(device_t, cfdata_t, void *);
+void	ucbsnd_attach(device_t, device_t, void *);
 
-int	ucbsnd_exec_output(void*);
-int	ucbsnd_busy(void*);
+int	ucbsnd_exec_output(void *);
+int	ucbsnd_busy(void *);
 
-void	ucbsnd_sound_init(struct ucbsnd_softc*);
+void	ucbsnd_sound_init(struct ucbsnd_softc *);
 void	__ucbsnd_sound_click(tx_sound_tag_t);
 void	__ucbsnd_sound_mute(tx_sound_tag_t, int);
 
 int	ucbsndwrite_subr(struct ucbsnd_softc *, u_int32_t *, size_t,
 	    struct uio *);
 
-int	ringbuf_allocate(struct ring_buf*, size_t, int);
-void	ringbuf_deallocate(struct ring_buf*);
-void	ringbuf_reset(struct ring_buf*);
-int	ringbuf_full(struct ring_buf*);
-void	*ringbuf_producer_get(struct ring_buf*);
-void	ringbuf_producer_return(struct ring_buf*, size_t);
-void	*ringbuf_consumer_get(struct ring_buf*, size_t*);
-void	ringbuf_consumer_return(struct ring_buf*);
+int	ringbuf_allocate(struct ring_buf *, size_t, int);
+void	ringbuf_deallocate(struct ring_buf *);
+void	ringbuf_reset(struct ring_buf *);
+int	ringbuf_full(struct ring_buf *);
+void	*ringbuf_producer_get(struct ring_buf *);
+void	ringbuf_producer_return(struct ring_buf *, size_t);
+void	*ringbuf_consumer_get(struct ring_buf *, size_t *);
+void	ringbuf_consumer_return(struct ring_buf *);
 
-CFATTACH_DECL(ucbsnd, sizeof(struct ucbsnd_softc),
+CFATTACH_DECL_NEW(ucbsnd, sizeof(struct ucbsnd_softc),
     ucbsnd_match, ucbsnd_attach, NULL, NULL);
 
 dev_type_open(ucbsndopen);
@@ -181,19 +181,20 @@ const struct cdevsw ucbsnd_cdevsw = {
 };
 
 int
-ucbsnd_match(struct device *parent, struct cfdata *cf, void *aux)
+ucbsnd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 void
-ucbsnd_attach(struct device *parent, struct device *self, void *aux)
+ucbsnd_attach(device_t parent, device_t self, void *aux)
 {
 	struct ucb1200_attach_args *ucba = aux;
-	struct ucbsnd_softc *sc = (void*)self;
+	struct ucbsnd_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 
+	sc->sc_dev = self;
 	tc = sc->sc_tc = ucba->ucba_tc;
 	sc->sc_sib = ucba->ucba_sib;
 	sc->sc_ucb = ucba->ucba_ucb;
@@ -629,7 +630,7 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
  out:
 	return (error);
  errout:
-	printf("%s: timeout. reset ring-buffer.\n", sc->sc_dev.dv_xname);
+	printf("%s: timeout. reset ring-buffer.\n", device_xname(sc->sc_dev));
 	s = splvm();
 	ringbuf_reset(&sc->sc_rb);
 	splx(s);

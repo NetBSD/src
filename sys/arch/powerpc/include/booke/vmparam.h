@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2012/07/09 17:55:15 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6.2.1 2012/11/20 03:01:38 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -106,6 +106,6 @@
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 #endif
 
-#include <common/pmap/tlb/vmpagemd.h>
+#include <uvm/pmap/vmpagemd.h>
 
 #endif /* _POWERPC_BOOKE_VMPARAM_H_ */

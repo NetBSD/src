@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant - test code
- * Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2011, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -22,12 +22,15 @@
 #include "config.h"
 #include "eapol_supp/eapol_supp_sm.h"
 #include "eap_peer/eap.h"
+#include "eap_server/eap_methods.h"
 #include "eloop.h"
+#include "utils/base64.h"
 #include "rsn_supp/wpa.h"
 #include "eap_peer/eap_i.h"
 #include "wpa_supplicant_i.h"
 #include "radius/radius.h"
 #include "radius/radius_client.h"
+#include "common/wpa_ctrl.h"
 #include "ctrl_iface.h"
 #include "pcsc_funcs.h"
 
@@ -74,6 +77,8 @@ struct eapol_test_data {
 	char *connect_info;
 	u8 own_addr[ETH_ALEN];
 	struct extra_radius_attr *extra_attrs;
+
+	FILE *server_cert_file;
 };
 
 static struct eapol_test_data eapol_test;
@@ -279,7 +284,9 @@ static void ieee802_1x_encapsulate_radius(struct eapol_test_data *e,
 		}
 	}
 
-	radius_client_send(e->radius, msg, RADIUS_AUTH, e->wpa_s->own_addr);
+	if (radius_client_send(e->radius, msg, RADIUS_AUTH, e->wpa_s->own_addr)
+	    < 0)
+		goto fail;
 	return;
 
  fail:
@@ -290,7 +297,6 @@ static void ieee802_1x_encapsulate_radius(struct eapol_test_data *e,
 static int eapol_test_eapol_send(void *ctx, int type, const u8 *buf,
 				 size_t len)
 {
-	/* struct wpa_supplicant *wpa_s = ctx; */
 	printf("WPA: eapol_test_eapol_send(type=%d len=%lu)\n",
 	       type, (unsigned long) len);
 	if (type == IEEE802_1X_TYPE_EAP_PACKET) {
@@ -304,16 +310,16 @@ static int eapol_test_eapol_send(void *ctx, int type, const u8 *buf,
 static void eapol_test_set_config_blob(void *ctx,
 				       struct wpa_config_blob *blob)
 {
-	struct wpa_supplicant *wpa_s = ctx;
-	wpa_config_set_blob(wpa_s->conf, blob);
+	struct eapol_test_data *e = ctx;
+	wpa_config_set_blob(e->wpa_s->conf, blob);
 }
 
 
 static const struct wpa_config_blob *
 eapol_test_get_config_blob(void *ctx, const char *name)
 {
-	struct wpa_supplicant *wpa_s = ctx;
-	return wpa_config_get_blob(wpa_s->conf, name);
+	struct eapol_test_data *e = ctx;
+	return wpa_config_get_blob(e->wpa_s->conf, name);
 }
 
 
@@ -382,6 +388,53 @@ static void eapol_sm_cb(struct eapol_sm *eapol, int success, void *ctx)
 }
 
 
+static void eapol_test_write_cert(FILE *f, const char *subject,
+				  const struct wpabuf *cert)
+{
+	unsigned char *encoded;
+
+	encoded = base64_encode(wpabuf_head(cert), wpabuf_len(cert), NULL);
+	if (encoded == NULL)
+		return;
+	fprintf(f, "%s\n-----BEGIN CERTIFICATE-----\n%s"
+		"-----END CERTIFICATE-----\n\n", subject, encoded);
+	os_free(encoded);
+}
+
+
+static void eapol_test_cert_cb(void *ctx, int depth, const char *subject,
+			       const char *cert_hash,
+			       const struct wpabuf *cert)
+{
+	struct eapol_test_data *e = ctx;
+
+	wpa_msg(e->wpa_s, MSG_INFO, WPA_EVENT_EAP_PEER_CERT
+		"depth=%d subject='%s'%s%s",
+		depth, subject,
+		cert_hash ? " hash=" : "",
+		cert_hash ? cert_hash : "");
+
+	if (cert) {
+		char *cert_hex;
+		size_t len = wpabuf_len(cert) * 2 + 1;
+		cert_hex = os_malloc(len);
+		if (cert_hex) {
+			wpa_snprintf_hex(cert_hex, len, wpabuf_head(cert),
+					 wpabuf_len(cert));
+			wpa_msg_ctrl(e->wpa_s, MSG_INFO,
+				     WPA_EVENT_EAP_PEER_CERT
+				     "depth=%d subject='%s' cert=%s",
+				     depth, subject, cert_hex);
+			os_free(cert_hex);
+		}
+
+		if (e->server_cert_file)
+			eapol_test_write_cert(e->server_cert_file,
+					      subject, cert);
+	}
+}
+
+
 static int test_eapol(struct eapol_test_data *e, struct wpa_supplicant *wpa_s,
 		      struct wpa_ssid *ssid)
 {
@@ -393,7 +446,7 @@ static int test_eapol(struct eapol_test_data *e, struct wpa_supplicant *wpa_s,
 		printf("Failed to allocate EAPOL context.\n");
 		return -1;
 	}
-	ctx->ctx = wpa_s;
+	ctx->ctx = e;
 	ctx->msg_ctx = wpa_s;
 	ctx->scard_ctx = wpa_s->scard;
 	ctx->cb = eapol_sm_cb;
@@ -407,6 +460,8 @@ static int test_eapol(struct eapol_test_data *e, struct wpa_supplicant *wpa_s,
 	ctx->opensc_engine_path = wpa_s->conf->opensc_engine_path;
 	ctx->pkcs11_engine_path = wpa_s->conf->pkcs11_engine_path;
 	ctx->pkcs11_module_path = wpa_s->conf->pkcs11_module_path;
+	ctx->cert_cb = eapol_test_cert_cb;
+	ctx->cert_in_cb = 1;
 
 	wpa_s->eapol = eapol_sm_init(ctx);
 	if (wpa_s->eapol == NULL) {
@@ -963,7 +1018,7 @@ static void usage(void)
 	       "eapol_test [-nWS] -c<conf> [-a<AS IP>] [-p<AS port>] "
 	       "[-s<AS secret>]\\\n"
 	       "           [-r<count>] [-t<timeout>] [-C<Connect-Info>] \\\n"
-	       "           [-M<client MAC address>] \\\n"
+	       "           [-M<client MAC address>] [-o<server cert file] \\\n"
 	       "           [-N<attr spec>] \\\n"
 	       "           [-A<client IP>]\n"
 	       "eapol_test scard\n"
@@ -989,6 +1044,8 @@ static void usage(void)
 	       "  -M<client MAC address> = Set own MAC address "
 	       "(Calling-Station-Id,\n"
 	       "                           default: 02:00:00:00:00:01)\n"
+	       "  -o<server cert file> = Write received server certificate\n"
+	       "                         chain to the specified file\n"
 	       "  -N<attr spec> = send arbitrary attribute specified by:\n"
 	       "                  attr_id:syntax:value or attr_id\n"
 	       "                  attr_id - number id of the attribute\n"
@@ -1030,7 +1087,7 @@ int main(int argc, char *argv[])
 	wpa_debug_show_keys = 1;
 
 	for (;;) {
-		c = getopt(argc, argv, "a:A:c:C:M:nN:p:r:s:St:W");
+		c = getopt(argc, argv, "a:A:c:C:M:nN:o:p:r:s:St:W");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -1054,6 +1111,16 @@ int main(int argc, char *argv[])
 			break;
 		case 'n':
 			eapol_test.no_mppe_keys++;
+			break;
+		case 'o':
+			if (eapol_test.server_cert_file)
+				fclose(eapol_test.server_cert_file);
+			eapol_test.server_cert_file = fopen(optarg, "w");
+			if (eapol_test.server_cert_file == NULL) {
+				printf("Could not open '%s' for writing\n",
+				       optarg);
+				return -1;
+			}
 			break;
 		case 'p':
 			as_port = atoi(optarg);
@@ -1191,8 +1258,14 @@ int main(int argc, char *argv[])
 	test_eapol_clean(&eapol_test, &wpa_s);
 
 	eap_peer_unregister_methods();
+#ifdef CONFIG_AP
+	eap_server_unregister_methods();
+#endif /* CONFIG_AP */
 
 	eloop_destroy();
+
+	if (eapol_test.server_cert_file)
+		fclose(eapol_test.server_cert_file);
 
 	printf("MPPE keys OK: %d  mismatch: %d\n",
 	       eapol_test.num_mppe_ok, eapol_test.num_mppe_mismatch);

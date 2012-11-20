@@ -1,4 +1,4 @@
-/* $NetBSD: daicvar.h,v 1.11 2009/05/12 14:25:17 cegger Exp $ */
+/* $NetBSD: daicvar.h,v 1.11.22.1 2012/11/20 03:02:04 tls Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct daic_unit {
 /* superclass of all softc structs for attachments, you should
  * always be able to cast an attachments device_t self to this. */
 struct daic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;		/* bus identifier */
 	bus_space_handle_t sc_ioh;	/* mem handle */
 	int sc_cardtype;		/* variant of card */

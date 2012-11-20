@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.3.12.1 2012/11/20 03:01:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3.12.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ omapfb_restore_palette(struct omapfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
+	for (i = 0; i < 256; i++) {
 		omapfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
 	}

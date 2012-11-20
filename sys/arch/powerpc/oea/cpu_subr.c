@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.73 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.73.6.1 2012/11/20 03:01:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73.6.1 2012/11/20 03:01:39 tls Exp $");
 
 #include "opt_ppcparam.h"
+#include "opt_ppccache.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 #include "sysmon_envsys.h"
@@ -236,6 +237,7 @@ struct cpu_info cpu_info[CPU_MAXNUM] = {
 };
 volatile struct cpu_hatch_data *cpu_hatch_data;
 volatile int cpu_hatch_stack;
+#define HATCH_STACK_SIZE 0x1000
 extern int ticks_per_intr;
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>
@@ -266,13 +268,13 @@ cpu_model_init(void)
 	vers = pvr >> 16;
 
 	oeacpufeat = 0;
-	
+
 	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
 		vers == IBMCELL || vers == IBMPOWER6P5) {
 		oeacpufeat |= OEACPU_64;
 		oeacpufeat |= OEACPU_64_BRIDGE;
 		oeacpufeat |= OEACPU_NOBAT;
-	
+
 	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
@@ -580,6 +582,13 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		break;
 	}
 
+#ifdef MULTIPROCESSOR
+	switch (vers) {
+	case MPC603e:
+		hid0 |= HID0_ABE;
+	}
+#endif
+
 	if (hid0 != hid0_save) {
 		mtspr(SPR_HID0, hid0);
 		__asm volatile("sync;isync");
@@ -656,7 +665,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	/*
 	 * Attach MPC750 temperature sensor to the envsys subsystem.
 	 * XXX the 74xx series also has this sensor, but it is not
-	 * XXX supported by Motorola and may return values that are off by 
+	 * XXX supported by Motorola and may return values that are off by
 	 * XXX 35-55 degrees C.
 	 */
 	if (vers == MPC750 || vers == IBM750FX || vers == IBM750GX)
@@ -799,7 +808,7 @@ cpu_enable_l2cr(register_t l2cr)
 	uint16_t vers;
 
 	vers = mfpvr() >> 16;
-	
+
 	/* Disable interrupts and set the cache config bits. */
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
@@ -838,7 +847,7 @@ cpu_enable_l3cr(register_t l3cr)
 	register_t x;
 
 	/* By The Book (numbered steps from section 3.7.1.3 of MPC7450UM) */
-				
+
 	/*
 	 * 1: Set all L3CR bits for final config except L3E, L3I, L3PE, and
 	 *    L3CLKEN.  (also mask off reserved bits in case they were included
@@ -862,7 +871,7 @@ cpu_enable_l3cr(register_t l3cr)
 	do {
 		x = mfspr(SPR_L3CR);
 	} while (x & L3CR_L3I);
-	
+
 	/* 6: Clear L3CLKEN to 0 */
 	l3cr &= ~L3CR_L3CLKEN;
 	mtspr(SPR_L3CR, l3cr);
@@ -964,7 +973,7 @@ cpu_config_l3cr(int vers)
 		cpu_enable_l2cr(l2cr_config);
 		l2cr = mfspr(SPR_L2CR);
 	}
-	
+
 	aprint_normal(",");
 	switch (vers) {
 	case MPC7447A:
@@ -997,7 +1006,7 @@ cpu_config_l3cr(int vers)
 		cpu_enable_l3cr(l3cr_config);
 		l3cr = mfspr(SPR_L3CR);
 	}
-	
+
 	if (l3cr & L3CR_L3E) {
 		aprint_normal(",");
 		cpu_fmttab_print(cpu_7450_l3cr_formats, l3cr);
@@ -1123,8 +1132,8 @@ cpu_tau_setup(struct cpu_info *ci)
 	 */
 
 	therm_delay = ci->ci_khz / 40;		/* 25us just to be safe */
-	
-        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE); 
+
+        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE);
 
 	sme = sysmon_envsys_create();
 
@@ -1136,7 +1145,7 @@ cpu_tau_setup(struct cpu_info *ci)
 		return;
 	}
 
-	sme->sme_name = device_xname(ci->ci_dev);	
+	sme->sme_name = device_xname(ci->ci_dev);
 	sme->sme_cookie = ci;
 	sme->sme_refresh = cpu_tau_refresh;
 
@@ -1161,24 +1170,23 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	 * Unit in the MPC750 Microprocessor".
 	 */
 	for (i = 5; i >= 0 ; i--) {
-		mtspr(SPR_THRM1, 
+		mtspr(SPR_THRM1,
 		    SPR_THRM_THRESHOLD(threshold) | SPR_THRM_VALID);
 		count = 0;
-		while ((count < 100000) && 
+		while ((count < 100000) &&
 		    ((mfspr(SPR_THRM1) & SPR_THRM_TIV) == 0)) {
 			count++;
 			delay(1);
 		}
 		if (mfspr(SPR_THRM1) & SPR_THRM_TIN) {
-			/* The interrupt bit was set, meaning the 
-			 * temperature was above the threshold 
+			/* The interrupt bit was set, meaning the
+			 * temperature was above the threshold
 			 */
 			threshold += 1 << i;
 		} else {
 			/* Temperature was below the threshold */
 			threshold -= 1 << i;
 		}
-		
 	}
 	threshold += 2;
 
@@ -1189,7 +1197,7 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 #endif /* NSYSMON_ENVSYS > 0 */
 
 #ifdef MULTIPROCESSOR
-extern volatile u_int cpu_spinstart_ack;
+volatile u_int cpu_spinstart_ack, cpu_spinstart_cpunum;
 
 int
 cpu_spinup(device_t self, struct cpu_info *ci)
@@ -1204,7 +1212,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	KASSERT(ci != curcpu());
 
 	/* Now allocate a hatch stack */
-	error = uvm_pglistalloc(0x1000, 0x10000, 0x10000000, 16, 0,
+	error = uvm_pglistalloc(HATCH_STACK_SIZE, 0x10000, 0x10000000, 16, 0,
 	    &mlist, 1, 1);
 	if (error) {
 		aprint_error(": unable to allocate hatch stack\n");
@@ -1212,7 +1220,7 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	}
 
 	hp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	memset(hp, 0, 0x1000);
+	memset(hp, 0, HATCH_STACK_SIZE);
 
 	/* Initialize secondary cpu's initial lwp to its idlelwp. */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
@@ -1225,13 +1233,13 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 	h->hatch_ci = ci;
 	h->hatch_pir = ci->ci_cpuid;
 
-	cpu_hatch_stack = (uint32_t)hp;
+	cpu_hatch_stack = (uint32_t)hp + HATCH_STACK_SIZE - CALLFRAMELEN;
 	ci->ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
 
 	h->hatch_hid0 = mfspr(SPR_HID0);
-	
+
 	__asm volatile ("mfsdr1 %0" : "=r"(h->hatch_sdr1));
 	for (i = 0; i < 16; i++) {
 		__asm ("mfsrin %0,%1" : "=r"(h->hatch_sr[i]) :
@@ -1243,14 +1251,22 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 		h->hatch_asr = 0;
 
 	/* copy the bat regs */
-	__asm volatile ("mfibatu %0,0" : "=r"(h->hatch_batu[0]));
-	__asm volatile ("mfibatl %0,0" : "=r"(h->hatch_batl[0]));
-	__asm volatile ("mfibatu %0,1" : "=r"(h->hatch_batu[1]));
-	__asm volatile ("mfibatl %0,1" : "=r"(h->hatch_batl[1]));
-	__asm volatile ("mfibatu %0,2" : "=r"(h->hatch_batu[2]));
-	__asm volatile ("mfibatl %0,2" : "=r"(h->hatch_batl[2]));
-	__asm volatile ("mfibatu %0,3" : "=r"(h->hatch_batu[3]));
-	__asm volatile ("mfibatl %0,3" : "=r"(h->hatch_batl[3]));
+	__asm volatile ("mfibatu %0,0" : "=r"(h->hatch_ibatu[0]));
+	__asm volatile ("mfibatl %0,0" : "=r"(h->hatch_ibatl[0]));
+	__asm volatile ("mfibatu %0,1" : "=r"(h->hatch_ibatu[1]));
+	__asm volatile ("mfibatl %0,1" : "=r"(h->hatch_ibatl[1]));
+	__asm volatile ("mfibatu %0,2" : "=r"(h->hatch_ibatu[2]));
+	__asm volatile ("mfibatl %0,2" : "=r"(h->hatch_ibatl[2]));
+	__asm volatile ("mfibatu %0,3" : "=r"(h->hatch_ibatu[3]));
+	__asm volatile ("mfibatl %0,3" : "=r"(h->hatch_ibatl[3]));
+	__asm volatile ("mfdbatu %0,0" : "=r"(h->hatch_dbatu[0]));
+	__asm volatile ("mfdbatl %0,0" : "=r"(h->hatch_dbatl[0]));
+	__asm volatile ("mfdbatu %0,1" : "=r"(h->hatch_dbatu[1]));
+	__asm volatile ("mfdbatl %0,1" : "=r"(h->hatch_dbatl[1]));
+	__asm volatile ("mfdbatu %0,2" : "=r"(h->hatch_dbatu[2]));
+	__asm volatile ("mfdbatl %0,2" : "=r"(h->hatch_dbatl[2]));
+	__asm volatile ("mfdbatu %0,3" : "=r"(h->hatch_dbatu[3]));
+	__asm volatile ("mfdbatl %0,3" : "=r"(h->hatch_dbatl[3]));
 	__asm volatile ("sync; isync");
 
 	if (md_setup_trampoline(h, ci) == -1)
@@ -1262,7 +1278,19 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 
 	delay(200000);
 
+#ifdef CACHE_PROTO_MEI
+	__asm volatile ("dcbi 0,%0"::"r"(&h->hatch_running):"memory");
+	__asm volatile ("sync; isync");
+	__asm volatile ("dcbst 0,%0"::"r"(&h->hatch_running):"memory");
+	__asm volatile ("sync; isync");
+#endif
 	if (h->hatch_running < 1) {
+#ifdef CACHE_PROTO_MEI
+		__asm volatile ("dcbi 0,%0"::"r"(&cpu_spinstart_ack):"memory");
+		__asm volatile ("sync; isync");
+		__asm volatile ("dcbst 0,%0"::"r"(&cpu_spinstart_ack):"memory");
+		__asm volatile ("sync; isync");
+#endif
 		aprint_error("%d:CPU %d didn't start %d\n", cpu_spinstart_ack,
 		    ci->ci_cpuid, cpu_spinstart_ack);
 		Debugger();
@@ -1277,7 +1305,6 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 }
 
 static volatile int start_secondary_cpu;
-extern void tlbia(void);
 
 register_t
 cpu_hatch(void)
@@ -1300,20 +1327,28 @@ cpu_hatch(void)
 	msr = mfspr(SPR_PIR);
 	if (msr != h->hatch_pir)
 		mtspr(SPR_PIR, h->hatch_pir);
-	
+
 	__asm volatile ("mtsprg0 %0" :: "r"(ci));
 	curlwp = ci->ci_curlwp;
 	cpu_spinstart_ack = 0;
 
 	/* Initialize MMU. */
-	__asm ("mtibatu 0,%0" :: "r"(h->hatch_batu[0]));
-	__asm ("mtibatl 0,%0" :: "r"(h->hatch_batl[0]));
-	__asm ("mtibatu 1,%0" :: "r"(h->hatch_batu[1]));
-	__asm ("mtibatl 1,%0" :: "r"(h->hatch_batl[1]));
-	__asm ("mtibatu 2,%0" :: "r"(h->hatch_batu[2]));
-	__asm ("mtibatl 2,%0" :: "r"(h->hatch_batl[2]));
-	__asm ("mtibatu 3,%0" :: "r"(h->hatch_batu[3]));
-	__asm ("mtibatl 3,%0" :: "r"(h->hatch_batl[3]));
+	__asm ("mtibatu 0,%0" :: "r"(h->hatch_ibatu[0]));
+	__asm ("mtibatl 0,%0" :: "r"(h->hatch_ibatl[0]));
+	__asm ("mtibatu 1,%0" :: "r"(h->hatch_ibatu[1]));
+	__asm ("mtibatl 1,%0" :: "r"(h->hatch_ibatl[1]));
+	__asm ("mtibatu 2,%0" :: "r"(h->hatch_ibatu[2]));
+	__asm ("mtibatl 2,%0" :: "r"(h->hatch_ibatl[2]));
+	__asm ("mtibatu 3,%0" :: "r"(h->hatch_ibatu[3]));
+	__asm ("mtibatl 3,%0" :: "r"(h->hatch_ibatl[3]));
+	__asm ("mtdbatu 0,%0" :: "r"(h->hatch_dbatu[0]));
+	__asm ("mtdbatl 0,%0" :: "r"(h->hatch_dbatl[0]));
+	__asm ("mtdbatu 1,%0" :: "r"(h->hatch_dbatu[1]));
+	__asm ("mtdbatl 1,%0" :: "r"(h->hatch_dbatl[1]));
+	__asm ("mtdbatu 2,%0" :: "r"(h->hatch_dbatu[2]));
+	__asm ("mtdbatl 2,%0" :: "r"(h->hatch_dbatl[2]));
+	__asm ("mtdbatu 3,%0" :: "r"(h->hatch_dbatu[3]));
+	__asm ("mtdbatl 3,%0" :: "r"(h->hatch_dbatl[3]));
 
 	mtspr(SPR_HID0, h->hatch_hid0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.15.6.1 2012/11/20 03:02:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -78,11 +78,15 @@
  *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
  *	- Reclamation of inactive vnode, via vget(9).
  *
+ *	Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9)
+ *	was another, traditional way.  Currently, only the draining thread
+ *	recycles the vnodes.  This behaviour might be revisited.
+ *
  *	The life-cycle ends when the last reference is dropped, usually
  *	in VOP_REMOVE(9).  In such case, VOP_INACTIVE(9) is called to inform
  *	the file system that vnode is inactive.  Via this call, file system
- *	indicates whether vnode should be recycled (usually, count of links
- *	is checked i.e. whether file was removed).
+ *	indicates whether vnode can be recycled (usually, it checks its own
+ *	references, e.g. count of links, whether the file was removed).
  *
  *	Depending on indication, vnode can be put into a free list (cache),
  *	or cleaned via vclean(9), which calls VOP_RECLAIM(9) to disassociate
@@ -120,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15.6.1 2012/11/20 03:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,18 +151,23 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.15 2011/12/20 16:49:37 hannken Exp $
 u_int			numvnodes		__cacheline_aligned;
 
 static pool_cache_t	vnode_cache		__read_mostly;
-static kmutex_t		vnode_free_list_lock	__cacheline_aligned;
 
+/*
+ * There are two free lists: one is for vnodes which have no buffer/page
+ * references and one for those which do (i.e. v_holdcnt is non-zero).
+ * Vnode recycling mechanism first attempts to look into the former list.
+ */
+static kmutex_t		vnode_free_list_lock	__cacheline_aligned;
 static vnodelst_t	vnode_free_list		__cacheline_aligned;
 static vnodelst_t	vnode_hold_list		__cacheline_aligned;
-static vnodelst_t	vrele_list		__cacheline_aligned;
+static kcondvar_t	vdrain_cv		__cacheline_aligned;
 
+static vnodelst_t	vrele_list		__cacheline_aligned;
 static kmutex_t		vrele_lock		__cacheline_aligned;
 static kcondvar_t	vrele_cv		__cacheline_aligned;
 static lwp_t *		vrele_lwp		__cacheline_aligned;
 static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
-static kcondvar_t	vdrain_cv		__cacheline_aligned;
 
 static int		cleanvnode(void);
 static void		vdrain_thread(void *);
@@ -555,6 +564,22 @@ vget(vnode_t *vp, int flags)
 		return ENOENT;
 	}
 
+	if ((vp->v_iflag & VI_INACTNOW) != 0) {
+		/*
+		 * if it's being desactived, wait for it to complete.
+		 * Make sure to not return a clean vnode.
+		 */
+		 if ((flags & LK_NOWAIT) != 0) {
+			vrelel(vp, 0);
+			return EBUSY;
+		}
+		vwait(vp, VI_INACTNOW);
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
+			vrelel(vp, 0);
+			return ENOENT;
+		}
+	}
+
 	/*
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
@@ -665,8 +690,12 @@ retry:
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
-			/* We have to try harder. */
-			vp->v_iflag &= ~VI_INACTREDO;
+			/*
+			 * We have to try harder. But we can't sleep
+			 * with VI_INACTNOW as vget() may be waiting on it.
+			 */
+			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
@@ -674,6 +703,18 @@ retry:
 				vnpanic(vp, "%s: unable to lock %p",
 				    __func__, vp);
 			}
+			mutex_enter(vp->v_interlock);
+			/*
+			 * if we did get another reference while
+			 * sleeping, don't try to inactivate it yet.
+			 */
+			if (__predict_false(vtryrele(vp))) {
+				VOP_UNLOCK(vp);
+				mutex_exit(vp->v_interlock);
+				return;
+			}
+			vp->v_iflag |= VI_INACTNOW;
+			mutex_exit(vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
@@ -709,6 +750,7 @@ retry:
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(vp->v_interlock);
 			return;
 		}
@@ -726,6 +768,7 @@ retry:
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(vp->v_interlock);
 		vp->v_iflag &= ~VI_INACTNOW;
+		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(vp->v_interlock);

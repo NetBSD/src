@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.21 2012/08/12 03:35:14 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.21.2.1 2012/11/20 03:02:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.21 2012/08/12 03:35:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.21.2.1 2012/11/20 03:02:47 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,8 +136,10 @@ npf_packet_handler(void *arg, struct mbuf **mp, ifnet_t *ifp, int di)
 		nbuf = (nbuf_t *)*mp;
 		npc.npc_info = 0;
 
-		int ret __unused = npf_cache_all(&npc, nbuf);
-		KASSERT((ret & NPC_IPFRAG) == 0);
+		if (npf_cache_all(&npc, nbuf) & NPC_IPFRAG) {
+			se = NULL;
+			goto out;
+		}
 		npf_stats_inc(NPF_STAT_REASSEMBLY);
 	}
 
@@ -207,10 +209,11 @@ pass:
 	error = npf_do_nat(&npc, se, nbuf, ifp, di);
 block:
 	/*
-	 * Execute rule procedure, if any.
+	 * Execute the rule procedure, if any is associated.
+	 * It may reverse the decision from pass to block.
 	 */
 	if (rp) {
-		npf_rproc_run(&npc, nbuf, rp, error);
+		npf_rproc_run(&npc, nbuf, rp, &decision);
 	}
 out:
 	/*

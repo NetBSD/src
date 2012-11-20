@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.1 2012/11/20 03:01:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,6 @@
 
 struct intrsource;
 struct pmap;
-struct device;
 
 #ifdef __x86_64__
 #define	i386tss	x86_64_tss

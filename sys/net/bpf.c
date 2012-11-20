@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $	*/
+/*	$NetBSD: bpf.c,v 1.171.2.1 2012/11/20 03:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171.2.1 2012/11/20 03:02:46 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
 #include <net/slip.h>
 
 #include <net/bpf.h>
-#include <net/bpf_jit.h>
 #include <net/bpfdesc.h>
+#include <net/bpfjit.h>
 
 #include <net/if_arc.h>
 #include <net/if_ether.h>
@@ -108,6 +108,12 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.171 2012/08/15 20:59:51 alnsn Exp $");
  */
 int bpf_bufsize = BPF_BUFSIZE;
 int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
+bool bpf_jit = false;
+
+struct bpfjit_ops bpfjit_module_ops = {
+	.bj_generate_code = NULL,
+	.bj_free_code = NULL
+};
 
 /*
  * Global BPF statistics returned by net.bpf.stats sysctl.
@@ -119,14 +125,6 @@ struct bpf_stat	bpf_gstats;
  * and opening/closing the device.
  */
 static kmutex_t bpf_mtx;
-
-/* BPF JIT compilation. */
-static bool bpf_jit_enable __read_mostly = false;
-
-#ifndef BPF_JIT
-#define	bpf_jit(x, y)			NULL
-#define	bpf_destroy_jit_filter(x)	(void)x
-#endif
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -427,6 +425,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	callout_init(&d->bd_callout, 0);
 	selinit(&d->bd_sel);
 	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
+	d->bd_jitcode = NULL;
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -1063,10 +1062,11 @@ int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
-	bpf_jit_filter *jfunc, *ofunc;
+	bpfjit_function_t jcode, oldj;
 	size_t flen, size;
 	int s;
 
+	jcode = NULL;
 	flen = fp->bf_len;
 
 	if ((fp->bf_insns == NULL && flen) || flen > BPF_MAXINSNS) {
@@ -1085,28 +1085,31 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			free(fcode, M_DEVBUF);
 			return EINVAL;
 		}
-
-		/* Perform JIT compilation. */
-		jfunc = bpf_jit(fcode, flen);
+		membar_consumer();
+		if (bpf_jit && bpfjit_module_ops.bj_generate_code != NULL) {
+			jcode = bpfjit_module_ops.bj_generate_code(fcode, flen);
+		}
 	} else {
 		fcode = NULL;
-		jfunc = NULL;
 	}
 
 	s = splnet();
 	old = d->bd_filter;
-	ofunc = d->bd_bfilter;
 	d->bd_filter = fcode;
-	d->bd_bfilter = jfunc;
+	oldj = d->bd_jitcode;
+	d->bd_jitcode = jcode;
 	reset_d(d);
 	splx(s);
 
 	if (old) {
 		free(old, M_DEVBUF);
 	}
-	if (ofunc) {
-		bpf_destroy_jit_filter(ofunc);
+
+	if (oldj != NULL) {
+		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
+		bpfjit_module_ops.bj_free_code(oldj);
 	}
+
 	return 0;
 }
 
@@ -1368,7 +1371,6 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	 * interfaces shared any data.  This is not the case.
 	 */
 	for (d = bp->bif_dlist; d != NULL; d = d->bd_next) {
-		bpf_jit_filter *bf;
 		u_int slen;
 
 		if (!d->bd_seesent && !rcv) {
@@ -1377,17 +1379,11 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		d->bd_rcount++;
 		bpf_gstats.bs_recv++;
 
-		bf = bpf_jit_enable ? d->bd_bfilter : NULL;
-		if (bf) {
-			/*
-			 * XXX THIS is totally broken when pkt
-			 * points to mbuf. FreeBSD does a runtime
-			 * check, we don't.
-			 */
-			slen = (*(bf->func))(pkt, pktlen, pktlen);
-		} else {
+		if (d->bd_jitcode != NULL)
+			slen = d->bd_jitcode(pkt, pktlen, buflen);
+		else
 			slen = bpf_filter(d->bd_filter, pkt, pktlen, buflen);
-		}
+
 		if (!slen) {
 			continue;
 		}
@@ -1716,8 +1712,11 @@ bpf_freed(struct bpf_d *d)
 	}
 	if (d->bd_filter)
 		free(d->bd_filter, M_DEVBUF);
-	if (d->bd_bfilter)
-		bpf_destroy_jit_filter(d->bd_bfilter);
+
+	if (d->bd_jitcode != NULL) {
+		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
+		bpfjit_module_ops.bj_free_code(d->bd_jitcode);
+	}
 }
 
 /*
@@ -1890,6 +1889,36 @@ sysctl_net_bpf_maxbufsize(SYSCTLFN_ARGS)
 }
 
 static int
+sysctl_net_bpf_jit(SYSCTLFN_ARGS)
+{
+	bool newval;
+	int error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &newval;
+	newval = bpf_jit;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	bpf_jit = newval;
+
+	/*
+	 * Do a full sync to publish new bpf_jit value and
+	 * update bpfjit_module_ops.bj_generate_code variable.
+	 */
+	membar_sync();
+
+	if (newval && bpfjit_module_ops.bj_generate_code == NULL) {
+		printf("WARNING jit activation is postponed "
+		    "until after bpfjit module is loaded\n");
+	}
+
+	return 0;
+}
+
+static int
 sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 {
 	int    error, elem_count;
@@ -1979,6 +2008,12 @@ sysctl_net_bpf_setup(void)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL) {
+		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_BOOL, "jit",
+			SYSCTL_DESCR("Toggle Just-In-Time compilation"),
+			sysctl_net_bpf_jit, 0, &bpf_jit, 0,
+			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize",

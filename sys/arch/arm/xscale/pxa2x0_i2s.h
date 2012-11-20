@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.h,v 1.3 2011/11/23 23:07:29 jmcneill Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.h,v 1.3.8.1 2012/11/20 03:01:08 tls Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.h,v 1.3 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -26,7 +26,6 @@ struct pxa2x0_i2s_dma;
 struct audio_params;
 
 struct pxa2x0_i2s_softc {
-	struct device sc_dev;
 	kmutex_t *sc_intr_lock;
 
 	bus_space_tag_t sc_iot;
@@ -58,7 +57,7 @@ int	pxa2x0_i2s_attach_sub(struct pxa2x0_i2s_softc *);
 int	pxa2x0_i2s_detach_sub(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_open(struct pxa2x0_i2s_softc *);
 void	pxa2x0_i2s_close(struct pxa2x0_i2s_softc *);
-void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, u_int32_t);
+void	pxa2x0_i2s_write(struct pxa2x0_i2s_softc *, uint32_t);
 
 void	pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *, u_int *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.14 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.14.44.1 2012/11/20 03:02:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct mlx_sysdrive {
 	u_int32_t	ms_size;
 	u_short		ms_state;
 	u_short		ms_raidlevel;
-	struct device	*ms_dv;
+	device_t	ms_dv;
 };
 
 /* Optional per-CCB context. */
@@ -87,7 +87,7 @@ struct mlx_ccb;
 struct mlx_context {
 	void	(*mx_handler)(struct mlx_ccb *);
 	void 	*mx_context;
-	struct	device	*mx_dv;
+	device_t	mx_dv;
 };
 
 /* Command control block. */
@@ -117,7 +117,7 @@ struct mlx_ccb {
  * Per-controller state.
  */
 struct mlx_softc {
-	struct device		mlx_dv;
+	device_t		mlx_dv;
 	bus_space_tag_t		mlx_iot;
 	bus_space_handle_t	mlx_ioh;
 	bus_dma_tag_t		mlx_dmat;

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.635 2012/08/08 14:08:02 christos Exp $
+# $NetBSD: shl.mi,v 1.635.2.1 2012/11/20 02:57:46 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -41,8 +41,8 @@
 ./lib/libkvm.so.6				base-sys-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
 ./lib/liblzf.so					base-sys-shlib		dynamicroot
-./lib/liblzf.so.0				base-sys-shlib		dynamicroot
-./lib/liblzf.so.0.0				base-sys-shlib		dynamicroot
+./lib/liblzf.so.1				base-sys-shlib		dynamicroot
+./lib/liblzf.so.1.0				base-sys-shlib		dynamicroot
 ./lib/liblzma.so				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
@@ -335,8 +335,8 @@
 ./usr/lib/liblzma.so.1				base-sys-shlib
 ./usr/lib/liblzma.so.1.1			base-sys-shlib
 ./usr/lib/liblzf.so				base-sys-shlib
-./usr/lib/liblzf.so.0				base-sys-shlib
-./usr/lib/liblzf.so.0.0				base-sys-shlib
+./usr/lib/liblzf.so.1				base-sys-shlib
+./usr/lib/liblzf.so.1.0				base-sys-shlib
 ./usr/lib/libm.so				base-sys-shlib
 ./usr/lib/libm.so.0				base-sys-shlib
 ./usr/lib/libm.so.0.10				base-sys-shlib
@@ -412,8 +412,8 @@
 ./usr/lib/librefuse.so.2			base-refuse-shlib
 ./usr/lib/librefuse.so.2.0			base-refuse-shlib
 ./usr/lib/libresolv.so				base-net-shlib
-./usr/lib/libresolv.so.2			base-net-shlib
-./usr/lib/libresolv.so.2.0			base-net-shlib
+./usr/lib/libresolv.so.3			base-net-shlib
+./usr/lib/libresolv.so.3.0			base-net-shlib
 ./usr/lib/libroken.so				base-krb5-shlib		kerberos
 ./usr/lib/libroken.so.19			base-krb5-shlib		kerberos
 ./usr/lib/libroken.so.19.0			base-krb5-shlib		kerberos
@@ -681,6 +681,7 @@
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=45,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
 ./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx
+./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
@@ -690,9 +691,11 @@
 ./usr/lib/libtermlib.so				base-sys-shlib
 ./usr/lib/libtermlib.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
+./usr/lib/libtpm_unseal.so.1.0			base-tmp-shlib		tpm
 ./usr/lib/libtre.so				base-sys-shlib
 ./usr/lib/libtre.so.0				base-sys-shlib
 ./usr/lib/libtre.so.0.8				base-sys-shlib
+./usr/lib/libtspi.so.3.0			base-sys-shlib		tpm
 ./usr/lib/libukfs.so				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		rump
@@ -726,6 +729,12 @@
 ./usr/lib/libzpool_pic.a			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/lua/5.1/gpio.so                    	base-sys-shlib
 ./usr/lib/lua/5.1/sqlite.so                    	base-sys-shlib
+./usr/lib/npf/ext_log.so			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0			base-npf-shlib		npf
+./usr/lib/npf/ext_log.so.0.0			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so			base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0		base-npf-shlib		npf
+./usr/lib/npf/ext_normalise.so.0.0		base-npf-shlib		npf
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns

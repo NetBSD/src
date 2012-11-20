@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.20 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.20.44.1 2012/11/20 03:01:24 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.20 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39sib.c,v 1.20.44.1 2012/11/20 03:01:24 tls Exp $");
 
 #undef TX39SIBDEBUG
 
@@ -59,11 +59,10 @@ int	tx39sibdebug = 0;
 #define	DPRINTF(arg)
 #endif
 
-int	tx39sib_match(struct device *, struct cfdata *, void *);
-void	tx39sib_attach(struct device *, struct device *, void *);
+int	tx39sib_match(device_t, cfdata_t, void *);
+void	tx39sib_attach(device_t, device_t, void *);
 int	tx39sib_print(void *, const char *);
-int	tx39sib_search(struct device *, struct cfdata *,
-		       const int *, void *);
+int	tx39sib_search(device_t, cfdata_t, const int *, void *);
 
 #define TX39_CLK2X	18432000
 const int sibsclk_divide_table[8] = {
@@ -123,7 +122,6 @@ struct tx39sib_param tx39sib_param_default_3922 = {
 };
 
 struct tx39sib_softc {
-	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
 
 	struct tx39sib_param sc_param;
@@ -135,20 +133,20 @@ inline int	__txsibsf0_ready(tx_chipset_tag_t);
 void	tx39sib_dump(struct tx39sib_softc *);
 #endif
 
-CFATTACH_DECL(tx39sib, sizeof(struct tx39sib_softc),
+CFATTACH_DECL_NEW(tx39sib, sizeof(struct tx39sib_softc),
     tx39sib_match, tx39sib_attach, NULL, NULL);
 
 int
-tx39sib_match(struct device *parent, struct cfdata *cf, void *aux)
+tx39sib_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (ATTACH_FIRST);
 }
 
 void
-tx39sib_attach(struct device *parent, struct device *self, void *aux)
+tx39sib_attach(device_t parent, device_t self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
-	struct tx39sib_softc *sc = (void*)self;
+	struct tx39sib_softc *sc = device_private(self);
 	tx_chipset_tag_t tc;
 	
 	sc->sc_tc = tc = ta->ta_tc;
@@ -183,9 +181,9 @@ tx39sib_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-tx39sib_enable1(struct device *dev)
+tx39sib_enable1(device_t dev)
 {
-	struct tx39sib_softc *sc = (void*)dev;
+	struct tx39sib_softc *sc = device_private(dev);
 	struct tx39sib_param *param = &sc->sc_param;
 	tx_chipset_tag_t tc = sc->sc_tc;
 
@@ -224,9 +222,9 @@ tx39sib_enable1(struct device *dev)
 }
 
 void
-tx39sib_enable2(struct device *dev)
+tx39sib_enable2(device_t dev)
 {
-	struct tx39sib_softc *sc = (void*)dev;
+	struct tx39sib_softc *sc = device_private(dev);
 	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg;
 	
@@ -236,9 +234,9 @@ tx39sib_enable2(struct device *dev)
 }
 
 void
-tx39sib_disable(struct device *dev)
+tx39sib_disable(device_t dev)
 {
-	struct tx39sib_softc *sc = (void*)dev;
+	struct tx39sib_softc *sc = device_private(dev);
 	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg;
 	/* disable codec side */
@@ -264,18 +262,17 @@ tx39sib_disable(struct device *dev)
 }
 
 int
-tx39sib_clock(struct device *dev)
+tx39sib_clock(device_t dev)
 {
-	struct tx39sib_softc *sc = (void*)dev;
+	struct tx39sib_softc *sc = device_private(dev);
 
 	return (TX39_CLK2X / sibsclk_divide_table[sc->sc_param.sp_clock]);
 }
 
 int
-tx39sib_search(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+tx39sib_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct tx39sib_softc *sc = (void*)parent;
+	struct tx39sib_softc *sc = device_private(parent);
 	struct txsib_attach_args sa;
 	
 	sa.sa_tc	= sc->sc_tc;

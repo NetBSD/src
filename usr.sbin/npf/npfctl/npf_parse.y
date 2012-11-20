@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.12 2012/08/12 03:35:13 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.12.2.1 2012/11/20 03:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -54,18 +54,24 @@ yyerror(const char *fmt, ...)
 	extern int yyleng;
 	extern char *yytext;
 
-	char *msg, *context = xstrndup(yytext, yyleng);
-	size_t len = strlen(context);
-	char *dst = zalloc(len * 4 + 1);
+	char *msg, *context = estrndup(yytext, yyleng);
+	bool eol = (*context == '\n');
 	va_list ap;
 
 	va_start(ap, fmt);
 	vasprintf(&msg, fmt, ap);
 	va_end(ap);
 
-	strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
-	fprintf(stderr, "%s:%d:%d: %s near '%s'\n", yyfilename, yylineno,
-	    yycolumn, msg, dst);
+	fprintf(stderr, "%s:%d:%d: %s", yyfilename,
+	    yylineno - (int)eol, yycolumn, msg);
+	if (!eol) {
+		size_t len = strlen(context);
+		char *dst = ecalloc(1, len * 4 + 1);
+
+		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
+		fprintf(stderr, " near '%s'", dst);
+	}
+	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -130,18 +136,19 @@ yyerror(const char *fmt, ...)
 %token	<str>		IPV4ADDR
 %token	<str>		IPV6ADDR
 %token	<num>		NUM
+%token	<fpnum>		FPNUM
 %token	<str>		STRING
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
 
 %type	<str>		addr, some_name, list_elem, table_store
-%type	<str>		opt_apply
+%type	<str>		proc_param_val, opt_apply
 %type	<num>		ifindex, port, opt_final, on_iface
 %type	<num>		block_or_pass, rule_dir, block_opts, opt_family
 %type	<num>		opt_stateful, icmp_type, table_type, map_sd, map_type
 %type	<var>		addr_or_iface, port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
-%type	<var>		modulearg_opts, procs, proc_op, modulearg, moduleargs
+%type	<var>		procs, proc_call, proc_param_list, proc_param
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
@@ -150,6 +157,7 @@ yyerror(const char *fmt, ...)
 %union {
 	char *		str;
 	unsigned long	num;
+	double		fpnum;
 	addr_port_t	addrport;
 	filt_opts_t	filtopts;
 	npfvar_t *	var;
@@ -295,64 +303,53 @@ rproc
 	;
 
 procs
-	: proc_op SEPLINE procs	{ $$ = npfvar_add_elements($1, $3); }
-	| proc_op		{ $$ = $1; }
-	;
-
-proc_op
-	: IDENTIFIER COLON moduleargs
-	{
-		proc_op_t po;
-
-		po.po_name = xstrdup($1);
-		po.po_opts = $3;
-		$$ = npfvar_create(".proc_ops");
-		npfvar_add_element($$, NPFVAR_PROC_OP, &po, sizeof(po));
-	}
-	|	{ $$ = NULL; }
-	;
-
-moduleargs
-	: modulearg COMMA moduleargs
+	: proc_call SEPLINE procs
 	{
 		$$ = npfvar_add_elements($1, $3);
 	}
-	| modulearg	{ $$ = $1; }
+	| proc_call	{ $$ = $1; }
+	;
+
+proc_call
+	: IDENTIFIER COLON proc_param_list
+	{
+		proc_call_t pc;
+
+		pc.pc_name = estrdup($1);
+		pc.pc_opts = $3;
+		$$ = npfvar_create(".proc_call");
+		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
+	}
+	|	{ $$ = NULL; }
+	;
+
+proc_param_list
+	: proc_param COMMA proc_param_list
+	{
+		$$ = npfvar_add_elements($1, $3);
+	}
+	| proc_param	{ $$ = $1; }
 	|		{ $$ = NULL; }
 	;
 
-modulearg
-	: some_name modulearg_opts
+proc_param
+	/* Key and value pair. */
+	: some_name proc_param_val
 	{
-		module_arg_t ma;
+		proc_param_t pp;
 
-		ma.ma_name = xstrdup($1);
-		ma.ma_opts = $2;
-		$$ = npfvar_create(".module_arg");
-		npfvar_add_element($$, NPFVAR_MODULE_ARG, &ma, sizeof(ma));
+		pp.pp_param = estrdup($1);
+		pp.pp_value = $2 ? estrdup($2) : NULL;
+		$$ = npfvar_create(".proc_param");
+		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
 	;
 
-modulearg_opts
-	: STRING modulearg_opts
-	{
-		npfvar_t *vp = npfvar_create(".modstring");
-		npfvar_add_element(vp, NPFVAR_STRING, $1, strlen($1) + 1);
-		$$ = $2 ? npfvar_add_elements($2, vp) : vp;
-	}
-	| IDENTIFIER modulearg_opts
-	{
-		npfvar_t *vp = npfvar_create(".modident");
-		npfvar_add_element(vp, NPFVAR_IDENTIFIER, $1, strlen($1) + 1);
-		$$ = $2 ? npfvar_add_elements($2, vp) : vp;
-	}
-	| NUM modulearg_opts
-	{
-		npfvar_t *vp = npfvar_create(".modnum");
-		npfvar_add_element(vp, NPFVAR_NUM, &$1, sizeof($1));
-		$$ = $2 ? npfvar_add_elements($2, vp) : vp;
-	}
-	|	{ $$ = NULL; }
+proc_param_val
+	: some_name	{ $$ = $1; }
+	| NUM		{ (void)asprintf(&$$, "%ld", $1); }
+	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
+	|		{ $$ = NULL; }
 	;
 
 group
@@ -612,7 +609,6 @@ addr
 	: IPV4ADDR	{ $$ = $1; }
 	| IPV6ADDR	{ $$ = $1; }
 	;
-
 
 port_range
 	: PORT port		/* just port */

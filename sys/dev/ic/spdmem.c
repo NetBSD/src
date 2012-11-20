@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.6 2012/05/31 16:09:34 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.6.2.1 2012/11/20 03:02:08 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6 2012/05/31 16:09:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6.2.1 2012/11/20 03:02:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -417,7 +417,7 @@ decode_size_speed(device_t self, const struct sysctlnode *node,
 		  bool round, const char *ddr_type_string, int speed)
 {
 	int p_clk;
-	struct spdmem_softc *sc = (struct spdmem_softc *)device_private(self);
+	struct spdmem_softc *sc = device_private(self);
 
 	if (dimm_size < 1024)
 		aprint_normal("%dMB", dimm_size);

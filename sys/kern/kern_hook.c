@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.4 2010/12/11 22:27:53 matt Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.4.18.1 2012/11/20 03:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.4 2010/12/11 22:27:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.4.18.1 2012/11/20 03:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -184,7 +184,7 @@ mountroothook_destroy(void)
 }
 
 void
-domountroothook(struct device *therootdev)
+domountroothook(device_t therootdev)
 {
 	struct hook_desc *hd;
 

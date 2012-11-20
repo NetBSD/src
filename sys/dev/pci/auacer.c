@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.30 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: auacer.c,v 1.30.8.1 2012/11/20 03:02:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.30 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.30.8.1 2012/11/20 03:02:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ struct auacer_chan {
 };
 
 struct auacer_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
@@ -260,6 +260,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = aux;
 	aprint_normal(": Acer Labs M5455 Audio controller\n");
 
@@ -285,7 +286,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "can't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "can't map interrupt\n");
 		mutex_destroy(&sc->sc_lock);
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
@@ -294,7 +295,7 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO,
 	    auacer_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -302,12 +303,12 @@ auacer_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	strlcpy(sc->sc_audev.name, "M5455 AC97", MAX_AUDIO_DEV_LEN);
 	snprintf(sc->sc_audev.version, MAX_AUDIO_DEV_LEN,
 		 "0x%02x", PCI_REVISION(pa->pa_class));
-	strlcpy(sc->sc_audev.config, device_xname(&sc->sc_dev), MAX_AUDIO_DEV_LEN);
+	strlcpy(sc->sc_audev.config, device_xname(sc->sc_dev), MAX_AUDIO_DEV_LEN);
 
 	/* Set up DMA lists. */
 	auacer_alloc_cdata(sc);
@@ -358,13 +359,13 @@ auacer_attach(device_t parent, device_t self, void *aux)
 	mutex_spin_exit(&sc->sc_intr_lock);
 	mutex_exit(&sc->sc_lock);
 
-	audio_attach_mi(&auacer_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auacer_hw_if, sc, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, auacer_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
+CFATTACH_DECL_NEW(auacer, sizeof(struct auacer_softc),
     auacer_match, auacer_attach, NULL, NULL);
 
 static int
@@ -825,7 +826,7 @@ auacer_upd_chan(struct auacer_softc *sc, struct auacer_chan *chan)
 
 	if (sts & ALI_SR_DMA_INT_FIFO) {
 		printf("%s: fifo underrun # %u\n",
-		       device_xname(&sc->sc_dev), ++chan->fifoe);
+		       device_xname(sc->sc_dev), ++chan->fifoe);
 	}
 
 	civ = READ1(sc, chan->port + ALI_OFF_CIV);
@@ -1004,7 +1005,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->dmat,
 				      sizeof(struct auacer_cdata),
 				      PAGE_SIZE, 0, &seg, 1, &rseg, 0)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n",
 		    error);
 		goto fail_0;
 	}
@@ -1013,7 +1014,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 				    sizeof(struct auacer_cdata),
 				    (void **) &sc->sc_cdata,
 				    sc->sc_dmamap_flags)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n",
+		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
 		    error);
 		goto fail_1;
 	}
@@ -1021,7 +1022,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	if ((error = bus_dmamap_create(sc->dmat, sizeof(struct auacer_cdata), 1,
 				       sizeof(struct auacer_cdata), 0, 0,
 				       &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_2;
 	}
@@ -1029,7 +1030,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	if ((error = bus_dmamap_load(sc->dmat, sc->sc_cddmamap,
 				     sc->sc_cdata, sizeof(struct auacer_cdata),
 				     NULL, 0)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to load control data DMA map, "
+		aprint_error_dev(sc->sc_dev, "unable to load control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_3;
 	}

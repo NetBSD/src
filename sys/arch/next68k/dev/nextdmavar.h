@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.15 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.15.18.1 2012/11/20 03:01:37 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -53,7 +53,7 @@ struct nextdma_status {
 };
 
 struct nextdma_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct nextdma_channel	*sc_chan;
 	bus_space_handle_t	sc_bsh;		/* bus space handle */
 	bus_space_tag_t		sc_bst;		/* bus space tag */

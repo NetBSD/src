@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.16 2010/10/17 14:16:21 tsutsui Exp $	*/
+/*	$NetBSD: mms.c,v 1.16.18.1 2012/11/20 03:01:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.16 2010/10/17 14:16:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.16.18.1 2012/11/20 03:01:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,7 +88,7 @@ struct mms_softc {
 
 	uint32_t sc_oldbuttons;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 };
 
 static int	mms_match(device_t, cfdata_t, void *);

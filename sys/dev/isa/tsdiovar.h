@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdiovar.h,v 1.3 2009/10/23 00:39:31 snj Exp $	*/
+/*	$NetBSD: tsdiovar.h,v 1.3.22.1 2012/11/20 03:02:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -30,7 +30,6 @@
 #define	_TSDIOVAR_H_
 
 struct tsdio_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };

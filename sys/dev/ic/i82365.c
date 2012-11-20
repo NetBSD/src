@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.114 2011/07/26 22:21:02 dyoung Exp $	*/
+/*	$NetBSD: i82365.c,v 1.114.12.1 2012/11/20 03:02:04 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.114 2011/07/26 22:21:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.114.12.1 2012/11/20 03:02:04 tls Exp $");
 
 #define	PCICDEBUG
 
@@ -236,7 +236,7 @@ pcic_attach(struct pcic_softc *sc)
 
 	DPRINTF(("pcic ident regs:"));
 
-	self = &sc->dev;
+	self = sc->dev;
 	mutex_init(&sc->sc_pcic_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* find and configure for the available sockets */
@@ -371,7 +371,7 @@ pcic_power(int why, void *arg)
 			    pcic_read(h, PCIC_CSC_INTR));
 #endif
 			DPRINTF(("%s: CSC_INTR was zero; reset to %s\n",
-			    device_xname(&sc->dev), bitbuf));
+			    device_xname(sc->dev), bitbuf));
 		}
 
 		/*
@@ -411,7 +411,7 @@ pcic_attach_socket(struct pcic_handle *h)
 	locs[PCMCIABUSCF_CONTROLLER] = h->chip;
 	locs[PCMCIABUSCF_SOCKET] = h->socket;
 
-	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", locs, &paa,
+	h->pcmcia = config_found_sm_loc(sc->dev, "pcmciabus", locs, &paa,
 					pcic_print, config_stdsubmatch);
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
@@ -659,7 +659,7 @@ pcic_intr(void *arg)
 	struct pcic_softc *sc = arg;
 	int i, ret = 0;
 
-	DPRINTF(("%s: intr\n", device_xname(&sc->dev)));
+	DPRINTF(("%s: intr\n", device_xname(sc->dev)));
 
 	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
@@ -1211,7 +1211,7 @@ pcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 
 	/* XXX wtf is this doing here? */
 
-	printf("%s: port 0x%lx", device_xname(&sc->dev), (u_long) ioaddr);
+	printf("%s: port 0x%lx", device_xname(sc->dev), (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
 	printf("\n");

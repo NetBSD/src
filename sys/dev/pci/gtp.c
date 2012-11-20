@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.18 2012/01/30 19:41:19 drochner Exp $ */
+/* $NetBSD: gtp.c,v 1.18.6.1 2012/11/20 03:02:14 tls Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.18 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.18.6.1 2012/11/20 03:02:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ static const struct radio_hw_if gtp_hw_if = {
 };
 
 struct gtp_softc {
-	struct device	sc_dev;
-
 	int	mute;
 	u_int8_t	vol;
 	u_int32_t	freq;
@@ -104,7 +102,7 @@ struct gtp_softc {
 	struct tea5757_t	tea;
 };
 
-CFATTACH_DECL(gtp, sizeof(struct gtp_softc),
+CFATTACH_DECL_NEW(gtp, sizeof(struct gtp_softc),
     gtp_match, gtp_attach, NULL, NULL);
 
 static void	gtp_set_mute(struct gtp_softc *);
@@ -143,7 +141,7 @@ gtp_attach(device_t parent, device_t self, void *aux)
 {
 	struct gtp_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	cfdata_t cf = device_cfdata(&sc->sc_dev);
+	cfdata_t cf = device_cfdata(self);
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_size_t iosize;
 	pcireg_t csr;
@@ -176,7 +174,7 @@ gtp_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Gemtek PR103\n");
 
-	radio_attach_mi(&gtp_hw_if, sc, &sc->sc_dev);
+	radio_attach_mi(&gtp_hw_if, sc, self);
 }
 
 static int

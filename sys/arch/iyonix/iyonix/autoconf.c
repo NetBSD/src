@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2012/07/29 18:05:44 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.2.1 2012/11/20 03:01:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2012/07/29 18:05:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.2.1 2012/11/20 03:01:29 tls Exp $");
 
 #include "opt_md.h"
 
@@ -62,7 +62,7 @@ void
 cpu_rootconf(void)
 {
 	aprint_normal("boot device: %s\n",
-	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
+	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 	rootconf();
 }
 
@@ -97,15 +97,15 @@ cpu_configure(void)
 		if (prop_dictionary_set(device_properties(dev),		\
 						x, y) == false) {	\
 			printf("WARNING: unable to set " x " "		\
-			   "property for %s\n", dev->dv_xname);		\
+			   "property for %s\n", device_xname(dev));	\
 		}							\
 		prop_object_release(y);					\
 	} while (/*CONSTCOND*/0)
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
-	struct device *pdev;
+	device_t pdev;
 
 	if ((pdev = device_parent(dev)) != NULL &&
 	    device_is_a(pdev, "pci")) {

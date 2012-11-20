@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2 2012/02/07 09:06:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2.10.1 2012/11/20 03:01:07 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2 2012/02/07 09:06:05 nisimura E
 
 #include "locators.h"
 
-static int sscom_match(device_t, struct cfdata *, void *);
-static void sscom_attach(device_t, struct device *, void *);
+static int sscom_match(device_t, cfdata_t, void *);
+static void sscom_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(sscom, sizeof(struct sscom_softc), sscom_match,
     sscom_attach, NULL, NULL);
@@ -127,7 +127,7 @@ sscom_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sscom_attach(device_t parent, struct device *self, void *aux)
+sscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct sscom_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = aux;

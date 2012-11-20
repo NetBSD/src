@@ -25,6 +25,7 @@
 #include "radius/radius_client.h"
 #include "hostapd.h"
 #include "ap_config.h"
+#include "ap_drv_ops.h"
 #include "ieee802_11.h"
 #include "ieee802_11_auth.h"
 
@@ -32,7 +33,7 @@
 
 
 struct hostapd_cached_radius_acl {
-	time_t timestamp;
+	os_time_t timestamp;
 	macaddr addr;
 	int accepted; /* HOSTAPD_ACL_* */
 	struct hostapd_cached_radius_acl *next;
@@ -43,7 +44,7 @@ struct hostapd_cached_radius_acl {
 
 
 struct hostapd_acl_query_data {
-	time_t timestamp;
+	os_time_t timestamp;
 	u8 radius_id;
 	macaddr addr;
 	u8 *auth_msg; /* IEEE 802.11 authentication frame from station */
@@ -70,14 +71,14 @@ static int hostapd_acl_cache_get(struct hostapd_data *hapd, const u8 *addr,
 				 u32 *acct_interim_interval, int *vlan_id)
 {
 	struct hostapd_cached_radius_acl *entry;
-	time_t now;
+	struct os_time now;
 
-	time(&now);
+	os_get_time(&now);
 	entry = hapd->acl_cache;
 
 	while (entry) {
 		if (os_memcmp(entry->addr, addr, ETH_ALEN) == 0) {
-			if (now - entry->timestamp > RADIUS_ACL_TIMEOUT)
+			if (now.sec - entry->timestamp > RADIUS_ACL_TIMEOUT)
 				return -1; /* entry has expired */
 			if (entry->accepted == HOSTAPD_ACL_ACCEPT_TIMEOUT)
 				if (session_timeout)
@@ -190,7 +191,8 @@ static int hostapd_radius_acl_query(struct hostapd_data *hapd, const u8 *addr,
 		goto fail;
 	}
 
-	radius_client_send(hapd->radius, msg, RADIUS_AUTH, addr);
+	if (radius_client_send(hapd->radius, msg, RADIUS_AUTH, addr) < 0)
+		goto fail;
 	return 0;
 
  fail:
@@ -240,6 +242,7 @@ int hostapd_allowed_address(struct hostapd_data *hapd, const u8 *addr,
 		return HOSTAPD_ACL_REJECT;
 #else /* CONFIG_NO_RADIUS */
 		struct hostapd_acl_query_data *query;
+		struct os_time t;
 
 		/* Check whether ACL cache has an entry for this station */
 		int res = hostapd_acl_cache_get(hapd, addr, session_timeout,
@@ -270,7 +273,8 @@ int hostapd_allowed_address(struct hostapd_data *hapd, const u8 *addr,
 			wpa_printf(MSG_ERROR, "malloc for query data failed");
 			return HOSTAPD_ACL_REJECT;
 		}
-		time(&query->timestamp);
+		os_get_time(&t);
+		query->timestamp = t.sec;
 		os_memcpy(query->addr, addr, ETH_ALEN);
 		if (hostapd_radius_acl_query(hapd, addr, query)) {
 			wpa_printf(MSG_DEBUG, "Failed to send Access-Request "
@@ -302,7 +306,7 @@ int hostapd_allowed_address(struct hostapd_data *hapd, const u8 *addr,
 
 
 #ifndef CONFIG_NO_RADIUS
-static void hostapd_acl_expire_cache(struct hostapd_data *hapd, time_t now)
+static void hostapd_acl_expire_cache(struct hostapd_data *hapd, os_time_t now)
 {
 	struct hostapd_cached_radius_acl *prev, *entry, *tmp;
 
@@ -317,9 +321,7 @@ static void hostapd_acl_expire_cache(struct hostapd_data *hapd, time_t now)
 				prev->next = entry->next;
 			else
 				hapd->acl_cache = entry->next;
-#ifdef CONFIG_DRIVER_RADIUS_ACL
-			hapd->drv.set_radius_acl_expire(hapd, entry->addr);
-#endif /* CONFIG_DRIVER_RADIUS_ACL */
+			hostapd_drv_set_radius_acl_expire(hapd, entry->addr);
 			tmp = entry;
 			entry = entry->next;
 			os_free(tmp);
@@ -332,7 +334,8 @@ static void hostapd_acl_expire_cache(struct hostapd_data *hapd, time_t now)
 }
 
 
-static void hostapd_acl_expire_queries(struct hostapd_data *hapd, time_t now)
+static void hostapd_acl_expire_queries(struct hostapd_data *hapd,
+				       os_time_t now)
 {
 	struct hostapd_acl_query_data *prev, *entry, *tmp;
 
@@ -368,11 +371,11 @@ static void hostapd_acl_expire_queries(struct hostapd_data *hapd, time_t now)
 static void hostapd_acl_expire(void *eloop_ctx, void *timeout_ctx)
 {
 	struct hostapd_data *hapd = eloop_ctx;
-	time_t now;
+	struct os_time now;
 
-	time(&now);
-	hostapd_acl_expire_cache(hapd, now);
-	hostapd_acl_expire_queries(hapd, now);
+	os_get_time(&now);
+	hostapd_acl_expire_cache(hapd, now.sec);
+	hostapd_acl_expire_queries(hapd, now.sec);
 
 	eloop_register_timeout(10, 0, hostapd_acl_expire, hapd, NULL);
 }
@@ -397,6 +400,7 @@ hostapd_acl_recv_radius(struct radius_msg *msg, struct radius_msg *req,
 	struct hostapd_acl_query_data *query, *prev;
 	struct hostapd_cached_radius_acl *cache;
 	struct radius_hdr *hdr = radius_msg_get_hdr(msg);
+	struct os_time t;
 
 	query = hapd->acl_queries;
 	prev = NULL;
@@ -431,7 +435,8 @@ hostapd_acl_recv_radius(struct radius_msg *msg, struct radius_msg *req,
 		wpa_printf(MSG_DEBUG, "Failed to add ACL cache entry");
 		goto done;
 	}
-	time(&cache->timestamp);
+	os_get_time(&t);
+	cache->timestamp = t.sec;
 	os_memcpy(cache->addr, query->addr, sizeof(cache->addr));
 	if (hdr->code == RADIUS_CODE_ACCESS_ACCEPT) {
 		if (radius_msg_get_attr_int32(msg, RADIUS_ATTR_SESSION_TIMEOUT,
@@ -458,8 +463,8 @@ hostapd_acl_recv_radius(struct radius_msg *msg, struct radius_msg *req,
 	hapd->acl_cache = cache;
 
 #ifdef CONFIG_DRIVER_RADIUS_ACL
-	hapd->drv.set_radius_acl_auth(hapd, query->addr, cache->accepted,
-				      cache->session_timeout);
+	hostapd_drv_set_radius_acl_auth(hapd, query->addr, cache->accepted,
+					cache->session_timeout);
 #else /* CONFIG_DRIVER_RADIUS_ACL */
 #ifdef NEED_AP_MLME
 	/* Re-send original authentication frame for 802.11 processing */

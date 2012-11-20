@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.16 2007/02/04 21:17:01 cbiere Exp $	*/
+/*	$NetBSD: measure.c,v 1.16.40.1 2012/11/20 03:03:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.16 2007/02/04 21:17:01 cbiere Exp $");
+__RCSID("$NetBSD: measure.c,v 1.16.40.1 2012/11/20 03:03:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,6 +43,9 @@ __RCSID("$NetBSD: measure.c,v 1.16 2007/02/04 21:17:01 cbiere Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <util.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
 #define MSEC_DAY	(SECDAY*1000)
 

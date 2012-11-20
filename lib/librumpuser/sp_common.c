@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.32 2012/07/27 09:09:05 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.32.2.1 2012/11/20 03:00:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -86,8 +86,10 @@ mydprintf(const char *fmt, ...)
 #define host_setsockopt setsockopt
 #endif
 
-#define IOVPUT(_io_, _b_) _io_.iov_base = &_b_; _io_.iov_len = sizeof(_b_);
-#define IOVPUT_WITHSIZE(_io_, _b_, _l_) _io_.iov_base = _b_; _io_.iov_len = _l_;
+#define IOVPUT(_io_, _b_) _io_.iov_base = 			\
+    (void *)&_b_; _io_.iov_len = sizeof(_b_);
+#define IOVPUT_WITHSIZE(_io_, _b_, _l_) _io_.iov_base =		\
+    (void *)(_b_); _io_.iov_len = _l_;
 #define SENDIOV(_spc_, _iov_) dosend(_spc_, _iov_, __arraycount(_iov_))
 
 /*
@@ -104,6 +106,39 @@ enum {	RUMPSP_HANDSHAKE,
 	RUMPSP_RAISE };
 
 enum { HANDSHAKE_GUEST, HANDSHAKE_AUTH, HANDSHAKE_FORK, HANDSHAKE_EXEC };
+
+/*
+ * error types used for RUMPSP_ERROR
+ */
+enum rumpsp_err { RUMPSP_ERR_NONE = 0, RUMPSP_ERR_TRYAGAIN, RUMPSP_ERR_AUTH,
+	RUMPSP_ERR_INVALID_PREFORK, RUMPSP_ERR_RFORK_FAILED,
+	RUMPSP_ERR_INEXEC, RUMPSP_ERR_NOMEM, RUMPSP_ERR_MALFORMED_REQUEST };
+
+/*
+ * The mapping of the above types to errno.  They are almost never exposed
+ * to the client after handshake (except for a server resource shortage
+ * and the client trying to be funny).  This is a function instead of
+ * an array to catch missing values.  Theoretically, the compiled code
+ * should be the same.
+ */
+static int
+errmap(enum rumpsp_err error)
+{
+
+	switch (error) {
+	/* XXX: no EAUTH on Linux */
+	case RUMPSP_ERR_NONE:			return 0;
+	case RUMPSP_ERR_AUTH:			return EPERM;
+	case RUMPSP_ERR_TRYAGAIN:		return EAGAIN;
+	case RUMPSP_ERR_INVALID_PREFORK:	return ESRCH;
+	case RUMPSP_ERR_RFORK_FAILED:		return EIO; /* got a light? */
+	case RUMPSP_ERR_INEXEC:			return EBUSY;
+	case RUMPSP_ERR_NOMEM:			return ENOMEM;
+	case RUMPSP_ERR_MALFORMED_REQUEST:	return EINVAL;
+	}
+
+	return -1;
+}
 
 #define AUTHLEN 4 /* 128bit fork auth */
 
@@ -313,7 +348,8 @@ dosend(struct spclient *spc, struct iovec *iov, size_t iovlen)
 			_DIAGASSERT(n == 0);
 			break;
 		} else {
-			iov[0].iov_base = (uint8_t *)iov[0].iov_base + n;
+			iov[0].iov_base =
+			    (void *)((uint8_t *)iov[0].iov_base + n);
 			iov[0].iov_len -= n;
 		}
 	}
@@ -402,7 +438,7 @@ kickwaiter(struct spclient *spc)
 	rw->rw_done = 1;
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
-		error = rw->rw_error = spc->spc_hdr.rsp_error;
+		error = rw->rw_error = errmap(spc->spc_hdr.rsp_error);
 	}
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
@@ -597,11 +633,11 @@ static char parsedurl[256];
 static int
 unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 {
-	struct sockaddr_un sun;
+	struct sockaddr_un s_un;
 	size_t slen;
 	int savepath = 0;
 
-	if (strlen(addr) >= sizeof(sun.sun_path))
+	if (strlen(addr) >= sizeof(s_un.sun_path))
 		return ENAMETOOLONG;
 
 	/*
@@ -611,8 +647,8 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	 * one and the server does a chdir() between now than the
 	 * cleanup.
 	 */
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_LOCAL;
+	memset(&s_un, 0, sizeof(s_un));
+	s_un.sun_family = AF_LOCAL;
 	if (*addr != '/') {
 		char mywd[PATH_MAX];
 
@@ -620,30 +656,31 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 			fprintf(stderr, "warning: cannot determine cwd, "
 			    "omitting socket cleanup\n");
 		} else {
-			if (strlen(addr)+strlen(mywd)+1 >= sizeof(sun.sun_path))
+			if (strlen(addr)+strlen(mywd)+1
+			    >= sizeof(s_un.sun_path))
 				return ENAMETOOLONG;
-			strcpy(sun.sun_path, mywd);
-			strcat(sun.sun_path, "/");
+			strcpy(s_un.sun_path, mywd);
+			strcat(s_un.sun_path, "/");
 			savepath = 1;
 		}
 	}
-	strcat(sun.sun_path, addr);
-#ifdef __linux__
-	slen = sizeof(sun);
+	strcat(s_un.sun_path, addr);
+#if defined(__linux__) || defined(__sun__)
+	slen = sizeof(s_un);
 #else
-	sun.sun_len = SUN_LEN(&sun);
-	slen = sun.sun_len+1; /* get the 0 too */
+	s_un.sun_len = SUN_LEN(&s_un);
+	slen = s_un.sun_len+1; /* get the 0 too */
 #endif
 
 	if (savepath && *parsedurl == '\0') {
 		snprintf(parsedurl, sizeof(parsedurl),
-		    "unix://%s", sun.sun_path);
+		    "unix://%s", s_un.sun_path);
 	}
 
 	*sa = malloc(slen);
 	if (*sa == NULL)
 		return errno;
-	memcpy(*sa, &sun, slen);
+	memcpy(*sa, &s_un, slen);
 
 	return 0;
 }
@@ -651,13 +688,13 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 static void
 unix_cleanup(struct sockaddr *sa)
 {
-	struct sockaddr_un *sun = (void *)sa;
+	struct sockaddr_un *s_sun = (void *)sa;
 
 	/*
 	 * cleanup only absolute paths.  see unix_parse() above
 	 */
-	if (*sun->sun_path == '/') {
-		unlink(sun->sun_path);
+	if (*s_sun->sun_path == '/') {
+		unlink(s_sun->sun_path);
 	}
 }
 

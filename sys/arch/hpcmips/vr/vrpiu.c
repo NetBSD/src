@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.41 2007/10/17 19:54:29 garbled Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.41.64.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.41 2007/10/17 19:54:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.41.64.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,9 @@ int	vrpiu_debug = 0;
 /*
  * function prototypes
  */
-static int	vrpiumatch(struct device *, struct cfdata *, void *);
-static void	vrpiuattach(struct device *, struct device *, void *);
-static void	vrc4173piuattach(struct device *, struct device *, void *);
+static int	vrpiumatch(device_t, cfdata_t, void *);
+static void	vrpiuattach(device_t, device_t, void *);
+static void	vrc4173piuattach(device_t, device_t, void *);
 static void	vrpiu_init(struct vrpiu_softc *, void *);
 
 static void	vrpiu_write(struct vrpiu_softc *, int, unsigned short);
@@ -133,9 +133,9 @@ int mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s,
 /*
  * static or global variables
  */
-CFATTACH_DECL(vrpiu, sizeof(struct vrpiu_softc),
+CFATTACH_DECL_NEW(vrpiu, sizeof(struct vrpiu_softc),
     vrpiumatch, vrpiuattach, NULL, NULL);
-CFATTACH_DECL(vrc4173piu, sizeof(struct vrpiu_softc),
+CFATTACH_DECL_NEW(vrc4173piu, sizeof(struct vrpiu_softc),
     vrpiumatch, vrc4173piuattach, NULL, NULL);
 
 const struct wsmouse_accessops vrpiu_accessops = {
@@ -171,17 +171,18 @@ vrpiu_buf_read(struct vrpiu_softc *sc, int port)
 }
 
 static int
-vrpiumatch(struct device *parent, struct cfdata *cf, void *aux)
+vrpiumatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-vrpiuattach(struct device *parent, struct device *self, void *aux)
+vrpiuattach(device_t parent, device_t self, void *aux)
 {
-	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
+	struct vrpiu_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_ab_paddata_mask = PIUAB_PADDATA_MASK;
 	sc->sc_pb_paddata_mask = PIUPB_PADDATA_MASK;
 	sc->sc_pb_paddata_max = PIUPB_PADDATA_MAX;
@@ -189,10 +190,11 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-vrc4173piuattach(struct device *parent, struct device *self, void *aux)
+vrc4173piuattach(device_t parent, device_t self, void *aux)
 {
-	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
+	struct vrpiu_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_ab_paddata_mask = VRC4173PIUAB_PADDATA_MASK;
 	sc->sc_pb_paddata_mask = VRC4173PIUPB_PADDATA_MASK;
 	sc->sc_pb_paddata_max = VRC4173PIUPB_PADDATA_MAX;
@@ -325,16 +327,16 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	/*
 	 * attach the wsmouse
 	 */
-	sc->sc_wsmousedev = config_found(&sc->sc_dev, &wsmaa, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(sc->sc_dev, &wsmaa, wsmousedevprint);
 
 	/*
 	 * power management events
 	 */
-	sc->sc_power_hook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_power_hook = powerhook_establish(device_xname(sc->sc_dev),
 	    vrpiu_power, sc);
 	if (sc->sc_power_hook == NULL)
 		aprint_error("%s: WARNING: couldn't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * init A/D port polling.

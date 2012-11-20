@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.21 2012/08/01 21:30:22 matt Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.21.2.1 2012/11/20 03:01:38 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.21 2012/08/01 21:30:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.21.2.1 2012/11/20 03:01:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -913,7 +913,9 @@ e500_extintr(struct trapframe *tf)
 			 * Timer interrupts get their argument overriden with
 			 * the pointer to the trapframe.
 			 */
-			KASSERT(is->is_ipl == ipl);
+			KASSERTMSG(is->is_ipl == ipl,
+			    "iack %#x: is %p: irq %d ipl %d != iack ipl %d",
+			    iack, is, irq, is->is_ipl, ipl);
 			void *arg = (is->is_ist == IST_TIMER ? tf : is->is_arg);
 			if (is->is_ipl <= old_ipl)
 				panic("%s(%p): %s (%u): is->is_ipl (%u) <= old_ipl (%u)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.24.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2012/02/17 16:26:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -86,7 +86,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		db_expr_t count, const char *modif,
 		void (*pr)(const char *, ...))
 {
-	u_int32_t	*frame, *lastframe;
+	uint32_t	*frame, *lastframe;
 	const char	*cp = modif;
 	char c;
 	bool		kernel_only = true;
@@ -106,7 +106,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	}
 
 	if (!have_addr)
-		frame = (u_int32_t *)(DDB_REGS->tf_r11);
+		frame = (uint32_t *)(DDB_REGS->tf_r11);
 	else {
 		if (trace_thread) {
 			struct pcb *pcb;
@@ -146,16 +146,16 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #endif
 			(*pr)("at %p\n", frame);
 		} else
-			frame = (u_int32_t *)(addr);
+			frame = (uint32_t *)(addr);
 	}
 	lastframe = NULL;
 	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (count-- && frame != NULL) {
 		db_addr_t	scp;
-		u_int32_t	savecode;
+		uint32_t	savecode;
 		int		r;
-		u_int32_t	*rp;
+		uint32_t	*rp;
 		const char	*sep;
 
 		lastframe = frame;
@@ -190,10 +190,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
 
 #ifndef _KERNEL
-		db_read_bytes((db_addr_t)((u_int32_t *)scp + scp_offset),
+		db_read_bytes((db_addr_t)((uint32_t *)scp + scp_offset),
 		    sizeof(savecode), (void *)&savecode);
 #else
-		savecode = ((u_int32_t *)scp)[scp_offset];
+		if ((scp & 3) == 0) {
+			savecode = ((uint32_t *)scp)[scp_offset];
+		} else {
+			savecode = 0;
+		}
 #endif
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
@@ -217,7 +221,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
 
-		frame = (u_int32_t *)(frame[FR_RFP]);
+		frame = (uint32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */

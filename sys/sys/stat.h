@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.63 2011/09/04 10:02:33 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.63.12.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -249,6 +249,10 @@ int     fstatat(int, const char *, struct stat *, int);
 int     utimensat(int, const char *, const struct timespec *, int);
 #endif
 
+#ifdef _NETBSD_SOURCE
+int utimens(const char *, const struct timespec *);
+int lutimens(const char *, const struct timespec *);
+#endif
 int futimens(int, const struct timespec *);
 #endif
 

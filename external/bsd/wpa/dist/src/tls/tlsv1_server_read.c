@@ -85,14 +85,25 @@ static int tls_process_client_hello(struct tlsv1_server *conn, u8 ct,
 	conn->client_version = WPA_GET_BE16(pos);
 	wpa_printf(MSG_DEBUG, "TLSv1: Client version %d.%d",
 		   conn->client_version >> 8, conn->client_version & 0xff);
-	if (conn->client_version < TLS_VERSION) {
+	if (conn->client_version < TLS_VERSION_1) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Unexpected protocol version in "
-			   "ClientHello");
+			   "ClientHello %u.%u",
+			   conn->client_version >> 8,
+			   conn->client_version & 0xff);
 		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
 				   TLS_ALERT_PROTOCOL_VERSION);
 		return -1;
 	}
 	pos += 2;
+
+	if (TLS_VERSION == TLS_VERSION_1)
+		conn->rl.tls_version = TLS_VERSION_1;
+	else if (conn->client_version > TLS_VERSION_1_1)
+		conn->rl.tls_version = TLS_VERSION_1_1;
+	else
+		conn->rl.tls_version = conn->client_version;
+	wpa_printf(MSG_DEBUG, "TLSv1: Using TLS v%s",
+		   conn->rl.tls_version == TLS_VERSION_1_1 ? "1.1" : "1.0");
 
 	/* Random random */
 	if (end - pos < TLS_RANDOM_LEN)
@@ -424,7 +435,7 @@ static int tls_process_certificate(struct tlsv1_server *conn, u8 ct,
 	}
 
 	if (x509_certificate_chain_validate(conn->cred->trusted_certs, chain,
-					    &reason) < 0) {
+					    &reason, 0) < 0) {
 		int tls_reason;
 		wpa_printf(MSG_DEBUG, "TLSv1: Server certificate chain "
 			   "validation failed (reason=%d)", reason);
@@ -483,6 +494,14 @@ static int tls_process_client_key_exchange_rsa(
 
 	encr_len = WPA_GET_BE16(pos);
 	pos += 2;
+	if (pos + encr_len > end) {
+		wpa_printf(MSG_DEBUG, "TLSv1: Invalid ClientKeyExchange "
+			   "format: encr_len=%u left=%u",
+			   encr_len, (unsigned int) (end - pos));
+		tlsv1_server_alert(conn, TLS_ALERT_LEVEL_FATAL,
+				   TLS_ALERT_DECODE_ERROR);
+		return -1;
+	}
 
 	outbuflen = outlen = end - pos;
 	out = os_malloc(outlen >= TLS_PRE_MASTER_SECRET_LEN ?
@@ -512,21 +531,21 @@ static int tls_process_client_key_exchange_rsa(
 	 */
 
 	if (crypto_private_key_decrypt_pkcs1_v15(conn->cred->key,
-						 pos, end - pos,
+						 pos, encr_len,
 						 out, &outlen) < 0) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to decrypt "
-			   "PreMasterSecret (encr_len=%d outlen=%lu)",
-			   (int) (end - pos), (unsigned long) outlen);
+			   "PreMasterSecret (encr_len=%u outlen=%lu)",
+			   encr_len, (unsigned long) outlen);
 		use_random = 1;
 	}
 
-	if (outlen != TLS_PRE_MASTER_SECRET_LEN) {
+	if (!use_random && outlen != TLS_PRE_MASTER_SECRET_LEN) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Unexpected PreMasterSecret "
 			   "length %lu", (unsigned long) outlen);
 		use_random = 1;
 	}
 
-	if (WPA_GET_BE16(out) != conn->client_version) {
+	if (!use_random && WPA_GET_BE16(out) != conn->client_version) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Client version in "
 			   "ClientKeyExchange does not match with version in "
 			   "ClientHello");
