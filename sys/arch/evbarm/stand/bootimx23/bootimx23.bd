@@ -1,0 +1,31 @@
+/* $Id: bootimx23.bd,v 1.1 2012/11/20 19:08:46 jkunz Exp $ */
+
+/*
+ * elftosb command file.
+ *
+ * Generate boot image by issuing:
+ * $ elftosb -V -c bootimx23.bd -z -o bootimx23.sb
+ *
+ * Verify generated boot image:
+ * $ sbtool -x 2 bootimx23.sb
+ *
+ */
+
+options {
+	toolset = "GNU";
+}
+
+sources {
+	boot_prep="./boot_prep.elf";
+	netbsd="./netbsd";
+}
+
+section (0) {
+	// Initialize power, clocks and DRAM.
+	load boot_prep;
+	call boot_prep;
+
+	// Load and start NetBSD kernel.
+	load netbsd;
+	jump netbsd;
+}
