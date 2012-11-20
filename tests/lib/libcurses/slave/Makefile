@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/09/08 18:44:38 jmmv Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2012/11/20 23:26:54 matt Exp $
 #
 .include <bsd.own.mk>
 
@@ -12,7 +12,10 @@ NOMAN=	"true"
 SRCS=	slave.c commands.c curses_commands.c
 
 CPPFLAGS+=	-g -I${.CURDIR} -I. -I${.CURDIR}/../director
-LDADD+=		-lcurses -lterminfo -Wl,--no-fatal-warnings
+LDADD+=		-lcurses -lterminfo
+.if ${HAVE_BINUTILS} == "219"
+LDADD+=		-Wl,--no-fatal-warnings
+.endif
 
 COPTS.curses_commands.c += -Wno-format-nonliteral
 CWARNFLAGS.clang+=	-Wno-format
