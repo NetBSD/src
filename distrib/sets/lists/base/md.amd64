@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.178 2012/11/15 18:51:54 christos Exp $
+# $NetBSD: md.amd64,v 1.179 2012/11/20 05:27:22 agc Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -189,6 +189,8 @@
 ./usr/lib/i386/libmj.so.1.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/i386/libnetpgp.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libnetpgp.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libnetpgpverify.so.4		base-compat-shlib	compat,pic
+./usr/lib/i386/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds

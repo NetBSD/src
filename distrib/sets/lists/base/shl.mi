@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.639 2012/11/15 18:51:55 christos Exp $
+# $NetBSD: shl.mi,v 1.640 2012/11/20 05:27:22 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -352,6 +352,9 @@
 ./usr/lib/libnetpgp.so				base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3			base-crypto-shlib	crypto
 ./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so.4			base-crypto-shlib	crypto
+./usr/lib/libnetpgpverify.so.4.0		base-crypto-shlib	crypto
 ./usr/lib/libnpf.so				base-npf-shlib		npf
 ./usr/lib/libnpf.so.0				base-npf-shlib		npf
 ./usr/lib/libnpf.so.0.0				base-npf-shlib		npf
