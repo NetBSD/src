@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1789 2012/11/18 17:41:51 manu Exp $
+#	$NetBSD: mi,v 1.1790 2012/11/20 05:27:23 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2033,6 +2033,7 @@
 ./usr/include/netns/spp_timer.h			comp-obsolete		obsolete
 ./usr/include/netns/spp_var.h			comp-obsolete		obsolete
 ./usr/include/netpgp.h				comp-c-include		crypto
+./usr/include/netpgp/verify.h			comp-c-include		crypto
 ./usr/include/netsmb/iconv.h			comp-c-include
 ./usr/include/netsmb/netbios.h			comp-c-include
 ./usr/include/netsmb/smb.h			comp-c-include
@@ -2975,6 +2976,9 @@
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
+./usr/lib/libnetpgpverify.a			comp-c-lib		crypto
+./usr/lib/libnetpgpverify_g.a			-unknown-		debuglib
+./usr/lib/libnetpgpverify_p.a			comp-c-proflib		profile,crypto
 ./usr/lib/libnpf.a				comp-npf-lib		npf
 ./usr/lib/libnpf_g.a				-unknown-		debuglib
 ./usr/lib/libnpf_p.a				comp-npf-proflib	profile,npf
@@ -7920,6 +7924,7 @@
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libmj.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/libnetpgpverify.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
@@ -14362,6 +14367,7 @@
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
 ./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/libnetpgpverify.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
@@ -20764,6 +20770,7 @@
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
 ./usr/share/man/man3/libmj.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
+./usr/share/man/man3/libnetpgpverify.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
