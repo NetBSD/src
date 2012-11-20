@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.6.1 2012/11/01 16:45:06 matt Exp $
+# $NetBSD: Makefile,v 1.3.6.2 2012/11/20 23:26:54 matt Exp $
 
 HELPER_NAME=	ideatest
 HELPER_DIR=	idea
@@ -7,4 +7,6 @@ HELPER_DIR=	idea
 
 LDADD= -lcrypto
 
+.if ${HAVE_BINUTILS} == "219"
 LDADD+=		-Wl,--no-fatal-warnings
+.endif
