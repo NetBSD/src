@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.93 2012/11/15 18:51:55 christos Exp $
+# $NetBSD: ad.mips64el,v 1.94 2012/11/20 05:27:22 agc Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/gcc-4.5/loongson.h		comp-c-include		gcccmds,gcc=45
@@ -458,6 +458,10 @@
 ./usr/lib/64/libnetpgp.so			comp-sys-shlib		compat,crypto,pic
 ./usr/lib/64/libnetpgp_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/64/libnetpgp_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/64/libnetpgpverify.a			comp-c-lib		compat,crypto
+./usr/lib/64/libnetpgpverify.so			comp-sys-shlib		compat,crypto,pic
+./usr/lib/64/libnetpgpverify_p.a		comp-c-proflib		compat,crypto,profile
+./usr/lib/64/libnetpgpverify_pic.a		comp-c-piclib		compat,crypto,pic
 ./usr/lib/64/libnpf.a				comp-c-lib		compat,npf
 ./usr/lib/64/libnpf.so				comp-sys-shlib		compat,npf,pic
 ./usr/lib/64/libnpf_p.a				comp-c-proflib		compat,npf,profile
@@ -1053,6 +1057,10 @@
 ./usr/lib/o32/libnetpgp.so			comp-sys-shlib		compat,crypto,pic
 ./usr/lib/o32/libnetpgp_p.a			comp-c-proflib		compat,crypto,profile
 ./usr/lib/o32/libnetpgp_pic.a			comp-c-piclib		compat,crypto,pic
+./usr/lib/o32/libnetpgpverify.a			comp-c-lib		compat,crypto
+./usr/lib/o32/libnetpgpverify.so		comp-sys-shlib		compat,crypto,pic
+./usr/lib/o32/libnetpgpverify_p.a		comp-c-proflib		compat,crypto,profile
+./usr/lib/o32/libnetpgpverify_pic.a		comp-c-piclib		compat,crypto,pic
 ./usr/lib/o32/libnpf.a				comp-c-lib		compat,npf
 ./usr/lib/o32/libnpf.so				comp-sys-shlib		compat,npf,pic
 ./usr/lib/o32/libnpf_p.a			comp-c-proflib		compat,npf,profile
