@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2010/12/03 21:38:47 plunky Exp $
+#	$NetBSD: Makefile,v 1.17.10.1 2012/11/20 18:39:13 matt Exp $
 
-SUBDIR+= usr.bin
+SUBDIR+= usr.bin usr.sbin
 
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-libexec:
