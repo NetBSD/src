@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.25 2012/07/16 12:55:36 abs Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.25.2.1 2012/11/20 03:01:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.25 2012/07/16 12:55:36 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.25.2.1 2012/11/20 03:01:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ struct dzkbd_internal {
 struct dzkbd_internal dzkbd_console_internal;
 
 struct dzkbd_softc {
-	struct device dzkbd_dev;	/* required first: base device */
-
 	struct dzkbd_internal *sc_itl;
 
 	int sc_enabled;
@@ -94,7 +92,7 @@ static int	dzkbd_input(void *, int);
 static int	dzkbd_match(device_t, cfdata_t, void *);
 static void	dzkbd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(dzkbd, sizeof(struct dzkbd_softc),
+CFATTACH_DECL_NEW(dzkbd, sizeof(struct dzkbd_softc),
     dzkbd_match, dzkbd_attach, NULL, NULL);
 
 static int	dzkbd_enable(void *, int);

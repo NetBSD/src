@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.253.2.1 2012/11/20 03:02:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.1 2012/11/20 03:02:44 tls Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253 2012/08/17 16:21:19 christos Exp $");
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
 #include <sys/bitops.h>
+
+#ifdef COMPAT_60
+#include <compat/sys/ttycom.h>
+#endif /* COMPAT_60 */
 
 static int	ttnread(struct tty *);
 static void	ttyblock(struct tty *);
@@ -1363,6 +1369,11 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			error = tty_set_qsize(tp, s);
 		return error;
 	default:
+#ifdef COMPAT_60
+		error = compat_60_ttioctl(tp, cmd, data, flag, l);
+		if (error != EPASSTHROUGH)
+			return error;
+#endif /* COMPAT_60 */
 		/* We may have to load the compat module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
@@ -1928,7 +1939,6 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		goto loop;
 	}
  read:
-	mutex_spin_exit(&tty_lock);
 
 	/*
 	 * Input present, check for input mapping and processing.
@@ -1940,16 +1950,14 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		 */
 		if (CCEQ(cc[VDSUSP], c) &&
 		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
-			mutex_spin_enter(&tty_lock);
 			ttysig(tp, TTYSIG_PG1, SIGTSTP);
 			if (first) {
 				error = ttypause(tp, hz);
-				mutex_spin_exit(&tty_lock);
 				if (error)
 					break;
-				goto loop;
-			} else
 				mutex_spin_exit(&tty_lock);
+				goto loop;
+			}
 			break;
 		}
 		/*
@@ -1960,7 +1968,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		/*
 		 * Give user character.
 		 */
+		mutex_spin_exit(&tty_lock);
  		error = ureadc(c, uio);
+		mutex_spin_enter(&tty_lock);
 		if (error)
 			break;
  		if (uio->uio_resid == 0)
@@ -1973,11 +1983,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			break;
 		first = 0;
 	}
+
 	/*
 	 * Look to unblock output now that (presumably)
 	 * the input queue has gone down.
 	 */
-	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG / 5) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    cc[VSTART] != _POSIX_VDISABLE &&

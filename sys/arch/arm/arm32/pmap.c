@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.236.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236 2012/09/02 14:46:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.236.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -257,6 +257,9 @@ int pmapdebug = 0;
  */
 static struct pmap	kernel_pmap_store;
 struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+int			arm_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+#endif
 
 /*
  * Which pmap is currently 'live' in the cache
@@ -499,8 +502,8 @@ struct l1_ttable {
 	 * We avoid using ffs() and a bitmap to track domains since ffs()
 	 * is slow on ARM.
 	 */
-	u_int8_t l1_domain_first;
-	u_int8_t l1_domain_free[PMAP_DOMAINS];
+	uint8_t l1_domain_first;
+	uint8_t l1_domain_free[PMAP_DOMAINS];
 
 	/* Physical address of this L1 page table */
 	paddr_t l1_physaddr;
@@ -1120,7 +1123,7 @@ static void
 pmap_alloc_l1(pmap_t pm)
 {
 	struct l1_ttable *l1;
-	u_int8_t domain;
+	uint8_t domain;
 
 	/*
 	 * Remove the L1 at the head of the LRU list
@@ -2995,12 +2998,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		bool is_cached = pmap_is_cached(pm);
 
 		*ptep = npte;
+		PTE_SYNC(ptep);
 		if (is_cached) {
 			/*
 			 * We only need to frob the cache/tlb if this pmap
 			 * is current
 			 */
-			PTE_SYNC(ptep);
 			if (va != vector_page && l2pte_valid(npte)) {
 				/*
 				 * This mapping is likely to be accessed as
@@ -4002,6 +4005,18 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	}
 #endif /* CPU_SA110 */
 
+	/*
+	 * If 'rv == 0' at this point, it generally indicates that there is a
+	 * stale TLB entry for the faulting address.  That might be due to a
+	 * wrong setting of pmap_needs_pte_sync.  So set it and retry.
+	 */
+	if (rv == 0 && pm->pm_l1->l1_domain_use_count == 1
+	    && pmap_needs_pte_sync == 0) {
+		pmap_needs_pte_sync = 1;
+		PTE_SYNC(ptep);
+		rv = 1;
+	}
+
 #ifdef DEBUG
 	/*
 	 * If 'rv == 0' at this point, it generally indicates that there is a
@@ -4206,8 +4221,7 @@ pmap_activate(struct lwp *l)
 		 * same user vmspace as before... Simply update
 		 * the TTB (no TLB flush required)
 		 */
-		__asm volatile("mcr p15, 0, %0, c2, c0, 0" ::
-		    "r"(npm->pm_l1->l1_physaddr));
+		cpu_setttb(npm->pm_l1->l1_physaddr, false);
 		cpu_cpwait();
 	} else {
 		/*
@@ -6476,6 +6490,22 @@ pmap_pte_init_armv7(void)
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv7;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv7;
 
+	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
+		/*
+		 * write-back, no write-allocate, shareable for normal pages.
+		 */
+		pte_l1_s_cache_mode = L1_S_C | L1_S_B | L1_S_V6_S;
+		pte_l2_l_cache_mode = L2_C | L2_B | L2_XS_S;
+		pte_l2_s_cache_mode = L2_C | L2_B | L2_XS_S;
+
+		/*
+		 * write-back, no write-allocate, shareable for page tables.
+		 */
+		pte_l1_s_cache_mode_pt = L1_S_C | L1_S_B | L1_S_V6_S;
+		pte_l2_l_cache_mode_pt = L2_C | L2_B | L2_XS_S;
+		pte_l2_s_cache_mode_pt = L2_C | L2_B | L2_XS_S;
+	}
+
 	pte_l1_s_prot_u = L1_S_PROT_U_armv7;
 	pte_l1_s_prot_w = L1_S_PROT_W_armv7;
 	pte_l1_s_prot_ro = L1_S_PROT_RO_armv7;
@@ -6495,6 +6525,8 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_proto = L1_S_PROTO_armv7;
 	pte_l1_c_proto = L1_C_PROTO_armv7;
 	pte_l2_s_proto = L2_S_PROTO_armv7;
+
+	pmap_needs_pte_sync = 1;
 }
 #endif /* ARM_MMU_V7 */
 
@@ -6824,3 +6856,19 @@ SYSCTL_SETUP(sysctl_machdep_pmap_setup, "sysctl machdep.kmpages setup")
 			NULL, 0, &pmap_kmpages, 0,
 			CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+struct vm_page *
+arm_pmap_alloc_poolpage(int flags)
+{
+	/*
+	 * On some systems, only some pages may be "coherent" for dma and we
+	 * want to use those for pool pages (think mbufs).
+	 */
+	if (arm_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
+		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
+		    UVM_PGA_STRAT_ONLY, arm_poolpage_vmfreelist);
+
+	return uvm_pagealloc(NULL, 0, NULL, flags);
+}
+#endif

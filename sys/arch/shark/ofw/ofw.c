@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.59 2012/07/29 00:07:06 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59 2012/07/29 00:07:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,7 +775,7 @@ ofw_configmem(void)
 
 	/* Switch to the proc0 pagetables. */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

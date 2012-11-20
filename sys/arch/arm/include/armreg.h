@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.65 2012/09/11 15:31:54 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.65.2.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -77,6 +77,7 @@
 #define PSR_SVC32_MODE	0x00000013
 #define PSR_MON32_MODE	0x00000016
 #define PSR_ABT32_MODE	0x00000017
+#define PSR_HYP32_MODE	0x0000001a
 #define PSR_UND32_MODE	0x0000001b
 #define PSR_SYS32_MODE	0x0000001f
 #define PSR_32_MODE	0x00000010
@@ -320,6 +321,15 @@
 #define	CPU_CONTROL_TE_ENABLE	0x40000000 /* TE: Thumb Exception enable */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
+
+/* ARMv6/ARMv7 Co-Processor Access Control Register (CP15, 0, c1, c0, 2) */
+#define	CPACR_V7_ASEDIS		0x80000000 /* Disable Advanced SIMD Ext. */
+#define	CPACR_V7_D32DIS		0x40000000 /* Disable VFP regs 15-31 */
+#define	CPACR_CPn(n)		(3 << (2*n))
+#define	CPACR_NOACCESS		0 /* reset value */
+#define	CPACR_PRIVED		1 /* Privileged mode access */
+#define	CPACR_RESERVED		2
+#define	CPACR_ALL		3 /* Privileged and User mode access */
 
 /* ARM11x6 Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	ARM11X6_AUXCTL_RS	0x00000001 /* return stack */
@@ -569,6 +579,11 @@ ARMREG_READ_INLINE(ccsidr, "p15,1,%0,c0,c0,0") /* Cache Size ID Register */
 ARMREG_READ_INLINE(clidr, "p15,1,%0,c0,c0,1") /* Cache Level ID Register */
 ARMREG_READ_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
 ARMREG_WRITE_INLINE(csselr, "p15,2,%0,c0,c0,0") /* Cache Size Selection Register */
+/* c1 registers */
+ARMREG_READ_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_WRITE_INLINE(auxctl, "p15,0,%0,c1,c0,1") /* Auxiliary Control Register */
+ARMREG_READ_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
+ARMREG_WRITE_INLINE(cpacr, "p15,0,%0,c1,c0,2") /* Co-Processor Access Control Register */
 /* c2 registers */
 ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
@@ -576,6 +591,12 @@ ARMREG_READ_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register
 ARMREG_WRITE_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
 ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
 ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+/* c5 registers */
+ARMREG_READ_INLINE(dfsr, "p15,0,%0,c5,c0,0") /* Data Fault Status Register */
+ARMREG_READ_INLINE(ifsr, "p15,0,%0,c5,c0,1") /* Instruction Fault Status Register */
+/* c6 registers */
+ARMREG_READ_INLINE(dfar, "p15,0,%0,c6,c0,0") /* Data Fault Address Register */
+ARMREG_READ_INLINE(ifar, "p15,0,%0,c6,c0,2") /* Instruction Fault Address Register */
 /* c7 registers */
 ARMREG_WRITE_INLINE(icialluis, "p15,0,%0,c7,c1,0") /* Instruction Inv All (IS) */
 ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Invalidate All (IS) */

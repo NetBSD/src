@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.5 2012/08/16 18:16:25 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.5.2.1 2012/11/20 03:01:07 tls Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -216,9 +216,32 @@ vfp_attach(void)
 {
 	struct cpu_info * const ci = curcpu();
 	const char *model = NULL;
-	void *uh;
+	bool vfp_p = false;
 
-	uh = install_coproc_handler(VFP_COPROC, vfp_test);
+#ifdef FPU_VFP
+	if (CPU_ID_ARM11_P(curcpu()->ci_arm_cpuid)
+	    || CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
+		const uint32_t cpacr_vfp = CPACR_CPn(VFP_COPROC);
+		const uint32_t cpacr_vfp2 = CPACR_CPn(VFP_COPROC2);
+
+		/*
+		 * We first need to enable access to the coprocessors.
+		 */
+		uint32_t cpacr = armreg_cpacr_read();
+		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
+		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
+		armreg_cpacr_write(cpacr);
+
+		/*
+		 * If we could enable them, then they exist.
+		 */
+		cpacr = armreg_cpacr_read();
+		vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) != CPACR_NOACCESS
+		    || __SHIFTOUT(cpacr, cpacr_vfp) != CPACR_NOACCESS;
+	}
+#endif
+
+	void *uh = install_coproc_handler(VFP_COPROC, vfp_test);
 
 	undefined_test = 0;
 
@@ -241,6 +264,12 @@ vfp_attach(void)
 	case FPU_VFP11_ARM11:
 		model = "VFP11";
 		break;
+	case FPU_VFP_CORTEXA5:
+	case FPU_VFP_CORTEXA7:
+	case FPU_VFP_CORTEXA8:
+	case FPU_VFP_CORTEXA9:
+		model = "NEON MPE (VFP 3.0+)";
+		break;
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %x\n",
 		    fpsid);
@@ -250,7 +279,7 @@ vfp_attach(void)
 
 	if (fpsid != 0) {
 		aprint_normal("vfp%d at %s: %s\n",
-		    curcpu()->ci_dev->dv_unit, curcpu()->ci_dev->dv_xname,
+		    device_unit(curcpu()->ci_dev), device_xname(curcpu()->ci_dev),
 		    model);
 	}
 	evcnt_attach_dynamic(&vfpevent_use, EVCNT_TYPE_MISC, NULL,

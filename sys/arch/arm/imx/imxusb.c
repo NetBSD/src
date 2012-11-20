@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.2 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.2.2.1 2012/11/20 03:01:05 tls Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.1 2012/11/20 03:01:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ ulpi_reset(struct imxehci_softc *sc)
 void
 imxehci_reset(struct imxehci_softc *sc)
 {
-	u_int32_t reg;
+	uint32_t reg;
 	int i;
 	struct ehci_softc *hsc = &sc->sc_hsc;
 #define	RESET_TIMEOUT 100

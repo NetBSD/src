@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.26 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.26.6.1 2012/11/20 03:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.26 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.26.6.1 2012/11/20 03:02:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, daddr_t blkno,
 			}
 		}
 	} else {
-		ac->ac_device = (device_t)sc;
+		ac->ac_device = sc->sc_ld.sc_dv;
 		ac->ac_context = bp;
 		ac->ac_intr = ld_aac_intr;
 		aac_ccb_enqueue(aac, ac);
@@ -328,8 +328,8 @@ ld_aac_intr(struct aac_ccb *ac)
 	u_int32_t status;
 
 	bp = ac->ac_context;
-	sc = (struct ld_aac_softc *)ac->ac_device;
-	aac = device_private(device_parent(sc->sc_ld.sc_dv));
+	sc = device_private(ac->ac_device);
+	aac = device_private(device_parent(ac->ac_device));
 
 	if ((bp->b_flags & B_READ) != 0) {
 		brr = (struct aac_blockread_response *)&ac->ac_fib->data[0];

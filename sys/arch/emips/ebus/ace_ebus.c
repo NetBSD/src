@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.4.6.1 2012/11/20 03:01:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.4.6.1 2012/11/20 03:01:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,11 +228,12 @@ ace_ebus_attach(device_t parent, device_t self, void *aux)
 	struct ebus_attach_args *ia = aux;
 	int error;
 
+	ace->sc_dev = self;
+
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
 	ace->sc_dr = (struct _Sac *)ia->ia_vaddr;
-	ace->sc_dev = self;
 #if DEBUG
 	printf(" virt=%p", (void*)ace->sc_dr);
 #endif
@@ -1461,7 +1462,7 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: ace_ebus.c,v 1.4 2012/02/02 19:42:58 tls Exp $ */
+/*	$NetBSD: ace_ebus.c,v 1.4.6.1 2012/11/20 03:01:12 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1578,7 +1579,7 @@ static void bad144intern(struct ace_softc *);
 void
 aceattach(struct ace_softc *ace)
 {
-	struct device *self = ace->sc_dev;
+	device_t self = ace->sc_dev;
 	char tbuf[41], pbuf[9], c, *p, *q;
 	int i, blank;
 	DEBUG_PRINT(("aceattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
@@ -1625,7 +1626,7 @@ aceattach(struct ace_softc *ace)
 	format_bytes(pbuf, sizeof(pbuf), ace->sc_capacity * DEV_BSIZE);
 	aprint_normal("%s: %s, %d cyl, %d head, %d sec, "
 	    "%d bytes/sect x %llu sectors\n",
-	    self->dv_xname, pbuf,
+	    device_xname(self), pbuf,
 	    (int)(ace->sc_capacity /
 	    (ace->sc_params.CurrentNumberOfHeads *
 	    ace->sc_params.CurrentSectorsPerTrack)),
@@ -1644,7 +1645,7 @@ aceattach(struct ace_softc *ace)
 }
 
 int
-aceactivate(struct device *self, enum devact act)
+aceactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -1661,7 +1662,7 @@ aceactivate(struct device *self, enum devact act)
 }
 
 int
-acedetach(struct device *self, int flags)
+acedetach(device_t self, int flags)
 {
 	struct ace_softc *sc = device_private(self);
 	int s, bmaj, cmaj, i, mn;

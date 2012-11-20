@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: hpc.c,v 1.66.12.1 2012/11/20 03:01:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.66 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.66.12.1 2012/11/20 03:01:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,8 +638,7 @@ hpc_revision(struct hpc_softc *sc, struct gio_attach_args *ga)
 }
 
 static int
-hpc_submatch(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+hpc_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.50 2011/06/30 20:09:37 wiz Exp $
+# $NetBSD: DISKLESS3X,v 1.50.12.1 2012/11/20 03:01:47 tls Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -56,6 +56,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

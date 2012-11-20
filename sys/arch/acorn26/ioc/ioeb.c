@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $ */
+/* $NetBSD: ioeb.c,v 1.7.12.1 2012/11/20 03:00:53 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.7.12.1 2012/11/20 03:00:53 tls Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.7 2011/07/19 16:05:11 dyoung Exp $");
 #include <arch/acorn26/ioc/ioebvar.h>
 
 struct ioeb_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
@@ -48,7 +47,7 @@ struct ioeb_softc {
 static int ioeb_match(device_t, cfdata_t, void *);
 static void ioeb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ioeb, sizeof(struct ioeb_softc),
+CFATTACH_DECL_NEW(ioeb, sizeof(struct ioeb_softc),
     ioeb_match, ioeb_attach, NULL, NULL);
 
 device_t the_ioeb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: check.c,v 1.6.48.1 2012/11/20 02:58:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,31 +34,31 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: check.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: check.c,v 1.6.48.1 2012/11/20 02:58:45 tls Exp $");
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
 void
-getmove(void)
+getmove(struct move *mm)
 {
 	int     i, c;
 
 	c = 0;
 	for (;;) {
-		i = checkmove(c);
+		i = checkmove(mm, c);
 
 		switch (i) {
 		case -1:
-			if (movokay(mvlim)) {
+			if (movokay(mm, mm->mvlim)) {
 				if (tflag)
 					curmove(20, 0);
 				else
 					writec('\n');
-				for (i = 0; i < mvlim; i++)
-					if (h[i])
-						wrhit(g[i]);
+				for (i = 0; i < mm->mvlim; i++)
+					if (mm->h[i])
+						wrhit(mm->g[i]);
 				nexturn();
 				if (*offopp == 15)
 					cturn *= -2;
@@ -81,21 +81,21 @@ getmove(void)
 				writel(" must make ");
 			else
 				writel(" can only make ");
-			writec(mvlim + '0');
+			writec(mm->mvlim + '0');
 			writel(" move");
-			if (mvlim > 1)
+			if (mm->mvlim > 1)
 				writec('s');
 			writec('.');
 			writec('\n');
 			break;
 
 		case -3:
-			if (quit())
+			if (quit(mm))
 				return;
 		}
 
 		if (!tflag)
-			proll();
+			proll(mm);
 		else {
 			curmove(cturn == -1 ? 18 : 19, 39);
 			cline();
@@ -105,34 +105,34 @@ getmove(void)
 }
 
 int
-movokay(int mv)
+movokay(struct move *mm, int mv)
 {
 	int     i, m;
 
-	if (d0)
-		swap;
+	if (mm->d0)
+		mswap(mm);
 
 	for (i = 0; i < mv; i++) {
-		if (p[i] == g[i]) {
-			moverr(i);
+		if (mm->p[i] == mm->g[i]) {
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Attempt to move to same location.\n");
 			return (0);
 		}
-		if (cturn * (g[i] - p[i]) < 0) {
-			moverr(i);
+		if (cturn * (mm->g[i] - mm->p[i]) < 0) {
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Backwards move.\n");
 			return (0);
 		}
-		if (abs(board[bar]) && p[i] != bar) {
-			moverr(i);
+		if (abs(board[bar]) && mm->p[i] != bar) {
+			moverr(mm, i);
 			curmove(20, 0);
 			writel("Men still on bar.\n");
 			return (0);
 		}
-		if ((m = makmove(i))) {
-			moverr(i);
+		if ((m = makmove(mm, i))) {
+			moverr(mm, i);
 			switch (m) {
 
 			case 1:

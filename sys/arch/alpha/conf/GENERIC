@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.345 2012/08/17 20:11:37 abs Exp $
+# $NetBSD: GENERIC,v 1.345.2.1 2012/11/20 03:00:55 tls Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.345 $"
+ident		"GENERIC-$Revision: 1.345.2.1 $"
 
 maxusers 32
 
@@ -151,6 +151,7 @@ options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1

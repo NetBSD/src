@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.25 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.25.22.1 2012/11/20 03:02:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.25 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.25.22.1 2012/11/20 03:02:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.25 2009/11/26 15:17:09 njoly Exp $");
 static int	dpt_pci_match(device_t, cfdata_t, void *);
 static void	dpt_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(dpt_pci, sizeof(struct dpt_softc),
+CFATTACH_DECL_NEW(dpt_pci, sizeof(struct dpt_softc),
     dpt_pci_match, dpt_pci_attach, NULL, NULL);
 
 static int
@@ -90,6 +90,7 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Storage controller\n");
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	aprint_normal(": ");
@@ -130,7 +131,7 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
-		aprint_error_dev(&sc->sc_dv, "readcfg failed - see dpt(4)\n");
+		aprint_error_dev(sc->sc_dev, "readcfg failed - see dpt(4)\n");
 		return;
 	}
 

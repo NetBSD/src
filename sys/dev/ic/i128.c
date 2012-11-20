@@ -1,4 +1,4 @@
-/*	$NetBSD: i128.c,v 1.3 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: i128.c,v 1.3.44.1 2012/11/20 03:02:04 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i128.c,v 1.3 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i128.c,v 1.3.44.1 2012/11/20 03:02:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ i128_bitblt(bus_space_tag_t tag, bus_space_handle_t regh, int xs, int ys,
 	bus_space_write_4(tag, regh, XY2_WH, (wi << 16) | he);
 	bus_space_write_4(tag, regh, XY0_SRC, (xs << 16) | ys);
 	bus_space_write_4(tag, regh, XY1_DST, (xd << 16) | yd);
-	I128_DONE(tag, regh);
 }
 
 void
@@ -118,5 +117,17 @@ i128_rectfill(bus_space_tag_t tag, bus_space_handle_t regh, int x, int y,
 	bus_space_write_4(tag, regh, XY2_WH, (wi << 16) | he);
 	bus_space_write_4(tag, regh, XY0_SRC, 0);
 	bus_space_write_4(tag, regh, XY1_DST, (x << 16) | y);
-	I128_DONE(tag, regh);
 }
+
+void
+i128_ready(bus_space_tag_t t, bus_space_handle_t h)
+{
+    I128_READY(t, h);
+}
+
+void
+i128_sync(bus_space_tag_t t, bus_space_handle_t h)
+{
+    I128_DONE(t, h);
+}
+ 

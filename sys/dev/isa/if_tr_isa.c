@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.23 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.23.22.1 2012/11/20 03:02:10 tls Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.23 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.23.22.1 2012/11/20 03:02:10 tls Exp $");
 
 #undef TRISADEBUG
 
@@ -78,7 +78,7 @@ int	(*tr_isa_probe_list[])(device_t, cfdata_t, void *) = {
 		0
 	};
 
-CFATTACH_DECL(tr_isa, sizeof(struct tr_softc),
+CFATTACH_DECL_NEW(tr_isa, sizeof(struct tr_softc),
     tr_isa_probe, tr_isa_attach, NULL, NULL);
 
 int
@@ -192,13 +192,14 @@ tr_isa_probe(device_t parent, cfdata_t match, void *aux)
 int trtcm_setspeed(struct tr_softc *, int);
 
 void
-tr_isa_attach(device_t parent, device_t self, void	*aux)
+tr_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct tr_softc *sc = (void *) self;
+	struct tr_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh)) {

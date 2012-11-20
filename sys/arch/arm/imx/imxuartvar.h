@@ -1,4 +1,4 @@
-/* $NetBSD: imxuartvar.h,v 1.4 2010/11/27 13:37:27 bsh Exp $ */
+/* $NetBSD: imxuartvar.h,v 1.4.18.1 2012/11/20 03:01:05 tls Exp $ */
 /*
  * driver include for Freescale i.MX31 and i.MX31L UARTs
  */
@@ -52,7 +52,7 @@ void imxuart_set_frequency(u_int, u_int);
 /*
  * defined in imx51uart.c and imx31uart.c
  */
-int imxuart_match(struct device *, struct cfdata *, void *);
-void imxuart_attach(struct device *, struct device *, void *);
+int imxuart_match(device_t, cfdata_t, void *);
+void imxuart_attach(device_t, device_t, void *);
 
 #endif	/* _IMXUARTVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.9 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.9.122.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181_vrip.c,v 1.9 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181_vrip.c,v 1.9.122.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,14 @@ struct ite8181_vrip_softc {
 	struct ite8181_softc	sc_ite8181;
 };
 
-static int	ite8181_vrip_probe(struct device *, struct cfdata *, void *);
-static void	ite8181_vrip_attach(struct device *, struct device *, void *);
+static int	ite8181_vrip_probe(device_t, cfdata_t, void *);
+static void	ite8181_vrip_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ite8181video_vrip, sizeof(struct ite8181_vrip_softc),
+CFATTACH_DECL_NEW(ite8181video_vrip, sizeof(struct ite8181_vrip_softc),
     ite8181_vrip_probe, ite8181_vrip_attach, NULL, NULL);
 
 static int
-ite8181_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
+ite8181_vrip_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_handle_t ioh;
@@ -86,12 +86,13 @@ ite8181_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-ite8181_vrip_attach(struct device *parent, struct device *self, void *aux)
+ite8181_vrip_attach(device_t parent, device_t self, void *aux)
 {
-	struct ite8181_vrip_softc *vsc = (void *)self;
+	struct ite8181_vrip_softc *vsc = device_private(self);
 	struct ite8181_softc *sc = &vsc->sc_ite8181;
 	struct vrip_attach_args *va = aux;
 
+	sc->sc_dev = self;
 	sc->sc_baseaddr = va->va_addr;
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(va->va_iot, va->va_addr, va->va_size, 0,

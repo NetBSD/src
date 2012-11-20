@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.50 2010/11/13 13:52:06 uebayasi Exp $ */
+/* $NetBSD: if_lmc.c,v 1.50.18.1 2012/11/20 03:02:16 tls Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50 2010/11/13 13:52:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50.18.1 2012/11/20 03:02:16 tls Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3562,7 +3562,7 @@ ifnet_attach(softc_t *sc)
 # endif
 
   /* Every OS does it differently! */
-  strlcpy(sc->ifp->if_xname, device_xname(&sc->dev), IFNAMSIZ);
+  strlcpy(sc->ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
   IFQ_SET_MAXLEN(&sc->ifp->if_snd, SNDQ_MAXLEN);
   IFQ_SET_READY(&sc->ifp->if_snd);
@@ -5380,8 +5380,7 @@ print_driver_info(void)
 /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_match(struct device *parent, cfdata_t match,
-    void *aux)
+nbsd_match(device_t parent, cfdata_t match, void *aux)
   {
   struct pci_attach_args *pa = aux;
   u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
@@ -5405,15 +5404,16 @@ nbsd_match(struct device *parent, cfdata_t match,
 /* NetBSD bottom-half initialization. */
 /* context: kernel (boot) or process (syscall) */
 static void
-nbsd_attach(struct device *parent, struct device *self, void *aux)
+nbsd_attach(device_t parent, device_t self, void *aux)
   {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  softc_t *sc = device_private(self);
   struct pci_attach_args *pa = aux;
   const char *intrstr;
   bus_addr_t csr_addr;
   int error;
 
   /* for READ/WRITE_PCI_CFG() */
+  sc->sc_dev = self;
   sc->pa_pc   = pa->pa_pc;
   sc->pa_tag  = pa->pa_tag;
   sc->pa_dmat = pa->pa_dmat;
@@ -5493,9 +5493,9 @@ nbsd_attach(struct device *parent, struct device *self, void *aux)
 
 /* context: kernel (boot) or process (syscall) */
 static int
-nbsd_detach(struct device *self, int flags)
+nbsd_detach(device_t self, int flags)
   {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  softc_t *sc = device_private(self);
 
   /* Detach from the bus and the kernel. */
   lmc_detach(sc);
@@ -5514,9 +5514,5 @@ nbsd_detach(struct device *self, int flags)
   return 0;
   }
 
-CFATTACH_DECL(lmc, sizeof(softc_t),		/* lmc_ca */
+CFATTACH_DECL_NEW(lmc, sizeof(softc_t),		/* lmc_ca */
  nbsd_match, nbsd_attach, nbsd_detach, NULL);
-
-
-
-

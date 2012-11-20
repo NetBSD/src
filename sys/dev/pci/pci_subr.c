@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.92.2.1 2012/11/20 03:02:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.92 2012/04/24 09:53:41 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.92.2.1 2012/11/20 03:02:20 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -90,6 +90,7 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,	NULL,	},
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,	NULL,	},
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
+	{ "NVM",		PCI_SUBCLASS_MASS_STORAGE_NVM,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -118,6 +119,7 @@ static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
+	{ "HD audio",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -452,7 +454,7 @@ pci_aprint_devinfo_fancy(const struct pci_attach_args *pa, const char *naive,
  * in a device attach routine like this:
  *
  *	#ifdef MYDEV_DEBUG
- *		printf("%s: ", device_xname(&sc->sc_dev));
+ *		printf("%s: ", device_xname(sc->sc_dev));
  *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */

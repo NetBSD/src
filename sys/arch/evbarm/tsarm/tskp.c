@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $ */
+/* $NetBSD: tskp.c,v 1.8.12.1 2012/11/20 03:01:17 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.8.12.1 2012/11/20 03:01:17 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.8 2011/07/01 19:11:34 dyoung Exp $");
 #include <evbarm/tsarm/tsarmreg.h>
 
 struct tskp_softc {
-	struct device sc_dev;
 	struct matrixkp_softc sc_mxkp;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_gpioh;
@@ -98,15 +97,15 @@ struct wskbd_mapdata mxkp_keymapdata = {
 	KB_US,
 };
 
-static int	tskp_match(struct device *, struct cfdata *, void *);
-static void	tskp_attach(struct device *, struct device *, void *);
-static void	tskp_scankeys(struct matrixkp_softc *, u_int32_t *);
+static int	tskp_match(device_t, cfdata_t, void *);
+static void	tskp_attach(device_t, device_t, void *);
+static void	tskp_scankeys(struct matrixkp_softc *, uint32_t *);
 
-CFATTACH_DECL(tskp, sizeof(struct tskp_softc),
+CFATTACH_DECL_NEW(tskp, sizeof(struct tskp_softc),
     tskp_match, tskp_attach, NULL, NULL);
 
 static int
-tskp_match(struct device *parent, struct cfdata *match, void *aux)
+tskp_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
@@ -124,9 +123,9 @@ tskp_match(struct device *parent, struct cfdata *match, void *aux)
 	(EP93XX_GPIO_ ## x), GPIO_GET(x) & (~(y)))
 
 static void
-tskp_attach(struct device *parent, struct device *self, void *aux)
+tskp_attach(device_t parent, device_t self, void *aux)
 {
-	struct tskp_softc *sc = (void *)self;
+	struct tskp_softc *sc = device_private(self);
 	struct tspld_attach_args *taa = aux;
 	struct wskbddev_attach_args wa;
 
@@ -155,10 +154,10 @@ tskp_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-tskp_scankeys(struct matrixkp_softc *mxkp_sc, u_int32_t *keys)
+tskp_scankeys(struct matrixkp_softc *mxkp_sc, uint32_t *keys)
 {
-	struct tskp_softc *sc = (void *)mxkp_sc->sc_dev;
-	u_int32_t pos;
+	struct tskp_softc *sc = device_private(mxkp_sc->sc_dev);
+	uint32_t pos;
 
 	for(pos = 0; pos < 4; pos++) {
 		GPIO_SET(PBDDR, (1 << pos));

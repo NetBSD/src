@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.17 2012/09/11 19:43:10 msaitoh Exp $
+#	$NetBSD: OVERO,v 1.17.2.1 2012/11/20 03:01:13 tls Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -109,6 +109,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -206,6 +207,13 @@ omapwdt32k*	at obio1 addr 0x48314000 size 0x0800	# WDT2
 
 # Power, Reset and Clock Management
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+
+# SDHC controllers
+sdhc0		at obio0 addr 0x4809c000 size 0x0400 intr 83
+#sdhc1		at obio0 addr 0x480b4000 size 0x0400 intr 86	# Wifi
+
+sdmmc*		at sdhc?			# SD/MMC bus
+ld*		at sdmmc?
 
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77

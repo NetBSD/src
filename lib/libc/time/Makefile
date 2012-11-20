@@ -3,7 +3,7 @@
 # 2009-05-17 by Arthur David Olson.
 
 # Version numbers of the code and data distributions.
-VERSION = 2012e
+VERSION =	2012h
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -120,10 +120,18 @@ LDLIBS=
 #  -DZIC_MAX_ABBR_LEN_WO_WARN=3
 #	(or some other number) to set the maximum time zone abbreviation length
 #	that zic will accept without a warning (the default is 6)
-GCC_DEBUG_FLAGS = -Dlint -g -O3 -fno-common \
-	-Wall -Wcast-qual -Wconversion -Wmissing-prototypes \
-	-Wnested-externs -Wpointer-arith -Wshadow \
-	-Wtraditional # -Wstrict-prototypes -Wwrite-strings
+GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
+	-Wall -Wextra \
+	-Wbad-function-cast -Wcast-align -Wcast-qual \
+	-Wformat=2 -Winit-self \
+	-Wmissing-declarations -Wmissing-noreturn -Wmissing-prototypes \
+	-Wnested-externs \
+	-Wno-format-nonliteral -Wno-sign-compare -Wno-sign-conversion \
+	-Wno-type-limits \
+	-Wno-unused-parameter -Woverlength-strings -Wpointer-arith \
+	-Wshadow -Wstrict-prototypes -Wsuggest-attribute=const \
+	-Wsuggest-attribute=noreturn -Wsuggest-attribute=pure -Wtrampolines \
+	-Wwrite-strings
 #
 # If you want to use System V compatibility code, add
 #	-DUSG_COMPAT
@@ -276,7 +284,8 @@ NEWUCBSRCS=	date.c strftime.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) tzselect.ksh
 MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
 			tzfile.5 tzselect.8 zic.8 zdump.8
-DOCS=		README Theory $(MANS) date.1 Makefile
+COMMON=		Makefile
+DOCS=		README Theory $(MANS) date.1
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
 YDATA=		$(PRIMARY_YDATA) pacificnew etcetera backward
@@ -289,7 +298,7 @@ WEB_PAGES=	tz-art.htm tz-link.htm
 MISC=		usno1988 usno1989 usno1989a usno1995 usno1997 usno1998 \
 			$(WEB_PAGES) checktab.awk workman.sh \
 			zoneinfo2tdf.pl
-ENCHILADA=	$(DOCS) $(SOURCES) $(DATA) $(MISC)
+ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
 
 # And for the benefit of csh users on systems that assume the user
 # shell should be used to handle commands in Makefiles. . .
@@ -437,17 +446,18 @@ public:		$(ENCHILADA) set-timestamps
 		done
 		$(AWK) -f checktab.awk $(PRIMARY_YDATA)
 		LC_ALL=C && export LC_ALL && \
-		tar $(TARFLAGS) -cf - $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | \
+		tar $(TARFLAGS) -cf - \
+		    $(COMMON) $(DOCS) $(SOURCES) $(MISC) *.[1-8].txt | \
 		  gzip $(GZIPFLAGS) > tzcode$(VERSION).tar.gz
 		LC_ALL=C && export LC_ALL && \
-		tar $(TARFLAGS) -cf - $(DATA) | \
+		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) | \
 		  gzip $(GZIPFLAGS) > tzdata$(VERSION).tar.gz
 
 typecheck:
 		make clean
 		for i in "long long" unsigned double; \
 		do \
-			make CFLAGS="-DTYPECHECK -D_TIME_T \"-Dtime_t=$$i\"" ; \
+			make CFLAGS="-DTYPECHECK -D__time_t_defined -D_TIME_T \"-Dtime_t=$$i\"" ; \
 			./zdump -v Europe/Rome ; \
 			make clean ; \
 		done

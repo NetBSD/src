@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.9 2012/08/13 01:18:32 rmind Exp $
+.\"	$NetBSD: npfctl.8,v 1.9.2.1 2012/11/20 03:03:03 tls Exp $
 .\"
 .\" Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2012
+.Dd November 15, 2012
 .Dt NPFCTL 8
 .Os
 .Sh NAME
@@ -79,13 +79,16 @@ Show the current state and configuration.
 Syntax of printed configuration is for the user and may not match the
 .Xr npf.conf 5
 syntax.
-.\".It Ic table Ar tid
-.\"List all entries in the currently loaded table specified by
-.\".Ar tid .
-.It Ic table Ar tid Ic [ add | rem ] Aq Ar addr/mask
+.It Ic table Ar tid Ic add Aq Ar addr/mask
 In table
 .Ar tid ,
-add or remove the IP address and optionally netmask, specified by
+add the IP address and optionally netmask, specified by
+.Aq Ar addr/mask .
+Only tree-type tables support masks.
+.It Ic table Ar tid Ic rem Aq Ar addr/mask
+In table
+.Ar tid ,
+remove the IP address and optionally netmask, specified by
 .Aq Ar addr/mask .
 Only tree-type tables support masks.
 .It Ic table Ar tid Ic test Aq Ar addr
@@ -94,6 +97,10 @@ Query the table
 for a specific IP address, specified by
 .Ar addr .
 If no mask is specified, a single host is assumed.
+.It Ic table Ar tid Ic list
+List all entries in the currently loaded table specified by
+.Ar tid .
+This operation is expensive and should be used with caution.
 .It Ic sess-save
 Save all active sessions.
 The data will be stored in the

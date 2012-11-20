@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.150 2011/03/21 16:41:08 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.150.14.1 2012/11/20 03:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150 2011/03/21 16:41:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.1 2012/11/20 03:02:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -95,8 +95,8 @@ int max_bdevsws = 255;
 
 int mem_no = 2;
 
-struct device *booted_device;
-struct device *booted_wedge;
+device_t booted_device;
+device_t booted_wedge;
 int booted_partition;
 
 /* XXX: unused */

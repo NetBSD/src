@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.18 2009/05/12 14:38:26 cegger Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.18.22.1 2012/11/20 03:02:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.18 2009/05/12 14:38:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.18.22.1 2012/11/20 03:02:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ void clmpcc_pcctwo_attach(device_t, device_t, void *);
 void clmpcc_pcctwo_iackhook(struct clmpcc_softc *, int);
 void clmpcc_pcctwo_consiackhook(struct clmpcc_softc *, int);
 
-CFATTACH_DECL(clmpcc_pcctwo, sizeof(struct clmpcc_softc),
+CFATTACH_DECL_NEW(clmpcc_pcctwo, sizeof(struct clmpcc_softc),
     clmpcc_pcctwo_match, clmpcc_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver clmpcc_cd;
@@ -115,6 +115,7 @@ clmpcc_pcctwo_attach(device_t parent, device_t self, void *aux)
 	int level = pa->pa_ipl;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	level = pa->pa_ipl;
 	sc->sc_iot = pa->pa_bust;
 	bus_space_map(pa->pa_bust, pa->pa_offset, 0x100, 0, &sc->sc_ioh);
@@ -161,7 +162,7 @@ clmpcc_pcctwo_iackhook(struct clmpcc_softc *sc, int which)
 	default:
 #ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
-		    device_xname(&sc->sc_dev), which);
+		    device_xname(sc->sc_dev), which);
 #endif
 		panic("clmpcc_pcctwo_iackhook %d", which);
 	}
@@ -194,7 +195,7 @@ clmpcc_pcctwo_consiackhook(struct clmpcc_softc *sc, int which)
 	default:
 #ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
-		    device_xname(&sc->sc_dev), which);
+		    device_xname(sc->sc_dev), which);
 		panic("clmpcc_pcctwo_consiackhook");
 #endif
 		panic("clmpcc_pcctwo_iackhook %d", which);

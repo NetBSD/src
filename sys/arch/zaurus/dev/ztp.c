@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.13 2012/01/29 10:12:42 tsutsui Exp $	*/
+/*	$NetBSD: ztp.c,v 1.13.6.1 2012/11/20 03:01:52 tls Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.13 2012/01/29 10:12:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.13.6.1 2012/11/20 03:01:52 tls Exp $");
 
 #include "lcd.h"
 #include "w100lcd.h"
@@ -114,7 +114,7 @@ struct ztp_softc {
 	void *sc_gh;
 	int sc_enabled;
 	int sc_buttons; /* button emulation ? */
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 	struct ztp_pos sc_oldpos;
 	int sc_resx;
 	int sc_resy;

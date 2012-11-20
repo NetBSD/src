@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.37 2010/11/14 06:30:59 uebayasi Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.37.18.1 2012/11/20 03:02:05 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.37 2010/11/14 06:30:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.37.18.1 2012/11/20 03:02:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,7 @@ lsi64854_scsi_intr(void *arg)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    device_xname(&sc->sc_dev), trans, sc->sc_dmasize);
+		    device_xname(sc->sc_dev), trans, sc->sc_dmasize);
 #endif
 		trans = sc->sc_dmasize;
 	}

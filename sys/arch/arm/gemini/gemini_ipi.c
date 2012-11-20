@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.5 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.5.22.1 2012/11/20 03:01:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -18,8 +18,8 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.5 2009/11/25 14:28:50 rmind Exp $")
 #include <arch/arm/gemini/gemini_ipivar.h>
 #include <arch/arm/gemini/gemini_reg.h>
 
-static int  gemini_ipi_match(struct device *, struct cfdata *, void *);
-static void gemini_ipi_attach(struct device *, struct device *, void *);
+static int  gemini_ipi_match(device_t, cfdata_t, void *);
+static void gemini_ipi_attach(device_t, device_t, void *);
 static int  gemini_ipiintr(void *);
 
 CFATTACH_DECL_NEW(geminiipi, sizeof(struct gemini_ipi_softc),
@@ -29,7 +29,7 @@ static gemini_ipi_softc_t *gemini_ipi_sc;
 
 
 static int
-gemini_ipi_match(struct device *parent, struct cfdata *cf, void *aux)
+gemini_ipi_match(device_t parent, cfdata_t cf, void *aux)
 {
         struct obio_attach_args *obio = aux;
 
@@ -40,7 +40,7 @@ gemini_ipi_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gemini_ipi_attach(struct device *parent, struct device *self, void *aux)
+gemini_ipi_attach(device_t parent, device_t self, void *aux)
 {
         gemini_ipi_softc_t *sc = device_private(self);
         struct obio_attach_args *obio = aux;
@@ -157,7 +157,7 @@ ipi_intr_establish(int (*func)(void *), void *arg)
 #ifdef DEBUG
         if (ih == NULL)
 		panic("%s: gemini_ipi_intrq_insert failed",
-			device_xname(&sc->sc_dev));
+			device_xname(sc->sc_dev));
 #endif
 
 	return ih;
@@ -169,7 +169,7 @@ ipi_intr_disestablish(void *ih)
         gemini_ipi_softc_t *sc = gemini_ipi_sc;
 
 	if (sc == NULL)
-		panic("%s: NULL gemini_ipi_sc", device_xname(&sc->sc_dev));
+		panic("%s: NULL gemini_ipi_sc", device_xname(sc->sc_dev));
 
         gemini_ipi_intrq_remove(sc, ih);
 }

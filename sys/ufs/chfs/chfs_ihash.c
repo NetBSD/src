@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_ihash.c,v 1.1 2011/11/24 15:51:31 ahoka Exp $	*/
+/*	$NetBSD: chfs_ihash.c,v 1.1.10.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -148,12 +148,9 @@ loop:
 	LIST_FOREACH(ip, ipp, hash_entry) {
 		dbg("ip: %p\n", ip);
 		if (inum == ip->ino && dev == ip->dev) {
-//			printf("chfs_ihashget: found inode: %p\n", ip);
 			vp = ITOV(ip);
 			KASSERT(vp != NULL);
-			//dbg("found\n");
 			if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
-				//dbg("wait for #%llu\n", ip->ino);
 				mutex_exit(&chfs_ihash_lock);
 				goto loop;
 			}
@@ -164,22 +161,17 @@ loop:
 				dbg("isn't locked\n");
 			*/
 			if (flags == 0) {
-				//dbg("no flags\n");
 				mutex_exit(&chfs_ihash_lock);
 			} else {
-				//dbg("vget\n");
 				mutex_enter(vp->v_interlock);
 				mutex_exit(&chfs_ihash_lock);
 				if (vget(vp, flags)) {
 					goto loop;
 				}
-				//dbg("got it\n");
 			}
-			//dbg("return\n");
 			return (vp);
 		}
 	}
-	//dbg("not found\n");
 	mutex_exit(&chfs_ihash_lock);
 	return (NULL);
 }

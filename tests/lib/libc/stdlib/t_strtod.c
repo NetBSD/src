@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtod.c,v 1.30 2012/05/15 18:46:20 alnsn Exp $ */
+/*	$NetBSD: t_strtod.c,v 1.30.2.1 2012/11/20 03:02:55 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Public domain, Otto Moerbeek <otto@drijf.net>, 2006. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtod.c,v 1.30 2012/05/15 18:46:20 alnsn Exp $");
+__RCSID("$NetBSD: t_strtod.c,v 1.30.2.1 2012/11/20 03:02:55 tls Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -155,8 +155,6 @@ ATF_TC_BODY(strtold_inf, tc)
 {
 #ifndef __vax__
 #   ifdef __HAVE_LONG_DOUBLE
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
 
 	for (size_t i = 0; i < __arraycount(inf_strings); i++) {
 		volatile long double ld = strtold(inf_strings[i], NULL);
@@ -220,9 +218,6 @@ ATF_TC_BODY(strtold_nan, tc)
 #   ifdef __HAVE_LONG_DOUBLE
 
 	char *end;
-
-	if (system("cpuctl identify 0 | grep -q QEMU") == 0)
-		atf_tc_expect_fail("PR misc/44767");
 
 	volatile long double ld = strtold(nan_string, &end);
 	ATF_REQUIRE(isnan(ld) != 0);

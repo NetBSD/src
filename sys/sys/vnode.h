@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.236 2011/11/24 15:51:30 ahoka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.236.8.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -82,14 +82,9 @@ struct uvm_ractx;
  */
 
 /*
- * Vnode types.  VNON means no type.  __VTYPE_DEFINED allows other
- * sources to override this definition.  __VTYPE_DEFINED should be
- * considered a temporary feature.
+ * Vnode types.  VNON means no type.
  */
-#ifndef __VTYPE_DEFINED
-#define __VTYPE_DEFINED
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
-#endif /* __VTYPE_DEFINED */
 
 #define	VNODE_TYPES \
     "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD"

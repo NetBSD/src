@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14.14.1 2012/11/20 03:01:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@ enum ite_arraymaxs {
 #define ARGBUF_SIZE 256
 
 struct ite_softc {
-	struct	device device;
+	device_t device;
 	struct grf_softc *grf;
 	struct	itesw *isw;
 	int	flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopspvar.h,v 1.8 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.8.44.1 2012/11/20 03:02:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct iopsp_target {
 #define	IT_PRESENT		0x01	/* Target is present */
 
 struct iopsp_softc {
-	struct	device sc_dv;			/* Generic device data */
+	device_t sc_dev;			/* Generic device data */
 	struct	scsipi_adapter sc_adapter;	/* scsipi adapter */
 	struct	scsipi_channel sc_channel;	/* Prototype link */
 	struct	iop_initiator sc_ii;		/* I2O initiator state */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.88 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: if_el.c,v 1.88.6.1 2012/11/20 03:02:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.1 2012/11/20 03:02:10 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88 2012/02/02 19:43:04 tls Exp $");
  * per-line info and status
  */
 struct el_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* ethernet common */
@@ -97,7 +97,7 @@ static inline void el_hardreset(struct el_softc *);
 int elprobe(device_t, cfdata_t, void *);
 void elattach(device_t, device_t, void *);
 
-CFATTACH_DECL(el, sizeof(struct el_softc),
+CFATTACH_DECL_NEW(el, sizeof(struct el_softc),
     elprobe, elattach, NULL, NULL);
 
 /*
@@ -196,7 +196,7 @@ elprobe(device_t parent, cfdata_t match, void *aux)
 void
 elattach(device_t parent, device_t self, void *aux)
 {
-	struct el_softc *sc = (void *)self;
+	struct el_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -204,9 +204,11 @@ elattach(device_t parent, device_t self, void *aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	u_int8_t i;
 
+	sc->sc_dev = self;
+
 	printf("\n");
 
-	DPRINTF(("Attaching %s...\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("Attaching %s...\n", device_xname(sc->sc_dev)));
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {
@@ -232,7 +234,7 @@ elattach(device_t parent, device_t self, void *aux)
 	elstop(sc);
 
 	/* Initialize ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
@@ -252,7 +254,7 @@ elattach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, IPL_NET, elintr, sc);
 
 	DPRINTF(("Attaching to random...\n"));
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
 
 	DPRINTF(("elattach() finished.\n"));
@@ -395,7 +397,7 @@ elstart(struct ifnet *ifp)
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
 			printf("%s: bogus off 0x%x\n",
-			    device_xname(&sc->sc_dev), off);
+			    device_xname(sc->sc_dev), off);
 #endif
 		bus_space_write_1(iot, ioh, EL_GPBL, off & 0xff);
 		bus_space_write_1(iot, ioh, EL_GPBH, (off >> 8) & 0xff);
@@ -569,7 +571,7 @@ elread(struct el_softc *sc, int len)
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
-		    device_xname(&sc->sc_dev), len);
+		    device_xname(sc->sc_dev), len);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -724,7 +726,7 @@ elwatchdog(struct ifnet *ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	elreset(sc);

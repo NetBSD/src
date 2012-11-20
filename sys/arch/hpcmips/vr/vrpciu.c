@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.19 2011/08/24 20:27:36 dyoung Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.19.12.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.19 2011/08/24 20:27:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.19.12.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.19 2011/08/24 20:27:36 dyoung Exp $");
 #endif
 
 struct vrpciu_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	vrip_chipset_tag_t sc_vc;
 	bus_space_tag_t sc_iot;
@@ -78,10 +78,10 @@ static void	vrpciu_write_2(struct vrpciu_softc *, int, u_int16_t)
 static u_int16_t
 		vrpciu_read_2(struct vrpciu_softc *, int);
 #endif
-static int	vrpciu_match(struct device *, struct cfdata *, void *);
-static void	vrpciu_attach(struct device *, struct device *, void *);
+static int	vrpciu_match(device_t, cfdata_t, void *);
+static void	vrpciu_attach(device_t, device_t, void *);
 static int	vrpciu_intr(void *);
-static void	vrpciu_attach_hook(struct device *, struct device *,
+static void	vrpciu_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 static int	vrpciu_bus_maxdevs(pci_chipset_tag_t, int);
 static int	vrpciu_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
@@ -90,7 +90,7 @@ static void	vrpciu_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
 static pcireg_t	vrpciu_conf_read(pci_chipset_tag_t, pcitag_t, int); 
 static void	vrpciu_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-static int	vrpciu_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+static int	vrpciu_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 static const char *vrpciu_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 static const struct evcnt *vrpciu_intr_evcnt(pci_chipset_tag_t,
 		    pci_intr_handle_t);
@@ -98,7 +98,7 @@ static void	*vrpciu_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 static void	vrpciu_intr_disestablish(pci_chipset_tag_t, void *);
 
-CFATTACH_DECL(vrpciu, sizeof(struct vrpciu_softc),
+CFATTACH_DECL_NEW(vrpciu, sizeof(struct vrpciu_softc),
     vrpciu_match, vrpciu_attach, NULL, NULL);
 
 static void
@@ -132,16 +132,16 @@ vrpciu_read_2(struct vrpciu_softc *sc, int offset)
 #endif
 
 static int
-vrpciu_match(struct device *parent, struct cfdata *match, void *aux)
+vrpciu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-vrpciu_attach(struct device *parent, struct device *self, void *aux)
+vrpciu_attach(device_t parent, device_t self, void *aux)
 {
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)self;
+	struct vrpciu_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct vrip_attach_args *va = aux;
 #if defined(DEBUG) || NPCI > 0
@@ -153,6 +153,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 #endif
 
+	sc->sc_dev = self;
 	sc->sc_vc = va->va_vc;
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size, 0,
@@ -175,27 +176,27 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef DEBUG
 #define	DUMP_MAW(sc, name, reg) do {					\
-	printf("%s: %s =\t0x%08x\n", (sc)->sc_dev.dv_xname,		\
+	printf("%s: %s =\t0x%08x\n", device_xname((sc)->sc_dev),	\
 	    (name), (reg));						\
 	printf("%s:\tIBA/MASK =\t0x%08x/0x%08x (0x%08x - 0x%08x)\n",	\
-	    (sc)->sc_dev.dv_xname,					\
+	    device_xname((sc)->sc_dev),					\
 	    reg & VRPCIU_MAW_IBAMASK, VRPCIU_MAW_ADDRMASK(reg),		\
 	    VRPCIU_MAW_ADDR(reg),					\
 	    VRPCIU_MAW_ADDR(reg) + VRPCIU_MAW_SIZE(reg));		\
-	printf("%s:\tWINEN =\t0x%08x\n", (sc)->sc_dev.dv_xname,		\
+	printf("%s:\tWINEN =\t0x%08x\n", device_xname((sc)->sc_dev),	\
 	    reg & VRPCIU_MAW_WINEN);					\
-	printf("%s:\tPCIADR =\t0x%08x\n", (sc)->sc_dev.dv_xname,	\
+	printf("%s:\tPCIADR =\t0x%08x\n", device_xname((sc)->sc_dev),	\
 	    VRPCIU_MAW_PCIADDR(reg));					\
 } while (0)
-#define	DUMP_TAW(sc, name, reg) do {				\
-	printf("%s: %s =\t\t0x%08x\n", (sc)->sc_dev.dv_xname,	\
-	    (name), (reg));					\
-	printf("%s:\tMASK =\t0x%08x\n", (sc)->sc_dev.dv_xname,	\
-	    VRPCIU_TAW_ADDRMASK(reg));				\
-	printf("%s:\tWINEN =\t0x%08x\n", (sc)->sc_dev.dv_xname,	\
-	    reg & VRPCIU_TAW_WINEN);				\
-	printf("%s:\tIBA =\t0x%08x\n", (sc)->sc_dev.dv_xname,	\
-	    VRPCIU_TAW_IBA(reg));				\
+#define	DUMP_TAW(sc, name, reg) do {					\
+	printf("%s: %s =\t\t0x%08x\n", device_xname((sc)->sc_dev),	\
+	    (name), (reg));						\
+	printf("%s:\tMASK =\t0x%08x\n", device_xname((sc)->sc_dev),	\
+	    VRPCIU_TAW_ADDRMASK(reg));					\
+	printf("%s:\tWINEN =\t0x%08x\n", device_xname((sc)->sc_dev),	\
+	    reg & VRPCIU_TAW_WINEN);					\
+	printf("%s:\tIBA =\t0x%08x\n", device_xname((sc)->sc_dev),	\
+	    VRPCIU_TAW_IBA(reg));					\
 } while (0)
 	reg = vrpciu_read(sc, VRPCIU_MMAW1REG);
 	DUMP_MAW(sc, "MMAW1", reg);
@@ -207,50 +208,50 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	DUMP_TAW(sc, "TAW2", reg);
 	reg = vrpciu_read(sc, VRPCIU_MIOAWREG);
 	DUMP_MAW(sc, "MIOAW", reg);
-	printf("%s: BUSERRAD =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: BUSERRAD =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_BUSERRADREG));
-	printf("%s: INTCNTSTA =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: INTCNTSTA =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_INTCNTSTAREG));
-	printf("%s: EXACC =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: EXACC =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_EXACCREG));
-	printf("%s: RECONT =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: RECONT =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_RECONTREG));
-	printf("%s: PCIEN =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: PCIEN =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_ENREG));
-	printf("%s: CLOCKSEL =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: CLOCKSEL =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CLKSELREG));
-	printf("%s: TRDYV =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: TRDYV =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_TRDYVREG));
-	printf("%s: CLKRUN =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: CLKRUN =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read_2(sc, VRPCIU_CLKRUNREG));
-	printf("%s: IDREG =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: IDREG =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_ID_REG));
 	reg = vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_COMMAND_STATUS_REG);
-	printf("%s: CSR =\t\t0x%08x\n", sc->sc_dev.dv_xname, reg);
+	printf("%s: CSR =\t\t0x%08x\n", device_xname(sc->sc_dev), reg);
 	vrpciu_write(sc, VRPCIU_CONF_BASE + PCI_COMMAND_STATUS_REG, reg);
-	printf("%s: CSR =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: CSR =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_COMMAND_STATUS_REG));
-	printf("%s: CLASS =\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: CLASS =\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_CLASS_REG));
-	printf("%s: BHLC =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: BHLC =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_BHLC_REG));
-	printf("%s: MAIL =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: MAIL =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + VRPCIU_CONF_MAILREG));
-	printf("%s: MBA1 =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: MBA1 =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + VRPCIU_CONF_MBA1REG));
-	printf("%s: MBA2 =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: MBA2 =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + VRPCIU_CONF_MBA2REG));
-	printf("%s: INTR =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: INTR =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_INTERRUPT_REG));
 #if 0
 	vrpciu_write(sc, VRPCIU_CONF_BASE + PCI_INTERRUPT_REG,
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_INTERRUPT_REG) | 0x01);
-	printf("%s: INTR =\t\t0x%08x\n", sc->sc_dev.dv_xname,
+	printf("%s: INTR =\t\t0x%08x\n", device_xname(sc->sc_dev),
 	    vrpciu_read(sc, VRPCIU_CONF_BASE + PCI_INTERRUPT_REG));
 #endif
 #endif
 
-	pc->pc_dev = &sc->sc_dev;
+	pc->pc_dev = sc->sc_dev;
 	pc->pc_attach_hook = vrpciu_attach_hook;
 	pc->pc_bus_maxdevs = vrpciu_bus_maxdevs;
 	pc->pc_bus_devorder = vrpciu_bus_devorder;
@@ -270,7 +271,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 
 		for (i = 0; i < 8; i++)
 			printf("%s: ID_REG(0, 0, %d) = 0x%08x\n",
-			    sc->sc_dev.dv_xname, i,
+			    device_xname(sc->sc_dev), i,
 			    pci_conf_read(pc, pci_make_tag(pc, 0, 0, i),
 				PCI_ID_REG));
 	}
@@ -284,7 +285,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	iot = hpcmips_alloc_bus_space_tag();
 	reg = vrpciu_read(sc, VRPCIU_MIOAWREG);
 	snprintf(tmpbuf, sizeof(tmpbuf), "%s/iot",
-	    sc->sc_dev.dv_xname);
+	    device_xname(sc->sc_dev));
 	hpcmips_init_bus_space(iot, (struct bus_space_tag_hpcmips *)sc->sc_iot,
 	    tmpbuf, VRPCIU_MAW_ADDR(reg), VRPCIU_MAW_SIZE(reg));
 	pba.pba_iot = &iot->bst;
@@ -338,12 +339,12 @@ vrpciu_intr(void *arg)
 	isr = vrpciu_read(sc, VRPCIU_INTCNTSTAREG);
 	baddr = vrpciu_read(sc, VRPCIU_BUSERRADREG);
 	printf("%s: status=0x%08x  bad addr=0x%08x\n",
-	    sc->sc_dev.dv_xname, isr, baddr);
+	    device_xname(sc->sc_dev), isr, baddr);
 	return ((isr & 0x0f) ? 1 : 0);
 }
 
 void
-vrpciu_attach_hook(struct device *parent, struct device *self,
+vrpciu_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 
@@ -418,7 +419,7 @@ vrpciu_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp,
 pcireg_t
 vrpciu_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
+	struct vrpciu_softc *sc = device_private(pc->pc_dev);
 	u_int32_t val;
 	int bus, device, function;
 
@@ -434,7 +435,7 @@ vrpciu_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	val = vrpciu_read(sc, VRPCIU_CONFDREG);
 #if 0
 	printf("%s: conf_read: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, val);
+	    device_xname(sc->sc_dev), (u_int32_t)tag, reg, val);
 #endif
 	return (val);
 }
@@ -443,12 +444,12 @@ void
 vrpciu_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
-	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
+	struct vrpciu_softc *sc = device_private(pc->pc_dev);
 	int bus, device, function;
 
 #if 0
 	printf("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int32_t)tag, reg, (u_int32_t)data);
+	    device_xname(sc->sc_dev), (u_int32_t)tag, reg, (u_int32_t)data);
 #endif
 	vrpciu_decompose_tag(pc, tag, &bus, &device, &function);
 	if (bus == 0) {
@@ -463,7 +464,7 @@ vrpciu_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 }
 
 int
-vrpciu_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+vrpciu_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
@@ -474,7 +475,7 @@ vrpciu_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 
 	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
-	DPRINTF(("%s(%d, %d, %d): line = %d, pin = %d\n", pc->pc_dev->dv_xname,
+	DPRINTF(("%s(%d, %d, %d): line = %d, pin = %d\n", device_xname(pc->pc_dev),
 	    bus, dev, func, line, pin));
 
 	*ihp = CONFIG_HOOK_PCIINTR_ID(bus, dev, func);

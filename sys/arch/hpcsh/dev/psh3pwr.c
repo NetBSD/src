@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $	*/
+/*	$NetBSD: psh3pwr.c,v 1.4.22.1 2012/11/20 03:01:25 tls Exp $	*/
 /*
  * Copyright (c) 2005, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.4 2009/12/19 07:09:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psh3pwr.c,v 1.4.22.1 2012/11/20 03:01:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,9 +150,9 @@ psh3pwr_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_ih_pout = intc_intr_establish(SH7709_INTEVT2_IRQ0,
-	    IST_EDGE, IPL_TTY, psh3pwr_intr_plug_out, sc);
+	    IST_EDGE, IPL_TTY, psh3pwr_intr_plug_out, self);
 	sc->sc_ih_pin = intc_intr_establish(SH7709_INTEVT2_IRQ1,
-	    IST_EDGE, IPL_TTY, psh3pwr_intr_plug_in, sc);
+	    IST_EDGE, IPL_TTY, psh3pwr_intr_plug_in, self);
 
 	/* XXXX: WindowsCE sets this bit. */
 	aprint_normal_dev(self, "plug status: %s\n",
@@ -164,10 +164,8 @@ psh3pwr_attach(device_t parent, device_t self, void *aux)
 
 
 static int
-psh3pwr_intr_plug_out(void *self)
+psh3pwr_intr_plug_out(void *dev)
 {
-	struct psh3pwr_softc *sc __attribute__((__unused__)) =
-	    (struct psh3pwr_softc *)self;
 	uint8_t irr0, scpdr;
 
 	irr0 = _reg_read_1(SH7709_IRR0);
@@ -180,16 +178,14 @@ psh3pwr_intr_plug_out(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr | PSH3PWR_PLUG_OUT);
 
-	DPRINTF(("%s: plug out\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: plug out\n", device_xname(dev)));
 
 	return 1;
 }
 
 static int
-psh3pwr_intr_plug_in(void *self)
+psh3pwr_intr_plug_in(void *dev)
 {
-	struct psh3pwr_softc *sc __attribute__((__unused__)) =
-	    (struct psh3pwr_softc *)self;
 	uint8_t irr0, scpdr;
 
 	irr0 = _reg_read_1(SH7709_IRR0);
@@ -201,13 +197,13 @@ psh3pwr_intr_plug_in(void *self)
 	scpdr = _reg_read_1(SH7709_SCPDR);
 	_reg_write_1(SH7709_SCPDR, scpdr & ~PSH3PWR_PLUG_OUT);
 
-	DPRINTF(("%s: plug in\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s: plug in\n", device_xname(dev)));
 
 	return 1;
 }
 
 void
-psh3pwr_sleep(void *self)
+psh3pwr_sleep(void *v)
 {
 	/* splhigh on entry */
 	extern void pfckbd_poll_hitachi_power(void);

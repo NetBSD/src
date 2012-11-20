@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2011/07/02 18:17:12 kefren Exp $ */
+/* $NetBSD: main.c,v 1.6.8.1 2012/11/20 03:03:02 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		fatalp("Cannot create command socket\n");
 		return EXIT_FAILURE;
 	}
-	if (create_hello_socket() < 1) {
+	if (create_hello_sockets() != 0) {
 		fatalp("Cannot create hello socket\n");
 		return EXIT_FAILURE;
 	}

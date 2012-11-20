@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.36 2009/03/14 15:36:01 dsl Exp $ */
+/*	$NetBSD: ms.c,v 1.36.22.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36.22.1 2012/11/20 03:00:58 tls Exp $");
 
 /*
  * Mouse driver.
@@ -85,8 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2009/03/14 15:36:01 dsl Exp $");
 #include <dev/wscons/wsconsio.h>
 #endif
 
-void msattach(struct device *, struct device *, void *);
-int msmatch(struct device *, struct cfdata *, void *);
+void msattach(device_t, device_t, void *);
+int msmatch(device_t, cfdata_t, void *);
 
 /* per-port state */
 struct ms_port {
@@ -103,7 +103,7 @@ struct ms_port {
 	volatile int ms_ready;	   /* event queue is ready */
 	struct	evvar ms_events;   /* event queue state */
 #if NWSMOUSE > 0
-	struct device *ms_wsmousedev; /* wsmouse device */
+	device_t ms_wsmousedev; /* wsmouse device */
 	int     ms_wsenabled;      /* feeding events to wscons */
 #endif
 };
@@ -111,11 +111,10 @@ struct ms_port {
 #define	MS_NPORTS	2
 
 struct ms_softc {
-	struct device sc_dev;		/* base device */
 	struct ms_port sc_ports[MS_NPORTS];
 };
 
-CFATTACH_DECL(ms, sizeof(struct ms_softc),
+CFATTACH_DECL_NEW(ms, sizeof(struct ms_softc),
     msmatch, msattach, NULL, NULL);
 
 void msintr(void *);
@@ -162,12 +161,12 @@ static struct wsmouse_accessops ms_wscons_accessops = {
 #endif
 
 int
-msmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+msmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int ms_matched = 0;
 
 	/* Allow only one instance. */
-	if (!matchname((char *)auxp, "ms") || ms_matched)
+	if (!matchname((char *)aux, "ms") || ms_matched)
 		return 0;
 
 	ms_matched = 1;
@@ -175,12 +174,12 @@ msmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-msattach(struct device *pdp, struct device *dp, void *auxp)
+msattach(device_t parent, device_t self, void *aux)
 {
 #if NWSMOUSE > 0
 	struct wsmousedev_attach_args waa;
 #endif
-	struct ms_softc *sc = (void *) dp;
+	struct ms_softc *sc = device_private(self);
 	int i;
 
 	printf("\n");
@@ -193,7 +192,7 @@ msattach(struct device *pdp, struct device *dp, void *auxp)
 		
 		sc->sc_ports[i].ms_wsenabled = 0;
 		sc->sc_ports[i].ms_wsmousedev = 
-		    config_found(dp, &waa, wsmousedevprint);
+		    config_found(self, &waa, wsmousedevprint);
 #endif
 	}
 }

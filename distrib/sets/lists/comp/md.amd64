@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.176 2012/08/29 17:13:21 drochner Exp $
+# $NetBSD: md.amd64,v 1.176.2.1 2012/11/20 02:57:46 tls Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -57,6 +57,7 @@
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
+./usr/include/amd64/sljitarch.h			comp-c-include
 ./usr/include/amd64/specialreg.h		comp-c-include
 ./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
@@ -86,12 +87,15 @@
 ./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/bmiintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fmaintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/immintrin.h		comp-c-include		llvm
@@ -102,6 +106,7 @@
 ./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
@@ -201,6 +206,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete
@@ -1148,7 +1154,7 @@
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.2.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.5.7.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/liblzf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblzf.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblzma.so.1.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.10.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.1.debug	comp-compat-shlib	compat,pic,debug
@@ -1175,7 +1181,7 @@
 ./usr/libdata/debug/usr/lib/i386/libquota.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libradius.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librefuse.so.2.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libresolv.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libresolv.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libroken.so.14.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libroken.so.19.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug

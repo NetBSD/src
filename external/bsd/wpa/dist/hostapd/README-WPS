@@ -63,6 +63,7 @@ includes WPS support and uses madwifi driver interface:
 CONFIG_DRIVER_MADWIFI=y
 CFLAGS += -I/usr/src/madwifi-0.9.3
 CONFIG_WPS=y
+CONFIG_WPS2=y
 CONFIG_WPS_UPNP=y
 
 
@@ -119,6 +120,13 @@ pushbutton event (for PBC) to allow a new WPS Enrollee to join the
 network. hostapd uses the control interface as an input channel for
 these events.
 
+The PIN value used in the commands must be processed by an UI to
+remove non-digit characters and potentially, to verify the checksum
+digit. "hostapd_cli wps_check_pin <PIN>" can be used to do such
+processing. It returns FAIL if the PIN is invalid, or FAIL-CHECKSUM if
+the checksum digit is incorrect, or the processed PIN (non-digit
+characters removed) if the PIN is valid.
+
 When a client device (WPS Enrollee) connects to hostapd (WPS
 Registrar) in order to start PIN mode negotiation for WPS, an
 identifier (Enrollee UUID) is sent. hostapd will need to be configured
@@ -171,9 +179,16 @@ hostapd_cli wps_pin any 12345670
 
 To reduce likelihood of PIN being used with other devices or of
 forgetting an active PIN available for potential attackers, expiration
-time can be set for the new PIN:
+time in seconds can be set for the new PIN (value 0 indicates no
+expiration):
 
 hostapd_cli wps_pin any 12345670 300
+
+If the MAC address of the enrollee is known, it should be configured
+to allow the AP to advertise list of authorized enrollees:
+
+hostapd_cli wps_pin 53b63a98-d29e-4457-a2ed-094d7e6a669c \
+	12345670 300 00:11:22:33:44:55
 
 
 After this, the Enrollee can connect to the AP again and complete WPS
@@ -221,6 +236,17 @@ hostapd_cli wps_ap_pin set <PIN> [timeout]
 - if the optional timeout parameter is given, the AP PIN will be enabled
   for the specified number of seconds
 
+hostapd_cli get_config
+- display the current configuration
+
+hostapd_cli wps_config <new SSID> <auth> <encr> <new key>
+examples:
+  hostapd_cli wps_config testing WPA2PSK CCMP 12345678
+  hostapd_cli wps_config "no security" OPEN NONE ""
+
+<auth> must be one of the following: OPEN WPAPSK WPA2PSK
+<encr> must be one of the following: NONE WEP TKIP CCMP
+
 
 Credential generation and configuration changes
 -----------------------------------------------
@@ -251,7 +277,7 @@ WPS-REG-SUCCESS <Enrollee MAC address <UUID-E>
 For example:
 <2>WPS-REG-SUCCESS 02:66:a0:ee:17:27 2b7093f1-d6fb-5108-adbb-bea66bb87333
 
-This can be used to tricker change from unconfigured to configured
+This can be used to trigger change from unconfigured to configured
 state (random configuration based on the first successful WPS
 registration). In addition, this can be used to update AP UI about the
 status of WPS registration progress.

@@ -1,16 +1,19 @@
-#	$NetBSD: Makefile,v 1.12 2012/08/09 14:37:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2012/11/20 02:58:01 tls Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	ammintrin.h \
+INCS=	__wmmintrin_aes.h \
+	__wmmintrin_pclmul.h \
+	ammintrin.h \
 	avx2intrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
 	emmintrin.h \
+	f16cintrin.h \
 	fmaintrin.h \
 	fma4intrin.h \
 	immintrin.h \
@@ -21,6 +24,7 @@ INCS=	ammintrin.h \
 	nmmintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
+	rtmintrin.h \
 	smmintrin.h \
 	tmmintrin.h \
 	wmmintrin.h \
@@ -43,6 +47,7 @@ HEADER=	\
   tgmath.h
 
 .PATH:	${LLVM_SRCDIR}/include/llvm \
+	${CLANG_SRCDIR}/include/clang/AST \
 	${CLANG_SRCDIR}/include/clang/Basic \
 	${CLANG_SRCDIR}/include/clang/Driver
 
@@ -51,8 +56,10 @@ TABLEGEN_SRC=	Intrinsics.td
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/Intrinsics.gen|-gen-intrinsic
 
-CLANG_TABLEGEN_SRC=	Attr.td StmtNodes.td DeclNodes.td CommentNodes.td \
-	Diagnostic.td arm_neon.td Options.td CC1AsOptions.td CC1Options.td
+CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
+	CommentNodes.td DeclNodes.td StmtNodes.td \
+	Diagnostic.td arm_neon.td Options.td \
+	CC1AsOptions.td CC1Options.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
@@ -75,6 +82,13 @@ CLANG_TABLEGEN_OUTPUT.DeclNodes.td= \
 
 CLANG_TABLEGEN_OUTPUT.CommentNodes.td= \
 	clang/AST/CommentNodes.inc|-gen-clang-comment-nodes
+
+CLANG_TABLEGEN_OUTPUT.CommentCommands.td= \
+	clang/AST/CommentCommandInfo.inc|-gen-clang-comment-command-info
+
+CLANG_TABLEGEN_OUTPUT.CommentHTMLTags.td= \
+	clang/AST/CommentHTMLTags.inc|-gen-clang-comment-html-tags \
+	clang/AST/CommentHTMLTagsProperties.inc|-gen-clang-comment-html-tags-properties
 
 CLANG_TABLEGEN_INCLUDES.Diagnostic.td=	-I${CLANG_SRCDIR}/include/clang/Basic
 CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \

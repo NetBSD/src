@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.75 2007/10/17 19:55:15 garbled Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.75.64.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75 2007/10/17 19:55:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75.64.1 2012/11/20 03:01:30 tls Exp $");
 
 #include <sys/param.h>
 
@@ -74,10 +74,10 @@ static void	grfmv_intr_mvc(void *);
 static void	grfmv_intr_viltro_340(void *);
 
 static int	grfmv_mode(struct grf_softc *, int, void *);
-static int	grfmv_match(struct device *, struct cfdata *, void *);
-static void	grfmv_attach(struct device *, struct device *, void *);
+static int	grfmv_match(device_t, cfdata_t, void *);
+static void	grfmv_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(macvid, sizeof(struct grfbus_softc),
+CFATTACH_DECL_NEW(macvid, sizeof(struct grfbus_softc),
     grfmv_match, grfmv_attach, NULL, NULL);
 
 static void
@@ -106,7 +106,7 @@ load_image_data(void *	data, struct image_data *image)
 
 
 static int
-grfmv_match(struct device *parent, struct cfdata *cf, void *aux)
+grfmv_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 
@@ -130,9 +130,9 @@ grfmv_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-grfmv_attach(struct device *parent, struct device *self, void *aux)
+grfmv_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfbus_softc *sc = (struct grfbus_softc *)self;
+	struct grfbus_softc *sc = device_private(self);
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	struct image_data image_store, image;
 	struct grfmode *gm;
@@ -226,7 +226,7 @@ bad:
 			sc->card_id = NUBUS_DRHW_SAM768;
 		else if (strncmp(cardname, "Toby frame", 10) != 0)
 			printf("%s: This display card pretends to be a TFB!\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(self));
 	}
 
 	switch (sc->card_id) {
@@ -349,7 +349,7 @@ bad:
 		break;
 	default:
 		printf("%s: Unknown video card ID 0x%x --",
-		    sc->sc_dev.dv_xname, sc->card_id);
+		    device_xname(self), sc->card_id);
 		printf(" Not installing interrupt routine.\n");
 		break;
 	}

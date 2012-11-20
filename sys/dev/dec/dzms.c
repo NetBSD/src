@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.21 2009/05/12 14:18:16 cegger Exp $	*/
+/*	$NetBSD: dzms.c,v 1.21.22.1 2012/11/20 03:01:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.21 2009/05/12 14:18:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.21.22.1 2012/11/20 03:01:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.21 2009/05/12 14:18:16 cegger Exp $");
 #include "locators.h"
 
 struct dzms_softc {		/* driver status information */
-	struct	device dzms_dev;	/* required first: base device */
 	struct	dz_linestate *dzms_ls;
 
 	int sc_enabled;		/* input enabled? */
@@ -86,7 +85,7 @@ static int  dzms_match(device_t, cfdata_t, void *);
 static void dzms_attach(device_t, device_t, void *);
 static int dzms_input(void *, int);
 
-CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
+CFATTACH_DECL_NEW(dzms, sizeof(struct dzms_softc),
     dzms_match, dzms_attach, NULL, NULL);
 
 static int  dzms_enable(void *);

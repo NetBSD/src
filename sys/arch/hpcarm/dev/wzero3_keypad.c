@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_keypad.c,v 1.3 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: wzero3_keypad.c,v 1.3.6.1 2012/11/20 03:01:22 tls Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.3 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.3.6.1 2012/11/20 03:01:22 tls Exp $");
 
 #include "wzero3lcd.h"
 #include "opt_wsdisplay_compat.h"
@@ -269,7 +269,7 @@ wzero3keypad_lookup(void)
 }
 
 static int
-wzero3keypad_match(struct device *parent, struct cfdata *cf, void *aux)
+wzero3keypad_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(cf->cf_name, "wzero3keypad") != 0)
@@ -280,7 +280,7 @@ wzero3keypad_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wzero3keypad_attach(struct device *parent, struct device *self, void *aux)
+wzero3keypad_attach(device_t parent, device_t self, void *aux)
 {
 	struct wzero3keypad_softc *sc = device_private(self);
 	const struct wzero3keypad_model *model;

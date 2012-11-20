@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.55 2011/02/20 13:51:17 cegger Exp $	*/
+/*	$NetBSD: if_media.h,v 1.55.14.1 2012/11/20 03:02:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -461,6 +461,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10_T | IFM_FDX,	"10BASE-T-FDX" },	\
 	{ IFM_ETHER | IFM_100_TX | IFM_FDX,	"100baseTX-FDX" },	\
 	{ IFM_ETHER | IFM_100_TX | IFM_FDX,	"100BASE-TX-FDX" },	\
+	{ IFM_ETHER | IFM_1000_T | IFM_FDX,	"1000baseT-FDX" },	\
 									\
 	/*								\
 	 * IEEE 802.11							\

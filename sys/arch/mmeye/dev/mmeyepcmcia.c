@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.21 2011/07/26 22:52:49 dyoung Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.21.12.1 2012/11/20 03:01:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.21 2011/07/26 22:52:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.21.12.1 2012/11/20 03:01:34 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ struct mmeyepcmcia_handle {
 		bus_space_handle_t	ioh;
 	} io[MMEYEPCMCIA_IO_WINS];
 	int	ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int	shutdown;
 	lwp_t	*event_thread;
@@ -128,7 +128,7 @@ struct mmeyepcmcia_handle {
 #define MMEYEPCMCIA_IOWINS	2
 
 struct mmeyepcmcia_softc {
-	struct device dev;
+	device_t dev;
 
 	bus_space_tag_t iot;		/* mmeyepcmcia registers */
 	bus_space_handle_t ioh;
@@ -228,10 +228,10 @@ static void	mmeyepcmcia_deactivate_card(struct mmeyepcmcia_handle *);
 static void	mmeyepcmcia_event_thread(void *);
 static void	mmeyepcmcia_queue_event(struct mmeyepcmcia_handle *, int);
 
-static int	mmeyepcmcia_match(struct device *, struct cfdata *, void *);
-static void	mmeyepcmcia_attach(struct device *, struct device *, void *);
+static int	mmeyepcmcia_match(device_t, cfdata_t, void *);
+static void	mmeyepcmcia_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mmeyepcmcia, sizeof(struct mmeyepcmcia_softc),
+CFATTACH_DECL_NEW(mmeyepcmcia, sizeof(struct mmeyepcmcia_softc),
     mmeyepcmcia_match, mmeyepcmcia_attach, NULL, NULL);
 
 static struct pcmcia_chip_functions mmeyepcmcia_functions = {
@@ -255,7 +255,7 @@ static struct pcmcia_chip_functions mmeyepcmcia_functions = {
 };
 
 static int
-mmeyepcmcia_match(struct device *parent, struct cfdata *match, void *aux)
+mmeyepcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -272,13 +272,14 @@ mmeyepcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mmeyepcmcia_attach(struct device *parent, struct device *self, void *aux)
+mmeyepcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct mmeyepcmcia_softc *sc = (void *)self;
+	struct mmeyepcmcia_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 
+	sc->dev = self;
 	sc->subregionmask = 1;	/* 1999.05.17 T.Horiuchi for R1.4 */
 
 	sc->pct = (pcmcia_chipset_tag_t)&mmeyepcmcia_functions;
@@ -321,7 +322,7 @@ mmeyepcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	ih = mmeye_intr_establish(irq, IST_LEVEL, ipl, fct, arg);
 	h->ih_irq = irq;
 
-	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
+	printf("%s: card irq %d\n", device_xname(h->pcmcia), irq);
 
 	return ih;
 }
@@ -361,7 +362,7 @@ mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *h)
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
 
-	h->pcmcia = config_found_ia(&h->sc->dev, "pcmciabus", &paa,
+	h->pcmcia = config_found_ia(h->sc->dev, "pcmciabus", &paa,
 				    mmeyepcmcia_print);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
@@ -414,7 +415,7 @@ mmeyepcmcia_event_thread(void *arg)
 			}
 			splx(s);
 
-			DPRINTF(("%s: insertion event\n", h->sc->dev.dv_xname));
+			DPRINTF(("%s: insertion event\n", device_xname(h->sc->dev)));
 			mmeyepcmcia_attach_card(h);
 			break;
 
@@ -438,7 +439,7 @@ mmeyepcmcia_event_thread(void *arg)
 			}
 			splx(s);
 
-			DPRINTF(("%s: removal event\n", h->sc->dev.dv_xname));
+			DPRINTF(("%s: removal event\n", device_xname(h->sc->dev)));
 			mmeyepcmcia_detach_card(h, DETACH_FORCE);
 			break;
 
@@ -494,9 +495,9 @@ mmeyepcmcia_init_socket(struct mmeyepcmcia_handle *h)
 	}
 
 	if (kthread_create(PRI_NONE, 0, NULL, mmeyepcmcia_event_thread, h,
-	    &h->event_thread, "%s", h->sc->dev.dv_xname)) {
+	    &h->event_thread, "%s", device_xname(h->sc->dev))) {
 		printf("%s: unable to create event thread\n",
-		    h->sc->dev.dv_xname);
+		    device_xname(h->sc->dev));
 		panic("mmeyepcmcia_create_event_thread");
 	}
 }
@@ -516,7 +517,7 @@ mmeyepcmcia_intr(void *arg)
 {
 	struct mmeyepcmcia_softc *sc = arg;
 
-	DPRINTF(("%s: intr\n", sc->dev.dv_xname));
+	DPRINTF(("%s: intr\n", device_xname(sc->dev)));
 
 	mmeyepcmcia_intr_socket(&sc->handle[0]);
 
@@ -537,21 +538,21 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 		   MMEYEPCMCIA_CSC_BATTDEAD);
 
 	if (cscreg & MMEYEPCMCIA_CSC_GPI) {
-		DPRINTF(("%s: %02x GPI\n", h->sc->dev.dv_xname, h->sock));
+		DPRINTF(("%s: %02x GPI\n", device_xname(h->sc->dev), h->sock));
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_CD) {
 		int statreg;
 
 		statreg = mmeyepcmcia_read(h, MMEYEPCMCIA_IF_STATUS);
 
-		DPRINTF(("%s: %02x CD %x\n", h->sc->dev.dv_xname, h->sock,
+		DPRINTF(("%s: %02x CD %x\n", device_xname(h->sc->dev), h->sock,
 		    statreg));
 
 		if ((statreg & MMEYEPCMCIA_IF_STATUS_CARDDETECT_MASK) ==
 		    MMEYEPCMCIA_IF_STATUS_CARDDETECT_PRESENT) {
 			if (h->laststate != MMEYEPCMCIA_LASTSTATE_PRESENT) {
 				DPRINTF(("%s: enqueing INSERTION event\n",
-						 h->sc->dev.dv_xname));
+						 device_xname(h->sc->dev)));
 				mmeyepcmcia_queue_event(h, MMEYEPCMCIA_EVENT_INSERTION);
 			}
 			h->laststate = MMEYEPCMCIA_LASTSTATE_PRESENT;
@@ -559,11 +560,11 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 			if (h->laststate == MMEYEPCMCIA_LASTSTATE_PRESENT) {
 				/* Deactivate the card now. */
 				DPRINTF(("%s: deactivating card\n",
-						 h->sc->dev.dv_xname));
+						 device_xname(h->sc->dev)));
 				mmeyepcmcia_deactivate_card(h);
 
 				DPRINTF(("%s: enqueing REMOVAL event\n",
-						 h->sc->dev.dv_xname));
+						 device_xname(h->sc->dev)));
 				mmeyepcmcia_queue_event(h, MMEYEPCMCIA_EVENT_REMOVAL);
 			}
 			h->laststate = ((statreg & MMEYEPCMCIA_IF_STATUS_CARDDETECT_MASK) == 0)
@@ -571,14 +572,14 @@ mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *h)
 		}
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_READY) {
-		DPRINTF(("%s: %02x READY\n", h->sc->dev.dv_xname, h->sock));
+		DPRINTF(("%s: %02x READY\n", device_xname(h->sc->dev), h->sock));
 		/* shouldn't happen */
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_BATTWARN) {
-		DPRINTF(("%s: %02x BATTWARN\n", h->sc->dev.dv_xname, h->sock));
+		DPRINTF(("%s: %02x BATTWARN\n", device_xname(h->sc->dev), h->sock));
 	}
 	if (cscreg & MMEYEPCMCIA_CSC_BATTDEAD) {
-		DPRINTF(("%s: %02x BATTDEAD\n", h->sc->dev.dv_xname, h->sock));
+		DPRINTF(("%s: %02x BATTDEAD\n", device_xname(h->sc->dev), h->sock));
 	}
 	return cscreg ? 1 : 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.18.12.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.18.12.1 2012/11/20 03:00:58 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,8 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.18 2011/07/19 15:55:27 dyoung Exp $
 /* XXX I think the following line should be elsewhere ... -is */
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-/*static*/ int isic_supio_match(struct device *, struct cfdata *, void *);
-/*static*/ void isic_supio_attach(struct device *, struct device *, void *);
+/*static*/ int isic_supio_match(device_t, cfdata_t, void *);
+/*static*/ void isic_supio_attach(device_t, device_t, void *);
 
 /*static*/ u_int8_t aster_read_reg(struct isic_softc *sc, int what,
 		bus_size_t offs);
@@ -102,14 +102,14 @@ struct isic_supio_softc {
 	struct bus_space_tag	sc_bst;
 };
 
-CFATTACH_DECL(isic_supio, sizeof(struct isic_supio_softc),
+CFATTACH_DECL_NEW(isic_supio, sizeof(struct isic_supio_softc),
     isic_supio_match, isic_supio_attach, NULL, NULL);
 
 /*
  * Probe card
  */
 /*static*/ int
-isic_supio_match(struct device *parent, struct cfdata *cf, void *aux)
+isic_supio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct supio_attach_args *sap = aux;
 
@@ -122,9 +122,9 @@ int isic_supio_ipl = 2;
  * Attach the card
  */
 /*static*/ void
-isic_supio_attach(struct device *parent, struct device *self, void *aux)
+isic_supio_attach(device_t parent, device_t self, void *aux)
 {
-	struct isic_supio_softc *ssc = (void *)self;
+	struct isic_supio_softc *ssc = device_private(self);
 	struct isic_softc *sc = &ssc->sc_isic;
 	struct supio_attach_args *sap = aux;
 
@@ -132,6 +132,8 @@ isic_supio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t h;
 
 	int o1, o2;
+
+	sc->sc_dev = self;
 
 	/* setup parameters */
 	sc->sc_cardtyp = CARD_TYPEP_BLMASTER;
@@ -242,7 +244,7 @@ aster_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
  */
 
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	sc->sc_dev.dv_xname
+#define	ISIC_PARM	device_xname(sc->sc_dev)
 #define	TERMFMT	"\n"
 
 int

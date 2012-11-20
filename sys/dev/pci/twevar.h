@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.29 2009/05/07 07:33:05 cegger Exp $	*/
+/*	$NetBSD: twevar.h,v 1.29.22.1 2012/11/20 03:02:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct twe_drive {
 
 /* Per-controller state. */
 struct twe_softc {
-	struct device		sc_dv;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;

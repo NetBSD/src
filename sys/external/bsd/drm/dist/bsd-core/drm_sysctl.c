@@ -164,7 +164,55 @@ int drm_sysctl_cleanup(struct drm_device *dev)
 
 #ifdef __NetBSD__
 #define SYSCTL_OUT(x, y, z) \
-	(len+=z,(len<*oldlenp)?(strcat((char*)oldp, y),0):EOVERFLOW)
+	drm_sysctl_out(oldp, oldlenp, &len, y, z, &error, &retcode);
+
+static int
+drm_sysctl_out(void *oldp, size_t *oldlenp, size_t *lenp,
+	       const char *buf, size_t buflen,
+	       int *errorp, int *retcodep)
+{
+	size_t copylen;
+	int error = 0;
+
+	/*
+	 * If there's room left in the user buffer,
+	 * copy out as much data as there is room for.
+	 */
+
+	if (*lenp < *oldlenp) {
+		copylen = MIN(buflen, *oldlenp - *lenp);
+		error = copyout(buf, (char *)oldp + *lenp, copylen);
+		if (error) {
+			*errorp = error;
+		}
+	} else {
+		copylen = 0;
+	}
+	*lenp += buflen;
+
+	/*
+	 * If we didn't copy everything, remember that we should
+	 * return ENOMEM at the end.
+	 */
+
+	if (copylen < buflen && *errorp == 0) {
+		*errorp = ENOMEM;
+	}
+
+	/*
+	 * If this is the final call (indicated by the buffer
+	 * being the string terminator byte), return the
+	 * total space required in *oldlenp and return
+	 * the saved error in *retcodep.
+	 */
+
+	if (buflen == 1 && *buf == 0) {
+		*oldlenp = *lenp;
+		*retcodep = *errorp;
+	}
+	return error;
+}
+
 #endif
 
 #define DRM_SYSCTL_PRINT(fmt, arg...)				\
@@ -181,7 +229,8 @@ static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-	int len = 0;
+	size_t len = 0;
+	int error = 0;
 #endif
 	char buf[128];
 	int retcode;
@@ -219,7 +268,8 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-	int len = 0;
+	size_t len = 0;
+	int error = 0;
 #endif
 	drm_local_map_t *map, *tempmaps;
 	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG", "GEM", "TTM" };
@@ -284,7 +334,8 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-	int len = 0;
+	size_t len = 0;
+	int error = 0;
 #endif
 	drm_device_dma_t *dma = dev->dma;
 	drm_device_dma_t tempdma;
@@ -346,7 +397,8 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 	struct drm_device *dev = arg1;
 #elif   defined(__NetBSD__)
 	struct drm_device *dev = rnode->sysctl_data;
-	int len = 0;
+	size_t len = 0;
+	int error = 0;
 #endif
 	struct drm_file *priv, *tempprivs;
 	char buf[128];

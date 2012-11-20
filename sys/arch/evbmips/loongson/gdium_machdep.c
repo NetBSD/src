@@ -45,7 +45,7 @@ int	gdium_revision = 0;
 static pcireg_t fb_addr = 0;
 
 void	gdium_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-void	gdium_device_register(struct device *, void *);
+void	gdium_device_register(device_t, void *);
 int	gdium_intr_map(int, int, int, pci_intr_handle_t *);
 void	gdium_powerdown(void);
 void	gdium_reset(void);
@@ -234,13 +234,13 @@ extern struct cfdriver sd_cd;
 #include <dev/usb/usbdi.h>
 
 void
-gdium_device_register(struct device *dev, void *aux)
+gdium_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict;
 	static int gkey_chain_pos = 0;
-	static struct device *lastparent = NULL;
+	static device_t lastparent = NULL;
 
-	if (dev->dv_parent != lastparent && gkey_chain_pos != 0)
+	if (device_parent(dev) != lastparent && gkey_chain_pos != 0)
 		return;
 
 	switch (gkey_chain_pos) {

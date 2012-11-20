@@ -1,4 +1,4 @@
-#	$NetBSD: OPENRD,v 1.2 2012/09/01 14:50:11 matt Exp $
+#	$NetBSD: OPENRD,v 1.2.2.1 2012/11/20 03:01:13 tls Exp $
 #
 # This is a working config file for OpenRD(.org) Client.  Note that the
 # default boot address will not work and the kernel has to load at 8MB
@@ -25,6 +25,16 @@ no mvsdio*
 no sdmmc* at mvsdio?
 no sbt* at sdmmc?
 no ld* at sdmmc?
+
+# On-chip PCI Express Interface
+mvpex*	at mvsoc? offset ? irq ?
+
+pci*	at mvpex?
+
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
 
 # This has two SATA ports
 mvsata*		at mvsoc? offset ? irq ?

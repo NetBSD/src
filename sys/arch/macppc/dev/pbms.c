@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.12 2010/12/20 19:18:24 phx Exp $ */
+/* $Id: pbms.c,v 1.12.18.1 2012/11/20 03:01:31 tls Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -231,7 +231,7 @@ static struct pbms_dev pbms_devices[] =
 
 /* Device data. */
 struct pbms_softc {
-	struct uhidev sc_hdev;	      /* USB parent (got the struct device). */
+	struct uhidev sc_hdev;	      /* USB parent */
 	int is_geyser2;
 	int sc_datalen;		      /* Size of a data packet */
 	int sc_bufusage;	      /* Number of bytes in sc_databuf */

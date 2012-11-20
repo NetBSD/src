@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.54 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.54.6.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.54 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.54.6.1 2012/11/20 03:00:58 tls Exp $");
 
 #include "grfrh.h"
 #include "ite.h"
@@ -1529,24 +1529,24 @@ int rh_default_gfx = 4;
 static struct MonDef *current_mon;	/* EVIL */
 
 int  rh_mode(struct grf_softc *, u_long, void *, u_long, int);
-void grfrhattach(struct device *, struct device *, void *);
+void grfrhattach(device_t, device_t, void *);
 int  grfrhprint(void *, const char *);
-int  grfrhmatch(struct device *, struct cfdata *, void *);
+int  grfrhmatch(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(grfrh, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfrh, sizeof(struct grf_softc),
     grfrhmatch, grfrhattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 
 int
-grfrhmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfrhmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #ifdef RETINACONSOLE
 	static int rhconunit = -1;
 #endif
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (amiga_realconfig == 0)
 #ifdef RETINACONSOLE
@@ -1557,7 +1557,7 @@ grfrhmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 			((zap->prodid != 16) && (zap->prodid != 19)))
 		return(0);
 #ifdef RETINACONSOLE
-	if (amiga_realconfig == 0 || rhconunit != cfp->cf_unit) {
+	if (amiga_realconfig == 0 || rhconunit != cf->cf_unit) {
 #endif
 		if ((unsigned)rh_default_mon >= rh_mon_max ||
 		    monitor_defs[rh_default_mon].DEP == 8)
@@ -1567,8 +1567,8 @@ grfrhmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 			return(0);
 #ifdef RETINACONSOLE
 		if (amiga_realconfig == 0) {
-			rhconunit = cfp->cf_unit;
-			cfdata = cfp;
+			rhconunit = cf->cf_unit;
+			cfdata = cf;
 		}
 	}
 #endif
@@ -1576,19 +1576,25 @@ grfrhmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-grfrhattach(struct device *pdp, struct device *dp, void *auxp)
+grfrhattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
+	struct device temp;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
 
-	zap = auxp;
+	zap = aux;
 
-	if (dp == NULL)
+	if (self == NULL) {
 		gp = &congrf;
-	else
-		gp = (struct grf_softc *)dp;
-	if (dp != NULL && congrf.g_regkva != 0) {
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gp = device_private(self);
+		gp->g_device = self;
+	}
+
+	if (self != NULL && congrf.g_regkva != 0) {
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
@@ -1606,16 +1612,16 @@ grfrhattach(struct device *pdp, struct device *dp, void *auxp)
 #endif
 		(void)rh_load_mon(gp, current_mon);
 	}
-	if (dp != NULL)
+	if (self != NULL)
 		printf("\n");
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, &gp->g_device, gp, grfrhprint);
+	amiga_config_found(cfdata, gp->g_device, gp, grfrhprint);
 }
 
 int
-grfrhprint(void *auxp, const char *pnp)
+grfrhprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("ite at %s", pnp);

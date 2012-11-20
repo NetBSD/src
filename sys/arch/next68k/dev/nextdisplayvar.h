@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplayvar.h,v 1.4 2005/12/11 12:18:25 christos Exp $ */
+/* $NetBSD: nextdisplayvar.h,v 1.4.122.1 2012/11/20 03:01:37 tls Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -64,7 +64,7 @@ struct nextdisplay_config {
 };
 
 struct nextdisplay_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct nextdisplay_config *sc_dc;
 				

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.12 2007/12/15 00:39:18 perry Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.12.54.1 2012/11/20 03:01:24 tls Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.12 2007/12/15 00:39:18 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.12.54.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ struct vrc4172gpio_intr_entry {
 };
 
 struct vrc4172gpio_softc {
-	struct	device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct hpcio_attach_args sc_args;
@@ -97,23 +96,23 @@ struct vrc4172gpio_softc {
 	struct hpcio_attach_args sc_haa;
 };
 
-int vrc4172gpio_match(struct device*, struct cfdata*, void*);
-void vrc4172gpio_attach(struct device*, struct device*, void*);
-void vrc4172gpio_callback(struct device *self);
-int vrc4172gpio_intr(void*);
-int vrc4172gpio_print(void*, const char*);
+int vrc4172gpio_match(device_t, cfdata_t, void *);
+void vrc4172gpio_attach(device_t, device_t, void *);
+void vrc4172gpio_callback(device_t);
+int vrc4172gpio_intr(void *);
+int vrc4172gpio_print(void *, const char *);
 
 int vrc4172gpio_port_read(hpcio_chip_t, int);
 void vrc4172gpio_port_write(hpcio_chip_t, int, int);
-void *vrc4172gpio_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void*);
-void vrc4172gpio_intr_disestablish(hpcio_chip_t, void*);
-void vrc4172gpio_intr_clear(hpcio_chip_t, void*);
+void *vrc4172gpio_intr_establish(hpcio_chip_t, int, int, int (*)(void *), void *);
+void vrc4172gpio_intr_disestablish(hpcio_chip_t, void *);
+void vrc4172gpio_intr_clear(hpcio_chip_t, void *);
 void vrc4172gpio_register_iochip(hpcio_chip_t, hpcio_chip_t);
 void vrc4172gpio_update(hpcio_chip_t);
 void vrc4172gpio_dump(hpcio_chip_t);
 void vrc4172gpio_intr_dump(struct vrc4172gpio_softc *, int);
-hpcio_chip_t vrc4172gpio_getchip(void*, int);
-static void vrc4172gpio_diffport(struct vrc4172gpio_softc *sc);
+hpcio_chip_t vrc4172gpio_getchip(void *, int);
+static void vrc4172gpio_diffport(struct vrc4172gpio_softc *);
 
 static u_int16_t read_2(struct vrc4172gpio_softc *, bus_addr_t);
 static void write_2(struct vrc4172gpio_softc *, bus_addr_t, u_int16_t);
@@ -138,7 +137,7 @@ static int intlv_regs[] = {
 	VRC2_EXGPINTLV1L
 };
 
-CFATTACH_DECL(vrc4172gpio, sizeof(struct vrc4172gpio_softc),
+CFATTACH_DECL_NEW(vrc4172gpio, sizeof(struct vrc4172gpio_softc),
     vrc4172gpio_match, vrc4172gpio_attach, NULL, NULL);
 
 /*
@@ -175,7 +174,7 @@ write_4(struct vrc4172gpio_softc *sc, bus_addr_t off, u_int32_t data)
 }
 
 int
-vrc4172gpio_match(struct device *parent, struct cfdata *cf, void *aux)
+vrc4172gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
@@ -190,15 +189,15 @@ vrc4172gpio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
+vrc4172gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpcio_attach_args *args = aux;
-	struct vrc4172gpio_softc *sc = (void*)self;
+	struct vrc4172gpio_softc *sc = device_private(self);
 	int i, *loc, port, mode;
 	u_int32_t regs[6], t0, t1, t2;
 
 	printf("\n");
-	loc = device_cfdata(&sc->sc_dev)->cf_loc;
+	loc = device_cfdata(self)->cf_loc;
 
 	/*
 	 * map bus space
@@ -209,7 +208,7 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_map(sc->sc_iot, loc[HPCIOIFCF_ADDR], loc[HPCIOIFCF_SIZE],
 		      0 /* no cache */, &sc->sc_ioh);
 	if (sc->sc_ioh == 0) {
-		printf("%s: can't map bus space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map bus space\n", device_xname(self));
 		return;
 	}
 
@@ -300,7 +299,7 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intr_handle = 
 	    hpcio_intr_establish(sc->sc_hc, port, mode, vrc4172gpio_intr, sc);
 	if (sc->sc_intr_handle == NULL) {
-		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: can't establish interrupt\n", device_xname(self));
 		return;
 	}
 
@@ -309,7 +308,7 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_iochip = vrc4172gpio_iochip; /* structure copy */
 	sc->sc_iochip.hc_chipid = VRIP_IOCHIP_VRC4172GPIO;
-	sc->sc_iochip.hc_name = sc->sc_dev.dv_xname;
+	sc->sc_iochip.hc_name = device_xname(self);
 	sc->sc_iochip.hc_sc = sc;
 	/* Register functions to upper interface */
 	hpcio_register_iochip(sc->sc_hc, &sc->sc_iochip);
@@ -333,9 +332,9 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-vrc4172gpio_callback(struct device *self)
+vrc4172gpio_callback(device_t self)
 {
-	struct vrc4172gpio_softc *sc = (void*)self;
+	struct vrc4172gpio_softc *sc = device_private(self);
 
 	sc->sc_haa.haa_busname = "vrisab";
 	config_found(self, &sc->sc_haa, vrc4172gpio_print);

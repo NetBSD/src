@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.16 2012/08/01 21:30:21 matt Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.16.2.1 2012/11/20 03:01:38 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16 2012/08/01 21:30:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16.2.1 2012/11/20 03:01:38 tls Exp $");
 
 #include "opt_modular.h"
 
@@ -85,7 +85,11 @@ struct powerpc_bus_dma_tag booke_bus_dma_tag = {
 	._dmamap_load_uio = _bus_dmamap_load_uio,
 	._dmamap_load_raw = _bus_dmamap_load_raw,
 	._dmamap_unload = _bus_dmamap_unload,
-	._dmamap_sync = _bus_dmamap_sync,
+	/*
+	 * The caches on BookE are coherent so we don't need to do any special
+	 * cache synchronization.
+	 */
+	//._dmamap_sync = _bus_dmamap_sync,
 	._dmamem_alloc = _bus_dmamem_alloc,
 	._dmamem_free = _bus_dmamem_free,
 	._dmamem_map = _bus_dmamem_map,

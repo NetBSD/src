@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.24 2011/06/18 08:08:28 matt Exp $	*/
+/*	$NetBSD: apm.c,v 1.24.12.1 2012/11/20 03:01:31 tls Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24 2011/06/18 08:08:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24.12.1 2012/11/20 03:01:31 tls Exp $");
 
 #include "apm.h"
 
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.24 2011/06/18 08:08:28 matt Exp $");
 #define APM_NEVENTS 16
 
 struct apm_softc {
-	struct device sc_dev;
 	struct selinfo sc_rsel;
 #ifdef __OpenBSD__
 	struct klist sc_note;
@@ -111,7 +110,7 @@ static int	apm_record_event(struct apm_softc *, u_int);
 #endif
 #endif
 
-CFATTACH_DECL(apm, sizeof(struct apm_softc),
+CFATTACH_DECL_NEW(apm, sizeof(struct apm_softc),
     apmmatch, apmattach, NULL, NULL);
 
 #ifdef __OpenBSD__
@@ -177,7 +176,7 @@ apmmatch(device_t parent, cfdata_t match, void *aux)
 void
 apmattach(device_t parent, device_t self, void *aux)
 {
-	struct apm_softc *sc = (struct apm_softc *) self;
+	struct apm_softc *sc = device_private(self);
 	struct pmu_battery_info info;
 
 	pm_battery_info(0, &info);

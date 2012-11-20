@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.16 2011/07/01 21:16:40 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.16.12.1 2012/11/20 03:01:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ typedef struct	{
 /*
  * Functions provided to machine-independent ISA code.
  */
-void	isa_attach_hook(struct device *, struct device *,
+void	isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	isa_detach_hook(isa_chipset_tag_t, device_t);
 int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);

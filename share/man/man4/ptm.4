@@ -1,4 +1,4 @@
-.\"        $NetBSD: ptm.4,v 1.6 2008/05/08 15:34:21 wiz Exp $
+.\"        $NetBSD: ptm.4,v 1.6.26.1 2012/11/20 03:00:50 tls Exp $
 .\"
 .\" Copyright (c) 2004 Thomas Klausner
 .\" All rights reserved.
@@ -52,8 +52,8 @@ This struct has the following content:
 struct ptmget {
         int     cfd;
         int     sfd;
-        char    cn[16];
-        char    sn[16];
+        char    cn[PATH_MAX];
+        char    sn[PATH_MAX];
 };
 .Ed
 .Pp

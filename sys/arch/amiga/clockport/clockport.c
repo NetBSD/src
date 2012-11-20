@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.3 2012/06/28 18:55:03 rkujawa Exp $ */
+/*      $NetBSD: clockport.c,v 1.3.2.1 2012/11/20 03:00:56 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -42,10 +42,8 @@
 
 static int	clockport_match(device_t, cfdata_t , void *);
 static void	clockport_attach(device_t, device_t, void *);
-static int	clockport_print(struct clockport_attach_args *a, 
-		    const char *str);
-static int	clockport_submatch(device_t cpbus, cfdata_t dev, 
-		    const int *ldesc, void *aux);
+static int	clockport_print(void *, const char *);
+static int	clockport_submatch(device_t, cfdata_t, const int *, void *);
 
 CFATTACH_DECL_NEW(clockport, sizeof(struct clockportbus_softc),
     clockport_match, clockport_attach, NULL, NULL);
@@ -64,25 +62,26 @@ clockport_attach(device_t parent, device_t self, void *aux)
         aprint_normal("\n");
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	sc->cpb_aa = (struct clockportbus_attach_args *) aux;
 
 	config_search_ia(clockport_submatch, self, "clockport", 0);
 }
 
 static int
-clockport_submatch(device_t cpbus, cfdata_t dev, const int *ldesc, void *aux)
+clockport_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct clockportbus_softc *sc;
 	struct clockport_attach_args a; 
 
-	sc = device_private(cpbus);
+	sc = device_private(parent);
 
 	/* XXX: copy bus_space_tag and intr routine for now... */
 	a.cp_iot = sc->cpb_aa->cp_iot;
 	a.cp_intr_establish = sc->cpb_aa->cp_intr_establish;
 
-	if(config_match(cpbus, dev, &a)) {
-		config_attach(cpbus, dev, &a, (cfprint_t) clockport_print);
+	if (config_match(parent, cf, &a)) {
+		config_attach(parent, cf, &a, clockport_print);
 		return 1;
 	}
 
@@ -90,8 +89,9 @@ clockport_submatch(device_t cpbus, cfdata_t dev, const int *ldesc, void *aux)
 }
 
 static int
-clockport_print(struct clockport_attach_args *a, const char *str)
+clockport_print(void *aux, const char *str)
 {
+
         if (str == NULL)
                 return 0;
 
@@ -99,4 +99,3 @@ clockport_print(struct clockport_attach_args *a, const char *str)
 
         return 0;
 }
-

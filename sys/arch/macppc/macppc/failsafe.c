@@ -39,7 +39,9 @@
 #include <sys/conf.h>
 #include <dev/cons.h>
 #include <sys/tty.h>
+
 #include <powerpc/cpu.h>
+#include <machine/psl.h>
 
 #if defined (PMAC_G5)
 extern void mfhid4(volatile uint64_t * ret_hid4);

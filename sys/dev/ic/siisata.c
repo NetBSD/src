@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.22 2012/07/31 15:50:34 bouyer Exp $ */
+/* $NetBSD: siisata.c,v 1.22.2.1 2012/11/20 03:02:07 tls Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.22 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.22.2.1 2012/11/20 03:02:07 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -109,6 +109,28 @@ int siisata_debug_mask = 0;
 #endif
 
 #define ATA_DELAY 10000		/* 10s for a drive I/O */
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define bus_space_read_stream_4 bus_space_read_4
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+#else
+static inline uint32_t
+bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
+{
+	return htole32(bus_space_read_4(t, h, o);
+}
+
+static inline void
+bus_space_read_region_stream_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, uint32_t *p, bus_size_t c)
+{
+	bus_space_read_region_4(t, h, o, p, c);
+	for (bus_size_t i = 0; i < c; i++) {
+		p[i] = htole32(p[i]);
+	}
+}
+#endif
+#endif
 
 static void siisata_attach_port(struct siisata_softc *, int);
 static void siisata_intr_port(struct siisata_channel *);

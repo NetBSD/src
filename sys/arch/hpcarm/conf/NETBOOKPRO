@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.6 2012/08/17 19:43:25 abs Exp $
+#	$NetBSD: NETBOOKPRO,v 1.6.2.1 2012/11/20 03:01:22 tls Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.6.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -86,6 +86,7 @@ options 	INET6		# IPV6
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

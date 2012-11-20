@@ -1,4 +1,4 @@
-/*	$NetBSD: noarch.c,v 1.4 2012/08/31 07:27:27 drochner Exp $	*/
+/*	$NetBSD: noarch.c,v 1.4.2.1 2012/11/20 03:02:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,17 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-#include <sys/types.h>
 
 #ifndef lint
-__RCSID("$NetBSD: noarch.c,v 1.4 2012/08/31 07:27:27 drochner Exp $");
+__RCSID("$NetBSD: noarch.c,v 1.4.2.1 2012/11/20 03:02:59 tls Exp $");
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/cpuio.h>
 #include <stdio.h>
-
-struct cpu_ucode {
-	int dummy;
-};
 
 #include "../cpuctl.h"
 

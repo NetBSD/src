@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.48 2011/03/06 14:58:43 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.48.14.1 2012/11/20 03:01:01 tls Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.48 2011/03/06 14:58:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.48.14.1 2012/11/20 03:01:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -308,7 +308,7 @@ intr_calculatemasks(void)
 }
 
 static void
-isabr_attach_hook(struct device *parent, struct device *self,
+isabr_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 

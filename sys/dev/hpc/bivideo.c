@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.32 2010/11/13 13:51:58 uebayasi Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.32.18.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.32 2010/11/13 13:51:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.32.18.1 2012/11/20 03:02:00 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -83,7 +83,6 @@ int	bivideo_ioctl(void *, u_long, void *, int, struct lwp *);
 paddr_t	bivideo_mmap(void *, off_t, int);
 
 struct bivideo_softc {
-	struct device		sc_dev;
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
 	int			sc_powerstate;
@@ -125,7 +124,7 @@ void	bivideo_set_contrast(struct bivideo_softc *, int);
 /*
  *  static variables
  */
-CFATTACH_DECL(bivideo, sizeof(struct bivideo_softc),
+CFATTACH_DECL_NEW(bivideo, sizeof(struct bivideo_softc),
     bivideomatch, bivideoattach, NULL, NULL);
 
 struct hpcfb_accessops bivideo_ha = {
@@ -173,7 +172,7 @@ bivideoattach(device_t parent, device_t self, void *aux)
 	}
 	printf("\n");
 	printf("%s: framebuffer address: 0x%08lx\n",
-		device_xname(&sc->sc_dev), (u_long)bootinfo->fb_addr);
+		device_xname(self), (u_long)bootinfo->fb_addr);
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.7 2009/03/14 14:45:51 dsl Exp $ */
+/* $NetBSD: escvar.h,v 1.7.22.1 2012/11/20 03:00:54 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -151,7 +151,7 @@ struct nexus {
 #define ESC_NF_DEBUG		0x8000	/* As it says: DEBUG */
 
 struct	esc_softc {
-	struct	device		 sc_dev;	/* System required struct */
+	device_t		 sc_dev;	/* System required struct */
 	struct	scsipi_channel	 sc_channel;	/* For sub devices */
 	struct	scsipi_adapter	 sc_adapter;
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */

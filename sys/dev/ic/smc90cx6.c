@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.63 2010/04/05 07:19:37 joerg Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.63.18.1 2012/11/20 03:02:08 tls Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.63 2010/04/05 07:19:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.63.18.1 2012/11/20 03:02:08 tls Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -154,7 +154,7 @@ bah_attach_subr(struct bah_softc *sc)
 
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
 	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
-	    device_xname(&sc->sc_dev), parent, self, aux);
+	    device_xname(sc->sc_dev), parent, self, aux);
 #endif
 	s = splhigh();
 
@@ -189,7 +189,7 @@ bah_attach_subr(struct bah_softc *sc)
 	 */
 	bah_stop(sc);
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
@@ -253,7 +253,7 @@ bah_reset(struct bah_softc *sc)
 	ifp = &sc->sc_arccom.ac_if;
 
 #ifdef BAH_DEBUG
-	printf("%s: reset\n", device_xname(&sc->sc_dev));
+	printf("%s: reset\n", device_xname(sc->sc_dev));
 #endif
 	/* stop and restart hardware */
 
@@ -266,7 +266,7 @@ bah_reset(struct bah_softc *sc)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
-	    device_xname(&sc->sc_dev), linkaddress, linkaddress);
+	    device_xname(sc->sc_dev), linkaddress, linkaddress);
 #endif
 
 	/* tell the routing level about the (possibly changed) link address */
@@ -279,13 +279,13 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: chip configured, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
+	    device_xname(sc->sc_dev), GETREG(BAHSTAT));
 #endif
 	PUTREG(BAHCMD, BAH_CLR(CLR_POR|CLR_RECONFIG));
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: bits cleared, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
+	    device_xname(sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
@@ -301,7 +301,7 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: started receiver, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
+	    device_xname(sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	/* and init transmitter status */
@@ -360,7 +360,7 @@ bah_start(struct ifnet *ifp)
 #endif
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 3)
-	printf("%s: start(0x%x)\n", device_xname(&sc->sc_dev), ifp);
+	printf("%s: start(0x%x)\n", device_xname(sc->sc_dev), ifp);
 #endif
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -394,7 +394,7 @@ bah_start(struct ifnet *ifp)
 	if (m->m_len < ARC_HDRLEN)
 		m = m_pullup(m, ARC_HDRLEN);/* gcc does structure padding */
 	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
-	    device_xname(&sc->sc_dev), buffer, mtod(m, u_char *)[0],
+	    device_xname(sc->sc_dev), buffer, mtod(m, u_char *)[0],
 	    mtod(m, u_char *)[1], mtod(m, u_char *)[2]);
 #else
 	if (m->m_len < 2)
@@ -461,7 +461,7 @@ bah_start(struct ifnet *ifp)
 	} else {
 #ifdef BAH_DEBUG
 		printf("%s: start: starting transmitter on buffer %d\n",
-		    device_xname(&sc->sc_dev), buffer);
+		    device_xname(sc->sc_dev), buffer);
 #endif
 		/* Transmitter was off, start it */
 		sc->sc_tx_act = buffer;
@@ -628,7 +628,7 @@ cleanup:
 
 #ifdef BAH_DEBUG
 		printf("%s: srint: restarted rx on buf %ld\n",
-		    device_xname(&sc->sc_dev), buffer);
+		    device_xname(sc->sc_dev), buffer);
 #endif
 	}
 	splx(s);
@@ -695,7 +695,7 @@ bah_tint(struct bah_softc *sc, int isr)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
 		printf("%s: tint: starting tx on buffer %d, status 0x%02x\n",
-		    device_xname(&sc->sc_dev), buffer, GETREG(BAHSTAT));
+		    device_xname(sc->sc_dev), buffer, GETREG(BAHSTAT));
 #endif
 	} else {
 		/* have to disable TX interrupt */
@@ -706,7 +706,7 @@ bah_tint(struct bah_softc *sc, int isr)
 
 #ifdef BAH_DEBUG
 		printf("%s: tint: no more buffers to send, status 0x%02x\n",
-		    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
+		    device_xname(sc->sc_dev), GETREG(BAHSTAT));
 #endif
 	}
 
@@ -745,7 +745,7 @@ bahintr(void *arg)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG>1)
 		printf("%s: intr: status 0x%02x, intmask 0x%02x\n",
-		    device_xname(&sc->sc_dev), isr, sc->sc_intmask);
+		    device_xname(sc->sc_dev), isr, sc->sc_intmask);
 #endif
 
 		if (maskedisr & BAH_POR) {
@@ -757,7 +757,7 @@ bahintr(void *arg)
 			PUTREG(BAHCMD, BAH_CLR(CLR_POR));
 			log(LOG_WARNING,
 			    "%s: intr: got spurious power on reset int\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		}
 
 		if (maskedisr & BAH_RECON) {
@@ -788,7 +788,7 @@ bahintr(void *arg)
 			    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
 				log(LOG_WARNING,
 				    "%s: excessive token losses, "
-				    "cable problem?\n", device_xname(&sc->sc_dev));
+				    "cable problem?\n", device_xname(sc->sc_dev));
 			}
 			sc->sc_recontime = newsec;
 			callout_reset(&sc->sc_recon_ch, 15 * hz,
@@ -798,7 +798,7 @@ bahintr(void *arg)
 		if (maskedisr & BAH_RI) {
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
 			printf("%s: intr: hard rint, act %ld\n",
-			    device_xname(&sc->sc_dev), sc->sc_rx_act);
+			    device_xname(sc->sc_dev), sc->sc_rx_act);
 #endif
 
 			buffer = sc->sc_rx_act;
@@ -810,7 +810,7 @@ bahintr(void *arg)
 				 */
 				log(LOG_WARNING,
 				    "%s: spurious RX interrupt or sender 0 "
-				    " (ignored)\n", device_xname(&sc->sc_dev));
+				    " (ignored)\n", device_xname(sc->sc_dev));
 				/*
 				 * restart receiver on same buffer.
 				 * XXX maybe better reset interface?
@@ -835,7 +835,7 @@ bahintr(void *arg)
 #ifdef BAH_DEBUG
 					printf("%s: strt rx for buf %ld, "
 					    "stat 0x%02x\n",
-					    device_xname(&sc->sc_dev), sc->sc_rx_act,
+					    device_xname(sc->sc_dev), sc->sc_rx_act,
 					    GETREG(BAHSTAT));
 #endif
 				}
@@ -870,7 +870,7 @@ bah_reconwatch(void *arg)
 	if (sc->sc_reconcount >= ARC_EXCESSIVE_RECONS) {
 		sc->sc_reconcount = 0;
 		log(LOG_WARNING, "%s: token valid again.\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	}
 	sc->sc_reconcount = 0;
 }
@@ -896,7 +896,7 @@ bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: ioctl() called, cmd = 0x%x\n",
-	    device_xname(&sc->sc_dev), cmd);
+	    device_xname(sc->sc_dev), cmd);
 #endif
 
 	switch (cmd) {

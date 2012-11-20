@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.5 2011/11/22 18:25:48 apb Exp $
+# $NetBSD: bsd.clean.mk,v 1.5.6.1 2012/11/20 03:00:52 tls Exp $
 
 # <bsd.clean.mk>
 #
@@ -65,10 +65,12 @@ __cleanuse: .USE
 	    (cd ${_d} && rm -f ${.ALLSRC:@v@${${v}}@} || true) }
 .if "${MKCLEANVERIFY}" == "yes"
 	@${"${.ALLSRC:@v@${${v}:M*}@:Q}" == "":?true: \
-	    bad="\$(cd ${_d} && ls -d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
+	    bad="\$(cd ${_d} && ls -1d ${.ALLSRC:@v@${${v}}@} 2>/dev/null)"; \
 	    if test -n "\$bad"; then \
-	        echo "Failed to remove files from ${_d}:" ; \
-	        echo "\$bad" ; \
+	        echo "Failed to remove the following files from ${_d}:" ; \
+	        echo "\$bad" | while read file ; do \
+		    echo "	\$file" ; \
+		done ; \
 	        false ; \
 	    fi }
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.3 2012/09/03 11:33:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.3.2.1 2012/11/20 03:00:45 tls Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -14,6 +14,10 @@
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
+
+#ifdef __sun__
+typedef long register_t;
+#endif
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
@@ -49,7 +53,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__sun__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,6 +78,21 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
+/* Solarisa 10 has memalign() but no posix_memalign() */
+#if defined(__sun__)
+#include <stdlib.h>
+
+static inline int
+posix_memalign(void **ptr, size_t align, size_t size)
+{
+
+	*ptr = memalign(align, size);
+	if (*ptr == NULL)
+		return ENOMEM;
+	return 0;
+}
+#endif /* __sun__ */
+
 #ifndef __RCSID
 #define __RCSID(a)
 #endif
@@ -86,7 +105,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define _DIAGASSERT(_p_)
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__sun__)
 #define SA_SETLEN(a,b)
 #else /* BSD */
 #define SA_SETLEN(_sa_, _len_) ((struct sockaddr *)_sa_)->sa_len = _len_
@@ -121,7 +140,7 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define __UNCONST(_a_) ((void *)(unsigned long)(const void *)(_a_))
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__sun__)
 #define arc4random() random()
 #endif
 
@@ -129,11 +148,24 @@ getenv_r(const char *name, char *buf, size_t buflen)
 #define __NetBSD_Prereq__(a,b,c) 0
 #endif
 
-#if !defined(__CMSG_ALIGN)
 #include <sys/socket.h>
+
+#if !defined(__CMSG_ALIGN)
 #ifdef CMSG_ALIGN
 #define __CMSG_ALIGN(a) CMSG_ALIGN(a)
 #endif
+#endif
+
+#ifndef PF_LOCAL
+#define PF_LOCAL PF_UNIX
+#endif
+#ifndef AF_LOCAL
+#define AF_LOCAL AF_UNIX
+#endif
+
+/* pfft, but what are you going to do? */
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.31 2010/05/23 23:53:36 jym Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.31.18.1 2012/11/20 03:02:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.31 2010/05/23 23:53:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.31.18.1 2012/11/20 03:02:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ int	pcicisapnp_debug = 0 /* XXX */ ;
 int pcic_isapnp_match(device_t, cfdata_t, void *);
 void pcic_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcic_isapnp, sizeof(struct pcic_isa_softc),
+CFATTACH_DECL_NEW(pcic_isapnp, sizeof(struct pcic_isa_softc),
     pcic_isapnp_match, pcic_isapnp_attach, NULL, NULL);
 
 static const struct pcmcia_chip_functions pcic_isa_functions = {
@@ -116,6 +116,8 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t maddr;
 	int msize;
 	int tmp1;
+
+	sc->dev = self;
 
 	printf("\n");
 

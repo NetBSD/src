@@ -1,3 +1,83 @@
+2012-07-02  Release Manager
+
+	* GCC 4.5.4 released.
+
+2012-01-19  Kai Tietz  <ktietz@redhat.com>
+
+	PR c++/51344
+	* decl2.c (save_template_attributes): Use merge_attributes
+	instead of chaining up via TREE_CHAIN.
+
+2011-12-20  Dodji Seketeli  <dodji@redhat.com>
+
+	PR debug/49951
+	* decl.c (cxx_maybe_build_cleanup): Don't set location of the call
+	to the destructor.
+
+2011-12-13  Jason Merrill  <jason@redhat.com>
+
+	PR c++/51406
+	PR c++/51161
+	* typeck.c (build_static_cast_1): Fix cast of lvalue to
+	base rvalue reference.
+
+2011-10-19  Jason Merrill  <jason@redhat.com>
+
+	PR c++/50793
+	* tree.c (bot_manip): Propagate AGGR_INIT_ZERO_FIRST.
+
+2011-10-13  Jason Merrill  <jason@redhat.com>
+
+	PR c++/50618
+	* init.c (expand_aggr_init_1): Don't zero-initialize virtual
+	bases of a base subobject.
+
+2011-10-11  Janis Johnson  <janisjo@codesourcery.com>
+
+	PR c++/44473
+	* mangle.c (write_type): Handle CV qualifiers for decimal classes.
+
+2011-07-19  Jakub Jelinek  <jakub@redhat.com>
+
+	Backport from mainline
+	2011-07-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/49644
+	* typeck.c (cp_build_binary_op): For MULT_EXPR and TRUNC_DIV_EXPR with
+	one non-complex and one complex argument, call save_expr on both
+	operands.
+
+2011-06-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/49440
+	* class.c (set_linkage_according_to_type): Hand off to
+	determine_visibility.
+
+2011-05-31  Duncan Sands  <baldrick@free.fr>
+
+	Backported from 4.6 branch
+	2011-03-09  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/47714
+	* method.c (use_thunk): Clear addressable flag of thunk arguments.
+
+2011-05-20  Jason Merrill  <jason@redhat.com>
+
+	PR c++/48873
+	* tree.c (stabilize_expr): Don't make gratuitous copies of classes.
+
+2011-05-09  Jason Merrill  <jason@redhat.com>
+
+	PR c++/48936
+	* decl2.c (mark_used): Instantiate constant variables even
+	in unevaluated context.
+
+2011-04-27  Jason Merrill  <jason@redhat.com>
+
+	PR c++/48046
+	* parser.c (cp_parser_diagnose_invalid_type_name): Commit
+	to tentative parse sooner.
+
 2011-04-28  Release Manager
 
 	* GCC 4.5.3 released.

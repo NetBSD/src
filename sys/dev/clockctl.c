@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.29 2012/01/04 13:40:53 apb Exp $ */
+/*      $NetBSD: clockctl.c,v 1.29.6.1 2012/11/20 03:01:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.29 2012/01/04 13:40:53 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.29.6.1 2012/11/20 03:01:58 tls Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -53,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.29 2012/01/04 13:40:53 apb Exp $");
 #ifdef COMPAT_50
 #include <compat/sys/clockctl.h>
 #endif
-
-struct clockctl_softc {
-	struct device   clockctl_dev;
-};
 
 dev_type_ioctl(clockctlioctl);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14 2012/09/01 14:48:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -160,7 +160,7 @@ struct at91bus_softc *at91bus_sc = NULL;
 #endif
 
 static const struct {
-	u_int32_t	cidr;
+	uint32_t	cidr;
 	const char *	name;
 	const struct at91bus_machdep *machdep;
 } at91_types[] = {
@@ -196,7 +196,7 @@ static const struct {
 	}
 };
 
-u_int32_t at91_chip_id;
+uint32_t at91_chip_id;
 static int at91_chip_ndx = -1;
 struct at91bus_machdep at91bus_machdep = { 0 };
 at91bus_tag_t at91bus_tag = 0;
@@ -204,7 +204,7 @@ at91bus_tag_t at91bus_tag = 0;
 static int
 match_cid(void)
 {
-	u_int32_t		cidr;
+	uint32_t		cidr;
 	int			i;
 
 	/* get chip id */
@@ -448,7 +448,7 @@ at91bus_setup(BootConfig *mem)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

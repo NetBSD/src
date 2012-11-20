@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19 2009/09/12 18:44:36 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19 2009/09/12 18:44:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19 2009/09/12 18:44:36 tsutsui Exp $");
 #include <dev/gpib/ppiio.h>
 
 struct	ppi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	gpib_chipset_tag_t sc_ic;
 	gpib_handle_t sc_hdl;
 
@@ -106,7 +106,7 @@ struct	ppi_softc {
 int	ppimatch(device_t, cfdata_t, void *);
 void	ppiattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
+CFATTACH_DECL_NEW(ppi, sizeof(struct ppi_softc),
 	ppimatch, ppiattach, NULL, NULL);
 
 extern struct cfdriver ppi_cd;
@@ -165,7 +165,7 @@ ppiattach(device_t parent, device_t self, void *aux)
 
 	if (gpibregister(sc->sc_ic, sc->sc_address, ppicallback, sc,
 	    &sc->sc_hdl)) {
-		aprint_error_dev(&sc->sc_dev, "can't register callback\n");
+		aprint_error_dev(sc->sc_dev, "can't register callback\n");
 		return;
 	}
 
@@ -238,7 +238,7 @@ ppistart(void *v)
 {
 	struct ppi_softc *sc = v;
 
-	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", device_unit(&sc->sc_dev)));
+	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", device_unit(sc->sc_dev)));
 
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -249,7 +249,7 @@ ppitimo(void *arg)
 {
 	struct ppi_softc *sc = arg;
 
-	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", device_unit(&sc->sc_dev)));
+	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", device_unit(sc->sc_dev)));
 
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);

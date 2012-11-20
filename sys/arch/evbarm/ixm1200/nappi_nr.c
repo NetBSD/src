@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.10 2012/07/30 23:35:05 matt Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.10.2.1 2012/11/20 03:01:15 tls Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.10 2012/07/30 23:35:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.10.2.1 2012/11/20 03:01:15 tls Exp $");
 
 /*
  * LED support for NAPPI.
@@ -47,15 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.10 2012/07/30 23:35:05 matt Exp $");
 
 #include <arm/ixp12x0/ixpsipvar.h>
 
-static int	nappinr_match(struct device *, struct cfdata *, void *);
-static void	nappinr_attach(struct device *, struct device *, void *);
+static int	nappinr_match(device_t, cfdata_t, void *);
+static void	nappinr_attach(device_t, device_t, void *);
 #if 0
-static int	nappinr_activate(struct device *, enum devact);
+static int	nappinr_activate(device_t, enum devact);
 #endif
 static void	nappinr_callout(void *);
 
 struct nappinr_softc {
-	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_baseaddr;
@@ -63,19 +62,19 @@ struct nappinr_softc {
 	struct callout		sc_co;
 };
 
-CFATTACH_DECL(nappinr, sizeof(struct nappinr_softc),
+CFATTACH_DECL_NEW(nappinr, sizeof(struct nappinr_softc),
     nappinr_match, nappinr_attach, NULL, NULL);
 
 static int
-nappinr_match(struct device *parent, struct cfdata *match, void *aux)
+nappinr_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
 static void
-nappinr_attach(struct device *parent, struct device *self, void *aux)
+nappinr_attach(device_t parent, device_t self, void *aux)
 {
-	struct nappinr_softc*		sc = (struct nappinr_softc*) self;
+	struct nappinr_softc*		sc = device_private(self);
 	struct ixpsip_attach_args*	sa = aux;
 
 	printf("\n");
@@ -83,9 +82,9 @@ nappinr_attach(struct device *parent, struct device *self, void *aux)
   	sc->sc_iot = sa->sa_iot;
   	sc->sc_baseaddr = sa->sa_addr;
 
-	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
-			 &sc->sc_ioh)) {
-		printf("%s: unable to map registers\n", self->dv_xname);
+	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
+			  &sc->sc_ioh)) {
+		printf("%s: unable to map registers\n", device_xname(self));
 		return;
 	}
 
@@ -95,7 +94,7 @@ nappinr_attach(struct device *parent, struct device *self, void *aux)
 
 #if 0
 static int
-nappinr_activate(struct device *self, enum devact act)
+nappinr_activate(device_t self, enum devact act)
 {
 	printf("nappinr_activate act=%d\n", act);
 	return 0;
@@ -106,7 +105,7 @@ static void
 nappinr_callout(void *arg)
 {
 	static const int	ptn[] = { 1, 2, 4, 8, 4, 2 };
-	struct nappinr_softc*	sc = arg;
+	struct nappinr_softc	*sc = arg;
 	uint32_t v;
 
 	v = ptn[sc->sc_pos++ % 6];

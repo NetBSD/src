@@ -1,6 +1,6 @@
 /*
- * TLSv1 Record Protocol
- * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
+ * TLS v1.0 (RFC 2246) and v1.1 (RFC 4346) Record Protocol
+ * Copyright (c) 2006-2011, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -35,6 +35,8 @@ enum {
 };
 
 struct tlsv1_record_layer {
+	u16 tls_version;
+
 	u8 write_mac_secret[TLS_MAX_WRITE_MAC_SECRET_LEN];
 	u8 read_mac_secret[TLS_MAX_WRITE_MAC_SECRET_LEN];
 	u8 write_key[TLS_MAX_WRITE_KEY_LEN];
@@ -66,7 +68,8 @@ int tlsv1_record_set_cipher_suite(struct tlsv1_record_layer *rl,
 int tlsv1_record_change_write_cipher(struct tlsv1_record_layer *rl);
 int tlsv1_record_change_read_cipher(struct tlsv1_record_layer *rl);
 int tlsv1_record_send(struct tlsv1_record_layer *rl, u8 content_type, u8 *buf,
-		      size_t buf_size, size_t payload_len, size_t *out_len);
+		      size_t buf_size, const u8 *payload, size_t payload_len,
+		      size_t *out_len);
 int tlsv1_record_receive(struct tlsv1_record_layer *rl,
 			 const u8 *in_data, size_t in_len,
 			 u8 *out_data, size_t *out_len, u8 *alert);

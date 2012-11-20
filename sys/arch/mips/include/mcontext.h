@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.19 2011/07/05 19:30:50 joerg Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19.12.1 2012/11/20 03:01:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -205,10 +205,10 @@ __lwp_gettcb_fast(void)
 	 */
 	__asm __volatile(".set push; .set mips32r2; "
 		"rdhwr $3,$29; .set pop;"
-#ifdef _LP64
-		"daddiu %[__tcb],$3,%1"
-#else
+#ifdef __mips_o32
 		"addiu %[__tcb],$3,%1"
+#else
+		"daddiu %[__tcb],$3,%1"
 #endif
 	    : [__tcb]"=r"(__tcb)
 	    : [__offset]"n"(-(TLS_TP_OFFSET + sizeof(*__tcb)))

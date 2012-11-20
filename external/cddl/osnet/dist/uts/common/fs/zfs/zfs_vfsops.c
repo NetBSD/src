@@ -1811,6 +1811,10 @@ zfs_root(vfs_t *vfsp, vnode_t **vpp)
 		*vpp = ZTOV(rootzp);
 	dprintf("vpp -> %d, error %d -- %p\n", (*vpp)->v_type, error, *vpp);
 	ZFS_EXIT(zfsvfs);
+	if (error == 0)
+		vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	KASSERT((error != 0) || (*vpp != NULL));
+	KASSERT((error != 0) || (VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE));
 	return (error);
 }
 

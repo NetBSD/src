@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.6 2012/07/18 21:55:05 joerg Exp $ */
+/*	$NetBSD: powernow.c,v 1.6.2.1 2012/11/20 03:01:51 tls Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.6 2012/07/18 21:55:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.6.2.1 2012/11/20 03:01:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -378,7 +378,7 @@ powernow_k7_init(device_t self)
 	struct powernow_softc *sc = device_private(self);
 	uint32_t currentfid, maxfid, mhz, startvid;
 	uint64_t status;
-	int i, rv, len;
+	int i, rv;
 	char tmp[6];
 
 	sc->sc_state = kmem_alloc(sizeof(*sc->sc_state), KM_SLEEP);
@@ -428,7 +428,7 @@ powernow_k7_init(device_t self)
 			sc->sc_state->state_table[i].fid,
 			sc->sc_state->state_table[i].vid));
 
-		len += snprintf(tmp, sizeof(tmp), "%d%s",
+		snprintf(tmp, sizeof(tmp), "%d%s",
 		    sc->sc_state->state_table[i].freq,
 		    i < sc->sc_state->n_states - 1 ? " " : "");
 

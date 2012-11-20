@@ -432,7 +432,7 @@ ENTRY(pxa27x_run_mode)
 	mov	pc, lr
 
 /*
- * void pxa27x_fastbus_run_mode(int enable, u_int32_t mdrefr)
+ * void pxa27x_fastbus_run_mode(int enable, uint32_t mdrefr)
  *
  * Enter normal run mode with fast-bus mode enabled or disabled.
  * The new value of MDREFR is programmed before or after CLKCFG,

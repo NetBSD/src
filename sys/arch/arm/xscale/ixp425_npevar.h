@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npevar.h,v 1.3 2009/03/11 16:30:20 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_npevar.h,v 1.3.22.1 2012/11/20 03:01:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -82,7 +82,7 @@
 #define	IXP425_NPE_C_IMAGEID	0x02000201
 
 struct ixpnpe_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	bus_dma_tag_t	sc_dt;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;

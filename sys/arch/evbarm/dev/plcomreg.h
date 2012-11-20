@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomreg.h,v 1.4 2012/07/25 07:26:17 skrll Exp $	*/
+/*	$NetBSD: plcomreg.h,v 1.4.2.1 2012/11/20 03:01:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -105,6 +105,15 @@
 #define	PL01X_MSR_DSR		PL01X_FR_DSR
 #define	PL01X_MSR_CTS		PL01X_FR_CTS
 #define	PL011_MSR_RI		PL011_FR_RI
+
+/* ifls */
+#define	PL011_IFLS_1EIGHTH	0
+#define	PL011_IFLS_1QUARTER	1
+#define	PL011_IFLS_1HALF	2
+#define	PL011_IFLS_3QUARTERS	3
+#define	PL011_IFLS_7EIGHTHS	4
+#define	PL011_IFLS_RXIFLS(x)	(((x) & 0x7) << 3)
+#define	PL011_IFLS_TXIFLS(x)	(((x) & 0x7) << 0)
 
 /* All interrupt status/clear registers */
 #define	PL011_INT_OE	0x400

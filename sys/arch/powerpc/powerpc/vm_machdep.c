@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97 2012/06/28 15:28:44 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.1 2012/11/20 03:01:39 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2012/06/28 15:28:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.1 2012/11/20 03:01:39 tls Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
+#include "opt_ppccache.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -150,6 +151,37 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_umapsr = 0;
 #ifdef PPC_HAVE_FPU
 	pcb2->pcb_flags = PSL_FE_DFLT;
+#endif
+#ifdef CACHE_PROTO_MEI
+	{
+		paddr_t pa;
+		int dcache_line_size, i;
+
+		/* Flush on cache values for other cpu. */
+
+		dcache_line_size = curcpu()->ci_ci.dcache_line_size;
+		pa = vtophys((vaddr_t)sf);
+		for (i = 0; i < SFRAMELEN + CALLFRAMELEN + FRAMELEN;
+		    i += dcache_line_size) {
+			__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+			pa += dcache_line_size;
+		}
+		__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+		pa = vtophys((vaddr_t)pcb2->pcb_pm);
+		for (i = 0; i < sizeof(*pcb2->pcb_pm); i += dcache_line_size) {
+			__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+			pa += dcache_line_size;
+		}
+		__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+		pa = vtophys((vaddr_t)pcb2);
+		for (i = 0; i < sizeof(*pcb2); i += dcache_line_size) {
+			__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+			pa += dcache_line_size;
+		}
+		__asm volatile ("dcbf 0,%0"::"r"(pa):"memory");
+
+		/* Need more flush? */
+	}
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2012/07/28 23:09:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137.2.1 2012/11/20 03:01:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2012/07/28 23:09:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137.2.1 2012/11/20 03:01:41 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -954,7 +954,7 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 
 	switch (comp->Type) {
 	case COMPONENT_TYPE_SecondaryICache:
-		panic("%s: split L2 cache", self->dv_xname);
+		panic("%s: split L2 cache", device_xname(self));
 	case COMPONENT_TYPE_SecondaryDCache:
 	case COMPONENT_TYPE_SecondaryCache:
 		mci->mci_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);

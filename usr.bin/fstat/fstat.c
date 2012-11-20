@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.96 2012/03/24 21:51:23 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.96.2.1 2012/11/20 03:02:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.96 2012/03/24 21:51:23 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.96.2.1 2012/11/20 03:02:57 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ static const char   *vfilestat(struct vnode *, struct filestat *);
 static void	vtrans(struct vnode *, int, int);
 static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
+static void	kdriver_init(void);
 
 int
 main(int argc, char **argv)
@@ -233,6 +234,8 @@ main(int argc, char **argv)
 		default:
 			usage();
 		}
+
+	kdriver_init();
 
 	if (*(argv += optind)) {
 		for (; *argv; ++argv) {
@@ -313,6 +316,89 @@ pid_t	Pid;
 		(void)printf(" %4d", i); \
 		break; \
 	}
+
+static struct kinfo_drivers *kdriver;
+static size_t kdriverlen;
+
+static int
+kdriver_comp(const void *a, const void *b)
+{
+	const struct kinfo_drivers *ka = a;
+	const struct kinfo_drivers *kb = b;
+	int kac = ka->d_cmajor == -1 ? 0 : ka->d_cmajor;
+	int kbc = kb->d_cmajor == -1 ? 0 : kb->d_cmajor;
+	int kab = ka->d_bmajor == -1 ? 0 : ka->d_bmajor;
+	int kbb = kb->d_bmajor == -1 ? 0 : kb->d_bmajor;
+	int c = kac - kbc;
+	if (c == 0)
+		return kab - kbb;
+	else
+		return c;
+}
+
+static const char *
+kdriver_search(int type, dev_t num)
+{
+	struct kinfo_drivers k, *kp;
+	static char buf[64];
+
+	if (nflg)
+		goto out;
+
+	if (type == VBLK) {
+		k.d_bmajor = num;
+		k.d_cmajor = -1;
+	} else {
+		k.d_bmajor = -1;
+		k.d_cmajor = num;
+	}
+	kp = bsearch(&k, kdriver, kdriverlen, sizeof(*kdriver), kdriver_comp);
+	if (kp)
+		return kp->d_name;
+out:	
+	snprintf(buf, sizeof(buf), "%llu", (unsigned long long)num);
+	return buf;
+}
+
+
+static void
+kdriver_init(void)
+{
+	size_t sz;
+	int error;
+	static const int name[2] = { CTL_KERN, KERN_DRIVERS };
+
+	error = sysctl(name, __arraycount(name), NULL, &sz, NULL, 0);
+	if (error == -1) {
+		warn("sysctl kern.drivers");
+		return;
+	}
+
+	if (sz % sizeof(*kdriver)) {
+		warnx("bad size %zu for kern.drivers", sz);
+		return;
+	}
+
+	kdriver = malloc(sz);
+	if (kdriver == NULL) {
+		warn("malloc");
+		return;
+	}
+
+	error = sysctl(name, __arraycount(name), kdriver, &sz, NULL, 0);
+	if (error == -1) {
+		warn("sysctl kern.drivers");
+		return;
+	}
+
+	kdriverlen = sz / sizeof(*kdriver);
+	qsort(kdriver, kdriverlen, sizeof(*kdriver), kdriver_comp);
+#ifdef DEBUG
+	for (size_t i = 0; i < kdriverlen; i++)
+		printf("%d %d %s\n", kdriver[i].d_cmajor, kdriver[i].d_bmajor,
+		    kdriver[i].d_name);
+#endif
+}
 
 /*
  * print open files attributed to this process
@@ -559,8 +645,8 @@ vtrans(struct vnode *vp, int i, int flag)
 
 		if (nflg || ((name = devname(fst.rdev, vn.v_type == VCHR ? 
 		    S_IFCHR : S_IFBLK)) == NULL))
-			(void)printf("  %2llu,%-2llu",
-			    (unsigned long long)major(fst.rdev),
+			(void)printf("  %s,%-2llu",
+			    kdriver_search(vn.v_type, major(fst.rdev)),
 			    (unsigned long long)minor(fst.rdev));
 		else
 			(void)printf(" %6s", name);
@@ -767,31 +853,36 @@ getmnton(struct mount *m)
 static const char *
 inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
 {
-	char addr[256];
+	char addr[256], serv[256];
+	struct sockaddr_in sin;
+	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+
+	(void)memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof(sin);
+	sin.sin_addr = *a;
+	sin.sin_port = htons(p);
+
+	serv[0] = '\0';
+
+	if (getnameinfo((struct sockaddr *)&sin, sin.sin_len,
+	    addr, sizeof(addr), serv, sizeof(serv), niflags)) {
+		if (inet_ntop(AF_INET, a, addr, sizeof(addr)) == NULL)
+			strlcpy(addr, "invalid", sizeof(addr));
+	}
+
+	if (serv[0] == '\0')
+		snprintf(serv, sizeof(serv), "%u", p);
 
 	if (a->s_addr == INADDR_ANY) {
 		if (p == 0)
-			addr[0] = '\0';
+			buf[0] = '\0';
 		else
-			strlcpy(addr, "*", sizeof(addr));
-	} else {
-		struct sockaddr_in sin;
-		const int niflags = NI_NUMERICHOST;
-
-		(void)memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET6;
-		sin.sin_len = sizeof(sin);
-		sin.sin_addr = *a;
-
-		if (getnameinfo((struct sockaddr *)&sin, sin.sin_len,
-		    addr, sizeof(addr), NULL, 0, niflags))
-			if (inet_ntop(AF_INET, a, addr, sizeof(addr)) == NULL)
-				strlcpy(addr, "invalid", sizeof(addr));
+			snprintf(buf, len, "*:%s", serv);
+		return buf;
 	}
-	if (addr[0])
-		snprintf(buf, len, "%s:%u", addr, p);
-	else
-		strlcpy(buf, addr, len);
+
+	snprintf(buf, len, "%s:%s", addr, serv);
 	return buf;
 }
 
@@ -799,39 +890,47 @@ inet_addrstr(char *buf, size_t len, const struct in_addr *a, uint16_t p)
 static const char *
 inet6_addrstr(char *buf, size_t len, const struct in6_addr *a, uint16_t p)
 {
-	char addr[256];
+	char addr[256], serv[256];
+	struct sockaddr_in6 sin6;
+	const int niflags = nflg ? (NI_NUMERICHOST|NI_NUMERICSERV) : 0;
+
+	(void)memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_addr = *a;
+	sin6.sin6_port = htons(p);
+
+	if (IN6_IS_ADDR_LINKLOCAL(a) &&
+	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
+		sin6.sin6_scope_id =
+			ntohs(*(uint16_t *)&sin6.sin6_addr.s6_addr[2]);
+		sin6.sin6_addr.s6_addr[2] = 0;
+		sin6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	serv[0] = '\0';
+
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+	    addr, sizeof(addr), serv, sizeof(serv), niflags)) {
+		if (inet_ntop(AF_INET6, a, addr, sizeof(addr)) == NULL)
+			strlcpy(addr, "invalid", sizeof(addr));
+	}
+
+	if (serv[0] == '\0')
+		snprintf(serv, sizeof(serv), "%u", p);
 
 	if (IN6_IS_ADDR_UNSPECIFIED(a)) {
 		if (p == 0)
-			addr[0] = '\0';
+			buf[0] = '\0';
 		else
-			strlcpy(addr, "*", sizeof(addr));
-	} else {
-		struct sockaddr_in6 sin6;
-		const int niflags = NI_NUMERICHOST;
-
-		(void)memset(&sin6, 0, sizeof(sin6));
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_len = sizeof(sin6);
-		sin6.sin6_addr = *a;
-
-		if (IN6_IS_ADDR_LINKLOCAL(a) &&
-		    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-			sin6.sin6_scope_id =
-				ntohs(*(uint16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-
-		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-		    addr, sizeof(addr), NULL, 0, niflags))
-			if (inet_ntop(AF_INET6, a, addr, sizeof(addr)) == NULL)
-				strlcpy(addr, "invalid", sizeof(addr));
+			snprintf(buf, len, "*:%s", serv);
+		return buf;
 	}
-	if (addr[0])
-		snprintf(buf, len, "[%s]:%u", addr, p);
+
+	if (strchr(addr, ':') == NULL)
+		snprintf(buf, len, "%s:%s", addr, serv);
 	else
-		strlcpy(buf, addr, len);
+		snprintf(buf, len, "[%s]:%s", addr, serv);
 
 	return buf;
 }
@@ -987,12 +1086,10 @@ socktrans(struct socket *sock, int i)
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
 			char shoconn[4], *cp;
+			void *pcb[2];
+			size_t p = 0;
 
-			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
-			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
-				dprintf("can't read unpcb at %p", so.so_pcb);
-				goto bad;
-			}
+			pcb[0] = so.so_pcb;
 
 			cp = shoconn;
 			if (!(so.so_state & SS_CANTRCVMORE))
@@ -1001,6 +1098,13 @@ socktrans(struct socket *sock, int i)
 			if (!(so.so_state & SS_CANTSENDMORE))
 				*cp++ = '>';
 			*cp = '\0';
+again:
+			if (kvm_read(kd, (u_long)pcb[p], (char *)&unpcb,
+			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
+				dprintf("can't read unpcb at %p", so.so_pcb);
+				goto bad;
+			}
+
 			if (unpcb.unp_addr) {
 				struct sockaddr_un *sun = 
 					malloc(unpcb.unp_addrlen);
@@ -1014,15 +1118,22 @@ socktrans(struct socket *sock, int i)
 					    unpcb.unp_addr);
 					free(sun);
 				} else {
-					snprintf(fbuf, sizeof(fbuf), " %s %s",
-					    shoconn, sun->sun_path);
+					snprintf(fbuf, sizeof(fbuf), " %s %s %s",
+					    shoconn, sun->sun_path,
+					    p == 0 ? "[creat]" : "[using]");
 					free(sun);
 					break;
 				}
 			}
-			if (unpcb.unp_conn)
-				snprintf(fbuf, sizeof(fbuf), " %s %lx", shoconn,
-				    (long)unpcb.unp_conn);
+			if (unpcb.unp_conn) {
+				if (p == 0) {
+					pcb[++p] = unpcb.unp_conn;
+					goto again;
+				} else
+					snprintf(fbuf, sizeof(fbuf),
+					    " %p %s %p", pcb[0], shoconn,
+					    pcb[1]);
+			}
 		}
 		break;
 	case AF_APPLETALK:

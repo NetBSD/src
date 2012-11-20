@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.29 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.29.2.1 2012/11/20 03:02:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.29 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.29.2.1 2012/11/20 03:02:57 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,8 +266,16 @@ outof(struct name *names, FILE *fo, struct header *hp)
 		ispipe = np->n_name[0] == '|';
 		if (ispipe)
 			fname = np->n_name+1;
-		else
+		else {
 			fname = expand(np->n_name);
+			if (fname == NULL) {
+				warnx("Filename expansion of %s failed",
+				    np->n_name);
+				senderr++;
+				goto cant;
+			}
+		}
+
 
 		/*
 		 * See if we have copied the complete message out yet.

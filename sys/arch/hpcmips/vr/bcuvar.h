@@ -1,4 +1,4 @@
-/*	$NetBSD: bcuvar.h,v 1.6 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: bcuvar.h,v 1.6.122.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 struct vrbcu_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

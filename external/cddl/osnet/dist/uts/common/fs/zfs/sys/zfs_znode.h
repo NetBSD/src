@@ -186,6 +186,7 @@ typedef struct zfs_dirlock {
 	uint32_t	dl_sharecnt;	/* 0 if exclusive, > 0 if shared */
 	uint8_t		dl_namelock;	/* 1 if z_name_lock is NOT held */
 	uint16_t	dl_namesize;	/* set if dl_name was allocated */
+	unsigned long	dl_refcnt;	/* reference count */
 	kcondvar_t	dl_cv;		/* wait for entry to be unlocked */
 	struct znode	*dl_dzp;	/* directory znode */
 	struct zfs_dirlock *dl_next;	/* next in z_dirlocks list */

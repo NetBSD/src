@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2012/08/10 12:11:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.136.2.1 2012/11/20 03:00:24 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -16,12 +16,6 @@ SUBDIR+=	groff
 .endif
 
 SUBDIR+=	gettext
-
-.if ${MKGDB} != "no"
-.if ${HAVE_GDB} == "6"
-SUBDIR+=	gdb6
-.endif
-.endif
 
 .if ${MKGCC} != "no"
 .if ${HAVE_GCC} == 4

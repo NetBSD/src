@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.131 2011/09/24 04:10:03 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.131.12.1 2012/11/20 03:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131 2011/09/24 04:10:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131.12.1 2012/11/20 03:02:44 tls Exp $");
 
 #include "opt_ptm.h"
 
@@ -338,6 +338,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		tp->t_dev = dev;
 		ttychars(tp);		/* Set up default chars */
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -569,6 +570,7 @@ ptcopen(dev_t dev, int flag, int devtype, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		return EIO;
 	}
+	tp->t_dev = dev;
 	tp->t_oproc = ptsstart;
 	mutex_spin_exit(&tty_lock);
 	(void)(*tp->t_linesw->l_modem)(tp, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.23 2009/05/12 14:23:47 cegger Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.23.22.1 2012/11/20 03:02:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ struct iop_initiator {
 	int	(*ii_reconfig)(device_t);
 	void	(*ii_adjqparam)(device_t, int);
 
-	struct	device *ii_dv;
+	device_t ii_dv;
 	kcondvar_t ii_cv;
 	int	ii_flags;
 	int	ii_ictx;		/* Initiator context */
@@ -105,7 +105,7 @@ struct iop_pgop {
  * Per-IOP context.
  */
 struct iop_softc {
-	struct device	sc_dv;		/* Generic device data */
+	device_t	sc_dev;		/* Generic device data */
 	bus_space_handle_t sc_ioh;	/* Bus space handle */
 	bus_space_tag_t	sc_iot;		/* Bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* Bus DMA tag */

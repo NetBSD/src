@@ -22,6 +22,7 @@
 #include "crypto/crypto.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
+#include "crypto/random.h"
 #include "eapol_auth/eapol_auth_sm.h"
 #include "ap_config.h"
 #include "ieee802_11.h"
@@ -44,6 +45,8 @@ static void wpa_group_sm_step(struct wpa_authenticator *wpa_auth,
 static void wpa_request_new_ptk(struct wpa_state_machine *sm);
 static int wpa_gtk_update(struct wpa_authenticator *wpa_auth,
 			  struct wpa_group *group);
+static int wpa_group_config_group_keys(struct wpa_authenticator *wpa_auth,
+				       struct wpa_group *group);
 
 static const u32 dot11RSNAConfigGroupUpdateCount = 4;
 static const u32 dot11RSNAConfigPairwiseUpdateCount = 4;
@@ -215,11 +218,13 @@ static void wpa_rekey_gmk(void *eloop_ctx, void *timeout_ctx)
 {
 	struct wpa_authenticator *wpa_auth = eloop_ctx;
 
-	if (os_get_random(wpa_auth->group->GMK, WPA_GMK_LEN)) {
+	if (random_get_bytes(wpa_auth->group->GMK, WPA_GMK_LEN)) {
 		wpa_printf(MSG_ERROR, "Failed to get random data for WPA "
 			   "initialization.");
 	} else {
 		wpa_auth_logger(wpa_auth, NULL, LOGGER_DEBUG, "GMK rekeyd");
+		wpa_hexdump_key(MSG_DEBUG, "GMK",
+				wpa_auth->group->GMK, WPA_GMK_LEN);
 	}
 
 	if (wpa_auth->conf.wpa_gmk_rekey) {
@@ -296,12 +301,40 @@ static void wpa_group_set_key_len(struct wpa_group *group, int cipher)
 }
 
 
-static struct wpa_group * wpa_group_init(struct wpa_authenticator *wpa_auth,
-					 int vlan_id)
+static int wpa_group_init_gmk_and_counter(struct wpa_authenticator *wpa_auth,
+					  struct wpa_group *group)
 {
-	struct wpa_group *group;
 	u8 buf[ETH_ALEN + 8 + sizeof(group)];
 	u8 rkey[32];
+
+	if (random_get_bytes(group->GMK, WPA_GMK_LEN) < 0)
+		return -1;
+	wpa_hexdump_key(MSG_DEBUG, "GMK", group->GMK, WPA_GMK_LEN);
+
+	/*
+	 * Counter = PRF-256(Random number, "Init Counter",
+	 *                   Local MAC Address || Time)
+	 */
+	os_memcpy(buf, wpa_auth->addr, ETH_ALEN);
+	wpa_get_ntp_timestamp(buf + ETH_ALEN);
+	os_memcpy(buf + ETH_ALEN + 8, &group, sizeof(group));
+	if (random_get_bytes(rkey, sizeof(rkey)) < 0)
+		return -1;
+
+	if (sha1_prf(rkey, sizeof(rkey), "Init Counter", buf, sizeof(buf),
+		     group->Counter, WPA_NONCE_LEN) < 0)
+		return -1;
+	wpa_hexdump_key(MSG_DEBUG, "Key Counter",
+			group->Counter, WPA_NONCE_LEN);
+
+	return 0;
+}
+
+
+static struct wpa_group * wpa_group_init(struct wpa_authenticator *wpa_auth,
+					 int vlan_id, int delay_init)
+{
+	struct wpa_group *group;
 
 	group = os_zalloc(sizeof(struct wpa_group));
 	if (group == NULL)
@@ -312,27 +345,35 @@ static struct wpa_group * wpa_group_init(struct wpa_authenticator *wpa_auth,
 
 	wpa_group_set_key_len(group, wpa_auth->conf.wpa_group);
 
-	/* Counter = PRF-256(Random number, "Init Counter",
-	 *                   Local MAC Address || Time)
+	if (random_pool_ready() != 1) {
+		wpa_printf(MSG_INFO, "WPA: Not enough entropy in random pool "
+			   "for secure operations - update keys later when "
+			   "the first station connects");
+	}
+
+	/*
+	 * Set initial GMK/Counter value here. The actual values that will be
+	 * used in negotiations will be set once the first station tries to
+	 * connect. This allows more time for collecting additional randomness
+	 * on embedded devices.
 	 */
-	os_memcpy(buf, wpa_auth->addr, ETH_ALEN);
-	wpa_get_ntp_timestamp(buf + ETH_ALEN);
-	os_memcpy(buf + ETH_ALEN + 8, &group, sizeof(group));
-	if (os_get_random(rkey, sizeof(rkey)) ||
-	    os_get_random(group->GMK, WPA_GMK_LEN)) {
+	if (wpa_group_init_gmk_and_counter(wpa_auth, group) < 0) {
 		wpa_printf(MSG_ERROR, "Failed to get random data for WPA "
 			   "initialization.");
 		os_free(group);
 		return NULL;
 	}
 
-	sha1_prf(rkey, sizeof(rkey), "Init Counter", buf, sizeof(buf),
-		 group->Counter, WPA_NONCE_LEN);
-
 	group->GInit = TRUE;
-	wpa_group_sm_step(wpa_auth, group);
-	group->GInit = FALSE;
-	wpa_group_sm_step(wpa_auth, group);
+	if (delay_init) {
+		wpa_printf(MSG_DEBUG, "WPA: Delay group state machine start "
+			   "until Beacon frames have been configured");
+		/* Initialization is completed in wpa_init_keys(). */
+	} else {
+		wpa_group_sm_step(wpa_auth, group);
+		group->GInit = FALSE;
+		wpa_group_sm_step(wpa_auth, group);
+	}
 
 	return group;
 }
@@ -364,7 +405,7 @@ struct wpa_authenticator * wpa_init(const u8 *addr,
 		return NULL;
 	}
 
-	wpa_auth->group = wpa_group_init(wpa_auth, 0);
+	wpa_auth->group = wpa_group_init(wpa_auth, 0, 1);
 	if (wpa_auth->group == NULL) {
 		os_free(wpa_auth->wpa_ie);
 		os_free(wpa_auth);
@@ -402,6 +443,19 @@ struct wpa_authenticator * wpa_init(const u8 *addr,
 	}
 
 	return wpa_auth;
+}
+
+
+int wpa_init_keys(struct wpa_authenticator *wpa_auth)
+{
+	struct wpa_group *group = wpa_auth->group;
+
+	wpa_printf(MSG_DEBUG, "WPA: Start group state machine to set initial "
+		   "keys");
+	wpa_group_sm_step(wpa_auth, group);
+	group->GInit = FALSE;
+	wpa_group_sm_step(wpa_auth, group);
+	return 0;
 }
 
 
@@ -539,6 +593,10 @@ void wpa_auth_sta_no_wpa(struct wpa_state_machine *sm)
 
 static void wpa_free_sta_sm(struct wpa_state_machine *sm)
 {
+	if (sm->GUpdateStationKeys) {
+		sm->group->GKeyDoneStations--;
+		sm->GUpdateStationKeys = FALSE;
+	}
 #ifdef CONFIG_IEEE80211R
 	os_free(sm->assoc_resp_ftie);
 #endif /* CONFIG_IEEE80211R */
@@ -563,6 +621,7 @@ void wpa_auth_sta_deinit(struct wpa_state_machine *sm)
 	}
 
 	eloop_cancel_timeout(wpa_send_eapol_timeout, sm->wpa_auth, sm);
+	sm->pending_1_of_4_timeout = 0;
 	eloop_cancel_timeout(wpa_sm_call_step, sm, NULL);
 	eloop_cancel_timeout(wpa_rekey_ptk, sm->wpa_auth, sm);
 	if (sm->in_step_loop) {
@@ -651,6 +710,37 @@ static int ft_check_msg_2_of_4(struct wpa_authenticator *wpa_auth,
 #endif /* CONFIG_IEEE80211R */
 
 
+static void wpa_receive_error_report(struct wpa_authenticator *wpa_auth,
+				     struct wpa_state_machine *sm, int group)
+{
+	/* Supplicant reported a Michael MIC error */
+	wpa_auth_vlogger(wpa_auth, sm->addr, LOGGER_INFO,
+			 "received EAPOL-Key Error Request "
+			 "(STA detected Michael MIC failure (group=%d))",
+			 group);
+
+	if (group && wpa_auth->conf.wpa_group != WPA_CIPHER_TKIP) {
+		wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO,
+				"ignore Michael MIC failure report since "
+				"group cipher is not TKIP");
+	} else if (!group && sm->pairwise != WPA_CIPHER_TKIP) {
+		wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO,
+				"ignore Michael MIC failure report since "
+				"pairwise cipher is not TKIP");
+	} else {
+		wpa_auth_mic_failure_report(wpa_auth, sm->addr);
+		sm->dot11RSNAStatsTKIPRemoteMICFailures++;
+		wpa_auth->dot11RSNAStatsTKIPRemoteMICFailures++;
+	}
+
+	/*
+	 * Error report is not a request for a new key handshake, but since
+	 * Authenticator may do it, let's change the keys now anyway.
+	 */
+	wpa_request_new_ptk(sm);
+}
+
+
 void wpa_receive(struct wpa_authenticator *wpa_auth,
 		 struct wpa_state_machine *sm,
 		 u8 *data, size_t data_len)
@@ -676,6 +766,9 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 	key = (struct wpa_eapol_key *) (hdr + 1);
 	key_info = WPA_GET_BE16(key->key_info);
 	key_data_length = WPA_GET_BE16(key->key_data_length);
+	wpa_printf(MSG_DEBUG, "WPA: Received EAPOL-Key from " MACSTR
+		   " key_info=0x%x type=%u key_data_length=%u",
+		   MAC2STR(sm->addr), key_info, key->type, key_data_length);
 	if (key_data_length > data_len - sizeof(*hdr) - sizeof(*key)) {
 		wpa_printf(MSG_INFO, "WPA: Invalid EAPOL-Key frame - "
 			   "key_data overflow (%d > %lu)",
@@ -686,7 +779,14 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 	}
 
 	if (sm->wpa == WPA_VERSION_WPA2) {
-		if (key->type != EAPOL_KEY_TYPE_RSN) {
+		if (key->type == EAPOL_KEY_TYPE_WPA) {
+			/*
+			 * Some deployed station implementations seem to send
+			 * msg 4/4 with incorrect type value in WPA2 mode.
+			 */
+			wpa_printf(MSG_DEBUG, "Workaround: Allow EAPOL-Key "
+				   "with unexpected WPA type in RSN mode");
+		} else if (key->type != EAPOL_KEY_TYPE_RSN) {
 			wpa_printf(MSG_DEBUG, "Ignore EAPOL-Key with "
 				   "unexpected type %d in RSN mode",
 				   key->type);
@@ -700,6 +800,11 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 			return;
 		}
 	}
+
+	wpa_hexdump(MSG_DEBUG, "WPA: Received Key Nonce", key->key_nonce,
+		    WPA_NONCE_LEN);
+	wpa_hexdump(MSG_DEBUG, "WPA: Received Replay Counter",
+		    key->replay_counter, WPA_REPLAY_COUNTER_LEN);
 
 	/* FIX: verify that the EAPOL-Key frame was encrypted if pairwise keys
 	 * are set */
@@ -770,7 +875,7 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 	if (!(key_info & WPA_KEY_INFO_REQUEST) &&
 	    !wpa_replay_counter_valid(sm, key->replay_counter)) {
 		int i;
-		wpa_auth_vlogger(wpa_auth, sm->addr, LOGGER_INFO,
+		wpa_auth_vlogger(wpa_auth, sm->addr, LOGGER_DEBUG,
 				 "received EAPOL-Key %s with unexpected "
 				 "replay counter", msgtxt);
 		for (i = 0; i < RSNA_MAX_EAPOL_RETRIES; i++) {
@@ -793,6 +898,26 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 					 "received EAPOL-Key msg 2/4 in "
 					 "invalid state (%d) - dropped",
 					 sm->wpa_ptk_state);
+			return;
+		}
+		random_add_randomness(key->key_nonce, WPA_NONCE_LEN);
+		if (sm->group->reject_4way_hs_for_entropy) {
+			/*
+			 * The system did not have enough entropy to generate
+			 * strong random numbers. Reject the first 4-way
+			 * handshake(s) and collect some entropy based on the
+			 * information from it. Once enough entropy is
+			 * available, the next atempt will trigger GMK/Key
+			 * Counter update and the station will be allowed to
+			 * continue.
+			 */
+			wpa_printf(MSG_DEBUG, "WPA: Reject 4-way handshake to "
+				   "collect more entropy for random number "
+				   "generation");
+			sm->group->reject_4way_hs_for_entropy = FALSE;
+			random_mark_pool_ready();
+			sm->group->first_sta_seen = FALSE;
+			wpa_sta_disconnect(wpa_auth, sm->addr);
 			return;
 		}
 		if (wpa_parse_kde_ies((u8 *) (key + 1), key_data_length,
@@ -905,6 +1030,7 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 		}
 		sm->MICVerified = TRUE;
 		eloop_cancel_timeout(wpa_send_eapol_timeout, wpa_auth, sm);
+		sm->pending_1_of_4_timeout = 0;
 	}
 
 	if (key_info & WPA_KEY_INFO_REQUEST) {
@@ -930,17 +1056,9 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 #endif /* CONFIG_PEERKEY */
 			return;
 		} else if (key_info & WPA_KEY_INFO_ERROR) {
-			/* Supplicant reported a Michael MIC error */
-			wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO,
-					"received EAPOL-Key Error Request "
-					"(STA detected Michael MIC failure)");
-			wpa_auth_mic_failure_report(wpa_auth, sm->addr);
-			sm->dot11RSNAStatsTKIPRemoteMICFailures++;
-			wpa_auth->dot11RSNAStatsTKIPRemoteMICFailures++;
-			/* Error report is not a request for a new key
-			 * handshake, but since Authenticator may do it, let's
-			 * change the keys now anyway. */
-			wpa_request_new_ptk(sm);
+			wpa_receive_error_report(
+				wpa_auth, sm,
+				!(key_info & WPA_KEY_INFO_KEY_TYPE));
 		} else if (key_info & WPA_KEY_INFO_KEY_TYPE) {
 			wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO,
 					"received EAPOL-Key Request for new "
@@ -958,9 +1076,6 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 			wpa_auth_logger(wpa_auth, sm->addr, LOGGER_INFO,
 					"received EAPOL-Key Request for GTK "
 					"rekeying");
-			/* FIX: why was this triggering PTK rekeying for the
-			 * STA that requested Group Key rekeying?? */
-			/* wpa_request_new_ptk(sta->wpa_sm); */
 			eloop_cancel_timeout(wpa_rekey_gtk, wpa_auth, NULL);
 			wpa_rekey_gtk(wpa_auth, NULL);
 		}
@@ -987,6 +1102,7 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 	os_memcpy(sm->last_rx_eapol_key, data, data_len);
 	sm->last_rx_eapol_key_len = data_len;
 
+	sm->rx_eapol_key_secure = !!(key_info & WPA_KEY_INFO_SECURE);
 	sm->EAPOLKeyReceived = TRUE;
 	sm->EAPOLKeyPairwise = !!(key_info & WPA_KEY_INFO_KEY_TYPE);
 	sm->EAPOLKeyRequest = !!(key_info & WPA_KEY_INFO_REQUEST);
@@ -995,25 +1111,37 @@ void wpa_receive(struct wpa_authenticator *wpa_auth,
 }
 
 
-static void wpa_gmk_to_gtk(const u8 *gmk, const u8 *addr, const u8 *gnonce,
-			   u8 *gtk, size_t gtk_len)
+static int wpa_gmk_to_gtk(const u8 *gmk, const char *label, const u8 *addr,
+			  const u8 *gnonce, u8 *gtk, size_t gtk_len)
 {
-	u8 data[ETH_ALEN + WPA_NONCE_LEN];
+	u8 data[ETH_ALEN + WPA_NONCE_LEN + 8 + 16];
+	u8 *pos;
+	int ret = 0;
 
-	/* GTK = PRF-X(GMK, "Group key expansion", AA || GNonce) */
+	/* GTK = PRF-X(GMK, "Group key expansion",
+	 *	AA || GNonce || Time || random data)
+	 * The example described in the IEEE 802.11 standard uses only AA and
+	 * GNonce as inputs here. Add some more entropy since this derivation
+	 * is done only at the Authenticator and as such, does not need to be
+	 * exactly same.
+	 */
 	os_memcpy(data, addr, ETH_ALEN);
 	os_memcpy(data + ETH_ALEN, gnonce, WPA_NONCE_LEN);
+	pos = data + ETH_ALEN + WPA_NONCE_LEN;
+	wpa_get_ntp_timestamp(pos);
+	pos += 8;
+	if (random_get_bytes(pos, 16) < 0)
+		ret = -1;
 
 #ifdef CONFIG_IEEE80211W
-	sha256_prf(gmk, WPA_GMK_LEN, "Group key expansion",
-		   data, sizeof(data), gtk, gtk_len);
+	sha256_prf(gmk, WPA_GMK_LEN, label, data, sizeof(data), gtk, gtk_len);
 #else /* CONFIG_IEEE80211W */
-	sha1_prf(gmk, WPA_GMK_LEN, "Group key expansion",
-		 data, sizeof(data), gtk, gtk_len);
+	if (sha1_prf(gmk, WPA_GMK_LEN, label, data, sizeof(data), gtk, gtk_len)
+	    < 0)
+		ret = -1;
 #endif /* CONFIG_IEEE80211W */
 
-	wpa_hexdump_key(MSG_DEBUG, "GMK", gmk, WPA_GMK_LEN);
-	wpa_hexdump_key(MSG_DEBUG, "GTK", gtk, gtk_len);
+	return ret;
 }
 
 
@@ -1022,6 +1150,7 @@ static void wpa_send_eapol_timeout(void *eloop_ctx, void *timeout_ctx)
 	struct wpa_authenticator *wpa_auth = eloop_ctx;
 	struct wpa_state_machine *sm = timeout_ctx;
 
+	sm->pending_1_of_4_timeout = 0;
 	wpa_auth_logger(wpa_auth, sm->addr, LOGGER_DEBUG, "EAPOL-Key timeout");
 	sm->TimeoutEvt = TRUE;
 	wpa_sm_step(sm);
@@ -1209,10 +1338,14 @@ static void wpa_send_eapol(struct wpa_authenticator *wpa_auth,
 			 keyidx, encr, 0);
 
 	ctr = pairwise ? sm->TimeoutCtr : sm->GTimeoutCtr;
-	if (ctr == 1)
+	if (ctr == 1 && wpa_auth->conf.tx_status)
 		timeout_ms = eapol_key_timeout_first;
 	else
 		timeout_ms = eapol_key_timeout_subseq;
+	if (pairwise && ctr == 1 && !(key_info & WPA_KEY_INFO_MIC))
+		sm->pending_1_of_4_timeout = 1;
+	wpa_printf(MSG_DEBUG, "WPA: Use EAPOL-Key timeout of %u ms (retry "
+		   "counter %d)", timeout_ms, ctr);
 	eloop_register_timeout(timeout_ms / 1000, (timeout_ms % 1000) * 1000,
 			       wpa_send_eapol_timeout, wpa_auth, sm);
 }
@@ -1247,8 +1380,7 @@ void wpa_remove_ptk(struct wpa_state_machine *sm)
 {
 	sm->PTK_valid = FALSE;
 	os_memset(&sm->PTK, 0, sizeof(sm->PTK));
-	wpa_auth_set_key(sm->wpa_auth, 0, WPA_ALG_NONE, sm->addr, 0, (u8 *) "",
-			 0);
+	wpa_auth_set_key(sm->wpa_auth, 0, WPA_ALG_NONE, sm->addr, 0, NULL, 0);
 	sm->pairwise_set = FALSE;
 	eloop_cancel_timeout(wpa_rekey_ptk, sm->wpa_auth, sm);
 }
@@ -1411,10 +1543,41 @@ SM_STATE(WPA_PTK, AUTHENTICATION)
 }
 
 
+static void wpa_group_first_station(struct wpa_authenticator *wpa_auth,
+				    struct wpa_group *group)
+{
+	/*
+	 * System has run bit further than at the time hostapd was started
+	 * potentially very early during boot up. This provides better chances
+	 * of collecting more randomness on embedded systems. Re-initialize the
+	 * GMK and Counter here to improve their strength if there was not
+	 * enough entropy available immediately after system startup.
+	 */
+	wpa_printf(MSG_DEBUG, "WPA: Re-initialize GMK/Counter on first "
+		   "station");
+	if (random_pool_ready() != 1) {
+		wpa_printf(MSG_INFO, "WPA: Not enough entropy in random pool "
+			   "to proceed - reject first 4-way handshake");
+		group->reject_4way_hs_for_entropy = TRUE;
+	}
+	wpa_group_init_gmk_and_counter(wpa_auth, group);
+	wpa_gtk_update(wpa_auth, group);
+	wpa_group_config_group_keys(wpa_auth, group);
+}
+
+
 SM_STATE(WPA_PTK, AUTHENTICATION2)
 {
 	SM_ENTRY_MA(WPA_PTK, AUTHENTICATION2, wpa_ptk);
+
+	if (!sm->group->first_sta_seen) {
+		wpa_group_first_station(sm->wpa_auth, sm->group);
+		sm->group->first_sta_seen = TRUE;
+	}
+
 	os_memcpy(sm->ANonce, sm->group->Counter, WPA_NONCE_LEN);
+	wpa_hexdump(MSG_DEBUG, "WPA: Assign ANonce", sm->ANonce,
+		    WPA_NONCE_LEN);
 	inc_byte_array(sm->group->Counter, WPA_NONCE_LEN);
 	sm->ReAuthenticationRequest = FALSE;
 	/* IEEE 802.11i does not clear TimeoutCtr here, but this is more
@@ -1605,6 +1768,7 @@ SM_STATE(WPA_PTK, PTKCALCNEGOTIATING)
 	}
 #endif /* CONFIG_IEEE80211R */
 
+	sm->pending_1_of_4_timeout = 0;
 	eloop_cancel_timeout(wpa_send_eapol_timeout, sm->wpa_auth, sm);
 
 	if (wpa_key_mgmt_wpa_psk(sm->wpa_key_mgmt)) {
@@ -1726,6 +1890,20 @@ SM_STATE(WPA_PTK, PTKINITNEGOTIATING)
 		gtk_len = 0;
 		keyidx = 0;
 		_rsc = NULL;
+		if (sm->rx_eapol_key_secure) {
+			/*
+			 * It looks like Windows 7 supplicant tries to use
+			 * Secure bit in msg 2/4 after having reported Michael
+			 * MIC failure and it then rejects the 4-way handshake
+			 * if msg 3/4 does not set Secure bit. Work around this
+			 * by setting the Secure bit here even in the case of
+			 * WPA if the supplicant used it first.
+			 */
+			wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
+					"STA used Secure bit in WPA msg 2/4 - "
+					"set Secure for 3/4 as workaround");
+			secure = 1;
+		}
 	}
 
 	kde_len = wpa_ie_len + ieee80211w_kde_len(sm);
@@ -1876,8 +2054,11 @@ SM_STEP(WPA_PTK)
 	if (sm->Init)
 		SM_ENTER(WPA_PTK, INITIALIZE);
 	else if (sm->Disconnect
-		 /* || FIX: dot11RSNAConfigSALifetime timeout */)
+		 /* || FIX: dot11RSNAConfigSALifetime timeout */) {
+		wpa_auth_logger(wpa_auth, sm->addr, LOGGER_DEBUG,
+				"WPA_PTK: sm->Disconnect");
 		SM_ENTER(WPA_PTK, DISCONNECT);
+	}
 	else if (sm->DeauthenticationRequest)
 		SM_ENTER(WPA_PTK, DISCONNECTED);
 	else if (sm->AuthenticationRequest)
@@ -1913,6 +2094,8 @@ SM_STEP(WPA_PTK)
 			SM_ENTER(WPA_PTK, PTKSTART);
 		else {
 			wpa_auth->dot11RSNA4WayHandshakeFailures++;
+			wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_INFO,
+					"INITPMK - keyAvailable = false");
 			SM_ENTER(WPA_PTK, DISCONNECT);
 		}
 		break;
@@ -1933,6 +2116,9 @@ SM_STEP(WPA_PTK)
 		else if (sm->TimeoutCtr >
 			 (int) dot11RSNAConfigPairwiseUpdateCount) {
 			wpa_auth->dot11RSNA4WayHandshakeFailures++;
+			wpa_auth_vlogger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
+					 "PTKSTART: Retry limit %d reached",
+					 dot11RSNAConfigPairwiseUpdateCount);
 			SM_ENTER(WPA_PTK, DISCONNECT);
 		} else if (sm->TimeoutEvt)
 			SM_ENTER(WPA_PTK, PTKSTART);
@@ -1956,6 +2142,10 @@ SM_STEP(WPA_PTK)
 		else if (sm->TimeoutCtr >
 			 (int) dot11RSNAConfigPairwiseUpdateCount) {
 			wpa_auth->dot11RSNA4WayHandshakeFailures++;
+			wpa_auth_vlogger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
+					 "PTKINITNEGOTIATING: Retry limit %d "
+					 "reached",
+					 dot11RSNAConfigPairwiseUpdateCount);
 			SM_ENTER(WPA_PTK, DISCONNECT);
 		} else if (sm->TimeoutEvt)
 			SM_ENTER(WPA_PTK, PTKINITNEGOTIATING);
@@ -2094,20 +2284,24 @@ static int wpa_gtk_update(struct wpa_authenticator *wpa_auth,
 {
 	int ret = 0;
 
-	/* FIX: is this the correct way of getting GNonce? */
 	os_memcpy(group->GNonce, group->Counter, WPA_NONCE_LEN);
 	inc_byte_array(group->Counter, WPA_NONCE_LEN);
-	wpa_gmk_to_gtk(group->GMK, wpa_auth->addr, group->GNonce,
-		       group->GTK[group->GN - 1], group->GTK_len);
+	if (wpa_gmk_to_gtk(group->GMK, "Group key expansion",
+			   wpa_auth->addr, group->GNonce,
+			   group->GTK[group->GN - 1], group->GTK_len) < 0)
+		ret = -1;
+	wpa_hexdump_key(MSG_DEBUG, "GTK",
+			group->GTK[group->GN - 1], group->GTK_len);
 
 #ifdef CONFIG_IEEE80211W
 	if (wpa_auth->conf.ieee80211w != NO_MGMT_FRAME_PROTECTION) {
-		if (os_get_random(group->IGTK[group->GN_igtk - 4],
-				  WPA_IGTK_LEN) < 0) {
-			wpa_printf(MSG_INFO, "RSN: Failed to get new random "
-				   "IGTK");
+		os_memcpy(group->GNonce, group->Counter, WPA_NONCE_LEN);
+		inc_byte_array(group->Counter, WPA_NONCE_LEN);
+		if (wpa_gmk_to_gtk(group->GMK, "IGTK key expansion",
+				   wpa_auth->addr, group->GNonce,
+				   group->IGTK[group->GN_igtk - 4],
+				   WPA_IGTK_LEN) < 0)
 			ret = -1;
-		}
 		wpa_hexdump_key(MSG_DEBUG, "IGTK",
 				group->IGTK[group->GN_igtk - 4], WPA_IGTK_LEN);
 	}
@@ -2143,20 +2337,23 @@ static int wpa_group_update_sta(struct wpa_state_machine *sm, void *ctx)
 	if (sm->wpa_ptk_state != WPA_PTK_PTKINITDONE) {
 		wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
 				"Not in PTKINITDONE; skip Group Key update");
+		sm->GUpdateStationKeys = FALSE;
 		return 0;
 	}
 	if (sm->GUpdateStationKeys) {
 		/*
-		 * This should not really happen, but just in case, make sure
-		 * we do not count the same STA twice in GKeyDoneStations.
+		 * This should not really happen, so add a debug log entry.
+		 * Since we clear the GKeyDoneStations before the loop, the
+		 * station needs to be counted here anyway.
 		 */
 		wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
-				"GUpdateStationKeys already set - do not "
-				"increment GKeyDoneStations");
-	} else {
-		sm->group->GKeyDoneStations++;
-		sm->GUpdateStationKeys = TRUE;
+				"GUpdateStationKeys was already set when "
+				"marking station for GTK rekeying");
 	}
+
+	sm->group->GKeyDoneStations++;
+	sm->GUpdateStationKeys = TRUE;
+
 	wpa_sm_step(sm);
 	return 0;
 }
@@ -2185,32 +2382,54 @@ static void wpa_group_setkeys(struct wpa_authenticator *wpa_auth,
 	 * including all STAs that could be in not-yet-completed state. */
 	wpa_gtk_update(wpa_auth, group);
 
+	if (group->GKeyDoneStations) {
+		wpa_printf(MSG_DEBUG, "wpa_group_setkeys: Unexpected "
+			   "GKeyDoneStations=%d when starting new GTK rekey",
+			   group->GKeyDoneStations);
+		group->GKeyDoneStations = 0;
+	}
 	wpa_auth_for_each_sta(wpa_auth, wpa_group_update_sta, NULL);
 	wpa_printf(MSG_DEBUG, "wpa_group_setkeys: GKeyDoneStations=%d",
 		   group->GKeyDoneStations);
 }
 
 
-static void wpa_group_setkeysdone(struct wpa_authenticator *wpa_auth,
-				  struct wpa_group *group)
+static int wpa_group_config_group_keys(struct wpa_authenticator *wpa_auth,
+				       struct wpa_group *group)
+{
+	int ret = 0;
+
+	if (wpa_auth_set_key(wpa_auth, group->vlan_id,
+			     wpa_alg_enum(wpa_auth->conf.wpa_group),
+			     broadcast_ether_addr, group->GN,
+			     group->GTK[group->GN - 1], group->GTK_len) < 0)
+		ret = -1;
+
+#ifdef CONFIG_IEEE80211W
+	if (wpa_auth->conf.ieee80211w != NO_MGMT_FRAME_PROTECTION &&
+	    wpa_auth_set_key(wpa_auth, group->vlan_id, WPA_ALG_IGTK,
+			     broadcast_ether_addr, group->GN_igtk,
+			     group->IGTK[group->GN_igtk - 4],
+			     WPA_IGTK_LEN) < 0)
+		ret = -1;
+#endif /* CONFIG_IEEE80211W */
+
+	return ret;
+}
+
+
+static int wpa_group_setkeysdone(struct wpa_authenticator *wpa_auth,
+				 struct wpa_group *group)
 {
 	wpa_printf(MSG_DEBUG, "WPA: group state machine entering state "
 		   "SETKEYSDONE (VLAN-ID %d)", group->vlan_id);
 	group->changed = TRUE;
 	group->wpa_group_state = WPA_GROUP_SETKEYSDONE;
-	wpa_auth_set_key(wpa_auth, group->vlan_id,
-			 wpa_alg_enum(wpa_auth->conf.wpa_group),
-			 NULL, group->GN, group->GTK[group->GN - 1],
-			 group->GTK_len);
 
-#ifdef CONFIG_IEEE80211W
-	if (wpa_auth->conf.ieee80211w != NO_MGMT_FRAME_PROTECTION) {
-		wpa_auth_set_key(wpa_auth, group->vlan_id, WPA_ALG_IGTK,
-				 NULL, group->GN_igtk,
-				 group->IGTK[group->GN_igtk - 4],
-				 WPA_IGTK_LEN);
-	}
-#endif /* CONFIG_IEEE80211W */
+	if (wpa_group_config_group_keys(wpa_auth, group) < 0)
+		return -1;
+
+	return 0;
 }
 
 
@@ -2310,6 +2529,7 @@ void wpa_gtk_rekey(struct wpa_authenticator *wpa_auth)
 		group->GN_igtk = tmp;
 #endif /* CONFIG_IEEE80211W */
 		wpa_gtk_update(wpa_auth, group);
+		wpa_group_config_group_keys(wpa_auth, group);
 	}
 }
 
@@ -2475,7 +2695,7 @@ int wpa_get_mib_sta(struct wpa_state_machine *sm, char *buf, size_t buflen)
 		"dot11RSNAStatsSelectedPairwiseCipher=" RSN_SUITE "\n"
 		/* TODO: dot11RSNAStatsTKIPICVErrors */
 		"dot11RSNAStatsTKIPLocalMICFailures=%u\n"
-		"dot11RSNAStatsTKIPRemoveMICFailures=%u\n"
+		"dot11RSNAStatsTKIPRemoteMICFailures=%u\n"
 		/* TODO: dot11RSNAStatsCCMPReplays */
 		/* TODO: dot11RSNAStatsCCMPDecryptErrors */
 		/* TODO: dot11RSNAStatsTKIPReplays */,
@@ -2572,7 +2792,8 @@ const u8 * wpa_auth_get_wpa_ie(struct wpa_authenticator *wpa_auth, size_t *len)
 int wpa_auth_pmksa_add(struct wpa_state_machine *sm, const u8 *pmk,
 		       int session_timeout, struct eapol_state_machine *eapol)
 {
-	if (sm == NULL || sm->wpa != WPA_VERSION_WPA2)
+	if (sm == NULL || sm->wpa != WPA_VERSION_WPA2 ||
+	    sm->wpa_auth->conf.disable_pmksa_caching)
 		return -1;
 
 	if (pmksa_cache_auth_add(sm->wpa_auth->pmksa, pmk, PMK_LEN,
@@ -2611,7 +2832,7 @@ wpa_auth_add_group(struct wpa_authenticator *wpa_auth, int vlan_id)
 
 	wpa_printf(MSG_DEBUG, "WPA: Add group state machine for VLAN-ID %d",
 		   vlan_id);
-	group = wpa_group_init(wpa_auth, vlan_id);
+	group = wpa_group_init(wpa_auth, vlan_id, 0);
 	if (group == NULL)
 		return NULL;
 
@@ -2650,4 +2871,34 @@ int wpa_auth_sta_set_vlan(struct wpa_state_machine *sm, int vlan_id)
 
 	sm->group = group;
 	return 0;
+}
+
+
+void wpa_auth_eapol_key_tx_status(struct wpa_authenticator *wpa_auth,
+				  struct wpa_state_machine *sm, int ack)
+{
+	if (wpa_auth == NULL || sm == NULL)
+		return;
+	wpa_printf(MSG_DEBUG, "WPA: EAPOL-Key TX status for STA " MACSTR
+		   " ack=%d", MAC2STR(sm->addr), ack);
+	if (sm->pending_1_of_4_timeout && ack) {
+		/*
+		 * Some deployed supplicant implementations update their SNonce
+		 * for each EAPOL-Key 2/4 message even within the same 4-way
+		 * handshake and then fail to use the first SNonce when
+		 * deriving the PTK. This results in unsuccessful 4-way
+		 * handshake whenever the relatively short initial timeout is
+		 * reached and EAPOL-Key 1/4 is retransmitted. Try to work
+		 * around this by increasing the timeout now that we know that
+		 * the station has received the frame.
+		 */
+		int timeout_ms = eapol_key_timeout_subseq;
+		wpa_printf(MSG_DEBUG, "WPA: Increase initial EAPOL-Key 1/4 "
+			   "timeout by %u ms because of acknowledged frame",
+			   timeout_ms);
+		eloop_cancel_timeout(wpa_send_eapol_timeout, wpa_auth, sm);
+		eloop_register_timeout(timeout_ms / 1000,
+				       (timeout_ms % 1000) * 1000,
+				       wpa_send_eapol_timeout, wpa_auth, sm);
+	}
 }

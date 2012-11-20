@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.13 2011/07/17 20:54:46 joerg Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.13.12.1 2012/11/20 03:01:39 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.13 2011/07/17 20:54:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.13.12.1 2012/11/20 03:01:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -150,6 +150,7 @@ cninit(void)
 
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
+		extern struct consdev failsafe_cons;
 		cp = &failsafe_cons;
 		cn_tab = cp;
 		(*cp->cn_probe)(cp);
@@ -239,7 +240,7 @@ cninit_kd(void)
 	if (strcmp(name, "isa") == 0) {
 		printf("console keyboard type: PC Keyboard\n");
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 		goto kbd_found;
 	}
 #endif

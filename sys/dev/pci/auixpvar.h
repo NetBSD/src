@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.7 2011/11/23 23:07:34 jmcneill Exp $*/
+/* $NetBSD: auixpvar.h,v 1.7.8.1 2012/11/20 03:02:13 tls Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -96,7 +96,7 @@ struct auixp_codec {
 
 
 struct auixp_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.20.12.1 2012/11/20 03:01:08 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.20.12.1 2012/11/20 03:01:08 tls Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -214,12 +214,12 @@ pxaip_attach(device_t parent, device_t self, void *aux)
 	 * This takes 2 secs at most.
 	 */
 	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
-	printf("%s: CPU clock = %d.%03d MHz\n", self->dv_xname,
+	printf("%s: CPU clock = %d.%03d MHz\n", device_xname(self),
 	    cpuclock/1000, cpuclock%1000 );
 
 	aprint_normal("%s: kernel is configured for " SUPPORTED_CPU
 		      ", cpu type is %s\n",
-		      self->dv_xname,
+		      device_xname(self),
 		      __CPU_IS_PXA270 ? "PXA270" : "PXA250");
 
 	/*
@@ -387,10 +387,10 @@ pxa2x0_turbo_mode(int f)
 void
 pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
 {
-	u_int32_t mdcnfg, dwid, dcac, drac, dnb;
+	uint32_t mdcnfg, dwid, dcac, drac, dnb;
 	int i;
 
-	mdcnfg = *((volatile u_int32_t *)(memctl_va + MEMCTL_MDCNFG));
+	mdcnfg = *((volatile uint32_t *)(memctl_va + MEMCTL_MDCNFG));
 
 	/*
 	 * Scan all 4 SDRAM banks

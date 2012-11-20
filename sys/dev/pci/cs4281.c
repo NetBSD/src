@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.47 2012/01/30 19:41:19 drochner Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.47.6.1 2012/11/20 03:02:14 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47.6.1 2012/11/20 03:02:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ static const struct midi_hw_if cs4281_midi_hw_if = {
 };
 #endif
 
-CFATTACH_DECL(clct, sizeof(struct cs428x_softc),
+CFATTACH_DECL_NEW(clct, sizeof(struct cs428x_softc),
     cs4281_match, cs4281_attach, NULL, NULL);
 
 static struct audio_device cs4281_device = {
@@ -192,6 +192,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 
@@ -204,13 +205,13 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	if (pci_mapreg_map(pa, PCI_BA0,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->ba0t, &sc->ba0h, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map BA0 space\n");
+		aprint_error_dev(sc->sc_dev, "can't map BA0 space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, PCI_BA1,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->ba1t, &sc->ba1h, NULL, NULL)) {
-		aprint_error_dev(&sc->sc_dev, "can't map BA1 space\n");
+		aprint_error_dev(sc->sc_dev, "can't map BA1 space\n");
 		return;
 	}
 
@@ -219,7 +220,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
+		aprint_error_dev(sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -240,7 +241,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &sc->intrh)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, sc->intrh);
@@ -251,7 +252,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
 	    cs4281_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -259,7 +260,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Sound System start-up
@@ -285,15 +286,15 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4281_reset_codec;
 	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
-		aprint_error_dev(&sc->sc_dev, "ac97_attach failed\n");
+		aprint_error_dev(sc->sc_dev, "ac97_attach failed\n");
 		mutex_destroy(&sc->sc_lock);
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	audio_attach_mi(&cs4281_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&cs4281_hw_if, sc, sc->sc_dev);
 
 #if NMIDI > 0 && 0
-	midi_attach_mi(&cs4281_midi_hw_if, sc, &sc->sc_dev);
+	midi_attach_mi(&cs4281_midi_hw_if, sc, sc->sc_dev);
 #endif
 
 	if (!pmf_device_register(self, cs4281_suspend, cs4281_resume))
@@ -356,7 +357,7 @@ cs4281_intr(void *p)
 			if (sc->sc_pn >= sc->sc_pe)
 				sc->sc_pn = sc->sc_ps;
 		} else {
-			aprint_error_dev(&sc->sc_dev, "unexpected play intr\n");
+			aprint_error_dev(sc->sc_dev, "unexpected play intr\n");
 		}
 	}
 	if (intr & HISR_DMA1) {
@@ -376,7 +377,7 @@ cs4281_intr(void *p)
 			if ((sc->sc_ri % sc->sc_rcount) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "unexpected record intr\n");
 		}
 	}
@@ -858,7 +859,7 @@ cs4281_reset_codec(void *addr)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for codec ready\n");
 			return ETIMEDOUT;
 		}
@@ -873,7 +874,7 @@ cs4281_reset_codec(void *addr)
 	do {
 		delay(1);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for codec calibration\n");
 			return ETIMEDOUT;
 		}
@@ -889,7 +890,7 @@ cs4281_reset_codec(void *addr)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev, "timeout waiting for "
+			aprint_error_dev(sc->sc_dev, "timeout waiting for "
 			    "sampled input slots as valid\n");
 			return ETIMEDOUT;
 		}
@@ -1016,7 +1017,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 		 != (CLKCR1_DLLRDY | CLKCR1_CLKON)) {
 		delay(100);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for clock stabilization\n");
 			return -1;
 		}
@@ -1026,7 +1027,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	while (!(BA0READ4(sc, CS4281_CLKCR1) & CLKCR1_DLLRDY)) {
 		delay(1000);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for clock stabilization\n");
 			return -1;
 		}
@@ -1041,7 +1042,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	while ((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
 		delay(100);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for codec ready\n");
 			return -1;
 		}
@@ -1053,7 +1054,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	while ((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
 		delay(100);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for secondary codec ready\n");
 			return -1;
 		}
@@ -1069,7 +1070,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for codec ready\n");
 			return -1;
 		}
@@ -1084,7 +1085,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	do {
 		delay(1);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "timeout waiting for codec calibration\n");
 			return -1;
 		}
@@ -1100,7 +1101,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			aprint_error_dev(&sc->sc_dev, "timeout waiting for "
+			aprint_error_dev(sc->sc_dev, "timeout waiting for "
 			    "sampled input slots as valid\n");
 			return -1;
 		}

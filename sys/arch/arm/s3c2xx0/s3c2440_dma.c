@@ -78,10 +78,10 @@ struct dmac_xfer_state {
 };
 
 struct s3c2440_dmac_peripheral {
-	u_int8_t	dp_id;
-	u_int8_t	dp_channel_order[DMAC_N_CHANNELS+1];
+	uint8_t	dp_id;
+	uint8_t	dp_channel_order[DMAC_N_CHANNELS+1];
 #define PERPH_LAST DMAC_N_CHANNELS+1
-	u_int8_t	dp_channel_source[DMAC_N_CHANNELS];
+	uint8_t	dp_channel_source[DMAC_N_CHANNELS];
 #define PERPH_NA 7
 };
 
@@ -130,7 +130,7 @@ static struct s3c2440_dmac_peripheral s3c2440_peripherals[] = {
 {DMAC_PERIPH_USBEP4, {3, PERPH_LAST}, {PERPH_NA, PERPH_NA, PERPH_NA, 4}}
 };
 
-static void dmac_start(u_int8_t channel_no, struct dmac_xfer_state*);
+static void dmac_start(uint8_t channel_no, struct dmac_xfer_state*);
 static void dmac_transfer_segment(uint8_t channel_no, struct dmac_xfer_state*);
 static void dmac_channel_done(uint8_t channel_no);
 
@@ -320,7 +320,7 @@ s3c2440_dmac_start_xfer(dmac_xfer_t dx) {
 	for(i=0;
 	    perph->dp_channel_order[i] != PERPH_LAST;
 	    i++) {
-		u_int8_t channel_no = perph->dp_channel_order[i];
+		uint8_t channel_no = perph->dp_channel_order[i];
 
 #ifdef DIAGNOSTIC
 		/* Check that there is a mapping for the given channel.
@@ -339,7 +339,7 @@ s3c2440_dmac_start_xfer(dmac_xfer_t dx) {
 	}
 
 	if (transfer_started == FALSE) {
-		u_int8_t channel_no = perph->dp_channel_order[0];
+		uint8_t channel_no = perph->dp_channel_order[0];
 		/* Enqueue the transfer, as none of the DMA channels were
 		   available.
 		   The highest priority channel is used.
@@ -355,7 +355,7 @@ s3c2440_dmac_start_xfer(dmac_xfer_t dx) {
 }
 
 static void
-dmac_start(u_int8_t channel_no, struct dmac_xfer_state *dxs) {
+dmac_start(uint8_t channel_no, struct dmac_xfer_state *dxs) {
 	struct s3c2440_dmac_softc	*sc = s3c2440_dmac_sc;
 	struct s3c2440_dmac_channel	*dc = &sc->sc_channels[channel_no];
 	uint32_t			options;

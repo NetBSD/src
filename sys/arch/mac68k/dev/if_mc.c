@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.38 2010/04/05 07:19:30 joerg Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.38.18.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.38 2010/04/05 07:19:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.38.18.1 2012/11/20 03:01:30 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -151,7 +151,7 @@ mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
 	memcpy(sc->sc_enaddr, lladdr, ETHER_ADDR_LEN);
 	printf(": address %s\n", ether_sprintf(lladdr));
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = mcioctl;
 	ifp->if_start = mcstart;
@@ -411,7 +411,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 	}
 
 	if (totlen > PAGE_SIZE)
-		panic("%s: maceput: packet overflow", sc->sc_dev.dv_xname);
+		panic("%s: maceput: packet overflow", device_xname(sc->sc_dev));
 
 #if 0
 	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
@@ -436,21 +436,21 @@ struct mc_softc *sc = arg;
 	ir = NIC_GET(sc, MACE_IR) & ~NIC_GET(sc, MACE_IMR);
 	if (ir & JAB) {
 #ifdef MCDEBUG
-		printf("%s: jabber error\n", sc->sc_dev.dv_xname);
+		printf("%s: jabber error\n", device_xname(sc->sc_dev));
 #endif
 		sc->sc_if.if_oerrors++;
 	}
 
 	if (ir & BABL) {
 #ifdef MCDEBUG
-		printf("%s: babble\n", sc->sc_dev.dv_xname);
+		printf("%s: babble\n", device_xname(sc->sc_dev));
 #endif
 		sc->sc_if.if_oerrors++;
 	}
 
 	if (ir & CERR) {
 #ifdef MCDEBUG
-		printf("%s: collision error\n", sc->sc_dev.dv_xname);
+		printf("%s: collision error\n", device_xname(sc->sc_dev));
 #endif
 		sc->sc_if.if_collisions++;
 	}
@@ -480,13 +480,13 @@ mc_tint(struct mc_softc *sc)
 		return;
 
 	if (xmtfs & UFLO) {
-		printf("%s: underflow\n", sc->sc_dev.dv_xname);
+		printf("%s: underflow\n", device_xname(sc->sc_dev));
 		mcreset(sc);
 		return;
 	}
 
 	if (xmtfs & LCOL) {
-		printf("%s: late collision\n", sc->sc_dev.dv_xname);
+		printf("%s: late collision\n", device_xname(sc->sc_dev));
 		sc->sc_if.if_oerrors++;
 		sc->sc_if.if_collisions++;
 	}
@@ -497,14 +497,14 @@ mc_tint(struct mc_softc *sc)
 	else if (xmtfs & ONE)
 		sc->sc_if.if_collisions++;
 	else if (xmtfs & RTRY) {
-		printf("%s: excessive collisions\n", sc->sc_dev.dv_xname);
+		printf("%s: excessive collisions\n", device_xname(sc->sc_dev));
 		sc->sc_if.if_collisions += 16;
 		sc->sc_if.if_oerrors++;
 	}
 
 	if (xmtfs & LCAR) {
 		sc->sc_havecarrier = 0;
-		printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
+		printf("%s: lost carrier\n", device_xname(sc->sc_dev));
 		sc->sc_if.if_oerrors++;
 	}
 
@@ -524,12 +524,12 @@ mc_rint(struct mc_softc *sc)
 #ifdef MCDEBUG
 	if (rxf.rx_rcvsts & 0xf0)
 		printf("%s: rcvcnt %02x rcvsts %02x rntpc 0x%02x rcvcc 0x%02x\n",
-		    sc->sc_dev.dv_xname, rxf.rx_rcvcnt, rxf.rx_rcvsts,
+		    device_xname(sc->sc_dev), rxf.rx_rcvcnt, rxf.rx_rcvsts,
 		    rxf.rx_rntpc, rxf.rx_rcvcc);
 #endif
 
 	if (rxf.rx_rcvsts & OFLO) {
-		printf("%s: receive FIFO overflow\n", sc->sc_dev.dv_xname);
+		printf("%s: receive FIFO overflow\n", device_xname(sc->sc_dev));
 		sc->sc_if.if_ierrors++;
 		return;
 	}
@@ -539,7 +539,7 @@ mc_rint(struct mc_softc *sc)
 
 	if (rxf.rx_rcvsts & FRAM) {
 #ifdef MCDEBUG
-		printf("%s: framing error\n", sc->sc_dev.dv_xname);
+		printf("%s: framing error\n", device_xname(sc->sc_dev));
 #endif
 		sc->sc_if.if_ierrors++;
 		return;
@@ -547,7 +547,7 @@ mc_rint(struct mc_softc *sc)
 
 	if (rxf.rx_rcvsts & FCS) {
 #ifdef MCDEBUG
-		printf("%s: frame control checksum error\n", sc->sc_dev.dv_xname);
+		printf("%s: frame control checksum error\n", device_xname(sc->sc_dev));
 #endif
 		sc->sc_if.if_ierrors++;
 		return;
@@ -567,7 +567,7 @@ mace_read(struct mc_softc *sc, void *pkt, int len)
 	    len > ETHERMTU + sizeof(struct ether_header)) {
 #ifdef MCDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname, len);
+		    device_xname(sc->sc_dev), len);
 #endif
 		ifp->if_ierrors++;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.31 2012/08/16 18:22:44 matt Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.31.2.1 2012/11/20 03:01:15 tls Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.31 2012/08/16 18:22:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.31.2.1 2012/11/20 03:01:15 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,7 +212,7 @@ int kgdb_devmode = KGDB_DEVMODE;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	u_int32_t reg;
+	uint32_t reg;
 
 #ifdef DIAGNOSTIC
 	/* info */
@@ -405,7 +405,7 @@ initarm(void *arg)
 	bootconfig.dram[0].address = 0x10000000;
 	bootconfig.dram[0].pages = ixp425_sdram_size() / PAGE_SIZE;
 
-	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
+	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 #ifdef VERBOSE_INIT_ARM
         printf("kernsize=0x%x\n", kerneldatasize);
@@ -648,7 +648,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

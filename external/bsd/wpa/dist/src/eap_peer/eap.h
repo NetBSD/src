@@ -216,11 +216,22 @@ struct eapol_callbacks {
 	/**
 	 * eap_param_needed - Notify that EAP parameter is needed
 	 * @ctx: eapol_ctx from eap_peer_sm_init() call
-	 * @field: Field name (e.g., "IDENTITY")
+	 * @field: Field indicator (e.g., WPA_CTRL_REQ_EAP_IDENTITY)
 	 * @txt: User readable text describing the required parameter
 	 */
-	void (*eap_param_needed)(void *ctx, const char *field,
+	void (*eap_param_needed)(void *ctx, enum wpa_ctrl_req_type field,
 				 const char *txt);
+
+	/**
+	 * notify_cert - Notification of a peer certificate
+	 * @ctx: eapol_ctx from eap_peer_sm_init() call
+	 * @depth: Depth in certificate chain (0 = server)
+	 * @subject: Subject of the peer certificate
+	 * @cert_hash: SHA-256 hash of the certificate
+	 * @cert: Peer certificate
+	 */
+	void (*notify_cert)(void *ctx, int depth, const char *subject,
+			    const char *cert_hash, const struct wpabuf *cert);
 };
 
 /**
@@ -251,6 +262,11 @@ struct eap_config {
 	 * This is only used by EAP-WSC and can be left %NULL if not available.
 	 */
 	struct wps_context *wps;
+
+	/**
+	 * cert_in_cb - Include server certificates in callback
+	 */
+	int cert_in_cb;
 };
 
 struct eap_sm * eap_peer_sm_init(void *eapol_ctx,
@@ -261,6 +277,7 @@ int eap_peer_sm_step(struct eap_sm *sm);
 void eap_sm_abort(struct eap_sm *sm);
 int eap_sm_get_status(struct eap_sm *sm, char *buf, size_t buflen,
 		      int verbose);
+const char * eap_sm_get_method_name(struct eap_sm *sm);
 struct wpabuf * eap_sm_buildIdentity(struct eap_sm *sm, int id, int encrypted);
 void eap_sm_request_identity(struct eap_sm *sm);
 void eap_sm_request_password(struct eap_sm *sm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.25 2011/07/26 22:52:48 dyoung Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.25.12.1 2012/11/20 03:01:23 tls Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25 2011/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25.12.1 2012/11/20 03:01:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25 2011/07/26 22:52:48 dyoung Exp $
 #endif
 #include <machine/debug.h>
 
-int	plumpcmcia_match(struct device *, struct cfdata *, void *);
-void	plumpcmcia_attach(struct device *, struct device *, void *);
+int	plumpcmcia_match(device_t, cfdata_t, void *);
+void	plumpcmcia_attach(device_t, device_t, void *);
 int	plumpcmcia_print(void *, const char *);
 
 int	plumpcmcia_power(void *, int, long, void *);
@@ -68,9 +68,9 @@ struct plumpcmcia_softc;
 
 struct plumpcmcia_handle {
 	/* parent */
-	struct device	*ph_parent;
+	device_t ph_parent;
 	/* child */
-	struct device	*ph_pcmcia;
+	device_t ph_pcmcia;
 
 	/* PCMCIA controller register space */
 	bus_space_tag_t ph_regt;
@@ -121,7 +121,7 @@ struct plumpcmcia_event {
 };
 
 struct plumpcmcia_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	plum_chipset_tag_t sc_pc;
 
 	/* Register space */
@@ -198,23 +198,24 @@ static void __memareadump(plumreg_t) __DEBUG_FUNC;
 static void plumpcmcia_dump(struct plumpcmcia_softc *) __DEBUG_FUNC;
 #endif /* PLUMPCMCIA_DEBUG */
 
-CFATTACH_DECL(plumpcmcia, sizeof(struct plumpcmcia_softc),
+CFATTACH_DECL_NEW(plumpcmcia, sizeof(struct plumpcmcia_softc),
     plumpcmcia_match, plumpcmcia_attach, NULL, NULL);
 
 int
-plumpcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
+plumpcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return (1);
 }
 
 void
-plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
+plumpcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
-	struct plumpcmcia_softc *sc = (void*)self;
+	struct plumpcmcia_softc *sc = device_private(self);
 	struct plumpcmcia_handle *ph;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_pc	= pa->pa_pc;
 	sc->sc_regt	= pa->pa_regt;
 
@@ -240,7 +241,7 @@ plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
 	/* Slot0/1 CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
 	error = kthread_create(PRI_NONE, 0, NULL, plumpcmcia_event_thread,
-	    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
+	    sc, &sc->sc_event_thread, "%s", device_xname(self));
 	KASSERT(error == 0);
 
 	/* Slot 0 */
@@ -259,7 +260,7 @@ plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
 	    &ph->ph_regh);
 	ph->ph_iot	= pa->pa_iot;
 	ph->ph_memt	= pa->pa_iot;
-	ph->ph_parent = (void*)sc;
+	ph->ph_parent = self;
 
 	plum_csc_intr_setup(sc, ph, PLUM_INT_C1SC);
 	plum_power_establish(sc->sc_pc, PLUM_PWR_PCC1);
@@ -281,7 +282,7 @@ plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
 	    &ph->ph_regh);
 	ph->ph_iot	= pa->pa_iot;
 	ph->ph_memt	= pa->pa_iot;
-	ph->ph_parent = (void*)sc;
+	ph->ph_parent = self;
 
 	plum_csc_intr_setup(sc, ph, PLUM_INT_C2SC);
 	plum_power_establish(sc->sc_pc, PLUM_PWR_PCC2);
@@ -302,7 +303,7 @@ static void
 plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 {
 	struct pcmciabus_attach_args paa;
-	struct plumpcmcia_softc *sc = (void*)ph->ph_parent;
+	struct plumpcmcia_softc *sc = device_private(ph->ph_parent);
 
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&plumpcmcia_functions;
@@ -328,8 +329,8 @@ plumpcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
     struct pcmcia_function *pf, int ipl,
     int (*ih_fun)(void *), void *ih_arg)
 {
-	struct plumpcmcia_handle *ph = (void*)pch;
-	struct plumpcmcia_softc *sc = (void*)ph->ph_parent;
+	struct plumpcmcia_handle *ph = (void *)pch;
+	struct plumpcmcia_softc *sc = device_private(ph->ph_parent);
 
 	if (!(ph->ph_card_ih = 
 	    plum_intr_establish(sc->sc_pc, ph->ph_plum_irq,
@@ -344,8 +345,8 @@ plumpcmcia_chip_intr_establish(pcmcia_chipset_handle_t pch,
 static void 
 plumpcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
-	struct plumpcmcia_handle *ph = (void*)pch;
-	struct plumpcmcia_softc *sc = (void*)ph->ph_parent;
+	struct plumpcmcia_handle *ph = pch;
+	struct plumpcmcia_softc *sc = device_private(ph->ph_parent);
 
 	plum_intr_disestablish(sc->sc_pc, ih);
 }
@@ -805,7 +806,7 @@ plumpcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
 		reg |= PLUM_PCMCIA_GENCTRL_CARDTYPE_MEM;
 
 	DPRINTF(("%s: plumpcmcia_chip_socket_enable type %s %02x\n",
-	    ph->ph_parent->dv_xname, 
+	    device_xname(ph->ph_parent), 
 	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
 
 	plum_conf_write(regt, regh, PLUM_PCMCIA_GENCTRL, reg);
@@ -864,7 +865,7 @@ static int
 plum_csc_intr(void *arg)
 {
 	struct plumpcmcia_handle *ph = arg;
-	struct plumpcmcia_softc *sc = (void *)ph->ph_parent;
+	struct plumpcmcia_softc *sc = device_private(ph->ph_parent);
 	struct plumpcmcia_event *pe;
 	bus_space_tag_t regt = ph->ph_regt;
 	bus_space_handle_t regh = ph->ph_regh;
@@ -974,7 +975,7 @@ plumpcmcia_power(void *ctx, int type, long id, void *msg)
 
 	switch (why) {
 	case PWR_RESUME:
-		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: ON\n", device_xname(sc->sc_dev)));
 		/* power on */
 		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
 		    PLUM_PCMCIA_CARDPWRCTRL_ON);
@@ -984,7 +985,7 @@ plumpcmcia_power(void *ctx, int type, long id, void *msg)
 	case PWR_STANDBY:
 		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
 		    PLUM_PCMCIA_CARDPWRCTRL_OFF);
-		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: OFF\n", device_xname(sc->sc_dev)));
 		break;
 	}
 

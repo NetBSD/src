@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.278.2.1 2012/09/12 06:15:35 tls Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.278.2.2 2012/11/20 03:02:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.1 2012/09/12 06:15:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.2 2012/11/20 03:02:53 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1318,6 +1318,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		ufs_extattr_uepm_init(&ump->um_extattr);	
 #endif /* UFS_EXTATTR */
 
+	if (mp->mnt_flag & MNT_DISCARD)
+		ump->um_discarddata = ffs_discard_init(devvp, fs);
+
 	return (0);
 out:
 #ifdef WAPBL
@@ -1473,6 +1476,11 @@ ffs_unmount(struct mount *mp, int mntflags)
 #ifdef WAPBL
 	extern int doforce;
 #endif
+
+	if (ump->um_discarddata) {
+		ffs_discard_finish(ump->um_discarddata, mntflags);
+		ump->um_discarddata = NULL;
+	}
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)

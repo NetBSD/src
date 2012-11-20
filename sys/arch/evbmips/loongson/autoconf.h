@@ -68,8 +68,7 @@ struct platform {
 	const struct bonito_irqmap	*irq_map;
 
 	void				(*setup)(void);
-	void				(*device_register)(struct device *,
-					    void *);
+	void				(*device_register)(device_t , void *);
 
 	void				(*powerdown)(void);
 	void				(*reset)(void);

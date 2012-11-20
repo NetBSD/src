@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.60 2011/06/30 20:09:40 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.60.12.1 2012/11/20 03:02:30 tls Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60 2011/06/30 20:09:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60.12.1 2012/11/20 03:02:30 tls Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1333,7 +1333,7 @@ static int      bktr_probe(device_t, cfdata_t, void *);
 #endif
 static void     bktr_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bktr, sizeof(struct bktr_softc),
+CFATTACH_DECL_NEW(bktr, sizeof(struct bktr_softc),
     bktr_probe, bktr_attach, NULL, NULL);
 
 #if defined(__NetBSD__)
@@ -1428,7 +1428,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
-				      bktr_intr, bktr, device_xname(&bktr->bktr_dev));
+				      bktr_intr, bktr, device_xname(bktr->bktr_dev));
 	if (bktr->ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -1449,8 +1449,9 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	int retval;
 	int unit;
 
-	bktr = (bktr_ptr_t)self;
-	unit = device_unit(&bktr->bktr_dev);
+	bktr = device_private(self);
+	bktr->bktr_dev = self;
+	unit = device_unit(bktr->bktr_dev);
         bktr->dmat = pa->pa_dmat;
 
 	printf("\n");
@@ -1535,7 +1536,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 #if NRADIO > 0
 	/* attach to radio(4) */
 	if (bktr->card.tuner->pllControl[3] != 0x00)
-		radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
+		radio_attach_mi(&bktr_hw_if, bktr, bktr->bktr_dev);
 #endif
 }
 

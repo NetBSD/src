@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.9 2012/08/13 01:18:32 rmind Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.9.2.1 2012/11/20 03:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.9 2012/08/13 01:18:32 rmind Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.9.2.1 2012/11/20 03:03:03 tls Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: npf_disassemble.c,v 1.9 2012/08/13 01:18:32 rmind Exp $");
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-
-#include <util.h>
 
 #define NPF_OPCODES_STRINGS
 #include <net/npf_ncode.h>
@@ -108,7 +106,7 @@ npfctl_ncode_add_target(nc_inf_t *ni, const uint32_t *pc)
 	/* Grow array, if needed, and add a new target. */
 	if (ni->ni_targidx == ni->ni_targsize) {
 		ni->ni_targsize += 16;
-		ni->ni_targs = xrealloc(ni->ni_targs,
+		ni->ni_targs = erealloc(ni->ni_targs,
 		    ni->ni_targsize * sizeof(uint32_t));
 	}
 	assert(ni->ni_targidx < ni->ni_targsize);
@@ -372,7 +370,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 nc_inf_t *
 npfctl_ncode_disinf(FILE *fp)
 {
-	nc_inf_t *ni = zalloc(sizeof(nc_inf_t));
+	nc_inf_t *ni = ecalloc(1, sizeof(nc_inf_t));
 
 	memset(ni, 0, sizeof(nc_inf_t));
 	ni->ni_fp = fp;
@@ -664,31 +662,11 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 	}
 	_npf_nat_getinfo(nt, &type, &flags, &taddr, &alen, &port);
 
-	struct sockaddr_storage ss;
-	char taddrbuf[64], tportbuf[16];
+	char *taddrbuf, tportbuf[16];
 
-	if (alen == 4) {
-		struct sockaddr_in *sin = (void *)&ss;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_port = 0;
-		memcpy(&sin->sin_addr, &taddr, sizeof(sin->sin_addr));
-		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
-		    "%a", (struct sockaddr *)sin);
-	} else {
-		assert(alen == 16);
-		struct sockaddr_in6 *sin6 = (void *)&ss;
-		sin6->sin6_len = sizeof(*sin6);
-		sin6->sin6_family = AF_INET6;
-		sin6->sin6_port = 0;
-		memcpy(&sin6->sin6_addr, &taddr, sizeof(sin6->sin6_addr));
-		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
-		    "%a", (struct sockaddr *)sin6);
-	}
-
+	taddrbuf = npfctl_print_addrmask(alen, &taddr, 0);
 	if (port) {
-		snprintf(tportbuf, sizeof(tportbuf),
-		    " port %d", ntohs(port));
+		snprintf(tportbuf, sizeof(tportbuf), " port %d", ntohs(port));
 	}
 
 	const char *seg1 = "any", *seg2 = "any", *sp1 = "", *sp2 = "", *mt;
@@ -708,6 +686,7 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 	}
 	printf("map %s dynamic %s%s %s %s%s pass ", ifname,
 	    seg1, sp1, mt, seg2, sp2);
+	free(taddrbuf);
 
 	const void *nc;
 	size_t nclen;

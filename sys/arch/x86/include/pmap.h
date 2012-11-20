@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.52 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.52.2.1 2012/11/20 03:01:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -255,6 +255,7 @@ void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
 void		pmap_ldt_sync(struct pmap *);
+void		pmap_kremove_local(vaddr_t, vsize_t);
 
 void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);

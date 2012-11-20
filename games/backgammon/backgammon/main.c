@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2010/03/22 05:10:19 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.28.12.1 2012/11/20 02:58:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2010/03/22 05:10:19 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.28.12.1 2012/11/20 02:58:45 tls Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,6 +94,7 @@ main(int argc __unused, char **argv)
 	int     l;		/* non-descript index */
 	char    c;		/* non-descript character storage */
 	time_t  t;		/* time for random num generator */
+	struct move mmstore, *mm;
 
 	/* revoke setgid privileges */
 	setgid(getgid());
@@ -117,12 +118,11 @@ main(int argc __unused, char **argv)
 	t = time(NULL);
 	srandom(t);		/* 'random' seed */
 
-#ifdef V7
+	/* need this now beceause getarg() may try to load a game */
+	mm = &mmstore;
+	move_init(mm);
 	while (*++argv != 0)	/* process arguments */
-#else
-	while (*++argv != -1)	/* process arguments */
-#endif
-		getarg(&argv);
+		getarg(mm, &argv);
 	args[acnt] = '\0';
 	if (tflag) {		/* clear screen */
 		noech.c_oflag &= ~(ONLCR | OXTABS);
@@ -239,23 +239,23 @@ main(int argc __unused, char **argv)
 	for (;;) {		/* begin game! */
 		/* initial roll if needed */
 		if ((!rflag) || raflag)
-			roll();
+			roll(mm);
 
 		/* perform ritual of first roll */
 		if (!rflag) {
 			if (tflag)
 				curmove(17, 0);
-			while (D0 == D1)	/* no doubles */
-				roll();
+			while (mm->D0 == mm->D1)	/* no doubles */
+				roll(mm);
 
 			/* print rolls */
 			writel(rollr);
-			writec(D0 + '0');
+			writec(mm->D0 + '0');
 			writel(rollw);
-			writec(D1 + '0');
+			writec(mm->D1 + '0');
 
 			/* winner goes first */
-			if (D0 > D1) {
+			if (mm->D0 > mm->D1) {
 				writel(rstart);
 				cturn = 1;
 			} else {
@@ -290,14 +290,14 @@ main(int argc __unused, char **argv)
 		/* do first move (special case) */
 		if (!(rflag && raflag)) {
 			if (cturn == pnum)	/* computer's move */
-				move(0);
+				move(mm, 0);
 			else {	/* player's move */
-				mvlim = movallow();
+				mm->mvlim = movallow(mm);
 				/* reprint roll */
 				if (tflag)
 					curmove(cturn == -1 ? 18 : 19, 0);
-				proll();
-				getmove();	/* get player's move */
+				proll(mm);
+				getmove(mm);	/* get player's move */
 			}
 		}
 		if (tflag) {
@@ -322,7 +322,7 @@ main(int argc __unused, char **argv)
 
 			/* do computer's move */
 			if (cturn == pnum) {
-				move(1);
+				move(mm, 1);
 
 				/* see if double refused */
 				if (cturn == -2 || cturn == 2)
@@ -362,12 +362,12 @@ main(int argc __unused, char **argv)
 					/* save game */
 				case 'S':
 					raflag = 1;
-					save(1);
+					save(mm, 1);
 					break;
 
 					/* quit */
 				case 'Q':
-					quit();
+					quit(mm);
 					break;
 
 					/* double */
@@ -378,15 +378,15 @@ main(int argc __unused, char **argv)
 					/* roll */
 				case ' ':
 				case '\n':
-					roll();
+					roll(mm);
 					writel(" rolls ");
-					writec(D0 + '0');
+					writec(mm->D0 + '0');
 					writec(' ');
-					writec(D1 + '0');
+					writec(mm->D1 + '0');
 					writel(".  ");
 
 					/* see if he can move */
-					if ((mvlim = movallow()) == 0) {
+					if ((mm->mvlim = movallow(mm)) == 0) {
 
 						/* can't move */
 						writel(toobad1);
@@ -402,7 +402,7 @@ main(int argc __unused, char **argv)
 						break;
 					}
 					/* get move */
-					getmove();
+					getmove(mm);
 
 					/* okay to clean screen */
 					hflag = 1;
@@ -429,13 +429,13 @@ main(int argc __unused, char **argv)
 			} else {/* couldn't double */
 
 				/* print roll */
-				roll();
+				roll(mm);
 				if (tflag)
 					curmove(cturn == -1 ? 18 : 19, 0);
-				proll();
+				proll(mm);
 
 				/* can he move? */
-				if ((mvlim = movallow()) == 0) {
+				if ((mm->mvlim = movallow(mm)) == 0) {
 
 					/* he can't */
 					writel(toobad2);
@@ -447,7 +447,7 @@ main(int argc __unused, char **argv)
 					continue;
 				}
 				/* get move */
-				getmove();
+				getmove(mm);
 			}
 		}
 
@@ -507,7 +507,7 @@ main(int argc __unused, char **argv)
 		if (i == 2) {
 			writel("  Save.\n");
 			cturn = 0;
-			save(0);
+			save(mm, 0);
 		}
 		/* yes, reset game */
 		wrboard();
@@ -520,7 +520,7 @@ main(int argc __unused, char **argv)
 			/* re-initialize for recovery */
 			init();
 			cturn = 0;
-			save(0);
+			save(mm, 0);
 		}
 	}
 	/* leave peacefully */

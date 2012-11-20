@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.12 2012/08/20 07:32:49 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.12.2.1 2012/11/20 03:02:34 tls Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.12 2012/08/20 07:32:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.12.2.1 2012/11/20 03:02:34 tls Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
@@ -82,7 +82,7 @@ int otus_debug = 0;
 
 Static int	otus_match(device_t, cfdata_t, void *);
 Static void	otus_attach(device_t, device_t, void *);
-Static int	otus_detach(struct device *, int);
+Static int	otus_detach(device_t, int);
 Static int	otus_activate(device_t, devact_t);
 Static void	otus_attachhook(device_t);
 Static void	otus_get_chanlist(struct otus_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.15 2009/05/12 14:22:39 cegger Exp $	*/
+/*	$NetBSD: button.c,v 1.15.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.15 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.15.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: button.c,v 1.15 2009/05/12 14:22:39 cegger Exp $");
 #include "locators.h"
 
 struct button_softc {
-	struct device sc_dev;
 	hpcio_chip_t sc_hc;
 	hpcio_intr_handle_t sc_intr_handle;
 	int sc_port;
@@ -67,7 +66,7 @@ static void	button_attach(device_t, device_t, void *);
 static int	button_intr(void *);
 static int	button_state(void *, int, long, void *);
 
-CFATTACH_DECL(button, sizeof(struct button_softc),
+CFATTACH_DECL_NEW(button, sizeof(struct button_softc),
     button_match, button_attach, NULL, NULL);
 
 int
@@ -89,10 +88,10 @@ button_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
-	struct button_softc *sc = (void*)self;
+	struct button_softc *sc = device_private(self);
 	int mode;
 
-	loc = device_cfdata(&sc->sc_dev)->cf_loc;
+	loc = device_cfdata(self)->cf_loc;
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
 	sc->sc_id = loc[HPCIOIFCF_ID];

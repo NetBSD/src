@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.7 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.7.12.1 2012/11/20 03:01:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7.12.1 2012/11/20 03:01:40 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7 2011/07/01 18:53:46 dyoung Exp 
 #include <dev/eisa/eisavar.h>
 
 void
-eisa_attach_hook(struct device *parent, struct device *self, struct eisabus_attach_args *eba)
+eisa_attach_hook(device_t parent, device_t self, struct eisabus_attach_args *eba)
 {
 }
 

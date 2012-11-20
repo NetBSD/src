@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2012/07/28 19:08:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32.2.1 2012/11/20 03:01:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -782,6 +782,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
+{
+	return EINVAL;
+}
+
+int
+cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
 	return EINVAL;
 }

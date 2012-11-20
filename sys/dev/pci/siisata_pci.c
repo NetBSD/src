@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.10 2012/01/30 19:41:23 drochner Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.10.6.1 2012/11/20 03:02:29 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.10 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.10.6.1 2012/11/20 03:02:29 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -83,6 +83,12 @@ struct siisata_pci_board {
 };
 
 static const struct siisata_pci_board siisata_pci_boards[] = {
+	{
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_3114,
+		.spb_port = 4,
+		.spb_chip = 3114,
+	},
 	{
 		.spb_vend = PCI_VENDOR_CMDTECH,
 		.spb_prod = PCI_PRODUCT_CMDTECH_3124,

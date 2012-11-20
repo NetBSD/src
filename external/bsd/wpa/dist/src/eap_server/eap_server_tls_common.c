@@ -45,8 +45,7 @@ int eap_server_tls_ssl_init(struct eap_sm *sm, struct eap_ssl_data *data,
 		return -1;
 	}
 
-	/* TODO: make this configurable */
-	data->tls_out_limit = 1398;
+	data->tls_out_limit = sm->fragment_size > 0 ? sm->fragment_size : 1398;
 	if (data->phase2) {
 		/* Limit the fragment size in the inner TLS authentication
 		 * since the outer authentication with EAP-PEAP does not yet
@@ -222,6 +221,12 @@ static int eap_server_tls_process_fragment(struct eap_ssl_data *data,
 		if (message_length > 65536) {
 			wpa_printf(MSG_INFO, "SSL: Too long TLS fragment (size"
 				   " over 64 kB)");
+			return -1;
+		}
+		if (len > message_length) {
+			wpa_printf(MSG_INFO, "SSL: Too much data (%zu bytes) "
+				   "in first fragment of frame (TLS Message "
+				   "Length %u bytes)", len, message_length);
 			return -1;
 		}
 

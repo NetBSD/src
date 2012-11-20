@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.26 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.26.6.1 2012/11/20 03:00:57 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.1 2012/11/20 03:00:57 tls Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -114,8 +114,8 @@ Note: IO Regbase is needed fo wakeup of the board otherwise use
 #define cpu_sync() __asm volatile ("sync; isync")
 #endif
 
-int	grfcv3dmatch(struct device *, struct cfdata *, void *);
-void	grfcv3dattach(struct device *, struct device *, void *);
+int	grfcv3dmatch(device_t, cfdata_t, void *);
+void	grfcv3dattach(device_t, device_t, void *);
 int	grfcv3dprint(void *, const char *);
 
 static int cv3d_has_4mb(volatile void *);
@@ -337,7 +337,7 @@ static struct wsscreen_descr cv3d_screen = {
 #endif /* NWSDISPLAY > 0 */
 
 /* standard driver stuff */
-CFATTACH_DECL(grfcv3d, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grfcv3d, sizeof(struct grf_softc),
     grfcv3dmatch, grfcv3dattach, NULL, NULL);
 
 static struct cfdata *cfdata;
@@ -380,14 +380,14 @@ cv3d_has_4mb(volatile void *fb)
 }
 
 int
-grfcv3dmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+grfcv3dmatch(device_t parent, cfdata_t cf, void *aux)
 {
 #ifdef CV3DCONSOLE
 	static int cv3dcons_unit = -1;
 #endif
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (amiga_realconfig == 0)
 #ifdef CV3DCONSOLE
@@ -406,18 +406,12 @@ grfcv3dmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	if (zap->manid != 8512 || zap->prodid != 67)
 		return (0);
 
-#ifndef CV3DONZORRO2
-	if (!cv3d_zorroIII) {
-		return (0);
-	}
-#endif
-
 	cv3d_boardaddr = zap->va;
 
 #ifdef CV3DCONSOLE
 	if (amiga_realconfig == 0) {
-		cv3dcons_unit = cfp->cf_unit;
-		cfdata = cfp;
+		cv3dcons_unit = cf->cf_unit;
+		cfdata = cf;
 	}
 #endif
 
@@ -425,28 +419,33 @@ grfcv3dmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
+grfcv3dattach(device_t parent, device_t self, void *aux)
 {
 	static struct grf_softc congrf;
+	static char attachflag = 0;
+	struct device temp;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
-	static char attachflag = 0;
 
-	zap = auxp;
+	zap = aux;
 
 	printf("\n");
 
 	/*
-	 * This function is called twice, once on console init (dp == NULL)
+	 * This function is called twice, once on console init (self == NULL)
 	 * and once on "normal" grf7 init.
 	 */
 
-	if (dp == NULL) /* console init */
+	if (self == NULL) {
 		gp = &congrf;
-	else
-		gp = (struct grf_softc *)dp;
+		gp->g_device = &temp;
+		temp.dv_private = gp;
+	} else {
+		gp = device_private(self);
+		gp->g_device = self;
+	}
 
-	if (dp != NULL && congrf.g_regkva != 0) {
+	if (self != NULL && congrf.g_regkva != 0) {
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
@@ -507,10 +506,10 @@ grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach grf
 	 */
-	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcv3dprint)) {
-		if (dp != NULL)
+	if (amiga_config_found(cfdata, gp->g_device, gp, grfcv3dprint)) {
+		if (self != NULL)
 			printf("%s: CyberVision64/3D with %dMB being used\n",
-			    dp->dv_xname, cv3d_fbsize / 0x100000);
+			    device_xname(self), cv3d_fbsize / 0x100000);
 		attachflag = 1;
 	} else {
 		if (!attachflag)
@@ -519,7 +518,7 @@ grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 int
-grfcv3dprint(void *auxp, const char *pnp)
+grfcv3dprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		aprint_normal("ite at %s: ", pnp);

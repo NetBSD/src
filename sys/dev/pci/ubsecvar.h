@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.3 2007/03/04 06:02:26 christos Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.3.86.1 2012/11/20 03:02:29 tls Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ struct ubsec_q {
 };
 
 struct ubsec_softc {
-	struct	device		sc_dv;		/* generic device */
+	device_t		sc_dev;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
 	bus_space_handle_t	sc_sh;		/* memory handle */
 	bus_space_tag_t		sc_st;		/* memory tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200var.h,v 1.5 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: ucb1200var.h,v 1.5.44.1 2012/11/20 03:01:23 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@ struct ucb1200_attach_args {
 	tx_chipset_tag_t ucba_tc;
 	int ucba_snd_rate;
 	int ucba_tel_rate;
-	struct device *ucba_sib;
-	struct device *ucba_ucb;
+	device_t ucba_sib;
+	device_t ucba_ucb;
 };
 
 #define UCB1200_TP_MODULE	0
@@ -42,6 +42,6 @@ struct ucb1200_attach_args {
 #define UCB1200_TEL_MODULE	2
 #define UCB1200_MODULE_MAX	3
 
-void	ucb1200_state_install(struct device *, int (*)(void *), void *, int);
-int	ucb1200_state_idle(struct device *);
+void	ucb1200_state_install(device_t, int (*)(void *), void *, int);
+int	ucb1200_state_idle(device_t);
 

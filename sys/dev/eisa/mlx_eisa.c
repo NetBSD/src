@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.22 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.22.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.22 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.22.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static int	mlx_v1_fw_handshake(struct mlx_softc *, int *, int *, int *);
 static int	mlx_v1_reset(struct mlx_softc *);
 #endif
 
-CFATTACH_DECL(mlx_eisa, sizeof(struct mlx_softc),
+CFATTACH_DECL_NEW(mlx_eisa, sizeof(struct mlx_softc),
     mlx_eisa_match, mlx_eisa_attach, NULL, NULL);
 
 static struct mlx_eisa_prod {
@@ -130,6 +130,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mlx->mlx_dv = self;
 	mlx->mlx_iot = iot;
 	mlx->mlx_ioh = ioh;
 	mlx->mlx_dmat = ea->ea_dmat;

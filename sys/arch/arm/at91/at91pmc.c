@@ -1,5 +1,5 @@
-/*	$Id: at91pmc.c,v 1.5 2011/11/04 17:21:46 aymeric Exp $	*/
-/*	$NetBSD: at91pmc.c,v 1.5 2011/11/04 17:21:46 aymeric Exp $	*/
+/*	$Id: at91pmc.c,v 1.5.10.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: at91pmc.c,v 1.5.10.1 2012/11/20 03:01:03 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD");
 void
 at91pmc_get_clocks(struct at91bus_clocks *clocks)
 {
-	u_int64_t		mclk, pllaclk, pllbclk, pclk, mstclk;
-	u_int32_t		reg;
+	uint64_t		mclk, pllaclk, pllbclk, pclk, mstclk;
+	uint32_t		reg;
 
 	if (!((reg = PMCREG(PMC_MOR)) & PMC_MOR_MOSCEN))
 		panic("%s: main oscillator not enabled (MOR=0x%#X)", __FUNCTION__, reg);

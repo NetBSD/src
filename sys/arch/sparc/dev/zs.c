@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.120 2010/06/26 03:39:53 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.120.18.1 2012/11/20 03:01:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.120 2010/06/26 03:39:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.120.18.1 2012/11/20 03:01:43 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -185,7 +185,7 @@ void zs_disable(struct zs_chanstate *);
 
 
 /* XXX from dev/ic/z8530tty.c */
-extern struct tty *zstty_get_tty_from_dev(struct device *);
+extern struct tty *zstty_get_tty_from_dev(device_t);
 
 /*
  * Is the zs chip present?
@@ -415,7 +415,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
-		struct device *child;
+		device_t child;
 		int hwflags;
 
 		zsc_args.channel = channel;

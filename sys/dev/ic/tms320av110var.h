@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.11 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.11.8.1 2012/11/20 03:02:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 /* softc */
 
 struct tav_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
 	kcondvar_t	sc_cv;

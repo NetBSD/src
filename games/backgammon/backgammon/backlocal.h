@@ -1,4 +1,4 @@
-/*	$NetBSD: backlocal.h,v 1.4 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: backlocal.h,v 1.4.12.1 2012/11/20 02:58:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,5 +32,5 @@
 void		dble(void);
 int		dblgood(void);
 int		freemen(int);
-void		move(int);
+void		move(struct move *, int);
 int		trapped(int, int);

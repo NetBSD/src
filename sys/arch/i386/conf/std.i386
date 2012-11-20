@@ -1,11 +1,10 @@
-# $NetBSD: std.i386,v 1.32 2012/08/01 23:24:29 rmind Exp $
+# $NetBSD: std.i386,v 1.32.2.1 2012/11/20 03:01:26 tls Exp $
 #
 # standard, required NetBSD/i386 'options'
 
 machine i386 x86
 include		"conf/std"	# MI standard options
 
-options 	BPF_JIT
 options 	CPU_IN_CKSUM
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries

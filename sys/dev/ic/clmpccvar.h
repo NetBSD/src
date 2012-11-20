@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.12 2008/04/28 20:23:49 martin Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.12.44.1 2012/11/20 03:02:03 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct clmpcc_chan {
 
 
 struct clmpcc_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	/*
 	 * The bus/MD-specific attachment code must initialise the

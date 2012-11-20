@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.31 2012/07/25 01:23:46 christos Exp $	*/
+/*	$NetBSD: touch.c,v 1.31.2.1 2012/11/20 03:02:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.31 2012/07/25 01:23:46 christos Exp $");
+__RCSID("$NetBSD: touch.c,v 1.31.2.1 2012/11/20 03:02:59 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,12 +57,22 @@ __RCSID("$NetBSD: touch.c,v 1.31 2012/07/25 01:23:46 christos Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+#include <getopt.h>
 
 static void	stime_arg0(char *, struct timeval *);
 static void	stime_arg1(char *, struct timeval *);
 static void	stime_arg2(char *, int, struct timeval *);
 static void	stime_file(char *, struct timeval *);
 __dead static void	usage(void);
+
+struct option touch_longopts[] = {
+	{ "date",		required_argument,	0,
+						'd' },
+	{ "reference",		required_argument,	0,
+						'r' },
+	{ NULL,			0,			0,
+						0 },
+};
 
 int
 main(int argc, char *argv[])
@@ -80,7 +90,8 @@ main(int argc, char *argv[])
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
-	while ((ch = getopt(argc, argv, "acd:fhmr:t:")) != -1)
+	while ((ch = getopt_long(argc, argv, "acd:fhmr:t:", touch_longopts,
+	    NULL)) != -1)
 		switch(ch) {
 		case 'a':
 			aflag = 1;
@@ -320,7 +331,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-acfhm] [-d datetime] [-r file] [-t time] file ...\n",
+	    "Usage: %s [-acfhm] [-d|--date datetime] [-r|--reference file] [-t time] file ...\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }

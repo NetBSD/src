@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.19 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.19.6.1 2012/11/20 03:02:05 tls Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.19 2012/02/02 19:43:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.19.6.1 2012/11/20 03:02:05 tls Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -192,7 +192,7 @@ mb86950_attach(struct mb86950_softc *sc, u_int8_t *myea)
 #ifdef DIAGNOSTIC
 	if (myea == NULL) {
 		printf("%s: ethernet address shouldn't be NULL\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		panic("NULL ethernet address");
 	}
 #endif
@@ -268,7 +268,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 	bus_space_handle_t bsh = sc->sc_bsh;
 
 	/* Initialize ifnet structure. */
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = mb86950_start;
 	ifp->if_ioctl = mb86950_ioctl;
@@ -293,7 +293,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 
 /* XXX No! This doesn't work - DLCR6 of the mb86950 is different
@@ -323,7 +323,7 @@ mb86950_config(struct mb86950_softc *sc, int *media,
 	if (sc->rxb_num_pkt == 0) sc->rxb_num_pkt = 100;
 
 	/* Print additional info when attached. */
-	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* The attach is successful. */
@@ -373,7 +373,7 @@ mb86950_reset(struct mb86950_softc *sc)
 	int s;
 
 	s = splnet();
-	log(LOG_ERR, "%s: device reset\n", device_xname(&sc->sc_dev));
+	log(LOG_ERR, "%s: device reset\n", device_xname(sc->sc_dev));
 	mb86950_stop(sc);
 	mb86950_init(sc);
 	splx(s);
@@ -396,21 +396,21 @@ mb86950_watchdog(struct ifnet *ifp)
 		if (tstat & TX_CR_LOST) {
 			if ((tstat & (TX_COL | TX_16COL)) == 0) {
 				 log(LOG_ERR, "%s: carrier lost\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			} else {
 				log(LOG_ERR, "%s: excessive collisions\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 			}
 		}
 		else if ((tstat & (TX_UNDERFLO | TX_BUS_WR_ERR)) != 0) {
 			log(LOG_ERR, "%s: tx fifo underflow/overflow\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		} else {
 			log(LOG_ERR, "%s: transmit error\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		}
 	} else {
-		log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
+		log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	}
 
 	/* Don't know how many packets are lost by this accident.
@@ -501,7 +501,7 @@ mb86950_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		/* "ifconfig fe0 debug" to print register dump. */
 		if (ifp->if_flags & IFF_DEBUG) {
 			log(LOG_INFO, "%s: SIOCSIFFLAGS(DEBUG)\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			mb86950_dump(LOG_DEBUG, sc);
 		}
 #endif
@@ -580,7 +580,7 @@ mb86950_start(struct ifnet *ifp)
 
 	/* XXX bus_space_barrier here ? */
 	if (bus_space_read_1(bst, bsh, DLCR_TX_STAT) & (TX_UNDERFLO | TX_BUS_WR_ERR)) {
-		log(LOG_ERR, "%s: tx fifo underflow/overflow\n", device_xname(&sc->sc_dev));
+		log(LOG_ERR, "%s: tx fifo underflow/overflow\n", device_xname(sc->sc_dev));
 	}
 
 	bus_space_write_2(bst, bsh, BMPR_TX_LENGTH, len | TRANSMIT_START);
@@ -921,7 +921,7 @@ mb86950_enable(struct mb86950_softc *sc)
 
 	if ((sc->sc_stat & ESTAR_STAT_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
-			aprint_error_dev(&sc->sc_dev, "device enable failed\n");
+			aprint_error_dev(sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 	}

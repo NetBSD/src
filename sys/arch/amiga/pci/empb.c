@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.7 2012/06/27 18:53:03 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.7.2.1 2012/11/20 03:01:00 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -63,30 +63,28 @@
 #define WINDOW_LOCK(s)		(s) = splhigh()
 #define WINDOW_UNLOCK(s)	splx((s)) 
 
-static int	empb_match(struct device *, struct cfdata *, void *);
-static void	empb_attach(struct device *, struct device *, void *);
+static int	empb_match(device_t, cfdata_t, void *);
+static void	empb_attach(device_t, device_t, void *);
 
-static void	empb_callback(device_t self);
+static void	empb_callback(device_t);
 
-static void	empb_find_mem(struct empb_softc *sc);
-static void	empb_switch_bridge(struct empb_softc *sc, uint8_t mode);
-static void	empb_intr_enable(struct empb_softc *sc);
+static void	empb_find_mem(struct empb_softc *);
+static void	empb_switch_bridge(struct empb_softc *, uint8_t);
+static void	empb_intr_enable(struct empb_softc *);
 
 pcireg_t	empb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		empb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		empb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno); 
-void		empb_pci_attach_hook(struct device *parent, 
-		    struct device *self, struct pcibus_attach_args *pba);
-pcitag_t	empb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, 
-		    int function);
-void		empb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, 
-		    int *bp, int *dp, int *fp);
-int		empb_pci_intr_map(const struct pci_attach_args *pa, 
-		    pci_intr_handle_t *ihp);
-const struct evcnt * empb_pci_intr_evcnt(pci_chipset_tag_t pc, 
-		    pci_intr_handle_t ih);
-int		empb_pci_conf_hook(pci_chipset_tag_t pct, int bus, 
-		    int dev, int func, pcireg_t id);
+int		empb_pci_bus_maxdevs(pci_chipset_tag_t, int); 
+void		empb_pci_attach_hook(device_t, device_t,
+		    struct pcibus_attach_args *);
+pcitag_t	empb_pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		empb_pci_decompose_tag(pci_chipset_tag_t, pcitag_t, 
+		    int *, int *, int *);
+int		empb_pci_intr_map(const struct pci_attach_args *, 
+		    pci_intr_handle_t *);
+const struct evcnt * empb_pci_intr_evcnt(pci_chipset_tag_t, 
+		    pci_intr_handle_t);
+int		empb_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 
 CFATTACH_DECL_NEW(empb, sizeof(struct empb_softc),
     empb_match, empb_attach, NULL, NULL);
@@ -420,7 +418,7 @@ empb_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 }
 
 void
-empb_pci_attach_hook(struct device *parent, struct device *self,
+empb_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }

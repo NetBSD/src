@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.7 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: T_SH7706LSR,v 1.7.6.1 2012/11/20 03:01:20 tls Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -49,6 +49,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

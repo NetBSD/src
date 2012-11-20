@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.33 2012/08/29 07:09:12 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.33.2.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -323,7 +323,7 @@ LOCK_CAS_DEBUG_LOCALS
  */
 #define	PUSHUSERREGS							   \
 	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
-	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
+	add	r0, sp, #(TF_USR_SP-TF_R0); /* Adjust the stack pointer */ \
 	stmia	r0, {r13-r14}^		/* Push the user mode registers */
 #else
 #define	PUSHUSERREGS							   \
@@ -332,11 +332,24 @@ LOCK_CAS_DEBUG_LOCALS
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
-	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
+	sub	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
-	str	r0, [sp, #-8]!		/* Push the SPSR on the stack */
+	str	r0, [sp, #-TF_R0]!	/* Push the SPSR on the stack */
+
+/*
+ * Push a minimal trapframe so we can dispatch an interrupt from the
+ * idle loop.  The only reason the idle loop wakes up is to dispatch
+ * interrupts so why take the avoid of a full exception when we can do
+ * something minimal.
+ */
+#define PUSHIDLEFRAME							   \
+	str	lr, [sp, #-4]!;		/* save SVC32 lr */		   \
+	str	r6, [sp, #(TF_R6-TF_PC)]!; /* save callee-saved r6 */	   \
+	str	r4, [sp, #(TF_R4-TF_R6)]!; /* save callee-saved r4 */	   \
+	mrs	r0, cpsr_all;		/* Get the CPSR */		   \
+	str	r0, [sp, #(-TF_R4)]!	/* Push the CPSR on the stack */
 
 /*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
@@ -344,12 +357,18 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAME							   \
-	ldr     r0, [sp], #0x0008;      /* Pop the SPSR from stack */	   \
+	ldr     r0, [sp], #TF_R0;	/* Pop the SPSR from stack */	   \
 	msr     spsr_all, r0;						   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
-	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
+	add	sp, sp, #(TF_PC-TF_R0);	/* Adjust the stack pointer */	   \
  	ldr	lr, [sp], #0x0004	/* Pop the return address */
+
+#define PULLIDLEFRAME							   \
+	add	sp, sp, #TF_R4;		/* Adjust the stack pointer */	   \
+	ldr	r4, [sp], #(TF_R6-TF_R4); /* restore callee-saved r4 */	   \
+	ldr	r6, [sp], #(TF_PC-TF_R6); /* restore callee-saved r6 */	   \
+ 	ldr	lr, [sp], #4		/* Pop the return address */
 
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
@@ -385,11 +404,11 @@ LOCK_CAS_DEBUG_LOCALS
 	mov	sp, r2;			/* Keep stack aligned */	   \
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
-	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	sub	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
 	PUSHUSERREGS;			/* Push the user mode registers */ \
 	mov     r0, r0;                 /* NOP for previous instruction */ \
 	mrs	r0, spsr_all;		/* Get the SPSR */		   \
-	str	r0, [sp, #-8]!		/* Push the SPSR onto the stack */
+	str	r0, [sp, #-TF_R0]!	/* Push the SPSR onto the stack */
 
 /*
  * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
@@ -403,7 +422,7 @@ LOCK_CAS_DEBUG_LOCALS
 	msr     spsr_all, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	add	sp, sp, #(TF_SVC_SP-TF_R0); /* Adjust the stack pointer */ \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
 #endif /* _LOCORE */

@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_8.S,v 1.3 2012/08/31 23:41:52 matt Exp $ */
+/* $NetBSD: atomic_cas_8.S,v 1.3.2.1 2012/11/20 02:57:29 tls Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,4 +56,4 @@ ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_char,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_uchar,_atomic_cas_8)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */

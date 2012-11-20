@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.15 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: edvar.h,v 1.15.6.1 2012/11/20 03:02:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 struct edc_mca_softc;
 
 struct ed_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	/* General disk infos */
 	struct disk sc_dk;

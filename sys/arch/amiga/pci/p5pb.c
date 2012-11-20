@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.11 2012/07/13 08:47:07 rkujawa Exp $ */
+/*	$NetBSD: p5pb.c,v 1.11.2.1 2012/11/20 03:01:00 tls Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -86,38 +86,36 @@ struct m68k_bus_dma_tag p5pb_bus_dma_tag = {
 	_bus_dmamem_mmap
 };
 
-static int	p5pb_match(struct device *, struct cfdata *, void *);
-static void	p5pb_attach(struct device *, struct device *, void *);
-void		p5pb_set_props(struct p5pb_softc *sc);
+static int	p5pb_match(device_t, cfdata_t, void *);
+static void	p5pb_attach(device_t, device_t, void *);
+void		p5pb_set_props(struct p5pb_softc *);
 pcireg_t	p5pb_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		p5pb_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-int		p5pb_pci_bus_maxdevs_cvppc(pci_chipset_tag_t pc, int busno); 
-int		p5pb_pci_bus_maxdevs_grex1200(pci_chipset_tag_t pc, int busno); 
-int		p5pb_pci_bus_maxdevs_grex4000(pci_chipset_tag_t pc, int busno); 
-int		p5pb_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, 
-		    int func, pcireg_t id);
-void		p5pb_pci_attach_hook (struct device *parent, 
-		    struct device *self, struct pcibus_attach_args *pba);
-pcitag_t	p5pb_pci_make_tag(pci_chipset_tag_t pc, int bus, int device, 
-		    int function);
-void		p5pb_pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, 
-		    int *bp, int *dp, int *fp);
-int		p5pb_pci_intr_map(const struct pci_attach_args *pa, 
-		    pci_intr_handle_t *ihp);
-bool		p5pb_bus_map_memio(struct p5pb_softc *sc);
-bool		p5pb_bus_map_conf(struct p5pb_softc *sc);
-uint8_t		p5pb_find_resources(struct p5pb_softc *sc);
-static bool	p5pb_identify_bridge(struct p5pb_softc *sc);
-void		p5pb_membar_grex(struct p5pb_softc *sc);
-static bool	p5pb_cvppc_probe(struct p5pb_softc *sc);
+int		p5pb_pci_bus_maxdevs_cvppc(pci_chipset_tag_t, int); 
+int		p5pb_pci_bus_maxdevs_grex1200(pci_chipset_tag_t, int); 
+int		p5pb_pci_bus_maxdevs_grex4000(pci_chipset_tag_t, int); 
+int		p5pb_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+void		p5pb_pci_attach_hook (device_t, device_t,
+		    struct pcibus_attach_args *);
+pcitag_t	p5pb_pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		p5pb_pci_decompose_tag(pci_chipset_tag_t, pcitag_t, 
+		    int *, int *, int *);
+int		p5pb_pci_intr_map(const struct pci_attach_args *, 
+		    pci_intr_handle_t *);
+bool		p5pb_bus_map_memio(struct p5pb_softc *);
+bool		p5pb_bus_map_conf(struct p5pb_softc *);
+uint8_t		p5pb_find_resources(struct p5pb_softc *);
+static bool	p5pb_identify_bridge(struct p5pb_softc *);
+void		p5pb_membar_grex(struct p5pb_softc *);
+static bool	p5pb_cvppc_probe(struct p5pb_softc *);
 #ifdef PCI_NETBSD_CONFIGURE
-bool		p5pb_bus_reconfigure(struct p5pb_softc *sc);
+bool		p5pb_bus_reconfigure(struct p5pb_softc *);
 #endif /* PCI_NETBSD_CONFIGURE */
 #ifdef P5PB_DEBUG
-void		p5pb_usable_ranges(struct p5pb_softc *sc);
-void		p5pb_badaddr_range(struct p5pb_softc *sc, bus_space_tag_t bust, 
-		    bus_addr_t base, size_t len);
-void		p5pb_conf_search(struct p5pb_softc *sc, uint16_t val);
+void		p5pb_usable_ranges(struct p5pb_softc *);
+void		p5pb_badaddr_range(struct p5pb_softc *, bus_space_tag_t, 
+		    bus_addr_t, size_t);
+void		p5pb_conf_search(struct p5pb_softc *, uint16_t);
 #endif /* P5PB_DEBUG */
 
 CFATTACH_DECL_NEW(p5pb, sizeof(struct p5pb_softc),
@@ -426,7 +424,7 @@ p5pb_pci_bus_maxdevs_grex1200(pci_chipset_tag_t pc, int busno)
 }
 
 void
-p5pb_pci_attach_hook(struct device *parent, struct device *self,
+p5pb_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }
@@ -706,4 +704,3 @@ p5pb_device_register(device_t dev, void *aux)
         }
 }
 #endif /* P5PB_CONSOLE */
-

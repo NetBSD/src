@@ -79,26 +79,6 @@
 #endif
 
 /*
- *
- */
-
-#define ISCSI_HTONLL6(x) (uint64_t) \
-      ( ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000ff0000000000uLL) >> 40))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000ff00000000uLL) >> 24))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x00000000ff000000uLL) >> 8))      \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000000000ff0000uLL) << 8))      \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000000000ff00uLL) << 24))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x00000000000000ffuLL) << 40)))
-
-#define ISCSI_NTOHLL6(x) (uint64_t) \
-      ( ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000ff0000000000uLL) >> 40))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000ff00000000uLL) >> 24))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x00000000ff000000uLL) >> 8))      \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x0000000000ff0000uLL) << 8))      \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x000000000000ff00uLL) << 24))     \
-      | ((uint64_t)( ((uint64_t)(x) & (uint64_t)0x00000000000000ffuLL) << 40)))
-
-/*
  * Debugging Levels
  */
 

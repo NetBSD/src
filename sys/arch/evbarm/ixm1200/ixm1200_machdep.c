@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.51 2012/08/16 18:22:44 matt Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51 2012/08/16 18:22:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -361,7 +361,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages   = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
 	bootconfig.dramblocks = 1;
 
-	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
+	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
 
@@ -598,7 +598,7 @@ initarm(void *arg)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

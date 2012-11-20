@@ -1,4 +1,4 @@
-/*	$NetBSD: bppcsc.c,v 1.2 2012/01/10 20:29:50 rkujawa Exp $ */
+/*	$NetBSD: bppcsc.c,v 1.2.6.1 2012/11/20 03:00:57 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.2 2012/01/10 20:29:50 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.2.6.1 2012/11/20 03:00:57 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,25 +84,25 @@ __KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.2 2012/01/10 20:29:50 rkujawa Exp $");
 #define BPPC_SCSI_OFF	0xf40000
 #define BPPC_PUPROM_OFF	0xf00010
 
-void bppcscattach(struct device *, struct device *, void *);
-int bppcscmatch(struct device *, struct cfdata *, void *);
+void bppcscattach(device_t, device_t, void *);
+int bppcscmatch(device_t, cfdata_t, void *);
 int bppcsc_dmaintr(void *);
 #ifdef DEBUG
 void bppcsc_dump(void);
 #endif
 
-CFATTACH_DECL(bppcsc, sizeof(struct siop_softc),
+CFATTACH_DECL_NEW(bppcsc, sizeof(struct siop_softc),
     bppcscmatch, bppcscattach, NULL, NULL);
 
 /*
  * if we are a Phase5 BlizzardPPC 603e+
  */
 int
-bppcscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+bppcscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct p5bus_attach_args *p5baa;
 
-	p5baa = (struct p5bus_attach_args *) auxp;
+	p5baa = aux;
 
 	if (strcmp(p5baa->p5baa_name, "bppcsc") == 0)
 		return 1;
@@ -111,14 +111,15 @@ bppcscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 }
 
 void
-bppcscattach(struct device *pdp, struct device *dp, void *auxp)
+bppcscattach(device_t parent, device_t self, void *aux)
 {
 	struct siop_softc *sc;
 	struct scsipi_adapter *adapt;
 	struct scsipi_channel *chan;
 	siop_regmap_p rp;
 
-	sc = (struct siop_softc *)dp;
+	sc = device_private(self);
+	sc->sc_dev = self;
 	adapt = &sc->sc_adapter;
 	chan = &sc->sc_channel;
 
@@ -140,7 +141,7 @@ bppcscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = self;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 7;
 	adapt->adapt_max_periph = 1;
@@ -168,7 +169,7 @@ bppcscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, chan, scsiprint);
+	config_found(self, chan, scsiprint);
 }
 
 int

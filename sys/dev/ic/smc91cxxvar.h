@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.18 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.18.6.1 2012/11/20 03:02:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <sys/rnd.h>
 
 struct smc91cxx_softc {
-	struct	device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 	struct	ethercom sc_ec;		/* ethernet common glue */
 
 	struct mii_data sc_mii;		/* MII/media control		*/

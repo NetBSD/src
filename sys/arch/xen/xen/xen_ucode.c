@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ucode.c,v 1.2 2012/08/29 17:13:22 drochner Exp $ */
+/* $NetBSD: xen_ucode.c,v 1.2.2.1 2012/11/20 03:01:52 tls Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.2 2012/08/29 17:13:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ucode.c,v 1.2.2.1 2012/11/20 03:01:52 tls Exp $");
 
 #include "opt_cpu_ucode.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/cpuio.h>
@@ -62,7 +63,7 @@ cpu_ucode_get_version(struct cpu_ucode_version *data)
 	return 0;
 }
 
-/* XXX COMPAT */
+#ifdef COMPAT_60
 int
 compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
 {
@@ -76,6 +77,7 @@ compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *data)
 
 	return 0;
 }
+#endif
 
 int
 cpu_ucode_md_open(firmware_handle_t *fwh, int loader_version, const char *fwname)
@@ -119,6 +121,7 @@ cpu_ucode_apply(const struct cpu_ucode *data)
 	return error;
 }
 
+#ifdef COMPAT_60
 int
 compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
 {
@@ -143,3 +146,4 @@ compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *data)
 	sc->sc_blobsize = 0;
 	return error;
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.9 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.9.12.1 2012/11/20 03:01:06 tls Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -38,7 +38,7 @@
 #include <dev/pci/pcivar.h>
 
 struct ixp12x0_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 
 	/* Handles for the PCI */
@@ -69,9 +69,9 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	u_int32_t iq_mask;		/* IRQs to mask while handling */
-	u_int32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
-	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
+	uint32_t iq_mask;		/* IRQs to mask while handling */
+	uint32_t iq_pci_mask;		/* PCI IRQs to mask while handling */
+	uint32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 	int iq_ist;			/* share type */
 };

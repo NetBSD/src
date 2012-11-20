@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.86 2012/07/06 21:10:56 jdf Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.86.2.1 2012/11/20 02:57:53 tls Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -913,7 +913,11 @@ message Select_medium {Wybierz medium}
 message ftp {FTP}
 message http {HTTP}
 message nfs {NFS}
+.if HAVE_INSTALL_IMAGE
+message cdrom {CD-ROM / DVD / install image media}	/* XXX translation */
+.else
 message cdrom {CD-ROM / DVD}
+.endif
 message floppy {Dyskietka}
 message local_fs {Niezamontowany SP}
 message local_dir {Lokalny katalog}

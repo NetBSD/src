@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.11 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.11.44.1 2012/11/20 03:02:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ struct mcabus_attach_args {
 
 
 struct mca_attach_args {
-	struct device  *ma_self;	/* pointer to it's device struct */
 	bus_space_tag_t ma_iot;		/* MCA I/O space tag */
 	bus_space_tag_t ma_memt;	/* MCA mem space tag */
 	bus_dma_tag_t ma_dmat;		/* MCA DMA tag */

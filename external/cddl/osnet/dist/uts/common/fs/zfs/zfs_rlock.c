@@ -94,6 +94,33 @@
 
 #include <sys/zfs_rlock.h>
 
+static int
+zfs_range_lock_hold(rl_t *rl)
+{
+
+	KASSERT(mutex_owned(&rl->r_zp->z_range_lock));
+
+	if (rl->r_refcnt >= ULONG_MAX)
+		return (ENFILE); /* XXX What to do?  */
+
+	rl->r_refcnt++;
+	return (0);
+}
+
+static void
+zfs_range_lock_rele(rl_t *rl)
+{
+
+	KASSERT(mutex_owned(&rl->r_zp->z_range_lock));
+	KASSERT(rl->r_refcnt > 0);
+
+	if (--rl->r_refcnt == 0) {
+		cv_destroy(&rl->r_wr_cv);
+		cv_destroy(&rl->r_rd_cv);
+		kmem_free(rl, sizeof (rl_t));
+	}
+}
+
 /*
  * Check if a write lock can be grabbed, or wait and recheck until available.
  */
@@ -169,10 +196,12 @@ zfs_range_lock_writer(znode_t *zp, rl_t *new)
 		return;
 wait:
 		if (!rl->r_write_wanted) {
-			cv_init(&rl->r_wr_cv, NULL, CV_DEFAULT, NULL);
 			rl->r_write_wanted = B_TRUE;
 		}
+		if (zfs_range_lock_hold(rl) != 0)
+			panic("too many waiters on zfs range lock %p", rl);
 		cv_wait(&rl->r_wr_cv, &zp->z_range_lock);
+		zfs_range_lock_rele(rl);
 
 		/* reset to original */
 		new->r_off = off;
@@ -205,8 +234,11 @@ zfs_range_proxify(avl_tree_t *tree, rl_t *rl)
 	proxy->r_cnt = 1;
 	proxy->r_type = RL_READER;
 	proxy->r_proxy = B_TRUE;
+	cv_init(&proxy->r_wr_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&proxy->r_rd_cv, NULL, CV_DEFAULT, NULL);
 	proxy->r_write_wanted = B_FALSE;
 	proxy->r_read_wanted = B_FALSE;
+	proxy->r_refcnt = 1;
 	avl_add(tree, proxy);
 
 	return (proxy);
@@ -234,6 +266,9 @@ zfs_range_split(avl_tree_t *tree, rl_t *rl, uint64_t off)
 	rear->r_cnt = rl->r_cnt;
 	rear->r_type = RL_READER;
 	rear->r_proxy = B_TRUE;
+	cv_init(&rear->r_wr_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&rear->r_rd_cv, NULL, CV_DEFAULT, NULL);
+	rear->r_refcnt = 1;
 	rear->r_write_wanted = B_FALSE;
 	rear->r_read_wanted = B_FALSE;
 
@@ -259,8 +294,11 @@ zfs_range_new_proxy(avl_tree_t *tree, uint64_t off, uint64_t len)
 	rl->r_cnt = 1;
 	rl->r_type = RL_READER;
 	rl->r_proxy = B_TRUE;
+	cv_init(&rl->r_wr_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&rl->r_rd_cv, NULL, CV_DEFAULT, NULL);
 	rl->r_write_wanted = B_FALSE;
 	rl->r_read_wanted = B_FALSE;
+	rl->r_refcnt = 1;
 	avl_add(tree, rl);
 }
 
@@ -372,10 +410,13 @@ retry:
 	if (prev && (off < prev->r_off + prev->r_len)) {
 		if ((prev->r_type == RL_WRITER) || (prev->r_write_wanted)) {
 			if (!prev->r_read_wanted) {
-				cv_init(&prev->r_rd_cv, NULL, CV_DEFAULT, NULL);
 				prev->r_read_wanted = B_TRUE;
 			}
+			if (zfs_range_lock_hold(prev) != 0)
+				panic("too many waiters on zfs range lock %p",
+				    prev);
 			cv_wait(&prev->r_rd_cv, &zp->z_range_lock);
+			zfs_range_lock_rele(prev);
 			goto retry;
 		}
 		if (off + len < prev->r_off + prev->r_len)
@@ -395,10 +436,13 @@ retry:
 			goto got_lock;
 		if ((next->r_type == RL_WRITER) || (next->r_write_wanted)) {
 			if (!next->r_read_wanted) {
-				cv_init(&next->r_rd_cv, NULL, CV_DEFAULT, NULL);
 				next->r_read_wanted = B_TRUE;
 			}
+			if (zfs_range_lock_hold(next) != 0)
+				panic("too many waiters on zfs range lock %p",
+				    next);
 			cv_wait(&next->r_rd_cv, &zp->z_range_lock);
+			zfs_range_lock_rele(next);
 			goto retry;
 		}
 		if (off + len <= next->r_off + next->r_len)
@@ -435,20 +479,25 @@ zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
 	new->r_cnt = 1; /* assume it's going to be in the tree */
 	new->r_type = type;
 	new->r_proxy = B_FALSE;
+	cv_init(&new->r_wr_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&new->r_rd_cv, NULL, CV_DEFAULT, NULL);
 	new->r_write_wanted = B_FALSE;
 	new->r_read_wanted = B_FALSE;
+	new->r_refcnt = 1;
 
 	mutex_enter(&zp->z_range_lock);
 	if (type == RL_READER) {
 		/*
 		 * First check for the usual case of no locks
 		 */
-		if (avl_numnodes(&zp->z_range_avl) == 0)
+		if (avl_numnodes(&zp->z_range_avl) == 0) {
 			avl_add(&zp->z_range_avl, new);
-		else
+		} else {
 			zfs_range_lock_reader(zp, new);
-	} else
+		}
+	} else {
 		zfs_range_lock_writer(zp, new); /* RL_WRITER or RL_APPEND */
+	}
 	mutex_exit(&zp->z_range_lock);
 	return (new);
 }
@@ -474,11 +523,9 @@ zfs_range_unlock_reader(znode_t *zp, rl_t *remove)
 		avl_remove(tree, remove);
 		if (remove->r_write_wanted) {
 			cv_broadcast(&remove->r_wr_cv);
-			cv_destroy(&remove->r_wr_cv);
 		}
 		if (remove->r_read_wanted) {
 			cv_broadcast(&remove->r_rd_cv);
-			cv_destroy(&remove->r_rd_cv);
 		}
 	} else {
 		ASSERT3U(remove->r_cnt, ==, 0);
@@ -507,17 +554,15 @@ zfs_range_unlock_reader(znode_t *zp, rl_t *remove)
 				avl_remove(tree, rl);
 				if (rl->r_write_wanted) {
 					cv_broadcast(&rl->r_wr_cv);
-					cv_destroy(&rl->r_wr_cv);
 				}
 				if (rl->r_read_wanted) {
 					cv_broadcast(&rl->r_rd_cv);
-					cv_destroy(&rl->r_rd_cv);
 				}
-				kmem_free(rl, sizeof (rl_t));
+				zfs_range_lock_rele(rl);
 			}
 		}
 	}
-	kmem_free(remove, sizeof (rl_t));
+	zfs_range_lock_rele(remove);
 }
 
 /*
@@ -536,16 +581,14 @@ zfs_range_unlock(rl_t *rl)
 	if (rl->r_type == RL_WRITER) {
 		/* writer locks can't be shared or split */
 		avl_remove(&zp->z_range_avl, rl);
-		mutex_exit(&zp->z_range_lock);
 		if (rl->r_write_wanted) {
 			cv_broadcast(&rl->r_wr_cv);
-			cv_destroy(&rl->r_wr_cv);
 		}
 		if (rl->r_read_wanted) {
 			cv_broadcast(&rl->r_rd_cv);
-			cv_destroy(&rl->r_rd_cv);
 		}
-		kmem_free(rl, sizeof (rl_t));
+		zfs_range_lock_rele(rl);
+		mutex_exit(&zp->z_range_lock);
 	} else {
 		/*
 		 * lock may be shared, let zfs_range_unlock_reader()
@@ -577,11 +620,11 @@ zfs_range_reduce(rl_t *rl, uint64_t off, uint64_t len)
 	mutex_enter(&zp->z_range_lock);
 	rl->r_off = off;
 	rl->r_len = len;
-	mutex_exit(&zp->z_range_lock);
 	if (rl->r_write_wanted)
 		cv_broadcast(&rl->r_wr_cv);
 	if (rl->r_read_wanted)
 		cv_broadcast(&rl->r_rd_cv);
+	mutex_exit(&zp->z_range_lock);
 }
 
 /*

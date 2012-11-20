@@ -247,8 +247,13 @@ static int wpa_config_read_global(struct wpa_config *config, HKEY hk)
 		hk, TEXT("model_name"));
 	config->serial_number = wpa_config_read_reg_string(
 		hk, TEXT("serial_number"));
-	config->device_type = wpa_config_read_reg_string(
-		hk, TEXT("device_type"));
+	{
+		char *t = wpa_config_read_reg_string(
+			hk, TEXT("device_type"));
+		if (t && wps_dev_type_str2bin(t, config->device_type))
+			errors++;
+		os_free(t);
+	}
 	config->config_methods = wpa_config_read_reg_string(
 		hk, TEXT("config_methods"));
 	if (wpa_config_read_global_os_version(config, hk))
@@ -256,11 +261,21 @@ static int wpa_config_read_global(struct wpa_config *config, HKEY hk)
 	wpa_config_read_reg_dword(hk, TEXT("wps_cred_processing"),
 				  &config->wps_cred_processing);
 #endif /* CONFIG_WPS */
+#ifdef CONFIG_P2P
+	config->p2p_ssid_postfix = wpa_config_read_reg_string(
+		hk, TEXT("p2p_ssid_postfix"));
+	wpa_config_read_reg_dword(hk, TEXT("p2p_group_idle"),
+				  (int *) &config->p2p_group_idle);
+#endif /* CONFIG_P2P */
 
 	wpa_config_read_reg_dword(hk, TEXT("bss_max_count"),
 				  (int *) &config->bss_max_count);
 	wpa_config_read_reg_dword(hk, TEXT("filter_ssids"),
 				  &config->filter_ssids);
+	wpa_config_read_reg_dword(hk, TEXT("max_num_sta"),
+				  (int *) &config->max_num_sta);
+	wpa_config_read_reg_dword(hk, TEXT("disassoc_low_ack"),
+				  (int *) &config->disassoc_low_ack);
 
 	return errors ? -1 : 0;
 }
@@ -575,7 +590,12 @@ static int wpa_config_write_global(struct wpa_config *config, HKEY hk)
 	wpa_config_write_reg_string(hk, "model_number", config->model_number);
 	wpa_config_write_reg_string(hk, "serial_number",
 				    config->serial_number);
-	wpa_config_write_reg_string(hk, "device_type", config->device_type);
+	{
+		char _buf[WPS_DEV_TYPE_BUFSIZE], *buf;
+		buf = wps_dev_type_bin2str(config->device_type,
+					   _buf, sizeof(_buf));
+		wpa_config_write_reg_string(hk, "device_type", buf);
+	}
 	wpa_config_write_reg_string(hk, "config_methods",
 				    config->config_methods);
 	if (WPA_GET_BE32(config->os_version)) {
@@ -587,12 +607,22 @@ static int wpa_config_write_global(struct wpa_config *config, HKEY hk)
 	wpa_config_write_reg_dword(hk, TEXT("wps_cred_processing"),
 				   config->wps_cred_processing, 0);
 #endif /* CONFIG_WPS */
+#ifdef CONFIG_P2P
+	wpa_config_write_reg_string(hk, "p2p_ssid_postfix",
+				    config->p2p_ssid_postfix);
+	wpa_config_write_reg_dword(hk, TEXT("p2p_group_idle"),
+				   config->p2p_group_idle, 0);
+#endif /* CONFIG_P2P */
 
 	wpa_config_write_reg_dword(hk, TEXT("bss_max_count"),
 				   config->bss_max_count,
 				   DEFAULT_BSS_MAX_COUNT);
 	wpa_config_write_reg_dword(hk, TEXT("filter_ssids"),
 				   config->filter_ssids, 0);
+	wpa_config_write_reg_dword(hk, TEXT("max_num_sta"),
+				   config->max_num_sta, DEFAULT_MAX_NUM_STA);
+	wpa_config_write_reg_dword(hk, TEXT("disassoc_low_ack"),
+				   config->disassoc_low_ack, 0);
 
 	return 0;
 }

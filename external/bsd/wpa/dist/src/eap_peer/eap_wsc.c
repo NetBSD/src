@@ -203,6 +203,10 @@ static void * eap_wsc_init(struct eap_sm *sm)
 		return NULL;
 	}
 
+	pos = os_strstr(phase1, "dev_pw_id=");
+	if (pos && cfg.pin)
+		cfg.dev_pw_id = atoi(pos + 10);
+
 	res = eap_wsc_new_ap_settings(&new_ap_settings, phase1);
 	if (res < 0) {
 		os_free(data);
@@ -219,10 +223,16 @@ static void * eap_wsc_init(struct eap_sm *sm)
 		os_free(data);
 		return NULL;
 	}
-	data->fragment_size = WSC_FRAGMENT_SIZE;
+	res = eap_get_config_fragment_size(sm);
+	if (res > 0)
+		data->fragment_size = res;
+	else
+		data->fragment_size = WSC_FRAGMENT_SIZE;
+	wpa_printf(MSG_DEBUG, "EAP-WSC: Fragment size limit %u",
+		   (unsigned int) data->fragment_size);
 
 	if (registrar && cfg.pin) {
-		wps_registrar_add_pin(data->wps_ctx->registrar, NULL,
+		wps_registrar_add_pin(data->wps_ctx->registrar, NULL, NULL,
 				      cfg.pin, cfg.pin_len, 0);
 	}
 

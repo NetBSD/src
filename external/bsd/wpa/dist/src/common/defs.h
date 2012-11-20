@@ -46,28 +46,34 @@ typedef enum { FALSE = 0, TRUE = 1 } Boolean;
 
 static inline int wpa_key_mgmt_wpa_ieee8021x(int akm)
 {
-	return akm == WPA_KEY_MGMT_IEEE8021X ||
-		akm == WPA_KEY_MGMT_FT_IEEE8021X ||
-		akm == WPA_KEY_MGMT_IEEE8021X_SHA256;
+	return !!(akm & (WPA_KEY_MGMT_IEEE8021X |
+			 WPA_KEY_MGMT_FT_IEEE8021X |
+			 WPA_KEY_MGMT_IEEE8021X_SHA256));
 }
 
 static inline int wpa_key_mgmt_wpa_psk(int akm)
 {
-	return akm == WPA_KEY_MGMT_PSK ||
-		akm == WPA_KEY_MGMT_FT_PSK ||
-		akm == WPA_KEY_MGMT_PSK_SHA256;
+	return !!(akm & (WPA_KEY_MGMT_PSK |
+			 WPA_KEY_MGMT_FT_PSK |
+			 WPA_KEY_MGMT_PSK_SHA256));
 }
 
 static inline int wpa_key_mgmt_ft(int akm)
 {
-	return akm == WPA_KEY_MGMT_FT_PSK ||
-		akm == WPA_KEY_MGMT_FT_IEEE8021X;
+	return !!(akm & (WPA_KEY_MGMT_FT_PSK |
+			 WPA_KEY_MGMT_FT_IEEE8021X));
 }
 
 static inline int wpa_key_mgmt_sha256(int akm)
 {
-	return akm == WPA_KEY_MGMT_PSK_SHA256 ||
-		akm == WPA_KEY_MGMT_IEEE8021X_SHA256;
+	return !!(akm & (WPA_KEY_MGMT_PSK_SHA256 |
+			 WPA_KEY_MGMT_IEEE8021X_SHA256));
+}
+
+static inline int wpa_key_mgmt_wpa(int akm)
+{
+	return wpa_key_mgmt_wpa_ieee8021x(akm) ||
+		wpa_key_mgmt_wpa_psk(akm);
 }
 
 
@@ -135,6 +141,15 @@ enum wpa_states {
 	 * connection is lost.
 	 */
 	WPA_DISCONNECTED,
+
+	/**
+	 * WPA_INTERFACE_DISABLED - Interface disabled
+	 *
+	 * This stat eis entered if the network interface is disabled, e.g.,
+	 * due to rfkill. wpa_supplicant refuses any new operations that would
+	 * use the radio until the interface has been enabled.
+	 */
+	WPA_INTERFACE_DISABLED,
 
 	/**
 	 * WPA_INACTIVE - Inactive state (wpa_supplicant disabled)
@@ -250,6 +265,20 @@ enum hostapd_hw_mode {
 	HOSTAPD_MODE_IEEE80211G,
 	HOSTAPD_MODE_IEEE80211A,
 	NUM_HOSTAPD_MODES
+};
+
+/**
+ * enum wpa_ctrl_req_type - Control interface request types
+ */
+enum wpa_ctrl_req_type {
+	WPA_CTRL_REQ_UNKNOWN,
+	WPA_CTRL_REQ_EAP_IDENTITY,
+	WPA_CTRL_REQ_EAP_PASSWORD,
+	WPA_CTRL_REQ_EAP_NEW_PASSWORD,
+	WPA_CTRL_REQ_EAP_PIN,
+	WPA_CTRL_REQ_EAP_OTP,
+	WPA_CTRL_REQ_EAP_PASSPHRASE,
+	NUM_WPA_CTRL_REQS
 };
 
 #endif /* DEFS_H */

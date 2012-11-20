@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.15 2012/02/04 22:20:38 matt Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.15.6.1 2012/11/20 03:01:07 tls Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.15 2012/02/04 22:20:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.15.6.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ static void
 sackbc_slot_enable(void *self, pckbport_slot_t slot, int on)
 {
 #if 0
-	struct sackbc_softc *sc = (struct sackbc_softc *) self;
+	struct sackbc_softc *sc = device_private(self);
 	int cmd;
 
 	cmd = on ? KBC_KBDENABLE : KBC_KBDDISABLE;
@@ -377,7 +377,7 @@ sackbc_slot_enable(void *self, pckbport_slot_t slot, int on)
 static void
 sackbc_set_poll(void *self, pckbport_slot_t slot, int on)
 {
-	struct sackbc_softc *sc = (struct sackbc_softc *)self;
+	struct sackbc_softc *sc = device_private(self);
 	int s;
 
 	s = spltty();

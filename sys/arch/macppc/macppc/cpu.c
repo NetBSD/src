@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.58 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.58.12.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58.12.1 2012/11/20 03:01:31 tls Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -176,7 +176,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	}
 
 	if (OF_finddevice("/bandit/ohare") != -1) {
-		printf("%s", self->dv_xname);
+		printf("%s", device_xname(self));
 		ohare_init();
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.20 2009/05/12 14:21:32 cegger Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.20.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20 2009/05/12 14:21:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ static void	dpt_eisa_attach(device_t, device_t, void *);
 static int	dpt_eisa_irq(bus_space_tag_t, bus_space_handle_t, int *);
 static int	dpt_eisa_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(dpt_eisa, sizeof(struct dpt_softc),
+CFATTACH_DECL_NEW(dpt_eisa, sizeof(struct dpt_softc),
     dpt_eisa_match, dpt_eisa_attach, NULL, NULL);
 
 static const char * const dpt_eisa_boards[] = {
@@ -103,8 +103,7 @@ dpt_eisa_irq(bus_space_tag_t iot, bus_space_handle_t ioh, int *irq)
 }
 
 static int
-dpt_eisa_match(device_t parent, cfdata_t match,
-    void *aux)
+dpt_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
@@ -132,6 +131,7 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 
 	ea = aux;
 	sc = device_private(self);
+	sc->sc_dev = self;
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
 
@@ -171,7 +171,7 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 
 	/* Read the EATA configuration. */
 	if (dpt_readcfg(sc)) {
-		aprint_error_dev(&sc->sc_dv, "readcfg failed - see dpt(4)\n");
+		aprint_error_dev(sc->sc_dev, "readcfg failed - see dpt(4)\n");
 		return;
 	}
 

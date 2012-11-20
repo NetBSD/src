@@ -21,7 +21,7 @@
 #include "http_client.h"
 
 
-#define HTTP_CLIENT_TIMEOUT 30
+#define HTTP_CLIENT_TIMEOUT_SEC 30
 
 
 struct http_client {
@@ -42,7 +42,7 @@ struct http_client {
 static void http_client_timeout(void *eloop_data, void *user_ctx)
 {
 	struct http_client *c = eloop_data;
-	wpa_printf(MSG_DEBUG, "HTTP: Timeout");
+	wpa_printf(MSG_DEBUG, "HTTP: Timeout (c=%p)", c);
 	c->cb(c->cb_ctx, c, HTTP_CLIENT_TIMEOUT);
 }
 
@@ -51,6 +51,9 @@ static void http_client_got_response(struct httpread *handle, void *cookie,
 				     enum httpread_event e)
 {
 	struct http_client *c = cookie;
+
+	wpa_printf(MSG_DEBUG, "HTTP: httpread callback: handle=%p cookie=%p "
+		   "e=%d", handle, cookie, e);
 
 	eloop_cancel_timeout(http_client_timeout, c, NULL);
 	switch (e) {
@@ -122,7 +125,7 @@ static void http_client_tx_ready(int sock, void *eloop_ctx, void *sock_ctx)
 	c->req = NULL;
 
 	c->hread = httpread_create(c->sd, http_client_got_response, c,
-				   c->max_response, HTTP_CLIENT_TIMEOUT);
+				   c->max_response, HTTP_CLIENT_TIMEOUT_SEC);
 	if (c->hread == NULL) {
 		c->cb(c->cb_ctx, c, HTTP_CLIENT_FAILED);
 		return;
@@ -181,8 +184,8 @@ struct http_client * http_client_addr(struct sockaddr_in *dst,
 		return NULL;
 	}
 
-	if (eloop_register_timeout(HTTP_CLIENT_TIMEOUT, 0, http_client_timeout,
-				   c, NULL)) {
+	if (eloop_register_timeout(HTTP_CLIENT_TIMEOUT_SEC, 0,
+				   http_client_timeout, c, NULL)) {
 		http_client_free(c);
 		return NULL;
 	}

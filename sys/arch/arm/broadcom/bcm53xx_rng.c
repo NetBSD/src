@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_rng.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $");
 
 #include <sys/bus.h>
 #include <sys/callout.h>

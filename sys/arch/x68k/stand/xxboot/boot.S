@@ -1,8 +1,8 @@
 | file: boot.S
 | author: chapuni(webmaster@chapuni.com)
-|         Yasha(itohy@NetBSD.org)
+|         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.1 2012/03/20 13:01:32 minoura Exp $
+| $NetBSD: boot.S,v 1.1.4.1 2012/11/20 03:01:50 tls Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -19,7 +19,7 @@
 
 #define BOOT_ERROR(s)	jbsr boot_error; .asciz s; .even
 
-	.globl	_C_LABEL(bootufs)
+	.globl	_C_LABEL(bootmain)
 	.text
 ASENTRY_NOPROFILE(start)
 ASENTRY_NOPROFILE(top)
@@ -66,7 +66,7 @@ clrbss:		clrb	%a1@+
 
 		| we use 68020 instructions, and check MPU beforehand
 		|
-		| here d1.w = -1, and the above "subw a1,d0" = 0x9049, and
+		| here d0.w = -1, and the above "subw a1,d0" = 0x9049, and
 		|	if MPU <= 010	loads 0x49,
 		|	if MPU >= 020	loads 0x90.
 		| This is a move, not a tst instruction

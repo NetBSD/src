@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.44 2010/12/20 00:25:26 matt Exp $ */
+/*	$NetBSD: zssc.c,v 1.44.18.1 2012/11/20 03:01:00 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.44 2010/12/20 00:25:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.44.18.1 2012/11/20 03:01:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,32 +76,32 @@ __KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.44 2010/12/20 00:25:26 matt Exp $");
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-void zsscattach(struct device *, struct device *, void *);
-int  zsscmatch(struct device *, struct cfdata *, void *);
+void zsscattach(device_t, device_t, void *);
+int  zsscmatch(device_t, cfdata_t, void *);
 int  zssc_dmaintr(void *);
 #ifdef DEBUG
 void zssc_dump(void);
 #endif
 
-CFATTACH_DECL(zssc, sizeof(struct siop_softc),
+CFATTACH_DECL_NEW(zssc, sizeof(struct siop_softc),
     zsscmatch, zsscattach, NULL, NULL);
 
 /*
  * if we are an PPI Zeus
  */
 int
-zsscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+zsscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 	if (zap->manid == 2026 && zap->prodid == 150)
 		return(1);
 	return(0);
 }
 
 void
-zsscattach(struct device *pdp, struct device *dp, void *auxp)
+zsscattach(device_t parent, device_t self, void *aux)
 {
 	struct siop_softc *sc;
 	struct zbus_args *zap;
@@ -109,9 +109,9 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 
 	printf("\n");
 
-	zap = auxp;
+	zap = aux;
 
-	sc = (struct siop_softc *)dp;
+	sc = device_private(self);
 	sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va + 0x4000);
 
 	/*
@@ -124,7 +124,7 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_siop_si = softint_establish(SOFTINT_BIO,
 	    (void (*)(void *))siopintr, sc);
 
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = self;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -149,7 +149,7 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.51 2011/04/04 08:30:32 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.51.10.1 2012/11/20 02:57:54 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,8 +39,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{Si vous avez démarré sur un média amovible (clé USB, disquette...), vous
-pouvez maintenant le retirer.
+{
 }
 
 message Keyboard_type {Type de clavier}

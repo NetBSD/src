@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.13 2011/02/01 19:36:24 chuck Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.13.14.1 2012/11/20 03:02:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -92,7 +92,7 @@ struct xy_iorq {
  * a "xy_softc" structure contains per-disk state info.
  */
 struct xy_softc {
-	struct device sc_dev;	/* device struct, reqd by autoconf */
+	device_t sc_dev;	/* device struct, reqd by autoconf */
 	struct disk sc_dk;	/* generic disk info */
 	struct xyc_softc *parent;/* parent */
 	u_short flags;		/* flags */
@@ -131,7 +131,7 @@ struct xy_softc {
  */
 
 struct xyc_softc {
-	struct device sc_dev;		/* device struct, reqd by autoconf */
+	device_t sc_dev;		/* device struct, reqd by autoconf */
 	struct evcnt sc_intrcnt;	/* event counter (for vmstat -i) */
 
 	struct callout sc_tick_ch;

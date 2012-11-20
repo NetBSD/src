@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_lcd.c,v 1.4 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: wzero3_lcd.c,v 1.4.6.1 2012/11/20 03:01:22 tls Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.4 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.4.6.1 2012/11/20 03:01:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,8 @@ static const struct lcd_panel_geometry sharp_ws020sh = {
 	0,			/* PCDDIV */
 };
 
-static int	wzero3lcd_match(struct device *, struct cfdata *, void *);
-static void	wzero3lcd_attach(struct device *, struct device *, void *);
+static int	wzero3lcd_match(device_t, cfdata_t, void *);
+static void	wzero3lcd_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(wzero3lcd, sizeof(struct pxa2x0_lcd_softc),
 	wzero3lcd_match, wzero3lcd_attach, NULL, NULL);
@@ -209,7 +209,7 @@ wzero3lcd_lookup(void)
 }
 
 static int
-wzero3lcd_match(struct device *parent, struct cfdata *cf, void *aux)
+wzero3lcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(cf->cf_name, "lcd") != 0)
@@ -220,7 +220,7 @@ wzero3lcd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wzero3lcd_attach(struct device *parent, struct device *self, void *aux)
+wzero3lcd_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxa2x0_lcd_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args aa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2011/07/16 20:25:28 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.72.12.1 2012/11/20 03:01:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2011/07/16 20:25:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72.12.1 2012/11/20 03:01:47 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -396,7 +396,7 @@ fdconf(struct fdc_softc *fdc)
 }
 
 void 
-fdcattach(struct device *parent, struct device *self, void *aux)
+fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct fdc_softc *fdc = device_private(self);
@@ -1766,10 +1766,11 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		for (k = 0; k < fdc->sc_nstat; k++)
 			printf(" %x", fdc->sc_status[k]);
 		printf(">\n");
-		}
 		return 0;
+		}
 
 	case _IOW('f', 101, int):
+		{
 		struct fdc_softc *fdc =
 		    device_private(device_parent(fd->sc_dv));
 
@@ -1777,6 +1778,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		fdc->sc_cfg |= (*(int *)addr & CFG_THRHLD_MASK);
 		fdconf(fdc);
 		return 0;
+		}
 
 	case _IO('f', 102):
 		{
@@ -1789,10 +1791,11 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		printf("sensei(%d regs): <", fdc->sc_nstat);
 		for (k=0; k < fdc->sc_nstat; k++)
 			printf(" 0x%x", fdc->sc_status[k]);
-		}
 		printf(">\n");
 		return 0;
+		}
 #endif
+
 	default:
 		return ENOTTY;
 	}

@@ -1,8 +1,8 @@
-#       $NetBSD: Makefile,v 1.1 2010/02/03 06:25:55 tls Exp $
+#       $NetBSD: Makefile,v 1.1.12.1 2012/11/20 02:57:59 tls Exp $
 
 .include <bsd.init.mk>
 
-SHLIB_MAJOR=	 0
+SHLIB_MAJOR=	 1
 SHLIB_MINOR=	 0
 
 USE_SHLIBDIR=	yes

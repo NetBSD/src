@@ -1,4 +1,4 @@
-/* $NetBSD: rsbus.c,v 1.9 2011/07/19 15:59:52 dyoung Exp $ */
+/* $NetBSD: rsbus.c,v 1.9.12.1 2012/11/20 03:00:54 tls Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.9 2011/07/19 15:59:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsbus.c,v 1.9.12.1 2012/11/20 03:00:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ static int	rsbus_print(void *, const char *);
 static int	rsbus_search(device_t, cfdata_t,
 			     const int *, void *);
 
-CFATTACH_DECL(rsbus, sizeof(struct rsbus_softc),
+CFATTACH_DECL_NEW(rsbus, sizeof(struct rsbus_softc),
     rsbus_match, rsbus_attach, NULL, NULL);
  
 static int

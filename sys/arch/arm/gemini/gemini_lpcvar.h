@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_lpcvar.h,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_lpcvar.h,v 1.3.12.1 2012/11/20 03:01:05 tls Exp $	*/
 
 #ifndef _ARM_GEMINI_LPCVAR_H
 #define _ARM_GEMINI_LPCVAR_H
@@ -36,7 +36,6 @@ typedef struct gemini_lpc_bus_ops {
 } gemini_lpc_bus_ops_t;
 
 typedef struct gemini_lpc_softc {
-	struct device			sc_dev;
 	bus_addr_t			sc_addr;
 	bus_size_t			sc_size;
 	int				sc_intr;

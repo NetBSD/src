@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.18 2011/08/26 06:18:16 dholland Exp $	*/
+/*	$NetBSD: back.h,v 1.18.8.1 2012/11/20 02:58:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,7 +46,17 @@
 #define rnum(r)	(random()%r)
 #define D0	dice[0]
 #define D1	dice[1]
-#define swap	{D0 ^= D1; D1 ^= D0; D0 ^= D1; d0 = 1-d0;}
+#define mswap(m) {(m)->D0 ^= (m)->D1; (m)->D1 ^= (m)->D0; (m)->D0 ^= (m)->D1; (m)->d0 = 1-(m)->d0;}
+
+struct move {
+	int	dice[2];	/* value of dice */
+	int	mvlim;		/* 'move limit':  max. number of moves */
+	int	p[5];		/* starting position of moves */
+	int	g[5];		/* ending position of moves (goals) */
+	int	h[4];		/* flag for each move if a man was hit */
+	int	d0;		/* flag if dice have been reversed from
+				   original position */
+};
 
 /*
  *
@@ -83,20 +93,12 @@ extern	int	rfl;		/* saved value of rflag */
 extern	int	iroll;		/* special flag for inputting rolls */
 extern	int	board[26];	/* board:  negative values are white,
 				   positive are red */
-extern	int	dice[2];	/* value of dice */
-extern	int	mvlim;		/* 'move limit':  max. number of moves */
-extern	int	mvl;		/* working copy of mvlim */
-extern	int	p[5];		/* starting position of moves */
-extern	int	g[5];		/* ending position of moves (goals) */
-extern	int	h[4];		/* flag for each move if a man was hit */
 extern	int	cturn;		/* whose turn it currently is:
 					-1 = white
 					 1 = red
 					 0 = just quitted
 					-2 = white just lost
 					 2 = red just lost */
-extern	int	d0;		/* flag if dice have been reversed from
-				   original position */
 extern	int	table[6][6];	/* odds table for possible rolls */
 extern	int	rscore;		/* red's score */
 extern	int	wscore;		/* white's score */
@@ -130,10 +132,10 @@ extern	int	begscr;		/* 'beginning' of screen
 				   (not including board) */
 
 int	addbuf(int);
-void	backone(int);
+void	backone(struct move *, int);
 void	buflush(void);
 int	canhit(int, int);
-int	checkmove(int);
+int	checkmove(struct move *, int);
 void	clear(void);
 void	clend(void);
 void	cline(void);
@@ -143,28 +145,28 @@ void	errexit(const char *) __dead;
 void	fancyc(int);
 void	fboard(void);
 void	fixtty(struct termios *);
-void	getarg(char ***);
+void	getarg(struct move *, char ***);
 int	getcaps(const char *);
-void	getmove(void);
+void	getmove(struct move *);
 void	getout(int) __dead;
 void	gwrite(void);
 void	init(void);
 int	main(int, char *[]);
-int	makmove(int);
-int	movallow(void);
-void	movback(int);
-void	moverr(int);
-int	movokay(int);
+int	makmove(struct move *, int);
+int	movallow(struct move *);
+void	movback(struct move *, int);
+void	moverr(struct move *, int);
+int	movokay(struct move *, int);
 void	newpos(void);
 void	nexturn(void);
 void	odds(int, int, int);
-void	proll(void);
-int	quit(void);
+void	proll(struct move *);
+int	quit(struct move *);
 int	readc(void);
-void	recover(const char *);
+void	recover(struct move *, const char *);
 void	refresh(void);
-void	roll(void);
-void	save(int);
+void	roll(struct move *);
+void	save(struct move *, int);
 int	wrtext(const char *const *);
 void	wrboard(void);
 void	wrhit(int);
@@ -173,3 +175,5 @@ void	writec(int);
 void	writel(const char *);
 void	wrscore(void);
 int	yorn(int);
+
+void move_init(struct move *);

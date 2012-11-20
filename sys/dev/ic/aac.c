@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.43 2010/11/13 13:51:59 uebayasi Exp $	*/
+/*	$NetBSD: aac.c,v 1.43.18.1 2012/11/20 03:02:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.43 2010/11/13 13:51:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.43.18.1 2012/11/20 03:02:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ aac_attach(struct aac_softc *sc)
 
 		locs[AACCF_UNIT] = i;
 
-		config_found_sm_loc(&sc->sc_dv, "aac", locs, &aaca,
+		config_found_sm_loc(sc->sc_dv, "aac", locs, &aaca,
 				    aac_print, config_stdsubmatch);
 	}
 
@@ -229,7 +229,7 @@ aac_alloc_commands(struct aac_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size,
 	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &fm->fm_fibmap);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dv, "cannot create fibs dmamap (%d)\n",
+		aprint_error_dev(sc->sc_dv, "cannot create fibs dmamap (%d)\n",
 		    error);
 		goto bail_out;
 	}
@@ -237,7 +237,7 @@ aac_alloc_commands(struct aac_softc *sc)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
 	    &fm->fm_fibseg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dv, "can't allocate fibs structure (%d)\n",
+		aprint_error_dev(sc->sc_dv, "can't allocate fibs structure (%d)\n",
 		    error);
 		goto bail_out;
 	}
@@ -245,7 +245,7 @@ aac_alloc_commands(struct aac_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &fm->fm_fibseg, nsegs, size,
 	    (void **)&fm->fm_fibs, 0);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dv, "can't map fibs structure (%d)\n",
+		aprint_error_dev(sc->sc_dv, "can't map fibs structure (%d)\n",
 		    error);
 		goto bail_out;
 	}
@@ -253,7 +253,7 @@ aac_alloc_commands(struct aac_softc *sc)
 	error = bus_dmamap_load(sc->sc_dmat, fm->fm_fibmap, fm->fm_fibs,
 	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sc->sc_dv, "cannot load fibs dmamap (%d)\n",
+		aprint_error_dev(sc->sc_dv, "cannot load fibs dmamap (%d)\n",
 		    error);
 		goto bail_out;
 	}
@@ -275,7 +275,7 @@ aac_alloc_commands(struct aac_softc *sc)
 				    ac->ac_dmamap_xfer);
 				sc->sc_total_fibs--;
 			}
-			aprint_error_dev(&sc->sc_dv, "cannot create ccb dmamap (%d)",
+			aprint_error_dev(sc->sc_dv, "cannot create ccb dmamap (%d)",
 			    error);
 			goto bail_out;
 		}
@@ -365,18 +365,18 @@ aac_describe_controller(struct aac_softc *sc)
 	arg = 0;
 	if (aac_sync_fib(sc, RequestAdapterInfo, 0, &arg, sizeof(arg), &tbuf,
 	    &bufsize)) {
-		aprint_error_dev(&sc->sc_dv, "RequestAdapterInfo failed\n");
+		aprint_error_dev(sc->sc_dv, "RequestAdapterInfo failed\n");
 		return;
 	}
 	if (bufsize != sizeof(*info)) {
-		aprint_error_dev(&sc->sc_dv,
+		aprint_error_dev(sc->sc_dv,
 		    "RequestAdapterInfo returned wrong data size (%d != %zu)\n",
 		    bufsize, sizeof(*info));
 		return;
 	}
 	info = (struct aac_adapter_info *)&tbuf[0];
 
-	aprint_normal_dev(&sc->sc_dv, "%s at %dMHz, %dMB mem (%dMB cache), %s\n",
+	aprint_normal_dev(sc->sc_dv, "%s at %dMHz, %dMB mem (%dMB cache), %s\n",
 	    aac_describe_code(aac_cpu_variant, le32toh(info->CpuVariant)),
 	    le32toh(info->ClockSpeed),
 	    le32toh(info->TotalMem) / (1024 * 1024),
@@ -384,7 +384,7 @@ aac_describe_controller(struct aac_softc *sc)
 	    aac_describe_code(aac_battery_platform,
 			      le32toh(info->batteryPlatform)));
 
-	aprint_verbose_dev(&sc->sc_dv, "Kernel %d.%d-%d [Build %d], ",
+	aprint_verbose_dev(sc->sc_dv, "Kernel %d.%d-%d [Build %d], ",
 	    info->KernelRevision.external.comp.major,
 	    info->KernelRevision.external.comp.minor,
 	    info->KernelRevision.external.comp.dash,
@@ -398,7 +398,7 @@ aac_describe_controller(struct aac_softc *sc)
 	    ((u_int32_t)info->SerialNumber & 0xffffff));
 
 	snprintb(fmtbuf, sizeof(fmtbuf), optfmt, sc->sc_supported_options);
-	aprint_verbose_dev(&sc->sc_dv, "Controller supports: %s\n", fmtbuf);
+	aprint_verbose_dev(sc->sc_dv, "Controller supports: %s\n", fmtbuf);
 
 	/* Save the kernel revision structure for later use. */
 	sc->sc_revision = info->KernelRevision;
@@ -417,7 +417,7 @@ aac_check_firmware(struct aac_softc *sc)
 	if ((sc->sc_quirks & AAC_QUIRK_PERC2QC) != 0) {
 		if (aac_sync_command(sc, AAC_MONKER_GETKERNVER, 0, 0, 0, 0,
 		    NULL)) {
-			aprint_error_dev(&sc->sc_dv, "error reading firmware version\n");
+			aprint_error_dev(sc->sc_dv, "error reading firmware version\n");
 			return (1);
 		}
 
@@ -425,7 +425,7 @@ aac_check_firmware(struct aac_softc *sc)
 		major = (AAC_GET_MAILBOX(sc, 1) & 0xff) - 0x30;
 		minor = (AAC_GET_MAILBOX(sc, 2) & 0xff) - 0x30;
 		if (major == 1) {
-			aprint_error_dev(&sc->sc_dv, 
+			aprint_error_dev(sc->sc_dv, 
 			    "firmware version %d.%d not supported.\n",
 			    major, minor);
 			return (1);
@@ -434,7 +434,7 @@ aac_check_firmware(struct aac_softc *sc)
 
 	if (aac_sync_command(sc, AAC_MONKER_GETINFO, 0, 0, 0, 0, &status)) {
 		if (status != AAC_SRB_STS_INVALID_REQUEST) {
-			aprint_error_dev(&sc->sc_dv, "GETINFO failed, status 0x%08x\n", status);
+			aprint_error_dev(sc->sc_dv, "GETINFO failed, status 0x%08x\n", status);
 			return (1);
 		}
 	} else {
@@ -448,7 +448,7 @@ aac_check_firmware(struct aac_softc *sc)
 
 		if (((opts & AAC_SUPPORTED_SGMAP_HOST64) != 0) &&
 		    (sizeof(bus_addr_t) > 4)) {
-			aprint_normal_dev(&sc->sc_dv, "Enabling 64-bit address support\n");
+			aprint_normal_dev(sc->sc_dv, "Enabling 64-bit address support\n");
 			sc->sc_quirks |= AAC_QUIRK_SG_64BIT;
 		}
 		if ((opts & AAC_SUPPORTED_NEW_COMM) &&
@@ -463,7 +463,7 @@ aac_check_firmware(struct aac_softc *sc)
 
 	if (   (sc->sc_quirks & AAC_QUIRK_NEW_COMM)
 	    && (sc->sc_regsize < atusize)) {
-		aprint_error_dev(&sc->sc_dv, "Not enabling new comm i/f -- "
+		aprint_error_dev(sc->sc_dv, "Not enabling new comm i/f -- "
 			     "atusize 0x%08x, regsize 0x%08x\n",
 			     atusize,
 			     (uint32_t) sc->sc_regsize);
@@ -471,7 +471,7 @@ aac_check_firmware(struct aac_softc *sc)
 	}
 #if 0
 	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
-		aprint_error_dev(&sc->sc_dv, "Not enabling new comm i/f -- "
+		aprint_error_dev(sc->sc_dv, "Not enabling new comm i/f -- "
 			     "driver not ready yet\n");
 		sc->sc_quirks &= ~AAC_QUIRK_NEW_COMM;
 	}
@@ -498,7 +498,7 @@ aac_check_firmware(struct aac_softc *sc)
 		opt2 = AAC_GET_MAILBOX(sc, 2);
 		opt3 = AAC_GET_MAILBOX(sc, 3);
 		if (!opt1 || !opt2 || !opt3) {
-			aprint_verbose_dev(&sc->sc_dv, "GETCOMMPREF appears untrustworthy."
+			aprint_verbose_dev(sc->sc_dv, "GETCOMMPREF appears untrustworthy."
 			    "  Ignoring.\n");
 		} else {
 			sc->sc_max_fib_size = le32toh(opt1) & 0xffff;
@@ -535,12 +535,12 @@ aac_check_firmware(struct aac_softc *sc)
 
 	if (sc->sc_max_fib_size > sizeof(struct aac_fib)) {
 		sc->sc_quirks |= AAC_QUIRK_RAW_IO;
-		aprint_debug_dev(&sc->sc_dv, "Enable raw I/O\n");
+		aprint_debug_dev(sc->sc_dv, "Enable raw I/O\n");
 	}
 	if ((sc->sc_quirks & AAC_QUIRK_RAW_IO) &&
 	    (sc->sc_quirks & AAC_QUIRK_ARRAY_64BIT)) {
 		sc->sc_quirks |= AAC_QUIRK_LBA_64BIT;
-		aprint_normal_dev(&sc->sc_dv, "Enable 64-bit array support\n");
+		aprint_normal_dev(sc->sc_dv, "Enable 64-bit array support\n");
 	}
 
 	return (0);
@@ -561,11 +561,11 @@ aac_init(struct aac_softc *sc)
 	for (i = 0; i < AAC_BOOT_TIMEOUT * 1000; i++) {
 		code = AAC_GET_FWSTATUS(sc);
 		if ((code & AAC_SELF_TEST_FAILED) != 0) {
-			aprint_error_dev(&sc->sc_dv, "FATAL: selftest failed\n");
+			aprint_error_dev(sc->sc_dv, "FATAL: selftest failed\n");
 			return (ENXIO);
 		}
 		if ((code & AAC_KERNEL_PANIC) != 0) {
-			aprint_error_dev(&sc->sc_dv, "FATAL: controller kernel panic\n");
+			aprint_error_dev(sc->sc_dv, "FATAL: controller kernel panic\n");
 			return (ENXIO);
 		}
 		if ((code & AAC_UP_AND_RUNNING) != 0)
@@ -573,7 +573,7 @@ aac_init(struct aac_softc *sc)
 		DELAY(1000);
 	}
 	if (i == AAC_BOOT_TIMEOUT * 1000) {
-		aprint_error_dev(&sc->sc_dv, 
+		aprint_error_dev(sc->sc_dv, 
 		    "FATAL: controller not coming ready, status %x\n",
 		    code);
 		return (ENXIO);
@@ -582,33 +582,33 @@ aac_init(struct aac_softc *sc)
 	sc->sc_aif_fib = malloc(sizeof(struct aac_fib), M_AACBUF,
 	    M_NOWAIT | M_ZERO);
 	if (sc->sc_aif_fib == NULL) {
-		aprint_error_dev(&sc->sc_dv, "cannot alloc fib structure\n");
+		aprint_error_dev(sc->sc_dv, "cannot alloc fib structure\n");
 		return (ENOMEM);
 	}
 	if ((rv = bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_common), 1,
 	    sizeof(*sc->sc_common), 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_common_dmamap)) != 0) {
-		aprint_error_dev(&sc->sc_dv, "cannot create common dmamap\n");
+		aprint_error_dev(sc->sc_dv, "cannot create common dmamap\n");
 		goto bail_out;
 	}
 	state++;
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_common),
 	    PAGE_SIZE, 0, &sc->sc_common_seg, 1, &nsegs,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dv, "can't allocate common structure\n");
+		aprint_error_dev(sc->sc_dv, "can't allocate common structure\n");
 		goto bail_out;
 	}
 	state++;
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &sc->sc_common_seg, nsegs,
 	    sizeof(*sc->sc_common), (void **)&sc->sc_common, 0)) != 0) {
-		aprint_error_dev(&sc->sc_dv, "can't map common structure\n");
+		aprint_error_dev(sc->sc_dv, "can't map common structure\n");
 		goto bail_out;
 	}
 	state++;
 	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_common_dmamap,
 	    sc->sc_common, sizeof(*sc->sc_common), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dv, "cannot load common dmamap\n");
+		aprint_error_dev(sc->sc_dv, "cannot load common dmamap\n");
 		goto bail_out;
 	}
 	state++;
@@ -619,7 +619,7 @@ aac_init(struct aac_softc *sc)
 	sc->sc_ccbs = malloc(sizeof(struct aac_ccb) * sc->sc_max_fibs, M_AACBUF,
 	    M_NOWAIT | M_ZERO);
 	if (sc->sc_ccbs == NULL) {
-		aprint_error_dev(&sc->sc_dv, "memory allocation failure getting ccbs\n");
+		aprint_error_dev(sc->sc_dv, "memory allocation failure getting ccbs\n");
 		rv = ENOMEM;
 		goto bail_out;
 	}
@@ -668,7 +668,7 @@ aac_init(struct aac_softc *sc)
 	ip->InitFlags = 0;
 	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
 		ip->InitFlags = htole32(AAC_INITFLAGS_NEW_COMM_SUPPORTED);
-		aprint_normal_dev(&sc->sc_dv, "New comm. interface enabled\n");
+		aprint_normal_dev(sc->sc_dv, "New comm. interface enabled\n");
 	}
 
 	ip->MaxIoCommands = htole32(sc->sc_max_fibs);
@@ -780,7 +780,7 @@ aac_init(struct aac_softc *sc)
 	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT,
 	    sc->sc_common_seg.ds_addr + offsetof(struct aac_common, ac_init),
 	    0, 0, 0, NULL)) {
-		aprint_error_dev(&sc->sc_dv, "error establishing init structure\n");
+		aprint_error_dev(sc->sc_dv, "error establishing init structure\n");
 		rv = EIO;
 		goto bail_out;
 	}
@@ -840,11 +840,11 @@ aac_startup(struct aac_softc *sc)
 		mi.MntCount = htole32(i);
 		if (aac_sync_fib(sc, ContainerCommand, 0, &mi, sizeof(mi), &mir,
 		    &rsize)) {
-			aprint_error_dev(&sc->sc_dv, "error probing container %d\n", i);
+			aprint_error_dev(sc->sc_dv, "error probing container %d\n", i);
 			continue;
 		}
 		if (rsize != ersize) {
-			aprint_error_dev(&sc->sc_dv, "container info response wrong size "
+			aprint_error_dev(sc->sc_dv, "container info response wrong size "
 			    "(%d should be %zu)\n", rsize, ersize);
 			continue;
 		}
@@ -894,7 +894,7 @@ aac_shutdown(void *cookie)
 		cc.ContainerId = 0xffffffff;
 		if (aac_sync_fib(sc, ContainerCommand, 0, &cc, sizeof(cc),
 		    NULL, NULL)) {
-			aprint_error_dev(&sc->sc_dv, "unable to halt controller\n");
+			aprint_error_dev(sc->sc_dv, "unable to halt controller\n");
 			continue;
 		}
 
@@ -905,7 +905,7 @@ aac_shutdown(void *cookie)
 		 */
 		if (aac_sync_fib(sc, FsaHostShutdown, AAC_FIBSTATE_SHUTDOWN,
 		    &i, sizeof(i), NULL, NULL))
-			aprint_error_dev(&sc->sc_dv, "unable to halt controller\n");
+			aprint_error_dev(sc->sc_dv, "unable to halt controller\n");
 
 		sc->sc_flags &= ~AAC_ONLINE;
 	}
@@ -1010,8 +1010,8 @@ aac_intr(void *cookie)
 		if (sc->sc_common->ac_printf[0] == '\0')
 			sc->sc_common->ac_printf[0] = ' ';
 		printf("%s: WARNING: adapter logged message:\n",
-			device_xname(&sc->sc_dv));
-		printf("%s:     %.*s", device_xname(&sc->sc_dv),
+			device_xname(sc->sc_dv));
+		printf("%s:     %.*s", device_xname(sc->sc_dv),
 			AAC_PRINTF_BUFSIZE, sc->sc_common->ac_printf);
 		sc->sc_common->ac_printf[0] = '\0';
 		AAC_QNOTIFY(sc, AAC_DB_PRINTF);
@@ -1076,7 +1076,7 @@ aac_host_command(struct aac_softc *sc)
 			AAC_PRINT_FIB(sc, fib);
 			break;
 		default:
-			aprint_error_dev(&sc->sc_dv, "unknown command from controller\n");
+			aprint_error_dev(sc->sc_dv, "unknown command from controller\n");
 			AAC_PRINT_FIB(sc, fib);
 			break;
 		}
@@ -1262,7 +1262,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 		return (EIO);
 	if (status != 1) {
 		printf("%s: syncfib command %04x status %08x\n",
-			device_xname(&sc->sc_dv), command, status);
+			device_xname(sc->sc_dv), command, status);
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
@@ -1354,7 +1354,7 @@ aac_ccb_map(struct aac_softc *sc, struct aac_ccb *ac)
 	    ac->ac_datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
 	    ((ac->ac_flags & AAC_CCB_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
-		printf("%s: aac_ccb_map: ", device_xname(&sc->sc_dv));
+		printf("%s: aac_ccb_map: ", device_xname(sc->sc_dv));
 		if (error == EFBIG)
 			printf("more than %d DMA segs\n", sc->sc_max_sgs);
 		else

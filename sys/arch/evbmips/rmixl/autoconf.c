@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2012/07/29 18:05:41 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.1 2012/11/20 03:01:19 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/07/29 18:05:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.2.1 2012/11/20 03:01:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ cpu_rootconf(void)
 	findroot();
 
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+		booted_device ? device_xname(booted_device) : "<unknown>");
 
 	rootconf();
 }

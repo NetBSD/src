@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.322.2.1 2012/09/12 06:15:35 tls Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.322.2.2 2012/11/20 03:02:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.1 2012/09/12 06:15:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.2 2012/11/20 03:02:53 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2221,10 +2221,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 */
 			KASSERT(vm_map_pmap(map) == pmap_kernel());
 
-			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-				uvm_km_pgremove_intrsafe(map, entry->start,
-				    entry->end);
-			}
+			uvm_km_pgremove_intrsafe(map, entry->start, entry->end);
 		} else if (UVM_ET_ISOBJ(entry) &&
 			   UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
 			panic("%s: kernel object %p %p\n",
@@ -2242,26 +2239,23 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 
 #if defined(DEBUG)
-		if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
+		/*
+		 * check if there's remaining mapping,
+		 * which is a bug in caller.
+		 */
 
-			/*
-			 * check if there's remaining mapping,
-			 * which is a bug in caller.
-			 */
-
-			vaddr_t va;
-			for (va = entry->start; va < entry->end;
-			    va += PAGE_SIZE) {
-				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
-					panic("%s: %#"PRIxVADDR" has mapping",
-					    __func__, va);
-				}
+		vaddr_t va;
+		for (va = entry->start; va < entry->end;
+		    va += PAGE_SIZE) {
+			if (pmap_extract(vm_map_pmap(map), va, NULL)) {
+				panic("%s: %#"PRIxVADDR" has mapping",
+				    __func__, va);
 			}
+		}
 
-			if (VM_MAP_IS_KERNEL(map)) {
-				uvm_km_check_empty(map, entry->start,
-				    entry->end);
-			}
+		if (VM_MAP_IS_KERNEL(map)) {
+			uvm_km_check_empty(map, entry->start,
+			    entry->end);
 		}
 #endif /* defined(DEBUG) */
 
@@ -2375,7 +2369,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
     vaddr_t offset	/* hint for pmap_prefer */,
     vsize_t align	/* alignment */,
     vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
-    uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
+    uvm_flag_t flags	/* UVM_FLAG_FIXED or UVM_FLAG_COLORMATCH or 0 */)
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist);
 
@@ -2582,8 +2576,11 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		dstaddr = vm_map_min(dstmap);
-		if (!uvm_map_reserve(dstmap, len, start, 0, &dstaddr, 0))
+		if (!uvm_map_reserve(dstmap, len, start, 
+		    atop(start) & uvmexp.colormask, &dstaddr,
+		    UVM_FLAG_COLORMATCH))
 			return (ENOMEM);
+		KASSERT((atop(start ^ dstaddr) & uvmexp.colormask) == 0);
 		*dstaddrp = dstaddr;	/* pass address back to caller */
 		UVMHIST_LOG(maphist, "  dstaddr=0x%x", dstaddr,0,0,0);
 	} else {

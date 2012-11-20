@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2012/08/08 13:57:06 christos Exp $
+# $NetBSD: Makefile,v 1.20.2.1 2012/11/20 03:02:54 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,11 @@ TESTS_SUBDIRS+= libdes
 
 .if (${MKSKEY} != "no")
 TESTS_SUBDIRS+= libskey
+.endif
+
+.if ${MKSLJIT} != "no"
+TESTS_SUBDIRS+=	libsljit
+TESTS_SUBDIRS+=	libbpfjit
 .endif
 
 TESTSDIR=	${TESTSBASE}/lib

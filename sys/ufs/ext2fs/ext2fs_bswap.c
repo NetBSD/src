@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.16 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.16.22.1 2012/11/20 03:02:53 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.16 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.16.22.1 2012/11/20 03:02:53 tls Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.16 2009/10/19 18:41:17 bouyer Exp
 #include <string.h>
 #endif
 
-/* These functions are only needed if native byte order is not big endian */
+/* These functions are only needed if native byte order is not little endian */
 #if BYTE_ORDER == BIG_ENDIAN
 void
 e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)

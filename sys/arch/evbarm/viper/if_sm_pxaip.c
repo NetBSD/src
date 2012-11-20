@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pxaip.c,v 1.5 2011/07/01 20:45:45 dyoung Exp $	*/
+/*	$NetBSD: if_sm_pxaip.c,v 1.5.12.1 2012/11/20 03:01:18 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.5 2011/07/01 20:45:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.5.12.1 2012/11/20 03:01:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,19 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_pxaip.c,v 1.5 2011/07/01 20:45:45 dyoung Exp $
 
 #include <arch/evbarm/viper/viper_reg.h>
 
-static int	sm_pxaip_match(struct device *, struct cfdata *, void *);
-static void	sm_pxaip_attach(struct device *, struct device *, void *);
+static int	sm_pxaip_match(device_t, cfdata_t, void *);
+static void	sm_pxaip_attach(device_t, device_t, void *);
 
 struct sm_pxaip_softc {
 	struct smc91cxx_softc sc_sm;
 	void *ih;
 };
 
-CFATTACH_DECL(sm_pxaip, sizeof(struct sm_pxaip_softc), sm_pxaip_match,
+CFATTACH_DECL_NEW(sm_pxaip, sizeof(struct sm_pxaip_softc), sm_pxaip_match,
     sm_pxaip_attach, NULL, NULL);
 
 static int
-sm_pxaip_match(struct device *parent, struct cfdata *match, void *aux)
+sm_pxaip_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pxaip_attach_args *paa = aux;
 
@@ -75,9 +75,9 @@ sm_pxaip_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sm_pxaip_attach(struct device *parent, struct device *self, void *aux)
+sm_pxaip_attach(device_t parent, device_t self, void *aux)
 {
-	struct sm_pxaip_softc *pxasc = (struct sm_pxaip_softc *)self;
+	struct sm_pxaip_softc *pxasc = device_private(self);
 	struct smc91cxx_softc *sc = &pxasc->sc_sm;
 	struct pxaip_attach_args *paa = aux;
 	bus_space_tag_t bst = &pxa2x0_bs_tag;
@@ -101,6 +101,7 @@ sm_pxaip_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/* fill in master sc */
+	sc->sc_dev = self;
 	sc->sc_bst = bst;
 	sc->sc_bsh = bsh;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.h,v 1.3 2006/03/02 03:38:45 dyoung Exp $ */
+/*	$NetBSD: athrate-sample.h,v 1.3.114.1 2012/11/20 03:02:02 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -199,7 +199,7 @@ static unsigned calc_usecs_unicast_packet(struct ath_softc *sc,
 	int cw = WIFI_CW_MIN;
 	int cix = rt->info[rix].controlRate;
 	
-	KASSERT(rt != NULL, ("no rate table, mode %u", sc->sc_curmode));
+	KASSERTMSG(rt != NULL, "no rate table, mode %u", sc->sc_curmode);
 
 	if (!rt->info[rix].rateKbps) {
 		printf("rix %d (%d) bad ratekbps %d mode %u",

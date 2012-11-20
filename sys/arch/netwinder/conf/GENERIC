@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.112 2012/06/05 08:44:14 abs Exp $
+# $NetBSD: GENERIC,v 1.112.2.1 2012/11/20 03:01:35 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,6 +120,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

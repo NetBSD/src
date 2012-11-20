@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.46 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.46.18.1 2012/11/20 03:02:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -316,7 +316,7 @@ typedef struct _pdq_os_ctx_t {
     struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
 #elif defined(__NetBSD__)
-    struct device sc_dev;		/* base device */
+    device_t sc_dev;		/* base device */
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
     struct ethercom sc_ec;

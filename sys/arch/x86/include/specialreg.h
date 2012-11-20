@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.59 2012/05/05 15:08:29 jym Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.59.2.1 2012/11/20 03:01:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -157,9 +157,12 @@
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
+#define	CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
+#define	CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
-#define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
+#define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\33P1GB\34RDTSCP" \
+				    "\36EM64T"
 
 /* Intel Fn80000001 extended features - %ecx */
 #define	CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
@@ -173,8 +176,8 @@
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
-#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
-#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
+/*	CPUID_P1GB			   1GB Large Page Support */
+/*	CPUID_RDTSCP			   Read TSC Pair Instruction */
 /*	CPUID_EM64T			   Long mode */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */

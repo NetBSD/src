@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.19 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.19.22.1 2012/11/20 03:02:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct cac_ccb;
 
 struct cac_context {
 	void		(*cc_handler)(device_t, void *, int);
-	struct device	*cc_dv;
+	device_t	cc_dv;
 	void 		*cc_context;
 };
 
@@ -104,7 +104,7 @@ struct cac_linkage {
 };
 
 struct cac_softc {
-	struct device		sc_dv;
+	device_t		sc_dev;
 	kmutex_t		sc_mutex;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

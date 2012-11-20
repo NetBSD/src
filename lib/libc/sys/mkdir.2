@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.2,v 1.24 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: mkdir.2,v 1.24.12.1 2012/11/20 03:00:43 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,8 @@
 .Dt MKDIR 2
 .Os
 .Sh NAME
-.Nm mkdir
+.Nm mkdir ,
+.Nm mkdirat
 .Nd make a directory file
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In sys/stat.h
 .Ft int
 .Fn mkdir "const char *path" "mode_t mode"
+.Ft int
+.Fn mkdirat "int fd" "const char *path" "mode_t mode"
 .Sh DESCRIPTION
 The directory
 .Fa path
@@ -49,6 +52,24 @@ is created with the access permissions specified by
 and restricted by the
 .Xr umask 2
 of the calling process.
+.Pp
+.Fn mkdirat
+works the same way as
+.Fn mkdir
+except if
+.Fa path
+is relative. In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on
+.Fa fd
+except if that file descriptor was open with
+.Dv O_SEARCH
+option.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify current directory.
 .Pp
 The directory's owner ID is set to the process's effective user ID.
 The directory's group ID is set to that of the parent directory in
@@ -109,3 +130,7 @@ The
 .Fn mkdir
 function conforms to
 .St -p1003.1-90 .
+.Fn mkdirat
+conforms to
+.St -p1003.1-2008 .
+

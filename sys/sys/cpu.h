@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2012/08/29 17:13:22 drochner Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36.2.1 2012/11/20 03:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -45,9 +45,9 @@ void cpu_idle(void);
 #ifdef CPU_UCODE
 #include <sys/cpuio.h>
 #include <dev/firmload.h>
-
-/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
 #include <compat/sys/cpuio.h>
+#endif
 #endif
 
 /*
@@ -120,11 +120,11 @@ struct cpu_ucode_softc {
 };
 
 int cpu_ucode_get_version(struct cpu_ucode_version *);
-/* XXX ifdef COMPAT */
-int compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *);
 int cpu_ucode_apply(const struct cpu_ucode *);
-/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
+int compat6_cpu_ucode_get_version(struct compat6_cpu_ucode *);
 int compat6_cpu_ucode_apply(const struct compat6_cpu_ucode *);
+#endif
 int cpu_ucode_load(struct cpu_ucode_softc *, const char *);
 int cpu_ucode_md_open(firmware_handle_t *, int, const char *);
 #endif

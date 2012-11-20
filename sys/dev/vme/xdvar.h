@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.12 2011/02/01 19:36:24 chuck Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.12.14.1 2012/11/20 03:02:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -97,7 +97,7 @@ struct xd_iorq {
  */
 
 struct xd_softc {
-	struct device sc_dev;		/* device struct, reqd by autoconf */
+	device_t sc_dev;		/* device struct, reqd by autoconf */
 	struct disk sc_dk;		/* generic disk info */
 	struct xdc_softc *parent;	/* parent */
 	u_short flags;			/* flags */
@@ -131,7 +131,7 @@ struct xd_softc {
  */
 
 struct xdc_softc {
-	struct device sc_dev;		/* device struct, reqd by autoconf */
+	device_t sc_dev;		/* device struct, reqd by autoconf */
 	struct evcnt sc_intrcnt;	/* event counter (for vmstat -i) */
 
 	struct callout sc_tick_ch;

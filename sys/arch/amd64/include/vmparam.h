@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2012/08/15 08:09:57 sborrill Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31.2.1 2012/11/20 03:00:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,7 +148,7 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-#define VM_PHYSSEG_MAX		16	/* 1 "hole" + 15 free lists */
+#define VM_PHYSSEG_MAX		32	/* 1 "hole" + 31 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #define	VM_NFREELIST		3

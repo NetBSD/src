@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.2 2012/09/07 11:52:30 matt Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.2.2.1 2012/11/20 03:01:03 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.2 2012/09/07 11:52:30 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.2.2.1 2012/11/20 03:01:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,10 +43,14 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.2 2012/09/07 11:52:30 matt Exp $
 
 #include <prop/proplib.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #define CRU_PRIVATE
 #define DDR_PRIVATE
 #define DMU_PRIVATE
 #define ARMCORE_PRIVATE
+#define SRAB_PRIVATE
 
 #include <arm/cortex/a9tmr_var.h>
 #include <arm/cortex/pl310_var.h>
@@ -63,21 +67,43 @@ bus_space_handle_t bcm53xx_armcore_bsh;
 static struct cpu_softc cpu_softc;
 static struct bcm53xx_clock_info clk_info;
 
+struct arm32_dma_range bcm53xx_dma_ranges[2] = {
+	[0] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+		.dr_len = 0x10000000,
+	}, [1] = {
+		.dr_sysbase = 0x90000000,
+		.dr_busbase = 0x90000000,
+	},
+};
+
 struct arm32_bus_dma_tag bcm53xx_dma_tag = {
-	._dmamap_create = _bus_dmamap_create,
-	._dmamap_destroy = _bus_dmamap_destroy,
-	._dmamap_load = _bus_dmamap_load,
-	._dmamap_load_mbuf = _bus_dmamap_load_mbuf,
-	._dmamap_load_uio = _bus_dmamap_load_uio,
-	._dmamap_load_raw = _bus_dmamap_load_raw,
-	._dmamap_unload = _bus_dmamap_unload,
-	._dmamap_sync_pre = _bus_dmamap_sync,
-	._dmamap_sync_post = NULL,
-	._dmamem_alloc = _bus_dmamem_alloc,
-	._dmamem_free = _bus_dmamem_free,
-	._dmamem_map = _bus_dmamem_map,
-	._dmamem_unmap = _bus_dmamem_unmap,
-	._dmamem_mmap = _bus_dmamem_mmap
+	._ranges = bcm53xx_dma_ranges,
+	._nranges = __arraycount(bcm53xx_dma_ranges),
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
+};
+
+struct arm32_dma_range bcm53xx_coherent_dma_ranges[2] = {
+	[0] = {
+		.dr_sysbase = 0x80000000,
+		.dr_busbase = 0x80000000,
+		.dr_len = 0x10000000,
+		.dr_flags = _BUS_DMAMAP_COHERENT,
+	}, [1] = {
+		.dr_sysbase = 0x90000000,
+		.dr_busbase = 0x90000000,
+	},
+};
+
+struct arm32_bus_dma_tag bcm53xx_coherent_dma_tag = {
+	._ranges = bcm53xx_coherent_dma_ranges,
+	._nranges = __arraycount(bcm53xx_coherent_dma_ranges),
+	_BUS_DMAMAP_FUNCS,
+	_BUS_DMAMEM_FUNCS,
+	_BUS_DMATAG_FUNCS,
 };
 
 #ifdef BCM53XX_CONSOLE_EARLY
@@ -492,6 +518,27 @@ bcm53xx_bootstrap(vaddr_t iobase)
 	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh, ARMCORE_L2C_BASE);
 }
 
+void
+bcm53xx_dma_bootstrap(psize_t memsize)
+{
+	if (memsize > 256*1024*1024) {
+		/*
+		 * By setting up two ranges, bus_dmamem_alloc will always
+		 * try to allocate from range 0 first resulting in allocations
+		 * below 256MB which for PCI and GMAC are coherent.
+		 */
+		bcm53xx_dma_ranges[1].dr_len = memsize - 0x10000000;
+		bcm53xx_coherent_dma_ranges[1].dr_len = memsize - 0x10000000;
+	} else {
+		bcm53xx_dma_ranges[0].dr_len = memsize;
+		bcm53xx_coherent_dma_ranges[0].dr_len = memsize;
+		bcm53xx_dma_tag._nranges = 1;
+		bcm53xx_coherent_dma_tag._nranges = 1;
+	}
+	KASSERT(bcm53xx_dma_tag._ranges[0].dr_flags == 0);
+	KASSERT(bcm53xx_coherent_dma_tag._ranges[0].dr_flags == _BUS_DMAMAP_COHERENT);
+}
+
 #ifdef MULTIPROCESSOR
 void
 bcm53xx_cpu_hatch(struct cpu_info *ci)
@@ -530,5 +577,122 @@ bcm53xx_device_register(device_t self, void *aux)
                 prop_dictionary_set_uint32(dict, "frequency",
 		    clk_info.clk_cpu / 2);
 		return;
-	}	
+	}
+
+	if (device_is_a(self, "bcmeth")) {
+		const struct bcmccb_attach_args * const ccbaa = aux;
+		const uint8_t enaddr[ETHER_ADDR_LEN] = {
+			0x00, 0x01, 0x02, 0x03, 0x04,
+			0x05 + 2 * ccbaa->ccbaa_loc.loc_port,
+		};
+		prop_data_t pd = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
+		KASSERT(pd != NULL);
+		if (prop_dictionary_set(device_properties(self), "mac-address", pd) == false) {
+			printf("WARNING: Unable to set mac-address property for %s\n", device_xname(self));
+		}
+		prop_object_release(pd);
+	}
+}
+
+static kmutex_t srab_lock __cacheline_aligned;
+
+void
+bcm53xx_srab_init(void)
+{
+	mutex_init(&srab_lock, MUTEX_DEFAULT, IPL_VM);
+
+	bcm53xx_srab_write_4(0x0079, 0x90);	// reset switch 
+	for (u_int port = 0; port < 8; port++) {        
+		/* per port control: no stp */
+		bcm53xx_srab_write_4(port, 0x00);
+	}
+	bcm53xx_srab_write_4(0x0008, 0x1c);	// IMP port (enab UC/MC/BC)
+	bcm53xx_srab_write_4(0x000e, 0xbb);	// IMP port force-link 1G
+	bcm53xx_srab_write_4(0x005d, 0x7b);	// port5 force-link 1G
+	bcm53xx_srab_write_4(0x005f, 0x7b);	// port7 force-link 1G
+	bcm53xx_srab_write_4(0x000b, 0x7);	// management mode
+	bcm53xx_srab_write_4(0x0203, 0x0);	// disable BRCM tag
+	bcm53xx_srab_write_4(0x0200, 0x80);	// enable IMP=port8
+}
+
+static inline void
+bcm53xx_srab_busywait(bus_space_tag_t bst, bus_space_handle_t bsh)
+{
+	while (bus_space_read_4(bst, bsh, SRAB_BASE + SRAB_CMDSTAT) & SRA_GORDYN) {
+		delay(10);
+	}
+}
+
+uint32_t
+bcm53xx_srab_read_4(u_int pageoffset)
+{
+	bus_space_tag_t bst = bcm53xx_ioreg_bst;
+	bus_space_handle_t bsh = bcm53xx_ioreg_bsh;
+	uint32_t rv;
+
+	mutex_spin_enter(&srab_lock);
+
+	bcm53xx_srab_busywait(bst, bsh);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_CMDSTAT,
+	    __SHIFTIN(pageoffset, SRA_PAGEOFFSET) | SRA_GORDYN);
+	bcm53xx_srab_busywait(bst, bsh);
+	rv = bus_space_read_4(bst, bsh, SRAB_BASE + SRAB_RDL);
+
+	mutex_spin_exit(&srab_lock);
+	return rv;
+}
+
+uint64_t
+bcm53xx_srab_read_8(u_int pageoffset)
+{
+	bus_space_tag_t bst = bcm53xx_ioreg_bst;
+	bus_space_handle_t bsh = bcm53xx_ioreg_bsh;
+	uint64_t rv;
+
+	mutex_spin_enter(&srab_lock);
+
+	bcm53xx_srab_busywait(bst, bsh);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_CMDSTAT,
+	    __SHIFTIN(pageoffset, SRA_PAGEOFFSET) | SRA_GORDYN);
+	bcm53xx_srab_busywait(bst, bsh);
+	rv = bus_space_read_4(bst, bsh, SRAB_BASE + SRAB_RDH);
+	rv <<= 32;
+	rv |= bus_space_read_4(bst, bsh, SRAB_BASE + SRAB_RDL);
+
+	mutex_spin_exit(&srab_lock);
+	return rv;
+}
+
+void
+bcm53xx_srab_write_4(u_int pageoffset, uint32_t val)
+{
+	bus_space_tag_t bst = bcm53xx_ioreg_bst;
+	bus_space_handle_t bsh = bcm53xx_ioreg_bsh;
+
+	mutex_spin_enter(&srab_lock);
+
+	bcm53xx_srab_busywait(bst, bsh);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_WDL, val);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_CMDSTAT,
+	    __SHIFTIN(pageoffset, SRA_PAGEOFFSET) | SRA_WRITE | SRA_GORDYN);
+	bcm53xx_srab_busywait(bst, bsh);
+
+	mutex_spin_exit(&srab_lock);
+}
+
+void
+bcm53xx_srab_write_8(u_int pageoffset, uint64_t val)
+{
+	bus_space_tag_t bst = bcm53xx_ioreg_bst;
+	bus_space_handle_t bsh = bcm53xx_ioreg_bsh;
+
+	mutex_spin_enter(&srab_lock);
+
+	bcm53xx_srab_busywait(bst, bsh);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_WDL, val);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_WDH, val >> 32);
+	bus_space_write_4(bst, bsh, SRAB_BASE + SRAB_CMDSTAT,
+	    __SHIFTIN(pageoffset, SRA_PAGEOFFSET) | SRA_WRITE | SRA_GORDYN);
+	bcm53xx_srab_busywait(bst, bsh);
+	mutex_spin_exit(&srab_lock);
 }

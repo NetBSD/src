@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.1 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.1.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.1.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -215,27 +215,42 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap_physload ");
 #endif
+	KASSERT(bp != NULL || nbp == 0);
+	KASSERT(bp == NULL || nbp != 0);
 
-	if (bp == NULL) {
-		KASSERT(nbp == 0);
-		for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
-			pv_addr_t * const pv = &bmi->bmi_freeblocks[i];
-			const paddr_t start = atop(pv->pv_pa);
-			const paddr_t end = start + atop(pv->pv_size);
+	for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
+		pv_addr_t * const pv = &bmi->bmi_freeblocks[i];
+		paddr_t start = atop(pv->pv_pa);
+		const paddr_t end = start + atop(pv->pv_size);
 
-			uvm_page_physload(start, end, start, end,
-			    VM_FREELIST_DEFAULT);
-		}
-	}
-
-	for (; nbp-- > 0; bp++) {
-		const paddr_t start = bp->bp_start;
-		const paddr_t end = start + bp->bp_pages;
-
-		if (start < end) {
-			KASSERT(bp->bp_freelist < VM_NFREELIST);
-			uvm_page_physload(start, end, start, end,
-			    bp->bp_freelist);
+		while (start < end) {
+			int vm_freelist = VM_FREELIST_DEFAULT;
+			paddr_t segend = end;
+			/*
+			 * This assumes the bp list is sorted in ascending
+			 * order.
+			 */
+			for (size_t j = 0; j < nbp; j++) {
+				paddr_t bp_start = bp[j].bp_start;
+				paddr_t bp_end = bp_start + bp[j].bp_pages;
+				if (start < bp_start) {
+					if (segend > bp_start) {
+						segend = bp_start;
+					}
+					break;
+				}
+				if (start < bp_end) {
+					if (segend > bp_end) {
+						segend = bp_end;
+					}
+					vm_freelist = bp[j].bp_freelist;
+					break;
+				}
+			}
+	
+			uvm_page_physload(start, segend, start, segend,
+			    vm_freelist);
+			start = segend;
 		}
 	}
 

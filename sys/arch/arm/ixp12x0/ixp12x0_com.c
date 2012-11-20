@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.40 2012/02/02 19:42:58 tls Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.40.6.1 2012/11/20 03:01:06 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40.6.1 2012/11/20 03:01:06 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -122,8 +122,8 @@ inline static void	ixpcom_rxsoft(struct ixpcom_softc *, struct tty *);
 void            ixpcomcnprobe(struct consdev *);
 void            ixpcomcninit(struct consdev *);
 
-u_int32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
-u_int32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
+uint32_t	ixpcom_cr = 0;		/* tell cr to *_intr.c */
+uint32_t	ixpcom_imask = 0;	/* intrrupt mask from *_intr.c */
 
 
 static struct ixpcom_cons_softc {
@@ -171,7 +171,7 @@ struct consdev ixpcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 device_is_active(&(sc)->sc_dev))
+			 device_is_active((sc)->sc_dev))
 
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 
@@ -211,7 +211,7 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 	sc->sc_rbavail = IXPCOM_RING_SIZE;
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (IXPCOM_RING_SIZE << 1);
@@ -229,15 +229,15 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		cn_tab->cn_dev = makedev(maj, device_unit(sc->sc_dev));
 
-		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: console\n", device_xname(sc->sc_dev));
 	}
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, ixpcomsoft, sc);
 
 #ifdef RND_COM
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -257,7 +257,7 @@ ixpcomparam(struct tty *tp, struct termios *t)
 {
 	struct ixpcom_softc *sc
 		= device_lookup_private(&ixpcom_cd, COMUNIT(tp->t_dev));
-	u_int32_t cr;
+	uint32_t cr;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -471,7 +471,7 @@ ixpcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -506,7 +506,7 @@ ixpcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 				splx(s2);
 				splx(s);
 				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(sc->sc_dev));
 				return (EIO);
 			}
 			sc->enabled = 1;
@@ -791,7 +791,7 @@ ixpcom_iflush(struct ixpcom_softc *sc)
 			bus_space_read_4(iot, ioh, IXPCOM_DR);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
+		printf("%s: com_iflush timeout %02x\n", device_xname(sc->sc_dev),
 		       reg);
 #endif
 }
@@ -1037,7 +1037,7 @@ ixpcomintr(void* arg)
 	u_int cc;
 	u_int cr;
 	u_int sr;
-	u_int32_t c;
+	uint32_t c;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $	 */
+/* $NetBSD: ioc.c,v 1.9.12.1 2012/11/20 03:01:41 tls Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9.12.1 2012/11/20 03:01:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,21 +64,18 @@ __KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9 2011/07/01 18:53:47 dyoung Exp $");
 #include "locators.h"
 
 struct ioc_softc {
-	struct device   sc_dev;
-
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-static int      ioc_match(struct device *, struct cfdata *, void *);
-static void     ioc_attach(struct device *, struct device *, void *);
+static int      ioc_match(device_t, cfdata_t, void *);
+static void     ioc_attach(device_t, device_t, void *);
 #if defined(notyet)
 static int      ioc_print(void *, const char *);
-static int      ioc_search(struct device *, struct cfdata *,
-			   const int *, void *);
+static int      ioc_search(device_t, cfdata_t, const int *, void *);
 #endif
 
-CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
+CFATTACH_DECL_NEW(ioc, sizeof(struct ioc_softc),
 	      ioc_match, ioc_attach, NULL, NULL);
 
 #if defined(BLINK)
@@ -87,7 +84,7 @@ static void     ioc_blink(void *);
 #endif
 
 static int
-ioc_match(struct device * parent, struct cfdata * match, void *aux)
+ioc_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (mach_type == MACH_SGI_IP22)
 		return 1;
@@ -96,9 +93,9 @@ ioc_match(struct device * parent, struct cfdata * match, void *aux)
 }
 
 static void
-ioc_attach(struct device * parent, struct device * self, void *aux)
+ioc_attach(device_t parent, device_t self, void *aux)
 {
-	struct ioc_softc *sc = (struct ioc_softc *) self;
+	struct ioc_softc *sc = device_private(self);
 	struct mainbus_attach_args *maa = aux;
 	u_int32_t       sysid;
 
@@ -182,10 +179,9 @@ ioc_print(void *aux, const char *pnp)
 }
 
 static int
-ioc_search(struct device * parent, struct cfdata * cf,
-	   const int *ldesc, void *aux)
+ioc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct ioc_softc *sc = (struct ioc_softc *) parent;
+	struct ioc_softc *sc = device_private(parent);
 	struct ioc_attach_args iaa;
 	int             tryagain;
 
@@ -210,7 +206,7 @@ ioc_search(struct device * parent, struct cfdata * cf,
 static void
 ioc_blink(void *self)
 {
-	struct ioc_softc *sc = (struct ioc_softc *) self;
+	struct ioc_softc *sc = device_private(self);
 	register int    s;
 	int             value;
 

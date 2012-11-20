@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.54 2011/07/09 17:32:30 matt Exp $ */
+/* $NetBSD: dec_3max.c,v 1.54.12.1 2012/11/20 03:01:38 tls Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.54 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.54.12.1 2012/11/20 03:01:38 tls Exp $");
 
 #include "dzkbd.h"
 
@@ -220,7 +220,7 @@ static const struct {
 };
 
 static void
-dec_3max_intr_establish(struct device *dev, void *cookie, int level,
+dec_3max_intr_establish(device_t dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
 	int i;

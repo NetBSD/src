@@ -561,7 +561,7 @@ SM_STEP(SUPP_BE)
 		 * IEEE Std 802.1X-2004 has transitions from REQUEST to FAIL
 		 * and SUCCESS based on eapFail and eapSuccess, respectively.
 		 * However, IEEE Std 802.1X-2004 is also specifying that
-		 * eapNoResp should be set in conjuction with eapSuccess and
+		 * eapNoResp should be set in conjunction with eapSuccess and
 		 * eapFail which would mean that more than one of the
 		 * transitions here would be activated at the same time.
 		 * Skipping RESPONSE and/or RECEIVE states in these cases can
@@ -1026,6 +1026,21 @@ void eapol_sm_configure(struct eapol_sm *sm, int heldPeriod, int authPeriod,
 		sm->startPeriod = startPeriod;
 	if (maxStart >= 0)
 		sm->maxStart = maxStart;
+}
+
+
+/**
+ * eapol_sm_get_method_name - Get EAPOL method name
+ * @sm: Pointer to EAPOL state machine allocated with eapol_sm_init()
+ * Returns: Static string containing name of current eap method or NULL
+ */
+const char * eapol_sm_get_method_name(struct eapol_sm *sm)
+{
+	if (sm->SUPP_PAE_state != SUPP_PAE_AUTHENTICATED ||
+	    sm->suppPortStatus != Authorized)
+		return NULL;
+
+	return eap_sm_get_method_name(sm->eap);
 }
 
 
@@ -1798,7 +1813,7 @@ static void eapol_sm_notify_pending(void *ctx)
 
 
 #if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
-static void eapol_sm_eap_param_needed(void *ctx, const char *field,
+static void eapol_sm_eap_param_needed(void *ctx, enum wpa_ctrl_req_type field,
 				      const char *txt)
 {
 	struct eapol_sm *sm = ctx;
@@ -1810,6 +1825,15 @@ static void eapol_sm_eap_param_needed(void *ctx, const char *field,
 #define eapol_sm_eap_param_needed NULL
 #endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
 
+static void eapol_sm_notify_cert(void *ctx, int depth, const char *subject,
+				 const char *cert_hash,
+				 const struct wpabuf *cert)
+{
+	struct eapol_sm *sm = ctx;
+	if (sm->ctx->cert_cb)
+		sm->ctx->cert_cb(sm->ctx->ctx, depth, subject,
+				 cert_hash, cert);
+}
 
 static struct eapol_callbacks eapol_cb =
 {
@@ -1822,7 +1846,8 @@ static struct eapol_callbacks eapol_cb =
 	eapol_sm_set_config_blob,
 	eapol_sm_get_config_blob,
 	eapol_sm_notify_pending,
-	eapol_sm_eap_param_needed
+	eapol_sm_eap_param_needed,
+	eapol_sm_notify_cert
 };
 
 
@@ -1858,6 +1883,7 @@ struct eapol_sm *eapol_sm_init(struct eapol_ctx *ctx)
 	conf.pkcs11_engine_path = ctx->pkcs11_engine_path;
 	conf.pkcs11_module_path = ctx->pkcs11_module_path;
 	conf.wps = ctx->wps;
+	conf.cert_in_cb = ctx->cert_in_cb;
 
 	sm->eap = eap_peer_sm_init(sm, &eapol_cb, sm->ctx->msg_ctx, &conf);
 	if (sm->eap == NULL) {

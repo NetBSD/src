@@ -1,4 +1,4 @@
-/*	$NetBSD: gpibvar.h,v 1.4 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: gpibvar.h,v 1.4.44.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ struct gpibdev_attach_args {
  * Software state per GPIB bus.
  */
 struct gpib_softc {
-	struct device sc_dev;			/* generic device glue */
+	device_t sc_dev;			/* generic device glue */
 	gpib_chipset_tag_t sc_ic;		/* GPIB chipset tag */
 	u_int8_t sc_myaddr;			/* my (host) GPIB address */
 	int sc_flags;

@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.1.12.1 2012/11/20 03:01:18 tls Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.1.12.1 2012/11/20 03:01:18 tls Exp $");
 
 #define __INTR_PRIVATE
 
@@ -173,7 +173,7 @@ evbmips_iointr(int ppl, vaddr_t pc, uint32_t ipending)
 }
 
 void *
-loongson_pciide_compat_intr_establish(void *v, struct device *dev,
+loongson_pciide_compat_intr_establish(void *v, device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
@@ -198,7 +198,7 @@ loongson_pciide_compat_intr_establish(void *v, struct device *dev,
 		cookie = NULL;
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	printf("%s: %s channel interrupting at %s\n", device_xname(dev),
 	    PCIIDE_CHANNEL_NAME(chan),
 	    isa_intr_string(sys_platform->isa_chipset, irq));
 	return (cookie);

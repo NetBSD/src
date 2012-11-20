@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.8 2012/03/11 00:34:46 mrg Exp $	*/
+/*	$NetBSD: ahci.c,v 1.8.2.1 2012/11/20 03:01:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.8 2012/03/11 00:34:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.8.2.1 2012/11/20 03:01:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,10 +239,10 @@ struct ahci_pipe {
 	u_int32_t toggle;
 };
 
-static int	ahci_match(device_t, struct cfdata *, void *);
+static int	ahci_match(device_t, cfdata_t, void *);
 static void	ahci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ahci, sizeof(struct ahci_softc),
+CFATTACH_DECL_NEW(ahci, sizeof(struct ahci_softc),
     ahci_match, ahci_attach, NULL, NULL);
 
 static int

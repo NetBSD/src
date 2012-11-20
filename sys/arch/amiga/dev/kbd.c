@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.54 2011/06/03 00:52:22 matt Exp $ */
+/*	$NetBSD: kbd.c,v 1.54.12.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.54 2011/06/03 00:52:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.54.12.1 2012/11/20 03:00:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,17 +177,17 @@ const struct cdevsw kbd_cdevsw = {
 
 /*ARGSUSED*/
 int
-kbdmatch(device_t pdp, cfdata_t cfp, void *auxp)
+kbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (matchname((char *)auxp, "kbd"))
+	if (matchname((char *)aux, "kbd"))
 		return(1);
 	return(0);
 }
 
 /*ARGSUSED*/
 void
-kbdattach(device_t pdp, device_t dp, void *auxp)
+kbdattach(device_t parent, device_t self, void *aux)
 {
 #ifdef DRACO
 	kbdenable();
@@ -200,7 +200,7 @@ kbdattach(device_t pdp, device_t dp, void *auxp)
 #endif
 
 #if NWSKBD>0
-	if (dp != NULL) {
+	if (self != NULL) {
 		/*
 		 * Try to attach the wskbd.
 		 */
@@ -209,7 +209,7 @@ kbdattach(device_t pdp, device_t dp, void *auxp)
 		waa.keymap = &kbd_mapdata;
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
-		kbd_softc.k_wskbddev = config_found(dp, &waa, wskbddevprint);
+		kbd_softc.k_wskbddev = config_found(self, &waa, wskbddevprint);
 
 		kbd_softc.k_pollingmode = 0;
 	}

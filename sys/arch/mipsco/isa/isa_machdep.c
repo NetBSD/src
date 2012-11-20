@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.14 2009/08/19 15:11:53 dyoung Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.14.22.1 2012/11/20 03:01:34 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2009/08/19 15:11:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14.22.1 2012/11/20 03:01:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,16 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.14 2009/08/19 15:11:53 dyoung Exp 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
-static int	mipscoisabusprint(void *auxp, const char *);
-static int	isabusmatch(struct device *, struct cfdata *, void *);
-static void	isabusattach(struct device *, struct device *, void *);
+static int	mipscoisabusprint(void *, const char *);
+static int	isabusmatch(device_t, cfdata_t, void *);
+static void	isabusattach(device_t, device_t, void *);
 
 struct isabus_softc {
-	struct device		sc_dev;
 	struct mipsco_isa_chipset sc_isa_ic;
 };
 
-CFATTACH_DECL(isabus, sizeof(struct isabus_softc),
+CFATTACH_DECL_NEW(isabus, sizeof(struct isabus_softc),
     isabusmatch, isabusattach, NULL, NULL);
 
 extern struct cfdriver isabus_cd;
@@ -69,7 +68,7 @@ int    isa_intr(void *);
 
 
 int
-isabusmatch(struct device *pdp, struct cfdata *cfp, void *aux)
+isabusmatch(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -103,9 +102,9 @@ isa_bus_space_init(struct mipsco_bus_space *bst, const char *type, paddr_t paddr
 
 
 void
-isabusattach(struct device *pdp, struct device *dp, void *aux)
+isabusattach(device_t parent, device_t self, void *aux)
 {
-	struct isabus_softc *sc = (struct isabus_softc *)dp;
+	struct isabus_softc *sc = device_private(self);
 	struct mipsco_isa_chipset *ic = &sc->sc_isa_ic;
 	struct isabus_attach_args iba;
 
@@ -139,25 +138,25 @@ isabusattach(struct device *pdp, struct device *dp, void *aux)
 	bus_space_write_4(ic->ic_bst, ic->ic_bsh, 0, 0);
 
 	evcnt_attach_dynamic(&ic->ic_intrcnt, EVCNT_TYPE_INTR, NULL,
-			     dp->dv_xname, "intr");
+			     device_xname(self), "intr");
 
 	LIST_INIT(&ic->intr_q);
 	(*platform.intr_establish)(SYS_INTR_ATBUS, isa_intr, ic);
 
 	printf("\n");
-	config_found_ia(dp, "isabus", &iba, mipscoisabusprint);
+	config_found_ia(self, "isabus", &iba, mipscoisabusprint);
 }
 
 int
-mipscoisabusprint(void *auxp, const char *name)
+mipscoisabusprint(void *aux, const char *name)
 {
-	if(name == NULL)
-		return(UNCONF);
-	return(QUIET);
+	if (name == NULL)
+		return UNCONF;
+	return QUIET;
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self, struct isabus_attach_args *iba)
+isa_attach_hook(device_t parent, device_t self, struct isabus_attach_args *iba)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.16 2012/02/12 16:34:08 matt Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.16.6.1 2012/11/20 03:01:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.16 2012/02/12 16:34:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.16.6.1 2012/11/20 03:01:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ hd64465_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	r = hd64465_reg_read_2(HD64465_SRR);
-	printf("%s: HITACHI HD64465 rev. %d.%d\n", self->dv_xname,
+	printf("%s: HITACHI HD64465 rev. %d.%d\n", device_xname(self),
 	    (r >> 8) & 0xff, r & 0xff);
 
 	/* Mask all interrupt */

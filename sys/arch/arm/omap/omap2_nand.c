@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.4.12.1 2012/11/20 03:01:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.4.12.1 2012/11/20 03:01:06 tls Exp $");
 
 #include "opt_omap.h"
 #include "opt_flash.h"
@@ -81,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $"
 /* NAND status register */
 #define NAND_WP_BIT __BIT(4)
 
-static int	omap2_nand_match(struct device *, struct cfdata *, void *);
-static void	omap2_nand_attach(struct device *, struct device *, void *);
+static int	omap2_nand_match(device_t, cfdata_t, void *);
+static void	omap2_nand_attach(device_t, device_t, void *);
 static int	omap2_nand_detach(device_t, int);
 
 void omap2_nand_command(device_t self, uint8_t command);
@@ -161,7 +161,7 @@ omap2_nand_isbusy(device_t self)
 };
 
 static int
-omap2_nand_match(struct device *parent, struct cfdata *match, void *aux)
+omap2_nand_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct gpmc_attach_args *gpmc = aux;
 	bus_space_tag_t	iot;

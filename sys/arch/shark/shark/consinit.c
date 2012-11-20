@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11.12.1 2012/11/20 03:01:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11.12.1 2012/11/20 03:01:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ consinit(void)
 		if (!igsfb_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
 #if (NPCKBC > 0)
 			pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif /* NPCKBC */
 			return;
 		}
@@ -133,7 +133,7 @@ consinit(void)
 		if (!chipsfb_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
 #if (NPCKBC > 0)
 			pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif /* NPCKBC */
 			return;
 		}
@@ -142,7 +142,7 @@ consinit(void)
 		if (!vga_ofbus_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag)) {
 #if (NPCKBC > 0)
 			pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP,
-			    PCKBC_KBD_SLOT);
+			    PCKBC_KBD_SLOT, 0);
 #endif /* NPCKBC */
 			return;
 		}

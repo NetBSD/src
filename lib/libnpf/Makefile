@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/03/21 05:37:42 matt Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2012/11/20 03:00:44 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ LIBDPLIBS+=	prop ${.CURDIR}/../libprop
 LDADD+=		-lprop
 DPADD+=		${LIBPROP}
 
-WARNS?=		5
-NOLINT=		# defined (note: deliberately)
+WARNS=		5
+NOLINT=		# disabled deliberately
 
 .include <bsd.lib.mk>

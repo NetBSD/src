@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.42 2012/08/29 19:10:16 matt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.42.2.1 2012/11/20 03:01:14 tls Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -869,7 +869,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -1332,17 +1332,17 @@ gumstix_device_register(device_t dev, void *aux)
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port1", 1) == false) {
 			printf("WARNING: unable to set power-mask for port1"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port2", 1) == false) {
 			printf("WARNING: unable to set power-mask for port2"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 		if (prop_dictionary_set_bool(device_properties(dev),
 		    "Ganged-power-mask-on-port3", 1) == false) {
 			printf("WARNING: unable to set power-mask for port3"
-			    " property for %s\n", dev->dv_xname);
+			    " property for %s\n", device_xname(dev));
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.3 2012/09/06 02:03:01 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.3.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3 2012/09/06 02:03:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -248,7 +248,7 @@ static void
 add_pages(struct bootmem_info *bmi, pv_addr_t *pv)
 {
 	pv_addr_t **pvp = &SLIST_FIRST(&bmi->bmi_chunks);
-	while ((*pvp) != 0 && (*pvp)->pv_va <= pv->pv_va) {
+	while ((*pvp) != NULL && (*pvp)->pv_va <= pv->pv_va) {
 		pv_addr_t * const pv0 = (*pvp);
 		KASSERT(SLIST_NEXT(pv0, pv_list) == NULL || pv0->pv_pa < SLIST_NEXT(pv0, pv_list)->pv_pa);
 		if (concat_pvaddr(pv0, pv)) {
@@ -303,7 +303,7 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	static bool l1pt_found;
 
 	/*
-	 * If we haven't allcoated the kernel L1 page table and we are aligned
+	 * If we haven't allocated the kernel L1 page table and we are aligned
 	 * at a L1 table boundary, alloc the memory for it.
 	 */
 	if (!l1pt_found
@@ -323,6 +323,12 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 			    __func__, nbytes);
 		}
 	}
+
+	/*
+	 * As we allocate the memory, make sure that we don't walk over
+	 * our current first level translation table.
+	 */
+	KASSERT((armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1)) != free_pv->pv_pa);
 
 	pv->pv_pa = free_pv->pv_pa;
 	pv->pv_va = free_pv->pv_va;
@@ -368,15 +374,17 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	/*
 	 * Calculate the number of L2 pages needed for mapping the
-	 * kernel + data + stuff
+	 * kernel + data + stuff.  Assume 2 L2 pages for kernel, 1 for vectors,
+	 * and 1 for IO
 	 */
 	size_t kernel_size = bmi->bmi_kernelend;
 	kernel_size -= (bmi->bmi_kernelstart & -L2_S_SEGSIZE);
 	kernel_size += L1_TABLE_SIZE;
-	kernel_size += round_page(MSGBUFSIZE);
+	kernel_size += L2_TABLE_SIZE * (2 + 1 + KERNEL_L2PT_VMDATA_NUM + 1);
 	kernel_size +=
 	    cpu_num * (ABT_STACK_SIZE + FIQ_STACK_SIZE + IRQ_STACK_SIZE
 	    + UND_STACK_SIZE + UPAGES) * PAGE_SIZE;
+	kernel_size += round_page(MSGBUFSIZE);
 	kernel_size += 0x10000;	/* slop */
 	kernel_size += (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 	kernel_size = round_page(kernel_size);
@@ -409,7 +417,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * We are going to allocate our bootstrap pages from the beginning of
 	 * the free space that we just calculated.  We allocate one page
 	 * directory and a number of page tables and store the physical
-	 * addresses in the kernel_l2pt_table array.
+	 * addresses in the bmi_l2pts array in bootmem_info.
 	 *
 	 * The kernel page directory must be on a 16K boundary.  The page
 	 * tables must be on 4K boundaries.  What we do is allocate the
@@ -426,13 +434,14 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		SLIST_INSERT_HEAD(&bmi->bmi_freechunks, &chunks[i], pv_list);
 	}
 
-	/*
-	 * As we allocate the memory, make sure that we don't walk over
-	 * our temporary first level translation table.
-	 */
-
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
+
+	/*
+	 * Allocate the L2 pages, but if we get to a page that is aligned for
+	 * an L1 page table, we will allocate the pages for it first and then
+	 * allocate the L2 page.
+	 */
 
 	/*
 	 * First allocate L2 page for the vectors.
@@ -445,22 +454,24 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	add_pages(bmi, &bmi->bmi_vector_l2pt);
 
 	/*
-	 * Allocate the L2 pages, but if we get to a page that aligned for a
-	 * L1 page table, we will allocate pages for it first and allocate
-	 * L2 page.
+	 * Now allocate L2 pages for the kernel
 	 */
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
 #endif
-	for (size_t idx = 0; idx <= KERNEL_L2PT_KERNEL_NUM; ++idx) {
+	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
 		valloc_pages(bmi, &kernel_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 		add_pages(bmi, &kernel_l2pt[idx]);
 	}
+
+	/*
+	 * Now allocate L2 pages for the initial kernel VA space.
+	 */
 #ifdef VERBOSE_INIT_ARM
 	printf(" vm");
 #endif
-	for (size_t idx = 0; idx <= KERNEL_L2PT_VMDATA_NUM; ++idx) {
+	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; ++idx) {
 		valloc_pages(bmi, &vmdata_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 		add_pages(bmi, &vmdata_l2pt[idx]);
@@ -482,7 +493,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf("%s: allocating stacks\n", __func__);
 #endif
 
-	/* Allocate stacks for all modes */
+	/* Allocate stacks for all modes and CPUs */
 	valloc_pages(bmi, &abtstack, ABT_STACK_SIZE * cpu_num,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	add_pages(bmi, &abtstack);
@@ -555,7 +566,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	pmap_link_l2pt(l1pt_va, systempage.pv_va & -L2_S_SEGSIZE,
 	    &bmi->bmi_vector_l2pt);
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+	printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n (vectors)",
 	    __func__, bmi->bmi_vector_l2pt.pv_va, bmi->bmi_vector_l2pt.pv_pa,
 	    systempage.pv_va);
 #endif
@@ -566,7 +577,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		pmap_link_l2pt(l1pt_va, kernel_base + idx * L2_S_SEGSIZE,
 		    &kernel_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (kernel)\n",
 		    __func__, kernel_l2pt[idx].pv_va, kernel_l2pt[idx].pv_pa,
 		    kernel_base + idx * L2_S_SEGSIZE);
 #endif
@@ -576,7 +587,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		pmap_link_l2pt(l1pt_va, kernel_vm_base + idx * L2_S_SEGSIZE,
 		    &vmdata_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (vm)\n",
 		    __func__, vmdata_l2pt[idx].pv_va, vmdata_l2pt[idx].pv_pa,
 		    kernel_vm_base + idx * L2_S_SEGSIZE);
 #endif
@@ -584,7 +595,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	if (iovbase) {
 		pmap_link_l2pt(l1pt_va, iovbase & -L2_S_SEGSIZE, &bmi->bmi_io_l2pt);
 #ifdef VERBOSE_INIT_ARM
-		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx\n",
+		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (io)\n",
 		    __func__, bmi->bmi_io_l2pt.pv_va, bmi->bmi_io_l2pt.pv_pa,
 		    iovbase & -L2_S_SEGSIZE);
 #endif
@@ -652,7 +663,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv = *pv;
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
-		cur_pv.pv_va = kernel_base;
+		cur_pv.pv_va = KERNEL_BASE;
 		cur_pv.pv_pa = bmi->bmi_start;
 		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
@@ -806,10 +817,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernel_l1pt.pv_pa, kernel_l1pt.pv_pa + L1_TABLE_SIZE - 1,
 	    kernel_l1pt.pv_va, kernel_l1pt.pv_va + L1_TABLE_SIZE - 1,
 	    L1_TABLE_SIZE / PAGE_SIZE);
-	printf(mem_fmt, "Exception Vectors",
-	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
-	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
-	    1);
+	printf(mem_fmt, "ABT stack (CPU 0)",
+	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
+	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
+	    ABT_STACK_SIZE);
 	printf(mem_fmt, "FIQ stack (CPU 0)",
 	    fiqstack.pv_pa, fiqstack.pv_pa + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    fiqstack.pv_va, fiqstack.pv_va + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
@@ -818,10 +829,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    irqstack.pv_pa, irqstack.pv_pa + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    irqstack.pv_va, irqstack.pv_va + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
 	    IRQ_STACK_SIZE);
-	printf(mem_fmt, "ABT stack (CPU 0)",
-	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    ABT_STACK_SIZE);
 	printf(mem_fmt, "UND stack (CPU 0)",
 	    undstack.pv_pa, undstack.pv_pa + (UND_STACK_SIZE * PAGE_SIZE) - 1,
 	    undstack.pv_va, undstack.pv_va + (UND_STACK_SIZE * PAGE_SIZE) - 1,
@@ -834,8 +841,14 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    kernelstack.pv_pa, kernelstack.pv_pa + (UPAGES * PAGE_SIZE) - 1,
 	    kernelstack.pv_va, kernelstack.pv_va + (UPAGES * PAGE_SIZE) - 1,
 	    UPAGES);
-	printf(mem_fmt_nov, "Message Buffer",
-	    msgbufphys, msgbufphys + msgbuf_pgs * PAGE_SIZE - 1, msgbuf_pgs);
+	printf(mem_fmt, "Message Buffer",
+	    msgbuf.pv_pa, msgbuf.pv_pa + (msgbuf_pgs * PAGE_SIZE) - 1,
+	    msgbuf.pv_va, msgbuf.pv_va + (msgbuf_pgs * PAGE_SIZE) - 1,
+	    (int)msgbuf_pgs);
+	printf(mem_fmt, "Exception Vectors",
+	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
+	    systempage.pv_va, systempage.pv_va + PAGE_SIZE - 1,
+	    1);
 	for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
 		pv = &bmi->bmi_freeblocks[i];
 
@@ -866,11 +879,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	cpu_idcache_wbinv_all();
-	cpu_setttb(l1pt_pa);
+	cpu_setttb(l1pt_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 #ifdef VERBOSE_INIT_ARM
-	printf("OK.\n");
+	printf("TTBR0=%#x OK\n", armreg_ttbr_read());
 #endif
 }

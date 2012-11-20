@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.83.2.1 2012/11/20 03:02:19 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.83 2012/08/16 18:37:14 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.83.2.1 2012/11/20 03:02:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOBILITY, 230000 },
 #endif
+	{ PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT, 230000 },
@@ -887,8 +888,6 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.cursor = mach64_cursor;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = mach64_putchar_aa8;
-		ri->ri_ops.allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG,
-		     0, &sc->sc_gc.gc_attr);
 	} else
 		ri->ri_ops.putchar = mach64_putchar_mono;
 }
@@ -1514,8 +1513,8 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 
 		if (!CHAR_IN_FONT(c, font))
 			return;
-		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0x0f];
-		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0x0f];
+		bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
+		fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 		x = ri->ri_xorigin + col * wi;
 		y = ri->ri_yorigin + row * he;
 		if (c == 0x20) {
@@ -2048,7 +2047,7 @@ machfb_fbattach(struct mach64_softc *sc)
 	fb->fb_type.fb_size = sc->memsize;
 	
 	fb->fb_type.fb_type = FBTYPE_GENERIC_PCI;
-	fb->fb_flags = sc->sc_dev->dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = sc->bits_per_pixel;
 	fb->fb_type.fb_width = sc->virt_x;
 	fb->fb_type.fb_height = sc->virt_y;

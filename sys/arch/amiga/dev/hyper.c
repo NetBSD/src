@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.21 2011/07/19 15:55:27 dyoung Exp $ */
+/*	$NetBSD: hyper.c,v 1.21.12.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.21 2011/07/19 15:55:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.21.12.1 2012/11/20 03:00:58 tls Exp $");
 
 /*
  * zbus HyperCom driver
@@ -54,15 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.21 2011/07/19 15:55:27 dyoung Exp $");
 
 
 struct hyper_softc {
-	struct device sc_dev;
 	struct bus_space_tag sc_bst;
 };
 
-int hypermatch(struct device *, struct cfdata *, void *);
-void hyperattach(struct device *, struct device *, void *);
-int hyperprint(void *auxp, const char *);
+int hypermatch(device_t, cfdata_t, void *);
+void hyperattach(device_t, device_t, void *);
+int hyperprint(void *, const char *);
 
-CFATTACH_DECL(hyper, sizeof(struct hyper_softc),
+CFATTACH_DECL_NEW(hyper, sizeof(struct hyper_softc),
     hypermatch, hyperattach, NULL, NULL);
 
 struct hyper_prods {
@@ -80,12 +79,11 @@ struct hyper_prods {
 };
 
 int
-hypermatch(struct device *parent, struct cfdata *cfp, void *auxp)
+hypermatch(device_t parent, cfdata_t cf, void *aux)
 {
-
 	struct zbus_args *zap;
 
-	zap = auxp;
+	zap = aux;
 
 	if (zap->manid != 5001)
 		return (0);
@@ -123,7 +121,7 @@ struct hyper_devs {
 };
 
 void
-hyperattach(struct device *parent, struct device *self, void *auxp)
+hyperattach(device_t parent, device_t self, void *aux)
 {
 	struct hyper_softc *hprsc;
 	struct hyper_devs  *hprsd;
@@ -131,8 +129,8 @@ hyperattach(struct device *parent, struct device *self, void *auxp)
 	struct supio_attach_args supa;
 	struct hyper_prods *hprpp;
 
-	hprsc = (struct hyper_softc *)self;
-	zap = auxp;
+	hprsc = device_private(self);
+	zap = aux;
 	hprpp = &hyperproducts[zap->prodid];
 
 	if (parent)
@@ -158,10 +156,10 @@ hyperattach(struct device *parent, struct device *self, void *auxp)
 }
 
 int
-hyperprint(void *auxp, const char *pnp)
+hyperprint(void *aux, const char *pnp)
 {
 	struct supio_attach_args *supa;
-	supa = auxp;
+	supa = aux;
 
 	if (pnp == NULL)
 		return(QUIET);

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1003 2012/08/22 06:45:15 spz Exp $
+# $NetBSD: mi,v 1.1003.2.1 2012/11/20 02:57:45 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -321,6 +321,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/npfctl					base-npf-bin		npf
 ./sbin/pdisk					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
@@ -462,6 +463,7 @@
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
 ./usr/bin/finger				base-util-bin
+./usr/bin/flock					base-util-bin
 ./usr/bin/fmt					base-util-bin
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
@@ -548,6 +550,8 @@
 ./usr/bin/lsextattr				base-util-bin
 ./usr/bin/lua					base-util-bin
 ./usr/bin/lzcat					base-util-bin
+./usr/bin/lzf					base-util-bin
+./usr/bin/lzfcat				base-util-bin
 ./usr/bin/lzma					base-util-bin
 ./usr/bin/lzmainfo				base-util-bin
 ./usr/bin/m4					base-util-bin
@@ -704,6 +708,9 @@
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpm_sealdata				base-tpm-bin		tpm
+./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
+./usr/bin/tpm_version				base-tpm-bin		tpm
 ./usr/bin/tput					base-util-bin
 ./usr/bin/tr					base-util-bin
 ./usr/bin/true					base-util-bin
@@ -715,6 +722,7 @@
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
+./usr/bin/unlzf					base-util-bin
 ./usr/bin/unlzma				base-util-bin
 ./usr/bin/unvis					base-util-bin
 ./usr/bin/unxz					base-util-bin
@@ -932,6 +940,7 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr
 ./usr/lib/lua/5.1				base-sys-usr
+./usr/lib/npf					base-sys-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -972,6 +981,7 @@
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/lib			base-sys-usr
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root
+./usr/libdata/debug/usr/lib/npf			base-sys-usr
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
@@ -1351,7 +1361,8 @@
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
-./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/npfctl				base-obsolete		obsolete
+./usr/sbin/npftest				base-npf-bin		npf,rump,pic
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
@@ -1489,9 +1500,31 @@
 ./usr/sbin/tcpdmatch				base-netutil-bin
 ./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
+./usr/sbin/tcsd					base-tpm-bin		tpm
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
 ./usr/sbin/tprof				base-sysutil-bin
+./usr/sbin/tpm_changeownerauth			base-tpm-bin		tpm
+./usr/sbin/tpm_clear				base-tpm-bin		tpm
+./usr/sbin/tpm_createek				base-tpm-bin		tpm
+./usr/sbin/tpm_getpubek				base-tpm-bin		tpm
+./usr/sbin/tpm_nvdefine				base-tpm-bin		tpm
+./usr/sbin/tpm_nvinfo				base-tpm-bin		tpm
+./usr/sbin/tpm_nvread				base-tpm-bin		tpm
+./usr/sbin/tpm_nvrelease			base-tpm-bin		tpm
+./usr/sbin/tpm_nvwrite				base-tpm-bin		tpm
+./usr/sbin/tpm_resetdalock			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictpubek			base-tpm-bin		tpm
+./usr/sbin/tpm_restrictsrk			base-tpm-bin		tpm
+./usr/sbin/tpm_revokeek				base-tpm-bin		tpm
+./usr/sbin/tpm_selftest				base-tpm-bin		tpm
+./usr/sbin/tpm_setactive			base-tpm-bin		tpm
+./usr/sbin/tpm_setclearable			base-tpm-bin		tpm
+./usr/sbin/tpm_setenable			base-tpm-bin		tpm
+./usr/sbin/tpm_setoperatorauth			base-tpm-bin		tpm
+./usr/sbin/tpm_setownable			base-tpm-bin		tpm
+./usr/sbin/tpm_setpresence			base-tpm-bin		tpm
+./usr/sbin/tpm_takeownership			base-tpm-bin		tpm
 ./usr/sbin/traceroute				base-netutil-bin
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
@@ -3791,6 +3824,7 @@
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share
+./usr/share/mk/bsd.buildinstall.mk			base-mk-share		share
 ./usr/share/mk/bsd.clang-analyze.mk		base-mk-share		share
 ./usr/share/mk/bsd.clean.mk			base-mk-share		share
 ./usr/share/mk/bsd.crypto.mk			base-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.116.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116 2012/09/11 17:51:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.116.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1311,7 +1311,7 @@ struct cpu_functions cortex_cpufuncs = {
 	/* Other functions */
 
 	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= arm11_drain_writebuf,
+	.cf_drain_writebuf	= armv7_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
@@ -1574,7 +1574,7 @@ get_cachetype_cp15(void)
     defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
 /* Cache information for CPUs without cache type registers. */
 struct cachetab {
-	u_int32_t ct_cpuid;
+	uint32_t ct_cpuid;
 	int	ct_pcache_type;
 	int	ct_pcache_unified;
 	int	ct_pdcache_size;
@@ -1609,7 +1609,7 @@ static void
 get_cachetype_table(void)
 {
 	int i;
-	u_int32_t cpuid = cpu_id();
+	uint32_t cpuid = cpu_id();
 
 	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
 		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {

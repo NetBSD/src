@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.80 2012/07/22 00:53:20 rmind Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.80.2.1 2012/11/20 03:02:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80 2012/07/22 00:53:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80.2.1 2012/11/20 03:02:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,8 @@ smbfs_create(void *v)
 	if (error)
 		goto out;
 
-	cache_enter(dvp, *ap->a_vpp, cnp);
+	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_flags);
 
   out:
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -1202,29 +1203,25 @@ smbfs_lookup(void *v)
 	 * the time the cache entry has been created. If it has,
 	 * the cache entry has to be ignored.
 	 */
-	if ((error = cache_lookup(dvp, vpp, cnp)) >= 0) {
+	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags,
+			 NULL, vpp)) {
 		struct vattr vattr;
 		struct vnode *newvp;
-		int err2;
 
-		if (error && error != ENOENT) {
-			*vpp = NULLVP;
-			return error;
-		}
-
-		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
-		if (err2 != 0) {
-			if (error == 0) {
+		error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
+		if (error != 0) {
+			if (*vpp != NULLVP) {
 				if (*vpp != dvp)
 					vput(*vpp);
 				else
 					vrele(*vpp);
 			}
 			*vpp = NULLVP;
-			return err2;
+			return error;
 		}
 
-		if (error == ENOENT) {
+		if (*vpp == NULLVP) {
 			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred)
 			    && vattr.va_mtime.tv_sec == VTOSMB(dvp)->n_nctime)
 				return ENOENT;
@@ -1297,7 +1294,8 @@ smbfs_lookup(void *v)
 		 * Insert name into cache (as non-existent) if appropriate.
 		 */
 		if (nameiop != CREATE)
-			cache_enter(dvp, *vpp, cnp);
+			cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+				    cnp->cn_flags);
 
 		return (ENOENT);
 	}
@@ -1352,11 +1350,13 @@ smbfs_lookup(void *v)
 	KASSERT(error == 0);
 	if (cnp->cn_nameiop != DELETE || !islastcn) {
 		VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 #ifdef notdef
 	} else if (error == ENOENT && cnp->cn_nameiop != CREATE) {
 		VTOSMB(*vpp)->n_nctime = VTOSMB(*vpp)->n_mtime.tv_sec;
-		cache_enter(dvp, *vpp, cnp);
+		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
+			    cnp->cn_flags);
 #endif
 	}
 

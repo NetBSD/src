@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.6 2012/01/31 22:13:20 hauke Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.6.6.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.6 2012/01/31 22:13:20 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.6.6.1 2012/11/20 03:01:30 tls Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -105,7 +105,7 @@ int cpi_nubus_match(device_t, cfdata_t, void *);
 void cpi_nubus_attach(device_t, device_t, void *);
 void cpi_nubus_intr(void *);
 
-CFATTACH_DECL(cpi, sizeof(struct cpi_softc),
+CFATTACH_DECL_NEW(cpi, sizeof(struct cpi_softc),
     cpi_nubus_match, cpi_nubus_attach, NULL, NULL);
 
 dev_type_open(cpi_open);
@@ -352,8 +352,8 @@ cpi_open(dev_t device, int flag, int mode, struct lwp *l)
 	}
 	if (sc->sc_lpstate != LP_INITIAL) {
 		if (TRACE_OPEN)
-			printf("%s not in initial state (%x).\n",
-			    sc->sc_dev.dv_xname, sc->sc_lpstate);
+			printf("Not in initial state (%x).\n",
+			    sc->sc_lpstate);
 		return EBUSY;
 	}
 	sc->sc_lpstate = LP_OPENING;

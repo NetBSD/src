@@ -1,4 +1,4 @@
-/*	$NetBSD: ssc.c,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: ssc.c,v 1.3.22.1 2012/11/20 03:01:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -37,7 +37,7 @@
 
 #define	SSC_POLL_HZ	50
 
-void sscconsattach(struct device *, struct device *, void *);
+void sscconsattach(device_t, device_t, void *);
 
 void ssccnprobe(struct consdev *);
 void ssccninit(struct consdev *);
@@ -60,7 +60,7 @@ ssc(uint64_t in0, uint64_t in1, uint64_t in2, uint64_t in3, int which)
 
 
 void
-sscconsattach(struct device *parent, struct device *self, void *aux)
+sscconsattach(device_t parent, device_t self, void *aux)
 {
 	/* not yet */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.30.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.30.2.2 2012/11/20 03:02:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.1 2012/10/09 13:36:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.2 2012/11/20 03:02:13 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -186,6 +186,14 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_QUIRK_BADPMP },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_SATA,
 	    AHCI_QUIRK_BADPMP },
+	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_01,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_02,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_11,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_12,
+	    AHCI_PCI_QUIRK_FORCE },
 };
 
 struct ahci_pci_softc {

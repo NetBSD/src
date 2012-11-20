@@ -1,3 +1,15 @@
+##### CLEAR VARS
+
+DRV_CFLAGS =
+DRV_WPA_CFLAGS =
+DRV_AP_CFLAGS =
+DRV_OBJS =
+DRV_WPA_OBJS =
+DRV_AP_OBJS =
+DRV_LIBS =
+DRV_WPA_LIBS =
+DRV_AP_LIBS =
+
 ##### COMMON DRIVERS
 
 ifdef CONFIG_DRIVER_HOSTAP
@@ -31,11 +43,23 @@ NEED_SME=y
 NEED_AP_MLME=y
 NEED_NETLINK=y
 NEED_LINUX_IOCTL=y
-DRV_LIBS += -lnl
+NEED_RFKILL=y
 
-ifdef CONFIG_LIBNL20
-DRV_LIBS += -lnl-genl
-DRV_CFLAGS += -DCONFIG_LIBNL20
+ifdef CONFIG_LIBNL32
+  DRV_LIBS += -lnl-3
+  DRV_LIBS += -lnl-genl-3
+  DRV_CFLAGS += -DCONFIG_LIBNL20
+else
+  ifdef CONFIG_LIBNL_TINY
+    DRV_LIBS += -lnl-tiny
+  else
+    DRV_LIBS += -lnl
+  endif
+
+  ifdef CONFIG_LIBNL20
+    DRV_LIBS += -lnl-genl
+    DRV_CFLAGS += -DCONFIG_LIBNL20
+  endif
 endif
 endif
 
@@ -77,24 +101,7 @@ DRV_WPA_CFLAGS += -DCONFIG_DRIVER_WEXT
 CONFIG_WIRELESS_EXTENSION=y
 NEED_NETLINK=y
 NEED_LINUX_IOCTL=y
-endif
-
-ifdef CONFIG_DRIVER_HERMES
-DRV_WPA_CFLAGS += -DCONFIG_DRIVER_HERMES
-DRV_WPA_OBJS += ../src/drivers/driver_hermes.o
-CONFIG_WIRELESS_EXTENSION=y
-endif
-
-ifdef CONFIG_DRIVER_ATMEL
-DRV_WPA_CFLAGS += -DCONFIG_DRIVER_ATMEL
-DRV_WPA_OBJS += ../src/drivers/driver_atmel.o
-CONFIG_WIRELESS_EXTENSION=y
-endif
-
-ifdef CONFIG_DRIVER_NDISWRAPPER
-DRV_WPA_CFLAGS += -DCONFIG_DRIVER_NDISWRAPPER
-DRV_WPA_OBJS += ../src/drivers/driver_ndiswrapper.o
-CONFIG_WIRELESS_EXTENSION=y
+NEED_RFKILL=y
 endif
 
 ifdef CONFIG_DRIVER_RALINK
@@ -107,12 +114,6 @@ endif
 ifdef CONFIG_DRIVER_BROADCOM
 DRV_WPA_CFLAGS += -DCONFIG_DRIVER_BROADCOM
 DRV_WPA_OBJS += ../src/drivers/driver_broadcom.o
-endif
-
-ifdef CONFIG_DRIVER_IPW
-DRV_WPA_CFLAGS += -DCONFIG_DRIVER_IPW
-DRV_WPA_OBJS += ../src/drivers/driver_ipw.o
-CONFIG_WIRELESS_EXTENSION=y
 endif
 
 ifdef CONFIG_DRIVER_NDIS
@@ -152,6 +153,7 @@ endif
 ifdef CONFIG_WIRELESS_EXTENSION
 DRV_WPA_CFLAGS += -DCONFIG_WIRELESS_EXTENSION
 DRV_WPA_OBJS += ../src/drivers/driver_wext.o
+NEED_RFKILL=y
 endif
 
 ifdef NEED_NETLINK
@@ -160,6 +162,10 @@ endif
 
 ifdef NEED_LINUX_IOCTL
 DRV_OBJS += ../src/drivers/linux_ioctl.o
+endif
+
+ifdef NEED_RFKILL
+DRV_OBJS += ../src/drivers/rfkill.o
 endif
 
 

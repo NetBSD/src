@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.52 2011/12/18 05:49:30 dholland Exp $
+# 	$NetBSD: NEWS1200,v 1.52.6.1 2012/11/20 03:01:36 tls Exp $
 
 #	news1200 config file
 #
@@ -44,6 +44,7 @@ options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 binary compatibility
 options 	COMPAT_40		# NetBSD 4.0 binary compatibility
 options 	COMPAT_50		# NetBSD 5.0 binary compatibility
+options 	COMPAT_60		# NetBSD 6.0 compatibility.
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4

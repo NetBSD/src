@@ -19,11 +19,13 @@
 
 int hostapd_init_wps(struct hostapd_data *hapd,
 		     struct hostapd_bss_config *conf);
+int hostapd_init_wps_complete(struct hostapd_data *hapd);
 void hostapd_deinit_wps(struct hostapd_data *hapd);
 void hostapd_update_wps(struct hostapd_data *hapd);
-int hostapd_wps_add_pin(struct hostapd_data *hapd, const char *uuid,
-			const char *pin, int timeout);
-int hostapd_wps_button_pushed(struct hostapd_data *hapd);
+int hostapd_wps_add_pin(struct hostapd_data *hapd, const u8 *addr,
+			const char *uuid, const char *pin, int timeout);
+int hostapd_wps_button_pushed(struct hostapd_data *hapd,
+			      const u8 *p2p_dev_addr);
 int hostapd_wps_start_oob(struct hostapd_data *hapd, char *device_type,
 			  char *path, char *method, char *name);
 int hostapd_wps_get_mib_sta(struct hostapd_data *hapd, const u8 *addr,
@@ -33,6 +35,9 @@ const char * hostapd_wps_ap_pin_random(struct hostapd_data *hapd, int timeout);
 const char * hostapd_wps_ap_pin_get(struct hostapd_data *hapd);
 int hostapd_wps_ap_pin_set(struct hostapd_data *hapd, const char *pin,
 			   int timeout);
+void hostapd_wps_update_ie(struct hostapd_data *hapd);
+int hostapd_wps_config_ap(struct hostapd_data *hapd, const char *ssid,
+			  const char *auth, const char *encr, const char *key);
 
 #else /* CONFIG_WPS */
 
@@ -46,6 +51,11 @@ static inline void hostapd_deinit_wps(struct hostapd_data *hapd)
 {
 }
 
+static inline int hostapd_init_wps_complete(struct hostapd_data *hapd)
+{
+    return 0;
+}
+
 static inline void hostapd_update_wps(struct hostapd_data *hapd)
 {
 }
@@ -57,7 +67,8 @@ static inline int hostapd_wps_get_mib_sta(struct hostapd_data *hapd,
 	return 0;
 }
 
-static inline int hostapd_wps_button_pushed(struct hostapd_data *hapd)
+static inline int hostapd_wps_button_pushed(struct hostapd_data *hapd,
+					    const u8 *p2p_dev_addr)
 {
 	return 0;
 }

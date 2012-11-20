@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.76 2012/06/02 15:54:02 martin Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.76.2.1 2012/11/20 03:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.76 2012/06/02 15:54:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.76.2.1 2012/11/20 03:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,14 +450,25 @@ filt_kqueue(struct knote *kn, long hint)
 static int
 filt_procattach(struct knote *kn)
 {
-	struct proc *p, *curp;
+	struct proc *p;
 	struct lwp *curl;
 
 	curl = curlwp;
-	curp = curl->l_proc;
 
 	mutex_enter(proc_lock);
-	p = proc_find(kn->kn_id);
+	if (kn->kn_flags & EV_FLAG1) {
+		/*
+		 * NOTE_TRACK attaches to the child process too early
+		 * for proc_find, so do a raw look up and check the state
+		 * explicitly.
+		 */
+		p = proc_find_raw(kn->kn_id);
+		if (p != NULL && p->p_stat != SIDL)
+			p = NULL;
+	} else {
+		p = proc_find(kn->kn_id);
+	}
+
 	if (p == NULL) {
 		mutex_exit(proc_lock);
 		return ESRCH;

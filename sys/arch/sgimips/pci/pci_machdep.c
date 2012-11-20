@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22.12.1 2012/11/20 03:01:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.1 2012/11/20 03:01:41 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2011/07/01 18:53:47 dyoung Exp 
 struct sgimips_bus_dma_tag pci_bus_dma_tag;
 
 void
-pci_attach_hook(struct device *parent, struct device *self, struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 	/*
 	 * PCI doesn't have any special needs; just use

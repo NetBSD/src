@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.29 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.29.22.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.29 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.29.22.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.29 2009/03/18 10:22:29 cegger Exp $")
 #include <hpcmips/vr/bcureg.h>
 #include <hpcmips/vr/bcuvar.h>
 
-static int vrbcu_match(struct device *, struct cfdata *, void *);
-static void vrbcu_attach(struct device *, struct device *, void *);
+static int vrbcu_match(device_t, cfdata_t, void *);
+static void vrbcu_attach(device_t, device_t, void *);
 
 static void vrbcu_write(struct vrbcu_softc *, int, unsigned short);
 static unsigned short vrbcu_read(struct vrbcu_softc *, int);
@@ -71,7 +71,7 @@ int	vr_major=-1;
 int	vr_minor=-1;
 int	vr_cpuid=-1;
 
-CFATTACH_DECL(vrbcu, sizeof(struct vrbcu_softc),
+CFATTACH_DECL_NEW(vrbcu, sizeof(struct vrbcu_softc),
     vrbcu_match, vrbcu_attach, NULL, NULL);
 
 struct vrbcu_softc *the_bcu_sc = NULL;
@@ -120,18 +120,19 @@ vrbcu_read(struct vrbcu_softc *sc, int port)
 }
 
 static int
-vrbcu_match(struct device *parent, struct cfdata *cf, void *aux)
+vrbcu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (2);
 }
 
 static void
-vrbcu_attach(struct device *parent, struct device *self, void *aux)
+vrbcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
-	struct vrbcu_softc *sc = (struct vrbcu_softc *)self;
+	struct vrbcu_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = va->va_iot;
 	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 	    0, /* no flags */
@@ -254,17 +255,17 @@ vrbcu_dump_regs(void)
 	}
 	if (tclock)
 		printf("%s: CPU %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    cpuclock/1000000, (cpuclock%1000000)/1000,
 		    tclock/1000000, (tclock%1000000)/1000,
 		    vtclock/1000000, (vtclock%1000000)/1000);
 	else {
 		printf("%s: CPU %d.%03dMHz\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(sc->sc_dev),
 		    cpuclock/1000000, (cpuclock%1000000)/1000);
 		printf("%s: UNKNOWN BUS CLOCK SPEED:"
 		    " CPU is UNKNOWN or NOT CONFIGURED\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	}
 #ifdef VRBCUDEBUG
 	reg = vrbcu_read(sc, BCUCNT1_REG_W);

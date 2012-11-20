@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.12 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.12.122.1 2012/11/20 03:01:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200_vrip.c,v 1.12 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200_vrip.c,v 1.12.122.1 2012/11/20 03:01:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,14 @@ struct mq200_vrip_softc {
 	struct mq200_softc	sc_mq200;
 };
 
-static int	mq200_vrip_probe(struct device *, struct cfdata *, void *);
-static void	mq200_vrip_attach(struct device *, struct device *, void *);
+static int	mq200_vrip_probe(device_t, cfdata_t, void *);
+static void	mq200_vrip_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mqvideo_vrip, sizeof(struct mq200_vrip_softc),
+CFATTACH_DECL_NEW(mqvideo_vrip, sizeof(struct mq200_vrip_softc),
     mq200_vrip_probe, mq200_vrip_attach, NULL, NULL);
 
 static int
-mq200_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
+mq200_vrip_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_handle_t ioh;
@@ -89,12 +89,13 @@ mq200_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-mq200_vrip_attach(struct device *parent, struct device *self, void *aux)
+mq200_vrip_attach(device_t parent, device_t self, void *aux)
 {
-	struct mq200_vrip_softc *vsc = (void *)self;
+	struct mq200_vrip_softc *vsc = device_private(self);
 	struct mq200_softc *sc = &vsc->sc_mq200;
 	struct vrip_attach_args *va = aux;
 
+	sc->sc_dev = self;
 	sc->sc_baseaddr = va->va_addr;
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(va->va_iot, va->va_addr + MQ200_REGADDR,

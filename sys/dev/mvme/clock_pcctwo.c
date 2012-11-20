@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.16 2009/05/12 14:38:26 cegger Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.16.22.1 2012/11/20 03:02:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.16 2009/05/12 14:38:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.16.22.1 2012/11/20 03:02:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,13 +56,12 @@ int clock_pcctwo_match(device_t, cfdata_t, void *);
 void clock_pcctwo_attach(device_t, device_t, void *);
 
 struct clock_pcctwo_softc {
-	struct device sc_dev;
 	struct clock_attach_args sc_clock_args;
 	u_char sc_clock_lvl;
 	struct timecounter sc_tc;
 };
 
-CFATTACH_DECL(clock_pcctwo, sizeof(struct clock_pcctwo_softc),
+CFATTACH_DECL_NEW(clock_pcctwo, sizeof(struct clock_pcctwo_softc),
     clock_pcctwo_match, clock_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver clock_cd;

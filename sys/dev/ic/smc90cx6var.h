@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.10 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.10.12.1 2012/11/20 03:02:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include <sys/callout.h>
 
 struct bah_softc {
-	struct	device		sc_dev;
+	device_t		sc_dev;
 	struct	arccom		sc_arccom;	/* Common arcnet structures */
 	bus_space_tag_t		sc_bst_r, sc_bst_m;
 	bus_space_handle_t 	sc_regs, sc_mem;

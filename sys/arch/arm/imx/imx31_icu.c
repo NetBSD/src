@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_icu.c,v 1.6 2011/07/01 20:27:50 dyoung Exp $	*/
+/*	$NetBSD: imx31_icu.c,v 1.6.12.1 2012/11/20 03:01:05 tls Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.6 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.6.12.1 2012/11/20 03:01:05 tls Exp $");
 
 #define _INTR_PRIVATE
  
@@ -66,7 +66,6 @@ const struct pic_ops avic_pic_ops = {
 };
 
 struct avic_softc {
-	struct device avic_dv;
 	struct pic_softc avic_pic;
 	bus_space_tag_t avic_memt;
 	bus_space_handle_t avic_memh;
@@ -204,10 +203,8 @@ imx31_irq_handler(void *frame)
 static int avic_match(device_t, cfdata_t, void *);
 static void avic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(avic,
-	sizeof(struct avic_softc),
-	avic_match, avic_attach,
-	NULL, NULL);
+CFATTACH_DECL_NEW(avic, sizeof(struct avic_softc),
+    avic_match, avic_attach, NULL, NULL);
 
 int
 avic_match(device_t parent, cfdata_t self, void *aux)
@@ -223,7 +220,7 @@ avic_match(device_t parent, cfdata_t self, void *aux)
 void
 avic_attach(device_t parent, device_t self, void *aux)
 {
-	struct avic_softc * const avic = (void *) self;
+	struct avic_softc * const avic = device_private(self);
 	struct ahb_attach_args * const ahba = aux;
 	int error;
 
@@ -243,7 +240,7 @@ avic_attach(device_t parent, device_t self, void *aux)
 
 	avic->avic_pic.pic_ops = &avic_pic_ops;
 	avic->avic_pic.pic_maxsources = 64;
-	strlcpy(avic->avic_pic.pic_name, self->dv_xname,
+	strlcpy(avic->avic_pic.pic_name, device_xname(self),
 	    sizeof(avic->avic_pic.pic_name));
 
 	pic_add(&avic->avic_pic, ahba->ahba_irqbase);

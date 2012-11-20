@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.111 2012/09/11 15:28:14 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.111.2.1 2012/11/20 03:01:06 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -143,16 +143,16 @@ struct l2_dtable;
 union pmap_cache_state {
 	struct {
 		union {
-			u_int8_t csu_cache_b[2];
-			u_int16_t csu_cache;
+			uint8_t csu_cache_b[2];
+			uint16_t csu_cache;
 		} cs_cache_u;
 
 		union {
-			u_int8_t csu_tlb_b[2];
-			u_int16_t csu_tlb;
+			uint8_t csu_tlb_b[2];
+			uint16_t csu_tlb;
 		} cs_tlb_u;
 	} cs_s;
-	u_int32_t cs_all;
+	uint32_t cs_all;
 };
 #define	cs_cache_id	cs_s.cs_cache_u.csu_cache_b[0]
 #define	cs_cache_d	cs_s.cs_cache_u.csu_cache_b[1]
@@ -182,7 +182,7 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	u_int8_t		pm_domain;
+	uint8_t			pm_domain;
 	bool			pm_remove_all;
 	bool			pm_activated;
 	struct l1_ttable	*pm_l1;
@@ -269,6 +269,7 @@ extern pv_addr_t kernel_l1pt;
  * Commonly referenced structures
  */
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
+extern int		arm_poolpage_vmfreelist;
 
 /*
  * Macros that we need to export
@@ -402,24 +403,13 @@ extern int pmap_needs_pte_sync;
  * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
  * this at compile time.
  */
-#if (ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7 != 0) && (ARM_NMMUS == 1) 
+#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0) && (ARM_NMMUS == 1) 
 #define	PMAP_INCLUDE_PTE_SYNC
-#if (ARM_MMU_V7 > 0)
-#if defined(CPU_CORTEXA8)
-#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) \
-    || defined(CPU_CORTEXA15)
-#define	PMAP_NEEDS_PTE_SYNC	CPU_ID_IS_CORTEX_A8(curcpu()->ci_arm_cpuid)
-#else
+#if (ARM_MMU_V6 > 0)
 #define	PMAP_NEEDS_PTE_SYNC	1
-#endif
-#else
-#define	PMAP_NEEDS_PTE_SYNC	1
-#endif
-#else
-#define	PMAP_NEEDS_PTE_SYNC	1
-#endif
 #elif (ARM_MMU_SA1 == 0)
 #define	PMAP_NEEDS_PTE_SYNC	0
+#endif
 #endif
 #endif /* _KERNEL_OPT */
 
@@ -896,6 +886,15 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+extern paddr_t physical_start;
+struct vm_page *arm_pmap_alloc_poolpage(int);
+#define	PMAP_ALLOC_POOLPAGE	arm_pmap_alloc_poolpage
+#define	PMAP_MAP_POOLPAGE(pa) \
+        ((vaddr_t)((paddr_t)(pa) - physical_start + KERNEL_BASE))
+#define PMAP_UNMAP_POOLPAGE(va) \
+        ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + physical_start))
+#endif
 
 #ifndef _LOCORE
 

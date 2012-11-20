@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.59 2009/11/23 00:11:45 rmind Exp $	*/
+/*	$NetBSD: esp.c,v 1.59.22.1 2012/11/20 03:01:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59 2009/11/23 00:11:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.1 2012/11/20 03:01:37 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ bus_dmamap_t esp_dmacb_continue(void *);
 void esp_dmacb_completed(bus_dmamap_t, void *);
 void esp_dmacb_shutdown(void *);
 
-static void	findchannel_defer(struct device *);
+static void	findchannel_defer(device_t);
 
 #ifdef ESP_DEBUG
 char esp_dma_dump[5*1024] = "";
@@ -222,7 +222,7 @@ espmatch_intio(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-findchannel_defer(struct device *self)
+findchannel_defer(device_t self)
 {
 	struct esp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
@@ -278,7 +278,7 @@ findchannel_defer(struct device *self)
 			     device_xname(sc->sc_dev), "intr");
 
 	aprint_normal_dev(sc->sc_dev, "using DMA channel %s\n",
-	    device_xname(&esc->sc_dma->sc_dev));
+	    device_xname(esc->sc_dma->sc_dev));
 }
 
 void
@@ -1645,7 +1645,7 @@ esp_dmacb_continue(void *arg)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	NDTRACEIF (*ndtracep++ = 'x');
-	DPRINTF(("%s: DMA continue\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: DMA continue\n", device_xname(sc->sc_dev)));
 
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {

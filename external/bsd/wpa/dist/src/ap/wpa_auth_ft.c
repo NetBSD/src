@@ -18,6 +18,7 @@
 #include "common/ieee802_11_defs.h"
 #include "common/ieee802_11_common.h"
 #include "crypto/aes_wrap.h"
+#include "crypto/random.h"
 #include "ap_config.h"
 #include "ieee802_11.h"
 #include "wmm.h"
@@ -27,28 +28,6 @@
 
 
 #ifdef CONFIG_IEEE80211R
-
-struct wpa_ft_ies {
-	const u8 *mdie;
-	size_t mdie_len;
-	const u8 *ftie;
-	size_t ftie_len;
-	const u8 *r1kh_id;
-	const u8 *gtk;
-	size_t gtk_len;
-	const u8 *r0kh_id;
-	size_t r0kh_id_len;
-	const u8 *rsn;
-	size_t rsn_len;
-	const u8 *rsn_pmkid;
-	const u8 *ric;
-	size_t ric_len;
-};
-
-
-static int wpa_ft_parse_ies(const u8 *ies, size_t ies_len,
-			    struct wpa_ft_ies *parse);
-
 
 static int wpa_ft_rrb_send(struct wpa_authenticator *wpa_auth, const u8 *dst,
 			   const u8 *data, size_t data_len)
@@ -91,7 +70,9 @@ int wpa_write_mdie(struct wpa_auth_config *conf, u8 *buf, size_t len)
 	*pos++ = MOBILITY_DOMAIN_ID_LEN + 1;
 	os_memcpy(pos, conf->mobility_domain, MOBILITY_DOMAIN_ID_LEN);
 	pos += MOBILITY_DOMAIN_ID_LEN;
-	capab = RSN_FT_CAPAB_FT_OVER_DS;
+	capab = 0;
+	if (conf->ft_over_ds)
+		capab |= RSN_FT_CAPAB_FT_OVER_DS;
 	*pos++ = capab;
 
 	return pos - buf;
@@ -334,7 +315,7 @@ static int wpa_ft_pull_pmk_r1(struct wpa_authenticator *wpa_auth,
 
 	/* aes_wrap() does not support inplace encryption, so use a temporary
 	 * buffer for the data. */
-	if (os_get_random(f.nonce, sizeof(f.nonce))) {
+	if (random_get_bytes(f.nonce, sizeof(f.nonce))) {
 		wpa_printf(MSG_DEBUG, "FT: Failed to get random data for "
 			   "nonce");
 		return -1;
@@ -725,143 +706,6 @@ u8 * wpa_sm_write_assoc_resp_ies(struct wpa_state_machine *sm, u8 *pos,
 }
 
 
-static int wpa_ft_parse_ftie(const u8 *ie, size_t ie_len,
-			     struct wpa_ft_ies *parse)
-{
-	const u8 *end, *pos;
-
-	parse->ftie = ie;
-	parse->ftie_len = ie_len;
-
-	pos = ie + sizeof(struct rsn_ftie);
-	end = ie + ie_len;
-
-	while (pos + 2 <= end && pos + 2 + pos[1] <= end) {
-		switch (pos[0]) {
-		case FTIE_SUBELEM_R1KH_ID:
-			if (pos[1] != FT_R1KH_ID_LEN) {
-				wpa_printf(MSG_DEBUG, "FT: Invalid R1KH-ID "
-					   "length in FTIE: %d", pos[1]);
-				return -1;
-			}
-			parse->r1kh_id = pos + 2;
-			break;
-		case FTIE_SUBELEM_GTK:
-			parse->gtk = pos + 2;
-			parse->gtk_len = pos[1];
-			break;
-		case FTIE_SUBELEM_R0KH_ID:
-			if (pos[1] < 1 || pos[1] > FT_R0KH_ID_MAX_LEN) {
-				wpa_printf(MSG_DEBUG, "FT: Invalid R0KH-ID "
-					   "length in FTIE: %d", pos[1]);
-				return -1;
-			}
-			parse->r0kh_id = pos + 2;
-			parse->r0kh_id_len = pos[1];
-			break;
-		}
-
-		pos += 2 + pos[1];
-	}
-
-	return 0;
-}
-
-
-static int wpa_ft_parse_ies(const u8 *ies, size_t ies_len,
-			    struct wpa_ft_ies *parse)
-{
-	const u8 *end, *pos;
-	struct wpa_ie_data data;
-	int ret;
-	const struct rsn_ftie *ftie;
-	int prot_ie_count = 0;
-
-	os_memset(parse, 0, sizeof(*parse));
-	if (ies == NULL)
-		return 0;
-
-	pos = ies;
-	end = ies + ies_len;
-	while (pos + 2 <= end && pos + 2 + pos[1] <= end) {
-		switch (pos[0]) {
-		case WLAN_EID_RSN:
-			parse->rsn = pos + 2;
-			parse->rsn_len = pos[1];
-			ret = wpa_parse_wpa_ie_rsn(parse->rsn - 2,
-						   parse->rsn_len + 2,
-						   &data);
-			if (ret < 0) {
-				wpa_printf(MSG_DEBUG, "FT: Failed to parse "
-					   "RSN IE: %d", ret);
-				return -1;
-			}
-			if (data.num_pmkid == 1 && data.pmkid)
-				parse->rsn_pmkid = data.pmkid;
-			break;
-		case WLAN_EID_MOBILITY_DOMAIN:
-			parse->mdie = pos + 2;
-			parse->mdie_len = pos[1];
-			break;
-		case WLAN_EID_FAST_BSS_TRANSITION:
-			if (pos[1] < sizeof(*ftie))
-				return -1;
-			ftie = (const struct rsn_ftie *) (pos + 2);
-			prot_ie_count = ftie->mic_control[1];
-			if (wpa_ft_parse_ftie(pos + 2, pos[1], parse) < 0)
-				return -1;
-			break;
-		case WLAN_EID_RIC_DATA:
-			if (parse->ric == NULL)
-				parse->ric = pos;
-		}
-
-		pos += 2 + pos[1];
-	}
-
-	if (prot_ie_count == 0)
-		return 0; /* no MIC */
-
-	/*
-	 * Check that the protected IE count matches with IEs included in the
-	 * frame.
-	 */
-	if (parse->rsn)
-		prot_ie_count--;
-	if (parse->mdie)
-		prot_ie_count--;
-	if (parse->ftie)
-		prot_ie_count--;
-	if (prot_ie_count < 0) {
-		wpa_printf(MSG_DEBUG, "FT: Some required IEs not included in "
-			   "the protected IE count");
-		return -1;
-	}
-
-	if (prot_ie_count == 0 && parse->ric) {
-		wpa_printf(MSG_DEBUG, "FT: RIC IE(s) in the frame, but not "
-			   "included in protected IE count");
-		return -1;
-	}
-
-	/* Determine the end of the RIC IE(s) */
-	pos = parse->ric;
-	while (pos && pos + 2 <= end && pos + 2 + pos[1] <= end &&
-	       prot_ie_count) {
-		prot_ie_count--;
-		pos += 2 + pos[1];
-	}
-	parse->ric_len = pos - parse->ric;
-	if (prot_ie_count) {
-		wpa_printf(MSG_DEBUG, "FT: %d protected IEs missing from "
-			   "frame", (int) prot_ie_count);
-		return -1;
-	}
-
-	return 0;
-}
-
-
 static inline int wpa_auth_set_key(struct wpa_authenticator *wpa_auth,
 				   int vlan_id,
 				   enum wpa_alg alg, const u8 *addr, int idx,
@@ -997,7 +841,7 @@ static u16 wpa_ft_process_auth_req(struct wpa_state_machine *sm,
 	sm->pmk_r1_name_valid = 1;
 	os_memcpy(sm->pmk_r1_name, pmk_r1_name, WPA_PMK_NAME_LEN);
 
-	if (os_get_random(sm->ANonce, WPA_NONCE_LEN)) {
+	if (random_get_bytes(sm->ANonce, WPA_NONCE_LEN)) {
 		wpa_printf(MSG_DEBUG, "FT: Failed to get random data for "
 			   "ANonce");
 		return WLAN_STATUS_UNSPECIFIED_FAILURE;
@@ -1204,7 +1048,7 @@ u16 wpa_ft_validate_reassoc(struct wpa_state_machine *sm, const u8 *ies,
 
 	count = 3;
 	if (parse.ric)
-		count++;
+		count += ieee802_11_ie_count(parse.ric, parse.ric_len);
 	if (ftie->mic_control[1] != count) {
 		wpa_printf(MSG_DEBUG, "FT: Unexpected IE count in MIC "
 			   "Control: received %u expected %u",

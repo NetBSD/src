@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94 2012/07/29 18:05:47 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.94.2.1 2012/11/20 03:01:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94 2012/07/29 18:05:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94.2.1 2012/11/20 03:01:48 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -419,7 +419,7 @@ int
 booted_ra(device_t dev, void *aux)
 {
 	struct drive_attach_args *da = aux;
-	struct mscp_softc *pdev = (void *)device_parent(dev);
+	struct mscp_softc *pdev = device_private(device_parent(dev));
 	paddr_t ioaddr;
 
 	if (jmfr("ra", dev, BDEV_UDA))

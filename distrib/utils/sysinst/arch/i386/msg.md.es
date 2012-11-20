@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.14 2012/03/01 16:22:15 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.14.2.1 2012/11/20 02:57:54 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@ message md_hello
 }
 
 message md_may_remove_boot_medium
-{Si ha iniciado desde disquette, ahora deberia retirar el disco.
+{
 }
 
 message Keyboard_type {Tipo de teclado}

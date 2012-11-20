@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.10 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: csa.c,v 1.10.44.1 2012/11/20 03:00:54 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csa.c,v 1.10 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csa.c,v 1.10.44.1 2012/11/20 03:00:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ csa_attach(device_t parent, device_t self, void *aux)
 	struct ncr5380_softc *ncr_sc = &sc->sc_ncr5380;
 	struct podule_attach_args *pa = aux;
 	uint8_t *iobase;
-	char hi_option[sizeof(self->dv_xname) + 8];
+	char hi_option[sizeof(device_xname(self)) + 8];
 
 	ncr_sc->sc_dev = self;
 

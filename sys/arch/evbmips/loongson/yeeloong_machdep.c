@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.3 2012/03/02 13:20:57 nonaka Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.3.2.1 2012/11/20 03:01:18 tls Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.3 2012/03/02 13:20:57 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.3.2.1 2012/11/20 03:01:18 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.3 2012/03/02 13:20:57 nonaka 
 #define DPRINTF(x)
 #endif
 
-void	 lemote_device_register(struct device *, void *);
+void	 lemote_device_register(device_t, void *);
 void	 lemote_reset(void);
 
 void	 fuloong_powerdown(void);
@@ -78,7 +78,7 @@ void	 lemote_pci_attach_hook(device_t, device_t,
 	    struct pcibus_attach_args *);
 int	 lemote_intr_map(int, int, int, pci_intr_handle_t *);
 
-void	 lemote_isa_attach_hook(struct device *, struct device *,
+void	 lemote_isa_attach_hook(device_t, device_t,
 	    struct isabus_attach_args *);
 void	*lemote_isa_intr_establish(void *, int, int, int,
 	    int (*)(void *), void *);
@@ -356,7 +356,7 @@ lemote_intr_map(int dev, int fn, int pin, pci_intr_handle_t *ihp)
  */
 
 void
-lemote_isa_attach_hook(struct device *parent, struct device *self,
+lemote_isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 
@@ -549,12 +549,12 @@ fuloong_setup(void)
 }
 
 void
-lemote_device_register(struct device *dev, void *aux)
+lemote_device_register(device_t dev, void *aux)
 {
 	const char *name = device_xname(dev);
 
-	if (dev->dv_class != bootdev_class)
-		return;	
+	if (device_class(dev) != bootdev_class)
+		return;
 
 	/* 
 	 * The device numbering must match. There's no way

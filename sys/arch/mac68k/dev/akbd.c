@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.22 2010/12/10 00:17:08 macallan Exp $	*/
+/*	$NetBSD: akbd.c,v 1.22.18.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22 2010/12/10 00:17:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22.18.1 2012/11/20 03:01:30 tls Exp $");
 
 #include "opt_adb.h"
 
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22 2010/12/10 00:17:08 macallan Exp $");
 /*
  * Function declarations.
  */
-static int	akbdmatch(struct device *, struct cfdata *, void *);
-static void	akbdattach(struct device *, struct device *, void *);
+static int	akbdmatch(device_t, cfdata_t, void *);
+static void	akbdattach(device_t, device_t, void *);
 static void	kbd_processevent(adb_event_t *, struct akbd_softc *);
 #ifdef notyet
 static u_char	getleds(int);
@@ -83,7 +83,7 @@ static void	blinkleds(struct akbd_softc *);
  */
 
 /* Driver definition. */
-CFATTACH_DECL(akbd, sizeof(struct akbd_softc),
+CFATTACH_DECL_NEW(akbd, sizeof(struct akbd_softc),
     akbdmatch, akbdattach, NULL, NULL);
 
 extern struct cfdriver akbd_cd;
@@ -116,7 +116,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 static int akbd_is_console(void);
 
 static int
-akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
+akbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 
@@ -127,10 +127,10 @@ akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-akbdattach(struct device *parent, struct device *self, void *aux)
+akbdattach(device_t parent, device_t self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
-	struct akbd_softc *sc = (struct akbd_softc *)self;
+	struct akbd_softc *sc = device_private(self);
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	int error, kbd_done;
 	short cmd;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/08/09 14:37:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2012/11/20 02:58:02 tls Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -32,6 +32,7 @@ SRCS+=	ADCE.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
 	SCCP.cpp \
+	SROA.cpp \
 	Scalar.cpp \
 	ScalarReplAggregates.cpp \
 	SimplifyCFGPass.cpp \
