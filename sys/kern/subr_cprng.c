@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.13 2012/10/27 17:34:07 matt Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.14 2012/11/20 11:06:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.13 2012/10/27 17:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.14 2012/11/20 11:06:27 msaitoh Exp $");
 
 void
 cprng_init(void)
@@ -178,7 +178,7 @@ cprng_strong_create(const char *const name, int ipl, int flags)
 	mutex_init(&c->mtx, MUTEX_DEFAULT, ipl);
 
 	if (c->flags & CPRNG_USE_CV) {
-		cv_init(&c->cv, name);
+		cv_init(&c->cv, (const char *)c->name);
 	}
 
 	selinit(&c->selq);
