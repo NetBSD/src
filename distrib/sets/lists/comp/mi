@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.10 2012/11/20 03:33:16 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.11 2012/11/20 22:19:20 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3243,7 +3243,7 @@
 ./usr/lib/librumpnet_netinet.a			comp-c-lib
 ./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib
 ./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
-./usr/lib/librumpnet_npf.a			comp-c-lib		
+./usr/lib/librumpnet_npf.a			comp-c-lib
 ./usr/lib/librumpnet_npf_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_npf_p.a 			comp-c-lib		profile
 ./usr/lib/librumpnet_p.a			comp-c-proflib		profile
