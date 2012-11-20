@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.61 2011/05/10 00:33:58 matt Exp $
+#	$NetBSD: Makefile.rump,v 1.61.12.1 2012/11/20 23:58:02 matt Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -32,7 +32,9 @@ CPPFLAGS+=	-I${RUMPTOP}/../../common/include -isystem ${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 CPPFLAGS+=	-nostdinc -isystem ${RUMPTOP}/..
+.if ${HAVE_BINUTILS} == "219"
 LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
+.endif
 #CPPFLAGS+=	-DDEBUG
 
 .ifdef RUMP_LOCKDEBUG
