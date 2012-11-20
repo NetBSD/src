@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1790 2012/11/20 05:27:23 agc Exp $
+#	$NetBSD: mi,v 1.1791 2012/11/20 16:18:47 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4458,6 +4458,7 @@
 ./usr/libdata/lint/llib-lmpc.ln			comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lmpfr.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
+./usr/libdata/lint/llib-lnetpgpverify.ln	comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
