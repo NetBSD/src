@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.5 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.5.22.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -35,8 +35,6 @@
 #endif				/* AED_MAX_EVENTS */
 
 struct aed_softc {
-	struct  device  sc_dev;
-
 	struct callout sc_repeat_ch;
 
 	/* ADB info */

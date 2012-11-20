@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.8 2012/01/25 15:58:10 tsutsui Exp $	*/
+/*	$NetBSD: zrc.c,v 1.8.6.1 2012/11/20 03:01:52 tls Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.8 2012/01/25 15:58:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.8.6.1 2012/11/20 03:01:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,14 +89,14 @@ struct zrc_softc {
 	int		 sc_scans;	/* rescan counter */
 	int		 sc_noise;	/* discard if too noisy? */
 	int		 sc_keydown;	/* currently pressed key */
-	struct device   *sc_wskbddev;
+	device_t	 sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int		 sc_rawkbd;
 #endif
 };
 
-static int	zrc_match(struct device *, struct cfdata *, void *);
-static void	zrc_attach(struct device *, struct device *, void *);
+static int	zrc_match(device_t, cfdata_t, void *);
+static void	zrc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(zrc, sizeof(struct zrc_softc), 
     zrc_match, zrc_attach, NULL, NULL);

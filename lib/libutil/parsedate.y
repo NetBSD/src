@@ -367,7 +367,7 @@ o_merid	: /* NULL */ {
 %%
 
 /* Month and day table. */
-static const TABLE const MonthDayTable[] = {
+static const TABLE MonthDayTable[] = {
     { "january",	tMONTH,  1 },
     { "february",	tMONTH,  2 },
     { "march",		tMONTH,  3 },
@@ -396,7 +396,7 @@ static const TABLE const MonthDayTable[] = {
 };
 
 /* Time units table. */
-static const TABLE const UnitsTable[] = {
+static const TABLE UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	1 },
     { "fortnight",	tMINUTE_UNIT,	14 * 24 * 60 },
@@ -411,7 +411,7 @@ static const TABLE const UnitsTable[] = {
 };
 
 /* Assorted relative-time words. */
-static const TABLE const OtherTable[] = {
+static const TABLE OtherTable[] = {
     { "tomorrow",	tMINUTE_UNIT,	1 * 24 * 60 },
     { "yesterday",	tMINUTE_UNIT,	-1 * 24 * 60 },
     { "today",		tMINUTE_UNIT,	0 },
@@ -449,7 +449,7 @@ static const TABLE const OtherTable[] = {
 
 /* The timezone table. */
 /* Some of these are commented out because a time_t can't store a float. */
-static const TABLE const TimezoneTable[] = {
+static const TABLE TimezoneTable[] = {
     { "gmt",	tZONE,     HOUR( 0) },	/* Greenwich Mean */
     { "ut",	tZONE,     HOUR( 0) },	/* Universal (Coordinated) */
     { "utc",	tZONE,     HOUR( 0) },
@@ -533,7 +533,7 @@ static const TABLE const TimezoneTable[] = {
 };
 
 /* Military timezone table. */
-static const TABLE const MilitaryTable[] = {
+static const TABLE MilitaryTable[] = {
     { "a",	tZONE,	HOUR(  1) },
     { "b",	tZONE,	HOUR(  2) },
     { "c",	tZONE,	HOUR(  3) },

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.234 2012/08/17 19:43:25 abs Exp $
+# $NetBSD: GENERIC,v 1.234.2.1 2012/11/20 03:01:42 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.234 $"
+#ident 		"GENERIC-$Revision: 1.234.2.1 $"
 
 maxusers	32
 
@@ -181,6 +181,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.23 2012/08/16 18:22:42 matt Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.23.2.1 2012/11/20 03:01:12 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.23 2012/08/16 18:22:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.23.2.1 2012/11/20 03:01:12 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -299,7 +299,7 @@ armadillo9_device_register(device_t dev, void *aux)
 		if (prop_dictionary_set(device_properties(dev),
 					"mac-address", pd) == false) {
 			printf("WARNING: unable to set mac-addr property "
-			    "for %s\n", dev->dv_xname);
+			    "for %s\n", device_xname(dev));
 		}
 		prop_object_release(pd);
 	}
@@ -376,8 +376,8 @@ cpu_reboot(int howto, char *bootstr)
 	epwdog_reset();
 #else
 	{
-	u_int32_t ctrl = EP93XX_APB_VBASE + EP93XX_APB_WDOG + EP93XX_WDOG_Ctrl;
-	u_int32_t val = EP93XX_WDOG_ENABLE;
+	uint32_t ctrl = EP93XX_APB_VBASE + EP93XX_APB_WDOG + EP93XX_WDOG_Ctrl;
+	uint32_t val = EP93XX_WDOG_ENABLE;
 	__asm volatile (
 		"str %1, [%0]\n"
 		:
@@ -748,7 +748,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

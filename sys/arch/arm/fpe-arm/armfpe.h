@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe.h,v 1.6 2011/01/14 02:06:23 rmind Exp $	*/
+/*	$NetBSD: armfpe.h,v 1.6.18.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Neil A Carson.
@@ -56,7 +56,7 @@
  */
  
 typedef struct fp_context_frame {
-	u_int32_t fpsr;
+	uint32_t fpsr;
 	fp_extended_precision_t regs[8];
 } fp_context_frame_t;
 
@@ -67,34 +67,34 @@ typedef struct {
 	 * Addresses of procedures/functions
 	 */
 
-	u_int32_t core_abort_addr;
-	u_int32_t core_initws_addr;
-	u_int32_t core_initcontext_addr;
-	u_int32_t core_changecontext_addr;
-	u_int32_t core_shutdown_addr;
-	u_int32_t core_activatecontext_addr;
-	u_int32_t core_deactivatecontext_addr;
-	u_int32_t core_savecontext_addr;
-	u_int32_t core_loadcontext_addr;
-	u_int32_t core_disable_addr;
-	u_int32_t core_enable_addr;
+	uint32_t core_abort_addr;
+	uint32_t core_initws_addr;
+	uint32_t core_initcontext_addr;
+	uint32_t core_changecontext_addr;
+	uint32_t core_shutdown_addr;
+	uint32_t core_activatecontext_addr;
+	uint32_t core_deactivatecontext_addr;
+	uint32_t core_savecontext_addr;
+	uint32_t core_loadcontext_addr;
+	uint32_t core_disable_addr;
+	uint32_t core_enable_addr;
 
 	/*
 	 * Addresses of things that need to be filled in by the kernel on startup
 	 */
 
-	u_int32_t *main_ws_ptr_addr;
-	u_int32_t *local_handler_ptr_addr;
-	u_int32_t *old_handler_ptr_addr;
-	u_int32_t *exc_handler_ptr_addr;
-	u_int32_t *fp_post_proc_addr;
+	uint32_t *main_ws_ptr_addr;
+	uint32_t *local_handler_ptr_addr;
+	uint32_t *old_handler_ptr_addr;
+	uint32_t *exc_handler_ptr_addr;
+	uint32_t *fp_post_proc_addr;
 
 	/*
 	 * Constants that the kernel needs
 	 */
 
-	u_int32_t workspacelength;
-	u_int32_t contextlength;
+	uint32_t workspacelength;
+	uint32_t contextlength;
 
 	/*
 	 * Data pointers for extra information

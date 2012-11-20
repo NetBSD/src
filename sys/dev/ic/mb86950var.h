@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.7 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.7.6.1 2012/11/20 03:02:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -38,7 +38,7 @@
  * EStar_softc: per line info and status
  */
 struct mb86950_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ec;		/* ethernet common */
 	struct ifmedia sc_media;	/* supported media information */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.14 2008/01/12 09:54:27 tsutsui Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.14.54.1 2012/11/20 03:01:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@ struct sbic_tinfo {
 };
 
 struct  sbic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct target_sync {
 		u_char state;
 		u_char period;

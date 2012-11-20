@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_clock.c,v 1.3 2012/04/17 09:33:31 bsh Exp $ */
+/*	$NetBSD: imx51_clock.c,v 1.3.2.1 2012/11/20 03:01:05 tls Exp $ */
 /*
  * Copyright (c) 2009  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.3 2012/04/17 09:33:31 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_clock.c,v 1.3.2.1 2012/11/20 03:01:05 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ imxclock_attach(device_t parent, device_t self, void *aux)
 		epit2_sc = sc;
 		break;
 	default:
-		panic("%s: invalid address %p", self->dv_xname, (void *)aa->aa_addr);
+		panic("%s: invalid address %p", device_xname(self), (void *)aa->aa_addr);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.14 2008/04/08 12:07:27 cegger Exp $ */
+/* $NetBSD: upc.c,v 1.14.48.1 2012/11/20 03:02:08 tls Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.14 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.14.48.1 2012/11/20 03:02:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ upc1_attach(struct upc_softc *sc)
 	for (i = 0; i < 16; i++)
 		cr[i] = upc1_read_config(sc, i);
 
-	aprint_verbose_dev(&sc->sc_dev, "config state");
+	aprint_verbose_dev(sc->sc_dev, "config state");
 	for (i = 0; i < 16; i++)
 		aprint_verbose(" %02x", cr[i]);
 	aprint_verbose("\n");
@@ -219,7 +219,7 @@ upc_found(struct upc_softc *sc, char const *devtype, int offset, int size,
 
 	locs[UPCCF_OFFSET] = offset;
 
-	config_found_sm_loc(&sc->sc_dev, "upc", locs, &ua,
+	config_found_sm_loc(sc->sc_dev, "upc", locs, &ua,
 			    upc_print, config_stdsubmatch);
 }
 
@@ -240,7 +240,7 @@ upc_found2(struct upc_softc *sc, char const *devtype, int offset, int size,
 
 	locs[UPCCF_OFFSET] = offset;
 
-	config_found_sm_loc(&sc->sc_dev, "upc", locs, &ua,
+	config_found_sm_loc(sc->sc_dev, "upc", locs, &ua,
 			    upc_print, config_stdsubmatch);
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2012/09/01 18:17:51 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.152.2.1 2012/11/20 03:01:44 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152 $"
+#ident 		"GENERIC-$Revision: 1.152.2.1 $"
 
 maxusers	64
 
@@ -147,6 +147,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 binary compatibility
 options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
@@ -296,6 +297,14 @@ sabtty*	at sab? channel ?
 com*	at ebus?				# `com' driver for `su'
 kbd0	at com?					# keyboard
 ms0	at com?					# mouse
+
+## Tadpole SPARCle PS/2 keyboard and mouse
+pckbc* 		at ebus?                # PC keyboard controller
+pckbd* 		at pckbc?               # PC keyboard
+pms* 		at pckbc?               # PS/2 mouse for wsmouse
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+wskbd* 		at pckbd? console ?
+wsmouse* 	at pms? mux 0
 
 ## Magma Serial/Parallel driver (not tested)
 #magma*	at sbus? slot ? offset ?
@@ -931,6 +940,9 @@ alipm*		at pci?
 iic*		at alipm?
 
 # I2C devices
+spdmem*		at iic? addr 0x50	# SPARCle memory
+spdmem*		at iic? addr 0x51	# SPARCle memory
+
 spdmem*		at iic? addr?
 admtemp*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450

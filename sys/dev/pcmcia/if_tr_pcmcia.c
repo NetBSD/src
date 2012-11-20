@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.24 2009/10/22 18:47:56 snj Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.24.22.1 2012/11/20 03:02:31 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.24 2009/10/22 18:47:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.24.22.1 2012/11/20 03:02:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ static void	tr_pcmcia_mediastatus(struct tr_softc *, struct ifmediareq *);
 static void	tr_pcmcia_disable(struct tr_softc *);
 static void	tr_pcmcia_setup(struct tr_softc *);
 
-CFATTACH_DECL(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
+CFATTACH_DECL_NEW(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
     tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate);
 
 static int
@@ -117,7 +117,7 @@ tr_pcmcia_match(device_t parent, cfdata_t match,
 static void
 tr_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct tr_pcmcia_softc *psc = (void *)self;
+	struct tr_pcmcia_softc *psc = device_private(self);
 	struct tr_softc *sc = &psc->sc_tr;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -212,7 +212,7 @@ tr_pcmcia_enable(struct tr_softc *sc)
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, tr_intr, psc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&psc->sc_tr.sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(psc->sc_tr.sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
 
@@ -288,7 +288,7 @@ tr_pcmcia_mediastatus(struct tr_softc *sc, struct ifmediareq *ifmr)
 int
 tr_pcmcia_detach(device_t self, int flags)
 {
-	struct tr_pcmcia_softc *psc = (struct tr_pcmcia_softc *)self;
+	struct tr_pcmcia_softc *psc = device_private(self);
 	int rv;
 
 	rv = tr_detach(self, flags);

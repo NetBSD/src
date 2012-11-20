@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.9 2012/09/07 03:05:12 matt Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.9.2.1 2012/11/20 03:01:08 tls Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.9 2012/09/07 03:05:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.9.2.1 2012/11/20 03:01:08 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.9 2012/09/07 03:05:12 matt Exp $");
 #include "opt_pci.h"
 #include "pci.h"
 
-void	ixp425_pci_attach_hook(struct device *, struct device *,
+void	ixp425_pci_attach_hook(device_t, device_t,
 	    struct pcibus_attach_args *);
 int	ixp425_pci_bus_maxdevs(void *, int);
 void	ixp425_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -97,7 +97,7 @@ ixp425_pci_init(struct ixp425_softc *sc)
 				IXP425_PCI_MEM_HWBASE +
 				IXP425_PCI_MEM_SIZE - 1,
 				NULL, 0, EX_NOWAIT);
-	printf("%s: configuring PCI bus\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev, "configuring PCI bus\n");
 	pci_configure_bus(pc, ioext, memext, NULL, 0 /* XXX bus = 0 */,
 			  arm_dcache_align);
 
@@ -112,7 +112,7 @@ ixp425_pci_conf_interrupt(void *v, int a, int b, int c, int d, int *p)
 }
 
 void
-ixp425_pci_attach_hook(struct device *parent, struct device *self,
+ixp425_pci_attach_hook(device_t parent, device_t self,
 	struct pcibus_attach_args *pba)
 {
 	/* Nothing to do. */
@@ -179,7 +179,7 @@ pcireg_t
 ixp425_pci_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct ixp425_softc *sc = v;
-	u_int32_t data;
+	uint32_t data;
 	pcireg_t rv;
 	int s;
 #define PCI_NP_HAVE_BUG
@@ -223,7 +223,7 @@ void
 ixp425_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 {
 	struct ixp425_softc *sc = v;
-	u_int32_t data;
+	uint32_t data;
 	int s;
 
 	PCI_CONF_LOCK(s);

@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.31 2012/09/11 19:43:09 msaitoh Exp $
+# $NetBSD: HDL_G,v 1.31.2.1 2012/11/20 03:01:13 tls Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -103,6 +103,7 @@ options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

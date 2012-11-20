@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.30 2009/03/18 16:00:11 cegger Exp $	*/
+/*	$NetBSD: mq200.c,v 1.30.22.1 2012/11/20 03:01:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30 2009/03/18 16:00:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30.22.1 2012/11/20 03:01:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,7 @@ mq200_attach(struct mq200_softc *sc)
 	}
 	printf("\n");
         printf("%s: framebuffer address: 0x%08lx\n",
-	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	    device_xname(sc->sc_dev), (u_long)bootinfo->fb_addr);
 
 	/*
 	 * setup registers
@@ -157,7 +157,7 @@ mq200_attach(struct mq200_softc *sc)
 		case 16:	mode = MQ200_GCC_16BPP_DIRECT;	break;
 		default:
 			printf("%s: %dbpp isn't supported\n",
-			    sc->sc_dev.dv_xname, sc->sc_fbconf.hf_pixel_width);
+			    device_xname(sc->sc_dev), sc->sc_fbconf.hf_pixel_width);
 			return;
 		}
 
@@ -199,11 +199,11 @@ mq200_attach(struct mq200_softc *sc)
 
 	/* Add a power hook to power saving */
 	sc->sc_mq200pwstate = MQ200_POWERSTATE_D0;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    mq200_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* Add a hard power hook to power saving */
 	sc->sc_hardpowerhook = config_hook(CONFIG_HOOK_PMEVENT,
@@ -212,7 +212,7 @@ mq200_attach(struct mq200_softc *sc)
 	    mq200_hardpower, sc);
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
@@ -234,7 +234,7 @@ mq200_attach(struct mq200_softc *sc)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(&sc->sc_dev, &ha, hpcfbprint);
+	config_found(sc->sc_dev, &ha, hpcfbprint);
 
 #if NBIVIDEO > 0
 	/*

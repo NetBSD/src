@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.14 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: becc.c,v 1.14.12.1 2012/11/20 03:01:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.14 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.14.12.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,7 @@ const char *becc_revisions[] = {
  */
 struct becc_softc *becc_softc;
 
-static int becc_search(struct device *, struct cfdata *,
-		       const int *, void *);
+static int becc_search(device_t, cfdata_t, const int *, void *);
 static int becc_print(void *, const char *);
 
 static void becc_pci_dma_init(struct becc_softc *);
@@ -194,7 +193,7 @@ becc_attach(struct becc_softc *sc)
 	 * the BECC is a soft-core with a variety of peripherals, depending
 	 * on configuration.
 	 */
-	config_search_ia(becc_search, &sc->sc_dev, "becc", NULL);
+	config_search_ia(becc_search, sc->sc_dev, "becc", NULL);
 
 	/*
 	 * Attach the PCI bus.
@@ -210,7 +209,7 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 /*
@@ -219,10 +218,9 @@ becc_attach(struct becc_softc *sc)
  *	Indirect autoconfiguration glue for BECC.
  */
 static int
-becc_search(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+becc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct becc_softc *sc = (void *) parent;
+	struct becc_softc *sc = device_private(parent);
 	struct becc_attach_args ba;
 
 	ba.ba_dmat = &sc->sc_local_dmat;
@@ -297,6 +295,9 @@ becc_pci_dma_init(struct becc_softc *sc)
 	dmat->_dmamem_map = _bus_dmamem_map;
 	dmat->_dmamem_unmap = _bus_dmamem_unmap;
 	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+
+	dmat->_dmatag_subregion = _bus_dmatag_subregion;
+	dmat->_dmatag_destroy = _bus_dmatag_destroy;
 }
 
 /*

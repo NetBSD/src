@@ -96,6 +96,41 @@ zfs_match_find(zfsvfs_t *zfsvfs, znode_t *dzp, char *name, boolean_t exact,
 }
 
 /*
+ * Reference counting for dirlocks.  Solaris destroys the condvar as
+ * soon as it broadcasts, which works for them because cv_wait doesn't
+ * need to use the condvar after it is woken, but which is too fast and
+ * loose with the abstraction for us in NetBSD.
+ */
+
+static int
+zfs_dirlock_hold(zfs_dirlock_t *dl)
+{
+
+	KASSERT(mutex_owned(&dl->dl_dzp->z_lock));
+
+	if (dl->dl_refcnt >= ULONG_MAX) /* XXX Name this constant.  */
+		return (ENFILE);	/* XXX What to do?  */
+
+	dl->dl_refcnt++;
+	return (0);
+}
+
+static void
+zfs_dirlock_rele(zfs_dirlock_t *dl)
+{
+
+	KASSERT(mutex_owned(&dl->dl_dzp->z_lock));
+	KASSERT(dl->dl_refcnt > 0);
+
+	if (--dl->dl_refcnt == 0) {
+		if (dl->dl_namesize != 0)
+			kmem_free(dl->dl_name, dl->dl_namesize);
+		cv_destroy(&dl->dl_cv);
+		kmem_free(dl, sizeof(*dl));
+	}
+}
+
+/*
  * Lock a directory entry.  A dirlock on <dzp, name> protects that name
  * in dzp's directory zap object.  As long as you hold a dirlock, you can
  * assume two things: (1) dzp cannot be reaped, and (2) no other thread
@@ -246,14 +281,23 @@ zfs_dirent_lock(zfs_dirlock_t **dlpp, znode_t *dzp, char *name, znode_t **zpp,
 			dl->dl_sharecnt = 0;
 			dl->dl_namelock = 0;
 			dl->dl_namesize = 0;
+			dl->dl_refcnt = 1;
 			dl->dl_dzp = dzp;
 			dl->dl_next = dzp->z_dirlocks;
 			dzp->z_dirlocks = dl;
 			break;
-		} 
+		}
 		if ((flag & ZSHARED) && dl->dl_sharecnt != 0)
 			break;
+		error = zfs_dirlock_hold(dl);
+		if (error) {
+			mutex_exit(&dzp->z_lock);
+			if (!(flag & ZHAVELOCK))
+				rw_exit(&dzp->z_name_lock);
+			return (error);
+		}
 		cv_wait(&dl->dl_cv, &dzp->z_lock);
+		zfs_dirlock_rele(dl);
 	}
 
 	/*
@@ -355,12 +399,8 @@ zfs_dirent_unlock(zfs_dirlock_t *dl)
 		prev_dl = &cur_dl->dl_next;
 	*prev_dl = dl->dl_next;
 	cv_broadcast(&dl->dl_cv);
+	zfs_dirlock_rele(dl);
 	mutex_exit(&dzp->z_lock);
-
-	if (dl->dl_namesize != 0)
-		kmem_free(dl->dl_name, dl->dl_namesize);
-	cv_destroy(&dl->dl_cv);
-	kmem_free(dl, sizeof (*dl));
 }
 
 /*
@@ -396,9 +436,16 @@ zfs_dirlook(znode_t *dzp, char *name, vnode_t **vpp, int flags,
 			return (error);
 		}
 		rw_enter(&dzp->z_parent_lock, RW_READER);
-		error = zfs_zget(zfsvfs, dzp->z_phys->zp_parent, &zp);
-		if (error == 0)
-			*vpp = ZTOV(zp);
+		mutex_enter(&dzp->z_lock);
+		if (dzp->z_phys->zp_links == 0) {
+			/* Directory has been rmdir'd.  */
+			error = ENOENT;
+		} else {
+			error = zfs_zget(zfsvfs, dzp->z_phys->zp_parent, &zp);
+			if (error == 0)
+				*vpp = ZTOV(zp);
+		}
+		mutex_exit(&dzp->z_lock);
 		rw_exit(&dzp->z_parent_lock);
 	} else if (zfs_has_ctldir(dzp) && strcmp(name, ZFS_CTLDIR_NAME) == 0) {
 		*vpp = zfsctl_root(dzp);

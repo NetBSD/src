@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.34 2011/09/15 09:44:59 wiz Exp $
+.\" $NetBSD: mount_msdos.8,v 1.34.8.1 2012/11/20 03:00:49 tls Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd January 23, 2009
+.Dd November 16, 2012
 .Dt MOUNT_MSDOS 8
 .Os
 .Sh NAME
@@ -84,6 +84,7 @@ This option causes the filesystem to be interpreted as an Atari-Gemdos
 filesystem.
 The differences to the MS-DOS filesystem are minimal and
 limited to the boot block.
+This option also allows mounting X680x0's Human68k floppies.
 This option enforces
 .Fl s .
 .It Fl g Ar gid
@@ -192,13 +193,3 @@ The use of the
 flag could result in damaged filesystems,
 albeit the damage is in part taken care of by
 procedures similar to the ones used in Win'95.
-.Pp
-The default handling for
-.Fl s
-and
-.Fl l
-will result in empty filesystems to be populated
-with short filenames only.
-To generate long filenames
-on empty DOS filesystems use
-.Fl l .

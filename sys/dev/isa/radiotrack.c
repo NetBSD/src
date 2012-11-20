@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.18 2009/05/12 09:10:15 cegger Exp $ */
+/* $NetBSD: radiotrack.c,v 1.18.22.1 2012/11/20 03:02:10 tls Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.18 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.18.22.1 2012/11/20 03:02:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,6 @@ const struct radio_hw_if rt_hw_if = {
 };
 
 struct rt_softc {
-	struct device	sc_dev;
-
 	int		mute;
 	u_int8_t	vol;
 	u_int8_t	cardtype;
@@ -116,7 +114,7 @@ struct rt_softc {
 	struct lm700x_t	lm;
 };
 
-CFATTACH_DECL(rt, sizeof(struct rt_softc),
+CFATTACH_DECL_NEW(rt, sizeof(struct rt_softc),
     rt_probe, rt_attach, NULL, NULL);
 
 int	rt_find(bus_space_tag_t, bus_space_handle_t);
@@ -176,7 +174,7 @@ rt_probe(device_t parent, cfdata_t cf, void *aux)
 void
 rt_attach(device_t parent, device_t self, void *aux)
 {
-	struct rt_softc *sc = (void *) self;
+	struct rt_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->lm.iot = ia->ia_iot;
@@ -189,7 +187,7 @@ rt_attach(device_t parent, device_t self, void *aux)
 	/* remap I/O */
 	if (bus_space_map(sc->lm.iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->lm.ioh))
-		panic(": bus_space_map() of %s failed", device_xname(&sc->sc_dev));
+		panic(": bus_space_map() of %s failed", device_xname(self));
 
 	switch (ia->ia_io[0].ir_addr) {
 	case 0x20C:
@@ -223,7 +221,7 @@ rt_attach(device_t parent, device_t self, void *aux)
 
 	rt_set_freq(sc, sc->freq);
 
-	radio_attach_mi(&rt_hw_if, sc, &sc->sc_dev);
+	radio_attach_mi(&rt_hw_if, sc, self);
 }
 
 /*

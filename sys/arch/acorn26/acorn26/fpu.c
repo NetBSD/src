@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13 2011/06/03 07:08:48 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13.12.1 2012/11/20 03:00:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2011/06/03 07:08:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13.12.1 2012/11/20 03:00:53 tls Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -50,7 +50,7 @@ static int fpu_match(device_t, cfdata_t, void *);
 static void fpu_attach(device_t, device_t, void *);
 static register_t fpu_identify(void);
 
-CFATTACH_DECL(fpu, sizeof(struct fpu_softc),
+CFATTACH_DECL_NEW(fpu, sizeof(struct fpu_softc),
     fpu_match, fpu_attach, NULL, NULL);
 
 struct fpu_softc *the_fpu;
@@ -65,8 +65,8 @@ fpu_match(device_t parent, cfdata_t cf, void *aux)
 static void
 fpu_attach(device_t parent, device_t self, void *aux)
 {
-	int supported;
 	struct fpu_softc *sc = device_private(self);
+	int supported;
 
 	the_fpu = sc;
 	printf(": ");

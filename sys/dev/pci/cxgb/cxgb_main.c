@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.2 2011/05/18 01:01:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.2.14.1 2012/11/20 03:02:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ static int offload_close(struct toedev *tdev);
 #endif
 
 
-CFATTACH_DECL(cxgbc, sizeof(struct adapter), cxgb_controller_match, cxgb_controller_attach, cxgb_controller_detach, NULL);
+CFATTACH_DECL_NEW(cxgbc, sizeof(struct adapter), cxgb_controller_match, cxgb_controller_attach, cxgb_controller_detach, NULL);
 
 /*
  * Attachment glue for the ports.  Attachment is done directly to the
@@ -118,7 +118,7 @@ static int cxgb_port_match(device_t dev, cfdata_t match, void *context);
 static void cxgb_port_attach(device_t dev, device_t self, void *context);
 static int cxgb_port_detach(device_t dev, int flags);
 
-CFATTACH_DECL(cxgb, sizeof(struct port_device), cxgb_port_match, cxgb_port_attach, cxgb_port_detach, NULL);
+CFATTACH_DECL_NEW(cxgb, sizeof(struct port_device), cxgb_port_match, cxgb_port_attach, cxgb_port_detach, NULL);
 
 #define SGE_MSIX_COUNT (SGE_QSETS + 1)
 
@@ -684,7 +684,7 @@ static int cxgb_port_match(device_t dev, cfdata_t match, void *context)
 #endif
 
 static void
-cxgb_port_attach(device_t dev, device_t self, void *context)
+cxgb_port_attach(device_t parent, device_t self, void *context)
 {
     struct port_info *p;
     struct port_device *pd;
@@ -692,9 +692,9 @@ cxgb_port_attach(device_t dev, device_t self, void *context)
     char buf[32];
     struct ifnet *ifp;
     int media_flags;
-    pd = (struct port_device *)self; // device is first element in port_device
+    pd = device_private(self);
     pd->dev = self;
-    pd->parent = (struct adapter *)dev;
+    pd->parent = device_private(parent);
     pd->port_number = *port_number;
     p = &pd->parent->port[*port_number];
     p->pd = pd;
@@ -704,7 +704,7 @@ cxgb_port_attach(device_t dev, device_t self, void *context)
     /* Allocate an ifnet object and set it up */
     ifp = p->ifp = (void *)malloc(sizeof (struct ifnet), M_IFADDR, M_WAITOK);
     if (ifp == NULL) {
-        device_printf(dev, "Cannot allocate ifnet\n");
+        device_printf(self, "Cannot allocate ifnet\n");
         return;
     }
     memset(ifp, 0, sizeof(struct ifnet));
@@ -787,11 +787,11 @@ cxgb_port_attach(device_t dev, device_t self, void *context)
 }
 
 static int
-cxgb_port_detach(device_t dev, int flags)
+cxgb_port_detach(device_t self, int flags)
 {
     struct port_info *p;
 
-    p = (struct port_info *)dev; // device is first thing in adapter
+    p = device_private(self);
 
     PORT_LOCK(p);
     if (p->ifp->if_drv_flags & IFF_DRV_RUNNING)

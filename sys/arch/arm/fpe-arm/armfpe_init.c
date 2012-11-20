@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.17 2012/09/01 00:01:43 matt Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.17.2.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.17 2012/09/01 00:01:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.17.2.1 2012/11/20 03:01:05 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -92,10 +92,10 @@ initialise_arm_fpe(void)
 	int error;
 
 	printf("%s: FPE: %s\n",
-	    curcpu()->ci_dev->dv_xname, fpe_arm_header.core_identity_addr);
+	    device_xname(curcpu()->ci_dev), fpe_arm_header.core_identity_addr);
 	error = arm_fpe_boot();
 	if (error != 0) {
-		printf("%s: FPE boot failed\n", curcpu()->ci_dev->dv_xname);
+		printf("%s: FPE boot failed\n", device_xname(curcpu()->ci_dev));
 		return(1);
 	}
 	return(0);
@@ -137,10 +137,10 @@ arm_fpe_boot(void)
 	    (u_int)&fpe_nexthandler);
 
 	if (id == 0x81)
-		printf("%s: FPA11 found\n", curcpu()->ci_dev->dv_xname);
+		printf("%s: FPA11 found\n", device_xname(curcpu()->ci_dev));
 	else
 		printf("%s: no FP hardware found\n",
-		    curcpu()->ci_dev->dv_xname);
+		    device_xname(curcpu()->ci_dev));
 
 #ifdef DEBUG
 	printf("fpe id=%08x\n", id);

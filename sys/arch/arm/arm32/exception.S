@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.17 2012/08/29 23:10:31 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.17.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -50,7 +50,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
-	RCSID("$NetBSD: exception.S,v 1.17 2012/08/29 23:10:31 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.17.2.1 2012/11/20 03:01:02 tls Exp $")
 
 	.text	
 	.align	0
@@ -111,8 +111,8 @@ Lprefetch_abort_handler_address:
 	.word	_C_LABEL(prefetch_abort_handler_address)
 
 	.data
+	.p2align 2
 	.global	_C_LABEL(prefetch_abort_handler_address)
-
 _C_LABEL(prefetch_abort_handler_address):
 	.word	abortprefetch
 
@@ -150,6 +150,7 @@ Ldata_abort_handler_address:
 	.word	_C_LABEL(data_abort_handler_address)
 
 	.data
+	.p2align 2
 	.global	_C_LABEL(data_abort_handler_address)
 _C_LABEL(data_abort_handler_address):
 	.word	abortdata

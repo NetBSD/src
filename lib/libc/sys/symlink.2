@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.2,v 1.20 2010/05/31 12:16:20 njoly Exp $
+.\"	$NetBSD: symlink.2,v 1.20.12.1 2012/11/20 03:00:43 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,8 @@
 .Dt SYMLINK 2
 .Os
 .Sh NAME
-.Nm symlink
+.Nm symlink ,
+.Nm symlinkat
 .Nd make symbolic link to a file
 .Sh LIBRARY
 .Lb libc
@@ -41,6 +42,8 @@
 .In unistd.h
 .Ft int
 .Fn symlink "const char *name1" "const char *name2"
+.Ft int
+.Fn symlinkat "const char *name1" "int fd" "const char *name2"
 .Sh DESCRIPTION
 A symbolic link
 .Fa name2
@@ -54,6 +57,24 @@ is the string
 used in creating the symbolic link).
 Either name may be an arbitrary path name; the files need neither
 to be on the same file system nor to exist.
+.Pp
+.Fn symlinkat
+works the same way as
+.Fn symlink
+except if
+.Fa path2
+is relative. In that case, it is looked up from a directory whose file
+descriptor was passed as
+.Fa fd .
+Search permission is required on
+.Fa fd
+except if that file descriptor was open with
+.Dv O_SEARCH
+option.
+.Fa fd
+can be set to
+.Dv AT_FDCWD
+in order to specify current directory.
 .Sh RETURN VALUES
 Upon successful completion, a zero value is returned.
 If an error occurs, the error code is stored in
@@ -133,6 +154,14 @@ points outside the process's allocated address space.
 .Xr readlink 2 ,
 .Xr unlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The    
+.Fn symlink
+function conforms to
+.St -p1003.1-90 .
+.Fn symlinkat
+conforms to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn symlink

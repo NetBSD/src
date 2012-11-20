@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.246 2012/08/16 19:40:48 pgoyette Exp $	*/
+/*	$NetBSD: rump.c,v 1.246.2.1 2012/11/20 03:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.246 2012/08/16 19:40:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.246.2.1 2012/11/20 03:02:50 tls Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -339,6 +339,8 @@ rump__init(int rump_version)
 
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
+
+	rump_biglock_init();
 
 	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a semireal context */

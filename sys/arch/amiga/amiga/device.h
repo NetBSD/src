@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.13 2010/02/09 18:13:09 phx Exp $	*/
+/*	$NetBSD: device.h,v 1.13.20.1 2012/11/20 03:00:56 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * passed in some cases and the devices will deal with it)
  */
 void config_console(void);
-int amiga_config_found(struct cfdata *, struct device *, void *, cfprint_t );
+int amiga_config_found(cfdata_t, device_t, void *, cfprint_t);
 int simple_devprint(void *, const char *);
 int matchname(const char *, const char *);
 /*

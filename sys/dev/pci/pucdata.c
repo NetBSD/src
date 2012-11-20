@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.80.2.1 2012/11/20 03:02:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80 2012/08/15 01:03:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.80.2.1 2012/11/20 03:02:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * B&B Electronics MIPort Serial cards.
 	 */
-	{ "BBELEC ISOLATED_2_PORT",
+	{   "BBELEC ISOLATED_2_PORT",
 	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT, 0, 0 },
 	    {	0xffff, 0xffff, 0,	0	},
 	    {
@@ -176,7 +176,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
 	    },
 	},
-	{ "BBELEC ISOLATED_4_PORT",
+	{   "BBELEC ISOLATED_4_PORT",
 	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT, 0, 0 },
 	    {	0xffff, 0xffff, 0,	0	},
 	    {
@@ -186,7 +186,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
 	    },
 	},
-	{ "BBELEC ISOLATED_8_PORT",
+	{   "BBELEC ISOLATED_8_PORT",
 	    {	PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT, 0, 0 },
 	    {	0xffff, 0xffff, 0,	0	},
 	    {
@@ -363,7 +363,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Digi International Digi Neo 4 Serial */
-	{ "Digi International Digi Neo 4 Serial",
+	{   "Digi International Digi Neo 4 Serial",
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,		0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
@@ -375,7 +375,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Digi International Digi Neo 8 Serial */
-	{ "Digi International Digi Neo 8 Serial",
+	{   "Digi International Digi Neo 8 Serial",
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,		0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
@@ -551,6 +551,15 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers single port serial PCI card */
+	{   "Lava Computers SSERIAL-PCI",
+	    {	PCI_VENDOR_LAVA,	PCI_PRODUCT_LAVA_SSERIAL, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -790,37 +799,37 @@ const struct puc_device_description puc_devices[] = {
 	       { PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	   },
-       },
+	},
 
 	/* NetMos 4S1P PCI NM9845 : 4S, 1P */
 	{   "NetMos NM9845 Quad UART and 1284 Printer port",
-	   {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0014 },
-	   {   0xffff, 0xffff, 0xffff, 0xffff  },
-	   {
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0014 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff  },
+	    {
 	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
-	   },
-       },
+	    },
+	},
 
-       /* NetMos 6S PCI 16C650 : 6S, 0P */
-       {   "NetMos NM9845 6 UART",
-	   {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0006 },
-	   {   0xffff, 0xffff, 0xffff, 0xffff  },
-	   {
+	/* NetMos 6S PCI 16C650 : 6S, 0P */
+	{   "NetMos NM9845 6 UART",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0006 },
+	    {   0xffff, 0xffff, 0xffff, 0xffff  },
+	    {
 	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
 	       { PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
-	   },
-       },
+	    },
+	},
 
-       /* NetMos 4S1P PCI NM9845 : 4S, 1P */
-       {   "NetMos NM9845 Quad UART and 1284 Printer port (unknown type)",
+	/* NetMos 4S1P PCI NM9845 : 4S, 1P */
+	{   "NetMos NM9845 Quad UART and 1284 Printer port (unknown type)",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -832,8 +841,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 4S1P PCI NM9855 : 4S, 1P */
-       {   "NetMos NM9855 Quad UART and 1284 Printer port (unknown type)",
+	/* NetMos 4S1P PCI NM9855 : 4S, 1P */
+	{   "NetMos NM9855 Quad UART and 1284 Printer port (unknown type)",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855, 0x1000, 0x0014 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -845,8 +854,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 6S PCI NM9865 : 1S */
-       {   "NetMos NM9865 1 UART",
+	/* NetMos 6S PCI NM9865 : 1S */
+	{   "NetMos NM9865 1 UART",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x1000 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -854,8 +863,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 2S PCI NM9865 : 2S */
-       {   "NetMos NM9865 2 UART",
+	/* NetMos 2S PCI NM9865 : 2S */
+	{   "NetMos NM9865 2 UART",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3002 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -864,8 +873,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 3S PCI NM9865 : 3S */
-       {   "NetMos NM9865 3 UART",
+	/* NetMos 3S PCI NM9865 : 3S */
+	{   "NetMos NM9865 3 UART",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3003 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -875,8 +884,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 4S PCI NM9865 : 4S */
-       {   "NetMos NM9865 4 UART",
+	/* NetMos 4S PCI NM9865 : 4S */
+	{   "NetMos NM9865 4 UART",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3004 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -887,8 +896,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos PCI NM9865 : 1S 1P */
-       {   "NetMos NM9865 Single UART and Single LPT",
+	/* NetMos PCI NM9865 : 1S 1P */
+	{   "NetMos NM9865 Single UART and Single LPT",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3011 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -897,8 +906,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos PCI NM9865 : 2S 1P */
-       {   "NetMos NM9865 Dual UART and Single LPT",
+	/* NetMos PCI NM9865 : 2S 1P */
+	{   "NetMos NM9865 Dual UART and Single LPT",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3012 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -908,8 +917,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos PCI NM9865 : 2P */
-       {   "NetMos NM9865 Dual LPT",
+	/* NetMos PCI NM9865 : 2P */
+	{   "NetMos NM9865 Dual LPT",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3020 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -947,8 +956,8 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos PCIe NM9901 : 1P */
-       {   "NetMos NM9901 LPT",
+	/* NetMos PCIe NM9901 : 1P */
+	{   "NetMos NM9901 LPT",
 	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x2000 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -1433,7 +1442,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Intel G33/G31/P35/P31 KT */
-	{   "Intel Q35 KT",
+	{   "Intel G33/G31/P35/P31 KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -1496,7 +1505,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Intel 5 Series and Intel 3400 Series KT */
-	{   "Intel 6 Series KT",
+	{   "Intel 5 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -1523,7 +1532,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Intel C600/X79 Series KT */
-	{   "Intel 7 Series KT",
+	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {

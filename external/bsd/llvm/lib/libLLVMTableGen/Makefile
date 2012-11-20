@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/05/29 19:31:52 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2012/11/20 02:58:02 tls Exp $
 
 LIB=	LLVMTableGen
 
@@ -10,7 +10,6 @@ SRCS+=	Error.cpp \
 	Main.cpp \
 	Record.cpp \
 	StringMatcher.cpp \
-	TableGenAction.cpp \
 	TableGenBackend.cpp \
 	TGLexer.cpp \
 	TGParser.cpp

@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.65 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.65.8.1 2012/11/20 03:03:04 tls Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,12 +41,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.65 2011/08/31 13:32:39 joerg Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.65.8.1 2012/11/20 03:03:04 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
+#include <stdio.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>

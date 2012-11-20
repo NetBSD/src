@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.14 2009/05/12 14:22:39 cegger Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.14.22.1 2012/11/20 03:02:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.14 2009/05/12 14:22:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.14.22.1 2012/11/20 03:02:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ void	hpcin_attach(device_t, device_t, void *);
 int	hpcin_intr(void *);
 
 struct hpcin_softc {
-	struct device sc_dev;
 	struct hpcioman_attach_args sc_hma;
 	hpcio_intr_handle_t sc_ih;
 	config_call_tag sc_ct;
@@ -65,7 +64,7 @@ struct hpcin_softc {
 #define sc_off		sc_hma.hma_off
 #define sc_connect	sc_hma.hma_connect
 
-CFATTACH_DECL(hpcin, sizeof(struct hpcin_softc),
+CFATTACH_DECL_NEW(hpcin, sizeof(struct hpcin_softc),
     hpcin_match, hpcin_attach, NULL, NULL);
 
 int

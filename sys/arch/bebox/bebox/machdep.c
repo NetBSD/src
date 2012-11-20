@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.12.1 2012/11/20 03:01:09 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104.12.1 2012/11/20 03:01:09 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2011/08/07 15:22:19 kiyohara Exp $
 #include <machine/powerpc.h>
 
 #include <powerpc/pic/picvar.h> 
+#include <powerpc/pio.h>
+#include <powerpc/prep_bus.h>
 #include <powerpc/psl.h>
 
 #include <dev/cons.h>
@@ -237,7 +239,7 @@ consinit(void)
 		 */
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		disable_device("vga");
 		return;
@@ -250,7 +252,7 @@ consinit(void)
 		vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
+		    PCKBC_KBD_SLOT, 0);
 #endif
 		return;
 	}
@@ -315,5 +317,12 @@ cpu_reboot(int howto, char *what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
+
+	/* Left and Right LED on.  Max 15 for both LED. */
+#define LEFT_LED(x)	(((x) & 0xf) << 4)
+#define RIGHT_LED(x)	(((x) & 0xf))
+
+	outb(PREP_BUS_SPACE_IO + 0x0c00, LEFT_LED(15) | RIGHT_LED(15));
+
 	while (1);
 }

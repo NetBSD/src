@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/02/06 01:13:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2012/11/20 02:58:00 tls Exp $
 
 PROG_CXX=	llvm-extract
 NOMAN=		yes
@@ -13,10 +13,10 @@ LLVM_LIBS+= \
 	AsmParser \
 	BitReader \
 	BitWriter \
-	Target \
 	ipo \
 	TransformsUtils \
 	Analysis \
+	Target \
 	ipa \
 	Core \
 	Support

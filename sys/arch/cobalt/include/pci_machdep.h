@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.11 2011/04/04 20:37:47 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.11.14.1 2012/11/20 03:01:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -66,7 +66,7 @@ struct cobalt_pci_chipset {
 /*
  * Functions provided to machine-independent PCI code.
  */
-void		pci_attach_hook(struct device *, struct device *,
+void		pci_attach_hook(device_t, device_t,
 			struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);

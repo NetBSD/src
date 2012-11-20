@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.58 2012/09/01 00:24:43 matt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.58.2.1 2012/11/20 03:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58 2012/09/01 00:24:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58.2.1 2012/11/20 03:02:42 tls Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -275,10 +275,11 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = cpu_ucode_get_version((struct cpu_ucode_version *)data);
 		break;
 
-	/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
 	case OIOC_CPU_UCODE_GET_VERSION:
 		error = compat6_cpu_ucode_get_version((struct compat6_cpu_ucode *)data);
 		break;
+#endif
 
 	case IOC_CPU_UCODE_APPLY:
 		error = kauth_authorize_machdep(l->l_cred,
@@ -289,7 +290,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = cpu_ucode_apply((const struct cpu_ucode *)data);
 		break;
 
-	/* XXX ifdef COMPAT */
+#ifdef COMPAT_60
 	case OIOC_CPU_UCODE_APPLY:
 		error = kauth_authorize_machdep(l->l_cred,
 		    KAUTH_MACHDEP_CPU_UCODE_APPLY,
@@ -298,6 +299,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		error = compat6_cpu_ucode_apply((const struct compat6_cpu_ucode *)data);
 		break;
+#endif
 #endif
 
 	default:

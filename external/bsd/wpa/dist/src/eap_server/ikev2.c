@@ -16,6 +16,7 @@
 
 #include "common.h"
 #include "crypto/dh_groups.h"
+#include "crypto/random.h"
 #include "ikev2.h"
 
 
@@ -403,7 +404,7 @@ static int ikev2_process_ker(struct ikev2_initiator_data *data,
 	}
 
 	/* RFC 4306, Section 3.4:
-	 * The length of DH public value MUST be equal to the lenght of the
+	 * The length of DH public value MUST be equal to the length of the
 	 * prime modulus.
 	 */
 	if (ker_len - 4 != data->dh->prime_len) {
@@ -1100,7 +1101,7 @@ static struct wpabuf * ikev2_build_sa_init(struct ikev2_initiator_data *data)
 		    data->i_spi, IKEV2_SPI_LEN);
 
 	data->i_nonce_len = IKEV2_NONCE_MIN_LEN;
-	if (os_get_random(data->i_nonce, data->i_nonce_len))
+	if (random_get_bytes(data->i_nonce, data->i_nonce_len))
 		return NULL;
 	wpa_hexdump(MSG_DEBUG, "IKEV2: Ni", data->i_nonce, data->i_nonce_len);
 
@@ -1148,7 +1149,7 @@ static struct wpabuf * ikev2_build_sa_auth(struct ikev2_initiator_data *data)
 		if (data->shared_secret == NULL)
 			return NULL;
 		data->shared_secret_len = 16;
-		if (os_get_random(data->shared_secret, 16))
+		if (random_get_bytes(data->shared_secret, 16))
 			return NULL;
 	} else {
 		os_free(data->shared_secret);

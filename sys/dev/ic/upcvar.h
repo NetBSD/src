@@ -1,4 +1,4 @@
-/* $NetBSD: upcvar.h,v 1.5 2007/10/19 12:00:04 ad Exp $ */
+/* $NetBSD: upcvar.h,v 1.5.64.1 2012/11/20 03:02:08 tls Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -38,7 +38,7 @@ struct upc_irqhandle {
 };
 
 struct upc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	/* These fields are filled in by the bus attachment. */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.24 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: asc.c,v 1.24.12.1 2012/11/20 03:01:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.24 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.24.12.1 2012/11/20 03:01:01 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ asc_dma_intr(struct ncr53c9x_softc *sc)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, asc->sc_dmasize);
+		    device_xname(sc->sc_dev), trans, asc->sc_dmasize);
 #endif
 		trans = asc->sc_dmasize;
 	}

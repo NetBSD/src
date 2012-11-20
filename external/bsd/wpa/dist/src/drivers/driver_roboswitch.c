@@ -14,10 +14,10 @@
 
 #include "includes.h"
 #include <sys/ioctl.h>
-#include <linux/if.h>
 #include <linux/sockios.h>
 #include <linux/if_ether.h>
 #include <linux/mii.h>
+#include <net/if.h>
 
 #include "common.h"
 #include "driver.h"
@@ -364,7 +364,7 @@ static void * wpa_driver_roboswitch_init(void *ctx, const char *ifname)
 	/* copy ifname and take a pointer to the second to last character */
 	sep = drv->ifname +
 	      os_strlcpy(drv->ifname, ifname, sizeof(drv->ifname)) - 2;
-	/* find the '.' seperating <interface> and <vlan> */
+	/* find the '.' separating <interface> and <vlan> */
 	while (sep > drv->ifname && *sep != '.') sep--;
 	if (sep <= drv->ifname) {
 		wpa_printf(MSG_INFO, "%s: No <interface>.<vlan> pair in "

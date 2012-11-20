@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.23 2011/06/12 03:35:53 rmind Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.23.12.1 2012/11/20 03:02:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.23 2011/06/12 03:35:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.23.12.1 2012/11/20 03:02:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 	}
 out:
 	ptyfs->ptyfs_uid = ptyfs->ptyfs_gid = 0;
-	ptyfs->ptyfs_flags |= PTYFS_CHANGE;
+	ptyfs->ptyfs_status |= PTYFS_CHANGE;
 	PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
 	ptyfs->ptyfs_birthtime = ptyfs->ptyfs_mtime =
 	    ptyfs->ptyfs_atime = ptyfs->ptyfs_ctime;

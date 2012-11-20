@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.45 2011/10/01 15:59:01 chs Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.45.12.1 2012/11/20 03:02:03 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45 2011/10/01 15:59:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.45.12.1 2012/11/20 03:02:03 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -220,7 +220,7 @@ clmpcc_channel_cmd(struct clmpcc_softc *sc, int chan, int cmd)
 
 	if ( i == 0 )
 		printf("%s: channel %d command timeout (idle)\n",
-			device_xname(&sc->sc_dev), chan);
+			device_xname(sc->sc_dev), chan);
 
 	clmpcc_wrreg(sc, CLMPCC_REG_CCR, cmd);
 }
@@ -296,7 +296,7 @@ clmpcc_attach(struct clmpcc_softc *sc)
 
 		ch->ch_ibuf = malloc(clmpcc_ibuf_size * 2, M_DEVBUF, M_NOWAIT);
 		if ( ch->ch_ibuf == NULL ) {
-			aprint_error_dev(&sc->sc_dev, "(%d): unable to allocate ring buffer\n",
+			aprint_error_dev(sc->sc_dev, "(%d): unable to allocate ring buffer\n",
 		    		chan);
 			return;
 		}
@@ -307,7 +307,7 @@ clmpcc_attach(struct clmpcc_softc *sc)
 		tty_attach(tp);
 	}
 
-	aprint_error_dev(&sc->sc_dev, "%d channels available",
+	aprint_error_dev(sc->sc_dev, "%d channels available",
 					    CLMPCC_NUM_CHANS);
 	if ( cons_sc == sc ) {
 		printf(", console on channel %d.\n", cons_chan);
@@ -368,7 +368,7 @@ clmpcc_init(struct clmpcc_softc *sc)
 		 * Watch out... If this chip is console, the message
 		 * probably won't be sent since we just reset it!
 		 */
-		aprint_error_dev(&sc->sc_dev, "Failed to reset chip\n");
+		aprint_error_dev(sc->sc_dev, "Failed to reset chip\n");
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: ams.c,v 1.28.12.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.28.12.1 2012/11/20 03:01:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ static void	ms_processevent(adb_event_t *event, struct ams_softc *);
 static void	init_trackpad(struct ams_softc *);
 
 /* Driver definition. */
-CFATTACH_DECL(ams, sizeof(struct ams_softc),
+CFATTACH_DECL_NEW(ams, sizeof(struct ams_softc),
     amsmatch, amsattach, NULL, NULL);
 
 int ams_enable(void *);
@@ -107,6 +107,7 @@ amsattach(device_t parent, device_t self, void *aux)
 	int error;
 	struct wsmousedev_attach_args a;
 
+	sc->sc_dev = self;
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
 	sc->handler_id = aa_args->handler_id;
@@ -684,7 +685,7 @@ init_trackpad(struct ams_softc *sc)
 	
 	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
 	    CTLFLAG_READWRITE,
-	    CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.56 2011/06/22 18:06:32 matt Exp $
+#	$NetBSD: files.bebox,v 1.56.12.1 2012/11/20 03:01:10 tls Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -7,6 +7,7 @@ maxpartitions 8
 maxusers 2 8 64
 
 include "arch/powerpc/pic/files.pic"
+include "arch/powerpc/pic/files.ipi"
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/machdep.c
@@ -16,6 +17,7 @@ file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 file    arch/bebox/bebox/pic_bebox.c
+file    arch/bebox/bebox/ipi_bebox.c		multiprocessor
 
 # General files
 file	dev/cons.c

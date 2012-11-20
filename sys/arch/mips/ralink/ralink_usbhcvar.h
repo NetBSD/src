@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_usbhcvar.h,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_usbhcvar.h,v 1.2.12.1 2012/11/20 03:01:33 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -38,10 +38,10 @@
 
 struct ralink_usb_hc {
 	TAILQ_ENTRY(ralink_usb_hc) next;
-	struct device *usb;
+	device_t usb;
 };
 
-void ralink_usb_hc_add(struct ralink_usb_hc *, struct device *);
+void ralink_usb_hc_add(struct ralink_usb_hc *, device_t);
 void ralink_usb_hc_rem(struct ralink_usb_hc *);
 
 #endif	/* _RALINK_USBHCVAR_H_ */

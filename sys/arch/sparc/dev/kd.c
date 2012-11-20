@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.50 2012/07/30 17:29:55 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.50.2.1 2012/11/20 03:01:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.50 2012/07/30 17:29:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.50.2.1 2012/11/20 03:01:43 tls Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.50 2012/07/30 17:29:55 christos Exp $");
 #define PUT_WSIZE	64
 
 struct kd_softc {
-	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;
 	int rows, cols;
 

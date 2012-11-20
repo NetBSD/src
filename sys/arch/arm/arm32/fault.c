@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.85 2012/09/07 11:48:59 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.85.2.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85 2012/09/07 11:48:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.85.2.1 2012/11/20 03:01:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,8 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
 		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
-		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1)),
-		    *((u_int16 *)((tf->tf_pc + 2) & ~1)));
+		    tf->tf_pc, *((uint16 *)(tf->tf_pc & ~1)),
+		    *((uint16 *)((tf->tf_pc + 2) & ~1)));
 	}
 	else
 #endif
@@ -320,7 +320,7 @@ data_abort_handler(trapframe_t *tf)
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLOPC;
-			ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+			ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 			ksi.ksi_trap = fsr;
 			goto do_trapsignal;
 		}
@@ -343,7 +343,7 @@ data_abort_handler(trapframe_t *tf)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+		ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 		ksi.ksi_trap = fsr;
 		goto do_trapsignal;
 	default:
@@ -369,7 +369,7 @@ data_abort_handler(trapframe_t *tf)
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_ACCERR;
-			ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+			ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 			ksi.ksi_trap = fsr;
 
 			/*
@@ -495,7 +495,7 @@ data_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGSEGV;
 
 	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
-	ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
+	ksi.ksi_addr = (uint32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
 	UVMHIST_LOG(maphist, " <- error (%d)", error, 0, 0, 0);
 
@@ -589,7 +589,7 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l, ksiginfo_t *ksi)
 	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = SIGBUS;
 	ksi->ksi_code = BUS_ADRALN;
-	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
+	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
 	lwp_settrapframe(l, tf);
@@ -696,7 +696,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = SIGBUS;
 	ksi->ksi_code = BUS_ADRERR;
-	ksi->ksi_addr = (u_int32_t *)(intptr_t)far;
+	ksi->ksi_addr = (uint32_t *)(intptr_t)far;
 	ksi->ksi_trap = fsr;
 
 	lwp_settrapframe(l, tf);
@@ -723,8 +723,8 @@ prefetch_abort_fixup(trapframe_t *tf)
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
 		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
-		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1)),
-		    *((u_int16 *)((tf->tf_pc + 2) & ~1)));
+		    tf->tf_pc, *((uint16 *)(tf->tf_pc & ~1)),
+		    *((uint16 *)((tf->tf_pc + 2) & ~1)));
 	}
 	else
 #endif
@@ -795,7 +795,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC;
-		ksi.ksi_addr = (u_int32_t *)(intptr_t) tf->tf_pc;
+		ksi.ksi_addr = (uint32_t *)(intptr_t) tf->tf_pc;
 		lwp_settrapframe(l, tf);
 		goto do_trapsignal;
 	default:
@@ -818,7 +818,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
-		ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
+		ksi.ksi_addr = (uint32_t *)(intptr_t) fault_pc;
 		ksi.ksi_trap = fault_pc;
 		goto do_trapsignal;
 	}
@@ -863,7 +863,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		ksi.ksi_signo = SIGSEGV;
 
 	ksi.ksi_code = SEGV_MAPERR;
-	ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
+	ksi.ksi_addr = (uint32_t *)(intptr_t) fault_pc;
 	ksi.ksi_trap = fault_pc;
 
 do_trapsignal:

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.13 2011/12/02 00:25:37 jakllsch Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.13.8.1 2012/11/20 03:01:02 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.13 2011/12/02 00:25:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.13.8.1 2012/11/20 03:01:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,23 +151,23 @@ mbr_label_read(dev_t dev,
 
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions['e' - 'a' + i];
-			pp->p_offset = mbrp->mbrp_start;
-			pp->p_size = mbrp->mbrp_size;
+			pp->p_offset = le32toh(mbrp->mbrp_start);
+			pp->p_size = le32toh(mbrp->mbrp_size);
 			pp->p_fstype = xlat_mbr_fstype(mbrp->mbrp_type);
 
 			/* is this ours? */
 			if (mbrp == ourmbrp) {
 				/* need sector address for SCSI/IDE,
 				 cylinder for ESDI/ST506/RLL */
-				mbrpartoff = mbrp->mbrp_start;
+				mbrpartoff = le32toh(mbrp->mbrp_start);
 				cyl = MBR_PCYL(mbrp->mbrp_scyl, mbrp->mbrp_ssect);
 
 #ifdef __i386__ /* XXX? */
 				/* update disklabel with details */
 				lp->d_partitions[2].p_size =
-				    mbrp->mbrp_size;
+				    le32toh(mbrp->mbrp_size);
 				lp->d_partitions[2].p_offset = 
-				    mbrp->mbrp_start;
+				    le32toh(mbrp->mbrp_start);
 				lp->d_ntracks = mbrp->mbrp_ehd + 1;
 				lp->d_nsectors = MBR_PSECT(mbrp->mbrp_esect);
 				lp->d_secpercyl =
@@ -250,7 +250,7 @@ mbr_label_locate(dev_t dev,
 	}
 
 	/* need sector address for SCSI/IDE, cylinder for ESDI/ST506/RLL */
-	mbrpartoff = ourmbrp->mbrp_start;
+	mbrpartoff = le32toh(ourmbrp->mbrp_start);
 	cyl = MBR_PCYL(ourmbrp->mbrp_scyl, ourmbrp->mbrp_ssect);
 
 	*cylp = cyl;

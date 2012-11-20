@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323 2012/07/31 14:23:34 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.323.2.1 2012/11/20 03:01:44 tls Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2012/07/31 14:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.1 2012/11/20 03:01:44 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2012/07/31 14:23:34 martin Exp $")
 #include <sys/simplelock.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/ras.h>
 
 #include <dev/mm.h>
 
@@ -594,6 +595,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
 	__greg_t *r = mcp->__gregs;
+	__greg_t ras_pc;
 #ifdef FPU_CONTEXT
 	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
@@ -633,7 +635,13 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	r[_REG_O6] = tf->tf_out[6];
 	r[_REG_O7] = tf->tf_out[7];
 
-	*flags |= _UC_CPU;
+	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
+	    (void *) r[_REG_PC])) != -1) {
+		r[_REG_PC] = ras_pc;
+		r[_REG_nPC] = ras_pc + 4;
+	}
+
+	*flags |= (_UC_CPU|_UC_TLSBASE);
 
 #ifdef FPU_CONTEXT
 	/*
@@ -739,7 +747,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_global[4] = r[_REG_G4];
 		tf->tf_global[5] = r[_REG_G5];
 		tf->tf_global[6] = r[_REG_G6];
-		tf->tf_global[7] = r[_REG_G7];
+		/* done in lwp_setprivate */
+		/* tf->tf_global[7] = r[_REG_G7]; */
 
 		tf->tf_out[0] = r[_REG_O0];
 		tf->tf_out[1] = r[_REG_O1];
@@ -750,7 +759,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_out[6] = r[_REG_O6];
 		tf->tf_out[7] = r[_REG_O7];
 
-		lwp_setprivate(l, (void *)(uintptr_t)r[_REG_G7]);
+		if (flags & _UC_TLSBASE)
+			lwp_setprivate(l, (void *)(uintptr_t)r[_REG_G7]);
 	}
 
 #ifdef FPU_CONTEXT

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.68 2012/09/01 18:17:50 jakllsch Exp $
+#	$NetBSD: XEN3_DOM0,v 1.68.2.1 2012/11/20 03:01:26 tls Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -89,6 +89,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -511,6 +512,7 @@ pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 #vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -788,6 +790,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
 
 # accept filters
 pseudo-device	accf_data		# "dataready" accept filter

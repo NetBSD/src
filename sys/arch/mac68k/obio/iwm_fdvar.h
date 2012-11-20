@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.14 2008/05/26 17:58:37 hauke Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.14.42.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -128,7 +128,7 @@ typedef struct iwmAttachArgs iwmAttachArgs_t;
  *
  */
 struct fd_softc {
-	struct device devInfo;		/* generic device info */
+	device_t sc_dev;		/* generic device info */
 	struct disk diskInfo;		/* generic disk info */
 	struct bufq_state *bufQueue;	/* queue of buf's */
 	int sc_active;			/* number of active requests */
@@ -176,7 +176,6 @@ typedef struct fd_softc fd_softc_t;
  * SWIM/MFM mode may have some state to keep here.
  */
 struct iwm_softc {
-	struct device devInfo;		/* generic device info */
 	int	drives;			/* # of attached fd's */
 	fd_softc_t *fd[IWM_MAX_DRIVE];	/* ptrs to children */
 

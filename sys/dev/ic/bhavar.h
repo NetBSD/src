@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.24 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.24.44.1 2012/11/20 03:02:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ do {									\
 } while (0)
 
 struct bha_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

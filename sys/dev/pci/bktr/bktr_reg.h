@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_reg.h,v 1.3 2003/03/11 23:11:27 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_reg.h,v 1.21 2011/01/26 00:54:35 dyoung Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.21.14.1 2012/11/20 03:02:30 tls Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp$
  *
@@ -436,7 +436,7 @@ typedef struct bktr_clip bktr_clip_t;
 struct bktr_softc {
 
 
-    struct device bktr_dev;     /* base device */
+    device_t bktr_dev;     /* base device */
     bus_dma_tag_t	dmat;   /* DMA tag */
     bus_space_tag_t	memt;
     bus_space_handle_t	memh;

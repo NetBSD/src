@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.7 2012/03/15 04:06:54 joerg Exp $ */
+/* $NetBSD: disk.c,v 1.7.2.1 2012/11/20 02:57:59 tls Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -1098,7 +1098,7 @@ device_command(target_session_t *sess, target_cmd_t *cmd)
 	uint8_t			lun;
 
 	cdb = args->cdb;
-	lun = (uint8_t) (args->lun >> 32);
+	lun = (uint8_t) (args->lun >> 48);
 	cdbsize = &cdb[4];
 
 	/*

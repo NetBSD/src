@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.21 2011/04/04 20:37:49 dyoung Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.21.14.1 2012/11/20 03:01:19 tls Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.21 2011/04/04 20:37:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.21.14.1 2012/11/20 03:01:19 tls Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -103,7 +103,7 @@ static void	*malta_pci_intr_establish(void *, pci_intr_handle_t, int,
 		    int (*)(void *), void *);
 static void	malta_pci_intr_disestablish(void *, void *);
 static void	malta_pci_conf_interrupt(void *, int, int, int, int, int *);
-static void	*malta_pciide_compat_intr_establish(void *, struct device *,
+static void	*malta_pciide_compat_intr_establish(void *, device_t,
 		    const struct pci_attach_args *, int, int (*)(void *),
 		    void *);
 
@@ -381,7 +381,7 @@ malta_pci_conf_interrupt(void *v, int bus, int dev, int func, int swiz,
 }
 
 void *
-malta_pciide_compat_intr_establish(void *v, struct device *dev,
+malta_pciide_compat_intr_establish(void *v, device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
@@ -400,7 +400,7 @@ malta_pciide_compat_intr_establish(void *v, struct device *dev,
 	cookie = isa_intr_establish(pcib_ic, irq, IST_EDGE, IPL_BIO, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
+	printf("%s: %s channel interrupting at %s\n", device_xname(dev),
 	    PCIIDE_CHANNEL_NAME(chan), malta_pci_intr_string(v, irq));
 	return (cookie);
 }

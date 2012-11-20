@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.30.2.1 2012/11/20 03:02:33 tls Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.30 2012/08/31 01:44:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.30.2.1 2012/11/20 03:02:33 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -220,7 +220,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 static int
 sdhc_cfprint(void *aux, const char *pnp)
 {
-	const struct sdmmcbus_attach_args const * saa = aux;
+	const struct sdmmcbus_attach_args * const saa = aux;
 	const struct sdhc_host * const hp = saa->saa_sch;
 	
 	if (pnp) {
@@ -413,6 +413,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 			saa.saa_caps |= SMC_CAPS_MULTI_SEG_DMA;
 		}
 	}
+	if (ISSET(sc->sc_flags, SDHC_FLAG_SINGLE_ONLY))
+		saa.saa_caps |= SMC_CAPS_SINGLE_ONLY;
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
@@ -625,6 +627,9 @@ sdhc_card_detect(sdmmc_chipset_handle_t sch)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int r;
 
+	if (hp->sc->sc_vendor_card_detect)
+		return (*hp->sc->sc_vendor_card_detect)(hp->sc);
+
 	mutex_enter(&hp->host_mtx);
 	r = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CARD_INSERTED);
 	mutex_exit(&hp->host_mtx);
@@ -640,6 +645,9 @@ sdhc_write_protect(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int r;
+
+	if (hp->sc->sc_vendor_write_protect)
+		return (*hp->sc->sc_vendor_write_protect)(hp->sc);
 
 	mutex_enter(&hp->host_mtx);
 	r = ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_WRITE_PROTECT_SWITCH);
@@ -658,6 +666,8 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	uint8_t vdd;
 	int error = 0;
+	const uint32_t pcmask =
+	    ~(SDHC_BUS_POWER | (SDHC_VOLTAGE_MASK << SDHC_VOLTAGE_SHIFT));
 
 	mutex_enter(&hp->host_mtx);
 
@@ -696,7 +706,11 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 		 * voltage ramp until power rises.
 		 */
 		HWRITE1(hp, SDHC_POWER_CTL,
-		    (vdd << SDHC_VOLTAGE_SHIFT) | SDHC_BUS_POWER);
+		    HREAD1(hp, SDHC_POWER_CTL) & pcmask);
+		sdmmc_delay(1);
+		HWRITE1(hp, SDHC_POWER_CTL, (vdd << SDHC_VOLTAGE_SHIFT));
+		sdmmc_delay(1);
+		HSET1(hp, SDHC_POWER_CTL, SDHC_BUS_POWER);
 		sdmmc_delay(10000);
 
 		/*
@@ -760,13 +774,12 @@ sdhc_clock_divisor(struct sdhc_host *hp, u_int freq, u_int *divp)
 		/* No divisor found. */
 		return false;
 	} else {
-		for (div = 1; div <= 256; div *= 2) {
-			if ((hp->clkbase / div) <= freq) {
-				*divp = (div / 2) << SDHC_SDCLK_DIV_SHIFT;
-				//freq = hp->clkbase / div;
-				return true;
-			}
-		}
+		if (hp->sc->sc_clkmsk != 0)
+			*divp = (hp->clkbase / freq) <<
+			    (ffs(hp->sc->sc_clkmsk) - 1);
+		else
+			*divp = (hp->clkbase / freq) << SDHC_SDCLK_DIV_SHIFT;
+		return true;
 	}
 	/* No divisor found. */
 	return false;
@@ -782,6 +795,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	u_int div;
 	u_int timo;
+	int16_t reg;
 	int error = 0;
 #ifdef DIAGNOSTIC
 	bool present;
@@ -809,7 +823,7 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 			goto out;
 		}
 	} else {
-		HWRITE2(hp, SDHC_CLOCK_CTL, 0);
+		HCLR2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
 		if (freq == SDMMC_SDCLK_OFF)
 			goto out;
 	}
@@ -826,7 +840,9 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		HWRITE4(hp, SDHC_CLOCK_CTL,
 		    div | (SDHC_TIMEOUT_MAX << 16));
 	} else {
-		HWRITE2(hp, SDHC_CLOCK_CTL, div);
+		reg = HREAD2(hp, SDHC_CLOCK_CTL);
+		reg &= (SDHC_INTCLK_STABLE | SDHC_INTCLK_ENABLE);
+		HWRITE2(hp, SDHC_CLOCK_CTL, reg | div);
 	}
 
 	/*
@@ -931,8 +947,11 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 static int
 sdhc_bus_rod(sdmmc_chipset_handle_t sch, int on)
 {
+	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
-	/* Nothing ?? */
+	if (hp->sc->sc_vendor_rod)
+		return (*hp->sc->sc_vendor_rod)(hp->sc, on);
+
 	return 0;
 }
 
@@ -1031,6 +1050,15 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmd->c_resp[1] = HREAD4(hp, SDHC_RESPONSE + 4);
 			cmd->c_resp[2] = HREAD4(hp, SDHC_RESPONSE + 8);
 			cmd->c_resp[3] = HREAD4(hp, SDHC_RESPONSE + 12);
+			if (ISSET(hp->sc->sc_flags, SDHC_FLAG_RSP136_CRC)) {
+				cmd->c_resp[0] = (cmd->c_resp[0] >> 8) |
+				    (cmd->c_resp[1] << 24);
+				cmd->c_resp[1] = (cmd->c_resp[1] >> 8) |
+				    (cmd->c_resp[2] << 24);
+				cmd->c_resp[2] = (cmd->c_resp[2] >> 8) |
+				    (cmd->c_resp[3] << 24);
+				cmd->c_resp[3] = (cmd->c_resp[3] >> 8);
+			}
 		}
 	}
 	mutex_exit(&hp->host_mtx);

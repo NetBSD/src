@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.93 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: ite.c,v 1.93.6.1 2012/11/20 03:00:58 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.93 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.93.6.1 2012/11/20 03:00:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,8 +118,8 @@ static callout_t repeat_ch;
 
 void iteputchar(int c, struct ite_softc *ip);
 void ite_putstr(const char * s, int len, dev_t dev);
-void iteattach(struct device *, struct device *, void *);
-int itematch(struct device *, struct cfdata *, void *);
+void iteattach(device_t, device_t, void *);
+int itematch(device_t, cfdata_t, void *);
 static void iteprecheckwrap(struct ite_softc *);
 static void itecheckwrap(struct ite_softc *);
 struct ite_softc *getitesp(dev_t);
@@ -148,7 +148,7 @@ inline static int atoi(const char *);
 inline static int ite_argnum(struct ite_softc *);
 inline static int ite_zargnum(struct ite_softc *);
 
-CFATTACH_DECL(ite, sizeof(struct ite_softc),
+CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
@@ -167,12 +167,12 @@ const struct cdevsw ite_cdevsw = {
 };
 
 int
-itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
+itematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct grf_softc *gp;
 	int maj;
 
-	gp = auxp;
+	gp = aux;
 
 	/*
 	 * XXX
@@ -181,20 +181,20 @@ itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	 * and thus no unit number.
 	 */
 	maj = cdevsw_lookup_major(&ite_cdevsw);
-	gp->g_itedev = makedev(maj, cfp->cf_unit);
+	gp->g_itedev = makedev(maj, cf->cf_unit);
 	return(1);
 }
 
 void
-iteattach(struct device *pdp, struct device *dp, void *auxp)
+iteattach(device_t parent, device_t self, void *aux)
 {
 	struct grf_softc *gp;
 	struct ite_softc *ip;
 	int s;
 
-	gp = (struct grf_softc *)auxp;
-	if (dp) {
-		ip = (struct ite_softc *)dp;
+	gp = aux;
+	if (self) {
+		ip = device_private(self);
 
 		s = spltty();
 		if (con_itesoftc.grf != NULL &&

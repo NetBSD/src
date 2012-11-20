@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.16 2012/06/05 08:44:10 abs Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.16.2.1 2012/11/20 03:01:19 tls Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -74,6 +74,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 options 	COMPAT_30	# NetBSD 3.0,
 options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems

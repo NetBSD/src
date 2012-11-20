@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.8 2011/07/01 18:31:32 dyoung Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.8.12.1 2012/11/20 03:00:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.8 2011/07/01 18:31:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.8.12.1 2012/11/20 03:00:55 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ const char *vtpbc_revs[] = {
 };
 const int vtpbc_nrevs = sizeof(vtpbc_revs) / sizeof(vtpbc_revs[0]);
 
-void	vtpbc_attach_hook(struct device *, struct device *,
+void	vtpbc_attach_hook(device_t, device_t,
 	    struct pcibus_attach_args *);
 int	vtpbc_bus_maxdevs(void *, int);
 pcitag_t vtpbc_make_tag(void *, int, int, int);
@@ -128,7 +128,7 @@ vtpbc_init(pci_chipset_tag_t pc, struct vtpbc_config *vt)
 }
 
 void
-vtpbc_attach_hook(struct device *parent, struct device *self,
+vtpbc_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }

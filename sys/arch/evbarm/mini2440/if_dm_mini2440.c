@@ -51,14 +51,14 @@
 
 #include "opt_mini2440.h"
 
-int	dme_ssextio_match(struct device *, struct cfdata *, void *);
-void	dme_ssextio_attach(struct device *, struct device *, void *);
+int	dme_ssextio_match(device_t, cfdata_t, void *);
+void	dme_ssextio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(dme_ssextio, sizeof(struct dme_softc),
     dme_ssextio_match, dme_ssextio_attach, NULL, NULL);
 
 int
-dme_ssextio_match(struct device *parent, struct cfdata *cf, void *aux)
+dme_ssextio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = aux;
 	bus_space_tag_t iot = sa->sa_iot;
@@ -104,7 +104,7 @@ out:
 
 
 void
-dme_ssextio_attach(struct device *parent, struct device *self, void *aux)
+dme_ssextio_attach(device_t parent, device_t self, void *aux)
 {
 	struct dme_softc	   *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = aux;
@@ -113,7 +113,7 @@ dme_ssextio_attach(struct device *parent, struct device *self, void *aux)
 	prop_data_t		ea;
 
 #ifdef MINI2440_ETHER_ADDR_FIXED
-	static u_int8_t enaddr_default[ETHER_ADDR_LEN] = {MINI2440_ETHER_ADDR_FIXED};
+	static uint8_t enaddr_default[ETHER_ADDR_LEN] = {MINI2440_ETHER_ADDR_FIXED};
 #endif
 
 	sc->sc_iot = sa->sa_iot;

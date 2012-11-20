@@ -70,8 +70,8 @@ struct sstouch_softc {
 };
 
 /* Basic Driver Stuff */
-static int	sstouch_match	(struct device *, struct cfdata *, void *);
-static void	sstouch_attach	(struct device *, struct device *, void *);
+static int	sstouch_match	(device_t, cfdata_t, void *);
+static void	sstouch_attach	(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(sstouch, sizeof(struct sstouch_softc), sstouch_match,
 	      sstouch_attach, NULL, NULL);
@@ -108,19 +108,17 @@ static struct wsmouse_calibcoords default_calib = {
 
 /* IMPLEMENTATION PART */
 int
-sstouch_match(struct device *parent, struct cfdata *match, void *aux)
+sstouch_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* XXX: Check CPU type? */
 	return 1;
 }
 
 void
-sstouch_attach(struct device	*parent,
-	       struct device	*self,
-	       void		*aux)
+sstouch_attach(device_t parent, device_t self, void *aux)
 {
 	struct sstouch_softc		*sc = device_private(self);
-	struct s3c2xx0_attach_args	*sa = (struct s3c2xx0_attach_args*)aux;
+	struct s3c2xx0_attach_args	*sa = aux;
 	struct wsmousedev_attach_args	mas;
 
 	sc->dev = self;

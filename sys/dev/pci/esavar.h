@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.11 2011/11/23 23:07:35 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.11.8.1 2012/11/20 03:02:14 tls Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -116,7 +116,7 @@ struct esa_softc
 	struct ac97_host_if	host_if;
 	enum ac97_host_flags	codec_flags;
 
-	struct device		*sc_audiodev[ESA_NUM_VOICES];
+	device_t		sc_audiodev[ESA_NUM_VOICES];
 
 	struct esa_voice	voice[ESA_NUM_VOICES];
 	struct esa_dma		*sc_dmas;

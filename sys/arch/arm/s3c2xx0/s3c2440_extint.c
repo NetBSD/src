@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.1 2012/01/30 03:28:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_extint.c,v 1.1.10.1 2012/11/20 03:01:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,9 @@ static struct	ssextio_softc *ssextio_softc = NULL;
 #define	EXTINT_8_23	2
 
 /* prototypes */
-static int	ssextio_match(struct device *, struct cfdata *, void *);
-static void	ssextio_attach(struct device *, struct device *, void *);
-static int 	ssextio_search(struct device *, struct cfdata * ,
-			       const int *, void *);
+static int	ssextio_match(device_t, cfdata_t, void *);
+static void	ssextio_attach(device_t, device_t, void *);
+static int 	ssextio_search(device_t, cfdata_t, const int *, void *);
 static int	ssextio_print(void *, const char *);
 
 static int	ssextio_cascaded_intr(void *);
@@ -155,7 +154,7 @@ ssextio_print(void *aux, const char *name)
 }
 
 int
-ssextio_match(struct device *parent, struct cfdata *match, void *aux)
+ssextio_match(device_t parent, cfdata_t match, void *aux)
 {
 #if S3C2440_EXTINT_MAX < 4
 	/* better not configure this driver */
@@ -169,7 +168,7 @@ ssextio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ssextio_attach(struct device *parent, struct device *self, void *aux)
+ssextio_attach(device_t parent, device_t self, void *aux)
 {
 	struct ssextio_softc *sc = device_private(self);
 	struct s3c24x0_softc *cpuc = ((struct s3c2xx0_attach_args *)aux)->sa_sc;
@@ -198,11 +197,10 @@ ssextio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ssextio_search(struct device *parent, struct cfdata *cf,
-		const int *ldesc, void *aux)
+ssextio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct ssextio_softc *sc = device_private(parent);
-	struct s3c24x0_softc *cpuc =(struct s3c24x0_softc *) device_private(device_parent(sc->sc_dev));
+	struct s3c24x0_softc *cpuc = device_private(device_parent(parent));
 	struct s3c2xx0_attach_args sa;
 
 	sa.sa_sc = sc;

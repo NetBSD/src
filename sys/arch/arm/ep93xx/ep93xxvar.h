@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxvar.h,v 1.4 2011/07/01 19:31:17 dyoung Exp $ */
+/*	$NetBSD: ep93xxvar.h,v 1.4.12.1 2012/11/20 03:01:04 tls Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -34,11 +34,6 @@
 
 #include <sys/bus.h>
 
-struct ep93xx_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-};
-
 struct intrhand {
 	TAILQ_ENTRY(intrhand) ih_list;	/* link on intrq list */
 	int (*ih_func)(void *);		/* interrupt handler */
@@ -52,9 +47,9 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	u_int32_t iq_vic1_mask;		/* VIC1 IRQs to mask while handling */
-	u_int32_t iq_vic2_mask;		/* VIC2 IRQs to mask while handling */
-	u_int32_t iq_levels;		/* IPL_*'s this IRQ has */
+	uint32_t iq_vic1_mask;		/* VIC1 IRQs to mask while handling */
+	uint32_t iq_vic2_mask;		/* VIC2 IRQs to mask while handling */
+	uint32_t iq_levels;		/* IPL_*'s this IRQ has */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 	int iq_ist;			/* share type */
 };
@@ -71,7 +66,6 @@ struct pmap_ent {
 extern struct bus_space	ep93xx_bs_tag;
 extern struct arm32_bus_dma_tag ep93xx_bus_dma;
 
-void	ep93xx_attach(struct ep93xx_softc *);
 void	ep93xx_intr_init(void);
 void	*ep93xx_intr_establish(int irq, int ipl, int (*)(void *), void *);
 void	ep93xx_intr_disestablish(void *);

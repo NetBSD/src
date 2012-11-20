@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74 2012/08/16 18:22:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -710,7 +710,7 @@ initarm(void *arm_bootargs)
 	fcomcndetach();
 #endif
 	
-	cpu_setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa, true);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*
@@ -945,7 +945,8 @@ consinit(void)
 		vga_cnattach(&footbridge_pci_io_bs_tag,
 		    &footbridge_pci_mem_bs_tag, - 1, 0);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT,
+		    0);
 #endif	/* NPCKBC */
 	}
 #endif	/* NVGA */

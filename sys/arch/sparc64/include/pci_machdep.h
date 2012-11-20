@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.25 2011/04/04 20:37:54 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.25.14.1 2012/11/20 03:01:45 tls Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -82,8 +82,8 @@ struct sparc_pci_chipset {
 };
 
 
-void		pci_attach_hook(struct device *, struct device *,
-				     struct pcibus_attach_args *);
+void		pci_attach_hook(device_t, device_t,
+		    struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,

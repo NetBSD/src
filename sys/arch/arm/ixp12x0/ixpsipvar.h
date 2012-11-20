@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsipvar.h,v 1.3 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: ixpsipvar.h,v 1.3.12.1 2012/11/20 03:01:06 tls Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,6 @@
 #include <sys/bus.h>
 
 struct ixpsip_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

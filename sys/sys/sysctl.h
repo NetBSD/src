@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.201 2012/06/09 02:31:15 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.201.2.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.40.12.1 2012/10/09 13:36:04 bouyer Exp $	*/
+/*	$NetBSD: atareg.h,v 1.40.12.2 2012/11/20 03:01:59 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -90,6 +90,7 @@
 
 /* Commands for Disk Controller. */
 #define	WDCC_NOP		0x00	/* Always fail with "aborted command" */
+#define ATA_DATA_SET_MANAGEMENT	0x06
 #define	WDCC_RECAL		0x10	/* disk restore code -- resets cntlr */
 
 #define	WDCC_READ		0x20	/* disk read code */
@@ -392,6 +393,7 @@ struct ataparams {
 #define	WDC_VER_ATA5	0x0020
 #define	WDC_VER_ATA6	0x0040
 #define	WDC_VER_ATA7	0x0080
+#define	WDC_VER_ATA8	0x0100
     uint16_t	atap_ata_minor;		/* 81: Minor version number */
     uint16_t	atap_cmd_set1;		/* 82: command set supported */
 #define	WDC_CMD1_NOP	0x4000		/*	NOP */
@@ -456,7 +458,8 @@ struct ataparams {
     uint16_t	atap_apm_val;		/* 91: current APM value */
     uint16_t	__reserved5[8];		/* 92-99: reserved */
     uint16_t	atap_max_lba[4];	/* 100-103: Max. user LBA addr */
-    uint16_t	__reserved6[2];		/* 104-105: reserved */
+    uint16_t	__reserved6;		/* 104: reserved */
+    uint16_t	max_dsm_blocks;		/* 105: DSM (ATA-8/ACS-2) */
     uint16_t	atap_secsz;		/* 106: physical/logical sector size */
 #define ATA_SECSZ_VALID_MASK 0xc000
 #define ATA_SECSZ_VALID      0x4000
@@ -485,7 +488,10 @@ struct ataparams {
 #define ATA_CFA_MODE1_DIS 0x1000	/* CFA Mode 1 Disabled */
 #define ATA_CFA_MODE1_REQ 0x2000	/* CFA Mode 1 Required */
 #define ATA_CFA_WORD160   0x8000	/* Word 160 supported */
-    uint16_t	__reserved10[15];	/* 161-175: reserved for CFA */
+    uint16_t	__reserved10[8];	/* 161-168: reserved for CFA */
+    uint16_t	support_dsm;		/* 169: DSM (ATA-8/ACS-2) */
+#define ATA_SUPPORT_DSM_TRIM	0x0001
+    uint16_t	__reserved10a[6];	/* 170-175: reserved for CFA */
     uint8_t	atap_media_serial[60];	/* 176-205: media serial number */
     uint16_t	__reserved11[3];	/* 206-208: */
     uint16_t	atap_logical_align;	/* 209: logical/physical alignment */

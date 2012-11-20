@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $	*/
+/*	$Id: imx31_aips.c,v 1.4.12.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.4.12.1 2012/11/20 03:01:05 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.4.12.1 2012/11/20 03:01:05 tls Exp $");
 
 #include "locators.h"
 
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.4 2011/07/01 20:27:50 dyoung Exp $");
 #include <arm/imx/imxuartvar.h>
 
 struct imxaips_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_bust;
 };
 
@@ -136,7 +135,7 @@ static int 	imxaips_search(device_t , cfdata_t, const int *, void *);
 static int	imxaips_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(aips, sizeof(struct imxaips_softc),
+CFATTACH_DECL_NEW(aips, sizeof(struct imxaips_softc),
     imxaips_match, imxaips_attach, NULL, NULL);
 
 static int
@@ -148,7 +147,7 @@ imxaips_match(device_t parent, cfdata_t match, void *aux)
 static void
 imxaips_attach(device_t parent, device_t self, void *aux)
 {
-	struct imxaips_softc * const sc = (struct imxaips_softc *)self;
+	struct imxaips_softc * const sc = device_private(self);
 	struct ahb_attach_args * const ahba = aux;
 
 	sc->sc_bust = ahba->ahba_memt;

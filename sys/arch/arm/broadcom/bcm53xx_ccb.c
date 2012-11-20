@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.1 2012/09/01 00:04:44 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,10 +108,10 @@ static const struct bcm_locators bcmccb_locators[] = {
 	{ "bcmeth", GMAC0_BASE, 0x1000, 0, 1, { IRQ_GMAC0 }, },
 	{ "bcmeth", GMAC1_BASE, 0x1000, 1, 1, { IRQ_GMAC1 }, },
 	{ "bcmeth", GMAC2_BASE, 0x1000, 2, 1, { IRQ_GMAC2 }, },
-	{ "bcmeth", GMAC3_BASE, 0x1000, 3, 1, { IRQ_GMAC3 }, },
-	{ "bcmpax", PCIE0_BASE, 0x1000, 0, 1, { IRQ_PCIE_INT0 }, },
-	{ "bcmpax", PCIE1_BASE, 0x1000, 1, 1, { IRQ_PCIE_INT1 }, },
-	{ "bcmpax", PCIE2_BASE, 0x1000, 2, 1, { IRQ_PCIE_INT2 }, },
+	// { "bcmeth", GMAC3_BASE, 0x1000, 3, 1, { IRQ_GMAC3 }, },
+	{ "bcmpax", PCIE0_BASE, 0x1000, 0, 6, { IRQ_PCIE_INT0 }, },
+	{ "bcmpax", PCIE1_BASE, 0x1000, 1, 6, { IRQ_PCIE_INT1 }, },
+	{ "bcmpax", PCIE2_BASE, 0x1000, 2, 6, { IRQ_PCIE_INT2 }, },
 	{ "sdhc", SDIO_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_SDIO } },
 	{ "bcmusb", EHCI_BASE, 0x2000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_USB2 } },
 };
@@ -158,6 +158,8 @@ bcmccb_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	bcm53xx_srab_init();	// need this for ethernet.
 
 	for (size_t i = 0; i < __arraycount(bcmccb_locators); i++) {
 		struct bcmccb_attach_args ccbaa = {

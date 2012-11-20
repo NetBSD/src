@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.74 2012/09/11 19:43:09 msaitoh Exp $
+#	$NetBSD: IQ80321,v 1.74.2.1 2012/11/20 03:01:13 tls Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -80,6 +80,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.

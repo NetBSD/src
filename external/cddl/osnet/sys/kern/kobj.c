@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.c,v 1.3 2012/04/26 23:34:09 christos Exp $	*/
+/*	$NetBSD: kobj.c,v 1.3.2.1 2012/11/20 02:58:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,19 +57,17 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/compat/opensolaris/kern/opensolaris_kobj.c,v 1.4 2007/05/31 11:51:49 kib Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.3 2012/04/26 23:34:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj.c,v 1.3.2.1 2012/11/20 02:58:12 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/systm.h>
 #include <sys/kthread.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
 #include <sys/kobj.h>
-#include <sys/namei.h>
 
 void
 kobj_free(void *address, size_t size)

@@ -1,6 +1,6 @@
 /*
  * TLS interface functions and an internal TLS implementation
- * Copyright (c) 2004-2009, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2011, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -211,6 +211,9 @@ int tls_connection_set_params(void *tls_ctx, struct tls_connection *conn,
 		return -1;
 	}
 
+	tlsv1_client_set_time_checks(
+		conn->client, !(params->flags & TLS_CONN_DISABLE_TIME_CHECKS));
+
 	return 0;
 #else /* CONFIG_TLS_INTERNAL_CLIENT */
 	return -1;
@@ -283,13 +286,6 @@ int tls_connection_set_verify(void *tls_ctx, struct tls_connection *conn,
 	if (conn->server)
 		return tlsv1_server_set_verify(conn->server, verify_peer);
 #endif /* CONFIG_TLS_INTERNAL_SERVER */
-	return -1;
-}
-
-
-int tls_connection_set_ia(void *tls_ctx, struct tls_connection *conn,
-			  int tls_ia)
-{
 	return -1;
 }
 
@@ -605,28 +601,6 @@ int tls_connection_get_keyblock_size(void *tls_ctx,
 unsigned int tls_capabilities(void *tls_ctx)
 {
 	return 0;
-}
-
-
-struct wpabuf * tls_connection_ia_send_phase_finished(
-	void *tls_ctx, struct tls_connection *conn, int final)
-{
-	return NULL;
-}
-
-
-int tls_connection_ia_final_phase_finished(void *tls_ctx,
-					   struct tls_connection *conn)
-{
-	return -1;
-}
-
-
-int tls_connection_ia_permute_inner_secret(void *tls_ctx,
-					   struct tls_connection *conn,
-					   const u8 *key, size_t key_len)
-{
-	return -1;
 }
 
 

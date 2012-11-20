@@ -20,6 +20,7 @@
 #include "crypto/dh_group5.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
+#include "crypto/random.h"
 #include "wps_i.h"
 #include "wps_dev_attr.h"
 
@@ -81,6 +82,8 @@ int wps_derive_keys(struct wps_data *wps)
 		return -1;
 	}
 
+	wpa_hexdump_buf_key(MSG_DEBUG, "WPS: DH Private Key", wps->dh_privkey);
+	wpa_hexdump_buf(MSG_DEBUG, "WPS: DH peer Public Key", pubkey);
 	dh_shared = dh5_derive_shared(wps->dh_ctx, pubkey, wps->dh_privkey);
 	dh5_free(wps->dh_ctx);
 	wps->dh_ctx = NULL;
@@ -241,7 +244,7 @@ unsigned int wps_generate_pin(void)
 	unsigned int val;
 
 	/* Generate seven random digits for the PIN */
-	if (os_get_random((unsigned char *) &val, sizeof(val)) < 0) {
+	if (random_get_bytes((unsigned char *) &val, sizeof(val)) < 0) {
 		struct os_time now;
 		os_get_time(&now);
 		val = os_random() ^ now.sec ^ now.usec;
@@ -253,7 +256,8 @@ unsigned int wps_generate_pin(void)
 }
 
 
-void wps_fail_event(struct wps_context *wps, enum wps_msg_type msg)
+void wps_fail_event(struct wps_context *wps, enum wps_msg_type msg,
+		    u16 config_error, u16 error_indication)
 {
 	union wps_event_data data;
 
@@ -262,6 +266,8 @@ void wps_fail_event(struct wps_context *wps, enum wps_msg_type msg)
 
 	os_memset(&data, 0, sizeof(data));
 	data.fail.msg = msg;
+	data.fail.config_error = config_error;
+	data.fail.error_indication = error_indication;
 	wps->event_cb(wps->cb_ctx, WPS_EV_FAIL, &data);
 }
 
@@ -325,7 +331,9 @@ static struct wpabuf * wps_get_oob_cred(struct wps_context *wps)
 	data.wps = wps;
 	data.auth_type = wps->auth_types;
 	data.encr_type = wps->encr_types;
-	if (wps_build_version(plain) || wps_build_cred(&data, plain)) {
+	if (wps_build_version(plain) ||
+	    wps_build_cred(&data, plain) ||
+	    wps_build_wfa_ext(plain, 0, NULL, 0)) {
 		wpabuf_free(plain);
 		return NULL;
 	}
@@ -356,7 +364,8 @@ static struct wpabuf * wps_get_oob_dev_pwd(struct wps_context *wps)
 	}
 
 	if (wps_build_version(data) ||
-	    wps_build_oob_dev_password(data, wps)) {
+	    wps_build_oob_dev_password(data, wps) ||
+	    wps_build_wfa_ext(data, 0, NULL, 0)) {
 		wpa_printf(MSG_ERROR, "WPS: Build OOB device password "
 			   "attribute error");
 		wpabuf_free(data);
@@ -604,6 +613,9 @@ u16 wps_config_methods_str2bin(const char *str)
 	if (str == NULL) {
 		/* Default to enabling methods based on build configuration */
 		methods |= WPS_CONFIG_DISPLAY | WPS_CONFIG_KEYPAD;
+#ifdef CONFIG_WPS2
+		methods |= WPS_CONFIG_VIRT_DISPLAY;
+#endif /* CONFIG_WPS2 */
 #ifdef CONFIG_WPS_UFD
 		methods |= WPS_CONFIG_USBA;
 #endif /* CONFIG_WPS_UFD */
@@ -629,7 +641,64 @@ u16 wps_config_methods_str2bin(const char *str)
 			methods |= WPS_CONFIG_PUSHBUTTON;
 		if (os_strstr(str, "keypad"))
 			methods |= WPS_CONFIG_KEYPAD;
+#ifdef CONFIG_WPS2
+		if (os_strstr(str, "virtual_display"))
+			methods |= WPS_CONFIG_VIRT_DISPLAY;
+		if (os_strstr(str, "physical_display"))
+			methods |= WPS_CONFIG_PHY_DISPLAY;
+		if (os_strstr(str, "virtual_push_button"))
+			methods |= WPS_CONFIG_VIRT_PUSHBUTTON;
+		if (os_strstr(str, "physical_push_button"))
+			methods |= WPS_CONFIG_PHY_PUSHBUTTON;
+#endif /* CONFIG_WPS2 */
 	}
 
 	return methods;
+}
+
+
+struct wpabuf * wps_build_wsc_ack(struct wps_data *wps)
+{
+	struct wpabuf *msg;
+
+	wpa_printf(MSG_DEBUG, "WPS: Building Message WSC_ACK");
+
+	msg = wpabuf_alloc(1000);
+	if (msg == NULL)
+		return NULL;
+
+	if (wps_build_version(msg) ||
+	    wps_build_msg_type(msg, WPS_WSC_ACK) ||
+	    wps_build_enrollee_nonce(wps, msg) ||
+	    wps_build_registrar_nonce(wps, msg) ||
+	    wps_build_wfa_ext(msg, 0, NULL, 0)) {
+		wpabuf_free(msg);
+		return NULL;
+	}
+
+	return msg;
+}
+
+
+struct wpabuf * wps_build_wsc_nack(struct wps_data *wps)
+{
+	struct wpabuf *msg;
+
+	wpa_printf(MSG_DEBUG, "WPS: Building Message WSC_NACK");
+
+	msg = wpabuf_alloc(1000);
+	if (msg == NULL)
+		return NULL;
+
+	if (wps_build_version(msg) ||
+	    wps_build_msg_type(msg, WPS_WSC_NACK) ||
+	    wps_build_enrollee_nonce(wps, msg) ||
+	    wps_build_registrar_nonce(wps, msg) ||
+	    wps_build_config_error(msg, wps->config_error) ||
+	    wps_build_wfa_ext(msg, 0, NULL, 0)) {
+		wpabuf_free(msg);
+		return NULL;
+	}
+
+	return msg;
 }

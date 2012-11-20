@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.65 2009/03/04 19:55:16 hauke Exp $	*/
+/*	$NetBSD: nubus.h,v 1.65.22.1 2012/11/20 03:01:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -369,7 +369,7 @@ struct nubus_attach_args {
 };
 
 struct nubus_softc {
-	struct	device	sc_dev;
+	device_t	sc_dev;
 };
 
 

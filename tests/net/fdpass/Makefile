@@ -1,5 +1,8 @@
-# $NetBSD: Makefile,v 1.3 2012/09/10 11:29:06 adam Exp $
+# $NetBSD: Makefile,v 1.3.2.1 2012/11/20 03:02:56 tls Exp $
 #
+
+SHLIBDIR=		/usr/lib
+SHLIBINSTALLDIR=	/usr/lib
 
 .include <bsd.own.mk>
 

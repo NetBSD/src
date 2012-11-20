@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.20 2010/11/13 13:52:05 uebayasi Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.20.18.1 2012/11/20 03:02:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.20 2010/11/13 13:52:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.20.18.1 2012/11/20 03:02:15 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ void	icp_mpr_release_event(struct icp_softc *, struct icp_ccb *);
 void	icp_mpr_set_sema0(struct icp_softc *);
 int	icp_mpr_test_busy(struct icp_softc *);
 
-CFATTACH_DECL(icp_pci, sizeof(struct icp_softc),
+CFATTACH_DECL_NEW(icp_pci, sizeof(struct icp_softc),
     icp_pci_match, icp_pci_attach, NULL, NULL);
 
 struct icp_pci_ident {
@@ -254,6 +254,7 @@ icp_pci_attach(device_t parent, device_t self, void *aux)
 	pa = aux;
 	status = 0;
 	icp = device_private(self);
+	icp->icp_dv = self;
 	icp->icp_class = icp_pci_find_class(pa);
 
 	aprint_naive(": RAID controller\n");

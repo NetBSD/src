@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.h,v 1.2 2012/04/13 14:50:35 ttoth Exp $	*/
+/*	$NetBSD: ebh.h,v 1.2.4.1 2012/11/20 03:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -30,13 +30,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * ebh.h
- *
- *  Created on: 2009.11.03.
- *      Author: dtengeri
  */
 
 #ifndef EBH_H_

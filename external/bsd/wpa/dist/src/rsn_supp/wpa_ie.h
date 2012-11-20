@@ -15,6 +15,8 @@
 #ifndef WPA_IE_H
 #define WPA_IE_H
 
+struct wpa_sm;
+
 struct wpa_eapol_ie_parse {
 	const u8 *wpa_ie;
 	size_t wpa_ie_len;
@@ -39,14 +41,20 @@ struct wpa_eapol_ie_parse {
 	const u8 *igtk;
 	size_t igtk_len;
 #endif /* CONFIG_IEEE80211W */
-#ifdef CONFIG_IEEE80211R
 	const u8 *mdie;
 	size_t mdie_len;
 	const u8 *ftie;
 	size_t ftie_len;
 	const u8 *reassoc_deadline;
 	const u8 *key_lifetime;
-#endif /* CONFIG_IEEE80211R */
+	const u8 *lnkid;
+	size_t lnkid_len;
+	const u8 *ext_capab;
+	size_t ext_capab_len;
+	const u8 *supp_rates;
+	size_t supp_rates_len;
+	const u8 *ext_supp_rates;
+	size_t ext_supp_rates_len;
 };
 
 int wpa_supplicant_parse_ies(const u8 *buf, size_t len,

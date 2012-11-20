@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.19 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.19.44.1 2012/11/20 03:01:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.19 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.19.44.1 2012/11/20 03:01:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,17 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.19 2008/04/28 20:23:29 martin Exp $"
 
 #include "ioconf.h"
 
-int clock_pcc_match(struct device *, struct cfdata *, void *);
-void clock_pcc_attach(struct device *, struct device *, void *);
+int clock_pcc_match(device_t, cfdata_t, void *);
+void clock_pcc_attach(device_t, device_t, void *);
 
 struct clock_pcc_softc {
-	struct device sc_dev;
 	struct clock_attach_args sc_clock_args;
 	u_char sc_clock_lvl;
 	struct timecounter sc_tc;
 };
 
-CFATTACH_DECL(clock_pcc, sizeof(struct clock_pcc_softc),
+CFATTACH_DECL_NEW(clock_pcc, sizeof(struct clock_pcc_softc),
     clock_pcc_match, clock_pcc_attach, NULL, NULL);
 
 
@@ -79,7 +78,7 @@ static uint16_t clock_pcc_reload;
 
 /* ARGSUSED */
 int
-clock_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
+clock_pcc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcc_attach_args *pa;
 
@@ -99,12 +98,12 @@ clock_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 void
-clock_pcc_attach(struct device *parent, struct device *self, void *aux)
+clock_pcc_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcc_attach_args *pa;
 	struct clock_pcc_softc *sc;
 
-	sc = (struct clock_pcc_softc *)self;
+	sc = device_private(self);
 	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)

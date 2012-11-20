@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.127 2012/08/29 17:13:21 drochner Exp $
+# $NetBSD: md.i386,v 1.127.2.1 2012/11/20 02:57:46 tls Exp $
 ./usr/include/clang-3.0/avxintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/bmi2intrin.h		comp-obsolete		obsolete
@@ -18,12 +18,15 @@
 ./usr/include/clang-3.0/wmmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/x86intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.0/xmmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.2/__wmmintrin_aes.h	comp-c-include		llvm
+./usr/include/clang-3.2/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.2/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/avx2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/bmiintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/emmintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/f16cintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fma4intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/fmaintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/immintrin.h		comp-c-include		llvm
@@ -34,6 +37,7 @@
 ./usr/include/clang-3.2/nmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/pmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/popcntintrin.h		comp-c-include		llvm
+./usr/include/clang-3.2/rtmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/smmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/tmmintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.2/wmmintrin.h		comp-c-include		llvm
@@ -141,6 +145,7 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/sljitarch.h			comp-c-include
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete

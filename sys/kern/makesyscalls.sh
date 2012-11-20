@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.125 2012/08/03 18:08:01 matt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.125.2.1 2012/11/20 03:02:43 tls Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -964,6 +964,7 @@ END {
 	printf("};\n") > sysent
 	printf("};\n") > rumpsysent
 	printf("CTASSERT(__arraycount(rump_sysent) == SYS_NSYSENT);\n") > rumpsysent
+	printf("__strong_alias(sysent,rump_sysent);\n") > rumpsysent
 	printf("#endif /* RUMP_CLIENT */\n") > rumpsysent
 	if (haverumpcalls)
 		printf("#endif /* !RUMP_CLIENT */\n") > sysprotos

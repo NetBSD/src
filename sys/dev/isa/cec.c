@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.12 2009/09/12 18:52:25 tsutsui Exp $	*/
+/*	$NetBSD: cec.c,v 1.12.22.1 2012/11/20 03:02:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.12 2009/09/12 18:52:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.12.22.1 2012/11/20 03:02:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ int cecdebug = 0x1f;
 #define CEC_IOSIZE	8
 
 struct cec_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -92,7 +92,7 @@ struct cec_softc {
 int	cecprobe(device_t, cfdata_t, void *);
 void	cecattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cec, sizeof(struct cec_softc),
+CFATTACH_DECL_NEW(cec, sizeof(struct cec_softc),
 	cecprobe, cecattach, NULL, NULL);
 
 void	cecreset(void *);
@@ -180,7 +180,7 @@ cecprobe(device_t parent, cfdata_t match, void *aux)
 void
 cecattach(device_t parent, device_t self, void *aux)
 {
-	struct cec_softc *sc = (struct cec_softc *)self;
+	struct cec_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct gpibdev_attach_args ga;
 	bus_size_t maxsize;
@@ -189,12 +189,13 @@ cecattach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(DBG_CONFIG, ("cecattach: called\n"));
 
+	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, CEC_IOSIZE,
 	    0, &sc->sc_ioh) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map I/O space\n");
+		aprint_error_dev(sc->sc_dev, "unable to map I/O space\n");
 		return;
 	}
 
@@ -206,7 +207,7 @@ cecattach(device_t parent, device_t self, void *aux)
 		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 		    maxsize, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(&sc->sc_dev, "unable to create map for drq %d\n",
+			aprint_error_dev(sc->sc_dev, "unable to create map for drq %d\n",
 			    sc->sc_drq);
 			sc->sc_flags &= ~CECF_USEDMA;
 		}
@@ -220,7 +221,7 @@ cecattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, cecintr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -700,7 +701,7 @@ cectimeout(void *v)
 		bus_space_write_1(iot, ioh, NEC7210_AUXMR, AUXCMD_TCA);
 		sc->sc_flags &= ~(CECF_IO | CECF_READ | CECF_TIMO);
 		isa_dmaabort(sc->sc_ic, sc->sc_drq);
-		aprint_error_dev(&sc->sc_dev, "%s timeout\n",
+		aprint_error_dev(sc->sc_dev, "%s timeout\n",
 		    sc->sc_flags & CECF_READ ? "read" : "write");
 		gpibintr(sc->sc_gpib);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.245 2012/07/31 14:23:33 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.245.2.1 2012/11/20 03:01:43 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245 2012/07/31 14:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245.2.1 2012/11/20 03:01:43 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,7 +158,7 @@ int autoconf_debug = 0;
  * device names with our internal names.
  */
 int
-matchbyname(struct device *parent, struct cfdata *cf, void *aux)
+matchbyname(device_t parent, cfdata_t cf, void *aux)
 {
 
 	printf("%s: WARNING: matchbyname\n", cf->cf_name);
@@ -1501,11 +1501,11 @@ romgetcursoraddr(int **rowp, int **colp)
 #define BUSCLASS_PCIC		9
 #define BUSCLASS_PCI		10
 
-static int bus_class(struct device *);
+static int bus_class(device_t);
 static const char *bus_compatible(const char *);
-static int instance_match(struct device *, void *, struct bootpath *);
-static void nail_bootdev(struct device *, struct bootpath *);
-static void set_network_props(struct device *, void *);
+static int instance_match(device_t, void *, struct bootpath *);
+static void nail_bootdev(device_t, struct bootpath *);
+static void set_network_props(device_t, void *);
 
 static struct {
 	const char	*name;
@@ -1564,7 +1564,7 @@ bus_compatible(const char *bpname)
 }
 
 static int
-bus_class(struct device *dev)
+bus_class(device_t dev)
 {
 	int i, class;
 
@@ -1587,7 +1587,7 @@ bus_class(struct device *dev)
 }
 
 static void
-set_network_props(struct device *dev, void *aux)
+set_network_props(device_t dev, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
@@ -1626,7 +1626,7 @@ set_network_props(struct device *dev, void *aux)
 }
 
 int
-instance_match(struct device *dev, void *aux, struct bootpath *bp)
+instance_match(device_t dev, void *aux, struct bootpath *bp)
 {
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
@@ -1724,12 +1724,12 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 }
 
 void
-nail_bootdev(struct device *dev, struct bootpath *bp)
+nail_bootdev(device_t dev, struct bootpath *bp)
 {
 
 	if (bp->dev != NULL)
 		panic("device_register: already got a boot device: %s",
-			bp->dev->dv_xname);
+			device_xname(bp->dev));
 
 	/*
 	 * Mark this bootpath component by linking it to the matched
@@ -1746,7 +1746,7 @@ nail_bootdev(struct device *dev, struct bootpath *bp)
 }
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
 	const char *bpname;
@@ -1765,8 +1765,8 @@ device_register(struct device *dev, void *aux)
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname,
-	    bpname, bp->name));
+	    device_xname(dev), device_cfdata(dev)->cf_name,
+	    device_xname(dev), bpname, bp->name));
 
 	/* First, match by name */
 	if (!device_is_a(dev, bpname))
@@ -1794,7 +1794,7 @@ device_register(struct device *dev, void *aux)
 			booted_device = bp->dev = dev;
 			bootpath_store(1, bp + 1);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
-			    dev->dv_xname));
+			    device_xname(dev)));
 			return;
 		}
 	} else if (device_is_a(dev, "le") ||
@@ -1810,7 +1810,7 @@ device_register(struct device *dev, void *aux)
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
-			    dev->dv_xname));
+			    device_xname(dev)));
 			return;
 		}
 	} else if (device_is_a(dev, "sd") ||
@@ -1864,7 +1864,7 @@ device_register(struct device *dev, void *aux)
 		    periph->periph_lun == lun) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
-			    dev->dv_xname));
+			    device_xname(dev)));
 			return;
 		}
 #endif /* NSCSIBUS */
@@ -1875,7 +1875,7 @@ device_register(struct device *dev, void *aux)
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found x[dy] disk %s\n",
-			    dev->dv_xname));
+			    device_xname(dev)));
 			return;
 		}
 
@@ -1889,7 +1889,7 @@ device_register(struct device *dev, void *aux)
 		 */
 		nail_bootdev(dev, bp);
 		DPRINTF(ACDB_BOOTDEV, ("\t-- found floppy drive %s\n",
-		    dev->dv_xname));
+		    device_xname(dev)));
 		return;
 	} else {
 		/*

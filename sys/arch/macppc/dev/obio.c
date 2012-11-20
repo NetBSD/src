@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.37 2012/06/02 21:36:42 dsl Exp $	*/
+/*	$NetBSD: obio.c,v 1.37.2.1 2012/11/20 03:01:31 tls Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.37 2012/06/02 21:36:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.37.2.1 2012/11/20 03:01:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/* Enable internal modem (KeyLargo) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
 		aprint_normal("%s: enabling KeyLargo internal modem\n",
-		    self->dv_xname);
+		    device_xname(self));
 		bus_space_write_4(ca.ca_tag, bsh, 0x40, 
 		    bus_space_read_4(ca.ca_tag, bsh, 0x40) & ~(1<<25));
 	}

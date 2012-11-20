@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.7 2007/09/06 16:09:09 pooka Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.7.34.1 2012/11/20 03:03:04 tls Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.7 2007/09/06 16:09:09 pooka Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.7.34.1 2012/11/20 03:03:04 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <errno.h>

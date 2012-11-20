@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.12 2009/03/14 21:04:12 dsl Exp $	*/
+/*	$NetBSD: rambo.c,v 1.12.22.1 2012/11/20 03:01:34 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.12 2009/03/14 21:04:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.12.22.1 2012/11/20 03:01:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,14 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: rambo.c,v 1.12 2009/03/14 21:04:12 dsl Exp $");
  * Timer & Interrupt manipulation routines for the Rambo Custom ASIC 
  */
 
-static int	rambo_match(struct device *, struct cfdata *, void *);
-static void	rambo_attach(struct device *, struct device *, void *);
+static int	rambo_match(device_t, cfdata_t, void *);
+static void	rambo_attach(device_t, device_t, void *);
 static unsigned rambo_get_timecount(struct timecounter *);
 void rambo_clkintr(struct clockframe *);
 static void rambo_tc_init(void);
 
 struct rambo_softc {
-        struct device		dev; 
 	struct evcnt		sc_intrcnt;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
@@ -67,20 +66,20 @@ struct rambo_softc {
 
 static struct rambo_softc *rambo;
 
-CFATTACH_DECL(rambo, sizeof(struct rambo_softc),
+CFATTACH_DECL_NEW(rambo, sizeof(struct rambo_softc),
     rambo_match, rambo_attach, NULL, NULL);
 
 static int
-rambo_match(struct device *parent, struct cfdata *cf, void *aux)
+rambo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
 static void
-rambo_attach(struct device *parent, struct device *self, void *aux)
+rambo_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct rambo_softc *sc = (void *)self;
+	struct rambo_softc *sc = device_private(self);
 
 	sc->sc_bst = ca->ca_bustag;
 

@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.h,v 1.2 2008/04/27 18:58:44 matt Exp $	*/
+/*	$Id: imx_pcic.h,v 1.2.44.1 2012/11/20 03:01:05 tls Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.h,v 1.2 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: imx_pcic.h,v 1.2.44.1 2012/11/20 03:01:05 tls Exp $	*/
 /*	$OpenBSD: pxapcicvar.h,v 1.7 2005/12/14 15:08:51 uwe Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 struct imx_pcic_socket {
 	struct imx_pcic_softc *sc;
 	int socket;		/* socket number */
-	struct device *pcmcia;
+	device_t pcmcia;
 	struct lwp *event_thread;
 
 	int flags;
@@ -78,7 +78,7 @@ struct imx_pcic_tag {
 #define IMX_PCIC_NSLOT	1			/* ??? */
 
 struct imx_pcic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct imx_pcic_socket sc_socket[IMX_PCIC_NSLOT];
 
 	bus_space_tag_t sc_iot;

@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.15 2011/07/17 20:54:51 joerg Exp $
+ *	$Id: hscx.c,v 1.15.12.1 2012/11/20 03:02:04 tls Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.15 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.15.12.1 2012/11/20 03:02:04 tls Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -346,7 +346,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 		int len;
 		int nextlen;
 
-		NDBGL1(L1_H_IRQ, "%s, chan %d - XPR, Tx Fifo Empty!", device_xname(&sc->sc_dev), h_chan);
+		NDBGL1(L1_H_IRQ, "%s, chan %d - XPR, Tx Fifo Empty!", device_xname(sc->sc_dev), h_chan);
 
 		if(chan->out_mbuf_cur == NULL) 	/* last frame is transmitted */
 		{

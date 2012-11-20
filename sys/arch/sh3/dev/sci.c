@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.54 2012/02/02 19:43:00 tls Exp $ */
+/* $NetBSD: sci.c,v 1.54.6.1 2012/11/20 03:01:42 tls Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.54 2012/02/02 19:43:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.54.6.1 2012/11/20 03:01:42 tls Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -130,7 +130,7 @@ void scicnpoolc(dev_t, int);
 int sciintr(void *);
 
 struct sci_softc {
-	struct device sc_dev;		/* boilerplate */
+	device_t sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
 	void *sc_si;
 	callout_t sc_diag_ch;
@@ -181,8 +181,8 @@ struct sci_softc {
 };
 
 /* controller driver configuration */
-static int sci_match(struct device *, struct cfdata *, void *);
-static void sci_attach(struct device *, struct device *, void *);
+static int sci_match(device_t, cfdata_t, void *);
+static void sci_attach(device_t, device_t, void *);
 
 void	sci_break(struct sci_softc *, int);
 void	sci_iflush(struct sci_softc *);
@@ -231,7 +231,7 @@ int scicn_speed = 9600;
 
 u_int sci_rbuf_size = SCI_RING_SIZE;
 
-CFATTACH_DECL(sci, sizeof(struct sci_softc),
+CFATTACH_DECL_NEW(sci, sizeof(struct sci_softc),
     sci_match, sci_attach, NULL, NULL);
 
 extern struct cfdriver sci_cd;
@@ -358,19 +358,19 @@ sci_getc(void)
 }
 
 static int
-sci_match(struct device *parent, struct cfdata *cfp, void *aux)
+sci_match(device_t parent, cfdata_t cf, void *aux)
 {
 
-	if (strcmp(cfp->cf_name, "sci") || sci_attached)
+	if (strcmp(cf->cf_name, "sci") || sci_attached)
 		return 0;
 
 	return 1;
 }
 
 static void
-sci_attach(struct device *parent, struct device *self, void *aux)
+sci_attach(device_t parent, device_t self, void *aux)
 {
-	struct sci_softc *sc = (struct sci_softc *)self;
+	struct sci_softc *sc = device_private(self);
 	struct tty *tp;
 
 	sci_attached = 1;
@@ -382,7 +382,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	if (sciisconsole) {
 		SET(sc->sc_hwflags, SCI_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
-		printf("\n%s: console\n", sc->sc_dev.dv_xname);
+		printf("\n%s: console\n", device_xname(self));
 	} else {
 		InitializeSci(9600);
 		printf("\n");
@@ -411,7 +411,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rbuf = malloc(sci_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (sci_rbuf_size << 1);
@@ -481,7 +481,7 @@ sciparam(struct tty *tp, struct termios *t)
 	int ospeed = t->c_ospeed;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -618,7 +618,7 @@ sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -728,7 +728,7 @@ sciclose(dev_t dev, int flag, int mode, struct lwp *l)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (0);
 
 	return (0);
@@ -778,7 +778,7 @@ sciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
@@ -891,7 +891,7 @@ scidiag(void *arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -1036,7 +1036,7 @@ scisoft(void *arg)
 	struct sci_softc *sc = arg;
 	struct tty *tp;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	tp = sc->sc_tty;
@@ -1067,7 +1067,7 @@ sciintr(void *arg)
 	u_int cc;
 	u_short ssr;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (0);
 
 	end = sc->sc_ebuf;

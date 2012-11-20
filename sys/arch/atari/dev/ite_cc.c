@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.37 2011/06/05 16:25:12 tsutsui Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.37.12.1 2012/11/20 03:01:09 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.37 2011/06/05 16:25:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.37.12.1 2012/11/20 03:01:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -192,7 +192,7 @@ grfccmatch(device_t parent, cfdata_t cf, void *aux)
 
 /*
  * attach: initialize the grf-structure and try to attach an ite to us.
- * note  : dp is NULL during early console init.
+ * note  : self is NULL during early console init.
  */
 void
 grfccattach(device_t parent, device_t self, void *aux)

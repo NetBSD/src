@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.10 2012/07/07 16:15:20 tsutsui Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.10.2.1 2012/11/20 03:02:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10 2012/07/07 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10.2.1 2012/11/20 03:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10 2012/07/07 16:15:20 tsutsui 
 #include <miscfs/specfs/specdev.h>
 
 struct vnode *
-opendisk(struct device *dv)
+opendisk(device_t dv)
 {
 	devmajor_t bmajor;
 	int unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.67 2011/07/04 11:31:37 mrg Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.67.12.1 2012/11/20 03:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67 2011/07/04 11:31:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.1 2012/11/20 03:02:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -184,7 +184,6 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 {
 	struct rumpcn *rcn;
 	struct componentname *cnp;
-	const char *cp = NULL;
 
 	rcn = kmem_zalloc(sizeof(*rcn), KM_SLEEP);
 	cnp = &rcn->rcn_cn;
@@ -197,7 +196,6 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_flags = flags & (MODMASK | PARAMASK);
 
 	cnp->cn_namelen = namelen;
-	cnp->cn_hash = namei_hash(name, &cp);
 
 	cnp->cn_cred = creds;
 
@@ -267,7 +265,7 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 }
 
 void
-rump_getvninfo(struct vnode *vp, enum vtype *vtype,
+rump_getvninfo(struct vnode *vp, enum rump_vtype *vtype,
 	voff_t *vsize, dev_t *vdev)
 {
 
@@ -322,7 +320,7 @@ rump_vattr_init(void)
 }
 
 void
-rump_vattr_settype(struct vattr *vap, enum vtype vt)
+rump_vattr_settype(struct vattr *vap, enum rump_vtype vt)
 {
 
 	vap->va_type = vt;

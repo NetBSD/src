@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.27 2009/03/18 16:00:11 cegger Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.27.22.1 2012/11/20 03:01:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.27 2009/03/18 16:00:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.27.22.1 2012/11/20 03:01:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -258,10 +258,10 @@ ite8181_attach(struct ite8181_softc *sc)
 	}
 	printf("\n");
 	printf("%s: framebuffer address: 0x%08lx\n",
-	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	    device_xname(sc->sc_dev), (u_long)bootinfo->fb_addr);
 	if (ite8181_lcd_control_disable)
 		printf("%s: ite8181 lcd control is DISABLED.\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* set base offsets */
 	sc->sc_mba = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_MBA);
@@ -277,11 +277,11 @@ ite8181_attach(struct ite8181_softc *sc)
 	ite8181_erase_cursor(sc);
 
 	/* Add a power hook to power saving */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
 	    ite8181_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* Add a hard power hook to power saving */
 	sc->sc_hardpowerhook = config_hook(CONFIG_HOOK_PMEVENT,
@@ -290,7 +290,7 @@ ite8181_attach(struct ite8181_softc *sc)
 	    ite8181_hardpower, sc);
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	/* initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
@@ -312,7 +312,7 @@ ite8181_attach(struct ite8181_softc *sc)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(&sc->sc_dev, &ha, hpcfbprint);
+	config_found(sc->sc_dev, &ha, hpcfbprint);
 
 #if NBIVIDEO > 0
 	/*

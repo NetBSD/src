@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.19.22.1 2012/11/20 03:02:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.19.22.1 2012/11/20 03:02:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $
 #define	STATUS_SIZE	8		/* May be bogus... */
 
 struct addcom_softc {
-	struct device sc_dev;
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;
@@ -109,7 +108,7 @@ int addcomprobe(device_t, cfdata_t, void *);
 void addcomattach(device_t, device_t, void *);
 int addcomintr(void *);
 
-CFATTACH_DECL(addcom_isa, sizeof(struct addcom_softc),
+CFATTACH_DECL_NEW(addcom_isa, sizeof(struct addcom_softc),
     addcomprobe, addcomattach, NULL, NULL);
 
 int
@@ -186,7 +185,7 @@ out:
 void
 addcomattach(device_t parent, device_t self, void *aux)
 {
-	struct addcom_softc *sc = (void *)self;
+	struct addcom_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -199,7 +198,7 @@ addcomattach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
 			  0, &sc->sc_statusioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map status space\n");
+		aprint_error_dev(self, "can't map status space\n");
 		return;
 	}
 
@@ -210,7 +209,7 @@ addcomattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 				  &sc->sc_slaveioh[i])) {
-			aprint_error_dev(&sc->sc_dev, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(self, "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.254.2.1 2012/09/12 06:15:32 tls Exp $	*/
+/*	$NetBSD: acpi.c,v 1.254.2.2 2012/11/20 03:01:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.1 2012/09/12 06:15:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.2 2012/11/20 03:01:58 tls Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -190,6 +190,7 @@ static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
+static void		acpi_config_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
@@ -465,20 +466,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Bring ACPICA on-line.
 	 */
-#define ACPI_ENABLE_PHASE1 \
-    (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
-#define ACPI_ENABLE_PHASE2 \
-    (ACPI_NO_HARDWARE_INIT | ACPI_NO_ACPI_ENABLE | \
-     ACPI_NO_ADDRESS_SPACE_INIT)
 
-	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-
-	acpi_md_callback();
-
-	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
+	rv = AcpiEnableSubsystem(ACPI_FULL_INITIALIZATION);
 
 	if (ACPI_FAILURE(rv))
 		goto fail;
@@ -492,6 +481,13 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	if (ACPI_FAILURE(rv))
 		goto fail;
+
+	/*
+	 * Scan the namespace and build our device tree.
+	 */
+	acpi_build_tree(sc);
+
+	acpi_md_callback(sc);
 
 	/*
 	 * Early initialization of the _PDC control method
@@ -527,11 +523,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
 
 	acpitimer_init(sc);
-
-	/*
-	 * Scan the namespace and build our device tree.
-	 */
-	acpi_build_tree(sc);
+	acpi_config_tree(sc);
 	acpi_sleep_init(sc);
 
 #ifdef ACPI_DEBUG
@@ -669,6 +661,15 @@ acpi_build_tree(struct acpi_softc *sc)
 	 * Scan the internal namespace.
 	 */
 	(void)acpi_pcidev_scan(sc->sc_root);
+}
+
+static void
+acpi_config_tree(struct acpi_softc *sc)
+{
+
+	/*
+	 * Configure all everything found "at acpi?".
+	 */
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
 	/*

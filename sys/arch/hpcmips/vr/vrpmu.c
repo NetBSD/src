@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.18 2005/12/11 12:17:35 christos Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.18.122.1 2012/11/20 03:01:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.18 2005/12/11 12:17:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.18.122.1 2012/11/20 03:01:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ int vrpmudebug = VRPMUDEBUG_CONF;
 #define DDUMP_REGS(flag, arg)
 #endif /* VRPMUDEBUG */
 
-static int vrpmumatch(struct device *, struct cfdata *, void *);
-static void vrpmuattach(struct device *, struct device *, void *);
+static int vrpmumatch(device_t, cfdata_t, void *);
+static void vrpmuattach(device_t, device_t, void *);
 
 static void vrpmu_write(struct vrpmu_softc *, int, unsigned short);
 static unsigned short vrpmu_read(struct vrpmu_softc *, int);
@@ -77,7 +77,7 @@ void vrpmu_dump_intr(void *);
 void vrpmu_dump_intr2(unsigned int, unsigned int);
 void vrpmu_dump_regs(void *);
 
-CFATTACH_DECL(vrpmu, sizeof(struct vrpmu_softc),
+CFATTACH_DECL_NEW(vrpmu, sizeof(struct vrpmu_softc),
     vrpmumatch, vrpmuattach, NULL, NULL);
 
 struct vrpmu_softc *this_pmu;
@@ -97,16 +97,16 @@ vrpmu_read(struct vrpmu_softc *sc, int port)
 }
 
 static int
-vrpmumatch(struct device *parent, struct cfdata *cf, void *aux)
+vrpmumatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-vrpmuattach(struct device *parent, struct device *self, void *aux)
+vrpmuattach(device_t parent, device_t self, void *aux)
 {
-	struct vrpmu_softc *sc = (struct vrpmu_softc *)self;
+	struct vrpmu_softc *sc = device_private(self);
 	struct vrip_attach_args *va = aux;
 #if NVRBCU > 0
 	int cpuid;

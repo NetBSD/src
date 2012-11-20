@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.22 2011/04/24 16:26:58 rmind Exp $	*/
+/*	$NetBSD: kd.c,v 1.22.14.1 2012/11/20 03:01:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.22 2011/04/24 16:26:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.22.14.1 2012/11/20 03:01:46 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,7 +75,6 @@ struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
 #define PUT_WSIZE	64
 
 struct kd_softc {
-	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;
 	int rows, cols;
 

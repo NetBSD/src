@@ -1,4 +1,4 @@
-/*	$NetBSD: fpuvar.h,v 1.3 2011/01/14 02:06:22 rmind Exp $	*/
+/*	$NetBSD: fpuvar.h,v 1.3.18.1 2012/11/20 03:00:53 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -36,7 +36,6 @@
 struct proc;
 
 struct fpu_softc {
-	struct device	sc_dev;
 	register_t	sc_fputype;
 	void		(*sc_ctxload)(struct fpframe *);
 	void		(*sc_ctxsave)(struct fpframe *);

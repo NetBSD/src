@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.47 2010/06/06 02:51:46 mrg Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.47.18.1 2012/11/20 03:01:37 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.47 2010/06/06 02:51:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.47.18.1 2012/11/20 03:01:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,8 @@ void nextdma_debug_enetr_dumpstate(void);
 #endif
 
 
-int	nextdma_match(struct device *, struct cfdata *, void *);
-void	nextdma_attach(struct device *, struct device *, void *);
+int	nextdma_match(device_t, cfdata_t, void *);
+void	nextdma_attach(device_t, device_t, void *);
 
 void nextdmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 int nextdma_continue(struct nextdma_softc *);
@@ -113,7 +113,7 @@ static int nextdma_enet_intr(void *);
 #define nd_bsw4(reg,val) \
 	bus_space_write_4(nsc->sc_bst, nsc->sc_bsh, (reg), (val))
 
-CFATTACH_DECL(nextdma, sizeof(struct nextdma_softc),
+CFATTACH_DECL_NEW(nextdma, sizeof(struct nextdma_softc),
     nextdma_match, nextdma_attach, NULL, NULL);
 
 static struct nextdma_channel nextdma_channel[] = {
@@ -138,7 +138,7 @@ nextdma_findchannel(const char *name)
 	for (dev = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 	     dev != NULL;
 	     dev = deviter_next(&di)) {
-		if (strncmp(dev->dv_xname, "nextdma", 7) == 0) {
+		if (strncmp(device_xname(dev), "nextdma", 7) == 0) {
 			struct nextdma_softc *nsc = device_private(dev);
 			if (strcmp(nsc->sc_chan->nd_name, name) == 0)
 				break;
@@ -151,7 +151,7 @@ nextdma_findchannel(const char *name)
 }
 
 int
-nextdma_match(struct device *parent, struct cfdata *match, void *aux)
+nextdma_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
@@ -164,14 +164,15 @@ nextdma_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-nextdma_attach(struct device *parent, struct device *self, void *aux)
+nextdma_attach(device_t parent, device_t self, void *aux)
 {
-	struct nextdma_softc *nsc = (struct nextdma_softc *)self;
+	struct nextdma_softc *nsc = device_private(self);
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
 	if (attached >= nnextdma_channels)
 		return;
 
+	nsc->sc_dev = self;
 	nsc->sc_chan = &nextdma_channel[attached];
 
 	nsc->sc_dmat = ia->ia_dmat;
@@ -180,7 +181,7 @@ nextdma_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(nsc->sc_bst, nsc->sc_chan->nd_base,
 			  nsc->sc_chan->nd_size, 0, &nsc->sc_bsh)) {
 		panic("%s: can't map DMA registers for channel %s",
-		      nsc->sc_dev.dv_xname, nsc->sc_chan->nd_name);
+		      device_xname(self), nsc->sc_chan->nd_name);
 	}
 
 	nextdma_init (nsc);

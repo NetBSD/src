@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/04 17:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.1.12.1 2012/11/20 02:58:04 tls Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -12,6 +12,7 @@ config.c \
 config_file.c \
 ctrl_iface.c \
 ctrl_iface_unix.c \
+driver_common.c \
 driver_bsd.c \
 driver_wired.c \
 drivers.c \
@@ -29,6 +30,7 @@ os_unix.c \
 peerkey.c \
 pmksa_cache.c \
 preauth.c \
+random.c \
 scan.c \
 sha1.c \
 wpa.c \

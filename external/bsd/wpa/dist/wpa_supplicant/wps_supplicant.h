@@ -35,9 +35,11 @@ int wpas_wps_init(struct wpa_supplicant *wpa_s);
 void wpas_wps_deinit(struct wpa_supplicant *wpa_s);
 int wpas_wps_eapol_cb(struct wpa_supplicant *wpa_s);
 enum wps_request_type wpas_wps_get_req_type(struct wpa_ssid *ssid);
-int wpas_wps_start_pbc(struct wpa_supplicant *wpa_s, const u8 *bssid);
+int wpas_wps_start_pbc(struct wpa_supplicant *wpa_s, const u8 *bssid,
+		       int p2p_group);
 int wpas_wps_start_pin(struct wpa_supplicant *wpa_s, const u8 *bssid,
-		       const char *pin);
+		       const char *pin, int p2p_group, u16 dev_pw_id);
+int wpas_wps_cancel(struct wpa_supplicant *wpa_s);
 int wpas_wps_start_oob(struct wpa_supplicant *wpa_s, char *device_type,
 		       char *path, char *method, char *name);
 int wpas_wps_start_reg(struct wpa_supplicant *wpa_s, const u8 *bssid,
@@ -52,14 +54,20 @@ void wpas_wps_notify_scan_results(struct wpa_supplicant *wpa_s);
 int wpas_wps_searching(struct wpa_supplicant *wpa_s);
 int wpas_wps_scan_result_text(const u8 *ies, size_t ies_len, char *pos,
 			      char *end);
-int wpas_wps_er_start(struct wpa_supplicant *wpa_s);
+int wpas_wps_er_start(struct wpa_supplicant *wpa_s, const char *filter);
 int wpas_wps_er_stop(struct wpa_supplicant *wpa_s);
-int wpas_wps_er_add_pin(struct wpa_supplicant *wpa_s, const char *uuid,
-			const char *pin);
+int wpas_wps_er_add_pin(struct wpa_supplicant *wpa_s, const u8 *addr,
+			const char *uuid, const char *pin);
 int wpas_wps_er_pbc(struct wpa_supplicant *wpa_s, const char *uuid);
 int wpas_wps_er_learn(struct wpa_supplicant *wpa_s, const char *uuid,
 		      const char *pin);
+int wpas_wps_er_set_config(struct wpa_supplicant *wpa_s, const char *uuid,
+			   int id);
+int wpas_wps_er_config(struct wpa_supplicant *wpa_s, const char *uuid,
+		       const char *pin, struct wps_new_ap_settings *settings);
 int wpas_wps_terminate_pending(struct wpa_supplicant *wpa_s);
+int wpas_wps_in_progress(struct wpa_supplicant *wpa_s);
+void wpas_wps_update_config(struct wpa_supplicant *wpa_s);
 
 #else /* CONFIG_WPS */
 

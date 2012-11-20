@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.190.2.1 2012/11/20 03:02:46 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.190 2012/07/17 18:08:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.190.2.1 2012/11/20 03:02:46 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -915,7 +915,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 #ifdef GATEWAY  
-			if (ip6flow_fastforward(m))
+			if (ip6flow_fastforward(&m))
 				return;
 #endif
 			schednetisr(NETISR_IPV6);
@@ -1494,6 +1494,7 @@ int
 ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ethercom *ec = (void *) ifp;
+	struct eccapreq *eccr;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_laddrreq *iflr = data;
 	const struct sockaddr_dl *sdl;
@@ -1502,21 +1503,21 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING)) {
+	    {
+		struct ifaddr *ifa = (struct ifaddr *)data;
+		if (ifa->ifa_addr->sa_family != AF_LINK
+		    && (ifp->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		       (IFF_UP|IFF_RUNNING)) {
 			ifp->if_flags |= IFF_UP;
 			if ((error = (*ifp->if_init)(ifp)) != 0)
 				return error;
 		}
 #ifdef INET
-		{
-			struct ifaddr *ifa = (struct ifaddr *)data;
-
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				arp_ifinit(ifp, ifa);
-		}
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(ifp, ifa);
 #endif /* INET */
 		return 0;
+	    }
 
 	case SIOCSIFMTU:
 	    {
@@ -1570,6 +1571,11 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case 0:
 			break;
 		}
+		return 0;
+	case SIOCGETHERCAP:
+		eccr = (struct eccapreq *)data;
+		eccr->eccr_capabilities = ec->ec_capabilities;
+		eccr->eccr_capenable = ec->ec_capenable;
 		return 0;
 	case SIOCADDMULTI:
 		return ether_addmulti(ifreq_getaddr(cmd, ifr), ec);

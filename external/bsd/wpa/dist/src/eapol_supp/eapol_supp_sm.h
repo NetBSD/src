@@ -208,10 +208,10 @@ struct eapol_ctx {
 	/**
 	 * eap_param_needed - Notify that EAP parameter is needed
 	 * @ctx: Callback context (ctx)
-	 * @field: Field name (e.g., "IDENTITY")
+	 * @field: Field indicator (e.g., WPA_CTRL_REQ_EAP_IDENTITY)
 	 * @txt: User readable text describing the required parameter
 	 */
-	void (*eap_param_needed)(void *ctx, const char *field,
+	void (*eap_param_needed)(void *ctx, enum wpa_ctrl_req_type field,
 				 const char *txt);
 
 	/**
@@ -220,6 +220,22 @@ struct eapol_ctx {
 	 * @authorized: Whether the supplicant port is now in authorized state
 	 */
 	void (*port_cb)(void *ctx, int authorized);
+
+	/**
+	 * cert_cb - Notification of a peer certificate
+	 * @ctx: Callback context (ctx)
+	 * @depth: Depth in certificate chain (0 = server)
+	 * @subject: Subject of the peer certificate
+	 * @cert_hash: SHA-256 hash of the certificate
+	 * @cert: Peer certificate
+	 */
+	void (*cert_cb)(void *ctx, int depth, const char *subject,
+			const char *cert_hash, const struct wpabuf *cert);
+
+	/**
+	 * cert_in_cb - Include server certificates in callback
+	 */
+	int cert_in_cb;
 };
 
 
@@ -255,6 +271,7 @@ void eapol_sm_notify_ctrl_response(struct eapol_sm *sm);
 void eapol_sm_request_reauth(struct eapol_sm *sm);
 void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm, int in_eapol_sm);
 void eapol_sm_invalidate_cached_session(struct eapol_sm *sm);
+const char * eapol_sm_get_method_name(struct eapol_sm *sm);
 #else /* IEEE8021X_EAPOL */
 static inline struct eapol_sm *eapol_sm_init(struct eapol_ctx *ctx)
 {
@@ -341,6 +358,10 @@ static inline void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm,
 }
 static inline void eapol_sm_invalidate_cached_session(struct eapol_sm *sm)
 {
+}
+static inline const char * eapol_sm_get_method_name(struct eapol_sm *sm)
+{
+	return NULL;
 }
 #endif /* IEEE8021X_EAPOL */
 

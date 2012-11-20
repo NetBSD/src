@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2012/07/29 18:05:43 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.2.1 2012/11/20 03:01:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2012/07/29 18:05:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.2.1 2012/11/20 03:01:25 tls Exp $");
 
 #include "opt_md.h"
 
@@ -100,7 +100,7 @@ cpu_rootconf(void)
 	get_device(booted_device_name);
 
 	printf("boot device: %s\n",
-	       booted_device ? booted_device->dv_xname : "<unknown>");
+	       booted_device ? device_xname(booted_device) : "<unknown>");
 #endif
 	rootconf();
 }

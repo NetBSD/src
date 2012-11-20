@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.7 2011/06/30 20:09:35 wiz Exp $ */
+/* $NetBSD: nvram.h,v 1.7.12.1 2012/11/20 03:01:39 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -220,8 +220,6 @@ struct prep_mk48txx_softc {
 };
 
 struct nvram_pnpbus_softc {
-	struct device sc_dev;		/* base device */ 
-
 	bus_space_tag_t sc_iot;		/* io space tag */
 	bus_space_tag_t sc_as;		/* addr line */
 	bus_space_handle_t sc_ash;

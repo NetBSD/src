@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.260 2012/02/03 03:35:30 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.260.6.1 2012/11/20 03:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260 2012/02/03 03:35:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.260.6.1 2012/11/20 03:02:46 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -1614,6 +1614,14 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		 */
 		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
 		    offsetof(struct if_data, ifi_ipackets));
+		/*
+		 * The memset() clears to the bottm of if_data. In the area,
+		 * if_lastchange is included. Please be careful if new entry
+		 * will be added into if_data or rewite this.
+		 *
+		 * And also, update if_lastchnage.
+		 */
+		getnanotime(&ifp->if_lastchange);
 		break;
 	case SIOCSIFMTU:
 		ifr = data;

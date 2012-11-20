@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.33 2011/09/29 12:51:28 is Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.33.12.1 2012/11/20 03:02:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.33 2011/09/29 12:51:28 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.33.12.1 2012/11/20 03:02:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,10 +356,26 @@ static struct aac_ident {
 	{	PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
 		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_2405,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 2405"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_3405,
 		AAC_HWIF_I960RX,
 		0,
 		"Adaptec RAID 3405"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_3805,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 3805"
 	},
 	{
 		PCI_VENDOR_DEC,
@@ -489,6 +505,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 	pcisc = device_private(self);
 	pcisc->sc_pc = pc;
 	sc = &pcisc->sc_aac;
+	sc->sc_dv = self;
 	state = 0;
 
 	aprint_naive(": RAID controller\n");
@@ -544,7 +561,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 	m = aac_find_ident(pa);
 	aprint_normal("%s\n", m->prodstr);
 	if (intrstr != NULL)
-		aprint_normal_dev(&sc->sc_dv, "interrupting at %s\n",
+		aprint_normal_dev(self, "interrupting at %s\n",
 		    intrstr);
 
 	sc->sc_hwif = m->hwif;
@@ -581,7 +598,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
-CFATTACH_DECL(aac_pci, sizeof(struct aac_pci_softc),
+CFATTACH_DECL_NEW(aac_pci, sizeof(struct aac_pci_softc),
     aac_pci_match, aac_pci_attach, NULL, NULL);
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: g2busvar.h,v 1.6 2011/07/19 15:52:29 dyoung Exp $	*/
+/*	$NetBSD: g2busvar.h,v 1.6.12.1 2012/11/20 03:01:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -48,7 +48,7 @@ struct g2bus_attach_args {
  * Per-device G2 variables
  */
 struct g2busdev {
-	struct  device *gd_dev;		/* back pointer to generic */
+	device_t gd_dev;		/* back pointer to generic */
 	TAILQ_ENTRY(g2busdev)
 		gd_bchain;		/* bus chain */
 };

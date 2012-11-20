@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.h,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.2.2.1 2012/11/20 02:57:58 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -135,8 +135,8 @@ typedef	struct	ipmon_action {
 extern	void	dump_config __P((void));
 extern	int	load_config __P((char *));
 extern	void	unload_config __P((void));
-extern	void	dumphex __P((FILE *, int, char *, int));
-extern	int	check_action __P((char *, char *, int, int));
+extern	void	dumphex __P((FILE *, int, const void *, size_t));
+extern	int	check_action __P((const char *, const char *, int, int));
 extern	char	*getword __P((int));
 extern	void	*add_doing __P((ipmon_saver_t *));
 

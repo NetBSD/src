@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/04/04 10:42:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2012/11/20 02:58:03 tls Exp $
 
 LIB=	clangAnalysis
 
@@ -7,6 +7,7 @@ LIB=	clangAnalysis
 .PATH: ${CLANG_SRCDIR}/lib/Analysis
 
 SRCS+=	AnalysisDeclContext.cpp \
+	BodyFarm.cpp \
 	CFG.cpp \
 	CFGReachabilityAnalysis.cpp \
 	CFGStmtMap.cpp \
@@ -15,6 +16,7 @@ SRCS+=	AnalysisDeclContext.cpp \
 	Dominators.cpp \
 	FormatString.cpp \
 	LiveVariables.cpp \
+	ObjCNoReturn.cpp \
 	PostOrderCFGView.cpp \
 	ProgramPoint.cpp \
 	PrintfFormatString.cpp \

@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.14.8.1 2012/11/20 02:58:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.14 2011/08/26 06:18:16 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.14.8.1 2012/11/20 02:58:45 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static const char cantrec[] = "Can't recover file:  ";
 static void norec(const char *) __dead;
 
 void
-save(int n)
+save(struct move *mm, int n)
 {
 	int     fdesc;
 	char   *fs;
@@ -123,7 +123,7 @@ save(int n)
 	write(fdesc, board, sizeof board);
 	write(fdesc, off, sizeof off);
 	write(fdesc, in, sizeof in);
-	write(fdesc, dice, sizeof dice);
+	write(fdesc, mm->dice, sizeof mm->dice);
 	write(fdesc, &cturn, sizeof cturn);
 	write(fdesc, &dlast, sizeof dlast);
 	write(fdesc, &pnum, sizeof pnum);
@@ -145,7 +145,7 @@ save(int n)
 }
 
 void
-recover(const char *s)
+recover(struct move *mm, const char *s)
 {
 	int     fdesc;
 
@@ -154,7 +154,7 @@ recover(const char *s)
 	read(fdesc, board, sizeof board);
 	read(fdesc, off, sizeof off);
 	read(fdesc, in, sizeof in);
-	read(fdesc, dice, sizeof dice);
+	read(fdesc, mm->dice, sizeof mm->dice);
 	read(fdesc, &cturn, sizeof cturn);
 	read(fdesc, &dlast, sizeof dlast);
 	read(fdesc, &pnum, sizeof pnum);

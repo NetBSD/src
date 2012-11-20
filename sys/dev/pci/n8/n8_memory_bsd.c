@@ -61,7 +61,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.4 2009/05/12 08:23:01 cegger Exp $";
+static char const n8_id[] = "$Id: n8_memory_bsd.c,v 1.4.22.1 2012/11/20 03:02:30 tls Exp $";
 /*****************************************************************************/
 /** @file n8_memory_bsd.c
  *  @brief NetOctaveMemory Services - FreeBSD-specific support routines.
@@ -288,26 +288,26 @@ n8_GetLargeAllocation(N8_MemoryType_t bankIndex,
 	if (bus_dmamem_alloc(sc->dma_tag, size, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc DMA buffer\n",
-		    device_xname(&sc->device));
+		    device_xname(sc->sc_dev));
 		return 0;
         }
 	if (bus_dmamem_map(sc->dma_tag, &seg, rseg, size, &kva,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't map DMA buffers (%lu bytes)\n",
-		    device_xname(&sc->device), size);
+		    device_xname(sc->sc_dev), size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 0;
 	}
 	if (bus_dmamap_create(sc->dma_tag, size, 1,
 	    size, 0, BUS_DMA_NOWAIT, &DmaMap_g[bankIndex])) {
-		printf("%s: can't create DMA map\n", device_xname(&sc->device));
+		printf("%s: can't create DMA map\n", device_xname(sc->sc_dev));
 		bus_dmamem_unmap(sc->dma_tag, kva, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 0;
 	}
 	if (bus_dmamap_load(sc->dma_tag, DmaMap_g[bankIndex], kva, size,
 	    NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load DMA map\n", device_xname(&sc->device));
+		printf("%s: can't load DMA map\n", device_xname(sc->sc_dev));
 		bus_dmamap_destroy(sc->dma_tag, DmaMap_g[bankIndex]);
 		bus_dmamem_unmap(sc->dma_tag, kva, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);

@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.11 2012/01/30 19:41:19 drochner Exp $ */
+/* $NetBSD: cxdtv.c,v 1.11.6.1 2012/11/20 03:02:14 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11.6.1 2012/11/20 03:02:14 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,11 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11 2012/01/30 19:41:19 drochner Exp $");
 #define CXDTV_SRAM_CH_MPEG	0
 #define CXDTV_TS_PKTSIZE	(188 * 8)
 
-static int cxdtv_match(struct device *, struct cfdata *, void *);
-static void cxdtv_attach(struct device *, struct device *, void *);
-static int cxdtv_detach(struct device *, int);
-static int cxdtv_rescan(struct device *, const char *, const int *);
-static void cxdtv_childdet(struct device *, struct device *);
+static int cxdtv_match(device_t, cfdata_t, void *);
+static void cxdtv_attach(device_t, device_t, void *);
+static int cxdtv_detach(device_t, int);
+static int cxdtv_rescan(device_t, const char *, const int *);
+static void cxdtv_childdet(device_t, device_t);
 static int cxdtv_intr(void *);
 
 static bool cxdtv_resume(device_t, const pmf_qual_t *);

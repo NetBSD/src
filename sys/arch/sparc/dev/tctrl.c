@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.55 2012/03/25 08:48:40 martin Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.55.2.1 2012/11/20 03:01:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55 2012/03/25 08:48:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55.2.1 2012/11/20 03:01:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1437,7 +1437,7 @@ static void
 tctrl_event_thread(void *v)
 {
 	struct tctrl_softc *sc = v;
-	struct device *dv;
+	device_t dv;
 	struct sd_softc *sd = NULL;
 	struct lance_softc *le = NULL;
 	int ticks = hz/2;
