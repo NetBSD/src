@@ -1,0 +1,15 @@
+#source: tlspic1.s
+#source: tlspic2.s
+#as:
+#ld: -shared
+#objdump: -sj.got
+#target: ia64-*-*
+
+.*: +file format elf..-ia64-.*
+
+Contents of section .got:
+ 12000 0+ 0+ 0+ 0+  .*
+ 12010 0+ 0+ [0-9a-f]+ [0-9a-f]+  .*
+ 12020 [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+  .*
+ 12030 [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+  .*
+ 12040 440+ 0+ [0-9a-f]+ [0-9a-f]+  .*
