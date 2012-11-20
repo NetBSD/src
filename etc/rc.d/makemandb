@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makemandb,v 1.1.2.1 2012/06/24 16:31:52 jdc Exp $
+# $NetBSD: makemandb,v 1.1.2.2 2012/11/20 23:11:47 riz Exp $
 #
 
 # PROVIDE: makemandb
@@ -18,7 +18,7 @@ stop_cmd=":"
 makemandb_start()
 {
 	# Initiate update build in the background
-	nice -n 5 /usr/sbin/makemandb -q > /dev/null 2>&1 &
+	nice -n 5 /usr/sbin/makemandb -Q > /dev/null 2>&1 &
 }
 
 load_rc_config $name

@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.4.2.2 2012/04/19 20:03:00 riz Exp $	*/
+/*	$NetBSD: apropos.c,v 1.4.2.3 2012/11/20 23:11:47 riz Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.4.2.2 2012/04/19 20:03:00 riz Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.4.2.3 2012/11/20 23:11:47 riz Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -277,7 +277,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-		"Usage: %s [-n Number of records] [-p] [-123456789] [-S machine] query\n",
+		"Usage: %s [-n Number of records] [-123456789Ccp] [-S machine] query\n",
 		getprogname());
 	exit(1);
 }
