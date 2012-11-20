@@ -1,4 +1,4 @@
-/* $Id: power_prep.c,v 1.1 2012/11/20 19:08:46 jkunz Exp $ */
+/* $Id: power_prep.c,v 1.2 2012/11/20 23:39:33 jkunz Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -574,6 +574,7 @@ enable_vddmem(void)
 	vddctrl &= ~(HW_POWER_VDDMEMCTRL_PULLDOWN_ACTIVE |
 	    HW_POWER_VDDMEMCTRL_ENABLE_ILIMIT);
 	REG_WRITE(HW_POWER_BASE + HW_POWER_VDDMEMCTRL, vddctrl);
+	delay_us(10000);
 
 	return;
 }
