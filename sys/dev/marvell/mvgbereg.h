@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.3 2011/02/01 23:40:12 jakllsch Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.3.10.1 2012/11/20 22:26:03 riz Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -341,7 +341,7 @@
  */
 #define MVGBE_MRU		9022
 
-#define MVGBE_RXBUF_ALIGN	8
+#define MVGBE_RXBUF_ALIGN	32	/* Cache line size */
 #define MVGBE_RXBUF_MASK	(MVGBE_RXBUF_ALIGN - 1)
 #define MVGBE_HWHEADER_SIZE	2
 
@@ -429,6 +429,8 @@ struct mvgbe_rx_desc {
 #define MVGBE_RX_FIRST_DESC		(1 << 27)
 #define MVGBE_RX_UNKNOWN_DA		(1 << 28)
 #define MVGBE_RX_ENABLE_INTERRUPT	(1 << 29)
-#define MVGBE_RX_L4_CHECKSUM		(1 << 30)
+#define MVGBE_RX_L4_CHECKSUM_OK		(1 << 30)
+
+#define MVGBE_RX_IP_FRAGMENT		(1 << 2)
 
 #endif	/* _MVGEREG_H_ */

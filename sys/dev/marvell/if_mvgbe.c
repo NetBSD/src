@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.16 2012/02/02 19:43:04 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.16.2.1 2012/11/20 22:26:03 riz Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,13 +25,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.16 2012/02/02 19:43:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.16.2.1 2012/11/20 22:26:03 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/sockio.h>
@@ -89,7 +91,9 @@ CTASSERT(MVGBE_RX_RING_CNT > 1 && MVGBE_RX_RING_NEXT(MVGBE_RX_RING_CNT) ==
 	(MVGBE_RX_RING_CNT + 1) % MVGBE_RX_RING_CNT);
 
 #define MVGBE_JSLOTS		384	/* XXXX */
-#define MVGBE_JLEN		((MVGBE_MRU + MVGBE_RXBUF_ALIGN)&~MVGBE_RXBUF_MASK)
+#define MVGBE_JLEN \
+    ((MVGBE_MRU + MVGBE_HWHEADER_SIZE + MVGBE_RXBUF_ALIGN - 1) & \
+    ~MVGBE_RXBUF_MASK)
 #define MVGBE_NTXSEG		30
 #define MVGBE_JPAGESZ		PAGE_SIZE
 #define MVGBE_RESID \
@@ -195,17 +199,20 @@ struct mvgbe_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_dafh;		/* dest address filter handle */
+	bus_space_handle_t sc_dafh;	/* dest address filter handle */
 	bus_dma_tag_t sc_dmat;
 
 	struct ethercom sc_ethercom;
 	struct mii_data sc_mii;
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* station addr */
 
+	callout_t sc_tick_ch;		/* tick callout */
+
 	struct mvgbe_chain_data sc_cdata;
 	struct mvgbe_ring_data *sc_rdata;
 	bus_dmamap_t sc_ring_map;
 	int sc_if_flags;
+	int sc_wdogsoft;
 
 	LIST_HEAD(__mvgbe_jfreehead, mvgbe_jpool_entry) sc_jfree_listhead;
 	LIST_HEAD(__mvgbe_jinusehead, mvgbe_jpool_entry) sc_jinuse_listhead;
@@ -235,6 +242,7 @@ static void mvgbec_wininit(struct mvgbec_softc *);
 static int mvgbe_match(device_t, struct cfdata *, void *);
 static void mvgbe_attach(device_t, device_t, void *);
 
+static void mvgbe_tick(void *);
 static int mvgbe_intr(void *);
 
 static void mvgbe_start(struct ifnet *);
@@ -336,7 +344,7 @@ mvgbec_match(device_t parent, cfdata_t match, void *aux)
 static void
 mvgbec_attach(device_t parent, device_t self, void *aux)
 {
-	struct mvgbec_softc *sc = device_private(self);
+	struct mvgbec_softc *csc = device_private(self);
 	struct marvell_attach_args *mva = aux, gbea;
 	struct mvgbe_softc *port;
 	struct mii_softc *mii;
@@ -347,10 +355,10 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Marvell Gigabit Ethernet Controller\n");
 
-	sc->sc_dev = self;
-	sc->sc_iot = mva->mva_iot;
+	csc->sc_dev = self;
+	csc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
-	    mva->mva_size, &sc->sc_ioh)) {
+	    mva->mva_size, &csc->sc_ioh)) {
 		aprint_error_dev(self, "Cannot map registers\n");
 		return;
 	}
@@ -359,15 +367,15 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		mvgbec0 = self;
 		
 	phyaddr = 0;
-	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
+	MVGBE_WRITE(csc, MVGBE_PHYADDR, phyaddr);
 
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&csc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
 
 	/* Disable and clear Gigabit Ethernet Unit interrupts */
-	MVGBE_WRITE(sc, MVGBE_EUIM, 0);
-	MVGBE_WRITE(sc, MVGBE_EUIC, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
 
-	mvgbec_wininit(sc);
+	mvgbec_wininit(csc);
 
 	memset(&gbea, 0, sizeof(gbea));
 	for (i = 0; i < __arraycount(mvgbe_ports); i++) {
@@ -375,17 +383,17 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		    mvgbe_ports[i].unit != mva->mva_unit)
 			continue;
 
-		sc->sc_flags = mvgbe_ports[i].flags;
+		csc->sc_flags = mvgbe_ports[i].flags;
 
 		for (j = 0; j < mvgbe_ports[i].ports; j++) {
 			gbea.mva_name = "mvgbe";
 			gbea.mva_model = mva->mva_model;
-			gbea.mva_iot = sc->sc_iot;
-			gbea.mva_ioh = sc->sc_ioh;
+			gbea.mva_iot = csc->sc_iot;
+			gbea.mva_ioh = csc->sc_ioh;
 			gbea.mva_unit = j;
 			gbea.mva_dmat = mva->mva_dmat;
 			gbea.mva_irq = mvgbe_ports[i].irqs[j];
-			child = config_found_sm_loc(sc->sc_dev, "mvgbec", NULL,
+			child = config_found_sm_loc(csc->sc_dev, "mvgbec", NULL,
 			    &gbea, mvgbec_print, mvgbec_search);
 			if (child) {
 				port = device_private(child);
@@ -395,7 +403,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	}
-	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
+	MVGBE_WRITE(csc, MVGBE_PHYADDR, phyaddr);
 }
 
 static int
@@ -629,6 +637,8 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_port = mva->mva_unit;
 	sc->sc_iot = mva->mva_iot;
+	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, mvgbe_tick, sc);
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
 	    MVGBE_PORTR_BASE + mva->mva_unit * MVGBE_PORTR_SIZE,
 	    MVGBE_PORTR_SIZE, &sc->sc_ioh)) {
@@ -799,6 +809,21 @@ fail1:
 }
 
 
+static void
+mvgbe_tick(void *arg)
+{
+	struct mvgbe_softc *sc = arg;
+	struct mii_data *mii = &sc->sc_mii;
+	int s;
+
+	s = splnet();
+	mii_tick(mii);
+	/* Need more work */
+	splx(s);
+
+	callout_schedule(&sc->sc_tick_ch, hz);
+}
+
 static int
 mvgbe_intr(void *arg)
 {
@@ -822,6 +847,9 @@ mvgbe_intr(void *arg)
 
 		claimed = 1;
 
+		if (!(ifp->if_flags & IFF_RUNNING))
+			break;
+
 		if (ice & MVGBE_ICE_LINKCHG) {
 			if (MVGBE_READ(sc, MVGBE_PS) & MVGBE_PS_LINKUP) {
 				/* Enable port RX and TX. */
@@ -831,6 +859,9 @@ mvgbe_intr(void *arg)
 				MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_DISQ(0));
 				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ);
 			}
+
+			/* Notify link change event to mii layer */
+			mii_pollstat(&sc->sc_mii);
 		}
 
 		if (ic & (MVGBE_IC_RXBUF | MVGBE_IC_RXERROR))
@@ -901,7 +932,8 @@ mvgbe_start(struct ifnet *ifp)
 		/*
 		 * Set a timeout in case the chip goes out to lunch.
 		 */
-		ifp->if_timer = 5;
+		ifp->if_timer = 1;
+		sc->sc_wdogsoft = 1;
 	}
 }
 
@@ -1045,6 +1077,8 @@ mvgbe_init(struct ifnet *ifp)
 	    MVGBE_ICE_TXERR |
 	    MVGBE_ICE_LINKCHG);
 
+	callout_schedule(&sc->sc_tick_ch, hz);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1056,11 +1090,14 @@ static void
 mvgbe_stop(struct ifnet *ifp, int disable)
 {
 	struct mvgbe_softc *sc = ifp->if_softc;
+	struct mvgbec_softc *csc = device_private(device_parent(sc->sc_dev));
 	struct mvgbe_chain_data *cdata = &sc->sc_cdata;
 	uint32_t reg;
 	int i, cnt;
 
 	DPRINTFN(2, ("mvgbe_stop\n"));
+
+	callout_stop(&sc->sc_tick_ch);
 
 	/* Stop Rx port activity. Check port Rx activity. */
 	reg = MVGBE_READ(sc, MVGBE_RQC);
@@ -1128,7 +1165,16 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 	reg = MVGBE_READ(sc, MVGBE_PSC);
 	MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_PORTEN);
 
-	/* Disable interrupts */
+	/*
+	 * Disable and clear interrupts
+	 * 0) controller interrupt
+	 * 1) port interrupt cause
+	 * 2) port interrupt mask
+	 */
+	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
+	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
+	MVGBE_WRITE(sc, MVGBE_IC, 0);
+	MVGBE_WRITE(sc, MVGBE_ICE, 0);
 	MVGBE_WRITE(sc, MVGBE_PIM, 0);
 	MVGBE_WRITE(sc, MVGBE_PEIM, 0);
 
@@ -1160,11 +1206,22 @@ mvgbe_watchdog(struct ifnet *ifp)
 	 */
 	mvgbe_txeof(sc);
 	if (sc->sc_cdata.mvgbe_tx_cnt != 0) {
-		aprint_error_ifnet(ifp, "watchdog timeout\n");
+		if (sc->sc_wdogsoft) {
+			/*
+			 * There is race condition between CPU and DMA
+			 * engine. When DMA engine encounters queue end,
+			 * it clears MVGBE_TQC_ENQ bit.
+			 */
+			MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+			ifp->if_timer = 5;
+			sc->sc_wdogsoft = 0;
+		} else {
+			aprint_error_ifnet(ifp, "watchdog timeout\n");
 
-		ifp->if_oerrors++;
+			ifp->if_oerrors++;
 
-		mvgbe_init(ifp);
+			mvgbe_init(ifp);
+		}
 	}
 }
 
@@ -1291,6 +1348,7 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	struct mvgbe_chain *c;
 	struct mvgbe_rx_desc *r;
 	int align;
+	vaddr_t offset;
 
 	if (m == NULL) {
 		void *buf = NULL;
@@ -1333,10 +1391,14 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	c = &sc->sc_cdata.mvgbe_rx_chain[i];
 	r = c->mvgbe_desc;
 	c->mvgbe_mbuf = m_new;
-	r->bufptr = dmamap->dm_segs[0].ds_addr +
-	    (((vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf));
+	offset = (vaddr_t)m_new->m_data - (vaddr_t)sc->sc_cdata.mvgbe_jumbo_buf;
+	r->bufptr = dmamap->dm_segs[0].ds_addr + offset;
 	r->bufsize = MVGBE_JLEN & ~MVGBE_RXBUF_MASK;
 	r->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA | MVGBE_RX_ENABLE_INTERRUPT;
+
+	/* Invalidate RX buffer */
+	bus_dmamap_sync(sc->sc_dmat, dmamap, offset, r->bufsize,
+	    BUS_DMASYNC_PREREAD);
 
 	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -1582,7 +1644,8 @@ do_defrag:
 		f = &sc->sc_rdata->mvgbe_tx_ring[current];
 		f->bufptr = txseg[i].ds_addr;
 		f->bytecnt = txseg[i].ds_len;
-		f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
+		if (i != 0)
+			f->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA;
 		last = current;
 		current = MVGBE_TX_RING_NEXT(current);
 	}
@@ -1603,7 +1666,6 @@ do_defrag:
 	}
 	if (txmap->dm_nsegs == 1)
 		f->cmdsts = cmdsts		|
-		    MVGBE_BUFFER_OWNED_BY_DMA	|
 		    MVGBE_TX_GENERATE_CRC	|
 		    MVGBE_TX_ENABLE_INTERRUPT	|
 		    MVGBE_TX_ZERO_PADDING	|
@@ -1612,7 +1674,6 @@ do_defrag:
 	else {
 		f = &sc->sc_rdata->mvgbe_tx_ring[first];
 		f->cmdsts = cmdsts		|
-		    MVGBE_BUFFER_OWNED_BY_DMA	|
 		    MVGBE_TX_GENERATE_CRC	|
 		    MVGBE_TX_FIRST_DESC;
 
@@ -1622,14 +1683,22 @@ do_defrag:
 		    MVGBE_TX_ENABLE_INTERRUPT	|
 		    MVGBE_TX_ZERO_PADDING	|
 		    MVGBE_TX_LAST_DESC;
+
+		/* Sync descriptors except first */
+		MVGBE_CDTXSYNC(sc,
+		    (MVGBE_TX_RING_CNT - 1 == *txidx) ? 0 : (*txidx) + 1,
+		    txmap->dm_nsegs - 1,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
 	sc->sc_cdata.mvgbe_tx_chain[last].mvgbe_mbuf = m_head;
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_txmap_head, link);
 	sc->sc_cdata.mvgbe_tx_map[last] = entry;
 
-	/* Sync descriptors before handing to chip */
-	MVGBE_CDTXSYNC(sc, *txidx, txmap->dm_nsegs,
+	/* Finally, sync first descriptor */
+	sc->sc_rdata->mvgbe_tx_ring[first].cmdsts |=
+	    MVGBE_BUFFER_OWNED_BY_DMA;
+	MVGBE_CDTXSYNC(sc, *txidx, 1,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->sc_cdata.mvgbe_tx_cnt += i;
@@ -1649,6 +1718,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 	struct mbuf *m;
 	bus_dmamap_t dmamap;
 	uint32_t rxstat;
+	uint16_t bufsize;
 	int idx, cur, total_len;
 
 	idx = sc->sc_cdata.mvgbe_rx_prod;
@@ -1686,8 +1756,9 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		m = cdata->mvgbe_rx_chain[idx].mvgbe_mbuf;
 		cdata->mvgbe_rx_chain[idx].mvgbe_mbuf = NULL;
-		total_len = cur_rx->bytecnt;
+		total_len = cur_rx->bytecnt - ETHER_CRC_LEN;
 		rxstat = cur_rx->cmdsts;
+		bufsize = cur_rx->bufsize;
 
 		cdata->mvgbe_rx_map[idx] = NULL;
 
@@ -1712,26 +1783,36 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			continue;
 		}
 
-		if (total_len <= MVGBE_RX_CSUM_MIN_BYTE)  /* XXX documented? */
-			goto sw_csum;
-
 		if (rxstat & MVGBE_RX_IP_FRAME_TYPE) {
+			int flgs = 0;
+
 			/* Check IPv4 header checksum */
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			flgs |= M_CSUM_IPv4;
 			if (!(rxstat & MVGBE_RX_IP_HEADER_OK))
-				m->m_pkthdr.csum_flags |=
-				    M_CSUM_IPv4_BAD;
-			/* Check TCPv4/UDPv4 checksum */
-			if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-			    MVGBE_RX_L4_TYPE_TCP)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			else if ((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
-			    MVGBE_RX_L4_TYPE_UDP)
-				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (!(rxstat & MVGBE_RX_L4_CHECKSUM))
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				flgs |= M_CSUM_IPv4_BAD;
+			else if ((bufsize & MVGBE_RX_IP_FRAGMENT) == 0) {
+				/*
+				 * Check TCPv4/UDPv4 checksum for
+				 * non-fragmented packet only.
+				 *
+				 * It seemd that sometimes
+				 * MVGBE_RX_L4_CHECKSUM_OK bit was set to 0
+				 * even if the checksum is correct and the
+				 * packet was not fragmented. So we don't set
+				 * M_CSUM_TCP_UDP_BAD even if csum bit is 0.
+				 */
+
+				if (((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+					MVGBE_RX_L4_TYPE_TCP) &&
+				    ((rxstat & MVGBE_RX_L4_CHECKSUM_OK) != 0))
+					flgs |= M_CSUM_TCPv4;
+				else if (((rxstat & MVGBE_RX_L4_TYPE_MASK) ==
+					MVGBE_RX_L4_TYPE_UDP) &&
+				    ((rxstat & MVGBE_RX_L4_CHECKSUM_OK) != 0))
+					flgs |= M_CSUM_UDPv4;
+			}
+			m->m_pkthdr.csum_flags = flgs;
 		}
-sw_csum:
 
 		/*
 		 * Try to allocate a new jumbo buffer. If that
@@ -1760,7 +1841,6 @@ sw_csum:
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
-		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;
 
