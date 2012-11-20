@@ -1,4 +1,4 @@
-.\" $NetBSD: makemandb.8,v 1.1.2.1 2012/02/20 22:04:30 sborrill Exp $
+.\" $NetBSD: makemandb.8,v 1.1.2.2 2012/11/20 23:11:47 riz Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 20, 2012
+.Dd August 29, 2012
 .Dt MAKEMANDB 8
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@
 .Nd parse the manual pages and build a search index over them
 .Sh SYNOPSIS
 .Nm
+.Op Fl floQqv
 .Op Fl C Ar path
-.Op Fl floqv
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,11 +71,15 @@ and also to substantially save disk space.
 Use this option to optimize the index for speed and also
 to significantly reduce disk space usage.
 This is a somewhat expensive operation.
+.It Fl Q
+Print only fatal error messages (i.e., when the database is left in
+an inconsistent state and needs manual intervention).
 .It Fl q
-Print only error messages and no status updates.
+Print only warnings and error messages but no status updates.
 .It Fl v
 Enable verbose output.
-This prints the name of every file being parsed.
+This prints the name of every file being parsed
+and a summary at the end of the index update.
 .El
 .Pp
 As the database file is stored under
@@ -94,7 +98,11 @@ The name of the FTS table is mandb and its schema is as follows:
 .It Li env Ta The ENVIRONMENT section.
 .It Li files Ta The FILES section.
 .It Li exit_status Ta The EXIT STATUS section.
+.It Li diagnostics Ta The DIAGNOSTICS section.
 .It Li errors Ta The ERRORS section.
+.It Li md5_hash Ta  MD5 checksum of the man page.
+.It Li machine Ta The machine architecture (if any) for which the man
+page is relevant.
 .El
 .Sh FILES
 .Bl -hang -width /var/db/man.db -compact
