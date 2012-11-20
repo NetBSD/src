@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.15 2012/11/20 22:53:20 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.16 2012/11/20 23:30:33 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -125,4 +125,24 @@ xsrc/external/mit/xorg-server/dist/exa/exa_unaccel.c	1.2
 	commonly by certain rendered text sections appearing as solid
 	rectangular blocks of colour.
 	[abs, ticket #673]
+
+doc/3RDPARTY					patch
+share/zoneinfo/africa				patch
+share/zoneinfo/asia				patch
+share/zoneinfo/australasia			patch
+share/zoneinfo/europe				patch
+share/zoneinfo/northamerica			patch
+share/zoneinfo/southamerica			patch
+
+	Import tzdata2012j from
+	ftp://ftp.iana.org/tz/releases/tzdata2012j.tar.gz
+	Changes from tzdata2012h to tzdata2012i:
+        Changes from tzdata2012h to tzdata2012i:
+		Cuba switches from DST on 4 Nov 2012 at 01:00. (Thanks to Steffen
+		Thorsen.) 
+	Changes from tzdata2012i to tzdata2012j:
+		Libya moved to CET this weekend, but with DST planned next year.
+		(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
+   	Various fixes to documentation and commentary.
+	[apb, ticket #677]
 
