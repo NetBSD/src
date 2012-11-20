@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.696.2.2.2.1 2012/11/01 16:44:58 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.696.2.2.2.2 2012/11/20 18:55:09 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,6 +75,8 @@ HAVE_GDB?= 6
 HAVE_GDB?=	7
 .endif
 
+# default to binutils 2.21	 
+HAVE_BINUTILS?= 219
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
