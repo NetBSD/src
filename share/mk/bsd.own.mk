@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.712 2012/11/15 19:49:12 jkunz Exp $
+#	$NetBSD: bsd.own.mk,v 1.713 2012/11/20 10:43:21 apb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -70,14 +70,14 @@ USE_COMPILERCRTSTUFF?=	yes
 
 HAVE_GDB?=	7
 
-.if empty(.MAKEFLAGS:M-V*)
+.if empty(.MAKEFLAGS:tW:M*-V .OBJDIR*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
 PRINTOBJDIR=	${MAKE} -r -V .OBJDIR -f /dev/null xxx
 .else
 PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .endif
 .else
-PRINTOBJDIR=	echo # prevent infinite recursion
+PRINTOBJDIR=	echo /error/bsd.own.mk/PRINTOBJDIR # avoid infinite recursion
 .endif
 
 #
