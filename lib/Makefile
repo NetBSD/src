@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2012/11/15 23:51:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.196 2012/11/20 16:33:06 agc Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -48,6 +48,7 @@ SUBDIR+=	libskey
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	../crypto/external/bsd/netpgp/lib/verify
 .endif
 
 .if (${MKMDNS} != "no")
