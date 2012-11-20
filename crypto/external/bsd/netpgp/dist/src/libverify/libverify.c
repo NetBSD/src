@@ -940,7 +940,7 @@ read_compressed(pgpv_t *pgp, pgpv_compress_t *compressed, uint8_t *p, size_t len
 		break;
 	case BZIP2_COMPRESSION:
 		ok = (BZ2_bzDecompress(&bz) == BZ_STREAM_END);
-		unzmem->size = ((size_t)bz.total_out_hi32 << 32) | bz.total_out_lo32;
+		unzmem->size = ((uint64_t)bz.total_out_hi32 << 32) | bz.total_out_lo32;
 		break;
 	}
 	if (!ok) {
