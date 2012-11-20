@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.507 2012/11/20 08:00:33 agc Exp $
+# $NetBSD: mi,v 1.508 2012/11/20 16:18:50 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -818,6 +818,7 @@
 ./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug
+./usr/libdata/debug/usr/tests/usr.bin/netpgpverify			tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-usr.sbin-debug
 ./usr/libdata/debug/usr/tests/util					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df					tests-obsolete		obsolete
