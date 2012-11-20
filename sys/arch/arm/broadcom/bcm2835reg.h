@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.4 2012/11/20 21:21:42 skrll Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.5 2012/11/20 21:22:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 /*
  * Reference: BCM2835 ARM Periperhals
- * 
+ *
  * 	http://dmkenr5gtnd8f.cloudfront.net/wp-content/uploads/2012/02/BCM2835-ARM-Peripherals.pdf
  */
 
