@@ -44,8 +44,8 @@
 
 __BEGIN_DECLS
 
-typedef unsigned long	mp_digit;
-typedef unsigned long	mp_word __attribute__ ((mode(TI)));
+typedef uint64_t	mp_digit;
+typedef uint64_t	mp_word;
 
 /* multi-precision integer */
 typedef struct mp_int {
