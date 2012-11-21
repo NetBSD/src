@@ -8,37 +8,16 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.11 2012/11/18 21:19:52 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.12 2012/11/21 17:35:21 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
 printf '#include <rump/rump_namei.h>\n'
-printf '#ifdef _KERNEL\n'
-printf '#include <sys/stdint.h>\n'
-printf '#else\n'
-printf '#include <stdint.h>\n'
-printf '#endif\n'
 
 fromvers () {
 	echo
 	sed -n '1{s/\$//gp;q;}' $1
 }
-
-# Odds of sockaddr_in changing are zero, so no acrobatics needed.  Alas,
-# dealing with in_addr_t for s_addr is very difficult, so have it as
-# an incompatible uint32_t for now.
-echo
-cat <<EOF
-struct rump_sockaddr_in {
-	uint8_t		sin_len;
-	uint8_t		sin_family;
-	uint16_t	sin_port;
-	struct {
-			uint32_t s_addr;
-	} sin_addr;
-	int8_t		sin_zero[8];
-};
-EOF
 
 fromvers ../../../sys/fcntl.h
 sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
