@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.4 2012/11/18 19:29:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.5 2012/11/21 17:41:27 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -14,10 +14,6 @@
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
-
-#ifdef __sun__
-typedef long register_t;
-#endif
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
@@ -166,6 +162,11 @@ posix_memalign(void **ptr, size_t align, size_t size)
 /* pfft, but what are you going to do? */
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
+#endif
+
+#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#define RUMP_REGISTER_T long
+typedef RUMP_REGISTER_T register_t;
 #endif
 
 #endif /* _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_ */
