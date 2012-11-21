@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.24 2012/11/19 00:36:21 jakllsch Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.25 2012/11/21 20:45:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -145,13 +145,23 @@ struct ext2fs_dinode {
 #define	EXT2_IFSOCK		0140000		/* UNIX domain socket. */
 
 /* file flags */
-#define EXT2_SECRM		0x00000001	/* Secure deletion */
-#define EXT2_UNRM		0x00000002	/* Undelete */
-#define EXT2_COMPR		0x00000004	/* Compress file */
-#define EXT2_SYNC		0x00000008	/* Synchronous updates */
-#define EXT2_IMMUTABLE		0x00000010	/* Immutable file */
+#define EXT2_SECRM		0x00000001 /* Secure deletion */
+#define EXT2_UNRM		0x00000002 /* Undelete */
+#define EXT2_COMPR		0x00000004 /* Compress file */
+#define EXT2_SYNC		0x00000008 /* Synchronous updates */
+#define EXT2_IMMUTABLE		0x00000010 /* Immutable file */
 #define EXT2_APPEND		0x00000020 /* writes to file may only append */
-#define EXT2_NODUMP		0x00000040	/* do not dump file */
+#define EXT2_NODUMP		0x00000040 /* do not dump file */
+#define EXT2_NOATIME		0x00000080 /* do not update atime */
+#define EXT2_INDEX		0x00001000 /* hash-indexed directory */
+#define EXT2_IMAGIC		0x00002000 /* AFS directory */
+#define EXT2_JOURNAL_DATA	0x00004000 /* file data should be journaled */
+#define EXT2_NOTAIL		0x00008000 /* file tail should not be merged */
+#define EXT2_DIRSYNC		0x00010000 /* dirsync behaviour */
+#define EXT2_TOPDIR		0x00020000 /* Top of directory hierarchies*/
+#define EXT2_HUGE_FILE		0x00040000 /* Set to each huge file */
+#define EXT2_EXTENTS		0x00080000 /* Inode uses extents */
+#define EXT2_EOFBLOCKS		0x00400000 /* Blocks allocated beyond EOF */
 
 /* Size of on-disk inode. */
 #define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
