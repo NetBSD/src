@@ -1,4 +1,4 @@
-/*      $NetBSD: wdc_xsurf.c,v 1.1 2012/11/19 22:36:11 rkujawa Exp $ */
+/*      $NetBSD: wdc_xsurf.c,v 1.2 2012/11/21 22:37:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -135,9 +135,7 @@ wdc_xsurf_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
-	/* This controller has no aux control registers! 
-	   But just pretenting that they don't exist might not work,
-	   consider using WDC_NO_IDS and turning it into flag... */
+	/* this controller has no aux control registers */
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_NO_AUXCTL;
 
 	/* attach the channels */
