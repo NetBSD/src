@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.75 2012/01/27 19:22:48 para Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.76 2012/11/21 23:11:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.75 2012/01/27 19:22:48 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.76 2012/11/21 23:11:23 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,54 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 	ip->i_e2fs_size = size;
 
 	return 0;
+}
+
+uint64_t
+ext2fs_nblock(struct inode *ip)
+{
+	uint64_t nblock = ip->i_e2fs_nblock;
+	struct m_ext2fs * const fs = ip->i_e2fs;
+
+	if (fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_HUGE_FILE) {
+		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
+
+		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
+			nblock = fsbtodb(fs, nblock);
+		}
+	}
+
+	return nblock;
+}
+
+int
+ext2fs_setnblock(struct inode *ip, uint64_t nblock)
+{
+	struct m_ext2fs * const fs = ip->i_e2fs;
+
+	if (nblock <= 0xffffffffULL) {
+		CLR(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = nblock;
+		return 0;
+	}
+
+	if (!ISSET(fs->e2fs.e2fs_features_rocompat, EXT2F_ROCOMPAT_HUGE_FILE)) 
+		return EFBIG;
+
+	if (nblock <= 0xffffffffffffULL) {
+		CLR(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = nblock & 0xffffffff;
+		ip->i_e2fs_nblock_high = (nblock >> 32) & 0xffff;
+		return 0;
+	}
+
+	if (dbtofsb(fs, nblock) <= 0xffffffffffffULL) {
+		SET(ip->i_e2fs_flags, EXT2_HUGE_FILE);
+		ip->i_e2fs_nblock = dbtofsb(fs, nblock) & 0xffffffff;
+		ip->i_e2fs_nblock_high = (dbtofsb(fs, nblock) >> 32) & 0xffff;
+		return 0;
+	}
+
+	return EFBIG;
 }
 
 /*
@@ -260,7 +308,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 
 	if (ovp->v_type == VLNK &&
 	    (ext2fs_size(oip) < ump->um_maxsymlinklen ||
-	     (ump->um_maxsymlinklen == 0 && oip->i_e2fs_nblock == 0))) {
+	     (ump->um_maxsymlinklen == 0 && ext2fs_nblock(oip) == 0))) {
 		KDASSERT(length == 0);
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)ext2fs_size(oip));
@@ -425,7 +473,9 @@ done:
 	 * Put back the real size.
 	 */
 	(void)ext2fs_setsize(oip, length);
-	oip->i_e2fs_nblock -= blocksreleased;
+	error = ext2fs_setnblock(oip, ext2fs_nblock(oip) - blocksreleased);
+	if (error != 0)
+		allerror = error;
 	oip->i_flag |= IN_CHANGE;
 	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
 	return (allerror);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.35 2012/11/21 23:11:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.34 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.35 2012/11/21 23:11:23 jakllsch Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -343,7 +343,7 @@ fail:
 		}
 	}
 	if (deallocated) {
-		ip->i_e2fs_nblock -= btodb(deallocated);
+		ext2fs_setnblock(ip, ext2fs_nblock(ip) - btodb(deallocated));
 		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
 	}
 	return error;
