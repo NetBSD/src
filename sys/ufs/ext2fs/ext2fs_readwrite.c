@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.61 2012/04/29 22:54:00 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.62 2012/11/21 23:11:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.61 2012/04/29 22:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.62 2012/11/21 23:11:23 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ ext2fs_read(void *v)
 
 	if (vp->v_type == VLNK) {
 		if (ext2fs_size(ip) < ump->um_maxsymlinklen ||
-		    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0))
+		    (ump->um_maxsymlinklen == 0 && ext2fs_nblock(ip) == 0))
 			panic("%s: short symlink", "ext2fs_read");
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", "ext2fs_read", vp->v_type);
