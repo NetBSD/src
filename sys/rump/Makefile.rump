@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.64 2012/11/13 19:12:42 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.65 2012/11/21 17:48:05 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -27,10 +27,19 @@ CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DCOMPAT_50=1
 CPPFLAGS+=	-DDEBUGPRINT
 CPPFLAGS+=	-I${.CURDIR} -I.
-CPPFLAGS+=	-I${RUMPTOP}/../../common/include -isystem ${RUMPTOP}/../arch
+CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
-CPPFLAGS+=	-nostdinc -isystem ${RUMPTOP}/..
+CPPFLAGS+=	-nostdinc
+
+.ifdef NEED_ISYSTEM
+CPPFLAGS+=	-isystem ${RUMPTOP}/../arch
+CPPFLAGS+=	-isystem ${RUMPTOP}/..
+.else
+CPPFLAGS+=	-I${RUMPTOP}/../arch
+CPPFLAGS+=	-I${RUMPTOP}/..
+.endif
+
 LDFLAGS+=	-T ${RUMPTOP}/ldscript.rump
 
 RUMP_DIAGNOSTIC?=yes
