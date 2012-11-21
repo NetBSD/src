@@ -6746,6 +6746,186 @@ do_swi (char * str)
 }
 
 static void
+do_dsb (char * str)
+{
+  skip_whitespace (str);
+  /* Allow optional leading '#'.  */
+  if (is_immediate_prefix (*str))
+    str++;
+
+  end_of_line (str);
+}
+
+static void
+do_bfci (char * str)
+{
+  expressionS expr;
+  unsigned long lsb;
+  unsigned long width;
+  int reg;
+
+  skip_whitespace (str);
+
+  if ((reg = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    return;
+
+  if (reg == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if ((inst.instruction & 0xf) == 0)
+    {
+      if ((reg == reg_required_here (&str, 0)) == FAIL
+	  || skip_past_comma (&str) == FAIL)
+	return;
+
+      if (reg == REG_PC)
+	{
+	  inst.error = BAD_PC;
+	  return;
+	}
+    }
+
+  if (is_immediate_prefix (*str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    return;
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return FAIL;
+    }
+
+  lsb = expr.X_add_number;
+  if (lsb > 31)
+    {
+      inst.error = _("invalid lsb");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL)
+    return;
+
+  if (is_immediate_prefix (*str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    return;
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return FAIL;
+    }
+
+  width = expr.X_add_number;
+  if (lsb + width > 32 || width > 32 || width == 0)
+    {
+      if (!inst.error)
+        inst.error = _("invalid width");
+      return;
+    }
+
+  inst.instruction |= (lsb << 7);
+  inst.instruction |= (lsb + width - 1) << 16;
+
+  end_of_line (str);
+}
+
+static void
+do_bfx (char * str)
+{
+  expressionS expr;
+  unsigned long lsb;
+  unsigned long width;
+  int rd, rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rd == REG_PC || rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (is_immediate_prefix (*str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    return;
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return FAIL;
+    }
+
+  lsb = expr.X_add_number;
+  if (lsb > 31)
+    {
+      inst.error = _("invalid lsb");
+      return;
+    }
+
+  if (skip_past_comma (&str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (is_immediate_prefix (*str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  if (my_get_expression (&expr, &str))
+    return;
+
+  width = expr.X_add_number;
+  if (lsb + width > 32 || width > 32 || width == 0)
+    {
+      inst.error = _("invalid width");
+      return;
+    }
+
+  inst.instruction |= (lsb << 7);
+  inst.instruction |= (width - 1) << 16;
+
+  end_of_line (str);
+}
+
+static void
 do_swap (char * str)
 {
   int reg;
@@ -10014,6 +10194,15 @@ static const struct asm_opcode insns[] =
   /*  ARM V6Z.  */
   { "smi",       0xe1600070, 3,  ARM_EXT_V6Z,      do_smi},
 
+  /*  ARM V7A.  */
+  { "dmb",       0xf57ff05f, 0,  ARM_EXT_V7A,      do_dsb},
+  { "dsb",       0xf57ff04f, 0,  ARM_EXT_V7A,      do_dsb},
+  { "isb",       0xf57ff06f, 0,  ARM_EXT_V7A,      do_dsb},
+  { "sbfx",      0xe7a00050, 4,  ARM_EXT_V7A,      do_bfx},
+  { "bfi",       0xe7c00010, 3,  ARM_EXT_V7A,      do_bfci},
+  { "bfc",       0xe7c0001f, 3,  ARM_EXT_V7A,      do_bfci},
+  { "ubfx",      0xe7e00050, 4,  ARM_EXT_V7A,      do_bfx},
+
   /* Core FPA instruction set (V1).  */
   {"wfs",        0xee200110, 3,  FPU_FPA_EXT_V1,   do_fpa_ctrl},
   {"rfs",        0xee300110, 3,  FPU_FPA_EXT_V1,   do_fpa_ctrl},
@@ -12714,6 +12903,8 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"mpcorenovfp",	ARM_ARCH_V6K,    FPU_NONE},
   {"arm1176jz-s",	ARM_ARCH_V6ZK,   FPU_NONE},
   {"arm1176jzf-s",	ARM_ARCH_V6ZK,   FPU_ARCH_VFP_V2},
+  {"cortex-a8",		ARM_ARCH_V7A,    FPU_ARCH_VFP_V2},
+  {"cortex-a9",		ARM_ARCH_V7A,    FPU_ARCH_VFP_V2},
   /* ??? XSCALE is really an architecture.  */
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP_V2},
   /* ??? iwmmxt is not a processor.  */
@@ -12757,6 +12948,8 @@ static struct arm_arch_option_table arm_archs[] =
   {"armv6k",            ARM_ARCH_V6K,    FPU_ARCH_VFP},
   {"armv6z",            ARM_ARCH_V6Z,    FPU_ARCH_VFP},
   {"armv6zk",           ARM_ARCH_V6ZK,   FPU_ARCH_VFP},
+  {"armv7",             ARM_ARCH_V7A,    FPU_ARCH_VFP},
+  {"armv7a",            ARM_ARCH_V7A,    FPU_ARCH_VFP},
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP},
   {"iwmmxt",		ARM_ARCH_IWMMXT, FPU_ARCH_VFP},
   {NULL, 0, 0}
@@ -12963,6 +13156,20 @@ arm_parse_arch (char * str)
 
   as_bad (_("unknown architecture `%s'\n"), str);
   return 0;
+}
+
+static void
+s_arch (int ignore ATTRIBUTE_UNUSED)
+{
+  char *name, *p, c;
+  SKIP_WHITESPACE ();
+  name = input_line_pointer;
+  c = get_symbol_end ();
+  p = input_line_pointer;
+  arm_parse_arch (name);
+  *p = c;
+  SKIP_WHITESPACE ();
+  demand_empty_rest_of_line ();
 }
 
 static int
@@ -14839,6 +15046,7 @@ const pseudo_typeS md_pseudo_table[] =
   { "unreq",       s_unreq,       0 },
   { "bss",         s_bss,         0 },
   { "align",       s_align,       0 },
+  { "arch",        s_arch,        0 },
   { "arm",         s_arm,         0 },
   { "thumb",       s_thumb,       0 },
   { "code",        s_code,        0 },
