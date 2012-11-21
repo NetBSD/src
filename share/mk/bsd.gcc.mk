@@ -1,13 +1,17 @@
-#	$NetBSD: bsd.gcc.mk,v 1.6 2012/11/21 18:45:08 pooka Exp $
+#	$NetBSD: bsd.gcc.mk,v 1.7 2012/11/21 20:30:01 pooka Exp $
 
 .if !defined(_BSD_GCC_MK_)
 _BSD_GCC_MK_=1
 
 .if defined(EXTERNAL_TOOLCHAIN)
 _GCC_CRTBEGIN!=		${CC} --print-file-name=crtbegin.o
+.ifndef _GCC_CRTBEGINS
 _GCC_CRTBEGINS!=	${CC} --print-file-name=crtbeginS.o
+.endif
 _GCC_CRTEND!=		${CC} --print-file-name=crtend.o
+.ifndef _GCC_CRTENDS
 _GCC_CRTENDS!=		${CC} --print-file-name=crtendS.o
+.endif
 _GCC_CRTI!=		${CC} --print-file-name=crti.o
 _GCC_CRTN!=		${CC} --print-file-name=crtn.o
 _GCC_CRTDIR!=		dirname ${_GCC_CRTBEGIN}
