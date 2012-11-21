@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29 2012/09/27 21:28:13 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.30 2012/11/21 19:38:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.29 2012/09/27 21:28:13 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.30 2012/11/21 19:38:36 matt Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -155,9 +155,9 @@ ENTRY_NP(cpu_reset)
 	 * Hurl ourselves into the ROM
 	 */
 	mrc	p15, 0, r0, c1, c0, 0
-	bic	r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
-	bic	r0, #(CPU_CONTROL_IC_ENABLE)
-	orr	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
+	bic	r0, r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
+	bic	r0, r0, #(CPU_CONTROL_IC_ENABLE)
+	orr	r0, r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr	p15, 0, r0, c1, c0, 0
 	mcreq	p15, 0, r2, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
