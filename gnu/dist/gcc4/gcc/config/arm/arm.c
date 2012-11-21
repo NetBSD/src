@@ -433,6 +433,7 @@ static int thumb_call_reg_needed;
 #define FL_WBUF	      (1 << 14)	      /* Schedule for write buffer ops.
 					 Note: ARM6 & 7 derivatives only.  */
 #define FL_ARCH6K     (1 << 15)       /* Architecture rel 6 K extensions.  */
+#define FL_ARCH7A     (1 << 16)       /* Architecture rel 7.  */
 
 #define FL_IWMMXT     (1 << 29)	      /* XScale v2 or "Intel Wireless MMX technology".  */
 
@@ -451,6 +452,7 @@ static int thumb_call_reg_needed;
 #define FL_FOR_ARCH6K	(FL_FOR_ARCH6 | FL_ARCH6K)
 #define FL_FOR_ARCH6Z	FL_FOR_ARCH6
 #define FL_FOR_ARCH6ZK	FL_FOR_ARCH6K
+#define FL_FOR_ARCH7A	(FL_ARCH7A | FL_FOR_ARCH6K)
 
 /* The bits in this mask specify which
    instructions we are allowed to generate.  */
@@ -483,6 +485,9 @@ int arm_arch6 = 0;
 
 /* Nonzero if this chip supports the ARM 6K extensions.  */
 int arm_arch6k = 0;
+
+/* Nonzero if this chip supports the ARM Architecutre 7 extensions.  */
+int arm_arch7 = 0;
 
 /* Nonzero if this chip can benefit from load scheduling.  */
 int arm_ld_sched = 0;
@@ -596,6 +601,7 @@ static const struct processors all_architectures[] =
   {"armv6k",  mpcore,	  "6K",  FL_CO_PROC |             FL_FOR_ARCH6K, NULL},
   {"armv6z",  arm1176jzs, "6Z",  FL_CO_PROC |             FL_FOR_ARCH6Z, NULL},
   {"armv6zk", arm1176jzs, "6ZK", FL_CO_PROC |             FL_FOR_ARCH6ZK, NULL},
+  {"armv7a",  cortexa8,	  "7A",  FL_CO_PROC |             FL_FOR_ARCH7A, NULL},
   {"ep9312",  ep9312,     "4T",  FL_LDSCHED | FL_CIRRUS | FL_FOR_ARCH4, NULL},
   {"iwmmxt",  iwmmxt,     "5TE", FL_LDSCHED | FL_STRONG | FL_FOR_ARCH5TE | FL_XSCALE | FL_IWMMXT , NULL},
   {NULL, arm_none, NULL, 0 , NULL}
@@ -1100,6 +1106,7 @@ arm_override_options (void)
   arm_arch5e = (insn_flags & FL_ARCH5E) != 0;
   arm_arch6 = (insn_flags & FL_ARCH6) != 0;
   arm_arch6k = (insn_flags & FL_ARCH6K) != 0;
+  arm_arch7 = (insn_flags & FL_ARCH7A) != 0;
   arm_arch_xscale = (insn_flags & FL_XSCALE) != 0;
   arm_arch_cirrus = (insn_flags & FL_CIRRUS) != 0;
 
