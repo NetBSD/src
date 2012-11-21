@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.40 2011/07/17 23:52:12 dyoung Exp $
+#	$NetBSD: Makefile,v 1.40.10.1 2012/11/21 00:00:10 matt Exp $
 
 INCSDIR= /usr/include/arm
 
-INCS=	ansi.h aout_machdep.h armreg.h asm.h atomic.h \
+INCS=	aeabi.h ansi.h aout_machdep.h armreg.h asm.h atomic.h \
 	bswap.h byte_swap.h \
-	cdefs.h cpu.h \
+	cdefs.h cpu.h cpuconf.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h atomic.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h swi.h sysarch.h \
 	trap.h types.h \
+	vfpreg.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>
