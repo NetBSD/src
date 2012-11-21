@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.105 2012/11/19 22:39:47 rkujawa Exp $
+# $NetBSD: GENERIC.in,v 1.106 2012/11/21 22:33:50 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -466,8 +466,7 @@ qn*		at zbus0		# Quicknet
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
-#wdc*		at xsurfbus?		# IDE on X-Surf
-#options	WDC_NO_IDS
+wdc*		at xsurfbus?		# IDE on X-Surf
 clockport*	at gencp?
 
 # Arcnet
