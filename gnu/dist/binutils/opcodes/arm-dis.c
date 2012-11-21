@@ -80,6 +80,7 @@
    %A			print address for ldc/stc/ldf/stf instruction
    %m			print register mask for ldm/stm instruction
    %C			print the PSR sub type.
+   %E			print the LSB and WIDTH fields of a BFI or BFC instruction.
    %F			print the COUNT field of a LFM/SFM instruction.
 IWMMXT specific format options:
    %<bitfield>g         print as an iWMMXt 64-bit register
@@ -117,6 +118,17 @@ static const struct arm_opcode arm_opcodes[] =
   {ARM_EXT_V2S, 0x01000090, 0x0fb00ff0, "swp%c%22'b\t%12-15r, %0-3r, [%16-19r]"},
   {ARM_EXT_V3M, 0x00800090, 0x0fa000f0, "%22?sumull%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
   {ARM_EXT_V3M, 0x00a00090, 0x0fa000f0, "%22?sumlal%c%20's\t%12-15r, %16-19r, %0-3r, %8-11r"},
+
+  /* ARM V7 instructions.  */
+  {ARM_EXT_V7A, 0x07a00050, 0x0fa00070, "%22?usbfx%c\t%12-15r, %0-3r, #%7-11d, #%16-20W"},
+  {ARM_EXT_V7A, 0x07c0001f, 0x0fa0007f, "bfc%c\t%12-15R, %E"},
+  {ARM_EXT_V7A, 0x07c00010, 0x0fa00070, "bfi%c\t%12-15R, %0-3r, %E"},
+  {ARM_EXT_V7A, 0xf57ff05f, 0xffffffff, "dmb"},
+  {ARM_EXT_V7A, 0xf57ff050, 0xfffffff0, "dmb\t#%0-3d"},
+  {ARM_EXT_V7A, 0xf57ff05f, 0xffffffff, "dsb"},
+  {ARM_EXT_V7A, 0xf57ff050, 0xfffffff0, "dsb\t%#0-3d"},
+  {ARM_EXT_V7A, 0xf57ff06f, 0xffffffff, "isb"},
+  {ARM_EXT_V7A, 0xf57ff060, 0xfffffff0, "isb\t%#0-3d"},
 
   /* ARM V6Z instructions.  */
   {ARM_EXT_V6Z, 0x01600070, 0x0ff000f0, "smi%c\t%e"},
@@ -1232,6 +1244,19 @@ print_insn_arm (pc, info, given)
 			func (stream, "x");
 		      if (given & 0x10000)
 			func (stream, "c");
+		      break;
+
+		    case 'E':
+		      {
+			long msb = (given >> 16) & 0x1f;
+			long lsb = (given >> 7) & 0x1f;
+			long width = msb - lsb + 1;
+
+			if (width > 0)
+			  func(stream, "#%lu, #%lu", lsb, width);
+			else
+			  func(stream, "(invalid %lu:%lu)", lsb, msb);
+		      }
 		      break;
 
 		    case 'F':
