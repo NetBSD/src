@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.209.2.4.2.1 2012/11/01 16:44:51 matt Exp $
+# $NetBSD: shl.mi,v 1.209.2.4.2.2 2012/11/21 00:07:36 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -94,8 +94,10 @@
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		npf
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
-./usr/lib/libopcodes.so.5			comp-c-shlib		binutils
-./usr/lib/libopcodes.so.5.0			comp-c-shlib		binutils
+./usr/lib/libopcodes.so.3			comp-c-shlib		binutils=216
+./usr/lib/libopcodes.so.3.0			comp-c-shlib		binutils=216
+./usr/lib/libopcodes.so.5			comp-c-shlib		binutils=219
+./usr/lib/libopcodes.so.5.0			comp-c-shlib		binutils=219
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio_pic.a			comp-c-piclib
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib
@@ -244,7 +246,8 @@
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug
-./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libbfd.so.10.0.debug	comp-sys-debug	binutils=216,debug
+./usr/libdata/debug/usr/lib/libbfd.so.12.0.debug	comp-sys-debug	binutils=219,debug
 ./usr/libdata/debug/usr/lib/libbind9.so.5.7.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug
@@ -311,7 +314,8 @@
 ./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=45,debug
-./usr/libdata/debug/usr/lib/libopcodes.so.5.0.debug	comp-c-debug	binutils,debug
+./usr/libdata/debug/usr/lib/libopcodes.so.3.0.debug	comp-c-debug	binutils=216,debug
+./usr/libdata/debug/usr/lib/libopcodes.so.5.0.debug	comp-c-debug	binutils=219,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
