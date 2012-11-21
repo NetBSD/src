@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.15 2012/11/18 21:20:16 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.16 2012/11/21 17:36:17 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -8,21 +8,6 @@
 #define _RUMP_RUMPDEFS_H_
 
 #include <rump/rump_namei.h>
-#ifdef _KERNEL
-#include <sys/stdint.h>
-#else
-#include <stdint.h>
-#endif
-
-struct rump_sockaddr_in {
-	uint8_t		sin_len;
-	uint8_t		sin_family;
-	uint16_t	sin_port;
-	struct {
-			uint32_t s_addr;
-	} sin_addr;
-	int8_t		sin_zero[8];
-};
 
 /*	NetBSD: fcntl.h,v 1.42 2012/01/25 00:28:35 christos Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
