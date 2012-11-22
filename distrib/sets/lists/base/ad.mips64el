@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.102 2012/11/20 05:27:22 agc Exp $
+# $NetBSD: ad.mips64el,v 1.103 2012/11/22 11:23:43 martin Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -487,6 +487,8 @@
 ./usr/lib/o32/libmpfr.so.4.1			base-compat-shlib	obsolete
 ./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libnetpgpverify.so.4		base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libnetpgpverify.so.4.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnpf.so.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/o32/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds
