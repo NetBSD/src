@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.32 2012/11/21 15:57:20 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.33 2012/11/22 00:44:31 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -773,4 +773,48 @@ share/zoneinfo/southamerica			patch
 		(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
    	Various fixes to documentation and commentary.
 	[apb, ticket #677]
+
+sys/arch/amiga/conf/files.amiga			1.162
+sys/arch/amiga/dev/grf_cv3d.c			1.27
+
+	CV3DONZORRO2 option is no longer needed.
+	[phx, ticket #680]
+
+sys/arch/amiga/conf/files.amiga			1.161
+sys/arch/amiga/dev/if_ed.c			delete
+sys/arch/amiga/dev/if_ed_zbus.c			1.1-1.2
+sys/arch/amiga/dev/if_edreg.h			delete
+sys/dev/ic/dp8390reg.h				1.9
+
+	New ed(4) device driver for Hydra and ASDG Zorro2 bus network cards.
+	This driver is based on the MI dp8390 backend.
+	[phx, ticket #681]
+
+sys/dev/acpi/acpi_pci_link.c			1.19
+
+	Fix PCI interrupts on some systems.
+	[chs, ticket #682]
+
+sys/arch/ia64/acpi/acpi_machdep.c		1.6
+sys/arch/ia64/include/acpi_machdep.h		1.6
+sys/arch/x86/acpi/acpi_machdep.c		1.4
+sys/arch/x86/include/acpi_machdep.h		1.11
+sys/arch/x86/x86/mpacpi.c			1.95-1.96
+sys/dev/acpi/acpi.c				1.255
+
+	Simplify the ACPI/PCI glue, improve detection of PCI buses, and
+	fix some panics.  PR#47016.
+	[chs, ticket #683]
+
+sys/arch/i386/conf/kern.ldscript		1.9
+sys/arch/i386/conf/kern.ldscript.4MB		1.10
+sys/arch/i386/conf/kern.ldscript.Xen		1.4
+
+	Improve CPU cache usage slightly for some kernel configs.
+	[chs, ticket #684]
+
+sys/dev/pci/if_nfe.c				1.57
+
+	Improve nfe(4) performance by avoiding bounce-buffering.
+	[chs, ticket #685]
 
