@@ -36,6 +36,10 @@
 #include "digest.h"
 #include "pgpsum.h"
 
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
+
 /* add the ascii armor line endings (except for last line) */
 static size_t
 don_armor(digest_t *hash, uint8_t *in, size_t insize, int doarmor)
@@ -103,7 +107,7 @@ already_armored(uint8_t *in, size_t insize)
 
 /* calculate the checksum for the data we have */
 static int
-calcsum(uint8_t *out, size_t size, const char *name, uint8_t *mem, size_t cc, const uint8_t *hashed, size_t hashsize, int doarmor)
+calcsum(uint8_t *out, size_t size, uint8_t *mem, size_t cc, const uint8_t *hashed, size_t hashsize, int doarmor)
 {
 	digest_t	 hash;
 	uint32_t	 len32;
@@ -111,6 +115,7 @@ calcsum(uint8_t *out, size_t size, const char *name, uint8_t *mem, size_t cc, co
 	uint8_t		 hashalg;
 	uint8_t		 trailer[6];
 
+	USE_ARG(size);
 	/* hashed data is non-null (previously checked) */
 	hashalg = hashed[3];
 	memcpy(&len16, &hashed[4], sizeof(len16));
@@ -122,7 +127,7 @@ calcsum(uint8_t *out, size_t size, const char *name, uint8_t *mem, size_t cc, co
 #ifdef NETPGPV_DEBUG
 	writefile(mem, cc);
 #endif
-	digest_init(&hash, hashalg);
+	digest_init(&hash, (const unsigned)hashalg);
 	if (strchr("tw", doarmor) != NULL && !already_armored(mem, cc)) {
 		/* this took me ages to find - something causes gpg to truncate its input */
 		don_armor(&hash, mem, cc - 1, doarmor);
@@ -166,7 +171,7 @@ pgpv_digest_file(uint8_t *data, size_t size, const char *name, const uint8_t *ha
 		warn("%s - can't mmap", name);
 		goto done;
 	}
-	ret = calcsum(data, size, name, mem, cc, hashed, hashsize, doarmor);
+	ret = calcsum(data, size, mem, cc, hashed, hashsize, doarmor);
 done:
 	if (data) {
 		munmap(mem, cc);
@@ -183,5 +188,5 @@ pgpv_digest_memory(uint8_t *data, size_t size, void *mem, size_t cc, const uint8
 		fprintf(stderr, "no hashed data provided\n");
 		return 0;
 	}
-	return calcsum(data, size, "[memory]", mem, cc, hashed, hashsize, doarmor);
+	return calcsum(data, size, mem, cc, hashed, hashsize, doarmor);
 }
