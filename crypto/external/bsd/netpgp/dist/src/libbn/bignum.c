@@ -500,7 +500,7 @@ mp_clear (mp_int * a)
     }
 
     /* free ram */
-    netpgp_deallocate(a->dp, a->alloc);
+    netpgp_deallocate(a->dp, (size_t)a->alloc);
 
     /* reset members to make debugging easier */
     a->dp    = NULL;
@@ -4789,6 +4789,7 @@ mp_cnt_lsb(mp_int *a)
    if ((q & 1) == 0) {
       do {
          qq  = q & 15;
+	 /* LINTED previous op ensures range of qq */
          x  += lnz[qq];
          q >>= 4;
       } while (qq == 0);
@@ -5064,6 +5065,7 @@ mp_toradix_n(mp_int * a, char *str, int radix, int maxlen)
       mp_clear (&t);
       return res;
     }
+    /* LINTED -- radix' range is checked above, limits d's range */
     *str++ = mp_s_rmap[d];
     ++digs;
   }
@@ -5089,9 +5091,9 @@ formatbn(const BIGNUM *a, const int radix)
 	if (mp_radix_size(__UNCONST(a), radix, &len) != MP_OKAY) {
 		return NULL;
 	}
-	if ((s = netpgp_allocate(1, len)) != NULL) {
+	if ((s = netpgp_allocate(1, (size_t)len)) != NULL) {
 		if (mp_toradix_n(__UNCONST(a), s, radix, len) != MP_OKAY) {
-			netpgp_deallocate(s, len);
+			netpgp_deallocate(s, (size_t)len);
 			return NULL;
 		}
 	}
