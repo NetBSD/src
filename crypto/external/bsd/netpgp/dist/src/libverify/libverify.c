@@ -874,7 +874,7 @@ read_compressed(pgpv_t *pgp, pgpv_compress_t *compressed, uint8_t *p, size_t len
 	pgpv_mem_t	*unzmem;
 	bz_stream	 bz;
 	z_stream	 z;
-	int		 ok;
+	int		 ok = 0;
 
 	compressed->compalg = *p;
 	compressed->s.size = len;
