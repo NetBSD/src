@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.18 2012/11/22 17:26:58 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.19 2012/11/22 18:51:29 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -155,4 +155,12 @@ sys/dev/ic/ciss.c				1.28
 
 	ciss(4): don't try to handle sensors if there aren't any.
 	[chs, ticket #687]
+
+sys/kern/vfs_vnode.c				1.17
+sys/kern/vfs_vnops.c				1.186
+
+	Resolve races between vget() and vrelel() resulting in vget()
+	resulting in vget() returning dead vnodes.
+	It is impossible to resolve these races in vn_lock().
+	[hannken, ticket #692]
 
