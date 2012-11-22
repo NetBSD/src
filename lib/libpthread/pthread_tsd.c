@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_tsd.c,v 1.9 2012/11/21 19:19:24 christos Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.10 2012/11/22 08:32:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams, and by Andrew Doran.
+ * by Nathan J. Williams, by Andrew Doran, and by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.9 2012/11/21 19:19:24 christos Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.10 2012/11/22 08:32:36 christos Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -161,7 +161,8 @@ pthread_key_delete(pthread_key_t key)
 	 * Subject: Re: TSD key reusing issue
 	 * Message-ID: <u97d8.29$fL6.200@news.cpqcorp.net>
 	 * Date: Thu, 21 Feb 2002 09:06:17 -0500
-	 * http://groups.google.com/groups?hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
+	 *	 http://groups.google.com/groups?\
+	 *	 hl=en&selm=u97d8.29%24fL6.200%40news.cpqcorp.net
 	 * 
 	 * Given:
 	 *
@@ -217,12 +218,16 @@ pthread_key_delete(pthread_key_t key)
 
 	/*
 	 * We do option 3; we find the list of all pt_specific structures
-	 * threaded on the key we are deleting, unthread them, set the
-	 * pointer to NULL, and call the destructor on a saved pointer.
-	 * Finally we unthread the entry, freeing it from further use.
+	 * threaded on the key we are deleting, unthread them, and set the
+	 * pointer to NULL. Finally we unthread the entry, freeing it for
+	 * further use.
+	 *
+	 * We don't call the destructor here, it is the responsibility
+	 * of the application to cleanup the storage:
+	 * 	http://pubs.opengroup.org/onlinepubs/9699919799/functions/\
+	 *	pthread_key_delete.html
 	 */
 	struct pt_specific *pt;
-	void (*destructor)(void *);
 
 	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
 
@@ -230,21 +235,10 @@ pthread_key_delete(pthread_key_t key)
 
 	pthread__assert(pthread__tsd_destructors[key] != NULL);
 
-	destructor = pthread__tsd_destructors[key];
-	if (destructor == null_destructor)
-		destructor = NULL;
-
 	while ((pt = PTQ_FIRST(&pthread__tsd_list[key])) != NULL) {
-		void *v;
 		PTQ_REMOVE(&pthread__tsd_list[key], pt, pts_next);
-		v = pt->pts_value;
 		pt->pts_value = NULL;
 		pt->pts_next.ptqe_prev = NULL;
-		if (destructor && v) {
-			pthread_mutex_unlock(&tsd_mutex);
-			(*destructor)(v);
-			pthread_mutex_lock(&tsd_mutex);
-		}
 	}
 
 	pthread__tsd_destructors[key] = NULL;
