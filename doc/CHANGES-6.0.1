@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.16 2012/11/20 23:30:33 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.17 2012/11/22 00:34:59 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -145,4 +145,9 @@ share/zoneinfo/southamerica			patch
 		(Thanks to Even Scharning, Steffen Thorsen, and Tim Parenti.)
    	Various fixes to documentation and commentary.
 	[apb, ticket #677]
+
+sys/dev/acpi/acpi_pci_link.c			1.19
+
+	Fix PCI interrupts on some systems.
+	[chs, ticket #682]
 
