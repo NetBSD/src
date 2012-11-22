@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.17 2012/11/22 00:34:59 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.18 2012/11/22 17:26:58 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -150,4 +150,9 @@ sys/dev/acpi/acpi_pci_link.c			1.19
 
 	Fix PCI interrupts on some systems.
 	[chs, ticket #682]
+
+sys/dev/ic/ciss.c				1.28
+
+	ciss(4): don't try to handle sensors if there aren't any.
+	[chs, ticket #687]
 
