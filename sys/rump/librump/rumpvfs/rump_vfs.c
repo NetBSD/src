@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.69 2012/11/18 18:39:23 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.70 2012/11/22 21:23:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.69 2012/11/18 18:39:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.70 2012/11/22 21:23:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -269,7 +269,7 @@ rump_getvninfo(struct vnode *vp, enum rump_vtype *vtype,
 	voff_t *vsize, dev_t *vdev)
 {
 
-	*vtype = vp->v_type;
+	*vtype = (enum rump_vtype)vp->v_type;
 	*vsize = vp->v_size;
 	if (vp->v_specnode)
 		*vdev = vp->v_rdev;
@@ -323,7 +323,7 @@ void
 rump_vattr_settype(struct vattr *vap, enum rump_vtype vt)
 {
 
-	vap->va_type = vt;
+	vap->va_type = (enum vtype)vt;
 }
 
 void
