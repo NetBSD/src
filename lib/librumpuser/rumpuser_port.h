@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.5 2012/11/21 17:41:27 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.6 2012/11/22 21:23:08 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -113,7 +113,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #ifndef __dead
-#define __dead
+#define __dead __attribute__((__noreturn__))
 #endif
 
 #ifndef __printflike
