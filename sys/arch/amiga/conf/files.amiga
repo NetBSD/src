@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.154 2012/01/24 00:19:39 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.154.2.1 2012/11/22 00:23:35 riz Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -18,7 +18,6 @@ defflag	opt_amigaccgrf.h	USE_C_BFOPS
 
 defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
-defflag	opt_amigacons.h		CV3DONZORRO2
 defflag	opt_amigacons.h		SERCONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
