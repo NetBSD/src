@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2012/11/22 04:05:57 agc Exp $
+# $NetBSD: Makefile,v 1.4 2012/11/22 21:20:44 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,9 @@ CPPFLAGS+=-I${EXTDIST}/libverify
 LIBNETPGPVERIFYDIR!=   cd ${.CURDIR}/../../lib/verify && ${PRINTOBJDIR}
 LDADD+=         -L${LIBNETPGPVERIFYDIR} -lnetpgpverify
 DPADD+=         ${LIBNETPGPVERIFYDIR}/libnetpgpverify.a
+
+LDADD+=         -lz -lbz2
+DPADD+=         ${LIBZ} ${LIBBZ2}
 
 EXTDIST= ${.CURDIR}/../../dist/src
 .PATH: ${EXTDIST}/netpgpverify
