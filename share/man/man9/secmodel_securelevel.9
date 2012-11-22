@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.12 2012/01/17 10:47:27 cegger Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.13 2012/11/22 14:27:32 abs Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright (c) 2000 Hugh Graham
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 16, 2012
+.Dd November 22, 2012
 .Dt SECMODEL_SECURELEVEL 9
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 The securelevel mechanism is intended to allow protecting the persistence
 of code and data on the system, or a subset thereof, from modification, even
 by the
-.Em super-user
+.Em super-user ,
 by providing convenient means of
 .Dq locking down
 a system to a degree suited to its environment.
@@ -51,14 +51,14 @@ but only
 .Xr init 8
 can lower it.
 .Pp
-Four security levels are provided.
+Four security levels are provided:
 .Bl -tag -width flag
 .It \&-1 Em Permanently insecure mode
 .Bl -bullet
 .It
 Do not raise the
 .Em securelevel
-on boot
+on boot.
 .El
 .It \ 0 Em Insecure mode
 .Bl -bullet
@@ -247,7 +247,7 @@ the unique identifier of
 .Qo Dv org.netbsd.secmodel.securelevel Qc .
 .It what
 a string,
-.Qo Dv is-securelevel-above Qc
+.Qo Dv is-securelevel-above Qc .
 .It arg
 a reference to an
 .Dv int
