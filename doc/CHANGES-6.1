@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.34 2012/11/22 17:35:14 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.35 2012/11/22 17:49:07 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -832,4 +832,32 @@ sys/dev/pci/twa.c				1.43
 
 	Fix autoconf output for twa(4).
 	[chs, ticket #688]
+
+sys/arch/amd64/amd64/autoconf.c			1.24
+
+	Add #include of opt_intrdebug.h.
+	[chs, ticket #689]
+
+external/cddl/osnet/dev/dtrace/amd64/dtrace_asm.S 1.4
+external/cddl/osnet/dev/dtrace/amd64/dtrace_isa.c 1.4
+external/cddl/osnet/dev/dtrace/amd64/dtrace_subr.c 1.6
+sys/arch/amd64/amd64/genassym.cf		1.51
+sys/arch/amd64/include/Makefile.inc		1.4
+sys/arch/amd64/include/asm.h			1.15
+sys/arch/amd64/include/pmap.h			1.33
+
+	Make dtrace work on amd64.  Also, allow more space for kernel
+	modules.
+	[chs, ticket #690]
+
+sys/dev/pci/aac_pci.c				1.34
+sys/dev/pci/if_an_pci.c				1.34
+sys/dev/pci/if_sip.c				1.155
+sys/dev/pci/if_tlp_pci.c			1.122
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Match some more devices.
+	[chs, ticket #691]
 
