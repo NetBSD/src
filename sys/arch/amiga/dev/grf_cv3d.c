@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.26 2011/12/15 14:25:13 phx Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.26.2.1 2012/11/22 00:23:35 riz Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26 2011/12/15 14:25:13 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.2.1 2012/11/22 00:23:35 riz Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -405,12 +405,6 @@ grfcv3dmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	/* Lets be Paranoid: Test man and prod id */
 	if (zap->manid != 8512 || zap->prodid != 67)
 		return (0);
-
-#ifndef CV3DONZORRO2
-	if (!cv3d_zorroIII) {
-		return (0);
-	}
-#endif
 
 	cv3d_boardaddr = zap->va;
 
