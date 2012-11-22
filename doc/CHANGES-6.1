@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.36 2012/11/22 18:51:48 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.37 2012/11/22 20:26:06 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -868,4 +868,11 @@ sys/kern/vfs_vnops.c				1.186
 	resulting in vget() returning dead vnodes.
 	It is impossible to resolve these races in vn_lock().
 	[hannken, ticket #692]
+
+sys/uvm/uvm_aobj.c				1.117-1.119
+sys/uvm/uvm_aobj.h				1.22
+sys/uvm/uvm_object.h				1.33
+
+	Improve UVM aobj locking, and fix a bug.
+	[rmind, ticket #694]
 
