@@ -1,4 +1,4 @@
-/*	$NetBSD: t_readlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $ */
+/*	$NetBSD: t_readlinkat.c,v 1.2 2012/11/22 20:17:48 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_readlinkat.c,v 1.1 2012/11/18 17:41:54 manu Exp $");
+__RCSID("$NetBSD: t_readlinkat.c,v 1.2 2012/11/22 20:17:48 martin Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -58,6 +58,7 @@ ATF_TC_BODY(readlinkat_fd, tc)
 {
 	int dfd;
 	int fd;
+	ssize_t len;
 	char buf[MAXPATHLEN];
 
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
@@ -66,7 +67,9 @@ ATF_TC_BODY(readlinkat_fd, tc)
 	ATF_REQUIRE(symlink(FILE, LINK) == 0);
 
 	ATF_REQUIRE((dfd = open(DIR, O_RDONLY, 0)) != -1);
-	ATF_REQUIRE(readlinkat(dfd, BASELINK, buf, sizeof(buf)) != -1);
+	len = readlinkat(dfd, BASELINK, buf, sizeof(buf)-1);
+	ATF_REQUIRE(len != -1);
+	buf[len] = 0;
 	ATF_REQUIRE(close(dfd) == 0);
 
 	ATF_REQUIRE(strcmp(buf, FILE) == 0);
@@ -90,6 +93,7 @@ ATF_TC_HEAD(readlinkat_fdcwd, tc)
 ATF_TC_BODY(readlinkat_fdcwd, tc)
 {
 	int fd;
+	ssize_t len;
 	char buf[MAXPATHLEN];
 
 	ATF_REQUIRE(mkdir(DIR, 0755) == 0);
@@ -97,7 +101,9 @@ ATF_TC_BODY(readlinkat_fdcwd, tc)
 	ATF_REQUIRE(close(fd) == 0);
 	ATF_REQUIRE(symlink(FILE, LINK) == 0);
 
-	ATF_REQUIRE(readlinkat(AT_FDCWD, LINK, buf, sizeof(buf)) != -1);
+	len = readlinkat(AT_FDCWD, LINK, buf, sizeof(buf)-1);
+	ATF_REQUIRE(len != -1);
+	buf[len] = 0;
 
 	ATF_REQUIRE(strcmp(buf, FILE) == 0);
 }
