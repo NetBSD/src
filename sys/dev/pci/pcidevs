@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1102.2.10 2012/11/18 17:53:15 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1102.2.11 2012/11/22 17:46:09 riz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -866,6 +866,8 @@ product ADP2 ASR2200S_SUB2M	0x0287	ASR-2200S
 product ADP2 ASR2410SA		0x0290	ASR-2410SA
 product ADP2 AAR2810SA		0x0292	AAR-2810SA
 product ADP2 3405		0x02bb	RAID 3405
+product ADP2 3805		0x02bc	RAID 3805
+product ADP2 2405		0x02d5	RAID 2405
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
