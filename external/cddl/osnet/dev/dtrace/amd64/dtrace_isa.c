@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.3.8.1 2012/11/22 17:39:28 riz Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -52,15 +52,14 @@ uint16_t dtrace_fuword16_nocheck(void *);
 uint32_t dtrace_fuword32_nocheck(void *);
 uint64_t dtrace_fuword64_nocheck(void *);
 
-uintptr_t kernelbase = (uintptr_t)KERNBASE;
-        
-#define INKERNEL(va) (((vm_offset_t)(va)) >= USRSTACK && \
-     ((vm_offset_t)(va)) < VM_MAX_KERNEL_ADDRESS)
+uintptr_t kernelbase = (uintptr_t)KERN_BASE;
+
+#define INKERNEL(va) ((intptr_t)(va) < 0)
 
 struct amd64_frame {     
 	struct amd64_frame	*f_frame;
-	int			 f_retaddr; 
-	int			 f_arg0;
+	uintptr_t		 f_retaddr; 
+	uintptr_t		 f_arg0;
 };
 
 typedef unsigned long vm_offset_t;
