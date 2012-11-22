@@ -1,4 +1,4 @@
-/*	$NetBSD: t_utimensat.c,v 1.3 2012/11/22 14:51:19 martin Exp $ */
+/*	$NetBSD: t_utimensat.c,v 1.4 2012/11/22 14:59:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_utimensat.c,v 1.3 2012/11/22 14:51:19 martin Exp $");
+__RCSID("$NetBSD: t_utimensat.c,v 1.4 2012/11/22 14:59:59 martin Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -77,8 +77,8 @@ ATF_TC_BODY(utimensat_fd, tc)
 	ATF_REQUIRE(stat(FILE, &st) == 0);
 	ATF_REQUIRE(st.st_atimespec.tv_sec == tptr[0].tv_sec);
 	ATF_REQUIRE(st.st_atimespec.tv_nsec == tptr[0].tv_nsec);
-	ATF_REQUIRE(st.st_ctimespec.tv_sec == tptr[1].tv_sec);
-	ATF_REQUIRE(st.st_ctimespec.tv_nsec == tptr[1].tv_nsec);
+	ATF_REQUIRE(st.st_mtimespec.tv_sec == tptr[1].tv_sec);
+	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
 }
 
 ATF_TC_CLEANUP(utimensat_fd, tc)
@@ -110,8 +110,8 @@ ATF_TC_BODY(utimensat_fdcwd, tc)
 	ATF_REQUIRE(stat(BASEFILE, &st) == 0);
 	ATF_REQUIRE(st.st_atimespec.tv_sec == tptr[0].tv_sec);
 	ATF_REQUIRE(st.st_atimespec.tv_nsec == tptr[0].tv_nsec);
-	ATF_REQUIRE(st.st_ctimespec.tv_sec == tptr[1].tv_sec);
-	ATF_REQUIRE(st.st_ctimespec.tv_nsec == tptr[1].tv_nsec);
+	ATF_REQUIRE(st.st_mtimespec.tv_sec == tptr[1].tv_sec);
+	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
 }
 
 ATF_TC_CLEANUP(utimensat_fdcwd, tc)
@@ -242,8 +242,8 @@ ATF_TC_BODY(utimensat_fdlink, tc)
 	ATF_REQUIRE(lstat(LINK, &st) == 0);
 	ATF_REQUIRE(st.st_atimespec.tv_sec == tptr[0].tv_sec);
 	ATF_REQUIRE(st.st_atimespec.tv_nsec == tptr[0].tv_nsec);
-	ATF_REQUIRE(st.st_ctimespec.tv_sec == tptr[1].tv_sec);
-	ATF_REQUIRE(st.st_ctimespec.tv_nsec == tptr[1].tv_nsec);
+	ATF_REQUIRE(st.st_mtimespec.tv_sec == tptr[1].tv_sec);
+	ATF_REQUIRE(st.st_mtimespec.tv_nsec == tptr[1].tv_nsec);
 }
 
 ATF_TC_CLEANUP(utimensat_fdlink, tc)
