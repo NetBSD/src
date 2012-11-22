@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.33 2012/11/22 00:44:31 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.34 2012/11/22 17:35:14 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -817,4 +817,19 @@ sys/dev/pci/if_nfe.c				1.57
 
 	Improve nfe(4) performance by avoiding bounce-buffering.
 	[chs, ticket #685]
+
+sys/dev/ic/mpt_netbsd.c				1.19
+
+	mpt(4): set chan_bustype correctly.
+	[chs, ticket #686]
+
+sys/dev/ic/ciss.c				1.28
+
+	ciss(4): don't try to handle sensors if there aren't any.
+	[chs, ticket #687]
+
+sys/dev/pci/twa.c				1.43
+
+	Fix autoconf output for twa(4).
+	[chs, ticket #688]
 
