@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.56 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.56.8.1 2012/11/23 16:12:36 riz Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -415,6 +415,8 @@
 #define	CLEAR_SOFTINT	%asr21	/* Clears these bits */
 #define	SOFTINT		%asr22	/* Reads the register */
 #define	TICK_CMPR	%asr23
+#define	STICK		%asr24
+#define	STICK_CMPR	%asr25
 
 #define	TICK_INT	0x01	/* level-14 clock tick */
 #define	SOFTINT1	(0x1<<1)
@@ -432,6 +434,7 @@
 #define	SOFTINT13	(0x1<<13)
 #define	SOFTINT14	(0x1<<14)
 #define	SOFTINT15	(0x1<<15)
+#define	STICK_INTR	(0x1<<16)	/* system tick */
 
 /* Interrupt Dispatch -- usually reserved for cross-calls */
 #define	ASR_IDSR	0x48 /* Interrupt dispatch status reg */
