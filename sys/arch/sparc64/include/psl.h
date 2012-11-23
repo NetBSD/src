@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.49 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.49.8.1 2012/11/23 16:12:35 riz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -330,6 +330,7 @@ SPARC64_GETPR64_DEF(ver)			/* getver() */
 #define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
 #define GETVER_CPU_MANUF()	((getver() & VER_MANUF) >> VER_MANUF_SHIFT)
 #define CPU_IS_SPITFIRE()	(GETVER_CPU_IMPL() == IMPL_SPITFIRE)
+#define CPU_IS_HUMMINGBIRD()	(GETVER_CPU_IMPL() == IMPL_HUMMINGBIRD)
 #define CPU_IS_USIIIi()		((GETVER_CPU_IMPL() == IMPL_JALAPENO) || \
 				 (GETVER_CPU_IMPL() == IMPL_SERRANO))
 #define CPU_IS_USIII_UP()	(GETVER_CPU_IMPL() >= IMPL_CHEETAH)
