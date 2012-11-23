@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.38 2012/11/23 16:17:46 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.39 2012/11/23 16:40:01 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -891,4 +891,20 @@ sys/kern/kern_rndq.c				1.6
 	Fix hardware RNGs -- accept their entropy estimates *rather than* using
 	timestamps to estimate the entropy of their input.
 	[msaitoh, ticket #696]
+
+sys/dev/pci/if_wm.c				1.237
+
+	Fix a bug that PHY isn't set to low-power mode on PCH and PCH2.
+	[msaitoh, ticket #697]
+
+sbin/init/init.c				1.105
+
+	Add missing free() in error path.
+	[msaitoh, ticket #698]
+
+sys/dev/isa/itesio_isa.c			1.24
+sys/dev/isa/itesio_isavar.h			1.9
+
+	Add support for ITE8720F. PR#47169.
+	[msaitoh, ticket #699]
 
