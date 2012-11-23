@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.22 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.23 2012/11/23 03:37:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.22 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.23 2012/11/23 03:37:27 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,16 +74,10 @@ struct ml_entry {
 	struct mount ml_mount;
 };
 
-static struct nlist namelist[] = {
-#define	X_BUFMEM	0
-	{ .n_name = "_bufmem" },
-	{ .n_name = NULL },
-};
-
 static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
-static u_long bufmem;
+static uint64_t bufmem;
 static u_int nbuf, pgwidth, kbwidth;
 static struct uvmexp_sysctl uvmexp;
 
@@ -133,8 +127,11 @@ showbufcache(void)
 	int tbuf, i, lastrow;
 	double tvalid, tsize;
 	struct ml_entry *ml;
+	size_t len;
 
-	NREAD(X_BUFMEM, &bufmem, sizeof(bufmem));
+	len = sizeof(bufmem);
+	if (sysctlbyname("vm.bufmem", &bufmem, &len, NULL, 0))
+		error("can't get \"vm.bufmmem\": %s", strerror(errno));
 
 	mvwprintw(wnd, 0, 0,
 	    "   %*d metadata buffers using             %*ld kBytes of "
@@ -218,13 +215,6 @@ showbufcache(void)
 int
 initbufcache(void)
 {
-	if (namelist[0].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
-			nlisterr(namelist);
-			return(0);
-		}
-	}
-
 	fetchuvmexp();
 	pgwidth = (int)(floor(log10((double)uvmexp.npages)) + 1);
 	kbwidth = (int)(floor(log10(uvmexp.npages * getpagesize() / 1024.0)) +
