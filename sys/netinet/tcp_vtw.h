@@ -1,3 +1,4 @@
+/*	$NetBSD: tcp_vtw.h,v 1.6 2012/11/23 14:48:31 joerg Exp $	*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -186,7 +187,7 @@ fatp_full(fatp_t *fp)
 {
 	fatp_t full;
 
-	full.inuse = ~0;
+	full.inuse = (1U << FATP_NTAGS) - 1U;
 
 	return (fp->inuse == full.inuse);
 }
