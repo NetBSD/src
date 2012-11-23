@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.89 2012/11/20 15:41:43 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.90 2012/11/23 08:36:47 njoly Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -52,6 +52,7 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
+./usr/libdata/debug/usr/tests/lib/libc/c063
 ./usr/libdata/debug/usr/tests/lib/libc/db
 ./usr/libdata/debug/usr/tests/lib/libc/gen
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn
