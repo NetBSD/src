@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.24 2012/11/23 06:44:38 pgoyette Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.25 2012/11/23 15:35:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.24 2012/11/23 06:44:38 pgoyette Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.25 2012/11/23 15:35:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ showbufcache(void)
 		error("can't get \"vm.bufmmem\": %s", strerror(errno));
 
 	mvwprintw(wnd, 0, 0,
-	    "   %*d metadata buffers using             %*"PRId64" kBytes of "
+	    "   %*d metadata buffers using             %*"PRIu64" kBytes of "
 	    "memory (%2.0f%%).",
 	    pgwidth, nbuf, kbwidth, bufmem / 1024,
 	    ((bufmem * 100.0) + 0.5) / getpagesize() / uvmexp.npages);
