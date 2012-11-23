@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.37 2012/11/22 20:26:06 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.38 2012/11/23 16:17:46 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -875,4 +875,20 @@ sys/uvm/uvm_object.h				1.33
 
 	Improve UVM aobj locking, and fix a bug.
 	[rmind, ticket #694]
+
+sys/arch/sparc64/include/cpu.h			1.99
+sys/arch/sparc64/include/ctlreg.h		1.57
+sys/arch/sparc64/include/psl.h			1.50
+sys/arch/sparc64/sparc64/clock.c		1.107
+sys/arch/sparc64/sparc64/cpu.c			1.103
+sys/arch/sparc64/sparc64/locore.s		1.342
+
+	Improve time keeping on some UltraSPARC-IIIish systems.
+	[macallan, ticket #695]
+
+sys/kern/kern_rndq.c				1.6
+
+	Fix hardware RNGs -- accept their entropy estimates *rather than* using
+	timestamps to estimate the entropy of their input.
+	[msaitoh, ticket #696]
 
