@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.59 2012/11/18 19:04:22 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.60 2012/11/23 14:27:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -667,7 +667,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 
 	puffs_newinfo_setcookie(pni, p2n);
 	rump_pub_getvninfo(vp, &vtype, &vsize, (void *)&rdev);
-	puffs_newinfo_setvtype(pni, vtype);
+	puffs_newinfo_setvtype(pni, (enum vtype)vtype);
 	puffs_newinfo_setsize(pni, vsize);
 	/* LINTED: yea, it'll lose accuracy, but that's life */
 	puffs_newinfo_setrdev(pni, rdev);
@@ -740,7 +740,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	puffs_newinfo_setcookie(pni, p2n);
 	rump_pub_getvninfo(vp, &vtype, &vsize, (void *)&rdev);
-	puffs_newinfo_setvtype(pni, vtype);
+	puffs_newinfo_setvtype(pni, (enum vtype)vtype);
 	puffs_newinfo_setsize(pni, vsize);
 	/* LINTED: yea, it'll lose accuracy, but that's life */
 	puffs_newinfo_setrdev(pni, rdev);
