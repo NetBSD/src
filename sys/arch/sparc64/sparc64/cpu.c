@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.101.8.1 2012/11/23 16:12:36 riz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2011/10/08 08:49:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101.8.1 2012/11/23 16:12:36 riz Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -242,7 +242,7 @@ void
 cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	int node;
-	long clk;
+	long clk, sclk = 0;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_info *ci;
 	const char *sep;
@@ -299,12 +299,23 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_cpu_clockrate[1] = clk / 1000000;
 	}
 
+	if (!CPU_IS_HUMMINGBIRD()) {
+		sclk = prom_getpropint(findroot(), "stick-frequency", 0);
+	}
+	ci->ci_system_clockrate[0] = sclk;
+	ci->ci_system_clockrate[1] = sclk / 1000000;
+
 	snprintf(buf, sizeof buf, "%s @ %s MHz",
 		prom_getpropstring(node, "name"), clockfreq(clk));
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
 
 	aprint_normal(": %s, UPA id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
+
+	if (ci->ci_system_clockrate[0] != 0) {
+		aprint_normal_dev(dev, "system tick frequency %d MHz\n", 
+		    (int)ci->ci_system_clockrate[1]);
+	}
 	aprint_normal_dev(dev, "");
 
 	bigcache = 0;
@@ -452,6 +463,8 @@ cpu_boot_secondary_processors(void)
 		sync_tick = 1;
 		membar_Sync();
 		settick(0);
+		if (ci->ci_system_clockrate[0] != 0)
+			setstick(0);
 
 		setpstate(pstate);
 
@@ -480,8 +493,12 @@ cpu_hatch(void)
 		/* we do nothing here */
 	}
 	settick(0);
-
-	tickintr_establish(PIL_CLOCK, tickintr);
+	if (curcpu()->ci_system_clockrate[0] != 0) {
+		setstick(0);
+		stickintr_establish(PIL_CLOCK, stickintr);
+	} else {
+		tickintr_establish(PIL_CLOCK, tickintr);
+	}
 	spl0();
 }
 #endif /* MULTIPROCESSOR */
