@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.h,v 1.3 2002/05/04 18:44:27 thorpej Exp $  */
+/*      $NetBSD: ps.h,v 1.4 2012/11/23 03:33:05 christos Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -42,4 +42,4 @@ extern struct p_times {
 extern u_int64_t stime[CPUSTATES];       
 extern int	fscale;       
 extern double	lccpu; 
-extern long	mempages;
+extern uint64_t	mempages;
