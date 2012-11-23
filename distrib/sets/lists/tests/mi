@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.508 2012/11/20 16:18:50 agc Exp $
+# $NetBSD: mi,v 1.509 2012/11/23 08:36:48 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,6 +372,23 @@
 ./usr/libdata/debug/usr/tests/lib/libbpfjit				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fexecve.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_fstatat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_linkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mkdirat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mkfifoat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_mknodat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_o_search.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_openat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_readlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_renameat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_symlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_unlinkat.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/c063/t_utimensat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/db/h_db.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
