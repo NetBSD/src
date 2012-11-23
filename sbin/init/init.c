@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.102 2011/08/28 10:13:03 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.102.4.1 2012/11/23 16:37:21 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.102 2011/08/28 10:13:03 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.102.4.1 2012/11/23 16:37:21 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1097,8 +1097,10 @@ new_session(session_t *sprev, int session_index, struct ttyent *typ)
 	sp->se_index = session_index;
 
 	(void)asprintf(&sp->se_device, "%s%s", _PATH_DEV, typ->ty_name);
-	if (!sp->se_device)
+	if (!sp->se_device) {
+		free(sp);
 		return NULL;
+	}
 
 	if (setupargv(sp, typ) == 0) {
 		free_session(sp);
