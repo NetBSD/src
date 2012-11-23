@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.32 2012/11/23 03:33:05 christos Exp $	*/
+/*	$NetBSD: pigs.c,v 1.33 2012/11/23 03:46:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.32 2012/11/23 03:33:05 christos Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.33 2012/11/23 03:46:35 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -150,8 +150,8 @@ initpigs(void)
 	(void) fetch_cptime(stime);
 
 	len = sizeof(mempages);
-	if (sysctlbyname("kern.physmem64", &mempages, &len, NULL, 0))
-		error("can't get \"kern.physmem64\": %s", strerror(errno));
+	if (sysctlbyname("hw.physmem64", &mempages, &len, NULL, 0))
+		error("can't get \"hw.physmem64\": %s", strerror(errno));
 
 	len = sizeof(ccpu);
 	if (sysctlbyname("kern.ccpu", &ccpu, &len, NULL, 0))
