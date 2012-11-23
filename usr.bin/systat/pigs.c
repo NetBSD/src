@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.31 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: pigs.c,v 1.32 2012/11/23 03:33:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.31 2009/10/21 21:12:07 rmind Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.32 2012/11/23 03:33:05 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: pigs.c,v 1.31 2009/10/21 21:12:07 rmind Exp $");
 #include <curses.h>
 #include <math.h>
 #include <pwd.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,8 +61,8 @@ int compare_pctcpu(const void *, const void *);
 int nproc;
 struct p_times *pt;
 
-u_int64_t stime[CPUSTATES];
-long	mempages;
+uint64_t stime[CPUSTATES];
+uint64_t mempages;
 int     fscale;
 double  lccpu;
 
@@ -140,36 +141,26 @@ showpigs(void)
 	wmove(wnd, y, 0); wclrtobot(wnd);
 }
 
-static struct nlist namelist[] = {
-#define X_FIRST		0
-#define X_CCPU          0
-	{ .n_name = "_ccpu" },
-#define X_FSCALE        1
-	{ .n_name = "_fscale" },
-#define X_PHYSMEM	2
-	{ .n_name = "_physmem" },
-	{ .n_name = NULL }
-};
-
 int
 initpigs(void)
 {
 	fixpt_t ccpu;
+	size_t len;
 
-	if (namelist[X_FIRST].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
-			nlisterr(namelist);
-		        return(0);
-		}
-		if (namelist[X_FIRST].n_type == 0) {
-			error("namelist failed");
-			return(0);
-		}
-	}
 	(void) fetch_cptime(stime);
-	KREAD(NPTR(X_PHYSMEM), &mempages, sizeof (mempages));
-	NREAD(X_CCPU, &ccpu, sizeof ccpu);
-	NREAD(X_FSCALE,  &fscale, sizeof fscale);
+
+	len = sizeof(mempages);
+	if (sysctlbyname("kern.physmem64", &mempages, &len, NULL, 0))
+		error("can't get \"kern.physmem64\": %s", strerror(errno));
+
+	len = sizeof(ccpu);
+	if (sysctlbyname("kern.ccpu", &ccpu, &len, NULL, 0))
+		error("can't get \"kern.ccpu\": %s", strerror(errno));
+
+	len = sizeof(fscale);
+	if (sysctlbyname("kern.fscale", &fscale, &len, NULL, 0))
+		error("can't get \"kern.fscale\": %s", strerror(errno));
+
 	lccpu = log((double) ccpu / fscale);
 
 	return(1);
@@ -185,8 +176,6 @@ fetchpigs(void)
 	double t;
 	static int lastnproc = 0;
 
-	if (namelist[X_FIRST].n_type == 0)
-		return;
 	if ((kpp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*kpp),
 				&nproc)) == NULL) {
 		error("%s", kvm_geterr(kd));
