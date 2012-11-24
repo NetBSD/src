@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.3.8.1 2012/10/23 19:50:49 riz Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.3.8.2 2012/11/24 20:53:13 jdc Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.3.8.1 2012/10/23 19:50:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.3.8.2 2012/11/24 20:53:13 jdc Exp $");
 
 #include "gpio.h"
 
@@ -168,7 +168,8 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 		MVSOCGPP_WRITE(sc, MVSOCGPP_GPIOIC(i), 0);
 
 	sc->sc_pic =
-	    kmem_zalloc(sizeof(struct mvsocgpp_pic) * gpp_npins / 8, KM_SLEEP);
+	    kmem_zalloc(sizeof(struct mvsocgpp_pic) * howmany(gpp_npins, 8),
+		KM_SLEEP);
 	for (i = 0, j = 0; i < gpp_npins; i += 8, j++) {
 		gpio_pic = &(sc->sc_pic + j)->gpio_pic;
 		gpio_pic->pic_ops = &gpio_pic_ops;
