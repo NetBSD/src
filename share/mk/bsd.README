@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.308 2012/11/19 16:04:54 apb Exp $
+#	$NetBSD: bsd.README,v 1.309 2012/11/24 14:01:28 alnsn Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -329,6 +329,10 @@ MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 MKSKEY		If "no", disables building of S/key authentication
 		infrastructure (libraries and support programs).
 		Default: yes
+
+MKSLJIT		If "no", disables buildin of sljit (stack-less platform
+		independent JIT compiler) private library and tests.
+		Default: yes on amd64, i386 and sparc, no elsewhere.
 
 MKSOFTFLOAT	If not "no", build with options to enable the compiler to
 		generate output containing library calls for floating
