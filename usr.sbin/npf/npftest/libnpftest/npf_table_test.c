@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_table_test.c,v 1.2.2.6 2012/11/18 21:48:56 riz Exp $	*/
+/*	$NetBSD: npf_table_test.c,v 1.2.2.7 2012/11/24 04:34:44 riz Exp $	*/
 
 /*
  * NPF tableset test.
@@ -44,6 +44,32 @@ static const uint16_t ip6_list[][8] = {
 #define	HASH_TID		1
 #define	TREE_TID		2
 
+static bool
+npf_table_test_fill4(npf_tableset_t *tblset, npf_addr_t *addr)
+{
+	const int alen = sizeof(struct in_addr);
+	const int nm = NPF_NO_NETMASK;
+	bool fail = false;
+
+	/* Fill both tables with IP addresses. */
+	for (unsigned i = 0; i < __arraycount(ip_list); i++) {
+		int error;
+
+		addr->s6_addr32[0] = inet_addr(ip_list[i]);
+
+		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
+		fail |= !(error == 0);
+		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
+		fail |= !(error != 0);
+
+		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
+		fail |= !(error == 0);
+		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
+		fail |= !(error != 0);
+	}
+	return fail;
+}
+
 bool
 npf_table_test(bool verbose)
 {
@@ -54,8 +80,6 @@ npf_table_test(bool verbose)
 	int error, alen;
 	bool fail = false;
 	u_int i;
-
-	npf_tableset_sysinit();
 
 	tblset = npf_tableset_create();
 	fail |= !(tblset != NULL);
@@ -87,19 +111,7 @@ npf_table_test(bool verbose)
 	fail |= !(error != 0);
 
 	/* Fill both tables with IP addresses. */
-	for (i = 0; i < __arraycount(ip_list); i++) {
-		addr->s6_addr32[0] = inet_addr(ip_list[i]);
-
-		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
-		fail |= !(error == 0);
-		error = npf_table_insert(tblset, HASH_TID, alen, addr, nm);
-		fail |= !(error != 0);
-
-		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
-		fail |= !(error == 0);
-		error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
-		fail |= !(error != 0);
-	}
+	fail |= npf_table_test_fill4(tblset, addr);
 
 	/* Attempt to add duplicates - should fail. */
 	addr->s6_addr32[0] = inet_addr(ip_list[0]);
@@ -110,15 +122,6 @@ npf_table_test(bool verbose)
 
 	error = npf_table_insert(tblset, TREE_TID, alen, addr, nm);
 	fail |= !(error != 0);
-
-	/* Reference checks. */
-	t1 = npf_table_get(tblset, HASH_TID);
-	fail |= !(t1 != NULL);
-	npf_table_put(t1);
-
-	t2 = npf_table_get(tblset, TREE_TID);
-	fail |= !(t2 != NULL);
-	npf_table_put(t2);
 
 	/* Match (validate) each IP entry. */
 	for (i = 0; i < __arraycount(ip_list); i++) {
@@ -206,7 +209,6 @@ npf_table_test(bool verbose)
 	}
 
 	npf_tableset_destroy(tblset);
-	npf_tableset_sysfini();
 
 	return !fail;
 }
