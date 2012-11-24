@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.19 2012/11/22 18:51:29 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.20 2012/11/24 04:01:43 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -163,4 +163,10 @@ sys/kern/vfs_vnops.c				1.186
 	resulting in vget() returning dead vnodes.
 	It is impossible to resolve these races in vn_lock().
 	[hannken, ticket #692]
+
+sys/dev/usb/if_urndis.c				1.4
+
+	Don't match on idVendor=0x0000 && idProduct=0x0000. Fixes the
+	keyboard on a number of HP and possibly other vendors' machines.
+	[joerg, ticket #700]
 
