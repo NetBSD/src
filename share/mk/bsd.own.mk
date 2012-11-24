@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.696.2.3 2012/09/17 19:00:33 riz Exp $
+#	$NetBSD: bsd.own.mk,v 1.696.2.4 2012/11/24 19:45:11 riz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,17 +64,7 @@ USE_COMPILERCRTSTUFF?=	no
 .endif
 USE_COMPILERCRTSTUFF?=	yes
 
-
-#
-# Platforms still using GDB 6
-#
-.if ${MACHINE_CPU}  == "mips"
-HAVE_GDB?= 6
-.else
-# Otherwise, default to GDB7
 HAVE_GDB?=	7
-.endif
-
 
 .if empty(.MAKEFLAGS:M-V*)
 .if defined(MAKEOBJDIRPREFIX) || defined(MAKEOBJDIR)
