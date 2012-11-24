@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.3.10.1 2012/11/20 22:26:03 riz Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.3.10.2 2012/11/24 18:10:10 jdc Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -33,9 +33,6 @@
 #define MVGBE_NREMAP		4
 
 #define MVGBE_PHY_TIMEOUT	10000	/* msec */
-
-#define MVGBE_RX_CSUM_MIN_BYTE	72
-
 
 /*
  * Ethernet Unit Registers
