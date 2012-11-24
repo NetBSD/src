@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.40 2012/11/24 04:02:00 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.41 2012/11/24 04:36:38 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -913,4 +913,25 @@ sys/dev/usb/if_urndis.c				1.4
 	Don't match on idVendor=0x0000 && idProduct=0x0000. Fixes the
 	keyboard on a number of HP and possibly other vendors' machines.
 	[joerg, ticket #700]
+
+lib/libc/arch/arm/sys/__aeabi_read_tp.S		1.3
+
+	Add $NetBSD: CHANGES-6.1,v 1.1.2.41 2012/11/24 04:36:38 riz Exp $ tag.  Use ip to save r1 instead of the stack.
+	[matt, ticket #701]
+
+sys/net/npf/npf.c				1.14
+sys/net/npf/npf.h				1.22
+sys/net/npf/npf_ctl.c				1.19
+sys/net/npf/npf_impl.h				1.24
+sys/net/npf/npf_state_tcp.c			1.11
+sys/net/npf/npf_tableset.c			1.15
+usr.sbin/npf/npfctl/npf_disassemble.c		1.10
+usr.sbin/npf/npfctl/npfctl.8			1.10
+usr.sbin/npf/npfctl/npfctl.c			1.21
+usr.sbin/npf/npfctl/npfctl.h			1.21
+usr.sbin/npf/npftest/libnpftest/npf_table_test.c 1.6
+
+	Protect better against off-path attacks.  Implement NPF table
+	listing, and preservation of entries on reload.
+	[rmind, ticket #702]
 
