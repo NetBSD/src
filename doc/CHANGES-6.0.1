@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.20 2012/11/24 04:01:43 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.21 2012/11/24 19:36:47 jdc Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -169,4 +169,10 @@ sys/dev/usb/if_urndis.c				1.4
 	Don't match on idVendor=0x0000 && idProduct=0x0000. Fixes the
 	keyboard on a number of HP and possibly other vendors' machines.
 	[joerg, ticket #700]
+
+src/lib/libc/softfloat/Makefile.inc		1.11-1.12 via patch
+src/doc/HACKS					1.124 via patch
+	For arm, add -fno-tree-vrp to COPTS when compiling softfloat.c.
+	Without -fno-tree-vrp, -INF + -INF returns 0 by adddf3.  PR#46953.
+	[msaitoh, ticket #703]
 
