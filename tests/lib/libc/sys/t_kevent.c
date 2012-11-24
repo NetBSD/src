@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.4 2012/06/02 16:52:18 martin Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.5 2012/11/24 15:05:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.4 2012/06/02 16:52:18 martin Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.5 2012/11/24 15:05:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: t_kevent.c,v 1.4 2012/06/02 16:52:18 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <err.h>
 #include <sys/event.h>
 #include <sys/time.h>
@@ -137,11 +138,40 @@ ATF_TC_BODY(kqueue_desc_passing, tc)
 	ATF_CHECK(WIFEXITED(status) && WEXITSTATUS(status)==0);
 }
 
+ATF_TC(kqueue_unsupported_fd);
+ATF_TC_HEAD(kqueue_unsupported_fd, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks that watching an fd whose"
+	    " type is not supported does not crash the kernel");
+}
+
+ATF_TC_BODY(kqueue_unsupported_fd, tc)
+{
+	/* mqueue and semaphore use fnullop_kqueue also */
+	static const char drvctl[] = "/dev/drvctl";
+	int fd, kq;
+	struct kevent ev;
+
+	ATF_REQUIRE((fd = open(drvctl, O_RDONLY)) != -1);
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	EV_SET(&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
+	   NOTE_DELETE|NOTE_WRITE|NOTE_EXTEND|NOTE_ATTRIB|NOTE_LINK|
+	   NOTE_RENAME|NOTE_REVOKE, 0, 0);
+
+	ATF_REQUIRE(kevent(kq, &ev, 1, NULL, 0, NULL) == -1);
+	ATF_REQUIRE_ERRNO(EOPNOTSUPP, true);
+
+	(void)close(fd);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, kevent_zerotimer);
 	ATF_TP_ADD_TC(tp, kqueue_desc_passing);
+	ATF_TP_ADD_TC(tp, kqueue_unsupported_fd);
 
 	return atf_no_error();
 }
