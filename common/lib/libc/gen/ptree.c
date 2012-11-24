@@ -1,4 +1,4 @@
-/*	$NetBSD: ptree.c,v 1.5.8.2 2012/07/16 22:10:46 riz Exp $	*/
+/*	$NetBSD: ptree.c,v 1.5.8.3 2012/11/24 18:15:22 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5.8.2 2012/07/16 22:10:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5.8.3 2012/11/24 18:15:22 jdc Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.5.8.2 2012/07/16 22:10:46 riz Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.5.8.2 2012/07/16 22:10:46 riz Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.5.8.3 2012/11/24 18:15:22 jdc Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -1213,4 +1213,18 @@ ptree_check(const pt_tree_t *pt)
 		ok = ok && ptree_check_branch(pt, parent, ptn);
 #endif
 	return ok;
+}
+
+bool
+ptree_mask_node_p(pt_tree_t *pt, const void *item, pt_bitlen_t *lenp)
+{
+	const pt_node_t * const mask = ITEMTONODE(pt, item);
+
+	if (!PTN_ISMASK_P(mask))
+		return false;
+
+	if (lenp != NULL)
+		*lenp = PTN_MASK_BITLEN(mask);
+
+	return true;
 }
