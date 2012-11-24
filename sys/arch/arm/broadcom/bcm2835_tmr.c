@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.1.2.2 2012/08/09 06:36:50 jdc Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.1.2.3 2012/11/24 19:14:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1.2.2 2012/08/09 06:36:50 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1.2.3 2012/11/24 19:14:49 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,22 +159,19 @@ delay(unsigned int n)
 	uint32_t delta, usecs;
 
 	KASSERT(sc != NULL);
-	int nhloops = 0;
 
 	last = bus_space_read_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CLO);
 
 	delta = usecs = 0;
 	while (n > usecs) {
-		if (nhloops++ > 0x100000) Debugger();
 		curr = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    BCM2835_STIMER_CLO);
 
-		/* XXXNH !?!?!?!?!?!?! - use CHI? */
 		/* Check to see if the timer has wrapped around. */
 		if (curr < last)
-			delta += (last + (counts_per_hz - curr));
+			delta += curr + (UINT32_MAX - last);
 		else
-			delta += (last - curr);
+			delta += curr - last;
 
 		last = curr;
 
