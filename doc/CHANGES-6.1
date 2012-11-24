@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.39 2012/11/23 16:40:01 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.40 2012/11/24 04:02:00 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -907,4 +907,10 @@ sys/dev/isa/itesio_isavar.h			1.9
 
 	Add support for ITE8720F. PR#47169.
 	[msaitoh, ticket #699]
+
+sys/dev/usb/if_urndis.c				1.4
+
+	Don't match on idVendor=0x0000 && idProduct=0x0000. Fixes the
+	keyboard on a number of HP and possibly other vendors' machines.
+	[joerg, ticket #700]
 
