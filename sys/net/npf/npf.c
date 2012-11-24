@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.7.2.5 2012/11/19 09:44:42 msaitoh Exp $	*/
+/*	$NetBSD: npf.c,v 1.7.2.6 2012/11/24 04:34:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.5 2012/11/19 09:44:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.7.2.6 2012/11/24 04:34:42 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -303,7 +303,9 @@ npf_reload(prop_dictionary_t dict, npf_ruleset_t *rset,
 	rw_enter(&npf_lock, RW_WRITER);
 	onc = atomic_swap_ptr(&npf_core, nc);
 	if (onc) {
-		/* Reload only necessary NAT policies. */
+		/* Reload only the static tables. */
+		npf_tableset_reload(tset, onc->n_tables);
+		/* Reload only the necessary NAT policies. */
 		npf_ruleset_natreload(nset, onc->n_nat_rules);
 	}
 	/* Unlock.  Everything goes "live" now. */

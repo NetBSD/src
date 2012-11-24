@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.2.7 2012/08/13 19:43:44 riz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.2.8 2012/11/24 04:34:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.7 2012/08/13 19:43:44 riz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.8 2012/11/24 04:34:43 riz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -664,31 +664,11 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 	}
 	_npf_nat_getinfo(nt, &type, &flags, &taddr, &alen, &port);
 
-	struct sockaddr_storage ss;
-	char taddrbuf[64], tportbuf[16];
+	char *taddrbuf, tportbuf[16];
 
-	if (alen == 4) {
-		struct sockaddr_in *sin = (void *)&ss;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_family = AF_INET;
-		sin->sin_port = 0;
-		memcpy(&sin->sin_addr, &taddr, sizeof(sin->sin_addr));
-		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
-		    "%a", (struct sockaddr *)sin);
-	} else {
-		assert(alen == 16);
-		struct sockaddr_in6 *sin6 = (void *)&ss;
-		sin6->sin6_len = sizeof(*sin6);
-		sin6->sin6_family = AF_INET6;
-		sin6->sin6_port = 0;
-		memcpy(&sin6->sin6_addr, &taddr, sizeof(sin6->sin6_addr));
-		sockaddr_snprintf(taddrbuf, sizeof(taddrbuf),
-		    "%a", (struct sockaddr *)sin6);
-	}
-
+	taddrbuf = npfctl_print_addrmask(alen, &taddr, 0);
 	if (port) {
-		snprintf(tportbuf, sizeof(tportbuf),
-		    " port %d", ntohs(port));
+		snprintf(tportbuf, sizeof(tportbuf), " port %d", ntohs(port));
 	}
 
 	const char *seg1 = "any", *seg2 = "any", *sp1 = "", *sp2 = "", *mt;
@@ -708,6 +688,7 @@ npfctl_show_nat(nl_rule_t *nrl, unsigned nlevel)
 	}
 	printf("map %s dynamic %s%s %s %s%s pass ", ifname,
 	    seg1, sp1, mt, seg2, sp2);
+	free(taddrbuf);
 
 	const void *nc;
 	size_t nclen;
