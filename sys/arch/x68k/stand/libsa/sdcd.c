@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.11.8.1 2012/11/18 19:05:20 riz Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.11.8.2 2012/11/24 20:20:26 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -339,6 +339,7 @@ cdopen(struct open_file *f, ...)
 	sc = alloc(sizeof(struct sdcd_softc));
 	current_npart = 3;
 	sc->sc_part = 0;
+	sc->sc_partinfo.start = 0;
 	sc->sc_partinfo.size = current_devsize;
 	sc->sc_blocksize = current_blklen << 9;
 	f->f_devdata = sc;
