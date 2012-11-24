@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/11/18 12:39:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.58.1 2012/11/24 20:34:12 jdc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,6 +10,7 @@ FLOPPYSIZE=	2400
 BOOTNAME!=	printf "USTAR.volsize.%o" ${FLOPPYSIZE}
 FLOPPYFILES=	${BOOTNAME} netbsd
 FLOPPYSUFFIX=	.fs
+FLOPPYPAD=	1
 
 FLOPPY_RELEASEDIR=	installation/floppy
 
