@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.43 2012/11/24 19:48:24 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42 2011/09/27 02:05:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.43 2012/11/24 19:48:24 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ smbfs_smb_create(struct smbnode *dnp, const char *name, int nmlen,
 			smb_rq_getreply(rqp, &mdp);
 			md_get_uint8(mdp, &wc);
 			if (wc == 1)
-				md_get_uint16le(mdp, &fid);
+				md_get_uint16(mdp, &fid);
 			else
 				error = EBADRPC;
 		}
@@ -1422,8 +1422,6 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
 	mb_put_uint8(mbp, 0);		/* Security tracking mode flags */
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
-	smb_rq_bend(rqp);
-	mbp->mb_count = 0;
 
 	error = smbfs_fullpath(mbp, SSTOVC(ssp), np, NULL, 0);
 	if (error)
@@ -1435,6 +1433,7 @@ smbfs_smb_ntcreatex(struct smbnode *np, int accmode,
 	flen = mbp->mb_count;
 	SMBRQ_PUTLE16(nmlen, flen);
 
+	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
 	if (error)
 		goto bad;
