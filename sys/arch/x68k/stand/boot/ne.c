@@ -1,5 +1,4 @@
-/*	$NetBSD: ne.c,v 1.2.2.2 2012/11/18 19:05:18 riz Exp $	*/
-/*	Id: ne.c,v 1.22 2011/10/05 13:16:20 isaki Exp 	*/
+/*	$NetBSD: ne.c,v 1.2.2.3 2012/11/24 20:20:25 jdc Exp $	*/
 
 /*
  * This file is derived from sys/arch/i386/stand/lib/netif/ne.c
