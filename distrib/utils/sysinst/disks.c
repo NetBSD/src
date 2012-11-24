@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.123.2.2 2012/07/05 17:29:15 riz Exp $ */
+/*	$NetBSD: disks.c,v 1.123.2.3 2012/11/24 19:32:28 jdc Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -377,6 +377,14 @@ get_disks(struct disk_desc *dd)
 					break;
 				continue;
 			}
+
+			/*
+			 * Exclude a disk mounted as root partition,
+			 * in case of install-image on a USB memstick.
+			 */
+			if (is_active_rootpart(dd->dd_name, 0))
+				continue;
+
 			dd->dd_cyl = l.d_ncylinders;
 			dd->dd_head = l.d_ntracks;
 			dd->dd_sec = l.d_nsectors;
