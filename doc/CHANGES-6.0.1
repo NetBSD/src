@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.21 2012/11/24 19:36:47 jdc Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.22 2012/11/24 21:47:35 jdc Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -175,4 +175,31 @@ src/doc/HACKS					1.124 via patch
 	For arm, add -fno-tree-vrp to COPTS when compiling softfloat.c.
 	Without -fno-tree-vrp, -INF + -INF returns 0 by adddf3.  PR#46953.
 	[msaitoh, ticket #703]
+
+distrib/notes/common/postinstall			1.75
+	Update install note for packages removal.
+	[tsutsui, ticket #710]
+
+sbin/mount_msdos/mount_msdos.8				1.35,1.36
+	Remove the bit about empty DOS file systems assumed to have short
+	names by default.  Note mount_msdos -G option also allows mounting
+	X680x0's Human68k floppies.
+	[tsutsui, ticket #711]
+
+src/external/mit/expat/dist/lib/expat.h			1.1.1.2 via patch
+src/external/mit/expat/dist/lib/xmlparse.c		1.1.1.2 via patch
+src/external/mit/expat/dist/xmlwf/readfilemap.c		1.1.1.2 via patch
+
+	Fix CVE-2012-1147, CVE-2012-1148 and CVE-2012-0876 (other security
+	issues have been previously fixed in our tree)
+	[spz, ticket #715]
+
+sys/kern/kern_event.c					1.79
+sys/kern/kern_descrip.c					1.219
+lib/libc/sys/kqueue.2					1.33
+tests/lib/libc/sys/t_kevent.c				1.2-1.5
+	Prevent kernel crash when unsupported fd's are used.
+	Mention that kevent returns now EOPNOTSUPP.
+	Add a test for adding an event to an unsupported fd.
+	[christos, ticket #716]
 
