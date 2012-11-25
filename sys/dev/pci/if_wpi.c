@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.53 2012/08/04 03:52:46 riastradh Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.54 2012/11/25 19:50:34 riastradh Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.53 2012/08/04 03:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.54 2012/11/25 19:50:34 riastradh Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -91,6 +91,7 @@ static const struct ieee80211_rateset wpi_rateset_11b =
 static const struct ieee80211_rateset wpi_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
+static const char wpi_firmware_name[] = "iwlwifi-3945.ucode";
 static once_t wpi_firmware_init;
 static kmutex_t wpi_firmware_mutex;
 static size_t wpi_firmware_users;
@@ -131,6 +132,8 @@ static void wpi_mem_write_region_4(struct wpi_softc *, uint16_t,
 								   const uint32_t *, int);
 static int  wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
 static int  wpi_load_microcode(struct wpi_softc *,  const uint8_t *, int);
+static int  wpi_cache_firmware(struct wpi_softc *);
+static void wpi_release_firmware(void);
 static int  wpi_load_firmware(struct wpi_softc *);
 static void wpi_calib_timeout(void *);
 static void wpi_iter_func(void *, struct ieee80211_node *);
@@ -197,6 +200,7 @@ wpi_match(device_t parent, cfdata_t match __unused, void *aux)
 static int
 wpi_attach_once(void)
 {
+
 	mutex_init(&wpi_firmware_mutex, MUTEX_DEFAULT, IPL_NONE);
 	return 0;
 }
@@ -416,10 +420,8 @@ wpi_detach(device_t self, int flags __unused)
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
 	if (sc->fw_used) {
-		mutex_enter(&wpi_firmware_mutex);
-		if (--wpi_firmware_users == 0)
-			firmware_free(wpi_firmware_image, wpi_firmware_size);
-		mutex_exit(&wpi_firmware_mutex);
+		sc->fw_used = false;
+		wpi_release_firmware();
 	}
 
 	return 0;
@@ -1133,21 +1135,32 @@ wpi_load_microcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 static int
 wpi_cache_firmware(struct wpi_softc *sc)
 {
+	const char *const fwname = wpi_firmware_name;
 	firmware_handle_t fw;
 	int error;
 
-	if (sc->fw_used)
-		return 0;
+	/* sc is used here only to report error messages.  */
 
 	mutex_enter(&wpi_firmware_mutex);
-	if (wpi_firmware_users++) {
+
+	if (wpi_firmware_users == SIZE_MAX) {
 		mutex_exit(&wpi_firmware_mutex);
-		return 0;
+		return ENFILE;	/* Too many of something in the system...  */
+	}
+	if (wpi_firmware_users++) {
+		KASSERT(wpi_firmware_image != NULL);
+		KASSERT(wpi_firmware_size > 0);
+		mutex_exit(&wpi_firmware_mutex);
+		return 0;	/* Already good to go.  */
 	}
 
+	KASSERT(wpi_firmware_image == NULL);
+	KASSERT(wpi_firmware_size == 0);
+
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_wpi","iwlwifi-3945.ucode", &fw)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
+	if ((error = firmware_open("if_wpi", fwname, &fw)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "could not open firmware file %s: %d\n", fwname, error);
 		goto fail0;
 	}
 
@@ -1157,46 +1170,74 @@ wpi_cache_firmware(struct wpi_softc *sc)
 	    WPI_FW_MAIN_TEXT_MAXSZ + WPI_FW_MAIN_DATA_MAXSZ +
 	    WPI_FW_INIT_TEXT_MAXSZ + WPI_FW_INIT_DATA_MAXSZ +
 	    WPI_FW_BOOT_TEXT_MAXSZ) {
-		aprint_error_dev(sc->sc_dev, "invalid firmware file\n");
+		aprint_error_dev(sc->sc_dev,
+		    "firmware file %s too large: %zu bytes\n",
+		    fwname, wpi_firmware_size);
 		error = EFBIG;
 		goto fail1;
 	}
 
 	if (wpi_firmware_size < sizeof (struct wpi_firmware_hdr)) {
 		aprint_error_dev(sc->sc_dev,
-		    "truncated firmware header: %zu bytes\n",
-		    wpi_firmware_size);
+		    "firmware file %s too small: %zu bytes\n",
+		    fwname, wpi_firmware_size);
 		error = EINVAL;
-		goto fail2;
+		goto fail1;
 	}
 
 	wpi_firmware_image = firmware_malloc(wpi_firmware_size);
 	if (wpi_firmware_image == NULL) {
-		aprint_error_dev(sc->sc_dev, "not enough memory to stock firmware\n");
+		aprint_error_dev(sc->sc_dev,
+		    "not enough memory for firmware file %s\n", fwname);
 		error = ENOMEM;
 		goto fail1;
 	}
 
-	if ((error = firmware_read(fw, 0, wpi_firmware_image, wpi_firmware_size)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't get firmware\n");
+	error = firmware_read(fw, 0, wpi_firmware_image, wpi_firmware_size);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "error reading firmware file %s: %d\n", fwname, error);
 		goto fail2;
 	}
 
-	sc->fw_used = true;
+	/* Success!  */
 	firmware_close(fw);
 	mutex_exit(&wpi_firmware_mutex);
-
 	return 0;
 
 fail2:
 	firmware_free(wpi_firmware_image, wpi_firmware_size);
+	wpi_firmware_image = NULL;
 fail1:
+	wpi_firmware_size = 0;
 	firmware_close(fw);
 fail0:
-	wpi_firmware_users--;
-	KASSERT(wpi_firmware_users == 0);
+	KASSERT(wpi_firmware_users == 1);
+	wpi_firmware_users = 0;
+	KASSERT(wpi_firmware_image == NULL);
+	KASSERT(wpi_firmware_size == 0);
+
 	mutex_exit(&wpi_firmware_mutex);
 	return error;
+}
+
+static void
+wpi_release_firmware(void)
+{
+
+	mutex_enter(&wpi_firmware_mutex);
+
+	KASSERT(wpi_firmware_users > 0);
+	KASSERT(wpi_firmware_image != NULL);
+	KASSERT(wpi_firmware_size != 0);
+
+	if (--wpi_firmware_users == 0) {
+		firmware_free(wpi_firmware_image, wpi_firmware_size);
+		wpi_firmware_image = NULL;
+		wpi_firmware_size = 0;
+	}
+
+	mutex_exit(&wpi_firmware_mutex);
 }
 
 static int
@@ -1208,10 +1249,18 @@ wpi_load_firmware(struct wpi_softc *sc)
 	const uint8_t *boot_text;
 	uint32_t init_textsz, init_datasz, main_textsz, main_datasz;
 	uint32_t boot_textsz;
+	size_t size;
 	int error;
 
-	if ((error = wpi_cache_firmware(sc)) != 0)
-		return error;
+	if (!sc->fw_used) {
+		if ((error = wpi_cache_firmware(sc)) != 0)
+			return error;
+		sc->fw_used = true;
+	}
+
+	KASSERT(sc->fw_used);
+	KASSERT(wpi_firmware_image != NULL);
+	KASSERT(wpi_firmware_size > sizeof(hdr));
 
 	memcpy(&hdr, wpi_firmware_image, sizeof(hdr));
 
@@ -1234,11 +1283,12 @@ wpi_load_firmware(struct wpi_softc *sc)
 	}
 
 	/* check that all firmware segments are present */
-	if (wpi_firmware_size <
-	    sizeof (struct wpi_firmware_hdr) + main_textsz +
-	    main_datasz + init_textsz + init_datasz + boot_textsz) {
+	size = sizeof (struct wpi_firmware_hdr) + main_textsz +
+	    main_datasz + init_textsz + init_datasz + boot_textsz;
+	if (wpi_firmware_size < size) {
 		aprint_error_dev(sc->sc_dev,
-		    "firmware file too short: %zu bytes\n", wpi_firmware_size);
+		    "firmware file truncated: %zu bytes, expected %zu bytes\n",
+		    wpi_firmware_size, size);
 		error = EINVAL;
 		goto free_firmware;
 	}
@@ -1252,7 +1302,8 @@ wpi_load_firmware(struct wpi_softc *sc)
 
 	/* copy initialization images into pre-allocated DMA-safe memory */
 	memcpy(dma->vaddr, init_data, init_datasz);
-	memcpy((char*)dma->vaddr + WPI_FW_INIT_DATA_MAXSZ, init_text, init_textsz);
+	memcpy((char *)dma->vaddr + WPI_FW_INIT_DATA_MAXSZ, init_text,
+	    init_textsz);
 
 	/* tell adapter where to find initialization images */
 	wpi_mem_lock(sc);
@@ -1275,13 +1326,14 @@ wpi_load_firmware(struct wpi_softc *sc)
 	/* ..and wait at most one second for adapter to initialize */
 	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
 		/* this isn't what was supposed to happen.. */
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for adapter to initialize\n");
 	}
 
 	/* copy runtime images into pre-allocated DMA-safe memory */
 	memcpy(dma->vaddr, main_data, main_datasz);
-	memcpy((char*)dma->vaddr + WPI_FW_MAIN_DATA_MAXSZ, main_text, main_textsz);
+	memcpy((char *)dma->vaddr + WPI_FW_MAIN_DATA_MAXSZ, main_text,
+	    main_textsz);
 
 	/* tell adapter where to find runtime images */
 	wpi_mem_lock(sc);
@@ -1295,17 +1347,15 @@ wpi_load_firmware(struct wpi_softc *sc)
 	/* wait at most one second for second alive notification */
 	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
 		/* this isn't what was supposed to happen.. */
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for adapter to initialize\n");
 	}
 
 	return error;
 
 free_firmware:
-	mutex_enter(&wpi_firmware_mutex);
 	sc->fw_used = false;
-	--wpi_firmware_users;
-	mutex_exit(&wpi_firmware_mutex);
+	wpi_release_firmware();
 	return error;
 }
 
@@ -3091,15 +3141,15 @@ wpi_init(struct ifnet *ifp)
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_RADIO_OFF);
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_RADIO_OFF);
 
-	if ((error = wpi_load_firmware(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not load firmware\n");
+	if ((error = wpi_load_firmware(sc)) != 0)
+		/* wpi_load_firmware prints error messages for us.  */
 		goto fail1;
-	}
 
 	/* Check the status of the radio switch */
 	if (wpi_getrfkill(sc)) {
-		aprint_error_dev(sc->sc_dev, "Radio is disabled by hardware switch\n");
-		error = EBUSY; 
+		aprint_error_dev(sc->sc_dev,
+		    "radio is disabled by hardware switch\n");
+		error = EBUSY;
 		goto fail1;
 	}
 
@@ -3110,8 +3160,8 @@ wpi_init(struct ifnet *ifp)
 		DELAY(10);
 	}
 	if (ntries == 1000) {
-		aprint_error_dev(sc->sc_dev, 
-						 "timeout waiting for thermal sensors calibration\n");
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for thermal sensors calibration\n");
 		error = ETIMEDOUT;
 		goto fail1;
 	}
