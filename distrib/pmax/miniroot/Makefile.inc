@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2010/02/11 09:06:49 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.23.14.1 2012/11/25 10:10:03 jdc Exp $
 
 .if ${MACHINE_ARCH} == "mips64el"
 SFX=		64
@@ -9,7 +9,7 @@ DBG=		-Os
 IMAGESIZE=	32m
 MAKEFS_FLAGS=	-f 15
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	all
+MAKEDEVTARGETS=	all ipty
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list${SFX}
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
