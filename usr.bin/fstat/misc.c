@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2012/11/25 01:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2012/11/25 01:05:49 christos Exp $");
 
 #define _KMEMUSER
 #include <stdbool.h>
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $");
 #include <sys/proc.h>
 #define _KERNEL
 #include <sys/file.h>
+#define copyout_t int
+#include <sys/ksem.h>
 #undef _KERNEL
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -55,6 +57,7 @@ __RCSID("$NetBSD: misc.c,v 1.9 2012/10/27 22:38:07 alnsn Exp $");
 #include <net/bpfdesc.h>
 
 #include <err.h>
+#include <string.h>
 #include <kvm.h>
 #include "fstat.h"
 
@@ -105,7 +108,7 @@ p_bpf(struct file *f)
 {
 	struct bpf_d bpf;
 
-	if (!KVM_READ(f->f_data, &bpf, sizeof (bpf))) {
+	if (!KVM_READ(f->f_data, &bpf, sizeof(bpf))) {
 		dprintf("can't read bpf at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
@@ -133,11 +136,39 @@ p_bpf(struct file *f)
 }
 
 static int
+p_sem(struct file *f)
+{
+	ksem_t ks;
+	if (!KVM_READ(f->f_data, &ks, sizeof(ks))) {
+		dprintf("can't read sem at %p for pid %d", f->f_data, Pid);
+		return 0;
+	}
+	(void)printf("* ksem ref=%u, value=%u, waiters=%u, flags=0x%x, "
+	    "mode=%o, uid=%u, gid=%u", ks.ks_ref, ks.ks_value, ks.ks_waiters,
+	    ks.ks_flags, ks.ks_mode, ks.ks_uid, ks.ks_gid);
+	if (ks.ks_name && ks.ks_namelen) {
+		char buf[64];
+		if (ks.ks_namelen >= sizeof(buf))
+			ks.ks_namelen = sizeof(buf) - 1;
+		if (!KVM_READ(ks.ks_name, buf, ks.ks_namelen)) {
+			dprintf("can't read sem name at %p for pid %d",
+			    ks.ks_name, Pid);
+		} else {
+			buf[ks.ks_namelen] = '\0';
+			(void)printf(", name=%s\n", buf);
+			return 0;
+		}
+	}
+	(void)printf("\n");
+	return 0;
+}
+
+static int
 p_mqueue(struct file *f)
 {
 	struct mqueue mq;
 
-	if (!KVM_READ(f->f_data, &mq, sizeof (mq))) {
+	if (!KVM_READ(f->f_data, &mq, sizeof(mq))) {
 		dprintf("can't read mqueue at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
@@ -150,7 +181,7 @@ p_kqueue(struct file *f)
 {
 	struct kqueue kq;
 
-	if (!KVM_READ(f->f_data, &kq, sizeof (kq))) {
+	if (!KVM_READ(f->f_data, &kq, sizeof(kq))) {
 		dprintf("can't read kqueue at %p for pid %d", f->f_data, Pid);
 		return 0;
 	}
@@ -167,8 +198,17 @@ pmisc(struct file *f, const char *name)
 		if ((n = KVM_NLIST(nl)) == -1)
 			errx(1, "Cannot list kernel symbols (%s)",
 			    KVM_GETERR());
-		else if (n != 0 && vflg)
-			warnx("Could not find %d symbols", n);
+		else if (n != 0 && vflg) {
+			char buf[1024];
+			buf[0] = '\0';
+			for (struct nlist *l = nl; l->n_name != NULL; l++) {
+				if (l->n_value != 0)
+					continue;
+				strlcat(buf, ", ", sizeof(buf));
+				strlcat(buf, l->n_name, sizeof(buf));
+			}
+			warnx("Could not find %d symbols: %s", n, buf + 2);
+		}
 	}
 	for (i = 0; i < NL_MAX; i++)
 		if ((uintptr_t)f->f_ops == nl[i].n_value)
@@ -180,6 +220,8 @@ pmisc(struct file *f, const char *name)
 		return p_mqueue(f);
 	case NL_KQUEUE:
 		return p_kqueue(f);
+	case NL_SEM:
+		return p_sem(f);
 	case NL_TAP:
 		printf("* tap %lu\n", (unsigned long)(intptr_t)f->f_data);
 		return 0;
