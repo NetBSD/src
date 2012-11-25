@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.165 2012/11/19 23:43:08 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.166 2012/11/25 23:33:56 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -550,6 +550,10 @@ file	arch/amiga/pci/emmem.c		emmem
 
 include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
+
+device	z3rambd: altmemdev
+attach	z3rambd at zbus
+file	arch/amiga/dev/z3rambd.c	z3rambd needs-flag
 
 include "arch/amiga/clockport/files.clockport"
 

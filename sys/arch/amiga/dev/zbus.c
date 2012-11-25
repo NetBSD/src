@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.71 2012/11/25 19:52:05 christos Exp $ */
+/*	$NetBSD: zbus.c,v 1.72 2012/11/25 23:33:56 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.71 2012/11/25 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.72 2012/11/25 23:33:56 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.71 2012/11/25 19:52:05 christos Exp $");
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
+
+#include "z3rambd.h"
 
 struct aconfdata {
 	const char *name;
@@ -326,6 +328,11 @@ zbusattach(device_t parent, device_t self, void *aux)
 		if (amiga_realconfig == 0 && pcp >= epcp)
 			continue;
 
+#if NZ3RAMBD > 0
+		if ((cdp->rom.manid == 3643) && (cdp->rom.prodid == 32))
+		{ }
+		else 
+#endif /* NZ3RAMBD */
 		/*
 		 * check if it's a Zorro II or III board and not linked into
 		 * MemList (i.e. not a memory board)
