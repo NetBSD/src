@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.21 2012/08/31 17:29:08 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.22 2012/11/25 20:40:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 #endif
 
 #if defined(_KERNEL)
-static __inline __cpu_simple_lock_t
+static __inline unsigned char
 __swp(__cpu_simple_lock_t __val, volatile __cpu_simple_lock_t *__ptr)
 {
 #ifdef _ARM_ARCH_6
