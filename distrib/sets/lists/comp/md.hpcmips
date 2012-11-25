@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.29 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.hpcmips,v 1.30 2012/11/25 21:55:50 alnsn Exp $
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
@@ -54,6 +54,7 @@
 ./usr/include/hpcmips/rwlock.h			comp-c-include
 ./usr/include/hpcmips/setjmp.h			comp-c-include
 ./usr/include/hpcmips/signal.h			comp-c-include
+./usr/include/hpcmips/sljitarch.h		comp-c-include
 ./usr/include/hpcmips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hpcmips/sysconf.h			comp-c-include
 ./usr/include/hpcmips/trap.h			comp-c-include
