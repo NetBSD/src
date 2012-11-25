@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.57 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.58 2012/11/25 22:22:39 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.57 2012/08/24 09:01:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.58 2012/11/25 22:22:39 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -145,6 +145,7 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172}, 0 },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772}, AX772 },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772A}, AX772 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B}, AX772 | AX772B },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88178}, AX178 },
 	{ { USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC210T}, 0 },
 	{ { USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D5055 }, AX178 },
@@ -918,12 +919,14 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			total_len -= sizeof(hdr);
 			buf += sizeof(hdr);
 
-			if ((hdr.len ^ hdr.ilen) != 0xffff) {
+			if (((le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK) ^
+			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) != 
+			    AXE_RH1M_RXLEN_MASK) {		
 				ifp->if_ierrors++;
 				goto done;
 			}
 
-			rxlen = le16toh(hdr.len);
+			rxlen = le16toh(hdr.len & AXE_RH1M_RXLEN_MASK);
 			if (total_len < rxlen) {
 				pktlen = total_len;
 				total_len = 0;
@@ -1241,7 +1244,9 @@ axe_init(struct ifnet *ifp)
 
 	/* Enable receiver, set RX mode */
 	rxmode = AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE;
-	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
+	if (sc->axe_flags & AX772B)
+		rxmode |= AXE_772B_RXCMD_RH1M;
+	else if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
 			/* Largest possible USB buffer size for AX88178 */
 			rxmode |= AXE_178_RXCMD_MFB;
