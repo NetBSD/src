@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.112 2012/11/21 22:35:19 rkujawa Exp $
+# $NetBSD: INSTALL,v 1.113 2012/11/25 23:37:28 rkujawa Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.106 2012/11/21 22:33:50 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.107 2012/11/25 23:37:10 rkujawa Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.112 $"
+#ident 		"GENERIC-$Revision: 1.113 $"
 
 makeoptions	COPTS="-Os"
 
@@ -225,6 +225,9 @@ options        KFONT_CONS_ISO8859_1
 #options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	FONT_VT220L8x10
 #options	FONT_VT220ISO8x16
+
+#z3rambd*	at zbus0		# Zorro III RAM block devices
+#altmem*	at z3rambd?
 
 p5bus0		at zbus0		# Phase5 CSPPC/BPPC internal bus
 
