@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.62 2012/02/12 14:24:08 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.63 2012/11/25 07:48:46 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.62 2012/02/12 14:24:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.63 2012/11/25 07:48:46 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -298,15 +298,12 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_cpu != ci) {
-			hypervisor_set_ipending(ih->ih_cpu, 1 << ih->ih_level,
-			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
+			hypervisor_send_event(ih->ih_cpu, evtch);
 			iplmask &= ~IUNMASK(ci, ih->ih_level);
 			ih = ih->ih_evt_next;
 			continue;
 		}
 		if (ih->ih_level <= ilevel) {
-			hypervisor_set_ipending(ih->ih_cpu, iplmask,
-			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
