@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23 2009/10/19 18:41:07 bouyer Exp $	*/
+/*	$NetBSD: dir.c,v 1.24 2012/11/25 19:36:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23 2009/10/19 18:41:07 bouyer Exp $");
+__RCSID("$NetBSD: dir.c,v 1.24 2012/11/25 19:36:23 jakllsch Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,8 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	dp->e2di_blocks[lastbn + 1] = dp->e2di_blocks[lastbn];
 	dp->e2di_blocks[lastbn] = h2fs32(newblk);
 	inossize(dp, inosize(dp) + sblock.e2fs_bsize);
-	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) + 1);
+	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) +
+		btodb(sblock.e2fs_bsize));
 	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
 	if (bp->b_errs)
@@ -603,7 +604,8 @@ bad:
 	dp->e2di_blocks[lastbn] = dp->e2di_blocks[lastbn + 1];
 	dp->e2di_blocks[lastbn + 1] = 0;
 	inossize(dp, inosize(dp) - sblock.e2fs_bsize);
-	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) - 1);
+	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) -
+		btodb(sblock.e2fs_bsize));
 	freeblk(newblk);
 	return (0);
 }
