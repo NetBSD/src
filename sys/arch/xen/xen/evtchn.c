@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.64 2012/11/25 08:39:36 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.65 2012/11/25 20:56:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.64 2012/11/25 08:39:36 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.65 2012/11/25 20:56:33 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -694,7 +694,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 		 * is more explicitly implemented.
 		 */
 		evts->ev_cpu = ci;
-		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_HIGH);
+		mutex_init(&evtlock[evtch], MUTEX_DEFAULT, IPL_NONE);
 		evtsource[evtch] = evts;
 		if (evname)
 			strncpy(evts->ev_evname, evname,
