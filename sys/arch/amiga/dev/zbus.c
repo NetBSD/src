@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.70 2012/11/25 19:15:43 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.71 2012/11/25 19:52:05 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.70 2012/11/25 19:15:43 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.71 2012/11/25 19:52:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -330,10 +330,13 @@ zbusattach(device_t parent, device_t self, void *aux)
 		 * check if it's a Zorro II or III board and not linked into
 		 * MemList (i.e. not a memory board)
 		 */
-		if ((cdp->rom.type & (ERT_TYPEMASK | ERTF_MEMLIST)) != 
-		    ERT_ZORROII && (cdp->rom.type & (ERT_TYPEMASK | 
-		    ERTF_MEMLIST)) != ERT_ZORROIII)
-			continue;	/* er_Type != Zorro I/O */
+		switch (cdp->rom.type & (ERT_TYPEMASK | ERTF_MEMLIST)) {
+		case ERT_ZORROII:
+		case ERT_ZORROIII:
+			break;
+		default:
+			continue;
+		}
 
 		za.pa = cdp->addr;
 		za.size = cdp->size;
