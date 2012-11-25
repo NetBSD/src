@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.33 2012/09/05 18:57:33 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.34 2012/11/25 15:29:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -238,5 +238,17 @@ typedef struct {
 #define	RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define	RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
 #define	RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t) /* get statistics */
+
+#ifdef _KERNEL
+/*
+ * A context.  cprng plus a smidge.
+ */
+typedef struct {
+	struct _cprng_strong	*cprng;
+	int		hard;
+	int		bytesonkey;
+	kmutex_t	interlock;
+} rp_ctx_t;
+#endif
 
 #endif /* !_SYS_RND_H_ */
