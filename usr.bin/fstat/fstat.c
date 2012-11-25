@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.99 2012/10/19 02:49:52 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.100 2012/11/25 00:36:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.99 2012/10/19 02:49:52 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.100 2012/11/25 00:36:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ static const char *inet6_addrstr(char *, size_t, const struct in6_addr *,
 #endif
 static const char *at_addrstr(char *, size_t, const struct sockaddr_at *);
 static void	socktrans(struct socket *, int);
-static void	misctrans(struct file *);
+static void	misctrans(struct file *, int);
 static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
@@ -485,8 +485,11 @@ ftrans(fdfile_t *fp, int i)
 		    i, fp, Pid);
 		return;
 	}
-	if (fdfile.ff_file == NULL)
+	if (fdfile.ff_file == NULL) {
+		dprintf("null ff_file for %d at %p for pid %d",
+		    i, fp, Pid);
 		return;
+	}
 	if (!KVM_READ(fdfile.ff_file, &file, sizeof(file))) {
 		dprintf("can't read file %d at %p for pid %d",
 		    i, fdfile.ff_file, Pid);
@@ -510,7 +513,7 @@ ftrans(fdfile_t *fp, int i)
 	case DTYPE_MQUEUE:
 	case DTYPE_SEM:
 		if (checkfile == 0)
-			misctrans(&file);
+			misctrans(&file, i);
 		break;
 	default:
 		dprintf("unknown file type %d for file %d of pid %d",
@@ -1192,10 +1195,10 @@ bad:
 }
 
 static void
-misctrans(struct file *file)
+misctrans(struct file *file, int i)
 {
 
-	PREFIX((int)file->f_type);
+	PREFIX(i);
 	pmisc(file, dtypes[file->f_type]);
 }
 
