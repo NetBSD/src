@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2011/07/17 23:53:41 dyoung Exp $
+# $NetBSD: Makefile,v 1.14 2012/11/25 21:55:51 alnsn Exp $
 
 INCSDIR= /usr/include/sbmips
 
@@ -18,7 +18,7 @@ INCS=	ansi.h asm.h \
 	math.h mcontext.h mips_opcode.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h \
+	setjmp.h signal.h sljitarch.h \
 	trap.h types.h \
 	vmparam.h \
 	wchar_limits.h
