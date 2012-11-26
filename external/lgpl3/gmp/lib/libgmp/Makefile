@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2012/08/10 16:05:26 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2012/11/26 18:57:33 drochner Exp $
 
 .include <bsd.init.mk>
 
@@ -180,6 +180,39 @@ perfsqr.h: gen-psqr.c
 CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+
+# XXX stuff looks for "../config.m4"
+dummy:
+	mkdir dummy
+${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
+	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
+
+CLEANFILES+=	config.m4
+clean: cleandummy
+cleandummy: .PHONY
+	-rmdir dummy
+
+BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn
+
+.for _build _src in ${ASM_SRCS_LIST}
+${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
+	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} ${BUILD_S_INCS} \
+		${M4FLAGS} ${M4FLAGS.${.TARGET:R}} \
+		-DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
+
+SRCS+=		${_build:R}.s
+CLEANFILES+=	${_build:R}.s
+.endfor
+
+.for _build _src in ${C_SRCS_LIST}
+mpn_${_build}: Makefile
+	echo '#include "${_src}"' > ${.TARGET}
+
+CPPFLAGS.mpn_${_build}+= -DOPERATION_${_build:R}
+
+SRCS+=		mpn_${_build}   
+CLEANFILES+=	mpn_${_build}   
+.endfor
 
 .include <bsd.lib.mk>
 
