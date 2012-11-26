@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1407 2012/11/15 19:49:11 jkunz Exp $
+# $NetBSD: mi,v 1.1408 2012/11/26 00:41:48 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -768,6 +768,7 @@
 ./usr/share/man/cat4/amiga/ser.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/wesc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/xsurf.0		man-sys-catman		.cat
+./usr/share/man/cat4/amiga/z3rambd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
@@ -3725,6 +3726,7 @@
 ./usr/share/man/html4/amiga/ser.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/wesc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amiga/xsurf.html		man-sys-htmlman		html
+./usr/share/man/html4/amiga/z3rambd.html	man-sys-htmlman		html
 ./usr/share/man/html4/amiga/zssc.html		man-sys-htmlman		html
 ./usr/share/man/html4/amr.html			man-sys-htmlman		html
 ./usr/share/man/html4/ams.html			man-sys-htmlman		html
@@ -6376,6 +6378,7 @@
 ./usr/share/man/man4/amiga/ser.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/wesc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/xsurf.4		man-sys-man		.man
+./usr/share/man/man4/amiga/z3rambd.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man		.man
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
