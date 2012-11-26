@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.199 2012/11/15 13:33:29 msaitoh Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.200 2012/11/26 19:53:04 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8798,3 +8798,15 @@ distrib/sets/lists/base/mi			1.993
 
 	Really mark wake as obsolete
 	[msaitoh]
+
+sys/arch/x86/x86/identcpu.c			1.31 via patch
+
+	MSR fixes for VIA CPUs.  PR#41267.
+	[christos, ticket #1819]
+
+sys/fs/smbfs/smbfs_smb.c			1.43
+sys/netsmb/smb_smb.c				1.33
+
+	Make smbfs actually works on big-endian ports.
+	[nakayama, ticket #1820]
+
