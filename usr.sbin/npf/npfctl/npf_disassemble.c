@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_disassemble.c,v 1.3.2.8 2012/11/24 04:34:43 riz Exp $	*/
+/*	$NetBSD: npf_disassemble.c,v 1.3.2.9 2012/11/26 17:39:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * FIXME: config generation should be redesigned..
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.8 2012/11/24 04:34:43 riz Exp $");
+__RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.9 2012/11/26 17:39:29 riz Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,8 +47,6 @@ __RCSID("$NetBSD: npf_disassemble.c,v 1.3.2.8 2012/11/24 04:34:43 riz Exp $");
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-
-#include <util.h>
 
 #define NPF_OPCODES_STRINGS
 #include <net/npf_ncode.h>
@@ -108,7 +106,7 @@ npfctl_ncode_add_target(nc_inf_t *ni, const uint32_t *pc)
 	/* Grow array, if needed, and add a new target. */
 	if (ni->ni_targidx == ni->ni_targsize) {
 		ni->ni_targsize += 16;
-		ni->ni_targs = xrealloc(ni->ni_targs,
+		ni->ni_targs = erealloc(ni->ni_targs,
 		    ni->ni_targsize * sizeof(uint32_t));
 	}
 	assert(ni->ni_targidx < ni->ni_targsize);
@@ -372,7 +370,7 @@ npfctl_ncode_operand(nc_inf_t *ni, char *buf, size_t bufsiz, uint8_t operand)
 nc_inf_t *
 npfctl_ncode_disinf(FILE *fp)
 {
-	nc_inf_t *ni = zalloc(sizeof(nc_inf_t));
+	nc_inf_t *ni = ecalloc(1, sizeof(nc_inf_t));
 
 	memset(ni, 0, sizeof(nc_inf_t));
 	ni->ni_fp = fp;

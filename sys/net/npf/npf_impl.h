@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.10.2.10 2012/11/24 04:34:42 riz Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.10.2.11 2012/11/26 17:39:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ int		npf_match_tcpfl(npf_cache_t *, nbuf_t *, void *, uint32_t);
 void		npf_tableset_sysinit(void);
 void		npf_tableset_sysfini(void);
 
-const pt_tree_ops_t npf_table_ptree_ops;
+extern const pt_tree_ops_t npf_table_ptree_ops;
 
 npf_tableset_t *npf_tableset_create(void);
 void		npf_tableset_destroy(npf_tableset_t *);
