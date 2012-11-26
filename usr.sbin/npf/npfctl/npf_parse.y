@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.3.2.8 2012/11/18 22:38:28 riz Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.3.2.9 2012/11/26 17:39:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ yyerror(const char *fmt, ...)
 	extern int yyleng;
 	extern char *yytext;
 
-	char *msg, *context = xstrndup(yytext, yyleng);
+	char *msg, *context = estrndup(yytext, yyleng);
 	bool eol = (*context == '\n');
 	va_list ap;
 
@@ -66,7 +66,7 @@ yyerror(const char *fmt, ...)
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
 		size_t len = strlen(context);
-		char *dst = zalloc(len * 4 + 1);
+		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
 		fprintf(stderr, " near '%s'", dst);
@@ -130,13 +130,13 @@ yyerror(const char *fmt, ...)
 %token			TYPE
 %token	<num>		ICMP
 %token	<num>		ICMP6
-%token	<fpnum>		FPNUM
 
 %token	<num>		HEX
 %token	<str>		IDENTIFIER
 %token	<str>		IPV4ADDR
 %token	<str>		IPV6ADDR
 %token	<num>		NUM
+%token	<fpnum>		FPNUM
 %token	<str>		STRING
 %token	<str>		TABLE_ID
 %token	<str>		VAR_ID
@@ -315,7 +315,7 @@ proc_call
 	{
 		proc_call_t pc;
 
-		pc.pc_name = xstrdup($1);
+		pc.pc_name = estrdup($1);
 		pc.pc_opts = $3;
 		$$ = npfvar_create(".proc_call");
 		npfvar_add_element($$, NPFVAR_PROC, &pc, sizeof(pc));
@@ -338,8 +338,8 @@ proc_param
 	{
 		proc_param_t pp;
 
-		pp.pp_param = xstrdup($1);
-		pp.pp_value = $2 ? xstrdup($2) : NULL;
+		pp.pp_param = estrdup($1);
+		pp.pp_value = $2 ? estrdup($2) : NULL;
 		$$ = npfvar_create(".proc_param");
 		npfvar_add_element($$, NPFVAR_PROC_PARAM, &pp, sizeof(pp));
 	}
@@ -609,7 +609,6 @@ addr
 	: IPV4ADDR	{ $$ = $1; }
 	| IPV6ADDR	{ $$ = $1; }
 	;
-
 
 port_range
 	: PORT port		/* just port */
