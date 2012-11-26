@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.42 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.43 2012/11/26 17:18:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -61,8 +61,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _PWD_H_
+/* compat stunts to avoid this file defining _PWD_H_ */
+#if !defined(_PWD_H_) && !defined(_COMPAT_PWD_INCLUDED)
+#ifdef _COMPAT_PWD_H_
+#define _COMPAT_PWD_INCLUDED
+#else
 #define	_PWD_H_
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
