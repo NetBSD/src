@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.31 2012/10/19 17:09:07 drochner Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.32 2012/11/26 16:22:21 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -171,6 +171,7 @@ typedef struct fhandle	fhandle_t;
      MNT_ASYNC | \
      MNT_NOCOREDUMP | \
      MNT_IGNORE | \
+     MNT_DISCARD | \
      MNT_NOATIME | \
      MNT_SYMPERM | \
      MNT_NODEVMTIME | \
