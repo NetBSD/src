@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/07/03 06:52:27 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2012/11/26 18:57:36 drochner Exp $
 
 SRCS+= \
 	random.c \
@@ -159,19 +159,3 @@ trialdivtab.h: gen-trialdivtab
 	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
 
 CLEANFILES+=	trialdivtab.h
-
-# XXX stuff looks for "../config.m4"
-dummy:
-	mkdir dummy
-${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.TARGET}
-
-.for _build _src in ${C_SRCS_LIST}
-mpn_${_build}: Makefile
-	echo '#include "${_src}"' > ${.TARGET}
-
-CPPFLAGS.mpn_${_build}+= -DOPERATION_${_build:R}
-
-SRCS+=		mpn_${_build}
-CLEANFILES+=	mpn_${_build}
-.endfor
