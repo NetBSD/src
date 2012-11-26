@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.7 2012/11/26 16:30:14 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.8 2012/11/26 17:03:15 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -49,7 +49,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#if defined(__linux__) || defined(__sun__)
+#if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
