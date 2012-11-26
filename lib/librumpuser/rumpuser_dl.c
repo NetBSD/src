@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.9 2012/11/26 17:00:54 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.10 2012/11/26 17:55:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.9 2012/11/26 17:00:54 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.10 2012/11/26 17:55:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -53,7 +53,8 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.9 2012/11/26 17:00:54 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #if defined(__ELF__) && (defined(__NetBSD__) || defined(__FreeBSD__)	\
-    || (defined(__sun__) && defined(__svr4__))) || defined(__linux__)
+    || (defined(__sun__) && defined(__svr4__))) || defined(__linux__)	\
+    || defined(__DragonFly__)
 static size_t symtabsize = 0, strtabsize = 0;
 static size_t symtaboff = 0, strtaboff = 0;
 static uint8_t *symtab = NULL;
