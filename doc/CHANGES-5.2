@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.200 2012/11/26 19:53:04 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.201 2012/11/26 20:00:35 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8809,4 +8809,11 @@ sys/netsmb/smb_smb.c				1.33
 
 	Make smbfs actually works on big-endian ports.
 	[nakayama, ticket #1820]
+
+xsrc/external/mit/expat/dist/lib/expat.h		patch
+xsrc/external/mit/expat/dist/lib/xmlparse.c		patch
+xsrc/external/mit/expat/dist/xmlwf/readfilemap.c	patch
+
+	Address CVE-2012-1147, CVE-2012-1148 and CVE-2012-0876.
+	[spz, ticket #1821]
 
