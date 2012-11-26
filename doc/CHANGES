@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1760 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1761 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -143,3 +143,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	amiga: A2000-style RTCs are now driven by the msm6242b(4) driver.
 		[rkujawa 20121114]
 	xsurf(4): Add X-Surf IDE controller support. [rkujawa 20121119]
+	z3rambd(4): Add driver for Zorro III RAM boards as block devices.
+		[rkujawa 20121126]
