@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.14 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.15 2012/11/26 20:34:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.14 2012/09/16 13:47:41 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.15 2012/11/26 20:34:28 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -145,7 +145,7 @@ npfctl_build_fam(nc_ctx_t *nc, sa_family_t family,
 	 * Otherwise, address of invalid family was passed manually.
 	 */
 	if (family != AF_UNSPEC && family != fam->fam_family) {
-		if (!fam->fam_interface) {
+		if (!fam->fam_ifindex) {
 			yyerror("specified address is not of the required "
 			    "family %d", family);
 		}
