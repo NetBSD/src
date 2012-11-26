@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.9 2012/10/08 18:02:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.10 2012/11/26 17:54:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.9 2012/10/08 18:02:04 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.10 2012/11/26 17:54:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -386,7 +386,7 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 
 	NOFAIL(*rw = malloc(sizeof(struct rumpuser_rw)));
 	NOFAIL_ERRNO(pthread_rwlock_init(&((*rw)->pthrw), NULL));
-	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin), PTHREAD_PROCESS_SHARED));
+	NOFAIL_ERRNO(pthread_spin_init(&((*rw)->spin),PTHREAD_PROCESS_PRIVATE));
 	(*rw)->readers = 0;
 	(*rw)->writer = NULL;
 }
