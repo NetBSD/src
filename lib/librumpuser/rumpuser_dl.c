@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.8 2012/07/27 09:09:05 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.9 2012/11/26 17:00:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.8 2012/07/27 09:09:05 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.9 2012/11/26 17:00:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -101,11 +101,11 @@ reservespace(void *store, size_t *storesize,
 #define DYNn_GETMEMBER(base, n, thevar, result)				\
 do {									\
 	if (eident == ELFCLASS32) {					\
-		Elf32_Dyn *dyn = base;					\
+		const Elf32_Dyn *dyn = base;				\
 		/*LINTED*/						\
 		result = dyn[n].thevar;					\
 	} else {							\
-		Elf64_Dyn *dyn = base;					\
+		const Elf64_Dyn *dyn = base;				\
 		/*LINTED*/						\
 		result = dyn[n].thevar;					\
 	}								\
@@ -157,7 +157,7 @@ getsymbols(struct link_map *map)
 	char *str_base;
 	void *syms_base = NULL; /* XXXgcc */
 	size_t curstrsize;
-	void *ed_base;
+	const void *ed_base;
 	uint64_t ed_tag;
 	size_t cursymcount;
 	unsigned i;
