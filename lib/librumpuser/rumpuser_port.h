@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.9 2012/11/26 19:57:24 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.10 2012/11/26 20:03:40 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -51,7 +51,7 @@
 
 /* maybe this should be !__NetBSD__ ? */
 #if defined(__linux__) || defined(__sun__) || defined(__FreeBSD__)	\
-    defined(__DragonFly__)
+    || defined(__DragonFly__)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
