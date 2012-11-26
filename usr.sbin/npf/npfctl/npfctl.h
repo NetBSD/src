@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.22 2012/11/05 23:47:12 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.23 2012/11/26 20:34:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -51,8 +51,15 @@ typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
 	npf_addr_t	fam_addr;
 	npf_netmask_t	fam_mask;
-	npfvar_t *	fam_interface;
+	unsigned long	fam_ifindex;
 } fam_addr_mask_t;
+
+typedef struct ifnet_addr {
+	unsigned long	ifna_index;
+	sa_family_t	ifna_family;
+	npfvar_t *	ifna_filter;
+	npfvar_t *	ifna_addrs;
+} ifnet_addr_t;
 
 typedef struct port_range {
 	in_port_t	pr_start;
@@ -100,10 +107,10 @@ in_port_t	npfctl_portno(const char *);
 uint8_t		npfctl_icmpcode(int, uint8_t, const char *);
 uint8_t		npfctl_icmptype(int, const char *);
 unsigned long   npfctl_find_ifindex(const char *);
+npfvar_t *	npfctl_parse_ifnet(const char *, const int);
 npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
 npfvar_t * 	npfctl_parse_icmp(int, int, int);
-npfvar_t *	npfctl_parse_iface(const char *);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
 npfvar_t *	npfctl_parse_port_range_variable(const char *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
