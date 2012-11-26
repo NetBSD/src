@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.48 2012/09/21 14:33:03 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.49 2012/11/26 17:03:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.48 2012/09/21 14:33:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.49 2012/11/26 17:03:15 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -116,6 +116,12 @@ getdisco(void)
 
 	return discocnt;
 }
+
+#elif defined(__FreeBSD__)
+
+#include <machine/atomic.h>
+#define signaldisco()	atomic_add_int(&disco, 1)
+#define getdisco()	atomic_readandclear_int(&disco)
 
 #else /* NetBSD */
 
