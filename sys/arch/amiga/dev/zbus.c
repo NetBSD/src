@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.72 2012/11/25 23:33:56 rkujawa Exp $ */
+/*	$NetBSD: zbus.c,v 1.73 2012/11/26 22:58:24 rkujawa Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.72 2012/11/25 23:33:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.73 2012/11/26 22:58:24 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.72 2012/11/25 23:33:56 rkujawa Exp $");
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/z3rambdvar.h>
 
 #include "z3rambd.h"
 
@@ -329,7 +330,7 @@ zbusattach(device_t parent, device_t self, void *aux)
 			continue;
 
 #if NZ3RAMBD > 0
-		if ((cdp->rom.manid == 3643) && (cdp->rom.prodid == 32))
+		if (z3rambd_match_id(cdp->rom.manid, cdp->rom.prodid) > 0)
 		{ }
 		else 
 #endif /* NZ3RAMBD */
