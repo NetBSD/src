@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.6 2012/11/22 21:23:08 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.7 2012/11/26 16:30:14 pooka Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -102,9 +102,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #endif
 
 #if defined(__linux__) || defined(__sun__)
-#define SA_SETLEN(a,b)
+#define SIN_SETLEN(a,b)
 #else /* BSD */
-#define SA_SETLEN(_sa_, _len_) ((struct sockaddr *)_sa_)->sa_len = _len_
+#define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
 #endif
 
 #ifndef __predict_true

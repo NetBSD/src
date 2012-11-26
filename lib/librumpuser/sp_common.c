@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.34 2012/11/18 19:29:40 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.35 2012/11/26 16:30:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -546,7 +546,7 @@ tcp_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	int port;
 
 	memset(&sin, 0, sizeof(sin));
-	SA_SETLEN(&sin, sizeof(sin));
+	SIN_SETLEN(sin, sizeof(sin));
 	sin.sin_family = AF_INET;
 
 	p = strchr(addr, ':');
