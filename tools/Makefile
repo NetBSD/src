@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159 2012/11/15 23:51:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.160 2012/11/26 16:57:25 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -6,11 +6,11 @@
 # plain make.
 .MAIN: build_install
 
-.if defined(HAVE_GCC) || defined(HAVE_PCC)
+.if ${TOOLCHAIN_MISSING} == "no"
+.if defined(HAVE_GCC)
 TOOLCHAIN_BITS= gmake .WAIT
 .endif
 
-.if ${TOOLCHAIN_MISSING} == "no"
 .if defined(HAVE_GCC)
 .if ${HAVE_GCC} >= 45
 TOOLCHAIN_BITS+= gmp .WAIT
