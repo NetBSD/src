@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.55 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.55 2011/08/31 16:24:59 plunky Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.56 2012/11/26 20:13:54 pooka Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -119,7 +119,10 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.55 2011/08/31 16:24:59 plunky Exp $");
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <util.h>
+#endif
 
 #define	MAX_CACHESIZE	8*1024*1024
 #define	MIN_CACHESIZE	2*1024*1024
