@@ -1,4 +1,4 @@
-/*	$NetBSD: z3rambd.c,v 1.1 2012/11/25 23:33:56 rkujawa Exp $ */
+/*	$NetBSD: z3rambd.c,v 1.2 2012/11/26 22:58:24 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.1 2012/11/25 23:33:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.2 2012/11/26 22:58:24 rkujawa Exp $");
 
 /*
- * Z3 RAM virtual block device. Supports ZorRAM so far.
+ * Z3 RAM virtual block device. Supports ZorRAM, BigRamPlus and FastLane Z3 so 
+ * far.
  */
 
 #include <sys/param.h>
@@ -41,11 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.1 2012/11/25 23:33:56 rkujawa Exp $");
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/bus.h>
 
 #include <machine/cpu.h>
 
 #include <amiga/dev/zbusvar.h>
+#include <amiga/dev/z3rambdvar.h>
 
 #include <dev/altmem/altmemvar.h>
 
@@ -62,24 +63,8 @@ static const struct altmem_memops z3rambd_altmem_memops = {
 	.strategy = z3rambd_altmem_strategy
 };
 
-struct z3rambd_softc {
-	device_t		sc_dev;
-
-	size_t			sc_size;
-
-	struct bus_space_tag	sc_bst;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-
-	void			*sc_va;
-};
-
 CFATTACH_DECL_NEW(z3rambd, sizeof(struct z3rambd_softc),
     z3rambd_match, z3rambd_attach, NULL, NULL);
-
-#define ZORRO_MANID_E3B		3643
-#define ZORRO_PRODID_ZORRAM	32
 
 int
 z3rambd_match(device_t parent, cfdata_t cf, void *aux)
@@ -87,9 +72,8 @@ z3rambd_match(device_t parent, cfdata_t cf, void *aux)
 	struct zbus_args *zap;
 	zap = aux;
 
-	if (zap->manid == ZORRO_MANID_E3B) 
-		if (zap->prodid == ZORRO_PRODID_ZORRAM)
-			return 100;
+	if (z3rambd_match_id(zap->manid, zap->prodid) > 0)
+		return 100;
 
 	return 0; 
 }
@@ -112,7 +96,14 @@ z3rambd_attach(device_t parent, device_t self, void *aux)
 	/* XXX: duh, size of the board does not necessarily equal mem size */
 	sc->sc_size = zap->size;
 
-	aprint_normal(": AmigaKit ZorRAM\n");
+	if (zap->prodid == ZORRO_PRODID_ZORRAM)
+		aprint_normal(": AmigaKit ZorRAM / Individual Computers BigRamPlus\n");
+	else if (zap->prodid == ZORRO_PRODID_3128)
+		aprint_normal(": DKB 3128\n");
+	else if (zap->prodid == ZORRO_PRODID_FLZ3MEM)
+		aprint_normal(": FastLane Z3 memory\n");
+	else
+		aprint_normal("\n");
 
 	if (bus_space_map(sc->sc_iot, 0, sc->sc_size, 0,
 	    &sc->sc_ioh)) {
