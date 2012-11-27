@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2012/08/01 16:19:43 matt Exp $
+#	$NetBSD: genassym.cf,v 1.10 2012/11/27 19:24:46 matt Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -110,4 +110,5 @@ define	HATCH_RUNNING		offsetof(struct cpu_hatch_data, hatch_running)
 define	HATCH_SP		offsetof(struct cpu_hatch_data, hatch_sp)
 define	HATCH_TBU		offsetof(struct cpu_hatch_data, hatch_tbu)
 define	HATCH_TBL		offsetof(struct cpu_hatch_data, hatch_tbl)
+define	HATCH_TLBIDX		offsetof(struct cpu_hatch_data, hatch_tlbidx)
 endif
