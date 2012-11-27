@@ -1,7 +1,6 @@
-/*	$NetBSD: atomic_add_32.S,v 1.2.24.1 2012/11/27 23:42:34 matt Exp $	*/
-
+/*	$NetBSD: atomic_and_64.S,v 1.2.4.2 2012/11/27 23:42:35 matt Exp $	*/
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,11 +32,17 @@
 
 #ifdef _ARM_ARCH_6
 
-ENTRY_NP(_atomic_add_32)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value (to be returned) */
-	add	r2, r0, r1		/* calculate new value */
-	strex	ip, r2, [r3]		/* try to store */
+ENTRY_NP(_atomic_and_64)
+	str	r4, [sp, #-4]!		/* save temporary */
+#ifndef __ARM_EABI__
+	mov	r3, r2
+	mov	r2, r1
+#endif
+	mov	r4, r0			/* need r0 for return value */
+1:	ldrexd	r0, [r4]		/* load old value (to be returned) */
+	and	r2, r0, r2		/* calculate new value */
+	and	r3, r1, r3		/* calculate new value */
+	strexd	ip, r2, [r4]		/* try to store */
 	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 #ifdef _ARM_ARCH_7
@@ -45,36 +50,32 @@ ENTRY_NP(_atomic_add_32)
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
+	ldr	r4, [sp], #4		/* restore temporary */
 	RET				/* return old value */
-	END(_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_32,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_int,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_long,_atomic_add_32)
-ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_long,_atomic_add_32)
-STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
+	END(_atomic_and_64)
+ATOMIC_OP_ALIAS(atomic_and_64,_atomic_and_64)
 
-ENTRY_NP(_atomic_add_32_nv)
-	mov	r3, r0			/* need r0 for return value */
-1:	ldrex	r0, [r3]		/* load old value */
-	add	r0, r0, r1		/* calculate new value (return value) */
-	strex	r2, r0, [r3]		/* try to store */
-	cmp	r2, #0			/*   succeed? */
+ENTRY_NP(_atomic_and_64_nv)
+	str	r4, [sp, #-4]!		/* save temporary */
+#ifndef __ARM_EABI__
+	mov	r3, r2
+	mov	r2, r1
+#endif
+	mov	r4, r0			/* need r0 for return value */
+1:	ldrexd	r0, [r4]		/* load old value */
+	and	r0, r0, r2		/* calculate new value */
+	and	r1, r1, r3		/* calculate new value */
+	strexd	ip, r0, [r4]		/* try to store */
+	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
 #ifdef _ARM_ARCH_7
 	dmb
 #else
 	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
 #endif
+	ldr	r4, [sp], #4		/* restore temporary */
 	RET				/* return new value */
-	END(_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_32_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_int_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_long_nv,_atomic_add_32_nv)
-ATOMIC_OP_ALIAS(atomic_add_ptr_nv,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_int_nv,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_long_nv,_atomic_add_32_nv)
-STRONG_ALIAS(_atomic_add_ptr_nv,_atomic_add_32_nv)
+	END(_atomic_and_64_nv)
+ATOMIC_OP_ALIAS(atomic_and_64_nv,_atomic_and_64_nv)
 
 #endif /* _ARM_ARCH_6 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32.S,v 1.2 2008/08/16 07:12:39 matt Exp $	*/
+/*	$NetBSD: atomic_inc_32.S,v 1.2.24.1 2012/11/27 23:42:35 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,11 @@ ENTRY_NP(_atomic_inc_32)
 	strex	r3, r1, [r2]		/* try to store */
 	cmp	r3, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
 	RET				/* return new value */
 	END(_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_32,_atomic_inc_32)
@@ -56,6 +61,11 @@ ENTRY_NP(_atomic_inc_32_nv)
 	strex	r1, r0, [r2]		/* try to store */
 	cmp	r1, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
+#ifdef _ARM_ARCH_7
+	dmb
+#else
+	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
+#endif
 	RET				/* return new value */
 	END(_atomic_inc_32_nv)
 ATOMIC_OP_ALIAS(atomic_inc_32_nv,_atomic_inc_32_nv)
@@ -66,4 +76,4 @@ STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 STRONG_ALIAS(_atomic_inc_ptr_nv,_atomic_inc_32_nv)
 
-#endif /* _ARCH_ARM_6 */
+#endif /* _ARM_ARCH_6 */
