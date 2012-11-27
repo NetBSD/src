@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.12 2012/11/27 15:59:15 jakllsch Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.13 2012/11/27 16:01:49 jakllsch Exp $	*/
 
 /*
  * Basic tests for mounting
@@ -86,11 +86,53 @@ ATF_TC_BODY(fsbsizeovermaxphys, tc)
 	/* otherwise we're do-ne */
 }
 
+ATF_TC(fsbsizeovermaxbsize);
+ATF_TC_HEAD(fsbsizeovermaxbsize, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "mounts file system with "
+	    "blocksize > MAXBSIZE");
+}
+
+ATF_TC_BODY(fsbsizeovermaxbsize, tc)
+{
+	char cmd[1024];
+	struct ufs_args args;
+	struct statvfs svb;
+
+	/*
+	 * We cannot pass newfs parameters via the fstest interface,
+	 * so do things the oldfashioned manual way.
+	 */
+	snprintf(cmd, sizeof(cmd), "newfs -G -b %d -F -s 10000 "
+	    "ffs.img > /dev/null", MAXBSIZE * 2);
+	if (system(cmd))
+		atf_tc_fail("cannot create file system");
+
+	rump_init();
+	if (rump_pub_etfs_register("/devdisk", "ffs.img", RUMP_ETFS_BLK))
+		atf_tc_fail("cannot register rump fake device");
+
+	args.fspec = __UNCONST("/devdisk");
+
+	if (rump_sys_mkdir("/mp", 0777) == -1)
+		atf_tc_fail_errno("create mountpoint");
+
+	/* mount succeeded?  bad omen.  confirm we're in trouble.  */
+	if (rump_sys_mount(MOUNT_FFS, "/mp", 0, &args, sizeof(args)) != -1) {
+		rump_sys_statvfs1("/mp", &svb, ST_WAIT);
+		atf_tc_fail("not expecting to be alive");
+	}
+
+	/* otherwise we're do-ne */
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, 48Kimage);
 	ATF_TP_ADD_TC(tp, fsbsizeovermaxphys);
+	ATF_TP_ADD_TC(tp, fsbsizeovermaxbsize);
 
 	return atf_no_error();
 }
