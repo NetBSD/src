@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.11 2010/11/07 17:51:17 jmmv Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.12 2012/11/27 15:59:15 jakllsch Exp $	*/
 
 /*
  * Basic tests for mounting
@@ -44,8 +44,8 @@ ATF_TC_BODY(48Kimage, tc)
 	FSTEST_DESTRUCTOR(tc, ffs, tmp);
 }
 
-ATF_TC(fsbsize2big);
-ATF_TC_HEAD(fsbsize2big, tc)
+ATF_TC(fsbsizeovermaxphys);
+ATF_TC_HEAD(fsbsizeovermaxphys, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "mounts file system with "
@@ -53,11 +53,7 @@ ATF_TC_HEAD(fsbsize2big, tc)
 	/* PR kern/43727 */
 }
 
-#define MYBLOCKSIZE 131072
-#if MAXPHYS >= MYBLOCKSIZE
-#error MAXPHYS too large for test to work
-#endif
-ATF_TC_BODY(fsbsize2big, tc)
+ATF_TC_BODY(fsbsizeovermaxphys, tc)
 {
 	char cmd[1024];
 	struct ufs_args args;
@@ -68,7 +64,7 @@ ATF_TC_BODY(fsbsize2big, tc)
 	 * so do things the oldfashioned manual way.
 	 */
 	snprintf(cmd, sizeof(cmd), "newfs -G -b %d -F -s 10000 "
-	    "ffs.img > /dev/null", MYBLOCKSIZE);
+	    "ffs.img > /dev/null", MAXPHYS * 2);
 	if (system(cmd))
 		atf_tc_fail("cannot create file system");
 
@@ -94,7 +90,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, 48Kimage);
-	ATF_TP_ADD_TC(tp, fsbsize2big);
+	ATF_TP_ADD_TC(tp, fsbsizeovermaxphys);
 
 	return atf_no_error();
 }
