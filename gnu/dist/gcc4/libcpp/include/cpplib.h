@@ -551,6 +551,7 @@ enum builtin_type
   BT_BASE_FILE,			/* `__BASE_FILE__' */
   BT_INCLUDE_LEVEL,		/* `__INCLUDE_LEVEL__' */
   BT_TIME,			/* `__TIME__' */
+  BT_COUNTER,			/* `__COUNTER__' */
   BT_STDC,			/* `__STDC__' */
   BT_PRAGMA			/* `_Pragma' operator */
 };
