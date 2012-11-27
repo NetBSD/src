@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.201 2012/11/26 20:00:35 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.202 2012/11/27 18:17:26 riz Exp $
 
 A complete list of changes from the NetBSD 5.1 release to the NetBSD 5.2
 release:
@@ -8816,4 +8816,9 @@ xsrc/external/mit/expat/dist/xmlwf/readfilemap.c	patch
 
 	Address CVE-2012-1147, CVE-2012-1148 and CVE-2012-0876.
 	[spz, ticket #1821]
+
+usr.bin/tput/tput.c				patch
+
+	Fix tput support for setaf terminfo sequence. PR#39883.
+	[jnemeth, ticket #1822]
 
