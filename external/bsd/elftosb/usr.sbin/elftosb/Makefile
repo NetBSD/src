@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2012/11/15 19:49:16 jkunz Exp $
+# $NetBSD: Makefile,v 1.2 2012/11/27 20:00:38 jkunz Exp $
 
 .include <bsd.init.mk>
 
 .PATH:		${DIST}/elftosb2
 
-.if (${MACHINE} == "evbarm")
+.if (${MACHINE} == "evbarm") && (${MACHINE_ARCH} == "arm")
 PROG_CXX=	elftosb
 SRCS=		BootImageGenerator.cpp \
 		ConversionController.cpp \
