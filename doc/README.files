@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4.10.3 2010/11/06 18:10:17 snj Exp $
+#	$NetBSD: README.files,v 1.4.10.4 2012/11/27 18:52:28 riz Exp $
 
 What's in this directory:
 
@@ -7,6 +7,8 @@ CHANGES		Changes between the 4.0 and 5.0 releases.
 CHANGES-5.0	Changes between the initial 5.0 branch and final release of 5.0.
 
 CHANGES-5.1	Changes between the 5.0 and 5.1 releases.
+
+CHANGES-5.2	Changes between the 5.1 and 5.2 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
