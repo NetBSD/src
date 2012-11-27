@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2012/11/26 16:57:25 pooka Exp $
+#	$NetBSD: Makefile,v 1.161 2012/11/27 20:00:39 jkunz Exp $
 
 .include <bsd.own.mk>
 
@@ -154,7 +154,7 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.if ${MACHINE} == "evbarm"
+.if ${MACHINE} == "evbarm" && ${MACHINE_ARCH} == "arm"
 SUBDIR+=	elftosb
 .endif
 
