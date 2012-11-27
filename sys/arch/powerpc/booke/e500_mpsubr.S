@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas of 3am Software Foundry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * r3 = fdt pointer (ignored)
@@ -10,8 +38,6 @@
  */
 	.p2align 5
 ENTRY_NOPROFILE(e500_spinup_trampoline)
-
-	stw	%r7, 4(%r0)		/* r7 to 4 */
 
 	lis	%r31, 0xdeadbeef@h
 	ori	%r31, %r31, 0xdeadbeef@l
@@ -49,16 +75,38 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	 */
 	lis	%r20, _C_LABEL(cpu_hatch_data)@h
 	ori	%r20, %r20, _C_LABEL(cpu_hatch_data)@l
+	sync
+
+	/*
+	 * Ensure that the TLB entry we are using is memory coherent.
+	 */
+	lis	%r0, (MASX_TLBSEL_MAKE(1)|MAS0_ESEL_MAKE(0))@h
+	mtspr	SPR_MAS0, %r0 			/* setup MAS0 */
+	lis	%r3, (MAS1_V|MAS1_IPROT)@h	/* V | IPROT */
+	ori	%r3, %r3, MASX_TSIZE_64MB	/* and 64MB */
+	mtspr	SPR_MAS1, %r3 			/* save MAS1 */
+	li	%r3, MAS2_M			/* set M bit */
+	mtspr	SPR_MAS2, %r3 			/* save MAS2 */
+	li	%r3, MAS3_SX|MAS3_SR|MAS3_SW	/* set kernel RWX */
+	mtspr	SPR_MAS3, %r3 			/* save MAS3 */
+	tlbwe					/* update entry */
+	isync					/* flush i-stream */
+	sync					/* sync memory. */
 
 	li	%r0, 0
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
-	eieio
+	sync
+#if 0
+	dcbf	0, %r20
+#endif
 
 	lwz	%r1, HATCH_SP(%r20)		/* get hatch SP */
 	lwz	%r21, HATCH_CI(%r20)		/* get cpu_info */
 	mtsprg0	%r21				/* save cpu_info */
 	lwz	%r13, CI_CURLWP(%r21)		/* load r13 with curlwp */
 	mtsprg2	%r13				/* save it in sprg2 */
+	addi    %r0,%r21,CI_SAVELIFO		/* get SAVE area start */
+	mtsprg3 %r0				/* save it in sprg3 */
 
 	/*
 	 * Now to synchronize timebase values.  First to make sure HID0 is
@@ -102,6 +150,7 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 
 	li	%r0, 2
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
+	sync
 
 	/*
 	 * We have to setup the IVOR SPRs since the ones u-boot setup
@@ -146,15 +195,11 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
 
 	/*
-	 * Let's find out what TLB1[0] entry we are supposed to use.
+	 * Let's find out what TLB1 entry we are supposed to use.
 	 */
-	li	%r3, 0
+	lwz	%r3, HATCH_TLBIDX(%r20)
 	bl	_C_LABEL(e500_tlb1_fetch)
-	lwz	%r28, 0(%r3)			/* load the saved TLB1 entry */
-	mtspr	SPR_MAS0, %r28			/* place into SPRs */
-	mtspr	SPR_MAS1, %r29
-	mtspr	SPR_MAS2, %r30
-	mtspr	SPR_MAS3, %r31
+	lmw	%r28, 0(%r3)			/* load the saved TLB1 entry */
 
 	li	%r0, 6
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
@@ -182,6 +227,30 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	li	%r0, 8
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
 
+	/*
+	 * Let's clear TBL1[0] and TBL1[1]
+	 */
+	li	%r8, 0
+	mtspr	SPR_MAS1, %r8
+	mtspr	SPR_MAS2, %r8
+	mtspr	SPR_MAS3, %r8
+	mtspr	SPR_MAS7, %r8
+
+	lis	%r8, (MASX_TLBSEL_MAKE(1)|MAS0_ESEL_MAKE(0))@h
+	mtspr	SPR_MAS0, %r8
+	tlbwe
+
+	lis	%r8, (MASX_TLBSEL_MAKE(1)|MAS0_ESEL_MAKE(1))@h
+	mtspr	SPR_MAS0, %r8
+	tlbwe
+
+	/*
+	 * Now load the new TLB data into the MAS registers.
+	 */
+	mtspr	SPR_MAS0, %r28			/* place into SPRs */
+	mtspr	SPR_MAS1, %r29
+	mtspr	SPR_MAS2, %r30
+	mtspr	SPR_MAS3, %r31
 	tlbwe
 
 	mtsrr0	%r5
@@ -197,12 +266,22 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
 
 	/*
+	 * We now have our TLB1[0] in place.  Now we need to load the rest of
+	 * TLB1 with our entries.  After this is done, we should have access
+	 * to everything.
+	 */
+	bl	_C_LABEL(e500_tlb1_sync)
+
+	li	%r0, 11
+	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
+
+	/*
 	 * Now we can use our stack...
 	 */
 	lwz	%r0, CI_CURPCB(%r21)
 	lwz	%r1, PCB_SP(%r0)
 
-	li	%r0, 11
+	li	%r0, 12
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
 
 	/*
@@ -210,16 +289,6 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	 */
 	li	%r0, 0
 	stw	%r0, HATCH_SP(%r20)
-
-	li	%r0, 12
-	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
-
-	/*
-	 * We now have our TLB1[0] in place.  Now we need to load the rest of
-	 * TLB1 with our entries.  After this is done, we should have access
-	 * to everything.
-	 */
-	bl	_C_LABEL(e500_tlb1_sync)
 
 	li	%r0, 13
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
