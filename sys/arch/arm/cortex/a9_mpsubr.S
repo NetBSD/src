@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.3 2012/09/05 00:21:30 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.4 2012/11/28 22:48:13 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -302,10 +302,10 @@ a9_start:
 	 * Step 4b, set ACTLR.SMP=1 (and ACTRL.FX=1)
 	 */
 	mrc	p15, 0, r0, c1, c0, 1		@ read aux ctl
-	orr	r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
+	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	@ enable SMP
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
-	orr	r0, #CORTEXA9_AUXCTL_FW		@ enable cache/tlb/coherency
+	orr	r0, r0, #CORTEXA9_AUXCTL_FW	@ enable cache/tlb/coherency
 	mcr	p15, 0, r0, c1, c0, 1		@ write aux ctl
 	isb
 
