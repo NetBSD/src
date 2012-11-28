@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.1 2007/01/06 00:50:54 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.1.98.1 2012/11/28 22:40:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -39,6 +39,8 @@
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
+#include "assym.h"
+
 /*
  * Functions to set the MMU Translation Table Base register
  *
@@ -57,14 +59,17 @@ ENTRY(armv5_ec_setttb)
 	 * For armv5_ec_settb, the idcache_wbinv_all is simple enough, I just
 	 * do it directly and entirely avoid the problem.
 	 */
+	cmp	r1, #0			@ need to flush cache / TLB?
+	beq	2f			@   nope, so don't
+
 	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
 1:	mrc	p15, 0, r15, c7, c14, 3	/* Test, clean and invalidate DCache */
 	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
+	cmp	r0, #1
 
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+2:	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
 
 /*
@@ -109,7 +114,7 @@ ENTRY_NP(armv5_ec_icache_sync_all)
 	RET
 
 .Larmv5_ec_line_size:
-	.word	_C_LABEL(arm_pdcache_line_size)
+	.word	_C_LABEL(arm_pcache) + DCACHE_LINE_SIZE
 
 ENTRY(armv5_ec_dcache_wb_range)
 	ldr	ip, .Larmv5_ec_line_size

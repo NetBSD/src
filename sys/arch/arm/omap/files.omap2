@@ -1,10 +1,11 @@
-#	$NetBSD: files.omap2,v 1.8.10.1 2012/08/10 12:15:51 jdc Exp $
+#	$NetBSD: files.omap2,v 1.8.10.1.2.1 2012/11/28 22:40:33 matt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
 #
 
 include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
 
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/omap/omap_dma.c
@@ -14,9 +15,13 @@ defparam opt_omap.h				MEMSIZE
 defparam opt_omap.h				OMAP_EMIFF_PBASE OMAP_EMIFF_SIZE
 defflag opt_omap.h				OMAP2
 defflag opt_omap.h				OMAP3: OMAP2
+defflag opt_omap.h				OMAP4: OMAP3
 defflag	opt_omap.h				OMAP_2430: OMAP2
 defflag opt_omap.h				OMAP_2420: OMAP2
 defflag opt_omap.h				OMAP_3530: OMAP3
+defflag opt_omap.h				OMAP_4430: OMAP4
+defflag opt_omap.h				TI_AM335X: OMAP3
+defflag opt_omap.h				TI_DM37XX: OMAP3
 
 # OBIO just an attach point
 device	obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
@@ -35,7 +40,7 @@ file	arch/arm/arm/bus_space_a4x.S		obio
 device	omapicu: pic, pic_splfuncs
 attach	omapicu at obio with omap2icu
 file	arch/arm/omap/omap2_icu.c		(omap2 | omap3) & omapicu
-file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu
+file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 
 # OMAP2 GPIO controllers
 device	omapgpio: gpiobus
@@ -79,6 +84,10 @@ device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
 
+# SDMMC controller
+attach	sdhc at obio with obiosdhc
+file	arch/arm/omap/omap3_sdhc.c		obiosdhc
+
 # NAND flash controller
 device	omapnand: nandbus
 attach	omapnand at gpmc
@@ -90,9 +99,11 @@ attach	prcm at obio
 file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
 
 # OHCI USB controller
-##attach	ohci at obio with obioohci:		omapgpio
 attach	ohci at obio with obioohci
 file	arch/arm/omap/obio_ohci.c		obioohci
+
+attach	ehci at obio with obioehci
+file	arch/arm/omap/omap3_ehci.c		obioehci
 
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
 attach	omapfb at obio

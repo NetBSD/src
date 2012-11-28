@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.8 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.8.10.1 2012/11/28 22:40:34 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.8 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.8.10.1 2012/11/28 22:40:34 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -349,6 +349,34 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 		return 1;
 #endif
 
+#ifdef OMAP_4430
+	if (oa->obio_addr == GPIO1_BASE_4430
+	    || oa->obio_addr == GPIO2_BASE_4430
+	    || oa->obio_addr == GPIO3_BASE_4430
+	    || oa->obio_addr == GPIO4_BASE_4430
+	    || oa->obio_addr == GPIO5_BASE_4430
+	    || oa->obio_addr == GPIO6_BASE_4430)
+		return 1;
+#endif
+
+#ifdef TI_AM335X
+	if (oa->obio_addr == GPIO0_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO1_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO2_BASE_TI_AM335X
+	    || oa->obio_addr == GPIO3_BASE_TI_AM335X)
+		return 1;
+#endif
+
+#ifdef TI_DM37XX
+	if (oa->obio_addr == GPIO1_BASE_TI_DM37XX
+	    || oa->obio_addr == GPIO2_BASE_TI_DM37XX
+	    || oa->obio_addr == GPIO3_BASE_TI_DM37XX
+	    || oa->obio_addr == GPIO4_BASE_TI_DM37XX
+	    || oa->obio_addr == GPIO5_BASE_TI_DM37XX
+	    || oa->obio_addr == GPIO6_BASE_TI_DM37XX)
+		return 1;
+#endif
+
 	return 0;
 }
 
@@ -379,7 +407,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT) {
 		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
-		strlcpy(gpio->gpio_pic.pic_name, self->dv_xname,
+		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 		pic_add(&gpio->gpio_pic, oa->obio_intrbase);

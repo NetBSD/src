@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.12 2009/11/21 20:32:27 rmind Exp $	*/
+/*	$NetBSD: frame.h,v 1.12.20.1 2012/11/28 22:40:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,6 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 #include <sys/ucontext.h>
 
 /*
@@ -53,6 +52,7 @@
 
 typedef struct trapframe {
 	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_fill; /* fill here so r0 will dword aligned */
 	register_t tf_r0;
 	register_t tf_r1;
 	register_t tf_r2;
@@ -79,6 +79,12 @@ typedef struct trapframe {
 #define tf_r14 tf_usr_lr
 #define tf_r15 tf_pc
 
+#ifdef __PROG32
+#define TRAP_USERMODE(tf)	(((tf)->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
+#elif defined(__PROG26)
+#define TRAP_USERMODE(tf)	(((tf)->tf_r15 & R15_MODE) == R15_MODE_USR)
+#endif
+
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
  */
@@ -94,27 +100,13 @@ struct sigframe_siginfo {
 	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
-/*
- * Scheduler activations upcall frame.  Pushed onto user stack before
- * calling an SA upcall.
- */
-
-struct saframe {
-#if 0 /* in registers on entry to upcall */
-	int		sa_type;
-	struct sa_t **	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-#endif
-	void *		sa_arg;
-};
-
 #ifdef _KERNEL
 __BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 void *getframe(struct lwp *, int, int *);
 __END_DECLS
-#define process_frame(l) (((struct pcb *)lwp_getpcb(l))->pcb_tf)
+#define lwp_trapframe(l)		((l)->l_md.md_tf)
+#define lwp_settrapframe(l, tf)		((l)->l_md.md_tf = (tf))
 #endif
 
 #endif /* _LOCORE */

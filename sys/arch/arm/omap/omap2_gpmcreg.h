@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcreg.h,v 1.5 2011/02/07 23:22:18 ahoka Exp $	*/
+/*	$NetBSD: omap2_gpmcreg.h,v 1.5.12.1 2012/11/28 22:40:34 matt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -45,6 +45,12 @@
 #define GPMC_BASE			0x6800a000
 #endif
 #ifdef OMAP_3530
+#define GPMC_BASE			0x6e000000
+#endif
+#if defined(TI_AM335X) || defined(OMAP_4430)
+#define GPMC_BASE			0x50000000
+#endif
+#ifdef TI_DM37XX
 #define GPMC_BASE			0x6e000000
 #endif
 

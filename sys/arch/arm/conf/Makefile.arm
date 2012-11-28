@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.32 2008/04/27 03:23:13 tsutsui Exp $
+#	$NetBSD: Makefile.arm,v 1.32.44.1 2012/11/28 22:40:25 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -34,6 +34,7 @@ GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 ##
 # CPPFLAGS set by platform-specific Makefile fragment.
 AFLAGS+=	-x assembler-with-cpp
+COPTS.arm32_kvminit.c+=		-fno-stack-protector
 
 ##
 ## (3) libkern and compat
@@ -63,7 +64,8 @@ LINKFLAGS_NORMAL=	-X
 # Strip ARM mapping symbols from the kernel image, as they interfere
 # with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.
 .if !defined(DEBUG) || empty(DEBUG:M-g*)
-SYSTEM_LD_TAIL?=	@${OBJCOPY} --strip-symbol='$$a'	 \
+SYSTEM_LD_TAIL?=	${SYSTEM_LD_TAIL_DBSYM} ; \
+			${OBJCOPY} --strip-symbol='$$a'	 \
 				    --strip-symbol='$$t'	 \
 				    --strip-symbol='$$d' $@	;\
 			${SIZE} $@; chmod 755 $@

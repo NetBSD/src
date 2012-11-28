@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21 2011/11/18 16:10:02 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.21.8.1 2012/11/28 22:40:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ typedef unsigned long	vsize_t;
 #define	PRIuVSIZE	"lu"
 #endif
 
-typedef int		register_t;
+typedef int		register_t, register32_t;
 #define	PRIxREGISTER	"x"
 
 typedef unsigned long	pmc_evid_t;
@@ -73,9 +73,17 @@ typedef unsigned long	pmc_ctr_t;
  * to user-space, we don't want ABI breakage there.
  */
 #if defined(_KERNEL)
-typedef volatile unsigned char	__cpu_simple_lock_t;
+typedef 
+#if __GNUC_PREREQ__(4,5)
+	volatile
+#endif
+	unsigned char	__cpu_simple_lock_t;
 #else
-typedef	volatile int		__cpu_simple_lock_t;
+typedef
+#if __GNUC_PREREQ__(4,5)
+	volatile
+#endif
+	int		__cpu_simple_lock_t;
 #endif /* _KERNEL */
 
 #define	__SIMPLELOCK_LOCKED	1
@@ -88,6 +96,11 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_TLS_VARIANT_I
+
+#if defined(_KERNEL) || defined(_KMEMUSER)
+#define	PCU_FPU			0
+#define	PCU_UNIT_COUNT		1
+#endif
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

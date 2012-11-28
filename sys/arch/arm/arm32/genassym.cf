@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46 2011/04/07 10:03:47 matt Exp $
+#	$NetBSD: genassym.cf,v 1.46.12.1 2012/11/28 22:40:19 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -50,6 +50,7 @@ include <arm/fiq.h>
 include <arm/arm32/pte.h>
 include <machine/pmap.h>
 include <machine/frame.h>
+include <machine/pcb.h>
 include <machine/vmparam.h>
 
 include "opt_multiprocessor.h"
@@ -65,6 +66,10 @@ ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
 endif
 
+ifdef __HAVE_PIC_FAST_SOFTINTS
+define	__HAVE_PIC_FAST_SOFTINTS	1
+endif
+
 ifdef __HAVE_UNNESTED_INTRS
 define	__HAVE_UNNESTED_INTRS	1
 endif
@@ -73,6 +78,9 @@ define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
+define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
+
+define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 define	L1_S_PROTO_generic	L1_S_PROTO_generic
@@ -86,6 +94,7 @@ define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
+define	L1_S_AP_KR		L1_S_AP(AP_KR)
 define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
 define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
 define	L1_TABLE_SIZE		L1_TABLE_SIZE
@@ -96,6 +105,7 @@ ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
 endif
 
+define	PAGE_MASK		PAGE_MASK
 define	PAGE_SIZE		PAGE_SIZE
 define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
@@ -109,10 +119,12 @@ define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
+define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
+define	MDLWP_NOALIGNFLT	MDLWP_NOALIGNFLT
+
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
-define	PCB_TF			offsetof(struct pcb, pcb_tf)
-define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
 define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
 define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
@@ -123,7 +135,6 @@ define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
 define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
 define	PCB_SIZE		sizeof(struct pcb)
 
@@ -138,11 +149,14 @@ define	PR_SCALE		offsetof(struct uprof, pr_scale)
 define	SIGTRAP			SIGTRAP
 define	SIGEMT			SIGEMT
 
+define	TF_FILL			offsetof(struct trapframe, tf_fill)
 define	TF_R0			offsetof(struct trapframe, tf_r0)
+define	TF_R4			offsetof(struct trapframe, tf_r4)
+define	TF_R6			offsetof(struct trapframe, tf_r6)
 define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_USR_SP		offsetof(struct trapframe, tf_usr_sp)
+define	TF_SVC_SP		offsetof(struct trapframe, tf_svc_sp)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
-
-define	IF_PC			offsetof(struct irqframe, if_pc)
 
 define	PROCSIZE		sizeof(struct proc)
 define	TRAPFRAMESIZE		sizeof(struct trapframe)
@@ -155,21 +169,21 @@ define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
-ifndef PROCESS_ID_IS_CURLWP
+define	CI_ARM_CPUID		offsetof(struct cpu_info, ci_arm_cpuid)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-endif
-define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+define	CI_UNDEFSAVE		offsetof(struct cpu_info, ci_undefsave[0])
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif
 ifdef __HAVE_FAST_SOFTINTS
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)

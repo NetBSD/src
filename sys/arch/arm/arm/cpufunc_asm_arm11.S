@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.6 2010/01/03 04:25:16 uebayasi Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.6.20.1 2012/11/28 22:40:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -30,7 +30,7 @@
  *
  * ARM11 assembly functions for CPU / MMU / TLB specific operations
  *
- * XXX We make no attempt at present to take advantage of the v6 memroy
+ * XXX We make no attempt at present to take advantage of the v6 memory
  * architecture or physically tagged cache.
  */
  
@@ -46,15 +46,14 @@
  */
 ENTRY(arm11_setttb)
 #ifdef PMAP_CACHE_VIVT
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv6_idcache_wbinv_all)
-	ldmfd	sp!, {r0, lr}
+#error arm11 does not have a VIVT cache.
 #endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+	cmp	r1, #0
+	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	mcrne	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	RET
 
 /*
@@ -75,7 +74,7 @@ ENTRY(arm11_tlb_flushI_SE)
 /*
  * Context switch.
  *
- * These are the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switchto()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm11_context_switch)
