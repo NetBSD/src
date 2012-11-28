@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21.8.1 2012/11/28 22:40:30 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.21.8.2 2012/11/28 22:45:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,17 +73,9 @@ typedef unsigned long	pmc_ctr_t;
  * to user-space, we don't want ABI breakage there.
  */
 #if defined(_KERNEL)
-typedef 
-#if __GNUC_PREREQ__(4,5)
-	volatile
-#endif
-	unsigned char	__cpu_simple_lock_t;
+typedef volatile unsigned char	__cpu_simple_lock_t;
 #else
-typedef
-#if __GNUC_PREREQ__(4,5)
-	volatile
-#endif
-	int		__cpu_simple_lock_t;
+typedef volatile int		__cpu_simple_lock_t;
 #endif /* _KERNEL */
 
 #define	__SIMPLELOCK_LOCKED	1
