@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.45 2012/11/26 17:40:28 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.46 2012/11/28 21:41:38 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -916,7 +916,7 @@ sys/dev/usb/if_urndis.c				1.4
 
 lib/libc/arch/arm/sys/__aeabi_read_tp.S		1.3
 
-	Add $NetBSD: CHANGES-6.1,v 1.1.2.45 2012/11/26 17:40:28 riz Exp $ tag.  Use ip to save r1 instead of the stack.
+	Add $NetBSD: CHANGES-6.1,v 1.1.2.46 2012/11/28 21:41:38 riz Exp $ tag.  Use ip to save r1 instead of the stack.
 	[matt, ticket #701]
 
 sys/net/npf/npf.c				1.14
@@ -7026,4 +7026,28 @@ usr.sbin/npf/npfctl/npfctl.h			1.22 via patch
 
 	Various NPF fixes to bring it up-to-date.
 	[rmind, ticket #718]
+
+distrib/sets/lists/base/mi			1.1011
+distrib/sets/lists/comp/mi			1.1786
+distrib/sets/lists/man/mi			1.1404
+usr.bin/Makefile				1.211
+usr.bin/flock/Makefile				1.1
+usr.bin/flock/flock.1				1.1-1.8
+usr.bin/flock/flock.c				1.1-1.6
+
+	Add flock(1), inspired by the Linux program of the same name.
+	[christos, ticket #719]
+
+lib/libc/gen/sysconf.3				1.41
+lib/libc/gen/sysconf.c				1.35
+sys/sys/unistd.h				1.54
+
+	Add _SC_PHYS_PAGES.
+	[christos, ticket #720]
+
+include/resolv.h				1.40
+sys/netinet/ip.h				1.33-1.34
+
+	Make some include files idempotent.
+	[christos, ticket #721]
 
