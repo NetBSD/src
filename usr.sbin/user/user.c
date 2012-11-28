@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.130 2012/11/28 11:20:58 blymn Exp $ */
+/* $NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.130 2012/11/28 11:20:58 blymn Exp $");
+__RCSID("$NetBSD: user.c,v 1.131 2012/11/28 11:31:27 blymn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1576,7 +1576,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 					errx(EXIT_FAILURE,
 					    "Can't modify user `%s': "
 					    "gid %d is already in use",
-					    login_name, up->u_uid);
+					    login_name, pwp->pw_uid);
 				}
 				pwp->pw_gid = pwp->pw_uid;
 				if (!creategid(newlogin, pwp->pw_uid, "")) {
