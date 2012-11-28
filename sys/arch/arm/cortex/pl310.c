@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.8 2012/11/01 20:17:44 matt Exp $	*/
+/*	$NetBSD: pl310.c,v 1.9 2012/11/28 22:48:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.8 2012/11/01 20:17:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.9 2012/11/28 22:48:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,8 @@ __CTASSERT(offsetof(struct arml2cc_softc, sc_ev_wbinv.ev_count) % 8 == 0);
 CFATTACH_DECL_NEW(arml2cc, sizeof(struct arml2cc_softc),
     arml2cc_match, arml2cc_attach, NULL, NULL);
 
-static void arml2cc_disable(struct arml2cc_softc *);
-static void arml2cc_enable(struct arml2cc_softc *);
+static inline void arml2cc_disable(struct arml2cc_softc *);
+static inline void arml2cc_enable(struct arml2cc_softc *);
 static void arml2cc_sdcache_wb_range(vaddr_t, paddr_t, psize_t);
 static void arml2cc_sdcache_inv_range(vaddr_t, paddr_t, psize_t);
 static void arml2cc_sdcache_wbinv_range(vaddr_t, paddr_t, psize_t);
