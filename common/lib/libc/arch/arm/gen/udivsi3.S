@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1.54.1 2012/11/28 01:53:42 matt Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.1.6.2 2012/11/28 01:53:42 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,5 +16,8 @@
 
 #include <machine/asm.h>
 
-ENTRY(__divsi3)
-	b	__divide
+
+ENTRY_NP(__aeabi_uidivmod)
+ENTRY_NP(__aeabi_uidiv)
+ENTRY(__udivsi3)
+	b	__udivide

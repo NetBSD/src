@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1.54.1 2012/11/28 01:53:42 matt Exp $	*/
+/*	$NetBSD: modsi3.S,v 1.2.2.2 2012/11/28 01:53:42 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,5 +16,15 @@
 
 #include <machine/asm.h>
 
-ENTRY(__divsi3)
-	b	__divide
+/* 
+ * stack is aligned as there's a possibility of branching to .L_overflow
+ * which makes a C call
+ */
+
+ENTRY(__modsi3)
+	str	lr, [sp, #-8]!	/* push lr */
+	bl	PIC_SYM(__divsi3, PLT)
+	mov	r0, r1
+	ldr	lr, [sp], #8	/* pop lr */
+	RET
+END(__modsi3)
