@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.82 2012/01/17 20:34:57 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.82.2.1 2012/11/28 23:58:35 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -145,7 +145,10 @@ struct	__pthread_st {
 
 	/* Thread-specific data.  Large so it sits close to the end. */
 	int		pt_havespecific;
-	void		*pt_specific[PTHREAD_KEYS_MAX];
+	struct pt_specific {
+		void *pts_value;
+		PTQ_ENTRY(pt_specific) pts_next;
+	} pt_specific[PTHREAD_KEYS_MAX];
 
 	/*
 	 * Context for thread creation.  At the end as it's cached
@@ -294,6 +297,7 @@ char	*pthread__getenv(const char *) PTHREAD_HIDE;
 __dead void	pthread__cancelled(void) PTHREAD_HIDE;
 void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 int	pthread__checkpri(int) PTHREAD_HIDE;
+int	pthread__add_specific(pthread_t, pthread_key_t, const void *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
