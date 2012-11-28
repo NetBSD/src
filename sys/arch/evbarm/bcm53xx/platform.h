@@ -1,11 +1,11 @@
-/*	$NetBSD: autoconf.h,v 1.5.42.1 2012/11/28 22:50:09 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.2.6.2 2012/11/28 22:50:04 matt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas <matt@3am-software.com>
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_AUTOCONF_H_
-#define	_EVBARM_AUTOCONF_H_
+#ifndef _EVBARM_BCM53XX_PLATFORM_H
+#define _EVBARM_BCM53XX_PLATFORM_H
 
-#ifndef _ARM_MAINBUS_MAINBUS_H_
-struct mainbus_attach_args {
-	const char *ma_name;
-};
+#include <arm/broadcom/bcm53xx_reg.h>
+
+/*
+ * Memory will be mapped starting at 0x8000_0000 through 0xbfff_ffff
+ * Kernel VM space: KERNEL_VM_BASE to 0xc0000000.  Leave 1MB unused.
+ */
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x40000000)
+#if BCM53XX_IO_SIZE >= L1_SS_SIZE
+#define	KERNEL_VM_TOP		((0xfff00000 - BCM53XX_IO_SIZE) & -L1_SS_SIZE)
+#else
+#define	KERNEL_VM_TOP		(0xfff00000 - BCM53XX_IO_SIZE)
 #endif
+#define	KERNEL_VM_SIZE		(KERNEL_VM_TOP - KERNEL_VM_BASE)
 
-extern void (*evbarm_device_register)(device_t, void *);
+/*
+ * BCM53xx ARM Peripherals.  Their physical address would live in the user
+ * address space, so we can't map 1:1 VA:PA.  So shove them just after the
+ * top of the kernel VM.
+ */
 
-#endif	/* _EVBARM_AUTOCONF_H_ */
+#define	KERNEL_IO_VBASE			KERNEL_VM_TOP
+
+#define	KERNEL_IO_PCIE0_OWIN_VBASE	KERNEL_IO_VBASE
+#define	KERNEL_IO_PCIE1_OWIN_VBASE	(KERNEL_IO_PCIE0_OWIN_VBASE + BCM53XX_PCIE0_OWIN_SIZE)
+#define	KERNEL_IO_PCIE2_OWIN_VBASE	(KERNEL_IO_PCIE1_OWIN_VBASE + BCM53XX_PCIE1_OWIN_SIZE)
+#define	KERNEL_IO_IOREG_VBASE		(KERNEL_IO_PCIE2_OWIN_VBASE + BCM53XX_PCIE2_OWIN_SIZE)
+#define	KERNEL_IO_ARMCORE_VBASE		(KERNEL_IO_IOREG_VBASE + BCM53XX_IOREG_SIZE)
+#define	KERNEL_IO_END_VBASE		(KERNEL_IO_ARMCORE_VBASE + BCM53XX_ARMCORE_SIZE)
+
+#endif	/* _EVBARM_BCM53XX_PLATFORM_H */

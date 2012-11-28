@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.25.2.1.2.1 2012/11/28 22:50:05 matt Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.7.4.2 2012/11/28 22:50:06 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -18,7 +18,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 options 	CPU_CORTEXA8
-options 	OMAP_3530
+options 	TI_DM37XX
 options 	PMAPCOUNTERS
 
 # Architecture options
@@ -168,8 +168,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-#options 	MEMSIZE=256
-options 	MEMSIZE=128
+options 	MEMSIZE=512
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -177,7 +176,7 @@ L3i0		at mainbus?
 # OBIO
 obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
 obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP
-obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
+obio2		at mainbus? base 0x49000000 size 0x1000000	# L4 PERIPHERAL
 #obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL
 
 # General Purpose Memory Controller
@@ -189,23 +188,6 @@ sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
 #sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
-
-
-# NAND controller
-omapnand0	at gpmc? addr 0x30000000
-
-# NAND layer
-nand0		at nandbus?
-
-# use the bad block table
-options NAND_BBT
-
-# Define flash partitions for board
-flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
-flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
-flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
-flash3		at nand0 offset 0x280000 size 0x400000		# kernel
-flash4		at nand0 offset 0x680000 size 0			# filesystem
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
@@ -246,11 +228,11 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
 # onboard video
-omapfb* 	at obio0 addr 0x48050000 size 0x10000
+#omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
-wsdisplay0	at wsemuldisplaydev? console 1
-wsdisplay*	at wsemuldisplaydev?
+#wsdisplay0	at wsemuldisplaydev? console 1
+#wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -272,13 +254,15 @@ pseudo-device	wsfont
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 # On-board USB
-#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
+#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #usb*		at ohci?
 #usb*		at ehci?
 #uhub*		at usb?
 #uhub*		at uhub? port ?
 #umass*		at uhub? port ? configuration ? interface ?
+#scsibus*	at scsi?
+#sd*		at scsibus? target ? lun ?
 #wd*		at umass?
 #uhidev*		at uhub?
 #ukbd*		at uhidev?
