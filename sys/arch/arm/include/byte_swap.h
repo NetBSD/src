@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8.42.1 2012/11/01 16:44:59 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.8.42.2 2012/11/28 22:40:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,33 @@
 
 #ifndef _ARM_BYTE_SWAP_H_
 #define	_ARM_BYTE_SWAP_H_
+
+#ifdef _LOCORE
+
+#if defined(_ARM_ARCH_6) || defined(_ARM_ARCH_7)
+
+#define	BSWAP16(_src, _dst, _tmp)		\
+	rev16	_dst, _src
+#define	BSWAP32(_src, _dst, _tmp)		\
+	rev	_dst, _src
+
+#else
+
+#define	BSWAP16(_src, _dst, _tmp)		\
+	mov	_tmp, _src, ror #8		;\
+	orr	_tmp, _tmp, _tmp, lsr #16	;\
+	bic	_dst, _tmp, _tmp, lsl #16
+
+#define	BSWAP32(_src, _dst, _tmp)		\
+	eor	_tmp, _src, _src, ror #16	;\
+	bic	_tmp, _tmp, #0x00FF0000		;\
+	mov	_dst, _src, ror #8		;\
+	eor	_dst, _dst, _tmp, lsr #8
+
+#endif
+
+
+#else
 
 #ifdef __GNUC__
 #include <sys/types.h>
@@ -88,5 +115,6 @@ __byte_swap_u16_variable(uint16_t v)
 __END_DECLS
 #endif
 
+#endif	/* _LOCORE */
 
 #endif /* _ARM_BYTE_SWAP_H_ */
