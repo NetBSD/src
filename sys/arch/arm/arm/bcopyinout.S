@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.17.22.1 2012/11/28 22:40:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,11 +43,15 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-#ifdef __XSCALE__
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
+/*
+ * armv6 and v7 have pld and strd so they can use the xscale
+ * bcopyinout as well.
+ */
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.17.22.1 2012/11/28 22:40:09 matt Exp $")	
 
 	.text
 	.align	0
@@ -61,7 +65,7 @@ RCSID("$NetBSD: bcopyinout.S,v 1.17 2009/01/18 01:19:32 bjh21 Exp $")
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
 #endif
 		
-#if defined(__XSCALE__) || defined(_ARCH_ARM_6)
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 #define HELLOCPP #
 #define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
 #else

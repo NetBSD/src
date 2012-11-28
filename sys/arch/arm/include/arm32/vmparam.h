@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.16.1 2012/11/28 22:40:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _ARM_ARM32_VMPARAM_H_
 #define	_ARM_ARM32_VMPARAM_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Virtual Memory parameters common to all arm32 platforms.
@@ -81,11 +81,11 @@
  * Mach derived constants
  */
 #define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) KERNEL_BASE - 0x1000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffefff)
 
 #ifndef __ASSEMBLER__
 /* XXX max. amount of KVM to be used by buffers. */
@@ -98,6 +98,6 @@ extern vaddr_t virtual_end;
 #endif
 #endif /* __ASSEMBLER__ */
 
-#endif /* _KERNEL */
+#endif /* _KERNEL || _KMEMUSER */
 
 #endif /* _ARM_ARM32_VMPARAM_H_ */
