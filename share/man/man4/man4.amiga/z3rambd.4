@@ -1,4 +1,4 @@
-.\" $NetBSD: z3rambd.4,v 1.2 2012/11/26 23:02:53 rkujawa Exp $
+.\" $NetBSD: z3rambd.4,v 1.3 2012/11/28 09:31:15 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt Z3RAMBD 4 amiga
 .Os
 .Sh NAME
-.Nm z3rambd 
+.Nm z3rambd
 .Nd Zorro III RAM block device driver
 .Sh SYNOPSIS
 .Cd "z3rambd* at zbus0"
@@ -67,15 +67,15 @@ driver was written by
 .An Radoslaw Kujawa
 .Aq radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
-Currently it is up to user to ensure that given memory board is not used by
-the kernel as normal RAM.
-It is usually safe to pass
+Currently it is up to the user to ensure that given memory board
+is not used by the kernel as normal RAM.
+It is usually safe to pass the
 .Ic -n0
 and
 .Ic -p
 parameters to boot loader.
 .Pp
-If the kernel is compiled wihtout
+If the kernel is compiled without the
 .Nm
 driver, it is possible to use Zorro III
 memory boards as normal RAM in some configurations.
