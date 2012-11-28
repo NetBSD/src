@@ -1,7 +1,7 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.25.2.1.2.1 2012/11/28 22:50:05 matt Exp $
+#	$NetBSD: BEAGLEBONE,v 1.3.4.2 2012/11/28 22:50:07 matt Exp $
 #
-#	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
+#	BEAGLEBONE -- TI AM335x board Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
@@ -18,10 +18,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 options 	CPU_CORTEXA8
-options 	OMAP_3530
+options 	TI_AM335X
 options 	PMAPCOUNTERS
 
 # Architecture options
+#makeoptions	CPUFLAGS+="-mthumb"
 
 # File systems
 
@@ -168,8 +169,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-#options 	MEMSIZE=256
-options 	MEMSIZE=128
+options 	MEMSIZE=256
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -189,23 +189,6 @@ sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
 #sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
-
-
-# NAND controller
-omapnand0	at gpmc? addr 0x30000000
-
-# NAND layer
-nand0		at nandbus?
-
-# use the bad block table
-options NAND_BBT
-
-# Define flash partitions for board
-flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
-flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
-flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
-flash3		at nand0 offset 0x280000 size 0x400000		# kernel
-flash4		at nand0 offset 0x680000 size 0			# filesystem
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
@@ -228,9 +211,8 @@ gpio*		at omapgpio?
 # options		I2C_HIGH_TIME_nSEC=1000
 
 # On-board 16550 UARTs
-com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
-#options 	CONSADDR=0x49020000, CONSPEED=38400
-options 	CONSADDR=0x49020000, CONSPEED=115200
+com0		at obio2 addr 0x44e09000 intr 74 mult 4	# UART3 (console)
+options 	CONSADDR=0x44e09000, CONSPEED=115200
 
 # Operating System Timer
 omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
@@ -246,23 +228,23 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
 # onboard video
-omapfb* 	at obio0 addr 0x48050000 size 0x10000
+#omapfb* 	at obio0 addr 0x48050000 size 0x10000
 
 # make sure the console display is always wsdisplay0
-wsdisplay0	at wsemuldisplaydev? console 1
-wsdisplay*	at wsemuldisplaydev?
+#wsdisplay0	at wsemuldisplaydev? console 1
+#wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_VT100		# sun terminal emulation
-options 	WS_DEFAULT_FG=WSCOL_BLACK
-options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-options 	WSDISPLAY_DEFAULTSCREENS=4
-options		FONT_QVSS8x15
+#options 	WSEMUL_VT100		# sun terminal emulation
+#options 	WS_DEFAULT_FG=WSCOL_BLACK
+#options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+#options		WS_KERNEL_FG=WSCOL_GREEN
+#options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+#options		FONT_QVSS8x15
 #options 	FONT_GALLANT12x22	# the console font
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
@@ -297,7 +279,7 @@ options		OMAP_CK_REF_SPEED=12000000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
