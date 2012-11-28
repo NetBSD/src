@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.12 2006/11/02 17:34:21 jmmv Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.13 2012/11/28 13:34:24 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -48,6 +48,7 @@
 /*efine	NNEW			0x0008*//* smb/vnode has been allocated */
 #define	NREFPARENT		0x0010	/* node holds parent from recycling */
 #define	NOPEN			0x2000	/* file is open */
+#define	NGONE			0x4000	/* file has been removed/renamed */
 
 #define SMBFS_ATTRTIMO		5	/* Attribute cache timeout in sec */
 
