@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.12 2012/11/20 22:33:37 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.13 2012/11/28 21:34:43 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3599,6 +3599,7 @@
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/finger.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/flock.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fmt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fold.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fort77.debug	comp-fortran-debug	gcc=3,gcccmds,debug

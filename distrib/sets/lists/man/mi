@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1379.2.7 2012/06/15 08:48:47 sborrill Exp $
+# $NetBSD: mi,v 1.1379.2.8 2012/11/28 21:34:37 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -159,6 +159,7 @@
 ./usr/share/man/cat1/fincore.0			man-util-catman		.cat
 ./usr/share/man/cat1/find.0			man-util-catman		.cat
 ./usr/share/man/cat1/finger.0			man-util-catman		.cat
+./usr/share/man/cat1/flock.0			man-util-catman		.cat
 ./usr/share/man/cat1/fmt.0			man-util-catman		.cat
 ./usr/share/man/cat1/fold.0			man-util-catman		.cat
 ./usr/share/man/cat1/foreach.0			man-util-catman		.cat
@@ -3111,6 +3112,7 @@
 ./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
 ./usr/share/man/html1/finger.html		man-util-htmlman	html
+./usr/share/man/html1/flock.html		man-util-htmlman	html
 ./usr/share/man/html1/fmt.html			man-util-htmlman	html
 ./usr/share/man/html1/fold.html			man-util-htmlman	html
 ./usr/share/man/html1/foreach.html		man-util-htmlman	html
@@ -5680,6 +5682,7 @@
 ./usr/share/man/man1/fincore.1			man-util-man		.man
 ./usr/share/man/man1/find.1			man-util-man		.man
 ./usr/share/man/man1/finger.1			man-util-man		.man
+./usr/share/man/man1/flock.1			man-util-man		.man
 ./usr/share/man/man1/fmt.1			man-util-man		.man
 ./usr/share/man/man1/fold.1			man-util-man		.man
 ./usr/share/man/man1/foreach.1			man-util-man		.man
