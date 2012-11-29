@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.48 2012/11/28 13:34:24 nakayama Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.49 2012/11/29 11:58:49 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.48 2012/11/28 13:34:24 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.49 2012/11/29 11:58:49 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,15 +150,16 @@ retry:
 		 */
 		if ((vp->v_type == VDIR && (np->n_dosattr & SMB_FA_DIR) == 0) ||
 		    (vp->v_type == VREG && (np->n_dosattr & SMB_FA_DIR) != 0)) {
-			vput(vp);
+			VOP_UNLOCK(vp);
 			vgone(vp);
-			break;
+			goto allocnew;
 		}
 		*vpp = vp;
 		return (0);
 	}
 	mutex_exit(&smp->sm_hashlock);
 
+allocnew:
 	/*
 	 * If we don't have node attributes, then it is an explicit lookup
 	 * for an existing vnode.
