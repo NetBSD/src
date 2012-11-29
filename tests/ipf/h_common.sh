@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.4 2012/11/29 17:10:21 pgoyette Exp $
+# $NetBSD: h_common.sh,v 1.5 2012/11/29 18:54:43 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,7 @@ failing_test_case()
 {
 	local name="${1}"; shift
 	local check_function="${1}"; shift
-	local reason="${1}; shift
+	local reason="${1}"; shift
 
 	atf_test_case "${name}"
 	eval "${name}_body() { \
