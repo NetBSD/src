@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.12 2012/11/28 21:34:30 riz Exp $
+# $NetBSD: mi,v 1.984.2.13 2012/11/29 00:09:44 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -315,6 +315,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/npfctl					base-npf-bin		npf
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
 ./sbin/pfs						base-pf-root		pf
@@ -1344,7 +1345,7 @@
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
-./usr/sbin/npfctl				base-npf-bin		npf
+./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
