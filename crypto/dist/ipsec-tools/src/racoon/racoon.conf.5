@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.64 2011/11/15 19:15:58 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.65 2012/11/29 15:31:25 vanhu Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -1102,7 +1102,7 @@ Note that the kernel may not support the algorithm you have specified.
 .Ic des , 3des , des_iv64 , des_iv32 ,
 .Ic rc5 , rc4 , idea , 3idea ,
 .Ic cast128 , blowfish , null_enc ,
-.Ic twofish , rijndael , aes , camellia
+.Ic twofish , rijndael , aes , camellia , aes_gcm_16
 .Pq used with ESP
 .\"
 .It Ic authentication_algorithm Ar algorithms ;
