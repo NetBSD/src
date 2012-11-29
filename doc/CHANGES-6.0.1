@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.24 2012/11/29 00:04:02 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.25 2012/11/29 00:04:19 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -223,4 +223,10 @@ distrib/utils/sysinst/disks.c			1.127
 	users from shooting their foot in case of installation using
 	install-image on a USB stick.  PR#47195.
 	[tsutsui, ticket #706]
+
+sys/fs/smbfs/smbfs_smb.c			1.43
+sys/netsmb/smb_smb.c				1.33
+
+	Make smbfs actually works on big-endian ports.
+	[nakayama, ticket #725]
 
