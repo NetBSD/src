@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.47 2012/11/29 00:00:02 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.48 2012/11/29 00:12:19 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -916,7 +916,7 @@ sys/dev/usb/if_urndis.c				1.4
 
 lib/libc/arch/arm/sys/__aeabi_read_tp.S		1.3
 
-	Add $NetBSD: CHANGES-6.1,v 1.1.2.47 2012/11/29 00:00:02 riz Exp $ tag.  Use ip to save r1 instead of the stack.
+	Add $NetBSD: CHANGES-6.1,v 1.1.2.48 2012/11/29 00:12:19 riz Exp $ tag.  Use ip to save r1 instead of the stack.
 	[matt, ticket #701]
 
 sys/net/npf/npf.c				1.14
@@ -7072,4 +7072,25 @@ lib/libpthread/pthread_tsd.c			1.8-1.10
 	and pthread_{g,s}etspecific functions with one that invalidates
 	values of keys in other threads when pthread_key_delete() is called.
 	[christos, ticket #724]
+
+sys/fs/smbfs/smbfs_smb.c			1.43
+sys/netsmb/smb_smb.c				1.33
+
+	Make smbfs actually works on big-endian ports.
+	[nakayama, ticket #725]
+
+distrib/sets/lists/base/mi			1.1010 via patch
+distrib/sets/lists/comp/mi			1.1785 via patch
+etc/rc.d/npf					1.3
+usr.sbin/npf/npfctl/Makefile			1.9
+
+	Move npfctl from /usr/sbin to /sbin so it is available before
+	/usr is mounted.
+	[rmind, ticket #726]
+
+sys/arch/amigappc/conf/files.amigappc		1.26
+
+	Fix fallout from recent ed driver replacement. Makes amigappc
+	build again.
+	[msaitoh, ticket #727]
 
