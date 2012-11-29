@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kevent.c,v 1.5 2012/11/24 15:05:45 christos Exp $ */
+/*	$NetBSD: t_kevent.c,v 1.6 2012/11/29 09:13:44 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.5 2012/11/24 15:05:45 christos Exp $");
+__RCSID("$NetBSD: t_kevent.c,v 1.6 2012/11/29 09:13:44 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: t_kevent.c,v 1.5 2012/11/24 15:05:45 christos Exp $");
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
+#include <sys/drvctlio.h>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -148,11 +149,13 @@ ATF_TC_HEAD(kqueue_unsupported_fd, tc)
 ATF_TC_BODY(kqueue_unsupported_fd, tc)
 {
 	/* mqueue and semaphore use fnullop_kqueue also */
-	static const char drvctl[] = "/dev/drvctl";
 	int fd, kq;
 	struct kevent ev;
 
-	ATF_REQUIRE((fd = open(drvctl, O_RDONLY)) != -1);
+	fd = open(DRVCTLDEV, O_RDONLY);
+	if (fd == -1 && errno == ENOENT)
+		atf_tc_skip("no " DRVCTLDEV " available for testing");
+	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE((kq = kqueue()) != -1);
 
 	EV_SET(&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
