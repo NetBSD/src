@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.20 2012/06/03 23:19:11 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.21 2012/11/29 23:01:16 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.20 2012/06/03 23:19:11 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.21 2012/11/29 23:01:16 mbalmer Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -59,9 +59,6 @@ __RCSID("$NetBSD: tic.c,v 1.20 2012/06/03 23:19:11 joerg Exp $");
 
 #define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 
-/* We store the full list of terminals we have instead of iterating
-   through the database as the sequential iterator doesn't work
-   the the data size stored changes N amount which ours will. */
 typedef struct term {
 	STAILQ_ENTRY(term) next;
 	char *name;
