@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.83 2012/11/28 13:34:24 nakayama Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.84 2012/11/29 11:58:49 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.83 2012/11/28 13:34:24 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.84 2012/11/29 11:58:49 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,6 +725,7 @@ smbfs_rename(void *v)
 		}
 		error = smbfs_smb_rename(VTOSMB(fvp), VTOSMB(tdvp),
 		    tcnp->cn_nameptr, tcnp->cn_namelen, &scred);
+		VTOSMB(fvp)->n_flag |= NGONE;
 		VN_KNOTE(fdvp, NOTE_WRITE);
 		VN_KNOTE(fvp, NOTE_RENAME);
 	}
@@ -1270,9 +1271,11 @@ smbfs_lookup(void *v)
 
 		cache_purge(newvp);
 		if (newvp != dvp) {
-			vput(newvp);
-			if (killit)
+			if (killit) {
+				VOP_UNLOCK(newvp);
 				vgone(newvp);
+			} else
+				vput(newvp);
 		} else
 			vrele(newvp);
 		*vpp = NULLVP;
