@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.13 2012/11/28 21:34:43 riz Exp $
+#	$NetBSD: mi,v 1.1738.2.14 2012/11/29 00:09:46 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3472,6 +3472,7 @@
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_v7fs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/npfctl.debug		comp-npf-debug		npf,debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pfs.debug		comp-pf-debug		pf,debug
@@ -4202,7 +4203,7 @@
 ./usr/libdata/debug/usr/sbin/ndp.debug		comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/netgroup_mkdb.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/sbin/nfsd.debug		comp-nfsserver-debug	debug
-./usr/libdata/debug/usr/sbin/npfctl.debug	comp-npf-debug		npf,debug
+./usr/libdata/debug/usr/sbin/npfctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		crypto,debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
