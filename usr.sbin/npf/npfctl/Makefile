@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.5.2.3 2012/11/18 22:38:28 riz Exp $
+# $NetBSD: Makefile,v 1.5.2.4 2012/11/29 00:09:46 riz Exp $
 
+BINDIR=/sbin
 PROG=		npfctl
 MAN=		npfctl.8 npf.conf.5
 
