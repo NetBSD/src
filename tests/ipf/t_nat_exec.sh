@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.10 2012/11/29 04:57:42 pgoyette Exp $
+# $NetBSD: t_nat_exec.sh,v 1.11 2012/11/29 17:22:17 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,6 +85,7 @@ test_case n106 nattest hex hex -T update_ipid=0
 test_case n200 nattest hex hex -T update_ipid=0
 test_case n1_6 nattest text text -6
 test_case n2_6 nattest text text -6
+failing_test_case n3_6 nattest "Test input file missing" text text -6
 test_case n4_6 nattest text text -6
 test_case n5_6 nattest text text -6
 test_case n6_6 nattest text text -6
@@ -94,7 +95,7 @@ test_case n9_6 nattest hex hex -6
 test_case n11_6 nattest text text -6
 test_case n12_6 nattest hex hex -6
 test_case n15_6 nattest text text -6
-broken_test_case n17_6 nattest hex hex -6
+failing_test_case n17_6 nattest "Test input file missing" hex hex -6
 
 atf_init_test_cases()
 {
@@ -125,7 +126,7 @@ atf_init_test_cases()
 
 	atf_add_test_case n1_6
 	atf_add_test_case n2_6
-#	atf_add_test_case n3_6
+	atf_add_test_case n3_6
 	atf_add_test_case n4_6
 	atf_add_test_case n5_6
 	atf_add_test_case n6_6
