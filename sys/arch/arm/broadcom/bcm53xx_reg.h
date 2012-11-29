@@ -658,6 +658,13 @@
 
 #endif /* IDM_PRIVATE */
 
+#ifdef USBH_PRIVATE
+#define	USBH_PHY_CTRL_P0		0x200
+#define	USBH_PHY_CTRL_P1		0x204
+
+#define	USBH_PHY_CTRL_INIT		0x3ff
+#endif
+
 #ifdef GMAC_PRIVATE
 
 struct gmac_txdb {
