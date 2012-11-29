@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.73 2012/06/23 03:13:41 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.74 2012/11/29 02:27:12 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 22, 2012
+.Dd November 28, 2012
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1225,6 +1225,7 @@ The currently defined protocols and names are:
 .It ip	allowsrcrt	integer	yes
 .It ip 	anonportalgo.selected	string	yes
 .It ip 	anonportalgo.available	string	yes
+.It ip 	anonportalgo.reserve	struct	yes
 .It ip	anonportmax	integer	yes
 .It ip	anonportmin	integer	yes
 .It ip	checkinterface	integer	yes
@@ -1329,6 +1330,9 @@ Disabled by default.
 If set to 1, the host accepts source routed packets.
 .It Li ip.anonportalgo.available
 The available RFC 6056 port randomization algorithms.
+.It Li ip.anonportalgo.reserve
+A bitmask of ports that will not be used during anonymous or privileged
+port selection.
 .It Li ip.anonportalgo.selected
 The currently selected RFC 6056 port randomization algorithm.
 .It Li ip.anonportmax
@@ -1599,6 +1603,7 @@ The currently defined protocols and names are:
 .It ip6	accept_rtadv	integer	yes
 .It ip6	anonportalgo.selected	string	yes
 .It ip6	anonportalgo.available	string	yes
+.It ip6 anonportalgo.reserve	struct	yes
 .It ip6	anonportmax	integer	yes
 .It ip6	anonportmin	integer	yes
 .It ip6	auto_flowlabel	integer	yes
@@ -1640,6 +1645,9 @@ The node must be a host
 for the option to be meaningful.
 .It Li ip6.anonportalgo.available
 The available RFC 6056 port randomization algorithms.
+.It Li ip6.anonportalgo.reserve
+A bitmask of ports that will not be used during anonymous or privileged
+port selection.
 .It Li ip6.anonportalgo.selected
 The currently selected RFC 6056 port randomization algorithm.
 .It Li ip6.anonportmax
