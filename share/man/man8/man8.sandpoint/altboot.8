@@ -1,4 +1,4 @@
-.\" $NetBSD: altboot.8,v 1.7 2012/01/22 16:41:42 wiz Exp $
+.\" $NetBSD: altboot.8,v 1.8 2012/11/29 10:44:37 phx Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -276,3 +276,7 @@ The
 .Nm
 first appeared in
 .Nx 6.0 .
+.Sh BUGS
+The Realtek Gigabit Ethernet driver does not work correctly at 1000 Mbps.
+Another known problem of this driver is that it runs into a timeout after
+a coldstart. The system has to be rebooted at least once to make it work.
