@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.13 2012/01/01 15:29:28 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.14 2012/11/29 15:31:25 vanhu Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -75,6 +75,7 @@
 #define   IPSECDOI_ESP_RC4				10
 #define   IPSECDOI_ESP_NULL				11
 #define   IPSECDOI_ESP_AES				12
+#define   IPSECDOI_ESP_AESGCM16				20
 #define   IPSECDOI_ESP_CAMELLIA				22
 #if 1
   /* draft-ietf-ipsec-ciph-aes-cbc-00.txt */
