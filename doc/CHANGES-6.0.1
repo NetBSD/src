@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.23 2012/11/25 10:13:52 jdc Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.24 2012/11/29 00:04:02 riz Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -216,13 +216,6 @@ distrib/vax/miniroot/Makefile.inc		1.23
 	"MAKEDEV all" no longer creates /dev/pty* device nodes and miniroot
 	doesn't mount ptyfs. Fix PR install/47123.
 	[tsutsui, ticket #650]
-
-distrib/utils/sysinst/disks.c			1.127
-	Don't show a disk which is mounted as root partition in the
-	"Available disks" list during sysinst procedure to prevent
-	users from shooting their foot in case of installation using
-	install-image on a USB stick.  PR#47195.
-	[tsutsui, ticket #706]
 
 distrib/utils/sysinst/disks.c			1.127
 	Don't show a disk which is mounted as root partition in the
