@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.143 2012/06/02 21:38:09 dsl Exp $ */
+/*	$NetBSD: sysctl.c,v 1.144 2012/11/29 02:06:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.143 2012/06/02 21:38:09 dsl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.144 2012/11/29 02:06:17 christos Exp $");
 #endif
 #endif /* not lint */
 
+#define FD_SETSIZE 0x10000
+#include <sys/fd_set.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -171,6 +173,7 @@ static void proc_limit(HANDLER_PROTO);
 static void machdep_diskinfo(HANDLER_PROTO);
 #endif /* CPU_DISKINFO */
 static void mode_bits(HANDLER_PROTO);
+static void reserve(HANDLER_PROTO);
 
 static const struct handlespec {
 	const char *ps_re;
@@ -210,7 +213,7 @@ static const struct handlespec {
 	{ "/net/(inet|inet6)/[^/]+/stats",	printother, NULL, "netstat"},
 	{ "/net/bpf/(stats|peers)",		printother, NULL, "netstat"},
 
-	{ "/net/inet.*/tcp.*/deb.*",		printother, NULL, "trpt" },
+	{ "/net/inet.*/ip.*/anonportalgo/reserve", reserve, reserve, NULL },
 
 	{ "/net/ns/spp/deb.*",			printother, NULL, "trsp" },
 
@@ -2682,6 +2685,99 @@ mode_bits(HANDLER_ARGS)
 			strmode(mm, buf);
 			rc = snprintf(outbuf, sizeof(outbuf), "%04o (%s)", mm, buf + 1);
 			display_string(pnode, sname, outbuf, rc, DISPLAY_NEW);
+		}
+	}
+}
+
+static char *
+bitmask_print(const fd_set *o)
+{
+	char *s, *os;
+
+	s = os = NULL;
+	for (size_t i = 0; i < FD_SETSIZE; i++)
+		if (FD_ISSET(i, o)) {
+			int rv;
+
+			if (os)
+			    	rv = asprintf(&s, "%s,%zu", os, i);
+			else
+			    	rv = asprintf(&s, "%zu", i);
+			if (rv == -1)
+				err(1, "");
+			free(os);
+			os = s;
+		}
+	if (s == NULL && (s = strdup("")) == NULL)
+		err(1, "");
+	return s;
+}
+
+static void
+bitmask_scan(const void *v, fd_set *o)
+{
+	char *s = strdup(v);
+	if (s == NULL)
+		err(1, "");
+	FD_ZERO(o);
+	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
+		char *e;
+		errno = 0;
+		unsigned long l = strtoul(s, &e, 0);
+		if ((l == ULONG_MAX && errno == ERANGE) || s == e || *e)
+			errx(1, "Invalid port: %s", s);
+		if (l >= FD_SETSIZE)
+			errx(1, "Port out of range: %s", s);
+		FD_SET(l, o);
+	}
+}
+
+
+static void
+reserve(HANDLER_ARGS)
+{
+	int rc;
+	size_t osz, nsz;
+	fd_set o, n;
+
+	if (fn)
+		trim_whitespace(value, 3);
+
+	osz = sizeof(o);
+	if (value) {
+		bitmask_scan(value, &n);
+		value = (char *)&n;
+		nsz = sizeof(n);
+	} else
+		nsz = 0;
+
+	rc = prog_sysctl(name, namelen, &o, &osz, value, nsz);
+	if (rc == -1) {
+		sysctlerror(value == NULL);
+		return;
+	}
+
+	if (value && qflag)
+		return;
+
+	if (rflag || xflag)
+		display_struct(pnode, sname, &o, sizeof(o),
+		    value ? DISPLAY_OLD : DISPLAY_VALUE);
+	else {
+		char *s = bitmask_print(&o);
+		display_string(pnode, sname, s, strlen(s),
+		    value ? DISPLAY_OLD : DISPLAY_VALUE);
+		free(s);
+	}
+
+	if (value) {
+		if (rflag || xflag)
+			display_struct(pnode, sname, &n, sizeof(n),
+			    DISPLAY_NEW);
+		else {
+			char *s = bitmask_print(&n);
+			display_string(pnode, sname, s, strlen(s), DISPLAY_NEW);
+			free(s);
 		}
 	}
 }
