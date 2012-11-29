@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1135 2012/10/21 23:07:23 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1136 2012/11/29 18:46:10 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1143 2012/10/21 23:06:59 matt Exp
+ *	NetBSD: pcidevs,v 1.1144 2012/11/29 18:45:20 msaitoh Exp
  */
 
 /*
@@ -2780,7 +2780,7 @@
 #define	PCI_PRODUCT_INTEL_C600_PCIE_7	0x1d1c		/* C600/X79 PCIE */
 #define	PCI_PRODUCT_INTEL_C600_PCIE_8	0x1d1e		/* C600/X79 PCIE */
 #define	PCI_PRODUCT_INTEL_C600_HDA	0x1d20		/* C600 HD Audio */
-#define	PCI_PRODUCT_INTEL_C600_SMB_1	0x1d22		/* C600/X79 SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMBUS	0x1d22		/* C600 SMBus Controller */
 #define	PCI_PRODUCT_INTEL_C600_THERM	0x1d24		/* C600 Thermal Management Controller */
 #define	PCI_PRODUCT_INTEL_C600_EHCI_1	0x1d26		/* C600 USB */
 #define	PCI_PRODUCT_INTEL_C600_EHCI_2	0x1d2d		/* C600 USB */
@@ -2806,7 +2806,9 @@
 #define	PCI_PRODUCT_INTEL_C600_SAS_11	0x1d6d		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_12	0x1d6e		/* C600 SAS Controller */
 #define	PCI_PRODUCT_INTEL_C600_SAS_SATA_4	0x1d6f		/* C600 SAS Controller (SATA) */
-#define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d70		/* C600/X79 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_0	0x1d70		/* C600/X79 Series SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_1	0x1d71		/* C606/C608 SMBus Controller */
+#define	PCI_PRODUCT_INTEL_C600_SMB_2	0x1d72		/* C608 SMBus Controller */
 #define	PCI_PRODUCT_INTEL_7SER_DT_SATA_1	0x1e00		/* 7 Series (desktop) SATA Controller */
 #define	PCI_PRODUCT_INTEL_7SER_MO_SATA_1	0x1e01		/* 7 Series (mobile) SATA Controller */
 #define	PCI_PRODUCT_INTEL_7SER_DT_SATA_AHCI	0x1e02		/* 7 Series (desktop) SATA Controller (AHCI) */
