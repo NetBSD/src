@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.140 2012/06/25 15:28:40 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.141 2012/11/29 02:07:20 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140 2012/06/25 15:28:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.141 2012/11/29 02:07:20 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -1976,6 +1976,12 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTLTYPE_STRING, "selected",
 		       SYSCTL_DESCR("selected algorithm"),
 	               sysctl_portalgo_selected6, 0, NULL, PORTALGO_MAXLEN,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &portalgo_node, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "reserve",
+		       SYSCTL_DESCR("bitmap of reserved ports"),
+		       sysctl_portalgo_reserve6, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
