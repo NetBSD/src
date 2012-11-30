@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.100 2012/05/30 14:33:48 nonaka Exp $
+#	$NetBSD: RESPONSIBLE,v 1.101 2012/11/30 16:22:53 mbalmer Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -57,7 +57,7 @@ toolchain	thorpej, mrg
 top		simonb
 user		agc
 vi		aymeric
-wake		mbalmer
+wakeonlan	mbalmer
 wpa_supplicant	scw
 
 Userland Libraries:
