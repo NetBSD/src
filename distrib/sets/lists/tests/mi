@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.509 2012/11/23 08:36:48 njoly Exp $
+# $NetBSD: mi,v 1.510 2012/11/30 01:42:43 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2135,7 +2135,7 @@
 ./usr/tests/ipf/regress/p7.pool			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/p9.nat			tests-ipf-tests		ipfilter
 ./usr/tests/ipf/regress/p9.pool			tests-ipf-tests		ipfilter
-./usr/tests/ipf/t_bpf				tests-ipf-tests		atf,ipfilter
+./usr/tests/ipf/t_bpf				tests-obsolete		obsolete
 ./usr/tests/ipf/t_filter_exec			tests-ipf-tests		atf,ipfilter
 ./usr/tests/ipf/t_filter_parse			tests-ipf-tests		atf,ipfilter
 ./usr/tests/ipf/t_ipf				tests-obsolete		obsolete
