@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.1,v 1.1.2.25 2012/11/29 00:04:19 riz Exp $
+# $NetBSD: CHANGES-6.0.1,v 1.1.2.26 2012/11/30 06:32:31 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0 release to the NetBSD 6.0.1
 release:
@@ -230,3 +230,7 @@ sys/netsmb/smb_smb.c				1.33
 	Make smbfs actually works on big-endian ports.
 	[nakayama, ticket #725]
 
+sys/arch/xen/xenbus/xenbus_xs.c			1.23
+
+	Xen Dom0 NetBSD kernel can crash by adding duplicate xenwatches.
+	[royger, ticket #728]
