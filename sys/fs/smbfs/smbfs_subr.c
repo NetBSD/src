@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.15 2011/06/09 02:59:22 rmind Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.16 2012/11/30 23:24:21 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.15 2011/06/09 02:59:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.16 2012/11/30 23:24:21 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ smb_time_local2NT(struct timespec *tsp, int tzoff, int64_t *nsec)
 	u_long seconds;
 
 	smb_time_local2server(tsp, 0, &seconds);
-	*nsec = (((int64_t)(seconds) & ~1) + DIFF1970TO1601) * (int64_t)10000000;
+	*nsec = ((int64_t)seconds + DIFF1970TO1601) * (int64_t)10000000;
 }
 
 void
