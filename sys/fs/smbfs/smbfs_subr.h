@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.20 2009/10/20 20:55:01 tron Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.21 2012/11/30 23:24:21 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -142,10 +142,8 @@ int  smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr,
 	struct timespec *mtime, struct smb_cred *scred);
 int  smbfs_smb_setptime2(struct smbnode *np, struct timespec *mtime,
 	struct timespec *atime, int attr, struct smb_cred *scred);
-#if 0
 int  smbfs_smb_setpattrNT(struct smbnode *np, u_int16_t attr,
 	struct timespec *mtime, struct timespec *atime, struct smb_cred *scred);
-#endif
 
 int  smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	struct timespec *atime, struct smb_cred *scred);
