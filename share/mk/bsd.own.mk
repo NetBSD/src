@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.715 2012/11/24 14:00:35 alnsn Exp $
+#	$NetBSD: bsd.own.mk,v 1.716 2012/11/30 17:51:50 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -399,7 +399,7 @@ TOOL_MAKEFS=		makefs
 TOOL_MAKEINFO=		makeinfo
 TOOL_MAKEWHATIS=	/usr/libexec/makewhatis
 TOOL_MANDOC_ASCII=	mandoc -Tascii
-TOOL_MANDOC_HTML=	mandoc -Thtml -Oman=../html%S/%N.html -Ostyle=../style.css
+TOOL_MANDOC_HTML=	mandoc -Thtml
 TOOL_MANDOC_LINT=	mandoc -Tlint
 TOOL_MDSETIMAGE=	mdsetimage
 TOOL_MENUC=		menuc
