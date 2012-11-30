@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.5 2012/11/29 18:54:43 pgoyette Exp $
+# $NetBSD: h_common.sh,v 1.6 2012/11/30 14:46:48 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ failing_test_case()
 
 	atf_test_case "${name}"
 	eval "${name}_body() { \
-		atf_tc_expect_fail "${reason}"; \
+		atf_expect_fail "${reason}"; \
 		${check_function} '${name}' " "${@}" "; \
 	}"
 }
