@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.1 2012/11/29 23:23:22 reed Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.2 2012/11/30 08:25:35 wiz Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,12 +35,12 @@
 .Nd create U-Boot loader image
 .Sh SYNOPSIS
 .Nm
+.Op Fl h
 .Fl A No ( arm Ns | Ns mips Ns | Ns mips64 Ns | Ns powerpc )
 .Fl a Ar address
 .Op Fl C No Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
 .Op Fl E Ar address
 .Op Fl e Ar address
-.Op Fl h
 .Op Fl m Ar magic
 .Fl n Ar image
 .Op Fl O No Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
@@ -62,7 +62,7 @@ This is required.
 Sets the image load address.
 This is an integer between 0 and ULONG_MAX.
 This is required.
-.It Fl C No ( bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Ns )
+.It Fl C No ( bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none )
 Defines the compression.
 The default is
 .Qq none .
@@ -96,7 +96,7 @@ Display the usage and exit.
 Set the magic.
 This is an integer between 0 and ULONG_MAX.
 The default is
-.Qq 0x27051956.
+.Qq 0x27051956 .
 .It Fl n Ar image
 Defines the image name.
 This is required.
