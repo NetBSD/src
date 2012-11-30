@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.48 2012/11/29 00:12:19 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.49 2012/11/30 04:30:26 msaitoh Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -916,7 +916,7 @@ sys/dev/usb/if_urndis.c				1.4
 
 lib/libc/arch/arm/sys/__aeabi_read_tp.S		1.3
 
-	Add $NetBSD: CHANGES-6.1,v 1.1.2.48 2012/11/29 00:12:19 riz Exp $ tag.  Use ip to save r1 instead of the stack.
+	Add $NetBSD: CHANGES-6.1,v 1.1.2.49 2012/11/30 04:30:26 msaitoh Exp $ tag.  Use ip to save r1 instead of the stack.
 	[matt, ticket #701]
 
 sys/net/npf/npf.c				1.14
@@ -7094,3 +7094,13 @@ sys/arch/amigappc/conf/files.amigappc		1.26
 	build again.
 	[msaitoh, ticket #727]
 
+sys/arch/xen/xenbus/xenbus_xs.c			1.23
+
+	Xen Dom0 NetBSD kernel can crash by adding duplicate xenwatches.
+	[royger, ticket #728]
+
+distrib/sets/lists/base/shl.mi			1.641
+lib/libnpf/Makefile				1.4
+
+	Install libnpf in /lib too because npfctl is linked against it.
+	[christos, ticket #729]
