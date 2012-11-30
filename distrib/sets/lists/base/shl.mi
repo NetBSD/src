@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.616.2.6 2012/11/18 22:38:29 riz Exp $
+# $NetBSD: shl.mi,v 1.616.2.7 2012/11/30 04:27:54 msaitoh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -46,6 +46,9 @@
 ./lib/liblzma.so				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1				base-sys-shlib		dynamicroot
 ./lib/liblzma.so.1.1				base-sys-shlib		dynamicroot
+./lib/libnpf.so					base-sys-shlib		dynamicroot
+./lib/libnpf.so.0				base-sys-shlib		dynamicroot
+./lib/libnpf.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libm.so					base-sys-shlib		dynamicroot
 ./lib/libm.so.0					base-sys-shlib		dynamicroot
 ./lib/libm.so.0.10				base-sys-shlib		dynamicroot
