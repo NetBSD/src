@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.9 2012/11/30 10:14:18 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.8 2012/06/02 19:10:33 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.9 2012/11/30 10:14:18 msaitoh Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -57,7 +57,7 @@ typedef struct {
 static int
 push(int num, char *string, TPSTACK *stack)
 {
-	if (stack->offset > sizeof(stack->nums)) {
+	if (stack->offset >= sizeof(stack->nums)) {
 		errno = E2BIG;
 		return -1;
 	}
