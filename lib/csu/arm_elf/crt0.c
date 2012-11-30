@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 2012/01/25 13:29:58 he Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10.4.1 2012/11/30 23:38:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -35,7 +35,6 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 
-#include <machine/asm.h>
 #include <stdlib.h>
 
 #include "common.h"
@@ -68,7 +67,7 @@ __asm("	.text			\n"
 "	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 2012/01/25 13:29:58 he Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10.4.1 2012/11/30 23:38:57 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
