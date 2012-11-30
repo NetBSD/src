@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.89 2012/11/30 08:12:27 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.90 2012/11/30 08:15:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2012/11/30 08:12:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2012/11/30 08:15:45 msaitoh Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -613,8 +613,8 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 			cpu_class = cpuids[i].cpu_class;
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
 			    CPU_ID_REVISION_MASK];
-			sprintf(cpu_model, "%s%s%s (%s core)",
-			    cpuids[i].cpu_classname,
+			snprintf(cpu_model, sizeof(cpu_model),
+			    "%s%s%s (%s core)", cpuids[i].cpu_classname,
 			    steppingstr[0] == '*' ? "" : " ",
 			    &steppingstr[steppingstr[0] == '*'],
 			    cpu_classes[cpu_class].class_name);
@@ -622,7 +622,8 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 		}
 
 	if (cpuids[i].cpuid == 0)
-		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+		snprintf(cpu_model, sizeof(cpu_model),
+		    "unknown CPU (ID = 0x%x)", cpuid);
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		char freqbuf[8];
