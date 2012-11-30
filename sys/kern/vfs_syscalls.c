@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.461 2012/11/19 15:01:17 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.462 2012/11/30 13:26:37 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.461 2012/11/19 15:01:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.462 2012/11/30 13:26:37 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -182,7 +182,9 @@ fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
 			goto out;
 
 		if (!(dfp->f_flag & FSEARCH)) {
+			vn_lock(dfp->f_data, LK_EXCLUSIVE);
 			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
+			VOP_UNLOCK(dfp->f_data);
 			if (error)
 				goto cleanup;
 		}
@@ -212,7 +214,9 @@ fd_nameiat_simple_user(struct lwp *l, int fdat, const char *path,
 			goto out;
 
 		if (!(dfp->f_flag & FSEARCH)) {
+			vn_lock(dfp->f_data, LK_EXCLUSIVE);
 			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
+			VOP_UNLOCK(dfp->f_data);
 			if (error)
 				goto cleanup;
 		}
@@ -1660,7 +1664,9 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 		dvp = dfp->f_data;
 
 		if (!(dfp->f_flag & FSEARCH)) {
+			vn_lock(dfp->f_data, LK_EXCLUSIVE);
 			error = VOP_ACCESS(dfp->f_data, VEXEC, l->l_cred);
+			VOP_UNLOCK(dfp->f_data);
 			if (error)
 				goto cleanup;
 		}
