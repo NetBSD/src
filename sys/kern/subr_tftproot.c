@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.11 2012/10/27 17:18:39 chs Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.12 2012/12/01 11:41:50 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.11 2012/10/27 17:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.12 2012/12/01 11:41:50 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -439,7 +439,7 @@ tftproot_recv(struct mbuf *m, void *ctx)
 	}
 
 	/* 
-	 * Grow the receiving buffer to accomodate new data
+	 * Grow the receiving buffer to accommodate new data
 	 */
 	newlen = trh->trh_len + (m->m_pkthdr.len - hdrlen);
 	if ((trh->trh_base = realloc(trh->trh_base, 
