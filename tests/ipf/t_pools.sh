@@ -1,4 +1,4 @@
-# $NetBSD: t_pools.sh,v 1.6 2012/12/01 04:40:00 pgoyette Exp $
+# $NetBSD: t_pools.sh,v 1.7 2012/12/01 21:25:51 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,9 +73,9 @@ test_case p5 ptest text text
 test_case p6 ptest text text
 test_case p7 ptest text text
 test_case p9 ptest text text
-failing_test_case p10 "PR kern/47270 - ipftest -P -N is broken" ptest text text
-failing_test_case p11 "PR kern/47270 - ipftest -P -N is broken" ptest text text
-failing_test_case p12 "PR kern/47270 - ipftest -P -N is broken" ptest text text
+failing_test_case p10 ptest "PR kern/47270 - ipftest -P -N is broken" text text
+failing_test_case p11 ptest "PR kern/47270 - ipftest -P -N is broken" text text
+failing_test_case p12 ptest "PR kern/47270 - ipftest -P -N is broken" text text
 test_case p13 ptest text text
 test_case ip1 iptest text text
 test_case ip2 iptest text text
