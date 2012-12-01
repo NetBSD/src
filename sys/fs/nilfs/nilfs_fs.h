@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_fs.h,v 1.2 2010/06/24 10:20:08 reinoud Exp $ */
+/* $NetBSD: nilfs_fs.h,v 1.3 2012/12/01 11:41:49 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -513,7 +513,7 @@ struct nilfs_cpfile_header {
          struct nilfs_snapshot_list ch_snapshot_list;	/* snapshot list     */
 };
 
-/* to accomodate with the header */
+/* to accommodate with the header */
 #define NILFS_CPFILE_FIRST_CHECKPOINT_OFFSET    \
         ((sizeof(struct nilfs_cpfile_header) +                          \
           sizeof(struct nilfs_checkpoint) - 1) /                        \
@@ -549,7 +549,7 @@ struct nilfs_sufile_header {
          /* ... */
 };
 
-/* to accomodate with the header */
+/* to accommodate with the header */
 #define NILFS_SUFILE_FIRST_SEGMENT_USAGE_OFFSET \
          ((sizeof(struct nilfs_sufile_header) + \
            sizeof(struct nilfs_segment_usage) - 1) / \
