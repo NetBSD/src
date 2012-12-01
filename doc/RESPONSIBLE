@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.101 2012/11/30 16:22:53 mbalmer Exp $
+#	$NetBSD: RESPONSIBLE,v 1.102 2012/12/01 03:09:55 dholland Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -20,6 +20,7 @@ bc		phil, simonb
 csh		christos
 cvs		christos, wiz
 dhcp		mellon
+edquota		dholland
 etcupdate	martti
 expr		jdolecek
 file		christos, pooka
@@ -32,6 +33,7 @@ hostapd		none
 installboot(mi)	core
 kerberos	lha, joda
 less/more	mrg
+lint		christos
 lua/luac	mbalmer
 make		christos, sjg, dholland
 named(bind)	christos
@@ -51,6 +53,7 @@ sendmail	atatat
 sh		christos, dsl
 sort		jdolecek
 sysctl		atatat
+talk/talkd	dholland
 tcpdump		core
 texinfo		wiz
 toolchain	thorpej, mrg
@@ -59,6 +62,7 @@ user		agc
 vi		aymeric
 wakeonlan	mbalmer
 wpa_supplicant	scw
+ypbind		dholland
 
 Userland Libraries:
 
@@ -70,6 +74,7 @@ kerberos	lha, joda
 openssl		thorpej, christos
 pcap		core
 pthread		nathanw
+quota		dholland
 resolver(bind)	christos
 softfloat	bjh21
 tz		kleink
@@ -170,18 +175,46 @@ elanpex		dyoung
 
 file systems:
 
+adosfs		?
+cd9660		?
+chfs		ttoth
 coda		gdt
 efs		rumble
+ext2fs		[nobody in particular]
+ffs		?
+ffs+wapbl	?
 hfs		dillo
-lfs		dholland
+kernfs		?
+lfs		dholland, perseant
+mfs		[nobody in particular]
 msdosfs		jdolecek
 nilfs		reinoud
-nfs		fvdl
+nfs		[nobody really]
 ntfs		jdolecek
+nullfs/layerfs	dholland, pooka
+overlay		[nobody]
+procfs		?
+ptyfs		?
+puffs		pooka
 smbfs		jdolecek
+sysvbfs		?
+tmpfs		rmind
 udf		reinoud
-ufs		fvdl
-ufs2		fvdl
+ufs		?
+union		[nobody]
+umapfs		[nobody]
+v7fs		uch
+
+kern/vfs:
+
+buffercache	[nobody]
+fstrans		hannken
+genfs_io	yamt
+mount		?
+namei		dholland
+rename		dholland, riastradh
+vnode-lifecycle	hannken
+misc		dholland, pooka
 
 kern/general:
 
@@ -194,7 +227,6 @@ ntp		simonb, jonathan
 pipes		jdolecek
 splash		jmcneill
 uvm		chuck, chs, mrg, atatat
-vfs		pooka, dholland
 
 kern/compat:
 
@@ -214,6 +246,7 @@ networking:
 general net	thorpej, matt
 ipf		darrenr, martti
 kame/ipv6	core
+npf		rmind
 pf		peter, yamt
 ppp(async)	christos
 ppp(sync)	martin
