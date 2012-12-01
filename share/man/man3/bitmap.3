@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitmap.3,v 1.1 2012/12/01 20:33:02 christos Exp $
+.\"	$NetBSD: bitmap.3,v 1.2 2012/12/01 20:38:41 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ main(int argc, char **argv)
 	/* Set bit 1 */
 	__BITMAP_SET(1, bitmap);
 
-	for (size_t i = 0; i \*[Lt]= 5000; i++) {
+	for (size_t i = 0; i \*[Lt] 5000; i++) {
 		if (__BITMAP_ISSET(i, bitmap)) {
 			/* Should just print 1 */
 			printf("Bit %zu is set\en", i);
