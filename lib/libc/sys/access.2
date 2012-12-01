@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.2,v 1.27 2012/11/18 17:41:53 manu Exp $
+.\"	$NetBSD: access.2,v 1.28 2012/12/01 20:45:01 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,13 +69,13 @@ All components of the pathname
 are checked for access permissions (including
 .Dv F_OK ) .
 .Pp
-.Fn faccessat 
-works the same way as 
+.Fn faccessat
+works the same way as
 .Fn access
-except if 
+except if
 .Fa path
 is relative. In that case, it is looked up from a directory whose file
-descriptor was passed as 
+descriptor was passed as
 .Fa fd .
 Search permission is required on
 .Fa fd
@@ -85,7 +85,7 @@ option.
 .Fa fd
 can be set to
 .Dv AT_FDCWD
-in order to specify current directory. 
+in order to specify current directory.
 .Pp
 The real user ID is used in place of the effective user ID
 and the real group access list
@@ -93,9 +93,9 @@ and the real group access list
 used in place of the effective ID for verifying permission.
 .Fn faccessat
 can use
-effective user ID and effective group ID if the 
+effective user ID and effective group ID if the
 .Dv AT_EACCESS
-is passed in 
+is passed in
 .Fa flag .
 .Pp
 If a process has super-user privileges and indicates success for
