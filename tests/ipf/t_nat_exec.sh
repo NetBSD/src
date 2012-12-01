@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_exec.sh,v 1.11 2012/11/29 17:22:17 pgoyette Exp $
+# $NetBSD: t_nat_exec.sh,v 1.12 2012/12/01 21:37:41 pgoyette Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,8 @@ nattest()
 
 	format="$format"
 
+	test -f in  && test -f reg || atf_fail "Test input file missing"
+
 	{ while read rule; do
 		atf_check -o save:save -x \
 		    "echo \"$rule\" | ipftest $format -RDbN - -i in $args"
@@ -95,7 +97,7 @@ test_case n9_6 nattest hex hex -6
 test_case n11_6 nattest text text -6
 test_case n12_6 nattest hex hex -6
 test_case n15_6 nattest text text -6
-failing_test_case n17_6 nattest "Test input file missing" hex hex -6
+failing_test_case n17_6 nattest "Test golden output file missing" hex hex -6
 
 atf_init_test_cases()
 {
