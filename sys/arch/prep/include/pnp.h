@@ -567,7 +567,7 @@ typedef union _PnP_TAG_PACKET {
     unsigned char Tag;                  /* small tag = 0x30 or 0x31           */
     unsigned char Priority;             /* Optional; if missing then x01; else*/
                                         /*  x00 = best possible               */
-                                        /*  x01 = acceptible                  */
+                                        /*  x01 = acceptable                  */
                                         /*  x02 = sub-optimal but functional  */
     } S6_Pack;
 
