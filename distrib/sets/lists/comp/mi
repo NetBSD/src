@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1791 2012/11/20 16:18:47 agc Exp $
+#	$NetBSD: mi,v 1.1792 2012/12/01 20:37:02 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5572,6 +5572,11 @@
 ./usr/share/man/cat3/X509_verify_cert.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BIT.0			comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_CLR.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_ISSET.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_SIZE.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_SET.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_ZERO.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BITS.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__CONCAT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__KERNEL_RCSID.0		comp-c-catman		.cat
@@ -5981,6 +5986,7 @@
 ./usr/share/man/cat3/bit_nset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bit_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bit_test.0			comp-c-catman		.cat
+./usr/share/man/cat3/bitmap.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bitops.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bits.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bitstr_size.0		comp-c-catman		.cat
@@ -12094,6 +12100,11 @@
 ./usr/share/man/html3/X509_verify_cert.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/_DIAGASSERT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BIT.html		comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_CLR.html		comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_ISSET.html	comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_SIZE.html	comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_SET.html		comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_ZERO.html	comp-c-htmlman		html
 ./usr/share/man/html3/__BITS.html		comp-c-htmlman		html
 ./usr/share/man/html3/__CONCAT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__KERNEL_RCSID.html	comp-c-htmlman		html
@@ -12503,6 +12514,7 @@
 ./usr/share/man/html3/bit_nset.html		comp-c-htmlman		html
 ./usr/share/man/html3/bit_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/bit_test.html		comp-c-htmlman		html
+./usr/share/man/html3/bitmap.html		comp-c-htmlman		html
 ./usr/share/man/html3/bitops.html		comp-c-htmlman		html
 ./usr/share/man/html3/bits.html			comp-c-htmlman		html
 ./usr/share/man/html3/bitstr_size.html		comp-c-htmlman		html
@@ -18418,6 +18430,11 @@
 ./usr/share/man/man3/X509_verify_cert.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/_DIAGASSERT.3		comp-c-man		.man
 ./usr/share/man/man3/__BIT.3			comp-c-man		.man
+./usr/share/man/man3/__BITMAP_CLR.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_ISSET.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_SIZE.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_SET.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_ZERO.3		comp-c-man		.man
 ./usr/share/man/man3/__BITS.3			comp-c-man		.man
 ./usr/share/man/man3/__CONCAT.3			comp-c-man		.man
 ./usr/share/man/man3/__KERNEL_RCSID.3		comp-c-man		.man
@@ -18827,6 +18844,7 @@
 ./usr/share/man/man3/bit_nset.3			comp-c-man		.man
 ./usr/share/man/man3/bit_set.3			comp-c-man		.man
 ./usr/share/man/man3/bit_test.3			comp-c-man		.man
+./usr/share/man/man3/bitmap.3			comp-c-man		.man
 ./usr/share/man/man3/bitops.3			comp-c-man		.man
 ./usr/share/man/man3/bits.3			comp-c-man		.man
 ./usr/share/man/man3/bitstr_size.3		comp-c-man		.man
