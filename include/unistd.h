@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.136 2012/11/18 17:41:53 manu Exp $	*/
+/*	$NetBSD: unistd.h,v 1.137 2012/12/01 13:28:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
  * X/Open Extended API set 2 (a.k.a. C063)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
-    defined(_INCOMPLETE_XOPEN_C063) || defined(_KERNEL)
+    defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int	linkat(int, const char *, int, const char *, int);
 int	renameat(int, const char *, int, const char *);
 int	mkfifoat(int, const char *, mode_t);
