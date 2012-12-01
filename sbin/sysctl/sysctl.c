@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.145 2012/11/29 02:24:14 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.146 2012/12/01 15:30:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,12 +68,10 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.145 2012/11/29 02:24:14 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.146 2012/12/01 15:30:16 christos Exp $");
 #endif
 #endif /* not lint */
 
-#define FD_SETSIZE 0x10000
-#include <sys/fd_set.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -82,6 +80,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.145 2012/11/29 02:24:14 christos Exp $");
 #include <sys/stat.h>
 #include <sys/sched.h>
 #include <sys/socket.h>
+#include <sys/bitops.h>
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
@@ -253,6 +252,8 @@ size_t	nr;
 char	*fn;
 int	req, stale, errs;
 FILE	*warnfp = stderr;
+
+#define MAXPORTS	0x10000
 
 /*
  * vah-riables n stuff
@@ -2692,13 +2693,13 @@ mode_bits(HANDLER_ARGS)
 }
 
 static char *
-bitmask_print(const fd_set *o)
+bitmask_print(const uint32_t *o)
 {
 	char *s, *os;
 
 	s = os = NULL;
-	for (size_t i = 0; i < FD_SETSIZE; i++)
-		if (FD_ISSET(i, o)) {
+	for (size_t i = 0; i < MAXPORTS; i++)
+		if (__BITMAP_ISSET(i, o)) {
 			int rv;
 
 			if (os)
@@ -2716,21 +2717,21 @@ bitmask_print(const fd_set *o)
 }
 
 static void
-bitmask_scan(const void *v, fd_set *o)
+bitmask_scan(const void *v, uint32_t *o)
 {
 	char *s = strdup(v);
 	if (s == NULL)
 		err(1, "");
-	FD_ZERO(o);
+	__BITMAP_ZERO(o);
 	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
 		char *e;
 		errno = 0;
 		unsigned long l = strtoul(s, &e, 0);
 		if ((l == ULONG_MAX && errno == ERANGE) || s == e || *e)
 			errx(1, "Invalid port: %s", s);
-		if (l >= FD_SETSIZE)
+		if (l >= MAXPORTS)
 			errx(1, "Port out of range: %s", s);
-		FD_SET(l, o);
+		__BITMAP_SET(l, o);
 	}
 }
 
@@ -2740,15 +2741,16 @@ reserve(HANDLER_ARGS)
 {
 	int rc;
 	size_t osz, nsz;
-	fd_set o, n;
+	uint32_t o[__BITMAP_SIZE(uint32_t, MAXPORTS)];
+	uint32_t n[__BITMAP_SIZE(uint32_t, MAXPORTS)];
 
 	if (fn)
 		trim_whitespace(value, 3);
 
 	osz = sizeof(o);
 	if (value) {
-		bitmask_scan(value, &n);
-		value = (char *)&n;
+		bitmask_scan(value, n);
+		value = (char *)n;
 		nsz = sizeof(n);
 	} else
 		nsz = 0;
@@ -2763,10 +2765,10 @@ reserve(HANDLER_ARGS)
 		return;
 
 	if (rflag || xflag)
-		display_struct(pnode, sname, &o, sizeof(o),
+		display_struct(pnode, sname, o, sizeof(o),
 		    value ? DISPLAY_OLD : DISPLAY_VALUE);
 	else {
-		char *s = bitmask_print(&o);
+		char *s = bitmask_print(o);
 		display_string(pnode, sname, s, strlen(s),
 		    value ? DISPLAY_OLD : DISPLAY_VALUE);
 		free(s);
@@ -2774,10 +2776,10 @@ reserve(HANDLER_ARGS)
 
 	if (value) {
 		if (rflag || xflag)
-			display_struct(pnode, sname, &n, sizeof(n),
+			display_struct(pnode, sname, n, sizeof(n),
 			    DISPLAY_NEW);
 		else {
-			char *s = bitmask_print(&n);
+			char *s = bitmask_print(n);
 			display_string(pnode, sname, s, strlen(s), DISPLAY_NEW);
 			free(s);
 		}
