@@ -1,0 +1,133 @@
+.\"	$NetBSD: bitmap.3,v 1.1 2012/12/01 20:33:02 christos Exp $
+.\"
+.\" Copyright (c) 2012 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 1, 2012
+.Dt bitmap 3
+.Os
+.Sh NAME
+.Nm __BITMAP_CLR ,
+.Nm __BITMAP_ISSET,
+.Nm __BITMAP_SET ,
+.Nm __BITMAP_SIZE ,
+.Nm __BITMAP_ZERO 
+.Nd bitmap manipulation macros
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.In sys/bitops.h
+.Fn __BITMAP_CLR "int bit" "type *bitmap"
+.Fn __BITMAP_ISSET "int bit" "type *bitmap"
+.Fn __BITMAP_SET "int bit" "type *bitmap"
+.Fn __BITMAP_SIZE "type" "int nbits"
+.Fn __BITMAP_ZERO "type *bitmap"
+.Sh DESCRIPTION
+The supplied macros are similar to the 
+.Xr select 2
+.Fn FD_SET
+family, and to the 
+.Xr bitstring 3
+library.
+They are different from
+.Fn FD_SET
+because they are designed to handle multiple sized bitmaps at the same time,
+and they can be of any integral type.
+They are different from
+.Xr bitstring 3
+because they are just macros, they don't allocate memory or use code,
+and they can be used in both kernel and userland.
+.Pp
+The following macros are provided for manipulating creating and manipulating
+bitmaps:
+.Pp
+.Fn __BITMAP_CLR bit, bitmap
+initializes a descriptor set pointed to by
+.Fa bitmap
+to the null set.
+.Pp
+.Fn __BITMAP_ISSET bit bitmap
+is non-zero if
+.Fa bit
+is a member of
+.Fa bitmap ,
+zero otherwise.
+.Pp
+.Fn __BITMAP_SIZE type nbits
+Returns the number of elements would be required of the given
+.Fa type
+to hold
+.Fa nbits .
+.Pp
+.Fn __BITMAP_SET bit bitmap
+Sets the given
+.Fa bit
+in the
+.Fa bitmap .
+.Pp
+.Fn __BITMAP_CLR bit bitmap
+removes the given
+.Fa bit
+from the
+.Fa bitmap .
+.Pp
+The behavior of these macros is undefined for negative
+bit values or ones greater than the number of bits the bitmap can hold.
+.Sh EXAMPLES
+.Bd -literal
+#include \*[Lt]sys/bitops.h\*[Gt]
+
+int
+main(int argc, char **argv)
+{
+	uint32_t bitmap[__BITMAP_SIZE(uint32_t, 5000)];
+
+	/* Initialize the read set to null */
+	__BITMAP_ZERO(bitmap);
+
+	/* Set bit 1 */
+	__BITMAP_SET(1, bitmap);
+
+	for (size_t i = 0; i \*[Lt]= 5000; i++) {
+		if (__BITMAP_ISSET(i, bitmap)) {
+			/* Should just print 1 */
+			printf("Bit %zu is set\en", i);
+			__BITMAP_CLR(i, bitmap);
+		}
+		break;
+	}
+	return 0;
+}
+.Ed
+.Sh SEE ALSO
+.Xr select 2 ,
+.Xr bitstring 3
+.Sh HISTORY
+The
+.Fn __BITMAP_*
+macros appeared in
+.Nx 7 .
