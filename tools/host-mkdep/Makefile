@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2012/12/02 12:21:51 apb Exp $
+#	$NetBSD: Makefile,v 1.12 2012/12/02 12:44:06 apb Exp $
 
-TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
+HOSTPROG= 	host-mkdep
+HOSTPROGNAME=	${_TOOL_PREFIX}host-mkdep
+HOST_BINDIR=	${TOOLDIR}/bin
+
+NOMAN=	# defined
+SRCS=	# empty
 
 CLEANFILES+=	config.cache config.log config.status host-mkdep
 
@@ -20,12 +25,24 @@ host-mkdep: configure host-mkdep.in
 	    ${HOST_SH} ${.CURDIR}/configure --cache-file=config.cache
 	chmod +x $@
 
-# This is the only program that comes before binstall.
-install: ${TIMESTAMP}
-${TIMESTAMP}: host-mkdep
-	mkdir -p ${TOOLDIR}/bin
-	cp host-mkdep $@
-	chmod +x $@
+# Use uninstalled copy of the install program
+INSTALL_OBJ!=	cd ${NETBSDSRCDIR}/tools/binstall && ${PRINTOBJDIR}
+INSTALL=	${INSTALL_OBJ}/xinstall
+
+# Install rule, copied from src/tools/Makefile.host.
+# We can't include Makefile.host because there is no HOST_SRCDIR
+# corresponding to host-mkdep.
+#
+realinstall: install.host
+install.host: ${HOST_BINDIR}/${HOSTPROGNAME}
+${HOST_BINDIR}/${HOSTPROGNAME}:: ${HOSTPROG}
+	${_MKTARGET_INSTALL}
+	mkdir -p ${HOST_BINDIR}
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${HOSTPROG}${HOSTEXEEXT} ${.TARGET}
+
+.if ${MKUPDATE} == "no"
+.PHONY:		${HOST_BINDIR}/${HOSTPROGNAME}
+.endif
 
 # Run by hand, then "configure" script committed:
 regen:
