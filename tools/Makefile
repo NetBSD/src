@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.161 2012/11/27 20:00:39 jkunz Exp $
+#	$NetBSD: Makefile,v 1.162 2012/12/02 11:19:45 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -50,7 +50,7 @@ DTRACE_BITS=
 .if ${MKDTRACE} != "no"
 DTRACE_BITS+= .WAIT libelf
 DTRACE_BITS+= .WAIT libdwarf
-DTRACE_BITS+= .WAIT libctf 
+DTRACE_BITS+= .WAIT libctf
 DTRACE_BITS+= .WAIT ctfconvert ctfmerge
 .endif
 
@@ -188,7 +188,7 @@ all-${dir} depend-${dir} dependall-${dir} install-${dir}:
 .  if exists(PREVIOUSTOOLDIR)
 PREVIOUSTOOLDIR!=	cat PREVIOUSTOOLDIR
 .  else
-PREVIOUSTOOLDIR=	
+PREVIOUSTOOLDIR=
 .  endif
 .endif
 
