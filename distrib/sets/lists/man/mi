@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1408 2012/11/26 00:41:48 rkujawa Exp $
+# $NetBSD: mi,v 1.1409 2012/12/02 02:21:28 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -300,6 +300,7 @@
 ./usr/share/man/cat1/mkfilters.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat1/mklocale.0			man-util-catman		.cat
 ./usr/share/man/cat1/mktemp.0			man-util-catman		.cat
+./usr/share/man/cat1/mkubootimage.0		man-util-catman		.cat
 ./usr/share/man/cat1/mopa.out.0			man-obsolete		obsolete
 ./usr/share/man/cat1/mopchk.0			man-bootserver-catman	.cat
 ./usr/share/man/cat1/mopcopy.0			man-bootserver-catman	.cat
@@ -3286,6 +3287,7 @@
 ./usr/share/man/html1/mkfilters.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html1/mklocale.html		man-util-htmlman	html
 ./usr/share/man/html1/mktemp.html		man-util-htmlman	html
+./usr/share/man/html1/mkubootimage.html		man-util-htmlman	html
 ./usr/share/man/html1/mopchk.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/mopcopy.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/mopprobe.html		man-bootserver-htmlman	html
@@ -5910,6 +5912,7 @@
 ./usr/share/man/man1/mkfilters.1		man-ipf-man		ipfilter,.man
 ./usr/share/man/man1/mklocale.1			man-util-man		.man
 ./usr/share/man/man1/mktemp.1			man-util-man		.man
+./usr/share/man/man1/mkubootimage.1		man-util-man		.man
 ./usr/share/man/man1/mopa.out.1			man-obsolete		obsolete
 ./usr/share/man/man1/mopchk.1			man-bootserver-man	.man
 ./usr/share/man/man1/mopcopy.1			man-bootserver-man	.man
