@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.368 2012/12/02 19:30:18 rkujawa Exp $
+#       $NetBSD: Makefile,v 1.369 2012/12/02 19:51:56 rkujawa Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -630,6 +630,11 @@ MLINKS+=pcq.9 pcq_create.9 \
 	pcq.9 pcq_peek.9 \
 	pcq.9 pcq_maxitems.9 \
 	pcq.9 pcq_put.9
+MLINKS+=pcu.9 pcu_load.9 \
+	pcu.9 pcu_save.9 \
+	pcu.9 pcu_save_all.9 \
+	pcu.9 pcu_discard.9 \
+	pcu.9 pcu_used_p.9
 MLINKS+=pmf.9 pmf_device_register.9 pmf.9 pmf_device_register1.9 \
 	pmf.9 pmf_device_deregister.9 \
 	pmf.9 pmf_device_suspend.9 pmf.9 pmf_device_resume.9 \
