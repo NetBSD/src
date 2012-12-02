@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.26 2012/10/16 12:31:57 rkujawa Exp $
+#	$NetBSD: files.amigappc,v 1.27 2012/12/02 22:11:25 rkujawa Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -435,6 +435,11 @@ file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 # Buddha wdc
 attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
+
+# Zorro III RAM block devices
+device  z3rambd: altmemdev
+attach  z3rambd at zbus
+file    arch/amiga/dev/z3rambd.c        z3rambd needs-flag
 
 # Compatibility modules
 
