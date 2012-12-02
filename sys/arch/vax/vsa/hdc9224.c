@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.51.18.1 2012/12/02 05:46:39 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51 2010/12/14 23:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51.18.1 2012/12/02 05:46:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,14 @@ static volatile int u;
 #define	HDC_WCMD(x)	*(volatile char *)(sc->sc_regs + 4) = (x)
 #define	HDC_RSTAT	*(volatile char *)(sc->sc_regs + 4)
 
+static void
+rdminphys(struct buf *bp)
+{
+	if (bp->b_bcount > rd_dmasize)
+		bp->b_bcount = rd_dmasize;
+}
+
+const struct dkdriver rd_dkdriver = { rdstrategy, rdminphys };
 /*
  * new-config's hdcmatch() is similiar to old-config's hdcprobe(), 
  * thus we probe for the existence of the controller and reset it.
@@ -301,7 +309,7 @@ hdcattach(device_t parent, device_t self, void *aux)
 	sc->sc_dmabase = (void *)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
 	sc->sc_intbit = va->va_maskno;
-	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
+	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rdminphys */
 
 	sc->sc_vd.vd_go = hdc_qstart;
 	sc->sc_vd.vd_arg = sc;
@@ -365,7 +373,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&rd->sc_disk, device_xname(rd->sc_dev), NULL);
+	disk_init(&rd->sc_disk, device_xname(rd->sc_dev), &rd_dkdriver);
 	disk_attach(&rd->sc_disk);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.48 2010/12/14 23:38:30 matt Exp $ */
+/*	$NetBSD: hp.c,v 1.48.18.1 2012/12/02 05:46:39 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.48 2010/12/14 23:38:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.48.18.1 2012/12/02 05:46:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,8 @@ const struct cdevsw hp_cdevsw = {
 	.d_flag = D_DISK
 };
 
+const struct dkdriver hp_dkdriver = { hpstrategy, minphys };
+
 #define HP_WCSR(reg, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))
 #define HP_RCSR(reg) \
@@ -174,7 +176,7 @@ hpattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Init and attach the disk structure.
 	 */
-	disk_init(&sc->sc_disk, device_xname(sc->sc_dev), NULL);
+	disk_init(&sc->sc_disk, device_xname(sc->sc_dev), &hp_dkdriver);
 	disk_attach(&sc->sc_disk);
 
 	/*

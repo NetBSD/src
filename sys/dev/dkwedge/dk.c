@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.64.2.1 2012/11/20 03:02:00 tls Exp $	*/
+/*	$NetBSD: dk.c,v 1.64.2.2 2012/12/02 05:46:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.2 2012/12/02 05:46:40 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -117,6 +117,8 @@ const struct cdevsw dk_cdevsw = {
 	dkopen, dkclose, dkread, dkwrite, dkioctl,
 	    nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+const struct dkdriver dk_dkdriver = { dkstrategy, dkminphys };
 
 static struct dkwedge_softc **dkwedges;
 static u_int ndkwedges;
@@ -432,7 +434,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 * of state to RUNNING atomic.
 	 */
 
-	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), &dk_dkdriver);
 	disk_blocksize(&sc->sc_dk, DEV_BSIZE << pdk->dk_blkshift);
 	dkgetproperties(&sc->sc_dk, dkw);
 	disk_attach(&sc->sc_dk);

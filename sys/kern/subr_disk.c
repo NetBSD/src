@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.100.18.1 2012/09/12 06:15:34 tls Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.100.18.2 2012/12/02 05:46:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.1 2012/09/12 06:15:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.100.18.2 2012/12/02 05:46:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -218,6 +218,9 @@ int disk_maxphys(const struct disk *const diskp)
 void
 disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 {
+	KASSERT(diskp != NULL);
+	KASSERT(name != NULL);
+	KASSERT(driver != NULL);
 
 	/*
 	 * Initialize the wedge-related locks and other fields.
