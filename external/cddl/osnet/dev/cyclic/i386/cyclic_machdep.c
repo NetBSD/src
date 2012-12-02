@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_machdep.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: cyclic_machdep.c,v 1.3 2012/12/02 00:05:38 chs Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/dev/cyclic/i386/cyclic_machdep.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD$
  *
  */
 
@@ -69,7 +69,7 @@ cyclic_machdep_uninit(void)
 
 	for (i = 0; i <= mp_maxid; i++)
 		/* Reset the cyclic clock callback hook. */
-		lapic_cyclic_clock_func[i] = NULL;
+		cyclic_clock_func[i] = NULL;
 
 	/* De-register the cyclic backend. */
 	cyclic_uninit();
@@ -107,13 +107,13 @@ cyclic_clock(struct trapframe *frame)
 static void enable(cyb_arg_t arg)
 {
 	/* Register the cyclic clock callback function. */
-	lapic_cyclic_clock_func[curcpu] = cyclic_clock;
+	cyclic_clock_func[curcpu] = cyclic_clock;
 }
 
 static void disable(cyb_arg_t arg)
 {
 	/* Reset the cyclic clock callback function. */
-	lapic_cyclic_clock_func[curcpu] = NULL;
+	cyclic_clock_func[curcpu] = NULL;
 }
 
 static void reprogram(cyb_arg_t arg, hrtime_t exp)
@@ -123,13 +123,7 @@ static void reprogram(cyb_arg_t arg, hrtime_t exp)
 
 static void xcall(cyb_arg_t arg, cpu_t *c, cyc_func_t func, void *param)
 {
-	/*
-	 * If the target CPU is the current one, just call the
-	 * function. This covers the non-SMP case.
-	 */
-	if (c == &solaris_cpu[curcpu])
-		(*func)(param);
-	else
-		smp_rendezvous_cpus((cpumask_t) (1 << c->cpuid), NULL,
-		    func, smp_no_rendevous_barrier, param);
+
+	smp_rendezvous_cpus((cpumask_t) (1 << c->cpuid),
+	    smp_no_rendevous_barrier, func, smp_no_rendevous_barrier, param);
 }
