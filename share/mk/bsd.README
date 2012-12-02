@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.309 2012/11/24 14:01:28 alnsn Exp $
+#	$NetBSD: bsd.README,v 1.310 2012/12/02 20:19:46 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -627,6 +627,10 @@ COPY		The flag passed to the install program to cause the binary
 		building our own install script so that the entire system
 		can either be installed with copies, or with moves using
 		a single knob.  [-c]
+
+MAKEDIRTARGETENV
+		Environment variables passed to the child make process
+		invoked by MAKEDIRTARGET.
 
 MAKEDIRTARGET dir target [params]
 		Runs "cd $${dir} && ${MAKE} [params] $${target}",
