@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.5 2012/01/30 23:31:27 matt Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.6 2012/12/02 00:05:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -63,7 +63,7 @@ typedef	void (*cyclic_clock_func_t)(struct trapframe *);
  *
  * Defining them here avoids a proliferation of header files.
  */
-extern cyclic_clock_func_t     lapic_cyclic_clock_func[];
+extern cyclic_clock_func_t     cyclic_clock_func[];
 
 /*
  * The dtrace module handles traps that occur during a DTrace probe.
