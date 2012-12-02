@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.14 2011/06/20 13:26:58 pgoyette Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.14.12.1 2012/12/02 05:46:03 tls Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -127,7 +127,10 @@ struct arc_sge {
 #define ARC_MAX_TARGET		16
 #define ARC_MAX_LUN		8
 #define ARC_MAX_IOCMDLEN	512
+#define ARC_MAX_XFER_BLOCKS	4096
 #define ARC_BLOCKSIZE		512
+#define ARC_MAX_XFER		(MIN(MACHINE_MAXPHYS, \
+				 ARC_MAX_XFER_BLOCKS * ARC_BLOCKSIZE))
 
 /* 
  * the firmware deals with up to 256 or 512 byte command frames.

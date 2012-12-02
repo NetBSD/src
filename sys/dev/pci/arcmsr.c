@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.30.12.1 2012/12/02 05:46:03 tls Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30 2011/06/20 22:03:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30.12.1 2012/12/02 05:46:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -259,8 +259,8 @@ arc_shutdown(device_t self, int how)
 static void
 arc_minphys(struct buf *bp)
 {
-	if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
+	if (bp->b_bcount > ARC_MAX_XFER)
+		bp->b_bcount = ARC_MAX_XFER;
 	minphys(bp);
 }
 
@@ -2091,8 +2091,9 @@ arc_alloc_ccbs(device_t self)
 	for (i = 0; i < sc->sc_req_count; i++) {
 		ccb = &sc->sc_ccbs[i];
 
-		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, ARC_SGL_MAXLEN,
-		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
+		if (bus_dmamap_create(sc->sc_dmat, ARC_MAX_XFER,
+				      ARC_SGL_MAXLEN, ARC_MAX_XFER,
+				      0, 0, &ccb->ccb_dmamap) != 0) {
 			aprint_error_dev(self,
 			    "unable to create dmamap for ccb %d\n", i);
 			goto free_maps;
