@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.164 2012/12/02 12:10:43 apb Exp $
+#	$NetBSD: Makefile,v 1.165 2012/12/02 12:25:25 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -70,9 +70,28 @@ LINT_BITS=
 LINT_BITS= lint lint2
 .endif
 
+# All of host-mkdep, compat, and binstall are needed before anything
+# else.  Within this group, they must be built in a specific order, and
+# all of them must be built before any of them is installed.  They may
+# be installed in any order.  This can't be expressed using the .WAIT
+# notation inside the SUBDIR list.
+#
+# XXX .ORDER does not work when multiple targets are passed on the
+# make command line without "-j", so use dependencies in addition to .ORDER.
+#
+.ORDER: dependall-host-mkdep dependall-compat dependall-binstall
+.if make(dependall-host-mkdep) && make(dependall-compat)
+dependall-compat: dependall-host-mkdep
+.endif
+.if make(dependall-compat) && make(dependall-binstall)
+dependall-binstall: dependall-compat
+.endif
+
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
-SUBDIR=	host-mkdep .WAIT compat .WAIT \
-	binstall .WAIT mktemp .WAIT sed .WAIT \
+# See above for special treatment for host-mkdep, compat, and binstall.
+#
+SUBDIR=	host-mkdep compat binstall \
+	.WAIT mktemp .WAIT sed .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump join \
 		${LINT_BITS} \
 		lorder makewhatis mkdep mtree nbperf .WAIT rpcgen tsort \
