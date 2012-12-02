@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_machdep.c,v 1.3 2012/12/02 00:05:38 chs Exp $	*/
+/*	$NetBSD: cyclic_machdep.c,v 1.4 2012/12/02 01:05:16 chs Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -60,6 +60,9 @@ cyclic_machdep_init(void)
 {
 	/* Register the cyclic backend. */
 	cyclic_init(&be);
+#ifdef __NetBSD__
+	cyclic_ap_start(NULL);
+#endif
 }
 
 static void
@@ -82,11 +85,11 @@ static hrtime_t exp_due[MAXCPU];
  * initialiser as the callback for high speed timer events.
  */
 static void
-cyclic_clock(struct trapframe *frame)
+cyclic_clock(struct clockframe *frame)
 {
-	cpu_t *c = &solaris_cpu[curcpu];
+	cpu_t *c = &solaris_cpu[cpu_number()];
 
-	if (c->cpu_cyclic != NULL && gethrtime() >= exp_due[curcpu]) {
+	if (c->cpu_cyclic != NULL && gethrtime() >= exp_due[cpu_number()]) {
 		if (TRAPF_USERMODE(frame)) {
 			c->cpu_profile_pc = 0;
 			c->cpu_profile_upc = TRAPF_PC(frame);
@@ -107,23 +110,39 @@ cyclic_clock(struct trapframe *frame)
 static void enable(cyb_arg_t arg)
 {
 	/* Register the cyclic clock callback function. */
-	cyclic_clock_func[curcpu] = cyclic_clock;
+	cyclic_clock_func[cpu_number()] = cyclic_clock;
 }
 
 static void disable(cyb_arg_t arg)
 {
 	/* Reset the cyclic clock callback function. */
-	cyclic_clock_func[curcpu] = NULL;
+	cyclic_clock_func[cpu_number()] = NULL;
 }
 
 static void reprogram(cyb_arg_t arg, hrtime_t exp)
 {
-	exp_due[curcpu] = exp;
+	exp_due[cpu_number()] = exp;
 }
+
+#ifdef __NetBSD__
+static void xcall_func(void *arg0, void *arg1)
+{
+	cyc_func_t func;
+
+	func = arg0;
+	(*func)(arg1);
+}
+#endif
 
 static void xcall(cyb_arg_t arg, cpu_t *c, cyc_func_t func, void *param)
 {
+#ifdef __NetBSD__
+	uint64_t xc;
 
+	xc = xc_unicast(XC_HIGHPRI, xcall_func, func, param, cpu_lookup(c->cpuid));
+	xc_wait(xc);
+#else
 	smp_rendezvous_cpus((cpumask_t) (1 << c->cpuid),
 	    smp_no_rendevous_barrier, func, smp_no_rendevous_barrier, param);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.3 2012/12/02 00:05:38 chs Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.4 2012/12/02 01:05:16 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -326,8 +326,10 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#ifdef __FreeBSD___
 #include <sys/lock.h>
 #include <sys/sx.h>
+#endif
 #include <sys/cyclic_impl.h>
 #include <sys/module.h>
 #include <sys/systm.h>
@@ -335,7 +337,32 @@
 #include <sys/kmem.h>
 #include <sys/cmn_err.h>
 #include <sys/dtrace_bsd.h>
+#ifdef __FreeBSD__
 #include <machine/cpu.h>
+#endif
+
+#ifdef __NetBSD__
+#include <sys/cpu.h>
+#include <sys/malloc.h>
+#include <sys/xcall.h>
+
+#undef mutex_init
+#define mtx_init(m, d, p, f) mutex_init(m, MUTEX_DEFAULT, IPL_CLOCK)
+#define mtx_lock_spin(x) mutex_spin_enter(x)
+#define mtx_unlock_spin(x) mutex_spin_exit(x)
+#define mtx_destroy(x) mutex_destroy(x)
+
+#define ASSERT(x) KASSERT(x)
+#define SYSINIT(a1, a2, a3, a4, a5)
+#define SYSUNINIT(a1, a2, a3, a4, a5)
+#define CPU_FOREACH(var) \
+	CPU_INFO_ITERATOR cii; \
+	struct cpu_info *ci; \
+	for (CPU_INFO_FOREACH(cii, ci))
+#define MAXCPU MAXCPUS
+#define TRAPF_USERMODE(x) CLKF_USERMODE(x)
+#define TRAPF_PC(x) CLKF_PC(x)
+#endif
 
 static kmem_cache_t *cyclic_id_cache;
 static cyc_id_t *cyclic_id_head;
@@ -873,7 +900,7 @@ cyclic_configure(cpu_t *c)
 	ASSERT(MUTEX_HELD(&cpu_lock));
 
 	if (cyclic_id_cache == NULL)
-		cyclic_id_cache = kmem_cache_create("cyclic_id_cache",
+		cyclic_id_cache = kmem_cache_create(__UNCONST("cyclic_id_cache"),
 		    sizeof (cyc_id_t), 0, NULL, NULL, NULL, NULL, NULL, 0);
 
 	cpu->cyp_cpu = c;
@@ -1110,7 +1137,7 @@ cyclic_id_t
 cyclic_add(cyc_handler_t *hdlr, cyc_time_t *when)
 {
 	cyc_id_t *idp = cyclic_new_id();
-	solaris_cpu_t *c = &solaris_cpu[curcpu];
+	solaris_cpu_t *c = &solaris_cpu[cpu_number()];
 
 	ASSERT(MUTEX_HELD(&cpu_lock));
 	ASSERT(when->cyt_when >= 0 && when->cyt_interval > 0);
@@ -1217,6 +1244,7 @@ cyclic_add_omni(cyc_omni_handler_t *omni)
 	idp->cyi_omni_hdlr = *omni;
 
 	CPU_FOREACH(i) {
+		i = cpu_index(ci);
 		c = &solaris_cpu[i];
 		if ((cpu = c->cpu_cyclic) == NULL)
 			continue;
@@ -1305,7 +1333,7 @@ cyclic_init(cyc_backend_t *be)
 	 */
 	bcopy(be, &cyclic_backend, sizeof (cyc_backend_t));
 
-	cyclic_configure(&solaris_cpu[curcpu]);
+	cyclic_configure(&solaris_cpu[cpu_number()]);
 }
 
 /*
@@ -1320,15 +1348,20 @@ cyclic_mp_init(void)
 	cpu_t *c;
 	int i;
 
+#ifndef __NetBSD__
 	mutex_enter(&cpu_lock);
+#endif
 
 	CPU_FOREACH(i) {
+		i = cpu_index(ci);
 		c = &solaris_cpu[i];
 		if (c->cpu_cyclic == NULL)
 			cyclic_configure(c);
 	}
 
+#ifndef __NetBSD__
 	mutex_exit(&cpu_lock);
+#endif
 }
 
 static void
@@ -1338,6 +1371,7 @@ cyclic_uninit(void)
 	int id;
 
 	CPU_FOREACH(id) {
+		id = cpu_index(ci);
 		c = &solaris_cpu[id];
 		if (c->cpu_cyclic == NULL)
 			continue;
@@ -1379,6 +1413,7 @@ cyclic_unload(void)
 
 SYSUNINIT(cyclic_unregister, SI_SUB_CYCLIC, SI_ORDER_SECOND, cyclic_unload, NULL);
 
+#ifdef __FreeBSD__
 /* ARGSUSED */
 static int
 cyclic_modevent(module_t mod __unused, int type, void *data __unused)
@@ -1406,3 +1441,24 @@ cyclic_modevent(module_t mod __unused, int type, void *data __unused)
 DEV_MODULE(cyclic, cyclic_modevent, NULL);
 MODULE_VERSION(cyclic, 1);
 MODULE_DEPEND(cyclic, opensolaris, 1, 1, 1);
+#endif
+
+#ifdef __NetBSD__
+static int
+cyclic_modcmd(modcmd_t cmd, void *data)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		cyclic_load(NULL);
+		return 0;
+
+	case MODULE_CMD_FINI:
+		cyclic_unload();
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+MODULE(MODULE_CLASS_MISC, cyclic, "dtrace");
+#endif
