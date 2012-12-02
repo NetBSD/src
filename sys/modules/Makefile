@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2012/11/06 07:59:09 alnsn Exp $
+#	$NetBSD: Makefile,v 1.116 2012/12/02 01:05:16 chs Exp $
 
 .include <bsd.own.mk>
 
@@ -241,6 +241,7 @@ SUBDIR+= 	dm
 .endif
 
 .if (${MKDTRACE} != "no")
+SUBDIR+=	cyclic
 SUBDIR+=	dtrace
 .endif
 

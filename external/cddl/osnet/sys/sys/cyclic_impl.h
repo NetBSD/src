@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic_impl.h,v 1.3 2012/12/02 00:05:39 chs Exp $	*/
+/*	$NetBSD: cyclic_impl.h,v 1.4 2012/12/02 01:05:16 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -269,7 +269,7 @@ typedef struct cyc_cpu {
 	cyc_index_t cyp_nelems;
 	cyc_index_t cyp_size;
 	cyc_backend_t *cyp_backend;
-	struct mtx cyp_mtx;
+	kmutex_t cyp_mtx;
 } cyc_cpu_t;
 
 typedef struct cyc_omni_cpu {
