@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.143 2011/11/13 23:02:46 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.143.10.1 2012/12/02 05:46:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.143 2011/11/13 23:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.143.10.1 2012/12/02 05:46:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,23 @@ struct ccd_softc 	*ccd_softc;
 const int		ccd_softc_elemsize = sizeof(struct ccd_softc);
 int			numccd = 0;
 
+static void
+ccdminphys(struct buf *bp)
+{
+	struct ccd_softc *cs;
+	long xmax;
+	int unit = ccdunit(bp->b_dev);
+
+	cs = &ccd_softc[unit];
+
+	xmax = cs->sc_maxphys;
+
+	if (bp->b_bcount > xmax)
+	    bp->b_bcount = xmax;
+}
+
+const struct dkdriver ccd_dkdriver = { ccdstrategy, ccdminphys };
+
 /*
  * Called by main() during pseudo-device attachment.  All we need
  * to do is allocate enough space for devices to be configured later.
@@ -246,7 +263,7 @@ ccdattach(int num)
 		cs->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&cs->sc_stop, "ccdstop");
 		cv_init(&cs->sc_push, "ccdthr");
-		disk_init(&cs->sc_dkdev, cs->sc_xname, NULL); /* XXX */
+		disk_init(&cs->sc_dkdev, cs->sc_xname, &ccd_dkdriver);
 	}
 }
 
@@ -274,6 +291,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	tmppath = kmem_alloc(MAXPATHLEN, KM_SLEEP);
 
 	cs->sc_size = 0;
+	cs->sc_maxphys = MACHINE_MAXPHYS;
 
 	/*
 	 * Verify that each component piece exists and record
@@ -284,6 +302,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	for (ix = 0, path_alloced = 0; ix < cs->sc_nccdisks; ix++) {
 		ci = &cs->sc_cinfo[ix];
 		ci->ci_vp = vpp[ix];
+		struct disk *diskp;
 
 		/*
 		 * Copy in the pathname of the component.
@@ -321,6 +340,11 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 			goto out;
 		}
 		ci->ci_dev = va.va_rdev;
+		if ((diskp = disk_find_blk(ci->ci_dev)) == NULL) {
+			panic("no disk for device %d %d", major(ci->ci_dev),
+			      DISKUNIT(ci->ci_dev));
+		}
+		cs->sc_maxphys = MIN(cs->sc_maxphys, disk_maxphys(diskp));
 
 		/*
 		 * Get partition information for the component.
