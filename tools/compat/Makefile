@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2012/12/02 12:19:34 apb Exp $
+#	$NetBSD: Makefile,v 1.61 2012/12/02 12:34:51 apb Exp $
 
 HOSTLIB=	nbcompat
 
@@ -55,6 +55,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 
 DPSRCS+=	defs.mk
 CLEANFILES+=	config.log config.status configure.lineno *.stamp
+CLEANDIRFILES+=	defs.mk config.cache confdefs.h
 
 # Get components of Berkeley DB.
 _CURDIR:=	${.CURDIR}
@@ -72,14 +73,55 @@ config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 defs.mk: config.cache
 	@touch ${.TARGET}
 
+INCFILES=	nbtool_config.h
+INCSUBDIRS=	sys machine rpc arpa
+CLEANDIRFILES+= ${INCFILES}
+
+# CLEANDIRFILES may not contain directory names
+cleandir:	cleandir.include
+cleandir.include: .PHONY
+		rm -rf include
+
 include/.stamp:
-	mkdir -p include/sys include/machine include/rpc include/arpa
+	mkdir -p ${INCSUBDIRS:@d@ include/$d @}
 	@touch ${.TARGET}
 
-cleandir:
-	-rm -f nbtool_config.h confdefs.h defs.mk
-	-rm -r -f include
-	-rm -f config.cache
+# Install rules
+
+HOST_LIBDIR=	${TOOLDIR}/lib
+HOST_INCSDIR=	${TOOLDIR}/include
+HOST_SHAREDIR= ${TOOLDIR}/share
+
+install:	.PHONY install.lib install.includes install.defs.mk
+
+# Install lib${HOSTLIB}.a in ${TOOLDIR}/lib
+install.lib: .PHONY ${HOST_LIBDIR}/lib${HOSTLIB}.a
+${HOST_LIBDIR}/lib${HOSTLIB}.a: lib${HOSTLIB}.a
+	${_MKTARGET_INSTALL}
+	${HOST_INSTALL_DIR} ${HOST_LIBDIR}
+	${HOST_INSTALL_FILE} -m ${LIBMODE} ${.ALLSRC} ${.TARGET}
+
+# Install include files in ${TOOLDIR}/include/compat
+install.includes: .PHONY
+	${_MKMSG_INSTALL} "${HOST_INCSDIR}/*"
+	${HOST_INSTALL_DIR} ${HOST_INCSDIR}
+	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat
+	${HOST_INSTALL_FILE} ${INCFILES} ${HOST_INCSDIR}/compat/
+.for _d in ${INCSUBDIRS}
+	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat/${_d}
+	touch include/${_d}/dummy # ensure dir is not empty
+	${HOST_INSTALL_FILE} include/${_d}/* ${HOST_INCSDIR}/compat/${_d}/
+.endfor
+
+# Install defs.mk in ${TOOLDIR}/share/compat
+install.defs.mk: .PHONY ${HOST_SHAREDIR}/compat/defs.mk
+${HOST_SHAREDIR}/compat/defs.mk: defs.mk
+	${_MKTARGET_INSTALL}
+	${HOST_INSTALL_DIR} ${HOST_SHAREDIR}
+	${HOST_INSTALL_DIR} ${HOST_SHAREDIR}/compat
+	${HOST_INSTALL_FILE} ${.ALLSRC} ${.TARGET}
+
+# bsd.hostlib.mk wants HOST_CPPFLAGS, not CPPFLAGS
 
 HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty
@@ -90,6 +132,10 @@ CPPFLAGS:=	# empty
 HOST_MKDEP_OBJ!= cd ${.CURDIR}/../host-mkdep && ${PRINTOBJDIR}
 HOST_MKDEP=	${HOST_MKDEP_OBJ}/host-mkdep
 MKDEP=		${HOST_MKDEP}
+
+# Use uninstalled copy of the install program
+INSTALL_OBJ!=	cd ${NETBSDSRCDIR}/tools/binstall && ${PRINTOBJDIR}
+INSTALL=	${INSTALL_OBJ}/xinstall
 
 # Run "${TOOLDIR}/bin/nbmake-${MACHINE} regen" by hand after editing
 # configure.ac.  See more detailed instructions in configure.ac.
