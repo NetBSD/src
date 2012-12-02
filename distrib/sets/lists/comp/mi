@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1792 2012/12/01 20:37:02 christos Exp $
+#	$NetBSD: mi,v 1.1793 2012/12/02 19:45:18 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10645,6 +10645,7 @@
 ./usr/share/man/cat9/pcq_maxitems.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcq_peek.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcq_put.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pcu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/percpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/percpu_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/percpu_foreach.0		comp-sys-catman		.cat
@@ -16989,6 +16990,7 @@
 ./usr/share/man/html9/pcq_maxitems.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcq_peek.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcq_put.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcu.html			comp-sys-htmlman	html
 ./usr/share/man/html9/percpu.html		comp-sys-htmlman	html
 ./usr/share/man/html9/percpu_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/percpu_foreach.html	comp-sys-htmlman	html
@@ -23498,6 +23500,7 @@
 ./usr/share/man/man9/pcq_maxitems.9		comp-sys-man		.man
 ./usr/share/man/man9/pcq_peek.9			comp-sys-man		.man
 ./usr/share/man/man9/pcq_put.9			comp-sys-man		.man
+./usr/share/man/man9/pcu.9			comp-sys-man		.man
 ./usr/share/man/man9/percpu.9			comp-sys-man		.man
 ./usr/share/man/man9/percpu_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/percpu_foreach.9		comp-sys-man		.man
