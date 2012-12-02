@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2012/12/02 11:19:45 apb Exp $
+#	$NetBSD: Makefile,v 1.163 2012/12/02 11:46:34 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -172,12 +172,8 @@ check_MKTOOLS: .PHONY .NOTMAIN
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"	# {
+SUBDIR= # empty
 realall realdepend install: check_MKTOOLS
-
-.for dir in ${SUBDIR:N.WAIT}
-all-${dir} depend-${dir} dependall-${dir} install-${dir}:
-	@true
-.endfor
 .endif							# }
 
 .include <bsd.subdir.mk>
