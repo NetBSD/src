@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.83.2.1 2012/12/02 05:46:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83 2012/07/28 16:14:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.1 2012/12/02 05:46:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,19 @@ CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
     fss_match, fss_attach, fss_detach, NULL);
 extern struct cfdriver fss_cd;
 
+static void
+fss_minphys(struct buf *bp)
+{
+	struct fss_softc *fc = device_lookup_private(&fss_cd, minor(bp->b_dev));
+
+	long xmax;
+	xmax = fc->sc_mount->mnt_maxphys;
+	if (bp->b_bcount > xmax)
+	    bp->b_bcount = xmax;
+}
+
+const struct dkdriver fss_dkdriver = { fss_strategy, fss_minphys };
+
 void
 fssattach(int num)
 {
@@ -146,7 +159,7 @@ fss_attach(device_t parent, device_t self, void *aux)
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	sc->sc_dkdev = malloc(sizeof(*sc->sc_dkdev), M_DEVBUF, M_WAITOK);
 	sc->sc_dkdev->dk_info = NULL;
-	disk_init(sc->sc_dkdev, device_xname(self), NULL);
+	disk_init(sc->sc_dkdev, device_xname(self), &fss_dkdriver);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 

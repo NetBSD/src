@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.30.6.1 2012/11/20 03:02:00 tls Exp $ */
+/*	$NetBSD: rd.c,v 1.30.6.2 2012/12/02 05:46:40 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30.6.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.30.6.2 2012/12/02 05:46:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,19 @@ const struct cdevsw rd_cdevsw = {
 
 extern struct cfdriver rd_cd;
 
+static void
+rdminphys(struct buf *bp)
+{
+    struct rd_softc *sc = device_lookup_private(&rd_cd, RDUNIT(bp->b_dev));
+
+    long xmax;
+    xmax = rd->sc_dev->dv_maxphys;
+    if (bp->b_bcount > xmax)
+        bp->b_bcount = xmax;
+}
+
+const struct dkdriver rd_dkdriver = { rdstrategy, rdminphys };
+
 int
 rdlookup(int id, int slave, int punit)
 {
@@ -390,7 +403,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	 * Initialize and attach the disk structure.
 	 */
 	memset(&sc->sc_dk, 0, sizeof(sc->sc_dk));
-	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), rd_dkdriver);
 	disk_attach(&sc->sc_dk);
 
 	callout_init(&sc->sc_restart_ch, 0);

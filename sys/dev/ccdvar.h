@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.32 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.32.14.1 2012/12/02 05:46:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ struct ccd_softc {
 	struct lwp	 *sc_thread;		/* for deferred I/O */
 	kcondvar_t	 sc_push;		/* for deferred I/O */
 	bool		 sc_zap;		/* for deferred I/O */
+	size_t		 sc_maxphys;		/* Max I/O size */
 #endif
 };
 
