@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2012/06/04 19:06:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.60 2012/12/02 12:19:34 apb Exp $
 
 HOSTLIB=	nbcompat
 
@@ -72,12 +72,6 @@ config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 defs.mk: config.cache
 	@touch ${.TARGET}
 
-# Run "${TOOLDIR}/bin/nbmake-${MACHINE} regen" by hand after editing
-# configure.ac.  See more detailed instructions in configure.ac.
-regen:
-	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf
-	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoheader
-
 include/.stamp:
 	mkdir -p include/sys include/machine include/rpc include/arpa
 	@touch ${.TARGET}
@@ -91,3 +85,14 @@ HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty
 
 .include <bsd.hostlib.mk>
+
+# Use uninstalled copy of host-mkdep
+HOST_MKDEP_OBJ!= cd ${.CURDIR}/../host-mkdep && ${PRINTOBJDIR}
+HOST_MKDEP=	${HOST_MKDEP_OBJ}/host-mkdep
+MKDEP=		${HOST_MKDEP}
+
+# Run "${TOOLDIR}/bin/nbmake-${MACHINE} regen" by hand after editing
+# configure.ac.  See more detailed instructions in configure.ac.
+regen:
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoheader
