@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2012/09/18 07:05:15 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2012/12/02 12:55:27 apb Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -24,8 +24,7 @@ CPPFLAGS+=	-I.
 DPSRCS+= gmp.h mpfr.h mpf2mpfr.h mpc.h mpc-log.h
 
 .if ${USETOOLS} == "yes"
-COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
-NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
+NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 GNUHOSTDIST=	${DIST}

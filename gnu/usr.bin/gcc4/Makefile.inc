@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/05/30 14:41:26 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2012/12/02 12:55:27 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,7 @@ CPPFLAGS+=	-DLOCALEDIR=\"/usr/share/locale\" -DNETBSD_NATIVE
 HOST_CPPFLAGS+=	-I${.CURDIR}/..
 
 .if ${USETOOLS} == "yes"
-COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
-NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
+NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 GNUHOSTDIST=	${DIST}
