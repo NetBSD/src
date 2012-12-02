@@ -1,10 +1,21 @@
-#	$NetBSD: Makefile,v 1.163 2012/12/02 11:46:34 apb Exp $
+#	$NetBSD: Makefile,v 1.164 2012/12/02 12:10:43 apb Exp $
 
 .include <bsd.own.mk>
 
 # Make sure that the ordered build/install processing applies when using
 # plain make.
 .MAIN: build_install
+
+# TOOLDIR must be valid, unless MKTOOLS=no
+.if ${MKTOOLS:Uyes} != "no"
+.if "${TOOLDIR}" == ""
+.error "TOOLDIR is undefined or empty"
+.elif "${TOOLDIR:tW:M/*}" == ""
+.error "TOOLDIR is not an absolute path: ${TOOLDIR}"
+#.elif !exists(TOOLDIR) # XXX .exists fails for directories
+#.error "TOOLDIR does not exist: ${TOOLDIR}"
+.endif
+.endif # MKTOOLS != no
 
 .if ${TOOLCHAIN_MISSING} == "no"
 .if defined(HAVE_GCC)
