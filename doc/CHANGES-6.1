@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.51 2012/12/02 02:06:18 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.52 2012/12/02 18:47:37 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -915,7 +915,7 @@ sys/dev/usb/if_urndis.c				1.4
 
 lib/libc/arch/arm/sys/__aeabi_read_tp.S		1.3
 
-	Add $NetBSD: CHANGES-6.1,v 1.1.2.51 2012/12/02 02:06:18 riz Exp $ tag.  Use ip to save r1 instead of the stack.
+	Add $NetBSD: CHANGES-6.1,v 1.1.2.52 2012/12/02 18:47:37 riz Exp $ tag.  Use ip to save r1 instead of the stack.
 	[matt, ticket #701]
 
 sys/net/npf/npf.c				1.14
@@ -7062,15 +7062,6 @@ lib/libc/stdio/fopen.3				1.29
 
 	Add 'x' to the mode bits of fopen() to specify O_EXCL, like glibc.
 	[christos, ticket #723]
-
-lib/libpthread/pthread_int.h			1.88
-lib/libpthread/pthread_specific.c		1.24
-lib/libpthread/pthread_tsd.c			1.8-1.10
-
-	Replace the simple implementation of pthread_key_{create,destroy}
-	and pthread_{g,s}etspecific functions with one that invalidates
-	values of keys in other threads when pthread_key_delete() is called.
-	[christos, ticket #724]
 
 sys/fs/smbfs/smbfs_smb.c			1.43
 sys/netsmb/smb_smb.c				1.33

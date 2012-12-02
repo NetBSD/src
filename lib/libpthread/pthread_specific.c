@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.21.22.1 2012/11/28 23:58:35 riz Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.21.22.2 2012/12/02 18:47:36 riz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.21.22.1 2012/11/28 23:58:35 riz Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.21.22.2 2012/12/02 18:47:36 riz Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
@@ -55,14 +55,18 @@ pthread_setspecific(pthread_key_t key, const void *value)
 	 * and return it from functions that are const void *, without
 	 * generating a warning. 
 	 */
-	return pthread__add_specific(self, key, value);
+	/*LINTED const cast*/
+	self->pt_specific[key] = (void *) value;
+	self->pt_havespecific = 1;
+
+	return 0;
 }
 
 void *
 pthread_getspecific(pthread_key_t key)
 {
 
-	return pthread__self()->pt_specific[key].pts_value;
+	return pthread__self()->pt_specific[key];
 }
 
 unsigned int
