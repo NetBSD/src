@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.97 2012/10/27 17:18:35 chs Exp $	*/
+/*	$NetBSD: twe.c,v 1.98 2012/12/02 15:34:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.97 2012/10/27 17:18:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.98 2012/12/02 15:34:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	struct twe_ccb *ccb;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = aux;
 	pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
