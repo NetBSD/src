@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.259 2012/11/15 23:51:53 joerg Exp $
+#	$NetBSD: build.sh,v 1.260 2012/12/02 19:19:36 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1253,6 +1253,24 @@ parseoptions()
 #
 sanitycheck()
 {
+	# Non-root should always use either the -U or -E flag.
+	#
+	if ! ${do_expertmode} && \
+	    [ "$id_u" -ne 0 ] && \
+	    [ "${MKUNPRIVED}" = "no" ] ; then
+		bomb "-U or -E must be set for build as an unprivileged user."
+	fi
+
+	# Install as non-root is a bad idea.
+	#
+	if ${do_install} && [ "$id_u" -ne 0 ] ; then
+		if ${do_expertmode}; then
+			warning "Will install as an unprivileged user."
+		else
+			bomb "-E must be set for install as an unprivileged user."
+		fi
+	fi
+
 	# If the PATH contains any non-absolute components (including,
 	# but not limited to, "." or ""), then complain.  As an exception,
 	# allow "" or "." as the last component of the PATH.  This is fatal
@@ -1580,43 +1598,24 @@ validatemakeparams()
 	removedirs="${TOOLDIR}"
 
 	if [ -z "${DESTDIR}" ] || [ "${DESTDIR}" = "/" ]; then
-		if ${do_build} || ${do_distribution} || ${do_release}; then
-			if ! ${do_build} || \
-			   [ "${uname_s}" != "NetBSD" ] || \
-			   [ "${uname_m}" != "${MACHINE}" ]; then
-				bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
-			fi
-			if ! ${do_expertmode}; then
-				bomb "DESTDIR must != / for non -E (expert) builds"
-			fi
-			statusmsg "WARNING: Building to /, in expert mode."
-			statusmsg "         This may cause your system to break!  Reasons include:"
-			statusmsg "            - your kernel is not up to date"
-			statusmsg "            - the libraries or toolchain have changed"
-			statusmsg "         YOU HAVE BEEN WARNED!"
+		if ${do_distribution} || ${do_release} || \
+		   [ "${uname_s}" != "NetBSD" ] || \
+		   [ "${uname_m}" != "${MACHINE}" ]; then
+			bomb "DESTDIR must != / for cross builds, or ${progname} 'distribution' or 'release'."
 		fi
+		if ! ${do_expertmode}; then
+			bomb "DESTDIR must != / for non -E (expert) builds"
+		fi
+		statusmsg "WARNING: Building to /, in expert mode."
+		statusmsg "         This may cause your system to break!  Reasons include:"
+		statusmsg "            - your kernel is not up to date"
+		statusmsg "            - the libraries or toolchain have changed"
+		statusmsg "         YOU HAVE BEEN WARNED!"
 	else
 		removedirs="${removedirs} ${DESTDIR}"
 	fi
-	if ${do_build} || ${do_distribution} || ${do_release}; then
-		if ! ${do_expertmode} && \
-		    [ "$id_u" -ne 0 ] && \
-		    [ "${MKUNPRIVED}" = "no" ] ; then
-			bomb "-U or -E must be set for build as an unprivileged user."
-		fi
-	fi
 	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
 		bomb "Must set RELEASEDIR with \`releasekernel=...'"
-	fi
-
-	# Install as non-root is a bad idea.
-	#
-	if ${do_install} && [ "$id_u" -ne 0 ] ; then
-		if ${do_expertmode}; then
-			warning "Will install as an unprivileged user."
-		else
-			bomb "-E must be set for install as an unprivileged user."
-		fi
 	fi
 
 	# If a previous build.sh run used -U (and therefore created a
@@ -1629,9 +1628,7 @@ validatemakeparams()
 		# DESTDIR is about to be removed
 		;;
 	*)
-		if ( ${do_build} || ${do_distribution} || ${do_release} || \
-		    ${do_install} ) && \
-		    [ -e "${DESTDIR}/METALOG" ] && \
+		if [ -e "${DESTDIR}/METALOG" ] && \
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			if $do_expertmode; then
 				warning "A previous build.sh run specified -U."
@@ -1718,7 +1715,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.259 2012/11/15 23:51:53 joerg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.260 2012/12/02 19:19:36 apb Exp $
 # with these arguments: ${_args}
 #
 
