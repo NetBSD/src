@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2012/10/27 17:17:46 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2012/12/02 18:22:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2012/10/27 17:17:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2012/12/02 18:22:45 msaitoh Exp $");
 
 #include "opt_md.h"
 
@@ -45,8 +45,61 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2012/10/27 17:17:46 chs Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+#include <machine/bootconfig.h>
 
 void	(*evbarm_device_register)(device_t, void *);
+
+#ifndef MEMORY_DISK_IS_ROOT
+static void get_device(char *name);
+static void set_root_device(void);
+#endif
+
+#ifndef MEMORY_DISK_IS_ROOT
+/* Decode a device name to a major and minor number */
+
+static void
+get_device(char *name)
+{
+	int unit, part;
+	char devname[16], *cp;
+	device_t dv;
+
+	if (strncmp(name, "/dev/", 5) == 0)
+		name += 5;
+
+	if (devsw_name2blk(name, devname, sizeof(devname)) == -1)
+		return;
+
+	name += strlen(devname);
+	unit = part = 0;
+
+	cp = name;
+	while (*cp >= '0' && *cp <= '9')
+		unit = (unit * 10) + (*cp++ - '0');
+	if (cp == name)
+		return;
+
+	if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
+		part = *cp - 'a';
+	else if (*cp != '\0' && *cp != ' ')
+		return;
+	if ((dv = device_find_by_driver_unit(devname, unit)) != NULL) {
+		booted_device = dv;
+		booted_partition = part;
+	}
+}
+
+/* Set the rootdev variable from the root specifier in the boot args */
+
+static void
+set_root_device(void)
+{
+	char *ptr;
+	if (boot_args &&
+	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
+		get_device(ptr);
+}
+#endif
 
 /*
  * Set up the root device from the boot args
@@ -54,6 +107,9 @@ void	(*evbarm_device_register)(device_t, void *);
 void
 cpu_rootconf(void)
 {
+#ifndef MEMORY_DISK_IS_ROOT
+	set_root_device();
+#endif
 	aprint_normal("boot device: %s\n",
 	    booted_device != NULL ? device_xname(booted_device) : "<unknown>");
 	rootconf();
