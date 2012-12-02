@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.19 2012/10/22 15:43:32 matt Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.20 2012/12/02 18:20:20 msaitoh Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.19 2012/10/22 15:43:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.20 2012/12/02 18:20:20 msaitoh Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -374,6 +374,10 @@ initarm(void *arg)
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = marvell_device_register;
+
+	/* parse bootargs from U-Boot */
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
