@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.33 2012/01/10 01:43:05 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.33.4.1 2012/12/03 22:00:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.33 2012/01/10 01:43:05 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.33.4.1 2012/12/03 22:00:53 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -686,11 +686,12 @@ ahci_probe_drive(struct ata_channel *chp)
 		splx(s);
 		/* clear port interrupt register */
 		AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+		
 		/* and enable interrupts */
 		AHCI_WRITE(sc, AHCI_P_IE(chp->ch_channel),
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |
-		    AHCI_P_IX_DHRS);
+		    AHCI_P_IX_PSS | AHCI_P_IX_DHRS);
 		/* wait 500ms before actually starting operations */
 		tsleep(&sc, PRIBIO, "ahciprb", mstohz(500));
 		break;
@@ -769,8 +770,9 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	int i;
 	int channel = chp->ch_channel;
 
-	AHCIDEBUG_PRINT(("ahci_cmd_start CI 0x%x\n",
-	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_XFERS);
+	AHCIDEBUG_PRINT(("ahci_cmd_start CI 0x%x timo %d\n",
+	    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)), ata_c->timeout),
+	    DEBUG_XFERS);
 
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
@@ -912,18 +914,18 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	uint16_t *idwordbuf;
 	int i;
 
-	AHCIDEBUG_PRINT(("ahci_cmd_done channel %d\n", chp->ch_channel),
-	    DEBUG_FUNCS);
+	AHCIDEBUG_PRINT(("ahci_cmd_done channel %d (status %#x) flags %#x/%#x\n",
+	    chp->ch_channel, chp->ch_status, xfer->c_flags, ata_c->flags), DEBUG_FUNCS);
 
 	/* this comamnd is not active any more */
 	achp->ahcic_cmds_active &= ~(1 << slot);
 
 	if (ata_c->flags & (AT_READ|AT_WRITE) && ata_c->bcount > 0) {
-		bus_dmamap_sync(sc->sc_dmat, achp->ahcic_datad[slot], 0,
-		    achp->ahcic_datad[slot]->dm_mapsize,
+		bus_dmamap_t map = achp->ahcic_datad[slot];
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    (ata_c->flags & AT_READ) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, achp->ahcic_datad[slot]);
+		bus_dmamap_unload(sc->sc_dmat, map);
 	}
 
 	AHCI_CMDH_SYNC(sc, achp, slot,
@@ -1192,8 +1194,12 @@ ahci_timeout(void *v)
 {
 	struct ata_channel *chp = (struct ata_channel *)v;
 	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
+#ifdef AHCI_DEBUG
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+#endif
 	int s = splbio();
-	AHCIDEBUG_PRINT(("ahci_timeout xfer %p\n", xfer), DEBUG_INTR);
+	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel))), DEBUG_INTR);
+	
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		xfer->c_flags |= C_TIMEOU;
 		xfer->c_intr(chp, xfer, 0);
