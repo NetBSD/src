@@ -6803,7 +6803,7 @@ do_bfci (char * str)
   if (expr.X_op != O_constant)
     {
       inst.error = _("constant expression expected");
-      return FAIL;
+      return;
     }
 
   lsb = expr.X_add_number;
@@ -6830,7 +6830,7 @@ do_bfci (char * str)
   if (expr.X_op != O_constant)
     {
       inst.error = _("constant expression expected");
-      return FAIL;
+      return;
     }
 
   width = expr.X_add_number;
@@ -6885,7 +6885,7 @@ do_bfx (char * str)
   if (expr.X_op != O_constant)
     {
       inst.error = _("constant expression expected");
-      return FAIL;
+      return;
     }
 
   lsb = expr.X_add_number;
