@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.125.4.1 2012/05/07 03:12:33 riz Exp $	*/
+/*	$NetBSD: pthread.c,v 1.125.4.2 2012/12/03 19:07:26 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.125.4.1 2012/05/07 03:12:33 riz Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.125.4.2 2012/12/03 19:07:26 jdc Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1274,22 +1274,32 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 {
 	pthread_t t;
 	void *redaddr;
-	size_t pagesize;
+	size_t pagesize, bytes_needed;
 	int ret;
 
 	t = base;
 	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+	bytes_needed = roundup(sizeof(*t), pagesize);
+
+	if (pagesize >= size)
+		return ENOMEM;
+	if (bytes_needed >= (size - pagesize))
+		return ENOMEM;
 
 	/*
 	 * Put a pointer to the pthread in the bottom (but
          * redzone-protected section) of the stack. 
+	 *
+	 * XXX If the stack grows up, the pthread is *not*
+	 * protected by the redzone.
 	 */
-	redaddr = STACK_SHRINK(STACK_MAX(base, size), pagesize);
-	t->pt_stack.ss_size = size - 2 * pagesize;
+	t->pt_stack.ss_size = size - bytes_needed - pagesize;
 #ifdef __MACHINE_STACK_GROWS_UP
-	t->pt_stack.ss_sp = (char *)(void *)base + pagesize;
+	redaddr = STACK_SHRINK(STACK_MAX(base, size), pagesize);
+	t->pt_stack.ss_sp = (char *)(void *)base + bytes_needed;
 #else
-	t->pt_stack.ss_sp = (char *)(void *)base + 2 * pagesize;
+	redaddr = STACK_SHRINK(STACK_MAX(base, size), bytes_needed);
+	t->pt_stack.ss_sp = (char *)(void *)base + bytes_needed + pagesize;
 #endif
 	/* Protect the next-to-bottom stack page as a red zone. */
 	ret = mprotect(redaddr, pagesize, PROT_NONE);
