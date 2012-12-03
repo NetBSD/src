@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.25 2012/10/17 14:48:10 apb Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.26 2012/12/03 23:38:29 msaitoh Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -27,6 +27,7 @@ options 	KIRKWOOD
 
 # Standard system options
 
+options 	MSGBUFSIZE=32768
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
@@ -95,6 +96,7 @@ options 	INET6		# IPv6
 #options 	INET_CSUM_COUNTERS
 #options 	TCP_CSUM_COUNTERS
 #options 	UDP_CSUM_COUNTERS
+#options 	MVGBE_EVENT_COUNTERS
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
@@ -166,7 +168,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPTS="-O1"
+#makeoptions	COPTS="-O1"
 options 	SYMTAB_SPACE=800000
 #options 	AUDIO_DEBUG=2
 
@@ -182,18 +184,18 @@ cpu0	at mainbus?
 mvsoc0	at mainbus?
 
 # On-chip PCI Express Interface
-#mvpex*	at mvsoc? offset ? irq ?
+mvpex*	at mvsoc? offset ? irq ?
 
 # PCI bus support
 options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 
-#pci*	at mvpex?
+pci*	at mvpex?
 
-#pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
 
 # On-chip Serial-ATA II Host Controller (SATAHC)
-#mvsata* at mvsoc? offset ? irq ?
+mvsata* at mvsoc? offset ? irq ?
 
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
@@ -217,8 +219,8 @@ com*	at mvsoc? offset ? irq ?
 gtidmac* at mvsoc? offset ? irq ?
 
 # On-chip General Purpose I/O Port Interface
-#mvsocgpp* at mvsoc? offset ? irq ?
-#gpio*	at mvsocgpp?
+mvsocgpp* at mvsoc? offset ? irq ?
+gpio*	at mvsocgpp?
 
 # On-chip Timers
 mvsoctmr* at mvsoc? offset ? irq ?
@@ -230,11 +232,11 @@ sdmmc*	at mvsdio?
 ld*	at sdmmc?
 
 # ATA (IDE) bus support
-#atabus* at ata?
+atabus* at ata?
 #options 	ATADEBUG
 
 # IDE drives
-#wd*	at atabus? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at atapi?
