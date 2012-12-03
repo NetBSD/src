@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.301 2012/11/15 23:51:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.302 2012/12/03 13:53:29 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -259,11 +259,11 @@ includes-gnu:	.PHONY includes-lib
 #
 # This is referenced by _NETBSD_VERSION_DEPENDS in <bsd.own.mk>.
 #
-
+.include "${NETBSDSRCDIR}/etc/Makefile.params"
 CLEANDIRFILES+= params
 params: .EXEC
 	${_MKMSG_CREATE} params
-	@(${MAKEDIRTARGET:S/^@//} etc params) >${.TARGET}.new
+	@${PRINT_PARAMS} >${.TARGET}.new
 	@if cmp -s ${.TARGET}.new ${.TARGET} > /dev/null 2>&1; then \
 		: "params is unchanged" ; \
 		rm ${.TARGET}.new ; \
@@ -271,6 +271,12 @@ params: .EXEC
 		: "params has changed or is new" ; \
 		mv ${.TARGET}.new ${.TARGET} ; \
 	fi
+
+#
+# Display current make(1) parameters
+#
+show-params: .PHONY .MAKE
+	@${PRINT_PARAMS}
 
 #
 # Build the system and install into DESTDIR.
@@ -521,9 +527,3 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
-
-#
-# Display current make(1) parameters
-#
-show-params: .PHONY .MAKE
-	${MAKEDIRTARGET} etc params
