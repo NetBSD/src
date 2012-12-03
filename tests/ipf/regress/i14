@@ -11,3 +11,5 @@ pass in from 1.1.1.1 to 2.2.2.2 group vm0-group
 block in on vm0 proto tcp/udp all head vm0-group
 pass in from 1.1.1.1 to 2.2.2.2 group vm0-group
 pass in from 8f:: to f8::
+block in inet6 proto udp
+block in inet6
