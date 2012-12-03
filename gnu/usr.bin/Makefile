@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.135.6.1 2012/11/20 18:52:37 matt Exp $
+#	$NetBSD: Makefile,v 1.135.6.2 2012/12/03 18:28:22 matt Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=	bc
-.if ${MKBINUTILS} != "no" && ${HAVE_BINUTILS} == "219"
+.if ${MKBINUTILS} != "no" && ${HAVE_BINUTILS} == "216"
 SUBDIR+=	binutils
 .endif
 SUBDIR+=	c89 c99
