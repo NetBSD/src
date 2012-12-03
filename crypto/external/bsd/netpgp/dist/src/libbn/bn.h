@@ -44,7 +44,8 @@
 
 __BEGIN_DECLS
 
-typedef uint64_t	mp_digit;
+/* should be 32bit on ILP32, 64bit on LP64 */
+typedef unsigned long	mp_digit;
 typedef uint64_t	mp_word;
 
 /* multi-precision integer */
