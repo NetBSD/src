@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.8 2012/06/05 00:38:56 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.9 2012/12/04 23:38:38 spz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -87,6 +87,7 @@ usage(void) {
 	fprintf(stderr, "        RSA | RSAMD5 | DSA | RSASHA1 | NSEC3RSASHA1"
 				" | NSEC3DSA |\n");
 	fprintf(stderr, "        RSASHA256 | RSASHA512 | ECCGOST |\n");
+	fprintf(stderr, "        ECDSAP256SHA256 | ECDSAP384SHA384 |\n");
 	fprintf(stderr, "        DH | HMAC-MD5 | HMAC-SHA1 | HMAC-SHA224 | "
 				"HMAC-SHA256 | \n");
 	fprintf(stderr, "        HMAC-SHA384 | HMAC-SHA512\n");
@@ -104,6 +105,8 @@ usage(void) {
 	fprintf(stderr, "        NSEC3DSA:\t[512..1024] and divisible "
 				"by 64\n");
 	fprintf(stderr, "        ECCGOST:\tignored\n");
+	fprintf(stderr, "        ECDSAP256SHA256:\tignored\n");
+	fprintf(stderr, "        ECDSAP384SHA384:\tignored\n");
 	fprintf(stderr, "        HMAC-MD5:\t[1..512]\n");
 	fprintf(stderr, "        HMAC-SHA1:\t[1..160]\n");
 	fprintf(stderr, "        HMAC-SHA224:\t[1..224]\n");
@@ -123,7 +126,6 @@ usage(void) {
 #else
 	fprintf(stderr, "    -E <engine name>\n");
 #endif
-	fprintf(stderr, "    -e: use large exponent (RSAMD5/RSASHA1 only)\n");
 	fprintf(stderr, "    -f <keyflag>: KSK | REVOKE\n");
 	fprintf(stderr, "    -g <generator>: use specified generator "
 			"(DH only)\n");
@@ -211,7 +213,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	conflict = ISC_FALSE, null_key = ISC_FALSE;
 	isc_boolean_t	oldstyle = ISC_FALSE;
 	isc_mem_t	*mctx = NULL;
-	int		ch, rsa_exp = 0, generator = 0, param = 0;
+	int		ch, generator = 0, param = 0;
 	int		protocol = -1, size = -1, signatory = 0;
 	isc_result_t	ret;
 	isc_textregion_t r;
@@ -310,7 +312,9 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		case 'e':
-			rsa_exp = 1;
+			fprintf(stderr,
+				"phased-out option -e "
+				"(was 'use (RSA) large exponent)\n");
 			break;
 		case 'f':
 			c = (unsigned char)(isc_commandline_argument[0]);
@@ -559,7 +563,8 @@ main(int argc, char **argv) {
 		if (use_nsec3 &&
 		    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
 		    alg != DST_ALG_RSASHA256 && alg!= DST_ALG_RSASHA512 &&
-		    alg != DST_ALG_ECCGOST) {
+		    alg != DST_ALG_ECCGOST &&
+		    alg != DST_ALG_ECDSA256 && alg != DST_ALG_ECDSA384) {
 			fatal("%s is incompatible with NSEC3; "
 			      "do not use the -3 option", algname);
 		}
@@ -591,7 +596,9 @@ main(int argc, char **argv) {
 					fprintf(stderr, "key size not "
 							"specified; defaulting "
 							"to %d\n", size);
-			} else if (alg != DST_ALG_ECCGOST)
+			} else if (alg != DST_ALG_ECCGOST &&
+				   alg != DST_ALG_ECDSA256 &&
+				   alg != DST_ALG_ECDSA384)
 				fatal("key size not specified (-b option)");
 		}
 
@@ -720,6 +727,8 @@ main(int argc, char **argv) {
 			fatal("invalid DSS key size: %d", size);
 		break;
 	case DST_ALG_ECCGOST:
+	case DST_ALG_ECDSA256:
+	case DST_ALG_ECDSA384:
 		break;
 	case DST_ALG_HMACMD5:
 		options |= DST_TYPE_KEY;
@@ -783,12 +792,6 @@ main(int argc, char **argv) {
 		break;
 	}
 
-	if (!(alg == DNS_KEYALG_RSAMD5 || alg == DNS_KEYALG_RSASHA1 ||
-	      alg == DNS_KEYALG_NSEC3RSASHA1 || alg == DNS_KEYALG_RSASHA256 ||
-	      alg == DNS_KEYALG_RSASHA512 || alg == DST_ALG_ECCGOST) &&
-	    rsa_exp != 0)
-		fatal("specified RSA exponent for a non-RSA key");
-
 	if (alg != DNS_KEYALG_DH && generator != 0)
 		fatal("specified DH generator for a non-DH key");
 
@@ -848,7 +851,6 @@ main(int argc, char **argv) {
 	case DNS_KEYALG_NSEC3RSASHA1:
 	case DNS_KEYALG_RSASHA256:
 	case DNS_KEYALG_RSASHA512:
-		param = rsa_exp;
 		show_progress = ISC_TRUE;
 		break;
 
@@ -859,6 +861,8 @@ main(int argc, char **argv) {
 	case DNS_KEYALG_DSA:
 	case DNS_KEYALG_NSEC3DSA:
 	case DST_ALG_ECCGOST:
+	case DST_ALG_ECDSA256:
+	case DST_ALG_ECDSA384:
 		show_progress = ISC_TRUE;
 		/* fall through */
 
