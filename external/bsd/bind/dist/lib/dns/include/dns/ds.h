@@ -1,7 +1,7 @@
-/*	$NetBSD: ds.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
+/*	$NetBSD: ds.h,v 1.4 2012/12/04 23:38:43 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,15 +29,16 @@
 #define DNS_DSDIGEST_SHA1 (1)
 #define DNS_DSDIGEST_SHA256 (2)
 #define DNS_DSDIGEST_GOST (3)
+#define DNS_DSDIGEST_SHA384 (4)
 
 /* should not be here... */
 
 #define ISC_GOST_DIGESTLENGTH 32U
 
 /*
- * Assuming SHA-256 digest type.
+ * Assuming SHA-384 digest type.
  */
-#define DNS_DS_BUFFERSIZE (36)
+#define DNS_DS_BUFFERSIZE (52)
 
 ISC_LANG_BEGINDECLS
 

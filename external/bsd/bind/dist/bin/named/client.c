@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.5 2012/06/05 00:38:58 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.6 2012/12/04 23:38:38 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -503,12 +503,14 @@ exit_check(ns_client_t *client) {
 		 * the dying client inbetween.
 		 */
 		client->state = NS_CLIENTSTATE_INACTIVE;
-		if (!ns_g_clienttest)
-			ISC_QUEUE_PUSH(manager->inactive, client, ilink);
 		INSIST(client->recursionquota == NULL);
 
 		if (client->state == client->newstate) {
 			client->newstate = NS_CLIENTSTATE_MAX;
+			if (!ns_g_clienttest && manager != NULL &&
+			    !manager->exiting)
+				ISC_QUEUE_PUSH(manager->inactive, client,
+					       ilink);
 			if (client->needshutdown)
 				isc_task_shutdown(client->task);
 			return (ISC_TRUE);
@@ -528,6 +530,7 @@ exit_check(ns_client_t *client) {
 		REQUIRE(client->state == NS_CLIENTSTATE_INACTIVE);
 
 		INSIST(client->recursionquota == NULL);
+		INSIST(!ISC_QLINK_LINKED(client, ilink));
 
 		ns_query_free(client);
 		isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
@@ -635,6 +638,9 @@ client_shutdown(isc_task_t *task, isc_event_t *event) {
 		client->shutdown = NULL;
 		client->shutdown_arg = NULL;
 	}
+
+	if (ISC_QLINK_LINKED(client, ilink))
+		ISC_QUEUE_UNLINK(client->manager->inactive, client, ilink);
 
 	client->newstate = NS_CLIENTSTATE_FREED;
 	client->needshutdown = ISC_FALSE;
@@ -2122,6 +2128,8 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 #ifdef ALLOW_FILTER_AAAA_ON_V4
 	client->filter_aaaa = dns_v4_aaaa_ok;
 #endif
+	client->needshutdown = ns_g_clienttest;
+
 	ISC_EVENT_INIT(&client->ctlevent, sizeof(client->ctlevent), 0, NULL,
 		       NS_EVENT_CLIENTCONTROL, client_start, client, client,
 		       NULL, NULL);
@@ -2148,8 +2156,6 @@ client_create(ns_clientmgr_t *manager, ns_client_t **clientp) {
 	result = isc_task_onshutdown(client->task, client_shutdown, client);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_query;
-
-	client->needshutdown = ns_g_clienttest;
 
 	CTRACE("create");
 
@@ -2516,9 +2522,10 @@ ns_clientmgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 
 void
 ns_clientmgr_destroy(ns_clientmgr_t **managerp) {
+	isc_result_t result;
 	ns_clientmgr_t *manager;
 	ns_client_t *client;
-	isc_boolean_t need_destroy = ISC_FALSE;
+	isc_boolean_t need_destroy = ISC_FALSE, unlock = ISC_FALSE;
 
 	REQUIRE(managerp != NULL);
 	manager = *managerp;
@@ -2526,11 +2533,16 @@ ns_clientmgr_destroy(ns_clientmgr_t **managerp) {
 
 	MTRACE("destroy");
 
-	LOCK(&manager->listlock);
+	/*
+	 * Check for success because we may already be task-exclusive
+	 * at this point.  Only if we succeed at obtaining an exclusive
+	 * lock now will we need to relinquish it later.
+	 */
+	result = isc_task_beginexclusive(ns_g_server->task);
+	if (result == ISC_R_SUCCESS)
+		unlock = ISC_TRUE;
 
-	LOCK(&manager->lock);
 	manager->exiting = ISC_TRUE;
-	UNLOCK(&manager->lock);
 
 	for (client = ISC_LIST_HEAD(manager->clients);
 	     client != NULL;
@@ -2540,7 +2552,8 @@ ns_clientmgr_destroy(ns_clientmgr_t **managerp) {
 	if (ISC_LIST_EMPTY(manager->clients))
 		need_destroy = ISC_TRUE;
 
-	UNLOCK(&manager->listlock);
+	if (unlock)
+		isc_task_endexclusive(ns_g_server->task);
 
 	if (need_destroy)
 		clientmgr_destroy(manager);
@@ -2556,6 +2569,9 @@ get_client(ns_clientmgr_t *manager, ns_interface_t *ifp,
 	isc_event_t *ev;
 	ns_client_t *client;
 	MTRACE("get client");
+
+	if (manager != NULL && manager->exiting)
+		return (ISC_R_SHUTTINGDOWN);
 
 	/*
 	 * Allocate a client.  First try to get a recycled one;
