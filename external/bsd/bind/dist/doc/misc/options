@@ -386,6 +386,7 @@ view <string> <optional_class> {
         max-ncache-ttl <integer>;
         max-refresh-time <integer>;
         max-retry-time <integer>;
+        max-rsa-exponent-size <integer>;
         max-transfer-idle-in <integer>;
         max-transfer-idle-out <integer>;
         max-transfer-time-in <integer>;

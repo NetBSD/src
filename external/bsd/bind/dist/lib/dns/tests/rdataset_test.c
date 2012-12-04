@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset_test.c,v 1.1.1.1 2012/12/04 19:25:38 spz Exp $	*/
+/*	$NetBSD: rdataset_test.c,v 1.2 2012/12/04 23:38:44 spz Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")

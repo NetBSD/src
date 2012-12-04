@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1014 2012/11/20 05:29:12 agc Exp $
+# $NetBSD: mi,v 1.1015 2012/12/04 23:38:57 spz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1226,6 +1226,7 @@
 ./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
