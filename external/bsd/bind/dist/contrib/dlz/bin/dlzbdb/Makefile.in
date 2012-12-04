@@ -51,11 +51,11 @@ SRCS =		dlzbdb.c
 @BIND9_MAKE_RULES@
 
 dlzbdb.@O@: dlzbdb.c
-	${LIBTOOL} ${CC} ${ALL_CFLAGS} -DVERSION=\"${VERSION}\" \
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} -DVERSION=\"${VERSION}\" \
 		-c ${srcdir}/dlzbdb.c
 
 dlzbdb: dlzbdb.@O@ ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dlzbdb.@O@ ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ dlzbdb.@O@ ${LIBS}
 
 doc man:: ${MANOBJS}
 
@@ -70,4 +70,4 @@ installdirs:
 #	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man8
 
 install:: dlzbdb installdirs
-	${LIBTOOL} ${INSTALL_PROGRAM} dlzbdb ${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} dlzbdb ${DESTDIR}${sbindir}

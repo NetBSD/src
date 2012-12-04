@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-SUBDIRS =	dlzexternal filter-aaaa lwresd rpz tkey tsiggss
+SUBDIRS =	dlzexternal filter-aaaa lwresd rpz rsabigexponent tkey tsiggss
 TARGETS =
 
 @BIND9_MAKE_RULES@

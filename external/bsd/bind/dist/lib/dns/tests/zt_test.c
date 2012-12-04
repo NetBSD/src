@@ -1,4 +1,4 @@
-/*	$NetBSD: zt_test.c,v 1.1.1.1 2012/06/04 17:56:39 christos Exp $	*/
+/*	$NetBSD: zt_test.c,v 1.1.1.2 2012/12/04 19:25:38 spz Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -39,6 +39,11 @@
 
 #include "dnstest.h"
 
+struct args {
+	void *arg1;
+	void *arg2;
+};
+
 /*
  * Helper functions
  */
@@ -72,6 +77,27 @@ all_done(void *arg) {
 	*done = ISC_TRUE;
 	isc_app_shutdown();
 	return (ISC_R_SUCCESS);
+}
+
+static void
+start_zt_asyncload(isc_task_t *task, isc_event_t *event) {
+	struct args *args = (struct args *)(event->ev_arg);
+
+	UNUSED(task);
+
+	dns_zt_asyncload(args->arg1, all_done, args->arg2);
+
+	isc_event_free(&event);
+}
+
+static void
+start_zone_asyncload(isc_task_t *task, isc_event_t *event) {
+	struct args *args = (struct args *)(event->ev_arg);
+
+	UNUSED(task);
+
+	dns_zone_asyncload(args->arg1, load_done, args->arg2);
+	isc_event_free(&event);
 }
 
 /*
@@ -129,6 +155,7 @@ ATF_TC_BODY(asyncload_zone, tc) {
 	dns_db_t *db = NULL;
 	isc_boolean_t done = ISC_FALSE;
 	int i = 0;
+	struct args args;
 
 	UNUSED(tc);
 
@@ -149,8 +176,10 @@ ATF_TC_BODY(asyncload_zone, tc) {
 	ATF_CHECK(!dns__zone_loadpending(zone));
 	ATF_CHECK(!done);
 	dns_zone_setfile(zone, "testdata/zt/zone1.db");
-	dns_zone_asyncload(zone, load_done, (void *) &done);
-	ATF_CHECK(dns__zone_loadpending(zone));
+
+	args.arg1 = zone;
+	args.arg2 = &done;
+	isc_app_onrun(mctx, maintask, start_zone_asyncload, &args);
 
 	isc_app_run();
 	while (dns__zone_loadpending(zone) && i++ < 5000)
@@ -185,6 +214,7 @@ ATF_TC_BODY(asyncload_zt, tc) {
 	dns_db_t *db = NULL;
 	isc_boolean_t done = ISC_FALSE;
 	int i = 0;
+	struct args args;
 
 	UNUSED(tc);
 
@@ -220,7 +250,10 @@ ATF_TC_BODY(asyncload_zt, tc) {
 	ATF_CHECK(!dns__zone_loadpending(zone1));
 	ATF_CHECK(!dns__zone_loadpending(zone2));
 	ATF_CHECK(!done);
-	dns_zt_asyncload(zt, all_done, (void *) &done);
+
+	args.arg1 = zt;
+	args.arg2 = &done;
+	isc_app_onrun(mctx, maintask, start_zt_asyncload, &args);
 
 	isc_app_run();
 	while (!done && i++ < 5000)

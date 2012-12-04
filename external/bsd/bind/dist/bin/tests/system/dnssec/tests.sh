@@ -1481,7 +1481,42 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:check that 'rndc signing -nsec3param' works with salt ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 0 ffff inline.example > /dev/null 2>&1 || ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+for i in 1 2 3 4 5 6 7 8 9 10 ; do
+        salt=`$DIG $DIGOPTS +nodnssec +short nsec3param inline.example. @10.53.0.3 | awk '{print $4}'`
+	if [ "$salt" = "FFFF" ]; then
+		break;
+	fi
+	echo "I:sleeping ...."
+	sleep 1
+done;
+[ "$salt" = "FFFF" ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that 'rndc signing -nsec3param' works without salt ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 0 - inline.example > /dev/null 2>&1 || ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > /dev/null || ret=1
+for i in 1 2 3 4 5 6 7 8 9 10 ; do
+        salt=`$DIG $DIGOPTS +nodnssec +short nsec3param inline.example. @10.53.0.3 | awk '{print $4}'`
+	if [ "$salt" = "-" ]; then
+		break;
+	fi
+	echo "I:sleeping ...."
+	sleep 1
+done;
+[ "$salt" = "-" ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:check rndc signing -list output ($n)"
+ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -list dynamic.example 2>&1 > signing.out
 grep "No signing records found" signing.out > /dev/null 2>&1 || {
         ret=1
@@ -1651,6 +1686,125 @@ echo send
 $DIG +noall +answer +dnssec -p 5300 fail.nosign.example txt @10.53.0.3 \
         > dig.out.ns3.test$n 2>&1
 [ -s dig.out.ns3.test$n ] && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing legacy upper case signer name validation ($n)"
+ret=0
+$DIG +tcp +dnssec -p 5300 +noadd +noauth soa upper.example @10.53.0.4 \
+        > dig.out.ns4.test$n 2>&1
+grep 'flags:.* ad;' dig.out.ns4.test$n >/dev/null || ret=1
+grep 'RRSIG.*SOA.* UPPER\.EXAMPLE\. ' dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing that we lower case signer name ($n)"
+ret=0
+$DIG +tcp +dnssec -p 5300 +noadd +noauth soa LOWER.EXAMPLE @10.53.0.4 \
+        > dig.out.ns4.test$n 2>&1
+grep 'flags:.* ad;' dig.out.ns4.test$n >/dev/null || ret=1
+grep 'RRSIG.*SOA.* lower\.example\. ' dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing TTL is capped at RRSIG expiry time ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 freeze expiring.example 2>&1 | sed 's/^/I:ns3 /'
+(
+cd ns3
+RANDFILE=../random.data
+for file in K*.moved; do
+  mv $file `basename $file .moved`
+done
+$SIGNER -S -r $RANDFILE -N increment -e now+1mi -o expiring.example expiring.example.db > /dev/null 2>&1
+) || ret=1
+$RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reload expiring.example 2>&1 | sed 's/^/I:ns3 /'
+
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +answer +dnssec +cd -p 5300 expiring.example soa @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +answer +dnssec -p 5300 expiring.example soa @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '{print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '{print $2}' dig.out.ns4.2.$n`
+for ttl in $ttls; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in $ttls2; do
+    [ $ttl -le 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +additional +dnssec -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '{print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '{print $2}' dig.out.ns4.2.$n`
+for ttl in $ttls; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in $ttls2; do
+    [ $ttl -le 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+cp ns4/named3.conf ns4/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 reconfig 2>&1 | sed 's/^/I:ns4 /'
+sleep 3
+
+echo "I:testing TTL of about to expire RRsets with dnssec-accept-expired yes; ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +answer +dnssec +cd -p 5300 expiring.example soa @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +answer +dnssec -p 5300 expiring.example soa @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '{print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '{print $2}' dig.out.ns4.2.$n`
+for ttl in $ttls; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in $ttls2; do
+    [ $ttl -le 120 -a $ttl -gt 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing TTL of expired RRsets with dnssec-accept-expired yes; ($n)"
+ret=0
+$DIG +noall +answer +dnssec +cd -p 5300 expired.example soa @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +answer +dnssec -p 5300 expired.example soa @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '{print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '{print $2}' dig.out.ns4.2.$n`
+for ttl in $ttls; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in $ttls2; do
+    [ $ttl -le 120 -a $ttl -gt 60 ] || ret=1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing TTL is capped at RRSIG expiry time for records in the additional section with dnssec-accept-expired yes; ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 flush
+$DIG +noall +additional +dnssec +cd -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.1.$n
+$DIG +noall +additional +dnssec -p 5300 expiring.example mx @10.53.0.4 > dig.out.ns4.2.$n
+ttls=`awk '{print $2}' dig.out.ns4.1.$n`
+ttls2=`awk '{print $2}' dig.out.ns4.2.$n`
+for ttl in $ttls; do
+    [ $ttl -eq 300 ] || ret=1
+done
+for ttl in $ttls2; do
+    [ $ttl -le 120  -a $ttl -gt 60 ] || ret=1
+done
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
