@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.64 2012/10/04 10:29:24 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.65 2012/12/04 11:24:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.64 2012/10/04 10:29:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.65 2012/12/04 11:24:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,6 +794,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		/* N.B.: radeon wants 64-byte aligned stride */
 		dp->rd_stride = dp->rd_virtx * dp->rd_bpp / 8;
 		dp->rd_stride = ROUNDUP(dp->rd_stride, RADEON_STRIDEALIGN);
+		DPRINTF(("stride: %d\n", dp->rd_stride));
 
 		dp->rd_offset = sc->sc_fboffset * i;
 		dp->rd_fbptr = (vaddr_t)bus_space_vaddr(sc->sc_memt,
@@ -2005,13 +2006,11 @@ radeonfb_setcrtc(struct radeonfb_display *dp, int index)
 	mode = &cp->rc_videomode;
 
 #if 1
-	pitch = (((dp->rd_virtx * dp->rd_bpp) + ((dp->rd_bpp * 8) - 1)) /
-	    (dp->rd_bpp * 8));
+	pitch = dp->rd_stride / dp->rd_bpp;
 #else
 	pitch = (((sc->sc_maxx * sc->sc_maxbpp) + ((sc->sc_maxbpp * 8) - 1)) /
 	    (sc->sc_maxbpp * 8));
 #endif
-
 	switch (crtc) {
 	case 0:
 		gencntl = RADEON_CRTC_GEN_CNTL;
@@ -2225,14 +2224,12 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = dp->rd_virty;
 	ri->ri_stride = dp->rd_stride;
 	ri->ri_flg = RI_CENTER;
-	if (ri->ri_depth == 32) {
-		ri->ri_flg |= RI_ENABLE_ALPHA;
-	}
 	switch (ri->ri_depth) {
 		case 8:
 			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 			break;
 		case 32:
+			ri->ri_flg |= RI_ENABLE_ALPHA;
 			/* we run radeons in RGB even on SPARC hardware */
 			ri->ri_rnum = 8;
 			ri->ri_gnum = 8;
