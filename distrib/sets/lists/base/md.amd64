@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.179 2012/11/20 05:27:22 agc Exp $
+# $NetBSD: md.amd64,v 1.180 2012/12/04 23:38:57 spz Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -65,7 +65,7 @@
 ./usr/lib/i386/libbfd.so.12			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbfd.so.12.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libbind9.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libbind9.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -101,7 +101,7 @@
 ./usr/lib/i386/libdm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libdns.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libdns.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
 ./usr/lib/i386/libdwarf.so.0			base-compat-shlib	compat,pic
@@ -143,11 +143,11 @@
 ./usr/lib/i386/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccc.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccc.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libisccfg.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/libisccfg.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/i386/libisns.so.0			base-compat-shlib	compat,pic
@@ -174,7 +174,7 @@
 ./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/liblwres.so.5.7			base-compat-shlib	compat,pic
+./usr/lib/i386/liblwres.so.5.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzf.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic

@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.1.1.1 2012/12/04 19:22:54 spz Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.2 2012/12/04 23:38:39 spz Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -145,7 +145,7 @@ do { result = (op); \
 			msg, isc_result_totext(result), __FILE__, __LINE__); \
 		exit(1); \
 	} \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 int
 main(int argc, char **argv) {

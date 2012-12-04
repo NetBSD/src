@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.1.1.2 2012/06/04 17:56:52 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.2 2012/12/04 23:38:55 spz Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 extern isc_mem_t *mctx;
 extern isc_entropy_t *ectx;
