@@ -1,11 +1,11 @@
-/*	$NetBSD: t_bitops.c,v 1.14 2011/10/31 18:37:01 pgoyette Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.15 2012/12/04 06:57:44 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jukka Ruohonen.
+ * by Christos Zoulas and Jukka Ruohonen.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.14 2011/10/31 18:37:01 pgoyette Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.15 2012/12/04 06:57:44 jruoho Exp $");
 
 #include <atf-c.h>
 
@@ -63,6 +63,41 @@ static const struct {
 	{ 0xFC, 3, 8 },	{ 0xFD, 1, 8 },	{ 0xFE, 2, 8 },	{ 0xFF, 1, 8 },
 
 };
+
+ATF_TC(bitmap_basic);
+ATF_TC_HEAD(bitmap_basic, tc)
+{
+        atf_tc_set_md_var(tc, "descr", "A basic test of __BITMAP_*");
+}
+
+ATF_TC_BODY(bitmap_basic, tc)
+{
+	uint32_t bm[__BITMAP_SIZE(uint32_t, 65536)];
+	__BITMAP_ZERO(bm);
+
+	ATF_REQUIRE(__BITMAP_SIZE(uint32_t, 65536) == 2048);
+
+	ATF_REQUIRE(__BITMAP_SHIFT(uint32_t) == 5);
+
+	ATF_REQUIRE(__BITMAP_MASK(uint32_t) == 31);
+
+	for (size_t i = 0; i < 65536; i += 2)
+		__BITMAP_SET(i, bm);
+
+	for (size_t i = 0; i < 2048; i++)
+		ATF_REQUIRE(bm[i] == 0x55555555);
+
+	for (size_t i = 0; i < 65536; i++)
+		if (i & 1)
+			ATF_REQUIRE(!__BITMAP_ISSET(i, bm));
+		else {
+			ATF_REQUIRE(__BITMAP_ISSET(i, bm));
+			__BITMAP_CLR(i, bm);
+		}
+
+	for (size_t i = 0; i < 65536; i += 2)
+		ATF_REQUIRE(!__BITMAP_ISSET(i, bm));
+}
 
 ATF_TC(fast_divide32);
 ATF_TC_HEAD(fast_divide32, tc)
@@ -193,6 +228,7 @@ ATF_TC_BODY(ilog2_log2, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+        ATF_TP_ADD_TC(tp, bitmap_basic);
 	ATF_TP_ADD_TC(tp, fast_divide32);
 	ATF_TP_ADD_TC(tp, ffsfls);
 	ATF_TP_ADD_TC(tp, ilog2_basic);
