@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.1.1.1 2012/12/04 19:21:38 spz Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.2 2012/12/04 23:38:38 spz Exp $	*/
 
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")

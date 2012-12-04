@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.4 2012/06/05 00:38:56 christos Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.5 2012/12/04 23:38:38 spz Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007-2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007-2012 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -35,7 +35,7 @@
 dnssec\-keygen \- DNSSEC key generation tool
 .SH "SYNOPSIS"
 .HP 14
-\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
+\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keygen\fR
@@ -50,7 +50,7 @@ of the key is specified on the command line. For DNSSEC keys, this must match th
 .RS 4
 Selects the cryptographic algorithm. For DNSSEC keys, the value of
 \fBalgorithm\fR
-must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512 or ECCGOST. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
+must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256 or ECDSAP384SHA384. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
 .sp
 If no algorithm is specified, then RSASHA1 will be used by default, unless the
 \fB\-3\fR
@@ -65,7 +65,7 @@ Note 2: DH, HMAC\-MD5, and HMAC\-SHA1 through HMAC\-SHA512 automatically set the
 .PP
 \-b \fIkeysize\fR
 .RS 4
-Specifies the number of bits in the key. The choice of key size depends on the algorithm used. RSA keys must be between 512 and 2048 bits. Diffie Hellman keys must be between 128 and 4096 bits. DSA keys must be between 512 and 1024 bits and an exact multiple of 64. HMAC keys must be between 1 and 512 bits.
+Specifies the number of bits in the key. The choice of key size depends on the algorithm used. RSA keys must be between 512 and 2048 bits. Diffie Hellman keys must be between 128 and 4096 bits. DSA keys must be between 512 and 1024 bits and an exact multiple of 64. HMAC keys must be between 1 and 512 bits. Elliptic curve algorithms don't need this parameter.
 .sp
 The key size does not need to be specified if using a default algorithm. The default key size is 1024 bits for zone signing keys (ZSK's) and 2048 bits for key signing keys (KSK's, generated with
 \fB\-f KSK\fR). However, if an algorithm is explicitly specified with the
@@ -83,7 +83,7 @@ must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a 
 .PP
 \-3
 .RS 4
-Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default. Note that RSASHA256, RSASHA512 and ECCGOST algorithms are NSEC3\-capable.
+Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default. Note that RSASHA256, RSASHA512, ECCGOST, ECDSAP256SHA256 and ECDSAP384SHA384 algorithms are NSEC3\-capable.
 .RE
 .PP
 \-C
@@ -103,11 +103,6 @@ Indicates that the DNS record containing the key should have the specified class
 \-E \fIengine\fR
 .RS 4
 Uses a crypto hardware (OpenSSL engine) for random number and, when supported, key generation. When compiled with PKCS#11 support it defaults to pkcs11; the empty name resets it to no engine.
-.RE
-.PP
-\-e
-.RS 4
-If generating an RSAMD5/RSASHA1 key, use a large exponent.
 .RE
 .PP
 \-f \fIflag\fR
@@ -309,7 +304,7 @@ RFC 4034.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007\-2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007\-2012 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

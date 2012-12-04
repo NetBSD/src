@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.641 2012/11/29 16:18:35 christos Exp $
+# $NetBSD: shl.mi,v 1.642 2012/12/04 23:38:58 spz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -170,7 +170,7 @@
 ./usr/lib/libbfd.so.12.0			base-sys-shlib		binutils
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.5				base-bind-shlib
-./usr/lib/libbind9.so.5.7			base-bind-shlib
+./usr/lib/libbind9.so.5.8			base-bind-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
@@ -218,7 +218,7 @@
 ./usr/lib/libdm.so.0.0				base-sys-shlib
 ./usr/lib/libdns.so				base-bind-shlib
 ./usr/lib/libdns.so.5				base-bind-shlib
-./usr/lib/libdns.so.5.7				base-bind-shlib
+./usr/lib/libdns.so.5.8				base-bind-shlib
 ./usr/lib/libdns_sd.so				base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
@@ -284,13 +284,13 @@
 ./usr/lib/libipsec.so.3.0			base-net-shlib
 ./usr/lib/libisc.so				base-bind-shlib
 ./usr/lib/libisc.so.5				base-bind-shlib
-./usr/lib/libisc.so.5.7				base-bind-shlib
+./usr/lib/libisc.so.5.8				base-bind-shlib
 ./usr/lib/libisccc.so				base-bind-shlib
 ./usr/lib/libisccc.so.5				base-bind-shlib
-./usr/lib/libisccc.so.5.7			base-bind-shlib
+./usr/lib/libisccc.so.5.8			base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
 ./usr/lib/libisccfg.so.5			base-bind-shlib
-./usr/lib/libisccfg.so.5.7			base-bind-shlib
+./usr/lib/libisccfg.so.5.8			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi
@@ -333,7 +333,7 @@
 ./usr/lib/liblua.so.1.0				base-sys-shlib
 ./usr/lib/liblwres.so				base-bind-shlib
 ./usr/lib/liblwres.so.5				base-bind-shlib
-./usr/lib/liblwres.so.5.7			base-bind-shlib
+./usr/lib/liblwres.so.5.8			base-bind-shlib
 ./usr/lib/liblzma.so				base-sys-shlib
 ./usr/lib/liblzma.so.1				base-sys-shlib
 ./usr/lib/liblzma.so.1.1			base-sys-shlib
