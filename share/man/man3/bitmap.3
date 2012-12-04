@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitmap.3,v 1.4 2012/12/04 06:57:45 jruoho Exp $
+.\"	$NetBSD: bitmap.3,v 1.5 2012/12/04 18:02:48 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,13 +50,18 @@
 The supplied macros are similar to the
 .Xr select 2
 .Fn FD_SET
-family, and to the
+family, to the
+.Xr setbit 9 ,
+macros and the
 .Xr bitstring 3
 library.
 They are different from
 .Fn FD_SET
 because they are designed to handle multiple sized bitmaps at the same time,
 and they can be of any integral type.
+They are different from
+.Xr setbit 9
+because they can operate on different integral types, not just on bytes.
 They are different from
 .Xr bitstring 3
 because they are just macros, they don't allocate memory or use code,
@@ -126,7 +131,8 @@ main(int argc, char **argv)
 .Sh SEE ALSO
 .Xr select 2 ,
 .Xr bitops 3 ,
-.Xr bitstring 3
+.Xr bitstring 3,
+.Xr setbit 9
 .Sh HISTORY
 The
 .Fn __BITMAP_*
