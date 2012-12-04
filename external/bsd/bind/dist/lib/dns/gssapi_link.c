@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.4 2012/06/05 00:41:32 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.5 2012/12/04 23:38:42 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -364,6 +364,7 @@ static dst_func_t gssapi_functions = {
 	gssapi_adddata,
 	gssapi_sign,
 	gssapi_verify,
+	NULL, /*%< verify2 */
 	NULL, /*%< computesecret */
 	gssapi_compare,
 	NULL, /*%< paramcompare */

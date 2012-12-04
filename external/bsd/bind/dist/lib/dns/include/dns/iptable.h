@@ -1,7 +1,7 @@
-/*	$NetBSD: iptable.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
+/*	$NetBSD: iptable.h,v 1.4 2012/12/04 23:38:43 spz Exp $	*/
 
 /*
- * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,8 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/radix.h>
+
+#include <dns/types.h>
 
 struct dns_iptable {
 	unsigned int		magic;

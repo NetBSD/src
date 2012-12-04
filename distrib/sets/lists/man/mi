@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1409 2012/12/02 02:21:28 reed Exp $
+# $NetBSD: mi,v 1.1410 2012/12/04 23:38:58 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2286,6 +2286,7 @@
 ./usr/share/man/cat8/dnssec-settime.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-signkey.0		man-obsolete		obsolete
 ./usr/share/man/cat8/dnssec-signzone.0		man-bind-catman		.cat
+./usr/share/man/cat8/dnssec-verify.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dreamcast/makedev.0	man-obsolete		obsolete
@@ -5064,6 +5065,7 @@
 ./usr/share/man/html8/dnssec-revoke.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-settime.html	man-bind-htmlman	html
 ./usr/share/man/html8/dnssec-signzone.html	man-bind-htmlman	html
+./usr/share/man/html8/dnssec-verify.html	man-bind-htmlman	html
 ./usr/share/man/html8/dreamcast/boot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/drvctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/dump.html			man-sysutil-htmlman	html
@@ -7897,6 +7899,7 @@
 ./usr/share/man/man8/dnssec-settime.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-signkey.8		man-obsolete		obsolete
 ./usr/share/man/man8/dnssec-signzone.8		man-bind-man		.man
+./usr/share/man/man8/dnssec-verify.8		man-bind-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
 ./usr/share/man/man8/dreamcast/makedev.8	man-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.3 2012/06/05 00:42:58 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.4 2012/12/04 23:38:55 spz Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -401,8 +401,6 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 		first_tag = ISC_FALSE;
 	}
 
-	*alistp = alist;
-
 	if (secret != NULL) {
 		if (checksum_rstart != NULL)
 			result = verify(alist, checksum_rstart,
@@ -414,7 +412,9 @@ table_fromwire(isccc_region_t *source, isccc_region_t *secret,
 		result = ISC_R_SUCCESS;
 
  bad:
-	if (result != ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS)
+		*alistp = alist;
+	else
 		isccc_sexpr_free(&alist);
 
 	return (result);

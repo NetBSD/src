@@ -1,7 +1,7 @@
-/*	$NetBSD: hmac_link.c,v 1.3 2012/06/05 00:41:32 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.4 2012/12/04 23:38:42 spz Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -315,6 +315,7 @@ static dst_func_t hmacmd5_functions = {
 	hmacmd5_adddata,
 	hmacmd5_sign,
 	hmacmd5_verify,
+	NULL, /*%< verify2 */
 	NULL, /*%< computesecret */
 	hmacmd5_compare,
 	NULL, /*%< paramcompare */
@@ -591,6 +592,7 @@ static dst_func_t hmacsha1_functions = {
 	hmacsha1_adddata,
 	hmacsha1_sign,
 	hmacsha1_verify,
+	NULL, /* verify2 */
 	NULL, /* computesecret */
 	hmacsha1_compare,
 	NULL, /* paramcompare */
@@ -869,6 +871,7 @@ static dst_func_t hmacsha224_functions = {
 	hmacsha224_adddata,
 	hmacsha224_sign,
 	hmacsha224_verify,
+	NULL, /* verify2 */
 	NULL, /* computesecret */
 	hmacsha224_compare,
 	NULL, /* paramcompare */
@@ -1147,6 +1150,7 @@ static dst_func_t hmacsha256_functions = {
 	hmacsha256_adddata,
 	hmacsha256_sign,
 	hmacsha256_verify,
+	NULL, /* verify2 */
 	NULL, /* computesecret */
 	hmacsha256_compare,
 	NULL, /* paramcompare */
@@ -1425,6 +1429,7 @@ static dst_func_t hmacsha384_functions = {
 	hmacsha384_adddata,
 	hmacsha384_sign,
 	hmacsha384_verify,
+	NULL, /* verify2 */
 	NULL, /* computesecret */
 	hmacsha384_compare,
 	NULL, /* paramcompare */
@@ -1703,6 +1708,7 @@ static dst_func_t hmacsha512_functions = {
 	hmacsha512_adddata,
 	hmacsha512_sign,
 	hmacsha512_verify,
+	NULL, /* verify2 */
 	NULL, /* computesecret */
 	hmacsha512_compare,
 	NULL, /* paramcompare */

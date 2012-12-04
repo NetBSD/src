@@ -1,4 +1,4 @@
-/*	$NetBSD: task_api.c,v 1.3 2012/06/05 00:42:32 christos Exp $	*/
+/*	$NetBSD: task_api.c,v 1.4 2012/12/04 23:38:44 spz Exp $	*/
 
 /*
  * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -201,6 +201,17 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag)
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
 	return (task->methods->purgeevents(task, sender, type, tag));
+}
+
+void
+isc_taskmgr_setexcltask(isc_taskmgr_t *mgr, isc_task_t *task) {
+	REQUIRE(ISCAPI_TASK_VALID(task));
+	return (mgr->methods->setexcltask(mgr, task));
+}
+
+isc_result_t
+isc_taskmgr_excltask(isc_taskmgr_t *mgr, isc_task_t **taskp) {
+	return (mgr->methods->excltask(mgr, taskp));
 }
 
 isc_result_t

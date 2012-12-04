@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.h,v 1.5 2012/09/13 05:32:08 spz Exp $	*/
+/*	$NetBSD: rdata.h,v 1.6 2012/12/04 23:38:43 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

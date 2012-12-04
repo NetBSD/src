@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.4 2012/06/05 00:38:56 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.5 2012/12/04 23:38:38 spz Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,7 @@
 
 #include <dns/keyvalues.h>
 #include <dns/result.h>
+#include <dns/log.h>
 
 #include <dst/dst.h>
 
@@ -155,6 +156,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	force = ISC_FALSE;
 	isc_boolean_t   epoch = ISC_FALSE;
 	isc_boolean_t   changed = ISC_FALSE;
+	isc_log_t       *log = NULL;
 
 	if (argc == 1)
 		usage();
@@ -162,6 +164,8 @@ main(int argc, char **argv) {
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
+
+	setup_logging(verbose, mctx, &log);
 
 	dns_result_register();
 
@@ -595,6 +599,7 @@ main(int argc, char **argv) {
 	cleanup_entropy(&ectx);
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
+	cleanup_logging(&log);
 	isc_mem_free(mctx, directory);
 	isc_mem_destroy(&mctx);
 

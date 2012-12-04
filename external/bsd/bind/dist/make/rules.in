@@ -367,3 +367,12 @@ ALWAYS_MAKE_SYMTABLE =	@ALWAYS_MAKE_SYMTABLE@
 	cp -f $< $@
 	chmod +x $@
 
+
+###
+### Python executable
+###
+.SUFFIXES: .py
+.py:
+	cp -f $< $@
+	chmod +x $@
+

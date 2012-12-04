@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.4 2012/06/05 00:41:56 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.5 2012/12/04 23:38:43 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -159,11 +159,14 @@ struct dns_view {
 	dns_name_t *			dlv;
 	dns_fixedname_t			dlv_fixed;
 	isc_uint16_t			maxudp;
+	unsigned int			maxbits;
 	dns_v4_aaaa_t			v4_aaaa;
 	dns_acl_t *			v4_aaaa_acl;
 	dns_dns64list_t 		dns64;
 	unsigned int 			dns64cnt;
 	ISC_LIST(dns_rpz_zone_t)	rpz_zones;
+	isc_boolean_t			rpz_recursive_only;
+	isc_boolean_t			rpz_break_dnssec;
 
 	/*
 	 * Configurable data for server use only,

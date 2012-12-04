@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.3 2012/06/05 00:43:03 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.4 2012/12/04 23:38:56 spz Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * This code is derived from software contributed to ISC by
@@ -400,7 +400,7 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 				goto inet6_addr;
 			}
 			addrsize = sizeof(struct in_addr);
-			addroff = (char *)(&SIN(0)->sin_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in, sin_addr);
 			family = AF_INET;
 			goto common;
 #ifdef LWRES_HAVE_SIN6_SCOPE_ID
@@ -410,7 +410,7 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 			if (family && family != AF_INET6)
 				return (EAI_NONAME);
 			addrsize = sizeof(struct in6_addr);
-			addroff = (char *)(&SIN6(0)->sin6_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in6, sin6_addr);
 			family = AF_INET6;
 			goto common;
 #endif
@@ -419,7 +419,7 @@ lwres_getaddrinfo(const char *hostname, const char *servname,
 				return (EAI_NONAME);
 		inet6_addr:
 			addrsize = sizeof(struct in6_addr);
-			addroff = (char *)(&SIN6(0)->sin6_addr) - (char *)0;
+			addroff = offsetof(struct sockaddr_in6, sin6_addr);
 			family = AF_INET6;
 
 		common:
