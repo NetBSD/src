@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.120 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.121 2012/12/04 05:50:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.120 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.121 2012/12/04 05:50:57 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -91,7 +91,6 @@ struct ugen_endpoint {
 #define UGEN_RA_WB_STOP	0x20	/* RA/WB xfer is stopped (buffer full/empty) */
 	usbd_pipe_handle pipeh;
 	struct clist q;
-	struct selinfo rsel;
 	u_char *ibuf;		/* start of buffer (circular for isoc) */
 	u_char *fill;		/* location for input (isoc) */
 	u_char *limit;		/* end of circular buffer (isoc) */
@@ -108,8 +107,10 @@ struct ugen_endpoint {
 		void *dmabuf;
 		u_int16_t sizes[UGEN_NISORFRMS];
 	} isoreqs[UGEN_NISOREQS];
-	/* Keep this last; we don't overwrite it in ugen_set_config() */
-	kcondvar_t		cv;
+	/* Keep these last; we don't overwrite them in ugen_set_config() */
+#define UGEN_ENDPOINT_NONZERO_CRUFT	offsetof(struct ugen_endpoint, rsel)
+	struct selinfo rsel;
+	kcondvar_t cv;
 };
 
 struct ugen_softc {
@@ -216,6 +217,16 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = udev = uaa->device;
 
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		for (dir = OUT; dir <= IN; dir++) {
+			struct ugen_endpoint *sce;
+
+			sce = &sc->sc_endpoints[i][dir];
+			selinit(&sce->rsel);
+			cv_init(&sce->cv, "ugensce");
+		}
+	}
+
 	/* First set configuration index 0, the default one for ugen. */
 	err = usbd_set_config_index(udev, 0, 0);
 	if (err) {
@@ -233,16 +244,6 @@ ugen_attach(device_t parent, device_t self, void *aux)
 		    conf);
 		sc->sc_dying = 1;
 		return;
-	}
-
-	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
-		for (dir = OUT; dir <= IN; dir++) {
-			struct ugen_endpoint *sce;
-
-			sce = &sc->sc_endpoints[i][dir];
-			selinit(&sce->rsel);
-			cv_init(&sce->cv, "ugensce");
-		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -294,11 +295,11 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	if (err)
 		return (err);
 
-	/* Clear out the old info, but leave the cv initialised. */
+	/* Clear out the old info, but leave the selinfo and cv initialised. */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
-			memset(sce, 0, offsetof(struct ugen_endpoint, cv));
+			memset(sce, 0, UGEN_ENDPOINT_NONZERO_CRUFT);
 		}
 	}
 
@@ -396,16 +397,20 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n",
 				     endpt, isize));
-			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
+			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1) {
+				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (ENOMEM);
+			}
 			err = usbd_open_pipe_intr(sce->iface,
 				  edesc->bEndpointAddress,
 				  USBD_SHORT_XFER_OK, &sce->pipeh, sce,
 				  sce->ibuf, isize, ugenintr,
 				  USBD_DEFAULT_INTERVAL);
 			if (err) {
-				free(sce->ibuf, M_USBDEV);
 				clfree(&sce->q);
+				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (EIO);
 			}
 			DPRINTFN(5, ("ugenopen: interrupt open done\n"));
@@ -416,7 +421,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			if (err)
 				return (EIO);
 			sce->ra_wb_bufsize = UGEN_BULK_RA_WB_BUFSIZE;
-			/* 
+			/*
 			 * Use request size for non-RA/WB transfers
 			 * as the default.
 			 */
@@ -438,6 +443,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
 			if (err) {
 				free(sce->ibuf, M_USBDEV);
+				sce->ibuf = NULL;
 				return (EIO);
 			}
 			for(i = 0; i < UGEN_NISOREQS; ++i) {
@@ -467,6 +473,10 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 		bad:
 			while (--i >= 0) /* implicit buffer free */
 				usbd_free_xfer(sce->isoreqs[i].xfer);
+			usbd_close_pipe(sce->pipeh);
+			sce->pipeh = NULL;
+			free(sce->ibuf, M_USBDEV);
+			sce->ibuf = NULL;
 			return (ENOMEM);
 		case UE_CONTROL:
 			sce->timeout = USBD_DEFAULT_TIMEOUT;
