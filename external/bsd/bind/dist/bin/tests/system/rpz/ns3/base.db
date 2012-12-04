@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,14 +12,17 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: base.db,v 1.6 2011/10/13 01:32:33 vjs Exp 
+; Id: base.db,v 1.6.4.1 2011/10/15 23:03:38 vjs Exp 
 
 
 ; RPZ test
+;   This basic file is copied to several zone files before being used.
+;   Its contents are also changed with nsupdate
+
 
 $TTL	120
 @	SOA	blx.  hostmaster.ns.blx. ( 1 3600 1200 604800 60 )
-	NS	ns.tld.
+	NS	ns
 ns	A	10.53.0.3
 
 ; Poke the radix tree a little.
@@ -34,6 +37,6 @@ ns	A	10.53.0.3
 
 
 ; regression testing for some old crashes
-redirect	IN      A       127.0.0.1
-*.redirect	IN      A       127.0.0.1
-*.credirect	IN      CNAME   google.com.
+redirect	A       127.0.0.1
+*.redirect	A       127.0.0.1
+*.credirect	CNAME   google.com.
