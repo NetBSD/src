@@ -1,4 +1,4 @@
-; Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: tld2.db,v 1.4 2011/10/13 01:32:33 vjs Exp 
+; Id: tld2.db,v 1.4.4.2 2012/02/24 17:22:37 vjs Exp 
 
 
 ; RPZ rewrite responses from this zone
@@ -20,10 +20,8 @@
 $TTL	120
 @		SOA	tld2.  hostmaster.ns.tld2. ( 1 3600 1200 604800 60 )
 		NS	ns
-		NS	ns2
 		NS	.			; check for RT 24985
 ns		A	10.53.0.2
-ns2		A	10.53.0.2
 
 
 txt-only	TXT	"txt-only-tld2"
@@ -36,6 +34,8 @@ a12-cname	CNAME	a12
 a0-1		A	192.168.0.1
 		AAAA	2001:2::1
 		TXT	"a0-1 tld2 text"
+a0-1-scname	CNAME	a0-1.tld2s.
+
 
 a3-1		A	192.168.3.1
 		AAAA	2001:2:3::1
@@ -115,3 +115,8 @@ a5-3		A	192.168.5.3
 
 a5-4		A	192.168.5.4
 		TXT	"a5-4 tld2 text"
+
+a6-1		A	192.168.6.1
+		TXT	"a6-1 tld2 text"
+a6-2		A	192.168.6.2
+		TXT	"a6-2 tld2 text"

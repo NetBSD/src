@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.1.1.6 2012/06/04 17:56:16 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.1.1.7 2012/12/04 19:25:06 spz Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -110,6 +110,8 @@
 	{ DNS_KEYALG_RSASHA256, "RSASHA256", 0 }, \
 	{ DNS_KEYALG_RSASHA512, "RSASHA512", 0 }, \
 	{ DNS_KEYALG_ECCGOST, "ECCGOST", 0 }, \
+	{ DNS_KEYALG_ECDSA256, "ECDSAP256SHA256", 0 }, \
+	{ DNS_KEYALG_ECDSA384, "ECDSAP384SHA384", 0 }, \
 	{ DNS_KEYALG_INDIRECT, "INDIRECT", 0 }, \
 	{ DNS_KEYALG_PRIVATEDNS, "PRIVATEDNS", 0 }, \
 	{ DNS_KEYALG_PRIVATEOID, "PRIVATEOID", 0 }, \

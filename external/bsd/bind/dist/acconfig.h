@@ -1,7 +1,7 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.4 2012/06/04 17:53:12 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.5 2012/12/04 19:21:12 spz Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -139,6 +139,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
+
+/* Define if OpenSSL includes ECDSA support */
+#undef HAVE_OPENSSL_ECDSA
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #undef ISC_SOCKADDR_LEN_T
