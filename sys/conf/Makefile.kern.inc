@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.152 2012/02/12 16:34:11 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.152.4.1 2012/12/04 07:00:30 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -236,6 +236,7 @@ SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
 		${SIZE} $@; chmod 755 $@; \
 		${SYSTEM_CTFMERGE}
+SYSTEM_LD_TAIL_DBSYM?=  true
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
