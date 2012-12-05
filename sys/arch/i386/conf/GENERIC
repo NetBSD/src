@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1082 2012/10/17 14:48:13 apb Exp $
+# $NetBSD: GENERIC,v 1.1083 2012/12/05 16:19:46 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1082 $"
+#ident 		"GENERIC-$Revision: 1.1083 $"
 
 maxusers	64		# estimated number of users
 
@@ -457,6 +457,8 @@ ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
 					# watchdog, SpeedStep and HPET
 fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet*	at ichlpcib?
+tcpcib* at pci? dev ? function ?	# Intel Atom E6xx PCI-LPC
+hpet* at tcpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 					# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
@@ -486,6 +488,7 @@ eisa0	at pceb?
 #isa0	at amdpcib?
 isa0	at gcscpcib?
 isa0	at ichlpcib?
+isa0	at tcpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
 isa0	at viapcib?
