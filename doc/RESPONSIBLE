@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.105 2012/12/05 06:19:11 jnemeth Exp $
+#	$NetBSD: RESPONSIBLE,v 1.106 2012/12/05 17:21:55 dholland Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -189,7 +189,7 @@ lfs		dholland, perseant
 mfs		[nobody in particular]
 msdosfs		jdolecek*
 nilfs		reinoud
-nfs		[nobody really]
+nfs		fvdl*
 ntfs		jdolecek*
 nullfs/layerfs	dholland, pooka
 overlay		[nobody]
@@ -200,7 +200,7 @@ smbfs		jdolecek*
 sysvbfs		?
 tmpfs		rmind
 udf		reinoud
-ufs		?
+ufs		fvdl*
 union		[nobody]
 umapfs		[nobody]
 v7fs		uch
