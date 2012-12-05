@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.90 2012/11/30 08:15:45 msaitoh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.91 2012/12/05 19:05:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2012/11/30 08:15:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2012/12/05 19:05:45 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -59,11 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2012/11/30 08:15:45 msaitoh Exp $");
 
 #include <arm/cpuconf.h>
 #include <arm/undefined.h>
-
-#ifdef ARMFPE
-#include <machine/bootconfig.h> /* For boot args */
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 char cpu_model[256];
 
@@ -207,39 +202,6 @@ cpu_attach(device_t dv, cpuid_t id)
 		}
 		aprint_normal(" fclk source=%s\n", fclk);
  	}
-#endif
-
-#ifdef ARMFPE
-	/*
-	 * Ok now we test for an FPA
-	 * At this point no floating point emulator has been installed.
-	 * This means any FP instruction will cause undefined exception.
-	 * We install a temporay coproc 1 handler which will modify
-	 * undefined_test if it is called.
-	 * We then try to read the FP status register. If undefined_test
-	 * has been decremented then the instruction was not handled by
-	 * an FPA so we know the FPA is missing. If undefined_test is
-	 * still 1 then we know the instruction was handled by an FPA.
-	 * We then remove our test handler and look at the
-	 * FP status register for identification.
-	 */
- 
-	/*
-	 * Ok if ARMFPE is defined and the boot options request the 
-	 * ARM FPE then it will be installed as the FPE.
-	 * This is just while I work on integrating the new FPE.
-	 * It means the new FPE gets installed if compiled int (ARMFPE
-	 * defined) and also gives me a on/off option when I boot in
-	 * case the new FPE is causing panics.
-	 */
-
-
-	int usearmfpe = 1;
-	if (boot_args)
-		get_bootconf_option(boot_args, "armfpe",
-		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
-	if (usearmfpe)
-		initialise_arm_fpe();
 #endif
 
 	vfp_attach();		/* XXX SMP */
