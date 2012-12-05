@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.73 2012/11/08 08:22:56 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.74 2012/12/05 19:05:45 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.73 2012/11/08 08:22:56 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.74 2012/12/05 19:05:45 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -276,17 +276,6 @@ ENTRY(cpu_switchto)
 	/* rem: r5 = new lwp's proc */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
-
-#ifdef ARMFPE
-	add	r0, r7, #(PCB_SIZE) & 0x00ff
-	add	r0, r0, #(PCB_SIZE) & 0xff00 
-	bl	_C_LABEL(arm_fpe_core_changecontext)
-#endif
-
-	/* rem: r4 = old lwp */
-	/* rem: r5 = new lwp's proc */
-	/* rem: r6 = new lwp */
-	/* rem: r7 = new PCB */
 
 	/* 
 	 * Check for restartable atomic sequences (RAS).
