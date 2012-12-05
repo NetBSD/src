@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.8 2012/12/05 19:05:46 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.9 2012/12/05 19:30:10 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -231,6 +231,12 @@ vfp_attach(void)
 		uint32_t cpacr = armreg_cpacr_read();
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
+		if (CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
+			/*
+			 * Disable access to the upper 16 FP registers.
+			 */
+			cpacr |= CPACR_V7_D32DIS;
+		}
 		armreg_cpacr_write(cpacr);
 
 		/*
