@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2012/10/23 22:50:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62 2012/12/05 19:05:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2012/10/23 22:50:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62 2012/12/05 19:05:45 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2012/10/23 22:50:00 matt Exp $")
 #include <machine/pmap.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-
-#ifdef ARMFPE
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 extern pv_addr_t systempage;
 
@@ -164,12 +160,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif	/* PMAP_DEBUG */
 
-#ifdef ARMFPE
-	/* Initialise a new FP context for p2 and copy the context from p1 */
-	arm_fpe_core_initcontext(FP_CONTEXT(l2));
-	arm_fpe_copycontext(FP_CONTEXT(l1), FP_CONTEXT(l2));
-#endif	/* ARMFPE */
-
 	struct trapframe *tf = (struct trapframe *)pcb2->pcb_sp - 1;
 	lwp_settrapframe(l2, tf);
 	*tf = *lwp_trapframe(l1);
@@ -201,23 +191,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-#ifdef ARMFPE
-	/* Abort any active FP operation and deactivate the context */
-	arm_fpe_core_abort(FP_CONTEXT(l), NULL, NULL);
-	arm_fpe_core_changecontext(0);
-#endif	/* ARMFPE */
-
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
-	if (l) {
-		u_char *ptr;
-		int loop;
+	struct pcb * const pcb = lwp_getpcb(l);
+	u_char *ptr;
+	u_int loop;
 
-		ptr = (u_char *)pcb + USPACE_SVC_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
-		    && *ptr == 0xdd; ++loop, ++ptr) ;
-		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
-	}
+	ptr = (u_char *)pcb + USPACE_SVC_STACK_BOTTOM;
+	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
+	    && *ptr == 0xdd; ++loop, ++ptr) ;
+	log(LOG_INFO, "%u bytes of svc stack fill pattern\n", loop);
 #endif	/* STACKCHECKS */
 }
 

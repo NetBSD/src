@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23 2012/08/16 16:41:53 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24 2012/12/05 19:05:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2012/08/16 16:41:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2012/12/05 19:05:46 matt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -144,10 +144,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23 2012/08/16 16:41:53 matt Ex
 #include <machine/reg.h>
 
 #include <arm/armreg.h>
-
-#ifdef ARMFPE
-#include <arm/fpe-arm/armfpe.h>
-#endif
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -177,14 +173,15 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-#ifdef ARMFPE
-	arm_fpe_getcontext(p, regs);
+#ifdef FPU_VFP
+	if (curcpu()->ci_vfp_id == 0) {
+		return EINVAL;
+	}
+	const struct pcb * const pcb = lwp_getpcb(l);
+	vfp_savecontext();
+	regs->fpr_vfp = pcb->pcb_vfp;
+#endif
 	return(0);
-#else	/* ARMFPE */
-	/* No hardware FP support */
-	memset(regs, 0, sizeof(struct fpreg));
-	return(0);
-#endif	/* ARMFPE */
 }
 
 int
@@ -222,13 +219,16 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
-#ifdef ARMFPE
-	arm_fpe_setcontext(p, regs);
+#ifdef FPU_VFP
+	if (curcpu()->ci_vfp_id == 0) {
+		return EINVAL;
+	}
+	struct pcb * const pcb = lwp_getpcb(l);
+	vfp_discardcontext();
+	l->l_md.md_flags |= MDLWP_VFPUSED;
+	pcb->pcb_vfp = regs->fpr_vfp;
+#endif
 	return(0);
-#else	/* ARMFPE */
-	/* No hardware FP support */
-	return(0);
-#endif	/* ARMFPE */
 }
 
 int
