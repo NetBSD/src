@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.103 2012/12/05 05:05:12 jnemeth Exp $
+#	$NetBSD: RESPONSIBLE,v 1.104 2012/12/05 05:44:16 jnemeth Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -15,33 +15,33 @@ amd		christos
 atf		jmmv
 audioplay	mrg
 audiorecord	mrg
-awk		jdolecek
-bc		phil, simonb
+awk		jdolecek*
+bc		phil*, simonb
 csh		christos
 cvs		christos, wiz
 dhcp		mellon
 edquota		dholland
-etcupdate	martti
-expr		jdolecek
+etcupdate	[nobody]
+expr		jdolecek*
 file		christos, pooka
 gpioctl		mbalmer
 grep		simonb, wiz
 groff		wiz
-gzip		mrg, atatat
+gzip		mrg, atatat*
 ifconfig	dyoung
-hostapd		none
+hostapd		[nobody]
 installboot(mi)	core
-kerberos	lha, joda
+kerberos	lha*, joda*
 less/more	mrg
 lint		christos
 lua/luac	mbalmer
 make		christos, sjg, dholland
 named(bind)	christos
-ntp		simonb, jonathan
+ntp		simonb, jonathan*
 openpam		christos, jnemeth
 openssh		christos
 pax/tar		christos
-pcc		ragge
+pcc		ragge*
 ping		christos
 ping6		core
 postfix		tron
@@ -51,12 +51,12 @@ ppp(sync)	martin?
 racoon		manu
 routed		christos
 sh		christos, dsl
-sort		jdolecek
-sysctl		atatat
+sort		jdolecek*
+sysctl		atatat*
 talk/talkd	dholland
 tcpdump		core
 texinfo		wiz
-toolchain	thorpej, mrg
+toolchain	thorpej*, mrg
 top		simonb
 user		agc
 vi		aymeric
@@ -69,14 +69,14 @@ Userland Libraries:
 atf		jmmv
 citrus		core
 curses		blymn, jdc
-edit		christos, jdolecek
-kerberos	lha, joda
-openssl		thorpej, christos
+edit		christos, jdolecek*
+kerberos	lha*, joda*
+openssl		thorpej*, christos
 pcap		core
-pthread		nathanw
+pthread		nathanw*
 quota		dholland
 resolver(bind)	christos
-softfloat	bjh21
+softfloat	bjh21*
 tz		kleink
 
 
@@ -92,7 +92,7 @@ terminfo	roy
 X:
 
 [Surely this needs breaking up further]
-XFree86		tron, mrg, rtr, macallan
+XFree86		tron, mrg, rtr*, macallan
 xorg		macallan
 
 X video drivers:
@@ -105,35 +105,35 @@ Kernel:
 
 device support:
 
-acpi		thorpej, kochi, jmcneill, joerg
-audio		augustss, jmcneill
+acpi		thorpej*, kochi*, jmcneill*, joerg
+audio		augustss*, jmcneill*
 cgd		elric
 firewire	jmc
 flash		ahoka
 gpio		mbalmer
 ide/atapi	bouyer
-irda		augustss, kenh
+irda		augustss*, kenh
 isdn		martin
 keylock		mbalmer
-mca		jdolecek
+mca		jdolecek*
 nand		ahoka
 net80211	dyoung
 onewire		riz
-podulebus	bjh21
-scsi		bouyer, thorpej, reinoud
-raid(hard)	ad
+podulebus	bjh21*
+scsi		bouyer, thorpej*, reinoud
+raid(hard)	ad*
 raidframe	oster
-usb		augustss
+usb		augustss*
 vcons		macallan
 
 device drivers:
 
 audio device drivers:
 
-auich		kent
+auich		kent*
 dbri		macallan
 eap		pooka
-esa		jmcneill
+esa		jmcneill*
 
 console device drivers:
 
@@ -146,12 +146,12 @@ network device drivers:
 
 ath		dyoung
 atw		dyoung
-bge		fvdl, jonathan, thorpej
-gsip		thorpej
+bge		fvdl*, jonathan*, thorpej*
+gsip		thorpej*
 mb86960		tsutsui
 rtw		dyoung
 run		nonaka
-seeq8005	bjh21
+seeq8005	bjh21*
 ti		bouyer
 tl		bouyer
 urtwn		nonaka
@@ -179,24 +179,24 @@ adosfs		?
 cd9660		?
 chfs		ttoth
 coda		gdt
-efs		rumble
+efs		rumble*
 ext2fs		[nobody in particular]
 ffs		?
 ffs+wapbl	?
-hfs		dillo
+hfs		dillo*
 kernfs		?
 lfs		dholland, perseant
 mfs		[nobody in particular]
-msdosfs		jdolecek
+msdosfs		jdolecek*
 nilfs		reinoud
 nfs		[nobody really]
-ntfs		jdolecek
+ntfs		jdolecek*
 nullfs/layerfs	dholland, pooka
 overlay		[nobody]
 procfs		?
 ptyfs		christos
 puffs		pooka
-smbfs		jdolecek
+smbfs		jdolecek*
 sysvbfs		?
 tmpfs		rmind
 udf		reinoud
@@ -219,21 +219,21 @@ misc		dholland, pooka
 kern/general:
 
 ddb		jhawk
-emulation	christos, fvdl, manu, jdolecek, mrg
-kevents		jdolecek
-ksyms		ragge
+emulation	christos, fvdl*, manu, jdolecek*, mrg
+kevents		jdolecek*
+ksyms		ragge*
 modules		jnemeth
-lwp/pthread	nathanw
-ntp		simonb, jonathan
-pipes		jdolecek
-splash		jmcneill
-uvm		chuck, chs, mrg, atatat
+lwp/pthread	nathanw*
+ntp		simonb, jonathan*
+pipes		jdolecek*
+splash		jmcneill*
+uvm		chuck, chs, mrg, atatat*
 
 kern/compat:
 
 linux-alpha	erh
-linux-i386	fvdl, jdolecek
-linux-m68k	itohy
+linux-i386	fvdl*, jdolecek*
+linux-m68k	itohy*
 linux-mips	manu
 linux-powerpc	manu
 linux-amd64	manu
@@ -244,40 +244,40 @@ netbsd32	mrg
 
 networking:
 
-general net	thorpej, matt
-ipf		darrenr, martti
+general net	thorpej*, matt
+ipf		darrenr
 kame/ipv6	core
 npf		rmind
-pf		peter, yamt
+pf		peter*, yamt
 ppp(async)	christos
 ppp(sync)	martin
 
 Portmasters:
 
 [should be synced with src/distrib/notes/common/main]
-acorn26		bjh21
+acorn26		core
 acorn32		reinoud
 amd64		dsl
-algor		thorpej
+algor		core
 alpha		matt
 amiga		is
 amigappc	is
 arc		soda
 atari		jdc
 bebox		core
-cats		chris
+cats		core
 cesfic		drochner
-cobalt		cyber
+cobalt		core
 emips		pooka
-evbarm		thorpej
+evbarm		core
 evbmips		simonb
 evbppc		scw
 evbsh3		core
 ews4800mips	tsutsui
 hp300		tsutsui
 hp700		skrll
-hpcarm		ichiro, toshii
-hpcmips		takemura
+hpcarm		core
+hpcmips		core
 hpcsh		uwe
 i386		dsl
 ibmnws		matt
@@ -285,39 +285,39 @@ iyonix		gavan
 luna68k		nisimura
 mac68k		scottr
 macppc		macallan
-mipsco		wdk
+mipsco		wdk*
 mmeye		core
 mvme68k		scw
 mvmeppc		scw
 netwinder	matt
 news68k		tsutsui
-newsmips	tsubai
+newsmips	core
 next68k		core
 ofppc		garbled
 pmax		simonb
-pc532		phil
+pc532		core
 pmax		simonb
-pmppc		augustss
+pmppc		core
 prep		garbled
 sandpoint	nisimura
 sbmips		simonb
-sgimips		soren
-shark		thorpej
+sgimips		core
+shark		core
 sh3		msaitoh
-sparc		pk
+sparc		core
 sparc64		martin
-sun2		fredette
-sun3		nathanw, jeremy
+sun2		core
+sun3		jeremy
 usermode	reinoud
-vax		ragge
-x68k		nsmrtks
+vax		core
+x68k		core
 xen		bouyer
 
 
 MD Misc:
 
 hpcboot		uwe
-i386 bootblocks	dsl, drochner, fvdl, christos
+i386 bootblocks	dsl, drochner, fvdl*, christos
 amiga pci	rkujawa
 
 
@@ -327,3 +327,6 @@ Build Tools	core
 Man Pages	wiz
 Release Tools	core
 Standards Guru	kleink
+
+
+* No longer has commit rights, but may still answer questions.
