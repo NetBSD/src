@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.7 2012/09/22 19:45:54 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.8 2012/12/05 19:05:46 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -39,6 +39,7 @@
 #include <arm/pcb.h>
 #include <arm/undefined.h>
 #include <arm/vfpreg.h>
+#include <arm/mcontext.h>
 
 /* 
  * Use generic co-processor instructions to avoid assembly problems.
@@ -365,6 +366,10 @@ vfp_state_load(lwp_t *l, bool used)
 		switch (ci->ci_vfp_id) {
 		case FPU_VFP10_ARM10E:
 		case FPU_VFP11_ARM11:
+		case FPU_VFP_CORTEXA5:
+		case FPU_VFP_CORTEXA7:
+		case FPU_VFP_CORTEXA8:
+		case FPU_VFP_CORTEXA9:
 			write_fpinst2(fregs->vfp_fpinst2);
 			write_fpinst(fregs->vfp_fpinst);
 			break;
@@ -407,6 +412,10 @@ vfp_state_save(lwp_t *l)
 		switch (ci->ci_vfp_id) {
 		case FPU_VFP10_ARM10E:
 		case FPU_VFP11_ARM11:
+		case FPU_VFP_CORTEXA5:
+		case FPU_VFP_CORTEXA7:
+		case FPU_VFP_CORTEXA8:
+		case FPU_VFP_CORTEXA9:
 			fregs->vfp_fpinst = read_fpinst();
 			fregs->vfp_fpinst2 = read_fpinst2();
 			break;
@@ -454,6 +463,30 @@ void
 vfp_discardcontext(void)
 {
 	pcu_discard(&arm_vfp_ops);
+}
+
+void
+vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
+{
+	if (l->l_md.md_flags & MDLWP_VFPUSED) {
+		const struct pcb * const pcb = lwp_getpcb(l);
+		pcu_save(&arm_vfp_ops);
+		mcp->__fpu.__vfpregs.__vfp_fpscr = pcb->pcb_vfp.vfp_fpscr;
+		memcpy(mcp->__fpu.__vfpregs.__vfp_fstmx, pcb->pcb_vfp.vfp_regs,
+		    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
+		*flagsp |= _UC_FPU;
+	}
+}
+
+void
+vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
+{
+	pcu_discard(&arm_vfp_ops);
+	struct pcb * const pcb = lwp_getpcb(l);
+	l->l_md.md_flags |= MDLWP_VFPUSED;
+	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
+	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
+	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
 }
 
 #endif /* FPU_VFP */

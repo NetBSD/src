@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2012/08/03 07:59:23 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2012/12/05 19:05:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -125,5 +125,10 @@ __lwp_getprivate_fast(void)
 	 */
 	return _lwp_getprivate();
 }
+
+#if defined(_KERNEL)
+void vfp_getcontext(struct lwp *, mcontext_t *, int *);
+void vfp_setcontext(struct lwp *, const mcontext_t *); 
+#endif
 
 #endif	/* !_ARM_MCONTEXT_H_ */
