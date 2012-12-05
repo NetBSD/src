@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.32 2012/12/05 02:23:20 christos Exp $
+.\" $NetBSD: cgdconfig.8,v 1.33 2012/12/05 08:56:54 wiz Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,7 +178,8 @@ a disk volume with meaningless data prior to use.
 .It urandomkey
 The method simply reads
 .Pa /dev/urandom
-and uses the resulting bits as the key.  This is similar to the
+and uses the resulting bits as the key.
+This is similar to the
 .Pa randomkey
 method, but it guarantees that cgdconfig will not stall waiting for
 hard-random bits (useful when configuring a cgd for swap at boot time).
@@ -355,7 +356,7 @@ sequence of commands that is recommended:
 .Pp
 To scrub data from a disk before setting up a cgd:
 .Bd -literal
-	# cgdconfig -s cgd0 /dev/sd0e aes-cbc 256 < /dev/urandom 
+	# cgdconfig -s cgd0 /dev/sd0e aes-cbc 256 < /dev/urandom
 	# dd if=/dev/zero of=/dev/rcgd0d bs=32k progress=512
 	# cgdconfig -u cgd0
 .Ed
