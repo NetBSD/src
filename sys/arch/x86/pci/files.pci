@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.14 2012/04/13 13:11:17 cegger Exp $
+#	$NetBSD: files.pci,v 1.15 2012/12/05 16:19:46 christos Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -19,7 +19,8 @@ file	arch/x86/pci/pchb.c		pchb		needs-flag
 device	pcib: isabus
 attach	pcib at pci
 file	arch/x86/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib |
-					viapcib | amdpcib | gcscpcib | rdcpcib
+					viapcib | amdpcib | gcscpcib | rdcpcib |
+					tcpcib
 
 device	amdpcib {} : isabus
 attach	amdpcib at pci
@@ -50,6 +51,10 @@ file 	arch/x86/pci/ichlpcib.c 	ichlpcib
 
 attach	hpet at hpetichbus with ichlpcib_hpet
 file    arch/x86/pci/ichlpcib_hpet.c	ichlpcib_hpet
+
+device	tcpcib: isabus, sysmon_wdog, hpetichbus
+attach	tcpcib at pci
+file	arch/x86/pci/tcpcib.c		tcpcib
 
 device	fwhrng
 attach	fwhrng at fwhichbus
