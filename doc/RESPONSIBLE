@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.102 2012/12/01 03:09:55 dholland Exp $
+#	$NetBSD: RESPONSIBLE,v 1.103 2012/12/05 05:05:12 jnemeth Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -38,6 +38,7 @@ lua/luac	mbalmer
 make		christos, sjg, dholland
 named(bind)	christos
 ntp		simonb, jonathan
+openpam		christos, jnemeth
 openssh		christos
 pax/tar		christos
 pcc		ragge
@@ -49,7 +50,6 @@ ppp(async)	christos
 ppp(sync)	martin?
 racoon		manu
 routed		christos
-sendmail	atatat
 sh		christos, dsl
 sort		jdolecek
 sysctl		atatat
@@ -194,7 +194,7 @@ ntfs		jdolecek
 nullfs/layerfs	dholland, pooka
 overlay		[nobody]
 procfs		?
-ptyfs		?
+ptyfs		christos
 puffs		pooka
 smbfs		jdolecek
 sysvbfs		?
@@ -222,6 +222,7 @@ ddb		jhawk
 emulation	christos, fvdl, manu, jdolecek, mrg
 kevents		jdolecek
 ksyms		ragge
+modules		jnemeth
 lwp/pthread	nathanw
 ntp		simonb, jonathan
 pipes		jdolecek
@@ -256,53 +257,61 @@ Portmasters:
 [should be synced with src/distrib/notes/common/main]
 acorn26		bjh21
 acorn32		reinoud
+amd64		dsl
 algor		thorpej
-alpha		matt, ross
+alpha		matt
 amiga		is
+amigappc	is
 arc		soda
 atari		jdc
 bebox		core
 cats		chris
 cesfic		drochner
-cobalt		soren
+cobalt		cyber
+emips		pooka
 evbarm		thorpej
 evbmips		simonb
-evbppc		simonb, eeh
+evbppc		scw
 evbsh3		core
+ews4800mips	tsutsui
 hp300		tsutsui
-hp700		fredette
+hp700		skrll
 hpcarm		ichiro, toshii
 hpcmips		takemura
-hpcsh		uch
-i386		fvdl
+hpcsh		uwe
+i386		dsl
+ibmnws		matt
 iyonix		gavan
 luna68k		nisimura
 mac68k		scottr
-macppc		tsubai
+macppc		macallan
 mipsco		wdk
 mmeye		core
 mvme68k		scw
 mvmeppc		scw
+netwinder	matt
 news68k		tsutsui
 newsmips	tsubai
 next68k		core
-ofppc		ws
+ofppc		garbled
+pmax		simonb
 pc532		phil
-pmax		simonb, jonathan
+pmax		simonb
 pmppc		augustss
-prep		nonaka
-sandpoint	briggs
+prep		garbled
+sandpoint	nisimura
 sbmips		simonb
 sgimips		soren
 shark		thorpej
+sh3		msaitoh
 sparc		pk
-sparc64		martin, petrov
+sparc64		martin
 sun2		fredette
 sun3		nathanw, jeremy
 usermode	reinoud
 vax		ragge
 x68k		nsmrtks
-xen		cl, bouyer
+xen		bouyer
 
 
 MD Misc:
