@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.77 2012/05/25 10:53:46 elric Exp $ */
+/* $NetBSD: cgd.c,v 1.78 2012/12/05 02:23:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.77 2012/05/25 10:53:46 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.78 2012/12/05 02:23:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,7 @@ static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
 static int	cgd_ioctl_clr(struct cgd_softc *, struct lwp *);
+static int	cgd_ioctl_get(dev_t, void *, struct lwp *);
 static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
@@ -523,14 +524,23 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	DPRINTF_FOLLOW(("cgdioctl(0x%"PRIx64", %ld, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
-	GETCGD_SOFTC(cs, dev);
-	dksc = &cs->sc_dksc;
-	dk = &dksc->sc_dkdev;
+
 	switch (cmd) {
+	case CGDIOCGET: /* don't call cgd_spawn() if the device isn't there */
+		cs = NULL;
+		dksc = NULL;
+		dk = NULL;
+		break;
 	case CGDIOCSET:
 	case CGDIOCCLR:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
+		/* FALLTHROUGH */
+	default:
+		GETCGD_SOFTC(cs, dev);
+		dksc = &cs->sc_dksc;
+		dk = &dksc->sc_dkdev;
+		break;
 	}
 
 	switch (cmd) {
@@ -542,6 +552,8 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (DK_BUSY(&cs->sc_dksc, pmask))
 			return EBUSY;
 		return cgd_ioctl_clr(cs, l);
+	case CGDIOCGET:
+		return cgd_ioctl_get(dev, data, l);
 	case DIOCCACHESYNC:
 		/*
 		 * XXX Do we really need to care about having a writable
@@ -653,6 +665,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 
 	cs->sc_cdata.cf_blocksize = ci->ci_blocksize;
 	cs->sc_cdata.cf_mode = encblkno[i].v;
+	cs->sc_cdata.cf_keylen = ci->ci_keylen;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
 	    &cs->sc_cdata.cf_blocksize);
 	if (cs->sc_cdata.cf_blocksize > CGD_MAXBLOCKSIZE) {
@@ -660,7 +673,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		cs->sc_cdata.cf_blocksize, CGD_MAXBLOCKSIZE);
 	    cs->sc_cdata.cf_priv = NULL;
 	}
-		
+
 	/*
 	 * The blocksize is supposed to be in bytes. Unfortunately originally
 	 * it was expressed in bits. For compatibility we maintain encblkno
@@ -729,6 +742,44 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 	cs->sc_dksc.sc_flags &= ~DKF_INITED;
 	disk_detach(&cs->sc_dksc.sc_dkdev);
 
+	return 0;
+}
+
+static int
+cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
+{
+	struct cgd_softc *cs;
+	struct cgd_user *cgu;
+	int unit;
+
+	unit = CGDUNIT(dev);
+	cgu = (struct cgd_user *)data;
+
+	DPRINTF_FOLLOW(("cgd_ioctl_get(0x%"PRIx64", %d, %p, %p)\n",
+			   dev, unit, data, l));
+
+	if (cgu->cgu_unit == -1)
+		cgu->cgu_unit = unit;
+
+	if (cgu->cgu_unit < 0)
+		return EINVAL;	/* XXX: should this be ENXIO? */
+
+	cs = device_lookup_private(&cgd_cd, unit);
+	if (cs == NULL || (cs->sc_dksc.sc_flags & DKF_INITED) == 0) {
+		cgu->cgu_dev = 0;
+		cgu->cgu_alg[0] = '\0';
+		cgu->cgu_blocksize = 0;
+		cgu->cgu_mode = 0;
+		cgu->cgu_keylen = 0;
+	}
+	else {
+		cgu->cgu_dev = cs->sc_tdev;
+		strlcpy(cgu->cgu_alg, cs->sc_cfuncs->cf_name,
+		    sizeof(cgu->cgu_alg));
+		cgu->cgu_blocksize = cs->sc_cdata.cf_blocksize;
+		cgu->cgu_mode = cs->sc_cdata.cf_mode;
+		cgu->cgu_keylen = cs->sc_cdata.cf_keylen;
+	}
 	return 0;
 }
 
