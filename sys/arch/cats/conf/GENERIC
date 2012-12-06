@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2012/10/17 14:48:09 apb Exp $
+# $NetBSD: GENERIC,v 1.142 2012/12/06 06:25:25 msaitoh Exp $
 #
 # GENERIC machine description file
 # 
@@ -49,10 +49,6 @@ options 	CPU_SA110	# Support the SA110 core
 makeoptions	CPUFLAGS="-march=armv4 -mtune=strongarm"
 #options 	VERBOSE_INIT_ARM
 #options 	FCOM_INIT_ARM	# early console attach
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 
