@@ -253,7 +253,7 @@ int make_option_mask(uint8_t *mask, const char *opts, int add)
 }
 
 static int
-valid_length(uint8_t option, int dl, int *type)
+validate_length(uint8_t option, int dl, int *type)
 {
 	const struct dhcp_opt *opt;
 	ssize_t sz;
@@ -270,10 +270,13 @@ valid_length(uint8_t option, int dl, int *type)
 
 		if (opt->type == 0 ||
 		    opt->type & (STRING | RFC3442 | RFC5969))
-			return 0;
+			return dl;
 
-		if (opt->type & IPV4 && opt->type & ARRAY)
-			return (dl % sizeof(uint32_t) == 0 ? 0 : -1);
+		if (opt->type & IPV4 && opt->type & ARRAY) {
+			if (dl < (int)sizeof(uint32_t))
+				return -1;
+			return dl - (dl % sizeof(uint32_t));
+		}
 
 		sz = 0;
 		if (opt->type & (UINT32 | IPV4))
@@ -283,17 +286,20 @@ valid_length(uint8_t option, int dl, int *type)
 		if (opt->type & UINT8)
 			sz = sizeof(uint8_t);
 		/* If we don't know the size, assume it's valid */
-		return (sz == 0 || dl == sz ? 0 : -1);
+		if (sz == 0)
+			return dl;
+		return (dl < sz ? -1 : sz);
 	}
 
 	/* unknown option, so let it pass */
-	return 0;
+	return dl;
 }
 
 #ifdef DEBUG_MEMORY
 static void
 free_option_buffer(void)
 {
+
 	free(opt_buffer);
 }
 #endif
@@ -309,7 +315,7 @@ get_option(const struct dhcp_message *dhcp, uint8_t opt, int *len, int *type)
 	uint8_t overl = 0;
 	uint8_t *bp = NULL;
 	const uint8_t *op = NULL;
-	int bl = 0;
+	ssize_t bl = 0;
 
 	while (p < e) {
 		o = *p++;
@@ -358,7 +364,9 @@ get_option(const struct dhcp_message *dhcp, uint8_t opt, int *len, int *type)
 	}
 
 exit:
-	if (valid_length(opt, bl, type) == -1) {
+
+	bl = validate_length(opt, bl, type);
+	if (bl == -1) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -431,10 +439,14 @@ get_option_uint8(uint8_t *i, const struct dhcp_message *dhcp, uint8_t option)
 ssize_t
 decode_rfc3397(char *out, ssize_t len, int pl, const uint8_t *p)
 {
+	const char *start;
+	ssize_t start_len;
 	const uint8_t *r, *q = p;
 	int count = 0, l, hops;
 	uint8_t ltype;
 
+	start = out;
+	start_len = len;
 	while (q - p < pl) {
 		r = NULL;
 		hops = 0;
@@ -474,15 +486,19 @@ decode_rfc3397(char *out, ssize_t len, int pl, const uint8_t *p)
 			}
 		}
 		/* change last dot to space */
-		if (out)
+		if (out && out != start)
 			*(out - 1) = ' ';
 		if (r)
 			q = r;
 	}
 
 	/* change last space to zero terminator */
-	if (out)
-		*(out - 1) = 0;
+	if (out) {
+		if (out != start)
+			*(out - 1) = '\0';
+		else if (start_len > 0)
+			*out = '\0';
+	}
 
 	return count;  
 }
@@ -1177,7 +1193,7 @@ read_lease(const struct interface *iface)
 	return dhcp;
 }
 
-static ssize_t
+ssize_t
 print_string(char *s, ssize_t len, int dl, const uint8_t *data)
 {
 	uint8_t c;
