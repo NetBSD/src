@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1043.2.1 2012/07/02 18:01:16 jdc Exp $
+#	$NetBSD: files,v 1.1043.2.1.2.1 2012/12/06 18:01:21 matt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -126,7 +126,7 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 defflag	opt_sa.h		KERN_SA
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, KERN_SA, COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20, COMPAT_NETBSD
