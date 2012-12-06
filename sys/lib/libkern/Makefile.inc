@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2005/12/20 19:35:26 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.40.118.1 2012/12/06 17:13:31 matt Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -42,6 +42,7 @@ KERNMAKE= \
 	    TSORT=${TSORT:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    AR=${AR:Q} NM=${NM:Q} \
+	    CPUFLAGS= \
 	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:Q} \
