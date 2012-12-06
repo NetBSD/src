@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.39 2011/06/06 16:29:16 matt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.39.10.1 2012/12/06 17:57:25 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39 2011/06/06 16:29:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39.10.1 2012/12/06 17:57:25 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -102,10 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.39 2011/06/06 16:29:16 matt Exp 
 extern pv_addr_t irqstack;
 extern pv_addr_t undstack;
 extern pv_addr_t abtstack;
-extern pv_addr_t kernelstack;
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-extern u_int undefined_handler_address;
 
 /*
  *  Imported routines
