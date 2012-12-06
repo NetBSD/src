@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.47 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.48 2012/12/06 13:28:17 hauke Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.47 2012/10/27 17:17:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.48 2012/12/06 13:28:17 hauke Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,9 +409,8 @@ extern	int			*nofault, m68k_fault_addr;
 			data = (u_int8_t *) pending_5380_data;
 			drq = (volatile u_int8_t *) ncr_5380_with_drq;
 			while (count) {
-#define R1	*data++ = *drq++
-				R1; count--;
-#undef R1
+				*data++ = *drq++;
+				count--;
 			}
 			pending_5380_data += resid;
 			pending_5380_count -= resid;
@@ -440,9 +439,8 @@ extern	int			*nofault, m68k_fault_addr;
 		data = (u_int8_t *) long_data;
 		drq = (volatile u_int8_t *) long_drq;
 		while (count) {
-#define R1	*data++ = *drq++
-			R1; count--;
-#undef R1
+			*data++ = *drq++;
+			count--;
 		}
 		pending_5380_count -= dcount;
 		pending_5380_data += dcount;
