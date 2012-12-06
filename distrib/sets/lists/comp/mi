@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.6.2.1 2012/11/01 16:44:48 matt Exp $
+#	$NetBSD: mi,v 1.1738.2.6.2.2 2012/12/06 17:22:42 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -25,7 +25,7 @@
 ./usr/bin/ctfmerge				comp-util-bin		dtrace
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
-./usr/bin/elfedit				comp-util-bin		binutils
+./usr/bin/elfedit				comp-util-bin		binutils=219
 ./usr/bin/f77					comp-fortran-bin	gcc=3,gcccmds
 ./usr/bin/f77					comp-obsolete		gcc=4,obsolete
 ./usr/bin/fgen					comp-util-bin
@@ -3585,7 +3585,7 @@
 ./usr/libdata/debug/usr/bin/dns-sd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/bin/du.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eject.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/elfedit.debug	comp-util-debug		binutils,debug
+./usr/libdata/debug/usr/bin/elfedit.debug	comp-util-debug		binutils=219,debug
 ./usr/libdata/debug/usr/bin/env.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/error.debug		comp-util-debug		debug
@@ -4609,7 +4609,7 @@
 ./usr/share/man/cat1/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/elf2aout.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat1/elf2ecoff.0		comp-sysutil-catman	.cat
-./usr/share/man/cat1/elfedit.0			comp-util-catman	binutils,.cat
+./usr/share/man/cat1/elfedit.0			comp-util-catman	binutils=219,.cat
 ./usr/share/man/cat1/f77.0			comp-fortran-catman	gcc=3,gcccmds,.cat
 ./usr/share/man/cat1/f77.0			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/cat1/fgen.0			comp-util-catman	.cat
@@ -11001,7 +11001,7 @@
 ./usr/share/man/html1/cvs.html			comp-cvs-htmlman	cvs,html
 ./usr/share/man/html1/elf2aout.html		comp-sysutil-htmlman	html
 ./usr/share/man/html1/elf2ecoff.html		comp-sysutil-htmlman	html
-./usr/share/man/html1/elfedit.html		comp-util-htmlman	binutils,html
+./usr/share/man/html1/elfedit.html		comp-util-htmlman	binutils=219,html
 ./usr/share/man/html1/f77.html			comp-fortran-htmlman	gcc=3,gcccmds,html
 ./usr/share/man/html1/fgen.html			comp-util-htmlman	html
 ./usr/share/man/html1/flex.html			comp-c-htmlman		html
@@ -17128,7 +17128,7 @@
 ./usr/share/man/man1/cvs.1			comp-cvs-man		cvs,.man
 ./usr/share/man/man1/elf2aout.1			comp-sysutil-man	.man
 ./usr/share/man/man1/elf2ecoff.1		comp-sysutil-man	.man
-./usr/share/man/man1/elfedit.1			comp-util-man		binutils,.man
+./usr/share/man/man1/elfedit.1			comp-util-man		binutils=219,.man
 ./usr/share/man/man1/f77.1			comp-fortran-man	gcc=3,gcccmds,.man
 ./usr/share/man/man1/f77.1			comp-obsolete		gcc=4,obsolete
 ./usr/share/man/man1/fgen.1			comp-util-man		.man
