@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1145 2012/12/05 16:19:46 christos Exp $
+$NetBSD: pcidevs,v 1.1146 2012/12/06 12:46:49 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2871,6 +2871,7 @@ product INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
 product INTEL 82801BA_HPB	0x244e	82801BA Hub-PCI Bridge
+product INTEL 82801E_LPC	0x2450	82801E LPC Interface Bridge
 product INTEL 82801E_SMB	0x2453	82801E SMBus Controller
 product INTEL 82801E_LAN_1	0x2459	82801E LAN Controller
 product INTEL 82801E_LAN_2	0x245d	82801E LAN Controller
@@ -3030,6 +3031,7 @@ product INTEL 82945GM_IGD	0x27a2	82945GM/PM/GMS Integrated Graphics Device
 product INTEL 82945GM_IGD_1	0x27a6	82945GM/PM/GMS Integrated Graphics Device
 product INTEL 82945GME_HB	0x27ac	82945GME Host Bridge
 product INTEL 82945GME_IGD	0x27ae	82945GME Integrated Graphics Device
+product INTEL 82801GH_LPC	0x27b0	82801GH LPC Interface Bridge
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
 product INTEL NM10_LPC		0x27bc	NM10 Family LPC Interface Bridge
@@ -3252,7 +3254,18 @@ product INTEL 82801JD_PCIE_4	0x3a76	82801JD PCI Express Port
 product INTEL 82801JD_PCIE_5	0x3a78	82801JD PCI Express Port
 product INTEL 82801JD_PCIE_6	0x3a7a	82801JD PCI Express Port
 product INTEL 82801JD_LAN	0x3a7c	82801JD LAN Controller
-product INTEL 3400_LPC		0x3b14	3400 LPC Interface Bridge
+product INTEL P55_LPC		0x3b02	P55 LPC Interface Bridge
+product INTEL PM55_LPC		0x3b03	PM55 LPC Interface Bridge
+product INTEL H55_LPC		0x3b06	H55 LPC Interface Bridge
+product INTEL QM57_LPC		0x3b07	QM57 LPC Interface Bridge
+product INTEL H57_LPC		0x3b08	H57 LPC Interface Bridge
+product INTEL HM55_LPC		0x3b09	HM55 LPC Interface Bridge
+product INTEL Q57_LPC		0x3b0a	Q57 LPC Interface Bridge
+product INTEL HM57_LPC		0x3b0b	HM57 LPC Interface Bridge
+product INTEL QS57_LPC		0x3b0f	QS57 LPC Interface Bridge
+product INTEL 3400_LPC		0x3b12	3400 LPC Interface Bridge
+product INTEL 3420_LPC		0x3b14	3420 LPC Interface Bridge
+product INTEL 3450_LPC		0x3b16	3450 LPC Interface Bridge
 product INTEL 3400_SATA_1	0x3b20	3400 SATA
 product INTEL 3400_SATA_2	0x3b21	3400 SATA
 product INTEL 3400_AHCI_1	0x3b22	3400 AHCI
