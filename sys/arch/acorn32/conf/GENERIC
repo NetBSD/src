@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.104 2012/10/17 14:48:07 apb Exp $
+# 	$NetBSD: GENERIC,v 1.105 2012/12/06 06:25:24 msaitoh Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.104 $"
+#ident		"GENERIC-$Revision: 1.105 $"
 
 # estimated number of users
 maxusers	32
@@ -41,9 +41,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # For StrongARM only kernels
 #makeoptions	COPTS="-O2 -march=armv3m -mtune=strongarm"
-
-# FPA options
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 

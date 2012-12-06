@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.82 2012/06/05 08:44:08 abs Exp $
+#	$NetBSD: INSTALL,v 1.83 2012/12/06 06:25:25 msaitoh Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -23,10 +23,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	COPTS="-Os -march=armv4 -mtune=strongarm" # optimise for space
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
 
