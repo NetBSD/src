@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.128.4.1 2012/12/06 16:07:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128 2012/01/25 00:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128.4.1 2012/12/06 16:07:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	size_t		size, alloc_size;
 	void 		*data, *memp;
 #define	STK_PARAMS	128
-	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
+	u_long		stkbuf[STK_PARAMS/sizeof(u_long)] __aligned(__ALIGNBYTES+1);
 
 	memp = NULL;
 	alloc_size = 0;
