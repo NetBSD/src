@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.3 2012/12/01 15:11:43 christos Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.4 2012/12/07 02:27:41 christos Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.3 2012/12/01 15:11:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.4 2012/12/07 02:27:41 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -86,13 +86,14 @@ static bool portalgo_debug = true;
 #define DPRINTF while (/*CONSTCOND*/0) printf
 #endif
 
+typedef __BITMAP_TYPE(, uint32_t, 0x10000) bitmap;
 #ifdef INET
 static int inet4_portalgo = PORTALGO_BSD;
-static uint32_t inet4_reserve[__BITMAP_SIZE(uint32_t, 0x10000)];
+static bitmap inet4_reserve;
 #endif
 #ifdef INET6
 static int inet6_portalgo = PORTALGO_BSD;
-static uint32_t inet6_reserve[__BITMAP_SIZE(uint32_t, 0x10000)];
+static bitmap inet6_reserve;
 #endif
 
 typedef struct {
@@ -253,7 +254,7 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		struct inpcb *pcb;
 		struct sockaddr_in sin;
 
-		if (__BITMAP_ISSET(port, inet4_reserve))
+		if (__BITMAP_ISSET(port, &inet4_reserve))
 			return false;
 
 		sin.sin_addr = inp->inp_laddr;
@@ -298,7 +299,7 @@ check_suitable_port(uint16_t port, struct inpcb_hdr *inp_hdr, kauth_cred_t cred)
 		struct sockaddr_in6 sin6;
 		void *t;
 
-		if (__BITMAP_ISSET(port, inet6_reserve))
+		if (__BITMAP_ISSET(port, &inet6_reserve))
 			return false;
 
 		sin6.sin6_addr = in6p->in6p_laddr;
@@ -901,7 +902,7 @@ sysctl_portalgo_selected(SYSCTLFN_ARGS, int *algo)
 }
 
 static int
-sysctl_portalgo_reserve(SYSCTLFN_ARGS, uint32_t *bt)
+sysctl_portalgo_reserve(SYSCTLFN_ARGS, bitmap *bt)
 {
 	struct sysctlnode node;
 	int error;
@@ -942,7 +943,7 @@ int
 sysctl_portalgo_reserve4(SYSCTLFN_ARGS)
 {
 
-	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), inet4_reserve);
+	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), &inet4_reserve);
 }
 #endif
 
@@ -957,7 +958,7 @@ sysctl_portalgo_selected6(SYSCTLFN_ARGS)
 int
 sysctl_portalgo_reserve6(SYSCTLFN_ARGS)
 {
-	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), inet6_reserve);
+	return sysctl_portalgo_reserve(SYSCTLFN_CALL(rnode), &inet6_reserve);
 }
 #endif
 
