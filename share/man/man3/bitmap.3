@@ -1,4 +1,4 @@
-.\"	$NetBSD: bitmap.3,v 1.6 2012/12/04 18:10:25 wiz Exp $
+.\"	$NetBSD: bitmap.3,v 1.7 2012/12/07 01:54:42 christos Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2012
+.Dd December 6, 2012
 .Dt BITMAP 3
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm __BITMAP_ISSET ,
 .Nm __BITMAP_SET ,
 .Nm __BITMAP_SIZE ,
+.Nm __BITMAP_TYPE ,
 .Nm __BITMAP_ZERO
 .Nd bitmap manipulation macros
 .Sh LIBRARY
@@ -45,6 +46,7 @@
 .Fn __BITMAP_ISSET "int bit" "type *bitmap"
 .Fn __BITMAP_SET "int bit" "type *bitmap"
 .Fn __BITMAP_SIZE "type" "int nbits"
+.Fn __BITMAP_TYPE "name" "type" "int nbits"
 .Fn __BITMAP_ZERO "type *bitmap"
 .Sh DESCRIPTION
 The supplied macros are similar to the
@@ -71,9 +73,10 @@ The following macros are provided for manipulating creating and manipulating
 bitmaps:
 .Pp
 .Fn __BITMAP_CLR bit bitmap
-initializes a descriptor set pointed to by
-.Fa bitmap
-to the null set.
+removes the given
+.Fa bit
+from the
+.Fa bitmap .
 .Pp
 .Fn __BITMAP_ISSET bit bitmap
 is non-zero if
@@ -82,23 +85,31 @@ is a member of
 .Fa bitmap ,
 zero otherwise.
 .Pp
-.Fn __BITMAP_SIZE type nbits
-Returns the number of elements would be required of the given
-.Fa type
-to hold
-.Fa nbits .
-.Pp
 .Fn __BITMAP_SET bit bitmap
 Sets the given
 .Fa bit
 in the
 .Fa bitmap .
 .Pp
-.Fn __BITMAP_CLR bit bitmap
-removes the given
-.Fa bit
-from the
-.Fa bitmap .
+.Fn __BITMAP_SIZE type nbits
+Returns the number of elements would be required of the given
+.Fa type
+to hold
+.Fa nbits .
+.Pp
+.Fn __BITMAP_TYPE name type nbits
+Declares the properly sized bitmap structure
+of the given
+.Fa type
+that holds
+.Fa nbits
+and is named
+.Fa name .
+.Pp
+.Fn __BITMAP_ZERO bit bitmap
+initializes a descriptor set pointed to by
+.Fa bitmap
+to the null set.
 .Pp
 The behavior of these macros is undefined for negative
 bit values or ones greater than the number of bits the bitmap can hold.
@@ -109,19 +120,19 @@ bit values or ones greater than the number of bits the bitmap can hold.
 int
 main(int argc, char **argv)
 {
-	uint32_t bitmap[__BITMAP_SIZE(uint32_t, 5000)];
+	__BITMAP_TYPE(, uint32_t, 5000) bitmap;
 
 	/* Initialize the read set to null */
-	__BITMAP_ZERO(bitmap);
+	__BITMAP_ZERO(\*[Am]bitmap);
 
 	/* Set bit 1 */
-	__BITMAP_SET(1, bitmap);
+	__BITMAP_SET(1, \*[Am]bitmap);
 
 	for (size_t i = 0; i \*[Lt] 5000; i++) {
-		if (__BITMAP_ISSET(i, bitmap)) {
+		if (__BITMAP_ISSET(i, \*[Am]bitmap)) {
 			/* Should just print 1 */
 			printf("Bit %zu is set\en", i);
-			__BITMAP_CLR(i, bitmap);
+			__BITMAP_CLR(i, \*[Am]bitmap);
 		}
 		break;
 	}

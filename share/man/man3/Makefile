@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2012/12/01 20:33:02 christos Exp $
+#	$NetBSD: Makefile,v 1.81 2012/12/07 01:54:41 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -272,6 +272,7 @@ MLINKS+=bitmap.3 __BITMAP_CLR.3 \
 	bitmap.3 __BITMAP_ISSET.3 \
 	bitmap.3 __BITMAP_SET.3 \
 	bitmap.3 __BITMAP_SIZE.3 \
+	bitmap.3 __BITMAP_TYPE.3 \
 	bitmap.3 __BITMAP_ZERO.3
 
 .include <bsd.man.mk>
