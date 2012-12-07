@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.18 2008/01/16 13:08:54 jmcneill Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.19 2012/12/07 05:56:30 msaitoh Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.18 2008/01/16 13:08:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.19 2012/12/07 05:56:30 msaitoh Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
@@ -465,8 +465,9 @@ void msp_read_id(bktr_ptr_t bktr) {
     rev1 = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x001e);
     rev2 = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x001f);
 
-    sprintf(bktr->msp_version_string, "34%02d%c-%c%d",
-      (rev2>>8)&0xff, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@', rev2&0x1f);
+    snprintf(bktr->msp_version_string, sizeof bktr->msp_version_string,
+	"34%02d%c-%c%d", (rev2>>8)&0xff, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@',
+	rev2&0x1f);
 
 }
 
@@ -475,7 +476,7 @@ void msp_read_id(bktr_ptr_t bktr) {
  * For the MSP3430G, we use fast autodetect mode
  * For the MSP3410/3415 there are two schemes for this
  *  a) Fast autodetection - the chip is put into autodetect mode, and the function
- *     returns immediatly. This works in most cases and is the Default Mode.
+ *     returns immediately. This works in most cases and is the Default Mode.
  *  b) Slow mode. The function sets the MSP3410/3415 chip, then waits for feedback from
  *     the chip and re-programs it if needed.
  */
@@ -613,8 +614,9 @@ void dpl_read_id(bktr_ptr_t bktr) {
     rev1 = msp_dpl_read(bktr, bktr->dpl_addr, 0x12, 0x001e);
     rev2 = msp_dpl_read(bktr, bktr->dpl_addr, 0x12, 0x001f);
 
-    sprintf(bktr->dpl_version_string, "34%02d%c-%c%d",
-      ((rev2>>8)&0xff)-1, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@', rev2&0x1f);
+    snprintf(bktr->dpl_version_string, sizeof bktr->dpl_version_string,
+	"34%02d%c-%c%d", ((rev2>>8)&0xff)-1, (rev1&0xff)+'@',
+	((rev1>>8)&0xff)+'@', rev2&0x1f);
 }
 
 /* Configure the DPL chip to Auto-detect the audio format */
