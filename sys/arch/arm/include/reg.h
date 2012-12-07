@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.3 2012/12/05 19:05:46 matt Exp $	*/
+/*	$NetBSD: reg.h,v 1.4 2012/12/07 18:49:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1994, 1995 Frank Lancaster
@@ -51,7 +51,7 @@ struct vfpreg {
 	uint32_t vfp_fpscr;
 	uint32_t vfp_fpinst;
 	uint32_t vfp_fpinst2;
-	uint32_t vfp_regs[33];	/* In case we need fstmx format.  */
+	uint64_t vfp_regs[33];	/* In case we need fstmx format.  */
 };
 
 struct fpreg {
