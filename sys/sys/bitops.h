@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.10 2012/12/01 15:03:47 christos Exp $	*/
+/*	$NetBSD: bitops.h,v 1.11 2012/12/07 02:27:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -294,31 +294,35 @@ fast_remainder32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
 	return _v - _div * fast_divide32(_v, _div, _m, _s1, _s2);
 }
 
+#define __BITMAP_TYPE(__s, __t, __n) struct __s { \
+    __t _b[__BITMAP_SIZE(__t, __n)]; \
+}
+
 #define __BITMAP_BITS(__t)		(sizeof(__t) * NBBY)
 #define __BITMAP_SHIFT(__t)		(ilog2(__BITMAP_BITS(__t)))
 #define __BITMAP_MASK(__t)		(__BITMAP_BITS(__t) - 1)
 #define __BITMAP_SIZE(__t, __n) \
     (((__n) + (__BITMAP_BITS(__t) - 1)) / __BITMAP_BITS(__t))
 #define __BITMAP_BIT(__n, __v) \
-    (1 << ((__n) & __BITMAP_MASK(*__v)))
+    (1 << ((__n) & __BITMAP_MASK(*(__v)->_b)))
 #define __BITMAP_WORD(__n, __v) \
-    ((__n) >> __BITMAP_SHIFT(*__v))
+    ((__n) >> __BITMAP_SHIFT(*(__v)->_b))
 
 #define __BITMAP_SET(__n, __v) \
-    (__v[__BITMAP_WORD(__n, __v)] |= __BITMAP_BIT(__n, __v))
+    ((__v)->_b[__BITMAP_WORD(__n, __v)] |= __BITMAP_BIT(__n, __v))
 #define __BITMAP_CLR(__n, __v) \
-    (__v[__BITMAP_WORD(__n, __v)] &= ~__BITMAP_BIT(__n, __v))
+    ((__v)->_b[__BITMAP_WORD(__n, __v)] &= ~__BITMAP_BIT(__n, __v))
 #define __BITMAP_ISSET(__n, __v) \
-    (__v[__BITMAP_WORD(__n, __v)] & __BITMAP_BIT(__n, __v))
+    ((__v)->_b[__BITMAP_WORD(__n, __v)] & __BITMAP_BIT(__n, __v))
 
 #if __GNUC_PREREQ__(2, 95)
 #define	__BITMAP_ZERO(__v) \
-    (void)__builtin_memset((__v), 0, sizeof(__v))
+    (void)__builtin_memset((__v), 0, sizeof(*__v))
 #else
 #define __BITMAP_ZERO(__v) do {						\
 	size_t __i;							\
-	for (__i = 0; __i < __arraycount(__v); __i++)			\
-		(__v)[__i] = 0;						\
+	for (__i = 0; __i < __arraycount(__v->_b); __i++)		\
+		(__v)->_b[__i] = 0;					\
 	} while (/* CONSTCOND */ 0)
 #endif /* GCC 2.95 */
 
