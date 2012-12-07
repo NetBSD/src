@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.4 2012/09/01 11:11:31 matt Exp $
+$NetBSD: README.evbarm,v 1.5 2012/12/07 00:02:36 khorben Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -31,6 +31,7 @@ MINI2440	2012/01/30	FrendlyARM Mini2440 S3C2440 SoC board
 MMNET_GENERIC	2011/11/04	Propox MMnet1002 board
 MPCSA_GENERIC	2008/07/03	MPCSA Atmel AT91RM9200 based board
 MV2120		2011/07/20	HP Media Vault MV2011 Marvell Orion board
+N900		2012/12/07	Nokia N900 smartphone
 NAPPI		2002/07/15	Netwise APlication Platform Board
 NETWALKER	2010/11/13	Sharp NetWalker
 NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")

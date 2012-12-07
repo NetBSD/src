@@ -1,0 +1,311 @@
+#
+#	$NetBSD: N900,v 1.1 2012/12/07 00:02:36 khorben Exp $
+#
+#	N900 -- Nokia N900 Kernel
+#
+
+include	"arch/evbarm/conf/std.n900"
+
+# estimated number of users
+
+maxusers	32
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# CPU options
+
+options 	CPU_CORTEXA8
+options 	OMAP_3530
+options 	PMAPCOUNTERS
+
+# Architecture options
+
+# File systems
+
+file-system	FFS		# UFS
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network file system
+#file-system 	ADOSFS		# AmigaDOS-compatible file system
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+file-system	TMPFS		# memory file system
+file-system	PTYFS		# /dev/pts/N support
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	FFS_EI		# FFS Endian Independent support
+#options 	NFSSERVER
+options 	WAPBL		# File system journaling support
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options		NFS_BOOT_BOOTSTATIC
+#options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
+#options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
+#options		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options		NFS_BOOTSTATIC_SERVADDR="\"192.168.1.1\""
+#options		NFS_BOOTSTATIC_SERVER="\"192.168.1.1:/nfs/sdp2430\""
+
+options		NFS_BOOT_RWSIZE=1024
+
+# Compatibility options
+
+#options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_60	# NetBSD 6.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_20	# NetBSD 2.0 compatibility.
+#options 	COMPAT_16	# NetBSD 1.6 compatibility.
+#options 	COMPAT_15	# NetBSD 1.5 compatibility.
+#options 	COMPAT_14	# NetBSD 1.4 compatibility.
+#options 	COMPAT_13	# NetBSD 1.3 compatibility.
+#options 	COMPAT_12	# NetBSD 1.2 compatibility.
+#options 	COMPAT_11	# NetBSD 1.1 compatibility.
+#options 	COMPAT_10	# NetBSD 1.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+#options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Shared memory options
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MINIROOTSIZE=1000	# Size in blocks
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+#options 	KMEMSTATS	# kernel memory statistics
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internally consistency checks
+#options 	DEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options		DDB_ONPANIC=1
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=530000
+
+## USB Debugging options
+options USB_DEBUG
+options EHCI_DEBUG
+options OHCI_DEBUG
+options UHUB_DEBUG
+
+
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+options		BOOT_ARGS="\"\""
+
+config		netbsd		root on ? type ?
+
+# The main bus device
+mainbus0	at root
+
+# The boot cpu
+cpu0		at mainbus?
+
+# Specify the memory size in megabytes.
+options		MEMSIZE=256
+
+# L3 Interconnect
+L3i0		at mainbus?
+
+# OBIO
+obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
+obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP
+obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
+#obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL
+
+# General Purpose Memory Controller
+gpmc0		at mainbus? base 0x6e000000
+
+# SDHC controllers
+sdhc0		at obio0 addr 0x4809C000 size 0x0400 intr 83
+#sdhc1		at obio0 addr 0x480B4000 size 0x0400 intr 86
+#sdhc2		at obio0 addr 0x480AD000 size 0x0400 intr 94
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+
+
+# NAND controller
+omapnand0	at gpmc? addr 0x30000000
+
+# NAND layer
+nand0		at nandbus?
+
+# use the bad block table
+options NAND_BBT
+
+# Define flash partitions for board
+flash0		at nand0 offset 0x0000040 size 0x3602000 # MyDocs
+flash1		at nand0 offset 0x3602040 size 0x0400000 # filesystem
+flash2		at nand0 offset 0x3a02040 size 0x0180000 # swap
+
+# Interrupt Controller
+omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
+omapgpio0	at obio1 addr 0x48310000 size 0x0400 intrbase 96  intr 29
+#omapgpio1	at obio2 addr 0x49050000 size 0x0400 intrbase 128 intr 30
+#omapgpio2	at obio2 addr 0x49052000 size 0x0400 intrbase 160 intr 31
+#omapgpio3	at obio2 addr 0x49054000 size 0x0400 intrbase 192 intr 32
+omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
+#omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
+
+gpio*		at omapgpio?
+
+# # I2C Controller
+# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
+# iic*		at omapi2c?
+# # omap's own i2c address
+# options		OMAP_I2C_ADDRESS=0xe
+# # i2c bus clock low and high times in ns
+# options		I2C_LOW_TIME_nSEC=1500
+# options		I2C_HIGH_TIME_nSEC=1000
+
+# On-board 16550 UARTs
+com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
+#options 	CONSADDR=0x49020000, CONSPEED=38400
+options 	CONSADDR=0x49020000, CONSPEED=115200
+
+# Operating System Timer
+omapmputmr0	at obio2 addr 0x49032000 intr 38	# GP Timer 2
+# Statistics Timer
+omapmputmr1	at obio2 addr 0x49034000 intr 39	# GP Timer 3
+# Microtime Reference Timer
+omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
+options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
+
+# Watchdog timers
+#omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
+#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
+#omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# onboard video
+omapfb*		at obio0 addr 0x48050000 size 0x10000
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options		FONT_QVSS8x15
+#options 	FONT_GALLANT12x22	# the console font
+
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# Power, Reset and Clock Management
+prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+
+# On-board USB
+#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
+#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
+#usb*		at ohci?
+#usb*		at ehci?
+#uhub*		at usb?
+#uhub*		at uhub? port ?
+#umass*		at uhub? port ? configuration ? interface ?
+#wd*		at umass?
+#uhidev*		at uhub?
+#ukbd*		at uhidev?
+#ums*		at uhidev?
+#wskbd*		at ukbd?
+#wsmouse*	at ums?
+
+#axe*		at uhub? port ? configuration ? interface ?
+
+# Hardware clocking and power management
+
+options		HWCLOCK
+options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
+options		OMAP_CK_REF_SPEED=12000000
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	fss			# file system snapshot device
+#pseudo-device	putter			# for puffs and pud
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	loop			# network loopback
+#pseudo-device	kttcp			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#options	RND_COM
+#pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
