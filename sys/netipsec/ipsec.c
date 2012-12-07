@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.56 2012/03/13 18:41:00 elad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.57 2012/12/07 15:29:38 christos Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.56 2012/03/13 18:41:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.57 2012/12/07 15:29:38 christos Exp $");
 
 /*
  * IPsec controller part.
@@ -1155,12 +1155,12 @@ ipsec_delpcbpolicy(struct inpcbpolicy *p)
 
 /* initialize policy in PCB */
 int
-ipsec_init_policy(struct socket *so, struct inpcbpolicy **pcb_sp)
+ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 {
 	struct inpcbpolicy *new;
 
 	/* sanity check. */
-	if (so == NULL || pcb_sp == NULL)
+	if (so == NULL || policy == NULL)
 		panic("ipsec_init_policy: NULL pointer was passed");
 
 	new = malloc(sizeof(*new), M_SECA, M_NOWAIT|M_ZERO);
@@ -1189,7 +1189,7 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **pcb_sp)
 	new->sp_out->state = IPSEC_SPSTATE_ALIVE;
 	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
 
-	*pcb_sp = new;
+	*policy = new;
 
 	return 0;
 }
@@ -1278,7 +1278,7 @@ fail:
 /* set policy and ipsec request if present. */
 static int
 ipsec_set_policy(
-	struct secpolicy **pcb_sp,
+	struct secpolicy **policy,
 	int optname,
 	const void *request,
 	size_t len,
@@ -1290,7 +1290,7 @@ ipsec_set_policy(
 	int error;
 
 	/* sanity check. */
-	if (pcb_sp == NULL || *pcb_sp == NULL || request == NULL)
+	if (policy == NULL || *policy == NULL || request == NULL)
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
@@ -1321,8 +1321,8 @@ ipsec_set_policy(
 	newsp->state = IPSEC_SPSTATE_ALIVE;
 
 	/* clear old SP and set new SP */
-	KEY_FREESP(pcb_sp);
-	*pcb_sp = newsp;
+	KEY_FREESP(policy);
+	*policy = newsp;
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
 		printf("ipsec_set_policy: new policy\n");
 		kdebug_secpolicy(newsp));
@@ -1331,14 +1331,14 @@ ipsec_set_policy(
 }
 
 static int
-ipsec_get_policy(struct secpolicy *pcb_sp, struct mbuf **mp)
+ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
 {
 
 	/* sanity check. */
-	if (pcb_sp == NULL || mp == NULL)
+	if (policy == NULL || mp == NULL)
 		return EINVAL;
 
-	*mp = key_sp2msg(pcb_sp);
+	*mp = key_sp2msg(policy);
 	if (!*mp) {
 		ipseclog((LOG_DEBUG, "ipsec_get_policy: No more memory.\n"));
 		return ENOBUFS;
@@ -1357,7 +1357,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 		  size_t len, kauth_cred_t cred)
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **policy;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL)
@@ -1372,10 +1372,10 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &inp->inp_sp->sp_in;
+		policy = &inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &inp->inp_sp->sp_out;
+		policy = &inp->inp_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
@@ -1383,7 +1383,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 		return EINVAL;
 	}
 
-	return ipsec_set_policy(pcb_sp, optname, request, len, cred);
+	return ipsec_set_policy(policy, optname, request, len, cred);
 }
 
 int
@@ -1391,7 +1391,7 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 		  struct mbuf **mp)
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *policy;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL || mp == NULL)
@@ -1404,10 +1404,10 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = inp->inp_sp->sp_in;
+		policy = inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = inp->inp_sp->sp_out;
+		policy = inp->inp_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
@@ -1415,7 +1415,7 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(policy, mp);
 }
 
 /* delete policy in PCB */
@@ -1449,7 +1449,7 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 		  size_t len, kauth_cred_t cred)
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **policy;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL)
@@ -1461,10 +1461,10 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_in;
+		policy = &in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_out;
+		policy = &in6p->in6p_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
@@ -1472,7 +1472,7 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 		return EINVAL;
 	}
 
-	return ipsec_set_policy(pcb_sp, optname, request, len, cred);
+	return ipsec_set_policy(policy, optname, request, len, cred);
 }
 
 int
@@ -1480,7 +1480,7 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 		  struct mbuf **mp)
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *policy;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL || mp == NULL)
@@ -1493,10 +1493,10 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = in6p->in6p_sp->sp_in;
+		policy = in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = in6p->in6p_sp->sp_out;
+		policy = in6p->in6p_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
@@ -1504,7 +1504,7 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(policy, mp);
 }
 
 int
