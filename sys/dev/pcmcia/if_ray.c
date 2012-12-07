@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.80 2012/10/27 17:18:36 chs Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.81 2012/12/07 05:45:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.80 2012/10/27 17:18:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.81 2012/12/07 05:45:17 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2702,7 +2702,7 @@ ray_start_join_net_done(struct ray_softc *sc, u_int cmd, bus_size_t ccs, u_int s
 				break;
 		}
 		sc->sc_cnwid.i_len = i;
-		memcpy(sc->sc_cnwid.i_nwid, np.p_ssid, sizeof(sc->sc_cnwid));
+		memcpy(sc->sc_cnwid.i_nwid, np.p_ssid, i);
 		sc->sc_omode = sc->sc_mode;
 		if (np.p_net_type != sc->sc_mode)
 			return (ray_start_join_net);
