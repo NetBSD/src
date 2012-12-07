@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.4.4.2 2012/11/28 22:50:03 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.4.4.3 2012/12/07 00:00:20 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.4.4.2 2012/11/28 22:50:03 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.4.4.3 2012/12/07 00:00:20 matt Exp $")
 
 #undef VERBOSE_INIT_ARM
 #define VERBOSE_INIT_ARM
@@ -83,6 +83,7 @@ _C_LABEL(bcm53xx_start):
 	 * Cal the initial start code for the a9
 	 */
 	bl	a9_start
+	cps	#PSR_SVC32_MODE
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
