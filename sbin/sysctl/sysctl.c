@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.147 2012/12/05 13:53:39 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.148 2012/12/07 02:27:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.147 2012/12/05 13:53:39 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.148 2012/12/07 02:27:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2692,8 +2692,10 @@ mode_bits(HANDLER_ARGS)
 	}
 }
 
+typedef __BITMAP_TYPE(, uint32_t, 0x10000) bitmap;
+
 static char *
-bitmask_print(const uint32_t *o)
+bitmask_print(const bitmap *o)
 {
 	char *s, *os;
 
@@ -2717,12 +2719,13 @@ bitmask_print(const uint32_t *o)
 }
 
 static void
-bitmask_scan(const void *v, uint32_t *o)
+bitmask_scan(const void *v, bitmap *o)
 {
 	char *s = strdup(v);
 	if (s == NULL)
 		err(1, "");
 
+	__BITMAP_ZERO(o);
 	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
 		char *e;
 		errno = 0;
@@ -2741,17 +2744,15 @@ reserve(HANDLER_ARGS)
 {
 	int rc;
 	size_t osz, nsz;
-	uint32_t o[__BITMAP_SIZE(uint32_t, MAXPORTS)];
-	uint32_t n[__BITMAP_SIZE(uint32_t, MAXPORTS)];
+	bitmap o, n;
 
 	if (fn)
 		trim_whitespace(value, 3);
 
 	osz = sizeof(o);
 	if (value) {
-		__BITMAP_ZERO(n);
-		bitmask_scan(value, n);
-		value = (char *)n;
+		bitmask_scan(value, &n);
+		value = (char *)&n;
 		nsz = sizeof(n);
 	} else
 		nsz = 0;
@@ -2766,10 +2767,10 @@ reserve(HANDLER_ARGS)
 		return;
 
 	if (rflag || xflag)
-		display_struct(pnode, sname, o, sizeof(o),
+		display_struct(pnode, sname, &o, sizeof(o),
 		    value ? DISPLAY_OLD : DISPLAY_VALUE);
 	else {
-		char *s = bitmask_print(o);
+		char *s = bitmask_print(&o);
 		display_string(pnode, sname, s, strlen(s),
 		    value ? DISPLAY_OLD : DISPLAY_VALUE);
 		free(s);
@@ -2777,10 +2778,10 @@ reserve(HANDLER_ARGS)
 
 	if (value) {
 		if (rflag || xflag)
-			display_struct(pnode, sname, n, sizeof(n),
+			display_struct(pnode, sname, &n, sizeof(n),
 			    DISPLAY_NEW);
 		else {
-			char *s = bitmask_print(n);
+			char *s = bitmask_print(&n);
 			display_string(pnode, sname, s, strlen(s), DISPLAY_NEW);
 			free(s);
 		}
