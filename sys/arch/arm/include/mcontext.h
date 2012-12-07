@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.12 2012/12/05 19:05:46 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.13 2012/12/07 18:49:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -76,9 +76,15 @@ typedef struct {
 } __fpregset_t;
 
 typedef struct {
+#ifdef __ARM_EABI__
+	unsigned int	__vfp_fpscr;
+	uint64_t	__vfp_fstmx[32];
+	unsigned int	__vfp_fpsid;
+#else
 	unsigned int	__vfp_fpscr;
 	unsigned int	__vfp_fstmx[33];
 	unsigned int	__vfp_fpsid;
+#endif
 } __vfpregset_t;
 
 typedef struct {
