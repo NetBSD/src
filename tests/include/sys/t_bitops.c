@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.15 2012/12/04 06:57:44 jruoho Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.16 2012/12/07 02:28:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.15 2012/12/04 06:57:44 jruoho Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.16 2012/12/07 02:28:19 christos Exp $");
 
 #include <atf-c.h>
 
@@ -72,8 +72,8 @@ ATF_TC_HEAD(bitmap_basic, tc)
 
 ATF_TC_BODY(bitmap_basic, tc)
 {
-	uint32_t bm[__BITMAP_SIZE(uint32_t, 65536)];
-	__BITMAP_ZERO(bm);
+	__BITMAP_TYPE(, uint32_t, 65536) bm;
+	__BITMAP_ZERO(&bm);
 
 	ATF_REQUIRE(__BITMAP_SIZE(uint32_t, 65536) == 2048);
 
@@ -82,21 +82,21 @@ ATF_TC_BODY(bitmap_basic, tc)
 	ATF_REQUIRE(__BITMAP_MASK(uint32_t) == 31);
 
 	for (size_t i = 0; i < 65536; i += 2)
-		__BITMAP_SET(i, bm);
+		__BITMAP_SET(i, &bm);
 
 	for (size_t i = 0; i < 2048; i++)
-		ATF_REQUIRE(bm[i] == 0x55555555);
+		ATF_REQUIRE(bm._b[i] == 0x55555555);
 
 	for (size_t i = 0; i < 65536; i++)
 		if (i & 1)
-			ATF_REQUIRE(!__BITMAP_ISSET(i, bm));
+			ATF_REQUIRE(!__BITMAP_ISSET(i, &bm));
 		else {
-			ATF_REQUIRE(__BITMAP_ISSET(i, bm));
-			__BITMAP_CLR(i, bm);
+			ATF_REQUIRE(__BITMAP_ISSET(i, &bm));
+			__BITMAP_CLR(i, &bm);
 		}
 
 	for (size_t i = 0; i < 65536; i += 2)
-		ATF_REQUIRE(!__BITMAP_ISSET(i, bm));
+		ATF_REQUIRE(!__BITMAP_ISSET(i, &bm));
 }
 
 ATF_TC(fast_divide32);
