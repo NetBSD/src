@@ -31,10 +31,11 @@
 #define GMAC_PRIVATE
 
 #include "locators.h"
+#include "opt_broadcom.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.17 2012/11/08 21:32:48 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.18 2012/12/07 22:21:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,6 +63,13 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.17 2012/11/08 21:32:48 matt Exp $"
 #include <arm/broadcom/bcm53xx_var.h>
 
 //#define BCMETH_MPSAFE
+
+#ifdef BCMETH_COUNTERS
+#define	BCMETH_EVCNT_ADD(a,b)	((void)((a).ev_count += (b)))
+#else
+#define	BCMETH_EVCNT_ADD(a,b)	do { } while (/*CONSTCOND*/0)
+#endif
+#define	BCMETH_EVCNT_INCR(a)	BCMETH_EVCNT_ADD((a), 1)
 
 #define	BCMETH_RCVOFFSET	10
 #define	BCMETH_MAXTXMBUFS	128
@@ -148,12 +156,14 @@ struct bcmeth_softc {
 #define	SOFT_RXINTR		0x01
 #define	SOFT_TXINTR		0x02
 
+#ifdef BCMETH_COUNTERS
 	struct evcnt sc_ev_intr;
 	struct evcnt sc_ev_soft_intr;
 	struct evcnt sc_ev_work;
 	struct evcnt sc_ev_tx_stall;
 	struct evcnt sc_ev_rx_badmagic_lo;
 	struct evcnt sc_ev_rx_badmagic_hi;
+#endif
 
 	struct ifqueue sc_rx_bufcache;
 	struct bcmeth_mapcache *sc_rx_mapcache;     
@@ -386,6 +396,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
+#ifdef BCMETH_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, xname, "intr");
 	evcnt_attach_dynamic(&sc->sc_ev_soft_intr, EVCNT_TYPE_INTR,
@@ -398,6 +409,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "rx badmagic lo");
 	evcnt_attach_dynamic(&sc->sc_ev_rx_badmagic_hi, EVCNT_TYPE_MISC,
 	    NULL, xname, "rx badmagic hi");
+#endif
 }
 
 static int
@@ -1056,9 +1068,9 @@ bcmeth_rxq_consume(
 		if (rxsts == BCMETH_RCVMAGIC) {	
 			ifp->if_ierrors++;
 			if ((m->m_ext.ext_paddr >> 28) == 8) {
-				sc->sc_ev_rx_badmagic_lo.ev_count++;
+				BCMETH_EVCNT_INCR(sc->sc_ev_rx_badmagic_lo);
 			} else {
-				sc->sc_ev_rx_badmagic_hi.ev_count++;
+				BCMETH_EVCNT_INCR( sc->sc_ev_rx_badmagic_hi);
 			}
 			IF_ENQUEUE(&sc->sc_rx_bufcache, m);
 		} else
@@ -1709,7 +1721,7 @@ bcmeth_intr(void *arg)
 	mutex_enter(sc->sc_hwlock);
 
 	uint32_t intmask = sc->sc_intmask;
-	sc->sc_ev_intr.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_intr);
 
 	for (;;) {
 		uint32_t intstatus = bcmeth_read_4(sc, GMAC_INTSTATUS);
@@ -1821,7 +1833,7 @@ bcmeth_soft_txintr(struct bcmeth_softc *sc)
 	 */
 	if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 	    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
-		sc->sc_ev_tx_stall.ev_count++;
+		BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
 		sc->sc_if.if_flags |= IFF_OACTIVE;
 	} else {
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
@@ -1847,7 +1859,7 @@ bcmeth_soft_intr(void *arg)
 
 	u_int soft_flags = atomic_swap_uint(&sc->sc_soft_flags, 0);
 
-	sc->sc_ev_soft_intr.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_soft_intr);
 
 	if ((soft_flags & SOFT_TXINTR)
 	    || bcmeth_txq_active_p(sc, &sc->sc_txq)) {
@@ -1857,7 +1869,7 @@ bcmeth_soft_intr(void *arg)
 		 */
 		if (!bcmeth_txq_consume(sc, &sc->sc_txq)
 		    || !bcmeth_txq_enqueue(sc, &sc->sc_txq)) {
-			sc->sc_ev_tx_stall.ev_count++;
+			BCMETH_EVCNT_INCR(sc->sc_ev_tx_stall);
 			ifp->if_flags |= IFF_OACTIVE;
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
@@ -1893,7 +1905,7 @@ bcmeth_worker(struct work *wk, void *arg)
 
 	mutex_enter(sc->sc_lock);
 
-	sc->sc_ev_work.ev_count++;
+	BCMETH_EVCNT_INCR(sc->sc_ev_work);
 
 	uint32_t work_flags = atomic_swap_32(&sc->sc_work_flags, 0);
 	if (work_flags & WORK_REINIT) {
