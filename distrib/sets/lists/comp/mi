@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1794 2012/12/02 19:58:18 rkujawa Exp $
+#	$NetBSD: mi,v 1.1795 2012/12/07 01:54:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5574,8 +5574,9 @@
 ./usr/share/man/cat3/__BIT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__BITMAP_CLR.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BITMAP_ISSET.0		comp-c-catman		.cat
-./usr/share/man/cat3/__BITMAP_SIZE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BITMAP_SET.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_SIZE.0		comp-c-catman		.cat
+./usr/share/man/cat3/__BITMAP_TYPE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BITMAP_ZERO.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BITS.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__CONCAT.0			comp-c-catman		.cat
@@ -12108,8 +12109,9 @@
 ./usr/share/man/html3/__BIT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BITMAP_CLR.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BITMAP_ISSET.html	comp-c-htmlman		html
-./usr/share/man/html3/__BITMAP_SIZE.html	comp-c-htmlman		html
 ./usr/share/man/html3/__BITMAP_SET.html		comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_SIZE.html	comp-c-htmlman		html
+./usr/share/man/html3/__BITMAP_TYPE.html	comp-c-htmlman		html
 ./usr/share/man/html3/__BITMAP_ZERO.html	comp-c-htmlman		html
 ./usr/share/man/html3/__BITS.html		comp-c-htmlman		html
 ./usr/share/man/html3/__CONCAT.html		comp-c-htmlman		html
@@ -18444,8 +18446,9 @@
 ./usr/share/man/man3/__BIT.3			comp-c-man		.man
 ./usr/share/man/man3/__BITMAP_CLR.3		comp-c-man		.man
 ./usr/share/man/man3/__BITMAP_ISSET.3		comp-c-man		.man
-./usr/share/man/man3/__BITMAP_SIZE.3		comp-c-man		.man
 ./usr/share/man/man3/__BITMAP_SET.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_SIZE.3		comp-c-man		.man
+./usr/share/man/man3/__BITMAP_TYPE.3		comp-c-man		.man
 ./usr/share/man/man3/__BITMAP_ZERO.3		comp-c-man		.man
 ./usr/share/man/man3/__BITS.3			comp-c-man		.man
 ./usr/share/man/man3/__CONCAT.3			comp-c-man		.man
