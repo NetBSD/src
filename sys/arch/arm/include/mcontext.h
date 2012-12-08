@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2012/12/08 02:41:54 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15 2012/12/08 06:58:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -114,7 +114,11 @@ typedef struct {
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
+#ifdef __ARM_EABI__
+#define	__UCONTEXT_SIZE	(256 + 144)
+#else
 #define	__UCONTEXT_SIZE	256
+#endif
 
 static __inline void *
 __lwp_getprivate_fast(void)
