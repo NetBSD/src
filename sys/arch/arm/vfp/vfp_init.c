@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.9 2012/12/05 19:30:10 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.10 2012/12/08 06:49:00 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -90,10 +90,6 @@ read_fpinst2(void)
 	return rv;
 }
 
-/* FSTMD <X>, {d0-d15} */
-#define save_vfpregs(X)	__asm __volatile("stc p11, c0, [%0], {32}" : \
-			    : "r" (X) : "memory")
-
 /* FMXR <X>, fpscr */
 #define write_fpscr(X)	__asm __volatile("mcr p10, 7, %0, c1, c0, 0" : \
 			    : "r" (X))
@@ -107,8 +103,35 @@ read_fpinst2(void)
 #define write_fpinst2(X) __asm __volatile("mcr p10, 7, %0, c10, c0, 0" : \
 			    : "r" (X))
 /* FLDMD <X>, {d0-d15} */
-#define load_vfpregs(X)	__asm __volatile("ldc p11, c0, [%0], {32}" : \
-			    : "r" (X) : "memory");
+static void
+load_vfpregs_lo(uint64_t *p)
+{
+	/* vldmia rN, {d0-d15} */
+	__asm __volatile("ldc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+}
+
+/* FSTMD <X>, {d0-d15} */
+static void
+save_vfpregs_lo(uint64_t *p)
+{
+	__asm __volatile("stc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
+}
+
+#ifdef CPU_CORTEX
+/* FLDMD <X>, {d16-d31} */
+static void
+load_vfpregs_hi(uint64_t *p)
+{
+	__asm __volatile("ldcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+}
+
+/* FLDMD <X>, {d16-d31} */
+static void
+save_vfpregs_hi(uint64_t *p)
+{
+	__asm __volatile("stcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
+}
+#endif
 
 #ifdef FPU_VFP
 
@@ -231,12 +254,15 @@ vfp_attach(void)
 		uint32_t cpacr = armreg_cpacr_read();
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp);
 		cpacr |= __SHIFTIN(CPACR_ALL, cpacr_vfp2);
+#if 0
 		if (CPU_ID_CORTEX_P(curcpu()->ci_arm_cpuid)) {
 			/*
-			 * Disable access to the upper 16 FP registers.
+			 * Disable access to the upper 16 FP registers and NEON.
 			 */
 			cpacr |= CPACR_V7_D32DIS;
+			cpacr |= CPACR_V7_ASEDIS;
 		}
+#endif
 		armreg_cpacr_write(cpacr);
 
 		/*
@@ -363,7 +389,21 @@ vfp_state_load(lwp_t *l, bool used)
 	KDASSERT((fpexc & VFP_FPEXC_EX) == 0);
 	write_fpexc(fpexc | VFP_FPEXC_EN);
 
-	load_vfpregs(fregs->vfp_regs);
+	load_vfpregs_lo(fregs->vfp_regs);
+#ifdef CPU_CORTEX
+#ifdef CPU_ARM11
+	switch (curcpu()->ci_vfp_id) {
+	case FPU_VFP_CORTEXA5:
+	case FPU_VFP_CORTEXA7:
+	case FPU_VFP_CORTEXA8:
+	case FPU_VFP_CORTEXA9:
+#endif
+		load_vfpregs_hi(fregs->vfp_regs);
+#ifdef CPU_ARM11
+		break;
+	}
+#endif
+#endif
 	write_fpscr(fregs->vfp_fpscr);
 
 	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
@@ -431,7 +471,21 @@ vfp_state_save(lwp_t *l)
 		}
 	}
 	fregs->vfp_fpscr = read_fpscr();
-	save_vfpregs(fregs->vfp_regs);
+	save_vfpregs_lo(fregs->vfp_regs);
+#ifdef CPU_CORTEX
+#ifdef CPU_ARM11
+	switch (curcpu()->ci_vfp_id) {
+	case FPU_VFP_CORTEXA5:
+	case FPU_VFP_CORTEXA7:
+	case FPU_VFP_CORTEXA8:
+	case FPU_VFP_CORTEXA9:
+#endif
+		save_vfpregs_hi(fregs->vfp_regs);
+#ifdef CPU_ARM11
+		break;
+	}
+#endif
+#endif
 
 	/* Disable the VFP.  */
 	write_fpexc(fpexc);
@@ -480,7 +534,7 @@ vfp_getcontext(struct lwp *l, mcontext_t *mcp, int *flagsp)
 		mcp->__fpu.__vfpregs.__vfp_fpscr = pcb->pcb_vfp.vfp_fpscr;
 		memcpy(mcp->__fpu.__vfpregs.__vfp_fstmx, pcb->pcb_vfp.vfp_regs,
 		    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
-		*flagsp |= _UC_FPU;
+		*flagsp |= _UC_FPU|_UC_ARM_VFP;
 	}
 }
 
