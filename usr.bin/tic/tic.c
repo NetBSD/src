@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.22 2012/12/08 21:04:27 joerg Exp $ */
+/* $NetBSD: tic.c,v 1.23 2012/12/08 23:29:28 joerg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,16 +32,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.22 2012/12/08 21:04:27 joerg Exp $");
+__RCSID("$NetBSD: tic.c,v 1.23 2012/12/08 23:29:28 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
-#endif
-#if !HAVE_NBTOOL_CONFIG_H
-#include <util.h>
 #endif
 
 #include <cdbw.h>
@@ -58,6 +55,7 @@ __RCSID("$NetBSD: tic.c,v 1.22 2012/12/08 21:04:27 joerg Exp $");
 #include <string.h>
 #include <term_private.h>
 #include <term.h>
+#include <util.h>
 
 #define	HASH_SIZE	16384	/* 2012-06-01: 3600 entries */
 
