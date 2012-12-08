@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.13 2012/12/07 18:49:13 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14 2012/12/08 02:41:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _ARM_MCONTEXT_H_
 #define _ARM_MCONTEXT_H_
 
+#include <sys/stdint.h>
 /*
  * General register state
  */
