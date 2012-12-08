@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.40 2012/09/10 14:00:15 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.40 2012/09/10 14:00:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.41 2012/12/08 13:42:36 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -251,15 +251,12 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	}
 
 	/*
-	 * When setting attribute on the root vnode, we get it 
-	 * already locked, and vn_open/namei/VFS_ROOT will try to
-	 * look it, causing a panic. Unlock it first.
+	 * XXX unlock/lock should only be done when setting extattr
+	 * on backing store or one of its parent directory 
+	 * including root, but we always do it for now.
 	 */ 
-	if (vp->v_vflag && VV_ROOT) {
-		KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-		VOP_UNLOCK(vp);
-	}
-	KASSERT(VOP_ISLOCKED(vp) == 0);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	VOP_UNLOCK(vp);
 
 	pb = pathbuf_create(path);
 	NDINIT(&nd, CREATE, LOCKPARENT, pb);
@@ -267,12 +264,10 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	error = vn_open(&nd, O_CREAT|O_RDWR, 0600);
 
 	/*
-	 * Reacquire the lock on the vnode if it was root.
+	 * Reacquire the lock on the vnode
 	 */
 	KASSERT(VOP_ISLOCKED(vp) == 0);
-	if (vp->v_vflag && VV_ROOT)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	if (error != 0) {
 		pathbuf_destroy(pb);
