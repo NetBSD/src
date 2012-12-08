@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.101 2012/12/08 12:36:31 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.101 2012/12/08 12:36:31 kiyohara Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_mtrr.h"
+#include "opt_multiprocessor.h"
 
 #include "lapic.h"
 #include "ioapic.h"
@@ -92,7 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $");
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
+#if MPBIOS > 0
 #include <machine/mpbiosvar.h>
+#endif
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -105,9 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100 2012/07/02 01:05:48 chs Exp $");
 #include <machine/tlog.h>
 #endif
 
+#if NLAPIC > 0
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
+#endif
 
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
@@ -131,10 +136,12 @@ struct cpu_softc {
 	bool sc_wasonline;
 };
 
+#ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *, paddr_t); 
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
+#endif
 
 
 CFATTACH_DECL2_NEW(cpu, sizeof(struct cpu_softc),
@@ -179,15 +186,23 @@ uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 
 extern char x86_64_doubleflt_stack[];
 
+#ifdef MULTIPROCESSOR
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
+#endif
+#if NLAPIC > 0
 static vaddr_t cmos_data_mapping;
+#endif
 struct cpu_info *cpu_starting;
 
+#ifdef MULTIPROCESSOR
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
+#endif
+#if NLAPIC > 0
 static void	cpu_copy_trampoline(void);
+#endif
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
@@ -195,6 +210,7 @@ static void	cpu_copy_trampoline(void);
  *
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
+#if NLAPIC > 0
 void
 cpu_init_first(void)
 {
@@ -208,6 +224,7 @@ cpu_init_first(void)
 	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 }
+#endif
 
 static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
@@ -275,7 +292,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
+#if NLAPIC > 0
 	int cpunum = caa->cpu_number;
+#endif
 	static bool again;
 
 	sc->sc_dev = self;
@@ -313,6 +332,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
+#if NLAPIC > 0
 		if (cpunum != lapic_cpu_number()) {
 			/* XXX should be done earlier. */
 			uint32_t reg;
@@ -327,6 +347,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		if (cpunum != lapic_cpu_number()) {
 			aprint_error_dev(self, "unable to reset apic id\n");
 		}
+#endif
 	}
 
 	ci->ci_self = ci;
@@ -370,12 +391,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+#if NLAPIC > 0
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
 			lapic_enable();
 			lapic_set_lvt();
 			lapic_calibrate_timer(ci);
 		}
+#endif
 		/* Make sure DELAY() is initialized. */
 		DELAY(1);
 		again = true;
@@ -398,6 +421,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		x86_cpu_idle_init();
 		break;
 
+#ifdef MULTIPROCESSOR
 	case CPU_ROLE_AP:
 		/*
 		 * report on an AP
@@ -418,6 +442,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			tmp->ci_next = ci;
 		}
 		break;
+#endif
 
 	default:
 		aprint_normal("\n");
@@ -429,6 +454,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register1(self, cpu_suspend, cpu_resume, cpu_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+#ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 		struct pcb *pcb = lwp_getpcb(l);
@@ -443,6 +469,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
+#endif
 
 	/*
 	 * Postpone the "cpufeaturebus" scan.
@@ -585,6 +612,7 @@ cpu_init(struct cpu_info *ci)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors(void)
 {
@@ -622,6 +650,7 @@ cpu_boot_secondary_processors(void)
 	/* Enable zeroing of pages in the idle loop if we have SSE2. */
 	vm_page_zero_enable = ((cpu_feature[0] & CPUID_SSE2) != 0);
 }
+#endif
 
 static void
 cpu_init_idle_lwp(struct cpu_info *ci)
@@ -650,6 +679,7 @@ cpu_init_idle_lwps(void)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 void
 cpu_start_secondary(struct cpu_info *ci)
 {
@@ -844,6 +874,7 @@ cpu_hatch(void *v)
 	idle_loop(NULL);
 	KASSERT(false);
 }
+#endif
 
 #if defined(DDB)
 
@@ -872,6 +903,7 @@ cpu_debug_dump(void)
 }
 #endif
 
+#if NLAPIC > 0
 static void
 cpu_copy_trampoline(void)
 {
@@ -897,6 +929,7 @@ cpu_copy_trampoline(void)
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
+#endif
 
 #ifdef i386
 static void
@@ -923,7 +956,7 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 #define IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
 extern vector IDTVEC(tss_trap08);
-#ifdef DDB
+#if defined(DDB) && defined(MULTIPROCESSOR)
 extern vector Xintrddbipi;
 extern int ddb_vec;
 #endif
@@ -943,7 +976,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
-#if defined(DDB)
+#if defined(DDB) && defined(MULTIPROCESSOR)
 	/*
 	 * Set up separate handler for the DDB IPI, so that it doesn't
 	 * stomp on a possibly corrupted stack.
@@ -971,6 +1004,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 }
 #endif	/* i386 */
 
+#ifdef MULTIPROCESSOR
 int
 mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
@@ -1051,6 +1085,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
+#endif
 
 #ifdef __x86_64__
 typedef void (vector)(void);

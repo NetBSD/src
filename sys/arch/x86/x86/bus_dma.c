@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.69 2012/12/08 12:36:31 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.69 2012/12/08 12:36:31 kiyohara Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $");
  */
 
 #include "ioapic.h"
+#include "isa.h"
+#include "opt_mpbios.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,11 +98,17 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.68 2011/10/14 18:28:04 bouyer Exp $");
 
 #include <sys/bus.h>
 #include <machine/bus_private.h>
+#if NIOAPIC > 0
 #include <machine/i82093var.h>
+#endif
+#ifdef MPBIOS
 #include <machine/mpbiosvar.h>
+#endif
 
+#if NISA > 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#endif
 
 #include <uvm/uvm.h>
 
