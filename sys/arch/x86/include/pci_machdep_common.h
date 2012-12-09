@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.10 2012/12/09 20:43:54 jakllsch Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.11 2012/12/09 21:30:02 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 #endif
 
 /*
- * i386-specific PCI structure and type definitions.
+ * x86-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
  * Configuration tag; created from a {bus,device,function} triplet by
@@ -90,7 +90,7 @@ struct pci_chipset_tag {
 };
 
 /*
- * i386-specific PCI variables and functions.
+ * x86-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 int		pci_bus_flags(void);
