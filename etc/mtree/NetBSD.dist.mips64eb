@@ -1,14 +1,16 @@
-#	$NetBSD: NetBSD.dist.mips64eb,v 1.3 2011/10/08 13:14:03 mbalmer Exp $
+#	$NetBSD: NetBSD.dist.mips64eb,v 1.4 2012/12/09 22:06:21 spz Exp $
 
 ./usr/lib/o32
 ./usr/lib/o32/i18n
 ./usr/lib/o32/lua
 ./usr/lib/o32/lua/5.1
+./usr/lib/o32/npf
 ./usr/lib/o32/security
 ./usr/lib/64
 ./usr/lib/64/i18n
 ./usr/lib/64/lua
 ./usr/lib/64/lua/5.1
+./usr/lib/64/npf
 ./usr/lib/64/security
 ./usr/libdata/debug/usr/lib/o32
 ./usr/libdata/debug/usr/lib/o32/i18n
