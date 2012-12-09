@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2012/12/02 12:34:51 apb Exp $
+#	$NetBSD: Makefile,v 1.62 2012/12/09 15:22:54 apb Exp $
 
 HOSTLIB=	nbcompat
 
@@ -106,12 +106,12 @@ install.includes: .PHONY
 	${_MKMSG_INSTALL} "${HOST_INCSDIR}/*"
 	${HOST_INSTALL_DIR} ${HOST_INCSDIR}
 	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat
-	${HOST_INSTALL_FILE} ${INCFILES} ${HOST_INCSDIR}/compat/
 .for _d in ${INCSUBDIRS}
 	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat/${_d}
-	touch include/${_d}/dummy # ensure dir is not empty
-	${HOST_INSTALL_FILE} include/${_d}/* ${HOST_INCSDIR}/compat/${_d}/
 .endfor
+	(cd include && find . -name '*.h' -print | while read f ; do \
+	    ${HOST_INSTALL_FILE} $$f ${HOST_INCSDIR}/compat/$$f ; \
+	 done)
 
 # Install defs.mk in ${TOOLDIR}/share/compat
 install.defs.mk: .PHONY ${HOST_SHAREDIR}/compat/defs.mk
