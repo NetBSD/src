@@ -103,6 +103,7 @@ static void	alc_attach(device_t, device_t, void *);
 static int	alc_detach(device_t, int);
 
 static int	alc_init(struct ifnet *);
+static int	alc_init_backend(struct ifnet *, bool);
 static void	alc_start(struct ifnet *);
 static int	alc_ioctl(struct ifnet *, u_long, void *);
 static void	alc_watchdog(struct ifnet *);
@@ -119,7 +120,7 @@ static struct alc_ident *
 static void	alc_get_macaddr(struct alc_softc *);
 static void	alc_init_cmb(struct alc_softc *);
 static void	alc_init_rr_ring(struct alc_softc *);
-static int	alc_init_rx_ring(struct alc_softc *);
+static int	alc_init_rx_ring(struct alc_softc *, bool);
 static void	alc_init_smb(struct alc_softc *);
 static void	alc_init_tx_ring(struct alc_softc *);
 static int	alc_intr(void *);
@@ -127,7 +128,7 @@ static void	alc_mac_config(struct alc_softc *);
 static int	alc_miibus_readreg(device_t, int, int);
 static void	alc_miibus_statchg(struct ifnet *);
 static void	alc_miibus_writereg(device_t, int, int, int);
-static int	alc_newbuf(struct alc_softc *, struct alc_rxdesc *, int);
+static int	alc_newbuf(struct alc_softc *, struct alc_rxdesc *, bool);
 static void	alc_phy_down(struct alc_softc *);
 static void	alc_phy_reset(struct alc_softc *);
 static void	alc_reset(struct alc_softc *);
@@ -1442,13 +1443,13 @@ alc_watchdog(struct ifnet *ifp)
 		printf("%s: watchdog timeout (missed link)\n",
 		    device_xname(sc->sc_dev));
 		ifp->if_oerrors++;
-		alc_init(ifp);
+		alc_init_backend(ifp, false);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
-	alc_init(ifp);
+	alc_init_backend(ifp, false);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		 alc_start(ifp);
@@ -1678,7 +1679,7 @@ alc_intr(void *arg)
 
 			error = alc_rxintr(sc);
 			if (error) {
-				alc_init(ifp);
+				alc_init_backend(ifp, false);
 				return (0);
 			}
 		}
@@ -1694,7 +1695,7 @@ alc_intr(void *arg)
 			if (status & INTR_TXQ_TO_RST)
 				printf("%s: TxQ reset! -- resetting\n",
 				    device_xname(sc->sc_dev));
-			alc_init(ifp);
+			alc_init_backend(ifp, false);
 			return (0);
 		}
 
@@ -1765,7 +1766,7 @@ alc_txeof(struct alc_softc *sc)
 }
 
 static int
-alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, int init)
+alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd, bool init)
 {
 	struct mbuf *m;
 	bus_dmamap_t map;
@@ -1920,7 +1921,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		rxd = &sc->alc_cdata.alc_rxdesc[rx_cons];
 		mp = rxd->rx_m;
 		/* Add a new receive buffer to the ring. */
-		if (alc_newbuf(sc, rxd, 0) != 0) {
+		if (alc_newbuf(sc, rxd, false) != 0) {
 			ifp->if_iqdrops++;
 			/* Reuse Rx buffers. */
 			if (sc->alc_cdata.alc_rxhead != NULL)
@@ -2044,6 +2045,13 @@ alc_reset(struct alc_softc *sc)
 static int
 alc_init(struct ifnet *ifp)
 {
+	
+	return alc_init_backend(ifp, true);
+}
+
+static int
+alc_init_backend(struct ifnet *ifp, bool init)
+{
 	struct alc_softc *sc = ifp->if_softc;
 	struct mii_data *mii;
 	uint8_t eaddr[ETHER_ADDR_LEN];
@@ -2061,7 +2069,7 @@ alc_init(struct ifnet *ifp)
 	alc_reset(sc);
 
 	/* Initialize Rx descriptors. */
-	error = alc_init_rx_ring(sc);
+	error = alc_init_rx_ring(sc, init);
 	if (error != 0) {
 		printf("%s: no memory for Rx buffers.\n", device_xname(sc->sc_dev));
 		alc_stop(ifp, 0);
@@ -2514,7 +2522,7 @@ alc_init_tx_ring(struct alc_softc *sc)
 }
 
 static int
-alc_init_rx_ring(struct alc_softc *sc)
+alc_init_rx_ring(struct alc_softc *sc, bool init)
 {
 	struct alc_ring_data *rd;
 	struct alc_rxdesc *rxd;
@@ -2527,7 +2535,7 @@ alc_init_rx_ring(struct alc_softc *sc)
 		rxd = &sc->alc_cdata.alc_rxdesc[i];
 		rxd->rx_m = NULL;
 		rxd->rx_desc = &rd->alc_rx_ring[i];
-		if (alc_newbuf(sc, rxd, 1) != 0)
+		if (alc_newbuf(sc, rxd, init) != 0)
 			return (ENOBUFS);
 	}
 
