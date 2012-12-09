@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.9 2012/06/15 13:58:34 yamt Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.10 2012/12/09 20:43:54 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -139,11 +139,11 @@ int		pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 void pci_device_foreach(pci_chipset_tag_t, int,
 			void (*)(pci_chipset_tag_t, pcitag_t, void*),
 			void *);
-        
+
 void pci_device_foreach_min(pci_chipset_tag_t, int, int,
 			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
 			    void *);
-        
+
 void pci_bridge_foreach(pci_chipset_tag_t, int, int,
 	void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
 
