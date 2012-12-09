@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.62 2012/12/09 15:22:54 apb Exp $
+#	$NetBSD: Makefile,v 1.63 2012/12/09 18:08:08 christos Exp $
+
+.include <bsd.own.mk>
 
 HOSTLIB=	nbcompat
 
