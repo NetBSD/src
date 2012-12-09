@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.13 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.14 2012/12/09 02:59:16 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.13 2012/10/27 17:18:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.14 2012/12/09 02:59:16 christos Exp $");
 /*-
  * Driver for Atheros AR9001U chipset.
  * http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
@@ -1171,21 +1171,21 @@ otus_task(void *arg)
 
 	/* Process host commands. */
 	s = splusb();
-	mutex_spin_enter(&sc->sc_task_mtx);;
+	mutex_spin_enter(&sc->sc_task_mtx);
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
-		mutex_spin_exit(&sc->sc_task_mtx);;
+		mutex_spin_exit(&sc->sc_task_mtx);
 		splx(s);
 		/* Callback. */
 		DPRINTFN(2, "otus_task: cb=%p queued=%d\n",
 		    cmd->cb, ring->queued);
 		cmd->cb(sc, cmd->data);
 		s = splusb();
-		mutex_spin_enter(&sc->sc_task_mtx);;
+		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
 		ring->next = (ring->next + 1) % OTUS_HOST_CMD_RING_COUNT;
 	}
-	mutex_spin_exit(&sc->sc_task_mtx);;
+	mutex_spin_exit(&sc->sc_task_mtx);
 	wakeup(ring);
 	splx(s);
 }
@@ -1201,7 +1201,7 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 	DPRINTF("otus_do_async: cb=%p\n", cb);
 
 	s = splusb();
-	mutex_spin_enter(&sc->sc_task_mtx);;
+	mutex_spin_enter(&sc->sc_task_mtx);
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
@@ -1210,11 +1210,11 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 
 	/* If there is no pending command already, schedule a task. */
 	if (++ring->queued == 1) {
-		mutex_spin_exit(&sc->sc_task_mtx);;
+		mutex_spin_exit(&sc->sc_task_mtx);
 		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 	}
 	else
-		mutex_spin_exit(&sc->sc_task_mtx);;
+		mutex_spin_exit(&sc->sc_task_mtx);
 	wakeup(ring);
 	splx(s);
 }
@@ -1384,7 +1384,7 @@ otus_node_alloc(struct ieee80211_node_table *ntp)
 
 	DPRINTF("otus_node_alloc\n");
 
-	on = malloc(sizeof(struct otus_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	on = malloc(sizeof(*on), M_DEVBUF, M_NOWAIT | M_ZERO);
 	return &on->ni;
 }
 
@@ -2617,7 +2617,7 @@ Static int
 otus_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
-	struct otus_softc *sc = ic->ic_ifp->if_softc;;
+	struct otus_softc *sc = ic->ic_ifp->if_softc;
 	struct otus_cmd_key cmd;
 
 	/* Defer setting of WEP keys until interface is brought up. */
