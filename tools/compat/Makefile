@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2012/12/09 18:08:08 christos Exp $
+#	$NetBSD: Makefile,v 1.64 2012/12/09 19:15:48 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -94,7 +94,7 @@ HOST_LIBDIR=	${TOOLDIR}/lib
 HOST_INCSDIR=	${TOOLDIR}/include
 HOST_SHAREDIR= ${TOOLDIR}/share
 
-install:	.PHONY install.lib install.includes install.defs.mk
+install:	.PHONY install.lib includes install.defs.mk
 
 # Install lib${HOSTLIB}.a in ${TOOLDIR}/lib
 install.lib: .PHONY ${HOST_LIBDIR}/lib${HOSTLIB}.a
@@ -103,17 +103,22 @@ ${HOST_LIBDIR}/lib${HOSTLIB}.a: lib${HOSTLIB}.a
 	${HOST_INSTALL_DIR} ${HOST_LIBDIR}
 	${HOST_INSTALL_FILE} -m ${LIBMODE} ${.ALLSRC} ${.TARGET}
 
-# Install include files in ${TOOLDIR}/include/compat
-install.includes: .PHONY
-	${_MKMSG_INSTALL} "${HOST_INCSDIR}/*"
-	${HOST_INSTALL_DIR} ${HOST_INCSDIR}
-	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat
-.for _d in ${INCSUBDIRS}
-	${HOST_INSTALL_DIR} ${HOST_INCSDIR}/compat/${_d}
+.for _f in ${INCFILES}
+HOST_INCINSTFILES+= ${HOST_INCSDIR}/compat/${_f}
+${HOST_INCSDIR}/compat/${_f}: ${_f}
+	${_MKTARGET_INSTALL}
+	${HOST_INSTALL_FILE} ${.ALLSRC} ${.TARGET}
 .endfor
-	(cd include && find . -name '*.h' -print | while read f ; do \
-	    ${HOST_INSTALL_FILE} $$f ${HOST_INCSDIR}/compat/$$f ; \
-	 done)
+
+.for _d in ${INCSUBDIRS}
+HOST_INCINSTDIRS+= ${HOST_INCSDIR}/compat/${_d}
+${HOST_INCSDIR}/compat/${_d}:
+	${_MKTARGET_INSTALL}
+	${HOST_INSTALL_DIR} ${.TARGET}
+.endfor
+
+# Install include files in ${TOOLDIR}/include/compat
+includes: .PHONY ${HOST_INCINSTDIRS} .WAIT ${HOST_INCINSTFILES}
 
 # Install defs.mk in ${TOOLDIR}/share/compat
 install.defs.mk: .PHONY ${HOST_SHAREDIR}/compat/defs.mk
