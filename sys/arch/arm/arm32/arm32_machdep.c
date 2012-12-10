@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.85 2012/10/27 17:17:36 chs Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.86 2012/12/10 01:37:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.85 2012/10/27 17:17:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.86 2012/12/10 01:37:30 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -268,8 +268,8 @@ cpu_startup(void)
 
 	struct lwp * const l = &lwp0;
 	struct pcb * const pcb = lwp_getpcb(l);
-	pcb->pcb_sp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
-	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_sp - 1);
+	pcb->pcb_ksp = uvm_lwp_getuarea(l) + USPACE_SVC_STACK_TOP;
+	lwp_settrapframe(l, (struct trapframe *)pcb->pcb_ksp - 1);
 }
 
 /*
