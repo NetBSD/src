@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.86 2012/12/10 01:37:30 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.87 2012/12/10 08:19:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.86 2012/12/10 01:37:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.87 2012/12/10 08:19:10 matt Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -561,3 +561,16 @@ xc_send_ipi(struct cpu_info *ci)
 	printf("\n");
 }
 #endif /* MULTIPROCESSOR */
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+bool
+mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
+{
+	if (physical_start <= pa && pa < physical_end) {
+		*vap = KERNEL_BASE + (pa - physical_start);
+		return true;
+	}
+
+	return false;
+}
+#endif
