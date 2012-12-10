@@ -1,6 +1,6 @@
-#	$NetBSD: mk.rpi,v 1.1 2012/07/26 06:21:57 skrll Exp $
+#	$NetBSD: mk.rpi,v 1.2 2012/12/10 05:02:14 matt Exp $
 
-CPPFLAGS+= -march=armv6z -mtune=arm1176jzf-s
+CPPFLAGS+= -march=armv6z -mtune=arm1176jzf-s -mfpu=vfp
 
 SYSTEM_FIRST_OBJ=	rpi_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/rpi/rpi_start.S
