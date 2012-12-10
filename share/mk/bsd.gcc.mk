@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.gcc.mk,v 1.9 2012/12/10 23:48:38 pooka Exp $
+#	$NetBSD: bsd.gcc.mk,v 1.10 2012/12/10 23:49:39 pooka Exp $
 
 .if !defined(_BSD_GCC_MK_)
 _BSD_GCC_MK_=1
@@ -12,8 +12,12 @@ _GCC_CRTEND!=		${CC} --print-file-name=crtend.o
 .ifndef _GCC_CRTENDS
 _GCC_CRTENDS!=		${CC} --print-file-name=crtendS.o
 .endif
+.ifndef _GCC_CRTI
 _GCC_CRTI!=		${CC} --print-file-name=crti.o
+.endif
+.ifndef _GCC_CRTN
 _GCC_CRTN!=		${CC} --print-file-name=crtn.o
+.endif
 _GCC_CRTDIR!=		dirname ${_GCC_CRTBEGIN}
 _GCC_LIBGCCDIR!=	dirname `${CC} --print-libgcc-file-name`
 .else
