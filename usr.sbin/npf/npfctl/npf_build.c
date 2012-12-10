@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.15 2012/11/26 20:34:28 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.16 2012/12/10 02:26:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.15 2012/11/26 20:34:28 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.16 2012/12/10 02:26:04 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -83,6 +83,12 @@ npfctl_config_send(int fd, const char *out)
 	}
 	npf_config_destroy(npf_conf);
 	return error;
+}
+
+nl_config_t *
+npfctl_config_ref(void)
+{
+	return npf_conf;
 }
 
 unsigned long
