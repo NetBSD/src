@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.86 2012/11/12 18:00:35 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.87 2012/12/10 01:37:30 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.86 2012/11/12 18:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.87 2012/12/10 01:37:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l,
 		 * If the current trapframe is at the top of the kernel stack,
 		 * the fault _must_ have come from user mode.
 		 */
-		if (tf != ((trapframe_t *)pcb->pcb_sp) - 1) {
+		if (tf != ((trapframe_t *)pcb->pcb_ksp) - 1) {
 			/*
 			 * Kernel mode. We're either about to die a
 			 * spectacular death, or pcb_onfault will come

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.74 2012/12/05 19:05:45 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.75 2012/12/10 01:37:30 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.74 2012/12/05 19:05:45 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.75 2012/12/10 01:37:30 matt Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -258,7 +258,7 @@ ENTRY(cpu_switchto)
 	ldr	r10, [r7, #(PCB_R10)]
 	ldr	r11, [r7, #(PCB_R11)]
 	ldr	r12, [r7, #(PCB_R12)]
-	ldr	r13, [r7, #(PCB_SP)]
+	ldr	r13, [r7, #(PCB_KSP)]
 #elif defined(_ARM_ARCH_6)
 	ldrd	r8, [r7, #(PCB_R8)]
 	ldrd	r10, [r7, #(PCB_R10)]
@@ -430,7 +430,7 @@ ENTRY_NP(softint_switch)
 	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
 #endif
 	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
-	ldr	sp, [r2, #(PCB_SP)]	/* now running on the old stack. */
+	ldr	sp, [r2, #(PCB_KSP)]	/* now running on the old stack. */
 
 	/* At this point we can allow IRQ's again. */
 	msr	cpsr_c, r6
