@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.78.2.2 2012/12/10 21:12:51 riz Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.78.2.3 2012/12/10 21:16:25 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.78.2.2 2012/12/10 21:12:51 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.78.2.3 2012/12/10 21:16:25 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,8 +493,7 @@ smbfs_setattr(void *v)
 				VOP_CLOSE(vp, FWRITE, ap->a_cred);
 				}
 			} else if (SMB_CAPS(vcp) & SMB_CAP_NT_SMBS) {
-				error = smbfs_smb_setptime2(np, mtime, atime, 0, &scred);
-/*				error = smbfs_smb_setpattrNT(np, 0, mtime, atime, &scred);*/
+				error = smbfs_smb_setpattrNT(np, 0, mtime, atime, &scred);
 			} else if (SMB_DIALECT(vcp) >= SMB_DIALECT_LANMAN2_0) {
 				error = smbfs_smb_setptime2(np, mtime, atime, 0, &scred);
 			} else {
