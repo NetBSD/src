@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.10 2012/12/08 06:49:00 matt Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.11 2012/12/10 01:35:28 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -102,8 +102,11 @@ read_fpinst2(void)
 /* FMXR <X>, fpinst2 */
 #define write_fpinst2(X) __asm __volatile("mcr p10, 7, %0, c10, c0, 0" : \
 			    : "r" (X))
+
+#ifdef FPU_VFP
+
 /* FLDMD <X>, {d0-d15} */
-static void
+static inline void
 load_vfpregs_lo(uint64_t *p)
 {
 	/* vldmia rN, {d0-d15} */
@@ -111,7 +114,7 @@ load_vfpregs_lo(uint64_t *p)
 }
 
 /* FSTMD <X>, {d0-d15} */
-static void
+static inline void
 save_vfpregs_lo(uint64_t *p)
 {
 	__asm __volatile("stc\tp11, c0, [%0], {32}" :: "r" (p) : "memory");
@@ -119,21 +122,19 @@ save_vfpregs_lo(uint64_t *p)
 
 #ifdef CPU_CORTEX
 /* FLDMD <X>, {d16-d31} */
-static void
+static inline void
 load_vfpregs_hi(uint64_t *p)
 {
 	__asm __volatile("ldcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
 }
 
 /* FLDMD <X>, {d16-d31} */
-static void
+static inline void
 save_vfpregs_hi(uint64_t *p)
 {
 	__asm __volatile("stcl\tp11, c0, [%0], {32}" :: "r" (&p[16]) : "memory");
 }
 #endif
-
-#ifdef FPU_VFP
 
 /* The real handler for VFP bounces.  */
 static int vfp_handler(u_int, u_int, trapframe_t *, int);
