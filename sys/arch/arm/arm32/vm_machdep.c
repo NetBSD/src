@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62 2012/12/05 19:05:45 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.63 2012/12/10 01:37:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62 2012/12/05 19:05:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.63 2012/12/10 01:37:31 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -143,7 +143,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note: this stack is not in use if we are forking from p1
 	 */
 	uv = uvm_lwp_getuarea(l2);
-	pcb2->pcb_sp = uv + USPACE_SVC_STACK_TOP;
+	pcb2->pcb_ksp = uv + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the kernel stack with a known pattern */
@@ -160,7 +160,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif	/* PMAP_DEBUG */
 
-	struct trapframe *tf = (struct trapframe *)pcb2->pcb_sp - 1;
+	struct trapframe *tf = (struct trapframe *)pcb2->pcb_ksp - 1;
 	lwp_settrapframe(l2, tf);
 	*tf = *lwp_trapframe(l1);
 
@@ -177,7 +177,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sf->sf_r7 = PSR_USR32_MODE;		/* for returning to userspace */
 	sf->sf_sp = (u_int)tf;
 	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb2->pcb_sp = (u_int)sf;
+	pcb2->pcb_ksp = (u_int)sf;
 }
 
 /*
