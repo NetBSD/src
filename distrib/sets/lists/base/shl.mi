@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.642 2012/12/04 23:38:58 spz Exp $
+# $NetBSD: shl.mi,v 1.643 2012/12/10 00:32:24 rmind Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -741,6 +741,9 @@
 ./usr/lib/npf/ext_normalise.so			base-npf-shlib		npf
 ./usr/lib/npf/ext_normalise.so.0		base-npf-shlib		npf
 ./usr/lib/npf/ext_normalise.so.0.0		base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so			base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so.0		base-npf-shlib		npf
+./usr/lib/npf/ext_rndblock.so.0.0		base-npf-shlib		npf
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
