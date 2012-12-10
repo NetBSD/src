@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.18.20.1 2012/11/22 00:34:44 riz Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.18.20.2 2012/12/10 18:26:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.18.20.1 2012/11/22 00:34:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.18.20.2 2012/12/10 18:26:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -533,11 +533,13 @@ acpi_pci_link_attach(struct acpi_pci_link_softc *sc)
 	 * run _DIS (i.e., the method doesn't exist), assume the initial
 	 * IRQ was routed by the BIOS.
 	 */
+#if 0	/* XXX causes spontaneaous resets on some systems. Disabled for now. */
 	if (ACPI_SUCCESS(AcpiEvaluateObject(sc->pl_handle, "_DIS", NULL,
 	    NULL)))
 		for (i = 0; i < sc->pl_num_links; i++)
 			sc->pl_links[i].l_irq = PCI_INVALID_IRQ;
 	else
+#endif
 		for (i = 0; i < sc->pl_num_links; i++)
 			if (PCI_INTERRUPT_VALID(sc->pl_links[i].l_irq))
 				sc->pl_links[i].l_routed = TRUE;
