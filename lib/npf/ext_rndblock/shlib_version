@@ -1,0 +1,4 @@
+# $NetBSD: shlib_version,v 1.1 2012/12/10 00:32:25 rmind Exp $
+
+major=0
+minor=0
