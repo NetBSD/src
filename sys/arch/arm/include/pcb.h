@@ -71,7 +71,7 @@ struct pcb_arm32 {
 #define	pcb_cstate	pcb_un.un_32.pcb32_cstate
 #define	pcb_user_pid_rw	pcb_un.un_32.pcb32_user_pid_rw
 #ifdef __PROG32
-#define	pcb_sp		pcb_un.un_32.pcb32_sp
+#define	pcb_ksp		pcb_un.un_32.pcb32_sp
 #endif
 
 struct pcb_arm26 {
@@ -79,7 +79,7 @@ struct pcb_arm26 {
 };
 #define	pcb_sf	pcb_un.un_26.pcb26_sf
 #ifdef __PROG26
-#define	pcb_sp		pcb_sf.sf_r13
+#define	pcb_ksp		pcb_sf.sf_r13
 #endif
 
 /*
