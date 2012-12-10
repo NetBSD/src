@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.17 2012/09/16 13:47:41 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.18 2012/12/10 01:11:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.17 2012/09/16 13:47:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.18 2012/12/10 01:11:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -597,65 +597,80 @@ npf_rwrcksum(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 {
 	const int proto = npf_cache_ipproto(npc);
 	npf_addr_t *oaddr;
-	in_port_t *oport;
-	uint16_t *cksum;
+	uint16_t *ocksum;
+	in_port_t oport;
 	u_int offby;
 
-	/* Checksum update for IPv4 header. */
+	/* XXX: NetBSD - process delayed checksums. */
+	if (di == PFIL_OUT && proto != IPPROTO_ICMP) {
+		nbuf_cksum_barrier(nbuf);
+		npc->npc_info &= ~(NPC_LAYER4 | NPC_TCP | NPC_UDP);
+		if (!npf_cache_all(npc, nbuf)) {
+			return false;
+		}
+	}
+
+	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
+
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = &npc->npc_ip.v4;
 		uint16_t ipsum;
 
-		oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
+		/* Recalculate IPv4 checksum, advance to it and rewrite. */
 		ipsum = npf_addr_cksum(ip->ip_sum, npc->npc_alen, oaddr, addr);
-
-		/* Advance to the IPv4 checksum and rewrite it. */
 		offby = offsetof(struct ip, ip_sum);
 		if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(ipsum), &ipsum))
 			return false;
-
 		ip->ip_sum = ipsum;
-		offby = npf_cache_hlen(npc) - offby;
 	} else {
 		/* No checksum for IPv6. */
 		KASSERT(npf_iscached(npc, NPC_IP6));
-		oaddr = NULL;
 		offby = 0;
-		return false;	/* XXX: Not yet supported. */
 	}
 
-	/* Determine whether TCP/UDP checksum update is needed. */
-	if (proto == IPPROTO_ICMP || port == 0) {
+	/* Nothing else to do for ICMP. */
+	if (proto == IPPROTO_ICMP) {
 		return true;
 	}
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
+	offby = npf_cache_hlen(npc) - offby;
 
-	/* Calculate TCP/UDP checksum. */
+	/*
+	 * Calculate TCP/UDP checksum:
+	 * - Skip if UDP and the current checksum is zero.
+	 * - Fixup the IP address change.
+	 * - Fixup the port change, if required (non-zero).
+	 */
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = &npc->npc_l4.tcp;
 
-		cksum = &th->th_sum;
+		ocksum = &th->th_sum;
 		offby += offsetof(struct tcphdr, th_sum);
-		oport = (di == PFIL_OUT) ? &th->th_sport : &th->th_dport;
+		oport = (di == PFIL_OUT) ? th->th_sport : th->th_dport;
 	} else {
 		struct udphdr *uh = &npc->npc_l4.udp;
 
 		KASSERT(proto == IPPROTO_UDP);
-		cksum = &uh->uh_sum;
-		if (*cksum == 0) {
+		ocksum = &uh->uh_sum;
+		if (*ocksum == 0) {
 			/* No need to update. */
 			return true;
 		}
 		offby += offsetof(struct udphdr, uh_sum);
-		oport = (di == PFIL_OUT) ? &uh->uh_sport : &uh->uh_dport;
+		oport = (di == PFIL_OUT) ? uh->uh_sport : uh->uh_dport;
 	}
-	*cksum = npf_addr_cksum(*cksum, npc->npc_alen, oaddr, addr);
-	*cksum = npf_fixup16_cksum(*cksum, *oport, port);
+
+	uint16_t cksum = *ocksum;
+	cksum = npf_addr_cksum(cksum, npc->npc_alen, oaddr, addr);
+	if (port) {
+		cksum = npf_fixup16_cksum(cksum, oport, port);
+	}
 
 	/* Advance to TCP/UDP checksum and rewrite it. */
-	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(uint16_t), cksum)) {
+	if (nbuf_advstore(&nbuf, &n_ptr, offby, sizeof(cksum), &cksum)) {
 		return false;
 	}
+	*ocksum = cksum;
 	return true;
 }
 
