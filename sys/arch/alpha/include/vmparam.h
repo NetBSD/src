@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.37 2012/09/10 07:47:07 martin Exp $ */
+/* $NetBSD: vmparam.h,v 1.38 2012/12/10 16:12:19 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
 #define	_ALPHA_VMPARAM_H_
 
 #include <machine/alpha_cpu.h>
+
+#define __USE_TOPDOWN_VM
 
 /*
  * Machine dependent constants for Alpha.
