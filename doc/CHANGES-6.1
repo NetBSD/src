@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1,v 1.1.2.54 2012/12/10 18:27:00 riz Exp $
+# $NetBSD: CHANGES-6.1,v 1.1.2.55 2012/12/10 21:19:08 riz Exp $
 
 A complete list of changes from the 6.0 release until the 6.1 release:
 
@@ -7094,3 +7094,25 @@ sys/arch/amd64/conf/XEN3_DOM0			1.91
 
 	Add alc* at pci, re-sort slightly to reduce diffs from GENERIC.
 	[riz, ticket #730]
+
+sys/fs/smbfs/smbfs_node.c			1.48-1.49 via patch
+sys/fs/smbfs/smbfs_node.h			1.13 via patch
+sys/fs/smbfs/smbfs_vnops.c			1.83-1.84 via patch
+
+	Implement various fixes for smbfs. PR#25070 and others.
+	[nakayama, ticket #731]
+
+sys/fs/smbfs/smbfs_smb.c			1.44
+sys/fs/smbfs/smbfs_subr.c			1.16
+sys/fs/smbfs/smbfs_subr.h			1.21
+sys/fs/smbfs/smbfs_vnops.c			1.85
+sys/netsmb/smb.h				1.20
+
+	Improve smbfs timestamp handling.
+	[nakayama, ticket #732]
+
+external/cddl/osnet/include/unistd.h		1.5
+
+	Fix MKDTRACE and MKZFS builds.
+	[riastradh, ticket #733]
+
