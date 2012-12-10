@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.58 2012/12/10 05:03:42 matt Exp $
+#	$NetBSD: genassym.cf,v 1.59 2012/12/10 06:50:28 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,10 @@ include "opt_execfmt.h"
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
+endif
+
+ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS	1
 endif
 
 ifdef __HAVE_FAST_SOFTINTS
